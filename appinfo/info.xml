@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+    <id>app-template</id>
+    <name lang="en">Nextcloud App Template</name>
+    <name lang="nl">Nextcloud App Template</name>
+    <summary lang="en">A template for creating new Nextcloud apps</summary>
+    <summary lang="nl">Een sjabloon voor het maken van nieuwe Nextcloud-apps</summary>
+    <description lang="en"><![CDATA[A starting point for building Nextcloud apps following ConductionNL conventions.
+
+**Key Features**
+
+- **Vue 2 + Pinia frontend** — Modern reactive UI with state management
+- **OpenRegister integration** — Built-in support for the OpenRegister data layer
+- **Admin settings** — Pre-wired settings page with version info
+- **NL Design System ready** — CSS variables, WCAG AA, government theming
+- **Full quality pipeline** — PHPCS, PHPMD, Psalm, PHPStan, ESLint, Stylelint
+
+Free and open source under the EUPL-1.2 license.
+
+**Support:** For support, contact support@conduction.nl.
+    ]]></description>
+    <description lang="nl"><![CDATA[Een startpunt voor het bouwen van Nextcloud-apps volgens ConductionNL-conventies.
+
+**Belangrijkste functies**
+
+- **Vue 2 + Pinia frontend** — Moderne reactieve UI met state management
+- **OpenRegister-integratie** — Ingebouwde ondersteuning voor de OpenRegister-datalaag
+- **Beheerdersinstell ingen** — Voorgeconfigureerde instellingenpagina met versie-informatie
+- **NL Design System klaar** — CSS-variabelen, WCAG AA, overheidsthema
+- **Volledige kwaliteitspipeline** — PHPCS, PHPMD, Psalm, PHPStan, ESLint, Stylelint
+
+Vrij en open source onder de EUPL-1.2-licentie.
+
+**Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
+    ]]></description>
+    <version>0.1.0</version>
+    <licence>eupl</licence>
+    <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
+    <namespace>AppTemplate</namespace>
+    <documentation>
+        <user>https://github.com/ConductionNL/nextcloud-app-template</user>
+        <admin>https://github.com/ConductionNL/nextcloud-app-template</admin>
+        <developer>https://github.com/ConductionNL/nextcloud-app-template</developer>
+    </documentation>
+    <category>tools</category>
+    <website>https://github.com/ConductionNL/nextcloud-app-template</website>
+    <discussion>https://github.com/ConductionNL/nextcloud-app-template/discussions</discussion>
+    <bugs>https://github.com/ConductionNL/nextcloud-app-template/issues</bugs>
+    <repository>https://github.com/ConductionNL/nextcloud-app-template</repository>
+
+    <screenshot>https://raw.githubusercontent.com/ConductionNL/nextcloud-app-template/main/img/app-store.svg</screenshot>
+
+    <dependencies>
+        <nextcloud min-version="28" max-version="34"/>
+        <php min-version="8.1"/>
+    </dependencies>
+
+    <navigations>
+        <navigation>
+            <id>app-template</id>
+            <name>App Template</name>
+            <route>app-template.dashboard.page</route>
+            <icon>app.svg</icon>
+        </navigation>
+    </navigations>
+
+    <settings>
+        <admin>OCA\AppTemplate\Settings\AdminSettings</admin>
+        <admin-section>OCA\AppTemplate\Sections\SettingsSection</admin-section>
+    </settings>
+</info>

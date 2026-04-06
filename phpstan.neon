@@ -1,0 +1,31 @@
+parameters:
+    level: 5
+    paths:
+        - lib
+    bootstrapFiles:
+        - phpstan-bootstrap.php
+    excludePaths:
+        - vendor
+    scanDirectories:
+        - vendor/nextcloud/ocp
+    reportUnmatchedIgnoredErrors: false
+    ignoreErrors:
+        # Nextcloud internal classes that PHPStan might not recognize
+        - '#Call to an undefined method OC::#'
+        - '#Class OC not found#'
+        - '#Access to static property \$server on an unknown class OC#'
+        # OCA classes from other apps (OpenRegister) not available during static analysis
+        - '#unknown class OCA\\OpenRegister\\#'
+        - '#OCA\\OpenRegister\\[a-zA-Z\\]+.*not found#'
+        - '#on an unknown class OCA\\OpenRegister\\#'
+        - '#has invalid return type OCA\\OpenRegister\\#'
+        # GuzzleHttp is available at runtime via Nextcloud but not in composer require
+        - '#unknown class GuzzleHttp\\#'
+        - '#GuzzleHttp\\[a-zA-Z\\]+.*not found#'
+        - '#on an unknown class GuzzleHttp\\#'
+        - '#invalid type GuzzleHttp\\#'
+        - '#Caught class GuzzleHttp\\#'
+        # Dynamic HTTP status codes from business rule validation results
+        - '#Parameter \$statusCode of class OCP\\AppFramework\\Http\\JSONResponse constructor expects#'
+        # registerRepairStep exists on server; not yet in nextcloud/ocp stub used for analysis
+        - '#Call to an undefined method OCP\\AppFramework\\Bootstrap\\IRegistrationContext::registerRepairStep#'
