@@ -18,7 +18,7 @@ export const useSettingsStore = defineStore('settings', {
 		async fetchSettings() {
 			this.loading = true
 			try {
-				const response = await fetch(generateUrl('/apps/app-template/api/settings'), {
+				const response = await fetch(generateUrl('/apps/shillinq/api/settings'), {
 					headers: { requesttoken: OC.requestToken },
 				})
 				if (response.ok) {
@@ -39,7 +39,7 @@ export const useSettingsStore = defineStore('settings', {
 		async saveSettings(settings) {
 			this.loading = true
 			try {
-				const response = await fetch(generateUrl('/apps/app-template/api/settings'), {
+				const response = await fetch(generateUrl('/apps/shillinq/api/settings'), {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',

@@ -1,15 +1,15 @@
 <template>
 	<CnSettingsSection
-		:name="t('app-template', 'Configuration')"
-		:description="t('app-template', 'Configure the app settings')">
+		:name="t('shillinq', 'Configuration')"
+		:description="t('shillinq', 'Configure the app settings')">
 		<form @submit.prevent="save">
 			<div class="form-group">
-				<label for="register">{{ t('app-template', 'Register') }}</label>
+				<label for="register">{{ t('shillinq', 'Register') }}</label>
 				<input
 					id="register"
 					v-model="form.register"
 					type="text"
-					:placeholder="t('app-template', 'OpenRegister register ID')">
+					:placeholder="t('shillinq', 'OpenRegister register ID')">
 			</div>
 
 			<div v-if="successMessage" class="success-message">
@@ -20,7 +20,7 @@
 				type="primary"
 				native-type="submit"
 				:disabled="saving">
-				{{ saving ? t('app-template', 'Saving...') : t('app-template', 'Save') }}
+				{{ saving ? t('shillinq', 'Saving...') : t('shillinq', 'Save') }}
 			</NcButton>
 		</form>
 	</CnSettingsSection>
@@ -57,7 +57,7 @@ export default {
 			const settingsStore = useSettingsStore()
 			const result = await settingsStore.saveSettings(this.form)
 			if (result) {
-				this.successMessage = t('app-template', 'Settings saved successfully')
+				this.successMessage = t('shillinq', 'Settings saved successfully')
 			}
 			this.saving = false
 		},

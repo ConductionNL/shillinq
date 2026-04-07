@@ -1,8 +1,8 @@
-# App Template — Nextcloud App Template
+# Shillinq — Shillinq
 
 ## Overview
 
-App Template is the official starter template for Conduction Nextcloud apps. It provides the standard structure, configuration, and tooling that all Conduction apps share.
+Shillinq is the official starter template for Conduction Nextcloud apps. It provides the standard structure, configuration, and tooling that all Conduction apps share.
 
 When creating a new app, clone this template and use `/app-create` to rename all identifiers.
 
@@ -10,7 +10,7 @@ When creating a new app, clone this template and use `/app-create` to rename all
 
 - **Type**: Nextcloud App (PHP backend + Vue 2 frontend)
 - **Data layer**: OpenRegister (all data stored as register objects)
-- **Pattern**: Thin client — App Template provides UI/UX, OpenRegister handles persistence
+- **Pattern**: Thin client — Shillinq provides UI/UX, OpenRegister handles persistence
 - **License**: EUPL-1.2
 
 ## Tech Stack
@@ -32,7 +32,7 @@ When creating a new app, clone this template and use `/app-create` to rename all
 | `lib/Service/SettingsService.php` | Settings business logic, OpenRegister integration |
 | `lib/Listener/DeepLinkRegistrationListener.php` | Registers deep link patterns with OpenRegister search |
 | `lib/Repair/InitializeSettings.php` | Import register on install/upgrade |
-| `lib/Settings/app_template_register.json` | OpenAPI 3.0 register schema definition |
+| `lib/Settings/shillinq_register.json` | OpenAPI 3.0 register schema definition |
 | `src/App.vue` | App shell (navigation + routing) |
 | `src/navigation/MainMenu.vue` | App navigation sidebar |
 | `src/views/settings/UserSettings.vue` | User settings dialog |

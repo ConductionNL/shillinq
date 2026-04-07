@@ -1,6 +1,6 @@
 {
-	"name": "conductionnl/app-template",
-	"description": "A template for creating new Nextcloud apps",
+	"name": "conductionnl/shillinq",
+	"description": "Complete open-source business administration suite for freelancers, sole proprietors, SMBs, and corporations.",
 	"license": "EUPL-1.2",
 	"authors": [
 		{
@@ -11,7 +11,7 @@
 	],
 	"autoload": {
 		"psr-4": {
-			"OCA\\AppTemplate\\": "lib/"
+			"OCA\\Shillinq\\": "lib/"
 		}
 	},
 	"require": {

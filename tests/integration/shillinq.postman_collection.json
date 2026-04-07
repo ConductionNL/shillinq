@@ -1,8 +1,8 @@
 {
 	"info": {
-		"_postman_id": "app-template-collection",
-		"name": "App Template Integration Tests",
-		"description": "Integration test collection for the app-template Nextcloud app.\nReplace this with your actual API tests.",
+		"_postman_id": "shillinq-collection",
+		"name": "Shillinq Integration Tests",
+		"description": "Integration test collection for the shillinq Nextcloud app.\nReplace this with your actual API tests.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"auth": {

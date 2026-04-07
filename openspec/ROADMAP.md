@@ -1,6 +1,6 @@
 # Roadmap
 
-This document tracks the planned development of Nextcloud App Template.
+This document tracks the planned development of Shillinq.
 
 Features are defined in [`appspec/features/`](../appspec/features/). When a feature reaches `planned` status during an `/app-explore` session, it is listed here and an OpenSpec change is created with `/opsx:ff`.
 
