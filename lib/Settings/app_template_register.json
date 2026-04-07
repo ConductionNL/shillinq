@@ -1,0 +1,42 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "App Template Register",
+    "description": "Register containing all schemas for the App Template application.",
+    "version": "0.1.0"
+  },
+  "x-openregister": {
+    "type": "application",
+    "app": "app-template",
+    "openregister": "^v0.2.10",
+    "description": "App Template — replace with your app description"
+  },
+  "paths": {},
+  "components": {
+    "schemas": {
+      "example": {
+        "slug": "example",
+        "icon": "FileDocumentOutline",
+        "version": "0.1.0",
+        "title": "Example",
+        "description": "Example schema — replace with your app's actual schemas.",
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title of the example object",
+            "example": "My example"
+          },
+          "description": {
+            "type": "string",
+            "description": "An optional description",
+            "example": "This is an example"
+          }
+        }
+      }
+    }
+  }
+}
