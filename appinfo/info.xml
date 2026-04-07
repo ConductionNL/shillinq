@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 <info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
-    <id>app-template</id>
-    <name lang="en">Nextcloud App Template</name>
-    <name lang="nl">Nextcloud App Template</name>
-    <summary lang="en">A template for creating new Nextcloud apps</summary>
-    <summary lang="nl">Een sjabloon voor het maken van nieuwe Nextcloud-apps</summary>
-    <description lang="en"><![CDATA[A starting point for building Nextcloud apps following ConductionNL conventions.
+    <id>shillinq</id>
+    <name lang="en">Shillinq</name>
+    <name lang="nl">Shillinq</name>
+    <summary lang="en">Complete open-source business administration suite for freelancers, sole proprietors, SMBs, and corp</summary>
+    <summary lang="nl">Complete open-source business administration suite for freelancers, sole proprietors, SMBs, and corp</summary>
+    <description lang="en"><![CDATA[Complete open-source business administration suite for freelancers, sole proprietors, SMBs, and corporations. Combines bookkeeping, invoicing, procurement, and contract management into one self-hosted.
 
 **Key Features**
 
@@ -37,19 +37,19 @@ Vrij en open source onder de EUPL-1.2-licentie.
     <version>0.1.0</version>
     <licence>eupl</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
-    <namespace>AppTemplate</namespace>
+    <namespace>Shillinq</namespace>
     <documentation>
-        <user>https://github.com/ConductionNL/nextcloud-app-template</user>
-        <admin>https://github.com/ConductionNL/nextcloud-app-template</admin>
-        <developer>https://github.com/ConductionNL/nextcloud-app-template</developer>
+        <user>https://github.com/ConductionNL/shillinq</user>
+        <admin>https://github.com/ConductionNL/shillinq</admin>
+        <developer>https://github.com/ConductionNL/shillinq</developer>
     </documentation>
     <category>tools</category>
-    <website>https://github.com/ConductionNL/nextcloud-app-template</website>
-    <discussion>https://github.com/ConductionNL/nextcloud-app-template/discussions</discussion>
-    <bugs>https://github.com/ConductionNL/nextcloud-app-template/issues</bugs>
-    <repository>https://github.com/ConductionNL/nextcloud-app-template</repository>
+    <website>https://github.com/ConductionNL/shillinq</website>
+    <discussion>https://github.com/ConductionNL/shillinq/discussions</discussion>
+    <bugs>https://github.com/ConductionNL/shillinq/issues</bugs>
+    <repository>https://github.com/ConductionNL/shillinq</repository>
 
-    <screenshot>https://raw.githubusercontent.com/ConductionNL/nextcloud-app-template/main/img/app-store.svg</screenshot>
+    <screenshot>https://raw.githubusercontent.com/ConductionNL/shillinq/main/img/app-store.svg</screenshot>
 
     <dependencies>
         <nextcloud min-version="28" max-version="34"/>
@@ -58,15 +58,15 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
     <navigations>
         <navigation>
-            <id>app-template</id>
+            <id>shillinq</id>
             <name>App Template</name>
-            <route>app-template.dashboard.page</route>
+            <route>shillinq.dashboard.page</route>
             <icon>app.svg</icon>
         </navigation>
     </navigations>
 
     <settings>
-        <admin>OCA\AppTemplate\Settings\AdminSettings</admin>
-        <admin-section>OCA\AppTemplate\Sections\SettingsSection</admin-section>
+        <admin>OCA\Shillinq\Settings\AdminSettings</admin>
+        <admin-section>OCA\Shillinq\Sections\SettingsSection</admin-section>
     </settings>
 </info>

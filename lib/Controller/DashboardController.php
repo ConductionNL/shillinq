@@ -1,12 +1,12 @@
 <?php
 
 /**
- * AppTemplate Dashboard Controller
+ * Shillinq Dashboard Controller
  *
- * Controller for the main AppTemplate dashboard page.
+ * Controller for the main Shillinq dashboard page.
  *
  * @category Controller
- * @package  OCA\AppTemplate\Controller
+ * @package  OCA\Shillinq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,15 +19,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\AppTemplate\Controller;
+namespace OCA\Shillinq\Controller;
 
-use OCA\AppTemplate\AppInfo\Application;
+use OCA\Shillinq\AppInfo\Application;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\IRequest;
 
 /**
- * Controller for the main AppTemplate dashboard page.
+ * Controller for the main Shillinq dashboard page.
  */
 class DashboardController extends Controller
 {

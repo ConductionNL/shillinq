@@ -1,12 +1,12 @@
 <?php
 
 /**
- * AppTemplate Settings Controller
+ * Shillinq Settings Controller
  *
- * Controller for managing AppTemplate application settings.
+ * Controller for managing Shillinq application settings.
  *
  * @category Controller
- * @package  OCA\AppTemplate\Controller
+ * @package  OCA\Shillinq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,16 +19,16 @@
 
 declare(strict_types=1);
 
-namespace OCA\AppTemplate\Controller;
+namespace OCA\Shillinq\Controller;
 
-use OCA\AppTemplate\AppInfo\Application;
-use OCA\AppTemplate\Service\SettingsService;
+use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 
 /**
- * Controller for managing AppTemplate application settings.
+ * Controller for managing Shillinq application settings.
  */
 class SettingsController extends Controller
 {
@@ -80,7 +80,7 @@ class SettingsController extends Controller
     }//end create()
 
     /**
-     * Re-import the configuration from app_template_register.json.
+     * Re-import the configuration from shillinq_register.json.
      *
      * Forces a fresh import regardless of version, auto-configuring
      * all schema and register IDs from the import result.

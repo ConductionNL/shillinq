@@ -2,12 +2,12 @@ schema: conduction
 
 context: |
   Project: App Template
-  Repo: ConductionNL/nextcloud-app-template
+  Repo: ConductionNL/shillinq
   Type: Nextcloud App (PHP backend + Vue 2 frontend)
   Description: Starter template for Conduction Nextcloud apps — replace this description with your app's purpose.
   Key components: Dashboard, Settings, Example objects
   Database: PostgreSQL (via OpenRegister's ObjectService)
-  Mount path: /var/www/html/custom_apps/app-template
+  Mount path: /var/www/html/custom_apps/shillinq
 
   Architecture:
     Pattern: Thin client — App Template owns no database tables
@@ -27,7 +27,7 @@ rules:
     - Specify which Nextcloud OCP interfaces are used for integration features
   design:
     - Uses OpenRegister API directly from frontend (no own backend CRUD)
-    - Register config in lib/Settings/app_template_register.json (OpenAPI 3.0.0 format)
+    - Register config in lib/Settings/shillinq_register.json (OpenAPI 3.0.0 format)
     - Imported via ConfigurationService::importFromApp() in repair step
   tasks:
     - Test with OpenRegister to verify schema validation works

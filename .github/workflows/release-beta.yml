@@ -8,5 +8,5 @@ jobs:
   release:
     uses: ConductionNL/.github/.github/workflows/release-beta.yml@main
     with:
-      app-name: app-template
+      app-name: shillinq
     secrets: inherit

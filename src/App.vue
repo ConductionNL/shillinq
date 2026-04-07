@@ -1,10 +1,10 @@
 <template>
-	<NcContent app-name="app-template">
+	<NcContent app-name="shillinq">
 		<template v-if="storesReady && !hasOpenRegisters">
 			<NcAppContent class="open-register-missing">
 				<NcEmptyContent
-					:name="t('app-template', 'OpenRegister is required')"
-					:description="t('app-template', 'This app needs OpenRegister to store and manage data. Please install OpenRegister from the app store to get started.')">
+					:name="t('shillinq', 'OpenRegister is required')"
+					:description="t('shillinq', 'This app needs OpenRegister to store and manage data. Please install OpenRegister from the app store to get started.')">
 					<template #icon>
 						<img :src="appIcon"
 							alt=""
@@ -16,7 +16,7 @@
 							v-if="isAdmin"
 							type="primary"
 							:href="appStoreUrl">
-							{{ t('app-template', 'Install OpenRegister') }}
+							{{ t('shillinq', 'Install OpenRegister') }}
 						</NcButton>
 					</template>
 				</NcEmptyContent>
@@ -70,7 +70,7 @@ export default {
 			return settingsStore.getIsAdmin
 		},
 		appIcon() {
-			return imagePath('app-template', 'app-dark.svg')
+			return imagePath('shillinq', 'app-dark.svg')
 		},
 		appStoreUrl() {
 			return generateUrl('/settings/apps/integration/openregister')

@@ -1,4 +1,4 @@
-# App Template — Nextcloud App Template
+# App Template — Shillinq
 
 ## Overview
 
@@ -32,7 +32,7 @@ When creating a new app, clone this template and use `/app-create` to rename all
 | `lib/Service/SettingsService.php` | Settings business logic, OpenRegister integration |
 | `lib/Listener/DeepLinkRegistrationListener.php` | Registers deep link patterns with OpenRegister search |
 | `lib/Repair/InitializeSettings.php` | Import register on install/upgrade |
-| `lib/Settings/app_template_register.json` | OpenAPI 3.0 register schema definition |
+| `lib/Settings/shillinq_register.json` | OpenAPI 3.0 register schema definition |
 | `src/App.vue` | App shell (navigation + routing) |
 | `src/navigation/MainMenu.vue` | App navigation sidebar |
 | `src/views/settings/UserSettings.vue` | User settings dialog |

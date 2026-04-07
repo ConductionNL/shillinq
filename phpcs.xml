@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="PHP_CodeSniffer" xsi:noNamespaceSchemaLocation="phpcs.xsd">
-    <description>Coding standard for AppTemplate, based on the Conduction/OpenRegister standard.</description>
+    <description>Coding standard for Shillinq, based on the Conduction/OpenRegister standard.</description>
 
     <file>lib</file>
 
