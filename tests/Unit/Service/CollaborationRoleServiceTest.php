@@ -32,6 +32,32 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
+ * Stub matching the OpenRegister ObjectService API so mocks accept named arguments.
+ */
+abstract class CollaborationRoleObjectServiceStub
+{
+    /**
+     * Find all objects matching the given filters.
+     *
+     * @param string              $schema  The schema name
+     * @param array<string,mixed> $filters Key/value filters
+     *
+     * @return array<string,mixed>
+     */
+    abstract public function findAll(string $schema, array $filters=[]): array;
+
+    /**
+     * Find a single object by ID.
+     *
+     * @param string $schema The schema name
+     * @param string $id     The object ID
+     *
+     * @return array<string,mixed>|null
+     */
+    abstract public function find(string $schema, string $id): array|null;
+}//end class
+
+/**
  * Tests for CollaborationRoleService.
  *
  * @spec openspec/changes/collaboration/tasks.md#task-11.2
@@ -87,9 +113,8 @@ class CollaborationRoleServiceTest extends TestCase
         $this->groupManager = $this->createMock(IGroupManager::class);
         $this->logger       = $this->createMock(LoggerInterface::class);
 
-        // Create a generic mock for OpenRegister ObjectService.
-        $this->objectService = $this->getMockBuilder(\stdClass::class)
-            ->addMethods(['findAll', 'find'])
+        // Create a mock using the stub so named arguments are accepted.
+        $this->objectService = $this->getMockBuilder(className: CollaborationRoleObjectServiceStub::class)
             ->getMock();
 
         $this->container->method('get')

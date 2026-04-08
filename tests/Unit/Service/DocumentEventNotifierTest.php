@@ -153,14 +153,18 @@ class DocumentEventNotifierTest extends TestCase
             ->expects($this->exactly(3))
             ->method('notify');
 
-        // Set up user mocks for email.
+        // Set up user mocks for email using a map so all three users are resolved.
+        $userMap = [];
         foreach (['alice', 'bob', 'carol'] as $uid) {
             $user = $this->createMock(IUser::class);
             $user->method('getEMailAddress')->willReturn($uid.'@example.com');
-            $this->userManager->method('get')
-                ->with($uid)
-                ->willReturn($user);
+            $userMap[$uid] = $user;
         }
+
+        $this->userManager->method('get')
+            ->willReturnCallback(static function (string $uid) use ($userMap): ?IUser {
+                return ($userMap[$uid] ?? null);
+            });
 
         $message = $this->createMock(IMessage::class);
         $message->method('setTo')->willReturnSelf();

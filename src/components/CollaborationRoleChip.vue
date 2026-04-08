@@ -57,8 +57,11 @@ export default {
 }
 
 .role-chip--approver { background-color: var(--color-primary-element-light); }
+
 .role-chip--reviewer { background-color: var(--color-success-hover); }
+
 .role-chip--contributor { background-color: var(--color-background-dark); }
+
 .role-chip--viewer { background-color: var(--color-background-darker); }
 
 .role-chip__name {
