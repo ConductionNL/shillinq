@@ -10,6 +10,10 @@ return [
         ['name' => 'settings#create', 'url' => '/api/settings', 'verb' => 'POST'],
         ['name' => 'settings#load',  'url' => '/api/settings/load', 'verb' => 'POST'],
 
+        // User preferences.
+        ['name' => 'user_preferences#index', 'url' => '/api/preferences', 'verb' => 'GET'],
+        ['name' => 'user_preferences#create', 'url' => '/api/preferences', 'verb' => 'POST'],
+
         // Prometheus metrics endpoint.
         ['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
         // Health check endpoint.
