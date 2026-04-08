@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: EUPL-1.2 -->
+<!-- Copyright (C) 2026 Conduction B.V. -->
 <template>
 	<NcContent app-name="shillinq">
 		<template v-if="storesReady && !hasOpenRegisters">
@@ -25,6 +27,9 @@
 		<template v-else-if="storesReady && hasOpenRegisters">
 			<MainMenu />
 			<NcAppContent>
+				<div class="shillinq-app__header">
+					<GlobalSearch />
+				</div>
 				<router-view />
 			</NcAppContent>
 		</template>
@@ -42,6 +47,7 @@ import { generateUrl, imagePath } from '@nextcloud/router'
 import { initializeStores } from './store/store.js'
 import { useSettingsStore } from './store/modules/settings.js'
 import MainMenu from './navigation/MainMenu.vue'
+import GlobalSearch from './components/GlobalSearch.vue'
 
 export default {
 	name: 'App',
@@ -52,6 +58,7 @@ export default {
 		NcEmptyContent,
 		NcLoadingIcon,
 		MainMenu,
+		GlobalSearch,
 	},
 
 	data() {
@@ -83,3 +90,11 @@ export default {
 	},
 }
 </script>
+
+<style scoped>
+.shillinq-app__header {
+	display: flex;
+	justify-content: flex-end;
+	padding: 8px 16px;
+}
+</style>
