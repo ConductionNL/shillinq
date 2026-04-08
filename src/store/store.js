@@ -10,7 +10,7 @@ import { useCatalogItemStore } from './modules/catalogItem.js'
 import { useOrderBasketStore } from './modules/orderBasket.js'
 import { usePurchaseOrderStore } from './modules/purchaseOrder.js'
 import { useGoodsReceiptStore } from './modules/goodsReceipt.js'
-import { useRFQStore } from './modules/rFQ.js'
+import { useRfqStore } from './modules/rfq.js'
 import { useSupplierQuoteStore } from './modules/supplierQuote.js'
 import { useSupplierStore } from './modules/supplier.js'
 
@@ -33,7 +33,7 @@ export {
 	useOrderBasketStore,
 	usePurchaseOrderStore,
 	useGoodsReceiptStore,
-	useRFQStore,
+	useRfqStore,
 	useSupplierQuoteStore,
 	useSupplierStore,
 }

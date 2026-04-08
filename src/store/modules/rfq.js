@@ -8,4 +8,4 @@ import { createObjectStore } from '@conduction/nextcloud-vue'
  *
  * @see openspec/changes/catalog-purchase-management/tasks.md#task-6.8
  */
-export const useRFQStore = createObjectStore('rFQ')
+export const useRfqStore = createObjectStore('rFQ')

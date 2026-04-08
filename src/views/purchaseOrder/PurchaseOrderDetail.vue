@@ -197,7 +197,6 @@
 
 <script>
 import { NcButton, NcDialog, NcLoadingIcon } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
 import Bell from 'vue-material-design-icons/Bell.vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Check from 'vue-material-design-icons/Check.vue'
