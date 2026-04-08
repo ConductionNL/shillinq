@@ -55,7 +55,7 @@ class ShillinqActivityProvider implements IProvider
     /**
      * Parse the given activity event into a human-readable form.
      *
-     * @param string $language      The target language
+     * @param mixed  $language      The target language
      * @param IEvent $event         The event to parse
      * @param IEvent $previousEvent The previous event for aggregation (nullable)
      *
@@ -64,7 +64,7 @@ class ShillinqActivityProvider implements IProvider
      * @spec openspec/changes/core/tasks.md#task-9
      */
     public function parse(
-        string $language,
+        mixed $language,
         IEvent $event,
         ?IEvent $previousEvent=null,
     ): IEvent {
