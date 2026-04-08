@@ -18,6 +18,7 @@
 						({{ t('shillinq', 'edited') }})
 					</span>
 				</div>
+				<!-- eslint-disable-next-line vue/no-v-html -->
 				<div class="comment-thread__content" v-html="renderMentions(comment.content)" />
 				<div class="comment-thread__actions">
 					<NcButton
@@ -102,7 +103,14 @@ export default {
 		},
 		renderMentions(content) {
 			if (!content) return ''
-			return content.replace(
+			// Escape HTML entities first to prevent XSS before injecting mention chips
+			const escaped = content
+				.replace(/&/g, '&amp;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;')
+				.replace(/"/g, '&quot;')
+				.replace(/'/g, '&#39;')
+			return escaped.replace(
 				/@([a-zA-Z0-9_\-.]+)/g,
 				'<span class="mention-chip">@$1</span>',
 			)

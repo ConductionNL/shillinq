@@ -55,7 +55,7 @@ export const usePresenceStore = defineStore('presence', {
  *
  * @param {string} targetType - Entity type
  * @param {string} targetId - Object ID
- * @param {boolean} [isEditing=false] - Whether the user is editing
+ * @param {boolean} [isEditing] - Whether the user is editing (defaults to false)
  */
 export function startHeartbeat(targetType, targetId, isEditing = false) {
 	stopHeartbeat()
