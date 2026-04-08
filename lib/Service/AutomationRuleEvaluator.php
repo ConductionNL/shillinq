@@ -115,6 +115,11 @@ class AutomationRuleEvaluator
 
         $objectValue = (float) $object[$field];
 
+        if (in_array($operator, self::OPERATORS, true) === false) {
+            $this->logger->warning('Unknown operator: {op}', ['op' => $operator]);
+            return false;
+        }
+
         switch ($operator) {
             case 'gt':
                 return $objectValue > $value;

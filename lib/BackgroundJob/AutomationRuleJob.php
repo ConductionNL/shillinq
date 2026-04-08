@@ -57,7 +57,7 @@ class AutomationRuleJob extends TimedJob
     ) {
         parent::__construct(time: $time);
         // Run every 15 minutes (900 seconds).
-        $this->setInterval(interval: 900);
+        $this->setInterval(900);
     }//end __construct()
 
     /**
