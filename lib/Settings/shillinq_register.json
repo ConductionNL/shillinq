@@ -3,37 +3,344 @@
   "info": {
     "title": "Shillinq Register",
     "description": "Register containing all schemas for the Shillinq application.",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "x-openregister": {
     "type": "application",
     "app": "shillinq",
     "openregister": "^v0.2.10",
-    "description": "Shillinq — replace with your app description"
+    "description": "Shillinq — complete open-source business administration suite"
   },
   "paths": {},
   "components": {
     "schemas": {
-      "example": {
-        "slug": "example",
-        "icon": "FileDocumentOutline",
+      "role": {
+        "slug": "role",
+        "icon": "ShieldAccountOutline",
         "version": "0.1.0",
-        "title": "Example",
-        "description": "Example schema — replace with your app's actual schemas.",
+        "title": "Role",
+        "description": "Defines a permission role with a hierarchy level and optional purchasing limits.",
+        "x-schema-org": "schema:Thing",
         "type": "object",
         "required": [
-          "title"
+          "name",
+          "isActive"
         ],
         "properties": {
-          "title": {
+          "name": {
             "type": "string",
-            "description": "The title of the example object",
-            "example": "My example"
+            "description": "Role name, e.g. Admin, Editor, Accountant",
+            "example": "Admin"
           },
           "description": {
             "type": "string",
-            "description": "An optional description",
-            "example": "This is an example"
+            "description": "Role description and responsibilities",
+            "example": "Full system access"
+          },
+          "level": {
+            "type": "integer",
+            "description": "Hierarchy level: 100=Admin, 80=Editor, 60=Accountant, 40=Viewer, 20=Reports-only",
+            "default": 0,
+            "example": 100
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether this role can be assigned",
+            "default": true
+          },
+          "purchasingLimitAmount": {
+            "type": "number",
+            "description": "Maximum purchase order amount for this role"
+          },
+          "purchasingLimitCategory": {
+            "type": "string",
+            "description": "Category the limit applies to; null means all categories"
+          }
+        }
+      },
+      "team": {
+        "slug": "team",
+        "icon": "AccountGroupOutline",
+        "version": "0.1.0",
+        "title": "Team",
+        "description": "Organisational team with member management.",
+        "x-schema-org": "schema:Organization",
+        "type": "object",
+        "required": [
+          "name",
+          "createdAt"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Team name",
+            "example": "Finance Department"
+          },
+          "description": {
+            "type": "string",
+            "description": "Team description",
+            "example": "Handles all financial operations"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Team creation timestamp"
+          }
+        }
+      },
+      "user": {
+        "slug": "user",
+        "icon": "AccountOutline",
+        "version": "0.1.0",
+        "title": "User",
+        "description": "Shillinq user profile linked to a Nextcloud account.",
+        "x-schema-org": "schema:Person",
+        "type": "object",
+        "required": [
+          "email",
+          "username",
+          "displayName",
+          "isActive",
+          "createdAt"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User email for notifications",
+            "example": "j.doe@example.com"
+          },
+          "username": {
+            "type": "string",
+            "description": "Nextcloud username; primary reference key",
+            "example": "jdoe"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Display name",
+            "example": "Jane Doe"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the user account is active",
+            "default": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Account creation timestamp"
+          },
+          "lastLogin": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last login timestamp"
+          },
+          "branch": {
+            "type": "string",
+            "description": "Organisational unit or branch assignment",
+            "example": "Gemeente Amsterdam"
+          }
+        }
+      },
+      "accessControl": {
+        "slug": "accessControl",
+        "icon": "ShieldLockOutline",
+        "version": "0.1.0",
+        "title": "Access Control",
+        "description": "Audit log entry for security-relevant events.",
+        "x-schema-org": "schema:Event",
+        "type": "object",
+        "required": [
+          "action",
+          "resourceType",
+          "timestamp",
+          "result"
+        ],
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "The type of action performed",
+            "enum": [
+              "create",
+              "read",
+              "update",
+              "delete",
+              "login",
+              "logout",
+              "permission-denied",
+              "delegation-created",
+              "delegation-revoked"
+            ]
+          },
+          "resourceType": {
+            "type": "string",
+            "description": "Schema name of the accessed resource",
+            "example": "invoice"
+          },
+          "resourceId": {
+            "type": "string",
+            "description": "OpenRegister object ID"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 event time"
+          },
+          "result": {
+            "type": "string",
+            "description": "Outcome of the action",
+            "enum": [
+              "success",
+              "denied",
+              "error"
+            ]
+          },
+          "ipAddress": {
+            "type": "string",
+            "description": "Remote IP of request"
+          },
+          "userAgent": {
+            "type": "string",
+            "description": "HTTP User-Agent header"
+          },
+          "details": {
+            "type": "object",
+            "description": "Additional context such as blocked field names"
+          }
+        }
+      },
+      "accessRight": {
+        "slug": "accessRight",
+        "icon": "KeyOutline",
+        "version": "0.1.0",
+        "title": "Access Right",
+        "description": "Time-limited delegation of a role to a user.",
+        "type": "object",
+        "required": [
+          "userId",
+          "roleId",
+          "grantedBy",
+          "startDate",
+          "endDate",
+          "isActive"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "Grantee User object ID"
+          },
+          "roleId": {
+            "type": "string",
+            "description": "Delegated Role object ID"
+          },
+          "grantedBy": {
+            "type": "string",
+            "description": "Admin User object ID who granted the delegation"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Delegation start date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Delegation end date; job revokes after this"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether this delegation is currently active",
+            "default": true
+          },
+          "reason": {
+            "type": "string",
+            "description": "Business justification for the delegation"
+          }
+        }
+      },
+      "accessRecertification": {
+        "slug": "accessRecertification",
+        "icon": "CalendarCheckOutline",
+        "version": "0.1.0",
+        "title": "Access Recertification",
+        "description": "Scheduled campaign for periodic access reviews.",
+        "type": "object",
+        "required": [
+          "name",
+          "cronExpression",
+          "isActive"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Campaign name",
+            "example": "Monthly access review"
+          },
+          "cronExpression": {
+            "type": "string",
+            "description": "Cron schedule expression",
+            "example": "0 9 1 * *"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether this campaign is active",
+            "default": true
+          },
+          "lastRunAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of last execution"
+          },
+          "nextRunAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Computed next execution time"
+          },
+          "reviewDeadlineDays": {
+            "type": "integer",
+            "description": "Days after notification before auto-suspend",
+            "default": 14
+          }
+        }
+      },
+      "permission": {
+        "slug": "permission",
+        "icon": "LockCheckOutline",
+        "version": "0.1.0",
+        "title": "Permission",
+        "description": "Field-level read/write permission for a role on a schema property.",
+        "type": "object",
+        "required": [
+          "roleId",
+          "schemaName",
+          "fieldName",
+          "canRead",
+          "canWrite"
+        ],
+        "properties": {
+          "roleId": {
+            "type": "string",
+            "description": "Role object ID"
+          },
+          "schemaName": {
+            "type": "string",
+            "description": "Target OpenRegister schema name",
+            "example": "invoice"
+          },
+          "fieldName": {
+            "type": "string",
+            "description": "Schema property name",
+            "example": "bankAccountNumber"
+          },
+          "canRead": {
+            "type": "boolean",
+            "description": "Whether the role can read this field",
+            "default": true
+          },
+          "canWrite": {
+            "type": "boolean",
+            "description": "Whether the role can write this field",
+            "default": true
           }
         }
       }
