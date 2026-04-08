@@ -53,15 +53,6 @@ class PortalServiceTest extends TestCase
      */
     public function testGenerateTokenCreatesVerifiableHash(): void
     {
-        $objectService = $this->createMock(\stdClass::class);
-        $objectService->method('createObject')->willReturnCallback(function () {
-            // Return a mock object with the passed data.
-            $args = func_get_args();
-            return array_merge(['id' => 'test-id'], ($args[1] ?? []));
-        });
-
-        // Use a real mock that stores the hash for verification.
-        $storedHash = null;
         $mockObjectService = new class {
 
             public ?string $lastHash = null;
