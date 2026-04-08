@@ -1,3 +1,7 @@
+---
+status: pr-created
+---
+
 # Design: Access Control & Security — Shillinq
 
 ## Architecture Overview
