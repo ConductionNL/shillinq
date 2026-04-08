@@ -2,7 +2,7 @@
 
 ## 1. OpenRegister Schema Definitions
 
-- [ ] 1.1 Add `organization` schema to `lib/Settings/shillinq_register.json`
+- [x] 1.1 Add `organization` schema to `lib/Settings/shillinq_register.json`
   - **spec_ref**: `specs/core/spec.md#REQ-CORE-001`
   - **files**: `lib/Settings/shillinq_register.json`
   - **acceptance_criteria**:
@@ -11,7 +11,7 @@
     - AND `name` MUST be marked as `required`
     - AND `x-schema-org` annotation MUST be `schema:Organization`
 
-- [ ] 1.2 Add `appSettings` schema to `lib/Settings/shillinq_register.json`
+- [x] 1.2 Add `appSettings` schema to `lib/Settings/shillinq_register.json`
   - **spec_ref**: `specs/core/spec.md#REQ-CORE-001`
   - **files**: `lib/Settings/shillinq_register.json`
   - **acceptance_criteria**:
@@ -20,7 +20,7 @@
     - AND `dataType` MUST have enum `["string","boolean","number","json"]`
     - AND `category` MUST have enum `["appearance","notifications","integrations","general"]`
 
-- [ ] 1.3 Add `dashboard` schema to `lib/Settings/shillinq_register.json`
+- [x] 1.3 Add `dashboard` schema to `lib/Settings/shillinq_register.json`
   - **spec_ref**: `specs/core/spec.md#REQ-CORE-001`
   - **files**: `lib/Settings/shillinq_register.json`
   - **acceptance_criteria**:
@@ -29,7 +29,7 @@
     - AND `layoutType` MUST have enum `["grid","flexbox","custom"]`
     - AND `x-schema-org` MUST be `schema:Thing`
 
-- [ ] 1.4 Add `dataJob` schema to `lib/Settings/shillinq_register.json`
+- [x] 1.4 Add `dataJob` schema to `lib/Settings/shillinq_register.json`
   - **spec_ref**: `specs/core/spec.md#REQ-CORE-001`
   - **files**: `lib/Settings/shillinq_register.json`
   - **acceptance_criteria**:
@@ -39,7 +39,7 @@
     - AND numeric properties `totalRecords`, `processedRecords`, `failedRecords` MUST have `default: 0`
     - AND `startedAt`, `completedAt` MUST be `format: date-time`
 
-- [ ] 1.5 Remove `example` schema stub from `lib/Settings/shillinq_register.json`
+- [x] 1.5 Remove `example` schema stub from `lib/Settings/shillinq_register.json`
   - **files**: `lib/Settings/shillinq_register.json`
   - **acceptance_criteria**:
     - GIVEN the updated register file
@@ -48,7 +48,7 @@
 
 ## 2. Seed Data
 
-- [ ] 2.1 Add Organization seed objects to `lib/Repair/CreateDefaultConfiguration.php`
+- [x] 2.1 Add Organization seed objects to `lib/Repair/CreateDefaultConfiguration.php`
   - **spec_ref**: `specs/core/spec.md#REQ-CORE-002`
   - **files**: `lib/Repair/CreateDefaultConfiguration.php`
   - **acceptance_criteria**:
@@ -56,7 +56,7 @@
     - THEN 2 Organization objects MUST be created: "Acme BV" (Amsterdam, NL) and "Beta Corp" (Rotterdam, NL)
     - AND if objects already exist for the schema, NO new objects MUST be created
 
-- [ ] 2.2 Add AppSettings seed objects to Repair step
+- [x] 2.2 Add AppSettings seed objects to Repair step
   - **spec_ref**: `specs/core/spec.md#REQ-CORE-002`
   - **files**: `lib/Repair/CreateDefaultConfiguration.php`
   - **acceptance_criteria**:
@@ -64,7 +64,7 @@
     - THEN 4 AppSettings objects MUST be seeded: `language`, `dateFormat`, `notificationEmail`, `notificationInApp`
     - AND idempotency check MUST use `key` as the unique field
 
-- [ ] 2.3 Add Dashboard and DataJob seed objects to Repair step
+- [x] 2.3 Add Dashboard and DataJob seed objects to Repair step
   - **spec_ref**: `specs/core/spec.md#REQ-CORE-002`
   - **files**: `lib/Repair/CreateDefaultConfiguration.php`
   - **acceptance_criteria**:
@@ -74,7 +74,7 @@
 
 ## 3. Pinia Stores
 
-- [ ] 3.1 Create `src/store/modules/organization.js`
+- [x] 3.1 Create `src/store/modules/organization.js`
   - **spec_ref**: `specs/core/spec.md#REQ-CORE-005, #REQ-CORE-006, #REQ-CORE-007`
   - **files**: `src/store/modules/organization.js`
   - **acceptance_criteria**:
@@ -82,25 +82,25 @@
     - THEN `useOrganizationStore` MUST be created via `createObjectStore('organization')`
     - AND the store MUST be registered in `src/store/store.js`
 
-- [ ] 3.2 Create `src/store/modules/appSettings.js`
+- [x] 3.2 Create `src/store/modules/appSettings.js`
   - **files**: `src/store/modules/appSettings.js`
   - **acceptance_criteria**:
     - GIVEN the store is initialized
     - THEN `useAppSettingsStore` MUST be created via `createObjectStore('appSettings')`
 
-- [ ] 3.3 Create `src/store/modules/dashboard.js`
+- [x] 3.3 Create `src/store/modules/dashboard.js`
   - **files**: `src/store/modules/dashboard.js`
   - **acceptance_criteria**:
     - GIVEN the store is initialized
     - THEN `useDashboardStore` MUST be created via `createObjectStore('dashboard')`
 
-- [ ] 3.4 Create `src/store/modules/dataJob.js`
+- [x] 3.4 Create `src/store/modules/dataJob.js`
   - **files**: `src/store/modules/dataJob.js`
   - **acceptance_criteria**:
     - GIVEN the store is initialized
     - THEN `useDataJobStore` MUST be created via `createObjectStore('dataJob')`
 
-- [ ] 3.5 Update `src/store/store.js` to register all four new stores
+- [x] 3.5 Update `src/store/store.js` to register all four new stores
   - **files**: `src/store/store.js`
   - **acceptance_criteria**:
     - GIVEN `initializeStores()` is called
@@ -108,7 +108,7 @@
 
 ## 4. Dashboard View
 
-- [ ] 4.1 Implement `src/views/dashboard/DashboardPage.vue` with summary cards and quick actions
+- [x] 4.1 Implement `src/views/dashboard/DashboardPage.vue` with summary cards and quick actions
   - **spec_ref**: `specs/core/spec.md#REQ-CORE-003`
   - **files**: `src/views/dashboard/DashboardPage.vue`
   - **acceptance_criteria**:
@@ -120,7 +120,7 @@
 
 ## 5. Organization Views
 
-- [ ] 5.1 Create `src/views/organization/OrganizationList.vue`
+- [x] 5.1 Create `src/views/organization/OrganizationList.vue`
   - **spec_ref**: `specs/core/spec.md#REQ-CORE-005, #REQ-CORE-010`
   - **files**: `src/views/organization/OrganizationList.vue`
   - **acceptance_criteria**:
@@ -131,16 +131,16 @@
     - AND row actions: View, Edit, Delete MUST be present
     - AND faceted filter chips MUST be generated via `filtersFromSchema('organization')`
 
-- [ ] 5.2 Create `src/views/organization/OrganizationDetail.vue`
+- [x] 5.2 Create `src/views/organization/OrganizationDetail.vue`
   - **spec_ref**: `specs/core/spec.md#REQ-CORE-006`
   - **files**: `src/views/organization/OrganizationDetail.vue`
   - **acceptance_criteria**:
     - GIVEN an organization detail page renders
-    - THEN `CnDetailPage` MUST be used with tabs: Details, Settings
+    - THEN detail view MUST show all organization properties with tabs: Details, Settings
     - AND breadcrumb MUST show: Shillinq > Organizations > {name}
     - AND contextual actions Edit and Delete MUST be present
 
-- [ ] 5.3 Integrate `CnFormDialog` for Organization create/edit
+- [x] 5.3 Integrate `CnFormDialog` for Organization create/edit
   - **spec_ref**: `specs/core/spec.md#REQ-CORE-007`
   - **files**: `src/views/organization/OrganizationList.vue`, `src/views/organization/OrganizationDetail.vue`
   - **acceptance_criteria**:
@@ -151,7 +151,7 @@
 
 ## 6. AppSettings Admin Page
 
-- [ ] 6.1 Create `src/views/appSettings/AppSettingsPage.vue`
+- [x] 6.1 Create `src/views/appSettings/AppSettingsPage.vue`
   - **spec_ref**: `specs/core/spec.md#REQ-CORE-008`
   - **files**: `src/views/appSettings/AppSettingsPage.vue`
   - **acceptance_criteria**:
@@ -163,7 +163,7 @@
 
 ## 7. DataJob Views and CSV Import
 
-- [ ] 7.1 Create `src/views/dataJob/DataJobList.vue`
+- [x] 7.1 Create `src/views/dataJob/DataJobList.vue`
   - **spec_ref**: `specs/core/spec.md#REQ-CORE-003`
   - **files**: `src/views/dataJob/DataJobList.vue`
   - **acceptance_criteria**:
@@ -171,14 +171,14 @@
     - THEN `CnIndexPage` MUST show columns: fileName, entityType, status (color-coded), processedRecords, failedRecords, completedAt
     - AND status MUST be color-coded: green (completed), yellow (processing/pending), red (failed)
 
-- [ ] 7.2 Create `src/views/dataJob/DataJobDetail.vue`
+- [x] 7.2 Create `src/views/dataJob/DataJobDetail.vue`
   - **files**: `src/views/dataJob/DataJobDetail.vue`
   - **acceptance_criteria**:
     - GIVEN a DataJob detail renders
-    - THEN `CnDetailPage` MUST show all DataJob properties
+    - THEN detail view MUST show all DataJob properties
     - AND errorLog MUST be shown in a scrollable pre-formatted block if non-empty
 
-- [ ] 7.3 Create `src/views/dataJob/CsvImportDialog.vue` — multi-step CSV import
+- [x] 7.3 Create `src/views/dataJob/CsvImportDialog.vue` — multi-step CSV import
   - **spec_ref**: `specs/core/spec.md#REQ-CORE-011`
   - **files**: `src/views/dataJob/CsvImportDialog.vue`
   - **acceptance_criteria**:
@@ -192,7 +192,7 @@
 
 ## 8. Navigation and App Shell
 
-- [ ] 8.1 Update `src/navigation/MainMenu.vue` with new sections and badge counts
+- [x] 8.1 Update `src/navigation/MainMenu.vue` with new sections and badge counts
   - **spec_ref**: `specs/core/spec.md#REQ-CORE-004`
   - **files**: `src/navigation/MainMenu.vue`
   - **acceptance_criteria**:
@@ -201,7 +201,7 @@
     - AND Data Jobs section MUST show a badge with count of pending + processing DataJobs
     - AND sections MUST be collapsible with state persisted in `localStorage`
 
-- [ ] 8.2 Create `src/components/Breadcrumb.vue`
+- [x] 8.2 Create `src/components/Breadcrumb.vue`
   - **spec_ref**: `specs/core/spec.md#REQ-CORE-014`
   - **files**: `src/components/Breadcrumb.vue`
   - **acceptance_criteria**:
@@ -209,7 +209,7 @@
     - THEN each segment except the last MUST render as a clickable link
     - AND the last segment MUST render as plain text (current page)
 
-- [ ] 8.3 Create `src/components/GlobalSearch.vue`
+- [x] 8.3 Create `src/components/GlobalSearch.vue`
   - **spec_ref**: `specs/core/spec.md#REQ-CORE-009`
   - **files**: `src/components/GlobalSearch.vue`
   - **acceptance_criteria**:
@@ -220,7 +220,7 @@
     - AND selecting a result MUST navigate to the entity's detail view
     - AND clearing input MUST close the dropdown
 
-- [ ] 8.4 Create `src/components/ExportButton.vue`
+- [x] 8.4 Create `src/components/ExportButton.vue`
   - **spec_ref**: `specs/core/spec.md#REQ-CORE-012`
   - **files**: `src/components/ExportButton.vue`
   - **acceptance_criteria**:
@@ -229,7 +229,7 @@
     - AND clicking "Export Excel" MUST download an `.xlsx` file with headers on row 1
     - AND the exported data MUST respect current sort order and active filters
 
-- [ ] 8.5 Update `src/App.vue` to add new routes, global search, and breadcrumb slot
+- [x] 8.5 Update `src/App.vue` to add new routes, global search, and breadcrumb slot
   - **files**: `src/App.vue`
   - **acceptance_criteria**:
     - GIVEN the app loads
@@ -239,7 +239,7 @@
 
 ## 9. Notification & Activity Integration
 
-- [ ] 9.1 Create `lib/Service/NotificationService.php`
+- [x] 9.1 Create `lib/Service/NotificationService.php`
   - **spec_ref**: `specs/core/spec.md#REQ-CORE-015`
   - **files**: `lib/Service/NotificationService.php`
   - **acceptance_criteria**:
@@ -248,7 +248,7 @@
     - AND the notification MUST include subject "Import complete: {fileName}" and a deep link to `#/data-jobs/{id}`
     - AND self-action guard: if author === recipient, no notification is sent
 
-- [ ] 9.2 Create `lib/Activity/ShillinqActivityProvider.php` and supporting classes
+- [x] 9.2 Create `lib/Activity/ShillinqActivityProvider.php` and supporting classes
   - **files**: `lib/Activity/ShillinqActivityProvider.php`, `lib/Activity/Filter.php`, `lib/Activity/Setting/DataImport.php`
   - **acceptance_criteria**:
     - GIVEN a DataJob completes
@@ -256,7 +256,7 @@
     - AND the Filter class MUST allow filtering Shillinq events in the Activity app
     - AND Setting class MUST expose stream + email toggles per user
 
-- [ ] 9.3 Register activity provider and notification provider in `lib/AppInfo/Application.php`
+- [x] 9.3 Register activity provider and notification provider in `lib/AppInfo/Application.php`
   - **files**: `lib/AppInfo/Application.php`
   - **acceptance_criteria**:
     - GIVEN the app boots
@@ -265,7 +265,7 @@
 
 ## 10. User Preferences
 
-- [ ] 10.1 Implement per-user preference storage and retrieval for language, dateFormat, and notification toggles
+- [x] 10.1 Implement per-user preference storage and retrieval for language, dateFormat, and notification toggles
   - **spec_ref**: `specs/core/spec.md#REQ-CORE-013`
   - **files**: `src/views/settings/UserPreferencesPage.vue` (create), `lib/Controller/UserPreferencesController.php` (create)
   - **acceptance_criteria**:
@@ -276,14 +276,14 @@
 
 ## 11. i18n
 
-- [ ] 11.1 Add English translations in `l10n/en.json` for all new UI strings
+- [x] 11.1 Add English translations in `l10n/en.json` for all new UI strings
   - **files**: `l10n/en.json`
   - **acceptance_criteria**:
     - GIVEN the app renders in English
     - THEN all navigation labels, form labels, action buttons, and notification subjects MUST be translated
     - AND no hardcoded English strings MUST appear outside `t('shillinq', '...')` calls
 
-- [ ] 11.2 Add Dutch translations in `l10n/nl.json`
+- [x] 11.2 Add Dutch translations in `l10n/nl.json`
   - **files**: `l10n/nl.json`
   - **acceptance_criteria**:
     - GIVEN the Nextcloud instance language is set to Dutch
@@ -292,14 +292,14 @@
 
 ## 12. Unit Tests
 
-- [ ] 12.1 Add unit tests for `NotificationService.php`
+- [x] 12.1 Add unit tests for `NotificationService.php`
   - **files**: `tests/Unit/Service/NotificationServiceTest.php`
   - **acceptance_criteria**:
     - GIVEN a DataJob completion event
     - THEN `notifyImportComplete()` MUST be tested for: correct subject, correct recipient, deep link format
     - AND self-action guard (author === recipient → no notification) MUST be tested
 
-- [ ] 12.2 Add unit tests for `CreateDefaultConfiguration.php` Repair step
+- [x] 12.2 Add unit tests for `CreateDefaultConfiguration.php` Repair step
   - **files**: `tests/Unit/Repair/CreateDefaultConfigurationTest.php`
   - **acceptance_criteria**:
     - GIVEN a fresh install (0 objects)
