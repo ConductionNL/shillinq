@@ -22,7 +22,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -46,12 +45,14 @@ class FieldSecurityService
      *
      * @param ContainerInterface $container The DI container
      * @param LoggerInterface    $logger    The logger
+     * @param string             $appId     The Nextcloud app ID
      *
      * @return void
      */
     public function __construct(
         private ContainerInterface $container,
         private LoggerInterface $logger,
+        private string $appId='shillinq',
     ) {
     }//end __construct()
 
@@ -141,7 +142,7 @@ class FieldSecurityService
             $allPermissions = [];
             foreach ($roleIds as $roleId) {
                 $results = $objectService->findObjects(
-                    Application::APP_ID,
+                    $this->appId,
                     'permission',
                     ['roleId' => $roleId],
                 );
@@ -176,7 +177,7 @@ class FieldSecurityService
 
         // Find the user's base role assignments.
         $accessRights = $objectService->findObjects(
-            Application::APP_ID,
+            $this->appId,
             'accessRight',
             [
                 'userId'   => $userId,

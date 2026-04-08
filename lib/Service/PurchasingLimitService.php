@@ -22,7 +22,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -38,12 +37,14 @@ class PurchasingLimitService
      *
      * @param ContainerInterface $container The DI container
      * @param LoggerInterface    $logger    The logger
+     * @param string             $appId     The Nextcloud app ID
      *
      * @return void
      */
     public function __construct(
         private ContainerInterface $container,
         private LoggerInterface $logger,
+        private string $appId='shillinq',
     ) {
     }//end __construct()
 
@@ -125,7 +126,7 @@ class PurchasingLimitService
         $roles = [];
 
         $accessRights = $objectService->findObjects(
-            Application::APP_ID,
+            $this->appId,
             'accessRight',
             [
                 'userId'   => $userId,
@@ -140,7 +141,7 @@ class PurchasingLimitService
 
             try {
                 $role = $objectService->getObject(
-                    Application::APP_ID,
+                    $this->appId,
                     'role',
                     $right['roleId'],
                 );
