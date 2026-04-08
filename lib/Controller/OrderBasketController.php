@@ -19,7 +19,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
@@ -44,15 +43,14 @@ use Psr\Log\LoggerInterface;
  */
 class OrderBasketController extends Controller
 {
-
     /**
      * Constructor for the OrderBasketController.
      *
      * @param IRequest           $request      The request object
      * @param OrderLimitService  $limitService The order limit service
-     * @param ContainerInterface $container     The DI container
-     * @param IUserSession       $userSession   The user session
-     * @param LoggerInterface    $logger        The logger
+     * @param ContainerInterface $container    The DI container
+     * @param IUserSession       $userSession  The user session
+     * @param LoggerInterface    $logger       The logger
      *
      * @return void
      */
@@ -66,7 +64,6 @@ class OrderBasketController extends Controller
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
 
-
     /**
      * Submit an order basket for approval or auto-approval.
      *
@@ -75,12 +72,12 @@ class OrderBasketController extends Controller
      * or auto-approves the order by creating a PurchaseOrder draft.
      * Budget availability is also validated.
      *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
      * @param string $id The order basket ID
      *
      * @return JSONResponse The submission result
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
      *
      * @spec openspec/changes/catalog-purchase-management/tasks.md#task-5.2
      */
@@ -98,8 +95,12 @@ class OrderBasketController extends Controller
             }
 
             // Load the basket.
-            $basket     = $objectService->findOne(objectType: 'orderBasket', id: $id);
-            $basketData = is_array($basket) ? $basket : $basket->jsonSerialize();
+            $basket = $objectService->findOne(objectType: 'orderBasket', id: $id);
+            if (is_array($basket) === true) {
+                $basketData = $basket;
+            } else {
+                $basketData = $basket->jsonSerialize();
+            }
 
             // Set requisitionerId to authenticated user.
             $basketData['requisitionerId'] = $user->getUID();
@@ -107,7 +108,7 @@ class OrderBasketController extends Controller
             // Check order limits.
             $limitCheck = $this->limitService->check(
                 userId: $user->getUID(),
-                basket: $basketData,
+                basketTotal: (float) ($basketData['totalAmount'] ?? 0),
             );
 
             if ($limitCheck['requiresApproval'] === true) {
@@ -115,11 +116,11 @@ class OrderBasketController extends Controller
                 $approvalWorkflow = $objectService->create(
                     objectType: 'approvalWorkflow',
                     object: [
-                        'orderBasketId'  => $id,
+                        'orderBasketId'   => $id,
                         'requisitionerId' => $user->getUID(),
-                        'status'         => 'pending',
-                        'createdAt'      => (new \DateTime())->format('c'),
-                        'totalAmount'    => ($basketData['totalAmount'] ?? 0),
+                        'status'          => 'pending',
+                        'createdAt'       => (new \DateTime())->format('c'),
+                        'totalAmount'     => ($basketData['totalAmount'] ?? 0),
                     ],
                 );
 
@@ -131,26 +132,32 @@ class OrderBasketController extends Controller
                     object: $basketData,
                 );
 
-                return new JSONResponse(data: [
-                    'status'           => 'pending_approval',
-                    'approvalWorkflow' => is_array($approvalWorkflow)
-                        ? $approvalWorkflow
-                        : $approvalWorkflow->jsonSerialize(),
-                ]);
-            }
+                if (is_array($approvalWorkflow) === true) {
+                    $approvalWorkflowData = $approvalWorkflow;
+                } else {
+                    $approvalWorkflowData = $approvalWorkflow->jsonSerialize();
+                }
+
+                return new JSONResponse(
+                        data: [
+                            'status'           => 'pending_approval',
+                            'approvalWorkflow' => $approvalWorkflowData,
+                        ]
+                        );
+            }//end if
 
             // Auto-approve: create PurchaseOrder draft.
             $purchaseOrder = $objectService->create(
                 objectType: 'purchaseOrder',
                 object: [
-                    'orderBasketId'  => $id,
+                    'orderBasketId'   => $id,
                     'requisitionerId' => $user->getUID(),
-                    'status'         => 'draft',
-                    'createdBy'      => $user->getUID(),
-                    'createdAt'      => (new \DateTime())->format('c'),
-                    'items'          => ($basketData['items'] ?? []),
-                    'totalAmount'    => ($basketData['totalAmount'] ?? 0),
-                    'supplierId'     => ($basketData['supplierId'] ?? null),
+                    'status'          => 'draft',
+                    'createdBy'       => $user->getUID(),
+                    'createdAt'       => (new \DateTime())->format('c'),
+                    'items'           => ($basketData['items'] ?? []),
+                    'totalAmount'     => ($basketData['totalAmount'] ?? 0),
+                    'supplierId'      => ($basketData['supplierId'] ?? null),
                 ],
             );
 
@@ -162,21 +169,30 @@ class OrderBasketController extends Controller
                 object: $basketData,
             );
 
-            return new JSONResponse(data: [
-                'status'        => 'auto_approved',
-                'purchaseOrder' => is_array($purchaseOrder)
-                    ? $purchaseOrder
-                    : $purchaseOrder->jsonSerialize(),
-            ]);
+            if (is_array($purchaseOrder) === true) {
+                $purchaseOrderData = $purchaseOrder;
+            } else {
+                $purchaseOrderData = $purchaseOrder->jsonSerialize();
+            }
+
+            return new JSONResponse(
+                    data: [
+                        'status'        => 'auto_approved',
+                        'purchaseOrder' => $purchaseOrderData,
+                    ]
+                    );
         } catch (\Exception $e) {
-            $this->logger->error('OrderBasketController::submit failed', [
-                'basketId'  => $id,
-                'exception' => $e,
-            ]);
+            $this->logger->error(
+                    'OrderBasketController::submit failed',
+                    [
+                        'basketId'  => $id,
+                        'exception' => $e,
+                    ]
+                    );
             return new JSONResponse(
                 data: ['error' => $e->getMessage()],
                 statusCode: 500,
             );
-        }
+        }//end try
     }//end submit()
 }//end class

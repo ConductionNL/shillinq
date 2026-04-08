@@ -19,7 +19,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
@@ -44,16 +43,15 @@ use Psr\Log\LoggerInterface;
  */
 class CatalogController extends Controller
 {
-
     /**
      * Constructor for the CatalogController.
      *
-     * @param IRequest             $request        The request object
-     * @param CatalogSearchService $searchService  The catalog search service
-     * @param CatalogImportService $importService  The catalog import service
-     * @param ContainerInterface   $container       The DI container
-     * @param IUserSession         $userSession     The user session
-     * @param LoggerInterface      $logger          The logger
+     * @param IRequest             $request       The request object
+     * @param CatalogSearchService $searchService The catalog search service
+     * @param CatalogImportService $importService The catalog import service
+     * @param ContainerInterface   $container     The DI container
+     * @param IUserSession         $userSession   The user session
+     * @param LoggerInterface      $logger        The logger
      *
      * @return void
      */
@@ -68,17 +66,16 @@ class CatalogController extends Controller
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
 
-
     /**
      * Search catalog items by query string and optional category.
      *
      * Reads the `q` and `categoryId` request parameters and delegates
      * to the CatalogSearchService.
      *
+     * @return JSONResponse The search results
+     *
      * @NoAdminRequired
      * @NoCSRFRequired
-     *
-     * @return JSONResponse The search results
      *
      * @spec openspec/changes/catalog-purchase-management/tasks.md#task-5.1
      */
@@ -89,7 +86,7 @@ class CatalogController extends Controller
             $categoryId = $this->request->getParam('categoryId', null);
 
             $results = $this->searchService->search(
-                query: $query,
+                term: $query,
                 categoryId: $categoryId,
             );
 
@@ -103,19 +100,18 @@ class CatalogController extends Controller
         }
     }//end search()
 
-
     /**
      * Import catalog items from an uploaded CSV file.
      *
      * Validates that the catalog is not archived before proceeding.
      * Returns 422 if the catalog has been archived.
      *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
      * @param string $id The catalog ID
      *
      * @return JSONResponse The import result
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
      *
      * @spec openspec/changes/catalog-purchase-management/tasks.md#task-5.1
      */
@@ -125,8 +121,12 @@ class CatalogController extends Controller
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
             // Verify catalog is not archived.
-            $catalog     = $objectService->findOne(objectType: 'catalog', id: $id);
-            $catalogData = is_array($catalog) ? $catalog : $catalog->jsonSerialize();
+            $catalog = $objectService->findOne(objectType: 'catalog', id: $id);
+            if (is_array($catalog) === true) {
+                $catalogData = $catalog;
+            } else {
+                $catalogData = $catalog->jsonSerialize();
+            }
 
             if (($catalogData['status'] ?? '') === 'archived') {
                 return new JSONResponse(
@@ -137,28 +137,36 @@ class CatalogController extends Controller
 
             // Read uploaded CSV file.
             $file = $this->request->getUploadedFile('file');
-            if ($file === null || !isset($file['tmp_name'])) {
+            if ($file === null || isset($file['tmp_name']) === false) {
                 return new JSONResponse(
                     data: ['error' => 'No CSV file uploaded'],
                     statusCode: 400,
                 );
             }
 
-            $result = $this->importService->import(
+            $csvStream = fopen($file['tmp_name'], 'r');
+            $result    = $this->importService->import(
                 catalogId: $id,
-                filePath: $file['tmp_name'],
+                csvStream: $csvStream,
             );
+
+            if (is_resource($csvStream) === true) {
+                fclose($csvStream);
+            }
 
             return new JSONResponse(data: $result);
         } catch (\Exception $e) {
-            $this->logger->error('CatalogController::import failed', [
-                'catalogId' => $id,
-                'exception' => $e,
-            ]);
+            $this->logger->error(
+                    'CatalogController::import failed',
+                    [
+                        'catalogId' => $id,
+                        'exception' => $e,
+                    ]
+                    );
             return new JSONResponse(
                 data: ['error' => $e->getMessage()],
                 statusCode: 500,
             );
-        }
+        }//end try
     }//end import()
 }//end class

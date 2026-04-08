@@ -1,11 +1,6 @@
 <?php
 
 /**
- * SPDX-License-Identifier: EUPL-1.2
- * Copyright (C) 2026 Conduction B.V.
- */
-
-/**
  * Shillinq Catalog Import Service
  *
  * Imports catalog items from CSV data, resolving products by SKU and
@@ -25,6 +20,8 @@
  * @spec openspec/changes/catalog-purchase-management/tasks.md#task-3.4
  */
 
+// SPDX-License-Identifier: EUPL-1.2
+// Copyright (C) 2026 Conduction B.V.
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
@@ -119,7 +116,7 @@ class CatalogImportService
                     [
                         'row'     => 0,
                         'sku'     => '',
-                        'message' => 'Missing required columns: ' . implode(separator: ', ', array: $missingColumns),
+                        'message' => 'Missing required columns: '.implode(separator: ', ', array: $missingColumns),
                     ],
                 ],
             ];
@@ -155,7 +152,7 @@ class CatalogImportService
                 continue;
             }
 
-            $sku = trim((string) ($row[$columnMap['sku']] ?? ''));
+            $sku       = trim((string) ($row[$columnMap['sku']] ?? ''));
             $unitPrice = ($row[$columnMap['unit_price']] ?? '');
 
             if ($sku === '') {
@@ -177,7 +174,7 @@ class CatalogImportService
                 $errors[] = [
                     'row'     => $rowNumber,
                     'sku'     => $sku,
-                    'message' => 'Failed to look up product: ' . $e->getMessage(),
+                    'message' => 'Failed to look up product: '.$e->getMessage(),
                 ];
                 continue;
             }
@@ -186,7 +183,7 @@ class CatalogImportService
                 $errors[] = [
                     'row'     => $rowNumber,
                     'sku'     => $sku,
-                    'message' => 'Product not found for SKU: ' . $sku,
+                    'message' => 'Product not found for SKU: '.$sku,
                 ];
                 continue;
             }
@@ -198,7 +195,7 @@ class CatalogImportService
                 $errors[] = [
                     'row'     => $rowNumber,
                     'sku'     => $sku,
-                    'message' => 'Product has no ID for SKU: ' . $sku,
+                    'message' => 'Product has no ID for SKU: '.$sku,
                 ];
                 continue;
             }
@@ -234,10 +231,13 @@ class CatalogImportService
 
         // If fewer than 1 valid row, do not commit anything.
         if (count($validRows) < 1) {
-            $this->logger->info('CatalogImportService: no valid rows to import', [
-                'catalogId' => $catalogId,
-                'errors'    => count($errors),
-            ]);
+            $this->logger->info(
+                    'CatalogImportService: no valid rows to import',
+                    [
+                        'catalogId' => $catalogId,
+                        'errors'    => count($errors),
+                    ]
+                    );
 
             return [
                 'imported' => 0,
@@ -278,16 +278,19 @@ class CatalogImportService
                 $errors[] = [
                     'row'     => $validRow['rowNumber'],
                     'sku'     => $validRow['sku'],
-                    'message' => 'Failed to upsert catalog item: ' . $e->getMessage(),
+                    'message' => 'Failed to upsert catalog item: '.$e->getMessage(),
                 ];
-            }
+            }//end try
         }//end foreach
 
-        $this->logger->info('CatalogImportService: import completed', [
-            'catalogId' => $catalogId,
-            'imported'  => $imported,
-            'errors'    => count($errors),
-        ]);
+        $this->logger->info(
+                'CatalogImportService: import completed',
+                [
+                    'catalogId' => $catalogId,
+                    'imported'  => $imported,
+                    'errors'    => count($errors),
+                ]
+                );
 
         return [
             'imported' => $imported,

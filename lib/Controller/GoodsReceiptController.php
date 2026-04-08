@@ -19,7 +19,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
@@ -44,15 +43,14 @@ use Psr\Log\LoggerInterface;
  */
 class GoodsReceiptController extends Controller
 {
-
     /**
      * Constructor for the GoodsReceiptController.
      *
-     * @param IRequest                 $request         The request object
-     * @param ThreeWayMatchingService  $matchingService The three-way matching service
-     * @param ContainerInterface       $container        The DI container
-     * @param IUserSession             $userSession      The user session
-     * @param LoggerInterface          $logger           The logger
+     * @param IRequest                $request         The request object
+     * @param ThreeWayMatchingService $matchingService The three-way matching service
+     * @param ContainerInterface      $container       The DI container
+     * @param IUserSession            $userSession     The user session
+     * @param LoggerInterface         $logger          The logger
      *
      * @return void
      */
@@ -65,7 +63,6 @@ class GoodsReceiptController extends Controller
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
-
 
     /**
      * Create a goods receipt and trigger three-way matching.
@@ -101,8 +98,12 @@ class GoodsReceiptController extends Controller
             }
 
             // Validate PO is not closed.
-            $po     = $objectService->findOne(objectType: 'purchaseOrder', id: $purchaseOrderId);
-            $poData = is_array($po) ? $po : $po->jsonSerialize();
+            $po = $objectService->findOne(objectType: 'purchaseOrder', id: $purchaseOrderId);
+            if (is_array($po) === true) {
+                $poData = $po;
+            } else {
+                $poData = $po->jsonSerialize();
+            }
 
             if (($poData['status'] ?? '') === 'closed') {
                 return new JSONResponse(
@@ -112,38 +113,62 @@ class GoodsReceiptController extends Controller
             }
 
             // Create the GoodsReceipt object.
+            if ($user !== null) {
+                $receivedBy = $user->getUID();
+            } else {
+                $receivedBy = null;
+            }
+
             $goodsReceipt = $objectService->create(
                 objectType: 'goodsReceipt',
-                object: array_merge($receipt, [
-                    'receivedBy' => ($user !== null ? $user->getUID() : null),
-                    'receivedAt' => (new \DateTime())->format('c'),
-                    'status'     => 'received',
-                ]),
+                object: array_merge(
+                        $receipt,
+                        [
+                            'receivedBy' => $receivedBy,
+                            'receivedAt' => (new \DateTime())->format('c'),
+                            'status'     => 'received',
+                        ]
+                        ),
             );
 
-            $receiptData = is_array($goodsReceipt) ? $goodsReceipt : $goodsReceipt->jsonSerialize();
-            $receiptId   = $receiptData['id'] ?? $receiptData['uuid'] ?? null;
+            if (is_array($goodsReceipt) === true) {
+                $receiptData = $goodsReceipt;
+            } else {
+                $receiptData = $goodsReceipt->jsonSerialize();
+            }
+
+            $receiptId = $receiptData['id'] ?? $receiptData['uuid'] ?? null;
 
             // Create GoodsReceiptLine objects.
             $createdLines = [];
             foreach ($lines as $line) {
                 $createdLine = $objectService->create(
                     objectType: 'goodsReceiptLine',
-                    object: array_merge($line, [
-                        'goodsReceiptId' => $receiptId,
-                    ]),
+                    object: array_merge(
+                            $line,
+                            [
+                                'goodsReceiptId' => $receiptId,
+                            ]
+                            ),
                 );
-                $createdLines[] = is_array($createdLine) ? $createdLine : $createdLine->jsonSerialize();
+                if (is_array($createdLine) === true) {
+                    $createdLines[] = $createdLine;
+                } else {
+                    $createdLines[] = $createdLine->jsonSerialize();
+                }
             }
 
             // Run three-way matching.
             $matchResults = $this->matchingService->match(
                 purchaseOrderId: $purchaseOrderId,
-                goodsReceiptId: $receiptId,
             );
 
             // Determine and update PO status based on match results.
-            $newStatus = ($matchResults['fullyReceived'] ?? false) ? 'received' : 'partially_received';
+            if (($matchResults['fullyReceived'] ?? false) === true) {
+                $newStatus = 'received';
+            } else {
+                $newStatus = 'partially_received';
+            }
 
             $poData['status'] = $newStatus;
             $objectService->update(
@@ -152,18 +177,20 @@ class GoodsReceiptController extends Controller
                 object: $poData,
             );
 
-            return new JSONResponse(data: [
-                'goodsReceipt'   => $receiptData,
-                'lines'          => $createdLines,
-                'matchResults'   => $matchResults,
-                'purchaseOrderStatus' => $newStatus,
-            ]);
+            return new JSONResponse(
+                    data: [
+                        'goodsReceipt'        => $receiptData,
+                        'lines'               => $createdLines,
+                        'matchResults'        => $matchResults,
+                        'purchaseOrderStatus' => $newStatus,
+                    ]
+                    );
         } catch (\Exception $e) {
             $this->logger->error('GoodsReceiptController::create failed', ['exception' => $e]);
             return new JSONResponse(
                 data: ['error' => $e->getMessage()],
                 statusCode: 500,
             );
-        }
+        }//end try
     }//end create()
 }//end class

@@ -19,7 +19,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
@@ -96,7 +95,7 @@ class CreateDefaultConfiguration implements IRepairStep
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
         } catch (\Throwable $e) {
-            $output->warning('Could not obtain ObjectService: ' . $e->getMessage());
+            $output->warning('Could not obtain ObjectService: '.$e->getMessage());
             $this->logger->error(
                 'Shillinq: ObjectService not available for seeding',
                 ['exception' => $e->getMessage()]
@@ -108,7 +107,7 @@ class CreateDefaultConfiguration implements IRepairStep
             $this->seedAllData(objectService: $objectService, output: $output);
             $output->info('Default catalog-purchase-management data seeded successfully.');
         } catch (\Throwable $e) {
-            $output->warning('Error seeding default data: ' . $e->getMessage());
+            $output->warning('Error seeding default data: '.$e->getMessage());
             $this->logger->error(
                 'Shillinq: default data seeding failed',
                 ['exception' => $e->getMessage()]
@@ -342,7 +341,7 @@ class CreateDefaultConfiguration implements IRepairStep
                 objectService: $objectService,
                 schema: 'purchaseOrderLine',
                 uniqueField: 'purchaseOrderId',
-                uniqueValue: ($poId . '-' . ($penBlkId ?? '')),
+                uniqueValue: ($poId.'-'.($penBlkId ?? '')),
                 data: [
                     'purchaseOrderId' => $poId,
                     'productId'       => $penBlkId,
@@ -378,7 +377,7 @@ class CreateDefaultConfiguration implements IRepairStep
                 objectService: $objectService,
                 schema: 'supplierQuote',
                 uniqueField: 'rfqId',
-                uniqueValue: ($rfqId . '-' . $acmeId),
+                uniqueValue: ($rfqId.'-'.$acmeId),
                 data: [
                     'rfqId'             => $rfqId,
                     'supplierProfileId' => $acmeId,
@@ -394,7 +393,7 @@ class CreateDefaultConfiguration implements IRepairStep
                 objectService: $objectService,
                 schema: 'supplierQuote',
                 uniqueField: 'rfqId',
-                uniqueValue: ($rfqId . '-' . $betaId),
+                uniqueValue: ($rfqId.'-'.$betaId),
                 data: [
                     'rfqId'             => $rfqId,
                     'supplierProfileId' => $betaId,
@@ -460,7 +459,7 @@ class CreateDefaultConfiguration implements IRepairStep
             return $id;
         } catch (\Throwable $e) {
             $output->warning(
-                "Failed to seed {$schema} ({$uniqueField}={$uniqueValue}): " . $e->getMessage()
+                "Failed to seed {$schema} ({$uniqueField}={$uniqueValue}): ".$e->getMessage()
             );
             $this->logger->error(
                 "Shillinq: failed to seed {$schema}",
@@ -483,7 +482,7 @@ class CreateDefaultConfiguration implements IRepairStep
      * @param string|null $supplierId    The supplier profile object ID
      * @param IOutput     $output        The output interface for progress reporting
      *
-     * @return string|null The catalog item object ID or null on failure
+     * @return void
      *
      * @spec openspec/changes/catalog-purchase-management/tasks.md#task-2.2
      */
@@ -493,7 +492,7 @@ class CreateDefaultConfiguration implements IRepairStep
         string $productId,
         ?string $supplierId,
         IOutput $output,
-    ): ?string {
+    ): void {
         try {
             // Check for existing catalog item by composite key.
             $existing = $objectService->getObjects(
@@ -511,7 +510,7 @@ class CreateDefaultConfiguration implements IRepairStep
                 $output->info(
                     "Skipped existing catalogItem (catalogId={$catalogId}, productId={$productId}), id={$id}"
                 );
-                return $id;
+                return;
             }
 
             $data = [
@@ -532,11 +531,9 @@ class CreateDefaultConfiguration implements IRepairStep
             $output->info(
                 "Created catalogItem (catalogId={$catalogId}, productId={$productId}), id={$id}"
             );
-
-            return $id;
         } catch (\Throwable $e) {
             $output->warning(
-                'Failed to seed catalogItem: ' . $e->getMessage()
+                'Failed to seed catalogItem: '.$e->getMessage()
             );
             $this->logger->error(
                 'Shillinq: failed to seed catalogItem',
@@ -546,7 +543,6 @@ class CreateDefaultConfiguration implements IRepairStep
                     'exception' => $e->getMessage(),
                 ]
             );
-            return null;
         }//end try
     }//end seedCatalogItem()
 
