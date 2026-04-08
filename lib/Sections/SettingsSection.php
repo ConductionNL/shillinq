@@ -1,12 +1,12 @@
 <?php
 
 /**
- * AppTemplate Settings Section
+ * Shillinq Settings Section
  *
- * Defines the AppTemplate section in the Nextcloud admin settings.
+ * Defines the Shillinq section in the Nextcloud admin settings.
  *
  * @category Sections
- * @package  OCA\AppTemplate\Sections
+ * @package  OCA\Shillinq\Sections
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,14 +19,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\AppTemplate\Sections;
+namespace OCA\Shillinq\Sections;
 
 use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\Settings\IIconSection;
 
 /**
- * Defines the AppTemplate section in the Nextcloud admin settings.
+ * Defines the Shillinq section in the Nextcloud admin settings.
  */
 class SettingsSection implements IIconSection
 {
@@ -51,7 +51,7 @@ class SettingsSection implements IIconSection
      */
     public function getID(): string
     {
-        return 'app-template';
+        return 'shillinq';
     }//end getID()
 
     /**
@@ -61,7 +61,7 @@ class SettingsSection implements IIconSection
      */
     public function getName(): string
     {
-        return $this->l->t('App Template');
+        return $this->l->t('Shillinq');
     }//end getName()
 
     /**
@@ -81,6 +81,6 @@ class SettingsSection implements IIconSection
      */
     public function getIcon(): string
     {
-        return $this->urlGenerator->imagePath(appName: 'app-template', file: 'app-dark.svg');
+        return $this->urlGenerator->imagePath(appName: 'shillinq', file: 'app-dark.svg');
     }//end getIcon()
 }//end class

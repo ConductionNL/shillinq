@@ -2,17 +2,17 @@
 	<NcAppSettingsDialog
 		:open="open"
 		:show-navigation="false"
-		:name="t('app-template', 'App Template settings')"
+		:name="t('shillinq', 'Shillinq settings')"
 		@update:open="$emit('update:open', $event)">
 		<NcAppSettingsSection
 			id="general"
-			:name="t('app-template', 'General')">
+			:name="t('shillinq', 'General')">
 			<template #icon>
 				<CogIcon :size="20" />
 			</template>
 			<NcEmptyContent
-				:name="t('app-template', 'No settings available yet')"
-				:description="t('app-template', 'User settings will appear here in a future update.')">
+				:name="t('shillinq', 'No settings available yet')"
+				:description="t('shillinq', 'User settings will appear here in a future update.')">
 				<template #icon>
 					<CogIcon :size="64" />
 				</template>

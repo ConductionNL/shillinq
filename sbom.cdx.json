@@ -82,12 +82,12 @@
       }
     ],
     "component": {
-      "bom-ref": "conductionnl/app-template-dev-main",
+      "bom-ref": "conductionnl/shillinq-dev-main",
       "type": "application",
-      "name": "app-template",
+      "name": "shillinq",
       "version": "dev-main",
       "group": "conductionnl",
-      "description": "A template for creating new Nextcloud apps",
+      "description": "Complete open-source business administration suite for freelancers, sole proprietors, SMBs, and corporations.",
       "author": "Conduction b.v.",
       "licenses": [
         {
@@ -96,7 +96,7 @@
           }
         }
       ],
-      "purl": "pkg:composer/conductionnl/app-template@dev-main",
+      "purl": "pkg:composer/conductionnl/shillinq@dev-main",
       "properties": [
         {
           "name": "cdx:composer:package:distReference",
@@ -119,7 +119,7 @@
       "name": "helper-string-parser",
       "group": "@babel",
       "version": "7.27.1",
-      "bom-ref": "app-template@0.1.0|@babel/helper-string-parser@7.27.1",
+      "bom-ref": "shillinq@0.1.0|@babel/helper-string-parser@7.27.1",
       "author": "The Babel Team",
       "description": "A utility package to parse strings",
       "licenses": [
@@ -170,7 +170,7 @@
       "name": "helper-validator-identifier",
       "group": "@babel",
       "version": "7.28.5",
-      "bom-ref": "app-template@0.1.0|@babel/helper-validator-identifier@7.28.5",
+      "bom-ref": "shillinq@0.1.0|@babel/helper-validator-identifier@7.28.5",
       "author": "The Babel Team",
       "description": "Validate identifier/keywords name",
       "licenses": [
@@ -221,7 +221,7 @@
       "name": "parser",
       "group": "@babel",
       "version": "7.29.2",
-      "bom-ref": "app-template@0.1.0|@babel/parser@7.29.2",
+      "bom-ref": "shillinq@0.1.0|@babel/parser@7.29.2",
       "author": "The Babel Team",
       "description": "A JavaScript parser",
       "licenses": [
@@ -272,7 +272,7 @@
       "name": "runtime",
       "group": "@babel",
       "version": "7.29.2",
-      "bom-ref": "app-template@0.1.0|@babel/runtime@7.29.2",
+      "bom-ref": "shillinq@0.1.0|@babel/runtime@7.29.2",
       "author": "The Babel Team",
       "description": "babel's modular runtime helpers",
       "licenses": [
@@ -323,7 +323,7 @@
       "name": "types",
       "group": "@babel",
       "version": "7.29.0",
-      "bom-ref": "app-template@0.1.0|@babel/types@7.29.0",
+      "bom-ref": "shillinq@0.1.0|@babel/types@7.29.0",
       "author": "The Babel Team",
       "description": "Babel Types is a Lodash-esque utility library for AST nodes",
       "licenses": [
@@ -374,7 +374,7 @@
       "name": "fetch",
       "group": "@buttercup",
       "version": "0.2.1",
-      "bom-ref": "app-template@0.1.0|@buttercup/fetch@0.2.1",
+      "bom-ref": "shillinq@0.1.0|@buttercup/fetch@0.2.1",
       "author": "Perry Mitchell",
       "description": "Fetch adapter for cross-platform use.",
       "scope": "optional",
@@ -430,7 +430,7 @@
       "name": "nextcloud-vue",
       "group": "@conduction",
       "version": "0.1.0-beta.3",
-      "bom-ref": "app-template@0.1.0|@conduction/nextcloud-vue@0.1.0-beta.3",
+      "bom-ref": "shillinq@0.1.0|@conduction/nextcloud-vue@0.1.0-beta.3",
       "author": "Conduction B.V.",
       "description": "Shared Vue component library for Conduction Nextcloud apps — complements @nextcloud/vue with higher-level components, OpenRegister integration, and NL Design System support",
       "licenses": [
@@ -466,7 +466,7 @@
       "name": "xml",
       "group": "@file-type",
       "version": "0.4.4",
-      "bom-ref": "app-template@0.1.0|@file-type/xml@0.4.4",
+      "bom-ref": "shillinq@0.1.0|@file-type/xml@0.4.4",
       "author": "Borewit",
       "description": "XML detection plugin for file-type",
       "licenses": [
@@ -517,7 +517,7 @@
       "name": "core",
       "group": "@floating-ui",
       "version": "1.7.5",
-      "bom-ref": "app-template@0.1.0|@floating-ui/core@1.7.5",
+      "bom-ref": "shillinq@0.1.0|@floating-ui/core@1.7.5",
       "author": "atomiks",
       "description": "Positioning library for floating elements: tooltips, popovers, dropdowns, and more",
       "licenses": [
@@ -568,7 +568,7 @@
       "name": "dom",
       "group": "@floating-ui",
       "version": "1.7.6",
-      "bom-ref": "app-template@0.1.0|@floating-ui/dom@1.7.6",
+      "bom-ref": "shillinq@0.1.0|@floating-ui/dom@1.7.6",
       "author": "atomiks",
       "description": "Floating UI for the web",
       "licenses": [
@@ -619,7 +619,7 @@
       "name": "utils",
       "group": "@floating-ui",
       "version": "0.2.11",
-      "bom-ref": "app-template@0.1.0|@floating-ui/utils@0.2.11",
+      "bom-ref": "shillinq@0.1.0|@floating-ui/utils@0.2.11",
       "author": "atomiks",
       "description": "Utilities for Floating UI",
       "licenses": [
@@ -670,7 +670,7 @@
       "name": "vue-simple-portal",
       "group": "@linusborg",
       "version": "0.1.5",
-      "bom-ref": "app-template@0.1.0|@linusborg/vue-simple-portal@0.1.5",
+      "bom-ref": "shillinq@0.1.0|@linusborg/vue-simple-portal@0.1.5",
       "author": "Thorsten Lünborg",
       "description": "A simple Portal implementation for Vue, to mount slot content to another element",
       "licenses": [
@@ -721,7 +721,7 @@
       "name": "hast-util-table-cell-style",
       "group": "@mapbox",
       "version": "0.2.1",
-      "bom-ref": "app-template@0.1.0|@mapbox/hast-util-table-cell-style@0.2.1",
+      "bom-ref": "shillinq@0.1.0|@mapbox/hast-util-table-cell-style@0.2.1",
       "author": "Mapbox",
       "description": "Transform deprecated styling attributes on HAST table cells to inline styles",
       "licenses": [
@@ -771,7 +771,7 @@
           "type": "library",
           "name": "unist-util-visit",
           "version": "1.4.1",
-          "bom-ref": "app-template@0.1.0|@mapbox/hast-util-table-cell-style@0.2.1|unist-util-visit@1.4.1",
+          "bom-ref": "shillinq@0.1.0|@mapbox/hast-util-table-cell-style@0.2.1|unist-util-visit@1.4.1",
           "author": "Titus Wormer",
           "description": "Recursively walk over unist nodes",
           "licenses": [
@@ -821,7 +821,7 @@
           "type": "library",
           "name": "unist-util-visit-parents",
           "version": "2.1.2",
-          "bom-ref": "app-template@0.1.0|@mapbox/hast-util-table-cell-style@0.2.1|unist-util-visit-parents@2.1.2",
+          "bom-ref": "shillinq@0.1.0|@mapbox/hast-util-table-cell-style@0.2.1|unist-util-visit-parents@2.1.2",
           "author": "Titus Wormer",
           "description": "Recursively walk over unist nodes, with ancestral information",
           "licenses": [
@@ -871,7 +871,7 @@
           "type": "library",
           "name": "unist-util-is",
           "version": "3.0.0",
-          "bom-ref": "app-template@0.1.0|@mapbox/hast-util-table-cell-style@0.2.1|unist-util-is@3.0.0",
+          "bom-ref": "shillinq@0.1.0|@mapbox/hast-util-table-cell-style@0.2.1|unist-util-is@3.0.0",
           "author": "Titus Wormer",
           "description": "Utility to check if a node passes a test",
           "licenses": [
@@ -924,7 +924,7 @@
       "name": "auth",
       "group": "@nextcloud",
       "version": "2.5.3",
-      "bom-ref": "app-template@0.1.0|@nextcloud/auth@2.5.3",
+      "bom-ref": "shillinq@0.1.0|@nextcloud/auth@2.5.3",
       "author": "Christoph Wurst",
       "description": "Nextcloud helpers related to authentication and the current user",
       "licenses": [
@@ -975,7 +975,7 @@
       "name": "axios",
       "group": "@nextcloud",
       "version": "2.5.2",
-      "bom-ref": "app-template@0.1.0|@nextcloud/axios@2.5.2",
+      "bom-ref": "shillinq@0.1.0|@nextcloud/axios@2.5.2",
       "author": "Nextcloud GmbH and Nextcloud contributors",
       "description": "Axios client for Nextcloud",
       "licenses": [
@@ -1026,7 +1026,7 @@
           "name": "router",
           "group": "@nextcloud",
           "version": "3.1.0",
-          "bom-ref": "app-template@0.1.0|@nextcloud/axios@2.5.2|@nextcloud/router@3.1.0",
+          "bom-ref": "shillinq@0.1.0|@nextcloud/axios@2.5.2|@nextcloud/router@3.1.0",
           "author": "Nextcloud GmbH and Nextcloud contributors",
           "description": "Utils for generating Nextcloud URLs",
           "licenses": [
@@ -1079,7 +1079,7 @@
       "name": "browser-storage",
       "group": "@nextcloud",
       "version": "0.5.0",
-      "bom-ref": "app-template@0.1.0|@nextcloud/browser-storage@0.5.0",
+      "bom-ref": "shillinq@0.1.0|@nextcloud/browser-storage@0.5.0",
       "author": "Nextcloud GmbH and Nextcloud contributors",
       "description": "Browser storage (e.g. local storage) abstraction for Nextcloud apps",
       "licenses": [
@@ -1130,7 +1130,7 @@
       "name": "capabilities",
       "group": "@nextcloud",
       "version": "1.2.1",
-      "bom-ref": "app-template@0.1.0|@nextcloud/capabilities@1.2.1",
+      "bom-ref": "shillinq@0.1.0|@nextcloud/capabilities@1.2.1",
       "author": "Nextcloud GmbH and Nextcloud contributors",
       "description": "Nextcloud helper to obtain the server capabilities",
       "licenses": [
@@ -1181,7 +1181,7 @@
           "name": "initial-state",
           "group": "@nextcloud",
           "version": "3.0.0",
-          "bom-ref": "app-template@0.1.0|@nextcloud/capabilities@1.2.1|@nextcloud/initial-state@3.0.0",
+          "bom-ref": "shillinq@0.1.0|@nextcloud/capabilities@1.2.1|@nextcloud/initial-state@3.0.0",
           "author": "Nextcloud GmbH and Nextcloud contributors",
           "description": "Access data from the nextcloud server-side initial state API within apps.",
           "licenses": [
@@ -1234,7 +1234,7 @@
       "name": "dialogs",
       "group": "@nextcloud",
       "version": "3.2.0",
-      "bom-ref": "app-template@0.1.0|@nextcloud/dialogs@3.2.0",
+      "bom-ref": "shillinq@0.1.0|@nextcloud/dialogs@3.2.0",
       "author": "Christoph Wurst",
       "licenses": [
         {
@@ -1284,7 +1284,7 @@
           "name": "l10n",
           "group": "@nextcloud",
           "version": "1.6.0",
-          "bom-ref": "app-template@0.1.0|@nextcloud/dialogs@3.2.0|@nextcloud/l10n@1.6.0",
+          "bom-ref": "shillinq@0.1.0|@nextcloud/dialogs@3.2.0|@nextcloud/l10n@1.6.0",
           "author": "Christoph Wurst",
           "licenses": [
             {
@@ -1336,7 +1336,7 @@
       "name": "event-bus",
       "group": "@nextcloud",
       "version": "3.3.3",
-      "bom-ref": "app-template@0.1.0|@nextcloud/event-bus@3.3.3",
+      "bom-ref": "shillinq@0.1.0|@nextcloud/event-bus@3.3.3",
       "author": "Nextcloud GmbH and Nextcloud contributors",
       "description": "A simple event bus to communicate between Nextcloud components.",
       "licenses": [
@@ -1386,7 +1386,7 @@
           "type": "library",
           "name": "semver",
           "version": "7.7.4",
-          "bom-ref": "app-template@0.1.0|@nextcloud/event-bus@3.3.3|semver@7.7.4",
+          "bom-ref": "shillinq@0.1.0|@nextcloud/event-bus@3.3.3|semver@7.7.4",
           "author": "GitHub Inc.",
           "description": "The semantic version parser used by npm.",
           "licenses": [
@@ -1439,7 +1439,7 @@
       "name": "initial-state",
       "group": "@nextcloud",
       "version": "2.2.0",
-      "bom-ref": "app-template@0.1.0|@nextcloud/initial-state@2.2.0",
+      "bom-ref": "shillinq@0.1.0|@nextcloud/initial-state@2.2.0",
       "author": "Christoph Wurst",
       "description": "Access data from the nextcloud server-side initial state API within apps.",
       "licenses": [
@@ -1490,7 +1490,7 @@
       "name": "l10n",
       "group": "@nextcloud",
       "version": "2.2.0",
-      "bom-ref": "app-template@0.1.0|@nextcloud/l10n@2.2.0",
+      "bom-ref": "shillinq@0.1.0|@nextcloud/l10n@2.2.0",
       "author": "Christoph Wurst",
       "description": "Nextcloud L10n helpers for apps and libraries",
       "licenses": [
@@ -1541,7 +1541,7 @@
       "name": "logger",
       "group": "@nextcloud",
       "version": "3.0.3",
-      "bom-ref": "app-template@0.1.0|@nextcloud/logger@3.0.3",
+      "bom-ref": "shillinq@0.1.0|@nextcloud/logger@3.0.3",
       "author": "Nextcloud GmbH and Nextcloud contributors",
       "description": "Generic JavaScript logging interface for Nextcloud apps and libraries",
       "licenses": [
@@ -1592,7 +1592,7 @@
       "name": "paths",
       "group": "@nextcloud",
       "version": "3.1.0",
-      "bom-ref": "app-template@0.1.0|@nextcloud/paths@3.1.0",
+      "bom-ref": "shillinq@0.1.0|@nextcloud/paths@3.1.0",
       "author": "Nextcloud GmbH and Nextcloud contributors",
       "description": "Helper functions for working with paths in Nextcloud apps",
       "scope": "optional",
@@ -1648,7 +1648,7 @@
       "name": "router",
       "group": "@nextcloud",
       "version": "2.2.1",
-      "bom-ref": "app-template@0.1.0|@nextcloud/router@2.2.1",
+      "bom-ref": "shillinq@0.1.0|@nextcloud/router@2.2.1",
       "author": "Christoph Wurst",
       "licenses": [
         {
@@ -1698,7 +1698,7 @@
       "name": "sharing",
       "group": "@nextcloud",
       "version": "0.4.0",
-      "bom-ref": "app-template@0.1.0|@nextcloud/sharing@0.4.0",
+      "bom-ref": "shillinq@0.1.0|@nextcloud/sharing@0.4.0",
       "author": "Nextcloud GmbH and Nextcloud contributors",
       "description": "Front-end utilities for Nextcloud files sharing",
       "licenses": [
@@ -1749,7 +1749,7 @@
           "name": "initial-state",
           "group": "@nextcloud",
           "version": "3.0.0",
-          "bom-ref": "app-template@0.1.0|@nextcloud/sharing@0.4.0|@nextcloud/initial-state@3.0.0",
+          "bom-ref": "shillinq@0.1.0|@nextcloud/sharing@0.4.0|@nextcloud/initial-state@3.0.0",
           "author": "Nextcloud GmbH and Nextcloud contributors",
           "description": "Access data from the nextcloud server-side initial state API within apps.",
           "licenses": [
@@ -1802,7 +1802,7 @@
       "name": "typings",
       "group": "@nextcloud",
       "version": "1.10.0",
-      "bom-ref": "app-template@0.1.0|@nextcloud/typings@1.10.0",
+      "bom-ref": "shillinq@0.1.0|@nextcloud/typings@1.10.0",
       "author": "Nextcloud GmbH and Nextcloud contributors",
       "description": "Nextcloud TypeScript typings",
       "licenses": [
@@ -1853,7 +1853,7 @@
       "name": "vue-select",
       "group": "@nextcloud",
       "version": "3.26.0",
-      "bom-ref": "app-template@0.1.0|@nextcloud/vue-select@3.26.0",
+      "bom-ref": "shillinq@0.1.0|@nextcloud/vue-select@3.26.0",
       "author": "Jeff Sagal",
       "description": "Everything you wish the HTML <select> element could do, wrapped up into a lightweight, extensible Vue component.",
       "licenses": [
@@ -1904,7 +1904,7 @@
       "name": "vue",
       "group": "@nextcloud",
       "version": "8.37.0",
-      "bom-ref": "app-template@0.1.0|@nextcloud/vue@8.37.0",
+      "bom-ref": "shillinq@0.1.0|@nextcloud/vue@8.37.0",
       "author": "Nextcloud GmbH and Nextcloud contributors",
       "description": "Nextcloud vue components",
       "licenses": [
@@ -1955,7 +1955,7 @@
           "name": "l10n",
           "group": "@nextcloud",
           "version": "3.4.1",
-          "bom-ref": "app-template@0.1.0|@nextcloud/vue@8.37.0|@nextcloud/l10n@3.4.1",
+          "bom-ref": "shillinq@0.1.0|@nextcloud/vue@8.37.0|@nextcloud/l10n@3.4.1",
           "author": "Nextcloud GmbH and Nextcloud contributors",
           "description": "Nextcloud localization and translation helpers for apps and libraries",
           "licenses": [
@@ -2006,7 +2006,7 @@
           "name": "router",
           "group": "@nextcloud",
           "version": "3.1.0",
-          "bom-ref": "app-template@0.1.0|@nextcloud/vue@8.37.0|@nextcloud/router@3.1.0",
+          "bom-ref": "shillinq@0.1.0|@nextcloud/vue@8.37.0|@nextcloud/router@3.1.0",
           "author": "Nextcloud GmbH and Nextcloud contributors",
           "description": "Utils for generating Nextcloud URLs",
           "licenses": [
@@ -2059,7 +2059,7 @@
       "name": "parseargs",
       "group": "@pkgjs",
       "version": "0.11.0",
-      "bom-ref": "app-template@0.1.0|@pkgjs/parseargs@0.11.0",
+      "bom-ref": "shillinq@0.1.0|@pkgjs/parseargs@0.11.0",
       "description": "Polyfill of future proposal for `util.parseArgs()`",
       "scope": "optional",
       "licenses": [
@@ -2118,7 +2118,7 @@
       "name": "token",
       "group": "@tokenizer",
       "version": "0.3.0",
-      "bom-ref": "app-template@0.1.0|@tokenizer/token@0.3.0",
+      "bom-ref": "shillinq@0.1.0|@tokenizer/token@0.3.0",
       "author": "Borewit",
       "description": "TypeScript definition for strtok3 token",
       "licenses": [
@@ -2169,7 +2169,7 @@
       "name": "debug",
       "group": "@types",
       "version": "4.1.13",
-      "bom-ref": "app-template@0.1.0|@types/debug@4.1.13",
+      "bom-ref": "shillinq@0.1.0|@types/debug@4.1.13",
       "description": "TypeScript definitions for debug",
       "licenses": [
         {
@@ -2219,7 +2219,7 @@
       "name": "escape-html",
       "group": "@types",
       "version": "1.0.4",
-      "bom-ref": "app-template@0.1.0|@types/escape-html@1.0.4",
+      "bom-ref": "shillinq@0.1.0|@types/escape-html@1.0.4",
       "description": "TypeScript definitions for escape-html",
       "licenses": [
         {
@@ -2269,7 +2269,7 @@
       "name": "hast",
       "group": "@types",
       "version": "3.0.4",
-      "bom-ref": "app-template@0.1.0|@types/hast@3.0.4",
+      "bom-ref": "shillinq@0.1.0|@types/hast@3.0.4",
       "description": "TypeScript definitions for hast",
       "licenses": [
         {
@@ -2319,7 +2319,7 @@
       "name": "jquery",
       "group": "@types",
       "version": "3.5.16",
-      "bom-ref": "app-template@0.1.0|@types/jquery@3.5.16",
+      "bom-ref": "shillinq@0.1.0|@types/jquery@3.5.16",
       "description": "TypeScript definitions for jquery",
       "licenses": [
         {
@@ -2369,7 +2369,7 @@
       "name": "mdast",
       "group": "@types",
       "version": "4.0.4",
-      "bom-ref": "app-template@0.1.0|@types/mdast@4.0.4",
+      "bom-ref": "shillinq@0.1.0|@types/mdast@4.0.4",
       "description": "TypeScript definitions for mdast",
       "licenses": [
         {
@@ -2419,7 +2419,7 @@
       "name": "ms",
       "group": "@types",
       "version": "2.1.0",
-      "bom-ref": "app-template@0.1.0|@types/ms@2.1.0",
+      "bom-ref": "shillinq@0.1.0|@types/ms@2.1.0",
       "description": "TypeScript definitions for ms",
       "licenses": [
         {
@@ -2469,7 +2469,7 @@
       "name": "react",
       "group": "@types",
       "version": "19.2.14",
-      "bom-ref": "app-template@0.1.0|@types/react@19.2.14",
+      "bom-ref": "shillinq@0.1.0|@types/react@19.2.14",
       "description": "TypeScript definitions for react",
       "licenses": [
         {
@@ -2519,7 +2519,7 @@
       "name": "semver",
       "group": "@types",
       "version": "7.7.1",
-      "bom-ref": "app-template@0.1.0|@types/semver@7.7.1",
+      "bom-ref": "shillinq@0.1.0|@types/semver@7.7.1",
       "description": "TypeScript definitions for semver",
       "licenses": [
         {
@@ -2569,7 +2569,7 @@
       "name": "sizzle",
       "group": "@types",
       "version": "2.3.10",
-      "bom-ref": "app-template@0.1.0|@types/sizzle@2.3.10",
+      "bom-ref": "shillinq@0.1.0|@types/sizzle@2.3.10",
       "description": "TypeScript definitions for sizzle",
       "licenses": [
         {
@@ -2619,7 +2619,7 @@
       "name": "trusted-types",
       "group": "@types",
       "version": "2.0.7",
-      "bom-ref": "app-template@0.1.0|@types/trusted-types@2.0.7",
+      "bom-ref": "shillinq@0.1.0|@types/trusted-types@2.0.7",
       "description": "TypeScript definitions for trusted-types",
       "scope": "optional",
       "licenses": [
@@ -2670,7 +2670,7 @@
       "name": "unist",
       "group": "@types",
       "version": "3.0.3",
-      "bom-ref": "app-template@0.1.0|@types/unist@3.0.3",
+      "bom-ref": "shillinq@0.1.0|@types/unist@3.0.3",
       "description": "TypeScript definitions for unist",
       "licenses": [
         {
@@ -2720,7 +2720,7 @@
       "name": "web-bluetooth",
       "group": "@types",
       "version": "0.0.20",
-      "bom-ref": "app-template@0.1.0|@types/web-bluetooth@0.0.20",
+      "bom-ref": "shillinq@0.1.0|@types/web-bluetooth@0.0.20",
       "description": "TypeScript definitions for web-bluetooth",
       "licenses": [
         {
@@ -2770,7 +2770,7 @@
       "name": "structured-clone",
       "group": "@ungap",
       "version": "1.3.0",
-      "bom-ref": "app-template@0.1.0|@ungap/structured-clone@1.3.0",
+      "bom-ref": "shillinq@0.1.0|@ungap/structured-clone@1.3.0",
       "author": "Andrea Giammarchi",
       "description": "A structuredClone polyfill",
       "licenses": [
@@ -2821,7 +2821,7 @@
       "name": "compiler-sfc",
       "group": "@vue",
       "version": "2.7.16",
-      "bom-ref": "app-template@0.1.0|@vue/compiler-sfc@2.7.16",
+      "bom-ref": "shillinq@0.1.0|@vue/compiler-sfc@2.7.16",
       "description": "compiler-sfc for Vue 2",
       "purl": "pkg:npm/%40vue/compiler-sfc@2.7.16",
       "externalReferences": [
@@ -2848,7 +2848,7 @@
           "type": "library",
           "name": "source-map",
           "version": "0.6.1",
-          "bom-ref": "app-template@0.1.0|@vue/compiler-sfc@2.7.16|source-map@0.6.1",
+          "bom-ref": "shillinq@0.1.0|@vue/compiler-sfc@2.7.16|source-map@0.6.1",
           "author": "Nick Fitzgerald",
           "description": "Generates and consumes source maps",
           "licenses": [
@@ -2901,7 +2901,7 @@
       "name": "devtools-api",
       "group": "@vue",
       "version": "6.6.4",
-      "bom-ref": "app-template@0.1.0|@vue/devtools-api@6.6.4",
+      "bom-ref": "shillinq@0.1.0|@vue/devtools-api@6.6.4",
       "author": "Guillaume Chau",
       "description": "Interact with the Vue devtools from the page",
       "licenses": [
@@ -2952,7 +2952,7 @@
       "name": "components",
       "group": "@vueuse",
       "version": "11.3.0",
-      "bom-ref": "app-template@0.1.0|@vueuse/components@11.3.0",
+      "bom-ref": "shillinq@0.1.0|@vueuse/components@11.3.0",
       "author": "Jacob Clevenger",
       "description": "Renderless components for VueUse",
       "licenses": [
@@ -3002,7 +3002,7 @@
           "type": "library",
           "name": "vue-demi",
           "version": "0.14.10",
-          "bom-ref": "app-template@0.1.0|@vueuse/components@11.3.0|vue-demi@0.14.10",
+          "bom-ref": "shillinq@0.1.0|@vueuse/components@11.3.0|vue-demi@0.14.10",
           "author": "Anthony Fu",
           "licenses": [
             {
@@ -3054,7 +3054,7 @@
       "name": "core",
       "group": "@vueuse",
       "version": "11.3.0",
-      "bom-ref": "app-template@0.1.0|@vueuse/core@11.3.0",
+      "bom-ref": "shillinq@0.1.0|@vueuse/core@11.3.0",
       "author": "Anthony Fu",
       "description": "Collection of essential Vue Composition Utilities",
       "licenses": [
@@ -3104,7 +3104,7 @@
           "type": "library",
           "name": "vue-demi",
           "version": "0.14.10",
-          "bom-ref": "app-template@0.1.0|@vueuse/core@11.3.0|vue-demi@0.14.10",
+          "bom-ref": "shillinq@0.1.0|@vueuse/core@11.3.0|vue-demi@0.14.10",
           "author": "Anthony Fu",
           "licenses": [
             {
@@ -3156,7 +3156,7 @@
       "name": "metadata",
       "group": "@vueuse",
       "version": "11.3.0",
-      "bom-ref": "app-template@0.1.0|@vueuse/metadata@11.3.0",
+      "bom-ref": "shillinq@0.1.0|@vueuse/metadata@11.3.0",
       "author": "Anthony Fu",
       "description": "Metadata for VueUse functions",
       "licenses": [
@@ -3207,7 +3207,7 @@
       "name": "shared",
       "group": "@vueuse",
       "version": "11.3.0",
-      "bom-ref": "app-template@0.1.0|@vueuse/shared@11.3.0",
+      "bom-ref": "shillinq@0.1.0|@vueuse/shared@11.3.0",
       "author": "Anthony Fu",
       "licenses": [
         {
@@ -3256,7 +3256,7 @@
           "type": "library",
           "name": "vue-demi",
           "version": "0.14.10",
-          "bom-ref": "app-template@0.1.0|@vueuse/shared@11.3.0|vue-demi@0.14.10",
+          "bom-ref": "shillinq@0.1.0|@vueuse/shared@11.3.0|vue-demi@0.14.10",
           "author": "Anthony Fu",
           "licenses": [
             {
@@ -3307,7 +3307,7 @@
       "type": "library",
       "name": "asynckit",
       "version": "0.4.0",
-      "bom-ref": "app-template@0.1.0|asynckit@0.4.0",
+      "bom-ref": "shillinq@0.1.0|asynckit@0.4.0",
       "author": "Alex Indigo",
       "description": "Minimal async jobs utility library, with streams support",
       "licenses": [
@@ -3357,7 +3357,7 @@
       "type": "library",
       "name": "axios",
       "version": "1.13.6",
-      "bom-ref": "app-template@0.1.0|axios@1.13.6",
+      "bom-ref": "shillinq@0.1.0|axios@1.13.6",
       "author": "Matt Zabriskie",
       "description": "Promise based HTTP client for the browser and node.js",
       "licenses": [
@@ -3407,7 +3407,7 @@
       "type": "library",
       "name": "bail",
       "version": "2.0.2",
-      "bom-ref": "app-template@0.1.0|bail@2.0.2",
+      "bom-ref": "shillinq@0.1.0|bail@2.0.2",
       "author": "Titus Wormer",
       "description": "Throw a given error",
       "licenses": [
@@ -3457,7 +3457,7 @@
       "type": "library",
       "name": "balanced-match",
       "version": "1.0.2",
-      "bom-ref": "app-template@0.1.0|balanced-match@1.0.2",
+      "bom-ref": "shillinq@0.1.0|balanced-match@1.0.2",
       "author": "Julian Gruber",
       "description": "Match balanced character pairs, like \"{\" and \"}\"",
       "licenses": [
@@ -3511,7 +3511,7 @@
       "type": "library",
       "name": "base-64",
       "version": "1.0.0",
-      "bom-ref": "app-template@0.1.0|base-64@1.0.0",
+      "bom-ref": "shillinq@0.1.0|base-64@1.0.0",
       "author": "Mathias Bynens",
       "description": "A robust base64 encoder/decoder that is fully compatible with `atob()` and `btoa()`, written in JavaScript.",
       "scope": "optional",
@@ -3566,7 +3566,7 @@
       "type": "library",
       "name": "blurhash",
       "version": "2.0.5",
-      "bom-ref": "app-template@0.1.0|blurhash@2.0.5",
+      "bom-ref": "shillinq@0.1.0|blurhash@2.0.5",
       "author": "omahlama",
       "description": "Encoder and decoder for the Wolt BlurHash algorithm.",
       "licenses": [
@@ -3616,7 +3616,7 @@
       "type": "library",
       "name": "byte-length",
       "version": "1.0.2",
-      "bom-ref": "app-template@0.1.0|byte-length@1.0.2",
+      "bom-ref": "shillinq@0.1.0|byte-length@1.0.2",
       "author": "Dylan Piercey",
       "description": "Get the real byte length of a string.",
       "scope": "optional",
@@ -3671,7 +3671,7 @@
       "type": "library",
       "name": "call-bind-apply-helpers",
       "version": "1.0.2",
-      "bom-ref": "app-template@0.1.0|call-bind-apply-helpers@1.0.2",
+      "bom-ref": "shillinq@0.1.0|call-bind-apply-helpers@1.0.2",
       "author": "Jordan Harband",
       "description": "Helper functions around Function call/apply/bind, for use in `call-bind`",
       "licenses": [
@@ -3721,7 +3721,7 @@
       "type": "library",
       "name": "cancelable-promise",
       "version": "4.3.1",
-      "bom-ref": "app-template@0.1.0|cancelable-promise@4.3.1",
+      "bom-ref": "shillinq@0.1.0|cancelable-promise@4.3.1",
       "author": "Alkemics",
       "description": "A simple cancelable promise",
       "scope": "optional",
@@ -3776,7 +3776,7 @@
       "type": "library",
       "name": "char-regex",
       "version": "2.0.2",
-      "bom-ref": "app-template@0.1.0|char-regex@2.0.2",
+      "bom-ref": "shillinq@0.1.0|char-regex@2.0.2",
       "author": "Richie Bendall",
       "description": "A regex to match any full character, considering weird character ranges.",
       "licenses": [
@@ -3826,7 +3826,7 @@
       "type": "library",
       "name": "character-entities",
       "version": "2.0.2",
-      "bom-ref": "app-template@0.1.0|character-entities@2.0.2",
+      "bom-ref": "shillinq@0.1.0|character-entities@2.0.2",
       "author": "Titus Wormer",
       "description": "Map of named character references",
       "licenses": [
@@ -3876,7 +3876,7 @@
       "type": "library",
       "name": "charenc",
       "version": "0.0.2",
-      "bom-ref": "app-template@0.1.0|charenc@0.0.2",
+      "bom-ref": "shillinq@0.1.0|charenc@0.0.2",
       "author": "Paul Vorbach",
       "description": "character encoding utilities",
       "licenses": [
@@ -3926,7 +3926,7 @@
       "type": "library",
       "name": "clamp",
       "version": "1.0.1",
-      "bom-ref": "app-template@0.1.0|clamp@1.0.1",
+      "bom-ref": "shillinq@0.1.0|clamp@1.0.1",
       "author": "Hugh Kennedy",
       "description": "Clamp a value between two other values",
       "licenses": [
@@ -3976,7 +3976,7 @@
       "type": "library",
       "name": "clone",
       "version": "2.1.2",
-      "bom-ref": "app-template@0.1.0|clone@2.1.2",
+      "bom-ref": "shillinq@0.1.0|clone@2.1.2",
       "author": "Paul Vorbach",
       "description": "deep cloning of objects and arrays",
       "licenses": [
@@ -4026,7 +4026,7 @@
       "type": "library",
       "name": "combined-stream",
       "version": "1.0.8",
-      "bom-ref": "app-template@0.1.0|combined-stream@1.0.8",
+      "bom-ref": "shillinq@0.1.0|combined-stream@1.0.8",
       "author": "Felix Geisendörfer",
       "description": "A stream that emits multiple other streams one after another.",
       "licenses": [
@@ -4076,7 +4076,7 @@
       "type": "library",
       "name": "comma-separated-tokens",
       "version": "2.0.3",
-      "bom-ref": "app-template@0.1.0|comma-separated-tokens@2.0.3",
+      "bom-ref": "shillinq@0.1.0|comma-separated-tokens@2.0.3",
       "author": "Titus Wormer",
       "description": "Parse and stringify comma-separated tokens",
       "licenses": [
@@ -4126,7 +4126,7 @@
       "type": "library",
       "name": "core-js",
       "version": "3.49.0",
-      "bom-ref": "app-template@0.1.0|core-js@3.49.0",
+      "bom-ref": "shillinq@0.1.0|core-js@3.49.0",
       "author": "Denis Pushkarev",
       "description": "Standard library",
       "licenses": [
@@ -4176,7 +4176,7 @@
       "type": "library",
       "name": "crypt",
       "version": "0.0.2",
-      "bom-ref": "app-template@0.1.0|crypt@0.0.2",
+      "bom-ref": "shillinq@0.1.0|crypt@0.0.2",
       "author": "Paul Vorbach",
       "description": "utilities for encryption and hashing",
       "licenses": [
@@ -4226,7 +4226,7 @@
       "type": "library",
       "name": "csstype",
       "version": "3.2.3",
-      "bom-ref": "app-template@0.1.0|csstype@3.2.3",
+      "bom-ref": "shillinq@0.1.0|csstype@3.2.3",
       "author": "Fredrik Nicol",
       "description": "Strict TypeScript and Flow types for style based on MDN data",
       "licenses": [
@@ -4276,7 +4276,7 @@
       "type": "library",
       "name": "data-uri-to-buffer",
       "version": "4.0.1",
-      "bom-ref": "app-template@0.1.0|data-uri-to-buffer@4.0.1",
+      "bom-ref": "shillinq@0.1.0|data-uri-to-buffer@4.0.1",
       "author": "Nathan Rajlich",
       "description": "Generate a Buffer instance from a Data URI string",
       "scope": "optional",
@@ -4331,7 +4331,7 @@
       "type": "library",
       "name": "date-format-parse",
       "version": "0.2.7",
-      "bom-ref": "app-template@0.1.0|date-format-parse@0.2.7",
+      "bom-ref": "shillinq@0.1.0|date-format-parse@0.2.7",
       "author": "xiemengxiong",
       "description": "Lightweight date format and parse",
       "licenses": [
@@ -4381,7 +4381,7 @@
       "type": "library",
       "name": "debounce",
       "version": "2.2.0",
-      "bom-ref": "app-template@0.1.0|debounce@2.2.0",
+      "bom-ref": "shillinq@0.1.0|debounce@2.2.0",
       "description": "Delay function calls until a set time elapses after the last invocation",
       "licenses": [
         {
@@ -4430,7 +4430,7 @@
       "type": "library",
       "name": "debug",
       "version": "4.4.3",
-      "bom-ref": "app-template@0.1.0|debug@4.4.3",
+      "bom-ref": "shillinq@0.1.0|debug@4.4.3",
       "author": "Josh Junon",
       "description": "Lightweight debugging utility for Node.js and the browser",
       "licenses": [
@@ -4480,7 +4480,7 @@
       "type": "library",
       "name": "decode-named-character-reference",
       "version": "1.3.0",
-      "bom-ref": "app-template@0.1.0|decode-named-character-reference@1.3.0",
+      "bom-ref": "shillinq@0.1.0|decode-named-character-reference@1.3.0",
       "author": "Titus Wormer",
       "description": "Decode named character references",
       "licenses": [
@@ -4530,7 +4530,7 @@
       "type": "library",
       "name": "delayed-stream",
       "version": "1.0.0",
-      "bom-ref": "app-template@0.1.0|delayed-stream@1.0.0",
+      "bom-ref": "shillinq@0.1.0|delayed-stream@1.0.0",
       "author": "Felix Geisendörfer",
       "description": "Buffers events from a stream until you are ready to handle them.",
       "licenses": [
@@ -4580,7 +4580,7 @@
       "type": "library",
       "name": "dequal",
       "version": "2.0.3",
-      "bom-ref": "app-template@0.1.0|dequal@2.0.3",
+      "bom-ref": "shillinq@0.1.0|dequal@2.0.3",
       "author": "Luke Edwards",
       "description": "A tiny (304B to 489B) utility for check for deep equality",
       "licenses": [
@@ -4630,7 +4630,7 @@
       "type": "library",
       "name": "devlop",
       "version": "1.1.0",
-      "bom-ref": "app-template@0.1.0|devlop@1.1.0",
+      "bom-ref": "shillinq@0.1.0|devlop@1.1.0",
       "author": "Titus Wormer",
       "description": "Do things in development and nothing otherwise",
       "licenses": [
@@ -4680,7 +4680,7 @@
       "type": "library",
       "name": "dompurify",
       "version": "3.3.3",
-      "bom-ref": "app-template@0.1.0|dompurify@3.3.3",
+      "bom-ref": "shillinq@0.1.0|dompurify@3.3.3",
       "author": "Dr.-Ing. Mario Heiderich, Cure53",
       "description": "DOMPurify is a DOM-only, super-fast, uber-tolerant XSS sanitizer for HTML, MathML and SVG. It's written in JavaScript and works in all modern browsers (Safari, Opera (15+), Internet Explorer (10+), Firefox and Chrome - as well as almost anything else using Blink or WebKit). DOMPurify is written by security people who have vast background in web attacks and XSS. Fear not.",
       "licenses": [
@@ -4728,7 +4728,7 @@
       "type": "library",
       "name": "dunder-proto",
       "version": "1.0.1",
-      "bom-ref": "app-template@0.1.0|dunder-proto@1.0.1",
+      "bom-ref": "shillinq@0.1.0|dunder-proto@1.0.1",
       "author": "Jordan Harband",
       "description": "If available, the `Object.prototype.__proto__` accessor and mutator, call-bound",
       "licenses": [
@@ -4778,7 +4778,7 @@
       "type": "library",
       "name": "emoji-mart-vue-fast",
       "version": "15.0.5",
-      "bom-ref": "app-template@0.1.0|emoji-mart-vue-fast@15.0.5",
+      "bom-ref": "shillinq@0.1.0|emoji-mart-vue-fast@15.0.5",
       "author": "Borys Serebrov",
       "description": "Customizable Slack-like emoji picker for VueJS, fast version",
       "licenses": [
@@ -4828,7 +4828,7 @@
       "type": "library",
       "name": "encoding",
       "version": "0.1.13",
-      "bom-ref": "app-template@0.1.0|encoding@0.1.13",
+      "bom-ref": "shillinq@0.1.0|encoding@0.1.13",
       "author": "Andris Reinman",
       "description": "Convert encodings, uses iconv-lite",
       "scope": "optional",
@@ -4887,7 +4887,7 @@
       "type": "library",
       "name": "es-define-property",
       "version": "1.0.1",
-      "bom-ref": "app-template@0.1.0|es-define-property@1.0.1",
+      "bom-ref": "shillinq@0.1.0|es-define-property@1.0.1",
       "author": "Jordan Harband",
       "description": "`Object.defineProperty`, but not IE 8's broken one.",
       "licenses": [
@@ -4937,7 +4937,7 @@
       "type": "library",
       "name": "es-errors",
       "version": "1.3.0",
-      "bom-ref": "app-template@0.1.0|es-errors@1.3.0",
+      "bom-ref": "shillinq@0.1.0|es-errors@1.3.0",
       "author": "Jordan Harband",
       "description": "A simple cache for a few of the JS Error constructors.",
       "licenses": [
@@ -4987,7 +4987,7 @@
       "type": "library",
       "name": "es-object-atoms",
       "version": "1.1.1",
-      "bom-ref": "app-template@0.1.0|es-object-atoms@1.1.1",
+      "bom-ref": "shillinq@0.1.0|es-object-atoms@1.1.1",
       "author": "Jordan Harband",
       "description": "ES Object-related atoms: Object, ToObject, RequireObjectCoercible",
       "licenses": [
@@ -5037,7 +5037,7 @@
       "type": "library",
       "name": "es-set-tostringtag",
       "version": "2.1.0",
-      "bom-ref": "app-template@0.1.0|es-set-tostringtag@2.1.0",
+      "bom-ref": "shillinq@0.1.0|es-set-tostringtag@2.1.0",
       "author": "Jordan Harband",
       "description": "A helper to optimistically set Symbol.toStringTag, when possible.",
       "licenses": [
@@ -5087,7 +5087,7 @@
       "type": "library",
       "name": "escape-html",
       "version": "1.0.3",
-      "bom-ref": "app-template@0.1.0|escape-html@1.0.3",
+      "bom-ref": "shillinq@0.1.0|escape-html@1.0.3",
       "description": "Escape string for use in HTML",
       "licenses": [
         {
@@ -5136,7 +5136,7 @@
       "type": "library",
       "name": "eventemitter3",
       "version": "5.0.4",
-      "bom-ref": "app-template@0.1.0|eventemitter3@5.0.4",
+      "bom-ref": "shillinq@0.1.0|eventemitter3@5.0.4",
       "author": "Arnout Kazemier",
       "description": "EventEmitter3 focuses on performance while maintaining a Node.js AND browser compatible interface.",
       "licenses": [
@@ -5186,7 +5186,7 @@
       "type": "library",
       "name": "extend",
       "version": "3.0.2",
-      "bom-ref": "app-template@0.1.0|extend@3.0.2",
+      "bom-ref": "shillinq@0.1.0|extend@3.0.2",
       "author": "Stefan Thomas",
       "description": "Port of jQuery.extend for node.js and the browser",
       "licenses": [
@@ -5236,7 +5236,7 @@
       "type": "library",
       "name": "fast-xml-builder",
       "version": "1.1.4",
-      "bom-ref": "app-template@0.1.0|fast-xml-builder@1.1.4",
+      "bom-ref": "shillinq@0.1.0|fast-xml-builder@1.1.4",
       "author": "Amit Gupta",
       "description": "Build XML from JSON without C/C++ based libraries",
       "scope": "optional",
@@ -5291,7 +5291,7 @@
       "type": "library",
       "name": "fetch-blob",
       "version": "3.2.0",
-      "bom-ref": "app-template@0.1.0|fetch-blob@3.2.0",
+      "bom-ref": "shillinq@0.1.0|fetch-blob@3.2.0",
       "author": "Jimmy Wärting",
       "description": "Blob & File implementation in Node.js, originally from node-fetch.",
       "scope": "optional",
@@ -5346,7 +5346,7 @@
       "type": "library",
       "name": "floating-vue",
       "version": "1.0.0-beta.19",
-      "bom-ref": "app-template@0.1.0|floating-vue@1.0.0-beta.19",
+      "bom-ref": "shillinq@0.1.0|floating-vue@1.0.0-beta.19",
       "author": "Guillaume Chau",
       "description": "Easy Vue tooltips, dropdowns, menus & popovers using floating-ui",
       "licenses": [
@@ -5397,7 +5397,7 @@
           "name": "dom",
           "group": "@floating-ui",
           "version": "0.1.10",
-          "bom-ref": "app-template@0.1.0|floating-vue@1.0.0-beta.19|@floating-ui/dom@0.1.10",
+          "bom-ref": "shillinq@0.1.0|floating-vue@1.0.0-beta.19|@floating-ui/dom@0.1.10",
           "author": "atomiks",
           "description": "Floating UI for the web",
           "licenses": [
@@ -5448,7 +5448,7 @@
           "name": "core",
           "group": "@floating-ui",
           "version": "0.3.1",
-          "bom-ref": "app-template@0.1.0|floating-vue@1.0.0-beta.19|@floating-ui/core@0.3.1",
+          "bom-ref": "shillinq@0.1.0|floating-vue@1.0.0-beta.19|@floating-ui/core@0.3.1",
           "author": "atomiks",
           "description": "Positioning library for floating elements: tooltips, popovers, dropdowns, and more",
           "licenses": [
@@ -5500,7 +5500,7 @@
       "type": "library",
       "name": "focus-trap",
       "version": "7.8.0",
-      "bom-ref": "app-template@0.1.0|focus-trap@7.8.0",
+      "bom-ref": "shillinq@0.1.0|focus-trap@7.8.0",
       "author": "David Clark",
       "description": "Trap focus within a DOM node.",
       "licenses": [
@@ -5550,7 +5550,7 @@
       "type": "library",
       "name": "follow-redirects",
       "version": "1.15.11",
-      "bom-ref": "app-template@0.1.0|follow-redirects@1.15.11",
+      "bom-ref": "shillinq@0.1.0|follow-redirects@1.15.11",
       "author": "Ruben Verborgh",
       "description": "HTTP and HTTPS modules that follow redirects.",
       "licenses": [
@@ -5600,7 +5600,7 @@
       "type": "library",
       "name": "form-data",
       "version": "4.0.5",
-      "bom-ref": "app-template@0.1.0|form-data@4.0.5",
+      "bom-ref": "shillinq@0.1.0|form-data@4.0.5",
       "author": "Felix Geisendörfer",
       "description": "A library to create readable \"multipart/form-data\" streams. Can be used to submit forms and file uploads to other web applications.",
       "licenses": [
@@ -5650,7 +5650,7 @@
       "type": "library",
       "name": "formdata-polyfill",
       "version": "4.0.10",
-      "bom-ref": "app-template@0.1.0|formdata-polyfill@4.0.10",
+      "bom-ref": "shillinq@0.1.0|formdata-polyfill@4.0.10",
       "author": "Jimmy Wärting",
       "description": "HTML5 `FormData` for Browsers and Node.",
       "scope": "optional",
@@ -5705,7 +5705,7 @@
       "type": "library",
       "name": "function-bind",
       "version": "1.1.2",
-      "bom-ref": "app-template@0.1.0|function-bind@1.1.2",
+      "bom-ref": "shillinq@0.1.0|function-bind@1.1.2",
       "author": "Raynos",
       "description": "Implementation of Function.prototype.bind",
       "licenses": [
@@ -5755,7 +5755,7 @@
       "type": "library",
       "name": "get-intrinsic",
       "version": "1.3.0",
-      "bom-ref": "app-template@0.1.0|get-intrinsic@1.3.0",
+      "bom-ref": "shillinq@0.1.0|get-intrinsic@1.3.0",
       "author": "Jordan Harband",
       "description": "Get and robustly cache all JS language-level intrinsics at first require time",
       "licenses": [
@@ -5805,7 +5805,7 @@
       "type": "library",
       "name": "get-proto",
       "version": "1.0.1",
-      "bom-ref": "app-template@0.1.0|get-proto@1.0.1",
+      "bom-ref": "shillinq@0.1.0|get-proto@1.0.1",
       "author": "Jordan Harband",
       "description": "Robustly get the [[Prototype]] of an object",
       "licenses": [
@@ -5855,7 +5855,7 @@
       "type": "library",
       "name": "gopd",
       "version": "1.2.0",
-      "bom-ref": "app-template@0.1.0|gopd@1.2.0",
+      "bom-ref": "shillinq@0.1.0|gopd@1.2.0",
       "author": "Jordan Harband",
       "description": "`Object.getOwnPropertyDescriptor`, but accounts for IE's broken implementation.",
       "licenses": [
@@ -5905,7 +5905,7 @@
       "type": "library",
       "name": "has-symbols",
       "version": "1.1.0",
-      "bom-ref": "app-template@0.1.0|has-symbols@1.1.0",
+      "bom-ref": "shillinq@0.1.0|has-symbols@1.1.0",
       "author": "Jordan Harband",
       "description": "Determine if the JS environment has Symbol support. Supports spec, or shams.",
       "licenses": [
@@ -5955,7 +5955,7 @@
       "type": "library",
       "name": "has-tostringtag",
       "version": "1.0.2",
-      "bom-ref": "app-template@0.1.0|has-tostringtag@1.0.2",
+      "bom-ref": "shillinq@0.1.0|has-tostringtag@1.0.2",
       "author": "Jordan Harband",
       "description": "Determine if the JS environment has `Symbol.toStringTag` support. Supports spec, or shams.",
       "licenses": [
@@ -6005,7 +6005,7 @@
       "type": "library",
       "name": "hasown",
       "version": "2.0.2",
-      "bom-ref": "app-template@0.1.0|hasown@2.0.2",
+      "bom-ref": "shillinq@0.1.0|hasown@2.0.2",
       "author": "Jordan Harband",
       "description": "A robust, ES3 compatible, \"has own property\" predicate.",
       "licenses": [
@@ -6055,7 +6055,7 @@
       "type": "library",
       "name": "hast-to-hyperscript",
       "version": "10.0.3",
-      "bom-ref": "app-template@0.1.0|hast-to-hyperscript@10.0.3",
+      "bom-ref": "shillinq@0.1.0|hast-to-hyperscript@10.0.3",
       "author": "Titus Wormer",
       "description": "Legacy hast utility to transform to something else",
       "licenses": [
@@ -6106,7 +6106,7 @@
           "name": "unist",
           "group": "@types",
           "version": "2.0.11",
-          "bom-ref": "app-template@0.1.0|hast-to-hyperscript@10.0.3|@types/unist@2.0.11",
+          "bom-ref": "shillinq@0.1.0|hast-to-hyperscript@10.0.3|@types/unist@2.0.11",
           "description": "TypeScript definitions for unist",
           "licenses": [
             {
@@ -6157,7 +6157,7 @@
       "type": "library",
       "name": "hast-util-is-element",
       "version": "3.0.0",
-      "bom-ref": "app-template@0.1.0|hast-util-is-element@3.0.0",
+      "bom-ref": "shillinq@0.1.0|hast-util-is-element@3.0.0",
       "author": "Titus Wormer",
       "description": "hast utility to check if a node is a (certain) element",
       "licenses": [
@@ -6207,7 +6207,7 @@
       "type": "library",
       "name": "hast-util-to-text",
       "version": "4.0.2",
-      "bom-ref": "app-template@0.1.0|hast-util-to-text@4.0.2",
+      "bom-ref": "shillinq@0.1.0|hast-util-to-text@4.0.2",
       "author": "Titus Wormer",
       "description": "hast utility to get the plain-text value of a node according to the `innerText` algorithm",
       "licenses": [
@@ -6257,7 +6257,7 @@
       "type": "library",
       "name": "hast-util-whitespace",
       "version": "2.0.1",
-      "bom-ref": "app-template@0.1.0|hast-util-whitespace@2.0.1",
+      "bom-ref": "shillinq@0.1.0|hast-util-whitespace@2.0.1",
       "author": "Titus Wormer",
       "description": "hast utility to check if a node is inter-element whitespace",
       "licenses": [
@@ -6307,7 +6307,7 @@
       "type": "library",
       "name": "highlight.js",
       "version": "11.11.1",
-      "bom-ref": "app-template@0.1.0|highlight.js@11.11.1",
+      "bom-ref": "shillinq@0.1.0|highlight.js@11.11.1",
       "author": "Josh Goebel",
       "description": "Syntax highlighting with language autodetection.",
       "licenses": [
@@ -6357,7 +6357,7 @@
       "type": "library",
       "name": "hot-patcher",
       "version": "2.0.1",
-      "bom-ref": "app-template@0.1.0|hot-patcher@2.0.1",
+      "bom-ref": "shillinq@0.1.0|hot-patcher@2.0.1",
       "author": "Perry Mitchell",
       "description": "Hot method patching framework for handling environmental method differences",
       "scope": "optional",
@@ -6412,7 +6412,7 @@
       "type": "library",
       "name": "iconv-lite",
       "version": "0.6.3",
-      "bom-ref": "app-template@0.1.0|iconv-lite@0.6.3",
+      "bom-ref": "shillinq@0.1.0|iconv-lite@0.6.3",
       "author": "Alexander Shtuchkin",
       "description": "Convert character encodings in pure javascript.",
       "scope": "optional",
@@ -6471,7 +6471,7 @@
       "type": "library",
       "name": "inline-style-parser",
       "version": "0.1.1",
-      "bom-ref": "app-template@0.1.0|inline-style-parser@0.1.1",
+      "bom-ref": "shillinq@0.1.0|inline-style-parser@0.1.1",
       "description": "An inline style parser.",
       "licenses": [
         {
@@ -6520,7 +6520,7 @@
       "type": "library",
       "name": "is-absolute-url",
       "version": "4.0.1",
-      "bom-ref": "app-template@0.1.0|is-absolute-url@4.0.1",
+      "bom-ref": "shillinq@0.1.0|is-absolute-url@4.0.1",
       "author": "Sindre Sorhus",
       "description": "Check if a URL is absolute",
       "licenses": [
@@ -6570,7 +6570,7 @@
       "type": "library",
       "name": "is-buffer",
       "version": "1.1.6",
-      "bom-ref": "app-template@0.1.0|is-buffer@1.1.6",
+      "bom-ref": "shillinq@0.1.0|is-buffer@1.1.6",
       "author": "Feross Aboukhadijeh",
       "description": "Determine if an object is a Buffer",
       "licenses": [
@@ -6620,7 +6620,7 @@
       "type": "library",
       "name": "is-svg",
       "version": "6.1.0",
-      "bom-ref": "app-template@0.1.0|is-svg@6.1.0",
+      "bom-ref": "shillinq@0.1.0|is-svg@6.1.0",
       "author": "Sindre Sorhus",
       "description": "Check if a string is SVG",
       "licenses": [
@@ -6670,7 +6670,7 @@
       "type": "library",
       "name": "layerr",
       "version": "3.0.0",
-      "bom-ref": "app-template@0.1.0|layerr@3.0.0",
+      "bom-ref": "shillinq@0.1.0|layerr@3.0.0",
       "author": "Perry Mitchell",
       "description": "Error wrapping utility for NodeJS and the browser",
       "scope": "optional",
@@ -6725,7 +6725,7 @@
       "type": "library",
       "name": "linkify-string",
       "version": "4.3.2",
-      "bom-ref": "app-template@0.1.0|linkify-string@4.3.2",
+      "bom-ref": "shillinq@0.1.0|linkify-string@4.3.2",
       "author": "Nick Frasser",
       "description": "String interface for linkifyjs",
       "licenses": [
@@ -6775,7 +6775,7 @@
       "type": "library",
       "name": "linkifyjs",
       "version": "4.3.2",
-      "bom-ref": "app-template@0.1.0|linkifyjs@4.3.2",
+      "bom-ref": "shillinq@0.1.0|linkifyjs@4.3.2",
       "author": "Nick Frasser",
       "description": "Find URLs, email addresses, #hashtags and @mentions in plain-text strings, then convert them into HTML <a> links.",
       "licenses": [
@@ -6825,7 +6825,7 @@
       "type": "library",
       "name": "lodash.get",
       "version": "4.4.2",
-      "bom-ref": "app-template@0.1.0|lodash.get@4.4.2",
+      "bom-ref": "shillinq@0.1.0|lodash.get@4.4.2",
       "author": "John-David Dalton",
       "description": "The lodash method `_.get` exported as a module.",
       "licenses": [
@@ -6875,7 +6875,7 @@
       "type": "library",
       "name": "lodash.throttle",
       "version": "4.1.1",
-      "bom-ref": "app-template@0.1.0|lodash.throttle@4.1.1",
+      "bom-ref": "shillinq@0.1.0|lodash.throttle@4.1.1",
       "author": "John-David Dalton",
       "description": "The lodash method `_.throttle` exported as a module.",
       "licenses": [
@@ -6925,7 +6925,7 @@
       "type": "library",
       "name": "longest-streak",
       "version": "3.1.0",
-      "bom-ref": "app-template@0.1.0|longest-streak@3.1.0",
+      "bom-ref": "shillinq@0.1.0|longest-streak@3.1.0",
       "author": "Titus Wormer",
       "description": "Count the longest repeating streak of a substring",
       "licenses": [
@@ -6975,7 +6975,7 @@
       "type": "library",
       "name": "lowlight",
       "version": "3.3.0",
-      "bom-ref": "app-template@0.1.0|lowlight@3.3.0",
+      "bom-ref": "shillinq@0.1.0|lowlight@3.3.0",
       "author": "Titus Wormer",
       "description": "Virtual syntax highlighting for virtual DOMs and non-HTML things",
       "licenses": [
@@ -7025,7 +7025,7 @@
       "type": "library",
       "name": "material-colors",
       "version": "1.2.6",
-      "bom-ref": "app-template@0.1.0|material-colors@1.2.6",
+      "bom-ref": "shillinq@0.1.0|material-colors@1.2.6",
       "author": "Shuhei Kagawa",
       "description": "Colors of Google's Material Design made available to coders",
       "licenses": [
@@ -7075,7 +7075,7 @@
       "type": "library",
       "name": "math-intrinsics",
       "version": "1.1.0",
-      "bom-ref": "app-template@0.1.0|math-intrinsics@1.1.0",
+      "bom-ref": "shillinq@0.1.0|math-intrinsics@1.1.0",
       "author": "Jordan Harband",
       "description": "ES Math-related intrinsics and helpers, robustly cached.",
       "licenses": [
@@ -7125,7 +7125,7 @@
       "type": "library",
       "name": "md5",
       "version": "2.3.0",
-      "bom-ref": "app-template@0.1.0|md5@2.3.0",
+      "bom-ref": "shillinq@0.1.0|md5@2.3.0",
       "author": "Paul Vorbach",
       "description": "js function for hashing messages with MD5",
       "licenses": [
@@ -7175,7 +7175,7 @@
       "type": "library",
       "name": "mdast-squeeze-paragraphs",
       "version": "6.0.0",
-      "bom-ref": "app-template@0.1.0|mdast-squeeze-paragraphs@6.0.0",
+      "bom-ref": "shillinq@0.1.0|mdast-squeeze-paragraphs@6.0.0",
       "author": "Eugene Sharygin",
       "description": "mdast utility to remove empty paragraphs from a tree",
       "licenses": [
@@ -7225,7 +7225,7 @@
       "type": "library",
       "name": "mdast-util-find-and-replace",
       "version": "3.0.2",
-      "bom-ref": "app-template@0.1.0|mdast-util-find-and-replace@3.0.2",
+      "bom-ref": "shillinq@0.1.0|mdast-util-find-and-replace@3.0.2",
       "author": "Titus Wormer",
       "description": "mdast utility to find and replace text in a tree",
       "licenses": [
@@ -7275,7 +7275,7 @@
           "type": "library",
           "name": "escape-string-regexp",
           "version": "5.0.0",
-          "bom-ref": "app-template@0.1.0|mdast-util-find-and-replace@3.0.2|escape-string-regexp@5.0.0",
+          "bom-ref": "shillinq@0.1.0|mdast-util-find-and-replace@3.0.2|escape-string-regexp@5.0.0",
           "author": "Sindre Sorhus",
           "description": "Escape RegExp special characters",
           "licenses": [
@@ -7327,7 +7327,7 @@
       "type": "library",
       "name": "mdast-util-from-markdown",
       "version": "2.0.3",
-      "bom-ref": "app-template@0.1.0|mdast-util-from-markdown@2.0.3",
+      "bom-ref": "shillinq@0.1.0|mdast-util-from-markdown@2.0.3",
       "author": "Titus Wormer",
       "description": "mdast utility to parse markdown",
       "licenses": [
@@ -7377,7 +7377,7 @@
       "type": "library",
       "name": "mdast-util-newline-to-break",
       "version": "2.0.0",
-      "bom-ref": "app-template@0.1.0|mdast-util-newline-to-break@2.0.0",
+      "bom-ref": "shillinq@0.1.0|mdast-util-newline-to-break@2.0.0",
       "author": "Titus Wormer",
       "description": "mdast utility to support hard breaks without needing spaces or escapes",
       "licenses": [
@@ -7427,7 +7427,7 @@
       "type": "library",
       "name": "mdast-util-phrasing",
       "version": "4.1.0",
-      "bom-ref": "app-template@0.1.0|mdast-util-phrasing@4.1.0",
+      "bom-ref": "shillinq@0.1.0|mdast-util-phrasing@4.1.0",
       "author": "Victor Felder",
       "description": "mdast utility to check if a node is phrasing content",
       "licenses": [
@@ -7477,7 +7477,7 @@
       "type": "library",
       "name": "mdast-util-to-hast",
       "version": "13.2.1",
-      "bom-ref": "app-template@0.1.0|mdast-util-to-hast@13.2.1",
+      "bom-ref": "shillinq@0.1.0|mdast-util-to-hast@13.2.1",
       "author": "Titus Wormer",
       "description": "mdast utility to transform to hast",
       "licenses": [
@@ -7527,7 +7527,7 @@
       "type": "library",
       "name": "mdast-util-to-markdown",
       "version": "2.1.2",
-      "bom-ref": "app-template@0.1.0|mdast-util-to-markdown@2.1.2",
+      "bom-ref": "shillinq@0.1.0|mdast-util-to-markdown@2.1.2",
       "author": "Titus Wormer",
       "description": "mdast utility to serialize markdown",
       "licenses": [
@@ -7577,7 +7577,7 @@
       "type": "library",
       "name": "mdast-util-to-string",
       "version": "4.0.0",
-      "bom-ref": "app-template@0.1.0|mdast-util-to-string@4.0.0",
+      "bom-ref": "shillinq@0.1.0|mdast-util-to-string@4.0.0",
       "author": "Titus Wormer",
       "description": "mdast utility to get the plain text content of a node",
       "licenses": [
@@ -7627,7 +7627,7 @@
       "type": "library",
       "name": "micromark-core-commonmark",
       "version": "2.0.3",
-      "bom-ref": "app-template@0.1.0|micromark-core-commonmark@2.0.3",
+      "bom-ref": "shillinq@0.1.0|micromark-core-commonmark@2.0.3",
       "author": "Titus Wormer",
       "description": "The CommonMark markdown constructs",
       "licenses": [
@@ -7677,7 +7677,7 @@
       "type": "library",
       "name": "micromark-factory-destination",
       "version": "2.0.1",
-      "bom-ref": "app-template@0.1.0|micromark-factory-destination@2.0.1",
+      "bom-ref": "shillinq@0.1.0|micromark-factory-destination@2.0.1",
       "author": "Titus Wormer",
       "description": "micromark factory to parse destinations (found in resources, definitions)",
       "licenses": [
@@ -7727,7 +7727,7 @@
       "type": "library",
       "name": "micromark-factory-label",
       "version": "2.0.1",
-      "bom-ref": "app-template@0.1.0|micromark-factory-label@2.0.1",
+      "bom-ref": "shillinq@0.1.0|micromark-factory-label@2.0.1",
       "author": "Titus Wormer",
       "description": "micromark factory to parse labels (found in media, definitions)",
       "licenses": [
@@ -7777,7 +7777,7 @@
       "type": "library",
       "name": "micromark-factory-space",
       "version": "2.0.1",
-      "bom-ref": "app-template@0.1.0|micromark-factory-space@2.0.1",
+      "bom-ref": "shillinq@0.1.0|micromark-factory-space@2.0.1",
       "author": "Titus Wormer",
       "description": "micromark factory to parse markdown space (found in lots of places)",
       "licenses": [
@@ -7827,7 +7827,7 @@
       "type": "library",
       "name": "micromark-factory-title",
       "version": "2.0.1",
-      "bom-ref": "app-template@0.1.0|micromark-factory-title@2.0.1",
+      "bom-ref": "shillinq@0.1.0|micromark-factory-title@2.0.1",
       "author": "Titus Wormer",
       "description": "micromark factory to parse markdown titles (found in resources, definitions)",
       "licenses": [
@@ -7877,7 +7877,7 @@
       "type": "library",
       "name": "micromark-factory-whitespace",
       "version": "2.0.1",
-      "bom-ref": "app-template@0.1.0|micromark-factory-whitespace@2.0.1",
+      "bom-ref": "shillinq@0.1.0|micromark-factory-whitespace@2.0.1",
       "author": "Titus Wormer",
       "description": "micromark factory to parse markdown whitespace (found in lots of places)",
       "licenses": [
@@ -7927,7 +7927,7 @@
       "type": "library",
       "name": "micromark-util-character",
       "version": "2.1.1",
-      "bom-ref": "app-template@0.1.0|micromark-util-character@2.1.1",
+      "bom-ref": "shillinq@0.1.0|micromark-util-character@2.1.1",
       "author": "Titus Wormer",
       "description": "micromark utility to handle character codes",
       "licenses": [
@@ -7977,7 +7977,7 @@
       "type": "library",
       "name": "micromark-util-chunked",
       "version": "2.0.1",
-      "bom-ref": "app-template@0.1.0|micromark-util-chunked@2.0.1",
+      "bom-ref": "shillinq@0.1.0|micromark-util-chunked@2.0.1",
       "author": "Titus Wormer",
       "description": "micromark utility to splice and push with giant arrays",
       "licenses": [
@@ -8027,7 +8027,7 @@
       "type": "library",
       "name": "micromark-util-classify-character",
       "version": "2.0.1",
-      "bom-ref": "app-template@0.1.0|micromark-util-classify-character@2.0.1",
+      "bom-ref": "shillinq@0.1.0|micromark-util-classify-character@2.0.1",
       "author": "Titus Wormer",
       "description": "micromark utility to classify whether a character is whitespace or punctuation",
       "licenses": [
@@ -8077,7 +8077,7 @@
       "type": "library",
       "name": "micromark-util-combine-extensions",
       "version": "2.0.1",
-      "bom-ref": "app-template@0.1.0|micromark-util-combine-extensions@2.0.1",
+      "bom-ref": "shillinq@0.1.0|micromark-util-combine-extensions@2.0.1",
       "author": "Titus Wormer",
       "description": "micromark utility to combine syntax or html extensions",
       "licenses": [
@@ -8127,7 +8127,7 @@
       "type": "library",
       "name": "micromark-util-decode-numeric-character-reference",
       "version": "2.0.2",
-      "bom-ref": "app-template@0.1.0|micromark-util-decode-numeric-character-reference@2.0.2",
+      "bom-ref": "shillinq@0.1.0|micromark-util-decode-numeric-character-reference@2.0.2",
       "author": "Titus Wormer",
       "description": "micromark utility to decode numeric character references",
       "licenses": [
@@ -8177,7 +8177,7 @@
       "type": "library",
       "name": "micromark-util-decode-string",
       "version": "2.0.1",
-      "bom-ref": "app-template@0.1.0|micromark-util-decode-string@2.0.1",
+      "bom-ref": "shillinq@0.1.0|micromark-util-decode-string@2.0.1",
       "author": "Titus Wormer",
       "description": "micromark utility to decode markdown strings",
       "licenses": [
@@ -8227,7 +8227,7 @@
       "type": "library",
       "name": "micromark-util-encode",
       "version": "2.0.1",
-      "bom-ref": "app-template@0.1.0|micromark-util-encode@2.0.1",
+      "bom-ref": "shillinq@0.1.0|micromark-util-encode@2.0.1",
       "author": "Titus Wormer",
       "description": "micromark utility to encode dangerous html characters",
       "licenses": [
@@ -8277,7 +8277,7 @@
       "type": "library",
       "name": "micromark-util-html-tag-name",
       "version": "2.0.1",
-      "bom-ref": "app-template@0.1.0|micromark-util-html-tag-name@2.0.1",
+      "bom-ref": "shillinq@0.1.0|micromark-util-html-tag-name@2.0.1",
       "author": "Titus Wormer",
       "description": "micromark utility with list of html tag names",
       "licenses": [
@@ -8327,7 +8327,7 @@
       "type": "library",
       "name": "micromark-util-normalize-identifier",
       "version": "2.0.1",
-      "bom-ref": "app-template@0.1.0|micromark-util-normalize-identifier@2.0.1",
+      "bom-ref": "shillinq@0.1.0|micromark-util-normalize-identifier@2.0.1",
       "author": "Titus Wormer",
       "description": "micromark utility normalize identifiers (as found in references, definitions)",
       "licenses": [
@@ -8377,7 +8377,7 @@
       "type": "library",
       "name": "micromark-util-resolve-all",
       "version": "2.0.1",
-      "bom-ref": "app-template@0.1.0|micromark-util-resolve-all@2.0.1",
+      "bom-ref": "shillinq@0.1.0|micromark-util-resolve-all@2.0.1",
       "author": "Titus Wormer",
       "description": "micromark utility to resolve subtokens",
       "licenses": [
@@ -8427,7 +8427,7 @@
       "type": "library",
       "name": "micromark-util-sanitize-uri",
       "version": "2.0.1",
-      "bom-ref": "app-template@0.1.0|micromark-util-sanitize-uri@2.0.1",
+      "bom-ref": "shillinq@0.1.0|micromark-util-sanitize-uri@2.0.1",
       "author": "Titus Wormer",
       "description": "micromark utility to sanitize urls",
       "licenses": [
@@ -8477,7 +8477,7 @@
       "type": "library",
       "name": "micromark-util-subtokenize",
       "version": "2.1.0",
-      "bom-ref": "app-template@0.1.0|micromark-util-subtokenize@2.1.0",
+      "bom-ref": "shillinq@0.1.0|micromark-util-subtokenize@2.1.0",
       "author": "Titus Wormer",
       "description": "micromark utility to tokenize subtokens",
       "licenses": [
@@ -8527,7 +8527,7 @@
       "type": "library",
       "name": "micromark-util-symbol",
       "version": "2.0.1",
-      "bom-ref": "app-template@0.1.0|micromark-util-symbol@2.0.1",
+      "bom-ref": "shillinq@0.1.0|micromark-util-symbol@2.0.1",
       "author": "Titus Wormer",
       "description": "micromark utility with symbols",
       "licenses": [
@@ -8577,7 +8577,7 @@
       "type": "library",
       "name": "micromark-util-types",
       "version": "2.0.2",
-      "bom-ref": "app-template@0.1.0|micromark-util-types@2.0.2",
+      "bom-ref": "shillinq@0.1.0|micromark-util-types@2.0.2",
       "author": "Titus Wormer",
       "description": "micromark utility with a couple of typescript types",
       "licenses": [
@@ -8627,7 +8627,7 @@
       "type": "library",
       "name": "micromark",
       "version": "4.0.2",
-      "bom-ref": "app-template@0.1.0|micromark@4.0.2",
+      "bom-ref": "shillinq@0.1.0|micromark@4.0.2",
       "author": "Titus Wormer",
       "description": "small commonmark compliant markdown parser with positional info and concrete tokens",
       "licenses": [
@@ -8677,7 +8677,7 @@
       "type": "library",
       "name": "mime-db",
       "version": "1.52.0",
-      "bom-ref": "app-template@0.1.0|mime-db@1.52.0",
+      "bom-ref": "shillinq@0.1.0|mime-db@1.52.0",
       "description": "Media Type Database",
       "licenses": [
         {
@@ -8726,7 +8726,7 @@
       "type": "library",
       "name": "mime-types",
       "version": "2.1.35",
-      "bom-ref": "app-template@0.1.0|mime-types@2.1.35",
+      "bom-ref": "shillinq@0.1.0|mime-types@2.1.35",
       "description": "The ultimate javascript content-type utility.",
       "licenses": [
         {
@@ -8775,7 +8775,7 @@
       "type": "library",
       "name": "ms",
       "version": "2.1.3",
-      "bom-ref": "app-template@0.1.0|ms@2.1.3",
+      "bom-ref": "shillinq@0.1.0|ms@2.1.3",
       "description": "Tiny millisecond conversion utility",
       "licenses": [
         {
@@ -8824,7 +8824,7 @@
       "type": "library",
       "name": "nanoid",
       "version": "3.3.11",
-      "bom-ref": "app-template@0.1.0|nanoid@3.3.11",
+      "bom-ref": "shillinq@0.1.0|nanoid@3.3.11",
       "author": "Andrey Sitnik",
       "description": "A tiny (116 bytes), secure URL-friendly unique string ID generator",
       "licenses": [
@@ -8874,7 +8874,7 @@
       "type": "library",
       "name": "nested-property",
       "version": "4.0.0",
-      "bom-ref": "app-template@0.1.0|nested-property@4.0.0",
+      "bom-ref": "shillinq@0.1.0|nested-property@4.0.0",
       "author": "Olivier Scherrer",
       "description": "Read, write or test a data structure's nested property via a string like 'my.nested.property'. It works through arrays and objects.'",
       "scope": "optional",
@@ -8929,7 +8929,7 @@
       "type": "library",
       "name": "node-domexception",
       "version": "1.0.0",
-      "bom-ref": "app-template@0.1.0|node-domexception@1.0.0",
+      "bom-ref": "shillinq@0.1.0|node-domexception@1.0.0",
       "author": "Jimmy Wärting",
       "description": "An implementation of the DOMException class from NodeJS",
       "scope": "optional",
@@ -8984,7 +8984,7 @@
       "type": "library",
       "name": "node-fetch",
       "version": "3.3.2",
-      "bom-ref": "app-template@0.1.0|node-fetch@3.3.2",
+      "bom-ref": "shillinq@0.1.0|node-fetch@3.3.2",
       "author": "David Frank",
       "description": "A light-weight module that brings Fetch API to node.js",
       "scope": "optional",
@@ -9039,7 +9039,7 @@
       "type": "library",
       "name": "node-gettext",
       "version": "3.0.1",
-      "bom-ref": "app-template@0.1.0|node-gettext@3.0.1",
+      "bom-ref": "shillinq@0.1.0|node-gettext@3.0.1",
       "author": "Andris Reinman",
       "description": "A JavaScript implementation of gettext, a localization framework",
       "licenses": [
@@ -9090,7 +9090,7 @@
       "type": "library",
       "name": "p-queue",
       "version": "8.1.1",
-      "bom-ref": "app-template@0.1.0|p-queue@8.1.1",
+      "bom-ref": "shillinq@0.1.0|p-queue@8.1.1",
       "description": "Promise queue with concurrency control",
       "licenses": [
         {
@@ -9139,7 +9139,7 @@
       "type": "library",
       "name": "p-timeout",
       "version": "6.1.4",
-      "bom-ref": "app-template@0.1.0|p-timeout@6.1.4",
+      "bom-ref": "shillinq@0.1.0|p-timeout@6.1.4",
       "author": "Sindre Sorhus",
       "description": "Timeout a promise after a specified amount of time",
       "licenses": [
@@ -9189,7 +9189,7 @@
       "type": "library",
       "name": "path-expression-matcher",
       "version": "1.2.0",
-      "bom-ref": "app-template@0.1.0|path-expression-matcher@1.2.0",
+      "bom-ref": "shillinq@0.1.0|path-expression-matcher@1.2.0",
       "author": "Amit Gupta",
       "description": "Efficient path tracking and pattern matching for XML/JSON parsers",
       "scope": "optional",
@@ -9244,7 +9244,7 @@
       "type": "library",
       "name": "path-posix",
       "version": "1.0.0",
-      "bom-ref": "app-template@0.1.0|path-posix@1.0.0",
+      "bom-ref": "shillinq@0.1.0|path-posix@1.0.0",
       "author": "jden",
       "description": "posix-specific core path module",
       "scope": "optional",
@@ -9299,7 +9299,7 @@
       "type": "library",
       "name": "picocolors",
       "version": "1.1.1",
-      "bom-ref": "app-template@0.1.0|picocolors@1.1.1",
+      "bom-ref": "shillinq@0.1.0|picocolors@1.1.1",
       "author": "Alexey Raspopov",
       "description": "The tiniest and the fastest library for terminal output formatting with ANSI colors",
       "licenses": [
@@ -9349,7 +9349,7 @@
       "type": "library",
       "name": "pinia",
       "version": "2.3.1",
-      "bom-ref": "app-template@0.1.0|pinia@2.3.1",
+      "bom-ref": "shillinq@0.1.0|pinia@2.3.1",
       "author": "Eduardo San Martin Morote",
       "description": "Intuitive, type safe and flexible Store for Vue",
       "licenses": [
@@ -9399,7 +9399,7 @@
           "type": "library",
           "name": "vue-demi",
           "version": "0.14.10",
-          "bom-ref": "app-template@0.1.0|pinia@2.3.1|vue-demi@0.14.10",
+          "bom-ref": "shillinq@0.1.0|pinia@2.3.1|vue-demi@0.14.10",
           "author": "Anthony Fu",
           "licenses": [
             {
@@ -9450,7 +9450,7 @@
       "type": "library",
       "name": "postcss",
       "version": "8.5.8",
-      "bom-ref": "app-template@0.1.0|postcss@8.5.8",
+      "bom-ref": "shillinq@0.1.0|postcss@8.5.8",
       "author": "Andrey Sitnik",
       "description": "Tool for transforming styles with JS plugins",
       "licenses": [
@@ -9500,7 +9500,7 @@
       "type": "library",
       "name": "prettier",
       "version": "2.8.8",
-      "bom-ref": "app-template@0.1.0|prettier@2.8.8",
+      "bom-ref": "shillinq@0.1.0|prettier@2.8.8",
       "author": "James Long",
       "description": "Prettier is an opinionated code formatter",
       "scope": "optional",
@@ -9551,7 +9551,7 @@
       "type": "library",
       "name": "property-information",
       "version": "6.5.0",
-      "bom-ref": "app-template@0.1.0|property-information@6.5.0",
+      "bom-ref": "shillinq@0.1.0|property-information@6.5.0",
       "author": "Titus Wormer",
       "description": "Info on the properties and attributes of the web platform",
       "licenses": [
@@ -9601,7 +9601,7 @@
       "type": "library",
       "name": "proxy-from-env",
       "version": "1.1.0",
-      "bom-ref": "app-template@0.1.0|proxy-from-env@1.1.0",
+      "bom-ref": "shillinq@0.1.0|proxy-from-env@1.1.0",
       "author": "Rob Wu",
       "description": "Offers getProxyForUrl to get the proxy URL for a URL, respecting the *_PROXY (e.g. HTTP_PROXY) and NO_PROXY environment variables.",
       "licenses": [
@@ -9651,7 +9651,7 @@
       "type": "library",
       "name": "querystringify",
       "version": "2.2.0",
-      "bom-ref": "app-template@0.1.0|querystringify@2.2.0",
+      "bom-ref": "shillinq@0.1.0|querystringify@2.2.0",
       "author": "Arnout Kazemier",
       "description": "Querystringify - Small, simple but powerful query string parser.",
       "scope": "optional",
@@ -9706,7 +9706,7 @@
       "type": "library",
       "name": "rehype-external-links",
       "version": "3.0.0",
-      "bom-ref": "app-template@0.1.0|rehype-external-links@3.0.0",
+      "bom-ref": "shillinq@0.1.0|rehype-external-links@3.0.0",
       "author": "Titus Wormer",
       "description": "rehype plugin to automatically add `target` and `rel` attributes to external links",
       "licenses": [
@@ -9756,7 +9756,7 @@
       "type": "library",
       "name": "rehype-highlight",
       "version": "7.0.2",
-      "bom-ref": "app-template@0.1.0|rehype-highlight@7.0.2",
+      "bom-ref": "shillinq@0.1.0|rehype-highlight@7.0.2",
       "author": "Titus Wormer",
       "description": "rehype plugin to highlight code blocks with lowlight (highlight.js)",
       "licenses": [
@@ -9806,7 +9806,7 @@
       "type": "library",
       "name": "rehype-react",
       "version": "7.2.0",
-      "bom-ref": "app-template@0.1.0|rehype-react@7.2.0",
+      "bom-ref": "shillinq@0.1.0|rehype-react@7.2.0",
       "author": "rhysd",
       "description": "rehype plugin to transform to React",
       "licenses": [
@@ -9857,7 +9857,7 @@
           "name": "hast",
           "group": "@types",
           "version": "2.3.10",
-          "bom-ref": "app-template@0.1.0|rehype-react@7.2.0|@types/hast@2.3.10",
+          "bom-ref": "shillinq@0.1.0|rehype-react@7.2.0|@types/hast@2.3.10",
           "description": "TypeScript definitions for hast",
           "licenses": [
             {
@@ -9906,7 +9906,7 @@
           "type": "library",
           "name": "unified",
           "version": "10.1.2",
-          "bom-ref": "app-template@0.1.0|rehype-react@7.2.0|unified@10.1.2",
+          "bom-ref": "shillinq@0.1.0|rehype-react@7.2.0|unified@10.1.2",
           "author": "Titus Wormer",
           "description": "Interface for parsing, inspecting, transforming, and serializing content through syntax trees",
           "licenses": [
@@ -9957,7 +9957,7 @@
           "name": "unist",
           "group": "@types",
           "version": "2.0.11",
-          "bom-ref": "app-template@0.1.0|rehype-react@7.2.0|@types/unist@2.0.11",
+          "bom-ref": "shillinq@0.1.0|rehype-react@7.2.0|@types/unist@2.0.11",
           "description": "TypeScript definitions for unist",
           "licenses": [
             {
@@ -10006,7 +10006,7 @@
           "type": "library",
           "name": "is-buffer",
           "version": "2.0.5",
-          "bom-ref": "app-template@0.1.0|rehype-react@7.2.0|is-buffer@2.0.5",
+          "bom-ref": "shillinq@0.1.0|rehype-react@7.2.0|is-buffer@2.0.5",
           "author": "Feross Aboukhadijeh",
           "description": "Determine if an object is a Buffer",
           "licenses": [
@@ -10056,7 +10056,7 @@
           "type": "library",
           "name": "is-plain-obj",
           "version": "4.1.0",
-          "bom-ref": "app-template@0.1.0|rehype-react@7.2.0|is-plain-obj@4.1.0",
+          "bom-ref": "shillinq@0.1.0|rehype-react@7.2.0|is-plain-obj@4.1.0",
           "author": "Sindre Sorhus",
           "description": "Check if a value is a plain object",
           "licenses": [
@@ -10106,7 +10106,7 @@
           "type": "library",
           "name": "vfile",
           "version": "5.3.7",
-          "bom-ref": "app-template@0.1.0|rehype-react@7.2.0|vfile@5.3.7",
+          "bom-ref": "shillinq@0.1.0|rehype-react@7.2.0|vfile@5.3.7",
           "author": "Titus Wormer",
           "description": "Virtual file format for text processing",
           "licenses": [
@@ -10156,7 +10156,7 @@
           "type": "library",
           "name": "unist-util-stringify-position",
           "version": "3.0.3",
-          "bom-ref": "app-template@0.1.0|rehype-react@7.2.0|unist-util-stringify-position@3.0.3",
+          "bom-ref": "shillinq@0.1.0|rehype-react@7.2.0|unist-util-stringify-position@3.0.3",
           "author": "Titus Wormer",
           "description": "unist utility to serialize a node, position, or point as a human readable location",
           "licenses": [
@@ -10206,7 +10206,7 @@
           "type": "library",
           "name": "vfile-message",
           "version": "3.1.4",
-          "bom-ref": "app-template@0.1.0|rehype-react@7.2.0|vfile-message@3.1.4",
+          "bom-ref": "shillinq@0.1.0|rehype-react@7.2.0|vfile-message@3.1.4",
           "author": "Titus Wormer",
           "description": "vfile utility to create a virtual message",
           "licenses": [
@@ -10258,7 +10258,7 @@
       "type": "library",
       "name": "remark-breaks",
       "version": "4.0.0",
-      "bom-ref": "app-template@0.1.0|remark-breaks@4.0.0",
+      "bom-ref": "shillinq@0.1.0|remark-breaks@4.0.0",
       "author": "Titus Wormer",
       "description": "remark plugin to add break support, without needing spaces",
       "licenses": [
@@ -10308,7 +10308,7 @@
       "type": "library",
       "name": "remark-parse",
       "version": "11.0.0",
-      "bom-ref": "app-template@0.1.0|remark-parse@11.0.0",
+      "bom-ref": "shillinq@0.1.0|remark-parse@11.0.0",
       "author": "Titus Wormer",
       "description": "remark plugin to add support for parsing markdown input",
       "licenses": [
@@ -10358,7 +10358,7 @@
       "type": "library",
       "name": "remark-rehype",
       "version": "11.1.2",
-      "bom-ref": "app-template@0.1.0|remark-rehype@11.1.2",
+      "bom-ref": "shillinq@0.1.0|remark-rehype@11.1.2",
       "author": "Titus Wormer",
       "description": "remark plugin that turns markdown into HTML to support rehype",
       "licenses": [
@@ -10408,7 +10408,7 @@
       "type": "library",
       "name": "remark-stringify",
       "version": "11.0.0",
-      "bom-ref": "app-template@0.1.0|remark-stringify@11.0.0",
+      "bom-ref": "shillinq@0.1.0|remark-stringify@11.0.0",
       "author": "Titus Wormer",
       "description": "remark plugin to add support for serializing markdown",
       "licenses": [
@@ -10458,7 +10458,7 @@
       "type": "library",
       "name": "remark-unlink-protocols",
       "version": "1.0.0",
-      "bom-ref": "app-template@0.1.0|remark-unlink-protocols@1.0.0",
+      "bom-ref": "shillinq@0.1.0|remark-unlink-protocols@1.0.0",
       "author": "Max",
       "description": "remark plugin to remove links and references based on their protocol",
       "licenses": [
@@ -10508,7 +10508,7 @@
       "type": "library",
       "name": "requires-port",
       "version": "1.0.0",
-      "bom-ref": "app-template@0.1.0|requires-port@1.0.0",
+      "bom-ref": "shillinq@0.1.0|requires-port@1.0.0",
       "author": "Arnout Kazemier",
       "description": "Check if a protocol requires a certain port number to be added to an URL.",
       "licenses": [
@@ -10562,7 +10562,7 @@
       "type": "library",
       "name": "safer-buffer",
       "version": "2.1.2",
-      "bom-ref": "app-template@0.1.0|safer-buffer@2.1.2",
+      "bom-ref": "shillinq@0.1.0|safer-buffer@2.1.2",
       "author": "Nikita Skovoroda",
       "description": "Modern Buffer API polyfill without footguns",
       "licenses": [
@@ -10616,7 +10616,7 @@
       "type": "library",
       "name": "sax",
       "version": "1.6.0",
-      "bom-ref": "app-template@0.1.0|sax@1.6.0",
+      "bom-ref": "shillinq@0.1.0|sax@1.6.0",
       "author": "Isaac Z. Schlueter",
       "description": "An evented streaming XML parser in JavaScript",
       "licenses": [
@@ -10666,7 +10666,7 @@
       "type": "library",
       "name": "source-map-js",
       "version": "1.2.1",
-      "bom-ref": "app-template@0.1.0|source-map-js@1.2.1",
+      "bom-ref": "shillinq@0.1.0|source-map-js@1.2.1",
       "author": "Valentin 7rulnik Semirulnik",
       "description": "Generates and consumes source maps",
       "licenses": [
@@ -10716,7 +10716,7 @@
       "type": "library",
       "name": "space-separated-tokens",
       "version": "2.0.2",
-      "bom-ref": "app-template@0.1.0|space-separated-tokens@2.0.2",
+      "bom-ref": "shillinq@0.1.0|space-separated-tokens@2.0.2",
       "author": "Titus Wormer",
       "description": "Parse and stringify space separated tokens",
       "licenses": [
@@ -10766,7 +10766,7 @@
       "type": "library",
       "name": "splitpanes",
       "version": "2.4.1",
-      "bom-ref": "app-template@0.1.0|splitpanes@2.4.1",
+      "bom-ref": "shillinq@0.1.0|splitpanes@2.4.1",
       "author": "Antoni Andre",
       "description": "A Vue.js reliable, simple and touch-ready panes splitter / resizer",
       "licenses": [
@@ -10816,7 +10816,7 @@
       "type": "library",
       "name": "string-length",
       "version": "5.0.1",
-      "bom-ref": "app-template@0.1.0|string-length@5.0.1",
+      "bom-ref": "shillinq@0.1.0|string-length@5.0.1",
       "author": "Sindre Sorhus",
       "description": "Get the real length of a string - by correctly counting astral symbols and ignoring ansi escape codes",
       "licenses": [
@@ -10866,7 +10866,7 @@
           "type": "library",
           "name": "strip-ansi",
           "version": "7.2.0",
-          "bom-ref": "app-template@0.1.0|string-length@5.0.1|strip-ansi@7.2.0",
+          "bom-ref": "shillinq@0.1.0|string-length@5.0.1|strip-ansi@7.2.0",
           "author": "Sindre Sorhus",
           "description": "Strip ANSI escape codes from a string",
           "licenses": [
@@ -10916,7 +10916,7 @@
           "type": "library",
           "name": "ansi-regex",
           "version": "6.2.2",
-          "bom-ref": "app-template@0.1.0|string-length@5.0.1|ansi-regex@6.2.2",
+          "bom-ref": "shillinq@0.1.0|string-length@5.0.1|ansi-regex@6.2.2",
           "author": "Sindre Sorhus",
           "description": "Regular expression for matching ANSI escape codes",
           "licenses": [
@@ -10968,7 +10968,7 @@
       "type": "library",
       "name": "striptags",
       "version": "3.2.0",
-      "bom-ref": "app-template@0.1.0|striptags@3.2.0",
+      "bom-ref": "shillinq@0.1.0|striptags@3.2.0",
       "author": "Eric Norris",
       "description": "PHP strip_tags in Node.js",
       "licenses": [
@@ -11018,7 +11018,7 @@
       "type": "library",
       "name": "strtok3",
       "version": "10.3.5",
-      "bom-ref": "app-template@0.1.0|strtok3@10.3.5",
+      "bom-ref": "shillinq@0.1.0|strtok3@10.3.5",
       "author": "Borewit",
       "description": "A promise based streaming tokenizer",
       "licenses": [
@@ -11068,7 +11068,7 @@
       "type": "library",
       "name": "style-to-object",
       "version": "0.4.4",
-      "bom-ref": "app-template@0.1.0|style-to-object@0.4.4",
+      "bom-ref": "shillinq@0.1.0|style-to-object@0.4.4",
       "author": "Mark",
       "description": "Converts inline style to object.",
       "licenses": [
@@ -11118,7 +11118,7 @@
       "type": "library",
       "name": "tabbable",
       "version": "6.4.0",
-      "bom-ref": "app-template@0.1.0|tabbable@6.4.0",
+      "bom-ref": "shillinq@0.1.0|tabbable@6.4.0",
       "author": "David Clark",
       "description": "Returns an array of all tabbable DOM nodes within a containing node.",
       "licenses": [
@@ -11168,7 +11168,7 @@
       "type": "library",
       "name": "tinycolor2",
       "version": "1.6.0",
-      "bom-ref": "app-template@0.1.0|tinycolor2@1.6.0",
+      "bom-ref": "shillinq@0.1.0|tinycolor2@1.6.0",
       "author": "Brian Grinstead",
       "description": "Fast Color Parsing and Manipulation",
       "licenses": [
@@ -11218,7 +11218,7 @@
       "type": "library",
       "name": "toastify-js",
       "version": "1.12.0",
-      "bom-ref": "app-template@0.1.0|toastify-js@1.12.0",
+      "bom-ref": "shillinq@0.1.0|toastify-js@1.12.0",
       "author": "Varun A P",
       "description": "Toastify is a lightweight, vanilla JS toast notification library.",
       "licenses": [
@@ -11268,7 +11268,7 @@
       "type": "library",
       "name": "tributejs",
       "version": "5.1.3",
-      "bom-ref": "app-template@0.1.0|tributejs@5.1.3",
+      "bom-ref": "shillinq@0.1.0|tributejs@5.1.3",
       "author": "Jordan Humphreys",
       "description": "Native ES6 @mentions",
       "licenses": [
@@ -11318,7 +11318,7 @@
       "type": "library",
       "name": "trim-lines",
       "version": "3.0.1",
-      "bom-ref": "app-template@0.1.0|trim-lines@3.0.1",
+      "bom-ref": "shillinq@0.1.0|trim-lines@3.0.1",
       "author": "Titus Wormer",
       "description": "Remove spaces and tabs around line-breaks",
       "licenses": [
@@ -11368,7 +11368,7 @@
       "type": "library",
       "name": "trough",
       "version": "2.2.0",
-      "bom-ref": "app-template@0.1.0|trough@2.2.0",
+      "bom-ref": "shillinq@0.1.0|trough@2.2.0",
       "author": "Titus Wormer",
       "description": "`trough` is middleware",
       "licenses": [
@@ -11418,7 +11418,7 @@
       "type": "library",
       "name": "typescript-event-target",
       "version": "1.1.2",
-      "bom-ref": "app-template@0.1.0|typescript-event-target@1.1.2",
+      "bom-ref": "shillinq@0.1.0|typescript-event-target@1.1.2",
       "author": "Jonas Schade",
       "description": "Strictly typed EventTarget that directly extends EventTarget to function as a drop-in replacement. It works with all Event-Types and accounts for basically no additional bundle-size.",
       "scope": "optional",
@@ -11473,7 +11473,7 @@
       "type": "library",
       "name": "typescript",
       "version": "5.9.3",
-      "bom-ref": "app-template@0.1.0|typescript@5.9.3",
+      "bom-ref": "shillinq@0.1.0|typescript@5.9.3",
       "author": "Microsoft Corp.",
       "description": "TypeScript is a language for application scale JavaScript development",
       "licenses": [
@@ -11527,7 +11527,7 @@
       "type": "library",
       "name": "unified",
       "version": "11.0.5",
-      "bom-ref": "app-template@0.1.0|unified@11.0.5",
+      "bom-ref": "shillinq@0.1.0|unified@11.0.5",
       "author": "Titus Wormer",
       "description": "parse, inspect, transform, and serialize content through syntax trees",
       "licenses": [
@@ -11577,7 +11577,7 @@
           "type": "library",
           "name": "is-plain-obj",
           "version": "4.1.0",
-          "bom-ref": "app-template@0.1.0|unified@11.0.5|is-plain-obj@4.1.0",
+          "bom-ref": "shillinq@0.1.0|unified@11.0.5|is-plain-obj@4.1.0",
           "author": "Sindre Sorhus",
           "description": "Check if a value is a plain object",
           "licenses": [
@@ -11629,7 +11629,7 @@
       "type": "library",
       "name": "unist-builder",
       "version": "4.0.0",
-      "bom-ref": "app-template@0.1.0|unist-builder@4.0.0",
+      "bom-ref": "shillinq@0.1.0|unist-builder@4.0.0",
       "author": "Eugene Sharygin",
       "description": "unist utility to create a new trees with a nice syntax",
       "licenses": [
@@ -11679,7 +11679,7 @@
       "type": "library",
       "name": "unist-util-find-after",
       "version": "5.0.0",
-      "bom-ref": "app-template@0.1.0|unist-util-find-after@5.0.0",
+      "bom-ref": "shillinq@0.1.0|unist-util-find-after@5.0.0",
       "author": "Titus Wormer",
       "description": "unist utility to find a node after another node",
       "licenses": [
@@ -11729,7 +11729,7 @@
       "type": "library",
       "name": "unist-util-is",
       "version": "6.0.1",
-      "bom-ref": "app-template@0.1.0|unist-util-is@6.0.1",
+      "bom-ref": "shillinq@0.1.0|unist-util-is@6.0.1",
       "author": "Titus Wormer",
       "description": "unist utility to check if a node passes a test",
       "licenses": [
@@ -11779,7 +11779,7 @@
       "type": "library",
       "name": "unist-util-position",
       "version": "5.0.0",
-      "bom-ref": "app-template@0.1.0|unist-util-position@5.0.0",
+      "bom-ref": "shillinq@0.1.0|unist-util-position@5.0.0",
       "author": "Titus Wormer",
       "description": "unist utility to get the position of a node",
       "licenses": [
@@ -11829,7 +11829,7 @@
       "type": "library",
       "name": "unist-util-stringify-position",
       "version": "4.0.0",
-      "bom-ref": "app-template@0.1.0|unist-util-stringify-position@4.0.0",
+      "bom-ref": "shillinq@0.1.0|unist-util-stringify-position@4.0.0",
       "author": "Titus Wormer",
       "description": "unist utility to serialize a node, position, or point as a human readable location",
       "licenses": [
@@ -11879,7 +11879,7 @@
       "type": "library",
       "name": "unist-util-visit-parents",
       "version": "6.0.2",
-      "bom-ref": "app-template@0.1.0|unist-util-visit-parents@6.0.2",
+      "bom-ref": "shillinq@0.1.0|unist-util-visit-parents@6.0.2",
       "author": "Titus Wormer",
       "description": "unist utility to recursively walk over nodes, with ancestral information",
       "licenses": [
@@ -11929,7 +11929,7 @@
       "type": "library",
       "name": "unist-util-visit",
       "version": "5.1.0",
-      "bom-ref": "app-template@0.1.0|unist-util-visit@5.1.0",
+      "bom-ref": "shillinq@0.1.0|unist-util-visit@5.1.0",
       "author": "Titus Wormer",
       "description": "unist utility to visit nodes",
       "licenses": [
@@ -11979,7 +11979,7 @@
       "type": "library",
       "name": "url-join",
       "version": "5.0.0",
-      "bom-ref": "app-template@0.1.0|url-join@5.0.0",
+      "bom-ref": "shillinq@0.1.0|url-join@5.0.0",
       "author": "José F. Romaniello",
       "description": "Join urls and normalize as in path.join.",
       "scope": "optional",
@@ -12034,7 +12034,7 @@
       "type": "library",
       "name": "url-parse",
       "version": "1.5.10",
-      "bom-ref": "app-template@0.1.0|url-parse@1.5.10",
+      "bom-ref": "shillinq@0.1.0|url-parse@1.5.10",
       "author": "Arnout Kazemier",
       "description": "Small footprint URL parser that works seamlessly across Node.js and browser environments",
       "scope": "optional",
@@ -12089,7 +12089,7 @@
       "type": "library",
       "name": "vfile-message",
       "version": "4.0.3",
-      "bom-ref": "app-template@0.1.0|vfile-message@4.0.3",
+      "bom-ref": "shillinq@0.1.0|vfile-message@4.0.3",
       "author": "Titus Wormer",
       "description": "vfile utility to create a virtual message",
       "licenses": [
@@ -12139,7 +12139,7 @@
       "type": "library",
       "name": "vfile",
       "version": "6.0.3",
-      "bom-ref": "app-template@0.1.0|vfile@6.0.3",
+      "bom-ref": "shillinq@0.1.0|vfile@6.0.3",
       "author": "Titus Wormer",
       "description": "Virtual file format for text processing",
       "licenses": [
@@ -12189,7 +12189,7 @@
       "type": "library",
       "name": "vue-color",
       "version": "2.8.2",
-      "bom-ref": "app-template@0.1.0|vue-color@2.8.2",
+      "bom-ref": "shillinq@0.1.0|vue-color@2.8.2",
       "author": "xiaokai",
       "description": "Color of Vue Components",
       "licenses": [
@@ -12239,7 +12239,7 @@
       "type": "library",
       "name": "vue-frag",
       "version": "1.4.3",
-      "bom-ref": "app-template@0.1.0|vue-frag@1.4.3",
+      "bom-ref": "shillinq@0.1.0|vue-frag@1.4.3",
       "author": "Hiroki Osame",
       "description": "Vue 2 fragment directive to return multiple root elements",
       "licenses": [
@@ -12289,7 +12289,7 @@
       "type": "library",
       "name": "vue-material-design-icons",
       "version": "5.3.1",
-      "bom-ref": "app-template@0.1.0|vue-material-design-icons@5.3.1",
+      "bom-ref": "shillinq@0.1.0|vue-material-design-icons@5.3.1",
       "author": "Rob Cresswell",
       "description": "A collection of material design icons as Vue single file components",
       "licenses": [
@@ -12339,7 +12339,7 @@
       "type": "library",
       "name": "vue-resize",
       "version": "1.0.1",
-      "bom-ref": "app-template@0.1.0|vue-resize@1.0.1",
+      "bom-ref": "shillinq@0.1.0|vue-resize@1.0.1",
       "author": "Guillaume Chau",
       "description": "Detects DOM element resizing",
       "licenses": [
@@ -12389,7 +12389,7 @@
       "type": "library",
       "name": "vue-router",
       "version": "3.6.5",
-      "bom-ref": "app-template@0.1.0|vue-router@3.6.5",
+      "bom-ref": "shillinq@0.1.0|vue-router@3.6.5",
       "author": "Evan You",
       "description": "Official router for Vue.js 2",
       "licenses": [
@@ -12439,7 +12439,7 @@
       "type": "library",
       "name": "vue2-datepicker",
       "version": "3.11.1",
-      "bom-ref": "app-template@0.1.0|vue2-datepicker@3.11.1",
+      "bom-ref": "shillinq@0.1.0|vue2-datepicker@3.11.1",
       "author": "xiemengxiong",
       "description": "A Datepicker Component For Vue2",
       "licenses": [
@@ -12489,7 +12489,7 @@
       "type": "library",
       "name": "vue",
       "version": "2.7.16",
-      "bom-ref": "app-template@0.1.0|vue@2.7.16",
+      "bom-ref": "shillinq@0.1.0|vue@2.7.16",
       "author": "Evan You",
       "description": "Reactive, component-oriented view layer for modern web interfaces.",
       "licenses": [
@@ -12539,7 +12539,7 @@
       "type": "library",
       "name": "web-namespaces",
       "version": "2.0.1",
-      "bom-ref": "app-template@0.1.0|web-namespaces@2.0.1",
+      "bom-ref": "shillinq@0.1.0|web-namespaces@2.0.1",
       "author": "Titus Wormer",
       "description": "Map of web namespaces",
       "licenses": [
@@ -12589,7 +12589,7 @@
       "type": "library",
       "name": "web-streams-polyfill",
       "version": "3.3.3",
-      "bom-ref": "app-template@0.1.0|web-streams-polyfill@3.3.3",
+      "bom-ref": "shillinq@0.1.0|web-streams-polyfill@3.3.3",
       "author": "Mattias Buelens",
       "description": "Web Streams, based on the WHATWG spec reference implementation",
       "scope": "optional",
@@ -12644,7 +12644,7 @@
       "type": "library",
       "name": "webdav",
       "version": "5.9.0",
-      "bom-ref": "app-template@0.1.0|webdav@5.9.0",
+      "bom-ref": "shillinq@0.1.0|webdav@5.9.0",
       "author": "Perry Mitchell",
       "description": "WebDAV client for NodeJS",
       "scope": "optional",
@@ -12699,7 +12699,7 @@
           "type": "library",
           "name": "brace-expansion",
           "version": "2.0.2",
-          "bom-ref": "app-template@0.1.0|webdav@5.9.0|brace-expansion@2.0.2",
+          "bom-ref": "shillinq@0.1.0|webdav@5.9.0|brace-expansion@2.0.2",
           "author": "Julian Gruber",
           "description": "Brace expansion as known from sh/bash",
           "scope": "optional",
@@ -12754,7 +12754,7 @@
           "type": "library",
           "name": "entities",
           "version": "6.0.1",
-          "bom-ref": "app-template@0.1.0|webdav@5.9.0|entities@6.0.1",
+          "bom-ref": "shillinq@0.1.0|webdav@5.9.0|entities@6.0.1",
           "author": "Felix Boehm",
           "description": "Encode & decode XML and HTML entities with ease & speed",
           "scope": "optional",
@@ -12809,7 +12809,7 @@
           "type": "library",
           "name": "fast-xml-parser",
           "version": "5.5.8",
-          "bom-ref": "app-template@0.1.0|webdav@5.9.0|fast-xml-parser@5.5.8",
+          "bom-ref": "shillinq@0.1.0|webdav@5.9.0|fast-xml-parser@5.5.8",
           "author": "Amit Gupta",
           "description": "Validate XML, Parse XML, Build XML without C/C++ based libraries",
           "scope": "optional",
@@ -12864,7 +12864,7 @@
           "type": "library",
           "name": "minimatch",
           "version": "9.0.9",
-          "bom-ref": "app-template@0.1.0|webdav@5.9.0|minimatch@9.0.9",
+          "bom-ref": "shillinq@0.1.0|webdav@5.9.0|minimatch@9.0.9",
           "author": "Isaac Z. Schlueter",
           "description": "a glob matcher in javascript",
           "scope": "optional",
@@ -12919,7 +12919,7 @@
           "type": "library",
           "name": "strnum",
           "version": "2.2.1",
-          "bom-ref": "app-template@0.1.0|webdav@5.9.0|strnum@2.2.1",
+          "bom-ref": "shillinq@0.1.0|webdav@5.9.0|strnum@2.2.1",
           "author": "Amit Gupta",
           "description": "Parse String to Number based on configuration",
           "scope": "optional",
@@ -12976,7 +12976,7 @@
       "type": "library",
       "name": "zwitch",
       "version": "2.0.4",
-      "bom-ref": "app-template@0.1.0|zwitch@2.0.4",
+      "bom-ref": "shillinq@0.1.0|zwitch@2.0.4",
       "author": "Titus Wormer",
       "description": "Handle values based on a property",
       "licenses": [
@@ -13025,7 +13025,7 @@
   ],
   "dependencies": [
     {
-      "ref": "conductionnl/app-template-dev-main"
+      "ref": "conductionnl/shillinq-dev-main"
     }
   ]
 }

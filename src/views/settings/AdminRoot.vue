@@ -1,16 +1,16 @@
 <template>
-	<div class="app-template-admin">
+	<div class="shillinq-admin">
 		<CnVersionInfoCard
-			:app-name="'App Template'"
+			:app-name="'Shillinq'"
 			:app-version="appVersion"
 			:is-up-to-date="true"
 			:show-update-button="true"
-			:title="t('app-template', 'Version Information')"
-			:description="t('app-template', 'Information about the current App Template installation')">
+			:title="t('shillinq', 'Version Information')"
+			:description="t('shillinq', 'Information about the current Shillinq installation')">
 			<template #footer>
 				<div class="cn-support-info">
-					<h4>{{ t('app-template', 'Support') }}</h4>
-					<p>{{ t('app-template', 'For support, contact us at') }} <a href="mailto:support@conduction.nl">support@conduction.nl</a></p>
+					<h4>{{ t('shillinq', 'Support') }}</h4>
+					<p>{{ t('shillinq', 'For support, contact us at') }} <a href="mailto:support@conduction.nl">support@conduction.nl</a></p>
 				</div>
 			</template>
 		</CnVersionInfoCard>
@@ -33,7 +33,7 @@ export default {
 	data() {
 		return {
 			storesReady: false,
-			appVersion: document.getElementById('app-template-settings')?.dataset?.version || 'Unknown',
+			appVersion: document.getElementById('shillinq-settings')?.dataset?.version || 'Unknown',
 		}
 	},
 	async created() {
@@ -44,7 +44,7 @@ export default {
 </script>
 
 <style scoped>
-.app-template-admin {
+.shillinq-admin {
 	max-width: 900px;
 }
 </style>

@@ -2,7 +2,7 @@
 	<NcAppNavigation>
 		<template #list>
 			<NcAppNavigationItem
-				:name="t('app-template', 'Dashboard')"
+				:name="t('shillinq', 'Dashboard')"
 				:to="{ name: 'Dashboard' }"
 				:exact="true">
 				<template #icon>
@@ -10,7 +10,7 @@
 				</template>
 			</NcAppNavigationItem>
 			<NcAppNavigationItem
-				:name="t('app-template', 'Documentation')"
+				:name="t('shillinq', 'Documentation')"
 				@click="openLink('https://conduction.nl', '_blank')">
 				<template #icon>
 					<BookOpenVariantOutline :size="20" />
@@ -19,7 +19,7 @@
 		</template>
 		<template #footer>
 			<NcAppNavigationItem
-				:name="t('app-template', 'Settings')"
+				:name="t('shillinq', 'Settings')"
 				:to="{ name: 'Settings' }">
 				<template #icon>
 					<CogIcon :size="20" />

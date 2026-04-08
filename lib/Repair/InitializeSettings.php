@@ -1,12 +1,12 @@
 <?php
 
 /**
- * AppTemplate Initialize Settings Repair Step
+ * Shillinq Initialize Settings Repair Step
  *
- * Repair step that initializes AppTemplate register and schemas on install/upgrade.
+ * Repair step that initializes Shillinq register and schemas on install/upgrade.
  *
  * @category Repair
- * @package  OCA\AppTemplate\Repair
+ * @package  OCA\Shillinq\Repair
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,15 +19,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\AppTemplate\Repair;
+namespace OCA\Shillinq\Repair;
 
-use OCA\AppTemplate\Service\SettingsService;
+use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
 
 /**
- * Repair step that initializes AppTemplate configuration via SettingsService.
+ * Repair step that initializes Shillinq configuration via SettingsService.
  */
 class InitializeSettings implements IRepairStep
 {
@@ -52,11 +52,11 @@ class InitializeSettings implements IRepairStep
      */
     public function getName(): string
     {
-        return 'Initialize AppTemplate register and schemas via ConfigurationService';
+        return 'Initialize Shillinq register and schemas via ConfigurationService';
     }//end getName()
 
     /**
-     * Run the repair step to initialize AppTemplate configuration.
+     * Run the repair step to initialize Shillinq configuration.
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -64,14 +64,14 @@ class InitializeSettings implements IRepairStep
      */
     public function run(IOutput $output): void
     {
-        $output->info('Initializing AppTemplate configuration...');
+        $output->info('Initializing Shillinq configuration...');
 
         if ($this->settingsService->isOpenRegisterAvailable() === false) {
             $output->warning(
                 'OpenRegister is not installed or enabled. Skipping auto-configuration.'
             );
             $this->logger->warning(
-                'AppTemplate: OpenRegister not available, skipping register initialization'
+                'Shillinq: OpenRegister not available, skipping register initialization'
             );
             return;
         }
@@ -82,19 +82,19 @@ class InitializeSettings implements IRepairStep
             if ($result['success'] === true) {
                 $version = ($result['version'] ?? 'unknown');
                 $output->info(
-                    'AppTemplate configuration imported successfully (version: '.$version.')'
+                    'Shillinq configuration imported successfully (version: '.$version.')'
                 );
                 return;
             }
 
             $message = ($result['message'] ?? 'unknown error');
             $output->warning(
-                'AppTemplate configuration import issue: '.$message
+                'Shillinq configuration import issue: '.$message
             );
         } catch (\Throwable $e) {
-            $output->warning('Could not auto-configure AppTemplate: '.$e->getMessage());
+            $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
-                'AppTemplate initialization failed',
+                'Shillinq initialization failed',
                 ['exception' => $e->getMessage()]
             );
         }//end try

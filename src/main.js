@@ -15,7 +15,7 @@ import './assets/app.css'
 Vue.mixin({ methods: { t, n } })
 Vue.use(PiniaVuePlugin)
 
-loadTranslations('app-template', () => {
+loadTranslations('shillinq', () => {
 	// Create Vue instance to activate Pinia context, then initialize stores.
 	const app = new Vue({
 		pinia,

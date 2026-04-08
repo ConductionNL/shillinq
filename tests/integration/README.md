@@ -14,7 +14,7 @@ enable-newman: true
 
 ```bash
 npm install -g newman
-newman run tests/integration/app-template.postman_collection.json \
+newman run tests/integration/shillinq.postman_collection.json \
   --env-var base_url=http://nextcloud.local \
   --env-var admin_user=admin \
   --env-var admin_password=admin

@@ -1,25 +1,35 @@
 {
-  "id": "app-template",
-  "name": "Nextcloud App Template",
-  "namespace": "AppTemplate",
-  "summary": "A template for creating new Nextcloud apps",
-  "goal": "A starting point for building Nextcloud apps following ConductionNL conventions",
-  "category": "tools",
+  "id": "shillinq",
+  "name": "Shillinq",
+  "namespace": "Shillinq",
+  "summary": "Complete open-source business administration suite for freelancers, sole proprietors, SMBs, and corporations.",
+  "goal": "Complete open-source business administration suite for freelancers, sole proprietors, SMBs, and corporations. Combines bookkeeping, invoicing, procurement, and contract management into one self-hosted solution on Nextcloud.Named after the shilling \u2014 one of the oldest and most widely used coins in European history, from the Roman solidus to the British shilling to the East African shilling still in use today.Shillinq covers:- Bookkeeping & general ledger (double-entry accounting)- Accounts payabl",
+  "category": "organization",
   "version": "0.1.0",
   "license": "EUPL-1.2",
   "author": "Conduction B.V.",
-  "repository": "https://github.com/ConductionNL/nextcloud-app-template",
+  "repository": "https://github.com/ConductionNL/shillinq",
   "dependencies": {
     "requiresOpenRegister": true,
     "additionalCiApps": [
-      {"repo": "ConductionNL/openregister", "app": "openregister", "ref": "main"}
+      {
+        "repo": "ConductionNL/openregister",
+        "app": "openregister",
+        "ref": "main"
+      }
     ]
   },
   "cicd": {
-    "phpVersions": ["8.3", "8.4"],
-    "nextcloudRefs": ["stable31", "stable32"],
+    "phpVersions": [
+      "8.3",
+      "8.4"
+    ],
+    "nextcloudRefs": [
+      "stable31",
+      "stable32"
+    ],
     "enableNewman": false
   },
-  "createdAt": "2025-01-01",
-  "updatedAt": "2026-03-23"
+  "createdAt": "2026-04-08",
+  "updatedAt": "2026-04-08"
 }

@@ -8,7 +8,7 @@ Vue.use(Router)
 
 export default new Router({
 	mode: 'history',
-	base: generateUrl('/apps/app-template'),
+	base: generateUrl('/apps/shillinq'),
 	routes: [
 		{ path: '/', name: 'Dashboard', component: Dashboard },
 		{ path: '/settings', name: 'Settings', component: AdminRoot },

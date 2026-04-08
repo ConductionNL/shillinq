@@ -1,12 +1,12 @@
 <?php
 
 /**
- * AppTemplate Application
+ * Shillinq Application
  *
- * Main application class for the AppTemplate Nextcloud app.
+ * Main application class for the Shillinq Nextcloud app.
  *
  * @category AppInfo
- * @package  OCA\AppTemplate\AppInfo
+ * @package  OCA\Shillinq\AppInfo
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,10 +19,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\AppTemplate\AppInfo;
+namespace OCA\Shillinq\AppInfo;
 
-use OCA\AppTemplate\Listener\DeepLinkRegistrationListener;
-use OCA\AppTemplate\Repair\InitializeSettings;
+use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
+use OCA\Shillinq\Repair\InitializeSettings;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
@@ -30,11 +30,11 @@ use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
- * Main application class for the AppTemplate Nextcloud app.
+ * Main application class for the Shillinq Nextcloud app.
  */
 class Application extends App implements IBootstrap
 {
-    public const APP_ID = 'app-template';
+    public const APP_ID = 'shillinq';
 
     /**
      * Constructor for the Application class.

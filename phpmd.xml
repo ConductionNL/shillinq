@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
-<ruleset name="AppTemplate Nextcloud Rules"
+<ruleset name="Shillinq Nextcloud Rules"
     xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0
                         http://pmd.sourceforge.net/ruleset_xml_schema.xsd">
 
     <description>
-        This is a custom ruleset for AppTemplate Nextcloud.
+        This is a custom ruleset for Shillinq Nextcloud.
     </description>
 
     <!-- Clean Code Rules -->
