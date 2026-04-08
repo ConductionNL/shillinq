@@ -53,6 +53,7 @@ class PortalServiceTest extends TestCase
      */
     public function testGenerateTokenCreatesVerifiableHash(): void
     {
+        // Use an anonymous class mock that stores the hash for verification.
         $mockObjectService = new class {
 
             public ?string $lastHash = null;
