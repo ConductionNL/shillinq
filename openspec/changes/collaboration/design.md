@@ -1,3 +1,7 @@
+---
+status: pr-created
+---
+
 # Design: Collaboration — Shillinq
 
 ## Architecture Overview
