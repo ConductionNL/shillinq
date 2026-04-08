@@ -92,7 +92,7 @@
 
 <script>
 import { NcButton, NcDialog, NcLoadingIcon } from '@nextcloud/vue'
-import { useRfqStore } from '../../store/modules/rfq.js'
+import { useRFQStore } from '../../store/modules/rFQ.js'
 
 export default {
 	name: 'RFQForm',
@@ -118,7 +118,7 @@ export default {
 	},
 	computed: {
 		rfqStore() {
-			return useRfqStore()
+			return useRFQStore()
 		},
 		isValid() {
 			return this.form.title.trim() && this.form.type && this.form.dueDate

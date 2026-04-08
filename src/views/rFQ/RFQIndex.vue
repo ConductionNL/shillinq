@@ -82,7 +82,7 @@
 <script>
 import { NcButton, NcLoadingIcon } from '@nextcloud/vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
-import { useRfqStore } from '../../store/modules/rfq.js'
+import { useRFQStore } from '../../store/modules/rFQ.js'
 import RFQForm from './RFQForm.vue'
 
 export default {
@@ -117,7 +117,7 @@ export default {
 	},
 	computed: {
 		rfqStore() {
-			return useRfqStore()
+			return useRFQStore()
 		},
 		rfqs() {
 			return this.rfqStore.items || []

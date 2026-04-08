@@ -172,7 +172,7 @@ import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
 import Send from 'vue-material-design-icons/Send.vue'
 import Trophy from 'vue-material-design-icons/Trophy.vue'
-import { useRfqStore } from '../../store/modules/rfq.js'
+import { useRFQStore } from '../../store/modules/rFQ.js'
 import QuoteComparisonTable from '../../components/QuoteComparisonTable.vue'
 
 export default {
@@ -203,7 +203,7 @@ export default {
 	},
 	computed: {
 		rfqStore() {
-			return useRfqStore()
+			return useRFQStore()
 		},
 		rfq() {
 			return this.rfqStore.current || null
