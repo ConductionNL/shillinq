@@ -2,7 +2,7 @@
 
 ## 1. OpenRegister Schema Definitions
 
-- [ ] 1.1 Add `productCategory` schema to `lib/Settings/shillinq_register.json`
+- [x] 1.1 Add `productCategory` schema to `lib/Settings/shillinq_register.json`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-001`
   - **files**: `lib/Settings/shillinq_register.json`
   - **acceptance_criteria**:
@@ -10,28 +10,28 @@
     - THEN schema `productCategory` MUST be registered with `name` (required), `code`, `description`, `parentCategoryId`, `active` (boolean, default true), `sortOrder` (integer, default 0)
     - AND `x-schema-org` annotation MUST be `schema:Thing`
 
-- [ ] 1.2 Add `product` schema to `lib/Settings/shillinq_register.json`
+- [x] 1.2 Add `product` schema to `lib/Settings/shillinq_register.json`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-001`
   - **files**: `lib/Settings/shillinq_register.json`
   - **acceptance_criteria**:
     - THEN schema `product` MUST exist with `sku` (required), `name` (required), `description`, `unit` (default "piece"), `active` (boolean, default true), `categoryId`, `purchasePrice` (number), `currency` (default "EUR"), `taxRate` (number, default 21), `leadTimeDays` (integer), `notes`
     - AND `x-schema-org` MUST be `schema:Product`
 
-- [ ] 1.3 Add `catalog` schema to `lib/Settings/shillinq_register.json`
+- [x] 1.3 Add `catalog` schema to `lib/Settings/shillinq_register.json`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-002`
   - **files**: `lib/Settings/shillinq_register.json`
   - **acceptance_criteria**:
     - THEN schema `catalog` MUST exist with `name` (required), `description`, `status` (required, enum `["draft","active","archived"]`, default "draft"), `supplierProfileId`, `effectiveFrom` (datetime), `effectiveTo` (datetime), `ownerId`, `contractReference`
     - AND `x-schema-org` MUST be `schema:CreativeWork`
 
-- [ ] 1.4 Add `catalogItem` schema to `lib/Settings/shillinq_register.json`
+- [x] 1.4 Add `catalogItem` schema to `lib/Settings/shillinq_register.json`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-002`
   - **files**: `lib/Settings/shillinq_register.json`
   - **acceptance_criteria**:
     - THEN schema `catalogItem` MUST exist with `catalogId` (required), `productId` (required), `supplierProfileId` (required), `unitPrice` (required, number), `currency` (default "EUR"), `minimumOrderQuantity` (integer, default 1), `leadTimeDays` (integer), `active` (boolean, default true), `notes`
     - AND `x-schema-org` MUST be `schema:Offer`
 
-- [ ] 1.5 Add `orderBasket` and `orderBasketLine` schemas to `lib/Settings/shillinq_register.json`
+- [x] 1.5 Add `orderBasket` and `orderBasketLine` schemas to `lib/Settings/shillinq_register.json`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-003`
   - **files**: `lib/Settings/shillinq_register.json`
   - **acceptance_criteria**:
@@ -39,7 +39,7 @@
     - AND schema `orderBasketLine` MUST exist with `basketId` (required), `catalogItemId` (required), `quantity` (required, number), `unitPrice` (required, number), `lineTotal` (number), `currency` (default "EUR")
     - AND both MUST have `x-schema-org: schema:Order` and `schema:OrderItem` respectively
 
-- [ ] 1.6 Add `purchaseOrder` and `purchaseOrderLine` schemas to `lib/Settings/shillinq_register.json`
+- [x] 1.6 Add `purchaseOrder` and `purchaseOrderLine` schemas to `lib/Settings/shillinq_register.json`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-004`
   - **files**: `lib/Settings/shillinq_register.json`
   - **acceptance_criteria**:
@@ -47,7 +47,7 @@
     - AND schema `purchaseOrderLine` MUST exist with `purchaseOrderId` (required), `productId` (required), `description`, `quantity` (required, number), `unitPrice` (required, number), `lineTotal` (number), `currency` (default "EUR"), `matchStatus` (enum `["pending","matched","discrepancy","not_received"]`, default "pending"), `receivedQuantity` (number, default 0), `invoicedQuantity` (number, default 0)
     - AND `x-schema-org` MUST be `schema:Order` and `schema:OrderItem` respectively
 
-- [ ] 1.7 Add `goodsReceipt` and `goodsReceiptLine` schemas to `lib/Settings/shillinq_register.json`
+- [x] 1.7 Add `goodsReceipt` and `goodsReceiptLine` schemas to `lib/Settings/shillinq_register.json`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-005`
   - **files**: `lib/Settings/shillinq_register.json`
   - **acceptance_criteria**:
@@ -55,14 +55,14 @@
     - AND schema `goodsReceiptLine` MUST exist with `goodsReceiptId` (required), `purchaseOrderLineId` (required), `receivedQuantity` (required, number), `discrepancyNote`
     - AND `x-schema-org` MUST be `schema:ReceiveAction` and `schema:OrderItem` respectively
 
-- [ ] 1.8 Add `rFQ` schema to `lib/Settings/shillinq_register.json`
+- [x] 1.8 Add `rFQ` schema to `lib/Settings/shillinq_register.json`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-007`
   - **files**: `lib/Settings/shillinq_register.json`
   - **acceptance_criteria**:
     - THEN schema `rFQ` MUST exist with `number` (required), `title` (required), `description`, `type` (enum `["RFI","RFP","RFQ","Auction"]`, default "RFQ"), `status` (enum `["draft","published","evaluating","awarded","closed"]`, default "draft"), `budget` (number), `currency` (default "EUR"), `dueDate` (datetime), `publishedAt` (datetime), `awardedSupplierProfileId`, `awardedAt` (datetime), `createdBy` (required), `invitedSupplierProfileIds` (array, default [])
     - AND `x-schema-org` MUST be `schema:Quotation`
 
-- [ ] 1.9 Add `supplierQuote` schema to `lib/Settings/shillinq_register.json`
+- [x] 1.9 Add `supplierQuote` schema to `lib/Settings/shillinq_register.json`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-007`
   - **files**: `lib/Settings/shillinq_register.json`
   - **acceptance_criteria**:
@@ -71,7 +71,7 @@
 
 ## 2. Seed Data
 
-- [ ] 2.1 Add ProductCategory and Product seed objects to `lib/Repair/CreateDefaultConfiguration.php`
+- [x] 2.1 Add ProductCategory and Product seed objects to `lib/Repair/CreateDefaultConfiguration.php`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-009`
   - **files**: `lib/Repair/CreateDefaultConfiguration.php`
   - **acceptance_criteria**:
@@ -80,7 +80,7 @@
     - AND 4 Product objects MUST be created: PAPER-A4-80, PEN-BLK-10, LAPTOP-15-STD, MOUSE-USB-STD with the prices, units, and tax rates from the seed data table
     - AND idempotency key for ProductCategory MUST be `code`; for Product MUST be `sku`
 
-- [ ] 2.2 Add Catalog and CatalogItem seed objects to repair step
+- [x] 2.2 Add Catalog and CatalogItem seed objects to repair step
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-009`
   - **files**: `lib/Repair/CreateDefaultConfiguration.php`
   - **acceptance_criteria**:
@@ -88,7 +88,7 @@
     - AND 4 CatalogItem objects MUST be created linking each seed product to the catalog at seed purchase prices, linked to Acme BV SupplierProfile from supplier-management seed
     - AND idempotency key for CatalogItem MUST be composite `(catalogId, productId)`
 
-- [ ] 2.3 Add PurchaseOrder seed object to repair step
+- [x] 2.3 Add PurchaseOrder seed object to repair step
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-009`
   - **files**: `lib/Repair/CreateDefaultConfiguration.php`
   - **acceptance_criteria**:
@@ -96,7 +96,7 @@
     - AND 2 PurchaseOrderLines MUST be created: 5 reams PAPER-A4-80 (EUR 22.50) and 5 boxes PEN-BLK-10 (EUR 16.00), referencing Product IDs resolved at seed time
     - AND idempotency key for PurchaseOrder MUST be `poNumber`
 
-- [ ] 2.4 Add RFQ and SupplierQuote seed objects to repair step
+- [x] 2.4 Add RFQ and SupplierQuote seed objects to repair step
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-009`
   - **files**: `lib/Repair/CreateDefaultConfiguration.php`
   - **acceptance_criteria**:
@@ -106,7 +106,7 @@
 
 ## 3. Backend Services
 
-- [ ] 3.1 Create `lib/Service/CatalogSearchService.php`
+- [x] 3.1 Create `lib/Service/CatalogSearchService.php`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-002, #REQ-CAT-003`
   - **files**: `lib/Service/CatalogSearchService.php`
   - **acceptance_criteria**:
@@ -116,7 +116,7 @@
     - AND only items where the linked `Product.active` is `true` are returned
     - AND category filter applies to the product's `categoryId` AND all descendant category IDs (resolved via `ProductCategory.parentCategoryId` traversal)
 
-- [ ] 3.2 Create `lib/Service/OrderLimitService.php`
+- [x] 3.2 Create `lib/Service/OrderLimitService.php`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-003`
   - **files**: `lib/Service/OrderLimitService.php`
   - **acceptance_criteria**:
@@ -125,7 +125,7 @@
     - AND returns a boolean `requiresApproval` and the applicable limit amount
     - AND if no limit is configured, `requiresApproval` is always false
 
-- [ ] 3.3 Create `lib/Service/ThreeWayMatchingService.php`
+- [x] 3.3 Create `lib/Service/ThreeWayMatchingService.php`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-006`
   - **files**: `lib/Service/ThreeWayMatchingService.php`
   - **acceptance_criteria**:
@@ -137,7 +137,7 @@
     - AND MUST NOT modify any invoice or goods receipt objects; only `PurchaseOrderLine.matchStatus`, `receivedQuantity`, and `invoicedQuantity` are updated
     - AND the service is idempotent: calling it twice with unchanged data produces no further updates
 
-- [ ] 3.4 Create `lib/Service/CatalogImportService.php`
+- [x] 3.4 Create `lib/Service/CatalogImportService.php`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-002`
   - **files**: `lib/Service/CatalogImportService.php`
   - **acceptance_criteria**:
@@ -150,7 +150,7 @@
 
 ## 4. Background Jobs
 
-- [ ] 4.1 Create `lib/BackgroundJob/OverdueDeliveryJob.php`
+- [x] 4.1 Create `lib/BackgroundJob/OverdueDeliveryJob.php`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-008`
   - **files**: `lib/BackgroundJob/OverdueDeliveryJob.php`, `lib/AppInfo/Application.php`
   - **acceptance_criteria**:
@@ -162,7 +162,7 @@
 
 ## 5. Backend Controllers
 
-- [ ] 5.1 Create `lib/Controller/CatalogController.php`
+- [x] 5.1 Create `lib/Controller/CatalogController.php`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-002, #REQ-CAT-003`
   - **files**: `lib/Controller/CatalogController.php`, `appinfo/routes.php`
   - **acceptance_criteria**:
@@ -173,7 +173,7 @@
     - GIVEN `POST /api/v1/catalogs/{id}/import` is called for an archived catalog
     - THEN 422 is returned with "Cannot add items to an archived catalog."
 
-- [ ] 5.2 Create `lib/Controller/OrderBasketController.php`
+- [x] 5.2 Create `lib/Controller/OrderBasketController.php`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-003`
   - **files**: `lib/Controller/OrderBasketController.php`, `appinfo/routes.php`
   - **acceptance_criteria**:
@@ -182,7 +182,7 @@
     - AND `OrderBasket.requisitionerId` MUST always be set server-side to the authenticated userId; any client-supplied value is ignored
     - AND the budget check against the `Budget` entity for the selected `costCentreId` is performed; if available budget is insufficient, the response includes `{budgetWarning: true, deficit: N}` alongside the 200 success response
 
-- [ ] 5.3 Create `lib/Controller/PurchaseOrderController.php`
+- [x] 5.3 Create `lib/Controller/PurchaseOrderController.php`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-004`
   - **files**: `lib/Controller/PurchaseOrderController.php`, `appinfo/routes.php`
   - **acceptance_criteria**:
@@ -192,7 +192,7 @@
     - THEN reason is required; 422 if empty; status changes to `cancelled` and supplier is notified
     - GIVEN a new PO is created THEN `poNumber` is auto-generated in format `PO-{YYYY}-{NNNNN}` using the highest existing sequence number for the current year + 1
 
-- [ ] 5.4 Create `lib/Controller/GoodsReceiptController.php`
+- [x] 5.4 Create `lib/Controller/GoodsReceiptController.php`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-005`
   - **files**: `lib/Controller/GoodsReceiptController.php`, `appinfo/routes.php`
   - **acceptance_criteria**:
@@ -203,7 +203,7 @@
     - AND if all lines are fully received, `PurchaseOrder.status` changes to `received`
     - GIVEN the PO has `status: closed` THEN 422 is returned with "Cannot create a goods receipt for a closed purchase order."
 
-- [ ] 5.5 Create `lib/Controller/RFQController.php`
+- [x] 5.5 Create `lib/Controller/RFQController.php`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-007`
   - **files**: `lib/Controller/RFQController.php`, `appinfo/routes.php`
   - **acceptance_criteria**:
@@ -215,59 +215,59 @@
 
 ## 6. Pinia Stores
 
-- [ ] 6.1 Create `src/store/modules/productCategory.js`
+- [x] 6.1 Create `src/store/modules/productCategory.js`
   - **files**: `src/store/modules/productCategory.js`
   - **acceptance_criteria**:
     - THEN `useProductCategoryStore` MUST be created via `createObjectStore('productCategory')` and registered in `src/store/store.js`
 
-- [ ] 6.2 Create `src/store/modules/product.js`
+- [x] 6.2 Create `src/store/modules/product.js`
   - **files**: `src/store/modules/product.js`
   - **acceptance_criteria**:
     - THEN `useProductStore` MUST be created via `createObjectStore('product')` and registered in `src/store/store.js`
 
-- [ ] 6.3 Create `src/store/modules/catalog.js`
+- [x] 6.3 Create `src/store/modules/catalog.js`
   - **files**: `src/store/modules/catalog.js`
   - **acceptance_criteria**:
     - THEN `useCatalogStore` MUST be created via `createObjectStore('catalog')` and registered in `src/store/store.js`
 
-- [ ] 6.4 Create `src/store/modules/catalogItem.js`
+- [x] 6.4 Create `src/store/modules/catalogItem.js`
   - **files**: `src/store/modules/catalogItem.js`
   - **acceptance_criteria**:
     - THEN `useCatalogItemStore` MUST be created via `createObjectStore('catalogItem')` and registered in `src/store/store.js`
 
-- [ ] 6.5 Create `src/store/modules/orderBasket.js`
+- [x] 6.5 Create `src/store/modules/orderBasket.js`
   - **files**: `src/store/modules/orderBasket.js`
   - **acceptance_criteria**:
     - THEN `useOrderBasketStore` MUST be created via `createObjectStore('orderBasket')` and registered in `src/store/store.js`
 
-- [ ] 6.6 Create `src/store/modules/purchaseOrder.js`
+- [x] 6.6 Create `src/store/modules/purchaseOrder.js`
   - **files**: `src/store/modules/purchaseOrder.js`
   - **acceptance_criteria**:
     - THEN `usePurchaseOrderStore` MUST be created via `createObjectStore('purchaseOrder')` and registered in `src/store/store.js`
 
-- [ ] 6.7 Create `src/store/modules/goodsReceipt.js`
+- [x] 6.7 Create `src/store/modules/goodsReceipt.js`
   - **files**: `src/store/modules/goodsReceipt.js`
   - **acceptance_criteria**:
     - THEN `useGoodsReceiptStore` MUST be created via `createObjectStore('goodsReceipt')` and registered in `src/store/store.js`
 
-- [ ] 6.8 Create `src/store/modules/rFQ.js`
+- [x] 6.8 Create `src/store/modules/rFQ.js`
   - **files**: `src/store/modules/rFQ.js`
   - **acceptance_criteria**:
     - THEN `useRFQStore` MUST be created via `createObjectStore('rFQ')` and registered in `src/store/store.js`
 
-- [ ] 6.9 Create `src/store/modules/supplierQuote.js`
+- [x] 6.9 Create `src/store/modules/supplierQuote.js`
   - **files**: `src/store/modules/supplierQuote.js`
   - **acceptance_criteria**:
     - THEN `useSupplierQuoteStore` MUST be created via `createObjectStore('supplierQuote')` and registered in `src/store/store.js`
 
-- [ ] 6.10 Create `src/store/modules/supplier.js`
+- [x] 6.10 Create `src/store/modules/supplier.js`
   - **files**: `src/store/modules/supplier.js`
   - **acceptance_criteria**:
     - THEN `useSupplierStore` MUST be created via `createObjectStore('supplierProfile')` (referencing the supplier-management schema) and registered in `src/store/store.js`
 
 ## 7. Frontend Views — Product and Category
 
-- [ ] 7.1 Create `src/views/productCategory/ProductCategoryIndex.vue`, `ProductCategoryDetail.vue`, `ProductCategoryForm.vue`
+- [x] 7.1 Create `src/views/productCategory/ProductCategoryIndex.vue`, `ProductCategoryDetail.vue`, `ProductCategoryForm.vue`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-001`
   - **files**: `src/views/productCategory/ProductCategoryIndex.vue`, `src/views/productCategory/ProductCategoryDetail.vue`, `src/views/productCategory/ProductCategoryForm.vue`
   - **acceptance_criteria**:
@@ -275,7 +275,7 @@
     - GIVEN the detail renders THEN it uses `CnDetailPage` with tabs: Details, Products (listing `Product` objects where `categoryId` matches)
     - GIVEN the form opens THEN `parentCategoryId` uses a dropdown populated from existing categories
 
-- [ ] 7.2 Create `src/views/product/ProductIndex.vue`, `ProductDetail.vue`, `ProductForm.vue`
+- [x] 7.2 Create `src/views/product/ProductIndex.vue`, `ProductDetail.vue`, `ProductForm.vue`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-001`
   - **files**: `src/views/product/ProductIndex.vue`, `src/views/product/ProductDetail.vue`, `src/views/product/ProductForm.vue`
   - **acceptance_criteria**:
@@ -285,7 +285,7 @@
 
 ## 8. Frontend Views — Catalog
 
-- [ ] 8.1 Create `src/views/catalog/CatalogIndex.vue`, `CatalogDetail.vue`, `CatalogForm.vue`
+- [x] 8.1 Create `src/views/catalog/CatalogIndex.vue`, `CatalogDetail.vue`, `CatalogForm.vue`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-002`
   - **files**: `src/views/catalog/CatalogIndex.vue`, `src/views/catalog/CatalogDetail.vue`, `src/views/catalog/CatalogForm.vue`
   - **acceptance_criteria**:
@@ -293,7 +293,7 @@
     - GIVEN the detail renders THEN it uses `CnDetailPage` with tabs: Details, Items (CatalogItem list), Import (CSV upload panel via `CatalogImportPanel.vue`)
     - AND status transition buttons (Activate, Archive) MUST be shown per permitted roles; archived catalogs MUST show a read-only banner "This catalog is archived"
 
-- [ ] 8.2 Create `src/views/catalog/CatalogSearch.vue`
+- [x] 8.2 Create `src/views/catalog/CatalogSearch.vue`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-003`
   - **files**: `src/views/catalog/CatalogSearch.vue`
   - **acceptance_criteria**:
@@ -302,7 +302,7 @@
     - AND each result row shows: product name, supplier name, unit price + currency, catalog name, contract reference, and an "Add to basket" button with a quantity input
     - AND clicking "Add to basket" calls `useOrderBasketStore.addLine()` and updates the `OrderBasketPanel` badge count
 
-- [ ] 8.3 Create `src/components/CatalogImportPanel.vue`
+- [x] 8.3 Create `src/components/CatalogImportPanel.vue`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-002`
   - **files**: `src/components/CatalogImportPanel.vue`
   - **acceptance_criteria**:
@@ -311,7 +311,7 @@
 
 ## 9. Frontend Views — Order Basket
 
-- [ ] 9.1 Create `src/views/orderBasket/OrderBasketView.vue`
+- [x] 9.1 Create `src/views/orderBasket/OrderBasketView.vue`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-003`
   - **files**: `src/views/orderBasket/OrderBasketView.vue`
   - **acceptance_criteria**:
@@ -320,7 +320,7 @@
     - GIVEN the cost centre selector is used THEN only `Budget` objects the authenticated user is authorised to charge are shown
     - GIVEN submit is clicked THEN `POST /api/v1/order-baskets/{id}/submit` is called; if `budgetWarning: true` is returned, the warning banner is shown before the success message; if `requiresApproval: true`, the confirmation message reads "Your order has been sent for approval."
 
-- [ ] 9.2 Create `src/views/orderBasket/OrderBasketHistory.vue`
+- [x] 9.2 Create `src/views/orderBasket/OrderBasketHistory.vue`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-008`
   - **files**: `src/views/orderBasket/OrderBasketHistory.vue`
   - **acceptance_criteria**:
@@ -328,7 +328,7 @@
     - AND linked `PurchaseOrder.status` is shown per order: pending approval (amber), approved (blue), sent to supplier (blue), acknowledged (blue), overdue (red), delivered (green), invoiced (teal), closed (grey)
     - AND an "overdue" badge is shown for linked PurchaseOrders meeting the overdue criteria
 
-- [ ] 9.3 Create `src/components/OrderBasketPanel.vue`
+- [x] 9.3 Create `src/components/OrderBasketPanel.vue`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-003`
   - **files**: `src/components/OrderBasketPanel.vue`
   - **acceptance_criteria**:
@@ -337,7 +337,7 @@
 
 ## 10. Frontend Views — Purchase Order
 
-- [ ] 10.1 Create `src/views/purchaseOrder/PurchaseOrderIndex.vue`, `PurchaseOrderDetail.vue`, `PurchaseOrderForm.vue`
+- [x] 10.1 Create `src/views/purchaseOrder/PurchaseOrderIndex.vue`, `PurchaseOrderDetail.vue`, `PurchaseOrderForm.vue`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-004, #REQ-CAT-008`
   - **files**: `src/views/purchaseOrder/PurchaseOrderIndex.vue`, `src/views/purchaseOrder/PurchaseOrderDetail.vue`, `src/views/purchaseOrder/PurchaseOrderForm.vue`
   - **acceptance_criteria**:
@@ -349,7 +349,7 @@
 
 ## 11. Frontend Views — Goods Receipt
 
-- [ ] 11.1 Create `src/views/goodsReceipt/GoodsReceiptIndex.vue`, `GoodsReceiptDetail.vue`, `GoodsReceiptForm.vue`
+- [x] 11.1 Create `src/views/goodsReceipt/GoodsReceiptIndex.vue`, `GoodsReceiptDetail.vue`, `GoodsReceiptForm.vue`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-005`
   - **files**: `src/views/goodsReceipt/GoodsReceiptIndex.vue`, `src/views/goodsReceipt/GoodsReceiptDetail.vue`, `src/views/goodsReceipt/GoodsReceiptForm.vue`
   - **acceptance_criteria**:
@@ -357,7 +357,7 @@
     - AND a "Received quantity" validation MUST prevent values greater than the outstanding quantity (ordered − previously received) with message "Received quantity cannot exceed outstanding quantity of {N}"
     - GIVEN the form is submitted THEN `POST /api/v1/goods-receipts` is called; updated `matchStatus` values per line are reflected in the PO detail "Matching" tab immediately
 
-- [ ] 11.2 Create `src/components/ThreeWayMatchingPanel.vue`
+- [x] 11.2 Create `src/components/ThreeWayMatchingPanel.vue`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-006`
   - **files**: `src/components/ThreeWayMatchingPanel.vue`
   - **acceptance_criteria**:
@@ -368,7 +368,7 @@
 
 ## 12. Frontend Views — RFQ
 
-- [ ] 12.1 Create `src/views/rFQ/RFQIndex.vue`, `RFQDetail.vue`, `RFQForm.vue`
+- [x] 12.1 Create `src/views/rFQ/RFQIndex.vue`, `RFQDetail.vue`, `RFQForm.vue`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-007`
   - **files**: `src/views/rFQ/RFQIndex.vue`, `src/views/rFQ/RFQDetail.vue`, `src/views/rFQ/RFQForm.vue`
   - **acceptance_criteria**:
@@ -378,7 +378,7 @@
     - AND the Comparison tab renders `QuoteComparisonTable.vue`
     - AND an "Award" button on the Comparison tab calls `POST /api/v1/rfqs/{id}/award` with the selected quote ID; confirmation dialog shows "Awarding to {supplierName} will reject all other quotes. Continue?"
 
-- [ ] 12.2 Create `src/components/QuoteComparisonTable.vue`
+- [x] 12.2 Create `src/components/QuoteComparisonTable.vue`
   - **spec_ref**: `specs/catalog-purchase-management/spec.md#REQ-CAT-007`
   - **files**: `src/components/QuoteComparisonTable.vue`
   - **acceptance_criteria**:
@@ -389,7 +389,7 @@
 
 ## 13. Sidebar Navigation Update
 
-- [ ] 13.1 Add catalog and procurement sections to `src/components/ShillinqSidebar.vue`
+- [x] 13.1 Add catalog and procurement sections to `src/components/ShillinqSidebar.vue`
   - **files**: `src/components/ShillinqSidebar.vue`
   - **acceptance_criteria**:
     - GIVEN the sidebar renders THEN a "Catalog" section MUST be present with nav items: Catalog Search, My Basket, My Orders, Catalogs, Products, Categories

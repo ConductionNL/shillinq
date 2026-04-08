@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: pr-created
 ---
 
 # Catalog & Purchase Management — Shillinq
