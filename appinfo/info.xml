@@ -62,6 +62,10 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <admin-section>OCA\Shillinq\Sections\SettingsSection</admin-section>
     </settings>
 
+    <background-jobs>
+        <job>OCA\Shillinq\BackgroundJob\AutomationRuleJob</job>
+    </background-jobs>
+
     <repair-steps>
         <post-migration>
             <step>OCA\Shillinq\Settings\InitializeSettings</step>

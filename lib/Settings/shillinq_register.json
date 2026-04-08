@@ -3,37 +3,406 @@
   "info": {
     "title": "Shillinq Register",
     "description": "Register containing all schemas for the Shillinq application.",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "x-openregister": {
     "type": "application",
     "app": "shillinq",
     "openregister": "^v0.2.10",
-    "description": "Shillinq — replace with your app description"
+    "description": "Shillinq — complete open-source business administration suite"
   },
   "paths": {},
   "components": {
     "schemas": {
-      "example": {
-        "slug": "example",
-        "icon": "FileDocumentOutline",
+      "KpiWidget": {
+        "slug": "kpi-widget",
+        "icon": "ChartBoxOutline",
         "version": "0.1.0",
-        "title": "Example",
-        "description": "Example schema — replace with your app's actual schemas.",
+        "title": "KPI Widget",
+        "description": "Configurable KPI dashboard widget with trend indicators and chart types.",
+        "x-schema-org": "schema:Thing",
         "type": "object",
         "required": [
-          "title"
+          "title",
+          "metricKey",
+          "chartType"
         ],
         "properties": {
           "title": {
             "type": "string",
-            "description": "The title of the example object",
-            "example": "My example"
+            "description": "Widget display name",
+            "example": "Total Receivables"
+          },
+          "metricKey": {
+            "type": "string",
+            "description": "Identifier for the metric, e.g. total_receivables",
+            "example": "total_receivables"
+          },
+          "chartType": {
+            "type": "string",
+            "description": "Visualisation type for the widget",
+            "enum": [
+              "number",
+              "line",
+              "bar",
+              "donut"
+            ],
+            "default": "number",
+            "example": "number"
+          },
+          "schemaRef": {
+            "type": "string",
+            "description": "OpenRegister schema to aggregate"
+          },
+          "filterJson": {
+            "type": "string",
+            "description": "JSON-encoded filter expression"
+          },
+          "compareWith": {
+            "type": "string",
+            "description": "Comparison target for trend indicator",
+            "enum": [
+              "previous_period",
+              "previous_year",
+              "budget"
+            ],
+            "default": "previous_period"
+          },
+          "userId": {
+            "type": "string",
+            "description": "Owner user ID; null means shared"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "description": "Position on dashboard",
+            "default": 0
+          }
+        }
+      },
+      "AnalyticsReport": {
+        "slug": "analytics-report",
+        "icon": "FileChartOutline",
+        "version": "0.1.0",
+        "title": "Analytics Report",
+        "description": "Saved analytics report with optional scheduled execution.",
+        "x-schema-org": "schema:Report",
+        "type": "object",
+        "required": [
+          "title",
+          "reportType"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Report name",
+            "example": "Debtors Ageing Q1"
           },
           "description": {
             "type": "string",
-            "description": "An optional description",
-            "example": "This is an example"
+            "description": "Report description"
+          },
+          "reportType": {
+            "type": "string",
+            "description": "Type of report",
+            "enum": [
+              "debtors_ageing",
+              "budget_vs_actual",
+              "cash_flow",
+              "custom"
+            ],
+            "example": "debtors_ageing"
+          },
+          "parameters": {
+            "type": "string",
+            "description": "JSON-encoded report parameters"
+          },
+          "snapshotData": {
+            "type": "string",
+            "description": "JSON snapshot of last run result"
+          },
+          "lastRunAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of last execution"
+          },
+          "scheduledCron": {
+            "type": "string",
+            "description": "Cron expression for auto-run"
+          },
+          "userId": {
+            "type": "string",
+            "description": "Owner user ID"
+          }
+        }
+      },
+      "PortalToken": {
+        "slug": "portal-token",
+        "icon": "KeyOutline",
+        "version": "0.1.0",
+        "title": "Portal Token",
+        "description": "Token for external portal authentication, scoped to an organisation.",
+        "x-schema-org": "schema:DigitalDocument",
+        "type": "object",
+        "required": [
+          "tokenHash",
+          "organizationId",
+          "isActive"
+        ],
+        "properties": {
+          "tokenHash": {
+            "type": "string",
+            "description": "password_hash() of the raw token"
+          },
+          "organizationId": {
+            "type": "string",
+            "description": "OpenRegister object ID of the linked Organisation"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human label, e.g. Supplier ABC access"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Expiry datetime; null means never expires"
+          },
+          "lastUsedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of last successful use"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the token is active",
+            "default": true
+          },
+          "permissions": {
+            "type": "array",
+            "description": "Scoped permissions: invoice_read, payment_read",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          }
+        }
+      },
+      "AutomationRule": {
+        "slug": "automation-rule",
+        "icon": "RobotOutline",
+        "version": "0.1.0",
+        "title": "Automation Rule",
+        "description": "Rule that evaluates OpenRegister objects and executes actions on matches.",
+        "x-schema-org": "schema:Action",
+        "type": "object",
+        "required": [
+          "name",
+          "triggerSchema",
+          "triggerField",
+          "triggerOperator",
+          "triggerValue",
+          "actionType",
+          "isActive"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Rule display name",
+            "example": "Invoice 30-day Reminder"
+          },
+          "triggerSchema": {
+            "type": "string",
+            "description": "Schema monitored, e.g. Invoice",
+            "example": "Invoice"
+          },
+          "triggerField": {
+            "type": "string",
+            "description": "Field to watch, e.g. ageInDays",
+            "example": "ageInDays"
+          },
+          "triggerOperator": {
+            "type": "string",
+            "description": "Comparison operator",
+            "enum": [
+              "gt",
+              "lt",
+              "eq",
+              "gte",
+              "lte"
+            ],
+            "example": "gte"
+          },
+          "triggerValue": {
+            "type": "string",
+            "description": "Comparison value (stored as string)",
+            "example": "30"
+          },
+          "actionType": {
+            "type": "string",
+            "description": "Action to execute on match",
+            "enum": [
+              "send_notification",
+              "change_status",
+              "escalate"
+            ],
+            "example": "send_notification"
+          },
+          "actionParams": {
+            "type": "string",
+            "description": "JSON-encoded action parameters"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the rule is active",
+            "default": true
+          },
+          "lastEvaluatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of last evaluation"
+          },
+          "matchCount": {
+            "type": "integer",
+            "description": "Cumulative count of rule matches",
+            "default": 0
+          }
+        }
+      },
+      "ExpenseClaim": {
+        "slug": "expense-claim",
+        "icon": "CashMultiple",
+        "version": "0.1.0",
+        "title": "Expense Claim",
+        "description": "Employee expense claim with approval workflow.",
+        "x-schema-org": "schema:Invoice",
+        "type": "object",
+        "required": [
+          "claimNumber",
+          "employeeId",
+          "description",
+          "status"
+        ],
+        "properties": {
+          "claimNumber": {
+            "type": "string",
+            "description": "Auto-generated claim number, e.g. EXP-2026-0042",
+            "example": "EXP-2026-0042"
+          },
+          "employeeId": {
+            "type": "string",
+            "description": "Nextcloud userId of the claimant"
+          },
+          "description": {
+            "type": "string",
+            "description": "Purpose of claim"
+          },
+          "status": {
+            "type": "string",
+            "description": "Workflow status",
+            "enum": [
+              "draft",
+              "submitted",
+              "under_review",
+              "approved",
+              "rejected",
+              "paid"
+            ],
+            "default": "draft"
+          },
+          "totalAmount": {
+            "type": "number",
+            "description": "Sum of all ExpenseItem amounts",
+            "default": 0
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code",
+            "default": "EUR"
+          },
+          "budgetId": {
+            "type": "string",
+            "description": "OpenRegister object ID of linked Budget"
+          },
+          "approvalWorkflowId": {
+            "type": "string",
+            "description": "OpenRegister object ID of ApprovalWorkflow"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Submission timestamp"
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Approval/rejection timestamp"
+          },
+          "rejectionReason": {
+            "type": "string",
+            "description": "Reason for rejection"
+          }
+        }
+      },
+      "ExpenseItem": {
+        "slug": "expense-item",
+        "icon": "ReceiptOutline",
+        "version": "0.1.0",
+        "title": "Expense Item",
+        "description": "Single line item within an expense claim.",
+        "x-schema-org": "schema:Thing",
+        "type": "object",
+        "required": [
+          "expenseClaimId",
+          "category",
+          "description",
+          "amount"
+        ],
+        "properties": {
+          "expenseClaimId": {
+            "type": "string",
+            "description": "Parent ExpenseClaim object ID"
+          },
+          "category": {
+            "type": "string",
+            "description": "Expense category",
+            "enum": [
+              "travel",
+              "accommodation",
+              "meals",
+              "equipment",
+              "other"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "description": "Item description"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Item amount"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code",
+            "default": "EUR"
+          },
+          "receiptDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date on the receipt"
+          },
+          "receiptFile": {
+            "type": "file",
+            "description": "Attached receipt (Nextcloud file reference)"
+          },
+          "vatAmount": {
+            "type": "number",
+            "description": "VAT portion",
+            "default": 0
+          },
+          "vatRate": {
+            "type": "number",
+            "description": "VAT percentage",
+            "default": 0
           }
         }
       }
