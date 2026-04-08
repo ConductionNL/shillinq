@@ -15,6 +15,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/core/tasks.md#task-1
  */
 
 declare(strict_types=1);
@@ -32,6 +34,8 @@ use OCP\EventDispatcher\IEventListener;
  * will link directly to the relevant detail views in the app.
  *
  * @implements IEventListener<Event>
+ *
+ * @spec openspec/changes/core/tasks.md#task-1
  */
 class DeepLinkRegistrationListener implements IEventListener
 {
@@ -41,6 +45,8 @@ class DeepLinkRegistrationListener implements IEventListener
      * @param Event $event The event to handle
      *
      * @return void
+     *
+     * @spec openspec/changes/core/tasks.md#task-1
      */
     public function handle(Event $event): void
     {
@@ -48,14 +54,32 @@ class DeepLinkRegistrationListener implements IEventListener
             return;
         }
 
-        // Register example object deep links.
-        // Replace 'shillinq' with your app ID and update the register slug,
-        // schema slug, and URL template to match your app's actual schemas.
         $event->register(
             appId: 'shillinq',
             registerSlug: 'shillinq',
-            schemaSlug: 'example',
-            urlTemplate: '/apps/shillinq/#/examples/{uuid}'
+            schemaSlug: 'organization',
+            urlTemplate: '/apps/shillinq/organizations/{uuid}'
+        );
+
+        $event->register(
+            appId: 'shillinq',
+            registerSlug: 'shillinq',
+            schemaSlug: 'appSettings',
+            urlTemplate: '/apps/shillinq/settings/{uuid}'
+        );
+
+        $event->register(
+            appId: 'shillinq',
+            registerSlug: 'shillinq',
+            schemaSlug: 'dashboard',
+            urlTemplate: '/apps/shillinq/dashboard/{uuid}'
+        );
+
+        $event->register(
+            appId: 'shillinq',
+            registerSlug: 'shillinq',
+            schemaSlug: 'dataJob',
+            urlTemplate: '/apps/shillinq/data-jobs/{uuid}'
         );
 
     }//end handle()
