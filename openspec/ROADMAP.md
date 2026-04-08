@@ -24,6 +24,25 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 | Breadcrumb navigation for nested views | in-progress | should | [core](changes/core/) |
 | Nextcloud notification integration | in-progress | should | [core](changes/core/) |
 
+## Scheduling Features
+
+| Feature | Status | Priority | OpenSpec Change |
+|---------|--------|----------|----------------|
+| Cash management with liquidity forecasting and planning | planned | must | [scheduling](changes/scheduling/) |
+| Delegation rules with calendar-based out-of-office and escalation management | planned | must | [scheduling](changes/scheduling/) |
+| Publish award notice within legal deadline | planned | must | [scheduling](changes/scheduling/) |
+| Digital lockbox technology preventing bid viewing before submission deadline | planned | must | [scheduling](changes/scheduling/) |
+| Procurement planning with budget allocation linked to tender pipeline | planned | must | [scheduling](changes/scheduling/) |
+| Set delivery schedule on call-off order | planned | must | [scheduling](changes/scheduling/) |
+| Receive deadline alerts for objection responses | planned | must | [scheduling](changes/scheduling/) |
+| Schedule invoice email for specific date | planned | must | [scheduling](changes/scheduling/) |
+| Multi-year planning | planned | must | [scheduling](changes/scheduling/) |
+| Decline renewal and schedule contract closure | planned | must | [scheduling](changes/scheduling/) |
+| Automate reminder escalation workflow | planned | must | [scheduling](changes/scheduling/) |
+| Automatic payment reminder emails with configurable escalation schedule | planned | must | [scheduling](changes/scheduling/) |
+| Schedule payments strategically | planned | must | [scheduling](changes/scheduling/) |
+| Schedule payment date | planned | must | [scheduling](changes/scheduling/) |
+
 ## Phases
 
 ### Phase 1 — Foundation
