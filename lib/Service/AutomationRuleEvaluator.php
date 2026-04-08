@@ -22,7 +22,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
@@ -81,14 +80,14 @@ class AutomationRuleEvaluator
 
         $matches = [];
         foreach ($objects as $object) {
-            if ($this->matchesCondition($object, $rule) === true) {
+            if ($this->matchesCondition(object: $object, rule: $rule) === true) {
                 $matches[] = $object;
             }
         }
 
         // Execute action for each match.
         foreach ($matches as $match) {
-            $this->executeAction($rule, $match);
+            $this->executeAction(rule: $rule, object: $match);
         }
 
         return $matches;
@@ -153,7 +152,7 @@ class AutomationRuleEvaluator
 
         $matches = [];
         foreach ($objects as $object) {
-            if ($this->matchesCondition($object, $rule) === true) {
+            if ($this->matchesCondition(object: $object, rule: $rule) === true) {
                 $matches[] = $object;
             }
         }
@@ -178,13 +177,13 @@ class AutomationRuleEvaluator
 
         switch ($rule['actionType']) {
             case 'send_notification':
-                $this->executeSendNotification($rule, $object, $actionParams);
+                $this->executeSendNotification(rule: $rule, object: $object, actionParams: $actionParams);
                 break;
             case 'change_status':
-                $this->executeChangeStatus($object, $actionParams);
+                $this->executeChangeStatus(object: $object, actionParams: $actionParams);
                 break;
             case 'escalate':
-                $this->executeEscalate($rule, $object, $actionParams);
+                $this->executeEscalate(rule: $rule, object: $object, actionParams: $actionParams);
                 break;
             default:
                 $this->logger->warning(
@@ -208,7 +207,7 @@ class AutomationRuleEvaluator
     {
         try {
             $notificationManager = $this->container->get('OCP\Notification\IManager');
-            $notification = $notificationManager->createNotification();
+            $notification        = $notificationManager->createNotification();
 
             $subject = ($actionParams['subject'] ?? 'Automation Rule: '.$rule['name']);
             $notification->setApp('shillinq')
@@ -268,7 +267,7 @@ class AutomationRuleEvaluator
     {
         try {
             $notificationManager = $this->container->get('OCP\Notification\IManager');
-            $notification = $notificationManager->createNotification();
+            $notification        = $notificationManager->createNotification();
 
             $notification->setApp('shillinq')
                 ->setUser($actionParams['cfoUserId'] ?? 'admin')

@@ -22,7 +22,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\BackgroundJob;
@@ -40,7 +39,6 @@ use Psr\Log\LoggerInterface;
  */
 class AutomationRuleJob extends TimedJob
 {
-
     /**
      * Constructor for AutomationRuleJob.
      *
@@ -57,9 +55,9 @@ class AutomationRuleJob extends TimedJob
         private ContainerInterface $container,
         private LoggerInterface $logger,
     ) {
-        parent::__construct($time);
+        parent::__construct(time: $time);
         // Run every 15 minutes (900 seconds).
-        $this->setInterval(900);
+        $this->setInterval(interval: 900);
     }//end __construct()
 
     /**

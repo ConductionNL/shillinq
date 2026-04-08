@@ -22,7 +22,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
@@ -37,7 +36,6 @@ use Psr\Log\LoggerInterface;
  */
 class PortalService
 {
-
     /**
      * Constructor for PortalService.
      *
@@ -69,9 +67,9 @@ class PortalService
      */
     public function generateToken(
         string $organizationId,
-        ?string $description = null,
-        ?string $expiresAt = null,
-        array $permissions = [],
+        ?string $description=null,
+        ?string $expiresAt=null,
+        array $permissions=[],
     ): array {
         $rawBytes = random_bytes(32);
         $rawToken = base64_encode($rawBytes);

@@ -22,7 +22,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
@@ -40,7 +39,6 @@ use OCP\IRequest;
  */
 class PortalController extends Controller
 {
-
     /**
      * Constructor for PortalController.
      *
@@ -89,10 +87,12 @@ class PortalController extends Controller
             );
         }
 
-        return new JSONResponse([
-            'organizationId' => $tokenObject['organizationId'],
-            'permissions'    => ($tokenObject['permissions'] ?? []),
-        ]);
+        return new JSONResponse(
+                [
+                    'organizationId' => $tokenObject['organizationId'],
+                    'permissions'    => ($tokenObject['permissions'] ?? []),
+                ]
+                );
     }//end auth()
 
     /**
@@ -174,16 +174,22 @@ class PortalController extends Controller
             );
         }
 
+        if (is_array($permissions) === false) {
+            $permissions = [];
+        }
+
         $result = $this->portalService->generateToken(
             organizationId: $organizationId,
             description: $description,
             expiresAt: $expiresAt,
-            permissions: (is_array($permissions) === true ? $permissions : []),
+            permissions: $permissions,
         );
 
-        return new JSONResponse([
-            'rawToken' => $result['rawToken'],
-            'token'    => $result['tokenObject'],
-        ]);
+        return new JSONResponse(
+                [
+                    'rawToken' => $result['rawToken'],
+                    'token'    => $result['tokenObject'],
+                ]
+                );
     }//end generate()
 }//end class

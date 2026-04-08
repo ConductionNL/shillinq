@@ -22,7 +22,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
@@ -40,7 +39,6 @@ use Psr\Log\LoggerInterface;
  */
 class CreateDefaultConfiguration implements IRepairStep
 {
-
     /**
      * Constructor for CreateDefaultConfiguration.
      *
@@ -92,10 +90,10 @@ class CreateDefaultConfiguration implements IRepairStep
             return;
         }
 
-        $this->seedKpiWidgets($objectService, $output);
-        $this->seedAutomationRule($objectService, $output);
-        $this->seedExpenseClaim($objectService, $output);
-        $this->seedAnalyticsReport($objectService, $output);
+        $this->seedKpiWidgets(objectService: $objectService, output: $output);
+        $this->seedAutomationRule(objectService: $objectService, output: $output);
+        $this->seedExpenseClaim(objectService: $objectService, output: $output);
+        $this->seedAnalyticsReport(objectService: $objectService, output: $output);
 
         $output->info('Shillinq seed data created successfully.');
     }//end run()
@@ -159,29 +157,50 @@ class CreateDefaultConfiguration implements IRepairStep
      */
     private function seedKpiWidgets(object $objectService, IOutput $output): void
     {
-        $this->seedObject($objectService, 'KpiWidget', 'metricKey', 'total_receivables', [
-            'title'       => 'Total Receivables',
-            'metricKey'   => 'total_receivables',
-            'chartType'   => 'number',
-            'compareWith' => 'previous_period',
-            'sortOrder'   => 1,
-        ], $output);
+        $this->seedObject(
+            objectService: $objectService,
+            schema: 'KpiWidget',
+            uniqueField: 'metricKey',
+            uniqueValue: 'total_receivables',
+            data: [
+                'title'       => 'Total Receivables',
+                'metricKey'   => 'total_receivables',
+                'chartType'   => 'number',
+                'compareWith' => 'previous_period',
+                'sortOrder'   => 1,
+            ],
+            output: $output,
+        );
 
-        $this->seedObject($objectService, 'KpiWidget', 'metricKey', 'overdue_invoices', [
-            'title'       => 'Overdue Invoices',
-            'metricKey'   => 'overdue_invoices',
-            'chartType'   => 'number',
-            'compareWith' => 'previous_period',
-            'sortOrder'   => 2,
-        ], $output);
+        $this->seedObject(
+            objectService: $objectService,
+            schema: 'KpiWidget',
+            uniqueField: 'metricKey',
+            uniqueValue: 'overdue_invoices',
+            data: [
+                'title'       => 'Overdue Invoices',
+                'metricKey'   => 'overdue_invoices',
+                'chartType'   => 'number',
+                'compareWith' => 'previous_period',
+                'sortOrder'   => 2,
+            ],
+            output: $output,
+        );
 
-        $this->seedObject($objectService, 'KpiWidget', 'metricKey', 'cash_position', [
-            'title'       => 'Cash Position',
-            'metricKey'   => 'cash_position',
-            'chartType'   => 'line',
-            'compareWith' => 'previous_year',
-            'sortOrder'   => 3,
-        ], $output);
+        $this->seedObject(
+            objectService: $objectService,
+            schema: 'KpiWidget',
+            uniqueField: 'metricKey',
+            uniqueValue: 'cash_position',
+            data: [
+                'title'       => 'Cash Position',
+                'metricKey'   => 'cash_position',
+                'chartType'   => 'line',
+                'compareWith' => 'previous_year',
+                'sortOrder'   => 3,
+            ],
+            output: $output,
+        );
     }//end seedKpiWidgets()
 
     /**
@@ -196,17 +215,24 @@ class CreateDefaultConfiguration implements IRepairStep
      */
     private function seedAutomationRule(object $objectService, IOutput $output): void
     {
-        $this->seedObject($objectService, 'AutomationRule', 'name', 'Invoice 30-day Reminder', [
-            'name'            => 'Invoice 30-day Reminder',
-            'triggerSchema'   => 'Invoice',
-            'triggerField'    => 'ageInDays',
-            'triggerOperator' => 'gte',
-            'triggerValue'    => '30',
-            'actionType'      => 'send_notification',
-            'actionParams'    => '{"subject":"Invoice overdue","template":"invoice_reminder"}',
-            'isActive'        => true,
-            'matchCount'      => 0,
-        ], $output);
+        $this->seedObject(
+            objectService: $objectService,
+            schema: 'AutomationRule',
+            uniqueField: 'name',
+            uniqueValue: 'Invoice 30-day Reminder',
+            data: [
+                'name'            => 'Invoice 30-day Reminder',
+                'triggerSchema'   => 'Invoice',
+                'triggerField'    => 'ageInDays',
+                'triggerOperator' => 'gte',
+                'triggerValue'    => '30',
+                'actionType'      => 'send_notification',
+                'actionParams'    => '{"subject":"Invoice overdue","template":"invoice_reminder"}',
+                'isActive'        => true,
+                'matchCount'      => 0,
+            ],
+            output: $output,
+        );
     }//end seedAutomationRule()
 
     /**
@@ -221,14 +247,21 @@ class CreateDefaultConfiguration implements IRepairStep
      */
     private function seedExpenseClaim(object $objectService, IOutput $output): void
     {
-        $this->seedObject($objectService, 'ExpenseClaim', 'claimNumber', 'EXP-DEMO-0001', [
-            'claimNumber' => 'EXP-DEMO-0001',
-            'employeeId'  => 'admin',
-            'description' => 'Demo conference travel expenses',
-            'status'      => 'approved',
-            'totalAmount' => 345.50,
-            'currency'    => 'EUR',
-        ], $output);
+        $this->seedObject(
+            objectService: $objectService,
+            schema: 'ExpenseClaim',
+            uniqueField: 'claimNumber',
+            uniqueValue: 'EXP-DEMO-0001',
+            data: [
+                'claimNumber' => 'EXP-DEMO-0001',
+                'employeeId'  => 'admin',
+                'description' => 'Demo conference travel expenses',
+                'status'      => 'approved',
+                'totalAmount' => 345.50,
+                'currency'    => 'EUR',
+            ],
+            output: $output,
+        );
     }//end seedExpenseClaim()
 
     /**
@@ -243,10 +276,17 @@ class CreateDefaultConfiguration implements IRepairStep
      */
     private function seedAnalyticsReport(object $objectService, IOutput $output): void
     {
-        $this->seedObject($objectService, 'AnalyticsReport', 'title', 'Debtors Ageing Overview', [
-            'title'       => 'Debtors Ageing Overview',
-            'description' => 'Default debtors ageing report showing outstanding receivables by age bracket.',
-            'reportType'  => 'debtors_ageing',
-        ], $output);
+        $this->seedObject(
+            objectService: $objectService,
+            schema: 'AnalyticsReport',
+            uniqueField: 'title',
+            uniqueValue: 'Debtors Ageing Overview',
+            data: [
+                'title'       => 'Debtors Ageing Overview',
+                'description' => 'Default debtors ageing report showing outstanding receivables by age bracket.',
+                'reportType'  => 'debtors_ageing',
+            ],
+            output: $output,
+        );
     }//end seedAnalyticsReport()
 }//end class

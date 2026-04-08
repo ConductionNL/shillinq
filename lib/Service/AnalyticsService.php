@@ -22,7 +22,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
@@ -37,7 +36,6 @@ use Psr\Log\LoggerInterface;
  */
 class AnalyticsService
 {
-
     /**
      * Constructor for AnalyticsService.
      *
@@ -67,16 +65,16 @@ class AnalyticsService
 
         switch ($metricKey) {
             case 'total_receivables':
-                $current  = $this->computeTotalReceivables($objectService);
-                $previous = $this->computeTotalReceivables($objectService, previousPeriod: true);
+                $current  = $this->computeTotalReceivables(objectService: $objectService);
+                $previous = $this->computeTotalReceivables(objectService: $objectService, previousPeriod: true);
                 break;
             case 'overdue_invoices':
-                $current  = $this->computeOverdueInvoices($objectService);
-                $previous = $this->computeOverdueInvoices($objectService, previousPeriod: true);
+                $current  = $this->computeOverdueInvoices(objectService: $objectService);
+                $previous = $this->computeOverdueInvoices(objectService: $objectService, previousPeriod: true);
                 break;
             case 'cash_position':
-                $current  = $this->computeCashPosition($objectService);
-                $previous = $this->computeCashPosition($objectService, previousPeriod: true);
+                $current  = $this->computeCashPosition(objectService: $objectService);
+                $previous = $this->computeCashPosition(objectService: $objectService, previousPeriod: true);
                 break;
             default:
                 $this->logger->warning('Unknown metric key: {key}', ['key' => $metricKey]);
@@ -86,7 +84,7 @@ class AnalyticsService
         $trend = 'neutral';
         if ($current > $previous) {
             $trend = 'up';
-        } elseif ($current < $previous) {
+        } else if ($current < $previous) {
             $trend = 'down';
         }
 
@@ -107,7 +105,7 @@ class AnalyticsService
      *
      * @spec openspec/changes/general/tasks.md#task-11.2
      */
-    public function runReport(string $reportType, array $parameters = []): array
+    public function runReport(string $reportType, array $parameters=[]): array
     {
         $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
@@ -115,13 +113,13 @@ class AnalyticsService
 
         switch ($reportType) {
             case 'debtors_ageing':
-                $snapshot = $this->buildDebtorsAgeingReport($objectService, $parameters);
+                $snapshot = $this->buildDebtorsAgeingReport(objectService: $objectService, parameters: $parameters);
                 break;
             case 'budget_vs_actual':
-                $snapshot = $this->buildBudgetVsActualReport($objectService, $parameters);
+                $snapshot = $this->buildBudgetVsActualReport(objectService: $objectService, parameters: $parameters);
                 break;
             case 'cash_flow':
-                $snapshot = $this->buildCashFlowReport($objectService, $parameters);
+                $snapshot = $this->buildCashFlowReport(objectService: $objectService, parameters: $parameters);
                 break;
             default:
                 $snapshot = ['type' => 'custom', 'data' => []];
@@ -139,7 +137,7 @@ class AnalyticsService
      *
      * @return float The total receivables amount.
      */
-    private function computeTotalReceivables(object $objectService, bool $previousPeriod = false): float
+    private function computeTotalReceivables(object $objectService, bool $previousPeriod=false): float
     {
         $filters = ['status' => ['ne' => 'paid']];
 
@@ -170,7 +168,7 @@ class AnalyticsService
      *
      * @return float The count of overdue invoices.
      */
-    private function computeOverdueInvoices(object $objectService, bool $previousPeriod = false): float
+    private function computeOverdueInvoices(object $objectService, bool $previousPeriod=false): float
     {
         $filters = [
             'status'    => ['ne' => 'paid'],
@@ -199,7 +197,7 @@ class AnalyticsService
      *
      * @return float The cash position value.
      */
-    private function computeCashPosition(object $objectService, bool $previousPeriod = false): float
+    private function computeCashPosition(object $objectService, bool $previousPeriod=false): float
     {
         $filters = [];
 
@@ -256,11 +254,11 @@ class AnalyticsService
 
             if ($age <= 0) {
                 $buckets['current'] += $amount;
-            } elseif ($age <= 30) {
+            } else if ($age <= 30) {
                 $buckets['1_30_days'] += $amount;
-            } elseif ($age <= 60) {
+            } else if ($age <= 60) {
                 $buckets['31_60_days'] += $amount;
-            } elseif ($age <= 90) {
+            } else if ($age <= 90) {
                 $buckets['61_90_days'] += $amount;
             } else {
                 $buckets['over_90'] += $amount;

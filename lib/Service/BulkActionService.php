@@ -21,7 +21,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
@@ -36,7 +35,6 @@ use Psr\Log\LoggerInterface;
  */
 class BulkActionService
 {
-
     /**
      * Constructor for BulkActionService.
      *
@@ -65,7 +63,7 @@ class BulkActionService
      */
     public function bulkApprove(string $schema, array $ids): array
     {
-        return $this->bulkUpdate($schema, $ids, ['status' => 'approved']);
+        return $this->bulkUpdate(schema: $schema, ids: $ids, data: ['status' => 'approved']);
     }//end bulkApprove()
 
     /**
@@ -115,8 +113,8 @@ class BulkActionService
     /**
      * Assign multiple objects to a new assignee.
      *
-     * @param string $schema    The schema name.
-     * @param array  $ids       Array of object IDs to assign.
+     * @param string $schema     The schema name.
+     * @param array  $ids        Array of object IDs to assign.
      * @param string $assigneeId The target assignee user ID.
      *
      * @return array{succeeded: int, failed: int, errors: array}
@@ -125,7 +123,7 @@ class BulkActionService
      */
     public function bulkAssign(string $schema, array $ids, string $assigneeId): array
     {
-        return $this->bulkUpdate($schema, $ids, ['assigneeId' => $assigneeId]);
+        return $this->bulkUpdate(schema: $schema, ids: $ids, data: ['assigneeId' => $assigneeId]);
     }//end bulkAssign()
 
     /**

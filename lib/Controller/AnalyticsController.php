@@ -21,7 +21,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
@@ -39,7 +38,6 @@ use OCP\IRequest;
  */
 class AnalyticsController extends Controller
 {
-
     /**
      * Constructor for AnalyticsController.
      *
@@ -58,9 +56,9 @@ class AnalyticsController extends Controller
     /**
      * Get the current KPI value and trend for a metric key.
      *
-     * @NoAdminRequired
-     *
      * @param string $metricKey The metric identifier.
+     *
+     * @NoAdminRequired
      *
      * @return JSONResponse
      *
@@ -76,9 +74,9 @@ class AnalyticsController extends Controller
     /**
      * Run a report by type and return its snapshot data.
      *
-     * @NoAdminRequired
-     *
      * @param string $reportType The report type identifier.
+     *
+     * @NoAdminRequired
      *
      * @return JSONResponse
      *
@@ -91,19 +89,21 @@ class AnalyticsController extends Controller
 
         $snapshot = $this->analyticsService->runReport($reportType, $parameters);
 
-        return new JSONResponse([
-            'reportType'   => $reportType,
-            'snapshotData' => $snapshot,
-            'lastRunAt'    => (new \DateTimeImmutable())->format('c'),
-        ]);
+        return new JSONResponse(
+                [
+                    'reportType'   => $reportType,
+                    'snapshotData' => $snapshot,
+                    'lastRunAt'    => (new \DateTimeImmutable())->format('c'),
+                ]
+                );
     }//end runReport()
 
     /**
      * Get the last saved snapshot for a report.
      *
-     * @NoAdminRequired
-     *
      * @param string $id The report object ID.
+     *
+     * @NoAdminRequired
      *
      * @return JSONResponse
      *
@@ -111,9 +111,11 @@ class AnalyticsController extends Controller
      */
     public function snapshot(string $id): JSONResponse
     {
-        return new JSONResponse([
-            'id'       => $id,
-            'snapshot' => null,
-        ]);
+        return new JSONResponse(
+                [
+                    'id'       => $id,
+                    'snapshot' => null,
+                ]
+                );
     }//end snapshot()
 }//end class
