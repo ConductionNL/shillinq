@@ -55,7 +55,7 @@ class RecertificationNotificationJob extends TimedJob
         parent::__construct(time: $time);
 
         // Run every hour (3600 seconds).
-        $this->setInterval(3600);
+        $this->setInterval(seconds: 3600);
     }//end __construct()
 
     /**

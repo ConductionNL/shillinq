@@ -58,7 +58,7 @@ class DelegationExpiryJob extends TimedJob
         parent::__construct(time: $time);
 
         // Run every 5 minutes (300 seconds).
-        $this->setInterval(300);
+        $this->setInterval(seconds: 300);
     }//end __construct()
 
     /**
