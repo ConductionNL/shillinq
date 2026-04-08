@@ -102,9 +102,6 @@ import DomainIcon from 'vue-material-design-icons/Domain.vue'
 import DatabaseImportIcon from 'vue-material-design-icons/DatabaseImport.vue'
 import CogIcon from 'vue-material-design-icons/Cog.vue'
 import ViewDashboardIcon from 'vue-material-design-icons/ViewDashboard.vue'
-import PlusIcon from 'vue-material-design-icons/Plus.vue'
-import UploadIcon from 'vue-material-design-icons/Upload.vue'
-import DownloadIcon from 'vue-material-design-icons/Download.vue'
 
 export default {
 	name: 'DashboardPage',

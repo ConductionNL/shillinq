@@ -93,14 +93,14 @@ class NotificationServiceTest extends TestCase
 
         $notification->expects($this->once())
             ->method('setObject')
-            ->with(objectType: 'dataJob', objectId: 'job-123')
+            ->with('dataJob', 'job-123')
             ->willReturnSelf();
 
         $notification->expects($this->once())
             ->method('setSubject')
             ->with(
-                subject: 'datajob_completed',
-                parameters: [
+                'datajob_completed',
+                [
                     'fileName'         => 'test.csv',
                     'processedRecords' => 10,
                 ]
@@ -150,8 +150,8 @@ class NotificationServiceTest extends TestCase
         $notification->expects($this->once())
             ->method('setSubject')
             ->with(
-                subject: 'datajob_failed',
-                parameters: [
+                'datajob_failed',
+                [
                     'fileName'      => 'fail.csv',
                     'failedRecords' => 3,
                 ]

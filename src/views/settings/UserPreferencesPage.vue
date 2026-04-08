@@ -9,17 +9,27 @@
 		<div class="user-preferences__field">
 			<label for="pref-language">{{ t('shillinq', 'Language') }}</label>
 			<select id="pref-language" v-model="preferences.language" @change="save">
-				<option value="en">English</option>
-				<option value="nl">Nederlands</option>
+				<option value="en">
+					English
+				</option>
+				<option value="nl">
+					Nederlands
+				</option>
 			</select>
 		</div>
 
 		<div class="user-preferences__field">
 			<label for="pref-dateformat">{{ t('shillinq', 'Date Format') }}</label>
 			<select id="pref-dateformat" v-model="preferences.dateFormat" @change="save">
-				<option value="DD-MM-YYYY">DD-MM-YYYY</option>
-				<option value="YYYY-MM-DD">YYYY-MM-DD</option>
-				<option value="MM/DD/YYYY">MM/DD/YYYY</option>
+				<option value="DD-MM-YYYY">
+					DD-MM-YYYY
+				</option>
+				<option value="YYYY-MM-DD">
+					YYYY-MM-DD
+				</option>
+				<option value="MM/DD/YYYY">
+					MM/DD/YYYY
+				</option>
 			</select>
 		</div>
 

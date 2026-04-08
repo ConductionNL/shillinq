@@ -14,7 +14,9 @@
 			<div v-for="group in groupedResults"
 				:key="group.schema"
 				class="global-search__group">
-				<h4 class="global-search__group-title">{{ group.label }}</h4>
+				<h4 class="global-search__group-title">
+					{{ group.label }}
+				</h4>
 				<ul class="global-search__list">
 					<li v-for="result in group.items"
 						:key="result.id"

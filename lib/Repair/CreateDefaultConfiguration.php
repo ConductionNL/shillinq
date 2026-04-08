@@ -87,7 +87,7 @@ class CreateDefaultConfiguration implements IRepairStep
         } catch (\Throwable $e) {
             $output->warning(
                 'OpenRegister ObjectService not available, skipping seed data: '
-                . $e->getMessage()
+                .$e->getMessage()
             );
             return;
         }
@@ -286,7 +286,7 @@ class CreateDefaultConfiguration implements IRepairStep
 
             if (empty($existing) === false) {
                 $output->info(
-                    $label . ' objects already exist, skipping seed data.'
+                    $label.' objects already exist, skipping seed data.'
                 );
                 return;
             }
@@ -298,18 +298,18 @@ class CreateDefaultConfiguration implements IRepairStep
                     object: $data
                 );
                 $output->info(
-                    'Seeded ' . $label . ': '
-                    . ($data[$uniqueField] ?? 'unknown')
+                    'Seeded '.$label.': '
+                    .($data[$uniqueField] ?? 'unknown')
                 );
             }
         } catch (\Throwable $e) {
             $this->logger->warning(
-                'Shillinq: failed to seed ' . $label . ' data',
+                'Shillinq: failed to seed '.$label.' data',
                 ['exception' => $e->getMessage()]
             );
             $output->warning(
-                'Failed to seed ' . $label . ' data: '
-                . $e->getMessage()
+                'Failed to seed '.$label.' data: '
+                .$e->getMessage()
             );
         }//end try
     }//end seedObjects()

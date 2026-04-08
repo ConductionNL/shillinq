@@ -20,12 +20,16 @@
 				<input type="file"
 					accept=".csv,text/csv"
 					@change="onFileSelected">
-				<p v-if="fileError" class="csv-import__error">{{ fileError }}</p>
+				<p v-if="fileError" class="csv-import__error">
+					{{ fileError }}
+				</p>
 
 				<div class="csv-import__entity-select">
 					<label>{{ t('shillinq', 'Target entity type') }}</label>
 					<select v-model="entityType">
-						<option value="organization">{{ t('shillinq', 'Organization') }}</option>
+						<option value="organization">
+							{{ t('shillinq', 'Organization') }}
+						</option>
 					</select>
 				</div>
 			</div>
@@ -45,7 +49,9 @@
 							<td>{{ header }}</td>
 							<td>
 								<select v-model="columnMapping[header]">
-									<option value="">{{ t('shillinq', '— Skip —') }}</option>
+									<option value="">
+										{{ t('shillinq', '— Skip —') }}
+									</option>
 									<option v-for="prop in schemaProperties"
 										:key="prop"
 										:value="prop">
@@ -64,7 +70,9 @@
 				<table class="csv-import__preview-table">
 					<thead>
 						<tr>
-							<th v-for="prop in mappedProperties" :key="prop">{{ prop }}</th>
+							<th v-for="prop in mappedProperties" :key="prop">
+								{{ prop }}
+							</th>
 							<th>{{ t('shillinq', 'Status') }}</th>
 						</tr>
 					</thead>

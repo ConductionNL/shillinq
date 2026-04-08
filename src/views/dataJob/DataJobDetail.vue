@@ -4,10 +4,27 @@
 	<div class="datajob-detail">
 		<Breadcrumb :items="breadcrumbItems" />
 
-		<CnDetailPage
-			:object="currentObject"
-			:store="dataJobStore"
-			:tabs="tabs" />
+		<div v-if="currentObject" class="datajob-detail__content">
+			<div class="datajob-detail__header">
+				<h2>{{ currentObject.fileName }}</h2>
+				<span :class="'datajob-detail__status datajob-detail__status--' + currentObject.status">
+					{{ currentObject.status }}
+				</span>
+			</div>
+
+			<div class="datajob-detail__fields">
+				<div v-for="(value, key) in displayFields"
+					:key="key"
+					class="datajob-detail__field">
+					<span class="datajob-detail__label">
+						{{ key }}
+					</span>
+					<span class="datajob-detail__value">
+						{{ value ?? '—' }}
+					</span>
+				</div>
+			</div>
+		</div>
 
 		<div v-if="currentObject && currentObject.errorLog" class="datajob-detail__error-log">
 			<h3>{{ t('shillinq', 'Error Log') }}</h3>
@@ -22,7 +39,6 @@
 </template>
 
 <script>
-import { CnDetailPage } from '@conduction/nextcloud-vue'
 import { NcProgressBar } from '@nextcloud/vue'
 import { useDataJobStore } from '../../store/modules/dataJob.js'
 import Breadcrumb from '../../components/Breadcrumb.vue'
@@ -30,7 +46,6 @@ import Breadcrumb from '../../components/Breadcrumb.vue'
 export default {
 	name: 'DataJobDetail',
 	components: {
-		CnDetailPage,
 		NcProgressBar,
 		Breadcrumb,
 	},
@@ -48,10 +63,16 @@ export default {
 		currentObject() {
 			return this.dataJobStore.currentObject
 		},
-		tabs() {
-			return [
-				{ id: 'details', label: t('shillinq', 'Details') },
-			]
+		displayFields() {
+			if (!this.currentObject) return {}
+			const skip = ['id', 'uuid', 'errorLog', 'fileName', 'status']
+			const fields = {}
+			Object.entries(this.currentObject).forEach(([key, value]) => {
+				if (!skip.includes(key) && !key.startsWith('_')) {
+					fields[key] = value
+				}
+			})
+			return fields
 		},
 		breadcrumbItems() {
 			return [
@@ -101,6 +122,49 @@ export default {
 </script>
 
 <style scoped>
+.datajob-detail__header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.datajob-detail__status {
+	padding: 2px 8px;
+	border-radius: 4px;
+	font-size: 13px;
+	font-weight: 600;
+	text-transform: capitalize;
+}
+
+.datajob-detail__status--completed {
+	background-color: var(--color-success);
+	color: white;
+}
+
+.datajob-detail__status--processing,
+.datajob-detail__status--pending {
+	background-color: var(--color-warning);
+	color: white;
+}
+
+.datajob-detail__status--failed {
+	background-color: var(--color-error);
+	color: white;
+}
+
+.datajob-detail__fields {
+	display: grid;
+	grid-template-columns: 1fr 2fr;
+	gap: 8px 16px;
+}
+
+.datajob-detail__label {
+	font-weight: 600;
+	color: var(--color-text-maxcontrast);
+	text-transform: capitalize;
+}
+
 .datajob-detail__error-log {
 	margin-top: 16px;
 }

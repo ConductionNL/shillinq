@@ -42,6 +42,7 @@ export default {
 		CnIndexPage,
 		Breadcrumb,
 		CsvImportDialog,
+		UploadIcon,
 	},
 
 	data() {

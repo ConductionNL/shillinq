@@ -53,13 +53,13 @@ class NotificationService
     /**
      * Notify the user that a DataJob import has completed or failed.
      *
-     * @param string $userId          The user who initiated the import
-     * @param string $jobId           The DataJob object ID
-     * @param string $fileName        The imported file name
-     * @param string $status          The final status (completed or failed)
+     * @param string $userId           The user who initiated the import
+     * @param string $jobId            The DataJob object ID
+     * @param string $fileName         The imported file name
+     * @param string $status           The final status (completed or failed)
      * @param int    $processedRecords Number of successfully processed records
-     * @param int    $failedRecords   Number of failed records
-     * @param string $currentUserId   The user triggering the notification (for self-action guard)
+     * @param int    $failedRecords    Number of failed records
+     * @param string $currentUserId    The user triggering the notification (for self-action guard)
      *
      * @return void
      *
@@ -72,7 +72,7 @@ class NotificationService
         string $status,
         int $processedRecords,
         int $failedRecords,
-        string $currentUserId = '',
+        string $currentUserId='',
     ): void {
         // Self-action guard: do not notify if author === recipient.
         if ($currentUserId !== '' && $currentUserId === $userId) {
@@ -84,7 +84,7 @@ class NotificationService
             $notification->setApp(Application::APP_ID);
             $notification->setUser($userId);
             $notification->setDateTime(new \DateTime());
-            $notification->setObject(objectType: 'dataJob', objectId: $jobId);
+            $notification->setObject(type: 'dataJob', id: $jobId);
 
             if ($status === 'completed') {
                 $notification->setSubject(
@@ -104,7 +104,7 @@ class NotificationService
                 );
             }
 
-            $notification->setLink('/apps/shillinq/data-jobs/' . $jobId);
+            $notification->setLink('/apps/shillinq/data-jobs/'.$jobId);
             $this->notificationManager->notify($notification);
         } catch (\Throwable $e) {
             $this->logger->error(

@@ -55,8 +55,8 @@ class ShillinqActivityProvider implements IProvider
     /**
      * Parse the given activity event into a human-readable form.
      *
-     * @param string $language The target language
-     * @param IEvent $event    The event to parse
+     * @param string $language      The target language
+     * @param IEvent $event         The event to parse
      * @param IEvent $previousEvent The previous event for aggregation (nullable)
      *
      * @return IEvent
@@ -66,13 +66,13 @@ class ShillinqActivityProvider implements IProvider
     public function parse(
         string $language,
         IEvent $event,
-        ?IEvent $previousEvent = null,
+        ?IEvent $previousEvent=null,
     ): IEvent {
         if ($event->getApp() !== Application::APP_ID) {
             throw new \InvalidArgumentException('Event not for Shillinq');
         }
 
-        $params = $event->getSubjectParameters();
+        $params   = $event->getSubjectParameters();
         $fileName = ($params['fileName'] ?? 'unknown');
 
         if ($event->getSubject() === 'datajob_completed') {
@@ -80,7 +80,7 @@ class ShillinqActivityProvider implements IProvider
             $event->setParsedSubject(
                 $this->l->t('Import of %s completed with %d records', [$fileName, $processed])
             );
-        } elseif ($event->getSubject() === 'datajob_failed') {
+        } else if ($event->getSubject() === 'datajob_failed') {
             $failed = ($params['failedRecords'] ?? 0);
             $event->setParsedSubject(
                 $this->l->t('Import of %s failed with %d errors', [$fileName, $failed])

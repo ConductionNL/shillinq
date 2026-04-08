@@ -128,7 +128,11 @@ class UserPreferencesController extends Controller
             if (isset($data[$key]) === true) {
                 $value = $data[$key];
                 if (is_bool($value) === true) {
-                    $value = ($value ? 'true' : 'false');
+                    if ($value === true) {
+                        $value = 'true';
+                    } else {
+                        $value = 'false';
+                    }
                 }
 
                 $this->config->setUserValue(

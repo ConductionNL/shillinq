@@ -96,8 +96,8 @@ class ShillinqNotifier implements INotifier
             throw new \InvalidArgumentException('Notification not for Shillinq');
         }
 
-        $params = $notification->getSubjectParameters();
-        $subject = $notification->getSubject();
+        $params   = $notification->getSubjectParameters();
+        $subject  = $notification->getSubject();
         $fileName = ($params['fileName'] ?? 'unknown');
 
         if ($subject === 'datajob_completed') {
@@ -105,18 +105,18 @@ class ShillinqNotifier implements INotifier
             $notification->setParsedSubject(
                 $this->l->t('Import of %s completed: %d records imported', [$fileName, $processed])
             );
-        } elseif ($subject === 'datajob_failed') {
+        } else if ($subject === 'datajob_failed') {
             $failed = ($params['failedRecords'] ?? 0);
             $notification->setParsedSubject(
                 $this->l->t('Import of %s failed: %d errors. View details.', [$fileName, $failed])
             );
         } else {
-            throw new \InvalidArgumentException('Unknown notification subject: ' . $subject);
+            throw new \InvalidArgumentException('Unknown notification subject: '.$subject);
         }
 
         $link = $this->urlGenerator->linkToRouteAbsolute(
-            routeName: Application::APP_ID . '.dashboard.page'
-        ) . '/data-jobs/' . $notification->getObjectId();
+            routeName: Application::APP_ID.'.dashboard.page'
+        ).'/data-jobs/'.$notification->getObjectId();
         $notification->setLink($link);
 
         return $notification;

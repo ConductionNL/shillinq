@@ -102,6 +102,8 @@ class Filter implements IFilter
     /**
      * Get the types of events this filter includes.
      *
+     * @param array $types The current list of event types
+     *
      * @return string[]
      *
      * @spec openspec/changes/core/tasks.md#task-9

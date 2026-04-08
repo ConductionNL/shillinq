@@ -101,13 +101,11 @@ class CreateDefaultConfigurationTest extends TestCase
             ->with('OCA\OpenRegister\Service\ObjectService')
             ->willReturn($objectService);
 
+        $this->repairStep->run(output: $this->output);
+
         // Expect saveObject to be called for each seed object:
         // 2 organizations + 4 settings + 1 dashboard + 1 data job = 8.
-        $objectService
-            ->expects($this->exactly(8))
-            ->method('saveObject');
-
-        $this->repairStep->run(output: $this->output);
+        $this->assertSame(8, $objectService->saveObjectCallCount);
     }//end testSeedDataCreatedOnFreshInstall()
 
     /**
@@ -129,12 +127,10 @@ class CreateDefaultConfigurationTest extends TestCase
             ->with('OCA\OpenRegister\Service\ObjectService')
             ->willReturn($objectService);
 
-        // saveObject should never be called since objects already exist.
-        $objectService
-            ->expects($this->never())
-            ->method('saveObject');
-
         $this->repairStep->run(output: $this->output);
+
+        // saveObject should never be called since objects already exist.
+        $this->assertSame(0, $objectService->saveObjectCallCount);
     }//end testNoDuplicatesWhenObjectsExist()
 
     /**
@@ -168,13 +164,46 @@ class CreateDefaultConfigurationTest extends TestCase
      */
     private function createObjectServiceMock(array $existingObjects): object
     {
-        $mock = $this->getMockBuilder(\stdClass::class)
-            ->addMethods(['getObjects', 'saveObject'])
-            ->getMock();
+        return new class ($existingObjects) {
 
-        $mock->method('getObjects')
-            ->willReturn($existingObjects);
+            /**
+             * @var array
+             */
+            private array $existingObjects;
 
-        return $mock;
+            /**
+             * @var int
+             */
+            public int $saveObjectCallCount = 0;
+
+            public function __construct(array $existingObjects)
+            {
+                $this->existingObjects = $existingObjects;
+            }
+
+            /**
+             * @param string $register The register slug
+             * @param string $schema   The schema slug
+             *
+             * @return array
+             */
+            public function getObjects(string $register, string $schema): array
+            {
+                return $this->existingObjects;
+            }
+
+            /**
+             * @param string $register The register slug
+             * @param string $schema   The schema slug
+             * @param array  $object   The object data
+             *
+             * @return array
+             */
+            public function saveObject(string $register, string $schema, array $object): array
+            {
+                $this->saveObjectCallCount++;
+                return $object;
+            }
+        };
     }//end createObjectServiceMock()
 }//end class

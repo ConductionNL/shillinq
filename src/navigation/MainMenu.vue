@@ -32,7 +32,9 @@
 					<DatabaseImportIcon :size="20" />
 				</template>
 				<template v-if="openJobCount > 0" #counter>
-					<NcCounterBubble type="highlighted">{{ openJobCount }}</NcCounterBubble>
+					<NcCounterBubble type="highlighted">
+						{{ openJobCount }}
+					</NcCounterBubble>
 				</template>
 			</NcAppNavigationItem>
 
