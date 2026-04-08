@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\BackgroundJob;
 
+use DateTimeImmutable;
 use OCA\Shillinq\Service\AutomationRuleEvaluator;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -57,7 +58,7 @@ class AutomationRuleJob extends TimedJob
     ) {
         parent::__construct(time: $time);
         // Run every 15 minutes (900 seconds).
-        $this->setInterval(900);
+        $this->setInterval(seconds: 900);
     }//end __construct()
 
     /**
@@ -91,7 +92,7 @@ class AutomationRuleJob extends TimedJob
             return;
         }//end try
 
-        $now = (new \DateTimeImmutable())->format('c');
+        $now = (new DateTimeImmutable())->format('c');
 
         foreach ($rules as $rule) {
             try {

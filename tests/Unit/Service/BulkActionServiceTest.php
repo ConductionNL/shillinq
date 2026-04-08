@@ -162,21 +162,21 @@ class BulkActionServiceTest extends TestCase
      */
     public function testBulkAssignUpdatesAssignee(): void
     {
-        $updatedData = [];
+        $updatedData = new \ArrayObject();
         $mockObjectService = new class ($updatedData) {
 
-            private array $data;
+            private \ArrayObject $data;
 
             /**
              * Constructor.
              *
-             * @param array $data Reference to updated data tracker.
+             * @param \ArrayObject $data Shared data tracker.
              *
              * @return void
              */
-            public function __construct(array &$data)
+            public function __construct(\ArrayObject $data)
             {
-                $this->data = &$data;
+                $this->data = $data;
             }//end __construct()
 
             /**

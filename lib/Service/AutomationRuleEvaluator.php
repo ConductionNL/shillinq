@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use DateTime;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -217,7 +218,7 @@ class AutomationRuleEvaluator
             $subject = ($actionParams['subject'] ?? 'Automation Rule: '.$rule['name']);
             $notification->setApp('shillinq')
                 ->setUser($object['userId'] ?? 'admin')
-                ->setDateTime(new \DateTime())
+                ->setDateTime(new DateTime())
                 ->setObject('automation_rule', (string) $rule['id'])
                 ->setSubject('automation_match', ['subject' => $subject, 'objectId' => $object['id'] ?? '']);
 
@@ -276,7 +277,7 @@ class AutomationRuleEvaluator
 
             $notification->setApp('shillinq')
                 ->setUser($actionParams['cfoUserId'] ?? 'admin')
-                ->setDateTime(new \DateTime())
+                ->setDateTime(new DateTime())
                 ->setObject('escalation', (string) ($object['id'] ?? ''))
                 ->setSubject(
                     'escalation',

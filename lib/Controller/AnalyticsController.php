@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
+use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\AnalyticsService;
 use OCP\AppFramework\Controller;
@@ -93,7 +94,7 @@ class AnalyticsController extends Controller
                 [
                     'reportType'   => $reportType,
                     'snapshotData' => $snapshot,
-                    'lastRunAt'    => (new \DateTimeImmutable())->format('c'),
+                    'lastRunAt'    => (new DateTimeImmutable())->format('c'),
                 ]
                 );
     }//end runReport()

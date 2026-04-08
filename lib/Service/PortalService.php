@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use DateTimeImmutable;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -130,12 +131,12 @@ class PortalService
             filters: ['isActive' => true],
         );
 
-        $now = new \DateTimeImmutable();
+        $now = new DateTimeImmutable();
 
         foreach ($tokens as $token) {
             // Skip expired tokens.
             if (empty($token['expiresAt']) === false) {
-                $expiry = new \DateTimeImmutable($token['expiresAt']);
+                $expiry = new DateTimeImmutable($token['expiresAt']);
                 if ($expiry < $now) {
                     continue;
                 }
