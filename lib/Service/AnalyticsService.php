@@ -224,9 +224,11 @@ class AnalyticsService
      * Build a debtors ageing report.
      *
      * @param object $objectService The OpenRegister object service.
-     * @param array  $parameters    Report parameters.
+     * @param array  $parameters    Report parameters (reserved for future filtering).
      *
      * @return array The report data.
+     *
+     * @psalm-suppress UnusedParam
      */
     private function buildDebtorsAgeingReport(object $objectService, array $parameters): array
     {
@@ -279,6 +281,8 @@ class AnalyticsService
      * @param array  $parameters    Report parameters.
      *
      * @return array The report data.
+     *
+     * @psalm-suppress UnusedParam
      */
     private function buildBudgetVsActualReport(object $objectService, array $parameters): array
     {
@@ -295,6 +299,8 @@ class AnalyticsService
      * @param array  $parameters    Report parameters.
      *
      * @return array The report data.
+     *
+     * @psalm-suppress UnusedParam
      */
     private function buildCashFlowReport(object $objectService, array $parameters): array
     {
