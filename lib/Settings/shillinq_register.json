@@ -3,37 +3,711 @@
   "info": {
     "title": "Shillinq Register",
     "description": "Register containing all schemas for the Shillinq application.",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "x-openregister": {
     "type": "application",
     "app": "shillinq",
     "openregister": "^v0.2.10",
-    "description": "Shillinq — replace with your app description"
+    "description": "Shillinq — complete open-source business administration suite"
   },
   "paths": {},
   "components": {
     "schemas": {
-      "example": {
-        "slug": "example",
-        "icon": "FileDocumentOutline",
+      "productCategory": {
+        "slug": "product-category",
+        "icon": "FolderOutline",
         "version": "0.1.0",
-        "title": "Example",
-        "description": "Example schema — replace with your app's actual schemas.",
+        "title": "Product Category",
+        "description": "Hierarchical product and service category supporting parent-child nesting.",
+        "x-schema-org": "schema:Thing",
         "type": "object",
         "required": [
-          "title"
+          "name"
         ],
         "properties": {
-          "title": {
+          "name": {
             "type": "string",
-            "description": "The title of the example object",
-            "example": "My example"
+            "description": "Category display name",
+            "example": "Office Supplies"
+          },
+          "code": {
+            "type": "string",
+            "description": "Short code for filtering (e.g. IT, OFFICE)",
+            "example": "OFFICE-SUP"
           },
           "description": {
             "type": "string",
-            "description": "An optional description",
-            "example": "This is an example"
+            "description": "Category description",
+            "example": "General office supplies"
+          },
+          "parentCategoryId": {
+            "type": "string",
+            "description": "OpenRegister object ID of the parent ProductCategory; null for root nodes"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the category is available for use",
+            "default": true
+          },
+          "sortOrder": {
+            "type": "integer",
+            "description": "Display order within a parent level",
+            "default": 0
+          }
+        }
+      },
+      "product": {
+        "slug": "product",
+        "icon": "PackageVariantClosed",
+        "version": "0.1.0",
+        "title": "Product",
+        "description": "Product or service item master with SKU, pricing, and category assignment.",
+        "x-schema-org": "schema:Product",
+        "type": "object",
+        "required": [
+          "sku",
+          "name"
+        ],
+        "properties": {
+          "sku": {
+            "type": "string",
+            "description": "Stock keeping unit; unique within the register",
+            "example": "PAPER-A4-80"
+          },
+          "name": {
+            "type": "string",
+            "description": "Product or service display name",
+            "example": "A4 Copy Paper 80gsm (500 sheets)"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed description"
+          },
+          "unit": {
+            "type": "string",
+            "description": "Unit of measure (piece, kg, hour, litre, m², etc.)",
+            "default": "piece",
+            "example": "ream"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the product is available for purchasing",
+            "default": true
+          },
+          "categoryId": {
+            "type": "string",
+            "description": "OpenRegister object ID of the assigned ProductCategory"
+          },
+          "purchasePrice": {
+            "type": "number",
+            "description": "Default purchase price (may be overridden in CatalogItem)",
+            "example": 4.50
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code for purchasePrice",
+            "default": "EUR",
+            "example": "EUR"
+          },
+          "taxRate": {
+            "type": "number",
+            "description": "Default VAT rate percentage",
+            "default": 21,
+            "example": 21
+          },
+          "leadTimeDays": {
+            "type": "integer",
+            "description": "Default supplier lead time in calendar days"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Internal notes"
+          }
+        }
+      },
+      "catalog": {
+        "slug": "catalog",
+        "icon": "BookOpenPageVariantOutline",
+        "version": "0.1.0",
+        "title": "Catalog",
+        "description": "Vendor catalog with negotiated pricing, effective date range, and lifecycle status.",
+        "x-schema-org": "schema:CreativeWork",
+        "type": "object",
+        "required": [
+          "name",
+          "status"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Catalog display name",
+            "example": "Office Essentials 2026"
+          },
+          "description": {
+            "type": "string",
+            "description": "Catalog scope and purpose"
+          },
+          "status": {
+            "type": "string",
+            "description": "Catalog lifecycle status",
+            "enum": ["draft", "active", "archived"],
+            "default": "draft",
+            "example": "active"
+          },
+          "supplierProfileId": {
+            "type": "string",
+            "description": "OpenRegister object ID of the linked SupplierProfile"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date from which the catalog is valid"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date after which the catalog expires"
+          },
+          "ownerId": {
+            "type": "string",
+            "description": "userId of the procurement manager who owns this catalog"
+          },
+          "contractReference": {
+            "type": "string",
+            "description": "Framework contract or agreement number",
+            "example": "FW-2026-OFFICE"
+          }
+        }
+      },
+      "catalogItem": {
+        "slug": "catalog-item",
+        "icon": "TagOutline",
+        "version": "0.1.0",
+        "title": "Catalog Item",
+        "description": "Links a Product to a Catalog with a negotiated unit price from a supplier.",
+        "x-schema-org": "schema:Offer",
+        "type": "object",
+        "required": [
+          "catalogId",
+          "productId",
+          "supplierProfileId",
+          "unitPrice"
+        ],
+        "properties": {
+          "catalogId": {
+            "type": "string",
+            "description": "OpenRegister object ID of the parent Catalog"
+          },
+          "productId": {
+            "type": "string",
+            "description": "OpenRegister object ID of the Product"
+          },
+          "supplierProfileId": {
+            "type": "string",
+            "description": "OpenRegister object ID of the supplying SupplierProfile"
+          },
+          "unitPrice": {
+            "type": "number",
+            "description": "Negotiated unit price",
+            "example": 4.50
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code",
+            "default": "EUR"
+          },
+          "minimumOrderQuantity": {
+            "type": "integer",
+            "description": "Minimum order quantity",
+            "default": 1
+          },
+          "leadTimeDays": {
+            "type": "integer",
+            "description": "Supplier lead time for this item (overrides Product default)"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether this item is orderable from this catalog",
+            "default": true
+          },
+          "notes": {
+            "type": "string",
+            "description": "Procurement notes"
+          }
+        }
+      },
+      "orderBasket": {
+        "slug": "order-basket",
+        "icon": "CartOutline",
+        "version": "0.1.0",
+        "title": "Order Basket",
+        "description": "Requisitioner shopping basket for catalog items with cost centre assignment.",
+        "x-schema-org": "schema:Order",
+        "type": "object",
+        "required": [
+          "requisitionerId",
+          "status"
+        ],
+        "properties": {
+          "requisitionerId": {
+            "type": "string",
+            "description": "userId of the requisitioner"
+          },
+          "status": {
+            "type": "string",
+            "description": "Basket lifecycle status",
+            "enum": ["open", "submitted", "approved", "rejected"],
+            "default": "open"
+          },
+          "costCentreId": {
+            "type": "string",
+            "description": "OpenRegister object ID of the assigned Budget/cost centre"
+          },
+          "glAccountCode": {
+            "type": "string",
+            "description": "General ledger account code"
+          },
+          "totalAmount": {
+            "type": "number",
+            "description": "Running total (computed on save)",
+            "default": 0
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code",
+            "default": "EUR"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Requisitioner notes"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the basket was submitted for approval"
+          },
+          "approvedBy": {
+            "type": "string",
+            "description": "userId who approved the requisition"
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of approval decision"
+          }
+        }
+      },
+      "orderBasketLine": {
+        "slug": "order-basket-line",
+        "icon": "CartOutline",
+        "version": "0.1.0",
+        "title": "Order Basket Line",
+        "description": "Individual line item within an order basket.",
+        "x-schema-org": "schema:OrderItem",
+        "type": "object",
+        "required": [
+          "basketId",
+          "catalogItemId",
+          "quantity",
+          "unitPrice"
+        ],
+        "properties": {
+          "basketId": {
+            "type": "string",
+            "description": "OpenRegister object ID of the parent OrderBasket"
+          },
+          "catalogItemId": {
+            "type": "string",
+            "description": "OpenRegister object ID of the CatalogItem"
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Ordered quantity",
+            "default": 1
+          },
+          "unitPrice": {
+            "type": "number",
+            "description": "Unit price at time of adding to basket (snapshot from CatalogItem)"
+          },
+          "lineTotal": {
+            "type": "number",
+            "description": "quantity × unitPrice (computed on save)"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code",
+            "default": "EUR"
+          }
+        }
+      },
+      "purchaseOrder": {
+        "slug": "purchase-order",
+        "icon": "ClipboardTextOutline",
+        "version": "0.1.0",
+        "title": "Purchase Order",
+        "description": "Purchase order sent to a supplier with sequential PO numbering and full lifecycle tracking.",
+        "x-schema-org": "schema:Order",
+        "type": "object",
+        "required": [
+          "poNumber",
+          "supplierProfileId",
+          "status",
+          "createdBy"
+        ],
+        "properties": {
+          "poNumber": {
+            "type": "string",
+            "description": "Auto-generated PO number (e.g. PO-2026-00001)",
+            "example": "PO-2026-00001"
+          },
+          "supplierProfileId": {
+            "type": "string",
+            "description": "OpenRegister object ID of the SupplierProfile"
+          },
+          "status": {
+            "type": "string",
+            "description": "PO lifecycle status",
+            "enum": ["draft", "submitted", "acknowledged", "partially_received", "received", "invoiced", "closed", "cancelled"],
+            "default": "draft"
+          },
+          "orderBasketId": {
+            "type": "string",
+            "description": "OpenRegister object ID of the originating OrderBasket"
+          },
+          "deliveryAddress": {
+            "type": "string",
+            "description": "Delivery address text"
+          },
+          "expectedDeliveryDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Expected delivery date"
+          },
+          "transmittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when PO was sent to supplier"
+          },
+          "acknowledgedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when supplier acknowledged the PO"
+          },
+          "totalAmount": {
+            "type": "number",
+            "description": "PO total (computed from lines)"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code",
+            "default": "EUR"
+          },
+          "costCentreId": {
+            "type": "string",
+            "description": "Budget / cost centre reference"
+          },
+          "createdBy": {
+            "type": "string",
+            "description": "userId who created the PO"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Internal notes"
+          }
+        }
+      },
+      "purchaseOrderLine": {
+        "slug": "purchase-order-line",
+        "icon": "ClipboardTextOutline",
+        "version": "0.1.0",
+        "title": "Purchase Order Line",
+        "description": "Individual line item within a purchase order with three-way matching status.",
+        "x-schema-org": "schema:OrderItem",
+        "type": "object",
+        "required": [
+          "purchaseOrderId",
+          "productId",
+          "quantity",
+          "unitPrice"
+        ],
+        "properties": {
+          "purchaseOrderId": {
+            "type": "string",
+            "description": "OpenRegister object ID of the parent PurchaseOrder"
+          },
+          "productId": {
+            "type": "string",
+            "description": "OpenRegister object ID of the Product"
+          },
+          "description": {
+            "type": "string",
+            "description": "Line description (defaults to Product.name)"
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Ordered quantity"
+          },
+          "unitPrice": {
+            "type": "number",
+            "description": "Agreed unit price"
+          },
+          "lineTotal": {
+            "type": "number",
+            "description": "quantity × unitPrice (computed on save)"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code",
+            "default": "EUR"
+          },
+          "matchStatus": {
+            "type": "string",
+            "description": "Three-way matching status",
+            "enum": ["pending", "matched", "discrepancy", "not_received"],
+            "default": "pending"
+          },
+          "receivedQuantity": {
+            "type": "number",
+            "description": "Cumulative quantity confirmed received",
+            "default": 0
+          },
+          "invoicedQuantity": {
+            "type": "number",
+            "description": "Cumulative quantity on matched invoices",
+            "default": 0
+          }
+        }
+      },
+      "goodsReceipt": {
+        "slug": "goods-receipt",
+        "icon": "TruckDeliveryOutline",
+        "version": "0.1.0",
+        "title": "Goods Receipt",
+        "description": "Confirmation of goods or services received against a purchase order.",
+        "x-schema-org": "schema:ReceiveAction",
+        "type": "object",
+        "required": [
+          "purchaseOrderId",
+          "receivedBy",
+          "receivedAt"
+        ],
+        "properties": {
+          "purchaseOrderId": {
+            "type": "string",
+            "description": "OpenRegister object ID of the PurchaseOrder"
+          },
+          "receivedBy": {
+            "type": "string",
+            "description": "userId who confirmed receipt"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of goods receipt"
+          },
+          "deliveryReference": {
+            "type": "string",
+            "description": "Supplier delivery note or tracking reference"
+          },
+          "notes": {
+            "type": "string",
+            "description": "General receipt notes"
+          },
+          "matchStatus": {
+            "type": "string",
+            "description": "Overall receipt matching status",
+            "enum": ["pending", "matched", "discrepancy"],
+            "default": "pending"
+          }
+        }
+      },
+      "goodsReceiptLine": {
+        "slug": "goods-receipt-line",
+        "icon": "TruckDeliveryOutline",
+        "version": "0.1.0",
+        "title": "Goods Receipt Line",
+        "description": "Per-line received quantity for a goods receipt.",
+        "x-schema-org": "schema:OrderItem",
+        "type": "object",
+        "required": [
+          "goodsReceiptId",
+          "purchaseOrderLineId",
+          "receivedQuantity"
+        ],
+        "properties": {
+          "goodsReceiptId": {
+            "type": "string",
+            "description": "OpenRegister object ID of the parent GoodsReceipt"
+          },
+          "purchaseOrderLineId": {
+            "type": "string",
+            "description": "OpenRegister object ID of the PurchaseOrderLine"
+          },
+          "receivedQuantity": {
+            "type": "number",
+            "description": "Actually received quantity"
+          },
+          "discrepancyNote": {
+            "type": "string",
+            "description": "Note explaining quantity or condition discrepancy"
+          }
+        }
+      },
+      "rFQ": {
+        "slug": "rfq",
+        "icon": "FileDocumentEditOutline",
+        "version": "0.1.0",
+        "title": "RFQ",
+        "description": "Request for Quotation for multi-supplier solicitation and evaluation.",
+        "x-schema-org": "schema:Quotation",
+        "type": "object",
+        "required": [
+          "number",
+          "title",
+          "createdBy"
+        ],
+        "properties": {
+          "number": {
+            "type": "string",
+            "description": "Unique RFQ number (auto-generated)",
+            "example": "RFQ-2026-00001"
+          },
+          "title": {
+            "type": "string",
+            "description": "RFQ title",
+            "example": "RFQ — IT Hardware Q3 2026"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed RFQ description and requirements"
+          },
+          "type": {
+            "type": "string",
+            "description": "Solicitation type",
+            "enum": ["RFI", "RFP", "RFQ", "Auction"],
+            "default": "RFQ"
+          },
+          "status": {
+            "type": "string",
+            "description": "RFQ lifecycle status",
+            "enum": ["draft", "published", "evaluating", "awarded", "closed"],
+            "default": "draft"
+          },
+          "budget": {
+            "type": "number",
+            "description": "Budget envelope for this RFQ",
+            "example": 5000.00
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code",
+            "default": "EUR"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Deadline for supplier responses"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when published to suppliers"
+          },
+          "awardedSupplierProfileId": {
+            "type": "string",
+            "description": "OpenRegister object ID of the awarded SupplierProfile"
+          },
+          "awardedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of award"
+          },
+          "createdBy": {
+            "type": "string",
+            "description": "userId of the procurement officer"
+          },
+          "invitedSupplierProfileIds": {
+            "type": "array",
+            "description": "Array of SupplierProfile object IDs invited to respond",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          }
+        }
+      },
+      "supplierQuote": {
+        "slug": "supplier-quote",
+        "icon": "CurrencyEur",
+        "version": "0.1.0",
+        "title": "Supplier Quote",
+        "description": "A supplier's response to an RFQ with pricing and evaluation scoring.",
+        "x-schema-org": "schema:Offer",
+        "type": "object",
+        "required": [
+          "rfqId",
+          "supplierProfileId",
+          "status"
+        ],
+        "properties": {
+          "rfqId": {
+            "type": "string",
+            "description": "OpenRegister object ID of the parent RFQ"
+          },
+          "supplierProfileId": {
+            "type": "string",
+            "description": "OpenRegister object ID of the quoting SupplierProfile"
+          },
+          "status": {
+            "type": "string",
+            "description": "Quote status",
+            "enum": ["submitted", "accepted", "rejected"],
+            "default": "submitted"
+          },
+          "totalAmount": {
+            "type": "number",
+            "description": "Supplier's total quoted price",
+            "example": 4200.00
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code",
+            "default": "EUR"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Quote validity deadline"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Supplier's narrative or conditions"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of quote submission"
+          },
+          "evaluationScore": {
+            "type": "number",
+            "description": "Numeric score assigned during evaluation"
+          },
+          "evaluationNotes": {
+            "type": "string",
+            "description": "Evaluator's notes"
+          },
+          "evaluatedBy": {
+            "type": "string",
+            "description": "userId of the evaluator"
+          },
+          "documentIds": {
+            "type": "array",
+            "description": "Array of Document object IDs attached to this quote",
+            "items": {
+              "type": "string"
+            },
+            "default": []
           }
         }
       }
