@@ -20,7 +20,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\BackgroundJob;
@@ -59,14 +58,13 @@ class OverdueDeliveryJob extends TimedJob
         'partially_received',
     ];
 
-
     /**
      * Constructor for the OverdueDeliveryJob.
      *
      * @param ITimeFactory       $time                The time factory
-     * @param ContainerInterface $container            The DI container
-     * @param IManager           $notificationManager  The notification manager
-     * @param LoggerInterface    $logger               The logger
+     * @param ContainerInterface $container           The DI container
+     * @param IManager           $notificationManager The notification manager
+     * @param LoggerInterface    $logger              The logger
      *
      * @return void
      */
@@ -76,10 +74,9 @@ class OverdueDeliveryJob extends TimedJob
         private IManager $notificationManager,
         private LoggerInterface $logger,
     ) {
-        parent::__construct($time);
-        $this->setInterval(86400);
+        parent::__construct(time: $time);
+        $this->setInterval(interval: 86400);
     }//end __construct()
-
 
     /**
      * Execute the overdue delivery check.
@@ -119,7 +116,11 @@ class OverdueDeliveryJob extends TimedJob
         }
 
         foreach ($purchaseOrders as $po) {
-            $poData = is_array($po) ? $po : $po->jsonSerialize();
+            if (is_array($po) === true) {
+                $poData = $po;
+            } else {
+                $poData = $po->jsonSerialize();
+            }
 
             $expectedDate = $poData['expectedDeliveryDate'] ?? null;
             if ($expectedDate === null) {
@@ -129,10 +130,13 @@ class OverdueDeliveryJob extends TimedJob
             try {
                 $expectedDateTime = new \DateTime($expectedDate);
             } catch (\Exception $e) {
-                $this->logger->warning('OverdueDeliveryJob: invalid date for PO', [
-                    'poNumber' => ($poData['poNumber'] ?? 'unknown'),
-                    'date'     => $expectedDate,
-                ]);
+                $this->logger->warning(
+                        'OverdueDeliveryJob: invalid date for PO',
+                        [
+                            'poNumber' => ($poData['poNumber'] ?? 'unknown'),
+                            'date'     => $expectedDate,
+                        ]
+                        );
                 continue;
             }
 
@@ -140,14 +144,17 @@ class OverdueDeliveryJob extends TimedJob
                 continue;
             }
 
-            $poNumber       = $poData['poNumber'] ?? 'unknown';
-            $createdBy      = $poData['createdBy'] ?? null;
-            $deduplicationKey = 'po-overdue-' . $poNumber . '-' . $today;
+            $poNumber         = $poData['poNumber'] ?? 'unknown';
+            $createdBy        = $poData['createdBy'] ?? null;
+            $deduplicationKey = 'po-overdue-'.$poNumber.'-'.$today;
 
             if ($createdBy === null) {
-                $this->logger->warning('OverdueDeliveryJob: no createdBy for PO', [
-                    'poNumber' => $poNumber,
-                ]);
+                $this->logger->warning(
+                        'OverdueDeliveryJob: no createdBy for PO',
+                        [
+                            'poNumber' => $poNumber,
+                        ]
+                        );
                 continue;
             }
 
@@ -183,10 +190,13 @@ class OverdueDeliveryJob extends TimedJob
 
             $this->notificationManager->notify($notification);
 
-            $this->logger->info('OverdueDeliveryJob: notification sent', [
-                'poNumber' => $poNumber,
-                'user'     => $createdBy,
-            ]);
+            $this->logger->info(
+                    'OverdueDeliveryJob: notification sent',
+                    [
+                        'poNumber' => $poNumber,
+                        'user'     => $createdBy,
+                    ]
+                    );
         }//end foreach
     }//end run()
 }//end class

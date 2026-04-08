@@ -1,11 +1,6 @@
 <?php
 
 /**
- * SPDX-License-Identifier: EUPL-1.2
- * Copyright (C) 2026 Conduction B.V.
- */
-
-/**
  * Shillinq Catalog Search Service
  *
  * Provides full-text and filtered search across active catalogs and products,
@@ -25,6 +20,8 @@
  * @spec openspec/changes/catalog-purchase-management/tasks.md#task-3.1
  */
 
+// SPDX-License-Identifier: EUPL-1.2
+// Copyright (C) 2026 Conduction B.V.
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
@@ -44,7 +41,6 @@ use Psr\Log\LoggerInterface;
  */
 class CatalogSearchService
 {
-
     /**
      * Constructor for the CatalogSearchService.
      *
@@ -77,7 +73,7 @@ class CatalogSearchService
      *
      * @spec openspec/changes/catalog-purchase-management/tasks.md#task-3.1
      */
-    public function search(string $term, ?string $categoryId = null): array
+    public function search(string $term, ?string $categoryId=null): array
     {
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
@@ -102,7 +98,7 @@ class CatalogSearchService
         // Resolve allowed category IDs if filtering by category.
         $allowedCategoryIds = null;
         if ($categoryId !== null) {
-            $allowedCategoryIds = $this->getDescendantCategoryIds(
+            $allowedCategoryIds   = $this->getDescendantCategoryIds(
                 objectService: $objectService,
                 categoryId: $categoryId,
             );
@@ -188,10 +184,13 @@ class CatalogSearchService
             ];
         }//end foreach
 
-        $this->logger->info('CatalogSearchService: search completed', [
-            'term'    => $term,
-            'results' => count($results),
-        ]);
+        $this->logger->info(
+                'CatalogSearchService: search completed',
+                [
+                    'term'    => $term,
+                    'results' => count($results),
+                ]
+                );
 
         return $results;
     }//end search()
@@ -219,10 +218,13 @@ class CatalogSearchService
                 filters: ['parentCategoryId' => $categoryId],
             );
         } catch (\Throwable $e) {
-            $this->logger->debug('CatalogSearchService: failed to fetch child categories', [
-                'categoryId' => $categoryId,
-                'exception'  => $e->getMessage(),
-            ]);
+            $this->logger->debug(
+                    'CatalogSearchService: failed to fetch child categories',
+                    [
+                        'categoryId' => $categoryId,
+                        'exception'  => $e->getMessage(),
+                    ]
+                    );
             return [];
         }
 

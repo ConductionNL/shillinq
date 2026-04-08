@@ -1,11 +1,6 @@
 <?php
 
 /**
- * SPDX-License-Identifier: EUPL-1.2
- * Copyright (C) 2026 Conduction B.V.
- */
-
-/**
  * Shillinq Order Limit Service
  *
  * Checks per-user ordering limits against basket totals to determine
@@ -25,6 +20,8 @@
  * @spec openspec/changes/catalog-purchase-management/tasks.md#task-3.2
  */
 
+// SPDX-License-Identifier: EUPL-1.2
+// Copyright (C) 2026 Conduction B.V.
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
@@ -43,7 +40,6 @@ use Psr\Log\LoggerInterface;
  */
 class OrderLimitService
 {
-
     /**
      * Constructor for the OrderLimitService.
      *
@@ -86,10 +82,13 @@ class OrderLimitService
 
         // No limit configured — approval is never required.
         if ($limitValue === '') {
-            $this->logger->debug('OrderLimitService: no limit configured for user', [
-                'userId'      => $userId,
-                'basketTotal' => $basketTotal,
-            ]);
+            $this->logger->debug(
+                    'OrderLimitService: no limit configured for user',
+                    [
+                        'userId'      => $userId,
+                        'basketTotal' => $basketTotal,
+                    ]
+                    );
 
             return [
                 'requiresApproval' => false,
@@ -101,12 +100,15 @@ class OrderLimitService
 
         $requiresApproval = ($basketTotal > $limit);
 
-        $this->logger->info('OrderLimitService: limit check performed', [
-            'userId'           => $userId,
-            'basketTotal'      => $basketTotal,
-            'limit'            => $limit,
-            'requiresApproval' => $requiresApproval,
-        ]);
+        $this->logger->info(
+                'OrderLimitService: limit check performed',
+                [
+                    'userId'           => $userId,
+                    'basketTotal'      => $basketTotal,
+                    'limit'            => $limit,
+                    'requiresApproval' => $requiresApproval,
+                ]
+                );
 
         return [
             'requiresApproval' => $requiresApproval,

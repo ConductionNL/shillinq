@@ -20,7 +20,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
@@ -45,15 +44,14 @@ use Psr\Log\LoggerInterface;
  */
 class RFQController extends Controller
 {
-
     /**
      * Constructor for the RFQController.
      *
      * @param IRequest           $request             The request object
-     * @param ContainerInterface $container             The DI container
-     * @param IManager           $notificationManager  The notification manager
-     * @param IUserSession       $userSession           The user session
-     * @param LoggerInterface    $logger                The logger
+     * @param ContainerInterface $container           The DI container
+     * @param IManager           $notificationManager The notification manager
+     * @param IUserSession       $userSession         The user session
+     * @param LoggerInterface    $logger              The logger
      *
      * @return void
      */
@@ -67,7 +65,6 @@ class RFQController extends Controller
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
 
-
     /**
      * Publish an RFQ to invited suppliers.
      *
@@ -76,10 +73,10 @@ class RFQController extends Controller
      * invited supplier profile IDs, and sends a notification to each
      * invited supplier.
      *
+     * @param string $id The RFQ ID
+     *
      * @NoAdminRequired
      * @NoCSRFRequired
-     *
-     * @param string $id The RFQ ID
      *
      * @return JSONResponse The updated RFQ
      *
@@ -91,12 +88,16 @@ class RFQController extends Controller
             $objectService      = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             $supplierProfileIds = $this->request->getParam('supplierProfileIds', []);
 
-            $rfq     = $objectService->findOne(objectType: 'rfq', id: $id);
-            $rfqData = is_array($rfq) ? $rfq : $rfq->jsonSerialize();
+            $rfq = $objectService->findOne(objectType: 'rfq', id: $id);
+            if (is_array($rfq) === true) {
+                $rfqData = $rfq;
+            } else {
+                $rfqData = $rfq->jsonSerialize();
+            }
 
             // Update RFQ fields.
-            $rfqData['status']                  = 'published';
-            $rfqData['publishedAt']             = (new \DateTime())->format('c');
+            $rfqData['status']      = 'published';
+            $rfqData['publishedAt'] = (new \DateTime())->format('c');
             $rfqData['invitedSupplierProfileIds'] = $supplierProfileIds;
 
             $updated = $objectService->update(
@@ -112,9 +113,12 @@ class RFQController extends Controller
                         objectType: 'supplierProfile',
                         id: $supplierProfileId,
                     );
-                    $profileData  = is_array($supplierProfile)
-                        ? $supplierProfile
-                        : $supplierProfile->jsonSerialize();
+                    if (is_array($supplierProfile) === true) {
+                        $profileData = $supplierProfile;
+                    } else {
+                        $profileData = $supplierProfile->jsonSerialize();
+                    }
+
                     $contactUserId = $profileData['contactUserId'] ?? null;
 
                     if ($contactUserId !== null) {
@@ -122,7 +126,7 @@ class RFQController extends Controller
                         $notification->setApp(Application::APP_ID)
                             ->setUser($contactUserId)
                             ->setDateTime(new \DateTime())
-                            ->setObject('rfq', 'rfq-published-' . $id . '-' . $supplierProfileId)
+                            ->setObject('rfq', 'rfq-published-'.$id.'-'.$supplierProfileId)
                             ->setSubject(
                                 'rfq_published',
                                 [
@@ -134,28 +138,39 @@ class RFQController extends Controller
                         $this->notificationManager->notify($notification);
                     }
                 } catch (\Exception $e) {
-                    $this->logger->warning('RFQController::publish: failed to notify supplier', [
-                        'supplierProfileId' => $supplierProfileId,
-                        'exception'         => $e,
-                    ]);
-                }
+                    $this->logger->warning(
+                            'RFQController::publish: failed to notify supplier',
+                            [
+                                'supplierProfileId' => $supplierProfileId,
+                                'exception'         => $e,
+                            ]
+                            );
+                }//end try
             }//end foreach
 
+            if (is_array($updated) === true) {
+                $updatedData = $updated;
+            } else {
+                $updatedData = $updated->jsonSerialize();
+            }
+
             return new JSONResponse(
-                data: is_array($updated) ? $updated : $updated->jsonSerialize(),
+                data: $updatedData,
             );
         } catch (\Exception $e) {
-            $this->logger->error('RFQController::publish failed', [
-                'rfqId'     => $id,
-                'exception' => $e,
-            ]);
+            $this->logger->error(
+                    'RFQController::publish failed',
+                    [
+                        'rfqId'     => $id,
+                        'exception' => $e,
+                    ]
+                    );
             return new JSONResponse(
                 data: ['error' => $e->getMessage()],
                 statusCode: 500,
             );
-        }
+        }//end try
     }//end publish()
-
 
     /**
      * Award an RFQ to a selected supplier quote.
@@ -165,10 +180,10 @@ class RFQController extends Controller
      * quotes for this RFQ, and creates a purchase order draft from the
      * awarded quote data.
      *
+     * @param string $id The RFQ ID
+     *
      * @NoAdminRequired
      * @NoCSRFRequired
-     *
-     * @param string $id The RFQ ID
      *
      * @return JSONResponse The award result including the created PO draft
      *
@@ -181,7 +196,7 @@ class RFQController extends Controller
             $user            = $this->userSession->getUser();
             $supplierQuoteId = $this->request->getParam('supplierQuoteId');
 
-            if (empty($supplierQuoteId)) {
+            if (empty($supplierQuoteId) === true) {
                 return new JSONResponse(
                     data: ['error' => 'supplierQuoteId is required'],
                     statusCode: 400,
@@ -189,12 +204,16 @@ class RFQController extends Controller
             }
 
             // Update RFQ status to awarded.
-            $rfq     = $objectService->findOne(objectType: 'rfq', id: $id);
-            $rfqData = is_array($rfq) ? $rfq : $rfq->jsonSerialize();
+            $rfq = $objectService->findOne(objectType: 'rfq', id: $id);
+            if (is_array($rfq) === true) {
+                $rfqData = $rfq;
+            } else {
+                $rfqData = $rfq->jsonSerialize();
+            }
 
-            $rfqData['status']              = 'awarded';
-            $rfqData['awardedQuoteId']      = $supplierQuoteId;
-            $rfqData['awardedAt']           = (new \DateTime())->format('c');
+            $rfqData['status']         = 'awarded';
+            $rfqData['awardedQuoteId'] = $supplierQuoteId;
+            $rfqData['awardedAt']      = (new \DateTime())->format('c');
 
             $objectService->update(
                 objectType: 'rfq',
@@ -203,8 +222,12 @@ class RFQController extends Controller
             );
 
             // Accept the winning quote.
-            $winningQuote     = $objectService->findOne(objectType: 'supplierQuote', id: $supplierQuoteId);
-            $winningQuoteData = is_array($winningQuote) ? $winningQuote : $winningQuote->jsonSerialize();
+            $winningQuote = $objectService->findOne(objectType: 'supplierQuote', id: $supplierQuoteId);
+            if (is_array($winningQuote) === true) {
+                $winningQuoteData = $winningQuote;
+            } else {
+                $winningQuoteData = $winningQuote->jsonSerialize();
+            }
 
             $winningQuoteData['status'] = 'accepted';
             $objectService->update(
@@ -220,8 +243,13 @@ class RFQController extends Controller
             );
 
             foreach ($allQuotes as $quote) {
-                $quoteData = is_array($quote) ? $quote : $quote->jsonSerialize();
-                $quoteId   = $quoteData['id'] ?? $quoteData['uuid'] ?? null;
+                if (is_array($quote) === true) {
+                    $quoteData = $quote;
+                } else {
+                    $quoteData = $quote->jsonSerialize();
+                }
+
+                $quoteId = $quoteData['id'] ?? $quoteData['uuid'] ?? null;
 
                 if ($quoteId !== null && $quoteId !== $supplierQuoteId) {
                     $quoteData['status'] = 'rejected';
@@ -234,37 +262,52 @@ class RFQController extends Controller
             }
 
             // Create PurchaseOrder draft from the awarded quote.
+            if ($user !== null) {
+                $createdByUserId = $user->getUID();
+            } else {
+                $createdByUserId = null;
+            }
+
             $purchaseOrder = $objectService->create(
                 objectType: 'purchaseOrder',
                 object: [
-                    'rfqId'             => $id,
-                    'supplierQuoteId'   => $supplierQuoteId,
-                    'supplierId'        => ($winningQuoteData['supplierId'] ?? null),
-                    'status'            => 'draft',
-                    'createdBy'         => ($user !== null ? $user->getUID() : null),
-                    'createdAt'         => (new \DateTime())->format('c'),
-                    'items'             => ($winningQuoteData['items'] ?? []),
-                    'totalAmount'       => ($winningQuoteData['totalAmount'] ?? 0),
+                    'rfqId'           => $id,
+                    'supplierQuoteId' => $supplierQuoteId,
+                    'supplierId'      => ($winningQuoteData['supplierId'] ?? null),
+                    'status'          => 'draft',
+                    'createdBy'       => $createdByUserId,
+                    'createdAt'       => (new \DateTime())->format('c'),
+                    'items'           => ($winningQuoteData['items'] ?? []),
+                    'totalAmount'     => ($winningQuoteData['totalAmount'] ?? 0),
                 ],
             );
 
-            return new JSONResponse(data: [
-                'rfqId'         => $id,
-                'status'        => 'awarded',
-                'awardedQuote'  => $winningQuoteData,
-                'purchaseOrder' => is_array($purchaseOrder)
-                    ? $purchaseOrder
-                    : $purchaseOrder->jsonSerialize(),
-            ]);
+            if (is_array($purchaseOrder) === true) {
+                $purchaseOrderData = $purchaseOrder;
+            } else {
+                $purchaseOrderData = $purchaseOrder->jsonSerialize();
+            }
+
+            return new JSONResponse(
+                    data: [
+                        'rfqId'         => $id,
+                        'status'        => 'awarded',
+                        'awardedQuote'  => $winningQuoteData,
+                        'purchaseOrder' => $purchaseOrderData,
+                    ]
+                    );
         } catch (\Exception $e) {
-            $this->logger->error('RFQController::award failed', [
-                'rfqId'     => $id,
-                'exception' => $e,
-            ]);
+            $this->logger->error(
+                    'RFQController::award failed',
+                    [
+                        'rfqId'     => $id,
+                        'exception' => $e,
+                    ]
+                    );
             return new JSONResponse(
                 data: ['error' => $e->getMessage()],
                 statusCode: 500,
             );
-        }
+        }//end try
     }//end award()
 }//end class

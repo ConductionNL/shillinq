@@ -1,11 +1,6 @@
 <?php
 
 /**
- * SPDX-License-Identifier: EUPL-1.2
- * Copyright (C) 2026 Conduction B.V.
- */
-
-/**
  * Shillinq Three-Way Matching Service
  *
  * Performs three-way matching between purchase order lines, goods receipt lines,
@@ -25,6 +20,8 @@
  * @spec openspec/changes/catalog-purchase-management/tasks.md#task-3.3
  */
 
+// SPDX-License-Identifier: EUPL-1.2
+// Copyright (C) 2026 Conduction B.V.
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
@@ -45,7 +42,6 @@ use Psr\Log\LoggerInterface;
  */
 class ThreeWayMatchingService
 {
-
     /**
      * Constructor for the ThreeWayMatchingService.
      *
@@ -94,17 +90,20 @@ class ThreeWayMatchingService
                 filters: ['purchaseOrderId' => $purchaseOrderId],
             );
         } catch (\Throwable $e) {
-            $this->logger->error('ThreeWayMatchingService: failed to fetch order lines', [
-                'purchaseOrderId' => $purchaseOrderId,
-                'exception'       => $e->getMessage(),
-            ]);
+            $this->logger->error(
+                    'ThreeWayMatchingService: failed to fetch order lines',
+                    [
+                        'purchaseOrderId' => $purchaseOrderId,
+                        'exception'       => $e->getMessage(),
+                    ]
+                    );
             return [];
         }
 
         $discrepancies = [];
 
         foreach ($orderLines as $orderLine) {
-            $lineId         = ($orderLine['id'] ?? null);
+            $lineId          = ($orderLine['id'] ?? null);
             $orderedQuantity = (float) ($orderLine['quantity'] ?? 0);
 
             if ($lineId === null) {
@@ -153,15 +152,18 @@ class ThreeWayMatchingService
                     id: $lineId,
                     data: [
                         'matchStatus'      => $matchStatus,
-                        'receivedQuantity'  => $receivedQuantity,
-                        'invoicedQuantity'  => $invoicedQuantity,
+                        'receivedQuantity' => $receivedQuantity,
+                        'invoicedQuantity' => $invoicedQuantity,
                     ],
                 );
             } catch (\Throwable $e) {
-                $this->logger->error('ThreeWayMatchingService: failed to update order line', [
-                    'lineId'    => $lineId,
-                    'exception' => $e->getMessage(),
-                ]);
+                $this->logger->error(
+                        'ThreeWayMatchingService: failed to update order line',
+                        [
+                            'lineId'    => $lineId,
+                            'exception' => $e->getMessage(),
+                        ]
+                        );
             }
 
             // Add to discrepancy report if not matched.
@@ -177,11 +179,14 @@ class ThreeWayMatchingService
             }
         }//end foreach
 
-        $this->logger->info('ThreeWayMatchingService: matching completed', [
-            'purchaseOrderId' => $purchaseOrderId,
-            'totalLines'      => count($orderLines),
-            'discrepancies'   => count($discrepancies),
-        ]);
+        $this->logger->info(
+                'ThreeWayMatchingService: matching completed',
+                [
+                    'purchaseOrderId' => $purchaseOrderId,
+                    'totalLines'      => count($orderLines),
+                    'discrepancies'   => count($discrepancies),
+                ]
+                );
 
         return $discrepancies;
     }//end match()
@@ -208,10 +213,13 @@ class ThreeWayMatchingService
                 $total += (float) ($receiptLine['receivedQuantity'] ?? 0);
             }
         } catch (\Throwable $e) {
-            $this->logger->debug('ThreeWayMatchingService: failed to fetch goods receipt lines', [
-                'purchaseOrderLineId' => $purchaseOrderLineId,
-                'exception'           => $e->getMessage(),
-            ]);
+            $this->logger->debug(
+                    'ThreeWayMatchingService: failed to fetch goods receipt lines',
+                    [
+                        'purchaseOrderLineId' => $purchaseOrderLineId,
+                        'exception'           => $e->getMessage(),
+                    ]
+                    );
         }
 
         return $total;
@@ -242,10 +250,13 @@ class ThreeWayMatchingService
                 $total += (float) ($invoiceLine['quantity'] ?? 0);
             }
         } catch (\Throwable $e) {
-            $this->logger->debug('ThreeWayMatchingService: no invoice lines found or fetch failed', [
-                'purchaseOrderLineId' => $purchaseOrderLineId,
-                'exception'           => $e->getMessage(),
-            ]);
+            $this->logger->debug(
+                    'ThreeWayMatchingService: no invoice lines found or fetch failed',
+                    [
+                        'purchaseOrderLineId' => $purchaseOrderLineId,
+                        'exception'           => $e->getMessage(),
+                    ]
+                    );
             // If none found, invoiced quantity is 0.
         }
 

@@ -20,7 +20,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
@@ -45,15 +44,14 @@ use Psr\Log\LoggerInterface;
  */
 class PurchaseOrderController extends Controller
 {
-
     /**
      * Constructor for the PurchaseOrderController.
      *
      * @param IRequest           $request             The request object
-     * @param ContainerInterface $container             The DI container
-     * @param IManager           $notificationManager  The notification manager
-     * @param IUserSession       $userSession           The user session
-     * @param LoggerInterface    $logger                The logger
+     * @param ContainerInterface $container           The DI container
+     * @param IManager           $notificationManager The notification manager
+     * @param IUserSession       $userSession         The user session
+     * @param LoggerInterface    $logger              The logger
      *
      * @return void
      */
@@ -67,17 +65,16 @@ class PurchaseOrderController extends Controller
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
 
-
     /**
      * Submit a purchase order to the supplier.
      *
      * Changes the order status to "submitted", records the transmission
      * timestamp, and sends a notification to the supplier.
      *
+     * @param string $id The purchase order ID
+     *
      * @NoAdminRequired
      * @NoCSRFRequired
-     *
-     * @param string $id The purchase order ID
      *
      * @return JSONResponse The updated purchase order
      *
@@ -88,8 +85,12 @@ class PurchaseOrderController extends Controller
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-            $po     = $objectService->findOne(objectType: 'purchaseOrder', id: $id);
-            $poData = is_array($po) ? $po : $po->jsonSerialize();
+            $po = $objectService->findOne(objectType: 'purchaseOrder', id: $id);
+            if (is_array($po) === true) {
+                $poData = $po;
+            } else {
+                $poData = $po->jsonSerialize();
+            }
 
             // Update status and transmission timestamp.
             $poData['status']        = 'submitted';
@@ -108,7 +109,7 @@ class PurchaseOrderController extends Controller
                 $notification->setApp(Application::APP_ID)
                     ->setUser($supplierContact)
                     ->setDateTime(new \DateTime())
-                    ->setObject('purchaseOrder', 'po-submitted-' . $id)
+                    ->setObject('purchaseOrder', 'po-submitted-'.$id)
                     ->setSubject(
                         'po_submitted',
                         [
@@ -119,21 +120,29 @@ class PurchaseOrderController extends Controller
                 $this->notificationManager->notify($notification);
             }
 
+            if (is_array($updated) === true) {
+                $updatedData = $updated;
+            } else {
+                $updatedData = $updated->jsonSerialize();
+            }
+
             return new JSONResponse(
-                data: is_array($updated) ? $updated : $updated->jsonSerialize(),
+                data: $updatedData,
             );
         } catch (\Exception $e) {
-            $this->logger->error('PurchaseOrderController::submit failed', [
-                'purchaseOrderId' => $id,
-                'exception'       => $e,
-            ]);
+            $this->logger->error(
+                    'PurchaseOrderController::submit failed',
+                    [
+                        'purchaseOrderId' => $id,
+                        'exception'       => $e,
+                    ]
+                    );
             return new JSONResponse(
                 data: ['error' => $e->getMessage()],
                 statusCode: 500,
             );
-        }
+        }//end try
     }//end submit()
-
 
     /**
      * Cancel a purchase order with a mandatory reason.
@@ -142,10 +151,10 @@ class PurchaseOrderController extends Controller
      * Returns 422 if the reason is missing or empty.
      * Notifies the supplier of the cancellation.
      *
+     * @param string $id The purchase order ID
+     *
      * @NoAdminRequired
      * @NoCSRFRequired
-     *
-     * @param string $id The purchase order ID
      *
      * @return JSONResponse The cancelled purchase order
      *
@@ -156,7 +165,7 @@ class PurchaseOrderController extends Controller
         try {
             $reason = $this->request->getParam('reason', '');
 
-            if (empty(trim($reason))) {
+            if (empty(trim($reason)) === true) {
                 return new JSONResponse(
                     data: ['error' => 'A cancellation reason is required'],
                     statusCode: 422,
@@ -165,10 +174,14 @@ class PurchaseOrderController extends Controller
 
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-            $po     = $objectService->findOne(objectType: 'purchaseOrder', id: $id);
-            $poData = is_array($po) ? $po : $po->jsonSerialize();
+            $po = $objectService->findOne(objectType: 'purchaseOrder', id: $id);
+            if (is_array($po) === true) {
+                $poData = $po;
+            } else {
+                $poData = $po->jsonSerialize();
+            }
 
-            $poData['status']             = 'cancelled';
+            $poData['status'] = 'cancelled';
             $poData['cancellationReason'] = $reason;
             $poData['cancelledAt']        = (new \DateTime())->format('c');
 
@@ -185,7 +198,7 @@ class PurchaseOrderController extends Controller
                 $notification->setApp(Application::APP_ID)
                     ->setUser($supplierContact)
                     ->setDateTime(new \DateTime())
-                    ->setObject('purchaseOrder', 'po-cancelled-' . $id)
+                    ->setObject('purchaseOrder', 'po-cancelled-'.$id)
                     ->setSubject(
                         'po_cancelled',
                         [
@@ -197,21 +210,29 @@ class PurchaseOrderController extends Controller
                 $this->notificationManager->notify($notification);
             }
 
+            if (is_array($updated) === true) {
+                $updatedData = $updated;
+            } else {
+                $updatedData = $updated->jsonSerialize();
+            }
+
             return new JSONResponse(
-                data: is_array($updated) ? $updated : $updated->jsonSerialize(),
+                data: $updatedData,
             );
         } catch (\Exception $e) {
-            $this->logger->error('PurchaseOrderController::cancel failed', [
-                'purchaseOrderId' => $id,
-                'exception'       => $e,
-            ]);
+            $this->logger->error(
+                    'PurchaseOrderController::cancel failed',
+                    [
+                        'purchaseOrderId' => $id,
+                        'exception'       => $e,
+                    ]
+                    );
             return new JSONResponse(
                 data: ['error' => $e->getMessage()],
                 statusCode: 500,
             );
-        }
+        }//end try
     }//end cancel()
-
 
     /**
      * Send a delivery reminder notification to the supplier.
@@ -219,10 +240,10 @@ class PurchaseOrderController extends Controller
      * Creates a Nextcloud notification reminding the supplier about
      * the expected delivery for the given purchase order.
      *
+     * @param string $id The purchase order ID
+     *
      * @NoAdminRequired
      * @NoCSRFRequired
-     *
-     * @param string $id The purchase order ID
      *
      * @return JSONResponse Confirmation of reminder sent
      *
@@ -233,8 +254,12 @@ class PurchaseOrderController extends Controller
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-            $po     = $objectService->findOne(objectType: 'purchaseOrder', id: $id);
-            $poData = is_array($po) ? $po : $po->jsonSerialize();
+            $po = $objectService->findOne(objectType: 'purchaseOrder', id: $id);
+            if (is_array($po) === true) {
+                $poData = $po;
+            } else {
+                $poData = $po->jsonSerialize();
+            }
 
             $supplierContact = $poData['supplierContactId'] ?? $poData['createdBy'] ?? null;
             if ($supplierContact === null) {
@@ -248,7 +273,7 @@ class PurchaseOrderController extends Controller
             $notification->setApp(Application::APP_ID)
                 ->setUser($supplierContact)
                 ->setDateTime(new \DateTime())
-                ->setObject('purchaseOrder', 'po-reminder-' . $id . '-' . date('Y-m-d'))
+                ->setObject('purchaseOrder', 'po-reminder-'.$id.'-'.date('Y-m-d'))
                 ->setSubject(
                     'delivery_reminder',
                     [
@@ -261,14 +286,17 @@ class PurchaseOrderController extends Controller
 
             return new JSONResponse(data: ['status' => 'reminder_sent']);
         } catch (\Exception $e) {
-            $this->logger->error('PurchaseOrderController::sendReminder failed', [
-                'purchaseOrderId' => $id,
-                'exception'       => $e,
-            ]);
+            $this->logger->error(
+                    'PurchaseOrderController::sendReminder failed',
+                    [
+                        'purchaseOrderId' => $id,
+                        'exception'       => $e,
+                    ]
+                    );
             return new JSONResponse(
                 data: ['error' => $e->getMessage()],
                 statusCode: 500,
             );
-        }
+        }//end try
     }//end sendReminder()
 }//end class
