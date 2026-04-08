@@ -1,5 +1,7 @@
 # Design: Catalog & Purchase Management — Shillinq
 
+**Status:** pr-created
+
 ## Architecture Overview
 
 This change adds product and service item management, vendor catalog browsing, order basket checkout, RFQ multi-supplier solicitation, purchase order management, goods receipt confirmation, and three-way matching on top of the core, access-control-authorisation, collaboration, document-management, and supplier-management infrastructure. All new entities are OpenRegister schemas; no custom database tables are introduced. The `ThreeWayMatchingService` and `OverdueDeliveryJob` are the only new PHP components beyond standard CRUD controllers.
