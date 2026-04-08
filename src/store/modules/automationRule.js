@@ -6,7 +6,7 @@ import { defineStore } from 'pinia'
 /**
  * Automation rule store.
  *
- * @spec openspec/changes/general/tasks.md#task-3.3
+ * @see openspec/changes/general/tasks.md#task-3.3
  */
 export const useAutomationRuleStore = defineStore('automationRule', {
 	state: () => ({

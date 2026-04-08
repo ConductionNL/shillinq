@@ -6,7 +6,7 @@ import { defineStore } from 'pinia'
 /**
  * Expense claim store.
  *
- * @spec openspec/changes/general/tasks.md#task-3.4
+ * @see openspec/changes/general/tasks.md#task-3.4
  */
 export const useExpenseClaimStore = defineStore('expenseClaim', {
 	state: () => ({

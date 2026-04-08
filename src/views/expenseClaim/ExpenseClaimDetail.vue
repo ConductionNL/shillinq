@@ -49,8 +49,12 @@
 				<dd>{{ claim.submittedAt || '—' }}</dd>
 				<dt>{{ t('shillinq', 'Decided') }}</dt>
 				<dd>{{ claim.decidedAt || '—' }}</dd>
-				<dt v-if="claim.rejectionReason">{{ t('shillinq', 'Rejection Reason') }}</dt>
-				<dd v-if="claim.rejectionReason">{{ claim.rejectionReason }}</dd>
+				<dt v-if="claim.rejectionReason">
+					{{ t('shillinq', 'Rejection Reason') }}
+				</dt>
+				<dd v-if="claim.rejectionReason">
+					{{ claim.rejectionReason }}
+				</dd>
 			</dl>
 		</div>
 

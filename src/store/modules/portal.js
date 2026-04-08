@@ -7,7 +7,7 @@ import { generateUrl } from '@nextcloud/router'
 /**
  * Portal store for PortalToken management.
  *
- * @spec openspec/changes/general/tasks.md#task-3.2
+ * @see openspec/changes/general/tasks.md#task-3.2
  */
 export const usePortalStore = defineStore('portal', {
 	state: () => ({

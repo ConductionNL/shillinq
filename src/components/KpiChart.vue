@@ -10,6 +10,7 @@
 </template>
 
 <script>
+/* global Chart */
 export default {
 	name: 'KpiChart',
 	props: {
@@ -26,9 +27,6 @@ export default {
 			}),
 		},
 	},
-	mounted() {
-		this.renderChart()
-	},
 	watch: {
 		data: {
 			deep: true,
@@ -36,6 +34,14 @@ export default {
 				this.renderChart()
 			},
 		},
+	},
+	mounted() {
+		this.renderChart()
+	},
+	beforeDestroy() {
+		if (this._chart) {
+			this._chart.destroy()
+		}
 	},
 	methods: {
 		renderChart() {
@@ -78,11 +84,6 @@ export default {
 				},
 			})
 		},
-	},
-	beforeDestroy() {
-		if (this._chart) {
-			this._chart.destroy()
-		}
 	},
 }
 </script>

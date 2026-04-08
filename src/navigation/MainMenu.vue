@@ -44,7 +44,9 @@
 					<CashMultipleIcon :size="20" />
 				</template>
 				<template v-if="pendingClaimCount > 0" #counter>
-					<NcCounterBubble type="highlighted">{{ pendingClaimCount }}</NcCounterBubble>
+					<NcCounterBubble type="highlighted">
+						{{ pendingClaimCount }}
+					</NcCounterBubble>
 				</template>
 			</NcAppNavigationItem>
 

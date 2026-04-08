@@ -6,7 +6,7 @@ import { defineStore } from 'pinia'
 /**
  * Expense item store.
  *
- * @spec openspec/changes/general/tasks.md#task-3.4
+ * @see openspec/changes/general/tasks.md#task-3.4
  */
 export const useExpenseItemStore = defineStore('expenseItem', {
 	state: () => ({

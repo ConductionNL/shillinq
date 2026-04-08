@@ -61,8 +61,12 @@
 					{{ t('shillinq', 'Add Item') }}
 				</NcButton>
 				<div class="expense-claim-form__nav">
-					<NcButton @click="step = 0">{{ t('shillinq', 'Back') }}</NcButton>
-					<NcButton type="primary" @click="step = 2">{{ t('shillinq', 'Next') }}</NcButton>
+					<NcButton @click="step = 0">
+						{{ t('shillinq', 'Back') }}
+					</NcButton>
+					<NcButton type="primary" @click="step = 2">
+						{{ t('shillinq', 'Next') }}
+					</NcButton>
 				</div>
 			</div>
 
@@ -77,8 +81,12 @@
 					<span v-if="item.receiptFile">{{ item.receiptFile }}</span>
 				</div>
 				<div class="expense-claim-form__nav">
-					<NcButton @click="step = 1">{{ t('shillinq', 'Back') }}</NcButton>
-					<NcButton type="primary" @click="step = 3">{{ t('shillinq', 'Next') }}</NcButton>
+					<NcButton @click="step = 1">
+						{{ t('shillinq', 'Back') }}
+					</NcButton>
+					<NcButton type="primary" @click="step = 3">
+						{{ t('shillinq', 'Next') }}
+					</NcButton>
 				</div>
 			</div>
 
@@ -96,7 +104,9 @@
 					<dd>{{ items.length }}</dd>
 				</dl>
 				<div class="expense-claim-form__nav">
-					<NcButton @click="step = 2">{{ t('shillinq', 'Back') }}</NcButton>
+					<NcButton @click="step = 2">
+						{{ t('shillinq', 'Back') }}
+					</NcButton>
 					<NcButton type="primary" @click="submit">
 						{{ t('shillinq', 'Submit Claim') }}
 					</NcButton>
@@ -123,6 +133,7 @@ export default {
 			step: 0,
 			steps: ['Details', 'Items', 'Receipts', 'Review'],
 			form: {
+				// eslint-disable-next-line @nextcloud/no-deprecations
 				employeeId: OC.currentUser || '',
 				description: '',
 				currency: 'EUR',

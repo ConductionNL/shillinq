@@ -7,7 +7,7 @@ import { generateUrl } from '@nextcloud/router'
 /**
  * Analytics store for KpiWidget and report state.
  *
- * @spec openspec/changes/general/tasks.md#task-3.1
+ * @see openspec/changes/general/tasks.md#task-3.1
  */
 export const useAnalyticsStore = defineStore('analytics', {
 	state: () => ({
