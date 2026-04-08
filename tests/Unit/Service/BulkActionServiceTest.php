@@ -163,7 +163,7 @@ class BulkActionServiceTest extends TestCase
     public function testBulkAssignUpdatesAssignee(): void
     {
         $updatedData = [];
-        $mockObjectService = new class (&$updatedData) {
+        $mockObjectService = new class ($updatedData) {
 
             private array $data;
 
