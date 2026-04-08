@@ -1,0 +1,25 @@
+{
+  "id": "app-template",
+  "name": "Nextcloud App Template",
+  "namespace": "AppTemplate",
+  "summary": "A template for creating new Nextcloud apps",
+  "goal": "A starting point for building Nextcloud apps following ConductionNL conventions",
+  "category": "tools",
+  "version": "0.1.0",
+  "license": "EUPL-1.2",
+  "author": "Conduction B.V.",
+  "repository": "https://github.com/ConductionNL/nextcloud-app-template",
+  "dependencies": {
+    "requiresOpenRegister": true,
+    "additionalCiApps": [
+      {"repo": "ConductionNL/openregister", "app": "openregister", "ref": "main"}
+    ]
+  },
+  "cicd": {
+    "phpVersions": ["8.3", "8.4"],
+    "nextcloudRefs": ["stable31", "stable32"],
+    "enableNewman": false
+  },
+  "createdAt": "2025-01-01",
+  "updatedAt": "2026-03-23"
+}
