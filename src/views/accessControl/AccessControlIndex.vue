@@ -6,16 +6,26 @@
 			<h2>{{ t('shillinq', 'Access Log') }}</h2>
 			<div class="shillinq-access-log__filters">
 				<select v-model="filterAction" @change="fetchFiltered">
-					<option value="">{{ t('shillinq', 'All actions') }}</option>
+					<option value="">
+						{{ t('shillinq', 'All actions') }}
+					</option>
 					<option v-for="action in actions" :key="action" :value="action">
 						{{ action }}
 					</option>
 				</select>
 				<select v-model="filterResult" @change="fetchFiltered">
-					<option value="">{{ t('shillinq', 'All results') }}</option>
-					<option value="success">{{ t('shillinq', 'Success') }}</option>
-					<option value="denied">{{ t('shillinq', 'Denied') }}</option>
-					<option value="error">{{ t('shillinq', 'Error') }}</option>
+					<option value="">
+						{{ t('shillinq', 'All results') }}
+					</option>
+					<option value="success">
+						{{ t('shillinq', 'Success') }}
+					</option>
+					<option value="denied">
+						{{ t('shillinq', 'Denied') }}
+					</option>
+					<option value="error">
+						{{ t('shillinq', 'Error') }}
+					</option>
 				</select>
 			</div>
 		</header>
@@ -34,7 +44,8 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr v-for="entry in accessControlStore.entries" :key="entry.id"
+				<tr v-for="entry in accessControlStore.entries"
+					:key="entry.id"
 					@click="$router.push({ name: 'AccessControlDetail', params: { id: entry.id } })">
 					<td>{{ entry.timestamp }}</td>
 					<td>{{ entry.action }}</td>

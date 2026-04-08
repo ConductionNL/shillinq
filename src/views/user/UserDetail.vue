@@ -14,7 +14,8 @@
 			<h2>{{ user.displayName }}</h2>
 
 			<div class="shillinq-user-detail__tabs">
-				<NcButton v-for="tab in tabs" :key="tab.id"
+				<NcButton v-for="tab in tabs"
+					:key="tab.id"
 					:type="activeTab === tab.id ? 'primary' : 'secondary'"
 					@click="activeTab = tab.id">
 					{{ tab.label }}
