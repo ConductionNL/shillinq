@@ -101,9 +101,9 @@ class PermissionGateMiddleware extends Middleware
 
             // Resolve the Shillinq user object.
             $users = $objectService->findObjects(
-                register: Application::APP_ID,
-                schema: 'user',
-                filters: ['username' => $ncUserId],
+                Application::APP_ID,
+                'user',
+                ['username' => $ncUserId],
             );
 
             if (empty($users) === false) {

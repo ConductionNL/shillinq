@@ -125,9 +125,9 @@ class PurchasingLimitService
         $roles = [];
 
         $accessRights = $objectService->findObjects(
-            register: Application::APP_ID,
-            schema: 'accessRight',
-            filters: [
+            Application::APP_ID,
+            'accessRight',
+            [
                 'userId'   => $userId,
                 'isActive' => true,
             ],
@@ -140,9 +140,9 @@ class PurchasingLimitService
 
             try {
                 $role = $objectService->getObject(
-                    register: Application::APP_ID,
-                    schema: 'role',
-                    id: $right['roleId'],
+                    Application::APP_ID,
+                    'role',
+                    $right['roleId'],
                 );
                 if (empty($role) === false && ($role['isActive'] ?? false) === true) {
                     $roles[] = $role;

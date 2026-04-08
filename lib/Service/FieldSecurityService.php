@@ -141,9 +141,9 @@ class FieldSecurityService
             $allPermissions = [];
             foreach ($roleIds as $roleId) {
                 $results = $objectService->findObjects(
-                    register: Application::APP_ID,
-                    schema: 'permission',
-                    filters: ['roleId' => $roleId],
+                    Application::APP_ID,
+                    'permission',
+                    ['roleId' => $roleId],
                 );
                 foreach ($results as $perm) {
                     $allPermissions[] = $perm;
@@ -176,9 +176,9 @@ class FieldSecurityService
 
         // Find the user's base role assignments.
         $accessRights = $objectService->findObjects(
-            register: Application::APP_ID,
-            schema: 'accessRight',
-            filters: [
+            Application::APP_ID,
+            'accessRight',
+            [
                 'userId'   => $userId,
                 'isActive' => true,
             ],

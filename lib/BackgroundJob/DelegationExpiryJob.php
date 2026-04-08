@@ -78,9 +78,9 @@ class DelegationExpiryJob extends TimedJob
             );
 
             $activeRights = $objectService->findObjects(
-                register: Application::APP_ID,
-                schema: 'accessRight',
-                filters: ['isActive' => true],
+                Application::APP_ID,
+                'accessRight',
+                ['isActive' => true],
             );
 
             $now = new \DateTime();
@@ -95,9 +95,9 @@ class DelegationExpiryJob extends TimedJob
                 // Expire this delegation.
                 $right['isActive'] = false;
                 $objectService->saveObject(
-                    register: Application::APP_ID,
-                    schema: 'accessRight',
-                    object: $right,
+                    Application::APP_ID,
+                    'accessRight',
+                    $right,
                 );
 
                 $this->auditLogService->log(

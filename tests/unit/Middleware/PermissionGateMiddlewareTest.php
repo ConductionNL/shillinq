@@ -122,7 +122,9 @@ class PermissionGateMiddlewareTest extends TestCase
         $user->method('getUID')->willReturn('inactive-user');
         $this->userSession->method('getUser')->willReturn($user);
 
-        $objectService = $this->createMock(\stdClass::class);
+        $objectService = $this->getMockBuilder(\stdClass::class)
+            ->addMethods(['findObjects'])
+            ->getMock();
         $objectService->method('findObjects')
             ->willReturn([
                 [
@@ -174,7 +176,9 @@ class PermissionGateMiddlewareTest extends TestCase
         $user->method('getUID')->willReturn('active-user');
         $this->userSession->method('getUser')->willReturn($user);
 
-        $objectService = $this->createMock(\stdClass::class);
+        $objectService = $this->getMockBuilder(\stdClass::class)
+            ->addMethods(['findObjects'])
+            ->getMock();
         $objectService->method('findObjects')
             ->willReturn([
                 [
