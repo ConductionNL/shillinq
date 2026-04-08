@@ -21,7 +21,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
@@ -33,7 +32,6 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Log\LoggerInterface;
 
 /**
  * OCS API controller for presence heartbeat pings and active viewer listing.
@@ -42,14 +40,12 @@ use Psr\Log\LoggerInterface;
  */
 class PresenceController extends Controller
 {
-
     /**
      * Constructor for PresenceController.
      *
      * @param IRequest        $request         The request object
      * @param IUserSession    $userSession     The user session
      * @param PresenceService $presenceService The presence service
-     * @param LoggerInterface $logger          The logger
      *
      * @return void
      */
@@ -57,7 +53,6 @@ class PresenceController extends Controller
         IRequest $request,
         private IUserSession $userSession,
         private PresenceService $presenceService,
-        private LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()

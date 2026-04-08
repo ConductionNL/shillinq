@@ -21,7 +21,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
@@ -75,7 +74,7 @@ class PresenceService
      *
      * @spec openspec/changes/collaboration/tasks.md#task-7.3
      */
-    public function ping(string $userId, string $targetType, string $targetId, bool $isEditing = false): array
+    public function ping(string $userId, string $targetType, string $targetId, bool $isEditing=false): array
     {
         $now = (new \DateTime())->format('c');
 
@@ -153,10 +152,10 @@ class PresenceService
                 ],
             );
 
-            $records  = ($result['results'] ?? $result ?? []);
-            $cutoff   = new \DateTime();
+            $records = ($result['results'] ?? $result ?? []);
+            $cutoff  = new \DateTime();
             $cutoff->modify('-'.self::ACTIVITY_WINDOW_SECONDS.' seconds');
-            $active   = [];
+            $active = [];
 
             foreach ($records as $record) {
                 $lastSeen = new \DateTime($record['lastSeenAt'] ?? '1970-01-01');

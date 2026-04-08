@@ -21,7 +21,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
@@ -115,9 +114,12 @@ class CommentController extends Controller
             $comments = ($result['results'] ?? $result ?? []);
 
             // Sort by timestamp ascending.
-            usort($comments, static function ($a, $b) {
-                return ($a['timestamp'] ?? '') <=> ($b['timestamp'] ?? '');
-            });
+            usort(
+                    $comments,
+                    static function ($a, $b) {
+                        return ($a['timestamp'] ?? '') <=> ($b['timestamp'] ?? '');
+                    }
+                    );
 
             return new JSONResponse($comments);
         } catch (\Throwable $e) {
@@ -229,9 +231,9 @@ class CommentController extends Controller
     /**
      * Edit an existing comment (author or admin only).
      *
-     * @NoAdminRequired
-     *
      * @param string $id The comment object ID
+     *
+     * @NoAdminRequired
      *
      * @return JSONResponse The updated comment or error
      *
@@ -304,9 +306,9 @@ class CommentController extends Controller
      *
      * Requires at least reviewer role on the target document.
      *
-     * @NoAdminRequired
-     *
      * @param string $id The comment object ID
+     *
+     * @NoAdminRequired
      *
      * @return JSONResponse The resolved comment or error
      *
@@ -388,9 +390,9 @@ class CommentController extends Controller
      *
      * Author can delete within 5 minutes; DPO or admin can delete at any time.
      *
-     * @NoAdminRequired
-     *
      * @param string $id The comment object ID
+     *
+     * @NoAdminRequired
      *
      * @return JSONResponse Success or error
      *

@@ -21,7 +21,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
@@ -44,7 +43,6 @@ use Psr\Log\LoggerInterface;
  */
 class DocumentEventNotifier
 {
-
     /**
      * Constructor for DocumentEventNotifier.
      *
@@ -82,7 +80,7 @@ class DocumentEventNotifier
      *
      * @spec openspec/changes/collaboration/tasks.md#task-7.4
      */
-    public function notify(string $eventType, string $targetType, string $targetId, array $context = []): int
+    public function notify(string $eventType, string $targetType, string $targetId, array $context=[]): int
     {
         $roles = $this->roleService->getRolesForTarget(
             targetType: $targetType,
@@ -215,21 +213,28 @@ class DocumentEventNotifier
                 return;
             }
 
-            $link    = $this->urlGenerator->linkToRouteAbsolute(
+            $link       = $this->urlGenerator->linkToRouteAbsolute(
                 routeName: Application::APP_ID.'.dashboard.page',
             );
-            $subject = ucfirst(str_replace(
+            $eventLabel = str_replace(
                 search: '.',
                 replace: ': ',
                 subject: $eventType,
-            )).' — '.$targetType.' '.$targetId;
+            );
+            $subject    = ucfirst($eventLabel).' — '.$targetType.' '.$targetId;
 
             $message = $this->mailer->createMessage();
             $message->setTo([$email]);
             $message->setSubject($subject);
+            $contextInfo = '';
+            if (empty($context) === false) {
+                $contextInfo = "\nDetails: ".json_encode($context);
+            }
+
             $message->setPlainBody(
                 'Event: '.$eventType."\n"
-                .'Document: '.$targetType.' '.$targetId."\n\n"
+                .'Document: '.$targetType.' '.$targetId
+                .$contextInfo."\n\n"
                 .'View the document: '.$link
             );
 

@@ -21,7 +21,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
@@ -198,8 +197,8 @@ class CollaborationRoleService
 
         if ($principalType === 'group') {
             return $this->groupManager->isInGroup(
-                uid: $userId,
-                gid: $principalId,
+                userId: $userId,
+                group: $principalId,
             );
         }
 

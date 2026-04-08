@@ -21,7 +21,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
@@ -44,7 +43,6 @@ use Psr\Log\LoggerInterface;
  */
 class CollaborationRoleController extends Controller
 {
-
     /**
      * Constructor for CollaborationRoleController.
      *
@@ -206,9 +204,9 @@ class CollaborationRoleController extends Controller
      *
      * Requires approver role on the target document.
      *
-     * @NoAdminRequired
-     *
      * @param string $id The CollaborationRole object ID
+     *
+     * @NoAdminRequired
      *
      * @return JSONResponse Success or error
      *
