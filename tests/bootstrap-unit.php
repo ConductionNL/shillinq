@@ -8,6 +8,13 @@ define('PHPUNIT_RUN', 1);
 // Include Composer's autoloader.
 require_once __DIR__ . '/../vendor/autoload.php';
 
+// Register OCP and NCU namespaces from the nextcloud/ocp package so that
+// unit tests can mock Nextcloud interfaces without a full NC environment.
+$ocpLoader = new \Composer\Autoload\ClassLoader();
+$ocpLoader->addPsr4('OCP\\', __DIR__ . '/../vendor/nextcloud/ocp/OCP');
+$ocpLoader->addPsr4('NCU\\', __DIR__ . '/../vendor/nextcloud/ocp/NCU');
+$ocpLoader->register(true);
+
 // Bootstrap Nextcloud — since we run inside the Docker container,
 // the full environment (including \OC::$server) is available.
 if (file_exists(__DIR__ . '/../../../lib/base.php')) {
