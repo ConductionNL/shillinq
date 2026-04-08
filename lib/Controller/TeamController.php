@@ -18,7 +18,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
@@ -39,15 +38,14 @@ use Psr\Log\LoggerInterface;
  */
 class TeamController extends Controller
 {
-
     /**
      * Constructor.
      *
-     * @param IRequest          $request           The request object
+     * @param IRequest           $request           The request object
      * @param ContainerInterface $container         The DI container
-     * @param DelegationService $delegationService The delegation service
-     * @param IUserSession      $userSession       The user session
-     * @param LoggerInterface   $logger            The logger
+     * @param DelegationService  $delegationService The delegation service
+     * @param IUserSession       $userSession       The user session
+     * @param LoggerInterface    $logger            The logger
      *
      * @return void
      */
@@ -76,7 +74,7 @@ class TeamController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $results = $objectService->findObjects(
+            $results       = $objectService->findObjects(
                 register: Application::APP_ID,
                 schema: 'team',
                 filters: [],
@@ -93,9 +91,9 @@ class TeamController extends Controller
     /**
      * Get a single team by ID.
      *
-     * @NoAdminRequired
-     *
      * @param string $id The team object ID
+     *
+     * @NoAdminRequired
      *
      * @return JSONResponse
      *
@@ -107,7 +105,7 @@ class TeamController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $team = $objectService->getObject(
+            $team          = $objectService->getObject(
                 register: Application::APP_ID,
                 schema: 'team',
                 id: $id,
@@ -134,7 +132,7 @@ class TeamController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $data = $this->request->getParams();
+            $data          = $this->request->getParams();
             if (isset($data['createdAt']) === false) {
                 $data['createdAt'] = date('c');
             }
@@ -168,9 +166,9 @@ class TeamController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $data       = $this->request->getParams();
-            $data['id'] = $id;
-            $team       = $objectService->saveObject(
+            $data          = $this->request->getParams();
+            $data['id']    = $id;
+            $team          = $objectService->saveObject(
                 register: Application::APP_ID,
                 schema: 'team',
                 object: $data,
@@ -229,7 +227,11 @@ class TeamController extends Controller
             $email  = ($data['email'] ?? '');
             $roleId = ($data['roleId'] ?? '');
             $user   = $this->userSession->getUser();
-            $admin  = ($user !== null) ? $user->getUID() : 'system';
+
+            $admin = 'system';
+            if ($user !== null) {
+                $admin = $user->getUID();
+            }
 
             $accessRight = $this->delegationService->createDelegation(
                 userId: $email,
@@ -237,7 +239,7 @@ class TeamController extends Controller
                 grantedBy: $admin,
                 start: new \DateTime(),
                 end: new \DateTime('+1 year'),
-                reason: 'Team invitation for team ' . $id,
+                reason: 'Team invitation for team '.$id,
             );
 
             return new JSONResponse(data: $accessRight, statusCode: 201);

@@ -18,7 +18,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
@@ -37,7 +36,6 @@ use Psr\Log\LoggerInterface;
  */
 class RoleController extends Controller
 {
-
     /**
      * Constructor.
      *
@@ -70,7 +68,7 @@ class RoleController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $results = $objectService->findObjects(
+            $results       = $objectService->findObjects(
                 register: Application::APP_ID,
                 schema: 'role',
                 filters: [],
@@ -87,9 +85,9 @@ class RoleController extends Controller
     /**
      * Get a single role by ID.
      *
-     * @NoAdminRequired
-     *
      * @param string $id The role object ID
+     *
+     * @NoAdminRequired
      *
      * @return JSONResponse
      *
@@ -101,7 +99,7 @@ class RoleController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $role = $objectService->getObject(
+            $role          = $objectService->getObject(
                 register: Application::APP_ID,
                 schema: 'role',
                 id: $id,
@@ -128,8 +126,8 @@ class RoleController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $data = $this->request->getParams();
-            $role = $objectService->saveObject(
+            $data          = $this->request->getParams();
+            $role          = $objectService->saveObject(
                 register: Application::APP_ID,
                 schema: 'role',
                 object: $data,
@@ -158,9 +156,9 @@ class RoleController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $data       = $this->request->getParams();
-            $data['id'] = $id;
-            $role       = $objectService->saveObject(
+            $data          = $this->request->getParams();
+            $data['id']    = $id;
+            $role          = $objectService->saveObject(
                 register: Application::APP_ID,
                 schema: 'role',
                 object: $data,

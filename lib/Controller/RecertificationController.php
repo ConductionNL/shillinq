@@ -18,7 +18,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
@@ -38,7 +37,6 @@ use Psr\Log\LoggerInterface;
  */
 class RecertificationController extends Controller
 {
-
     /**
      * Constructor.
      *
@@ -73,7 +71,7 @@ class RecertificationController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $results = $objectService->findObjects(
+            $results       = $objectService->findObjects(
                 register: Application::APP_ID,
                 schema: 'accessRecertification',
                 filters: [],
@@ -100,8 +98,8 @@ class RecertificationController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $data     = $this->request->getParams();
-            $campaign = $objectService->saveObject(
+            $data          = $this->request->getParams();
+            $campaign      = $objectService->saveObject(
                 register: Application::APP_ID,
                 schema: 'accessRecertification',
                 object: $data,

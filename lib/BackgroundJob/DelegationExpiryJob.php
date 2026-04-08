@@ -18,7 +18,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\BackgroundJob;
@@ -38,7 +37,6 @@ use Psr\Log\LoggerInterface;
  */
 class DelegationExpiryJob extends TimedJob
 {
-
     /**
      * Constructor.
      *
@@ -60,7 +58,7 @@ class DelegationExpiryJob extends TimedJob
         parent::__construct(time: $time);
 
         // Run every 5 minutes (300 seconds).
-        $this->setInterval(interval: 300);
+        $this->setInterval(300);
     }//end __construct()
 
     /**

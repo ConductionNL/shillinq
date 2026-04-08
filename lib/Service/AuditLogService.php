@@ -18,7 +18,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
@@ -36,7 +35,6 @@ use Psr\Log\LoggerInterface;
  */
 class AuditLogService
 {
-
     /**
      * Constructor.
      *
@@ -75,7 +73,7 @@ class AuditLogService
         string $resourceType,
         ?string $resourceId,
         string $result,
-        ?array $details = null,
+        ?array $details=null,
     ): void {
         try {
             $objectService = $this->container->get(

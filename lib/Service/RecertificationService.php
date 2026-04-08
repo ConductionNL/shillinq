@@ -18,7 +18,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
@@ -35,7 +34,6 @@ use Psr\Log\LoggerInterface;
  */
 class RecertificationService
 {
-
     /**
      * Constructor.
      *
@@ -129,7 +127,7 @@ class RecertificationService
                     );
 
                     if (empty($users) === false) {
-                        $user             = $users[0];
+                        $user = $users[0];
                         $user['isActive'] = false;
                         $objectService->saveObject(
                             register: Application::APP_ID,
@@ -155,7 +153,7 @@ class RecertificationService
                             ->setObject('accessRecertification', $campaignId)
                             ->setSubject('access-revoked');
                         $this->notificationManager->notify($notification);
-                    }
+                    }//end if
                 } catch (\Throwable $e) {
                     $this->logger->error(
                         'Shillinq: recertification revoke failed',

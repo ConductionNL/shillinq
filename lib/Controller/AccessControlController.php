@@ -18,7 +18,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
@@ -37,7 +36,6 @@ use Psr\Log\LoggerInterface;
  */
 class AccessControlController extends Controller
 {
-
     /**
      * Constructor.
      *
@@ -100,9 +98,9 @@ class AccessControlController extends Controller
     /**
      * Get a single audit log entry by ID.
      *
-     * @NoAdminRequired
-     *
      * @param string $id The audit log object ID
+     *
+     * @NoAdminRequired
      *
      * @return JSONResponse
      *
@@ -114,7 +112,7 @@ class AccessControlController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $entry = $objectService->getObject(
+            $entry         = $objectService->getObject(
                 register: Application::APP_ID,
                 schema: 'accessControl',
                 id: $id,

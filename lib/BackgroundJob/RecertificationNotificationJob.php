@@ -18,7 +18,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\BackgroundJob;
@@ -37,7 +36,6 @@ use Psr\Log\LoggerInterface;
  */
 class RecertificationNotificationJob extends TimedJob
 {
-
     /**
      * Constructor.
      *
@@ -57,7 +55,7 @@ class RecertificationNotificationJob extends TimedJob
         parent::__construct(time: $time);
 
         // Run every hour (3600 seconds).
-        $this->setInterval(interval: 3600);
+        $this->setInterval(3600);
     }//end __construct()
 
     /**

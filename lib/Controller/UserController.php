@@ -18,7 +18,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
@@ -37,7 +36,6 @@ use Psr\Log\LoggerInterface;
  */
 class UserController extends Controller
 {
-
     /**
      * Constructor.
      *
@@ -70,7 +68,7 @@ class UserController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $results = $objectService->findObjects(
+            $results       = $objectService->findObjects(
                 register: Application::APP_ID,
                 schema: 'user',
                 filters: [],
@@ -87,9 +85,9 @@ class UserController extends Controller
     /**
      * Get a single user by ID.
      *
-     * @NoAdminRequired
-     *
      * @param string $id The user object ID
+     *
+     * @NoAdminRequired
      *
      * @return JSONResponse
      *
@@ -101,7 +99,7 @@ class UserController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $user = $objectService->getObject(
+            $user          = $objectService->getObject(
                 register: Application::APP_ID,
                 schema: 'user',
                 id: $id,
@@ -130,9 +128,9 @@ class UserController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $data       = $this->request->getParams();
-            $data['id'] = $id;
-            $user       = $objectService->saveObject(
+            $data          = $this->request->getParams();
+            $data['id']    = $id;
+            $user          = $objectService->saveObject(
                 register: Application::APP_ID,
                 schema: 'user',
                 object: $data,
@@ -161,9 +159,9 @@ class UserController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $data       = $this->request->getParams();
-            $employeeId = ($data['employeeId'] ?? '');
-            $roleName   = ($data['roleName'] ?? '');
+            $data          = $this->request->getParams();
+            $employeeId    = ($data['employeeId'] ?? '');
+            $roleName      = ($data['roleName'] ?? '');
 
             // Check if user already exists.
             $existing = $objectService->findObjects(
@@ -175,7 +173,7 @@ class UserController extends Controller
             $userData = [
                 'username'    => $employeeId,
                 'displayName' => ($data['displayName'] ?? $employeeId),
-                'email'       => ($data['email'] ?? $employeeId . '@example.com'),
+                'email'       => ($data['email'] ?? $employeeId.'@example.com'),
                 'isActive'    => true,
                 'createdAt'   => date('c'),
             ];

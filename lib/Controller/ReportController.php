@@ -18,7 +18,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
@@ -38,7 +37,6 @@ use Psr\Log\LoggerInterface;
  */
 class ReportController extends Controller
 {
-
     /**
      * Constructor.
      *
@@ -131,15 +129,15 @@ class ReportController extends Controller
             'delegationsActive',
         ];
 
-        $csv = implode(',', $headers) . "\n";
+        $csv = implode(',', $headers)."\n";
         foreach ($rows as $row) {
             $line = [];
             foreach ($headers as $header) {
                 $value  = (string) ($row[$header] ?? '');
-                $line[] = '"' . str_replace('"', '""', $value) . '"';
+                $line[] = '"'.str_replace('"', '""', $value).'"';
             }
 
-            $csv .= implode(',', $line) . "\n";
+            $csv .= implode(',', $line)."\n";
         }
 
         return new DataDownloadResponse(

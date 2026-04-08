@@ -21,7 +21,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
@@ -40,7 +39,6 @@ use Psr\Log\LoggerInterface;
  */
 class CreateDefaultConfiguration implements IRepairStep
 {
-
     /**
      * Constructor.
      *
@@ -94,7 +92,7 @@ class CreateDefaultConfiguration implements IRepairStep
 
             $output->info('Shillinq seed data created successfully.');
         } catch (\Throwable $e) {
-            $output->warning('Could not create seed data: ' . $e->getMessage());
+            $output->warning('Could not create seed data: '.$e->getMessage());
             $this->logger->error(
                 'Shillinq seed data creation failed',
                 ['exception' => $e->getMessage()]

@@ -18,7 +18,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
@@ -36,9 +35,9 @@ class FieldSecurityService
 {
 
     /**
-     * Per-request permission cache keyed by roleId.
+     * Per-request permission cache.
      *
-     * @var array<string,array>|null
+     * @var list<array<string,mixed>>|null
      */
     private ?array $permissionCache = null;
 

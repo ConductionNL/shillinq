@@ -18,7 +18,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
@@ -38,7 +37,6 @@ use Psr\Log\LoggerInterface;
  */
 class DelegationController extends Controller
 {
-
     /**
      * Constructor.
      *
@@ -70,7 +68,11 @@ class DelegationController extends Controller
         try {
             $data = $this->request->getParams();
             $user = $this->userSession->getUser();
-            $admin = ($user !== null) ? $user->getUID() : 'system';
+
+            $admin = 'system';
+            if ($user !== null) {
+                $admin = $user->getUID();
+            }
 
             $accessRight = $this->delegationService->createDelegation(
                 userId: ($data['userId'] ?? ''),
@@ -107,8 +109,12 @@ class DelegationController extends Controller
     public function destroy(string $id): JSONResponse
     {
         try {
-            $user      = $this->userSession->getUser();
-            $revokedBy = ($user !== null) ? $user->getUID() : 'system';
+            $user = $this->userSession->getUser();
+
+            $revokedBy = 'system';
+            if ($user !== null) {
+                $revokedBy = $user->getUID();
+            }
 
             $result = $this->delegationService->revokeDelegation(
                 accessRightId: $id,

@@ -18,7 +18,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
@@ -34,7 +33,6 @@ use Psr\Log\LoggerInterface;
  */
 class PurchasingLimitService
 {
-
     /**
      * Constructor.
      *
@@ -155,7 +153,7 @@ class PurchasingLimitService
                     ['roleId' => $right['roleId'], 'exception' => $e->getMessage()]
                 );
             }//end try
-        }
+        }//end foreach
 
         return $roles;
     }//end resolveEffectiveRoles()

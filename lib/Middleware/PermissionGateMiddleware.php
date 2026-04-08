@@ -18,7 +18,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Middleware;
@@ -39,7 +38,6 @@ use Psr\Log\LoggerInterface;
  */
 class PermissionGateMiddleware extends Middleware
 {
-
     /**
      * Constructor.
      *
@@ -65,8 +63,8 @@ class PermissionGateMiddleware extends Middleware
      *
      * Checks user active status and role level against the endpoint annotation.
      *
-     * @param \OCP\AppFramework\Controller $controller  The controller being called
-     * @param string                       $methodName  The method being called
+     * @param \OCP\AppFramework\Controller $controller The controller being called
+     * @param string                       $methodName The method being called
      *
      * @return void
      *
