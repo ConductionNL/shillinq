@@ -15,13 +15,19 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/core/tasks.md#task-9
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\AppInfo;
 
+use OCA\Shillinq\Activity\Filter as ActivityFilter;
+use OCA\Shillinq\Activity\Setting\DataImport as DataImportSetting;
+use OCA\Shillinq\Activity\ShillinqActivityProvider;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
+use OCA\Shillinq\Notification\ShillinqNotifier;
 use OCA\Shillinq\Repair\CreateDefaultConfiguration;
 use OCA\Shillinq\Repair\InitializeSettings;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
@@ -32,6 +38,8 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
  * Main application class for the Shillinq Nextcloud app.
+ *
+ * @spec openspec/changes/core/tasks.md#task-9
  */
 class Application extends App implements IBootstrap
 {
@@ -55,6 +63,8 @@ class Application extends App implements IBootstrap
      * @return void
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     *
+     * @spec openspec/changes/core/tasks.md#task-9
      */
     public function register(IRegistrationContext $context): void
     {
@@ -71,18 +81,32 @@ class Application extends App implements IBootstrap
         // Seed default configuration data after register setup.
         $context->registerRepairStep(CreateDefaultConfiguration::class);
 
+        // Register notification handler.
+        $context->registerNotifierService(ShillinqNotifier::class);
+
     }//end register()
 
     /**
-     * Boot the application.
+     * Boot the application and register activity provider.
      *
      * @param IBootContext $context The boot context
      *
      * @return void
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @spec openspec/changes/core/tasks.md#task-9
      */
     public function boot(IBootContext $context): void
     {
+        $server = $context->getServerContainer();
+
+        // Register activity provider, filter, and setting if the Activity app is available.
+        try {
+            $activityManager = $server->get(\OCP\Activity\IManager::class);
+            $activityManager->registerProvider(ShillinqActivityProvider::class);
+            $activityManager->registerFilter(ActivityFilter::class);
+            $activityManager->registerSetting(DataImportSetting::class);
+        } catch (\Throwable $e) {
+            // Activity app may not be installed; silently ignore.
+        }
     }//end boot()
 }//end class
