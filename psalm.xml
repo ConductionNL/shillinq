@@ -75,6 +75,7 @@
         <PossiblyUnusedMethod errorLevel="suppress"/>
         <UnusedMethod errorLevel="suppress"/>
         <UnusedProperty errorLevel="suppress"/>
+        <UnusedParam errorLevel="suppress"/>
         <PossiblyUnusedParam errorLevel="suppress"/>
         <UnusedDocblockParam errorLevel="suppress"/>
         <UnusedVariable errorLevel="suppress"/>
