@@ -1,38 +1,27 @@
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
 
-import { defineStore } from 'pinia'
+import { createObjectStore } from '@conduction/nextcloud-vue'
 
 /**
  * Expense item store.
  *
  * @see openspec/changes/general/tasks.md#task-3.4
  */
-export const useExpenseItemStore = defineStore('expenseItem', {
-	state: () => ({
-		items: [],
-		loading: false,
-	}),
-
+const expenseItemPlugin = {
+	name: 'expenseItem',
 	getters: {
-		getItems: (state) => state.items,
-		getItemsByClaimId: (state) => (claimId) =>
-			state.items.filter((i) => i.expenseClaimId === claimId),
-	},
-
-	actions: {
-		async fetchItems() {
-			this.loading = true
-			try {
-				const objectStore = (await import('./object.js')).useObjectStore()
-				this.items = await objectStore.fetchObjects('ExpenseItem')
-				return this.items
-			} catch (error) {
-				console.error('Failed to fetch expense items:', error)
-			} finally {
-				this.loading = false
-			}
-			return []
+		items: (state) => state.collections?.ExpenseItem || [],
+		getItemsByClaimId: (state) => (claimId) => {
+			const items = state.collections?.ExpenseItem || []
+			return items.filter((i) => i.expenseClaimId === claimId)
 		},
 	},
-})
+	actions: {
+		async fetchItems() {
+			return this.fetchCollection('ExpenseItem')
+		},
+	},
+}
+
+export const useExpenseItemStore = createObjectStore('ExpenseItem', { plugins: [expenseItemPlugin] })

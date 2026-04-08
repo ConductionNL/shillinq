@@ -106,7 +106,7 @@ export default {
 			return this.portalStore.tokens
 		},
 		loading() {
-			return this.portalStore.loading
+			return this.portalStore.tokenLoading
 		},
 	},
 	created() {

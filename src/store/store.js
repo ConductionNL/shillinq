@@ -1,5 +1,7 @@
-import { generateUrl } from '@nextcloud/router'
-import { useObjectStore } from './modules/object.js'
+// SPDX-License-Identifier: EUPL-1.2
+// Copyright (C) 2026 Conduction B.V.
+
+import { useObjectStore } from '@conduction/nextcloud-vue'
 import { useSettingsStore } from './modules/settings.js'
 import { useAnalyticsStore } from './modules/analytics.js'
 import { usePortalStore } from './modules/portal.js'
@@ -10,11 +12,6 @@ import { useExpenseItemStore } from './modules/expenseItem.js'
 export async function initializeStores() {
 	const settingsStore = useSettingsStore()
 	const objectStore = useObjectStore()
-
-	objectStore.configure({
-		baseUrl: generateUrl('/apps/openregister/api/objects'),
-		schemaBaseUrl: generateUrl('/apps/openregister/api/schemas'),
-	})
 
 	await settingsStore.fetchSettings()
 

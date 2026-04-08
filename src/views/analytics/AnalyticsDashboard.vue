@@ -58,6 +58,7 @@
 
 <script>
 import { NcButton, NcDialog, NcLoadingIcon, NcSelect, NcTextField } from '@nextcloud/vue'
+import { generateUrl } from '@nextcloud/router'
 import PlusIcon from 'vue-material-design-icons/Plus.vue'
 import KpiWidgetCard from './KpiWidgetCard.vue'
 import { useAnalyticsStore } from '../../store/modules/analytics.js'
@@ -102,7 +103,7 @@ export default {
 			return this.analyticsStore.kpiData
 		},
 		loading() {
-			return this.analyticsStore.loading
+			return this.analyticsStore.widgetLoading
 		},
 		sortedWidgets() {
 			return [...this.widgets].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
@@ -114,9 +115,8 @@ export default {
 	},
 	methods: {
 		async addWidget() {
-			const objectStore = (await import('../../store/modules/object.js')).useObjectStore()
 			try {
-				const url = new URL(objectStore.baseUrl, window.location.origin)
+				const url = new URL(generateUrl('/apps/openregister/api/objects'), window.location.origin)
 				url.searchParams.set('schema', 'KpiWidget')
 				await fetch(url.toString(), {
 					method: 'POST',

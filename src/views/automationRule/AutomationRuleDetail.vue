@@ -48,6 +48,7 @@
 
 <script>
 import { NcButton } from '@nextcloud/vue'
+import { generateUrl } from '@nextcloud/router'
 import TestTubeIcon from 'vue-material-design-icons/TestTube.vue'
 import { useAutomationRuleStore } from '../../store/modules/automationRule.js'
 
@@ -79,8 +80,11 @@ export default {
 	methods: {
 		async testRule() {
 			// Preview mode — fetches matching objects without executing actions.
-			const objectStore = (await import('../../store/modules/object.js')).useObjectStore()
-			const objects = await objectStore.fetchObjects(this.rule.triggerSchema)
+			const url = new URL(generateUrl('/apps/openregister/api/objects'), window.location.origin)
+			url.searchParams.set('schema', this.rule.triggerSchema)
+			const response = await fetch(url.toString(), { headers: { requesttoken: OC.requestToken } })
+			const data = response.ok ? await response.json() : { results: [] }
+			const objects = data.results || data
 			const value = parseFloat(this.rule.triggerValue)
 			this.testResults = objects.filter((obj) => {
 				const fieldVal = parseFloat(obj[this.rule.triggerField])

@@ -96,6 +96,39 @@ class AnalyticsService
     }//end getKpiValue()
 
     /**
+     * Get the last saved snapshot data for a report.
+     *
+     * @param string $id The report object ID.
+     *
+     * @return array{id: string, snapshot: mixed} The report ID and its snapshot data.
+     *
+     * @spec openspec/changes/general/tasks.md#task-11.2
+     */
+    public function getReportSnapshot(string $id): array
+    {
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $report        = $objectService->getObject(schema: 'AnalyticsReport', id: $id);
+
+            $snapshotData = null;
+            if ($report !== null && isset($report['snapshotData']) === true) {
+                $snapshotData = json_decode($report['snapshotData'], true) ?? $report['snapshotData'];
+            }
+
+            return [
+                'id'       => $id,
+                'snapshot' => $snapshotData,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->warning('Could not fetch report snapshot: '.$e->getMessage());
+            return [
+                'id'       => $id,
+                'snapshot' => null,
+            ];
+        }//end try
+    }//end getReportSnapshot()
+
+    /**
      * Run a report by type and return its snapshot data.
      *
      * @param string $reportType The report type identifier.

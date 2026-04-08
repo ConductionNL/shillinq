@@ -49,6 +49,7 @@
 
 <script>
 import { NcButton, NcDialog, NcSelect, NcTextField } from '@nextcloud/vue'
+import { generateUrl } from '@nextcloud/router'
 
 export default {
 	name: 'AutomationRuleForm',
@@ -95,9 +96,8 @@ export default {
 	},
 	methods: {
 		async save() {
-			const objectStore = (await import('../../store/modules/object.js')).useObjectStore()
 			try {
-				const url = new URL(objectStore.baseUrl, window.location.origin)
+				const url = new URL(generateUrl('/apps/openregister/api/objects'), window.location.origin)
 				url.searchParams.set('schema', 'AutomationRule')
 				await fetch(url.toString(), {
 					method: 'POST',

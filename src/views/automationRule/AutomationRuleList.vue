@@ -106,7 +106,7 @@ export default {
 			return this.ruleStore.rules
 		},
 		loading() {
-			return this.ruleStore.loading
+			return this.ruleStore.ruleLoading
 		},
 		allSelected() {
 			return this.rules.length > 0 && this.selectedIds.length === this.rules.length

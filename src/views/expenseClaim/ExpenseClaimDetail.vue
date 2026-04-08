@@ -89,6 +89,7 @@
 
 <script>
 import { NcButton } from '@nextcloud/vue'
+import { generateUrl } from '@nextcloud/router'
 import { useExpenseClaimStore } from '../../store/modules/expenseClaim.js'
 import { useExpenseItemStore } from '../../store/modules/expenseItem.js'
 
@@ -126,9 +127,8 @@ export default {
 	},
 	methods: {
 		async updateStatus(status) {
-			const objectStore = (await import('../../store/modules/object.js')).useObjectStore()
 			try {
-				const url = new URL(objectStore.baseUrl, window.location.origin)
+				const url = new URL(generateUrl('/apps/openregister/api/objects'), window.location.origin)
 				url.searchParams.set('id', this.claim.id)
 				await fetch(url.toString(), {
 					method: 'PUT',

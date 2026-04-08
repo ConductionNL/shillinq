@@ -1,37 +1,25 @@
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
 
-import { defineStore } from 'pinia'
+import { createObjectStore } from '@conduction/nextcloud-vue'
 
 /**
  * Automation rule store.
  *
  * @see openspec/changes/general/tasks.md#task-3.3
  */
-export const useAutomationRuleStore = defineStore('automationRule', {
-	state: () => ({
-		rules: [],
-		loading: false,
-	}),
-
+const automationRulePlugin = {
+	name: 'automationRule',
 	getters: {
-		getRules: (state) => state.rules,
-		getActiveRules: (state) => state.rules.filter((r) => r.isActive),
+		rules: (state) => state.collections?.AutomationRule || [],
+		getActiveRules: (state) => (state.collections?.AutomationRule || []).filter((r) => r.isActive),
+		ruleLoading: (state) => state.loading?.AutomationRule || false,
 	},
-
 	actions: {
 		async fetchRules() {
-			this.loading = true
-			try {
-				const objectStore = (await import('./object.js')).useObjectStore()
-				this.rules = await objectStore.fetchObjects('AutomationRule')
-				return this.rules
-			} catch (error) {
-				console.error('Failed to fetch automation rules:', error)
-			} finally {
-				this.loading = false
-			}
-			return []
+			return this.fetchCollection('AutomationRule')
 		},
 	},
-})
+}
+
+export const useAutomationRuleStore = createObjectStore('AutomationRule', { plugins: [automationRulePlugin] })

@@ -118,6 +118,7 @@
 
 <script>
 import { NcButton, NcDialog, NcSelect, NcTextField } from '@nextcloud/vue'
+import { generateUrl } from '@nextcloud/router'
 
 export default {
 	name: 'ExpenseClaimForm',
@@ -165,9 +166,8 @@ export default {
 			}
 		},
 		async submit() {
-			const objectStore = (await import('../../store/modules/object.js')).useObjectStore()
 			try {
-				const claimUrl = new URL(objectStore.baseUrl, window.location.origin)
+				const claimUrl = new URL(generateUrl('/apps/openregister/api/objects'), window.location.origin)
 				claimUrl.searchParams.set('schema', 'ExpenseClaim')
 
 				const now = new Date().toISOString()
@@ -193,7 +193,7 @@ export default {
 					const claimId = claimData.id
 
 					// Create expense items.
-					const itemUrl = new URL(objectStore.baseUrl, window.location.origin)
+					const itemUrl = new URL(generateUrl('/apps/openregister/api/objects'), window.location.origin)
 					itemUrl.searchParams.set('schema', 'ExpenseItem')
 
 					for (const item of this.items) {

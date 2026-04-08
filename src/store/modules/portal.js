@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
 
-import { defineStore } from 'pinia'
+import { createObjectStore } from '@conduction/nextcloud-vue'
 import { generateUrl } from '@nextcloud/router'
 
 /**
@@ -9,29 +9,15 @@ import { generateUrl } from '@nextcloud/router'
  *
  * @see openspec/changes/general/tasks.md#task-3.2
  */
-export const usePortalStore = defineStore('portal', {
-	state: () => ({
-		tokens: [],
-		loading: false,
-	}),
-
+const portalPlugin = {
+	name: 'portal',
 	getters: {
-		getTokens: (state) => state.tokens,
+		tokens: (state) => state.collections?.PortalToken || [],
+		tokenLoading: (state) => state.loading?.PortalToken || false,
 	},
-
 	actions: {
 		async fetchTokens() {
-			this.loading = true
-			try {
-				const objectStore = (await import('./object.js')).useObjectStore()
-				this.tokens = await objectStore.fetchObjects('PortalToken')
-				return this.tokens
-			} catch (error) {
-				console.error('Failed to fetch portal tokens:', error)
-			} finally {
-				this.loading = false
-			}
-			return []
+			return this.fetchCollection('PortalToken')
 		},
 
 		async generateToken(organizationId, description = null, expiresAt = null, permissions = []) {
@@ -58,4 +44,6 @@ export const usePortalStore = defineStore('portal', {
 			return null
 		},
 	},
-})
+}
+
+export const usePortalStore = createObjectStore('PortalToken', { plugins: [portalPlugin] })

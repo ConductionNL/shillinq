@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
 
-import { defineStore } from 'pinia'
+import { createObjectStore } from '@conduction/nextcloud-vue'
 import { generateUrl } from '@nextcloud/router'
 
 /**
@@ -9,34 +9,25 @@ import { generateUrl } from '@nextcloud/router'
  *
  * @see openspec/changes/general/tasks.md#task-3.1
  */
-export const useAnalyticsStore = defineStore('analytics', {
+const kpiPlugin = {
+	name: 'kpi',
 	state: () => ({
-		widgets: [],
-		reports: [],
 		kpiData: {},
-		loading: false,
 		reportLoading: false,
 	}),
-
 	getters: {
-		getWidgets: (state) => state.widgets,
-		getReports: (state) => state.reports,
+		widgets: (state) => state.collections?.KpiWidget || [],
+		reports: (state) => state.collections?.AnalyticsReport || [],
 		getKpiData: (state) => state.kpiData,
+		widgetLoading: (state) => state.loading?.KpiWidget || false,
 	},
-
 	actions: {
 		async fetchWidgets() {
-			this.loading = true
-			try {
-				const objectStore = (await import('./object.js')).useObjectStore()
-				this.widgets = await objectStore.fetchObjects('KpiWidget')
-				return this.widgets
-			} catch (error) {
-				console.error('Failed to fetch KPI widgets:', error)
-			} finally {
-				this.loading = false
-			}
-			return []
+			return this.fetchCollection('KpiWidget')
+		},
+
+		async fetchReports() {
+			return this.fetchCollection('AnalyticsReport')
 		},
 
 		async fetchKpiValue(metricKey) {
@@ -47,7 +38,7 @@ export const useAnalyticsStore = defineStore('analytics', {
 				)
 				if (response.ok) {
 					const data = await response.json()
-					this.kpiData[metricKey] = data
+					this.kpiData = { ...this.kpiData, [metricKey]: data }
 					return data
 				}
 			} catch (error) {
@@ -61,21 +52,8 @@ export const useAnalyticsStore = defineStore('analytics', {
 			await Promise.all(keys.map((key) => this.fetchKpiValue(key)))
 		},
 
-		async fetchReports() {
-			this.reportLoading = true
-			try {
-				const objectStore = (await import('./object.js')).useObjectStore()
-				this.reports = await objectStore.fetchObjects('AnalyticsReport')
-				return this.reports
-			} catch (error) {
-				console.error('Failed to fetch analytics reports:', error)
-			} finally {
-				this.reportLoading = false
-			}
-			return []
-		},
-
 		async runReport(reportType, parameters = {}) {
+			this.reportLoading = true
 			try {
 				const response = await fetch(
 					generateUrl(`/apps/shillinq/api/v1/analytics/reports/${reportType}/run`),
@@ -93,8 +71,12 @@ export const useAnalyticsStore = defineStore('analytics', {
 				}
 			} catch (error) {
 				console.error(`Failed to run report ${reportType}:`, error)
+			} finally {
+				this.reportLoading = false
 			}
 			return null
 		},
 	},
-})
+}
+
+export const useAnalyticsStore = createObjectStore('KpiWidget', { plugins: [kpiPlugin] })

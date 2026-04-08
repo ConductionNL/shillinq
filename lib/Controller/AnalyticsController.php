@@ -112,11 +112,8 @@ class AnalyticsController extends Controller
      */
     public function snapshot(string $id): JSONResponse
     {
-        return new JSONResponse(
-                [
-                    'id'       => $id,
-                    'snapshot' => null,
-                ]
-                );
+        $data = $this->analyticsService->getReportSnapshot($id);
+
+        return new JSONResponse($data);
     }//end snapshot()
 }//end class
