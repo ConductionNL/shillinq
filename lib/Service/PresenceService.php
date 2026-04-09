@@ -19,7 +19,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
@@ -168,7 +167,7 @@ class PresenceService
         }//end try
 
         $cutoff = new \DateTime();
-        $cutoff->modify('-' . self::PRESENCE_TIMEOUT_SECONDS . ' seconds');
+        $cutoff->modify('-'.self::PRESENCE_TIMEOUT_SECONDS.' seconds');
 
         $active = [];
         foreach ($records as $record) {

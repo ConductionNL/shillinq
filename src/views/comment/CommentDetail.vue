@@ -14,81 +14,79 @@
 
 		<NcLoadingIcon v-if="loading" :size="44" />
 
-		<CnDetailPage v-else-if="comment">
-			<template #default>
-				<div class="comment-detail__content">
-					<div class="comment-detail__field">
-						<label>{{ t('shillinq', 'Author') }}</label>
-						<span>{{ comment.author || comment.userId }}</span>
-					</div>
-					<div class="comment-detail__field">
-						<label>{{ t('shillinq', 'Target type') }}</label>
-						<span>{{ comment.targetType }}</span>
-					</div>
-					<div class="comment-detail__field">
-						<label>{{ t('shillinq', 'Target ID') }}</label>
-						<span>{{ comment.targetId }}</span>
-					</div>
-					<div class="comment-detail__field">
-						<label>{{ t('shillinq', 'Content') }}</label>
-						<p class="comment-detail__body">{{ comment.content || comment.body }}</p>
-					</div>
-					<div class="comment-detail__field">
-						<label>{{ t('shillinq', 'Mentions') }}</label>
-						<span v-if="comment.mentions && comment.mentions.length">
-							{{ comment.mentions.join(', ') }}
-						</span>
-						<span v-else class="comment-detail__empty">{{ t('shillinq', 'None') }}</span>
-					</div>
-					<div class="comment-detail__field">
-						<label>{{ t('shillinq', 'Created at') }}</label>
-						<span>{{ formatTimestamp(comment.createdAt || comment.timestamp) }}</span>
-					</div>
-					<div class="comment-detail__field">
-						<label>{{ t('shillinq', 'Resolved') }}</label>
-						<span>{{ comment.resolved ? t('shillinq', 'Yes') : t('shillinq', 'No') }}</span>
-					</div>
-					<div v-if="comment.resolvedBy" class="comment-detail__field">
-						<label>{{ t('shillinq', 'Resolved by') }}</label>
-						<span>{{ comment.resolvedBy }}</span>
-					</div>
-					<div v-if="comment.resolvedAt" class="comment-detail__field">
-						<label>{{ t('shillinq', 'Resolved at') }}</label>
-						<span>{{ formatTimestamp(comment.resolvedAt) }}</span>
-					</div>
+		<div v-else-if="comment" class="comment-detail__content">
+			<div class="comment-detail__field">
+				<label>{{ t('shillinq', 'Author') }}</label>
+				<span>{{ comment.author || comment.userId }}</span>
+			</div>
+			<div class="comment-detail__field">
+				<label>{{ t('shillinq', 'Target type') }}</label>
+				<span>{{ comment.targetType }}</span>
+			</div>
+			<div class="comment-detail__field">
+				<label>{{ t('shillinq', 'Target ID') }}</label>
+				<span>{{ comment.targetId }}</span>
+			</div>
+			<div class="comment-detail__field">
+				<label>{{ t('shillinq', 'Content') }}</label>
+				<p class="comment-detail__body">
+					{{ comment.content || comment.body }}
+				</p>
+			</div>
+			<div class="comment-detail__field">
+				<label>{{ t('shillinq', 'Mentions') }}</label>
+				<span v-if="comment.mentions && comment.mentions.length">
+					{{ comment.mentions.join(', ') }}
+				</span>
+				<span v-else class="comment-detail__empty">{{ t('shillinq', 'None') }}</span>
+			</div>
+			<div class="comment-detail__field">
+				<label>{{ t('shillinq', 'Created at') }}</label>
+				<span>{{ formatTimestamp(comment.createdAt || comment.timestamp) }}</span>
+			</div>
+			<div class="comment-detail__field">
+				<label>{{ t('shillinq', 'Resolved') }}</label>
+				<span>{{ comment.resolved ? t('shillinq', 'Yes') : t('shillinq', 'No') }}</span>
+			</div>
+			<div v-if="comment.resolvedBy" class="comment-detail__field">
+				<label>{{ t('shillinq', 'Resolved by') }}</label>
+				<span>{{ comment.resolvedBy }}</span>
+			</div>
+			<div v-if="comment.resolvedAt" class="comment-detail__field">
+				<label>{{ t('shillinq', 'Resolved at') }}</label>
+				<span>{{ formatTimestamp(comment.resolvedAt) }}</span>
+			</div>
 
-					<div class="comment-detail__actions">
-						<NcButton
-							v-if="!comment.resolved"
-							type="primary"
-							@click="resolveComment">
-							<template #icon>
-								<CheckCircleOutline :size="20" />
-							</template>
-							{{ t('shillinq', 'Resolve') }}
-						</NcButton>
+			<div class="comment-detail__actions">
+				<NcButton
+					v-if="!comment.resolved"
+					type="primary"
+					@click="resolveComment">
+					<template #icon>
+						<CheckCircleOutline :size="20" />
+					</template>
+					{{ t('shillinq', 'Resolve') }}
+				</NcButton>
 
-						<NcButton
-							type="warning"
-							@click="anonymiseComment">
-							<template #icon>
-								<AccountOffOutline :size="20" />
-							</template>
-							{{ t('shillinq', 'Anonymise') }}
-						</NcButton>
+				<NcButton
+					type="warning"
+					@click="anonymiseComment">
+					<template #icon>
+						<AccountOffOutline :size="20" />
+					</template>
+					{{ t('shillinq', 'Anonymise') }}
+				</NcButton>
 
-						<NcButton
-							type="error"
-							@click="deleteComment">
-							<template #icon>
-								<DeleteOutline :size="20" />
-							</template>
-							{{ t('shillinq', 'Delete') }}
-						</NcButton>
-					</div>
-				</div>
-			</template>
-		</CnDetailPage>
+				<NcButton
+					type="error"
+					@click="deleteComment">
+					<template #icon>
+						<DeleteOutline :size="20" />
+					</template>
+					{{ t('shillinq', 'Delete') }}
+				</NcButton>
+			</div>
+		</div>
 
 		<NcEmptyContent
 			v-else
@@ -103,7 +101,6 @@
 
 <script>
 import { NcButton, NcLoadingIcon, NcEmptyContent } from '@nextcloud/vue'
-import { CnDetailPage } from '@conduction/nextcloud-vue'
 import { useCommentStore } from '../../store/modules/comment.js'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import CheckCircleOutline from 'vue-material-design-icons/CheckCircleOutline.vue'
@@ -114,7 +111,6 @@ import CommentOutline from 'vue-material-design-icons/CommentOutline.vue'
 export default {
 	name: 'CommentDetail',
 	components: {
-		CnDetailPage,
 		NcButton,
 		NcLoadingIcon,
 		NcEmptyContent,

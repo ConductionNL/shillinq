@@ -19,7 +19,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
@@ -120,16 +119,17 @@ class CollaborationRoleController extends Controller
             $targetType = ($data['targetType'] ?? null);
             $targetId   = ($data['targetId'] ?? null);
 
+            $user = $this->userSession->getUser();
+
             $hasRole = $this->collaborationRoleService->checkRole(
+                userId: $user->getUID(),
                 targetType: $targetType,
                 targetId: $targetId,
-                role: 'approver'
+                minimumRole: 'approver'
             );
             if ($hasRole === false) {
                 return new JSONResponse(data: ['error' => 'Forbidden'], statusCode: 403);
             }
-
-            $user = $this->userSession->getUser();
 
             $data['grantedBy'] = $user->getUID();
             $data['grantedAt'] = date('c');
@@ -171,13 +171,13 @@ class CollaborationRoleController extends Controller
      *
      * Requires the 'approver' role on the target object.
      *
-     * @NoAdminRequired
-     *
-     * @spec openspec/changes/collaboration/tasks.md#task-8.2
-     *
      * @param string $id The role assignment ID
      *
      * @return JSONResponse
+     *
+     * @NoAdminRequired
+     *
+     * @spec openspec/changes/collaboration/tasks.md#task-8.2
      */
     public function destroy(string $id): JSONResponse
     {
@@ -185,11 +185,13 @@ class CollaborationRoleController extends Controller
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
             $role = $objectService->getObject(id: $id);
+            $user = $this->userSession->getUser();
 
             $hasRole = $this->collaborationRoleService->checkRole(
+                userId: $user->getUID(),
                 targetType: ($role['targetType'] ?? ''),
                 targetId: ($role['targetId'] ?? ''),
-                role: 'approver'
+                minimumRole: 'approver'
             );
             if ($hasRole === false) {
                 return new JSONResponse(data: ['error' => 'Forbidden'], statusCode: 403);

@@ -19,7 +19,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
@@ -88,9 +87,12 @@ class CommentController extends Controller
                 ]
             );
 
-            usort($comments, function ($a, $b) {
-                return ($a['created'] ?? '') <=> ($b['created'] ?? '');
-            });
+            usort(
+                    $comments,
+                    function ($a, $b) {
+                        return ($a['created'] ?? '') <=> ($b['created'] ?? '');
+                    }
+                    );
 
             return new JSONResponse(data: $comments);
         } catch (\Throwable $e) {
@@ -124,16 +126,17 @@ class CommentController extends Controller
             $targetType = ($data['targetType'] ?? null);
             $targetId   = ($data['targetId'] ?? null);
 
+            $user = $this->userSession->getUser();
+
             $hasRole = $this->collaborationRoleService->checkRole(
+                userId: $user->getUID(),
                 targetType: $targetType,
                 targetId: $targetId,
-                role: 'contributor'
+                minimumRole: 'contributor'
             );
             if ($hasRole === false) {
                 return new JSONResponse(data: ['error' => 'Forbidden'], statusCode: 403);
             }
-
-            $user = $this->userSession->getUser();
 
             $data['author']  = $user->getUID();
             $data['created'] = date('c');
@@ -143,7 +146,9 @@ class CommentController extends Controller
             $comment = $objectService->saveObject(object: $data);
 
             $this->mentionService->processMentions(
-                comment: $comment
+                content: ($comment['content'] ?? ''),
+                targetType: ($comment['targetType'] ?? ''),
+                targetId: ($comment['targetId'] ?? '')
             );
 
             return new JSONResponse(data: $comment);
@@ -165,13 +170,13 @@ class CommentController extends Controller
      * Only the original author or an admin may edit a comment.
      * Sets the editedAt timestamp on update.
      *
-     * @NoAdminRequired
-     *
-     * @spec openspec/changes/collaboration/tasks.md#task-8.1
-     *
      * @param string $id The comment ID
      *
      * @return JSONResponse
+     *
+     * @NoAdminRequired
+     *
+     * @spec openspec/changes/collaboration/tasks.md#task-8.1
      */
     public function update(string $id): JSONResponse
     {
@@ -180,19 +185,20 @@ class CommentController extends Controller
 
             $comment = $objectService->getObject(id: $id);
 
-            $user    = $this->userSession->getUser();
-            $userId  = $user->getUID();
-            $isAdmin = $this->collaborationRoleService->checkRole(
+            $user       = $this->userSession->getUser();
+            $userId     = $user->getUID();
+            $isApprover = $this->collaborationRoleService->checkRole(
+                userId: $userId,
                 targetType: ($comment['targetType'] ?? ''),
                 targetId: ($comment['targetId'] ?? ''),
-                role: 'admin'
+                minimumRole: 'approver'
             );
 
-            if ($comment['author'] !== $userId && $isAdmin === false) {
+            if ($comment['author'] !== $userId && $isApprover === false) {
                 return new JSONResponse(data: ['error' => 'Forbidden'], statusCode: 403);
             }
 
-            $data             = $this->request->getParams();
+            $data = $this->request->getParams();
             $data['editedAt'] = date('c');
 
             $updated = $objectService->saveObject(object: array_merge($comment, $data));
@@ -216,13 +222,13 @@ class CommentController extends Controller
      * Requires the 'reviewer' role on the target object. Sets the
      * resolved flag, resolvedBy user, and resolvedAt timestamp.
      *
-     * @NoAdminRequired
-     *
-     * @spec openspec/changes/collaboration/tasks.md#task-8.1
-     *
      * @param string $id The comment ID
      *
      * @return JSONResponse
+     *
+     * @NoAdminRequired
+     *
+     * @spec openspec/changes/collaboration/tasks.md#task-8.1
      */
     public function resolve(string $id): JSONResponse
     {
@@ -231,16 +237,17 @@ class CommentController extends Controller
 
             $comment = $objectService->getObject(id: $id);
 
+            $user = $this->userSession->getUser();
+
             $hasRole = $this->collaborationRoleService->checkRole(
+                userId: $user->getUID(),
                 targetType: ($comment['targetType'] ?? ''),
                 targetId: ($comment['targetId'] ?? ''),
-                role: 'reviewer'
+                minimumRole: 'reviewer'
             );
             if ($hasRole === false) {
                 return new JSONResponse(data: ['error' => 'Forbidden'], statusCode: 403);
             }
-
-            $user = $this->userSession->getUser();
 
             $comment['resolved']   = true;
             $comment['resolvedBy'] = $user->getUID();
@@ -267,13 +274,13 @@ class CommentController extends Controller
      * The original author may delete within 5 minutes of creation.
      * Admins and DPOs may delete at any time.
      *
-     * @NoAdminRequired
-     *
-     * @spec openspec/changes/collaboration/tasks.md#task-8.1
-     *
      * @param string $id The comment ID
      *
      * @return JSONResponse
+     *
+     * @NoAdminRequired
+     *
+     * @spec openspec/changes/collaboration/tasks.md#task-8.1
      */
     public function destroy(string $id): JSONResponse
     {
@@ -282,20 +289,16 @@ class CommentController extends Controller
 
             $comment = $objectService->getObject(id: $id);
 
-            $user    = $this->userSession->getUser();
-            $userId  = $user->getUID();
-            $isAdmin = $this->collaborationRoleService->checkRole(
+            $user       = $this->userSession->getUser();
+            $userId     = $user->getUID();
+            $isApprover = $this->collaborationRoleService->checkRole(
+                userId: $userId,
                 targetType: ($comment['targetType'] ?? ''),
                 targetId: ($comment['targetId'] ?? ''),
-                role: 'admin'
-            );
-            $isDpo = $this->collaborationRoleService->checkRole(
-                targetType: ($comment['targetType'] ?? ''),
-                targetId: ($comment['targetId'] ?? ''),
-                role: 'dpo'
+                minimumRole: 'approver'
             );
 
-            if ($isAdmin === true || $isDpo === true) {
+            if ($isApprover === true) {
                 $objectService->deleteObject(id: $id);
                 return new JSONResponse(data: ['success' => true]);
             }

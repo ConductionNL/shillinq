@@ -19,7 +19,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
@@ -48,10 +47,10 @@ class DocumentEventNotifier
     /**
      * Constructor for the DocumentEventNotifier.
      *
-     * @param ContainerInterface   $container            The service container
-     * @param INotificationManager $notificationManager  The notification manager
-     * @param IURLGenerator        $urlGenerator         The URL generator
-     * @param LoggerInterface      $logger               The logger
+     * @param ContainerInterface   $container           The service container
+     * @param INotificationManager $notificationManager The notification manager
+     * @param IURLGenerator        $urlGenerator        The URL generator
+     * @param LoggerInterface      $logger              The logger
      *
      * @return void
      *
@@ -210,15 +209,15 @@ class DocumentEventNotifier
         try {
             $link = $this->urlGenerator->linkToRouteAbsolute(
                 routeName: 'shillinq.page.index',
-                arguments: ['target' => $targetType . '/' . $targetId]
+                arguments: ['target' => $targetType.'/'.$targetId]
             );
 
             $message = $this->mailer->createMessage();
             $message->setTo(recipients: [$userId]);
-            $message->setSubject(subject: 'Shillinq: ' . $eventType . ' on ' . $targetType . ' ' . $targetId);
+            $message->setSubject(subject: 'Shillinq: '.$eventType.' on '.$targetType.' '.$targetId);
             $message->setPlainBody(
-                body: 'A ' . $eventType . ' event occurred on ' . $targetType . ' ' . $targetId . '.'
-                    . "\n\nView it here: " . $link
+                body: 'A '.$eventType.' event occurred on '.$targetType.' '.$targetId.'.'
+                    ."\n\nView it here: ".$link
             );
 
             $this->mailer->send(message: $message);
