@@ -45,7 +45,6 @@ use Psr\Log\LoggerInterface;
  */
 class DocumentEventNotifier
 {
-
     /**
      * Constructor for DocumentEventNotifier.
      *
@@ -111,7 +110,7 @@ class DocumentEventNotifier
             // Expand group principals to individual member user IDs.
             if ($principalType === 'group') {
                 $userIds = $this->resolveGroupMembers(groupId: $principalId);
-            } elseif ($principalType === 'user') {
+            } else if ($principalType === 'user') {
                 $userIds = [$principalId];
             } else {
                 continue;
