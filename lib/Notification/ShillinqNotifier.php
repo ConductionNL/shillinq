@@ -114,10 +114,13 @@ class ShillinqNotifier implements INotifier
             throw new \InvalidArgumentException('Unknown notification subject: '.$subject);
         }
 
-        $link = $this->urlGenerator->linkToRouteAbsolute(
-            routeName: Application::APP_ID.'.dashboard.page'
-        ).'/data-jobs/'.$notification->getObjectId();
-        $notification->setLink($link);
+        $objectId = $notification->getObjectId();
+        if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $objectId) === 1) {
+            $link = $this->urlGenerator->linkToRouteAbsolute(
+                routeName: Application::APP_ID.'.dashboard.page'
+            ).'/data-jobs/'.$objectId;
+            $notification->setLink($link);
+        }
 
         return $notification;
     }//end prepare()
