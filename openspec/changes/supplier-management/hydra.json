@@ -6,5 +6,5 @@
   "depends_on": [
     "core"
   ],
-  "issue": null
+  "issue": "https://github.com/ConductionNL/shillinq/issues/56"
 }
