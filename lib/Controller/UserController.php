@@ -44,7 +44,7 @@ class UserController extends Controller
      * @param IRequest           $request      The request object
      * @param ContainerInterface $container    The DI container
      * @param IUserSession       $userSession  The user session
-     * @param IGroupManager      $groupManager The group manager
+     * @param IGroupManager      $groupManager The group manager for admin checks
      * @param LoggerInterface    $logger       The logger
      *
      * @return void
@@ -81,8 +81,9 @@ class UserController extends Controller
             );
             return new JSONResponse(data: ['results' => $results]);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: user index failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 500,
             );
         }//end try
@@ -112,8 +113,9 @@ class UserController extends Controller
             );
             return new JSONResponse(data: $user);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: user show failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 404,
             );
         }//end try
@@ -134,18 +136,27 @@ class UserController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $allowed       = ['displayName', 'email', 'isActive', 'roleId', 'branchId', 'purchasingLimit'];
-            $data          = array_intersect_key($this->request->getParams(), array_flip($allowed));
-            $data['id']    = $id;
-            $user          = $objectService->saveObject(
+            $data          = $this->request->getParams();
+
+            // Allowlist fields — prevent mass assignment of sensitive internal fields like isActive/isAdmin.
+            $allowedData = [
+                'id'          => $id,
+                'displayName' => ($data['displayName'] ?? ''),
+                'email'       => ($data['email'] ?? ''),
+                'branch'      => ($data['branch'] ?? ''),
+                'department'  => ($data['department'] ?? ''),
+            ];
+
+            $user = $objectService->saveObject(
                 register: Application::APP_ID,
                 schema: 'user',
-                object: $data,
+                object: $allowedData,
             );
             return new JSONResponse(data: $user);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: user update failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 400,
             );
         }//end try
@@ -155,6 +166,7 @@ class UserController extends Controller
      * Provision a user from an HR onboarding event.
      *
      * Accepts { employeeId, email, displayName } and creates or updates the User object.
+     * The email field is mandatory — provisioning without a valid email is rejected.
      * Requires admin access.
      *
      * @return JSONResponse
@@ -179,9 +191,20 @@ class UserController extends Controller
             $data          = $this->request->getParams();
             $employeeId    = ($data['employeeId'] ?? '');
 
-            $email = $this->request->getParam('email', '');
-            if (empty($email) === true) {
-                return new JSONResponse(data: ['message' => 'Email is required for provisioning'], statusCode: 400);
+            if (empty($employeeId) === true) {
+                return new JSONResponse(
+                    data: ['error' => 'employeeId is required'],
+                    statusCode: 422,
+                );
+            }
+
+            // Email is mandatory — never fall back to a placeholder domain.
+            $email = ($data['email'] ?? '');
+            if (empty($email) === true || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+                return new JSONResponse(
+                    data: ['error' => 'A valid email address is required'],
+                    statusCode: 422,
+                );
             }
 
             // Check if user already exists.
@@ -211,8 +234,9 @@ class UserController extends Controller
 
             return new JSONResponse(data: $user, statusCode: 201);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: user provision failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 400,
             );
         }//end try

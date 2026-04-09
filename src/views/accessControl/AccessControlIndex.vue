@@ -64,8 +64,8 @@
 </template>
 
 <script>
-import { NcLoadingIcon } from '@nextcloud/vue'
-import NcBadge from '@nextcloud/vue/dist/Components/NcBadge.js'
+import { NcBadge, NcLoadingIcon } from '@nextcloud/vue'
+
 import { useAccessControlStore } from '../../store/modules/accessControl.js'
 
 export default {

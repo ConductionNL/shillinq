@@ -27,6 +27,7 @@ use OCA\Shillinq\Service\DelegationService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUserManager;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -45,6 +46,7 @@ class TeamController extends Controller
      * @param ContainerInterface $container         The DI container
      * @param DelegationService  $delegationService The delegation service
      * @param IUserSession       $userSession       The user session
+     * @param IUserManager       $userManager       The user manager
      * @param LoggerInterface    $logger            The logger
      *
      * @return void
@@ -54,6 +56,7 @@ class TeamController extends Controller
         private ContainerInterface $container,
         private DelegationService $delegationService,
         private IUserSession $userSession,
+        private IUserManager $userManager,
         private LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -81,8 +84,9 @@ class TeamController extends Controller
             );
             return new JSONResponse(data: ['results' => $results]);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: team index failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 500,
             );
         }//end try
@@ -112,8 +116,9 @@ class TeamController extends Controller
             );
             return new JSONResponse(data: $team);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: team show failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 404,
             );
         }//end try
@@ -145,8 +150,9 @@ class TeamController extends Controller
             );
             return new JSONResponse(data: $team, statusCode: 201);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: team create failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 400,
             );
         }//end try
@@ -177,8 +183,9 @@ class TeamController extends Controller
             );
             return new JSONResponse(data: $team);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: team update failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 400,
             );
         }//end try
@@ -206,8 +213,9 @@ class TeamController extends Controller
             );
             return new JSONResponse(data: ['success' => true]);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: team destroy failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 400,
             );
         }//end try
@@ -215,6 +223,9 @@ class TeamController extends Controller
 
     /**
      * Invite a member to a team by provisioning their role.
+     *
+     * The email is resolved to a Nextcloud UID before creating the delegation.
+     * Returns 422 if no Nextcloud account matches the provided email address.
      *
      * @param string $id The team object ID
      *
@@ -240,8 +251,26 @@ class TeamController extends Controller
                 $admin = $user->getUID();
             }
 
+            if (empty($email) === true) {
+                return new JSONResponse(
+                    data: ['error' => 'email is required'],
+                    statusCode: 422,
+                );
+            }
+
+            // Resolve the Nextcloud UID from the email address.
+            $ncUsers = $this->userManager->getByEmail($email);
+            if (empty($ncUsers) === true) {
+                return new JSONResponse(
+                    data: ['error' => 'No Nextcloud account found for the provided email address'],
+                    statusCode: 422,
+                );
+            }
+
+            $ncUserId = $ncUsers[0]->getUID();
+
             $accessRight = $this->delegationService->createDelegation(
-                userId: $email,
+                userId: $ncUserId,
                 roleId: $roleId,
                 grantedBy: $admin,
                 start: new \DateTime(),
@@ -251,8 +280,9 @@ class TeamController extends Controller
 
             return new JSONResponse(data: $accessRight, statusCode: 201);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: team invite failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 400,
             );
         }//end try

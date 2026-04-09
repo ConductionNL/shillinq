@@ -78,8 +78,9 @@ class RecertificationController extends Controller
             );
             return new JSONResponse(data: ['results' => $results]);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: recertification index failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 500,
             );
         }//end try
@@ -98,17 +99,26 @@ class RecertificationController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $allowed       = ['title', 'description', 'dueDate', 'scope', 'reviewedBy'];
-            $data          = array_intersect_key($this->request->getParams(), array_flip($allowed));
-            $campaign      = $objectService->saveObject(
+            $data          = $this->request->getParams();
+
+            // Allowlist fields — never trust the full request payload to prevent mass assignment.
+            $allowedData = [
+                'name'        => ($data['name'] ?? ''),
+                'description' => ($data['description'] ?? ''),
+                'dueDate'     => ($data['dueDate'] ?? null),
+                'scope'       => ($data['scope'] ?? ''),
+            ];
+
+            $campaign = $objectService->saveObject(
                 register: Application::APP_ID,
                 schema: 'accessRecertification',
-                object: $data,
+                object: $allowedData,
             );
             return new JSONResponse(data: $campaign, statusCode: 201);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: recertification create failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 400,
             );
         }//end try
@@ -136,8 +146,9 @@ class RecertificationController extends Controller
 
             return new JSONResponse(data: ['results' => $result]);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: recertification review failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 400,
             );
         }//end try

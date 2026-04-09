@@ -43,8 +43,8 @@
 </template>
 
 <script>
-import { NcLoadingIcon, NcBreadcrumbs, NcBreadcrumb } from '@nextcloud/vue'
-import NcBadge from '@nextcloud/vue/dist/Components/NcBadge.js'
+import { NcBadge, NcBreadcrumb, NcBreadcrumbs, NcLoadingIcon } from '@nextcloud/vue'
+
 import { useAccessControlStore } from '../../store/modules/accessControl.js'
 
 export default {

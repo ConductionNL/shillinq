@@ -65,8 +65,7 @@
 </template>
 
 <script>
-import { NcButton, NcLoadingIcon, NcEmptyContent, NcBreadcrumbs, NcBreadcrumb } from '@nextcloud/vue'
-import NcBadge from '@nextcloud/vue/dist/Components/NcBadge.js'
+import { NcBadge, NcButton, NcLoadingIcon, NcEmptyContent, NcBreadcrumbs, NcBreadcrumb } from '@nextcloud/vue'
 import { useRoleStore } from '../../store/modules/role.js'
 
 export default {

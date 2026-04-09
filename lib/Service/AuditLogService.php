@@ -80,15 +80,21 @@ class AuditLogService
                 'OCA\OpenRegister\Service\ObjectService'
             );
 
+            $sessionUser = $this->userSession->getUser();
+            $userId      = 'anonymous';
+            if ($sessionUser !== null) {
+                $userId = $sessionUser->getUID();
+            }
+
             $data = [
                 'action'       => $action,
                 'resourceType' => $resourceType,
                 'resourceId'   => ($resourceId ?? ''),
                 'timestamp'    => date('c'),
                 'result'       => $result,
+                'userId'       => $userId,
                 'ipAddress'    => $this->request->getRemoteAddress(),
                 'userAgent'    => ($this->request->getHeader('User-Agent') ?? ''),
-                'userId'       => $this->userSession->getUser()?->getUID() ?? 'anonymous',
             ];
 
             if ($details !== null) {

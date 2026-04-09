@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Middleware;
 
+use OCA\Shillinq\Exception\PermissionGateException;
 use OCA\Shillinq\Middleware\PermissionGateMiddleware;
 use OCA\Shillinq\Service\AuditLogService;
 use OCP\IRequest;
@@ -118,7 +119,7 @@ class PermissionGateMiddlewareTest extends TestCase
      */
     public function testInactiveUserIsDenied(): void
     {
-        $this->expectException(\OCP\AppFramework\OCS\OCSForbiddenException::class);
+        $this->expectException(PermissionGateException::class);
 
         $user = $this->createMock(IUser::class);
         $user->method('getUID')->willReturn('inactive-user');

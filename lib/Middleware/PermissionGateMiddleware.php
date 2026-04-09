@@ -23,11 +23,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Middleware;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Exception\PermissionGateException;
 use OCA\Shillinq\Service\AuditLogService;
-use OCP\AppFramework\Http\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
-use OCP\AppFramework\OCS\OCSForbiddenException;
 use OCP\AppFramework\Middleware;
 use OCP\IRequest;
 use OCP\IUserSession;
@@ -70,8 +69,6 @@ class PermissionGateMiddleware extends Middleware
      * @param string                       $methodName The method being called
      *
      * @return void
-     *
-     * @throws OCSForbiddenException When the user is inactive or permission check fails
      *
      * @spec openspec/changes/access-control-authorisation/tasks.md#task-3.1
      */
@@ -123,9 +120,54 @@ class PermissionGateMiddleware extends Middleware
                         result: 'denied',
                         details: ['reason' => 'user-inactive'],
                     );
-                    throw new OCSForbiddenException('Account is inactive');
+                    throw new PermissionGateException(message: 'Account inactive', statusCode: 403);
                 }
-            }
+
+                // Check @RequiredRole annotation on the controller method.
+                $requiredRole = $this->getRequiredRole(controller: $controller, methodName: $methodName);
+                if ($requiredRole !== null) {
+                    $activeRoleIds = array_map(
+                        static fn($r) => ($r['roleId'] ?? ''),
+                        $objectService->findObjects(
+                            Application::APP_ID,
+                            'accessRight',
+                            [
+                                'userId'   => ($shillinqUser['id'] ?? $ncUserId),
+                                'isActive' => true,
+                            ],
+                        )
+                    );
+
+                    $activeRoles = array_filter(
+                            array_map(
+                        function ($roleId) use ($objectService) {
+                            try {
+                                $role = $objectService->getObject(
+                                    Application::APP_ID,
+                                    'role',
+                                    $roleId,
+                                );
+                                return ($role['name'] ?? null);
+                            } catch (\Throwable $e) {
+                                return null;
+                            }
+                        },
+                            $activeRoleIds,
+                    )
+                            );
+
+                    if (in_array($requiredRole, $activeRoles, true) === false) {
+                        $this->auditLogService->log(
+                            action: 'permission-denied',
+                            resourceType: get_class($controller),
+                            resourceId: $methodName,
+                            result: 'denied',
+                            details: ['reason' => 'insufficient-role', 'required' => $requiredRole],
+                        );
+                        throw new PermissionGateException(message: 'Insufficient role', statusCode: 403);
+                    }
+                }//end if
+            }//end if
 
             // Log the access attempt as successful.
             $this->auditLogService->log(
@@ -134,27 +176,58 @@ class PermissionGateMiddleware extends Middleware
                 resourceId: $methodName,
                 result: 'success',
             );
-        } catch (OCSForbiddenException $e) {
+        } catch (PermissionGateException $e) {
             throw $e;
         } catch (\Throwable $e) {
-            $this->logger->warning(
-                'Shillinq: permission gate check failed, denying request for safety',
+            $this->logger->error(
+                'Shillinq: permission gate unavailable, blocking request',
                 ['exception' => $e->getMessage()]
             );
-            throw new OCSForbiddenException('Permission check unavailable');
+            throw new PermissionGateException(message: 'Service unavailable', statusCode: 503);
         }//end try
     }//end beforeController()
 
     /**
-     * Called after the controller method executes, applies field security filtering.
+     * Extract the @RequiredRole annotation value from a controller method docblock.
+     *
+     * Returns null when no annotation is present (the method has no role requirement).
+     *
+     * @param object $controller The controller instance
+     * @param string $methodName The method name
+     *
+     * @return string|null The required role name, or null if not annotated
+     */
+    private function getRequiredRole(object $controller, string $methodName): ?string
+    {
+        try {
+            $reflection = new \ReflectionMethod($controller, $methodName);
+            $rawComment = $reflection->getDocComment();
+            $docComment = '';
+            if ($rawComment !== false) {
+                $docComment = $rawComment;
+            }
+
+            if (preg_match('/@RequiredRole\s+(\S+)/', $docComment, $matches) === 1) {
+                return $matches[1];
+            }
+        } catch (\ReflectionException $e) {
+            // If reflection fails, skip the role check.
+        }
+
+        return null;
+    }//end getRequiredRole()
+
+    /**
+     * Called after the controller method executes.
+     *
+     * Applies field-level security filtering on JSON responses to strip fields
+     * the authenticated user is not permitted to read.
      *
      * @param \OCP\AppFramework\Controller $controller The controller
      * @param string                       $methodName The method name
      * @param Response                     $response   The controller response
      *
      * @return Response
-     *
-     * @spec openspec/changes/access-control-authorisation/tasks.md#task-3.1
      */
     public function afterController($controller, $methodName, Response $response): Response
     {
@@ -176,7 +249,10 @@ class PermissionGateMiddleware extends Middleware
                         $response->setData($data);
                     }
                 } catch (\Throwable $e) {
-                    $this->logger->warning('Shillinq: field security filter failed', ['exception' => $e->getMessage()]);
+                    $this->logger->warning(
+                        'Shillinq: field security filter failed',
+                        ['exception' => $e->getMessage()]
+                    );
                 }
             }
         }
@@ -187,35 +263,35 @@ class PermissionGateMiddleware extends Middleware
     /**
      * Called after an exception is thrown by the controller.
      *
+     * Converts SecurityException (thrown by beforeController) into a JSON error
+     * response so the client receives a well-formed 403/503 rather than a raw
+     * exception page.
+     *
      * @param \OCP\AppFramework\Controller $controller The controller
      * @param string                       $methodName The method name
      * @param \Exception                   $exception  The thrown exception
      *
-     * @return JSONResponse|null
+     * @return JSONResponse
      *
-     * @throws \Exception Re-throws if not a permission error
+     * @throws \Exception Re-throws if not a SecurityException
      */
     public function afterException($controller, $methodName, \Exception $exception)
     {
-        if (str_contains(get_class($controller), 'OCA\\Shillinq\\Controller\\') === false) {
-            throw $exception;
-        }
+        if ($exception instanceof PermissionGateException) {
+            $statusCode = 403;
+            if ($exception->getCode() !== 0) {
+                $statusCode = $exception->getCode();
+            }
 
-        if ($exception instanceof OCSForbiddenException) {
             return new JSONResponse(
-                data: ['message' => $exception->getMessage()],
-                statusCode: Http::STATUS_FORBIDDEN
+                data: ['error' => $exception->getMessage()],
+                statusCode: $statusCode,
             );
         }
 
-        $this->logger->error(
-            'Shillinq: controller exception',
-            [
-                'controller' => get_class($controller),
-                'method'     => $methodName,
-                'exception'  => $exception->getMessage(),
-            ]
-        );
+        if (str_contains(get_class($controller), 'OCA\\Shillinq\\Controller\\') === false) {
+            throw $exception;
+        }
 
         throw $exception;
     }//end afterException()

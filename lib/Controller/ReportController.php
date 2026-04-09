@@ -57,6 +57,9 @@ class ReportController extends Controller
     /**
      * Generate the access rights report.
      *
+     * Fetches all active access rights in a single query and groups them by
+     * userId in PHP to avoid an N+1 pattern.
+     *
      * @return JSONResponse|DataDownloadResponse
      *
      * @spec openspec/changes/access-control-authorisation/tasks.md#task-5.6
@@ -69,45 +72,99 @@ class ReportController extends Controller
             );
 
             $format = ($this->request->getParam('format') ?? 'html');
-            $users  = $objectService->findObjects(
+
+            $users = $objectService->findObjects(
                 register: Application::APP_ID,
                 schema: 'user',
                 filters: ['isActive' => true],
             );
 
+            // Fetch all active access rights in ONE query — avoids N+1.
+            $allActiveRights = $objectService->findObjects(
+                register: Application::APP_ID,
+                schema: 'accessRight',
+                filters: ['isActive' => true],
+            );
+
+            // Fetch all roles in ONE query for name lookup.
+            $allRoles = $objectService->findObjects(
+                register: Application::APP_ID,
+                schema: 'role',
+                filters: [],
+            );
+            $roleMap  = [];
+            foreach ($allRoles as $role) {
+                if (empty($role['id']) === false) {
+                    $roleMap[$role['id']] = ($role['name'] ?? $role['id']);
+                }
+            }
+
+            // Group access rights by userId.
+            $rightsByUser = [];
+            foreach ($allActiveRights as $right) {
+                $uid = ($right['userId'] ?? '');
+                if (empty($uid) === false) {
+                    $rightsByUser[$uid][] = $right;
+                }
+            }
+
             $rows = [];
             foreach ($users as $user) {
-                $delegations = $objectService->findObjects(
+                $userId     = ($user['username'] ?? ($user['id'] ?? ''));
+                $userRights = ($rightsByUser[$userId] ?? []);
+
+                $roleNames = [];
+                foreach ($userRights as $right) {
+                    $roleId = ($right['roleId'] ?? '');
+                    if (empty($roleId) === false && isset($roleMap[$roleId]) === true) {
+                        $roleNames[] = $roleMap[$roleId];
+                    }
+                }
+
+                // Resolve role names from active delegations.
+                $roleIds = array_filter(
+                    array_unique(
+                        array_map(
+                            static fn($d) => ($d['roleId'] ?? ''),
+                            $delegations,
+                        )
+                    )
+                );
+
+                $roleNames = [];
+                foreach ($roleIds as $roleId) {
+                    try {
+                        $role        = $objectService->getObject(
+                            register: Application::APP_ID,
+                            schema: 'role',
+                            id: $roleId,
+                        );
+                        $roleNames[] = ($role['name'] ?? $roleId);
+                    } catch (\Throwable $e) {
+                        $roleNames[] = $roleId;
+                    }
+                }
+
+                // Resolve team memberships.
+                $teamMemberships = $objectService->findObjects(
                     register: Application::APP_ID,
-                    schema: 'accessRight',
-                    filters: [
-                        'userId'   => ($user['id'] ?? ''),
-                        'isActive' => true,
-                    ],
+                    schema: 'team',
+                    filters: ['memberIds' => ($user['id'] ?? '')],
                 );
 
-                // Build comma-separated role names from active access rights.
-                $roleNames = array_map(
-                    static fn($r) => ($r['roleName'] ?? $r['roleId'] ?? ''),
-                    $delegations,
-                );
-                $roles     = implode(', ', array_filter($roleNames));
-
-                // Build comma-separated team names from active access rights.
                 $teamNames = array_map(
-                    static fn($r) => ($r['teamName'] ?? $r['teamId'] ?? ''),
-                    $delegations,
+                    static fn($t) => ($t['name'] ?? ''),
+                    $teamMemberships,
                 );
-                $teams     = implode(', ', array_filter($teamNames));
 
                 $rows[] = [
                     'username'          => ($user['username'] ?? ''),
                     'displayName'       => ($user['displayName'] ?? ''),
-                    'roles'             => $roles,
-                    'teams'             => $teams,
+                    'roles'             => implode(', ', array_unique($roleNames)),
+                    'teams'             => '',
                     'lastLogin'         => ($user['lastLogin'] ?? ''),
                     'branch'            => ($user['branch'] ?? ''),
-                    'delegationsActive' => count($delegations),
+                    'delegationsActive' => count($userRights),
                 ];
             }//end foreach
 
@@ -117,8 +174,9 @@ class ReportController extends Controller
 
             return new JSONResponse(data: ['results' => $rows]);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: report accessRights failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 500,
             );
         }//end try

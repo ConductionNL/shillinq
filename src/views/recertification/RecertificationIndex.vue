@@ -45,8 +45,8 @@
 </template>
 
 <script>
-import { NcButton, NcLoadingIcon } from '@nextcloud/vue'
-import NcBadge from '@nextcloud/vue/dist/Components/NcBadge.js'
+import { NcBadge, NcButton, NcLoadingIcon } from '@nextcloud/vue'
+
 import { useRecertificationStore } from '../../store/modules/recertification.js'
 
 export default {

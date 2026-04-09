@@ -69,15 +69,15 @@ class DelegationController extends Controller
             $data = $this->request->getParams();
             $user = $this->userSession->getUser();
 
-            $grantedBy = 'system';
+            $admin = 'system';
             if ($user !== null) {
-                $grantedBy = $user->getUID();
+                $admin = $user->getUID();
             }
 
             $accessRight = $this->delegationService->createDelegation(
                 userId: ($data['userId'] ?? ''),
                 roleId: ($data['roleId'] ?? ''),
-                grantedBy: $grantedBy,
+                grantedBy: $admin,
                 start: new \DateTime($data['startDate'] ?? 'now'),
                 end: new \DateTime($data['endDate'] ?? '+30 days'),
                 reason: ($data['reason'] ?? ''),
@@ -90,8 +90,9 @@ class DelegationController extends Controller
                 statusCode: 422,
             );
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: delegation create failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 400,
             );
         }//end try
@@ -122,8 +123,9 @@ class DelegationController extends Controller
             );
             return new JSONResponse(data: $result);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: delegation destroy failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 400,
             );
         }//end try

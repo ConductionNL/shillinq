@@ -75,8 +75,9 @@ class RoleController extends Controller
             );
             return new JSONResponse(data: ['results' => $results]);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: role index failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 500,
             );
         }//end try
@@ -106,8 +107,9 @@ class RoleController extends Controller
             );
             return new JSONResponse(data: $role);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: role show failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 404,
             );
         }//end try
@@ -126,17 +128,27 @@ class RoleController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $allowed       = ['name', 'description', 'permissionLevel', 'isDefault'];
-            $data          = array_intersect_key($this->request->getParams(), array_flip($allowed));
-            $role          = $objectService->saveObject(
+            $data          = $this->request->getParams();
+
+            // Allowlist fields — prevent mass assignment of internal fields.
+            $allowedData = [
+                'name'                    => ($data['name'] ?? ''),
+                'description'             => ($data['description'] ?? ''),
+                'level'                   => ($data['level'] ?? 1),
+                'purchasingLimitAmount'   => ($data['purchasingLimitAmount'] ?? null),
+                'purchasingLimitCurrency' => ($data['purchasingLimitCurrency'] ?? 'EUR'),
+            ];
+
+            $role = $objectService->saveObject(
                 register: Application::APP_ID,
                 schema: 'role',
-                object: $data,
+                object: $allowedData,
             );
             return new JSONResponse(data: $role, statusCode: 201);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: role create failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 400,
             );
         }//end try
@@ -157,18 +169,28 @@ class RoleController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $allowed       = ['name', 'description', 'permissionLevel', 'isDefault'];
-            $data          = array_intersect_key($this->request->getParams(), array_flip($allowed));
-            $data['id']    = $id;
-            $role          = $objectService->saveObject(
+            $data          = $this->request->getParams();
+
+            // Allowlist fields — prevent mass assignment of internal fields like isSystemRole.
+            $allowedData = [
+                'id'                      => $id,
+                'name'                    => ($data['name'] ?? ''),
+                'description'             => ($data['description'] ?? ''),
+                'level'                   => ($data['level'] ?? 1),
+                'purchasingLimitAmount'   => ($data['purchasingLimitAmount'] ?? null),
+                'purchasingLimitCurrency' => ($data['purchasingLimitCurrency'] ?? 'EUR'),
+            ];
+
+            $role = $objectService->saveObject(
                 register: Application::APP_ID,
                 schema: 'role',
-                object: $data,
+                object: $allowedData,
             );
             return new JSONResponse(data: $role);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: role update failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 400,
             );
         }//end try
@@ -221,8 +243,9 @@ class RoleController extends Controller
             );
             return new JSONResponse(data: ['success' => true]);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: role destroy failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 400,
             );
         }//end try
