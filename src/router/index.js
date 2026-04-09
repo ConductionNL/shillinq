@@ -10,6 +10,7 @@ import OrganizationDetail from '../views/organization/OrganizationDetail.vue'
 import DataJobList from '../views/dataJob/DataJobList.vue'
 import DataJobDetail from '../views/dataJob/DataJobDetail.vue'
 import AppSettingsPage from '../views/appSettings/AppSettingsPage.vue'
+import UserPreferencesPage from '../views/settings/UserPreferencesPage.vue'
 import AdminRoot from '../views/settings/AdminRoot.vue'
 
 Vue.use(Router)
@@ -27,6 +28,7 @@ export default new Router({
 		{ path: '/data-jobs', name: 'DataJobList', component: DataJobList },
 		{ path: '/data-jobs/:id', name: 'DataJobDetail', component: DataJobDetail },
 		{ path: '/settings', name: 'Settings', component: AppSettingsPage },
+		{ path: '/preferences', name: 'UserPreferences', component: UserPreferencesPage },
 		{ path: '/admin', name: 'Admin', component: AdminRoot },
 		{ path: '*', redirect: '/' },
 	],

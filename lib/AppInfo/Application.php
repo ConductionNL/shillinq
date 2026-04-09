@@ -21,6 +21,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\AppInfo;
 
+use OCA\Shillinq\Activity\Filter;
+use OCA\Shillinq\Activity\Setting\DataImport;
+use OCA\Shillinq\Activity\ShillinqActivityProvider;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Repair\CreateDefaultConfiguration;
 use OCA\Shillinq\Repair\InitializeSettings;
@@ -76,13 +79,26 @@ class Application extends App implements IBootstrap
     /**
      * Boot the application.
      *
+     * Registers activity providers and notification handlers.
+     *
      * @param IBootContext $context The boot context
      *
-     * @return void
+     * @spec openspec/changes/core/tasks.md#task-9.3
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @return void
      */
     public function boot(IBootContext $context): void
     {
+        $serverContainer = $context->getServerContainer();
+
+        // Register activity provider, filter, and setting.
+        try {
+            $activityManager = $serverContainer->get(\OCP\Activity\IManager::class);
+            $activityManager->registerProvider(ShillinqActivityProvider::class);
+            $activityManager->registerFilter(Filter::class);
+            $activityManager->registerSetting(DataImport::class);
+        } catch (\Throwable $e) {
+            // Activity app may not be installed — silently skip.
+        }
     }//end boot()
 }//end class
