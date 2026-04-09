@@ -1,8 +1,5 @@
 <?php
 
-// SPDX-License-Identifier: EUPL-1.2
-// Copyright (C) 2026 Conduction B.V.
-
 /**
  * Shillinq Notification Service
  *
@@ -90,9 +87,11 @@ class NotificationService
         try {
             $notification = $this->notificationManager->createNotification();
 
-            $subject = ($status === 'completed')
-                ? 'datajob_completed'
-                : 'datajob_failed';
+            if ($status === 'completed') {
+                $subject = 'datajob_completed';
+            } else {
+                $subject = 'datajob_failed';
+            }
 
             $notification
                 ->setApp(Application::APP_ID)

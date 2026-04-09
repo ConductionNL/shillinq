@@ -25,7 +25,7 @@ Copyright (C) 2026 Conduction B.V.
 </template>
 
 <script>
-import { CnIndexPage, CnFormDialog, useListView, columnsFromSchema, filtersFromSchema, fieldsFromSchema } from '@conduction/nextcloud-vue'
+import { CnIndexPage, CnFormDialog, useListView, fieldsFromSchema } from '@conduction/nextcloud-vue'
 import { useOrganizationStore } from '../../store/modules/organization.js'
 import Breadcrumb from '../../components/Breadcrumb.vue'
 import ExportButton from '../../components/ExportButton.vue'

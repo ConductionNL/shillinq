@@ -28,7 +28,7 @@ Copyright (C) 2026 Conduction B.V.
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue'
 
 export default {
-	name: 'ShillinqBreadcrumb',
+	name: 'Breadcrumb',
 	components: {
 		ChevronRight,
 	},

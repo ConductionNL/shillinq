@@ -1,3 +1,7 @@
+---
+status: pr-created
+---
+
 # Design: Core — Shillinq
 
 ## Architecture Overview

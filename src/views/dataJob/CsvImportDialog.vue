@@ -234,18 +234,19 @@ export default {
 			const dataJobStore = useDataJobStore()
 			const organizationStore = useOrganizationStore()
 
-			await dataJobStore.saveObject('dataJob', {
+			const job = {
 				fileName: this.file.name,
 				entityType: 'organization',
 				status: 'processing',
 				totalRecords: this.csvRows.length,
 				processedRecords: 0,
 				failedRecords: 0,
-			})
+			}
+			await dataJobStore.saveObject('dataJob', job)
 
 			// Import rows client-side (for now — backend background job handles this in production)
-			let processed = 0
-			let failed = 0
+			let processedCount = 0
+			let failedCount = 0
 			for (const row of this.csvRows) {
 				const mapped = {}
 				for (const [csvCol, schemaField] of Object.entries(this.mapping)) {
@@ -256,14 +257,22 @@ export default {
 				if (mapped.name) {
 					try {
 						await organizationStore.saveObject('organization', mapped)
-						processed++
+						processedCount++
 					} catch {
-						failed++
+						failedCount++
 					}
 				} else {
-					failed++
+					failedCount++
 				}
 			}
+
+			// Update the DataJob with final counts
+			await dataJobStore.saveObject('dataJob', {
+				...job,
+				processedRecords: processedCount,
+				failedRecords: failedCount,
+				status: failedCount > 0 && processedCount === 0 ? 'failed' : 'completed',
+			})
 
 			this.importing = false
 			this.$emit('imported')

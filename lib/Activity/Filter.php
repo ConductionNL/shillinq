@@ -1,8 +1,5 @@
 <?php
 
-// SPDX-License-Identifier: EUPL-1.2
-// Copyright (C) 2026 Conduction B.V.
-
 /**
  * Shillinq Activity Filter
  *
@@ -96,11 +93,9 @@ class Filter implements IFilter
     }//end getPriority()
 
     /**
-     * Check if this filter allows the given app.
+     * Get the list of allowed apps for this filter.
      *
-     * @param string $app The app identifier
-     *
-     * @return bool
+     * @return string[]
      */
     public function allowedApps(): array
     {
@@ -110,7 +105,7 @@ class Filter implements IFilter
     /**
      * Filter events by type.
      *
-     * @param string $type The event type
+     * @param array $types The event types
      *
      * @return string[]
      */

@@ -109,7 +109,11 @@ export default {
 		},
 		displayFields() {
 			if (!this.objectData) return {}
-			const { id, uuid, _schema, _register, ...fields } = this.objectData
+			const fields = { ...this.objectData }
+			delete fields.id
+			delete fields.uuid
+			delete fields._schema
+			delete fields._register
 			return fields
 		},
 		formFields() {
