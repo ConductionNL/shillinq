@@ -24,6 +24,16 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 | Breadcrumb navigation for nested views | in-progress | should | [core](changes/core/) |
 | Nextcloud notification integration | in-progress | should | [core](changes/core/) |
 
+## Contract Lifecycle Management Features
+
+| Feature | Status | Priority | OpenSpec Change |
+|---------|--------|----------|----------------|
+| AI obligation task management with automated deadline tracking | planned | must | [contract-lifecycle-management](changes/contract-lifecycle-management/) |
+| Contract Repository with Full-Text Search | planned | must | [contract-lifecycle-management](changes/contract-lifecycle-management/) |
+| AI-powered automated contract redlining and task management | planned | must | [contract-lifecycle-management](changes/contract-lifecycle-management/) |
+| Contract lifecycle management from award through execution to expiration | planned | must | [contract-lifecycle-management](changes/contract-lifecycle-management/) |
+| Route contract for approval | planned | must | [contract-lifecycle-management](changes/contract-lifecycle-management/) |
+
 ## Scheduling Features
 
 | Feature | Status | Priority | OpenSpec Change |
