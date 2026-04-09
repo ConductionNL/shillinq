@@ -21,10 +21,6 @@ Copyright (C) 2026 Conduction B.V.
 				</div>
 			</div>
 
-			<NcAppSettingsDialog
-				v-if="false"
-				:open="false" />
-
 			<div class="organization-detail__tabs">
 				<NcButton :type="activeTab === 'details' ? 'primary' : 'secondary'"
 					@click="activeTab = 'details'">
@@ -97,6 +93,7 @@ export default {
 	data() {
 		return {
 			activeTab: 'details',
+			showDeleteDialog: false,
 		}
 	},
 	computed: {

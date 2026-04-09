@@ -79,9 +79,14 @@ Copyright (C) 2026 Conduction B.V.
 				<p>
 					{{ t('shillinq', 'Ready to import {count} rows.', { count: csvRows.length }) }}
 				</p>
-				<p v-if="importing" class="csv-import__importing">
-					{{ t('shillinq', 'Creating import job...') }}
-				</p>
+				<template v-if="importing">
+					<p class="csv-import__importing">
+						{{ t('shillinq', 'Importing... {progress} of {total}', { progress: importProgress, total: csvRows.length }) }}
+					</p>
+					<progress class="csv-import__progress"
+						:value="importProgress"
+						:max="csvRows.length" />
+				</template>
 			</div>
 
 			<div class="csv-import__footer">
@@ -125,6 +130,7 @@ export default {
 			csvRows: [],
 			mapping: {},
 			importing: false,
+			importProgress: 0,
 			schemaFields: ['name', 'registrationNumber', 'email', 'phone', 'website', 'address', 'city', 'country'],
 			stepLabels: [
 				t('shillinq', 'Upload'),
@@ -153,7 +159,7 @@ export default {
 			})
 		},
 		canProceed() {
-			if (this.step === 0) return this.file !== null
+			if (this.step === 0) return this.file !== null && this.csvHeaders.length > 0
 			if (this.step === 1) return this.mappedFields.length > 0
 			if (this.step === 2) return true
 			return false
@@ -231,6 +237,7 @@ export default {
 		},
 		async startImport() {
 			this.importing = true
+			this.importProgress = 0
 			const dataJobStore = useDataJobStore()
 			const organizationStore = useOrganizationStore()
 
@@ -242,33 +249,40 @@ export default {
 				processedRecords: 0,
 				failedRecords: 0,
 			}
-			await dataJobStore.saveObject('dataJob', job)
+			// Capture the server-assigned id so the completion update PATCHes the same record.
+			const createdJob = await dataJobStore.saveObject('dataJob', job)
 
-			// Import rows client-side (for now — backend background job handles this in production)
+			// Import rows in batches of 10 to keep the UI responsive.
+			const BATCH_SIZE = 10
 			let processedCount = 0
 			let failedCount = 0
-			for (const row of this.csvRows) {
-				const mapped = {}
-				for (const [csvCol, schemaField] of Object.entries(this.mapping)) {
-					if (schemaField) {
-						mapped[schemaField] = row[csvCol] || ''
+
+			for (let i = 0; i < this.csvRows.length; i += BATCH_SIZE) {
+				const batch = this.csvRows.slice(i, i + BATCH_SIZE)
+				await Promise.all(batch.map(async (row) => {
+					const mapped = {}
+					for (const [csvCol, schemaField] of Object.entries(this.mapping)) {
+						if (schemaField) {
+							mapped[schemaField] = row[csvCol] || ''
+						}
 					}
-				}
-				if (mapped.name) {
-					try {
-						await organizationStore.saveObject('organization', mapped)
-						processedCount++
-					} catch {
+					if (mapped.name) {
+						try {
+							await organizationStore.saveObject('organization', mapped)
+							processedCount++
+						} catch {
+							failedCount++
+						}
+					} else {
 						failedCount++
 					}
-				} else {
-					failedCount++
-				}
+				}))
+				this.importProgress = Math.min(i + BATCH_SIZE, this.csvRows.length)
 			}
 
-			// Update the DataJob with final counts
+			// Update the original DataJob record with final counts.
 			await dataJobStore.saveObject('dataJob', {
-				...job,
+				...createdJob,
 				processedRecords: processedCount,
 				failedRecords: failedCount,
 				status: failedCount > 0 && processedCount === 0 ? 'failed' : 'completed',

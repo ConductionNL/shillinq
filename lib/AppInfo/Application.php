@@ -56,8 +56,6 @@ class Application extends App implements IBootstrap
      * @param IRegistrationContext $context The registration context
      *
      * @return void
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function register(IRegistrationContext $context): void
     {
@@ -74,31 +72,23 @@ class Application extends App implements IBootstrap
         // Seed default configuration data.
         $context->registerRepairStep(CreateDefaultConfiguration::class);
 
+        // Register activity provider, filter, and user setting via Bootstrap context.
+        $context->registerActivityProvider(ShillinqActivityProvider::class);
+        $context->registerActivityFilter(Filter::class);
+        $context->registerActivitySetting(DataImport::class);
+
     }//end register()
 
     /**
      * Boot the application.
      *
-     * Registers activity providers and notification handlers.
-     *
      * @param IBootContext $context The boot context
      *
-     * @spec openspec/changes/core/tasks.md#task-9.3
-     *
      * @return void
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function boot(IBootContext $context): void
     {
-        $serverContainer = $context->getServerContainer();
-
-        // Register activity provider, filter, and setting.
-        try {
-            $activityManager = $serverContainer->get(\OCP\Activity\IManager::class);
-            $activityManager->registerProvider(ShillinqActivityProvider::class);
-            $activityManager->registerFilter(Filter::class);
-            $activityManager->registerSetting(DataImport::class);
-        } catch (\Throwable $e) {
-            // Activity app may not be installed — silently skip.
-        }
     }//end boot()
 }//end class

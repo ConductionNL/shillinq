@@ -97,7 +97,7 @@ export default {
 </Worksheet>
 </Workbook>`
 
-			this.download(xml, `${this.objectType}-export.xlsx`, 'application/vnd.ms-excel')
+			this.download(xml, `${this.objectType}-export.xls`, 'application/vnd.ms-excel')
 		},
 		escapeXml(str) {
 			return str

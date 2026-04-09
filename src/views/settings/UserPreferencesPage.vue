@@ -50,6 +50,9 @@ Copyright (C) 2026 Conduction B.V.
 			<div v-if="successMessage" class="user-preferences__success">
 				{{ successMessage }}
 			</div>
+			<div v-if="errorMessage" class="user-preferences__error">
+				{{ errorMessage }}
+			</div>
 
 			<NcButton type="primary" native-type="submit" :disabled="saving">
 				{{ saving ? t('shillinq', 'Saving...') : t('shillinq', 'Save Preferences') }}
@@ -76,6 +79,7 @@ export default {
 			loading: true,
 			saving: false,
 			successMessage: '',
+			errorMessage: '',
 			form: {
 				language: '',
 				dateFormat: '',
@@ -113,6 +117,7 @@ export default {
 		async save() {
 			this.saving = true
 			this.successMessage = ''
+			this.errorMessage = ''
 			try {
 				const response = await fetch(generateUrl('/apps/shillinq/api/preferences'), {
 					method: 'POST',
@@ -124,9 +129,11 @@ export default {
 				})
 				if (response.ok) {
 					this.successMessage = t('shillinq', 'Preferences saved successfully')
+				} else {
+					this.errorMessage = t('shillinq', 'Failed to save preferences. Please try again.')
 				}
 			} catch {
-				// Ignore
+				this.errorMessage = t('shillinq', 'Failed to save preferences. Please try again.')
 			}
 			this.saving = false
 		},
@@ -160,6 +167,11 @@ export default {
 
 .user-preferences__success {
 	color: var(--color-success);
+	margin-bottom: 8px;
+}
+
+.user-preferences__error {
+	color: var(--color-error);
 	margin-bottom: 8px;
 }
 </style>

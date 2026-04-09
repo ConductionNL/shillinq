@@ -53,7 +53,7 @@ class ShillinqActivityProvider implements IProvider
     /**
      * Parse the activity event into a human-readable format.
      *
-     * @param string $language The language to use for translation
+     * @param mixed  $language The language to use for translation
      * @param IEvent $event    The activity event
      * @param IEvent $previous The previous event (for grouping)
      *
@@ -61,8 +61,9 @@ class ShillinqActivityProvider implements IProvider
      *
      * @return IEvent
      */
-    public function parse(string $language, IEvent $event, ?IEvent $previous=null): IEvent
+    public function parse(mixed $language, IEvent $event, ?IEvent $previous=null): IEvent
     {
+        $language = (string) $language;
         if ($event->getApp() !== Application::APP_ID) {
             throw new \InvalidArgumentException('Not a Shillinq event');
         }
