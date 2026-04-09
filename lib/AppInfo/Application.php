@@ -22,6 +22,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\AppInfo;
 
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
+use OCA\Shillinq\Middleware\PermissionGateMiddleware;
+use OCA\Shillinq\Repair\CreateDefaultConfiguration;
 use OCA\Shillinq\Repair\InitializeSettings;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCP\AppFramework\App;
@@ -66,6 +68,12 @@ class Application extends App implements IBootstrap
 
         // Initialize register and schemas on install/upgrade.
         $context->registerRepairStep(InitializeSettings::class);
+
+        // Seed default access control configuration.
+        $context->registerRepairStep(CreateDefaultConfiguration::class);
+
+        // Register permission gate middleware for role-based access control.
+        $context->registerMiddleware(PermissionGateMiddleware::class);
 
     }//end register()
 
