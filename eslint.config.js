@@ -34,6 +34,10 @@ module.exports = defineConfig([{
 		// Allow unused i18n functions (t, n) — imported for future translation wiring
 		'no-unused-vars': ['error', { varsIgnorePattern: '^(t|n)$', argsIgnorePattern: '^_' }],
 		'jsdoc/require-jsdoc': 'off',
+		// Allow @spec tags used in JSDoc for OpenSpec traceability
+		'jsdoc/check-tag-names': ['warn', { definedTags: ['spec'] }],
+		// Allow short inline content in single-line HTML elements
+		'vue/singleline-html-element-content-newline': 'off',
 		'vue/first-attribute-linebreak': 'off',
 		'@typescript-eslint/no-explicit-any': 'off',
 		'n/no-missing-import': 'off',
