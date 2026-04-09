@@ -1,18 +1,12 @@
 <!-- SPDX-License-Identifier: EUPL-1.2 -->
 <!-- Copyright (C) 2026 Conduction B.V. -->
 <template>
-	<div class="shillinq-team-detail">
-		<NcBreadcrumbs>
-			<NcBreadcrumb :name="t('shillinq', 'Shillinq')" :to="{ name: 'Dashboard' }" />
-			<NcBreadcrumb :name="t('shillinq', 'Teams')" :to="{ name: 'Teams' }" />
-			<NcBreadcrumb :name="team ? team.name : '...'" />
-		</NcBreadcrumbs>
-
+	<CnDetailPage
+		:title="team ? team.name : '...'"
+		:description="team ? team.description : ''">
 		<NcLoadingIcon v-if="teamStore.loading" />
 
 		<template v-else-if="team">
-			<h2>{{ team.name }}</h2>
-
 			<div class="shillinq-team-detail__tabs">
 				<NcButton :type="activeTab === 'details' ? 'primary' : 'secondary'"
 					@click="activeTab = 'details'">
@@ -44,17 +38,18 @@
 		<TeamInviteDialog v-if="showInviteDialog"
 			:team-id="$route.params.id"
 			@close="showInviteDialog = false" />
-	</div>
+	</CnDetailPage>
 </template>
 
 <script>
-import { NcButton, NcLoadingIcon, NcEmptyContent, NcBreadcrumbs, NcBreadcrumb } from '@nextcloud/vue'
+import { NcButton, NcLoadingIcon, NcEmptyContent } from '@nextcloud/vue'
+import { CnDetailPage } from '@conduction/nextcloud-vue'
 import { useTeamStore } from '../../store/modules/team.js'
 import TeamInviteDialog from './TeamInviteDialog.vue'
 
 export default {
 	name: 'TeamDetail',
-	components: { NcButton, NcLoadingIcon, NcEmptyContent, NcBreadcrumbs, NcBreadcrumb, TeamInviteDialog },
+	components: { CnDetailPage, NcButton, NcLoadingIcon, NcEmptyContent, TeamInviteDialog },
 	data() {
 		return {
 			teamStore: useTeamStore(),
@@ -72,7 +67,6 @@ export default {
 </script>
 
 <style scoped>
-.shillinq-team-detail { padding: 8px 16px 24px; max-width: 1200px; }
 .shillinq-team-detail__tabs { display: flex; gap: 8px; margin-bottom: 16px; }
 .shillinq-team-detail__section dl { display: grid; grid-template-columns: 180px 1fr; gap: 8px; }
 .shillinq-team-detail__section dt { font-weight: bold; }

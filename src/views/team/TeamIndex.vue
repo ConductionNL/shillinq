@@ -1,16 +1,15 @@
 <!-- SPDX-License-Identifier: EUPL-1.2 -->
 <!-- Copyright (C) 2026 Conduction B.V. -->
 <template>
-	<div class="shillinq-team-index">
-		<header class="shillinq-team-index__header">
-			<h2>{{ t('shillinq', 'Teams') }}</h2>
+	<CnIndexPage :title="t('shillinq', 'Teams')">
+		<template #actions>
 			<NcButton type="primary" @click="showCreateDialog = true">
 				<template #icon>
 					<PlusIcon :size="20" />
 				</template>
 				{{ t('shillinq', 'Add Team') }}
 			</NcButton>
-		</header>
+		</template>
 
 		<NcLoadingIcon v-if="teamStore.loading" />
 
@@ -52,17 +51,18 @@
 				</NcButton>
 			</div>
 		</NcDialog>
-	</div>
+	</CnIndexPage>
 </template>
 
 <script>
 import { NcButton, NcLoadingIcon, NcDialog } from '@nextcloud/vue'
+import { CnIndexPage } from '@conduction/nextcloud-vue'
 import PlusIcon from 'vue-material-design-icons/Plus.vue'
 import { useTeamStore } from '../../store/modules/team.js'
 
 export default {
 	name: 'TeamIndex',
-	components: { NcButton, NcLoadingIcon, NcDialog, PlusIcon },
+	components: { CnIndexPage, NcButton, NcLoadingIcon, NcDialog, PlusIcon },
 	data() {
 		return {
 			teamStore: useTeamStore(),
@@ -85,8 +85,6 @@ export default {
 </script>
 
 <style scoped>
-.shillinq-team-index { padding: 8px 16px 24px; max-width: 1200px; }
-.shillinq-team-index__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .shillinq-team-index__table { width: 100%; border-collapse: collapse; }
 .shillinq-team-index__table th, .shillinq-team-index__table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--color-border); }
 .shillinq-team-index__form label { display: block; margin-bottom: 12px; }

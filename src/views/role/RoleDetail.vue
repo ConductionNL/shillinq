@@ -1,25 +1,20 @@
 <!-- SPDX-License-Identifier: EUPL-1.2 -->
 <!-- Copyright (C) 2026 Conduction B.V. -->
 <template>
-	<div class="shillinq-role-detail">
-		<NcBreadcrumbs>
-			<NcBreadcrumb :name="t('shillinq', 'Shillinq')" :to="{ name: 'Dashboard' }" />
-			<NcBreadcrumb :name="t('shillinq', 'Roles')" :to="{ name: 'Roles' }" />
-			<NcBreadcrumb :name="role ? role.name : '...'" />
-		</NcBreadcrumbs>
-
+	<CnDetailPage
+		:title="role ? role.name : '...'"
+		:description="role ? role.description : ''">
 		<NcLoadingIcon v-if="roleStore.loading" />
 
 		<template v-else-if="role">
-			<header class="shillinq-role-detail__header">
-				<h2>{{ role.name }}</h2>
+			<div class="shillinq-role-detail__status">
 				<NcBadge v-if="role.isActive" type="success">
 					{{ t('shillinq', 'Active') }}
 				</NcBadge>
 				<NcBadge v-else type="warning">
 					{{ t('shillinq', 'Inactive') }}
 				</NcBadge>
-			</header>
+			</div>
 
 			<div class="shillinq-role-detail__tabs">
 				<NcButton :type="activeTab === 'details' ? 'primary' : 'secondary'"
@@ -61,21 +56,21 @@
 				</NcEmptyContent>
 			</div>
 		</template>
-	</div>
+	</CnDetailPage>
 </template>
 
 <script>
-import { NcBadge, NcButton, NcLoadingIcon, NcEmptyContent, NcBreadcrumbs, NcBreadcrumb } from '@nextcloud/vue'
+import { NcBadge, NcButton, NcLoadingIcon, NcEmptyContent } from '@nextcloud/vue'
+import { CnDetailPage } from '@conduction/nextcloud-vue'
 import { useRoleStore } from '../../store/modules/role.js'
 
 export default {
 	name: 'RoleDetail',
 	components: {
+		CnDetailPage,
 		NcButton,
 		NcLoadingIcon,
 		NcEmptyContent,
-		NcBreadcrumbs,
-		NcBreadcrumb,
 		NcBadge,
 	},
 	data() {
@@ -97,15 +92,7 @@ export default {
 </script>
 
 <style scoped>
-.shillinq-role-detail {
-	padding: 8px 16px 24px;
-	max-width: 1200px;
-}
-
-.shillinq-role-detail__header {
-	display: flex;
-	align-items: center;
-	gap: 12px;
+.shillinq-role-detail__status {
 	margin-bottom: 16px;
 }
 

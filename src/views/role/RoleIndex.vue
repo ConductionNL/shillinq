@@ -1,16 +1,15 @@
 <!-- SPDX-License-Identifier: EUPL-1.2 -->
 <!-- Copyright (C) 2026 Conduction B.V. -->
 <template>
-	<div class="shillinq-role-index">
-		<header class="shillinq-role-index__header">
-			<h2>{{ t('shillinq', 'Roles') }}</h2>
+	<CnIndexPage :title="t('shillinq', 'Roles')">
+		<template #actions>
 			<NcButton type="primary" @click="showCreateDialog = true">
 				<template #icon>
 					<PlusIcon :size="20" />
 				</template>
 				{{ t('shillinq', 'Add Role') }}
 			</NcButton>
-		</header>
+		</template>
 
 		<NcLoadingIcon v-if="roleStore.loading" />
 
@@ -64,17 +63,19 @@
 				</NcButton>
 			</div>
 		</NcDialog>
-	</div>
+	</CnIndexPage>
 </template>
 
 <script>
 import { NcBadge, NcButton, NcLoadingIcon, NcDialog } from '@nextcloud/vue'
+import { CnIndexPage } from '@conduction/nextcloud-vue'
 import PlusIcon from 'vue-material-design-icons/Plus.vue'
 import { useRoleStore } from '../../store/modules/role.js'
 
 export default {
 	name: 'RoleIndex',
 	components: {
+		CnIndexPage,
 		NcButton,
 		NcLoadingIcon,
 		NcDialog,
@@ -103,18 +104,6 @@ export default {
 </script>
 
 <style scoped>
-.shillinq-role-index {
-	padding: 8px 16px 24px;
-	max-width: 1200px;
-}
-
-.shillinq-role-index__header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 16px;
-}
-
 .shillinq-role-index__table {
 	width: 100%;
 	border-collapse: collapse;

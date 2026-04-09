@@ -1,11 +1,7 @@
 <!-- SPDX-License-Identifier: EUPL-1.2 -->
 <!-- Copyright (C) 2026 Conduction B.V. -->
 <template>
-	<div class="shillinq-recert-index">
-		<header class="shillinq-recert-index__header">
-			<h2>{{ t('shillinq', 'Recertification') }}</h2>
-		</header>
-
+	<CnIndexPage :title="t('shillinq', 'Recertification')">
 		<NcLoadingIcon v-if="recertStore.loading" />
 
 		<table v-else class="shillinq-recert-index__table">
@@ -41,17 +37,17 @@
 				</tr>
 			</tbody>
 		</table>
-	</div>
+	</CnIndexPage>
 </template>
 
 <script>
 import { NcBadge, NcButton, NcLoadingIcon } from '@nextcloud/vue'
-
+import { CnIndexPage } from '@conduction/nextcloud-vue'
 import { useRecertificationStore } from '../../store/modules/recertification.js'
 
 export default {
 	name: 'RecertificationIndex',
-	components: { NcButton, NcLoadingIcon, NcBadge },
+	components: { CnIndexPage, NcButton, NcLoadingIcon, NcBadge },
 	data() {
 		return { recertStore: useRecertificationStore() }
 	},
@@ -62,8 +58,6 @@ export default {
 </script>
 
 <style scoped>
-.shillinq-recert-index { padding: 8px 16px 24px; max-width: 1200px; }
-.shillinq-recert-index__header { margin-bottom: 16px; }
 .shillinq-recert-index__table { width: 100%; border-collapse: collapse; }
 .shillinq-recert-index__table th, .shillinq-recert-index__table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--color-border); }
 </style>
