@@ -26,6 +26,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\CollaborationRoleService;
 use OCA\Shillinq\Service\DocumentEventNotifier;
+use OCP\IGroupManager;
 use OCP\IURLGenerator;
 use OCP\IUser;
 use OCP\IUserManager;
@@ -81,6 +82,13 @@ class DocumentEventNotifierTest extends TestCase
     private IUserManager&MockObject $userManager;
 
     /**
+     * Mock IGroupManager.
+     *
+     * @var IGroupManager&MockObject
+     */
+    private IGroupManager&MockObject $groupManager;
+
+    /**
      * Mock IURLGenerator.
      *
      * @var IURLGenerator&MockObject
@@ -107,6 +115,7 @@ class DocumentEventNotifierTest extends TestCase
         $this->notificationManager = $this->createMock(INotificationManager::class);
         $this->mailer              = $this->createMock(IMailer::class);
         $this->userManager         = $this->createMock(IUserManager::class);
+        $this->groupManager        = $this->createMock(IGroupManager::class);
         $this->urlGenerator        = $this->createMock(IURLGenerator::class);
         $this->logger              = $this->createMock(LoggerInterface::class);
 
@@ -115,6 +124,7 @@ class DocumentEventNotifierTest extends TestCase
             notificationManager: $this->notificationManager,
             mailer: $this->mailer,
             userManager: $this->userManager,
+            groupManager: $this->groupManager,
             urlGenerator: $this->urlGenerator,
             logger: $this->logger,
         );

@@ -228,31 +228,65 @@ class CollaborationRoleServiceTest extends TestCase
     }//end testExpiredRoleReturnsFalse()
 
     /**
-     * Test that no role falls back to AccessControl check.
+     * Test that admin user gets fallback access when no explicit role exists.
+     *
+     * The fallback no longer grants contributor access to any user who can see
+     * the object. Only Nextcloud admins receive fallback access (as approver).
      *
      * @return void
      *
      * @spec openspec/changes/collaboration/tasks.md#task-11.2
      */
-    public function testNoRoleFallsBackToAccessControl(): void
+    public function testAdminGetsFallbackAccessWhenNoRoleExists(): void
     {
         $this->objectService->method('findAll')
             ->willReturn(['results' => []]);
 
-        // Fallback: object exists so user gets contributor level.
-        $this->objectService->method('find')
-            ->willReturn(['id' => 'inv-001']);
+        // Admin users receive fallback access at any level.
+        $this->groupManager->method('isAdmin')
+            ->with('admin-dave')
+            ->willReturn(true);
 
-        $resultContributor = $this->service->checkRole(
+        $result = $this->service->checkRole(
+            userId: 'admin-dave',
+            targetType: 'Invoice',
+            targetId: 'inv-001',
+            minimumRole: 'contributor',
+        );
+
+        self::assertTrue($result);
+
+    }//end testAdminGetsFallbackAccessWhenNoRoleExists()
+
+    /**
+     * Test that non-admin user gets no fallback access when no explicit role exists.
+     *
+     * Previously the fallback granted contributor access to any user who could see
+     * the object in OpenRegister. This was too permissive — now it returns false.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/collaboration/tasks.md#task-11.2
+     */
+    public function testNonAdminGetNoFallbackAccessWhenNoRoleExists(): void
+    {
+        $this->objectService->method('findAll')
+            ->willReturn(['results' => []]);
+
+        $this->groupManager->method('isAdmin')
+            ->with('dave')
+            ->willReturn(false);
+
+        $result = $this->service->checkRole(
             userId: 'dave',
             targetType: 'Invoice',
             targetId: 'inv-001',
             minimumRole: 'contributor',
         );
 
-        self::assertTrue($resultContributor);
+        self::assertFalse($result);
 
-    }//end testNoRoleFallsBackToAccessControl()
+    }//end testNonAdminGetNoFallbackAccessWhenNoRoleExists()
 
     /**
      * Test that no role and no object access returns false for reviewer.

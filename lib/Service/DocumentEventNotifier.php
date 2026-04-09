@@ -26,6 +26,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCP\IGroupManager;
 use OCP\IURLGenerator;
 use OCP\IUserManager;
 use OCP\Mail\IMailer;
@@ -37,12 +38,14 @@ use Psr\Log\LoggerInterface;
  *
  * Notifies all users with reviewer or approver CollaborationRole on the target
  * document. Uses IMailer for email and INotificationManager for in-app notifications.
+ * Group principals are expanded to their individual member user IDs.
  * Degrades gracefully if mail is not configured.
  *
  * @spec openspec/changes/collaboration/tasks.md#task-7.4
  */
 class DocumentEventNotifier
 {
+
     /**
      * Constructor for DocumentEventNotifier.
      *
@@ -50,6 +53,7 @@ class DocumentEventNotifier
      * @param INotificationManager     $notificationManager The notification manager
      * @param IMailer                  $mailer              The mailer service
      * @param IUserManager             $userManager         The user manager
+     * @param IGroupManager            $groupManager        The group manager for group expansion
      * @param IURLGenerator            $urlGenerator        The URL generator
      * @param LoggerInterface          $logger              The logger
      *
@@ -60,6 +64,7 @@ class DocumentEventNotifier
         private INotificationManager $notificationManager,
         private IMailer $mailer,
         private IUserManager $userManager,
+        private IGroupManager $groupManager,
         private IURLGenerator $urlGenerator,
         private LoggerInterface $logger,
     ) {
@@ -70,11 +75,12 @@ class DocumentEventNotifier
      *
      * Fetches all CollaborationRole objects with role reviewer or approver for
      * the target, and dispatches in-app notifications and emails to each.
+     * Group principals are expanded to their individual member user IDs.
      *
      * @param string              $eventType  The event type (e.g. invoice.approved, comment.added)
      * @param string              $targetType The entity type
      * @param string              $targetId   The target object ID
-     * @param array<string,mixed> $context    Additional context for the notification
+     * @param array<string,mixed> $context    Additional context for the in-app notification
      *
      * @return int Number of users notified
      *
@@ -102,45 +108,77 @@ class DocumentEventNotifier
                 continue;
             }
 
+            // Expand group principals to individual member user IDs.
             if ($principalType === 'group') {
-                // Group fan-out is not yet implemented. Log so admins know.
-                $this->logger->debug(
-                    'DocumentEventNotifier: skipping group principal — group notifications not yet implemented',
-                    ['principalId' => $principalId, 'eventType' => $eventType]
+                $userIds = $this->resolveGroupMembers(groupId: $principalId);
+            } elseif ($principalType === 'user') {
+                $userIds = [$principalId];
+            } else {
+                continue;
+            }
+
+            foreach ($userIds as $userId) {
+                // Avoid duplicate notifications.
+                if (in_array($userId, $notifiedUsers, true) === true) {
+                    continue;
+                }
+
+                $this->sendInAppNotification(
+                    userId: $userId,
+                    eventType: $eventType,
+                    targetType: $targetType,
+                    targetId: $targetId,
+                    context: $context,
                 );
-                continue;
-            }
 
-            if ($principalType !== 'user') {
-                continue;
-            }
+                $this->sendEmailNotification(
+                    userId: $userId,
+                    eventType: $eventType,
+                    targetType: $targetType,
+                    targetId: $targetId,
+                );
 
-            // Avoid duplicate notifications.
-            if (in_array($principalId, $notifiedUsers, true) === true) {
-                continue;
-            }
-
-            $this->sendInAppNotification(
-                userId: $principalId,
-                eventType: $eventType,
-                targetType: $targetType,
-                targetId: $targetId,
-                context: $context,
-            );
-
-            $this->sendEmailNotification(
-                userId: $principalId,
-                eventType: $eventType,
-                targetType: $targetType,
-                targetId: $targetId,
-                context: $context,
-            );
-
-            $notifiedUsers[] = $principalId;
+                $notifiedUsers[] = $userId;
+            }//end foreach
         }//end foreach
 
         return count($notifiedUsers);
     }//end notify()
+
+    /**
+     * Resolve a group ID to the list of member user IDs.
+     *
+     * @param string $groupId The Nextcloud group ID
+     *
+     * @return string[] Member user IDs
+     *
+     * @spec openspec/changes/collaboration/tasks.md#task-7.4
+     */
+    private function resolveGroupMembers(string $groupId): array
+    {
+        try {
+            $group = $this->groupManager->get($groupId);
+            if ($group === null) {
+                return [];
+            }
+
+            $userIds = [];
+            foreach ($group->getUsers() as $user) {
+                $userIds[] = $user->getUID();
+            }
+
+            return $userIds;
+        } catch (\Throwable $e) {
+            $this->logger->warning(
+                'DocumentEventNotifier: failed to resolve group members',
+                [
+                    'groupId'   => $groupId,
+                    'exception' => $e->getMessage(),
+                ]
+            );
+            return [];
+        }//end try
+    }//end resolveGroupMembers()
 
     /**
      * Send an in-app notification for a document event.
@@ -196,13 +234,13 @@ class DocumentEventNotifier
     /**
      * Send an email notification for a document event.
      *
-     * Degrades gracefully if mail is not configured.
+     * Degrades gracefully if mail is not configured. Context values are intentionally
+     * omitted from the email body to prevent PII leakage (comment content, user IDs).
      *
-     * @param string              $userId     The Nextcloud userId
-     * @param string              $eventType  The event type
-     * @param string              $targetType The entity type
-     * @param string              $targetId   The target object ID
-     * @param array<string,mixed> $context    Additional context
+     * @param string $userId     The Nextcloud userId
+     * @param string $eventType  The event type
+     * @param string $targetType The entity type
+     * @param string $targetId   The target object ID
      *
      * @return void
      *
@@ -213,7 +251,6 @@ class DocumentEventNotifier
         string $eventType,
         string $targetType,
         string $targetId,
-        array $context,
     ): void {
         try {
             $user = $this->userManager->get($userId);
@@ -240,12 +277,13 @@ class DocumentEventNotifier
             $message->setTo([$email]);
             $message->setSubject($subject);
 
-            // Note: do not include comment content or user identifiers in the email body.
-            // Email is not end-to-end encrypted and may be stored outside the organisation.
+            // Email body must not include context values — they may contain comment
+            // content, user IDs, or other PII. Only structural identifiers are safe.
             $message->setPlainBody(
                 'Event: '.$eventType."\n"
-                .'Document: '.$targetType.' '.$targetId."\n\n"
-                .'View the document: '.$link
+                .'Document type: '.$targetType."\n"
+                .'Document ID: '.$targetId."\n\n"
+                .'View in Shillinq: '.$link
             );
 
             $this->mailer->send($message);
