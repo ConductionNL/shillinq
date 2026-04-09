@@ -17,3 +17,8 @@ export async function initializeStores() {
 }
 
 export { useObjectStore, useSettingsStore }
+export { useAnalyticsStore } from './modules/analytics.js'
+export { usePortalStore } from './modules/portal.js'
+export { useAutomationRuleStore } from './modules/automationRule.js'
+export { useExpenseClaimStore } from './modules/expenseClaim.js'
+export { useExpenseItemStore } from './modules/expenseItem.js'
