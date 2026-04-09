@@ -34,11 +34,14 @@ class FieldSecurityService
 {
 
     /**
-     * Per-request permission cache.
+     * Per-user permission cache, keyed by userId.
      *
-     * @var list<array<string,mixed>>|null
+     * Keyed by userId to prevent cross-user permission leaks if this service
+     * is ever used in a context with multiple users in the same process.
+     *
+     * @var array<string,list<array<string,mixed>>>
      */
-    private ?array $permissionCache = null;
+    private array $permissionCache = [];
 
     /**
      * Constructor.
@@ -124,8 +127,8 @@ class FieldSecurityService
      */
     private function loadPermissions(string $userId): array
     {
-        if ($this->permissionCache !== null) {
-            return $this->permissionCache;
+        if (isset($this->permissionCache[$userId]) === true) {
+            return $this->permissionCache[$userId];
         }
 
         try {
@@ -151,16 +154,16 @@ class FieldSecurityService
                 }
             }
 
-            $this->permissionCache = $allPermissions;
+            $this->permissionCache[$userId] = $allPermissions;
         } catch (\Throwable $e) {
             $this->logger->error(
                 'Shillinq: failed to load permissions',
                 ['exception' => $e->getMessage()]
             );
-            $this->permissionCache = [];
+            $this->permissionCache[$userId] = [];
         }//end try
 
-        return $this->permissionCache;
+        return $this->permissionCache[$userId];
     }//end loadPermissions()
 
     /**
@@ -195,12 +198,18 @@ class FieldSecurityService
     }//end resolveUserRoleIds()
 
     /**
-     * Reset the per-request permission cache.
+     * Reset the permission cache for a specific user, or for all users.
+     *
+     * @param string|null $userId The user ID to clear, or null to clear all
      *
      * @return void
      */
-    public function resetCache(): void
+    public function resetCache(?string $userId=null): void
     {
-        $this->permissionCache = null;
+        if ($userId !== null) {
+            unset($this->permissionCache[$userId]);
+        } else {
+            $this->permissionCache = [];
+        }
     }//end resetCache()
 }//end class

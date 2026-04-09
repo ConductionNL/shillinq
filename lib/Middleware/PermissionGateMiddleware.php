@@ -227,7 +227,7 @@ class PermissionGateMiddleware extends Middleware
      * @param string                       $methodName The method name
      * @param \Exception                   $exception  The thrown exception
      *
-     * @return JSONResponse|null
+     * @return JSONResponse
      *
      * @throws \Exception Re-throws if not a SecurityException
      */
@@ -248,15 +248,6 @@ class PermissionGateMiddleware extends Middleware
         if (str_contains(get_class($controller), 'OCA\\Shillinq\\Controller\\') === false) {
             throw $exception;
         }
-
-        $this->logger->error(
-            'Shillinq: controller exception',
-            [
-                'controller' => get_class($controller),
-                'method'     => $methodName,
-                'exception'  => $exception->getMessage(),
-            ]
-        );
 
         throw $exception;
     }//end afterException()

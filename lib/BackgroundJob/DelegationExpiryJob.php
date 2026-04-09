@@ -77,6 +77,9 @@ class DelegationExpiryJob extends TimedJob
                 'OCA\OpenRegister\Service\ObjectService'
             );
 
+            // Only fetch rights that have an endDate set (permanent grants have no endDate
+            // and must never be auto-revoked). Add a server-side date filter when supported;
+            // the client-side guard below is the authoritative safety net.
             $activeRights = $objectService->findObjects(
                 Application::APP_ID,
                 'accessRight',
@@ -86,7 +89,7 @@ class DelegationExpiryJob extends TimedJob
             $now = new \DateTime();
 
             foreach ($activeRights as $right) {
-                // Permanent grants have no endDate — never auto-expire them.
+                // Permanent grants (no endDate) must never be auto-revoked.
                 if (empty($right['endDate']) === true) {
                     continue;
                 }

@@ -93,7 +93,7 @@ class DelegationController extends Controller
             $this->logger->error('Shillinq: delegation create failed', ['exception' => $e]);
             return new JSONResponse(
                 data: ['error' => 'An internal error occurred'],
-                statusCode: 500,
+                statusCode: 400,
             );
         }//end try
     }//end create()
@@ -126,7 +126,7 @@ class DelegationController extends Controller
             $this->logger->error('Shillinq: delegation destroy failed', ['exception' => $e]);
             return new JSONResponse(
                 data: ['error' => 'An internal error occurred'],
-                statusCode: 500,
+                statusCode: 400,
             );
         }//end try
     }//end destroy()

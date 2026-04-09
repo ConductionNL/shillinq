@@ -68,8 +68,7 @@
 </template>
 
 <script>
-import { NcButton, NcLoadingIcon, NcDialog } from '@nextcloud/vue'
-import NcBadge from '@nextcloud/vue/dist/Components/NcBadge.js'
+import { NcBadge, NcButton, NcLoadingIcon, NcDialog } from '@nextcloud/vue'
 import PlusIcon from 'vue-material-design-icons/Plus.vue'
 import { useRoleStore } from '../../store/modules/role.js'
 

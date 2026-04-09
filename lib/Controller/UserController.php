@@ -75,7 +75,7 @@ class UserController extends Controller
             );
             return new JSONResponse(data: ['results' => $results]);
         } catch (\Throwable $e) {
-            $this->logger->error('Shillinq: operation failed', ['exception' => $e]);
+            $this->logger->error('Shillinq: user index failed', ['exception' => $e]);
             return new JSONResponse(
                 data: ['error' => 'An internal error occurred'],
                 statusCode: 500,
@@ -107,7 +107,7 @@ class UserController extends Controller
             );
             return new JSONResponse(data: $user);
         } catch (\Throwable $e) {
-            $this->logger->error('Shillinq: operation failed', ['exception' => $e]);
+            $this->logger->error('Shillinq: user show failed', ['exception' => $e]);
             return new JSONResponse(
                 data: ['error' => 'An internal error occurred'],
                 statusCode: 404,
@@ -131,20 +131,24 @@ class UserController extends Controller
                 'OCA\OpenRegister\Service\ObjectService'
             );
             $data          = $this->request->getParams();
-            $user          = $objectService->saveObject(
+
+            // Allowlist fields — prevent mass assignment of sensitive internal fields like isActive/isAdmin.
+            $allowedData = [
+                'id'          => $id,
+                'displayName' => ($data['displayName'] ?? ''),
+                'email'       => ($data['email'] ?? ''),
+                'branch'      => ($data['branch'] ?? ''),
+                'department'  => ($data['department'] ?? ''),
+            ];
+
+            $user = $objectService->saveObject(
                 register: Application::APP_ID,
                 schema: 'user',
-                object: [
-                    'id'          => $id,
-                    'displayName' => ($data['displayName'] ?? null),
-                    'email'       => ($data['email'] ?? null),
-                    'branch'      => ($data['branch'] ?? null),
-                    'lastLogin'   => ($data['lastLogin'] ?? null),
-                ],
+                object: $allowedData,
             );
             return new JSONResponse(data: $user);
         } catch (\Throwable $e) {
-            $this->logger->error('Shillinq: operation failed', ['exception' => $e]);
+            $this->logger->error('Shillinq: user update failed', ['exception' => $e]);
             return new JSONResponse(
                 data: ['error' => 'An internal error occurred'],
                 statusCode: 400,
@@ -155,7 +159,8 @@ class UserController extends Controller
     /**
      * Provision a user from an HR onboarding event.
      *
-     * Accepts { employeeId, roleName } and creates or updates the User object.
+     * Accepts { employeeId, email, roleName } and creates or updates the User object.
+     * The email field is mandatory — provisioning without a valid email is rejected.
      *
      * @return JSONResponse
      *
@@ -169,7 +174,22 @@ class UserController extends Controller
             );
             $data          = $this->request->getParams();
             $employeeId    = ($data['employeeId'] ?? '');
-            $roleName      = ($data['roleName'] ?? '');
+
+            if (empty($employeeId) === true) {
+                return new JSONResponse(
+                    data: ['error' => 'employeeId is required'],
+                    statusCode: 422,
+                );
+            }
+
+            // Email is mandatory — never fall back to a placeholder domain.
+            $email = ($data['email'] ?? '');
+            if (empty($email) === true || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+                return new JSONResponse(
+                    data: ['error' => 'A valid email address is required'],
+                    statusCode: 422,
+                );
+            }
 
             // Check if user already exists.
             $existing = $objectService->findObjects(
@@ -188,7 +208,7 @@ class UserController extends Controller
             $userData = [
                 'username'    => $employeeId,
                 'displayName' => ($data['displayName'] ?? $employeeId),
-                'email'       => $data['email'],
+                'email'       => $email,
                 'isActive'    => true,
                 'createdAt'   => date('c'),
             ];
@@ -205,7 +225,7 @@ class UserController extends Controller
 
             return new JSONResponse(data: $user, statusCode: 201);
         } catch (\Throwable $e) {
-            $this->logger->error('Shillinq: operation failed', ['exception' => $e]);
+            $this->logger->error('Shillinq: user provision failed', ['exception' => $e]);
             return new JSONResponse(
                 data: ['error' => 'An internal error occurred'],
                 statusCode: 400,

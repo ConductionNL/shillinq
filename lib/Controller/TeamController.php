@@ -84,7 +84,7 @@ class TeamController extends Controller
             );
             return new JSONResponse(data: ['results' => $results]);
         } catch (\Throwable $e) {
-            $this->logger->error('Shillinq: operation failed', ['exception' => $e]);
+            $this->logger->error('Shillinq: team index failed', ['exception' => $e]);
             return new JSONResponse(
                 data: ['error' => 'An internal error occurred'],
                 statusCode: 500,
@@ -116,7 +116,7 @@ class TeamController extends Controller
             );
             return new JSONResponse(data: $team);
         } catch (\Throwable $e) {
-            $this->logger->error('Shillinq: operation failed', ['exception' => $e]);
+            $this->logger->error('Shillinq: team show failed', ['exception' => $e]);
             return new JSONResponse(
                 data: ['error' => 'An internal error occurred'],
                 statusCode: 404,
@@ -149,7 +149,7 @@ class TeamController extends Controller
             );
             return new JSONResponse(data: $team, statusCode: 201);
         } catch (\Throwable $e) {
-            $this->logger->error('Shillinq: operation failed', ['exception' => $e]);
+            $this->logger->error('Shillinq: team create failed', ['exception' => $e]);
             return new JSONResponse(
                 data: ['error' => 'An internal error occurred'],
                 statusCode: 400,
@@ -181,7 +181,7 @@ class TeamController extends Controller
             );
             return new JSONResponse(data: $team);
         } catch (\Throwable $e) {
-            $this->logger->error('Shillinq: operation failed', ['exception' => $e]);
+            $this->logger->error('Shillinq: team update failed', ['exception' => $e]);
             return new JSONResponse(
                 data: ['error' => 'An internal error occurred'],
                 statusCode: 400,
@@ -211,7 +211,7 @@ class TeamController extends Controller
             );
             return new JSONResponse(data: ['success' => true]);
         } catch (\Throwable $e) {
-            $this->logger->error('Shillinq: operation failed', ['exception' => $e]);
+            $this->logger->error('Shillinq: team destroy failed', ['exception' => $e]);
             return new JSONResponse(
                 data: ['error' => 'An internal error occurred'],
                 statusCode: 400,
@@ -221,6 +221,9 @@ class TeamController extends Controller
 
     /**
      * Invite a member to a team by provisioning their role.
+     *
+     * The email is resolved to a Nextcloud UID before creating the delegation.
+     * Returns 422 if no Nextcloud account matches the provided email address.
      *
      * @param string $id The team object ID
      *
@@ -241,11 +244,18 @@ class TeamController extends Controller
                 $admin = $user->getUID();
             }
 
-            // Resolve the email to a Nextcloud user ID.
+            if (empty($email) === true) {
+                return new JSONResponse(
+                    data: ['error' => 'email is required'],
+                    statusCode: 422,
+                );
+            }
+
+            // Resolve the Nextcloud UID from the email address.
             $ncUsers = $this->userManager->getByEmail($email);
             if (empty($ncUsers) === true) {
                 return new JSONResponse(
-                    data: ['error' => 'No Nextcloud account found for the given email address'],
+                    data: ['error' => 'No Nextcloud account found for the provided email address'],
                     statusCode: 422,
                 );
             }
@@ -263,7 +273,7 @@ class TeamController extends Controller
 
             return new JSONResponse(data: $accessRight, statusCode: 201);
         } catch (\Throwable $e) {
-            $this->logger->error('Shillinq: operation failed', ['exception' => $e]);
+            $this->logger->error('Shillinq: team invite failed', ['exception' => $e]);
             return new JSONResponse(
                 data: ['error' => 'An internal error occurred'],
                 statusCode: 400,

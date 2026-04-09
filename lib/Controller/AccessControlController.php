@@ -56,8 +56,7 @@ class AccessControlController extends Controller
     /**
      * List audit log entries with optional filters.
      *
-     * Admin-only: audit logs contain security-sensitive data (IP addresses,
-     * denied-access records) that must not be exposed to unprivileged users.
+     * Admin-only: audit logs contain PII (IP addresses, user identities).
      *
      * @return JSONResponse
      *
@@ -89,7 +88,7 @@ class AccessControlController extends Controller
 
             return new JSONResponse(data: ['results' => $results]);
         } catch (\Throwable $e) {
-            $this->logger->error('Shillinq: operation failed', ['exception' => $e]);
+            $this->logger->error('Shillinq: access control index failed', ['exception' => $e]);
             return new JSONResponse(
                 data: ['error' => 'An internal error occurred'],
                 statusCode: 500,
@@ -100,8 +99,7 @@ class AccessControlController extends Controller
     /**
      * Get a single audit log entry by ID.
      *
-     * Admin-only: audit logs contain security-sensitive data that must not be
-     * exposed to unprivileged users.
+     * Admin-only: audit logs contain PII (IP addresses, user identities).
      *
      * @param string $id The audit log object ID
      *
@@ -122,7 +120,7 @@ class AccessControlController extends Controller
             );
             return new JSONResponse(data: $entry);
         } catch (\Throwable $e) {
-            $this->logger->error('Shillinq: operation failed', ['exception' => $e]);
+            $this->logger->error('Shillinq: access control show failed', ['exception' => $e]);
             return new JSONResponse(
                 data: ['error' => 'An internal error occurred'],
                 statusCode: 404,
