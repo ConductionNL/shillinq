@@ -5,8 +5,8 @@
  *
  * Enforces per-buyer purchasing limits defined on Role objects.
  *
- * @category  Service
- * @package   OCA\Shillinq\Service
+ * @category Service
+ * @package  OCA\Shillinq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -34,8 +34,6 @@ use Psr\Log\LoggerInterface;
  */
 class PurchasingLimitService
 {
-
-
     /**
      * Constructor for PurchasingLimitService.
      *
@@ -49,7 +47,6 @@ class PurchasingLimitService
         private LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Check whether a purchase amount is within the user's authorised limit.
@@ -91,7 +88,7 @@ class PurchasingLimitService
             }
 
             // Load the roles and find the highest applicable limit.
-            $highestLimit = null;
+            $highestLimit       = null;
             $hasApplicableLimit = false;
 
             foreach ($roleIds as $roleId) {
@@ -118,7 +115,7 @@ class PurchasingLimitService
                 }
 
                 $hasApplicableLimit = true;
-                $limitAmount = (float) $role['purchasingLimitAmount'];
+                $limitAmount        = (float) $role['purchasingLimitAmount'];
 
                 if ($highestLimit === null || $limitAmount > $highestLimit) {
                     $highestLimit = $limitAmount;
@@ -138,6 +135,4 @@ class PurchasingLimitService
         }//end try
 
     }//end checkLimit()
-
-
 }//end class

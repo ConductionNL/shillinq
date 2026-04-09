@@ -5,8 +5,8 @@
  *
  * OCS controller for managing Shillinq User profiles.
  *
- * @category  Controller
- * @package   OCA\Shillinq\Controller
+ * @category Controller
+ * @package  OCA\Shillinq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -37,8 +37,6 @@ use Psr\Log\LoggerInterface;
  */
 class UserController extends Controller
 {
-
-
     /**
      * Constructor for UserController.
      *
@@ -57,7 +55,6 @@ class UserController extends Controller
 
     }//end __construct()
 
-
     /**
      * List all users.
      *
@@ -70,7 +67,7 @@ class UserController extends Controller
     public function index(): JSONResponse
     {
         $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-        $users = $objectService->findObjects(
+        $users         = $objectService->findObjects(
             filters: [],
             register: Application::APP_ID,
             schema: 'user',
@@ -80,22 +77,21 @@ class UserController extends Controller
 
     }//end index()
 
-
     /**
      * Get a single user by ID.
-     *
-     * @NoAdminRequired
      *
      * @param string $id The user object ID
      *
      * @return JSONResponse
+     *
+     * @NoAdminRequired
      *
      * @spec openspec/changes/access-control-authorisation/tasks.md#task-5
      */
     public function show(string $id): JSONResponse
     {
         $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-        $users = $objectService->findObjects(
+        $users         = $objectService->findObjects(
             filters: ['id' => $id],
             register: Application::APP_ID,
             schema: 'user',
@@ -109,23 +105,22 @@ class UserController extends Controller
 
     }//end show()
 
-
     /**
      * Update an existing user.
-     *
-     * @RequiresRoleLevel(80)
      *
      * @param string $id The user object ID
      *
      * @return JSONResponse
+     *
+     * @RequiresRoleLevel(80)
      *
      * @spec openspec/changes/access-control-authorisation/tasks.md#task-5
      */
     public function update(string $id): JSONResponse
     {
         $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-        $data = $this->request->getParams();
-        $data['id'] = $id;
+        $data          = $this->request->getParams();
+        $data['id']    = $id;
 
         $user = $objectService->saveObject(
             register: Application::APP_ID,
@@ -136,7 +131,6 @@ class UserController extends Controller
         return new JSONResponse($user);
 
     }//end update()
-
 
     /**
      * Provision a user from an HR onboarding event.
@@ -186,6 +180,4 @@ class UserController extends Controller
         return new JSONResponse($user, 201);
 
     }//end provision()
-
-
 }//end class

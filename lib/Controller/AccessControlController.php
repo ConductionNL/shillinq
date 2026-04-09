@@ -5,8 +5,8 @@
  *
  * Read-only OCS controller for the audit log.
  *
- * @category  Controller
- * @package   OCA\Shillinq\Controller
+ * @category Controller
+ * @package  OCA\Shillinq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -37,8 +37,6 @@ use Psr\Log\LoggerInterface;
  */
 class AccessControlController extends Controller
 {
-
-
     /**
      * Constructor for AccessControlController.
      *
@@ -57,7 +55,6 @@ class AccessControlController extends Controller
 
     }//end __construct()
 
-
     /**
      * List audit log entries with optional filters.
      *
@@ -73,8 +70,8 @@ class AccessControlController extends Controller
         $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
 
         $filters = [];
-        $action = $this->request->getParam('action');
-        $result = $this->request->getParam('result');
+        $action  = $this->request->getParam('action');
+        $result  = $this->request->getParam('result');
 
         if (empty($action) === false) {
             $filters['action'] = $action;
@@ -94,23 +91,22 @@ class AccessControlController extends Controller
 
     }//end index()
 
-
     /**
      * Get a single audit log entry.
-     *
-     * @NoAdminRequired
-     * @RequiresRoleLevel(60)
      *
      * @param string $id The access control event ID
      *
      * @return JSONResponse
+     *
+     * @NoAdminRequired
+     * @RequiresRoleLevel(60)
      *
      * @spec openspec/changes/access-control-authorisation/tasks.md#task-5
      */
     public function show(string $id): JSONResponse
     {
         $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-        $events = $objectService->findObjects(
+        $events        = $objectService->findObjects(
             filters: ['id' => $id],
             register: Application::APP_ID,
             schema: 'accessControl',
@@ -123,6 +119,4 @@ class AccessControlController extends Controller
         return new JSONResponse($events[0]);
 
     }//end show()
-
-
 }//end class

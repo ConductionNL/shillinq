@@ -5,12 +5,17 @@
 		<form @submit.prevent="saveDelegation">
 			<div class="form-group">
 				<label>{{ t('shillinq', 'User') }}</label>
-				<input v-model="form.userId" type="text" :placeholder="t('shillinq', 'User ID')" required>
+				<input v-model="form.userId"
+					type="text"
+					:placeholder="t('shillinq', 'User ID')"
+					required>
 			</div>
 			<div class="form-group">
 				<label>{{ t('shillinq', 'Role') }}</label>
 				<select v-model="form.roleId" required>
-					<option value="">{{ t('shillinq', 'Select role') }}</option>
+					<option value="">
+						{{ t('shillinq', 'Select role') }}
+					</option>
 					<option v-for="role in roleStore.roles" :key="role.id" :value="role.id">
 						{{ role.name }}
 					</option>
@@ -29,7 +34,9 @@
 				<textarea v-model="form.reason" rows="3" />
 			</div>
 
-			<p v-if="error" class="shillinq-delegation-dialog__error">{{ error }}</p>
+			<p v-if="error" class="shillinq-delegation-dialog__error">
+				{{ error }}
+			</p>
 
 			<NcButton type="primary" native-type="submit" :disabled="delegationStore.loading">
 				{{ t('shillinq', 'Grant Delegation') }}

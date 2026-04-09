@@ -5,8 +5,8 @@
  *
  * OCS controller for generating access rights reports.
  *
- * @category  Controller
- * @package   OCA\Shillinq\Controller
+ * @category Controller
+ * @package  OCA\Shillinq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -38,8 +38,6 @@ use Psr\Log\LoggerInterface;
  */
 class ReportController extends Controller
 {
-
-
     /**
      * Constructor for ReportController.
      *
@@ -58,7 +56,6 @@ class ReportController extends Controller
 
     }//end __construct()
 
-
     /**
      * Generate the access rights report.
      *
@@ -70,7 +67,7 @@ class ReportController extends Controller
      */
     public function accessRights()
     {
-        $format = $this->request->getParam('format', 'html');
+        $format        = $this->request->getParam('format', 'html');
         $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
 
         // Load all active users.
@@ -119,13 +116,12 @@ class ReportController extends Controller
         }//end foreach
 
         if ($format === 'csv') {
-            return $this->generateCsv($rows);
+            return $this->generateCsv(rows: $rows);
         }
 
         return new JSONResponse($rows);
 
     }//end accessRights()
-
 
     /**
      * Generate a CSV download response from report rows.
@@ -170,6 +166,4 @@ class ReportController extends Controller
         );
 
     }//end generateCsv()
-
-
 }//end class

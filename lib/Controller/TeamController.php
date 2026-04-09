@@ -5,8 +5,8 @@
  *
  * OCS controller for managing Team objects and member invitations.
  *
- * @category  Controller
- * @package   OCA\Shillinq\Controller
+ * @category Controller
+ * @package  OCA\Shillinq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -38,15 +38,13 @@ use Psr\Log\LoggerInterface;
  */
 class TeamController extends Controller
 {
-
-
     /**
      * Constructor for TeamController.
      *
-     * @param IRequest          $request           The request object
+     * @param IRequest           $request           The request object
      * @param ContainerInterface $container         The DI container
-     * @param DelegationService $delegationService The delegation service
-     * @param LoggerInterface   $logger            The logger
+     * @param DelegationService  $delegationService The delegation service
+     * @param LoggerInterface    $logger            The logger
      *
      * @return void
      */
@@ -60,7 +58,6 @@ class TeamController extends Controller
 
     }//end __construct()
 
-
     /**
      * List all teams.
      *
@@ -73,7 +70,7 @@ class TeamController extends Controller
     public function index(): JSONResponse
     {
         $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-        $teams = $objectService->findObjects(
+        $teams         = $objectService->findObjects(
             filters: [],
             register: Application::APP_ID,
             schema: 'team',
@@ -83,22 +80,21 @@ class TeamController extends Controller
 
     }//end index()
 
-
     /**
      * Get a single team by ID.
-     *
-     * @NoAdminRequired
      *
      * @param string $id The team object ID
      *
      * @return JSONResponse
+     *
+     * @NoAdminRequired
      *
      * @spec openspec/changes/access-control-authorisation/tasks.md#task-5
      */
     public function show(string $id): JSONResponse
     {
         $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-        $teams = $objectService->findObjects(
+        $teams         = $objectService->findObjects(
             filters: ['id' => $id],
             register: Application::APP_ID,
             schema: 'team',
@@ -112,7 +108,6 @@ class TeamController extends Controller
 
     }//end show()
 
-
     /**
      * Create a new team.
      *
@@ -125,7 +120,7 @@ class TeamController extends Controller
     public function create(): JSONResponse
     {
         $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-        $data = $this->request->getParams();
+        $data          = $this->request->getParams();
 
         if (isset($data['createdAt']) === false) {
             $data['createdAt'] = (new \DateTime())->format('c');
@@ -141,23 +136,22 @@ class TeamController extends Controller
 
     }//end create()
 
-
     /**
      * Update an existing team.
-     *
-     * @RequiresRoleLevel(100)
      *
      * @param string $id The team object ID
      *
      * @return JSONResponse
+     *
+     * @RequiresRoleLevel(100)
      *
      * @spec openspec/changes/access-control-authorisation/tasks.md#task-5
      */
     public function update(string $id): JSONResponse
     {
         $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-        $data = $this->request->getParams();
-        $data['id'] = $id;
+        $data          = $this->request->getParams();
+        $data['id']    = $id;
 
         $team = $objectService->saveObject(
             register: Application::APP_ID,
@@ -169,15 +163,14 @@ class TeamController extends Controller
 
     }//end update()
 
-
     /**
      * Delete a team.
-     *
-     * @RequiresRoleLevel(100)
      *
      * @param string $id The team object ID
      *
      * @return JSONResponse
+     *
+     * @RequiresRoleLevel(100)
      *
      * @spec openspec/changes/access-control-authorisation/tasks.md#task-5
      */
@@ -194,15 +187,14 @@ class TeamController extends Controller
 
     }//end destroy()
 
-
     /**
      * Invite a member to the team.
-     *
-     * @RequiresRoleLevel(80)
      *
      * @param string $id The team object ID
      *
      * @return JSONResponse
+     *
+     * @RequiresRoleLevel(80)
      *
      * @spec openspec/changes/access-control-authorisation/tasks.md#task-5
      */
@@ -241,6 +233,4 @@ class TeamController extends Controller
         return new JSONResponse(['success' => true, 'email' => $email], 201);
 
     }//end invite()
-
-
 }//end class

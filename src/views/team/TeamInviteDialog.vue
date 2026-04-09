@@ -10,7 +10,9 @@
 			<div class="form-group">
 				<label>{{ t('shillinq', 'Role') }}</label>
 				<select v-model="roleId" required>
-					<option value="">{{ t('shillinq', 'Select role') }}</option>
+					<option value="">
+						{{ t('shillinq', 'Select role') }}
+					</option>
 					<option v-for="role in roleStore.roles" :key="role.id" :value="role.id">
 						{{ role.name }}
 					</option>

@@ -5,8 +5,8 @@
  *
  * OCS controller for managing access delegations.
  *
- * @category  Controller
- * @package   OCA\Shillinq\Controller
+ * @category Controller
+ * @package  OCA\Shillinq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -37,8 +37,6 @@ use Psr\Log\LoggerInterface;
  */
 class DelegationController extends Controller
 {
-
-
     /**
      * Constructor for DelegationController.
      *
@@ -56,7 +54,6 @@ class DelegationController extends Controller
         parent::__construct(appName: Application::APP_ID, request: $request);
 
     }//end __construct()
-
 
     /**
      * Create a new delegation.
@@ -97,15 +94,14 @@ class DelegationController extends Controller
 
     }//end create()
 
-
     /**
      * Revoke (delete) a delegation.
-     *
-     * @RequiresRoleLevel(100)
      *
      * @param string $id The AccessRight object ID
      *
      * @return JSONResponse
+     *
+     * @RequiresRoleLevel(100)
      *
      * @spec openspec/changes/access-control-authorisation/tasks.md#task-5
      */
@@ -119,6 +115,4 @@ class DelegationController extends Controller
         }
 
     }//end destroy()
-
-
 }//end class

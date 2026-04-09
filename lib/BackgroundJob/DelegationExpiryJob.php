@@ -5,8 +5,8 @@
  *
  * Automatically revokes expired access delegations.
  *
- * @category  BackgroundJob
- * @package   OCA\Shillinq\BackgroundJob
+ * @category BackgroundJob
+ * @package  OCA\Shillinq\BackgroundJob
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -38,8 +38,6 @@ use Psr\Log\LoggerInterface;
  */
 class DelegationExpiryJob extends TimedJob
 {
-
-
     /**
      * Constructor for DelegationExpiryJob.
      *
@@ -58,12 +56,11 @@ class DelegationExpiryJob extends TimedJob
         private INotificationManager $notificationManager,
         private LoggerInterface $logger,
     ) {
-        parent::__construct($time);
+        parent::__construct(time: $time);
         // Run every 5 minutes.
-        $this->setInterval(300);
+        $this->setInterval(seconds: 300);
 
     }//end __construct()
-
 
     /**
      * Execute the delegation expiry check.
@@ -114,7 +111,7 @@ class DelegationExpiryJob extends TimedJob
                 );
 
                 // Notify grantee and admin.
-                $this->sendExpiryNotification($right['userId'] ?? '', $right['grantedBy'] ?? '');
+                $this->sendExpiryNotification(userId: $right['userId'] ?? '', grantedBy: $right['grantedBy'] ?? '');
 
                 $this->logger->info(
                     'Shillinq: expired delegation revoked',
@@ -126,7 +123,6 @@ class DelegationExpiryJob extends TimedJob
         }//end try
 
     }//end run()
-
 
     /**
      * Send expiry notifications to grantee and admin.
@@ -157,6 +153,4 @@ class DelegationExpiryJob extends TimedJob
         }
 
     }//end sendExpiryNotification()
-
-
 }//end class

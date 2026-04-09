@@ -5,8 +5,8 @@
  *
  * Dispatches recertification review notifications on schedule.
  *
- * @category  BackgroundJob
- * @package   OCA\Shillinq\BackgroundJob
+ * @category BackgroundJob
+ * @package  OCA\Shillinq\BackgroundJob
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -37,8 +37,6 @@ use Psr\Log\LoggerInterface;
  */
 class RecertificationNotificationJob extends TimedJob
 {
-
-
     /**
      * Constructor for RecertificationNotificationJob.
      *
@@ -55,12 +53,11 @@ class RecertificationNotificationJob extends TimedJob
         private RecertificationService $recertificationService,
         private LoggerInterface $logger,
     ) {
-        parent::__construct($time);
+        parent::__construct(time: $time);
         // Run every hour.
-        $this->setInterval(3600);
+        $this->setInterval(seconds: 3600);
 
     }//end __construct()
-
 
     /**
      * Evaluate active recertification campaigns and dispatch notifications if due.
@@ -85,7 +82,7 @@ class RecertificationNotificationJob extends TimedJob
             $now = new \DateTime();
 
             foreach ($campaigns as $campaign) {
-                if ($this->isDue($campaign, $now) === false) {
+                if ($this->isDue(campaign: $campaign, now: $now) === false) {
                     continue;
                 }
 
@@ -93,7 +90,7 @@ class RecertificationNotificationJob extends TimedJob
 
                 // Update lastRunAt and nextRunAt.
                 $campaign['lastRunAt'] = $now->format('c');
-                $campaign['nextRunAt'] = $this->computeNextRun($campaign['cronExpression'], $now);
+                $campaign['nextRunAt'] = $this->computeNextRun(cronExpression: $campaign['cronExpression'], from: $now);
 
                 $objectService->saveObject(
                     register: Application::APP_ID,
@@ -115,7 +112,6 @@ class RecertificationNotificationJob extends TimedJob
 
     }//end run()
 
-
     /**
      * Check if a campaign is due based on its cron expression and nextRunAt.
      *
@@ -135,7 +131,6 @@ class RecertificationNotificationJob extends TimedJob
         return true;
 
     }//end isDue()
-
 
     /**
      * Compute the next run time from a cron expression.
@@ -158,7 +153,7 @@ class RecertificationNotificationJob extends TimedJob
             if ($parts[2] !== '*') {
                 // Day of month specified — monthly.
                 $next->modify('+1 month');
-            } elseif ($parts[1] !== '*') {
+            } else if ($parts[1] !== '*') {
                 // Hour specified — daily.
                 $next->modify('+1 day');
             } else {
@@ -172,6 +167,4 @@ class RecertificationNotificationJob extends TimedJob
         return $next->format('c');
 
     }//end computeNextRun()
-
-
 }//end class

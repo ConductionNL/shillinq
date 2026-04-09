@@ -52,7 +52,10 @@
 				</div>
 				<div class="form-group">
 					<label>{{ t('shillinq', 'Cron Expression') }}</label>
-					<input v-model="newCampaign.cronExpression" type="text" placeholder="0 9 1 * *" required>
+					<input v-model="newCampaign.cronExpression"
+						type="text"
+						placeholder="0 9 1 * *"
+						required>
 				</div>
 				<NcButton type="primary" native-type="submit">
 					{{ t('shillinq', 'Save') }}

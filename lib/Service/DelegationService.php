@@ -5,8 +5,8 @@
  *
  * Manages time-limited access delegations.
  *
- * @category  Service
- * @package   OCA\Shillinq\Service
+ * @category Service
+ * @package  OCA\Shillinq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -35,8 +35,6 @@ use Psr\Log\LoggerInterface;
  */
 class DelegationService
 {
-
-
     /**
      * Constructor for DelegationService.
      *
@@ -54,7 +52,6 @@ class DelegationService
         private LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Create a time-limited delegation.
@@ -112,12 +109,11 @@ class DelegationService
             ],
         );
 
-        $this->sendDelegationNotification($userId, $grantedBy, 'delegation_created');
+        $this->sendDelegationNotification(userId: $userId, grantedBy: $grantedBy, subject: 'delegation_created');
 
         return $accessRight;
 
     }//end createDelegation()
-
 
     /**
      * Revoke an active delegation.
@@ -159,15 +155,14 @@ class DelegationService
         );
 
         $this->sendDelegationNotification(
-            $accessRight['userId'],
-            $accessRight['grantedBy'],
-            'delegation_revoked'
+            userId: $accessRight['userId'],
+            grantedBy: $accessRight['grantedBy'],
+            subject: 'delegation_revoked'
         );
 
         return $updated;
 
     }//end revokeDelegation()
-
 
     /**
      * Send a notification about a delegation event.
@@ -193,6 +188,4 @@ class DelegationService
         }
 
     }//end sendDelegationNotification()
-
-
 }//end class

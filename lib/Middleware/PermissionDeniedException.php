@@ -5,8 +5,8 @@
  *
  * Exception thrown when a user lacks the required permissions.
  *
- * @category  Middleware
- * @package   OCA\Shillinq\Middleware
+ * @category Middleware
+ * @package  OCA\Shillinq\Middleware
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.

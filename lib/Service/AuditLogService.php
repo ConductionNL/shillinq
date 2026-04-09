@@ -5,8 +5,8 @@
  *
  * Service for writing immutable audit log entries to the AccessControl schema.
  *
- * @category  Service
- * @package   OCA\Shillinq\Service
+ * @category Service
+ * @package  OCA\Shillinq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -35,8 +35,6 @@ use Psr\Log\LoggerInterface;
  */
 class AuditLogService
 {
-
-
     /**
      * Constructor for AuditLogService.
      *
@@ -52,7 +50,6 @@ class AuditLogService
         private LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Write an audit log entry. Fire-and-forget: errors are logged but never propagated.
@@ -72,7 +69,7 @@ class AuditLogService
         string $resourceType,
         ?string $resourceId,
         string $result,
-        ?array $details = null,
+        ?array $details=null,
     ): void {
         try {
             $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
@@ -107,6 +104,4 @@ class AuditLogService
         }//end try
 
     }//end log()
-
-
 }//end class

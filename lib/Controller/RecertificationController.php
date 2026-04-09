@@ -5,8 +5,8 @@
  *
  * OCS controller for managing access recertification campaigns.
  *
- * @category  Controller
- * @package   OCA\Shillinq\Controller
+ * @category Controller
+ * @package  OCA\Shillinq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -38,8 +38,6 @@ use Psr\Log\LoggerInterface;
  */
 class RecertificationController extends Controller
 {
-
-
     /**
      * Constructor for RecertificationController.
      *
@@ -60,7 +58,6 @@ class RecertificationController extends Controller
 
     }//end __construct()
 
-
     /**
      * List all recertification campaigns.
      *
@@ -74,7 +71,7 @@ class RecertificationController extends Controller
     public function index(): JSONResponse
     {
         $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-        $campaigns = $objectService->findObjects(
+        $campaigns     = $objectService->findObjects(
             filters: [],
             register: Application::APP_ID,
             schema: 'accessRecertification',
@@ -83,7 +80,6 @@ class RecertificationController extends Controller
         return new JSONResponse($campaigns);
 
     }//end index()
-
 
     /**
      * Create a new recertification campaign.
@@ -97,7 +93,7 @@ class RecertificationController extends Controller
     public function create(): JSONResponse
     {
         $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-        $data = $this->request->getParams();
+        $data          = $this->request->getParams();
 
         $campaign = $objectService->saveObject(
             register: Application::APP_ID,
@@ -109,15 +105,14 @@ class RecertificationController extends Controller
 
     }//end create()
 
-
     /**
      * Submit review decisions for a recertification campaign.
-     *
-     * @RequiresRoleLevel(80)
      *
      * @param string $id The campaign object ID
      *
      * @return JSONResponse
+     *
+     * @RequiresRoleLevel(80)
      *
      * @spec openspec/changes/access-control-authorisation/tasks.md#task-5
      */
@@ -134,6 +129,4 @@ class RecertificationController extends Controller
         return new JSONResponse($summary);
 
     }//end review()
-
-
 }//end class

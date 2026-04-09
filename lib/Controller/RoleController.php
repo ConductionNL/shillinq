@@ -5,8 +5,8 @@
  *
  * OCS controller for managing Role objects.
  *
- * @category  Controller
- * @package   OCA\Shillinq\Controller
+ * @category Controller
+ * @package  OCA\Shillinq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -37,8 +37,6 @@ use Psr\Log\LoggerInterface;
  */
 class RoleController extends Controller
 {
-
-
     /**
      * Constructor for RoleController.
      *
@@ -57,7 +55,6 @@ class RoleController extends Controller
 
     }//end __construct()
 
-
     /**
      * List all roles.
      *
@@ -70,7 +67,7 @@ class RoleController extends Controller
     public function index(): JSONResponse
     {
         $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-        $roles = $objectService->findObjects(
+        $roles         = $objectService->findObjects(
             filters: [],
             register: Application::APP_ID,
             schema: 'role',
@@ -80,22 +77,21 @@ class RoleController extends Controller
 
     }//end index()
 
-
     /**
      * Get a single role by ID.
-     *
-     * @NoAdminRequired
      *
      * @param string $id The role object ID
      *
      * @return JSONResponse
+     *
+     * @NoAdminRequired
      *
      * @spec openspec/changes/access-control-authorisation/tasks.md#task-5
      */
     public function show(string $id): JSONResponse
     {
         $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-        $roles = $objectService->findObjects(
+        $roles         = $objectService->findObjects(
             filters: ['id' => $id],
             register: Application::APP_ID,
             schema: 'role',
@@ -109,7 +105,6 @@ class RoleController extends Controller
 
     }//end show()
 
-
     /**
      * Create a new role.
      *
@@ -122,7 +117,7 @@ class RoleController extends Controller
     public function create(): JSONResponse
     {
         $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-        $data = $this->request->getParams();
+        $data          = $this->request->getParams();
 
         $role = $objectService->saveObject(
             register: Application::APP_ID,
@@ -134,23 +129,22 @@ class RoleController extends Controller
 
     }//end create()
 
-
     /**
      * Update an existing role.
-     *
-     * @RequiresRoleLevel(100)
      *
      * @param string $id The role object ID
      *
      * @return JSONResponse
+     *
+     * @RequiresRoleLevel(100)
      *
      * @spec openspec/changes/access-control-authorisation/tasks.md#task-5
      */
     public function update(string $id): JSONResponse
     {
         $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-        $data = $this->request->getParams();
-        $data['id'] = $id;
+        $data          = $this->request->getParams();
+        $data['id']    = $id;
 
         $role = $objectService->saveObject(
             register: Application::APP_ID,
@@ -162,15 +156,14 @@ class RoleController extends Controller
 
     }//end update()
 
-
     /**
      * Delete a role. Blocked if users are assigned.
-     *
-     * @RequiresRoleLevel(100)
      *
      * @param string $id The role object ID
      *
      * @return JSONResponse
+     *
+     * @RequiresRoleLevel(100)
      *
      * @spec openspec/changes/access-control-authorisation/tasks.md#task-5
      */
@@ -195,8 +188,8 @@ class RoleController extends Controller
             );
             return new JSONResponse(
                 [
-                    'error'          => 'Cannot delete role: users are assigned',
-                    'affectedUsers'  => $usernames,
+                    'error'         => 'Cannot delete role: users are assigned',
+                    'affectedUsers' => $usernames,
                 ],
                 422
             );
@@ -211,6 +204,4 @@ class RoleController extends Controller
         return new JSONResponse(['success' => true]);
 
     }//end destroy()
-
-
 }//end class

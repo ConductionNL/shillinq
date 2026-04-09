@@ -5,8 +5,8 @@
  *
  * Enforces field-level read/write permissions based on role-permission matrix.
  *
- * @category  Service
- * @package   OCA\Shillinq\Service
+ * @category Service
+ * @package  OCA\Shillinq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -42,7 +42,6 @@ class FieldSecurityService
      */
     private ?array $permissionCache = null;
 
-
     /**
      * Constructor for FieldSecurityService.
      *
@@ -56,7 +55,6 @@ class FieldSecurityService
         private LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Filter response fields based on the user's role permissions.
@@ -73,7 +71,7 @@ class FieldSecurityService
      */
     public function filterResponse(array $object, string $schemaName, string $userId): array
     {
-        $permissions = $this->loadPermissions($userId);
+        $permissions = $this->loadPermissions(userId: $userId);
 
         foreach ($permissions as $permission) {
             if ($permission['schemaName'] !== $schemaName) {
@@ -89,7 +87,6 @@ class FieldSecurityService
 
     }//end filterResponse()
 
-
     /**
      * Check if a field write is permitted for the user's role.
      *
@@ -103,7 +100,7 @@ class FieldSecurityService
      */
     public function checkWritePermission(string $schemaName, string $fieldName, string $userId): bool
     {
-        $permissions = $this->loadPermissions($userId);
+        $permissions = $this->loadPermissions(userId: $userId);
 
         foreach ($permissions as $permission) {
             if ($permission['schemaName'] === $schemaName
@@ -118,7 +115,6 @@ class FieldSecurityService
         return true;
 
     }//end checkWritePermission()
-
 
     /**
      * Load the permission matrix for a user, cached per request lifecycle.
@@ -166,7 +162,7 @@ class FieldSecurityService
             // Load all permissions for these roles.
             $allPermissions = [];
             foreach ($roleIds as $roleId) {
-                $perms = $objectService->findObjects(
+                $perms          = $objectService->findObjects(
                     filters: ['roleId' => $roleId],
                     register: Application::APP_ID,
                     schema: 'permission',
@@ -183,6 +179,4 @@ class FieldSecurityService
         return $this->permissionCache;
 
     }//end loadPermissions()
-
-
 }//end class

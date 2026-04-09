@@ -5,8 +5,8 @@
  *
  * Manages access recertification campaigns and review decisions.
  *
- * @category  Service
- * @package   OCA\Shillinq\Service
+ * @category Service
+ * @package  OCA\Shillinq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -35,8 +35,6 @@ use Psr\Log\LoggerInterface;
  */
 class RecertificationService
 {
-
-
     /**
      * Constructor for RecertificationService.
      *
@@ -54,7 +52,6 @@ class RecertificationService
         private LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Dispatch review notifications to role-owners for a campaign.
@@ -93,7 +90,6 @@ class RecertificationService
         }//end try
 
     }//end dispatchReviewNotifications()
-
 
     /**
      * Process review decisions from a recertification campaign.
@@ -142,7 +138,7 @@ class RecertificationService
                     );
 
                     $revoked++;
-                }
+                }//end if
             } else {
                 $confirmed++;
             }//end if
@@ -154,6 +150,4 @@ class RecertificationService
         ];
 
     }//end processReviewDecisions()
-
-
 }//end class

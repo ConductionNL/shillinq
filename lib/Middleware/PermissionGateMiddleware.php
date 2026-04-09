@@ -5,8 +5,8 @@
  *
  * Intercepts all Shillinq OCS requests to enforce role-based access control.
  *
- * @category  Middleware
- * @package   OCA\Shillinq\Middleware
+ * @category Middleware
+ * @package  OCA\Shillinq\Middleware
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -47,7 +47,6 @@ class PermissionGateMiddleware extends Middleware
      */
     private ?array $currentUser = null;
 
-
     /**
      * Constructor for PermissionGateMiddleware.
      *
@@ -68,12 +67,11 @@ class PermissionGateMiddleware extends Middleware
     ) {
     }//end __construct()
 
-
     /**
      * Execute before the controller method. Checks user status and role level.
      *
-     * @param \OCP\AppFramework\Controller $controller  The controller
-     * @param string                       $methodName  The method name being called
+     * @param \OCP\AppFramework\Controller $controller The controller
+     * @param string                       $methodName The method name being called
      *
      * @return void
      *
@@ -84,7 +82,7 @@ class PermissionGateMiddleware extends Middleware
     public function beforeController($controller, $methodName): void
     {
         // Only gate controllers in the Shillinq namespace (skip Dashboard, Settings).
-        $controllerClass = get_class($controller);
+        $controllerClass  = get_class($controller);
         $gatedControllers = [
             'OCA\\Shillinq\\Controller\\RoleController',
             'OCA\\Shillinq\\Controller\\TeamController',
@@ -106,7 +104,7 @@ class PermissionGateMiddleware extends Middleware
         }
 
         // Resolve Shillinq user object.
-        $shillinqUser = $this->resolveUser($ncUser->getUID());
+        $shillinqUser = $this->resolveUser(username: $ncUser->getUID());
         if ($shillinqUser === null) {
             // No Shillinq user profile yet — allow through for basic endpoints.
             $this->auditLogService->log('read', 'api', null, 'success');
@@ -126,9 +124,9 @@ class PermissionGateMiddleware extends Middleware
         }
 
         // Check role level via reflection on the controller method annotations.
-        $requiredLevel = $this->getRequiredRoleLevel($controller, $methodName);
+        $requiredLevel = $this->getRequiredRoleLevel(controller: $controller, methodName: $methodName);
         if ($requiredLevel > 0) {
-            $userLevel = $this->getUserRoleLevel($shillinqUser);
+            $userLevel = $this->getUserRoleLevel(user: $shillinqUser);
             if ($userLevel < $requiredLevel) {
                 $this->auditLogService->log(
                     'permission-denied',
@@ -136,10 +134,10 @@ class PermissionGateMiddleware extends Middleware
                     null,
                     'denied',
                     [
-                        'reason'        => 'insufficient role level',
-                        'required'      => $requiredLevel,
-                        'actual'        => $userLevel,
-                        'username'      => $ncUser->getUID(),
+                        'reason'   => 'insufficient role level',
+                        'required' => $requiredLevel,
+                        'actual'   => $userLevel,
+                        'username' => $ncUser->getUID(),
                     ]
                 );
                 throw new PermissionDeniedException(
@@ -152,7 +150,6 @@ class PermissionGateMiddleware extends Middleware
         $this->auditLogService->log('read', 'api', null, 'success');
 
     }//end beforeController()
-
 
     /**
      * Handle exceptions thrown by the controller or middleware.
@@ -178,7 +175,6 @@ class PermissionGateMiddleware extends Middleware
 
     }//end afterException()
 
-
     /**
      * Resolve a Nextcloud user to a Shillinq User object.
      *
@@ -194,7 +190,7 @@ class PermissionGateMiddleware extends Middleware
 
         try {
             $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-            $users = $objectService->findObjects(
+            $users         = $objectService->findObjects(
                 filters: ['username' => $username],
                 register: Application::APP_ID,
                 schema: 'user',
@@ -211,7 +207,6 @@ class PermissionGateMiddleware extends Middleware
         return null;
 
     }//end resolveUser()
-
 
     /**
      * Extract the required role level from method annotations.
@@ -238,7 +233,6 @@ class PermissionGateMiddleware extends Middleware
 
     }//end getRequiredRoleLevel()
 
-
     /**
      * Get the highest role level for a user across base and delegated roles.
      *
@@ -252,7 +246,7 @@ class PermissionGateMiddleware extends Middleware
 
         try {
             $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-            $userId = ($user['id'] ?? '');
+            $userId        = ($user['id'] ?? '');
 
             // Get all active access rights for this user.
             $accessRights = $objectService->findObjects(
@@ -272,7 +266,7 @@ class PermissionGateMiddleware extends Middleware
                 );
 
                 if (empty($roles) === false) {
-                    $role = $roles[0];
+                    $role  = $roles[0];
                     $level = (int) ($role['level'] ?? 0);
                     if ($level > $highestLevel) {
                         $highestLevel = $level;
@@ -286,6 +280,4 @@ class PermissionGateMiddleware extends Middleware
         return $highestLevel;
 
     }//end getUserRoleLevel()
-
-
 }//end class

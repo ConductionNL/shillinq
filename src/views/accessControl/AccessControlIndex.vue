@@ -8,16 +8,26 @@
 
 		<div class="shillinq-access-log-index__filters">
 			<select v-model="filterAction" @change="fetchFiltered">
-				<option value="">{{ t('shillinq', 'All actions') }}</option>
+				<option value="">
+					{{ t('shillinq', 'All actions') }}
+				</option>
 				<option v-for="action in actions" :key="action" :value="action">
 					{{ action }}
 				</option>
 			</select>
 			<select v-model="filterResult" @change="fetchFiltered">
-				<option value="">{{ t('shillinq', 'All results') }}</option>
-				<option value="success">{{ t('shillinq', 'Success') }}</option>
-				<option value="denied">{{ t('shillinq', 'Denied') }}</option>
-				<option value="error">{{ t('shillinq', 'Error') }}</option>
+				<option value="">
+					{{ t('shillinq', 'All results') }}
+				</option>
+				<option value="success">
+					{{ t('shillinq', 'Success') }}
+				</option>
+				<option value="denied">
+					{{ t('shillinq', 'Denied') }}
+				</option>
+				<option value="error">
+					{{ t('shillinq', 'Error') }}
+				</option>
 			</select>
 		</div>
 
@@ -35,7 +45,8 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr v-for="event in accessControlStore.events" :key="event.id"
+				<tr v-for="event in accessControlStore.events"
+					:key="event.id"
 					@click="$router.push({ name: 'AccessControlDetail', params: { id: event.id } })">
 					<td>{{ event.timestamp }}</td>
 					<td>{{ event.action }}</td>

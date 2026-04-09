@@ -50,7 +50,10 @@
 				</div>
 				<div class="form-group">
 					<label>{{ t('shillinq', 'Level') }}</label>
-					<input v-model.number="newRole.level" type="number" min="0" max="100">
+					<input v-model.number="newRole.level"
+						type="number"
+						min="0"
+						max="100">
 				</div>
 				<div class="form-group">
 					<label>{{ t('shillinq', 'Description') }}</label>

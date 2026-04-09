@@ -5,8 +5,8 @@
  *
  * Seeds default roles, teams, and sample audit log entries on install/upgrade.
  *
- * @category  Repair
- * @package   OCA\Shillinq\Repair
+ * @category Repair
+ * @package  OCA\Shillinq\Repair
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -44,7 +44,6 @@ class CreateDefaultConfiguration implements IRepairStep
      */
     private ?object $objectService = null;
 
-
     /**
      * Constructor for CreateDefaultConfiguration.
      *
@@ -59,7 +58,6 @@ class CreateDefaultConfiguration implements IRepairStep
     ) {
     }//end __construct()
 
-
     /**
      * Get the name of this repair step.
      *
@@ -70,7 +68,6 @@ class CreateDefaultConfiguration implements IRepairStep
         return 'Seed default access control configuration for Shillinq';
 
     }//end getName()
-
 
     /**
      * Run the repair step to seed default objects.
@@ -91,14 +88,13 @@ class CreateDefaultConfiguration implements IRepairStep
             return;
         }
 
-        $this->seedRoles($output);
-        $this->seedTeams($output);
-        $this->seedAccessControlEvents($output);
+        $this->seedRoles(output: $output);
+        $this->seedTeams(output: $output);
+        $this->seedAccessControlEvents(output: $output);
 
         $output->info('Default access control configuration seeded successfully.');
 
     }//end run()
-
 
     /**
      * Seed the five built-in roles.
@@ -140,11 +136,16 @@ class CreateDefaultConfiguration implements IRepairStep
         ];
 
         foreach ($roles as $role) {
-            $this->seedObject('role', 'name', $role['name'], array_merge($role, ['isActive' => true]), $output);
+            $this->seedObject(
+                schemaName: 'role',
+                uniqueKey: 'name',
+                uniqueVal: $role['name'],
+                data: array_merge($role, ['isActive' => true]),
+                output: $output,
+            );
         }
 
     }//end seedRoles()
-
 
     /**
      * Seed the default administrator team.
@@ -158,19 +159,18 @@ class CreateDefaultConfiguration implements IRepairStep
     private function seedTeams(IOutput $output): void
     {
         $this->seedObject(
-            'team',
-            'name',
-            'Administrators',
-            [
+            schemaName: 'team',
+            uniqueKey: 'name',
+            uniqueVal: 'Administrators',
+            data: [
                 'name'        => 'Administrators',
                 'description' => 'System administrators with full access',
                 'createdAt'   => '2026-01-01T00:00:00Z',
             ],
-            $output
+            output: $output
         );
 
     }//end seedTeams()
-
 
     /**
      * Seed sample AccessControl audit log entries.
@@ -211,11 +211,10 @@ class CreateDefaultConfiguration implements IRepairStep
         ];
 
         foreach ($events as $event) {
-            $this->seedObject('accessControl', 'resourceId', $event['resourceId'], $event, $output);
+            $this->seedObject(schemaName: 'accessControl', uniqueKey: 'resourceId', uniqueVal: $event['resourceId'], data: $event, output: $output);
         }
 
     }//end seedAccessControlEvents()
-
 
     /**
      * Create or update a seed object idempotently.
@@ -258,6 +257,4 @@ class CreateDefaultConfiguration implements IRepairStep
         }//end try
 
     }//end seedObject()
-
-
 }//end class
