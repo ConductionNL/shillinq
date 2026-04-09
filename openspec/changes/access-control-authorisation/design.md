@@ -1,5 +1,7 @@
 # Design: Access Control & Security — Shillinq
 
+**status:** pr-created
+
 ## Architecture Overview
 
 This change layers the access control and security subsystem on top of the core and general infrastructure. All entities follow the OpenRegister thin-client pattern. The PHP backend introduces middleware (permission gate, field-security service, purchasing limit service) that intercepts all OCS API calls. Background jobs handle delegation expiry and access recertification. The Vue 2.7 + Pinia frontend handles all CRUD rendering via the standard `CnIndexPage` / `CnDetailPage` / `CnFormDialog` pattern.
