@@ -26,6 +26,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\Shillinq\Service\SettingsService;
+use OCP\IGroupManager;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Container\ContainerInterface;
@@ -45,6 +46,7 @@ class CreateDefaultConfiguration implements IRepairStep
      *
      * @param ContainerInterface $container       The DI container
      * @param SettingsService    $settingsService The settings service
+     * @param IGroupManager      $groupManager    The group manager
      * @param LoggerInterface    $logger          The logger
      *
      * @return void
@@ -52,6 +54,7 @@ class CreateDefaultConfiguration implements IRepairStep
     public function __construct(
         private ContainerInterface $container,
         private SettingsService $settingsService,
+        private IGroupManager $groupManager,
         private LoggerInterface $logger,
     ) {
     }//end __construct()
@@ -86,11 +89,25 @@ class CreateDefaultConfiguration implements IRepairStep
             return;
         }
 
+        $adminUserId = $this->resolveAdminUserId(output: $output);
+        if ($adminUserId === null) {
+            $output->warning('No admin user found — skipping collaboration seed data.');
+            return;
+        }
+
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-            $this->seedComment(objectService: $objectService, output: $output);
-            $this->seedCollaborationRole(objectService: $objectService, output: $output);
+            $this->seedComment(
+                objectService: $objectService,
+                output: $output,
+                adminUserId: $adminUserId,
+            );
+            $this->seedCollaborationRole(
+                objectService: $objectService,
+                output: $output,
+                adminUserId: $adminUserId,
+            );
 
             $output->info('Collaboration seed data created successfully.');
         } catch (\Throwable $e) {
@@ -103,18 +120,43 @@ class CreateDefaultConfiguration implements IRepairStep
     }//end run()
 
     /**
+     * Resolve the first available Nextcloud admin user ID.
+     *
+     * @param IOutput $output The output interface
+     *
+     * @return string|null Admin user ID or null if no admin exists
+     */
+    private function resolveAdminUserId(IOutput $output): ?string
+    {
+        $adminGroup = $this->groupManager->get(gid: 'admin');
+        if ($adminGroup === null) {
+            $output->warning('Admin group not found.');
+            return null;
+        }
+
+        $admins = $adminGroup->getUsers();
+        if (empty($admins) === true) {
+            $output->warning('Admin group is empty.');
+            return null;
+        }
+
+        return array_values($admins)[0]->getUID();
+    }//end resolveAdminUserId()
+
+    /**
      * Seed a demo Comment object.
      *
      * Idempotency check uses content + targetId combination.
      *
      * @param object  $objectService The OpenRegister ObjectService
      * @param IOutput $output        The output interface
+     * @param string  $adminUserId   The resolved admin user ID
      *
      * @return void
      *
      * @spec openspec/changes/collaboration/tasks.md#task-2.1
      */
-    private function seedComment(object $objectService, IOutput $output): void
+    private function seedComment(object $objectService, IOutput $output, string $adminUserId): void
     {
         $existing = $objectService->findAll(
             schema: 'Comment',
@@ -134,7 +176,7 @@ class CreateDefaultConfiguration implements IRepairStep
             schema: 'Comment',
             data: [
                 'content'    => 'Please review the line items before approval.',
-                'author'     => 'admin',
+                'author'     => $adminUserId,
                 'targetType' => 'Invoice',
                 'targetId'   => 'demo-invoice-001',
                 'timestamp'  => '2026-01-15T09:00:00Z',
@@ -153,17 +195,18 @@ class CreateDefaultConfiguration implements IRepairStep
      *
      * @param object  $objectService The OpenRegister ObjectService
      * @param IOutput $output        The output interface
+     * @param string  $adminUserId   The resolved admin user ID
      *
      * @return void
      *
      * @spec openspec/changes/collaboration/tasks.md#task-2.2
      */
-    private function seedCollaborationRole(object $objectService, IOutput $output): void
+    private function seedCollaborationRole(object $objectService, IOutput $output, string $adminUserId): void
     {
         $existing = $objectService->findAll(
             schema: 'CollaborationRole',
             filters: [
-                'principalId' => 'admin',
+                'principalId' => $adminUserId,
                 'targetId'    => 'demo-invoice-001',
                 'role'        => 'approver',
             ],
@@ -181,9 +224,9 @@ class CreateDefaultConfiguration implements IRepairStep
                 'targetType'    => 'Invoice',
                 'targetId'      => 'demo-invoice-001',
                 'principalType' => 'user',
-                'principalId'   => 'admin',
+                'principalId'   => $adminUserId,
                 'role'          => 'approver',
-                'grantedBy'     => 'admin',
+                'grantedBy'     => $adminUserId,
                 'grantedAt'     => '2026-01-01T00:00:00Z',
             ],
         );

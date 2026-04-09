@@ -193,6 +193,22 @@ class CollaborationRoleController extends Controller
             ];
 
             if (empty($expiresAt) === false) {
+                $parsed = \DateTime::createFromFormat(\DateTime::ATOM, $expiresAt);
+                if ($parsed === false) {
+                    $parsed = \DateTime::createFromFormat('Y-m-d\TH:i:s', $expiresAt);
+                }
+
+                if ($parsed === false) {
+                    $parsed = \DateTime::createFromFormat('Y-m-d', $expiresAt);
+                }
+
+                if ($parsed === false) {
+                    return new JSONResponse(
+                        ['error' => 'expiresAt must be a valid ISO 8601 date (e.g. 2026-12-31T23:59:59+00:00)'],
+                        Http::STATUS_UNPROCESSABLE_ENTITY,
+                    );
+                }
+
                 $data['expiresAt'] = $expiresAt;
             }
 
