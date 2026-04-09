@@ -22,7 +22,12 @@
 					<strong class="comment-thread__author">{{ comment.author || comment.userId }}</strong>
 					<span class="comment-thread__time">{{ relativeTime(comment.createdAt || comment.timestamp) }}</span>
 				</div>
-				<div class="comment-thread__content" v-html="highlightMentions(comment.content || comment.body)" />
+				<div class="comment-thread__content">
+					<template v-for="(part, i) in parseMentions(comment.content || comment.body)">
+						<span v-if="part.type === 'mention'" :key="'m' + i" class="comment-thread__mention">{{ part.value }}</span>
+						<span v-else :key="'t' + i" class="comment-thread__text">{{ part.value }}</span>
+					</template>
+				</div>
 				<div class="comment-thread__actions">
 					<NcButton
 						type="tertiary"
@@ -70,7 +75,12 @@
 							<span class="comment-thread__time">{{ relativeTime(comment.createdAt || comment.timestamp) }}</span>
 							<CheckCircleOutline :size="16" class="comment-thread__resolved-icon" />
 						</div>
-						<div class="comment-thread__content" v-html="highlightMentions(comment.content || comment.body)" />
+						<div class="comment-thread__content">
+							<template v-for="(part, i) in parseMentions(comment.content || comment.body)">
+								<span v-if="part.type === 'mention'" :key="'m' + i" class="comment-thread__mention">{{ part.value }}</span>
+								<span v-else :key="'t' + i" class="comment-thread__text">{{ part.value }}</span>
+							</template>
+						</div>
 					</div>
 				</div>
 			</template>
@@ -144,15 +154,23 @@ export default {
 			if (diffDay < 30) return t('shillinq', '{count} days ago', { count: diffDay })
 			return date.toLocaleDateString()
 		},
-		highlightMentions(text) {
-			if (!text) return ''
-			// Escape HTML first for safety
-			const escaped = text
-				.replace(/&/g, '&amp;')
-				.replace(/</g, '&lt;')
-				.replace(/>/g, '&gt;')
-			// Highlight @mentions
-			return escaped.replace(/@(\w+)/g, '<span class="comment-thread__mention">@$1</span>')
+		parseMentions(text) {
+			if (!text) return []
+			const parts = []
+			const regex = /@(\w+)/g
+			let lastIndex = 0
+			let match
+			while ((match = regex.exec(text)) !== null) {
+				if (match.index > lastIndex) {
+					parts.push({ type: 'text', value: text.slice(lastIndex, match.index) })
+				}
+				parts.push({ type: 'mention', value: match[0] })
+				lastIndex = regex.lastIndex
+			}
+			if (lastIndex < text.length) {
+				parts.push({ type: 'text', value: text.slice(lastIndex) })
+			}
+			return parts
 		},
 	},
 }
@@ -233,7 +251,7 @@ export default {
 </style>
 
 <style>
-/* Unscoped so v-html mention spans pick it up */
+/* Unscoped so mention spans inside dynamic templates pick it up */
 .comment-thread__mention {
 	background-color: var(--color-primary-element-light, #e8f0fe);
 	color: var(--color-primary-element, #0082c9);
