@@ -1,5 +1,7 @@
 # Design: Collaboration — Shillinq
 
+**Status:** pr-created
+
 ## Architecture Overview
 
 This change layers five collaboration capability groups on top of the core and access-control-authorisation infrastructure. All new entities follow the OpenRegister thin-client pattern: no custom database tables, all data via `ObjectService`. New PHP components handle mention resolution, presence tracking, email notification dispatch, and collaboration role enforcement; the Vue 2.7 + Pinia frontend handles all rendering.
