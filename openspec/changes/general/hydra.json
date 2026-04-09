@@ -1,0 +1,8 @@
+{
+  "spec_slug": "general",
+  "title": "General \u2014 Shillinq",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [],
+  "issue": "https://github.com/ConductionNL/shillinq/issues/36"
+}

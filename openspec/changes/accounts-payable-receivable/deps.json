@@ -1,6 +1,0 @@
-{
-  "depends_on": [
-    "core",
-    "access-control-authorisation"
-  ]
-}

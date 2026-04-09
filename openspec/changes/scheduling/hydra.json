@@ -1,0 +1,10 @@
+{
+  "spec_slug": "scheduling",
+  "title": "Scheduling \u2014 Shillinq",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [
+    "core"
+  ],
+  "issue": "https://github.com/ConductionNL/shillinq/issues/45"
+}
