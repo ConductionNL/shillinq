@@ -198,13 +198,6 @@ class UserController extends Controller
                 filters: ['username' => $employeeId],
             );
 
-            if (empty($data['email']) === true) {
-                return new JSONResponse(
-                    data: ['error' => 'email is required for user provisioning'],
-                    statusCode: 422,
-                );
-            }
-
             $userData = [
                 'username'    => $employeeId,
                 'displayName' => ($data['displayName'] ?? $employeeId),

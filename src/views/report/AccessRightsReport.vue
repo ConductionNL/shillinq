@@ -1,16 +1,15 @@
 <!-- SPDX-License-Identifier: EUPL-1.2 -->
 <!-- Copyright (C) 2026 Conduction B.V. -->
 <template>
-	<div class="shillinq-report">
-		<header class="shillinq-report__header">
-			<h2>{{ t('shillinq', 'Access Rights Report') }}</h2>
+	<CnIndexPage :title="t('shillinq', 'Access Rights Report')">
+		<template #actions>
 			<NcButton type="primary" @click="exportCsv">
 				<template #icon>
 					<DownloadIcon :size="20" />
 				</template>
 				{{ t('shillinq', 'Export CSV') }}
 			</NcButton>
-		</header>
+		</template>
 
 		<NcLoadingIcon v-if="loading" />
 
@@ -43,18 +42,18 @@
 				</tr>
 			</tbody>
 		</table>
-	</div>
+	</CnIndexPage>
 </template>
 
 <script>
 import { NcBadge, NcButton, NcLoadingIcon } from '@nextcloud/vue'
-
+import { CnIndexPage } from '@conduction/nextcloud-vue'
 import DownloadIcon from 'vue-material-design-icons/Download.vue'
 import { generateUrl } from '@nextcloud/router'
 
 export default {
 	name: 'AccessRightsReport',
-	components: { NcButton, NcLoadingIcon, NcBadge, DownloadIcon },
+	components: { CnIndexPage, NcButton, NcLoadingIcon, NcBadge, DownloadIcon },
 	data() {
 		return {
 			loading: false,
@@ -96,8 +95,6 @@ export default {
 </script>
 
 <style scoped>
-.shillinq-report { padding: 8px 16px 24px; max-width: 1200px; }
-.shillinq-report__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .shillinq-report__table { width: 100%; border-collapse: collapse; }
 .shillinq-report__table th, .shillinq-report__table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--color-border); }
 </style>

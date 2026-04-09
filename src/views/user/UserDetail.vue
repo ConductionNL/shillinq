@@ -1,18 +1,12 @@
 <!-- SPDX-License-Identifier: EUPL-1.2 -->
 <!-- Copyright (C) 2026 Conduction B.V. -->
 <template>
-	<div class="shillinq-user-detail">
-		<NcBreadcrumbs>
-			<NcBreadcrumb :name="t('shillinq', 'Shillinq')" :to="{ name: 'Dashboard' }" />
-			<NcBreadcrumb :name="t('shillinq', 'Users')" :to="{ name: 'Users' }" />
-			<NcBreadcrumb :name="user ? user.displayName : '...'" />
-		</NcBreadcrumbs>
-
+	<CnDetailPage
+		:title="user ? user.displayName : '...'"
+		:description="user ? user.email : ''">
 		<NcLoadingIcon v-if="userStore.loading" />
 
 		<template v-else-if="user">
-			<h2>{{ user.displayName }}</h2>
-
 			<div class="shillinq-user-detail__tabs">
 				<NcButton v-for="tab in tabs"
 					:key="tab.id"
@@ -61,17 +55,18 @@
 
 		<DelegationDialog v-if="showDelegationDialog"
 			@close="showDelegationDialog = false" />
-	</div>
+	</CnDetailPage>
 </template>
 
 <script>
-import { NcButton, NcLoadingIcon, NcEmptyContent, NcBreadcrumbs, NcBreadcrumb } from '@nextcloud/vue'
+import { NcButton, NcLoadingIcon, NcEmptyContent } from '@nextcloud/vue'
+import { CnDetailPage } from '@conduction/nextcloud-vue'
 import { useUserStore } from '../../store/modules/user.js'
 import DelegationDialog from '../delegation/DelegationDialog.vue'
 
 export default {
 	name: 'UserDetail',
-	components: { NcButton, NcLoadingIcon, NcEmptyContent, NcBreadcrumbs, NcBreadcrumb, DelegationDialog },
+	components: { CnDetailPage, NcButton, NcLoadingIcon, NcEmptyContent, DelegationDialog },
 	data() {
 		return {
 			userStore: useUserStore(),
@@ -97,7 +92,6 @@ export default {
 </script>
 
 <style scoped>
-.shillinq-user-detail { padding: 8px 16px 24px; max-width: 1200px; }
 .shillinq-user-detail__tabs { display: flex; gap: 8px; margin-bottom: 16px; }
 .shillinq-user-detail__section dl { display: grid; grid-template-columns: 180px 1fr; gap: 8px; }
 .shillinq-user-detail__section dt { font-weight: bold; }

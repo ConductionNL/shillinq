@@ -1,11 +1,7 @@
 <!-- SPDX-License-Identifier: EUPL-1.2 -->
 <!-- Copyright (C) 2026 Conduction B.V. -->
 <template>
-	<div class="shillinq-user-index">
-		<header class="shillinq-user-index__header">
-			<h2>{{ t('shillinq', 'Users') }}</h2>
-		</header>
-
+	<CnIndexPage :title="t('shillinq', 'Users')">
 		<NcLoadingIcon v-if="userStore.loading" />
 
 		<table v-else class="shillinq-user-index__table">
@@ -41,16 +37,17 @@
 				</tr>
 			</tbody>
 		</table>
-	</div>
+	</CnIndexPage>
 </template>
 
 <script>
 import { NcBadge, NcButton, NcLoadingIcon } from '@nextcloud/vue'
+import { CnIndexPage } from '@conduction/nextcloud-vue'
 import { useUserStore } from '../../store/modules/user.js'
 
 export default {
 	name: 'UserIndex',
-	components: { NcButton, NcLoadingIcon, NcBadge },
+	components: { CnIndexPage, NcButton, NcLoadingIcon, NcBadge },
 	data() {
 		return { userStore: useUserStore() }
 	},
@@ -61,8 +58,6 @@ export default {
 </script>
 
 <style scoped>
-.shillinq-user-index { padding: 8px 16px 24px; max-width: 1200px; }
-.shillinq-user-index__header { margin-bottom: 16px; }
 .shillinq-user-index__table { width: 100%; border-collapse: collapse; }
 .shillinq-user-index__table th, .shillinq-user-index__table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--color-border); }
 .shillinq-user-index__row--inactive { opacity: 0.5; }

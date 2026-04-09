@@ -1,15 +1,17 @@
 <!-- SPDX-License-Identifier: EUPL-1.2 -->
 <!-- Copyright (C) 2026 Conduction B.V. -->
 <template>
-	<div class="shillinq-access-log">
-		<header class="shillinq-access-log__header">
-			<h2>{{ t('shillinq', 'Access Log') }}</h2>
+	<CnIndexPage :title="t('shillinq', 'Access Log')">
+		<template #actions>
 			<div class="shillinq-access-log__filters">
 				<select v-model="filterAction" @change="fetchFiltered">
 					<option value="">
 						{{ t('shillinq', 'All actions') }}
 					</option>
-					<option v-for="action in actions" :key="action" :value="action">
+					<option
+						v-for="action in actions"
+						:key="action"
+						:value="action">
 						{{ action }}
 					</option>
 				</select>
@@ -28,7 +30,7 @@
 					</option>
 				</select>
 			</div>
-		</header>
+		</template>
 
 		<NcLoadingIcon v-if="accessControlStore.loading" />
 
@@ -60,17 +62,17 @@
 				</tr>
 			</tbody>
 		</table>
-	</div>
+	</CnIndexPage>
 </template>
 
 <script>
 import { NcBadge, NcLoadingIcon } from '@nextcloud/vue'
-
+import { CnIndexPage } from '@conduction/nextcloud-vue'
 import { useAccessControlStore } from '../../store/modules/accessControl.js'
 
 export default {
 	name: 'AccessControlIndex',
-	components: { NcLoadingIcon, NcBadge },
+	components: { CnIndexPage, NcLoadingIcon, NcBadge },
 	data() {
 		return {
 			accessControlStore: useAccessControlStore(),
@@ -99,8 +101,6 @@ export default {
 </script>
 
 <style scoped>
-.shillinq-access-log { padding: 8px 16px 24px; max-width: 1200px; }
-.shillinq-access-log__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .shillinq-access-log__filters { display: flex; gap: 8px; }
 .shillinq-access-log__table { width: 100%; border-collapse: collapse; cursor: pointer; }
 .shillinq-access-log__table th, .shillinq-access-log__table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--color-border); }

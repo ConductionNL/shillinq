@@ -219,7 +219,7 @@ class PermissionGateMiddleware extends Middleware
     /**
      * Called after an exception is thrown by the controller.
      *
-     * Converts SecurityException (thrown by beforeController) into a JSON error
+     * Converts PermissionGateException (thrown by beforeController) into a JSON error
      * response so the client receives a well-formed 403/503 rather than a raw
      * exception page.
      *

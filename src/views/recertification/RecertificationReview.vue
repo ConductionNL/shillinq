@@ -1,15 +1,7 @@
 <!-- SPDX-License-Identifier: EUPL-1.2 -->
 <!-- Copyright (C) 2026 Conduction B.V. -->
 <template>
-	<div class="shillinq-recert-review">
-		<NcBreadcrumbs>
-			<NcBreadcrumb :name="t('shillinq', 'Shillinq')" :to="{ name: 'Dashboard' }" />
-			<NcBreadcrumb :name="t('shillinq', 'Recertification')" :to="{ name: 'Recertifications' }" />
-			<NcBreadcrumb :name="t('shillinq', 'Review')" />
-		</NcBreadcrumbs>
-
-		<h2>{{ t('shillinq', 'Recertification Review') }}</h2>
-
+	<CnDetailPage :title="t('shillinq', 'Recertification Review')">
 		<NcLoadingIcon v-if="userStore.loading" />
 
 		<template v-else>
@@ -43,17 +35,18 @@
 				{{ t('shillinq', 'Submit Review') }}
 			</NcButton>
 		</template>
-	</div>
+	</CnDetailPage>
 </template>
 
 <script>
-import { NcButton, NcLoadingIcon, NcBreadcrumbs, NcBreadcrumb } from '@nextcloud/vue'
+import { NcButton, NcLoadingIcon } from '@nextcloud/vue'
+import { CnDetailPage } from '@conduction/nextcloud-vue'
 import { useUserStore } from '../../store/modules/user.js'
 import { useRecertificationStore } from '../../store/modules/recertification.js'
 
 export default {
 	name: 'RecertificationReview',
-	components: { NcButton, NcLoadingIcon, NcBreadcrumbs, NcBreadcrumb },
+	components: { CnDetailPage, NcButton, NcLoadingIcon },
 	data() {
 		return {
 			userStore: useUserStore(),
@@ -81,7 +74,6 @@ export default {
 </script>
 
 <style scoped>
-.shillinq-recert-review { padding: 8px 16px 24px; max-width: 1200px; }
 .shillinq-recert-review__table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
 .shillinq-recert-review__table th, .shillinq-recert-review__table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--color-border); }
 .shillinq-recert-review__table td:last-child { display: flex; gap: 8px; }
