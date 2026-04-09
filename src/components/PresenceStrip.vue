@@ -42,15 +42,15 @@ export default {
 	},
 	data() {
 		return {
+			// Local copy of viewers — avoids shared global store state being overwritten
+			// if multiple PresenceStrips exist for different targets simultaneously.
+			activeViewers: [],
 			pollTimer: null,
 		}
 	},
 	computed: {
 		presenceStore() {
 			return usePresenceStore()
-		},
-		activeViewers() {
-			return this.presenceStore.records
 		},
 	},
 	mounted() {
@@ -63,8 +63,12 @@ export default {
 		}
 	},
 	methods: {
-		fetchViewers() {
-			this.presenceStore.fetchActiveViewers(this.targetType, this.targetId)
+		async fetchViewers() {
+			// Populate the local data property rather than reading shared store state.
+			this.activeViewers = await this.presenceStore.fetchActiveViewers(
+				this.targetType,
+				this.targetId,
+			)
 		},
 	},
 }

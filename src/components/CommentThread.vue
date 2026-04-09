@@ -18,8 +18,12 @@
 						({{ t('shillinq', 'edited') }})
 					</span>
 				</div>
-				<!-- eslint-disable-next-line vue/no-v-html -->
-				<div class="comment-thread__content" v-html="renderMentions(comment.content)" />
+				<div class="comment-thread__content">
+					<span
+						v-for="(segment, i) in parseContent(comment.content)"
+						:key="i"
+						:class="{ 'mention-chip': segment.mention }">{{ segment.text }}</span>
+				</div>
 				<div class="comment-thread__actions">
 					<NcButton
 						v-if="!comment.resolved"
@@ -101,19 +105,30 @@ export default {
 			const days = Math.floor(hours / 24)
 			return days + 'd'
 		},
-		renderMentions(content) {
-			if (!content) return ''
-			// Escape HTML entities first to prevent XSS before injecting mention chips
-			const escaped = content
-				.replace(/&/g, '&amp;')
-				.replace(/</g, '&lt;')
-				.replace(/>/g, '&gt;')
-				.replace(/"/g, '&quot;')
-				.replace(/'/g, '&#39;')
-			return escaped.replace(
-				/@([a-zA-Z0-9_\-.]+)/g,
-				'<span class="mention-chip">@$1</span>',
-			)
+		/**
+		 * Parse comment content into plain-text and mention segments.
+		 * Renders @mention tokens as chips using v-text (no v-html — XSS-safe).
+		 *
+		 * @param {string} content - Raw comment text
+		 * @return {Array<{text: string, mention: boolean}>} Ordered segments
+		 */
+		parseContent(content) {
+			if (!content) return []
+			const segments = []
+			const pattern = /@([a-zA-Z0-9_\-.]+)/g
+			let last = 0
+			let match
+			while ((match = pattern.exec(content)) !== null) {
+				if (match.index > last) {
+					segments.push({ text: content.slice(last, match.index), mention: false })
+				}
+				segments.push({ text: match[0], mention: true })
+				last = match.index + match[0].length
+			}
+			if (last < content.length) {
+				segments.push({ text: content.slice(last), mention: false })
+			}
+			return segments
 		},
 	},
 }

@@ -77,6 +77,14 @@ class CollaborationRoleController extends Controller
      */
     public function index(): JSONResponse
     {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(
+                ['error' => 'Authentication required'],
+                Http::STATUS_UNAUTHORIZED,
+            );
+        }
+
         $targetType = $this->request->getParam('targetType', '');
         $targetId   = $this->request->getParam('targetId', '');
 
@@ -84,6 +92,21 @@ class CollaborationRoleController extends Controller
             return new JSONResponse(
                 ['error' => 'targetType and targetId are required'],
                 Http::STATUS_BAD_REQUEST,
+            );
+        }
+
+        // Guard: caller must hold at least viewer role on the target document.
+        $hasRole = $this->roleService->checkRole(
+            userId: $user->getUID(),
+            targetType: $targetType,
+            targetId: $targetId,
+            minimumRole: 'viewer',
+        );
+
+        if ($hasRole === false) {
+            return new JSONResponse(
+                ['error' => 'Insufficient permissions — requires at least viewer role'],
+                Http::STATUS_FORBIDDEN,
             );
         }
 
@@ -178,13 +201,15 @@ class CollaborationRoleController extends Controller
                 data: $data,
             );
 
-            // Notify the grantee.
-            $this->notifyGrantee(
-                principalId: $principalId,
-                role: $role,
-                targetType: $targetType,
-                targetId: $targetId,
-            );
+            // Notify the grantee — only supported for individual users, not groups.
+            if ($principalType === 'user') {
+                $this->notifyGrantee(
+                    principalId: $principalId,
+                    role: $role,
+                    targetType: $targetType,
+                    targetId: $targetId,
+                );
+            }
 
             return new JSONResponse($created, Http::STATUS_CREATED);
         } catch (\Throwable $e) {

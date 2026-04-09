@@ -4,11 +4,10 @@
   @spec openspec/changes/collaboration/tasks.md#task-4.2
 -->
 <template>
-	<div class="comment-detail">
+	<div class="comment-detail-page">
 		<NcLoadingIcon v-if="loading" :size="44" />
 		<template v-else-if="comment">
-			<h2>{{ t('shillinq', 'Comment Detail') }}</h2>
-			<div class="comment-detail__card">
+			<CnConfigurationCard :title="t('shillinq', 'Comment Detail')">
 				<div class="comment-detail__field">
 					<strong>{{ t('shillinq', 'Author') }}:</strong>
 					<span>{{ comment.author }}</span>
@@ -41,12 +40,12 @@
 					<strong>{{ t('shillinq', 'Edited at') }}:</strong>
 					<span>{{ formatDate(comment.editedAt) }}</span>
 				</div>
-			</div>
-			<div class="comment-detail__actions">
-				<NcButton v-if="isDpo" type="warning" @click="anonymise">
-					{{ t('shillinq', 'Anonymise') }}
-				</NcButton>
-			</div>
+				<div class="comment-detail__actions">
+					<NcButton v-if="isDpo" type="warning" @click="anonymise">
+						{{ t('shillinq', 'Anonymise') }}
+					</NcButton>
+				</div>
+			</CnConfigurationCard>
 		</template>
 		<NcEmptyContent v-else :name="t('shillinq', 'Comment not found')">
 			<template #icon>
@@ -59,6 +58,7 @@
 <script>
 import { NcButton, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
+import { CnConfigurationCard } from '@conduction/nextcloud-vue'
 import CommentTextOutline from 'vue-material-design-icons/CommentTextOutline.vue'
 import { useSettingsStore } from '../../store/modules/settings.js'
 
@@ -68,6 +68,7 @@ export default {
 		NcButton,
 		NcEmptyContent,
 		NcLoadingIcon,
+		CnConfigurationCard,
 		CommentTextOutline,
 	},
 	data() {
@@ -106,18 +107,11 @@ export default {
 		async anonymise() {
 			try {
 				const id = this.$route.params.commentId
-				const url = generateUrl(`/apps/shillinq/api/v1/comments/${id}`)
+				// Use the dedicated anonymise endpoint so the author field is also zeroed out.
+				const url = generateUrl(`/apps/shillinq/api/v1/comments/${id}/anonymise`)
 				const response = await fetch(url, {
-					method: 'PUT',
-					headers: {
-						'Content-Type': 'application/json',
-						requesttoken: OC.requestToken,
-					},
-					body: JSON.stringify({
-						content: '[anonymised]',
-						author: '[anonymised]',
-						mentions: [],
-					}),
+					method: 'PATCH',
+					headers: { requesttoken: OC.requestToken },
 				})
 				if (response.ok) {
 					this.comment = await response.json()
@@ -135,16 +129,8 @@ export default {
 </script>
 
 <style scoped>
-.comment-detail {
+.comment-detail-page {
 	padding: 20px;
-}
-
-.comment-detail__card {
-	background: var(--color-main-background);
-	border: 1px solid var(--color-border);
-	border-radius: var(--border-radius-large);
-	padding: 16px;
-	margin-bottom: 16px;
 }
 
 .comment-detail__field {
@@ -154,5 +140,6 @@ export default {
 .comment-detail__actions {
 	display: flex;
 	gap: 8px;
+	margin-top: 16px;
 }
 </style>

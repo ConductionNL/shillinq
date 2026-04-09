@@ -26,6 +26,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\CollaborationRoleService;
 use OCA\Shillinq\Service\PresenceService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -43,9 +44,10 @@ class PresenceController extends Controller
     /**
      * Constructor for PresenceController.
      *
-     * @param IRequest        $request         The request object
-     * @param IUserSession    $userSession     The user session
-     * @param PresenceService $presenceService The presence service
+     * @param IRequest                 $request         The request object
+     * @param IUserSession             $userSession     The user session
+     * @param PresenceService          $presenceService The presence service
+     * @param CollaborationRoleService $roleService     The role service
      *
      * @return void
      */
@@ -53,6 +55,7 @@ class PresenceController extends Controller
         IRequest $request,
         private IUserSession $userSession,
         private PresenceService $presenceService,
+        private CollaborationRoleService $roleService,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
@@ -112,6 +115,14 @@ class PresenceController extends Controller
      */
     public function index(): JSONResponse
     {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(
+                ['error' => 'Authentication required'],
+                Http::STATUS_UNAUTHORIZED,
+            );
+        }
+
         $targetType = $this->request->getParam('targetType', '');
         $targetId   = $this->request->getParam('targetId', '');
 
@@ -119,6 +130,21 @@ class PresenceController extends Controller
             return new JSONResponse(
                 ['error' => 'targetType and targetId are required'],
                 Http::STATUS_BAD_REQUEST,
+            );
+        }
+
+        // Guard: caller must hold at least viewer role to see who is viewing the document.
+        $hasRole = $this->roleService->checkRole(
+            userId: $user->getUID(),
+            targetType: $targetType,
+            targetId: $targetId,
+            minimumRole: 'viewer',
+        );
+
+        if ($hasRole === false) {
+            return new JSONResponse(
+                ['error' => 'Insufficient permissions — requires at least viewer role'],
+                Http::STATUS_FORBIDDEN,
             );
         }
 

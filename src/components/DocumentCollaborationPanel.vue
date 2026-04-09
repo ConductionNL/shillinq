@@ -28,6 +28,7 @@
 				v-for="role in roles"
 				:key="role.id"
 				:role="role"
+				:can-remove="true"
 				@remove="onRoleRemoved" />
 			<NcButton type="secondary" @click="showRoleDialog = true">
 				{{ t('shillinq', 'Add Member') }}

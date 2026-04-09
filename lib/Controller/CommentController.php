@@ -27,6 +27,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\CollaborationRoleService;
+use OCA\Shillinq\Service\CommentService;
 use OCA\Shillinq\Service\DocumentEventNotifier;
 use OCA\Shillinq\Service\MentionService;
 use OCP\AppFramework\Controller;
@@ -35,11 +36,13 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * OCS API controller for comment CRUD: create, list, edit, resolve, delete.
+ * OCS API controller for comment CRUD: create, list, edit, resolve, anonymise, delete.
+ *
+ * All persistence is delegated to CommentService. This controller handles only
+ * authentication, authorisation, and HTTP response shaping.
  *
  * @spec openspec/changes/collaboration/tasks.md#task-8.1
  */
@@ -57,10 +60,10 @@ class CommentController extends Controller
      * Constructor for CommentController.
      *
      * @param IRequest                 $request      The request object
-     * @param ContainerInterface       $container    The DI container
      * @param IUserSession             $userSession  The user session
      * @param IGroupManager            $groupManager The group manager
      * @param CollaborationRoleService $roleService  The role service
+     * @param CommentService           $commentSvc   The comment service
      * @param MentionService           $mentionSvc   The mention service
      * @param DocumentEventNotifier    $eventNotify  The event notifier
      * @param LoggerInterface          $logger       The logger
@@ -69,10 +72,10 @@ class CommentController extends Controller
      */
     public function __construct(
         IRequest $request,
-        private ContainerInterface $container,
         private IUserSession $userSession,
         private IGroupManager $groupManager,
         private CollaborationRoleService $roleService,
+        private CommentService $commentSvc,
         private MentionService $mentionSvc,
         private DocumentEventNotifier $eventNotify,
         private LoggerInterface $logger,
@@ -83,6 +86,9 @@ class CommentController extends Controller
     /**
      * List comments for a target document.
      *
+     * Requires at least viewer role on the target when targetId is provided.
+     * When targetId is omitted (admin listing), authentication alone is required.
+     *
      * @NoAdminRequired
      *
      * @return JSONResponse Comments sorted by timestamp ascending
@@ -91,35 +97,46 @@ class CommentController extends Controller
      */
     public function index(): JSONResponse
     {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(
+                ['error' => 'Authentication required'],
+                Http::STATUS_UNAUTHORIZED,
+            );
+        }
+
         $targetType = $this->request->getParam('targetType', '');
         $targetId   = $this->request->getParam('targetId', '');
 
-        if (empty($targetType) === true || empty($targetId) === true) {
+        if (empty($targetType) === true) {
             return new JSONResponse(
-                ['error' => 'targetType and targetId are required'],
+                ['error' => 'targetType is required'],
                 Http::STATUS_BAD_REQUEST,
             );
         }
 
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $result        = $objectService->findAll(
-                schema: 'Comment',
-                filters: [
-                    'targetType' => $targetType,
-                    'targetId'   => $targetId,
-                ],
+        // When targetId is provided, enforce viewer role on that specific document.
+        if (empty($targetId) === false) {
+            $hasRole = $this->roleService->checkRole(
+                userId: $user->getUID(),
+                targetType: $targetType,
+                targetId: $targetId,
+                minimumRole: 'viewer',
             );
 
-            $comments = ($result['results'] ?? $result ?? []);
+            if ($hasRole === false) {
+                return new JSONResponse(
+                    ['error' => 'Insufficient permissions — requires at least viewer role'],
+                    Http::STATUS_FORBIDDEN,
+                );
+            }
+        }
 
-            // Sort by timestamp ascending.
-            usort(
-                    $comments,
-                    static function ($a, $b) {
-                        return ($a['timestamp'] ?? '') <=> ($b['timestamp'] ?? '');
-                    }
-                    );
+        try {
+            $comments = $this->commentSvc->findAll(
+                targetType: $targetType,
+                targetId: $targetId,
+            );
 
             return new JSONResponse($comments);
         } catch (\Throwable $e) {
@@ -184,11 +201,9 @@ class CommentController extends Controller
         }
 
         try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $mentions      = $this->mentionSvc->extractMentions(content: $content);
+            $mentions = $this->mentionSvc->extractMentions(content: $content);
 
-            $comment = $objectService->create(
-                schema: 'Comment',
+            $comment = $this->commentSvc->create(
                 data: [
                     'content'    => $content,
                     'author'     => $userId,
@@ -231,6 +246,8 @@ class CommentController extends Controller
     /**
      * Edit an existing comment (author or admin only).
      *
+     * Resolved comments cannot be edited to preserve the audit trail.
+     *
      * @param string $id The comment object ID
      *
      * @NoAdminRequired
@@ -260,13 +277,20 @@ class CommentController extends Controller
         }
 
         try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $comment       = $objectService->find(schema: 'Comment', id: $id);
+            $comment = $this->commentSvc->find(id: $id);
 
             if ($comment === null) {
                 return new JSONResponse(
                     ['error' => 'Comment not found'],
                     Http::STATUS_NOT_FOUND,
+                );
+            }
+
+            // Resolved comments cannot be edited to preserve the audit trail.
+            if (($comment['resolved'] ?? false) === true) {
+                return new JSONResponse(
+                    ['error' => 'Resolved comments cannot be edited'],
+                    Http::STATUS_UNPROCESSABLE_ENTITY,
                 );
             }
 
@@ -279,7 +303,7 @@ class CommentController extends Controller
             }
 
             $mentions = $this->mentionSvc->extractMentions(content: $content);
-            $updated  = $objectService->update(
+            $updated  = $this->commentSvc->update(
                 id: $id,
                 data: [
                     'content'  => $content,
@@ -300,6 +324,63 @@ class CommentController extends Controller
             );
         }//end try
     }//end update()
+
+    /**
+     * Anonymise a comment for GDPR erasure (DPO/admin only).
+     *
+     * Replaces content, author, and mentions with anonymised placeholders.
+     * This is the only endpoint that may overwrite the author field.
+     *
+     * @param string $id The comment object ID
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse The anonymised comment or error
+     *
+     * @spec openspec/changes/collaboration/tasks.md#task-8.1
+     */
+    public function anonymise(string $id): JSONResponse
+    {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(
+                ['error' => 'Authentication required'],
+                Http::STATUS_UNAUTHORIZED,
+            );
+        }
+
+        // Only admins/DPOs may anonymise.
+        if ($this->groupManager->isAdmin($user->getUID()) === false) {
+            return new JSONResponse(
+                ['error' => 'Admin or DPO privileges required to anonymise'],
+                Http::STATUS_FORBIDDEN,
+            );
+        }
+
+        try {
+            $comment = $this->commentSvc->find(id: $id);
+
+            if ($comment === null) {
+                return new JSONResponse(
+                    ['error' => 'Comment not found'],
+                    Http::STATUS_NOT_FOUND,
+                );
+            }
+
+            $updated = $this->commentSvc->anonymise(id: $id);
+
+            return new JSONResponse($updated);
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'CommentController: anonymise failed',
+                ['exception' => $e->getMessage()]
+            );
+            return new JSONResponse(
+                ['error' => 'Failed to anonymise comment'],
+                Http::STATUS_INTERNAL_SERVER_ERROR,
+            );
+        }//end try
+    }//end anonymise()
 
     /**
      * Mark a comment as resolved.
@@ -327,8 +408,7 @@ class CommentController extends Controller
         $userId = $user->getUID();
 
         try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $comment       = $objectService->find(schema: 'Comment', id: $id);
+            $comment = $this->commentSvc->find(id: $id);
 
             if ($comment === null) {
                 return new JSONResponse(
@@ -355,7 +435,7 @@ class CommentController extends Controller
                 }
             }
 
-            $updated = $objectService->update(
+            $updated = $this->commentSvc->update(
                 id: $id,
                 data: [
                     'resolved'   => true,
@@ -411,8 +491,7 @@ class CommentController extends Controller
         $userId = $user->getUID();
 
         try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $comment       = $objectService->find(schema: 'Comment', id: $id);
+            $comment = $this->commentSvc->find(id: $id);
 
             if ($comment === null) {
                 return new JSONResponse(
@@ -426,7 +505,7 @@ class CommentController extends Controller
 
             if ($isAdmin === true) {
                 // Admin/DPO can always delete.
-                $objectService->delete(id: $id);
+                $this->commentSvc->delete(id: $id);
                 return new JSONResponse(['success' => true]);
             }
 
@@ -437,7 +516,7 @@ class CommentController extends Controller
                 $diffMins  = (int) (($now->getTimestamp() - $createdAt->getTimestamp()) / 60);
 
                 if ($diffMins <= self::DELETE_WINDOW_MINUTES) {
-                    $objectService->delete(id: $id);
+                    $this->commentSvc->delete(id: $id);
                     return new JSONResponse(['success' => true]);
                 }
 

@@ -206,16 +206,21 @@ class CollaborationRoleService
     }//end roleMatchesUser()
 
     /**
-     * Fall back to AccessControl global permissions when no CollaborationRole exists.
+     * Fall back when no CollaborationRole exists for a user on a target.
      *
-     * If the user has global editor access they are treated as contributor.
+     * Returns false (deny) by default. Explicit role assignment via CollaborationRole
+     * is required to access any collaboration feature on a document.
+     *
+     * This prevents a privilege escalation where any authenticated user who can read
+     * an object through OpenRegister would silently gain contributor-level access
+     * (posting comments, editing data) on documents they were never explicitly granted.
      *
      * @param string $userId      The Nextcloud userId
      * @param string $targetType  The entity type
      * @param string $targetId    The target object ID
      * @param string $minimumRole The minimum role required
      *
-     * @return bool Whether the user has sufficient global access
+     * @return bool Always false — explicit role assignment required
      *
      * @spec openspec/changes/collaboration/tasks.md#task-7.2
      */
@@ -225,31 +230,17 @@ class CollaborationRoleService
         string $targetId,
         string $minimumRole,
     ): bool {
-        $minimumLevel = (self::ROLE_HIERARCHY[$minimumRole] ?? 0);
-
-        // Global editors are treated as contributors (level 2).
-        $contributorLevel = self::ROLE_HIERARCHY['contributor'];
-
-        // If minimum required exceeds contributor, global access is not enough.
-        if ($minimumLevel > $contributorLevel) {
-            return false;
-        }
-
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $object        = $objectService->find(
-                schema: $targetType,
-                id: $targetId,
-            );
-
-            // If the object exists and user can access it via OpenRegister, treat as contributor.
-            return $object !== null;
-        } catch (\Throwable $e) {
-            $this->logger->debug(
-                'CollaborationRoleService: AccessControl fallback failed',
-                ['exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
+        // No CollaborationRole exists for this user on this target.
+        // Deny by default — explicit role assignment is required.
+        $this->logger->debug(
+            'CollaborationRoleService: no role found, denying access',
+            [
+                'userId'     => $userId,
+                'targetType' => $targetType,
+                'targetId'   => $targetId,
+                'minimum'    => $minimumRole,
+            ]
+        );
+        return false;
     }//end checkAccessControlFallback()
 }//end class

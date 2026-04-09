@@ -202,17 +202,18 @@ class MentionService
         }
 
         try {
-            $excerpt = mb_substr(string: $content, start: 0, length: 100);
-            $link    = $this->urlGenerator->linkToRouteAbsolute(
+            $link = $this->urlGenerator->linkToRouteAbsolute(
                 routeName: Application::APP_ID.'.dashboard.page',
             );
 
+            // Note: do not include comment content in the email body.
+            // Email is not end-to-end encrypted and may be stored outside the organisation.
             $message = $this->mailer->createMessage();
             $message->setTo([$email]);
             $message->setSubject('You were mentioned in a '.$targetType.' comment');
             $message->setPlainBody(
-                'You were mentioned in a comment on '.$targetType.' ('.$targetId."):\n\n"
-                .$excerpt."\n\nView the document: ".$link
+                'You were mentioned in a comment on '.$targetType.' ('.$targetId.").\n\n"
+                .'View the document: '.$link
             );
 
             $this->mailer->send($message);

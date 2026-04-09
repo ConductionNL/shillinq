@@ -98,7 +98,20 @@ class DocumentEventNotifier
             $principalType = ($role['principalType'] ?? 'user');
             $principalId   = ($role['principalId'] ?? '');
 
-            if ($principalType !== 'user' || empty($principalId) === true) {
+            if (empty($principalId) === true) {
+                continue;
+            }
+
+            if ($principalType === 'group') {
+                // Group fan-out is not yet implemented. Log so admins know.
+                $this->logger->debug(
+                    'DocumentEventNotifier: skipping group principal — group notifications not yet implemented',
+                    ['principalId' => $principalId, 'eventType' => $eventType]
+                );
+                continue;
+            }
+
+            if ($principalType !== 'user') {
                 continue;
             }
 
@@ -226,15 +239,12 @@ class DocumentEventNotifier
             $message = $this->mailer->createMessage();
             $message->setTo([$email]);
             $message->setSubject($subject);
-            $contextInfo = '';
-            if (empty($context) === false) {
-                $contextInfo = "\nDetails: ".json_encode($context);
-            }
 
+            // Note: do not include comment content or user identifiers in the email body.
+            // Email is not end-to-end encrypted and may be stored outside the organisation.
             $message->setPlainBody(
                 'Event: '.$eventType."\n"
-                .'Document: '.$targetType.' '.$targetId
-                .$contextInfo."\n\n"
+                .'Document: '.$targetType.' '.$targetId."\n\n"
                 .'View the document: '.$link
             );
 

@@ -4,58 +4,45 @@
   @spec openspec/changes/collaboration/tasks.md#task-5.1
 -->
 <template>
-	<div class="role-list">
-		<h2>{{ t('shillinq', 'Team Roles') }}</h2>
-		<NcButton type="primary" @click="showForm = true">
-			{{ t('shillinq', 'Add Member') }}
-		</NcButton>
-		<NcLoadingIcon v-if="loading" :size="44" />
-		<table v-else class="role-list__table">
-			<thead>
-				<tr>
-					<th>{{ t('shillinq', 'Principal') }}</th>
-					<th>{{ t('shillinq', 'Type') }}</th>
-					<th>{{ t('shillinq', 'Role') }}</th>
-					<th>{{ t('shillinq', 'Granted By') }}</th>
-					<th>{{ t('shillinq', 'Granted At') }}</th>
-					<th>{{ t('shillinq', 'Expires') }}</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr
-					v-for="role in roles"
-					:key="role.id"
-					:class="{ 'role-list__row--expired': isExpired(role) }">
-					<td>{{ role.principalId }}</td>
-					<td>{{ role.principalType }}</td>
-					<td>
-						<span :class="'role-badge role-badge--' + role.role">
-							{{ t('shillinq', role.role) }}
-						</span>
-					</td>
-					<td>{{ role.grantedBy }}</td>
-					<td>{{ formatDate(role.grantedAt) }}</td>
-					<td>{{ role.expiresAt ? formatDate(role.expiresAt) : '—' }}</td>
-				</tr>
-			</tbody>
-		</table>
-		<NcEmptyContent
-			v-if="!loading && roles.length === 0"
-			:name="t('shillinq', 'No roles assigned')">
-			<template #icon>
-				<AccountGroupOutline :size="20" />
-			</template>
-		</NcEmptyContent>
+	<CnIndexPage
+		:title="t('shillinq', 'Team Roles')"
+		:objects="roles"
+		:columns="columns"
+		:loading="loading"
+		:selectable="false"
+		:show-mass-import="false"
+		:show-mass-export="false"
+		:show-mass-copy="false"
+		:show-mass-delete="false"
+		:show-form-dialog="false"
+		:empty-text="t('shillinq', 'No roles assigned')"
+		row-key="id">
+		<template #action-items>
+			<NcButton type="primary" @click="showForm = true">
+				{{ t('shillinq', 'Add Member') }}
+			</NcButton>
+		</template>
+		<template #column-role="{ value }">
+			<span :class="'role-badge role-badge--' + value">
+				{{ t('shillinq', value) }}
+			</span>
+		</template>
+		<template #column-expiresAt="{ value }">
+			{{ value ? formatDate(value) : '—' }}
+		</template>
+		<template #column-grantedAt="{ value }">
+			{{ formatDate(value) }}
+		</template>
 		<CollaborationRoleForm
 			v-if="showForm"
 			@close="showForm = false"
 			@created="onRoleCreated" />
-	</div>
+	</CnIndexPage>
 </template>
 
 <script>
-import { NcButton, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
-import AccountGroupOutline from 'vue-material-design-icons/AccountGroup.vue'
+import { NcButton } from '@nextcloud/vue'
+import { CnIndexPage } from '@conduction/nextcloud-vue'
 import CollaborationRoleForm from './CollaborationRoleForm.vue'
 import { useCollaborationRoleStore } from '../../store/modules/collaborationRole.js'
 
@@ -63,14 +50,20 @@ export default {
 	name: 'CollaborationRoleList',
 	components: {
 		NcButton,
-		NcEmptyContent,
-		NcLoadingIcon,
-		AccountGroupOutline,
+		CnIndexPage,
 		CollaborationRoleForm,
 	},
 	data() {
 		return {
 			showForm: false,
+			columns: [
+				{ key: 'principalId', label: this.t('shillinq', 'Principal') },
+				{ key: 'principalType', label: this.t('shillinq', 'Type') },
+				{ key: 'role', label: this.t('shillinq', 'Role') },
+				{ key: 'grantedBy', label: this.t('shillinq', 'Granted By') },
+				{ key: 'grantedAt', label: this.t('shillinq', 'Granted At') },
+				{ key: 'expiresAt', label: this.t('shillinq', 'Expires') },
+			],
 		}
 	},
 	computed: {
@@ -84,45 +77,32 @@ export default {
 			return this.roleStore.roles
 		},
 	},
+	mounted() {
+		// Fetch all roles for the context provided via route params, or show empty state.
+		const targetType = this.$route.query.targetType || ''
+		const targetId = this.$route.query.targetId || ''
+		if (targetType && targetId) {
+			this.roleStore.fetchByTarget(targetType, targetId)
+		}
+	},
 	methods: {
-		isExpired(role) {
-			if (!role.expiresAt) return false
-			return new Date(role.expiresAt) < new Date()
-		},
 		formatDate(dateStr) {
 			if (!dateStr) return ''
 			return new Date(dateStr).toLocaleString()
 		},
 		onRoleCreated() {
 			this.showForm = false
+			const targetType = this.$route.query.targetType || ''
+			const targetId = this.$route.query.targetId || ''
+			if (targetType && targetId) {
+				this.roleStore.fetchByTarget(targetType, targetId)
+			}
 		},
 	},
 }
 </script>
 
 <style scoped>
-.role-list {
-	padding: 20px;
-}
-
-.role-list__table {
-	width: 100%;
-	border-collapse: collapse;
-	margin-top: 16px;
-}
-
-.role-list__table th,
-.role-list__table td {
-	padding: 8px 12px;
-	text-align: left;
-	border-bottom: 1px solid var(--color-border);
-}
-
-.role-list__row--expired {
-	opacity: 0.6;
-	background-color: var(--color-warning-hover);
-}
-
 .role-badge {
 	padding: 2px 8px;
 	border-radius: 12px;
@@ -131,7 +111,10 @@ export default {
 }
 
 .role-badge--approver { background-color: var(--color-primary-element-light); color: var(--color-primary-element); }
+
 .role-badge--reviewer { background-color: var(--color-success-hover); color: var(--color-success); }
+
 .role-badge--contributor { background-color: var(--color-background-dark); }
+
 .role-badge--viewer { background-color: var(--color-background-darker); }
 </style>

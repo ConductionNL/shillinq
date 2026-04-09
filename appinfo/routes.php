@@ -13,9 +13,10 @@ return [
         // Comment endpoints.
         ['name' => 'comment#index',   'url' => '/api/v1/comments',              'verb' => 'GET'],
         ['name' => 'comment#create',  'url' => '/api/v1/comments',              'verb' => 'POST'],
-        ['name' => 'comment#update',  'url' => '/api/v1/comments/{id}',         'verb' => 'PUT'],
-        ['name' => 'comment#resolve', 'url' => '/api/v1/comments/{id}/resolve', 'verb' => 'PATCH'],
-        ['name' => 'comment#destroy', 'url' => '/api/v1/comments/{id}',         'verb' => 'DELETE'],
+        ['name' => 'comment#update',    'url' => '/api/v1/comments/{id}',           'verb' => 'PUT'],
+        ['name' => 'comment#anonymise', 'url' => '/api/v1/comments/{id}/anonymise', 'verb' => 'PATCH'],
+        ['name' => 'comment#resolve',   'url' => '/api/v1/comments/{id}/resolve',   'verb' => 'PATCH'],
+        ['name' => 'comment#destroy',   'url' => '/api/v1/comments/{id}',           'verb' => 'DELETE'],
 
         // Collaboration role endpoints.
         ['name' => 'collaborationRole#index',   'url' => '/api/v1/collaboration/roles',      'verb' => 'GET'],
