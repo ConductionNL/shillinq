@@ -74,7 +74,7 @@ class CreateDefaultConfiguration implements IRepairStep
 
         try {
             $objectService = $this->container->get(
-                'OCA\OpenRegister\Service\ObjectService'
+                'OCA\OpenRegister\Service\ConfigurationService'
             );
         } catch (\Throwable $e) {
             $output->warning(
