@@ -36,6 +36,187 @@
             "example": "This is an example"
           }
         }
+      },
+      "Comment": {
+        "slug": "comment",
+        "icon": "CommentTextOutline",
+        "version": "0.1.0",
+        "title": "Comment",
+        "description": "A comment on a document with @mention support and resolution tracking.",
+        "x-schema-org": "schema:Comment",
+        "type": "object",
+        "required": [
+          "content",
+          "author",
+          "targetType",
+          "targetId",
+          "timestamp"
+        ],
+        "properties": {
+          "content": {
+            "type": "string",
+            "maxLength": 4000,
+            "description": "Comment text, max 4000 chars",
+            "example": "Please review the line items before approval."
+          },
+          "author": {
+            "type": "string",
+            "description": "Nextcloud userId of comment author",
+            "example": "admin"
+          },
+          "targetType": {
+            "type": "string",
+            "description": "Entity type: Invoice / PurchaseOrder / Contract / NegotiationThread",
+            "example": "Invoice"
+          },
+          "targetId": {
+            "type": "string",
+            "description": "OpenRegister object ID of the target",
+            "example": "demo-invoice-001"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Comment creation time (server-set)",
+            "example": "2026-01-15T09:00:00Z"
+          },
+          "mentions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "Array of mentioned Nextcloud userIds"
+          },
+          "resolved": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether comment has been resolved"
+          },
+          "resolvedBy": {
+            "type": "string",
+            "description": "userId who resolved the comment"
+          },
+          "resolvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of resolution"
+          },
+          "editedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last edit timestamp"
+          },
+          "portalTokenId": {
+            "type": "string",
+            "description": "Set when posted by a supplier via portal token"
+          }
+        }
+      },
+      "CollaborationRole": {
+        "slug": "collaborationRole",
+        "icon": "AccountGroupOutline",
+        "version": "0.1.0",
+        "title": "CollaborationRole",
+        "description": "Per-document team permission assignment for collaboration.",
+        "x-schema-org": "schema:Role",
+        "type": "object",
+        "required": [
+          "targetType",
+          "targetId",
+          "principalType",
+          "principalId",
+          "role",
+          "grantedBy",
+          "grantedAt"
+        ],
+        "properties": {
+          "targetType": {
+            "type": "string",
+            "description": "Entity type the role applies to",
+            "example": "Invoice"
+          },
+          "targetId": {
+            "type": "string",
+            "description": "OpenRegister object ID of the target",
+            "example": "demo-invoice-001"
+          },
+          "principalType": {
+            "type": "string",
+            "enum": ["user", "group"],
+            "description": "user or group",
+            "example": "user"
+          },
+          "principalId": {
+            "type": "string",
+            "description": "Nextcloud userId or groupId",
+            "example": "admin"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["viewer", "contributor", "reviewer", "approver"],
+            "description": "Collaboration role level",
+            "example": "approver"
+          },
+          "grantedBy": {
+            "type": "string",
+            "description": "userId who granted the role",
+            "example": "admin"
+          },
+          "grantedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of grant",
+            "example": "2026-01-01T00:00:00Z"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Optional expiry"
+          }
+        }
+      },
+      "PresenceRecord": {
+        "slug": "presenceRecord",
+        "icon": "AccountEyeOutline",
+        "version": "0.1.0",
+        "title": "PresenceRecord",
+        "description": "Real-time presence indicator for document viewers.",
+        "x-schema-org": "schema:Thing",
+        "type": "object",
+        "required": [
+          "userId",
+          "targetType",
+          "targetId",
+          "lastSeenAt"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "Nextcloud userId",
+            "example": "admin"
+          },
+          "targetType": {
+            "type": "string",
+            "description": "Entity type being viewed",
+            "example": "Invoice"
+          },
+          "targetId": {
+            "type": "string",
+            "description": "OpenRegister object ID",
+            "example": "demo-invoice-001"
+          },
+          "lastSeenAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last heartbeat timestamp"
+          },
+          "isEditing": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether user has the edit form open"
+          }
+        }
       }
     }
   }
