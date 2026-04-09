@@ -1,0 +1,6 @@
+{
+  "depends_on": [
+    "core",
+    "document-management"
+  ]
+}
