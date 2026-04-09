@@ -2,38 +2,241 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Shillinq Register",
-    "description": "Register containing all schemas for the Shillinq application.",
+    "description": "Register containing all schemas for the Shillinq business administration suite.",
     "version": "0.1.0"
   },
   "x-openregister": {
     "type": "application",
     "app": "shillinq",
     "openregister": "^v0.2.10",
-    "description": "Shillinq — replace with your app description"
+    "description": "Complete open-source business administration suite for freelancers, sole proprietors, SMBs, and corporations."
   },
   "paths": {},
   "components": {
     "schemas": {
-      "example": {
-        "slug": "example",
-        "icon": "FileDocumentOutline",
+      "organization": {
+        "slug": "organization",
+        "icon": "DomainOutline",
         "version": "0.1.0",
-        "title": "Example",
-        "description": "Example schema — replace with your app's actual schemas.",
+        "title": "Organization",
+        "description": "A business organization entity.",
+        "x-schema-org": "schema:Organization",
         "type": "object",
         "required": [
-          "title"
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Legal name of the organization",
+            "example": "Acme BV"
+          },
+          "registrationNumber": {
+            "type": "string",
+            "description": "KvK number",
+            "example": "12345678"
+          },
+          "email": {
+            "type": "string",
+            "description": "Contact email address",
+            "example": "info@acme.nl"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Contact phone number",
+            "example": "+31 20 1234567"
+          },
+          "website": {
+            "type": "string",
+            "description": "Website URL",
+            "example": "https://acme.nl"
+          },
+          "address": {
+            "type": "string",
+            "description": "Street and number",
+            "example": "Keizersgracht 100"
+          },
+          "city": {
+            "type": "string",
+            "description": "City name",
+            "example": "Amsterdam"
+          },
+          "country": {
+            "type": "string",
+            "description": "ISO 3166-1 alpha-2 country code",
+            "example": "NL"
+          }
+        }
+      },
+      "appSettings": {
+        "slug": "appSettings",
+        "icon": "CogOutline",
+        "version": "0.1.0",
+        "title": "App Settings",
+        "description": "Application-wide and per-user configuration settings.",
+        "x-schema-org": "custom",
+        "type": "object",
+        "required": [
+          "key",
+          "value"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Setting identifier",
+            "example": "fiscalYearStart"
+          },
+          "value": {
+            "type": "string",
+            "description": "Setting value, always stored as string",
+            "example": "EUR"
+          },
+          "dataType": {
+            "type": "string",
+            "description": "Value data type",
+            "default": "string",
+            "enum": [
+              "string",
+              "boolean",
+              "number",
+              "json"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "description": "UI grouping category",
+            "enum": [
+              "appearance",
+              "notifications",
+              "integrations",
+              "general"
+            ]
+          },
+          "editable": {
+            "type": "boolean",
+            "description": "Whether the setting is editable in the UI",
+            "default": true
+          },
+          "userId": {
+            "type": "string",
+            "description": "Null for app-wide settings, user ID for per-user preferences"
+          }
+        }
+      },
+      "dashboard": {
+        "slug": "dashboard",
+        "icon": "ViewDashboardOutline",
+        "version": "0.1.0",
+        "title": "Dashboard",
+        "description": "Dashboard layout configuration.",
+        "x-schema-org": "schema:Thing",
+        "type": "object",
+        "required": [
+          "title",
+          "layoutType"
         ],
         "properties": {
           "title": {
             "type": "string",
-            "description": "The title of the example object",
-            "example": "My example"
+            "description": "Dashboard title",
+            "example": "Default Dashboard"
           },
           "description": {
             "type": "string",
-            "description": "An optional description",
-            "example": "This is an example"
+            "description": "Optional dashboard description"
+          },
+          "layoutType": {
+            "type": "string",
+            "description": "Layout rendering type",
+            "default": "grid",
+            "enum": [
+              "grid",
+              "flexbox",
+              "custom"
+            ]
+          },
+          "isDefault": {
+            "type": "boolean",
+            "description": "Whether this is the default dashboard for the user",
+            "default": false
+          },
+          "theme": {
+            "type": "string",
+            "description": "NL Design System theme variant"
+          },
+          "userId": {
+            "type": "string",
+            "description": "Owner user ID; null for shared dashboards"
+          }
+        }
+      },
+      "dataJob": {
+        "slug": "dataJob",
+        "icon": "DatabaseImportOutline",
+        "version": "0.1.0",
+        "title": "Data Job",
+        "description": "Tracks CSV/data import jobs and their progress.",
+        "x-schema-org": "schema:Thing",
+        "type": "object",
+        "required": [
+          "fileName",
+          "entityType",
+          "status"
+        ],
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "description": "Uploaded file name",
+            "example": "organizations.csv"
+          },
+          "entityType": {
+            "type": "string",
+            "description": "Target schema for the import",
+            "example": "organization"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current job status",
+            "default": "pending",
+            "enum": [
+              "pending",
+              "processing",
+              "completed",
+              "failed"
+            ]
+          },
+          "totalRecords": {
+            "type": "integer",
+            "description": "Total rows in the uploaded file",
+            "default": 0
+          },
+          "processedRecords": {
+            "type": "integer",
+            "description": "Successfully imported records",
+            "default": 0
+          },
+          "failedRecords": {
+            "type": "integer",
+            "description": "Rows that failed validation",
+            "default": 0
+          },
+          "errorLog": {
+            "type": "string",
+            "description": "JSONL of per-row errors"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the job started"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the job completed"
+          },
+          "userId": {
+            "type": "string",
+            "description": "User who triggered the import"
           }
         }
       }

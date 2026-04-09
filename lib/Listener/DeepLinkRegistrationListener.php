@@ -48,14 +48,33 @@ class DeepLinkRegistrationListener implements IEventListener
             return;
         }
 
-        // Register example object deep links.
-        // Replace 'shillinq' with your app ID and update the register slug,
-        // schema slug, and URL template to match your app's actual schemas.
+        // Register deep link patterns for all Shillinq entity types.
         $event->register(
             appId: 'shillinq',
             registerSlug: 'shillinq',
-            schemaSlug: 'example',
-            urlTemplate: '/apps/shillinq/#/examples/{uuid}'
+            schemaSlug: 'organization',
+            urlTemplate: '/apps/shillinq/organizations/{uuid}'
+        );
+
+        $event->register(
+            appId: 'shillinq',
+            registerSlug: 'shillinq',
+            schemaSlug: 'appSettings',
+            urlTemplate: '/apps/shillinq/settings'
+        );
+
+        $event->register(
+            appId: 'shillinq',
+            registerSlug: 'shillinq',
+            schemaSlug: 'dashboard',
+            urlTemplate: '/apps/shillinq/'
+        );
+
+        $event->register(
+            appId: 'shillinq',
+            registerSlug: 'shillinq',
+            schemaSlug: 'dataJob',
+            urlTemplate: '/apps/shillinq/data-jobs/{uuid}'
         );
 
     }//end handle()
