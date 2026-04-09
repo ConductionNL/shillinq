@@ -23,7 +23,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -134,9 +133,9 @@ class FieldSecurityService
 
             // Resolve user's role IDs.
             $users = $objectService->findObjects(
-                filters: ['id' => $userId],
-                register: Application::APP_ID,
-                schema: 'user',
+                ['id' => $userId],
+                'shillinq',
+                'user',
             );
 
             if (empty($users) === true) {
@@ -146,12 +145,12 @@ class FieldSecurityService
 
             // Load all active access rights (delegations) for this user.
             $accessRights = $objectService->findObjects(
-                filters: [
+                [
                     'userId'   => $userId,
                     'isActive' => true,
                 ],
-                register: Application::APP_ID,
-                schema: 'accessRight',
+                'shillinq',
+                'accessRight',
             );
 
             $roleIds = [];
@@ -163,9 +162,9 @@ class FieldSecurityService
             $allPermissions = [];
             foreach ($roleIds as $roleId) {
                 $perms          = $objectService->findObjects(
-                    filters: ['roleId' => $roleId],
-                    register: Application::APP_ID,
-                    schema: 'permission',
+                    ['roleId' => $roleId],
+                    'shillinq',
+                    'permission',
                 );
                 $allPermissions = array_merge($allPermissions, $perms);
             }

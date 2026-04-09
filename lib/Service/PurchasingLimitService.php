@@ -23,7 +23,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -69,12 +68,12 @@ class PurchasingLimitService
 
             // Get all active access rights (base + delegations) for the user.
             $accessRights = $objectService->findObjects(
-                filters: [
+                [
                     'userId'   => $userId,
                     'isActive' => true,
                 ],
-                register: Application::APP_ID,
-                schema: 'accessRight',
+                'shillinq',
+                'accessRight',
             );
 
             // Collect all role IDs.
@@ -93,9 +92,9 @@ class PurchasingLimitService
 
             foreach ($roleIds as $roleId) {
                 $roles = $objectService->findObjects(
-                    filters: ['id' => $roleId],
-                    register: Application::APP_ID,
-                    schema: 'role',
+                    ['id' => $roleId],
+                    'shillinq',
+                    'role',
                 );
 
                 if (empty($roles) === true) {
