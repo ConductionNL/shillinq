@@ -1,12 +1,17 @@
 <!-- SPDX-License-Identifier: EUPL-1.2 -->
 <!-- Copyright (C) 2026 Conduction B.V. -->
 <template>
-	<CnDetailPage
-		:title="entry ? entry.action + ' — ' + entry.resourceType : '...'"
-		:description="entry ? entry.resourceId : ''">
+	<div class="shillinq-access-detail">
+		<NcBreadcrumbs>
+			<NcBreadcrumb :name="t('shillinq', 'Shillinq')" :to="{ name: 'Dashboard' }" />
+			<NcBreadcrumb :name="t('shillinq', 'Access Log')" :to="{ name: 'AccessControl' }" />
+			<NcBreadcrumb :name="entry ? entry.action : '...'" />
+		</NcBreadcrumbs>
+
 		<NcLoadingIcon v-if="accessControlStore.loading" />
 
-		<template v-else-if="entry">
+		<CnConfigurationCard v-else-if="entry"
+			:title="entry.action + ' — ' + entry.resourceType">
 			<dl class="shillinq-access-detail__fields">
 				<dt>{{ t('shillinq', 'Timestamp') }}</dt>
 				<dd>{{ entry.timestamp }}</dd>
@@ -32,18 +37,18 @@
 					<span v-else>—</span>
 				</dd>
 			</dl>
-		</template>
-	</CnDetailPage>
+		</CnConfigurationCard>
+	</div>
 </template>
 
 <script>
-import { NcBadge, NcLoadingIcon } from '@nextcloud/vue'
-import { CnDetailPage } from '@conduction/nextcloud-vue'
+import { NcBadge, NcBreadcrumb, NcBreadcrumbs, NcLoadingIcon } from '@nextcloud/vue'
+import { CnConfigurationCard } from '@conduction/nextcloud-vue'
 import { useAccessControlStore } from '../../store/modules/accessControl.js'
 
 export default {
 	name: 'AccessControlDetail',
-	components: { CnDetailPage, NcLoadingIcon, NcBadge },
+	components: { CnConfigurationCard, NcBadge, NcBreadcrumb, NcBreadcrumbs, NcLoadingIcon },
 	data() {
 		return { accessControlStore: useAccessControlStore() }
 	},
@@ -57,6 +62,7 @@ export default {
 </script>
 
 <style scoped>
+.shillinq-access-detail { padding: 8px 16px 24px; max-width: 1200px; }
 .shillinq-access-detail__fields { display: grid; grid-template-columns: 180px 1fr; gap: 8px; }
 .shillinq-access-detail__fields dt { font-weight: bold; }
 .shillinq-access-detail__fields pre { background: var(--color-background-dark); padding: 8px; border-radius: 4px; overflow-x: auto; }
