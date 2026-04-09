@@ -269,10 +269,10 @@ class CreateDefaultConfiguration implements IRepairStep
     ): void {
         try {
             $existing = $objectService->searchObjects(
-                schema: $schema,
-                register: 'shillinq',
-                filters: [$uniqueField => $uniqueValue],
-                limit: 1
+                $schema,
+                'shillinq',
+                [$uniqueField => $uniqueValue],
+                1
             );
 
             if (empty($existing) === false) {
@@ -283,9 +283,9 @@ class CreateDefaultConfiguration implements IRepairStep
             }
 
             $objectService->createObject(
-                schema: $schema,
-                register: 'shillinq',
-                data: $data
+                $schema,
+                'shillinq',
+                $data
             );
             $output->info(
                 'Shillinq: seeded '.$schema.' "'.$uniqueValue.'".'
