@@ -79,6 +79,15 @@ class NotificationService
             return;
         }
 
+        // Validate jobId is a UUID to prevent open-redirect via path traversal.
+        if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $jobId) !== 1) {
+            $this->logger->warning(
+                'Shillinq: invalid jobId format, skipping notification link',
+                ['jobId' => $jobId]
+            );
+            return;
+        }
+
         try {
             $notification = $this->notificationManager->createNotification();
             $notification->setApp(Application::APP_ID);

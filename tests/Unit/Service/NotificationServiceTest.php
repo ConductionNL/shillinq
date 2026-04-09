@@ -93,7 +93,7 @@ class NotificationServiceTest extends TestCase
 
         $notification->expects($this->once())
             ->method('setObject')
-            ->with('dataJob', 'job-123')
+            ->with('dataJob', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890')
             ->willReturnSelf();
 
         $notification->expects($this->once())
@@ -118,7 +118,7 @@ class NotificationServiceTest extends TestCase
 
         $this->service->notifyImportComplete(
             userId: 'testuser',
-            jobId: 'job-123',
+            jobId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
             fileName: 'test.csv',
             status: 'completed',
             processedRecords: 10,
@@ -164,7 +164,7 @@ class NotificationServiceTest extends TestCase
 
         $this->service->notifyImportComplete(
             userId: 'testuser',
-            jobId: 'job-456',
+            jobId: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
             fileName: 'fail.csv',
             status: 'failed',
             processedRecords: 7,
@@ -228,7 +228,7 @@ class NotificationServiceTest extends TestCase
 
         $this->service->notifyImportComplete(
             userId: 'recipient',
-            jobId: 'job-101',
+            jobId: 'c3d4e5f6-a7b8-9012-cdef-123456789012',
             fileName: 'other.csv',
             status: 'completed',
             processedRecords: 3,

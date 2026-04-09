@@ -9,11 +9,11 @@
 				</template>
 				{{ t('shillinq', 'Export CSV') }}
 			</NcActionButton>
-			<NcActionButton @click="exportXlsx">
+			<NcActionButton @click="exportCsvExcel">
 				<template #icon>
 					<FileExcelOutline :size="20" />
 				</template>
-				{{ t('shillinq', 'Export Excel') }}
+				{{ t('shillinq', 'Export CSV (Excel-compatible)') }}
 			</NcActionButton>
 		</NcActions>
 	</div>
@@ -60,10 +60,12 @@ export default {
 
 		escapeCsvField(value) {
 			const str = String(value ?? '')
-			if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-				return '"' + str.replace(/"/g, '""') + '"'
+			const formulaPrefixes = ['=', '+', '-', '@', '\t', '\r']
+			const safeStr = formulaPrefixes.some(p => str.startsWith(p)) ? '\t' + str : str
+			if (safeStr.includes(',') || safeStr.includes('"') || safeStr.includes('\n')) {
+				return '"' + safeStr.replace(/"/g, '""') + '"'
 			}
-			return str
+			return safeStr
 		},
 
 		exportCsv() {
@@ -76,15 +78,17 @@ export default {
 			this.downloadFile(csv, this.schema + '.csv', 'text/csv')
 		},
 
-		exportXlsx() {
-			// Simple XLSX export using the OCS export endpoint
+		exportCsvExcel() {
+			// Export as CSV with UTF-8 BOM so Excel auto-detects encoding.
+			// Full XLSX generation is tracked as a follow-up task.
 			const { headers, rows } = this.getExportData()
 			const lines = [
 				headers.map(h => this.escapeCsvField(h)).join(','),
 				...rows.map(row => row.map(cell => this.escapeCsvField(cell)).join(',')),
 			]
-			const csv = lines.join('\n')
-			this.downloadFile(csv, this.schema + '.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+			const bom = '\uFEFF'
+			const csv = bom + lines.join('\n')
+			this.downloadFile(csv, this.schema + '-excel.csv', 'text/csv;charset=utf-8')
 		},
 
 		downloadFile(content, filename, mimeType) {

@@ -252,7 +252,13 @@ export default {
 			for (let i = 0; i < line.length; i++) {
 				const char = line[i]
 				if (char === '"') {
-					inQuotes = !inQuotes
+					if (inQuotes && line[i + 1] === '"') {
+						// RFC 4180 §2.7: escaped double-quote inside a quoted field.
+						current += '"'
+						i++
+					} else {
+						inQuotes = !inQuotes
+					}
 				} else if (char === ',' && !inQuotes) {
 					result.push(current.trim())
 					current = ''
@@ -265,13 +271,16 @@ export default {
 		},
 
 		async startImport() {
+			// TODO: send this.csvRows + this.columnMapping to a backend processing
+			// endpoint once the DataJob processing API is implemented (follow-up PR).
+			// For now, create a pending DataJob record so the import can be tracked.
 			this.importing = true
 			const dataJobStore = useDataJobStore()
 
 			await dataJobStore.saveObject({
 				fileName: this.file.name,
 				entityType: this.entityType,
-				status: 'processing',
+				status: 'pending',
 				totalRecords: this.csvRows.length,
 				processedRecords: 0,
 				failedRecords: 0,

@@ -10,33 +10,36 @@
 		</header>
 
 		<CnKpiGrid :columns="4">
-			<CnStatsBlock
-				:title="t('shillinq', 'Organizations')"
-				:count="organizationCount"
-				:count-label="t('shillinq', 'total')"
-				:icon="DomainIcon"
-				variant="primary"
-				horizontal
-				style="cursor: pointer;"
-				@click.native="$router.push({ name: 'OrganizationList' })" />
-			<CnStatsBlock
-				:title="t('shillinq', 'Open Data Jobs')"
-				:count="openDataJobCount"
-				:count-label="t('shillinq', 'pending')"
-				:icon="DatabaseImportIcon"
-				variant="warning"
-				horizontal
-				style="cursor: pointer;"
-				@click.native="$router.push({ name: 'DataJobList' })" />
-			<CnStatsBlock
-				:title="t('shillinq', 'Settings')"
-				:count="appSettingsCount"
-				:count-label="t('shillinq', 'configured')"
-				:icon="CogIcon"
-				variant="default"
-				horizontal
-				style="cursor: pointer;"
-				@click.native="$router.push({ name: 'AppSettingsPage' })" />
+			<div class="shillinq-dashboard__kpi-link"
+				@click="$router.push({ name: 'OrganizationList' })">
+				<CnStatsBlock
+					:title="t('shillinq', 'Organizations')"
+					:count="organizationCount"
+					:count-label="t('shillinq', 'total')"
+					:icon="DomainIcon"
+					variant="primary"
+					horizontal />
+			</div>
+			<div class="shillinq-dashboard__kpi-link"
+				@click="$router.push({ name: 'DataJobList' })">
+				<CnStatsBlock
+					:title="t('shillinq', 'Open Data Jobs')"
+					:count="openDataJobCount"
+					:count-label="t('shillinq', 'pending')"
+					:icon="DatabaseImportIcon"
+					variant="warning"
+					horizontal />
+			</div>
+			<div class="shillinq-dashboard__kpi-link"
+				@click="$router.push({ name: 'AppSettingsPage' })">
+				<CnStatsBlock
+					:title="t('shillinq', 'Settings')"
+					:count="appSettingsCount"
+					:count-label="t('shillinq', 'configured')"
+					:icon="CogIcon"
+					variant="default"
+					horizontal />
+			</div>
 			<CnStatsBlock
 				:title="t('shillinq', 'Dashboards')"
 				:count="dashboardCount"
@@ -166,6 +169,10 @@ export default {
 .shillinq-dashboard {
 	padding: 8px 4px 24px;
 	max-width: 1200px;
+}
+
+.shillinq-dashboard__kpi-link {
+	cursor: pointer;
 }
 
 .shillinq-dashboard__header {
