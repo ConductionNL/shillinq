@@ -28,7 +28,7 @@ use OCA\Shillinq\Service\DocumentEventNotifier;
 use OCP\IURLGenerator;
 use OCP\Mail\IMailer;
 use OCP\Notification\INotification;
-use OCP\Notification\INotificationManager;
+use OCP\Notification\IManager as INotificationManager;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;

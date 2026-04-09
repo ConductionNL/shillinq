@@ -25,7 +25,7 @@ namespace OCA\Shillinq\Service;
 
 use OCP\IURLGenerator;
 use OCP\Mail\IMailer;
-use OCP\Notification\INotificationManager;
+use OCP\Notification\IManager as INotificationManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 

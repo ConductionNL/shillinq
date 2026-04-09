@@ -25,7 +25,7 @@ namespace OCA\Shillinq\Service;
 
 use OCP\IURLGenerator;
 use OCP\IUserManager;
-use OCP\Notification\INotificationManager;
+use OCP\Notification\IManager as INotificationManager;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -79,7 +79,7 @@ class MentionService
             return [];
         }
 
-        $usernames   = array_unique(values: $matches[1]);
+        $usernames   = array_unique($matches[1]);
         $resolvedIds = [];
 
         foreach ($usernames as $username) {
