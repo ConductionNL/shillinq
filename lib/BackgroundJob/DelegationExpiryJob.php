@@ -86,7 +86,12 @@ class DelegationExpiryJob extends TimedJob
             $now = new \DateTime();
 
             foreach ($activeRights as $right) {
-                $endDate = new \DateTime($right['endDate'] ?? 'now');
+                // Permanent grants have no endDate — never auto-expire them.
+                if (empty($right['endDate']) === true) {
+                    continue;
+                }
+
+                $endDate = new \DateTime($right['endDate']);
 
                 if ($endDate >= $now) {
                     continue;

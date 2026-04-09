@@ -86,16 +86,52 @@ class ReportController extends Controller
                     ],
                 );
 
+                // Resolve role names from active delegations.
+                $roleIds = array_filter(
+                    array_unique(
+                        array_map(
+                            static fn($d) => ($d['roleId'] ?? ''),
+                            $delegations,
+                        )
+                    )
+                );
+
+                $roleNames = [];
+                foreach ($roleIds as $roleId) {
+                    try {
+                        $role        = $objectService->getObject(
+                            register: Application::APP_ID,
+                            schema: 'role',
+                            id: $roleId,
+                        );
+                        $roleNames[] = ($role['name'] ?? $roleId);
+                    } catch (\Throwable $e) {
+                        $roleNames[] = $roleId;
+                    }
+                }
+
+                // Resolve team memberships.
+                $teamMemberships = $objectService->findObjects(
+                    register: Application::APP_ID,
+                    schema: 'team',
+                    filters: ['memberIds' => ($user['id'] ?? '')],
+                );
+
+                $teamNames = array_map(
+                    static fn($t) => ($t['name'] ?? ''),
+                    $teamMemberships,
+                );
+
                 $rows[] = [
                     'username'          => ($user['username'] ?? ''),
                     'displayName'       => ($user['displayName'] ?? ''),
-                    'roles'             => '',
-                    'teams'             => '',
+                    'roles'             => implode(';', $roleNames),
+                    'teams'             => implode(';', $teamNames),
                     'lastLogin'         => ($user['lastLogin'] ?? ''),
                     'branch'            => ($user['branch'] ?? ''),
                     'delegationsActive' => count($delegations),
                 ];
-            }
+            }//end foreach
 
             if ($format === 'csv') {
                 return $this->buildCsvResponse(rows: $rows);
@@ -103,8 +139,9 @@ class ReportController extends Controller
 
             return new JSONResponse(data: ['results' => $rows]);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: operation failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 500,
             );
         }//end try

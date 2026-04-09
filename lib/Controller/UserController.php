@@ -75,8 +75,9 @@ class UserController extends Controller
             );
             return new JSONResponse(data: ['results' => $results]);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: operation failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 500,
             );
         }//end try
@@ -106,8 +107,9 @@ class UserController extends Controller
             );
             return new JSONResponse(data: $user);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: operation failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 404,
             );
         }//end try
@@ -129,16 +131,22 @@ class UserController extends Controller
                 'OCA\OpenRegister\Service\ObjectService'
             );
             $data          = $this->request->getParams();
-            $data['id']    = $id;
             $user          = $objectService->saveObject(
                 register: Application::APP_ID,
                 schema: 'user',
-                object: $data,
+                object: [
+                    'id'          => $id,
+                    'displayName' => ($data['displayName'] ?? null),
+                    'email'       => ($data['email'] ?? null),
+                    'branch'      => ($data['branch'] ?? null),
+                    'lastLogin'   => ($data['lastLogin'] ?? null),
+                ],
             );
             return new JSONResponse(data: $user);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: operation failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 400,
             );
         }//end try
@@ -170,10 +178,17 @@ class UserController extends Controller
                 filters: ['username' => $employeeId],
             );
 
+            if (empty($data['email']) === true) {
+                return new JSONResponse(
+                    data: ['error' => 'email is required for user provisioning'],
+                    statusCode: 422,
+                );
+            }
+
             $userData = [
                 'username'    => $employeeId,
                 'displayName' => ($data['displayName'] ?? $employeeId),
-                'email'       => ($data['email'] ?? $employeeId.'@example.com'),
+                'email'       => $data['email'],
                 'isActive'    => true,
                 'createdAt'   => date('c'),
             ];
@@ -190,8 +205,9 @@ class UserController extends Controller
 
             return new JSONResponse(data: $user, statusCode: 201);
         } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: operation failed', ['exception' => $e]);
             return new JSONResponse(
-                data: ['error' => $e->getMessage()],
+                data: ['error' => 'An internal error occurred'],
                 statusCode: 400,
             );
         }//end try
