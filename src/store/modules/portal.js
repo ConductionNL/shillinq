@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Conduction B.V.
 
 /**
- * @spec openspec/changes/general/tasks.md#task-3.2
+ * @see openspec/changes/general/tasks.md#task-3.2
  */
 import { defineStore } from 'pinia'
 
@@ -16,7 +16,7 @@ export const usePortalStore = defineStore('portal', {
 		/**
 		 * Fetch all portal tokens from OpenRegister.
 		 *
-		 * @spec openspec/changes/general/tasks.md#task-3.2
+		 * @see openspec/changes/general/tasks.md#task-3.2
 		 */
 		async fetchTokens() {
 			this.loading = true

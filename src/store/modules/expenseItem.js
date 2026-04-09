@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Conduction B.V.
 
 /**
- * @spec openspec/changes/general/tasks.md#task-3.4
+ * @see openspec/changes/general/tasks.md#task-3.4
  */
 import { defineStore } from 'pinia'
 
@@ -17,7 +17,7 @@ export const useExpenseItemStore = defineStore('expenseItem', {
 		 * Fetch expense items for a given claim.
 		 *
 		 * @param {string} expenseClaimId The parent claim ID
-		 * @spec openspec/changes/general/tasks.md#task-3.4
+		 * @see openspec/changes/general/tasks.md#task-3.4
 		 */
 		async fetchItemsForClaim(expenseClaimId) {
 			this.loading = true

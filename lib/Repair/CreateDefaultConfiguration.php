@@ -21,7 +21,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
@@ -38,7 +37,6 @@ use Psr\Log\LoggerInterface;
  */
 class CreateDefaultConfiguration implements IRepairStep
 {
-
     /**
      * Constructor for CreateDefaultConfiguration.
      *
@@ -83,10 +81,10 @@ class CreateDefaultConfiguration implements IRepairStep
             return;
         }
 
-        $this->seedKpiWidgets($objectService, $output);
-        $this->seedAutomationRules($objectService, $output);
-        $this->seedExpenseClaims($objectService, $output);
-        $this->seedAnalyticsReports($objectService, $output);
+        $this->seedKpiWidgets(objectService: $objectService, output: $output);
+        $this->seedAutomationRules(objectService: $objectService, output: $output);
+        $this->seedExpenseClaims(objectService: $objectService, output: $output);
+        $this->seedAnalyticsReports(objectService: $objectService, output: $output);
 
         $output->info('Shillinq seed data creation complete.');
     }//end run()
@@ -128,7 +126,14 @@ class CreateDefaultConfiguration implements IRepairStep
         ];
 
         foreach ($widgets as $widget) {
-            $this->seedObject($objectService, 'KpiWidget', 'metricKey', $widget['metricKey'], $widget, $output);
+            $this->seedObject(
+                objectService: $objectService,
+                schema: 'KpiWidget',
+                uniqueField: 'metricKey',
+                uniqueValue: $widget['metricKey'],
+                data: $widget,
+                output: $output,
+            );
         }
     }//end seedKpiWidgets()
 
@@ -145,11 +150,11 @@ class CreateDefaultConfiguration implements IRepairStep
     private function seedAutomationRules(mixed $objectService, IOutput $output): void
     {
         $this->seedObject(
-            $objectService,
-            'AutomationRule',
-            'name',
-            'Invoice 30-day Reminder',
-            [
+            objectService: $objectService,
+            schema: 'AutomationRule',
+            uniqueField: 'name',
+            uniqueValue: 'Invoice 30-day Reminder',
+            data: [
                 'name'            => 'Invoice 30-day Reminder',
                 'triggerSchema'   => 'Invoice',
                 'triggerField'    => 'ageInDays',
@@ -160,7 +165,7 @@ class CreateDefaultConfiguration implements IRepairStep
                 'isActive'        => true,
                 'matchCount'      => 0,
             ],
-            $output,
+            output: $output,
         );
     }//end seedAutomationRules()
 
@@ -177,11 +182,11 @@ class CreateDefaultConfiguration implements IRepairStep
     private function seedExpenseClaims(mixed $objectService, IOutput $output): void
     {
         $this->seedObject(
-            $objectService,
-            'ExpenseClaim',
-            'claimNumber',
-            'EXP-DEMO-0001',
-            [
+            objectService: $objectService,
+            schema: 'ExpenseClaim',
+            uniqueField: 'claimNumber',
+            uniqueValue: 'EXP-DEMO-0001',
+            data: [
                 'claimNumber' => 'EXP-DEMO-0001',
                 'employeeId'  => 'admin',
                 'description' => 'Demo conference travel expenses',
@@ -189,7 +194,7 @@ class CreateDefaultConfiguration implements IRepairStep
                 'totalAmount' => 345.50,
                 'currency'    => 'EUR',
             ],
-            $output,
+            output: $output,
         );
     }//end seedExpenseClaims()
 
@@ -206,16 +211,16 @@ class CreateDefaultConfiguration implements IRepairStep
     private function seedAnalyticsReports(mixed $objectService, IOutput $output): void
     {
         $this->seedObject(
-            $objectService,
-            'AnalyticsReport',
-            'title',
-            'Debtors Ageing Report',
-            [
+            objectService: $objectService,
+            schema: 'AnalyticsReport',
+            uniqueField: 'title',
+            uniqueValue: 'Debtors Ageing Report',
+            data: [
                 'title'       => 'Debtors Ageing Report',
                 'description' => 'Monthly debtors ageing analysis',
                 'reportType'  => 'debtors_ageing',
             ],
-            $output,
+            output: $output,
         );
     }//end seedAnalyticsReports()
 

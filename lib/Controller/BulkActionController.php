@@ -21,7 +21,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
@@ -39,7 +38,6 @@ use OCP\IRequest;
  */
 class BulkActionController extends Controller
 {
-
     /**
      * Constructor for BulkActionController.
      *
@@ -58,12 +56,12 @@ class BulkActionController extends Controller
     /**
      * Bulk approve objects of a given schema.
      *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
      * @param string $schema The schema name
      *
      * @return JSONResponse
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
      *
      * @spec openspec/changes/general/tasks.md#task-8.2
      */
@@ -86,12 +84,12 @@ class BulkActionController extends Controller
     /**
      * Bulk delete objects of a given schema.
      *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
      * @param string $schema The schema name
      *
      * @return JSONResponse
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
      *
      * @spec openspec/changes/general/tasks.md#task-8.2
      */
@@ -114,12 +112,12 @@ class BulkActionController extends Controller
     /**
      * Bulk assign objects of a given schema to a user.
      *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
      * @param string $schema The schema name
      *
      * @return JSONResponse
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
      *
      * @spec openspec/changes/general/tasks.md#task-8.2
      */

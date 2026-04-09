@@ -21,7 +21,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
@@ -39,7 +38,6 @@ use OCP\IRequest;
  */
 class PortalController extends Controller
 {
-
     /**
      * Constructor for PortalController.
      *
@@ -86,10 +84,12 @@ class PortalController extends Controller
             );
         }
 
-        return new JSONResponse([
-            'organizationId' => $portalToken['organizationId'],
-            'permissions'    => ($portalToken['permissions'] ?? []),
-        ]);
+        return new JSONResponse(
+                [
+                    'organizationId' => $portalToken['organizationId'],
+                    'permissions'    => ($portalToken['permissions'] ?? []),
+                ]
+                );
     }//end auth()
 
     /**

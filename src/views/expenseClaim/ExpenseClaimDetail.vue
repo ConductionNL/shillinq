@@ -2,7 +2,7 @@
 SPDX-License-Identifier: EUPL-1.2
 Copyright (C) 2026 Conduction B.V.
 
-@spec openspec/changes/general/tasks.md#task-7.2
+@see openspec/changes/general/tasks.md#task-7.2
 -->
 <template>
 	<div class="expense-claim-detail">
@@ -71,8 +71,12 @@ Copyright (C) 2026 Conduction B.V.
 				<dd>{{ claim.submittedAt || t('shillinq', 'Not submitted') }}</dd>
 				<dt>{{ t('shillinq', 'Decided') }}</dt>
 				<dd>{{ claim.decidedAt || t('shillinq', 'Pending') }}</dd>
-				<dt v-if="claim.rejectionReason">{{ t('shillinq', 'Rejection Reason') }}</dt>
-				<dd v-if="claim.rejectionReason">{{ claim.rejectionReason }}</dd>
+				<dt v-if="claim.rejectionReason">
+					{{ t('shillinq', 'Rejection Reason') }}
+				</dt>
+				<dd v-if="claim.rejectionReason">
+					{{ claim.rejectionReason }}
+				</dd>
 			</dl>
 		</div>
 

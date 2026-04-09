@@ -21,7 +21,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
@@ -68,8 +67,8 @@ class AutomationRuleEvaluator
     /**
      * Evaluate a rule against objects and execute actions on matches.
      *
-     * @param array $rule    The AutomationRule object
-     * @param bool  $dryRun  If true, only return matches without executing actions
+     * @param array $rule   The AutomationRule object
+     * @param bool  $dryRun If true, only return matches without executing actions
      *
      * @return array{matches: array, matchCount: int}
      *
@@ -87,13 +86,13 @@ class AutomationRuleEvaluator
 
         $matches = [];
         foreach ($objects as $object) {
-            if ($this->matchesCondition($object, $rule) === true) {
+            if ($this->matchesCondition(object: $object, rule: $rule) === true) {
                 $matches[] = $object;
             }
         }
 
         if ($dryRun === false && empty($matches) === false) {
-            $this->executeAction($rule, $matches);
+            $this->executeAction(rule: $rule, matches: $matches);
         }
 
         return [
@@ -152,9 +151,9 @@ class AutomationRuleEvaluator
         }
 
         match ($rule['actionType']) {
-            'send_notification' => $this->executeSendNotification($rule, $matches, $actionParams),
-            'change_status'     => $this->executeChangeStatus($rule, $matches, $actionParams),
-            'escalate'          => $this->executeEscalate($rule, $matches, $actionParams),
+            'send_notification' => $this->executeSendNotification(rule: $rule, matches: $matches, actionParams: $actionParams),
+            'change_status'     => $this->executeChangeStatus(rule: $rule, matches: $matches, actionParams: $actionParams),
+            'escalate'          => $this->executeEscalate(rule: $rule, matches: $matches, actionParams: $actionParams),
             default             => $this->logger->warning(
                 'Unknown action type: {type}',
                 ['type' => $rule['actionType']]

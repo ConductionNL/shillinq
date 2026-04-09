@@ -21,7 +21,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
@@ -39,7 +38,6 @@ use OCP\IRequest;
  */
 class AnalyticsController extends Controller
 {
-
     /**
      * Constructor for AnalyticsController.
      *
@@ -58,12 +56,12 @@ class AnalyticsController extends Controller
     /**
      * Get the current value and trend for a KPI metric.
      *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
      * @param string $metricKey The metric identifier
      *
      * @return JSONResponse
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
      *
      * @spec openspec/changes/general/tasks.md#task-11.4
      */
@@ -77,12 +75,12 @@ class AnalyticsController extends Controller
     /**
      * Run a report and return the snapshot data.
      *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
      * @param string $reportType The report type
      *
      * @return JSONResponse
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
      *
      * @spec openspec/changes/general/tasks.md#task-11.4
      */
@@ -98,20 +96,22 @@ class AnalyticsController extends Controller
     /**
      * Get the last saved snapshot for a report.
      *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
      * @param string $id The report object ID
      *
      * @return JSONResponse
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
      *
      * @spec openspec/changes/general/tasks.md#task-11.4
      */
     public function snapshot(string $id): JSONResponse
     {
-        return new JSONResponse([
-            'id'           => $id,
-            'snapshotData' => null,
-        ]);
+        return new JSONResponse(
+                [
+                    'id'           => $id,
+                    'snapshotData' => null,
+                ]
+                );
     }//end snapshot()
 }//end class

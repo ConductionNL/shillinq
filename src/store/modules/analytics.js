@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Conduction B.V.
 
 /**
- * @spec openspec/changes/general/tasks.md#task-3.1
+ * @see openspec/changes/general/tasks.md#task-3.1
  */
 import { defineStore } from 'pinia'
 import { generateUrl } from '@nextcloud/router'
@@ -19,7 +19,7 @@ export const useAnalyticsStore = defineStore('analytics', {
 		/**
 		 * Fetch all KPI widgets from OpenRegister.
 		 *
-		 * @spec openspec/changes/general/tasks.md#task-3.1
+		 * @see openspec/changes/general/tasks.md#task-3.1
 		 */
 		async fetchWidgets() {
 			this.loading = true
@@ -38,7 +38,7 @@ export const useAnalyticsStore = defineStore('analytics', {
 		 * Fetch KPI value for a given metric key.
 		 *
 		 * @param {string} metricKey The metric key
-		 * @spec openspec/changes/general/tasks.md#task-3.1
+		 * @see openspec/changes/general/tasks.md#task-3.1
 		 */
 		async fetchKpiValue(metricKey) {
 			try {
@@ -58,7 +58,7 @@ export const useAnalyticsStore = defineStore('analytics', {
 		/**
 		 * Fetch all analytics reports.
 		 *
-		 * @spec openspec/changes/general/tasks.md#task-3.1
+		 * @see openspec/changes/general/tasks.md#task-3.1
 		 */
 		async fetchReports() {
 			try {
@@ -75,7 +75,7 @@ export const useAnalyticsStore = defineStore('analytics', {
 		 *
 		 * @param {string} reportType The report type
 		 * @param {object} parameters Optional parameters
-		 * @spec openspec/changes/general/tasks.md#task-3.1
+		 * @see openspec/changes/general/tasks.md#task-3.1
 		 */
 		async runReport(reportType, parameters = {}) {
 			try {

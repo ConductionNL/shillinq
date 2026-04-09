@@ -2,7 +2,7 @@
 SPDX-License-Identifier: EUPL-1.2
 Copyright (C) 2026 Conduction B.V.
 
-@spec openspec/changes/general/tasks.md#task-4.2
+@see openspec/changes/general/tasks.md#task-4.2
 -->
 <template>
 	<div class="kpi-chart">
@@ -24,9 +24,6 @@ export default {
 			default: () => ({ labels: [], values: [] }),
 		},
 	},
-	mounted() {
-		this.renderChart()
-	},
 	watch: {
 		data: {
 			handler() {
@@ -34,6 +31,9 @@ export default {
 			},
 			deep: true,
 		},
+	},
+	mounted() {
+		this.renderChart()
 	},
 	methods: {
 		renderChart() {

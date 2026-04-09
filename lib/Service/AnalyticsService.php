@@ -21,7 +21,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
@@ -36,7 +35,6 @@ use Psr\Log\LoggerInterface;
  */
 class AnalyticsService
 {
-
     /**
      * Constructor for AnalyticsService.
      *
@@ -66,7 +64,7 @@ class AnalyticsService
             'total_receivables' => $this->computeTotalReceivables(),
             'overdue_invoices'  => $this->computeOverdueInvoices(),
             'cash_position'     => $this->computeCashPosition(),
-            default             => $this->computeCustomKpi($metricKey),
+            default             => $this->computeCustomKpi(metricKey: $metricKey),
         };
     }//end getKpiValue()
 
@@ -83,10 +81,10 @@ class AnalyticsService
     public function runReport(string $reportType, array $parameters=[]): array
     {
         return match ($reportType) {
-            'debtors_ageing'    => $this->runDebtorsAgeing($parameters),
-            'budget_vs_actual'  => $this->runBudgetVsActual($parameters),
-            'cash_flow'         => $this->runCashFlow($parameters),
-            default             => $this->runCustomReport($reportType, $parameters),
+            'debtors_ageing'    => $this->runDebtorsAgeing(parameters: $parameters),
+            'budget_vs_actual'  => $this->runBudgetVsActual(parameters: $parameters),
+            'cash_flow'         => $this->runCashFlow(parameters: $parameters),
+            default             => $this->runCustomReport(reportType: $reportType, parameters: $parameters),
         };
     }//end runReport()
 
@@ -116,8 +114,8 @@ class AnalyticsService
             }
         }
 
-        $previous = $this->getPreviousPeriodValue('total_receivables');
-        $trend    = $this->calculateTrend($current, $previous);
+        $previous = $this->getPreviousPeriodValue(metricKey:'total_receivables');
+        $trend    = $this->calculateTrend(current: $current, previous: $previous);
 
         return [
             'current'  => $current,
@@ -154,8 +152,8 @@ class AnalyticsService
             }
         }
 
-        $previous = $this->getPreviousPeriodValue('overdue_invoices');
-        $trend    = $this->calculateTrend($current, $previous);
+        $previous = $this->getPreviousPeriodValue(metricKey:'overdue_invoices');
+        $trend    = $this->calculateTrend(current: $current, previous: $previous);
 
         return [
             'current'  => $current,
@@ -186,8 +184,8 @@ class AnalyticsService
             $current += (float) ($payment['amount'] ?? 0);
         }
 
-        $previous = $this->getPreviousPeriodValue('cash_position');
-        $trend    = $this->calculateTrend($current, $previous);
+        $previous = $this->getPreviousPeriodValue(metricKey:'cash_position');
+        $trend    = $this->calculateTrend(current: $current, previous: $previous);
 
         return [
             'current'  => $current,
@@ -282,11 +280,11 @@ class AnalyticsService
 
             if ($age <= 0) {
                 $buckets['current'] += $amount;
-            } elseif ($age <= 30) {
+            } else if ($age <= 30) {
                 $buckets['1_30_days'] += $amount;
-            } elseif ($age <= 60) {
+            } else if ($age <= 60) {
                 $buckets['31_60_days'] += $amount;
-            } elseif ($age <= 90) {
+            } else if ($age <= 90) {
                 $buckets['61_90_days'] += $amount;
             } else {
                 $buckets['over_90'] += $amount;
@@ -294,7 +292,7 @@ class AnalyticsService
         }//end foreach
 
         return [
-            'reportType' => 'debtors_ageing',
+            'reportType'  => 'debtors_ageing',
             'generatedAt' => (new \DateTimeImmutable())->format('c'),
             'data'        => $buckets,
         ];

@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Conduction B.V.
 
 /**
- * @spec openspec/changes/general/tasks.md#task-3.3
+ * @see openspec/changes/general/tasks.md#task-3.3
  */
 import { defineStore } from 'pinia'
 
@@ -20,7 +20,7 @@ export const useAutomationRuleStore = defineStore('automationRule', {
 		/**
 		 * Fetch all automation rules from OpenRegister.
 		 *
-		 * @spec openspec/changes/general/tasks.md#task-3.3
+		 * @see openspec/changes/general/tasks.md#task-3.3
 		 */
 		async fetchRules() {
 			this.loading = true

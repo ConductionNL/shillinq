@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Conduction B.V.
 
 /**
- * @spec openspec/changes/general/tasks.md#task-10.2
+ * @see openspec/changes/general/tasks.md#task-10.2
  */
 import Vue from 'vue'
 import Router from 'vue-router'

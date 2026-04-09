@@ -21,7 +21,6 @@
 
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
-
 declare(strict_types=1);
 
 namespace OCA\Shillinq\BackgroundJob;
@@ -50,10 +49,10 @@ class AutomationRuleJob extends TimedJob
     /**
      * Constructor for AutomationRuleJob.
      *
-     * @param ITimeFactory            $time       The time factory
-     * @param AutomationRuleEvaluator $evaluator  The rule evaluator
-     * @param ContainerInterface      $container  The service container
-     * @param LoggerInterface         $logger     The logger
+     * @param ITimeFactory            $time      The time factory
+     * @param AutomationRuleEvaluator $evaluator The rule evaluator
+     * @param ContainerInterface      $container The service container
+     * @param LoggerInterface         $logger    The logger
      *
      * @return void
      */
@@ -63,8 +62,8 @@ class AutomationRuleJob extends TimedJob
         private ContainerInterface $container,
         private LoggerInterface $logger,
     ) {
-        parent::__construct($time);
-        $this->setInterval(self::INTERVAL);
+        parent::__construct(time: $time);
+        $this->setInterval(interval: self::INTERVAL);
     }//end __construct()
 
     /**

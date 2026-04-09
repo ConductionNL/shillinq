@@ -2,7 +2,7 @@
 SPDX-License-Identifier: EUPL-1.2
 Copyright (C) 2026 Conduction B.V.
 
-@spec openspec/changes/general/tasks.md#task-4.3
+@see openspec/changes/general/tasks.md#task-4.3
 -->
 <template>
 	<NcDialog
