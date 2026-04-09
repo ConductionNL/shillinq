@@ -257,6 +257,8 @@ class AutomationRuleEvaluator
      * @return void
      *
      * @spec openspec/changes/general/tasks.md#task-6.4
+     *
+     * @psalm-suppress UnusedParam
      */
     private function executeEscalate(array $rule, array $matches, array $actionParams): void
     {

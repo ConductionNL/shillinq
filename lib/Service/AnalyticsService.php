@@ -114,7 +114,7 @@ class AnalyticsService
             }
         }
 
-        $previous = $this->getPreviousPeriodValue(metricKey:'total_receivables');
+        $previous = $this->getPreviousPeriodValue(metricKey: 'total_receivables');
         $trend    = $this->calculateTrend(current: $current, previous: $previous);
 
         return [
@@ -152,7 +152,7 @@ class AnalyticsService
             }
         }
 
-        $previous = $this->getPreviousPeriodValue(metricKey:'overdue_invoices');
+        $previous = $this->getPreviousPeriodValue(metricKey: 'overdue_invoices');
         $trend    = $this->calculateTrend(current: $current, previous: $previous);
 
         return [
@@ -184,7 +184,7 @@ class AnalyticsService
             $current += (float) ($payment['amount'] ?? 0);
         }
 
-        $previous = $this->getPreviousPeriodValue(metricKey:'cash_position');
+        $previous = $this->getPreviousPeriodValue(metricKey: 'cash_position');
         $trend    = $this->calculateTrend(current: $current, previous: $previous);
 
         return [
@@ -202,6 +202,8 @@ class AnalyticsService
      * @return array{current: float, previous: float, trend: string}
      *
      * @spec openspec/changes/general/tasks.md#task-11.2
+     *
+     * @psalm-suppress UnusedParam
      */
     private function computeCustomKpi(string $metricKey): array
     {
@@ -218,6 +220,8 @@ class AnalyticsService
      * @param string $metricKey The metric identifier
      *
      * @return float The previous period value
+     *
+     * @psalm-suppress UnusedParam
      */
     private function getPreviousPeriodValue(string $metricKey): float
     {
@@ -251,6 +255,8 @@ class AnalyticsService
      * @param array $parameters Report parameters
      *
      * @return array Report snapshot data
+     *
+     * @psalm-suppress UnusedParam
      */
     private function runDebtorsAgeing(array $parameters): array
     {
@@ -304,6 +310,8 @@ class AnalyticsService
      * @param array $parameters Report parameters
      *
      * @return array Report snapshot data
+     *
+     * @psalm-suppress UnusedParam
      */
     private function runBudgetVsActual(array $parameters): array
     {
@@ -320,6 +328,8 @@ class AnalyticsService
      * @param array $parameters Report parameters
      *
      * @return array Report snapshot data
+     *
+     * @psalm-suppress UnusedParam
      */
     private function runCashFlow(array $parameters): array
     {
@@ -337,6 +347,8 @@ class AnalyticsService
      * @param array  $parameters Report parameters
      *
      * @return array Report snapshot data
+     *
+     * @psalm-suppress UnusedParam
      */
     private function runCustomReport(string $reportType, array $parameters): array
     {

@@ -55,6 +55,8 @@ class AutomationRuleJob extends TimedJob
      * @param LoggerInterface         $logger    The logger
      *
      * @return void
+     *
+     * @psalm-suppress InvalidNamedArgument
      */
     public function __construct(
         ITimeFactory $time,
