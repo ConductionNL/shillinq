@@ -4,5 +4,17 @@
   "app": "shillinq",
   "repo": "https://github.com/ConductionNL/shillinq",
   "depends_on": [],
-  "issue": "https://github.com/ConductionNL/shillinq/issues/34"
+  "issue": "https://github.com/ConductionNL/shillinq/issues/34",
+  "pipeline": {
+    "review_rounds": 2,
+    "build_count": 0,
+    "fix_iterations": 0,
+    "total_cost_eur": 0,
+    "total_turns": 0,
+    "findings_open": 0,
+    "findings_fixed": 0,
+    "suggestions_open": 0,
+    "last_code_review_pass": null,
+    "last_security_review_pass": null
+  }
 }
