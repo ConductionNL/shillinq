@@ -98,7 +98,8 @@ class RecertificationController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $data          = $this->request->getParams();
+            $allowed       = ['title', 'description', 'dueDate', 'scope', 'reviewedBy'];
+            $data          = array_intersect_key($this->request->getParams(), array_flip($allowed));
             $campaign      = $objectService->saveObject(
                 register: Application::APP_ID,
                 schema: 'accessRecertification',

@@ -132,7 +132,8 @@ class TeamController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $data          = $this->request->getParams();
+            $allowed       = ['name', 'description', 'isActive'];
+            $data          = array_intersect_key($this->request->getParams(), array_flip($allowed));
             if (isset($data['createdAt']) === false) {
                 $data['createdAt'] = date('c');
             }
@@ -166,7 +167,8 @@ class TeamController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $data          = $this->request->getParams();
+            $allowed       = ['name', 'description', 'isActive'];
+            $data          = array_intersect_key($this->request->getParams(), array_flip($allowed));
             $data['id']    = $id;
             $team          = $objectService->saveObject(
                 register: Application::APP_ID,
@@ -224,9 +226,14 @@ class TeamController extends Controller
     {
         try {
             $data   = $this->request->getParams();
-            $email  = ($data['email'] ?? '');
+            $email  = $this->request->getParam('email', '');
             $roleId = ($data['roleId'] ?? '');
-            $user   = $this->userSession->getUser();
+
+            if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+                return new JSONResponse(data: ['message' => 'Invalid email address'], statusCode: 400);
+            }
+
+            $user = $this->userSession->getUser();
 
             $admin = 'system';
             if ($user !== null) {

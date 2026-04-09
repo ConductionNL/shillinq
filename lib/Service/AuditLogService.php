@@ -88,6 +88,7 @@ class AuditLogService
                 'result'       => $result,
                 'ipAddress'    => $this->request->getRemoteAddress(),
                 'userAgent'    => ($this->request->getHeader('User-Agent') ?? ''),
+                'userId'       => $this->userSession->getUser()?->getUID() ?? 'anonymous',
             ];
 
             if ($details !== null) {

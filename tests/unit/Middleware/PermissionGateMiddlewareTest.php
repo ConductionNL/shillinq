@@ -118,6 +118,8 @@ class PermissionGateMiddlewareTest extends TestCase
      */
     public function testInactiveUserIsDenied(): void
     {
+        $this->expectException(\OCP\AppFramework\OCS\OCSForbiddenException::class);
+
         $user = $this->createMock(IUser::class);
         $user->method('getUID')->willReturn('inactive-user');
         $this->userSession->method('getUser')->willReturn($user);

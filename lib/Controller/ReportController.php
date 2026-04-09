@@ -86,16 +86,30 @@ class ReportController extends Controller
                     ],
                 );
 
+                // Build comma-separated role names from active access rights.
+                $roleNames = array_map(
+                    static fn($r) => ($r['roleName'] ?? $r['roleId'] ?? ''),
+                    $delegations,
+                );
+                $roles     = implode(', ', array_filter($roleNames));
+
+                // Build comma-separated team names from active access rights.
+                $teamNames = array_map(
+                    static fn($r) => ($r['teamName'] ?? $r['teamId'] ?? ''),
+                    $delegations,
+                );
+                $teams     = implode(', ', array_filter($teamNames));
+
                 $rows[] = [
                     'username'          => ($user['username'] ?? ''),
                     'displayName'       => ($user['displayName'] ?? ''),
-                    'roles'             => '',
-                    'teams'             => '',
+                    'roles'             => $roles,
+                    'teams'             => $teams,
                     'lastLogin'         => ($user['lastLogin'] ?? ''),
                     'branch'            => ($user['branch'] ?? ''),
                     'delegationsActive' => count($delegations),
                 ];
-            }
+            }//end foreach
 
             if ($format === 'csv') {
                 return $this->buildCsvResponse(rows: $rows);

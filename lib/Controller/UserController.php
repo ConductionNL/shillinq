@@ -25,7 +25,9 @@ namespace OCA\Shillinq\Controller;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IGroupManager;
 use OCP\IRequest;
+use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -39,15 +41,19 @@ class UserController extends Controller
     /**
      * Constructor.
      *
-     * @param IRequest           $request   The request object
-     * @param ContainerInterface $container The DI container
-     * @param LoggerInterface    $logger    The logger
+     * @param IRequest           $request      The request object
+     * @param ContainerInterface $container    The DI container
+     * @param IUserSession       $userSession  The user session
+     * @param IGroupManager      $groupManager The group manager
+     * @param LoggerInterface    $logger       The logger
      *
      * @return void
      */
     public function __construct(
         IRequest $request,
         private ContainerInterface $container,
+        private IUserSession $userSession,
+        private IGroupManager $groupManager,
         private LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -128,7 +134,8 @@ class UserController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $data          = $this->request->getParams();
+            $allowed       = ['displayName', 'email', 'isActive', 'roleId', 'branchId', 'purchasingLimit'];
+            $data          = array_intersect_key($this->request->getParams(), array_flip($allowed));
             $data['id']    = $id;
             $user          = $objectService->saveObject(
                 register: Application::APP_ID,
@@ -147,7 +154,8 @@ class UserController extends Controller
     /**
      * Provision a user from an HR onboarding event.
      *
-     * Accepts { employeeId, roleName } and creates or updates the User object.
+     * Accepts { employeeId, email, displayName } and creates or updates the User object.
+     * Requires admin access.
      *
      * @return JSONResponse
      *
@@ -155,13 +163,26 @@ class UserController extends Controller
      */
     public function provision(): JSONResponse
     {
+        // Only admins may provision users.
+        $currentUser = $this->userSession->getUser();
+        if ($currentUser === null || $this->groupManager->isAdmin($currentUser->getUID()) === false) {
+            return new JSONResponse(
+                data: ['message' => 'Admin access required'],
+                statusCode: 403,
+            );
+        }
+
         try {
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
             $data          = $this->request->getParams();
             $employeeId    = ($data['employeeId'] ?? '');
-            $roleName      = ($data['roleName'] ?? '');
+
+            $email = $this->request->getParam('email', '');
+            if (empty($email) === true) {
+                return new JSONResponse(data: ['message' => 'Email is required for provisioning'], statusCode: 400);
+            }
 
             // Check if user already exists.
             $existing = $objectService->findObjects(
@@ -173,7 +194,7 @@ class UserController extends Controller
             $userData = [
                 'username'    => $employeeId,
                 'displayName' => ($data['displayName'] ?? $employeeId),
-                'email'       => ($data['email'] ?? $employeeId.'@example.com'),
+                'email'       => $email,
                 'isActive'    => true,
                 'createdAt'   => date('c'),
             ];

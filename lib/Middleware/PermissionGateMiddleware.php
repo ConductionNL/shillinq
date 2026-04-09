@@ -24,7 +24,10 @@ namespace OCA\Shillinq\Middleware;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\AuditLogService;
+use OCP\AppFramework\Http\Http;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\Response;
+use OCP\AppFramework\OCS\OCSForbiddenException;
 use OCP\AppFramework\Middleware;
 use OCP\IRequest;
 use OCP\IUserSession;
@@ -67,6 +70,8 @@ class PermissionGateMiddleware extends Middleware
      * @param string                       $methodName The method being called
      *
      * @return void
+     *
+     * @throws OCSForbiddenException When the user is inactive or permission check fails
      *
      * @spec openspec/changes/access-control-authorisation/tasks.md#task-3.1
      */
@@ -118,7 +123,7 @@ class PermissionGateMiddleware extends Middleware
                         result: 'denied',
                         details: ['reason' => 'user-inactive'],
                     );
-                    return;
+                    throw new OCSForbiddenException('Account is inactive');
                 }
             }
 
@@ -129,13 +134,55 @@ class PermissionGateMiddleware extends Middleware
                 resourceId: $methodName,
                 result: 'success',
             );
+        } catch (OCSForbiddenException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             $this->logger->warning(
-                'Shillinq: permission gate check failed, allowing request',
+                'Shillinq: permission gate check failed, denying request for safety',
                 ['exception' => $e->getMessage()]
             );
+            throw new OCSForbiddenException('Permission check unavailable');
         }//end try
     }//end beforeController()
+
+    /**
+     * Called after the controller method executes, applies field security filtering.
+     *
+     * @param \OCP\AppFramework\Controller $controller The controller
+     * @param string                       $methodName The method name
+     * @param Response                     $response   The controller response
+     *
+     * @return Response
+     *
+     * @spec openspec/changes/access-control-authorisation/tasks.md#task-3.1
+     */
+    public function afterController($controller, $methodName, Response $response): Response
+    {
+        if (str_contains(get_class($controller), 'OCA\\Shillinq\\Controller\\') === false) {
+            return $response;
+        }
+
+        // Apply field-level security filtering on JSON responses.
+        if ($response instanceof JSONResponse) {
+            $user = $this->userSession->getUser();
+            if ($user !== null) {
+                try {
+                    $fieldSecurityService = $this->container->get(
+                        'OCA\Shillinq\Service\FieldSecurityService'
+                    );
+                    $data = $response->getData();
+                    if (is_array($data) === true) {
+                        $data = $fieldSecurityService->filterResponse($data, '', $user->getUID());
+                        $response->setData($data);
+                    }
+                } catch (\Throwable $e) {
+                    $this->logger->warning('Shillinq: field security filter failed', ['exception' => $e->getMessage()]);
+                }
+            }
+        }
+
+        return $response;
+    }//end afterController()
 
     /**
      * Called after an exception is thrown by the controller.
@@ -152,6 +199,13 @@ class PermissionGateMiddleware extends Middleware
     {
         if (str_contains(get_class($controller), 'OCA\\Shillinq\\Controller\\') === false) {
             throw $exception;
+        }
+
+        if ($exception instanceof OCSForbiddenException) {
+            return new JSONResponse(
+                data: ['message' => $exception->getMessage()],
+                statusCode: Http::STATUS_FORBIDDEN
+            );
         }
 
         $this->logger->error(

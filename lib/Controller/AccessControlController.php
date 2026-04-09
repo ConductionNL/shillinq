@@ -56,8 +56,6 @@ class AccessControlController extends Controller
     /**
      * List audit log entries with optional filters.
      *
-     * @NoAdminRequired
-     *
      * @return JSONResponse
      *
      * @spec openspec/changes/access-control-authorisation/tasks.md#task-5.4
@@ -99,8 +97,6 @@ class AccessControlController extends Controller
      * Get a single audit log entry by ID.
      *
      * @param string $id The audit log object ID
-     *
-     * @NoAdminRequired
      *
      * @return JSONResponse
      *

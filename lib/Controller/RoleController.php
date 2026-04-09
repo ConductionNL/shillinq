@@ -126,7 +126,8 @@ class RoleController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $data          = $this->request->getParams();
+            $allowed       = ['name', 'description', 'permissionLevel', 'isDefault'];
+            $data          = array_intersect_key($this->request->getParams(), array_flip($allowed));
             $role          = $objectService->saveObject(
                 register: Application::APP_ID,
                 schema: 'role',
@@ -156,7 +157,8 @@ class RoleController extends Controller
             $objectService = $this->container->get(
                 'OCA\OpenRegister\Service\ObjectService'
             );
-            $data          = $this->request->getParams();
+            $allowed       = ['name', 'description', 'permissionLevel', 'isDefault'];
+            $data          = array_intersect_key($this->request->getParams(), array_flip($allowed));
             $data['id']    = $id;
             $role          = $objectService->saveObject(
                 register: Application::APP_ID,

@@ -69,15 +69,15 @@ class DelegationController extends Controller
             $data = $this->request->getParams();
             $user = $this->userSession->getUser();
 
-            $admin = 'system';
+            $grantedBy = 'system';
             if ($user !== null) {
-                $admin = $user->getUID();
+                $grantedBy = $user->getUID();
             }
 
             $accessRight = $this->delegationService->createDelegation(
                 userId: ($data['userId'] ?? ''),
                 roleId: ($data['roleId'] ?? ''),
-                grantedBy: ($data['grantedBy'] ?? $admin),
+                grantedBy: $grantedBy,
                 start: new \DateTime($data['startDate'] ?? 'now'),
                 end: new \DateTime($data['endDate'] ?? '+30 days'),
                 reason: ($data['reason'] ?? ''),
