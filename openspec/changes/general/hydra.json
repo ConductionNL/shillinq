@@ -6,7 +6,7 @@
   "depends_on": [],
   "issue": "https://github.com/ConductionNL/shillinq/issues/36",
   "pipeline": {
-    "review_rounds": 1,
+    "review_rounds": 2,
     "build_count": 0,
     "fix_iterations": 0,
     "total_cost_eur": 0.0,
