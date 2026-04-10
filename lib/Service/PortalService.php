@@ -70,13 +70,15 @@ class PortalService
         ?string $expiresAt=null,
         array $permissions=[],
     ): array {
-        $rawBytes  = random_bytes(32);
-        $rawToken  = base64_encode($rawBytes);
-        $tokenHash = password_hash($rawToken, PASSWORD_DEFAULT);
+        $rawBytes    = random_bytes(32);
+        $rawToken    = base64_encode($rawBytes);
+        $tokenPrefix = substr($rawToken, 0, 12);
+        $tokenHash   = password_hash($rawToken, PASSWORD_DEFAULT);
 
         $objectService = $this->getObjectService();
 
         $tokenData = [
+            'tokenPrefix'    => $tokenPrefix,
             'tokenHash'      => $tokenHash,
             'organizationId' => $organizationId,
             'description'    => ($description ?? ''),
@@ -93,6 +95,9 @@ class PortalService
             schema: 'PortalToken',
             object: $tokenData,
         );
+
+        // Strip the hash from the returned object — callers must never see it.
+        unset($object['tokenHash']);
 
         return [
             'raw'    => $rawToken,
@@ -116,10 +121,16 @@ class PortalService
     {
         $objectService = $this->getObjectService();
 
+        // Use the token prefix to narrow candidates to ≈1 before running bcrypt.
+        $prefix = substr($rawToken, 0, 12);
+
         $tokens = $objectService->getObjects(
             register: 'shillinq',
             schema: 'PortalToken',
-            filters: ['isActive' => true],
+            filters: [
+                'isActive'    => true,
+                'tokenPrefix' => $prefix,
+            ],
         );
 
         $now = new \DateTimeImmutable();
@@ -132,7 +143,9 @@ class PortalService
                 }
             }
 
-            if (password_verify($rawToken, $token['tokenHash']) === true) {
+            if (empty($token['tokenHash']) === false
+                && password_verify($rawToken, $token['tokenHash']) === true
+            ) {
                 $objectService->updateObject(
                     register: 'shillinq',
                     schema: 'PortalToken',
@@ -140,9 +153,12 @@ class PortalService
                     object: ['lastUsedAt' => $now->format('c')],
                 );
 
+                // Strip hash so callers never hold it in memory unnecessarily.
+                unset($token['tokenHash']);
+
                 return $token;
             }
-        }
+        }//end foreach
 
         return null;
     }//end validateToken()

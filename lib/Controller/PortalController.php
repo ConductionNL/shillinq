@@ -167,7 +167,7 @@ class PortalController extends Controller
     /**
      * Generate a new portal token (admin only).
      *
-     * @NoCSRFRequired
+     * @AdminRequired
      *
      * @return JSONResponse
      *

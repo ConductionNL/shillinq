@@ -38,6 +38,13 @@ use OCP\IRequest;
  */
 class BulkActionController extends Controller
 {
+
+    /**
+     * Schemas that may be targeted by bulk operations.
+     *
+     * @var array<string>
+     */
+    private const ALLOWED_SCHEMAS = ['Invoice', 'ExpenseClaim', 'Payment', 'AutomationRule'];
     /**
      * Constructor for BulkActionController.
      *
@@ -67,6 +74,10 @@ class BulkActionController extends Controller
      */
     public function approve(string $schema): JSONResponse
     {
+        if (in_array($schema, self::ALLOWED_SCHEMAS, true) === false) {
+            return new JSONResponse(['error' => 'Schema not permitted for bulk operations'], 400);
+        }
+
         $ids = $this->request->getParam('ids', []);
 
         if (empty($ids) === true) {
@@ -95,6 +106,10 @@ class BulkActionController extends Controller
      */
     public function delete(string $schema): JSONResponse
     {
+        if (in_array($schema, self::ALLOWED_SCHEMAS, true) === false) {
+            return new JSONResponse(['error' => 'Schema not permitted for bulk operations'], 400);
+        }
+
         $ids = $this->request->getParam('ids', []);
 
         if (empty($ids) === true) {
@@ -123,6 +138,10 @@ class BulkActionController extends Controller
      */
     public function assign(string $schema): JSONResponse
     {
+        if (in_array($schema, self::ALLOWED_SCHEMAS, true) === false) {
+            return new JSONResponse(['error' => 'Schema not permitted for bulk operations'], 400);
+        }
+
         $ids        = $this->request->getParam('ids', []);
         $assigneeId = $this->request->getParam('assigneeId');
 

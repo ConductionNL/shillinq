@@ -50,11 +50,11 @@ class AnalyticsService
     }//end __construct()
 
     /**
-     * Get the current value, previous value, and trend for a KPI metric.
+     * Get the current value and trend availability for a KPI metric.
      *
      * @param string $metricKey The metric identifier
      *
-     * @return array{current: float, previous: float, trend: string}
+     * @return array{current: float, previous: float|null, trend: string|null, trendAvailable: bool}
      *
      * @spec openspec/changes/general/tasks.md#task-11.2
      */
@@ -114,13 +114,11 @@ class AnalyticsService
             }
         }
 
-        $previous = $this->getPreviousPeriodValue(metricKey: 'total_receivables');
-        $trend    = $this->calculateTrend(current: $current, previous: $previous);
-
         return [
-            'current'  => $current,
-            'previous' => $previous,
-            'trend'    => $trend,
+            'current'        => $current,
+            'previous'       => null,
+            'trend'          => null,
+            'trendAvailable' => false,
         ];
     }//end computeTotalReceivables()
 
@@ -152,13 +150,11 @@ class AnalyticsService
             }
         }
 
-        $previous = $this->getPreviousPeriodValue(metricKey: 'overdue_invoices');
-        $trend    = $this->calculateTrend(current: $current, previous: $previous);
-
         return [
-            'current'  => $current,
-            'previous' => $previous,
-            'trend'    => $trend,
+            'current'        => $current,
+            'previous'       => null,
+            'trend'          => null,
+            'trendAvailable' => false,
         ];
     }//end computeOverdueInvoices()
 
@@ -184,13 +180,11 @@ class AnalyticsService
             $current += (float) ($payment['amount'] ?? 0);
         }
 
-        $previous = $this->getPreviousPeriodValue(metricKey: 'cash_position');
-        $trend    = $this->calculateTrend(current: $current, previous: $previous);
-
         return [
-            'current'  => $current,
-            'previous' => $previous,
-            'trend'    => $trend,
+            'current'        => $current,
+            'previous'       => null,
+            'trend'          => null,
+            'trendAvailable' => false,
         ];
     }//end computeCashPosition()
 
@@ -208,46 +202,13 @@ class AnalyticsService
     private function computeCustomKpi(string $metricKey): array
     {
         return [
-            'current'  => 0.0,
-            'previous' => 0.0,
-            'trend'    => 'neutral',
+            'current'        => 0.0,
+            'previous'       => null,
+            'trend'          => null,
+            'trendAvailable' => false,
         ];
     }//end computeCustomKpi()
 
-    /**
-     * Get the previous period value for a metric (placeholder for comparison).
-     *
-     * @param string $metricKey The metric identifier
-     *
-     * @return float The previous period value
-     *
-     * @psalm-suppress UnusedParam
-     */
-    private function getPreviousPeriodValue(string $metricKey): float
-    {
-        return 0.0;
-    }//end getPreviousPeriodValue()
-
-    /**
-     * Calculate trend direction from current and previous values.
-     *
-     * @param float $current  The current value
-     * @param float $previous The previous value
-     *
-     * @return string 'up', 'down', or 'neutral'
-     */
-    private function calculateTrend(float $current, float $previous): string
-    {
-        if ($current > $previous) {
-            return 'up';
-        }
-
-        if ($current < $previous) {
-            return 'down';
-        }
-
-        return 'neutral';
-    }//end calculateTrend()
 
     /**
      * Run the debtors ageing report.
