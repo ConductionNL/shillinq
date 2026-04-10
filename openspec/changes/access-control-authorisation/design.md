@@ -24,7 +24,7 @@ Browser (Vue 2.7 + Pinia)
                             ├─ PurchasingLimitService
                             ├─ DelegationService
                             ├─ RecertificationService
-                            └─ AuditLogService
+                            └─ OpenRegister audit trail (built-in)
                                     │
                                     └─ OpenRegister ObjectService
 ```
@@ -177,7 +177,7 @@ Implements `OCP\AppFramework\Middleware`. On every Shillinq OCS request:
 1. Resolves the requesting Nextcloud user to a `User` object (cached).
 2. Checks `isActive`; returns 403 if false.
 3. Evaluates the required minimum role level for the endpoint (defined via route annotation `@RequiresRoleLevel(60)`).
-4. Writes an `AccessControl` audit event via `AuditLogService` regardless of outcome.
+4. Writes an `AccessControl` audit event — OpenRegister automatically tracks all object changes via its built-in audit trail. Do NOT build a custom AuditLogService.
 
 ### `lib/Service/FieldSecurityService.php`
 - `filterResponse(array $object, string $schemaName, string $userId): array`
@@ -196,9 +196,10 @@ Implements `OCP\AppFramework\Middleware`. On every Shillinq OCS request:
 - Validates `end > start`; creates `AccessRight` object in OpenRegister.
 - Dispatches Nextcloud notification to grantee and admin.
 
-### `lib/Service/AuditLogService.php`
-- `log(string $action, string $resourceType, ?string $resourceId, string $result, ?array $details = null): void`
-- Creates `AccessControl` object via `ObjectService`. Fire-and-forget; errors are logged to Nextcloud log but do not interrupt the primary request.
+### Audit Trail (platform-provided — do NOT build custom)
+Access events are automatically tracked by OpenRegister's built-in audit trail on every
+object mutation. View history via `CnObjectSidebar` → `CnAuditTrailTab`. Do NOT create
+a custom AuditLogService or AccessControl audit schema.
 
 ### `lib/BackgroundJob/DelegationExpiryJob.php`
 Extends `OC\BackgroundJob\TimedJob` (runs every 5 minutes). Queries all `AccessRight` objects where `isActive: true` and `endDate < now`. Sets each to `isActive: false`, writes an audit event, and dispatches notifications.
@@ -323,7 +324,7 @@ $this->seedObject('accessControl', 'resourceId', 'seed-login-001', [
 - `lib/Service/FieldSecurityService.php`
 - `lib/Service/PurchasingLimitService.php`
 - `lib/Service/DelegationService.php`
-- `lib/Service/AuditLogService.php`
+- `lib/Service/OpenRegister audit trail (built-in).php`
 - `lib/Service/RecertificationService.php`
 - `lib/Controller/RoleController.php`
 - `lib/Controller/TeamController.php`

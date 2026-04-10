@@ -20,8 +20,7 @@ Browser (Vue 2.7 + Pinia)
             └─ PHP Services
                     ├─ CatalogSearchService
                     ├─ OrderLimitService
-                    ├─ ThreeWayMatchingService
-                    └─ CatalogImportService
+                    └─ ThreeWayMatchingService
             │
             └─ Background Jobs
                     └─ OverdueDeliveryJob  (daily)
@@ -206,7 +205,7 @@ Browser (Vue 2.7 + Pinia)
 | `CatalogSearchService` | Full-text search across CatalogItem + Product + Catalog; applies active-catalog and active-product filters; supports category and supplier facets |
 | `OrderLimitService` | Reads configurable per-user ordering limit from AppSettings; compares basket total; returns whether the order requires approval routing |
 | `ThreeWayMatchingService` | For each PurchaseOrderLine, compares `quantity` vs `receivedQuantity` (from GoodsReceiptLines) and `invoicedQuantity` (from linked invoice lines); sets `matchStatus` accordingly; returns a discrepancy report |
-| `CatalogImportService` | Parses CSV upload (Product SKU, unit price, MOQ, lead time); resolves Product by SKU; upserts CatalogItems; returns per-row validation errors |
+| ~~CatalogImportService~~ | **Removed** — CSV import is provided by OpenRegister's `CnMassImportDialog`. Do NOT build a custom import service. Schema validation handles per-row errors automatically. |
 
 ### Background Jobs
 
@@ -262,7 +261,7 @@ src/
 │   ├── OrderBasketPanel.vue              (floating basket widget, item count badge)
 │   ├── ThreeWayMatchingPanel.vue         (match status table embedded in PO detail)
 │   ├── QuoteComparisonTable.vue          (side-by-side quote table for RFQ detail)
-│   └── CatalogImportPanel.vue            (CSV upload + validation error display)
+│   └── Use CnMassImportDialog from @conduction/nextcloud-vue — do NOT build custom import UI
 └── store/modules/
     ├── productCategory.js                (createObjectStore('productCategory'))
     ├── product.js                        (createObjectStore('product'))

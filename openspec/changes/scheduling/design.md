@@ -459,4 +459,4 @@ src/
 - `TenderDeadline` `status: met` transitions are append-only (no reverting to `pending`) to preserve the legal audit trail
 - `ScheduledInvoice.recipientEmail` is validated against the linked invoice's debtor email before scheduling to prevent misdirected dispatch
 - Payment reminder emails are sent via Nextcloud's `IMailer`; no third-party email service is introduced
-- `DigitalLockbox.auditLog` is written by the server; clients cannot POST to the auditLog property directly
+- `DigitalLockbox.auditLog` is written by the server; Audit trail is provided by OpenRegister automatically — do NOT add auditLog as a schema property
