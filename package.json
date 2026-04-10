@@ -32,7 +32,8 @@
     "vue-router": "^3.6.5"
   },
   "overrides": {
-    "libxmljs2": "^0.37.0"
+    "libxmljs2": "^0.37.0",
+    "axios": ">=1.15.0"
   },
   "devDependencies": {
     "@cyclonedx/cyclonedx-npm": "^4.2.1",
