@@ -3,8 +3,6 @@
   "title": "Core Platform",
   "app": "shillinq",
   "repo": "https://github.com/ConductionNL/shillinq",
-  "depends_on": [
-    "[]"
-  ],
+  "depends_on": [],
   "issue": "https://github.com/ConductionNL/shillinq/issues/64"
 }
