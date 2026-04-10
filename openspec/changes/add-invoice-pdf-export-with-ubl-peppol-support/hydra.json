@@ -1,11 +1,9 @@
 {
   "spec_slug": "add-invoice-pdf-export-with-ubl-peppol-support",
-  "title": "Add Invoice PDF Export with UBL/Peppol Support — Shillinq",
+  "title": "Add invoice PDF export with UBL/Peppol support",
   "app": "shillinq",
   "repo": "https://github.com/ConductionNL/shillinq",
-  "depends_on": [
-    "core",
-    "accounts-payable-receivable"
-  ],
-  "issue": "https://github.com/ConductionNL/shillinq/issues/61"
+  "depends_on": [],
+  "issue": "https://github.com/ConductionNL/shillinq/issues/61",
+  "source": "issue"
 }
