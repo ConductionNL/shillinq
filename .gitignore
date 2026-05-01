@@ -88,3 +88,8 @@ openspec/test-site-results/**/*.jpg
 openspec/test-site-results/**/*.jpeg
 openspec/test-site-results/**/*.gif
 openspec/test-site-results/**/*.webp
+
+# SBOM is published as release asset (see SECURITY.md), not stored in repo
+sbom.cdx.json
+bom-php.cdx.json
+bom-npm.cdx.json
