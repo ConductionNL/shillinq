@@ -52,6 +52,22 @@ webpackConfig.module = {
 			test: /\.css$/,
 			use: ['style-loader', 'css-loader'],
 		},
+		{
+			// SCSS used by the aliased @conduction/nextcloud-vue components
+			// (CnCard, CnDataTable, CnAppRoot internals, …) when building
+			// against the monorepo-dev source tree.
+			test: /\.scss$/,
+			use: ['style-loader', 'css-loader', 'sass-loader'],
+		},
+		{
+			// Image assets referenced by library components (e.g. Leaflet
+			// marker icons pulled in transitively).
+			test: /\.(png|jpe?g|gif|svg)$/,
+			type: 'asset/resource',
+			generator: {
+				filename: 'img/[name][ext]',
+			},
+		},
 	],
 }
 
