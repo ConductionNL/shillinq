@@ -93,3 +93,16 @@ openspec/test-site-results/**/*.webp
 sbom.cdx.json
 bom-php.cdx.json
 bom-npm.cdx.json
+
+# Docusaurus documentation site (docs/)
+/docs/node_modules/
+/docs/build/
+/docs/.docusaurus/
+/docs/.cache-loader/
+# Generated translation files — re-enable when a Dutch translation pass ships
+/docs/i18n/nl/
+
+# Playwright (tests/e2e/)
+/test-results/
+/playwright-report/
+/playwright/.cache/
