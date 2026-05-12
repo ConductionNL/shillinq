@@ -69,11 +69,13 @@ export default {
 .form-group {
 	margin-bottom: 12px;
 }
+
 .form-group label {
 	display: block;
 	margin-bottom: 4px;
 	font-weight: 600;
 }
+
 .success-message {
 	color: var(--color-success);
 	margin-bottom: 8px;
