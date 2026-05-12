@@ -1,0 +1,57 @@
+{
+	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest.schema.json",
+	"version": "1.0.0",
+	"dependencies": ["openregister"],
+	"menu": [
+		{ "id": "Dashboard", "label": "Dashboard", "icon": "icon-category-dashboard", "route": "Dashboard", "order": 10 },
+		{ "id": "Documentation", "label": "Documentation", "icon": "icon-info", "href": "https://conduction.nl", "section": "settings", "order": 90 },
+		{ "id": "Settings", "label": "Settings", "icon": "icon-settings", "route": "Settings", "section": "settings", "order": 99 }
+	],
+	"pages": [
+		{
+			"id": "Dashboard",
+			"route": "/",
+			"type": "dashboard",
+			"title": "Dashboard",
+			"config": {
+				"widgets": [
+					{ "id": "open-items", "title": "Open items", "type": "stats-block", "iconClass": "icon-folder", "props": { "count": 12, "countLabel": "sample", "variant": "primary" } },
+					{ "id": "due-this-week", "title": "Due this week", "type": "stats-block", "iconClass": "icon-calendar", "props": { "count": 5, "countLabel": "sample", "variant": "warning" } },
+					{ "id": "completed", "title": "Completed", "type": "stats-block", "iconClass": "icon-checkmark", "props": { "count": 48, "countLabel": "sample", "variant": "success" } },
+					{ "id": "team-members", "title": "Team members", "type": "stats-block", "iconClass": "icon-group", "props": { "count": 7, "countLabel": "sample", "variant": "default" } }
+				],
+				"layout": [
+					{ "id": "open-items",     "widgetId": "open-items",     "gridX": 0, "gridY": 0, "gridWidth": 3, "gridHeight": 2, "showTitle": true },
+					{ "id": "due-this-week",  "widgetId": "due-this-week",  "gridX": 3, "gridY": 0, "gridWidth": 3, "gridHeight": 2, "showTitle": true },
+					{ "id": "completed",      "widgetId": "completed",      "gridX": 6, "gridY": 0, "gridWidth": 3, "gridHeight": 2, "showTitle": true },
+					{ "id": "team-members",   "widgetId": "team-members",   "gridX": 9, "gridY": 0, "gridWidth": 3, "gridHeight": 2, "showTitle": true }
+				]
+			}
+		},
+		{
+			"id": "Settings",
+			"route": "/settings",
+			"type": "settings",
+			"title": "Settings",
+			"config": {
+				"saveEndpoint": "/index.php/apps/shillinq/api/settings",
+				"sections": [
+					{
+						"id": "version",
+						"title": "Version Information",
+						"widgets": [
+							{ "type": "version-info" }
+						]
+					},
+					{
+						"id": "configuration",
+						"title": "Configuration",
+						"fields": [
+							{ "key": "register", "label": "Register", "type": "string", "help": "OpenRegister register ID" }
+						]
+					}
+				]
+			}
+		}
+	]
+}
