@@ -3,14 +3,16 @@
 // Copyright (C) 2026 Conduction B.V.
 //
 // validate-manifest.js — schema-validates src/manifest.json against the
-// @conduction/nextcloud-vue v1.1.0 app-manifest schema using Ajv.
+// @conduction/nextcloud-vue app-manifest schema using Ajv, then runs a
+// manifest-internal consistency check (unique page ids; every menu.route
+// points at an existing page id — the ADR-024/ADR-029 reachability gate).
 //
 // Usage:
 //   node tests/validate-manifest.js
 //
 // Exit codes:
-//   0 — manifest validates against the schema with zero errors
-//   1 — manifest fails validation (or schema/manifest cannot be loaded)
+//   0 — manifest validates against the schema AND is internally consistent
+//   1 — manifest fails validation/consistency (or schema/manifest cannot be loaded)
 //
 // Schema lookup order (first hit wins):
 //   1. Env var APP_MANIFEST_SCHEMA — explicit absolute path to a schema JSON
@@ -125,6 +127,53 @@ function structuralLint(manifest) {
 	return errors
 }
 
+/**
+ * Manifest-internal consistency checks (beyond JSON-Schema validation):
+ * every `pages[].id` is unique, and every `menu[]` entry that declares a
+ * `route` points at an existing `pages[].id`. `routesFromManifest()` in
+ * `src/main.js` turns each page into a vue-router route named after its
+ * id, and `CnAppNav` navigates by route name — a `menu.route` with no
+ * matching page is a dead link. ADR-024 / ADR-029 reachability gate.
+ *
+ * @param {object} manifest The parsed manifest.
+ * @return {Array<string>} Human-readable error messages (empty == OK).
+ */
+function consistencyCheck(manifest) {
+	const errors = []
+	const pageIds = new Set()
+	for (let i = 0; i < (manifest.pages || []).length; i++) {
+		const id = manifest.pages[i] && manifest.pages[i].id
+		if (!id) continue
+		if (pageIds.has(id)) errors.push(`pages[${i}].id: duplicate "${id}"`)
+		pageIds.add(id)
+	}
+	for (let i = 0; i < (manifest.menu || []).length; i++) {
+		const entry = manifest.menu[i] || {}
+		if (entry.route && !pageIds.has(entry.route)) {
+			errors.push(`menu[${i}].route: "${entry.route}" has no matching pages[].id`)
+		}
+	}
+	return errors
+}
+
+/**
+ * Run the consistency check and exit 0/1 accordingly. Called from every
+ * path where schema/structural validation already passed.
+ *
+ * @param {object} manifest The parsed manifest.
+ * @return {void}
+ */
+function finishOk(manifest) {
+	const errors = consistencyCheck(manifest)
+	if (errors.length === 0) {
+		console.log('[validate-manifest] consistency check: PASS (0 issues)')
+		process.exit(0)
+	}
+	console.error('[validate-manifest] consistency check: FAIL')
+	for (const err of errors) console.error(`  - ${err}`)
+	process.exit(1)
+}
+
 function main() {
 	if (!fs.existsSync(MANIFEST_PATH)) {
 		console.error(`[validate-manifest] manifest not found: ${MANIFEST_PATH}`)
@@ -142,7 +191,8 @@ function main() {
 		const errors = structuralLint(manifest)
 		if (errors.length === 0) {
 			console.log('[validate-manifest] structural lint: PASS (0 issues)')
-			process.exit(0)
+			finishOk(manifest)
+			return
 		}
 		console.error('[validate-manifest] structural lint: FAIL')
 		for (const err of errors) console.error(`  - ${err}`)
@@ -157,7 +207,8 @@ function main() {
 		const errors = structuralLint(manifest)
 		if (errors.length === 0) {
 			console.log('[validate-manifest] structural lint (no Ajv): PASS (0 issues)')
-			process.exit(0)
+			finishOk(manifest)
+			return
 		}
 		console.error('[validate-manifest] structural lint (no Ajv): FAIL')
 		for (const err of errors) console.error(`  - ${err}`)
@@ -170,7 +221,8 @@ function main() {
 	const ok = validate(manifest)
 	if (ok) {
 		console.log('[validate-manifest] Ajv validation: PASS (0 errors)')
-		process.exit(0)
+		finishOk(manifest)
+		return
 	}
 	console.error('[validate-manifest] Ajv validation: FAIL')
 	for (const err of validate.errors || []) {
