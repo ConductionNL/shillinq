@@ -97,6 +97,14 @@ const config = createConfig({
      omitted (we can wire it in once tests/e2e produces the OAS). The
      pill auto-resolves to 'Stable · v0.1.0' from appinfo/info.xml. */
   navbar: {
+    /* Override the preset's default `img/logo.svg` (which it would
+       silently overlay with its own Conduction-avatar bundled asset).
+       The shillinq asset is shipped under a non-colliding filename so
+       Docusaurus's staticDirectories merge doesn't shadow it. */
+    logo: {
+      alt: 'Shillinq avatar',
+      src: 'img/app-logo.svg',
+    },
     items: [
       {
         type: 'docSidebar',
