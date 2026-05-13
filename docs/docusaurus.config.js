@@ -31,6 +31,13 @@ const config = createConfig({
   organizationName: 'ConductionNL',
   projectName: 'shillinq',
 
+  /* `repoUrl` (preset 2.7.0+) sets the target of the brand navbar's
+     GitHub icon. The "Stable · v{x.y.z}" pill in the navbar reads
+     `customFields.appVersion`, which the preset auto-populates from
+     `appinfo/info.xml` at build time (the canonical Nextcloud-app
+     version source). */
+  repoUrl: 'https://github.com/ConductionNL/shillinq',
+
   /* English-only for now (ADR-030). The brand preset ships a
      multi-locale i18n block (nl/en/de/fr), but enabling locales
      without translated markdown breaks SSR on doc pages — stale
@@ -75,10 +82,20 @@ const config = createConfig({
 
   themes: [BRAND_THEME, '@docusaurus/theme-mermaid'],
 
-  /* Brand navbar provides locale dropdown + GitHub by default; we
-     replace items[] with shillinq's own (Documentation sidebar link,
-     shillinq GitHub link). Object.assign in createConfig is shallow,
-     so items: replaces wholesale. */
+  /* Brand navbar items.
+
+     The preset 2.7.0 navbar swizzle renders three brand-specific item
+     types alongside the regular docSidebar / link / localeDropdown:
+
+       type: 'custom-github'       icon-only GitHub mark
+       type: 'custom-apiDocs'      icon + 'API Documentation' (defaults to /api)
+       type: 'custom-versionPill'  'Stable · v{x.y.z}' chip, reads info.xml
+
+     The `custom-` prefix is the Docusaurus convention for theme-
+     defined types that bypass the strict themeConfig validator.
+     Shillinq doesn't ship an OpenAPI reference yet, so apiDocs is
+     omitted (we can wire it in once tests/e2e produces the OAS). The
+     pill auto-resolves to 'Stable · v0.1.0' from appinfo/info.xml. */
   navbar: {
     items: [
       {
@@ -87,9 +104,10 @@ const config = createConfig({
         position: 'left',
         label: 'Documentation',
       },
+      { type: 'custom-versionPill', position: 'right' },
       {
+        type: 'custom-github',
         href: 'https://github.com/ConductionNL/shillinq',
-        label: 'GitHub',
         position: 'right',
       },
       { type: 'localeDropdown', position: 'right' },
