@@ -1,11 +1,11 @@
 {
-  "label": "Tutorials",
+  "label": "Guides",
   "position": 2,
   "collapsible": true,
   "collapsed": false,
   "link": {
     "type": "generated-index",
-    "title": "Shillinq tutorials",
+    "title": "Shillinq guides",
     "description": "Step-by-step walkthroughs for everyday Shillinq tasks. The user track covers individual bookkeeping, invoicing, and procurement workflows; the admin track covers org-wide configuration like the chart of accounts and supplier approval chains."
   }
 }

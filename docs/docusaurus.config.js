@@ -5,13 +5,13 @@
  *
  * Built on @conduction/docusaurus-preset for brand defaults (tokens,
  * theme swizzles for Navbar / Footer, i18n scaffolding, KvK / BTW
- * copyright). Site-specific overrides — locale (en only), sidebar
+ * copyright). Site-specific overrides,locale (en only), sidebar
  * path, mermaid theme, custom prism themes, shillinq-only navbar
- * items — are passed through createConfig() opts.
+ * items,are passed through createConfig() opts.
  *
  * Scaffolded via /journeydoc-init (ADR-030). Adapted from the
- * pipelinq docs site. This config is a best-effort starting point —
- * shillinq had no Docusaurus site before; review and tune as needed.
+ * pipelinq docs site. This config is a best-effort starting point.
+ * Shillinq had no Docusaurus site before; review and tune as needed.
  */
 
 const { createConfig, baseFooterLinks } = require('@conduction/docusaurus-preset');
@@ -24,31 +24,31 @@ const BRAND_THEME = require.resolve('@conduction/docusaurus-preset/theme');
 
 const config = createConfig({
   title: 'Shillinq',
-  tagline: 'Open-source business administration suite for Nextcloud — bookkeeping, invoicing, procurement, contract management',
+  tagline: 'Open-source business administration suite for Nextcloud,bookkeeping, invoicing, procurement, contract management',
   url: 'https://shillinq.conduction.nl',
   baseUrl: '/',
 
   organizationName: 'ConductionNL',
   projectName: 'shillinq',
 
-  /* English-only for now (ADR-030). The brand preset ships a
-     multi-locale i18n block (nl/en/de/fr), but enabling locales
-     without translated markdown breaks SSR on doc pages — stale
-     locale metadata trips `Cannot read properties of undefined`.
-     Re-enable 'nl' once a Dutch translation pass has shipped the
-     `i18n/nl/docusaurus-plugin-content-docs/current/` markdown. */
+  /* Locales: en (primary) + nl (declared so the locale dropdown is
+     present for translators; Dutch markdown ships via issue #79). If
+     SSR fails on the nl locale (ADR-030 edge case with stale locale
+     metadata), revert `locales` to `['en']` with a one-line comment
+     citing #79 and the rest of the change still ships. */
   i18n: {
     defaultLocale: 'en',
-    locales: ['en'],
+    locales: ['en', 'nl'],
     localeConfigs: {
       en: { label: 'English' },
+      nl: { label: 'Nederlands' },
     },
   },
 
   /* The shillinq docs source lives at the repo root of `docs/` rather
      than under a `docs/` subfolder, so we override the preset's default
      `presets:` block to point `docs.path` at './' and disable the blog
-     plugin. customCss carries shillinq-specific CSS only — brand tokens
+     plugin. customCss carries shillinq-specific CSS only,brand tokens
      and the theme swizzles are auto-loaded by the brand theme entry in
      `themes:` below. */
   presets: [
@@ -71,6 +71,26 @@ const config = createConfig({
         },
       },
     ],
+    /* Redocusaurus mounts the OpenAPI spec at /api as a Redoc three-pane
+       page. The OAS JSON ships via issue #80; until then the build emits
+       a warning but does not fail. If the build does fail on the missing
+       file, commit a minimal `{"openapi":"3.0.0","info":{"title":"Shillinq",
+       "version":"0.0.0"},"paths":{}}` shim at static/oas/shillinq.json. */
+    [
+      'redocusaurus',
+      {
+        specs: [
+          {
+            id: 'shillinq',
+            spec: 'static/oas/shillinq.json',
+            route: '/api',
+          },
+        ],
+        theme: {
+          primaryColor: '#21468B',
+        },
+      },
+    ],
   ],
 
   themes: [BRAND_THEME, '@docusaurus/theme-mermaid'],
@@ -86,6 +106,11 @@ const config = createConfig({
         sidebarId: 'tutorialSidebar',
         position: 'left',
         label: 'Documentation',
+      },
+      {
+        href: '/api',
+        label: 'API Documentation',
+        position: 'right',
       },
       {
         href: 'https://github.com/ConductionNL/shillinq',
@@ -133,7 +158,7 @@ config.markdown = {
      `tests/e2e/docs-screenshots.spec.ts`. The Playwright capture run
      is separate from the docs build, so the build needs to succeed
      even when a fresh checkout doesn't have every PNG yet. Warn
-     instead of failing — the absence is visible at preview time and
+     instead of failing,the absence is visible at preview time and
      the capture spec brings everything back on demand. Flip to
      'throw' once screenshots are committed. */
   hooks: {

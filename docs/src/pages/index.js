@@ -7,7 +7,7 @@
  *
  * Written as .js (not .mdx) because the docs site has the docs plugin
  * pointed at `path: './'`, and an MDX file in src/pages/ trips the
- * MDX-ESM parser even with the docs plugin's `src/**` exclude — likely
+ * MDX-ESM parser even with the docs plugin's `src/**` exclude,likely
  * a quirk of how mdx-loader's micromark stack reuses parser state
  * across files in this Docusaurus 3.10 + this preset combination.
  * Authoring the page in JSX keeps the same component composition.
@@ -16,7 +16,7 @@
  * variant (1.5.1), so the right-side illustration is a small inline
  * token-painted "financials workspace" mock that follows the AppMock
  * visual conventions (white 16:10 frame, cobalt chrome, one orange
- * accent, tokens only — no images, no real text). Swap in
+ * accent, tokens only,no images, no real text). Swap in
  * `<AppMock app="shillinq" />` once a variant ships in the preset.
  */
 
@@ -32,7 +32,7 @@ import {
    line glyph (the preset's `.titleIcon svg` forces `fill: none;
    stroke: currentColor`), so this is a line-drawing of the
    file-invoice-dollar concept from img/app.svg rather than the filled
-   Font Awesome compound path — the same way OpenRegister's hero icon
+   Font Awesome compound path,the same way OpenRegister's hero icon
    is the cylinder *outline* and Pipelinq's is a stroke polyline. */
 const SHILLINQ_ICON = (
   <svg viewBox="0 0 24 24">
@@ -48,7 +48,7 @@ const SHILLINQ_ICON = (
 const TAGLINE = (
   <>
     Open-source business administration on{' '}
-    <span className="next-blue">Nextcloud</span> — bookkeeping and
+    <span className="next-blue">Nextcloud</span>,bookkeeping and
     general ledger, sales invoicing &amp; e-invoicing (UBL / Peppol),
     procurement and approval chains, contract lifecycle, bank
     reconciliation, VAT reporting, and financial statements. For
@@ -57,7 +57,7 @@ const TAGLINE = (
 );
 
 /* ------------------------------------------------------------------ *
- * Inline app illustration — a token-painted "financials workspace"
+ * Inline app illustration,a token-painted "financials workspace"
  * screen for the hero's right column. Mirrors the AppMock framing
  * (white 16:10 card, cobalt border, faux topbar + left nav + content)
  * without depending on a preset variant that doesn't exist yet.
@@ -349,7 +349,7 @@ function ShillinqMock() {
 }
 
 /* ------------------------------------------------------------------ *
- * Mock "widget panel" components — coloured-row lists painted with
+ * Mock "widget panel" components,coloured-row lists painted with
  * design tokens only, mirroring the panels on the openregister and
  * pipelinq landings (no images, no real text).
  * ------------------------------------------------------------------ */
@@ -571,7 +571,7 @@ const WIDGETS = [
   },
   {
     title: 'Outstanding receivables',
-    desc: 'Aged debtor buckets straight off the ledger — current through 60-days-plus. The number you actually chase, not a nightly export.',
+    desc: 'Aged debtor buckets straight off the ledger,current through 60-days-plus. The number you actually chase, not a nightly export.',
     panel: <ReceivablesPanel />,
   },
   {
@@ -585,7 +585,7 @@ export default function Home() {
   return (
     <Layout
       title="Shillinq"
-      description="Open-source business administration on Nextcloud — bookkeeping, e-invoicing, procurement, contracts, bank reconciliation, VAT and financial statements."
+      description="Open-source business administration on Nextcloud,bookkeeping, e-invoicing, procurement, contracts, bank reconciliation, VAT and financial statements."
     >
       <main className="marketing-page">
         <DetailHero
@@ -614,7 +614,7 @@ export default function Home() {
         <WidgetShelf
           eyebrow="Widgets we ship"
           title="The books on the dashboard the team already opens."
-          lede="Install Shillinq and these widgets show up on the home screen. Recent invoices first, outstanding receivables next, cash position below — bookkeeping, e-invoicing, and reconciliation all behind them."
+          lede="Install Shillinq and these widgets show up on the home screen. Recent invoices first, outstanding receivables next, cash position below,bookkeeping, e-invoicing, and reconciliation all behind them."
           widgets={WIDGETS}
         />
       </main>

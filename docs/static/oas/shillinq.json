@@ -1,0 +1,15 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Shillinq API",
+    "version": "0.0.0",
+    "description": "Placeholder OpenAPI specification. The real spec lands via https://github.com/ConductionNL/shillinq/issues/80 and replaces this file. The /api Redoc page is wired and ready to render once the real spec ships."
+  },
+  "servers": [
+    {
+      "url": "https://shillinq.example.com/index.php/apps/shillinq/api",
+      "description": "Production Shillinq Nextcloud instance"
+    }
+  ],
+  "paths": {}
+}
