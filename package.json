@@ -13,6 +13,9 @@
     "lint": "eslint src",
     "lint-fix": "npm run lint -- --fix",
     "check:manifest": "node tests/validate-manifest.js",
+    "test:e2e": "playwright test",
+    "test:e2e:docs": "playwright test --project docs-capture",
+    "test:e2e:install": "playwright install chromium",
     "stylelint": "stylelint src/**/*.vue src/**/*.scss src/**/*.css",
     "stylelint-fix": "stylelint src/**/*.vue src/**/*.scss src/**/*.css --fix"
   },
@@ -46,6 +49,7 @@
     "@nextcloud/eslint-config": "^8.4.1",
     "@nextcloud/stylelint-config": "^2.4.0",
     "@nextcloud/webpack-vue-config": "^6.0.1",
+    "@playwright/test": "^1.49.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "ajv": "^8.20.0",
