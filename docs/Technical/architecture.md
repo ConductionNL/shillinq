@@ -1,6 +1,29 @@
-# Shillinq — Architecture
+---
+sidebar_position: 1
+title: Architecture
+description: How Shillinq is built, Nextcloud-app on top of OpenRegister, schema-validated JSON objects, no custom database tables, Dutch government-accounting standards baked in.
+---
 
-Complete open-source business administration suite for freelancers, sole proprietors, SMBs, and corporations. Combines bookkeeping, invoicing, procurement, and contract management into one self-hosted solution on Nextcloud.Named after the shilling — one of the oldest and most widely used coins in European history, from the Roman solidus to the British shilling to the East African shilling still in use today.Shillinq covers:- Bookkeeping & general ledger (double-entry accounting)- Accounts payable & receivable- Sales invoicing & e-invoicing (UBL/Peppol)- Purchase orders & procurement workflows- Supplier management & approval chains- Contract lifecycle management (creation, renewal, obligations)- Bank reconciliation & payment matching- VAT/tax reporting & compliance- Financial statements (P&L, balance sheet, cash flow)- Budget planning & forecasting- Multi-currency support- Dutch government compliance (BBV, IV3, SiSa, DigiInkoop)
+# Architecture
+
+Shillinq is the complete open-source business administration suite for freelancers, sole proprietors, SMBs, and corporations. Bookkeeping, invoicing, procurement, and contract management run in one self-hosted Nextcloud workspace.
+
+Named after the shilling, one of the oldest and most widely used coins in European history. From the Roman solidus to the British shilling to the East African shilling still in use today.
+
+## What Shillinq covers
+
+- Bookkeeping and general ledger (double-entry accounting).
+- Accounts payable and receivable.
+- Sales invoicing and e-invoicing (UBL, Peppol, NLCIUS).
+- Purchase orders and procurement workflows.
+- Supplier management and approval chains.
+- Contract lifecycle management (creation, renewal, obligations).
+- Bank reconciliation and payment matching.
+- VAT and tax reporting, plus compliance.
+- Financial statements (P&L, balance sheet, cash flow).
+- Budget planning and forecasting.
+- Multi-currency support.
+- Dutch government compliance (BBV, IV3, SiSa, DigiInkoop).
 
 ## Standards
 
@@ -8,7 +31,7 @@ Complete open-source business administration suite for freelancers, sole proprie
 - **BBV**: Besluit Begroting en Verantwoording provincies en gemeenten (government-accounting)
 - **BW Boek 2 Titel 9**: Burgerlijk Wetboek Boek 2 Titel 9 - Jaarrekening (handelsrecht)
 - **DCAT**: Data Catalog Vocabulary (Openbaar en toegankelijk)
-- **DCAT-AP-NL**: Het Nederlandse applicatieprofiel op DCAT-AP ()
+- **DCAT-AP-NL**: Het Nederlandse applicatieprofiel op DCAT-AP
 - **DigiInkoop**: DigiInkoop e-Procurement (e-procurement)
 - **Fiscale bewaarplicht**: Fiscale bewaarplicht (AWR art. 52) (belastingrecht)
 - **Handelsregisterwet**: Handelsregisterwet 2007 (handelsrecht)
@@ -27,7 +50,7 @@ Complete open-source business administration suite for freelancers, sole proprie
 - **Wwft**: Wet ter voorkoming van witwassen en financieren van terrorisme (financieel-toezicht)
 - **XBRL**: eXtensible Business Reporting Language Dimensions (financial-reporting)
 
-## Feature Domains
+## Feature domains
 
 - Ai
 - Analytics
@@ -41,14 +64,14 @@ Complete open-source business administration suite for freelancers, sole proprie
 - Scheduling
 - Security
 
-## Architectural Decision Records
+## Architectural decision records
 
-- **Architecture — Shillinq** — see `openspec/architecture/`
-- **Data Storage — Shillinq** — see `openspec/architecture/`
-- **Deployment — Shillinq** — see `openspec/architecture/`
-- **Integration — Shillinq** — see `openspec/architecture/`
-- **Security — Shillinq** — see `openspec/architecture/`
+- **Architecture (Shillinq)**: see `openspec/architecture/`
+- **Data Storage (Shillinq)**: see `openspec/architecture/`
+- **Deployment (Shillinq)**: see `openspec/architecture/`
+- **Integration (Shillinq)**: see `openspec/architecture/`
+- **Security (Shillinq)**: see `openspec/architecture/`
 
-## Data Layer
+## Data layer
 
-All data stored via OpenRegister (JSON schema validated objects). No custom database tables.
+All data is stored via OpenRegister as JSON-schema validated objects. No custom database tables.

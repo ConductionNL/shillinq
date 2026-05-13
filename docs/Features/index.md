@@ -1,4 +1,14 @@
-# Shillinq — Feature Analysis
+---
+sidebar_position: 1
+title: Features
+description: Market research and feature roadmap for Shillinq, sourced from competitor analysis and tender data. The curated per-feature pages land via issue #78.
+---
+
+# Shillinq feature analysis
+
+:::note
+This page is the raw research feed from the market-intelligence pipeline. Curated feature pages with benefits, sub-features, and pairs-well-with cross-links land via [issue #78](https://github.com/ConductionNL/shillinq/issues/78).
+:::
 
 ## Competitors (20)
 
@@ -11,10 +21,10 @@
 | Akaunting | Open Source (GPLv3) | https://akaunting.com |
 | All in One Odoo PoS Printing Solution | Odoo POS Network Printer & USB Printing Solution | Proprietary | https://apps.odoo.com/apps/modules/19.0/cr_pos_network_printer_all_in_one |
 | AuditBoard | Proprietary | https://www.auditboard.com |
-| AutoEntry (Sage) | — | https://www.autoentry.com |
+| AutoEntry (Sage) | Proprietary | https://www.autoentry.com |
 | Avalara | Proprietary | https://www.avalara.com |
 | Axians iS2 Financien | Proprietary | https://www.axians.nl/oplossingen/financiele-software/ |
-| Basecone (Wolters Kluwer) | — | https://www.wolterskluwer.com/en/solutions/basecone |
+| Basecone (Wolters Kluwer) | Proprietary | https://www.wolterskluwer.com/en/solutions/basecone |
 | Bigcapital | Open Source (AGPLv3) | https://bigcapital.app |
 | Bill.com | proprietary | https://www.bill.com |
 | Booke.ai | Proprietary | https://booke.ai |

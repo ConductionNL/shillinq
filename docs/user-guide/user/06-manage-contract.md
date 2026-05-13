@@ -1,7 +1,7 @@
 ---
 sidebar_position: 6
 title: Manage a contract
-description: Create a supplier or customer contract — track obligations, get a heads-up before auto-renewal, and tie POs and invoices back to it.
+description: Create a supplier or customer contract, track obligations, get a heads-up before auto-renewal, and tie POs and invoices back to it.
 ---
 
 # Manage a contract
@@ -15,7 +15,7 @@ By the end the contract will be in Shillinq with its term, value cap, obligation
 ## Prerequisites
 
 - Shillinq open and the OpenRegister back end connected (see [Open Shillinq for the first time](01-first-launch.md)).
-- The right to manage contracts — contract role on the Shillinq instance.
+- The right to manage contracts, contract role on the Shillinq instance.
 - The counterparty exists as a **customer** or **supplier** record.
 - The signed contract document, ideally as a PDF.
 
@@ -23,23 +23,23 @@ By the end the contract will be in Shillinq with its term, value cap, obligation
 
 1. Open **Contracts** and click **New contract**. The contract form opens.
 
-   ![New contract form](/screenshots/tutorials/user/06-manage-contract-01.png)
+   ![New contract form](/screenshots/user-guide/user/06-manage-contract-01.png)
 
-2. Fill in the contract — **title**, **counterparty** (customer or supplier), **contract type** (framework, SaaS, service, lease, …), **start date**, **end date**, **value cap** (total amount Shillinq budgets against the contract), **payment terms**, **notice period in days**, and an **auto-renew** toggle. Drop the signed PDF onto the document slot.
+2. Fill in the contract, **title**, **counterparty** (customer or supplier), **contract type** (framework, SaaS, service, lease, …), **start date**, **end date**, **value cap** (total amount Shillinq budgets against the contract), **payment terms**, **notice period in days**, and an **auto-renew** toggle. Drop the signed PDF onto the document slot.
 
-   ![Contract header fields](/screenshots/tutorials/user/06-manage-contract-02.png)
+   ![Contract header fields](/screenshots/user-guide/user/06-manage-contract-02.png)
 
-3. Add **obligations**. Each obligation is a discrete thing one party must do — *"Monthly status report on the first working day"*, *"99.5% uptime SLA"*, *"Right to terminate for convenience with 30 days' notice"*. Set the obligation's **owner** (who in your org tracks it), **due cadence**, and any **evidence** the obligation requires.
+3. Add **obligations**. Each obligation is a discrete thing one party must do, *"Monthly status report on the first working day"*, *"99.5% uptime SLA"*, *"Right to terminate for convenience with 30 days' notice"*. Set the obligation's **owner** (who in your org tracks it), **due cadence**, and any **evidence** the obligation requires.
 
-   ![Obligation list on a contract](/screenshots/tutorials/user/06-manage-contract-03.png)
+   ![Obligation list on a contract](/screenshots/user-guide/user/06-manage-contract-03.png)
 
-4. Arm the **renewal reminder**. Shillinq computes the notice deadline (= contract end date − notice period) and schedules a reminder a configurable number of days before — typically twice the notice period — so the contract owner has time to decide *renew*, *renegotiate*, or *let it lapse*.
+4. Arm the **renewal reminder**. Shillinq computes the notice deadline (= contract end date − notice period) and schedules a reminder a configurable number of days before, typically twice the notice period, so the contract owner has time to decide *renew*, *renegotiate*, or *let it lapse*.
 
-   ![Renewal reminder configured](/screenshots/tutorials/user/06-manage-contract-04.png)
+   ![Renewal reminder configured](/screenshots/user-guide/user/06-manage-contract-04.png)
 
 5. Save. The contract appears in the **Contracts** list with its status (*Active*), the value cap and current burn-down (driven by POs / bills posted against the contract). New POs against this counterparty offer the contract on the **Contract** field; the burn-down updates live.
 
-   ![Contracts list with the new contract](/screenshots/tutorials/user/06-manage-contract-05.png)
+   ![Contracts list with the new contract](/screenshots/user-guide/user/06-manage-contract-05.png)
 
 ## Verification
 
@@ -50,15 +50,15 @@ The contract shows in **Contracts** with status *Active*, its value-cap burn-dow
 | Symptom | Fix |
 |---|---|
 | Renewal reminder doesn't fire | The contract's **notice period** or **end date** is empty; the reminder needs both. Notification delivery also needs the user's notification settings configured. |
-| Value-cap burn-down doesn't move | POs/bills aren't tagged with the contract — either back-tag them, or wait until users start picking the contract on new POs. |
+| Value-cap burn-down doesn't move | POs/bills aren't tagged with the contract, either back-tag them, or wait until users start picking the contract on new POs. |
 | Auto-renew flipped the contract to a new term unexpectedly | Auto-renew runs at end-date minus notice-period; to prevent renewal, terminate before that. |
-| Obligation owner gets no reminders | Same as renewal — the obligation needs a cadence and the owner needs notification settings on. |
+| Obligation owner gets no reminders | Same as renewal, the obligation needs a cadence and the owner needs notification settings on. |
 | Cannot edit the contract after sign-off | Approved contracts are version-locked; create an **amendment** (a child contract version) rather than editing in place. |
 | Screenshots may be missing | App not yet installed in the test environment; rerun `npm run test:e2e:docs` once it is. |
 
 ## Reference
 
-- [Create a purchase order](04-create-purchase-order.md) — POs against a supplier draw on the contract's value cap.
-- [Read your financial statements](08-financial-statements.md) — contract commitments are disclosed in the notes to the accounts.
-- [Configure supplier approval chains](../admin/02-approval-chains.md) — high-value contracts may need higher approval bands than ordinary POs.
-- [Shillinq architecture overview](../../ARCHITECTURE.md) — Accord Project, contract lifecycle.
+- [Create a purchase order](04-create-purchase-order.md), POs against a supplier draw on the contract's value cap.
+- [Read your financial statements](08-financial-statements.md), contract commitments are disclosed in the notes to the accounts.
+- [Configure supplier approval chains](../admin/02-approval-chains.md), high-value contracts may need higher approval bands than ordinary POs.
+- [Shillinq architecture overview](../../Technical/architecture.md), Accord Project, contract lifecycle.
