@@ -591,8 +591,14 @@ export default function Home() {
         <DetailHero
           background="cobalt"
           appId="shillinq"
-          status={{ label: 'Beta', color: 'var(--c-orange-knvb)' }}
-          version="v0.1"
+          /* status + version dropped here — the brand DetailHero now
+             auto-derives them from customFields.appVersion (sourced
+             by createConfig() from appinfo/info.xml) via
+             deriveStability(): 0.1.0 → Beta, ≥1.0 → Stable, etc.
+             Same source the navbar pill reads, so the badge row and
+             the chrome pill stay in sync. Pass `status=...` /
+             `version=...` only when a site needs to override the
+             auto-derived label (preset 2.10.0+). */
           locales="EN"
           title="Shillinq"
           tagline={TAGLINE}
