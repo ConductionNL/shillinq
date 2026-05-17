@@ -11,14 +11,14 @@
 
 For administrations of type `gemeente`, `provincie`, or
 `waterschap`, shillinq MUST support schatkistbankieren — banking
-with the Treasury's Agentschap per Wet HOF (Wet houdbare
-overheidsfinanciën) — via T1's regular GL postings. There MUST
+with the Treasury's Agentschap per Wet Fido (Wet financiering
+decentrale overheden) — via T1's regular GL postings. There MUST
 NOT be a parallel schatkist ledger; schatkist deposits and
 withdrawals post to flagged T1 `Account` records and the
 "schatkist position" is a derived aggregation (per ADR-022 +
 ADR-031).
 
-Statutory basis: Wet HOF art. 2 + ministerial Regeling
+Statutory basis: Wet Fido art. 2c + ministerial Regeling
 schatkistbankieren decentrale overheden.
 
 #### Scenario: A non-municipal admin does not see schatkist
@@ -54,6 +54,8 @@ new "schatkist accounts" link table.
   (REQ-SBK-004) MUST include this account on next read.
 
 ### REQ-SBK-003: The `SchatkistPosition` schema SHALL declare a daily-aggregated derived position
+
+Schema.org annotation: `schema:MonetaryAmount` (the record models a daily balance/position amount rather than the underlying account; the account itself is the T1 `Account` record flagged via REQ-SBK-002).
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|

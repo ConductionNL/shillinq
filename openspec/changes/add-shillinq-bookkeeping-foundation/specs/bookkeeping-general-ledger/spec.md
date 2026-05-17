@@ -34,6 +34,12 @@ OpenRegister-managed objects per ADR-022 / ADR-024.
 
 ### REQ-GL-002: The `GLTransaction` schema SHALL declare a fixed minimum field set
 
+The `GLTransaction` schema MUST carry the Schema.org annotation
+`schema:AccountingTransaction` (per shillinq config.yaml `rules.specs`
+and the cross-app convention in `bookkeeping-chart-of-accounts`
+REQ-CoA-004): a GL posting is a recorded financial transaction and
+maps cleanly to that vocabulary term.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `transactionNumber` | string | Yes | Sequential transaction number unique per administration + fiscal year |
@@ -56,6 +62,12 @@ OpenRegister-managed objects per ADR-022 / ADR-024.
 
 ### REQ-GL-003: The `GLLine` schema SHALL declare a fixed minimum field set and encode sign in `side`
 
+The `GLLine` schema MUST carry the Schema.org annotation
+`schema:MonetaryAmount` (per shillinq config.yaml `rules.specs` and
+the cross-app convention in `bookkeeping-chart-of-accounts`
+REQ-CoA-004): a GL line is the canonical record of a currency-typed
+amount and maps cleanly to that vocabulary term.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `transactionId` | string | Yes | FK to the parent `GLTransaction.id` |
@@ -63,8 +75,8 @@ OpenRegister-managed objects per ADR-022 / ADR-024.
 | `accountNumber` | string | Yes | FK to `Account.accountNumber` |
 | `side` | enum | Yes | `debit` or `credit` |
 | `amount` | number ≥ 0 | Yes | Non-negative amount in the transaction's currency |
-| `currency` | string (ISO 4217) | Yes | MUST match the parent transaction's currency in T1 |
-| `periodId` | string | Yes | MUST match the parent transaction's periodId |
+| `currency` | string (ISO 4217) | Yes | The line's transaction currency (T1 single-currency invariants below; multi-currency rules per `bookkeeping-multi-currency` spec) |
+| `periodId` | string | Yes | Resolved at posting time per REQ-GL-006; the equality invariant against the parent is checked on the `post` transition only (see below) |
 | `subLedgerType` | enum | No | `ap`, `ar`, `project`, `none` (T2 owns the actual sub-ledger registers) |
 | `subLedgerRef` | string | No | FK identifier into the sub-ledger when `subLedgerType` ≠ `none` |
 | `costCenter` | string | No | Cost-center / department code |
@@ -77,6 +89,26 @@ WHEN side='debit' THEN amount END) = SUM(CASE WHEN side='credit' THEN
 amount END)` and avoids the negative-zero edge cases of signed
 amounts).
 
+**Single-currency invariant (T1 scope).** In the absence of the
+multi-currency extension (per `bookkeeping-multi-currency` spec),
+`GLLine.currency` MUST equal the parent `GLTransaction.currency`. The
+multi-currency extension supersedes this invariant by introducing
+`transactionCurrency` and `baseCurrency` fields and renaming the
+single `currency` field accordingly; consult that spec when it is in
+force. This T1 spec stays correct in isolation when multi-currency
+is not installed.
+
+**`periodId` post-transition invariant.** `GLLine.periodId` is
+auto-resolved at posting time by the lifecycle engine per REQ-GL-006
+(against the parent's `postingDate` and the active `FiscalPeriod`).
+The equality rule "`GLLine.periodId` MUST equal the parent
+`GLTransaction.periodId`" is enforced as a precondition on the
+`post` state transition (per REQ-GL-004), NOT as a write-time
+validation on `draft` lines. A `draft` line MAY temporarily carry a
+mismatched or absent `periodId`; the `draft → posted` transition
+runs the auto-resolution first, then the equality check is the gate
+that lets the transition succeed.
+
 #### Scenario: Negative amounts are rejected
 
 - **GIVEN** the schema
@@ -84,12 +116,33 @@ amounts).
 - **THEN** the save MUST fail with a "amount must be non-negative"
   validation error.
 
-#### Scenario: Line currency must match parent
+#### Scenario: Line currency must match parent (T1 single-currency)
 
-- **GIVEN** a parent transaction with `currency: "EUR"`
+- **GIVEN** the multi-currency extension is NOT installed AND a
+  parent transaction with `currency: "EUR"`
 - **WHEN** a `GLLine` with `currency: "USD"` is created against it
 - **THEN** the save MUST fail with a "currency mismatch with parent
-  transaction" error (T5 will revisit when multi-currency lands).
+  transaction" error. (The `bookkeeping-multi-currency` spec
+  supersedes this rule when installed.)
+
+#### Scenario: Draft line with mismatched periodId is accepted
+
+- **GIVEN** a parent transaction with `periodId: "2026-Q1"` in
+  `state: draft`
+- **WHEN** a `GLLine` is saved against it with `periodId: "2026-Q2"`
+  (or with `periodId` unset)
+- **THEN** the save MUST succeed; the mismatch is only flagged at
+  `post`-transition time per REQ-GL-006.
+
+#### Scenario: Post transition rejects line whose periodId does not match parent's
+
+- **GIVEN** a draft transaction with `periodId: "2026-Q1"` and a
+  child `GLLine` whose `periodId` is `"2026-Q2"` (and the lifecycle
+  auto-resolver has somehow not normalised it — e.g. operator
+  bypassed the engine)
+- **WHEN** the operator transitions the transaction to `posted`
+- **THEN** the transition MUST fail with a "line periodId does not
+  match parent" error naming the offending line.
 
 ### REQ-GL-004: `GLTransaction` SHALL declare a declarative draft → posted → reversed lifecycle
 
@@ -181,24 +234,63 @@ unbalanced postings differing by €0.01 MUST fail.
   error naming `4100`, surfaced from REQ-CoA-005's blocked-account
   rule.
 
-### REQ-GL-006: Every `GLLine` SHALL carry a `periodId` resolved against the active fiscal-period record
+### REQ-GL-006: `GLLine.periodId` SHALL be auto-resolved against the active fiscal-period record on the `post` transition, and the resolved value MUST equal the parent's
 
-`GLLine.periodId` MUST equal the parent `GLTransaction.periodId` (the
-resolution happens at posting time; the period is determined by
-`postingDate` falling within a `FiscalPeriod` record's date range).
+`GLLine.periodId` is owned by the lifecycle engine, not by write-time
+validation. The contract is two-phase:
+
+1. **Auto-resolution (lifecycle hook on `post`).** When the parent
+   `GLTransaction` transitions `draft → posted`, the lifecycle engine
+   MUST, for every child `GLLine`, set `periodId` to the period whose
+   date range contains the parent's `postingDate`. If the line
+   already carries a `periodId`, the engine MUST overwrite it with
+   the resolved value (i.e. resolution is authoritative; explicit
+   values on draft lines are advisory).
+2. **Post-transition equality invariant.** After auto-resolution,
+   every `GLLine.periodId` MUST equal the parent
+   `GLTransaction.periodId`. The `post` transition MUST fail if any
+   line's resolved `periodId` differs from the parent's (e.g. the
+   parent's `periodId` was explicitly overridden to a value
+   inconsistent with `postingDate`'s containing period). This is the
+   single gate; there is no separate write-time validation per
+   REQ-GL-003.
+
 T3 owns the `FiscalPeriod` register; T1 accepts a string field with
-no FK validation until T3 lands. Per design.md Decision D5, this
-stamping is the single mechanism by which T3's trial-balance
-aggregation operates on a single field group-by, with no date
-arithmetic at read time.
+no FK validation until T3 lands (the lifecycle hook MAY be a no-op
+in T1 if no `FiscalPeriod` records exist, but the equality invariant
+MUST still hold). Per design.md Decision D5, this stamping is the
+single mechanism by which T3's trial-balance aggregation operates on
+a single field group-by, with no date arithmetic at read time.
 
-#### Scenario: Line inherits period from parent
+#### Scenario: Draft lines accept any periodId (or none)
 
-- **GIVEN** a parent transaction with `periodId: "2026-Q1"`
-- **WHEN** a `GLLine` is created against it
-- **THEN** the line's `periodId` MUST be `"2026-Q1"` (set
-  automatically by the lifecycle engine when not explicitly set;
-  validated to match parent when explicitly set).
+- **GIVEN** a parent transaction with `periodId: "2026-Q1"` in
+  `state: draft`
+- **WHEN** a `GLLine` is created against it with `periodId: "2026-Q2"`
+- **THEN** the save MUST succeed; resolution is deferred to the
+  `post` transition.
+
+#### Scenario: Post transition auto-resolves and stamps lines
+
+- **GIVEN** a parent transaction with `postingDate: 2026-02-15`,
+  `periodId: "2026-Q1"`, and 3 child lines each carrying mixed or
+  absent `periodId` values
+- **WHEN** the operator transitions the transaction to `posted`
+- **THEN** the lifecycle engine MUST first overwrite each line's
+  `periodId` to `"2026-Q1"` (the period containing
+  `2026-02-15`); **AND** the equality check against the parent MUST
+  then pass; **AND** the transition MUST succeed.
+
+#### Scenario: Post fails when parent's periodId disagrees with postingDate's period
+
+- **GIVEN** a parent transaction with `postingDate: 2026-02-15`
+  (which falls inside `"2026-Q1"`) but `periodId: "2026-Q2"` set
+  explicitly by the operator
+- **WHEN** the operator transitions the transaction to `posted`
+- **THEN** the auto-resolver MUST set each line's `periodId` to
+  `"2026-Q1"`; **AND** the equality check against the parent's
+  `"2026-Q2"` MUST fail; **AND** the transition MUST fail with a
+  "parent periodId does not match postingDate" error.
 
 #### Scenario: T3 trial balance can sum by period
 
