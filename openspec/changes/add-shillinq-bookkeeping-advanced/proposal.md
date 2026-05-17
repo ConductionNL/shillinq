@@ -1,5 +1,10 @@
 # Proposal: add-shillinq-bookkeeping-advanced
 
+`kind: config` per ADR-032 — the centre of mass is declarative
+schema metadata + manifest entries + a small amount of seed data
+(NL-taxonomie mappings, allocation-rule shapes). No PHP service
+classes are authored.
+
 ## Summary
 
 Introduce the **Tier 4 advanced bookkeeping-engine capabilities** for
@@ -43,15 +48,15 @@ government, and group consolidation use:
 | **Bank connectors** | PSD2 AIS feeds reduce reconciliation effort from days to minutes; every modern bookkeeping product ships them |
 | **Reconciliation reports** | Controllers need exception reports across sub-ledger ↔ GL, intercompany, and budget vs actual — the operational visibility layer |
 
-The 5-tier rollout context (T1 from `add-shillinq-bookkeeping-foundation`):
-
-| Tier | Capability cluster | Status |
-|---|---|---|
-| T1 — Foundation | Chart of Accounts, General Ledger, Journal Entries | merged on this branch |
-| T2 — Sub-ledgers | Accounts Payable, Accounts Receivable, Bank/Cash ledgers | parallel change `add-shillinq-bookkeeping-operations` |
-| T3 — Periods & close | Fiscal periods, period close, trial balance, financial statements, bank reconciliation, VAT/BTW filing | parallel change `add-shillinq-bookkeeping-compliance` |
-| **T4 — Advanced engine** | **SBR/XBRL, fixed assets, multi-currency, dimensions, year-end close, bank connectors, reconciliation reports** | **this change** |
-| T5 — Cross-cutting / specialised | Intercompany & consolidation, WBSO time tracking, sector specialisations | future |
+See [`adr-001-bookkeeping-tier-roadmap.md`](../../architecture/adr-001-bookkeeping-tier-roadmap.md)
+for the canonical 5-tier breakdown. This change delivers **Tier 4-base**:
+`add-shillinq-bookkeeping-advanced`. T1
+(`add-shillinq-bookkeeping-foundation`), T2
+(`add-shillinq-bookkeeping-compliance`), T3
+(`add-shillinq-bookkeeping-operations`), and T4-specialized
+(`add-shillinq-gov-sector-mkb-advanced`) are siblings in the same PR.
+T5 cross-cutting (intercompany, full consolidation, treasury, IFRS
+overlay) is explicitly deferred and tracked separately.
 
 T4 is intentionally broad because every capability here either depends
 on or directly leverages an OR abstraction that already exists or is

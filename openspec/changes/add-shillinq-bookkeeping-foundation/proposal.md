@@ -1,5 +1,9 @@
 # Proposal: add-shillinq-bookkeeping-foundation
 
+`kind: config` per ADR-032 — the centre of mass is declarative
+schema metadata + manifest entries + RGS seed data. No PHP service
+classes are authored.
+
 ## Summary
 
 Introduce the foundational double-entry bookkeeping engine for Shillinq as
@@ -32,19 +36,14 @@ reporting, treasury, procurement spend) depends on a balanced
 double-entry ledger being present and trustworthy. Until the
 foundation is laid, the rest of the rollout cannot start.
 
-The 5-tier rollout sequence:
-
-| Tier | Capability cluster | Status |
-|---|---|---|
-| **T1 — Foundation** | Chart of Accounts, General Ledger, Journal Entries | **this change** |
-| T2 — Sub-ledgers | Accounts Payable, Accounts Receivable, Bank/Cash ledgers | future |
-| T3 — Periods & close | Fiscal periods, period close, trial balance, reversing accruals at close | future |
-| T4 — Reporting | Balance Sheet, P&L, financial statements, XBRL/SBR export | future |
-| T5 — Cross-cutting | Multi-currency, VAT/BTW, intercompany, consolidation | future |
+See [`adr-001-bookkeeping-tier-roadmap.md`](../../architecture/adr-001-bookkeeping-tier-roadmap.md)
+for the canonical 5-tier breakdown. This change delivers **Tier 1**:
+`add-shillinq-bookkeeping-foundation`.
 
 T1 is intentionally narrow: a balanced general ledger with hierarchical
 accounts and manual + recurring + reversing journals. Every downstream
-tier consumes this surface.
+tier (T2, T3, T4-base, T4-specialized — all in this PR) consumes this
+surface.
 
 ## Affected Projects
 
@@ -102,20 +101,29 @@ tier consumes this surface.
   Vue components, controllers, tests, and CI changes are deliberately
   not in this proposal; the task list references them but the
   implementation lands via a separate `opsx-apply` cycle on the spec.
-- **T2 sub-ledgers** — accounts payable, accounts receivable, bank /
-  cash ledgers, invoice → posting orchestration. Future change
-  (`add-shillinq-bookkeeping-subledgers`).
-- **T3 period operations** — period close, trial balance, period-end
-  accrual reversal automation. Future change
-  (`add-shillinq-bookkeeping-period-close`).
-- **T4 financial reporting** — balance sheet, P&L, statement of cash
-  flows, XBRL/SBR export. Future change
-  (`add-shillinq-bookkeeping-reporting`).
-- **T5 cross-cutting** — multi-currency (the schemas in T1 carry a
-  `currency` field, but currency translation, FX revaluation, CTA
-  postings are out of scope), VAT/BTW posting automation, intercompany
-  eliminations, group consolidation. Future change
-  (`add-shillinq-bookkeeping-multicurrency-and-tax`).
+- **Subsequent tiers (T2, T3, T4-base, T4-specialized)** ship in this
+  same PR as separate changes; see
+  [`adr-001-bookkeeping-tier-roadmap.md`](../../architecture/adr-001-bookkeeping-tier-roadmap.md)
+  for the breakdown:
+  - T2 (`add-shillinq-bookkeeping-compliance`) — sub-ledgers + period
+    machinery (AP/AR, trial balance, period close, financial
+    statements, bank reconciliation, audit-trail + document-attachment
+    integrations).
+  - T3 (`add-shillinq-bookkeeping-operations`) — operations + NL
+    regulatory core. **VAT/BTW filing ships here** as
+    `bookkeeping-vat-btw-filing`; it is not part of T1's surface.
+  - T4-base (`add-shillinq-bookkeeping-advanced`) — advanced engine
+    features (SBR/XBRL, fixed assets, multi-currency translation,
+    cost centers + dimensions, year-end close, bank connectors,
+    reconciliation reports). The schemas in T1 carry a `currency`
+    field but FX revaluation / CTA postings live in T4-base.
+  - T4-specialized (`add-shillinq-gov-sector-mkb-advanced`) — NL gov
+    sector variants + Vpb + innovation regimes + MKB R&D +
+    detachering bridge.
+- **Future T5 work** — UBL/Peppol BIS 3.0 outbound, intercompany
+  eliminations, advanced group consolidation, treasury cash
+  forecasting, IFRS rebridge, multi-administration aggregation —
+  tracked separately and explicitly OUT of this PR.
 - **Frontend Vue components** beyond what `CnIndexPage` /
   `CnDetailPage` from `@conduction/nextcloud-vue` already render
   generically from a register manifest. No bespoke Vue files in this

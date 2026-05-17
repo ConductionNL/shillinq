@@ -67,15 +67,12 @@ them as 10 capability specs so they can be implemented, reviewed,
 and rolled out independently — but on a shared T1+T2 foundation
 (no GL forking, no second journal, no parallel period engine).
 
-The 5-tier rollout sequence (full picture):
-
-| Tier | Capability cluster | Status |
-|---|---|---|
-| T1 — Foundation | Chart of Accounts, General Ledger, Journal Entries | landed (`add-shillinq-bookkeeping-foundation`) |
-| T2 — Sub-ledgers + close + statements | AP, AR, trial balance, period close, balance sheet, P&L | parallel change (`add-shillinq-bookkeeping-subledgers-close-statements`) |
-| **T3 — Operations + NL compliance core** | BTW filing, BBV, IV3, BCF, KOR, ZZP tax, schatkistbankieren, subsidies, Archiefwet retention, consultancy project accounting | **this change** |
-| T4 — Reporting + analytics | XBRL/SBR export plumbing, dashboards, drill-throughs, jaarrekening generation | future |
-| T5 — Cross-cutting | Multi-currency, intercompany, group consolidation, IFRS overlay | future |
+See [`adr-001-bookkeeping-tier-roadmap.md`](../../architecture/adr-001-bookkeeping-tier-roadmap.md)
+for the canonical 5-tier breakdown. This change delivers **Tier 3**:
+`add-shillinq-bookkeeping-operations`. T1 (`add-shillinq-bookkeeping-foundation`)
+and T2 (`add-shillinq-bookkeeping-compliance`) are siblings in the same
+PR; T4-base, T4-specialized, and the deferred T5 are also captured in
+the ADR.
 
 ## Affected Projects
 
@@ -312,7 +309,7 @@ requirement annotates the shortfall.
 **Severity**: Medium
 **Mitigation**: T2 is being written in parallel; T3 references its
 specs by slug (`bookkeeping-trial-balance`,
-`bookkeeping-period-close`, `bookkeeping-accounts-payable`,
+`bookkeeping-period-close`, `bookkeeping-accounts-payable-core`,
 `bookkeeping-accounts-receivable-core`,
 `bookkeeping-financial-statements`). Acceptance criterion: T3's
 `opsx-apply` cycle gates on T2's specs being at least at

@@ -59,15 +59,9 @@ T2 is the **compliance + operations envelope**: with T2 merged, a
 Dutch SMB bookkeeper can perform an end-to-end month in shillinq.
 Without it, T1 is shelfware.
 
-The 5-tier rollout sequence (as published in the T1 proposal):
-
-| Tier | Capability cluster | Status |
-|---|---|---|
-| T1 — Foundation | Chart of Accounts, General Ledger, Journal Entries | merged (separate change) |
-| **T2 — Compliance + operations** | Trial balance, period close, AP, AR, financial statements, audit trail, document attachment, bank reconciliation | **this change** |
-| T3 — Tax + sector compliance | VAT/BTW returns, KOR, ICP, OSS, BBV financial statements, year-end close (opening-balance generation), Belastingdienst submission | future |
-| T4 — e-Invoicing + treasury | UBL 2.1 / Peppol BIS 3.0 outbound, PSD2 live-feed connectors, payment-batch reconciliation, treasury (cash forecasting), multi-currency translation | future |
-| T5 — Cross-cutting | Intercompany, group consolidation, segment reporting, IFRS rebridge | future |
+See [`adr-001-bookkeeping-tier-roadmap.md`](../../architecture/adr-001-bookkeeping-tier-roadmap.md)
+for the canonical 5-tier breakdown. This change delivers **Tier 2**:
+`add-shillinq-bookkeeping-compliance`.
 
 The eight T2 capabilities are intentionally each their own spec
 (per ADR-032 spec sizing — each capability is `kind: config`

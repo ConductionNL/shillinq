@@ -52,16 +52,14 @@ groups:
    personnel tax surface that drives the bookkeeping work in real MKB
    workflows.
 
-The 5-tier rollout sequence:
-
-| Tier | Capability cluster | Status |
-|---|---|---|
-| T1 — Foundation | Chart of Accounts, General Ledger, Journal Entries | merged / in-flight |
-| T2 — Sub-ledgers | Accounts Payable, Accounts Receivable, Bank/Cash, Audit, Trial Balance, Period Close, Financial Statements, Bank Reconciliation, Document Attachment | in-flight |
-| T3 — Operations | RGS-base, IV3, VAT-BTW, Archiefwet, KOR, BCF, ZZP-tax, Schatkistbankieren, Subsidies, Consultancy projects | in-flight |
-| T4-base — Advanced | Multi-currency, Reconciliation reports, Bank connectors, Year-end close, Fixed assets, SBR-XBRL, Cost-centers + dimensions | in-flight |
-| **T4-specialized (this change)** | NL gov sector variants + Vpb + innovation + MKB R&D + detachering | **this change** |
-| T5 — Cross-cutting | (deferred — see "Out of Scope") | future |
+See [`adr-001-bookkeeping-tier-roadmap.md`](../../architecture/adr-001-bookkeeping-tier-roadmap.md)
+for the canonical 5-tier breakdown. This change delivers **Tier 4-specialized**:
+`add-shillinq-gov-sector-mkb-advanced`. T1
+(`add-shillinq-bookkeeping-foundation`), T2
+(`add-shillinq-bookkeeping-compliance`), T3
+(`add-shillinq-bookkeeping-operations`), and T4-base
+(`add-shillinq-bookkeeping-advanced`) are siblings in the same PR.
+T5 cross-cutting is deferred — see "Out of Scope".
 
 T4-specialized is intentionally the **largest by spec count** but the
 narrowest per spec: most capabilities are presentation manifests,
