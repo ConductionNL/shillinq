@@ -37,6 +37,8 @@ overheden (BBV) + Commissie BBV handreikingen.
 
 ### REQ-BBV-002: The `BbvAccountMapping` schema SHALL declare a fixed minimum field set
 
+Schema.org annotation: `schema:DefinedTerm` (a controlled-vocabulary mapping linking an `Account` to its BBV classifiers — same pattern as `Account` per REQ-CoA-004).
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `administrationId` | string | Yes | FK to administration (gemeente/provincie/waterschap) |
@@ -117,6 +119,8 @@ The complete BBV taakveld catalogue (currently 2024 revision; ~50
 codes spanning 0.x Bestuur through 8.x VHROSV) MUST be shipped as
 `lib/Settings/seeds/bbv-taakvelden-2024.json` and loaded into a
 `BbvTaakveld` register via the repair step. Each record:
+
+Schema.org annotation for `BbvTaakveld`: `schema:DefinedTerm` (a coded classifier from the statutory BBV bijlage IV catalogue).
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|

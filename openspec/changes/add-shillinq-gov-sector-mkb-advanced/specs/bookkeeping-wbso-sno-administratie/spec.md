@@ -7,124 +7,129 @@
 
 ## ADDED Requirements
 
-### REQ-WBSO-001: The system SHALL declare een `SoProject` register voor S&O-projecten met RvO-link
+### REQ-WBSO-001: The system SHALL declare an `SoProject` register for S&O-projecten with an RvO link
 
-Per Wet vermindering afdracht loonbelasting hoofdstuk VA (WBSO)
-MUST S&O-werk per project + per medewerker geadministreerd worden.
-The `SoProject` register MUST records declareren met fields:
-`projectNaam` (string), `rvoProjectNummer` (string — RvO-toegekend),
-`sEnOCertificaatNummer` (string — RvO-certificaat-id),
+Per Wet vermindering afdracht loonbelasting hoofdstuk VA (WBSO),
+S&O-werk MUST be administered per project + per employee. The
+`SoProject` register (schema.org type: `schema:Project`) MUST
+declare records with fields: `projectNaam` (string),
+`rvoProjectNummer` (string — assigned by RvO),
+`sEnOCertificaatNummer` (string — RvO certificate id),
 `looptijdStart` (date), `looptijdEind` (date), `costCenterId` (FK
-naar `CostCenter` uit T4-base), `status` (enum
-`aangevraagd | toegekend | afgerond`). Per ADR-031 declaratieve
-register — geen PHP S&O-service.
+to `CostCenter` from T4-base), `status` (enum
+`aangevraagd | toegekend | afgerond`). Per ADR-031 a declarative
+register — no PHP S&O service.
 
-#### Scenario: Een toegekend S&O-project wordt geregistreerd
+#### Scenario: A toegekend S&O-project is registered
 
-- **GIVEN** een MKB met een RvO S&O-certificaat 2026/0001
-- **WHEN** een `SoProject` met `rvoProjectNummer: '2026/0001'`,
-  `status: 'toegekend'` opgeslagen wordt
-- **THEN** de save MUST slagen; **AND** het project MUST in de
-  uren-administratie referencable zijn (REQ-WBSO-002).
+- **GIVEN** an MKB with an RvO S&O-certificaat 2026/0001
+- **WHEN** an `SoProject` with `rvoProjectNummer: '2026/0001'`,
+  `status: 'toegekend'` is stored
+- **THEN** the save MUST succeed; **AND** the project MUST be
+  referenceable from the hours administration (REQ-WBSO-002).
 
-### REQ-WBSO-002: The system SHALL declare een `SoUrenStaat` register voor per-medewerker per-week per-project urenadministratie
+### REQ-WBSO-002: The system SHALL declare an `SoUrenStaat` register for per-employee per-week per-project hours administration
 
-The `SoUrenStaat` register MUST records declareren met fields:
-`soProjectId` (FK naar `SoProject`), `medewerkerId` (string —
-referentie naar Nextcloud user OF naar `Detachering` record uit
-REQ-DPA-002), `weekISO` (string in ISO-8601 week-formaat, e.g.
-`2026-W14`), `aantalUren` (number ≥ 0, decimaal-toegestaan tot 0.25
-uur), `taakOmschrijving` (string), `state` (enum `draft |
-goedgekeurd | afgesloten`). Een `x-openregister-lifecycle` MUST de
-state-transities `draft → goedgekeurd → afgesloten` declareren met
-approval-workflow per ADR-022 op de `goedgekeurd` transitie.
+The `SoUrenStaat` register (schema.org type: `schema:Action`)
+MUST declare records with fields: `soProjectId` (FK to
+`SoProject`), `medewerkerId` (string — reference to a Nextcloud
+user OR to a `Detachering` record from REQ-DPA-002), `weekISO`
+(string in ISO-8601 week format, e.g. `2026-W14`), `aantalUren`
+(number ≥ 0, decimals allowed down to 0.25 hour),
+`taakOmschrijving` (string), `state` (enum
+`draft | goedgekeurd | afgesloten`). An
+`x-openregister-lifecycle` MUST declare the state transitions
+`draft → goedgekeurd → afgesloten` with an approval-workflow per
+ADR-022 on the `goedgekeurd` transition.
 
-#### Scenario: Een uren-staat moet goedgekeurd worden voor afsluiten
+#### Scenario: An uren-staat must be goedgekeurd before being afgesloten
 
-- **GIVEN** een `SoUrenStaat` in `state: 'draft'`
-- **WHEN** een operator de `afgesloten` transitie probeert zonder
-  via `goedgekeurd` te gaan
-- **THEN** de transitie MUST geweigerd worden ("lifecycle
+- **GIVEN** an `SoUrenStaat` in `state: 'draft'`
+- **WHEN** an operator attempts the `afgesloten` transition
+  without going through `goedgekeurd`
+- **THEN** the transition MUST be refused ("lifecycle
   precondition: state must be goedgekeurd").
 
-### REQ-WBSO-003: The system SHALL produce een RvO mededeling per kwartaal als docudesk document
+### REQ-WBSO-003: The system SHALL produce an RvO mededeling per quarter as a docudesk document
 
-Per RvO-WBSO-reglement MUST een mededeling van werkelijk gerealiseerde
-S&O-uren + loonkosten per kwartaal aan RvO doorgegeven worden. De
-mededeling MUST gegenereerd worden als een docudesk document gevuld
-uit een `x-openregister-aggregations` block dat `SoUrenStaat` (met
-`state ≠ 'draft'`) per kwartaal per project somt. Per ADR-031 geen
-PHP mededeling-renderer.
+Per RvO WBSO regulation, a mededeling of actually realised S&O
+hours + loonkosten per quarter MUST be reported to RvO. The
+mededeling MUST be generated as a docudesk document populated
+from an `x-openregister-aggregations` block that sums
+`SoUrenStaat` records (with `state ≠ 'draft'`) per quarter per
+project. Per ADR-031, no PHP mededeling renderer.
 
-#### Scenario: Mededeling 2026-Q1 sommeert alle goedgekeurde uren
+#### Scenario: Mededeling 2026-Q1 sums all goedgekeurde uren
 
-- **GIVEN** 3 S&O-projecten met goedgekeurde uren-staten over
-  weken `2026-W01..W13`
-- **WHEN** de Q1-mededeling gerendered wordt
-- **THEN** het docudesk document MUST per project het totale
-  aantal goedgekeurde uren tonen.
+- **GIVEN** 3 S&O-projecten with goedgekeurde uren-staten across
+  weeks `2026-W01..W13`
+- **WHEN** the Q1 mededeling is rendered
+- **THEN** the docudesk document MUST show the total goedgekeurde
+  hours per project.
 
-### REQ-WBSO-004: The system SHALL produce een RvO kwartaalrapportage + jaarrapport via docudesk
+### REQ-WBSO-004: The system SHALL produce an RvO kwartaalrapportage + jaarrapport via docudesk
 
-Naast de mededeling MUST een kwartaalrapportage (operationele
-voortgang per project) en een jaarrapport (jaarlijkse afsluiting +
-resultaten) als docudesk documenten gegenereerd worden uit dezelfde
-uren-data. Templates MUST RvO-conform layout volgen; rendering MUST
-via docudesk gaan; geen app-local renderer.
+In addition to the mededeling, a kwartaalrapportage (operational
+progress per project) and a jaarrapport (annual close +
+results) MUST be generated as docudesk documents from the same
+hours data. Templates MUST follow RvO-conform layout; rendering
+MUST go through docudesk; no app-local renderer.
 
-#### Scenario: Jaarrapport bundelt alle 4 kwartaalmedede­lingen
+#### Scenario: Jaarrapport bundles all four kwartaalmededelingen
 
-- **GIVEN** vier ingediende kwartaalmedede­lingen voor 2026
-- **WHEN** het jaarrapport 2026 gerendered wordt
-- **THEN** het document MUST de aggregate totalen tonen die
-  identiek zijn aan de sum van de vier kwartaalmedede­lingen.
+- **GIVEN** four submitted kwartaalmededelingen for 2026
+- **WHEN** the jaarrapport 2026 is rendered
+- **THEN** the document MUST show the aggregate totals identical
+  to the sum of the four kwartaalmededelingen.
 
-### REQ-WBSO-005: RvO-submissies SHALL ride openconnector sources — geen app-local HTTP
+### REQ-WBSO-005: RvO submissions SHALL ride openconnector sources — no app-local HTTP
 
-Per ADR-019 MUST elke RvO-submissie (mededeling, kwartaalrapportage,
-jaarrapport) via een openconnector source row gaan. Shillinq MUST
-de openconnector source-ids referencen vanuit de docudesk template
-output-channel-declaratie. Geen `lib/Service/RvoSubmissieClient.php`.
+Per ADR-019, every RvO submission (mededeling, kwartaalrapportage,
+jaarrapport) MUST go through an openconnector source row.
+Shillinq MUST reference the openconnector source ids from the
+docudesk template output-channel declaration. No
+`lib/Service/RvoSubmissieClient.php`.
 
-#### Scenario: Mededeling-upload flowt via openconnector
+#### Scenario: Mededeling upload flows via openconnector
 
-- **GIVEN** een gegenereerd docudesk mededeling-document
-- **WHEN** de operator de upload triggert
-- **THEN** de transmissie MUST via de openconnector source flowen;
-  **AND** de RvO response MUST in de audit-trail-immutable
-  vastgelegd worden per ADR-022.
+- **GIVEN** a generated docudesk mededeling document
+- **WHEN** the operator triggers the upload
+- **THEN** the transmission MUST flow via the openconnector
+  source; **AND** the RvO response MUST be recorded in the
+  audit-trail-immutable per ADR-022.
 
-### REQ-WBSO-006: De afdrachtvermindering loonheffing SHALL declaratief berekend worden uit S&O-uren × S&O-uurloon
+### REQ-WBSO-006: The afdrachtvermindering loonheffing SHALL be computed declaratively from S&O-uren × S&O-uurloon
 
-The afdrachtvermindering loonheffing per loonaangifte-tijdvak MUST
-een `x-openregister-calculations` block zijn dat `SoUrenStaat.aantalUren`
-× `medewerker.sEnOUurloon` × `actueelAfdrachtPercentage`
-(geseed uit RvO 2026, default 32% voor reguliere S&O en 40% voor
-starters) berekent. De afdracht is een **projected** waarde —
-de RvO mededeling is de **authoritative** waarde gebruikt in de
-loonaangifte. Shillinq MUST beide waarden tonen voor reconciliatie.
+The afdrachtvermindering loonheffing per loonaangifte period MUST
+be an `x-openregister-calculations` block that computes
+`SoUrenStaat.aantalUren` × `medewerker.sEnOUurloon` ×
+`actueelAfdrachtPercentage` (seeded from RvO 2026, default 32%
+for regular S&O and 40% for starters). The afdracht is a
+**projected** value — the RvO mededeling is the
+**authoritative** value used in the loonaangifte. Shillinq MUST
+show both values for reconciliation.
 
-#### Scenario: Projected en RvO-mededeling verschijnen naast elkaar in de uren-detail-view
+#### Scenario: Projected and RvO mededeling appear side by side in the hours detail view
 
-- **GIVEN** een Q1 met €40 000 projected afdracht en een RvO
-  mededeling die €38 500 teruggeeft
-- **WHEN** de WBSO-detail-view voor Q1 rendert
-- **THEN** beide bedragen MUST naast elkaar tonen; **AND** een
-  reconciliatie-warning MUST de €1 500 delta surfacen voor de
-  loonheffing-administratie.
+- **GIVEN** a Q1 with €40 000 projected afdracht and an RvO
+  mededeling returning €38 500
+- **WHEN** the WBSO detail view for Q1 renders
+- **THEN** both amounts MUST appear side by side; **AND** a
+  reconciliation warning MUST surface the €1 500 delta for the
+  loonheffing administration.
 
-### REQ-WBSO-007: WBSO-administratie SHALL be reachable through a feature-flag-controlled manifest navigation entry
+### REQ-WBSO-007: WBSO administration SHALL be reachable through a feature-flag-controlled manifest navigation entry
 
-`src/manifest.json` MUST een feature-flag-controlled menu entry
-(`featureFlags.mkb-wbso`) declareren onder `Bookkeeping > WBSO`
-met sub-pages voor Projecten, Uren-staten, Medede­lingen +
-Kwartaalrapportages + Jaarrapport, en Afdrachtvermindering. Per
+`src/manifest.json` MUST declare a feature-flag-controlled menu
+entry (`featureFlags.mkb-wbso`) under `Bookkeeping > WBSO` with
+sub-pages for Projecten, Uren-staten, Mededelingen +
+Kwartaalrapportages + Jaarrapport, and Afdrachtvermindering. Per
 ADR-024 Tier-4, no bespoke Vue files.
 
-#### Scenario: WBSO-menu toggles with the feature flag
+#### Scenario: WBSO menu toggles with the feature flag
 
-- **GIVEN** de manifest declareert `featureFlags.mkb-wbso`
-- **WHEN** de flag ON staat
-- **THEN** de vier WBSO sub-pages MUST verschijnen.
-- **WHEN** de flag OFF staat
-- **THEN** het menu MUST NOT renderen.
+- **GIVEN** the manifest declares `featureFlags.mkb-wbso`
+- **WHEN** the flag is ON
+- **THEN** the four WBSO sub-pages MUST appear.
+- **WHEN** the flag is OFF
+- **THEN** the menu MUST NOT render.

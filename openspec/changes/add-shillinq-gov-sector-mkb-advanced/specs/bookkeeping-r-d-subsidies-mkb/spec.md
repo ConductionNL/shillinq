@@ -7,114 +7,119 @@
 
 ## ADDED Requirements
 
-### REQ-RDS-001: The system SHALL declareren een `subsidieRegeling` enum op het bestaande Subsidie register voor de R&D-regelingen
+### REQ-RDS-001: The system SHALL declare a `subsidieRegeling` enum on the existing Subsidie register for the R&D regelingen
 
-The T3 `Subsidie` register (uit
-`bookkeeping-subsidie-verantwoording`) MUST een
-`subsidieRegeling` enum field krijgen met waarden `mit | sbir |
-eu-horizon | efro | react-eu | other`. Per ADR-031 + ADR-022 dit
-is een schema-overlay — geen parallel `RDSubsidie` register. Wanneer
-`subsidieRegeling ≠ 'other'` MUST de regeling-specifieke
-kostencategorieën constraint (REQ-RDS-002) gelden.
+The T3 `Subsidie` register (from
+`bookkeeping-subsidie-verantwoording`) MUST gain a
+`subsidieRegeling` enum field with values `mit | sbir |
+eu-horizon | efro | react-eu | other`. The `Subsidie` register
+SHOULD carry a schema.org type of `schema:Grant` (a
+`SubsidieProject` materialisation is exposed as
+`schema:ResearchProject` where the subsidie funds R&D work).
+Per ADR-031 + ADR-022 this is a schema overlay — no parallel
+`RDSubsidie` register. When `subsidieRegeling ≠ 'other'`, the
+regeling-specific kostencategorieën constraint (REQ-RDS-002)
+MUST apply.
 
-#### Scenario: Een EU-Horizon subsidie krijgt het regeling-label
+#### Scenario: An EU-Horizon subsidie gets the regeling label
 
-- **GIVEN** een nieuw `Subsidie` record
-- **WHEN** opgeslagen met `subsidieRegeling: 'eu-horizon'`
-- **THEN** de save MUST slagen; **AND** verdere kostendossier-
-  inputs MUST uitsluitend de EU-Horizon kostencategorieën accepteren
-  (REQ-RDS-002).
+- **GIVEN** a new `Subsidie` record
+- **WHEN** it is stored with `subsidieRegeling: 'eu-horizon'`
+- **THEN** the save MUST succeed; **AND** further
+  kostendossier inputs MUST exclusively accept the EU-Horizon
+  kostencategorieën (REQ-RDS-002).
 
-### REQ-RDS-002: Per-regeling kostencategorieën SHALL declaratief geconstrained worden
+### REQ-RDS-002: Per-regeling kostencategorieën SHALL be constrained declaratively
 
-Elke `subsidieRegeling` waarde MUST een specifieke set toegestane
-`kostencategorie` waarden hebben (declaratief via JSON Schema
-`oneOf` of `if/then` constructie):
+Each `subsidieRegeling` value MUST have a specific set of
+allowed `kostencategorie` values (declaratively via JSON Schema
+`oneOf` or `if/then` construct):
 
-| Regeling | Toegestane kostencategorieën |
+| Regeling | Allowed kostencategorieën |
 |---|---|
 | `mit` | `personnel`, `materials`, `external-services`, `equipment-depreciation`, `other-direct` |
 | `sbir` | `personnel`, `materials`, `equipment-depreciation`, `other-direct` |
 | `eu-horizon` | `personnel`, `subcontracting`, `other-direct`, `indirect-25-percent` |
 | `efro` | `personnel`, `external-services`, `materials`, `equipment`, `other`, `indirect-flat-rate` |
-| `react-eu` | (zelfde als EFRO + REACT-specifieke `green-recovery`) |
+| `react-eu` | (same as EFRO + REACT-specific `green-recovery`) |
 
-Per ADR-031 geen PHP categorie-validator.
+Per ADR-031, no PHP category validator.
 
-#### Scenario: Een ongeldige categorie voor EU-Horizon wordt geweigerd
+#### Scenario: An invalid category for EU-Horizon is refused
 
-- **GIVEN** een `Subsidie` met `subsidieRegeling: 'eu-horizon'`
-- **WHEN** een kostenpost met `kostencategorie: 'equipment'`
-  geboekt wordt (Horizon staat dat niet als directe categorie toe)
-- **THEN** de save MUST falen met een schema-validation error.
+- **GIVEN** a `Subsidie` with `subsidieRegeling: 'eu-horizon'`
+- **WHEN** a kostenpost with `kostencategorie: 'equipment'` is
+  booked (Horizon does not allow that as a direct category)
+- **THEN** the save MUST fail with a schema validation error.
 
-### REQ-RDS-003: Per-regeling voortgangsrapportage SHALL via een declarative aggregation gegenereerd worden
+### REQ-RDS-003: Per-regeling voortgangsrapportage SHALL be generated via a declarative aggregation
 
-De voortgangsrapportage per R&D-subsidie MUST een
-`x-openregister-aggregations` block zijn dat `kostenpost` records
-groepeert per `kostencategorie` + `periodId`, gefilterd op de
-parent subsidie. Een docudesk template per regeling MUST de
-rapportage in het door de subsidie-verstrekker vereiste formaat
-renderen (e.g. EU Horizon Periodic Report layout, MIT
-voortgangsrapport). Geen PHP rapportage-renderer.
+The voortgangsrapportage per R&D subsidie MUST be an
+`x-openregister-aggregations` block that groups `kostenpost`
+records per `kostencategorie` + `periodId`, filtered on the
+parent subsidie. A docudesk template per regeling MUST render
+the report in the format required by the subsidie provider
+(e.g. EU Horizon Periodic Report layout, MIT voortgangsrapport).
+No PHP report renderer.
 
-#### Scenario: Horizon voortgangsrapportage groeperende kosten per Horizon-categorie
+#### Scenario: Horizon voortgangsrapportage groups costs per Horizon category
 
-- **GIVEN** een Horizon-subsidie met kostenpost-records in elke
-  Horizon-categorie
-- **WHEN** de voortgangsrapportage gerendered wordt
-- **THEN** het docudesk document MUST de Horizon-canonical
-  layout volgen, met cumulatieve + periodieke totalen per
-  Horizon-categorie.
+- **GIVEN** a Horizon subsidie with kostenpost records in every
+  Horizon category
+- **WHEN** the voortgangsrapportage is rendered
+- **THEN** the docudesk document MUST follow the Horizon
+  canonical layout, with cumulative + periodic totals per
+  Horizon category.
 
-### REQ-RDS-004: Per-regeling audit-pack SHALL per regelings-eisen samengesteld worden via docudesk templates
+### REQ-RDS-004: Per-regeling audit-pack SHALL be assembled per regeling requirements via docudesk templates
 
-Elke R&D-regeling heeft eigen audit-trail eisen — EU Horizon vereist
-een `Audit Certificate` met expliciete timesheets bewijzen; MIT
-vereist een verklaring van de WBSO/S&O administratie; EFRO vereist
-een aanbestedingsdossier per inkoop > drempel. Per regeling MUST een
-docudesk template een audit-pack samenstellen uit de OR audit-trail-
-immutable + de subsidie's kostendossier + relevante external attachments
-(by URI per ADR-022). Geen PHP audit-pack-builder.
+Each R&D regeling has its own audit-trail requirements — EU
+Horizon requires an `Audit Certificate` with explicit timesheet
+evidence; MIT requires a declaration from the WBSO / S&O
+administration; EFRO requires a procurement dossier per
+purchase over a drempel. Per regeling, a docudesk template MUST
+assemble an audit-pack from the OR audit-trail-immutable + the
+subsidie's kostendossier + relevant external attachments (by
+URI per ADR-022). No PHP audit-pack builder.
 
-#### Scenario: EU-Horizon audit-pack include's timesheets-referenties
+#### Scenario: EU-Horizon audit-pack includes timesheet references
 
-- **GIVEN** een Horizon-subsidie met personnel-kosten + S&O-uren-
-  staten gerelateerd
-- **WHEN** de audit-pack gerendered wordt
-- **THEN** het docudesk document MUST per personnel-kostenpost een
-  URI-referentie naar de gerelateerde S&O-uren-staat bevatten.
+- **GIVEN** a Horizon subsidie with personnel costs + related
+  S&O-uren-staten
+- **WHEN** the audit-pack is rendered
+- **THEN** the docudesk document MUST contain, per personnel
+  kostenpost, a URI reference to the related S&O-uren-staat.
 
-### REQ-RDS-005: Budget bewaking per regeling SHALL warnings surfaceren bij dreigend overschrijden van een kostencategorie-max
+### REQ-RDS-005: Budget monitoring per regeling SHALL surface warnings when a kostencategorie max is at risk of being exceeded
 
-Elke R&D-regeling heeft per-kostencategorie sub-maxima (e.g. Horizon
-indirect-25% is bound aan 25% van de directe kosten). Een
-`x-openregister-calculations` block per regeling MUST dit
-verifiëren en een warning surfacen wanneer ≥90% van het max bereikt
-is. Per ADR-031 declaratief — geen PHP budget-watcher.
+Each R&D regeling has per-kostencategorie sub-maxima (e.g.
+Horizon indirect-25% is bound to 25% of direct costs). An
+`x-openregister-calculations` block per regeling MUST verify
+this and surface a warning when ≥90% of the max is reached. Per
+ADR-031, declarative — no PHP budget watcher.
 
-#### Scenario: Horizon indirect-25% warning bij 90% gebruik
+#### Scenario: Horizon indirect-25% warning at 90% usage
 
-- **GIVEN** een Horizon-subsidie met €100 000 directe kosten en
-  €22 500 indirect-25% kosten (geprojecteerd over het remaining
+- **GIVEN** a Horizon subsidie with €100 000 direct costs and
+  €22 500 indirect-25% costs (projected over the remaining
   budget)
-- **WHEN** de budget-bewaking calculation runs
-- **THEN** een warning MUST verschijnen ("indirect-25%-grens van
-  €25 000 nadert; huidige bezetting 90%").
+- **WHEN** the budget monitoring calculation runs
+- **THEN** a warning MUST appear ("indirect-25% limit of
+  €25 000 approaching; current usage 90%").
 
-### REQ-RDS-006: R&D-subsidies-administratie SHALL be reachable through a feature-flag-controlled manifest navigation entry
+### REQ-RDS-006: R&D subsidies administration SHALL be reachable through a feature-flag-controlled manifest navigation entry
 
-`src/manifest.json` MUST een feature-flag-controlled menu entry
-(`featureFlags.mkb-r-d-subsidies`) declareren onder
-`Bookkeeping > R&D Subsidies` met `type: index` per regeling +
+`src/manifest.json` MUST declare a feature-flag-controlled menu
+entry (`featureFlags.mkb-r-d-subsidies`) under
+`Bookkeeping > R&D Subsidies` with `type: index` per regeling +
 `type: detail` per subsidie (budget, kostendossier,
-voortgangsrapportage, audit-pack). Per ADR-024 Tier-4, no bespoke
-Vue files.
+voortgangsrapportage, audit-pack). Per ADR-024 Tier-4, no
+bespoke Vue files.
 
-#### Scenario: R&D-subsidies-menu toggles with the feature flag
+#### Scenario: R&D subsidies menu toggles with the feature flag
 
-- **GIVEN** de manifest declareert `featureFlags.mkb-r-d-subsidies`
-- **WHEN** de flag ON staat
-- **THEN** het menu MUST verschijnen.
-- **WHEN** de flag OFF staat
-- **THEN** het menu MUST NOT renderen.
+- **GIVEN** the manifest declares `featureFlags.mkb-r-d-subsidies`
+- **WHEN** the flag is ON
+- **THEN** the menu MUST appear.
+- **WHEN** the flag is OFF
+- **THEN** the menu MUST NOT render.

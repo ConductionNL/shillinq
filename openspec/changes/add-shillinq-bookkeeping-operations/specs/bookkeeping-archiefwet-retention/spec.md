@@ -40,6 +40,8 @@ A `RetentionRule` register MUST be declared and seeded from
 `lib/Settings/seeds/selectielijst-gemeenten-2020.json`. Each rule
 record carries:
 
+Schema.org annotation: `schema:DefinedTerm` (a policy declaration — a coded retention classifier from the statutory Selectielijst, with operator-authored overrides forming an extended controlled vocabulary).
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `selectielijstCode` | string | Yes | The Selectielijst classifier (e.g. `5.1.2`, `3.5.1`, `1.1.1`) |

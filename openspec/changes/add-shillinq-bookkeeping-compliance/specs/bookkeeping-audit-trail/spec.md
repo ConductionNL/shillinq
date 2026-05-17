@@ -166,3 +166,89 @@ the OR default applies; the audit log persists indefinitely.
   audit event
 - **THEN** OR MUST apply its archival/destruction workflow per
   ADR-022; shillinq MUST NOT intervene.
+
+### REQ-AT-006: Retention disposition SHALL itself be an audited lifecycle event whose chain entry survives payload destruction
+
+The append-only audit chain (REQ-AT-001..005) and the Archiefwet
+retention engine described in capability
+`bookkeeping-archiefwet-retention` (REQ-ARC-001..006) operate on
+the same lifecycle: a regulated record is created, transitions
+through working states, is archived, and is eventually
+destroyed or anonymised per its `x-openregister-lifecycle.retention`
+rule. The two abstractions MUST NOT contradict each other at that
+end-of-life boundary; instead they MUST compose as follows:
+
+1. **Retention disposition is itself an audited lifecycle event.**
+   When OR's retention engine acts on a record under a rule from
+   the `RetentionRule` register, the action (purge, archive,
+   anonymise) MUST be emitted to the audit chain as a
+   `lifecycle:<from>→<to>` event (e.g. `archived → purged` or
+   `archived → anonymised`) per REQ-AT-002. The event MUST
+   record `actor: system` (or the operator UUID for
+   manually-triggered dispositions), the
+   `selectielijstCode` + `legalBasis` of the applied rule (in
+   the action metadata), the `timestamp`, and the
+   `previousHash` + `eventHash` chain links.
+
+2. **The hash chain survives the record's destruction.** The
+   audit-chain entry for the disposition (and all prior entries
+   in the chain for that `objectId`) MUST be retained even when
+   the source record's payload is tombstoned or anonymised per
+   the rule. The retained chain entry preserves the chain's
+   end-to-end cryptographic verifiability (REQ-AT-002 hash
+   verification, REQ-ARC-006) without preserving the underlying
+   personal data. After disposition, the entry's
+   `afterState` MUST be either `null` (destroy) or the
+   anonymised payload (anonymise) — never the pre-disposition
+   payload.
+
+3. **Cross-reference: OR's retention engine MUST emit the
+   disposition event to the audit chain BEFORE the purge or
+   anonymisation completes.** This ordering ensures a tampered
+   chain cannot be hidden by a too-eager purge: the disposition
+   event itself is the proof that the rule was applied. Capability
+   `bookkeeping-archiefwet-retention` (REQ-ARC-001, REQ-ARC-006)
+   declares the same ordering from the retention-engine side;
+   this REQ declares it from the audit-chain side.
+
+shillinq MUST NOT implement the emit-then-purge ordering itself
+(per ADR-022 and REQ-AT-005, retention is OR's responsibility);
+shillinq declares the expectation as the consumer of both
+abstractions.
+
+#### Scenario: A GL transaction reaches retention end-of-life and the chain survives the payload
+
+- **GIVEN** a `GLTransaction` created in 2017 with
+  `x-openregister-lifecycle.retention` pointing at
+  Selectielijst `5.1.2` (disposition: `archive` after 7 years,
+  then `destroy` after the archival window per the rule)
+- **AND** the record has accumulated N audit-chain events
+  (create, posted transitions, archive)
+- **WHEN** OR's retention engine sweeps in the year the
+  destruction window closes
+- **THEN** OR MUST first emit a `lifecycle:archived → purged`
+  event to the audit chain with `actor: system`, the rule's
+  `selectielijstCode: "5.1.2"` + `legalBasis` in the action
+  metadata, `previousHash` linking to event N, and a fresh
+  `eventHash`
+- **AND** OR MUST then purge the source record's payload
+- **AND** the audit chain entry (event N+1) MUST be retained as
+  a tombstone (`afterState: null`) after the payload is gone
+- **AND** OR's hash-chain verification API MUST still report
+  `valid: true` for the surviving chain entries — the chain's
+  verifiability MUST survive the record's destruction.
+
+#### Scenario: An anonymisation disposition preserves the chain without preserving PII
+
+- **GIVEN** a `UrenRegistratie` record with PII (`personId`)
+  reaches the retention rule's anonymisation date (per
+  REQ-ARC-004)
+- **WHEN** OR's retention engine applies the rule
+- **THEN** OR MUST emit a `lifecycle:archived → anonymised`
+  event to the audit chain referencing the rule's
+  `selectielijstCode` + `legalBasis` BEFORE clearing the PII
+- **AND** the event's `afterState` MUST contain the anonymised
+  payload (PII cleared or hashed; aggregate fields retained per
+  REQ-ARC-004), never the pre-anonymisation payload
+- **AND** the chain MUST remain end-to-end verifiable per
+  REQ-AT-002.

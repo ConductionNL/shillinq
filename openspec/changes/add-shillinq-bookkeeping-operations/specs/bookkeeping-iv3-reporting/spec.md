@@ -11,16 +11,16 @@
 
 For administrations of type `gemeente`, `provincie`, or `waterschap`,
 shillinq MUST produce a quarterly IV3 export to CBS per BBV mandate
-(Wet HOF + Besluit BBV art. 71 + huidige IV3-bestand specificaties
-van CBS). The export MUST be declared as a register-managed entity
-(`Iv3Export`) with a lifecycle covering generation, validation,
-submission to CBS, and acceptance/rejection. No bespoke `Iv3Service`
-or `CbsExportService` — per ADR-031, the aggregation + XML
-generation are declarative.
+(Wet Fido art. 8 + Besluit BBV art. 71 + huidige IV3-bestand
+specificaties van CBS). The export MUST be declared as a
+register-managed entity (`Iv3Export`) with a lifecycle covering
+generation, validation, submission to CBS, and acceptance/rejection.
+No bespoke `Iv3Service` or `CbsExportService` — per ADR-031, the
+aggregation + XML generation are declarative.
 
-Statutory basis: Wet HOF art. 3 + Besluit BBV art. 71 + Regeling
-informatie voor derden (CBS) + IV3-bestand specificaties (current
-revision).
+Statutory basis: Wet Fido art. 8 (rapportageplicht) + Besluit BBV
+art. 71 + Regeling informatie voor derden (Regeling I) +
+IV3-bestand specificaties (current revision).
 
 #### Scenario: A gemeente generates a Q1 IV3 export
 
@@ -38,6 +38,10 @@ revision).
 - **THEN** the workflow MUST be skipped for that administration.
 
 ### REQ-IV3-002: The `Iv3Export` schema SHALL declare a fixed minimum field set
+
+Schema.org annotation: `schema:Dataset` (the `Iv3Export` register models
+the IV3 data bestand submitted to CBS, with `buckets` as the aggregated
+payload and `xmlAttachmentUri` as the serialised distribution).
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|

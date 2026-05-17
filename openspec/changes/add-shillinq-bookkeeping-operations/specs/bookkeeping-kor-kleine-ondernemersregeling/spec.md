@@ -28,6 +28,8 @@ Statutory basis: Wet OB 1968 art. 25 + Uitvoeringsbeschikking OB
 
 ### REQ-KOR-002: The `KorRegime` schema SHALL declare a fixed minimum field set
 
+Schema.org annotation: `schema:GovernmentPermit` (KOR is an opt-in statutory exemption regime granted by the Belastingdienst; the record represents the administration's permit-like enrolment status, not just a static term).
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `administrationId` | string | Yes | FK to the administration owning the regime |
@@ -56,6 +58,8 @@ on first install. The seed carries the current statutory threshold
 NOT baked as schema enums (they have changed historically: the
 KOR before 2020 was a sliding scale; the post-2020 regime is a
 fixed €20.000 ceiling).
+
+Schema.org annotation for `KorThreshold`: `schema:DefinedTerm` (a versioned statutory parameter — a controlled-vocabulary entry keyed by `effectiveFrom`/`effectiveTo`).
 
 #### Scenario: A future threshold change is a seed update, not a code change
 

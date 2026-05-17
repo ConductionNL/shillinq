@@ -41,6 +41,8 @@ Statutory basis: Wet OB 1968 (Wet op de omzetbelasting) art. 14 +
 The schema MUST declare the following fields. Additional fields MAY
 be added later (additive only).
 
+Schema.org annotation: `schema:Invoice` (the filing object — a periodic statement of VAT owed/refundable; the closest Schema.org type for a statutory monetary declaration. The act of filing is covered by REQ-VBTW-010's workflow.)
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `administrationId` | string | Yes | FK to the administration owning the return |
@@ -82,6 +84,8 @@ carries `code` (e.g. `21pct`, `9pct`, `0pct`, `vrij`, `verlegd`),
 `category` (`standaard`, `verlaagd`, `nul`, `vrijgesteld`,
 `verleggingsregeling`), `effectiveFrom`, `effectiveTo` (nullable),
 and the RGS account hints under `defaultAccounts`.
+
+Schema.org annotation for `VatTariff`: `schema:PriceSpecification` (a tariff is a structured rate specification applied to monetary amounts).
 
 Per ADR-031, rates are NOT baked as schema enums — they evolve
 with statute (the 9% category was 6% before 2019; a future
@@ -212,6 +216,8 @@ service — this is the ADR-022 anti-pattern.
 EU intracommunautaire prestaties MUST be filed quarterly via
 ICP-opgaaf. T3 ships an `IcpStatement` schema with:
 
+Schema.org annotation for `IcpStatement`: `schema:Invoice` (a periodic statutory statement of intra-EU supply totals — same Invoice-as-statement framing as `VatReturn`).
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `administrationId` | string | Yes | FK to administration |
@@ -266,6 +272,8 @@ the standard aggregation. No separate `ReverseChargeService`.
 A `VatCorrection` register MUST be declared for material corrections
 (suppletie) where a previously-submitted return needs amendment.
 Fields:
+
+Schema.org annotation for `VatCorrection`: `schema:Invoice` (a corrective statutory statement; carries the same Invoice-as-statement framing as the original `VatReturn` it supersedes).
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
