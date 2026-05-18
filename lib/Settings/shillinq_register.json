@@ -139,6 +139,9 @@
               "description": "Historical only — no new postings, no edits; remains queryable."
             }
           },
+          "preconditions": {
+            "save": "OCA\\Shillinq\\Guard\\AccountBalanceGuard::requireSingleClosingAccount"
+          },
           "transitions": {
             "block": {
               "from": "active",

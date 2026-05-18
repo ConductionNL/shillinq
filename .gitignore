@@ -106,3 +106,6 @@ bom-npm.cdx.json
 /test-results/
 /playwright-report/
 /playwright/.cache/
+
+# Hydra builder internal state — emitted by run-hydra-gates.sh
+task-audit.json
