@@ -1,0 +1,195 @@
+<?php
+
+/**
+ * Unit tests for InitializeSettings repair step.
+ *
+ * @category Test
+ * @package  OCA\Shillinq\Tests\Unit\Repair
+ *
+ * @author    Conduction Development Team <dev@conductio.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @link https://conduction.nl
+ *
+ * @spec openspec/changes/spec/tasks.md#task-11
+ */
+
+declare(strict_types=1);
+
+namespace OCA\Shillinq\Tests\Unit\Repair;
+
+use OCA\Shillinq\Repair\InitializeSettings;
+use OCA\Shillinq\Service\SettingsService;
+use OCP\Migration\IOutput;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
+
+/**
+ * Tests for InitializeSettings repair step.
+ */
+class InitializeSettingsTest extends TestCase
+{
+
+    /**
+     * Mock SettingsService.
+     *
+     * @var SettingsService&MockObject
+     */
+    private SettingsService&MockObject $settingsService;
+
+    /**
+     * Mock LoggerInterface.
+     *
+     * @var LoggerInterface&MockObject
+     */
+    private LoggerInterface&MockObject $logger;
+
+    /**
+     * Mock IOutput.
+     *
+     * @var IOutput&MockObject
+     */
+    private IOutput&MockObject $output;
+
+    /**
+     * The repair step under test.
+     *
+     * @var InitializeSettings
+     */
+    private InitializeSettings $repairStep;
+
+    /**
+     * Set up test fixtures.
+     *
+     * @return void
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->settingsService = $this->createMock(SettingsService::class);
+        $this->logger          = $this->createMock(LoggerInterface::class);
+        $this->output          = $this->createMock(IOutput::class);
+
+        $this->repairStep = new InitializeSettings(
+            settingsService: $this->settingsService,
+            logger: $this->logger,
+        );
+
+    }//end setUp()
+
+    /**
+     * Test that getName returns a non-empty descriptive string.
+     *
+     * @return void
+     */
+    public function testGetNameReturnsDescriptiveString(): void
+    {
+        $name = $this->repairStep->getName();
+
+        self::assertIsString($name);
+        self::assertNotEmpty($name);
+
+    }//end testGetNameReturnsDescriptiveString()
+
+    /**
+     * Test that run() skips configuration when OpenRegister is unavailable.
+     *
+     * @return void
+     */
+    public function testRunSkipsWhenOpenRegisterUnavailable(): void
+    {
+        $this->settingsService->expects($this->once())
+            ->method('isOpenRegisterAvailable')
+            ->willReturn(false);
+
+        $this->settingsService->expects($this->never())
+            ->method('loadConfiguration');
+
+        $this->output->expects($this->once())
+            ->method('warning')
+            ->with($this->stringContains('OpenRegister'));
+
+        $this->repairStep->run(output: $this->output);
+
+    }//end testRunSkipsWhenOpenRegisterUnavailable()
+
+    /**
+     * Test that run() calls loadConfiguration and seedRgsTemplate on success.
+     *
+     * @return void
+     */
+    public function testRunCallsLoadConfigurationAndSeedTemplate(): void
+    {
+        $this->settingsService->expects($this->once())
+            ->method('isOpenRegisterAvailable')
+            ->willReturn(true);
+
+        $this->settingsService->expects($this->once())
+            ->method('loadConfiguration')
+            ->with(force: true)
+            ->willReturn(['success' => true, 'version' => '0.2.0']);
+
+        $this->settingsService->expects($this->atLeastOnce())
+            ->method('getSettings')
+            ->willReturn([
+                'rgs_template'     => 'mkb',
+                'administration_id' => 'adm-1',
+                'register'         => '',
+                'openregisters'    => true,
+                'isAdmin'          => false,
+            ]);
+
+        $this->settingsService->expects($this->once())
+            ->method('seedRgsTemplate')
+            ->with(
+                templateVariant: 'mkb',
+                administrationId: 'adm-1'
+            )
+            ->willReturn(['success' => true, 'seeded' => 150, 'skipped' => 0]);
+
+        $this->repairStep->run(output: $this->output);
+
+    }//end testRunCallsLoadConfigurationAndSeedTemplate()
+
+    /**
+     * Test that run() reports a warning when loadConfiguration fails.
+     *
+     * @return void
+     */
+    public function testRunWarnsWhenLoadConfigurationFails(): void
+    {
+        $this->settingsService->expects($this->once())
+            ->method('isOpenRegisterAvailable')
+            ->willReturn(true);
+
+        $this->settingsService->expects($this->once())
+            ->method('loadConfiguration')
+            ->with(force: true)
+            ->willReturn(['success' => false, 'message' => 'Config import error']);
+
+        $this->settingsService->expects($this->atLeastOnce())
+            ->method('getSettings')
+            ->willReturn([
+                'rgs_template'     => 'mkb',
+                'administration_id' => 'default',
+                'register'         => '',
+                'openregisters'    => true,
+                'isAdmin'          => false,
+            ]);
+
+        $this->settingsService->expects($this->once())
+            ->method('seedRgsTemplate')
+            ->willReturn(['success' => true, 'seeded' => 40, 'skipped' => 0]);
+
+        $this->output->expects($this->atLeastOnce())
+            ->method('warning')
+            ->with($this->stringContains('Config import error'));
+
+        $this->repairStep->run(output: $this->output);
+
+    }//end testRunWarnsWhenLoadConfigurationFails()
+
+}//end class

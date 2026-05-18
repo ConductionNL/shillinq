@@ -3,13 +3,13 @@
   "info": {
     "title": "Shillinq Register",
     "description": "Register containing all schemas for the Shillinq application.",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "x-openregister": {
     "type": "application",
     "app": "shillinq",
     "openregister": "^v0.2.10",
-    "description": "Shillinq — replace with your app description"
+    "description": "Shillinq — open-source business administration suite for Dutch SMB, ZZP, and government."
   },
   "paths": {},
   "components": {
@@ -34,6 +34,174 @@
             "type": "string",
             "description": "An optional description",
             "example": "This is an example"
+          }
+        }
+      },
+      "Account": {
+        "slug": "Account",
+        "icon": "LedgerOutline",
+        "version": "0.1.0",
+        "title": "Account",
+        "description": "A hierarchical chart-of-accounts entry conforming to the RGS (Referentie Grootboek Schema) standard for Dutch bookkeeping.",
+        "type": "object",
+        "x-schema-org": "schema:DefinedTerm",
+        "required": [
+          "accountNumber",
+          "name",
+          "accountType",
+          "currency",
+          "administrationId",
+          "lifecycleState"
+        ],
+        "properties": {
+          "accountNumber": {
+            "type": "string",
+            "description": "RGS-style account code (e.g. '1000', '4100'). Unique within an administration.",
+            "example": "1000"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable account name.",
+            "example": "Liquide middelen"
+          },
+          "accountType": {
+            "type": "string",
+            "description": "Top-level balance-sheet or income-statement classification.",
+            "enum": [
+              "assets",
+              "liabilities",
+              "equity",
+              "revenue",
+              "expenses"
+            ],
+            "example": "assets"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code for this account's base currency.",
+            "minLength": 3,
+            "maxLength": 3,
+            "example": "EUR",
+            "default": "EUR"
+          },
+          "parentAccountNumber": {
+            "type": "string",
+            "description": "FK to the parent Account.accountNumber for hierarchy navigation.",
+            "example": "1000",
+            "nullable": true
+          },
+          "isClosingAccount": {
+            "type": "boolean",
+            "description": "Designates this as the administration's single closing account for period-end equity absorption.",
+            "default": false
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this account. Scopes uniqueness of accountNumber.",
+            "example": "adm-1"
+          },
+          "lifecycleState": {
+            "type": "string",
+            "description": "Current lifecycle state of the account.",
+            "enum": [
+              "active",
+              "blocked",
+              "archived"
+            ],
+            "example": "active",
+            "default": "active"
+          },
+          "description": {
+            "type": "string",
+            "description": "Operator-authored free-text description of the account.",
+            "nullable": true
+          },
+          "vatApplicable": {
+            "type": "boolean",
+            "description": "Whether VAT/BTW applies to transactions posted to this account.",
+            "default": false
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Fully usable for new GL postings."
+            },
+            "blocked": {
+              "label": "Blocked",
+              "description": "Readable and referenceable by existing postings, but rejected as the target of new GL lines."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Historical only — no new postings, no edits; remains queryable."
+            }
+          },
+          "preconditions": {
+            "save": "OCA\\Shillinq\\Guard\\AccountBalanceGuard::requireSingleClosingAccount"
+          },
+          "transitions": {
+            "block": {
+              "from": "active",
+              "to": "blocked",
+              "label": "Block account",
+              "description": "Prevent new postings against this account."
+            },
+            "unblock": {
+              "from": "blocked",
+              "to": "active",
+              "label": "Unblock account",
+              "description": "Re-enable new postings against this account."
+            },
+            "archiveFromActive": {
+              "from": "active",
+              "to": "archived",
+              "label": "Archive account",
+              "description": "Move to historical archive. Requires zero open balance.",
+              "requires": "OCA\\Shillinq\\Guard\\AccountBalanceGuard::requireZeroBalance"
+            },
+            "archiveFromBlocked": {
+              "from": "blocked",
+              "to": "archived",
+              "label": "Archive account",
+              "description": "Move to historical archive from blocked state. Requires zero open balance.",
+              "requires": "OCA\\Shillinq\\Guard\\AccountBalanceGuard::requireZeroBalance"
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "parentAccount": {
+            "localField": "parentAccountNumber",
+            "relatedSchema": "Account",
+            "relatedField": "accountNumber",
+            "cardinality": "many-to-one",
+            "description": "Self-relation enabling hierarchical chart-of-accounts navigation."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "countByType": {
+            "field": "accountType",
+            "operation": "count",
+            "description": "Number of accounts per accountType.",
+            "groupBy": "accountType"
+          },
+          "countByLifecycle": {
+            "field": "lifecycleState",
+            "operation": "count",
+            "description": "Number of accounts per lifecycleState.",
+            "groupBy": "lifecycleState"
           }
         }
       }

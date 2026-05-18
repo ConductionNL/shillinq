@@ -1,0 +1,593 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "RGS 3.5",
+    "variant": "zzp",
+    "description": "Vereenvoudigd rekeningschema voor ZZP-ers en eenmanszaken op basis van RGS 3.5.",
+    "imported": "2026-05-18T00:00:00Z",
+    "url": "https://www.referentiegrootboekschema.nl"
+  },
+  "accounts": [
+    {
+      "accountNumber": "1000",
+      "name": "Liquide middelen",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Groepsrekening liquide middelen."
+    },
+    {
+      "accountNumber": "1010",
+      "name": "Kas",
+      "accountType": "assets",
+      "currency": "EUR",
+      "parentAccountNumber": "1000",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Kasrekening voor contante betalingen."
+    },
+    {
+      "accountNumber": "1020",
+      "name": "Bankrekening zakelijk",
+      "accountType": "assets",
+      "currency": "EUR",
+      "parentAccountNumber": "1000",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Zakelijke betaalrekening."
+    },
+    {
+      "accountNumber": "1100",
+      "name": "Debiteuren",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Openstaande facturen bij opdrachtgevers."
+    },
+    {
+      "accountNumber": "1110",
+      "name": "Handelsdebiteuren",
+      "accountType": "assets",
+      "currency": "EUR",
+      "parentAccountNumber": "1100",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Nog te ontvangen betalingen van opdrachtgevers."
+    },
+    {
+      "accountNumber": "1200",
+      "name": "Overige vorderingen",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Groepsrekening overige kortlopende vorderingen."
+    },
+    {
+      "accountNumber": "1210",
+      "name": "BTW-vordering",
+      "accountType": "assets",
+      "currency": "EUR",
+      "parentAccountNumber": "1200",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Terugvorderbare BTW (hogere inkoop-BTW dan omzet-BTW)."
+    },
+    {
+      "accountNumber": "1220",
+      "name": "Vooruitbetaalde kosten",
+      "accountType": "assets",
+      "currency": "EUR",
+      "parentAccountNumber": "1200",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Kosten betaald voor volgend boekjaar."
+    },
+    {
+      "accountNumber": "1500",
+      "name": "Zakelijke activa",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Groepsrekening zakelijke vaste activa."
+    },
+    {
+      "accountNumber": "1510",
+      "name": "Inventaris en apparatuur",
+      "accountType": "assets",
+      "currency": "EUR",
+      "parentAccountNumber": "1500",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Bureau, werkstoel, gereedschap en overige zakelijke apparatuur."
+    },
+    {
+      "accountNumber": "1520",
+      "name": "Computer en ICT",
+      "accountType": "assets",
+      "currency": "EUR",
+      "parentAccountNumber": "1500",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Laptop, smartphone en overige ICT-middelen."
+    },
+    {
+      "accountNumber": "1800",
+      "name": "Cumulatieve afschrijvingen",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Groepsrekening cumulatieve afschrijvingen zakelijke activa (contra)."
+    },
+    {
+      "accountNumber": "1810",
+      "name": "Cum. afschrijving inventaris",
+      "accountType": "assets",
+      "currency": "EUR",
+      "parentAccountNumber": "1800",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Cumulatieve afschrijving inventaris en apparatuur."
+    },
+    {
+      "accountNumber": "1820",
+      "name": "Cum. afschrijving ICT",
+      "accountType": "assets",
+      "currency": "EUR",
+      "parentAccountNumber": "1800",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Cumulatieve afschrijving computers en ICT."
+    },
+    {
+      "accountNumber": "2000",
+      "name": "Crediteuren",
+      "accountType": "liabilities",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Openstaande facturen van leveranciers."
+    },
+    {
+      "accountNumber": "2010",
+      "name": "Handelscrediteuren",
+      "accountType": "liabilities",
+      "currency": "EUR",
+      "parentAccountNumber": "2000",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Nog te betalen facturen van leveranciers."
+    },
+    {
+      "accountNumber": "2100",
+      "name": "Belastingschulden",
+      "accountType": "liabilities",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Groepsrekening te betalen belastingen."
+    },
+    {
+      "accountNumber": "2110",
+      "name": "BTW-schuld",
+      "accountType": "liabilities",
+      "currency": "EUR",
+      "parentAccountNumber": "2100",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Af te dragen BTW aan de Belastingdienst."
+    },
+    {
+      "accountNumber": "2120",
+      "name": "Inkomstenbelasting voorlopige aanslag",
+      "accountType": "liabilities",
+      "currency": "EUR",
+      "parentAccountNumber": "2100",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Gereserveerde inkomstenbelasting (inclusief ZVW-bijdrage)."
+    },
+    {
+      "accountNumber": "2200",
+      "name": "Overige schulden",
+      "accountType": "liabilities",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Overige kortlopende schulden."
+    },
+    {
+      "accountNumber": "2210",
+      "name": "Vooruitontvangen bedragen",
+      "accountType": "liabilities",
+      "currency": "EUR",
+      "parentAccountNumber": "2200",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Ontvangen aanbetalingen van opdrachtgevers."
+    },
+    {
+      "accountNumber": "3000",
+      "name": "Eigen vermogen",
+      "accountType": "equity",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Groepsrekening eigen vermogen eenmanszaak/ZZP."
+    },
+    {
+      "accountNumber": "3010",
+      "name": "Beginsaldo eigen vermogen",
+      "accountType": "equity",
+      "currency": "EUR",
+      "parentAccountNumber": "3000",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Eigen vermogen begin van het boekjaar."
+    },
+    {
+      "accountNumber": "3020",
+      "name": "Kapitaalstortingen",
+      "accountType": "equity",
+      "currency": "EUR",
+      "parentAccountNumber": "3000",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Privé-stortingen in de onderneming."
+    },
+    {
+      "accountNumber": "3030",
+      "name": "Privé-opnamen",
+      "accountType": "equity",
+      "currency": "EUR",
+      "parentAccountNumber": "3000",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Opnamen ten behoeve van privégebruik (min-post op eigen vermogen)."
+    },
+    {
+      "accountNumber": "3900",
+      "name": "Resultaat boekjaar",
+      "accountType": "equity",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "isClosingAccount": false,
+      "description": "Resultaat van het lopende boekjaar (sluitrekening V&W)."
+    },
+    {
+      "accountNumber": "4000",
+      "name": "Personeels- en inleenkosten",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Kosten voor ingehuurde krachten en onderaannemers."
+    },
+    {
+      "accountNumber": "4010",
+      "name": "Ingehuurde freelancers",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "parentAccountNumber": "4000",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "vatApplicable": true,
+      "description": "Kosten voor onderaanneming en ingehuurde specialisten."
+    },
+    {
+      "accountNumber": "4100",
+      "name": "Huisvestingskosten",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Kosten werkruimte (huur of thuiswerkkostenvergoeding)."
+    },
+    {
+      "accountNumber": "4110",
+      "name": "Huur werkruimte",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "parentAccountNumber": "4100",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Huurkosten externe werkplek of coworking space."
+    },
+    {
+      "accountNumber": "4120",
+      "name": "Thuiswerkkosten (aftrekbaar deel)",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "parentAccountNumber": "4100",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Aftrekbaar deel energie, internet bij thuiswerken."
+    },
+    {
+      "accountNumber": "4200",
+      "name": "Autokosten",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Zakelijke autokosten (lease, brandstof, onderhoud)."
+    },
+    {
+      "accountNumber": "4210",
+      "name": "Zakelijke kilometers (eigen auto)",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "parentAccountNumber": "4200",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Kilometervergoeding eigen auto zakelijk gebruik."
+    },
+    {
+      "accountNumber": "4220",
+      "name": "Overige autokosten",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "parentAccountNumber": "4200",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Brandstof, parkeren en overige autokosten."
+    },
+    {
+      "accountNumber": "4300",
+      "name": "Kantoor- en communicatiekosten",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Kantoorbenodigdheden, telefonie, internet en software."
+    },
+    {
+      "accountNumber": "4310",
+      "name": "Kantoorartikelen",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "parentAccountNumber": "4300",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "vatApplicable": true,
+      "description": "Papier, printcartridges en overige kantoorbenodigdheden."
+    },
+    {
+      "accountNumber": "4320",
+      "name": "Telefoon en internet",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "parentAccountNumber": "4300",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "vatApplicable": true,
+      "description": "Abonnementen zakelijke telefonie en internet."
+    },
+    {
+      "accountNumber": "4330",
+      "name": "Software en online tools",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "parentAccountNumber": "4300",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "vatApplicable": true,
+      "description": "Abonnementen boekhoudpakket, projectmanagement, e-mail."
+    },
+    {
+      "accountNumber": "4500",
+      "name": "Reiskosten",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Zakelijke reis- en verblijfkosten."
+    },
+    {
+      "accountNumber": "4510",
+      "name": "OV-reiskosten",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "parentAccountNumber": "4500",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Trein, bus en taxi voor zakelijke reizen."
+    },
+    {
+      "accountNumber": "4520",
+      "name": "Verblijfkosten",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "parentAccountNumber": "4500",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Hotel en overige verblijfkosten bij zakelijke reizen."
+    },
+    {
+      "accountNumber": "4600",
+      "name": "Afschrijvingen",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Jaarlijkse afschrijvingslasten zakelijke activa."
+    },
+    {
+      "accountNumber": "4610",
+      "name": "Afschrijving inventaris",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "parentAccountNumber": "4600",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Afschrijving zakelijke inventaris en apparatuur."
+    },
+    {
+      "accountNumber": "4620",
+      "name": "Afschrijving ICT",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "parentAccountNumber": "4600",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Afschrijving computers en ICT-apparatuur."
+    },
+    {
+      "accountNumber": "4700",
+      "name": "Financiële kosten",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Bankkosten en overige financiële lasten."
+    },
+    {
+      "accountNumber": "4710",
+      "name": "Bankkosten",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "parentAccountNumber": "4700",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Maandelijkse bankkosten zakelijke betaalrekening."
+    },
+    {
+      "accountNumber": "4800",
+      "name": "Externe diensten",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Kosten externe adviseurs (accountant, jurist)."
+    },
+    {
+      "accountNumber": "4810",
+      "name": "Accountants- en administratiekosten",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "parentAccountNumber": "4800",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "vatApplicable": true,
+      "description": "Kosten boekhouder en belastingadviseur."
+    },
+    {
+      "accountNumber": "4900",
+      "name": "Overige bedrijfskosten",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Overige aftrekbare zakelijke kosten."
+    },
+    {
+      "accountNumber": "4910",
+      "name": "Verzekeringen",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "parentAccountNumber": "4900",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Beroepsaansprakelijkheid, AOV en overige zakelijke verzekeringen."
+    },
+    {
+      "accountNumber": "4920",
+      "name": "Cursussen en opleidingen",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "parentAccountNumber": "4900",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "vatApplicable": true,
+      "description": "Vakopleidingen, cursussen en congressen."
+    },
+    {
+      "accountNumber": "4930",
+      "name": "Vakliteratuur en contributies",
+      "accountType": "expenses",
+      "currency": "EUR",
+      "parentAccountNumber": "4900",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Vakbladen, vakliteratuur en brancheverenigingscontributies."
+    },
+    {
+      "accountNumber": "8000",
+      "name": "Omzet",
+      "accountType": "revenue",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Groepsrekening netto-omzet dienstverlening.",
+      "vatApplicable": true
+    },
+    {
+      "accountNumber": "8010",
+      "name": "Omzet dienstverlening",
+      "accountType": "revenue",
+      "currency": "EUR",
+      "parentAccountNumber": "8000",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "vatApplicable": true,
+      "description": "Omzet uit reguliere opdrachten en uurtarief-werkzaamheden."
+    },
+    {
+      "accountNumber": "8020",
+      "name": "Omzet projecten",
+      "accountType": "revenue",
+      "currency": "EUR",
+      "parentAccountNumber": "8000",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "vatApplicable": true,
+      "description": "Omzet op vaste-prijs projecten."
+    },
+    {
+      "accountNumber": "8030",
+      "name": "Omzet overig",
+      "accountType": "revenue",
+      "currency": "EUR",
+      "parentAccountNumber": "8000",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "vatApplicable": true,
+      "description": "Overige omzet (spreekbeurten, royalties, doorberekeningen)."
+    },
+    {
+      "accountNumber": "8100",
+      "name": "Overige opbrengsten",
+      "accountType": "revenue",
+      "currency": "EUR",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Groepsrekening overige inkomsten buiten de primaire omzet."
+    },
+    {
+      "accountNumber": "8110",
+      "name": "Subsidies en toeslagen",
+      "accountType": "revenue",
+      "currency": "EUR",
+      "parentAccountNumber": "8100",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "STAP-budget, TOZO-gerelateerde subsidies en overige toeslagen."
+    },
+    {
+      "accountNumber": "8120",
+      "name": "Rentebaten",
+      "accountType": "revenue",
+      "currency": "EUR",
+      "parentAccountNumber": "8100",
+      "administrationId": "template",
+      "lifecycleState": "active",
+      "description": "Rente op spaarrekeningen."
+    }
+  ]
+}

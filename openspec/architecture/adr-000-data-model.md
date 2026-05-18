@@ -36,26 +36,39 @@ _Financial transaction representing an invoice, credit note, or debit note in ac
 - → DunningNotice (one-to-many)
 
 ### Account
-_Business account representing a separate organization or workspace that users can access and manage_
-**Primary spec:** access-control-authorisation
+**Schema.org:** `schema:DefinedTerm`
+_Hierarchical chart-of-accounts entry conforming to the RGS (Referentie Grootboek Schema) standard. Canonical bookkeeping entity for T1–T5 tiers. Supersedes the earlier `GeneralLedgerAccount` entry (see reconciliation note below)._
+**Primary spec:** bookkeeping-chart-of-accounts
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| name | string | Yes | Account display name |
-| accountNumber | string | Yes | Unique account number or GL code |
-| accountType | string | Yes | Classification: assets, liabilities, equity, revenue, expenses |
-| balance | number | Yes | Current account balance |
-| currency | string | Yes | ISO 4217 currency code (e.g. EUR) |
-| description | string | No | Detailed account description |
+| accountNumber | string | Yes | RGS-style account code (e.g. 1000, 4100) |
+| name | string | Yes | Human-readable account name |
+| accountType | enum | Yes | One of assets, liabilities, equity, revenue, expenses |
+| currency | string | Yes | ISO 4217 currency code (e.g. EUR); default EUR |
+| parentAccountNumber | string | No | FK to parent Account.accountNumber for hierarchy |
+| isClosingAccount | boolean | No | Designates this as the administration's single closing account |
+| administrationId | string | Yes | FK to the Administration owning this account |
+| lifecycleState | enum | Yes | One of active, blocked, archived |
+| description | string | No | Operator-authored free-text description |
+| vatApplicable | boolean | No | Whether VAT/BTW applies to transactions on this account |
 | iban | string | No | Dutch IBAN for bank/cash accounts |
-| vatApplicable | boolean | No | Whether VAT applies to this account |
-| isArchived | boolean | No | Soft-delete flag for inactive accounts |
-| parentAccountNumber | string | No | Parent account for hierarchical GL structures |
 
 **Relations:**
-- → Organization (many-to-one)
-- → User (many-to-many)
-- → Team (one-to-many)
+- self → Account (many-to-one, via parentAccountNumber → accountNumber; hierarchy navigation)
+- → GLLine (one-to-many, from T1 general-ledger change)
+- → Administration (many-to-one)
+
+> **Reconciliation note (add-shillinq-chart-of-accounts, 2026-05-18):** The earlier
+> `GeneralLedgerAccount` entry (Schema.org `schema:Product`, primary spec
+> financial-reporting-accountability) has been reconciled into this `Account` entry.
+> `Account` is the canonical T1 chart-of-accounts schema registered in
+> `lib/Settings/shillinq_register.json`. The `GeneralLedgerAccount` entry below is
+> retained for historical reference but MUST NOT be used for new register declarations;
+> downstream specs (T2 trial balance, T3 VAT, T4 multi-currency) MUST reference
+> `Account.accountNumber` as the FK target. The Schema.org type is corrected to
+> `schema:DefinedTerm` — a ledger account code is a coded financial classifier
+> (DefinedTerm), not a product.
 
 ### AccountabilityReport
 **Schema.org:** `schema:Report`
@@ -1616,8 +1629,8 @@ _A source of funds that can be allocated to budgets and expenditures_
 - → BudgetAllocation (one-to-many)
 
 ### GeneralLedgerAccount
-**Schema.org:** `schema:Product`
-_A chart-of-accounts entry for tracking debits, credits, and account balances across asset, liability, equity, revenue, and expense categories._
+**Schema.org:** `schema:Product` _(deprecated — use `Account` with `schema:DefinedTerm` instead)_
+_**DEPRECATED.** Superseded by the `Account` entry (bookkeeping-chart-of-accounts, 2026-05-18). Retained here for historical reference only. New register declarations MUST use `Account`. The `currentBalance` field is not carried forward — balance is computed from GL lines by the general ledger tier._
 **Primary spec:** financial-reporting-accountability
 
 | Property | Type | Required | Description |
