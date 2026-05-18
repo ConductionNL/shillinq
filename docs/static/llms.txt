@@ -1,0 +1,27 @@
+# Shillinq
+
+> Shillinq is an open-source business administration app for the Nextcloud workspace.
+
+Shillinq is an open-source business administration app for the Nextcloud workspace. It covers double-entry bookkeeping, sales and purchase invoicing (UBL, Peppol, NLCIUS), procurement workflows, contract lifecycle management, and bank reconciliation over SEPA / ISO 20022. Dutch government compliance ships in the box: BBV, IV3, SiSa, and DigiInkoop. Released under EUPL-1.2 and maintained by Conduction since 2019.
+
+## Docs
+
+- [Tutorials](https://shillinq.conduction.nl/tutorials): step-by-step walkthroughs.
+- [Features](https://shillinq.conduction.nl/Features): what the app does, organised by capability.
+- [Use cases](https://shillinq.conduction.nl/UseCases): real customer scenarios.
+- [Integrations](https://shillinq.conduction.nl/Integrations): which external systems the app talks to.
+- [Technical](https://shillinq.conduction.nl/Technical): architecture, data model, security posture.
+- [User guide](https://shillinq.conduction.nl/user-guide): end-user documentation.
+- [API](https://shillinq.conduction.nl/api): OpenAPI reference.
+
+## Optional
+
+- [Install](https://shillinq.conduction.nl/installation): install from the Nextcloud app store.
+- [Source](https://shillinq.conduction.nl): repository and issue tracker.
+- [App page](https://www.conduction.nl/apps/shillinq): product positioning on conduction.nl.
+
+## Contact
+
+- Email: info@conduction.nl
+- GitHub: https://github.com/ConductionNL/shillinq
+- Conduction B.V. · KvK 76741850 · Lauriergracht 14h, Amsterdam, Netherlands
