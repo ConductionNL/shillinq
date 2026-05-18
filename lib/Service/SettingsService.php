@@ -42,6 +42,8 @@ class SettingsService
      */
     private const CONFIG_KEYS = [
         'register',
+        'rgs_template',
+        'administration_id',
     ];
 
     /**
@@ -120,6 +122,135 @@ class SettingsService
 
         return $this->getSettings();
     }//end updateSettings()
+
+    /**
+     * Seed the chart of accounts from an RGS template file, idempotently.
+     *
+     * Reads the selected template from lib/Settings/seeds/ and imports Account
+     * records via OpenRegister's ObjectService. Already-existing records (matched
+     * by accountNumber + administrationId) are skipped, preserving operator edits.
+     *
+     * @param string $templateVariant  Template to seed: 'mkb', 'zzp', or 'bbv'.
+     * @param string $administrationId The administrationId to stamp on seeded records.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/spec/tasks.md#task-11
+     */
+    public function seedRgsTemplate(string $templateVariant='mkb', string $administrationId='default'): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        $fileMap = [
+            'mkb' => 'rgs-3.5-mkb.json',
+            'zzp' => 'rgs-3.5-zzp.json',
+            'bbv' => 'rgs-bbv.json',
+        ];
+
+        if (isset($fileMap[$templateVariant]) === false) {
+            return [
+                'success' => false,
+                'message' => 'Unknown RGS template variant: '.$templateVariant,
+            ];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/'.$fileMap[$templateVariant];
+        if (file_exists($seedPath) === false) {
+            $this->logger->error('Shillinq: seed file not found at '.$seedPath);
+            return [
+                'success' => false,
+                'message' => 'Seed file not found: '.$fileMap[$templateVariant],
+            ];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return [
+                'success' => false,
+                'message' => 'Failed to read seed file.',
+            ];
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return [
+                'success' => false,
+                'message' => 'Failed to parse seed file: '.json_last_error_msg(),
+            ];
+        }
+
+        $accounts = ($data['accounts'] ?? []);
+        if (empty($accounts) === true) {
+            return [
+                'success' => false,
+                'message' => 'Seed file contains no accounts.',
+            ];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+
+            $seeded  = 0;
+            $skipped = 0;
+
+            foreach ($accounts as $account) {
+                $account['administrationId'] = $administrationId;
+
+                $existing = $objectService->findObjects(
+                    register: 'shillinq',
+                    schema: 'Account',
+                    params: [
+                        'accountNumber'    => $account['accountNumber'],
+                        'administrationId' => $administrationId,
+                        '_limit'           => 1,
+                    ]
+                );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    register: 'shillinq',
+                    schema: 'Account',
+                    object: $account
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: RGS template seeded',
+                [
+                    'variant' => $templateVariant,
+                    'seeded'  => $seeded,
+                    'skipped' => $skipped,
+                ]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'RGS template seeded successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: RGS template seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedRgsTemplate()
 
     /**
      * Load configuration from shillinq_register.json via OpenRegister.

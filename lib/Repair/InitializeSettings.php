@@ -58,9 +58,16 @@ class InitializeSettings implements IRepairStep
     /**
      * Run the repair step to initialize Shillinq configuration.
      *
+     * Phase 1: imports the register schema from shillinq_register.json.
+     * Phase 2: seeds the chart of accounts from the RGS template selected
+     * in app config key 'rgs_template' (default: 'mkb'). Idempotent —
+     * existing accounts are skipped on re-run, preserving operator edits.
+     *
      * @param IOutput $output The output interface for progress reporting
      *
      * @return void
+     *
+     * @spec openspec/changes/spec/tasks.md#task-11
      */
     public function run(IOutput $output): void
     {
@@ -84,13 +91,12 @@ class InitializeSettings implements IRepairStep
                 $output->info(
                     'Shillinq configuration imported successfully (version: '.$version.')'
                 );
-                return;
+            } else {
+                $message = ($result['message'] ?? 'unknown error');
+                $output->warning('Shillinq configuration import issue: '.$message);
             }
 
-            $message = ($result['message'] ?? 'unknown error');
-            $output->warning(
-                'Shillinq configuration import issue: '.$message
-            );
+            $this->seedChartOfAccounts(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -98,5 +104,38 @@ class InitializeSettings implements IRepairStep
                 ['exception' => $e->getMessage()]
             );
         }//end try
+
     }//end run()
+
+    /**
+     * Seed the chart of accounts from the configured RGS template, idempotently.
+     *
+     * @param IOutput $output The output interface for progress reporting
+     *
+     * @return void
+     */
+    private function seedChartOfAccounts(IOutput $output): void
+    {
+        $template         = $this->settingsService->getSettings()['rgs_template'] ?? 'mkb';
+        $administrationId = $this->settingsService->getSettings()['administration_id'] ?? 'default';
+
+        $output->info('Seeding chart of accounts (template: '.$template.')...');
+
+        $seedResult = $this->settingsService->seedRgsTemplate(
+            templateVariant: $template,
+            administrationId: $administrationId
+        );
+
+        if ($seedResult['success'] === true) {
+            $seeded  = ($seedResult['seeded'] ?? 0);
+            $skipped = ($seedResult['skipped'] ?? 0);
+            $output->info(
+                'Chart of accounts seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        } else {
+            $message = ($seedResult['message'] ?? 'unknown error');
+            $output->warning('Chart of accounts seeding issue: '.$message);
+        }
+
+    }//end seedChartOfAccounts()
 }//end class

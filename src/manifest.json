@@ -4,10 +4,61 @@
 	"dependencies": ["openregister"],
 	"menu": [
 		{ "id": "Dashboard", "label": "Dashboard", "icon": "icon-category-dashboard", "route": "Dashboard", "order": 10 },
+		{
+			"id": "Bookkeeping",
+			"label": "Bookkeeping",
+			"icon": "icon-category-organization",
+			"order": 20,
+			"children": [
+				{ "id": "ChartOfAccounts", "label": "Chart of Accounts", "icon": "LedgerOutline", "route": "ChartOfAccounts", "order": 10 }
+			]
+		},
 		{ "id": "Documentation", "label": "Documentation", "icon": "icon-info", "href": "https://conduction.nl", "section": "settings", "order": 90 },
 		{ "id": "Settings", "label": "Settings", "icon": "icon-settings", "route": "Settings", "section": "settings", "order": 99 }
 	],
 	"pages": [
+		{
+			"id": "ChartOfAccounts",
+			"route": "/chart-of-accounts",
+			"type": "index",
+			"title": "Chart of Accounts",
+			"config": {
+				"register": "shillinq",
+				"schema": "Account",
+				"columns": [
+					{ "key": "accountNumber", "label": "Account Number", "sortable": true },
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "accountType", "label": "Type", "sortable": true },
+					{ "key": "lifecycleState", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "accountNumber",
+				"detailRoute": "ChartOfAccountsDetail"
+			}
+		},
+		{
+			"id": "ChartOfAccountsDetail",
+			"route": "/chart-of-accounts/:id",
+			"type": "detail",
+			"title": "Account",
+			"config": {
+				"register": "shillinq",
+				"schema": "Account",
+				"fields": [
+					{ "key": "accountNumber", "label": "Account Number" },
+					{ "key": "name", "label": "Name" },
+					{ "key": "accountType", "label": "Account Type" },
+					{ "key": "currency", "label": "Currency" },
+					{ "key": "parentAccountNumber", "label": "Parent Account" },
+					{ "key": "administrationId", "label": "Administration" },
+					{ "key": "lifecycleState", "label": "Status" },
+					{ "key": "isClosingAccount", "label": "Closing Account" },
+					{ "key": "vatApplicable", "label": "VAT Applicable" },
+					{ "key": "description", "label": "Description" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ChartOfAccounts"
+			}
+		},
 		{
 			"id": "Dashboard",
 			"route": "/",
