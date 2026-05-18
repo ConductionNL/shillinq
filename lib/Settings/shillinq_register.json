@@ -204,6 +204,265 @@
             "groupBy": "lifecycleState"
           }
         }
+      },
+      "GLTransaction": {
+        "slug": "GLTransaction",
+        "icon": "BookOpenVariantOutline",
+        "version": "0.1.0",
+        "title": "GL Transaction",
+        "description": "General-ledger transaction header (double-entry bookkeeping). Owns N ≥ 2 balanced GLLine rows. Lifecycle: draft → posted → reversed.",
+        "type": "object",
+        "x-schema-org": "schema:AccountingTransaction",
+        "required": [
+          "transactionNumber",
+          "postingDate",
+          "periodId",
+          "currency",
+          "description",
+          "state",
+          "administrationId"
+        ],
+        "properties": {
+          "transactionNumber": {
+            "type": "string",
+            "description": "Sequential transaction number, unique per administration and fiscal year.",
+            "example": "2026-0001"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Effective accounting date of the posting.",
+            "example": "2026-02-15"
+          },
+          "periodId": {
+            "type": "string",
+            "description": "FK to the FiscalPeriod record (stub string until T3 lands; Tier 3 introduces the FiscalPeriod schema and converts this to a real FK).",
+            "example": "2026-Q1"
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "description": "ISO 4217 base currency for this posting.",
+            "example": "EUR",
+            "default": "EUR"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable summary of the posting.",
+            "example": "Purchase of office supplies"
+          },
+          "sourceReference": {
+            "type": "string",
+            "nullable": true,
+            "description": "External document number (invoice no., bank statement ref, etc.).",
+            "example": "INV-2026-0001"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "posted",
+              "reversed"
+            ],
+            "description": "Lifecycle state of the transaction.",
+            "default": "draft",
+            "example": "draft"
+          },
+          "journalEntryId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Back-reference to the JournalEntry that materialised this posting (if any).",
+            "example": "je-001"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this posting.",
+            "example": "adm-1"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Under construction; lines may be added, edited, or deleted."
+            },
+            "posted": {
+              "label": "Posted",
+              "description": "Immutable; header and all lines are locked. Appears in trial balance aggregations."
+            },
+            "reversed": {
+              "label": "Reversed",
+              "description": "Superseded by a compensating posting. Remains queryable for audit; excluded from balance aggregations."
+            }
+          },
+          "immutableStates": ["posted", "reversed"],
+          "transitions": {
+            "post": {
+              "from": "draft",
+              "to": "posted",
+              "label": "Post transaction",
+              "description": "Finalise the transaction. Enforces the double-entry balance invariant (sum of debit lines = sum of credit lines) and locks all child GLLine rows.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\BalanceGuard::isBalanced"
+            },
+            "reverse": {
+              "from": "posted",
+              "to": "reversed",
+              "label": "Reverse transaction",
+              "description": "Mark the transaction as reversed. A compensating GLTransaction that inverts the original lines must already exist before this transition is triggered."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "approver": {
+              "permissions": ["read", "transition:post"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "countByState": {
+            "field": "state",
+            "operation": "count",
+            "description": "Number of transactions per lifecycle state.",
+            "groupBy": "state"
+          }
+        }
+      },
+      "GLLine": {
+        "slug": "GLLine",
+        "icon": "FormatListBulleted",
+        "version": "0.1.0",
+        "title": "GL Line",
+        "description": "Debit or credit line belonging to a GLTransaction. Amount is always non-negative; polarity is encoded in the `side` field.",
+        "type": "object",
+        "x-schema-org": "schema:MonetaryAmount",
+        "required": [
+          "transactionId",
+          "lineNumber",
+          "accountNumber",
+          "side",
+          "amount",
+          "currency",
+          "periodId"
+        ],
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "description": "FK to the parent GLTransaction.id.",
+            "example": "tx-001"
+          },
+          "lineNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Stable 1-based ordering within the transaction.",
+            "example": 1
+          },
+          "accountNumber": {
+            "type": "string",
+            "description": "FK to Account.accountNumber (chart of accounts).",
+            "example": "1000"
+          },
+          "side": {
+            "type": "string",
+            "enum": [
+              "debit",
+              "credit"
+            ],
+            "description": "Debit or credit side. Sign is encoded here; `amount` is always non-negative.",
+            "example": "debit"
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Non-negative monetary amount in the transaction currency. Rounding tolerance: zero (unbalanced posting differing by €0.01 fails).",
+            "example": 100.00
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "description": "ISO 4217 currency. In T1 single-currency mode MUST equal parent GLTransaction.currency.",
+            "example": "EUR"
+          },
+          "periodId": {
+            "type": "string",
+            "description": "Fiscal period identifier. Auto-resolved from parent postingDate on the post transition; draft lines may carry any value.",
+            "example": "2026-Q1"
+          },
+          "subLedgerType": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "ap",
+              "ar",
+              "project",
+              "none"
+            ],
+            "description": "Sub-ledger category (Tier 2 owns the actual sub-ledger registers; T1 allocates the field only).",
+            "example": "none"
+          },
+          "subLedgerRef": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK identifier into the sub-ledger when subLedgerType ≠ none. No FK validation in T1.",
+            "example": "INV-2026-0001"
+          },
+          "costCenter": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cost-center or department code.",
+            "example": "CC-ADMIN"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Line-level description (optional).",
+            "example": "Office supplies expense"
+          }
+        },
+        "x-openregister-relations": {
+          "account": {
+            "localField": "accountNumber",
+            "relatedSchema": "Account",
+            "relatedField": "accountNumber",
+            "cardinality": "many-to-one",
+            "description": "FK to the chart-of-accounts entry declared by add-shillinq-chart-of-accounts."
+          },
+          "transaction": {
+            "localField": "transactionId",
+            "relatedSchema": "GLTransaction",
+            "relatedField": "id",
+            "cardinality": "many-to-one",
+            "description": "FK to the parent GLTransaction header."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "balanceByAccount": {
+            "field": "amount",
+            "operation": "sum",
+            "description": "Sum of amounts grouped by accountNumber and side — basis for T3 trial-balance aggregation.",
+            "groupBy": ["accountNumber", "side", "periodId"]
+          }
+        }
       }
     }
   }

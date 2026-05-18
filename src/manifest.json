@@ -10,7 +10,8 @@
 			"icon": "icon-category-organization",
 			"order": 20,
 			"children": [
-				{ "id": "ChartOfAccounts", "label": "Chart of Accounts", "icon": "LedgerOutline", "route": "ChartOfAccounts", "order": 10 }
+				{ "id": "ChartOfAccounts", "label": "Chart of Accounts", "icon": "LedgerOutline", "route": "ChartOfAccounts", "order": 10 },
+				{ "id": "GeneralLedger", "label": "General Ledger", "icon": "BookOpenVariantOutline", "route": "GeneralLedger", "order": 20 }
 			]
 		},
 		{ "id": "Documentation", "label": "Documentation", "icon": "icon-info", "href": "https://conduction.nl", "section": "settings", "order": 90 },
@@ -57,6 +58,63 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "ChartOfAccounts"
+			}
+		},
+		{
+			"id": "GeneralLedger",
+			"route": "/general-ledger",
+			"type": "index",
+			"title": "General Ledger",
+			"config": {
+				"register": "shillinq",
+				"schema": "GLTransaction",
+				"columns": [
+					{ "key": "transactionNumber", "label": "Transaction Number", "sortable": true },
+					{ "key": "postingDate", "label": "Posting Date", "sortable": true },
+					{ "key": "description", "label": "Description", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "postingDate",
+				"detailRoute": "GeneralLedgerDetail"
+			}
+		},
+		{
+			"id": "GeneralLedgerDetail",
+			"route": "/general-ledger/:id",
+			"type": "detail",
+			"title": "GL Transaction",
+			"config": {
+				"register": "shillinq",
+				"schema": "GLTransaction",
+				"fields": [
+					{ "key": "transactionNumber", "label": "Transaction Number" },
+					{ "key": "postingDate", "label": "Posting Date" },
+					{ "key": "periodId", "label": "Period" },
+					{ "key": "currency", "label": "Currency" },
+					{ "key": "description", "label": "Description" },
+					{ "key": "sourceReference", "label": "Source Reference" },
+					{ "key": "state", "label": "Status" },
+					{ "key": "journalEntryId", "label": "Journal Entry" },
+					{ "key": "administrationId", "label": "Administration" }
+				],
+				"relatedLists": [
+					{
+						"register": "shillinq",
+						"schema": "GLLine",
+						"parentField": "transactionId",
+						"title": "Lines",
+						"columns": [
+							{ "key": "lineNumber", "label": "#", "sortable": true },
+							{ "key": "accountNumber", "label": "Account", "sortable": true },
+							{ "key": "side", "label": "D/C", "sortable": true },
+							{ "key": "amount", "label": "Amount", "sortable": true },
+							{ "key": "subLedgerRef", "label": "Sub-ledger" },
+							{ "key": "costCenter", "label": "Cost Centre" }
+						]
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "GeneralLedger"
 			}
 		},
 		{

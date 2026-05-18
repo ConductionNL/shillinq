@@ -1645,8 +1645,8 @@ _**DEPRECATED.** Superseded by the `Account` entry (bookkeeping-chart-of-account
 - → JournalEntry (one-to-many)
 
 ### GeneralLedgerEntry
-**Schema.org:** `schema:Thing`
-_An individual entry in the general ledger representing a financial transaction with debit and credit amounts_
+**Schema.org:** `schema:Thing` _(deprecated — superseded by `GLLine` + `GLTransaction` below)_
+_**DEPRECATED.** Superseded by the `GLLine` + `GLTransaction` header/line split introduced by `add-shillinq-general-ledger` (2026-05-18). Retained here for historical reference only. New register declarations MUST use `GLTransaction` (header) and `GLLine` (line). The flat `entryDate`/`debitAmount`/`creditAmount` model is replaced by the header/line split required for the declarative balance invariant per ADR-031 (see design.md Decision D2)._
 **Primary spec:** financial-reporting-accountability
 
 | Property | Type | Required | Description |
@@ -1664,6 +1664,61 @@ _An individual entry in the general ledger representing a financial transaction 
 - → FiscalYear (many-to-one)
 - → Organization (many-to-one)
 - → APTransaction (many-to-one)
+
+> **Reconciliation note (add-shillinq-general-ledger, 2026-05-18):** The flat
+> `GeneralLedgerEntry` shape (one row = one debit OR one credit) is superseded
+> by the header/line split declared in `lib/Settings/shillinq_register.json`:
+> `GLTransaction` (header — owns lifecycle and balance invariant) and `GLLine`
+> (line — carries debit-or-credit side, amount, account FK). The split is
+> required for the double-entry balance invariant to be expressible as a
+> lifecycle precondition per ADR-031 (design.md §D2). Downstream specs MUST
+> reference `GLLine.accountNumber → Account.accountNumber` and
+> `GLLine.transactionId → GLTransaction.id`. The `GeneralLedgerEntry` entry
+> MUST NOT be used for new register declarations.
+
+### GLLine
+**Schema.org:** `schema:MonetaryAmount`
+_Debit or credit line belonging to a GLTransaction. Amount is always non-negative; polarity is encoded in the `side` field. Supersedes the flat `GeneralLedgerEntry` entry — see reconciliation note above._
+**Primary spec:** bookkeeping-general-ledger
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| transactionId | string | Yes | FK to parent GLTransaction.id |
+| lineNumber | integer | Yes | Stable 1-based ordering within the transaction |
+| accountNumber | string | Yes | FK to Account.accountNumber (chart of accounts) |
+| side | enum | Yes | `debit` or `credit` — sign encoded here; amount always non-negative |
+| amount | number ≥ 0 | Yes | Non-negative monetary amount in the transaction currency |
+| currency | string (ISO 4217) | Yes | Line currency; in T1 must equal parent GLTransaction.currency |
+| periodId | string | Yes | Fiscal period identifier; auto-resolved at posting time by lifecycle engine |
+| subLedgerType | enum | No | `ap`, `ar`, `project`, `none` — T2 owns the actual sub-ledger registers |
+| subLedgerRef | string | No | FK into sub-ledger when subLedgerType ≠ none; no FK validation in T1 |
+| costCenter | string | No | Cost-center or department code |
+| description | string | No | Line-level description |
+
+**Relations:**
+- → GLTransaction (many-to-one, via transactionId → GLTransaction.id)
+- → Account (many-to-one, via accountNumber → Account.accountNumber)
+
+### GLTransaction
+**Schema.org:** `schema:AccountingTransaction`
+_General-ledger transaction header for double-entry bookkeeping. Owns N ≥ 2 balanced GLLine rows whose debit sum equals credit sum. Lifecycle: draft → posted → reversed. New entity in the T1 data model; the `GeneralLedgerEntry` entry above is the superseded flat predecessor._
+**Primary spec:** bookkeeping-general-ledger
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| transactionNumber | string | Yes | Sequential number unique per administration and fiscal year |
+| postingDate | date | Yes | Effective accounting date of the posting |
+| periodId | string | Yes | FK to FiscalPeriod (stub string until T3 lands) |
+| currency | string (ISO 4217) | Yes | Base currency for this posting |
+| description | string | Yes | Human-readable posting summary |
+| sourceReference | string | No | External document reference (invoice no., bank statement ref, etc.) |
+| state | enum | Yes | One of `draft`, `posted`, `reversed` |
+| journalEntryId | string | No | Back-reference to the JournalEntry that materialised this posting |
+| administrationId | string | Yes | FK to the Administration owning this posting |
+
+**Relations:**
+- → GLLine (one-to-many, via GLLine.transactionId)
+- → Administration (many-to-one)
 
 ### GoodsReceipt
 **Schema.org:** `schema:Thing`

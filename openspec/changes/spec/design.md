@@ -1,6 +1,6 @@
-# Design — Chart of Accounts
+# Design — General Ledger
 
-**status: pr-created**
+**Status:** pr-created
 
 ## Context
 
@@ -10,15 +10,11 @@ reporting. The 5-tier rollout (see `proposal.md`) starts with Tier 1
 **foundation**: a balanced double-entry general ledger built on top of
 a hierarchical chart of accounts.
 
-This change is the **first slice** of Tier 1 — the chart of accounts
-itself. Sibling changes `add-shillinq-general-ledger` and
-`add-shillinq-journal-entries` consume the `Account` register declared
-here.
-
-Currently `lib/Settings/shillinq_register.json` ships only a placeholder
-`example` schema; `openspec/architecture/adr-000-data-model.md`
-enumerates `Account` and `GeneralLedgerAccount` entries but neither has
-landed as a register yet.
+This change is the **second slice** of Tier 1 — the balanced GL itself.
+It depends on `add-shillinq-chart-of-accounts` (which declares the
+`Account` register that `GLLine.accountNumber` foreign-keys into) and
+is consumed by `add-shillinq-journal-entries` (which materialises a
+`GLTransaction` on post).
 
 The change is **spec-only**. Implementation lands later through
 `opsx-apply` and the standard Hydra pipeline; this doc explains
@@ -26,174 +22,194 @@ The change is **spec-only**. Implementation lands later through
 
 ## Goals
 
-- Express the entire chart-of-accounts surface as **declarative
-  metadata** — schema + `x-openregister-lifecycle` rules + manifest
-  entries — per ADR-031. No new PHP service classes.
+- Express the entire GL surface as **declarative metadata** —
+  schemas + `x-openregister-lifecycle` rules + manifest entries —
+  per ADR-031. No new PHP service classes (with the documented
+  ADR-031 exception path for the balance precondition if the engine
+  cannot express it declaratively).
 - Consume every OpenRegister abstraction that already exists for
-  audit trail, RBAC, hierarchical relations — per ADR-022. No
-  reimplementation in shillinq.
+  audit trail, RBAC — per ADR-022. No reimplementation in shillinq.
 - Make the spec a **competent-bookkeeper readable contract** — a
   Dutch SMB accountant should recognise the model as a faithful
-  hierarchical chart of accounts, RGS-conformant, with no surprises.
-- Keep the shape narrow enough that the sibling GL and JE specs can
-  attach without reshaping the `Account` schema.
+  double-entry general ledger, RGS-conformant, with no surprises.
+- Keep Tier 1 narrow enough that Tier 2/3/4/5 specs can each add
+  their surface without reshaping the GL's schemas.
 
 ## Non-Goals
 
-- No GL postings, no journal entries — sibling changes own those.
-- No multi-currency translation — Tier 5's job. (The `Account`
-  schema carries `currency` so Tier 5 doesn't need a destructive
-  migration.)
+- No chart of accounts (sibling change owns the `Account` schema).
+- No journal entries (sibling change owns the `JournalEntry` schema).
+- No invoicing, no AP/AR sub-ledgers, no bank statement matching —
+  Tier 2's job.
+- No period close, no trial balance generation — Tier 3's job. (Tier
+  1 defines `periodId` on every posting so Tier 3 can compute trial
+  balance with one aggregation query.)
+- No financial-statement rendering — Tier 4's job.
+- No multi-currency translation, no VAT/BTW posting automation —
+  Tier 5's job.
 - No frontend Vue components beyond the generic
   `CnIndexPage`/`CnDetailPage` from `@conduction/nextcloud-vue`
   bound through `src/manifest.json`.
-- No PHP code authored in this change.
 
 ## Decisions
 
-### D1 — Declarative-first, per ADR-031
+### D1 — Header/line split for GL transactions
 
-Every chart-of-accounts behaviour expressible as schema metadata MUST
-be declared in `lib/Settings/shillinq_register.json`, not authored as
-a PHP service. Concretely:
+Tier 1 splits GL postings across two schemas:
 
-| Behaviour | Declarative form |
-|---|---|
-| Account active/blocked/archived state machine | `x-openregister-lifecycle` on `Account` |
-| Account hierarchy navigation | `x-openregister-relations` (self-relation `parentAccountNumber → Account.accountNumber`) |
-| Audit trail of every state change | OR's built-in audit-trail-immutable (no app config required) |
+- `GLTransaction` — the header. Carries period, posting date,
+  description, source reference, balanced-state, posting-state. Owns
+  the lifecycle.
+- `GLLine` — the debit-or-credit line. Carries account FK, amount,
+  side (`debit`|`credit`), optional sub-ledger FK, optional cost
+  centre.
 
-**Alternative considered**: Author a PHP `ChartOfAccountsService`
-mirroring Exact / Twinfield style. Rejected per ADR-031 — that is
-exactly the anti-pattern decidesk's MotionService / VotingService /
-QuorumService are now mid-migration away from.
+`adr-000-data-model.md`'s existing `GeneralLedgerEntry` entry is
+line-level (one entry = one debit OR one credit). The header/line
+split is necessary because the balance constraint operates over a
+*group* of lines. A flat `GeneralLedgerEntry` model would force the
+balance check into application code at write-time and prevent the
+constraint from being declarative.
 
-### D2 — `Account` carries `currency`, `administrationId`, `lifecycleState` for future tiers
+**Alternative considered**: Single flat `GeneralLedgerEntry` model
+with a `transactionId` clustering field, balance checked in a
+post-write hook. Rejected — moves the invariant from "declared on
+the schema" to "lives in the hook implementation", which is the
+ADR-031 anti-pattern. Header/line is also the canonical shape in
+RGS and every reference SMB accounting product (Exact, AFAS, Yuki,
+Twinfield, Snelstart).
 
-The `Account` schema must carry forward-compatible fields so that
-sibling and downstream tiers do not force a destructive migration:
+The downstream consequence: `GeneralLedgerEntry` in
+`adr-000-data-model.md` is **superseded by** `GLLine`. The
+ADR-000 update is a one-line note added in this change's
+implementation cycle (not in this proposal). The transactional
+header `GLTransaction` is **new** in the data model.
 
-- `currency` — Tier 5 multi-currency translation needs per-account
-  base currency; declaring it now (default `EUR`) avoids the
-  rewrite later.
-- `administrationId` — Tier 2 multi-administration scoping needs every
-  account to be scoped; declaring as a non-required string in Tier 1
-  keeps single-tenant installs working unchanged.
-- `lifecycleState` — exposes the OR lifecycle state as a queryable
-  field for reporting indexes.
+### D2 — Balance precondition declared as `x-openregister-lifecycle.requires`, with ADR-031 exception path
 
-**Alternative considered**: Add fields later as needs surface.
-Rejected — OR's schema-versioning is additive but downstream specs
-already reference these fields (GL lines need account `currency` for
-balance checks; JE approval policies key off `administrationId`).
-Forward declaration is cheap.
+The double-entry invariant — sum of `GLLine.amount WHERE side='debit'`
+equals sum of `GLLine.amount WHERE side='credit'` for a given
+`GLTransaction` — is the most consequential constraint in the spec.
+The decision is:
 
-### D3 — RGS templates as seed data, not hard-coded enums
+| Path | When | Form |
+|---|---|---|
+| Declarative | OR's lifecycle engine supports cross-schema sum constraints in `requires` | `x-openregister-lifecycle.transitions.post.requires.balance: { ... }` |
+| Single-method PHP guard (ADR-031 exception) | Engine cannot express the constraint declaratively | `lib/Lifecycle/BalanceGuard.php` — exactly one method `isBalanced(string $transactionId): bool`, referenced from `requires` |
 
-The chart-of-accounts shape is fixed by RGS conformance, but the
-exact account numbers and names vary by administration type. T1
-ships three RGS 3.5 templates:
+The discovery step (`opsx-ff`) resolves which path applies before the
+implementing cycle starts. The spec itself is shape-neutral:
+`REQ-GL-005` mandates the invariant without prescribing the
+implementation.
 
-- `rgs-3.5-mkb.json` — the standard SMB chart.
-- `rgs-3.5-zzp.json` — the simplified ZZP/freelancer chart.
-- `rgs-bbv.json` — the BBV (Besluit Begroting en Verantwoording)
-  chart for Dutch government / municipal bookkeeping.
+**Alternative considered**: Author a `PostingService` that checks the
+balance after every write. Rejected per ADR-031 — moves the invariant
+out of the declared metadata and into a service that downstream code
+can bypass. The exception path is single-method, stateless, and
+explicitly annotated as an ADR-031 exception.
 
-Templates are JSON arrays of `Account` records. The repair step
-seeds whichever template the administration selects on first run
-(or none — operators may build their own). Per-administration
-override is allowed: any seeded account can be edited, archived,
-or augmented with sub-accounts.
+### D3 — Period stamping via foreign-key, not via mid-line date arithmetic
 
-**Alternative considered**: Bake one template into the schema as
-enum constraints. Rejected — RGS evolves (4.x ships before
-implementation cycle finishes is plausible), accounts vary per
-administration, and government / SMB / ZZP cannot share enums.
-Seed files keep schema stable and templates evolveable.
+Every `GLLine` carries `periodId` pointing at a `FiscalPeriod`
+record (declared by Tier 3 — referenced by FK here, with a stub
+`periodId` field of type `string` for Tier 1 acceptance). Once Tier
+3 lands, the FK points at the real schema; until then, callers post
+the period identifier as a string. Two reasons for the FK shape:
+
+1. **Trial balance becomes a pure aggregation.** Tier 3's
+   trial-balance capability is `x-openregister-aggregations` grouped
+   by `(periodId, accountNumber)` summing `debit - credit`. No date
+   parsing, no period-boundary edge cases.
+2. **Period close becomes a pure lifecycle transition** on the
+   period record (Tier 3) — no per-line modification needed.
+
+**Alternative considered**: Carry only `entryDate` and compute the
+period on read. Rejected — period boundaries differ per
+administration (calendar year vs broken fiscal year vs 13-period
+retail), and recomputing on every read is wasteful + brittle.
+
+### D4 — Reversal lifecycle declared, not synthesised
+
+`GLTransaction` declares a `posted → reversed` transition. Reversing
+a posted transaction does NOT mutate the original; it emits an
+inverse audit event and marks the header `reversed`. The original
+lines remain queryable for trial-balance reconstruction at any prior
+point in time. This is the canonical immutable-ledger shape.
+
+**Alternative considered**: Hard-delete reversed transactions.
+Rejected — destroys audit history, fails statutory retention, and
+breaks period-close re-runnability.
 
 ## Reuse Analysis
 
 | Capability needed | What already exists | Reuse strategy |
 |---|---|---|
-| Account hierarchy | `adr-000-data-model.md` `Account` entry, `GeneralLedgerAccount` entry | This change's `Account` formalises the existing entry. The two ADR-000 entries are reconciled in the implementation cycle (the GL-prefixed entry becomes the canonical one; `Account` keeps its "business workspace" sense reserved for T2 multi-tenancy). |
+| Account FK | `add-shillinq-chart-of-accounts` `Account` schema | `GLLine.accountNumber` foreign-keys into `Account.accountNumber` via `x-openregister-relations`. |
+| GL line entry shape | `adr-000-data-model.md` `GeneralLedgerEntry` | `GLLine` is the renamed/structured replacement. ADR-000 gets an annotation noting the supersession. |
+| Header for grouped postings | None in ADR-000 | This change adds `GLTransaction` as a new entity in ADR-000 (update lands with the implementation cycle, not this spec). |
 | Audit trail | OR audit-trail-immutable | Consumed automatically (no schema config). Every state transition writes an audit event with actor, before/after, timestamp, hash chain. |
-| RBAC | OR authorization | Per-schema role definitions in the register file. Grants `bookkeeper` create/read, `auditor` read-only. |
-| Lifecycle engine | `x-openregister-lifecycle` (per ADR-031) | `Account` declares an `active → blocked → archived` lifecycle. |
-| Seed data import | `ConfigurationService::importFromApp()` (per shillinq config.yaml `design` rule 3) | Repair-step pattern already in use for the placeholder schema; extended to load the chosen RGS template into the `Account` register. |
-| Cross-schema relations | `x-openregister-relations` | Self-relation on `Account.parentAccountNumber`. |
-| Manifest navigation | `src/manifest.json` + `CnAppRoot` (Tier-4 adopted on `feature/adopt-app-manifest`) | Adds 1 menu entry + 1 index page + 1 detail page, all consuming `type: index` / `type: detail` library renderers. |
+| RBAC | OR authorization | Per-schema role definitions in the register file. Grants `bookkeeper` create/read, `approver` the `post` transition, `auditor` read-only on everything. |
+| Lifecycle engine | `x-openregister-lifecycle` (per ADR-031) | `GLTransaction` declares `draft → posted → reversed`. |
+| Balance precondition | `x-openregister-lifecycle.requires` (or single-method PHP guard per ADR-031 exception path) | See D2. |
+| Cross-schema relations | `x-openregister-relations` | FKs from `GLLine` → `Account`, `GLLine` → `GLTransaction`. |
+| Manifest navigation | `src/manifest.json` + `CnAppRoot` (Tier-4 adopted on `feature/adopt-app-manifest`) | Adds 1 menu entry + 1 index page + 1 detail page (the detail page shows GL header + lines together). |
 
-**Net new code in implementation cycle**: 1 schema declaration + 1
-manifest entry pair + 3 seed JSON files. No new PHP service.
+**Net new code in implementation cycle**: 2 schema declarations + 1
+manifest entry pair. Possibly 1 short PHP lifecycle guard (~20 LOC,
+single method) if Risk 1 in `proposal.md` confirms the cross-line
+balance precondition cannot run inside the declarative engine.
 
 ## Declarative-vs-imperative decision (per ADR-031)
 
 | Behaviour | Decision | Why |
 |---|---|---|
-| Account state machine | Declarative (`x-openregister-lifecycle`) | Pure state machine, fits the extension |
-| Hierarchical account navigation | Declarative (`x-openregister-relations` self-relation) | Standard relation shape |
+| GL transaction state machine | Declarative (`x-openregister-lifecycle`) | Pure state machine, fits the extension |
+| Balance precondition | Declarative if the engine supports cross-line aggregations in `requires`; otherwise a single-method PHP guard called *by* the lifecycle engine (ADR-031 §"PHP guards remain a legitimate seam") | Resolution lives in `opsx-ff` discovery; spec is shape-neutral |
+| Reversal posting | Declarative — lifecycle action on `posted → reversed` emits the inverse audit event | No service code |
+| Trial balance prep (period-stamped lines) | Declarative — Tier 3's aggregation will read these fields | No Tier 1 service |
 | Audit trail | Consumed from OR's audit-trail-immutable abstraction | ADR-022 |
 
-No service class authored in this envelope.
+If the balance precondition needs a PHP guard, it is
+`lib/Lifecycle/BalanceGuard.php`, single method, ~20 LOC — and
+explicitly cited as an ADR-031 exception in the implementing
+cycle's design doc.
 
 ## Seed Data
 
-This change ships three RGS template seeds, all under
-`lib/Settings/seeds/`:
-
-| File | Purpose | Approximate row count |
-|---|---|---|
-| `rgs-3.5-mkb.json` | Standard SMB chart of accounts. Five top-level cluster headers (assets/liabilities/equity/revenue/expenses) and the RGS 3.5 canonical SMB account tree. | ~150 |
-| `rgs-3.5-zzp.json` | Simplified ZZP/freelancer subset of RGS 3.5. | ~40 |
-| `rgs-bbv.json` | BBV chart for Dutch municipal / government bookkeeping. | ~120 |
-
-Format: a JSON array of `Account` records matching the schema declared
-in `bookkeeping-chart-of-accounts/spec.md`. Loaded via
-`ConfigurationService::importFromApp()` in the repair step. The
-administration's first-run flow selects which template to seed (or
-none — operators may build their own). After seeding, accounts are
-fully editable through normal OR object operations; per-administration
-override is the default behaviour.
-
-Each seed file's top of file carries:
-
-- SPDX header (EUPL-1.2 + Copyright Conduction B.V.) per
-  `feedback_spdx-in-docblock.md`.
-- An `_meta` block (`{ "_meta": { "source": "RGS 3.5", "variant":
-  "mkb", "imported": "<iso-timestamp>" } }`) so a future migration to
-  RGS 4.x can identify which records were template-sourced versus
-  operator-authored.
+None for the GL surface — `GLTransaction` and `GLLine` are
+accumulated through operation. (RGS account templates live in the
+sibling `add-shillinq-chart-of-accounts` change.)
 
 ## Risks / Trade-offs
 
 | Risk | Mitigation |
 |---|---|
-| Account hierarchy depth unbounded | Schema permits arbitrary depth; UI (T4+ reporting) renders the first 4 levels by default with collapse/expand. No T1 enforcement of max depth. |
-| RGS 4.x ships during implementation | Seed files versioned in filename (`rgs-3.5-*`); coexistence is trivial; a `rgs-4.0-*` file can be added without touching the schema. |
-| ADR-000 data-model entries `GeneralLedgerAccount` overlaps with `Account` | Reconciliation is a one-paragraph annotation in ADR-000 added during the implementation cycle. Not in this spec. |
+| OR's lifecycle engine can't express cross-line balance constraint inside `requires` | Document the gap as an OR issue; use a single-method PHP guard called *by* the lifecycle engine per ADR-031 §"PHP guards remain a legitimate seam". Spec is shape-neutral (REQ-GL-005 mandates the invariant without prescribing implementation). |
+| Future tier needs a header field Tier 1 didn't anticipate | Adding fields to a register schema is additive (per OR's schema versioning); breaking changes are vanishingly rare. Risk accepted. |
+| ADR-000 data-model entry `GeneralLedgerEntry` overlaps with `GLLine` | Reconciliation is a one-paragraph annotation in ADR-000 added during the implementation cycle, noting `GeneralLedgerEntry` is superseded by `GLLine` and a new `GLTransaction` header is added. Not in this spec. |
 
 ## Migration Plan
 
 Spec-only — no runtime migration in this change. When implementation
 lands:
 
-1. `lib/Settings/shillinq_register.json` is patched with the `Account`
-   schema (additive — no existing schema changes).
+1. `lib/Settings/shillinq_register.json` is patched with the two new
+   schemas (additive — no existing schema changes).
 2. `src/manifest.json` is patched with one new menu entry + one new
    index/detail page pair (additive).
-3. A new repair step (or extension of the existing one) imports the
-   selected RGS template into the `Account` register on first install.
-4. ADR-000 gains a one-paragraph annotation reconciling
-   `GeneralLedgerAccount` with `Account`.
+3. ADR-000 gains a one-paragraph annotation reconciling
+   `GeneralLedgerEntry` with `GLLine` and introducing `GLTransaction`.
 
-Down-direction: registers are non-destructive — disabling the seed
-import + reverting the manifest leaves stranded but queryable
-records. No destructive rollback needed at the spec-acceptance gate.
+Down-direction: registers are non-destructive — disabling the
+manifest leaves stranded but queryable records. No destructive
+rollback needed at the spec-acceptance gate.
 
 ## Open Questions
 
-1. **RGS template variant for housing corp / healthcare / education
-   sectors** — out of scope here; placed on the rollout roadmap.
-2. **Closing-account cardinality** — `REQ-CoA-009` proposes
-   exactly one closing account per administration. Confirm with
-   the bookkeeper persona during spec review.
+1. **Does `x-openregister-lifecycle.requires` support cross-line
+   sum constraints?** Resolved in `opsx-ff` discovery before the
+   implementing cycle starts. If no: thin PHP guard, documented.
+2. **Period-id type** — Tier 1 treats `periodId` as a plain string
+   identifier; Tier 3 introduces `FiscalPeriod` as a real schema and
+   converts the field to an FK. The conversion is additive (existing
+   strings remain valid as period identifiers).
