@@ -42,16 +42,18 @@ use Psr\Log\LoggerInterface;
 class AccountBalanceGuard
 {
     /**
-     * @param ContainerInterface $container DI container — OR's ObjectService
-     *                                      is fetched lazily so this class
-     *                                      stays usable in T1 before T2's
-     *                                      GLLine register exists.
+     * Construct the guard with lazy DI of OR's ObjectService.
+     *
+     * @param ContainerInterface $container DI container — OR's ObjectService is fetched
+     *                                      lazily so this class stays usable in T1
+     *                                      before T2's GLLine register exists.
+     * @param LoggerInterface    $logger    Nextcloud logger for fail-closed diagnostics.
      */
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly LoggerInterface $logger,
     ) {
-    }
+    }//end __construct()
 
     /**
      * Precondition for `archive*` transitions: the account's running balance
@@ -84,7 +86,7 @@ class AccountBalanceGuard
 
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $sum = $objectService->aggregate(
+            $sum           = $objectService->aggregate(
                 register: 'shillinq',
                 schema: 'GLLine',
                 aggregate: ['debit_minus_credit' => 'SUM(debit) - SUM(credit)'],
@@ -101,7 +103,7 @@ class AccountBalanceGuard
             );
             return false;
         }
-    }
+    }//end requireZeroBalance()
 
     /**
      * Precondition for save: at most one Account per administration may have
@@ -127,28 +129,33 @@ class AccountBalanceGuard
 
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $existing = $objectService->findObjects(
+            $existing      = $objectService->findObjects(
                 register: 'shillinq',
                 schema: 'Account',
                 params: [
-                    'administrationId'  => ($account['administrationId'] ?? ''),
-                    'isClosingAccount'  => true,
-                    '_limit'            => 2,
+                    'administrationId' => ($account['administrationId'] ?? ''),
+                    'isClosingAccount' => true,
+                    '_limit'           => 2,
                 ]
             );
 
             // Filter out the current account (by id, if persisted; by accountNumber otherwise).
-            $currentId = ($account['id'] ?? null);
+            $currentId            = ($account['id'] ?? null);
             $currentAccountNumber = ($account['accountNumber'] ?? null);
-            $otherClosing = array_filter($existing, static function ($candidate) use ($currentId, $currentAccountNumber) {
-                if ($currentId !== null && ($candidate['id'] ?? null) === $currentId) {
-                    return false;
-                }
-                if ($currentId === null && ($candidate['accountNumber'] ?? null) === $currentAccountNumber) {
-                    return false;
-                }
-                return true;
-            });
+            $otherClosing         = array_filter(
+                    $existing,
+                    static function ($candidate) use ($currentId, $currentAccountNumber) {
+                        if ($currentId !== null && ($candidate['id'] ?? null) === $currentId) {
+                            return false;
+                        }
+
+                        if ($currentId === null && ($candidate['accountNumber'] ?? null) === $currentAccountNumber) {
+                            return false;
+                        }
+
+                        return true;
+                    }
+                    );
 
             return count($otherClosing) === 0;
         } catch (\Throwable $e) {
@@ -157,21 +164,24 @@ class AccountBalanceGuard
                 ['exception' => $e->getMessage()]
             );
             return false;
-        }
-    }
+        }//end try
+    }//end requireSingleClosingAccount()
 
     /**
      * Probe whether the GLLine register is declared (i.e. T2 has shipped).
+     *
      * Lazy check via ObjectService → schema lookup; absence treated as T1 state.
+     *
+     * @return bool True when the GLLine schema exists in OR's `shillinq` register.
      */
     private function isGLLineRegisterAvailable(): bool
     {
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $schemas = $objectService->getSchemas(register: 'shillinq');
+            $schemas       = $objectService->getSchemas(register: 'shillinq');
             return isset($schemas['GLLine']);
         } catch (\Throwable) {
             return false;
         }
-    }
-}
+    }//end isGLLineRegisterAvailable()
+}//end class
