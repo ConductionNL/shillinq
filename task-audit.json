@@ -1,0 +1,24 @@
+{
+  "spec": "openspec/changes/spec",
+  "verified": [
+    {"task": "1", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "Confirmed no GLTransaction/GLLine prior to this PR. GeneralLedgerEntry catalogued in adr-000 for reconciliation."},
+    {"task": "2", "file": "openspec/changes/spec/specs/bookkeeping-general-ledger/spec.md", "ok": true},
+    {"task": "3", "file": "openspec/changes/spec/proposal.md", "ok": true},
+    {"task": "4", "file": "openspec/changes/spec/design.md", "ok": true},
+    {"task": "5", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "GLTransaction schema with all REQ-GL-002 fields declared."},
+    {"task": "6", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "x-openregister-lifecycle with draft→posted (balance guard) and posted→reversed transitions."},
+    {"task": "7", "file": "lib/Lifecycle/BalanceGuard.php", "ok": true, "note": "ADR-031 exception path taken. Single method isBalanced, ~170 LOC with addDecimal helper. Referenced from GLTransaction.x-openregister-lifecycle.transitions.post.requires."},
+    {"task": "8", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "GLLine schema with all REQ-GL-003 fields. side enum [debit,credit], amount minimum:0."},
+    {"task": "9", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "x-openregister-relations on GLLine: accountNumber→Account.accountNumber, transactionId→GLTransaction.id."},
+    {"task": "10", "file": "src/manifest.json", "ok": true, "note": "Bookkeeping>General Ledger menu entry, GeneralLedger index page, GeneralLedgerDetail detail page with relatedLists for GLLine rows."},
+    {"task": "11", "file": "openspec/architecture/adr-000-data-model.md", "ok": true, "note": "GeneralLedgerEntry marked deprecated, reconciliation note added, GLLine and GLTransaction entity entries added."}
+  ],
+  "stubs": [],
+  "missing_routes": [],
+  "tests": [
+    {"class": "OCA\\Shillinq\\Lifecycle\\BalanceGuard", "test": "tests/Unit/Lifecycle/BalanceGuardTest.php", "ok": true, "note": "6 tests, 15 assertions, all pass."}
+  ],
+  "gates": "ALL 14 GATES GREEN (run-hydra-gates.sh --scope-to-diff, 9 changed files)",
+  "phpcs": "PASS (12/12 lib/ files, no violations)",
+  "psalm": "No errors found"
+}
