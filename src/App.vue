@@ -15,6 +15,7 @@
 		:manifest="manifest"
 		:custom-components="customComponents"
 		:page-types="pageTypes"
+		:registry="registry"
 		app-id="shillinq"
 		:translate="translateForApp"
 		:permissions="permissions" />
@@ -67,6 +68,14 @@ export default {
 		 * Wired through to descendant `CnPageRenderer` instances.
 		 */
 		pageTypes: {
+			type: Object,
+			default: () => ({}),
+		},
+		/**
+		 * 5-kind component registry for v2 manifests (hydra ADR-036).
+		 * Empty for shillinq — see src/registry.js.
+		 */
+		registry: {
 			type: Object,
 			default: () => ({}),
 		},

@@ -1,20 +1,48 @@
 {
-	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest.schema.json",
+	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
 	"version": "1.0.0",
-	"dependencies": ["openregister"],
+	"dependencies": [
+		"openregister"
+	],
 	"menu": [
-		{ "id": "Dashboard", "label": "Dashboard", "icon": "icon-category-dashboard", "route": "Dashboard", "order": 10 },
+		{
+			"id": "Dashboard",
+			"label": "Dashboard",
+			"icon": "icon-category-dashboard",
+			"route": "Dashboard",
+			"order": 10
+		},
 		{
 			"id": "Bookkeeping",
 			"label": "Bookkeeping",
 			"icon": "icon-category-organization",
 			"order": 20,
 			"children": [
-				{ "id": "ChartOfAccounts", "label": "Chart of Accounts", "icon": "LedgerOutline", "route": "ChartOfAccounts", "order": 10 }
+				{
+					"id": "ChartOfAccounts",
+					"label": "Chart of Accounts",
+					"icon": "LedgerOutline",
+					"route": "ChartOfAccounts",
+					"order": 10
+				}
 			]
 		},
-		{ "id": "Documentation", "label": "Documentation", "icon": "icon-info", "href": "https://conduction.nl", "section": "settings", "order": 90 },
-		{ "id": "Settings", "label": "Settings", "icon": "icon-settings", "route": "Settings", "section": "settings", "order": 99 }
+		{
+			"id": "Documentation",
+			"label": "Documentation",
+			"icon": "icon-info",
+			"href": "https://conduction.nl",
+			"section": "settings",
+			"order": 90
+		},
+		{
+			"id": "Settings",
+			"label": "Settings",
+			"icon": "icon-settings",
+			"route": "Settings",
+			"section": "settings",
+			"order": 99
+		}
 	],
 	"pages": [
 		{
@@ -26,10 +54,26 @@
 				"register": "shillinq",
 				"schema": "Account",
 				"columns": [
-					{ "key": "accountNumber", "label": "Account Number", "sortable": true },
-					{ "key": "name", "label": "Name", "sortable": true },
-					{ "key": "accountType", "label": "Type", "sortable": true },
-					{ "key": "lifecycleState", "label": "Status", "sortable": true }
+					{
+						"key": "accountNumber",
+						"label": "Account Number",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "accountType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "accountNumber",
 				"detailRoute": "ChartOfAccountsDetail"
@@ -44,16 +88,46 @@
 				"register": "shillinq",
 				"schema": "Account",
 				"fields": [
-					{ "key": "accountNumber", "label": "Account Number" },
-					{ "key": "name", "label": "Name" },
-					{ "key": "accountType", "label": "Account Type" },
-					{ "key": "currency", "label": "Currency" },
-					{ "key": "parentAccountNumber", "label": "Parent Account" },
-					{ "key": "administrationId", "label": "Administration" },
-					{ "key": "lifecycleState", "label": "Status" },
-					{ "key": "isClosingAccount", "label": "Closing Account" },
-					{ "key": "vatApplicable", "label": "VAT Applicable" },
-					{ "key": "description", "label": "Description" }
+					{
+						"key": "accountNumber",
+						"label": "Account Number"
+					},
+					{
+						"key": "name",
+						"label": "Name"
+					},
+					{
+						"key": "accountType",
+						"label": "Account Type"
+					},
+					{
+						"key": "currency",
+						"label": "Currency"
+					},
+					{
+						"key": "parentAccountNumber",
+						"label": "Parent Account"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status"
+					},
+					{
+						"key": "isClosingAccount",
+						"label": "Closing Account"
+					},
+					{
+						"key": "vatApplicable",
+						"label": "VAT Applicable"
+					},
+					{
+						"key": "description",
+						"label": "Description"
+					}
 				],
 				"lifecycleActions": true,
 				"indexRoute": "ChartOfAccounts"
@@ -64,20 +138,81 @@
 			"route": "/",
 			"type": "dashboard",
 			"title": "Dashboard",
-			"config": {
-				"widgets": [
-					{ "id": "open-items", "title": "Open items", "type": "stats-block", "iconClass": "icon-folder", "props": { "count": 12, "countLabel": "sample", "variant": "primary" } },
-					{ "id": "due-this-week", "title": "Due this week", "type": "stats-block", "iconClass": "icon-calendar", "props": { "count": 5, "countLabel": "sample", "variant": "warning" } },
-					{ "id": "completed", "title": "Completed", "type": "stats-block", "iconClass": "icon-checkmark", "props": { "count": 48, "countLabel": "sample", "variant": "success" } },
-					{ "id": "team-members", "title": "Team members", "type": "stats-block", "iconClass": "icon-group", "props": { "count": 7, "countLabel": "sample", "variant": "default" } }
-				],
-				"layout": [
-					{ "id": "open-items",     "widgetId": "open-items",     "gridX": 0, "gridY": 0, "gridWidth": 3, "gridHeight": 2, "showTitle": true },
-					{ "id": "due-this-week",  "widgetId": "due-this-week",  "gridX": 3, "gridY": 0, "gridWidth": 3, "gridHeight": 2, "showTitle": true },
-					{ "id": "completed",      "widgetId": "completed",      "gridX": 6, "gridY": 0, "gridWidth": 3, "gridHeight": 2, "showTitle": true },
-					{ "id": "team-members",   "widgetId": "team-members",   "gridX": 9, "gridY": 0, "gridWidth": 3, "gridHeight": 2, "showTitle": true }
-				]
-			}
+			"config": {},
+			"widgets": [
+				{
+					"widgetKey": "stats-block",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 3,
+					"gridHeight": 2,
+					"props": {
+						"title": "Open items",
+						"iconClass": "icon-folder",
+						"props": {
+							"count": 12,
+							"countLabel": "sample",
+							"variant": "primary"
+						},
+						"showTitle": true
+					}
+				},
+				{
+					"widgetKey": "stats-block",
+					"slot": "body",
+					"gridX": 3,
+					"gridY": 0,
+					"gridWidth": 3,
+					"gridHeight": 2,
+					"props": {
+						"title": "Due this week",
+						"iconClass": "icon-calendar",
+						"props": {
+							"count": 5,
+							"countLabel": "sample",
+							"variant": "warning"
+						},
+						"showTitle": true
+					}
+				},
+				{
+					"widgetKey": "stats-block",
+					"slot": "body",
+					"gridX": 6,
+					"gridY": 0,
+					"gridWidth": 3,
+					"gridHeight": 2,
+					"props": {
+						"title": "Completed",
+						"iconClass": "icon-checkmark",
+						"props": {
+							"count": 48,
+							"countLabel": "sample",
+							"variant": "success"
+						},
+						"showTitle": true
+					}
+				},
+				{
+					"widgetKey": "stats-block",
+					"slot": "body",
+					"gridX": 9,
+					"gridY": 0,
+					"gridWidth": 3,
+					"gridHeight": 2,
+					"props": {
+						"title": "Team members",
+						"iconClass": "icon-group",
+						"props": {
+							"count": 7,
+							"countLabel": "sample",
+							"variant": "default"
+						},
+						"showTitle": true
+					}
+				}
+			]
 		},
 		{
 			"id": "Settings",
@@ -88,21 +223,29 @@
 				"saveEndpoint": "/index.php/apps/shillinq/api/settings",
 				"sections": [
 					{
-						"id": "version",
-						"title": "Version Information",
-						"widgets": [
-							{ "type": "version-info" }
-						]
-					},
-					{
 						"id": "configuration",
 						"title": "Configuration",
 						"fields": [
-							{ "key": "register", "label": "Register", "type": "string", "help": "OpenRegister register ID" }
+							{
+								"key": "register",
+								"label": "Register",
+								"type": "string",
+								"help": "OpenRegister register ID"
+							}
 						]
 					}
 				]
-			}
+			},
+			"widgets": [
+				{
+					"widgetKey": "version-info",
+					"slot": "section:version",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 12,
+					"gridHeight": 1
+				}
+			]
 		}
 	]
 }
