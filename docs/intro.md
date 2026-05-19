@@ -1,5 +1,6 @@
 ---
 sidebar_position: 1
+description: Get started with Shillinq, bookkeeping and e-invoicing for Nextcloud. Contracts, procurement, bank reconciliation, VAT and financial statements.
 ---
 
 # Shillinq
