@@ -585,7 +585,7 @@ export default function Home() {
   return (
     <Layout
       title="Shillinq, bookkeeping and e-invoicing on Nextcloud"
-      description="Open-source business administration on Nextcloud,bookkeeping, e-invoicing, procurement, contracts, bank reconciliation, VAT and financial statements."
+      description="Open-source business administration on Nextcloud. Bookkeeping, e-invoicing, procurement, contracts, bank reconciliation, VAT, and statements."
     >
       <main className="marketing-page">
         <DetailHero
