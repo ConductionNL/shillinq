@@ -16,6 +16,7 @@ import pinia from './pinia.js'
 import App from './App.vue'
 import bundledManifest from './manifest.json'
 import customComponents from './customComponents.js'
+import registry from './registry.js'
 
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
 import '@conduction/nextcloud-vue/css/index.css'
@@ -101,6 +102,7 @@ tryLoadTranslations()
 // Cloning here yields extensible objects without changing the resolved values.
 const pageTypesProp = { ...defaultPageTypes }
 const customComponentsProp = { ...customComponents }
+const registryProp = { ...registry }
 
 new Vue({
 	pinia,
@@ -110,6 +112,7 @@ new Vue({
 			manifest: bundledManifest,
 			customComponents: customComponentsProp,
 			pageTypes: pageTypesProp,
+			registry: registryProp,
 		},
 	}),
 }).$mount('#content')
