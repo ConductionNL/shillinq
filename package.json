@@ -30,8 +30,10 @@
     "@nextcloud/l10n": "^2.0.1",
     "@nextcloud/router": "^2.0.1",
     "@nextcloud/vue": "^8.16.0",
+    "bootstrap-vue": "^2.23.1",
     "pinia": "^2.1.7",
     "vue": "^2.7.14",
+    "vue-frag": "^1.4.3",
     "vue-material-design-icons": "^5.3.0",
     "vue-router": "^3.6.5"
   },
@@ -41,6 +43,8 @@
     "@nextcloud/axios": "~2.5.2"
   },
   "devDependencies": {
+    "@babel/core": "^7.26.9",
+    "@babel/eslint-parser": "^7.16.5",
     "@cyclonedx/cyclonedx-npm": "^4.2.1",
     "@eslint/config-helpers": "^0.4.2",
     "@eslint/eslintrc": "^3.3.1",
@@ -50,6 +54,11 @@
     "@nextcloud/eslint-plugin": "^2.0.0",
     "@nextcloud/stylelint-config": "^2.4.0",
     "@nextcloud/webpack-vue-config": "^6.0.1",
+    "@vue/eslint-config-typescript": "^13.0.0",
+    "eslint-import-resolver-exports": "^1.0.0-beta.5",
+    "eslint-import-resolver-typescript": "^3.8.0",
+    "eslint-plugin-promise": "^6.6.0",
+    "typescript": "^5.0.2",
     "@playwright/test": "^1.49.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
