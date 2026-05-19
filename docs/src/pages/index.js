@@ -584,7 +584,7 @@ const WIDGETS = [
 export default function Home() {
   return (
     <Layout
-      title="Shillinq"
+      title="Shillinq, bookkeeping and e-invoicing on Nextcloud"
       description="Open-source business administration on Nextcloud,bookkeeping, e-invoicing, procurement, contracts, bank reconciliation, VAT and financial statements."
     >
       <main className="marketing-page">
