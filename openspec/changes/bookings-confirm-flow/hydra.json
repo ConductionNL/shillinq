@@ -1,0 +1,10 @@
+{
+  "spec_slug": "bookings-confirm-flow",
+  "title": "Booking Confirmation Flow",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [
+    "bookings-create-appointment"
+  ],
+  "issue": null
+}
