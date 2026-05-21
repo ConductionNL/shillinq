@@ -6,5 +6,5 @@
   "depends_on": [
     "inventory-stock-tracking"
   ],
-  "issue": null
+  "issue": "https://github.com/ConductionNL/shillinq/issues/241"
 }
