@@ -91,7 +91,9 @@ class InitializeSettings implements IRepairStep
                 $output->info(
                     'Shillinq configuration imported successfully (version: '.$version.')'
                 );
-            } else {
+            }
+
+            if ($result['success'] !== true) {
                 $message = ($result['message'] ?? 'unknown error');
                 $output->warning('Shillinq configuration import issue: '.$message);
             }
@@ -132,7 +134,9 @@ class InitializeSettings implements IRepairStep
             $output->info(
                 'Chart of accounts seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
             );
-        } else {
+        }
+
+        if ($seedResult['success'] !== true) {
             $message = ($seedResult['message'] ?? 'unknown error');
             $output->warning('Chart of accounts seeding issue: '.$message);
         }
