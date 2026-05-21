@@ -6,5 +6,5 @@
   "depends_on": [
     "bookings-create-appointment"
   ],
-  "issue": null
+  "issue": "https://github.com/ConductionNL/shillinq/issues/246"
 }
