@@ -1,0 +1,10 @@
+{
+  "spec_slug": "bookings-self-service-widget",
+  "title": "Booking Self-service Widget (embeddable JS)",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [
+    "bookings-create-appointment"
+  ],
+  "issue": null
+}
