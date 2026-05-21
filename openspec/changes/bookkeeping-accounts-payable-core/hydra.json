@@ -1,0 +1,8 @@
+{
+  "spec_slug": "bookkeeping-accounts-payable-core",
+  "title": "Accounts Payable (Core)",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [],
+  "issue": null
+}
