@@ -3426,6 +3426,37 @@ _Detailed specification of deliverables, milestones, payment terms, and service 
 - → Contract (many-to-one)
 - → PurchaseOrder (one-to-many)
 
+### StockMove
+**Schema.org:** `schema:Event`
+_Immutable record of atomic stock movement between two warehouse locations with double-entry semantics, GL materialisation, and full audit trail per Odoo/Tryton pattern_
+**Primary spec:** inventory-stock-movement-ledger
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| movementNumber | string | Yes | Shillinq-side sequential ID per administration |
+| itemId | string | Yes | FK to Product (via InventoryStock SKU match) |
+| quantity | number | Yes | Units moved (≥ 0); must respect source location available qty on post |
+| unitCost | number | Yes | Cost per unit in EUR; used for GL posting on issue |
+| movementType | enum | Yes | One of: receipt, transfer, issue, manufacture, repack |
+| sourceLocationId | string | No | FK to Location (null for receipt); must differ from destination if both present |
+| destinationLocationId | string | No | FK to Location (null for issue); must differ from source if both present |
+| referenceDocumentUri | string | No | URI to PO (receipt), sales order (issue), production plan (manufacture), or null (manual) |
+| movementReason | enum | Yes | Admin-configurable reason code (damaged, expired, shrinkage, normal, inter-warehouse, etc.); mandatory on post |
+| notes | string | No | Free-text operator context |
+| draftedAt | datetime | Yes | Timestamp when move was created |
+| postedAt | datetime | No | Timestamp when move transitioned to posted (null until posting) |
+| cancelledAt | datetime | No | Timestamp when move transitioned to cancelled (null unless cancelled) |
+| administrationId | string | Yes | FK to Administration |
+| locked | boolean | No | Immutability flag; true on posting, prevents edits. Cancellation creates offsetting move, not patch. |
+| lifecycleState | enum | Yes | One of: draft, posted, cancelled |
+
+**Relations:**
+- → Product (many-to-one, via itemId)
+- → Location (many-to-one, sourceLocationId)
+- → Location (many-to-one, destinationLocationId)
+- → Administration (many-to-one)
+- → InventoryStock (implicit, via product+location trace for quantity reconciliation)
+
 ### SubmissionDossier
 **Schema.org:** `schema:DigitalDocument`
 _Council submission dossier aggregating spending records and compliance documentation for public sector reporting_
