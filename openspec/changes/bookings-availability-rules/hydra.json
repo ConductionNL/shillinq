@@ -1,0 +1,10 @@
+{
+  "spec_slug": "bookings-availability-rules",
+  "title": "Booking Availability Rules (hours, breaks, holidays)",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [
+    "bookings-resource-calendar"
+  ],
+  "issue": null
+}
