@@ -1,0 +1,10 @@
+{
+  "spec_slug": "bookings-deposit-to-invoice",
+  "title": "Booking Deposit-to-Invoice Flow",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [
+    "bookings-deposits"
+  ],
+  "issue": null
+}
