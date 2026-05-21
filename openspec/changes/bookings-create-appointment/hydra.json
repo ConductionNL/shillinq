@@ -1,0 +1,11 @@
+{
+  "spec_slug": "bookings-create-appointment",
+  "title": "Booking Create Appointment (single source of truth)",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [
+    "bookings-resource-calendar",
+    "bookings-service-catalog"
+  ],
+  "issue": null
+}
