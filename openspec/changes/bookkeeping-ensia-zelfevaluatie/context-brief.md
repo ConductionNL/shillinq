@@ -2,6 +2,17 @@ status: draft
 
 # Bookkeeping ENSIA Zelfevaluatie
 
+## Placement & Information Architecture
+
+**Placement type:** `ACTION` — Action button or menu item on an existing surface. Implemented as a single button / context-menu entry that opens a modal/wizard or runs a backend operation — NOT a page.
+
+**Lives at:** Rapportage / Audit Pack → "ENSIA-zelfevaluatie starten"
+
+**Rationale:** Self-assessment trigger, not a page.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 ENSIA (Eenduidige Normatiek Single Information Audit) is de jaarlijkse verplichte zelfevaluatie informatieveiligheid voor gemeenten, provincies en waterschappen in Nederland. Onder regie van VNG/IPO/UvW moet elke decentrale overheid voor 1 mei rapporteren op de BIO-onderwerpen (Baseline Informatiebeveiliging Overheid) en aparte verantwoordingsdomeinen als DigiD, SUWI, BAG, BGT, BRP en WOZ. Het proces eindigt in een formele Colleges-verklaring die door het college van B&W moet worden ondertekend en doorgestuurd naar de minister van BZK.
