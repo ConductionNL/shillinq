@@ -3,6 +3,17 @@ status: draft
 ---
 # Multi-administratie (Holding + werkmij, multi-tenant)
 
+## Placement & Information Architecture
+
+**Placement type:** `SETTING` — Setting under the app's Beheer/Admin/Configuration surface. Lives in the existing settings UI; no top-level menu entry.
+
+**Lives at:** Beheer / Administraties
+
+**Rationale:** Multi-tenant config + switcher.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Voor het overgrote deel van de Nederlandse MKB-markt — en voor vrijwel iedere accountants- of administratiekantoor-klant — is de single-administratie-aanname onhoudbaar. Een gemiddelde MKB-onderneming met groeiambities is georganiseerd in een holdingstructuur: een personal holding (Beheer B.V.) bezit de aandelen van een werkmaatschappij (Werk B.V.), die op haar beurt mogelijk weer dochters bezit. Iedere B.V. heeft een eigen KvK-nummer, eigen loonheffingsnummer (indien personeel), eigen BTW-nummer, eigen IB-aangifte (bij IB-ondernemer) of VPB-aangifte (bij rechtspersoon), eigen jaarrekening met KvK-deponering, eigen bankrekeningen en eigen administratie. Daarboven publiceert de holding optioneel een geconsolideerde jaarrekening waarin intercompany-mutaties zijn geëlimineerd.
