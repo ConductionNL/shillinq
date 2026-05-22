@@ -1,0 +1,8 @@
+{
+  "spec_slug": "bookkeeping-ifrs-rj-dual-gaap",
+  "title": "Dual GAAP Reporting: IFRS naast Nederlandse Richtlijnen voor de Jaarverslaggeving (RJ)",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [],
+  "issue": null
+}
