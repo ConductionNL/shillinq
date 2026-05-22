@@ -3,6 +3,17 @@ status: draft
 ---
 # BTW One-Stop-Shop (OSS) cross-border EU
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Belasting / OSS
+
+**Rationale:** Distinct aangifte.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 The Dutch Belastingdienst, together with all other EU member-state tax authorities, operates the Union One-Stop-Shop (OSS) scheme that lets a Dutch business charge, collect, declare and pay foreign VAT on B2C distance sales of goods and on TBE/electronically-supplied services to consumers in other EU member states without having to register for VAT in every individual destination country. The scheme replaced the old country-by-country distance-sales thresholds on 1 July 2021 with a single EU-wide annual threshold of EUR 10,000 (turnover in goods + TBE services to all other EU member states combined, excluding domestic NL turnover). Below that threshold a Dutch SME charges Dutch BTW as usual and reports it on the regular omzetbelasting return; above it, every B2C sale must carry the consumer-country VAT rate and must be declared on a quarterly OSS return filed through Mijn Belastingdienst Zakelijk. The Belastingdienst receives one consolidated payment in euros from the seller and redistributes the foreign portions to the other member states under Council Regulation (EU) 904/2010.
