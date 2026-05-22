@@ -3,6 +3,17 @@ status: draft
 ---
 # bookkeeping-vpb-mkb — Vpb-aangifte BV/NV (Regulier)
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Belasting / Vpb-aangifte (MKB variant)
+
+**Rationale:** Same page as gov-Vpb, sector-tab inside.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Implement the reguliere Vennootschapsbelasting (Vpb) aangifte workflow for private-sector BV's en NV's that are subject to standard corporate income tax — distinct from the Vpb-plicht voor overheidsondernemingen (covered by a separate capability). This capability targets MKB-companies and their accountants/fiscalisten: it walks the user through the annual cycle of voorlopige aanslag, definitieve aangifte, definitieve aanslag, en de bezwaar/beroep-workflow when the inspecteur and the taxpayer disagree.
