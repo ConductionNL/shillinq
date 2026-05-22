@@ -3,6 +3,17 @@ status: draft
 ---
 # Bookkeeping Titel 9 Boek 2 BW Jaarrekening Generatie
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Rapportage / Jaarrekening
+
+**Rationale:** The jaarrekening generator itself.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Elke Nederlandse rechtspersoon — BV, NV, coöperatie, stichting met onderneming, vereniging boven bepaalde grens — moet jaarlijks een **jaarrekening** opstellen die voldoet aan Titel 9 Boek 2 Burgerlijk Wetboek. Deze jaarrekening bestaat uit een balans, een winst-en-verliesrekening, een toelichting daarop, en voor middelgrote en grote rechtspersonen ook een kasstroomoverzicht en een bestuursverslag. De jaarrekening moet binnen vijf maanden na boekjaareinde door het bestuur opgemaakt, binnen zeven maanden door de algemene vergadering vastgesteld (of na maximum drie maanden uitstel binnen tien maanden), en daarna binnen acht dagen bij de Kamer van Koophandel gedeponeerd. Deponering gebeurt sinds 2017 verplicht digitaal in SBR-XBRL-formaat (Standard Business Reporting met XBRL-taxonomie).
