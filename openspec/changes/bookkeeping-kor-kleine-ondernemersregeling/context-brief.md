@@ -4,6 +4,17 @@ status: draft
 
 # KOR (Kleine Ondernemersregeling)
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Belasting / KOR
+
+**Rationale:** Distinct fiscal regime page.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 De Kleine Ondernemersregeling (KOR) is een Nederlandse btw-vrijstellingsregeling voor kleine ondernemers met een jaaromzet onder EUR 20.000. Sinds de modernisering van 1 januari 2020 (omzettingsregeling) en de uitbreiding KOR-EU per 1 januari 2025 (Wet implementatie Richtlijn (EU) 2020/285) vormt de KOR voor honderdduizenden ZZP'ers en kleine MKB-ondernemers het fiscale ankerpunt waarin zij hun btw-administratie radicaal vereenvoudigen. Volgens cijfers van de Belastingdienst maakten in 2024 ruim 320.000 ondernemers gebruik van de KOR — overwegend ZZP'ers in dienstverlening, kleine webshops, hobby-ondernemers en starters.
