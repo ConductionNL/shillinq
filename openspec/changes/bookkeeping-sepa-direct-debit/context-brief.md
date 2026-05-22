@@ -3,6 +3,17 @@ status: draft
 ---
 # SEPA Direct Debit (Incasso) generation + mandate tracking
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Verkoop / SEPA-incasso
+
+**Rationale:** Own page (mandates + batches).  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 SEPA Direct Debit (in the Netherlands universally referred to as "incasso" or "SEPA-incasso") is the standard mechanism through which a Dutch SME collects recurring or one-off payments directly from a debtor's bank account, on the strength of a signed mandate (machtiging). It is the backbone of subscription billing, membership fees, tuition, gym contributions, utility bills, and rent collection across the country. The scheme is operated by the European Payments Council (EPC) under the SEPA Direct Debit Core Rulebook (SDD CORE) for consumer debtors and the SEPA Direct Debit Business-to-Business Rulebook (SDD B2B) for business debtors, with technical exchange formats defined in ISO 20022 (`pain.008.001.02` for initiation, `pain.002.001.03` for status, `camt.054` for collection details on the receivable side).
