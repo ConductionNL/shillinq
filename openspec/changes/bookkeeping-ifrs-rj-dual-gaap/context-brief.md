@@ -25,6 +25,17 @@ standards:
 
 # Dual GAAP Reporting: IFRS naast Nederlandse Richtlijnen voor de Jaarverslaggeving (RJ)
 
+## Placement & Information Architecture
+
+**Placement type:** `DETAIL_TAB` — Tab on the detail view of an existing object. NOT a standalone page — appears inside the parent record's detail surface (e.g. an extra tab on the existing detail header).
+
+**Lives at:** Rapportage / Jaarrekening → IFRS-bridge tab
+
+**Rationale:** Dual GAAP toggle.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Nederlandse mid-cap en grote ondernemingen die op een Europese gereglementeerde markt noteren zijn verplicht hun geconsolideerde jaarrekening op te stellen onder IFRS (EU-Verordening 1606/2002). Dochterondernemingen, joint ventures en niet-beursgenoteerde groepsmaatschappijen blijven echter rapporteren onder Nederlandse Richtlijnen voor de Jaarverslaggeving (RJ) zoals uitgegeven door de Raad voor de Jaarverslaggeving en verankerd in BW2 Titel 9. Daarnaast kiezen veel familie-bedrijven, coöperaties en stichtingen bewust voor dubbele rapportage om internationale financiering, M&A-trajecten of cross-border benchmarking te faciliteren.
