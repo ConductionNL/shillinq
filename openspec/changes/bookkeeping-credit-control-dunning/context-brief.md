@@ -4,6 +4,17 @@ status: draft
 
 # Credit Control & Dunning Ladder
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Verkoop / Aanmaningen
+
+**Rationale:** Own page (dunning ladder).  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Voor de Nederlandse ZZP'er en MKB-ondernemer is achterstallige debiteurenbetaling een chronisch probleem met directe cashflow-impact: volgens Atradius (Payment Practices Barometer 2024) wordt gemiddeld 39 procent van alle B2B-facturen in Nederland te laat betaald, en is bij ongeveer 7 procent sprake van non-payment (afschrijving). Voor de ondernemer betekent dat (a) reëel cashflow-risico (zie ook `zzp-cashflow-13wk`), (b) administratieve last bij elke individuele aanmaning, (c) emotionele/relationele complicaties bij goede klanten die incidenteel te laat zijn, en (d) onbenutte wettelijke instrumenten zoals de 14-dagen-brief uit de Wet Incasso (art. 6:96 lid 6 BW) waarmee bij niet-tijdige betaling buitengerechtelijke incassokosten op de debiteur verhaald kunnen worden.
