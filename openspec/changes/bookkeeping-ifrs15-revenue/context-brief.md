@@ -3,6 +3,17 @@ status: draft
 ---
 # IFRS 15 Five-Step Revenue Recognition
 
+## Placement & Information Architecture
+
+**Placement type:** `DETAIL_TAB` — Tab on the detail view of an existing object. NOT a standalone page — appears inside the parent record's detail surface (e.g. an extra tab on the existing detail header).
+
+**Lives at:** Verkoop / Contracten & Retainers → IFRS 15 tab + Rapportage / Jaarrekening
+
+**Rationale:** Revenue-recognition rules applied per contract.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Provide a complete, auditable implementation of the IFRS 15 / ASC 606 five-step revenue recognition model inside shillinq, replacing the simplistic "invoice = revenue" assumption that legacy SME bookkeeping packages still ship with. IFRS 15 has been mandatory for listed companies since 1 January 2018 and is increasingly demanded by Dutch SMEs that publish IFRS-aligned annual accounts (BW2 Title 9), grow toward an IPO, or supply enterprise customers who require IFRS-compliant invoicing of their software/services spend. SaaS subscriptions, project-based consultancy, construction contracts, telecoms bundles, and any contract with variable consideration (rebates, volume discounts, milestone bonuses, refund obligations) require explicit performance-obligation tracking and timed recognition.
