@@ -4,6 +4,17 @@ status: draft
 
 # bookkeeping-cbcr-pillar2
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Rapportage / Country-by-Country
+
+**Rationale:** Multinational reporting.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Lever de volledige administratie voor twee gerelateerde multinationale belastingrapportagepakketten: **Country-by-Country Reporting (CbCR)** en **Pillar Two (Global Minimum Tax)** onder het OESO/G20 BEPS-raamwerk. CbCR ontstond uit **BEPS Actie 13** (2015) en is per 1-1-2016 in NL geïmplementeerd via de **Wet aanvullende regels uitwisseling landenrapporten** (artikelen 29b-29h Wet Vpb). Het verplicht **multinationale groepen met geconsolideerde groepsopbrengsten ≥ EUR 750M** een jaarlijks landenrapport in te dienen bij de Belastingdienst, met per jurisdictie: omzet (van derden en intra-groep), winst voor belasting, betaalde Vpb (cash), gerapporteerde Vpb-last (accrual), gestort aandelenkapitaal, ingehouden winsten, FTE, en materiële vaste activa (anders dan kasmiddelen). De Belastingdienst wisselt dit rapport automatisch uit met alle jurisdicties waar de groep aanwezig is, en de fiscale autoriteit van elke jurisdictie kan het rapport gebruiken voor risicoanalyse en transfer-pricing-toezicht.
