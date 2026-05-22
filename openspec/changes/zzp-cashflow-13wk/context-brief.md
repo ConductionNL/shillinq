@@ -4,6 +4,17 @@ status: draft
 
 # 13-Weeks Rolling Cashflow Forecast voor ZZP
 
+## Placement & Information Architecture
+
+**Placement type:** `WIDGET` — Widget shown on a dashboard or another page. Has no dedicated page of its own; renders inside an existing surface as a tile/panel/card.
+
+**Lives at:** Dashboard widget + Verkoop landing widget
+
+**Rationale:** Forecast widget, not its own page (it appears wherever cash matters).  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Voor de ZZP'er en kleine MKB-ondernemer is cashflow het bestaansrisico nummer één: niet winst, maar liquiditeit bepaalt of de onderneming volgende maand nog kan voldoen aan zijn verplichtingen. De typische ZZP-cashflow is volatiel — facturen worden niet altijd op tijd betaald (gemiddelde betalingstermijn B2B in Nederland is 41 dagen volgens Atradius Payment Practices Barometer 2024, met staartwaarden tot 90 dagen bij overheid en grootzakelijk), kosten zijn vaak vast (huur, verzekering, leasing, abonnementen), en seizoenseffecten kunnen omzet in juli en december halveren. Een "13-weeks rolling cashflow forecast" is in de internationale ondernemersfinanciering (de TPR-praktijk uit het Verenigd Koninkrijk en de zogenaamde "13-week cash flow model" uit M&A turnaround-praktijk) de standaard kortetermijn-planningshorizon: lang genoeg om patronen te zien (kwartaalafsluiting BTW, vakantieperiode), kort genoeg om bestuurbaar te blijven.
