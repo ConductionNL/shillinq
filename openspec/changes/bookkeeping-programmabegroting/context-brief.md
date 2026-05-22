@@ -3,6 +3,17 @@ status: draft
 ---
 # bookkeeping-programmabegroting — Programmabegroting & Meerjarenraming
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Rapportage / Programmabegroting
+
+**Rationale:** Gov budget.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Implement the BBV-verplichte programmabegroting and the four-year meerjarenraming as a first-class, machine-readable artefact inside shillinq. The programmabegroting is the central beleidsdocument and financial authorisation that the gemeenteraad / provinciale staten / algemeen bestuur adopts for the upcoming begrotingsjaar; it is simultaneously a strategic plan, a legal authorisation to spend, and a public accountability instrument. Under BBV (Besluit begroting en verantwoording provincies en gemeenten) the begroting must be structured around programma's chosen by the local political body, supplemented by the BBV-verplichte taakveldenindeling for vergelijkbaarheid, and accompanied by seven verplichte paragrafen, a meerjarenraming, and a financiële beschouwing that demonstrates a sluitend evenwicht.
