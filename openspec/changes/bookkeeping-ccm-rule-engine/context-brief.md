@@ -3,6 +3,17 @@ status: draft
 ---
 # bookkeeping-ccm-rule-engine
 
+## Placement & Information Architecture
+
+**Placement type:** `SETTING` — Setting under the app's Beheer/Admin/Configuration surface. Lives in the existing settings UI; no top-level menu entry.
+
+**Lives at:** Beheer / CCM Regel-engine
+
+**Rationale:** Pure rule-editor surface.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Build a Continuous Controls Monitoring (CCM) rule engine that examines every journal entry, every master-data change, and every payment instruction at the point of posting (and again on a periodic sweep) against a configurable library of forensic and SOX-style controls — flagging, quarantining, or escalating anomalies in real time and producing a defensible findings dashboard with full audit-committee reporting. The objective is to replace the after-the-fact, sample-based, once-a-year work an external auditor or internal-audit function does today with a continuous, population-based, evidence-rich layer that runs every minute the books are open. For shillinq's enterprise target customer — a Dutch MKB+ at the upper end of the segment, often a foreign-owned subsidiary subject to parent-company SOX 404 controls, or a financial-services entity under DNB / AFM oversight, or simply a fast-growing company whose audit firm has flagged "tone-at-the-top" risk after a controls-weakness letter — CCM is the difference between a clean audit and a long, expensive findings list.
