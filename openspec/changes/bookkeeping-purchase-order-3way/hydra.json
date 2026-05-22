@@ -1,0 +1,8 @@
+{
+  "spec_slug": "bookkeeping-purchase-order-3way",
+  "title": "Purchase Order Cyclus met 3-way Match (PO + GRN + Factuur)",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [],
+  "issue": null
+}
