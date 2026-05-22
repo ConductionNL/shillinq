@@ -3,6 +3,17 @@ status: draft
 ---
 # bookkeeping-csrd-esrs
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Rapportage / CSRD
+
+**Rationale:** Sustainability reporting.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Deliver the data collection, governance, calculation, assurance, and submission backbone for Corporate Sustainability Reporting Directive (CSRD) reporting under the European Sustainability Reporting Standards (ESRS), so that shillinq becomes the practical operating system for the sustainability-reporting wave that hits Dutch MKB+ between 2024 and 2028. CSRD (Directive 2022/2464) entered into force in January 2023 and is being phased in over four reporting cycles: large public-interest entities (FY2024, report 2025), other large companies meeting two-of-three thresholds — 250 employees, EUR 50M turnover, EUR 25M balance-sheet total — (FY2025, report 2026), listed SMEs (FY2026, report 2027, with a possible two-year opt-out to 2028), and non-EU groups with EUR 150M EU turnover (FY2028, report 2029). For the Netherlands, the implementation act amending Titel 9 Boek 2 BW transposed CSRD in late 2024, and the AFM has primary supervisory responsibility for in-scope listed entities while KvK handles deposition. The number of Dutch entities in scope rises from ~150 under the previous NFRD to over 4,500 under CSRD — and shillinq's target tenant base sits squarely in waves 2 and 3.
