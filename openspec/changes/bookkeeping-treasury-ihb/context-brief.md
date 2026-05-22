@@ -3,6 +3,17 @@ status: draft
 ---
 # Treasury / In-house Bank / Cash Pooling
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Boekhouding / Multi-valuta (Treasury tab) or Beheer / Treasury page detail
+
+**Rationale:** Cash-pooling has UI; folded into Treasury settings page with a "Pool runs" tab.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Provide centralised treasury management across multiple legal entities (administraties) within a shillinq group, enabling cash pooling, inter-company financing, foreign-exchange (FX) risk management, multi-administration bank reconciliation, and daily cashflow forecasting. The module turns the bookkeeping platform from a per-entity ledger into a group-wide cash-management cockpit comparable to dedicated treasury management systems (TMS) such as Kyriba, FIS Quantum, ION Treasury, Bellin/Coupa Treasury, or Reval. It targets multi-entity SMEs, holdings, and franchise groups that currently juggle five to fifty bank accounts across multiple banks and currencies without a consolidated cash position.
