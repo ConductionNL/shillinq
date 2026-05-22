@@ -4,6 +4,17 @@ status: draft
 
 # Investeringsaftrek (KIA/EIA/MIA/Vamil)
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Belasting / Investeringsaftrek
+
+**Rationale:** KIA/EIA/MIA/Vamil workflows.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 The Dutch tax code (Wet IB 2001, art. 3.40-3.45) offers four distinct but partially overlapping investment-relief schemes that allow entrepreneurs and companies to deduct **extra** amounts from their taxable income (winst uit onderneming or Vpb-grondslag) on top of normal depreciation. These schemes — KIA (Kleinschaligheidsinvesteringsaftrek), EIA (Energie-investeringsaftrek), MIA (Milieu-investeringsaftrek) and Vamil (Willekeurige Afschrijving Milieu-investeringen) — represent one of the most fiscally significant areas of MKB bookkeeping. A misclassified asset can cost the entrepreneur thousands of euros of foregone aftrek, or worse, trigger a desinvesteringsbijtelling years later when the asset is disposed of early.
