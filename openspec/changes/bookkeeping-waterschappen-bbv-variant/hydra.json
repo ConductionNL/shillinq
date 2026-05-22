@@ -1,0 +1,8 @@
+{
+  "spec_slug": "bookkeeping-waterschappen-bbv-variant",
+  "title": "Waterschappen BBV Variant (BBVW)",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [],
+  "issue": null
+}
