@@ -3,6 +3,17 @@ status: draft
 ---
 # bookkeeping-wet-fido-treasury — Wet Fido & Treasurystatuut Limieten
 
+## Placement & Information Architecture
+
+**Placement type:** `SETTING` — Setting under the app's Beheer/Admin/Configuration surface. Lives in the existing settings UI; no top-level menu entry.
+
+**Lives at:** Beheer / Treasury
+
+**Rationale:** Gov treasury limits.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Implement compliance with the Wet Financiering Decentrale Overheden (Wet Fido) and the local Treasurystatuut for Dutch gemeenten, provincies, waterschappen, en gemeenschappelijke regelingen. Wet Fido governs how decentralised governments may finance themselves and invest surplus liquidity, with the explicit aim of preventing reckless treasury activity that historically produced large losses (Vestia, Amarantis-era derivatives crises). The law imposes two hard quantitative limits — the kasgeldlimiet on short-term debt and the rente-risiconorm on long-term debt — and a mandatory scheme — schatkistbankieren — for parking surplus cash with the central treasury.
