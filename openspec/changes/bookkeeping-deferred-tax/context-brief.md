@@ -4,6 +4,17 @@ status: draft
 
 # bookkeeping-deferred-tax
 
+## Placement & Information Architecture
+
+**Placement type:** `DETAIL_TAB` — Tab on the detail view of an existing object. NOT a standalone page — appears inside the parent record's detail surface (e.g. an extra tab on the existing detail header).
+
+**Lives at:** Belasting / Vpb-aangifte → Deferred tax tab
+
+**Rationale:** IFRS sub-flow inside Vpb.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Deliver het volledige systeem voor **uitgestelde belastingen** (deferred tax assets en liabilities) en **belastingvoorzieningen** voor MKB+ en grote ondernemingen die rapporteren onder **IAS 12 Income Taxes** of de Nederlandse equivalent **RJ 272 Belastingen naar de winst**. Uitgestelde belastingen ontstaan zodra de fiscale en commerciële winstbepaling uit elkaar lopen — wat in de praktijk bij vrijwel elke onderneming met materiële vaste activa, voorzieningen, fiscale eenheid, of verliescompensatie gebeurt. Het correct opnemen en bijhouden van deze posities is conceptueel een van de moeilijkste onderdelen van de jaarrekening: de wettelijke belastingvoet (Vpb 19% tot EUR 200K, 25,8% daarboven in 2026) wordt zelden de effectieve belastingvoet, omdat blijvende verschillen (deelnemingsvrijstelling, niet-aftrekbare kosten, fiscaal ontheven baten), tijdelijke verschillen (afschrijvingstempo, voorzieningen, garantieverplichtingen, herwaarderingen), en compensabele verliezen het beeld vertekenen.
