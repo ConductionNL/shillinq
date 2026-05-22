@@ -4,19 +4,19 @@ You are running HEADLESS. Do NOT use AskUserQuestion, interactive prompts, or sk
 Write files directly using the Write tool.
 
 ## Inputs
-- Change: bookkeeping-pension-ias19 (title: bookkeeping-pension-ias19)
-- Context brief: openspec/changes/bookkeeping-pension-ias19/context-brief.md
+- Change: bookkeeping-ib-aangifte-zzp (title: IB Aangifte Assembly for ZZP)
+- Context brief: openspec/changes/bookkeeping-ib-aangifte-zzp/context-brief.md
 - Data model ADR: openspec/architecture/adr-000-data-model.md
 
 ## Step 1: Read context
 Read these files COMPLETELY before writing anything:
-- openspec/changes/bookkeeping-pension-ias19/context-brief.md (features, stories, stakeholders, journeys)
+- openspec/changes/bookkeeping-ib-aangifte-zzp/context-brief.md (features, stories, stakeholders, journeys)
 - openspec/architecture/adr-000-data-model.md (entity definitions)
 - All files in openspec/architecture/ (app ADRs)
 - All files in .claude/openspec/architecture/ (company ADRs, if present)
 
 ## Step 2: Get artifact templates
-Run: `openspec instructions proposal --change bookkeeping-pension-ias19 --json`
+Run: `openspec instructions proposal --change bookkeeping-ib-aangifte-zzp --json`
 This returns the template and rules for the proposal artifact.
 Then do the same for: design, specs, tasks (in that order).
 
@@ -35,8 +35,8 @@ For each artifact (proposal → design → specs → tasks):
 ## Step 4: Commit
 After all 4 artifacts are written:
 ```bash
-git add openspec/changes/bookkeeping-pension-ias19/
-git commit -m 'feat: Add OpenSpec change bookkeeping-pension-ias19 from Specter'
+git add openspec/changes/bookkeeping-ib-aangifte-zzp/
+git commit -m 'feat: Add OpenSpec change bookkeeping-ib-aangifte-zzp from Specter'
 ```
 Do NOT push — the caller handles pushing.
 Do NOT create branches — stay on the current branch.
