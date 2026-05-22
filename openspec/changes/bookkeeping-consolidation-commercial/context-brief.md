@@ -3,6 +3,17 @@ status: draft
 ---
 # Bookkeeping Consolidation (Commercial / RJ 217 / IAS 27)
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Rapportage / Consolidatie
+
+**Rationale:** Commercial consolidation (RJ 217 / IAS 27).  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Dutch groep-structuren (holding + werkmaatschappijen) zijn de norm in het Nederlandse MKB. Vrijwel elke commerciële onderneming met meer dan één entiteit kent een moeder-dochter relatie: een persoonlijke holding bovenop een werk-BV (de klassieke "BV-BV-structuur"), een tussenholding voor pensioen-in-eigen-beheer, een vastgoed-BV naast de operationele BV, of een joint venture met een minderheidsbelang. Voor al deze structuren eist de Nederlandse wet — Titel 9 Boek 2 BW, art. 2:406 — een **geconsolideerde jaarrekening** zodra de moeder "overheersende zeggenschap" uitoefent over de dochter, tenzij een vrijstelling geldt (art. 2:407: kleine groep; art. 2:408: tussenholding-vrijstelling met IFRS-moeder; art. 2:403: 403-verklaring voor dochters die opgaan in moeder).
