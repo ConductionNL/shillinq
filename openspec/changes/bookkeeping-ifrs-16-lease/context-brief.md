@@ -3,6 +3,17 @@ status: draft
 ---
 # bookkeeping-ifrs-16-lease
 
+## Placement & Information Architecture
+
+**Placement type:** `DETAIL_TAB` — Tab on the detail view of an existing object. NOT a standalone page — appears inside the parent record's detail surface (e.g. an extra tab on the existing detail header).
+
+**Lives at:** Vaste Activa → Leasing tab
+
+**Rationale:** Variant of fixed-assets, not a new menu.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Capture, classify, measure, and disclose lease contracts under IFRS 16 (and the converged Dutch/EU equivalent) so that shillinq becomes a credible bookkeeping engine for medium and large entities that have adopted IFRS — either voluntarily (NL BV with international parent) or because they are an EU-listed group, a CSRD-in-scope subsidiary that consolidates upward, or a regulated financial entity. Before IFRS 16 (effective 1 January 2019), most lease contracts disappeared off the balance sheet as "operating leases" — only the monthly lease expense hit P&L. IFRS 16 collapsed that distinction: virtually every lease longer than 12 months and worth more than ~EUR 5,000 must be capitalised, producing a Right-of-Use (RoU) asset and a corresponding Lease Liability at lease commencement. The result is a structurally larger balance sheet, front-loaded interest expense, straight-line depreciation, and a permanent disclosure obligation in the notes.
