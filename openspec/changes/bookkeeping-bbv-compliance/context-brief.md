@@ -4,6 +4,20 @@ status: draft
 
 # BBV Compliance for shillinq
 
+## Placement & Information Architecture
+
+**Placement type:** `SETTING+DETAIL_TAB` (compound — implement all of the following):
+
+- **`SETTING`** — Setting under the app's Beheer/Admin/Configuration surface. Lives in the existing settings UI; no top-level menu entry.
+- **`DETAIL_TAB`** — Tab on the detail view of an existing object. NOT a standalone page — appears inside the parent record's detail surface (e.g. an extra tab on the existing detail header).
+
+**Lives at:** Beheer / Rekeningschema → BBV-mapping tab + sector-flag on administratie
+
+**Rationale:** BBV is a mapping/regime, not a page.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 This spec adds BBV (Besluit Begroting en Verantwoording provincies en gemeenten) compliance to shillinq, transforming the platform from a generic Dutch bookkeeping ERP into a fully compliant administrative system for **decentrale overheden**: provincies, gemeenten, waterschappen, and gemeenschappelijke regelingen. BBV is a statutory regulation rooted in article 186 of the Gemeentewet, article 190 of the Provinciewet, and article 99 of the Waterschapswet — it dictates *how* every Dutch sub-national government must structure its programmabegroting, jaarrekening, meerjarenraming, and supporting administration. Without BBV compliance a gemeente cannot submit a legally valid jaarrekening to its raad, cannot receive an unqualified accountantsverklaring (rechtmatigheidsverklaring under the 2023 rechtmatigheidsverantwoording rules), and cannot be aggregated by CBS into the Iv3 macro-statistics that feed the gemeentefonds-verdeelsleutel. This spec implements the full BBV apparatus: the mandatory taakveldenstructuur, the RGS-decentraal koppeling, multi-year (T+0 through T+3) budgeting with comparative periods, BBV-conforme classification of investeringen (MVA), reserves and voorzieningen, the verplichte paragrafen, and the document generation pipeline for begroting, tussenrapportage (burap/marap), and jaarstukken.
