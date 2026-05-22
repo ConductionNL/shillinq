@@ -3,6 +3,17 @@ status: draft
 ---
 # Continuous-Close and Flux Analysis
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Rapportage / Flux-analyse + DETAIL_TAB on Periode-detail
+
+**Rationale:** Continuous-close UI + per-period flux tab.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Replace the traditional 10-15 working day month-end close with a continuous (daily soft-close) discipline and add automated flux analysis (variance explanation) so finance teams report numbers within 1-3 business days and spend the remaining time investigating outliers rather than chasing accruals. The shift from periodic close to continuous close is a well-documented finance-modernisation pattern (Hackett Group, APQC, McKinsey "Finance 2030") and is the operating model behind every fast-close benchmark: Cisco closes books in 3 days, Coca-Cola in 4, Microsoft in 2. Even mid-market SMEs achieve a 5-day close once the core building blocks are in place: automated accruals, continuous reconciliation, period-locked transactions, exception-driven review, and flux analysis with explanations attached to material variances.
