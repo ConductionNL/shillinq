@@ -1,0 +1,8 @@
+{
+  "spec_slug": "bookkeeping-vpb-mkb",
+  "title": "bookkeeping-vpb-mkb \u2014 Vpb-aangifte BV/NV (Regulier)",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [],
+  "issue": null
+}
