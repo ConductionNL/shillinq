@@ -4,6 +4,20 @@ status: draft
 
 # bookkeeping-voorzieningen-claims
 
+## Placement & Information Architecture
+
+**Placement type:** `SETTING+ACTION` (compound — implement all of the following):
+
+- **`SETTING`** — Setting under the app's Beheer/Admin/Configuration surface. Lives in the existing settings UI; no top-level menu entry.
+- **`ACTION`** — Action button or menu item on an existing surface. Implemented as a single button / context-menu entry that opens a modal/wizard or runs a backend operation — NOT a page.
+
+**Lives at:** Beheer / Voorzieningen + "Activeer voorziening" action on journal entry
+
+**Rationale:** Voorzieningen are configured templates + posted via action.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Lever het volledige systeem voor het herkennen, waarderen, muteren en toelichten van **voorzieningen** in de jaarrekening conform **IAS 37 Provisions, Contingent Liabilities and Contingent Assets** en de Nederlandse equivalent **RJ 252 Voorzieningen, niet uit de balans blijkende verplichtingen en niet uit de balans blijkende activa**. Een voorziening is een verplichting waarvan het bestaan, het bedrag of het tijdstip onzeker is — fundamenteel anders dan een gewone crediteurenpost (waar alle drie vast staan) en anders dan een reserve (die geen verplichting is maar een afgezonderd deel van het eigen vermogen). De technische definitie vereist drie elementen: een **in-uitvoering-of-rechtens-afdwingbare verplichting** als gevolg van een gebeurtenis in het verleden, een **waarschijnlijke (> 50%) uitstroom van middelen**, en een **betrouwbare schatting** van het bedrag. Falen op één van de drie betekent geen voorziening op de balans, hooguit een toelichting als niet-uit-de-balans-blijkende verplichting.
