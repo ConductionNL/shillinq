@@ -4,6 +4,20 @@ status: draft
 
 # DBA Compliance Marker per Opdracht
 
+## Placement & Information Architecture
+
+**Placement type:** `ACTION+DETAIL_TAB` (compound — implement all of the following):
+
+- **`ACTION`** — Action button or menu item on an existing surface. Implemented as a single button / context-menu entry that opens a modal/wizard or runs a backend operation — NOT a page.
+- **`DETAIL_TAB`** — Tab on the detail view of an existing object. NOT a standalone page — appears inside the parent record's detail surface (e.g. an extra tab on the existing detail header).
+
+**Lives at:** Salaris / Detachering → DBA-status tab + "Bevestig DBA-compliance" action on opdracht
+
+**Rationale:** Compliance marker on records.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 De Wet deregulering beoordeling arbeidsrelaties (Wet DBA) van mei 2016 is voor de Nederlandse ZZP-markt het centrale risico-instrument waarmee de Belastingdienst kan beoordelen of een opdrachtnemer feitelijk zelfstandig ondernemer is of materieel als werknemer moet worden aangemerkt — met alle fiscale en sociale-zekerheidsgevolgen van dien (alsnog loonheffing, premies werknemersverzekeringen, naheffingen, vergrijpboetes). Sinds 2025 wordt de Wet DBA actief gehandhaafd na een jarenlang handhavingsmoratorium; per 1 januari 2025 voert de Belastingdienst weer reguliere correctieverplichtingen op met naheffingen die kunnen oplopen tot tienduizenden euro's per opdracht. Voor de opdrachtgever én de ZZP'er is een gestructureerde, evidence-driven DBA-compliance-administratie daarmee in 2026 essentieel.
