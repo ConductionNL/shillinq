@@ -4,6 +4,17 @@ status: draft
 
 # IB Aangifte Assembly for ZZP
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Belasting / IB-aangifte (ZZP)
+
+**Rationale:** ZZP-only aangifte.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 De jaarlijkse aangifte inkomstenbelasting (IB) is voor IB-ondernemers — vrijwel uitsluitend ZZP'ers, eenmanszaken, maten in een maatschap en vennoten in een VOF — het fiscale eindstation van het boekjaar. Anders dan vennootschapsbelasting bij rechtspersonen, wordt de winst uit onderneming bij IB-ondernemers via box 1 belast en moet alles uit het boekhouddossier (winst, balans, urencriterium, investeringen, woonwerk-kilometers, premies AOV/lijfrente, heffingskortingen) zorgvuldig samengebracht worden in één integraal P-formulier dat via SBR/XBRL bij de Belastingdienst wordt aangeleverd. Deze spec beschrijft hoe shillinq de volledige assemblage en indiening van de IB-aangifte voor ZZP'ers automatiseert: van data-aggregatie en validatie tot SBR-genereren, voorbereiding van de aangifte door een fiscalist (Becon-route) of directe self-service-indiening via de DigiD-route.
