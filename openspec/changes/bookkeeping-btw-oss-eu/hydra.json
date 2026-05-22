@@ -1,0 +1,8 @@
+{
+  "spec_slug": "bookkeeping-btw-oss-eu",
+  "title": "BTW One-Stop-Shop (OSS) cross-border EU",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [],
+  "issue": null
+}
