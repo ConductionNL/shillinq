@@ -4,6 +4,20 @@ status: draft
 
 # 1225-Uren Urencriterium Tracker
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE+WIDGET` (compound — implement all of the following):
+
+- **`SUB_PAGE`** — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+- **`WIDGET`** — Widget shown on a dashboard or another page. Has no dedicated page of its own; renders inside an existing surface as a tile/panel/card.
+
+**Lives at:** Salaris / ZZP-uren + Dashboard widget
+
+**Rationale:** The tracker page + a progress widget.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Het urencriterium is de fiscale poortwachter voor vrijwel elke ondernemersfaciliteit in box 1 voor IB-ondernemers: zonder bewijs dat de ondernemer minimaal 1.225 uren per kalenderjaar aan zijn onderneming heeft besteed (art. 3.6 Wet IB 2001), vervalt het recht op zelfstandigenaftrek (in 2026 EUR 2.470), startersaftrek (driemaal EUR 2.123), meewerkaftrek, en — niet onbelangrijk — de mogelijkheid om de oudedagsreserve af te bouwen tegen het hoogste tarief. Voor de gemiddelde ZZP'er met een winst rond EUR 45.000 betekent het missen van het urencriterium een directe belastingschade van EUR 1.500 tot EUR 2.500 per jaar, oplopend tot EUR 4.000+ in de eerste vijf jaar als ook de startersaftrek wegvalt.
