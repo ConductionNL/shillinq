@@ -4,6 +4,17 @@ status: draft
 
 # Wet Markt en Overheid Separation
 
+## Placement & Information Architecture
+
+**Placement type:** `SETTING` — Setting under the app's Beheer/Admin/Configuration surface. Lives in the existing settings UI; no top-level menu entry.
+
+**Lives at:** Beheer / Wet Markt en Overheid
+
+**Rationale:** Pure separation config.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 The **Wet Markt en Overheid** (WMO, "Market and Government Act") is the Dutch implementation of EU state-aid principles into the Mededingingswet (Competition Act, hoofdstuk 4b, in force since 1 juli 2012, gewijzigd 1 juli 2014). The law obliges every **bestuursorgaan** — including gemeenten, provincies, waterschappen, gemeenschappelijke regelingen, omgevingsdiensten, GGD'en, RUD's and ZBO's — to follow four **gedragsregels** whenever it conducts an **economische activiteit** (the offering of goods or services on a market in concurrentie met private aanbieders).
