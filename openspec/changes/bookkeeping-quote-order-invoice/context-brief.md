@@ -3,6 +3,17 @@ status: draft
 ---
 # Sales Funnel: Quote → Order → Invoice
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Verkoop / Offertes & Orders
+
+**Rationale:** The sales funnel page.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Provide the full sales funnel from a customer quote (verkoopofferte) through a confirmed sales order to one or more invoices, with status workflow, partial deliveries, partial invoicing, backorders, volume discounts, promotions, and per-customer pricing tiers. This module is the operational counterpart to the IFRS 15 revenue module: the quote is the offer, the order is the signed contract, and the invoice is the billing event. Together they form the quote-to-cash (Q2C) backbone that every SME with a real sales process needs, but that most Dutch SME bookkeeping packages (Exact, Snelstart, Moneybird, Reeleezee) treat as separate islands with weak workflow.
