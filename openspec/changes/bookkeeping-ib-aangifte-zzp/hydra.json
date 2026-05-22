@@ -1,0 +1,8 @@
+{
+  "spec_slug": "bookkeeping-ib-aangifte-zzp",
+  "title": "IB Aangifte Assembly for ZZP",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [],
+  "issue": null
+}
