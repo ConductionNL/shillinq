@@ -4,6 +4,20 @@ status: draft
 
 # bookkeeping-pension-ias19
 
+## Placement & Information Architecture
+
+**Placement type:** `SETTING+DETAIL_TAB` (compound — implement all of the following):
+
+- **`SETTING`** — Setting under the app's Beheer/Admin/Configuration surface. Lives in the existing settings UI; no top-level menu entry.
+- **`DETAIL_TAB`** — Tab on the detail view of an existing object. NOT a standalone page — appears inside the parent record's detail surface (e.g. an extra tab on the existing detail header).
+
+**Lives at:** Beheer (pension settings) + Salaris / Werknemers → Pensioen tab
+
+**Rationale:** IAS 19 pension liabilities — config + per-employee tab.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Lever de volledige IAS 19 / RJ 271 pensioenadministratie voor **defined-benefit (DB) pensioenregelingen**, inclusief eigen-beheer pensioen van directeur-grootaandeelhouders (eDV / pensioen-in-eigen-beheer, hoewel sinds 2017 fiscaal uitgefaseerd, blijft commercieel aanwezig bij honderden DGA's), bedrijfstak- of ondernemingspensioenfondsen onder DB-toezegging, en hybride regelingen met DB-componenten. Voor het Nederlandse MKB ligt het zwaartepunt op de zogenaamde **collective defined contribution (CDC)** en **defined contribution (DC)** regelingen die simpeler zijn maar onder IAS 19 nog steeds disclosure vereisen. Voor grotere ondernemingen die nog een DB-belofte hebben, of een tekort/overschot bij hun pensioenuitvoerder dragen onder een **separation of administration agreement (SAA)**, is een complete IAS 19 boekhouding verplicht.
