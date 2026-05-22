@@ -4,6 +4,17 @@ status: draft
 
 # EMU-saldo / EMU-schuld Reporting
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Rapportage / EMU-rapportage
+
+**Rationale:** Gov-only.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Nederlandse decentrale overheden (provincies, gemeenten, waterschappen, gemeenschappelijke regelingen) zijn onder de **Wet Houdbare Overheidsfinanciën (Wet Hof)** verplicht om hun **EMU-saldo** (kassaldo: ontvangsten minus uitgaven) en **EMU-schuld** (bruto schuldpositie) periodiek aan het CBS te rapporteren. Het CBS aggregeert deze rapportages voor de Notificatie EDP (Excessive Deficit Procedure) richting Eurostat, die toetst of Nederland binnen de Europese Stabiliteits- en Groeipact-normen blijft (3% BBP tekort, 60% BBP schuld). EMU-rapportage verschilt fundamenteel van de accrual-basis **Besluit Begroting en Verantwoording (BBV)** jaarrekening: het EMU-saldo is **kasbasis**, dus afschrijvingen, voorzieningendotaties en boekwinsten/verliezen worden geëlimineerd terwijl bruto-investeringen en aflossingen juist meetellen. Deze spec biedt een geautomatiseerde pipeline van BBV-grootboek naar EMU-aangifte (kwartaalenquête EMU-saldo en jaarlijkse opgave EMU-schuld), inclusief afstemming, afwijkingsdetectie t.o.v. **vastgestelde meerjarenraming**, en SBR-Wonen / CBS XBRL-indiening.
