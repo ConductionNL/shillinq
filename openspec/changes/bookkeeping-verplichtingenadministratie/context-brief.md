@@ -3,6 +3,17 @@ status: draft
 ---
 # Verplichtingenadministratie (committed vs paid)
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Inkoop / Verplichtingen
+
+**Rationale:** Committed vs paid.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Een verplichtingenadministratie ("commitment accounting" in internationale terminologie) is het sluitstuk van een volwassen overheidsboekhouding. Waar de cashflow-administratie alleen betalingen ziet en de baten-lastenadministratie facturen op factuurdatum boekt, registreert de verplichtingenadministratie het moment waarop een organisatie zich juridisch of bestuurlijk bindt aan een toekomstige uitgave — typisch bij ondertekening van een inkooporder, gunningsbesluit, subsidiebeschikking, arbeidscontract of raamovereenkomst. Voor decentrale overheden in Nederland is dit niet enkel best practice maar wordt het in toenemende mate verwacht door interne toezichthouders, externe accountants en — onder de Wet versterking decentrale rekenkamers en de hernieuwde aandacht voor rechtmatigheid sinds 2023 — door de raad. Voor commerciële MKB-klanten van shillinq is verplichtingenadministratie de basis voor cashflow-prognoses, kredietruimte-bewaking en investeringssturing.
