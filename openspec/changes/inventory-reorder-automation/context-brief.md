@@ -4,6 +4,20 @@ status: draft
 
 # Inventory Min/Max + Reorder Point
 
+## Placement & Information Architecture
+
+**Placement type:** `SETTING+ACTION` (compound — implement all of the following):
+
+- **`SETTING`** — Setting under the app's Beheer/Admin/Configuration surface. Lives in the existing settings UI; no top-level menu entry.
+- **`ACTION`** — Action button or menu item on an existing surface. Implemented as a single button / context-menu entry that opens a modal/wizard or runs a backend operation — NOT a page.
+
+**Lives at:** Beheer (reorder-points per SKU) + "Genereer reorder-PO" action on alert
+
+**Rationale:** Min/max config + run action.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Min/max levels per item per location with low-stock alerts; auto-PO generation optional.
