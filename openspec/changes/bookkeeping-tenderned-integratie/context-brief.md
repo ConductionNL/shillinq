@@ -2,6 +2,20 @@ status: draft
 
 # Bookkeeping TenderNed Integratie
 
+## Placement & Information Architecture
+
+**Placement type:** `SETTING+ACTION` (compound — implement all of the following):
+
+- **`SETTING`** — Setting under the app's Beheer/Admin/Configuration surface. Lives in the existing settings UI; no top-level menu entry.
+- **`ACTION`** — Action button or menu item on an existing surface. Implemented as a single button / context-menu entry that opens a modal/wizard or runs a backend operation — NOT a page.
+
+**Lives at:** Beheer / Integraties (TenderNed config) + "TenderNed-import" action on PO
+
+**Rationale:** Integration.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Automatische integratie tussen TenderNed (het centrale Nederlandse aanbestedingsplatform) en de Shillinq verplichtingenadministratie. Wanneer een organisatie een aanbesteding wint op TenderNed, moet de financiele administratie deze opdracht direct kunnen verwerken als verplichting (commitment), zodat budget-uitputting realtime zichtbaar is en cashflow-prognoses kloppen. De huidige workflow is volledig handmatig: een inkoper of contractmanager exporteert PDF's vanuit TenderNed, mailt deze naar finance, en finance voert de gegevens opnieuw in - met alle bijbehorende risico's op typefouten, dubbele invoer en vertraging tussen gunning en boekhoudkundige verwerking.
