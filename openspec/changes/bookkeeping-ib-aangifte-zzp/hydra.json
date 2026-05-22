@@ -1,8 +1,15 @@
 {
   "spec_slug": "bookkeeping-ib-aangifte-zzp",
-  "title": "IB Aangifte Assembly for ZZP",
+  "title": "IB Aangifte (Income Tax Return) Assembly for ZZP",
+  "subtitle": "Automated P-formulier assembly, validation, and SBR/XBRL submission for Dutch self-employed",
   "app": "shillinq",
   "repo": "https://github.com/ConductionNL/shillinq",
-  "depends_on": [],
-  "issue": null
+  "depends_on": [
+    "zzp-urencriterium-tracker",
+    "bookkeeping-investeringsaftrek",
+    "bookkeeping-chart-of-accounts",
+    "bookkeeping-ap-ar",
+    "bookkeeping-fixed-assets"
+  ],
+  "issue": "https://github.com/ConductionNL/shillinq/issues/XXX"
 }
