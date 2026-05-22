@@ -3,6 +3,17 @@ status: draft
 ---
 # ICP-opgaaf voor intra-community supplies
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Belasting / ICP-opgaaf
+
+**Rationale:** Distinct aangifte.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 When a Dutch business sells goods or services to a VAT-registered business in another EU member state, the supply is zero-rated for Dutch VAT under the intra-community supply (ICP, intracommunautaire prestatie) rules. The recipient self-accounts for VAT in their own member state through the reverse-charge mechanism. To keep the system fraud-resistant the Belastingdienst requires the Dutch seller to file a separate ICP-opgaaf (the Dutch equivalent of the EU recapitulative statement / EC Sales List) that lists, per buyer VAT-identification number, the total value of supplies in the reporting period. The data is exchanged across all member states through the VIES network so that each destination tax authority can cross-check whether the local buyer correctly declared the reverse-charge VAT.
