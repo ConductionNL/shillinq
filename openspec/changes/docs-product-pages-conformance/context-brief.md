@@ -1,5 +1,16 @@
 # Proposal: docs-product-pages-conformance
 
+## Placement & Information Architecture
+
+**Placement type:** `SETTING` — Setting under the app's Beheer/Admin/Configuration surface. Lives in the existing settings UI; no top-level menu entry.
+
+**Lives at:** (out-of-app)
+
+**Rationale:** Docs-site conformance — not in-app IA.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Summary
 
 An audit on 2026-05-13 found shillinq's `docs/` directory partially conformant to the canonical product-pages spec that recently shipped to the Conduction design system (`preview/product-pages/`). This change brings shillinq's documentation into full Tier-1 (structural) and Tier-2 (configuration) conformance: renaming folders, moving files, fixing em-dash violations, adding stub placeholder pages for Tier-3 content areas, and wiring up the redocusaurus API docs preset and the `nl` locale so the design-system preset's full feature set is active.
