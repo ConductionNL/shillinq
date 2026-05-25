@@ -4,6 +4,20 @@ status: draft
 
 # Inventory Valuation (FIFO + moving-average)
 
+## Placement & Information Architecture
+
+**Placement type:** `SETTING+DETAIL_TAB` (compound — implement all of the following):
+
+- **`SETTING`** — Setting under the app's Beheer/Admin/Configuration surface. Lives in the existing settings UI; no top-level menu entry.
+- **`DETAIL_TAB`** — Tab on the detail view of an existing object. NOT a standalone page — appears inside the parent record's detail surface (e.g. an extra tab on the existing detail header).
+
+**Lives at:** Beheer (default valuation method) + Voorraad / Producten → COGS-mapping tab
+
+**Rationale:** Per-category config + per-product override.  
+_Source: /tmp/ia-shillinq.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 FIFO + moving-average valuation per item per warehouse. Minimal viable pair.
