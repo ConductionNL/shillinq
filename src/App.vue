@@ -34,6 +34,12 @@ export default {
 		CnAppRoot,
 	},
 
+	/**
+	 * Provide the shared objectSidebarState to descendant pages.
+	 *
+	 * @spec exclude Shell glue — CnAppRoot provide/inject channel for the
+	 * sidebar; no app-specific behavior.
+	 */
 	provide() {
 		return {
 			// Provide/inject channel for index/detail pages that auto-mount
@@ -99,11 +105,25 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * Current user's Nextcloud permissions, passed through to CnAppRoot.
+		 *
+		 * @return {Array} Permission list (empty when unavailable).
+		 * @spec exclude Shell glue — reads window.OC permissions for CnAppRoot;
+		 * no app-specific behavior.
+		 */
 		permissions() {
 			return window.OC?.currentUser?.permissions ?? []
 		},
 	},
 
+	/**
+	 * Bring up the Pinia stores for the admin-settings store / future custom
+	 * components before CnAppRoot dispatches pages.
+	 *
+	 * @spec exclude Shell glue — bootstraps stores for CnAppRoot; the store
+	 * behaviors are specced in REQ-Admin-001 / REQ-Admin-005.
+	 */
 	async created() {
 		// Pinia stores still need to come up so the admin-settings store
 		// (AdminRoot.vue) and any future custom components keep working.
@@ -119,6 +139,8 @@ export default {
 		 *
 		 * @param {string} key Translation key.
 		 * @return {string} Translated string (or the key on miss).
+		 * @spec exclude Shell glue — closes over @nextcloud/l10n translate so
+		 * CnAppRoot need not know the app id; no app-specific behavior.
 		 */
 		translateForApp(key) {
 			return ncT('shillinq', key)

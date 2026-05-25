@@ -50,6 +50,8 @@ class HealthController extends Controller
      * Return application health status.
      *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-3
      */
     #[PublicPage]
     #[NoCSRFRequired]

@@ -15,6 +15,13 @@ export const useSettingsStore = defineStore('settings', {
 	},
 
 	actions: {
+		/**
+		 * Load app settings from the shillinq settings endpoint and derive
+		 * the hasOpenRegisters / isAdmin flags from the response.
+		 *
+		 * @return {Promise<object|null>} The settings payload, or null on error.
+		 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-1
+		 */
 		async fetchSettings() {
 			this.loading = true
 			try {
@@ -36,6 +43,13 @@ export const useSettingsStore = defineStore('settings', {
 			return null
 		},
 
+		/**
+		 * Persist app settings to the shillinq settings endpoint.
+		 *
+		 * @param {object} settings The settings to save.
+		 * @return {Promise<object|null>} The refreshed settings, or null on error.
+		 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-1
+		 */
 		async saveSettings(settings) {
 			this.loading = true
 			try {
