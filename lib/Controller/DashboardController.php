@@ -50,6 +50,9 @@ class DashboardController extends Controller
      * @NoCSRFRequired
      *
      * @return TemplateResponse
+     *
+     * @spec exclude SPA shell — returns the bundled Vue index template with no
+     * app-specific behavior; pure Nextcloud TemplateResponse framework glue.
      */
     public function page(): TemplateResponse
     {
@@ -63,6 +66,9 @@ class DashboardController extends Controller
      * @NoCSRFRequired
      *
      * @return TemplateResponse
+     *
+     * @spec exclude SPA history-mode catch-all — delegates verbatim to page();
+     * pure Vue-router deep-link framework glue with no app-specific behavior.
      */
     public function catchAll(): TemplateResponse
     {

@@ -36,6 +36,12 @@ export default {
 			appVersion: document.getElementById('shillinq-settings')?.dataset?.version || 'Unknown',
 		}
 	},
+	/**
+	 * Bring up the Pinia stores (object + settings) so the embedded Settings
+	 * form can read register data, then reveal it.
+	 *
+	 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-5
+	 */
 	async created() {
 		await initializeStores()
 		this.storesReady = true

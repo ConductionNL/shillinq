@@ -53,6 +53,8 @@ class SettingsController extends Controller
      * @NoAdminRequired
      *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-1
      */
     public function index(): JSONResponse
     {
@@ -65,6 +67,8 @@ class SettingsController extends Controller
      * Update settings with provided data.
      *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-1
      */
     public function create(): JSONResponse
     {
@@ -86,6 +90,8 @@ class SettingsController extends Controller
      * all schema and register IDs from the import result.
      *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-2
      */
     public function load(): JSONResponse
     {

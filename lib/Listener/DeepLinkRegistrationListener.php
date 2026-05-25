@@ -41,6 +41,10 @@ class DeepLinkRegistrationListener implements IEventListener
      * @param Event $event The event to handle
      *
      * @return void
+     *
+     * @spec exclude Scaffold stub — registers the placeholder `example` schema
+     * deep link only; OpenRegister search-provider event wiring with no real
+     * shillinq behavior yet. To be reverse-specced when domain pages land.
      */
     public function handle(Event $event): void
     {

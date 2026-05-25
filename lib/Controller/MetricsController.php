@@ -49,6 +49,8 @@ class MetricsController extends Controller
      * Return application metrics in Prometheus text format.
      *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-4
      */
     #[AuthorizedAdminSetting(Application::APP_ID)]
     #[NoCSRFRequired]
