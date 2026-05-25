@@ -32,7 +32,7 @@
 			"label": "Documentation",
 			"icon": "icon-info",
 			"href": "https://conduction.nl",
-			"section": "settings",
+			"section": "footer",
 			"order": 90
 		},
 		{
