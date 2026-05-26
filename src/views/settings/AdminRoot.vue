@@ -20,6 +20,7 @@
 </template>
 
 <script>
+import { loadState } from '@nextcloud/initial-state'
 import { CnVersionInfoCard } from '@conduction/nextcloud-vue'
 import Settings from './Settings.vue'
 import { initializeStores } from '../../store/store.js'
@@ -33,7 +34,7 @@ export default {
 	data() {
 		return {
 			storesReady: false,
-			appVersion: document.getElementById('shillinq-settings')?.dataset?.version || 'Unknown',
+			appVersion: loadState('shillinq', 'version', 'Unknown'),
 		}
 	},
 	/**
