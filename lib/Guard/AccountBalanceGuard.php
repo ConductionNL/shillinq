@@ -64,9 +64,9 @@ class AccountBalanceGuard
      * exists yet (T2 `bookkeeping-general-ledger` introduces it). Returns
      * true unconditionally with a debug log noting the deferral.
      *
-     * **T2+ behaviour:** computes `SUM(GLLine.debit) - SUM(GLLine.credit)`
-     * for `accountNumber + administrationId` via OR's aggregation API.
-     * Returns true iff the sum is zero.
+     * **T2+ behaviour:** retrieves all GLLine records for the account via
+     * OR's real `setRegister()->setSchema()->findAll()` API and sums
+     * debit minus credit in PHP. Returns true iff the sum is zero.
      *
      * @param array<string, mixed> $account Account object array (loaded by OR)
      *
@@ -86,23 +86,33 @@ class AccountBalanceGuard
 
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $sum           = $objectService->aggregate(
-                register: 'shillinq',
-                schema: 'GLLine',
-                aggregate: ['debit_minus_credit' => 'SUM(debit) - SUM(credit)'],
-                filter: [
-                    'accountNumber'    => ($account['accountNumber'] ?? ''),
-                    'administrationId' => ($account['administrationId'] ?? ''),
-                ]
+            $lines         = $objectService
+                ->setRegister('shillinq')
+                ->setSchema('GLLine')
+                ->findAll(
+                        [
+                            'filters' => [
+                                'accountNumber'    => ($account['accountNumber'] ?? ''),
+                                'administrationId' => ($account['administrationId'] ?? ''),
+                            ],
+                        ]
+                        );
+
+            $balance = array_sum(
+                array_map(
+                    static fn($line) => (float) ($line['debit'] ?? 0) - (float) ($line['credit'] ?? 0),
+                    $lines
+                )
             );
-            return ((int) ($sum['debit_minus_credit'] ?? 0)) === 0;
+
+            return $balance === 0.0;
         } catch (\Throwable $e) {
             $this->logger->error(
                 'AccountBalanceGuard: balance computation failed — denying archive (fail-closed)',
                 ['exception' => $e->getMessage()]
             );
             return false;
-        }
+        }//end try
     }//end requireZeroBalance()
 
     /**
@@ -129,33 +139,43 @@ class AccountBalanceGuard
 
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $existing      = $objectService->findObjects(
-                register: 'shillinq',
-                schema: 'Account',
-                params: [
-                    'administrationId' => ($account['administrationId'] ?? ''),
-                    'isClosingAccount' => true,
-                    '_limit'           => 2,
-                ]
-            );
+            $existing      = $objectService
+                ->setRegister('shillinq')
+                ->setSchema('Account')
+                ->findAll(
+                        [
+                            'filters' => [
+                                'administrationId' => ($account['administrationId'] ?? ''),
+                                'isClosingAccount' => true,
+                            ],
+                            'limit'   => 2,
+                        ]
+                        );
 
             // Filter out the current account (by id, if persisted; by accountNumber otherwise).
+            // Defence-in-depth: also verify administrationId matches to prevent cross-tenant leakage.
             $currentId            = ($account['id'] ?? null);
             $currentAccountNumber = ($account['accountNumber'] ?? null);
+            $currentAdminId       = ($account['administrationId'] ?? null);
             $otherClosing         = array_filter(
-                    $existing,
-                    static function ($candidate) use ($currentId, $currentAccountNumber) {
-                        if ($currentId !== null && ($candidate['id'] ?? null) === $currentId) {
-                            return false;
-                        }
-
-                        if ($currentId === null && ($candidate['accountNumber'] ?? null) === $currentAccountNumber) {
-                            return false;
-                        }
-
-                        return true;
+                $existing,
+                static function ($candidate) use ($currentId, $currentAccountNumber, $currentAdminId) {
+                    // Cross-tenant defence: only consider candidates in the same administration.
+                    if ($currentAdminId !== null && ($candidate['administrationId'] ?? null) !== $currentAdminId) {
+                        return false;
                     }
-                    );
+
+                    if ($currentId !== null && ($candidate['id'] ?? null) === $currentId) {
+                        return false;
+                    }
+
+                    if ($currentId === null && ($candidate['accountNumber'] ?? null) === $currentAccountNumber) {
+                        return false;
+                    }
+
+                    return true;
+                }
+            );
 
             return count($otherClosing) === 0;
         } catch (\Throwable $e) {
@@ -168,9 +188,9 @@ class AccountBalanceGuard
     }//end requireSingleClosingAccount()
 
     /**
-     * Probe whether the GLLine register is declared (i.e. T2 has shipped).
-     *
-     * Lazy check via ObjectService → schema lookup; absence treated as T1 state.
+     * Probe whether the GLLine schema is declared in the shillinq register
+     * (i.e. T2 has shipped). Uses OR's real API: attempt to find the schema
+     * via setRegister + setSchema; absence is treated as T1 state.
      *
      * @return bool True when the GLLine schema exists in OR's `shillinq` register.
      */
@@ -178,8 +198,8 @@ class AccountBalanceGuard
     {
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $schemas       = $objectService->getSchemas(register: 'shillinq');
-            return isset($schemas['GLLine']);
+            $objectService->setRegister('shillinq')->setSchema('GLLine');
+            return true;
         } catch (\Throwable) {
             return false;
         }

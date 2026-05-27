@@ -124,7 +124,7 @@ class SettingsControllerTest extends TestCase
     }//end testCreateCallsUpdateSettingsAndReturnsSuccess()
 
     /**
-     * Test that load() returns the result of loadConfiguration.
+     * Test that load() returns the result of loadConfigurationForced.
      *
      * @return void
      */
@@ -137,8 +137,7 @@ class SettingsControllerTest extends TestCase
         ];
 
         $this->settingsService->expects($this->once())
-            ->method('loadConfiguration')
-            ->with(force: true)
+            ->method('loadConfigurationForced')
             ->willReturn($loadResult);
 
         $result = $this->controller->load();

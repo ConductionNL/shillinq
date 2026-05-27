@@ -32,19 +32,23 @@ use OCP\EventDispatcher\IEventListener;
  * will link directly to the relevant detail views in the app.
  *
  * @implements IEventListener<Event>
+ *
+ * @spec openspec/changes/add-shillinq-chart-of-accounts/specs/bookkeeping-chart-of-accounts/spec.md
  */
 class DeepLinkRegistrationListener implements IEventListener
 {
     /**
      * Handle the deep link registration event.
      *
+     * Registers deep links for real Shillinq schemas. The `account` schema is
+     * the only schema present in T1. Additional schemas (invoice, payment, etc.)
+     * should be added here once their Vue detail routes are implemented.
+     *
      * @param Event $event The event to handle
      *
      * @return void
      *
-     * @spec exclude Scaffold stub — registers the placeholder `example` schema
-     * deep link only; OpenRegister search-provider event wiring with no real
-     * shillinq behavior yet. To be reverse-specced when domain pages land.
+     * @spec openspec/changes/add-shillinq-chart-of-accounts/specs/bookkeeping-chart-of-accounts/spec.md
      */
     public function handle(Event $event): void
     {
@@ -52,14 +56,12 @@ class DeepLinkRegistrationListener implements IEventListener
             return;
         }
 
-        // Register example object deep links.
-        // Replace 'shillinq' with your app ID and update the register slug,
-        // schema slug, and URL template to match your app's actual schemas.
+        // Register deep link for the Account schema (T1 schema).
         $event->register(
             appId: 'shillinq',
             registerSlug: 'shillinq',
-            schemaSlug: 'example',
-            urlTemplate: '/apps/shillinq/#/examples/{uuid}'
+            schemaSlug: 'account',
+            urlTemplate: '/apps/shillinq/#/accounts/{uuid}'
         );
 
     }//end handle()
