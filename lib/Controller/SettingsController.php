@@ -97,7 +97,7 @@ class SettingsController extends Controller
     #[AuthorizedAdminSetting(Application::APP_ID)]
     public function load(): JSONResponse
     {
-        $result = $this->settingsService->loadConfiguration(force: true);
+        $result = $this->settingsService->loadConfigurationForced();
 
         return new JSONResponse($result);
     }//end load()

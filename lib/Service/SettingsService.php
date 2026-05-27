@@ -31,6 +31,8 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Service for managing Shillinq application configuration and settings.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md
  */
 class SettingsService
 {
@@ -72,6 +74,8 @@ class SettingsService
      * Check whether OpenRegister is installed and available.
      *
      * @return bool
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-1
      */
     public function isOpenRegisterAvailable(): bool
     {
@@ -150,83 +154,18 @@ class SettingsService
             ];
         }
 
-        $fileMap = [
-            'mkb' => 'rgs-3.5-mkb.json',
-            'zzp' => 'rgs-3.5-zzp.json',
-            'bbv' => 'rgs-bbv.json',
-        ];
-
-        if (isset($fileMap[$templateVariant]) === false) {
-            return [
-                'success' => false,
-                'message' => 'Unknown RGS template variant: '.$templateVariant,
-            ];
-        }
-
-        $seedPath = __DIR__.'/../Settings/seeds/'.$fileMap[$templateVariant];
-        if (file_exists($seedPath) === false) {
-            $this->logger->error('Shillinq: seed file not found at '.$seedPath);
-            return [
-                'success' => false,
-                'message' => 'Seed file not found: '.$fileMap[$templateVariant],
-            ];
-        }
-
-        $content = file_get_contents($seedPath);
-        if ($content === false) {
-            return [
-                'success' => false,
-                'message' => 'Failed to read seed file.',
-            ];
-        }
-
-        $data = json_decode($content, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return [
-                'success' => false,
-                'message' => 'Failed to parse seed file: '.json_last_error_msg(),
-            ];
-        }
-
-        $accounts = ($data['accounts'] ?? []);
-        if (empty($accounts) === true) {
-            return [
-                'success' => false,
-                'message' => 'Seed file contains no accounts.',
-            ];
+        $accountsResult = $this->loadSeedAccounts(templateVariant: $templateVariant);
+        if (isset($accountsResult['error']) === true) {
+            return $accountsResult['error'];
         }
 
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-
-            $seeded  = 0;
-            $skipped = 0;
-
-            foreach ($accounts as $account) {
-                $account['administrationId'] = $administrationId;
-
-                $existing = $objectService->findObjects(
-                    register: 'shillinq',
-                    schema: 'Account',
-                    params: [
-                        'accountNumber'    => $account['accountNumber'],
-                        'administrationId' => $administrationId,
-                        '_limit'           => 1,
-                    ]
-                );
-
-                if (empty($existing) === false) {
-                    $skipped++;
-                    continue;
-                }
-
-                $objectService->saveObject(
-                    register: 'shillinq',
-                    schema: 'Account',
-                    object: $account
-                );
-                $seeded++;
-            }//end foreach
+            ['seeded' => $seeded, 'skipped' => $skipped] = $this->importAccounts(
+                objectService: $objectService,
+                accounts: $accountsResult['accounts'],
+                administrationId: $administrationId
+            );
 
             $this->logger->info(
                 'Shillinq: RGS template seeded',
@@ -257,15 +196,136 @@ class SettingsService
     }//end seedRgsTemplate()
 
     /**
+     * Load and validate accounts from a seed file for the given template variant.
+     *
+     * Returns `['accounts' => array]` on success, or `['error' => array]` with a
+     * failure result array on any validation / IO error.
+     *
+     * @param string $templateVariant Template to load: 'mkb', 'zzp', or 'bbv'.
+     *
+     * @return array{accounts: array<mixed>}|array{error: array<string,mixed>}
+     */
+    private function loadSeedAccounts(string $templateVariant): array
+    {
+        $fileMap = [
+            'mkb' => 'rgs-3.5-mkb.json',
+            'zzp' => 'rgs-3.5-zzp.json',
+            'bbv' => 'rgs-bbv.json',
+        ];
+
+        if (isset($fileMap[$templateVariant]) === false) {
+            return ['error' => ['success' => false, 'message' => 'Unknown RGS template variant: '.$templateVariant]];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/'.$fileMap[$templateVariant];
+        if (file_exists($seedPath) === false) {
+            $this->logger->error('Shillinq: seed file not found at '.$seedPath);
+            return ['error' => ['success' => false, 'message' => 'Seed file not found: '.$fileMap[$templateVariant]]];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return ['error' => ['success' => false, 'message' => 'Failed to read seed file.']];
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return ['error' => ['success' => false, 'message' => 'Failed to parse seed file: '.json_last_error_msg()]];
+        }
+
+        $accounts = ($data['accounts'] ?? []);
+        if (empty($accounts) === true) {
+            return ['error' => ['success' => false, 'message' => 'Seed file contains no accounts.']];
+        }
+
+        return ['accounts' => $accounts];
+
+    }//end loadSeedAccounts()
+
+    /**
+     * Import a list of account records into OpenRegister, skipping existing ones.
+     *
+     * @param object       $objectService    OpenRegister ObjectService.
+     * @param array<mixed> $accounts         Account records to import.
+     * @param string       $administrationId The administrationId to stamp.
+     *
+     * @return array{seeded: int, skipped: int}
+     */
+    private function importAccounts(object $objectService, array $accounts, string $administrationId): array
+    {
+        $seeded  = 0;
+        $skipped = 0;
+
+        foreach ($accounts as $account) {
+            $account['administrationId'] = $administrationId;
+
+            $existing = $objectService->findObjects(
+                register: 'shillinq',
+                schema: 'Account',
+                params: [
+                    'accountNumber'    => $account['accountNumber'],
+                    'administrationId' => $administrationId,
+                    '_limit'           => 1,
+                ]
+            );
+
+            if (empty($existing) === false) {
+                $skipped++;
+                continue;
+            }
+
+            $objectService->saveObject(
+                register: 'shillinq',
+                schema: 'Account',
+                object: $account
+            );
+            $seeded++;
+        }//end foreach
+
+        return ['seeded' => $seeded, 'skipped' => $skipped];
+
+    }//end importAccounts()
+
+    /**
      * Load configuration from shillinq_register.json via OpenRegister.
      *
-     * @param bool $force Force re-import even if already configured.
+     * Skips import when the register is already configured (idempotent).
+     * Use {@see self::loadConfigurationForced()} to bypass this guard.
      *
      * @return array<string,mixed> Result with success flag, message, and version.
      *
      * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-2
      */
-    public function loadConfiguration(bool $force=false): array
+    public function loadConfiguration(): array
+    {
+        return $this->runLoadConfiguration(force: false);
+
+    }//end loadConfiguration()
+
+    /**
+     * Force re-import of configuration from shillinq_register.json via OpenRegister.
+     *
+     * Bypasses the already-configured guard and always re-imports.
+     * Use {@see self::loadConfiguration()} for the idempotent variant.
+     *
+     * @return array<string,mixed> Result with success flag, message, and version.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-2
+     */
+    public function loadConfigurationForced(): array
+    {
+        return $this->runLoadConfiguration(force: true);
+
+    }//end loadConfigurationForced()
+
+    /**
+     * Internal implementation for loadConfiguration / loadConfigurationForced.
+     *
+     * @param bool $force Force re-import even if already configured.
+     *
+     * @return array<string,mixed>
+     */
+    private function runLoadConfiguration(bool $force): array
     {
         if ($this->isOpenRegisterAvailable() === false) {
             $this->logger->warning('Shillinq: OpenRegister not available, skipping register initialization');
@@ -336,5 +396,5 @@ class SettingsService
                 'message' => $e->getMessage(),
             ];
         }//end try
-    }//end loadConfiguration()
+    }//end runLoadConfiguration()
 }//end class
