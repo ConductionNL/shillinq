@@ -34,6 +34,8 @@ use OCP\IUserSession;
 
 /**
  * Per-user preferences controller.
+ *
+ * @spec openspec/changes/retrofit-2026-05-26-preferences-api/tasks.md
  */
 class PreferencesController extends Controller
 {
@@ -72,15 +74,17 @@ class PreferencesController extends Controller
             return new JSONResponse(data: ['message' => 'Not logged in'], statusCode: Http::STATUS_UNAUTHORIZED);
         }
 
-        $safeKey = $this->sanitizeKey(key: $key);
-        if ($safeKey === '') {
-            return new JSONResponse(data: ['message' => 'Invalid key'], statusCode: Http::STATUS_BAD_REQUEST);
+        $keyResult = $this->sanitizeKey(key: $key);
+        if ($keyResult['error'] !== null) {
+            return new JSONResponse(data: ['message' => $keyResult['error']], statusCode: Http::STATUS_BAD_REQUEST);
         }
+
+        $safeKey = $keyResult['key'];
 
         $value = $this->config->getUserValue(
             userId: $user->getUID(),
             appName: Application::APP_ID,
-            key: 'pref_'.$safeKey,
+            key: $safeKey,
             default: ''
         );
 
@@ -89,7 +93,7 @@ class PreferencesController extends Controller
             $stored = $value;
         }
 
-        return new JSONResponse(data: ['value' => $stored]);
+        return new JSONResponse(data: ['key' => $safeKey, 'value' => $stored]);
 
     }//end getPreference()
 
@@ -113,43 +117,62 @@ class PreferencesController extends Controller
             return new JSONResponse(data: ['message' => 'Not logged in'], statusCode: Http::STATUS_UNAUTHORIZED);
         }
 
-        $safeKey = $this->sanitizeKey(key: $key);
-        if ($safeKey === '') {
-            return new JSONResponse(data: ['message' => 'Invalid key'], statusCode: Http::STATUS_BAD_REQUEST);
+        $keyResult = $this->sanitizeKey(key: $key);
+        if ($keyResult['error'] !== null) {
+            return new JSONResponse(data: ['message' => $keyResult['error']], statusCode: Http::STATUS_BAD_REQUEST);
         }
+
+        $safeKey = $keyResult['key'];
 
         if ($value === '') {
             $this->config->deleteUserValue(
                 userId: $user->getUID(),
                 appName: Application::APP_ID,
-                key: 'pref_'.$safeKey
+                key: $safeKey
             );
-            return new JSONResponse(data: ['value' => null]);
+            return new JSONResponse(data: ['key' => $safeKey, 'value' => null]);
         }
 
         $this->config->setUserValue(
             userId: $user->getUID(),
             appName: Application::APP_ID,
-            key: 'pref_'.$safeKey,
+            key: $safeKey,
             value: $value
         );
 
-        return new JSONResponse(data: ['value' => $value]);
+        return new JSONResponse(data: ['key' => $safeKey, 'value' => $value]);
 
     }//end setPreference()
 
     /**
-     * Restrict keys to a safe charset so callers cannot reach arbitrary
-     * IConfig user values outside the `pref_` namespace.
+     * Restrict keys to a safe charset and enforce a 64-character limit.
+     *
+     * Keys are restricted to lowercase alphanumeric characters and hyphens so
+     * callers cannot reach arbitrary IConfig user values. Keys exceeding 64
+     * characters are rejected (400) rather than silently truncated, making the
+     * API contract explicit and avoiding hard-to-debug key collisions.
      *
      * @param string $key The raw key.
      *
-     * @return string The sanitised key, or '' when nothing safe remains.
+     * @return array{key: string, error: string|null} `key` is the canonical key;
+     *         `error` is non-null when the key is invalid (empty or too long).
      */
-    private function sanitizeKey(string $key): string
+    private function sanitizeKey(string $key): array
     {
-        $safe = preg_replace(pattern: '/[^a-z0-9-]/', replacement: '', subject: strtolower($key));
-        return substr((string) $safe, offset: 0, length: 64);
+        $safe = (string) preg_replace(pattern: '/[^a-z0-9-]/', replacement: '', subject: strtolower($key));
+
+        if ($safe === '') {
+            return ['key' => '', 'error' => 'Invalid key: must contain at least one alphanumeric character or hyphen.'];
+        }
+
+        if (strlen($safe) > 64) {
+            return [
+                'key'   => '',
+                'error' => 'Key too long: maximum 64 characters (after stripping non-alphanumeric characters).',
+            ];
+        }
+
+        return ['key' => $safe, 'error' => null];
 
     }//end sanitizeKey()
 }//end class
