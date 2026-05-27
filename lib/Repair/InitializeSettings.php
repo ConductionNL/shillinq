@@ -84,7 +84,7 @@ class InitializeSettings implements IRepairStep
         }
 
         try {
-            $result = $this->settingsService->loadConfiguration(force: true);
+            $result = $this->settingsService->loadConfigurationForced();
 
             if ($result['success'] === true) {
                 $version = ($result['version'] ?? 'unknown');

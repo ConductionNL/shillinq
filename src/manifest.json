@@ -107,43 +107,53 @@
 				"fields": [
 					{
 						"key": "accountNumber",
-						"label": "Account Number"
+						"label": "Account Number",
+						"type": "string"
 					},
 					{
 						"key": "name",
-						"label": "Name"
+						"label": "Name",
+						"type": "string"
 					},
 					{
 						"key": "accountType",
-						"label": "Account Type"
+						"label": "Account Type",
+						"type": "string"
 					},
 					{
 						"key": "currency",
-						"label": "Currency"
+						"label": "Currency",
+						"type": "string"
 					},
 					{
 						"key": "parentAccountNumber",
-						"label": "Parent Account"
+						"label": "Parent Account",
+						"type": "string"
 					},
 					{
 						"key": "administrationId",
-						"label": "Administration"
+						"label": "Administration",
+						"type": "string"
 					},
 					{
 						"key": "lifecycleState",
-						"label": "Status"
+						"label": "Status",
+						"type": "string"
 					},
 					{
 						"key": "isClosingAccount",
-						"label": "Closing Account"
+						"label": "Closing Account",
+						"type": "boolean"
 					},
 					{
 						"key": "vatApplicable",
-						"label": "VAT Applicable"
+						"label": "VAT Applicable",
+						"type": "boolean"
 					},
 					{
 						"key": "description",
-						"label": "Description"
+						"label": "Description",
+						"type": "string"
 					}
 				],
 				"lifecycleActions": true,
@@ -155,81 +165,88 @@
 			"route": "/",
 			"type": "dashboard",
 			"title": "Dashboard",
-			"config": {},
-			"widgets": [
-				{
-					"widgetKey": "stats-block",
-					"slot": "body",
-					"gridX": 0,
-					"gridY": 0,
-					"gridWidth": 3,
-					"gridHeight": 2,
-					"props": {
+			"config": {
+				"widgets": [
+					{
+						"id": "open-items",
 						"title": "Open items",
+						"type": "stats-block",
 						"iconClass": "icon-folder",
 						"props": {
 							"count": 12,
 							"countLabel": "sample",
 							"variant": "primary"
-						},
-						"showTitle": true
-					}
-				},
-				{
-					"widgetKey": "stats-block",
-					"slot": "body",
-					"gridX": 3,
-					"gridY": 0,
-					"gridWidth": 3,
-					"gridHeight": 2,
-					"props": {
+						}
+					},
+					{
+						"id": "due-this-week",
 						"title": "Due this week",
+						"type": "stats-block",
 						"iconClass": "icon-calendar",
 						"props": {
 							"count": 5,
 							"countLabel": "sample",
 							"variant": "warning"
-						},
-						"showTitle": true
-					}
-				},
-				{
-					"widgetKey": "stats-block",
-					"slot": "body",
-					"gridX": 6,
-					"gridY": 0,
-					"gridWidth": 3,
-					"gridHeight": 2,
-					"props": {
+						}
+					},
+					{
+						"id": "completed",
 						"title": "Completed",
+						"type": "stats-block",
 						"iconClass": "icon-checkmark",
 						"props": {
 							"count": 48,
 							"countLabel": "sample",
 							"variant": "success"
-						},
-						"showTitle": true
-					}
-				},
-				{
-					"widgetKey": "stats-block",
-					"slot": "body",
-					"gridX": 9,
-					"gridY": 0,
-					"gridWidth": 3,
-					"gridHeight": 2,
-					"props": {
+						}
+					},
+					{
+						"id": "team-members",
 						"title": "Team members",
+						"type": "stats-block",
 						"iconClass": "icon-group",
 						"props": {
 							"count": 7,
 							"countLabel": "sample",
 							"variant": "default"
-						},
-						"showTitle": true
+						}
 					}
-				}
-			]
+				],
+				"layout": [
+					{
+						"id": "layout-open-items",
+						"widgetId": "open-items",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 3,
+						"gridHeight": 2
+					},
+					{
+						"id": "layout-due-this-week",
+						"widgetId": "due-this-week",
+						"gridX": 3,
+						"gridY": 0,
+						"gridWidth": 3,
+						"gridHeight": 2
+					},
+					{
+						"id": "layout-completed",
+						"widgetId": "completed",
+						"gridX": 6,
+						"gridY": 0,
+						"gridWidth": 3,
+						"gridHeight": 2
+					},
+					{
+						"id": "layout-team-members",
+						"widgetId": "team-members",
+						"gridX": 9,
+						"gridY": 0,
+						"gridWidth": 3,
+						"gridHeight": 2
+					}
+				]
+			}
 		},
 		{
 			"id": "Settings",
@@ -250,19 +267,18 @@
 								"help": "OpenRegister register ID"
 							}
 						]
+					},
+					{
+						"id": "version",
+						"title": "Version",
+						"widgets": [
+							{
+								"type": "version-info"
+							}
+						]
 					}
 				]
-			},
-			"widgets": [
-				{
-					"widgetKey": "version-info",
-					"slot": "section:version",
-					"gridX": 0,
-					"gridY": 0,
-					"gridWidth": 12,
-					"gridHeight": 1
-				}
-			]
+			}
 		}
 	]
 }
