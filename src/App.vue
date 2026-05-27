@@ -3,9 +3,9 @@
 
 <!--
  Shillinq app shell. Mounts CnAppRoot with the bundled manifest and the
- (currently empty) customComponents registry. CnAppRoot handles the
- dependency check (manifest.dependencies → "OpenRegister required" empty
- state), the default CnAppNav (manifest.menu) and per-route page dispatch
+ v2 kind-tagged registry (ADR-036). CnAppRoot handles the dependency check
+ (manifest.dependencies → "OpenRegister required" empty state), the default
+ CnAppNav (manifest.menu) and per-route page dispatch
  (manifest.pages[].type → Cn{Dashboard,Settings,Index,Detail,Logs}Page).
 
  @spec openspec/changes/shillinq-manifest-tier4/tasks.md#2.2
@@ -13,7 +13,6 @@
 <template>
 	<CnAppRoot
 		:manifest="manifest"
-		:custom-components="customComponents"
 		:page-types="pageTypes"
 		:registry="registry"
 		app-id="shillinq"
@@ -61,15 +60,6 @@ export default {
 			required: true,
 		},
 		/**
-		 * Consumer-injected components used by `type: "custom"` pages and
-		 * `headerComponent` / sidebar-tab / settings-section overrides.
-		 * Empty for shillinq — see src/customComponents.js.
-		 */
-		customComponents: {
-			type: Object,
-			default: () => ({}),
-		},
-		/**
 		 * Page-type registry — `{ index, detail, dashboard, settings, ... }`.
 		 * Wired through to descendant `CnPageRenderer` instances.
 		 */
@@ -78,7 +68,11 @@ export default {
 			default: () => ({}),
 		},
 		/**
-		 * 5-kind component registry for v2 manifests (hydra ADR-036).
+		 * V2 kind-tagged component registry (ADR-036). Each entry is
+		 * `{ kind: "page" | "widget" | "sidebarTab" | "modal" | "settingsSection",
+		 *   component }`. CnPageRenderer resolves every `type:"custom"` page's
+		 * `component` string against `kind: "page"` entries here. Replaces the
+		 * deprecated `customComponents` prop.
 		 * Empty for shillinq — see src/registry.js.
 		 */
 		registry: {
