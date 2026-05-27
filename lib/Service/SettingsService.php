@@ -259,15 +259,18 @@ class SettingsService
         foreach ($accounts as $account) {
             $account['administrationId'] = $administrationId;
 
-            $existing = $objectService->findObjects(
-                register: 'shillinq',
-                schema: 'Account',
-                params: [
-                    'accountNumber'    => $account['accountNumber'],
-                    'administrationId' => $administrationId,
-                    '_limit'           => 1,
-                ]
-            );
+            $existing = $objectService
+                ->setRegister('shillinq')
+                ->setSchema('Account')
+                ->findAll(
+                        [
+                            'filters' => [
+                                'accountNumber'    => $account['accountNumber'],
+                                'administrationId' => $administrationId,
+                            ],
+                            'limit'   => 1,
+                        ]
+                        );
 
             if (empty($existing) === false) {
                 $skipped++;
@@ -275,9 +278,9 @@ class SettingsService
             }
 
             $objectService->saveObject(
+                object: $account,
                 register: 'shillinq',
                 schema: 'Account',
-                object: $account
             );
             $seeded++;
         }//end foreach
@@ -374,13 +377,38 @@ class SettingsService
             );
 
             if (empty($result) === false) {
+                $errors   = ($result['errors'] ?? []);
+                $warnings = ($result['warnings'] ?? []);
+
+                if (empty($errors) === false) {
+                    $this->logger->error(
+                        'Shillinq: register configuration imported with errors',
+                        ['errors' => $errors]
+                    );
+                    return [
+                        'success'  => false,
+                        'message'  => 'Configuration import completed with errors.',
+                        'errors'   => $errors,
+                        'warnings' => $warnings,
+                        'version'  => ($result['version'] ?? 'unknown'),
+                    ];
+                }
+
+                if (empty($warnings) === false) {
+                    $this->logger->warning(
+                        'Shillinq: register configuration imported with warnings',
+                        ['warnings' => $warnings]
+                    );
+                }
+
                 $this->logger->info('Shillinq: register configuration imported successfully');
                 return [
-                    'success' => true,
-                    'message' => 'Configuration imported successfully.',
-                    'version' => ($result['version'] ?? 'unknown'),
+                    'success'  => true,
+                    'message'  => 'Configuration imported successfully.',
+                    'warnings' => $warnings,
+                    'version'  => ($result['version'] ?? 'unknown'),
                 ];
-            }
+            }//end if
 
             return [
                 'success' => false,
