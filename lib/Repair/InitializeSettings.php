@@ -28,6 +28,8 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Repair step that initializes Shillinq configuration via SettingsService.
+ *
+ * @spec openspec/changes/spec/tasks.md#task-11
  */
 class InitializeSettings implements IRepairStep
 {
@@ -49,6 +51,8 @@ class InitializeSettings implements IRepairStep
      * Get the name of this repair step.
      *
      * @return string
+     *
+     * @spec openspec/changes/spec/tasks.md#task-11
      */
     public function getName(): string
     {
@@ -84,7 +88,7 @@ class InitializeSettings implements IRepairStep
         }
 
         try {
-            $result = $this->settingsService->loadConfigurationForced();
+            $result = $this->settingsService->loadConfiguration();
 
             if ($result['success'] === true) {
                 $version = ($result['version'] ?? 'unknown');
@@ -118,8 +122,26 @@ class InitializeSettings implements IRepairStep
      */
     private function seedChartOfAccounts(IOutput $output): void
     {
-        $template         = $this->settingsService->getSettings()['rgs_template'] ?? 'mkb';
-        $administrationId = $this->settingsService->getSettings()['administration_id'] ?? 'default';
+        $settings    = $this->settingsService->getSettings();
+        $templateRaw = ($settings['rgs_template'] ?? '');
+        $template    = 'mkb';
+        if ($templateRaw !== '') {
+            $template = $templateRaw;
+        }
+
+        $administrationId = ($settings['administration_id'] ?? '');
+
+        if ($administrationId === '') {
+            $administrationId = 'default';
+            $output->warning(
+                'Shillinq: administration_id not configured — seeding chart of accounts under '
+                .'administrationId="default". Set administration_id in Shillinq admin settings '
+                .'before going to production to avoid cross-tenant contamination.'
+            );
+            $this->logger->warning(
+                'Shillinq: administration_id not configured, using "default" for chart of accounts seed'
+            );
+        }
 
         $output->info('Seeding chart of accounts (template: '.$template.')...');
 

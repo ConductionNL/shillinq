@@ -106,7 +106,7 @@ class InitializeSettingsTest extends TestCase
             ->willReturn(false);
 
         $this->settingsService->expects($this->never())
-            ->method('loadConfiguration');
+            ->method('loadConfigurationForced');
 
         $this->output->expects($this->once())
             ->method('warning')
@@ -129,17 +129,16 @@ class InitializeSettingsTest extends TestCase
 
         $this->settingsService->expects($this->once())
             ->method('loadConfiguration')
-            ->with(force: true)
             ->willReturn(['success' => true, 'version' => '0.2.0']);
 
         $this->settingsService->expects($this->atLeastOnce())
             ->method('getSettings')
             ->willReturn([
-                'rgs_template'     => 'mkb',
+                'rgs_template'      => 'mkb',
                 'administration_id' => 'adm-1',
-                'register'         => '',
-                'openregisters'    => true,
-                'isAdmin'          => false,
+                'register'          => '',
+                'openregisters'     => true,
+                'isAdmin'           => false,
             ]);
 
         $this->settingsService->expects($this->once())
@@ -167,7 +166,6 @@ class InitializeSettingsTest extends TestCase
 
         $this->settingsService->expects($this->once())
             ->method('loadConfiguration')
-            ->with(force: true)
             ->willReturn(['success' => false, 'message' => 'Config import error']);
 
         $this->settingsService->expects($this->atLeastOnce())

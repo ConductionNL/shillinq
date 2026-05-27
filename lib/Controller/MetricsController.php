@@ -24,12 +24,13 @@ namespace OCA\Shillinq\Controller;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
-use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 
 /**
  * Controller for the Prometheus-compatible metrics endpoint.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-4
  */
 class MetricsController extends Controller
 {
@@ -53,7 +54,6 @@ class MetricsController extends Controller
      * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-4
      */
     #[AuthorizedAdminSetting(Application::APP_ID)]
-    #[NoCSRFRequired]
     public function index(): JSONResponse
     {
         return new JSONResponse(
