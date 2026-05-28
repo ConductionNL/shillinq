@@ -142,7 +142,7 @@ class SettingsServiceTest extends TestCase
             ->with('openregister')
             ->willReturn(true);
 
-        $result = $this->service->seedRgsTemplate(templateVariant: 'nonexistent');
+        $result = $this->service->seedRgsTemplate(templateVariant: 'nonexistent', administrationId: 'test-admin-id');
 
         self::assertFalse($result['success']);
         self::assertStringContainsString('nonexistent', $result['message']);

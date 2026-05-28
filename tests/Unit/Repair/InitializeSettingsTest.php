@@ -128,7 +128,7 @@ class InitializeSettingsTest extends TestCase
             ->willReturn(true);
 
         $this->settingsService->expects($this->once())
-            ->method('loadConfiguration')
+            ->method('loadConfigurationForced')
             ->willReturn(['success' => true, 'version' => '0.2.0']);
 
         $this->settingsService->expects($this->atLeastOnce())
@@ -167,7 +167,7 @@ class InitializeSettingsTest extends TestCase
             ->willReturn(true);
 
         $this->settingsService->expects($this->once())
-            ->method('loadConfiguration')
+            ->method('loadConfigurationForced')
             ->willReturn(['success' => true, 'version' => '0.2.0']);
 
         $this->settingsService->expects($this->atLeastOnce())
@@ -206,7 +206,7 @@ class InitializeSettingsTest extends TestCase
             ->willReturn(true);
 
         $this->settingsService->expects($this->once())
-            ->method('loadConfiguration')
+            ->method('loadConfigurationForced')
             ->willReturn(['success' => false, 'message' => 'Config import error']);
 
         // H2: seedRgsTemplate must NOT be called when schema import failed.
