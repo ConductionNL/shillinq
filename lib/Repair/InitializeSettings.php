@@ -100,7 +100,9 @@ class InitializeSettings implements IRepairStep
                 $version = ($result['version'] ?? 'unknown');
                 if ($skipped === true) {
                     $output->info('Shillinq configuration already up-to-date (version-unchanged skip)');
-                } else {
+                }
+
+                if ($skipped !== true) {
                     $output->info(
                         'Shillinq configuration imported successfully (version: '.$version.')'
                     );
