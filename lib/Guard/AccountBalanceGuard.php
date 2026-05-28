@@ -27,6 +27,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Guard;
 
+use OCA\Shillinq\AppInfo\Application;
+use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -47,13 +49,35 @@ class AccountBalanceGuard
      * @param ContainerInterface $container DI container — OR's ObjectService is fetched
      *                                      lazily so this class stays usable in T1
      *                                      before T2's GLLine register exists.
+     * @param IAppConfig         $appConfig App config for dynamic register slug resolution (C3).
      * @param LoggerInterface    $logger    Nextcloud logger for fail-closed diagnostics.
      */
     public function __construct(
         private readonly ContainerInterface $container,
+        private readonly IAppConfig $appConfig,
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
+
+    /**
+     * Return the configured register slug, falling back to 'shillinq' if unset.
+     *
+     * C3: single source of truth — mirrors DeepLinkRegistrationListener and
+     * SettingsService::getRegisterSlug() so all writes and reads use the same
+     * register even when the admin reconfigures the slug.
+     *
+     * @return string
+     */
+    private function getRegisterSlug(): string
+    {
+        $slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+        if ($slug === '') {
+            return 'shillinq';
+        }
+
+        return $slug;
+
+    }//end getRegisterSlug()
 
     /**
      * Precondition for `archive*` transitions: the account's running balance
@@ -94,7 +118,7 @@ class AccountBalanceGuard
             $lines    = [];
             do {
                 $batch = $objectService
-                    ->setRegister('shillinq')
+                    ->setRegister($this->getRegisterSlug())
                     ->setSchema('GLLine')
                     ->findAll(
                         [
@@ -102,8 +126,8 @@ class AccountBalanceGuard
                                 'accountNumber'    => ($account['accountNumber'] ?? ''),
                                 'administrationId' => ($account['administrationId'] ?? ''),
                             ],
-                            'limit'  => $pageSize,
-                            'offset' => ($page - 1) * $pageSize,
+                            'limit'   => $pageSize,
+                            'offset'  => ($page - 1) * $pageSize,
                         ]
                     );
                 $lines = array_merge($lines, $batch);
@@ -155,8 +179,8 @@ class AccountBalanceGuard
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             // No LIMIT: we need ALL closing accounts in the administration so we
             // can correctly exclude the current record and count the remainder (L2).
-            $existing      = $objectService
-                ->setRegister('shillinq')
+            $existing = $objectService
+                ->setRegister($this->getRegisterSlug())
                 ->setSchema('Account')
                 ->findAll(
                         [
@@ -203,17 +227,26 @@ class AccountBalanceGuard
     }//end requireSingleClosingAccount()
 
     /**
-     * Probe whether the GLLine schema is declared in the shillinq register
-     * (i.e. T2 has shipped). Uses OR's real API: attempt to find the schema
-     * via setRegister + setSchema; absence is treated as T1 state.
+     * Probe whether the GLLine schema is declared in the configured register
+     * (i.e. T2 has shipped). Uses OR's real API: attempt to fetch at most one
+     * GLLine record; a "schema not found" exception means T1 state.
      *
-     * @return bool True when the GLLine schema exists in OR's `shillinq` register.
+     * C5: calling setRegister/setSchema alone does NOT validate schema existence —
+     * those setters merely stash the slug strings. We must execute an actual query
+     * so that a missing GLLine schema triggers the schema-not-found exception that
+     * proves T1 state. An empty result (schema exists but has no records) is still
+     * T2 — the schema is present, so we return true.
+     *
+     * @return bool True when the GLLine schema exists in OR's configured register.
      */
     private function isGLLineRegisterAvailable(): bool
     {
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $objectService->setRegister('shillinq')->setSchema('GLLine');
+            $objectService
+                ->setRegister($this->getRegisterSlug())
+                ->setSchema('GLLine')
+                ->findAll(['limit' => 1]);
             return true;
         } catch (\Throwable) {
             return false;

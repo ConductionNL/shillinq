@@ -132,6 +132,27 @@ class SettingsService
     }//end updateSettings()
 
     /**
+     * Return the configured register slug, falling back to 'shillinq' if unset.
+     *
+     * Single source of truth for the register slug — mirrors the dynamic slug
+     * resolution already used by DeepLinkRegistrationListener (L3/C3).
+     *
+     * @return string
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md
+     */
+    public function getRegisterSlug(): string
+    {
+        $slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+        if ($slug === '') {
+            return 'shillinq';
+        }
+
+        return $slug;
+
+    }//end getRegisterSlug()
+
+    /**
      * Seed the chart of accounts from an RGS template file, idempotently.
      *
      * Reads the selected template from lib/Settings/seeds/ and imports Account
@@ -140,17 +161,28 @@ class SettingsService
      *
      * @param string $templateVariant  Template to seed: 'mkb', 'zzp', or 'bbv'.
      * @param string $administrationId The administrationId to stamp on seeded records.
+     *                                 Must be a non-empty tenant-specific identifier;
+     *                                 callers must always supply an explicit value (C2).
      *
      * @return array<string,mixed> Result with success flag, seeded count, skipped count.
      *
      * @spec openspec/changes/spec/tasks.md#task-11
      */
-    public function seedRgsTemplate(string $templateVariant='mkb', string $administrationId='default'): array
+    public function seedRgsTemplate(string $templateVariant, string $administrationId): array
     {
         if ($this->isOpenRegisterAvailable() === false) {
             return [
                 'success' => false,
                 'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        // C2: reject empty administrationId — writing under '' or a hardcoded
+        // "default" would contaminate real tenant data on later reconfiguration.
+        if ($administrationId === '') {
+            return [
+                'success' => false,
+                'message' => 'administrationId must not be empty.',
             ];
         }
 
@@ -266,8 +298,9 @@ class SettingsService
         foreach ($accounts as $account) {
             $account['administrationId'] = $administrationId;
 
-            $existing = $objectService
-                ->setRegister('shillinq')
+            $registerSlug = $this->getRegisterSlug();
+            $existing     = $objectService
+                ->setRegister($registerSlug)
                 ->setSchema('Account')
                 ->findAll(
                         [
@@ -286,7 +319,7 @@ class SettingsService
 
             $objectService->saveObject(
                 object: $account,
-                register: 'shillinq',
+                register: $registerSlug,
                 schema: 'Account',
             );
             $seeded++;
@@ -417,9 +450,16 @@ class SettingsService
                 ];
             }//end if
 
+            // C8: OR's importFromApp returns an all-empty result on the version-unchanged
+            // idempotent-skip path (force=false, same version as previously imported).
+            // This is not a failure — it means the register is already up-to-date.
+            // Classifying it as failure caused every routine `occ upgrade` to log
+            // "schema import failed, skipping account seed" even when nothing was wrong.
+            $this->logger->info('Shillinq: register configuration already up-to-date (version-unchanged skip)');
             return [
-                'success' => false,
-                'message' => 'Import returned an empty result.',
+                'success' => true,
+                'skipped' => true,
+                'message' => 'Configuration already up-to-date (version-unchanged skip).',
             ];
         } catch (\Throwable $e) {
             $this->logger->error(

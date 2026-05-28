@@ -123,7 +123,7 @@ class SettingsServiceTest extends TestCase
             ->with('openregister')
             ->willReturn(false);
 
-        $result = $this->service->seedRgsTemplate();
+        $result = $this->service->seedRgsTemplate(templateVariant: 'mkb', administrationId: 'adm-test');
 
         self::assertFalse($result['success']);
         self::assertStringContainsString('OpenRegister', $result['message']);

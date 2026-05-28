@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Guard;
 
 use OCA\Shillinq\Guard\AccountBalanceGuard;
+use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -46,6 +47,13 @@ class AccountBalanceGuardTest extends TestCase
     private ContainerInterface&MockObject $container;
 
     /**
+     * Mock IAppConfig.
+     *
+     * @var IAppConfig&MockObject
+     */
+    private IAppConfig&MockObject $appConfig;
+
+    /**
      * Mock LoggerInterface.
      *
      * @var LoggerInterface&MockObject
@@ -69,9 +77,15 @@ class AccountBalanceGuardTest extends TestCase
         parent::setUp();
 
         $this->container = $this->createMock(ContainerInterface::class);
+        $this->appConfig = $this->createMock(IAppConfig::class);
         $this->logger    = $this->createMock(LoggerInterface::class);
-        $this->guard     = new AccountBalanceGuard(
+
+        // Default: return the canonical register slug.
+        $this->appConfig->method('getValueString')->willReturn('shillinq');
+
+        $this->guard = new AccountBalanceGuard(
             container: $this->container,
+            appConfig: $this->appConfig,
             logger: $this->logger,
         );
 

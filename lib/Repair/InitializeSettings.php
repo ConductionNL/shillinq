@@ -90,13 +90,21 @@ class InitializeSettings implements IRepairStep
         }
 
         try {
-            $result = $this->settingsService->loadConfiguration();
+            // C8: use loadConfigurationForced() so OR's per-register/per-schema
+            // version_compare provides the real idempotency — no silent no-ops on
+            // routine upgrades when the shillinq_register.json version hasn't changed.
+            $result = $this->settingsService->loadConfigurationForced();
 
             if ($result['success'] === true) {
+                $skipped = (($result['skipped'] ?? false) === true);
                 $version = ($result['version'] ?? 'unknown');
-                $output->info(
-                    'Shillinq configuration imported successfully (version: '.$version.')'
-                );
+                if ($skipped === true) {
+                    $output->info('Shillinq configuration already up-to-date (version-unchanged skip)');
+                } else {
+                    $output->info(
+                        'Shillinq configuration imported successfully (version: '.$version.')'
+                    );
+                }
             }
 
             if ($result['success'] !== true) {

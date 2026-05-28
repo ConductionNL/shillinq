@@ -85,7 +85,7 @@ class DeepLinkRegistrationListener implements IEventListener
             appId: 'shillinq',
             registerSlug: $registerSlug,
             schemaSlug: 'account',
-            urlTemplate: '/apps/shillinq/#/accounts/{uuid}'
+            urlTemplate: '/apps/shillinq/chart-of-accounts/{uuid}'
         );
 
     }//end handle()
