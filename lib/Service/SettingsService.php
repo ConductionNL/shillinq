@@ -362,6 +362,51 @@ class SettingsService
     }//end loadConfigurationForced()
 
     /**
+     * Load and parse the shillinq_register.json configuration file.
+     *
+     * Returns the parsed data array on success, or an error result array on
+     * failure (same shape as the public load methods so callers can return it).
+     *
+     * @return array<string,mixed> Either ['data' => array, 'version' => string]
+     *                             or ['success' => false, 'message' => string]
+     */
+    private function loadRegisterConfigData(): array
+    {
+        $configPath = __DIR__.'/../Settings/shillinq_register.json';
+        if (file_exists($configPath) === false) {
+            $this->logger->error('Shillinq: shillinq_register.json not found at '.$configPath);
+            return [
+                'success' => false,
+                'message' => 'Configuration file shillinq_register.json not found.',
+            ];
+        }
+
+        $configContent = file_get_contents($configPath);
+        if ($configContent === false) {
+            $this->logger->error('Shillinq: failed to read shillinq_register.json');
+            return [
+                'success' => false,
+                'message' => 'Failed to read configuration file.',
+            ];
+        }
+
+        $configData = json_decode($configContent, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $this->logger->error('Shillinq: failed to parse shillinq_register.json: '.json_last_error_msg());
+            return [
+                'success' => false,
+                'message' => 'Failed to parse configuration file: '.json_last_error_msg(),
+            ];
+        }
+
+        return [
+            'data'    => $configData,
+            'version' => ($configData['info']['version'] ?? '0.0.0'),
+        ];
+
+    }//end loadRegisterConfigData()
+
+    /**
      * Internal implementation for loadConfiguration / loadConfigurationForced.
      *
      * @param bool $force Force re-import even if already configured.
@@ -379,34 +424,13 @@ class SettingsService
         }
 
         try {
-            $configPath = __DIR__.'/../Settings/shillinq_register.json';
-            if (file_exists($configPath) === false) {
-                $this->logger->error('Shillinq: shillinq_register.json not found at '.$configPath);
-                return [
-                    'success' => false,
-                    'message' => 'Configuration file shillinq_register.json not found.',
-                ];
+            $configLoad = $this->loadRegisterConfigData();
+            if (isset($configLoad['success']) === true && $configLoad['success'] === false) {
+                return $configLoad;
             }
 
-            $configContent = file_get_contents($configPath);
-            if ($configContent === false) {
-                $this->logger->error('Shillinq: failed to read shillinq_register.json');
-                return [
-                    'success' => false,
-                    'message' => 'Failed to read configuration file.',
-                ];
-            }
-
-            $configData = json_decode($configContent, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                $this->logger->error('Shillinq: failed to parse shillinq_register.json: '.json_last_error_msg());
-                return [
-                    'success' => false,
-                    'message' => 'Failed to parse configuration file: '.json_last_error_msg(),
-                ];
-            }
-
-            $configVersion = ($configData['info']['version'] ?? '0.0.0');
+            $configData    = $configLoad['data'];
+            $configVersion = $configLoad['version'];
 
             $configurationService = $this->container->get('OCA\OpenRegister\Service\ConfigurationService');
             $result = $configurationService->importFromApp(

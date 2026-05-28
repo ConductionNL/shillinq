@@ -113,11 +113,12 @@ class AccountBalanceGuard
 
             // Page through all GLLine records in batches to avoid hitting the
             // default findAll() limit when an account has many postings (L1).
-            $pageSize = 500;
-            $page     = 1;
-            $lines    = [];
+            $pageSize  = 500;
+            $page      = 1;
+            $lines     = [];
+            $batchSize = 0;
             do {
-                $batch = $objectService
+                $batch     = $objectService
                     ->setRegister($this->getRegisterSlug())
                     ->setSchema('GLLine')
                     ->findAll(
@@ -130,9 +131,10 @@ class AccountBalanceGuard
                             'offset'  => ($page - 1) * $pageSize,
                         ]
                     );
-                $lines = array_merge($lines, $batch);
+                $lines     = array_merge($lines, $batch);
+                $batchSize = count($batch);
                 $page++;
-            } while (count($batch) === $pageSize);
+            } while ($batchSize === $pageSize);
 
             // Use integer cents to avoid IEEE-754 float equality issues (C1).
             // 0.1 + 0.2 - 0.3 in floats ≠ 0.0, but (10 + 20 - 30) === 0.
