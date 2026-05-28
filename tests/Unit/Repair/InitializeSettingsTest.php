@@ -154,11 +154,52 @@ class InitializeSettingsTest extends TestCase
     }//end testRunCallsLoadConfigurationAndSeedTemplate()
 
     /**
-     * Test that run() reports a warning when loadConfiguration fails.
+     * Test that run() skips seed (not called at all) when administrationId is unset.
+     *
+     * C2: seeding under a hardcoded "default" id contaminates real tenants.
      *
      * @return void
      */
-    public function testRunWarnsWhenLoadConfigurationFails(): void
+    public function testRunSkipsSeedWhenAdministrationIdUnset(): void
+    {
+        $this->settingsService->expects($this->once())
+            ->method('isOpenRegisterAvailable')
+            ->willReturn(true);
+
+        $this->settingsService->expects($this->once())
+            ->method('loadConfiguration')
+            ->willReturn(['success' => true, 'version' => '0.2.0']);
+
+        $this->settingsService->expects($this->atLeastOnce())
+            ->method('getSettings')
+            ->willReturn([
+                'rgs_template'      => 'mkb',
+                'administration_id' => '',
+                'register'          => '',
+                'openregisters'     => true,
+                'isAdmin'           => false,
+            ]);
+
+        // C2: seedRgsTemplate must NOT be called when administrationId is empty.
+        $this->settingsService->expects($this->never())
+            ->method('seedRgsTemplate');
+
+        $this->output->expects($this->atLeastOnce())
+            ->method('warning')
+            ->with($this->stringContains('administration_id'));
+
+        $this->repairStep->run(output: $this->output);
+
+    }//end testRunSkipsSeedWhenAdministrationIdUnset()
+
+    /**
+     * Test that run() reports a warning and skips seeding when loadConfiguration fails.
+     *
+     * H2: the seed must not run against an uninitialised register.
+     *
+     * @return void
+     */
+    public function testRunSkipsSeedWhenLoadConfigurationFails(): void
     {
         $this->settingsService->expects($this->once())
             ->method('isOpenRegisterAvailable')
@@ -168,26 +209,15 @@ class InitializeSettingsTest extends TestCase
             ->method('loadConfiguration')
             ->willReturn(['success' => false, 'message' => 'Config import error']);
 
-        $this->settingsService->expects($this->atLeastOnce())
-            ->method('getSettings')
-            ->willReturn([
-                'rgs_template'     => 'mkb',
-                'administration_id' => 'default',
-                'register'         => '',
-                'openregisters'    => true,
-                'isAdmin'          => false,
-            ]);
-
-        $this->settingsService->expects($this->once())
-            ->method('seedRgsTemplate')
-            ->willReturn(['success' => true, 'seeded' => 40, 'skipped' => 0]);
+        // H2: seedRgsTemplate must NOT be called when schema import failed.
+        $this->settingsService->expects($this->never())
+            ->method('seedRgsTemplate');
 
         $this->output->expects($this->atLeastOnce())
-            ->method('warning')
-            ->with($this->stringContains('Config import error'));
+            ->method('warning');
 
         $this->repairStep->run(output: $this->output);
 
-    }//end testRunWarnsWhenLoadConfigurationFails()
+    }//end testRunSkipsSeedWhenLoadConfigurationFails()
 
 }//end class

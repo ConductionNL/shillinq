@@ -66,6 +66,8 @@ class InitializeSettings implements IRepairStep
      * Phase 2: seeds the chart of accounts from the RGS template selected
      * in app config key 'rgs_template' (default: 'mkb'). Idempotent —
      * existing accounts are skipped on re-run, preserving operator edits.
+     * Seeding is skipped entirely when administration_id is not configured
+     * (C2: prevents "default" contamination of real tenant data).
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -100,6 +102,10 @@ class InitializeSettings implements IRepairStep
             if ($result['success'] !== true) {
                 $message = ($result['message'] ?? 'unknown error');
                 $output->warning('Shillinq configuration import issue: '.$message);
+                // H2: skip account seed when schema import failed to avoid writing
+                // accounts into an uninitialized register.
+                $output->warning('Shillinq: schema import failed, skipping account seed');
+                return;
             }
 
             $this->seedChartOfAccounts(output: $output);
@@ -115,6 +121,9 @@ class InitializeSettings implements IRepairStep
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.
+     *
+     * Seeding is skipped when administration_id is not configured (C2) to prevent
+     * orphan accounts under a "default" id that contaminates real tenant data later.
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -132,15 +141,18 @@ class InitializeSettings implements IRepairStep
         $administrationId = ($settings['administration_id'] ?? '');
 
         if ($administrationId === '') {
-            $administrationId = 'default';
+            // C2: seeding under a hardcoded "default" administrationId contaminates
+            // real tenants when the admin later configures a proper id. Skip the seed
+            // entirely and surface a clear admin notice instead.
             $output->warning(
-                'Shillinq: administration_id not configured — seeding chart of accounts under '
-                .'administrationId="default". Set administration_id in Shillinq admin settings '
-                .'before going to production to avoid cross-tenant contamination.'
+                'Shillinq: administration_id not configured — skipping chart of accounts seed. '
+                .'Go to Shillinq admin settings, set administration_id, then click '
+                .'"Seed Chart of Accounts" to initialise.'
             );
             $this->logger->warning(
-                'Shillinq: administration_id not configured, using "default" for chart of accounts seed'
+                'Shillinq: administration_id not configured, skipping chart of accounts seed'
             );
+            return;
         }
 
         $output->info('Seeding chart of accounts (template: '.$template.')...');

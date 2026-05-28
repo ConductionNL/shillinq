@@ -86,26 +86,40 @@ class AccountBalanceGuard
 
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $lines         = $objectService
-                ->setRegister('shillinq')
-                ->setSchema('GLLine')
-                ->findAll(
+
+            // Page through all GLLine records in batches to avoid hitting the
+            // default findAll() limit when an account has many postings (L1).
+            $pageSize = 500;
+            $page     = 1;
+            $lines    = [];
+            do {
+                $batch = $objectService
+                    ->setRegister('shillinq')
+                    ->setSchema('GLLine')
+                    ->findAll(
                         [
                             'filters' => [
                                 'accountNumber'    => ($account['accountNumber'] ?? ''),
                                 'administrationId' => ($account['administrationId'] ?? ''),
                             ],
+                            'limit'  => $pageSize,
+                            'offset' => ($page - 1) * $pageSize,
                         ]
-                        );
+                    );
+                $lines = array_merge($lines, $batch);
+                $page++;
+            } while (count($batch) === $pageSize);
 
-            $balance = array_sum(
+            // Use integer cents to avoid IEEE-754 float equality issues (C1).
+            // 0.1 + 0.2 - 0.3 in floats ≠ 0.0, but (10 + 20 - 30) === 0.
+            $balanceCents = array_sum(
                 array_map(
-                    static fn($line) => (float) ($line['debit'] ?? 0) - (float) ($line['credit'] ?? 0),
+                    static fn($line) => (int) round(((float) ($line['debit'] ?? 0) - (float) ($line['credit'] ?? 0)) * 100),
                     $lines
                 )
             );
 
-            return $balance === 0.0;
+            return $balanceCents === 0;
         } catch (\Throwable $e) {
             $this->logger->error(
                 'AccountBalanceGuard: balance computation failed — denying archive (fail-closed)',
@@ -139,6 +153,8 @@ class AccountBalanceGuard
 
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            // No LIMIT: we need ALL closing accounts in the administration so we
+            // can correctly exclude the current record and count the remainder (L2).
             $existing      = $objectService
                 ->setRegister('shillinq')
                 ->setSchema('Account')
@@ -148,7 +164,6 @@ class AccountBalanceGuard
                                 'administrationId' => ($account['administrationId'] ?? ''),
                                 'isClosingAccount' => true,
                             ],
-                            'limit'   => 2,
                         ]
                         );
 

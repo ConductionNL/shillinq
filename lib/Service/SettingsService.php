@@ -245,6 +245,13 @@ class SettingsService
     /**
      * Import a list of account records into OpenRegister, skipping existing ones.
      *
+     * Deduplication key is (accountNumber, administrationId). This means that if
+     * an admin changes the administrationId app config after an initial seed, the
+     * previously seeded accounts (under the old id) will be orphaned — they remain
+     * in OpenRegister but are no longer matched on re-seed. To clean up, an admin
+     * must manually delete accounts with the stale administrationId via the
+     * OpenRegister UI before re-seeding under the new id (M3).
+     *
      * @param object       $objectService    OpenRegister ObjectService.
      * @param array<mixed> $accounts         Account records to import.
      * @param string       $administrationId The administrationId to stamp.
