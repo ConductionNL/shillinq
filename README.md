@@ -9,9 +9,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/ConductionNL/shillinq/releases"><img src="https://img.shields.io/github/v/release/ConductionNL/shillinq" alt="Latest release"></a>
-  <a href="https://github.com/ConductionNL/shillinq/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-EUPL--1.2-blue" alt="License"></a>
-  <a href="https://github.com/ConductionNL/shillinq/actions"><img src="https://img.shields.io/github/actions/workflow/status/ConductionNL/shillinq/code-quality.yml?label=quality" alt="Code quality"></a>
+  <a href="https://codeberg.org/Conduction/shillinq/releases"><img src="https://img.shields.io/gitea/v/release/Conduction/shillinq?gitea_url=https%3A%2F%2Fcodeberg.org" alt="Latest release"></a>
+  <a href="https://codeberg.org/Conduction/shillinq/src/branch/main/LICENSE"><img src="https://img.shields.io/badge/license-EUPL--1.2-blue" alt="License"></a>
+  <a href="https://ci.codeberg.org/repos/Conduction/shillinq"><img src="https://ci.codeberg.org/api/badges/Conduction/shillinq/status.svg" alt="Code quality"></a>
 </p>
 
 ---
@@ -84,7 +84,7 @@ This data-driven foundation ensures Shillinq addresses real market needs and use
 
 ```bash
 # Clone the repository
-git clone https://github.com/ConductionNL/shillinq.git
+git clone https://codeberg.org/Conduction/shillinq.git
 cd shillinq
 
 # Install dependencies
