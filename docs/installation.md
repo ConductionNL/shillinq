@@ -61,7 +61,7 @@ For development environments or air-gapped deployments, clone the repository dir
 
 ```bash
 cd nextcloud/apps
-git clone https://github.com/ConductionNL/shillinq.git
+git clone https://codeberg.org/Conduction/shillinq.git
 cd shillinq
 composer install --no-dev
 npm install
@@ -109,7 +109,7 @@ See the [approval-chains guide](user-guide/admin/02-approval-chains.md) for the 
 - Send your first invoice: [Send your first invoice](user-guide/user/02-send-invoice.md).
 - Record a supplier bill: [Record a supplier bill](user-guide/user/03-record-bill.md).
 - Browse the [Features](Features/index.md) overview to see what else Shillinq does.
-- Open an issue at [github.com/ConductionNL/shillinq/issues](https://github.com/ConductionNL/shillinq/issues) if you run into trouble.
+- Open an issue at [codeberg.org/Conduction/shillinq/issues](https://codeberg.org/Conduction/shillinq/issues) if you run into trouble.
 
 ## Troubleshooting
 

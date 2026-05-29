@@ -3,7 +3,7 @@
   "info": {
     "title": "Shillinq API",
     "version": "0.0.0",
-    "description": "Placeholder OpenAPI specification. The real spec lands via https://github.com/ConductionNL/shillinq/issues/80 and replaces this file. The /api Redoc page is wired and ready to render once the real spec ships."
+    "description": "Placeholder OpenAPI specification. The real spec lands via https://codeberg.org/Conduction/shillinq/issues/80 and replaces this file. The /api Redoc page is wired and ready to render once the real spec ships."
   },
   "servers": [
     {

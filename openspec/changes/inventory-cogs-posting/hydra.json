@@ -2,7 +2,7 @@
   "spec_slug": "inventory-cogs-posting",
   "title": "Inventory Auto-post COGS + Inventory-asset GL Entries",
   "app": "shillinq",
-  "repo": "https://github.com/ConductionNL/shillinq",
+  "repo": "https://codeberg.org/Conduction/shillinq",
   "depends_on": [
     "inventory-valuation-fifo-avg"
   ],

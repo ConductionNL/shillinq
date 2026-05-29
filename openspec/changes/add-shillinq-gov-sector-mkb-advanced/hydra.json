@@ -2,7 +2,7 @@
   "spec_slug": "add-shillinq-gov-sector-mkb-advanced",
   "title": "Proposal: add-shillinq-gov-sector-mkb-advanced",
   "app": "shillinq",
-  "repo": "https://github.com/ConductionNL/shillinq",
+  "repo": "https://codeberg.org/Conduction/shillinq",
   "depends_on": [],
   "issue": null
 }

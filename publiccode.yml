@@ -1,7 +1,7 @@
 publiccodeYmlVersion: "0.4"
 
 name: Shillinq
-url: "https://github.com/ConductionNL/shillinq"
+url: "https://codeberg.org/Conduction/shillinq"
 softwareVersion: "0.1.2"
 releaseDate: "2026-05-26"
 developmentStatus: beta

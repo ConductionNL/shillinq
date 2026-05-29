@@ -12,7 +12,7 @@ The spec is deliberately **proactive, not just visualised**: at every predicted 
 
 This change conforms to the shared [`nextcloud-app`](../../specs/nextcloud-app/spec.md) spec for app structure.
 
-**Depends on:** [`bookkeeping-accounts-receivable-core`](../add-shillinq-accounts-receivable-core/proposal.md) (AR invoices + open balance), [`bookkeeping-accounts-payable-core`](../add-shillinq-accounts-payable-core/proposal.md) (AP invoices + scheduled payments), [`openconnector`](https://github.com/OpenCatalogi/openconnector) for PSD2 bankfeed integration, [`pipelinq`](https://github.com/ConductionNL/pipelinq) for pipeline-deal probability weighting.
+**Depends on:** [`bookkeeping-accounts-receivable-core`](../add-shillinq-accounts-receivable-core/proposal.md) (AR invoices + open balance), [`bookkeeping-accounts-payable-core`](../add-shillinq-accounts-payable-core/proposal.md) (AP invoices + scheduled payments), [`openconnector`](https://github.com/OpenCatalogi/openconnector) for PSD2 bankfeed integration, [`pipelinq`](https://codeberg.org/Conduction/pipelinq) for pipeline-deal probability weighting.
 
 ## Motivation
 

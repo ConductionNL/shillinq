@@ -2,7 +2,7 @@
   "spec_slug": "inventory-stock-movement-ledger",
   "title": "Inventory Immutable Stock-move Ledger",
   "app": "shillinq",
-  "repo": "https://github.com/ConductionNL/shillinq",
+  "repo": "https://codeberg.org/Conduction/shillinq",
   "depends_on": [
     "inventory-stock-tracking"
   ],

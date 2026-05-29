@@ -1,5 +1,5 @@
 # Tracked phpstan debt entries surfaced when shillinq synced to the fleet canonical.
-# All entries are tracked in https://github.com/ConductionNL/shillinq/issues/299
+# All entries are tracked in https://codeberg.org/Conduction/shillinq/issues/299
 # (Phase 2 fleet rollout lint-debt cleanup). Regenerate with:
 #     ./vendor/bin/phpstan analyse --generate-baseline
 # Entries removed as the underlying code is refactored.

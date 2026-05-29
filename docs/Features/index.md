@@ -7,7 +7,7 @@ description: Market research and feature roadmap for Shillinq, sourced from comp
 # Shillinq feature analysis
 
 :::note
-This page is the raw research feed from the market-intelligence pipeline. Curated feature pages with benefits, sub-features, and pairs-well-with cross-links land via [issue #78](https://github.com/ConductionNL/shillinq/issues/78).
+This page is the raw research feed from the market-intelligence pipeline. Curated feature pages with benefits, sub-features, and pairs-well-with cross-links land via [issue #78](https://codeberg.org/Conduction/shillinq/issues/78).
 :::
 
 ## Competitors (20)
