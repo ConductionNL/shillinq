@@ -93,9 +93,9 @@ reconciliation reports; year-end close consumes period close).
   attached source statements (the generated CAMT.053 from bank
   connectors, attached source documents on fixed-asset acquisition)
   by foreign-key URI per ADR-022.
-- [ ] Project: mydash — no source changes; mydash consumes
+- [ ] Project: launchpad — no source changes; launchpad consumes
   reconciliation reports via runtime GraphQL only (per
-  `feedback_mydash-no-or-dependency.md`); no `shillinq` dep is added.
+  `feedback_launchpad-no-or-dependency.md`); no `shillinq` dep is added.
 
 ## Scope
 
@@ -207,8 +207,8 @@ dependency order:
    core, T2 AR core) — declares saved-query objects as
    `x-openregister-aggregations`; sub-ledger ↔ GL match, intercompany
    match, variance analysis vs `Budget` register, controller
-   exception report. Consumed by mydash via runtime GraphQL (no
-   install-time dep per `feedback_mydash-no-or-dependency.md`).
+   exception report. Consumed by launchpad via runtime GraphQL (no
+   install-time dep per `feedback_launchpad-no-or-dependency.md`).
 
 All seven specs follow the conduction-schema format (RFC 2119,
 `### REQ-{Abbrev}-NNN: <name>`, `#### Scenario:` with exactly 4 hashtags,
@@ -267,8 +267,8 @@ that operators configure, and the already-bumped
 - **docudesk** — fixed-asset acquisition documents, XBRL submission
   receipts, and CAMT.053-from-aggregator statements are referenced
   by docudesk attachment URI from the relevant register records.
-- **mydash** — reads reconciliation reports via runtime GraphQL on
-  OR (per `feedback_mydash-no-or-dependency.md`). mydash MUST NOT
+- **launchpad** — reads reconciliation reports via runtime GraphQL on
+  OR (per `feedback_launchpad-no-or-dependency.md`). launchpad MUST NOT
   list shillinq as a dependency.
 
 ## Risks
@@ -631,8 +631,8 @@ controller exceptions) is declared as an
 `x-openregister-aggregations` query on a `SavedQuery` record. The
 queries are consumed by:
 
-- mydash dashboard widgets via runtime GraphQL (per
-  `feedback_mydash-no-or-dependency.md`)
+- launchpad dashboard widgets via runtime GraphQL (per
+  `feedback_launchpad-no-or-dependency.md`)
 - the shillinq manifest detail page that surfaces the report
 
 No PHP `ReportingService.generateReconciliation()` exists; the same
@@ -640,8 +640,8 @@ aggregation serves both consumers. The severity classification on
 exception rows (`critical` / `warning` / `info`) is encoded as a
 calculated field, not as PHP logic.
 
-This is the canonical mydash-no-shillinq-dep shape: shillinq publishes
-saved queries against OR registers; mydash discovers them through
+This is the canonical launchpad-no-shillinq-dep shape: shillinq publishes
+saved queries against OR registers; launchpad discovers them through
 the GraphQL schema; neither app imports the other.
 
 ## Reuse Analysis
@@ -661,7 +661,7 @@ the GraphQL schema; neither app imports the other.
 | Cost-center / project / dimension storage | New registers (`CostCenter`, `KostenDrager`, `Project`) | Declared the same way as T1 `Account`; same RBAC + audit + lifecycle |
 | Custom dimensions | OR register abstraction (ADR-022) | Operator declares a custom dimension register; `GLLine.dimensions` free-form map validates against it via relations engine |
 | Cost-allocation rule storage | New `AllocationRule` register | Schema-declared per ADR-031; cadence routes execution to lifecycle action or scheduled workflow |
-| Segment P&L aggregation | `x-openregister-aggregations` on `GLLine` (ADR-031) | Keyed by dimension; consumed by mydash + manifest pages |
+| Segment P&L aggregation | `x-openregister-aggregations` on `GLLine` (ADR-031) | Keyed by dimension; consumed by launchpad + manifest pages |
 | Fiscal-year storage | New `FiscalYear` register | Declared per ADR-024; lifecycle drives the close |
 | Retained-earnings transfer journal | T1 `JournalEntry` (manual sub-type) | Emitted by `FiscalYear.open → closing` action; consumes T1 |
 | Opening-balance journal in next year | T1 `JournalEntry` (manual sub-type) | Emitted by `FiscalYear.closing → closed` action; consumes T1 |
@@ -672,14 +672,14 @@ the GraphQL schema; neither app imports the other.
 | Bank transaction CAMT.053 generation | OR `ScheduledWorkflow` (workflow normalises aggregator JSON) | Workflow attaches the CAMT.053 via docudesk |
 | Bank connection lifecycle | `x-openregister-lifecycle` on `BankConnection` | Declarative; consent expiry warning is time-based auto-transition |
 | New-transaction notifications | `x-openregister-notifications` on `BankStatement` | Declarative recipient resolution + channel fan-out per ADR-031 |
-| Sub-ledger ↔ GL reconciliation | OR `SavedQuery` / `x-openregister-aggregations` | Saved-query records; consumed by mydash + manifest pages |
+| Sub-ledger ↔ GL reconciliation | OR `SavedQuery` / `x-openregister-aggregations` | Saved-query records; consumed by launchpad + manifest pages |
 | Intercompany match | OR `SavedQuery` joining administrations | Shape-neutral spec; engine-dependency resolution in opsx-ff |
 | Variance analysis vs budget | OR `SavedQuery` joining `GLLine` aggregations to `Budget` | Threshold check encoded as calculated field |
 | Controller exception report | OR `SavedQuery` consolidating REQ-RR-002/003/004 outputs | Severity classification as calculated field |
 | Audit trail | OR audit-trail-immutable | Consumed automatically (no schema config) |
 | RBAC | OR authorization | Per-schema role definitions; `admin` referenced for year-end reopen, `controller` for reconciliation reports, `treasurer` for bank connections |
 | Manifest navigation | `src/manifest.json` + `CnAppRoot` (Tier-4 adopted on `feature/adopt-app-manifest`) | T4 adds 11+ menu entries + matching `type: index` / `type: detail` pages |
-| Mydash consumption | mydash runtime GraphQL on OR (per `feedback_mydash-no-or-dependency.md`) | shillinq publishes saved queries; mydash discovers via GraphQL schema; no install-time dep |
+| LaunchPad consumption | launchpad runtime GraphQL on OR (per `feedback_launchpad-no-or-dependency.md`) | shillinq publishes saved queries; launchpad discovers via GraphQL schema; no install-time dep |
 | Seed data import | `ConfigurationService::importFromApp()` (per shillinq config.yaml `design` rule) | Repair-step pattern from T1; extended for NL-taxonomie mappings + allocation-rule defaults |
 
 **Net new code in T4 implementation**: ~10 schema declarations + 11+
@@ -726,7 +726,7 @@ all seven capabilities in one read.
 | bank-connectors | New-transaction notifications | Declarative (`x-openregister-notifications`) | Abstraction fits |
 | reconciliation-reports | All reports | Declarative (`x-openregister-aggregations` / `SavedQuery`) | Aggregation queries |
 | reconciliation-reports | Severity classification | Declarative (calculated field) | Pure function of row data |
-| reconciliation-reports | mydash consumption | Runtime GraphQL on OR (per `feedback_mydash-no-or-dependency.md`) | mydash discovers via GraphQL schema; no install-time dep |
+| reconciliation-reports | launchpad consumption | Runtime GraphQL on OR (per `feedback_launchpad-no-or-dependency.md`) | launchpad discovers via GraphQL schema; no install-time dep |
 | All capabilities | Audit trail | Consumed from OR audit-trail-immutable (ADR-022) | Abstraction exists |
 | All capabilities | RBAC | Consumed from OR authorization (ADR-022) | Abstraction exists |
 
@@ -801,7 +801,7 @@ operation.
 | Cost-allocation driver scope creep | Four named drivers shipped (`fixed-percentage`, `fixed-amount`, `volume`, `headcount`); driver enum is extensible additively; custom drivers require OR issue |
 | Bank-connector credentials accidentally land in shillinq | REQ-BC-003 forbids credentials in shillinq schemas; REQ-BC-001 forbids HTTP clients; reviewer gates on grep for these patterns; openconnector owns credentials |
 | Multi-currency rounding (negative-zero, € 0.005 banker's rounding) | T1 already encodes signs in `side` enum (no negative numbers); T4 multi-currency follows same; rounding convention documented in implementing cycle's tests |
-| Reports become a parallel reporting engine via creep | REQ-RR-001 hard-forbids report-engine services; reports MUST be `SavedQuery` / `x-openregister-aggregations`; reviewer gate; mydash is the canonical visualisation surface |
+| Reports become a parallel reporting engine via creep | REQ-RR-001 hard-forbids report-engine services; reports MUST be `SavedQuery` / `x-openregister-aggregations`; reviewer gate; launchpad is the canonical visualisation surface |
 
 ## Migration Plan
 
@@ -1003,8 +1003,8 @@ the other six capabilities remain operational.
     `Depends on: bookkeeping-general-ledger (T1), bookkeeping-accounts-payable-core (T2), bookkeeping-accounts-receivable-core (T2)`.
   - GIVEN the spec WHEN scanned THEN it forbids a PHP report
     engine (REQ-RR-001), declares all reports as saved-query
-    objects consumed by mydash via runtime GraphQL (REQ-RR-007),
-    and cites `feedback_mydash-no-or-dependency.md` for the mydash
+    objects consumed by launchpad via runtime GraphQL (REQ-RR-007),
+    and cites `feedback_launchpad-no-or-dependency.md` for the launchpad
     no-install-time-dep rule.
 - [x] Implement
 - [ ] Test (`openspec validate` clean)
@@ -1172,7 +1172,7 @@ the other six capabilities remain operational.
   - GIVEN the four saved queries (sub-ledger ↔ GL, intercompany,
     variance, controller exception) WHEN inspected THEN they are
     declared as `x-openregister-aggregations` records consumed by
-    both the manifest pages and mydash via runtime GraphQL.
+    both the manifest pages and launchpad via runtime GraphQL.
   - GIVEN the implementing PR WHEN reviewed THEN no `lib/Service/`
     class names match `*Report*` / `*Reconciliation*` / `*Variance*`
     (REQ-RR-001 scenario).
@@ -1180,7 +1180,7 @@ the other six capabilities remain operational.
 - [ ] Test (PHPUnit: matched reconciliation reports zero variance;
   mismatched surfaces as exception; intercompany match for grouped
   administrations; within-threshold variance does not flag;
-  exception report sorted by severity; mydash GraphQL discovery)
+  exception report sorted by severity; launchpad GraphQL discovery)
 
 ## 3. Seed data — `lib/Settings/seeds/`
 
@@ -1324,8 +1324,8 @@ the other six capabilities remain operational.
     the saved-query metadata, plus a `Bookkeeping > Budgets`
     index/detail pair.
 - [ ] Implement
-- [ ] Test (same as 4.1; mydash widget end-to-end confirming
-  runtime-GraphQL consumption with no shillinq dep on mydash)
+- [ ] Test (same as 4.1; launchpad widget end-to-end confirming
+  runtime-GraphQL consumption with no shillinq dep on launchpad)
 
 ## 5. ADR-000 reconciliation notes
 
@@ -1394,7 +1394,7 @@ the other six capabilities remain operational.
       compliance across all seven specs (no app-local audit; no
       app-local RBAC; no app-local approval; no service-class state
       machines / aggregations / calculations / notifications; no
-      embedded HTTP clients for Digipoort or PSD2; mydash carries no
+      embedded HTTP clients for Digipoort or PSD2; launchpad carries no
       shillinq dep; manifest carries the navigation; no per-app
       TimedJobs for scheduled work)
 - [ ] No source code changes outside

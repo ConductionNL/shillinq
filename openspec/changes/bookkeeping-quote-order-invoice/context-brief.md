@@ -71,7 +71,7 @@ It also handles the Dutch market specifics: BTW correctly applied per line based
 - **openconnector**: integrations to CRM (Salesforce, HubSpot, Pipedrive) for quote sync, to Peppol Access Points (Storecove, Tradeshift) for e-invoicing, to e-signature providers, to VIES for VAT validation, to shipping providers (DHL, PostNL, UPS) for tracking.
 - **docudesk**: PDF quote and invoice generation with branded templates, customer-portal hosting of documents.
 - **opencatalogi** / **softwarecatalog**: product catalogue source for the QuoteLine/SalesOrderLine product references.
-- **mydash**: sales-funnel tile (quotes outstanding, conversion rate, average deal size, days-to-close, billed-vs-recognised gap).
+- **launchpad**: sales-funnel tile (quotes outstanding, conversion rate, average deal size, days-to-close, billed-vs-recognised gap).
 
 ## Target users
 

@@ -497,7 +497,7 @@ Voor expat-werknemers met goedgekeurde 30%-regeling (per 2024 afgebouwd, in 2026
 - `openconnector` — Digipoort SOAP voor LH-aangifte, UPA-API voor pensioen, SEPA-betaalbatches naar bank
 - `openregister` — file-storage loonstroken (bewaarplicht 7 jaar, sommige delen 5 jaar), jaaropgaven, contracten
 - `docudesk` — ondertekening loonstroken (optioneel digital signature), arbeidsovereenkomsten
-- `mydash` — HR-KPI's voor management: loonkosten-trends, turnover, leeftijdsopbouw, vakantieverlofbalans
+- `launchpad` — HR-KPI's voor management: loonkosten-trends, turnover, leeftijdsopbouw, vakantieverlofbalans
 - `nldesign` — voor publieke werkgevers thema
 
 ## Target users

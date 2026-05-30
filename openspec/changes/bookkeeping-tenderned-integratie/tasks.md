@@ -4,7 +4,7 @@
 
 ## 0. Deduplication & Dependency Check
 
-- [ ] Task 0.1: Confirm no TenderNed integration or `TenderNedAanbesteding` schema already exists — scan `lib/Settings/shillinq_register.json`, existing OpenSpec specs, and cross-app dependencies (openconnector, mydash); verify openconnector's TenderNed source is stable (no pending API breaking changes)
+- [ ] Task 0.1: Confirm no TenderNed integration or `TenderNedAanbesteding` schema already exists — scan `lib/Settings/shillinq_register.json`, existing OpenSpec specs, and cross-app dependencies (openconnector, launchpad); verify openconnector's TenderNed source is stable (no pending API breaking changes)
 - [ ] Task 0.2: Confirm openconnector's TenderNed source and polling job are production-ready — check openconnector's release notes, test polling with 5+ live TenderNed dossiers, verify CloudEvent schema matches this spec's expectations
 
 ## 1. Spec foundation (this change)
@@ -68,7 +68,7 @@
   - Log CloudEvent processing in audit-trail (action: tenderned-award-detected, success/fail, dossierReference)
 - [ ] Task 5.2: Declare CloudEvent emitters in `lib/Events/ObligationEventPublisher.php`:
   - On Verplichting activation (status: concept → active), emit `obligation.activated` event with payload: contractWaarde, period (FY), kostenplaats, tenderNedDossierUrl
-  - Per REQ-007 budget-widget SLA; mydash subscribes to this event
+  - Per REQ-007 budget-widget SLA; launchpad subscribes to this event
 - [ ] Task 5.3: Declare CloudEvent for milestone completion:
   - On OpdrachtUitvoering completion (status: in-progress → completed), emit `milestone.completed` event with payload: verplichtingId, mijlpaalId, factuurNummeringEligible (boolean)
   - Consumed by accounting module for invoice-creation triggers
@@ -204,7 +204,7 @@
   - Screenshot 2: Obligation detail with milestone plan (REQ-003)
   - Screenshot 3: Bewijsstuk upload dialog (REQ-004)
   - Screenshot 4: Vendor cashflow-forecast dashboard (REQ-008)
-  - Diagram: CloudEvent flow (openconnector → shillinq → mydash, REQ-007)
+  - Diagram: CloudEvent flow (openconnector → shillinq → launchpad, REQ-007)
   - Commit all screenshots to `docs/images/procurement/`
 
 ## 12. i18n (Company ADR-007)
@@ -240,7 +240,7 @@
 - [ ] Spec review by procurement domain expert (e.g., contractmanager persona, test-persona-janwillem)
 - [ ] Spec review by compliance/ENSIA representative (audit-trail, data isolation, status-sync)
 - [ ] Architecture review: ADR-022 + ADR-024 + ADR-031 alignment confirmed
-- [ ] Cross-app dependency review: openconnector (TenderNed source ready), mydash (event listener ready), docudesk (file-attachment API stable)
+- [ ] Cross-app dependency review: openconnector (TenderNed source ready), launchpad (event listener ready), docudesk (file-attachment API stable)
 - [ ] Security review: RBAC roles defined, data isolation enforced, no sensitive credentials in code
 - [ ] All tests pass (`composer test` exits 0)
 - [ ] Documentation complete and proofread (Dutch spelling, UI consistency)

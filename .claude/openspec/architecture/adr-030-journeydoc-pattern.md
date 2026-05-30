@@ -8,14 +8,14 @@ Proposed
 
 ## Context
 
-Mydash documentation surfaced a reusable workflow: 15 step-by-step
+LaunchPad documentation surfaced a reusable workflow: 15 step-by-step
 tutorial pages were authored alongside a Playwright spec that drives
 each user journey end-to-end and captures a fresh PNG at every step.
 The result is a Docusaurus site whose screenshots stay in sync with
 the live UI — re-run the capture spec after any UI change and every
 image refreshes automatically.
 
-The workflow has eight reusable artifacts, none of which is mydash-
+The workflow has eight reusable artifacts, none of which is launchpad-
 specific: a `tutorials/{user,admin}/` markdown structure, a
 `docs-screenshots.spec.ts` capture spec, a per-track `_category_.json`
 sidebar config, a Playwright `docs-capture` project flag, a Docusaurus
@@ -33,7 +33,7 @@ isolation:
 - Path mistakes (e.g. `docs/screenshots/` instead of
   `docs/static/screenshots/`) silently ship broken images to
   production.
-- Selector brittleness on the capture spec. The mydash first run
+- Selector brittleness on the capture spec. The launchpad first run
   passed only 6/15 stories; pulling stable `data-testid`s into the
   Vue components took 28 testids across 8 components and lifted the
   pass rate to 9/15.
@@ -177,8 +177,8 @@ automatically.
 
 ## References
 
-- Mydash PR #132 (initial pattern landing) and PR #134 (path / static
-  fix). Both merged into mydash `development`.
+- LaunchPad PR #132 (initial pattern landing) and PR #134 (path / static
+  fix). Both merged into launchpad `development`.
 - `hydra/templates/journeydoc/` — canonical templates.
 - `hydra/.claude/skills/journeydoc-{init,add-story,instrument}/` —
   the three skills.

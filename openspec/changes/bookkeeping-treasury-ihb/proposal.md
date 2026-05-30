@@ -82,7 +82,7 @@ forecasting, and IFRS 7/9 disclosure.
 - [ ] Project: openconnector — optional integrations to rate-curve providers
   (Bloomberg, Refinitiv, ECB SDMX), FX broker APIs (360T, FXAll), confirmation
   matching (Misys, Acumen) — T4 phase.
-- [ ] Project: mydash — CFO dashboard tile for group cash position, FX exposure
+- [ ] Project: launchpad — CFO dashboard tile for group cash position, FX exposure
   heatmap, liquidity runway — consumes CashForecast + FXPosition aggregates.
 
 ## Scope

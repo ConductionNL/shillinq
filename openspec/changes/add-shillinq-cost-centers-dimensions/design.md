@@ -39,7 +39,7 @@ Exact / AFAS style. Rejected per ADR-031.
 
 Segment P&L roll-up is a single-schema aggregation on `GLLine` keyed
 by dimension; per ADR-031 single-schema aggregations are declarative
-default. No PHP `SegmentReportService`. Consumed by mydash widgets via
+default. No PHP `SegmentReportService`. Consumed by launchpad widgets via
 runtime GraphQL and by the manifest detail pages.
 
 ### D4 — Pre-position WBSO `time-per-project` via REQ-CC-007
@@ -60,7 +60,7 @@ schema. The WBSO capability itself ships separately.
 | Allocation rule execution (per-posting) | `x-openregister-lifecycle` action on `GLTransaction.post` | Composition of existing primitives |
 | Allocation rule execution (monthly / period-close) | OR `ScheduledWorkflow` (ADR-031 path 2) | Periodic batch work |
 | Fixed-percentage sum-to-100 precondition | `x-openregister-lifecycle.requires` (ADR-031) | Declarative; same path as T1 balance precondition |
-| Segment P&L aggregation | `x-openregister-aggregations` on `GLLine` (ADR-031) | Keyed by dimension; consumed by mydash + manifest pages |
+| Segment P&L aggregation | `x-openregister-aggregations` on `GLLine` (ADR-031) | Keyed by dimension; consumed by launchpad + manifest pages |
 | Audit trail | OR audit-trail-immutable | Consumed automatically |
 | Manifest navigation | `src/manifest.json` + `CnAppRoot` (Tier-4) | Adds 4 menu entries + matching index/detail page pairs |
 

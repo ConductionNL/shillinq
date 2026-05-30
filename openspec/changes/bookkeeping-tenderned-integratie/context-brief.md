@@ -104,7 +104,7 @@ THEN populeert het systeem de omzet-prognose-pijplijn met de contractwaarde verd
 - **openregister**: verplichting/mijlpalen-schema, audit-log, file-attachments
 - **opencatalogi**: TenderNed als externe katalogus opvoeren zodat aanbestedingen browsable zijn naast eigen registers
 - **docudesk**: contract-templates voor nadere-overeenkomsten onder raamcontracten
-- **mydash**: budget-uitputting-widget, top-leveranciers-rapport
+- **launchpad**: budget-uitputting-widget, top-leveranciers-rapport
 
 ## Target users
 

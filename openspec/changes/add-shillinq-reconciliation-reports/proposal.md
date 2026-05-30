@@ -13,9 +13,9 @@ engine (per `adr-001-bookkeeping-tier-roadmap.md`). This change
 declares saved-query objects (`SavedQuery` / `Budget` registers) as
 `x-openregister-aggregations` (per ADR-031) covering sub-ledger ↔ GL
 match, intercompany match, variance analysis vs `Budget`, and the
-controller exception report. Per `feedback_mydash-no-or-dependency.md`,
-mydash consumes these reports via runtime GraphQL — shillinq publishes
-the saved queries against OR registers, mydash discovers them through
+controller exception report. Per `feedback_launchpad-no-or-dependency.md`,
+launchpad consumes these reports via runtime GraphQL — shillinq publishes
+the saved queries against OR registers, launchpad discovers them through
 the GraphQL schema, neither app imports the other. No PHP
 `ReportingService.generateReconciliation()`; severity classification
 on exception rows (`critical` / `warning` / `info`) is encoded as a
@@ -32,7 +32,7 @@ Controllers need exception reports across sub-ledger ↔ GL,
 intercompany, and budget vs actual — the operational visibility layer.
 Without these, a complete bookkeeping system has a blind spot:
 operators discover reconciliation gaps too late. The saved-query
-shape lets mydash and the manifest pages share a single canonical
+shape lets launchpad and the manifest pages share a single canonical
 data path; the controller exception report rolls up severity from the
 underlying queries so the controller sees the urgent items at the
 top of the list.
@@ -49,9 +49,9 @@ to satisfy ADR-032 spec-sizing (cap: 20 unchecked tasks per change).
 - [ ] Project: openregister — no source changes; this change consumes
   `x-openregister-aggregations`, `SavedQuery`, audit-trail-immutable,
   RBAC.
-- [ ] Project: mydash — no source changes; mydash consumes
+- [ ] Project: launchpad — no source changes; launchpad consumes
   reconciliation reports via runtime GraphQL only (per
-  `feedback_mydash-no-or-dependency.md`); no `shillinq` dep is added.
+  `feedback_launchpad-no-or-dependency.md`); no `shillinq` dep is added.
 
 ## Scope
 
@@ -69,8 +69,8 @@ to satisfy ADR-032 spec-sizing (cap: 20 unchecked tasks per change).
 - Severity classification (`critical` / `warning` / `info`) encoded
   as a calculated field on each exception row, sortable in the
   controller report.
-- mydash consumption via runtime GraphQL only; no install-time dep
-  per `feedback_mydash-no-or-dependency.md`.
+- launchpad consumption via runtime GraphQL only; no install-time dep
+  per `feedback_launchpad-no-or-dependency.md`.
 - Manifest navigation entries (Bookkeeping > Reconciliation Reports
   + Bookkeeping > Budgets) using `type: index` / `type: detail`
   renderers; the reports page lists the saved-query catalogue and
@@ -85,7 +85,7 @@ to satisfy ADR-032 spec-sizing (cap: 20 unchecked tasks per change).
   `*Variance*.php` class names; the reviewer gates on grep.
 - **Frontend Vue components** beyond `CnIndexPage` / `CnDetailPage`
   generic rendering.
-- **mydash widget authoring** — mydash chooses how to render the
+- **launchpad widget authoring** — launchpad chooses how to render the
   saved queries; shillinq just publishes them.
 
 ## Approach
@@ -94,7 +94,7 @@ One delta, adding ADDED Requirements to a brand-new spec:
 
 **`bookkeeping-reconciliation-reports`** — declares the four
 saved-query objects, the `Budget` register, severity classification as
-a calculated field, and mydash consumption via runtime GraphQL.
+a calculated field, and launchpad consumption via runtime GraphQL.
 
 The spec follows the conduction-schema format (RFC 2119,
 `### REQ-{NNN}: <name>`, `#### Scenario:` with exactly 4 hashtags,
@@ -126,9 +126,9 @@ already-bumped `@conduction/nextcloud-vue@^1.0.0-beta.35`.
 - **T2 `bookkeeping-accounts-payable-core` /
   `bookkeeping-accounts-receivable-core`** — sub-ledger ↔ GL match
   joins T2 sub-ledger objects with `GLLine`.
-- **mydash** — discovers the saved queries via OR's GraphQL schema;
-  mydash MUST NOT list shillinq as a dependency (per
-  `feedback_mydash-no-or-dependency.md`).
+- **launchpad** — discovers the saved queries via OR's GraphQL schema;
+  launchpad MUST NOT list shillinq as a dependency (per
+  `feedback_launchpad-no-or-dependency.md`).
 
 ## Risks
 
@@ -153,25 +153,25 @@ design doc.
 **Severity**: Medium
 **Mitigation**: REQ-RR-001 hard-forbids report-engine services;
 reports MUST be `SavedQuery` / `x-openregister-aggregations`;
-reviewer gate; mydash is the canonical visualisation surface. Any
+reviewer gate; launchpad is the canonical visualisation surface. Any
 proposal to author `*Report*` / `*Reconciliation*` / `*Variance*`
 PHP service files is rejected at code review.
 
-### Risk 3: mydash inadvertently grows a `shillinq` install-time dep
+### Risk 3: launchpad inadvertently grows a `shillinq` install-time dep
 
 **Severity**: Low–Medium (architectural drift)
-**Mitigation**: Per `feedback_mydash-no-or-dependency.md`, mydash
+**Mitigation**: Per `feedback_launchpad-no-or-dependency.md`, launchpad
 consumes saved queries via runtime GraphQL on OR; the GraphQL schema
 is the discovery surface. The implementing cycle includes an explicit
-end-to-end test confirming mydash widget rendering works with no
-`require: shillinq` in mydash's `appinfo/info.xml`.
+end-to-end test confirming launchpad widget rendering works with no
+`require: shillinq` in launchpad's `appinfo/info.xml`.
 
 ## Rollback Strategy
 
 Spec-only change. To roll back: revert the commit; delete the change
 folder. After implementation (separate cycle), rollback follows the
 standard pattern: revert the implementing PR. Saved queries are
-non-destructive; mydash widgets degrade gracefully when the queries
+non-destructive; launchpad widgets degrade gracefully when the queries
 disappear (no results shown).
 
 ## Open Questions
