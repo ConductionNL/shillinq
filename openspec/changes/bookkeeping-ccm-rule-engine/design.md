@@ -52,7 +52,7 @@ for audit-committee sign-off and SOX 404 attestation.
 - **Training platform** — larpingapp hosts the control-awareness training;
   course content, enrollment tracking, completion attestation are out of
   scope.
-- **Real-time dashboard replication** — findings publish to mydash
+- **Real-time dashboard replication** — findings publish to launchpad
   dashboard asynchronously (no sub-second UI update requirement).
 
 ## Decisions
@@ -169,7 +169,7 @@ flag keeps it optional.
 | Sanctions / PEP screening | `openconnector` screening-provider integration | Value-chain rules call openconnector screening API (optional) |
 | Finding notifications | OR notification system + n8n (soft) | In-app notification on finding fire; n8n can push to Slack/Teams |
 | Report storage | Nextcloud file API (`docudesk` wrapper) | Audit committee report stored as DigitalDocument |
-| Dashboard | `mydash` publication API | Findings summary + SoD scorecard published to mydash |
+| Dashboard | `launchpad` publication API | Findings summary + SoD scorecard published to launchpad |
 
 **Net new code in implementation cycle:**
 - 3 major services (RuleEngine, FindingService, AuditCommitteeReportGenerator)

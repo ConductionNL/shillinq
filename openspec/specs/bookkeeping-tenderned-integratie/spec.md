@@ -113,15 +113,15 @@ An ENSIA auditor querying the audit-trail can reconstruct the full lineage: awar
 ### REQ-007: Real-time budget-impact widget update (60-second SLA)
 
 **GIVEN** a Verplichting with `bron: tenderned` that is activated (status: active)  
-**WHEN** the obligation is created or status-changed, a CloudEvent is emitted to the mydash event stream with payload: { event: "obligation-activated", contractWaarde: <amount>, periode: <FY>, kostenplaats: <code>, tenderNedDossierUrl: <url> }  
-**THEN** the mydash budget-widget listener receives the event and re-calculates the budget-utilization percentage for the relevant cost centre. The widget refreshes within 60 seconds, showing the new obligation as a committed expense.
+**WHEN** the obligation is created or status-changed, a CloudEvent is emitted to the launchpad event stream with payload: { event: "obligation-activated", contractWaarde: <amount>, periode: <FY>, kostenplaats: <code>, tenderNedDossierUrl: <url> }  
+**THEN** the launchpad budget-widget listener receives the event and re-calculates the budget-utilization percentage for the relevant cost centre. The widget refreshes within 60 seconds, showing the new obligation as a committed expense.
 
 **Acceptance Criteria:**
 - CloudEvent is emitted asynchronously (does NOT block obligation creation)
 - Event payload includes contract value, period, cost centre, and TenderNed dossier URL
 - Widget update SLA is 60 seconds from event emit to re-render
 - Test: Import 10 obligations in parallel; verify all 10 appear in widget within 60s
-- Failure mode: if mydash is unreachable, log warning but continue (graceful degradation)
+- Failure mode: if launchpad is unreachable, log warning but continue (graceful degradation)
 
 ---
 
@@ -269,7 +269,7 @@ Then the system returns a complete chain:
 
 - **openconnector**: Consumes TenderNed source polling (5-min cadence) and emits CloudEvents on status change
 - **openregister**: Uses audit-trail-immutable (REQ-005) and file-attachment (REQ-004, bewijsstukken via docudesk)
-- **mydash**: Listens for obligation-activated events and updates budget-widget (REQ-007)
+- **launchpad**: Listens for obligation-activated events and updates budget-widget (REQ-007)
 - **docudesk**: Stores bewijsstukken (proof documents) via ADR-022 file-attachment mechanism
 
 ---
@@ -296,5 +296,5 @@ Then the system returns a complete chain:
 
 - [ ] Spec reviewed by procurement domain expert (inkoper or contractmanager persona)
 - [ ] Spec reviewed by ENSIA auditor or compliance officer
-- [ ] Cross-app dependencies verified with openconnector, mydash, docudesk teams
+- [ ] Cross-app dependencies verified with openconnector, launchpad, docudesk teams
 - [ ] Design.md Q1–Q3 open questions resolved

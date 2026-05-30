@@ -127,7 +127,7 @@ checks and by ADR-005's per-attribute pairing.
 2. Wire into `images/builder/entrypoint.sh` post-build, `images/reviewer/`
    pre-flight, `images/security/` pre-flight.
 3. Run a one-shot full-repo audit on `openregister`, `decidesk`, `procest`,
-   `pipelinq`, `opencatalogi`, `larpingapp`, `mydash` to catalog inherited
+   `pipelinq`, `opencatalogi`, `larpingapp`, `launchpad` to catalog inherited
    route-gap and wrong-binding debt. Each app gets a single cleanup PR.
 4. After 30 days from gate landing, flip the Newman warning to a hard fail.
 

@@ -147,8 +147,8 @@
     `Depends on: bookkeeping-general-ledger (T1), bookkeeping-accounts-payable-core (T2), bookkeeping-accounts-receivable-core (T2)`.
   - GIVEN the spec WHEN scanned THEN it forbids a PHP report
     engine (REQ-RR-001), declares all reports as saved-query
-    objects consumed by mydash via runtime GraphQL (REQ-RR-007),
-    and cites `feedback_mydash-no-or-dependency.md` for the mydash
+    objects consumed by launchpad via runtime GraphQL (REQ-RR-007),
+    and cites `feedback_launchpad-no-or-dependency.md` for the launchpad
     no-install-time-dep rule.
 - [x] Implement
 - [ ] Test (`openspec validate` clean)
@@ -316,7 +316,7 @@
   - GIVEN the four saved queries (sub-ledger ↔ GL, intercompany,
     variance, controller exception) WHEN inspected THEN they are
     declared as `x-openregister-aggregations` records consumed by
-    both the manifest pages and mydash via runtime GraphQL.
+    both the manifest pages and launchpad via runtime GraphQL.
   - GIVEN the implementing PR WHEN reviewed THEN no `lib/Service/`
     class names match `*Report*` / `*Reconciliation*` / `*Variance*`
     (REQ-RR-001 scenario).
@@ -324,7 +324,7 @@
 - [ ] Test (PHPUnit: matched reconciliation reports zero variance;
   mismatched surfaces as exception; intercompany match for grouped
   administrations; within-threshold variance does not flag;
-  exception report sorted by severity; mydash GraphQL discovery)
+  exception report sorted by severity; launchpad GraphQL discovery)
 
 ## 3. Seed data — `lib/Settings/seeds/`
 
@@ -468,8 +468,8 @@
     the saved-query metadata, plus a `Bookkeeping > Budgets`
     index/detail pair.
 - [ ] Implement
-- [ ] Test (same as 4.1; mydash widget end-to-end confirming
-  runtime-GraphQL consumption with no shillinq dep on mydash)
+- [ ] Test (same as 4.1; launchpad widget end-to-end confirming
+  runtime-GraphQL consumption with no shillinq dep on launchpad)
 
 ## 5. ADR-000 reconciliation notes
 
@@ -538,7 +538,7 @@
       compliance across all seven specs (no app-local audit; no
       app-local RBAC; no app-local approval; no service-class state
       machines / aggregations / calculations / notifications; no
-      embedded HTTP clients for Digipoort or PSD2; mydash carries no
+      embedded HTTP clients for Digipoort or PSD2; launchpad carries no
       shillinq dep; manifest carries the navigation; no per-app
       TimedJobs for scheduled work)
 - [ ] No source code changes outside

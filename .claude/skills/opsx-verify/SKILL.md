@@ -25,7 +25,7 @@ Verify that an implementation matches the change artifacts (specs, tasks, design
 
 - If the input starts with `--app `, follow the **App Mode** steps in §A1–A6 below; **skip the per-change Steps 1–11**.
 - Otherwise follow the per-change Steps 1–11 below.
-- Disambiguation: if the user passes a single token that matches an app slug (e.g. `openregister`), ask once via AskUserQuestion whether they meant `--app openregister` (retrofit DoD) or the change literally named `openregister` (likely doesn't exist). Default to `--app` for the canonical Nextcloud app slugs (`openregister`, `procest`, `pipelinq`, `decidesk`, `docudesk`, `openconnector`, `nldesign`, `mydash`, `softwarecatalog`, `larpingapp`, `zaakafhandelapp`, `opencatalogi`).
+- Disambiguation: if the user passes a single token that matches an app slug (e.g. `openregister`), ask once via AskUserQuestion whether they meant `--app openregister` (retrofit DoD) or the change literally named `openregister` (likely doesn't exist). Default to `--app` for the canonical Nextcloud app slugs (`openregister`, `procest`, `pipelinq`, `decidesk`, `docudesk`, `openconnector`, `nldesign`, `launchpad`, `softwarecatalog`, `larpingapp`, `zaakafhandelapp`, `opencatalogi`).
 
 ---
 

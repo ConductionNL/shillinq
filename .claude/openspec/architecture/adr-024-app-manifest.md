@@ -74,9 +74,9 @@ Specifically:
    (2) an explicit Tier choice, (3) a regression test confirming all
    routes still resolve, (4) reviewer sign-off that the manifest does
    not duplicate or contradict the canonical schema.
-10. **Apps that should NOT depend on OpenRegister** — mydash and
+10. **Apps that should NOT depend on OpenRegister** — launchpad and
     nldesign MUST NOT list `openregister` in `manifest.dependencies`.
-    Per `feedback_mydash-no-or-dependency.md`, mydash is a BI surface
+    Per `feedback_launchpad-no-or-dependency.md`, launchpad is a BI surface
     that talks to OR via runtime GraphQL only; nldesign is a theme
     layer. Other apps SHOULD list every cross-app dependency the user
     needs installed for the app to function.
@@ -91,7 +91,7 @@ Specifically:
   reflected in `src/manifest.json` is treated as drift. (Pairs with
   ADR-029 route-reachability gate.)
 - Migration order recommendation (cheapest → highest-value):
-  `mydash` → `larpingapp` / `softwarecatalog` → `openregister` →
+  `launchpad` → `larpingapp` / `softwarecatalog` → `openregister` →
   remaining apps. Decidesk is already Tier 4 and serves as the
   reference.
 - App-manifest extensions (e.g. `theme: { primary, accent, logoUrl }`,

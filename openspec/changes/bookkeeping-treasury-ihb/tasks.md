@@ -26,7 +26,7 @@
   guidelines inline
 
 - [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app`
-  spec and including Affected Projects (shillinq, n8n, openconnector, mydash) /
+  spec and including Affected Projects (shillinq, n8n, openconnector, launchpad) /
   Scope (9 registers, zero-balance + notional pools, intercompany loans, FX
   hedging, 13-week forecast, multi-administratie recon, IFRS 7/9 disclosure) /
   Risks (sweep job failure, rate-snapshot staleness, forecast accuracy,

@@ -36,7 +36,7 @@ Templates live at [`templates/journeydoc/`](../../../templates/journeydoc/README
 
 Use **AskUserQuestion** if no slug was provided:
 
-> "Which Conduction app are we journeydoc-ing? (slug only — e.g. `opencatalogi`, `docudesk`, `mydash`)"
+> "Which Conduction app are we journeydoc-ing? (slug only — e.g. `opencatalogi`, `docudesk`, `launchpad`)"
 
 Verify the path exists:
 
@@ -84,7 +84,7 @@ needed). For brown-field, proceed.
 
 ## Step 4: Collect the user-story list
 
-Present the canonical mydash example as a starting point, then ask
+Present the canonical launchpad example as a starting point, then ask
 AskUserQuestion (open-ended):
 
 > "Paste your user-track stories — one per line. These become

@@ -128,7 +128,7 @@ traceability.
   or external API integration).
 - **docudesk** — evidence document storage (existing FK contract).
 - **planix** (optional) — cross-link mitigation actions to project tasks.
-- **mydash** — voortgangs-widget for ENSIA cycle dashboard.
+- **launchpad** — voortgangs-widget for ENSIA cycle dashboard.
 - **decidesk** — collegebesluit-workflow for college-verklaring approval.
 
 ## Impact
@@ -151,7 +151,7 @@ traceability.
 - **docudesk** — evidence document FK contract (per
   `bookkeeping-document-attachment-integration`).
 - **planix** — optional cross-link for mitigation action tracking.
-- **mydash** — ENSIA cycle voortgang widget (read-only aggregation).
+- **launchpad** — ENSIA cycle voortgang widget (read-only aggregation).
 - **decidesk** — collegebesluit approval workflow (existing integration pattern).
 
 ## Risks

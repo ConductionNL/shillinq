@@ -36,7 +36,7 @@ openregister installed and enabled.
 opencatalogi installed and enabled.
 softwarecatalog installed and enabled.
 nldesign installed and enabled.
-mydash installed and enabled.
+launchpad installed and enabled.
 ✓ All apps installed
 
 [clean-env] Done! Environment is clean and ready.
@@ -52,7 +52,7 @@ mydash installed and enabled.
    - opencatalogi     ✓
    - softwarecatalog  ✓
    - nldesign         ✓
-   - mydash           ✓
+   - launchpad           ✓
 ```
 
 ## If an app fails to enable
