@@ -1,14 +1,23 @@
 # Spec: app-administration
 
-**Status:** proposed
+**Status:** done
 **Scope:** shillinq
 **Tier:** T0 (platform)
 **Depends on:** none
 
+**OpenSpec changes:** [retrofit-2026-05-25-app-administration](../../changes/archive/2026-05-31-retrofit-2026-05-25-app-administration/) _(archived 2026-05-31)_
+
 > Reverse-engineered from observed code (ADR-003 retrofit). Describes the
 > application-administration surface as it ships today.
 
-## ADDED Requirements
+## Purpose
+
+Defines the application-administration surface of Shillinq as it ships
+today: the authenticated settings endpoint, forced register-configuration
+re-import, the public health probe, the admin-only metrics endpoint, and
+the generic OpenRegister object store used by the Vue shell.
+
+## Requirements
 
 ### Requirement: REQ-Admin-001 The system SHALL expose the app's configuration through a settings endpoint
 
