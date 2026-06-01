@@ -24,6 +24,27 @@
 					"icon": "LedgerOutline",
 					"route": "ChartOfAccounts",
 					"order": 10
+				},
+				{
+					"id": "GRDeelnemers",
+					"label": "Deelnemers",
+					"icon": "AccountMultipleOutline",
+					"route": "GRDeelnemers",
+					"order": 50
+				},
+				{
+					"id": "GRVerdeelsleutels",
+					"label": "Verdeelsleutels",
+					"icon": "ScaleBalanceOutline",
+					"route": "GRVerdeelsleutels",
+					"order": 60
+				},
+				{
+					"id": "GRConsolidated",
+					"label": "Geconsolideerde view",
+					"icon": "TableMergeCellsOutline",
+					"route": "GRConsolidated",
+					"order": 70
 				}
 			]
 		},
@@ -51,7 +72,7 @@
 			"visibility": { "administrationType": ["gemeente", "provincie", "waterschap"] },
 			"children": [
 				{ "id": "BbvMapping", "label": "BBV-mapping", "icon": "SitemapOutline", "route": "BbvMapping", "order": 10 },
-				{ "id": "Iv3Reports", "label": "IV3-rapportages", "icon": "ChartBoxOutline", "route": "Iv3Reports", "order": 20 },
+				{ "id": "Iv3Rapportages", "label": "IV3-rapportages", "icon": "FileChartOutline", "route": "Iv3Rapportages", "order": 20 },
 				{ "id": "BcfClaims", "label": "BCF-claims", "icon": "CashRefund", "route": "BcfClaims", "order": 30, "visibility": { "administrationType": ["gemeente"] } },
 				{ "id": "SchatkistPosition", "label": "Schatkist-positie", "icon": "BankOutline", "route": "SchatkistPosition", "order": 40, "visibility": { "administrationType": ["gemeente"] } }
 			]
@@ -125,6 +146,123 @@
 			}
 		},
 		{
+			"id": "Iv3Rapportages",
+			"route": "/iv3-rapportages",
+			"type": "index",
+			"title": "IV3-rapportages",
+			"config": {
+				"register": "shillinq",
+				"schema": "Iv3Export",
+				"visibility": {
+					"field": "administrationType",
+					"in": ["gemeente", "provincie", "waterschap"]
+				},
+				"columns": [
+					{
+						"key": "reportingYear",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "reportingQuarter",
+						"label": "Kwartaal",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "submittedAt",
+						"label": "Ingediend op",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-reportingYear",
+				"detailRoute": "Iv3RapportagesDetail"
+			}
+		},
+		{
+			"id": "Iv3RapportagesDetail",
+			"route": "/iv3-rapportages/:id",
+			"type": "detail",
+			"title": "IV3-rapportage",
+			"config": {
+				"register": "shillinq",
+				"schema": "Iv3Export",
+				"fields": [
+					{
+						"key": "reportingYear",
+						"label": "Jaar",
+						"type": "integer"
+					},
+					{
+						"key": "reportingQuarter",
+						"label": "Kwartaal",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "iv3Version",
+						"label": "IV3-versie",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "buckets",
+						"label": "IV3 Buckets",
+						"type": "object"
+					},
+					{
+						"key": "xmlAttachmentUri",
+						"label": "XML Bijlage",
+						"type": "link"
+					},
+					{
+						"key": "generatedAt",
+						"label": "Gegenereerd op",
+						"type": "date-time"
+					},
+					{
+						"key": "submittedAt",
+						"label": "Ingediend op",
+						"type": "date-time"
+					},
+					{
+						"key": "acceptedAt",
+						"label": "Geaccepteerd op",
+						"type": "date-time"
+					},
+					{
+						"key": "cbsMessageId",
+						"label": "CBS Bericht-ID",
+						"type": "string"
+					},
+					{
+						"key": "correctionOf",
+						"label": "Correctie van",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "Iv3Rapportages"
+			}
+		},
+		{
 			"id": "ChartOfAccounts",
 			"route": "/chart-of-accounts",
 			"type": "index",
@@ -156,6 +294,185 @@
 				],
 				"defaultSort": "accountNumber",
 				"detailRoute": "ChartOfAccountsDetail"
+			}
+		},
+		{
+			"id": "GRDeelnemers",
+			"route": "/gr/deelnemers",
+			"type": "index",
+			"title": "Deelnemers",
+			"config": {
+				"register": "shillinq",
+				"schema": "GRDeelnemer",
+				"columns": [
+					{
+						"key": "deelnemerNaam",
+						"label": "Naam",
+						"sortable": true
+					},
+					{
+						"key": "deelnemerType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "aandeel",
+						"label": "Aandeel",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "deelnemerNaam",
+				"detailRoute": "GRDeelnemerDetail"
+			}
+		},
+		{
+			"id": "GRDeelnemerDetail",
+			"route": "/gr/deelnemers/:id",
+			"type": "detail",
+			"title": "Deelnemer",
+			"config": {
+				"register": "shillinq",
+				"schema": "GRDeelnemer",
+				"fields": [
+					{
+						"key": "deelnemerNaam",
+						"label": "Naam",
+						"type": "string"
+					},
+					{
+						"key": "deelnemerType",
+						"label": "Type",
+						"type": "string"
+					},
+					{
+						"key": "aandeel",
+						"label": "Aandeel",
+						"type": "number"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie-koppeling",
+						"type": "string"
+					},
+					{
+						"key": "actief",
+						"label": "Actief",
+						"type": "boolean"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "GRDeelnemers"
+			}
+		},
+		{
+			"id": "GRVerdeelsleutels",
+			"route": "/gr/verdeelsleutels",
+			"type": "index",
+			"title": "Verdeelsleutels",
+			"config": {
+				"register": "shillinq",
+				"schema": "GRVerdeelsleutel",
+				"columns": [
+					{
+						"key": "sleutelNaam",
+						"label": "Naam",
+						"sortable": true
+					},
+					{
+						"key": "verdelingsType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "lineNumber",
+						"label": "Volgorde",
+						"sortable": true
+					}
+				],
+				"defaultSort": "lineNumber",
+				"detailRoute": "GRVerdeelsleutelDetail"
+			}
+		},
+		{
+			"id": "GRVerdeelsleutelDetail",
+			"route": "/gr/verdeelsleutels/:id",
+			"type": "detail",
+			"title": "Verdeelsleutel",
+			"config": {
+				"register": "shillinq",
+				"schema": "GRVerdeelsleutel",
+				"fields": [
+					{
+						"key": "sleutelNaam",
+						"label": "Naam",
+						"type": "string"
+					},
+					{
+						"key": "costClusterAccountNumbers",
+						"label": "Kostencluster grootboekrekeningen",
+						"type": "json"
+					},
+					{
+						"key": "verdelingsType",
+						"label": "Verdelingstype",
+						"type": "string"
+					},
+					{
+						"key": "parameters",
+						"label": "Parameters",
+						"type": "json"
+					},
+					{
+						"key": "lineNumber",
+						"label": "Volgorde",
+						"type": "number"
+					}
+				],
+				"indexRoute": "GRVerdeelsleutels"
+			}
+		},
+		{
+			"id": "GRConsolidated",
+			"route": "/gr/geconsolideerd",
+			"type": "index",
+			"title": "Geconsolideerde view",
+			"config": {
+				"register": "shillinq",
+				"schema": "GLLine",
+				"columns": [
+					{
+						"key": "accountNumber",
+						"label": "Grootboekrekening",
+						"sortable": true
+					},
+					{
+						"key": "side",
+						"label": "D/C",
+						"sortable": true
+					},
+					{
+						"key": "amount",
+						"label": "Bedrag",
+						"sortable": true
+					},
+					{
+						"key": "eliminationFlag",
+						"label": "Eliminatie",
+						"sortable": true
+					}
+				],
+				"defaultSort": "accountNumber",
+				"aggregation": "consolidatedTrialBalance"
 			}
 		},
 		{
@@ -460,40 +777,6 @@
 					{ "key": "iv3Bucket", "label": "IV3-bucket", "type": "string" }
 				],
 				"indexRoute": "BbvMapping"
-			}
-		},
-		{
-			"id": "Iv3Reports",
-			"route": "/iv3-rapportages",
-			"type": "index",
-			"title": "IV3-rapportages",
-			"config": {
-				"register": "shillinq",
-				"schema": "Iv3Export",
-				"columns": [
-					{ "key": "periodYear", "label": "Jaar", "sortable": true },
-					{ "key": "periodQuarter", "label": "Kwartaal", "sortable": true },
-					{ "key": "state", "label": "Status", "sortable": true }
-				],
-				"defaultSort": "periodYear",
-				"detailRoute": "Iv3ReportDetail"
-			}
-		},
-		{
-			"id": "Iv3ReportDetail",
-			"route": "/iv3-rapportages/:id",
-			"type": "detail",
-			"title": "IV3-rapportage",
-			"config": {
-				"register": "shillinq",
-				"schema": "Iv3Export",
-				"fields": [
-					{ "key": "periodYear", "label": "Jaar", "type": "number" },
-					{ "key": "periodQuarter", "label": "Kwartaal", "type": "number" },
-					{ "key": "state", "label": "Status", "type": "string" }
-				],
-				"lifecycleActions": true,
-				"indexRoute": "Iv3Reports"
 			}
 		},
 		{

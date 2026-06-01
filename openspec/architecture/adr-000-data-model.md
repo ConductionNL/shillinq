@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 225
+**Entities:** 226
 
 ## Context
 
@@ -1745,6 +1745,39 @@ _A managed collection of grants for organizational tracking, compliance monitori
 - → Organization (many-to-one)
 - → Grant (one-to-many)
 
+### GRDeelnemer
+**Schema.org:** `schema:Organization`
+_A deelnemer (participating municipality, province, or waterboard) of a gemeenschappelijke regeling (GR). Holds the quotum-aandeel and an optional cross-administration FK enabling doorbelasting materialisation when the deelnemer also runs shillinq. The active/archived lifecycle is declarative; no PHP service. Cross-referencing spec: `bookkeeping-gr-consolidation` (add-shillinq-gr-consolidation, 2026-06-01)._
+**Primary spec:** bookkeeping-gr-consolidation
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| deelnemerType | enum | Yes | One of gemeente, provincie, waterschap |
+| deelnemerNaam | string | Yes | Official name of the deelnemer |
+| administrationId | string | No | Optional FK to the deelnemer's own shillinq administration; drives cross-admin doorbelasting materialisation on GR period-close |
+| aandeel | number | Yes | Quotum-aandeel 0 ≤ x ≤ 1; sum across active deelnemers SHOULD equal 1.0 |
+| actief | boolean | No | Whether this deelnemer currently participates; default true |
+| lifecycleState | enum | Yes | One of active, archived |
+
+**Relations:**
+- → GRVerdeelsleutel (one-to-many, through costClusterAccountNumbers apportionment)
+
+### GRVerdeelsleutel
+**Schema.org:** `schema:Thing`
+_An apportionment rule parameterising the per-deelnemer split of a cost cluster within a gemeenschappelijke regeling. Multiple verdeelsleutels MAY apply to the same cost cluster, sequenced by lineNumber. The declarative `x-openregister-aggregations.doorbelastingPerDeelnemer` block drives the doorbelasting calculation without a PHP consolidation service. Cross-referencing spec: `bookkeeping-gr-consolidation` (add-shillinq-gr-consolidation, 2026-06-01)._
+**Primary spec:** bookkeeping-gr-consolidation
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| sleutelNaam | string | Yes | Human-readable name of this apportionment rule |
+| costClusterAccountNumbers | array | Yes | Array of Account.accountNumber strings identifying the cost cluster |
+| verdelingsType | enum | Yes | One of vast-percentage, inwoner-aantal, gewogen-oppervlak, custom-formula |
+| parameters | object | No | Per-deelnemer split parameters validated against verdelingsType |
+| lineNumber | integer | Yes | Sequence number controlling application order when multiple sleutels cover the same cost cluster |
+
+**Relations:**
+- → Account (many-to-many, via costClusterAccountNumbers → Account.accountNumber)
+
 ### IntercompanyTransaction
 **Schema.org:** `schema:FinancialProduct`
 _Transaction between related entities for transfer pricing, loans, or intercompany netting_
@@ -1892,6 +1925,40 @@ _A line item detailing goods or services on an invoice_
 **Relations:**
 - → Invoice (many-to-one)
 - → Product (many-to-one)
+
+### Iv3Export
+**Schema.org:** `schema:Dataset`
+_Quarterly IV3 (Informatie voor Derden) export submitted to CBS by Dutch decentralised government administrations (gemeente, provincie, waterschap). Lifecycle covers generation, XML validation, CBS submission, and acceptance/rejection. Buckets aggregation is declarative via x-openregister-aggregations over GLLine joined with BbvAccountMapping._
+**Primary spec:** bookkeeping-iv3-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the Administration (gemeente/provincie/waterschap) |
+| reportingYear | integer | Yes | Calendar year (e.g. 2026) |
+| reportingQuarter | enum | Yes | One of Q1, Q2, Q3, Q4 |
+| iv3Version | string | Yes | CBS IV3-bestand specification version (e.g. 2026.1) |
+| buckets | object | Yes | Aggregated GL values keyed by IV3 bucket code (derived via x-openregister-aggregations) |
+| xmlAttachmentUri | string | No | Docudesk URI of the generated CBS IV3 XML file |
+| state | enum | Yes | One of generated, validated, submitted, accepted, rejected, corrected |
+| generatedAt | datetime | No | Timestamp when the export was generated |
+| submittedAt | datetime | No | Timestamp when the export was submitted to CBS |
+| acceptedAt | datetime | No | Timestamp when CBS accepted the export |
+| cbsMessageId | string | No | CBS-side message identifier returned on submission |
+| correctionOf | string | No | FK to a prior Iv3Export.id superseded by this correction |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- self → Iv3Export (many-to-one, via correctionOf → id; correction chain)
+
+**Lifecycle (x-openregister-lifecycle):**
+- generated → validated (operator validates XML against CBS schema)
+- validated → submitted (operator submits via OpenConnector cbs-iv3)
+- submitted → accepted (CBS callback via cbs-iv3 source)
+- submitted → rejected (CBS callback via cbs-iv3 source)
+- rejected → validated (re-validate after operator corrects)
+- accepted → corrected (file a new Iv3Export with correctionOf set)
+
+**Submission:** OR ScheduledWorkflow (cron `0 0 1 */3 *`) via OpenConnector `cbs-iv3` source (ADR-019). No app-local HTTP client.
 
 ### JointVenture
 **Schema.org:** `schema:Organization`
