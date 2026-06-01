@@ -34,8 +34,12 @@
     extensions on `GLLine` (multi-currency fields, dimension
     references) do not conflict with field names already used by T2
     or T3.
-- [ ] Implement
-- [ ] Test
+- [x] Implement — verified against `origin/development`: `lib/Settings/shillinq_register.json`
+      declares none of `XbrlInstance`/`FixedAsset`/`FxRate`/`CostCenter`/`KostenDrager`/
+      `Project`/`AllocationRule`/`FiscalYear`/`BankConnection`/`Budget`; the seven capability
+      specs exist canonically under `openspec/specs/` (no collision); no `GLLine` field-name
+      clash with T2/T3 sibling changes.
+- [x] Test — dedup grep over the register JSON returns zero T4 entities (clean).
 
 ## 1. Spec foundation (this change)
 
