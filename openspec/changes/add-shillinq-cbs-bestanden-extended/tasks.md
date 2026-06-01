@@ -9,10 +9,10 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no extended CBS-bestand aggregations, `kernGegevensConfig` schema, `ozbCategorie` flag, or `bookkeeping-cbs-bestanden-extended` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `openspec/changes/**`)
-- [ ] Task 2: Author `specs/bookkeeping-cbs-bestanden-extended/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4-specialized (NL gov sector)` / `Depends on: bookkeeping-iv3-reporting` header, `REQ-CBSE-NNN` requirements, `#### Scenario:` blocks with GIVEN/WHEN/THEN
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions
-- [ ] Task 4: Author `design.md` with Reuse Analysis table; BBV-reviewer persona confirms the four bestanden + Kerngegevens denominators match CBS-spec
+- [x] Task 1: Confirm no extended CBS-bestand aggregations, `kernGegevensConfig` schema, `ozbCategorie` flag, or `bookkeeping-cbs-bestanden-extended` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `openspec/changes/**`)
+- [x] Task 2: Author `specs/bookkeeping-cbs-bestanden-extended/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4-specialized (NL gov sector)` / `Depends on: bookkeeping-iv3-reporting` header, `REQ-CBSE-NNN` requirements, `#### Scenario:` blocks with GIVEN/WHEN/THEN
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions
+- [x] Task 4: Author `design.md` with Reuse Analysis table; BBV-reviewer persona confirms the four bestanden + Kerngegevens denominators match CBS-spec
 - [ ] Task 5: Declare the small `kernGegevensConfig` admin-level schema in `lib/Settings/shillinq_register.json` with `inwonerAantal`, `oppervlak`, `gewogenOppervlak`, `bestuursOmvang` per REQ-CBSE-003
 - [ ] Task 6: Add `ozbCategorie` array flag on `GLLine` (values: `eigenaars-woning`, `eigenaars-niet-woning`, `gebruikers-woning`, `gebruikers-niet-woning`) per REQ-CBSE-004
 - [ ] Task 7: Declare the Iv3-detail aggregation grouping `GLLine` by `(periodId, taakveld, categorie)` summing `(debit - credit)` per REQ-CBSE-002; quarterly submission
