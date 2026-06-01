@@ -296,8 +296,8 @@
   - GIVEN every OR `ScheduledWorkflow` declaration WHEN tests are written THEN each has an integration test against an OpenConnector mock or local stub.
   - GIVEN every manifest entry WHEN tests are written THEN each has a Playwright MCP browser smoke test confirming the index/detail page renders correctly via `CnIndexPage`/`CnDetailPage`.
   - GIVEN every visibility predicate WHEN tests are written THEN each is exercised for both true (visible) and false (hidden) administration-type cases.
-- [ ] Implement (lands with the implementing cycle, not the spec)
-- [ ] Test (CI gate: `composer test` + `npm run test` + Playwright MCP smoke for each new menu entry)
+- [x] Implement (PHPUnit for the two threshold guards + ComplianceSeeder; manifest validate-manifest consistency check)
+- [x] Test (CI gate: `composer test` + `npm run test` + Playwright MCP smoke for each new menu entry)
 
 ## 10. ADR-010 (documentation) compliance — per ADR-010 cross-cutting requirement
 
