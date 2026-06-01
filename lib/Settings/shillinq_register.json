@@ -3,7 +3,7 @@
   "info": {
     "title": "Shillinq Register",
     "description": "Register containing all schemas for the Shillinq application.",
-    "version": "0.3.0"
+    "version": "0.4.0"
   },
   "x-openregister": {
     "type": "application",
@@ -715,6 +715,372 @@
             "enabled": true,
             "filter": {
               "administrationType": ["gemeente", "provincie", "waterschap"]
+            }
+          }
+        }
+      },
+      "KorThreshold": {
+        "slug": "KorThreshold",
+        "icon": "PercentOutline",
+        "version": "0.1.0",
+        "title": "KOR Threshold",
+        "description": "Versioned statutory KOR threshold record per Wet OB 1968 art. 25 lid 1. Seeded from kor-thresholds-2026.json; multiple records with non-overlapping effectiveFrom/effectiveTo windows support future statutory revisions per REQ-KOR-003.",
+        "x-schema-org": "schema:DefinedTerm",
+        "type": "object",
+        "required": [
+          "thresholdAmount",
+          "warningPercentage",
+          "fiscalYear",
+          "citation",
+          "effectiveFrom"
+        ],
+        "properties": {
+          "thresholdAmount": {
+            "type": "number",
+            "description": "Statutory KOR omzetdrempel in EUR (currently €20,000 per Wet OB 1968 art. 25 lid 1).",
+            "example": 20000
+          },
+          "warningPercentage": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 99,
+            "description": "Percentage of thresholdAmount at which the threshold-warning notification fires (default 80).",
+            "example": 80
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "description": "Fiscal year this threshold record applies to.",
+            "example": 2026
+          },
+          "citation": {
+            "type": "string",
+            "description": "Statutory citation for this threshold value.",
+            "example": "Wet OB 1968 art. 25 lid 1"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "Date from which this threshold record is effective.",
+            "example": "2026-01-01"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date",
+            "description": "Date after which this threshold is superseded. Null means currently in force.",
+            "nullable": true,
+            "example": "2026-12-31"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "vat-administrator": {
+              "permissions": ["read"]
+            },
+            "bookkeeper": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "KorRegime": {
+        "slug": "KorRegime",
+        "icon": "ShieldCheckOutline",
+        "version": "0.1.0",
+        "title": "KOR Regime",
+        "description": "KOR (Kleine Ondernemersregeling) opt-in/opt-out regime record per administrationId and calendar year. Tracks the 5-state lifecycle, YTD revenue (declarative calculation over Invoice T2), threshold, and generates a pending JournalEntry on opt-out per REQ-KOR-006. Visibility restricted to mkb/zzp administration types per REQ-KOR-001.",
+        "x-schema-org": "schema:GovernmentPermit",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "currentCalendarYear",
+          "state",
+          "thresholdAmount",
+          "warningPercentage"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration owning this KOR regime record.",
+            "example": "adm-mkb-1"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "outside",
+              "opted-in",
+              "threshold-warning",
+              "threshold-exceeded",
+              "opted-out"
+            ],
+            "default": "outside",
+            "description": "Current KOR lifecycle state per REQ-KOR-002."
+          },
+          "currentCalendarYear": {
+            "type": "integer",
+            "description": "Calendar year tracked by ytdRevenue. KOR applies per calendar year (Wet OB 1968 art. 25).",
+            "example": 2026
+          },
+          "ytdRevenue": {
+            "type": "number",
+            "description": "Year-to-date revenue within currentCalendarYear, derived via x-openregister-calculations from Invoice (T2 AR sub-ledger). Do not set directly.",
+            "example": 15000.00
+          },
+          "thresholdAmount": {
+            "type": "number",
+            "description": "Active KOR omzetdrempel for currentCalendarYear; read from KorThreshold seed. Default €20,000.",
+            "default": 20000,
+            "example": 20000
+          },
+          "warningPercentage": {
+            "type": "integer",
+            "description": "Warning fires at warningPercentage % of thresholdAmount; read from KorThreshold seed. Default 80.",
+            "default": 80,
+            "example": 80
+          },
+          "optedInAt": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of formal opt-in (Belastingdienst-reported).",
+            "nullable": true,
+            "example": "2026-01-01"
+          },
+          "optedOutAt": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of opt-out or auto-switch.",
+            "nullable": true,
+            "example": "2026-07-15"
+          },
+          "exceededAt": {
+            "type": "string",
+            "format": "date",
+            "description": "Date when ytdRevenue first crossed the full threshold.",
+            "nullable": true,
+            "example": "2026-07-10"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Operator-authored context (e.g. 'Opt-out due to ICP-omzet uitsluiting').",
+            "nullable": true
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "outside",
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "period": "P7Y",
+            "description": "KOR financial records retained 7 years per AWR art. 52 (financiële administratie bewaarplicht)."
+          },
+          "states": {
+            "outside": {
+              "label": "Buiten KOR",
+              "description": "Administration is not enrolled in KOR. No BTW exemption on outputs."
+            },
+            "opted-in": {
+              "label": "KOR actief",
+              "description": "Administration is enrolled in KOR. BTW-vrijstelling op outputs geldt."
+            },
+            "threshold-warning": {
+              "label": "Drempelwaarschuwing (80%)",
+              "description": "YTD revenue has reached 80% of the omzetdrempel. Operator should monitor closely."
+            },
+            "threshold-exceeded": {
+              "label": "Drempel overschreden (100%)",
+              "description": "YTD revenue has reached or exceeded the omzetdrempel. Opt-out required."
+            },
+            "opted-out": {
+              "label": "Buiten KOR (opt-out)",
+              "description": "Administration has opted out of KOR. 3-year re-entry lock-out applies per Wet OB 1968 art. 25 lid 3."
+            }
+          },
+          "transitions": {
+            "optIn": {
+              "from": "outside",
+              "to": "opted-in",
+              "label": "Opt in bij KOR",
+              "description": "Operator opts the administration into KOR for the current calendar year. Belastingdienst notification is the operator's responsibility.",
+              "sets": {
+                "optedInAt": "@now"
+              }
+            },
+            "warnThreshold": {
+              "from": "opted-in",
+              "to": "threshold-warning",
+              "label": "Drempelwaarschuwing",
+              "description": "Auto-transitions when ytdRevenue reaches warningPercentage % of thresholdAmount (default 80% = €16,000 on €20,000 threshold). Calculation-crossing trigger per ADR-031.",
+              "trigger": "calculation-crossing",
+              "requires": "ytdRevenue >= thresholdAmount * warningPercentage / 100"
+            },
+            "exceedThreshold": {
+              "from": "threshold-warning",
+              "to": "threshold-exceeded",
+              "label": "Drempel overschreden",
+              "description": "Auto-transitions when ytdRevenue reaches or exceeds thresholdAmount. Calculation-crossing trigger per ADR-031.",
+              "trigger": "calculation-crossing",
+              "requires": "ytdRevenue >= thresholdAmount",
+              "sets": {
+                "exceededAt": "@now"
+              }
+            },
+            "yearRollover": {
+              "from": "threshold-warning",
+              "to": "opted-in",
+              "label": "Jaar-rollover",
+              "description": "Reverts threshold-warning to opted-in on Jan 1 when ytdRevenue resets to zero for the new calendar year.",
+              "trigger": "calculation-crossing",
+              "requires": "ytdRevenue < thresholdAmount * warningPercentage / 100",
+              "condition": "currentCalendarYear < @year"
+            },
+            "optOutFromExceeded": {
+              "from": "threshold-exceeded",
+              "to": "opted-out",
+              "label": "Opt out (drempel)",
+              "description": "Administration opts out following threshold exceedance. Generates a pending JournalEntry for regime-change BTW reclamation reversal.",
+              "sets": {
+                "optedOutAt": "@now"
+              }
+            },
+            "optOutFromOptedIn": {
+              "from": "opted-in",
+              "to": "opted-out",
+              "label": "Opt out",
+              "description": "Voluntary opt-out by operator.",
+              "sets": {
+                "optedOutAt": "@now"
+              }
+            },
+            "returnToOutside": {
+              "from": "opted-out",
+              "to": "outside",
+              "label": "Terug buiten KOR",
+              "description": "After the 3-year re-entry lock-out per Wet OB 1968 art. 25 lid 3, operator may return to outside state.",
+              "requires": "OCA\\Shillinq\\Guard\\KorLockoutGuard::requireLockoutExpired"
+            }
+          },
+          "hooks": {
+            "onOptOut": {
+              "trigger": "transition:optOutFromExceeded",
+              "description": "On threshold-exceeded → opted-out: create a JournalEntry template for BTW reclamation reversal. MUST ship in state: pending per REQ-KOR-006 safety constraint. Operator + accountant approval required before posting.",
+              "action": "x-openregister-create-related",
+              "actionParameters": {
+                "register": "shillinq",
+                "schema": "JournalEntry",
+                "data": {
+                  "state": "pending",
+                  "type": "manual",
+                  "description": "KOR-regimewijziging: terugdraaien vrijgestelde BTW op outputs (art. 15 lid 2 Wet OB 1968). Goedkeuring vereist van operator en accountant alvorens boeking."
+                }
+              }
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "ytdRevenue": {
+            "description": "Year-to-date revenue sum from Invoice (T2 AR sub-ledger) for this administrationId within currentCalendarYear. Excludes cancelled invoices and credit notes. Per REQ-KOR-004; ADR-031 exception path: if OR's calculation engine cannot express the period-filter aggregation, a thin single-method KorThresholdGuard::currentYtdRevenue() guard (~30 LOC) is permitted.",
+            "expression": "sum(Invoice.totalAmountExclVat)",
+            "sourceSchema": "Invoice",
+            "sourceRegister": "shillinq",
+            "filter": {
+              "administrationId": "@self.administrationId",
+              "invoiceYear": "@self.currentCalendarYear",
+              "state": {
+                "not": ["cancelled", "credit-note"]
+              }
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "onOptIn": {
+            "trigger": "lifecycle.optIn",
+            "description": "Notify vat-administrator when KOR is activated for the administration.",
+            "recipients": {
+              "role": "vat-administrator",
+              "scope": "@self.administrationId"
+            },
+            "title": "KOR geactiveerd",
+            "message": "KOR-vrijstelling is geactiveerd voor administratie @self.administrationId voor jaar @self.currentCalendarYear."
+          },
+          "onThresholdWarning": {
+            "trigger": "lifecycle.warnThreshold",
+            "description": "Notify vat-administrator when YTD revenue reaches the warning threshold (80%).",
+            "recipients": {
+              "role": "vat-administrator",
+              "scope": "@self.administrationId"
+            },
+            "title": "KOR-drempelwaarschuwing",
+            "message": "KOR-omzet bedraagt €@self.ytdRevenue (@self.ytdRevenue / @self.thresholdAmount * 100% van de drempel). Actie aanbevolen."
+          },
+          "onThresholdExceeded": {
+            "trigger": "lifecycle.exceedThreshold",
+            "description": "Notify vat-administrator when YTD revenue reaches or exceeds the full KOR threshold.",
+            "recipients": {
+              "role": "vat-administrator",
+              "scope": "@self.administrationId"
+            },
+            "title": "KOR-drempel overschreden",
+            "message": "KOR-omzetdrempel van €@self.thresholdAmount is overschreden (ytdRevenue: €@self.ytdRevenue). Opt-out vereist; er wordt een journaalpost aangemaakt ter beoordeling."
+          },
+          "onOptOut": {
+            "trigger": "lifecycle.optOutFromExceeded,lifecycle.optOutFromOptedIn",
+            "description": "Notify vat-administrator when the administration opts out of KOR.",
+            "recipients": {
+              "role": "vat-administrator",
+              "scope": "@self.administrationId"
+            },
+            "title": "KOR opt-out",
+            "message": "Administratie @self.administrationId heeft de KOR verlaten. Controleer de aangemaakte journaalpost (state: pending) voor BTW-correcties."
+          }
+        },
+        "x-openregister-widgets": {
+          "korStatus": {
+            "id": "kor-status",
+            "title": "KOR-status",
+            "description": "KOR threshold tracker showing YTD revenue progress bar, regime state, and threshold indicators for mkb/zzp administrations.",
+            "type": "progress-with-state",
+            "register": "shillinq",
+            "schema": "KorRegime",
+            "visibility": {
+              "field": "administrationType",
+              "in": ["mkb", "zzp"]
+            },
+            "fields": {
+              "state": {
+                "label": "KOR-status",
+                "type": "lifecycle-badge"
+              },
+              "ytdRevenue": {
+                "label": "Jaaromzet (YTD)",
+                "type": "currency",
+                "currency": "EUR"
+              },
+              "thresholdAmount": {
+                "label": "Omzetdrempel",
+                "type": "currency",
+                "currency": "EUR"
+              },
+              "progress": {
+                "label": "Omzetbenutting",
+                "type": "progress-bar",
+                "value": "ytdRevenue / thresholdAmount * 100",
+                "thresholds": [
+                  { "value": 80, "variant": "warning" },
+                  { "value": 100, "variant": "danger" }
+                ]
+              }
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "vat-administrator": {
+              "permissions": ["create", "read", "update"]
+            },
+            "bookkeeper": {
+              "permissions": ["read"]
+            },
+            "auditor": {
+              "permissions": ["read"]
             }
           }
         }

@@ -49,6 +49,25 @@
 			]
 		},
 		{
+			"id": "Belastingen",
+			"label": "Belastingen",
+			"icon": "icon-category-monitoring",
+			"order": 25,
+			"visibility": {
+				"field": "administrationType",
+				"in": ["mkb", "zzp"]
+			},
+			"children": [
+				{
+					"id": "KorStatus",
+					"label": "KOR-status",
+					"icon": "ShieldCheckOutline",
+					"route": "KorStatus",
+					"order": 10
+				}
+			]
+		},
+		{
 			"id": "Overheid",
 			"label": "Overheid",
 			"icon": "icon-category-organization",
@@ -100,6 +119,114 @@
 			"title": "Features & roadmap",
 			"config": {
 				"documentationUrl": "https://shillinq.conduction.nl"
+			}
+		},
+		{
+			"id": "KorStatus",
+			"route": "/belastingen/kor",
+			"type": "index",
+			"title": "KOR-status",
+			"config": {
+				"register": "shillinq",
+				"schema": "KorRegime",
+				"visibility": {
+					"field": "administrationType",
+					"in": ["mkb", "zzp"]
+				},
+				"columns": [
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"sortable": true
+					},
+					{
+						"key": "currentCalendarYear",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "ytdRevenue",
+						"label": "Jaaromzet (YTD)",
+						"sortable": true
+					},
+					{
+						"key": "thresholdAmount",
+						"label": "Omzetdrempel",
+						"sortable": false
+					}
+				],
+				"defaultSort": "-currentCalendarYear",
+				"detailRoute": "KorStatusDetail",
+				"widget": "kor-status"
+			}
+		},
+		{
+			"id": "KorStatusDetail",
+			"route": "/belastingen/kor/:id",
+			"type": "detail",
+			"title": "KOR-regime",
+			"config": {
+				"register": "shillinq",
+				"schema": "KorRegime",
+				"fields": [
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "currentCalendarYear",
+						"label": "Kalenderjaar",
+						"type": "integer"
+					},
+					{
+						"key": "state",
+						"label": "KOR-status",
+						"type": "string"
+					},
+					{
+						"key": "ytdRevenue",
+						"label": "Jaaromzet (YTD)",
+						"type": "number"
+					},
+					{
+						"key": "thresholdAmount",
+						"label": "Omzetdrempel",
+						"type": "number"
+					},
+					{
+						"key": "warningPercentage",
+						"label": "Waarschuwingspercentage (%)",
+						"type": "integer"
+					},
+					{
+						"key": "optedInAt",
+						"label": "Opt-in datum",
+						"type": "date"
+					},
+					{
+						"key": "optedOutAt",
+						"label": "Opt-out datum",
+						"type": "date"
+					},
+					{
+						"key": "exceededAt",
+						"label": "Drempel overschreden op",
+						"type": "date"
+					},
+					{
+						"key": "notes",
+						"label": "Notities",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "KorStatus"
 			}
 		},
 		{
@@ -546,6 +673,21 @@
 							"countLabel": "sample",
 							"variant": "default"
 						}
+					},
+					{
+						"id": "kor-status",
+						"title": "KOR-status",
+						"type": "schema-widget",
+						"iconClass": "icon-category-monitoring",
+						"visibility": {
+							"field": "administrationType",
+							"in": ["mkb", "zzp"]
+						},
+						"props": {
+							"register": "shillinq",
+							"schema": "KorRegime",
+							"widget": "korStatus"
+						}
 					}
 				],
 				"layout": [
@@ -580,6 +722,14 @@
 						"gridY": 0,
 						"gridWidth": 3,
 						"gridHeight": 2
+					},
+					{
+						"id": "layout-kor-status",
+						"widgetId": "kor-status",
+						"gridX": 0,
+						"gridY": 2,
+						"gridWidth": 6,
+						"gridHeight": 3
 					}
 				]
 			}

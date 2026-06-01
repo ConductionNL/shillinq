@@ -73,12 +73,14 @@ class InitializeSettings implements IRepairStep
      * Seeding is skipped entirely when administration_id is not configured
      * (C2: prevents "default" contamination of real tenant data).
      * Phase 3: registers the IV3 quarterly CBS ScheduledWorkflow if not yet present.
+     * Phase 4: seeds KOR thresholds from kor-thresholds-2026.json idempotently.
      *
      * @param IOutput $output The output interface for progress reporting
      *
      * @return void
      *
      * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-10
+     * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
      */
     public function run(IOutput $output): void
     {
@@ -125,6 +127,7 @@ class InitializeSettings implements IRepairStep
 
             $this->seedChartOfAccounts(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
+            $this->seedKorThresholds(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -197,6 +200,97 @@ class InitializeSettings implements IRepairStep
         $output->info('Shillinq: IV3 quarterly CBS ScheduledWorkflow registered (interval: 90 days)');
 
     }//end registerIv3ScheduledWorkflow()
+
+    /**
+     * Seed the KOR thresholds from kor-thresholds-2026.json, idempotently.
+     *
+     * Deduplication key is fiscalYear: if a KorThreshold record with the same
+     * fiscalYear already exists in OpenRegister, the seed entry is skipped.
+     * This means re-running the repair step is safe and preserves operator edits.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
+     */
+    private function seedKorThresholds(IOutput $output): void
+    {
+        if ($this->settingsService->isOpenRegisterAvailable() === false) {
+            return;
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/kor-thresholds-2026.json';
+        if (file_exists($seedPath) === false) {
+            $output->warning('Shillinq: KOR threshold seed file not found, skipping');
+            return;
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            $output->warning('Shillinq: failed to read KOR threshold seed file, skipping');
+            return;
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $output->warning('Shillinq: failed to parse KOR threshold seed file: '.json_last_error_msg());
+            return;
+        }
+
+        $thresholds = ($data['thresholds'] ?? []);
+        if (empty($thresholds) === true) {
+            $output->info('Shillinq: KOR threshold seed file contains no thresholds, skipping');
+            return;
+        }
+
+        try {
+            $objectService  = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug   = $this->settingsService->getRegisterSlug();
+            $seeded         = 0;
+            $skipped        = 0;
+
+            foreach ($thresholds as $threshold) {
+                $fiscalYear = ($threshold['fiscalYear'] ?? null);
+                if ($fiscalYear === null) {
+                    continue;
+                }
+
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('KorThreshold')
+                    ->findAll(
+                            [
+                                'filters' => ['fiscalYear' => $fiscalYear],
+                                'limit'   => 1,
+                            ]
+                            );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $threshold,
+                    register: $registerSlug,
+                    schema: 'KorThreshold',
+                );
+                $seeded++;
+            }//end foreach
+
+            $output->info(
+                'Shillinq: KOR thresholds seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        } catch (\Throwable $e) {
+            $output->warning('Shillinq: KOR threshold seeding failed: '.$e->getMessage());
+            $this->logger->warning(
+                'Shillinq: KOR threshold seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+        }//end try
+
+    }//end seedKorThresholds()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.
