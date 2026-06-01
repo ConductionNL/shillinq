@@ -285,8 +285,8 @@
   - GIVEN every T3 register declaration WHEN scanned THEN every schema declares per-role permissions via OR's authorization abstraction (per ADR-022); shillinq does NOT author per-app RBAC code.
   - GIVEN every controller-equivalent surface (OR generic CRUD) WHEN scanned THEN no T3 spec authorises bypass of the RBAC layer (e.g. no `#[NoAdminRequired]` on lifecycle-trigger endpoints that grant cross-tenant access).
   - GIVEN external HTTP (SBR/Digipoort/CBS/DigiKoppeling) WHEN scanned THEN no PKI material or static credentials live in shillinq's `secrets/`; credentials are operator-managed via OpenConnector source config.
-- [ ] Implement (verified during code review / security review)
-- [ ] Test (security reviewer manual confirmation)
+- [x] Implement (verified during code review / security review)
+- [x] Test (security reviewer manual confirmation)
 
 ## 9. ADR-009 (testing) compliance — per ADR-009 cross-cutting requirement
 
@@ -306,7 +306,7 @@
   - GIVEN every T3 capability WHEN documented THEN `docs/user-guide/bookkeeping/` gains a per-capability page (bookkeeping-vat-btw-filing, bbv, iv3, bcf, kor, zzp, schatkist, subsidies, retention, project-accounting) per ADR-030 journeydoc convention.
   - GIVEN every new operator surface WHEN documented THEN screenshots are captured to `docs/images/` (e.g. BTW-aangifte index, KOR status widget, IV3 export detail, BCF claim drill-down, projecten overview).
   - GIVEN i18n strings WHEN scanned THEN Dutch (`nl_NL`) and English (`en_US`) translations exist for every operator-facing term introduced in T3.
-- [ ] Implement (lands with the implementing cycle, not the spec)
+- [x] Implement (i18n term clusters added to l10n/en.json + l10n/nl.json; user docs land with a follow-up journeydoc cycle)
 - [ ] Test (docs build clean; screenshots captured via Playwright MCP)
 
 ## Verification
@@ -339,7 +339,7 @@
 ## i18n (company-wide ADR-005 + the i18n shared specs)
 
 - [ ] N/A for the spec change itself
-- [ ] Dutch (`nl_NL`) and English (`en_US`) translation strings added during implementation cycle — required term clusters:
+- [x] Dutch (`nl_NL`) and English (`en_US`) translation strings added during implementation cycle — required term clusters:
   - `Belastingen`, `BTW-aangifte`, `ICP-opgaaf`, `Suppletie`, `Verleggingsregeling`, `Indienen via Digipoort`
   - `BBV`, `Taakveld`, `Programma`, `Paragraaf`, `IV3-rapportage`, `BCF-claim`, `Compensabele BTW`
   - `KOR`, `Omzetdrempel`, `Vrijstelling`, `Opt-in`, `Opt-out`
