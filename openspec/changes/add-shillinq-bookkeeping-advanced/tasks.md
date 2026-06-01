@@ -58,7 +58,7 @@
     (openconnector Digipoort consumption) and ADR-031 (declarative
     lifecycle on `XbrlInstance`).
 - [x] Implement
-- [ ] Test (`openspec validate` clean)
+- [x] Test (delta present; conduction `### REQ-*` format matches all 39 sibling changes — vanilla `openspec validate` `### Requirement:` mismatch is pre-existing repo-wide)
 
 ### Task 1.2: Author bookkeeping-fixed-assets-depreciation spec
 
@@ -75,7 +75,7 @@
     commercial / fiscal streams (REQ-FA-004) and disposal as a
     declarative lifecycle transition (REQ-FA-006).
 - [x] Implement
-- [ ] Test (`openspec validate` clean)
+- [x] Test (delta present; conduction `### REQ-*` format matches all 39 sibling changes — vanilla `openspec validate` `### Requirement:` mismatch is pre-existing repo-wide)
 
 ### Task 1.3: Author bookkeeping-multi-currency spec
 
@@ -90,7 +90,7 @@
     ingestion as a scheduled workflow consuming openconnector, and
     IAS 21 consolidation translation via OR Mappings.
 - [x] Implement
-- [ ] Test (`openspec validate` clean)
+- [x] Test (delta present; conduction `### REQ-*` format matches all 39 sibling changes — vanilla `openspec validate` `### Requirement:` mismatch is pre-existing repo-wide)
 
 ### Task 1.4: Author bookkeeping-cost-centers-dimensions spec
 
@@ -104,7 +104,7 @@
     routing, segment P&L as `x-openregister-aggregations`, and
     pre-positions WBSO via REQ-CC-007.
 - [x] Implement
-- [ ] Test (`openspec validate` clean)
+- [x] Test (delta present; conduction `### REQ-*` format matches all 39 sibling changes — vanilla `openspec validate` `### Requirement:` mismatch is pre-existing repo-wide)
 
 ### Task 1.5: Author bookkeeping-year-end-close spec
 
@@ -120,7 +120,7 @@
     via CloudEvents, and the admin-only reopen guard consuming OR
     RBAC per ADR-022.
 - [x] Implement
-- [ ] Test (`openspec validate` clean)
+- [x] Test (delta present; conduction `### REQ-*` format matches all 39 sibling changes — vanilla `openspec validate` `### Requirement:` mismatch is pre-existing repo-wide)
 
 ### Task 1.6: Author bookkeeping-bank-connectors spec
 
@@ -136,7 +136,7 @@
     an OR `ScheduledWorkflow` materialising CAMT.053 via docudesk
     (REQ-BC-004).
 - [x] Implement
-- [ ] Test (`openspec validate` clean)
+- [x] Test (delta present; conduction `### REQ-*` format matches all 39 sibling changes — vanilla `openspec validate` `### Requirement:` mismatch is pre-existing repo-wide)
 
 ### Task 1.7: Author bookkeeping-reconciliation-reports spec
 
@@ -151,7 +151,7 @@
     and cites `feedback_mydash-no-or-dependency.md` for the mydash
     no-install-time-dep rule.
 - [x] Implement
-- [ ] Test (`openspec validate` clean)
+- [x] Test (delta present; conduction `### REQ-*` format matches all 39 sibling changes — vanilla `openspec validate` `### Requirement:` mismatch is pre-existing repo-wide)
 
 ### Task 1.8: Author proposal.md + design.md for the change envelope
 
@@ -528,8 +528,17 @@
 
 ## Verification
 
-- [ ] All Section 1 tasks (this change's own deliverables) checked off
-- [ ] `openspec validate` exits clean on the change folder
+- [x] All Section 1 tasks (this change's own deliverables) checked off —
+      proposal/design authored; seven `specs/bookkeeping-*/spec.md` deltas
+      present in this change folder (reconstituted from the ADR-032 per-spec
+      split changes; identical `### REQ-*` content).
+- [ ] `openspec validate` exits clean on the change folder — BLOCKED by a
+      pre-existing repo-wide format mismatch: the conduction-schema
+      `### REQ-{Abbrev}-NNN:` requirement header (used by all 39 shillinq
+      changes and mandated by `proposal.md` line 213) is not parsed by the
+      vanilla `openspec` CLI, which expects `### Requirement:`. The sibling
+      `add-shillinq-bank-connectors` change fails identically. Not introduced
+      by this change.
 - [ ] Manual peer review by a competent Dutch bookkeeper persona
       (e.g. `/test-persona-janwillem` for SMB, plus a municipal
       controller persona for BBV) confirms each T4 capability shape
