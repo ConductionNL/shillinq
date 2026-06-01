@@ -204,7 +204,322 @@
             "groupBy": "lifecycleState"
           }
         }
+      },
+      "FixedAsset": {
+        "slug": "FixedAsset",
+        "icon": "OfficeBuildingOutline",
+        "version": "0.1.0",
+        "title": "Fixed Asset",
+        "description": "A capitalised tangible or intangible business asset with declarative depreciation rules, parallel commercial/fiscal streams, and a managed lifecycle (proposed → active → disposed → archived). Depreciation values are derived on demand — no materialised schedule table.",
+        "type": "object",
+        "x-schema-org": "schema:Thing",
+        "required": [
+          "assetNumber",
+          "name",
+          "assetCategory",
+          "acquisitionDate",
+          "acquisitionCost",
+          "currency",
+          "usefulLifeMonths",
+          "residualValue",
+          "depreciationMethod",
+          "assetAccountNumber",
+          "accumulatedDepAccountNumber",
+          "depreciationExpenseAccountNumber",
+          "lifecycleState",
+          "administrationId"
+        ],
+        "properties": {
+          "assetNumber": {
+            "type": "string",
+            "description": "Operator-assigned unique reference within the administration (e.g. FA-0001).",
+            "example": "FA-0001"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable asset name (e.g. Dell laptop XPS-15).",
+            "example": "Dell laptop XPS-15"
+          },
+          "assetCategory": {
+            "type": "string",
+            "description": "Asset category classification.",
+            "enum": [
+              "buildings",
+              "vehicles",
+              "machinery",
+              "it-equipment",
+              "furniture",
+              "intangibles"
+            ],
+            "example": "it-equipment"
+          },
+          "acquisitionDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the asset entered service.",
+            "example": "2026-01-01"
+          },
+          "acquisitionCost": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Original cost in the administration's base currency.",
+            "example": 2400
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency of the acquisition cost.",
+            "minLength": 3,
+            "maxLength": 3,
+            "example": "EUR",
+            "default": "EUR"
+          },
+          "usefulLifeMonths": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Useful life expressed in months.",
+            "example": 48
+          },
+          "residualValue": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Estimated salvage value at end of useful life.",
+            "example": 0
+          },
+          "depreciationMethod": {
+            "type": "string",
+            "description": "Depreciation method applied to this asset.",
+            "enum": [
+              "linear",
+              "degressive",
+              "units-of-production",
+              "none"
+            ],
+            "example": "linear"
+          },
+          "degressiveRate": {
+            "type": "number",
+            "description": "Annual declining-balance percentage when depreciationMethod = degressive (e.g. 0.20 for 20%). Required when method is degressive.",
+            "example": 0.20,
+            "nullable": true
+          },
+          "commercialRate": {
+            "type": "number",
+            "description": "Annual depreciation rate for commercial books (IFRS / Dutch GAAP). When set together with fiscalRate, two parallel streams are produced.",
+            "example": 0.20,
+            "nullable": true
+          },
+          "fiscalRate": {
+            "type": "number",
+            "description": "Annual depreciation rate for fiscal books (Wet IB / Wet VPB). May differ from commercialRate (e.g. Wet IB 20% cap rule).",
+            "example": 0.33,
+            "nullable": true
+          },
+          "assetAccountNumber": {
+            "type": "string",
+            "description": "FK to the Account carrying the asset's gross value (e.g. 0220).",
+            "example": "0220"
+          },
+          "accumulatedDepAccountNumber": {
+            "type": "string",
+            "description": "FK to the contra Account for accumulated depreciation (e.g. 0225).",
+            "example": "0225"
+          },
+          "depreciationExpenseAccountNumber": {
+            "type": "string",
+            "description": "FK to the P&L Account for the depreciation expense charge (e.g. 4500).",
+            "example": "4500"
+          },
+          "disposalDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the asset was disposed of (sale, scrap, donation). Set when lifecycleState transitions to disposed.",
+            "nullable": true
+          },
+          "disposalAccountingTreatment": {
+            "type": "string",
+            "description": "Accounting treatment on disposal. Required when disposalDate is set.",
+            "enum": [
+              "sale",
+              "scrap",
+              "donation",
+              "transfer"
+            ],
+            "nullable": true
+          },
+          "lifecycleState": {
+            "type": "string",
+            "description": "Current lifecycle state of the asset.",
+            "enum": [
+              "proposed",
+              "active",
+              "disposed",
+              "archived"
+            ],
+            "example": "active",
+            "default": "proposed"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this asset. Scopes uniqueness of assetNumber.",
+            "example": "adm-1"
+          }
+        },
+        "x-openregister-calculations": {
+          "monthlyDepreciation": {
+            "description": "Monthly depreciation charge for the current period under the linear method. Zero when depreciationMethod = none.",
+            "expression": "(depreciationMethod == 'none') ? 0 : (depreciationMethod == 'linear') ? (acquisitionCost - residualValue) / usefulLifeMonths : (depreciationMethod == 'degressive') ? (currentBookValue * degressiveRate / 12) : 0",
+            "dependsOn": ["acquisitionCost", "residualValue", "usefulLifeMonths", "depreciationMethod", "degressiveRate", "acquisitionDate"]
+          },
+          "currentBookValue": {
+            "description": "Current net book value. Equals acquisitionCost minus accumulated depreciation calculated from acquisitionDate to today. For none-method assets this always equals acquisitionCost.",
+            "expression": "(depreciationMethod == 'none') ? acquisitionCost : max(residualValue, acquisitionCost - ((acquisitionCost - residualValue) / usefulLifeMonths) * monthsElapsed(@self.acquisitionDate))",
+            "dependsOn": ["acquisitionCost", "residualValue", "usefulLifeMonths", "depreciationMethod", "acquisitionDate"]
+          },
+          "commercialBookValue": {
+            "description": "Net book value under the commercial depreciation stream (IFRS / Dutch GAAP). Only meaningful when commercialRate is set.",
+            "expression": "(commercialRate == null) ? currentBookValue : max(0, acquisitionCost * (1 - commercialRate * (monthsElapsed(@self.acquisitionDate) / 12)))",
+            "dependsOn": ["acquisitionCost", "commercialRate", "acquisitionDate"]
+          },
+          "fiscalBookValue": {
+            "description": "Net book value under the fiscal depreciation stream (Wet IB / Wet VPB). Only meaningful when fiscalRate is set.",
+            "expression": "(fiscalRate == null) ? currentBookValue : max(0, acquisitionCost * (1 - fiscalRate * (monthsElapsed(@self.acquisitionDate) / 12)))",
+            "dependsOn": ["acquisitionCost", "fiscalRate", "acquisitionDate"]
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "proposed",
+          "states": {
+            "proposed": {
+              "label": "Proposed",
+              "description": "Asset is under consideration for capitalisation. Not yet active on the balance sheet."
+            },
+            "active": {
+              "label": "Active",
+              "description": "Asset is capitalised and subject to periodic depreciation postings."
+            },
+            "disposed": {
+              "label": "Disposed",
+              "description": "Asset has been sold, scrapped, donated, or transferred. A closing JournalEntry has been emitted."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Asset record is retained for historical reference only. No further postings or edits."
+            }
+          },
+          "transitions": {
+            "activate": {
+              "from": "proposed",
+              "to": "active",
+              "label": "Activate asset",
+              "description": "Capitalise the asset and start the depreciation clock."
+            },
+            "dispose": {
+              "from": "active",
+              "to": "disposed",
+              "label": "Dispose asset",
+              "description": "Dispose of the asset and emit a closing JournalEntry (credits asset account for gross value, debits accumulated depreciation, posts gain/loss based on disposalAccountingTreatment and disposal proceeds).",
+              "action": {
+                "type": "emit-journal-entry",
+                "subType": "disposal",
+                "description": "Emits a balanced JournalEntry zeroing the asset account and accumulated depreciation, and posting any gain or loss to the configured P&L account based on disposalAccountingTreatment.",
+                "requiredInput": ["disposalDate", "disposalAccountingTreatment", "disposalProceeds"]
+              }
+            },
+            "archive": {
+              "from": "disposed",
+              "to": "archived",
+              "label": "Archive asset",
+              "description": "Move disposed asset to historical archive."
+            },
+            "rejectProposal": {
+              "from": "proposed",
+              "to": "archived",
+              "label": "Reject proposal",
+              "description": "Reject the asset proposal without capitalising it."
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "administration": {
+            "localField": "administrationId",
+            "relatedSchema": "Administration",
+            "relatedField": "id",
+            "cardinality": "many-to-one",
+            "description": "Administration that owns this asset."
+          },
+          "assetAccount": {
+            "localField": "assetAccountNumber",
+            "relatedSchema": "Account",
+            "relatedField": "accountNumber",
+            "cardinality": "many-to-one",
+            "description": "Balance-sheet account carrying the asset's gross value."
+          },
+          "accumulatedDepAccount": {
+            "localField": "accumulatedDepAccountNumber",
+            "relatedSchema": "Account",
+            "relatedField": "accountNumber",
+            "cardinality": "many-to-one",
+            "description": "Contra account for accumulated depreciation."
+          },
+          "depreciationExpenseAccount": {
+            "localField": "depreciationExpenseAccountNumber",
+            "relatedSchema": "Account",
+            "relatedField": "accountNumber",
+            "cardinality": "many-to-one",
+            "description": "P&L account for the periodic depreciation expense charge."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            },
+            "admin": {
+              "permissions": ["create", "read", "update", "delete"]
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "totalByCategory": {
+            "field": "assetCategory",
+            "operation": "count",
+            "description": "Number of active assets per assetCategory.",
+            "groupBy": "assetCategory",
+            "filter": {"lifecycleState": "active"}
+          },
+          "totalAcquisitionCost": {
+            "field": "acquisitionCost",
+            "operation": "sum",
+            "description": "Total gross acquisition cost of all active assets.",
+            "filter": {"lifecycleState": "active"}
+          }
+        }
       }
-    }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "FixedAsset",
+          "slug": "scheduled-workflow-monthly-depreciation"
+        },
+        "type": "ScheduledWorkflow",
+        "name": "Monthly depreciation run",
+        "description": "Iterates all active FixedAsset records, reads each asset's monthlyDepreciation calculated field, and creates a balanced JournalEntry (debit depreciationExpenseAccountNumber, credit accumulatedDepAccountNumber) of sub-type 'recurring' per asset. Driven by OR ScheduledWorkflowJob on a monthly cadence via n8n adapter.",
+        "register": "shillinq",
+        "schema": "FixedAsset",
+        "filter": {"lifecycleState": "active"},
+        "calculatedField": "monthlyDepreciation",
+        "outputSchema": "JournalEntry",
+        "outputSubType": "recurring",
+        "cadence": "monthly",
+        "n8nWorkflowId": "monthly-depreciation",
+        "enabled": true
+      }
+    ]
   }
 }

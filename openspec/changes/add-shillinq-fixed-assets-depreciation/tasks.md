@@ -10,16 +10,16 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `FixedAsset` schema or `bookkeeping-fixed-assets-depreciation` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `adr-000-data-model.md`)
-- [ ] Task 2: Author `specs/bookkeeping-fixed-assets-depreciation/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4 (advanced engine)` / `Depends on: bookkeeping-general-ledger (T1)` header, `REQ-FA-NNN` requirements using RFC 2119 keywords, `#### Scenario:` blocks with GIVEN/WHEN/THEN
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions per shillinq config.yaml `rules.proposal`
-- [ ] Task 4: Author `design.md` with Decisions (declarative state machine, derived-field depreciation, parallel commercial/fiscal streams, `ScheduledWorkflow` for monthly run) and Reuse Analysis table per hydra `rules.design`
-- [ ] Task 5: Declare the `FixedAsset` schema in `lib/Settings/shillinq_register.json` with all REQ-FA-002 fields (assetNumber, name, assetCategory, acquisitionDate, acquisitionCost, currency, usefulLifeMonths, residualValue, depreciationMethod, degressiveRate, commercialRate, fiscalRate, assetAccountNumber, accumulatedDepAccountNumber, depreciationExpenseAccountNumber, disposalDate, disposalAccountingTreatment, lifecycleState, administrationId)
-- [ ] Task 6: Add `x-openregister-calculations` to `FixedAsset` declaring `monthlyDepreciation`, `currentBookValue`, `commercialBookValue`, `fiscalBookValue` as derived fields per REQ-FA-003 + REQ-FA-004
-- [ ] Task 7: Add `x-openregister-lifecycle` to `FixedAsset` declaring `proposed → active → disposed → archived` transitions; the `active → disposed` action emits a closing T1 `JournalEntry` per REQ-FA-006
-- [ ] Task 8: Register an OR `ScheduledWorkflow` for the monthly depreciation run (reads each active asset's `monthlyDepreciation`, emits a balanced `GLTransaction` per asset) per REQ-FA-005 + ADR-031 path 2; no `DepreciationJob extends TimedJob` PHP class
-- [ ] Task 9: Add Fixed Assets navigation + pages to `src/manifest.json` (menu entry `Bookkeeping > Fixed Assets`, `type: index` page binding to `FixedAsset`, `type: detail` page surfacing acquisition/disposal actions) per REQ-FA-007; `node tests/validate-manifest.js` exits 0
-- [ ] Task 10: Update `openspec/architecture/adr-000-data-model.md` with a one-paragraph reconciliation note introducing `FixedAsset` and its references from `GLLine.subLedgerRef` when `subLedgerType = fixed-asset`
+- [x] Task 1: Confirm no `FixedAsset` schema or `bookkeeping-fixed-assets-depreciation` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `adr-000-data-model.md`)
+- [x] Task 2: Author `specs/bookkeeping-fixed-assets-depreciation/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4 (advanced engine)` / `Depends on: bookkeeping-general-ledger (T1)` header, `REQ-FA-NNN` requirements using RFC 2119 keywords, `#### Scenario:` blocks with GIVEN/WHEN/THEN
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions per shillinq config.yaml `rules.proposal`
+- [x] Task 4: Author `design.md` with Decisions (declarative state machine, derived-field depreciation, parallel commercial/fiscal streams, `ScheduledWorkflow` for monthly run) and Reuse Analysis table per hydra `rules.design`
+- [x] Task 5: Declare the `FixedAsset` schema in `lib/Settings/shillinq_register.json` with all REQ-FA-002 fields (assetNumber, name, assetCategory, acquisitionDate, acquisitionCost, currency, usefulLifeMonths, residualValue, depreciationMethod, degressiveRate, commercialRate, fiscalRate, assetAccountNumber, accumulatedDepAccountNumber, depreciationExpenseAccountNumber, disposalDate, disposalAccountingTreatment, lifecycleState, administrationId)
+- [x] Task 6: Add `x-openregister-calculations` to `FixedAsset` declaring `monthlyDepreciation`, `currentBookValue`, `commercialBookValue`, `fiscalBookValue` as derived fields per REQ-FA-003 + REQ-FA-004
+- [x] Task 7: Add `x-openregister-lifecycle` to `FixedAsset` declaring `proposed → active → disposed → archived` transitions; the `active → disposed` action emits a closing T1 `JournalEntry` per REQ-FA-006
+- [x] Task 8: Register an OR `ScheduledWorkflow` for the monthly depreciation run (reads each active asset's `monthlyDepreciation`, emits a balanced `GLTransaction` per asset) per REQ-FA-005 + ADR-031 path 2; no `DepreciationJob extends TimedJob` PHP class
+- [x] Task 9: Add Fixed Assets navigation + pages to `src/manifest.json` (menu entry `Bookkeeping > Fixed Assets`, `type: index` page binding to `FixedAsset`, `type: detail` page surfacing acquisition/disposal actions) per REQ-FA-007; `node tests/validate-manifest.js` exits 0
+- [x] Task 10: Update `openspec/architecture/adr-000-data-model.md` with a one-paragraph reconciliation note introducing `FixedAsset` and its references from `GLLine.subLedgerRef` when `subLedgerType = fixed-asset`
 
 ## Verification
 
