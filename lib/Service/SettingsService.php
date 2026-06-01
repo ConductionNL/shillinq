@@ -330,6 +330,100 @@ class SettingsService
     }//end importAccounts()
 
     /**
+     * Seed KOR thresholds from kor-thresholds-2026.json, idempotently.
+     *
+     * Imports KorThreshold records into OpenRegister. Records are deduplicated on
+     * (fiscalYear, effectiveFrom). Existing records are skipped, preserving statutory
+     * data integrity across upgrade runs.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
+     */
+    public function seedKorThresholds(): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/kor-thresholds-2026.json';
+        if (file_exists($seedPath) === false) {
+            return ['success' => false, 'message' => 'KOR threshold seed file not found.'];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return ['success' => false, 'message' => 'Failed to read KOR threshold seed file.'];
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return ['success' => false, 'message' => 'Failed to parse KOR threshold seed: '.json_last_error_msg()];
+        }
+
+        $thresholds = ($data['thresholds'] ?? []);
+        if (empty($thresholds) === true) {
+            return ['success' => false, 'message' => 'KOR threshold seed contains no thresholds.'];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($thresholds as $threshold) {
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('KorThreshold')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'fiscalYear'    => $threshold['fiscalYear'],
+                                'effectiveFrom' => $threshold['effectiveFrom'],
+                            ],
+                            'limit'   => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $threshold,
+                    register: $registerSlug,
+                    schema: 'KorThreshold',
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: KOR thresholds seeded',
+                ['seeded' => $seeded, 'skipped' => $skipped]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'KOR thresholds seeded successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: KOR threshold seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return ['success' => false, 'message' => $e->getMessage()];
+        }//end try
+
+    }//end seedKorThresholds()
+
+    /**
      * Load configuration from shillinq_register.json via OpenRegister.
      *
      * Skips import when the register is already configured (idempotent).

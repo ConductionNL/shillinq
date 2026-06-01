@@ -28,6 +28,24 @@
 			]
 		},
 		{
+			"id": "Belastingen",
+			"label": "Belastingen",
+			"icon": "icon-category-organization",
+			"order": 30,
+			"children": [
+				{
+					"id": "KorStatus",
+					"label": "KOR-status",
+					"icon": "TaxOutline",
+					"route": "KorStatus",
+					"order": 10,
+					"visibilityPredicate": {
+						"administrationType": ["mkb", "zzp"]
+					}
+				}
+			]
+		},
+		{
 			"id": "Documentation",
 			"label": "Documentation",
 			"icon": "icon-info",
@@ -60,6 +78,110 @@
 			"title": "Features & roadmap",
 			"config": {
 				"documentationUrl": "https://shillinq.conduction.nl"
+			}
+		},
+		{
+			"id": "KorStatus",
+			"route": "/belastingen/kor-status",
+			"type": "index",
+			"title": "KOR-status",
+			"visibilityPredicate": {
+				"administrationType": ["mkb", "zzp"]
+			},
+			"config": {
+				"register": "shillinq",
+				"schema": "KorRegime",
+				"columns": [
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "currentCalendarYear",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "ytdRevenue",
+						"label": "Omzet YTD (€)",
+						"sortable": true
+					},
+					{
+						"key": "thresholdAmount",
+						"label": "Drempel (€)",
+						"sortable": false
+					}
+				],
+				"defaultSort": "currentCalendarYear",
+				"detailRoute": "KorStatusDetail"
+			}
+		},
+		{
+			"id": "KorStatusDetail",
+			"route": "/belastingen/kor-status/:id",
+			"type": "detail",
+			"title": "KOR Regime",
+			"visibilityPredicate": {
+				"administrationType": ["mkb", "zzp"]
+			},
+			"config": {
+				"register": "shillinq",
+				"schema": "KorRegime",
+				"fields": [
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "currentCalendarYear",
+						"label": "Boekjaar",
+						"type": "integer"
+					},
+					{
+						"key": "ytdRevenue",
+						"label": "Omzet YTD (€)",
+						"type": "number"
+					},
+					{
+						"key": "thresholdAmount",
+						"label": "Omzetdrempel (€)",
+						"type": "number"
+					},
+					{
+						"key": "warningPercentage",
+						"label": "Waarschuwingspercentage (%)",
+						"type": "integer"
+					},
+					{
+						"key": "optedInAt",
+						"label": "Opt-in datum",
+						"type": "date"
+					},
+					{
+						"key": "optedOutAt",
+						"label": "Opt-out datum",
+						"type": "date"
+					},
+					{
+						"key": "notes",
+						"label": "Notities",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "KorStatus"
 			}
 		},
 		{
@@ -168,6 +290,26 @@
 			"config": {
 				"widgets": [
 					{
+						"id": "kor-status-widget",
+						"title": "KOR Status",
+						"type": "kor-status",
+						"iconClass": "icon-tax",
+						"visibilityPredicate": {
+							"administrationType": ["mkb", "zzp"]
+						},
+						"config": {
+							"register": "shillinq",
+							"schema": "KorRegime",
+							"fields": {
+								"state": "state",
+								"current": "ytdRevenue",
+								"total": "thresholdAmount",
+								"warningThreshold": "warningPercentage",
+								"label": "Omzetdrempel KOR"
+							}
+						}
+					},
+					{
 						"id": "open-items",
 						"title": "Open items",
 						"type": "stats-block",
@@ -214,9 +356,17 @@
 				],
 				"layout": [
 					{
+						"id": "layout-kor-status-widget",
+						"widgetId": "kor-status-widget",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 6,
+						"gridHeight": 3
+					},
+					{
 						"id": "layout-open-items",
 						"widgetId": "open-items",
-						"gridX": 0,
+						"gridX": 6,
 						"gridY": 0,
 						"gridWidth": 3,
 						"gridHeight": 2
@@ -224,7 +374,7 @@
 					{
 						"id": "layout-due-this-week",
 						"widgetId": "due-this-week",
-						"gridX": 3,
+						"gridX": 9,
 						"gridY": 0,
 						"gridWidth": 3,
 						"gridHeight": 2
@@ -233,7 +383,7 @@
 						"id": "layout-completed",
 						"widgetId": "completed",
 						"gridX": 6,
-						"gridY": 0,
+						"gridY": 2,
 						"gridWidth": 3,
 						"gridHeight": 2
 					},
@@ -241,7 +391,7 @@
 						"id": "layout-team-members",
 						"widgetId": "team-members",
 						"gridX": 9,
-						"gridY": 0,
+						"gridY": 2,
 						"gridWidth": 3,
 						"gridHeight": 2
 					}

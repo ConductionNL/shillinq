@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 225
+**Entities:** 227
 
 ## Context
 
@@ -1933,6 +1933,42 @@ _A balanced transaction record affecting two or more GL accounts (debits equal c
 **Relations:**
 - → GeneralLedgerAccount (many-to-many)
 - → FiscalYear (many-to-one)
+
+### KorRegime
+**Schema.org:** `schema:GovernmentPermit`
+_KOR (Kleine Ondernemersregeling) opt-in/opt-out regime per Wet OB 1968 art. 25. Tracks YTD revenue against the €20.000 omzetdrempel for MKB and ZZP administrations._
+**Primary spec:** bookkeeping-kor-kleine-ondernemersregeling
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the administration owning this KOR regime |
+| state | enum | Yes | One of: outside, opted-in, threshold-warning, threshold-exceeded, opted-out |
+| optedInAt | date | No | Date of formal opt-in (Belastingdienst-reported) |
+| optedOutAt | date | No | Date of opt-out or auto-switch |
+| currentCalendarYear | integer | Yes | The calendar year tracked by ytdRevenue |
+| ytdRevenue | number | Yes | Derived via x-openregister-calculations from Invoice (T2) within the calendar year |
+| thresholdAmount | number | Yes | Statutory threshold (currently €20.000); read from KorThreshold seed |
+| warningPercentage | integer | Yes | Default 80 (warning fires at 80% of threshold); from seed |
+| notes | string | No | Operator-authored context |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- → KorThreshold (many-to-one, active threshold for currentCalendarYear)
+- → JournalEntry (one-to-many, opt-out JournalEntry in state: pending)
+
+### KorThreshold
+**Schema.org:** `schema:DefinedTerm`
+_Versioned statutory KOR threshold record per Wet OB 1968 art. 25 lid 1. Loaded from kor-thresholds-2026.json seed. Non-overlapping effectiveFrom/effectiveTo windows support future threshold revisions without code changes._
+**Primary spec:** bookkeeping-kor-kleine-ondernemersregeling
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| thresholdAmount | number | Yes | Statutory omzetdrempel in EUR (currently €20.000 per Wet OB 1968 art. 25 lid 1) |
+| warningPercentage | integer | Yes | Warning percentage (default 80); warning notification fires at this percentage of thresholdAmount |
+| fiscalYear | integer | Yes | Fiscal year this threshold record applies to |
+| effectiveFrom | date | Yes | Start of the period during which this threshold record is active |
+| effectiveTo | date | No | End of the period; null = open-ended |
+| citation | string | No | Statutory citation for the threshold amount |
 
 ### LiquidityForecast
 **Schema.org:** `schema:Report`

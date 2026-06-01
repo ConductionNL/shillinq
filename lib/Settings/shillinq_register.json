@@ -37,6 +37,315 @@
           }
         }
       },
+      "KorRegime": {
+        "slug": "KorRegime",
+        "icon": "TaxOutline",
+        "version": "0.1.0",
+        "title": "KOR Regime",
+        "description": "KOR (Kleine Ondernemersregeling) opt-in/opt-out regime per Wet OB 1968 art. 25. Tracks YTD revenue against the €20.000 omzetdrempel for MKB and ZZP administrations.",
+        "type": "object",
+        "x-schema-org": "schema:GovernmentPermit",
+        "required": [
+          "administrationId",
+          "state",
+          "currentCalendarYear",
+          "ytdRevenue",
+          "thresholdAmount",
+          "warningPercentage"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration owning this KOR regime.",
+            "example": "adm-mkb-001"
+          },
+          "state": {
+            "type": "string",
+            "description": "Current lifecycle state of the KOR regime.",
+            "enum": [
+              "outside",
+              "opted-in",
+              "threshold-warning",
+              "threshold-exceeded",
+              "opted-out"
+            ],
+            "default": "outside",
+            "example": "opted-in"
+          },
+          "optedInAt": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of formal opt-in (Belastingdienst-reported).",
+            "nullable": true
+          },
+          "optedOutAt": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of opt-out or auto-switch.",
+            "nullable": true
+          },
+          "currentCalendarYear": {
+            "type": "integer",
+            "description": "The calendar year tracked by ytdRevenue.",
+            "example": 2026
+          },
+          "ytdRevenue": {
+            "type": "number",
+            "description": "Year-to-date revenue derived via x-openregister-calculations from Invoice (T2) within the calendar year.",
+            "example": 15000.00,
+            "default": 0
+          },
+          "thresholdAmount": {
+            "type": "number",
+            "description": "Statutory threshold (currently €20.000); read from kor-thresholds-2026.json seed.",
+            "example": 20000.00,
+            "default": 20000
+          },
+          "warningPercentage": {
+            "type": "integer",
+            "description": "Default 80 (warning fires at 80% of threshold); from seed.",
+            "example": 80,
+            "default": 80
+          },
+          "notes": {
+            "type": "string",
+            "description": "Operator-authored context (e.g. 'Opt-out due to ICP-omzet uitsluiting').",
+            "nullable": true
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "outside",
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "years": 7
+          },
+          "states": {
+            "outside": {
+              "label": "Outside KOR",
+              "description": "Administration is not opted into KOR. Default state for all eligible administrations."
+            },
+            "opted-in": {
+              "label": "Opted In",
+              "description": "Administration is opted into KOR. YTD revenue is being tracked against the omzetdrempel."
+            },
+            "threshold-warning": {
+              "label": "Threshold Warning (80%)",
+              "description": "YTD revenue has reached 80% of the omzetdrempel. Warning notification has been issued."
+            },
+            "threshold-exceeded": {
+              "label": "Threshold Exceeded",
+              "description": "YTD revenue has reached or exceeded the omzetdrempel (€20.000). Opt-out action required."
+            },
+            "opted-out": {
+              "label": "Opted Out",
+              "description": "Administration has exited KOR. A JournalEntry (state: pending) has been created for accountant review."
+            }
+          },
+          "transitions": {
+            "opt-in": {
+              "from": "outside",
+              "to": "opted-in",
+              "label": "Opt in to KOR",
+              "description": "Operator opts the administration into KOR for the current calendar year."
+            },
+            "warn-threshold": {
+              "from": "opted-in",
+              "to": "threshold-warning",
+              "label": "Threshold warning (80%)",
+              "description": "Automatic: fires when ytdRevenue reaches warningPercentage % of thresholdAmount.",
+              "trigger": "calculation-crossing",
+              "requires": "ytdRevenue >= (thresholdAmount * warningPercentage / 100)"
+            },
+            "exceed-threshold": {
+              "from": "threshold-warning",
+              "to": "threshold-exceeded",
+              "label": "Threshold exceeded",
+              "description": "Automatic: fires when ytdRevenue reaches or exceeds thresholdAmount.",
+              "trigger": "calculation-crossing",
+              "requires": "ytdRevenue >= thresholdAmount"
+            },
+            "year-rollover-reset": {
+              "from": "threshold-warning",
+              "to": "opted-in",
+              "label": "Calendar year rollover",
+              "description": "Fires on Jan 1 when currentCalendarYear increments and ytdRevenue resets to 0."
+            },
+            "opt-out-from-exceeded": {
+              "from": "threshold-exceeded",
+              "to": "opted-out",
+              "label": "Opt out (threshold exceeded)",
+              "description": "Operator or auto-trigger opts out after threshold is exceeded. Creates JournalEntry in state: pending."
+            },
+            "opt-out-from-opted-in": {
+              "from": "opted-in",
+              "to": "opted-out",
+              "label": "Opt out voluntarily",
+              "description": "Operator opts out before threshold is reached."
+            },
+            "re-enter-outside": {
+              "from": "opted-out",
+              "to": "outside",
+              "label": "Re-enter (after 3-year lock-out)",
+              "description": "Operator re-enters eligibility after the 3-year KOR lock-out per Wet OB 1968 art. 25 lid 3.",
+              "requires": "OCA\\Shillinq\\Guard\\KorLockoutGuard::requireLockoutExpired"
+            }
+          },
+          "postTransitionActions": {
+            "opt-out-from-exceeded": {
+              "action": "create-journal-entry",
+              "schema": "JournalEntry",
+              "state": "pending",
+              "description": "Create a KOR-vrijval JournalEntry template in state: pending for operator + accountant approval. NEVER auto-posted per REQ-KOR-006."
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "ytdRevenue": {
+            "description": "Sum of Invoice.totalAmountExclVat for the same administrationId within currentCalendarYear.",
+            "operation": "sum",
+            "sourceSchema": "Invoice",
+            "sourceField": "totalAmountExclVat",
+            "filters": {
+              "administrationId": "{{administrationId}}",
+              "invoiceYear": "{{currentCalendarYear}}",
+              "status": "posted"
+            },
+            "adr031Exception": {
+              "guard": "OCA\\Shillinq\\Guard\\KorThresholdGuard::currentYtdRevenue",
+              "reason": "Cross-period (year-to-date) aggregation may not be expressible declaratively by OR's calculation engine. Thin single-method PHP guard (~30 LOC, no state) is the ADR-031 exception path. Resolved in implementing cycle opsx-ff discovery."
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "opted-in-notification": {
+            "event": "transition:opt-in",
+            "recipients": {
+              "role": "vat-administrator",
+              "scope": "administrationId"
+            },
+            "template": "KOR opt-in geregistreerd voor administratie {{administrationId}} (jaar {{currentCalendarYear}})."
+          },
+          "threshold-warning-notification": {
+            "event": "transition:warn-threshold",
+            "recipients": {
+              "role": "vat-administrator",
+              "scope": "administrationId"
+            },
+            "template": "KOR-omzet bedraagt €{{ytdRevenue}} ({{ytdRevenuePercentage}}% van de drempel). Drempelwaarschuwing voor administratie {{administrationId}}."
+          },
+          "threshold-exceeded-notification": {
+            "event": "transition:exceed-threshold",
+            "recipients": {
+              "role": "vat-administrator",
+              "scope": "administrationId"
+            },
+            "template": "KOR-omzetdrempel overschreden: €{{ytdRevenue}} ≥ €{{thresholdAmount}}. Opt-out vereist voor administratie {{administrationId}}."
+          },
+          "opted-out-notification": {
+            "event": "transition:opt-out-from-exceeded,transition:opt-out-from-opted-in",
+            "recipients": {
+              "role": "vat-administrator",
+              "scope": "administrationId"
+            },
+            "template": "KOR opt-out verwerkt voor administratie {{administrationId}}. Een journaalpost (status: in behandeling) is aangemaakt voor beoordeling."
+          }
+        },
+        "x-openregister-widgets": {
+          "kor-status": {
+            "id": "kor-status",
+            "title": "KOR Status",
+            "description": "Shows current KOR regime state, YTD revenue progress against omzetdrempel, and warning/exceeded indicators.",
+            "type": "progress-status",
+            "fields": {
+              "state": "state",
+              "current": "ytdRevenue",
+              "total": "thresholdAmount",
+              "warningThreshold": "warningPercentage",
+              "label": "Omzetdrempel KOR"
+            },
+            "visibilityPredicate": {
+              "administrationType": ["mkb", "zzp"]
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "vat-administrator": {
+              "permissions": ["create", "read", "update"]
+            },
+            "bookkeeper": {
+              "permissions": ["read"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "KorThreshold": {
+        "slug": "KorThreshold",
+        "icon": "CurrencyEur",
+        "version": "0.1.0",
+        "title": "KOR Threshold",
+        "description": "Versioned statutory KOR threshold record per Wet OB 1968 art. 25 lid 1. Loaded from kor-thresholds-2026.json seed.",
+        "type": "object",
+        "x-schema-org": "schema:DefinedTerm",
+        "required": [
+          "thresholdAmount",
+          "warningPercentage",
+          "fiscalYear",
+          "effectiveFrom"
+        ],
+        "properties": {
+          "thresholdAmount": {
+            "type": "number",
+            "description": "Statutory omzetdrempel in EUR (currently €20.000 per Wet OB 1968 art. 25 lid 1).",
+            "example": 20000.00
+          },
+          "warningPercentage": {
+            "type": "integer",
+            "description": "Warning percentage (default 80): warning notification fires when ytdRevenue reaches this percentage of thresholdAmount.",
+            "example": 80,
+            "default": 80
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "description": "Fiscal year this threshold record applies to.",
+            "example": 2026
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "Start of the period during which this threshold record is active.",
+            "example": "2026-01-01"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date",
+            "description": "End of the period during which this threshold record is active. Null = open-ended.",
+            "nullable": true
+          },
+          "citation": {
+            "type": "string",
+            "description": "Statutory citation for the threshold amount.",
+            "example": "Wet OB 1968 art. 25 lid 1"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "vat-administrator": {
+              "permissions": ["read"]
+            },
+            "bookkeeper": {
+              "permissions": ["read"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
       "Account": {
         "slug": "Account",
         "icon": "LedgerOutline",

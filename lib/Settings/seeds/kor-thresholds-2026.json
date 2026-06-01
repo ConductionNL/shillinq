@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Wet OB 1968 art. 25 lid 1",
+    "version": "2026",
+    "description": "KOR (Kleine Ondernemersregeling) statutory threshold seed for fiscal year 2026. The omzetdrempel is €20.000 per Wet OB 1968 art. 25 lid 1. The post-2020 fixed-ceiling regime replaces the pre-2020 sliding scale."
+  },
+  "thresholds": [
+    {
+      "thresholdAmount": 20000,
+      "warningPercentage": 80,
+      "fiscalYear": 2026,
+      "effectiveFrom": "2026-01-01",
+      "effectiveTo": null,
+      "citation": "Wet OB 1968 art. 25 lid 1"
+    }
+  ]
+}

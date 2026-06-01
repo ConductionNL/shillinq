@@ -30,6 +30,7 @@ use Psr\Log\LoggerInterface;
  * Repair step that initializes Shillinq configuration via SettingsService.
  *
  * @spec openspec/changes/spec/tasks.md#task-11
+ * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
  */
 class InitializeSettings implements IRepairStep
 {
@@ -119,6 +120,7 @@ class InitializeSettings implements IRepairStep
             }
 
             $this->seedChartOfAccounts(output: $output);
+            $this->seedKorThresholds(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -186,4 +188,38 @@ class InitializeSettings implements IRepairStep
         }
 
     }//end seedChartOfAccounts()
+
+    /**
+     * Seed KOR thresholds from kor-thresholds-2026.json, idempotently.
+     *
+     * Delegates to SettingsService::seedKorThresholds(), which uses OpenRegister's
+     * ObjectService to import KorThreshold records. Records are matched by
+     * (fiscalYear, effectiveFrom); existing records are skipped, preserving
+     * statutory data integrity.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
+     */
+    private function seedKorThresholds(IOutput $output): void
+    {
+        $output->info('Seeding KOR thresholds...');
+
+        $result = $this->settingsService->seedKorThresholds();
+
+        if ($result['success'] === true) {
+            $seeded  = ($result['seeded'] ?? 0);
+            $skipped = ($result['skipped'] ?? 0);
+            $output->info(
+                'KOR thresholds seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+            return;
+        }
+
+        $message = ($result['message'] ?? 'unknown error');
+        $output->warning('Shillinq: KOR threshold seeding issue: '.$message);
+
+    }//end seedKorThresholds()
 }//end class
