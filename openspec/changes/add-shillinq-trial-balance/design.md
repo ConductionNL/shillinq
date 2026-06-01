@@ -105,7 +105,7 @@ shape; matches Exact / AFAS / Twinfield.
 | Behaviour | Decision | Why |
 |---|---|---|
 | Trial balance assembly | Declarative (`x-openregister-aggregations`) | Pure GROUP BY + SUM over T1's `GLLine` |
-| Bucket discrimination (opening / movement / closing) | Declarative — one query if engine supports, else three composed | Both shapes declarative |
+| Bucket discrimination (opening / movement / closing) | Declarative — **three composed queries** (`trialBalanceOpening`, `trialBalanceMovement`, `trialBalanceClosing`); OR's aggregation engine does not yet support in-query temporal bucket discriminators (opening = before-period, movement = in-period) in a single pass | Both shapes satisfy REQ-TB-001; three-query shape chosen because the single-query alternative requires a temporal-join primitive not yet stable in OR's aggregation extension. Closing is a `compose` operation over the two prior aggregations. |
 | Balance invariant | Declarative — schema invariant on aggregation output | Engine evaluates during aggregation |
 | Drill-through | Declarative — manifest-side URL template | No app routing code |
 | Reversed-transaction exclusion | Declarative — aggregation filter clause | Pure data filter |
@@ -142,9 +142,17 @@ and queryable through normal CRUD.
 
 ## Open Questions
 
-1. **One aggregation vs three** — resolved in `opsx-ff` discovery.
+1. **One aggregation vs three** — **resolved**: three composed aggregations
+   (`trialBalanceOpening`, `trialBalanceMovement`, `trialBalanceClosing`).
+   OR's aggregation engine does not yet support the temporal-bucket
+   discriminator (opening = before-period) in a single-pass query.
+   The three-query shape is fully declarative and satisfies REQ-TB-001.
+   See "Declarative-vs-imperative decision" row above.
 2. **Default comparative period count** — resolved during the
    implementing cycle's UX review.
 3. **Renderer path** (`CnReportPage` vs `CnIndexPage` fallback) —
-   resolved during the implementing cycle based on library
-   readiness.
+   **resolved**: `type: index` fallback used in `src/manifest.json`
+   because `CnReportPage` is not yet available in
+   `@conduction/nextcloud-vue`. The manifest page configuration uses
+   `aggregation: trialBalanceClosing` with explicit column bindings
+   per REQ-TB-005.

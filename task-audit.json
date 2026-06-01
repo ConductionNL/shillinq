@@ -1,72 +1,69 @@
 {
-  "spec": "openspec/changes/add-shillinq-gr-consolidation",
+  "spec": "openspec/changes/add-shillinq-trial-balance",
   "verified": [
     {
       "task": "1",
-      "description": "Confirmed no GRDeelnemer, GRVerdeelsleutel, or bookkeeping-gr-consolidation already existed in lib/Settings/shillinq_register.json",
+      "description": "Confirmed no TrialBalance* or *ReportBuilder* PHP classes exist in lib/Service/; no bookkeeping-trial-balance spec previously existed in openspec/specs/ (only in openspec/changes/).",
       "ok": true
     },
     {
       "task": "2",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/specs/bookkeeping-gr-consolidation/spec.md",
+      "file": "openspec/changes/add-shillinq-trial-balance/specs/bookkeeping-trial-balance/spec.md",
+      "description": "spec.md authored with Status: proposed, Scope: shillinq, Tier: T2, REQ-TB-001 through REQ-TB-006, GIVEN/WHEN/THEN scenarios, ADR-022 + ADR-031 cited.",
       "ok": true
     },
     {
       "task": "3",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/proposal.md",
+      "file": "openspec/changes/add-shillinq-trial-balance/proposal.md",
+      "description": "proposal.md authored with kind: config, Affected Projects, Scope, Risks, Rollback, Open Questions.",
       "ok": true
     },
     {
       "task": "4",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/design.md",
+      "file": "openspec/changes/add-shillinq-trial-balance/design.md",
+      "description": "design.md authored with Reuse Analysis, D1-D4 decisions, Declarative-vs-imperative decision table, Seed Data (none — purely computed), Risks, Migration Plan.",
       "ok": true
     },
     {
       "task": "5",
       "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer schema declared with deelnemerType enum, deelnemerNaam, administrationId (optional), aandeel (0-1 validated), actief boolean, lifecycleState",
+      "description": "GLLine.x-openregister-aggregations.trialBalanceOpening declared: filter periodId < param.period AND GLTransaction.state != reversed, groupBy accountNumber, operations: openingDebit (sum amount where side=debit), openingCredit (sum amount where side=credit).",
       "ok": true
     },
     {
       "task": "6",
       "file": "lib/Settings/shillinq_register.json",
-      "description": "GRVerdeelsleutel schema declared with sleutelNaam, costClusterAccountNumbers array, verdelingsType enum (vast-percentage/inwoner-aantal/gewogen-oppervlak/custom-formula), parameters object, lineNumber",
+      "description": "Reversed-transaction exclusion filter declared on all three trial-balance aggregations (trialBalanceOpening, trialBalanceMovement, trialBalanceClosing): GLTransaction.state != reversed. Lines remain queryable but excluded from movement totals per REQ-TB-002 D4.",
       "ok": true
     },
     {
       "task": "7",
       "file": "lib/Settings/shillinq_register.json",
-      "description": "GLLine schema declared with eliminationFlag: boolean (default false); x-openregister-aggregations.consolidatedTrialBalance declared with filter: eliminationFlag = false",
+      "description": "GLLine.x-openregister-aggregations.trialBalanceClosing.invariants.debitCreditBalance declared: SUM(closingDebit) = SUM(closingCredit), errorShape with TRIAL_BALANCE_IMBALANCE code and delta field per REQ-TB-003.",
       "ok": true
     },
     {
       "task": "8",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRVerdeelsleutel.x-openregister-aggregations.doorbelastingPerDeelnemer declared with join on GLLine WHERE accountNumber IN costClusterAccountNumbers AND eliminationFlag = false, grouped by deelnemerId",
+      "file": "src/manifest.json",
+      "description": "Bookkeeping > Trial Balance menu entry added (order: 20, icon: TableColumnWidth, route: TrialBalance); TrialBalance page added as type: index with aggregation: trialBalanceClosing, 7-column layout (account, opening Dr/Cr, movement Dr/Cr, closing Dr/Cr), period queryParam with openFiscalPeriod default per REQ-TB-005.",
       "ok": true
     },
     {
       "task": "9",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer.x-openregister-lifecycle.hooks.onGrPeriodClose declared: trigger bookkeeping-period-close:grPeriodClosed, condition administrationId IS NOT NULL, idempotency key (grAdministrationId, deelnemerId, periodId)",
+      "file": "src/manifest.json",
+      "description": "Drill-through URL template declared on TrialBalance page rowLink: /index.php/apps/shillinq/general-ledger?period={periodId}&account={accountNumber} per REQ-TB-004 and D2.",
       "ok": true
     },
     {
       "task": "10",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer.x-openregister-aggregations.aandeelSumCheck declared: filter actief = true, sum of aandeel field; non-blocking warning when result differs from 1.0",
+      "file": "openspec/changes/add-shillinq-trial-balance/design.md",
+      "description": "Resolved: three composed aggregations (trialBalanceOpening + trialBalanceMovement + trialBalanceClosing). OR's aggregation engine does not yet support temporal-bucket discriminators in a single-pass query. Closing uses compose primitive. Annotated in Declarative-vs-imperative decision table and Open Questions.",
       "ok": true
     },
     {
       "task": "11",
-      "file": "src/manifest.json",
-      "description": "featureFlags.gov-gr added; Gemeenschappelijke regeling menu entry under Bookkeeping with 3 children (Deelnemers, Verdeelsleutels, Geconsolideerde view); 5 pages added (GRDeelnemers, GRDeelnemerDetail, GRVerdeelsleutels, GRVerdeelsleutelDetail, GRConsolidated); node tests/validate-manifest.js: only pre-existing roadmap-type failure, no new failures",
-      "ok": true
-    },
-    {
-      "task": "12",
       "file": "openspec/architecture/adr-000-data-model.md",
-      "description": "GRDeelnemer and GRVerdeelsleutel entity entries added alphabetically after GrantPortfolio, cross-referencing bookkeeping-gr-consolidation spec",
+      "description": "Aggregation note added under TrialBalance entity: explains three-aggregation pattern, reversed exclusion, balance invariant, ADR-031 declarative path, reference to lib/Settings/shillinq_register.json.",
       "ok": true
     }
   ],

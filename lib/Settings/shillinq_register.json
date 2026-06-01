@@ -147,6 +147,88 @@
                 "condition": "side = 'credit'"
               }
             }
+          },
+          "trialBalanceOpening": {
+            "description": "Opening balance per account per period: sum of all posted GLLine rows with periodId strictly before the requested period, grouped by accountNumber. Excludes lines whose parent GLTransaction.state is reversed per REQ-TB-002 and D4. REQ-TB-001.",
+            "filter": {
+              "and": [
+                {"field": "periodId", "operator": "lt", "param": "period"},
+                {"field": "GLTransaction.state", "operator": "ne", "value": "reversed"}
+              ]
+            },
+            "groupBy": ["accountNumber"],
+            "operations": {
+              "openingDebit": {
+                "field": "amount",
+                "operation": "sum",
+                "condition": "side = 'debit'"
+              },
+              "openingCredit": {
+                "field": "amount",
+                "operation": "sum",
+                "condition": "side = 'credit'"
+              }
+            },
+            "drillThrough": {
+              "urlTemplate": "/index.php/apps/shillinq/general-ledger?period={periodId}&account={accountNumber}",
+              "description": "Filtered GL index for the opening-balance slice per REQ-TB-004."
+            }
+          },
+          "trialBalanceMovement": {
+            "description": "Period movement per account: sum of all posted GLLine rows within the requested periodId. Excludes lines whose parent GLTransaction.state is reversed per REQ-TB-002 and D4. REQ-TB-001.",
+            "filter": {
+              "and": [
+                {"field": "periodId", "operator": "eq", "param": "period"},
+                {"field": "GLTransaction.state", "operator": "ne", "value": "reversed"}
+              ]
+            },
+            "groupBy": ["periodId", "accountNumber"],
+            "operations": {
+              "movementDebit": {
+                "field": "amount",
+                "operation": "sum",
+                "condition": "side = 'debit'"
+              },
+              "movementCredit": {
+                "field": "amount",
+                "operation": "sum",
+                "condition": "side = 'credit'"
+              }
+            },
+            "drillThrough": {
+              "urlTemplate": "/index.php/apps/shillinq/general-ledger?period={periodId}&account={accountNumber}",
+              "description": "Filtered GL index for this period+account slice per REQ-TB-004 and D2."
+            }
+          },
+          "trialBalanceClosing": {
+            "description": "Closing balance per account per period: openingDebit + movementDebit (and openingCredit + movementCredit). Computed by composing trialBalanceOpening and trialBalanceMovement — no PHP report builder per REQ-TB-001 and D1. REQ-TB-002.",
+            "compose": {
+              "opening": "trialBalanceOpening",
+              "movement": "trialBalanceMovement"
+            },
+            "operations": {
+              "closingDebit": {
+                "expression": "opening.openingDebit + movement.movementDebit"
+              },
+              "closingCredit": {
+                "expression": "opening.openingCredit + movement.movementCredit"
+              }
+            },
+            "invariants": {
+              "debitCreditBalance": {
+                "description": "Sum of all closing.closingDebit MUST equal sum of all closing.closingCredit across all accounts in the period. A failed invariant surfaces an error naming the delta to the cent per REQ-TB-003 and D3.",
+                "assertion": "SUM(closingDebit) = SUM(closingCredit)",
+                "errorShape": {
+                  "code": "TRIAL_BALANCE_IMBALANCE",
+                  "delta": "SUM(closingDebit) - SUM(closingCredit)",
+                  "message": "Trial balance does not balance: debit/credit delta is {delta} EUR."
+                }
+              }
+            },
+            "drillThrough": {
+              "urlTemplate": "/index.php/apps/shillinq/general-ledger?period={periodId}&account={accountNumber}",
+              "description": "Filtered GL index for the closing-balance slice per REQ-TB-004 and D2."
+            }
           }
         }
       },

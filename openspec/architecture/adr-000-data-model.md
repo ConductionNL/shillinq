@@ -4218,6 +4218,19 @@ _A report listing all general ledger accounts with debit or credit balances for 
 - → Organization (many-to-one)
 - → GeneralLedgerEntry (one-to-many)
 
+> **Aggregation note (add-shillinq-trial-balance, 2026-06-01):** The trial balance
+> for shillinq is NOT a stored schema object but a **declarative aggregation** over
+> `GLLine` via three composed `x-openregister-aggregations` blocks:
+> `trialBalanceOpening` (periodId < requested period), `trialBalanceMovement`
+> (periodId = requested period), and `trialBalanceClosing` (compose of the two).
+> Each aggregation excludes lines whose parent `GLTransaction.state = 'reversed'`
+> per D4. The debit-credit-balance invariant (`SUM(closingDebit) = SUM(closingCredit)`)
+> is declared as a schema invariant on the closing aggregation output per D3 and
+> REQ-TB-003. No PHP `TrialBalanceService` or `TrialBalanceReportBuilder` exists —
+> this is the ADR-031 declarative aggregation pattern, not the anti-pattern. The
+> `TrialBalance` entry above is retained for cross-spec reference; the live implementation
+> is `lib/Settings/shillinq_register.json GLLine.x-openregister-aggregations`.
+
 ### User
 **Schema.org:** `schema:Person`
 _System account for authentication and access control with assigned permissions and team memberships_

@@ -26,6 +26,13 @@
 					"order": 10
 				},
 				{
+					"id": "TrialBalance",
+					"label": "Trial Balance",
+					"icon": "TableColumnWidth",
+					"route": "TrialBalance",
+					"order": 20
+				},
+				{
 					"id": "GRDeelnemers",
 					"label": "Deelnemers",
 					"icon": "AccountMultipleOutline",
@@ -93,6 +100,75 @@
 		}
 	],
 	"pages": [
+		{
+			"id": "TrialBalance",
+			"route": "/trial-balance",
+			"type": "index",
+			"title": "Trial Balance",
+			"config": {
+				"register": "shillinq",
+				"schema": "GLLine",
+				"aggregation": "trialBalanceClosing",
+				"queryParams": {
+					"period": {
+						"source": "query",
+						"key": "period",
+						"default": {
+							"source": "openFiscalPeriod"
+						}
+					}
+				},
+				"columns": [
+					{
+						"key": "accountNumber",
+						"label": "Account",
+						"sortable": true
+					},
+					{
+						"key": "openingDebit",
+						"label": "Opening Dr",
+						"sortable": false,
+						"type": "currency"
+					},
+					{
+						"key": "openingCredit",
+						"label": "Opening Cr",
+						"sortable": false,
+						"type": "currency"
+					},
+					{
+						"key": "movementDebit",
+						"label": "Movement Dr",
+						"sortable": false,
+						"type": "currency"
+					},
+					{
+						"key": "movementCredit",
+						"label": "Movement Cr",
+						"sortable": false,
+						"type": "currency"
+					},
+					{
+						"key": "closingDebit",
+						"label": "Closing Dr",
+						"sortable": false,
+						"type": "currency"
+					},
+					{
+						"key": "closingCredit",
+						"label": "Closing Cr",
+						"sortable": false,
+						"type": "currency"
+					}
+				],
+				"rowLink": {
+					"urlTemplate": "/index.php/apps/shillinq/general-ledger?period={periodId}&account={accountNumber}",
+					"description": "Drill through to filtered GL index per REQ-TB-004."
+				},
+				"defaultSort": "accountNumber",
+				"showTotalsRow": true
+			}
+		},
 		{
 			"id": "FeaturesRoadmap",
 			"route": "/features-roadmap",

@@ -9,17 +9,17 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `bookkeeping-trial-balance` capability spec already exists and that no `lib/Service/TrialBalance*` or `lib/Service/*ReportBuilder*` PHP classes are present in shillinq (per ADR-031 anti-pattern enumeration)
-- [ ] Task 2: Author `specs/bookkeeping-trial-balance/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T2 (compliance + operations)` / `Depends on: bookkeeping-general-ledger` header, `REQ-TB-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks with GIVEN/WHEN/THEN; cite ADR-022 + ADR-031 inline
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions
-- [ ] Task 4: Author `design.md` with Reuse Analysis table, D1 (aggregation not report builder), D2 (manifest-side drill-through), D3 (declarative balance invariant), D4 (reversed-transaction exclusion)
-- [ ] Task 5: Declare the trial-balance `x-openregister-aggregations` block on `lib/Settings/shillinq_register.json` `GLLine` grouping by `(period_id, account_number, side)` with opening / movement / closing buckets per REQ-TB-002
-- [ ] Task 6: Declare the `state: reversed` exclusion filter on the aggregation per REQ-TB-002 (reversed parents excluded from movement totals; lines remain queryable)
-- [ ] Task 7: Declare the debit-credit-balance schema invariant on the aggregation output (sum of period debits = sum of period credits) per REQ-TB-003
-- [ ] Task 8: Add Bookkeeping > Trial Balance navigation + page to `src/manifest.json` (`type: report` preferred; `type: index` fallback if `CnReportPage` not yet shipped) per REQ-TB-005; period query parameter defaults to active `FiscalPeriod`; `node tests/validate-manifest.js` exits 0
-- [ ] Task 9: Declare the drill-through URL template on the trial-balance row (`/general-ledger?period=…&account=…`) per REQ-TB-005 using OR-canonical filter query-param shape
-- [ ] Task 10: Resolve the one-aggregation-vs-three-composed question in `design.md` discovery against OR's aggregation extension capability; annotate the spec with the chosen path under "Declarative-vs-imperative decision"
-- [ ] Task 11: Update `openspec/architecture/adr-000-data-model.md` with a one-paragraph note declaring the trial-balance aggregation, citing ADR-031 (declarative aggregation over service) and ADR-022 (no parallel report storage)
+- [x] Task 1: Confirm no `bookkeeping-trial-balance` capability spec already exists and that no `lib/Service/TrialBalance*` or `lib/Service/*ReportBuilder*` PHP classes are present in shillinq (per ADR-031 anti-pattern enumeration)
+- [x] Task 2: Author `specs/bookkeeping-trial-balance/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T2 (compliance + operations)` / `Depends on: bookkeeping-general-ledger` header, `REQ-TB-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks with GIVEN/WHEN/THEN; cite ADR-022 + ADR-031 inline
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions
+- [x] Task 4: Author `design.md` with Reuse Analysis table, D1 (aggregation not report builder), D2 (manifest-side drill-through), D3 (declarative balance invariant), D4 (reversed-transaction exclusion)
+- [x] Task 5: Declare the trial-balance `x-openregister-aggregations` block on `lib/Settings/shillinq_register.json` `GLLine` grouping by `(period_id, account_number, side)` with opening / movement / closing buckets per REQ-TB-002
+- [x] Task 6: Declare the `state: reversed` exclusion filter on the aggregation per REQ-TB-002 (reversed parents excluded from movement totals; lines remain queryable)
+- [x] Task 7: Declare the debit-credit-balance schema invariant on the aggregation output (sum of period debits = sum of period credits) per REQ-TB-003
+- [x] Task 8: Add Bookkeeping > Trial Balance navigation + page to `src/manifest.json` (`type: report` preferred; `type: index` fallback if `CnReportPage` not yet shipped) per REQ-TB-005; period query parameter defaults to active `FiscalPeriod`; `node tests/validate-manifest.js` exits 0
+- [x] Task 9: Declare the drill-through URL template on the trial-balance row (`/general-ledger?period=…&account=…`) per REQ-TB-005 using OR-canonical filter query-param shape
+- [x] Task 10: Resolve the one-aggregation-vs-three-composed question in `design.md` discovery against OR's aggregation extension capability; annotate the spec with the chosen path under "Declarative-vs-imperative decision"
+- [x] Task 11: Update `openspec/architecture/adr-000-data-model.md` with a one-paragraph note declaring the trial-balance aggregation, citing ADR-031 (declarative aggregation over service) and ADR-022 (no parallel report storage)
 
 ## Verification
 
