@@ -1,5 +1,7 @@
 # Design — Multi-Currency Bank Account Management
 
+**status: pr-created**
+
 ## Context
 
 Dutch SMBs managing international trade hold bank accounts in multiple

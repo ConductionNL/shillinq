@@ -49,6 +49,28 @@
 			]
 		},
 		{
+			"id": "CashAndBank",
+			"label": "Cash & Bank",
+			"icon": "BankOutline",
+			"order": 25,
+			"children": [
+				{
+					"id": "BankAccounts",
+					"label": "Bank Accounts",
+					"icon": "BankOutline",
+					"route": "BankAccounts",
+					"order": 10
+				},
+				{
+					"id": "CurrencyBalances",
+					"label": "Currency Balances",
+					"icon": "CurrencyEurOutline",
+					"route": "CurrencyBalances",
+					"order": 20
+				}
+			]
+		},
+		{
 			"id": "Overheid",
 			"label": "Overheid",
 			"icon": "icon-category-organization",
@@ -217,6 +239,199 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "Iv3Rapportages"
+			}
+		},
+		{
+			"id": "BankAccounts",
+			"route": "/cash-and-bank/bank-accounts",
+			"type": "index",
+			"title": "Bank Accounts",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankAccount",
+				"columns": [
+					{
+						"key": "accountName",
+						"label": "Account Name",
+						"sortable": true
+					},
+					{
+						"key": "iban",
+						"label": "IBAN",
+						"sortable": true
+					},
+					{
+						"key": "bankName",
+						"label": "Bank",
+						"sortable": true
+					},
+					{
+						"key": "primaryCurrency",
+						"label": "Primary Currency",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "accountName",
+				"detailRoute": "BankAccountDetail"
+			}
+		},
+		{
+			"id": "BankAccountDetail",
+			"route": "/cash-and-bank/bank-accounts/:id",
+			"type": "detail",
+			"title": "Bank Account",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankAccount",
+				"fields": [
+					{
+						"key": "accountName",
+						"label": "Account Name",
+						"type": "string"
+					},
+					{
+						"key": "iban",
+						"label": "IBAN",
+						"type": "string"
+					},
+					{
+						"key": "bic",
+						"label": "BIC/SWIFT",
+						"type": "string"
+					},
+					{
+						"key": "bankName",
+						"label": "Bank",
+						"type": "string"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "primaryCurrency",
+						"label": "Primary Currency",
+						"type": "string"
+					},
+					{
+						"key": "balance",
+						"label": "Balance",
+						"type": "number"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "BankAccounts"
+			}
+		},
+		{
+			"id": "CurrencyBalances",
+			"route": "/cash-and-bank/currency-balances",
+			"type": "index",
+			"title": "Currency Balances",
+			"config": {
+				"register": "shillinq",
+				"schema": "CurrencyBalance",
+				"columns": [
+					{
+						"key": "accountId",
+						"label": "Account",
+						"sortable": true
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"sortable": true
+					},
+					{
+						"key": "balance",
+						"label": "Balance",
+						"sortable": true
+					},
+					{
+						"key": "previousBalance",
+						"label": "Previous Balance",
+						"sortable": true
+					},
+					{
+						"key": "lastUpdated",
+						"label": "Last Updated",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-lastUpdated",
+				"filters": [
+					{
+						"key": "accountId",
+						"label": "Account",
+						"type": "string"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "enum",
+						"options": ["EUR", "USD", "GBP", "CHF", "JPY", "CNY"]
+					},
+					{
+						"key": "balance[gte]",
+						"label": "Balance from",
+						"type": "number"
+					},
+					{
+						"key": "balance[lte]",
+						"label": "Balance to",
+						"type": "number"
+					}
+				],
+				"detailRoute": "CurrencyBalanceDetail"
+			}
+		},
+		{
+			"id": "CurrencyBalanceDetail",
+			"route": "/cash-and-bank/currency-balances/:id",
+			"type": "detail",
+			"title": "Currency Balance",
+			"config": {
+				"register": "shillinq",
+				"schema": "CurrencyBalance",
+				"fields": [
+					{
+						"key": "accountId",
+						"label": "Account",
+						"type": "string"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "balance",
+						"label": "Balance",
+						"type": "number"
+					},
+					{
+						"key": "previousBalance",
+						"label": "Previous Balance",
+						"type": "number"
+					},
+					{
+						"key": "lastUpdated",
+						"label": "Last Updated",
+						"type": "date-time"
+					}
+				],
+				"indexRoute": "CurrencyBalances"
 			}
 		},
 		{

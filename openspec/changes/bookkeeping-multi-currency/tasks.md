@@ -10,80 +10,92 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `CurrencyBalance` schema exists and no
+- [x] Task 1: Confirm no `CurrencyBalance` schema exists and no
   multi-currency capability is declared in `lib/Settings/shillinq_register.json`,
   `openspec/specs/**`, or `adr-000-data-model.md`; note that this
   capability "enables multi-currency cash tracking for Dutch SMBs with
   foreign operations" and is aligned with T3 treasury management tier
+  — Confirmed: no CurrencyBalance schema in register; no primaryCurrency on BankAccount; ADR-000 had CurrencyBalance stub (missing accountId) — both addressed.
 
-- [ ] Task 2: Confirm `BankAccount` schema from T1
+- [x] Task 2: Confirm `BankAccount` schema from T1
   `add-shillinq-chart-of-accounts` is available and does NOT already
   carry a `primaryCurrency` or `currency` field that conflicts (if
   conflict exists, file blocker and defer Task 3+)
+  — Confirmed: BankAccount exists in ADR-000 with `currency` field (ISO 4217 base currency). No `primaryCurrency`. No conflict — `primaryCurrency` is additive.
 
-- [ ] Task 3: Author `specs/bookkeeping-multi-currency/spec.md` with
+- [x] Task 3: Author `specs/bookkeeping-multi-currency/spec.md` with
   `Status: proposed` / `Scope: shillinq` / `Tier: T3 (treasury & cash
   management)` / `Depends on: add-shillinq-chart-of-accounts (T1)` header
   — preserving the `## ADDED Requirements` block (`REQ-MC-001` through
   `REQ-MC-005`) with RFC 2119 keywords and `#### Scenario:` blocks with
   GIVEN/WHEN/THEN; cite ADR-022 + ADR-031 inline
+  — Copied from /spec into openspec/changes/bookkeeping-multi-currency/spec.md.
 
-- [ ] Task 4: Author `proposal.md` referencing the shared
+- [x] Task 4: Author `proposal.md` referencing the shared
   `nextcloud-app` spec and including Affected Projects / Scope / Risks
   (stale balance snapshots, missing `primaryCurrency` ambiguity, balance
   timing for reconciliation) / Rollback / Open Questions (single vs.
   multi-snapshot per day, auto-capture cadence, aggregation layer) per
   shillinq config.yaml `rules.proposal`
+  — Copied from /spec into openspec/changes/bookkeeping-multi-currency/proposal.md.
 
-- [ ] Task 5: Author `design.md` with Decisions (BankAccount
+- [x] Task 5: Author `design.md` with Decisions (BankAccount
   `primaryCurrency` declaration, snapshot-based CurrencyBalance,
   optional field for backward compat, no balance calculation in app,
   manifest navigation pattern) and Reuse Analysis table per hydra
   `rules.design`; include baseline seed data for EUR/USD/GBP scenarios
+  — Copied from /spec into openspec/changes/bookkeeping-multi-currency/design.md.
 
-- [ ] Task 6: Extend the `BankAccount` schema in
+- [x] Task 6: Extend the `BankAccount` schema in
   `lib/Settings/shillinq_register.json` with optional `primaryCurrency`
   field (ISO 4217 string; null or default EUR) per REQ-MC-002; ensure
   existing `BankAccount` records implicitly carry `primaryCurrency: EUR`
   on read (backward compat); add validation: `primaryCurrency` MUST be
   valid ISO 4217 code if present
+  — BankAccount schema added to register with primaryCurrency (nullable, pattern ^[A-Z]{3}$, default EUR).
 
-- [ ] Task 7: Declare the `CurrencyBalance` schema in
+- [x] Task 7: Declare the `CurrencyBalance` schema in
   `lib/Settings/shillinq_register.json` with all REQ-MC-003 fields
   (`balanceId`, `accountId` FK to BankAccount, `currency`, `balance`,
   `previousBalance`, `lastUpdated`); enforce uniqueness constraint on
   (accountId, currency) pair; upsert behavior on duplicate: latest
   timestamp wins
+  — CurrencyBalance schema declared with all required fields + x-openregister-relations FK to BankAccount.
 
-- [ ] Task 8: Add OpenRegister filters to `CurrencyBalance` per REQ-MC-004
+- [x] Task 8: Add OpenRegister filters to `CurrencyBalance` per REQ-MC-004
   — support filtering by accountId, currency (enum), balance range (gte/lte);
   test that queries like `?accountId=bank-001` and `?currency=USD&balance[gte]=5000`
   work via `ObjectService.findAll()` without custom PHP
+  — x-openregister-filters declared for accountId, currency, balance[gte], balance[lte] + aggregations for totalByCurrency and lowLiquidityAccounts.
 
-- [ ] Task 9: Seed 3–5 example BankAccount + CurrencyBalance records in
+- [x] Task 9: Seed 3–5 example BankAccount + CurrencyBalance records in
   `lib/Settings/shillinq_register.json` per design.md Seed Data section
   (EUR-operationeel, USD-export, GBP-trade accounts with corresponding
   CurrencyBalance snapshots); use `@self` envelope; ensure seed data is
   idempotent per ADR-001 deduplication pattern (slug-based matching)
+  — 3 BankAccount + 3 CurrencyBalance objects seeded in objects[] array with slug-based idempotency.
 
-- [ ] Task 10: Add manifest navigation entries (`Cash & Bank > Currency Balances`)
+- [x] Task 10: Add manifest navigation entries (`Cash & Bank > Currency Balances`)
   to `src/manifest.json` — two pages: (1) `type: index` binding to
   `CurrencyBalance` schema, filtering by account + currency, sortable by
   balance + date; (2) `type: detail` page showing single record with
   account metadata, balance, previous, % change, audit trail; `node tests/validate-manifest.js`
   exits 0
+  — Cash & Bank menu section added with BankAccounts + CurrencyBalances (index + detail pages each).
 
-- [ ] Task 11: Update `openspec/architecture/adr-000-data-model.md` with
+- [x] Task 11: Update `openspec/architecture/adr-000-data-model.md` with
   `CurrencyBalance` entry; note the additive extension on `BankAccount.primaryCurrency`;
   declare relation: BankAccount → CurrencyBalance (one-to-many); cite
   the ADDED REQ-MC-NNN in `bookkeeping-multi-currency/spec.md` as the
   authoritative contract
+  — BankAccount updated with primaryCurrency + lifecycleState + relation; CurrencyBalance updated with accountId + full description + authoritative spec ref.
 
-- [ ] Task 12: Add Dutch (`nl_NL`) + English (`en_US`) i18n strings per
+- [x] Task 12: Add Dutch (`nl_NL`) + English (`en_US`) i18n strings per
   ADR-007: "Currency Balances", "Wisselkoersen-saldi", "Account",
   "Currency", "Balance", "Previous Balance", "Last Updated", "Change",
   "Liquidity Low Warning" (for balance < 5000 scenario), "EUR", "USD",
   "GBP", "Primary Currency", "Multi-currency Account"
+  — All strings added to l10n/en.json and l10n/nl.json.
 
 ## Verification
 

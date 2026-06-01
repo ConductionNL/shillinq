@@ -28,7 +28,24 @@
         "Settings saved successfully": "Instellingen succesvol opgeslagen",
         "Saving...": "Opslaan...",
         "This app needs OpenRegister to store and manage data. Please install OpenRegister from the app store to get started.": "Deze app heeft OpenRegister nodig om gegevens op te slaan en te beheren. Installeer OpenRegister via de app store om te beginnen.",
-        "User settings will appear here in a future update.": "Gebruikersinstellingen verschijnen hier in een toekomstige update."
+        "User settings will appear here in a future update.": "Gebruikersinstellingen verschijnen hier in een toekomstige update.",
+        "Cash & Bank": "Kas & Bank",
+        "Bank Accounts": "Bankrekeningen",
+        "Bank Account": "Bankrekening",
+        "Currency Balances": "Wisselkoersen-saldi",
+        "Currency Balance": "Wisselkoers-saldo",
+        "Account": "Rekening",
+        "Currency": "Valuta",
+        "Balance": "Saldo",
+        "Previous Balance": "Vorig saldo",
+        "Last Updated": "Laatste update",
+        "Change": "Wijziging",
+        "Liquidity Low Warning": "Lage liquiditeitswaarschuwing",
+        "EUR": "EUR",
+        "USD": "USD",
+        "GBP": "GBP",
+        "Primary Currency": "Primaire valuta",
+        "Multi-currency Account": "Meerdere-valuta-rekening"
     },
     "plurals": ""
 }

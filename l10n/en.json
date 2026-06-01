@@ -28,7 +28,24 @@
         "Settings saved successfully": "Settings saved successfully",
         "Saving...": "Saving...",
         "This app needs OpenRegister to store and manage data. Please install OpenRegister from the app store to get started.": "This app needs OpenRegister to store and manage data. Please install OpenRegister from the app store to get started.",
-        "User settings will appear here in a future update.": "User settings will appear here in a future update."
+        "User settings will appear here in a future update.": "User settings will appear here in a future update.",
+        "Cash & Bank": "Cash & Bank",
+        "Bank Accounts": "Bank Accounts",
+        "Bank Account": "Bank Account",
+        "Currency Balances": "Currency Balances",
+        "Currency Balance": "Currency Balance",
+        "Account": "Account",
+        "Currency": "Currency",
+        "Balance": "Balance",
+        "Previous Balance": "Previous Balance",
+        "Last Updated": "Last Updated",
+        "Change": "Change",
+        "Liquidity Low Warning": "Liquidity Low Warning",
+        "EUR": "EUR",
+        "USD": "USD",
+        "GBP": "GBP",
+        "Primary Currency": "Primary Currency",
+        "Multi-currency Account": "Multi-currency Account"
     },
     "plurals": ""
 }
