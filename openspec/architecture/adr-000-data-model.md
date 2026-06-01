@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 225
+**Entities:** 227
 
 ## Context
 
@@ -360,6 +360,43 @@ _Schema.org BankAccount — standard vocabulary for bankaccount data_
 | bankName | string | No | Name of the bank |
 | currency | string | Yes | Account currency |
 | balance | number | No | Current balance |
+
+### BbvAccountMapping
+**Schema.org:** `schema:DefinedTerm`
+_Maps an RGS account to a BBV taakveld for a specific administration (gemeente, provincie, or waterschap). Unique per (administrationId, accountNumber). Declared as a register per ADR-022 — not an embedded enum on Account._
+**Primary spec:** bookkeeping-bbv-compliance
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the administration (gemeente/provincie/waterschap) |
+| accountNumber | string | Yes | FK to Account.accountNumber (T1 chart of accounts) |
+| taakveld | string | Yes | BBV taakveld code from BbvTaakveld catalogue (e.g. '5.3') |
+| programmaCode | string | Yes | Operator-defined programma identifier (e.g. '01-Bestuur') |
+| paragraafCode | string | No | Operator-defined paragraaf code if applicable |
+| autorisatieniveau | enum | Yes | One of programma, taakveld, kostenplaats |
+| bcfCompensable | boolean | Yes | Whether VAT is recoverable via BCF (default false) |
+| iv3Bucket | enum | Yes | IV3 reporting bucket for this account mapping |
+
+**Relations:**
+- → Account (many-to-one, via accountNumber)
+- → BbvTaakveld (many-to-one, via taakveld → taakveldCode)
+
+### BbvTaakveld
+**Schema.org:** `schema:DefinedTerm`
+_A coded classifier from the statutory BBV bijlage IV catalogue (Besluit Begroting en Verantwoording). Seeded from bbv-taakvelden-2024.json._
+**Primary spec:** bookkeeping-bbv-compliance
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| taakveldCode | string | Yes | BBV taakveld code (e.g. '0.1', '5.3') |
+| name | string | Yes | Official name per Besluit BBV bijlage IV |
+| category | enum | Yes | One of bestuur, veiligheid, verkeer, economie, onderwijs, sport-cultuur-recreatie, sociaal-domein, volksgezondheid-milieu, vhrosv, algemene-dekkingsmiddelen, overhead |
+| legalBasis | string | Yes | Citation: Besluit BBV bijlage IV §X |
+| effectiveFrom | date | Yes | Start of validity window |
+| effectiveTo | date | No | End of validity window (null = still current) |
+
+**Relations:**
+- → BbvAccountMapping (one-to-many, via taakveldCode)
 
 ### Bid
 **Schema.org:** `schema:Offer`

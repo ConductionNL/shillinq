@@ -28,6 +28,27 @@
 			]
 		},
 		{
+			"id": "Overheid",
+			"label": "Overheid",
+			"icon": "icon-category-organization",
+			"order": 30,
+			"visibility": {
+				"administrationTypeIn": ["gemeente", "provincie", "waterschap"]
+			},
+			"children": [
+				{
+					"id": "BbvMapping",
+					"label": "BBV-mapping",
+					"icon": "MapOutline",
+					"route": "BbvMapping",
+					"order": 10,
+					"visibility": {
+						"administrationTypeIn": ["gemeente", "provincie", "waterschap"]
+					}
+				}
+			]
+		},
+		{
 			"id": "Documentation",
 			"label": "Documentation",
 			"icon": "icon-info",
@@ -158,6 +179,109 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "ChartOfAccounts"
+			}
+		},
+		{
+			"id": "BbvMapping",
+			"route": "/overheid/bbv-mapping",
+			"type": "index",
+			"title": "BBV-mapping",
+			"config": {
+				"register": "shillinq",
+				"schema": "BbvAccountMapping",
+				"visibility": {
+					"administrationTypeIn": ["gemeente", "provincie", "waterschap"]
+				},
+				"columns": [
+					{
+						"key": "accountNumber",
+						"label": "Account",
+						"sortable": true
+					},
+					{
+						"key": "taakveld",
+						"label": "Taakveld",
+						"sortable": true
+					},
+					{
+						"key": "programmaCode",
+						"label": "Programma",
+						"sortable": true
+					},
+					{
+						"key": "autorisatieniveau",
+						"label": "Autorisatieniveau",
+						"sortable": true
+					},
+					{
+						"key": "bcfCompensable",
+						"label": "BCF",
+						"sortable": true
+					}
+				],
+				"defaultSort": "accountNumber",
+				"detailRoute": "BbvMappingDetail"
+			}
+		},
+		{
+			"id": "BbvMappingDetail",
+			"route": "/overheid/bbv-mapping/:id",
+			"type": "detail",
+			"title": "BBV Account Mapping",
+			"config": {
+				"register": "shillinq",
+				"schema": "BbvAccountMapping",
+				"visibility": {
+					"administrationTypeIn": ["gemeente", "provincie", "waterschap"]
+				},
+				"fields": [
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "accountNumber",
+						"label": "Account Number",
+						"type": "string",
+						"relatedSchema": "Account",
+						"relatedField": "accountNumber"
+					},
+					{
+						"key": "taakveld",
+						"label": "Taakveld",
+						"type": "string",
+						"relatedSchema": "BbvTaakveld",
+						"relatedField": "taakveldCode"
+					},
+					{
+						"key": "programmaCode",
+						"label": "Programma",
+						"type": "string"
+					},
+					{
+						"key": "paragraafCode",
+						"label": "Paragraaf",
+						"type": "string"
+					},
+					{
+						"key": "autorisatieniveau",
+						"label": "Autorisatieniveau",
+						"type": "string"
+					},
+					{
+						"key": "bcfCompensable",
+						"label": "BCF compensabel",
+						"type": "boolean"
+					},
+					{
+						"key": "iv3Bucket",
+						"label": "IV3 bucket",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "BbvMapping"
 			}
 		},
 		{

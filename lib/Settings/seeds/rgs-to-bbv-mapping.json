@@ -1,0 +1,652 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "bbvVersion": "2024",
+    "source": "Commissie BBV handreiking",
+    "description": "Default RGS 3.5 account-to-BBV-taakveld mapping seed for gemeenten, provincies en waterschappen. Loaded via repair step into BbvAccountMapping for new municipal administrations only. Operator overrides are preserved on re-run (idempotent).",
+    "imported": "2026-06-01T00:00:00Z",
+    "note": "administrationId is stamped at import time with the actual administration identifier. programmaCode values are defaults — operators are expected to align these with their local programmabegroting."
+  },
+  "mappings": [
+    {
+      "accountNumber": "0100",
+      "taakveld": "0.4",
+      "programmaCode": "Overhead",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "0110",
+      "taakveld": "0.4",
+      "programmaCode": "Overhead",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "0120",
+      "taakveld": "0.4",
+      "programmaCode": "Overhead",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "0200",
+      "taakveld": "0.3",
+      "programmaCode": "Beheer gebouwen",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "0210",
+      "taakveld": "0.3",
+      "programmaCode": "Beheer gebouwen",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "0220",
+      "taakveld": "0.3",
+      "programmaCode": "Beheer gebouwen",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "0230",
+      "taakveld": "2.1",
+      "programmaCode": "Verkeer en vervoer",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": true,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "0300",
+      "taakveld": "0.5",
+      "programmaCode": "Treasury",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "0400",
+      "taakveld": "0.4",
+      "programmaCode": "Overhead",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": true,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "0410",
+      "taakveld": "0.4",
+      "programmaCode": "Overhead",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "0420",
+      "taakveld": "0.4",
+      "programmaCode": "Overhead",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "1000",
+      "taakveld": "0.5",
+      "programmaCode": "Treasury",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "baten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "1010",
+      "taakveld": "0.5",
+      "programmaCode": "Treasury",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "baten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "1020",
+      "taakveld": "0.5",
+      "programmaCode": "Treasury",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "baten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "1300",
+      "taakveld": "0.5",
+      "programmaCode": "Treasury",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "baten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "1400",
+      "taakveld": "0.1",
+      "programmaCode": "Bestuur",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "baten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "2000",
+      "taakveld": "0.1",
+      "programmaCode": "Bestuur",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "2100",
+      "taakveld": "0.4",
+      "programmaCode": "Overhead",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "2200",
+      "taakveld": "0.4",
+      "programmaCode": "Overhead",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "3000",
+      "taakveld": "0.8",
+      "programmaCode": "Overige baten en lasten",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "baten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4000",
+      "taakveld": "0.4",
+      "programmaCode": "Overhead",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4010",
+      "taakveld": "0.1",
+      "programmaCode": "Bestuur",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4050",
+      "taakveld": "0.2",
+      "programmaCode": "Burgerzaken",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4100",
+      "taakveld": "1.1",
+      "programmaCode": "Veiligheid",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4110",
+      "taakveld": "1.2",
+      "programmaCode": "Veiligheid",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4200",
+      "taakveld": "2.1",
+      "programmaCode": "Verkeer en vervoer",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": true,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4210",
+      "taakveld": "2.2",
+      "programmaCode": "Verkeer en vervoer",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": true,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4220",
+      "taakveld": "2.5",
+      "programmaCode": "Verkeer en vervoer",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4250",
+      "taakveld": "5.3",
+      "programmaCode": "Cultuur en recreatie",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4260",
+      "taakveld": "5.6",
+      "programmaCode": "Cultuur en recreatie",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4270",
+      "taakveld": "5.4",
+      "programmaCode": "Cultuur en recreatie",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4280",
+      "taakveld": "5.7",
+      "programmaCode": "Cultuur en recreatie",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": true,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4300",
+      "taakveld": "4.2",
+      "programmaCode": "Onderwijs",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": true,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4310",
+      "taakveld": "4.3",
+      "programmaCode": "Onderwijs",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4320",
+      "taakveld": "4.1",
+      "programmaCode": "Onderwijs",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4400",
+      "taakveld": "6.3",
+      "programmaCode": "Sociaal domein",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4410",
+      "taakveld": "6.6",
+      "programmaCode": "Sociaal domein",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4420",
+      "taakveld": "6.71",
+      "programmaCode": "Sociaal domein",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4430",
+      "taakveld": "6.72",
+      "programmaCode": "Sociaal domein",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4440",
+      "taakveld": "6.4",
+      "programmaCode": "Sociaal domein",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4450",
+      "taakveld": "6.5",
+      "programmaCode": "Sociaal domein",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4460",
+      "taakveld": "6.81",
+      "programmaCode": "Sociaal domein",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4470",
+      "taakveld": "6.1",
+      "programmaCode": "Sociaal domein",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4480",
+      "taakveld": "6.2",
+      "programmaCode": "Sociaal domein",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4500",
+      "taakveld": "7.1",
+      "programmaCode": "Volksgezondheid en milieu",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4510",
+      "taakveld": "7.2",
+      "programmaCode": "Volksgezondheid en milieu",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": true,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4520",
+      "taakveld": "7.3",
+      "programmaCode": "Volksgezondheid en milieu",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": true,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4530",
+      "taakveld": "7.4",
+      "programmaCode": "Volksgezondheid en milieu",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4540",
+      "taakveld": "7.5",
+      "programmaCode": "Volksgezondheid en milieu",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": true,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4600",
+      "taakveld": "8.1",
+      "programmaCode": "VHROSV",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4610",
+      "taakveld": "8.3",
+      "programmaCode": "VHROSV",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": true,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4620",
+      "taakveld": "8.2",
+      "programmaCode": "VHROSV",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": true,
+      "iv3Bucket": "investeringen",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4700",
+      "taakveld": "3.1",
+      "programmaCode": "Economie",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4710",
+      "taakveld": "3.2",
+      "programmaCode": "Economie",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": true,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4720",
+      "taakveld": "3.4",
+      "programmaCode": "Economie",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4800",
+      "taakveld": "5.1",
+      "programmaCode": "Sport en recreatie",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4810",
+      "taakveld": "5.2",
+      "programmaCode": "Sport en recreatie",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": true,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4820",
+      "taakveld": "5.5",
+      "programmaCode": "Cultuur en recreatie",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "4900",
+      "taakveld": "0.8",
+      "programmaCode": "Overige baten en lasten",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "5000",
+      "taakveld": "0.10",
+      "programmaCode": "Mutaties reserves",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "reserves-toevoeging",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "5010",
+      "taakveld": "0.10",
+      "programmaCode": "Mutaties reserves",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "reserves-onttrekking",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "6000",
+      "taakveld": "0.7",
+      "programmaCode": "Algemene dekkingsmiddelen",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "baten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "6010",
+      "taakveld": "0.61",
+      "programmaCode": "Algemene dekkingsmiddelen",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "baten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "6020",
+      "taakveld": "0.62",
+      "programmaCode": "Algemene dekkingsmiddelen",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "baten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "6030",
+      "taakveld": "0.63",
+      "programmaCode": "Algemene dekkingsmiddelen",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "baten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "6100",
+      "taakveld": "0.5",
+      "programmaCode": "Treasury",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "baten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "6200",
+      "taakveld": "7.2",
+      "programmaCode": "Volksgezondheid en milieu",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "baten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "6210",
+      "taakveld": "7.3",
+      "programmaCode": "Volksgezondheid en milieu",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "baten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "6220",
+      "taakveld": "2.2",
+      "programmaCode": "Verkeer en vervoer",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "baten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "6300",
+      "taakveld": "0.9",
+      "programmaCode": "Vennootschapsbelasting",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "lasten",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "accountNumber": "7000",
+      "taakveld": "0.8",
+      "programmaCode": "Overige baten en lasten",
+      "autorisatieniveau": "programma",
+      "bcfCompensable": false,
+      "iv3Bucket": "resultaat",
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    }
+  ]
+}

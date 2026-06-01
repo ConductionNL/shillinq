@@ -3,7 +3,7 @@
   "info": {
     "title": "Shillinq Register",
     "description": "Register containing all schemas for the Shillinq application.",
-    "version": "0.2.0"
+    "version": "0.3.0"
   },
   "x-openregister": {
     "type": "application",
@@ -202,6 +202,395 @@
             "operation": "count",
             "description": "Number of accounts per lifecycleState.",
             "groupBy": "lifecycleState"
+          }
+        }
+      },
+      "BbvAccountMapping": {
+        "slug": "BbvAccountMapping",
+        "icon": "MapOutline",
+        "version": "0.1.0",
+        "title": "BBV Account Mapping",
+        "description": "Maps an RGS account to a BBV taakveld for a specific administration (gemeente, provincie, or waterschap). Unique per (administrationId, accountNumber). Per ADR-022, this is a register — not an embedded enum or link table.",
+        "type": "object",
+        "x-schema-org": "schema:DefinedTerm",
+        "required": [
+          "administrationId",
+          "accountNumber",
+          "taakveld",
+          "programmaCode",
+          "autorisatieniveau",
+          "bcfCompensable",
+          "iv3Bucket"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration (gemeente/provincie/waterschap).",
+            "example": "gem-amsterdam"
+          },
+          "accountNumber": {
+            "type": "string",
+            "description": "FK to Account.accountNumber (T1 chart of accounts).",
+            "example": "4250"
+          },
+          "taakveld": {
+            "type": "string",
+            "description": "BBV taakveld code from the BbvTaakveld catalogue (REQ-BBV-005). e.g. '0.1', '5.3'.",
+            "example": "5.3"
+          },
+          "programmaCode": {
+            "type": "string",
+            "description": "Operator-defined programma identifier (e.g. '01-Bestuur').",
+            "example": "05-Cultuur"
+          },
+          "paragraafCode": {
+            "type": "string",
+            "description": "Operator-defined paragraaf code if applicable.",
+            "nullable": true,
+            "example": "A"
+          },
+          "autorisatieniveau": {
+            "type": "string",
+            "enum": [
+              "programma",
+              "taakveld",
+              "kostenplaats"
+            ],
+            "description": "Level at which raadsautorisatie applies.",
+            "example": "programma"
+          },
+          "bcfCompensable": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether the account's VAT is recoverable via BCF (Btw Compensatiefonds). See bookkeeping-bcf-vat-compensation."
+          },
+          "iv3Bucket": {
+            "type": "string",
+            "enum": [
+              "lasten",
+              "baten",
+              "investeringen",
+              "reserves-toevoeging",
+              "reserves-onttrekking",
+              "resultaat"
+            ],
+            "description": "IV3 reporting bucket for this account mapping. See bookkeeping-iv3-reporting.",
+            "example": "lasten"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Mapping is active and applied to new GL postings."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Mapping is archived; no longer applied to new postings."
+            }
+          },
+          "transitions": {
+            "archive": {
+              "from": "active",
+              "to": "archived",
+              "label": "Archive mapping",
+              "description": "Deactivate this BBV account mapping."
+            },
+            "restore": {
+              "from": "archived",
+              "to": "active",
+              "label": "Restore mapping",
+              "description": "Reactivate an archived BBV account mapping."
+            }
+          },
+          "retention": {
+            "rule": "selectielijst:5.1.1"
+          },
+          "requires": {
+            "update": {
+              "approval-workflow": {
+                "condition": "bcfCompensable_changed OR taakveld_changed",
+                "description": "bcfCompensable flag flips and taakveld reassignments may require approval per administration policy (REQ-BBV-009)."
+              }
+            }
+          }
+        },
+        "x-openregister-constraints": {
+          "unique": [
+            "administrationId",
+            "accountNumber"
+          ]
+        },
+        "x-openregister-relations": {
+          "account": {
+            "localField": "accountNumber",
+            "relatedSchema": "Account",
+            "relatedField": "accountNumber",
+            "cardinality": "many-to-one",
+            "description": "FK to the T1 Account schema (chart of accounts)."
+          },
+          "bbvTaakveld": {
+            "localField": "taakveld",
+            "relatedSchema": "BbvTaakveld",
+            "relatedField": "taakveldCode",
+            "cardinality": "many-to-one",
+            "description": "FK to the BbvTaakveld catalogue entry."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bbv-controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "byTaakveld": {
+            "field": "taakveld",
+            "operation": "count",
+            "description": "Number of accounts mapped per taakveld.",
+            "groupBy": "taakveld"
+          },
+          "byProgramma": {
+            "field": "programmaCode",
+            "operation": "count",
+            "description": "Number of accounts mapped per programma code.",
+            "groupBy": "programmaCode"
+          },
+          "bbvProgrammaSummary": {
+            "description": "Sum of GL debits and credits per programmaCode for BBV reporting (REQ-BBV-004). Joins BbvAccountMapping with GLLine via accountNumber.",
+            "operation": "sum",
+            "groupBy": "programmaCode",
+            "joinSchema": "GLLine",
+            "joinField": "accountNumber"
+          }
+        }
+      },
+      "BbvTaakveld": {
+        "slug": "BbvTaakveld",
+        "icon": "BookOpenVariantOutline",
+        "version": "0.1.0",
+        "title": "BBV Taakveld",
+        "description": "A taakveld entry from the BBV bijlage IV catalogue (Besluit Begroting en Verantwoording). Seeded from bbv-taakvelden-2024.json. Per D2, this is a register because the catalogue evolves at every BBV revision and needs translation handling.",
+        "type": "object",
+        "x-schema-org": "schema:DefinedTerm",
+        "required": [
+          "taakveldCode",
+          "name",
+          "category",
+          "legalBasis",
+          "effectiveFrom"
+        ],
+        "properties": {
+          "taakveldCode": {
+            "type": "string",
+            "description": "BBV taakveld code from bijlage IV. e.g. '0.1', '1.2', '7.1'.",
+            "example": "5.3"
+          },
+          "name": {
+            "type": "string",
+            "description": "Official taakveld name per Besluit BBV bijlage IV.",
+            "example": "Cultuurpresentatie, cultuurproductie en cultuurparticipatie"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "bestuur",
+              "veiligheid",
+              "verkeer",
+              "economie",
+              "onderwijs",
+              "sport-cultuur-recreatie",
+              "sociaal-domein",
+              "volksgezondheid-milieu",
+              "vhrosv",
+              "algemene-dekkingsmiddelen",
+              "overhead"
+            ],
+            "description": "High-level BBV bijlage IV category.",
+            "example": "sport-cultuur-recreatie"
+          },
+          "legalBasis": {
+            "type": "string",
+            "description": "Statutory citation: Besluit BBV bijlage IV §X.",
+            "example": "Besluit BBV bijlage IV §5"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "Start of the taakveld's validity window.",
+            "example": "2024-01-01"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "End of validity window; null means the taakveld is still current.",
+            "example": null
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Taakveld is current and in the active BBV catalogue."
+            },
+            "superseded": {
+              "label": "Superseded",
+              "description": "Replaced by a newer BBV catalogue revision."
+            }
+          },
+          "transitions": {
+            "supersede": {
+              "from": "active",
+              "to": "superseded",
+              "label": "Mark as superseded",
+              "description": "Mark this taakveld as replaced by a newer BBV revision."
+            }
+          },
+          "retention": {
+            "rule": "selectielijst:5.1.1"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bbv-controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      },
+      "GLTransaction": {
+        "slug": "GLTransaction",
+        "icon": "LedgerOutline",
+        "version": "0.1.0",
+        "title": "GL Transaction",
+        "description": "General-ledger posting header. Owns the balance invariant and lifecycle. Extended here with a BBV-mapping precondition for municipal administrations (REQ-BBV-003). Full T1 field set declared in bookkeeping-general-ledger spec.",
+        "type": "object",
+        "x-schema-org": "schema:AccountingTransaction",
+        "required": [
+          "transactionNumber",
+          "postingDate",
+          "currency",
+          "description",
+          "state",
+          "administrationId"
+        ],
+        "properties": {
+          "transactionNumber": {
+            "type": "string",
+            "description": "Sequential transaction number unique per administration + fiscal year.",
+            "example": "2024-001234"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Effective accounting date of the posting.",
+            "example": "2024-03-15"
+          },
+          "periodId": {
+            "type": "string",
+            "description": "FK to the FiscalPeriod record.",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 base currency for this posting.",
+            "minLength": 3,
+            "maxLength": 3,
+            "example": "EUR",
+            "default": "EUR"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable summary of the posting.",
+            "example": "Subsidie cultuurinstelling Q1"
+          },
+          "sourceReference": {
+            "type": "string",
+            "description": "External document number (invoice, bank statement ref, etc.).",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "posted",
+              "reversed"
+            ],
+            "description": "Lifecycle state of the GL transaction.",
+            "example": "draft"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration owning this posting.",
+            "example": "gem-amsterdam"
+          },
+          "journalEntryId": {
+            "type": "string",
+            "description": "Back-reference to the JournalEntry that materialised this posting.",
+            "nullable": true
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Posting in preparation — lines may be added or edited."
+            },
+            "posted": {
+              "label": "Posted",
+              "description": "Balanced, immutable posting in the general ledger."
+            },
+            "reversed": {
+              "label": "Reversed",
+              "description": "Posting has been reversed by a counter-entry."
+            }
+          },
+          "transitions": {
+            "post": {
+              "from": "draft",
+              "to": "posted",
+              "label": "Post transaction",
+              "description": "Finalise and post this GL transaction. For municipal administrations (gemeente/provincie/waterschap) every GLLine.accountNumber MUST have a non-archived BbvAccountMapping for the same administration and postingDate >= installation date (REQ-BBV-003, forward-only).",
+              "requires": {
+                "bbvMappingPresent": {
+                  "condition": "administrationType IN ('gemeente', 'provincie', 'waterschap') AND postingDate >= bbv_install_date",
+                  "check": "ALL GLLine.accountNumber RESOLVED IN BbvAccountMapping WHERE administrationId = GLTransaction.administrationId AND lifecycleState = 'active'",
+                  "errorMessage": "BBV mapping required: account {accountNumber} has no active BbvAccountMapping for this administration."
+                }
+              }
+            },
+            "reverse": {
+              "from": "posted",
+              "to": "reversed",
+              "label": "Reverse transaction",
+              "description": "Create a reversing counter-entry. Requires a corresponding reversal GLTransaction."
+            }
           }
         }
       }

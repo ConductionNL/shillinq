@@ -119,6 +119,7 @@ class InitializeSettings implements IRepairStep
             }
 
             $this->seedChartOfAccounts(output: $output);
+            $this->seedBbvData(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -186,4 +187,61 @@ class InitializeSettings implements IRepairStep
         }
 
     }//end seedChartOfAccounts()
+
+    /**
+     * Seed BBV taakveld catalogue and default RGS→BBV mapping for municipal administrations.
+     *
+     * Skipped entirely for non-municipal administration types (mkb, zzp, etc.).
+     * Idempotent on re-run — existing records are skipped to preserve operator overrides.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-bbv-compliance/tasks.md#task-10
+     */
+    private function seedBbvData(IOutput $output): void
+    {
+        $settings           = $this->settingsService->getSettings();
+        $administrationId   = ($settings['administration_id'] ?? '');
+        $administrationType = ($settings['administration_type'] ?? '');
+
+        if ($administrationId === '') {
+            $output->info('Shillinq: administration_id not configured — skipping BBV seed.');
+            return;
+        }
+
+        // BBV seeding is only relevant for municipal-type administrations.
+        $municipalTypes = ['gemeente', 'provincie', 'waterschap'];
+        if (in_array($administrationType, $municipalTypes, strict: true) === false) {
+            $output->info(
+                'Shillinq: administration_type is "'.$administrationType
+                .'" — BBV seed applies only to gemeente/provincie/waterschap, skipping.'
+            );
+            return;
+        }
+
+        $output->info('Shillinq: seeding BBV taakveld catalogue...');
+        $taakveldResult = $this->settingsService->seedBbvTaakvelden();
+        if ($taakveldResult['success'] === true) {
+            $seeded  = ($taakveldResult['seeded'] ?? 0);
+            $skipped = ($taakveldResult['skipped'] ?? 0);
+            $output->info('BBV taakveld catalogue: '.$seeded.' created, '.$skipped.' skipped.');
+        } else {
+            $output->warning('BBV taakveld seed issue: '.($taakveldResult['message'] ?? 'unknown error'));
+        }
+
+        $output->info('Shillinq: seeding RGS→BBV account mapping (administrationId: '.$administrationId.')...');
+        $mappingResult = $this->settingsService->seedBbvAccountMappings(
+            administrationId: $administrationId
+        );
+        if ($mappingResult['success'] === true) {
+            $seeded  = ($mappingResult['seeded'] ?? 0);
+            $skipped = ($mappingResult['skipped'] ?? 0);
+            $output->info('BBV account mappings: '.$seeded.' created, '.$skipped.' skipped (operator overrides preserved).');
+        } else {
+            $output->warning('BBV mapping seed issue: '.($mappingResult['message'] ?? 'unknown error'));
+        }
+
+    }//end seedBbvData()
 }//end class

@@ -46,6 +46,7 @@ class SettingsService
         'register',
         'rgs_template',
         'administration_id',
+        'administration_type',
     ];
 
     /**
@@ -328,6 +329,178 @@ class SettingsService
         return ['seeded' => $seeded, 'skipped' => $skipped];
 
     }//end importAccounts()
+
+    /**
+     * Seed the BBV taakveld catalogue from bbv-taakvelden-2024.json, idempotently.
+     *
+     * Existing records (matched by taakveldCode) are skipped on re-run to preserve
+     * any operator-added custom taakveld variants (REQ-BBV-005).
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/add-shillinq-bbv-compliance/tasks.md#task-10
+     */
+    public function seedBbvTaakvelden(): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return ['success' => false, 'message' => 'OpenRegister is not installed or enabled.'];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/bbv-taakvelden-2024.json';
+        if (file_exists($seedPath) === false) {
+            $this->logger->error('Shillinq: bbv-taakvelden-2024.json not found at '.$seedPath);
+            return ['success' => false, 'message' => 'Seed file bbv-taakvelden-2024.json not found.'];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return ['success' => false, 'message' => 'Failed to read bbv-taakvelden-2024.json.'];
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return ['success' => false, 'message' => 'Failed to parse bbv-taakvelden-2024.json: '.json_last_error_msg()];
+        }
+
+        $taakvelden = ($data['bbvTaakvelden'] ?? []);
+        if (empty($taakvelden) === true) {
+            return ['success' => false, 'message' => 'bbv-taakvelden-2024.json contains no entries.'];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($taakvelden as $taakveld) {
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('BbvTaakveld')
+                    ->findAll(
+                        [
+                            'filters' => ['taakveldCode' => $taakveld['taakveldCode']],
+                            'limit'   => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $taakveld,
+                    register: $registerSlug,
+                    schema: 'BbvTaakveld',
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: BBV taakveld catalogue seeded',
+                ['seeded' => $seeded, 'skipped' => $skipped]
+            );
+
+            return ['success' => true, 'seeded' => $seeded, 'skipped' => $skipped];
+        } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: BBV taakveld seeding failed', ['exception' => $e->getMessage()]);
+            return ['success' => false, 'message' => $e->getMessage()];
+        }//end try
+
+    }//end seedBbvTaakvelden()
+
+    /**
+     * Seed the default RGS→BBV account mapping from rgs-to-bbv-mapping.json, idempotently.
+     *
+     * Skips existing records matched by (administrationId, accountNumber) to preserve
+     * operator overrides on re-run (REQ-BBV-006). The administrationId argument MUST
+     * be the actual tenant identifier — never empty (C2).
+     *
+     * @param string $administrationId The administration to stamp on imported records.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/add-shillinq-bbv-compliance/tasks.md#task-10
+     */
+    public function seedBbvAccountMappings(string $administrationId): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return ['success' => false, 'message' => 'OpenRegister is not installed or enabled.'];
+        }
+
+        if ($administrationId === '') {
+            return ['success' => false, 'message' => 'administrationId must not be empty.'];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/rgs-to-bbv-mapping.json';
+        if (file_exists($seedPath) === false) {
+            $this->logger->error('Shillinq: rgs-to-bbv-mapping.json not found at '.$seedPath);
+            return ['success' => false, 'message' => 'Seed file rgs-to-bbv-mapping.json not found.'];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return ['success' => false, 'message' => 'Failed to read rgs-to-bbv-mapping.json.'];
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return ['success' => false, 'message' => 'Failed to parse rgs-to-bbv-mapping.json: '.json_last_error_msg()];
+        }
+
+        $mappings = ($data['mappings'] ?? []);
+        if (empty($mappings) === true) {
+            return ['success' => false, 'message' => 'rgs-to-bbv-mapping.json contains no entries.'];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($mappings as $mapping) {
+                $mapping['administrationId'] = $administrationId;
+
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('BbvAccountMapping')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'administrationId' => $administrationId,
+                                'accountNumber'    => $mapping['accountNumber'],
+                            ],
+                            'limit'   => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $mapping,
+                    register: $registerSlug,
+                    schema: 'BbvAccountMapping',
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: BBV account mappings seeded',
+                ['administrationId' => $administrationId, 'seeded' => $seeded, 'skipped' => $skipped]
+            );
+
+            return ['success' => true, 'seeded' => $seeded, 'skipped' => $skipped];
+        } catch (\Throwable $e) {
+            $this->logger->error('Shillinq: BBV mapping seeding failed', ['exception' => $e->getMessage()]);
+            return ['success' => false, 'message' => $e->getMessage()];
+        }//end try
+
+    }//end seedBbvAccountMappings()
 
     /**
      * Load configuration from shillinq_register.json via OpenRegister.

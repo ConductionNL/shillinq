@@ -1,0 +1,481 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "bbvVersion": "2024",
+    "source": "Commissie BBV handreiking",
+    "description": "Complete BBV bijlage IV taakveld catalogue (2024 revision) for Nederlandse gemeenten, provincies en waterschappen. Loaded via repair step into the BbvTaakveld register.",
+    "imported": "2026-06-01T00:00:00Z",
+    "url": "https://www.commissiebbv.nl"
+  },
+  "bbvTaakvelden": [
+    {
+      "taakveldCode": "0.1",
+      "name": "Bestuur",
+      "category": "bestuur",
+      "legalBasis": "Besluit BBV bijlage IV §0",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "0.2",
+      "name": "Burgerzaken",
+      "category": "bestuur",
+      "legalBasis": "Besluit BBV bijlage IV §0",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "0.3",
+      "name": "Beheer overige gebouwen en gronden",
+      "category": "bestuur",
+      "legalBasis": "Besluit BBV bijlage IV §0",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "0.4",
+      "name": "Overhead",
+      "category": "overhead",
+      "legalBasis": "Besluit BBV bijlage IV §0",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "0.5",
+      "name": "Treasury",
+      "category": "algemene-dekkingsmiddelen",
+      "legalBasis": "Besluit BBV bijlage IV §0",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "0.61",
+      "name": "OZB woningen",
+      "category": "algemene-dekkingsmiddelen",
+      "legalBasis": "Besluit BBV bijlage IV §0",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "0.62",
+      "name": "OZB niet-woningen",
+      "category": "algemene-dekkingsmiddelen",
+      "legalBasis": "Besluit BBV bijlage IV §0",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "0.63",
+      "name": "Parkeerbelasting",
+      "category": "algemene-dekkingsmiddelen",
+      "legalBasis": "Besluit BBV bijlage IV §0",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "0.64",
+      "name": "Belastingen overig",
+      "category": "algemene-dekkingsmiddelen",
+      "legalBasis": "Besluit BBV bijlage IV §0",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "0.7",
+      "name": "Algemene uitkering en overige uitkeringen gemeentefonds",
+      "category": "algemene-dekkingsmiddelen",
+      "legalBasis": "Besluit BBV bijlage IV §0",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "0.8",
+      "name": "Overige baten en lasten",
+      "category": "algemene-dekkingsmiddelen",
+      "legalBasis": "Besluit BBV bijlage IV §0",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "0.9",
+      "name": "Vennootschapsbelasting (Vpb)",
+      "category": "algemene-dekkingsmiddelen",
+      "legalBasis": "Besluit BBV bijlage IV §0",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "0.10",
+      "name": "Mutaties reserves",
+      "category": "algemene-dekkingsmiddelen",
+      "legalBasis": "Besluit BBV bijlage IV §0",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "1.1",
+      "name": "Crisisbeheersing en brandweer",
+      "category": "veiligheid",
+      "legalBasis": "Besluit BBV bijlage IV §1",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "1.2",
+      "name": "Openbare orde en veiligheid",
+      "category": "veiligheid",
+      "legalBasis": "Besluit BBV bijlage IV §1",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "2.1",
+      "name": "Verkeer en vervoer",
+      "category": "verkeer",
+      "legalBasis": "Besluit BBV bijlage IV §2",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "2.2",
+      "name": "Parkeren",
+      "category": "verkeer",
+      "legalBasis": "Besluit BBV bijlage IV §2",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "2.3",
+      "name": "Recreatieve havens",
+      "category": "verkeer",
+      "legalBasis": "Besluit BBV bijlage IV §2",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "2.4",
+      "name": "Economische havens en waterwegen",
+      "category": "verkeer",
+      "legalBasis": "Besluit BBV bijlage IV §2",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "2.5",
+      "name": "Openbaar vervoer",
+      "category": "verkeer",
+      "legalBasis": "Besluit BBV bijlage IV §2",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "3.1",
+      "name": "Economische ontwikkeling",
+      "category": "economie",
+      "legalBasis": "Besluit BBV bijlage IV §3",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "3.2",
+      "name": "Fysieke bedrijfsinfrastructuur",
+      "category": "economie",
+      "legalBasis": "Besluit BBV bijlage IV §3",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "3.3",
+      "name": "Bedrijfsloket en bedrijfsregelingen",
+      "category": "economie",
+      "legalBasis": "Besluit BBV bijlage IV §3",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "3.4",
+      "name": "Economische promotie",
+      "category": "economie",
+      "legalBasis": "Besluit BBV bijlage IV §3",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "4.1",
+      "name": "Openbaar basisonderwijs",
+      "category": "onderwijs",
+      "legalBasis": "Besluit BBV bijlage IV §4",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "4.2",
+      "name": "Onderwijshuisvesting",
+      "category": "onderwijs",
+      "legalBasis": "Besluit BBV bijlage IV §4",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "4.3",
+      "name": "Onderwijsbeleid en leerlingenzaken",
+      "category": "onderwijs",
+      "legalBasis": "Besluit BBV bijlage IV §4",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "5.1",
+      "name": "Sportbeleid en activering",
+      "category": "sport-cultuur-recreatie",
+      "legalBasis": "Besluit BBV bijlage IV §5",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "5.2",
+      "name": "Sportaccommodaties",
+      "category": "sport-cultuur-recreatie",
+      "legalBasis": "Besluit BBV bijlage IV §5",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "5.3",
+      "name": "Cultuurpresentatie, cultuurproductie en cultuurparticipatie",
+      "category": "sport-cultuur-recreatie",
+      "legalBasis": "Besluit BBV bijlage IV §5",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "5.4",
+      "name": "Musea",
+      "category": "sport-cultuur-recreatie",
+      "legalBasis": "Besluit BBV bijlage IV §5",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "5.5",
+      "name": "Cultureel erfgoed",
+      "category": "sport-cultuur-recreatie",
+      "legalBasis": "Besluit BBV bijlage IV §5",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "5.6",
+      "name": "Media",
+      "category": "sport-cultuur-recreatie",
+      "legalBasis": "Besluit BBV bijlage IV §5",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "5.7",
+      "name": "Openbaar groen en (openlucht) recreatie",
+      "category": "sport-cultuur-recreatie",
+      "legalBasis": "Besluit BBV bijlage IV §5",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "6.1",
+      "name": "Samenkracht en burgerparticipatie",
+      "category": "sociaal-domein",
+      "legalBasis": "Besluit BBV bijlage IV §6",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "6.2",
+      "name": "Wijkteams",
+      "category": "sociaal-domein",
+      "legalBasis": "Besluit BBV bijlage IV §6",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "6.3",
+      "name": "Inkomensregelingen",
+      "category": "sociaal-domein",
+      "legalBasis": "Besluit BBV bijlage IV §6",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "6.4",
+      "name": "Begeleide participatie",
+      "category": "sociaal-domein",
+      "legalBasis": "Besluit BBV bijlage IV §6",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "6.5",
+      "name": "Arbeidsparticipatie",
+      "category": "sociaal-domein",
+      "legalBasis": "Besluit BBV bijlage IV §6",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "6.6",
+      "name": "Maatwerkvoorzieningen (Wmo)",
+      "category": "sociaal-domein",
+      "legalBasis": "Besluit BBV bijlage IV §6",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "6.71",
+      "name": "Maatwerkdienstverlening 18+",
+      "category": "sociaal-domein",
+      "legalBasis": "Besluit BBV bijlage IV §6",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "6.72",
+      "name": "Maatwerkdienstverlening 18-",
+      "category": "sociaal-domein",
+      "legalBasis": "Besluit BBV bijlage IV §6",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "6.81",
+      "name": "Geëscaleerde zorg 18+",
+      "category": "sociaal-domein",
+      "legalBasis": "Besluit BBV bijlage IV §6",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "6.82",
+      "name": "Geëscaleerde zorg 18-",
+      "category": "sociaal-domein",
+      "legalBasis": "Besluit BBV bijlage IV §6",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "7.1",
+      "name": "Volksgezondheid",
+      "category": "volksgezondheid-milieu",
+      "legalBasis": "Besluit BBV bijlage IV §7",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "7.2",
+      "name": "Riolering",
+      "category": "volksgezondheid-milieu",
+      "legalBasis": "Besluit BBV bijlage IV §7",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "7.3",
+      "name": "Afval",
+      "category": "volksgezondheid-milieu",
+      "legalBasis": "Besluit BBV bijlage IV §7",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "7.4",
+      "name": "Milieubeheer",
+      "category": "volksgezondheid-milieu",
+      "legalBasis": "Besluit BBV bijlage IV §7",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "7.5",
+      "name": "Begraafplaatsen en crematoria",
+      "category": "volksgezondheid-milieu",
+      "legalBasis": "Besluit BBV bijlage IV §7",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "8.1",
+      "name": "Ruimtelijke ordening",
+      "category": "vhrosv",
+      "legalBasis": "Besluit BBV bijlage IV §8",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "8.2",
+      "name": "Grondexploitatie (niet-bedrijventerreinen)",
+      "category": "vhrosv",
+      "legalBasis": "Besluit BBV bijlage IV §8",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    },
+    {
+      "taakveldCode": "8.3",
+      "name": "Wonen en bouwen",
+      "category": "vhrosv",
+      "legalBasis": "Besluit BBV bijlage IV §8",
+      "effectiveFrom": "2017-01-01",
+      "effectiveTo": null,
+      "_meta": { "bbvVersion": "2024", "source": "seeded" }
+    }
+  ]
+}
