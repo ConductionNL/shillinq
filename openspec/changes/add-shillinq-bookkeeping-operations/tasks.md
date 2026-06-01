@@ -106,8 +106,8 @@
   - GIVEN `KorRegime.state` lifecycle WHEN scanned THEN the auto-transitions on threshold crossings are declared.
   - GIVEN the lifecycle's post-transition action WHEN inspected THEN the `threshold-exceeded → opted-out` action creates a `JournalEntry` in `state: pending` (NOT auto-posted).
   - GIVEN `KorRegime.ytdRevenue` WHEN inspected THEN it is declared as `x-openregister-calculations` per spec (OR a referenced PHP guard with ADR-031 exception annotation).
-- [ ] Implement
-- [ ] Test (PHPUnit: threshold-crossing transitions; notification fires at 80% + 100%; opt-out journal is `pending` not `posted`)
+- [x] Implement
+- [x] Test (PHPUnit: threshold-crossing transitions; notification fires at 80% + 100%; opt-out journal is `pending` not `posted`)
 
 ### Task 2.6: Declare ZZP registers — `UrenRegistratie`, `ZzpDeduction`, `IbAangifteExport`
 
@@ -117,8 +117,8 @@
   - GIVEN the three schemas WHEN loaded THEN fields per spec are present.
   - GIVEN `UrenRegistratie.category` WHEN inspected THEN excluded categories require `excludedReason` per spec.
   - GIVEN `ZzpDeduction.ytdQualifyingHours` WHEN inspected THEN it is declared as `x-openregister-calculations` per spec (OR a referenced PHP guard with ADR-031 exception annotation).
-- [ ] Implement
-- [ ] Test (PHPUnit: excluded-hours filtering; deduction calculation correctness with starters scenarios)
+- [x] Implement
+- [x] Test (PHPUnit: excluded-hours filtering; deduction calculation correctness with starters scenarios)
 
 ### Task 2.7: Declare Schatkist register — `SchatkistPosition` + `Account` extension
 
@@ -129,8 +129,8 @@
   - GIVEN `SchatkistPosition` WHEN loaded THEN fields per spec are present.
   - GIVEN the daily aggregation WHEN scanned THEN it is declared as `x-openregister-aggregations` filtered by `isSchatkistAccount` per spec.
   - GIVEN the daily workflow WHEN scanned THEN it is declared as `ScheduledWorkflow`, NOT a `*Job` class, per spec.
-- [ ] Implement
-- [ ] Test (PHPUnit: aggregation includes only flagged accounts; daily workflow generates one record per administration per day; threshold-crossing notification fires)
+- [x] Implement
+- [x] Test (PHPUnit: aggregation includes only flagged accounts; daily workflow generates one record per administration per day; threshold-crossing notification fires)
 
 ### Task 2.8: Declare Subsidie registers — `Subsidie`, `RepaymentInstallment`
 
@@ -265,8 +265,8 @@
 - **acceptance_criteria**:
   - GIVEN the discovery step concluded the engine cannot express cross-period revenue aggregation declaratively WHEN the guard is implemented THEN it has exactly one method `currentYtdRevenue(string $adminId, int $year): float` and is referenced from `x-openregister-lifecycle.requires` on the `KorRegime` lifecycle.
   - GIVEN the guard WHEN code-reviewed THEN it carries the ADR-031 exception annotation linking back to design.md's Declarative-vs-imperative decision table.
-- [ ] Implement (only if conditional triggered)
-- [ ] Test (PHPUnit: invoice fixture sums correctly; edge cases for cancelled invoices, credit notes, partial periods)
+- [x] Implement (only if conditional triggered)
+- [x] Test (PHPUnit: invoice fixture sums correctly; edge cases for cancelled invoices, credit notes, partial periods)
 
 ### Task 7.2 (conditional): Author UrencriteriumGuard
 
@@ -275,8 +275,8 @@
 - **acceptance_criteria**:
   - GIVEN the discovery step concluded the engine cannot express the cross-period qualifying-hours sum declaratively WHEN the guard is implemented THEN it has exactly one method `currentYtdHours(string $personId, int $year): float` and is referenced from `x-openregister-lifecycle.requires` on the `ZzpDeduction` schema.
   - GIVEN the guard WHEN code-reviewed THEN it carries the ADR-031 exception annotation.
-- [ ] Implement (only if conditional triggered)
-- [ ] Test (PHPUnit: hours fixture; excluded categories filter correctly; edge cases for start/end of year)
+- [x] Implement (only if conditional triggered)
+- [x] Test (PHPUnit: hours fixture; excluded categories filter correctly; edge cases for start/end of year)
 
 ## 8. ADR-005 (security) compliance — per ADR-005 cross-cutting requirement
 

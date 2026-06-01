@@ -1,0 +1,25 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Wet HOF art. 2 + ministeriele regeling",
+    "version": "2026-01-01",
+    "description": "Schatkistbankieren drempelbedrag percentages by municipality size. REQ-SBK-005.",
+    "imported": "2026-06-01T00:00:00Z",
+    "schema": "SchatkistThreshold"
+  },
+  "records": [
+    {
+      "code": "small_municipality",
+      "drempelPercentage": 0.75,
+      "description": "Drempelbedrag als percentage van de begroting voor kleine gemeenten.",
+      "legislativeReference": "Wet HOF art. 2 + ministeriele regeling"
+    },
+    {
+      "code": "large_municipality",
+      "drempelPercentage": 0.5,
+      "description": "Drempelbedrag als percentage van de begroting voor grote gemeenten.",
+      "legislativeReference": "Wet HOF art. 2 + ministeriele regeling"
+    }
+  ]
+}

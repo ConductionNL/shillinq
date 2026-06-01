@@ -1,0 +1,22 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Wet IB 2001 (afdeling 3.2)",
+    "version": "2026-01-01",
+    "description": "ZZP tax deduction amounts: zelfstandigenaftrek, startersaftrek, MKB-winstvrijstelling, with qualifying-hour thresholds. REQ-ZZP-005. Indicative amounts; operator confirms against the current Belastingdienst figures.",
+    "imported": "2026-06-01T00:00:00Z",
+    "schema": "ZzpDeductionAmounts"
+  },
+  "records": [
+    {
+      "code": "zzp-amounts-2026",
+      "zelfstandigenaftrek": 5000,
+      "startersaftrek": 1000,
+      "mkbWinstvrijstelling": 900,
+      "currency": "EUR",
+      "thresholds": { "full": 1225, "starters": 800 },
+      "legislativeReference": "Wet IB 2001 afdeling 3.2"
+    }
+  ]
+}

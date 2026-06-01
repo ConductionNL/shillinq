@@ -1002,6 +1002,332 @@
           "rule": "selectielijst:5.1.2",
           "description": "REQ-ARC: 7-year financial-record retention, disposition archive."
         }
+      },
+      "KorRegime": {
+        "slug": "KorRegime",
+        "icon": "StorefrontOutline",
+        "version": "0.1.0",
+        "title": "KOR Regime",
+        "description": "Kleine OndernemersRegeling (KOR) status per administration per Wet OB 1968 art. 25. REQ-KOR-001. Lifecycle outside → opted-in → threshold-warning → threshold-exceeded → opted-out.",
+        "type": "object",
+        "required": ["administrationId", "state"],
+        "properties": {
+          "administrationId": { "type": "string", "description": "FK to the SMB/ZZP Administration.", "example": "adm-mkb-1" },
+          "state": {
+            "type": "string",
+            "enum": ["outside", "opted-in", "threshold-warning", "threshold-exceeded", "opted-out"],
+            "default": "outside",
+            "description": "KOR regime lifecycle state."
+          },
+          "optedInDate": { "type": "string", "format": "date", "nullable": true, "description": "When the operator elected KOR." },
+          "optedOutDate": { "type": "string", "format": "date", "nullable": true, "description": "When the administration exited KOR." },
+          "ytdRevenue": {
+            "type": "number",
+            "description": "Server-authoritative YTD revenue (derived, see x-openregister-calculations). Never trusted from the client.",
+            "default": 0
+          },
+          "thresholdAmount": {
+            "type": "number",
+            "description": "KOR omzetdrempel from kor-thresholds-2026.json seed (EUR 20000).",
+            "default": 20000
+          },
+          "year": { "type": "integer", "description": "Calendar year tracked.", "example": 2026 }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "outside",
+          "states": {
+            "outside": { "label": "Buiten KOR", "description": "Administration is not in KOR." },
+            "opted-in": { "label": "KOR actief", "description": "Operator elected the KOR exemption." },
+            "threshold-warning": { "label": "Drempel nadert", "description": "YTD revenue >= 80% of the omzetdrempel." },
+            "threshold-exceeded": { "label": "Drempel overschreden", "description": "YTD revenue >= 100% of the omzetdrempel." },
+            "opted-out": { "label": "KOR beeindigd", "description": "Exited KOR; reverts to standard VAT filing." }
+          },
+          "transitions": {
+            "optIn": {
+              "from": "outside",
+              "to": "opted-in",
+              "label": "Opt-in KOR",
+              "description": "REQ-KOR-002: operator elects the KOR exemption."
+            },
+            "warn": {
+              "from": "opted-in",
+              "to": "threshold-warning",
+              "label": "Drempelwaarschuwing",
+              "description": "REQ-KOR-002/005: auto-transition when ytdRevenue >= 80% of threshold.",
+              "requires": {
+                "guard": "OCA\\Shillinq\\Guard\\KorThresholdGuard::reachesWarning",
+                "description": "REQ-KOR-004: cross-period YTD revenue aggregation. ADR-031 exception — OR's declarative aggregation cannot span fiscal periods inside a requires clause (Risk 3); single-method PHP guard, no state."
+              }
+            },
+            "exceed": {
+              "from": "threshold-warning",
+              "to": "threshold-exceeded",
+              "label": "Drempel overschreden",
+              "description": "REQ-KOR-002/005: auto-transition when ytdRevenue >= 100% of threshold.",
+              "requires": {
+                "guard": "OCA\\Shillinq\\Guard\\KorThresholdGuard::reachesThreshold",
+                "description": "REQ-KOR-004: cross-period YTD revenue aggregation. ADR-031 exception (Risk 3)."
+              }
+            },
+            "optOut": {
+              "from": "threshold-exceeded",
+              "to": "opted-out",
+              "label": "Opt-out KOR",
+              "description": "REQ-KOR-002/006: exit KOR. Creates a JournalEntry in state pending (NOT auto-posted) for operator + accountant review."
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "ytdRevenue": {
+            "description": "REQ-KOR-004: aggregate Invoice (T2 AR) revenue for the current calendar year. Declarative form; the cross-period sum inside the lifecycle requires is served by KorThresholdGuard per the ADR-031 exception.",
+            "source": "Invoice",
+            "operation": "sum",
+            "field": "amount",
+            "filters": {
+              "administrationId": "@self.administrationId",
+              "year": "@self.year"
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "thresholdWarning": {
+            "description": "REQ-KOR-005/010: warning notification at 80% of the omzetdrempel.",
+            "on": "state:threshold-warning",
+            "level": "warning",
+            "message": "KOR-omzetdrempel nadert (80%)."
+          },
+          "thresholdExceeded": {
+            "description": "REQ-KOR-005/010: alarm notification at 100% of the omzetdrempel.",
+            "on": "state:threshold-exceeded",
+            "level": "alarm",
+            "message": "KOR-omzetdrempel overschreden (100%)."
+          }
+        },
+        "x-openregister-widgets": {
+          "korProgress": {
+            "description": "REQ-KOR-009: dashboard progress bar (0-100%) of ytdRevenue against thresholdAmount for opted-in administrations.",
+            "type": "progress",
+            "valueField": "ytdRevenue",
+            "maxField": "thresholdAmount",
+            "title": "KOR-drempel"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "vat-administrator": { "permissions": ["create", "read", "update"] },
+            "auditor": { "permissions": ["read"] }
+          }
+        },
+        "x-openregister-lifecycle-retention": {
+          "rule": "selectielijst:5.1.2",
+          "description": "REQ-ARC: 7-year financial-record retention."
+        }
+      },
+      "UrenRegistratie": {
+        "slug": "UrenRegistratie",
+        "icon": "ClockOutline",
+        "version": "0.1.0",
+        "title": "Urenregistratie",
+        "description": "Billable-hour tracking for ZZP urencriterium (Wet IB 2001 art. 3.6) and consultancy project accounting. REQ-ZZP-001.",
+        "type": "object",
+        "required": ["administrationId", "personId", "workDate", "hours", "category"],
+        "properties": {
+          "administrationId": { "type": "string", "description": "FK to the Administration.", "example": "adm-zzp-1" },
+          "personId": { "type": "string", "description": "FK to the freelancer/consultant.", "example": "person-1" },
+          "workDate": { "type": "string", "format": "date", "description": "Date the hours were worked.", "example": "2026-01-15" },
+          "hours": { "type": "number", "description": "Number of hours.", "minimum": 0, "example": 8 },
+          "category": {
+            "type": "string",
+            "enum": ["billable", "excluded", "admin", "project"],
+            "description": "Hour category. Excluded hours do not count toward the 1225-urencriterium."
+          },
+          "excludedReason": {
+            "type": "string",
+            "enum": ["sick", "parental-leave", "vacation", "non-billable-admin"],
+            "nullable": true,
+            "description": "REQ-ZZP-002: required when category=excluded; per Wet IB 2001 these hours do not count toward the urencriterium."
+          },
+          "projectId": { "type": "string", "nullable": true, "description": "Optional FK to a Project (consultancy)." },
+          "hourlyRate": { "type": "number", "nullable": true, "description": "MonetaryAmount at work-date." }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "zzp-administrator": { "permissions": ["create", "read", "update"] },
+            "project-administrator": { "permissions": ["create", "read", "update"] },
+            "auditor": { "permissions": ["read"] }
+          }
+        },
+        "x-openregister-widgets": {
+          "urencriteriumProgress": {
+            "description": "REQ-KOR/ZZP: dashboard tracker for YTD qualifying hours against the 1225 threshold.",
+            "type": "progress",
+            "valueField": "ytdQualifyingHours",
+            "max": 1225,
+            "title": "Urencriterium"
+          }
+        },
+        "x-openregister-lifecycle-retention": {
+          "rule": "selectielijst:5.1.2",
+          "description": "REQ-ARC: 7-year financial-record retention."
+        }
+      },
+      "ZzpDeduction": {
+        "slug": "ZzpDeduction",
+        "icon": "CalculatorVariantOutline",
+        "version": "0.1.0",
+        "title": "ZZP Deduction",
+        "description": "ZZP tax deduction eligibility per Wet IB 2001 (zelfstandigenaftrek, startersaftrek, MKB-winstvrijstelling). REQ-ZZP-004.",
+        "type": "object",
+        "required": ["administrationId", "personId", "year"],
+        "properties": {
+          "administrationId": { "type": "string", "description": "FK to the Administration." },
+          "personId": { "type": "string", "description": "FK to the freelancer." },
+          "year": { "type": "integer", "description": "Tax year.", "example": 2026 },
+          "ytdQualifyingHours": {
+            "type": "number",
+            "description": "Server-authoritative YTD qualifying hours (derived). Never trusted from the client.",
+            "default": 0
+          },
+          "qualifies1225": { "type": "boolean", "description": "ytdQualifyingHours >= 1225.", "default": false },
+          "qualifiesStarters": { "type": "boolean", "description": "Founded < 2 years; 800-hour threshold.", "default": false },
+          "zelfstandigenaftrek": { "type": "number", "description": "MonetaryAmount from zzp-deduction-amounts-2026.json seed.", "default": 0 },
+          "startersaftrek": { "type": "number", "description": "MonetaryAmount if qualifiesStarters.", "default": 0 },
+          "mkbWinstvrijstelling": { "type": "number", "description": "MonetaryAmount from seed.", "default": 0 },
+          "totalAllowableDeduction": { "type": "number", "description": "REQ-ZZP-006: zelfstandigenaftrek + (startersaftrek if qualifiesStarters) + mkbWinstvrijstelling.", "default": 0 }
+        },
+        "x-openregister-calculations": {
+          "ytdQualifyingHours": {
+            "description": "REQ-ZZP-003: SUM(UrenRegistratie.hours) where category != excluded for the calendar year. Declarative form; the cross-period sum inside a lifecycle requires is served by UrencriteriumGuard per the ADR-031 exception (Risk 3).",
+            "source": "UrenRegistratie",
+            "operation": "sum",
+            "field": "hours",
+            "filters": {
+              "personId": "@self.personId",
+              "year": "@self.year",
+              "category": { "not": "excluded" }
+            }
+          },
+          "qualifies1225": {
+            "description": "REQ-ZZP-004: derived boolean ytdQualifyingHours >= 1225.",
+            "expression": "@self.ytdQualifyingHours >= 1225"
+          },
+          "totalAllowableDeduction": {
+            "description": "REQ-ZZP-006: sum of applicable deductions.",
+            "expression": "@self.zelfstandigenaftrek + (@self.qualifiesStarters ? @self.startersaftrek : 0) + @self.mkbWinstvrijstelling"
+          }
+        },
+        "x-openregister-requires": {
+          "ytdQualifyingHoursGuard": {
+            "guard": "OCA\\Shillinq\\Guard\\UrencriteriumGuard::currentYtdHours",
+            "description": "REQ-ZZP-003: cross-period qualifying-hours sum. ADR-031 exception — OR's declarative aggregation cannot span fiscal periods inside a requires clause (Risk 3); single-method PHP guard, no state."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "zzp-administrator": { "permissions": ["create", "read", "update"] },
+            "auditor": { "permissions": ["read"] }
+          }
+        },
+        "x-openregister-lifecycle-retention": {
+          "rule": "selectielijst:5.1.2",
+          "description": "REQ-ARC: 7-year financial-record retention."
+        }
+      },
+      "IbAangifteExport": {
+        "slug": "IbAangifteExport",
+        "icon": "FileExportOutline",
+        "version": "0.1.0",
+        "title": "IB-aangifte Export",
+        "description": "Inkomstenbelasting (IB) aangifteformulier export preparation per REQ-ZZP-007.",
+        "type": "object",
+        "required": ["administrationId", "personId", "year"],
+        "properties": {
+          "administrationId": { "type": "string", "description": "FK to the Administration." },
+          "personId": { "type": "string", "description": "FK to the freelancer." },
+          "year": { "type": "integer", "description": "Tax year." },
+          "exportDate": { "type": "string", "format": "date", "nullable": true, "description": "When the export was prepared." },
+          "totalIncome": { "type": "number", "description": "Server-authoritative income from GL revenue aggregation.", "default": 0 },
+          "allowableDeductions": { "type": "number", "description": "From ZzpDeduction.totalAllowableDeduction.", "default": 0 },
+          "taxableIncome": { "type": "number", "description": "totalIncome - allowableDeductions.", "default": 0 },
+          "attachmentUri": { "type": "string", "nullable": true, "description": "docudesk reference to the export PDF." }
+        },
+        "x-openregister-calculations": {
+          "taxableIncome": {
+            "description": "REQ-ZZP-007: totalIncome - allowableDeductions.",
+            "expression": "@self.totalIncome - @self.allowableDeductions"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "zzp-administrator": { "permissions": ["create", "read", "update"] },
+            "auditor": { "permissions": ["read"] }
+          }
+        },
+        "x-openregister-lifecycle-retention": {
+          "rule": "selectielijst:5.1.2",
+          "description": "REQ-ARC: 7-year financial-record retention."
+        }
+      },
+      "SchatkistPosition": {
+        "slug": "SchatkistPosition",
+        "icon": "BankOutline",
+        "version": "0.1.0",
+        "title": "Schatkist Position",
+        "description": "Daily aggregated Treasury (schatkistbankieren) position per Wet HOF. REQ-SBK-003. NOT a parallel ledger — a derived daily view over schatkist-flagged accounts.",
+        "type": "object",
+        "required": ["administrationId", "businessDate"],
+        "properties": {
+          "administrationId": { "type": "string", "description": "FK to the gemeente Administration.", "example": "adm-gemeente-1" },
+          "businessDate": { "type": "string", "format": "date", "description": "Business day.", "example": "2026-01-15" },
+          "position": {
+            "type": "number",
+            "description": "Server-authoritative aggregated position (derived from flagged accounts). Never trusted from the client.",
+            "default": 0
+          },
+          "drempelbedragApplies": { "type": "boolean", "description": "Whether the drempelbedrag applies for this administration size.", "default": false },
+          "drempelbedragAmount": { "type": "number", "description": "Drempelbedrag from schatkist-thresholds.json seed.", "default": 0 },
+          "aboveThreshold": { "type": "boolean", "description": "position > drempelbedragAmount.", "default": false }
+        },
+        "x-openregister-aggregations": {
+          "position": {
+            "description": "REQ-SBK-004: SUM of GLLine postings on accounts where isSchatkistAccount=true for the business day, computed end-of-day. Server-authoritative.",
+            "source": "GLLine",
+            "operation": "sum",
+            "field": "amount",
+            "filters": {
+              "administrationId": "@self.administrationId",
+              "isSchatkistAccount": true,
+              "businessDate": "@self.businessDate"
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "thresholdCrossing": {
+            "description": "REQ-SBK-008: alert the treasurer when position > drempelbedragAmount.",
+            "on": "field:aboveThreshold=true",
+            "level": "warning",
+            "message": "Schatkist-positie boven drempelbedrag."
+          }
+        },
+        "x-openregister-widgets": {
+          "schatkistPosition": {
+            "description": "REQ-SBK-010: daily position vs drempelbedrag.",
+            "type": "stats-block",
+            "valueField": "position",
+            "title": "Schatkist-positie"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "treasury-officer": { "permissions": ["read"] },
+            "auditor": { "permissions": ["read"] }
+          }
+        },
+        "x-openregister-lifecycle-retention": {
+          "rule": "selectielijst:5.1.2",
+          "description": "REQ-ARC: 7-year financial-record retention."
+        }
       }
     }
   }

@@ -1,0 +1,25 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Wet IB 2001 art. 3.6",
+    "version": "2026-01-01",
+    "description": "Urencriterium thresholds for ZZP qualification. Statutory — not operator-overridable. REQ-ZZP-005.",
+    "imported": "2026-06-01T00:00:00Z",
+    "schema": "UrencriteriumThreshold"
+  },
+  "records": [
+    {
+      "code": "urencriterium-full",
+      "hours": 1225,
+      "description": "Volledig urencriterium voor zelfstandigenaftrek.",
+      "legislativeReference": "Wet IB 2001 art. 3.6"
+    },
+    {
+      "code": "urencriterium-starters",
+      "hours": 800,
+      "description": "Verlaagd urencriterium voor starters/arbeidsongeschikten.",
+      "legislativeReference": "Wet IB 2001 art. 3.6"
+    }
+  ]
+}
