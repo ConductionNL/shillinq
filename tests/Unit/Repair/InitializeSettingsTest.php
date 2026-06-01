@@ -149,6 +149,10 @@ class InitializeSettingsTest extends TestCase
             )
             ->willReturn(['success' => true, 'seeded' => 150, 'skipped' => 0]);
 
+        $this->settingsService->expects($this->once())
+            ->method('seedKorThresholds')
+            ->willReturn(['success' => true, 'seeded' => 1, 'skipped' => 0]);
+
         $this->repairStep->run(output: $this->output);
 
     }//end testRunCallsLoadConfigurationAndSeedTemplate()
@@ -184,6 +188,11 @@ class InitializeSettingsTest extends TestCase
         $this->settingsService->expects($this->never())
             ->method('seedRgsTemplate');
 
+        // KOR thresholds are seeded regardless of administrationId (global seed).
+        $this->settingsService->expects($this->once())
+            ->method('seedKorThresholds')
+            ->willReturn(['success' => true, 'seeded' => 1, 'skipped' => 0]);
+
         $this->output->expects($this->atLeastOnce())
             ->method('warning')
             ->with($this->stringContains('administration_id'));
@@ -213,11 +222,54 @@ class InitializeSettingsTest extends TestCase
         $this->settingsService->expects($this->never())
             ->method('seedRgsTemplate');
 
+        // H2: seedKorThresholds must NOT be called when schema import failed.
+        $this->settingsService->expects($this->never())
+            ->method('seedKorThresholds');
+
         $this->output->expects($this->atLeastOnce())
             ->method('warning');
 
         $this->repairStep->run(output: $this->output);
 
     }//end testRunSkipsSeedWhenLoadConfigurationFails()
+
+    /**
+     * Test that run() calls seedKorThresholds after loadConfiguration and RGS seed succeed.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
+     */
+    public function testRunSeedsKorThresholdsAfterRgsTemplate(): void
+    {
+        $this->settingsService->expects($this->once())
+            ->method('isOpenRegisterAvailable')
+            ->willReturn(true);
+
+        $this->settingsService->expects($this->once())
+            ->method('loadConfigurationForced')
+            ->willReturn(['success' => true, 'version' => '0.2.0']);
+
+        $this->settingsService->expects($this->atLeastOnce())
+            ->method('getSettings')
+            ->willReturn([
+                'rgs_template'      => 'mkb',
+                'administration_id' => 'adm-kor-test',
+                'register'          => '',
+                'openregisters'     => true,
+                'isAdmin'           => false,
+            ]);
+
+        $this->settingsService->expects($this->once())
+            ->method('seedRgsTemplate')
+            ->willReturn(['success' => true, 'seeded' => 5, 'skipped' => 0]);
+
+        $this->settingsService->expects($this->once())
+            ->method('seedKorThresholds')
+            ->willReturn(['success' => true, 'seeded' => 1, 'skipped' => 0]);
+
+        $this->repairStep->run(output: $this->output);
+
+    }//end testRunSeedsKorThresholdsAfterRgsTemplate()
 
 }//end class

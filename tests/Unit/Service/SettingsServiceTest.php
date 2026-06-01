@@ -199,4 +199,56 @@ class SettingsServiceTest extends TestCase
 
     }//end testIsOpenRegisterAvailableDelegatesToAppManager()
 
+    /**
+     * Test that seedKorThresholds returns failure when OpenRegister is not available.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
+     */
+    public function testSeedKorThresholdsFailsWhenOpenRegisterUnavailable(): void
+    {
+        $this->appManager->expects($this->once())
+            ->method('isInstalled')
+            ->with('openregister')
+            ->willReturn(false);
+
+        $result = $this->service->seedKorThresholds();
+
+        self::assertFalse($result['success']);
+        self::assertStringContainsString('OpenRegister', $result['message']);
+
+    }//end testSeedKorThresholdsFailsWhenOpenRegisterUnavailable()
+
+    /**
+     * Test that seedKorThresholds returns a valid result array when OpenRegister is available.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
+     */
+    public function testSeedKorThresholdsReturnsResultArray(): void
+    {
+        $this->appManager->expects($this->once())
+            ->method('isInstalled')
+            ->with('openregister')
+            ->willReturn(true);
+
+        $mockObjectService = $this->createMock(\stdClass::class);
+
+        $this->container->expects($this->once())
+            ->method('get')
+            ->with('OCA\OpenRegister\Service\ObjectService')
+            ->willReturn($mockObjectService);
+
+        $this->appConfig->method('getValueString')
+            ->willReturn('shillinq');
+
+        $result = $this->service->seedKorThresholds();
+
+        self::assertArrayHasKey('success', $result);
+        self::assertArrayHasKey('message', $result);
+
+    }//end testSeedKorThresholdsReturnsResultArray()
+
 }//end class
