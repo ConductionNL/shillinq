@@ -120,6 +120,24 @@
             "type": "boolean",
             "description": "Whether VAT/BTW applies to transactions posted to this account.",
             "default": false
+          },
+          "esaClassifier": {
+            "type": "string",
+            "description": "ESA 2010 (European System of Accounts) sector classifier. Drives EMU-saldo computation's sector grouping per REQ-EMU-002. S.1311 = centrale overheid, S.1312 = deelstaatoverheid (N/A in NL), S.1313 = lokale overheid (gemeente/provincie/waterschap), S.1314 = wettelijke sociale verzekering. S.11–S.15/S.2 are non-government sectors per ESA 2010.",
+            "enum": [
+              "S.1311",
+              "S.1312",
+              "S.1313",
+              "S.1314",
+              "S.11",
+              "S.12",
+              "S.13",
+              "S.14",
+              "S.15",
+              "S.2"
+            ],
+            "nullable": true,
+            "example": "S.1313"
           }
         },
         "x-openregister-lifecycle": {
@@ -202,6 +220,53 @@
             "operation": "count",
             "description": "Number of accounts per lifecycleState.",
             "groupBy": "lifecycleState"
+          },
+          "emuSaldoByQuarter": {
+            "description": "Quarterly EMU-saldo (debit minus credit) grouped by ESA-2010 sector for a given quarter, riding the IV3-base quarterly data per REQ-EMU-003. Filters GLLine rows by period and respects per-line emuInclusionRule (included|partial only; excluded lines are omitted). Partial lines count at 50% contribution. If the declarative engine cannot express the combined multi-sector + emuInclusionRule filter, the guard OCA\\Shillinq\\Guard\\EmuCalculator::computeQuarterlySaldo is invoked per ADR-031 exception path.",
+            "source": "GLLine",
+            "joinOn": "accountNumber",
+            "filter": {
+              "periodQuarter": "@params.quarter",
+              "periodYear": "@params.year",
+              "periodState": "closed",
+              "emuInclusionRule": ["included", "partial"]
+            },
+            "groupBy": "esaClassifier",
+            "operation": "sum",
+            "field": "debit - credit",
+            "guard": "OCA\\Shillinq\\Guard\\EmuCalculator::computeQuarterlySaldo",
+            "meta": {
+              "cadence": "quarterly",
+              "auditHashFields": ["periodYear", "periodQuarter", "esaClassifier", "emuInclusionRule"],
+              "reproducible": true
+            }
+          },
+          "emuSaldoByYear": {
+            "description": "Annual EMU-saldo and EMU-schuld from the closed jaarrekening per REQ-EMU-003. Filters all closed-year GLLine rows, groups by ESA-2010 sector, and respects emuInclusionRule. EMU-schuld is derived as the cumulative net liability position across S.13 sectors. Same guard fallback as quarterly per ADR-031.",
+            "source": "GLLine",
+            "joinOn": "accountNumber",
+            "filter": {
+              "fiscalYear": "@params.fiscalYear",
+              "periodState": "closed",
+              "emuInclusionRule": ["included", "partial"]
+            },
+            "groupBy": "esaClassifier",
+            "operation": "sum",
+            "field": "debit - credit",
+            "guard": "OCA\\Shillinq\\Guard\\EmuCalculator::computeAnnualSaldo",
+            "meta": {
+              "cadence": "annual",
+              "outputs": ["emuSaldo", "emuSchuld"],
+              "auditHashFields": ["fiscalYear", "esaClassifier", "emuInclusionRule"],
+              "reproducible": true
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "emuAggregationHash": {
+            "description": "Stable SHA-256 hash of the contributing GL line IDs + esaClassifier state + applied emuInclusionRule values for the last EMU computation. Same inputs always produce the same hash, enabling audit-trail reproducibility per REQ-EMU-005.",
+            "expression": "sha256(@aggregation.contributingIds + ':' + @self.esaClassifier + ':' + @params.emuInclusionRule)",
+            "nullable": true
           }
         }
       }

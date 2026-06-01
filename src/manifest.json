@@ -24,6 +24,14 @@
 					"icon": "LedgerOutline",
 					"route": "ChartOfAccounts",
 					"order": 10
+				},
+				{
+					"id": "EmuRapportage",
+					"label": "EMU-rapportage",
+					"icon": "ChartBarOutline",
+					"route": "EmuRapportage",
+					"order": 20,
+					"featureFlag": "gov-emu"
 				}
 			]
 		},
@@ -53,6 +61,106 @@
 		}
 	],
 	"pages": [
+		{
+			"id": "EmuRapportage",
+			"route": "/emu-rapportage",
+			"type": "index",
+			"title": "EMU-rapportage",
+			"featureFlag": "gov-emu",
+			"config": {
+				"register": "shillinq",
+				"schema": "Account",
+				"aggregation": "emuSaldoByQuarter",
+				"columns": [
+					{
+						"key": "period",
+						"label": "Periode",
+						"sortable": true
+					},
+					{
+						"key": "sector",
+						"label": "ESA-2010 sector",
+						"sortable": true
+					},
+					{
+						"key": "emuSaldo",
+						"label": "EMU-saldo (€)",
+						"sortable": true
+					},
+					{
+						"key": "emuAggregationHash",
+						"label": "Reproductie-hash",
+						"sortable": false
+					}
+				],
+				"defaultSort": "period",
+				"detailRoute": "EmuRapportageDetail"
+			}
+		},
+		{
+			"id": "EmuRapportageDetail",
+			"route": "/emu-rapportage/:id",
+			"type": "detail",
+			"title": "EMU-rapportage details",
+			"featureFlag": "gov-emu",
+			"config": {
+				"register": "shillinq",
+				"schema": "Account",
+				"fields": [
+					{
+						"key": "period",
+						"label": "Periode",
+						"type": "string"
+					},
+					{
+						"key": "sector",
+						"label": "ESA-2010 sector",
+						"type": "string"
+					},
+					{
+						"key": "esaClassifier",
+						"label": "ESA-classifier code",
+						"type": "string"
+					},
+					{
+						"key": "emuInclusionRule",
+						"label": "Inclusieregel",
+						"type": "string"
+					},
+					{
+						"key": "emuSaldo",
+						"label": "EMU-saldo (€)",
+						"type": "number"
+					},
+					{
+						"key": "emuSchuld",
+						"label": "EMU-schuld (€)",
+						"type": "number"
+					},
+					{
+						"key": "emuAggregationHash",
+						"label": "Reproductie-hash (SHA-256)",
+						"type": "string"
+					},
+					{
+						"key": "contributingPeriods",
+						"label": "Bijdragende periodes",
+						"type": "array"
+					},
+					{
+						"key": "classifierStateAtCompute",
+						"label": "Classifier-staat bij berekening",
+						"type": "object"
+					},
+					{
+						"key": "exclusionRulesApplied",
+						"label": "Toegepaste exclusieregels",
+						"type": "object"
+					}
+				],
+				"indexRoute": "EmuRapportage"
+			}
+		},
 		{
 			"id": "FeaturesRoadmap",
 			"route": "/features-roadmap",

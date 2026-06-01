@@ -53,11 +53,22 @@ _Hierarchical chart-of-accounts entry conforming to the RGS (Referentie Grootboe
 | description | string | No | Operator-authored free-text description |
 | vatApplicable | boolean | No | Whether VAT/BTW applies to transactions on this account |
 | iban | string | No | Dutch IBAN for bank/cash accounts |
+| esaClassifier | enum | No | ESA 2010 sector code (S.1311/S.1312/S.1313/S.1314/S.11/S.12/S.13/S.14/S.15/S.2) driving EMU-saldo computation — see annotation below |
 
 **Relations:**
 - self → Account (many-to-one, via parentAccountNumber → accountNumber; hierarchy navigation)
 - → GLLine (one-to-many, from T1 general-ledger change)
 - → Administration (many-to-one)
+
+> **ESA-2010 classifier annotation (add-shillinq-emu-reporting, 2026-06-01):** The
+> optional `esaClassifier` field added by the T4-specialized change
+> `add-shillinq-emu-reporting` carries the canonical ESA 2010 (European System of
+> Accounts) sector code for each account. This field drives the EMU-saldo and
+> EMU-schuld computations declared as `x-openregister-aggregations` on the Account
+> schema per REQ-EMU-002. The canonical classifier list ships as
+> `lib/Settings/seeds/esa-2010-classifier.json`. See
+> `openspec/changes/add-shillinq-emu-reporting/design.md` for the full
+> Reuse Analysis and the ADR-031 declarative-vs-imperative decision.
 
 > **Reconciliation note (add-shillinq-chart-of-accounts, 2026-05-18):** The earlier
 > `GeneralLedgerAccount` entry (Schema.org `schema:Product`, primary spec
