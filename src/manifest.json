@@ -24,6 +24,14 @@
 					"icon": "LedgerOutline",
 					"route": "ChartOfAccounts",
 					"order": 10
+				},
+				{
+					"id": "Innovatiebox",
+					"label": "Innovatiebox",
+					"icon": "LightbulbOutline",
+					"route": "InnovatieboxElections",
+					"order": 80,
+					"featureFlag": "mkb-innovatiebox"
 				}
 			]
 		},
@@ -158,6 +166,183 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "ChartOfAccounts"
+			}
+		},
+		{
+			"id": "InnovatieboxElections",
+			"route": "/bookkeeping/innovatiebox",
+			"type": "index",
+			"title": "Innovatiebox",
+			"featureFlag": "mkb-innovatiebox",
+			"config": {
+				"register": "shillinq",
+				"schema": "InnovatieboxElection",
+				"columns": [
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Fiscal Year",
+						"sortable": true
+					},
+					{
+						"key": "route",
+						"label": "Route",
+						"sortable": true
+					},
+					{
+						"key": "applicableTariff",
+						"label": "Tariff",
+						"sortable": false
+					}
+				],
+				"defaultSort": "fiscalYear",
+				"detailRoute": "InnovatieboxDetail"
+			}
+		},
+		{
+			"id": "InnovatieboxDetail",
+			"route": "/bookkeeping/innovatiebox/:id",
+			"type": "detail",
+			"title": "Innovatiebox Election",
+			"featureFlag": "mkb-innovatiebox",
+			"config": {
+				"register": "shillinq",
+				"schema": "InnovatieboxElection",
+				"fields": [
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Fiscal Year",
+						"type": "integer"
+					},
+					{
+						"key": "route",
+						"label": "Route",
+						"type": "string"
+					},
+					{
+						"key": "applicableTariff",
+						"label": "Applicable Tariff",
+						"type": "number"
+					},
+					{
+						"key": "forfaitairCapBedrag",
+						"label": "Forfaitair Cap (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "forfaitairPercentage",
+						"label": "Forfaitair Percentage",
+						"type": "number"
+					},
+					{
+						"key": "operatingProfit",
+						"label": "Operating Profit (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "notes",
+						"label": "Notes",
+						"type": "string"
+					}
+				],
+				"relatedLists": [
+					{
+						"title": "IP Assets (afpelmethode)",
+						"condition": "route == 'afpelmethode'",
+						"schema": "IPAssetValuation",
+						"filterField": "administrationId",
+						"columns": [
+							{"key": "assetNaam", "label": "Asset Name"},
+							{"key": "assetType", "label": "Asset Type"},
+							{"key": "valuationBedrag", "label": "Valuation (EUR)"},
+							{"key": "applicableTariff", "label": "Tariff"},
+							{"key": "wbsoVerklaringNummer", "label": "WBSO Nr."}
+						],
+						"detailRoute": "InnovatieboxIPAssetDetail"
+					}
+				],
+				"indexRoute": "InnovatieboxElections"
+			}
+		},
+		{
+			"id": "InnovatieboxIPAssetDetail",
+			"route": "/bookkeeping/innovatiebox/ip-asset/:id",
+			"type": "detail",
+			"title": "IP Asset Valuation",
+			"featureFlag": "mkb-innovatiebox",
+			"config": {
+				"register": "shillinq",
+				"schema": "IPAssetValuation",
+				"fields": [
+					{
+						"key": "assetNaam",
+						"label": "Asset Name",
+						"type": "string"
+					},
+					{
+						"key": "assetType",
+						"label": "Asset Type",
+						"type": "string"
+					},
+					{
+						"key": "valuationBedrag",
+						"label": "Valuation (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "valuationDate",
+						"label": "Valuation Date",
+						"type": "date"
+					},
+					{
+						"key": "applicableTariff",
+						"label": "Applicable Tariff",
+						"type": "number"
+					},
+					{
+						"key": "wbsoVerklaringNummer",
+						"label": "WBSO Verklaring Nr.",
+						"type": "string"
+					},
+					{
+						"key": "octrooiNummer",
+						"label": "Octrooi Nr.",
+						"type": "string"
+					},
+					{
+						"key": "vpbBalansLinkId",
+						"label": "Vpb Balans Link",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Fiscal Year",
+						"type": "integer"
+					}
+				],
+				"relatedLists": [
+					{
+						"title": "Winsttoerekening",
+						"schema": "WinstToerekening",
+						"filterField": "ipAssetId",
+						"columns": [
+							{"key": "periodId", "label": "Period"},
+							{"key": "toegerekendeWinst", "label": "Toegewezen winst (EUR)"},
+							{"key": "verdeelsleutel", "label": "Verdeelsleutel"},
+							{"key": "vpbImpact", "label": "Vpb-impact (EUR)"}
+						]
+					}
+				],
+				"indexRoute": "InnovatieboxElections"
 			}
 		},
 		{

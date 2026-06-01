@@ -204,6 +204,355 @@
             "groupBy": "lifecycleState"
           }
         }
+      },
+      "InnovatieboxElection": {
+        "slug": "InnovatieboxElection",
+        "icon": "FileDocumentOutline",
+        "version": "0.1.0",
+        "title": "Innovatiebox Election",
+        "description": "Per-fiscal-year innovatiebox route election per Wet Vpb art. 12b/12bg. Records whether the forfaitair (art. 12bg) or afpelmethode (art. 12b) route applies for a given administration and fiscal year. Exactly one election per (administrationId, fiscalYear) is permitted.",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "fiscalYear",
+          "route",
+          "applicableTariff",
+          "forfaitairCapBedrag",
+          "forfaitairPercentage"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this election.",
+            "example": "adm-2026-bv-001"
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "description": "The fiscal year for which this route election applies.",
+            "example": 2026,
+            "minimum": 2007
+          },
+          "route": {
+            "type": "string",
+            "description": "Elected innovatiebox route. forfaitair: 25% of operating profit capped at EUR 25 000 (Wet Vpb art. 12bg). afpelmethode: explicit per-IP-asset profit attribution (Wet Vpb art. 12b).",
+            "enum": ["forfaitair", "afpelmethode"],
+            "example": "forfaitair"
+          },
+          "applicableTariff": {
+            "type": "number",
+            "description": "Innovatiebox tariff in effect for the fiscal year. Default 0.09 (9%) per Wet Vpb art. 12b 2026; populated from innovatiebox-tariefen seed.",
+            "default": 0.09,
+            "minimum": 0,
+            "maximum": 1,
+            "example": 0.09
+          },
+          "forfaitairCapBedrag": {
+            "type": "number",
+            "description": "Statutory cap on innovation-attributed profit under the forfaitair route per Wet Vpb art. 12bg. Default EUR 25 000.",
+            "default": 25000,
+            "minimum": 0,
+            "example": 25000
+          },
+          "forfaitairPercentage": {
+            "type": "number",
+            "description": "Percentage of operating profit attributed to innovation under the forfaitair route per Wet Vpb art. 12bg. Default 0.25 (25%).",
+            "default": 0.25,
+            "minimum": 0,
+            "maximum": 1,
+            "example": 0.25
+          },
+          "operatingProfit": {
+            "type": "number",
+            "description": "Operating profit for the fiscal year in euros. Required for forfaitair calculation. Source: Vpb-balans.",
+            "minimum": 0,
+            "nullable": true,
+            "example": 200000.00
+          },
+          "notes": {
+            "type": "string",
+            "description": "Optional bookkeeper notes on the election.",
+            "nullable": true,
+            "example": "Elected forfaitair; operating profit confirmed at EUR 200k."
+          }
+        },
+        "x-openregister-constraints": {
+          "uniqueElectionPerFiscalYear": {
+            "fields": ["administrationId", "fiscalYear"],
+            "constraint": "unique",
+            "description": "Exactly one InnovatieboxElection per (administrationId, fiscalYear). Enforces mutual exclusion of the two innovatiebox routes per fiscal year per Wet Vpb art. 12b/12bg."
+          }
+        },
+        "x-openregister-calculations": {
+          "forfaitairInnovationProfit": {
+            "description": "Innovation-attributed profit under the forfaitair route: min(forfaitairPercentage x operatingProfit, forfaitairCapBedrag). Only valid when route = forfaitair.",
+            "condition": "route == 'forfaitair'",
+            "formula": "min(forfaitairPercentage * operatingProfit, forfaitairCapBedrag)",
+            "resultField": "innovatieboxProfit",
+            "resultType": "number"
+          },
+          "capApplied": {
+            "description": "True when the forfaitair cap binds (25% of operating profit exceeds the statutory EUR 25 000 cap). Triggers an audit-trail-immutable cap-application event.",
+            "condition": "route == 'forfaitair' && operatingProfit != null",
+            "formula": "(forfaitairPercentage * operatingProfit) > forfaitairCapBedrag",
+            "resultField": "capApplied",
+            "resultType": "boolean"
+          }
+        },
+        "x-openregister-aggregations": {
+          "innovatieboxAdministratie": {
+            "description": "Per-year innovatiebox-administratie summary. Branches on the elected route: forfaitair applies min(forfaitairPercentage x operatingProfit, forfaitairCapBedrag) per REQ-IBA-002; afpelmethode sums WinstToerekening.toegerekendeWinst x applicableTariff per IP asset per REQ-IBA-003.",
+            "groupBy": ["administrationId", "fiscalYear"],
+            "branch": {
+              "field": "route",
+              "cases": {
+                "forfaitair": {
+                  "operation": "formula",
+                  "formula": "min(forfaitairPercentage * operatingProfit, forfaitairCapBedrag)",
+                  "resultField": "innovatieboxProfit",
+                  "vpbImpact": "innovatieboxProfit * applicableTariff"
+                },
+                "afpelmethode": {
+                  "operation": "sum",
+                  "sourceSchema": "WinstToerekening",
+                  "joinVia": "IPAssetValuation",
+                  "joinField": "ipAssetId",
+                  "field": "toegerekendeWinst",
+                  "tariffField": "applicableTariff",
+                  "resultField": "vpbImpact"
+                }
+              }
+            },
+            "requires": {
+              "afpelmethode": {
+                "schema": "IPAssetValuation",
+                "minimum": 1,
+                "description": "At least one IPAssetValuation is required when route = afpelmethode."
+              }
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "onRouteElection": {
+            "trigger": "onCreate",
+            "message": "Innovatiebox route '{{route}}' elected for fiscal year {{fiscalYear}} (administration {{administrationId}})",
+            "auditLevel": "immutable",
+            "description": "Writes a route-election event to audit-trail-immutable on election creation."
+          },
+          "onRouteChange": {
+            "trigger": "onUpdate",
+            "watchField": "route",
+            "message": "Innovatiebox route changed to '{{route}}' for fiscal year {{fiscalYear}} (administration {{administrationId}})",
+            "auditLevel": "immutable",
+            "description": "Writes a route-change event to audit-trail-immutable when the route field is updated."
+          },
+          "onCapApplication": {
+            "trigger": "onCalculation",
+            "watchField": "capApplied",
+            "condition": "capApplied == true",
+            "message": "Forfaitair cap applied for fiscal year {{fiscalYear}}: innovation profit capped at {{forfaitairCapBedrag}} EUR (operating profit: {{operatingProfit}} EUR)",
+            "auditLevel": "immutable",
+            "description": "Writes a cap-application event to audit-trail-immutable when the forfaitair cap binds."
+          },
+          "onTariffApplication": {
+            "trigger": "onCalculation",
+            "watchField": "applicableTariff",
+            "message": "Innovatiebox tariff {{applicableTariff}} applied for fiscal year {{fiscalYear}} (route: {{route}}, administration: {{administrationId}})",
+            "auditLevel": "immutable",
+            "description": "Writes a tariff-application event to audit-trail-immutable when the tariff is applied in aggregation."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "IPAssetValuation": {
+        "slug": "IPAssetValuation",
+        "icon": "FileDocumentOutline",
+        "version": "0.1.0",
+        "title": "IP Asset Valuation",
+        "description": "Immaterieel activum eligible for the innovatiebox under the afpelmethode (Wet Vpb art. 12b). Declares the asset type, capitalised valuation, and applicable tariff for winsttoerekening. Only used when InnovatieboxElection.route = afpelmethode.",
+        "type": "object",
+        "x-schema-org": "schema:Intangible",
+        "required": [
+          "assetNaam",
+          "assetType",
+          "valuationBedrag",
+          "valuationDate",
+          "applicableTariff",
+          "vpbBalansLinkId",
+          "administrationId",
+          "fiscalYear"
+        ],
+        "properties": {
+          "assetNaam": {
+            "type": "string",
+            "description": "Human-readable name of the IP asset.",
+            "example": "Innovatief softwareprogramma voor boekhouding"
+          },
+          "assetType": {
+            "type": "string",
+            "description": "Type of qualifying IP asset per Wet Vpb art. 12ba.",
+            "enum": [
+              "s-en-o-certificaat",
+              "octrooi",
+              "kwekersrecht",
+              "softwareprogrammatuur",
+              "model-tekening"
+            ],
+            "example": "s-en-o-certificaat"
+          },
+          "wbsoVerklaringNummer": {
+            "type": "string",
+            "description": "FK to the WBSO S&O-verklaring from the wbso-sno-administratie capability. Required when assetType = s-en-o-certificaat.",
+            "nullable": true,
+            "example": "WBSO-2026-00123"
+          },
+          "octrooiNummer": {
+            "type": "string",
+            "description": "Patent registration number. Required when assetType = octrooi.",
+            "nullable": true,
+            "example": "EP3456789A1"
+          },
+          "valuationBedrag": {
+            "type": "number",
+            "description": "Capitalised valuation of the IP asset in euros.",
+            "minimum": 0,
+            "example": 250000.00
+          },
+          "valuationDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Effective date of the asset valuation.",
+            "example": "2026-01-01"
+          },
+          "applicableTariff": {
+            "type": "number",
+            "description": "Innovatiebox tariff in effect at valuationDate. Default 0.09 (9%) per Wet Vpb art. 12b 2026; populated from innovatiebox-tariefen seed.",
+            "default": 0.09,
+            "minimum": 0,
+            "maximum": 1,
+            "example": 0.09
+          },
+          "vpbBalansLinkId": {
+            "type": "string",
+            "description": "FK to VpbBalansLink linking this IP asset to the Vpb-balans balance sheet entry (REQ-VPB-002).",
+            "example": "vpb-balans-link-001"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this IP asset. Must match the InnovatieboxElection.administrationId.",
+            "example": "adm-2026-bv-001"
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "description": "Fiscal year this asset valuation applies to.",
+            "example": 2026,
+            "minimum": 2007
+          }
+        },
+        "x-openregister-relations": {
+          "winstToerekeninge": {
+            "localField": "id",
+            "relatedSchema": "WinstToerekening",
+            "relatedField": "ipAssetId",
+            "cardinality": "one-to-many",
+            "description": "All winsttoerekening entries attributing profit to this IP asset."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "WinstToerekening": {
+        "slug": "WinstToerekening",
+        "icon": "FileDocumentOutline",
+        "version": "0.1.0",
+        "title": "Winsttoerekening",
+        "description": "Per-period mapping of operating profit to one or more IP assets via a configurable verdeelsleutel (Wet Vpb art. 12b, afpelmethode only). MUST NOT be populated when InnovatieboxElection.route = forfaitair.",
+        "type": "object",
+        "required": [
+          "ipAssetId",
+          "periodId",
+          "toegerekendeWinst",
+          "verdeelsleutel",
+          "administrationId"
+        ],
+        "properties": {
+          "ipAssetId": {
+            "type": "string",
+            "description": "FK to the IPAssetValuation this profit toerekening belongs to.",
+            "example": "ip-asset-001"
+          },
+          "periodId": {
+            "type": "string",
+            "description": "FK to the FiscalPeriod this toerekening covers.",
+            "example": "period-2026-q1"
+          },
+          "toegerekendeWinst": {
+            "type": "number",
+            "description": "Profit attributed to the IP asset in euros for this period.",
+            "minimum": 0,
+            "example": 60000.00
+          },
+          "verdeelsleutel": {
+            "type": "string",
+            "description": "Method used to attribute operating profit to the IP asset.",
+            "enum": ["omzet-aandeel", "r-en-d-uren", "custom-formula"],
+            "example": "omzet-aandeel"
+          },
+          "parameters": {
+            "type": "object",
+            "description": "Verdeelsleutel-specific calculation parameters. For omzet-aandeel: {omzetAandeel: 0.30}. For r-en-d-uren: {rdUren: 450, totalUren: 1200}. For custom-formula: {formula: '...'}.",
+            "nullable": true,
+            "example": {"omzetAandeel": 0.30}
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this winsttoerekening.",
+            "example": "adm-2026-bv-001"
+          }
+        },
+        "x-openregister-calculations": {
+          "vpbImpact": {
+            "description": "Vpb impact for this period's attributed profit at the applicable innovatiebox tariff. Joins IPAssetValuation to resolve applicableTariff.",
+            "formula": "toegerekendeWinst * $ipAsset.applicableTariff",
+            "resultField": "vpbImpact",
+            "resultType": "number"
+          }
+        },
+        "x-openregister-relations": {
+          "ipAsset": {
+            "localField": "ipAssetId",
+            "relatedSchema": "IPAssetValuation",
+            "relatedField": "id",
+            "cardinality": "many-to-one",
+            "description": "The IP asset this profit toerekening is attributed to."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
       }
     }
   }

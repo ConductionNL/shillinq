@@ -1846,6 +1846,51 @@ _Investment or capital contribution in an entity with terms and expected returns
 - → Entity (many-to-one)
 - → Person (many-to-one)
 
+### InnovatieboxElection
+**Schema.org:** `schema:Event`
+_Per-fiscal-year innovatiebox route election per Wet Vpb art. 12b/12bg. Records whether the forfaitair (art. 12bg: 25% of operating profit capped at EUR 25 000) or afpelmethode (art. 12b: explicit per-IP-asset profit attribution) route applies for a given administration. Exactly one election per (administrationId, fiscalYear). No PHP service — route selection and innovatiebox computation are fully declarative via x-openregister-calculations and x-openregister-aggregations._
+**Primary spec:** bookkeeping-innovatiebox-administratie
+
+> **Annotation (add-shillinq-innovatiebox-administratie, 2026-06-01):** Cross-references `IPAssetValuation` (afpelmethode assets) and `WinstToerekening` (per-period profit attribution) via the `innovatieboxAdministratie` aggregation. The applicable tariff defaults to 0.09 (9%) per Wet Vpb art. 12b 2026; statutory rate changes ship as a new `innovatiebox-tariefen-YYYY.json` seed file, not as a code change.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the Administration owning this election |
+| fiscalYear | integer | Yes | The fiscal year for which this route election applies |
+| route | enum | Yes | One of forfaitair, afpelmethode |
+| applicableTariff | number | Yes | Innovatiebox tariff for the fiscal year; default 0.09 per seed |
+| forfaitairCapBedrag | number | Yes (route=forfaitair) | Statutory cap EUR 25 000 per Wet Vpb art. 12bg |
+| forfaitairPercentage | number | Yes (route=forfaitair) | Default 0.25 (25%) per Wet Vpb art. 12bg |
+| operatingProfit | number | No | Operating profit for forfaitair calculation; source: Vpb-balans |
+
+**Relations:**
+- → IPAssetValuation (one-to-many, via administrationId + fiscalYear; afpelmethode only)
+- → WinstToerekening (indirectly via IPAssetValuation; afpelmethode only)
+
+### IPAssetValuation
+**Schema.org:** `schema:Intangible`
+_Immaterieel activum eligible for the innovatiebox under the afpelmethode (Wet Vpb art. 12b). Declares the asset type (S&O-certificaat, octrooi, kwekersrecht, softwareprogrammatuur, model-tekening), capitalised valuation, and applicable tariff. Only populated when InnovatieboxElection.route = afpelmethode; forfaitair taxpayers do NOT register per-asset valuations._
+**Primary spec:** bookkeeping-innovatiebox-administratie
+
+> **Annotation (add-shillinq-innovatiebox-administratie, 2026-06-01):** FK to `WinstToerekening` (one-to-many, winsttoerekening entries) and to `VpbBalansLink` (vpbBalansLinkId). When assetType = s-en-o-certificaat the wbsoVerklaringNummer FK links to the WBSO S&O-verklaring in the wbso-sno-administratie capability.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| assetNaam | string | Yes | Human-readable name of the IP asset |
+| assetType | enum | Yes | One of s-en-o-certificaat, octrooi, kwekersrecht, softwareprogrammatuur, model-tekening |
+| wbsoVerklaringNummer | string | No | FK to WBSO S&O-verklaring (required when assetType = s-en-o-certificaat) |
+| octrooiNummer | string | No | Patent registration number (required when assetType = octrooi) |
+| valuationBedrag | number | Yes | Capitalised valuation in euros |
+| valuationDate | date | Yes | Effective valuation date |
+| applicableTariff | number | Yes | Innovatiebox tariff in effect at valuationDate; default 0.09 per seed |
+| vpbBalansLinkId | string | Yes | FK to VpbBalansLink (REQ-VPB-002) |
+| administrationId | string | Yes | FK to the Administration |
+| fiscalYear | integer | Yes | Fiscal year this asset valuation applies to |
+
+**Relations:**
+- → WinstToerekening (one-to-many, via ipAssetId)
+- → InnovatieboxElection (many-to-one, via administrationId + fiscalYear)
+
 ### Invoice
 **Schema.org:** `schema:DigitalDocument`
 _Financial document detailing goods/services provided and creating an obligation for payment_
@@ -4230,6 +4275,26 @@ _Vendor invoice with approval workflow before payment processing_
 - → ApprovalRequest (one-to-one)
 - → Payment (one-to-one)
 - → Document (one-to-many)
+
+### WinstToerekening
+**Schema.org:** `schema:Thing`
+_Per-period mapping of operating profit to one or more IP assets via a configurable verdeelsleutel (Wet Vpb art. 12b, afpelmethode only). Three verdeelsleutels are supported: omzet-aandeel, r-en-d-uren, custom-formula. MUST NOT be populated when InnovatieboxElection.route = forfaitair._
+**Primary spec:** bookkeeping-innovatiebox-administratie
+
+> **Annotation (add-shillinq-innovatiebox-administratie, 2026-06-01):** FK to `IPAssetValuation` (many-to-one via ipAssetId) and to `FiscalPeriod` (via periodId). The `vpbImpact` is a declarative calculation: toegerekendeWinst × IPAssetValuation.applicableTariff.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| ipAssetId | string | Yes | FK to IPAssetValuation |
+| periodId | string | Yes | FK to FiscalPeriod |
+| toegerekendeWinst | number | Yes | Profit attributed to the IP asset in euros for this period |
+| verdeelsleutel | enum | Yes | One of omzet-aandeel, r-en-d-uren, custom-formula |
+| parameters | object | No | Verdeelsleutel-specific parameters (e.g. omzetAandeel: 0.30) |
+| administrationId | string | Yes | FK to the Administration |
+
+**Relations:**
+- → IPAssetValuation (many-to-one, via ipAssetId)
+- → FiscalPeriod (many-to-one, via periodId)
 
 ### WOZAssessment
 **Schema.org:** `schema:Assessment`
