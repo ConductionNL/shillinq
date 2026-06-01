@@ -3,7 +3,7 @@
   "info": {
     "title": "Shillinq Register",
     "description": "Register containing all schemas for the Shillinq application.",
-    "version": "0.2.0"
+    "version": "0.3.0"
   },
   "x-openregister": {
     "type": "application",
@@ -202,6 +202,735 @@
             "operation": "count",
             "description": "Number of accounts per lifecycleState.",
             "groupBy": "lifecycleState"
+          }
+        }
+      },
+      "GLTransaction": {
+        "slug": "GLTransaction",
+        "icon": "BookCheckOutline",
+        "version": "0.1.0",
+        "title": "GL Transaction",
+        "description": "General ledger transaction header. Each posted transaction groups one or more balanced GLLine entries. Declared by bookkeeping-general-ledger (T1).",
+        "type": "object",
+        "required": [
+          "transactionNumber",
+          "postingDate",
+          "periodId",
+          "currency",
+          "state",
+          "administrationId"
+        ],
+        "properties": {
+          "transactionNumber": {
+            "type": "string",
+            "description": "Sequential transaction reference number, unique within an administration.",
+            "example": "TXN-2026-00001"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the transaction was posted to the ledger.",
+            "example": "2026-06-01"
+          },
+          "periodId": {
+            "type": "string",
+            "description": "Fiscal period identifier (e.g. '2026-06'). Determines which period's P&L/balance is affected.",
+            "example": "2026-06"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code for the transaction.",
+            "minLength": 3,
+            "maxLength": 3,
+            "example": "EUR"
+          },
+          "description": {
+            "type": "string",
+            "description": "Operator-supplied description of the transaction.",
+            "nullable": true
+          },
+          "sourceReference": {
+            "type": "string",
+            "description": "External reference (invoice number, bank statement ref, etc.).",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "description": "Lifecycle state of the transaction.",
+            "enum": ["draft", "posted", "reversed"],
+            "example": "draft"
+          },
+          "journalEntryId": {
+            "type": "string",
+            "description": "FK to the originating JournalEntry that triggered this transaction.",
+            "nullable": true
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this transaction.",
+            "example": "adm-1"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Transaction is being prepared; lines may be edited."
+            },
+            "posted": {
+              "label": "Posted",
+              "description": "Transaction is locked; lines are immutable and affect period balances."
+            },
+            "reversed": {
+              "label": "Reversed",
+              "description": "Transaction has been reversed; inverse lines were emitted automatically."
+            }
+          },
+          "transitions": {
+            "post": {
+              "from": "draft",
+              "to": "posted",
+              "label": "Post transaction",
+              "description": "Lock the transaction and apply its lines to the ledger.",
+              "requires": "OCA\\Shillinq\\Guard\\TransactionBalanceGuard::isBalanced"
+            },
+            "reverse": {
+              "from": "posted",
+              "to": "reversed",
+              "label": "Reverse transaction",
+              "description": "Emit inverse lines and mark this transaction as reversed."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "GLLine": {
+        "slug": "GLLine",
+        "icon": "TableRow",
+        "version": "0.1.0",
+        "title": "GL Line",
+        "description": "Individual debit or credit line within a GL transaction. T1 base fields (bookkeeping-general-ledger) + T4 dimension fields (bookkeeping-cost-centers-dimensions).",
+        "type": "object",
+        "required": [
+          "transactionId",
+          "lineNumber",
+          "accountNumber",
+          "side",
+          "amount",
+          "currency",
+          "periodId"
+        ],
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "description": "FK to the parent GLTransaction.",
+            "example": "txn-uuid-1"
+          },
+          "lineNumber": {
+            "type": "integer",
+            "description": "Sequential line number within the transaction (1-based).",
+            "minimum": 1,
+            "example": 1
+          },
+          "accountNumber": {
+            "type": "string",
+            "description": "FK to Account.accountNumber. Must resolve to an active account.",
+            "example": "4100"
+          },
+          "side": {
+            "type": "string",
+            "description": "Debit or credit side. Amount sign is always positive; side encodes direction.",
+            "enum": ["debit", "credit"],
+            "example": "debit"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Non-negative monetary amount in the transaction's currency.",
+            "minimum": 0,
+            "example": 1000.00
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code for this line.",
+            "minLength": 3,
+            "maxLength": 3,
+            "example": "EUR"
+          },
+          "periodId": {
+            "type": "string",
+            "description": "Fiscal period identifier (mirrors GLTransaction.periodId).",
+            "example": "2026-06"
+          },
+          "subLedgerType": {
+            "type": "string",
+            "description": "Sub-ledger the line belongs to, for AR/AP/bank reconciliation.",
+            "enum": ["accounts-receivable", "accounts-payable", "bank"],
+            "nullable": true
+          },
+          "subLedgerRef": {
+            "type": "string",
+            "description": "Reference within the sub-ledger (e.g. invoice ID, bank statement ID).",
+            "nullable": true
+          },
+          "costCenter": {
+            "type": "string",
+            "description": "T1 backwards-compatible alias for costCenterCode.",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "description": "Line-level narrative.",
+            "nullable": true
+          },
+          "costCenterCode": {
+            "type": "string",
+            "description": "FK to CostCenter.code. Optional dimension tag per REQ-CC-003.",
+            "nullable": true
+          },
+          "kostenDragerCode": {
+            "type": "string",
+            "description": "FK to KostenDrager.code. Optional dimension tag per REQ-CC-003.",
+            "nullable": true
+          },
+          "projectCode": {
+            "type": "string",
+            "description": "FK to Project.code. Optional dimension tag per REQ-CC-003.",
+            "nullable": true
+          },
+          "dimensions": {
+            "type": "object",
+            "description": "Free-form key→value map for custom analytical dimensions. Each key MUST match a registered custom dimension register slug; each value MUST resolve to an existing record's code in that register. Validated via OR relations engine.",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "x-openregister-relations": {
+          "transaction": {
+            "localField": "transactionId",
+            "relatedSchema": "GLTransaction",
+            "relatedField": "id",
+            "cardinality": "many-to-one",
+            "description": "Parent GL transaction header."
+          },
+          "account": {
+            "localField": "accountNumber",
+            "relatedSchema": "Account",
+            "relatedField": "accountNumber",
+            "cardinality": "many-to-one",
+            "description": "Chart-of-accounts entry this line posts to."
+          },
+          "costCenter": {
+            "localField": "costCenterCode",
+            "relatedSchema": "CostCenter",
+            "relatedField": "code",
+            "cardinality": "many-to-one",
+            "description": "Optional cost-center dimension tag for segment P&L."
+          },
+          "kostenDrager": {
+            "localField": "kostenDragerCode",
+            "relatedSchema": "KostenDrager",
+            "relatedField": "code",
+            "cardinality": "many-to-one",
+            "description": "Optional cost-unit dimension tag."
+          },
+          "project": {
+            "localField": "projectCode",
+            "relatedSchema": "Project",
+            "relatedField": "code",
+            "cardinality": "many-to-one",
+            "description": "Optional project dimension tag; required for WBSO time-per-project (REQ-CC-007)."
+          }
+        },
+        "x-openregister-aggregations": {
+          "segmentPnlByCostCenter": {
+            "field": "amount",
+            "operation": "sum",
+            "description": "Segment P&L: sum of amounts grouped by (fiscalYear/periodId, accountNumber, costCenterCode). Consumable by launchpad widgets and manifest detail pages.",
+            "groupBy": ["periodId", "accountNumber", "costCenterCode"],
+            "filter": {
+              "costCenterCode": { "not": null }
+            }
+          },
+          "segmentPnlByProject": {
+            "field": "amount",
+            "operation": "sum",
+            "description": "Segment P&L: sum of amounts grouped by (periodId, accountNumber, projectCode). Supports WBSO time-per-project via projectCode join per REQ-CC-007.",
+            "groupBy": ["periodId", "accountNumber", "projectCode"],
+            "filter": {
+              "projectCode": { "not": null }
+            }
+          },
+          "segmentPnlByKostenDrager": {
+            "field": "amount",
+            "operation": "sum",
+            "description": "Segment P&L: sum of amounts grouped by (periodId, accountNumber, kostenDragerCode).",
+            "groupBy": ["periodId", "accountNumber", "kostenDragerCode"],
+            "filter": {
+              "kostenDragerCode": { "not": null }
+            }
+          }
+        }
+      },
+      "CostCenter": {
+        "slug": "CostCenter",
+        "icon": "OfficeBuilding",
+        "version": "0.1.0",
+        "title": "Cost Center",
+        "description": "Analytical cost center (kostenplaats) for segment P&L, project accounting, and overhead allocation. Supports hierarchy via parentCode self-relation per REQ-CC-002.",
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "lifecycleState",
+          "administrationId"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Operator-assigned unique reference within the administration (e.g. 'KC-100').",
+            "example": "KC-100"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable name for this cost center.",
+            "example": "Sales"
+          },
+          "parentCode": {
+            "type": "string",
+            "description": "FK to parent CostCenter.code for hierarchy navigation. Null = root node.",
+            "nullable": true,
+            "example": null
+          },
+          "responsibleUser": {
+            "type": "string",
+            "description": "Nextcloud user ID of the cost-center owner/manager.",
+            "nullable": true
+          },
+          "lifecycleState": {
+            "type": "string",
+            "description": "Current lifecycle state.",
+            "enum": ["active", "blocked", "archived"],
+            "example": "active",
+            "default": "active"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this cost center.",
+            "example": "adm-1"
+          },
+          "description": {
+            "type": "string",
+            "description": "Operator-authored free-text description.",
+            "nullable": true
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Selectable on new GL lines."
+            },
+            "blocked": {
+              "label": "Blocked",
+              "description": "Readable by existing lines but rejected for new GL lines."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Historical only — no new postings, queryable."
+            }
+          },
+          "transitions": {
+            "block": {
+              "from": "active",
+              "to": "blocked",
+              "label": "Block cost center",
+              "description": "Prevent selection on new GL lines."
+            },
+            "unblock": {
+              "from": "blocked",
+              "to": "active",
+              "label": "Unblock cost center",
+              "description": "Re-enable selection on new GL lines."
+            },
+            "archiveFromActive": {
+              "from": "active",
+              "to": "archived",
+              "label": "Archive",
+              "description": "Move to historical archive from active state."
+            },
+            "archiveFromBlocked": {
+              "from": "blocked",
+              "to": "archived",
+              "label": "Archive",
+              "description": "Move to historical archive from blocked state."
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "parentCostCenter": {
+            "localField": "parentCode",
+            "relatedSchema": "CostCenter",
+            "relatedField": "code",
+            "cardinality": "many-to-one",
+            "description": "Self-relation enabling hierarchical cost-center navigation."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "KostenDrager": {
+        "slug": "KostenDrager",
+        "icon": "PackageVariant",
+        "version": "0.1.0",
+        "title": "Kostendrager",
+        "description": "Cost unit / cost object (kostendrager) for tracking costs per product, service, or contract per Dutch GAAP accounting practice. Shares the same shape as CostCenter; distinction is semantic per REQ-CC-002.",
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "lifecycleState",
+          "administrationId"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Operator-assigned unique reference within the administration (e.g. 'KD-001').",
+            "example": "KD-001"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable name for this cost unit.",
+            "example": "Product A"
+          },
+          "parentCode": {
+            "type": "string",
+            "description": "FK to parent KostenDrager.code for hierarchy navigation.",
+            "nullable": true
+          },
+          "responsibleUser": {
+            "type": "string",
+            "description": "Nextcloud user ID of the cost-unit owner.",
+            "nullable": true
+          },
+          "lifecycleState": {
+            "type": "string",
+            "description": "Current lifecycle state.",
+            "enum": ["active", "blocked", "archived"],
+            "example": "active",
+            "default": "active"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this cost unit.",
+            "example": "adm-1"
+          },
+          "description": {
+            "type": "string",
+            "description": "Operator-authored free-text description.",
+            "nullable": true
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "active",
+          "states": {
+            "active": { "label": "Active", "description": "Selectable on new GL lines." },
+            "blocked": { "label": "Blocked", "description": "Rejected for new GL lines." },
+            "archived": { "label": "Archived", "description": "Historical only." }
+          },
+          "transitions": {
+            "block": { "from": "active", "to": "blocked", "label": "Block" },
+            "unblock": { "from": "blocked", "to": "active", "label": "Unblock" },
+            "archiveFromActive": { "from": "active", "to": "archived", "label": "Archive" },
+            "archiveFromBlocked": { "from": "blocked", "to": "archived", "label": "Archive" }
+          }
+        },
+        "x-openregister-relations": {
+          "parentKostenDrager": {
+            "localField": "parentCode",
+            "relatedSchema": "KostenDrager",
+            "relatedField": "code",
+            "cardinality": "many-to-one",
+            "description": "Self-relation enabling hierarchical cost-unit navigation."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": { "permissions": ["create", "read", "update"] },
+            "auditor": { "permissions": ["read"] }
+          }
+        }
+      },
+      "Project": {
+        "slug": "Project",
+        "icon": "FolderOutline",
+        "version": "0.1.0",
+        "title": "Project",
+        "description": "Analytical project dimension for project-based accounting and WBSO time-per-project. Pre-positions WBSO time tracking per REQ-CC-007. Shares the same shape as CostCenter; distinction is semantic per REQ-CC-002.",
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "lifecycleState",
+          "administrationId"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Operator-assigned unique reference within the administration (e.g. 'PRJ-001').",
+            "example": "PRJ-001"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable project name.",
+            "example": "AI Platform 2026"
+          },
+          "parentCode": {
+            "type": "string",
+            "description": "FK to parent Project.code for hierarchy navigation.",
+            "nullable": true
+          },
+          "responsibleUser": {
+            "type": "string",
+            "description": "Nextcloud user ID of the project owner.",
+            "nullable": true
+          },
+          "lifecycleState": {
+            "type": "string",
+            "description": "Current lifecycle state.",
+            "enum": ["active", "blocked", "archived"],
+            "example": "active",
+            "default": "active"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this project.",
+            "example": "adm-1"
+          },
+          "description": {
+            "type": "string",
+            "description": "Operator-authored free-text description.",
+            "nullable": true
+          },
+          "timeBookingEnabled": {
+            "type": "boolean",
+            "description": "Pre-positions WBSO time-per-project (REQ-CC-007). When true, time entries may be linked to this project for hours-per-project aggregation. The WBSO capability itself ships separately in T4-specialized.",
+            "default": false
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "active",
+          "states": {
+            "active": { "label": "Active", "description": "Selectable on new GL lines and time entries." },
+            "blocked": { "label": "Blocked", "description": "Rejected for new GL lines." },
+            "archived": { "label": "Archived", "description": "Historical only." }
+          },
+          "transitions": {
+            "block": { "from": "active", "to": "blocked", "label": "Block" },
+            "unblock": { "from": "blocked", "to": "active", "label": "Unblock" },
+            "archiveFromActive": { "from": "active", "to": "archived", "label": "Archive" },
+            "archiveFromBlocked": { "from": "blocked", "to": "archived", "label": "Archive" }
+          }
+        },
+        "x-openregister-relations": {
+          "parentProject": {
+            "localField": "parentCode",
+            "relatedSchema": "Project",
+            "relatedField": "code",
+            "cardinality": "many-to-one",
+            "description": "Self-relation enabling hierarchical project navigation."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": { "permissions": ["create", "read", "update"] },
+            "auditor": { "permissions": ["read"] }
+          }
+        }
+      },
+      "AllocationRule": {
+        "slug": "AllocationRule",
+        "icon": "SplitCellsHorizontal",
+        "version": "0.1.0",
+        "title": "Allocation Rule",
+        "description": "Cost-allocation rule that distributes shared costs (overhead, IT, facility) across cost objects using a named driver. Declared per ADR-031 as schema metadata — no AllocationService PHP class per REQ-CC-004.",
+        "type": "object",
+        "required": [
+          "name",
+          "sourceAccountPattern",
+          "driver",
+          "targets",
+          "targetDimension",
+          "cadence",
+          "lifecycleState",
+          "administrationId"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Operator-readable rule name.",
+            "example": "Spread overhead by headcount"
+          },
+          "sourceAccountPattern": {
+            "type": "string",
+            "description": "Glob or range pattern matching the source account(s) to allocate from (e.g. '4900' or '4900-4999').",
+            "example": "4900-4999"
+          },
+          "driver": {
+            "type": "string",
+            "description": "Allocation driver determining how source amounts are spread across targets.",
+            "enum": ["fixed-percentage", "fixed-amount", "volume", "headcount"],
+            "example": "fixed-percentage"
+          },
+          "targets": {
+            "type": "array",
+            "description": "At least 2 target entries. For fixed-percentage driver, percentages MUST sum to 100 (validated by x-openregister-lifecycle precondition on save).",
+            "minItems": 2,
+            "items": {
+              "type": "object",
+              "required": ["code"],
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "description": "Code of the target dimension object (CostCenter.code, KostenDrager.code, or Project.code)."
+                },
+                "percentage": {
+                  "type": "number",
+                  "description": "Allocation percentage for fixed-percentage driver (0–100).",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "nullable": true
+                },
+                "amount": {
+                  "type": "number",
+                  "description": "Fixed amount for fixed-amount driver.",
+                  "minimum": 0,
+                  "nullable": true
+                },
+                "source": {
+                  "type": "string",
+                  "description": "Source reference for volume/headcount drivers (e.g. GL account or headcount source).",
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "targetDimension": {
+            "type": "string",
+            "description": "Which dimension type the targets[].code values refer to.",
+            "enum": ["cost-center", "kosten-drager", "project"],
+            "example": "cost-center"
+          },
+          "cadence": {
+            "type": "string",
+            "description": "When the rule executes. per-posting → fires as x-openregister-lifecycle action on GLTransaction.post. monthly / period-close → fires via OR ScheduledWorkflow.",
+            "enum": ["per-posting", "monthly", "period-close"],
+            "example": "per-posting"
+          },
+          "lifecycleState": {
+            "type": "string",
+            "description": "Current lifecycle state. Seeds ship in 'paused' for operator review.",
+            "enum": ["active", "paused", "archived"],
+            "example": "paused",
+            "default": "paused"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this rule.",
+            "example": "adm-1"
+          },
+          "description": {
+            "type": "string",
+            "description": "Operator-authored free-text description of what this rule does and why.",
+            "nullable": true
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "paused",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Rule evaluates on its configured cadence."
+            },
+            "paused": {
+              "label": "Paused",
+              "description": "Rule exists but does not execute. Default for seeded example rules."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Historical — rule is not evaluated and cannot be activated."
+            }
+          },
+          "preconditions": {
+            "save": "OCA\\Shillinq\\Guard\\AllocationRuleGuard::requireFixedPercentageSumTo100"
+          },
+          "transitions": {
+            "activate": {
+              "from": "paused",
+              "to": "active",
+              "label": "Activate rule",
+              "description": "Enable the rule to execute on its configured cadence."
+            },
+            "pause": {
+              "from": "active",
+              "to": "paused",
+              "label": "Pause rule",
+              "description": "Temporarily disable execution without archiving."
+            },
+            "archiveFromActive": {
+              "from": "active",
+              "to": "archived",
+              "label": "Archive",
+              "description": "Permanently disable; rule history is preserved."
+            },
+            "archiveFromPaused": {
+              "from": "paused",
+              "to": "archived",
+              "label": "Archive",
+              "description": "Permanently disable from paused state."
+            }
+          },
+          "actions": {
+            "applyOnPost": {
+              "trigger": "GLTransaction.post",
+              "condition": "cadence === 'per-posting' && lifecycleState === 'active'",
+              "description": "When a GLTransaction is posted, evaluate all active per-posting AllocationRule records matching the transaction's lines. Emit additional balanced GLLine rows distributing the source account amount per the rule's targets and driver."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
           }
         }
       }

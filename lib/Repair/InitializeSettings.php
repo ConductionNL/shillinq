@@ -119,6 +119,7 @@ class InitializeSettings implements IRepairStep
             }
 
             $this->seedChartOfAccounts(output: $output);
+            $this->seedAllocationRules(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -186,4 +187,50 @@ class InitializeSettings implements IRepairStep
         }
 
     }//end seedChartOfAccounts()
+
+    /**
+     * Seed allocation rule examples idempotently, if administrationId is configured.
+     *
+     * Seeds are shipped in lifecycleState: paused per REQ-CC-004 so operators can
+     * review before activating. Seeding is skipped when administration_id is not
+     * configured (C2 — same guard as chart-of-accounts seed).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
+     */
+    private function seedAllocationRules(IOutput $output): void
+    {
+        $settings         = $this->settingsService->getSettings();
+        $administrationId = ($settings['administration_id'] ?? '');
+
+        if ($administrationId === '') {
+            $output->info(
+                'Shillinq: administration_id not configured — skipping allocation rule seed.'
+            );
+            return;
+        }
+
+        $output->info('Seeding example allocation rules (paused by default)...');
+
+        $seedResult = $this->settingsService->seedAllocationRules(
+            administrationId: $administrationId
+        );
+
+        if ($seedResult['success'] === true) {
+            $seeded  = ($seedResult['seeded'] ?? 0);
+            $skipped = ($seedResult['skipped'] ?? 0);
+            $output->info(
+                'Allocation rule seeds: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        }
+
+        if ($seedResult['success'] !== true) {
+            $message = ($seedResult['message'] ?? 'unknown error');
+            $output->warning('Allocation rule seeding issue: '.$message);
+        }
+
+    }//end seedAllocationRules()
 }//end class

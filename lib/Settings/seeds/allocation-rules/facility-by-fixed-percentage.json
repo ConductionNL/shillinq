@@ -1,0 +1,35 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "shillinq-default",
+    "variant": "fixed-percentage",
+    "description": "Default example: spread facility costs (4600-4699) across cost centers at fixed percentages (50/30/20). Ships paused — activate after configuring your cost centers.",
+    "imported": "2026-06-01T00:00:00Z"
+  },
+  "allocationRules": [
+    {
+      "name": "Facility costs at fixed percentages",
+      "sourceAccountPattern": "4600-4699",
+      "driver": "fixed-percentage",
+      "targetDimension": "cost-center",
+      "cadence": "per-posting",
+      "lifecycleState": "paused",
+      "description": "Distributes facility costs (accounts 4600-4699) across cost centers at fixed percentages that must sum to 100. Replace targets with your actual cost center codes and percentages before activating.",
+      "targets": [
+        {
+          "code": "KC-100",
+          "percentage": 50
+        },
+        {
+          "code": "KC-200",
+          "percentage": 30
+        },
+        {
+          "code": "KC-300",
+          "percentage": 20
+        }
+      ]
+    }
+  ]
+}

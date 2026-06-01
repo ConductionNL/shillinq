@@ -1,0 +1,31 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "shillinq-default",
+    "variant": "volume",
+    "description": "Default example: spread IT costs (4800-4849) across cost centers by volume driver (transaction count or usage units). Ships paused — activate after configuring your cost centers and volume source.",
+    "imported": "2026-06-01T00:00:00Z"
+  },
+  "allocationRules": [
+    {
+      "name": "IT spend spread by volume",
+      "sourceAccountPattern": "4800-4849",
+      "driver": "volume",
+      "targetDimension": "cost-center",
+      "cadence": "monthly",
+      "lifecycleState": "paused",
+      "description": "Distributes IT costs (accounts 4800-4849) across cost centers proportionally to usage volume. Replace targets with your actual cost center codes and volume sources before activating.",
+      "targets": [
+        {
+          "code": "KC-100",
+          "source": "volume.it-transactions.KC-100"
+        },
+        {
+          "code": "KC-200",
+          "source": "volume.it-transactions.KC-200"
+        }
+      ]
+    }
+  ]
+}

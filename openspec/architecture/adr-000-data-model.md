@@ -110,24 +110,32 @@ _Accounting administration unit for a specific business year of a corporation. S
 
 ### AllocationRule
 **Schema.org:** `schema:Thing`
-_Recurring rule for automatically allocating overhead and shared costs between cost centers based on percentage, fixed amount, or calculation formula_
-**Primary spec:** cost-accounting-allocation
+_Cost-allocation rule that distributes shared costs (overhead, IT, facility) across cost objects using a named driver. Schema-declared per ADR-031 — no AllocationService PHP class per REQ-CC-004._
+**Primary spec:** bookkeeping-cost-centers-dimensions
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| name | string | Yes | Name of the allocation rule |
-| ruleType | string | Yes | Type: percentage, fixed amount, or formula-based |
-| percentage | number | No | Percentage to allocate (if percentage-based) |
-| fixedAmount | number | No | Fixed amount to allocate per period |
-| frequency | string | Yes | Frequency: monthly, quarterly, or yearly |
-| isActive | boolean | Yes | Whether rule is currently active |
-| startDate | datetime | Yes | Date rule becomes effective |
-| endDate | datetime | No | Date rule expires |
-| description | string | No |  |
+| name | string | Yes | Operator-readable rule name |
+| sourceAccountPattern | string | Yes | Glob or range pattern matching source accounts (e.g. 4900-4999) |
+| driver | enum | Yes | One of fixed-percentage, fixed-amount, volume, headcount |
+| targets | array | Yes | At least 2 entries; percentages must sum to 100 when driver = fixed-percentage |
+| targetDimension | enum | Yes | One of cost-center, kosten-drager, project |
+| cadence | enum | Yes | One of per-posting, monthly, period-close |
+| lifecycleState | enum | Yes | One of active, paused, archived |
+| administrationId | string | Yes | FK to the Administration owning this rule |
 
 **Relations:**
-- → CostCenter (many-to-one)
-- → CostCenter (many-to-one)
+- → CostCenter (many-to-one via targets[].code when targetDimension = cost-center)
+- → KostenDrager (many-to-one via targets[].code when targetDimension = kosten-drager)
+- → Project (many-to-one via targets[].code when targetDimension = project)
+
+> **Reconciliation note (add-shillinq-cost-centers-dimensions, 2026-06-01):** The earlier
+> `AllocationRule` entry (primary spec cost-accounting-allocation, fields: ruleType, percentage,
+> fixedAmount, frequency, isActive, startDate) has been reconciled into this entry.
+> The bookkeeping-cost-centers-dimensions shape is the canonical T4 register declaration in
+> `lib/Settings/shillinq_register.json`. The earlier cost-accounting-allocation entry is
+> retained for historical reference but MUST NOT be used for new register declarations;
+> shillinq's bookkeeping engine uses the ADR-031-compliant shape above.
 
 ### ApprovalChain
 **Schema.org:** `ApprovalChain`
@@ -1025,21 +1033,64 @@ _Transaction allocating or distributing costs from one cost center to another, w
 
 ### CostCenter
 **Schema.org:** `schema:Organization`
-_A cost center for tracking, allocating, and analyzing departmental or functional expenses across the organization_
-**Primary spec:** cost-accounting-allocation
+_Analytical cost center (kostenplaats) for segment P&L, project accounting, and overhead allocation. Supports hierarchy via parentCode self-relation. Canonical T4 bookkeeping entity declared in `lib/Settings/shillinq_register.json`._
+**Primary spec:** bookkeeping-cost-centers-dimensions
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| code | string | Yes | Unique cost center identifier |
-| name | string | Yes | Name of the cost center |
-| description | string | No | Detailed description of responsibilities and scope |
-| status | string | Yes | Current status: active or inactive |
-| budget | number | No | Allocated annual or periodic budget |
-| createdDate | datetime | Yes | Date when cost center was created |
+| code | string | Yes | Operator-assigned unique reference within the administration (e.g. KC-100) |
+| name | string | Yes | Human-readable name |
+| parentCode | string | No | FK to parent CostCenter.code for hierarchy |
+| responsibleUser | string | No | NC user id of the cost-center owner |
+| lifecycleState | enum | Yes | One of active, blocked, archived (mirrors Account lifecycle) |
+| administrationId | string | Yes | FK to the Administration |
 
 **Relations:**
-- → Person (many-to-one)
-- → Organization (many-to-one)
+- self → CostCenter (many-to-one, via parentCode → code; hierarchy navigation)
+- → GLLine (one-to-many, via costCenterCode)
+
+> **Reconciliation note (add-shillinq-cost-centers-dimensions, 2026-06-01):** The earlier
+> `CostCenter` entry (primary spec cost-accounting-allocation, fields: status, budget, createdDate)
+> has been reconciled into this entry. The bookkeeping-cost-centers-dimensions shape is the
+> canonical register declaration. The earlier entry is retained below as `CostCenter (deprecated)`
+> for historical reference only.
+
+### KostenDrager
+**Schema.org:** `schema:Organization`
+_Cost unit / cost object (kostendrager) per Dutch GAAP accounting practice. Same shape as CostCenter; distinction is semantic and surfaces in UI labels. Declared in `lib/Settings/shillinq_register.json`._
+**Primary spec:** bookkeeping-cost-centers-dimensions
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| code | string | Yes | Operator-assigned unique reference within the administration |
+| name | string | Yes | Human-readable name |
+| parentCode | string | No | FK to parent KostenDrager.code for hierarchy |
+| responsibleUser | string | No | NC user id of the cost-unit owner |
+| lifecycleState | enum | Yes | One of active, blocked, archived |
+| administrationId | string | Yes | FK to the Administration |
+
+**Relations:**
+- self → KostenDrager (many-to-one, via parentCode → code; hierarchy navigation)
+- → GLLine (one-to-many, via kostenDragerCode)
+
+### Project
+**Schema.org:** `schema:Project`
+_Analytical project dimension for project-based accounting. Pre-positions WBSO time-per-project via timeBookingEnabled flag (REQ-CC-007). Same shape as CostCenter; declared in `lib/Settings/shillinq_register.json`._
+**Primary spec:** bookkeeping-cost-centers-dimensions
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| code | string | Yes | Operator-assigned unique reference within the administration |
+| name | string | Yes | Human-readable project name |
+| parentCode | string | No | FK to parent Project.code for hierarchy |
+| responsibleUser | string | No | NC user id of the project owner |
+| lifecycleState | enum | Yes | One of active, blocked, archived |
+| administrationId | string | Yes | FK to the Administration |
+| timeBookingEnabled | boolean | No | Pre-positions WBSO time-per-project (REQ-CC-007); default false |
+
+**Relations:**
+- self → Project (many-to-one, via parentCode → code; hierarchy navigation)
+- → GLLine (one-to-many, via projectCode)
 
 ### CostProject
 **Schema.org:** `schema:Project`
@@ -1664,6 +1715,57 @@ _An individual entry in the general ledger representing a financial transaction 
 - → FiscalYear (many-to-one)
 - → Organization (many-to-one)
 - → APTransaction (many-to-one)
+
+### GLLine
+**Schema.org:** `schema:Thing`
+_Individual debit or credit line within a GL transaction. T1 base fields declared by bookkeeping-general-ledger; T4 dimension fields (costCenterCode, kostenDragerCode, projectCode, dimensions) declared by bookkeeping-cost-centers-dimensions. Declared in `lib/Settings/shillinq_register.json`._
+**Primary spec:** bookkeeping-general-ledger (T1 base) + bookkeeping-cost-centers-dimensions (T4 dimension fields)
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| transactionId | string | Yes | FK to parent GLTransaction |
+| lineNumber | integer | Yes | Sequential line number within the transaction (1-based) |
+| accountNumber | string | Yes | FK to Account.accountNumber |
+| side | enum | Yes | One of debit, credit |
+| amount | number | Yes | Non-negative monetary amount |
+| currency | string | Yes | ISO 4217 currency code |
+| periodId | string | Yes | Fiscal period identifier |
+| subLedgerType | enum | No | One of accounts-receivable, accounts-payable, bank |
+| subLedgerRef | string | No | Reference within the sub-ledger |
+| costCenter | string | No | T1 backwards-compat alias for costCenterCode |
+| description | string | No | Line-level narrative |
+| costCenterCode | string | No | FK to CostCenter.code (T4 dimension) |
+| kostenDragerCode | string | No | FK to KostenDrager.code (T4 dimension) |
+| projectCode | string | No | FK to Project.code (T4 dimension, WBSO pre-position per REQ-CC-007) |
+| dimensions | object | No | Free-form key→value map for custom analytical dimensions |
+
+**Relations:**
+- → GLTransaction (many-to-one, via transactionId)
+- → Account (many-to-one, via accountNumber → accountNumber)
+- → CostCenter (many-to-one, via costCenterCode → code)
+- → KostenDrager (many-to-one, via kostenDragerCode → code)
+- → Project (many-to-one, via projectCode → code)
+
+### GLTransaction
+**Schema.org:** `schema:Thing`
+_General ledger transaction header. Each posted transaction groups one or more balanced GLLine entries. Balance precondition enforced on post transition. Declared in `lib/Settings/shillinq_register.json`._
+**Primary spec:** bookkeeping-general-ledger (T1)
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| transactionNumber | string | Yes | Sequential transaction reference, unique within an administration |
+| postingDate | date | Yes | Date the transaction was posted |
+| periodId | string | Yes | Fiscal period identifier |
+| currency | string | Yes | ISO 4217 currency code |
+| description | string | No | Operator-supplied description |
+| sourceReference | string | No | External reference (invoice number, bank statement ref) |
+| state | enum | Yes | One of draft, posted, reversed |
+| journalEntryId | string | No | FK to originating JournalEntry |
+| administrationId | string | Yes | FK to the Administration |
+
+**Relations:**
+- → GLLine (one-to-many)
+- → Administration (many-to-one)
 
 ### GoodsReceipt
 **Schema.org:** `schema:Thing`
