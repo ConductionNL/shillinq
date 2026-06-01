@@ -62,8 +62,8 @@
   - GIVEN the `VatReturn.state` lifecycle WHEN scanned THEN the transitions are declared via `x-openregister-lifecycle`.
   - GIVEN the `draft → submitted` precondition WHEN inspected THEN `x-openregister-lifecycle.requires.approval-workflow` is present.
   - GIVEN the `rubrieken` field WHEN inspected THEN it is declared as a derived field via `x-openregister-aggregations`.
-- [ ] Implement
-- [ ] Test (PHPUnit: lifecycle transitions; aggregation correctness over seeded GL fixture; approval-gate honoured)
+- [x] Implement
+- [x] Test (PHPUnit: lifecycle transitions; aggregation correctness over seeded GL fixture; approval-gate honoured)
 
 ### Task 2.2: Declare BBV registers — `BbvAccountMapping`, `BbvTaakveld`
 

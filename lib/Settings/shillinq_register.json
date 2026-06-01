@@ -203,6 +203,450 @@
             "description": "Number of accounts per lifecycleState.",
             "groupBy": "lifecycleState"
           }
+        },
+        "x-shillinq-extensions": {
+          "isSchatkistAccount": {
+            "type": "boolean",
+            "description": "REQ-SBK-002: marks this account as a Treasury (schatkistbankieren) account so its postings are aggregated into the daily SchatkistPosition. Default false; non-government administrations leave it false.",
+            "default": false
+          }
+        },
+        "x-openregister-lifecycle-retention": {
+          "rule": "selectielijst:5.1.1",
+          "description": "REQ-ARC-005: Account masterdata retained indefinitely per Selectielijst Gemeenten 2020 §5.1.1 (keep_indefinite). Enforcement is OR's per ADR-022."
+        }
+      },
+      "VatReturn": {
+        "slug": "VatReturn",
+        "icon": "ReceiptTextOutline",
+        "version": "0.1.0",
+        "title": "VAT Return (BTW-aangifte)",
+        "description": "A periodic VAT return (BTW-aangifte) per Wet OB 1968. REQ-VBTW-001/002. Lifecycle draft → submitted → accepted → corrected. SBR/Digipoort submission consumes the digipoort-sbr OpenConnector source per ADR-019/ADR-022.",
+        "type": "object",
+        "x-schema-org": "schema:Invoice",
+        "required": [
+          "administrationId",
+          "periodType",
+          "periodYear",
+          "state",
+          "currency"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this return.",
+            "example": "adm-1"
+          },
+          "periodType": {
+            "type": "string",
+            "description": "Filing cadence.",
+            "enum": ["month", "quarter", "year"],
+            "example": "quarter"
+          },
+          "periodYear": {
+            "type": "integer",
+            "description": "Calendar year of the return period.",
+            "example": 2026
+          },
+          "periodMonth": {
+            "type": "integer",
+            "description": "Month 1-12, required when periodType=month.",
+            "minimum": 1,
+            "maximum": 12,
+            "nullable": true,
+            "example": 1
+          },
+          "periodQuarter": {
+            "type": "integer",
+            "description": "Quarter 1-4, required when periodType=quarter.",
+            "minimum": 1,
+            "maximum": 4,
+            "nullable": true,
+            "example": 1
+          },
+          "state": {
+            "type": "string",
+            "description": "Lifecycle state of the VAT return.",
+            "enum": ["draft", "submitted", "accepted", "corrected"],
+            "default": "draft",
+            "example": "draft"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Server-authoritative total VAT liability (MonetaryAmount). Derived from the rubrieken aggregation; never trusted from the client.",
+            "example": 1234.56
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code.",
+            "minLength": 3,
+            "maxLength": 3,
+            "default": "EUR",
+            "example": "EUR"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Optional free-text notes.",
+            "nullable": true
+          },
+          "attachmentUri": {
+            "type": "string",
+            "description": "REQ-ARC: docudesk reference to the rendered aangifte PDF.",
+            "nullable": true
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Editable draft, not yet filed."
+            },
+            "submitted": {
+              "label": "Ingediend",
+              "description": "Filed via Digipoort; awaiting acceptance."
+            },
+            "accepted": {
+              "label": "Geaccepteerd",
+              "description": "Belastingdienst acknowledged receipt."
+            },
+            "corrected": {
+              "label": "Gecorrigeerd",
+              "description": "Superseded by a suppletie-aangifte."
+            }
+          },
+          "transitions": {
+            "submit": {
+              "from": "draft",
+              "to": "submitted",
+              "label": "Indienen via Digipoort",
+              "description": "REQ-VBTW-005/006/010: file the return. Requires approval above the operator threshold; triggers the digipoort-sbr submission workflow.",
+              "requires": {
+                "approval-workflow": {
+                  "threshold-field": "amount",
+                  "description": "REQ-VBTW-006: approval gate when liability exceeds an operator-configurable threshold (ADR-022 approval abstraction)."
+                }
+              }
+            },
+            "acknowledge": {
+              "from": "submitted",
+              "to": "accepted",
+              "label": "Bevestigen",
+              "description": "REQ-VBTW-005: external ACK received."
+            },
+            "correctFromAccepted": {
+              "from": "accepted",
+              "to": "corrected",
+              "label": "Suppletie indienen",
+              "description": "REQ-VBTW-005: operator files a suppletie-aangifte."
+            },
+            "correctFromDraft": {
+              "from": "draft",
+              "to": "corrected",
+              "label": "Vroege correctie",
+              "description": "REQ-VBTW-005: early correction before submission."
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "rubrieken": {
+            "description": "REQ-VBTW-004: VAT buckets grouped by rate (21%, 9%, 0%, reverse-charge) over GL postings in the return period, summing debit/credit per rate. Server-authoritative — drives the amount field.",
+            "source": "GLLine",
+            "groupBy": "vatRate",
+            "operation": "sum",
+            "field": "amount",
+            "filters": {
+              "administrationId": "@self.administrationId",
+              "periodYear": "@self.periodYear"
+            }
+          },
+          "reverseChargeBucket": {
+            "description": "REQ-VBTW-009: reverse-charge (verleggingsregeling) postings aggregated separately per Wet OB 1968.",
+            "source": "GLLine",
+            "operation": "sum",
+            "field": "amount",
+            "filters": {
+              "administrationId": "@self.administrationId",
+              "reverseCharge": true
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "vat-administrator": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        },
+        "x-openregister-lifecycle-retention": {
+          "rule": "selectielijst:5.1.2",
+          "description": "REQ-ARC-003/005: 7-year financial-record retention, disposition archive. Enforced by OR."
+        }
+      },
+      "IcpStatement": {
+        "slug": "IcpStatement",
+        "icon": "EarthOutline",
+        "version": "0.1.0",
+        "title": "ICP Statement (ICP-opgaaf)",
+        "description": "Intra-community supplies declaration (ICP-opgaaf) per REQ-VBTW-007. Lifecycle draft → submitted → accepted.",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "periodType",
+          "periodYear",
+          "state"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration.",
+            "example": "adm-1"
+          },
+          "periodType": {
+            "type": "string",
+            "enum": ["month", "quarter", "year"],
+            "description": "Filing cadence.",
+            "example": "quarter"
+          },
+          "periodYear": {
+            "type": "integer",
+            "description": "Calendar year.",
+            "example": 2026
+          },
+          "periodMonth": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12,
+            "nullable": true,
+            "description": "Month when periodType=month."
+          },
+          "periodQuarter": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "nullable": true,
+            "description": "Quarter when periodType=quarter."
+          },
+          "state": {
+            "type": "string",
+            "enum": ["draft", "submitted", "accepted"],
+            "default": "draft",
+            "description": "Lifecycle state."
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "default": "EUR",
+            "description": "ISO 4217 currency code."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": { "label": "Concept", "description": "Editable draft." },
+            "submitted": { "label": "Ingediend", "description": "Filed; awaiting acceptance." },
+            "accepted": { "label": "Geaccepteerd", "description": "Acknowledged." }
+          },
+          "transitions": {
+            "submit": {
+              "from": "draft",
+              "to": "submitted",
+              "label": "Indienen",
+              "description": "REQ-VBTW-007: file the ICP statement."
+            },
+            "acknowledge": {
+              "from": "submitted",
+              "to": "accepted",
+              "label": "Bevestigen",
+              "description": "External ACK received."
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "icpTransactions": {
+            "description": "REQ-VBTW-007: intra-community supply line totals aggregated from GL for the period.",
+            "source": "GLLine",
+            "operation": "sum",
+            "field": "amount",
+            "filters": {
+              "administrationId": "@self.administrationId",
+              "icp": true
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "vat-administrator": { "permissions": ["create", "read", "update"] },
+            "auditor": { "permissions": ["read"] }
+          }
+        },
+        "x-openregister-lifecycle-retention": {
+          "rule": "selectielijst:5.1.2",
+          "description": "REQ-ARC: 7-year financial-record retention."
+        }
+      },
+      "VatCorrection": {
+        "slug": "VatCorrection",
+        "icon": "ReceiptTextEditOutline",
+        "version": "0.1.0",
+        "title": "VAT Correction (Suppletie)",
+        "description": "VAT correction submission (suppletie-aangifte) per REQ-VBTW-008. Lifecycle draft → submitted → accepted.",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "periodType",
+          "periodYear",
+          "correctionReason",
+          "state"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration.",
+            "example": "adm-1"
+          },
+          "periodType": {
+            "type": "string",
+            "enum": ["month", "quarter", "year"],
+            "description": "Filing cadence of the period being corrected."
+          },
+          "periodYear": {
+            "type": "integer",
+            "description": "Calendar year of the corrected period."
+          },
+          "periodMonth": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12,
+            "nullable": true,
+            "description": "Month when periodType=month."
+          },
+          "periodQuarter": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "nullable": true,
+            "description": "Quarter when periodType=quarter."
+          },
+          "correctionReason": {
+            "type": "string",
+            "enum": ["underreporting", "overreporting", "calculation-error", "late-discovery"],
+            "description": "REQ-VBTW-008: reason for the correction."
+          },
+          "originalReturnId": {
+            "type": "string",
+            "description": "FK to the VatReturn being corrected.",
+            "nullable": true
+          },
+          "adjustmentAmount": {
+            "type": "number",
+            "description": "Server-authoritative adjustment (MonetaryAmount).",
+            "example": -120.00
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "default": "EUR",
+            "description": "ISO 4217 currency code."
+          },
+          "state": {
+            "type": "string",
+            "enum": ["draft", "submitted", "accepted"],
+            "default": "draft",
+            "description": "Lifecycle state."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": { "label": "Concept", "description": "Editable draft." },
+            "submitted": { "label": "Ingediend", "description": "Filed; awaiting acceptance." },
+            "accepted": { "label": "Geaccepteerd", "description": "Acknowledged." }
+          },
+          "transitions": {
+            "submit": {
+              "from": "draft",
+              "to": "submitted",
+              "label": "Suppletie indienen",
+              "description": "REQ-VBTW-008: file the correction."
+            },
+            "acknowledge": {
+              "from": "submitted",
+              "to": "accepted",
+              "label": "Bevestigen",
+              "description": "External ACK received."
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "originalReturn": {
+            "localField": "originalReturnId",
+            "relatedSchema": "VatReturn",
+            "relatedField": "id",
+            "cardinality": "many-to-one",
+            "description": "REQ-VBTW-008: the VatReturn this correction supersedes."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "vat-administrator": { "permissions": ["create", "read", "update"] },
+            "auditor": { "permissions": ["read"] }
+          }
+        },
+        "x-openregister-lifecycle-retention": {
+          "rule": "selectielijst:5.1.2",
+          "description": "REQ-ARC: 7-year financial-record retention."
+        }
+      },
+      "VatTariff": {
+        "slug": "VatTariff",
+        "icon": "PercentOutline",
+        "version": "0.1.0",
+        "title": "VAT Tariff (BTW-tarief)",
+        "description": "A statutory VAT rate (BTW-tarief) per Wet OB 1968, seeded from btw-tariffs-2026.json. REQ-VBTW-003.",
+        "type": "object",
+        "x-schema-org": "schema:DefinedTerm",
+        "required": ["code", "ratePercentage"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Tariff code (e.g. 'high', 'low', 'zero', 'exempt', 'reverse-charge').",
+            "example": "high"
+          },
+          "label": {
+            "type": "string",
+            "description": "Human-readable label.",
+            "example": "Hoog tarief 21%"
+          },
+          "ratePercentage": {
+            "type": "number",
+            "description": "Rate as a percentage (21, 9, 0).",
+            "example": 21
+          },
+          "rgsAccountHint": {
+            "type": "string",
+            "description": "Hint of the RGS account this rate posts to.",
+            "nullable": true
+          },
+          "legislativeReference": {
+            "type": "string",
+            "description": "Citation (Wet OB 1968).",
+            "nullable": true
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "vat-administrator": { "permissions": ["create", "read", "update"] },
+            "auditor": { "permissions": ["read"] }
+          }
         }
       }
     }

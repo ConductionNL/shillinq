@@ -1,0 +1,49 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Wet OB 1968 + Belastingdienst tariefoverzicht",
+    "version": "2026-01-01",
+    "description": "Statutory Dutch VAT (BTW) tariffs per Wet OB 1968 with RGS account hints. Statutory rates are not operator-overridable; operators may add bespoke codes but not change the canonical Belastingdienst rates.",
+    "imported": "2026-06-01T00:00:00Z",
+    "url": "https://www.belastingdienst.nl",
+    "schema": "VatTariff"
+  },
+  "records": [
+    {
+      "code": "high",
+      "label": "Hoog tarief 21%",
+      "ratePercentage": 21,
+      "rgsAccountHint": "1530",
+      "legislativeReference": "Wet OB 1968 art. 9 lid 1"
+    },
+    {
+      "code": "low",
+      "label": "Laag tarief 9%",
+      "ratePercentage": 9,
+      "rgsAccountHint": "1531",
+      "legislativeReference": "Wet OB 1968 art. 9 lid 2 + tabel I"
+    },
+    {
+      "code": "zero",
+      "label": "Nultarief 0%",
+      "ratePercentage": 0,
+      "rgsAccountHint": "1532",
+      "legislativeReference": "Wet OB 1968 art. 9 lid 2 + tabel II"
+    },
+    {
+      "code": "exempt",
+      "label": "Vrijgesteld",
+      "ratePercentage": 0,
+      "rgsAccountHint": null,
+      "legislativeReference": "Wet OB 1968 art. 11"
+    },
+    {
+      "code": "reverse-charge",
+      "label": "Verlegd (verleggingsregeling)",
+      "ratePercentage": 0,
+      "rgsAccountHint": "1535",
+      "legislativeReference": "Wet OB 1968 art. 12 lid 3-5"
+    }
+  ]
+}
