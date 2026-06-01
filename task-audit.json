@@ -1,73 +1,107 @@
 {
-  "spec": "openspec/changes/add-shillinq-gr-consolidation",
+  "spec": "openspec/changes/bookkeeping-year-end-close",
   "verified": [
     {
       "task": "1",
-      "description": "Confirmed no GRDeelnemer, GRVerdeelsleutel, or bookkeeping-gr-consolidation already existed in lib/Settings/shillinq_register.json",
-      "ok": true
+      "file": "openspec/changes/bookkeeping-year-end-close/tasks.md",
+      "ok": true,
+      "note": "Confirmed: no ClosingEntry/RetainedEarnings/ClosingAccount schemas existed; no lib/Service/Closing*.php classes present; no prior bookkeeping-year-end-close spec."
     },
     {
       "task": "2",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/specs/bookkeeping-gr-consolidation/spec.md",
-      "ok": true
+      "file": "openspec/changes/bookkeeping-year-end-close/specs/bookkeeping-year-end-close/spec.md",
+      "ok": true,
+      "note": "spec.md present with Status: proposed, Kind: config, REQ-YEC-NNN requirements, GIVEN/WHEN/THEN scenarios."
     },
     {
       "task": "3",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/proposal.md",
-      "ok": true
+      "file": "openspec/changes/bookkeeping-year-end-close/proposal.md",
+      "ok": true,
+      "note": "proposal.md present with Affected Projects, Scope, Motivation, Dependencies, Risks, Rollback, Open Questions."
     },
     {
       "task": "4",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/design.md",
-      "ok": true
+      "file": "openspec/changes/bookkeeping-year-end-close/design.md",
+      "ok": true,
+      "note": "design.md present with Reuse Analysis, D1-D6 decisions. Status set to pr-created."
     },
     {
       "task": "5",
       "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer schema declared with deelnemerType enum, deelnemerNaam, administrationId (optional), aandeel (0-1 validated), actief boolean, lifecycleState",
-      "ok": true
+      "ok": true,
+      "note": "ClosingEntry schema declared with all 12 REQ-YEC-001 fields plus approval lifecycle and relations."
     },
     {
       "task": "6",
       "file": "lib/Settings/shillinq_register.json",
-      "description": "GRVerdeelsleutel schema declared with sleutelNaam, costClusterAccountNumbers array, verdelingsType enum (vast-percentage/inwoner-aantal/gewogen-oppervlak/custom-formula), parameters object, lineNumber",
-      "ok": true
+      "ok": true,
+      "note": "RetainedEarnings schema declared with all 8 REQ-YEC-002 fields plus aggregations and relations."
     },
     {
       "task": "7",
       "file": "lib/Settings/shillinq_register.json",
-      "description": "GLLine schema declared with eliminationFlag: boolean (default false); x-openregister-aggregations.consolidatedTrialBalance declared with filter: eliminationFlag = false",
-      "ok": true
+      "ok": true,
+      "note": "ClosingAccount schema declared with all 4 REQ-YEC-003 fields."
     },
     {
       "task": "8",
       "file": "lib/Settings/shillinq_register.json",
-      "description": "GRVerdeelsleutel.x-openregister-aggregations.doorbelastingPerDeelnemer declared with join on GLLine WHERE accountNumber IN costClusterAccountNumbers AND eliminationFlag = false, grouped by deelnemerId",
-      "ok": true
+      "ok": true,
+      "note": "ClosingEntryTemplate schema declared with all 11 REQ-YEC-004 fields plus lifecycle (active/paused/archived)."
     },
     {
       "task": "9",
       "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer.x-openregister-lifecycle.hooks.onGrPeriodClose declared: trigger bookkeeping-period-close:grPeriodClosed, condition administrationId IS NOT NULL, idempotency key (grAdministrationId, deelnemerId, periodId)",
-      "ok": true
+      "ok": true,
+      "note": "FiscalYear schema declared with x-openregister-lifecycle: open -> in-progress -> closed per REQ-YEC-005."
     },
     {
       "task": "10",
       "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer.x-openregister-aggregations.aandeelSumCheck declared: filter actief = true, sum of aandeel field; non-blocking warning when result differs from 1.0",
-      "ok": true
+      "ok": true,
+      "note": "5 checklist requires predicates on completeClose transition (trial balance, accruals, depreciation, FX, related-party) per REQ-YEC-006. CFO override with checklistOverride + checklistOverrideReason memo supported."
     },
     {
       "task": "11",
-      "file": "src/manifest.json",
-      "description": "featureFlags.gov-gr added; Gemeenschappelijke regeling menu entry under Bookkeeping with 3 children (Deelnemers, Verdeelsleutels, Geconsolideerde view); 5 pages added (GRDeelnemers, GRDeelnemerDetail, GRVerdeelsleutels, GRVerdeelsleutelDetail, GRConsolidated); node tests/validate-manifest.js: only pre-existing roadmap-type failure, no new failures",
-      "ok": true
+      "file": "lib/Settings/shillinq_register.json",
+      "ok": true,
+      "note": "FiscalYear.closed state has immutable: true per REQ-YEC-007."
     },
     {
       "task": "12",
+      "file": "lib/Settings/shillinq_register.json",
+      "ok": true,
+      "note": "RetainedEarnings.x-openregister-aggregations.balanceCarryforward declared per REQ-YEC-008. No PHP service."
+    },
+    {
+      "task": "13",
+      "file": "lib/Settings/shillinq_register.json",
+      "ok": true,
+      "note": "ClosingEntry.post transition has action: x-openregister-materialise targeting GLTransaction per REQ-YEC-009."
+    },
+    {
+      "task": "14",
+      "file": "lib/Settings/shillinq_register.json",
+      "ok": true,
+      "note": "FiscalYear.completeClose transition has action: x-openregister-closing-workflow with templateFilter (administrationId, lifecycleState: active, automationTrigger: on-close) and seedNextFY per REQ-YEC-010."
+    },
+    {
+      "task": "15",
+      "file": "src/manifest.json",
+      "ok": true,
+      "note": "2 menu entries (YearEndCloseChecklist order:20, ClosingEntries order:30) + 4 pages (YearEndCloseChecklist index, YearEndCloseChecklistDetail, ClosingEntries index, ClosingEntriesDetail) added per REQ-YEC-011."
+    },
+    {
+      "task": "16",
+      "file": "lib/Settings/shillinq_register.json",
+      "ok": true,
+      "note": "3 ClosingEntryTemplate seed objects in components.objects[] per REQ-YEC-012: revenue-closing (4000-4999->9900), expense-closing (5000-6999->9900), accrual-reversal (9700-9799->5900, reverseNextPeriod:true). All lifecycleState: active."
+    },
+    {
+      "task": "17",
       "file": "openspec/architecture/adr-000-data-model.md",
-      "description": "GRDeelnemer and GRVerdeelsleutel entity entries added alphabetically after GrantPortfolio, cross-referencing bookkeeping-gr-consolidation spec",
-      "ok": true
+      "ok": true,
+      "note": "4 new entities added alphabetically (ClosingAccount, ClosingEntry, ClosingEntryTemplate, RetainedEarnings). FiscalYear entry updated with lifecycle properties and reconciliation note. Entity count bumped 226 -> 232."
     }
   ],
   "stubs": [],
