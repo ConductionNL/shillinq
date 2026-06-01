@@ -68,6 +68,35 @@
 			]
 		},
 		{
+			"id": "Belastingen",
+			"label": "Belastingen",
+			"icon": "icon-category-organization",
+			"order": 40,
+			"children": [
+				{
+					"id": "BtwAangiften",
+					"label": "BTW-aangiften",
+					"icon": "FileDocumentOutline",
+					"route": "BtwAangiften",
+					"order": 10
+				},
+				{
+					"id": "IcpOpgaaf",
+					"label": "ICP-opgaaf",
+					"icon": "EarthOutline",
+					"route": "IcpOpgaaf",
+					"order": 20
+				},
+				{
+					"id": "BtwCorrecties",
+					"label": "BTW-correcties",
+					"icon": "FileDocumentEditOutline",
+					"route": "BtwCorrecties",
+					"order": 30
+				}
+			]
+		},
+		{
 			"id": "Documentation",
 			"label": "Documentation",
 			"icon": "icon-info",
@@ -100,6 +129,310 @@
 			"title": "Features & roadmap",
 			"config": {
 				"documentationUrl": "https://shillinq.conduction.nl"
+			}
+		},
+		{
+			"id": "BtwAangiften",
+			"route": "/btw-aangiften",
+			"type": "index",
+			"title": "BTW-aangiften",
+			"config": {
+				"register": "shillinq",
+				"schema": "VatReturn",
+				"columns": [
+					{
+						"key": "periodEnd",
+						"label": "Periode t/m",
+						"sortable": true
+					},
+					{
+						"key": "periodType",
+						"label": "Frequentie",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "teBetalenOfTeruggave",
+						"label": "Te betalen / teruggave",
+						"sortable": true
+					},
+					{
+						"key": "submittedAt",
+						"label": "Ingediend op",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-periodEnd",
+				"detailRoute": "BtwAangiftenDetail"
+			}
+		},
+		{
+			"id": "BtwAangiftenDetail",
+			"route": "/btw-aangiften/:id",
+			"type": "detail",
+			"title": "BTW-aangifte",
+			"config": {
+				"register": "shillinq",
+				"schema": "VatReturn",
+				"fields": [
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "periodType",
+						"label": "Frequentie",
+						"type": "string"
+					},
+					{
+						"key": "periodStart",
+						"label": "Periode van",
+						"type": "date"
+					},
+					{
+						"key": "periodEnd",
+						"label": "Periode t/m",
+						"type": "date"
+					},
+					{
+						"key": "rubrieken",
+						"label": "Rubrieken",
+						"type": "object"
+					},
+					{
+						"key": "verschuldigdeOmzetbelasting",
+						"label": "Verschuldigde omzetbelasting",
+						"type": "number"
+					},
+					{
+						"key": "voorbelasting",
+						"label": "Voorbelasting",
+						"type": "number"
+					},
+					{
+						"key": "teBetalenOfTeruggave",
+						"label": "Te betalen / teruggave",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "submittedAt",
+						"label": "Ingediend op",
+						"type": "date-time"
+					},
+					{
+						"key": "acceptedAt",
+						"label": "Geaccepteerd op",
+						"type": "date-time"
+					},
+					{
+						"key": "digipoortMessageId",
+						"label": "Digipoort bericht-ID",
+						"type": "string"
+					},
+					{
+						"key": "attachmentUri",
+						"label": "Aangifte PDF",
+						"type": "link"
+					},
+					{
+						"key": "correctionOf",
+						"label": "Correctie van",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "BtwAangiften"
+			}
+		},
+		{
+			"id": "IcpOpgaaf",
+			"route": "/icp-opgaaf",
+			"type": "index",
+			"title": "ICP-opgaaf",
+			"config": {
+				"register": "shillinq",
+				"schema": "IcpStatement",
+				"columns": [
+					{
+						"key": "periodEnd",
+						"label": "Periode t/m",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "submittedAt",
+						"label": "Ingediend op",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-periodEnd",
+				"detailRoute": "IcpOpgaafDetail"
+			}
+		},
+		{
+			"id": "IcpOpgaafDetail",
+			"route": "/icp-opgaaf/:id",
+			"type": "detail",
+			"title": "ICP-opgaaf",
+			"config": {
+				"register": "shillinq",
+				"schema": "IcpStatement",
+				"fields": [
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "periodStart",
+						"label": "Periode van",
+						"type": "date"
+					},
+					{
+						"key": "periodEnd",
+						"label": "Periode t/m",
+						"type": "date"
+					},
+					{
+						"key": "lines",
+						"label": "ICP-regels",
+						"type": "array"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "submittedAt",
+						"label": "Ingediend op",
+						"type": "date-time"
+					},
+					{
+						"key": "acceptedAt",
+						"label": "Geaccepteerd op",
+						"type": "date-time"
+					},
+					{
+						"key": "digipoortMessageId",
+						"label": "Digipoort bericht-ID",
+						"type": "string"
+					},
+					{
+						"key": "correctionOf",
+						"label": "Correctie van",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "IcpOpgaaf"
+			}
+		},
+		{
+			"id": "BtwCorrecties",
+			"route": "/btw-correcties",
+			"type": "index",
+			"title": "BTW-correcties",
+			"config": {
+				"register": "shillinq",
+				"schema": "VatCorrection",
+				"columns": [
+					{
+						"key": "originalVatReturnId",
+						"label": "Oorspronkelijke aangifte",
+						"sortable": true
+					},
+					{
+						"key": "correctionAmount",
+						"label": "Correctiebedrag",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "submittedAt",
+						"label": "Ingediend op",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-submittedAt",
+				"detailRoute": "BtwCorrectiesDetail"
+			}
+		},
+		{
+			"id": "BtwCorrectiesDetail",
+			"route": "/btw-correcties/:id",
+			"type": "detail",
+			"title": "BTW-correctie (suppletie)",
+			"config": {
+				"register": "shillinq",
+				"schema": "VatCorrection",
+				"fields": [
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "originalVatReturnId",
+						"label": "Oorspronkelijke aangifte",
+						"type": "string"
+					},
+					{
+						"key": "correctionAmount",
+						"label": "Correctiebedrag",
+						"type": "number"
+					},
+					{
+						"key": "reason",
+						"label": "Reden",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "submittedAt",
+						"label": "Ingediend op",
+						"type": "date-time"
+					},
+					{
+						"key": "acceptedAt",
+						"label": "Geaccepteerd op",
+						"type": "date-time"
+					},
+					{
+						"key": "digipoortMessageId",
+						"label": "Digipoort bericht-ID",
+						"type": "string"
+					},
+					{
+						"key": "attachmentUri",
+						"label": "Suppletie PDF",
+						"type": "link"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "BtwCorrecties"
 			}
 		},
 		{

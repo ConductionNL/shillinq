@@ -718,6 +718,602 @@
             }
           }
         }
+      },
+      "VatReturn": {
+        "slug": "VatReturn",
+        "icon": "FileDocumentOutline",
+        "version": "0.1.0",
+        "title": "BTW-aangifte",
+        "description": "Periodic BTW (omzetbelasting) return per Wet OB 1968 art. 14. Lifecycle covers draft composition, approval gate, Digipoort submission, Belastingdienst ack/nack, and suppletie correction.",
+        "x-schema-org": "schema:Invoice",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "periodType",
+          "periodStart",
+          "periodEnd",
+          "rubrieken",
+          "verschuldigdeOmzetbelasting",
+          "voorbelasting",
+          "teBetalenOfTeruggave",
+          "state"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this return.",
+            "example": "adm-1"
+          },
+          "periodType": {
+            "type": "string",
+            "enum": ["month", "quarter"],
+            "description": "BTW filing frequency — month for large operators (>€7M omzet/jaar), quarter for SMB default per REQ-VBTW-002.",
+            "example": "quarter"
+          },
+          "periodStart": {
+            "type": "string",
+            "format": "date",
+            "description": "First day of the BTW period.",
+            "example": "2026-01-01"
+          },
+          "periodEnd": {
+            "type": "string",
+            "format": "date",
+            "description": "Last day of the BTW period.",
+            "example": "2026-03-31"
+          },
+          "rubrieken": {
+            "type": "object",
+            "description": "The standard BTW rubrieken per Belastingdienst aangifteformulier (1a, 1b, 1c, 1d, 1e, 2a, 3a, 3b, 3c, 4a, 4b, 5a, 5b, 5c, 5d, 5e, 5f, 5g) — each with omzet and btw subfields. Derived via x-openregister-aggregations from GLLine per REQ-VBTW-004.",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "omzet": { "type": "number" },
+                "btw": { "type": "number" }
+              }
+            },
+            "example": {
+              "1a": { "omzet": 50000.00, "btw": 10500.00 },
+              "5b": { "omzet": 0, "btw": -2500.00 }
+            }
+          },
+          "verschuldigdeOmzetbelasting": {
+            "type": "number",
+            "description": "Calculated total payable; derived via x-openregister-calculations from rubrieken BTW fields.",
+            "example": 10500.00
+          },
+          "voorbelasting": {
+            "type": "number",
+            "description": "Input VAT deductible; derived from GL postings tagged as voorbelasting.",
+            "example": 2500.00
+          },
+          "teBetalenOfTeruggave": {
+            "type": "number",
+            "description": "Net payable (positive = afdragen) or refund (negative = teruggave). Equals verschuldigdeOmzetbelasting minus voorbelasting.",
+            "example": 8000.00
+          },
+          "state": {
+            "type": "string",
+            "enum": ["draft", "submitted", "accepted", "rejected", "corrected"],
+            "description": "Lifecycle state of the BTW return.",
+            "default": "draft",
+            "example": "draft"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Set on transition to submitted.",
+            "nullable": true
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Set on receipt of Belastingdienst ack via digipoort-sbr callback.",
+            "nullable": true
+          },
+          "digipoortMessageId": {
+            "type": "string",
+            "description": "SBR message identifier returned by Digipoort on submission.",
+            "nullable": true
+          },
+          "attachmentUri": {
+            "type": "string",
+            "description": "Docudesk URI of the rendered aangifte PDF per ADR-022.",
+            "nullable": true,
+            "example": "docudesk://shillinq/btw-aangiften/2026-q1-adm-1.pdf"
+          },
+          "correctionOf": {
+            "type": "string",
+            "description": "FK to a prior VatReturn.id this one supersedes (only set on corrected returns).",
+            "nullable": true
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Operator is composing; rubrieken aggregations recompute on each save."
+            },
+            "submitted": {
+              "label": "Ingediend",
+              "description": "Handed to Digipoort/SBR via the digipoort-sbr OpenConnector source; aggregations frozen."
+            },
+            "accepted": {
+              "label": "Geaccepteerd",
+              "description": "Belastingdienst ack received via the digipoort-sbr source callback."
+            },
+            "rejected": {
+              "label": "Afgekeurd",
+              "description": "Belastingdienst nack received; operator must amend or file a suppletie."
+            },
+            "corrected": {
+              "label": "Gecorrigeerd",
+              "description": "Superseded by a later VatReturn (correctionOf FK points to this record)."
+            }
+          },
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "period": "P7Y",
+            "description": "BTW-aangiften retained 7 years per AWR art. 52 + Selectielijst Gemeenten 2020."
+          },
+          "transitions": {
+            "submit": {
+              "from": "draft",
+              "to": "submitted",
+              "label": "Indienen via Digipoort",
+              "description": "Operator triggers SBR submission after approval. Dispatches the digipoort-sbr ScheduledWorkflow.",
+              "requires": {
+                "approval-workflow": {
+                  "policy": "vat-return-submission-approval",
+                  "description": "Submission gate: controller must approve before the return can be filed per REQ-VBTW-006."
+                }
+              },
+              "preconditions": {
+                "balanceCheck": "teBetalenOfTeruggave === (verschuldigdeOmzetbelasting - voorbelasting)"
+              },
+              "onTransition": {
+                "dispatchWorkflow": "shillinq-btw-sbr-submission"
+              }
+            },
+            "accept": {
+              "from": "submitted",
+              "to": "accepted",
+              "label": "Belastingdienst geaccepteerd",
+              "description": "Belastingdienst ack received (triggered by digipoort-sbr OpenConnector callback)."
+            },
+            "reject": {
+              "from": "submitted",
+              "to": "rejected",
+              "label": "Belastingdienst afgekeurd",
+              "description": "Belastingdienst nack received (triggered by digipoort-sbr OpenConnector callback)."
+            },
+            "reopen": {
+              "from": "rejected",
+              "to": "draft",
+              "label": "Heropenen",
+              "description": "Operator reopens the rejected return to amend before re-submission."
+            },
+            "correct": {
+              "from": "accepted",
+              "to": "corrected",
+              "label": "Suppletie indienen",
+              "description": "Operator files a correction (suppletie) by creating a new VatReturn with correctionOf set."
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "rubrieken": {
+            "description": "Sum-by-rate projection over T1 GLLine rows filtered by periodStart/periodEnd + administrationId. Groups by the btw-rubriek tag on the Account (resolved via VatTariff.defaultAccounts). Per REQ-VBTW-004.",
+            "operation": "sum",
+            "sourceSchema": "GLLine",
+            "sourceRegister": "shillinq",
+            "groupBy": "VatTariff.rubriek",
+            "valueField": "amount",
+            "filter": {
+              "administrationId": "@self.administrationId",
+              "periodStart": { "gte": "@self.periodStart" },
+              "periodEnd": { "lte": "@self.periodEnd" }
+            },
+            "join": {
+              "from": "GLLine.accountNumber",
+              "through": "Account",
+              "on": "Account.accountNumber",
+              "thenThrough": "VatTariff",
+              "thenOn": "Account.vatTariffCode",
+              "select": "VatTariff.rubriek"
+            }
+          },
+          "verschuldigdeOmzetbelasting": {
+            "description": "Sum of all BTW owed from rubrieken (1a through 4b btw fields).",
+            "operation": "sum",
+            "sourceField": "rubrieken.*.btw",
+            "filter": {
+              "rubriekCategory": "verschuldigd"
+            }
+          },
+          "voorbelasting": {
+            "description": "Sum of input VAT from rubrieken (5a through 5g btw fields).",
+            "operation": "sum",
+            "sourceField": "rubrieken.*.btw",
+            "filter": {
+              "rubriekCategory": "voorbelasting"
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "teBetalenOfTeruggave": {
+            "description": "Net payable = verschuldigdeOmzetbelasting minus voorbelasting.",
+            "formula": "verschuldigdeOmzetbelasting - voorbelasting"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "vat-administrator": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        },
+        "x-openregister-scheduled-workflows": {
+          "sbr-quarterly-submission": {
+            "name": "BTW kwartaal SBR/Digipoort indiening",
+            "description": "Submits due BTW returns for all administrations on quarterly schedule via the digipoort-sbr OpenConnector source. Per REQ-VBTW-010 + ADR-019.",
+            "cron": "0 8 1 1,4,7,10 *",
+            "source": "digipoort-sbr",
+            "register": "shillinq",
+            "schema": "VatReturn",
+            "enabled": true,
+            "filter": {
+              "state": "draft",
+              "periodType": "quarter"
+            }
+          },
+          "sbr-monthly-submission": {
+            "name": "BTW maand SBR/Digipoort indiening",
+            "description": "Submits due BTW returns for large-operator administrations (monthly filers) via digipoort-sbr. Per REQ-VBTW-010 + ADR-019.",
+            "cron": "0 8 1 * *",
+            "source": "digipoort-sbr",
+            "register": "shillinq",
+            "schema": "VatReturn",
+            "enabled": true,
+            "filter": {
+              "state": "draft",
+              "periodType": "month"
+            }
+          }
+        }
+      },
+      "IcpStatement": {
+        "slug": "IcpStatement",
+        "icon": "EarthOutline",
+        "version": "0.1.0",
+        "title": "ICP-opgaaf",
+        "description": "Quarterly ICP-opgaaf (intracommunautaire prestaties) per Wet OB 1968 art. 37a. Lists intra-EU supply totals per customer for filing with Belastingdienst.",
+        "x-schema-org": "schema:Invoice",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "periodStart",
+          "periodEnd",
+          "lines",
+          "state"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this ICP statement.",
+            "example": "adm-1"
+          },
+          "periodStart": {
+            "type": "string",
+            "format": "date",
+            "description": "First day of the quarterly ICP period.",
+            "example": "2026-01-01"
+          },
+          "periodEnd": {
+            "type": "string",
+            "format": "date",
+            "description": "Last day of the quarterly ICP period.",
+            "example": "2026-03-31"
+          },
+          "lines": {
+            "type": "array",
+            "description": "One line per EU customer per period, derived from AR sub-ledger per REQ-VBTW-007.",
+            "items": {
+              "type": "object",
+              "required": ["vatNumber", "countryCode", "omzet", "type"],
+              "properties": {
+                "vatNumber": {
+                  "type": "string",
+                  "description": "EU VAT number of the customer.",
+                  "example": "BE0123456789"
+                },
+                "countryCode": {
+                  "type": "string",
+                  "description": "ISO 3166-1 alpha-2 country code.",
+                  "minLength": 2,
+                  "maxLength": 2,
+                  "example": "BE"
+                },
+                "omzet": {
+                  "type": "number",
+                  "description": "Net supply amount for this customer in the period.",
+                  "example": 12500.00
+                },
+                "type": {
+                  "type": "string",
+                  "enum": ["goederen", "diensten", "driehoekshandel"],
+                  "description": "Type of intracommunautaire prestatie.",
+                  "example": "diensten"
+                }
+              }
+            }
+          },
+          "state": {
+            "type": "string",
+            "enum": ["draft", "submitted", "accepted", "rejected", "corrected"],
+            "description": "Lifecycle state of the ICP statement.",
+            "default": "draft",
+            "example": "draft"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Set on transition to submitted.",
+            "nullable": true
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Set on receipt of Belastingdienst ack.",
+            "nullable": true
+          },
+          "digipoortMessageId": {
+            "type": "string",
+            "description": "SBR message identifier returned by Digipoort.",
+            "nullable": true
+          },
+          "correctionOf": {
+            "type": "string",
+            "description": "FK to a prior IcpStatement.id this one supersedes.",
+            "nullable": true
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": { "label": "Concept", "description": "Operator is composing; line aggregations recompute on each save." },
+            "submitted": { "label": "Ingediend", "description": "Submitted to Digipoort via digipoort-sbr." },
+            "accepted": { "label": "Geaccepteerd", "description": "Belastingdienst ack received." },
+            "rejected": { "label": "Afgekeurd", "description": "Belastingdienst nack; operator must amend or file correction." },
+            "corrected": { "label": "Gecorrigeerd", "description": "Superseded by a corrected statement." }
+          },
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "period": "P7Y",
+            "description": "ICP-opgaven retained 7 years per AWR art. 52."
+          },
+          "transitions": {
+            "submit": {
+              "from": "draft",
+              "to": "submitted",
+              "label": "Indienen via Digipoort",
+              "description": "Submit ICP-opgaaf to Belastingdienst.",
+              "onTransition": { "dispatchWorkflow": "shillinq-icp-sbr-submission" }
+            },
+            "accept": { "from": "submitted", "to": "accepted", "label": "Belastingdienst geaccepteerd" },
+            "reject": { "from": "submitted", "to": "rejected", "label": "Belastingdienst afgekeurd" },
+            "reopen": { "from": "rejected", "to": "draft", "label": "Heropenen" },
+            "correct": { "from": "accepted", "to": "corrected", "label": "Correctie indienen" }
+          }
+        },
+        "x-openregister-aggregations": {
+          "lines": {
+            "description": "Aggregates AR sub-ledger (T2 Invoice) rows filtered to EU customers (vatNumber not starting NL) in the period, grouping by vatNumber. Per REQ-VBTW-007.",
+            "operation": "sum",
+            "sourceSchema": "APTransaction",
+            "sourceRegister": "shillinq",
+            "groupBy": ["vatNumber", "countryCode", "type"],
+            "valueField": "amount",
+            "filter": {
+              "administrationId": "@self.administrationId",
+              "transactionDate": {
+                "gte": "@self.periodStart",
+                "lte": "@self.periodEnd"
+              },
+              "vatNumber": { "notStartsWith": "NL" }
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "vat-administrator": { "permissions": ["create", "read", "update"] },
+            "auditor": { "permissions": ["read"] }
+          }
+        }
+      },
+      "VatCorrection": {
+        "slug": "VatCorrection",
+        "icon": "FileDocumentEditOutline",
+        "version": "0.1.0",
+        "title": "BTW-suppletie",
+        "description": "Suppletie-aangifte for material BTW corrections per Wet OB 1968 art. 14a + Uitvoeringsbesluit OB 1968 art. 24c. Requires mandatory link to the original VatReturn.",
+        "x-schema-org": "schema:Invoice",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "originalVatReturnId",
+          "correctionAmount",
+          "reason",
+          "state"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this correction.",
+            "example": "adm-1"
+          },
+          "originalVatReturnId": {
+            "type": "string",
+            "description": "FK to the VatReturn being corrected. Mandatory per REQ-VBTW-009.",
+            "example": "vatreturn-q1-2026"
+          },
+          "correctionAmount": {
+            "type": "number",
+            "description": "Delta amount: positive = additional payable, negative = additional refund. Suppletie threshold is €1.000 per Belastingdienst (seeded in btw-tariffs-2026.json _meta.suppletieThreshold).",
+            "example": -1500.00
+          },
+          "reason": {
+            "type": "string",
+            "description": "Operator-authored explanation of the correction.",
+            "example": "Voorbelasting Q1 2026 onderrapporteerd door invoerfout"
+          },
+          "state": {
+            "type": "string",
+            "enum": ["draft", "submitted", "accepted", "rejected"],
+            "description": "Lifecycle state of the correction.",
+            "default": "draft",
+            "example": "draft"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Set on transition to submitted.",
+            "nullable": true
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Set on receipt of Belastingdienst ack.",
+            "nullable": true
+          },
+          "digipoortMessageId": {
+            "type": "string",
+            "description": "SBR message identifier returned by Digipoort.",
+            "nullable": true
+          },
+          "attachmentUri": {
+            "type": "string",
+            "description": "Docudesk URI of the rendered suppletie PDF.",
+            "nullable": true
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": { "label": "Concept", "description": "Operator is composing the suppletie." },
+            "submitted": { "label": "Ingediend", "description": "Submitted to Belastingdienst via Digipoort." },
+            "accepted": { "label": "Geaccepteerd", "description": "Belastingdienst ack received." },
+            "rejected": { "label": "Afgekeurd", "description": "Belastingdienst nack; operator must amend." }
+          },
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "period": "P7Y",
+            "description": "Suppletie-aangiften retained 7 years per AWR art. 52."
+          },
+          "transitions": {
+            "submit": {
+              "from": "draft",
+              "to": "submitted",
+              "label": "Suppletie indienen",
+              "description": "Operator submits the suppletie to Belastingdienst. Warning surfaced when correctionAmount abs < 1000 (suppletie threshold).",
+              "preconditions": {
+                "thresholdWarning": "abs(correctionAmount) >= _meta.suppletieThreshold"
+              },
+              "onTransition": { "dispatchWorkflow": "shillinq-btw-sbr-submission" }
+            },
+            "accept": { "from": "submitted", "to": "accepted", "label": "Belastingdienst geaccepteerd" },
+            "reject": { "from": "submitted", "to": "rejected", "label": "Belastingdienst afgekeurd" },
+            "reopen": { "from": "rejected", "to": "draft", "label": "Heropenen" }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "vat-administrator": { "permissions": ["create", "read", "update"] },
+            "auditor": { "permissions": ["read"] }
+          }
+        }
+      },
+      "VatTariff": {
+        "slug": "VatTariff",
+        "icon": "PercentOutline",
+        "version": "0.1.0",
+        "title": "BTW-tarief",
+        "description": "BTW rate catalogue per Wet OB 1968. Seeded from btw-tariffs-2026.json; operators may add rates but cannot override the canonical Belastingdienst set. Per REQ-VBTW-003 + ADR-031 (rates NOT as enum — they evolve with statute).",
+        "x-schema-org": "schema:PriceSpecification",
+        "type": "object",
+        "required": [
+          "code",
+          "rate",
+          "description",
+          "category",
+          "effectiveFrom"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Rate code (e.g. 21pct, 9pct, 0pct, vrij, verlegd).",
+            "example": "21pct"
+          },
+          "rate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Rate as decimal (e.g. 0.21 for 21%).",
+            "example": 0.21
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of this tariff.",
+            "example": "Standaardtarief 21%"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["standaard", "verlaagd", "nul", "vrijgesteld", "verleggingsregeling"],
+            "description": "Tariff category per Wet OB 1968.",
+            "example": "standaard"
+          },
+          "rubriek": {
+            "type": "string",
+            "description": "The BTW rubriek code on the aangifteformulier this tariff maps to (e.g. 1a, 2a, 4b).",
+            "example": "1a"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "Date from which this tariff is effective.",
+            "example": "2026-01-01"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date",
+            "description": "Date until which this tariff is effective (null = still active).",
+            "nullable": true,
+            "example": null
+          },
+          "defaultAccounts": {
+            "type": "object",
+            "description": "RGS account hints for this tariff (operator may override). Key = account purpose (e.g. vatPayable, vatReceivable), value = accountNumber.",
+            "nullable": true,
+            "example": {
+              "vatPayable": "1512",
+              "vatReceivable": "1520"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "vat-administrator": { "permissions": ["create", "read", "update"] },
+            "bookkeeper": { "permissions": ["read"] },
+            "auditor": { "permissions": ["read"] }
+          }
+        }
       }
     },
     "mappings": {

@@ -1,0 +1,103 @@
+{
+  "_meta": {
+    "source": "Wet OB 1968",
+    "version": "2026.1",
+    "description": "Canonical BTW-tarieven per Belastingdienst tariefoverzicht. Seeded via ConfigurationService::importFromApp() on install/upgrade. Operators may add additional tariffs; canonical rates are idempotent-protected.",
+    "suppletieThreshold": 1000,
+    "license": "EUPL-1.2",
+    "copyright": "2026 Conduction B.V."
+  },
+  "tariffs": [
+    {
+      "code": "21pct",
+      "rate": 0.21,
+      "description": "Standaardtarief 21%",
+      "category": "standaard",
+      "rubriek": "1a",
+      "effectiveFrom": "2012-10-01",
+      "effectiveTo": null,
+      "defaultAccounts": {
+        "vatPayable": "1512",
+        "vatReceivable": "1520"
+      }
+    },
+    {
+      "code": "9pct",
+      "rate": 0.09,
+      "description": "Verlaagd tarief 9% (levensmiddelen, geneesmiddelen, boeken, etc.)",
+      "category": "verlaagd",
+      "rubriek": "1b",
+      "effectiveFrom": "2019-01-01",
+      "effectiveTo": null,
+      "defaultAccounts": {
+        "vatPayable": "1513",
+        "vatReceivable": "1521"
+      }
+    },
+    {
+      "code": "0pct",
+      "rate": 0.00,
+      "description": "Nultarief 0% (export buiten EU, zeeschepen, intracommunautaire leveringen)",
+      "category": "nul",
+      "rubriek": "3a",
+      "effectiveFrom": "1969-01-01",
+      "effectiveTo": null,
+      "defaultAccounts": {
+        "vatPayable": "1514",
+        "vatReceivable": "1522"
+      }
+    },
+    {
+      "code": "vrij",
+      "rate": 0.00,
+      "description": "Vrijgesteld van BTW (onderwijs, zorg, financieel, vastgoed oud art. 11 Wet OB)",
+      "category": "vrijgesteld",
+      "rubriek": "5g",
+      "effectiveFrom": "1969-01-01",
+      "effectiveTo": null,
+      "defaultAccounts": {
+        "vatPayable": null,
+        "vatReceivable": null
+      }
+    },
+    {
+      "code": "verlegd",
+      "rate": 0.00,
+      "description": "Verleggingsregeling binnenland (aannemer-onderaannemer, art. 12 Wet OB)",
+      "category": "verleggingsregeling",
+      "rubriek": "2a",
+      "effectiveFrom": "1969-01-01",
+      "effectiveTo": null,
+      "defaultAccounts": {
+        "vatPayable": "1515",
+        "vatReceivable": "1523"
+      }
+    },
+    {
+      "code": "verlegd-euIntra",
+      "rate": 0.00,
+      "description": "Verleggingsregeling intra-EU (diensten ontvangen van EU-ondernemer, art. 6 Wet OB)",
+      "category": "verleggingsregeling",
+      "rubriek": "4a",
+      "effectiveFrom": "1969-01-01",
+      "effectiveTo": null,
+      "defaultAccounts": {
+        "vatPayable": "1516",
+        "vatReceivable": "1524"
+      }
+    },
+    {
+      "code": "verlegd-nietEU",
+      "rate": 0.00,
+      "description": "Verleggingsregeling buiten-EU (diensten ontvangen van niet-EU-ondernemer, art. 6 Wet OB)",
+      "category": "verleggingsregeling",
+      "rubriek": "4b",
+      "effectiveFrom": "1969-01-01",
+      "effectiveTo": null,
+      "defaultAccounts": {
+        "vatPayable": "1517",
+        "vatReceivable": "1525"
+      }
+    }
+  ]
+}

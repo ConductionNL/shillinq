@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 226
+**Entities:** 230
 
 ## Context
 
@@ -1959,6 +1959,30 @@ _Quarterly IV3 (Informatie voor Derden) export submitted to CBS by Dutch decentr
 - accepted → corrected (file a new Iv3Export with correctionOf set)
 
 **Submission:** OR ScheduledWorkflow (cron `0 0 1 */3 *`) via OpenConnector `cbs-iv3` source (ADR-019). No app-local HTTP client.
+
+### IcpStatement
+**Schema.org:** `schema:Invoice`
+_Quarterly ICP-opgaaf (intracommunautaire prestaties) per Wet OB 1968 art. 37a. Lists intra-EU supply totals per EU customer for filing with Belastingdienst via SBR/Digipoort._
+**Primary spec:** bookkeeping-vat-btw-filing
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the Administration owning this ICP statement |
+| periodStart | date | Yes | First day of the quarterly ICP period |
+| periodEnd | date | Yes | Last day of the quarterly ICP period |
+| lines | array | Yes | One line per EU customer: vatNumber, countryCode, omzet, type (goederen/diensten/driehoekshandel) |
+| state | enum | Yes | draft, submitted, accepted, rejected, corrected |
+| submittedAt | datetime | No | Set on transition to submitted |
+| acceptedAt | datetime | No | Set on Belastingdienst ack |
+| digipoortMessageId | string | No | SBR message identifier from Digipoort |
+| correctionOf | string | No | FK to a prior IcpStatement.id this supersedes |
+
+**Lifecycle:** draft → submitted → accepted/rejected; accepted → corrected.
+**Submission:** OR ScheduledWorkflow via OpenConnector `digipoort-sbr` source (ADR-019). No app-local HTTP client.
+**Retention:** 7 years per AWR art. 52 (selectielijst:5.1.2).
+
+**Relations:**
+- → VatReturn (many-to-one, by period)
 
 ### JointVenture
 **Schema.org:** `schema:Organization`
@@ -4255,6 +4279,82 @@ _User-specific preferences for display settings, notifications, language, and ot
 
 **Relations:**
 - → User (many-to-one)
+
+### VatCorrection
+**Schema.org:** `schema:Invoice`
+_Suppletie-aangifte for material BTW corrections per Wet OB 1968 art. 14a + Uitvoeringsbesluit OB 1968 art. 24c. Requires mandatory link to the original VatReturn. Threshold €1.000 (seeded in btw-tariffs-2026.json _meta.suppletieThreshold)._
+**Primary spec:** bookkeeping-vat-btw-filing
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the Administration |
+| originalVatReturnId | string | Yes | FK to the VatReturn being corrected |
+| correctionAmount | number | Yes | Delta: positive = additional payable, negative = additional refund |
+| reason | string | Yes | Operator-authored explanation |
+| state | enum | Yes | draft, submitted, accepted, rejected |
+| submittedAt | datetime | No | Set on transition to submitted |
+| acceptedAt | datetime | No | Set on Belastingdienst ack |
+| digipoortMessageId | string | No | SBR message identifier from Digipoort |
+| attachmentUri | string | No | Docudesk URI of the rendered suppletie PDF |
+
+**Lifecycle:** draft → submitted → accepted/rejected; rejected → draft (reopen).
+**Retention:** 7 years per AWR art. 52 (selectielijst:5.1.2).
+
+**Relations:**
+- → VatReturn (many-to-one via originalVatReturnId)
+
+### VatReturn
+**Schema.org:** `schema:Invoice`
+_Periodic BTW (omzetbelasting) return per Wet OB 1968 art. 14. Core entity for Dutch VAT compliance in Shillinq. Rubrieken are derived declaratively via x-openregister-aggregations over GLLine (T1). Submission via SBR/Digipoort through OpenConnector (ADR-019)._
+**Primary spec:** bookkeeping-vat-btw-filing
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the Administration owning this return |
+| periodType | enum | Yes | month or quarter (operator-configured per ADR, default quarter for SMB) |
+| periodStart | date | Yes | First day of the BTW period |
+| periodEnd | date | Yes | Last day of the BTW period |
+| rubrieken | object | Yes | Standard BTW rubrieken (1a–5g) with omzet and btw subfields; derived via aggregation |
+| verschuldigdeOmzetbelasting | number | Yes | Total VAT payable; derived via x-openregister-calculations |
+| voorbelasting | number | Yes | Input VAT deductible |
+| teBetalenOfTeruggave | number | Yes | Net payable (positive) or refund (negative) |
+| state | enum | Yes | draft, submitted, accepted, rejected, corrected |
+| submittedAt | datetime | No | Set on transition to submitted |
+| acceptedAt | datetime | No | Set on Belastingdienst ack via digipoort-sbr callback |
+| digipoortMessageId | string | No | SBR message identifier returned by Digipoort |
+| attachmentUri | string | No | Docudesk URI of the rendered aangifte PDF (ADR-022) |
+| correctionOf | string | No | FK to a prior VatReturn.id this supersedes (corrected state only) |
+
+**Lifecycle:** draft → submitted (requires approval-workflow gate) → accepted/rejected; rejected → draft; accepted → corrected.
+**Aggregation:** rubrieken populated by x-openregister-aggregations over GLLine filtered by periodStart/periodEnd + administrationId, joined through Account → VatTariff.rubriek.
+**Submission:** OR ScheduledWorkflow (quarterly cron `0 8 1 1,4,7,10 *`, monthly `0 8 1 * *`) via OpenConnector `digipoort-sbr` source (ADR-019). No app-local HTTP client.
+**Retention:** 7 years per AWR art. 52 (selectielijst:5.1.2).
+
+**Relations:**
+- → IcpStatement (one-to-many, by period)
+- → VatCorrection (one-to-many via originalVatReturnId)
+
+### VatTariff
+**Schema.org:** `schema:PriceSpecification`
+_BTW rate catalogue per Wet OB 1968. Seeded from btw-tariffs-2026.json with canonical rates (21pct, 9pct, 0pct, vrij, verlegd). Operators may add tariffs; canonical rates are idempotent-protected. Rates are NOT schema enums — they evolve with statute (9% was 6% before 2019) per ADR-031._
+**Primary spec:** bookkeeping-vat-btw-filing
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| code | string | Yes | Rate code: 21pct, 9pct, 0pct, vrij, verlegd, verlegd-euIntra, verlegd-nietEU |
+| rate | number | Yes | Rate as decimal (0.21, 0.09, 0.00) |
+| description | string | Yes | Human-readable description |
+| category | enum | Yes | standaard, verlaagd, nul, vrijgesteld, verleggingsregeling |
+| rubriek | string | No | BTW aangifteformulier rubriek code (1a, 2a, 3a, 4b, 5g, …) |
+| effectiveFrom | date | Yes | Effective from date |
+| effectiveTo | date | No | Effective to date (null = still active) |
+| defaultAccounts | object | No | RGS account hints (vatPayable, vatReceivable) |
+
+**Seed:** btw-tariffs-2026.json — loaded via ConfigurationService::importFromApp() in repair step (idempotent).
+
+**Relations:**
+- ← Account (one-to-many via Account.vatTariffCode)
+- ← GLLine (one-to-many via aggregation join)
 
 ### VATReturn
 **Schema.org:** `schema:Thing`

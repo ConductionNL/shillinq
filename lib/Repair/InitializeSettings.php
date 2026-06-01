@@ -15,6 +15,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-10
+ * @spec openspec/changes/add-shillinq-vat-btw-filing/tasks.md#task-11
  */
 
 declare(strict_types=1);
@@ -31,6 +32,7 @@ use Psr\Log\LoggerInterface;
  * Repair step that initializes Shillinq configuration via SettingsService.
  *
  * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-10
+ * @spec openspec/changes/add-shillinq-vat-btw-filing/tasks.md#task-11
  */
 class InitializeSettings implements IRepairStep
 {
@@ -125,6 +127,8 @@ class InitializeSettings implements IRepairStep
 
             $this->seedChartOfAccounts(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
+            $this->seedBtwTariffs(output: $output);
+            $this->registerBtwSbrScheduledWorkflows(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -197,6 +201,169 @@ class InitializeSettings implements IRepairStep
         $output->info('Shillinq: IV3 quarterly CBS ScheduledWorkflow registered (interval: 90 days)');
 
     }//end registerIv3ScheduledWorkflow()
+
+    /**
+     * Seed the BTW tariff catalogue from btw-tariffs-2026.json, idempotently.
+     *
+     * Each tariff is matched by its code field. Existing records are skipped so
+     * operator-added tariffs (sector-specific rates, future EU-imposed rates) survive
+     * re-runs of the repair step. Per REQ-VBTW-003 + ADR-031 (rates as register, not enum).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-vat-btw-filing/tasks.md#task-11
+     */
+    private function seedBtwTariffs(IOutput $output): void
+    {
+        if ($this->settingsService->isOpenRegisterAvailable() === false) {
+            return;
+        }
+
+        $seedFile = __DIR__.'/../Settings/seeds/btw-tariffs-2026.json';
+        if (file_exists(filename: $seedFile) === false) {
+            $output->warning('Shillinq: btw-tariffs-2026.json not found, skipping BTW tariff seed');
+            return;
+        }
+
+        $raw = file_get_contents(filename: $seedFile);
+        if ($raw === false) {
+            $output->warning('Shillinq: could not read btw-tariffs-2026.json, skipping BTW tariff seed');
+            return;
+        }
+
+        $data = json_decode(json: $raw, associative: true);
+        if (is_array(value: $data) === false || isset($data['tariffs']) === false) {
+            $output->warning('Shillinq: btw-tariffs-2026.json has unexpected format, skipping BTW tariff seed');
+            return;
+        }
+
+        try {
+            $objectService = $this->container->get(
+                'OCA\OpenRegister\Service\ObjectService'
+            );
+        } catch (\Throwable $e) {
+            $output->info('Shillinq: ObjectService not available, skipping BTW tariff seed');
+            return;
+        }
+
+        $seeded  = 0;
+        $skipped = 0;
+
+        foreach ($data['tariffs'] as $tariff) {
+            $code = ($tariff['code'] ?? '');
+            if ($code === '') {
+                continue;
+            }
+
+            $existing = $objectService->findObjects(
+                register: 'shillinq',
+                schema: 'VatTariff',
+                params: ['code' => $code, '_limit' => 1]
+            );
+
+            if (count(value: $existing) > 0) {
+                $skipped++;
+                continue;
+            }
+
+            $objectService->saveObject(
+                register: 'shillinq',
+                schema: 'VatTariff',
+                object: $tariff
+            );
+            $seeded++;
+        }//end foreach
+
+        $output->info(
+            'Shillinq: BTW tariffs seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+        );
+
+    }//end seedBtwTariffs()
+
+    /**
+     * Register the BTW SBR/Digipoort ScheduledWorkflows (quarterly + monthly) if not already present.
+     *
+     * Idempotent: uses slug-based deduplication. Per REQ-VBTW-010 + ADR-019 + ADR-031.
+     * The cron aligns with Belastingdienst filing deadlines:
+     * - quarterly: 1st of January/April/July/October at 08:00
+     * - monthly: 1st of each month at 08:00
+     * Operators adjust intervals and targets via the OpenRegister ScheduledWorkflow admin UI.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-vat-btw-filing/tasks.md#task-11
+     */
+    private function registerBtwSbrScheduledWorkflows(IOutput $output): void
+    {
+        if ($this->settingsService->isOpenRegisterAvailable() === false) {
+            return;
+        }
+
+        try {
+            $workflowMapper = $this->container->get(
+                'OCA\OpenRegister\Db\ScheduledWorkflowMapper'
+            );
+        } catch (\Throwable $e) {
+            $output->info('Shillinq: ScheduledWorkflowMapper not available, skipping BTW SBR workflow registration');
+            return;
+        }
+
+        $existing      = $workflowMapper->findAll();
+        $existingSlugs = [];
+        foreach ($existing as $workflow) {
+            $existingSlugs[] = $workflow->getName();
+        }
+
+        $workflows = [
+            [
+                'name'        => 'shillinq-btw-sbr-quarterly-submission',
+                'engine'      => 'openconnector',
+                'workflowId'  => 'digipoort-sbr',
+                'intervalSec' => 7776000,
+                'enabled'     => true,
+                'payload'     => json_encode(
+                    [
+                        'register' => 'shillinq',
+                        'schema'   => 'VatReturn',
+                        'filter'   => ['state' => 'draft', 'periodType' => 'quarter'],
+                    ]
+                ),
+            ],
+            [
+                'name'        => 'shillinq-btw-sbr-monthly-submission',
+                'engine'      => 'openconnector',
+                'workflowId'  => 'digipoort-sbr',
+                'intervalSec' => 2592000,
+                'enabled'     => true,
+                'payload'     => json_encode(
+                    [
+                        'register' => 'shillinq',
+                        'schema'   => 'VatReturn',
+                        'filter'   => ['state' => 'draft', 'periodType' => 'month'],
+                    ]
+                ),
+            ],
+        ];
+
+        foreach ($workflows as $workflowData) {
+            if (in_array(needle: $workflowData['name'], haystack: $existingSlugs, strict: true) === true) {
+                $output->info(
+                    'Shillinq: BTW SBR ScheduledWorkflow "'.$workflowData['name'].'" already registered, skipping'
+                );
+                continue;
+            }
+
+            $workflowMapper->createFromArray(data: $workflowData);
+            $output->info(
+                'Shillinq: BTW SBR ScheduledWorkflow "'.$workflowData['name'].'" registered'
+            );
+        }//end foreach
+
+    }//end registerBtwSbrScheduledWorkflows()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.
