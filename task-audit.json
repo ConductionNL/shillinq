@@ -1,73 +1,83 @@
 {
-  "spec": "openspec/changes/add-shillinq-gr-consolidation",
+  "spec": "openspec/changes/add-shillinq-vat-btw-filing",
   "verified": [
     {
       "task": "1",
-      "description": "Confirmed no GRDeelnemer, GRVerdeelsleutel, or bookkeeping-gr-consolidation already existed in lib/Settings/shillinq_register.json",
-      "ok": true
+      "file": "lib/Settings/shillinq_register.json",
+      "ok": true,
+      "note": "Confirmed no pre-existing VatReturn/IcpStatement/VatCorrection/VatTariff schemas before implementation"
     },
     {
       "task": "2",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/specs/bookkeeping-gr-consolidation/spec.md",
-      "ok": true
+      "file": "openspec/changes/add-shillinq-vat-btw-filing/specs/bookkeeping-vat-btw-filing/spec.md",
+      "ok": true,
+      "note": "Spec present from proposal phase — 12 REQ-VBTW-NNN requirements with GIVEN/WHEN/THEN scenarios"
     },
     {
       "task": "3",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/proposal.md",
-      "ok": true
+      "file": "openspec/changes/add-shillinq-vat-btw-filing/proposal.md",
+      "ok": true,
+      "note": "Proposal present from proposal phase"
     },
     {
       "task": "4",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/design.md",
-      "ok": true
+      "file": "openspec/changes/add-shillinq-vat-btw-filing/design.md",
+      "ok": true,
+      "note": "Design present; status updated to pr-created"
     },
     {
       "task": "5",
       "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer schema declared with deelnemerType enum, deelnemerNaam, administrationId (optional), aandeel (0-1 validated), actief boolean, lifecycleState",
-      "ok": true
+      "ok": true,
+      "note": "VatReturn schema declared with all REQ-VBTW-002 fields"
     },
     {
       "task": "6",
       "file": "lib/Settings/shillinq_register.json",
-      "description": "GRVerdeelsleutel schema declared with sleutelNaam, costClusterAccountNumbers array, verdelingsType enum (vast-percentage/inwoner-aantal/gewogen-oppervlak/custom-formula), parameters object, lineNumber",
-      "ok": true
+      "ok": true,
+      "note": "x-openregister-lifecycle on VatReturn with draft/submitted/accepted/rejected/corrected; approval-workflow on draft→submitted; 7yr retention"
     },
     {
       "task": "7",
       "file": "lib/Settings/shillinq_register.json",
-      "description": "GLLine schema declared with eliminationFlag: boolean (default false); x-openregister-aggregations.consolidatedTrialBalance declared with filter: eliminationFlag = false",
-      "ok": true
+      "ok": true,
+      "note": "IcpStatement, VatCorrection, VatTariff schemas declared with lifecycles per REQ-VBTW-007/008/009"
     },
     {
       "task": "8",
       "file": "lib/Settings/shillinq_register.json",
-      "description": "GRVerdeelsleutel.x-openregister-aggregations.doorbelastingPerDeelnemer declared with join on GLLine WHERE accountNumber IN costClusterAccountNumbers AND eliminationFlag = false, grouped by deelnemerId",
-      "ok": true
+      "ok": true,
+      "note": "x-openregister-aggregations on VatReturn.rubrieken (sum-by-rate over GLLine) + x-openregister-calculations for teBetalenOfTeruggave per REQ-VBTW-004"
     },
     {
       "task": "9",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer.x-openregister-lifecycle.hooks.onGrPeriodClose declared: trigger bookkeeping-period-close:grPeriodClosed, condition administrationId IS NOT NULL, idempotency key (grAdministrationId, deelnemerId, periodId)",
-      "ok": true
+      "file": "lib/Settings/seeds/btw-tariffs-2026.json",
+      "ok": true,
+      "note": "Seed ships 7 tariffs (21pct, 9pct, 0pct, vrij, verlegd, verlegd-euIntra, verlegd-nietEU) with _meta.source and suppletieThreshold per REQ-VBTW-003"
     },
     {
       "task": "10",
       "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer.x-openregister-aggregations.aandeelSumCheck declared: filter actief = true, sum of aandeel field; non-blocking warning when result differs from 1.0",
-      "ok": true
+      "ok": true,
+      "note": "x-openregister-scheduled-workflows on VatReturn: quarterly (cron 0 8 1 1,4,7,10 *) + monthly (cron 0 8 1 * *) via digipoort-sbr per REQ-VBTW-010 + ADR-019"
     },
     {
       "task": "11",
-      "file": "src/manifest.json",
-      "description": "featureFlags.gov-gr added; Gemeenschappelijke regeling menu entry under Bookkeeping with 3 children (Deelnemers, Verdeelsleutels, Geconsolideerde view); 5 pages added (GRDeelnemers, GRDeelnemerDetail, GRVerdeelsleutels, GRVerdeelsleutelDetail, GRConsolidated); node tests/validate-manifest.js: only pre-existing roadmap-type failure, no new failures",
-      "ok": true
+      "file": "lib/Repair/InitializeSettings.php",
+      "ok": true,
+      "note": "seedBtwTariffs() (idempotent, code-field dedup) + registerBtwSbrScheduledWorkflows() (slug dedup for quarterly + monthly) added to run()"
     },
     {
       "task": "12",
+      "file": "src/manifest.json",
+      "ok": true,
+      "note": "Belastingen menu (order 40) with 3 children; 6 pages (3 index + 3 detail) for VatReturn/IcpStatement/VatCorrection per REQ-VBTW-011 + ADR-024"
+    },
+    {
+      "task": "13",
       "file": "openspec/architecture/adr-000-data-model.md",
-      "description": "GRDeelnemer and GRVerdeelsleutel entity entries added alphabetically after GrantPortfolio, cross-referencing bookkeeping-gr-consolidation spec",
-      "ok": true
+      "ok": true,
+      "note": "4 entities added: IcpStatement (after Iv3Export), VatCorrection, VatReturn, VatTariff (before VATReturn). Count 226→230"
     }
   ],
   "stubs": [],
