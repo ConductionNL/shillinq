@@ -9,7 +9,7 @@ on:
 
 jobs:
   quality:
-    uses: ConductionNL/.github/.github/workflows/quality.yml@main
+    uses: Conduction/.github/.github/workflows/quality.yml@main
     with:
       app-name: shillinq
       php-version: "8.3"
@@ -23,5 +23,5 @@ jobs:
       enable-phpunit: true
       enable-newman: true
       # additional-apps: '[]'  # Add app dependencies here if needed, e.g.:
-      # additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"main"}]'
+      # additional-apps: '[{"repo":"Conduction/openregister","app":"openregister","ref":"main"}]'
       enable-sbom: true
