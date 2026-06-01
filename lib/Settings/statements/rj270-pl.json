@@ -1,0 +1,46 @@
+{
+  "_meta": {
+    "source": "RJ 270 (2026)",
+    "variant": "smb",
+    "imported": "",
+    "statement": "profit-and-loss",
+    "title": "Winst- en verliesrekening",
+    "method": "categorical",
+    "comparativePeriods": 1,
+    "spdxLicenseIdentifier": "EUPL-1.2",
+    "spdxFileCopyrightText": "2026 Conduction B.V. <info@conduction.nl>"
+  },
+  "sections": [
+    {"code": "OMZET", "label": "Netto omzet", "level": 0, "sign": "credit", "isHeader": true},
+    {"code": "OMZET-GD", "label": "Opbrengst goederen", "level": 1, "sign": "credit", "accountRange": ["8000", "8049"], "parent": "OMZET"},
+    {"code": "OMZET-DN", "label": "Opbrengst diensten", "level": 1, "sign": "credit", "accountRange": ["8050", "8099"], "parent": "OMZET"},
+    {"code": "WVRD", "label": "Wijziging voorraden / onderhanden werk", "level": 0, "sign": "credit", "accountRange": ["8100", "8149"]},
+    {"code": "GEACT", "label": "Geactiveerde productie eigen bedrijf", "level": 0, "sign": "credit", "accountRange": ["8150", "8199"]},
+    {"code": "OBO", "label": "Overige bedrijfsopbrengsten", "level": 0, "sign": "credit", "accountRange": ["8200", "8299"]},
+    {"code": "SOM-BATEN", "label": "Som der bedrijfsopbrengsten", "level": 0, "sign": "credit", "isSubtotal": true, "ofSections": ["OMZET", "WVRD", "GEACT", "OBO"]},
+
+    {"code": "KPRO", "label": "Kostprijs van de omzet", "level": 0, "sign": "debit", "isHeader": true},
+    {"code": "KPRO-INK", "label": "Inkoopwaarde van de omzet", "level": 1, "sign": "debit", "accountRange": ["7000", "7049"], "parent": "KPRO"},
+    {"code": "KPRO-UBW", "label": "Uitbesteed werk en andere externe kosten", "level": 1, "sign": "debit", "accountRange": ["7050", "7099"], "parent": "KPRO"},
+    {"code": "LONEN", "label": "Lonen en salarissen", "level": 0, "sign": "debit", "accountRange": ["4000", "4099"]},
+    {"code": "SOCL", "label": "Sociale lasten en pensioenlasten", "level": 0, "sign": "debit", "accountRange": ["4100", "4199"]},
+    {"code": "AFSCHR", "label": "Afschrijvingen vaste activa", "level": 0, "sign": "debit", "accountRange": ["4300", "4399"]},
+    {"code": "BIJZ", "label": "Bijzondere waardeverminderingen", "level": 0, "sign": "debit", "accountRange": ["4400", "4449"]},
+    {"code": "OBK", "label": "Overige bedrijfskosten", "level": 0, "sign": "debit", "isHeader": true},
+    {"code": "OBK-HUI", "label": "Huisvestingskosten", "level": 1, "sign": "debit", "accountRange": ["4500", "4549"], "parent": "OBK"},
+    {"code": "OBK-VKK", "label": "Verkoopkosten", "level": 1, "sign": "debit", "accountRange": ["4600", "4649"], "parent": "OBK"},
+    {"code": "OBK-AUT", "label": "Autokosten", "level": 1, "sign": "debit", "accountRange": ["4650", "4699"], "parent": "OBK"},
+    {"code": "OBK-KAN", "label": "Kantoorkosten", "level": 1, "sign": "debit", "accountRange": ["4700", "4749"], "parent": "OBK"},
+    {"code": "OBK-ALG", "label": "Algemene kosten", "level": 1, "sign": "debit", "accountRange": ["4750", "4899"], "parent": "OBK"},
+    {"code": "SOM-LASTEN", "label": "Som der bedrijfslasten", "level": 0, "sign": "debit", "isSubtotal": true, "ofSections": ["KPRO", "LONEN", "SOCL", "AFSCHR", "BIJZ", "OBK"]},
+    {"code": "BEDR-RES", "label": "Bedrijfsresultaat", "level": 0, "sign": "credit", "isSubtotal": true, "formula": "SOM-BATEN - SOM-LASTEN"},
+
+    {"code": "FIN", "label": "Financiële baten en lasten", "level": 0, "sign": "credit", "isHeader": true},
+    {"code": "FIN-RB", "label": "Rentebaten", "level": 1, "sign": "credit", "accountRange": ["8400", "8449"], "parent": "FIN"},
+    {"code": "FIN-RL", "label": "Rentelasten", "level": 1, "sign": "debit", "accountRange": ["4900", "4949"], "parent": "FIN"},
+    {"code": "RES-VB", "label": "Resultaat voor belastingen", "level": 0, "sign": "credit", "isSubtotal": true, "formula": "BEDR-RES + FIN"},
+    {"code": "VPB", "label": "Belastingen over het resultaat", "level": 0, "sign": "debit", "accountRange": ["4950", "4999"]},
+    {"code": "RES-DLN", "label": "Resultaat deelnemingen", "level": 0, "sign": "credit", "accountRange": ["8500", "8549"]},
+    {"code": "NET-RES", "label": "Nettoresultaat", "level": 0, "sign": "credit", "isSubtotal": true, "formula": "RES-VB - VPB + RES-DLN"}
+  ]
+}
