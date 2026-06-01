@@ -14,6 +14,242 @@ register, schema, relations, files, auditTrail, notes, tasks, tags, status, lock
 
 ## Entities
 
+<!-- T2 bookkeeping-compliance entities (add-shillinq-bookkeeping-compliance, 2026-06-01) -->
+
+### FiscalPeriod
+**Schema.org:** `schema:DatedMoneySpecification`
+_A monthly or quarterly fiscal period with an open→closing→closed→audit-locked lifecycle. Promotes T1's `GLLine.periodId` stub-string to a managed register._
+**Primary spec:** bookkeeping-period-close
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| periodId | string | Yes | Unique period code (e.g. 2026-01, 2026-Q1) |
+| name | string | Yes | Human-readable label (e.g. Januari 2026) |
+| startDate | date | Yes | First day of the period |
+| endDate | date | Yes | Last day of the period |
+| fiscalYear | string | Yes | Fiscal year this period belongs to |
+| administrationId | string | Yes | FK to the owning Administration |
+| state | enum | Yes | One of open, closing, closed, audit-locked |
+| closeReason | string | No | Operator-provided reason for closing |
+| reopenedHistory | array | No | {reopenedAt, reopenedBy, reason} entries per reopen |
+
+**Relations:**
+- → GLLine (one-to-many, via GLLine.periodId)
+- → Administration (many-to-one)
+
+### VendorMaster
+**Schema.org:** `schema:Organization`
+_Vendor (crediteur) master carrying remittance and payment-terms data for accounts payable._
+**Primary spec:** bookkeeping-accounts-payable-core
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| vendorId | string | Yes | Internal vendor code (e.g. CRD-0001) |
+| legalName | string | Yes | Official registered business name |
+| iban | string | Yes | Vendor's SEPA bank account IBAN |
+| email | string | Yes | Contact email for remittance advice |
+| paymentTermsDays | integer | No | Default payment terms (days net) |
+| administrationId | string | Yes | FK to the owning Administration |
+| lifecycleState | enum | Yes | One of active, blocked, archived |
+
+**Relations:**
+- → APInvoice (one-to-many)
+- → Administration (many-to-one)
+
+### APInvoice
+**Schema.org:** `schema:Invoice`
+_An incoming vendor invoice (inkoopfactuur) with a draft→received→matched→approved→posted→paid lifecycle. Materialises a balanced GLTransaction on posting._
+**Primary spec:** bookkeeping-accounts-payable-core
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| vendorInvoiceRef | string | Yes | Vendor's own invoice number |
+| vendorId | string | Yes | FK to VendorMaster.vendorId |
+| invoiceDate | date | Yes | Date the vendor invoice was issued |
+| dueDate | date | Yes | Payment due date |
+| grossAmount | number | Yes | Total amount including VAT (EUR) |
+| netAmount | number | Yes | Net amount excluding VAT |
+| periodId | string | Yes | FK to FiscalPeriod.periodId |
+| lifecycleState | enum | Yes | draft, received, matched, approved, posted, paid, voided |
+| sourceDocumentUri | string | No | Docudesk FK URI (docudesk://attachments/...) |
+
+**Relations:**
+- → VendorMaster (many-to-one)
+- → GLTransaction (many-to-one, via glTransactionId on posting)
+- → PaymentRun (many-to-one, via paymentRunId)
+
+### PaymentRun
+**Schema.org:** `schema:MoneyTransfer`
+_A batch of selected AP invoices paid together; emits SEPA pain.001 XML as a calculated field._
+**Primary spec:** bookkeeping-accounts-payable-core
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| runId | string | Yes | Unique payment run code (e.g. PAY-2026-001) |
+| runDate | date | Yes | Intended value date for bank processing |
+| totalAmount | number | Yes | Sum of selected invoice amounts |
+| selectedInvoiceIds | array | Yes | APInvoice UUIDs included in this run |
+| sepaXml | string | No | Calculated SEPA pain.001.001.03 XML |
+| lifecycleState | enum | Yes | draft, approved, exported, settled |
+
+**Relations:**
+- → APInvoice (one-to-many, via selectedInvoiceIds)
+- → Administration (many-to-one)
+
+### CustomerMaster
+**Schema.org:** `schema:Organization`
+_Customer (debiteur) master carrying credit-limit and dunning-policy data for accounts receivable._
+**Primary spec:** bookkeeping-accounts-receivable-core
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| customerId | string | Yes | Internal customer code (e.g. DEB-0001) |
+| legalName | string | Yes | Official registered business name |
+| email | string | Yes | Contact email for invoice delivery |
+| creditLimit | number | No | Maximum outstanding AR balance allowed (EUR) |
+| dunningPolicyRef | string | No | FK to OR dunning-policy record |
+| administrationId | string | Yes | FK to the owning Administration |
+| lifecycleState | enum | Yes | One of active, blocked, archived |
+
+**Relations:**
+- → ARInvoice (one-to-many)
+- → Administration (many-to-one)
+
+### ARInvoice
+**Schema.org:** `schema:Invoice`
+_An outgoing customer invoice (verkoopfactuur) with a draft→issued→paid/overdue/disputed/written-off lifecycle. Carries forward the original Shillinq invoicing scope._
+**Primary spec:** bookkeeping-accounts-receivable-core
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| invoiceNumber | string | Yes | Sequential invoice number (e.g. 2026-0042) |
+| customerId | string | Yes | FK to CustomerMaster.customerId |
+| invoiceDate | date | Yes | Date the invoice was issued |
+| dueDate | date | Yes | Payment due date |
+| grossAmount | number | Yes | Total amount including VAT |
+| netAmount | number | Yes | Net amount excluding VAT |
+| periodId | string | Yes | FK to FiscalPeriod.periodId |
+| lifecycleState | enum | Yes | draft, issued, paid, overdue, disputed, written-off |
+| sourceDocumentUri | string | No | Docudesk FK URI (PDF invoice) |
+| matchedBankLineId | string | No | FK to BankStatementLine.lineId on payment match |
+
+**Relations:**
+- → CustomerMaster (many-to-one)
+- → GLTransaction (many-to-one, via glTransactionId on issue)
+- → DunningRecord (one-to-many)
+- → BankStatementLine (many-to-one, via matchedBankLineId)
+
+### DunningRecord
+**Schema.org:** `schema:Message`
+_A dunning (aanmaning) communication record at a given escalation level for an overdue AR invoice. The dunning workflow itself is consumed from OpenRegister per ADR-022._
+**Primary spec:** bookkeeping-accounts-receivable-core
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| dunningId | string | Yes | Unique dunning record identifier |
+| arInvoiceId | string | Yes | FK to ARInvoice.invoiceNumber |
+| dunningLevel | enum | Yes | reminder1, reminder2, formal-notice, collection |
+| issuedDate | date | Yes | Date the dunning communication was issued |
+| dueDate | date | Yes | New payment deadline in the notice |
+| amount | number | Yes | Outstanding amount stated in the notice |
+| administrationId | string | Yes | FK to the owning Administration |
+| status | enum | Yes | pending, sent, responded, escalated, withdrawn |
+
+**Relations:**
+- → ARInvoice (many-to-one)
+
+> **Reconciliation note:** The earlier `DunningNotice` entry (Schema.org
+> `schema:Message`, primary spec accounts-payable-receivable) is the legacy
+> AP/AR-draft shape. T2's canonical dunning entity is `DunningRecord` registered
+> in `lib/Settings/shillinq_register.json`. New register declarations MUST use
+> `DunningRecord`; `DunningNotice` is retained for historical reference only.
+
+### BankStatement
+**Schema.org:** `schema:BankAccount`
+_A bank statement header imported from CAMT.053, MT940, or manual CSV with an imported→in-progress→reconciled→audit-locked lifecycle._
+**Primary spec:** bookkeeping-bank-reconciliation
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| statementId | string | Yes | Unique statement identifier (e.g. BS-2026-001) |
+| bankAccountIban | string | Yes | IBAN of the reconciled bank account |
+| administrationId | string | Yes | FK to the owning Administration |
+| periodStart | date | Yes | First date covered by the statement |
+| periodEnd | date | Yes | Last date covered by the statement |
+| openingBalance | number | Yes | Opening balance per the bank (EUR) |
+| closingBalance | number | Yes | Closing balance per the bank (EUR) |
+| importFormat | enum | Yes | camt053, mt940, csv, manual |
+| fileChecksum | string | Yes | SHA-256 hash of imported file for deduplication |
+| lifecycleState | enum | Yes | imported, in-progress, reconciled, audit-locked |
+
+**Relations:**
+- → BankStatementLine (one-to-many)
+- → Administration (many-to-one)
+
+### BankStatementLine
+**Schema.org:** `schema:MoneyTransfer`
+_A single transaction line on a bank statement, matchable against AR/AP invoices or routable to a suspense account._
+**Primary spec:** bookkeeping-bank-reconciliation
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| lineId | string | Yes | Unique line identifier within the statement |
+| statementId | string | Yes | FK to BankStatement.statementId |
+| valueDate | date | Yes | Value date (boekingsdatum) of the transaction |
+| amount | number | Yes | Transaction amount (signed, EUR) |
+| remittanceInfo | string | No | Payment reference / omschrijving |
+| counterpartyIban | string | No | IBAN of counterparty |
+| status | enum | Yes | unmatched, matched, routed-to-suspense |
+| reconciliationMatchId | string | No | FK to ReconciliationMatch.matchId |
+
+**Relations:**
+- → BankStatement (many-to-one)
+- → ReconciliationMatch (one-to-one, via reconciliationMatchId)
+
+### MatchingRule
+**Schema.org:** `schema:DefinedTerm`
+_A predicate-based rule for matching bank statement lines against AR/AP invoices or journals. Predicates are declarative schema metadata per ADR-031._
+**Primary spec:** bookkeeping-bank-reconciliation
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| ruleId | string | Yes | Unique rule identifier |
+| name | string | Yes | Human-readable rule name |
+| administrationId | string | Yes | FK to the owning Administration |
+| priority | integer | Yes | Lower number = higher priority |
+| isActive | boolean | Yes | Whether the rule is active |
+| predicates | array | Yes | {field, operator, value, matchTarget} predicate objects |
+
+**Relations:**
+- → Administration (many-to-one)
+
+### ReconciliationMatch
+**Schema.org:** `schema:Action`
+_A candidate or confirmed match linking a bank statement line to an AR/AP invoice, journal, or suspense routing. Emitted by the matching aggregation; confirmed by an operator._
+**Primary spec:** bookkeeping-bank-reconciliation
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| matchId | string | Yes | Unique match identifier |
+| bankStatementLineId | string | Yes | FK to BankStatementLine.lineId |
+| matchType | enum | Yes | ar-invoice, ap-invoice, journal, suspense |
+| matchedObjectId | string | Yes | UUID of the matched AR/AP invoice or journal |
+| matchedAmount | number | Yes | Amount matched |
+| confidence | enum | Yes | auto (rule-matched), manual (operator-created) |
+| status | enum | Yes | pending, confirmed, rejected |
+
+**Relations:**
+- → BankStatementLine (many-to-one)
+
+> **Reconciliation note:** The pre-existing `APTransaction` (Schema.org
+> `schema:Order`) and `Payee` entries are the legacy accounts-payable-receivable
+> draft model. T2 supersedes that single-entity AP/AR shape with the separate
+> `APInvoice` + `VendorMaster` (payable) and `ARInvoice` + `CustomerMaster`
+> (receivable) sub-ledgers per Decision D3 in
+> `openspec/changes/add-shillinq-bookkeeping-compliance/design.md`. New register
+> declarations MUST use the T2 entities above; `APTransaction`/`Payee` are
+> retained for historical reference only.
+
 ### APTransaction
 **Schema.org:** `schema:Order`
 _Financial transaction representing an invoice, credit note, or debit note in accounts payable/receivable flow._
