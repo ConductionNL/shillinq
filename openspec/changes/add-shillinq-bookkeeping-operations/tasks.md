@@ -188,8 +188,8 @@
   - GIVEN a fresh shillinq install WHEN the repair step runs THEN each seed file's records appear in its target register, idempotent on re-run.
   - GIVEN per-administration override WHEN a record is edited THEN the operator edit persists across subsequent repair runs.
   - GIVEN a `gemeente` administration WHEN the repair step runs THEN the BBV-mapping seed is applied for THAT administration; non-municipal admins skip the BBV seed.
-- [ ] Implement
-- [ ] Test (PHPUnit + browser smoke in dev container)
+- [x] Implement
+- [x] Test (PHPUnit + browser smoke in dev container)
 
 ## 4. Manifest navigation — `src/manifest.json`
 

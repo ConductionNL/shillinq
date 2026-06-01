@@ -119,6 +119,7 @@ class InitializeSettings implements IRepairStep
             }
 
             $this->seedChartOfAccounts(output: $output);
+            $this->seedComplianceData(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -186,4 +187,35 @@ class InitializeSettings implements IRepairStep
         }
 
     }//end seedChartOfAccounts()
+
+    /**
+     * Seed the T3 compliance reference data (BTW tariffs, BBV taakvelden,
+     * RGS↔BBV mapping, Selectielijst retention rules, rate-card templates),
+     * idempotently.
+     *
+     * Delegates to {@see SettingsService::seedComplianceData()}. Failures are
+     * surfaced as warnings without aborting the repair step (the register
+     * schema import is the critical path; reference data is best-effort).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-archiefwet-retention/spec.md (Task 3.11)
+     */
+    private function seedComplianceData(IOutput $output): void
+    {
+        $output->info('Seeding compliance reference data (BTW tariffs, BBV taakvelden, retention rules, rate cards)...');
+
+        $result = $this->settingsService->seedComplianceData();
+
+        if (($result['success'] ?? false) === true) {
+            $output->info('Compliance reference data seeded.');
+            return;
+        }
+
+        $message = ($result['message'] ?? 'unknown error');
+        $output->warning('Compliance reference data seeding issue: '.$message);
+
+    }//end seedComplianceData()
 }//end class

@@ -330,6 +330,38 @@ class SettingsService
     }//end importAccounts()
 
     /**
+     * Seed the T3 compliance reference data into OpenRegister, idempotently.
+     *
+     * Thin delegation to {@see ComplianceSeeder} which owns the per-file
+     * import logic. Statutory thresholds (kor-thresholds,
+     * urencriterium-thresholds, zzp-deduction-amounts, schatkist-thresholds)
+     * are read at runtime by the guards/calculations and are not persisted as
+     * records here.
+     *
+     * @return array<string,mixed> Result with success flag and per-file counts.
+     *
+     * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-archiefwet-retention/spec.md (Task 3.11)
+     */
+    public function seedComplianceData(): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        $seeder = new ComplianceSeeder(
+            container: $this->container,
+            logger: $this->logger,
+            registerSlug: $this->getRegisterSlug()
+        );
+
+        return $seeder->seedAll();
+
+    }//end seedComplianceData()
+
+    /**
      * Load configuration from shillinq_register.json via OpenRegister.
      *
      * Skips import when the register is already configured (idempotent).
