@@ -1,0 +1,40 @@
+{
+  "version": "0.1.0",
+  "description": "OpenConnector source registrations for Shillinq. Registered via ConfigurationService::importFromApp() on install. Per ADR-019, every external system integration (RvO submissions) rides an openconnector source — no app-local HTTP clients.",
+  "sources": [
+    {
+      "slug": "rvo-wbso-submissions",
+      "name": "RvO WBSO Submissions",
+      "description": "OpenConnector source for submitting WBSO mededeling, kwartaalrapportage, and jaarrapport to RvO (Rijksdienst voor Ondernemend Nederland) per REQ-WBSO-005. Shillinq references this source id from docudesk template output-channel declarations — no lib/Service/RvoSubmissieClient.php.",
+      "location": "https://mijn.rvo.nl/wbso/api/v1",
+      "type": "rest",
+      "auth": {
+        "type": "oauth2",
+        "description": "RvO eHerkenning OAuth2 — credentials managed in OpenConnector, not in Shillinq.",
+        "tokenEndpoint": "@config(rvo.tokenEndpoint)"
+      },
+      "endpoints": {
+        "mededeling": {
+          "path": "/mededelingen",
+          "method": "POST",
+          "description": "Submit quarterly mededeling of realised S&O hours per REQ-WBSO-003."
+        },
+        "kwartaalrapportage": {
+          "path": "/rapportages/kwartaal",
+          "method": "POST",
+          "description": "Submit quarterly rapportage per REQ-WBSO-004."
+        },
+        "jaarrapport": {
+          "path": "/rapportages/jaar",
+          "method": "POST",
+          "description": "Submit annual jaarrapport per REQ-WBSO-004."
+        }
+      },
+      "auditTrail": {
+        "enabled": true,
+        "type": "immutable",
+        "description": "Every RvO submission event and RvO response is recorded in the OR audit-trail-immutable per ADR-022."
+      }
+    }
+  ]
+}

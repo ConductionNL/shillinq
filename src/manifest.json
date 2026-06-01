@@ -49,6 +49,45 @@
 			]
 		},
 		{
+			"id": "WBSO",
+			"label": "WBSO",
+			"icon": "FlaskOutline",
+			"order": 25,
+			"visibility": {
+				"featureFlag": "mkb-wbso"
+			},
+			"children": [
+				{
+					"id": "WBSOProjecten",
+					"label": "Projecten",
+					"icon": "BriefcaseOutline",
+					"route": "WBSOProjecten",
+					"order": 10
+				},
+				{
+					"id": "WBSOUrenStaten",
+					"label": "Uren-staten",
+					"icon": "ClockOutline",
+					"route": "WBSOUrenStaten",
+					"order": 20
+				},
+				{
+					"id": "WBSOMededelingen",
+					"label": "Mededelingen & rapportages",
+					"icon": "FileChartOutline",
+					"route": "WBSOMededelingen",
+					"order": 30
+				},
+				{
+					"id": "WBSOAfdrachtvermindering",
+					"label": "Afdrachtvermindering",
+					"icon": "CalculatorOutline",
+					"route": "WBSOAfdrachtvermindering",
+					"order": 40
+				}
+			]
+		},
+		{
 			"id": "Overheid",
 			"label": "Overheid",
 			"icon": "icon-category-organization",
@@ -93,6 +132,278 @@
 		}
 	],
 	"pages": [
+		{
+			"id": "WBSOProjecten",
+			"route": "/wbso/projecten",
+			"type": "index",
+			"title": "S&O Projecten",
+			"config": {
+				"register": "shillinq",
+				"schema": "SoProject",
+				"visibility": {
+					"featureFlag": "mkb-wbso"
+				},
+				"columns": [
+					{
+						"key": "projectNaam",
+						"label": "Projectnaam",
+						"sortable": true
+					},
+					{
+						"key": "rvoProjectNummer",
+						"label": "RvO projectnummer",
+						"sortable": true
+					},
+					{
+						"key": "looptijdStart",
+						"label": "Looptijd start",
+						"sortable": true
+					},
+					{
+						"key": "looptijdEind",
+						"label": "Looptijd einde",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "projectNaam",
+				"detailRoute": "WBSOProjectenDetail"
+			}
+		},
+		{
+			"id": "WBSOProjectenDetail",
+			"route": "/wbso/projecten/:id",
+			"type": "detail",
+			"title": "S&O Project",
+			"config": {
+				"register": "shillinq",
+				"schema": "SoProject",
+				"fields": [
+					{
+						"key": "projectNaam",
+						"label": "Projectnaam",
+						"type": "string"
+					},
+					{
+						"key": "rvoProjectNummer",
+						"label": "RvO projectnummer",
+						"type": "string"
+					},
+					{
+						"key": "sEnOCertificaatNummer",
+						"label": "S&O-certificaatnummer",
+						"type": "string"
+					},
+					{
+						"key": "looptijdStart",
+						"label": "Looptijd start",
+						"type": "date"
+					},
+					{
+						"key": "looptijdEind",
+						"label": "Looptijd einde",
+						"type": "date"
+					},
+					{
+						"key": "costCenterId",
+						"label": "Kostenplaats",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"indexRoute": "WBSOProjecten"
+			}
+		},
+		{
+			"id": "WBSOUrenStaten",
+			"route": "/wbso/uren-staten",
+			"type": "index",
+			"title": "S&O Uren-staten",
+			"config": {
+				"register": "shillinq",
+				"schema": "SoUrenStaat",
+				"visibility": {
+					"featureFlag": "mkb-wbso"
+				},
+				"columns": [
+					{
+						"key": "soProjectId",
+						"label": "Project",
+						"sortable": true
+					},
+					{
+						"key": "medewerkerId",
+						"label": "Medewerker",
+						"sortable": true
+					},
+					{
+						"key": "weekISO",
+						"label": "Week",
+						"sortable": true
+					},
+					{
+						"key": "aantalUren",
+						"label": "Uren",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-weekISO",
+				"detailRoute": "WBSOUrenStatenDetail"
+			}
+		},
+		{
+			"id": "WBSOUrenStatenDetail",
+			"route": "/wbso/uren-staten/:id",
+			"type": "detail",
+			"title": "S&O Uren-staat",
+			"config": {
+				"register": "shillinq",
+				"schema": "SoUrenStaat",
+				"fields": [
+					{
+						"key": "soProjectId",
+						"label": "S&O Project",
+						"type": "string"
+					},
+					{
+						"key": "medewerkerId",
+						"label": "Medewerker",
+						"type": "string"
+					},
+					{
+						"key": "weekISO",
+						"label": "Week (ISO-8601)",
+						"type": "string"
+					},
+					{
+						"key": "aantalUren",
+						"label": "Aantal S&O-uren",
+						"type": "number"
+					},
+					{
+						"key": "taakOmschrijving",
+						"label": "Taakomschrijving",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "projectedAfdracht",
+						"label": "Projected afdrachtvermindering",
+						"type": "number",
+						"readOnly": true
+					},
+					{
+						"key": "rvoMededelingAfdracht",
+						"label": "RvO mededeling afdracht",
+						"type": "number"
+					},
+					{
+						"key": "afdrachtDelta",
+						"label": "Reconciliatieverschil",
+						"type": "number",
+						"readOnly": true
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "WBSOUrenStaten"
+			}
+		},
+		{
+			"id": "WBSOMededelingen",
+			"route": "/wbso/mededelingen",
+			"type": "index",
+			"title": "Mededelingen & rapportages",
+			"config": {
+				"register": "shillinq",
+				"schema": "SoUrenStaat",
+				"visibility": {
+					"featureFlag": "mkb-wbso"
+				},
+				"aggregation": "mededelingPerKwartaal",
+				"columns": [
+					{
+						"key": "soProjectId",
+						"label": "Project",
+						"sortable": true
+					},
+					{
+						"key": "quarter",
+						"label": "Kwartaal",
+						"sortable": true
+					},
+					{
+						"key": "totalUren",
+						"label": "Totaal S&O-uren",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-quarter"
+			}
+		},
+		{
+			"id": "WBSOAfdrachtvermindering",
+			"route": "/wbso/afdrachtvermindering",
+			"type": "index",
+			"title": "Afdrachtvermindering loonheffing",
+			"config": {
+				"register": "shillinq",
+				"schema": "SoUrenStaat",
+				"visibility": {
+					"featureFlag": "mkb-wbso"
+				},
+				"aggregation": "mededelingPerKwartaal",
+				"columns": [
+					{
+						"key": "soProjectId",
+						"label": "Project",
+						"sortable": true
+					},
+					{
+						"key": "quarter",
+						"label": "Kwartaal",
+						"sortable": true
+					},
+					{
+						"key": "totalUren",
+						"label": "Totaal S&O-uren",
+						"sortable": true
+					},
+					{
+						"key": "projectedAfdracht",
+						"label": "Projected afdracht",
+						"sortable": false
+					},
+					{
+						"key": "rvoMededelingAfdracht",
+						"label": "RvO mededeling afdracht",
+						"sortable": false
+					},
+					{
+						"key": "afdrachtDelta",
+						"label": "Reconciliatieverschil",
+						"sortable": false
+					}
+				],
+				"defaultSort": "-quarter"
+			}
+		},
 		{
 			"id": "FeaturesRoadmap",
 			"route": "/features-roadmap",

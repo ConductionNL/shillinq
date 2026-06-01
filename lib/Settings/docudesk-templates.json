@@ -1,0 +1,91 @@
+{
+  "version": "0.1.0",
+  "description": "Docudesk document templates for Shillinq. Registered via ConfigurationService::importFromApp() on install.",
+  "templates": [
+    {
+      "slug": "wbso-mededeling",
+      "name": "WBSO Mededeling",
+      "description": "Quarterly RvO mededeling of realised S&O hours and loonkosten per project per quarter. Populated from the mededelingPerKwartaal aggregation on SoUrenStaat (state ≠ draft) per REQ-WBSO-003.",
+      "register": "shillinq",
+      "schema": "SoUrenStaat",
+      "aggregation": "mededelingPerKwartaal",
+      "outputFormat": "pdf",
+      "outputChannel": {
+        "type": "openconnector",
+        "source": "rvo-wbso-submissions",
+        "description": "Transmit the completed mededeling to RvO via the openconnector rvo-wbso-submissions source per REQ-WBSO-005."
+      },
+      "fields": [
+        { "key": "soProjectId", "label": "S&O Project" },
+        { "key": "quarter", "label": "Kwartaal" },
+        { "key": "totalUren", "label": "Totaal S&O-uren" }
+      ],
+      "layoutHint": "rvo-conform"
+    },
+    {
+      "slug": "wbso-kwartaalrapportage",
+      "name": "WBSO Kwartaalrapportage",
+      "description": "Quarterly progress narrative per S&O project including per-employee hours totals. Generated from urenPerMedewerkerPerKwartaal aggregation per REQ-WBSO-004.",
+      "register": "shillinq",
+      "schema": "SoUrenStaat",
+      "aggregation": "urenPerMedewerkerPerKwartaal",
+      "outputFormat": "pdf",
+      "outputChannel": {
+        "type": "openconnector",
+        "source": "rvo-wbso-submissions",
+        "description": "Transmit kwartaalrapportage to RvO via the openconnector rvo-wbso-submissions source per REQ-WBSO-005."
+      },
+      "fields": [
+        { "key": "soProjectId", "label": "S&O Project" },
+        { "key": "medewerkerId", "label": "Medewerker" },
+        { "key": "quarter", "label": "Kwartaal" },
+        { "key": "totalUren", "label": "Totaal S&O-uren" }
+      ],
+      "layoutHint": "rvo-conform"
+    },
+    {
+      "slug": "wbso-jaarrapport",
+      "name": "WBSO Jaarrapport",
+      "description": "Annual close report summing the four kwartaalmededelingen per project. The sum MUST equal the sum of the four kwartaalmededelingen per REQ-WBSO-004 scenario invariant.",
+      "register": "shillinq",
+      "schema": "SoUrenStaat",
+      "aggregation": "mededelingPerKwartaal",
+      "aggregationFilter": {
+        "allQuarters": true,
+        "description": "Sum all four quarters for the fiscal year — equivalent to the four kwartaalmededelingen."
+      },
+      "outputFormat": "pdf",
+      "outputChannel": {
+        "type": "openconnector",
+        "source": "rvo-wbso-submissions",
+        "description": "Transmit jaarrapport to RvO via the openconnector rvo-wbso-submissions source per REQ-WBSO-005."
+      },
+      "fields": [
+        { "key": "soProjectId", "label": "S&O Project" },
+        { "key": "year", "label": "Jaar" },
+        { "key": "totalUren", "label": "Totaal S&O-uren (jaar)" }
+      ],
+      "layoutHint": "rvo-conform"
+    },
+    {
+      "slug": "wbso-aanvraag",
+      "name": "WBSO Aanvraag",
+      "description": "S&O application template for requesting a new WBSO verklaring from RvO. Populated from SoProject fields.",
+      "register": "shillinq",
+      "schema": "SoProject",
+      "outputFormat": "pdf",
+      "outputChannel": {
+        "type": "openconnector",
+        "source": "rvo-wbso-submissions",
+        "description": "Submit the WBSO aanvraag to RvO via the openconnector rvo-wbso-submissions source per REQ-WBSO-005."
+      },
+      "fields": [
+        { "key": "projectNaam", "label": "Projectnaam" },
+        { "key": "looptijdStart", "label": "Looptijd start" },
+        { "key": "looptijdEind", "label": "Looptijd einde" },
+        { "key": "costCenterId", "label": "Kostenplaats" }
+      ],
+      "layoutHint": "rvo-conform"
+    }
+  ]
+}

@@ -503,6 +503,256 @@
           }
         }
       },
+      "SoProject": {
+        "slug": "SoProject",
+        "icon": "BriefcaseOutline",
+        "version": "0.1.0",
+        "title": "S&O Project",
+        "description": "R&D project eligible for WBSO afdrachtvermindering loonheffing per Wet vermindering afdracht loonbelasting hoofdstuk VA. Tracks the RvO link, certificate, and lifecycle per REQ-WBSO-001.",
+        "x-schema-org": "schema:Project",
+        "type": "object",
+        "required": [
+          "projectNaam",
+          "status"
+        ],
+        "properties": {
+          "projectNaam": {
+            "type": "string",
+            "description": "Human-readable name of the S&O project.",
+            "example": "Automatisering predictieve kwaliteitscontrole"
+          },
+          "rvoProjectNummer": {
+            "type": "string",
+            "description": "Project number assigned by RvO (Rijksdienst voor Ondernemend Nederland).",
+            "nullable": true,
+            "example": "2026/0001"
+          },
+          "sEnOCertificaatNummer": {
+            "type": "string",
+            "description": "S&O-verklaring certificate number issued by RvO.",
+            "nullable": true,
+            "example": "S&O-2026-00042"
+          },
+          "looptijdStart": {
+            "type": "string",
+            "format": "date",
+            "description": "Start date of the S&O project looptijd.",
+            "nullable": true,
+            "example": "2026-01-01"
+          },
+          "looptijdEind": {
+            "type": "string",
+            "format": "date",
+            "description": "End date of the S&O project looptijd.",
+            "nullable": true,
+            "example": "2026-12-31"
+          },
+          "costCenterId": {
+            "type": "string",
+            "description": "FK to the CostCenter register (bookkeeping-cost-centers-dimensions) that absorbs the S&O costs.",
+            "nullable": true,
+            "example": "cc-rd-01"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "aangevraagd",
+              "toegekend",
+              "afgerond"
+            ],
+            "description": "RvO-side status of the S&O project application.",
+            "default": "aangevraagd",
+            "example": "toegekend"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "payroll-officer": {
+              "permissions": ["read"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "SoUrenStaat": {
+        "slug": "SoUrenStaat",
+        "icon": "ClockOutline",
+        "version": "0.1.0",
+        "title": "S&O Uren-staat",
+        "description": "Per-medewerker per-week per-project S&O hours administration with an approval lifecycle per REQ-WBSO-002. Feeds the quarterly mededeling aggregation (REQ-WBSO-003) and the declarative afdrachtvermindering calculation (REQ-WBSO-006).",
+        "x-schema-org": "schema:Action",
+        "type": "object",
+        "required": [
+          "soProjectId",
+          "medewerkerId",
+          "weekISO",
+          "aantalUren",
+          "state"
+        ],
+        "properties": {
+          "soProjectId": {
+            "type": "string",
+            "description": "FK to the parent SoProject.",
+            "example": "proj-wbso-2026-001"
+          },
+          "medewerkerId": {
+            "type": "string",
+            "description": "Reference to a Nextcloud user id OR to a Detachering record FK (sibling add-shillinq-detachering-payroll-administratie).",
+            "example": "jdoe"
+          },
+          "weekISO": {
+            "type": "string",
+            "pattern": "^\\d{4}-W([0-4]\\d|5[0-3])$",
+            "description": "ISO-8601 week identifier (e.g. 2026-W14).",
+            "example": "2026-W14"
+          },
+          "aantalUren": {
+            "type": "number",
+            "minimum": 0,
+            "multipleOf": 0.25,
+            "description": "Number of S&O hours worked in the week for this project. Decimals allowed down to 0.25 hour.",
+            "example": 32.75
+          },
+          "taakOmschrijving": {
+            "type": "string",
+            "description": "Short description of the S&O work performed this week.",
+            "example": "Design en implementatie van het neural-network trainingsraamwerk"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "goedgekeurd",
+              "afgesloten"
+            ],
+            "description": "Approval lifecycle state of the uren-staat record. Managed by x-openregister-lifecycle; do not set directly.",
+            "default": "draft",
+            "example": "draft"
+          },
+          "rvoMededelingAfdracht": {
+            "type": "number",
+            "description": "Authoritative afdrachtvermindering value returned by the RvO mededeling for the loonaangifte. Null until the mededeling is received. Shown side-by-side with projectedAfdracht per REQ-WBSO-006.",
+            "nullable": true,
+            "example": 38500.00
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Uren-staat is in draft and may be edited. Not included in mededeling aggregation."
+            },
+            "goedgekeurd": {
+              "label": "Goedgekeurd",
+              "description": "Uren-staat has been approved by the project-leider. Included in mededeling aggregation."
+            },
+            "afgesloten": {
+              "label": "Afgesloten",
+              "description": "Uren-staat is closed for the period. Terminal state."
+            }
+          },
+          "transitions": {
+            "goedkeuren": {
+              "from": "draft",
+              "to": "goedgekeurd",
+              "label": "Ter goedkeuring indienen",
+              "description": "Submit uren-staat for project-leider approval. Triggers the OR approval-workflow per ADR-022 — no app-local approval table.",
+              "approval": {
+                "required": true,
+                "approverRole": "project-leider",
+                "description": "Project-leider must approve the S&O hours before they count toward the mededeling."
+              }
+            },
+            "afsluiten": {
+              "from": "goedgekeurd",
+              "to": "afgesloten",
+              "label": "Afsluiten",
+              "description": "Close the uren-staat for the period. Requires prior goedgekeurd state — afgesloten without goedgekeurd is refused per REQ-WBSO-002.",
+              "requires": "OCA\\Shillinq\\Guard\\SoUrenStaatGuard::requireGoedgekeurd"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "payroll-officer": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "mededelingPerKwartaal": {
+            "description": "Sum of aantalUren per quarter per project for goedgekeurde and afgesloten records (state ≠ draft). Used to populate the RvO quarterly mededeling per REQ-WBSO-003.",
+            "filter": "state != 'draft'",
+            "groupBy": [
+              "soProjectId",
+              "quarter(weekISO)"
+            ],
+            "operations": {
+              "totalUren": {
+                "field": "aantalUren",
+                "operation": "sum"
+              },
+              "recordCount": {
+                "field": "id",
+                "operation": "count"
+              }
+            }
+          },
+          "urenPerMedewerkerPerKwartaal": {
+            "description": "Per-medewerker per-project uren rollup per quarter. Used by the kwartaalrapportage and jaarrapport per REQ-WBSO-004.",
+            "filter": "state != 'draft'",
+            "groupBy": [
+              "soProjectId",
+              "medewerkerId",
+              "quarter(weekISO)"
+            ],
+            "operations": {
+              "totalUren": {
+                "field": "aantalUren",
+                "operation": "sum"
+              }
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "projectedAfdracht": {
+            "description": "Projected afdrachtvermindering loonheffing per REQ-WBSO-006: aantalUren × medewerker.sEnOUurloon × actueelAfdrachtPercentage. Default percentages: 32% regular S&O, 40% starters (RvO 2026 seed). Shown side-by-side with rvoMededelingAfdracht for reconciliation.",
+            "formula": "@self.aantalUren * @resolve(medewerkerId, 'sEnOUurloon') * @config('wbso.afdrachtPercentage', 0.32)",
+            "resultType": "number",
+            "unit": "EUR",
+            "displayLabel": "Projected afdrachtvermindering"
+          },
+          "afdrachtDelta": {
+            "description": "Delta between projected and authoritative RvO mededeling afdracht. Surfaces a reconciliation warning when non-zero per REQ-WBSO-006.",
+            "formula": "@self.rvoMededelingAfdracht != null ? @self.projectedAfdracht - @self.rvoMededelingAfdracht : null",
+            "resultType": "number",
+            "unit": "EUR",
+            "displayLabel": "Reconciliatieverschil"
+          }
+        },
+        "x-openregister-relations": {
+          "soProject": {
+            "localField": "soProjectId",
+            "relatedSchema": "SoProject",
+            "relatedField": "id",
+            "cardinality": "many-to-one",
+            "description": "Parent S&O project for this uren-staat."
+          }
+        }
+      },
       "Iv3Export": {
         "slug": "Iv3Export",
         "icon": "FileChartOutline",

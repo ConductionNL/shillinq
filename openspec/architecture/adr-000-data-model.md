@@ -3393,6 +3393,49 @@ _Delegation of signing rights to a specific person with defined scope and limits
 **Relations:**
 - → Mandate (many-to-one)
 
+### SoProject
+**Schema.org:** `schema:Project`
+_S&O project eligible for WBSO afdrachtvermindering loonheffing per Wet vermindering afdracht loonbelasting hoofdstuk VA. Tracks the RvO project number, S&O-verklaring certificate, looptijd, and status. S&O hours administration links to this entity via `SoUrenStaat.soProjectId`._
+**Primary spec:** bookkeeping-wbso-sno-administratie
+
+> **Annotation (add-shillinq-wbso-sno-administratie, 2026-06-01):** Two new registers introduce WBSO / S&O administratie as a Tier-4 MKB capability per `adr-001-bookkeeping-tier-roadmap.md`. `SoProject` holds project-level metadata (RvO link, certificate, looptijd, costCenterId FK). `SoUrenStaat` holds per-medewerker per-week per-project hours with a `draft → goedgekeurd → afgesloten` lifecycle (approval-workflow on `goedgekeurd` per ADR-022). Aggregations feed the quarterly mededeling and annual jaarrapport. A declarative calculation produces the projected afdrachtvermindering side-by-side with the authoritative RvO mededeling value. No PHP service — fully declarative per ADR-031. See `openspec/changes/add-shillinq-wbso-sno-administratie/design.md`.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| projectNaam | string | Yes | Human-readable name of the S&O project |
+| rvoProjectNummer | string | No | Project number assigned by RvO |
+| sEnOCertificaatNummer | string | No | S&O-verklaring certificate number from RvO |
+| looptijdStart | date | No | Start date of the project looptijd |
+| looptijdEind | date | No | End date of the project looptijd |
+| costCenterId | string | No | FK to CostCenter (bookkeeping-cost-centers-dimensions) |
+| status | enum | Yes | RvO-side status: aangevraagd \| toegekend \| afgerond |
+
+**Relations:**
+- → SoUrenStaat (one-to-many)
+- → CostCenter (many-to-one, via costCenterId)
+
+### SoUrenStaat
+**Schema.org:** `schema:Action`
+_Per-medewerker per-week per-project S&O hours record. State machine: `draft → goedgekeurd → afgesloten`. The `goedgekeurd` transition requires an OR approval-workflow (project-leider approves) per ADR-022. Feeds the quarterly mededeling aggregation (`state ≠ draft`) and the declarative `projectedAfdracht` calculation (aantalUren × medewerker.sEnOUurloon × actueelAfdrachtPercentage). The `rvoMededelingAfdracht` field stores the authoritative RvO value shown side-by-side for reconciliation._
+**Primary spec:** bookkeeping-wbso-sno-administratie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| soProjectId | string | Yes | FK to the parent SoProject |
+| medewerkerId | string | Yes | NC user id or Detachering record FK |
+| weekISO | string | Yes | ISO-8601 week (e.g. 2026-W14) |
+| aantalUren | number | Yes | S&O hours worked (≥ 0, multiples of 0.25) |
+| taakOmschrijving | string | No | Description of S&O work performed |
+| state | enum | Yes | Lifecycle state: draft \| goedgekeurd \| afgesloten |
+| rvoMededelingAfdracht | number | No | Authoritative afdrachtvermindering from RvO mededeling |
+
+**Calculated fields (x-openregister-calculations):**
+- `projectedAfdracht` — aantalUren × medewerker.sEnOUurloon × actueelAfdrachtPercentage (32% standard / 40% starters)
+- `afdrachtDelta` — projectedAfdracht − rvoMededelingAfdracht (reconciliation warning when non-zero)
+
+**Relations:**
+- → SoProject (many-to-one, via soProjectId)
+
 ### SourcingEvent
 **Schema.org:** `schema:Event`
 _Sourcing event (RFQ, RFP, RFI) with supplier invitation and response tracking_
