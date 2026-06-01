@@ -217,11 +217,11 @@ class InitializeSettings implements IRepairStep
 
         $output->info('Seeding allocation rule examples...');
 
-        $seedResult = $this->settingsService->seedAllocationRuleExamples(
+        $seedResult = ($this->settingsService->seedAllocationRuleExamples(
             administrationId: $administrationId
-        );
+        ) ?? []);
 
-        if ($seedResult['success'] === true) {
+        if (($seedResult['success'] ?? false) === true) {
             $seeded  = ($seedResult['seeded'] ?? 0);
             $skipped = ($seedResult['skipped'] ?? 0);
             $output->info(
@@ -229,7 +229,7 @@ class InitializeSettings implements IRepairStep
             );
         }
 
-        if ($seedResult['success'] !== true) {
+        if (($seedResult['success'] ?? false) !== true) {
             $message = ($seedResult['message'] ?? 'unknown error');
             $output->warning('Allocation rule seeding issue: '.$message);
         }

@@ -133,13 +133,15 @@ class InitializeSettingsTest extends TestCase
 
         $this->settingsService->expects($this->atLeastOnce())
             ->method('getSettings')
-            ->willReturn([
-                'rgs_template'      => 'mkb',
-                'administration_id' => 'adm-1',
-                'register'          => '',
-                'openregisters'     => true,
-                'isAdmin'           => false,
-            ]);
+            ->willReturn(
+                    [
+                        'rgs_template'      => 'mkb',
+                        'administration_id' => 'adm-1',
+                        'register'          => '',
+                        'openregisters'     => true,
+                        'isAdmin'           => false,
+                    ]
+                    );
 
         $this->settingsService->expects($this->once())
             ->method('seedRgsTemplate')
@@ -148,6 +150,11 @@ class InitializeSettingsTest extends TestCase
                 administrationId: 'adm-1'
             )
             ->willReturn(['success' => true, 'seeded' => 150, 'skipped' => 0]);
+
+        $this->settingsService->expects($this->once())
+            ->method('seedAllocationRuleExamples')
+            ->with(administrationId: 'adm-1')
+            ->willReturn(['success' => true, 'seeded' => 3, 'skipped' => 0]);
 
         $this->repairStep->run(output: $this->output);
 
@@ -172,17 +179,23 @@ class InitializeSettingsTest extends TestCase
 
         $this->settingsService->expects($this->atLeastOnce())
             ->method('getSettings')
-            ->willReturn([
-                'rgs_template'      => 'mkb',
-                'administration_id' => '',
-                'register'          => '',
-                'openregisters'     => true,
-                'isAdmin'           => false,
-            ]);
+            ->willReturn(
+                    [
+                        'rgs_template'      => 'mkb',
+                        'administration_id' => '',
+                        'register'          => '',
+                        'openregisters'     => true,
+                        'isAdmin'           => false,
+                    ]
+                    );
 
         // C2: seedRgsTemplate must NOT be called when administrationId is empty.
         $this->settingsService->expects($this->never())
             ->method('seedRgsTemplate');
+
+        // C2: seedAllocationRuleExamples must NOT be called when administrationId is empty.
+        $this->settingsService->expects($this->never())
+            ->method('seedAllocationRuleExamples');
 
         $this->output->expects($this->atLeastOnce())
             ->method('warning')
@@ -219,5 +232,4 @@ class InitializeSettingsTest extends TestCase
         $this->repairStep->run(output: $this->output);
 
     }//end testRunSkipsSeedWhenLoadConfigurationFails()
-
 }//end class
