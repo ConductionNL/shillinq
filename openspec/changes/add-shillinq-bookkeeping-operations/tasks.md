@@ -13,8 +13,8 @@
   - GIVEN `openspec/specs/` WHEN scanned THEN no `bookkeeping-vat-*`, `bookkeeping-bbv-*`, `bookkeeping-iv3-*`, `bookkeeping-bcf-*`, `bookkeeping-kor-*`, `bookkeeping-zzp-*`, `bookkeeping-schatkist-*`, `bookkeeping-subsidie-*`, `bookkeeping-archiefwet-*`, or `bookkeeping-consultancy-*` capability spec already exists.
   - GIVEN T1 + T2 schemas WHEN scanned THEN no overlapping field set duplicates a T3 capability (e.g. T1's `Account` does NOT carry `bcfCompensable` or `taakveld` — those live in T3's `BbvAccountMapping`).
   - GIVEN `openconnector` source registrations WHEN scanned THEN `digipoort-sbr`, `cbs-iv3`, `digikoppeling-bcf` source names are not yet registered (their registration lives in a separate change — `add-openconnector-nl-overheid-sources`).
-- [ ] Implement
-- [ ] Test (`openspec validate` clean; manual sibling-spec scan)
+- [x] Implement
+- [x] Test (`openspec validate` clean; manual sibling-spec scan)
 
 ### Task 0.2: Confirm consumption of existing OR abstractions, not reinvention
 
@@ -24,8 +24,8 @@
   - GIVEN any T3 spec WHEN scanned for verbs like "implement an audit table", "build an approval queue", "write a retention sweep job" THEN no such phrasing SHALL appear — every audit, approval, retention reference MUST cite ADR-022 + consume the OR abstraction.
   - GIVEN any T3 spec WHEN scanned for state-machine descriptions THEN every state machine MUST be declared via `x-openregister-lifecycle` (ADR-031), NOT via a `*Service.transition*` method.
   - GIVEN any T3 spec mentioning external HTTP (SBR, CBS, DigiKoppeling) WHEN scanned THEN the submission MUST be expressed as an OR `ScheduledWorkflow` consuming an OpenConnector source (ADR-019 + ADR-022), never as a PHP `HttpClient` wrapper.
-- [ ] Implement
-- [ ] Test (reviewer manually confirms during spec review)
+- [x] Implement
+- [x] Test (reviewer manually confirms during spec review)
 
 ## 1. Spec foundation (this change)
 
@@ -39,7 +39,7 @@
   - GIVEN each requirement WHEN inspected THEN at least one `#### Scenario:` block with GIVEN/WHEN/THEN exists (exactly 4 hashtags on the scenario header per conduction-schema rule).
   - GIVEN each spec WHEN scanned THEN ADR-022 (audit), ADR-024 (manifest), ADR-031 (declarative lifecycle), and relevant ADR-019 (external integrations) are cited inline.
 - [x] Implement
-- [ ] Test (`openspec validate` clean)
+- [x] Test (`openspec validate` clean)
 
 ### Task 1.2: Author proposal.md + design.md for the change envelope
 
@@ -49,7 +49,7 @@
   - GIVEN `proposal.md` WHEN inspected THEN it references the shared `nextcloud-app` spec per shillinq config.yaml `rules.proposal`, includes Affected Projects / Scope / Risks / Rollback / Open Questions, AND classifies `kind: config` per ADR-032.
   - GIVEN `design.md` WHEN inspected THEN it includes a Reuse Analysis table, a Seed Data section, and a Declarative-vs-imperative decision table per hydra `rules.design` + ADR-031 enforcement.
 - [x] Implement
-- [ ] Test (peer review — bookkeeper + compliance-officer personas read the model end-to-end and confirm regulatory citations)
+- [x] Test (peer review — bookkeeper + compliance-officer personas read the model end-to-end and confirm regulatory citations)
 
 ## 2. Register declarations — `lib/Settings/shillinq_register.json`
 
@@ -253,8 +253,8 @@
 - **acceptance_criteria**:
   - GIVEN the ADR WHEN opened THEN the new 14+ T3 entities (VatReturn, IcpStatement, VatCorrection, VatTariff, BbvAccountMapping, BbvTaakveld, Iv3Export, BcfClaim, KorRegime, KorThreshold, UrenRegistratie, ZzpDeduction, IbAangifteExport, SchatkistPosition, Subsidie, RepaymentInstallment, RetentionRule, Project, ProjectAssignment, RateCard, WipBalance) are recorded with their `Primary spec:` references pointing at the new T3 specs.
   - GIVEN any pre-existing ADR-000 entries overlapping the new schemas WHEN read THEN reconciliation notes are appended (similar to T1's GLLine ↔ GeneralLedgerEntry note).
-- [ ] Implement
-- [ ] Test (peer review by the bookkeeper + compliance-officer personas)
+- [x] Implement
+- [x] Test (peer review by the bookkeeper + compliance-officer personas)
 
 ## 7. Conditional thin PHP guards (only if Risk 3 confirms)
 

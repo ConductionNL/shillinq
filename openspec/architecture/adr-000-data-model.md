@@ -4280,3 +4280,42 @@ _XBRL (eXtensible Business Reporting Language) taxonomy definitions for structur
 
 **Relations:**
 - → TaxReturn (one-to-many)
+
+## T3 Bookkeeping Operations + NL Compliance Core — reconciliation note
+
+The `add-shillinq-bookkeeping-operations` change (Tier 3) introduces the
+following entities as OpenRegister schemas declared in
+`lib/Settings/shillinq_register.json`. Each is a declarative schema with an
+`x-openregister-lifecycle` / `-aggregations` / `-calculations` / `-rbac` /
+`-lifecycle-retention` block per ADR-031; none introduces a bespoke PHP service
+or Entity/Mapper. Where a T3 entity overlaps a pre-existing catalogue entry
+(e.g. a generated `TaxReturn` / `XBRLInstance`), the T3 schema is the canonical
+operational shape and the older catalogue entry is treated as superseded for the
+VAT-filing/IV3 surfaces.
+
+| Entity | Primary spec | Notes |
+|--------|--------------|-------|
+| VatReturn | bookkeeping-vat-btw-filing | Lifecycle draft→submitted→accepted→corrected; rubrieken aggregation; supersedes generic TaxReturn for BTW. |
+| IcpStatement | bookkeeping-vat-btw-filing | Intra-community supplies (ICP-opgaaf). |
+| VatCorrection | bookkeeping-vat-btw-filing | Suppletie-aangifte; relation → VatReturn. |
+| VatTariff | bookkeeping-vat-btw-filing | Statutory BTW tariff masterdata (seeded). |
+| BbvAccountMapping | bookkeeping-bbv-compliance | RGS account → taakveld; unique (administrationId, accountNumber); carries bcfCompensable + compensablePercentage. |
+| BbvTaakveld | bookkeeping-bbv-compliance | BBV taakveld catalogue (seeded). |
+| Iv3Export | bookkeeping-iv3-reporting | Quarterly CBS export; buckets aggregation; mapping → IV3 XML. |
+| BcfClaim | bookkeeping-bcf-vat-compensation | BTW-compensatiefonds claim; compensableVatByAccount aggregation. |
+| KorRegime | bookkeeping-kor-kleine-ondernemersregeling | KOR lifecycle; ytdRevenue via KorThresholdGuard (ADR-031 exception). |
+| UrenRegistratie | bookkeeping-zzp-tax-regime / bookkeeping-consultancy-project-accounting | Billable-hour tracking; shared between ZZP and consultancy. |
+| ZzpDeduction | bookkeeping-zzp-tax-regime | Deduction eligibility; ytdQualifyingHours via UrencriteriumGuard (ADR-031 exception). |
+| IbAangifteExport | bookkeeping-zzp-tax-regime | IB-aangifteformulier export. |
+| SchatkistPosition | bookkeeping-schatkistbankieren | Daily Treasury position aggregation over Account.isSchatkistAccount. |
+| Subsidie | bookkeeping-subsidie-verantwoording | ASV-model lifecycle; relation → RepaymentInstallment. |
+| RepaymentInstallment | bookkeeping-subsidie-verantwoording | Settlement-plan (afbetalingsregeling) instalments. |
+| RetentionRule | bookkeeping-archiefwet-retention | Selectielijst retention rules (seeded); consumed by OR's lifecycle retention engine. |
+| Project | bookkeeping-consultancy-project-accounting | RJ 270 percentage-of-completion recognisedRevenue calculation. |
+| ProjectAssignment | bookkeeping-consultancy-project-accounting | Resource allocation; utilization calculation. |
+| RateCard | bookkeeping-consultancy-project-accounting | Effective-dated billing rates (seeded). |
+| BillableHour | bookkeeping-consultancy-project-accounting | Project hour line; rate snapshotted at work-date. |
+| WipBalance | bookkeeping-consultancy-project-accounting | Period-end WIP snapshot per project. |
+
+The pre-existing `Account` entry gains an additive `isSchatkistAccount` flag
+(REQ-SBK-002); no other catalogue entry is mutated.
