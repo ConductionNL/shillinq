@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 225
+**Entities:** 226
 
 ## Context
 
@@ -3158,6 +3158,35 @@ _A categorized source or type of revenue for tracking income by origin and suppo
 
 **Relations:**
 - → JournalEntry (one-to-many)
+
+### RetentionRule
+**Schema.org:** `schema:DefinedTerm`
+_Archiefwet 1995 + Selectielijst Gemeenten 2020 retention rule. A coded retention classifier declaring the statutory retention obligation (period, trigger, disposition) for a category of shillinq-managed records. Seeded from `selectielijst-gemeenten-2020.json`; operators MAY add administration-scoped overrides above the statutory minimum per the local archiefverordening._
+**Primary spec:** bookkeeping-archiefwet-retention
+
+> **Per-schema retention-rule reference pattern (add-shillinq-archiefwet-retention, 2026-06-01):**
+> Every shillinq schema subject to Archiefwet retention MUST declare an
+> `x-openregister-lifecycle.retention.rule` block referencing a `RetentionRule`
+> record by `selectielijstCode`. The reference takes the form
+> `rule: "selectielijst:<code>"` (e.g. `"selectielijst:5.1.2"`). OpenRegister's
+> retention engine reads the rule from the `RetentionRule` register and enforces
+> the retention period, disposition, and optional operator override — shillinq does
+> NOT implement parallel retention logic per ADR-022 + ADR-031.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| selectielijstCode | string | Yes | Selectielijst classifier code (e.g. 5.1.2, 3.5.1, 1.1.1) |
+| description | string | Yes | Plain-Dutch description of the record category |
+| recordCategory | enum | Yes | financial, subsidie, personeel, algemeen-bestuur, verantwoording, correspondentie, archief |
+| retentionYears | integer | No | Absolute retention in years from record creation date (mutually exclusive with retentionTrigger) |
+| retentionTrigger | string | No | Relative retention (e.g. "10 years after vaststellingDate") |
+| disposition | enum | Yes | destroy, archive, anonymise, keep_indefinite |
+| legalBasis | string | Yes | Citation: Archiefwet article + Selectielijst paragraph |
+| effectiveFrom | date | Yes | Date from which this rule is valid |
+| effectiveTo | date | No | Date until which this rule is valid (absent = no end date) |
+| customRetentionYears | integer | No | Operator extension above statutory minimum (MUST be >= retentionYears; never shorter) |
+| administrationId | string | No | Administration scope for per-organisation override rules (absent = applies to all) |
+| daysUntilRetention | integer (derived) | No | Days until rule expires per x-openregister-calculations (null for keep_indefinite) |
 
 ### RiskCriteria
 _Weighted assessment criteria for dynamic risk scoring and evaluation_

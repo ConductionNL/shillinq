@@ -119,6 +119,7 @@ class InitializeSettings implements IRepairStep
             }
 
             $this->seedChartOfAccounts(output: $output);
+            $this->seedSelectielijstRules(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -128,6 +129,40 @@ class InitializeSettings implements IRepairStep
         }//end try
 
     }//end run()
+
+    /**
+     * Import the Selectielijst Gemeenten 2020 retention rules, idempotently.
+     *
+     * Calls SettingsService::seedSelectielijst() which skips already-existing
+     * seeded rules and preserves operator-authored overrides per REQ-ARC-002.
+     * Safe to call on every install/upgrade — the seed is idempotent.
+     *
+     * @param IOutput $output The output interface for progress reporting
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
+     */
+    private function seedSelectielijstRules(IOutput $output): void
+    {
+        $output->info('Seeding Archiefwet Selectielijst Gemeenten 2020 retention rules...');
+
+        $result = $this->settingsService->seedSelectielijst();
+
+        if ($result['success'] === true) {
+            $seeded  = ($result['seeded'] ?? 0);
+            $skipped = ($result['skipped'] ?? 0);
+            $output->info(
+                'Selectielijst retention rules seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        }
+
+        if ($result['success'] !== true) {
+            $message = ($result['message'] ?? 'unknown error');
+            $output->warning('Selectielijst seeding issue: '.$message);
+        }
+
+    }//end seedSelectielijstRules()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.

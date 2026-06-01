@@ -28,6 +28,21 @@
 			]
 		},
 		{
+			"id": "Administratie",
+			"label": "Administratie",
+			"icon": "icon-category-organization",
+			"order": 30,
+			"children": [
+				{
+					"id": "Bewaartermijnen",
+					"label": "Bewaartermijnen",
+					"icon": "ShieldCheckOutline",
+					"route": "Bewaartermijnen",
+					"order": 10
+				}
+			]
+		},
+		{
 			"id": "Documentation",
 			"label": "Documentation",
 			"icon": "icon-info",
@@ -243,6 +258,161 @@
 						"gridX": 9,
 						"gridY": 0,
 						"gridWidth": 3,
+						"gridHeight": 2
+					}
+				]
+			}
+		},
+		{
+			"id": "Bewaartermijnen",
+			"route": "/administratie/bewaartermijnen",
+			"type": "index",
+			"title": "Bewaartermijnen",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetentionRule",
+				"columns": [
+					{
+						"key": "selectielijstCode",
+						"label": "Selectielijst code",
+						"sortable": true
+					},
+					{
+						"key": "description",
+						"label": "Omschrijving",
+						"sortable": false
+					},
+					{
+						"key": "recordCategory",
+						"label": "Categorie",
+						"sortable": true
+					},
+					{
+						"key": "retentionYears",
+						"label": "Bewaartermijn (jaren)",
+						"sortable": true
+					},
+					{
+						"key": "disposition",
+						"label": "Actie bij verstrijken",
+						"sortable": true
+					},
+					{
+						"key": "daysUntilRetention",
+						"label": "Dagen tot bewaartermijn",
+						"sortable": true
+					}
+				],
+				"defaultSort": "selectielijstCode",
+				"detailRoute": "BewaartermijnenDetail"
+			}
+		},
+		{
+			"id": "BewaartermijnenDetail",
+			"route": "/administratie/bewaartermijnen/:id",
+			"type": "detail",
+			"title": "Bewaartermijn",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetentionRule",
+				"fields": [
+					{
+						"key": "selectielijstCode",
+						"label": "Selectielijst code",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Omschrijving",
+						"type": "string"
+					},
+					{
+						"key": "recordCategory",
+						"label": "Recordcategorie",
+						"type": "string"
+					},
+					{
+						"key": "retentionYears",
+						"label": "Bewaartermijn (jaren)",
+						"type": "integer"
+					},
+					{
+						"key": "retentionTrigger",
+						"label": "Relatieve bewaartermijn",
+						"type": "string"
+					},
+					{
+						"key": "disposition",
+						"label": "Actie bij verstrijken",
+						"type": "string"
+					},
+					{
+						"key": "legalBasis",
+						"label": "Wettelijke grondslag",
+						"type": "string"
+					},
+					{
+						"key": "effectiveFrom",
+						"label": "Geldig vanaf",
+						"type": "string"
+					},
+					{
+						"key": "effectiveTo",
+						"label": "Geldig tot",
+						"type": "string"
+					},
+					{
+						"key": "customRetentionYears",
+						"label": "Afwijkende bewaartermijn (organisatie)",
+						"type": "integer"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "daysUntilRetention",
+						"label": "Dagen tot bewaartermijn",
+						"type": "integer"
+					}
+				],
+				"indexRoute": "Bewaartermijnen"
+			}
+		},
+		{
+			"id": "BewaartermijnenDashboard",
+			"route": "/administratie/bewaartermijnen/dashboard",
+			"type": "dashboard",
+			"title": "Bewaartermijnen — Dashboard",
+			"config": {
+				"widgets": [
+					{
+						"id": "nearing-retention",
+						"title": "Verlopen binnenkort",
+						"type": "stats-block",
+						"iconClass": "icon-calendar",
+						"props": {
+							"countLabel": "bewaartermijnen",
+							"variant": "warning"
+						},
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "RetentionRule",
+							"filter": {
+								"daysUntilRetention_lt": 90
+							},
+							"aggregate": "count"
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "layout-nearing-retention",
+						"widgetId": "nearing-retention",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 4,
 						"gridHeight": 2
 					}
 				]
