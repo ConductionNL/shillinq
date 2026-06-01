@@ -4,9 +4,6 @@
 	"dependencies": [
 		"openregister"
 	],
-	"featureFlags": {
-		"gov-gr": false
-	},
 	"menu": [
 		{
 			"id": "Dashboard",
@@ -29,34 +26,25 @@
 					"order": 10
 				},
 				{
-					"id": "GemeenschappelijkeRegeling",
-					"label": "Gemeenschappelijke regeling",
-					"icon": "AccountGroupOutline",
-					"featureFlag": "gov-gr",
-					"order": 50,
-					"children": [
-						{
-							"id": "GRDeelnemers",
-							"label": "Deelnemers",
-							"icon": "AccountMultipleOutline",
-							"route": "GRDeelnemers",
-							"order": 10
-						},
-						{
-							"id": "GRVerdeelsleutels",
-							"label": "Verdeelsleutels",
-							"icon": "ScaleBalanceOutline",
-							"route": "GRVerdeelsleutels",
-							"order": 20
-						},
-						{
-							"id": "GRConsolidated",
-							"label": "Geconsolideerde view",
-							"icon": "TableMergeCellsOutline",
-							"route": "GRConsolidated",
-							"order": 30
-						}
-					]
+					"id": "GRDeelnemers",
+					"label": "Deelnemers",
+					"icon": "AccountMultipleOutline",
+					"route": "GRDeelnemers",
+					"order": 50
+				},
+				{
+					"id": "GRVerdeelsleutels",
+					"label": "Verdeelsleutels",
+					"icon": "ScaleBalanceOutline",
+					"route": "GRVerdeelsleutels",
+					"order": 60
+				},
+				{
+					"id": "GRConsolidated",
+					"label": "Geconsolideerde view",
+					"icon": "TableMergeCellsOutline",
+					"route": "GRConsolidated",
+					"order": 70
 				}
 			]
 		},
@@ -253,7 +241,7 @@
 					{
 						"key": "costClusterAccountNumbers",
 						"label": "Kostencluster grootboekrekeningen",
-						"type": "array"
+						"type": "json"
 					},
 					{
 						"key": "verdelingsType",
@@ -263,12 +251,12 @@
 					{
 						"key": "parameters",
 						"label": "Parameters",
-						"type": "object"
+						"type": "json"
 					},
 					{
 						"key": "lineNumber",
 						"label": "Volgorde",
-						"type": "integer"
+						"type": "number"
 					}
 				],
 				"indexRoute": "GRVerdeelsleutels"
