@@ -21,6 +21,7 @@ namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\Shillinq\Repair\InitializeSettings;
 use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\StatementManifestService;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -38,6 +39,13 @@ class InitializeSettingsTest extends TestCase
      * @var SettingsService&MockObject
      */
     private SettingsService&MockObject $settingsService;
+
+    /**
+     * Mock StatementManifestService.
+     *
+     * @var StatementManifestService&MockObject
+     */
+    private StatementManifestService&MockObject $statementManifestService;
 
     /**
      * Mock LoggerInterface.
@@ -69,12 +77,14 @@ class InitializeSettingsTest extends TestCase
     {
         parent::setUp();
 
-        $this->settingsService = $this->createMock(SettingsService::class);
-        $this->logger          = $this->createMock(LoggerInterface::class);
-        $this->output          = $this->createMock(IOutput::class);
+        $this->settingsService          = $this->createMock(SettingsService::class);
+        $this->statementManifestService = $this->createMock(StatementManifestService::class);
+        $this->logger                   = $this->createMock(LoggerInterface::class);
+        $this->output                   = $this->createMock(IOutput::class);
 
         $this->repairStep = new InitializeSettings(
             settingsService: $this->settingsService,
+            manifestService: $this->statementManifestService,
             logger: $this->logger,
         );
 

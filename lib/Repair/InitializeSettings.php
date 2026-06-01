@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\StatementManifestService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
@@ -36,13 +37,15 @@ class InitializeSettings implements IRepairStep
     /**
      * Constructor for InitializeSettings.
      *
-     * @param SettingsService $settingsService The settings service
-     * @param LoggerInterface $logger          The logger interface
+     * @param SettingsService          $settingsService The settings service
+     * @param StatementManifestService $manifestService The statement-manifest importer
+     * @param LoggerInterface          $logger          The logger interface
      *
      * @return void
      */
     public function __construct(
         private SettingsService $settingsService,
+        private StatementManifestService $manifestService,
         private LoggerInterface $logger,
     ) {
     }//end __construct()
@@ -119,6 +122,7 @@ class InitializeSettings implements IRepairStep
             }
 
             $this->seedChartOfAccounts(output: $output);
+            $this->importStatementManifests(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -186,4 +190,38 @@ class InitializeSettings implements IRepairStep
         }
 
     }//end seedChartOfAccounts()
+
+    /**
+     * Import the RJ 270 statement-presentation manifests idempotently.
+     *
+     * Delegates to SettingsService::importStatementManifests(), which preserves
+     * operator edits across re-runs (REQ-FS-002). Non-fatal — a failure here
+     * logs a warning but does not abort the repair step.
+     *
+     * @param IOutput $output The output interface for progress reporting
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-bookkeeping-compliance/specs/bookkeeping-financial-statements/spec.md (REQ-FS-002)
+     */
+    private function importStatementManifests(IOutput $output): void
+    {
+        $output->info('Importing RJ 270 statement presentation manifests...');
+
+        $result = $this->manifestService->import();
+
+        if ($result['success'] === true) {
+            $imported = ($result['imported'] ?? 0);
+            $skipped  = ($result['skipped'] ?? 0);
+            $output->info(
+                'Statement manifests imported: '.$imported.' created, '.$skipped.' skipped (operator edits preserved).'
+            );
+        }
+
+        if ($result['success'] !== true) {
+            $message = ($result['message'] ?? 'unknown error');
+            $output->warning('Statement manifest import issue: '.$message);
+        }
+
+    }//end importStatementManifests()
 }//end class

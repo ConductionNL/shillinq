@@ -1,0 +1,44 @@
+{
+  "_meta": {
+    "source": "RJ 270 (2026)",
+    "variant": "smb",
+    "imported": "",
+    "statement": "cash-flow",
+    "title": "Kasstroomoverzicht",
+    "method": "indirect",
+    "comparativePeriods": 1,
+    "spdxLicenseIdentifier": "EUPL-1.2",
+    "spdxFileCopyrightText": "2026 Conduction B.V. <info@conduction.nl>"
+  },
+  "sections": [
+    {"code": "OPER", "label": "Kasstroom uit operationele activiteiten", "level": 0, "sign": "credit", "isHeader": true},
+    {"code": "OPER-RES", "label": "Bedrijfsresultaat", "level": 1, "sign": "credit", "source": "pl:BEDR-RES", "parent": "OPER"},
+    {"code": "OPER-AFS", "label": "Afschrijvingen", "level": 1, "sign": "credit", "source": "pl:AFSCHR", "adjustment": "non-cash", "parent": "OPER"},
+    {"code": "OPER-BIJ", "label": "Bijzondere waardeverminderingen", "level": 1, "sign": "credit", "source": "pl:BIJZ", "adjustment": "non-cash", "parent": "OPER"},
+    {"code": "OPER-VRZ", "label": "Mutatie voorzieningen", "level": 1, "sign": "credit", "accountRange": ["0700", "0799"], "adjustment": "balance-movement", "parent": "OPER"},
+    {"code": "OPER-VRD", "label": "Mutatie voorraden", "level": 1, "sign": "debit", "accountRange": ["3000", "3999"], "adjustment": "balance-movement", "parent": "OPER"},
+    {"code": "OPER-DEB", "label": "Mutatie handelsdebiteuren", "level": 1, "sign": "debit", "accountRange": ["1300", "1349"], "adjustment": "balance-movement", "parent": "OPER"},
+    {"code": "OPER-OVD", "label": "Mutatie overige vorderingen", "level": 1, "sign": "debit", "accountRange": ["1350", "1499"], "adjustment": "balance-movement", "parent": "OPER"},
+    {"code": "OPER-CRD", "label": "Mutatie handelscrediteuren", "level": 1, "sign": "credit", "accountRange": ["1600", "1649"], "adjustment": "balance-movement", "parent": "OPER"},
+    {"code": "OPER-KS", "label": "Mutatie overige kortlopende schulden", "level": 1, "sign": "credit", "accountRange": ["1650", "1899"], "adjustment": "balance-movement", "parent": "OPER"},
+    {"code": "OPER-RNT", "label": "Betaalde interest", "level": 1, "sign": "debit", "accountRange": ["4900", "4949"], "parent": "OPER"},
+    {"code": "OPER-VPB", "label": "Betaalde winstbelasting", "level": 1, "sign": "debit", "accountRange": ["4950", "4999"], "parent": "OPER"},
+    {"code": "TOT-OPER", "label": "Totaal kasstroom uit operationele activiteiten", "level": 0, "sign": "credit", "isSubtotal": true, "ofSections": ["OPER"]},
+
+    {"code": "INV", "label": "Kasstroom uit investeringsactiviteiten", "level": 0, "sign": "debit", "isHeader": true},
+    {"code": "INV-IMVA", "label": "Investeringen immateriële vaste activa", "level": 1, "sign": "debit", "accountRange": ["0100", "0199"], "adjustment": "balance-movement", "parent": "INV"},
+    {"code": "INV-MVA", "label": "Investeringen materiële vaste activa", "level": 1, "sign": "debit", "accountRange": ["0200", "0599"], "adjustment": "balance-movement", "parent": "INV"},
+    {"code": "INV-FVA", "label": "Mutatie financiële vaste activa", "level": 1, "sign": "debit", "accountRange": ["0600", "0999"], "adjustment": "balance-movement", "parent": "INV"},
+    {"code": "TOT-INV", "label": "Totaal kasstroom uit investeringsactiviteiten", "level": 0, "sign": "debit", "isSubtotal": true, "ofSections": ["INV"]},
+
+    {"code": "FIN", "label": "Kasstroom uit financieringsactiviteiten", "level": 0, "sign": "credit", "isHeader": true},
+    {"code": "FIN-LEN", "label": "Mutatie langlopende leningen", "level": 1, "sign": "credit", "accountRange": ["0800", "0899"], "adjustment": "balance-movement", "parent": "FIN"},
+    {"code": "FIN-KAP", "label": "Mutatie eigen vermogen (kapitaalstortingen)", "level": 1, "sign": "credit", "accountRange": ["0500", "0529"], "adjustment": "balance-movement", "parent": "FIN"},
+    {"code": "FIN-DIV", "label": "Betaalde dividenden", "level": 1, "sign": "debit", "accountRange": ["0580", "0599"], "adjustment": "balance-movement", "parent": "FIN"},
+    {"code": "TOT-FIN", "label": "Totaal kasstroom uit financieringsactiviteiten", "level": 0, "sign": "credit", "isSubtotal": true, "ofSections": ["FIN"]},
+
+    {"code": "NET-KAS", "label": "Netto kasstroom", "level": 0, "sign": "credit", "isSubtotal": true, "formula": "TOT-OPER + TOT-INV + TOT-FIN"},
+    {"code": "LIQ-BEGIN", "label": "Liquide middelen begin periode", "level": 0, "sign": "debit", "accountRange": ["1000", "1099"], "balanceAt": "openingBalance"},
+    {"code": "LIQ-EIND", "label": "Liquide middelen einde periode", "level": 0, "sign": "debit", "accountRange": ["1000", "1099"], "balanceAt": "closingBalance"}
+  ]
+}
