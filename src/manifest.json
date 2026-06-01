@@ -24,6 +24,13 @@
 					"icon": "LedgerOutline",
 					"route": "ChartOfAccounts",
 					"order": 10
+				},
+				{
+					"id": "BankConnections",
+					"label": "Bank Connections",
+					"icon": "BankOutline",
+					"route": "BankConnections",
+					"order": 20
 				}
 			]
 		},
@@ -60,6 +67,147 @@
 			"title": "Features & roadmap",
 			"config": {
 				"documentationUrl": "https://shillinq.conduction.nl"
+			}
+		},
+		{
+			"id": "BankConnections",
+			"route": "/bank-connections",
+			"type": "index",
+			"title": "Bank Connections",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankConnection",
+				"columns": [
+					{
+						"key": "connectionNumber",
+						"label": "Connection",
+						"sortable": true
+					},
+					{
+						"key": "aggregator",
+						"label": "Aggregator",
+						"sortable": true
+					},
+					{
+						"key": "bankAccountIban",
+						"label": "IBAN",
+						"sortable": true
+					},
+					{
+						"key": "consentExpiresAt",
+						"label": "Consent Expires",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "connectionNumber",
+				"detailRoute": "BankConnectionDetail"
+			}
+		},
+		{
+			"id": "BankConnectionDetail",
+			"route": "/bank-connections/:id",
+			"type": "detail",
+			"title": "Bank Connection",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankConnection",
+				"fields": [
+					{
+						"key": "connectionNumber",
+						"label": "Connection Number",
+						"type": "string"
+					},
+					{
+						"key": "aggregator",
+						"label": "Aggregator",
+						"type": "string"
+					},
+					{
+						"key": "aggregatorSourceSlug",
+						"label": "Aggregator Source",
+						"type": "string"
+					},
+					{
+						"key": "bankBic",
+						"label": "BIC",
+						"type": "string"
+					},
+					{
+						"key": "bankCountry",
+						"label": "Country",
+						"type": "string"
+					},
+					{
+						"key": "bankAccountIban",
+						"label": "IBAN",
+						"type": "string"
+					},
+					{
+						"key": "consentReference",
+						"label": "Consent Reference",
+						"type": "string"
+					},
+					{
+						"key": "consentGrantedAt",
+						"label": "Consent Granted",
+						"type": "string"
+					},
+					{
+						"key": "consentExpiresAt",
+						"label": "Consent Expires",
+						"type": "string"
+					},
+					{
+						"key": "consentRemainingDays",
+						"label": "Days Until Expiry",
+						"type": "calculated",
+						"help": "Remaining days on the PSD2 consent. Negative when expired."
+					},
+					{
+						"key": "lastSyncAt",
+						"label": "Last Synced",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"actions": [
+					{
+						"id": "renew-consent",
+						"label": "Renew consent",
+						"icon": "Refresh",
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": ["expiring", "expired"]
+						},
+						"type": "lifecycle-transition",
+						"transition": "renew",
+						"description": "Trigger PSD2 SCA renewal via the openconnector source reauthorise action."
+					}
+				],
+				"header": {
+					"countdownField": "consentRemainingDays",
+					"countdownLabel": "days until consent expires",
+					"countdownVisibleWhen": {
+						"field": "lifecycleState",
+						"in": ["expiring"]
+					}
+				},
+				"indexRoute": "BankConnections"
 			}
 		},
 		{

@@ -13,6 +13,23 @@
   },
   "paths": {},
   "components": {
+    "objects": [
+      {
+        "@self": {
+          "register": "openregister",
+          "schema": "ScheduledWorkflow",
+          "slug": "shillinq-bank-transaction-polling"
+        },
+        "name": "Bank Transaction Polling",
+        "description": "Periodic polling workflow that calls the openconnector PSD2 aggregator source by slug, normalises aggregator JSON to CAMT.053 format, attaches the document via docudesk, and creates BankStatement records. Runs 4× daily per REQ-BC-004 + ADR-031 path 2. No shillinq-side TimedJob.",
+        "register": "shillinq",
+        "schema": "BankConnection",
+        "cronExpression": "0 */6 * * *",
+        "workflowSource": "openconnector",
+        "workflowName": "shillinq-bank-transaction-import",
+        "isEnabled": true
+      }
+    ],
     "schemas": {
       "example": {
         "slug": "example",
@@ -34,6 +51,294 @@
             "type": "string",
             "description": "An optional description",
             "example": "This is an example"
+          }
+        }
+      },
+      "BankConnection": {
+        "slug": "BankConnection",
+        "icon": "BankOutline",
+        "version": "0.1.0",
+        "title": "Bank Connection",
+        "description": "A PSD2 AIS bank connection authorising access to one or more bank accounts via an openconnector aggregator source. Credentials live in openconnector; this record carries the consent reference only.",
+        "type": "object",
+        "x-schema-org": "schema:FinancialProduct",
+        "required": [
+          "connectionNumber",
+          "aggregator",
+          "aggregatorSourceSlug",
+          "bankBic",
+          "bankCountry",
+          "bankAccountIban",
+          "consentReference",
+          "consentGrantedAt",
+          "consentExpiresAt",
+          "lifecycleState",
+          "administrationId"
+        ],
+        "properties": {
+          "connectionNumber": {
+            "type": "string",
+            "description": "Operator-readable reference for this bank connection.",
+            "example": "BC-2026-001"
+          },
+          "aggregator": {
+            "type": "string",
+            "description": "PSD2 AIS aggregator providing the connection. Credentials live in the corresponding openconnector Source record.",
+            "enum": [
+              "tink",
+              "klarna-kosma",
+              "plaid-eu",
+              "yapily",
+              "manual"
+            ],
+            "example": "tink"
+          },
+          "aggregatorSourceSlug": {
+            "type": "string",
+            "description": "FK to the openconnector Source slug that holds the aggregator OAuth credentials. shillinq carries this reference only; credentials never land here.",
+            "example": "tink-nl-production"
+          },
+          "bankBic": {
+            "type": "string",
+            "description": "BIC/SWIFT code of the bank the connection covers.",
+            "example": "RABONL2U"
+          },
+          "bankCountry": {
+            "type": "string",
+            "description": "ISO 3166-1 alpha-2 country code of the bank.",
+            "minLength": 2,
+            "maxLength": 2,
+            "example": "NL"
+          },
+          "bankAccountIban": {
+            "type": "string",
+            "description": "IBAN of the linked bank account.",
+            "example": "NL01RABO0123456789"
+          },
+          "consentReference": {
+            "type": "string",
+            "description": "Aggregator-issued consent identifier returned from the SCA flow. Non-credential metadata — NOT an OAuth token or client secret.",
+            "example": "consent-ref-abc123"
+          },
+          "consentGrantedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when the PSD2 consent was granted.",
+            "example": "2026-07-01T10:00:00Z"
+          },
+          "consentExpiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when the PSD2 consent expires. PSD2 mandates SCA renewal every 90 days.",
+            "example": "2026-09-30T10:00:00Z"
+          },
+          "lastSyncAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the most recent successful transaction pull.",
+            "nullable": true,
+            "example": "2026-06-01T06:00:00Z"
+          },
+          "lifecycleState": {
+            "type": "string",
+            "description": "Current PSD2 consent lifecycle state.",
+            "enum": [
+              "pending",
+              "active",
+              "expiring",
+              "expired",
+              "revoked"
+            ],
+            "example": "active",
+            "default": "pending"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration that owns this bank connection.",
+            "example": "adm-1"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "pending",
+          "states": {
+            "pending": {
+              "label": "Pending",
+              "description": "SCA consent flow not yet completed; connection not usable."
+            },
+            "active": {
+              "label": "Active",
+              "description": "Consent granted and valid; transaction polling enabled."
+            },
+            "expiring": {
+              "label": "Expiring",
+              "description": "Consent expires within 14 days; operator must trigger renewal."
+            },
+            "expired": {
+              "label": "Expired",
+              "description": "Consent has lapsed; transaction polling suspended until renewed."
+            },
+            "revoked": {
+              "label": "Revoked",
+              "description": "Operator or bank revoked consent; connection permanently disabled."
+            }
+          },
+          "transitions": {
+            "activate": {
+              "from": "pending",
+              "to": "active",
+              "label": "Activate connection",
+              "description": "SCA consent flow completed successfully; activate the connection."
+            },
+            "warnExpiry": {
+              "from": "active",
+              "to": "expiring",
+              "label": "Mark as expiring",
+              "description": "Auto-transition fires 14 days before consentExpiresAt.",
+              "timeBased": {
+                "field": "consentExpiresAt",
+                "offsetDays": -14
+              }
+            },
+            "expire": {
+              "from": "expiring",
+              "to": "expired",
+              "label": "Mark as expired",
+              "description": "Auto-transition fires when consentExpiresAt is reached.",
+              "timeBased": {
+                "field": "consentExpiresAt",
+                "offsetDays": 0
+              }
+            },
+            "renew": {
+              "from": ["expiring", "expired"],
+              "to": "active",
+              "label": "Renew consent",
+              "description": "Operator triggered SCA renewal via openconnector source reauthorise action; updates consentReference and consentExpiresAt on success."
+            },
+            "revoke": {
+              "from": ["active", "expiring", "expired"],
+              "to": "revoked",
+              "label": "Revoke connection",
+              "description": "Permanently revoke the bank connection."
+            }
+          },
+          "notifications": {
+            "onEnterExpiring": {
+              "state": "expiring",
+              "recipient": "configured-operator",
+              "channel": ["in-app", "email"],
+              "template": "bank-connection-expiring",
+              "description": "Notify configured recipient 14 days before consent expires."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "treasurer": {
+              "permissions": ["create", "read", "update", "delete"]
+            },
+            "bookkeeper": {
+              "permissions": ["read"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "consentRemainingDays": {
+            "expression": "dateDiffDays(@self.consentExpiresAt, now())",
+            "type": "integer",
+            "description": "Number of days until the PSD2 consent expires. Negative when already expired.",
+            "example": 14
+          }
+        }
+      },
+      "BankStatement": {
+        "slug": "BankStatement",
+        "icon": "FileDocumentOutline",
+        "version": "0.1.0",
+        "title": "Bank Statement",
+        "description": "A CAMT.053 bank statement generated by the scheduled transaction polling workflow from aggregator data. The generated XML is attached via docudesk.",
+        "type": "object",
+        "x-schema-org": "schema:Report",
+        "required": [
+          "bankConnectionId",
+          "statementFormat",
+          "statementDate",
+          "administrationId"
+        ],
+        "properties": {
+          "bankConnectionId": {
+            "type": "string",
+            "description": "FK to the BankConnection that sourced this statement.",
+            "example": "bank-conn-uuid-1"
+          },
+          "statementFormat": {
+            "type": "string",
+            "description": "CAMT XML format version of the generated statement.",
+            "enum": [
+              "camt.053.001.08"
+            ],
+            "example": "camt.053.001.08",
+            "default": "camt.053.001.08"
+          },
+          "statementDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the statement generation run.",
+            "example": "2026-06-01T06:00:00Z"
+          },
+          "statementAttachmentUri": {
+            "type": "string",
+            "description": "docudesk attachment URI referencing the generated CAMT.053 XML document.",
+            "nullable": true,
+            "example": "docudesk://attachments/shillinq/bank-statement-2026-06-01.xml"
+          },
+          "transactionCount": {
+            "type": "integer",
+            "description": "Number of transactions included in this statement.",
+            "example": 5
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration that owns this statement.",
+            "example": "adm-1"
+          }
+        },
+        "x-openregister-notifications": {
+          "onNewStatement": {
+            "trigger": "onCreate",
+            "recipient": {
+              "resolver": "bank-connection-operator",
+              "fallback": "administration-treasurer"
+            },
+            "channels": ["in-app", "email"],
+            "template": "bank-statement-available",
+            "description": "Notify the configured bank-connection operator when a new statement is available. Declarative fan-out per ADR-031; no BankNotificationService."
+          }
+        },
+        "x-openregister-relations": {
+          "bankConnection": {
+            "localField": "bankConnectionId",
+            "relatedSchema": "BankConnection",
+            "relatedField": "id",
+            "cardinality": "many-to-one",
+            "description": "The PSD2 bank connection that generated this statement."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "treasurer": {
+              "permissions": ["read"]
+            },
+            "bookkeeper": {
+              "permissions": ["read"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
           }
         }
       },
