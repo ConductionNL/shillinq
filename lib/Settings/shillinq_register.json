@@ -718,8 +718,762 @@
             }
           }
         }
+      },
+      "TaxRegimeConfiguration": {
+        "slug": "TaxRegimeConfiguration",
+        "icon": "FileDocumentEditOutline",
+        "version": "0.1.0",
+        "title": "Tax Regime Configuration",
+        "description": "ZZP tax regime parameters including fiscal year, income tax rate, statutory allowances, filing deadline, and GL account to statutory category mapping rules. Configuration-driven per ADR-031 and REQ-TAX-002; no hardcoded PHP mapping constants.",
+        "x-schema-org": "schema:Thing",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "fiscalYear",
+          "regimeType",
+          "name",
+          "incomeTaxRate",
+          "filingDeadline",
+          "categoryMappingRules",
+          "versionId",
+          "effectiveFrom",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this configuration applies to.",
+            "example": "adm-1"
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "description": "Fiscal year this configuration governs (e.g. 2026).",
+            "example": 2026
+          },
+          "regimeType": {
+            "type": "string",
+            "enum": [
+              "zzp-sole-trader",
+              "partnership",
+              "cv"
+            ],
+            "description": "Tax regime type. ZZP sole-trader is the primary T3 scope; partnership and cv deferred to future tiers."
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable configuration name.",
+            "example": "ZZP Default 2026"
+          },
+          "incomeTaxRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Marginal income tax rate as a decimal (e.g. 0.25 for 25%). Statutory rate for the given fiscal year.",
+            "example": 0.25
+          },
+          "generalAllowance": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true,
+            "description": "General statutory allowance in EUR (algemene heffingskorting equivalent).",
+            "example": 0
+          },
+          "soleTraderAllowance": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Sole trader deduction in EUR (zelfstandigenaftrek) if applicable.",
+            "example": 0
+          },
+          "filingDeadline": {
+            "type": "string",
+            "format": "date",
+            "description": "Statutory filing deadline for this fiscal year (e.g. 2027-04-20 for FY2026).",
+            "example": "2027-04-20"
+          },
+          "categoryMappingRules": {
+            "type": "object",
+            "description": "JSON object mapping GL account ranges or specific accounts to statutory tax categories. Keys are account ranges (e.g. '4000-4099') or individual accounts (e.g. '4150'); values are category names. Range-based keys use dash notation; individual account keys take precedence over ranges (per REQ-TAX-005).",
+            "example": {
+              "4000-4099": "self-employment-income",
+              "4100-4199": "real-estate-income",
+              "6000-6199": "deductible-business-expenses",
+              "6200-6299": "deductible-professional-fees"
+            }
+          },
+          "allowanceAmounts": {
+            "type": "object",
+            "nullable": true,
+            "description": "Per-category allowance overrides (e.g. { 'business-expenses': 5000 }) for statutory caps.",
+            "example": {
+              "business-expenses": 5000
+            }
+          },
+          "versionId": {
+            "type": "string",
+            "description": "Semantic version identifier enabling retroactive recalculation when rules change (e.g. 'zzp-2026-v1').",
+            "example": "zzp-2026-v1"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "Date this configuration becomes active.",
+            "example": "2026-01-01"
+          },
+          "effectiveUntil": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date configuration expires; null = open-ended.",
+            "example": null
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "archived",
+              "superseded"
+            ],
+            "description": "Lifecycle status of this configuration version.",
+            "default": "active"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Configuration in use for new TaxSummaryReport aggregations and TaxEstimate projections."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Configuration retired but retained for historical estimate audit trail."
+            },
+            "superseded": {
+              "label": "Superseded",
+              "description": "Replaced by a newer configuration version. Prior TaxEstimate records using this version remain immutable."
+            }
+          },
+          "transitions": {
+            "archive": {
+              "from": "active",
+              "to": "archived",
+              "label": "Archive configuration",
+              "description": "Retire this configuration; historical records remain queryable."
+            },
+            "supersede": {
+              "from": "active",
+              "to": "superseded",
+              "label": "Supersede configuration",
+              "description": "Mark as superseded when a new configuration version takes effect."
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "activeConfigurationsByYear": {
+            "description": "Count of active TaxRegimeConfiguration records per fiscal year. Surfaced on Tax Filing Prep dashboard.",
+            "filter": "status = 'active'",
+            "groupBy": "fiscalYear",
+            "operations": {
+              "count": {
+                "field": "fiscalYear",
+                "operation": "count"
+              }
+            }
+          }
+        }
+      },
+      "TaxSummaryReport": {
+        "slug": "TaxSummaryReport",
+        "icon": "FileChartOutline",
+        "version": "0.1.0",
+        "title": "Tax Summary Report",
+        "description": "GL-aggregated income and expense summary by statutory tax category and fiscal period. Materialized from GLLine transactions grouped by (administrationId, fiscalYear, reportingPeriod, taxCategory) per REQ-TAX-003. No parallel tax table; aggregation is the source of truth per ADR-031 D1.",
+        "x-schema-org": "schema:Table",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "fiscalYear",
+          "reportingPeriod",
+          "taxCategory",
+          "grossAmount",
+          "netAmount",
+          "currency",
+          "snapshotDate",
+          "configurationVersionId",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this report belongs to.",
+            "example": "adm-1"
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "description": "Fiscal year this report covers.",
+            "example": 2026
+          },
+          "reportingPeriod": {
+            "type": "string",
+            "enum": [
+              "year",
+              "quarter-1",
+              "quarter-2",
+              "quarter-3",
+              "quarter-4",
+              "month-01",
+              "month-02",
+              "month-03",
+              "month-04",
+              "month-05",
+              "month-06",
+              "month-07",
+              "month-08",
+              "month-09",
+              "month-10",
+              "month-11",
+              "month-12"
+            ],
+            "description": "Reporting granularity: annual, quarterly, or monthly."
+          },
+          "taxCategory": {
+            "type": "string",
+            "description": "Statutory income/expense category resolved from TaxRegimeConfiguration.categoryMappingRules (e.g. 'self-employment-income', 'real-estate-income', 'deductible-business-expenses').",
+            "example": "self-employment-income"
+          },
+          "glTransactionCount": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Count of GLLine transactions included in this aggregation for audit trail sanity checks.",
+            "example": 12
+          },
+          "grossAmount": {
+            "type": "number",
+            "description": "Sum of GLLine amounts for this category and period in EUR.",
+            "example": 12500.00
+          },
+          "deductionsAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Statutory deductions or allowances applicable to this category (EUR).",
+            "example": 2300.00
+          },
+          "netAmount": {
+            "type": "number",
+            "description": "grossAmount minus deductionsAmount (EUR). Basis for TaxEstimate income calculation.",
+            "example": 10200.00
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code.",
+            "minLength": 3,
+            "maxLength": 3,
+            "default": "EUR",
+            "example": "EUR"
+          },
+          "snapshotDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the aggregation was computed. Makes GL posting lag explicit for operators.",
+            "example": "2026-03-31"
+          },
+          "configurationVersionId": {
+            "type": "string",
+            "description": "FK to TaxRegimeConfiguration.versionId used for the GL account to category mapping. Enables retroactive recalculation if mapping rules change.",
+            "example": "zzp-2026-v1"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "finalized",
+              "amended"
+            ],
+            "description": "Draft until operator finalizes; amended when a GL repost changes the aggregated amounts.",
+            "default": "draft"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Aggregation in progress or awaiting operator review. Updated automatically on each GL posting."
+            },
+            "finalized": {
+              "label": "Finalized",
+              "description": "Operator has confirmed the summary for the period."
+            },
+            "amended": {
+              "label": "Amended",
+              "description": "A GL repost has changed the amounts after finalization. Audit trail records old and new values."
+            }
+          },
+          "transitions": {
+            "finalize": {
+              "from": "draft",
+              "to": "finalized",
+              "label": "Finalize report",
+              "description": "Operator confirms the tax summary for filing preparation."
+            },
+            "amend": {
+              "from": "finalized",
+              "to": "amended",
+              "label": "Mark as amended",
+              "description": "Triggered automatically when a GL repost changes amounts after finalization."
+            },
+            "redraft": {
+              "from": "amended",
+              "to": "draft",
+              "label": "Return to draft",
+              "description": "Reset to draft for re-review after amendment."
+            }
+          },
+          "hooks": {
+            "onGlLinePosted": {
+              "trigger": "bookkeeping-general-ledger:glLinePosted",
+              "description": "When a GLLine posts, the aggregation engine applies TaxRegimeConfiguration.categoryMappingRules to the accountNumber, resolves the taxCategory, and upserts the TaxSummaryReport row for (administrationId, fiscalYear, reportingPeriod, taxCategory). Updates grossAmount, deductionsAmount, netAmount, glTransactionCount, and snapshotDate. Per REQ-TAX-007.",
+              "condition": "accountNumber IS IN TaxRegimeConfiguration.categoryMappingRules",
+              "action": "x-openregister-upsert-aggregation",
+              "actionParameters": {
+                "groupKey": ["administrationId", "fiscalYear", "reportingPeriod", "taxCategory"],
+                "operations": {
+                  "grossAmount": "sum(amount)",
+                  "glTransactionCount": "count()",
+                  "netAmount": "grossAmount - deductionsAmount",
+                  "snapshotDate": "now()"
+                },
+                "onFinalized": "transition:amend"
+              }
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "incomeByCategory": {
+            "description": "Sum of grossAmount per taxCategory for a given administrationId and fiscalYear. Drives Tax Filing Prep dashboard table widget and TaxEstimate YTD calculation.",
+            "groupBy": ["administrationId", "fiscalYear", "taxCategory"],
+            "operations": {
+              "totalGross": {
+                "field": "grossAmount",
+                "operation": "sum"
+              },
+              "totalNet": {
+                "field": "netAmount",
+                "operation": "sum"
+              },
+              "reportCount": {
+                "field": "status",
+                "operation": "count"
+              }
+            }
+          },
+          "finalizedSummaryCount": {
+            "description": "Count of finalized TaxSummaryReport rows. Surfaced as the 'tax summaries ready' KPI on Tax Filing Prep dashboard per REQ-TAX-006.",
+            "filter": "status = 'finalized'",
+            "groupBy": "administrationId",
+            "operations": {
+              "count": {
+                "field": "status",
+                "operation": "count"
+              }
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "TaxEstimate": {
+        "slug": "TaxEstimate",
+        "icon": "CalculatorOutline",
+        "version": "0.1.0",
+        "title": "Tax Estimate",
+        "description": "Real-time annual income tax (IB) liability projection for Dutch ZZP freelancers. Materialized view consuming GL year-to-date snapshot and TaxRegimeConfiguration per REQ-TAX-004 and ADR-031 D3. Computed on read or scheduled refresh; records calculation inputs for audit trail per D5.",
+        "x-schema-org": "schema:Table",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "fiscalYear",
+          "snapshotDate",
+          "configurationVersionId",
+          "ytdTaxableIncome",
+          "ytdTaxableExpenses",
+          "ytdNetIncome",
+          "estimatedAnnualIncome",
+          "estimatedAnnualExpenses",
+          "estimatedAnnualNetIncome",
+          "estimatedTaxableIncome",
+          "estimatedIncomeTax",
+          "estimatedNetLiability",
+          "currency",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this estimate belongs to.",
+            "example": "adm-1"
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "description": "Fiscal year for which the estimate projects annual liability.",
+            "example": 2026
+          },
+          "snapshotDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date through which GL transactions are included in the YTD calculation. Operators see 'estimate as of [date]' for GL lag awareness per REQ-TAX-009.",
+            "example": "2026-03-31"
+          },
+          "configurationVersionId": {
+            "type": "string",
+            "description": "FK to TaxRegimeConfiguration.versionId used for this calculation. Enables retroactive comparison when rules change per D5.",
+            "example": "zzp-2026-v1"
+          },
+          "glTransactionCount": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Count of GL transactions included in the YTD calculation. Sanity check for GL completeness per REQ-TAX-009.",
+            "example": 47
+          },
+          "ytdTaxableIncome": {
+            "type": "number",
+            "description": "YTD income aggregated from GLLine per categoryMappingRules income categories (EUR).",
+            "example": 10200.00
+          },
+          "ytdTaxableExpenses": {
+            "type": "number",
+            "description": "YTD deductible expenses aggregated from GLLine per categoryMappingRules expense categories (EUR).",
+            "example": 2300.00
+          },
+          "ytdNetIncome": {
+            "type": "number",
+            "description": "ytdTaxableIncome minus ytdTaxableExpenses (EUR).",
+            "example": 7900.00
+          },
+          "estimatedAnnualIncome": {
+            "type": "number",
+            "description": "Projected annual income: ytdTaxableIncome × (12 / months-elapsed). Months elapsed computed from snapshotDate and fiscalYear start per REQ-TAX-008.",
+            "example": 40800.00
+          },
+          "estimatedAnnualExpenses": {
+            "type": "number",
+            "description": "Projected annual expenses: ytdTaxableExpenses × (12 / months-elapsed) (EUR).",
+            "example": 9200.00
+          },
+          "estimatedAnnualNetIncome": {
+            "type": "number",
+            "description": "estimatedAnnualIncome minus estimatedAnnualExpenses (EUR).",
+            "example": 31600.00
+          },
+          "estimatedTaxableIncome": {
+            "type": "number",
+            "description": "estimatedAnnualNetIncome after statutory allowances from TaxRegimeConfiguration (generalAllowance, soleTraderAllowance, allowanceAmounts) (EUR).",
+            "example": 31600.00
+          },
+          "estimatedIncomeTax": {
+            "type": "number",
+            "description": "estimatedTaxableIncome × TaxRegimeConfiguration.incomeTaxRate (EUR).",
+            "example": 7900.00
+          },
+          "witholdingCredits": {
+            "type": "number",
+            "nullable": true,
+            "description": "Accumulated withheld tax or advance payments deducted from estimated liability (EUR). May be negative = refund due.",
+            "example": 0.00
+          },
+          "estimatedNetLiability": {
+            "type": "number",
+            "description": "estimatedIncomeTax minus witholdingCredits (EUR). Negative value indicates a refund is due.",
+            "example": 7900.00
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code.",
+            "minLength": 3,
+            "maxLength": 3,
+            "default": "EUR",
+            "example": "EUR"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "current",
+              "superseded"
+            ],
+            "description": "Current = most recent estimate for this administrationId + fiscalYear. Superseded = a newer estimate has been computed.",
+            "default": "current"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "current",
+          "states": {
+            "current": {
+              "label": "Current",
+              "description": "Most recent annual tax liability estimate for this administration and fiscal year."
+            },
+            "superseded": {
+              "label": "Superseded",
+              "description": "An updated estimate has been computed. Record retained for audit trail and liability delta comparison per REQ-TAX-004."
+            }
+          },
+          "transitions": {
+            "supersede": {
+              "from": "current",
+              "to": "superseded",
+              "label": "Supersede estimate",
+              "description": "Triggered when a new TaxEstimate is computed for the same administrationId + fiscalYear."
+            }
+          },
+          "hooks": {
+            "onGlLinePosted": {
+              "trigger": "bookkeeping-general-ledger:glLinePosted",
+              "description": "When a GLLine posts, amends, or reverses for an income/expense account, the current TaxEstimate for (administrationId, fiscalYear) is transitioned to 'superseded' and a new estimate is computed. Implements REQ-TAX-007 and REQ-TAX-012 recalculation trigger. Idempotency: only one estimate per (administrationId, fiscalYear, snapshotDate) remains 'current'.",
+              "condition": "accountNumber IS IN TaxRegimeConfiguration.categoryMappingRules",
+              "action": "x-openregister-supersede-and-recalculate",
+              "actionParameters": {
+                "supersedePrevious": true,
+                "recalculateFor": ["administrationId", "fiscalYear"],
+                "snapshotDate": "now()"
+              }
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "ytdByCategory": {
+            "description": "YTD income and expense totals per administrationId and fiscalYear through snapshotDate. Drives TaxEstimate materialized-view computation: YTD sums from TaxSummaryReport grouped by income vs expense categories, then projected to annual using months-elapsed formula per REQ-TAX-008.",
+            "sourceSchema": "TaxSummaryReport",
+            "filter": "administrationId = @self.administrationId AND fiscalYear = @self.fiscalYear AND snapshotDate <= @self.snapshotDate",
+            "groupBy": ["administrationId", "fiscalYear"],
+            "operations": {
+              "ytdTaxableIncome": {
+                "field": "netAmount",
+                "operation": "sum",
+                "condition": "taxCategory IN ['self-employment-income', 'real-estate-income', 'capital-gains']"
+              },
+              "ytdTaxableExpenses": {
+                "field": "netAmount",
+                "operation": "sum",
+                "condition": "taxCategory IN ['deductible-business-expenses', 'deductible-professional-fees']"
+              },
+              "glTransactionCount": {
+                "field": "glTransactionCount",
+                "operation": "sum"
+              }
+            }
+          },
+          "currentEstimateByYear": {
+            "description": "Most recent current TaxEstimate per administrationId and fiscalYear. Surfaced as 'Estimated annual liability' KPI on Tax Filing Prep dashboard per REQ-TAX-006.",
+            "filter": "status = 'current'",
+            "groupBy": ["administrationId", "fiscalYear"],
+            "operations": {
+              "latestLiability": {
+                "field": "estimatedNetLiability",
+                "operation": "max"
+              },
+              "latestSnapshotDate": {
+                "field": "snapshotDate",
+                "operation": "max"
+              }
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": ["read"]
+            },
+            "administrator": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
       }
     },
+    "objects": [
+      {
+        "@self": { "register": "shillinq", "schema": "TaxRegimeConfiguration", "slug": "zzp-default-2026" },
+        "administrationId": "adm-1",
+        "name": "ZZP Default 2026",
+        "fiscalYear": 2026,
+        "regimeType": "zzp-sole-trader",
+        "incomeTaxRate": 0.25,
+        "generalAllowance": 0,
+        "soleTraderAllowance": 0,
+        "filingDeadline": "2027-04-20",
+        "categoryMappingRules": {
+          "4000-4099": "self-employment-income",
+          "4100-4199": "real-estate-income",
+          "4200-4299": "capital-gains",
+          "6000-6199": "deductible-business-expenses",
+          "6200-6299": "deductible-professional-fees"
+        },
+        "allowanceAmounts": {},
+        "versionId": "zzp-2026-v1",
+        "effectiveFrom": "2026-01-01",
+        "effectiveUntil": null,
+        "status": "active"
+      },
+      {
+        "@self": { "register": "shillinq", "schema": "TaxRegimeConfiguration", "slug": "zzp-default-2025" },
+        "administrationId": "adm-1",
+        "name": "ZZP Default 2025",
+        "fiscalYear": 2025,
+        "regimeType": "zzp-sole-trader",
+        "incomeTaxRate": 0.249,
+        "generalAllowance": 0,
+        "soleTraderAllowance": 0,
+        "filingDeadline": "2026-04-20",
+        "categoryMappingRules": {
+          "4000-4099": "self-employment-income",
+          "4100-4199": "real-estate-income",
+          "6000-6199": "deductible-business-expenses",
+          "6200-6299": "deductible-professional-fees"
+        },
+        "allowanceAmounts": {},
+        "versionId": "zzp-2025-v1",
+        "effectiveFrom": "2025-01-01",
+        "effectiveUntil": "2025-12-31",
+        "status": "archived"
+      },
+      {
+        "@self": { "register": "shillinq", "schema": "TaxRegimeConfiguration", "slug": "zzp-default-2026-v2" },
+        "administrationId": "adm-1",
+        "name": "ZZP Default 2026 v2 (example rate adjustment)",
+        "fiscalYear": 2026,
+        "regimeType": "zzp-sole-trader",
+        "incomeTaxRate": 0.26,
+        "generalAllowance": 0,
+        "soleTraderAllowance": 0,
+        "filingDeadline": "2027-04-20",
+        "categoryMappingRules": {
+          "4000-4099": "self-employment-income",
+          "4100-4199": "real-estate-income",
+          "4200-4299": "capital-gains",
+          "6000-6199": "deductible-business-expenses",
+          "6200-6299": "deductible-professional-fees"
+        },
+        "allowanceAmounts": {},
+        "versionId": "zzp-2026-v2",
+        "effectiveFrom": "2026-07-01",
+        "effectiveUntil": null,
+        "status": "superseded"
+      },
+      {
+        "@self": { "register": "shillinq", "schema": "TaxSummaryReport", "slug": "tax-summary-2026-q1-self-employment" },
+        "administrationId": "adm-1",
+        "fiscalYear": 2026,
+        "reportingPeriod": "quarter-1",
+        "taxCategory": "self-employment-income",
+        "glTransactionCount": 8,
+        "grossAmount": 12500.00,
+        "deductionsAmount": 2300.00,
+        "netAmount": 10200.00,
+        "currency": "EUR",
+        "snapshotDate": "2026-03-31",
+        "configurationVersionId": "zzp-2026-v1",
+        "status": "finalized"
+      },
+      {
+        "@self": { "register": "shillinq", "schema": "TaxSummaryReport", "slug": "tax-summary-2026-q2-self-employment" },
+        "administrationId": "adm-1",
+        "fiscalYear": 2026,
+        "reportingPeriod": "quarter-2",
+        "taxCategory": "self-employment-income",
+        "glTransactionCount": 11,
+        "grossAmount": 14200.00,
+        "deductionsAmount": 2100.00,
+        "netAmount": 12100.00,
+        "currency": "EUR",
+        "snapshotDate": "2026-06-30",
+        "configurationVersionId": "zzp-2026-v1",
+        "status": "finalized"
+      },
+      {
+        "@self": { "register": "shillinq", "schema": "TaxSummaryReport", "slug": "tax-summary-2026-q1-real-estate" },
+        "administrationId": "adm-1",
+        "fiscalYear": 2026,
+        "reportingPeriod": "quarter-1",
+        "taxCategory": "real-estate-income",
+        "glTransactionCount": 2,
+        "grossAmount": 2500.00,
+        "deductionsAmount": 0.00,
+        "netAmount": 2500.00,
+        "currency": "EUR",
+        "snapshotDate": "2026-03-31",
+        "configurationVersionId": "zzp-2026-v1",
+        "status": "finalized"
+      },
+      {
+        "@self": { "register": "shillinq", "schema": "TaxSummaryReport", "slug": "tax-summary-2026-q3-self-employment" },
+        "administrationId": "adm-1",
+        "fiscalYear": 2026,
+        "reportingPeriod": "quarter-3",
+        "taxCategory": "self-employment-income",
+        "glTransactionCount": 9,
+        "grossAmount": 13800.00,
+        "deductionsAmount": 1900.00,
+        "netAmount": 11900.00,
+        "currency": "EUR",
+        "snapshotDate": "2026-09-30",
+        "configurationVersionId": "zzp-2026-v1",
+        "status": "draft"
+      },
+      {
+        "@self": { "register": "shillinq", "schema": "TaxEstimate", "slug": "tax-estimate-2026-03-31" },
+        "administrationId": "adm-1",
+        "fiscalYear": 2026,
+        "snapshotDate": "2026-03-31",
+        "configurationVersionId": "zzp-2026-v1",
+        "glTransactionCount": 47,
+        "ytdTaxableIncome": 10200.00,
+        "ytdTaxableExpenses": 2300.00,
+        "ytdNetIncome": 7900.00,
+        "estimatedAnnualIncome": 40800.00,
+        "estimatedAnnualExpenses": 9200.00,
+        "estimatedAnnualNetIncome": 31600.00,
+        "estimatedTaxableIncome": 31600.00,
+        "estimatedIncomeTax": 7900.00,
+        "witholdingCredits": 0.00,
+        "estimatedNetLiability": 7900.00,
+        "currency": "EUR",
+        "status": "superseded"
+      },
+      {
+        "@self": { "register": "shillinq", "schema": "TaxEstimate", "slug": "tax-estimate-2026-06-30" },
+        "administrationId": "adm-1",
+        "fiscalYear": 2026,
+        "snapshotDate": "2026-06-30",
+        "configurationVersionId": "zzp-2026-v1",
+        "glTransactionCount": 89,
+        "ytdTaxableIncome": 20800.00,
+        "ytdTaxableExpenses": 4700.00,
+        "ytdNetIncome": 16100.00,
+        "estimatedAnnualIncome": 41600.00,
+        "estimatedAnnualExpenses": 9400.00,
+        "estimatedAnnualNetIncome": 32200.00,
+        "estimatedTaxableIncome": 32200.00,
+        "estimatedIncomeTax": 8050.00,
+        "witholdingCredits": 0.00,
+        "estimatedNetLiability": 8050.00,
+        "currency": "EUR",
+        "status": "current"
+      }
+    ],
     "mappings": {
       "iv3-xml-transformation": {
         "slug": "iv3-xml-transformation",

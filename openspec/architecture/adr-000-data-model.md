@@ -3891,6 +3891,37 @@ _Primary tax declaration submission (VAT, BCF, exemptions). Aggregates tax lots 
 - → TaxLot (one-to-many)
 - → ExemptionCertificate (many-to-many)
 
+### TaxEstimate
+**Schema.org:** `schema:Table`
+_Real-time annual income tax (IB) liability projection for Dutch ZZP freelancers. Materialized view consuming GL year-to-date snapshot and TaxRegimeConfiguration. Records calculation inputs (ytdIncome, glTransactionCount, configurationVersionId, snapshotDate) for audit traceability per D5. Superseded on each GL mutation; prior estimates retained immutably. No PHP TaxEstimationService — pure aggregation per ADR-031. Cross-referencing spec: `bookkeeping-zzp-tax-regime` (bookkeeping-zzp-tax-regime, 2026-06-01)._
+**Primary spec:** bookkeeping-zzp-tax-regime
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the administration this estimate belongs to |
+| fiscalYear | integer | Yes | Fiscal year for which the estimate projects annual liability |
+| snapshotDate | date | Yes | Date through which GL transactions are included; operators see "estimate as of [date]" for GL lag awareness |
+| configurationVersionId | string | Yes | FK to TaxRegimeConfiguration.versionId; enables retroactive comparison when rules change |
+| glTransactionCount | integer | No | Count of GL transactions included; sanity check for GL completeness per REQ-TAX-009 |
+| ytdTaxableIncome | number | Yes | YTD income from GL income categories (EUR) |
+| ytdTaxableExpenses | number | Yes | YTD deductible expenses from GL expense categories (EUR) |
+| ytdNetIncome | number | Yes | ytdTaxableIncome − ytdTaxableExpenses (EUR) |
+| estimatedAnnualIncome | number | Yes | ytdTaxableIncome × (12 / months-elapsed) (EUR) |
+| estimatedAnnualExpenses | number | Yes | ytdTaxableExpenses × (12 / months-elapsed) (EUR) |
+| estimatedAnnualNetIncome | number | Yes | estimatedAnnualIncome − estimatedAnnualExpenses (EUR) |
+| estimatedTaxableIncome | number | Yes | estimatedAnnualNetIncome after statutory allowances (EUR) |
+| estimatedIncomeTax | number | Yes | estimatedTaxableIncome × configurationRate (EUR) |
+| witholdingCredits | number | No | Accumulated withheld tax / advance payments (EUR) |
+| estimatedNetLiability | number | Yes | estimatedIncomeTax − witholdingCredits (EUR; negative = refund due) |
+| currency | string | Yes | ISO 4217 currency code (EUR) |
+| status | enum | Yes | One of current, superseded |
+
+**Relations:**
+- → Administration (many-to-one)
+- → TaxRegimeConfiguration (many-to-one, via configurationVersionId → versionId)
+- → TaxSummaryReport (one-to-many, YTD aggregation source)
+- → GLLine (one-to-many, underlying GL transactions included through snapshotDate)
+
 ### TaxExemption
 **Schema.org:** `schema:Offer`
 _Reusable exemption rule or policy: qualifies transactions or amounts as exempt. Linked to certificates and applied during tax lot calculation._
@@ -3943,6 +3974,33 @@ _Individual tax rate rules for income, sales, VAT, capital gains, or other tax t
 - → TaxConfiguration (many-to-one)
 - → Product (many-to-one)
 
+### TaxRegimeConfiguration
+**Schema.org:** `schema:Thing`
+_ZZP tax regime parameters: fiscal year, income tax rate, statutory allowances, filing deadline, and GL account → statutory category mapping rules. Configuration-driven per ADR-031 D2 and REQ-TAX-002; no hardcoded PHP mapping constants. Versioned (versionId) so TaxEstimate records can be retroactively recalculated when statutory rules change mid-year. Cross-referencing spec: `bookkeeping-zzp-tax-regime` (bookkeeping-zzp-tax-regime, 2026-06-01)._
+**Primary spec:** bookkeeping-zzp-tax-regime
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the administration this configuration applies to |
+| fiscalYear | integer | Yes | Fiscal year this configuration governs |
+| regimeType | enum | Yes | One of zzp-sole-trader, partnership, cv |
+| name | string | Yes | Human-readable configuration name |
+| incomeTaxRate | number | Yes | Marginal income tax rate as decimal (e.g. 0.25 for 25%) |
+| generalAllowance | number | No | General statutory allowance EUR (algemene heffingskorting equivalent) |
+| soleTraderAllowance | number | No | Sole trader deduction EUR (zelfstandigenaftrek) if applicable |
+| filingDeadline | date | Yes | Statutory filing deadline (e.g. 2027-04-20 for FY2026) |
+| categoryMappingRules | object | Yes | JSON: GL account range → statutory tax category (e.g. "4000-4099" → "self-employment-income"); individual account keys take precedence over ranges per REQ-TAX-005 |
+| allowanceAmounts | object | No | Per-category allowance overrides (e.g. { "business-expenses": 5000 }) |
+| versionId | string | Yes | Semantic version enabling retroactive recalculation (e.g. "zzp-2026-v1") |
+| effectiveFrom | date | Yes | Date this configuration becomes active |
+| effectiveUntil | date | No | Date configuration expires; null = open-ended |
+| status | enum | Yes | One of active, archived, superseded |
+
+**Relations:**
+- → Administration (many-to-one)
+- → TaxSummaryReport (one-to-many, drives GL account → category mapping)
+- → TaxEstimate (one-to-many, provides rates and allowances for projection)
+
 ### TaxReturn
 **Schema.org:** `schema:Thing`
 _A formal tax return filing for income, VAT, or other tax obligations with workflow management and compliance tracking_
@@ -3961,6 +4019,32 @@ _A formal tax return filing for income, VAT, or other tax obligations with workf
 **Relations:**
 - → Organization (many-to-one)
 - → TaxConfiguration (many-to-one)
+
+### TaxSummaryReport
+**Schema.org:** `schema:Table`
+_GL-aggregated income and expense summary by statutory tax category and fiscal period. Materialized from GLLine transactions grouped by (administrationId, fiscalYear, reportingPeriod, taxCategory) using TaxRegimeConfiguration.categoryMappingRules. No parallel tax table — aggregation is the single source of truth per ADR-031 D1. Updated automatically on each GLLine posting via x-openregister-lifecycle hook; amended status triggered by GL repost after finalization. Cross-referencing spec: `bookkeeping-zzp-tax-regime` (bookkeeping-zzp-tax-regime, 2026-06-01)._
+**Primary spec:** bookkeeping-zzp-tax-regime
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the administration this report belongs to |
+| fiscalYear | integer | Yes | Fiscal year this report covers |
+| reportingPeriod | enum | Yes | One of year, quarter-1 … quarter-4, month-01 … month-12 |
+| taxCategory | string | Yes | Statutory category resolved via categoryMappingRules (e.g. "self-employment-income", "deductible-business-expenses") |
+| glTransactionCount | integer | No | Count of GLLine transactions in this aggregation for sanity checks |
+| grossAmount | number | Yes | Sum of GLLine amounts for this category and period (EUR) |
+| deductionsAmount | number | No | Statutory deductions or allowances applicable to this category (EUR) |
+| netAmount | number | Yes | grossAmount − deductionsAmount (EUR); basis for TaxEstimate income calculation |
+| currency | string | Yes | ISO 4217 currency code (EUR) |
+| snapshotDate | date | Yes | Date the aggregation was computed; makes GL posting lag explicit |
+| configurationVersionId | string | Yes | FK to TaxRegimeConfiguration.versionId used for the GL account → category mapping |
+| status | enum | Yes | One of draft, finalized, amended |
+
+**Relations:**
+- → Administration (many-to-one)
+- → TaxRegimeConfiguration (many-to-one, via configurationVersionId → versionId)
+- → GLLine (one-to-many, aggregated source transactions)
+- → TaxEstimate (many-to-one, provides YTD basis for annual projection)
 
 ### TaxableTransaction
 **Schema.org:** `schema:Thing`
