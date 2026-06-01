@@ -4,6 +4,13 @@
 	"dependencies": [
 		"openregister"
 	],
+	"featureFlags": {
+		"gov-provincie": {
+			"label": "Provinciale BBV-variant",
+			"description": "Enable provinciale fondsen administration, kerntaken-rollups, and opcenten MRB sub-administration. Requires bbv-provincies-kerntaken seed to be loaded via admin settings.",
+			"default": false
+		}
+	},
 	"menu": [
 		{
 			"id": "Dashboard",
@@ -45,6 +52,16 @@
 					"icon": "TableMergeCellsOutline",
 					"route": "GRConsolidated",
 					"order": 70
+				},
+				{
+					"id": "ProvincialeFondsen",
+					"label": "Provinciale fondsen",
+					"icon": "BankOutline",
+					"route": "ProvincialeFondsen",
+					"order": 80,
+					"visibility": {
+						"featureFlag": "gov-provincie"
+					}
 				}
 			]
 		},
@@ -100,6 +117,102 @@
 			"title": "Features & roadmap",
 			"config": {
 				"documentationUrl": "https://shillinq.conduction.nl"
+			}
+		},
+		{
+			"id": "ProvincialeFondsen",
+			"route": "/provinciale-fondsen",
+			"type": "index",
+			"title": "Provinciale fondsen",
+			"config": {
+				"register": "shillinq",
+				"schema": "ProvincialeFondsPosting",
+				"visibility": {
+					"featureFlag": "gov-provincie"
+				},
+				"columns": [
+					{
+						"key": "fondsType",
+						"label": "Fonds type",
+						"sortable": true
+					},
+					{
+						"key": "uitkeringJaar",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "uitkeringBedrag",
+						"label": "Bedrag",
+						"sortable": true
+					},
+					{
+						"key": "uitkeringBeschikking",
+						"label": "Beschikkingnummer",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-uitkeringJaar",
+				"detailRoute": "ProvincialeFondsenDetail"
+			}
+		},
+		{
+			"id": "ProvincialeFondsenDetail",
+			"route": "/provinciale-fondsen/:id",
+			"type": "detail",
+			"title": "Provinciale fonds posting",
+			"config": {
+				"register": "shillinq",
+				"schema": "ProvincialeFondsPosting",
+				"fields": [
+					{
+						"key": "fondsType",
+						"label": "Fonds type",
+						"type": "string"
+					},
+					{
+						"key": "uitkeringJaar",
+						"label": "Uitkering jaar",
+						"type": "integer"
+					},
+					{
+						"key": "uitkeringBedrag",
+						"label": "Uitkering bedrag",
+						"type": "number"
+					},
+					{
+						"key": "uitkeringBeschikking",
+						"label": "Beschikkingnummer",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "journalEntryId",
+						"label": "Journaalpost",
+						"type": "string"
+					},
+					{
+						"key": "sourceReference",
+						"label": "Bronreferentie",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ProvincialeFondsen"
 			}
 		},
 		{

@@ -3,7 +3,7 @@
   "info": {
     "title": "Shillinq Register",
     "description": "Register containing all schemas for the Shillinq application.",
-    "version": "0.3.0"
+    "version": "0.4.0"
   },
   "x-openregister": {
     "type": "application",
@@ -128,6 +128,19 @@
             "type": "boolean",
             "default": false,
             "description": "When true, excludes this line from the consolidated trial-balance and financial-statement aggregations. Used to eliminate inter-GR transactions from consolidated views per REQ-GRC-003."
+          },
+          "programmaCode": {
+            "type": "string",
+            "description": "FK to BBVProgramma.programmaCode. Required for BBV programma-rollup aggregations on gemeente-taakveld, waterschap-kostentoedeling, and provincie-kerntaak lines per REQ-PRB-002.",
+            "nullable": true,
+            "example": "mobiliteit"
+          },
+          "opcentenTarief": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Per-provincie tariefopslag in procenten for MRB-opcenten inkomsten. Only applicable on lines posted to the MRB-opcenten inkomstenrekening per REQ-PRB-005.",
+            "nullable": true,
+            "example": 80
           }
         },
         "x-openregister-aggregations": {
@@ -145,6 +158,22 @@
                 "field": "amount",
                 "operation": "sum",
                 "condition": "side = 'credit'"
+              }
+            }
+          },
+          "opcentenInkomstenPerPeriod": {
+            "description": "Roll-up of MRB-opcenten inkomsten per provincie per period per REQ-PRB-005. Groups by accountNumber and periodId where opcentenTarief is set.",
+            "filter": "opcentenTarief IS NOT NULL",
+            "groupBy": ["accountNumber", "periodId"],
+            "operations": {
+              "totalOpcentenInkomsten": {
+                "field": "amount",
+                "operation": "sum",
+                "condition": "side = 'credit'"
+              },
+              "gemiddeldTarief": {
+                "field": "opcentenTarief",
+                "operation": "avg"
               }
             }
           }
@@ -418,6 +447,17 @@
             "type": "boolean",
             "description": "Whether VAT/BTW applies to transactions posted to this account.",
             "default": false
+          },
+          "bbvVariant": {
+            "type": "string",
+            "enum": [
+              "gemeente",
+              "waterschap",
+              "provincie"
+            ],
+            "default": "gemeente",
+            "description": "BBV variant overlay per REQ-PRB-001 / REQ-WSB-001. When 'waterschap' or 'provincie', records are interpreted under the sector-specific BBV framework. No parallel sector register — variant is a schema flag per ADR-031.",
+            "nullable": true
           }
         },
         "x-openregister-lifecycle": {
@@ -715,6 +755,223 @@
             "enabled": true,
             "filter": {
               "administrationType": ["gemeente", "provincie", "waterschap"]
+            }
+          }
+        }
+      },
+      "BBVProgramma": {
+        "slug": "BBVProgramma",
+        "icon": "FormatListBulletedOutline",
+        "version": "0.1.0",
+        "title": "BBV Programma",
+        "description": "A BBV programma-indeling entry. Discriminated by programmaStructure: gemeente use taakveld, waterschappen use kostentoedeling, provincies use kerntaak per REQ-PRB-002 / REQ-WSB-002.",
+        "x-schema-org": "schema:DefinedTerm",
+        "type": "object",
+        "required": [
+          "programmaCode",
+          "programmaOmschrijving",
+          "administrationId",
+          "programmaStructure"
+        ],
+        "properties": {
+          "programmaCode": {
+            "type": "string",
+            "description": "Canonical programma code matching BBV handleiding (e.g. 'mobiliteit', 'watersysteembeheer', 'taakveld-0.1').",
+            "example": "mobiliteit"
+          },
+          "programmaOmschrijving": {
+            "type": "string",
+            "description": "Human-readable description of this programma entry.",
+            "example": "Mobiliteit"
+          },
+          "programmaStructure": {
+            "type": "string",
+            "enum": [
+              "taakveld",
+              "kostentoedeling",
+              "kerntaak"
+            ],
+            "default": "taakveld",
+            "description": "Discriminator controlling rollup aggregation shape. 'taakveld' for gemeente, 'kostentoedeling' for waterschap, 'kerntaak' for provincie per REQ-PRB-002."
+          },
+          "bbvVariant": {
+            "type": "string",
+            "enum": [
+              "gemeente",
+              "waterschap",
+              "provincie"
+            ],
+            "default": "gemeente",
+            "description": "BBV variant overlay aligning this programma with the correct sector-specific BBV framework per REQ-PRB-001.",
+            "nullable": true
+          },
+          "parentCode": {
+            "type": "string",
+            "description": "FK to the parent BBVProgramma.programmaCode for hierarchy (e.g. kerntaak → sub-kerntaak).",
+            "nullable": true
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this programma entry.",
+            "example": "adm-provincie-1"
+          }
+        },
+        "x-openregister-aggregations": {
+          "programmaRollupByStructure": {
+            "description": "Per-programma aggregation of GL lines honoring the programmaStructure discriminator. Produces debit/credit totals per programmaCode for the relevant BBV rollup view per REQ-PRB-002.",
+            "join": {
+              "schema": "GLLine",
+              "condition": "GLLine.programmaCode = programmaCode AND GLLine.eliminationFlag = false"
+            },
+            "groupBy": ["programmaCode", "programmaStructure"],
+            "operations": {
+              "totalBaten": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "GLLine.side = 'credit'"
+              },
+              "totalLasten": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "GLLine.side = 'debit'"
+              }
+            }
+          }
+        }
+      },
+      "ProvincialeFondsPosting": {
+        "slug": "ProvincialeFondsPosting",
+        "icon": "BankOutline",
+        "version": "0.1.0",
+        "title": "Provinciale Fonds Posting",
+        "description": "A provinciale fonds posting (provinciefonds, algemene uitkering, decentralisatie-uitkering, integratie-uitkering). Materialises a balanced GLTransaction per T1 REQ-GL-001 when state transitions to 'posted'. No own ledger lines per ADR-022 single-source-of-truth invariant. Per REQ-PRB-004.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "type": "object",
+        "required": [
+          "fondsType",
+          "uitkeringJaar",
+          "uitkeringBedrag",
+          "uitkeringBeschikking",
+          "administrationId",
+          "lifecycleState"
+        ],
+        "properties": {
+          "fondsType": {
+            "type": "string",
+            "enum": [
+              "provinciefonds",
+              "algemene-uitkering",
+              "decentralisatie-uitkering",
+              "integratie-uitkering"
+            ],
+            "description": "Type of provinciale fonds uitkering per REQ-PRB-004.",
+            "example": "provinciefonds"
+          },
+          "uitkeringJaar": {
+            "type": "integer",
+            "description": "Calendar year of the uitkering (e.g. 2026).",
+            "example": 2026
+          },
+          "uitkeringBedrag": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Total uitkering amount in EUR (non-negative) per REQ-PRB-004.",
+            "example": 50000.00
+          },
+          "uitkeringBeschikking": {
+            "type": "string",
+            "description": "Beschikkingnummer identifying the official uitkering besluit.",
+            "example": "PRVF-2026-0042"
+          },
+          "journalEntryId": {
+            "type": "string",
+            "description": "FK to the materialised GLTransaction.id. Set by the lifecycle engine on the 'posted' transition per REQ-PRB-004.",
+            "nullable": true,
+            "example": "txn-prv-001"
+          },
+          "sourceReference": {
+            "type": "string",
+            "description": "Back-reference from the materialised GLTransaction to this posting. Set alongside journalEntryId on 'posted' transition.",
+            "nullable": true
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this posting.",
+            "example": "adm-provincie-1"
+          },
+          "lifecycleState": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "submitted",
+              "posted",
+              "reversed"
+            ],
+            "default": "draft",
+            "description": "Current lifecycle state of the provinciale fonds posting."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Posting is being prepared. No GL impact yet."
+            },
+            "submitted": {
+              "label": "Submitted",
+              "description": "Posting submitted for approval. Awaiting posting."
+            },
+            "posted": {
+              "label": "Posted",
+              "description": "Balanced GLTransaction materialised per T1 REQ-GL-001. journalEntryId is set."
+            },
+            "reversed": {
+              "label": "Reversed",
+              "description": "Posting reversed. Original GLTransaction voided per audit-trail-immutable (ADR-022)."
+            }
+          },
+          "transitions": {
+            "submit": {
+              "from": "draft",
+              "to": "submitted",
+              "label": "Submit for posting",
+              "description": "Submit the fonds posting for approval and GL materialisation."
+            },
+            "post": {
+              "from": "submitted",
+              "to": "posted",
+              "label": "Post",
+              "description": "Materialise a balanced 2-line GLTransaction against the provinciefonds inkomstenrekening per T1 REQ-GL-001 with sourceReference back to this posting.",
+              "action": "x-openregister-materialise-gl-transaction",
+              "actionParameters": {
+                "sourceReference": "provinciale-fonds-posting",
+                "idempotencyKey": "posting.id"
+              }
+            },
+            "reverse": {
+              "from": "posted",
+              "to": "reversed",
+              "label": "Reverse",
+              "description": "Void the materialised GLTransaction and record a reversal audit entry per ADR-022."
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "fondsUitkeringenPerJaar": {
+            "description": "Total uitkering bedrag per fondsType per uitkeringJaar for the administration. Supports provinciefonds-inkomsten reporting.",
+            "groupBy": ["fondsType", "uitkeringJaar"],
+            "filter": "lifecycleState = 'posted'",
+            "operations": {
+              "totalUitkering": {
+                "field": "uitkeringBedrag",
+                "operation": "sum"
+              },
+              "aantalPostings": {
+                "field": "id",
+                "operation": "count"
+              }
             }
           }
         }

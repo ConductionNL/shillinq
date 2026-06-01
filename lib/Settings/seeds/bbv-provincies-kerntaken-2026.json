@@ -1,0 +1,67 @@
+{
+  "_meta": {
+    "source": "Provinciale handleiding BBV",
+    "year": 2026,
+    "description": "Provinciale BBV kerntaken-indeling 2026 — seven canonical kerntaken with RGS-aligned account sub-trees per REQ-PRB-003.",
+    "copyright": "2026 Conduction B.V.",
+    "license": "EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+  },
+  "programmas": [
+    {
+      "programmaCode": "ruimte",
+      "programmaOmschrijving": "Ruimte",
+      "programmaStructure": "kerntaak",
+      "bbvVariant": "provincie",
+      "rgsAccountRange": ["6100", "6199"],
+      "description": "Kerntaak Ruimte omvat ruimtelijke ordening, vergunningverlening, toezicht en handhaving op de fysieke leefomgeving."
+    },
+    {
+      "programmaCode": "mobiliteit",
+      "programmaOmschrijving": "Mobiliteit",
+      "programmaStructure": "kerntaak",
+      "bbvVariant": "provincie",
+      "rgsAccountRange": ["6200", "6299"],
+      "description": "Kerntaak Mobiliteit omvat provinciale wegen, openbaar vervoer, en regionale bereikbaarheid."
+    },
+    {
+      "programmaCode": "water",
+      "programmaOmschrijving": "Water",
+      "programmaStructure": "kerntaak",
+      "bbvVariant": "provincie",
+      "rgsAccountRange": ["6300", "6399"],
+      "description": "Kerntaak Water omvat waterbeheer, grondwater, en regionale wateropgaven in samenwerking met waterschappen."
+    },
+    {
+      "programmaCode": "milieu",
+      "programmaOmschrijving": "Milieu",
+      "programmaStructure": "kerntaak",
+      "bbvVariant": "provincie",
+      "rgsAccountRange": ["6400", "6499"],
+      "description": "Kerntaak Milieu omvat omgevingsvergunningen, handhaving, natuur en biodiversiteit, en klimaatbeleid."
+    },
+    {
+      "programmaCode": "cultuur",
+      "programmaOmschrijving": "Cultuur",
+      "programmaStructure": "kerntaak",
+      "bbvVariant": "provincie",
+      "rgsAccountRange": ["6500", "6599"],
+      "description": "Kerntaak Cultuur omvat provinciale cultuursubsidies, erfgoed, musea, en regionale cultuurinfrastructuur."
+    },
+    {
+      "programmaCode": "economie",
+      "programmaOmschrijving": "Economie",
+      "programmaStructure": "kerntaak",
+      "bbvVariant": "provincie",
+      "rgsAccountRange": ["6600", "6699"],
+      "description": "Kerntaak Economie omvat regionale economische ontwikkeling, arbeidsmarkt, innovatie, en landbouw."
+    },
+    {
+      "programmaCode": "bestuur",
+      "programmaOmschrijving": "Bestuur",
+      "programmaStructure": "kerntaak",
+      "bbvVariant": "provincie",
+      "rgsAccountRange": ["6700", "6799"],
+      "description": "Kerntaak Bestuur omvat provinciale organisatie, democratie, interbestuurlijke verhoudingen, en dienstverlening."
+    }
+  ]
+}

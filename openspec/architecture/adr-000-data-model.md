@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 226
+**Entities:** 230
 
 ## Context
 
@@ -328,6 +328,24 @@ _Legal notice of award with publication deadline and standstill enforcement for 
 **Relations:**
 - → AwardDecision (many-to-one)
 - → Lot (many-to-many)
+
+### BBVProgramma
+**Schema.org:** `schema:DefinedTerm`
+_A BBV programma-indeling entry discriminated by programmaStructure: gemeente records use 'taakveld', waterschappen use 'kostentoedeling', provincies use 'kerntaak'. The programmaRollupByStructure aggregation rolls up GLLine amounts by programmaCode honouring the discriminator. bbvVariant flag aligns the record with the applicable sector BBV framework per ADR-031 (no parallel sector register). Cross-referencing spec: `bookkeeping-waterschappen-bbv-variant` (add-shillinq-waterschappen-bbv-variant) and `bookkeeping-provincies-bbv-variant` (add-shillinq-provincies-bbv-variant, 2026-06-01)._
+**Primary spec:** bookkeeping-provincies-bbv-variant
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| programmaCode | string | Yes | Canonical programma code matching the BBV handleiding (e.g. 'mobiliteit') |
+| programmaOmschrijving | string | Yes | Human-readable description of this programma |
+| programmaStructure | enum | Yes | One of taakveld, kostentoedeling, kerntaak — discriminates the rollup shape |
+| bbvVariant | enum | No | One of gemeente, waterschap, provincie — default gemeente |
+| parentCode | string | No | FK to parent BBVProgramma.programmaCode for hierarchy |
+| administrationId | string | Yes | FK to the Administration owning this programma |
+
+**Relations:**
+- → GLLine (one-to-many, via GLLine.programmaCode → programmaCode; drives programmaRollupByStructure aggregation)
+- self → BBVProgramma (many-to-one, via parentCode → programmaCode; hierarchy)
 
 ### BalanceSheet
 **Schema.org:** `schema:Table`
@@ -2630,6 +2648,25 @@ _A detected violation or breach of a spending policy rule that requires attentio
 - → PolicyRule (many-to-one)
 - → Expense (many-to-one)
 - → Person (many-to-one)
+
+### ProvincialeFondsPosting
+**Schema.org:** `schema:MonetaryAmount`
+_A provinciale fonds posting recording a uitkering from the provinciefonds, algemene uitkering, decentralisatie-uitkering, or integratie-uitkering. On transition to 'posted', materialises a balanced 2-line GLTransaction per T1 REQ-GL-001 with sourceReference back to this posting per ADR-022 single-source-of-truth invariant. No own ledger lines. Part of the Tier-4 provinciale BBV-variant capability behind featureFlags.gov-provincie. Cross-referencing spec: `bookkeeping-provincies-bbv-variant` (add-shillinq-provincies-bbv-variant, 2026-06-01)._
+**Primary spec:** bookkeeping-provincies-bbv-variant
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| fondsType | enum | Yes | One of provinciefonds, algemene-uitkering, decentralisatie-uitkering, integratie-uitkering |
+| uitkeringJaar | integer | Yes | Calendar year of the uitkering |
+| uitkeringBedrag | number | Yes | Total uitkering amount in EUR (≥ 0) |
+| uitkeringBeschikking | string | Yes | Beschikkingnummer of the official uitkering besluit |
+| journalEntryId | string | No | FK to the materialised GLTransaction.id; set by lifecycle engine on 'posted' transition |
+| sourceReference | string | No | Back-reference from the materialised GLTransaction to this posting |
+| administrationId | string | Yes | FK to the Administration owning this posting |
+| lifecycleState | enum | Yes | One of draft, submitted, posted, reversed |
+
+**Relations:**
+- → GLTransaction (one-to-one, materialised on 'posted' transition via journalEntryId)
 
 ### PricingRule
 **Schema.org:** `schema:PriceSpecification`

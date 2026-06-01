@@ -46,6 +46,7 @@ class SettingsService
         'register',
         'rgs_template',
         'administration_id',
+        'gov_provincie',
     ];
 
     /**
@@ -328,6 +329,131 @@ class SettingsService
         return ['seeded' => $seeded, 'skipped' => $skipped];
 
     }//end importAccounts()
+
+    /**
+     * Seed the BBV provincies kerntaken from the year-versioned seed file, idempotently.
+     *
+     * Seeds BBVProgramma records for the seven canonical provinciale kerntaken (ruimte,
+     * mobiliteit, water, milieu, cultuur, economie, bestuur) when the feature flag
+     * 'gov_provincie' is enabled. Deduplication key is (programmaCode, administrationId)
+     * so operator edits persist across repair-step re-runs per REQ-PRB-003.
+     *
+     * @param string $administrationId The administrationId to stamp on seeded records.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/add-shillinq-provincies-bbv-variant/tasks.md#task-10
+     */
+    public function seedBbvProvinciesKerntaken(string $administrationId): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        if ($administrationId === '') {
+            return [
+                'success' => false,
+                'message' => 'administrationId must not be empty.',
+            ];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/bbv-provincies-kerntaken-2026.json';
+        if (file_exists(filename: $seedPath) === false) {
+            $this->logger->error(message: 'Shillinq: bbv-provincies-kerntaken-2026.json seed file not found at '.$seedPath);
+            return [
+                'success' => false,
+                'message' => 'Kerntaken seed file not found: bbv-provincies-kerntaken-2026.json',
+            ];
+        }
+
+        $content = file_get_contents(filename: $seedPath);
+        if ($content === false) {
+            return [
+                'success' => false,
+                'message' => 'Failed to read kerntaken seed file.',
+            ];
+        }
+
+        $data = json_decode(json: $content, associative: true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return [
+                'success' => false,
+                'message' => 'Failed to parse kerntaken seed file: '.json_last_error_msg(),
+            ];
+        }
+
+        $programmas = ($data['programmas'] ?? []);
+        if (empty($programmas) === true) {
+            return [
+                'success' => false,
+                'message' => 'Kerntaken seed file contains no programmas.',
+            ];
+        }
+
+        try {
+            $objectService = $this->container->get(id: 'OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($programmas as $programma) {
+                $programma['administrationId'] = $administrationId;
+
+                $existing = $objectService
+                    ->setRegister(register: $registerSlug)
+                    ->setSchema(schema: 'BBVProgramma')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'programmaCode'    => $programma['programmaCode'],
+                                'administrationId' => $administrationId,
+                            ],
+                            'limit'   => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $programma,
+                    register: $registerSlug,
+                    schema: 'BBVProgramma',
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                message: 'Shillinq: BBV provincies kerntaken seeded',
+                context: [
+                    'seeded'  => $seeded,
+                    'skipped' => $skipped,
+                ]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'BBV provincies kerntaken seeded successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                message: 'Shillinq: BBV provincies kerntaken seeding failed',
+                context: ['exception' => $e->getMessage()]
+            );
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedBbvProvinciesKerntaken()
 
     /**
      * Load configuration from shillinq_register.json via OpenRegister.

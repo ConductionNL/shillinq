@@ -73,12 +73,14 @@ class InitializeSettings implements IRepairStep
      * Seeding is skipped entirely when administration_id is not configured
      * (C2: prevents "default" contamination of real tenant data).
      * Phase 3: registers the IV3 quarterly CBS ScheduledWorkflow if not yet present.
+     * Phase 4: seeds the BBV provincies kerntaken when app config key
+     * 'gov_provincie' is set to '1' (featureFlags.gov-provincie enabled).
      *
      * @param IOutput $output The output interface for progress reporting
      *
      * @return void
      *
-     * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-10
+     * @spec openspec/changes/add-shillinq-provincies-bbv-variant/tasks.md#task-10
      */
     public function run(IOutput $output): void
     {
@@ -125,6 +127,7 @@ class InitializeSettings implements IRepairStep
 
             $this->seedChartOfAccounts(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
+            $this->seedBbvProvinciesKerntakenWhenEnabled(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -197,6 +200,71 @@ class InitializeSettings implements IRepairStep
         $output->info('Shillinq: IV3 quarterly CBS ScheduledWorkflow registered (interval: 90 days)');
 
     }//end registerIv3ScheduledWorkflow()
+
+    /**
+     * Seed BBV provincies kerntaken when the gov_provincie feature flag is enabled.
+     *
+     * Checks app config key 'gov_provincie'. When set to '1', seeds the seven
+     * canonical kerntaken from bbv-provincies-kerntaken-2026.json via
+     * SettingsService::seedBbvProvinciesKerntaken(). Skipped when administration_id
+     * is not configured (C2 guard) or when the feature flag is not enabled.
+     * Idempotent — operator edits persist on re-run per REQ-PRB-003.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-provincies-bbv-variant/tasks.md#task-10
+     */
+    private function seedBbvProvinciesKerntakenWhenEnabled(IOutput $output): void
+    {
+        try {
+            $appConfig = $this->container->get(id: \OCP\IAppConfig::class);
+        } catch (\Throwable $e) {
+            $output->info(message: 'Shillinq: IAppConfig not available, skipping kerntaken seed');
+            return;
+        }
+
+        $govProvincieEnabled = $appConfig->getValueString(
+            app: \OCA\Shillinq\AppInfo\Application::APP_ID,
+            key: 'gov_provincie',
+            default: '0'
+        );
+
+        if ($govProvincieEnabled !== '1') {
+            return;
+        }
+
+        $settings         = $this->settingsService->getSettings();
+        $administrationId = ($settings['administration_id'] ?? '');
+
+        if ($administrationId === '') {
+            $output->warning(
+                message: 'Shillinq: administration_id not configured — skipping BBV provincies kerntaken seed. '
+                .'Configure administration_id and re-run repair step.'
+            );
+            return;
+        }
+
+        $output->info(message: 'Seeding BBV provincies kerntaken (featureFlags.gov-provincie enabled)...');
+
+        $seedResult = $this->settingsService->seedBbvProvinciesKerntaken(
+            administrationId: $administrationId
+        );
+
+        if ($seedResult['success'] === true) {
+            $seeded  = ($seedResult['seeded'] ?? 0);
+            $skipped = ($seedResult['skipped'] ?? 0);
+            $output->info(
+                message: 'BBV provincies kerntaken seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+            return;
+        }
+
+        $message = ($seedResult['message'] ?? 'unknown error');
+        $output->warning(message: 'BBV provincies kerntaken seeding issue: '.$message);
+
+    }//end seedBbvProvinciesKerntakenWhenEnabled()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.
