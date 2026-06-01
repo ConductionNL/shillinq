@@ -37,6 +37,415 @@
           }
         }
       },
+      "GLTransaction": {
+        "slug": "GLTransaction",
+        "icon": "FileDocumentMultipleOutline",
+        "version": "0.1.0",
+        "title": "GL Transaction",
+        "description": "General ledger posting header. Owns the balanced set of GL lines and the posting lifecycle (draft → posted → reversed).",
+        "type": "object",
+        "x-schema-org": "schema:AccountingTransaction",
+        "required": [
+          "transactionNumber",
+          "postingDate",
+          "periodId",
+          "currency",
+          "description",
+          "state",
+          "administrationId"
+        ],
+        "properties": {
+          "transactionNumber": {
+            "type": "string",
+            "description": "Sequential transaction number unique per administration and fiscal year.",
+            "example": "2026-00001"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Effective accounting date of the posting.",
+            "example": "2026-07-15"
+          },
+          "periodId": {
+            "type": "string",
+            "description": "FK to the FiscalPeriod record (T3); stub string acceptable until T3 is implemented.",
+            "example": "2026-07"
+          },
+          "currency": {
+            "type": "string",
+            "description": "The administration's base currency for this posting (ISO 4217).",
+            "minLength": 3,
+            "maxLength": 3,
+            "example": "EUR",
+            "default": "EUR"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable summary of the posting.",
+            "example": "Purchase invoice supplier XYZ"
+          },
+          "sourceReference": {
+            "type": "string",
+            "description": "External document number (invoice no., bank statement ref, asset repair ID, etc.).",
+            "nullable": true,
+            "example": "INV-2026-001"
+          },
+          "state": {
+            "type": "string",
+            "description": "Lifecycle state of the GL transaction.",
+            "enum": ["draft", "posted", "reversed"],
+            "default": "draft",
+            "example": "draft"
+          },
+          "journalEntryId": {
+            "type": "string",
+            "description": "Back-reference to the JournalEntry that materialised this posting, if any.",
+            "nullable": true
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning the posting.",
+            "example": "adm-1"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Transaction being composed; lines may be added and modified."
+            },
+            "posted": {
+              "label": "Posted",
+              "description": "Balanced and locked; no further edits permitted. Balance invariant checked on entry."
+            },
+            "reversed": {
+              "label": "Reversed",
+              "description": "Fully reversed by a counter-posting; retained for audit trail."
+            }
+          },
+          "transitions": {
+            "post": {
+              "from": "draft",
+              "to": "posted",
+              "label": "Post transaction",
+              "description": "Lock the transaction after balance check. Requires sum(debit baseCurrencyAmount) = sum(credit baseCurrencyAmount).",
+              "requires": "OCA\\Shillinq\\Guard\\GLTransactionBalanceGuard::requireBalanced"
+            },
+            "reverse": {
+              "from": "posted",
+              "to": "reversed",
+              "label": "Reverse transaction",
+              "description": "Generate counter-posting and mark this transaction reversed."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "GLLine": {
+        "slug": "GLLine",
+        "icon": "FormatListBulletedOutline",
+        "version": "0.2.0",
+        "title": "GL Line",
+        "description": "General ledger posting line. Carries both the transaction-currency amount and the base-currency presentation amount (multi-currency extension per bookkeeping-multi-currency T4 spec). Single-currency postings default fxRate=1.0 and baseCurrencyAmount=amount.",
+        "type": "object",
+        "x-schema-org": "schema:MonetaryAmount",
+        "required": [
+          "transactionId",
+          "lineNumber",
+          "accountNumber",
+          "side",
+          "amount",
+          "transactionCurrency",
+          "baseCurrencyAmount",
+          "baseCurrency",
+          "fxRate",
+          "fxRateSource",
+          "fxRateDate",
+          "periodId"
+        ],
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "description": "FK to the parent GLTransaction.id.",
+            "example": "txn-001"
+          },
+          "lineNumber": {
+            "type": "integer",
+            "description": "Stable ordering within the transaction (1-based).",
+            "minimum": 1,
+            "example": 1
+          },
+          "accountNumber": {
+            "type": "string",
+            "description": "FK to Account.accountNumber.",
+            "example": "1000"
+          },
+          "side": {
+            "type": "string",
+            "description": "Debit or credit — encodes sign so amounts are always non-negative.",
+            "enum": ["debit", "credit"],
+            "example": "debit"
+          },
+          "amount": {
+            "type": "number",
+            "description": "The amount in the transaction currency (transactionAmount). Non-negative; on-the-wire JSON property name 'amount' preserved for T1 backwards compat — semantically this is transactionAmount.",
+            "minimum": 0,
+            "example": 1000.00
+          },
+          "transactionCurrency": {
+            "type": "string",
+            "description": "ISO 4217 code of the currency the line was posted in (renamed from T1 'currency'). Defaults to the administration's baseCurrency for same-currency postings.",
+            "minLength": 3,
+            "maxLength": 3,
+            "default": "EUR",
+            "example": "USD"
+          },
+          "baseCurrencyAmount": {
+            "type": "number",
+            "description": "Amount converted to the administration's base currency at fxRate. Always present; trial balance and statements aggregate this field. baseCurrencyAmount = amount × fxRate.",
+            "minimum": 0,
+            "example": 925.90
+          },
+          "baseCurrency": {
+            "type": "string",
+            "description": "ISO 4217 code of the administration's base currency at posting time.",
+            "minLength": 3,
+            "maxLength": 3,
+            "example": "EUR"
+          },
+          "fxRate": {
+            "type": "number",
+            "description": "Rate converting one unit of transactionCurrency to baseCurrency units. Orientation: 1 transactionCurrency = fxRate × baseCurrency. Same orientation as FxRate.rate — no reciprocation. Defaults to 1.0 when transactionCurrency = baseCurrency.",
+            "exclusiveMinimum": 0,
+            "default": 1.0,
+            "example": 0.9259
+          },
+          "fxRateSource": {
+            "type": "string",
+            "description": "Origin of the FX rate used on this line.",
+            "enum": ["ecb", "manual", "internal-policy"],
+            "default": "internal-policy",
+            "example": "ecb"
+          },
+          "fxRateDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the FX rate applies to (typically the posting date or the preceding business day).",
+            "example": "2026-07-15"
+          },
+          "periodId": {
+            "type": "string",
+            "description": "FK to FiscalPeriod; auto-resolved at post transition against postingDate and the active FiscalPeriod.",
+            "example": "2026-07"
+          },
+          "subLedgerType": {
+            "type": "string",
+            "description": "Sub-ledger classification; T2 owns the actual sub-ledger registers.",
+            "enum": ["ap", "ar", "project", "none"],
+            "nullable": true,
+            "example": "ar"
+          },
+          "subLedgerRef": {
+            "type": "string",
+            "description": "FK into the sub-ledger when subLedgerType ≠ none.",
+            "nullable": true,
+            "example": "ar-invoice-001"
+          },
+          "costCenter": {
+            "type": "string",
+            "description": "Cost-center / department code for allocation reporting.",
+            "nullable": true,
+            "example": "SALES"
+          },
+          "description": {
+            "type": "string",
+            "description": "Line-level description.",
+            "nullable": true,
+            "example": "Revenue from export sale"
+          }
+        },
+        "x-openregister-calculations": {
+          "isBaseCurrency": {
+            "expression": "@self.transactionCurrency == @self.baseCurrency",
+            "type": "boolean",
+            "description": "True when the line is posted in the administration's own base currency (fxRate=1.0 case)."
+          },
+          "gainLossIndicator": {
+            "expression": "@self.baseCurrencyAmount - @self.amount",
+            "type": "number",
+            "description": "Difference between base-currency amount and transaction amount; non-zero signals FX conversion was applied."
+          }
+        },
+        "x-openregister-relations": {
+          "transaction": {
+            "localField": "transactionId",
+            "relatedSchema": "GLTransaction",
+            "relatedField": "id",
+            "cardinality": "many-to-one",
+            "description": "Parent GL transaction that owns this line."
+          },
+          "account": {
+            "localField": "accountNumber",
+            "relatedSchema": "Account",
+            "relatedField": "accountNumber",
+            "cardinality": "many-to-one",
+            "description": "Chart-of-accounts entry for this line."
+          },
+          "fxRateRecord": {
+            "localField": ["transactionCurrency", "baseCurrency", "fxRateDate", "fxRateSource"],
+            "relatedSchema": "FxRate",
+            "relatedField": ["transactionCurrency", "baseCurrency", "date", "source"],
+            "cardinality": "many-to-one",
+            "description": "Join to the FxRate register on (transactionCurrency, baseCurrency, date, source) — verifiable that fxRate = FxRate.rate with no reciprocation."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "FxRate": {
+        "slug": "FxRate",
+        "icon": "CurrencyEur",
+        "version": "0.1.0",
+        "title": "FX Rate",
+        "description": "Foreign exchange rate for a (transactionCurrency, baseCurrency, date, source) tuple. Orientation: 1 transactionCurrency = rate × baseCurrency, matching GLLine.fxRate — no reciprocation needed. ECB rates are stored inverted (our rate = 1 / ECB published rate) per REQ-MC-002.",
+        "type": "object",
+        "x-schema-org": "schema:ExchangeRateSpecification",
+        "required": [
+          "transactionCurrency",
+          "baseCurrency",
+          "date",
+          "rate",
+          "source"
+        ],
+        "properties": {
+          "transactionCurrency": {
+            "type": "string",
+            "description": "The currency being converted FROM (the foreign/quote currency on a GL line). ISO 4217.",
+            "minLength": 3,
+            "maxLength": 3,
+            "example": "USD"
+          },
+          "baseCurrency": {
+            "type": "string",
+            "description": "The currency being converted TO (the administration's base currency). ISO 4217.",
+            "minLength": 3,
+            "maxLength": 3,
+            "example": "EUR"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "The day this rate applies to.",
+            "example": "2026-07-15"
+          },
+          "rate": {
+            "type": "number",
+            "description": "Rate: 1 transactionCurrency = rate × baseCurrency. Same orientation as GLLine.fxRate. A USD/EUR row for '1 USD = 0.9259 EUR' stores rate: 0.9259. ECB feed inverted on ingest: our rate = 1 / ECB rate, rounded to ≥6 decimal places.",
+            "exclusiveMinimum": 0,
+            "example": 0.925926
+          },
+          "source": {
+            "type": "string",
+            "description": "Origin of the rate.",
+            "enum": ["ecb", "manual", "internal-policy"],
+            "example": "ecb"
+          },
+          "manualOverrideReason": {
+            "type": "string",
+            "description": "Required when source = manual. Explains the business reason for overriding the ECB rate (e.g. internal hedge contract).",
+            "nullable": true,
+            "example": "Internal hedge contract 2026-H1"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "Optional — when set, this rate applies only to the specified administration; when null the rate is global.",
+            "nullable": true,
+            "example": "adm-1"
+          }
+        },
+        "x-openregister-unique": [
+          ["transactionCurrency", "baseCurrency", "date", "source", "administrationId"]
+        ],
+        "x-openregister-preconditions": {
+          "save": {
+            "conditions": [
+              {
+                "when": {"field": "source", "equals": "manual"},
+                "require": {"field": "manualOverrideReason", "notEmpty": true},
+                "error": "manualOverrideReason is required when source is manual"
+              }
+            ]
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Rate is valid and may be used for new GL postings."
+            },
+            "superseded": {
+              "label": "Superseded",
+              "description": "A newer rate for the same tuple has been stored; this rate is retained for audit trail."
+            }
+          },
+          "transitions": {
+            "supersede": {
+              "from": "active",
+              "to": "superseded",
+              "label": "Supersede",
+              "description": "Mark this rate as superseded when a corrected rate is stored for the same tuple."
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "countBySource": {
+            "field": "source",
+            "operation": "count",
+            "description": "Number of FX rate records per source (ecb, manual, internal-policy).",
+            "groupBy": "source"
+          },
+          "latestRatePerPair": {
+            "field": "date",
+            "operation": "max",
+            "description": "Most recent rate date per (transactionCurrency, baseCurrency) pair.",
+            "groupBy": ["transactionCurrency", "baseCurrency"]
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            },
+            "admin": {
+              "permissions": ["create", "read", "update", "delete"]
+            }
+          }
+        }
+      },
       "Account": {
         "slug": "Account",
         "icon": "LedgerOutline",
@@ -205,6 +614,85 @@
           }
         }
       }
+    }
+  },
+  "x-openregister-scheduled-workflows": {
+    "ecb-fx-rate-ingestion": {
+      "name": "ECB Daily FX Rate Ingestion",
+      "description": "Fetches the ECB reference XML feed via openconnector source 'ecb-fx-rates', inverts each published rate (our rate = 1 / ECB rate), rounds to ≥6 decimal places, and upserts FxRate records with source: ecb. Emits a CloudEvent on completion. Per REQ-MC-003 and ADR-031 path 2.",
+      "engine": "n8n",
+      "workflowId": "ecb-fx-rate-ingestion",
+      "register": "shillinq",
+      "schema": "FxRate",
+      "interval": 86400,
+      "enabled": true,
+      "payload": {
+        "openconnectorSourceSlug": "ecb-fx-rates",
+        "targetRegister": "shillinq",
+        "targetSchema": "FxRate",
+        "rateOrientation": "invert-ecb",
+        "rateDecimalPlaces": 6,
+        "source": "ecb"
+      }
+    },
+    "period-end-fx-revaluation": {
+      "name": "Period-End FX Revaluation",
+      "description": "Reads each open foreign-currency position (AR/AP with baseCurrencyAmount computed at book rate), computes the difference between book rate and the period-end ECB rate, and emits one balanced GLTransaction per position posting unrealised gain or loss to the configured account. Triggered on period close. Per REQ-MC-004 and ADR-031 path 2.",
+      "engine": "n8n",
+      "workflowId": "period-end-fx-revaluation",
+      "register": "shillinq",
+      "schema": "GLTransaction",
+      "interval": 0,
+      "enabled": false,
+      "triggerOn": "period-close",
+      "payload": {
+        "targetRegister": "shillinq",
+        "unrealisedGainAccount": "8900",
+        "unrealisedLossAccount": "8901",
+        "revaluationJournalCode": "FX-REVAL"
+      }
+    }
+  },
+  "x-openregister-mappings": {
+    "ias21-consolidation-translation": {
+      "name": "IAS 21 Functional-Currency Consolidation Translation",
+      "description": "Translates per-subsidiary financial statements to the parent's presentation currency per IAS 21 rules: monetary assets/liabilities at closing rate, equity at historical rate, P&L at average rate. The resulting cumulative translation adjustment (CTA) posts to a dedicated equity account on the consolidated balance sheet. References the FxRate register for rate lookups. No PHP ConsolidationTranslationService. Per REQ-MC-005 and ADR-022.",
+      "version": "0.1.0",
+      "inputRegister": "shillinq",
+      "inputSchema": "GLLine",
+      "outputRegister": "shillinq",
+      "outputSchema": "GLLine",
+      "rateRegister": "shillinq",
+      "rateSchema": "FxRate",
+      "rules": [
+        {
+          "accountType": "monetary-assets",
+          "rateType": "closing",
+          "description": "Monetary assets translated at period closing rate per IAS 21.23(a)."
+        },
+        {
+          "accountType": "monetary-liabilities",
+          "rateType": "closing",
+          "description": "Monetary liabilities translated at period closing rate per IAS 21.23(a)."
+        },
+        {
+          "accountType": "equity",
+          "rateType": "historical",
+          "description": "Equity translated at historical rate (rate at date of original transaction) per IAS 21.23(b)."
+        },
+        {
+          "accountType": "income",
+          "rateType": "average",
+          "description": "Income and expenses translated at average rate for the period per IAS 21.22."
+        },
+        {
+          "accountType": "expenses",
+          "rateType": "average",
+          "description": "Income and expenses translated at average rate for the period per IAS 21.22."
+        }
+      ],
+      "ctaAccount": "3900",
+      "ctaDescription": "Cumulatief omrekeningsverschil (Cumulative Translation Adjustment)"
     }
   }
 }

@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 225
+**Entities:** 228
 
 ## Context
 
@@ -1473,6 +1473,32 @@ _Spend and expense report by category with approval and budget tracking_
 - → ProcurementOrder (many-to-many)
 - → Supplier (many-to-many)
 
+### FxRate
+**Schema.org:** `schema:ExchangeRateSpecification`
+_Foreign exchange rate for a (transactionCurrency, baseCurrency, date, source) tuple. Orientation: 1 transactionCurrency = rate × baseCurrency — same direction as GLLine.fxRate so the join requires no reciprocation. ECB rates are stored inverted (our rate = 1 / ECB published rate, rounded to ≥6 dp)._
+**Primary spec:** bookkeeping-multi-currency (T4)
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| transactionCurrency | string (ISO 4217) | Yes | The currency being converted FROM (the foreign/quote currency on a GL line) |
+| baseCurrency | string (ISO 4217) | Yes | The currency being converted TO (the administration's base currency) |
+| date | date | Yes | The day this rate applies to |
+| rate | number > 0 | Yes | Rate: 1 transactionCurrency = rate × baseCurrency. A USD/EUR row for "1 USD = 0.9259 EUR" stores rate: 0.9259. |
+| source | enum | Yes | One of ecb, manual, internal-policy |
+| manualOverrideReason | string | No | Required when source = manual |
+| administrationId | string | No | When set, this rate applies only to the specified administration; when null the rate is global |
+
+**Uniqueness:** (transactionCurrency, baseCurrency, date, source, administrationId) must be unique.
+
+**Relations:**
+- → GLLine (one-to-many, via transactionCurrency + baseCurrency + date + source join)
+
+> **Reconciliation note (add-shillinq-multi-currency, 2026-06-01):** Introduced by the T4 multi-currency
+> extension. Holds one ECB, manual, or internal-policy rate per currency pair per day. The ECB ingestion
+> scheduled workflow inverts the published EUR/X rate to X/EUR orientation on storage. The `FxRate.rate`
+> and `GLLine.fxRate` share the same numeric value for the same (pair, date, source) — no reciprocation
+> needed. The T4 `bookkeeping-multi-currency` spec is the authoritative contract.
+
 ### FXExposure
 **Schema.org:** `schema:MonetaryAmount`
 _Track foreign exchange risk across currencies with current rates, valuations, and unrealized gains/losses_
@@ -1664,6 +1690,66 @@ _An individual entry in the general ledger representing a financial transaction 
 - → FiscalYear (many-to-one)
 - → Organization (many-to-one)
 - → APTransaction (many-to-one)
+
+### GLLine
+**Schema.org:** `schema:MonetaryAmount`
+_General ledger posting line. Carries both the transaction-currency amount (`amount` / `transactionAmount`) and the base-currency presentation amount (`baseCurrencyAmount`), joined by `fxRate`. Single-currency postings default `fxRate = 1.0` and `baseCurrencyAmount = amount`._
+**Primary spec:** bookkeeping-general-ledger (T1) — multi-currency fields per bookkeeping-multi-currency (T4)
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| transactionId | string | Yes | FK to parent GLTransaction.id |
+| lineNumber | integer | Yes | Stable ordering within the transaction (1-based) |
+| accountNumber | string | Yes | FK to Account.accountNumber |
+| side | enum | Yes | debit or credit |
+| amount | number ≥ 0 | Yes | Transaction-currency amount (semantically transactionAmount; on-the-wire name preserved for T1 compat) |
+| transactionCurrency | string (ISO 4217) | Yes | Currency the line was posted in (renamed from T1 `currency`) |
+| baseCurrencyAmount | number ≥ 0 | Yes | Amount in base currency at fxRate; used for balance invariant and aggregation |
+| baseCurrency | string (ISO 4217) | Yes | Administration's base currency at posting time |
+| fxRate | number > 0 | Yes | Rate: 1 transactionCurrency = fxRate × baseCurrency. Default 1.0 for same-currency lines |
+| fxRateSource | enum | Yes | One of ecb, manual, internal-policy |
+| fxRateDate | date | Yes | Date the FX rate applies to |
+| periodId | string | Yes | FK to FiscalPeriod; auto-resolved at post transition |
+| subLedgerType | enum | No | ap, ar, project, none |
+| subLedgerRef | string | No | FK into the sub-ledger register |
+| costCenter | string | No | Cost-center / department code |
+| description | string | No | Line-level description |
+
+**Balance invariant (REQ-GL-005):** Computed in `baseCurrencyAmount` — the only field guaranteed to share a unit across all lines of a multi-currency transaction.
+
+**Relations:**
+- → GLTransaction (many-to-one)
+- → Account (many-to-one)
+- → FxRate (many-to-one, join on transactionCurrency + baseCurrency + fxRateDate + fxRateSource)
+
+> **Reconciliation note (add-shillinq-multi-currency, 2026-06-01):** T4 multi-currency extension
+> additively patches the T1 `GLLine` field set. T1's single `currency` field is renamed to
+> `transactionCurrency`; `baseCurrencyAmount`, `baseCurrency`, `fxRate`, `fxRateSource`, and
+> `fxRateDate` are added. T1's balance invariant (sum debits = sum credits) is now computed in
+> `baseCurrencyAmount` instead of `amount`. T1 callers default `fxRate = 1.0` and
+> `baseCurrencyAmount = amount`. The authoritative multi-currency field contract is
+> `bookkeeping-multi-currency` MODIFIED REQ-GL-003.
+
+### GLTransaction
+**Schema.org:** `schema:AccountingTransaction`
+_General ledger posting header. Owns the balanced set of GLLine rows and the posting lifecycle (draft → posted → reversed). The balance invariant (sum of debit baseCurrencyAmount = sum of credit baseCurrencyAmount) is checked on the post transition._
+**Primary spec:** bookkeeping-general-ledger (T1)
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| transactionNumber | string | Yes | Sequential number unique per administration + fiscal year |
+| postingDate | date | Yes | Effective accounting date |
+| periodId | string | Yes | FK to FiscalPeriod |
+| currency | string (ISO 4217) | Yes | Administration's base currency for this posting |
+| description | string | Yes | Human-readable posting summary |
+| sourceReference | string | No | External document reference (invoice no., bank statement, etc.) |
+| state | enum | Yes | draft, posted, or reversed |
+| journalEntryId | string | No | Back-reference to the JournalEntry that materialised this posting |
+| administrationId | string | Yes | FK to the Administration owning the posting |
+
+**Relations:**
+- → GLLine (one-to-many)
+- → Administration (many-to-one)
 
 ### GoodsReceipt
 **Schema.org:** `schema:Thing`

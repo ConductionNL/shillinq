@@ -24,6 +24,13 @@
 					"icon": "LedgerOutline",
 					"route": "ChartOfAccounts",
 					"order": 10
+				},
+				{
+					"id": "FxRates",
+					"label": "FX Rates",
+					"icon": "CurrencyEur",
+					"route": "FxRates",
+					"order": 20
 				}
 			]
 		},
@@ -94,6 +101,108 @@
 				],
 				"defaultSort": "accountNumber",
 				"detailRoute": "ChartOfAccountsDetail"
+			}
+		},
+		{
+			"id": "FxRates",
+			"route": "/fx-rates",
+			"type": "index",
+			"title": "FX Rates",
+			"config": {
+				"register": "shillinq",
+				"schema": "FxRate",
+				"columns": [
+					{
+						"key": "transactionCurrency",
+						"label": "From Currency",
+						"sortable": true
+					},
+					{
+						"key": "baseCurrency",
+						"label": "To Currency",
+						"sortable": true
+					},
+					{
+						"key": "date",
+						"label": "Date",
+						"sortable": true
+					},
+					{
+						"key": "rate",
+						"label": "Rate",
+						"sortable": true
+					},
+					{
+						"key": "source",
+						"label": "Source",
+						"sortable": true
+					}
+				],
+				"defaultSort": "date",
+				"filterChips": [
+					{
+						"key": "transactionCurrency",
+						"label": "From Currency"
+					},
+					{
+						"key": "baseCurrency",
+						"label": "To Currency"
+					},
+					{
+						"key": "source",
+						"label": "Source"
+					}
+				],
+				"detailRoute": "FxRatesDetail"
+			}
+		},
+		{
+			"id": "FxRatesDetail",
+			"route": "/fx-rates/:id",
+			"type": "detail",
+			"title": "FX Rate",
+			"config": {
+				"register": "shillinq",
+				"schema": "FxRate",
+				"fields": [
+					{
+						"key": "transactionCurrency",
+						"label": "From Currency",
+						"type": "string"
+					},
+					{
+						"key": "baseCurrency",
+						"label": "To Currency",
+						"type": "string"
+					},
+					{
+						"key": "date",
+						"label": "Date",
+						"type": "string"
+					},
+					{
+						"key": "rate",
+						"label": "Rate",
+						"type": "number"
+					},
+					{
+						"key": "source",
+						"label": "Source",
+						"type": "string"
+					},
+					{
+						"key": "manualOverrideReason",
+						"label": "Manual Override Reason",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "FxRates"
 			}
 		},
 		{

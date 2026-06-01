@@ -1,5 +1,7 @@
 # Design — Multi-Currency
 
+**status: pr-created**
+
 ## Decisions
 
 ### D1 — Additive `GLLine` extension, single-currency callers stay correct
