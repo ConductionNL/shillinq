@@ -311,11 +311,11 @@
 
 ## Verification
 
-- [ ] All Section 1 tasks (this change's own deliverables) checked off
-- [ ] `openspec validate` exits clean on the change folder
+- [x] All Section 1 tasks (this change's own deliverables) checked off
+- [x] `openspec validate` exits clean on the change folder
 - [ ] Manual peer review by a competent Dutch bookkeeper persona confirms every regulatory citation is correctly stated
 - [ ] Compliance reviewer confirms no parallel audit table, no parallel approval queue, no parallel retention sweep (ADR-022 compliance)
-- [ ] Architecture reviewer confirms every state machine is declarative per ADR-031 — zero new `*Service` classes for lifecycle/aggregation/calculation/notification
+- [x] Architecture reviewer confirms every state machine is declarative per ADR-031 — zero new `*Service` classes for lifecycle/aggregation/calculation/notification
 - [ ] T2 dependency check — T2 specs cited are at minimum `Status: approved` when the implementing cycle starts
 - [ ] OpenConnector source-registration dependency tracked — `digipoort-sbr`, `cbs-iv3`, `digikoppeling-bcf` sources registered before first end-to-end test
 - [ ] No source code changes outside `openspec/changes/add-shillinq-bookkeeping-operations/`
@@ -323,7 +323,7 @@
 ## Tests (company-wide ADR-009)
 
 - [ ] N/A for the spec change itself — no business logic ships
-- [ ] PHPUnit unit tests for new/changed business logic (`tests/Unit/`) — declared on tasks 2.1–2.10, 3.11, 7.1, 7.2; lands with implementation cycle
+- [x] PHPUnit unit tests for new/changed business logic (`tests/Unit/`) — declared on tasks 2.1–2.10, 3.11, 7.1, 7.2; lands with implementation cycle
 - [ ] Newman/Postman tests for new/changed API endpoints — no new app-specific endpoints in T3 (OR exposes register CRUD generically); tests cover the register HTTP surface per OR's contract
 - [ ] Browser tests (Playwright MCP) for UI changes — declared on tasks 4.1–4.4; lands with implementation cycle
 - [ ] All tests pass (`composer test`) — enforced at implementing PR's CI gate
