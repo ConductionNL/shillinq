@@ -26,6 +26,13 @@
 					"order": 10
 				},
 				{
+					"id": "FiscalYears",
+					"label": "Fiscal Years",
+					"icon": "CalendarRangeOutline",
+					"route": "FiscalYears",
+					"order": 40
+				},
+				{
 					"id": "GRDeelnemers",
 					"label": "Deelnemers",
 					"icon": "AccountMultipleOutline",
@@ -582,6 +589,119 @@
 						"gridHeight": 2
 					}
 				]
+			}
+		},
+		{
+			"id": "FiscalYears",
+			"route": "/bookkeeping/fiscal-years",
+			"type": "index",
+			"title": "Fiscal Years",
+			"config": {
+				"register": "shillinq",
+				"schema": "FiscalYear",
+				"columns": [
+					{
+						"key": "yearNumber",
+						"label": "Boekjaar",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"sortable": true
+					},
+					{
+						"key": "startDate",
+						"label": "Startdatum",
+						"sortable": true
+					},
+					{
+						"key": "endDate",
+						"label": "Einddatum",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-yearNumber",
+				"detailRoute": "FiscalYearDetail"
+			}
+		},
+		{
+			"id": "FiscalYearDetail",
+			"route": "/bookkeeping/fiscal-years/:id",
+			"type": "detail",
+			"title": "Boekjaar",
+			"config": {
+				"register": "shillinq",
+				"schema": "FiscalYear",
+				"fields": [
+					{
+						"key": "yearNumber",
+						"label": "Boekjaar",
+						"type": "integer"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "startDate",
+						"label": "Startdatum",
+						"type": "date"
+					},
+					{
+						"key": "endDate",
+						"label": "Einddatum",
+						"type": "date"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "closingJournalId",
+						"label": "Afsluitingsboekingsregel",
+						"type": "string"
+					},
+					{
+						"key": "openingJournalId",
+						"label": "Openingsboekingsregel",
+						"type": "string"
+					},
+					{
+						"key": "closedAt",
+						"label": "Afgesloten op",
+						"type": "date-time"
+					},
+					{
+						"key": "closedBy",
+						"label": "Afgesloten door",
+						"type": "string"
+					},
+					{
+						"key": "reopenedAt",
+						"label": "Heropend op",
+						"type": "date-time"
+					},
+					{
+						"key": "reopenedBy",
+						"label": "Heropend door",
+						"type": "string"
+					},
+					{
+						"key": "reopenReason",
+						"label": "Reden heropening",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "FiscalYears"
 			}
 		},
 		{

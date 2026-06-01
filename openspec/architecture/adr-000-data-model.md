@@ -1527,20 +1527,29 @@ _Exported financial statements (annual, management, or consolidated) generated f
 
 ### FiscalYear
 **Schema.org:** `schema:Event`
-_An accounting period representing a fiscal year for financial reporting and regulatory compliance._
-**Primary spec:** financial-reporting-accountability
+_An accounting period representing a fiscal year for financial reporting, year-end close, and regulatory compliance. Extended by the `bookkeeping-year-end-close` (T4) capability to carry the full open → closing → closed → reopened lifecycle per REQ-YEC-001._
+**Primary spec:** bookkeeping-year-end-close (T4); referenced by financial-reporting-accountability
+
+> **Reconciliation note (add-shillinq-year-end-close):** The original model declared `year`, `isClosed`, and `closingDate`. The T4 year-end-close spec replaces these with a richer field set: `yearNumber` (replaces `year`; unique per `administrationId` per D5), a four-state `state` enum (replaces `isClosed`), `closingJournalId` + `openingJournalId` (FKs to the T1 `JournalEntry` records that carry the retained-earnings transfer and the opening-balance posting), and audit-trail fields (`closedAt`, `closedBy`, `reopenedAt`, `reopenedBy`, `reopenReason`). `JournalEntry.fiscalYearId` references the FiscalYear for all entries posted within that year; the closing and opening journals for the year-end close additionally reference the year via `closingJournalId` / `openingJournalId` for pairing with the admin-reopen reversals.
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| year | integer | Yes | The fiscal year number (e.g., 2024) |
-| startDate | date | Yes | The first day of the fiscal period |
-| endDate | date | Yes | The last day of the fiscal period |
-| isClosed | boolean | No | Whether the fiscal year is closed for amendments |
-| closingDate | date | No | Date when the fiscal year was officially closed |
+| yearNumber | integer | Yes | Calendar year reference (e.g. 2026). Unique per administrationId. |
+| startDate | date | Yes | First day of the fiscal year (typically YYYY-01-01; supports broken fiscal years). |
+| endDate | date | Yes | Last day of the fiscal year. |
+| state | enum | Yes | One of `open`, `closing`, `closed`, `reopened`. Driven by x-openregister-lifecycle. |
+| closingJournalId | string | No | FK to the JournalEntry posting the retained-earnings transfer (state = closed). |
+| openingJournalId | string | No | FK to the JournalEntry posting the next-year opening balances (set on next year's FiscalYear record). |
+| closedAt | date-time | No | Timestamp when the close completed; required when state = closed. |
+| closedBy | string | No | NC user id of the operator who completed the close; required when state = closed. |
+| reopenedAt | date-time | No | Timestamp when a reopen happened; required when state = reopened. |
+| reopenedBy | string | No | NC user id of the admin who reopened the year; required when state = reopened. |
+| reopenReason | string | No | Operator-supplied justification for the reopen; required (non-empty) when state = reopened. |
+| administrationId | string | Yes | FK to the Administration. Together with yearNumber forms the uniqueness key. |
 
 **Relations:**
 - → FinancialReport (one-to-many)
-- → JournalEntry (one-to-many)
+- → JournalEntry (one-to-many; `JournalEntry.fiscalYearId` references this record; closing + opening journals additionally referenced by `closingJournalId` / `openingJournalId` for audit-pair traceability)
 
 ### FixedAsset
 **Schema.org:** `schema:Thing`
