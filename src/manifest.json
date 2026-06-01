@@ -4,6 +4,9 @@
 	"dependencies": [
 		"openregister"
 	],
+	"featureFlags": {
+		"gov-gr": false
+	},
 	"menu": [
 		{
 			"id": "Dashboard",
@@ -24,6 +27,36 @@
 					"icon": "LedgerOutline",
 					"route": "ChartOfAccounts",
 					"order": 10
+				},
+				{
+					"id": "GemeenschappelijkeRegeling",
+					"label": "Gemeenschappelijke regeling",
+					"icon": "AccountGroupOutline",
+					"featureFlag": "gov-gr",
+					"order": 50,
+					"children": [
+						{
+							"id": "GRDeelnemers",
+							"label": "Deelnemers",
+							"icon": "AccountMultipleOutline",
+							"route": "GRDeelnemers",
+							"order": 10
+						},
+						{
+							"id": "GRVerdeelsleutels",
+							"label": "Verdeelsleutels",
+							"icon": "ScaleBalanceOutline",
+							"route": "GRVerdeelsleutels",
+							"order": 20
+						},
+						{
+							"id": "GRConsolidated",
+							"label": "Geconsolideerde view",
+							"icon": "TableMergeCellsOutline",
+							"route": "GRConsolidated",
+							"order": 30
+						}
+					]
 				}
 			]
 		},
@@ -94,6 +127,185 @@
 				],
 				"defaultSort": "accountNumber",
 				"detailRoute": "ChartOfAccountsDetail"
+			}
+		},
+		{
+			"id": "GRDeelnemers",
+			"route": "/gr/deelnemers",
+			"type": "index",
+			"title": "Deelnemers",
+			"config": {
+				"register": "shillinq",
+				"schema": "GRDeelnemer",
+				"columns": [
+					{
+						"key": "deelnemerNaam",
+						"label": "Naam",
+						"sortable": true
+					},
+					{
+						"key": "deelnemerType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "aandeel",
+						"label": "Aandeel",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "deelnemerNaam",
+				"detailRoute": "GRDeelnemerDetail"
+			}
+		},
+		{
+			"id": "GRDeelnemerDetail",
+			"route": "/gr/deelnemers/:id",
+			"type": "detail",
+			"title": "Deelnemer",
+			"config": {
+				"register": "shillinq",
+				"schema": "GRDeelnemer",
+				"fields": [
+					{
+						"key": "deelnemerNaam",
+						"label": "Naam",
+						"type": "string"
+					},
+					{
+						"key": "deelnemerType",
+						"label": "Type",
+						"type": "string"
+					},
+					{
+						"key": "aandeel",
+						"label": "Aandeel",
+						"type": "number"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie-koppeling",
+						"type": "string"
+					},
+					{
+						"key": "actief",
+						"label": "Actief",
+						"type": "boolean"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "GRDeelnemers"
+			}
+		},
+		{
+			"id": "GRVerdeelsleutels",
+			"route": "/gr/verdeelsleutels",
+			"type": "index",
+			"title": "Verdeelsleutels",
+			"config": {
+				"register": "shillinq",
+				"schema": "GRVerdeelsleutel",
+				"columns": [
+					{
+						"key": "sleutelNaam",
+						"label": "Naam",
+						"sortable": true
+					},
+					{
+						"key": "verdelingsType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "lineNumber",
+						"label": "Volgorde",
+						"sortable": true
+					}
+				],
+				"defaultSort": "lineNumber",
+				"detailRoute": "GRVerdeelsleutelDetail"
+			}
+		},
+		{
+			"id": "GRVerdeelsleutelDetail",
+			"route": "/gr/verdeelsleutels/:id",
+			"type": "detail",
+			"title": "Verdeelsleutel",
+			"config": {
+				"register": "shillinq",
+				"schema": "GRVerdeelsleutel",
+				"fields": [
+					{
+						"key": "sleutelNaam",
+						"label": "Naam",
+						"type": "string"
+					},
+					{
+						"key": "costClusterAccountNumbers",
+						"label": "Kostencluster grootboekrekeningen",
+						"type": "array"
+					},
+					{
+						"key": "verdelingsType",
+						"label": "Verdelingstype",
+						"type": "string"
+					},
+					{
+						"key": "parameters",
+						"label": "Parameters",
+						"type": "object"
+					},
+					{
+						"key": "lineNumber",
+						"label": "Volgorde",
+						"type": "integer"
+					}
+				],
+				"indexRoute": "GRVerdeelsleutels"
+			}
+		},
+		{
+			"id": "GRConsolidated",
+			"route": "/gr/geconsolideerd",
+			"type": "index",
+			"title": "Geconsolideerde view",
+			"config": {
+				"register": "shillinq",
+				"schema": "GLLine",
+				"columns": [
+					{
+						"key": "accountNumber",
+						"label": "Grootboekrekening",
+						"sortable": true
+					},
+					{
+						"key": "side",
+						"label": "D/C",
+						"sortable": true
+					},
+					{
+						"key": "amount",
+						"label": "Bedrag",
+						"sortable": true
+					},
+					{
+						"key": "eliminationFlag",
+						"label": "Eliminatie",
+						"sortable": true
+					}
+				],
+				"defaultSort": "accountNumber",
+				"aggregation": "consolidatedTrialBalance"
 			}
 		},
 		{

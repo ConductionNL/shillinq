@@ -37,6 +37,304 @@
           }
         }
       },
+      "GLLine": {
+        "slug": "GLLine",
+        "icon": "TableRowOutline",
+        "version": "0.1.0",
+        "title": "GL Line",
+        "description": "A debit-or-credit line within a GLTransaction, encoding the polarity in the side enum per REQ-GL-003. Extended with eliminationFlag to support GR consolidation per REQ-GRC-003.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "type": "object",
+        "required": [
+          "transactionId",
+          "lineNumber",
+          "accountNumber",
+          "side",
+          "amount",
+          "currency"
+        ],
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "description": "FK to the parent GLTransaction.id.",
+            "example": "txn-001"
+          },
+          "lineNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Stable 1-based ordering within the transaction.",
+            "example": 1
+          },
+          "accountNumber": {
+            "type": "string",
+            "description": "FK to Account.accountNumber.",
+            "example": "4100"
+          },
+          "side": {
+            "type": "string",
+            "enum": [
+              "debit",
+              "credit"
+            ],
+            "description": "Debit or credit polarity; amount is always non-negative."
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Non-negative posting amount in the transaction's currency.",
+            "example": 100.00
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code. Must equal the parent GLTransaction.currency (T1 single-currency invariant).",
+            "minLength": 3,
+            "maxLength": 3,
+            "default": "EUR",
+            "example": "EUR"
+          },
+          "periodId": {
+            "type": "string",
+            "description": "FK to the FiscalPeriod. Auto-resolved by the lifecycle engine on the GLTransaction.post transition.",
+            "nullable": true,
+            "example": "2026-Q1"
+          },
+          "subLedgerType": {
+            "type": "string",
+            "enum": [
+              "ap",
+              "ar",
+              "project",
+              "none"
+            ],
+            "description": "Sub-ledger discriminator; T2 owns the actual sub-ledger registers.",
+            "nullable": true
+          },
+          "subLedgerRef": {
+            "type": "string",
+            "description": "FK into the sub-ledger when subLedgerType is not none.",
+            "nullable": true
+          },
+          "costCenter": {
+            "type": "string",
+            "description": "Cost-center or department code for allocation reporting.",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "description": "Line-level description.",
+            "nullable": true
+          },
+          "eliminationFlag": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true, excludes this line from the consolidated trial-balance and financial-statement aggregations. Used to eliminate inter-GR transactions from consolidated views per REQ-GRC-003."
+          }
+        },
+        "x-openregister-aggregations": {
+          "consolidatedTrialBalance": {
+            "description": "Trial-balance rollup that excludes inter-GR lines flagged for elimination. Produces debit and credit totals per accountNumber for the GR own jaarrekening per REQ-GRC-003.",
+            "filter": "eliminationFlag = false",
+            "groupBy": "accountNumber",
+            "operations": {
+              "totalDebit": {
+                "field": "amount",
+                "operation": "sum",
+                "condition": "side = 'debit'"
+              },
+              "totalCredit": {
+                "field": "amount",
+                "operation": "sum",
+                "condition": "side = 'credit'"
+              }
+            }
+          }
+        }
+      },
+      "GRDeelnemer": {
+        "slug": "GRDeelnemer",
+        "icon": "AccountGroupOutline",
+        "version": "0.1.0",
+        "title": "GR Deelnemer",
+        "description": "A deelnemer (participating municipality, province, or waterboard) of a gemeenschappelijke regeling (GR). Holds the quotum-aandeel and an optional cross-administration FK for doorbelasting materialisation per REQ-GRC-001.",
+        "x-schema-org": "schema:Organization",
+        "type": "object",
+        "required": [
+          "deelnemerType",
+          "deelnemerNaam",
+          "aandeel",
+          "lifecycleState"
+        ],
+        "properties": {
+          "deelnemerType": {
+            "type": "string",
+            "enum": [
+              "gemeente",
+              "provincie",
+              "waterschap"
+            ],
+            "description": "Juridical type of the deelnemer.",
+            "example": "gemeente"
+          },
+          "deelnemerNaam": {
+            "type": "string",
+            "description": "Official name of the deelnemer.",
+            "example": "Gemeente Voorbeeld"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "Optional FK to the deelnemer's own shillinq administration. When set, a balanced GLTransaction is materialised in that administration on GR period-close per REQ-GRC-005.",
+            "nullable": true,
+            "example": "adm-voorbeeld"
+          },
+          "aandeel": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Quotum-aandeel (participation share) of this deelnemer in the GR. Must be 0 ≤ x ≤ 1. The sum across all actief deelnemers SHOULD equal 1.0.",
+            "example": 0.40
+          },
+          "actief": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether this deelnemer currently participates in the GR. Inactive deelnemers are excluded from the aandeel-sum invariant check."
+          },
+          "lifecycleState": {
+            "type": "string",
+            "enum": [
+              "active",
+              "archived"
+            ],
+            "default": "active",
+            "description": "Lifecycle state of the deelnemer record."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Deelnemer participates in the GR and is included in aandeel-sum and doorbelasting calculations."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Deelnemer no longer participates. Historical records remain queryable; excluded from aandeel-sum and doorbelasting calculations."
+            }
+          },
+          "transitions": {
+            "archive": {
+              "from": "active",
+              "to": "archived",
+              "label": "Archive deelnemer",
+              "description": "Remove from active participation without deleting historical boekingen."
+            },
+            "reactivate": {
+              "from": "archived",
+              "to": "active",
+              "label": "Reactivate deelnemer",
+              "description": "Restore to active participation."
+            }
+          },
+          "hooks": {
+            "onGrPeriodClose": {
+              "trigger": "bookkeeping-period-close:grPeriodClosed",
+              "description": "When the GR period closes, materialise a balanced GLTransaction in each deelnemer's administration where administrationId is set. Idempotency key: (grAdministrationId, deelnemerId, periodId) prevents re-posting on re-run of GR period-close per REQ-GRC-005.",
+              "condition": "administrationId IS NOT NULL AND lifecycleState = 'active'",
+              "action": "x-openregister-cross-admin-materialise",
+              "actionParameters": {
+                "sourceReference": "doorbelasting-rapport",
+                "idempotencyKey": "(grAdministrationId, deelnemerId, periodId)"
+              }
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "aandeelSumCheck": {
+            "description": "Computes the sum of aandeel across all actief deelnemers. Surfaces a non-blocking warning in the Consolidated view when the result differs from 1.0 per REQ-GRC-004 and design Risk 2.",
+            "filter": "actief = true",
+            "operations": {
+              "aandeelSum": {
+                "field": "aandeel",
+                "operation": "sum"
+              }
+            }
+          }
+        }
+      },
+      "GRVerdeelsleutel": {
+        "slug": "GRVerdeelsleutel",
+        "icon": "ScaleBalanceOutline",
+        "version": "0.1.0",
+        "title": "GR Verdeelsleutel",
+        "description": "An apportionment rule linking a cost-cluster (set of accountNumbers) to a per-deelnemer split method. Multiple verdeelsleutels MAY apply to the same cost cluster, sequenced by lineNumber per REQ-GRC-002.",
+        "x-schema-org": "schema:Thing",
+        "type": "object",
+        "required": [
+          "sleutelNaam",
+          "costClusterAccountNumbers",
+          "verdelingsType",
+          "lineNumber"
+        ],
+        "properties": {
+          "sleutelNaam": {
+            "type": "string",
+            "description": "Human-readable name of this apportionment rule.",
+            "example": "Sleutel 41xxx vast-percentage"
+          },
+          "costClusterAccountNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of Account.accountNumber strings identifying the cost cluster this verdeelsleutel applies to.",
+            "example": ["4100", "4101", "4199"]
+          },
+          "verdelingsType": {
+            "type": "string",
+            "enum": [
+              "vast-percentage",
+              "inwoner-aantal",
+              "gewogen-oppervlak",
+              "custom-formula"
+            ],
+            "description": "Apportionment method. vast-percentage uses fixed per-deelnemer percentages in parameters; inwoner-aantal weights by population count; gewogen-oppervlak by weighted surface area; custom-formula accepts free-form parameters JSON."
+          },
+          "parameters": {
+            "type": "object",
+            "nullable": true,
+            "description": "Per-deelnemer split parameters validated against verdelingsType. For vast-percentage: object keyed by GRDeelnemer.id with values summing to 1.0. For custom-formula: arbitrary JSON.",
+            "example": {
+              "deelnemer-1": 0.40,
+              "deelnemer-2": 0.40,
+              "deelnemer-3": 0.20
+            }
+          },
+          "lineNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Sequence number controlling the order in which multiple verdeelsleutels for the same cost cluster are applied.",
+            "example": 1
+          }
+        },
+        "x-openregister-aggregations": {
+          "doorbelastingPerDeelnemer": {
+            "description": "Per-deelnemer doorbelasting aggregation: applies this verdeelsleutel to GLLines whose accountNumber is in costClusterAccountNumbers (excluding eliminated lines). Produces doorbelasting bedrag per deelnemer per cost cluster per REQ-GRC-004.",
+            "join": {
+              "schema": "GLLine",
+              "condition": "GLLine.accountNumber IN costClusterAccountNumbers AND GLLine.eliminationFlag = false"
+            },
+            "groupBy": "deelnemerId",
+            "operations": {
+              "doorbelastingBedrag": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "apportionment": "verdelingsType",
+                "apportionmentParameters": "parameters"
+              }
+            }
+          }
+        }
+      },
       "Account": {
         "slug": "Account",
         "icon": "LedgerOutline",
