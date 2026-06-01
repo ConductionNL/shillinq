@@ -1,0 +1,73 @@
+{
+  "spec": "openspec/changes/add-shillinq-multi-currency",
+  "verified": [
+    {
+      "task": "1",
+      "file": "lib/Settings/shillinq_register.json",
+      "ok": true,
+      "note": "Confirmed no FxRate schema existed before this change. GLLine and GLTransaction also absent. bookkeeping-multi-currency spec existed with different content (treasury-focused T3 spec) — this change adds the T4 GL multi-currency spec."
+    },
+    {
+      "task": "2",
+      "file": "openspec/changes/add-shillinq-multi-currency/specs/bookkeeping-multi-currency/spec.md",
+      "ok": true,
+      "note": "Spec file authored with Status:proposed, Tier:T4, Depends on:T1, MODIFIED REQ-GL-003, RENAMED, and ADDED REQ-MC-001 through REQ-MC-006."
+    },
+    {
+      "task": "3",
+      "file": "openspec/changes/add-shillinq-multi-currency/proposal.md",
+      "ok": true,
+      "note": "proposal.md authored with Affected Projects, Scope, Risks, Rollback, Open Questions."
+    },
+    {
+      "task": "4",
+      "file": "openspec/changes/add-shillinq-multi-currency/design.md",
+      "ok": true,
+      "note": "design.md authored with Decisions D1-D5 and Reuse Analysis table. status: pr-created set."
+    },
+    {
+      "task": "5",
+      "file": "lib/Settings/shillinq_register.json#FxRate",
+      "ok": true,
+      "note": "FxRate schema declared with schema:ExchangeRateSpecification, all REQ-MC-002 fields, x-openregister-unique on (transactionCurrency,baseCurrency,date,source,administrationId), x-openregister-preconditions requiring manualOverrideReason when source=manual."
+    },
+    {
+      "task": "6",
+      "file": "lib/Settings/shillinq_register.json#GLLine",
+      "ok": true,
+      "note": "GLLine schema declared with T1 fields + T4 multi-currency extension: baseCurrencyAmount, transactionCurrency, baseCurrency, fxRate, fxRateSource, fxRateDate. on-wire 'amount' preserved. fxRate defaults to 1.0. x-openregister-calculations declares isBaseCurrency and gainLossIndicator derived fields."
+    },
+    {
+      "task": "7",
+      "file": "lib/Settings/shillinq_register.json#x-openregister-scheduled-workflows.ecb-fx-rate-ingestion",
+      "ok": true,
+      "note": "ECB daily rate ingestion declared as ScheduledWorkflow with interval:86400, openconnectorSourceSlug:ecb-fx-rates, invert-ecb orientation. No FxRateImportJob TimedJob authored."
+    },
+    {
+      "task": "8",
+      "file": "lib/Settings/shillinq_register.json#x-openregister-scheduled-workflows.period-end-fx-revaluation",
+      "ok": true,
+      "note": "Period-end revaluation declared as ScheduledWorkflow triggered on period-close. Note: x-openregister-lifecycle action for realised gain/loss on settlement will be added to T2 sub-ledger schemas when T2 is implemented; no T2 schemas exist yet."
+    },
+    {
+      "task": "9",
+      "file": "lib/Settings/shillinq_register.json#x-openregister-mappings.ias21-consolidation-translation",
+      "ok": true,
+      "note": "IAS 21 translation declared as OR Mapping with monetary/equity/P&L rules referencing FxRate register. No ConsolidationTranslationService PHP class."
+    },
+    {
+      "task": "10",
+      "file": "src/manifest.json",
+      "ok": true,
+      "note": "FX Rates menu entry added under Bookkeeping (order:20). FxRates index page with filterChips for transactionCurrency, baseCurrency, source. FxRatesDetail page. Both rendered by generic CnIndexPage/CnDetailPage."
+    },
+    {
+      "task": "11",
+      "file": "openspec/architecture/adr-000-data-model.md",
+      "ok": true,
+      "note": "FxRate entity entry added with schema:ExchangeRateSpecification. GLLine entry added with T1+T4 fields and reconciliation note citing bookkeeping-multi-currency MODIFIED REQ-GL-003. GLTransaction entry added. Entity count updated 225 → 228."
+    }
+  ],
+  "stubs": [],
+  "missing_routes": []
+}
