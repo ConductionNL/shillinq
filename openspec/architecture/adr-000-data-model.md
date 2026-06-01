@@ -1745,6 +1745,39 @@ _A managed collection of grants for organizational tracking, compliance monitori
 - → Organization (many-to-one)
 - → Grant (one-to-many)
 
+### GRDeelnemer
+**Schema.org:** `schema:Organization`
+_A deelnemer (participating municipality, province, or waterboard) of a gemeenschappelijke regeling (GR). Holds the quotum-aandeel and an optional cross-administration FK enabling doorbelasting materialisation when the deelnemer also runs shillinq. The active/archived lifecycle is declarative; no PHP service. Cross-referencing spec: `bookkeeping-gr-consolidation` (add-shillinq-gr-consolidation, 2026-06-01)._
+**Primary spec:** bookkeeping-gr-consolidation
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| deelnemerType | enum | Yes | One of gemeente, provincie, waterschap |
+| deelnemerNaam | string | Yes | Official name of the deelnemer |
+| administrationId | string | No | Optional FK to the deelnemer's own shillinq administration; drives cross-admin doorbelasting materialisation on GR period-close |
+| aandeel | number | Yes | Quotum-aandeel 0 ≤ x ≤ 1; sum across active deelnemers SHOULD equal 1.0 |
+| actief | boolean | No | Whether this deelnemer currently participates; default true |
+| lifecycleState | enum | Yes | One of active, archived |
+
+**Relations:**
+- → GRVerdeelsleutel (one-to-many, through costClusterAccountNumbers apportionment)
+
+### GRVerdeelsleutel
+**Schema.org:** `schema:Thing`
+_An apportionment rule parameterising the per-deelnemer split of a cost cluster within a gemeenschappelijke regeling. Multiple verdeelsleutels MAY apply to the same cost cluster, sequenced by lineNumber. The declarative `x-openregister-aggregations.doorbelastingPerDeelnemer` block drives the doorbelasting calculation without a PHP consolidation service. Cross-referencing spec: `bookkeeping-gr-consolidation` (add-shillinq-gr-consolidation, 2026-06-01)._
+**Primary spec:** bookkeeping-gr-consolidation
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| sleutelNaam | string | Yes | Human-readable name of this apportionment rule |
+| costClusterAccountNumbers | array | Yes | Array of Account.accountNumber strings identifying the cost cluster |
+| verdelingsType | enum | Yes | One of vast-percentage, inwoner-aantal, gewogen-oppervlak, custom-formula |
+| parameters | object | No | Per-deelnemer split parameters validated against verdelingsType |
+| lineNumber | integer | Yes | Sequence number controlling application order when multiple sleutels cover the same cost cluster |
+
+**Relations:**
+- → Account (many-to-many, via costClusterAccountNumbers → Account.accountNumber)
+
 ### IntercompanyTransaction
 **Schema.org:** `schema:FinancialProduct`
 _Transaction between related entities for transfer pricing, loans, or intercompany netting_
