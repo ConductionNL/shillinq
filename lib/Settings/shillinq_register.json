@@ -780,6 +780,228 @@
             "auditor": { "permissions": ["read"] }
           }
         }
+      },
+      "Iv3Export": {
+        "slug": "Iv3Export",
+        "icon": "ChartBoxOutline",
+        "version": "0.1.0",
+        "title": "IV3 Export",
+        "description": "Quarterly IV3 export to CBS per Statistische en Inlichtingendienst IV3-bestand specificaties. REQ-IV3-001/002. Lifecycle draft → generated → submitted → accepted (+ early correction).",
+        "type": "object",
+        "required": ["administrationId", "periodYear", "periodQuarter", "state"],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the gemeente Administration (carries the CBS gemeente code).",
+            "example": "adm-gemeente-1"
+          },
+          "periodYear": {
+            "type": "integer",
+            "description": "Reporting year.",
+            "example": 2026
+          },
+          "periodQuarter": {
+            "type": "integer",
+            "description": "Reporting quarter 1-4.",
+            "minimum": 1,
+            "maximum": 4,
+            "example": 1
+          },
+          "state": {
+            "type": "string",
+            "enum": ["draft", "generated", "submitted", "accepted", "corrected"],
+            "default": "draft",
+            "description": "Lifecycle state."
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the aggregation was generated."
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When submitted to CBS."
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When CBS acknowledged receipt."
+          },
+          "attachmentUri": {
+            "type": "string",
+            "nullable": true,
+            "description": "docudesk reference to the generated IV3 XML artifact."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": { "label": "Concept", "description": "Not yet generated." },
+            "generated": { "label": "Gegenereerd", "description": "Aggregation computed; awaiting submission." },
+            "submitted": { "label": "Ingediend", "description": "Submitted to CBS." },
+            "accepted": { "label": "Geaccepteerd", "description": "CBS acknowledged." },
+            "corrected": { "label": "Gecorrigeerd", "description": "Early amendment before submission." }
+          },
+          "transitions": {
+            "generate": {
+              "from": "draft",
+              "to": "generated",
+              "label": "Genereren",
+              "description": "REQ-IV3-005: trigger the bucket aggregation."
+            },
+            "submit": {
+              "from": "generated",
+              "to": "submitted",
+              "label": "Indienen bij CBS",
+              "description": "REQ-IV3-005/006: submit via the cbs-iv3 OpenConnector source."
+            },
+            "acknowledge": {
+              "from": "submitted",
+              "to": "accepted",
+              "label": "Bevestigen",
+              "description": "REQ-IV3-005: CBS ACK received."
+            },
+            "correct": {
+              "from": "draft",
+              "to": "corrected",
+              "label": "Corrigeren",
+              "description": "REQ-IV3-005: early amendment."
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "buckets": {
+            "description": "REQ-IV3-003: GL postings grouped by BbvAccountMapping.iv3Bucket, summing amounts per bucket for the quarter. Server-authoritative.",
+            "source": "GLLine",
+            "groupBy": "iv3Bucket",
+            "operation": "sum",
+            "field": "amount",
+            "filters": {
+              "administrationId": "@self.administrationId",
+              "periodYear": "@self.periodYear",
+              "periodQuarter": "@self.periodQuarter"
+            }
+          }
+        },
+        "x-openregister-mappings": {
+          "iv3Xml": {
+            "description": "REQ-IV3-004: declarative transformation from aggregated buckets to CBS IV3 XML structure via OR's mapping engine (no bespoke PHP rendering).",
+            "target": "cbs-iv3-xml",
+            "source": "buckets"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bbv-controller": { "permissions": ["create", "read", "update"] },
+            "auditor": { "permissions": ["read"] }
+          }
+        },
+        "x-openregister-lifecycle-retention": {
+          "rule": "selectielijst:5.1.2",
+          "description": "REQ-ARC: 7-year financial-record retention."
+        }
+      },
+      "BcfClaim": {
+        "slug": "BcfClaim",
+        "icon": "CashRefund",
+        "version": "0.1.0",
+        "title": "BCF Claim",
+        "description": "BTW-compensatiefonds claim per Wet HOF. REQ-BCF-001/002. Lifecycle draft → submitted → accepted → settled. Quarterly submission via the digikoppeling-bcf OpenConnector source.",
+        "type": "object",
+        "required": ["administrationId", "periodYear", "periodQuarter", "state", "claimNumber"],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the gemeente Administration.",
+            "example": "adm-gemeente-1"
+          },
+          "periodYear": { "type": "integer", "description": "Claim year.", "example": 2026 },
+          "periodQuarter": { "type": "integer", "minimum": 1, "maximum": 4, "description": "Claim quarter." },
+          "state": {
+            "type": "string",
+            "enum": ["draft", "submitted", "accepted", "settled"],
+            "default": "draft",
+            "description": "Lifecycle state."
+          },
+          "claimNumber": { "type": "string", "description": "Unique claim identifier.", "example": "BCF-2026-Q1-001" },
+          "claimDate": { "type": "string", "format": "date", "nullable": true, "description": "When the claim was prepared." },
+          "submittedDate": { "type": "string", "format": "date", "nullable": true, "description": "When submitted via DigiKoppeling." },
+          "settlementDate": { "type": "string", "format": "date", "nullable": true, "description": "When funds were received." },
+          "totalClaimAmount": {
+            "type": "number",
+            "description": "Server-authoritative claim total (MonetaryAmount), derived from the compensableVatByAccount aggregation. Never trusted from the client.",
+            "example": 45000.00
+          },
+          "currency": { "type": "string", "minLength": 3, "maxLength": 3, "default": "EUR", "description": "ISO 4217." },
+          "attachmentUri": { "type": "string", "nullable": true, "description": "docudesk reference to the claim PDF." },
+          "notes": { "type": "string", "nullable": true, "description": "Optional notes." }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": { "label": "Concept", "description": "Editable draft." },
+            "submitted": { "label": "Ingediend", "description": "Submitted; awaiting acceptance." },
+            "accepted": { "label": "Geaccepteerd", "description": "Fonds acknowledged." },
+            "settled": { "label": "Afgewikkeld", "description": "Payment received." }
+          },
+          "transitions": {
+            "submit": {
+              "from": "draft",
+              "to": "submitted",
+              "label": "Indienen",
+              "description": "REQ-BCF-006/009: submit the claim. Requires approval above the operator threshold.",
+              "requires": {
+                "approval-workflow": {
+                  "threshold-field": "totalClaimAmount",
+                  "description": "REQ-BCF-009: approval gate above an operator-configurable threshold (ADR-022)."
+                }
+              }
+            },
+            "acknowledge": {
+              "from": "submitted",
+              "to": "accepted",
+              "label": "Bevestigen",
+              "description": "REQ-BCF-006: Fonds ACK received."
+            },
+            "settle": {
+              "from": "accepted",
+              "to": "settled",
+              "label": "Afwikkelen",
+              "description": "REQ-BCF-006: payment received."
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "compensableVatByAccount": {
+            "description": "REQ-BCF-004: SUM(GLLine.amount × BbvAccountMapping.compensablePercentage) for postings where BbvAccountMapping.bcfCompensable = true in the claim period. Server-authoritative — drives totalClaimAmount.",
+            "source": "GLLine",
+            "groupBy": "accountNumber",
+            "operation": "sum",
+            "field": "amount",
+            "filters": {
+              "administrationId": "@self.administrationId",
+              "periodYear": "@self.periodYear",
+              "periodQuarter": "@self.periodQuarter",
+              "bcfCompensable": true
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bcf-administrator": { "permissions": ["create", "read", "update"] },
+            "auditor": { "permissions": ["read"] }
+          }
+        },
+        "x-openregister-lifecycle-retention": {
+          "rule": "selectielijst:5.1.2",
+          "description": "REQ-ARC: 7-year financial-record retention, disposition archive."
+        }
       }
     }
   }

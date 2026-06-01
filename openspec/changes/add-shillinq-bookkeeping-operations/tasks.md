@@ -83,8 +83,8 @@
   - GIVEN the schema WHEN loaded THEN fields per spec are present.
   - GIVEN the lifecycle WHEN scanned THEN the transitions are declared.
   - GIVEN the `buckets` field WHEN inspected THEN it is declared as a derived field via `x-openregister-aggregations`.
-- [ ] Implement
-- [ ] Test (PHPUnit: aggregation correctness; XML validates against CBS schema; submission triggers via OpenConnector mock)
+- [x] Implement
+- [x] Test (PHPUnit: aggregation correctness; XML validates against CBS schema; submission triggers via OpenConnector mock)
 
 ### Task 2.4: Declare BCF register — `BcfClaim`
 
@@ -94,8 +94,8 @@
   - GIVEN the schema WHEN loaded THEN fields per spec are present.
   - GIVEN the lifecycle WHEN scanned THEN the transitions are declared with the claim-arithmetic precondition.
   - GIVEN `BbvAccountMapping` WHEN extended THEN it carries `compensablePercentage` per spec.
-- [ ] Implement
-- [ ] Test (PHPUnit: claim aggregation includes only compensable accounts at the correct percentage; submission via OpenConnector mock)
+- [x] Implement
+- [x] Test (PHPUnit: claim aggregation includes only compensable accounts at the correct percentage; submission via OpenConnector mock)
 
 ### Task 2.5: Declare KOR registers — `KorRegime`, `KorThreshold`
 
