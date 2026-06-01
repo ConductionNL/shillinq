@@ -28,6 +28,68 @@
 			]
 		},
 		{
+			"id": "Belastingen",
+			"label": "Belastingen",
+			"icon": "ReceiptTextOutline",
+			"order": 30,
+			"visibility": { "administrationType": ["mkb", "zzp", "gemeente", "provincie", "waterschap"] },
+			"children": [
+				{ "id": "VatReturns", "label": "BTW-aangiften", "icon": "ReceiptTextOutline", "route": "VatReturns", "order": 10 },
+				{ "id": "IcpStatements", "label": "ICP-opgaaf", "icon": "EarthOutline", "route": "IcpStatements", "order": 20 },
+				{ "id": "VatCorrections", "label": "BTW-correcties", "icon": "ReceiptTextEditOutline", "route": "VatCorrections", "order": 30 },
+				{ "id": "KorStatus", "label": "KOR-status", "icon": "StorefrontOutline", "route": "KorStatus", "order": 40, "visibility": { "administrationType": ["mkb", "zzp"] } },
+				{ "id": "Urenregistratie", "label": "Urenregistratie", "icon": "ClockOutline", "route": "Urenregistratie", "order": 50, "visibility": { "administrationType": ["zzp", "mkb"] } },
+				{ "id": "ZzpDeductions", "label": "ZZP-aftrek", "icon": "CalculatorVariantOutline", "route": "ZzpDeductions", "order": 60, "visibility": { "administrationType": ["zzp"] } },
+				{ "id": "IbAangiften", "label": "IB-aangifte", "icon": "FileExportOutline", "route": "IbAangiften", "order": 70, "visibility": { "administrationType": ["zzp"] } }
+			]
+		},
+		{
+			"id": "Overheid",
+			"label": "Overheid",
+			"icon": "BankOutline",
+			"order": 40,
+			"visibility": { "administrationType": ["gemeente", "provincie", "waterschap"] },
+			"children": [
+				{ "id": "BbvMapping", "label": "BBV-mapping", "icon": "SitemapOutline", "route": "BbvMapping", "order": 10 },
+				{ "id": "Iv3Reports", "label": "IV3-rapportages", "icon": "ChartBoxOutline", "route": "Iv3Reports", "order": 20 },
+				{ "id": "BcfClaims", "label": "BCF-claims", "icon": "CashRefund", "route": "BcfClaims", "order": 30, "visibility": { "administrationType": ["gemeente"] } },
+				{ "id": "SchatkistPosition", "label": "Schatkist-positie", "icon": "BankOutline", "route": "SchatkistPosition", "order": 40, "visibility": { "administrationType": ["gemeente"] } }
+			]
+		},
+		{
+			"id": "Subsidies",
+			"label": "Subsidies",
+			"icon": "HandCoinOutline",
+			"order": 50,
+			"children": [
+				{ "id": "SubsidiesOverview", "label": "Overzicht", "icon": "HandCoinOutline", "route": "SubsidiesOverview", "order": 10 },
+				{ "id": "SubsidiesVerleend", "label": "Verleende subsidies", "icon": "CheckDecagramOutline", "route": "SubsidiesVerleend", "order": 20 },
+				{ "id": "SubsidiesTerugvordering", "label": "Terugvorderingen", "icon": "CashRefund", "route": "SubsidiesTerugvordering", "order": 30 }
+			]
+		},
+		{
+			"id": "Projecten",
+			"label": "Projecten",
+			"icon": "BriefcaseOutline",
+			"order": 60,
+			"visibility": { "administrationType": ["consultancy"] },
+			"children": [
+				{ "id": "ProjectsOverview", "label": "Overzicht", "icon": "BriefcaseOutline", "route": "ProjectsOverview", "order": 10 },
+				{ "id": "ProjectsPl", "label": "P&L", "icon": "ChartLineVariant", "route": "ProjectsPl", "order": 20 },
+				{ "id": "RateCards", "label": "Tarieven", "icon": "TagOutline", "route": "RateCards", "order": 30 },
+				{ "id": "Utilisatie", "label": "Utilisatie", "icon": "GaugeOutline", "route": "Utilisatie", "order": 40 }
+			]
+		},
+		{
+			"id": "Administratie",
+			"label": "Administratie",
+			"icon": "ArchiveOutline",
+			"order": 70,
+			"children": [
+				{ "id": "Bewaartermijnen", "label": "Bewaartermijnen", "icon": "ArchiveClockOutline", "route": "Bewaartermijnen", "order": 10 }
+			]
+		},
+		{
 			"id": "Documentation",
 			"label": "Documentation",
 			"icon": "icon-info",
@@ -158,6 +220,534 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "ChartOfAccounts"
+			}
+		},
+		{
+			"id": "VatReturns",
+			"route": "/btw-aangiften",
+			"type": "index",
+			"title": "BTW-aangiften",
+			"config": {
+				"register": "shillinq",
+				"schema": "VatReturn",
+				"columns": [
+					{ "key": "periodYear", "label": "Jaar", "sortable": true },
+					{ "key": "periodType", "label": "Periode", "sortable": true },
+					{ "key": "amount", "label": "Bedrag", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "periodYear",
+				"detailRoute": "VatReturnDetail"
+			}
+		},
+		{
+			"id": "VatReturnDetail",
+			"route": "/btw-aangiften/:id",
+			"type": "detail",
+			"title": "BTW-aangifte",
+			"config": {
+				"register": "shillinq",
+				"schema": "VatReturn",
+				"fields": [
+					{ "key": "periodType", "label": "Periodetype", "type": "string" },
+					{ "key": "periodYear", "label": "Jaar", "type": "number" },
+					{ "key": "amount", "label": "BTW-bedrag", "type": "number" },
+					{ "key": "state", "label": "Status", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "VatReturns"
+			}
+		},
+		{
+			"id": "IcpStatements",
+			"route": "/icp-opgaaf",
+			"type": "index",
+			"title": "ICP-opgaaf",
+			"config": {
+				"register": "shillinq",
+				"schema": "IcpStatement",
+				"columns": [
+					{ "key": "periodYear", "label": "Jaar", "sortable": true },
+					{ "key": "periodType", "label": "Periode", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "periodYear",
+				"detailRoute": "IcpStatementDetail"
+			}
+		},
+		{
+			"id": "IcpStatementDetail",
+			"route": "/icp-opgaaf/:id",
+			"type": "detail",
+			"title": "ICP-opgaaf",
+			"config": {
+				"register": "shillinq",
+				"schema": "IcpStatement",
+				"fields": [
+					{ "key": "periodType", "label": "Periodetype", "type": "string" },
+					{ "key": "periodYear", "label": "Jaar", "type": "number" },
+					{ "key": "state", "label": "Status", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "IcpStatements"
+			}
+		},
+		{
+			"id": "VatCorrections",
+			"route": "/btw-correcties",
+			"type": "index",
+			"title": "BTW-correcties",
+			"config": {
+				"register": "shillinq",
+				"schema": "VatCorrection",
+				"columns": [
+					{ "key": "periodYear", "label": "Jaar", "sortable": true },
+					{ "key": "correctionReason", "label": "Reden", "sortable": true },
+					{ "key": "adjustmentAmount", "label": "Correctie", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "periodYear",
+				"detailRoute": "VatCorrectionDetail"
+			}
+		},
+		{
+			"id": "VatCorrectionDetail",
+			"route": "/btw-correcties/:id",
+			"type": "detail",
+			"title": "BTW-correctie",
+			"config": {
+				"register": "shillinq",
+				"schema": "VatCorrection",
+				"fields": [
+					{ "key": "correctionReason", "label": "Reden", "type": "string" },
+					{ "key": "adjustmentAmount", "label": "Correctiebedrag", "type": "number" },
+					{ "key": "state", "label": "Status", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "VatCorrections"
+			}
+		},
+		{
+			"id": "KorStatus",
+			"route": "/kor-status",
+			"type": "detail",
+			"title": "KOR-status",
+			"config": {
+				"register": "shillinq",
+				"schema": "KorRegime",
+				"fields": [
+					{ "key": "state", "label": "Status", "type": "string" },
+					{ "key": "ytdRevenue", "label": "Omzet YTD", "type": "number" },
+					{ "key": "thresholdAmount", "label": "Omzetdrempel", "type": "number" }
+				],
+				"lifecycleActions": true
+			}
+		},
+		{
+			"id": "Urenregistratie",
+			"route": "/urenregistratie",
+			"type": "index",
+			"title": "Urenregistratie",
+			"config": {
+				"register": "shillinq",
+				"schema": "UrenRegistratie",
+				"columns": [
+					{ "key": "workDate", "label": "Datum", "sortable": true },
+					{ "key": "hours", "label": "Uren", "sortable": true },
+					{ "key": "category", "label": "Categorie", "sortable": true }
+				],
+				"defaultSort": "workDate",
+				"detailRoute": "UrenregistratieDetail"
+			}
+		},
+		{
+			"id": "UrenregistratieDetail",
+			"route": "/urenregistratie/:id",
+			"type": "detail",
+			"title": "Uren",
+			"config": {
+				"register": "shillinq",
+				"schema": "UrenRegistratie",
+				"fields": [
+					{ "key": "workDate", "label": "Datum", "type": "string" },
+					{ "key": "hours", "label": "Uren", "type": "number" },
+					{ "key": "category", "label": "Categorie", "type": "string" },
+					{ "key": "excludedReason", "label": "Reden uitsluiting", "type": "string" }
+				],
+				"indexRoute": "Urenregistratie"
+			}
+		},
+		{
+			"id": "ZzpDeductions",
+			"route": "/zzp-aftrek",
+			"type": "detail",
+			"title": "ZZP-aftrek",
+			"config": {
+				"register": "shillinq",
+				"schema": "ZzpDeduction",
+				"fields": [
+					{ "key": "year", "label": "Jaar", "type": "number" },
+					{ "key": "ytdQualifyingHours", "label": "Kwalificerende uren", "type": "number" },
+					{ "key": "qualifies1225", "label": "Voldoet aan 1225", "type": "boolean" },
+					{ "key": "totalAllowableDeduction", "label": "Totale aftrek", "type": "number" }
+				]
+			}
+		},
+		{
+			"id": "IbAangiften",
+			"route": "/ib-aangifte",
+			"type": "index",
+			"title": "IB-aangifte",
+			"config": {
+				"register": "shillinq",
+				"schema": "IbAangifteExport",
+				"columns": [
+					{ "key": "year", "label": "Jaar", "sortable": true },
+					{ "key": "taxableIncome", "label": "Belastbaar inkomen", "sortable": true }
+				],
+				"defaultSort": "year",
+				"detailRoute": "IbAangifteDetail"
+			}
+		},
+		{
+			"id": "IbAangifteDetail",
+			"route": "/ib-aangifte/:id",
+			"type": "detail",
+			"title": "IB-aangifte",
+			"config": {
+				"register": "shillinq",
+				"schema": "IbAangifteExport",
+				"fields": [
+					{ "key": "year", "label": "Jaar", "type": "number" },
+					{ "key": "totalIncome", "label": "Totaal inkomen", "type": "number" },
+					{ "key": "allowableDeductions", "label": "Aftrekposten", "type": "number" },
+					{ "key": "taxableIncome", "label": "Belastbaar inkomen", "type": "number" }
+				],
+				"indexRoute": "IbAangiften"
+			}
+		},
+		{
+			"id": "BbvMapping",
+			"route": "/bbv-mapping",
+			"type": "index",
+			"title": "BBV-mapping",
+			"config": {
+				"register": "shillinq",
+				"schema": "BbvAccountMapping",
+				"columns": [
+					{ "key": "accountNumber", "label": "Rekening", "sortable": true },
+					{ "key": "taakveld", "label": "Taakveld", "sortable": true },
+					{ "key": "bcfCompensable", "label": "BCF-compensabel", "sortable": true }
+				],
+				"defaultSort": "accountNumber",
+				"detailRoute": "BbvMappingDetail"
+			}
+		},
+		{
+			"id": "BbvMappingDetail",
+			"route": "/bbv-mapping/:id",
+			"type": "detail",
+			"title": "BBV-mapping",
+			"config": {
+				"register": "shillinq",
+				"schema": "BbvAccountMapping",
+				"fields": [
+					{ "key": "accountNumber", "label": "Rekening", "type": "string" },
+					{ "key": "taakveld", "label": "Taakveld", "type": "string" },
+					{ "key": "programmaCode", "label": "Programma", "type": "string" },
+					{ "key": "bcfCompensable", "label": "BCF-compensabel", "type": "boolean" },
+					{ "key": "compensablePercentage", "label": "Compensabel %", "type": "number" },
+					{ "key": "iv3Bucket", "label": "IV3-bucket", "type": "string" }
+				],
+				"indexRoute": "BbvMapping"
+			}
+		},
+		{
+			"id": "Iv3Reports",
+			"route": "/iv3-rapportages",
+			"type": "index",
+			"title": "IV3-rapportages",
+			"config": {
+				"register": "shillinq",
+				"schema": "Iv3Export",
+				"columns": [
+					{ "key": "periodYear", "label": "Jaar", "sortable": true },
+					{ "key": "periodQuarter", "label": "Kwartaal", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "periodYear",
+				"detailRoute": "Iv3ReportDetail"
+			}
+		},
+		{
+			"id": "Iv3ReportDetail",
+			"route": "/iv3-rapportages/:id",
+			"type": "detail",
+			"title": "IV3-rapportage",
+			"config": {
+				"register": "shillinq",
+				"schema": "Iv3Export",
+				"fields": [
+					{ "key": "periodYear", "label": "Jaar", "type": "number" },
+					{ "key": "periodQuarter", "label": "Kwartaal", "type": "number" },
+					{ "key": "state", "label": "Status", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "Iv3Reports"
+			}
+		},
+		{
+			"id": "BcfClaims",
+			"route": "/bcf-claims",
+			"type": "index",
+			"title": "BCF-claims",
+			"config": {
+				"register": "shillinq",
+				"schema": "BcfClaim",
+				"columns": [
+					{ "key": "claimNumber", "label": "Claimnummer", "sortable": true },
+					{ "key": "periodYear", "label": "Jaar", "sortable": true },
+					{ "key": "totalClaimAmount", "label": "Bedrag", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "claimNumber",
+				"detailRoute": "BcfClaimDetail"
+			}
+		},
+		{
+			"id": "BcfClaimDetail",
+			"route": "/bcf-claims/:id",
+			"type": "detail",
+			"title": "BCF-claim",
+			"config": {
+				"register": "shillinq",
+				"schema": "BcfClaim",
+				"fields": [
+					{ "key": "claimNumber", "label": "Claimnummer", "type": "string" },
+					{ "key": "totalClaimAmount", "label": "Claimbedrag", "type": "number" },
+					{ "key": "state", "label": "Status", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "BcfClaims"
+			}
+		},
+		{
+			"id": "SchatkistPosition",
+			"route": "/schatkist-positie",
+			"type": "dashboard",
+			"title": "Schatkist-positie",
+			"config": {
+				"register": "shillinq",
+				"schema": "SchatkistPosition",
+				"widgets": [
+					{ "id": "schatkist-position", "title": "Huidige positie", "type": "stats-block", "iconClass": "icon-category-monitoring", "props": { "countLabel": "EUR", "variant": "primary" } }
+				]
+			}
+		},
+		{
+			"id": "SubsidiesOverview",
+			"route": "/subsidies",
+			"type": "index",
+			"title": "Subsidies",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"columns": [
+					{ "key": "subsidieNumber", "label": "Nummer", "sortable": true },
+					{ "key": "subsidieName", "label": "Naam", "sortable": true },
+					{ "key": "awardAmount", "label": "Bedrag", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "subsidieNumber",
+				"detailRoute": "SubsidieDetail"
+			}
+		},
+		{
+			"id": "SubsidieDetail",
+			"route": "/subsidies/:id",
+			"type": "detail",
+			"title": "Subsidie",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"fields": [
+					{ "key": "subsidieNumber", "label": "Nummer", "type": "string" },
+					{ "key": "subsidieName", "label": "Naam", "type": "string" },
+					{ "key": "awardAmount", "label": "Bedrag", "type": "number" },
+					{ "key": "state", "label": "Status", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "SubsidiesOverview"
+			}
+		},
+		{
+			"id": "SubsidiesVerleend",
+			"route": "/subsidies/verleend",
+			"type": "index",
+			"title": "Verleende subsidies",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"filter": { "state": "verleend" },
+				"columns": [
+					{ "key": "subsidieNumber", "label": "Nummer", "sortable": true },
+					{ "key": "subsidieName", "label": "Naam", "sortable": true },
+					{ "key": "awardAmount", "label": "Bedrag", "sortable": true }
+				],
+				"defaultSort": "subsidieNumber",
+				"detailRoute": "SubsidieDetail"
+			}
+		},
+		{
+			"id": "SubsidiesTerugvordering",
+			"route": "/subsidies/terugvordering",
+			"type": "index",
+			"title": "Terugvorderingen",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"filter": { "state": "teruggevorderd" },
+				"columns": [
+					{ "key": "subsidieNumber", "label": "Nummer", "sortable": true },
+					{ "key": "subsidieName", "label": "Naam", "sortable": true },
+					{ "key": "awardAmount", "label": "Bedrag", "sortable": true }
+				],
+				"defaultSort": "subsidieNumber",
+				"detailRoute": "SubsidieDetail"
+			}
+		},
+		{
+			"id": "ProjectsOverview",
+			"route": "/projecten",
+			"type": "index",
+			"title": "Projecten",
+			"config": {
+				"register": "shillinq",
+				"schema": "Project",
+				"columns": [
+					{ "key": "projectCode", "label": "Code", "sortable": true },
+					{ "key": "projectName", "label": "Naam", "sortable": true },
+					{ "key": "contractValue", "label": "Contractwaarde", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "projectCode",
+				"detailRoute": "ProjectDetail"
+			}
+		},
+		{
+			"id": "ProjectDetail",
+			"route": "/projecten/:id",
+			"type": "detail",
+			"title": "Project",
+			"config": {
+				"register": "shillinq",
+				"schema": "Project",
+				"fields": [
+					{ "key": "projectCode", "label": "Code", "type": "string" },
+					{ "key": "projectName", "label": "Naam", "type": "string" },
+					{ "key": "contractValue", "label": "Contractwaarde", "type": "number" },
+					{ "key": "costIncurredToDate", "label": "Gemaakte kosten", "type": "number" },
+					{ "key": "recognisedRevenue", "label": "Verantwoorde omzet", "type": "number" },
+					{ "key": "state", "label": "Status", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ProjectsOverview"
+			}
+		},
+		{
+			"id": "ProjectsPl",
+			"route": "/projecten/pl",
+			"type": "dashboard",
+			"title": "Project P&L",
+			"config": {
+				"register": "shillinq",
+				"schema": "Project",
+				"widgets": [
+					{ "id": "project-margin", "title": "Marge", "type": "stats-block", "iconClass": "icon-category-monitoring", "props": { "countLabel": "EUR", "variant": "success" } }
+				]
+			}
+		},
+		{
+			"id": "RateCards",
+			"route": "/tarieven",
+			"type": "index",
+			"title": "Tarieven",
+			"config": {
+				"register": "shillinq",
+				"schema": "RateCard",
+				"columns": [
+					{ "key": "level", "label": "Niveau", "sortable": true },
+					{ "key": "hourlyRate", "label": "Uurtarief", "sortable": true },
+					{ "key": "effectiveFrom", "label": "Geldig vanaf", "sortable": true }
+				],
+				"defaultSort": "level",
+				"detailRoute": "RateCardDetail"
+			}
+		},
+		{
+			"id": "RateCardDetail",
+			"route": "/tarieven/:id",
+			"type": "detail",
+			"title": "Tariefkaart",
+			"config": {
+				"register": "shillinq",
+				"schema": "RateCard",
+				"fields": [
+					{ "key": "level", "label": "Niveau", "type": "string" },
+					{ "key": "hourlyRate", "label": "Uurtarief", "type": "number" },
+					{ "key": "effectiveFrom", "label": "Geldig vanaf", "type": "string" },
+					{ "key": "effectiveTo", "label": "Geldig tot", "type": "string" }
+				],
+				"indexRoute": "RateCards"
+			}
+		},
+		{
+			"id": "Utilisatie",
+			"route": "/utilisatie",
+			"type": "dashboard",
+			"title": "Utilisatie",
+			"config": {
+				"register": "shillinq",
+				"schema": "ProjectAssignment",
+				"widgets": [
+					{ "id": "utilisation-rate", "title": "Utilisatie", "type": "stats-block", "iconClass": "icon-category-monitoring", "props": { "countLabel": "%", "variant": "primary" } }
+				]
+			}
+		},
+		{
+			"id": "Bewaartermijnen",
+			"route": "/bewaartermijnen",
+			"type": "index",
+			"title": "Bewaartermijnen",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetentionRule",
+				"columns": [
+					{ "key": "selectielijstCode", "label": "Selectielijstcode", "sortable": true },
+					{ "key": "description", "label": "Omschrijving", "sortable": true },
+					{ "key": "retentionYears", "label": "Bewaartermijn (jaar)", "sortable": true },
+					{ "key": "disposition", "label": "Afhandeling", "sortable": true }
+				],
+				"defaultSort": "selectielijstCode",
+				"detailRoute": "BewaartermijnDetail"
+			}
+		},
+		{
+			"id": "BewaartermijnDetail",
+			"route": "/bewaartermijnen/:id",
+			"type": "detail",
+			"title": "Bewaartermijn",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetentionRule",
+				"fields": [
+					{ "key": "selectielijstCode", "label": "Selectielijstcode", "type": "string" },
+					{ "key": "description", "label": "Omschrijving", "type": "string" },
+					{ "key": "retentionYears", "label": "Bewaartermijn (jaar)", "type": "number" },
+					{ "key": "disposition", "label": "Afhandeling", "type": "string" },
+					{ "key": "legalBasis", "label": "Wettelijke basis", "type": "string" }
+				],
+				"indexRoute": "Bewaartermijnen"
 			}
 		},
 		{

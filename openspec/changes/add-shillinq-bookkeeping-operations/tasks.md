@@ -200,8 +200,8 @@
 - **acceptance_criteria**:
   - GIVEN the manifest WHEN scanned THEN it declares `Belastingen > BTW-aangiften`, `Belastingen > ICP-opgaaf`, `Belastingen > BTW-correcties` with `type: index` + `type: detail` pages.
   - GIVEN `node tests/validate-manifest.js` WHEN run THEN it exits 0.
-- [ ] Implement
-- [ ] Test (validate-manifest + browser smoke for each page)
+- [x] Implement
+- [x] Test (validate-manifest + browser smoke for each page)
 
 ### Task 4.2: Add Overheid menu (BBV, IV3, BCF, Schatkist)
 
@@ -210,8 +210,8 @@
 - **acceptance_criteria**:
   - GIVEN the manifest WHEN scanned THEN it declares `Overheid > BBV-mapping`, `Overheid > IV3-rapportages`, `Overheid > BCF-claims`, `Overheid > Schatkist-positie` with appropriate `type` pages.
   - GIVEN the visibility predicate WHEN evaluated THEN these entries show only for `gemeente`/`provincie`/`waterschap` administrations.
-- [ ] Implement
-- [ ] Test (validate-manifest + visibility predicate test)
+- [x] Implement
+- [x] Test (validate-manifest + visibility predicate test)
 
 ### Task 4.3: Add KOR + ZZP menus
 
@@ -220,8 +220,8 @@
 - **acceptance_criteria**:
   - GIVEN the manifest WHEN scanned THEN it declares `Belastingen > KOR-status`, `Belastingen > Urenregistratie`, `Belastingen > ZZP-aftrek`, `Belastingen > IB-aangifte` with appropriate `type` pages.
   - GIVEN the visibility predicate WHEN evaluated THEN these entries show only for `mkb`/`zzp` administrations.
-- [ ] Implement
-- [ ] Test (validate-manifest + browser smoke)
+- [x] Implement
+- [x] Test (validate-manifest + browser smoke)
 
 ### Task 4.4: Add Subsidies + Projecten + Bewaartermijnen menus
 
@@ -229,8 +229,8 @@
 - **files**: `src/manifest.json`
 - **acceptance_criteria**:
   - GIVEN the manifest WHEN scanned THEN it declares `Subsidies` (with sub-pages), `Projecten > Overzicht`, `Projecten > Tarieven`, `Projecten > Utilisatie`, `Administratie > Bewaartermijnen` with appropriate `type` pages.
-- [ ] Implement
-- [ ] Test (validate-manifest + browser smoke)
+- [x] Implement
+- [x] Test (validate-manifest + browser smoke)
 
 ## 5. ScheduledWorkflow declarations
 
@@ -241,8 +241,8 @@
 - **acceptance_criteria**:
   - GIVEN each workflow declaration WHEN scanned THEN it specifies the cron schedule per the spec (monthly/quarterly for SBR/IV3/BCF; daily for schatkist; period-end for WIP).
   - GIVEN each workflow WHEN invoked THEN it consumes the correct OpenConnector source or OR abstraction.
-- [ ] Implement
-- [ ] Test (PHPUnit + integration test against OpenConnector mocks)
+- [x] Implement
+- [x] Test (PHPUnit + integration test against OpenConnector mocks)
 
 ## 6. ADR-000 reconciliation note
 

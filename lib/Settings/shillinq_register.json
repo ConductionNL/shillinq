@@ -11,6 +11,39 @@
     "openregister": "^v0.2.10",
     "description": "Shillinq — open-source business administration suite for Dutch SMB, ZZP, and government."
   },
+  "x-openregister-scheduled-workflows": {
+    "vat-sbr-submission": {
+      "description": "REQ-VBTW-010: SBR/Digipoort BTW submission. Event-triggered on the VatReturn.submit transition; consumes the digipoort-sbr OpenConnector source (ADR-019/ADR-022). Not a PHP HttpClient.",
+      "trigger": "lifecycle:VatReturn.submit",
+      "schema": "VatReturn",
+      "source": "digipoort-sbr"
+    },
+    "iv3-quarterly-submission": {
+      "description": "REQ-IV3-006: quarterly IV3 export to CBS. Creates an Iv3Export, runs the bucket aggregation, submits via the cbs-iv3 OpenConnector source.",
+      "trigger": "cron",
+      "cron": "0 0 1 */3 *",
+      "schema": "Iv3Export",
+      "source": "cbs-iv3"
+    },
+    "bcf-quarterly-submission": {
+      "description": "REQ-BCF-007: quarterly BCF claim. Creates a BcfClaim, runs the compensable-VAT aggregation, submits via the digikoppeling-bcf OpenConnector source.",
+      "trigger": "cron",
+      "cron": "0 0 1 */3 *",
+      "schema": "BcfClaim",
+      "source": "digikoppeling-bcf"
+    },
+    "schatkist-daily-position": {
+      "description": "REQ-SBK-007: daily schatkist position aggregation over isSchatkistAccount-flagged accounts; creates one SchatkistPosition per administration per business day; fires a notification above the drempelbedrag.",
+      "trigger": "cron",
+      "cron": "0 18 * * 1-5",
+      "schema": "SchatkistPosition"
+    },
+    "wip-period-end-snapshot": {
+      "description": "REQ-CPA-008: WIP snapshot per project at period-end, triggered by T2's period-close event; snapshots costIncurredToDate + recognisedRevenue into a WipBalance record.",
+      "trigger": "event:period-close",
+      "schema": "WipBalance"
+    }
+  },
   "paths": {},
   "components": {
     "schemas": {
