@@ -3,7 +3,7 @@
   "info": {
     "title": "Shillinq Register",
     "description": "Register containing all schemas for the Shillinq application.",
-    "version": "0.2.0"
+    "version": "0.3.0"
   },
   "x-openregister": {
     "type": "application",
@@ -202,6 +202,248 @@
             "operation": "count",
             "description": "Number of accounts per lifecycleState.",
             "groupBy": "lifecycleState"
+          }
+        }
+      },
+      "Iv3Export": {
+        "slug": "Iv3Export",
+        "icon": "FileChartOutline",
+        "version": "0.1.0",
+        "title": "IV3 Export",
+        "description": "Quarterly IV3 (Informatie voor Derden) export to CBS for Dutch decentralised government administrations. Lifecycle covers generation, validation, submission, and CBS acceptance/rejection.",
+        "type": "object",
+        "x-schema-org": "schema:Dataset",
+        "required": [
+          "administrationId",
+          "reportingYear",
+          "reportingQuarter",
+          "iv3Version",
+          "state"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration (gemeente/provincie/waterschap) that this export belongs to.",
+            "example": "gem-a"
+          },
+          "reportingYear": {
+            "type": "integer",
+            "description": "Calendar year of the IV3 reporting period (e.g. 2026).",
+            "example": 2026
+          },
+          "reportingQuarter": {
+            "type": "string",
+            "description": "Quarter of the reporting period.",
+            "enum": ["Q1", "Q2", "Q3", "Q4"],
+            "example": "Q1"
+          },
+          "iv3Version": {
+            "type": "string",
+            "description": "CBS IV3-bestand specification version used for this export (e.g. '2026.1').",
+            "example": "2026.1"
+          },
+          "buckets": {
+            "type": "object",
+            "description": "Aggregated GL values keyed by IV3 bucket code (sum of debit minus credit per bucket for closed-period postings). Derived via x-openregister-aggregations — do not set directly.",
+            "additionalProperties": {
+              "type": "number"
+            },
+            "example": {"IV3-001": 125000.00, "IV3-002": -18500.00}
+          },
+          "xmlAttachmentUri": {
+            "type": "string",
+            "description": "Docudesk URI of the generated CBS IV3 XML file.",
+            "nullable": true,
+            "example": "docudesk://shillinq/iv3-exports/2026-q1-gem-a.xml"
+          },
+          "state": {
+            "type": "string",
+            "description": "Current lifecycle state of the IV3 export.",
+            "enum": ["generated", "validated", "submitted", "accepted", "rejected", "corrected"],
+            "example": "generated",
+            "default": "generated"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the export was generated.",
+            "nullable": true
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the export was submitted to CBS.",
+            "nullable": true
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when CBS accepted the export.",
+            "nullable": true
+          },
+          "cbsMessageId": {
+            "type": "string",
+            "description": "CBS-side message identifier returned on submission.",
+            "nullable": true
+          },
+          "correctionOf": {
+            "type": "string",
+            "description": "FK to a prior Iv3Export.id that this export supersedes (correction flow).",
+            "nullable": true
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "generated",
+          "states": {
+            "generated": {
+              "label": "Generated",
+              "description": "Export created and XML artifact generated. Awaiting operator validation."
+            },
+            "validated": {
+              "label": "Validated",
+              "description": "XML validated against the CBS IV3 schema. Ready for operator submission."
+            },
+            "submitted": {
+              "label": "Submitted",
+              "description": "Submitted to CBS via OpenConnector cbs-iv3. Awaiting CBS acknowledgement."
+            },
+            "accepted": {
+              "label": "Accepted",
+              "description": "CBS accepted the export. Terminal state unless a correction is filed."
+            },
+            "rejected": {
+              "label": "Rejected",
+              "description": "CBS rejected the export. Operator must correct and re-validate."
+            },
+            "corrected": {
+              "label": "Corrected",
+              "description": "A correction export (with correctionOf set) supersedes this one."
+            }
+          },
+          "retention": {
+            "rule": "selectielijst:5.1.4",
+            "period": "P10Y",
+            "description": "IV3 verantwoording-naar-derden records retained 10 years per Archiefwet 1995 + Selectielijst Gemeenten 2020."
+          },
+          "transitions": {
+            "validate": {
+              "from": "generated",
+              "to": "validated",
+              "label": "Validate XML",
+              "description": "Operator validates the generated XML against the CBS IV3 schema.",
+              "requires": "OCA\\Shillinq\\Guard\\Iv3XmlValidationGuard::requireValidXml"
+            },
+            "submit": {
+              "from": "validated",
+              "to": "submitted",
+              "label": "Submit to CBS",
+              "description": "Operator submits the validated export to CBS via OpenConnector cbs-iv3.",
+              "requires": "OCA\\Shillinq\\Guard\\Iv3SubmissionGuard::requireApproval"
+            },
+            "accept": {
+              "from": "submitted",
+              "to": "accepted",
+              "label": "CBS Accepted",
+              "description": "CBS accepted the export (triggered by OpenConnector cbs-iv3 callback)."
+            },
+            "reject": {
+              "from": "submitted",
+              "to": "rejected",
+              "label": "CBS Rejected",
+              "description": "CBS rejected the export (triggered by OpenConnector cbs-iv3 callback)."
+            },
+            "revalidate": {
+              "from": "rejected",
+              "to": "validated",
+              "label": "Re-validate after fix",
+              "description": "Operator re-validates after correcting the rejection reason.",
+              "requires": "OCA\\Shillinq\\Guard\\Iv3XmlValidationGuard::requireValidXml"
+            },
+            "correct": {
+              "from": "accepted",
+              "to": "corrected",
+              "label": "File correction",
+              "description": "Operator files a corrected export (sets correctionOf on the new Iv3Export)."
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "buckets": {
+            "description": "Sum of (debit - credit) per IV3 bucket code over closed-period GLLine rows for this export's administrationId + quarter. Joins GLLine → Account → BbvAccountMapping.iv3Bucket (T3 bbv-compliance). Filters to periodIds closed per T2 period-close boundaries.",
+            "operation": "sum",
+            "sourceSchema": "GLLine",
+            "sourceRegister": "shillinq",
+            "groupBy": "BbvAccountMapping.iv3Bucket",
+            "valueField": "debit - credit",
+            "filter": {
+              "administrationId": "@self.administrationId",
+              "periodId": {
+                "from": "BookkeepingPeriod",
+                "where": {
+                  "year": "@self.reportingYear",
+                  "quarter": "@self.reportingQuarter",
+                  "state": "closed"
+                },
+                "select": "id"
+              }
+            },
+            "join": {
+              "from": "GLLine.accountNumber",
+              "through": "BbvAccountMapping",
+              "on": "BbvAccountMapping.accountNumber",
+              "select": "BbvAccountMapping.iv3Bucket"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bbv-controller": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        },
+        "x-openregister-scheduled-workflows": {
+          "quarterly-cbs-submission": {
+            "name": "IV3 quarterly CBS submission",
+            "description": "Generates and submits IV3 exports for all closed gemeente/provincie/waterschap administrations on a quarterly schedule.",
+            "cron": "0 0 1 */3 *",
+            "source": "cbs-iv3",
+            "register": "shillinq",
+            "schema": "Iv3Export",
+            "enabled": true,
+            "filter": {
+              "administrationType": ["gemeente", "provincie", "waterschap"]
+            }
+          }
+        }
+      }
+    },
+    "mappings": {
+      "iv3-xml-transformation": {
+        "slug": "iv3-xml-transformation",
+        "version": "0.1.0",
+        "name": "IV3 XML Transformation",
+        "description": "Maps an Iv3Export record (with aggregated buckets) to the CBS IV3-bestand XML structure. ADR-031 declarative path — preferred over a PHP renderer. If OR's mapping engine cannot express CBS mixed-content XML nodes, the Iv3XmlRenderer::render() exception path (documented in openspec/changes/add-shillinq-iv3-reporting/design.md §D3) applies.",
+        "passThrough": false,
+        "mapping": {
+          "Aanlevering.Verslagperiode.Jaar": "reportingYear",
+          "Aanlevering.Verslagperiode.Kwartaal": "reportingQuarter",
+          "Aanlevering.Bestand.Specificatie": "iv3Version",
+          "Aanlevering.Overheid.Administratie": "administrationId",
+          "Aanlevering.Bedragen.IVBucket": "buckets"
+        },
+        "cast": {
+          "Aanlevering.Verslagperiode.Jaar": "string",
+          "Aanlevering.Verslagperiode.Kwartaal": {
+            "type": "map",
+            "Q1": "1",
+            "Q2": "2",
+            "Q3": "3",
+            "Q4": "4"
           }
         }
       }

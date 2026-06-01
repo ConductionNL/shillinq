@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 225
+**Entities:** 226
 
 ## Context
 
@@ -1892,6 +1892,40 @@ _A line item detailing goods or services on an invoice_
 **Relations:**
 - → Invoice (many-to-one)
 - → Product (many-to-one)
+
+### Iv3Export
+**Schema.org:** `schema:Dataset`
+_Quarterly IV3 (Informatie voor Derden) export submitted to CBS by Dutch decentralised government administrations (gemeente, provincie, waterschap). Lifecycle covers generation, XML validation, CBS submission, and acceptance/rejection. Buckets aggregation is declarative via x-openregister-aggregations over GLLine joined with BbvAccountMapping._
+**Primary spec:** bookkeeping-iv3-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the Administration (gemeente/provincie/waterschap) |
+| reportingYear | integer | Yes | Calendar year (e.g. 2026) |
+| reportingQuarter | enum | Yes | One of Q1, Q2, Q3, Q4 |
+| iv3Version | string | Yes | CBS IV3-bestand specification version (e.g. 2026.1) |
+| buckets | object | Yes | Aggregated GL values keyed by IV3 bucket code (derived via x-openregister-aggregations) |
+| xmlAttachmentUri | string | No | Docudesk URI of the generated CBS IV3 XML file |
+| state | enum | Yes | One of generated, validated, submitted, accepted, rejected, corrected |
+| generatedAt | datetime | No | Timestamp when the export was generated |
+| submittedAt | datetime | No | Timestamp when the export was submitted to CBS |
+| acceptedAt | datetime | No | Timestamp when CBS accepted the export |
+| cbsMessageId | string | No | CBS-side message identifier returned on submission |
+| correctionOf | string | No | FK to a prior Iv3Export.id superseded by this correction |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- self → Iv3Export (many-to-one, via correctionOf → id; correction chain)
+
+**Lifecycle (x-openregister-lifecycle):**
+- generated → validated (operator validates XML against CBS schema)
+- validated → submitted (operator submits via OpenConnector cbs-iv3)
+- submitted → accepted (CBS callback via cbs-iv3 source)
+- submitted → rejected (CBS callback via cbs-iv3 source)
+- rejected → validated (re-validate after operator corrects)
+- accepted → corrected (file a new Iv3Export with correctionOf set)
+
+**Submission:** OR ScheduledWorkflow (cron `0 0 1 */3 *`) via OpenConnector `cbs-iv3` source (ADR-019). No app-local HTTP client.
 
 ### JointVenture
 **Schema.org:** `schema:Organization`
