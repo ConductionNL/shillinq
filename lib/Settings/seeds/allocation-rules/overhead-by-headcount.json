@@ -1,0 +1,34 @@
+{
+  "_meta": {
+    "source": "shillinq-default",
+    "variant": "overhead-by-headcount",
+    "imported": "2026-06-01T00:00:00Z",
+    "spdx": "SPDX-License-Identifier: EUPL-1.2",
+    "copyright": "SPDX-FileCopyrightText: 2026 Conduction B.V."
+  },
+  "allocationRules": [
+    {
+      "name": "Overhead spread by headcount",
+      "sourceAccountPattern": "8000-8099",
+      "driver": "headcount",
+      "targets": [
+        {
+          "code": "KC-100",
+          "source": "headcount"
+        },
+        {
+          "code": "KC-200",
+          "source": "headcount"
+        },
+        {
+          "code": "KC-300",
+          "source": "headcount"
+        }
+      ],
+      "targetDimension": "cost-center",
+      "cadence": "monthly",
+      "lifecycleState": "paused",
+      "description": "Example: spread overhead accounts 8000-8099 across cost centers KC-100, KC-200, KC-300 proportional to headcount. Activate and adjust target codes to match your administration."
+    }
+  ]
+}

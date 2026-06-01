@@ -110,24 +110,25 @@ _Accounting administration unit for a specific business year of a corporation. S
 
 ### AllocationRule
 **Schema.org:** `schema:Thing`
-_Recurring rule for automatically allocating overhead and shared costs between cost centers based on percentage, fixed amount, or calculation formula_
-**Primary spec:** cost-accounting-allocation
+_A cost-allocation rule that spreads overhead and shared costs across cost objects using a named driver. Execution is schema-declared per ADR-031 (no AllocationService PHP class). Per-posting rules fire as an x-openregister-lifecycle action on GLTransaction.post; monthly/period-close rules fire via OR ScheduledWorkflow._
+**Primary spec:** bookkeeping-cost-centers-dimensions (T4)
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| name | string | Yes | Name of the allocation rule |
-| ruleType | string | Yes | Type: percentage, fixed amount, or formula-based |
-| percentage | number | No | Percentage to allocate (if percentage-based) |
-| fixedAmount | number | No | Fixed amount to allocate per period |
-| frequency | string | Yes | Frequency: monthly, quarterly, or yearly |
-| isActive | boolean | Yes | Whether rule is currently active |
-| startDate | datetime | Yes | Date rule becomes effective |
-| endDate | datetime | No | Date rule expires |
-| description | string | No |  |
+| name | string | Yes | Operator-readable rule name |
+| sourceAccountPattern | string | Yes | Glob or range pattern matching source accounts (e.g. 8000-8099) |
+| driver | enum | Yes | One of: fixed-percentage, fixed-amount, volume, headcount |
+| targets | array | Yes | At least 2 target dimension codes with split specification |
+| targetDimension | enum | Yes | One of: cost-center, kosten-drager, project |
+| cadence | enum | Yes | One of: per-posting, monthly, period-close |
+| lifecycleState | enum | Yes | One of: active, paused, archived |
+| administrationId | string | Yes | FK to the Administration |
+| description | string | No | Operator-authored description |
 
 **Relations:**
-- → CostCenter (many-to-one)
-- → CostCenter (many-to-one)
+- → CostCenter / KostenDrager / Project (many-to-many, via targets[].code resolved by targetDimension)
+
+> **Reconciliation note (add-shillinq-cost-centers-dimensions, 2026-06-01):** The earlier `AllocationRule` entry (primary spec: cost-accounting-allocation) used a generic `ruleType/percentage/fixedAmount/frequency/isActive` shape that did not conform to ADR-031 (schema-declarative business logic) and predated the T4 bookkeeping engine. This entry supersedes it. The canonical `AllocationRule` is declared in `lib/Settings/shillinq_register.json` under the `bookkeeping-cost-centers-dimensions` capability with four named drivers, lifecycle state per REQ-CC-004, and no PHP `AllocationService`. The older cost-accounting-allocation entry is retained below for historical reference only; do NOT use it for new register declarations.
 
 ### ApprovalChain
 **Schema.org:** `ApprovalChain`
@@ -1025,21 +1026,26 @@ _Transaction allocating or distributing costs from one cost center to another, w
 
 ### CostCenter
 **Schema.org:** `schema:Organization`
-_A cost center for tracking, allocating, and analyzing departmental or functional expenses across the organization_
-**Primary spec:** cost-accounting-allocation
+_An analytical dimension representing a department, function, or other cost-bearing unit within a bookkeeping administration. Supports hierarchical navigation via self-relation. Declared as an OR register per ADR-022 + REQ-CC-002._
+**Primary spec:** bookkeeping-cost-centers-dimensions (T4)
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| code | string | Yes | Unique cost center identifier |
-| name | string | Yes | Name of the cost center |
-| description | string | No | Detailed description of responsibilities and scope |
-| status | string | Yes | Current status: active or inactive |
-| budget | number | No | Allocated annual or periodic budget |
-| createdDate | datetime | Yes | Date when cost center was created |
+| code | string | Yes | Operator-assigned unique code within the administration (e.g. KC-100) |
+| name | string | Yes | Human-readable name |
+| parentCode | string | No | FK to parent CostCenter.code for hierarchy |
+| responsibleUser | string | No | Nextcloud user id of the cost-center owner |
+| lifecycleState | enum | Yes | One of: active, blocked, archived |
+| administrationId | string | Yes | FK to the Administration |
+| description | string | No | Operator-authored free-text description |
 
 **Relations:**
-- → Person (many-to-one)
-- → Organization (many-to-one)
+- self → CostCenter (many-to-one, via parentCode → code; hierarchy navigation)
+- → GLLine (one-to-many, via GLLine.costCenterCode)
+
+> **Reconciliation note (add-shillinq-cost-centers-dimensions, 2026-06-01):** The earlier `CostCenter` entry (primary spec: cost-accounting-allocation) used `status/budget/createdDate` fields and related to `Person` and `Organization` rather than bookkeeping entities. That shape does not conform to the T4 bookkeeping dimension model (REQ-CC-002). This entry supersedes it. The canonical `CostCenter` is declared in `lib/Settings/shillinq_register.json` with `x-openregister-relations` self-relation for hierarchy and `x-openregister-rbac` for bookkeeper/auditor roles. The earlier cost-accounting-allocation entry is retained for historical reference only; do NOT use it for new register declarations.
+
+> **KostenDrager companion** — see below. A cost center is WHERE costs originate; a kostendrager is WHAT bears the cost (product, service, contract). Both are distinct analytical dimensions in Dutch GAAP.
 
 ### CostProject
 **Schema.org:** `schema:Project`
@@ -1060,6 +1066,56 @@ _Project or cost object for tracking time, materials, and costs on a project bas
 **Relations:**
 - → Organization (many-to-one)
 - → CostCenter (many-to-one)
+
+### KostenDrager
+**Schema.org:** `schema:Intangible`
+_An analytical dimension representing a cost unit or cost object (Dutch: kostendrager). Semantically distinct from CostCenter: a cost center is WHERE costs originate; a kostendrager is WHAT bears the cost (e.g. a product, service, or contract). Part of the T4 bookkeeping dimension model per REQ-CC-002._
+**Primary spec:** bookkeeping-cost-centers-dimensions (T4)
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| code | string | Yes | Operator-assigned unique code within the administration |
+| name | string | Yes | Human-readable name |
+| parentCode | string | No | FK to parent KostenDrager.code for hierarchy |
+| responsibleUser | string | No | Nextcloud user id of the kostendrager owner |
+| lifecycleState | enum | Yes | One of: active, blocked, archived |
+| administrationId | string | Yes | FK to the Administration |
+| description | string | No | Operator-authored free-text description |
+
+**Relations:**
+- self → KostenDrager (many-to-one, via parentCode → code; hierarchy navigation)
+- → GLLine (one-to-many, via GLLine.kostenDragerCode)
+
+### GLLine
+**Schema.org:** `schema:AccountingEntry`
+_An individual debit or credit line within a GLTransaction. T1 base fields carry the double-entry data; T4 dimension fields (costCenterCode, kostenDragerCode, projectCode, dimensions) enable segment P&L analysis per REQ-CC-003._
+**Primary spec:** bookkeeping-general-ledger (T1) + bookkeeping-cost-centers-dimensions (T4 additive patch)
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| transactionId | string | Yes | FK to the parent GLTransaction |
+| lineNumber | integer | Yes | Sequence number within the transaction |
+| accountNumber | string | Yes | FK to Account.accountNumber |
+| side | enum | Yes | One of: debit, credit |
+| amount | number | Yes | Non-negative monetary amount |
+| currency | string | Yes | ISO 4217 currency code |
+| periodId | string | Yes | FK to the FiscalYear period |
+| subLedgerType | string | No | Sub-ledger classification (AP, AR, asset) |
+| subLedgerRef | string | No | FK to the sub-ledger record |
+| costCenter | string | No | Backwards-compatible alias for costCenterCode (T1 field) |
+| description | string | No | Line-level narrative |
+| administrationId | string | Yes | FK to the Administration |
+| costCenterCode | string | No | FK to CostCenter.code — T4 dimension reference per REQ-CC-003 |
+| kostenDragerCode | string | No | FK to KostenDrager.code — T4 dimension reference per REQ-CC-003 |
+| projectCode | string | No | FK to Project.code — T4 dimension reference; also WBSO time-per-project join key per REQ-CC-007 |
+| dimensions | object | No | Free-form key→value map for custom dimension registers; validated via OR relations engine per REQ-CC-003 |
+
+**Relations:**
+- → GLTransaction (many-to-one)
+- → Account (many-to-one, via accountNumber)
+- → CostCenter (many-to-one, via costCenterCode)
+- → KostenDrager (many-to-one, via kostenDragerCode)
+- → Project (many-to-one, via projectCode)
 
 ### CreditNote
 **Schema.org:** `schema:Invoice`
@@ -2758,6 +2814,8 @@ _Project container for organizing tasks, milestones, and team collaboration with
 - → Milestone (one-to-many)
 - → Person (many-to-one)
 - → Organization (many-to-one)
+
+> **Bookkeeping dimension note (add-shillinq-cost-centers-dimensions, 2026-06-01):** The T4 bookkeeping dimension model introduces a separate `Project` schema in `lib/Settings/shillinq_register.json` (primary spec: bookkeeping-cost-centers-dimensions). That schema carries `code`, `name`, `parentCode`, `responsibleUser`, `lifecycleState`, `administrationId`, and `timeBookingEnabled` (pre-positioning WBSO time-per-project per REQ-CC-007) — distinct from this approval-workflow `Project` entity which tracks tasks, milestones, and budgets. The two schemas serve different capabilities and are NOT merged; downstream code should reference the bookkeeping dimension schema by its register slug `shillinq/Project` when coding GL lines by project.
 
 ### ProjectTask
 **Schema.org:** `schema:Action`

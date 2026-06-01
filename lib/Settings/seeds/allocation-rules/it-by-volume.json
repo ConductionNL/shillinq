@@ -1,0 +1,30 @@
+{
+  "_meta": {
+    "source": "shillinq-default",
+    "variant": "it-by-volume",
+    "imported": "2026-06-01T00:00:00Z",
+    "spdx": "SPDX-License-Identifier: EUPL-1.2",
+    "copyright": "SPDX-FileCopyrightText: 2026 Conduction B.V."
+  },
+  "allocationRules": [
+    {
+      "name": "IT spend spread by transaction volume",
+      "sourceAccountPattern": "8100-8199",
+      "driver": "volume",
+      "targets": [
+        {
+          "code": "KC-100",
+          "source": "transaction_count"
+        },
+        {
+          "code": "KC-200",
+          "source": "transaction_count"
+        }
+      ],
+      "targetDimension": "cost-center",
+      "cadence": "monthly",
+      "lifecycleState": "paused",
+      "description": "Example: spread IT expenditure accounts 8100-8199 across cost centers proportional to transaction volume. Activate and adjust target codes to match your administration."
+    }
+  ]
+}

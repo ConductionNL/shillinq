@@ -66,6 +66,9 @@ class InitializeSettings implements IRepairStep
      * Phase 2: seeds the chart of accounts from the RGS template selected
      * in app config key 'rgs_template' (default: 'mkb'). Idempotent —
      * existing accounts are skipped on re-run, preserving operator edits.
+     * Phase 3: seeds allocation-rule example objects (overhead-by-headcount,
+     * it-by-volume, facility-by-fixed-percentage) in paused state per
+     * REQ-CC-004. Idempotent — existing rules are skipped.
      * Seeding is skipped entirely when administration_id is not configured
      * (C2: prevents "default" contamination of real tenant data).
      *
@@ -73,7 +76,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/spec/tasks.md#task-11
+     * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
      */
     public function run(IOutput $output): void
     {
@@ -119,6 +122,7 @@ class InitializeSettings implements IRepairStep
             }
 
             $this->seedChartOfAccounts(output: $output);
+            $this->seedAllocationRuleExamples(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -186,4 +190,49 @@ class InitializeSettings implements IRepairStep
         }
 
     }//end seedChartOfAccounts()
+
+    /**
+     * Seed allocation-rule example objects, idempotently.
+     *
+     * Delegates to SettingsService::seedAllocationRuleExamples(). Seeds are
+     * shipped in lifecycleState: paused so operators can review and activate
+     * each rule before it fires per REQ-CC-004. Seeding is skipped when
+     * administration_id is not configured (C2).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
+     */
+    private function seedAllocationRuleExamples(IOutput $output): void
+    {
+        $settings         = $this->settingsService->getSettings();
+        $administrationId = ($settings['administration_id'] ?? '');
+
+        if ($administrationId === '') {
+            $output->info('Shillinq: administration_id not configured — skipping allocation rule seed.');
+            return;
+        }
+
+        $output->info('Seeding allocation rule examples...');
+
+        $seedResult = $this->settingsService->seedAllocationRuleExamples(
+            administrationId: $administrationId
+        );
+
+        if ($seedResult['success'] === true) {
+            $seeded  = ($seedResult['seeded'] ?? 0);
+            $skipped = ($seedResult['skipped'] ?? 0);
+            $output->info(
+                'Allocation rule examples seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        }
+
+        if ($seedResult['success'] !== true) {
+            $message = ($seedResult['message'] ?? 'unknown error');
+            $output->warning('Allocation rule seeding issue: '.$message);
+        }
+
+    }//end seedAllocationRuleExamples()
 }//end class

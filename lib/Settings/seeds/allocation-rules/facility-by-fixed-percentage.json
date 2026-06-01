@@ -1,0 +1,34 @@
+{
+  "_meta": {
+    "source": "shillinq-default",
+    "variant": "facility-by-fixed-percentage",
+    "imported": "2026-06-01T00:00:00Z",
+    "spdx": "SPDX-License-Identifier: EUPL-1.2",
+    "copyright": "SPDX-FileCopyrightText: 2026 Conduction B.V."
+  },
+  "allocationRules": [
+    {
+      "name": "Facility costs by fixed percentage",
+      "sourceAccountPattern": "8200-8299",
+      "driver": "fixed-percentage",
+      "targets": [
+        {
+          "code": "KC-100",
+          "percentage": 50
+        },
+        {
+          "code": "KC-200",
+          "percentage": 30
+        },
+        {
+          "code": "KC-300",
+          "percentage": 20
+        }
+      ],
+      "targetDimension": "cost-center",
+      "cadence": "monthly",
+      "lifecycleState": "paused",
+      "description": "Example: spread facility costs (accounts 8200-8299) 50/30/20 across cost centers KC-100, KC-200, KC-300. Percentages sum to 100. Activate and adjust target codes and percentages to match your administration."
+    }
+  ]
+}

@@ -24,6 +24,42 @@
 					"icon": "LedgerOutline",
 					"route": "ChartOfAccounts",
 					"order": 10
+				},
+				{
+					"id": "Dimensions",
+					"label": "Dimensions",
+					"icon": "TagMultipleOutline",
+					"order": 50,
+					"children": [
+						{
+							"id": "CostCenters",
+							"label": "Cost Centers",
+							"icon": "DomainOutline",
+							"route": "CostCenters",
+							"order": 10
+						},
+						{
+							"id": "KostenDragers",
+							"label": "Kostendragers",
+							"icon": "TagOutline",
+							"route": "KostenDragers",
+							"order": 20
+						},
+						{
+							"id": "Projects",
+							"label": "Projects",
+							"icon": "FolderOutline",
+							"route": "Projects",
+							"order": 30
+						},
+						{
+							"id": "AllocationRules",
+							"label": "Allocation Rules",
+							"icon": "ArrowSplitVertical",
+							"route": "AllocationRules",
+							"order": 40
+						}
+					]
 				}
 			]
 		},
@@ -94,6 +130,338 @@
 				],
 				"defaultSort": "accountNumber",
 				"detailRoute": "ChartOfAccountsDetail"
+			}
+		},
+		{
+			"id": "CostCenters",
+			"route": "/dimensions/cost-centers",
+			"type": "index",
+			"title": "Cost Centers",
+			"config": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"columns": [
+					{
+						"key": "code",
+						"label": "Code",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "code",
+				"detailRoute": "CostCentersDetail"
+			}
+		},
+		{
+			"id": "CostCentersDetail",
+			"route": "/dimensions/cost-centers/:id",
+			"type": "detail",
+			"title": "Cost Center",
+			"config": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"fields": [
+					{
+						"key": "code",
+						"label": "Code",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "parentCode",
+						"label": "Parent Cost Center",
+						"type": "string"
+					},
+					{
+						"key": "responsibleUser",
+						"label": "Responsible User",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "CostCenters"
+			}
+		},
+		{
+			"id": "KostenDragers",
+			"route": "/dimensions/kostendragers",
+			"type": "index",
+			"title": "Kostendragers",
+			"config": {
+				"register": "shillinq",
+				"schema": "KostenDrager",
+				"columns": [
+					{
+						"key": "code",
+						"label": "Code",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "code",
+				"detailRoute": "KostenDragersDetail"
+			}
+		},
+		{
+			"id": "KostenDragersDetail",
+			"route": "/dimensions/kostendragers/:id",
+			"type": "detail",
+			"title": "Kostendrager",
+			"config": {
+				"register": "shillinq",
+				"schema": "KostenDrager",
+				"fields": [
+					{
+						"key": "code",
+						"label": "Code",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "parentCode",
+						"label": "Parent Kostendrager",
+						"type": "string"
+					},
+					{
+						"key": "responsibleUser",
+						"label": "Responsible User",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "KostenDragers"
+			}
+		},
+		{
+			"id": "Projects",
+			"route": "/dimensions/projects",
+			"type": "index",
+			"title": "Projects",
+			"config": {
+				"register": "shillinq",
+				"schema": "Project",
+				"columns": [
+					{
+						"key": "code",
+						"label": "Code",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "code",
+				"detailRoute": "ProjectsDetail"
+			}
+		},
+		{
+			"id": "ProjectsDetail",
+			"route": "/dimensions/projects/:id",
+			"type": "detail",
+			"title": "Project",
+			"config": {
+				"register": "shillinq",
+				"schema": "Project",
+				"fields": [
+					{
+						"key": "code",
+						"label": "Code",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "parentCode",
+						"label": "Parent Project",
+						"type": "string"
+					},
+					{
+						"key": "responsibleUser",
+						"label": "Responsible User",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "timeBookingEnabled",
+						"label": "Time Booking",
+						"type": "boolean"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "Projects"
+			}
+		},
+		{
+			"id": "AllocationRules",
+			"route": "/dimensions/allocation-rules",
+			"type": "index",
+			"title": "Allocation Rules",
+			"config": {
+				"register": "shillinq",
+				"schema": "AllocationRule",
+				"columns": [
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "driver",
+						"label": "Driver",
+						"sortable": true
+					},
+					{
+						"key": "cadence",
+						"label": "Cadence",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "name",
+				"detailRoute": "AllocationRulesDetail"
+			}
+		},
+		{
+			"id": "AllocationRulesDetail",
+			"route": "/dimensions/allocation-rules/:id",
+			"type": "detail",
+			"title": "Allocation Rule",
+			"config": {
+				"register": "shillinq",
+				"schema": "AllocationRule",
+				"fields": [
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "sourceAccountPattern",
+						"label": "Source Account Pattern",
+						"type": "string"
+					},
+					{
+						"key": "driver",
+						"label": "Driver",
+						"type": "string"
+					},
+					{
+						"key": "targets",
+						"label": "Targets",
+						"type": "array"
+					},
+					{
+						"key": "targetDimension",
+						"label": "Target Dimension",
+						"type": "string"
+					},
+					{
+						"key": "cadence",
+						"label": "Cadence",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "AllocationRules"
 			}
 		},
 		{
