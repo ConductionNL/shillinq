@@ -1,72 +1,72 @@
 {
-  "spec": "openspec/changes/add-shillinq-gr-consolidation",
+  "spec": "openspec/changes/add-shillinq-r-d-subsidies-mkb",
   "verified": [
     {
       "task": "1",
-      "description": "Confirmed no GRDeelnemer, GRVerdeelsleutel, or bookkeeping-gr-consolidation already existed in lib/Settings/shillinq_register.json",
+      "description": "Confirmed no subsidieRegeling enum, parallel RDSubsidie register, or bookkeeping-r-d-subsidies-mkb capability existed in lib/Settings/shillinq_register.json before this change.",
       "ok": true
     },
     {
       "task": "2",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/specs/bookkeeping-gr-consolidation/spec.md",
+      "file": "openspec/specs/bookkeeping-r-d-subsidies-mkb/spec.md",
       "ok": true
     },
     {
       "task": "3",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/proposal.md",
+      "file": "openspec/changes/add-shillinq-r-d-subsidies-mkb/proposal.md",
       "ok": true
     },
     {
       "task": "4",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/design.md",
+      "file": "openspec/changes/add-shillinq-r-d-subsidies-mkb/design.md",
       "ok": true
     },
     {
       "task": "5",
       "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer schema declared with deelnemerType enum, deelnemerNaam, administrationId (optional), aandeel (0-1 validated), actief boolean, lifecycleState",
+      "description": "Subsidie schema added with subsidieRegeling enum (mit|sbir|eu-horizon|efro|react-eu|other), schema:Grant x-schema-org annotation. Materialises as schema:ResearchProject when subsidieRegeling is non-other.",
       "ok": true
     },
     {
       "task": "6",
       "file": "lib/Settings/shillinq_register.json",
-      "description": "GRVerdeelsleutel schema declared with sleutelNaam, costClusterAccountNumbers array, verdelingsType enum (vast-percentage/inwoner-aantal/gewogen-oppervlak/custom-formula), parameters object, lineNumber",
+      "description": "Kostenpost schema declared with allOf if/then constraints per REQ-RDS-002: MIT (personnel/materials/external-services/equipment-depreciation/other-direct), SBIR (personnel/materials/equipment-depreciation/other-direct), EU Horizon (personnel/subcontracting/other-direct/indirect-25-percent), EFRO (personnel/external-services/materials/equipment/other/indirect-flat-rate), REACT-EU (EFRO + green-recovery).",
       "ok": true
     },
     {
       "task": "7",
       "file": "lib/Settings/shillinq_register.json",
-      "description": "GLLine schema declared with eliminationFlag: boolean (default false); x-openregister-aggregations.consolidatedTrialBalance declared with filter: eliminationFlag = false",
+      "description": "x-openregister-aggregations declared on Subsidie schema for MIT, SBIR, EU Horizon, EFRO/REACT-EU voortgangsrapportage, each grouping Kostenpost by (kostencategorie, periodId) filtered on the parent subsidie per REQ-RDS-003.",
       "ok": true
     },
     {
       "task": "8",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRVerdeelsleutel.x-openregister-aggregations.doorbelastingPerDeelnemer declared with join on GLLine WHERE accountNumber IN costClusterAccountNumbers AND eliminationFlag = false, grouped by deelnemerId",
+      "file": "lib/Settings/docudesk-templates.json",
+      "description": "Created with voortgangsrapportage templates for all 5 regelingen: EU Horizon Periodic Report, MIT Voortgangsrapport, SBIR Voortgangsrapport, EFRO/REACT-EU Progress Dossier per REQ-RDS-003.",
       "ok": true
     },
     {
       "task": "9",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer.x-openregister-lifecycle.hooks.onGrPeriodClose declared: trigger bookkeeping-period-close:grPeriodClosed, condition administrationId IS NOT NULL, idempotency key (grAdministrationId, deelnemerId, periodId)",
+      "file": "lib/Settings/docudesk-templates.json",
+      "description": "Audit-pack templates registered for EU Horizon (with personnel/S&O-uren-staat URI refs), MIT (WBSO/S&O declaration), SBIR, EFRO/REACT-EU (procurement dossier per inkoop boven drempel) per REQ-RDS-004.",
       "ok": true
     },
     {
       "task": "10",
       "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer.x-openregister-aggregations.aandeelSumCheck declared: filter actief = true, sum of aandeel field; non-blocking warning when result differs from 1.0",
+      "description": "x-openregister-calculations declared on Subsidie: Horizon indirect-25% warning at >=90% of 25%-of-direct sub-max, MIT budget monitoring, EFRO indirect flat-rate monitoring per REQ-RDS-005.",
       "ok": true
     },
     {
       "task": "11",
       "file": "src/manifest.json",
-      "description": "featureFlags.gov-gr added; Gemeenschappelijke regeling menu entry under Bookkeeping with 3 children (Deelnemers, Verdeelsleutels, Geconsolideerde view); 5 pages added (GRDeelnemers, GRDeelnemerDetail, GRVerdeelsleutels, GRVerdeelsleutelDetail, GRConsolidated); node tests/validate-manifest.js: only pre-existing roadmap-type failure, no new failures",
+      "description": "R&D Subsidies navigation added behind featureFlag mkb-r-d-subsidies under Bookkeeping with 5 per-regeling index pages (MIT, SBIR, EU Horizon, EFRO, REACT-EU) and 1 shared detail page. Pre-existing roadmap-type validation failure on development is unrelated to this change.",
       "ok": true
     },
     {
       "task": "12",
       "file": "openspec/architecture/adr-000-data-model.md",
-      "description": "GRDeelnemer and GRVerdeelsleutel entity entries added alphabetically after GrantPortfolio, cross-referencing bookkeeping-gr-consolidation spec",
+      "description": "Subsidie entity added with subsidieRegeling overlay annotation and Kostenpost entity added, both cross-referencing bookkeeping-r-d-subsidies-mkb (add-shillinq-r-d-subsidies-mkb, 2026-06-01).",
       "ok": true
     }
   ],

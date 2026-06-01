@@ -3550,6 +3550,57 @@ _An application for a subsidy or grant under a specific subsidy scheme with supp
 - → Organization (many-to-one)
 - → Document (one-to-many)
 
+### Subsidie
+**Schema.org:** `schema:Grant` (materialises as `schema:ResearchProject` when `subsidieRegeling ∈ {mit, sbir, eu-horizon, efro, react-eu}`)
+_ASV-model subsidie register covering the full lifecycle (aanvraag → verleend → vastgesteld → uitbetaald → teruggevorderd → afgehandeld) for both outgoing and incoming grants. The `subsidieRegeling` overlay (bookkeeping-r-d-subsidies-mkb, 2026-06-01) extends the base register with an R&D regeling discriminator that selects per-regeling kostencategorieën constraints (REQ-RDS-002), voortgangsrapportage aggregations (REQ-RDS-003), budget-monitoring calculations (REQ-RDS-005), and docudesk audit-pack templates (REQ-RDS-004). No parallel RDSubsidie register; no PHP regeling-resolver service — all declared via x-openregister-* extensions per ADR-031._
+**Primary spec:** bookkeeping-subsidie-verantwoording (base) + bookkeeping-r-d-subsidies-mkb (subsidieRegeling overlay)
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the Administration owning this subsidie record |
+| direction | enum | Yes | outgoing (admin grants to beneficiary) or incoming (admin receives from granting body) |
+| subsidieNumber | string | Yes | Unique subsidie reference per administration and tax year |
+| counterpartyName | string | Yes | Beneficiary name (outgoing) or granting body name (incoming) |
+| counterpartyId | string | No | Optional FK to a contact record |
+| regelingNaam | string | Yes | Name of the underlying subsidie regeling |
+| regelingArtikel | string | No | Specific article reference within the regeling |
+| subsidieRegeling | enum | No | R&D regeling discriminator: mit, sbir, eu-horizon, efro, react-eu, other (null for non-R&D subsidies) |
+| aanvraagDate | date | Yes | Date of the subsidie aanvraag |
+| beschikkingDate | date | No | Date of the verleningsbeschikking |
+| vaststellingDate | date | No | Date of the vaststellingsbeschikking |
+| aangevraagdBedrag | number | Yes | Applied-for amount in EUR |
+| verleendBedrag | number | No | Granted amount — set on the verleen transition |
+| vastgesteldBedrag | number | No | Settled amount — set on the vaststel transition |
+| uitbetaaldBedrag | number | No | Paid amount — set on the uitbetaal transition |
+| teruggevorderdBedrag | number | No | Reclaimed amount — set on the terugvorder transition |
+| state | enum | Yes | ASV-model lifecycle state: aanvraag, verleend, vastgesteld, uitbetaald, teruggevorderd, afgehandeld |
+| beschikkingUri | string | No | Docudesk URI of the verleningsbeschikking PDF |
+| vaststellingUri | string | No | Docudesk URI of the vaststellingsbeschikking PDF |
+| prestatieverantwoording | string | No | Free-text prestatieverantwoording |
+| repaymentPlanId | string | No | FK to a RepaymentInstallment parent record if a settlement plan applies |
+
+**Relations:**
+- → Kostenpost (one-to-many, via Kostenpost.subsidieId)
+
+### Kostenpost
+**Schema.org:** `schema:MonetaryAmount`
+_An individual cost item within a subsidie's kostendossier. The allowed kostencategorie values are constrained per subsidieRegeling via JSON Schema if/then rules: MIT allows (personnel, materials, external-services, equipment-depreciation, other-direct); SBIR (personnel, materials, equipment-depreciation, other-direct); EU Horizon (personnel, subcontracting, other-direct, indirect-25-percent); EFRO (personnel, external-services, materials, equipment, other, indirect-flat-rate); REACT-EU (same as EFRO + green-recovery) per REQ-RDS-002. An invalid (subsidieRegeling, kostencategorie) combination fails at save time with a schema validation error. Per ADR-031, no PHP category validator. Cross-referencing spec: bookkeeping-r-d-subsidies-mkb (add-shillinq-r-d-subsidies-mkb, 2026-06-01)._
+**Primary spec:** bookkeeping-r-d-subsidies-mkb
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| subsidieId | string | Yes | FK to the parent Subsidie.id |
+| subsidieRegeling | enum | Yes | Denormalized regeling discriminator from the parent Subsidie for schema-level kostencategorie validation |
+| kostencategorie | string | Yes | Cost category; allowed values depend on subsidieRegeling |
+| periodId | string | Yes | Reporting period identifier (e.g. 2026-Q1) for voortgangsrapportage grouping |
+| amount | number | Yes | Kostenpost amount in EUR |
+| currency | string | Yes | ISO 4217 currency code (default EUR) |
+| description | string | No | Free-text description |
+| attachmentUris | array | No | Docudesk or external URIs of supporting documents; EU Horizon personnel kostenpost MUST include S&O-uren-staat URI references per REQ-RDS-004 |
+
+**Relations:**
+- → Subsidie (many-to-one, via subsidieId)
+
 ### SubsidyScheme
 **Schema.org:** `schema:GovernmentService`
 _A government subsidy program defining eligibility criteria, award conditions, and funding framework_

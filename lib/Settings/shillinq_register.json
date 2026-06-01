@@ -720,6 +720,547 @@
         }
       }
     },
+      "Subsidie": {
+        "slug": "Subsidie",
+        "icon": "CurrencyEur",
+        "version": "0.1.0",
+        "title": "Subsidie",
+        "description": "Grant/subsidy register covering the full ASV-model lifecycle (aanvraag → verleend → vastgesteld → uitbetaald → teruggevorderd → afgehandeld) for both outgoing and incoming grants. Overlaid by the R&D regelingen via the subsidieRegeling enum per bookkeeping-r-d-subsidies-mkb.",
+        "x-schema-org": "schema:Grant",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "direction",
+          "subsidieNumber",
+          "counterpartyName",
+          "regelingNaam",
+          "aanvraagDate",
+          "aangevraagdBedrag",
+          "state"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this subsidie record.",
+            "example": "gem-a"
+          },
+          "direction": {
+            "type": "string",
+            "enum": ["outgoing", "incoming"],
+            "description": "outgoing = administration grants to beneficiary; incoming = administration receives from granting body."
+          },
+          "subsidieNumber": {
+            "type": "string",
+            "description": "Unique subsidie reference per administration and tax year.",
+            "example": "SUB-2026-001"
+          },
+          "counterpartyName": {
+            "type": "string",
+            "description": "Beneficiary name (outgoing) or granting body name (incoming).",
+            "example": "Stichting Cultuur"
+          },
+          "counterpartyId": {
+            "type": "string",
+            "description": "Optional FK to a contact record if the counterparty is registered.",
+            "nullable": true
+          },
+          "regelingNaam": {
+            "type": "string",
+            "description": "Name of the underlying subsidie regeling.",
+            "example": "Subsidieregeling cultuur 2026"
+          },
+          "regelingArtikel": {
+            "type": "string",
+            "description": "Specific article reference within the regeling.",
+            "nullable": true
+          },
+          "subsidieRegeling": {
+            "type": "string",
+            "enum": ["mit", "sbir", "eu-horizon", "efro", "react-eu", "other"],
+            "description": "R&D regeling discriminator per REQ-RDS-001. When set to a non-other value, the regeling-specific kostencategorieën constraint (REQ-RDS-002) applies on related Kostenpost records. The schema:Grant type is further materialised as schema:ResearchProject when this field is set to a non-other value.",
+            "nullable": true
+          },
+          "aanvraagDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of the subsidie aanvraag.",
+            "example": "2026-02-01"
+          },
+          "beschikkingDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of the verleningsbeschikking.",
+            "nullable": true
+          },
+          "vaststellingDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of the vaststellingsbeschikking.",
+            "nullable": true
+          },
+          "aangevraagdBedrag": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Applied-for amount in EUR.",
+            "example": 25000
+          },
+          "verleendBedrag": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Granted amount — set on the verleen transition.",
+            "nullable": true
+          },
+          "vastgesteldBedrag": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Settled amount — set on the vaststel transition.",
+            "nullable": true
+          },
+          "uitbetaaldBedrag": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Paid amount — set on the uitbetaal transition.",
+            "nullable": true
+          },
+          "teruggevorderdBedrag": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Reclaimed amount — set on the terugvorder transition.",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "enum": ["aanvraag", "verleend", "vastgesteld", "uitbetaald", "teruggevorderd", "afgehandeld"],
+            "default": "aanvraag",
+            "description": "Current ASV-model lifecycle state.",
+            "example": "aanvraag"
+          },
+          "beschikkingUri": {
+            "type": "string",
+            "description": "Docudesk URI of the verleningsbeschikking PDF.",
+            "nullable": true
+          },
+          "vaststellingUri": {
+            "type": "string",
+            "description": "Docudesk URI of the vaststellingsbeschikking PDF.",
+            "nullable": true
+          },
+          "prestatieverantwoording": {
+            "type": "string",
+            "description": "Free-text or structured prestatieverantwoording.",
+            "nullable": true
+          },
+          "repaymentPlanId": {
+            "type": "string",
+            "description": "FK to a RepaymentInstallment parent record if a settlement plan applies.",
+            "nullable": true
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "aanvraag",
+          "states": {
+            "aanvraag": {
+              "label": "Aanvraag",
+              "description": "Subsidie aanvraag registered; awaiting beslissing."
+            },
+            "verleend": {
+              "label": "Verleend",
+              "description": "Subsidie granted via verleningsbeschikking."
+            },
+            "vastgesteld": {
+              "label": "Vastgesteld",
+              "description": "Subsidie settled via vaststellingsbeschikking."
+            },
+            "uitbetaald": {
+              "label": "Uitbetaald",
+              "description": "Subsidie paid; GL journal entry posted."
+            },
+            "teruggevorderd": {
+              "label": "Teruggevorderd",
+              "description": "Repayment demanded; repayment plan may apply."
+            },
+            "afgehandeld": {
+              "label": "Afgehandeld",
+              "description": "Dossier closed; record retained per selectielijst."
+            }
+          },
+          "retention": {
+            "rule": "selectielijst:3.5.1",
+            "period": "P10Y",
+            "trigger": "vaststellingDate",
+            "description": "Subsidie records retained 10 years after vaststelling per Selectielijst Gemeenten 2020 + Awb 4:52."
+          },
+          "transitions": {
+            "verleen": {
+              "from": "aanvraag",
+              "to": "verleend",
+              "label": "Verleen",
+              "description": "Grant the subsidie. Requires dual-control approval (subsidie-coordinator + manager), verleendBedrag MUST be set, beschikkingUri SHOULD be set.",
+              "requires": "approval-workflow"
+            },
+            "wijs-af": {
+              "from": "aanvraag",
+              "to": "afgehandeld",
+              "label": "Wijs af",
+              "description": "Reject the aanvraag. Reason MUST be set."
+            },
+            "vaststel": {
+              "from": "verleend",
+              "to": "vastgesteld",
+              "label": "Vaststel",
+              "description": "Settle the subsidie. prestatieverantwoording and vastgesteldBedrag MUST be set; vaststellingUri SHOULD be set."
+            },
+            "uitbetaal": {
+              "from": "vastgesteld",
+              "to": "uitbetaald",
+              "label": "Uitbetaal",
+              "description": "Pay the subsidie. uitbetaaldBedrag MUST equal vastgesteldBedrag. Creates a pending T1 JournalEntry."
+            },
+            "terugvorder": {
+              "from": "uitbetaald",
+              "to": "teruggevorderd",
+              "label": "Terugvordering",
+              "description": "Reclaim grant funds. teruggevorderdBedrag and reason MUST be set. Requires dual-control approval.",
+              "requires": "approval-workflow"
+            },
+            "sluit-uitbetaald": {
+              "from": "uitbetaald",
+              "to": "afgehandeld",
+              "label": "Sluit dossier",
+              "description": "Close the dossier after retention obligations are met."
+            },
+            "sluit-teruggevorderd": {
+              "from": "teruggevorderd",
+              "to": "afgehandeld",
+              "label": "Sluit dossier (terugvordering)",
+              "description": "Close the dossier after the repayment plan is fully settled (repaymentBalance MUST equal 0)."
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "voortgangsrapportage-mit": {
+            "description": "MIT voortgangsrapportage: groups Kostenpost records by (kostencategorie, periodId) for MIT subsidies, producing cumulative and periodic totals per MIT kostencategorie per REQ-RDS-003.",
+            "filter": "subsidieRegeling = 'mit'",
+            "sourceSchema": "Kostenpost",
+            "sourceRegister": "shillinq",
+            "joinCondition": "Kostenpost.subsidieId = @self.id",
+            "groupBy": ["kostencategorie", "periodId"],
+            "operations": {
+              "totaalBedrag": {
+                "field": "amount",
+                "operation": "sum"
+              },
+              "aantalPosten": {
+                "field": "amount",
+                "operation": "count"
+              }
+            }
+          },
+          "voortgangsrapportage-sbir": {
+            "description": "SBIR voortgangsrapportage: groups Kostenpost records by (kostencategorie, periodId) for SBIR subsidies per REQ-RDS-003.",
+            "filter": "subsidieRegeling = 'sbir'",
+            "sourceSchema": "Kostenpost",
+            "sourceRegister": "shillinq",
+            "joinCondition": "Kostenpost.subsidieId = @self.id",
+            "groupBy": ["kostencategorie", "periodId"],
+            "operations": {
+              "totaalBedrag": {
+                "field": "amount",
+                "operation": "sum"
+              },
+              "aantalPosten": {
+                "field": "amount",
+                "operation": "count"
+              }
+            }
+          },
+          "voortgangsrapportage-eu-horizon": {
+            "description": "EU Horizon Periodic Report: groups Kostenpost records by (kostencategorie, periodId) for EU Horizon subsidies, following the Horizon canonical layout with cumulative + periodic totals per Horizon category per REQ-RDS-003.",
+            "filter": "subsidieRegeling = 'eu-horizon'",
+            "sourceSchema": "Kostenpost",
+            "sourceRegister": "shillinq",
+            "joinCondition": "Kostenpost.subsidieId = @self.id",
+            "groupBy": ["kostencategorie", "periodId"],
+            "operations": {
+              "totaalBedrag": {
+                "field": "amount",
+                "operation": "sum"
+              },
+              "aantalPosten": {
+                "field": "amount",
+                "operation": "count"
+              }
+            }
+          },
+          "voortgangsrapportage-efro": {
+            "description": "EFRO progress dossier: groups Kostenpost records by (kostencategorie, periodId) for EFRO subsidies per REQ-RDS-003.",
+            "filter": "subsidieRegeling IN ['efro', 'react-eu']",
+            "sourceSchema": "Kostenpost",
+            "sourceRegister": "shillinq",
+            "joinCondition": "Kostenpost.subsidieId = @self.id",
+            "groupBy": ["kostencategorie", "periodId"],
+            "operations": {
+              "totaalBedrag": {
+                "field": "amount",
+                "operation": "sum"
+              },
+              "aantalPosten": {
+                "field": "amount",
+                "operation": "count"
+              }
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "horizon-indirect-25pct-warning": {
+            "description": "EU Horizon indirect-25% budget monitoring: warns when indirect-25% costs reach ≥90% of the 25%-of-direct-costs sub-maximum per REQ-RDS-005.",
+            "condition": "subsidieRegeling = 'eu-horizon'",
+            "inputs": {
+              "directCosts": {
+                "sourceSchema": "Kostenpost",
+                "joinCondition": "Kostenpost.subsidieId = @self.id",
+                "filter": "kostencategorie IN ['personnel', 'subcontracting', 'other-direct']",
+                "operation": "sum",
+                "field": "amount"
+              },
+              "indirectCosts": {
+                "sourceSchema": "Kostenpost",
+                "joinCondition": "Kostenpost.subsidieId = @self.id",
+                "filter": "kostencategorie = 'indirect-25-percent'",
+                "operation": "sum",
+                "field": "amount"
+              }
+            },
+            "formula": "indirectCosts / (directCosts * 0.25)",
+            "warnings": [
+              {
+                "condition": "formula >= 0.90",
+                "message": "indirect-25% limit of {directCosts * 0.25} approaching; current usage {round(formula * 100)}%"
+              }
+            ]
+          },
+          "mit-budget-monitoring": {
+            "description": "MIT per-kostencategorie budget monitoring: warns when any MIT kostencategorie reaches ≥90% of its sub-maximum per REQ-RDS-005.",
+            "condition": "subsidieRegeling = 'mit'",
+            "inputs": {
+              "personnelCosts": {
+                "sourceSchema": "Kostenpost",
+                "joinCondition": "Kostenpost.subsidieId = @self.id",
+                "filter": "kostencategorie = 'personnel'",
+                "operation": "sum",
+                "field": "amount"
+              },
+              "totalGranted": {
+                "field": "verleendBedrag",
+                "operation": "value"
+              }
+            },
+            "formula": "personnelCosts / totalGranted",
+            "warnings": [
+              {
+                "condition": "formula >= 0.90",
+                "message": "MIT personnel costs at {round(formula * 100)}% of verleend budget"
+              }
+            ]
+          },
+          "efro-indirect-flat-rate-warning": {
+            "description": "EFRO indirect flat-rate monitoring: warns when indirect-flat-rate costs reach ≥90% of the allowed flat-rate ceiling per REQ-RDS-005.",
+            "condition": "subsidieRegeling IN ['efro', 'react-eu']",
+            "inputs": {
+              "directCosts": {
+                "sourceSchema": "Kostenpost",
+                "joinCondition": "Kostenpost.subsidieId = @self.id",
+                "filter": "kostencategorie NOT IN ['indirect-flat-rate']",
+                "operation": "sum",
+                "field": "amount"
+              },
+              "indirectCosts": {
+                "sourceSchema": "Kostenpost",
+                "joinCondition": "Kostenpost.subsidieId = @self.id",
+                "filter": "kostencategorie = 'indirect-flat-rate'",
+                "operation": "sum",
+                "field": "amount"
+              }
+            },
+            "formula": "indirectCosts / (directCosts * 0.15)",
+            "warnings": [
+              {
+                "condition": "formula >= 0.90",
+                "message": "EFRO indirect flat-rate limit approaching; current usage {round(formula * 100)}%"
+              }
+            ]
+          }
+        },
+        "x-openregister-notifications": {
+          "onVerleend": {
+            "trigger": "transition:verleend",
+            "target": "role:subsidie-coordinator",
+            "message": "Subsidie {subsidieNumber} is verleend voor {verleendBedrag} EUR."
+          },
+          "onVastgesteld": {
+            "trigger": "transition:vastgesteld",
+            "target": "role:subsidie-coordinator",
+            "message": "Subsidie {subsidieNumber} is vastgesteld voor {vastgesteldBedrag} EUR."
+          },
+          "onTeruggevorderd": {
+            "trigger": "transition:teruggevorderd",
+            "target": "role:subsidie-coordinator",
+            "message": "Terugvordering gestart voor subsidie {subsidieNumber}: {teruggevorderdBedrag} EUR."
+          }
+        }
+      },
+      "Kostenpost": {
+        "slug": "Kostenpost",
+        "icon": "ReceiptOutline",
+        "version": "0.1.0",
+        "title": "Kostenpost",
+        "description": "An individual cost item within a subsidie's kostendossier. The allowed kostencategorie values are constrained per subsidieRegeling via JSON Schema if/then rules per REQ-RDS-002.",
+        "type": "object",
+        "required": [
+          "subsidieId",
+          "subsidieRegeling",
+          "kostencategorie",
+          "periodId",
+          "amount",
+          "currency"
+        ],
+        "properties": {
+          "subsidieId": {
+            "type": "string",
+            "description": "FK to the parent Subsidie.id.",
+            "example": "subsidie-001"
+          },
+          "subsidieRegeling": {
+            "type": "string",
+            "enum": ["mit", "sbir", "eu-horizon", "efro", "react-eu", "other"],
+            "description": "Denormalized regeling discriminator from the parent Subsidie for schema-level kostencategorie validation per REQ-RDS-002."
+          },
+          "kostencategorie": {
+            "type": "string",
+            "description": "Cost category for this kostenpost; allowed values depend on subsidieRegeling per REQ-RDS-002.",
+            "example": "personnel"
+          },
+          "periodId": {
+            "type": "string",
+            "description": "Reporting period identifier (e.g. 2026-Q1) for voortgangsrapportage grouping per REQ-RDS-003.",
+            "example": "2026-Q1"
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Kostenpost amount in the subsidie's currency.",
+            "example": 5000.00
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "default": "EUR",
+            "description": "ISO 4217 currency code.",
+            "example": "EUR"
+          },
+          "description": {
+            "type": "string",
+            "description": "Free-text description of the cost item.",
+            "nullable": true
+          },
+          "attachmentUris": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Docudesk or external URIs of supporting documents (timesheets, invoices, receipts). EU Horizon audit-pack references personnel kostenpost URIs to S&O-uren-staten per REQ-RDS-004.",
+            "nullable": true
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "subsidieRegeling": {"const": "mit"}
+              },
+              "required": ["subsidieRegeling"]
+            },
+            "then": {
+              "properties": {
+                "kostencategorie": {
+                  "enum": ["personnel", "materials", "external-services", "equipment-depreciation", "other-direct"]
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "subsidieRegeling": {"const": "sbir"}
+              },
+              "required": ["subsidieRegeling"]
+            },
+            "then": {
+              "properties": {
+                "kostencategorie": {
+                  "enum": ["personnel", "materials", "equipment-depreciation", "other-direct"]
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "subsidieRegeling": {"const": "eu-horizon"}
+              },
+              "required": ["subsidieRegeling"]
+            },
+            "then": {
+              "properties": {
+                "kostencategorie": {
+                  "enum": ["personnel", "subcontracting", "other-direct", "indirect-25-percent"]
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "subsidieRegeling": {"const": "efro"}
+              },
+              "required": ["subsidieRegeling"]
+            },
+            "then": {
+              "properties": {
+                "kostencategorie": {
+                  "enum": ["personnel", "external-services", "materials", "equipment", "other", "indirect-flat-rate"]
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "subsidieRegeling": {"const": "react-eu"}
+              },
+              "required": ["subsidieRegeling"]
+            },
+            "then": {
+              "properties": {
+                "kostencategorie": {
+                  "enum": ["personnel", "external-services", "materials", "equipment", "other", "indirect-flat-rate", "green-recovery"]
+                }
+              }
+            }
+          }
+        ],
+        "x-openregister-relations": {
+          "subsidie": {
+            "localField": "subsidieId",
+            "relatedSchema": "Subsidie",
+            "relatedField": "id",
+            "cardinality": "many-to-one",
+            "description": "Parent subsidie for this cost item."
+          }
+        }
+      },
     "mappings": {
       "iv3-xml-transformation": {
         "slug": "iv3-xml-transformation",

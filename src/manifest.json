@@ -45,6 +45,56 @@
 					"icon": "TableMergeCellsOutline",
 					"route": "GRConsolidated",
 					"order": 70
+				},
+				{
+					"id": "RDSubsidies",
+					"label": "R&D Subsidies",
+					"icon": "FlaskOutline",
+					"route": "RDSubsidiesIndex",
+					"order": 80,
+					"featureFlag": "mkb-r-d-subsidies",
+					"children": [
+						{
+							"id": "RDSubsidiesMIT",
+							"label": "MIT",
+							"icon": "CurrencyEur",
+							"route": "RDSubsidiesMIT",
+							"order": 10,
+							"featureFlag": "mkb-r-d-subsidies"
+						},
+						{
+							"id": "RDSubsidiesSBIR",
+							"label": "SBIR",
+							"icon": "CurrencyEur",
+							"route": "RDSubsidiesSBIR",
+							"order": 20,
+							"featureFlag": "mkb-r-d-subsidies"
+						},
+						{
+							"id": "RDSubsidiesHorizon",
+							"label": "EU Horizon",
+							"icon": "EarthOutline",
+							"route": "RDSubsidiesHorizon",
+							"order": 30,
+							"featureFlag": "mkb-r-d-subsidies"
+						},
+						{
+							"id": "RDSubsidiesEFRO",
+							"label": "EFRO",
+							"icon": "EuropaOutline",
+							"route": "RDSubsidiesEFRO",
+							"order": 40,
+							"featureFlag": "mkb-r-d-subsidies"
+						},
+						{
+							"id": "RDSubsidiesREACTEU",
+							"label": "REACT-EU",
+							"icon": "LeafOutline",
+							"route": "RDSubsidiesREACTEU",
+							"order": 50,
+							"featureFlag": "mkb-r-d-subsidies"
+						}
+					]
 				}
 			]
 		},
@@ -582,6 +632,378 @@
 						"gridHeight": 2
 					}
 				]
+			}
+		},
+		{
+			"id": "RDSubsidiesIndex",
+			"route": "/r-d-subsidies",
+			"type": "index",
+			"title": "R&D Subsidies",
+			"featureFlag": "mkb-r-d-subsidies",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"filter": {
+					"subsidieRegeling": ["mit", "sbir", "eu-horizon", "efro", "react-eu"]
+				},
+				"columns": [
+					{
+						"key": "subsidieNumber",
+						"label": "Subsidienummer",
+						"sortable": true
+					},
+					{
+						"key": "subsidieRegeling",
+						"label": "Regeling",
+						"sortable": true
+					},
+					{
+						"key": "regelingNaam",
+						"label": "Regeling naam",
+						"sortable": true
+					},
+					{
+						"key": "counterpartyName",
+						"label": "Tegenpartij",
+						"sortable": true
+					},
+					{
+						"key": "verleendBedrag",
+						"label": "Verleend bedrag",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-aanvraagDate",
+				"detailRoute": "RDSubsidiesDetail"
+			}
+		},
+		{
+			"id": "RDSubsidiesMIT",
+			"route": "/r-d-subsidies/mit",
+			"type": "index",
+			"title": "MIT Subsidies",
+			"featureFlag": "mkb-r-d-subsidies",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"filter": {
+					"subsidieRegeling": "mit"
+				},
+				"columns": [
+					{
+						"key": "subsidieNumber",
+						"label": "Subsidienummer",
+						"sortable": true
+					},
+					{
+						"key": "regelingNaam",
+						"label": "Regeling naam",
+						"sortable": true
+					},
+					{
+						"key": "counterpartyName",
+						"label": "Tegenpartij",
+						"sortable": true
+					},
+					{
+						"key": "verleendBedrag",
+						"label": "Verleend bedrag",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-aanvraagDate",
+				"detailRoute": "RDSubsidiesDetail"
+			}
+		},
+		{
+			"id": "RDSubsidiesSBIR",
+			"route": "/r-d-subsidies/sbir",
+			"type": "index",
+			"title": "SBIR Subsidies",
+			"featureFlag": "mkb-r-d-subsidies",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"filter": {
+					"subsidieRegeling": "sbir"
+				},
+				"columns": [
+					{
+						"key": "subsidieNumber",
+						"label": "Subsidienummer",
+						"sortable": true
+					},
+					{
+						"key": "regelingNaam",
+						"label": "Regeling naam",
+						"sortable": true
+					},
+					{
+						"key": "counterpartyName",
+						"label": "Tegenpartij",
+						"sortable": true
+					},
+					{
+						"key": "verleendBedrag",
+						"label": "Verleend bedrag",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-aanvraagDate",
+				"detailRoute": "RDSubsidiesDetail"
+			}
+		},
+		{
+			"id": "RDSubsidiesHorizon",
+			"route": "/r-d-subsidies/eu-horizon",
+			"type": "index",
+			"title": "EU Horizon Subsidies",
+			"featureFlag": "mkb-r-d-subsidies",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"filter": {
+					"subsidieRegeling": "eu-horizon"
+				},
+				"columns": [
+					{
+						"key": "subsidieNumber",
+						"label": "Subsidienummer",
+						"sortable": true
+					},
+					{
+						"key": "regelingNaam",
+						"label": "Regeling naam",
+						"sortable": true
+					},
+					{
+						"key": "counterpartyName",
+						"label": "Tegenpartij",
+						"sortable": true
+					},
+					{
+						"key": "verleendBedrag",
+						"label": "Verleend bedrag",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-aanvraagDate",
+				"detailRoute": "RDSubsidiesDetail"
+			}
+		},
+		{
+			"id": "RDSubsidiesEFRO",
+			"route": "/r-d-subsidies/efro",
+			"type": "index",
+			"title": "EFRO Subsidies",
+			"featureFlag": "mkb-r-d-subsidies",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"filter": {
+					"subsidieRegeling": "efro"
+				},
+				"columns": [
+					{
+						"key": "subsidieNumber",
+						"label": "Subsidienummer",
+						"sortable": true
+					},
+					{
+						"key": "regelingNaam",
+						"label": "Regeling naam",
+						"sortable": true
+					},
+					{
+						"key": "counterpartyName",
+						"label": "Tegenpartij",
+						"sortable": true
+					},
+					{
+						"key": "verleendBedrag",
+						"label": "Verleend bedrag",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-aanvraagDate",
+				"detailRoute": "RDSubsidiesDetail"
+			}
+		},
+		{
+			"id": "RDSubsidiesREACTEU",
+			"route": "/r-d-subsidies/react-eu",
+			"type": "index",
+			"title": "REACT-EU Subsidies",
+			"featureFlag": "mkb-r-d-subsidies",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"filter": {
+					"subsidieRegeling": "react-eu"
+				},
+				"columns": [
+					{
+						"key": "subsidieNumber",
+						"label": "Subsidienummer",
+						"sortable": true
+					},
+					{
+						"key": "regelingNaam",
+						"label": "Regeling naam",
+						"sortable": true
+					},
+					{
+						"key": "counterpartyName",
+						"label": "Tegenpartij",
+						"sortable": true
+					},
+					{
+						"key": "verleendBedrag",
+						"label": "Verleend bedrag",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-aanvraagDate",
+				"detailRoute": "RDSubsidiesDetail"
+			}
+		},
+		{
+			"id": "RDSubsidiesDetail",
+			"route": "/r-d-subsidies/:id",
+			"type": "detail",
+			"title": "R&D Subsidie",
+			"featureFlag": "mkb-r-d-subsidies",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"fields": [
+					{
+						"key": "subsidieNumber",
+						"label": "Subsidienummer",
+						"type": "string"
+					},
+					{
+						"key": "subsidieRegeling",
+						"label": "R&D Regeling",
+						"type": "string"
+					},
+					{
+						"key": "direction",
+						"label": "Richting",
+						"type": "string"
+					},
+					{
+						"key": "regelingNaam",
+						"label": "Regeling naam",
+						"type": "string"
+					},
+					{
+						"key": "counterpartyName",
+						"label": "Tegenpartij",
+						"type": "string"
+					},
+					{
+						"key": "aanvraagDate",
+						"label": "Aanvraagdatum",
+						"type": "date"
+					},
+					{
+						"key": "aangevraagdBedrag",
+						"label": "Aangevraagd bedrag",
+						"type": "number"
+					},
+					{
+						"key": "verleendBedrag",
+						"label": "Verleend bedrag",
+						"type": "number"
+					},
+					{
+						"key": "vastgesteldBedrag",
+						"label": "Vastgesteld bedrag",
+						"type": "number"
+					},
+					{
+						"key": "uitbetaaldBedrag",
+						"label": "Uitbetaald bedrag",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "beschikkingUri",
+						"label": "Beschikking",
+						"type": "link"
+					},
+					{
+						"key": "vaststellingUri",
+						"label": "Vaststellingsbeschikking",
+						"type": "link"
+					}
+				],
+				"lifecycleActions": true,
+				"childGrids": [
+					{
+						"id": "kostendossier",
+						"title": "Kostendossier",
+						"schema": "Kostenpost",
+						"register": "shillinq",
+						"filter": {"subsidieId": "@self.id"},
+						"columns": [
+							{"key": "kostencategorie", "label": "Categorie"},
+							{"key": "periodId", "label": "Periode"},
+							{"key": "amount", "label": "Bedrag"},
+							{"key": "description", "label": "Omschrijving"}
+						]
+					}
+				],
+				"actions": [
+					{
+						"id": "voortgangsrapportage",
+						"label": "Voortgangsrapportage",
+						"type": "docudesk-template",
+						"templateId": "voortgangsrapportage-{subsidieRegeling}"
+					},
+					{
+						"id": "audit-pack",
+						"label": "Audit Pack",
+						"type": "docudesk-template",
+						"templateId": "audit-pack-{subsidieRegeling}"
+					}
+				],
+				"indexRoute": "RDSubsidiesIndex"
 			}
 		},
 		{

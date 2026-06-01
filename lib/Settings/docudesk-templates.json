@@ -1,0 +1,291 @@
+{
+  "version": "0.1.0",
+  "description": "Docudesk template registry for Shillinq. Per-regeling voortgangsrapportage and audit-pack templates per REQ-RDS-003 and REQ-RDS-004.",
+  "templates": {
+    "voortgangsrapportage-eu-horizon": {
+      "id": "voortgangsrapportage-eu-horizon",
+      "name": "EU Horizon Periodic Report",
+      "description": "Renders the EU Horizon Periodic Report voortgangsrapportage layout. Groups Kostenpost records by (kostencategorie, periodId) following the Horizon canonical layout with cumulative + periodic totals per Horizon category (personnel, subcontracting, other-direct, indirect-25-percent) per REQ-RDS-003.",
+      "regeling": "eu-horizon",
+      "type": "voortgangsrapportage",
+      "aggregation": "voortgangsrapportage-eu-horizon",
+      "schema": "Subsidie",
+      "register": "shillinq",
+      "outputFormat": "pdf",
+      "sections": [
+        {
+          "id": "header",
+          "title": "EU Horizon Periodic Report",
+          "fields": ["subsidieNumber", "regelingNaam", "counterpartyName", "aanvraagDate"]
+        },
+        {
+          "id": "cost-table",
+          "title": "Cost Summary by Category and Period",
+          "type": "aggregation-table",
+          "aggregation": "voortgangsrapportage-eu-horizon",
+          "columns": ["kostencategorie", "periodId", "totaalBedrag", "aantalPosten"],
+          "subtotals": ["kostencategorie"],
+          "grandTotal": true
+        },
+        {
+          "id": "indirect-monitoring",
+          "title": "Indirect Costs (25% Rule) Monitoring",
+          "type": "calculation-summary",
+          "calculation": "horizon-indirect-25pct-warning"
+        }
+      ]
+    },
+    "voortgangsrapportage-mit": {
+      "id": "voortgangsrapportage-mit",
+      "name": "MIT Voortgangsrapport",
+      "description": "Renders the MIT voortgangsrapport layout. Groups Kostenpost records by (kostencategorie, periodId) for MIT subsidies (personnel, materials, external-services, equipment-depreciation, other-direct) per REQ-RDS-003.",
+      "regeling": "mit",
+      "type": "voortgangsrapportage",
+      "aggregation": "voortgangsrapportage-mit",
+      "schema": "Subsidie",
+      "register": "shillinq",
+      "outputFormat": "pdf",
+      "sections": [
+        {
+          "id": "header",
+          "title": "MIT Voortgangsrapport",
+          "fields": ["subsidieNumber", "regelingNaam", "counterpartyName", "aanvraagDate"]
+        },
+        {
+          "id": "cost-table",
+          "title": "Kosten per Categorie en Periode",
+          "type": "aggregation-table",
+          "aggregation": "voortgangsrapportage-mit",
+          "columns": ["kostencategorie", "periodId", "totaalBedrag", "aantalPosten"],
+          "subtotals": ["kostencategorie"],
+          "grandTotal": true
+        }
+      ]
+    },
+    "voortgangsrapportage-sbir": {
+      "id": "voortgangsrapportage-sbir",
+      "name": "SBIR Voortgangsrapport",
+      "description": "Renders the SBIR voortgangsrapport layout. Groups Kostenpost records by (kostencategorie, periodId) for SBIR subsidies (personnel, materials, equipment-depreciation, other-direct) per REQ-RDS-003.",
+      "regeling": "sbir",
+      "type": "voortgangsrapportage",
+      "aggregation": "voortgangsrapportage-sbir",
+      "schema": "Subsidie",
+      "register": "shillinq",
+      "outputFormat": "pdf",
+      "sections": [
+        {
+          "id": "header",
+          "title": "SBIR Voortgangsrapport",
+          "fields": ["subsidieNumber", "regelingNaam", "counterpartyName", "aanvraagDate"]
+        },
+        {
+          "id": "cost-table",
+          "title": "Kosten per Categorie en Periode",
+          "type": "aggregation-table",
+          "aggregation": "voortgangsrapportage-sbir",
+          "columns": ["kostencategorie", "periodId", "totaalBedrag", "aantalPosten"],
+          "subtotals": ["kostencategorie"],
+          "grandTotal": true
+        }
+      ]
+    },
+    "voortgangsrapportage-efro": {
+      "id": "voortgangsrapportage-efro",
+      "name": "EFRO/REACT-EU Progress Dossier",
+      "description": "Renders the EFRO/REACT-EU progress dossier. Groups Kostenpost records by (kostencategorie, periodId) for EFRO and REACT-EU subsidies (personnel, external-services, materials, equipment, other, indirect-flat-rate; REACT-EU adds green-recovery) per REQ-RDS-003.",
+      "regeling": ["efro", "react-eu"],
+      "type": "voortgangsrapportage",
+      "aggregation": "voortgangsrapportage-efro",
+      "schema": "Subsidie",
+      "register": "shillinq",
+      "outputFormat": "pdf",
+      "sections": [
+        {
+          "id": "header",
+          "title": "EFRO/REACT-EU Progress Dossier",
+          "fields": ["subsidieNumber", "regelingNaam", "subsidieRegeling", "counterpartyName", "aanvraagDate"]
+        },
+        {
+          "id": "cost-table",
+          "title": "Costs by Category and Period",
+          "type": "aggregation-table",
+          "aggregation": "voortgangsrapportage-efro",
+          "columns": ["kostencategorie", "periodId", "totaalBedrag", "aantalPosten"],
+          "subtotals": ["kostencategorie"],
+          "grandTotal": true
+        },
+        {
+          "id": "indirect-monitoring",
+          "title": "Indirect Flat-Rate Monitoring",
+          "type": "calculation-summary",
+          "calculation": "efro-indirect-flat-rate-warning"
+        }
+      ]
+    },
+    "audit-pack-eu-horizon": {
+      "id": "audit-pack-eu-horizon",
+      "name": "EU Horizon Audit Certificate",
+      "description": "Assembles the EU Horizon Audit Certificate from the OR audit-trail-immutable, the subsidie's kostendossier, and S&O-uren-staten URI references from the sibling WBSO spec. Each personnel Kostenpost MUST include a URI reference to the related S&O-uren-staat per REQ-RDS-004.",
+      "regeling": "eu-horizon",
+      "type": "audit-pack",
+      "schema": "Subsidie",
+      "register": "shillinq",
+      "outputFormat": "pdf",
+      "sections": [
+        {
+          "id": "header",
+          "title": "EU Horizon Audit Certificate",
+          "fields": ["subsidieNumber", "regelingNaam", "counterpartyName", "aanvraagDate", "verleendBedrag", "vastgesteldBedrag"]
+        },
+        {
+          "id": "audit-trail",
+          "title": "Audit Trail",
+          "type": "audit-trail-immutable",
+          "source": "OR audit-trail-immutable",
+          "filter": "objectId = @self.id"
+        },
+        {
+          "id": "personnel-costs",
+          "title": "Personnel Costs with Timesheet References",
+          "type": "kostenpost-list",
+          "filter": "subsidieId = @self.id AND kostencategorie = 'personnel'",
+          "fields": ["description", "periodId", "amount", "attachmentUris"],
+          "note": "attachmentUris MUST contain URI references to related S&O-uren-staten from the WBSO/S&O administratie per REQ-RDS-004."
+        },
+        {
+          "id": "subcontracting-costs",
+          "title": "Subcontracting Costs",
+          "type": "kostenpost-list",
+          "filter": "subsidieId = @self.id AND kostencategorie = 'subcontracting'",
+          "fields": ["description", "periodId", "amount", "attachmentUris"]
+        },
+        {
+          "id": "other-direct-costs",
+          "title": "Other Direct Costs",
+          "type": "kostenpost-list",
+          "filter": "subsidieId = @self.id AND kostencategorie = 'other-direct'",
+          "fields": ["description", "periodId", "amount", "attachmentUris"]
+        },
+        {
+          "id": "indirect-costs",
+          "title": "Indirect Costs (25% Rule)",
+          "type": "calculation-summary",
+          "calculation": "horizon-indirect-25pct-warning"
+        },
+        {
+          "id": "certification",
+          "title": "Auditor Certification",
+          "type": "signature-block",
+          "fields": ["auditorName", "auditDate", "certification"]
+        }
+      ]
+    },
+    "audit-pack-mit": {
+      "id": "audit-pack-mit",
+      "name": "MIT Declaration Template",
+      "description": "Assembles the MIT audit declaration from OR audit-trail-immutable, kostendossier, and WBSO/S&O administration references. References the WBSO/S&O administratie for personnel cost verification per REQ-RDS-004.",
+      "regeling": "mit",
+      "type": "audit-pack",
+      "schema": "Subsidie",
+      "register": "shillinq",
+      "outputFormat": "pdf",
+      "sections": [
+        {
+          "id": "header",
+          "title": "MIT Subsidie Declaratie",
+          "fields": ["subsidieNumber", "regelingNaam", "counterpartyName", "aanvraagDate", "verleendBedrag", "vastgesteldBedrag"]
+        },
+        {
+          "id": "audit-trail",
+          "title": "Audit Trail",
+          "type": "audit-trail-immutable",
+          "source": "OR audit-trail-immutable",
+          "filter": "objectId = @self.id"
+        },
+        {
+          "id": "wbso-declaration",
+          "title": "WBSO/S&O Verklaring",
+          "type": "external-reference",
+          "note": "Reference to the WBSO/S&O administration declaration. URI retrieved from personnel Kostenpost.attachmentUris.",
+          "filter": "subsidieId = @self.id AND kostencategorie = 'personnel'"
+        },
+        {
+          "id": "kosten-overzicht",
+          "title": "Kostenpost Overzicht",
+          "type": "kostenpost-list",
+          "filter": "subsidieId = @self.id",
+          "fields": ["kostencategorie", "description", "periodId", "amount", "attachmentUris"]
+        }
+      ]
+    },
+    "audit-pack-sbir": {
+      "id": "audit-pack-sbir",
+      "name": "SBIR Audit Dossier",
+      "description": "Assembles the SBIR audit dossier from OR audit-trail-immutable and kostendossier per REQ-RDS-004.",
+      "regeling": "sbir",
+      "type": "audit-pack",
+      "schema": "Subsidie",
+      "register": "shillinq",
+      "outputFormat": "pdf",
+      "sections": [
+        {
+          "id": "header",
+          "title": "SBIR Audit Dossier",
+          "fields": ["subsidieNumber", "regelingNaam", "counterpartyName", "aanvraagDate", "verleendBedrag", "vastgesteldBedrag"]
+        },
+        {
+          "id": "audit-trail",
+          "title": "Audit Trail",
+          "type": "audit-trail-immutable",
+          "source": "OR audit-trail-immutable",
+          "filter": "objectId = @self.id"
+        },
+        {
+          "id": "kosten-overzicht",
+          "title": "Kostenpost Overzicht",
+          "type": "kostenpost-list",
+          "filter": "subsidieId = @self.id",
+          "fields": ["kostencategorie", "description", "periodId", "amount", "attachmentUris"]
+        }
+      ]
+    },
+    "audit-pack-efro": {
+      "id": "audit-pack-efro",
+      "name": "EFRO Procurement Dossier",
+      "description": "Assembles the EFRO procurement dossier from OR audit-trail-immutable, kostendossier, and procurement documentation per purchase over the drempel per REQ-RDS-004. REACT-EU follows the same template.",
+      "regeling": ["efro", "react-eu"],
+      "type": "audit-pack",
+      "schema": "Subsidie",
+      "register": "shillinq",
+      "outputFormat": "pdf",
+      "sections": [
+        {
+          "id": "header",
+          "title": "EFRO Procurement Dossier",
+          "fields": ["subsidieNumber", "regelingNaam", "subsidieRegeling", "counterpartyName", "aanvraagDate", "verleendBedrag", "vastgesteldBedrag"]
+        },
+        {
+          "id": "audit-trail",
+          "title": "Audit Trail",
+          "type": "audit-trail-immutable",
+          "source": "OR audit-trail-immutable",
+          "filter": "objectId = @self.id"
+        },
+        {
+          "id": "procurement-dossier",
+          "title": "Procurement Dossier per Inkoop boven Drempel",
+          "type": "kostenpost-list",
+          "filter": "subsidieId = @self.id AND kostencategorie IN ['materials', 'equipment', 'external-services']",
+          "fields": ["kostencategorie", "description", "periodId", "amount", "attachmentUris"],
+          "note": "For each purchase above the drempel, attachmentUris MUST contain the procurement dossier documentation."
+        },
+        {
+          "id": "indirect-flat-rate",
+          "title": "Indirect Flat-Rate",
+          "type": "calculation-summary",
+          "calculation": "efro-indirect-flat-rate-warning"
+        }
+      ]
+    }
+  }
+}
