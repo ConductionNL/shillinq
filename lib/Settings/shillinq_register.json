@@ -718,6 +718,794 @@
             }
           }
         }
+      },
+      "ClosingEntry": {
+        "slug": "ClosingEntry",
+        "icon": "FileDocumentEditOutline",
+        "version": "0.1.0",
+        "title": "Closing Entry",
+        "description": "Tracks manual and automated closing entries, reversals, and accrual postings during year-end close per REQ-YEC-001.",
+        "x-schema-org": "schema:Thing",
+        "type": "object",
+        "required": [
+          "closingEntryNumber",
+          "fiscalYearId",
+          "entryDate",
+          "entryType",
+          "amount",
+          "approvalStatus",
+          "administrationId"
+        ],
+        "properties": {
+          "closingEntryNumber": {
+            "type": "string",
+            "description": "Unique closing-entry identifier (e.g., CE-2025-001).",
+            "example": "CE-2025-001"
+          },
+          "fiscalYearId": {
+            "type": "string",
+            "description": "FK to FiscalYear.",
+            "example": "fy-2025"
+          },
+          "entryDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Posting date of the closing entry.",
+            "example": "2025-12-31"
+          },
+          "entryType": {
+            "type": "string",
+            "enum": [
+              "revenue-closing",
+              "expense-closing",
+              "accrual-reversal",
+              "depreciation",
+              "retained-earnings",
+              "opening-balance",
+              "manual"
+            ],
+            "description": "Type of closing entry per REQ-YEC-001.",
+            "example": "revenue-closing"
+          },
+          "description": {
+            "type": "string",
+            "description": "Operator-authored description.",
+            "nullable": true,
+            "example": "Close revenues for FY 2025"
+          },
+          "automationTemplate": {
+            "type": "string",
+            "description": "FK to ClosingEntryTemplate if auto-generated.",
+            "nullable": true,
+            "example": "revenue-closing"
+          },
+          "amount": {
+            "type": "object",
+            "description": "Total closing-entry amount (MonetaryAmount).",
+            "required": ["value", "currency"],
+            "properties": {
+              "value": {
+                "type": "number",
+                "description": "Monetary amount.",
+                "example": 125000.00
+              },
+              "currency": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 3,
+                "description": "ISO 4217 currency code.",
+                "default": "EUR",
+                "example": "EUR"
+              }
+            }
+          },
+          "glTransactionId": {
+            "type": "string",
+            "description": "FK to GLTransaction once materialised as GL posting.",
+            "nullable": true
+          },
+          "approvalStatus": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "pending-approval",
+              "approved",
+              "posted",
+              "reversed"
+            ],
+            "description": "Current approval lifecycle state per REQ-YEC-001.",
+            "default": "draft",
+            "example": "draft"
+          },
+          "approvedBy": {
+            "type": "string",
+            "description": "FK to Person who approved the entry.",
+            "nullable": true
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of approval.",
+            "nullable": true
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration.",
+            "example": "adm-1"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "approvalStatus",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Closing entry created but not yet submitted for approval."
+            },
+            "pending-approval": {
+              "label": "Pending Approval",
+              "description": "Submitted to CFO for approval. Entry does not yet materialise as GL transaction."
+            },
+            "approved": {
+              "label": "Approved",
+              "description": "CFO approved; ready to post to GL."
+            },
+            "posted": {
+              "label": "Posted",
+              "description": "Materialised as balanced GLTransaction per REQ-YEC-009. Period now reflects closing entry.",
+              "immutable": true
+            },
+            "reversed": {
+              "label": "Reversed",
+              "description": "Reversal entry posted to undo the closing entry (e.g., accrual reversal in next FY).",
+              "immutable": true
+            }
+          },
+          "transitions": {
+            "submit": {
+              "from": "draft",
+              "to": "pending-approval",
+              "label": "Submit for approval",
+              "description": "Financial officer submits closing entry for CFO approval."
+            },
+            "approve": {
+              "from": "pending-approval",
+              "to": "approved",
+              "label": "Approve",
+              "description": "CFO approves the closing entry; ready to post to GL."
+            },
+            "post": {
+              "from": "approved",
+              "to": "posted",
+              "label": "Post to GL",
+              "description": "Materialises the closing entry as a balanced GLTransaction per REQ-YEC-009.",
+              "action": "x-openregister-materialise",
+              "actionParameters": {
+                "targetSchema": "GLTransaction",
+                "source": "closing-entry",
+                "setField": "glTransactionId"
+              }
+            },
+            "reverse": {
+              "from": "posted",
+              "to": "reversed",
+              "label": "Reverse",
+              "description": "Posts a reversal entry (e.g., accrual reversal) to the next FY GL."
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "fiscalYear": {
+            "localField": "fiscalYearId",
+            "relatedSchema": "FiscalYear",
+            "relatedField": "id",
+            "cardinality": "many-to-one",
+            "description": "FK to the fiscal year this closing entry belongs to."
+          },
+          "template": {
+            "localField": "automationTemplate",
+            "relatedSchema": "ClosingEntryTemplate",
+            "relatedField": "templateId",
+            "cardinality": "many-to-one",
+            "description": "FK to the template that auto-generated this entry."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "financial-officer": {
+              "permissions": ["create", "read", "update"]
+            },
+            "cfo": {
+              "permissions": ["create", "read", "update", "delete"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "RetainedEarnings": {
+        "slug": "RetainedEarnings",
+        "icon": "ChartLineVariant",
+        "version": "0.1.0",
+        "title": "Retained Earnings",
+        "description": "Tracks retained-earnings account balance rollforward across fiscal years per REQ-YEC-002.",
+        "x-schema-org": "schema:Thing",
+        "type": "object",
+        "required": [
+          "retainedEarningsId",
+          "fiscalYearId",
+          "openingBalance",
+          "netIncome",
+          "closingBalance",
+          "administrationId"
+        ],
+        "properties": {
+          "retainedEarningsId": {
+            "type": "string",
+            "description": "Unique retained-earnings record identifier.",
+            "example": "re-2025"
+          },
+          "fiscalYearId": {
+            "type": "string",
+            "description": "FK to FiscalYear.",
+            "example": "fy-2025"
+          },
+          "openingBalance": {
+            "type": "object",
+            "description": "Retained earnings at start of FY (MonetaryAmount).",
+            "required": ["value", "currency"],
+            "properties": {
+              "value": {
+                "type": "number",
+                "description": "Monetary amount.",
+                "example": 500000.00
+              },
+              "currency": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 3,
+                "description": "ISO 4217 currency code.",
+                "default": "EUR",
+                "example": "EUR"
+              }
+            }
+          },
+          "netIncome": {
+            "type": "object",
+            "description": "Net income for the FY: revenue minus expenses (MonetaryAmount).",
+            "required": ["value", "currency"],
+            "properties": {
+              "value": {
+                "type": "number",
+                "description": "Monetary amount.",
+                "example": 250000.00
+              },
+              "currency": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 3,
+                "description": "ISO 4217 currency code.",
+                "default": "EUR",
+                "example": "EUR"
+              }
+            }
+          },
+          "distributions": {
+            "type": "object",
+            "description": "Dividends or distributions paid in the FY (MonetaryAmount).",
+            "nullable": true,
+            "properties": {
+              "value": {
+                "type": "number",
+                "description": "Monetary amount.",
+                "example": 0.00
+              },
+              "currency": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 3,
+                "description": "ISO 4217 currency code.",
+                "default": "EUR",
+                "example": "EUR"
+              }
+            }
+          },
+          "closingBalance": {
+            "type": "object",
+            "description": "Retained earnings at end of FY: opening + net income - distributions (MonetaryAmount).",
+            "required": ["value", "currency"],
+            "properties": {
+              "value": {
+                "type": "number",
+                "description": "Monetary amount.",
+                "example": 750000.00
+              },
+              "currency": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 3,
+                "description": "ISO 4217 currency code.",
+                "default": "EUR",
+                "example": "EUR"
+              }
+            }
+          },
+          "closingEntryId": {
+            "type": "string",
+            "description": "FK to ClosingEntry that materialised the retained-earnings entry.",
+            "nullable": true
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration.",
+            "example": "adm-1"
+          }
+        },
+        "x-openregister-aggregations": {
+          "balanceCarryforward": {
+            "description": "Validates next FY opening balance equals this FY closing balance per REQ-YEC-008. Groups retained-earnings records by administrationId for carryforward validation.",
+            "groupBy": "administrationId",
+            "operations": {
+              "closingBalanceTotal": {
+                "field": "closingBalance.value",
+                "operation": "sum",
+                "description": "Sum of all closing balances used as carryforward validation against next FY opening balances."
+              }
+            }
+          },
+          "netIncomeByFY": {
+            "description": "Net income per fiscal year for rollforward trend analysis.",
+            "groupBy": "fiscalYearId",
+            "operations": {
+              "totalNetIncome": {
+                "field": "netIncome.value",
+                "operation": "sum"
+              }
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "fiscalYear": {
+            "localField": "fiscalYearId",
+            "relatedSchema": "FiscalYear",
+            "relatedField": "id",
+            "cardinality": "many-to-one",
+            "description": "FK to the fiscal year this retained-earnings record tracks."
+          },
+          "closingEntry": {
+            "localField": "closingEntryId",
+            "relatedSchema": "ClosingEntry",
+            "relatedField": "id",
+            "cardinality": "one-to-one",
+            "description": "FK to the ClosingEntry that materialised the retained-earnings posting."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "financial-officer": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "ClosingAccount": {
+        "slug": "ClosingAccount",
+        "icon": "AccountBalanceOutline",
+        "version": "0.1.0",
+        "title": "Closing Account",
+        "description": "Designates the single closing/income-summary account through which all revenue and expense accounts close per REQ-YEC-003. One active closing account per administration.",
+        "x-schema-org": "schema:Thing",
+        "type": "object",
+        "required": [
+          "accountNumber",
+          "administrationId"
+        ],
+        "properties": {
+          "accountNumber": {
+            "type": "string",
+            "description": "FK to Account.accountNumber (typically 9900 income summary).",
+            "example": "9900"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration. One active closing account per administration.",
+            "example": "adm-1"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether this is the active closing account for the administration.",
+            "default": true
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "If multiple accounts exist, date from which this account is active.",
+            "nullable": true
+          }
+        },
+        "x-openregister-relations": {
+          "account": {
+            "localField": "accountNumber",
+            "relatedSchema": "Account",
+            "relatedField": "accountNumber",
+            "cardinality": "many-to-one",
+            "description": "FK to the Account designated as closing account."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "cfo": {
+              "permissions": ["create", "read", "update", "delete"]
+            },
+            "financial-officer": {
+              "permissions": ["read"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "ClosingEntryTemplate": {
+        "slug": "ClosingEntryTemplate",
+        "icon": "FileDocumentMultipleOutline",
+        "version": "0.1.0",
+        "title": "Closing Entry Template",
+        "description": "Defines rules for auto-generating closing entries during year-end close per REQ-YEC-004. Specifies account groups, closing target, and reversal behaviour.",
+        "x-schema-org": "schema:Thing",
+        "type": "object",
+        "required": [
+          "templateId",
+          "templateName",
+          "accountPattern",
+          "closingAccountNumber",
+          "administrationId",
+          "lifecycleState",
+          "createdAt"
+        ],
+        "properties": {
+          "templateId": {
+            "type": "string",
+            "description": "Unique template identifier (e.g., revenue-closing).",
+            "example": "revenue-closing"
+          },
+          "templateName": {
+            "type": "string",
+            "description": "Display name for the template.",
+            "example": "Revenue Closing"
+          },
+          "description": {
+            "type": "string",
+            "description": "Operator documentation for the template.",
+            "nullable": true,
+            "example": "Closes all revenue accounts (4000-4999) to income summary (9900)."
+          },
+          "accountPattern": {
+            "type": "string",
+            "description": "Account range or regex pattern (e.g., 4000-4999 for revenue accounts).",
+            "example": "4000-4999"
+          },
+          "closingAccountNumber": {
+            "type": "string",
+            "description": "FK to Account.accountNumber (target closing account, e.g., 9900).",
+            "example": "9900"
+          },
+          "reverseNextPeriod": {
+            "type": "boolean",
+            "description": "If true, a reversal entry is auto-generated in the next FY GL.",
+            "default": false
+          },
+          "automationTrigger": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "on-close",
+              "on-check"
+            ],
+            "description": "When this template auto-generates entries: on FY close transition, on checklist check, or manually.",
+            "default": "on-close",
+            "nullable": true
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration.",
+            "example": "adm-1"
+          },
+          "lifecycleState": {
+            "type": "string",
+            "enum": [
+              "active",
+              "paused",
+              "archived"
+            ],
+            "description": "Lifecycle state of the template.",
+            "default": "active",
+            "example": "active"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the template was created.",
+            "example": "2025-01-01T00:00:00Z"
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of last modification.",
+            "nullable": true
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Template is active and will be applied on FY close transition."
+            },
+            "paused": {
+              "label": "Paused",
+              "description": "Template is temporarily disabled; will not auto-generate entries until reactivated."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Template is archived; historical records remain queryable."
+            }
+          },
+          "transitions": {
+            "pause": {
+              "from": "active",
+              "to": "paused",
+              "label": "Pause template",
+              "description": "Temporarily disable this template without deleting it."
+            },
+            "reactivate": {
+              "from": "paused",
+              "to": "active",
+              "label": "Reactivate template",
+              "description": "Re-enable a paused template for next FY close."
+            },
+            "archive": {
+              "from": "active",
+              "to": "archived",
+              "label": "Archive template",
+              "description": "Archive a template; no new entries will be generated."
+            },
+            "archiveFromPaused": {
+              "from": "paused",
+              "to": "archived",
+              "label": "Archive paused template",
+              "description": "Archive a paused template."
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "closingAccount": {
+            "localField": "closingAccountNumber",
+            "relatedSchema": "Account",
+            "relatedField": "accountNumber",
+            "cardinality": "many-to-one",
+            "description": "FK to the Account used as the closing/income-summary target."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "cfo": {
+              "permissions": ["create", "read", "update", "delete"]
+            },
+            "financial-officer": {
+              "permissions": ["read"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "FiscalYear": {
+        "slug": "FiscalYear",
+        "icon": "CalendarMonthOutline",
+        "version": "0.1.0",
+        "title": "Fiscal Year",
+        "description": "Accounting period with year-end close lifecycle (open → in-progress → closed) per REQ-YEC-005. Closing checklist enforced as declarative preconditions per REQ-YEC-006. Closed periods are immutable per REQ-YEC-007.",
+        "x-schema-org": "schema:Event",
+        "type": "object",
+        "required": [
+          "year",
+          "startDate",
+          "endDate",
+          "administrationId",
+          "lifecycleState"
+        ],
+        "properties": {
+          "year": {
+            "type": "integer",
+            "description": "The fiscal year number (e.g., 2025).",
+            "example": 2025
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "description": "The first day of the fiscal period.",
+            "example": "2025-01-01"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "description": "The last day of the fiscal period.",
+            "example": "2025-12-31"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration.",
+            "example": "adm-1"
+          },
+          "lifecycleState": {
+            "type": "string",
+            "enum": [
+              "open",
+              "in-progress",
+              "closed"
+            ],
+            "description": "Year-end close lifecycle state. Closed fiscal years are immutable per REQ-YEC-007.",
+            "default": "open",
+            "example": "open"
+          },
+          "closingStartedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the year-end close process was initiated.",
+            "nullable": true
+          },
+          "closingCompletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the fiscal year was officially closed.",
+            "nullable": true
+          },
+          "closingOperator": {
+            "type": "string",
+            "description": "User ID of the operator who initiated the close process.",
+            "nullable": true
+          },
+          "checklistOverride": {
+            "type": "boolean",
+            "description": "If true, CFO has overridden the checklist for emergency close. Audit-trailed.",
+            "default": false
+          },
+          "checklistOverrideReason": {
+            "type": "string",
+            "description": "Memo recorded when CFO overrides the closing checklist.",
+            "nullable": true
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "open",
+          "states": {
+            "open": {
+              "label": "Open",
+              "description": "Fiscal year is active; GL transactions posted normally."
+            },
+            "in-progress": {
+              "label": "In Progress",
+              "description": "Year-end close has begun; GL is still writable; closing checklist is being verified."
+            },
+            "closed": {
+              "label": "Closed",
+              "description": "Fiscal year is closed; GL is immutable; closing entries materialised; opening balances seeded for next FY.",
+              "immutable": true
+            }
+          },
+          "transitions": {
+            "beginClose": {
+              "from": "open",
+              "to": "in-progress",
+              "label": "Begin Close Process",
+              "description": "Financial officer initiates year-end close. Records transition timestamp and operator.",
+              "requires": "OCA\\Shillinq\\Guard\\FiscalYearCloseGuard::requireFinancialOfficerRole"
+            },
+            "completeClose": {
+              "from": "in-progress",
+              "to": "closed",
+              "label": "Complete Close",
+              "description": "Completes year-end close after all checklist items pass per REQ-YEC-006. Materialises closing entries, retained earnings, and opening balances for next FY per REQ-YEC-010. Marks FY as immutable per REQ-YEC-007.",
+              "requires": [
+                "OCA\\Shillinq\\Guard\\FiscalYearCloseGuard::requireTrialBalanceVerified",
+                "OCA\\Shillinq\\Guard\\FiscalYearCloseGuard::requireAccrualsRecorded",
+                "OCA\\Shillinq\\Guard\\FiscalYearCloseGuard::requireDepreciationPosted",
+                "OCA\\Shillinq\\Guard\\FiscalYearCloseGuard::requireFxGainsLossesDeclared",
+                "OCA\\Shillinq\\Guard\\FiscalYearCloseGuard::requireRelatedPartyReviewed"
+              ],
+              "requiresOverride": {
+                "field": "checklistOverride",
+                "role": "cfo",
+                "requiresMemo": "checklistOverrideReason",
+                "description": "CFO can override all checklist preconditions with a reason memo (emergency close per REQ-YEC-006)."
+              },
+              "action": "x-openregister-closing-workflow",
+              "actionParameters": {
+                "generateClosingEntries": true,
+                "templateFilter": {
+                  "administrationId": "@self.administrationId",
+                  "lifecycleState": "active",
+                  "automationTrigger": "on-close"
+                },
+                "entryStatus": "pending-approval",
+                "seedNextFY": true,
+                "retainedEarningsSchema": "RetainedEarnings"
+              }
+            },
+            "unclose": {
+              "from": "closed",
+              "to": "open",
+              "label": "Unclose",
+              "description": "CFO unclosed the period for post-close corrections. All unclose/re-close actions are audit-trailed.",
+              "requires": "OCA\\Shillinq\\Guard\\FiscalYearCloseGuard::requireCfoRole"
+            }
+          },
+          "hooks": {
+            "onCompleteClose": {
+              "trigger": "fiscalYear:closed",
+              "description": "On successful close: generate ClosingEntry records per active ClosingEntryTemplate records for the administration; materialise RetainedEarnings entry; seed opening balances for next FY per REQ-YEC-008 and REQ-YEC-010.",
+              "condition": "lifecycleState = 'closed'",
+              "action": "x-openregister-closing-workflow"
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "trialBalanceCheck": {
+            "description": "Trial balance verification: sum(debit GL lines) = sum(credit GL lines) for this FY per REQ-YEC-006. Imbalance tolerance: 0.01 EUR.",
+            "join": {
+              "schema": "GLLine",
+              "condition": "GLLine.fiscalYearId = @self.id AND GLLine.eliminationFlag = false"
+            },
+            "operations": {
+              "totalDebit": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "GLLine.side = 'debit'"
+              },
+              "totalCredit": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "GLLine.side = 'credit'"
+              },
+              "imbalance": {
+                "formula": "ABS(totalDebit - totalCredit)",
+                "description": "Imbalance amount; must be <= 0.01 EUR for checklist to pass."
+              }
+            }
+          },
+          "openFiscalYears": {
+            "description": "Count of currently open fiscal years per administration.",
+            "filter": "lifecycleState = 'open'",
+            "groupBy": "administrationId",
+            "operations": {
+              "count": {
+                "field": "id",
+                "operation": "count"
+              }
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "financial-officer": {
+              "permissions": ["read", "update"]
+            },
+            "cfo": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
       }
     },
     "mappings": {
@@ -745,6 +1533,50 @@
           }
         }
       }
-    }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ClosingEntryTemplate"
+        },
+        "templateId": "revenue-closing",
+        "templateName": "Revenue Closing",
+        "description": "Closes all revenue accounts (4000-4999) to income summary account (9900) on FY close.",
+        "accountPattern": "4000-4999",
+        "closingAccountNumber": "9900",
+        "reverseNextPeriod": false,
+        "automationTrigger": "on-close",
+        "lifecycleState": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ClosingEntryTemplate"
+        },
+        "templateId": "expense-closing",
+        "templateName": "Expense Closing",
+        "description": "Closes all expense accounts (5000-6999) to income summary account (9900) on FY close.",
+        "accountPattern": "5000-6999",
+        "closingAccountNumber": "9900",
+        "reverseNextPeriod": false,
+        "automationTrigger": "on-close",
+        "lifecycleState": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ClosingEntryTemplate"
+        },
+        "templateId": "accrual-reversal",
+        "templateName": "Accrual Reversal",
+        "description": "Reverses prior-year accrual accounts (9700-9799) to audit/adjustments (5900) in the next FY.",
+        "accountPattern": "9700-9799",
+        "closingAccountNumber": "5900",
+        "reverseNextPeriod": true,
+        "automationTrigger": "on-close",
+        "lifecycleState": "active"
+      }
+    ]
   }
 }

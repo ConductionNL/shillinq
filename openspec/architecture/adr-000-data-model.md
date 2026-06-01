@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 226
+**Entities:** 232
 
 ## Context
 
@@ -541,6 +541,71 @@ _A defined time period for budget planning, such as fiscal year, calendar year, 
 
 **Relations:**
 - → Budget (one-to-many)
+
+### ClosingAccount
+**Schema.org:** `schema:Thing`
+_Designates the single closing/income-summary account through which all revenue and expense accounts close during year-end close. One active closing account per administration. Managed via the year-end close manifest entry._
+**Primary spec:** bookkeeping-year-end-close
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| accountNumber | string | Yes | FK to Account.accountNumber (typically 9900 — income summary) |
+| administrationId | string | Yes | FK to Administration; one active closing account per administration |
+| isActive | boolean | No | Whether this is the active closing account; default true |
+| effectiveFrom | date | No | If multiple accounts exist, date from which this account is active |
+
+**Relations:**
+- → Account (many-to-one, via accountNumber → Account.accountNumber)
+- → Administration (many-to-one)
+
+### ClosingEntry
+**Schema.org:** `schema:Thing`
+_Tracks manual and automated closing entries, reversals, and accrual postings during the year-end close process. The approval lifecycle drives materialisation as a balanced GLTransaction via OR closing-workflow._
+**Primary spec:** bookkeeping-year-end-close
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| closingEntryNumber | string | Yes | Unique identifier (e.g., CE-2025-001) |
+| fiscalYearId | string | Yes | FK to FiscalYear |
+| entryDate | date | Yes | Posting date of the closing entry |
+| entryType | enum | Yes | One of: revenue-closing, expense-closing, accrual-reversal, depreciation, retained-earnings, opening-balance, manual |
+| description | string | No | Operator-authored description |
+| automationTemplate | string | No | FK to ClosingEntryTemplate if auto-generated |
+| amount | MonetaryAmount | Yes | Total closing-entry amount |
+| glTransactionId | string | No | FK to GLTransaction once materialised as GL posting |
+| approvalStatus | enum | Yes | One of: draft, pending-approval, approved, posted, reversed |
+| approvedBy | string | No | FK to Person who approved the entry |
+| approvedAt | datetime | No | Timestamp of approval |
+| administrationId | string | Yes | FK to Administration |
+
+**Relations:**
+- → FiscalYear (many-to-one)
+- → ClosingEntryTemplate (many-to-one, via automationTemplate)
+- → GLTransaction (one-to-one, via glTransactionId)
+- → Administration (many-to-one)
+
+### ClosingEntryTemplate
+**Schema.org:** `schema:Thing`
+_Defines the rules that auto-generate closing entries during year-end close: which account groups close to the closing account and whether they reverse in the next period. Three default templates ship on install (revenue-closing, expense-closing, accrual-reversal)._
+**Primary spec:** bookkeeping-year-end-close
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| templateId | string | Yes | Unique identifier (e.g., revenue-closing) |
+| templateName | string | Yes | Display name |
+| description | string | No | Operator documentation |
+| accountPattern | string | Yes | Account range or regex pattern (e.g., 4000-4999) |
+| closingAccountNumber | string | Yes | FK to Account.accountNumber (target closing account, e.g., 9900) |
+| reverseNextPeriod | boolean | No | If true, reversal entry auto-generated in next FY |
+| automationTrigger | enum | No | One of: manual, on-close, on-check; default on-close |
+| administrationId | string | Yes | FK to Administration |
+| lifecycleState | enum | Yes | One of: active, paused, archived; default active |
+| createdAt | datetime | Yes | Template creation timestamp |
+| modifiedAt | datetime | No | Last modification timestamp |
+
+**Relations:**
+- → Account (many-to-one, via closingAccountNumber → Account.accountNumber)
+- → Administration (many-to-one)
 
 ### CallOffOrder
 **Schema.org:** `schema:Order`
@@ -1527,20 +1592,31 @@ _Exported financial statements (annual, management, or consolidated) generated f
 
 ### FiscalYear
 **Schema.org:** `schema:Event`
-_An accounting period representing a fiscal year for financial reporting and regulatory compliance._
+_An accounting period representing a fiscal year for financial reporting and regulatory compliance. Extended (bookkeeping-year-end-close, 2026-06-01) with year-end close lifecycle (open → in-progress → closed) and declarative closing checklist. Closed fiscal years are immutable (GL transactions become read-only). The `isClosed`/`closingDate` properties from the prior financial-reporting-accountability spec are superseded by the `lifecycleState` field and `closingCompletedAt` timestamp._
 **Primary spec:** financial-reporting-accountability
+**Extended by:** bookkeeping-year-end-close
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| year | integer | Yes | The fiscal year number (e.g., 2024) |
+| year | integer | Yes | The fiscal year number (e.g., 2025) |
 | startDate | date | Yes | The first day of the fiscal period |
 | endDate | date | Yes | The last day of the fiscal period |
-| isClosed | boolean | No | Whether the fiscal year is closed for amendments |
-| closingDate | date | No | Date when the fiscal year was officially closed |
+| administrationId | string | Yes | FK to Administration |
+| lifecycleState | enum | Yes | One of: open, in-progress, closed; default open. Closed = immutable per REQ-YEC-007 |
+| closingStartedAt | datetime | No | Timestamp when year-end close process was initiated |
+| closingCompletedAt | datetime | No | Timestamp when fiscal year was officially closed |
+| closingOperator | string | No | User ID of operator who initiated close |
+| checklistOverride | boolean | No | If true, CFO overrode the closing checklist (emergency close). Audit-trailed |
+| checklistOverrideReason | string | No | Memo recorded when CFO overrides the checklist |
+
+> **Reconciliation note (bookkeeping-year-end-close, 2026-06-01):** The prior `isClosed` (boolean) and `closingDate` properties from financial-reporting-accountability are superseded by `lifecycleState` and `closingCompletedAt`. New register declarations MUST use the lifecycle field. The `lifecycleState: closed` flag enforces immutability at the OR layer via `x-openregister-lifecycle` immutable-period flag.
 
 **Relations:**
 - → FinancialReport (one-to-many)
 - → JournalEntry (one-to-many)
+- → ClosingEntry (one-to-many)
+- → RetainedEarnings (one-to-many)
+- → Administration (many-to-one)
 
 ### FixedAsset
 **Schema.org:** `schema:Thing`
@@ -3209,6 +3285,27 @@ _Request for quotation supporting RFx management with templated events, multi-ro
 - → Organization (many-to-one)
 - → Payee (many-to-many)
 - → Offer (one-to-many)
+
+### RetainedEarnings
+**Schema.org:** `schema:Thing`
+_Tracks the retained-earnings account balance rollforward across fiscal years, recording opening balance, net income, distributions, and closing balance. The closing lifecycle action materialises the retained-earnings entry (debit closing account, credit retained earnings account)._
+**Primary spec:** bookkeeping-year-end-close
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| retainedEarningsId | string | Yes | Unique retained-earnings record identifier |
+| fiscalYearId | string | Yes | FK to FiscalYear |
+| openingBalance | MonetaryAmount | Yes | Retained earnings at start of FY |
+| netIncome | MonetaryAmount | Yes | Net income for the FY (revenue minus expenses) |
+| distributions | MonetaryAmount | No | Dividends or distributions paid in the FY |
+| closingBalance | MonetaryAmount | Yes | Retained earnings at end of FY (opening + net income - distributions) |
+| closingEntryId | string | No | FK to ClosingEntry that materialised the retained-earnings entry |
+| administrationId | string | Yes | FK to Administration |
+
+**Relations:**
+- → FiscalYear (many-to-one)
+- → ClosingEntry (one-to-one, via closingEntryId)
+- → Administration (many-to-one)
 
 ### RevenueStream
 **Schema.org:** `schema:Offer`

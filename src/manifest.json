@@ -26,6 +26,20 @@
 					"order": 10
 				},
 				{
+					"id": "YearEndCloseChecklist",
+					"label": "Year-End Close Checklist",
+					"icon": "ChecklistOutline",
+					"route": "YearEndCloseChecklist",
+					"order": 20
+				},
+				{
+					"id": "ClosingEntries",
+					"label": "Closing Entries",
+					"icon": "FileDocumentEditOutline",
+					"route": "ClosingEntries",
+					"order": 30
+				},
+				{
 					"id": "GRDeelnemers",
 					"label": "Deelnemers",
 					"icon": "AccountMultipleOutline",
@@ -93,6 +107,209 @@
 		}
 	],
 	"pages": [
+		{
+			"id": "YearEndCloseChecklist",
+			"route": "/year-end-close/checklist",
+			"type": "index",
+			"title": "Year-End Close Checklist",
+			"config": {
+				"register": "shillinq",
+				"schema": "FiscalYear",
+				"columns": [
+					{
+						"key": "year",
+						"label": "Fiscal Year",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "startDate",
+						"label": "Start Date",
+						"sortable": true
+					},
+					{
+						"key": "endDate",
+						"label": "End Date",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-year",
+				"lifecycleActions": true,
+				"detailRoute": "YearEndCloseChecklistDetail"
+			}
+		},
+		{
+			"id": "YearEndCloseChecklistDetail",
+			"route": "/year-end-close/checklist/:id",
+			"type": "detail",
+			"title": "Fiscal Year Close",
+			"config": {
+				"register": "shillinq",
+				"schema": "FiscalYear",
+				"fields": [
+					{
+						"key": "year",
+						"label": "Fiscal Year",
+						"type": "integer"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "startDate",
+						"label": "Start Date",
+						"type": "date"
+					},
+					{
+						"key": "endDate",
+						"label": "End Date",
+						"type": "date"
+					},
+					{
+						"key": "closingStartedAt",
+						"label": "Close Started",
+						"type": "date-time"
+					},
+					{
+						"key": "closingCompletedAt",
+						"label": "Close Completed",
+						"type": "date-time"
+					},
+					{
+						"key": "closingOperator",
+						"label": "Closing Operator",
+						"type": "string"
+					},
+					{
+						"key": "checklistOverride",
+						"label": "Checklist Override",
+						"type": "boolean"
+					},
+					{
+						"key": "checklistOverrideReason",
+						"label": "Override Reason",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "YearEndCloseChecklist"
+			}
+		},
+		{
+			"id": "ClosingEntries",
+			"route": "/year-end-close/closing-entries",
+			"type": "index",
+			"title": "Closing Entries",
+			"config": {
+				"register": "shillinq",
+				"schema": "ClosingEntry",
+				"columns": [
+					{
+						"key": "closingEntryNumber",
+						"label": "Entry Number",
+						"sortable": true
+					},
+					{
+						"key": "entryDate",
+						"label": "Entry Date",
+						"sortable": true
+					},
+					{
+						"key": "entryType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "approvalStatus",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "amount",
+						"label": "Amount",
+						"sortable": false
+					}
+				],
+				"defaultSort": "-entryDate",
+				"lifecycleActions": true,
+				"detailRoute": "ClosingEntriesDetail"
+			}
+		},
+		{
+			"id": "ClosingEntriesDetail",
+			"route": "/year-end-close/closing-entries/:id",
+			"type": "detail",
+			"title": "Closing Entry",
+			"config": {
+				"register": "shillinq",
+				"schema": "ClosingEntry",
+				"fields": [
+					{
+						"key": "closingEntryNumber",
+						"label": "Entry Number",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYearId",
+						"label": "Fiscal Year",
+						"type": "string"
+					},
+					{
+						"key": "entryDate",
+						"label": "Entry Date",
+						"type": "date"
+					},
+					{
+						"key": "entryType",
+						"label": "Entry Type",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "automationTemplate",
+						"label": "Template",
+						"type": "string"
+					},
+					{
+						"key": "amount",
+						"label": "Amount",
+						"type": "object"
+					},
+					{
+						"key": "approvalStatus",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "approvedBy",
+						"label": "Approved By",
+						"type": "string"
+					},
+					{
+						"key": "approvedAt",
+						"label": "Approved At",
+						"type": "date-time"
+					},
+					{
+						"key": "glTransactionId",
+						"label": "GL Transaction",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ClosingEntries"
+			}
+		},
 		{
 			"id": "FeaturesRoadmap",
 			"route": "/features-roadmap",
