@@ -72,8 +72,8 @@
 - **acceptance_criteria**:
   - GIVEN `BbvAccountMapping` WHEN loaded THEN fields per spec are present, AND `(administrationId, accountNumber)` is unique (declarative constraint).
   - GIVEN the T1 `GLTransaction.post` lifecycle precondition WHEN scanned THEN it asserts BBV-mapping existence for municipal administrations.
-- [ ] Implement
-- [ ] Test (PHPUnit: unmapped account fails posting for municipal admin; non-municipal admin bypasses the check; BBV aggregations return correct totals)
+- [x] Implement
+- [x] Test (PHPUnit: unmapped account fails posting for municipal admin; non-municipal admin bypasses the check; BBV aggregations return correct totals)
 
 ### Task 2.3: Declare IV3 register — `Iv3Export`
 
