@@ -28,6 +28,39 @@
 			]
 		},
 		{
+			"id": "Projecten",
+			"label": "Projecten",
+			"icon": "FolderOpenOutline",
+			"order": 30,
+			"visibilityPredicate": {
+				"administrationType": ["mkb", "zzp"],
+				"role": "project-administrator"
+			},
+			"children": [
+				{
+					"id": "ProjectenOverzicht",
+					"label": "Overzicht",
+					"icon": "TableLarge",
+					"route": "ProjectenOverzicht",
+					"order": 10
+				},
+				{
+					"id": "Tarieven",
+					"label": "Tarieven",
+					"icon": "CurrencyEur",
+					"route": "Tarieven",
+					"order": 20
+				},
+				{
+					"id": "Utilisatie",
+					"label": "Utilisatie",
+					"icon": "ChartLineVariant",
+					"route": "Utilisatie",
+					"order": 30
+				}
+			]
+		},
+		{
 			"id": "Documentation",
 			"label": "Documentation",
 			"icon": "icon-info",
@@ -60,6 +93,240 @@
 			"title": "Features & roadmap",
 			"config": {
 				"documentationUrl": "https://shillinq.conduction.nl"
+			}
+		},
+		{
+			"id": "ProjectenOverzicht",
+			"route": "/projecten",
+			"type": "index",
+			"title": "Projecten — Overzicht",
+			"visibilityPredicate": {
+				"administrationType": ["mkb", "zzp"],
+				"role": "project-administrator"
+			},
+			"config": {
+				"register": "shillinq",
+				"schema": "Project",
+				"columns": [
+					{
+						"key": "projectNumber",
+						"label": "Projectnummer",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Naam",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "recognitionStage",
+						"label": "Fase",
+						"sortable": true
+					},
+					{
+						"key": "recognisedRevenue",
+						"label": "Erkende omzet",
+						"sortable": true
+					},
+					{
+						"key": "wipBalance",
+						"label": "WIP-saldo",
+						"sortable": true
+					}
+				],
+				"defaultSort": "projectNumber",
+				"detailRoute": "ProjectDetail"
+			}
+		},
+		{
+			"id": "ProjectDetail",
+			"route": "/projecten/:id",
+			"type": "detail",
+			"title": "Project",
+			"visibilityPredicate": {
+				"administrationType": ["mkb", "zzp"],
+				"role": "project-administrator"
+			},
+			"config": {
+				"register": "shillinq",
+				"schema": "Project",
+				"fields": [
+					{
+						"key": "projectNumber",
+						"label": "Projectnummer",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Naam",
+						"type": "string"
+					},
+					{
+						"key": "customerId",
+						"label": "Klant",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "recognitionMethod",
+						"label": "Verantwoordingsmethode",
+						"type": "string"
+					},
+					{
+						"key": "recognitionStage",
+						"label": "Fase (RJ 270)",
+						"type": "string"
+					},
+					{
+						"key": "totalContractValue",
+						"label": "Contractwaarde",
+						"type": "number"
+					},
+					{
+						"key": "totalEstimatedCosts",
+						"label": "Geschatte kosten",
+						"type": "number"
+					},
+					{
+						"key": "costsIncurredToDate",
+						"label": "Gemaakte kosten",
+						"type": "number"
+					},
+					{
+						"key": "recognisedRevenue",
+						"label": "Erkende omzet",
+						"type": "number"
+					},
+					{
+						"key": "billedRevenue",
+						"label": "Gefactureerde omzet",
+						"type": "number"
+					},
+					{
+						"key": "wipBalance",
+						"label": "WIP-saldo",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Valuta",
+						"type": "string"
+					},
+					{
+						"key": "startDate",
+						"label": "Startdatum",
+						"type": "date"
+					},
+					{
+						"key": "endDate",
+						"label": "Einddatum",
+						"type": "date"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ProjectenOverzicht",
+				"relatedLists": [
+					{
+						"id": "assignments",
+						"title": "Projectopdrachten",
+						"schema": "ProjectAssignment",
+						"foreignKey": "projectId"
+					},
+					{
+						"id": "wip-history",
+						"title": "WIP-historie",
+						"schema": "WipBalance",
+						"foreignKey": "projectId"
+					}
+				]
+			}
+		},
+		{
+			"id": "Tarieven",
+			"route": "/tarieven",
+			"type": "index",
+			"title": "Tarieven",
+			"visibilityPredicate": {
+				"administrationType": ["mkb", "zzp"],
+				"role": "project-administrator"
+			},
+			"config": {
+				"register": "shillinq",
+				"schema": "RateCard",
+				"columns": [
+					{
+						"key": "level",
+						"label": "Niveau",
+						"sortable": true
+					},
+					{
+						"key": "hourlyRate",
+						"label": "Uurtarief",
+						"sortable": true
+					},
+					{
+						"key": "currency",
+						"label": "Valuta",
+						"sortable": false
+					},
+					{
+						"key": "effectiveFrom",
+						"label": "Geldig vanaf",
+						"sortable": true
+					},
+					{
+						"key": "effectiveTo",
+						"label": "Geldig tot",
+						"sortable": true
+					}
+				],
+				"defaultSort": "level"
+			}
+		},
+		{
+			"id": "Utilisatie",
+			"route": "/utilisatie",
+			"type": "dashboard",
+			"title": "Utilisatie",
+			"visibilityPredicate": {
+				"administrationType": ["mkb", "zzp"],
+				"role": "project-administrator"
+			},
+			"config": {
+				"widgets": [
+					{
+						"id": "utilisatie-widget",
+						"title": "Utilisatie per persoon",
+						"type": "utilisatie-chart",
+						"iconClass": "ChartLineVariant",
+						"schema": "ProjectAssignment",
+						"calculation": "utilization",
+						"bands": [
+							{ "min": 0.8, "color": "success", "label": "Hoog (>80%)" },
+							{ "min": 0.5, "color": "warning", "label": "Gemiddeld (50–80%)" },
+							{ "min": 0, "color": "error", "label": "Laag (<50%)" }
+						]
+					}
+				],
+				"layout": [
+					{
+						"id": "layout-utilisatie",
+						"widgetId": "utilisatie-widget",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 6
+					}
+				]
 			}
 		},
 		{

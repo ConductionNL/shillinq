@@ -29,7 +29,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Repair step that initializes Shillinq configuration via SettingsService.
  *
- * @spec openspec/changes/spec/tasks.md#task-11
+ * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
  */
 class InitializeSettings implements IRepairStep
 {
@@ -119,6 +119,7 @@ class InitializeSettings implements IRepairStep
             }
 
             $this->seedChartOfAccounts(output: $output);
+            $this->seedProjectData(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -128,6 +129,56 @@ class InitializeSettings implements IRepairStep
         }//end try
 
     }//end run()
+
+    /**
+     * Seed project accounting data (RJ-270 stages and rate-card templates), idempotently.
+     *
+     * RJ-270 stages are seeded unconditionally (not tenant-specific).
+     * Rate-card templates require a configured administrationId (C2).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
+     */
+    private function seedProjectData(IOutput $output): void
+    {
+        $output->info('Seeding RJ-270 stages...');
+        $rj270Result = $this->settingsService->seedRj270Stages();
+        if ($rj270Result['success'] === true) {
+            $output->info(
+                'RJ-270 stages seeded: '.($rj270Result['seeded'] ?? 0).' created, '.($rj270Result['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if ($rj270Result['success'] !== true) {
+            $output->warning('RJ-270 stages seeding issue: '.($rj270Result['message'] ?? 'unknown error'));
+        }
+
+        $settings         = $this->settingsService->getSettings();
+        $administrationId = ($settings['administration_id'] ?? '');
+
+        if ($administrationId === '') {
+            $output->warning(
+                'Shillinq: administration_id not configured — skipping rate-card template seed.'
+            );
+            return;
+        }
+
+        $output->info('Seeding rate-card templates...');
+        $rcResult = $this->settingsService->seedRateCardTemplates(administrationId: $administrationId);
+        if ($rcResult['success'] === true) {
+            $output->info(
+                'Rate-card templates seeded: '.($rcResult['seeded'] ?? 0).' created, '.($rcResult['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if ($rcResult['success'] !== true) {
+            $output->warning('Rate-card templates seeding issue: '.($rcResult['message'] ?? 'unknown error'));
+        }
+
+    }//end seedProjectData()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.

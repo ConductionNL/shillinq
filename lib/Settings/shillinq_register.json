@@ -3,7 +3,7 @@
   "info": {
     "title": "Shillinq Register",
     "description": "Register containing all schemas for the Shillinq application.",
-    "version": "0.2.0"
+    "version": "0.3.0"
   },
   "x-openregister": {
     "type": "application",
@@ -202,6 +202,750 @@
             "operation": "count",
             "description": "Number of accounts per lifecycleState.",
             "groupBy": "lifecycleState"
+          }
+        }
+      },
+      "Project": {
+        "slug": "Project",
+        "icon": "FolderOpenOutline",
+        "version": "0.1.0",
+        "title": "Project",
+        "description": "Consultancy project with RJ 270 / IFRS 15 percentage-of-completion revenue recognition. Lifecycle offerte → active → on-hold → closed → archived.",
+        "type": "object",
+        "x-schema-org": "schema:Project",
+        "required": [
+          "administrationId",
+          "projectNumber",
+          "name",
+          "customerId",
+          "state",
+          "totalContractValue",
+          "totalEstimatedCosts",
+          "recognitionMethod",
+          "recognitionStage",
+          "currency"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this project.",
+            "example": "adm-1"
+          },
+          "projectNumber": {
+            "type": "string",
+            "description": "Unique project identifier per administration (e.g. PRJ-2026-001).",
+            "example": "PRJ-2026-001"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable project name.",
+            "example": "OR-rollout client X"
+          },
+          "customerId": {
+            "type": "string",
+            "description": "FK to the customer contact record.",
+            "example": "cust-1"
+          },
+          "state": {
+            "type": "string",
+            "description": "Current lifecycle state of the project.",
+            "enum": [
+              "offerte",
+              "active",
+              "on-hold",
+              "closed",
+              "archived"
+            ],
+            "example": "active",
+            "default": "offerte"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Project activation date.",
+            "example": "2026-01-15"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Target project close date.",
+            "example": "2026-12-31"
+          },
+          "totalContractValue": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Total contracted revenue in project currency (operator-set).",
+            "example": 100000
+          },
+          "totalEstimatedCosts": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Total estimated costs (operator-set; revised over project life; revision triggers audit-trail entry).",
+            "example": 70000
+          },
+          "costsIncurredToDate": {
+            "type": "number",
+            "minimum": 0,
+            "readOnly": true,
+            "description": "Derived from GL via x-openregister-aggregations: sum of GLLine amounts on expense accounts tagged to this project (REQ-CPA-006).",
+            "example": 35000
+          },
+          "recognisedRevenue": {
+            "type": "number",
+            "minimum": 0,
+            "readOnly": true,
+            "description": "Derived via x-openregister-calculations: RJ 270 / IFRS 15 percentage-of-completion formula (REQ-CPA-007).",
+            "example": 50000
+          },
+          "billedRevenue": {
+            "type": "number",
+            "minimum": 0,
+            "readOnly": true,
+            "description": "Derived from invoices (T2 AR) referencing this project via subLedgerRef.",
+            "example": 40000
+          },
+          "wipBalance": {
+            "type": "number",
+            "readOnly": true,
+            "description": "Derived: recognisedRevenue - billedRevenue (REQ-CPA-008).",
+            "example": 10000
+          },
+          "recognitionMethod": {
+            "type": "string",
+            "description": "Revenue recognition method per RJ 270 / IFRS 15.",
+            "enum": [
+              "percentage-of-completion-cost-to-cost",
+              "percentage-of-completion-output",
+              "completed-contract"
+            ],
+            "example": "percentage-of-completion-cost-to-cost"
+          },
+          "recognitionStage": {
+            "type": "string",
+            "description": "Current RJ 270 completion stage (from rj-270-stages.json seed).",
+            "enum": [
+              "initiation",
+              "execution",
+              "closeout",
+              "complete"
+            ],
+            "example": "execution"
+          },
+          "percentageComplete": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "nullable": true,
+            "description": "Operator-supplied completion percentage for output-based recognition method.",
+            "example": 50
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "description": "ISO 4217 project currency.",
+            "example": "EUR",
+            "default": "EUR"
+          },
+          "closureJustification": {
+            "type": "string",
+            "nullable": true,
+            "description": "Operator justification when closing a project with non-zero WIP balance."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "offerte",
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "years": 7,
+            "description": "Financial records — 7 years per Selectielijst 5.1.2 (REQ-CPA-014)."
+          },
+          "states": {
+            "offerte": {
+              "label": "Offerte",
+              "description": "Project is at quotation stage; no GL postings yet."
+            },
+            "active": {
+              "label": "Actief",
+              "description": "Project is in execution; GL postings and hour logging are permitted."
+            },
+            "on-hold": {
+              "label": "On hold",
+              "description": "Project is paused; no new GL postings; reason required."
+            },
+            "closed": {
+              "label": "Afgesloten",
+              "description": "Project is complete; final WIP snapshot and recognition adjustment triggered."
+            },
+            "archived": {
+              "label": "Gearchiveerd",
+              "description": "Historical only; remains queryable per 7-year retention rule."
+            }
+          },
+          "transitions": {
+            "activate": {
+              "from": "offerte",
+              "to": "active",
+              "label": "Activeer project",
+              "description": "Move project from quotation to active execution. startDate must be set.",
+              "requires": "OCA\\Shillinq\\Guard\\ProjectActivationGuard::requireStartDate"
+            },
+            "putOnHold": {
+              "from": "active",
+              "to": "on-hold",
+              "label": "Zet on hold",
+              "description": "Pause project; closureJustification (reason) field must be set.",
+              "requires": "OCA\\Shillinq\\Guard\\ProjectTransitionGuard::requireReason"
+            },
+            "reactivate": {
+              "from": "on-hold",
+              "to": "active",
+              "label": "Heractiveer project",
+              "description": "Resume project from on-hold state."
+            },
+            "close": {
+              "from": "active",
+              "to": "closed",
+              "label": "Sluit project",
+              "description": "Close project; triggers final WIP snapshot + recognition adjustment. Open WIP balance surfaces warning requiring operator justification.",
+              "requires": "OCA\\Shillinq\\Guard\\ProjectCloseGuard::requireWipJustificationOrZero"
+            },
+            "archive": {
+              "from": "closed",
+              "to": "archived",
+              "label": "Archiveer project",
+              "description": "Move closed project to archive (typically 12 months post-close)."
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "costsIncurredToDate": {
+            "description": "Sum of GL expense-account postings tagged to this project via GLLine.subLedgerRef (REQ-CPA-006).",
+            "operation": "sum",
+            "field": "amount",
+            "source": {
+              "register": "@register",
+              "schema": "GLLine"
+            },
+            "filter": {
+              "subLedgerType": "project",
+              "subLedgerRef": "@self.id",
+              "account.accountType": "expenses"
+            }
+          },
+          "billedRevenue": {
+            "description": "Sum of invoice lines referencing this project via T2 AR sub-ledger.",
+            "operation": "sum",
+            "field": "amount",
+            "source": {
+              "register": "@register",
+              "schema": "GLLine"
+            },
+            "filter": {
+              "subLedgerType": "project",
+              "subLedgerRef": "@self.id",
+              "account.accountType": "revenue"
+            }
+          },
+          "profitAndLoss": {
+            "description": "Project P&L: recognised revenue minus costs incurred to date (REQ-CPA-010).",
+            "operation": "derived",
+            "fields": {
+              "recognisedRevenue": "@self.recognisedRevenue",
+              "costsIncurredToDate": "@self.costsIncurredToDate",
+              "grossMargin": {
+                "formula": "@self.recognisedRevenue - @self.costsIncurredToDate"
+              },
+              "grossMarginPercentage": {
+                "formula": "@self.recognisedRevenue > 0 ? ((@self.recognisedRevenue - @self.costsIncurredToDate) / @self.recognisedRevenue * 100) : 0"
+              }
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "recognisedRevenue": {
+            "description": "RJ 270 / IFRS 15 percentage-of-completion recognised revenue (REQ-CPA-007). Clamped to [0, totalContractValue].",
+            "type": "number",
+            "conditions": [
+              {
+                "when": {
+                  "recognitionMethod": "completed-contract",
+                  "state": { "not": "closed" }
+                },
+                "value": 0,
+                "description": "completed-contract: recognise nothing until state=closed."
+              },
+              {
+                "when": {
+                  "recognitionMethod": "completed-contract",
+                  "state": "closed"
+                },
+                "formula": "@self.totalContractValue",
+                "description": "completed-contract: recognise full contract value on close."
+              },
+              {
+                "when": {
+                  "recognitionMethod": "percentage-of-completion-output"
+                },
+                "formula": "@self.totalContractValue * (@self.percentageComplete / 100)",
+                "description": "output-based: operator-supplied percentageComplete drives recognition."
+              }
+            ],
+            "default": {
+              "formula": "@self.totalEstimatedCosts > 0 ? max(0, @self.totalContractValue * (@self.costsIncurredToDate / @self.totalEstimatedCosts)) : 0",
+              "description": "cost-to-cost (default): totalContractValue × (costsIncurredToDate / totalEstimatedCosts), clamped ≥ 0."
+            }
+          },
+          "wipBalance": {
+            "description": "Work-in-progress balance: recognised revenue minus billed revenue (REQ-CPA-008).",
+            "type": "number",
+            "formula": "@self.recognisedRevenue - @self.billedRevenue"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "project-administrator": {
+              "permissions": ["create", "read", "update", "delete"],
+              "description": "Full project management access; visibility predicate: administrationType ∈ {mkb, zzp}."
+            },
+            "bookkeeper": {
+              "permissions": ["read", "update"],
+              "description": "Read and update project financial fields."
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "ProjectAssignment": {
+        "slug": "ProjectAssignment",
+        "icon": "AccountArrowRightOutline",
+        "version": "0.1.0",
+        "title": "Projectopdracht",
+        "description": "Assignment of a person to a project with rate-card reference and utilisation tracking (REQ-CPA-004).",
+        "type": "object",
+        "x-schema-org": "schema:JobPosting",
+        "required": [
+          "projectId",
+          "personId",
+          "rateCardId",
+          "recognisedRate",
+          "startDate",
+          "state"
+        ],
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "description": "FK to the parent Project.id.",
+            "example": "proj-1"
+          },
+          "personId": {
+            "type": "string",
+            "description": "FK to the assigned person (Nextcloud user or OR Person record).",
+            "example": "user-1"
+          },
+          "rateCardId": {
+            "type": "string",
+            "description": "FK to the RateCard effective at assignment time.",
+            "example": "rc-1"
+          },
+          "recognisedRate": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Snapshot of RateCard.hourlyRate at assignment time per RJ 270 §3.2.4. Immutable after creation.",
+            "example": 180
+          },
+          "estimatedHours": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Operator estimate of hours this person will spend on this project.",
+            "example": 200
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Assignment start date.",
+            "example": "2026-01-15"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Assignment end date.",
+            "example": "2026-12-31"
+          },
+          "state": {
+            "type": "string",
+            "description": "Assignment lifecycle state.",
+            "enum": [
+              "planned",
+              "active",
+              "completed"
+            ],
+            "example": "active",
+            "default": "planned"
+          },
+          "capacityHoursPerWeek": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Operator-set weekly capacity hours for utilisation calculation. Default 40 per Wet IB (36-hour workweek; operator override allowed).",
+            "example": 40,
+            "default": 40
+          },
+          "utilization": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "readOnly": true,
+            "description": "Derived: billableHoursThisPeriod / capacityHoursThisPeriod (REQ-CPA-011).",
+            "example": 0.75
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "planned",
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "years": 7
+          },
+          "states": {
+            "planned": {
+              "label": "Gepland",
+              "description": "Assignment is planned; BillableHour records may not yet reference it."
+            },
+            "active": {
+              "label": "Actief",
+              "description": "Assignment is active; BillableHour records may reference projectId + personId."
+            },
+            "completed": {
+              "label": "Afgerond",
+              "description": "Assignment is complete."
+            }
+          },
+          "transitions": {
+            "activate": {
+              "from": "planned",
+              "to": "active",
+              "label": "Activeer opdracht",
+              "description": "Activate the assignment; hour logging becomes available."
+            },
+            "complete": {
+              "from": "active",
+              "to": "completed",
+              "label": "Sluit opdracht",
+              "description": "Mark assignment as completed."
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "utilization": {
+            "description": "Billable hours this period divided by capacity hours this period per person (REQ-CPA-011).",
+            "type": "number",
+            "formula": "@self.capacityHoursThisPeriod > 0 ? (@self.billableHoursThisPeriod / @self.capacityHoursThisPeriod) : 0",
+            "note": "billableHoursThisPeriod is aggregated from UrenRegistratie records for this assignment in the current FiscalPeriod; capacityHoursThisPeriod = capacityHoursPerWeek × workingWeeksInPeriod."
+          }
+        },
+        "x-openregister-widgets": {
+          "utilisatieWidget": {
+            "title": "Utilisatie",
+            "description": "Per-person utilisation for the current period with green/yellow/red bands (REQ-CPA-013).",
+            "type": "utilisation-chart",
+            "dataSource": {
+              "register": "@register",
+              "schema": "ProjectAssignment",
+              "calculation": "utilization"
+            },
+            "bands": [
+              { "min": 0.8, "color": "success", "label": "Hoog (>80%)" },
+              { "min": 0.5, "color": "warning", "label": "Gemiddeld (50-80%)" },
+              { "min": 0, "color": "error", "label": "Laag (<50%)" }
+            ],
+            "visibilityPredicate": {
+              "administrationType": ["mkb", "zzp"],
+              "role": "project-administrator"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "project-administrator": {
+              "permissions": ["create", "read", "update", "delete"]
+            },
+            "bookkeeper": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "RateCard": {
+        "slug": "RateCard",
+        "icon": "CurrencyEur",
+        "version": "0.1.0",
+        "title": "Tarievenkaart",
+        "description": "Rate card with per-level hourly rates and effectivity windows. Default templates seeded from rate-card-templates.json (REQ-CPA-005).",
+        "type": "object",
+        "x-schema-org": "schema:PriceSpecification",
+        "required": [
+          "administrationId",
+          "level",
+          "currency",
+          "hourlyRate",
+          "effectiveFrom"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this rate card.",
+            "example": "adm-1"
+          },
+          "level": {
+            "type": "string",
+            "description": "Personnel level for this rate. Operator-extensible via seed.",
+            "enum": [
+              "junior",
+              "medior",
+              "senior",
+              "partner"
+            ],
+            "example": "senior"
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "description": "ISO 4217 currency for hourlyRate.",
+            "example": "EUR",
+            "default": "EUR"
+          },
+          "hourlyRate": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Rate per hour in the specified currency.",
+            "example": 165
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "First date this rate is valid (inclusive).",
+            "example": "2026-01-01"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Last date this rate is valid (inclusive). Null = currently valid.",
+            "example": "2026-12-31"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional description of this rate card entry."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "_meta.status",
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "years": 7
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "project-administrator": {
+              "permissions": ["create", "read", "update", "delete"]
+            },
+            "bookkeeper": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "WipBalance": {
+        "slug": "WipBalance",
+        "icon": "ChartLineVariant",
+        "version": "0.1.0",
+        "title": "WIP-saldo",
+        "description": "Period-end work-in-progress snapshot per project, generated by an OR ScheduledWorkflow on T2 period close (REQ-CPA-008).",
+        "type": "object",
+        "x-schema-org": "schema:MonetaryAmount",
+        "required": [
+          "projectId",
+          "periodId",
+          "recognisedRevenue",
+          "billedRevenue",
+          "wipBalance",
+          "costsIncurredToDate",
+          "createdAt"
+        ],
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "description": "FK to the snapshotted Project.id.",
+            "example": "proj-1"
+          },
+          "periodId": {
+            "type": "string",
+            "description": "FK to the FiscalPeriod for which this snapshot was taken.",
+            "example": "fp-2026-Q1"
+          },
+          "recognisedRevenue": {
+            "type": "number",
+            "description": "Snapshot of Project.recognisedRevenue at period close.",
+            "example": 50000
+          },
+          "billedRevenue": {
+            "type": "number",
+            "description": "Snapshot of Project.billedRevenue at period close.",
+            "example": 40000
+          },
+          "wipBalance": {
+            "type": "number",
+            "description": "Snapshot: recognisedRevenue - billedRevenue at period close.",
+            "example": 10000
+          },
+          "costsIncurredToDate": {
+            "type": "number",
+            "description": "Snapshot of Project.costsIncurredToDate at period close.",
+            "example": 35000
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when this snapshot was generated.",
+            "example": "2026-04-01T00:00:00Z"
+          }
+        },
+        "x-openregister-scheduled-workflow": {
+          "trigger": "event",
+          "event": "PeriodClosed",
+          "description": "Triggered by T2 PeriodClosed event. Generates one WipBalance record per active Project per period close (REQ-CPA-008).",
+          "action": {
+            "forEach": {
+              "register": "@register",
+              "schema": "Project",
+              "filter": { "state": "active" }
+            },
+            "create": {
+              "register": "@register",
+              "schema": "WipBalance",
+              "fields": {
+                "projectId": "@item.id",
+                "periodId": "@event.periodId",
+                "recognisedRevenue": "@item.recognisedRevenue",
+                "billedRevenue": "@item.billedRevenue",
+                "wipBalance": "@item.wipBalance",
+                "costsIncurredToDate": "@item.costsIncurredToDate",
+                "createdAt": "@event.closedAt"
+              }
+            }
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "_meta.status",
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "years": 7,
+            "description": "Financial records — 7 years per Selectielijst 5.1.2 (REQ-CPA-014)."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "project-administrator": {
+              "permissions": ["read"],
+              "description": "Read-only; WipBalance records are system-generated, never manually created."
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "UrenRegistratie": {
+        "slug": "UrenRegistratie",
+        "icon": "ClockOutline",
+        "version": "0.1.0",
+        "title": "Urenregistratie",
+        "description": "Billable hour logging for ZZP / consultancy. Base schema from bookkeeping-zzp-tax-regime; extended here with recognisedRate (rate-at-write snapshot per RJ 270 §3.2.4) and projectAssignmentId (FK to ProjectAssignment, REQ-CPA-009).",
+        "type": "object",
+        "x-schema-org": "schema:HowToStep",
+        "required": [
+          "administrationId",
+          "personId",
+          "date",
+          "hours",
+          "description"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this hour entry.",
+            "example": "adm-1"
+          },
+          "personId": {
+            "type": "string",
+            "description": "FK to the person logging the hours.",
+            "example": "user-1"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "Date on which the work was performed (performance date, NOT invoice date).",
+            "example": "2026-03-15"
+          },
+          "hours": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Number of hours worked.",
+            "example": 8
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of work performed.",
+            "example": "Design session OR data model"
+          },
+          "projectId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional FK to the Project this hour is billed against.",
+            "example": "proj-1"
+          },
+          "projectAssignmentId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the ProjectAssignment governing this hour entry. References the assignment for rate-card lookup and utilisation aggregation (REQ-CPA-009).",
+            "example": "pa-1"
+          },
+          "recognisedRate": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true,
+            "readOnly": true,
+            "description": "Snapshot of the applicable RateCard.hourlyRate at the time this record is written, per RJ 270 §3.2.4 (rate as of performance date, not invoice date). Immutable after creation — subsequent rate-card revisions do NOT retroactively change this field (REQ-CPA-009).",
+            "example": 180
+          },
+          "glTransactionId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the GLTransaction when this hour is posted to GL.",
+            "example": "glt-1"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "project-administrator": {
+              "permissions": ["read"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
           }
         }
       }

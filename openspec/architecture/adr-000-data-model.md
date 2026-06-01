@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 225
+**Entities:** 228
 
 ## Context
 
@@ -2759,6 +2759,40 @@ _Project container for organizing tasks, milestones, and team collaboration with
 - → Person (many-to-one)
 - → Organization (many-to-one)
 
+> **CPA extension note (add-shillinq-consultancy-project-accounting, 2026-06-01):** The consultancy
+> project accounting capability (`bookkeeping-consultancy-project-accounting`, T3) declares a
+> purpose-built `Project` schema in `lib/Settings/shillinq_register.json` with the full T3 financial
+> field set (projectNumber, customerId, totalContractValue, totalEstimatedCosts, costsIncurredToDate,
+> recognisedRevenue, billedRevenue, wipBalance, recognitionMethod, recognitionStage) plus
+> `x-openregister-lifecycle` (`offerte → active → on-hold → closed → archived`) and
+> `x-openregister-calculations` for percentage-of-completion revenue recognition per RJ 270 §3 /
+> IFRS 15 §B14-B19. The approval-workflow `Project` entry above remains the canonical entity for
+> task/milestone management; the T3 CPA `Project` is a distinct bookkeeping register schema for
+> consultancy project financial tracking. **Primary spec (CPA variant):** bookkeeping-consultancy-project-accounting
+
+### ProjectAssignment
+**Schema.org:** `schema:JobPosting`
+_Assignment of a person to a consultancy project with rate-card reference and utilisation tracking._
+**Primary spec:** bookkeeping-consultancy-project-accounting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| projectId | string | Yes | FK to the parent Project.id |
+| personId | string | Yes | FK to the assigned person (Nextcloud user or OR Person record) |
+| rateCardId | string | Yes | FK to the RateCard effective at assignment time |
+| recognisedRate | number | Yes | Snapshot of RateCard.hourlyRate at assignment time per RJ 270 §3.2.4 — immutable after creation |
+| estimatedHours | number | No | Operator estimate of hours this person will spend on this project |
+| startDate | date | Yes | Assignment start date |
+| endDate | date | No | Assignment end date (nullable = open-ended) |
+| state | enum | Yes | One of planned, active, completed |
+| capacityHoursPerWeek | number | No | Weekly capacity hours for utilisation calculation; default 40 per Wet IB |
+| utilization | number | No | Derived: billableHoursThisPeriod / capacityHoursThisPeriod (x-openregister-calculations, REQ-CPA-011) |
+
+**Relations:**
+- → Project (many-to-one)
+- → RateCard (many-to-one)
+- → UrenRegistratie (one-to-many)
+
 ### ProjectTask
 **Schema.org:** `schema:Action`
 _Tasks within a project with hierarchy support, time estimation, and status tracking_
@@ -3092,6 +3126,15 @@ _Supplier rate and pricing structure matching contract terms with volume discoun
 **Relations:**
 - → Supplier (many-to-one)
 - → Contract (many-to-one)
+
+> **CPA extension note (add-shillinq-consultancy-project-accounting, 2026-06-01):** The consultancy
+> project accounting capability declares a purpose-built `RateCard` schema in
+> `lib/Settings/shillinq_register.json` with per-level (junior/medior/senior/partner) hourly rates,
+> `effectiveFrom`/`effectiveTo` effectivity windows, and ISO 4217 currency. Default templates
+> seeded from `lib/Settings/seeds/rate-card-templates.json`. The supplier-management `RateCard`
+> entry above remains the canonical entity for supplier pricing; the T3 CPA `RateCard` is a
+> distinct personnel rate-card register schema. **Primary spec (CPA variant):**
+> bookkeeping-consultancy-project-accounting
 
 ### Receipt
 **Schema.org:** `schema:DigitalDocument`
@@ -4151,6 +4194,28 @@ _A report listing all general ledger accounts with debit or credit balances for 
 - → Organization (many-to-one)
 - → GeneralLedgerEntry (one-to-many)
 
+### UrenRegistratie
+**Schema.org:** `schema:HowToStep`
+_Billable hour log entry for ZZP / consultancy work. Base schema from bookkeeping-zzp-tax-regime (T3); extended by bookkeeping-consultancy-project-accounting (T3) with `recognisedRate` (rate-at-write snapshot per RJ 270 §3.2.4) and `projectAssignmentId` (FK to ProjectAssignment)._
+**Primary spec:** bookkeeping-consultancy-project-accounting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the Administration owning this hour entry |
+| personId | string | Yes | FK to the person logging the hours |
+| date | date | Yes | Date on which the work was performed (performance date, NOT invoice date) |
+| hours | number | Yes | Number of hours worked |
+| description | string | Yes | Description of work performed |
+| projectId | string | No | Optional FK to the Project this hour is billed against |
+| projectAssignmentId | string | No | FK to the ProjectAssignment governing this hour entry — added by CPA extension (REQ-CPA-009) |
+| recognisedRate | number | No | Snapshot of the applicable RateCard.hourlyRate at write time per RJ 270 §3.2.4 — immutable after creation; subsequent rate-card revisions do NOT retroactively change this field (REQ-CPA-009) |
+| glTransactionId | string | No | FK to the GLTransaction when this hour is posted to GL |
+
+**Relations:**
+- → ProjectAssignment (many-to-one, via projectAssignmentId)
+- → Project (many-to-one, via projectId)
+- → GLTransaction (many-to-one, via glTransactionId)
+
 ### User
 **Schema.org:** `schema:Person`
 _System account for authentication and access control with assigned permissions and team memberships_
@@ -4230,6 +4295,25 @@ _Vendor invoice with approval workflow before payment processing_
 - → ApprovalRequest (one-to-one)
 - → Payment (one-to-one)
 - → Document (one-to-many)
+
+### WipBalance
+**Schema.org:** `schema:MonetaryAmount`
+_Period-end work-in-progress snapshot per project, generated by an OR ScheduledWorkflow on T2 period close (REQ-CPA-008). One record per project per period. Read-only; never manually created._
+**Primary spec:** bookkeeping-consultancy-project-accounting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| projectId | string | Yes | FK to the snapshotted Project.id |
+| periodId | string | Yes | FK to the FiscalPeriod for which this snapshot was taken |
+| recognisedRevenue | number | Yes | Snapshot of Project.recognisedRevenue at period close |
+| billedRevenue | number | Yes | Snapshot of Project.billedRevenue at period close |
+| wipBalance | number | Yes | Snapshot: recognisedRevenue − billedRevenue at period close |
+| costsIncurredToDate | number | Yes | Snapshot of Project.costsIncurredToDate at period close |
+| createdAt | datetime | Yes | Timestamp when this snapshot was generated by the ScheduledWorkflow |
+
+**Relations:**
+- → Project (many-to-one)
+- → FiscalYear (many-to-one, via periodId)
 
 ### WOZAssessment
 **Schema.org:** `schema:Assessment`

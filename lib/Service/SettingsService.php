@@ -330,6 +330,232 @@ class SettingsService
     }//end importAccounts()
 
     /**
+     * Seed RJ-270 stages from the rj-270-stages.json seed file, idempotently.
+     *
+     * Imports the 4 canonical percentage-of-completion stage definitions.
+     * Deduplication key is stageId. Idempotent on re-run.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-14
+     */
+    public function seedRj270Stages(): array
+    {
+        return $this->seedGenericFile(
+            seedFileName: 'rj-270-stages.json',
+            itemsKey: 'stages',
+            dedupeKey: 'stageId',
+            schema: 'RJ270Stage',
+            logLabel: 'RJ-270 stages'
+        );
+
+    }//end seedRj270Stages()
+
+    /**
+     * Seed default rate-card templates from rate-card-templates.json, idempotently.
+     *
+     * Requires a non-empty administrationId; seeding is skipped otherwise (C2).
+     * Deduplication key is level + effectiveFrom + administrationId.
+     *
+     * @param string $administrationId The administrationId to stamp on seeded records.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-14
+     */
+    public function seedRateCardTemplates(string $administrationId): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        if ($administrationId === '') {
+            return [
+                'success' => false,
+                'message' => 'administrationId must not be empty.',
+            ];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/rate-card-templates.json';
+        if (file_exists($seedPath) === false) {
+            return ['success' => false, 'message' => 'Seed file not found: rate-card-templates.json'];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return ['success' => false, 'message' => 'Failed to read rate-card-templates.json'];
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return ['success' => false, 'message' => 'Failed to parse rate-card-templates.json: '.json_last_error_msg()];
+        }
+
+        $rateCards = ($data['rateCards'] ?? []);
+        if (empty($rateCards) === true) {
+            return ['success' => false, 'message' => 'Seed file contains no rateCards.'];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($rateCards as $rateCard) {
+                $rateCard['administrationId'] = $administrationId;
+
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('RateCard')
+                    ->findAll(
+                            [
+                                'filters' => [
+                                    'level'            => $rateCard['level'],
+                                    'effectiveFrom'    => $rateCard['effectiveFrom'],
+                                    'administrationId' => $administrationId,
+                                ],
+                                'limit'   => 1,
+                            ]
+                            );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $rateCard,
+                    register: $registerSlug,
+                    schema: 'RateCard',
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: rate-card templates seeded',
+                [
+                    'seeded'  => $seeded,
+                    'skipped' => $skipped,
+                ]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'Rate-card templates seeded successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: rate-card templates seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedRateCardTemplates()
+
+    /**
+     * Generic seed helper for single-schema seed files that don't require an administrationId.
+     *
+     * @param string $seedFileName Name of the seed file under lib/Settings/seeds/.
+     * @param string $itemsKey     Key in the JSON holding the items array.
+     * @param string $dedupeKey    Field used as deduplication key.
+     * @param string $schema       OpenRegister schema slug to import into.
+     * @param string $logLabel     Label for log messages.
+     *
+     * @return array<string,mixed>
+     */
+    private function seedGenericFile(
+        string $seedFileName,
+        string $itemsKey,
+        string $dedupeKey,
+        string $schema,
+        string $logLabel
+    ): array {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return ['success' => false, 'message' => 'OpenRegister is not installed or enabled.'];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/'.$seedFileName;
+        if (file_exists($seedPath) === false) {
+            return ['success' => false, 'message' => 'Seed file not found: '.$seedFileName];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return ['success' => false, 'message' => 'Failed to read '.$seedFileName];
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return ['success' => false, 'message' => 'Failed to parse '.$seedFileName.': '.json_last_error_msg()];
+        }
+
+        $items = ($data[$itemsKey] ?? []);
+        if (empty($items) === true) {
+            return ['success' => false, 'message' => 'Seed file '.$seedFileName.' contains no '.$itemsKey.'.'];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($items as $item) {
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema($schema)
+                    ->findAll(
+                            [
+                                'filters' => [$dedupeKey => $item[$dedupeKey]],
+                                'limit'   => 1,
+                            ]
+                            );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $item,
+                    register: $registerSlug,
+                    schema: $schema,
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: '.$logLabel.' seeded',
+                ['seeded' => $seeded, 'skipped' => $skipped]
+            );
+
+            return [
+                'success' => true,
+                'message' => $logLabel.' seeded successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: '.$logLabel.' seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return ['success' => false, 'message' => $e->getMessage()];
+        }//end try
+
+    }//end seedGenericFile()
+
+    /**
      * Load configuration from shillinq_register.json via OpenRegister.
      *
      * Skips import when the register is already configured (idempotent).
