@@ -9845,11 +9845,31 @@
 				"register": "shillinq",
 				"schema": "KORRegistration",
 				"columns": [
-					{ "key": "ondernemingId", "label": "Onderneming", "sortable": true },
-					{ "key": "regime", "label": "Regime", "sortable": true },
-					{ "key": "status", "label": "Status", "sortable": true },
-					{ "key": "ingangsDatum", "label": "Ingangsdatum", "sortable": true },
-					{ "key": "lockInEindDatum", "label": "Lock-in einde", "sortable": true }
+					{
+						"key": "ondernemingId",
+						"label": "Onderneming",
+						"sortable": true
+					},
+					{
+						"key": "regime",
+						"label": "Regime",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "ingangsDatum",
+						"label": "Ingangsdatum",
+						"sortable": true
+					},
+					{
+						"key": "lockInEindDatum",
+						"label": "Lock-in einde",
+						"sortable": true
+					}
 				],
 				"defaultSort": "-ingangsDatum",
 				"detailRoute": "KorRegistrationDetail"
@@ -9864,26 +9884,97 @@
 				"register": "shillinq",
 				"schema": "KORRegistration",
 				"fields": [
-					{ "key": "ondernemingId", "label": "Onderneming", "type": "string" },
-					{ "key": "regime", "label": "Regime", "type": "string" },
-					{ "key": "status", "label": "Status", "type": "string" },
-					{ "key": "aanmeldDatum", "label": "Aanmelddatum", "type": "date" },
-					{ "key": "ingangsDatum", "label": "Ingangsdatum", "type": "date" },
-					{ "key": "lockInEindDatum", "label": "Lock-in einddatum", "type": "date" },
-					{ "key": "vroegsteOpzegDatum", "label": "Vroegste opzegdatum", "type": "date" },
-					{ "key": "belastingdienstReferentie", "label": "Belastingdienst-referentie", "type": "string" },
-					{ "key": "aanmeldKanaal", "label": "Aanmeldkanaal", "type": "string" },
-					{ "key": "drempelJaar", "label": "Jaardrempel (EUR)", "type": "number" },
-					{ "key": "voorgaandeOmzet", "label": "Voorgaande omzet", "type": "object" },
-					{ "key": "omzettingsRegeling", "label": "Omzettingsregeling", "type": "boolean" },
-					{ "key": "fiscalEenheidId", "label": "Fiscale eenheid", "type": "string" },
-					{ "key": "administrationId", "label": "Administratie", "type": "string" }
+					{
+						"key": "ondernemingId",
+						"label": "Onderneming",
+						"type": "string"
+					},
+					{
+						"key": "regime",
+						"label": "Regime",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "aanmeldDatum",
+						"label": "Aanmelddatum",
+						"type": "date"
+					},
+					{
+						"key": "ingangsDatum",
+						"label": "Ingangsdatum",
+						"type": "date"
+					},
+					{
+						"key": "lockInEindDatum",
+						"label": "Lock-in einddatum",
+						"type": "date"
+					},
+					{
+						"key": "vroegsteOpzegDatum",
+						"label": "Vroegste opzegdatum",
+						"type": "date"
+					},
+					{
+						"key": "belastingdienstReferentie",
+						"label": "Belastingdienst-referentie",
+						"type": "string"
+					},
+					{
+						"key": "aanmeldKanaal",
+						"label": "Aanmeldkanaal",
+						"type": "string"
+					},
+					{
+						"key": "drempelJaar",
+						"label": "Jaardrempel (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "voorgaandeOmzet",
+						"label": "Voorgaande omzet",
+						"type": "object"
+					},
+					{
+						"key": "omzettingsRegeling",
+						"label": "Omzettingsregeling",
+						"type": "boolean"
+					},
+					{
+						"key": "fiscalEenheidId",
+						"label": "Fiscale eenheid",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
 				],
 				"lifecycleActions": true,
 				"relatedLists": [
-					{ "id": "kor-turnover", "title": "Jaaromzet", "schema": "KORAnnualTurnover", "foreignKey": "registrationId" },
-					{ "id": "kor-alerts", "title": "Waarschuwingen", "schema": "KORThresholdAlert", "foreignKey": "registrationId" },
-					{ "id": "kor-revocations", "title": "Beëindigingen", "schema": "KORRevocation", "foreignKey": "registrationId" }
+					{
+						"id": "kor-turnover",
+						"title": "Jaaromzet",
+						"schema": "KORAnnualTurnover",
+						"foreignKey": "registrationId"
+					},
+					{
+						"id": "kor-alerts",
+						"title": "Waarschuwingen",
+						"schema": "KORThresholdAlert",
+						"foreignKey": "registrationId"
+					},
+					{
+						"id": "kor-revocations",
+						"title": "Beëindigingen",
+						"schema": "KORRevocation",
+						"foreignKey": "registrationId"
+					}
 				],
 				"indexRoute": "KorRegistrations"
 			}
@@ -9897,12 +9988,36 @@
 				"register": "shillinq",
 				"schema": "KORAnnualTurnover",
 				"columns": [
-					{ "key": "jaar", "label": "Jaar", "sortable": true },
-					{ "key": "lopendeOmzet", "label": "Lopende omzet", "sortable": true },
-					{ "key": "drempel", "label": "Drempel", "sortable": false },
-					{ "key": "drempelBenutting", "label": "Benutting", "sortable": true },
-					{ "key": "prognoseEindeJaar", "label": "Prognose eindejaar", "sortable": true },
-					{ "key": "prognoseStatus", "label": "Prognose-status", "sortable": true }
+					{
+						"key": "jaar",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "lopendeOmzet",
+						"label": "Lopende omzet",
+						"sortable": true
+					},
+					{
+						"key": "drempel",
+						"label": "Drempel",
+						"sortable": false
+					},
+					{
+						"key": "drempelBenutting",
+						"label": "Benutting",
+						"sortable": true
+					},
+					{
+						"key": "prognoseEindeJaar",
+						"label": "Prognose eindejaar",
+						"sortable": true
+					},
+					{
+						"key": "prognoseStatus",
+						"label": "Prognose-status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "-jaar",
 				"detailRoute": "KorAnnualTurnoverDetail"
@@ -9917,16 +10032,56 @@
 				"register": "shillinq",
 				"schema": "KORAnnualTurnover",
 				"fields": [
-					{ "key": "registrationId", "label": "Aanmelding", "type": "string" },
-					{ "key": "jaar", "label": "Jaar", "type": "integer" },
-					{ "key": "lopendeOmzet", "label": "Lopende omzet (EUR)", "type": "number" },
-					{ "key": "drempel", "label": "Drempel (EUR)", "type": "number" },
-					{ "key": "drempelBenutting", "label": "Drempel-benutting", "type": "number" },
-					{ "key": "perMaand", "label": "Omzet per maand", "type": "object" },
-					{ "key": "uitgeslotenPosten", "label": "Uitgesloten posten", "type": "array" },
-					{ "key": "prognoseEindeJaar", "label": "Prognose eindejaar (EUR)", "type": "number" },
-					{ "key": "prognoseStatus", "label": "Prognose-status", "type": "string" },
-					{ "key": "administrationId", "label": "Administratie", "type": "string" }
+					{
+						"key": "registrationId",
+						"label": "Aanmelding",
+						"type": "string"
+					},
+					{
+						"key": "jaar",
+						"label": "Jaar",
+						"type": "integer"
+					},
+					{
+						"key": "lopendeOmzet",
+						"label": "Lopende omzet (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "drempel",
+						"label": "Drempel (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "drempelBenutting",
+						"label": "Drempel-benutting",
+						"type": "number"
+					},
+					{
+						"key": "perMaand",
+						"label": "Omzet per maand",
+						"type": "object"
+					},
+					{
+						"key": "uitgeslotenPosten",
+						"label": "Uitgesloten posten",
+						"type": "array"
+					},
+					{
+						"key": "prognoseEindeJaar",
+						"label": "Prognose eindejaar (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "prognoseStatus",
+						"label": "Prognose-status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
 				],
 				"aggregation": "korTurnoverByYear",
 				"indexRoute": "KorDrempelMonitor"
@@ -9941,11 +10096,31 @@
 				"register": "shillinq",
 				"schema": "KORThresholdAlert",
 				"columns": [
-					{ "key": "trigger", "label": "Schijf", "sortable": true },
-					{ "key": "ernst", "label": "Ernst", "sortable": true },
-					{ "key": "uitgeloostOp", "label": "Uitgelost op", "sortable": true },
-					{ "key": "omzetOpMoment", "label": "Omzet op moment", "sortable": true },
-					{ "key": "drempelBenutting", "label": "Benutting", "sortable": true }
+					{
+						"key": "trigger",
+						"label": "Schijf",
+						"sortable": true
+					},
+					{
+						"key": "ernst",
+						"label": "Ernst",
+						"sortable": true
+					},
+					{
+						"key": "uitgeloostOp",
+						"label": "Uitgelost op",
+						"sortable": true
+					},
+					{
+						"key": "omzetOpMoment",
+						"label": "Omzet op moment",
+						"sortable": true
+					},
+					{
+						"key": "drempelBenutting",
+						"label": "Benutting",
+						"sortable": true
+					}
 				],
 				"defaultSort": "-uitgeloostOp",
 				"detailRoute": "KorAlertDetail"
@@ -9960,18 +10135,66 @@
 				"register": "shillinq",
 				"schema": "KORThresholdAlert",
 				"fields": [
-					{ "key": "registrationId", "label": "Aanmelding", "type": "string" },
-					{ "key": "trigger", "label": "Drempelschijf", "type": "string" },
-					{ "key": "ernst", "label": "Ernst", "type": "string" },
-					{ "key": "uitgeloostOp", "label": "Uitgelost op", "type": "date-time" },
-					{ "key": "omzetOpMoment", "label": "Omzet op moment (EUR)", "type": "number" },
-					{ "key": "drempelBenutting", "label": "Benutting", "type": "number" },
-					{ "key": "prognoseEindeJaar", "label": "Prognose eindejaar (EUR)", "type": "number" },
-					{ "key": "aanbeveling", "label": "Aanbeveling", "type": "string" },
-					{ "key": "kanaal", "label": "Kanaal", "type": "array" },
-					{ "key": "bevestigdDoor", "label": "Bevestigd door", "type": "string" },
-					{ "key": "actieOndernomen", "label": "Actie ondernomen", "type": "string" },
-					{ "key": "administrationId", "label": "Administratie", "type": "string" }
+					{
+						"key": "registrationId",
+						"label": "Aanmelding",
+						"type": "string"
+					},
+					{
+						"key": "trigger",
+						"label": "Drempelschijf",
+						"type": "string"
+					},
+					{
+						"key": "ernst",
+						"label": "Ernst",
+						"type": "string"
+					},
+					{
+						"key": "uitgeloostOp",
+						"label": "Uitgelost op",
+						"type": "date-time"
+					},
+					{
+						"key": "omzetOpMoment",
+						"label": "Omzet op moment (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "drempelBenutting",
+						"label": "Benutting",
+						"type": "number"
+					},
+					{
+						"key": "prognoseEindeJaar",
+						"label": "Prognose eindejaar (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "aanbeveling",
+						"label": "Aanbeveling",
+						"type": "string"
+					},
+					{
+						"key": "kanaal",
+						"label": "Kanaal",
+						"type": "array"
+					},
+					{
+						"key": "bevestigdDoor",
+						"label": "Bevestigd door",
+						"type": "string"
+					},
+					{
+						"key": "actieOndernomen",
+						"label": "Actie ondernomen",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
 				],
 				"indexRoute": "KorAlerts"
 			}
@@ -9985,10 +10208,26 @@
 				"register": "shillinq",
 				"schema": "KORRevocation",
 				"columns": [
-					{ "key": "type", "label": "Type", "sortable": true },
-					{ "key": "revocatieDatum", "label": "Revocatiedatum", "sortable": true },
-					{ "key": "omzetOpMoment", "label": "Omzet op moment", "sortable": true },
-					{ "key": "btwSuppletieBedrag", "label": "Suppletie-bedrag", "sortable": true }
+					{
+						"key": "type",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "revocatieDatum",
+						"label": "Revocatiedatum",
+						"sortable": true
+					},
+					{
+						"key": "omzetOpMoment",
+						"label": "Omzet op moment",
+						"sortable": true
+					},
+					{
+						"key": "btwSuppletieBedrag",
+						"label": "Suppletie-bedrag",
+						"sortable": true
+					}
 				],
 				"defaultSort": "-revocatieDatum",
 				"detailRoute": "KorRevocationDetail"
@@ -10003,20 +10242,783 @@
 				"register": "shillinq",
 				"schema": "KORRevocation",
 				"fields": [
-					{ "key": "registrationId", "label": "Aanmelding", "type": "string" },
-					{ "key": "type", "label": "Type", "type": "string" },
-					{ "key": "revocatieDatum", "label": "Revocatiedatum (leveringsdatum)", "type": "date" },
-					{ "key": "triggerFactuurId", "label": "Triggerfactuur", "type": "string" },
-					{ "key": "omzetOpMoment", "label": "Omzet op moment (EUR)", "type": "number" },
-					{ "key": "btwSuppletieVerschuldigd", "label": "Suppletie verschuldigd", "type": "boolean" },
-					{ "key": "btwSuppletieBedrag", "label": "Suppletie-bedrag (EUR)", "type": "number" },
-					{ "key": "herrekeningRange", "label": "Herrekening-periode", "type": "object" },
-					{ "key": "nieuwRegime", "label": "Nieuw regime", "type": "string" },
-					{ "key": "blokkadeHeraanmelding", "label": "Blokkade heraanmelding", "type": "date" },
-					{ "key": "belastingdienstNotificatie", "label": "Belastingdienst-notificatie", "type": "object" },
-					{ "key": "administrationId", "label": "Administratie", "type": "string" }
+					{
+						"key": "registrationId",
+						"label": "Aanmelding",
+						"type": "string"
+					},
+					{
+						"key": "type",
+						"label": "Type",
+						"type": "string"
+					},
+					{
+						"key": "revocatieDatum",
+						"label": "Revocatiedatum (leveringsdatum)",
+						"type": "date"
+					},
+					{
+						"key": "triggerFactuurId",
+						"label": "Triggerfactuur",
+						"type": "string"
+					},
+					{
+						"key": "omzetOpMoment",
+						"label": "Omzet op moment (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "btwSuppletieVerschuldigd",
+						"label": "Suppletie verschuldigd",
+						"type": "boolean"
+					},
+					{
+						"key": "btwSuppletieBedrag",
+						"label": "Suppletie-bedrag (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "herrekeningRange",
+						"label": "Herrekening-periode",
+						"type": "object"
+					},
+					{
+						"key": "nieuwRegime",
+						"label": "Nieuw regime",
+						"type": "string"
+					},
+					{
+						"key": "blokkadeHeraanmelding",
+						"label": "Blokkade heraanmelding",
+						"type": "date"
+					},
+					{
+						"key": "belastingdienstNotificatie",
+						"label": "Belastingdienst-notificatie",
+						"type": "object"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
 				],
 				"indexRoute": "KorRevocations"
+			}
+		},
+		{
+			"id": "ProfitAndLoss",
+			"route": "/financial-statements/profit-and-loss",
+			"type": "index",
+			"title": "Profit & Loss",
+			"config": {
+				"register": "shillinq",
+				"schema": "GLLine",
+				"statementManifest": "statement_manifest_pl",
+				"periodParam": "periodId",
+				"comparativePeriods": 1,
+				"previewBanner": "Voorlopige cijfers (niet definitief)",
+				"actions": [
+					{
+						"id": "export-xbrl",
+						"label": "Export XBRL",
+						"icon": "Download",
+						"handler": "exportXbrl"
+					},
+					{
+						"id": "export-pdf",
+						"label": "Export PDF",
+						"icon": "FilePdfBox",
+						"handler": "exportPdf"
+					}
+				],
+				"drillThrough": {
+					"route": "TrialBalance",
+					"params": {
+						"accountRange": "accountRange"
+					}
+				}
+			}
+		},
+		{
+			"id": "CashFlowStatement",
+			"route": "/financial-statements/cash-flow",
+			"type": "index",
+			"title": "Cash Flow Statement",
+			"config": {
+				"register": "shillinq",
+				"schema": "GLLine",
+				"statementManifest": "statement_manifest_cash_flow",
+				"method": "indirect",
+				"periodParam": "periodId",
+				"comparativePeriods": 1,
+				"previewBanner": "Voorlopige cijfers (niet definitief)",
+				"actions": [
+					{
+						"id": "export-xbrl",
+						"label": "Export XBRL",
+						"icon": "Download",
+						"handler": "exportXbrl"
+					},
+					{
+						"id": "export-pdf",
+						"label": "Export PDF",
+						"icon": "FilePdfBox",
+						"handler": "exportPdf"
+					}
+				],
+				"drillThrough": {
+					"route": "TrialBalance",
+					"params": {
+						"accountRange": "accountRange"
+					}
+				}
+			}
+		},
+		{
+			"id": "PeriodClose",
+			"route": "/bookkeeping/period-close",
+			"type": "index",
+			"title": "Period Close",
+			"config": {
+				"register": "shillinq",
+				"schema": "FiscalPeriod",
+				"columns": [
+					{
+						"key": "periodId",
+						"label": "Period",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Fiscal Year",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-startDate",
+				"detailRoute": "PeriodCloseDetail"
+			}
+		},
+		{
+			"id": "PeriodCloseDetail",
+			"route": "/bookkeeping/period-close/:id",
+			"type": "detail",
+			"title": "Fiscal Period",
+			"config": {
+				"register": "shillinq",
+				"schema": "FiscalPeriod",
+				"fields": [
+					{
+						"key": "periodId",
+						"label": "Period",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "startDate",
+						"label": "Start Date",
+						"type": "string"
+					},
+					{
+						"key": "endDate",
+						"label": "End Date",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Fiscal Year",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "closeReason",
+						"label": "Close Reason",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"links": [
+					{
+						"label": "Trial Balance Preview",
+						"route": "TrialBalance",
+						"params": {
+							"periodId": "periodId"
+						}
+					}
+				],
+				"integrations": [
+					{
+						"id": "audit-log",
+						"source": "openregister",
+						"type": "audit-log",
+						"filter": {
+							"objectId": "@id"
+						}
+					}
+				],
+				"indexRoute": "PeriodClose"
+			}
+		},
+		{
+			"id": "Customers",
+			"route": "/bookkeeping/customers",
+			"type": "index",
+			"title": "Customers",
+			"config": {
+				"register": "shillinq",
+				"schema": "CustomerMaster",
+				"columns": [
+					{
+						"key": "customerId",
+						"label": "Customer ID",
+						"sortable": true
+					},
+					{
+						"key": "legalName",
+						"label": "Legal Name",
+						"sortable": true
+					},
+					{
+						"key": "creditLimit",
+						"label": "Credit Limit"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "customerId",
+				"detailRoute": "CustomerDetail"
+			}
+		},
+		{
+			"id": "CustomerDetail",
+			"route": "/bookkeeping/customers/:id",
+			"type": "detail",
+			"title": "Customer",
+			"config": {
+				"register": "shillinq",
+				"schema": "CustomerMaster",
+				"fields": [
+					{
+						"key": "customerId",
+						"label": "Customer ID",
+						"type": "string"
+					},
+					{
+						"key": "legalName",
+						"label": "Legal Name",
+						"type": "string"
+					},
+					{
+						"key": "tradeName",
+						"label": "Trade Name",
+						"type": "string"
+					},
+					{
+						"key": "email",
+						"label": "Email",
+						"type": "string"
+					},
+					{
+						"key": "iban",
+						"label": "IBAN",
+						"type": "string"
+					},
+					{
+						"key": "creditLimit",
+						"label": "Credit Limit",
+						"type": "number"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"integrations": [
+					{
+						"id": "audit-log",
+						"source": "openregister",
+						"type": "audit-log",
+						"filter": {
+							"objectId": "@id"
+						}
+					}
+				],
+				"indexRoute": "Customers"
+			}
+		},
+		{
+			"id": "AccountsReceivable",
+			"route": "/bookkeeping/accounts-receivable",
+			"type": "index",
+			"title": "Accounts Receivable",
+			"config": {
+				"register": "shillinq",
+				"schema": "ARInvoice",
+				"columns": [
+					{
+						"key": "invoiceNumber",
+						"label": "Invoice Number",
+						"sortable": true
+					},
+					{
+						"key": "customerId",
+						"label": "Customer",
+						"sortable": true
+					},
+					{
+						"key": "invoiceDate",
+						"label": "Invoice Date",
+						"sortable": true
+					},
+					{
+						"key": "dueDate",
+						"label": "Due Date",
+						"sortable": true
+					},
+					{
+						"key": "grossAmount",
+						"label": "Gross"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-invoiceDate",
+				"detailRoute": "AccountsReceivableDetail"
+			}
+		},
+		{
+			"id": "AccountsReceivableDetail",
+			"route": "/bookkeeping/accounts-receivable/:id",
+			"type": "detail",
+			"title": "AR Invoice",
+			"config": {
+				"register": "shillinq",
+				"schema": "ARInvoice",
+				"fields": [
+					{
+						"key": "invoiceNumber",
+						"label": "Invoice Number",
+						"type": "string"
+					},
+					{
+						"key": "customerId",
+						"label": "Customer",
+						"type": "string"
+					},
+					{
+						"key": "invoiceDate",
+						"label": "Invoice Date",
+						"type": "string"
+					},
+					{
+						"key": "dueDate",
+						"label": "Due Date",
+						"type": "string"
+					},
+					{
+						"key": "netAmount",
+						"label": "Net",
+						"type": "number"
+					},
+					{
+						"key": "vatAmount",
+						"label": "VAT",
+						"type": "number"
+					},
+					{
+						"key": "grossAmount",
+						"label": "Gross",
+						"type": "number"
+					},
+					{
+						"key": "periodId",
+						"label": "Period",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "sourceDocumentUri",
+						"label": "Source Document",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"integrations": [
+					{
+						"id": "audit-log",
+						"source": "openregister",
+						"type": "audit-log",
+						"filter": {
+							"objectId": "@id"
+						}
+					}
+				],
+				"indexRoute": "AccountsReceivable"
+			}
+		},
+		{
+			"id": "ArAging",
+			"route": "/bookkeeping/ar-aging",
+			"type": "index",
+			"title": "AR Aging",
+			"config": {
+				"register": "shillinq",
+				"schema": "ARInvoice",
+				"aggregation": "arAging",
+				"columns": [
+					{
+						"key": "customerId",
+						"label": "Customer",
+						"sortable": true
+					},
+					{
+						"key": "agingBucket",
+						"label": "Aging Bucket"
+					},
+					{
+						"key": "grossAmount",
+						"label": "Outstanding"
+					}
+				]
+			}
+		},
+		{
+			"id": "Dunning",
+			"route": "/bookkeeping/dunning",
+			"type": "index",
+			"title": "Dunning",
+			"config": {
+				"register": "shillinq",
+				"schema": "DunningRecord",
+				"columns": [
+					{
+						"key": "dunningId",
+						"label": "Dunning ID",
+						"sortable": true
+					},
+					{
+						"key": "arInvoiceId",
+						"label": "AR Invoice",
+						"sortable": true
+					},
+					{
+						"key": "dunningLevel",
+						"label": "Level",
+						"sortable": true
+					},
+					{
+						"key": "issuedDate",
+						"label": "Issued",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"filters": [
+					{
+						"key": "status",
+						"label": "Status"
+					},
+					{
+						"key": "dunningLevel",
+						"label": "Level"
+					}
+				],
+				"defaultSort": "-issuedDate"
+			}
+		},
+		{
+			"id": "AuditTrail",
+			"route": "/bookkeeping/audit-trail",
+			"type": "index",
+			"title": "Audit Trail",
+			"config": {
+				"register": "shillinq",
+				"source": "openregister",
+				"view": "audit-log",
+				"objectTypes": [
+					"Account",
+					"GLTransaction",
+					"GLLine",
+					"JournalEntry",
+					"FiscalPeriod",
+					"VendorMaster",
+					"APInvoice",
+					"PaymentRun",
+					"CustomerMaster",
+					"ARInvoice",
+					"DunningRecord",
+					"BankStatement",
+					"BankStatementLine",
+					"MatchingRule",
+					"ReconciliationMatch"
+				],
+				"filters": [
+					{
+						"key": "objectType",
+						"label": "Object Type"
+					},
+					{
+						"key": "actor",
+						"label": "Actor"
+					},
+					{
+						"key": "dateRange",
+						"label": "Date Range",
+						"type": "daterange"
+					},
+					{
+						"key": "transition",
+						"label": "Transition"
+					}
+				]
+			}
+		},
+		{
+			"id": "BankReconciliation",
+			"route": "/bookkeeping/bank-reconciliation",
+			"type": "index",
+			"title": "Bank Reconciliation",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankStatement",
+				"columns": [
+					{
+						"key": "statementId",
+						"label": "Statement",
+						"sortable": true
+					},
+					{
+						"key": "bankAccountIban",
+						"label": "Bank Account",
+						"sortable": true
+					},
+					{
+						"key": "periodStart",
+						"label": "From",
+						"sortable": true
+					},
+					{
+						"key": "periodEnd",
+						"label": "To",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-periodEnd",
+				"detailRoute": "BankReconciliationDetail"
+			}
+		},
+		{
+			"id": "BankReconciliationDetail",
+			"route": "/bookkeeping/bank-reconciliation/:id",
+			"type": "detail",
+			"title": "Bank Statement",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankStatement",
+				"fields": [
+					{
+						"key": "statementId",
+						"label": "Statement",
+						"type": "string"
+					},
+					{
+						"key": "bankAccountIban",
+						"label": "Bank Account",
+						"type": "string"
+					},
+					{
+						"key": "periodStart",
+						"label": "From",
+						"type": "string"
+					},
+					{
+						"key": "periodEnd",
+						"label": "To",
+						"type": "string"
+					},
+					{
+						"key": "openingBalance",
+						"label": "Opening Balance",
+						"type": "number"
+					},
+					{
+						"key": "closingBalance",
+						"label": "Closing Balance",
+						"type": "number"
+					},
+					{
+						"key": "importFormat",
+						"label": "Import Format",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "sourceDocumentUri",
+						"label": "Source Document",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"actions": [
+					{
+						"id": "import-statement",
+						"label": "Import Statement",
+						"icon": "Upload",
+						"handler": "importBankStatement"
+					}
+				],
+				"relatedList": {
+					"schema": "BankStatementLine",
+					"foreignKey": "statementId",
+					"columns": [
+						{
+							"key": "valueDate",
+							"label": "Value Date"
+						},
+						{
+							"key": "amount",
+							"label": "Amount"
+						},
+						{
+							"key": "remittanceInfo",
+							"label": "Description"
+						},
+						{
+							"key": "status",
+							"label": "Match Status"
+						}
+					]
+				},
+				"integrations": [
+					{
+						"id": "audit-log",
+						"source": "openregister",
+						"type": "audit-log",
+						"filter": {
+							"objectId": "@id"
+						}
+					}
+				],
+				"indexRoute": "BankReconciliation"
+			}
+		},
+		{
+			"id": "MatchingRules",
+			"route": "/bookkeeping/matching-rules",
+			"type": "index",
+			"title": "Matching Rules",
+			"config": {
+				"register": "shillinq",
+				"schema": "MatchingRule",
+				"columns": [
+					{
+						"key": "ruleId",
+						"label": "Rule ID",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "priority",
+						"label": "Priority",
+						"sortable": true
+					},
+					{
+						"key": "isActive",
+						"label": "Active"
+					}
+				],
+				"defaultSort": "priority",
+				"detailRoute": "MatchingRuleDetail"
+			}
+		},
+		{
+			"id": "MatchingRuleDetail",
+			"route": "/bookkeeping/matching-rules/:id",
+			"type": "detail",
+			"title": "Matching Rule",
+			"config": {
+				"register": "shillinq",
+				"schema": "MatchingRule",
+				"fields": [
+					{
+						"key": "ruleId",
+						"label": "Rule ID",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "priority",
+						"label": "Priority",
+						"type": "number"
+					},
+					{
+						"key": "isActive",
+						"label": "Active",
+						"type": "boolean"
+					}
+				],
+				"integrations": [
+					{
+						"id": "audit-log",
+						"source": "openregister",
+						"type": "audit-log",
+						"filter": {
+							"objectId": "@id"
+						}
+					}
+				],
+				"indexRoute": "MatchingRules"
 			}
 		}
 	]
