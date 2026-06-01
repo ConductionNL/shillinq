@@ -1,5 +1,7 @@
 # Design — Detachering + Payroll Administratie
 
+**status: pr-created**
+
 ## Context
 
 Salarisbureaus (ADP, Loket, Visma, Nmbrs) own the per-medewerker

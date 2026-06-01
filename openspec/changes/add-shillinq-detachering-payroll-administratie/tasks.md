@@ -9,10 +9,10 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `SalarisFeed`, `OpdrachtgeversVerklaring`, `IB47Record` schemas or `bookkeeping-detachering-payroll-administratie` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `openspec/changes/**`)
-- [ ] Task 2: Author `specs/bookkeeping-detachering-payroll-administratie/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4-specialized (MKB — payroll + detachering)` / `Depends on: bookkeeping-accounts-payable-core` header, `REQ-DPA-NNN` requirements, `#### Scenario:` blocks with GIVEN/WHEN/THEN
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks (Risk 3 BSN privacy footprint) / Rollback / Open Questions
-- [ ] Task 4: Author `design.md` with Reuse Analysis table; loonadministratie reviewer persona confirms salarisbureau import + DBA + IB47 flows match praktijk
+- [x] Task 1: Confirm no `SalarisFeed`, `OpdrachtgeversVerklaring`, `IB47Record` schemas or `bookkeeping-detachering-payroll-administratie` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `openspec/changes/**`)
+- [x] Task 2: Author `specs/bookkeeping-detachering-payroll-administratie/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4-specialized (MKB — payroll + detachering)` / `Depends on: bookkeeping-accounts-payable-core` header, `REQ-DPA-NNN` requirements, `#### Scenario:` blocks with GIVEN/WHEN/THEN
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks (Risk 3 BSN privacy footprint) / Rollback / Open Questions
+- [x] Task 4: Author `design.md` with Reuse Analysis table; loonadministratie reviewer persona confirms salarisbureau import + DBA + IB47 flows match praktijk
 - [ ] Task 5: Declare the `SalarisFeed` raw-import schema in `lib/Settings/shillinq_register.json` with `schema:DataFeed` annotation, carrying the incoming salarisbureau batch (employee, loontijdvak, raw line items) per REQ-DPA-001 / REQ-DPA-002
 - [ ] Task 6: Declare 4 openconnector source rows for salarisbureaus (ADP / Loket / Visma / Nmbrs) in `lib/Settings/openconnector-sources.json` with OAuth2 + REST patterns per REQ-DPA-001; no app-local HTTP client
 - [ ] Task 7: Declare the `x-openregister-mappings` from `SalarisFeed` to balanced `JournalEntry` records of subtype `loonkosten` (loonkosten DR = nettoloon CR + sociale-premies CR + loonheffing CR + pensioen CR per employee per loontijdvak) per REQ-DPA-002; verify balance per T1 REQ-GL-001
