@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "spec_slug": "add-shillinq-year-end-close",
+  "repo": "https://codeberg.org/Conduction/shillinq",
+  "issue": 84,
+  "cycles": [
+    {
+      "cycle": 1,
+      "trigger": "build:queued",
+      "started_at": "2026-06-01T23:16:16Z",
+      "ended_at": null,
+      "outcome": "in-flight",
+      "outcome_reason": null,
+      "pattern_tags": [],
+      "stages": []
+    }
+  ]
+}
