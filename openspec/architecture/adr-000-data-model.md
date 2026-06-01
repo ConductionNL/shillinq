@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 225
+**Entities:** 228
 
 ## Context
 
@@ -34,6 +34,41 @@ _Financial transaction representing an invoice, credit note, or debit note in ac
 - → Receipt (one-to-many)
 - → Payment (one-to-many)
 - → DunningNotice (one-to-many)
+
+### ARInvoice
+**Schema.org:** `schema:Invoice`
+_Accounts receivable sub-ledger invoice recording the customer billing and payment obligation. Posting an ARInvoice materialises a balanced GLTransaction per the T1 REQ-JE-007 pattern. The lifecycle covers draft → issued → paid with overdue / disputed / written-off branches; write-off materialises a compensating GL posting._
+**Primary spec:** bookkeeping-accounts-receivable-core
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| invoiceNumber | string | Yes | Shillinq-side invoice number (auto-generated per administration) |
+| customerId | string | Yes | FK to CustomerMaster UUID |
+| invoiceDate | date | Yes | Date of invoice issuance |
+| dueDate | date | Yes | Auto-calculated from invoiceDate + customer.paymentTermDays; overrideable |
+| currency | string | Yes | ISO 4217 currency code; T2: base currency only (T5 adds multi-currency) |
+| totalAmount | number | Yes | Total amount including tax |
+| taxAmount | number | No | Tax/VAT amount |
+| lines | array | Yes | Line items: {description, accountNumber, amount, taxCode, quantity, unitPrice} |
+| sourceDocumentUri | string | No | docudesk FK URI per bookkeeping-document-attachment-integration |
+| ublXml | string | No | UBL 2.1 / Peppol BIS 3.0 XML (populated by T4 e-invoicing; null in T2) |
+| state | enum | Yes | One of draft, issued, partially-paid, paid, overdue, disputed, written-off, voided |
+| glTransactionId | string | No | Back-reference to materialised GLTransaction once posted |
+| peppolDispatchedAt | datetime | No | Timestamp of Peppol dispatch (set by T4) |
+| administrationId | string | Yes | FK to administration |
+
+**Relations:**
+- → CustomerMaster (many-to-one, via customerId)
+- → GLTransaction (many-to-one, via glTransactionId — materialised on issue and write-off)
+- → DunningRecord (one-to-many, dunning timeline per invoice)
+- → Administration (many-to-one)
+
+> **Reconciliation note (add-shillinq-accounts-receivable-core, 2026-06-01):** The existing
+> `Invoice` entry (primary spec: obligation-financial-administration) is a generic invoice
+> schema. `ARInvoice` is the shillinq bookkeeping-tier AR sub-ledger invoice with full
+> lifecycle, GL materialisation, dunning, and UBL field shape declaration. New AR register
+> declarations in shillinq MUST use `ARInvoice`. The `Invoice` entry is retained for
+> generic obligation-financial-administration usage outside the bookkeeping tier.
 
 ### Account
 **Schema.org:** `schema:DefinedTerm`
@@ -1096,6 +1131,34 @@ _Multi-currency balance tracking per account for foreign currency management_
 **Relations:**
 - → BankAccount (many-to-one)
 
+### CustomerMaster
+**Schema.org:** `schema:Organization`
+_Customer party record for accounts receivable. Holds billing details, credit limit, payment terms, and dunning policy reference for a customer within a single administration._
+**Primary spec:** bookkeeping-accounts-receivable-core
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| customerNumber | string | Yes | Stable identifier per administration |
+| name | string | Yes | Legal name |
+| tradingName | string | No | Alternate / DBA name |
+| kvkNumber | string | No | Dutch KvK number (8 digits) |
+| btwNumber | string | No | Dutch BTW / EU VAT number |
+| paymentTermDays | integer | Yes | Default payment term in days (default 30) |
+| defaultRevenueAccountNumber | string | No | FK to Account.accountNumber for default revenue coding |
+| creditLimit | number | No | Credit limit ≥ 0; if set, REQ-AR-006 evaluates open AR balance |
+| dunningPolicyRef | string | No | FK to OR dunning-workflow policy record if extension is stable per ADR-022; else null |
+| peppolEndpoint | string | No | Peppol BIS endpoint identifier (used by T4 e-invoicing) |
+| address | object | No | Street/number/postcode/city/country |
+| email | string | No | Primary billing email |
+| phone | string | No | Primary contact phone |
+| administrationId | string | Yes | FK to administration |
+| lifecycleState | enum | Yes | One of active, blocked, archived |
+| contactRef | string | No | FK to OR contact abstraction if stable per ADR-022; else null |
+
+**Relations:**
+- → ARInvoice (one-to-many, outstanding invoices for credit-limit aggregation)
+- → Administration (many-to-one)
+
 ### DebitNote
 **Schema.org:** `schema:Invoice`
 _A document issued to increase vendor debt for account adjustments_
@@ -1255,6 +1318,25 @@ _Follow-up notice for overdue unpaid transactions, escalating through dunning le
 **Relations:**
 - → APTransaction (many-to-one)
 - → Payee (many-to-one)
+
+### DunningRecord
+**Schema.org:** `schema:Event`
+_Per-invoice dunning timeline entry recording each reminder level dispatched to the customer. Written by the AR lifecycle when the dunning-workflow engine fires; read by the AR invoice detail page to surface the dunning timeline._
+**Primary spec:** bookkeeping-accounts-receivable-core
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| invoiceRef | string | Yes | FK to ARInvoice UUID |
+| reminderLevel | enum | Yes | One of reminder-1, reminder-2, formal-notice, collection |
+| dispatchedAt | datetime | Yes | When the reminder was dispatched |
+| dispatchedBy | string | Yes | Actor (system or operator) |
+| templateRef | string | No | FK to OR notification template |
+| acknowledgedAt | datetime | No | When the customer responded |
+| administrationId | string | Yes | FK to administration |
+
+**Relations:**
+- → ARInvoice (many-to-one, via invoiceRef)
+- → Administration (many-to-one)
 
 ### Entitlement
 _Grant of access or permission to use specific features, resources, or data within the system_
