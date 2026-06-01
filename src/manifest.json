@@ -24,6 +24,118 @@
 					"icon": "LedgerOutline",
 					"route": "ChartOfAccounts",
 					"order": 10
+				},
+				{
+					"id": "TrialBalance",
+					"label": "Trial Balance",
+					"icon": "ScaleBalance",
+					"route": "TrialBalance",
+					"order": 20
+				},
+				{
+					"id": "PeriodClose",
+					"label": "Period Close",
+					"icon": "CalendarRange",
+					"route": "PeriodClose",
+					"order": 30
+				},
+				{
+					"id": "Vendors",
+					"label": "Vendors",
+					"icon": "TruckOutline",
+					"route": "Vendors",
+					"order": 40
+				},
+				{
+					"id": "AccountsPayable",
+					"label": "Accounts Payable",
+					"icon": "FileDocumentArrowRightOutline",
+					"route": "AccountsPayable",
+					"order": 50
+				},
+				{
+					"id": "ApAging",
+					"label": "AP Aging",
+					"icon": "ClockAlertOutline",
+					"route": "ApAging",
+					"order": 60
+				},
+				{
+					"id": "PaymentRuns",
+					"label": "Payment Runs",
+					"icon": "BankTransferOut",
+					"route": "PaymentRuns",
+					"order": 70
+				},
+				{
+					"id": "Customers",
+					"label": "Customers",
+					"icon": "AccountTieOutline",
+					"route": "Customers",
+					"order": 80
+				},
+				{
+					"id": "AccountsReceivable",
+					"label": "Accounts Receivable",
+					"icon": "FileDocumentArrowLeftOutline",
+					"route": "AccountsReceivable",
+					"order": 90
+				},
+				{
+					"id": "ArAging",
+					"label": "AR Aging",
+					"icon": "ClockAlertOutline",
+					"route": "ArAging",
+					"order": 100
+				},
+				{
+					"id": "Dunning",
+					"label": "Dunning",
+					"icon": "EmailAlertOutline",
+					"route": "Dunning",
+					"order": 110
+				},
+				{
+					"id": "BalanceSheet",
+					"label": "Balance Sheet",
+					"icon": "FileChartOutline",
+					"route": "BalanceSheet",
+					"order": 120
+				},
+				{
+					"id": "ProfitAndLoss",
+					"label": "Profit & Loss",
+					"icon": "FileChartOutline",
+					"route": "ProfitAndLoss",
+					"order": 130
+				},
+				{
+					"id": "CashFlowStatement",
+					"label": "Cash Flow Statement",
+					"icon": "FileChartOutline",
+					"route": "CashFlowStatement",
+					"order": 140
+				},
+				{
+					"id": "AuditTrail",
+					"label": "Audit Trail",
+					"icon": "HistoryOutline",
+					"route": "AuditTrail",
+					"order": 150
+				},
+				{
+					"id": "BankReconciliation",
+					"label": "Bank Reconciliation",
+					"icon": "BankOutline",
+					"route": "BankReconciliation",
+					"order": 160
+				},
+				{
+					"id": "MatchingRules",
+					"label": "Matching Rules",
+					"icon": "FilterCogOutline",
+					"route": "MatchingRules",
+					"order": 170
 				}
 			]
 		},
@@ -158,6 +270,532 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "ChartOfAccounts"
+			}
+		},
+		{
+			"id": "TrialBalance",
+			"route": "/trial-balance",
+			"type": "index",
+			"title": "Trial Balance",
+			"config": {
+				"register": "shillinq",
+				"schema": "GLLine",
+				"aggregation": "trial-balance",
+				"queryParams": {
+					"periodId": "@activePeriod"
+				},
+				"columns": [
+					{ "key": "accountNumber", "label": "Account", "sortable": true },
+					{ "key": "openingDebit", "label": "Opening Debit" },
+					{ "key": "openingCredit", "label": "Opening Credit" },
+					{ "key": "movementDebit", "label": "Movement Debit" },
+					{ "key": "movementCredit", "label": "Movement Credit" },
+					{ "key": "closingDebit", "label": "Closing Debit" },
+					{ "key": "closingCredit", "label": "Closing Credit" }
+				],
+				"drillThrough": {
+					"route": "GeneralLedger",
+					"params": { "periodId": "periodId", "accountNumber": "accountNumber" }
+				}
+			}
+		},
+		{
+			"id": "PeriodClose",
+			"route": "/period-close",
+			"type": "index",
+			"title": "Period Close",
+			"config": {
+				"register": "shillinq",
+				"schema": "FiscalPeriod",
+				"columns": [
+					{ "key": "periodId", "label": "Period", "sortable": true },
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "fiscalYear", "label": "Fiscal Year", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "-startDate",
+				"detailRoute": "PeriodCloseDetail"
+			}
+		},
+		{
+			"id": "PeriodCloseDetail",
+			"route": "/period-close/:id",
+			"type": "detail",
+			"title": "Fiscal Period",
+			"config": {
+				"register": "shillinq",
+				"schema": "FiscalPeriod",
+				"fields": [
+					{ "key": "periodId", "label": "Period", "type": "string" },
+					{ "key": "name", "label": "Name", "type": "string" },
+					{ "key": "startDate", "label": "Start Date", "type": "string" },
+					{ "key": "endDate", "label": "End Date", "type": "string" },
+					{ "key": "fiscalYear", "label": "Fiscal Year", "type": "string" },
+					{ "key": "state", "label": "Status", "type": "string" },
+					{ "key": "closeReason", "label": "Close Reason", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"links": [
+					{ "label": "Trial Balance Preview", "route": "TrialBalance", "params": { "periodId": "periodId" } }
+				],
+				"integrations": [
+					{ "id": "audit-log", "source": "openregister", "type": "audit-log", "filter": { "objectId": "@id" } }
+				],
+				"indexRoute": "PeriodClose"
+			}
+		},
+		{
+			"id": "Vendors",
+			"route": "/vendors",
+			"type": "index",
+			"title": "Vendors",
+			"config": {
+				"register": "shillinq",
+				"schema": "VendorMaster",
+				"columns": [
+					{ "key": "vendorId", "label": "Vendor ID", "sortable": true },
+					{ "key": "legalName", "label": "Legal Name", "sortable": true },
+					{ "key": "iban", "label": "IBAN" },
+					{ "key": "lifecycleState", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "vendorId",
+				"detailRoute": "VendorDetail"
+			}
+		},
+		{
+			"id": "VendorDetail",
+			"route": "/vendors/:id",
+			"type": "detail",
+			"title": "Vendor",
+			"config": {
+				"register": "shillinq",
+				"schema": "VendorMaster",
+				"fields": [
+					{ "key": "vendorId", "label": "Vendor ID", "type": "string" },
+					{ "key": "legalName", "label": "Legal Name", "type": "string" },
+					{ "key": "tradeName", "label": "Trade Name", "type": "string" },
+					{ "key": "kvkNumber", "label": "KvK Number", "type": "string" },
+					{ "key": "vatID", "label": "VAT ID", "type": "string" },
+					{ "key": "iban", "label": "IBAN", "type": "string" },
+					{ "key": "bic", "label": "BIC", "type": "string" },
+					{ "key": "email", "label": "Email", "type": "string" },
+					{ "key": "paymentTermsDays", "label": "Payment Terms (days)", "type": "number" },
+					{ "key": "lifecycleState", "label": "Status", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"integrations": [
+					{ "id": "audit-log", "source": "openregister", "type": "audit-log", "filter": { "objectId": "@id" } }
+				],
+				"indexRoute": "Vendors"
+			}
+		},
+		{
+			"id": "AccountsPayable",
+			"route": "/accounts-payable",
+			"type": "index",
+			"title": "Accounts Payable",
+			"config": {
+				"register": "shillinq",
+				"schema": "APInvoice",
+				"columns": [
+					{ "key": "vendorInvoiceRef", "label": "Invoice Ref", "sortable": true },
+					{ "key": "vendorId", "label": "Vendor", "sortable": true },
+					{ "key": "invoiceDate", "label": "Invoice Date", "sortable": true },
+					{ "key": "dueDate", "label": "Due Date", "sortable": true },
+					{ "key": "grossAmount", "label": "Gross" },
+					{ "key": "lifecycleState", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "-invoiceDate",
+				"detailRoute": "AccountsPayableDetail"
+			}
+		},
+		{
+			"id": "AccountsPayableDetail",
+			"route": "/accounts-payable/:id",
+			"type": "detail",
+			"title": "AP Invoice",
+			"config": {
+				"register": "shillinq",
+				"schema": "APInvoice",
+				"fields": [
+					{ "key": "vendorInvoiceRef", "label": "Invoice Ref", "type": "string" },
+					{ "key": "vendorId", "label": "Vendor", "type": "string" },
+					{ "key": "invoiceDate", "label": "Invoice Date", "type": "string" },
+					{ "key": "dueDate", "label": "Due Date", "type": "string" },
+					{ "key": "netAmount", "label": "Net", "type": "number" },
+					{ "key": "vatAmount", "label": "VAT", "type": "number" },
+					{ "key": "grossAmount", "label": "Gross", "type": "number" },
+					{ "key": "periodId", "label": "Period", "type": "string" },
+					{ "key": "lifecycleState", "label": "Status", "type": "string" },
+					{ "key": "sourceDocumentUri", "label": "Source Document", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"integrations": [
+					{ "id": "audit-log", "source": "openregister", "type": "audit-log", "filter": { "objectId": "@id" } }
+				],
+				"indexRoute": "AccountsPayable"
+			}
+		},
+		{
+			"id": "ApAging",
+			"route": "/ap-aging",
+			"type": "index",
+			"title": "AP Aging",
+			"config": {
+				"register": "shillinq",
+				"schema": "APInvoice",
+				"aggregation": "apAging",
+				"columns": [
+					{ "key": "vendorId", "label": "Vendor", "sortable": true },
+					{ "key": "agingBucket", "label": "Aging Bucket" },
+					{ "key": "grossAmount", "label": "Outstanding" }
+				]
+			}
+		},
+		{
+			"id": "PaymentRuns",
+			"route": "/payment-runs",
+			"type": "index",
+			"title": "Payment Runs",
+			"config": {
+				"register": "shillinq",
+				"schema": "PaymentRun",
+				"columns": [
+					{ "key": "runId", "label": "Run ID", "sortable": true },
+					{ "key": "runDate", "label": "Run Date", "sortable": true },
+					{ "key": "totalAmount", "label": "Total" },
+					{ "key": "lifecycleState", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "-runDate",
+				"detailRoute": "PaymentRunDetail"
+			}
+		},
+		{
+			"id": "PaymentRunDetail",
+			"route": "/payment-runs/:id",
+			"type": "detail",
+			"title": "Payment Run",
+			"config": {
+				"register": "shillinq",
+				"schema": "PaymentRun",
+				"fields": [
+					{ "key": "runId", "label": "Run ID", "type": "string" },
+					{ "key": "runDate", "label": "Run Date", "type": "string" },
+					{ "key": "totalAmount", "label": "Total", "type": "number" },
+					{ "key": "currency", "label": "Currency", "type": "string" },
+					{ "key": "lifecycleState", "label": "Status", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"actions": [
+					{ "id": "download-sepa", "label": "Download SEPA XML", "icon": "Download", "handler": "downloadSepaXml" }
+				],
+				"integrations": [
+					{ "id": "audit-log", "source": "openregister", "type": "audit-log", "filter": { "objectId": "@id" } }
+				],
+				"indexRoute": "PaymentRuns"
+			}
+		},
+		{
+			"id": "Customers",
+			"route": "/customers",
+			"type": "index",
+			"title": "Customers",
+			"config": {
+				"register": "shillinq",
+				"schema": "CustomerMaster",
+				"columns": [
+					{ "key": "customerId", "label": "Customer ID", "sortable": true },
+					{ "key": "legalName", "label": "Legal Name", "sortable": true },
+					{ "key": "creditLimit", "label": "Credit Limit" },
+					{ "key": "lifecycleState", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "customerId",
+				"detailRoute": "CustomerDetail"
+			}
+		},
+		{
+			"id": "CustomerDetail",
+			"route": "/customers/:id",
+			"type": "detail",
+			"title": "Customer",
+			"config": {
+				"register": "shillinq",
+				"schema": "CustomerMaster",
+				"fields": [
+					{ "key": "customerId", "label": "Customer ID", "type": "string" },
+					{ "key": "legalName", "label": "Legal Name", "type": "string" },
+					{ "key": "tradeName", "label": "Trade Name", "type": "string" },
+					{ "key": "email", "label": "Email", "type": "string" },
+					{ "key": "iban", "label": "IBAN", "type": "string" },
+					{ "key": "creditLimit", "label": "Credit Limit", "type": "number" },
+					{ "key": "lifecycleState", "label": "Status", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"integrations": [
+					{ "id": "audit-log", "source": "openregister", "type": "audit-log", "filter": { "objectId": "@id" } }
+				],
+				"indexRoute": "Customers"
+			}
+		},
+		{
+			"id": "AccountsReceivable",
+			"route": "/accounts-receivable",
+			"type": "index",
+			"title": "Accounts Receivable",
+			"config": {
+				"register": "shillinq",
+				"schema": "ARInvoice",
+				"columns": [
+					{ "key": "invoiceNumber", "label": "Invoice Number", "sortable": true },
+					{ "key": "customerId", "label": "Customer", "sortable": true },
+					{ "key": "invoiceDate", "label": "Invoice Date", "sortable": true },
+					{ "key": "dueDate", "label": "Due Date", "sortable": true },
+					{ "key": "grossAmount", "label": "Gross" },
+					{ "key": "lifecycleState", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "-invoiceDate",
+				"detailRoute": "AccountsReceivableDetail"
+			}
+		},
+		{
+			"id": "AccountsReceivableDetail",
+			"route": "/accounts-receivable/:id",
+			"type": "detail",
+			"title": "AR Invoice",
+			"config": {
+				"register": "shillinq",
+				"schema": "ARInvoice",
+				"fields": [
+					{ "key": "invoiceNumber", "label": "Invoice Number", "type": "string" },
+					{ "key": "customerId", "label": "Customer", "type": "string" },
+					{ "key": "invoiceDate", "label": "Invoice Date", "type": "string" },
+					{ "key": "dueDate", "label": "Due Date", "type": "string" },
+					{ "key": "netAmount", "label": "Net", "type": "number" },
+					{ "key": "vatAmount", "label": "VAT", "type": "number" },
+					{ "key": "grossAmount", "label": "Gross", "type": "number" },
+					{ "key": "periodId", "label": "Period", "type": "string" },
+					{ "key": "lifecycleState", "label": "Status", "type": "string" },
+					{ "key": "sourceDocumentUri", "label": "Source Document", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"integrations": [
+					{ "id": "audit-log", "source": "openregister", "type": "audit-log", "filter": { "objectId": "@id" } }
+				],
+				"indexRoute": "AccountsReceivable"
+			}
+		},
+		{
+			"id": "ArAging",
+			"route": "/ar-aging",
+			"type": "index",
+			"title": "AR Aging",
+			"config": {
+				"register": "shillinq",
+				"schema": "ARInvoice",
+				"aggregation": "arAging",
+				"columns": [
+					{ "key": "customerId", "label": "Customer", "sortable": true },
+					{ "key": "agingBucket", "label": "Aging Bucket" },
+					{ "key": "grossAmount", "label": "Outstanding" }
+				]
+			}
+		},
+		{
+			"id": "Dunning",
+			"route": "/dunning",
+			"type": "index",
+			"title": "Dunning",
+			"config": {
+				"register": "shillinq",
+				"schema": "DunningRecord",
+				"columns": [
+					{ "key": "dunningId", "label": "Dunning ID", "sortable": true },
+					{ "key": "arInvoiceId", "label": "AR Invoice", "sortable": true },
+					{ "key": "dunningLevel", "label": "Level", "sortable": true },
+					{ "key": "issuedDate", "label": "Issued", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"filters": [
+					{ "key": "status", "label": "Status" },
+					{ "key": "dunningLevel", "label": "Level" }
+				],
+				"defaultSort": "-issuedDate"
+			}
+		},
+		{
+			"id": "BalanceSheet",
+			"route": "/financial-statements/balance-sheet",
+			"type": "index",
+			"title": "Balance Sheet",
+			"config": {
+				"register": "shillinq",
+				"schema": "GLLine",
+				"statementManifest": "statement_manifest_balance_sheet",
+				"periodParam": "periodId",
+				"comparativePeriods": 1,
+				"previewBanner": "Voorlopige cijfers (niet definitief)",
+				"actions": [
+					{ "id": "export-xbrl", "label": "Export XBRL", "icon": "Download", "handler": "exportXbrl" },
+					{ "id": "export-pdf", "label": "Export PDF", "icon": "FilePdfBox", "handler": "exportPdf" }
+				],
+				"drillThrough": { "route": "TrialBalance", "params": { "accountRange": "accountRange" } }
+			}
+		},
+		{
+			"id": "ProfitAndLoss",
+			"route": "/financial-statements/profit-and-loss",
+			"type": "index",
+			"title": "Profit & Loss",
+			"config": {
+				"register": "shillinq",
+				"schema": "GLLine",
+				"statementManifest": "statement_manifest_pl",
+				"periodParam": "periodId",
+				"comparativePeriods": 1,
+				"previewBanner": "Voorlopige cijfers (niet definitief)",
+				"actions": [
+					{ "id": "export-xbrl", "label": "Export XBRL", "icon": "Download", "handler": "exportXbrl" },
+					{ "id": "export-pdf", "label": "Export PDF", "icon": "FilePdfBox", "handler": "exportPdf" }
+				],
+				"drillThrough": { "route": "TrialBalance", "params": { "accountRange": "accountRange" } }
+			}
+		},
+		{
+			"id": "CashFlowStatement",
+			"route": "/financial-statements/cash-flow",
+			"type": "index",
+			"title": "Cash Flow Statement",
+			"config": {
+				"register": "shillinq",
+				"schema": "GLLine",
+				"statementManifest": "statement_manifest_cash_flow",
+				"method": "indirect",
+				"periodParam": "periodId",
+				"comparativePeriods": 1,
+				"previewBanner": "Voorlopige cijfers (niet definitief)",
+				"actions": [
+					{ "id": "export-xbrl", "label": "Export XBRL", "icon": "Download", "handler": "exportXbrl" },
+					{ "id": "export-pdf", "label": "Export PDF", "icon": "FilePdfBox", "handler": "exportPdf" }
+				],
+				"drillThrough": { "route": "TrialBalance", "params": { "accountRange": "accountRange" } }
+			}
+		},
+		{
+			"id": "AuditTrail",
+			"route": "/audit-trail",
+			"type": "index",
+			"title": "Audit Trail",
+			"config": {
+				"register": "shillinq",
+				"source": "openregister",
+				"view": "audit-log",
+				"objectTypes": [
+					"Account", "GLTransaction", "GLLine", "JournalEntry", "FiscalPeriod",
+					"VendorMaster", "APInvoice", "PaymentRun", "CustomerMaster", "ARInvoice",
+					"DunningRecord", "BankStatement", "BankStatementLine", "MatchingRule", "ReconciliationMatch"
+				],
+				"filters": [
+					{ "key": "objectType", "label": "Object Type" },
+					{ "key": "actor", "label": "Actor" },
+					{ "key": "dateRange", "label": "Date Range", "type": "daterange" },
+					{ "key": "transition", "label": "Transition" }
+				]
+			}
+		},
+		{
+			"id": "BankReconciliation",
+			"route": "/bank-reconciliation",
+			"type": "index",
+			"title": "Bank Reconciliation",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankStatement",
+				"columns": [
+					{ "key": "statementId", "label": "Statement", "sortable": true },
+					{ "key": "bankAccountIban", "label": "Bank Account", "sortable": true },
+					{ "key": "periodStart", "label": "From", "sortable": true },
+					{ "key": "periodEnd", "label": "To", "sortable": true },
+					{ "key": "lifecycleState", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "-periodEnd",
+				"detailRoute": "BankReconciliationDetail"
+			}
+		},
+		{
+			"id": "BankReconciliationDetail",
+			"route": "/bank-reconciliation/:id",
+			"type": "detail",
+			"title": "Bank Statement",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankStatement",
+				"fields": [
+					{ "key": "statementId", "label": "Statement", "type": "string" },
+					{ "key": "bankAccountIban", "label": "Bank Account", "type": "string" },
+					{ "key": "periodStart", "label": "From", "type": "string" },
+					{ "key": "periodEnd", "label": "To", "type": "string" },
+					{ "key": "openingBalance", "label": "Opening Balance", "type": "number" },
+					{ "key": "closingBalance", "label": "Closing Balance", "type": "number" },
+					{ "key": "importFormat", "label": "Import Format", "type": "string" },
+					{ "key": "lifecycleState", "label": "Status", "type": "string" },
+					{ "key": "sourceDocumentUri", "label": "Source Document", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"actions": [
+					{ "id": "import-statement", "label": "Import Statement", "icon": "Upload", "handler": "importBankStatement" }
+				],
+				"relatedList": {
+					"schema": "BankStatementLine",
+					"foreignKey": "statementId",
+					"columns": [
+						{ "key": "valueDate", "label": "Value Date" },
+						{ "key": "amount", "label": "Amount" },
+						{ "key": "remittanceInfo", "label": "Description" },
+						{ "key": "status", "label": "Match Status" }
+					]
+				},
+				"integrations": [
+					{ "id": "audit-log", "source": "openregister", "type": "audit-log", "filter": { "objectId": "@id" } }
+				],
+				"indexRoute": "BankReconciliation"
+			}
+		},
+		{
+			"id": "MatchingRules",
+			"route": "/matching-rules",
+			"type": "index",
+			"title": "Matching Rules",
+			"config": {
+				"register": "shillinq",
+				"schema": "MatchingRule",
+				"columns": [
+					{ "key": "ruleId", "label": "Rule ID", "sortable": true },
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "priority", "label": "Priority", "sortable": true },
+					{ "key": "isActive", "label": "Active" }
+				],
+				"defaultSort": "priority",
+				"detailRoute": "MatchingRuleDetail"
+			}
+		},
+		{
+			"id": "MatchingRuleDetail",
+			"route": "/matching-rules/:id",
+			"type": "detail",
+			"title": "Matching Rule",
+			"config": {
+				"register": "shillinq",
+				"schema": "MatchingRule",
+				"fields": [
+					{ "key": "ruleId", "label": "Rule ID", "type": "string" },
+					{ "key": "name", "label": "Name", "type": "string" },
+					{ "key": "priority", "label": "Priority", "type": "number" },
+					{ "key": "isActive", "label": "Active", "type": "boolean" }
+				],
+				"integrations": [
+					{ "id": "audit-log", "source": "openregister", "type": "audit-log", "filter": { "objectId": "@id" } }
+				],
+				"indexRoute": "MatchingRules"
 			}
 		},
 		{
