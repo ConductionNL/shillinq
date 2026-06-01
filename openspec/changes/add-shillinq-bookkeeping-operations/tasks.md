@@ -140,8 +140,8 @@
   - GIVEN the two schemas WHEN loaded THEN fields per spec are present.
   - GIVEN `Subsidie.state` lifecycle WHEN scanned THEN the transitions are declared with approval-workflow requires on `verleen` + `terugvorder`.
   - GIVEN the `vastgesteld → uitbetaald` transition WHEN inspected THEN it creates a `JournalEntry` in `pending` state per spec.
-- [ ] Implement
-- [ ] Test (PHPUnit: lifecycle transitions; approval-gates honoured; repayment-plan instalments created correctly)
+- [x] Implement
+- [x] Test (PHPUnit: lifecycle transitions; approval-gates honoured; repayment-plan instalments created correctly)
 
 ### Task 2.9: Declare Retention register — `RetentionRule`
 
@@ -151,8 +151,8 @@
   - GIVEN `RetentionRule` WHEN loaded THEN fields per spec are present.
   - GIVEN every existing shillinq schema (T1 + T2 + the 9 other T3 schemas) WHEN scanned THEN each carries `x-openregister-lifecycle.retention.rule` per the spec table.
   - GIVEN the `daysUntilRetention` derived field WHEN inspected on every retention-bound schema THEN it is declared via `x-openregister-calculations` per spec.
-- [ ] Implement
-- [ ] Test (PHPUnit: schema-load validator enforces retention rule presence; operator override prevails over seeded default; `daysUntilRetention` calculation correctness)
+- [x] Implement
+- [x] Test (PHPUnit: schema-load validator enforces retention rule presence; operator override prevails over seeded default; `daysUntilRetention` calculation correctness)
 
 ### Task 2.10: Declare Project accounting registers — `Project`, `ProjectAssignment`, `RateCard`, `WipBalance`
 
@@ -163,8 +163,8 @@
   - GIVEN `Project.recognisedRevenue` WHEN inspected THEN it is declared via `x-openregister-calculations` per spec.
   - GIVEN `BillableHour` (UrenRegistratie extension) WHEN inspected THEN it carries `recognisedRate` snapshotted at write time per spec.
   - GIVEN the WIP snapshot workflow WHEN scanned THEN it is declared as `ScheduledWorkflow` triggered by period-end per spec.
-- [ ] Implement
-- [ ] Test (PHPUnit: percentage-of-completion calculation correctness; rate-card snapshot honours work date not invoice date; WIP snapshot fires on period close)
+- [x] Implement
+- [x] Test (PHPUnit: percentage-of-completion calculation correctness; rate-card snapshot honours work date not invoice date; WIP snapshot fires on period close)
 
 ## 3. Seed data — `lib/Settings/seeds/`
 
@@ -177,8 +177,8 @@
   - GIVEN each file WHEN opened THEN it has an SPDX header and `_meta` block with source + version.
   - GIVEN a fresh shillinq install WHEN the repair step runs THEN each seed file's records appear in its target register, idempotent on re-run.
   - GIVEN per-administration override WHEN a record is edited THEN the operator edit persists across subsequent repair runs (no overwrite of operator-authored records).
-- [ ] Implement
-- [ ] Test (PHPUnit: parse + import + every record validates; per-admin idempotent seed; operator override preserved on re-run)
+- [x] Implement
+- [x] Test (PHPUnit: parse + import + every record validates; per-admin idempotent seed; operator override preserved on re-run)
 
 ### Task 3.11: Extend the repair step to import every T3 seed file
 

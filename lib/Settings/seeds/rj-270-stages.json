@@ -1,0 +1,17 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "RJ 270 §3 + IFRS 15 §B14-B19",
+    "version": "2026-01-01",
+    "description": "RJ 270 percentage-of-completion stage definitions for consultancy project accounting. REQ-CPA-013.",
+    "imported": "2026-06-01T00:00:00Z",
+    "schema": "Rj270Stage"
+  },
+  "records": [
+    { "code": "initiation", "label": "Initiatie", "description": "Contract negotiation / project setup.", "reference": "RJ 270 §1: project setup" },
+    { "code": "execution", "label": "Uitvoering", "description": "Work in progress.", "reference": "RJ 270 §2: delivery" },
+    { "code": "closeout", "label": "Afronding", "description": "Final billing / revenue recognition.", "reference": "RJ 270 §3: revenue recognition" },
+    { "code": "complete", "label": "Afgerond", "description": "Project archived.", "reference": "RJ 270 §4: project archived" }
+  ]
+}

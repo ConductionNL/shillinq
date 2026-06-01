@@ -1,0 +1,23 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Archiefwet 1995 art. 5 + Selectielijst Gemeenten 2020",
+    "version": "2020-01-01",
+    "description": "Records-retention rules per Selectielijst Gemeenten 2020, seeded into the RetentionRule register and consumed by OR's lifecycle retention engine per ADR-022. REQ-ARC-004. Operator-overrideable per administration.",
+    "imported": "2026-06-01T00:00:00Z",
+    "schema": "RetentionRule"
+  },
+  "records": [
+    { "selectielijstCode": "5.1.1", "description": "Financiele masterdata (rekeningschema, mappingen).", "retentionYears": null, "disposition": "keep_indefinite", "legalBasis": "Archiefwet 1995 art. 5, Selectielijst Gemeenten 2020 §5.1.1" },
+    { "selectielijstCode": "5.1.2", "description": "Financiele bescheiden en boekingen.", "retentionYears": 7, "disposition": "destroy", "legalBasis": "Archiefwet 1995 art. 5, Selectielijst Gemeenten 2020 §5.1.2; AWR art. 52 (fiscale bewaarplicht)" },
+    { "selectielijstCode": "5.1.3", "description": "Belastingaangiften en correcties (BTW/IB).", "retentionYears": 7, "disposition": "archive", "legalBasis": "Archiefwet 1995 art. 5, Selectielijst Gemeenten 2020 §5.1.3" },
+    { "selectielijstCode": "5.2.1", "description": "Projectdossiers en onderhanden werk.", "retentionYears": 7, "disposition": "archive", "legalBasis": "Archiefwet 1995 art. 5, Selectielijst Gemeenten 2020 §5.2.1 (na afsluiting)" },
+    { "selectielijstCode": "5.3.1", "description": "Subsidiedossiers (verlening t/m vaststelling en terugvordering).", "retentionYears": 10, "retentionTrigger": "10 years after settlement", "disposition": "archive", "legalBasis": "Archiefwet 1995 art. 5, Selectielijst Gemeenten 2020 §5.3.1" },
+    { "selectielijstCode": "5.4.1", "description": "BCF-claimdossiers.", "retentionYears": 7, "disposition": "archive", "legalBasis": "Archiefwet 1995 art. 5, Selectielijst Gemeenten 2020 §5.4.1" },
+    { "selectielijstCode": "5.5.1", "description": "IV3-rapportages aan CBS.", "retentionYears": 7, "disposition": "archive", "legalBasis": "Archiefwet 1995 art. 5, Selectielijst Gemeenten 2020 §5.5.1" },
+    { "selectielijstCode": "5.6.1", "description": "Schatkistbankieren positie- en liquiditeitsrapportages.", "retentionYears": 7, "disposition": "destroy", "legalBasis": "Archiefwet 1995 art. 5, Selectielijst Gemeenten 2020 §5.6.1" },
+    { "selectielijstCode": "5.7.1", "description": "Persoonsgegevens in urenregistratie (AVG).", "retentionYears": 7, "disposition": "anonymise", "legalBasis": "Archiefwet 1995 art. 5; AVG art. 17 (recht op vergetelheid)" },
+    { "selectielijstCode": "5.8.1", "description": "Bewaartermijnregels en overrides zelf.", "retentionYears": null, "disposition": "keep_indefinite", "legalBasis": "Archiefwet 1995 art. 5, Selectielijst Gemeenten 2020 §5.8.1" }
+  ]
+}

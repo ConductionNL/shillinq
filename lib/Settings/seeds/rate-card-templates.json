@@ -1,0 +1,17 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Conduction internal default",
+    "version": "2026-01-01",
+    "description": "Default consultancy rate-card per seniority level. REQ-CPA-005. Operators override per administration; these are starting points.",
+    "imported": "2026-06-01T00:00:00Z",
+    "schema": "RateCard"
+  },
+  "records": [
+    { "level": "junior", "hourlyRate": 65, "effectiveFrom": "2026-01-01", "effectiveTo": null, "currency": "EUR" },
+    { "level": "medior", "hourlyRate": 95, "effectiveFrom": "2026-01-01", "effectiveTo": null, "currency": "EUR" },
+    { "level": "senior", "hourlyRate": 135, "effectiveFrom": "2026-01-01", "effectiveTo": null, "currency": "EUR" },
+    { "level": "partner", "hourlyRate": 180, "effectiveFrom": "2026-01-01", "effectiveTo": null, "currency": "EUR" }
+  ]
+}
