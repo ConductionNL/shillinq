@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 225
+**Entities:** 226
 
 ## Context
 
@@ -1892,6 +1892,31 @@ _A line item detailing goods or services on an invoice_
 **Relations:**
 - → Invoice (many-to-one)
 - → Product (many-to-one)
+
+### Iv3Export
+**Schema.org:** `schema:Dataset`
+_Quarterly Informatie voor Derden (IV3) export submitted to CBS per Wet Fido art. 8 + Besluit BBV art. 71. Models the IV3 data bestand with declarative lifecycle (draft → generated → submitted → accepted), buckets aggregation over GLLine filtered by BbvAccountMapping.iv3Bucket, and XML transformation via OR Mapping engine._
+**Primary spec:** bookkeeping-iv3-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the Administration owning this export |
+| reportingYear | integer | Yes | Calendar year (e.g. 2026) |
+| reportingQuarter | enum | Yes | Q1, Q2, Q3, or Q4 |
+| iv3Version | string | Yes | CBS IV3 specification version (e.g. 2026.1) |
+| buckets | object | Yes | Aggregated values keyed by IV3 bucket code (derived) |
+| state | enum | Yes | generated, validated, submitted, accepted, rejected, or corrected |
+| xmlAttachmentUri | string | No | Docudesk URI of the generated CBS IV3 XML file |
+| generatedAt | datetime | No | Timestamp when the export was generated |
+| submittedAt | datetime | No | Timestamp when submitted to CBS |
+| acceptedAt | datetime | No | Timestamp when CBS accepted the export |
+| cbsMessageId | string | No | CBS-side message identifier |
+| correctionOf | string | No | FK to prior Iv3Export.id superseded by this correction |
+
+**Relations:**
+- → Administration (many-to-one)
+- → GLLine (many-to-many, via aggregation filtered by BbvAccountMapping.iv3Bucket)
+- → Iv3Export (self-reference, via correctionOf)
 
 ### JointVenture
 **Schema.org:** `schema:Organization`

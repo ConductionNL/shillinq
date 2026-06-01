@@ -28,6 +28,26 @@
 			]
 		},
 		{
+			"id": "Overheid",
+			"label": "Overheid",
+			"icon": "icon-category-organization",
+			"order": 30,
+			"visibilityFilter": {
+				"field": "administrationType",
+				"operator": "in",
+				"values": ["gemeente", "provincie", "waterschap"]
+			},
+			"children": [
+				{
+					"id": "Iv3Rapportages",
+					"label": "IV3-rapportages",
+					"icon": "FileDocumentOutline",
+					"route": "Iv3Rapportages",
+					"order": 10
+				}
+			]
+		},
+		{
 			"id": "Documentation",
 			"label": "Documentation",
 			"icon": "icon-info",
@@ -53,6 +73,129 @@
 		}
 	],
 	"pages": [
+		{
+			"id": "Iv3Rapportages",
+			"route": "/overheid/iv3-rapportages",
+			"type": "index",
+			"title": "IV3-rapportages",
+			"visibilityFilter": {
+				"field": "administrationType",
+				"operator": "in",
+				"values": ["gemeente", "provincie", "waterschap"]
+			},
+			"config": {
+				"register": "shillinq",
+				"schema": "Iv3Export",
+				"columns": [
+					{
+						"key": "reportingYear",
+						"label": "Year",
+						"sortable": true
+					},
+					{
+						"key": "reportingQuarter",
+						"label": "Quarter",
+						"sortable": true
+					},
+					{
+						"key": "iv3Version",
+						"label": "IV3 Version",
+						"sortable": false
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					}
+				],
+				"defaultSort": "reportingYear",
+				"detailRoute": "Iv3RapportagesDetail"
+			}
+		},
+		{
+			"id": "Iv3RapportagesDetail",
+			"route": "/overheid/iv3-rapportages/:id",
+			"type": "detail",
+			"title": "IV3-rapportage",
+			"visibilityFilter": {
+				"field": "administrationType",
+				"operator": "in",
+				"values": ["gemeente", "provincie", "waterschap"]
+			},
+			"config": {
+				"register": "shillinq",
+				"schema": "Iv3Export",
+				"fields": [
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "reportingYear",
+						"label": "Reporting Year",
+						"type": "integer"
+					},
+					{
+						"key": "reportingQuarter",
+						"label": "Quarter",
+						"type": "string"
+					},
+					{
+						"key": "iv3Version",
+						"label": "IV3 Version",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "buckets",
+						"label": "IV3 Buckets",
+						"type": "object"
+					},
+					{
+						"key": "xmlAttachmentUri",
+						"label": "CBS XML File",
+						"type": "string"
+					},
+					{
+						"key": "generatedAt",
+						"label": "Generated At",
+						"type": "datetime"
+					},
+					{
+						"key": "submittedAt",
+						"label": "Submitted At",
+						"type": "datetime"
+					},
+					{
+						"key": "acceptedAt",
+						"label": "Accepted At",
+						"type": "datetime"
+					},
+					{
+						"key": "cbsMessageId",
+						"label": "CBS Message ID",
+						"type": "string"
+					},
+					{
+						"key": "correctionOf",
+						"label": "Correction Of",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "Iv3Rapportages"
+			}
+		},
 		{
 			"id": "FeaturesRoadmap",
 			"route": "/features-roadmap",
