@@ -224,6 +224,25 @@ class SettingsServiceTest extends TestCase
     }//end testSeedProductAttributesFailsWhenOpenRegisterUnavailable()
 
     /**
+     * seedRetentionPolicies fails when OpenRegister is unavailable.
+     *
+     * @return void
+     */
+    public function testSeedRetentionPoliciesFailsWhenOpenRegisterUnavailable(): void
+    {
+        $this->appManager->expects($this->once())
+            ->method('isInstalled')
+            ->with('openregister')
+            ->willReturn(false);
+
+        $result = $this->service->seedRetentionPolicies();
+
+        self::assertFalse($result['success']);
+        self::assertStringContainsString('OpenRegister', $result['message']);
+
+    }//end testSeedRetentionPoliciesFailsWhenOpenRegisterUnavailable()
+
+    /**
      * Test seedProductAttributes returns failure for unknown category.
      *
      * @return void
@@ -466,4 +485,115 @@ class SettingsServiceTest extends TestCase
         }
 
     }//end testMultiAdministratieSchemasNotInMonolith()
+
+    /**
+     * seedRetentionPolicies is idempotent: when all three default policies already
+     * exist (matched by slug) every record is skipped and none is re-created
+     * (REQ-RET-012).
+     *
+     * @return void
+     */
+    public function testSeedRetentionPoliciesIsIdempotent(): void
+    {
+        $this->appManager->method('isInstalled')->with('openregister')->willReturn(true);
+        $this->appConfig->method('getValueString')->willReturn('shillinq');
+
+        // ObjectService stub: findAll always returns an existing record (so every
+        // policy is skipped); saveObject must never be called.
+        $objectService = new class {
+            public int $saveCalls = 0;
+
+            public function setRegister(string $register): static
+            {
+                return $this;
+            }
+
+            public function setSchema(string $schema): static
+            {
+                return $this;
+            }
+
+            /**
+             * @param array<string,mixed> $params
+             * @return array<mixed>
+             */
+            public function findAll(array $params=[]): array
+            {
+                return [['slug' => ($params['filters']['slug'] ?? 'x')]];
+            }
+
+            /**
+             * @param array<string,mixed> $object
+             */
+            public function saveObject(array $object, string $register, string $schema): void
+            {
+                $this->saveCalls++;
+            }
+        };
+
+        $this->container->method('get')->willReturn($objectService);
+
+        $result = $this->service->seedRetentionPolicies();
+
+        self::assertTrue($result['success']);
+        self::assertSame(0, $result['seeded']);
+        self::assertSame(3, $result['skipped']);
+        self::assertSame(0, $objectService->saveCalls, 'No policy should be re-created when all already exist');
+
+    }//end testSeedRetentionPoliciesIsIdempotent()
+
+    /**
+     * seedRetentionPolicies creates all three default policies on a fresh install.
+     *
+     * @return void
+     */
+    public function testSeedRetentionPoliciesCreatesDefaultsOnFreshInstall(): void
+    {
+        $this->appManager->method('isInstalled')->with('openregister')->willReturn(true);
+        $this->appConfig->method('getValueString')->willReturn('shillinq');
+
+        // ObjectService stub: findAll returns empty (nothing exists), so each
+        // policy is created via saveObject.
+        $objectService = new class {
+            public int $saveCalls = 0;
+
+            public function setRegister(string $register): static
+            {
+                return $this;
+            }
+
+            public function setSchema(string $schema): static
+            {
+                return $this;
+            }
+
+            /**
+             * @param array<string,mixed> $params
+             * @return array<mixed>
+             */
+            public function findAll(array $params=[]): array
+            {
+                return [];
+            }
+
+            /**
+             * @param array<string,mixed> $object
+             */
+            public function saveObject(array $object, string $register, string $schema): void
+            {
+                $this->saveCalls++;
+            }
+        };
+
+        $this->container->method('get')->willReturn($objectService);
+
+        $result = $this->service->seedRetentionPolicies();
+
+        self::assertTrue($result['success']);
+        self::assertSame(3, $result['seeded']);
+        self::assertSame(0, $result['skipped']);
+        self::assertSame(3, $objectService->saveCalls);
+
+    }//end testSeedRetentionPoliciesCreatesDefaultsOnFreshInstall()
+
 }//end class
