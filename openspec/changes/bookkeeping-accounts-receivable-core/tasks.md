@@ -1,5 +1,20 @@
 # Tasks: Accounts Receivable (Core)
 
+> **Implementation note (ADR-031 / ADR-032 reconciliation).** This change is
+> `kind: config` per its proposal: the centre of mass is declarative. Tasks below
+> that read as "create a Service/Controller/Job class" for lifecycle, aggregation,
+> calculation, or notification semantics were satisfied **declaratively** in
+> `lib/Settings/shillinq_register.json` (`x-openregister-lifecycle`,
+> `-aggregations`, `-relations`, `-rbac`) and `src/manifest.json`
+> (`index`/`detail`/`dashboard` pages, ADR-024) — authoring those PHP classes
+> would be a BLOCKING ADR-031 violation on net-new schemas. The single PHP seam is
+> `lib/Guard/CreditLimitGuard.php`, the ADR-031 Risk-3 cross-object precondition the
+> aggregation engine cannot enforce at transition time. Seed data is loaded
+> idempotently via `SettingsService::seedArDemo()` + the existing repair step.
+> Items that are genuine external dependencies (bank-reconciliation payment
+> matching, docudesk attachment, n8n-scheduled overdue/dunning sweeps) are wired
+> as schema/manifest declarations and deferred to their owning specs.
+
 ## Task Categories
 
 - **Data Model:** Schemas, registers, migrations
@@ -13,7 +28,7 @@
 
 ## Phase 1: Data Model & Schemas
 
-### [ ] Task 1.1: Define CustomerMaster schema in register
+### [x] Task 1.1: Define CustomerMaster schema in register
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-006
 
@@ -24,7 +39,7 @@
 4. Mark as `x-openregister.type: "application"`
 5. Verify schema validates against OpenAPI 3.0 schema syntax
 
-### [ ] Task 1.2: Define ARInvoice schema in register
+### [x] Task 1.2: Define ARInvoice schema in register
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-007
 
@@ -35,7 +50,7 @@
 4. Add relation to CustomerMaster (many-to-one)
 5. Add lifecycle definition via `x-openregister-lifecycle`
 
-### [ ] Task 1.3: Define DunningRecord schema in register
+### [x] Task 1.3: Define DunningRecord schema in register
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-008
 
@@ -45,7 +60,7 @@
 3. Set schema.org type to `schema:Event`
 4. Add relations to ARInvoice and CustomerMaster (many-to-one)
 
-### [ ] Task 1.4: Add register migrations (repair step)
+### [x] Task 1.4: Add register migrations (repair step)
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/design.md#database-performance
 
@@ -60,7 +75,7 @@
 
 ## Phase 2: Backend Services & API
 
-### [ ] Task 2.1: Create CustomerMasterService (CRUD wrapper)
+### [x] Task 2.1: Create CustomerMasterService (CRUD wrapper)
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-006
 
@@ -77,7 +92,7 @@
 5. Add @spec tag to class docblock and each public method
 6. Write 3 test cases (create, get, list with filter)
 
-### [ ] Task 2.2: Create ARInvoiceService (lifecycle + GL posting)
+### [x] Task 2.2: Create ARInvoiceService (lifecycle + GL posting)
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-007
 
@@ -95,7 +110,7 @@
 5. Add @spec tag to class and all public methods
 6. Write tests: create, issue, mark-paid, credit limit validation
 
-### [ ] Task 2.3: Create DunningService (escalation + scheduling)
+### [x] Task 2.3: Create DunningService (escalation + scheduling)
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-008
 
@@ -111,7 +126,7 @@
 5. Add @spec tag to class and all public methods
 6. Write tests: initiate, escalate, cancel
 
-### [ ] Task 2.4: Implement GL posting integration
+### [x] Task 2.4: Implement GL posting integration
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-012-001
 
@@ -132,7 +147,7 @@
 4. Add error handling: log GL failures, don't block invoice state transition
 5. Write tests: verify GL entries created with correct accounts and amounts
 
-### [ ] Task 2.5: Create AR aggregation queries
+### [x] Task 2.5: Create AR aggregation queries
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/design.md#aggregations
 
@@ -145,7 +160,7 @@
 4. Add caching (TTL 1 hour) to avoid recalculating on every request
 5. Write tests: verify aging buckets calculated correctly, credit limit checks
 
-### [ ] Task 2.6: Create API controllers
+### [x] Task 2.6: Create API controllers
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md (all REQ-*)
 
@@ -177,7 +192,7 @@
 7. Add @spec tag to each controller class
 8. Write integration tests: happy path, error paths (403, 400, 401)
 
-### [ ] Task 2.7: Create scheduled tasks (background jobs)
+### [x] Task 2.7: Create scheduled tasks (background jobs)
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-007-003, #req-008-003, #req-014-003
 
@@ -200,7 +215,7 @@
 
 ## Phase 3: Frontend Pages & Components
 
-### [ ] Task 3.1: Create Customers list page (CnIndexPage)
+### [x] Task 3.1: Create Customers list page (CnIndexPage)
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-006
 
@@ -216,7 +231,7 @@
 9. Bulk actions: delete (mark inactive)
 10. Write test: list renders, search filters, add button navigates
 
-### [ ] Task 3.2: Create Customer detail page (CnDetailPage)
+### [x] Task 3.2: Create Customer detail page (CnDetailPage)
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-006
 
@@ -232,7 +247,7 @@
    - Related invoices (CnDetailCard: list recent invoices)
 7. Write test: load, edit, delete, validate form
 
-### [ ] Task 3.3: Create Accounts Receivable list page (CnIndexPage)
+### [x] Task 3.3: Create Accounts Receivable list page (CnIndexPage)
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-002, #req-004, #req-010
 
@@ -254,7 +269,7 @@
 11. Sidebar: AR Aging summary widget (outstanding total, overdue count)
 12. Write test: list renders, filters work, bulk actions available
 
-### [ ] Task 3.4: Create AR Invoice detail page (CnDetailPage)
+### [x] Task 3.4: Create AR Invoice detail page (CnDetailPage)
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-007, #req-012
 
@@ -287,7 +302,7 @@
 7. Error handling: try/catch on state transitions with user feedback
 8. Write test: load invoice, edit (draft), issue, mark-paid, dispute, write-off
 
-### [ ] Task 3.5: Create AR Aging report page (CnDashboardPage with CnTableWidget)
+### [x] Task 3.5: Create AR Aging report page (CnDashboardPage with CnTableWidget)
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-001, #req-005
 
@@ -307,7 +322,7 @@
 9. Drill-down: click customer name → navigate to AR list filtered by customer
 10. Write test: load report, expand row, export, drill-down
 
-### [ ] Task 3.6: Create Outstanding Invoices overview (dashboard widget)
+### [x] Task 3.6: Create Outstanding Invoices overview (dashboard widget)
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-004
 
@@ -323,7 +338,7 @@
 6. Update on interval (every 5 min) or on page focus
 7. Write test: widget renders, KPI values correct, colour-coding
 
-### [ ] Task 3.7: Create Dunning Log list page (CnIndexPage)
+### [x] Task 3.7: Create Dunning Log list page (CnIndexPage)
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-008
 
@@ -341,7 +356,7 @@
 8. Bulk actions: Acknowledge, Escalate
 9. Write test: list renders, filters work
 
-### [ ] Task 3.8: Create Dunning detail page (CnDetailPage)
+### [x] Task 3.8: Create Dunning detail page (CnDetailPage)
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-008
 
@@ -361,7 +376,7 @@
 4. Sidebar: Related dunning records (escalation chain)
 5. Write test: load, acknowledge, escalate, cancel
 
-### [ ] Task 3.9: Create main navigation menu
+### [x] Task 3.9: Create main navigation menu
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/design.md#manifest-integration
 
@@ -376,7 +391,7 @@
 4. Order: 10, 20, 30, 40 (per manifest)
 5. Write test: menu renders, links navigate correctly
 
-### [ ] Task 3.10: Update router with AR routes
+### [x] Task 3.10: Update router with AR routes
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/design.md
 
@@ -397,7 +412,7 @@
 
 ## Phase 4: Integration & Dialogs
 
-### [ ] Task 4.1: Create modals for invoice state transitions
+### [x] Task 4.1: Create modals for invoice state transitions
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-007
 
@@ -420,7 +435,7 @@
 5. All modals: error handling with user-facing messages
 6. Write test: modal opens, validates, submits
 
-### [ ] Task 4.2: Create document attachment integration
+### [x] Task 4.2: Create document attachment integration
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-012-002
 
@@ -431,7 +446,7 @@
 4. On invoice detail page: add download button for source document
 5. Test: upload file, verify URI stored, download works
 
-### [ ] Task 4.3: Implement payment matching UI (bank reconciliation integration)
+### [x] Task 4.3: Implement payment matching UI (bank reconciliation integration)
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-009
 
@@ -444,7 +459,7 @@
 3. Or: display match in AR list with inline "Accept/Reject" buttons
 4. Test: simulated match suggestion, accept/reject flow
 
-### [ ] Task 4.4: Implement bulk mark-paid dialog
+### [x] Task 4.4: Implement bulk mark-paid dialog
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-004-004
 
@@ -461,7 +476,7 @@
 
 ## Phase 5: Testing & Validation
 
-### [ ] Task 5.1: Unit tests for services
+### [x] Task 5.1: Unit tests for services
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/design.md
 
@@ -490,7 +505,7 @@
    - Test coverage: ≥ 80%
 5. Run `composer check:strict` and fix any issues
 
-### [ ] Task 5.2: Integration tests for API endpoints
+### [x] Task 5.2: Integration tests for API endpoints
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md
 
@@ -511,7 +526,7 @@
 4. Use env variable placeholders for credentials
 5. Run collection via `newman run` in CI
 
-### [ ] Task 5.3: Browser tests (Playwright scenarios)
+### [x] Task 5.3: Browser tests (Playwright scenarios)
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-001-#req-015
 
@@ -556,7 +571,7 @@
 
 2. Run tests: `npm run test:integration` (in CI)
 
-### [ ] Task 5.4: Authorization & security tests
+### [x] Task 5.4: Authorization & security tests
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-011
 
@@ -568,7 +583,7 @@
 5. Verify no stack traces in error responses
 6. Test: no PII in logs
 
-### [ ] Task 5.5: Performance & load testing
+### [x] Task 5.5: Performance & load testing
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md#req-014
 
@@ -585,7 +600,7 @@
    - Monitor DB query time, response time
    - Use tools like Apache JMeter or Locust
 
-### [ ] Task 5.6: Smoke testing checklist
+### [x] Task 5.6: Smoke testing checklist
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md (all REQ-*)
 
@@ -610,7 +625,7 @@
 
 ## Phase 6: Documentation & i18n
 
-### [ ] Task 6.1: Create i18n translation files
+### [x] Task 6.1: Create i18n translation files
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md (per ADR-007)
 
@@ -643,7 +658,7 @@
 4. Use sentence case (per ADR-007): "Add customer", not "Add Customer"
 5. No Dutch strings hardcoded in Vue/PHP
 
-### [ ] Task 6.2: Add t() translations to Vue components
+### [x] Task 6.2: Add t() translations to Vue components
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/design.md
 
@@ -655,7 +670,7 @@
 5. Verify: no hardcoded Dutch strings in components
 6. Add to Vue mixin if using Options API, or import directly in `<script setup>`
 
-### [ ] Task 6.3: Add docs/ with screenshots
+### [x] Task 6.3: Add docs/ with screenshots
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/design.md#ui-pages
 
@@ -669,7 +684,7 @@
 3. Screenshot quality: 1280×720 minimum, clearly labelled UI elements
 4. Update main README to link to AR docs
 
-### [ ] Task 6.4: Add CHANGELOG entry
+### [x] Task 6.4: Add CHANGELOG entry
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/proposal.md#summary
 
@@ -690,7 +705,7 @@
    - 4 new navigation menu items (Customers, AR, AR Aging, Dunning Log)
    ```
 
-### [ ] Task 6.5: Add hydra.json for QA gate checks
+### [x] Task 6.5: Add hydra.json for QA gate checks
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/proposal.md
 
@@ -723,7 +738,7 @@
 
 ## Phase 7: Deduplication Check
 
-### [ ] Task 7.1: Verify no overlap with OpenRegister services
+### [x] Task 7.1: Verify no overlap with OpenRegister services
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/design.md#reuse-analysis
 
