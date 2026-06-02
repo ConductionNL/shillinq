@@ -1,5 +1,7 @@
 # Design — Schatkistbankieren (Treasury Banking Compliance)
 
+**status: pr-created**
+
 ## Context
 
 Dutch government entities and public-sector organizations must comply with strict

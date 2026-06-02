@@ -1,73 +1,87 @@
 {
-  "spec": "openspec/changes/add-shillinq-gr-consolidation",
+  "spec": "openspec/changes/bookkeeping-schatkistbankieren",
   "verified": [
     {
       "task": "1",
-      "description": "Confirmed no GRDeelnemer, GRVerdeelsleutel, or bookkeeping-gr-consolidation already existed in lib/Settings/shillinq_register.json",
-      "ok": true
+      "file": "lib/ directory scan",
+      "ok": true,
+      "note": "No TreasuryAccount/BankingRule/ComplianceReport PHP services found"
     },
     {
       "task": "2",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/specs/bookkeeping-gr-consolidation/spec.md",
+      "file": "openspec/changes/bookkeeping-schatkistbankieren/specs/bookkeeping-schatkistbankieren/spec.md",
       "ok": true
     },
     {
       "task": "3",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/proposal.md",
+      "file": "openspec/changes/bookkeeping-schatkistbankieren/proposal.md",
       "ok": true
     },
     {
       "task": "4",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/design.md",
+      "file": "openspec/changes/bookkeeping-schatkistbankieren/design.md",
       "ok": true
     },
     {
       "task": "5",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer schema declared with deelnemerType enum, deelnemerNaam, administrationId (optional), aandeel (0-1 validated), actief boolean, lifecycleState",
+      "file": "lib/Settings/shillinq_register.json#TreasuryAccount",
       "ok": true
     },
     {
       "task": "6",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRVerdeelsleutel schema declared with sleutelNaam, costClusterAccountNumbers array, verdelingsType enum (vast-percentage/inwoner-aantal/gewogen-oppervlak/custom-formula), parameters object, lineNumber",
+      "file": "lib/Settings/shillinq_register.json#BankingRule",
       "ok": true
     },
     {
       "task": "7",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GLLine schema declared with eliminationFlag: boolean (default false); x-openregister-aggregations.consolidatedTrialBalance declared with filter: eliminationFlag = false",
+      "file": "lib/Settings/shillinq_register.json#ComplianceReport",
       "ok": true
     },
     {
       "task": "8",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRVerdeelsleutel.x-openregister-aggregations.doorbelastingPerDeelnemer declared with join on GLLine WHERE accountNumber IN costClusterAccountNumbers AND eliminationFlag = false, grouped by deelnemerId",
+      "file": "lib/Settings/shillinq_register.json#TreasuryAccount.x-openregister-lifecycle",
       "ok": true
     },
     {
       "task": "9",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer.x-openregister-lifecycle.hooks.onGrPeriodClose declared: trigger bookkeeping-period-close:grPeriodClosed, condition administrationId IS NOT NULL, idempotency key (grAdministrationId, deelnemerId, periodId)",
+      "file": "lib/Lifecycle/ComplianceValidator.php",
       "ok": true
     },
     {
       "task": "10",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer.x-openregister-aggregations.aandeelSumCheck declared: filter actief = true, sum of aandeel field; non-blocking warning when result differs from 1.0",
+      "file": "lib/Settings/shillinq_register.json#ComplianceReport.x-openregister-calculations",
       "ok": true
     },
     {
       "task": "11",
-      "file": "src/manifest.json",
-      "description": "featureFlags.gov-gr added; Gemeenschappelijke regeling menu entry under Bookkeeping with 3 children (Deelnemers, Verdeelsleutels, Geconsolideerde view); 5 pages added (GRDeelnemers, GRDeelnemerDetail, GRVerdeelsleutels, GRVerdeelsleutelDetail, GRConsolidated); node tests/validate-manifest.js: only pre-existing roadmap-type failure, no new failures",
+      "file": "lib/Settings/shillinq_register.json#ComplianceReport.x-openregister-aggregations",
       "ok": true
     },
     {
       "task": "12",
-      "file": "openspec/architecture/adr-000-data-model.md",
-      "description": "GRDeelnemer and GRVerdeelsleutel entity entries added alphabetically after GrantPortfolio, cross-referencing bookkeeping-gr-consolidation spec",
+      "file": "lib/Settings/shillinq_register.json#TreasuryAccount.lifecycle.auditEvent",
       "ok": true
+    },
+    {
+      "task": "13",
+      "file": "src/manifest.json#Governance menu",
+      "ok": true
+    },
+    {
+      "task": "14",
+      "file": "lib/Settings/shillinq_register.json#components.objects",
+      "ok": true
+    },
+    {
+      "task": "15",
+      "file": "openspec/architecture/adr-000-data-model.md",
+      "ok": true
+    },
+    {
+      "task": "16",
+      "file": "deduplication check",
+      "ok": true,
+      "note": "No overlap with existing OR services or @conduction/nextcloud-vue components"
     }
   ],
   "stubs": [],
