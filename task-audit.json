@@ -1,74 +1,24 @@
 {
-  "spec": "openspec/changes/add-shillinq-gr-consolidation",
+  "spec": "openspec/changes/bookkeeping-sisa-reporting",
   "verified": [
-    {
-      "task": "1",
-      "description": "Confirmed no GRDeelnemer, GRVerdeelsleutel, or bookkeeping-gr-consolidation already existed in lib/Settings/shillinq_register.json",
-      "ok": true
-    },
-    {
-      "task": "2",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/specs/bookkeeping-gr-consolidation/spec.md",
-      "ok": true
-    },
-    {
-      "task": "3",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/proposal.md",
-      "ok": true
-    },
-    {
-      "task": "4",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/design.md",
-      "ok": true
-    },
-    {
-      "task": "5",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer schema declared with deelnemerType enum, deelnemerNaam, administrationId (optional), aandeel (0-1 validated), actief boolean, lifecycleState",
-      "ok": true
-    },
-    {
-      "task": "6",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRVerdeelsleutel schema declared with sleutelNaam, costClusterAccountNumbers array, verdelingsType enum (vast-percentage/inwoner-aantal/gewogen-oppervlak/custom-formula), parameters object, lineNumber",
-      "ok": true
-    },
-    {
-      "task": "7",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GLLine schema declared with eliminationFlag: boolean (default false); x-openregister-aggregations.consolidatedTrialBalance declared with filter: eliminationFlag = false",
-      "ok": true
-    },
-    {
-      "task": "8",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRVerdeelsleutel.x-openregister-aggregations.doorbelastingPerDeelnemer declared with join on GLLine WHERE accountNumber IN costClusterAccountNumbers AND eliminationFlag = false, grouped by deelnemerId",
-      "ok": true
-    },
-    {
-      "task": "9",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer.x-openregister-lifecycle.hooks.onGrPeriodClose declared: trigger bookkeeping-period-close:grPeriodClosed, condition administrationId IS NOT NULL, idempotency key (grAdministrationId, deelnemerId, periodId)",
-      "ok": true
-    },
-    {
-      "task": "10",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer.x-openregister-aggregations.aandeelSumCheck declared: filter actief = true, sum of aandeel field; non-blocking warning when result differs from 1.0",
-      "ok": true
-    },
-    {
-      "task": "11",
-      "file": "src/manifest.json",
-      "description": "featureFlags.gov-gr added; Gemeenschappelijke regeling menu entry under Bookkeeping with 3 children (Deelnemers, Verdeelsleutels, Geconsolideerde view); 5 pages added (GRDeelnemers, GRDeelnemerDetail, GRVerdeelsleutels, GRVerdeelsleutelDetail, GRConsolidated); node tests/validate-manifest.js: only pre-existing roadmap-type failure, no new failures",
-      "ok": true
-    },
-    {
-      "task": "12",
-      "file": "openspec/architecture/adr-000-data-model.md",
-      "description": "GRDeelnemer and GRVerdeelsleutel entity entries added alphabetically after GrantPortfolio, cross-referencing bookkeeping-gr-consolidation spec",
-      "ok": true
-    }
+    {"task": "1", "file": null, "ok": true, "note": "Confirmed no SisaReport/AuditDocument/ComplianceAuditTrail schemas in register; no lib/Service/Sisa* or lib/Service/Audit* PHP classes present."},
+    {"task": "2", "file": "openspec/changes/bookkeeping-sisa-reporting/specs/bookkeeping-sisa-reporting/spec.md", "ok": true},
+    {"task": "3", "file": "openspec/changes/bookkeeping-sisa-reporting/proposal.md", "ok": true},
+    {"task": "4", "file": "openspec/changes/bookkeeping-sisa-reporting/design.md", "ok": true},
+    {"task": "5", "file": "lib/Settings/shillinq_register.json#SisaReport", "ok": true},
+    {"task": "6", "file": "lib/Settings/shillinq_register.json#AuditDocument", "ok": true},
+    {"task": "7", "file": "lib/Settings/shillinq_register.json#ComplianceAuditTrail", "ok": true},
+    {"task": "8", "file": "lib/Settings/shillinq_register.json#ManagementLetter", "ok": true},
+    {"task": "9", "file": "lib/Settings/shillinq_register.json#AuditDocument.x-openregister-lifecycle", "ok": true},
+    {"task": "10", "file": "lib/Settings/shillinq_register.json#SisaReport.x-openregister-aggregations.onTimeSettlement", "ok": true},
+    {"task": "11", "file": "lib/Settings/shillinq_register.json#SisaReport.x-openregister-aggregations.findingCounts", "ok": true},
+    {"task": "12", "file": "lib/Service/SisaReportingService.php", "ok": true, "note": "ADR-031 exception: single-method read-only service + x-openregister-calculations declarative backup; 11 unit tests."},
+    {"task": "13", "file": "lib/Settings/shillinq_register.json#Grant.isSISAEligible", "ok": true},
+    {"task": "14", "file": "lib/Settings/shillinq_register.json#SisaReport.x-openregister-aggregations.onTimeSettlement", "ok": true, "note": "filter.grantIsSISAEligible: true wires the eligibility filtering."},
+    {"task": "15", "file": "lib/Settings/shillinq_register.json#AuditDocument.x-openregister-lifecycle", "ok": true, "note": "AuditDocument lifecycle declared. APTransaction/ARInvoice/JournalEntry lifecycle is T1 spec responsibility."},
+    {"task": "16", "file": "src/manifest.json#Compliance", "ok": true, "note": "4 nav entries + 8 pages added. validate-manifest.js roadmap type failure is pre-existing."},
+    {"task": "17", "file": "openspec/architecture/adr-000-data-model.md", "ok": true, "note": "AuditDocument, ComplianceAuditTrail, SisaReport entries added; entity count 226->229."},
+    {"task": "18", "file": "lib/Settings/shillinq_register.json#components.objects", "ok": true, "note": "14 seed objects with realistic Dutch values."}
   ],
   "stubs": [],
   "missing_routes": []
