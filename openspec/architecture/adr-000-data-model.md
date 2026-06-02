@@ -3256,6 +3256,30 @@ _Collection of permissions defining access level and capabilities within the sys
 - → Permission (many-to-many)
 - → User (many-to-many)
 
+### SBRDocumentType
+**Schema.org:** `schema:Thing`
+_Standard Business Reporting (SBR) document type defining filing rules, deadlines, and lifecycle for Dutch regulatory submissions to Belastingdienst and DNB. Filing state machine is declarative via x-openregister-lifecycle (draft → validated → submitted → approved/rejected). Pre-filing validation is declarative via x-openregister-aggregations (GL completeness, mapping coverage, mandatory fields, GL balance). Cross-referencing spec: `bookkeeping-sbr-xbrl-reporting` (2026-06-02)._
+**Primary spec:** bookkeeping-sbr-xbrl-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| name | string | Yes | Human-readable filing name (e.g., 'Jaarverslag (Annual Report)') |
+| code | string | Yes | Unique machine-readable code (e.g., JAARVERSLAG, BELASTINGAANGIFTE) |
+| description | string | No | Filing description and regulatory reference |
+| applicableEntityTypes | array | Yes | Entity types required to file (e.g., BV, NV, Eenmanszaak) |
+| filingDeadline | date | Yes | Regulatory deadline set by Belastingdienst or DNB |
+| requiredFields | array | No | Mandatory GL accounts or data elements for this filing type |
+| submissionEndpoint | string | Yes | Belastingdienst/DNB endpoint URL (contract declared; T4 implements outbound) |
+| authMethod | string | Yes | Authentication scheme (e.g., oauth2, mutual-tls, pki-cert) |
+| status | enum | Yes | One of active, draft, archived |
+| administrationId | string | Yes | FK to Administration — scopes deadline and entity-type applicability |
+| filingState | enum | Yes | One of draft, validated, submitted, approved, rejected |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- → XBRLTaxonomy (many-to-one, via xbrlTaxonomyVersion on lifecycle validation)
+- → XBRLMapping (one-to-many, via administrationId; coverage checked on validate transition)
+
 ### SavingsOpportunity
 **Schema.org:** `schema:Thing`
 _A tracked initiative to reduce spending with projected and realized savings amounts for portfolio management_
@@ -4332,18 +4356,40 @@ _Structured XBRL instance document for taxonomies (NTA7, SBR-NT). Contains facts
 **Relations:**
 - → TaxDeclaration (many-to-one)
 
-### XBRLTaxonomy
-**Schema.org:** `schema:CreativeWork`
-_XBRL (eXtensible Business Reporting Language) taxonomy definitions for structured tax reporting, compliance, and regulatory filing_
-**Primary spec:** tax-levy-management
+### XBRLMapping
+**Schema.org:** `schema:Thing`
+_Transformation rule mapping a Shillinq Account (chart-of-accounts entry) to an XBRL GL concept URI. Mappings are taxonomy-version-specific; multiple versions coexist. Mapping completeness is validated declaratively via x-openregister-aggregations on SBRDocumentType. No PHP mapping service. Cross-referencing spec: `bookkeeping-sbr-xbrl-reporting` (2026-06-02)._
+**Primary spec:** bookkeeping-sbr-xbrl-reporting
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| taxonomyId | string | Yes | Unique taxonomy identifier |
-| version | string | Yes | Taxonomy version number |
-| effectiveDate | datetime | Yes | Date when taxonomy becomes effective |
-| namespace | string | Yes | XML namespace URI for the taxonomy |
-| elements | array | No | List of XBRL element definitions and mappings |
+| sourceAccountId | string | Yes | FK to Account.id — the Shillinq chart-of-accounts entry being mapped |
+| targetXBRLConcept | string | Yes | XBRL GL concept URI (e.g., http://xbrl.gl/concept/CurrentAssets) |
+| taxonomyVersion | string | Yes | FK to XBRLTaxonomy.taxonomyVersion — mappings are version-specific |
+| mappingDate | date | Yes | Date mapping was established or last reviewed |
+| status | enum | Yes | One of active, archived, pending-review |
+| notes | string | No | Mapping rationale or notes on special cases |
 
 **Relations:**
-- → TaxReturn (one-to-many)
+- → Account (many-to-one, via sourceAccountId → Account.id)
+- → XBRLTaxonomy (many-to-one, via taxonomyVersion → XBRLTaxonomy.taxonomyVersion)
+
+### XBRLTaxonomy
+**Schema.org:** `schema:CreativeWork`
+_Official XBRL GL (General Ledger) taxonomy version published annually by Belastingdienst. Multiple versions coexist; operator selects the active version per administration at fiscal year start. Supersedes the earlier tax-levy-management entry below — the bookkeeping-sbr-xbrl-reporting spec is the canonical SBR/GL taxonomy register (2026-06-02)._
+**Primary spec:** bookkeeping-sbr-xbrl-reporting (canonical); tax-levy-management (prior — GL taxonomy only)
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| taxonomyId | string | Yes | Unique identifier for this XBRL GL taxonomy version (e.g., xbrl-gl-2026) |
+| name | string | Yes | Human-readable name (e.g., 'XBRL GL 2026 — Belastingdienst Official') |
+| taxonomyVersion | string | Yes | Official version code published by Belastingdienst (e.g., 2026-01) |
+| publicationDate | date | Yes | Date taxonomy was published by Belastingdienst |
+| effectiveDate | date | Yes | Date the taxonomy becomes effective for new filings |
+| expiryDate | date | No | Date taxonomy is superseded; null means active indefinitely |
+| status | enum | Yes | One of active, archived, deprecated |
+| description | string | No | Regulatory reference (e.g., Handboek voor het Financieel Jaarverslag) |
+
+**Relations:**
+- → XBRLMapping (one-to-many, via XBRLMapping.taxonomyVersion → taxonomyVersion)
+- → SBRDocumentType (one-to-many, via SBRDocumentType.xbrlTaxonomyVersion — selected at fiscal year start)

@@ -125,6 +125,7 @@ class InitializeSettings implements IRepairStep
 
             $this->seedChartOfAccounts(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
+            $this->seedXBRLData(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -255,4 +256,37 @@ class InitializeSettings implements IRepairStep
         }
 
     }//end seedChartOfAccounts()
+
+    /**
+     * Seed XBRL taxonomy, SBR document type, and XBRL mapping reference records.
+     *
+     * Idempotent — existing records are skipped on re-run. Loads from
+     * lib/Settings/seeds/xbrl-seed.json via SettingsService::seedXBRLData().
+     *
+     * @param IOutput $output The output interface for progress reporting
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-sbr-xbrl-reporting/tasks.md#task-13
+     */
+    private function seedXBRLData(IOutput $output): void
+    {
+        $output->info('Shillinq: seeding XBRL taxonomy and SBR reference data...');
+
+        $seedResult = $this->settingsService->seedXBRLData();
+
+        if ($seedResult['success'] === true) {
+            $seeded  = ($seedResult['seeded'] ?? 0);
+            $skipped = ($seedResult['skipped'] ?? 0);
+            $output->info(
+                'XBRL seed completed: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        }
+
+        if ($seedResult['success'] !== true) {
+            $message = ($seedResult['message'] ?? 'unknown error');
+            $output->warning('Shillinq: XBRL seed issue: '.$message);
+        }
+
+    }//end seedXBRLData()
 }//end class

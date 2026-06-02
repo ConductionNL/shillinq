@@ -496,4 +496,128 @@ class SettingsService
             ];
         }//end try
     }//end runLoadConfiguration()
+
+    /**
+     * Seed XBRL taxonomy, SBR document type, and XBRL mapping reference records.
+     *
+     * Loads seed objects from lib/Settings/seeds/xbrl-seed.json and saves them
+     * via OpenRegister's ObjectService. Idempotent: existing records (matched by
+     * taxonomyId for XBRLTaxonomy and code for SBRDocumentType) are skipped.
+     *
+     * @return array<string,mixed> Result with success flag, seeded counts, and skipped counts.
+     *
+     * @spec openspec/changes/bookkeeping-sbr-xbrl-reporting/tasks.md#task-13
+     */
+    public function seedXBRLData(): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not available, skipping XBRL seed.',
+            ];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/xbrl-seed.json';
+        if (file_exists($seedPath) === false) {
+            $this->logger->error('Shillinq: xbrl-seed.json not found at '.$seedPath);
+            return ['success' => false, 'message' => 'XBRL seed file not found.'];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return ['success' => false, 'message' => 'Failed to read XBRL seed file.'];
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return ['success' => false, 'message' => 'Failed to parse XBRL seed file: '.json_last_error_msg()];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach (($data['xbrlTaxonomies'] ?? []) as $taxonomy) {
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('XBRLTaxonomy')
+                    ->findAll(['filters' => ['taxonomyId' => $taxonomy['taxonomyId']], 'limit' => 1]);
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $taxonomy,
+                    register: $registerSlug,
+                    schema: 'XBRLTaxonomy',
+                );
+                $seeded++;
+            }
+
+            foreach (($data['sbrDocumentTypes'] ?? []) as $docType) {
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('SBRDocumentType')
+                    ->findAll(['filters' => ['code' => $docType['code']], 'limit' => 1]);
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $docType,
+                    register: $registerSlug,
+                    schema: 'SBRDocumentType',
+                );
+                $seeded++;
+            }
+
+            foreach (($data['xbrlMappings'] ?? []) as $mapping) {
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('XBRLMapping')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'sourceAccountId' => $mapping['sourceAccountId'],
+                                'taxonomyVersion' => $mapping['taxonomyVersion'],
+                            ],
+                            'limit'   => 1,
+                        ]
+                    );
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $mapping,
+                    register: $registerSlug,
+                    schema: 'XBRLMapping',
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: XBRL seed completed',
+                ['seeded' => $seeded, 'skipped' => $skipped]
+            );
+            return [
+                'success' => true,
+                'message' => 'XBRL seed completed successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: XBRL seed failed',
+                ['exception' => $e->getMessage()]
+            );
+            return ['success' => false, 'message' => $e->getMessage()];
+        }//end try
+
+    }//end seedXBRLData()
 }//end class
