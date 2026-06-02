@@ -1,0 +1,7 @@
+{
+  "schema_version": 2,
+  "spec_slug": "bookings-pipelinq-customer-bridge-07-timeline-publish-core",
+  "app": "shillinq",
+  "kind": "code",
+  "depends_on": ["bookings-pipelinq-customer-bridge-06-profile-card-ui"]
+}
