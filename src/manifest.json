@@ -88,6 +88,13 @@
 					"icon": "FileChartOutline",
 					"route": "ConsolidatedReport",
 					"order": 83
+				},
+				{
+					"id": "Iv3Reports",
+					"label": "IV3 Reports",
+					"icon": "FileChartOutline",
+					"route": "Iv3Reports",
+					"order": 84
 				}
 			]
 		},
@@ -594,6 +601,150 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "Waterschapsbelastingen"
+			}
+		},
+		{
+			"id": "Iv3Reports",
+			"route": "/iv3-reports",
+			"type": "index",
+			"title": "IV3 Reports",
+			"config": {
+				"register": "shillinq",
+				"schema": "IV3Report",
+				"columns": [
+					{
+						"key": "reportNumber",
+						"label": "Report Number",
+						"sortable": true
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Year",
+						"sortable": true
+					},
+					{
+						"key": "quarter",
+						"label": "Quarter",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "submissionDate",
+						"label": "Submitted",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-fiscalYear",
+				"detailRoute": "Iv3ReportDetail"
+			}
+		},
+		{
+			"id": "Iv3ReportDetail",
+			"route": "/iv3-reports/:id",
+			"type": "detail",
+			"title": "IV3 Report",
+			"config": {
+				"register": "shillinq",
+				"schema": "IV3Report",
+				"fields": [
+					{
+						"key": "reportNumber",
+						"label": "Report Number",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Year",
+						"type": "integer"
+					},
+					{
+						"key": "quarter",
+						"label": "Quarter",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"type": "date-time"
+					},
+					{
+						"key": "submissionDate",
+						"label": "Submission Date",
+						"type": "date-time"
+					},
+					{
+						"key": "filedDate",
+						"label": "Filed Date",
+						"type": "date-time"
+					},
+					{
+						"key": "cbsReceiptNumber",
+						"label": "CBS Receipt Number",
+						"type": "string"
+					},
+					{
+						"key": "notes",
+						"label": "Notes",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"relatedLists": [
+					{
+						"id": "iv3-report-lines",
+						"title": "IV3 Report Lines",
+						"schema": "IV3ReportLine",
+						"filter": {
+							"reportId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "iv3FieldCode",
+								"label": "CBS Field Code"
+							},
+							{
+								"key": "accountNumber",
+								"label": "Account"
+							},
+							{
+								"key": "debitAmount",
+								"label": "Debit (EUR)"
+							},
+							{
+								"key": "creditAmount",
+								"label": "Credit (EUR)"
+							},
+							{
+								"key": "netAmount",
+								"label": "Net (EUR)"
+							},
+							{
+								"key": "sequence",
+								"label": "Seq"
+							}
+						]
+					}
+				],
+				"indexRoute": "Iv3Reports"
 			}
 		},
 		{
