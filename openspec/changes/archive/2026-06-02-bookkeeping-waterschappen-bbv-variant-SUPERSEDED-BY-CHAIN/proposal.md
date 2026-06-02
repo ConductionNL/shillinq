@@ -1,3 +1,5 @@
+> SUPERSEDED 2026-06-02 (ADR-032): decomposed into bookkeeping-waterschappen-bbv-variant-01..12 (see openspec/changes/).
+
 # Proposal: bookkeeping-waterschappen-bbv-variant
 
 ## Summary
