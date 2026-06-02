@@ -68,6 +68,35 @@
 			]
 		},
 		{
+			"id": "Governance",
+			"label": "Governance",
+			"icon": "icon-category-security",
+			"order": 40,
+			"children": [
+				{
+					"id": "TreasuryAccounts",
+					"label": "Treasury Accounts",
+					"icon": "BankOutline",
+					"route": "TreasuryAccounts",
+					"order": 10
+				},
+				{
+					"id": "BankingRules",
+					"label": "Banking Rules",
+					"icon": "ShieldCheckOutline",
+					"route": "BankingRules",
+					"order": 20
+				},
+				{
+					"id": "ComplianceReports",
+					"label": "Compliance Reports",
+					"icon": "ClipboardCheckOutline",
+					"route": "ComplianceReports",
+					"order": 30
+				}
+			]
+		},
+		{
 			"id": "Documentation",
 			"label": "Documentation",
 			"icon": "icon-info",
@@ -93,6 +122,324 @@
 		}
 	],
 	"pages": [
+		{
+			"id": "TreasuryAccounts",
+			"route": "/governance/treasury-accounts",
+			"type": "index",
+			"title": "Treasury Accounts",
+			"config": {
+				"register": "shillinq",
+				"schema": "TreasuryAccount",
+				"columns": [
+					{
+						"key": "accountNumber",
+						"label": "Account Number",
+						"sortable": true
+					},
+					{
+						"key": "iban",
+						"label": "IBAN",
+						"sortable": true
+					},
+					{
+						"key": "accountName",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "complianceClassification",
+						"label": "Classification",
+						"sortable": true
+					},
+					{
+						"key": "masterListStatus",
+						"label": "Master List Status",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "accountNumber",
+				"detailRoute": "TreasuryAccountDetail"
+			}
+		},
+		{
+			"id": "TreasuryAccountDetail",
+			"route": "/governance/treasury-accounts/:id",
+			"type": "detail",
+			"title": "Treasury Account",
+			"config": {
+				"register": "shillinq",
+				"schema": "TreasuryAccount",
+				"fields": [
+					{
+						"key": "accountNumber",
+						"label": "Account Number",
+						"type": "string"
+					},
+					{
+						"key": "iban",
+						"label": "IBAN",
+						"type": "string"
+					},
+					{
+						"key": "bic",
+						"label": "BIC",
+						"type": "string"
+					},
+					{
+						"key": "bankName",
+						"label": "Bank Name",
+						"type": "string"
+					},
+					{
+						"key": "accountName",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "complianceClassification",
+						"label": "Compliance Classification",
+						"type": "string"
+					},
+					{
+						"key": "masterListStatus",
+						"label": "Master List Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "linkedAccountNumber",
+						"label": "Linked GL Account",
+						"type": "string"
+					},
+					{
+						"key": "requiresApproval",
+						"label": "Requires Approval",
+						"type": "boolean"
+					},
+					{
+						"key": "approvalStatus",
+						"label": "Approval Status",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Lifecycle Status",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "TreasuryAccounts"
+			}
+		},
+		{
+			"id": "BankingRules",
+			"route": "/governance/banking-rules",
+			"type": "index",
+			"title": "Banking Rules",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankingRule",
+				"columns": [
+					{
+						"key": "ruleNumber",
+						"label": "Rule Number",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "ruleType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "severity",
+						"label": "Severity",
+						"sortable": true
+					},
+					{
+						"key": "isActive",
+						"label": "Active",
+						"sortable": true
+					}
+				],
+				"defaultSort": "ruleNumber",
+				"detailRoute": "BankingRuleDetail"
+			}
+		},
+		{
+			"id": "BankingRuleDetail",
+			"route": "/governance/banking-rules/:id",
+			"type": "detail",
+			"title": "Banking Rule",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankingRule",
+				"fields": [
+					{
+						"key": "ruleNumber",
+						"label": "Rule Number",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "ruleType",
+						"label": "Rule Type",
+						"type": "string"
+					},
+					{
+						"key": "evaluationCriteria",
+						"label": "Evaluation Criteria",
+						"type": "json"
+					},
+					{
+						"key": "severity",
+						"label": "Severity",
+						"type": "string"
+					},
+					{
+						"key": "isActive",
+						"label": "Active",
+						"type": "boolean"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"indexRoute": "BankingRules"
+			}
+		},
+		{
+			"id": "ComplianceReports",
+			"route": "/governance/compliance-reports",
+			"type": "index",
+			"title": "Compliance Reports",
+			"config": {
+				"register": "shillinq",
+				"schema": "ComplianceReport",
+				"columns": [
+					{
+						"key": "reportNumber",
+						"label": "Report Number",
+						"sortable": true
+					},
+					{
+						"key": "reportPeriod",
+						"label": "Period",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					},
+					{
+						"key": "complianceScore",
+						"label": "Score",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-reportPeriod",
+				"aggregation": "byAdministrationAndPeriod",
+				"detailRoute": "ComplianceReportDetail"
+			}
+		},
+		{
+			"id": "ComplianceReportDetail",
+			"route": "/governance/compliance-reports/:id",
+			"type": "detail",
+			"title": "Compliance Report",
+			"config": {
+				"register": "shillinq",
+				"schema": "ComplianceReport",
+				"fields": [
+					{
+						"key": "reportNumber",
+						"label": "Report Number",
+						"type": "string"
+					},
+					{
+						"key": "reportPeriod",
+						"label": "Period",
+						"type": "string"
+					},
+					{
+						"key": "generatedAt",
+						"label": "Generated At",
+						"type": "date-time"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "treasuryAccountId",
+						"label": "Treasury Account",
+						"type": "string"
+					},
+					{
+						"key": "complianceScore",
+						"label": "Compliance Score",
+						"type": "number"
+					},
+					{
+						"key": "criteriaResults",
+						"label": "Criteria Results",
+						"type": "json"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "regulatoryExportFormat",
+						"label": "Export Format",
+						"type": "string"
+					},
+					{
+						"key": "regulatoryExportUri",
+						"label": "Export URI",
+						"type": "link"
+					}
+				],
+				"indexRoute": "ComplianceReports"
+			}
+		},
 		{
 			"id": "FeaturesRoadmap",
 			"route": "/features-roadmap",

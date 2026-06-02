@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 226
+**Entities:** 229
 
 ## Context
 
@@ -361,6 +361,22 @@ _Schema.org BankAccount — standard vocabulary for bankaccount data_
 | currency | string | Yes | Account currency |
 | balance | number | No | Current balance |
 
+### BankingRule
+**Schema.org:** `schatkist:BankingRule`
+_Configurable compliance criterion for schatkistbankieren treasury account validation. Operators configure rules per administration; rules are evaluated declaratively during TreasuryAccount lifecycle transitions per REQ-SCHATKIST-003. No overlap with BankAccount — BankingRule defines evaluation logic; BankAccount holds account data._
+**Primary spec:** bookkeeping-schatkistbankieren
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| ruleNumber | string | Yes | Stable identifier (e.g. rule-iban-format) |
+| name | string | Yes | Human-readable rule name |
+| description | string | No | Detailed rule description and rationale |
+| ruleType | enum | Yes | One of iban-format, segregation, approval-required, transaction-limit, reporting-period |
+| evaluationCriteria | object | Yes | Criteria payload (varies by ruleType) |
+| severity | enum | Yes | One of informational, warning, blocking |
+| isActive | boolean | Yes | Whether this rule is currently enforced in the administration |
+| administrationId | string | Yes | FK to administration; enables per-org rule customisation |
+
 ### Bid
 **Schema.org:** `schema:Offer`
 _A supplier's response to a tender with proposed pricing and terms; includes sealed bid handling and multi-round bidding_
@@ -698,6 +714,27 @@ _Analytics report tracking obligation and payment compliance metrics, supporting
 - → Obligation (one-to-many)
 - → Payment (one-to-many)
 - → SettlementDecision (one-to-many)
+
+### ComplianceReport (schatkistbankieren)
+**Schema.org:** `schema:Report`
+_Periodic compliance snapshot for schatkistbankieren treasury accounts. Carries automated compliance score (x-openregister-calculations from BankingRule match ratio), per-rule evaluation results, and regulatory export status. Distinct from the obligation-financial-administration ComplianceReport above — this entity is scoped to treasury banking governance, not payment-obligation analytics. No ComplianceScoringService.php — scoring is declarative per ADR-031 D5._
+**Primary spec:** bookkeeping-schatkistbankieren
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| reportNumber | string | Yes | Sequential identifier per administration |
+| reportPeriod | string | Yes | Period identifier (e.g. 2026-Q1 or 2026-01) |
+| generatedAt | datetime | Yes | Report generation timestamp |
+| treasuryAccountId | string | No | FK to TreasuryAccount (if single-account report); null if administration-wide |
+| complianceScore | number (0-100) | Yes (calculated) | Automated score from BankingRule match ratio — x-openregister-calculations |
+| criteriaResults | array | Yes (calculated) | Per-rule evaluation result (ruleNumber, passed, severity) — x-openregister-calculations |
+| status | enum | Yes | One of draft, reviewed, approved-for-export, exported |
+| regulatoryExportFormat | enum | No | One of csv-master-list, xml-regulatory, json-audit |
+| regulatoryExportUri | string | No | Storage URI (docudesk FK contract) of exported report |
+| administrationId | string | Yes | FK to administration this report covers |
+
+**Relations:**
+- → TreasuryAccount (many-to-one, optional; null = administration-wide aggregate)
 
 ### ComplianceRisk
 **Schema.org:** `schema:Report`
@@ -4198,6 +4235,31 @@ _Unified AP/AR/spend task list for cash flow management with due dates and count
 **Relations:**
 - → CashAccount (many-to-one)
 - → Organization (many-to-one)
+
+### TreasuryAccount
+**Schema.org:** `schema:BankAccount`
+_A schatkistbankieren treasury account subject to Dutch government treasury banking regulations. Master-list governance object carrying IBAN, compliance classification, and administration-scoped compliance attributes. Distinct from the BankAccount generic entity — TreasuryAccount adds schatkistbankieren-specific lifecycle (draft → configured → active → monitored → compliant), multi-criteria compliance precondition (ComplianceValidator per ADR-031 exception), and regulatory master-list status. No overlap with CashAccount (cash-management) or BankAccount (schema.org generic)._
+**Primary spec:** bookkeeping-schatkistbankieren
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| accountNumber | string | Yes | Stable identifier per administration (e.g. TR-NL-001) |
+| iban | string | Yes | Full Dutch IBAN, validated against ^NL[0-9]{2}[A-Z]{4}[0-9]{10}$ |
+| bic | string | No | BIC / SWIFT code |
+| bankName | string | No | Bank name for display |
+| accountName | string | Yes | Treasury account label |
+| description | string | No | Business purpose and governance notes |
+| complianceClassification | enum | Yes | One of master-list, subsidiary, suspense, temporary |
+| masterListStatus | enum | Yes | One of active, pending-review, blocked, archived |
+| administrationId | string | Yes | FK to administration owning the account |
+| linkedAccountNumber | string | No | FK to Account.accountNumber for GL classification (T1 chart-of-accounts) |
+| requiresApproval | boolean | Yes | Whether activation requires CFO/treasurer approval; default true |
+| approvalStatus | enum | Yes | One of not-required, pending, approved, rejected |
+| lifecycleState | enum | Yes | One of draft, configured, active, monitored, compliant, suspended, archived |
+
+**Relations:**
+- → Account (many-to-one, via linkedAccountNumber → accountNumber; T1 GL classification)
+- → ComplianceReport/schatkistbankieren (one-to-many; one report per compliance cycle)
 
 ### TrialBalance
 **Schema.org:** `schema:Table`
