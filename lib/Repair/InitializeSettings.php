@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\Shillinq\Service\BbvSeedService;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -38,6 +39,7 @@ class InitializeSettings implements IRepairStep
      * Constructor for InitializeSettings.
      *
      * @param SettingsService    $settingsService The settings service
+     * @param BbvSeedService     $bbvSeedService  The BBV stam-data seed service
      * @param LoggerInterface    $logger          The logger interface
      * @param ContainerInterface $container       The DI container
      *
@@ -45,6 +47,7 @@ class InitializeSettings implements IRepairStep
      */
     public function __construct(
         private SettingsService $settingsService,
+        private BbvSeedService $bbvSeedService,
         private LoggerInterface $logger,
         private ContainerInterface $container,
     ) {
@@ -124,6 +127,7 @@ class InitializeSettings implements IRepairStep
             }
 
             $this->seedChartOfAccounts(output: $output);
+            $this->seedBbvStamData(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
@@ -197,6 +201,46 @@ class InitializeSettings implements IRepairStep
         $output->info('Shillinq: IV3 quarterly CBS ScheduledWorkflow registered (interval: 90 days)');
 
     }//end registerIv3ScheduledWorkflow()
+
+    /**
+     * Seed the BBV stam-data (taakvelden, economische categorieen,
+     * beleidsindicatoren, RGS-decentraal mappings) for BBV-tenants only.
+     *
+     * Gated on rgs_template = 'bbv' (the BBV-tenant indicator at install/upgrade
+     * time) so generic SMB/ZZP administrations are unaffected. Idempotent on
+     * re-run via the SettingsService dedup keys (REQ-BBV-001/002/007).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md
+     */
+    private function seedBbvStamData(IOutput $output): void
+    {
+        $settings = $this->settingsService->getSettings();
+        $template = ($settings['rgs_template'] ?? '');
+        if ($template !== 'bbv') {
+            // Non-BBV tenant — skip BBV stam-data seeding entirely.
+            return;
+        }
+
+        $output->info('Seeding BBV stam-data (taakvelden, economische categorieen, beleidsindicatoren, RGS-decentraal)...');
+
+        $result = $this->bbvSeedService->seedAll();
+        if (($result['success'] ?? false) !== true) {
+            $output->warning('BBV stam-data seeding issue: '.($result['message'] ?? 'unknown error'));
+            return;
+        }
+
+        foreach (($result['counts'] ?? []) as $schema => $counts) {
+            $output->info(
+                'BBV '.$schema.': '.($counts['seeded'] ?? 0).' created, '
+                .($counts['skipped'] ?? 0).' skipped (already exist).'
+            );
+        }
+
+    }//end seedBbvStamData()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.

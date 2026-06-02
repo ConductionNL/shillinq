@@ -1,0 +1,37 @@
+{
+  "_meta": {
+    "spdx-license": "CC0-1.0",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Regeling Vaststelling Taakvelden (BZK Iv3-informatievoorschrift)",
+    "overheidslaag": "gemeente",
+    "iv3Version": "2025-1.0",
+    "effectiveDate": "2025-01-01",
+    "description": "BBV taakveldenstructuur voor gemeenten per Iv3-informatievoorschrift. Representatieve subset van de 53 gemeente-taakvelden; de volledige, jaarlijks bijgewerkte catalogus wordt via openconnector geimporteerd (REQ-BBV-001).",
+    "url": "https://www.referentiegrootboekschema.nl"
+  },
+  "taakvelden": [
+    {"code": "0.1", "naam": "Bestuur", "hoofdfunctie": 0, "hoofdfunctieNaam": "Bestuur en ondersteuning", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"},
+    {"code": "0.10", "naam": "Mutaties reserves", "hoofdfunctie": 0, "hoofdfunctieNaam": "Bestuur en ondersteuning", "omschrijvingIv3": "Resultaatbestemming: dotaties en onttrekkingen aan reserves.", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"},
+    {"code": "0.11", "naam": "Resultaat van de rekening van baten en lasten", "hoofdfunctie": 0, "hoofdfunctieNaam": "Bestuur en ondersteuning", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"},
+    {"code": "0.61", "naam": "OZB woningen", "hoofdfunctie": 0, "hoofdfunctieNaam": "Bestuur en ondersteuning", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"},
+    {"code": "0.64", "naam": "Belastingen overig", "hoofdfunctie": 0, "hoofdfunctieNaam": "Bestuur en ondersteuning", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"},
+    {"code": "1.1", "naam": "Crisisbeheersing en brandweer", "hoofdfunctie": 1, "hoofdfunctieNaam": "Veiligheid", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"},
+    {"code": "1.2", "naam": "Openbare orde en veiligheid", "hoofdfunctie": 1, "hoofdfunctieNaam": "Veiligheid", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"},
+    {"code": "2.1", "naam": "Verkeer en vervoer", "hoofdfunctie": 2, "hoofdfunctieNaam": "Verkeer, vervoer en waterstaat", "omschrijvingIv3": "Wegen, straten, pleinen; onderhoud en voorziening groot onderhoud wegen.", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"},
+    {"code": "2.2", "naam": "Parkeren", "hoofdfunctie": 2, "hoofdfunctieNaam": "Verkeer, vervoer en waterstaat", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"},
+    {"code": "3.1", "naam": "Economische ontwikkeling", "hoofdfunctie": 3, "hoofdfunctieNaam": "Economie", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"},
+    {"code": "4.2", "naam": "Onderwijshuisvesting", "hoofdfunctie": 4, "hoofdfunctieNaam": "Onderwijs", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"},
+    {"code": "4.3", "naam": "Onderwijsbeleid en leerlingzaken", "hoofdfunctie": 4, "hoofdfunctieNaam": "Onderwijs", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"},
+    {"code": "5.2", "naam": "Sportaccommodaties", "hoofdfunctie": 5, "hoofdfunctieNaam": "Sport, cultuur en recreatie", "omschrijvingIv3": "Sporthallen, zwembaden en overige sportaccommodaties.", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"},
+    {"code": "5.7", "naam": "Openbaar groen en (openlucht) recreatie", "hoofdfunctie": 5, "hoofdfunctieNaam": "Sport, cultuur en recreatie", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"},
+    {"code": "6.1", "naam": "Samenkracht en burgerparticipatie", "hoofdfunctie": 6, "hoofdfunctieNaam": "Sociaal domein", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"},
+    {"code": "6.2", "naam": "Toegang en eerstelijnsvoorzieningen", "hoofdfunctie": 6, "hoofdfunctieNaam": "Sociaal domein", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"},
+    {"code": "6.72", "naam": "Maatwerkdienstverlening 18-", "hoofdfunctie": 6, "hoofdfunctieNaam": "Sociaal domein", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"},
+    {"code": "7.2", "naam": "Riolering", "hoofdfunctie": 7, "hoofdfunctieNaam": "Volksgezondheid en milieu", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"},
+    {"code": "7.3", "naam": "Afval", "hoofdfunctie": 7, "hoofdfunctieNaam": "Volksgezondheid en milieu", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"},
+    {"code": "7.5", "naam": "Begraafplaatsen en crematoria", "hoofdfunctie": 7, "hoofdfunctieNaam": "Volksgezondheid en milieu", "omschrijvingIv3": "Beheer en exploitatie van gemeentelijke begraafplaatsen en crematoria.", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"},
+    {"code": "8.1", "naam": "Ruimtelijke ordening", "hoofdfunctie": 8, "hoofdfunctieNaam": "Volkshuisvesting, RO en stedelijke vernieuwing", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"},
+    {"code": "8.2", "naam": "Grondexploitatie (niet-bedrijventerreinen)", "hoofdfunctie": 8, "hoofdfunctieNaam": "Volkshuisvesting, RO en stedelijke vernieuwing", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"},
+    {"code": "8.3", "naam": "Wonen en bouwen", "hoofdfunctie": 8, "hoofdfunctieNaam": "Volkshuisvesting, RO en stedelijke vernieuwing", "overheidslaag": "gemeente", "geldigVanaf": "2025-01-01"}
+  ]
+}

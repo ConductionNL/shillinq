@@ -1,0 +1,20 @@
+{
+  "_meta": {
+    "spdx-license": "CC0-1.0",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "SBR/Logius RGS-decentraal publicatie",
+    "iv3Version": "2025-1.0",
+    "effectiveDate": "2025-01-01",
+    "description": "RGS-decentraal D-codes met default taakveld + economische categorie + Iv3-bucket koppeling (BbvAccountMapping templates). Representatieve subset; de volledige catalogus (ca. 200 D-codes) wordt via openconnector geimporteerd (REQ-BBV-001).",
+    "url": "https://www.referentiegrootboekschema.nl"
+  },
+  "mappings": [
+    {"accountNumber": "0100", "administrationId": "template", "rgsDecentraalCode": "BIvaKvO", "omschrijvingKort": "Immateriele vaste activa", "dc": "D", "rgsNiveau": 3, "iv3Bucket": "IV3-BAL-IVA"},
+    {"accountNumber": "2310", "administrationId": "template", "rgsDecentraalCode": "BVrzRes", "omschrijvingKort": "Bestemmingsreserve", "dc": "C", "rgsNiveau": 3, "taakveldDefault": "0.10", "iv3Bucket": "IV3-BAL-RES"},
+    {"accountNumber": "2420", "administrationId": "template", "rgsDecentraalCode": "BVrzOnh", "omschrijvingKort": "Voorziening groot onderhoud", "dc": "C", "rgsNiveau": 3, "taakveldDefault": "2.1", "economischeCategorieDefault": "7.1", "iv3Bucket": "IV3-BAL-VRZ"},
+    {"accountNumber": "4250", "administrationId": "template", "rgsDecentraalCode": "WLasOlpOlp", "omschrijvingKort": "Onderhoud wegen", "referentienummer": "4.2.5.0.0", "dc": "D", "rgsNiveau": 4, "taakveldDefault": "2.1", "economischeCategorieDefault": "3.4.3", "iv3Bucket": "IV3-021"},
+    {"accountNumber": "4310", "administrationId": "template", "rgsDecentraalCode": "WLasOlpBeg", "omschrijvingKort": "Onderhoud begraafplaatsen", "referentienummer": "4.3.1.0.0", "dc": "D", "rgsNiveau": 4, "taakveldDefault": "7.5", "economischeCategorieDefault": "3.4.3", "iv3Bucket": "IV3-075"},
+    {"accountNumber": "4100", "administrationId": "template", "rgsDecentraalCode": "WLasLes", "omschrijvingKort": "Salarissen", "referentienummer": "4.1.0.0.0", "dc": "D", "rgsNiveau": 3, "economischeCategorieDefault": "1.1", "iv3Bucket": "IV3-001"},
+    {"accountNumber": "8100", "administrationId": "template", "rgsDecentraalCode": "WBatBel", "omschrijvingKort": "Belastingopbrengsten", "dc": "C", "rgsNiveau": 3, "taakveldDefault": "0.61", "economischeCategorieDefault": "8.1", "iv3Bucket": "IV3-081"}
+  ]
+}
