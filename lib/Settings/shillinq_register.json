@@ -103,10 +103,11 @@
             "enum": [
               "ap",
               "ar",
+              "fa",
               "project",
               "none"
             ],
-            "description": "Sub-ledger discriminator; T2 owns the actual sub-ledger registers.",
+            "description": "Sub-ledger discriminator; T2 owns the actual sub-ledger registers. 'fa' resolves to FixedAsset per REQ-FA-001.",
             "nullable": true
           },
           "subLedgerRef": {
@@ -718,8 +719,675 @@
             }
           }
         }
+      },
+      "FixedAsset": {
+        "slug": "FixedAsset",
+        "icon": "OfficeBuilding",
+        "version": "0.1.0",
+        "title": "Fixed Asset",
+        "description": "A tangible business asset with long-term value subject to annual depreciation calculation per Dutch tax law (Vennootschapsbelasting). Acquisition materialises a balanced GLTransaction; retirement materialises a compensating posting per REQ-FA-008.",
+        "x-schema-org": "schema:Thing",
+        "type": "object",
+        "required": [
+          "assetNumber",
+          "name",
+          "assetType",
+          "purchaseDate",
+          "purchaseCost",
+          "usefulLifeYears",
+          "depreciationMethod",
+          "status",
+          "administrationId"
+        ],
+        "properties": {
+          "assetNumber": {
+            "type": "string",
+            "description": "Unique identifier per administration (auto-generated or operator-assigned).",
+            "example": "ASSET-V-2026-0001"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable asset name.",
+            "example": "Company Vehicle – License ABC-123"
+          },
+          "assetType": {
+            "type": "string",
+            "enum": [
+              "equipment",
+              "vehicle",
+              "property",
+              "building",
+              "leasehold",
+              "other"
+            ],
+            "description": "Tangible asset category.",
+            "example": "vehicle"
+          },
+          "description": {
+            "type": "string",
+            "description": "Additional asset details or serial number.",
+            "nullable": true
+          },
+          "purchaseDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of acquisition.",
+            "example": "2026-01-15"
+          },
+          "purchaseCost": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Original acquisition cost in base currency (EUR).",
+            "example": 25000
+          },
+          "residualValue": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0,
+            "description": "Estimated residual value at end of useful life. Default 0 (fully depreciates).",
+            "example": 2000
+          },
+          "usefulLifeYears": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Estimated useful life in years (e.g. 5 for vehicles, 20 for buildings).",
+            "example": 5
+          },
+          "depreciationMethod": {
+            "type": "string",
+            "enum": [
+              "linear",
+              "declining-balance",
+              "units-of-production"
+            ],
+            "description": "Depreciation method applied throughout asset useful life.",
+            "example": "linear"
+          },
+          "declineRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "For declining-balance: annual decline percentage (e.g. 0.40 for 40%).",
+            "nullable": true,
+            "example": 0.40
+          },
+          "productionUnits": {
+            "type": "integer",
+            "description": "For units-of-production: estimated total lifetime units.",
+            "nullable": true
+          },
+          "capitalizationAccountNumber": {
+            "type": "string",
+            "description": "FK to Account.accountNumber for asset capitalisation GL account (debit on acquisition).",
+            "nullable": true,
+            "example": "0600"
+          },
+          "depreciationExpenseAccountNumber": {
+            "type": "string",
+            "description": "FK to Account.accountNumber for depreciation-expense GL account (debit on yearly posting).",
+            "nullable": true,
+            "example": "6600"
+          },
+          "accumulatedDepreciationAccountNumber": {
+            "type": "string",
+            "description": "FK to Account.accountNumber for accumulated-depreciation GL account (contra-asset; credit on yearly posting).",
+            "nullable": true,
+            "example": "0680"
+          },
+          "location": {
+            "type": "string",
+            "description": "Physical location or cost center of the asset.",
+            "nullable": true,
+            "example": "Amsterdam HQ"
+          },
+          "costCenterCode": {
+            "type": "string",
+            "description": "Cost center for depreciation allocation and internal transfer tracking.",
+            "nullable": true,
+            "example": "HQ"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "retired"
+            ],
+            "description": "Current lifecycle state of the asset.",
+            "default": "active",
+            "example": "active"
+          },
+          "retirementDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date asset was retired (populated when status transitions to retired).",
+            "nullable": true
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning administration. Scopes assetNumber uniqueness.",
+            "example": "adm-sample"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Asset is in service; yearly depreciation postings fire automatically."
+            },
+            "inactive": {
+              "label": "Inactive",
+              "description": "Asset temporarily out of service; depreciation schedule paused."
+            },
+            "retired": {
+              "label": "Retired",
+              "description": "Asset permanently decommissioned; compensating GL posting materialises on retirement."
+            }
+          },
+          "transitions": {
+            "deactivate": {
+              "from": "active",
+              "to": "inactive",
+              "label": "Deactivate",
+              "description": "Temporarily remove asset from service."
+            },
+            "reactivate": {
+              "from": "inactive",
+              "to": "active",
+              "label": "Reactivate",
+              "description": "Return asset to active service."
+            },
+            "retire": {
+              "from": "active",
+              "to": "retired",
+              "label": "Retire asset",
+              "description": "Permanently decommission asset. Triggers compensating GL posting (removes asset and accumulated depreciation from books; posts gain/loss on disposal if salvage proceeds exist)."
+            }
+          },
+          "hooks": {
+            "onAcquisition": {
+              "trigger": "lifecycle:transitioned",
+              "condition": "status = 'active'",
+              "description": "On first activation, auto-generate the first-year DepreciationSchedule using depreciationMethod, usefulLifeYears, purchaseDate, and administrationId fiscal year per REQ-FA-004.",
+              "action": "x-openregister-create-related",
+              "actionParameters": {
+                "register": "shillinq",
+                "schema": "DepreciationSchedule",
+                "template": "first-year-depreciation-schedule",
+                "floatPrecisionSource": "nextcloud-system-settings",
+                "floatPrecisionFallback": 2
+              }
+            },
+            "onAcquisitionGL": {
+              "trigger": "lifecycle:transitioned",
+              "condition": "status = 'active'",
+              "description": "Materialise balanced GLTransaction on acquisition: debit capitalizationAccountNumber, credit cash/liability per T1 REQ-JE-007 pattern and REQ-FA-008.",
+              "action": "x-openregister-materialise-gl",
+              "actionParameters": {
+                "glPostingTemplate": "asset-acquisition",
+                "subLedgerType": "fa",
+                "idempotencyKey": "(administrationId, assetNumber, 'acquisition')"
+              }
+            },
+            "onRetirementGL": {
+              "trigger": "lifecycle:transitioned",
+              "condition": "status = 'retired'",
+              "description": "Materialise compensating GLTransaction on retirement per REQ-FA-008: remove asset and accumulated depreciation from books; post gain/loss on disposal if salvage proceeds exist.",
+              "action": "x-openregister-materialise-gl",
+              "actionParameters": {
+                "glPostingTemplate": "asset-retirement",
+                "subLedgerType": "fa",
+                "idempotencyKey": "(administrationId, assetNumber, 'retirement')"
+              }
+            },
+            "onTransfer": {
+              "trigger": "property:changed",
+              "condition": "costCenterCode IS CHANGED",
+              "description": "Internal asset transfer per REQ-FA-006: updates costCenterCode and adjusts the DepreciationSchedule cost-center allocation. No GL posting required (asset remains on same GL account).",
+              "action": "x-openregister-update-related",
+              "actionParameters": {
+                "register": "shillinq",
+                "schema": "DepreciationSchedule",
+                "filterBy": "assetRef",
+                "updateField": "costCenterCode"
+              }
+            }
+          }
+        },
+        "x-openregister-scheduled-workflows": {
+          "yearly-depreciation": {
+            "name": "Yearly depreciation posting",
+            "description": "Creates new DepreciationSchedule records for the new fiscal year and materialises balanced GLTransaction records (debit depreciation-expense, credit accumulated-depreciation) for all active assets on 1 January each year per REQ-FA-004 and REQ-FA-007. Float Precision is queried from Nextcloud System Settings at calculation time; fallback to 2 decimal places (Dutch standard) per REQ-FA-005.",
+            "cron": "0 0 1 1 *",
+            "register": "shillinq",
+            "schema": "FixedAsset",
+            "enabled": true,
+            "filter": {
+              "status": "active"
+            },
+            "actionParameters": {
+              "floatPrecisionSource": "nextcloud-system-settings",
+              "floatPrecisionFallback": 2,
+              "subLedgerType": "fa"
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "bookValuesByStatus": {
+            "description": "Sum of book values grouped by asset status for balance-sheet reporting per REQ-FA-009 item 4.",
+            "join": {
+              "schema": "DepreciationSchedule",
+              "condition": "DepreciationSchedule.assetRef = FixedAsset.id AND DepreciationSchedule.status = 'active'",
+              "select": "bookValue"
+            },
+            "groupBy": "status",
+            "operations": {
+              "totalBookValue": {
+                "field": "DepreciationSchedule.bookValue",
+                "operation": "sum"
+              },
+              "assetCount": {
+                "field": "id",
+                "operation": "count"
+              }
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "depreciationSchedules": {
+            "localField": "id",
+            "relatedSchema": "DepreciationSchedule",
+            "relatedField": "assetRef",
+            "cardinality": "one-to-many",
+            "description": "All depreciation schedule records for this asset, ordered by fiscalYear ascending."
+          }
+        }
+      },
+      "DepreciationSchedule": {
+        "slug": "DepreciationSchedule",
+        "icon": "CalendarClock",
+        "version": "0.1.0",
+        "title": "Depreciation Schedule",
+        "description": "Per-asset yearly depreciation tracking for a fixed asset. Declares method, annual rate, period boundaries, and calculated amounts. Immutable append-only per REQ-FA-003 and D4 (changes tracked via audit trail). Float Precision from Nextcloud System Settings applied at calculation time per REQ-FA-005.",
+        "x-schema-org": "schema:Thing",
+        "type": "object",
+        "required": [
+          "scheduleNumber",
+          "assetRef",
+          "depreciationMethod",
+          "annualRate",
+          "rateType",
+          "periodStartDate",
+          "periodEndDate",
+          "depreciationAmount",
+          "accumulatedDepreciation",
+          "bookValue",
+          "fiscalYear",
+          "status",
+          "administrationId"
+        ],
+        "properties": {
+          "scheduleNumber": {
+            "type": "string",
+            "description": "Unique identifier for the depreciation schedule record.",
+            "example": "SCHED-ASSET-V-2026-0001-FY2026"
+          },
+          "assetRef": {
+            "type": "string",
+            "description": "FK to FixedAsset UUID (OpenRegister relation).",
+            "example": "fa-uuid-0001"
+          },
+          "depreciationMethod": {
+            "type": "string",
+            "enum": [
+              "linear",
+              "declining-balance",
+              "units-of-production"
+            ],
+            "description": "Depreciation method applied in this schedule period.",
+            "example": "linear"
+          },
+          "annualRate": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Annual depreciation rate as decimal (e.g. 0.20 = 20%) or fixed EUR amount per rateType.",
+            "example": 0.20
+          },
+          "rateType": {
+            "type": "string",
+            "enum": [
+              "percentage",
+              "fixed-amount",
+              "units-per-year"
+            ],
+            "description": "Interpretation of annualRate field.",
+            "example": "percentage"
+          },
+          "periodStartDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Start date of the depreciation period (typically fiscal year start).",
+            "example": "2026-01-01"
+          },
+          "periodEndDate": {
+            "type": "string",
+            "format": "date",
+            "description": "End date of the depreciation period (typically fiscal year end).",
+            "example": "2026-12-31"
+          },
+          "depreciationAmount": {
+            "type": "number",
+            "description": "Depreciation amount for this period. Rounded to Float Precision setting (fallback: 2 decimal places per Dutch standard).",
+            "example": 4600.00
+          },
+          "accumulatedDepreciation": {
+            "type": "number",
+            "description": "Total depreciation accumulated across all periods to date.",
+            "example": 4600.00
+          },
+          "bookValue": {
+            "type": "number",
+            "description": "Net book value at period end = FixedAsset.purchaseCost − accumulatedDepreciation. Computed field; not stored independently.",
+            "example": 20400.00
+          },
+          "costCenterCode": {
+            "type": "string",
+            "description": "Cost center for depreciation allocation. Updated by internal asset transfer per REQ-FA-006.",
+            "nullable": true,
+            "example": "HQ"
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "description": "Fiscal year this schedule covers.",
+            "example": 2026
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "planned",
+              "active",
+              "completed"
+            ],
+            "description": "Schedule status.",
+            "default": "planned",
+            "example": "active"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning administration.",
+            "example": "adm-sample"
+          }
+        },
+        "x-openregister-calculations": {
+          "bookValue": {
+            "description": "Derived net book value per REQ-FA-003: FixedAsset.purchaseCost minus accumulatedDepreciation at period end.",
+            "formula": "relatedObject('FixedAsset', assetRef).purchaseCost - accumulatedDepreciation",
+            "precision": {
+              "source": "nextcloud-system-settings:floatPrecision",
+              "fallback": 2
+            }
+          },
+          "depreciationAmount": {
+            "description": "Period depreciation amount computed per depreciationMethod with Float Precision rounding per REQ-FA-005.",
+            "formula": {
+              "linear": "(relatedObject('FixedAsset', assetRef).purchaseCost - relatedObject('FixedAsset', assetRef).residualValue) * annualRate",
+              "declining-balance": "relatedObject('FixedAsset', assetRef).purchaseCost * relatedObject('FixedAsset', assetRef).declineRate",
+              "units-of-production": "(relatedObject('FixedAsset', assetRef).purchaseCost - relatedObject('FixedAsset', assetRef).residualValue) * (annualRate / relatedObject('FixedAsset', assetRef).productionUnits)"
+            },
+            "precision": {
+              "source": "nextcloud-system-settings:floatPrecision",
+              "fallback": 2
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "depreciationByMethod": {
+            "description": "Sum of depreciation amounts grouped by method for current fiscal year per REQ-FA-009 item 1.",
+            "groupBy": "depreciationMethod",
+            "operations": {
+              "totalDepreciation": {
+                "field": "depreciationAmount",
+                "operation": "sum"
+              },
+              "scheduleCount": {
+                "field": "scheduleNumber",
+                "operation": "count"
+              }
+            }
+          },
+          "depreciationByCostCenter": {
+            "description": "Sum of depreciation amounts grouped by cost center for current fiscal year per REQ-FA-009 item 2.",
+            "groupBy": "costCenterCode",
+            "operations": {
+              "totalDepreciation": {
+                "field": "depreciationAmount",
+                "operation": "sum"
+              }
+            }
+          },
+          "accumulatedDepreciationByAsset": {
+            "description": "Cumulative depreciation across all periods per asset per REQ-FA-009 item 3.",
+            "groupBy": "assetRef",
+            "operations": {
+              "totalAccumulatedDepreciation": {
+                "field": "accumulatedDepreciation",
+                "operation": "max"
+              },
+              "totalDepreciation": {
+                "field": "depreciationAmount",
+                "operation": "sum"
+              }
+            }
+          },
+          "bookValuesByStatus": {
+            "description": "Book values grouped by asset status for balance-sheet reporting per REQ-FA-009 item 4.",
+            "join": {
+              "schema": "FixedAsset",
+              "condition": "FixedAsset.id = DepreciationSchedule.assetRef AND DepreciationSchedule.status = 'active'",
+              "select": "FixedAsset.status"
+            },
+            "groupBy": "FixedAsset.status",
+            "operations": {
+              "totalBookValue": {
+                "field": "bookValue",
+                "operation": "sum"
+              }
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "fixedAsset": {
+            "localField": "assetRef",
+            "relatedSchema": "FixedAsset",
+            "relatedField": "id",
+            "cardinality": "many-to-one",
+            "description": "The fixed asset this depreciation schedule belongs to."
+          }
+        }
       }
     },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "FixedAsset",
+          "slug": "company-vehicle-2026"
+        },
+        "assetNumber": "ASSET-V-2026-0001",
+        "name": "Company Vehicle – License ABC-123",
+        "assetType": "vehicle",
+        "description": "Lease-end purchase; company pool car for sales team.",
+        "purchaseDate": "2026-01-15",
+        "purchaseCost": 25000,
+        "residualValue": 2000,
+        "usefulLifeYears": 5,
+        "depreciationMethod": "linear",
+        "capitalizationAccountNumber": "0600",
+        "depreciationExpenseAccountNumber": "6600",
+        "accumulatedDepreciationAccountNumber": "0680",
+        "location": "Amsterdam HQ – Parking P1",
+        "costCenterCode": "HQ",
+        "status": "active",
+        "administrationId": "adm-sample"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "FixedAsset",
+          "slug": "office-building-2020"
+        },
+        "assetNumber": "ASSET-B-2020-0001",
+        "name": "Office Building – Amsterdam Herengracht",
+        "assetType": "building",
+        "description": "Main office premises, owned freehold.",
+        "purchaseDate": "2020-06-01",
+        "purchaseCost": 200000,
+        "residualValue": 20000,
+        "usefulLifeYears": 20,
+        "depreciationMethod": "linear",
+        "capitalizationAccountNumber": "0100",
+        "depreciationExpenseAccountNumber": "6610",
+        "accumulatedDepreciationAccountNumber": "0180",
+        "location": "Herengracht 182, 1016 BR Amsterdam",
+        "costCenterCode": "HQ",
+        "status": "active",
+        "administrationId": "adm-sample"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "FixedAsset",
+          "slug": "computer-equipment-2025"
+        },
+        "assetNumber": "ASSET-E-2025-0001",
+        "name": "Computer Equipment – IT Lab Workstations",
+        "assetType": "equipment",
+        "description": "10-unit workstation refresh for IT lab.",
+        "purchaseDate": "2025-09-01",
+        "purchaseCost": 5000,
+        "residualValue": 500,
+        "usefulLifeYears": 3,
+        "depreciationMethod": "declining-balance",
+        "declineRate": 0.40,
+        "capitalizationAccountNumber": "0200",
+        "depreciationExpenseAccountNumber": "6620",
+        "accumulatedDepreciationAccountNumber": "0280",
+        "location": "Amsterdam HQ – IT Lab",
+        "costCenterCode": "IT",
+        "status": "active",
+        "administrationId": "adm-sample"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "FixedAsset",
+          "slug": "retired-equipment-2023"
+        },
+        "assetNumber": "ASSET-E-2020-0001",
+        "name": "Old Computer Equipment – Fully Depreciated",
+        "assetType": "equipment",
+        "description": "First-generation workstations, fully depreciated and decommissioned.",
+        "purchaseDate": "2020-01-15",
+        "purchaseCost": 3000,
+        "residualValue": 0,
+        "usefulLifeYears": 3,
+        "depreciationMethod": "linear",
+        "capitalizationAccountNumber": "0200",
+        "depreciationExpenseAccountNumber": "6620",
+        "accumulatedDepreciationAccountNumber": "0280",
+        "location": "Amsterdam HQ – Storage",
+        "costCenterCode": "IT",
+        "status": "retired",
+        "retirementDate": "2023-12-31",
+        "administrationId": "adm-sample"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "DepreciationSchedule",
+          "slug": "sched-vehicle-2026"
+        },
+        "scheduleNumber": "SCHED-ASSET-V-2026-0001-FY2026",
+        "assetRef": "company-vehicle-2026",
+        "depreciationMethod": "linear",
+        "annualRate": 0.20,
+        "rateType": "percentage",
+        "periodStartDate": "2026-01-01",
+        "periodEndDate": "2026-12-31",
+        "depreciationAmount": 4600.00,
+        "accumulatedDepreciation": 4600.00,
+        "bookValue": 20400.00,
+        "costCenterCode": "HQ",
+        "fiscalYear": 2026,
+        "status": "active",
+        "administrationId": "adm-sample"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "DepreciationSchedule",
+          "slug": "sched-building-2026"
+        },
+        "scheduleNumber": "SCHED-ASSET-B-2020-0001-FY2026",
+        "assetRef": "office-building-2020",
+        "depreciationMethod": "linear",
+        "annualRate": 0.05,
+        "rateType": "percentage",
+        "periodStartDate": "2026-01-01",
+        "periodEndDate": "2026-12-31",
+        "depreciationAmount": 9000.00,
+        "accumulatedDepreciation": 54000.00,
+        "bookValue": 146000.00,
+        "costCenterCode": "HQ",
+        "fiscalYear": 2026,
+        "status": "active",
+        "administrationId": "adm-sample"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "DepreciationSchedule",
+          "slug": "sched-computer-2026"
+        },
+        "scheduleNumber": "SCHED-ASSET-E-2025-0001-FY2026",
+        "assetRef": "computer-equipment-2025",
+        "depreciationMethod": "declining-balance",
+        "annualRate": 0.40,
+        "rateType": "percentage",
+        "periodStartDate": "2026-01-01",
+        "periodEndDate": "2026-12-31",
+        "depreciationAmount": 1800.00,
+        "accumulatedDepreciation": 3800.00,
+        "bookValue": 1200.00,
+        "costCenterCode": "IT",
+        "fiscalYear": 2026,
+        "status": "active",
+        "administrationId": "adm-sample"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "DepreciationSchedule",
+          "slug": "sched-retired-2023"
+        },
+        "scheduleNumber": "SCHED-ASSET-E-2020-0001-FY2023",
+        "assetRef": "retired-equipment-2023",
+        "depreciationMethod": "linear",
+        "annualRate": 0.3333,
+        "rateType": "percentage",
+        "periodStartDate": "2023-01-01",
+        "periodEndDate": "2023-12-31",
+        "depreciationAmount": 1000.00,
+        "accumulatedDepreciation": 3000.00,
+        "bookValue": 0.00,
+        "costCenterCode": "IT",
+        "fiscalYear": 2023,
+        "status": "completed",
+        "administrationId": "adm-sample"
+      }
+    ],
     "mappings": {
       "iv3-xml-transformation": {
         "slug": "iv3-xml-transformation",

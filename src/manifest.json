@@ -26,6 +26,27 @@
 					"order": 10
 				},
 				{
+					"id": "FixedAssets",
+					"label": "Fixed Assets",
+					"icon": "OfficeBuilding",
+					"route": "FixedAssets",
+					"order": 20
+				},
+				{
+					"id": "DepreciationSchedules",
+					"label": "Depreciation Schedules",
+					"icon": "CalendarClock",
+					"route": "DepreciationSchedules",
+					"order": 30
+				},
+				{
+					"id": "DepreciationExpense",
+					"label": "Depreciation Expense",
+					"icon": "ChartLine",
+					"route": "DepreciationExpense",
+					"order": 40
+				},
+				{
 					"id": "GRDeelnemers",
 					"label": "Deelnemers",
 					"icon": "AccountMultipleOutline",
@@ -430,6 +451,334 @@
 				],
 				"defaultSort": "accountNumber",
 				"aggregation": "consolidatedTrialBalance"
+			}
+		},
+		{
+			"id": "FixedAssets",
+			"route": "/fixed-assets",
+			"type": "index",
+			"title": "Fixed Assets",
+			"config": {
+				"register": "shillinq",
+				"schema": "FixedAsset",
+				"columns": [
+					{
+						"key": "assetNumber",
+						"label": "Asset Number",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "assetType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "purchaseCost",
+						"label": "Acquisition Cost",
+						"sortable": true
+					},
+					{
+						"key": "depreciationMethod",
+						"label": "Method",
+						"sortable": true
+					},
+					{
+						"key": "costCenterCode",
+						"label": "Cost Center",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "assetNumber",
+				"detailRoute": "FixedAssetDetail"
+			}
+		},
+		{
+			"id": "FixedAssetDetail",
+			"route": "/fixed-assets/:id",
+			"type": "detail",
+			"title": "Fixed Asset",
+			"config": {
+				"register": "shillinq",
+				"schema": "FixedAsset",
+				"fields": [
+					{
+						"key": "assetNumber",
+						"label": "Asset Number",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "assetType",
+						"label": "Asset Type",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "purchaseDate",
+						"label": "Purchase Date",
+						"type": "date"
+					},
+					{
+						"key": "purchaseCost",
+						"label": "Acquisition Cost",
+						"type": "number"
+					},
+					{
+						"key": "residualValue",
+						"label": "Residual Value",
+						"type": "number"
+					},
+					{
+						"key": "usefulLifeYears",
+						"label": "Useful Life (Years)",
+						"type": "integer"
+					},
+					{
+						"key": "depreciationMethod",
+						"label": "Depreciation Method",
+						"type": "string"
+					},
+					{
+						"key": "declineRate",
+						"label": "Decline Rate",
+						"type": "number"
+					},
+					{
+						"key": "capitalizationAccountNumber",
+						"label": "Capitalisation Account",
+						"type": "string"
+					},
+					{
+						"key": "depreciationExpenseAccountNumber",
+						"label": "Depreciation Expense Account",
+						"type": "string"
+					},
+					{
+						"key": "accumulatedDepreciationAccountNumber",
+						"label": "Accumulated Depreciation Account",
+						"type": "string"
+					},
+					{
+						"key": "location",
+						"label": "Location",
+						"type": "string"
+					},
+					{
+						"key": "costCenterCode",
+						"label": "Cost Center",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "retirementDate",
+						"label": "Retirement Date",
+						"type": "date"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"relatedSchema": "DepreciationSchedule",
+				"relatedField": "assetRef",
+				"relatedLabel": "Depreciation Schedules",
+				"indexRoute": "FixedAssets"
+			}
+		},
+		{
+			"id": "DepreciationSchedules",
+			"route": "/depreciation-schedules",
+			"type": "index",
+			"title": "Depreciation Schedules",
+			"config": {
+				"register": "shillinq",
+				"schema": "DepreciationSchedule",
+				"columns": [
+					{
+						"key": "scheduleNumber",
+						"label": "Schedule Number",
+						"sortable": true
+					},
+					{
+						"key": "assetRef",
+						"label": "Asset",
+						"sortable": true
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Fiscal Year",
+						"sortable": true
+					},
+					{
+						"key": "depreciationMethod",
+						"label": "Method",
+						"sortable": true
+					},
+					{
+						"key": "depreciationAmount",
+						"label": "Depreciation Amount",
+						"sortable": true
+					},
+					{
+						"key": "accumulatedDepreciation",
+						"label": "Accumulated Depreciation",
+						"sortable": true
+					},
+					{
+						"key": "bookValue",
+						"label": "Book Value",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-fiscalYear",
+				"detailRoute": "DepreciationScheduleDetail"
+			}
+		},
+		{
+			"id": "DepreciationScheduleDetail",
+			"route": "/depreciation-schedules/:id",
+			"type": "detail",
+			"title": "Depreciation Schedule",
+			"config": {
+				"register": "shillinq",
+				"schema": "DepreciationSchedule",
+				"fields": [
+					{
+						"key": "scheduleNumber",
+						"label": "Schedule Number",
+						"type": "string"
+					},
+					{
+						"key": "assetRef",
+						"label": "Asset",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Fiscal Year",
+						"type": "integer"
+					},
+					{
+						"key": "depreciationMethod",
+						"label": "Method",
+						"type": "string"
+					},
+					{
+						"key": "annualRate",
+						"label": "Annual Rate",
+						"type": "number"
+					},
+					{
+						"key": "rateType",
+						"label": "Rate Type",
+						"type": "string"
+					},
+					{
+						"key": "periodStartDate",
+						"label": "Period Start",
+						"type": "date"
+					},
+					{
+						"key": "periodEndDate",
+						"label": "Period End",
+						"type": "date"
+					},
+					{
+						"key": "depreciationAmount",
+						"label": "Depreciation Amount",
+						"type": "number"
+					},
+					{
+						"key": "accumulatedDepreciation",
+						"label": "Accumulated Depreciation",
+						"type": "number"
+					},
+					{
+						"key": "bookValue",
+						"label": "Book Value",
+						"type": "number"
+					},
+					{
+						"key": "costCenterCode",
+						"label": "Cost Center",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"indexRoute": "DepreciationSchedules"
+			}
+		},
+		{
+			"id": "DepreciationExpense",
+			"route": "/depreciation-expense",
+			"type": "index",
+			"title": "Depreciation Expense",
+			"config": {
+				"register": "shillinq",
+				"schema": "DepreciationSchedule",
+				"columns": [
+					{
+						"key": "costCenterCode",
+						"label": "Cost Center",
+						"sortable": true
+					},
+					{
+						"key": "depreciationMethod",
+						"label": "Method",
+						"sortable": true
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Fiscal Year",
+						"sortable": true
+					},
+					{
+						"key": "depreciationAmount",
+						"label": "Total Depreciation",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-fiscalYear",
+				"aggregation": "depreciationByCostCenter",
+				"secondaryAggregation": "depreciationByMethod"
 			}
 		},
 		{

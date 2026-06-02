@@ -1172,22 +1172,31 @@ _Rules for delegating approval tasks during out-of-office periods and escalation
 
 ### DepreciationSchedule
 **Schema.org:** `schema:Thing`
-_A detailed schedule defining depreciation method, rate, and yearly calculations for a fixed asset with automated computation_
-**Primary spec:** obligation-financial-administration
+_Per-asset yearly depreciation tracking for a fixed asset. Immutable append-only per D4 (changes tracked via audit trail). Declared in `lib/Settings/shillinq_register.json` via `x-openregister-calculations` (bookValue, depreciationAmount) and `x-openregister-aggregations` (four queries per REQ-FA-009). No PHP service class — fully declarative per ADR-031._
+**Primary spec:** bookkeeping-fixed-assets-depreciation (T2, 2026-06-02)
+
+> **Reconciliation note (bookkeeping-fixed-assets-depreciation, 2026-06-02):** Prior entry referenced `obligation-financial-administration` and used a simplified field set. This entry supersedes it with the full REQ-FA-003 field set. `bookValue` is a calculated field (FixedAsset.purchaseCost − accumulatedDepreciation), rounded to Float Precision from Nextcloud System Settings (fallback: 2 decimal places per Dutch standard).
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
 | scheduleNumber | string | Yes | Unique identifier for the depreciation schedule |
-| name | string | Yes | Name or description of the depreciation schedule |
-| startDate | datetime | Yes | Start date of the depreciation period |
-| endDate | datetime | Yes | End date of the depreciation period |
-| depreciationMethod | string | Yes | Method used: linear, declining-balance, units-of-production |
-| annualRate | number | Yes | Annual depreciation rate as a percentage or amount |
-| totalDepreciationAmount | number | No | Total depreciation amount over the schedule period |
-| status | string | Yes | Current status: planned, active, completed |
+| assetRef | string | Yes | FK to FixedAsset UUID (OpenRegister relation) |
+| depreciationMethod | enum | Yes | One of: linear, declining-balance, units-of-production |
+| annualRate | number | Yes | Annual depreciation rate as decimal (e.g. 0.20 = 20%) or fixed amount per rateType |
+| rateType | enum | Yes | One of: percentage, fixed-amount, units-per-year |
+| periodStartDate | date | Yes | Start date of the depreciation period (fiscal year start) |
+| periodEndDate | date | Yes | End date of the depreciation period (fiscal year end) |
+| depreciationAmount | number | Yes | Period depreciation (calculated, Float Precision rounded) |
+| accumulatedDepreciation | number | Yes | Total depreciation accumulated across all periods to date |
+| bookValue | number | Yes | Net book value (computed) = FixedAsset.purchaseCost − accumulatedDepreciation |
+| costCenterCode | string | No | Cost center for allocation tracking; updated by internal transfer per REQ-FA-006 |
+| fiscalYear | integer | Yes | Fiscal year this schedule covers |
+| status | enum | Yes | One of: planned, active, completed |
+| administrationId | string | Yes | FK to the owning administration |
 
 **Relations:**
-- → FixedAsset (many-to-one)
+- → FixedAsset (many-to-one, via assetRef → FixedAsset.id)
+- → GLTransaction (one-to-many, via GLLine.subLedgerType='fa' + GLLine.subLedgerRef for yearly expense postings)
 
 ### DigitalDocument
 **Schema.org:** `schema:DigitalDocument`
@@ -1544,22 +1553,42 @@ _An accounting period representing a fiscal year for financial reporting and reg
 
 ### FixedAsset
 **Schema.org:** `schema:Thing`
-_A tangible business asset with long-term value subject to annual depreciation calculation and tracking_
-**Primary spec:** obligation-financial-administration
+_A tangible business asset with long-term value subject to annual depreciation per Dutch tax law (Vennootschapsbelasting). Declared in `lib/Settings/shillinq_register.json` via `x-openregister-lifecycle` (active/inactive/retired state machine), `x-openregister-scheduled-workflows` (yearly depreciation posting), and `x-openregister-aggregations` (book values by status). Acquisition and retirement materialise balanced GLTransaction records. No PHP service class — fully declarative per ADR-031._
+**Primary spec:** bookkeeping-fixed-assets-depreciation (T2, 2026-06-02)
+
+> **Reconciliation note (bookkeeping-fixed-assets-depreciation, 2026-06-02):** Prior entry referenced `obligation-financial-administration` and used a simplified field set. This entry supersedes it with the full REQ-FA-002 field set, lifecycle, and GL-link pattern. `GLLine.subLedgerType='fa'` + `GLLine.subLedgerRef=<FixedAsset UUID>` resolves the fixed-asset sub-ledger reference (T1 REQ-GL-009 stub now backed by a real FK).
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| assetNumber | string | Yes | Unique identifier for the fixed asset |
-| name | string | Yes | Name of the fixed asset |
-| assetType | string | Yes | Type of asset: equipment, vehicle, property, building, etc. |
-| purchaseDate | datetime | Yes | Date when the asset was purchased |
-| purchaseCost | number | Yes | Original acquisition cost of the asset |
-| status | string | Yes | Current status: active, inactive, retired |
+| assetNumber | string | Yes | Unique identifier per administration (auto-generated or operator-assigned) |
+| name | string | Yes | Human-readable asset name |
+| assetType | enum | Yes | One of: equipment, vehicle, property, building, leasehold, other |
+| description | string | No | Additional asset details or serial number |
+| purchaseDate | date | Yes | Date of acquisition |
+| purchaseCost | number ≥ 0 | Yes | Original acquisition cost in base currency |
+| residualValue | number ≥ 0 | No | Estimated residual value at end of useful life; default 0 |
+| usefulLifeYears | integer ≥ 1 | Yes | Estimated useful life in years |
+| depreciationMethod | enum | Yes | One of: linear, declining-balance, units-of-production |
+| declineRate | number (0–1) | No | For declining-balance: annual decline percentage |
+| productionUnits | integer | No | For units-of-production: estimated total lifetime units |
+| capitalizationAccountNumber | string | No | FK to Account.accountNumber for asset capitalisation GL (debit on acquisition) |
+| depreciationExpenseAccountNumber | string | No | FK to Account.accountNumber for depreciation-expense GL (debit yearly) |
+| accumulatedDepreciationAccountNumber | string | No | FK to Account.accountNumber for accumulated-depreciation GL (contra-asset; credit yearly) |
 | location | string | No | Physical location of the asset |
+| costCenterCode | string | No | Cost center for depreciation allocation and internal transfer tracking |
+| status | enum | Yes | One of: active, inactive, retired |
+| retirementDate | date | No | Date asset was retired (when status = retired) |
+| administrationId | string | Yes | FK to the owning administration |
+
+**GL-link pattern (sub-ledger):**
+- Acquisition: `GLTransaction` debit `capitalizationAccountNumber`, credit cash/liability; `GLLine.subLedgerType='fa'` + `GLLine.subLedgerRef=<UUID>`.
+- Yearly depreciation: `GLTransaction` debit `depreciationExpenseAccountNumber`, credit `accumulatedDepreciationAccountNumber`; fired via `x-openregister-scheduled-workflows.yearly-depreciation` (cron 0 0 1 1 *).
+- Retirement: compensating `GLTransaction` removes asset and accumulated depreciation; posts gain/loss on disposal if salvage proceeds exist.
 
 **Relations:**
-- → Organization (many-to-one)
-- → DepreciationSchedule (one-to-many)
+- → DepreciationSchedule (one-to-many, via DepreciationSchedule.assetRef → FixedAsset.id)
+- → GLLine (one-to-many, via GLLine.subLedgerRef where GLLine.subLedgerType = 'fa')
+- → Account (many-to-one × 3, via capitalizationAccountNumber, depreciationExpenseAccountNumber, accumulatedDepreciationAccountNumber → Account.accountNumber)
 
 ### FrameworkAgreement
 **Schema.org:** `schema:Service`

@@ -1,5 +1,7 @@
 # Design — Fixed Assets & Depreciation
 
+**status: pr-created**
+
 ## Context
 
 Asset management and depreciation tracking are fundamental to Dutch SMB
