@@ -362,6 +362,7 @@
 				"title": "GL Transaction",
 				"description": "A double-entry general-ledger posting header. Owns the lifecycle and the balance invariant; child GLLine rows carry the debit/credit amounts per REQ-GL-001.",
 				"x-schema-org": "schema:AccountingTransaction",
+				"x-openregister-audit": true,
 				"type": "object",
 				"required": [
 					"transactionNumber",
