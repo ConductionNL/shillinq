@@ -8178,6 +8178,649 @@
 						}
 					}
 				}
+			},
+			"CustomerMaster": {
+				"slug": "CustomerMaster",
+				"icon": "AccountTieOutline",
+				"version": "0.1.0",
+				"title": "Customer",
+				"description": "A customer in the accounts-receivable sub-ledger. Carries contact, billing, credit-limit and dunning-policy data. Declared by bookkeeping-accounts-receivable-core (T2). schema.org Organization.",
+				"x-schema-org": "schema:Organization",
+				"type": "object",
+				"required": [
+					"customerNumber",
+					"legalName",
+					"administrationId",
+					"lifecycleState"
+				],
+				"properties": {
+					"customerNumber": {
+						"type": "string",
+						"description": "Unique customer code within the administration (e.g. CUST-001).",
+						"example": "CUST-001"
+					},
+					"legalName": {
+						"type": "string",
+						"description": "Customer legal or trading name.",
+						"example": "Gemeente Amsterdam"
+					},
+					"taxId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Customer VAT number (BTW-ID).",
+						"example": "NL856621669B01"
+					},
+					"contactPerson": {
+						"type": "string",
+						"nullable": true,
+						"description": "Primary contact name."
+					},
+					"email": {
+						"type": "string",
+						"format": "email",
+						"nullable": true,
+						"description": "Customer contact email."
+					},
+					"billingAddress": {
+						"type": "string",
+						"nullable": true,
+						"description": "Full billing address."
+					},
+					"paymentTerms": {
+						"type": "string",
+						"nullable": true,
+						"description": "Payment terms (e.g. Net 30, 2/10 Net 30).",
+						"example": "Net 30"
+					},
+					"creditLimitCents": {
+						"type": "integer",
+						"minimum": 0,
+						"nullable": true,
+						"description": "Maximum outstanding credit allowed, in integer cents (server-authoritative). Enforced on ARInvoice.issue via CreditLimitGuard.",
+						"example": 5000000
+					},
+					"dunningPolicy": {
+						"type": "string",
+						"nullable": true,
+						"description": "Reference to the dunning workflow configuration applied to this customer."
+					},
+					"iban": {
+						"type": "string",
+						"nullable": true,
+						"description": "Customer IBAN for payment receipts."
+					},
+					"notes": {
+						"type": "string",
+						"nullable": true,
+						"description": "Internal notes."
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this customer. Scopes uniqueness of customerNumber and all AR queries (multi-tenant isolation).",
+						"example": "adm-1"
+					},
+					"lifecycleState": {
+						"type": "string",
+						"enum": [
+							"active",
+							"suspended",
+							"inactive"
+						],
+						"default": "active",
+						"description": "Customer lifecycle state. inactive is the soft-delete terminal state (REQ-006-003)."
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Usable for new invoicing."
+						},
+						"suspended": {
+							"label": "Suspended",
+							"description": "Temporarily blocked from new invoicing; existing invoices remain."
+						},
+						"inactive": {
+							"label": "Inactive",
+							"description": "Soft-deleted; linked invoices and dunning records remain queryable."
+						}
+					},
+					"transitions": {
+						"suspend": {
+							"from": "active",
+							"to": "suspended",
+							"label": "Suspend customer",
+							"description": "Block new invoicing for this customer."
+						},
+						"reactivate": {
+							"from": "suspended",
+							"to": "active",
+							"label": "Reactivate customer",
+							"description": "Re-enable invoicing."
+						},
+						"deactivateFromActive": {
+							"from": "active",
+							"to": "inactive",
+							"label": "Deactivate customer",
+							"description": "Soft-delete; linked invoices and dunning records are retained."
+						},
+						"deactivateFromSuspended": {
+							"from": "suspended",
+							"to": "inactive",
+							"label": "Deactivate customer",
+							"description": "Soft-delete a suspended customer."
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"financeOfficer": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						},
+						"viewer": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"invoices": {
+						"localField": "customerNumber",
+						"relatedSchema": "ARInvoice",
+						"relatedField": "customerNumber",
+						"cardinality": "one-to-many",
+						"description": "AR invoices issued to this customer."
+					}
+				},
+				"x-openregister-aggregations": {
+					"countByLifecycle": {
+						"field": "lifecycleState",
+						"operation": "count",
+						"groupBy": "lifecycleState",
+						"description": "Number of customers per lifecycle state."
+					}
+				}
+			},
+			"ARInvoice": {
+				"slug": "ARInvoice",
+				"icon": "FileDocumentOutline",
+				"version": "0.1.0",
+				"title": "AR Invoice",
+				"description": "An accounts-receivable invoice. Amounts are server-authoritative integer cents; totalCents is the credit-control and aging basis. Lifecycle draft → issued → paid/overdue/disputed/written-off declared via x-openregister-lifecycle (T2). UBL 2.1 / Peppol BIS 3.0 fields are declared for T4 attachment but NOT computed in T2. schema.org Invoice.",
+				"x-schema-org": "schema:Invoice",
+				"type": "object",
+				"required": [
+					"invoiceNumber",
+					"customerNumber",
+					"invoiceDate",
+					"dueDate",
+					"netCents",
+					"totalCents",
+					"currency",
+					"administrationId",
+					"status"
+				],
+				"properties": {
+					"invoiceNumber": {
+						"type": "string",
+						"description": "Unique invoice identifier within the administration (e.g. INV-2026-001).",
+						"example": "INV-2026-001"
+					},
+					"customerNumber": {
+						"type": "string",
+						"description": "FK to CustomerMaster.customerNumber within the same administration.",
+						"example": "CUST-001"
+					},
+					"invoiceDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Date the invoice was issued."
+					},
+					"dueDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Payment due date. Aging buckets are computed against this date."
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "Invoice description / subject."
+					},
+					"netCents": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Amount before tax, in integer cents (server-authoritative — never trust a client total)."
+					},
+					"taxCents": {
+						"type": "integer",
+						"minimum": 0,
+						"default": 0,
+						"description": "VAT amount, in integer cents."
+					},
+					"totalCents": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Total including tax, in integer cents. Basis for credit-limit checks and AR aging."
+					},
+					"currency": {
+						"type": "string",
+						"minLength": 3,
+						"maxLength": 3,
+						"default": "EUR",
+						"description": "ISO 4217 currency code.",
+						"example": "EUR"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"draft",
+							"issued",
+							"paid",
+							"overdue",
+							"disputed",
+							"written-off"
+						],
+						"default": "draft",
+						"description": "Invoice lifecycle status (driven by x-openregister-lifecycle)."
+					},
+					"sourceDocumentUri": {
+						"type": "string",
+						"format": "uri",
+						"nullable": true,
+						"description": "Reference to the invoice PDF (docudesk attachment) per bookkeeping-document-attachment-integration. T4 attaches the outbound UBL/Peppol document."
+					},
+					"paidDate": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "Date payment was received (set on the paid transition)."
+					},
+					"paidCents": {
+						"type": "integer",
+						"minimum": 0,
+						"nullable": true,
+						"description": "Amount actually paid, in integer cents (supports partial payments via bank reconciliation)."
+					},
+					"writeOffReason": {
+						"type": "string",
+						"nullable": true,
+						"description": "Operator-provided reason captured on the write-off transition (audit-trailed)."
+					},
+					"notes": {
+						"type": "string",
+						"nullable": true,
+						"description": "Internal notes or dispute reason."
+					},
+					"glPosting": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to the GLTransaction created at issuance / payment / write-off."
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this invoice. Scopes all AR queries (multi-tenant isolation — IDOR-safe).",
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "status",
+					"initialState": "draft",
+					"states": {
+						"draft": {
+							"label": "Draft",
+							"description": "Not yet issued; editable; excluded from aging and lists."
+						},
+						"issued": {
+							"label": "Issued",
+							"description": "Issued to the customer; appears in lists and aging; GL posting created."
+						},
+						"overdue": {
+							"label": "Overdue",
+							"description": "Past dueDate and unpaid; dunning escalation may begin."
+						},
+						"paid": {
+							"label": "Paid",
+							"description": "Fully paid; excluded from outstanding and aging."
+						},
+						"disputed": {
+							"label": "Disputed",
+							"description": "Customer contests; dunning paused."
+						},
+						"written-off": {
+							"label": "Written off",
+							"description": "Bad debt; compensating GL posting created with audit-trailed reason."
+						}
+					},
+					"transitions": {
+						"issue": {
+							"from": "draft",
+							"to": "issued",
+							"label": "Issue invoice",
+							"description": "Issue the invoice. Creates a GL posting (Debit AR, Credit Revenue). Precondition: outstanding amount including this invoice must not exceed the customer credit limit.",
+							"requires": "OCA\\Shillinq\\Guard\\CreditLimitGuard::requireWithinCreditLimit"
+						},
+						"markOverdue": {
+							"from": "issued",
+							"to": "overdue",
+							"label": "Mark overdue",
+							"description": "Past due and unpaid."
+						},
+						"payFromIssued": {
+							"from": "issued",
+							"to": "paid",
+							"label": "Mark as paid",
+							"description": "Payment received; GL posting (Debit Bank, Credit AR)."
+						},
+						"payFromOverdue": {
+							"from": "overdue",
+							"to": "paid",
+							"label": "Mark as paid",
+							"description": "Payment received on an overdue invoice."
+						},
+						"disputeFromIssued": {
+							"from": "issued",
+							"to": "disputed",
+							"label": "Mark disputed",
+							"description": "Customer contests; dunning paused."
+						},
+						"disputeFromOverdue": {
+							"from": "overdue",
+							"to": "disputed",
+							"label": "Mark disputed",
+							"description": "Customer contests an overdue invoice; dunning paused."
+						},
+						"resolveDispute": {
+							"from": "disputed",
+							"to": "issued",
+							"label": "Resolve dispute",
+							"description": "Dispute resolved in our favour; resume payment tracking."
+						},
+						"writeOffFromIssued": {
+							"from": "issued",
+							"to": "written-off",
+							"label": "Write off",
+							"description": "Bad debt; compensating GL posting (Debit Bad Debt, Credit AR) with audit-trailed reason."
+						},
+						"writeOffFromOverdue": {
+							"from": "overdue",
+							"to": "written-off",
+							"label": "Write off",
+							"description": "Write off an overdue invoice."
+						},
+						"writeOffFromDisputed": {
+							"from": "disputed",
+							"to": "written-off",
+							"label": "Write off",
+							"description": "Write off a disputed invoice."
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"financeOfficer": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						},
+						"viewer": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"customer": {
+						"localField": "customerNumber",
+						"relatedSchema": "CustomerMaster",
+						"relatedField": "customerNumber",
+						"cardinality": "many-to-one",
+						"description": "The customer this invoice was issued to."
+					},
+					"dunningRecords": {
+						"localField": "invoiceNumber",
+						"relatedSchema": "DunningRecord",
+						"relatedField": "invoiceNumber",
+						"cardinality": "one-to-many",
+						"description": "Dunning escalation records for this invoice."
+					}
+				},
+				"x-openregister-aggregations": {
+					"outstandingByCustomer": {
+						"description": "Sum of outstanding totals per customer (excludes paid and written-off). Basis for the credit-limit check on issue and for AR aging.",
+						"filter": "status != 'paid' AND status != 'written-off'",
+						"groupBy": "customerNumber",
+						"operations": {
+							"outstandingCents": {
+								"field": "totalCents",
+								"operation": "sum"
+							},
+							"invoiceCount": {
+								"field": "invoiceNumber",
+								"operation": "count"
+							}
+						}
+					},
+					"agingByStatus": {
+						"description": "Count and outstanding total per status across the sub-ledger; feeds the outstanding-receivables dashboard KPI.",
+						"filter": "status != 'paid' AND status != 'written-off'",
+						"groupBy": "status",
+						"operations": {
+							"outstandingCents": {
+								"field": "totalCents",
+								"operation": "sum"
+							},
+							"invoiceCount": {
+								"field": "invoiceNumber",
+								"operation": "count"
+							}
+						}
+					}
+				}
+			},
+			"DunningRecord": {
+				"slug": "DunningRecord",
+				"icon": "BellAlertOutline",
+				"version": "0.1.0",
+				"title": "Dunning Record",
+				"description": "A dunning (reminder / formal notice / debt-collection) step against an overdue AR invoice, per administration-configurable policy. Consumes OR's dunning-workflow per ADR-022. schema.org Event.",
+				"x-schema-org": "schema:Event",
+				"type": "object",
+				"required": [
+					"dunningId",
+					"invoiceNumber",
+					"customerNumber",
+					"level",
+					"sentDate",
+					"administrationId",
+					"status"
+				],
+				"properties": {
+					"dunningId": {
+						"type": "string",
+						"description": "Unique dunning record identifier (e.g. DUN-2026-001).",
+						"example": "DUN-2026-001"
+					},
+					"invoiceNumber": {
+						"type": "string",
+						"description": "FK to ARInvoice.invoiceNumber within the same administration."
+					},
+					"customerNumber": {
+						"type": "string",
+						"description": "FK to CustomerMaster.customerNumber (denormalised for query efficiency)."
+					},
+					"level": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 3,
+						"description": "Dunning escalation level (1=reminder, 2=formal notice, 3=debt collection)."
+					},
+					"sentDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Date the dunning notice was sent."
+					},
+					"dueDate": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "Response / payment deadline for this dunning step."
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"pending",
+							"acknowledged",
+							"paid",
+							"escalated",
+							"cancelled"
+						],
+						"default": "pending",
+						"description": "Dunning record status (driven by x-openregister-lifecycle)."
+					},
+					"policyRef": {
+						"type": "string",
+						"nullable": true,
+						"description": "Reference to the dunning policy configuration applied."
+					},
+					"notes": {
+						"type": "string",
+						"nullable": true,
+						"description": "Dunning history or customer correspondence."
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this dunning record (multi-tenant isolation).",
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "status",
+					"initialState": "pending",
+					"states": {
+						"pending": {
+							"label": "Pending",
+							"description": "Notice sent; awaiting customer response."
+						},
+						"acknowledged": {
+							"label": "Acknowledged",
+							"description": "Customer responded; escalation paused."
+						},
+						"escalated": {
+							"label": "Escalated",
+							"description": "Advanced to the next dunning level."
+						},
+						"paid": {
+							"label": "Paid",
+							"description": "Linked invoice paid; dunning resolved."
+						},
+						"cancelled": {
+							"label": "Cancelled",
+							"description": "Dispute resolved or invoice written off; dunning stopped."
+						}
+					},
+					"transitions": {
+						"acknowledge": {
+							"from": "pending",
+							"to": "acknowledged",
+							"label": "Mark acknowledged",
+							"description": "Customer responded; pause escalation."
+						},
+						"escalate": {
+							"from": "pending",
+							"to": "escalated",
+							"label": "Escalate",
+							"description": "Advance to the next dunning level."
+						},
+						"escalateAcknowledged": {
+							"from": "acknowledged",
+							"to": "escalated",
+							"label": "Escalate",
+							"description": "Escalate after acknowledgement lapses."
+						},
+						"resolvePaid": {
+							"from": "pending",
+							"to": "paid",
+							"label": "Resolved (paid)",
+							"description": "Linked invoice paid."
+						},
+						"resolveAcknowledgedPaid": {
+							"from": "acknowledged",
+							"to": "paid",
+							"label": "Resolved (paid)",
+							"description": "Linked invoice paid after acknowledgement."
+						},
+						"cancelFromPending": {
+							"from": "pending",
+							"to": "cancelled",
+							"label": "Cancel",
+							"description": "Invoice disputed or written off."
+						},
+						"cancelFromAcknowledged": {
+							"from": "acknowledged",
+							"to": "cancelled",
+							"label": "Cancel",
+							"description": "Cancel an acknowledged dunning record."
+						},
+						"cancelFromEscalated": {
+							"from": "escalated",
+							"to": "cancelled",
+							"label": "Cancel",
+							"description": "Cancel an escalated dunning record."
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"financeOfficer": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"viewer": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"invoice": {
+						"localField": "invoiceNumber",
+						"relatedSchema": "ARInvoice",
+						"relatedField": "invoiceNumber",
+						"cardinality": "many-to-one",
+						"description": "The AR invoice this dunning record escalates."
+					},
+					"customer": {
+						"localField": "customerNumber",
+						"relatedSchema": "CustomerMaster",
+						"relatedField": "customerNumber",
+						"cardinality": "many-to-one",
+						"description": "The customer being dunned."
+					}
+				},
+				"x-openregister-aggregations": {
+					"countByLevel": {
+						"field": "level",
+						"operation": "count",
+						"groupBy": "level",
+						"description": "Number of dunning records per escalation level."
+					}
+				}
 			}
 		},
 		"SisaReport": {
