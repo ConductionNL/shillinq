@@ -45,6 +45,13 @@
 					"icon": "TableMergeCellsOutline",
 					"route": "GRConsolidated",
 					"order": 70
+				},
+				{
+					"id": "Journals",
+					"label": "Journaalposten",
+					"icon": "BookOpenPageVariantOutline",
+					"route": "Journals",
+					"order": 20
 				}
 			]
 		},
@@ -582,6 +589,131 @@
 						"gridHeight": 2
 					}
 				]
+			}
+		},
+		{
+			"id": "Journals",
+			"route": "/journals",
+			"type": "index",
+			"title": "Journaalposten",
+			"config": {
+				"register": "shillinq",
+				"schema": "JournalEntry",
+				"columns": [
+					{
+						"key": "journalNumber",
+						"label": "Journaalnummer",
+						"sortable": true
+					},
+					{
+						"key": "entryDate",
+						"label": "Boekdatum",
+						"sortable": true
+					},
+					{
+						"key": "description",
+						"label": "Omschrijving",
+						"sortable": true
+					},
+					{
+						"key": "journalType",
+						"label": "Type",
+						"sortable": true,
+						"filterable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true,
+						"filterable": true
+					},
+					{
+						"key": "approvalState",
+						"label": "Goedkeuring",
+						"sortable": true,
+						"filterable": true
+					}
+				],
+				"defaultSort": "entryDate",
+				"defaultSortDirection": "desc",
+				"defaultFilters": {
+					"state": ["draft", "pending", "posted"]
+				},
+				"detailRoute": "JournalDetail"
+			}
+		},
+		{
+			"id": "JournalDetail",
+			"route": "/journals/:id",
+			"type": "detail",
+			"title": "Journaalpost",
+			"config": {
+				"register": "shillinq",
+				"schema": "JournalEntry",
+				"fields": [
+					{
+						"key": "journalNumber",
+						"label": "Journaalnummer",
+						"type": "string"
+					},
+					{
+						"key": "entryDate",
+						"label": "Boekdatum",
+						"type": "date"
+					},
+					{
+						"key": "description",
+						"label": "Omschrijving",
+						"type": "string"
+					},
+					{
+						"key": "journalType",
+						"label": "Type",
+						"type": "string"
+					},
+					{
+						"key": "lines",
+						"label": "Boekingsregels",
+						"type": "object"
+					},
+					{
+						"key": "approvalState",
+						"label": "Goedkeuringsstatus",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "glTransactionId",
+						"label": "Grootboektransactie",
+						"type": "link"
+					},
+					{
+						"key": "sourceDocumentUri",
+						"label": "Brondocument",
+						"type": "link"
+					},
+					{
+						"key": "reversesOn",
+						"label": "Storneert op periode",
+						"type": "string"
+					},
+					{
+						"key": "cadence",
+						"label": "Cadans",
+						"type": "object"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "Journals"
 			}
 		},
 		{
