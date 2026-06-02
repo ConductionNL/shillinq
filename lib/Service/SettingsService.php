@@ -49,6 +49,7 @@ class SettingsService
         'register',
         'rgs_template',
         'administration_id',
+        'ar_demo_seed',
     ];
 
     /**
@@ -331,6 +332,159 @@ class SettingsService
         return ['seeded' => $seeded, 'skipped' => $skipped];
 
     }//end importAccounts()
+
+    /**
+     * Seed demo accounts-receivable data (customers + invoices), idempotently.
+     *
+     * Reads lib/Settings/seeds/ar-demo.json and imports CustomerMaster and
+     * ARInvoice records via OpenRegister's ObjectService. Already-existing
+     * records (matched by their natural key + administrationId) are skipped,
+     * preserving operator edits. Declared by bookkeeping-accounts-receivable-core.
+     *
+     * @param string $administrationId The administrationId to stamp on seeded records.
+     *                                 Must be non-empty (multi-tenant isolation, C2).
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md (REQ-006, REQ-007)
+     */
+    public function seedArDemo(string $administrationId): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        // C2: reject empty administrationId — writing under '' would contaminate
+        // real tenant data on later reconfiguration.
+        if ($administrationId === '') {
+            return [
+                'success' => false,
+                'message' => 'administrationId must not be empty.',
+            ];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/ar-demo.json';
+        if (file_exists($seedPath) === false) {
+            return ['success' => false, 'message' => 'AR demo seed file not found.'];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return ['success' => false, 'message' => 'Failed to read AR demo seed file.'];
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return ['success' => false, 'message' => 'Failed to parse AR demo seed file: '.json_last_error_msg()];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+
+            $customerResult = $this->importObjects(
+                objectService: $objectService,
+                objects: ($data['customers'] ?? []),
+                schema: 'CustomerMaster',
+                keyField: 'customerNumber',
+                administrationId: $administrationId
+            );
+            $invoiceResult  = $this->importObjects(
+                objectService: $objectService,
+                objects: ($data['invoices'] ?? []),
+                schema: 'ARInvoice',
+                keyField: 'invoiceNumber',
+                administrationId: $administrationId
+            );
+
+            $seeded  = ($customerResult['seeded'] + $invoiceResult['seeded']);
+            $skipped = ($customerResult['skipped'] + $invoiceResult['skipped']);
+
+            $this->logger->info(
+                'Shillinq: AR demo seeded',
+                ['seeded' => $seeded, 'skipped' => $skipped]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'AR demo seeded successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: AR demo seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedArDemo()
+
+    /**
+     * Import a list of objects into a schema idempotently, scoped by administration.
+     *
+     * Each object is stamped with the administrationId and matched against
+     * existing records by ($keyField, administrationId). Existing records are
+     * skipped so operator edits are never overwritten.
+     *
+     * @param object       $objectService    OpenRegister ObjectService.
+     * @param array<mixed> $objects          Records to import.
+     * @param string       $schema           Target schema slug.
+     * @param string       $keyField         Natural-key property used for dedup.
+     * @param string       $administrationId The administrationId to stamp.
+     *
+     * @return array{seeded: int, skipped: int}
+     */
+    private function importObjects(
+        object $objectService,
+        array $objects,
+        string $schema,
+        string $keyField,
+        string $administrationId,
+    ): array {
+        $seeded  = 0;
+        $skipped = 0;
+
+        $registerSlug = $this->getRegisterSlug();
+
+        foreach ($objects as $object) {
+            $object['administrationId'] = $administrationId;
+
+            $existing = $objectService
+                ->setRegister($registerSlug)
+                ->setSchema($schema)
+                ->findAll(
+                    [
+                        'filters' => [
+                            $keyField          => ($object[$keyField] ?? ''),
+                            'administrationId' => $administrationId,
+                        ],
+                        'limit'   => 1,
+                    ]
+                );
+
+            if (empty($existing) === false) {
+                $skipped++;
+                continue;
+            }
+
+            $objectService->saveObject(
+                object: $object,
+                register: $registerSlug,
+                schema: $schema,
+            );
+            $seeded++;
+        }//end foreach
+
+        return ['seeded' => $seeded, 'skipped' => $skipped];
+
+    }//end importObjects()
 
     /**
      * Seed RJ-270 stages from the rj-270-stages.json seed file, idempotently.
