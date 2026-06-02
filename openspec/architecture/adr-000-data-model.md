@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 233
+**Entities:** 235
 
 ## Context
 
@@ -2334,6 +2334,57 @@ _A balanced transaction record affecting two or more GL accounts (debits equal c
 **Relations:**
 - → GeneralLedgerAccount (many-to-many)
 - → FiscalYear (many-to-one)
+
+### KorRegime
+**Schema.org:** `schema:GovernmentPermit`
+_KOR (Kleine Ondernemersregeling) opt-in/opt-out regime record per administrationId and calendar year. Tracks the 5-state lifecycle (outside → opted-in → threshold-warning → threshold-exceeded → opted-out), YTD revenue (declarative x-openregister-calculations over Invoice T2), threshold from KorThreshold seed, and generates a pending JournalEntry on threshold-exceeded → opted-out per REQ-KOR-006 safety constraint. Visible only to mkb/zzp administration types per REQ-KOR-001._
+**Primary spec:** bookkeeping-kor-kleine-ondernemersregeling
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the administration owning this KOR regime record |
+| state | enum | Yes | One of outside, opted-in, threshold-warning, threshold-exceeded, opted-out |
+| currentCalendarYear | integer | Yes | Calendar year tracked by ytdRevenue |
+| ytdRevenue | number | Yes | Derived via x-openregister-calculations from Invoice (T2) within currentCalendarYear |
+| thresholdAmount | number | Yes | Active KOR omzetdrempel for the year; read from KorThreshold seed (default €20,000) |
+| warningPercentage | integer | Yes | Warning fires at warningPercentage % of thresholdAmount; from seed (default 80) |
+| optedInAt | date | No | Date of formal opt-in (Belastingdienst-reported) |
+| optedOutAt | date | No | Date of opt-out or auto-switch |
+| exceededAt | date | No | Date when ytdRevenue first crossed the full threshold |
+| notes | string | No | Operator-authored context (e.g. 'Opt-out due to ICP-omzet uitsluiting') |
+
+**Relations:**
+- → KorThreshold (many-to-one, via fiscalYear → KorThreshold.fiscalYear)
+- → JournalEntry (one-to-many, created on threshold-exceeded → opted-out; state: pending per REQ-KOR-006)
+- → Invoice (one-to-many, via x-openregister-calculations ytdRevenue aggregation)
+
+**Lifecycle (x-openregister-lifecycle):**
+- outside → opted-in (operator action; sets optedInAt)
+- opted-in → threshold-warning (auto / calculation-crossing: ytdRevenue ≥ warningPercentage% of thresholdAmount)
+- threshold-warning → threshold-exceeded (auto / calculation-crossing: ytdRevenue ≥ thresholdAmount; sets exceededAt)
+- threshold-warning → opted-in (year-rollover when ytdRevenue resets; calculation-crossing guard)
+- threshold-exceeded → opted-out (operator action; generates pending JournalEntry via hook; sets optedOutAt)
+- opted-in → opted-out (operator voluntary opt-out; sets optedOutAt)
+- opted-out → outside (operator, after 3-year lock-out per Wet OB 1968 art. 25 lid 3; KorLockoutGuard)
+
+**Retention:** 7 years per AWR art. 52 (selectielijst:5.1.2).
+
+### KorThreshold
+**Schema.org:** `schema:DefinedTerm`
+_Versioned statutory KOR threshold record per Wet OB 1968 art. 25 lid 1. Seeded from kor-thresholds-2026.json via the repair step. Multiple records with non-overlapping effectiveFrom/effectiveTo windows support future statutory revisions without code changes per REQ-KOR-003. The pre-2020 sliding-scale regime is not modelled; only the post-2020 fixed-ceiling form is tracked._
+**Primary spec:** bookkeeping-kor-kleine-ondernemersregeling
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| thresholdAmount | number | Yes | Statutory KOR omzetdrempel in EUR (currently €20,000) |
+| warningPercentage | integer | Yes | Percentage of thresholdAmount at which threshold-warning fires (default 80) |
+| fiscalYear | integer | Yes | Fiscal year this threshold applies to |
+| citation | string | Yes | Statutory citation (e.g. Wet OB 1968 art. 25 lid 1) |
+| effectiveFrom | date | Yes | Date from which this threshold record is effective |
+| effectiveTo | date | No | Date after which this threshold is superseded; null = currently in force |
+
+**Relations:**
+- → KorRegime (one-to-many, via fiscalYear)
 
 ### LiquidityForecast
 **Schema.org:** `schema:Report`
