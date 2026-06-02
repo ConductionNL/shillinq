@@ -10,24 +10,26 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `bookkeeping-ensia-zelfevaluatie` capability spec
+- [x] Task 1: Confirm no `bookkeeping-ensia-zelfevaluatie` capability spec
   already exists, no `ENSIAJaarcyclus`/`Evaluatievraag`/`Bevinding` schemas
   are declared, and no `lib/Service/ENSIA*` / `lib/Service/Bevinding*` PHP
   classes are present (per ADR-031 anti-pattern enumeration); explicitly note
   this capability covers the Dutch ENSIA annual compliance cycle
+  — **Confirmed:** `grep -rn "ENSIAJaarcyclus\|Evaluatievraag\|Bevinding" lib/` returns no results;
+  no `lib/Service/ENSIA*` or `lib/Service/Bevinding*` PHP classes exist; capability is net-new.
 
-- [ ] Task 2: Author `specs/bookkeeping-ensia-zelfevaluatie/spec.md` with
+- [x] Task 2: Author `specs/bookkeeping-ensia-zelfevaluatie/spec.md` with
   `Status: proposed` / `Scope: shillinq` / `Tier: T2 (compliance + operations)`
   / `Depends on: bookkeeping-general-ledger, bookkeeping-document-attachment-integration`
   header, `REQ-ENSIA-NNN` requirements using RFC 2119 keywords, and `#### Scenario:`
   blocks with GIVEN/WHEN/THEN; cite ADR-022 + ADR-031 inline
 
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec
   and including Affected Projects / Scope / Approach / Risks (VNG question-set
   availability, OR workflow stability, college-verklaring template shape,
   XML export validation) / Rollback / Open Questions
 
-- [ ] Task 4: Author `design.md` with Context (fragmentary ENSIA practice,
+- [x] Task 4: Author `design.md` with Context (fragmentary ENSIA practice,
   Shillinq compliance envelope), Goals, Non-Goals, Decisions (D1: workflow-driven
   not questionnaire, D2: VNG-norm linking, D3: peer-review gates, D4: auto-finding
   generation, D5: audit-trail with reason, D6: college-verklaring template,
@@ -101,7 +103,7 @@
   + their `type: index` / `type: detail` pages to `src/manifest.json`;
   `node tests/validate-manifest.js` exits 0
 
-- [ ] Task 18: Update `openspec/architecture/adr-000-data-model.md` with
+- [x] Task 18: Update `openspec/architecture/adr-000-data-model.md` with
   `ENSIAJaarcyclus`/`Evaluatievraag`/`Bevinding` entries, reconciling against
   any existing `Compliance`/`Assessment` data-model entries
 
