@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 226
+**Entities:** 229
 
 ## Context
 
@@ -360,6 +360,29 @@ _Schema.org BankAccount — standard vocabulary for bankaccount data_
 | bankName | string | No | Name of the bank |
 | currency | string | Yes | Account currency |
 | balance | number | No | Current balance |
+
+### Bevinding
+**Schema.org:** `schema:Report`
+_An ENSIA compliance finding — risk, shortcoming, or improvement opportunity identified from VNG norm comparison. Auto-generated when maturity score < VNG normniveau; tracked through mitigation lifecycle._
+**Primary spec:** bookkeeping-ensia-zelfevaluatie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| cyclusId | string | Yes | FK to ENSIAJaarcyclus (register relation) |
+| vraagId | string | No | FK to Evaluatievraag (nullable; null for manually added findings) |
+| type | enum | Yes | Finding type: tekortkoming, verbeterpunt, risico-acceptatie |
+| beschrijving | string | Yes | Finding description and context (auto-populated from question + score gap) |
+| impact | string | No | Impact assessment of the identified risk |
+| kans | string | No | Likelihood assessment of the risk materialising |
+| mitigatieActie | string | No | Planned mitigation action description |
+| verantwoordelijke | string | No | User-reference: owner responsible for mitigation |
+| streefDatum | date | No | Target date for mitigation or acceptance |
+| status | enum | Yes | Mitigation status: open, in-behandeling, gerealiseerd, geaccepteerd |
+| administrationId | string | Yes | FK to Administration owning this finding |
+
+**Relations:**
+- → ENSIAJaarcyclus (many-to-one)
+- → Evaluatievraag (many-to-one, nullable)
 
 ### Bid
 **Schema.org:** `schema:Offer`
@@ -1256,6 +1279,30 @@ _Follow-up notice for overdue unpaid transactions, escalating through dunning le
 - → APTransaction (many-to-one)
 - → Payee (many-to-one)
 
+### ENSIAJaarcyclus
+**Schema.org:** `schema:Event`
+_Annual ENSIA (Eenduidige Normatiek Single Information Audit) compliance evaluation cycle for Dutch public-sector organisations. Governs the full lifecycle from intake through portal submission._
+**Primary spec:** bookkeeping-ensia-zelfevaluatie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| jaar | integer | Yes | Calendar year of the ENSIA evaluation (e.g., 2026) |
+| organisatieNaam | string | Yes | Official organisation name |
+| organisatieKvK | string | Yes | KvK registration number of the organisation |
+| status | enum | Yes | Lifecycle status: in-voorbereiding, in-uitvoering, peer-review, college-akkoord, ingediend, afgerond |
+| startDatum | date | Yes | Date cycle was initiated |
+| deadlineColleges | date | Yes | College approval deadline |
+| deadlineMinister | date | Yes | Minister submission deadline (1 May per VNG law) |
+| verantwoordingsdomeinen | array | Yes | Selected VNG domains: BIO, DigiD, SUWI, BAG, BGT, BRP, WOZ |
+| procesEigenaar | string | Yes | User-reference: CISO or FIB responsible for the cycle |
+| vraagSetVersion | string | No | Version of the VNG question set used (e.g., BIO-1.04-2026); set on cycle init |
+| verklaringFile | string | No | File-reference: signed college declaration document |
+| administrationId | string | Yes | FK to Administration owning this cycle |
+
+**Relations:**
+- → Evaluatievraag (one-to-many)
+- → Bevinding (one-to-many)
+
 ### Entitlement
 _Grant of access or permission to use specific features, resources, or data within the system_
 **Primary spec:** access-control-authorisation
@@ -1289,6 +1336,33 @@ _A legal entity or business managed within a multi-entity system_
 **Relations:**
 - → Organization (many-to-one)
 - → Person (one-to-many)
+
+### Evaluatievraag
+**Schema.org:** `schema:Question`
+_An individual ENSIA evaluation question within a jaarcyclus. Carries the BIO/domain question code, answer, maturity score, evidence attachments, peer-review status, and full audit trail per change._
+**Primary spec:** bookkeeping-ensia-zelfevaluatie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| cyclusId | string | Yes | FK to ENSIAJaarcyclus (register relation) |
+| domein | enum | Yes | VNG domain: BIO, DigiD, SUWI, BAG, BGT, BRP, WOZ |
+| onderwerp | string | Yes | Question subject area (e.g., Toegangsbeveiliging, Backup & Recovery) |
+| vraagCode | string | Yes | Stable VNG question code (e.g., BIO-9.1.1) |
+| vraagtekst | string | Yes | Full question text from VNG question set |
+| antwoordType | enum | Yes | Answer type: ja-nee-nvt, volwassenheidsniveau-1-5, vrije-tekst |
+| antwoord | string | No | The answer value (yes/no/nvt, 1-5, or free text) |
+| volwassenheidsScore | integer | No | Maturity score 1-5 (nullable; only for antwoordType volwassenheidsniveau-1-5) |
+| toelichting | string | No | Textual justification (≥ 50 chars required when score ≥ 3) |
+| beantwoorder | string | No | User-reference: assigned answerer for this question |
+| peerReviewer | string | No | User-reference: assigned peer-reviewer (nullable until peer-review phase) |
+| peerReviewStatus | enum | Yes | Peer-review status: nog-niet-beoordeeld, akkoord, wijziging-gevraagd |
+| peerReviewCommentaar | string | No | Reviewer comment routed back to beantwoorder on wijziging-gevraagd |
+| bewijsstukken | array | No | Evidence attachments: array of {fileRef: docudesk-URI, omschrijving: string} |
+| administrationId | string | Yes | FK to Administration owning this question |
+
+**Relations:**
+- → ENSIAJaarcyclus (many-to-one)
+- → Bevinding (one-to-many, via vraagId)
 
 ### EvaluationCriterion
 **Schema.org:** `schema:Thing`
