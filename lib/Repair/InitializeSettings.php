@@ -8,13 +8,13 @@
  * @category Repair
  * @package  OCA\Shillinq\Repair
  *
- * @author    Conduction Development Team <dev@conductio.nl>
+ * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
- * @version GIT: <git-id>
- *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-10
  */
 
 declare(strict_types=1);
@@ -24,26 +24,29 @@ namespace OCA\Shillinq\Repair;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
  * Repair step that initializes Shillinq configuration via SettingsService.
  *
- * @spec openspec/changes/spec/tasks.md#task-11
+ * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-10
  */
 class InitializeSettings implements IRepairStep
 {
     /**
      * Constructor for InitializeSettings.
      *
-     * @param SettingsService $settingsService The settings service
-     * @param LoggerInterface $logger          The logger interface
+     * @param SettingsService    $settingsService The settings service
+     * @param LoggerInterface    $logger          The logger interface
+     * @param ContainerInterface $container       The DI container
      *
      * @return void
      */
     public function __construct(
         private SettingsService $settingsService,
         private LoggerInterface $logger,
+        private ContainerInterface $container,
     ) {
     }//end __construct()
 
@@ -52,7 +55,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return string
      *
-     * @spec openspec/changes/spec/tasks.md#task-11
+     * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-10
      */
     public function getName(): string
     {
@@ -62,18 +65,20 @@ class InitializeSettings implements IRepairStep
     /**
      * Run the repair step to initialize Shillinq configuration.
      *
-     * Phase 1: imports the register schema from shillinq_register.json.
+     * Phase 1: imports the register schema from shillinq_register.json (includes
+     * Iv3Export schema, lifecycle, aggregations, and iv3-xml-transformation mapping).
      * Phase 2: seeds the chart of accounts from the RGS template selected
      * in app config key 'rgs_template' (default: 'mkb'). Idempotent —
      * existing accounts are skipped on re-run, preserving operator edits.
      * Seeding is skipped entirely when administration_id is not configured
      * (C2: prevents "default" contamination of real tenant data).
+     * Phase 3: registers the IV3 quarterly CBS ScheduledWorkflow if not yet present.
      *
      * @param IOutput $output The output interface for progress reporting
      *
      * @return void
      *
-     * @spec openspec/changes/spec/tasks.md#task-11
+     * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-10
      */
     public function run(IOutput $output): void
     {
@@ -119,6 +124,7 @@ class InitializeSettings implements IRepairStep
             }
 
             $this->seedChartOfAccounts(output: $output);
+            $this->registerIv3ScheduledWorkflow(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -128,6 +134,69 @@ class InitializeSettings implements IRepairStep
         }//end try
 
     }//end run()
+
+    /**
+     * Register the IV3 quarterly CBS ScheduledWorkflow if not already present.
+     *
+     * Idempotent: uses the slug 'shillinq-iv3-quarterly-cbs-submission' for deduplication.
+     * The interval defaults to 7776000 seconds (90 days / quarterly). Operators adjust
+     * via the OpenRegister ScheduledWorkflow admin UI. Per ADR-031 §"Background jobs that
+     * orchestrate external systems" + REQ-IV3-006.
+     *
+     * @param IOutput $output The output interface for progress reporting
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-9
+     */
+    private function registerIv3ScheduledWorkflow(IOutput $output): void
+    {
+        if ($this->settingsService->isOpenRegisterAvailable() === false) {
+            return;
+        }
+
+        try {
+            $workflowMapper = $this->container->get(
+                'OCA\OpenRegister\Db\ScheduledWorkflowMapper'
+            );
+        } catch (\Throwable $e) {
+            $output->info('Shillinq: ScheduledWorkflowMapper not available, skipping IV3 workflow registration');
+            return;
+        }
+
+        $slug = 'shillinq-iv3-quarterly-cbs-submission';
+
+        $existing = $workflowMapper->findAll();
+        foreach ($existing as $workflow) {
+            if ($workflow->getName() === $slug) {
+                $output->info('Shillinq: IV3 quarterly CBS ScheduledWorkflow already registered, skipping');
+                return;
+            }
+        }
+
+        // 90 days in seconds — quarterly cadence aligned with cbs-iv3 cron 0 0 1 */3 *.
+        // Operators reconfigure the interval and target via the OpenRegister admin UI
+        // if CBS deadlines shift. REQ-IV3-006 / ADR-019.
+        $workflowMapper->createFromArray(
+                data: [
+                    'name'        => $slug,
+                    'engine'      => 'openconnector',
+                    'workflowId'  => 'cbs-iv3',
+                    'intervalSec' => 7776000,
+                    'enabled'     => true,
+                    'payload'     => json_encode(
+                    [
+                        'register'           => 'shillinq',
+                        'schema'             => 'Iv3Export',
+                        'administrationType' => ['gemeente', 'provincie', 'waterschap'],
+                    ]
+                    ),
+                ]
+                );
+
+        $output->info('Shillinq: IV3 quarterly CBS ScheduledWorkflow registered (interval: 90 days)');
+
+    }//end registerIv3ScheduledWorkflow()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.
