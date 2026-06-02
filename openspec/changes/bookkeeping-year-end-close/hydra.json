@@ -11,9 +11,9 @@
       "cycle": 1,
       "trigger": "build:queued",
       "started_at": "2026-06-01T22:59:13Z",
-      "ended_at": "2026-06-01T22:59:25Z",
+      "ended_at": "2026-06-02T14:20:51Z",
       "outcome": "needs-input",
-      "outcome_reason": "builder container exited non-zero",
+      "outcome_reason": "applier returned fail verdict",
       "pattern_tags": [],
       "stages": [
         {
