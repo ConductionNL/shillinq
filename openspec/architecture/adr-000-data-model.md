@@ -1281,7 +1281,7 @@ _Follow-up notice for overdue unpaid transactions, escalating through dunning le
 
 ### ENSIAJaarcyclus
 **Schema.org:** `schema:Event`
-_Annual ENSIA (Eenduidge Normatiek Single Information Audit) compliance evaluation cycle for Dutch public-sector organisations. Governs the full lifecycle from intake through portal submission._
+_Annual ENSIA (Eenduidige Normatiek Single Information Audit) compliance evaluation cycle for Dutch public-sector organisations. Governs the full lifecycle from intake through portal submission._
 **Primary spec:** bookkeeping-ensia-zelfevaluatie
 
 | Property | Type | Required | Description |

@@ -227,7 +227,7 @@ Five manifest entries MUST be added for ENSIA navigation.
 ## Standards Alignment
 
 - **BIO** — Baseline Informatiebeveiliging Overheid (BIO-1.04 + BIO-2 transition)
-- **ENSIA** — Eenduidge Normatiek Single Information Audit (VNG/IPO/UvW spec)
+- **ENSIA** — Eenduidige Normatiek Single Information Audit (VNG/IPO/UvW spec)
 - **ISO 27001:2022** — alignment with BIO controls
 - **GDPR/UAVG** — privacy overlap with BIO annex
 - **Dutch Public-Sector Standards** — NEN 7510, NORA, Logius DigiD norms, SUWInet,
