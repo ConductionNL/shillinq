@@ -124,6 +124,27 @@
 					"icon": "ShieldCheckOutline",
 					"route": "KorStatus",
 					"order": 10
+				},
+				{
+					"id": "TaxFilingPrep",
+					"label": "Tax Filing Prep",
+					"icon": "FileDocumentCheckOutline",
+					"route": "TaxFilingPrep",
+					"order": 20
+				},
+				{
+					"id": "TaxEstimates",
+					"label": "Tax Estimates",
+					"icon": "CalculatorOutline",
+					"route": "TaxEstimates",
+					"order": 30
+				},
+				{
+					"id": "TaxConfiguration",
+					"label": "Tax Configuration",
+					"icon": "CogOutline",
+					"route": "TaxConfiguration",
+					"order": 40
 				}
 			]
 		},
@@ -2402,6 +2423,319 @@
 						]
 					}
 				]
+			}
+		},
+		{
+			"id": "TaxFilingPrep",
+			"route": "/tax-filing-prep",
+			"type": "report",
+			"title": "Tax Filing Prep",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxSummaryReport",
+				"dashboard": {
+					"kpis": [
+						{
+							"id": "estimated-liability",
+							"label": "Estimated Annual Liability",
+							"icon": "CalculatorOutline",
+							"aggregation": "currentEstimateByYear",
+							"field": "latestLiability",
+							"format": "currency",
+							"currency": "EUR"
+						},
+						{
+							"id": "filing-deadline",
+							"label": "Filing Deadline",
+							"icon": "CalendarClockOutline",
+							"source": "TaxRegimeConfiguration",
+							"field": "filingDeadline",
+							"format": "days-until"
+						},
+						{
+							"id": "summaries-ready",
+							"label": "Tax Summaries Ready",
+							"icon": "FileCheckOutline",
+							"aggregation": "finalizedSummaryCount",
+							"field": "count",
+							"format": "integer"
+						},
+						{
+							"id": "gl-transaction-count",
+							"label": "GL Transactions Included",
+							"icon": "DatabaseOutline",
+							"source": "TaxEstimate",
+							"field": "glTransactionCount",
+							"filter": {
+								"status": "current"
+							},
+							"format": "integer"
+						}
+					],
+					"table": {
+						"schema": "TaxSummaryReport",
+						"filter": {
+							"fiscalYear": "@currentFiscalYear"
+						},
+						"columns": [
+							{
+								"key": "taxCategory",
+								"label": "Tax Category",
+								"sortable": true
+							},
+							{
+								"key": "grossAmount",
+								"label": "Gross Amount (EUR)",
+								"sortable": true
+							},
+							{
+								"key": "deductionsAmount",
+								"label": "Deductions (EUR)",
+								"sortable": true
+							},
+							{
+								"key": "netAmount",
+								"label": "Net Amount (EUR)",
+								"sortable": true
+							},
+							{
+								"key": "status",
+								"label": "Status",
+								"sortable": true
+							},
+							{
+								"key": "snapshotDate",
+								"label": "Snapshot Date",
+								"sortable": true
+							}
+						],
+						"defaultSort": "taxCategory"
+					}
+				}
+			}
+		},
+		{
+			"id": "TaxEstimates",
+			"route": "/tax-estimates",
+			"type": "index",
+			"title": "Tax Estimates",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxEstimate",
+				"columns": [
+					{
+						"key": "fiscalYear",
+						"label": "Fiscal Year",
+						"sortable": true
+					},
+					{
+						"key": "snapshotDate",
+						"label": "As of Date",
+						"sortable": true
+					},
+					{
+						"key": "estimatedNetLiability",
+						"label": "Estimated Net Liability (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "estimatedIncomeTax",
+						"label": "Estimated Income Tax (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "configurationVersionId",
+						"label": "Configuration Version",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-snapshotDate",
+				"detailRoute": "TaxEstimatesDetail"
+			}
+		},
+		{
+			"id": "TaxEstimatesDetail",
+			"route": "/tax-estimates/:id",
+			"type": "detail",
+			"title": "Tax Estimate",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxEstimate",
+				"fields": [
+					{
+						"key": "fiscalYear",
+						"label": "Fiscal Year",
+						"type": "number"
+					},
+					{
+						"key": "snapshotDate",
+						"label": "As of Date",
+						"type": "string"
+					},
+					{
+						"key": "configurationVersionId",
+						"label": "Configuration Version",
+						"type": "string"
+					},
+					{
+						"key": "glTransactionCount",
+						"label": "GL Transactions Included",
+						"type": "number"
+					},
+					{
+						"key": "ytdTaxableIncome",
+						"label": "YTD Taxable Income (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "ytdTaxableExpenses",
+						"label": "YTD Taxable Expenses (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "ytdNetIncome",
+						"label": "YTD Net Income (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "estimatedAnnualIncome",
+						"label": "Estimated Annual Income (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "estimatedAnnualExpenses",
+						"label": "Estimated Annual Expenses (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "estimatedAnnualNetIncome",
+						"label": "Estimated Annual Net Income (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "estimatedTaxableIncome",
+						"label": "Estimated Taxable Income (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "estimatedIncomeTax",
+						"label": "Estimated Income Tax (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "witholdingCredits",
+						"label": "Withholding Credits (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "estimatedNetLiability",
+						"label": "Estimated Net Liability (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "TaxEstimates"
+			}
+		},
+		{
+			"id": "TaxConfiguration",
+			"route": "/tax-configuration",
+			"type": "detail",
+			"title": "Tax Configuration",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxRegimeConfiguration",
+				"visibility": {
+					"roles": [
+						"administrator"
+					]
+				},
+				"fields": [
+					{
+						"key": "name",
+						"label": "Configuration Name",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Fiscal Year",
+						"type": "number"
+					},
+					{
+						"key": "regimeType",
+						"label": "Regime Type",
+						"type": "string"
+					},
+					{
+						"key": "incomeTaxRate",
+						"label": "Income Tax Rate",
+						"type": "number",
+						"help": "Decimal rate (e.g. 0.25 for 25%)"
+					},
+					{
+						"key": "generalAllowance",
+						"label": "General Allowance (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "soleTraderAllowance",
+						"label": "Sole Trader Allowance (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "filingDeadline",
+						"label": "Filing Deadline",
+						"type": "string"
+					},
+					{
+						"key": "categoryMappingRules",
+						"label": "GL Account Category Mapping Rules",
+						"type": "json",
+						"help": "Map GL account ranges (e.g. '4000-4099') or individual accounts to statutory tax categories."
+					},
+					{
+						"key": "allowanceAmounts",
+						"label": "Per-Category Allowance Overrides",
+						"type": "json"
+					},
+					{
+						"key": "versionId",
+						"label": "Version ID",
+						"type": "string"
+					},
+					{
+						"key": "effectiveFrom",
+						"label": "Effective From",
+						"type": "string"
+					},
+					{
+						"key": "effectiveUntil",
+						"label": "Effective Until",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "Dashboard"
 			}
 		}
 	]
