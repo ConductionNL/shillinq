@@ -1707,7 +1707,7 @@
 					{
 						"key": "retentionYears",
 						"label": "Bewaartermijn (jaren)",
-						"type": "integer"
+						"type": "number"
 					},
 					{
 						"key": "retentionTrigger",
@@ -1737,7 +1737,7 @@
 					{
 						"key": "customRetentionYears",
 						"label": "Afwijkende bewaartermijn (organisatie)",
-						"type": "integer"
+						"type": "number"
 					},
 					{
 						"key": "administrationId",
@@ -1747,7 +1747,7 @@
 					{
 						"key": "daysUntilRetention",
 						"label": "Dagen tot bewaartermijn",
-						"type": "integer"
+						"type": "number"
 					}
 				],
 				"indexRoute": "Bewaartermijnen"
