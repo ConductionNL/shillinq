@@ -128,6 +128,34 @@
             "type": "boolean",
             "default": false,
             "description": "When true, excludes this line from the consolidated trial-balance and financial-statement aggregations. Used to eliminate inter-GR transactions from consolidated views per REQ-GRC-003."
+          },
+          "taakveld": {
+            "type": "string",
+            "description": "FK to Taakveld.code classifying this line into a BBV function. Defaults from Account.taakveld; overridable within the allowed set per REQ-BBV-002. Reserve mutations must carry taakveld 0.10 per REQ-BBV-004.",
+            "nullable": true,
+            "example": "7.5"
+          },
+          "economischeCategorie": {
+            "type": "string",
+            "description": "FK to EconomischeCategorie.code (Iv3 cost-type) for this line. Defaults from Account.economischeCategorie per REQ-BBV-002.",
+            "nullable": true,
+            "example": "3.4.3"
+          },
+          "rechtmatigheidStatus": {
+            "type": "string",
+            "description": "Rechtmatigheids-classification of this posting per REQ-BBV-009. Set by year-close aggregation against the raad-configured rapportagegrens/goedkeuringstolerantie.",
+            "enum": [
+              "compliant",
+              "afwijking_within_tolerance",
+              "afwijking_outside_tolerance"
+            ],
+            "default": "compliant",
+            "nullable": true
+          }
+        },
+        "x-openregister-lifecycle": {
+          "preconditions": {
+            "saveBbvClassificatie": "OCA\\Shillinq\\Guard\\BbvComplianceGuard::requireLineClassification"
           }
         },
         "x-openregister-aggregations": {
@@ -418,6 +446,37 @@
             "type": "boolean",
             "description": "Whether VAT/BTW applies to transactions posted to this account.",
             "default": false
+          },
+          "rgsDecentraalCode": {
+            "type": "string",
+            "description": "FK to BbvAccountMapping.rgsDecentraalCode — the RGS-decentraal D-code establishing the wettelijke positie of this account. Required for BBV-tenants (administrationType ∈ {gemeente, provincie, waterschap}) per REQ-BBV-001.",
+            "nullable": true,
+            "example": "BLAr"
+          },
+          "taakveld": {
+            "type": "string",
+            "description": "FK to Taakveld.code — default function-classification for exploitatie accounts. Required for exploitatie accounts in BBV-tenants per REQ-BBV-002; overridable per GL line within the allowed set for the taakveld.",
+            "nullable": true,
+            "example": "7.5"
+          },
+          "economischeCategorie": {
+            "type": "string",
+            "description": "FK to EconomischeCategorie.code — default Iv3 cost-type for this account. Required for BBV-tenants per REQ-BBV-002.",
+            "nullable": true,
+            "example": "3.4.3"
+          },
+          "bbvClassificatie": {
+            "type": "string",
+            "description": "BBV routing discriminator determining posting constraints (reserve→taakveld 0.10, voorziening→gekoppelde taakveld) per REQ-BBV-004. Required for BBV-tenants.",
+            "enum": [
+              "exploitatie",
+              "investering",
+              "reserve",
+              "voorziening",
+              "balans-overig"
+            ],
+            "nullable": true,
+            "example": "exploitatie"
           }
         },
         "x-openregister-lifecycle": {
@@ -438,7 +497,8 @@
             }
           },
           "preconditions": {
-            "save": "OCA\\Shillinq\\Guard\\AccountBalanceGuard::requireSingleClosingAccount"
+            "save": "OCA\\Shillinq\\Guard\\AccountBalanceGuard::requireSingleClosingAccount",
+            "saveBbvMapping": "OCA\\Shillinq\\Guard\\BbvComplianceGuard::requireBbvAccountMapping"
           },
           "transitions": {
             "block": {
@@ -716,6 +776,1134 @@
             "filter": {
               "administrationType": ["gemeente", "provincie", "waterschap"]
             }
+          }
+        }
+      },
+      "Taakveld": {
+        "slug": "Taakveld",
+        "icon": "ShapeOutline",
+        "version": "0.1.0",
+        "title": "Taakveld",
+        "description": "A BBV taakveld (function code) per Iv3-informatievoorschrift. 53 for gemeente, 14 for provincie, ~12 for waterschap. The unit of BBV function-classification on every exploitatie posting per REQ-BBV-002.",
+        "type": "object",
+        "x-schema-org": "schema:DefinedTerm",
+        "required": [
+          "code",
+          "naam",
+          "hoofdfunctie",
+          "overheidslaag"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Taakveld code (e.g. '0.10', '7.5'). Unique within an overheidslaag + geldigheid window.",
+            "example": "7.5"
+          },
+          "naam": {
+            "type": "string",
+            "description": "Human-readable taakveld name.",
+            "example": "Begraafplaatsen en crematoria"
+          },
+          "hoofdfunctie": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 8,
+            "description": "BBV hoofdfunctie (0-8) this taakveld rolls up to. Validated against code prefix at Iv3-export time per REQ-BBV-006.",
+            "example": 7
+          },
+          "hoofdfunctieNaam": {
+            "type": "string",
+            "description": "Name of the hoofdfunctie.",
+            "nullable": true,
+            "example": "Volksgezondheid en milieu"
+          },
+          "omschrijvingIv3": {
+            "type": "string",
+            "description": "Official Iv3-informatievoorschrift description of the taakveld scope.",
+            "nullable": true
+          },
+          "overheidslaag": {
+            "type": "string",
+            "enum": [
+              "gemeente",
+              "provincie",
+              "waterschap"
+            ],
+            "description": "Which overheidslaag this taakveld catalogue applies to.",
+            "example": "gemeente"
+          },
+          "verplichteEconomischeCategorieen": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of EconomischeCategorie.code values allowed/required for this taakveld. Empty array means all categorieën are allowed.",
+            "nullable": true,
+            "example": ["3.4.3"]
+          },
+          "geldigVanaf": {
+            "type": "string",
+            "format": "date",
+            "description": "First date this taakveld version is effective (Iv3 catalogue versioning per design Risk 1).",
+            "nullable": true,
+            "example": "2025-01-01"
+          },
+          "geldigTot": {
+            "type": "string",
+            "format": "date",
+            "description": "Last date this taakveld version is effective; null = open-ended.",
+            "nullable": true
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bbv-controller": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "EconomischeCategorie": {
+        "slug": "EconomischeCategorie",
+        "icon": "TagOutline",
+        "version": "0.1.0",
+        "title": "Economische Categorie",
+        "description": "An Iv3 economische categorie (cost-type) — ~150 codes across 8 maingroups per Iv3-informatievoorschrift bijlage A. Drives the Iv3-aanlevering aggregation per REQ-BBV-006.",
+        "type": "object",
+        "x-schema-org": "schema:DefinedTerm",
+        "required": [
+          "code",
+          "naam",
+          "niveau",
+          "batenOfLasten"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Economische categorie code (e.g. '3.4.3', '1.2.1'). Unique within a catalogue version.",
+            "example": "3.4.3"
+          },
+          "naam": {
+            "type": "string",
+            "description": "Human-readable name of the economische categorie.",
+            "example": "Betaalde belastingen"
+          },
+          "niveau": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3,
+            "description": "Hierarchy level of the code (1 = maingroup, 3 = leaf).",
+            "example": 3
+          },
+          "parentCode": {
+            "type": "string",
+            "description": "FK to the parent EconomischeCategorie.code for hierarchy navigation.",
+            "nullable": true,
+            "example": "3.4"
+          },
+          "batenOfLasten": {
+            "type": "string",
+            "enum": [
+              "baten",
+              "lasten",
+              "balans"
+            ],
+            "description": "Whether postings on this categorie are baten, lasten, or balans-mutaties.",
+            "example": "lasten"
+          },
+          "iv3Verplicht": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether this categorie is mandatory in the Iv3-aanlevering per informatievoorschrift."
+          }
+        },
+        "x-openregister-relations": {
+          "parent": {
+            "localField": "parentCode",
+            "relatedSchema": "EconomischeCategorie",
+            "relatedField": "code",
+            "cardinality": "many-to-one",
+            "description": "Self-relation for the economische-categorie hierarchy."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bbv-controller": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "BbvAccountMapping": {
+        "slug": "BbvAccountMapping",
+        "icon": "LinkVariant",
+        "version": "0.1.0",
+        "title": "BBV Account Mapping",
+        "description": "The RGS-decentraal koppeling: maps a grootboekrekening to its RGS-decentraal D-code, default taakveld, default economische categorie, and Iv3-bucket. The linchpin connecting administrative bookkeeping to CBS Iv3-reporting per REQ-BBV-001. Consumed by the Iv3Export.buckets aggregation.",
+        "type": "object",
+        "x-schema-org": "schema:DefinedTerm",
+        "required": [
+          "accountNumber",
+          "administrationId",
+          "rgsDecentraalCode",
+          "dc"
+        ],
+        "properties": {
+          "accountNumber": {
+            "type": "string",
+            "description": "FK to Account.accountNumber. Scoped by administrationId — a tenant maps each account exactly once per REQ-BBV-001.",
+            "example": "4310"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this mapping. Different tenants may map the same accountNumber to different taakvelden (both valid) per design D2.",
+            "example": "gem-lemelerveld"
+          },
+          "rgsCode": {
+            "type": "string",
+            "description": "RGS hoofdcode this account derives from (e.g. 'WLasOlpOlp').",
+            "nullable": true,
+            "example": "WLasOlpOlp"
+          },
+          "rgsDecentraalCode": {
+            "type": "string",
+            "description": "RGS-decentraal D-code establishing the wettelijke positie. Validated against the active RGS-decentraal seed version per REQ-BBV-001.",
+            "example": "WLasOlpOlp"
+          },
+          "omschrijvingKort": {
+            "type": "string",
+            "description": "Short description of the RGS-decentraal post.",
+            "nullable": true
+          },
+          "referentienummer": {
+            "type": "string",
+            "description": "5-niveau referentienummer used for confidence-scored auto-mapping of legacy charts per REQ-BBV-001 mass-mapping scenario.",
+            "nullable": true,
+            "example": "4.3.1.7.5"
+          },
+          "dc": {
+            "type": "string",
+            "enum": ["D", "C"],
+            "description": "Debit/Credit hoofdkenmerk of the RGS-decentraal post.",
+            "example": "D"
+          },
+          "rgsNiveau": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "RGS hierarchy level (1-5).",
+            "nullable": true,
+            "example": 4
+          },
+          "taakveldDefault": {
+            "type": "string",
+            "description": "FK to Taakveld.code — default taakveld inherited by Account.taakveld and GLLine.taakveld per REQ-BBV-002.",
+            "nullable": true,
+            "example": "7.5"
+          },
+          "economischeCategorieDefault": {
+            "type": "string",
+            "description": "FK to EconomischeCategorie.code — default cost-type inherited by postings per REQ-BBV-002.",
+            "nullable": true,
+            "example": "3.4.3"
+          },
+          "iv3Bucket": {
+            "type": "string",
+            "description": "Iv3-bucket code this account aggregates into. Consumed by the Iv3Export.buckets aggregation (REQ-BBV-006).",
+            "nullable": true,
+            "example": "IV3-075"
+          },
+          "omslag": {
+            "type": "string",
+            "enum": ["verplicht", "toegestaan", "niet-toegestaan"],
+            "description": "Whether rente-omslag applies to this post.",
+            "nullable": true
+          }
+        },
+        "x-openregister-relations": {
+          "account": {
+            "localField": "accountNumber",
+            "relatedSchema": "Account",
+            "relatedField": "accountNumber",
+            "cardinality": "many-to-one",
+            "description": "Each mapping refines exactly one Account within an administration."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bbv-controller": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "Programma": {
+        "slug": "Programma",
+        "icon": "FolderTextOutline",
+        "version": "0.1.0",
+        "title": "Programma",
+        "description": "A BBV programma (policy objective) grouping taakvelden, doelstellingen, and beleidsindicatoren. The publish lifecycle enforces meerjarenraming sluitend-checks per REQ-BBV-003.",
+        "type": "object",
+        "x-schema-org": "schema:Thing",
+        "required": [
+          "nummer",
+          "naam",
+          "administrationId",
+          "boekjaar",
+          "lifecycleState"
+        ],
+        "properties": {
+          "nummer": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99,
+            "description": "Programmanummer, unique per (administrationId, boekjaar).",
+            "example": 3
+          },
+          "naam": {
+            "type": "string",
+            "description": "Programme name.",
+            "example": "Sociaal Domein"
+          },
+          "omschrijving": {
+            "type": "string",
+            "description": "Programme description.",
+            "nullable": true
+          },
+          "portefeuillehouder": {
+            "type": "string",
+            "description": "Responsible bestuurder (portefeuillehouder).",
+            "nullable": true
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this programma.",
+            "example": "gem-lemelerveld"
+          },
+          "taakvelden": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Array of Taakveld.code values grouped under this programma.",
+            "nullable": true,
+            "example": ["6.1", "6.2"]
+          },
+          "doelstellingen": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "wat": { "type": "string" },
+                "wanneer": { "type": "string" },
+                "kpi": { "type": "string" }
+              }
+            },
+            "description": "Goals with KPIs (wat/wanneer/kpi).",
+            "nullable": true
+          },
+          "beleidsindicatoren": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Array of BeleidsIndicator.code values tracked under this programma.",
+            "nullable": true
+          },
+          "boekjaar": {
+            "type": "integer",
+            "description": "Fiscal year of this programma version.",
+            "example": 2026
+          },
+          "versie": {
+            "type": "string",
+            "enum": [
+              "begroting",
+              "jaarrekening",
+              "burap-1",
+              "burap-2",
+              "marap",
+              "tussenrapportage"
+            ],
+            "description": "Document version this programma belongs to.",
+            "default": "begroting"
+          },
+          "stelselwijziging": {
+            "type": "boolean",
+            "default": false,
+            "description": "Marks recomputed comparative figures after a taakveld catalogue change per REQ-BBV-008."
+          },
+          "raadsbesluitNummer": {
+            "type": "string",
+            "description": "Raadsbesluit reference motivating a non-sluitende publicatie override per REQ-BBV-003.",
+            "nullable": true
+          },
+          "raadsbesluitDatum": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of the override raadsbesluit.",
+            "nullable": true
+          },
+          "lifecycleState": {
+            "type": "string",
+            "enum": ["draft", "published"],
+            "default": "draft",
+            "description": "Publication state of the programma."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Editable; meerjarenraming may be incomplete."
+            },
+            "published": {
+              "label": "Published",
+              "description": "Vastgesteld; meerjarenraming verified sluitend per REQ-BBV-003."
+            }
+          },
+          "transitions": {
+            "publish": {
+              "from": "draft",
+              "to": "published",
+              "label": "Publiceer begroting",
+              "description": "Publish the programme budget. Verifies that the meerjarenraming is structureel en reëel sluitend for T..T+3 per REQ-BBV-003. Override requires raadsbesluitNummer + raadsbesluitDatum.",
+              "requires": "OCA\\Shillinq\\Guard\\BbvComplianceGuard::requireMeerjarenramingSluitend"
+            },
+            "revise": {
+              "from": "published",
+              "to": "draft",
+              "label": "Heropen voor wijziging",
+              "description": "Reopen a published programma for revision (begrotingswijziging)."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bbv-controller": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "BeleidsIndicator": {
+        "slug": "BeleidsIndicator",
+        "icon": "ChartLineVariant",
+        "version": "0.1.0",
+        "title": "Beleidsindicator",
+        "description": "One of the 39 BBV-verplichte beleidsindicatoren per Regeling Vaststelling Beleidsindicatoren, tracked per programma per administratie (REQ-BBV-007).",
+        "type": "object",
+        "x-schema-org": "schema:DefinedTerm",
+        "required": [
+          "code",
+          "naam",
+          "administrationId"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Indicator code, unique per (administrationId, programma).",
+            "example": "BBV-7.1"
+          },
+          "naam": {
+            "type": "string",
+            "description": "Indicator name.",
+            "example": "Fijn huishoudelijk restafval"
+          },
+          "eenheid": {
+            "type": "string",
+            "description": "Unit of measure (e.g. 'kg per inwoner').",
+            "nullable": true
+          },
+          "bron": {
+            "type": "string",
+            "description": "Source of the indicator value (e.g. 'CBS').",
+            "nullable": true
+          },
+          "waarde": {
+            "type": "number",
+            "description": "Measured indicator value.",
+            "nullable": true
+          },
+          "programma": {
+            "type": "string",
+            "description": "FK to Programma (composite key reference) this indicator belongs to.",
+            "nullable": true
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this indicator record.",
+            "example": "gem-lemelerveld"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bbv-controller": { "permissions": ["create", "read", "update"] },
+            "auditor": { "permissions": ["read"] }
+          }
+        }
+      },
+      "MeerjarenBudget": {
+        "slug": "MeerjarenBudget",
+        "icon": "ChartTimelineVariant",
+        "version": "0.1.0",
+        "title": "Meerjarenbudget",
+        "description": "A multi-year budget row per (programma, taakveld, economische categorie, boekjaar, horizon). The basis for the sluitend-check at Programma.publish per REQ-BBV-003. Amounts in integer cents to avoid float drift.",
+        "type": "object",
+        "x-schema-org": "schema:MonetaryAmount",
+        "required": [
+          "administrationId",
+          "boekjaar",
+          "meerjarenHorizon",
+          "versie"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this budget row.",
+            "example": "gem-lemelerveld"
+          },
+          "programma": {
+            "type": "string",
+            "description": "FK to Programma (nummer) this budget row belongs to.",
+            "nullable": true
+          },
+          "taakveld": {
+            "type": "string",
+            "description": "FK to Taakveld.code.",
+            "nullable": true,
+            "example": "6.1"
+          },
+          "economischeCategorie": {
+            "type": "string",
+            "description": "FK to EconomischeCategorie.code.",
+            "nullable": true
+          },
+          "boekjaar": {
+            "type": "integer",
+            "description": "Base fiscal year T of the meerjarenraming.",
+            "example": 2026
+          },
+          "meerjarenHorizon": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3,
+            "description": "Horizon offset: 0 = T, 1 = T+1, 2 = T+2, 3 = T+3.",
+            "example": 0
+          },
+          "batenCents": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Budgeted baten in integer eurocents (server-authoritative; never client-trusted floats).",
+            "default": 0,
+            "example": 92400000000
+          },
+          "lastenCents": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Budgeted lasten in integer eurocents.",
+            "default": 0,
+            "example": 91800000000
+          },
+          "mutatieReservesCents": {
+            "type": "integer",
+            "description": "Saldo of reserve-mutaties (may be negative) in integer eurocents, contributing to the sluitend-saldo per REQ-BBV-003.",
+            "default": 0,
+            "example": 20000000
+          },
+          "incidenteelBatenCents": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Portion of baten that is incidenteel, shown apart per BBV-art. 19 (REQ-BBV-003).",
+            "default": 0
+          },
+          "incidenteelLastenCents": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Portion of lasten that is incidenteel.",
+            "default": 0
+          },
+          "versie": {
+            "type": "string",
+            "enum": ["primitief", "na-wijziging", "realisatie"],
+            "description": "Budget version.",
+            "default": "primitief"
+          },
+          "begrotingswijziging": {
+            "type": "string",
+            "description": "FK to Begrotingswijziging.nummer when this row results from a wijziging.",
+            "nullable": true
+          },
+          "toelichting": {
+            "type": "string",
+            "description": "Explanatory note.",
+            "nullable": true
+          },
+          "stelselwijziging": {
+            "type": "boolean",
+            "default": false,
+            "description": "Marks a recomputed comparative figure after a taakveld catalogue change per REQ-BBV-008."
+          }
+        },
+        "x-openregister-aggregations": {
+          "saldoPerJaar": {
+            "description": "Per-horizon sluitend-saldo = sum(batenCents) - sum(lastenCents) + sum(mutatieReservesCents), grouped by (boekjaar, meerjarenHorizon, versie). Consumed by the Programma.publish sluitend-check per REQ-BBV-003.",
+            "filter": "versie = 'primitief'",
+            "groupBy": "meerjarenHorizon",
+            "operations": {
+              "saldoCents": {
+                "field": "batenCents",
+                "operation": "sum"
+              }
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bbv-controller": { "permissions": ["create", "read", "update"] },
+            "auditor": { "permissions": ["read"] }
+          }
+        }
+      },
+      "Reserve": {
+        "slug": "Reserve",
+        "icon": "PiggyBankOutline",
+        "version": "0.1.0",
+        "title": "Reserve",
+        "description": "A BBV reserve (algemeen of bestemming). Mutaties run uitsluitend via resultaatbestemming op taakveld 0.10 per REQ-BBV-004. Saldi in integer cents.",
+        "type": "object",
+        "x-schema-org": "schema:MonetaryAmount",
+        "required": [
+          "naam",
+          "soort",
+          "administrationId"
+        ],
+        "properties": {
+          "naam": {
+            "type": "string",
+            "description": "Reserve name, unique per administration.",
+            "example": "Onderwijshuisvesting"
+          },
+          "soort": {
+            "type": "string",
+            "enum": ["algemeen", "bestemming"],
+            "description": "Algemene reserve or bestemmingsreserve.",
+            "example": "bestemming"
+          },
+          "doel": {
+            "type": "string",
+            "description": "Purpose of the reserve; required for bestemmingsreserves.",
+            "nullable": true
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this reserve.",
+            "example": "gem-lemelerveld"
+          },
+          "raadsbesluitInstelling": {
+            "type": "string",
+            "description": "Raadsbesluit reference establishing the reserve.",
+            "nullable": true
+          },
+          "plafondCents": {
+            "type": "integer",
+            "description": "Upper bound (plafond) in integer eurocents.",
+            "nullable": true
+          },
+          "bodemCents": {
+            "type": "integer",
+            "description": "Lower bound (bodem) in integer eurocents.",
+            "nullable": true
+          },
+          "looptijdEinde": {
+            "type": "string",
+            "format": "date",
+            "description": "End date of the bestemmingsreserve.",
+            "nullable": true
+          },
+          "programma": {
+            "type": "string",
+            "description": "FK to Programma (nummer) this reserve is linked to.",
+            "nullable": true
+          },
+          "rentetoerekening": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether rente is toegerekend to this reserve."
+          },
+          "saldoBeginJaarCents": {
+            "type": "integer",
+            "default": 0,
+            "description": "Saldo at the start of the boekjaar in integer eurocents."
+          },
+          "saldoEindJaarCents": {
+            "type": "integer",
+            "description": "Saldo at the end of the boekjaar in integer eurocents.",
+            "nullable": true
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bbv-controller": { "permissions": ["create", "read", "update"] },
+            "auditor": { "permissions": ["read"] }
+          }
+        }
+      },
+      "Voorziening": {
+        "slug": "Voorziening",
+        "icon": "ShieldOutline",
+        "version": "0.1.0",
+        "title": "Voorziening",
+        "description": "A BBV voorziening (art. 44 a-d). Mutaties run via exploitatie op het gekoppelde taakveld (dotatie = last, vrijval = negatieve last) per REQ-BBV-004. Saldi in integer cents.",
+        "type": "object",
+        "x-schema-org": "schema:MonetaryAmount",
+        "required": [
+          "naam",
+          "bbvArtikel44Categorie",
+          "administrationId"
+        ],
+        "properties": {
+          "naam": {
+            "type": "string",
+            "description": "Voorziening name, unique per administration.",
+            "example": "Groot Onderhoud Wegen"
+          },
+          "bbvArtikel44Categorie": {
+            "type": "string",
+            "enum": ["a", "b", "c", "d"],
+            "description": "BBV art. 44 sub-categorie (a/b/c/d).",
+            "example": "a"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this voorziening.",
+            "example": "gem-lemelerveld"
+          },
+          "onderbouwingDocument": {
+            "type": "string",
+            "description": "Docudesk URI of the onderbouwing (e.g. beheerplan).",
+            "nullable": true
+          },
+          "actualisatieFrequentieJaar": {
+            "type": "integer",
+            "description": "Actualisation frequency in years.",
+            "nullable": true,
+            "example": 4
+          },
+          "volgendeActualisatie": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of the next required actualisation.",
+            "nullable": true
+          },
+          "taakveld": {
+            "type": "string",
+            "description": "FK to Taakveld.code — the gekoppelde exploitatie-taakveld for dotatie/vrijval per REQ-BBV-004.",
+            "nullable": true,
+            "example": "2.1"
+          },
+          "saldoBeginJaarCents": {
+            "type": "integer",
+            "default": 0,
+            "description": "Saldo at the start of the boekjaar in integer eurocents."
+          },
+          "dotatiesJaarCents": {
+            "type": "integer",
+            "default": 0,
+            "description": "Total dotaties in the boekjaar in integer eurocents."
+          },
+          "vrijvallenJaarCents": {
+            "type": "integer",
+            "default": 0,
+            "description": "Total vrijvallen in the boekjaar in integer eurocents."
+          },
+          "saldoEindJaarCents": {
+            "type": "integer",
+            "description": "Saldo at the end of the boekjaar in integer eurocents.",
+            "nullable": true
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bbv-controller": { "permissions": ["create", "read", "update"] },
+            "auditor": { "permissions": ["read"] }
+          }
+        }
+      },
+      "MaterieleVasteActiva": {
+        "slug": "MaterieleVasteActiva",
+        "icon": "OfficeBuildingOutline",
+        "version": "0.1.0",
+        "title": "Materiële Vaste Activa",
+        "description": "A BBV MVA record per Notitie MVA (Commissie BBV juli 2023). Activation rules per mva_categorie; afschrijving start month following ingebruikname per REQ-BBV-005. Amounts in integer cents.",
+        "type": "object",
+        "x-schema-org": "schema:MonetaryAmount",
+        "required": [
+          "omschrijving",
+          "mvaCategorie",
+          "aanschafwaardeCents",
+          "ingebruiknameDatum",
+          "administrationId"
+        ],
+        "properties": {
+          "omschrijving": {
+            "type": "string",
+            "description": "MVA description, unique per (administrationId, ingebruiknameDatum).",
+            "example": "Sporthal De Brug"
+          },
+          "mvaCategorie": {
+            "type": "string",
+            "enum": [
+              "economisch-nut",
+              "economisch-nut-heffing",
+              "maatschappelijk-nut"
+            ],
+            "description": "MVA category determining activation vs. P&L treatment per REQ-BBV-005.",
+            "example": "economisch-nut"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this MVA.",
+            "example": "gem-lemelerveld"
+          },
+          "aanschafwaardeCents": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Gross acquisition value in integer eurocents (before subsidie van derden deduction).",
+            "example": 240000000
+          },
+          "subsidieVanDerdenCents": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Object-earmarked third-party contribution deducted directly from aanschafwaarde (not as bate) per REQ-BBV-005. Te activeren waarde = aanschafwaarde - subsidie.",
+            "default": 0,
+            "example": 35000000
+          },
+          "ingebruiknameDatum": {
+            "type": "string",
+            "format": "date",
+            "description": "In-use date. Depreciation starts the month following this date per REQ-BBV-005.",
+            "example": "2026-09-15"
+          },
+          "afschrijvingsmethode": {
+            "type": "string",
+            "enum": ["lineair", "annuitair"],
+            "description": "Depreciation method.",
+            "default": "lineair"
+          },
+          "afschrijvingstermijnJaar": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Depreciation term in years.",
+            "nullable": true,
+            "example": 40
+          },
+          "restwaardeCents": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Residual value in integer eurocents.",
+            "default": 0
+          },
+          "renteOmslagPercentage": {
+            "type": "number",
+            "description": "Rente-omslag percentage applied to this actief.",
+            "nullable": true
+          },
+          "taakveld": {
+            "type": "string",
+            "description": "FK to Taakveld.code the afschrijving is booked on.",
+            "nullable": true,
+            "example": "5.2"
+          },
+          "kredietbesluit": {
+            "type": "string",
+            "description": "Kredietbesluit reference authorising the investment.",
+            "nullable": true
+          },
+          "componentenMethode": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether the componentenmethode applies (samengesteld actief split into components with separate schedules)."
+          },
+          "boekwaardeBeginJaarCents": {
+            "type": "integer",
+            "default": 0,
+            "description": "Boekwaarde at the start of the boekjaar in integer eurocents."
+          },
+          "afschrijvingJaarCents": {
+            "type": "integer",
+            "description": "Computed depreciation for the boekjaar in integer eurocents.",
+            "nullable": true
+          }
+        },
+        "x-openregister-lifecycle": {
+          "preconditions": {
+            "saveActivation": "OCA\\Shillinq\\Guard\\BbvComplianceGuard::requireMvaActivation"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bbv-controller": { "permissions": ["create", "read", "update"] },
+            "auditor": { "permissions": ["read"] }
+          }
+        }
+      },
+      "Subsidie": {
+        "slug": "Subsidie",
+        "icon": "HandCoinOutline",
+        "version": "0.1.0",
+        "title": "Subsidie",
+        "description": "A BBV subsidie (verstrekt of ontvangen), optionally linked to a SiSa-indicator for the SiSa-bijlage per REQ-BBV-010. Bedragen in integer cents.",
+        "type": "object",
+        "x-schema-org": "schema:MonetaryAmount",
+        "required": [
+          "subsidieSoort",
+          "regelingNaam",
+          "beschikkingNummer",
+          "administrationId"
+        ],
+        "properties": {
+          "subsidieSoort": {
+            "type": "string",
+            "enum": [
+              "verstrekt-incidenteel",
+              "verstrekt-structureel",
+              "ontvangen-rijk",
+              "ontvangen-provincie",
+              "ontvangen-eu"
+            ],
+            "description": "Subsidy direction and type.",
+            "example": "ontvangen-rijk"
+          },
+          "regelingNaam": {
+            "type": "string",
+            "description": "Name of the regeling.",
+            "example": "Combinatiefuncties"
+          },
+          "sisaIndicator": {
+            "type": "string",
+            "description": "SiSa-bijlage indicator code (e.g. 'H8'). If empty for a SiSa-plichtige regeling, a warning fires per REQ-BBV-010.",
+            "nullable": true,
+            "example": "H8"
+          },
+          "verstrekkerOfOntvanger": {
+            "type": "string",
+            "description": "Counterparty (verstrekker for ontvangen, ontvanger for verstrekt).",
+            "nullable": true
+          },
+          "beschikkingNummer": {
+            "type": "string",
+            "description": "Beschikking number, unique per administration.",
+            "example": "BES-2026-0042"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this subsidie.",
+            "example": "gem-lemelerveld"
+          },
+          "bedragVerleendCents": {
+            "type": "integer",
+            "default": 0,
+            "description": "Granted amount in integer eurocents."
+          },
+          "bedragVastgesteldCents": {
+            "type": "integer",
+            "description": "Final established amount in integer eurocents.",
+            "nullable": true
+          },
+          "bedragGerealiseerdCents": {
+            "type": "integer",
+            "description": "Realised amount in integer eurocents.",
+            "nullable": true
+          },
+          "taakveld": {
+            "type": "string",
+            "description": "FK to Taakveld.code placing the subsidie in the BBV hierarchy.",
+            "nullable": true
+          },
+          "economischeCategorie": {
+            "type": "string",
+            "description": "FK to EconomischeCategorie.code.",
+            "nullable": true
+          },
+          "verleningsdatum": {
+            "type": "string",
+            "format": "date",
+            "description": "Grant date.",
+            "nullable": true
+          },
+          "beeindigingsdatum": {
+            "type": "string",
+            "format": "date",
+            "description": "End date.",
+            "nullable": true
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bbv-controller": { "permissions": ["create", "read", "update"] },
+            "auditor": { "permissions": ["read"] }
+          }
+        }
+      },
+      "Begrotingswijziging": {
+        "slug": "Begrotingswijziging",
+        "icon": "FileDocumentEditOutline",
+        "version": "0.1.0",
+        "title": "Begrotingswijziging",
+        "description": "A BBV begrotingswijziging amending a budget line, tied to a raadsbesluit. Bedragen in integer cents.",
+        "type": "object",
+        "x-schema-org": "schema:Thing",
+        "required": [
+          "nummer",
+          "administrationId",
+          "status"
+        ],
+        "properties": {
+          "nummer": {
+            "type": "string",
+            "description": "Begrotingswijziging number, unique per administration.",
+            "example": "BW-2026-007"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this wijziging.",
+            "example": "gem-lemelerveld"
+          },
+          "programma": {
+            "type": "string",
+            "description": "FK to Programma (nummer).",
+            "nullable": true
+          },
+          "taakveld": {
+            "type": "string",
+            "description": "FK to Taakveld.code.",
+            "nullable": true
+          },
+          "economischeCategorie": {
+            "type": "string",
+            "description": "FK to EconomischeCategorie.code.",
+            "nullable": true
+          },
+          "bedragOorspronkelijkCents": {
+            "type": "integer",
+            "default": 0,
+            "description": "Original amount in integer eurocents."
+          },
+          "bedragWijzigingCents": {
+            "type": "integer",
+            "default": 0,
+            "description": "Change amount (may be negative) in integer eurocents."
+          },
+          "bedragNieuwCents": {
+            "type": "integer",
+            "default": 0,
+            "description": "Resulting amount in integer eurocents."
+          },
+          "reden": {
+            "type": "string",
+            "description": "Reason for the wijziging.",
+            "nullable": true
+          },
+          "raadsbesluitNummer": {
+            "type": "string",
+            "description": "Raadsbesluit reference.",
+            "nullable": true
+          },
+          "raadsbesluitDatum": {
+            "type": "string",
+            "format": "date",
+            "description": "Raadsbesluit date.",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": ["concept", "vastgesteld", "verwerkt"],
+            "default": "concept",
+            "description": "Processing status of the wijziging."
+          },
+          "effectievedatum": {
+            "type": "string",
+            "format": "date",
+            "description": "Effective date of the wijziging.",
+            "nullable": true
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bbv-controller": { "permissions": ["create", "read", "update"] },
+            "auditor": { "permissions": ["read"] }
+          }
+        }
+      },
+      "Paragraaf": {
+        "slug": "Paragraaf",
+        "icon": "TextBoxOutline",
+        "version": "0.1.0",
+        "title": "Paragraaf",
+        "description": "One of the 7 verplichte BBV-paragrafen (art. 9). All 7 must be present and non-empty before a jaarrekening can be vastgesteld per REQ-BBV-007.",
+        "type": "object",
+        "x-schema-org": "schema:Thing",
+        "required": [
+          "type",
+          "administrationId",
+          "boekjaar"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "Lokale_heffingen",
+              "Weerstandsvermogen",
+              "Onderhoud_kapitaalgoederen",
+              "Financiering",
+              "Bedrijfsvoering",
+              "Verbonden_partijen",
+              "Grondbeleid"
+            ],
+            "description": "Paragraaf type per BBV art. 9.",
+            "example": "Weerstandsvermogen"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this paragraaf.",
+            "example": "gem-lemelerveld"
+          },
+          "boekjaar": {
+            "type": "integer",
+            "description": "Fiscal year of this paragraaf.",
+            "example": 2026
+          },
+          "inhoud": {
+            "type": "string",
+            "description": "Free-text content of the paragraaf (template-driven editor output).",
+            "nullable": true
+          },
+          "weerstandsratio": {
+            "type": "number",
+            "description": "Auto-computed weerstandsratio (beschikbaar / benodigd) for the Weerstandsvermogen paragraaf per REQ-BBV-007.",
+            "nullable": true
+          },
+          "compleet": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether the paragraaf is filled and signed-off."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bbv-controller": { "permissions": ["create", "read", "update"] },
+            "auditor": { "permissions": ["read"] }
           }
         }
       }
