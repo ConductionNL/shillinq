@@ -53,6 +53,34 @@
 					"icon": "TableMergeCellsOutline",
 					"route": "GRConsolidated",
 					"order": 70
+				},
+				{
+					"id": "BalanceSheet",
+					"label": "Balance Sheet",
+					"icon": "TableAccountOutline",
+					"route": "BalanceSheet",
+					"order": 80
+				},
+				{
+					"id": "TrialBalance",
+					"label": "Trial Balance",
+					"icon": "ScaleBalanceOutline",
+					"route": "TrialBalance",
+					"order": 81
+				},
+				{
+					"id": "Consolidations",
+					"label": "Consolidations",
+					"icon": "AccountMultipleOutline",
+					"route": "Consolidations",
+					"order": 82
+				},
+				{
+					"id": "ConsolidatedReport",
+					"label": "Consolidated Report",
+					"icon": "FileChartOutline",
+					"route": "ConsolidatedReport",
+					"order": 83
 				}
 			]
 		},
@@ -63,7 +91,11 @@
 			"order": 30,
 			"visibility": {
 				"field": "administrationType",
-				"in": ["gemeente", "provincie", "waterschap"]
+				"in": [
+					"gemeente",
+					"provincie",
+					"waterschap"
+				]
 			},
 			"children": [
 				{
@@ -273,7 +305,11 @@
 				"schema": "Iv3Export",
 				"visibility": {
 					"field": "administrationType",
-					"in": ["gemeente", "provincie", "waterschap"]
+					"in": [
+						"gemeente",
+						"provincie",
+						"waterschap"
+					]
 				},
 				"columns": [
 					{
@@ -743,6 +779,358 @@
 						"gridHeight": 2
 					}
 				]
+			}
+		},
+		{
+			"id": "BalanceSheet",
+			"route": "/financial-statements/balance-sheet",
+			"type": "index",
+			"title": "Balance Sheet",
+			"config": {
+				"register": "shillinq",
+				"schema": "BalanceSheet",
+				"columns": [
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					},
+					{
+						"key": "fiscalYearId",
+						"label": "Fiscal Year",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "totalAssets",
+						"label": "Total Assets",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-reportDate",
+				"detailRoute": "BalanceSheetDetail"
+			}
+		},
+		{
+			"id": "BalanceSheetDetail",
+			"route": "/financial-statements/balance-sheet/:id",
+			"type": "detail",
+			"title": "Balance Sheet",
+			"config": {
+				"register": "shillinq",
+				"schema": "BalanceSheet",
+				"fields": [
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"type": "date-time"
+					},
+					{
+						"key": "fiscalYearId",
+						"label": "Fiscal Year",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "totalAssets",
+						"label": "Total Assets",
+						"type": "number"
+					},
+					{
+						"key": "totalLiabilities",
+						"label": "Total Liabilities",
+						"type": "number"
+					},
+					{
+						"key": "totalEquity",
+						"label": "Total Equity",
+						"type": "number"
+					},
+					{
+						"key": "isBalanced",
+						"label": "Balanced",
+						"type": "boolean"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "BalanceSheet"
+			}
+		},
+		{
+			"id": "TrialBalance",
+			"route": "/financial-statements/trial-balance",
+			"type": "index",
+			"title": "Trial Balance",
+			"config": {
+				"register": "shillinq",
+				"schema": "TrialBalance",
+				"columns": [
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					},
+					{
+						"key": "fiscalYearId",
+						"label": "Fiscal Year",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "isBalanced",
+						"label": "Balanced",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-reportDate",
+				"detailRoute": "TrialBalanceDetail"
+			}
+		},
+		{
+			"id": "TrialBalanceDetail",
+			"route": "/financial-statements/trial-balance/:id",
+			"type": "detail",
+			"title": "Trial Balance",
+			"config": {
+				"register": "shillinq",
+				"schema": "TrialBalance",
+				"fields": [
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"type": "date-time"
+					},
+					{
+						"key": "fiscalYearId",
+						"label": "Fiscal Year",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "preparedBy",
+						"label": "Prepared By",
+						"type": "string"
+					},
+					{
+						"key": "totalDebits",
+						"label": "Total Debits",
+						"type": "number"
+					},
+					{
+						"key": "totalCredits",
+						"label": "Total Credits",
+						"type": "number"
+					},
+					{
+						"key": "isBalanced",
+						"label": "Balanced",
+						"type": "boolean"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "TrialBalance"
+			}
+		},
+		{
+			"id": "Consolidations",
+			"route": "/financial-statements/consolidations",
+			"type": "index",
+			"title": "Consolidations",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidationGroup",
+				"columns": [
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "consolidationMethod",
+						"label": "Method",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "name",
+				"detailRoute": "ConsolidationsDetail"
+			}
+		},
+		{
+			"id": "ConsolidationsDetail",
+			"route": "/financial-statements/consolidations/:id",
+			"type": "detail",
+			"title": "Consolidation Group",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidationGroup",
+				"fields": [
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "consolidationMethod",
+						"label": "Consolidation Method",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "parentOrganizationId",
+						"label": "Parent Organization",
+						"type": "string"
+					},
+					{
+						"key": "administrationIds",
+						"label": "Member Administrations",
+						"type": "json"
+					},
+					{
+						"key": "eliminationRules",
+						"label": "Elimination Rules",
+						"type": "json"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "Consolidations"
+			}
+		},
+		{
+			"id": "ConsolidatedReport",
+			"route": "/financial-statements/consolidated-report",
+			"type": "index",
+			"title": "Consolidated Report",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidatedReport",
+				"columns": [
+					{
+						"key": "reportNumber",
+						"label": "Report Number",
+						"sortable": true
+					},
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"sortable": true
+					},
+					{
+						"key": "consolidationMethod",
+						"label": "Method",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "eliminationsApplied",
+						"label": "Eliminations Applied",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-reportDate",
+				"detailRoute": "ConsolidatedReportDetail"
+			}
+		},
+		{
+			"id": "ConsolidatedReportDetail",
+			"route": "/financial-statements/consolidated-report/:id",
+			"type": "detail",
+			"title": "Consolidated Report",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidatedReport",
+				"fields": [
+					{
+						"key": "reportNumber",
+						"label": "Report Number",
+						"type": "string"
+					},
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"type": "date-time"
+					},
+					{
+						"key": "consolidationGroupId",
+						"label": "Consolidation Group",
+						"type": "string"
+					},
+					{
+						"key": "consolidationMethod",
+						"label": "Consolidation Method",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYearId",
+						"label": "Fiscal Year",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "eliminationsApplied",
+						"label": "Eliminations Applied",
+						"type": "boolean"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ConsolidatedReport"
 			}
 		},
 		{
