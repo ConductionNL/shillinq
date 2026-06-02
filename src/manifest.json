@@ -45,6 +45,41 @@
 					"icon": "TableMergeCellsOutline",
 					"route": "GRConsolidated",
 					"order": 70
+				},
+				{
+					"id": "SigningAuditTrail",
+					"label": "Signing Audit Trail",
+					"icon": "PenCheckOutline",
+					"href": "/index.php/apps/openregister/audit-log?register=shillinq&action=signing&objectTypes=Account%2CGLLine%2CGRDeelnemer%2CGRVerdeelsleutel%2CIv3Export",
+					"order": 80
+				},
+				{
+					"id": "DestructionReport",
+					"label": "Destruction Report",
+					"icon": "DeleteOutline",
+					"href": "/index.php/apps/openregister/audit-log?register=shillinq&lifecycleStatus=marked-for-destruction%2Cdestruction-completed&objectTypes=Account%2CGLLine",
+					"order": 81
+				},
+				{
+					"id": "ChangeHistory",
+					"label": "Change History",
+					"icon": "HistoryOutline",
+					"href": "/index.php/apps/openregister/audit-log?register=shillinq&objectTypes=Account%2CGLLine%2CGRDeelnemer%2CGRVerdeelsleutel%2CIv3Export",
+					"order": 82
+				},
+				{
+					"id": "ComplianceExport",
+					"label": "Compliance Export",
+					"icon": "FileExportOutline",
+					"href": "/index.php/apps/openregister/audit-log/export?register=shillinq&format=xlsx&rbac=auditor",
+					"order": 83
+				},
+				{
+					"id": "ActivityFeed",
+					"label": "Activity Feed",
+					"icon": "BellOutline",
+					"href": "/index.php/apps/activity",
+					"order": 84
 				}
 			]
 		},
@@ -216,7 +251,15 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "Iv3Rapportages"
+				"indexRoute": "Iv3Rapportages",
+				"auditPanel": {
+					"enabled": true,
+					"register": "shillinq",
+					"schema": "Iv3Export",
+					"objectIdParam": "id",
+					"rbacRequired": ["bookkeeper", "auditor", "bbv-controller"],
+					"title": "Audit History"
+				}
 			}
 		},
 		{
@@ -328,7 +371,15 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "GRDeelnemers"
+				"indexRoute": "GRDeelnemers",
+				"auditPanel": {
+					"enabled": true,
+					"register": "shillinq",
+					"schema": "GRDeelnemer",
+					"objectIdParam": "id",
+					"rbacRequired": ["bookkeeper", "auditor"],
+					"title": "Audit History"
+				}
 			}
 		},
 		{
@@ -395,7 +446,15 @@
 						"type": "number"
 					}
 				],
-				"indexRoute": "GRVerdeelsleutels"
+				"indexRoute": "GRVerdeelsleutels",
+				"auditPanel": {
+					"enabled": true,
+					"register": "shillinq",
+					"schema": "GRVerdeelsleutel",
+					"objectIdParam": "id",
+					"rbacRequired": ["bookkeeper", "auditor"],
+					"title": "Audit History"
+				}
 			}
 		},
 		{
@@ -493,7 +552,15 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "ChartOfAccounts"
+				"indexRoute": "ChartOfAccounts",
+				"auditPanel": {
+					"enabled": true,
+					"register": "shillinq",
+					"schema": "Account",
+					"objectIdParam": "id",
+					"rbacRequired": ["bookkeeper", "auditor"],
+					"title": "Audit History"
+				}
 			}
 		},
 		{

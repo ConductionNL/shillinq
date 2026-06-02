@@ -43,6 +43,7 @@
         "version": "0.1.0",
         "title": "GL Line",
         "description": "A debit-or-credit line within a GLTransaction, encoding the polarity in the side enum per REQ-GL-003. Extended with eliminationFlag to support GR consolidation per REQ-GRC-003.",
+        "x-openregister-audit": true,
         "x-schema-org": "schema:MonetaryAmount",
         "type": "object",
         "required": [
@@ -156,6 +157,7 @@
         "version": "0.1.0",
         "title": "GR Deelnemer",
         "description": "A deelnemer (participating municipality, province, or waterboard) of a gemeenschappelijke regeling (GR). Holds the quotum-aandeel and an optional cross-administration FK for doorbelasting materialisation per REQ-GRC-001.",
+        "x-openregister-audit": true,
         "x-schema-org": "schema:Organization",
         "type": "object",
         "required": [
@@ -267,6 +269,7 @@
         "version": "0.1.0",
         "title": "GR Verdeelsleutel",
         "description": "An apportionment rule linking a cost-cluster (set of accountNumbers) to a per-deelnemer split method. Multiple verdeelsleutels MAY apply to the same cost cluster, sequenced by lineNumber per REQ-GRC-002.",
+        "x-openregister-audit": true,
         "x-schema-org": "schema:Thing",
         "type": "object",
         "required": [
@@ -342,6 +345,7 @@
         "title": "Account",
         "description": "A hierarchical chart-of-accounts entry conforming to the RGS (Referentie Grootboek Schema) standard for Dutch bookkeeping.",
         "type": "object",
+        "x-openregister-audit": true,
         "x-schema-org": "schema:DefinedTerm",
         "required": [
           "accountNumber",
@@ -404,7 +408,9 @@
             "enum": [
               "active",
               "blocked",
-              "archived"
+              "archived",
+              "marked-for-destruction",
+              "destruction-completed"
             ],
             "example": "active",
             "default": "active"
@@ -435,6 +441,14 @@
             "archived": {
               "label": "Archived",
               "description": "Historical only — no new postings, no edits; remains queryable."
+            },
+            "marked-for-destruction": {
+              "label": "Marked for Destruction",
+              "description": "Eligible for Archiefwet-compliant destruction. No new postings. Awaiting compliance officer approval per REQ-RAP-008."
+            },
+            "destruction-completed": {
+              "label": "Destruction Completed",
+              "description": "Record destroyed per Archiefwet Article 7. Terminal state. Audit event certified in OR hash chain per REQ-RAP-008."
             }
           },
           "preconditions": {
@@ -466,7 +480,34 @@
               "label": "Archive account",
               "description": "Move to historical archive from blocked state. Requires zero open balance.",
               "requires": "OCA\\Shillinq\\Guard\\AccountBalanceGuard::requireZeroBalance"
+            },
+            "markForDestruction": {
+              "from": "archived",
+              "to": "marked-for-destruction",
+              "label": "Mark for destruction",
+              "description": "Mark archived account for Archiefwet-compliant destruction. Requires compliance officer role.",
+              "requires": "OCA\\Shillinq\\Guard\\DestructionGuard::requireComplianceOfficer",
+              "auditFields": {
+                "selectielijstCode": "5.1.1",
+                "legalBasis": "Archiefwet Article 7"
+              }
+            },
+            "completeDestruction": {
+              "from": "marked-for-destruction",
+              "to": "destruction-completed",
+              "label": "Complete destruction",
+              "description": "Execute Archiefwet-compliant destruction. Hash-chain certification emitted to OR audit trail.",
+              "requires": "OCA\\Shillinq\\Guard\\DestructionGuard::requireComplianceOfficer",
+              "auditFields": {
+                "selectielijstCode": "5.1.1",
+                "legalBasis": "Archiefwet Article 7"
+              }
             }
+          },
+          "retention": {
+            "rule": "selectielijst:5.1.1",
+            "period": "P7Y",
+            "description": "Financial account records retained 7 years per Archiefwet Article 7 and BBV Article 60."
           }
         },
         "x-openregister-relations": {
@@ -486,6 +527,20 @@
             "auditor": {
               "permissions": ["read"]
             }
+          }
+        },
+        "x-openregister-notifications": {
+          "onMarkedForDestruction": {
+            "event": "account.marked-for-destruction",
+            "template": "Account {accountNumber} ({name}) marked for destruction by {actor} per Archiefwet Article 7",
+            "recipients": ["auditor", "compliance-officer"],
+            "trigger": "lifecycle:archived→marked-for-destruction"
+          },
+          "onDestructionCompleted": {
+            "event": "account.destruction-completed",
+            "template": "Account {accountNumber} ({name}) destruction completed by {actor}. Hash-chain certified.",
+            "recipients": ["auditor", "compliance-officer"],
+            "trigger": "lifecycle:marked-for-destruction→destruction-completed"
           }
         },
         "x-openregister-aggregations": {
@@ -510,6 +565,7 @@
         "title": "IV3 Export",
         "description": "Quarterly IV3 (Informatie voor Derden) export to CBS for Dutch decentralised government administrations. Lifecycle covers generation, validation, submission, and CBS acceptance/rejection.",
         "type": "object",
+        "x-openregister-audit": true,
         "x-schema-org": "schema:Dataset",
         "required": [
           "administrationId",

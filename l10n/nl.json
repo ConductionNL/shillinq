@@ -28,7 +28,23 @@
         "Settings saved successfully": "Instellingen succesvol opgeslagen",
         "Saving...": "Opslaan...",
         "This app needs OpenRegister to store and manage data. Please install OpenRegister from the app store to get started.": "Deze app heeft OpenRegister nodig om gegevens op te slaan en te beheren. Installeer OpenRegister via de app store om te beginnen.",
-        "User settings will appear here in a future update.": "Gebruikersinstellingen verschijnen hier in een toekomstige update."
+        "User settings will appear here in a future update.": "Gebruikersinstellingen verschijnen hier in een toekomstige update.",
+        "Signing audit trail": "Ondertekeningsauditspoor",
+        "Destruction report": "Vernietigingsrapport",
+        "Change history": "Wijzigingsgeschiedenis",
+        "Compliance export": "Complianceexport",
+        "Activity feed": "Activiteitenstroom",
+        "Mark for destruction": "Markeren voor vernietiging",
+        "Destruction order": "Vernietigingsopdracht",
+        "Approved by": "Goedgekeurd door",
+        "Signed by": "Ondertekend door",
+        "Changed by": "Gewijzigd door",
+        "From": "Van",
+        "To": "Naar",
+        "Open audit log": "Auditlog openen",
+        "Export audit data": "Auditgegevens exporteren",
+        "Subject access request": "Inzageverzoek (AVG)",
+        "Audit History": "Auditgeschiedenis"
     },
     "plurals": ""
 }

@@ -4347,3 +4347,48 @@ _XBRL (eXtensible Business Reporting Language) taxonomy definitions for structur
 
 **Relations:**
 - → TaxReturn (one-to-many)
+
+## Audit Trail Requirements (bookkeeping-rekenkamer-audit-pack)
+
+Per REQ-RAP-001 and ADR-022, **every bookkeeping and procurement register MUST carry
+`x-openregister-audit: true`** in its schema declaration in `lib/Settings/shillinq_register.json`.
+
+This rule applies to all T1, T2, T3, and future-tier registers declared by
+`bookkeeping-chart-of-accounts`, `accounts-payable-receivable`, `procurement-compliance`,
+and any subsequent specs. The `tests/validate-registers.js` CI check enforces this rule
+mechanically — any PR adding a new bookkeeping/procurement register without the audit flag
+will fail CI.
+
+### Five Audit Surfaces (REQ-RAP-002 through REQ-RAP-006)
+
+| Surface | Navigation entry | OR UI filter |
+|---------|-----------------|--------------|
+| Signing Audit Trail | Bookkeeping > Signing Audit Trail | `action=signing` on bookkeeping schemas |
+| Destruction Report | Bookkeeping > Destruction Report | `lifecycleStatus=marked-for-destruction,destruction-completed` |
+| Change History | Bookkeeping > Change History | All mutations on bookkeeping schemas |
+| Compliance Export | Bookkeeping > Compliance Export | PII-excluded export; RBAC: auditor group |
+| Activity Feed | Bookkeeping > Activity Feed | Nextcloud Activity app |
+
+### Destruction Schedule Lifecycle (REQ-RAP-008, Archiefwet Article 7)
+
+Financial records follow this state machine for Archiefwet-compliant disposal:
+
+```
+status: active → status: marked-for-destruction → status: destruction-completed
+```
+
+- Records are **never physically deleted** — destruction is a state transition.
+- Each transition is hash-chain certified in OR's audit trail.
+- Only users with the `compliance-officer` role may trigger destruction transitions.
+- Retention period: **7 years** (`selectielijst:5.1.1`, Archiefwet Article 7).
+
+### Anti-Pattern Forbiddance (ADR-022)
+
+The following patterns are REVIEW-BLOCKING in shillinq:
+
+- `lib/Db/Audit*.php` — home-grown audit mapper
+- `lib/Service/Audit*.php` — home-grown audit service
+- `lib/Db/EventLog*.php` or `lib/Db/ChangeLog*.php` — parallel event tables
+- Any app-local audit-event deletion logic
+
+All audit functionality flows through OpenRegister's `audit-trail-immutable` abstraction.

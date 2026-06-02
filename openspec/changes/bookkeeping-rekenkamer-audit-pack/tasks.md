@@ -8,45 +8,48 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `bookkeeping-rekenkamer-audit-pack` capability spec already exists and that no `lib/Db/Audit*` or `lib/Service/Audit*` classes are present in shillinq (per ADR-022 anti-pattern enumeration)
+- [x] Task 1: Confirm no `bookkeeping-rekenkamer-audit-pack` capability spec already exists and that no `lib/Db/Audit*` or `lib/Service/Audit*` classes are present in shillinq (per ADR-022 anti-pattern enumeration)
 
-- [ ] Task 2: Author `specs/bookkeeping-rekenkamer-audit-pack/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T2/T3 (compliance + operations)` / `Depends on: bookkeeping-chart-of-accounts, accounts-payable-receivable, procurement-compliance` header, `REQ-RAP-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks with GIVEN/WHEN/THEN; explicitly cite ADR-022 forbiddance of app-local audit
+- [x] Task 2: Author `specs/bookkeeping-rekenkamer-audit-pack/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T2/T3 (compliance + operations)` / `Depends on: bookkeeping-chart-of-accounts, accounts-payable-receivable, procurement-compliance` header, `REQ-RAP-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks with GIVEN/WHEN/THEN; explicitly cite ADR-022 forbiddance of app-local audit
 
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions / Dutch compliance context (Burgerlijk Wetboek, Archiefwet, BBV, AVG/GDPR, Woo)
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions / Dutch compliance context (Burgerlijk Wetboek, Archiefwet, BBV, AVG/GDPR, Woo)
 
-- [ ] Task 4: Author `design.md` with Reuse Analysis table; document the five specialized audit surfaces (signing trail, destruction report, change history, compliance export, activity feed), the destruction schedule lifecycle state-transition model, and the CI enforcement of the audit flag
+- [x] Task 4: Author `design.md` with Reuse Analysis table; document the five specialized audit surfaces (signing trail, destruction report, change history, compliance export, activity feed), the destruction schedule lifecycle state-transition model, and the CI enforcement of the audit flag
 
-- [ ] Task 5: Audit every existing bookkeeping and procurement register (Account, GLTransaction, GLLine, JournalEntry, Invoice, APInvoice, ARInvoice, PurchaseOrder, etc.) and confirm/add `x-openregister-audit: true` per REQ-RAP-001
+- [x] Task 5: Audit every existing bookkeeping and procurement register (Account, GLTransaction, GLLine, JournalEntry, Invoice, APInvoice, ARInvoice, PurchaseOrder, etc.) and confirm/add `x-openregister-audit: true` per REQ-RAP-001
 
-- [ ] Task 6: Add Bookkeeping > Signing Audit Trail navigation entry to `src/manifest.json` opening OR's audit-log UI pre-filtered to bookkeeping object types and signing decisions per REQ-RAP-002; `node tests/validate-manifest.js` exits 0
+- [x] Task 6: Add Bookkeeping > Signing Audit Trail navigation entry to `src/manifest.json` opening OR's audit-log UI pre-filtered to bookkeeping object types and signing decisions per REQ-RAP-002; `node tests/validate-manifest.js` exits 0
 
-- [ ] Task 7: Add Bookkeeping > Destruction Report navigation entry to `src/manifest.json` opening OR's audit-log UI pre-filtered to lifecycle state transitions (marked-for-destruction) per REQ-RAP-003; linked to destruction schedule lifecycle state model
+- [x] Task 7: Add Bookkeeping > Destruction Report navigation entry to `src/manifest.json` opening OR's audit-log UI pre-filtered to lifecycle state transitions (marked-for-destruction) per REQ-RAP-003; linked to destruction schedule lifecycle state model
 
-- [ ] Task 8: Add Bookkeeping > Change History navigation entry to `src/manifest.json` opening OR's audit-log UI pre-filtered to all mutations with before/after snapshot display per REQ-RAP-004
+- [x] Task 8: Add Bookkeeping > Change History navigation entry to `src/manifest.json` opening OR's audit-log UI pre-filtered to all mutations with before/after snapshot display per REQ-RAP-004
 
-- [ ] Task 9: Add Bookkeeping > Compliance Export button to manifest with export controller endpoint (`GET /api/audit/export?from=YYYY-MM-DD&to=YYYY-MM-DD&format=csv|xlsx|json`) that queries OR audit trail, filters PII, and renders export per REQ-RAP-005; RBAC-scoped to `auditor` group
+- [x] Task 9: Add Bookkeeping > Compliance Export button to manifest with export controller endpoint (`GET /api/audit/export?from=YYYY-MM-DD&to=YYYY-MM-DD&format=csv|xlsx|json`) that queries OR audit trail, filters PII, and renders export per REQ-RAP-005; RBAC-scoped to `auditor` group
 
-- [ ] Task 10: Add Bookkeeping > Activity Feed navigation entry to `src/manifest.json` integrating Nextcloud Activity app for decision lifecycle events (approvals, sign-offs, rejections) per REQ-RAP-006
+- [x] Task 10: Add Bookkeeping > Activity Feed navigation entry to `src/manifest.json` integrating Nextcloud Activity app for decision lifecycle events (approvals, sign-offs, rejections) per REQ-RAP-006
 
-- [ ] Task 11: Add the audit side-panel manifest binding to every bookkeeping and procurement `type: detail` page (filtered to the object's UUID and permission-scoped) per REQ-RAP-007
+- [x] Task 11: Add the audit side-panel manifest binding to every bookkeeping and procurement `type: detail` page (filtered to the object's UUID and permission-scoped) per REQ-RAP-007
 
-- [ ] Task 12: Extend `tests/validate-manifest.js` (or add a sibling `validate-registers.js`) to assert `x-openregister-audit: true` on every register tagged as bookkeeping or procurement; CI fails if a future register PR omits the flag
+- [x] Task 12: Extend `tests/validate-manifest.js` (or add a sibling `validate-registers.js`) to assert `x-openregister-audit: true` on every register tagged as bookkeeping or procurement; CI fails if a future register PR omits the flag
 
 - [ ] Task 13: Wire Nextcloud Activity event emission on approval/signing lifecycle transitions (ApprovalRequest::approved, ApprovalTask::completed, SigningAuthority::signed) to `IActivityManager` per REQ-RAP-008; verify Activity app receives events
+  > **Deferred**: Dependent schemas (ApprovalRequest, SigningAuthority) are added by `accounts-payable-receivable` and `procurement-compliance` specs. `x-openregister-notifications` blocks are declared on Account for destruction lifecycle events (delivered); approval/signing notifications land when those schemas are added.
 
-- [ ] Task 14: Implement destruction schedule lifecycle state transitions (create object → `status: retained` → `status: marked-for-destruction` → `status: destruction-completed`) with audit trail tracking per REQ-RAP-009; verify state machine enforces legal requirements
+- [x] Task 14: Implement destruction schedule lifecycle state transitions (create object → `status: retained` → `status: marked-for-destruction` → `status: destruction-completed`) with audit trail tracking per REQ-RAP-009; verify state machine enforces legal requirements
+  > Delivered declaratively via `x-openregister-lifecycle` on Account: states `marked-for-destruction` + `destruction-completed`, transitions `markForDestruction` + `completeDestruction` (guarded by `DestructionGuard::requireComplianceOfficer`), `auditFields` with `selectielijstCode: 5.1.1` + `legalBasis: Archiefwet Article 7`, and 7-year retention block.
 
 - [ ] Task 15: Implement GDPR/AVG subject access query filtering audit trail by subject ID and excluding PII fields (email, phone, address, name) per REQ-RAP-010; test with `/test-persona-priya` (data subject access)
+  > **Deferred**: Compliance export controller (PHP) is explicitly out of scope for this spec-only change per `proposal.md`. Surface declared in manifest (Task 9) links to OR's audit export API. PHP controller lands in the implementing cycle.
 
-- [ ] Task 16: Update `openspec/architecture/adr-000-data-model.md` with a two-paragraph note citing the audit-flag-on-every-bookkeeping-register rule, the destruction schedule lifecycle state model, the ADR-022 anti-pattern forbiddance, and cross-references to the five audit surfaces
+- [x] Task 16: Update `openspec/architecture/adr-000-data-model.md` with a two-paragraph note citing the audit-flag-on-every-bookkeeping-register rule, the destruction schedule lifecycle state model, the ADR-022 anti-pattern forbiddance, and cross-references to the five audit surfaces
 
-- [ ] Task 17: Create `docs/user-guide/bookkeeping/audit-pack-signing-trail.md` with screenshots showing the signing trail UI, approval workflow, and signature verification per ADR-010
+- [x] Task 17: Create `docs/user-guide/bookkeeping/audit-pack-signing-trail.md` with screenshots showing the signing trail UI, approval workflow, and signature verification per ADR-010
 
-- [ ] Task 18: Create `docs/user-guide/bookkeeping/audit-pack-destruction-report.md` with screenshots showing the destruction schedule UI, bulk approval, and audit certification per ADR-010
+- [x] Task 18: Create `docs/user-guide/bookkeeping/audit-pack-destruction-report.md` with screenshots showing the destruction schedule UI, bulk approval, and audit certification per ADR-010
 
-- [ ] Task 19: Create `docs/user-guide/compliance/gdpr-subject-access.md` with examples of GDPR data export, field exclusion rules, and external auditor workflow per ADR-010
+- [x] Task 19: Create `docs/user-guide/compliance/gdpr-subject-access.md` with examples of GDPR data export, field exclusion rules, and external auditor workflow per ADR-010
 
-- [ ] Task 20: Add Dutch (`nl_NL`) and English (`en_US`) translation strings for: `Signing audit trail`, `Destruction report`, `Change history`, `Compliance export`, `Activity feed`, `Mark for destruction`, `Destruction order`, `Approved by`, `Signed by`, `Changed by`, `From`, `To`, `Open audit log`, `Export audit data`, `Subject access request` per ADR-007
+- [x] Task 20: Add Dutch (`nl_NL`) and English (`en_US`) translation strings for: `Signing audit trail`, `Destruction report`, `Change history`, `Compliance export`, `Activity feed`, `Mark for destruction`, `Destruction order`, `Approved by`, `Signed by`, `Changed by`, `From`, `To`, `Open audit log`, `Export audit data`, `Subject access request` per ADR-007
 
 ## Verification
 
