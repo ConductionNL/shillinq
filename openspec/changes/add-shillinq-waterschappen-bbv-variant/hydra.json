@@ -8,9 +8,9 @@
       "cycle": 1,
       "trigger": "build:queued",
       "started_at": "2026-06-01T23:14:32Z",
-      "ended_at": "2026-06-02T13:02:07Z",
-      "outcome": "aborted",
-      "outcome_reason": "rebuild:queued \u2014 human wiped prior cycle",
+      "ended_at": "2026-06-02T13:16:34Z",
+      "outcome": "done",
+      "outcome_reason": "pipeline complete \u2014 reviews passed and applier passed (if run)",
       "pattern_tags": [],
       "stages": [
         {
