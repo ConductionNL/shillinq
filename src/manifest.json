@@ -105,6 +105,42 @@
 			]
 		},
 		{
+			"id": "Compliance",
+			"label": "Compliance",
+			"icon": "icon-category-monitoring",
+			"order": 40,
+			"children": [
+				{
+					"id": "SisaRapportages",
+					"label": "SiSa-rapportages",
+					"icon": "FileDocumentCheckOutline",
+					"route": "SisaRapportages",
+					"order": 10
+				},
+				{
+					"id": "ComplianceAuditTrails",
+					"label": "Compliance audittrail",
+					"icon": "ClipboardCheckOutline",
+					"route": "ComplianceAuditTrails",
+					"order": 20
+				},
+				{
+					"id": "ManagementLetters",
+					"label": "Management letters",
+					"icon": "EmailOutline",
+					"route": "ManagementLetters",
+					"order": 30
+				},
+				{
+					"id": "AuditDocuments",
+					"label": "Auditdocumenten",
+					"icon": "FileSignOutline",
+					"route": "AuditDocuments",
+					"order": 40
+				}
+			]
+		},
+		{
 			"id": "Documentation",
 			"label": "Documentation",
 			"icon": "icon-info",
@@ -1045,6 +1081,494 @@
 						"gridHeight": 2
 					}
 				]
+			}
+		},
+		{
+			"id": "SisaRapportages",
+			"route": "/sisa-rapportages",
+			"type": "index",
+			"title": "SiSa-rapportages",
+			"config": {
+				"register": "shillinq",
+				"schema": "SisaReport",
+				"columns": [
+					{
+						"key": "reportNumber",
+						"label": "Rapportnummer",
+						"sortable": true
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Boekjaar",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"sortable": true
+					},
+					{
+						"key": "auditOpinion",
+						"label": "Controleverklaring",
+						"sortable": true
+					},
+					{
+						"key": "complianceStatus",
+						"label": "Nalevingsstatus",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-fiscalYear",
+				"detailRoute": "SisaRapportagesDetail"
+			}
+		},
+		{
+			"id": "SisaRapportagesDetail",
+			"route": "/sisa-rapportages/:id",
+			"type": "detail",
+			"title": "SiSa-rapportage",
+			"config": {
+				"register": "shillinq",
+				"schema": "SisaReport",
+				"fields": [
+					{
+						"key": "reportNumber",
+						"label": "Rapportnummer",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Boekjaar",
+						"type": "integer"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "reportDate",
+						"label": "Rapportdatum",
+						"type": "date-time"
+					},
+					{
+						"key": "totalTransactionCount",
+						"label": "Aantal transacties",
+						"type": "integer"
+					},
+					{
+						"key": "onTimeSettlementPercent",
+						"label": "Op-tijd-betaling %",
+						"type": "number"
+					},
+					{
+						"key": "totalAmount",
+						"label": "Totaalbedrag",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Valuta",
+						"type": "string"
+					},
+					{
+						"key": "criticalFindingsCount",
+						"label": "Kritieke bevindingen",
+						"type": "integer"
+					},
+					{
+						"key": "majorFindingsCount",
+						"label": "Majeure bevindingen",
+						"type": "integer"
+					},
+					{
+						"key": "minorFindingsCount",
+						"label": "Mineure bevindingen",
+						"type": "integer"
+					},
+					{
+						"key": "observationsCount",
+						"label": "Observaties",
+						"type": "integer"
+					},
+					{
+						"key": "remediationOverdueCount",
+						"label": "Achterstallige remediëringen",
+						"type": "integer"
+					},
+					{
+						"key": "auditOpinion",
+						"label": "Controleverklaring",
+						"type": "string"
+					},
+					{
+						"key": "managementLetterId",
+						"label": "Management letter",
+						"type": "string"
+					},
+					{
+						"key": "complianceStatus",
+						"label": "Nalevingsstatus",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "submissionDate",
+						"label": "Indiendatum",
+						"type": "date-time"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "SisaRapportages"
+			}
+		},
+		{
+			"id": "ComplianceAuditTrails",
+			"route": "/compliance-audit",
+			"type": "index",
+			"title": "Compliance audittrail",
+			"config": {
+				"register": "shillinq",
+				"schema": "ComplianceAuditTrail",
+				"columns": [
+					{
+						"key": "trailNumber",
+						"label": "Trailnummer",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"sortable": true
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Boekjaar",
+						"sortable": true
+					},
+					{
+						"key": "findingSeverity",
+						"label": "Ernst bevinding",
+						"sortable": true
+					},
+					{
+						"key": "remediationStatus",
+						"label": "Remediëringsstatus",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-fiscalYear",
+				"detailRoute": "ComplianceAuditTrailDetail"
+			}
+		},
+		{
+			"id": "ComplianceAuditTrailDetail",
+			"route": "/compliance-audit/:id",
+			"type": "detail",
+			"title": "Compliance audittrail",
+			"config": {
+				"register": "shillinq",
+				"schema": "ComplianceAuditTrail",
+				"fields": [
+					{
+						"key": "trailNumber",
+						"label": "Trailnummer",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Boekjaar",
+						"type": "integer"
+					},
+					{
+						"key": "findingNumber",
+						"label": "Bevindingsnummer",
+						"type": "string"
+					},
+					{
+						"key": "findingSeverity",
+						"label": "Ernst bevinding",
+						"type": "string"
+					},
+					{
+						"key": "findingDescription",
+						"label": "Bevindingomschrijving",
+						"type": "string"
+					},
+					{
+						"key": "observationNumber",
+						"label": "Observatienummer",
+						"type": "string"
+					},
+					{
+						"key": "observationDescription",
+						"label": "Observatieomschrijving",
+						"type": "string"
+					},
+					{
+						"key": "remediationDueDate",
+						"label": "Remediëring vóór",
+						"type": "date"
+					},
+					{
+						"key": "remediationStatus",
+						"label": "Remediëringsstatus",
+						"type": "string"
+					},
+					{
+						"key": "remediationCompletionDate",
+						"label": "Remediëring voltooid op",
+						"type": "date"
+					},
+					{
+						"key": "auditorName",
+						"label": "Auditor",
+						"type": "string"
+					},
+					{
+						"key": "auditDate",
+						"label": "Auditdatum",
+						"type": "date"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ComplianceAuditTrails"
+			}
+		},
+		{
+			"id": "ManagementLetters",
+			"route": "/management-letter",
+			"type": "index",
+			"title": "Management letters",
+			"config": {
+				"register": "shillinq",
+				"schema": "ManagementLetter",
+				"columns": [
+					{
+						"key": "letterNumber",
+						"label": "Briefnummer",
+						"sortable": true
+					},
+					{
+						"key": "auditorName",
+						"label": "Auditor",
+						"sortable": true
+					},
+					{
+						"key": "issuedDate",
+						"label": "Uitgiftedatum",
+						"sortable": true
+					},
+					{
+						"key": "auditOpinion",
+						"label": "Controleverklaring",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-issuedDate",
+				"detailRoute": "ManagementLetterDetail"
+			}
+		},
+		{
+			"id": "ManagementLetterDetail",
+			"route": "/management-letter/:id",
+			"type": "detail",
+			"title": "Management letter",
+			"config": {
+				"register": "shillinq",
+				"schema": "ManagementLetter",
+				"fields": [
+					{
+						"key": "letterNumber",
+						"label": "Briefnummer",
+						"type": "string"
+					},
+					{
+						"key": "sisaReportId",
+						"label": "SiSa-rapport",
+						"type": "string"
+					},
+					{
+						"key": "auditorName",
+						"label": "Auditor",
+						"type": "string"
+					},
+					{
+						"key": "issuedDate",
+						"label": "Uitgiftedatum",
+						"type": "date"
+					},
+					{
+						"key": "dueResponseDate",
+						"label": "Responsdatum",
+						"type": "date"
+					},
+					{
+						"key": "findingsSummary",
+						"label": "Samenvatting bevindingen",
+						"type": "string"
+					},
+					{
+						"key": "observationsSummary",
+						"label": "Samenvatting observaties",
+						"type": "string"
+					},
+					{
+						"key": "remediationRecommendations",
+						"label": "Remediëeringsaanbevelingen",
+						"type": "string"
+					},
+					{
+						"key": "auditOpinion",
+						"label": "Controleverklaring",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ManagementLetters"
+			}
+		},
+		{
+			"id": "AuditDocuments",
+			"route": "/audit-documents",
+			"type": "index",
+			"title": "Auditdocumenten",
+			"config": {
+				"register": "shillinq",
+				"schema": "AuditDocument",
+				"columns": [
+					{
+						"key": "documentNumber",
+						"label": "Documentnummer",
+						"sortable": true
+					},
+					{
+						"key": "documentType",
+						"label": "Documenttype",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Ondertekeningsstatus",
+						"sortable": true
+					},
+					{
+						"key": "signingTimestamp",
+						"label": "Ondertekend op",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-signingTimestamp",
+				"detailRoute": "AuditDocumentDetail"
+			}
+		},
+		{
+			"id": "AuditDocumentDetail",
+			"route": "/audit-documents/:id",
+			"type": "detail",
+			"title": "Auditdocument",
+			"config": {
+				"register": "shillinq",
+				"schema": "AuditDocument",
+				"fields": [
+					{
+						"key": "documentNumber",
+						"label": "Documentnummer",
+						"type": "string"
+					},
+					{
+						"key": "documentType",
+						"label": "Documenttype",
+						"type": "string"
+					},
+					{
+						"key": "glTransactionId",
+						"label": "GL-transactie",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "signingUser",
+						"label": "Ondertekenaar",
+						"type": "string"
+					},
+					{
+						"key": "signingTimestamp",
+						"label": "Ondertekend op",
+						"type": "date-time"
+					},
+					{
+						"key": "signingReason",
+						"label": "Reden ondertekening",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Ondertekeningsstatus",
+						"type": "string"
+					},
+					{
+						"key": "relatedTransactionAmount",
+						"label": "Transactiebedrag",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Valuta",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Archiveringsstatus",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"auditTrail": true,
+				"indexRoute": "AuditDocuments"
 			}
 		},
 		{
