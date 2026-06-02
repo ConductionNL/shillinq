@@ -429,6 +429,10 @@
           }
         },
         "x-openregister-lifecycle": {
+          "retention": {
+            "rule": "selectielijst:5.1.1",
+            "description": "Chart-of-accounts records are kept indefinitely per Selectielijst Gemeenten 2020 § 5.1.1 (begroting, jaarrekening, rekeningschema)."
+          },
           "field": "lifecycleState",
           "initialState": "active",
           "states": {
@@ -508,6 +512,155 @@
             "operation": "count",
             "description": "Number of accounts per lifecycleState.",
             "groupBy": "lifecycleState"
+          }
+        },
+        "x-openregister-calculations": {
+          "daysUntilRetention": {
+            "expression": "null",
+            "description": "Account records are kept indefinitely (disposition: keep_indefinite per selectielijst:5.1.1). This field always returns null for Account objects."
+          }
+        }
+      },
+      "RetentionRule": {
+        "slug": "RetentionRule",
+        "icon": "ShieldCheckOutline",
+        "version": "0.1.0",
+        "title": "Bewaartermijn",
+        "description": "Archiefwet 1995 + Selectielijst Gemeenten 2020 retention rule. Declares the statutory retention obligation for a record category per Selectielijst code. Seeded from selectielijst-gemeenten-2020.json; operators MAY add administration-scoped overrides above the statutory minimum per REQ-ARC-004.",
+        "x-schema-org": "schema:DefinedTerm",
+        "type": "object",
+        "required": [
+          "selectielijstCode",
+          "description",
+          "recordCategory",
+          "disposition",
+          "legalBasis",
+          "effectiveFrom"
+        ],
+        "x-openregister-calculations": {
+          "daysUntilRetention": {
+            "expression": "@self.effectiveTo != null ? datediff(today(), @self.effectiveTo) : null",
+            "description": "Days until this retention rule expires. Null when effectiveTo is absent (rules without an end date)."
+          }
+        },
+        "x-openregister-widgets": {
+          "nearing-retention": {
+            "title": "Bewaartermijnen verlopen binnenkort",
+            "type": "stats-block",
+            "filter": {
+              "field": "daysUntilRetention",
+              "operator": "lt",
+              "value": 90
+            },
+            "roles": ["archivist"],
+            "description": "Count of records nearing retention disposition within THRESHOLD_DAYS (default 90). Surfaced on the Bewaartermijnen dashboard per REQ-ARC-008."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "archivist": {
+              "permissions": ["create", "read", "update", "delete"],
+              "description": "Full access to view, create, and override retention rules."
+            },
+            "auditor": {
+              "permissions": ["read"],
+              "description": "Read-only access for audit and compliance inspection."
+            }
+          }
+        },
+        "properties": {
+          "selectielijstCode": {
+            "type": "string",
+            "description": "Selectielijst Gemeenten 2020 classifier code (e.g. 5.1.2, 3.5.1, 1.1.1).",
+            "example": "5.1.2",
+            "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?$"
+          },
+          "description": {
+            "type": "string",
+            "description": "Plain-Dutch description of the record category covered by this rule.",
+            "example": "Dagelijkse financiële verantwoording (facturen, betalingen, dagboeken, bankafschriften)"
+          },
+          "recordCategory": {
+            "type": "string",
+            "description": "High-level category of records covered by this rule.",
+            "enum": [
+              "financial",
+              "subsidie",
+              "personeel",
+              "algemeen-bestuur",
+              "verantwoording",
+              "correspondentie",
+              "archief"
+            ],
+            "example": "financial"
+          },
+          "retentionYears": {
+            "type": "integer",
+            "description": "Absolute retention period in years from record creation date. Mutually exclusive with retentionTrigger.",
+            "minimum": 0,
+            "example": 7
+          },
+          "retentionTrigger": {
+            "type": "string",
+            "description": "Relative retention expression (e.g. '10 years after vaststellingDate'). Mutually exclusive with retentionYears.",
+            "example": "10 years after vaststellingDate"
+          },
+          "disposition": {
+            "type": "string",
+            "description": "Action taken when the retention period expires.",
+            "enum": [
+              "destroy",
+              "archive",
+              "anonymise",
+              "keep_indefinite"
+            ],
+            "example": "archive"
+          },
+          "legalBasis": {
+            "type": "string",
+            "description": "Citation of the legal basis: Archiefwet article + Selectielijst paragraph.",
+            "example": "Archiefwet 1995 art. 5 + Selectielijst Gemeenten 2020 § 5.1.2"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "Date from which this rule is valid.",
+            "example": "2020-01-01"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date",
+            "description": "Date until which this rule is valid. Absent means the rule has no end date.",
+            "nullable": true
+          },
+          "customRetentionYears": {
+            "type": "integer",
+            "description": "Operator-defined extension of the statutory retention period (archiefverordening override). MUST be >= retentionYears — operators may extend retention but NEVER shorten below the Archiefwet floor (REQ-ARC-004).",
+            "minimum": 0,
+            "x-openregister-validation": {
+              "rule": "gte_field",
+              "field": "retentionYears",
+              "message": "customRetentionYears MUST be >= retentionYears. Operators may extend retention but not shorten it below the statutory minimum (Archiefwet 1995 + REQ-ARC-004)."
+            },
+            "example": 10
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "Administration identifier for per-administration override rules (archiefverordening scope). Absent on seeded default rules which apply to all administrations.",
+            "example": "gem-almelo",
+            "nullable": true
+          },
+          "_meta": {
+            "type": "object",
+            "description": "Record metadata.",
+            "properties": {
+              "source": {
+                "type": "string",
+                "description": "Origin: 'seeded' for Selectielijst defaults, 'operator-edited' for administration-specific overrides.",
+                "enum": ["seeded", "operator-edited"],
+                "example": "seeded"
+              }
+            }
           }
         }
       },
