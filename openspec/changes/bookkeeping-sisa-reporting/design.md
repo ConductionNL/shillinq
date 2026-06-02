@@ -7,8 +7,9 @@ Single Audit (SiSa) compliance. One organization, one unified audit trail
 per fiscal year, one audit opinion. Prior to T2, Shillinq has no audit-trail
 capability or compliance reporting surface.
 
-The change is **spec-only**. Implementation lands later through
-`opsx-apply` and the standard Hydra pipeline; this doc explains
+**Status:** pr-created
+
+Implementation delivered via `opsx-apply` (Hydra builder, issue #142); this doc explains
 *why* the shape is what it is.
 
 ## Goals
