@@ -189,7 +189,7 @@ class SisaReportingServiceTest extends TestCase
             'fiscalYear'       => 2026,
             'administrationId' => 'adm-gem-amsterdam',
         ];
-        self::assertTrue(condition: $this->service->validateForFinalization($report));
+        self::assertTrue(condition: $this->service->canBeFinalized($report));
 
     }//end testValidateForFinalizationPermitsWhenComplete()
 
@@ -204,7 +204,7 @@ class SisaReportingServiceTest extends TestCase
             'fiscalYear'       => 2026,
             'administrationId' => 'adm-gem-amsterdam',
         ];
-        self::assertFalse(condition: $this->service->validateForFinalization($report));
+        self::assertFalse(condition: $this->service->canBeFinalized($report));
 
     }//end testValidateForFinalizationDeniesWhenReportDateMissing()
 
@@ -219,7 +219,7 @@ class SisaReportingServiceTest extends TestCase
             'reportDate' => '2026-12-31T00:00:00Z',
             'fiscalYear' => 2026,
         ];
-        self::assertFalse(condition: $this->service->validateForFinalization($report));
+        self::assertFalse(condition: $this->service->canBeFinalized($report));
 
     }//end testValidateForFinalizationDeniesWhenAdminIdMissing()
 }//end class

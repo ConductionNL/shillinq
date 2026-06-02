@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Service;
  * The calculateAuditOpinion() rule mirrors the x-openregister-calculations
  * expression declared in lib/Settings/shillinq_register.json on SisaReport.
  * Both must stay in sync — the schema is the primary spec, the service is
- * the fallback. validateForFinalization() is the lifecycle precondition guard
+ * the fallback. canBeFinalized() is the lifecycle precondition guard
  * referenced in the SisaReport finalize transition.
  *
  * @spec openspec/changes/bookkeeping-sisa-reporting/tasks.md#task-12
@@ -83,7 +83,7 @@ class SisaReportingService
      * opinion can be meaningfully computed. Returns false if any are missing.
      *
      * Referenced from lib/Settings/shillinq_register.json SisaReport lifecycle
-     * finalize.requires as "OCA\\Shillinq\\Service\\SisaReportingService::validateForFinalization".
+     * finalize.requires as "OCA\\Shillinq\\Service\\SisaReportingService::canBeFinalized".
      *
      * @param array<string,mixed> $sisaReport SisaReport object array from OpenRegister.
      *
@@ -91,11 +91,11 @@ class SisaReportingService
      *
      * @spec openspec/changes/bookkeeping-sisa-reporting/tasks.md#task-12
      */
-    public function validateForFinalization(array $sisaReport): bool
+    public function canBeFinalized(array $sisaReport): bool
     {
         return empty($sisaReport['reportDate']) === false
             && empty($sisaReport['fiscalYear']) === false
             && empty($sisaReport['administrationId']) === false;
 
-    }//end validateForFinalization()
+    }//end canBeFinalized()
 }//end class

@@ -887,7 +887,7 @@
               "to": "finalized",
               "label": "Finalize report",
               "description": "Lock aggregation data and compute audit opinion. Calls SisaReportingService::calculateAuditOpinion() per ADR-031 exception if OR conditional aggregations are not stable.",
-              "requires": "OCA\\Shillinq\\Service\\SisaReportingService::validateForFinalization"
+              "requires": "OCA\\Shillinq\\Service\\SisaReportingService::canBeFinalized"
             },
             "submit": {
               "from": "finalized",
