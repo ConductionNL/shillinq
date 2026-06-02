@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-financial-statements/tasks.md#task-9
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -83,9 +86,9 @@ class ConsolidationGuardTest extends TestCase
     {
         parent::setUp();
 
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->logger    = $this->createMock(LoggerInterface::class);
+        $this->container = $this->createMock(originalClassName: ContainerInterface::class);
+        $this->appConfig = $this->createMock(originalClassName: IAppConfig::class);
+        $this->logger    = $this->createMock(originalClassName: LoggerInterface::class);
 
         $this->appConfig->method('getValueString')->willReturn('shillinq');
 
@@ -98,7 +101,7 @@ class ConsolidationGuardTest extends TestCase
     }//end setUp()
 
     /**
-     * requireFiscalPeriodClosed denies when fiscalYearId is missing.
+     * RequireFiscalPeriodClosed denies when fiscalYearId is missing.
      *
      * @return void
      */
@@ -111,12 +114,12 @@ class ConsolidationGuardTest extends TestCase
                 ]
                 );
 
-        self::assertFalse($result, 'Missing fiscalYearId must deny finalise');
+        self::assertFalse(condition: $result, message: 'Missing fiscalYearId must deny finalise');
 
     }//end testRequireFiscalPeriodClosedDeniesMissingFiscalYearId()
 
     /**
-     * requireFiscalPeriodClosed permits transition when FiscalYear schema is absent (T1/T2 deferral).
+     * RequireFiscalPeriodClosed permits transition when FiscalYear schema is absent (T1/T2 deferral).
      *
      * @return void
      */
@@ -132,12 +135,12 @@ class ConsolidationGuardTest extends TestCase
                 ]
                 );
 
-        self::assertTrue($result, 'FiscalYear absent (T1/T2): finalise must be permitted by default');
+        self::assertTrue(condition: $result, message: 'FiscalYear absent (T1/T2): finalise must be permitted by default');
 
     }//end testRequireFiscalPeriodClosedPermitsWhenFiscalYearAbsent()
 
     /**
-     * requireFiscalPeriodClosed permits when FiscalYear.isClosed is true.
+     * RequireFiscalPeriodClosed permits when FiscalYear.isClosed is true.
      *
      * @return void
      */
@@ -154,12 +157,12 @@ class ConsolidationGuardTest extends TestCase
                 ]
                 );
 
-        self::assertTrue($result, 'Closed FiscalYear must permit finalise');
+        self::assertTrue(condition: $result, message: 'Closed FiscalYear must permit finalise');
 
     }//end testRequireFiscalPeriodClosedPermitsWhenClosed()
 
     /**
-     * requireFiscalPeriodClosed denies when FiscalYear.isClosed is false.
+     * RequireFiscalPeriodClosed denies when FiscalYear.isClosed is false.
      *
      * @return void
      */
@@ -176,12 +179,12 @@ class ConsolidationGuardTest extends TestCase
                 ]
                 );
 
-        self::assertFalse($result, 'Open FiscalYear must deny finalise');
+        self::assertFalse(condition: $result, message: 'Open FiscalYear must deny finalise');
 
     }//end testRequireFiscalPeriodClosedDenieswhenOpen()
 
     /**
-     * requireFiscalPeriodClosed is fail-closed on exception.
+     * RequireFiscalPeriodClosed is fail-closed on exception.
      *
      * @return void
      */
@@ -196,12 +199,12 @@ class ConsolidationGuardTest extends TestCase
                 ]
                 );
 
-        self::assertFalse($result, 'Exception must deny finalise (fail-closed)');
+        self::assertFalse(condition: $result, message: 'Exception must deny finalise (fail-closed)');
 
     }//end testRequireFiscalPeriodClosedIsFailClosedOnException()
 
     /**
-     * requireAllMembersFinalised denies when required fields are missing.
+     * RequireAllMembersFinalised denies when required fields are missing.
      *
      * @return void
      */
@@ -209,12 +212,12 @@ class ConsolidationGuardTest extends TestCase
     {
         $result = $this->guard->requireAllMembersFinalised(['reportNumber' => 'CR-001']);
 
-        self::assertFalse($result, 'Missing consolidationGroupId/fiscalYearId must deny');
+        self::assertFalse(condition: $result, message: 'Missing consolidationGroupId/fiscalYearId must deny');
 
     }//end testRequireAllMembersFinalisedDeniesMissingFields()
 
     /**
-     * requireAllMembersFinalised permits when ConsolidationGroup not found (deferral).
+     * RequireAllMembersFinalised permits when ConsolidationGroup not found (deferral).
      *
      * @return void
      */
@@ -230,12 +233,12 @@ class ConsolidationGuardTest extends TestCase
                 ]
                 );
 
-        self::assertTrue($result, 'Absent ConsolidationGroup must permit by default (T2 deferral)');
+        self::assertTrue(condition: $result, message: 'Absent ConsolidationGroup must permit by default (T2 deferral)');
 
     }//end testRequireAllMembersFinalisedPermitsWhenGroupAbsent()
 
     /**
-     * requireAllMembersFinalised permits when all member administrations have a final BalanceSheet.
+     * RequireAllMembersFinalised permits when all member administrations have a final BalanceSheet.
      *
      * @return void
      */
@@ -257,12 +260,12 @@ class ConsolidationGuardTest extends TestCase
                 ]
                 );
 
-        self::assertTrue($result, 'All members final must permit consolidated report finalise');
+        self::assertTrue(condition: $result, message: 'All members final must permit consolidated report finalise');
 
     }//end testRequireAllMembersFinalisedPermitsWhenAllMembersFinal()
 
     /**
-     * requireAllMembersFinalised denies when a member administration lacks a final BalanceSheet.
+     * RequireAllMembersFinalised denies when a member administration lacks a final BalanceSheet.
      *
      * @return void
      */
@@ -283,12 +286,12 @@ class ConsolidationGuardTest extends TestCase
                 ]
                 );
 
-        self::assertFalse($result, 'Member without final BalanceSheet must deny consolidated report finalise');
+        self::assertFalse(condition: $result, message: 'Member without final BalanceSheet must deny consolidated report finalise');
 
     }//end testRequireAllMembersFinalisedDeniesWhenMemberNotFinal()
 
     /**
-     * requirePublicationApproval always returns true (role enforcement via RBAC layer).
+     * RequirePublicationApproval always returns true (role enforcement via RBAC layer).
      *
      * @return void
      */
@@ -296,7 +299,7 @@ class ConsolidationGuardTest extends TestCase
     {
         $result = $this->guard->requirePublicationApproval(['id' => 'bs-001', 'status' => 'final']);
 
-        self::assertTrue($result, 'requirePublicationApproval must always permit (role check is in RBAC layer)');
+        self::assertTrue(condition: $result, message: 'requirePublicationApproval must always permit (role check is in RBAC layer)');
 
     }//end testRequirePublicationApprovalAlwaysReturnsTrue()
 
@@ -312,33 +315,73 @@ class ConsolidationGuardTest extends TestCase
     {
         return new class($findObjectReturn, $findAllReturn) {
 
+            /**
+             * Return value for findObject().
+             *
+             * @var mixed
+             */
             private mixed $findObjectReturn;
 
+            /**
+             * Return value for findAll().
+             *
+             * @var array<mixed>
+             */
             private array $findAllReturn;
 
+            /**
+             * Construct the stub with fixed return values.
+             *
+             * @param mixed        $findObjectReturn Value to return from findObject().
+             * @param array<mixed> $findAllReturn    Value to return from findAll().
+             */
             public function __construct(mixed $findObjectReturn, array $findAllReturn)
             {
                 $this->findObjectReturn = $findObjectReturn;
                 $this->findAllReturn    = $findAllReturn;
             }//end __construct()
 
+            /**
+             * Fluent register setter — returns self.
+             *
+             * @param string $register Register slug.
+             *
+             * @return static
+             */
             public function setRegister(string $register): static
             {
                 return $this;
             }//end setRegister()
 
+            /**
+             * Fluent schema setter — returns self.
+             *
+             * @param string $schema Schema name.
+             *
+             * @return static
+             */
             public function setSchema(string $schema): static
             {
                 return $this;
             }//end setSchema()
 
+            /**
+             * Return the configured findObject return value.
+             *
+             * @param string $id Object ID.
+             *
+             * @return mixed
+             */
             public function findObject(string $id): mixed
             {
                 return $this->findObjectReturn;
             }//end findObject()
 
             /**
-             * @param  array<string,mixed> $params
+             * Return the configured findAll return value.
+             *
+             * @param array<string,mixed> $params Filter params.
+             *
              * @return array<mixed>
              */
             public function findAll(array $params=[]): array

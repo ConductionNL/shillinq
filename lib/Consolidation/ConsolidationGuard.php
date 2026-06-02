@@ -20,6 +20,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-financial-statements/tasks.md#task-9
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -222,6 +225,8 @@ class ConsolidationGuard
      * @param array<string, mixed> $statement Financial statement object array.
      *
      * @return bool Always true — role check delegated to OR RBAC layer.
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      *
      * @spec openspec/changes/bookkeeping-financial-statements/tasks.md#task-13
      */
