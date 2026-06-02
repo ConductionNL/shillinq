@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-schatkistbankieren/specs/bookkeeping-schatkistbankieren/spec.md#REQ-SCHATKIST-005
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -78,9 +81,9 @@ class ComplianceValidatorTest extends TestCase
     {
         parent::setUp();
 
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->logger    = $this->createMock(LoggerInterface::class);
+        $this->container = $this->createMock(originalClassName: ContainerInterface::class);
+        $this->appConfig = $this->createMock(originalClassName: IAppConfig::class);
+        $this->logger    = $this->createMock(originalClassName: LoggerInterface::class);
 
         $this->appConfig
             ->method('getValueString')
@@ -128,20 +131,46 @@ class ComplianceValidatorTest extends TestCase
     private function buildObjectServiceMock(array $rules): object
     {
         $objectService = new class($rules) {
+            /**
+             * Construct with pre-configured rule fixtures.
+             *
+             * @param array<array<string, mixed>> $rules Rules returned from findAll().
+             */
             public function __construct(private readonly array $rules)
             {
             }//end __construct()
 
+            /**
+             * Fluent register setter stub — returns self for chaining.
+             *
+             * @param string $register Register slug (ignored).
+             *
+             * @return static
+             */
             public function setRegister(string $register): static
             {
                 return $this;
             }//end setRegister()
 
+            /**
+             * Fluent schema setter stub — returns self for chaining.
+             *
+             * @param string $schema Schema name (ignored).
+             *
+             * @return static
+             */
             public function setSchema(string $schema): static
             {
                 return $this;
             }//end setSchema()
 
+            /**
+             * Return the pre-configured rule fixtures.
+             *
+             * @param array<string, mixed> $params Find parameters (ignored).
+             *
+             * @return array<array<string, mixed>>
+             */
             public function findAll(array $params=[]): array
             {
                 return $this->rules;
@@ -183,7 +212,7 @@ class ComplianceValidatorTest extends TestCase
         $account = $this->buildAccount();
         $result  = $this->validator->isCompliant(account: $account);
 
-        $this->assertTrue($result, 'Expected isCompliant() to return true when all blocking rules pass.');
+        $this->assertTrue(condition: $result, message: 'Expected isCompliant() to return true when all blocking rules pass.');
 
     }//end testAllRulesPassReturnsTrue()
 
@@ -212,7 +241,7 @@ class ComplianceValidatorTest extends TestCase
         $account = $this->buildAccount(overrides: ['iban' => 'NL91ABNA04171643']);
         $result  = $this->validator->isCompliant(account: $account);
 
-        $this->assertFalse($result, 'Expected isCompliant() to return false when IBAN format rule fails.');
+        $this->assertFalse(condition: $result, message: 'Expected isCompliant() to return false when IBAN format rule fails.');
 
     }//end testIbanFormatFailureBlocksActivation()
 
@@ -240,7 +269,7 @@ class ComplianceValidatorTest extends TestCase
         $account = $this->buildAccount(overrides: ['approvalStatus' => 'pending']);
         $result  = $this->validator->isCompliant(account: $account);
 
-        $this->assertFalse($result, 'Expected isCompliant() to return false when approval is pending.');
+        $this->assertFalse(condition: $result, message: 'Expected isCompliant() to return false when approval is pending.');
 
     }//end testApprovalRequiredFailureBlocksActivation()
 
@@ -258,7 +287,7 @@ class ComplianceValidatorTest extends TestCase
         $account = $this->buildAccount();
         $result  = $this->validator->isCompliant(account: $account);
 
-        $this->assertTrue($result, 'Expected isCompliant() to return true when no active rules exist.');
+        $this->assertTrue(condition: $result, message: 'Expected isCompliant() to return true when no active rules exist.');
 
     }//end testNoActiveRulesPermitsTransition()
 
@@ -274,7 +303,7 @@ class ComplianceValidatorTest extends TestCase
         $account = $this->buildAccount(overrides: ['administrationId' => '']);
         $result  = $this->validator->isCompliant(account: $account);
 
-        $this->assertFalse($result, 'Expected isCompliant() to return false when administrationId is missing.');
+        $this->assertFalse(condition: $result, message: 'Expected isCompliant() to return false when administrationId is missing.');
 
     }//end testMissingAdministrationIdFailsClosed()
 
@@ -292,7 +321,7 @@ class ComplianceValidatorTest extends TestCase
         $account = $this->buildAccount();
         $result  = $this->validator->isCompliant(account: $account);
 
-        $this->assertFalse($result, 'Expected isCompliant() to return false when ObjectService throws.');
+        $this->assertFalse(condition: $result, message: 'Expected isCompliant() to return false when ObjectService throws.');
 
     }//end testObjectServiceExceptionFailsClosed()
 
@@ -321,7 +350,7 @@ class ComplianceValidatorTest extends TestCase
         $account = $this->buildAccount(overrides: ['iban' => 'NL91ABNA04171643']);
         $result  = $this->validator->isCompliant(account: $account);
 
-        $this->assertTrue($result, 'Expected isCompliant() to return true when only warning-severity rules fail.');
+        $this->assertTrue(condition: $result, message: 'Expected isCompliant() to return true when only warning-severity rules fail.');
 
     }//end testWarningSeverityFailureDoesNotBlock()
 
@@ -360,8 +389,8 @@ class ComplianceValidatorTest extends TestCase
         $result  = $this->validator->isCompliant(account: $account);
 
         $this->assertFalse(
-            $result,
-            'Expected isCompliant() to return false when one blocking rule fails even if others pass.'
+            condition: $result,
+            message: 'Expected isCompliant() to return false when one blocking rule fails even if others pass.'
         );
 
     }//end testMultiCriteriaBlockingFailureReturnsFalse()
