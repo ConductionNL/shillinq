@@ -240,5 +240,5 @@ Five manifest entries MUST be added for ENSIA navigation.
 - **docudesk** — evidence document storage + attachment FK contract
   (REQ-ENSIA-009)
 - **planix** (optional) — mitigation action project-task cross-link (post-T2)
-- **mydash** — ENSIA cycle voortgang widget (read-only aggregation)
+- **launchpad** — ENSIA cycle voortgang widget (read-only aggregation)
 - **decidesk** — collegebesluit workflow for verklaring approval (existing pattern)
