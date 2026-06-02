@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 233
+**Entities:** 235
 
 ## Context
 
@@ -88,11 +88,13 @@ _Hierarchical chart-of-accounts entry conforming to the RGS (Referentie Grootboe
 | description | string | No | Operator-authored free-text description |
 | vatApplicable | boolean | No | Whether VAT/BTW applies to transactions on this account |
 | iban | string | No | Dutch IBAN for bank/cash accounts |
+| iv3FieldCode | string | No | CBS IV3 field code this account maps to (e.g. K1000, K2100). Optional; if set, IV3 report aggregation groups GL transactions for this account under the given field code per REQ-IV3-003 (bookkeeping-iv3-reporting). |
 
 **Relations:**
 - self → Account (many-to-one, via parentAccountNumber → accountNumber; hierarchy navigation)
 - → GLLine (one-to-many, from T1 general-ledger change)
 - → Administration (many-to-one)
+- → IV3ReportLine (one-to-many, via iv3FieldCode grouping in quarterly aggregation)
 
 > **Reconciliation note (add-shillinq-chart-of-accounts, 2026-05-18):** The earlier
 > `GeneralLedgerAccount` entry (Schema.org `schema:Product`, primary spec
@@ -1979,8 +1981,8 @@ _**DEPRECATED.** Superseded by the `Account` entry (bookkeeping-chart-of-account
 - → JournalEntry (one-to-many)
 
 ### GeneralLedgerEntry
-**Schema.org:** `schema:Thing`
-_An individual entry in the general ledger representing a financial transaction with debit and credit amounts_
+**Schema.org:** `schema:Thing` _(deprecated — use `GLTransaction` + `GLLine` instead)_
+_**DEPRECATED.** Superseded by the `GLTransaction` / `GLLine` header-line split (bookkeeping-general-ledger, 2026-06-02). The flat single-entry model could not express the balance invariant declaratively (see design.md Decision D2). Retained here for historical reference only; new register declarations MUST use `GLTransaction` and `GLLine`. Downstream specs (trial balance T3, financial reporting T4) MUST reference `GLTransaction` as the posting header and `GLLine.accountNumber` as the FK target._
 **Primary spec:** financial-reporting-accountability
 
 | Property | Type | Required | Description |
@@ -1998,6 +2000,13 @@ _An individual entry in the general ledger representing a financial transaction 
 - → FiscalYear (many-to-one)
 - → Organization (many-to-one)
 - → APTransaction (many-to-one)
+
+> **Reconciliation note (bookkeeping-general-ledger, 2026-06-02):** `GeneralLedgerEntry` is superseded
+> by the `GLTransaction` (header) + `GLLine` (line) split introduced in the
+> `bookkeeping-general-ledger` change. The flat model was rejected because the balance constraint
+> (SUM debits = SUM credits) cannot be expressed declaratively on a single-entry shape — it requires
+> grouping over a *set* of lines. The header/line split is canonical in RGS and every reference SMB
+> accounting product. Spec: `openspec/changes/bookkeeping-general-ledger/design.md` Decision D1.
 
 ### GoodsReceipt
 **Schema.org:** `schema:Thing`
@@ -2078,6 +2087,56 @@ _A managed collection of grants for organizational tracking, compliance monitori
 **Relations:**
 - → Organization (many-to-one)
 - → Grant (one-to-many)
+
+### GLLine
+**Schema.org:** `schema:MonetaryAmount`
+_A debit-or-credit line within a GLTransaction, encoding polarity in the `side` enum. `amount` is always non-negative; sign lives in `side`. Supersedes the flat `GeneralLedgerEntry` shape (see reconciliation note on that entry). Extended with `eliminationFlag` for GR consolidation per REQ-GRC-003._
+**Primary spec:** bookkeeping-general-ledger
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| transactionId | string | Yes | FK to the parent GLTransaction.id |
+| lineNumber | integer | Yes | Stable 1-based ordering within the transaction |
+| accountNumber | string | Yes | FK to Account.accountNumber |
+| side | enum | Yes | One of debit, credit |
+| amount | number ≥ 0 | Yes | Non-negative amount in the transaction's currency |
+| currency | string | Yes | ISO 4217 currency code; must equal GLTransaction.currency (T1 single-currency invariant) |
+| periodId | string | No | Auto-resolved by lifecycle engine on GLTransaction.post transition (stub string in T1, FK to FiscalPeriod in T3) |
+| subLedgerType | enum | No | One of ap, ar, project, none (T2 owns the sub-ledger registers) |
+| subLedgerRef | string | No | FK identifier into the sub-ledger when subLedgerType ≠ none |
+| costCenter | string | No | Cost-center code for allocation reporting |
+| description | string | No | Line-level description |
+| eliminationFlag | boolean | No | When true, excludes line from consolidated trial-balance (GR consolidation per REQ-GRC-003) |
+
+**Relations:**
+- → GLTransaction (many-to-one, via transactionId → GLTransaction.id)
+- → Account (many-to-one, via accountNumber → Account.accountNumber)
+
+### GLTransaction
+**Schema.org:** `schema:AccountingTransaction`
+_Double-entry general-ledger posting header. Owns the lifecycle (draft → posted → reversed) and the balance invariant (SUM debits = SUM credits across child GLLine rows). Introduced in T1 (bookkeeping-general-ledger, 2026-06-02) as the canonical replacement for the flat `GeneralLedgerEntry` shape (see that entry's reconciliation note). Balance precondition references `OCA\Shillinq\Lifecycle\BalanceGuard::isBalanced` as an ADR-031 exception-path guard._
+**Primary spec:** bookkeeping-general-ledger
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| transactionNumber | string | Yes | Sequential number unique per administration + fiscal year |
+| postingDate | date | Yes | Effective accounting date |
+| periodId | string | Yes | FK to FiscalPeriod (T3); plain string identifier in T1 |
+| currency | string | Yes | ISO 4217 base currency for the posting |
+| description | string | Yes | Human-readable summary |
+| sourceReference | string | No | External document number (invoice, bank statement ref, asset repair ID) |
+| state | enum | Yes | One of draft, posted, reversed |
+| journalEntryId | string | No | Back-reference to the JournalEntry that materialised this posting |
+| administrationId | string | Yes | FK to the Administration owning the posting |
+| reversesTransactionId | string | No | FK to the GLTransaction that this transaction reverses |
+
+**Relations:**
+- → GLLine (one-to-many, via id → GLLine.transactionId)
+
+> **T1 split rationale (bookkeeping-general-ledger, 2026-06-02):** The header/line split is required
+> for the balance constraint to be expressible declaratively (ADR-031): the invariant operates over
+> a *group* of lines, not a single row. A flat `GeneralLedgerEntry` model would force the check into
+> application code at write-time. Spec: `openspec/changes/bookkeeping-general-ledger/design.md` D1–D2.
 
 ### GRDeelnemer
 **Schema.org:** `schema:Organization`
@@ -2294,6 +2353,56 @@ _Quarterly IV3 (Informatie voor Derden) export submitted to CBS by Dutch decentr
 
 **Submission:** OR ScheduledWorkflow (cron `0 0 1 */3 *`) via OpenConnector `cbs-iv3` source (ADR-019). No app-local HTTP client.
 
+### IV3Report
+**Schema.org:** `schema:Report`
+_Quarterly IV3 (Informatie voor Derden) report for Dutch SMB and non-profit administrations. Represents a GL aggregation for a single calendar quarter, materialised into IV3ReportLine items and submitted to CBS via the cbs-gateway app. Distinct from Iv3Export (overheid/BBV flow): IV3Report is SMB/ZZP-focused and uses Account.iv3FieldCode mapping rather than BbvAccountMapping._
+**Primary spec:** bookkeeping-iv3-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| reportNumber | string | Yes | Unique IV3 report identifier, auto-assigned on creation |
+| administrationId | string | Yes | FK to Administration; determines GL source for aggregation |
+| fiscalYear | integer | Yes | Reporting year (e.g. 2026) |
+| quarter | enum | Yes | One of Q1, Q2, Q3, Q4 |
+| status | enum | Yes | One of draft, validated, submitted, filed |
+| reportDate | datetime | No | Date and time the report was generated |
+| submissionDate | datetime | No | Date and time submitted to CBS |
+| filedDate | datetime | No | Date and time CBS confirmed filing |
+| cbsReceiptNumber | string | No | Receipt number returned by CBS gateway on submission |
+| notes | string | No | Operator comments or submission notes |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- → IV3ReportLine (one-to-many, via reportId; materialised from quarterly GL aggregation)
+
+**Lifecycle (x-openregister-lifecycle):**
+- draft → validated (operator validates; precondition: all mandatory CBS fields K1000, K1100, K2000, K2100, K3000, K4000, K5000 have ≥1 mapped Account.iv3FieldCode)
+- validated → submitted (operator submits; hook POSTs to cbs-gateway /api/iv3/submit; receipt recorded)
+- submitted → filed (CBS gateway callback confirms receipt; filedDate recorded; terminal state)
+
+**Aggregation (x-openregister-aggregations):**
+- `quarterlyGlSum`: SUM(GLLine.amount) grouped by Account.iv3FieldCode, filtered to quarter boundaries, excluding GLLine.eliminationFlag = true; materialises IV3ReportLine items on creation.
+- `mandatoryFieldCheck`: Verifies all mandatory CBS IV3 fields (K1000, K1100, K2000, K2100, K3000, K4000, K5000) are mapped in chart of accounts. Used as validate precondition.
+
+### IV3ReportLine
+**Schema.org:** `schema:MonetaryAmount`
+_A single aggregated line item within an IV3Report, representing the sum of GL transactions for one CBS IV3 field code in a given quarter. Materialised declaratively from GL aggregation via x-openregister-aggregations; not manually entered._
+**Primary spec:** bookkeeping-iv3-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| reportId | string | Yes | FK to the parent IV3Report.id |
+| iv3FieldCode | string | Yes | CBS IV3 field code (e.g. K1000, K2100) this line represents |
+| accountNumber | string | Yes | RGS account code from chart of accounts aggregated into this field |
+| debitAmount | number | No | Total aggregated debit amount from GL for this account/field in EUR |
+| creditAmount | number | No | Total aggregated credit amount from GL for this account/field in EUR |
+| netAmount | number | Yes | Net amount (creditAmount - debitAmount) in EUR; negative values valid |
+| sequence | integer | Yes | Display order within the IV3 report |
+
+**Relations:**
+- → IV3Report (many-to-one, via reportId)
+- → Account (many-to-one, via accountNumber → Account.accountNumber)
+
 ### JointVenture
 **Schema.org:** `schema:Organization`
 _Formal partnership or joint venture between multiple corporations with shared profits/losses. Enables joint venture management across the multi-entity structure._
@@ -2334,6 +2443,57 @@ _A balanced transaction record affecting two or more GL accounts (debits equal c
 **Relations:**
 - → GeneralLedgerAccount (many-to-many)
 - → FiscalYear (many-to-one)
+
+### KorRegime
+**Schema.org:** `schema:GovernmentPermit`
+_KOR (Kleine Ondernemersregeling) opt-in/opt-out regime record per administrationId and calendar year. Tracks the 5-state lifecycle (outside → opted-in → threshold-warning → threshold-exceeded → opted-out), YTD revenue (declarative x-openregister-calculations over Invoice T2), threshold from KorThreshold seed, and generates a pending JournalEntry on threshold-exceeded → opted-out per REQ-KOR-006 safety constraint. Visible only to mkb/zzp administration types per REQ-KOR-001._
+**Primary spec:** bookkeeping-kor-kleine-ondernemersregeling
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the administration owning this KOR regime record |
+| state | enum | Yes | One of outside, opted-in, threshold-warning, threshold-exceeded, opted-out |
+| currentCalendarYear | integer | Yes | Calendar year tracked by ytdRevenue |
+| ytdRevenue | number | Yes | Derived via x-openregister-calculations from Invoice (T2) within currentCalendarYear |
+| thresholdAmount | number | Yes | Active KOR omzetdrempel for the year; read from KorThreshold seed (default €20,000) |
+| warningPercentage | integer | Yes | Warning fires at warningPercentage % of thresholdAmount; from seed (default 80) |
+| optedInAt | date | No | Date of formal opt-in (Belastingdienst-reported) |
+| optedOutAt | date | No | Date of opt-out or auto-switch |
+| exceededAt | date | No | Date when ytdRevenue first crossed the full threshold |
+| notes | string | No | Operator-authored context (e.g. 'Opt-out due to ICP-omzet uitsluiting') |
+
+**Relations:**
+- → KorThreshold (many-to-one, via fiscalYear → KorThreshold.fiscalYear)
+- → JournalEntry (one-to-many, created on threshold-exceeded → opted-out; state: pending per REQ-KOR-006)
+- → Invoice (one-to-many, via x-openregister-calculations ytdRevenue aggregation)
+
+**Lifecycle (x-openregister-lifecycle):**
+- outside → opted-in (operator action; sets optedInAt)
+- opted-in → threshold-warning (auto / calculation-crossing: ytdRevenue ≥ warningPercentage% of thresholdAmount)
+- threshold-warning → threshold-exceeded (auto / calculation-crossing: ytdRevenue ≥ thresholdAmount; sets exceededAt)
+- threshold-warning → opted-in (year-rollover when ytdRevenue resets; calculation-crossing guard)
+- threshold-exceeded → opted-out (operator action; generates pending JournalEntry via hook; sets optedOutAt)
+- opted-in → opted-out (operator voluntary opt-out; sets optedOutAt)
+- opted-out → outside (operator, after 3-year lock-out per Wet OB 1968 art. 25 lid 3; KorLockoutGuard)
+
+**Retention:** 7 years per AWR art. 52 (selectielijst:5.1.2).
+
+### KorThreshold
+**Schema.org:** `schema:DefinedTerm`
+_Versioned statutory KOR threshold record per Wet OB 1968 art. 25 lid 1. Seeded from kor-thresholds-2026.json via the repair step. Multiple records with non-overlapping effectiveFrom/effectiveTo windows support future statutory revisions without code changes per REQ-KOR-003. The pre-2020 sliding-scale regime is not modelled; only the post-2020 fixed-ceiling form is tracked._
+**Primary spec:** bookkeeping-kor-kleine-ondernemersregeling
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| thresholdAmount | number | Yes | Statutory KOR omzetdrempel in EUR (currently €20,000) |
+| warningPercentage | integer | Yes | Percentage of thresholdAmount at which threshold-warning fires (default 80) |
+| fiscalYear | integer | Yes | Fiscal year this threshold applies to |
+| citation | string | Yes | Statutory citation (e.g. Wet OB 1968 art. 25 lid 1) |
+| effectiveFrom | date | Yes | Date from which this threshold record is effective |
+| effectiveTo | date | No | Date after which this threshold is superseded; null = currently in force |
+
+**Relations:**
+- → KorRegime (one-to-many, via fiscalYear)
 
 ### LiquidityForecast
 **Schema.org:** `schema:Report`

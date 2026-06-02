@@ -11,6 +11,8 @@ This is one of ten T3 capability splits per ADR-032 spec-sizing.
 
 The change is **spec-only**.
 
+**Status:** pr-created
+
 ## Goals
 
 - Declare the KOR regime as a register with a 5-state lifecycle

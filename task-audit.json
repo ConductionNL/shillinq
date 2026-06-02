@@ -1,24 +1,78 @@
 {
-  "spec": "openspec/changes/bookkeeping-sisa-reporting",
+  "spec": "openspec/changes/docs-product-pages-conformance",
   "verified": [
-    {"task": "1", "file": null, "ok": true, "note": "Confirmed no SisaReport/AuditDocument/ComplianceAuditTrail schemas in register; no lib/Service/Sisa* or lib/Service/Audit* PHP classes present."},
-    {"task": "2", "file": "openspec/changes/bookkeeping-sisa-reporting/specs/bookkeeping-sisa-reporting/spec.md", "ok": true},
-    {"task": "3", "file": "openspec/changes/bookkeeping-sisa-reporting/proposal.md", "ok": true},
-    {"task": "4", "file": "openspec/changes/bookkeeping-sisa-reporting/design.md", "ok": true},
-    {"task": "5", "file": "lib/Settings/shillinq_register.json#SisaReport", "ok": true},
-    {"task": "6", "file": "lib/Settings/shillinq_register.json#AuditDocument", "ok": true},
-    {"task": "7", "file": "lib/Settings/shillinq_register.json#ComplianceAuditTrail", "ok": true},
-    {"task": "8", "file": "lib/Settings/shillinq_register.json#ManagementLetter", "ok": true},
-    {"task": "9", "file": "lib/Settings/shillinq_register.json#AuditDocument.x-openregister-lifecycle", "ok": true},
-    {"task": "10", "file": "lib/Settings/shillinq_register.json#SisaReport.x-openregister-aggregations.onTimeSettlement", "ok": true},
-    {"task": "11", "file": "lib/Settings/shillinq_register.json#SisaReport.x-openregister-aggregations.findingCounts", "ok": true},
-    {"task": "12", "file": "lib/Service/SisaReportingService.php", "ok": true, "note": "ADR-031 exception: single-method read-only service + x-openregister-calculations declarative backup; 11 unit tests."},
-    {"task": "13", "file": "lib/Settings/shillinq_register.json#Grant.isSISAEligible", "ok": true},
-    {"task": "14", "file": "lib/Settings/shillinq_register.json#SisaReport.x-openregister-aggregations.onTimeSettlement", "ok": true, "note": "filter.grantIsSISAEligible: true wires the eligibility filtering."},
-    {"task": "15", "file": "lib/Settings/shillinq_register.json#AuditDocument.x-openregister-lifecycle", "ok": true, "note": "AuditDocument lifecycle declared. APTransaction/ARInvoice/JournalEntry lifecycle is T1 spec responsibility."},
-    {"task": "16", "file": "src/manifest.json#Compliance", "ok": true, "note": "4 nav entries + 8 pages added. validate-manifest.js roadmap type failure is pre-existing."},
-    {"task": "17", "file": "openspec/architecture/adr-000-data-model.md", "ok": true, "note": "AuditDocument, ComplianceAuditTrail, SisaReport entries added; entity count 226->229."},
-    {"task": "18", "file": "lib/Settings/shillinq_register.json#components.objects", "ok": true, "note": "14 seed objects with realistic Dutch values."}
+    {
+      "task": "1",
+      "file": "docs/user-guide/",
+      "ok": true,
+      "note": "tutorials/ renamed to user-guide/ via git mv in commit 59c4321; admin/ and user/ subdirs present with all tutorial files"
+    },
+    {
+      "task": "2",
+      "file": "docs/Features/index.md",
+      "ok": true,
+      "note": "FEATURES.md moved to Features/index.md; zero em-dashes confirmed"
+    },
+    {
+      "task": "3",
+      "file": "docs/Technical/architecture.md",
+      "ok": true,
+      "note": "ARCHITECTURE.md moved to Technical/architecture.md; all em-dashes replaced"
+    },
+    {
+      "task": "4",
+      "file": "docs/UseCases/index.md",
+      "ok": true,
+      "note": "draft: true frontmatter stub with reference to issue #78"
+    },
+    {
+      "task": "4",
+      "file": "docs/Integrations/index.md",
+      "ok": true,
+      "note": "draft: true frontmatter stub with reference to issue #78"
+    },
+    {
+      "task": "5",
+      "file": "docs/installation.md",
+      "ok": true,
+      "note": "Contains Prerequisites, Install steps, Initial configuration, Next steps; zero em-dashes"
+    },
+    {
+      "task": "6",
+      "file": "docs/intro.md",
+      "ok": true,
+      "note": "All three em-dashes replaced (lines 8, 11, 23)"
+    },
+    {
+      "task": "7",
+      "file": "docs/package.json",
+      "ok": true,
+      "note": "redocusaurus: ^2.0.0 in dependencies block"
+    },
+    {
+      "task": "8",
+      "file": "docs/docusaurus.config.js",
+      "ok": true,
+      "note": "redocusaurus preset with spec: static/oas/shillinq.json and route: /api; API Documentation navbar link positioned after Documentation"
+    },
+    {
+      "task": "9",
+      "file": "docs/docusaurus.config.js",
+      "ok": true,
+      "note": "i18n.locales: ['en', 'nl'] with comment referencing issue #79 and ADR-030 escape hatch"
+    },
+    {
+      "task": "10",
+      "file": "docs/",
+      "ok": true,
+      "note": "grep -rE em-dash docs/ --include=*.md returns exit 1 (no matches fleet-wide)"
+    },
+    {
+      "task": "11",
+      "file": "docs/",
+      "ok": true,
+      "note": "npm install --legacy-peer-deps && npm run build exits 0; both en and nl locales build successfully; AI-baseline 10/10 checks passed"
+    }
   ],
   "stubs": [],
   "missing_routes": []
