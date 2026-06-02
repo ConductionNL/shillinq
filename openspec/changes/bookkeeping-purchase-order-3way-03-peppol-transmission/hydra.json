@@ -1,0 +1,7 @@
+{
+  "schema_version": 2,
+  "spec_slug": "bookkeeping-purchase-order-3way-03-peppol-transmission",
+  "app": "shillinq",
+  "kind": "code",
+  "depends_on": ["bookkeeping-purchase-order-3way-02-purchase-order-core"]
+}
