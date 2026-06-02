@@ -1,0 +1,17 @@
+{
+  "phase": "build",
+  "timestamp": "2026-06-02T13:26:24.549638+00:00",
+  "pr": 58,
+  "commit": "caf225e",
+  "turns": 41,
+  "cost_usd": 1.0585,
+  "tokens": {
+    "input": 42,
+    "output": 15613,
+    "cache_read": 2141205,
+    "cache_create": 48234
+  },
+  "model": "claude-sonnet-4-6",
+  "maxed_out": true,
+  "cost_eur": 0.9738
+}
