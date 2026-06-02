@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-general-ledger/tasks.md#task-7
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -76,11 +79,11 @@ class BalanceGuardTest extends TestCase
     {
         parent::setUp();
 
-        // phpcs:disable CustomSn.Functions.NamedParameters
+        // phpcs:disable CustomSniffs.Functions.NamedParameters
         $this->container = $this->createMock(ContainerInterface::class);
         $this->appConfig = $this->createMock(IAppConfig::class);
         $this->logger    = $this->createMock(LoggerInterface::class);
-        // phpcs:enable CustomSn.Functions.NamedParameters
+        // phpcs:enable CustomSniffs.Functions.NamedParameters
 
         $this->appConfig->method('getValueString')->willReturn('shillinq');
 
@@ -106,7 +109,7 @@ class BalanceGuardTest extends TestCase
 
         $this->container->method('get')->willReturn($this->buildObjectServiceStub(lines: $lines));
 
-        // phpcs:ignore CustomSn.Functions.NamedParameters
+        // phpcs:ignore CustomSniffs.Functions.NamedParameters
         self::assertTrue($this->guard->isBalanced(transactionId: 'txn-1'));
 
     }//end testBalancedTwoLineTransactionReturnsTrue()
@@ -125,7 +128,7 @@ class BalanceGuardTest extends TestCase
 
         $this->container->method('get')->willReturn($this->buildObjectServiceStub(lines: $lines));
 
-        // phpcs:ignore CustomSn.Functions.NamedParameters
+        // phpcs:ignore CustomSniffs.Functions.NamedParameters
         self::assertFalse($this->guard->isBalanced(transactionId: 'txn-2'));
 
     }//end testUnbalancedTransactionReturnsFalse()
@@ -148,7 +151,7 @@ class BalanceGuardTest extends TestCase
 
         $this->container->method('get')->willReturn($this->buildObjectServiceStub(lines: $lines));
 
-        // phpcs:ignore CustomSn.Functions.NamedParameters
+        // phpcs:ignore CustomSniffs.Functions.NamedParameters
         self::assertTrue($this->guard->isBalanced(transactionId: 'txn-3'));
 
     }//end testFloatRoundingHandledByIntegerCents()
@@ -165,7 +168,7 @@ class BalanceGuardTest extends TestCase
 
         $this->logger->expects($this->once())->method('error');
 
-        // phpcs:ignore CustomSn.Functions.NamedParameters
+        // phpcs:ignore CustomSniffs.Functions.NamedParameters
         self::assertFalse($this->guard->isBalanced(transactionId: 'txn-fail'));
 
     }//end testExceptionCausesFailClosed()
@@ -179,7 +182,7 @@ class BalanceGuardTest extends TestCase
     {
         $this->container->method('get')->willReturn($this->buildObjectServiceStub(lines: []));
 
-        // phpcs:ignore CustomSn.Functions.NamedParameters
+        // phpcs:ignore CustomSniffs.Functions.NamedParameters
         self::assertTrue($this->guard->isBalanced(transactionId: 'txn-empty'));
 
     }//end testEmptyLinesIsBalanced()
@@ -195,7 +198,11 @@ class BalanceGuardTest extends TestCase
     {
         return new class($lines) {
 
-            /** @var array<mixed> */
+            /**
+             * GL line records to return from findAll().
+             *
+             * @var array<mixed>
+             */
             private array $lines;
 
             /**
@@ -243,8 +250,6 @@ class BalanceGuardTest extends TestCase
             {
                 return $this->lines;
             }//end findAll()
-
         };
     }//end buildObjectServiceStub()
-
 }//end class

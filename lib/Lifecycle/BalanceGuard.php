@@ -95,9 +95,10 @@ class BalanceGuard
                 $cents = (int) round((float) ($line['amount'] ?? 0) * 100);
                 if (($line['side'] ?? '') === 'debit') {
                     $debitCents += $cents;
-                } else {
-                    $creditCents += $cents;
+                    continue;
                 }
+
+                $creditCents += $cents;
             }
 
             return $debitCents === $creditCents;
