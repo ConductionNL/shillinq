@@ -169,6 +169,7 @@ class InitializeSettings implements IRepairStep
             $this->seedIntercompanyToleranceRules(output: $output);
             $this->importStatementManifests(output: $output);
             $this->seedMandaatTemplates(output: $output);
+            $this->seedRetentionPolicies(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -816,4 +817,40 @@ class InitializeSettings implements IRepairStep
         }
 
     }//end seedArDemo()
+
+    /**
+     * Seed the default Archiefwet retention policies, idempotently.
+     *
+     * The three organization-wide default policies (financial 5yr, tax 7yr,
+     * general 3yr) are imported via SettingsService and matched by slug so
+     * re-runs on upgrade do not duplicate or overwrite operator edits
+     * (REQ-RET-012). No administration_id is required — retention policies are
+     * organization-wide defaults.
+     *
+     * @param IOutput $output The output interface for progress reporting
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-archiefwet-retention/tasks.md (Task 13)
+     */
+    private function seedRetentionPolicies(IOutput $output): void
+    {
+        $output->info('Seeding default retention policies...');
+
+        $result = $this->settingsService->seedRetentionPolicies();
+
+        if ($result['success'] === true) {
+            $seeded  = ($result['seeded'] ?? 0);
+            $skipped = ($result['skipped'] ?? 0);
+            $output->info(
+                'Retention policies seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        }
+
+        if ($result['success'] !== true) {
+            $message = ($result['message'] ?? 'unknown error');
+            $output->warning('Retention policy seeding issue: '.$message);
+        }
+
+    }//end seedRetentionPolicies()
 }//end class
