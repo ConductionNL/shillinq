@@ -2803,7 +2803,6 @@
     "objects": [
       {
         "@self": {
-<<<<<<< HEAD
           "register": "openregister",
           "schema": "ScheduledWorkflow",
           "slug": "shillinq-bank-transaction-polling"
@@ -2816,7 +2815,9 @@
         "workflowSource": "openconnector",
         "workflowName": "shillinq-bank-transaction-import",
         "isEnabled": true
-=======
+      },
+      {
+        "@self": {
           "register": "shillinq",
           "schema": "SisaReport",
           "slug": "sisa-2024-adm-amsterdam"
@@ -3077,7 +3078,6 @@
         "status": "active",
         "accountingStandard": "BBV",
         "isSISAEligible": true
->>>>>>> origin/development
       }
     ]
   }
