@@ -26,6 +26,14 @@
 					"order": 10
 				},
 				{
+					"id": "Waterschapsbelastingen",
+					"label": "Waterschapsbelastingen",
+					"icon": "WaterOutline",
+					"route": "Waterschapsbelastingen",
+					"order": 40,
+					"featureFlag": "gov-waterschap"
+				},
+				{
 					"id": "GRDeelnemers",
 					"label": "Deelnemers",
 					"icon": "AccountMultipleOutline",
@@ -128,6 +136,123 @@
 			"title": "Features & roadmap",
 			"config": {
 				"documentationUrl": "https://shillinq.conduction.nl"
+			}
+		},
+		{
+			"id": "Waterschapsbelastingen",
+			"route": "/waterschapsbelastingen",
+			"type": "index",
+			"title": "Waterschapsbelastingen",
+			"featureFlag": "gov-waterschap",
+			"config": {
+				"register": "shillinq",
+				"schema": "WaterschapHeffingPosting",
+				"featureFlag": "gov-waterschap",
+				"columns": [
+					{
+						"key": "heffingType",
+						"label": "Heffing type",
+						"sortable": true
+					},
+					{
+						"key": "aanslagJaar",
+						"label": "Aanslagjaar",
+						"sortable": true
+					},
+					{
+						"key": "aanslagBedrag",
+						"label": "Aanslag bedrag",
+						"sortable": true
+					},
+					{
+						"key": "emuExclusionRule",
+						"label": "EMU-saldo",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-aanslagJaar",
+				"detailRoute": "WaterschapsbelastingenDetail"
+			}
+		},
+		{
+			"id": "WaterschapsbelastingenDetail",
+			"route": "/waterschapsbelastingen/:id",
+			"type": "detail",
+			"title": "Heffing posting",
+			"featureFlag": "gov-waterschap",
+			"config": {
+				"register": "shillinq",
+				"schema": "WaterschapHeffingPosting",
+				"featureFlag": "gov-waterschap",
+				"fields": [
+					{
+						"key": "heffingType",
+						"label": "Heffing type",
+						"type": "string"
+					},
+					{
+						"key": "aanslagJaar",
+						"label": "Aanslagjaar",
+						"type": "integer"
+					},
+					{
+						"key": "tariefGrondslag",
+						"label": "Tariefgrondslag",
+						"type": "string"
+					},
+					{
+						"key": "tarief",
+						"label": "Tarief (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "aanslagBedrag",
+						"label": "Aanslag bedrag (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "emuExclusionRule",
+						"label": "EMU-saldo uitsluiting",
+						"type": "string"
+					},
+					{
+						"key": "journalEntryId",
+						"label": "Journal entry",
+						"type": "link"
+					},
+					{
+						"key": "debitAccountNumber",
+						"label": "Debet rekening",
+						"type": "string"
+					},
+					{
+						"key": "creditAccountNumber",
+						"label": "Credit rekening",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Omschrijving",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "Waterschapsbelastingen"
 			}
 		},
 		{

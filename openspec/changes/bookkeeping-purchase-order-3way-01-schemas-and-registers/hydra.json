@@ -1,0 +1,7 @@
+{
+  "schema_version": 2,
+  "spec_slug": "bookkeeping-purchase-order-3way-01-schemas-and-registers",
+  "app": "shillinq",
+  "kind": "config",
+  "depends_on": []
+}
