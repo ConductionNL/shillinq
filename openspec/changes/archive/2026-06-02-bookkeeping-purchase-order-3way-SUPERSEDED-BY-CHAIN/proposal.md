@@ -1,3 +1,5 @@
+> SUPERSEDED 2026-06-02 (ADR-032): decomposed into the chain bookkeeping-purchase-order-3way-01..11 (see openspec/changes/).
+
 # Proposal: bookkeeping-purchase-order-3way
 
 `kind: feature` per ADR-001 — the 3-way match is a complex financial control workflow combining procurement, inventory, and accounting processes. This change adds:
