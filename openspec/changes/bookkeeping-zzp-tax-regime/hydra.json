@@ -61,15 +61,34 @@
           "decisions": [],
           "verdict": "pass",
           "duration_seconds": 93
+        },
+        {
+          "stage": "applier",
+          "persona": "Axel Pli\u00e9r",
+          "model": "sonnet",
+          "container": "hydra-applier",
+          "started_at": "2026-06-02T17:04:27Z",
+          "ended_at": "2026-06-02T17:05:58Z",
+          "exit_code": 0,
+          "turns_used": 8,
+          "turns_budget": 20,
+          "checks_run": [
+            "hydra.json-consumer"
+          ],
+          "checks_skipped": [],
+          "findings": [],
+          "decisions": [],
+          "verdict": "pass",
+          "duration_seconds": 91
         }
       ]
     }
   ],
   "totals": {
-    "runs": 2,
-    "turns_used": 8,
+    "runs": 3,
+    "turns_used": 16,
     "cost_usd": 0.0,
-    "duration_seconds": 2098,
+    "duration_seconds": 2189,
     "cycles": 1,
     "by_stage": {
       "build": {
@@ -79,10 +98,10 @@
         "duration_seconds": 2005
       },
       "applier": {
-        "runs": 1,
-        "turns_used": 8,
+        "runs": 2,
+        "turns_used": 16,
         "cost_usd": 0.0,
-        "duration_seconds": 93
+        "duration_seconds": 184
       }
     }
   }
