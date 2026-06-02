@@ -33,6 +33,13 @@
 					"order": 20
 				},
 				{
+					"id": "BankConnections",
+					"label": "Bank Connections",
+					"icon": "BankOutline",
+					"route": "BankConnections",
+					"order": 25
+				},
+				{
 					"id": "Waterschapsbelastingen",
 					"label": "Waterschapsbelastingen",
 					"icon": "WaterOutline",
@@ -60,6 +67,71 @@
 					"icon": "TableMergeCellsOutline",
 					"route": "GRConsolidated",
 					"order": 70
+				},
+				{
+					"id": "BalanceSheet",
+					"label": "Balance Sheet",
+					"icon": "TableAccountOutline",
+					"route": "BalanceSheet",
+					"order": 80
+				},
+				{
+					"id": "TrialBalance",
+					"label": "Trial Balance",
+					"icon": "ScaleBalanceOutline",
+					"route": "TrialBalance",
+					"order": 81
+				},
+				{
+					"id": "Consolidations",
+					"label": "Consolidations",
+					"icon": "AccountMultipleOutline",
+					"route": "Consolidations",
+					"order": 82
+				},
+				{
+					"id": "ConsolidatedReport",
+					"label": "Consolidated Report",
+					"icon": "FileChartOutline",
+					"route": "ConsolidatedReport",
+					"order": 83
+				}
+			]
+		},
+		{
+			"id": "Belastingen",
+			"label": "Belastingen",
+			"icon": "icon-category-monitoring",
+			"order": 25,
+			"visibility": {
+				"field": "administrationType",
+				"in": [
+					"mkb",
+					"zzp"
+				]
+			},
+			"children": [
+				{
+					"id": "KorStatus",
+					"label": "KOR-status",
+					"icon": "ShieldCheckOutline",
+					"route": "KorStatus",
+					"order": 10
+				}
+			]
+		},
+		{
+			"id": "Administratie",
+			"label": "Administratie",
+			"icon": "icon-category-organization",
+			"order": 30,
+			"children": [
+				{
+					"id": "Bewaartermijnen",
+					"label": "Bewaartermijnen",
+					"icon": "ShieldCheckOutline",
+					"route": "Bewaartermijnen",
+					"order": 10
 				}
 			]
 		},
@@ -70,7 +142,11 @@
 			"order": 30,
 			"visibility": {
 				"field": "administrationType",
-				"in": ["gemeente", "provincie", "waterschap"]
+				"in": [
+					"gemeente",
+					"provincie",
+					"waterschap"
+				]
 			},
 			"children": [
 				{
@@ -79,6 +155,42 @@
 					"icon": "FileChartOutline",
 					"route": "Iv3Rapportages",
 					"order": 10
+				}
+			]
+		},
+		{
+			"id": "Compliance",
+			"label": "Compliance",
+			"icon": "icon-category-monitoring",
+			"order": 40,
+			"children": [
+				{
+					"id": "SisaRapportages",
+					"label": "SiSa-rapportages",
+					"icon": "FileDocumentCheckOutline",
+					"route": "SisaRapportages",
+					"order": 10
+				},
+				{
+					"id": "ComplianceAuditTrails",
+					"label": "Compliance audittrail",
+					"icon": "ClipboardCheckOutline",
+					"route": "ComplianceAuditTrails",
+					"order": 20
+				},
+				{
+					"id": "ManagementLetters",
+					"label": "Management letters",
+					"icon": "EmailOutline",
+					"route": "ManagementLetters",
+					"order": 30
+				},
+				{
+					"id": "AuditDocuments",
+					"label": "Auditdocumenten",
+					"icon": "FileSignOutline",
+					"route": "AuditDocuments",
+					"order": 40
 				}
 			]
 		},
@@ -115,6 +227,263 @@
 			"title": "Features & roadmap",
 			"config": {
 				"documentationUrl": "https://shillinq.conduction.nl"
+			}
+		},
+		{
+			"id": "KorStatus",
+			"route": "/belastingen/kor",
+			"type": "index",
+			"title": "KOR-status",
+			"config": {
+				"register": "shillinq",
+				"schema": "KorRegime",
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"mkb",
+						"zzp"
+					]
+				},
+				"columns": [
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"sortable": true
+					},
+					{
+						"key": "currentCalendarYear",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "ytdRevenue",
+						"label": "Jaaromzet (YTD)",
+						"sortable": true
+					},
+					{
+						"key": "thresholdAmount",
+						"label": "Omzetdrempel",
+						"sortable": false
+					}
+				],
+				"defaultSort": "-currentCalendarYear",
+				"detailRoute": "KorStatusDetail",
+				"widget": "kor-status"
+			}
+		},
+		{
+			"id": "KorStatusDetail",
+			"route": "/belastingen/kor/:id",
+			"type": "detail",
+			"title": "KOR-regime",
+			"config": {
+				"register": "shillinq",
+				"schema": "KorRegime",
+				"fields": [
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "currentCalendarYear",
+						"label": "Kalenderjaar",
+						"type": "integer"
+					},
+					{
+						"key": "state",
+						"label": "KOR-status",
+						"type": "string"
+					},
+					{
+						"key": "ytdRevenue",
+						"label": "Jaaromzet (YTD)",
+						"type": "number"
+					},
+					{
+						"key": "thresholdAmount",
+						"label": "Omzetdrempel",
+						"type": "number"
+					},
+					{
+						"key": "warningPercentage",
+						"label": "Waarschuwingspercentage (%)",
+						"type": "integer"
+					},
+					{
+						"key": "optedInAt",
+						"label": "Opt-in datum",
+						"type": "date"
+					},
+					{
+						"key": "optedOutAt",
+						"label": "Opt-out datum",
+						"type": "date"
+					},
+					{
+						"key": "exceededAt",
+						"label": "Drempel overschreden op",
+						"type": "date"
+					},
+					{
+						"key": "notes",
+						"label": "Notities",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "KorStatus"
+			}
+		},
+		{
+			"id": "BankConnections",
+			"route": "/bank-connections",
+			"type": "index",
+			"title": "Bank Connections",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankConnection",
+				"columns": [
+					{
+						"key": "connectionNumber",
+						"label": "Connection",
+						"sortable": true
+					},
+					{
+						"key": "aggregator",
+						"label": "Aggregator",
+						"sortable": true
+					},
+					{
+						"key": "bankAccountIban",
+						"label": "IBAN",
+						"sortable": true
+					},
+					{
+						"key": "consentExpiresAt",
+						"label": "Consent Expires",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "connectionNumber",
+				"detailRoute": "BankConnectionDetail"
+			}
+		},
+		{
+			"id": "BankConnectionDetail",
+			"route": "/bank-connections/:id",
+			"type": "detail",
+			"title": "Bank Connection",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankConnection",
+				"fields": [
+					{
+						"key": "connectionNumber",
+						"label": "Connection Number",
+						"type": "string"
+					},
+					{
+						"key": "aggregator",
+						"label": "Aggregator",
+						"type": "string"
+					},
+					{
+						"key": "aggregatorSourceSlug",
+						"label": "Aggregator Source",
+						"type": "string"
+					},
+					{
+						"key": "bankBic",
+						"label": "BIC",
+						"type": "string"
+					},
+					{
+						"key": "bankCountry",
+						"label": "Country",
+						"type": "string"
+					},
+					{
+						"key": "bankAccountIban",
+						"label": "IBAN",
+						"type": "string"
+					},
+					{
+						"key": "consentReference",
+						"label": "Consent Reference",
+						"type": "string"
+					},
+					{
+						"key": "consentGrantedAt",
+						"label": "Consent Granted",
+						"type": "string"
+					},
+					{
+						"key": "consentExpiresAt",
+						"label": "Consent Expires",
+						"type": "string"
+					},
+					{
+						"key": "consentRemainingDays",
+						"label": "Days Until Expiry",
+						"type": "calculated",
+						"help": "Remaining days on the PSD2 consent. Negative when expired."
+					},
+					{
+						"key": "lastSyncAt",
+						"label": "Last Synced",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"actions": [
+					{
+						"id": "renew-consent",
+						"label": "Renew consent",
+						"icon": "Refresh",
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": [
+								"expiring",
+								"expired"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "renew",
+						"description": "Trigger PSD2 SCA renewal via the openconnector source reauthorise action."
+					}
+				],
+				"header": {
+					"countdownField": "consentRemainingDays",
+					"countdownLabel": "days until consent expires",
+					"countdownVisibleWhen": {
+						"field": "lifecycleState",
+						"in": [
+							"expiring"
+						]
+					}
+				},
+				"indexRoute": "BankConnections"
 			}
 		},
 		{
@@ -244,7 +613,11 @@
 				"schema": "Iv3Export",
 				"visibility": {
 					"field": "administrationType",
-					"in": ["gemeente", "provincie", "waterschap"]
+					"in": [
+						"gemeente",
+						"provincie",
+						"waterschap"
+					]
 				},
 				"columns": [
 					{
@@ -848,6 +1221,1001 @@
 						"gridX": 9,
 						"gridY": 0,
 						"gridWidth": 3,
+						"gridHeight": 2
+					}
+				]
+			}
+		},
+		{
+			"id": "BalanceSheet",
+			"route": "/financial-statements/balance-sheet",
+			"type": "index",
+			"title": "Balance Sheet",
+			"config": {
+				"register": "shillinq",
+				"schema": "BalanceSheet",
+				"columns": [
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					},
+					{
+						"key": "fiscalYearId",
+						"label": "Fiscal Year",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "totalAssets",
+						"label": "Total Assets",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-reportDate",
+				"detailRoute": "BalanceSheetDetail"
+			}
+		},
+		{
+			"id": "BalanceSheetDetail",
+			"route": "/financial-statements/balance-sheet/:id",
+			"type": "detail",
+			"title": "Balance Sheet",
+			"config": {
+				"register": "shillinq",
+				"schema": "BalanceSheet",
+				"fields": [
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"type": "date-time"
+					},
+					{
+						"key": "fiscalYearId",
+						"label": "Fiscal Year",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "totalAssets",
+						"label": "Total Assets",
+						"type": "number"
+					},
+					{
+						"key": "totalLiabilities",
+						"label": "Total Liabilities",
+						"type": "number"
+					},
+					{
+						"key": "totalEquity",
+						"label": "Total Equity",
+						"type": "number"
+					},
+					{
+						"key": "isBalanced",
+						"label": "Balanced",
+						"type": "boolean"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "BalanceSheet"
+			}
+		},
+		{
+			"id": "TrialBalance",
+			"route": "/financial-statements/trial-balance",
+			"type": "index",
+			"title": "Trial Balance",
+			"config": {
+				"register": "shillinq",
+				"schema": "TrialBalance",
+				"columns": [
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					},
+					{
+						"key": "fiscalYearId",
+						"label": "Fiscal Year",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "isBalanced",
+						"label": "Balanced",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-reportDate",
+				"detailRoute": "TrialBalanceDetail"
+			}
+		},
+		{
+			"id": "TrialBalanceDetail",
+			"route": "/financial-statements/trial-balance/:id",
+			"type": "detail",
+			"title": "Trial Balance",
+			"config": {
+				"register": "shillinq",
+				"schema": "TrialBalance",
+				"fields": [
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"type": "date-time"
+					},
+					{
+						"key": "fiscalYearId",
+						"label": "Fiscal Year",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "preparedBy",
+						"label": "Prepared By",
+						"type": "string"
+					},
+					{
+						"key": "totalDebits",
+						"label": "Total Debits",
+						"type": "number"
+					},
+					{
+						"key": "totalCredits",
+						"label": "Total Credits",
+						"type": "number"
+					},
+					{
+						"key": "isBalanced",
+						"label": "Balanced",
+						"type": "boolean"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "TrialBalance"
+			}
+		},
+		{
+			"id": "Consolidations",
+			"route": "/financial-statements/consolidations",
+			"type": "index",
+			"title": "Consolidations",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidationGroup",
+				"columns": [
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "consolidationMethod",
+						"label": "Method",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "name",
+				"detailRoute": "ConsolidationsDetail"
+			}
+		},
+		{
+			"id": "ConsolidationsDetail",
+			"route": "/financial-statements/consolidations/:id",
+			"type": "detail",
+			"title": "Consolidation Group",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidationGroup",
+				"fields": [
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "consolidationMethod",
+						"label": "Consolidation Method",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "parentOrganizationId",
+						"label": "Parent Organization",
+						"type": "string"
+					},
+					{
+						"key": "administrationIds",
+						"label": "Member Administrations",
+						"type": "json"
+					},
+					{
+						"key": "eliminationRules",
+						"label": "Elimination Rules",
+						"type": "json"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "Consolidations"
+			}
+		},
+		{
+			"id": "ConsolidatedReport",
+			"route": "/financial-statements/consolidated-report",
+			"type": "index",
+			"title": "Consolidated Report",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidatedReport",
+				"columns": [
+					{
+						"key": "reportNumber",
+						"label": "Report Number",
+						"sortable": true
+					},
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"sortable": true
+					},
+					{
+						"key": "consolidationMethod",
+						"label": "Method",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "eliminationsApplied",
+						"label": "Eliminations Applied",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-reportDate",
+				"detailRoute": "ConsolidatedReportDetail"
+			}
+		},
+		{
+			"id": "ConsolidatedReportDetail",
+			"route": "/financial-statements/consolidated-report/:id",
+			"type": "detail",
+			"title": "Consolidated Report",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidatedReport",
+				"fields": [
+					{
+						"key": "reportNumber",
+						"label": "Report Number",
+						"type": "string"
+					},
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"type": "date-time"
+					},
+					{
+						"key": "consolidationGroupId",
+						"label": "Consolidation Group",
+						"type": "string"
+					},
+					{
+						"key": "consolidationMethod",
+						"label": "Consolidation Method",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYearId",
+						"label": "Fiscal Year",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "eliminationsApplied",
+						"label": "Eliminations Applied",
+						"type": "boolean"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ConsolidatedReport"
+			}
+		},
+		{
+			"id": "SisaRapportages",
+			"route": "/sisa-rapportages",
+			"type": "index",
+			"title": "SiSa-rapportages",
+			"config": {
+				"register": "shillinq",
+				"schema": "SisaReport",
+				"columns": [
+					{
+						"key": "reportNumber",
+						"label": "Rapportnummer",
+						"sortable": true
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Boekjaar",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"sortable": true
+					},
+					{
+						"key": "auditOpinion",
+						"label": "Controleverklaring",
+						"sortable": true
+					},
+					{
+						"key": "complianceStatus",
+						"label": "Nalevingsstatus",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-fiscalYear",
+				"detailRoute": "SisaRapportagesDetail"
+			}
+		},
+		{
+			"id": "SisaRapportagesDetail",
+			"route": "/sisa-rapportages/:id",
+			"type": "detail",
+			"title": "SiSa-rapportage",
+			"config": {
+				"register": "shillinq",
+				"schema": "SisaReport",
+				"fields": [
+					{
+						"key": "reportNumber",
+						"label": "Rapportnummer",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Boekjaar",
+						"type": "integer"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "reportDate",
+						"label": "Rapportdatum",
+						"type": "date-time"
+					},
+					{
+						"key": "totalTransactionCount",
+						"label": "Aantal transacties",
+						"type": "integer"
+					},
+					{
+						"key": "onTimeSettlementPercent",
+						"label": "Op-tijd-betaling %",
+						"type": "number"
+					},
+					{
+						"key": "totalAmount",
+						"label": "Totaalbedrag",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Valuta",
+						"type": "string"
+					},
+					{
+						"key": "criticalFindingsCount",
+						"label": "Kritieke bevindingen",
+						"type": "integer"
+					},
+					{
+						"key": "majorFindingsCount",
+						"label": "Majeure bevindingen",
+						"type": "integer"
+					},
+					{
+						"key": "minorFindingsCount",
+						"label": "Mineure bevindingen",
+						"type": "integer"
+					},
+					{
+						"key": "observationsCount",
+						"label": "Observaties",
+						"type": "integer"
+					},
+					{
+						"key": "remediationOverdueCount",
+						"label": "Achterstallige remediëringen",
+						"type": "integer"
+					},
+					{
+						"key": "auditOpinion",
+						"label": "Controleverklaring",
+						"type": "string"
+					},
+					{
+						"key": "managementLetterId",
+						"label": "Management letter",
+						"type": "string"
+					},
+					{
+						"key": "complianceStatus",
+						"label": "Nalevingsstatus",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "submissionDate",
+						"label": "Indiendatum",
+						"type": "date-time"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "SisaRapportages"
+			}
+		},
+		{
+			"id": "ComplianceAuditTrails",
+			"route": "/compliance-audit",
+			"type": "index",
+			"title": "Compliance audittrail",
+			"config": {
+				"register": "shillinq",
+				"schema": "ComplianceAuditTrail",
+				"columns": [
+					{
+						"key": "trailNumber",
+						"label": "Trailnummer",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"sortable": true
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Boekjaar",
+						"sortable": true
+					},
+					{
+						"key": "findingSeverity",
+						"label": "Ernst bevinding",
+						"sortable": true
+					},
+					{
+						"key": "remediationStatus",
+						"label": "Remediëringsstatus",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-fiscalYear",
+				"detailRoute": "ComplianceAuditTrailDetail"
+			}
+		},
+		{
+			"id": "ComplianceAuditTrailDetail",
+			"route": "/compliance-audit/:id",
+			"type": "detail",
+			"title": "Compliance audittrail",
+			"config": {
+				"register": "shillinq",
+				"schema": "ComplianceAuditTrail",
+				"fields": [
+					{
+						"key": "trailNumber",
+						"label": "Trailnummer",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Boekjaar",
+						"type": "integer"
+					},
+					{
+						"key": "findingNumber",
+						"label": "Bevindingsnummer",
+						"type": "string"
+					},
+					{
+						"key": "findingSeverity",
+						"label": "Ernst bevinding",
+						"type": "string"
+					},
+					{
+						"key": "findingDescription",
+						"label": "Bevindingomschrijving",
+						"type": "string"
+					},
+					{
+						"key": "observationNumber",
+						"label": "Observatienummer",
+						"type": "string"
+					},
+					{
+						"key": "observationDescription",
+						"label": "Observatieomschrijving",
+						"type": "string"
+					},
+					{
+						"key": "remediationDueDate",
+						"label": "Remediëring vóór",
+						"type": "date"
+					},
+					{
+						"key": "remediationStatus",
+						"label": "Remediëringsstatus",
+						"type": "string"
+					},
+					{
+						"key": "remediationCompletionDate",
+						"label": "Remediëring voltooid op",
+						"type": "date"
+					},
+					{
+						"key": "auditorName",
+						"label": "Auditor",
+						"type": "string"
+					},
+					{
+						"key": "auditDate",
+						"label": "Auditdatum",
+						"type": "date"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ComplianceAuditTrails"
+			}
+		},
+		{
+			"id": "ManagementLetters",
+			"route": "/management-letter",
+			"type": "index",
+			"title": "Management letters",
+			"config": {
+				"register": "shillinq",
+				"schema": "ManagementLetter",
+				"columns": [
+					{
+						"key": "letterNumber",
+						"label": "Briefnummer",
+						"sortable": true
+					},
+					{
+						"key": "auditorName",
+						"label": "Auditor",
+						"sortable": true
+					},
+					{
+						"key": "issuedDate",
+						"label": "Uitgiftedatum",
+						"sortable": true
+					},
+					{
+						"key": "auditOpinion",
+						"label": "Controleverklaring",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-issuedDate",
+				"detailRoute": "ManagementLetterDetail"
+			}
+		},
+		{
+			"id": "ManagementLetterDetail",
+			"route": "/management-letter/:id",
+			"type": "detail",
+			"title": "Management letter",
+			"config": {
+				"register": "shillinq",
+				"schema": "ManagementLetter",
+				"fields": [
+					{
+						"key": "letterNumber",
+						"label": "Briefnummer",
+						"type": "string"
+					},
+					{
+						"key": "sisaReportId",
+						"label": "SiSa-rapport",
+						"type": "string"
+					},
+					{
+						"key": "auditorName",
+						"label": "Auditor",
+						"type": "string"
+					},
+					{
+						"key": "issuedDate",
+						"label": "Uitgiftedatum",
+						"type": "date"
+					},
+					{
+						"key": "dueResponseDate",
+						"label": "Responsdatum",
+						"type": "date"
+					},
+					{
+						"key": "findingsSummary",
+						"label": "Samenvatting bevindingen",
+						"type": "string"
+					},
+					{
+						"key": "observationsSummary",
+						"label": "Samenvatting observaties",
+						"type": "string"
+					},
+					{
+						"key": "remediationRecommendations",
+						"label": "Remediëeringsaanbevelingen",
+						"type": "string"
+					},
+					{
+						"key": "auditOpinion",
+						"label": "Controleverklaring",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ManagementLetters"
+			}
+		},
+		{
+			"id": "AuditDocuments",
+			"route": "/audit-documents",
+			"type": "index",
+			"title": "Auditdocumenten",
+			"config": {
+				"register": "shillinq",
+				"schema": "AuditDocument",
+				"columns": [
+					{
+						"key": "documentNumber",
+						"label": "Documentnummer",
+						"sortable": true
+					},
+					{
+						"key": "documentType",
+						"label": "Documenttype",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Ondertekeningsstatus",
+						"sortable": true
+					},
+					{
+						"key": "signingTimestamp",
+						"label": "Ondertekend op",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-signingTimestamp",
+				"detailRoute": "AuditDocumentDetail"
+			}
+		},
+		{
+			"id": "AuditDocumentDetail",
+			"route": "/audit-documents/:id",
+			"type": "detail",
+			"title": "Auditdocument",
+			"config": {
+				"register": "shillinq",
+				"schema": "AuditDocument",
+				"fields": [
+					{
+						"key": "documentNumber",
+						"label": "Documentnummer",
+						"type": "string"
+					},
+					{
+						"key": "documentType",
+						"label": "Documenttype",
+						"type": "string"
+					},
+					{
+						"key": "glTransactionId",
+						"label": "GL-transactie",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "signingUser",
+						"label": "Ondertekenaar",
+						"type": "string"
+					},
+					{
+						"key": "signingTimestamp",
+						"label": "Ondertekend op",
+						"type": "date-time"
+					},
+					{
+						"key": "signingReason",
+						"label": "Reden ondertekening",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Ondertekeningsstatus",
+						"type": "string"
+					},
+					{
+						"key": "relatedTransactionAmount",
+						"label": "Transactiebedrag",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Valuta",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Archiveringsstatus",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"auditTrail": true,
+				"indexRoute": "AuditDocuments"
+			}
+		},
+		{
+			"id": "Bewaartermijnen",
+			"route": "/administratie/bewaartermijnen",
+			"type": "index",
+			"title": "Bewaartermijnen",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetentionRule",
+				"columns": [
+					{
+						"key": "selectielijstCode",
+						"label": "Selectielijst code",
+						"sortable": true
+					},
+					{
+						"key": "description",
+						"label": "Omschrijving",
+						"sortable": false
+					},
+					{
+						"key": "recordCategory",
+						"label": "Categorie",
+						"sortable": true
+					},
+					{
+						"key": "retentionYears",
+						"label": "Bewaartermijn (jaren)",
+						"sortable": true
+					},
+					{
+						"key": "disposition",
+						"label": "Actie bij verstrijken",
+						"sortable": true
+					},
+					{
+						"key": "daysUntilRetention",
+						"label": "Dagen tot bewaartermijn",
+						"sortable": true
+					}
+				],
+				"defaultSort": "selectielijstCode",
+				"detailRoute": "BewaartermijnenDetail"
+			}
+		},
+		{
+			"id": "BewaartermijnenDetail",
+			"route": "/administratie/bewaartermijnen/:id",
+			"type": "detail",
+			"title": "Bewaartermijn",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetentionRule",
+				"fields": [
+					{
+						"key": "selectielijstCode",
+						"label": "Selectielijst code",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Omschrijving",
+						"type": "string"
+					},
+					{
+						"key": "recordCategory",
+						"label": "Recordcategorie",
+						"type": "string"
+					},
+					{
+						"key": "retentionYears",
+						"label": "Bewaartermijn (jaren)",
+						"type": "number"
+					},
+					{
+						"key": "retentionTrigger",
+						"label": "Relatieve bewaartermijn",
+						"type": "string"
+					},
+					{
+						"key": "disposition",
+						"label": "Actie bij verstrijken",
+						"type": "string"
+					},
+					{
+						"key": "legalBasis",
+						"label": "Wettelijke grondslag",
+						"type": "string"
+					},
+					{
+						"key": "effectiveFrom",
+						"label": "Geldig vanaf",
+						"type": "string"
+					},
+					{
+						"key": "effectiveTo",
+						"label": "Geldig tot",
+						"type": "string"
+					},
+					{
+						"key": "customRetentionYears",
+						"label": "Afwijkende bewaartermijn (organisatie)",
+						"type": "number"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "daysUntilRetention",
+						"label": "Dagen tot bewaartermijn",
+						"type": "number"
+					}
+				],
+				"indexRoute": "Bewaartermijnen"
+			}
+		},
+		{
+			"id": "BewaartermijnenDashboard",
+			"route": "/administratie/bewaartermijnen/dashboard",
+			"type": "dashboard",
+			"title": "Bewaartermijnen — Dashboard",
+			"config": {
+				"widgets": [
+					{
+						"id": "nearing-retention",
+						"title": "Verlopen binnenkort",
+						"type": "stats-block",
+						"iconClass": "icon-calendar",
+						"props": {
+							"countLabel": "bewaartermijnen",
+							"variant": "warning"
+						},
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "RetentionRule",
+							"filter": {
+								"daysUntilRetention_lt": 90
+							},
+							"aggregate": "count"
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "layout-nearing-retention",
+						"widgetId": "nearing-retention",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 4,
 						"gridHeight": 2
 					}
 				]

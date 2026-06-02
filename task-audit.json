@@ -1,75 +1,87 @@
 {
-  "spec": "openspec/changes/add-shillinq-gr-consolidation",
-  "verified": [
-    {
-      "task": "1",
-      "description": "Confirmed no GRDeelnemer, GRVerdeelsleutel, or bookkeeping-gr-consolidation already existed in lib/Settings/shillinq_register.json",
-      "ok": true
-    },
-    {
-      "task": "2",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/specs/bookkeeping-gr-consolidation/spec.md",
-      "ok": true
-    },
-    {
-      "task": "3",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/proposal.md",
-      "ok": true
-    },
-    {
-      "task": "4",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/design.md",
-      "ok": true
-    },
-    {
-      "task": "5",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer schema declared with deelnemerType enum, deelnemerNaam, administrationId (optional), aandeel (0-1 validated), actief boolean, lifecycleState",
-      "ok": true
-    },
-    {
-      "task": "6",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRVerdeelsleutel schema declared with sleutelNaam, costClusterAccountNumbers array, verdelingsType enum (vast-percentage/inwoner-aantal/gewogen-oppervlak/custom-formula), parameters object, lineNumber",
-      "ok": true
-    },
-    {
-      "task": "7",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GLLine schema declared with eliminationFlag: boolean (default false); x-openregister-aggregations.consolidatedTrialBalance declared with filter: eliminationFlag = false",
-      "ok": true
-    },
-    {
-      "task": "8",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRVerdeelsleutel.x-openregister-aggregations.doorbelastingPerDeelnemer declared with join on GLLine WHERE accountNumber IN costClusterAccountNumbers AND eliminationFlag = false, grouped by deelnemerId",
-      "ok": true
-    },
-    {
-      "task": "9",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer.x-openregister-lifecycle.hooks.onGrPeriodClose declared: trigger bookkeeping-period-close:grPeriodClosed, condition administrationId IS NOT NULL, idempotency key (grAdministrationId, deelnemerId, periodId)",
-      "ok": true
-    },
-    {
-      "task": "10",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer.x-openregister-aggregations.aandeelSumCheck declared: filter actief = true, sum of aandeel field; non-blocking warning when result differs from 1.0",
-      "ok": true
-    },
-    {
-      "task": "11",
-      "file": "src/manifest.json",
-      "description": "featureFlags.gov-gr added; Gemeenschappelijke regeling menu entry under Bookkeeping with 3 children (Deelnemers, Verdeelsleutels, Geconsolideerde view); 5 pages added (GRDeelnemers, GRDeelnemerDetail, GRVerdeelsleutels, GRVerdeelsleutelDetail, GRConsolidated); node tests/validate-manifest.js: only pre-existing roadmap-type failure, no new failures",
-      "ok": true
-    },
-    {
-      "task": "12",
-      "file": "openspec/architecture/adr-000-data-model.md",
-      "description": "GRDeelnemer and GRVerdeelsleutel entity entries added alphabetically after GrantPortfolio, cross-referencing bookkeeping-gr-consolidation spec",
-      "ok": true
-    }
-  ],
-  "stubs": [],
-  "missing_routes": []
+    "spec": "openspec/changes/add-shillinq-kor-kleine-ondernemersregeling",
+    "verified": [
+        {
+            "task": "1",
+            "file": "lib/Settings/shillinq_register.json",
+            "ok": true,
+            "note": "Scanned - no KorRegime/KorThreshold schema present before this change"
+        },
+        {
+            "task": "2",
+            "file": "openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md",
+            "ok": true
+        },
+        {
+            "task": "3",
+            "file": "openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/proposal.md",
+            "ok": true
+        },
+        {
+            "task": "4",
+            "file": "openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/design.md",
+            "ok": true
+        },
+        {
+            "task": "5",
+            "file": "lib/Settings/shillinq_register.json",
+            "ok": true,
+            "note": "KorRegime schema added with all REQ-KOR-002 fields"
+        },
+        {
+            "task": "6",
+            "file": "lib/Settings/shillinq_register.json",
+            "ok": true,
+            "note": "x-openregister-lifecycle with 5 states, calculation-crossing transitions"
+        },
+        {
+            "task": "7",
+            "file": "lib/Settings/shillinq_register.json",
+            "ok": true,
+            "note": "KorThreshold schema added"
+        },
+        {
+            "task": "8",
+            "file": "lib/Settings/shillinq_register.json",
+            "ok": true,
+            "note": "x-openregister-calculations for ytdRevenue over Invoice T2"
+        },
+        {
+            "task": "9",
+            "file": "lib/Settings/seeds/kor-thresholds-2026.json",
+            "ok": true
+        },
+        {
+            "task": "10",
+            "file": "lib/Settings/shillinq_register.json",
+            "ok": true,
+            "note": "hook onOptOut creates JournalEntry in state: pending"
+        },
+        {
+            "task": "11",
+            "file": "lib/Settings/shillinq_register.json",
+            "ok": true,
+            "note": "x-openregister-notifications + x-openregister-widgets declared"
+        },
+        {
+            "task": "12",
+            "file": "lib/Repair/InitializeSettings.php",
+            "ok": true,
+            "note": "seedKorThresholds() method added, called from run()"
+        },
+        {
+            "task": "13",
+            "file": "src/manifest.json",
+            "ok": true,
+            "note": "Belastingen > KOR-status menu + KorStatus + KorStatusDetail pages added with mkb/zzp visibility predicate"
+        },
+        {
+            "task": "14",
+            "file": "openspec/architecture/adr-000-data-model.md",
+            "ok": true,
+            "note": "KorRegime + KorThreshold entities added, entity count updated 226->228"
+        }
+    ],
+    "stubs": [],
+    "missing_routes": []
 }

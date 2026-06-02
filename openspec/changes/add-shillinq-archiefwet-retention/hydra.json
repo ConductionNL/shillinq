@@ -1,55 +1,54 @@
 {
-  "spec_slug": "bookkeeping-ensia-zelfevaluatie",
-  "title": "Bookkeeping ENSIA Zelfevaluatie",
-  "app": "shillinq",
-  "repo": "https://github.com/ConductionNL/shillinq",
-  "depends_on": [],
-  "issue": null,
   "schema_version": 2,
+  "spec_slug": "add-shillinq-archiefwet-retention",
+  "repo": "https://codeberg.org/Conduction/shillinq",
+  "issue": 6,
   "cycles": [
     {
       "cycle": 1,
-      "trigger": "build:queued",
-      "started_at": "2026-06-02T05:02:54Z",
-      "ended_at": "2026-06-02T13:46:27Z",
+      "trigger": "orchestrator",
+      "started_at": "2026-06-02T15:21:39Z",
+      "ended_at": "2026-06-02T16:09:12Z",
       "outcome": "done",
       "outcome_reason": "pipeline complete \u2014 reviews passed and applier passed (if run)",
       "pattern_tags": [],
       "stages": [
         {
-          "stage": "build",
-          "persona": "Al Gorithm",
+          "stage": "applier",
+          "persona": "Axel Pli\u00e9r",
           "model": "sonnet",
-          "container": "hydra-builder",
-          "started_at": "2026-06-02T00:53:56Z",
-          "ended_at": "2026-06-02T05:02:52Z",
+          "container": "hydra-applier",
+          "started_at": "2026-06-02T15:20:58Z",
+          "ended_at": "2026-06-02T15:21:28Z",
           "exit_code": 1,
           "turns_used": 0,
-          "turns_budget": 40,
-          "checks_run": [],
+          "turns_budget": 20,
+          "checks_run": [
+            "hydra.json-consumer"
+          ],
           "checks_skipped": [],
           "findings": [
             {
-              "id": "build-failed",
+              "id": "applier-fail",
               "severity": "CRITICAL",
-              "gate": "builder",
-              "rule": "builder container exited non-zero",
+              "gate": "applier",
+              "rule": "applier returned fail verdict",
               "status": "open",
-              "note": "Builder container failed to complete. See logs/pipeline-*/builder-build.jsonl for detail.",
+              "note": "Applier blocking items should be captured in hydra.json pipeline.applier.blocking[] by the container itself. See logs/pipeline-*/applier.jsonl for detail.",
               "autofixable": false
             }
           ],
           "decisions": [],
           "verdict": "fail",
-          "duration_seconds": 14936
+          "duration_seconds": 30
         },
         {
           "stage": "applier",
           "persona": "Axel Pli\u00e9r",
           "model": "sonnet",
           "container": "hydra-applier",
-          "started_at": "2026-06-02T13:43:38Z",
-          "ended_at": "2026-06-02T13:45:53Z",
+          "started_at": "2026-06-02T16:06:11Z",
+          "ended_at": "2026-06-02T16:08:32Z",
           "exit_code": 0,
           "turns_used": 8,
           "turns_budget": 20,
@@ -60,7 +59,7 @@
           "findings": [],
           "decisions": [],
           "verdict": "pass",
-          "duration_seconds": 135
+          "duration_seconds": 141
         }
       ]
     }
@@ -69,20 +68,14 @@
     "runs": 2,
     "turns_used": 8,
     "cost_usd": 0.0,
-    "duration_seconds": 15071,
+    "duration_seconds": 171,
     "cycles": 1,
     "by_stage": {
-      "build": {
-        "runs": 1,
-        "turns_used": 0,
-        "cost_usd": 0.0,
-        "duration_seconds": 14936
-      },
       "applier": {
-        "runs": 1,
+        "runs": 2,
         "turns_used": 8,
         "cost_usd": 0.0,
-        "duration_seconds": 135
+        "duration_seconds": 171
       }
     }
   }
