@@ -1,0 +1,7 @@
+{
+  "schema_version": 2,
+  "spec_slug": "bookkeeping-waterschappen-bbv-variant-10-i18n",
+  "app": "shillinq",
+  "kind": "code",
+  "depends_on": ["bookkeeping-waterschappen-bbv-variant-09-fiscal-audit"]
+}
