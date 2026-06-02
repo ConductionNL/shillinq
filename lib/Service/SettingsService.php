@@ -15,6 +15,9 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -424,7 +427,7 @@ class SettingsService
                     continue;
                 }
 
-                $configData   = self::deepMergeConfig($configData, $fragmentData);
+                $configData   = self::deepMergeConfig(base: $configData, overlay: $fragmentData);
                 $fragmentSig .= basename($fragmentFile).':'.md5($fragmentContent).';';
             }
         }//end if
@@ -467,7 +470,7 @@ class SettingsService
                 if ($baseIsList === true && $overlayIsList === true) {
                     $base[$key] = array_merge($base[$key], $value);
                 } else {
-                    $base[$key] = self::deepMergeConfig($base[$key], $value);
+                    $base[$key] = self::deepMergeConfig(base: $base[$key], overlay: $value);
                 }
             } else {
                 $base[$key] = $value;
