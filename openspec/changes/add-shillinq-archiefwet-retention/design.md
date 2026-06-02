@@ -1,5 +1,7 @@
 # Design — Archiefwet Retention
 
+**Status:** pr-created
+
 ## Context
 
 The Archiefwet 1995 + actuele Selectielijst Gemeenten 2020 define

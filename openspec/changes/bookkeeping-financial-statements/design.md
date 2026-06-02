@@ -1,5 +1,7 @@
 # Design — Financial Statements
 
+**Status:** pr-created
+
 ## Context
 
 Financial reporting is mandatory for Dutch regulatory compliance (RJ, IFRS,

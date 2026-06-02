@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 226
+**Entities:** 233
 
 ## Context
 
@@ -34,6 +34,41 @@ _Financial transaction representing an invoice, credit note, or debit note in ac
 - → Receipt (one-to-many)
 - → Payment (one-to-many)
 - → DunningNotice (one-to-many)
+
+### ARInvoice
+**Schema.org:** `schema:Invoice`
+_Accounts receivable sub-ledger invoice recording the customer billing and payment obligation. Posting an ARInvoice materialises a balanced GLTransaction per the T1 REQ-JE-007 pattern. The lifecycle covers draft → issued → paid with overdue / disputed / written-off branches; write-off materialises a compensating GL posting._
+**Primary spec:** bookkeeping-accounts-receivable-core
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| invoiceNumber | string | Yes | Shillinq-side invoice number (auto-generated per administration) |
+| customerId | string | Yes | FK to CustomerMaster UUID |
+| invoiceDate | date | Yes | Date of invoice issuance |
+| dueDate | date | Yes | Auto-calculated from invoiceDate + customer.paymentTermDays; overrideable |
+| currency | string | Yes | ISO 4217 currency code; T2: base currency only (T5 adds multi-currency) |
+| totalAmount | number | Yes | Total amount including tax |
+| taxAmount | number | No | Tax/VAT amount |
+| lines | array | Yes | Line items: {description, accountNumber, amount, taxCode, quantity, unitPrice} |
+| sourceDocumentUri | string | No | docudesk FK URI per bookkeeping-document-attachment-integration |
+| ublXml | string | No | UBL 2.1 / Peppol BIS 3.0 XML (populated by T4 e-invoicing; null in T2) |
+| state | enum | Yes | One of draft, issued, partially-paid, paid, overdue, disputed, written-off, voided |
+| glTransactionId | string | No | Back-reference to materialised GLTransaction once posted |
+| peppolDispatchedAt | datetime | No | Timestamp of Peppol dispatch (set by T4) |
+| administrationId | string | Yes | FK to administration |
+
+**Relations:**
+- → CustomerMaster (many-to-one, via customerId)
+- → GLTransaction (many-to-one, via glTransactionId — materialised on issue and write-off)
+- → DunningRecord (one-to-many, dunning timeline per invoice)
+- → Administration (many-to-one)
+
+> **Reconciliation note (add-shillinq-accounts-receivable-core, 2026-06-01):** The existing
+> `Invoice` entry (primary spec: obligation-financial-administration) is a generic invoice
+> schema. `ARInvoice` is the shillinq bookkeeping-tier AR sub-ledger invoice with full
+> lifecycle, GL materialisation, dunning, and UBL field shape declaration. New AR register
+> declarations in shillinq MUST use `ARInvoice`. The `Invoice` entry is retained for
+> generic obligation-financial-administration usage outside the bookkeeping tier.
 
 ### Account
 **Schema.org:** `schema:DefinedTerm`
@@ -257,6 +292,29 @@ _Auction format for competitive bidding with multiple formats and real-time bid 
 - → Lot (many-to-one)
 - → Offer (one-to-many)
 
+### AuditDocument
+**Schema.org:** `schema:DigitalDocument`
+_A financial document participating in SiSa audit (invoice, purchase order, journal entry, payment). Every state transition triggers an immutable audit-trail event via OR's audit service per REQ-SISA-001 and REQ-SISA-003._
+**Primary spec:** bookkeeping-sisa-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| documentNumber | string | Yes | Unique document identifier per administration |
+| documentType | enum | Yes | One of: invoice, purchase-order, journal-entry, payment |
+| glTransactionId | string | Yes | FK to GLTransaction (T1 general-ledger) |
+| administrationId | string | Yes | FK to Administration |
+| signingUser | string | Yes | Nextcloud user ID who signed or issued the document |
+| signingTimestamp | datetime | Yes | Timestamp when document was signed (captured by OR audit service) |
+| signingReason | string | No | Optional reason or comment on signing |
+| state | enum | Yes | One of: draft, issued, signed, voided (lifecycle per REQ-SISA-004) |
+| lifecycleState | enum | Yes | One of: active, archived |
+| relatedTransactionAmount | number | No | Amount of related GL transaction for context display |
+| currency | string | Yes | ISO 4217 currency code |
+
+**Relations:**
+- → GLTransaction (many-to-one)
+- → Administration (many-to-one)
+
 ### AuditFinding
 **Schema.org:** `schema:Report`
 _Individual finding or observation from audit requiring management action or response_
@@ -331,22 +389,107 @@ _Legal notice of award with publication deadline and standstill enforcement for 
 
 ### BalanceSheet
 **Schema.org:** `schema:Table`
-_A financial statement showing assets, liabilities, and equity at a specific point in time_
-**Primary spec:** financial-reporting-accountability
+_A financial statement showing assets, liabilities, and equity at a fiscal-period snapshot. A read-only aggregate over GL transactions — totals (totalAssets, totalLiabilities, totalEquity, isBalanced) are computed via x-openregister-aggregations from GLLine entries grouped by Account.accountType per REQ-FS-004. No BalanceSheetService or FinancialStatementLine table. Lifecycle: draft → final → published → archived per REQ-FS-003 consuming OR publication extension or ConsolidationGuard fallback per ADR-031._
+**Primary spec:** bookkeeping-financial-statements
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| reportDate | datetime | Yes | Date of the balance sheet snapshot |
-| totalAssets | number | No | Total assets in base currency |
-| totalLiabilities | number | No | Total liabilities in base currency |
-| totalEquity | number | No | Total equity in base currency |
-| currency | string | Yes | Currency code for amounts |
-| status | string | Yes | Status (draft, final, published) |
+| reportDate | datetime | Yes | Snapshot date of the balance sheet (typically fiscal-year-end) |
+| totalAssets | number | No | Computed total assets in base currency (x-openregister-aggregations) |
+| totalLiabilities | number | No | Computed total liabilities in base currency (x-openregister-aggregations) |
+| totalEquity | number | No | Computed total equity in base currency (x-openregister-aggregations) |
+| isBalanced | boolean | No | Computed flag: totalAssets = totalLiabilities + totalEquity |
+| currency | string | Yes | ISO 4217 base currency code; default EUR |
+| status | enum | Yes | One of draft, final, published, archived |
+| fiscalYearId | string | Yes | FK to FiscalYear |
+| administrationId | string | Yes | FK to administration |
 
 **Relations:**
 - → FiscalYear (many-to-one)
-- → Organization (many-to-one)
-- → GeneralLedgerEntry (one-to-many)
+- → GLLine (one-to-many, via aggregation — not a direct DB join)
+
+> **Note (bookkeeping-financial-statements, 2026-06-02):** This entry supersedes
+> the earlier BalanceSheet entry (primary spec: financial-reporting-accountability).
+> Key changes: (1) declares this as a **read-only aggregate** over GL transactions
+> — no separate FinancialStatementLine table; (2) adds fiscalYearId + administrationId
+> required fields; (3) adds isBalanced computed flag; (4) updates lifecycle to
+> draft → final → published → archived; (5) removes stale → Organization and
+> → GeneralLedgerEntry relations (GeneralLedgerEntry is deprecated; GLLine is the
+> canonical T1 posting schema; aggregation is computed, not a FK join).
+
+### TrialBalance
+**Schema.org:** `schema:Table`
+_A read-only aggregate listing all GL accounts with debit/credit balances for period verification. isBalanced flag (totalDebits = totalCredits) is computed via x-openregister-aggregations per REQ-FS-005. No TrialBalanceService. Lifecycle: draft → verified → final → published → archived per REQ-FS-003._
+**Primary spec:** bookkeeping-financial-statements
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| reportDate | datetime | Yes | Snapshot date (typically fiscal-year-end) |
+| totalDebits | number | No | Sum of all debit balances (x-openregister-aggregations) |
+| totalCredits | number | No | Sum of all credit balances (x-openregister-aggregations) |
+| isBalanced | boolean | No | Computed flag: totalDebits = totalCredits |
+| status | enum | Yes | One of draft, verified, final, published, archived |
+| preparedBy | string | No | Actor who prepared or verified (audit trail) |
+| fiscalYearId | string | Yes | FK to FiscalYear |
+| administrationId | string | Yes | FK to administration |
+
+**Relations:**
+- → FiscalYear (many-to-one)
+- → GLLine (one-to-many, via aggregation)
+
+### ConsolidationGroup
+**Schema.org:** `schema:Organization`
+_A group of organizations consolidated together for consolidated financial reporting across multiple administrations. Holds the consolidation method (full/proportional/equity per IFRS 10/11/12) and inter-company elimination rules. Consumed by ConsolidatedReport per REQ-FS-006._
+**Primary spec:** bookkeeping-financial-statements
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| name | string | Yes | Name of the consolidation group |
+| consolidationMethod | enum | Yes | One of full, proportional, equity (IFRS 10/11/12) |
+| status | enum | Yes | One of active, inactive, archived |
+| parentOrganizationId | string | No | FK to parent organization |
+| eliminationRules | object | No | Inter-company elimination rules (offset-by-FK, percentage-based, custom) |
+| administrationIds | array of string | Yes | FKs to Administration records being consolidated |
+
+**Relations:**
+- → ConsolidatedReport (one-to-many)
+
+> **Note (bookkeeping-financial-statements, 2026-06-02):** This entry supersedes
+> the earlier ConsolidationGroup entry (primary spec: financial-reporting-accountability).
+> Key changes: (1) adds administrationIds required field (array of FK strings);
+> (2) replaces parentOrganization (string name) with parentOrganizationId (FK);
+> (3) adds lifecycle (active → inactive → archived); (4) removes stale
+> → Organization (one-to-many) relation — consolidated administrations are now
+> referenced by administrationIds array field.
+
+### ConsolidatedReport
+**Schema.org:** `schema:Report`
+_A read-only aggregate combining financials across multiple administrations with consolidation method and inter-company elimination tracking. Lifecycle: draft → final → published → archived per REQ-FS-003. Consolidation workflow consumes OR consolidation extension (ADR-022) or ConsolidationGuard fallback per ADR-031._
+**Primary spec:** bookkeeping-financial-statements
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| reportNumber | string | Yes | Unique identifier for the consolidated report |
+| reportDate | datetime | Yes | Consolidation snapshot date |
+| consolidationGroupId | string | Yes | FK to ConsolidationGroup |
+| consolidationMethod | enum | Yes | One of full, proportional, equity |
+| eliminationsApplied | boolean | No | Whether inter-company eliminations have been applied |
+| status | enum | Yes | One of draft, final, published, archived |
+| fiscalYearId | string | Yes | FK to FiscalYear |
+
+**Relations:**
+- → ConsolidationGroup (many-to-one)
+- → FiscalYear (many-to-one)
+
+> **Note (bookkeeping-financial-statements, 2026-06-02):** This entry supersedes
+> the earlier ConsolidatedReport entry (primary spec: financial-reporting-accountability).
+> Key changes: (1) replaces isPublished boolean with full lifecycle (draft → final
+> → published → archived); (2) adds consolidationGroupId FK (replaces stale
+> → ConsolidationGroup many-to-one relation); (3) adds fiscalYearId required field;
+> (4) removes stale → BalanceSheet (one-to-many) relation — the consolidated
+> report aggregates over member administrations' BalanceSheets via aggregation,
+> not a FK join; (5) removes finalized/archived from status enum — these are now
+> expressed as lifecycle states.
 
 ### BankAccount
 **Schema.org:** `schema:BankAccount`
@@ -360,6 +503,71 @@ _Schema.org BankAccount — standard vocabulary for bankaccount data_
 | bankName | string | No | Name of the bank |
 | currency | string | Yes | Account currency |
 | balance | number | No | Current balance |
+
+### BankConnection
+**Schema.org:** `schema:FinancialProduct`
+_A PSD2 AIS bank connection authorising access to one or more bank accounts via an openconnector aggregator source. Credentials (OAuth tokens, client secrets) live exclusively in openconnector's Source registry; shillinq carries the consent reference only — a non-credential identifier returned from the SCA flow. The connection lifecycle (`pending → active → expiring → expired / revoked`) is declared as `x-openregister-lifecycle` with a time-based `active → expiring` auto-transition firing 14 days before `consentExpiresAt`. Consent renewal routes through openconnector's SCA endpoint (no SCA logic in shillinq). Transaction polling is an OR ScheduledWorkflow (no TimedJob). See `add-shillinq-bank-connectors` change for full rationale._
+**Primary spec:** bookkeeping-bank-connectors
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| connectionNumber | string | Yes | Operator-readable reference |
+| aggregator | enum | Yes | One of tink, klarna-kosma, plaid-eu, yapily, manual |
+| aggregatorSourceSlug | string | Yes | FK to the openconnector Source slug that holds aggregator credentials |
+| bankBic | string | Yes | BIC of the bank the connection covers |
+| bankCountry | string | Yes | ISO 3166-1 alpha-2 country code |
+| bankAccountIban | string | Yes | IBAN of the linked account |
+| consentReference | string | Yes | Aggregator-issued consent identifier (non-credential) |
+| consentGrantedAt | date-time | Yes | When consent was granted |
+| consentExpiresAt | date-time | Yes | When consent expires (PSD2: 90-day max) |
+| lastSyncAt | date-time | No | Most recent successful transaction pull |
+| lifecycleState | enum | Yes | One of pending, active, expiring, expired, revoked |
+| administrationId | string | Yes | FK to the Administration owning this connection |
+
+**Relations:**
+- → BankStatement (one-to-many, via bankConnectionId)
+
+> **Reconciliation note (add-shillinq-bank-connectors, 2026-06-01):** `BankConnection` is the T4 PSD2 connectivity record declared in `lib/Settings/shillinq_register.json`. Aggregator credentials are not stored here — they live in openconnector's Source registry, referenced by `aggregatorSourceSlug`. The `consentReference` is the only aggregator-issued field; it is non-credential metadata. Consent renewal routes through openconnector's `reauthorise` source action; no SCA logic exists in shillinq. The `active → expiring` time-based auto-transition fires 14 days before `consentExpiresAt` (declared as `x-openregister-lifecycle.transitions.warnExpiry.timeBased`). Transaction polling is an OR `ScheduledWorkflow` (slug: `shillinq-bank-transaction-polling`), not a per-app TimedJob. See `openspec/changes/add-shillinq-bank-connectors/design.md` decisions D1–D5 for the full rationale.
+
+### BankStatement
+**Schema.org:** `schema:Report`
+_A CAMT.053 bank statement generated by the `shillinq-bank-transaction-polling` ScheduledWorkflow from aggregator data. The generated XML is attached via docudesk. New-statement notifications are declared as `x-openregister-notifications` — no BankNotificationService._
+**Primary spec:** bookkeeping-bank-connectors
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| bankConnectionId | string | Yes | FK to the BankConnection that sourced this statement |
+| statementFormat | enum | Yes | camt.053.001.08 |
+| statementDate | date-time | Yes | Statement generation timestamp |
+| statementAttachmentUri | string | No | docudesk attachment URI for the CAMT.053 XML |
+| transactionCount | integer | No | Number of transactions in the statement |
+| administrationId | string | Yes | FK to the Administration owning this statement |
+
+**Relations:**
+- → BankConnection (many-to-one, via bankConnectionId)
+
+### Bevinding
+**Schema.org:** `schema:Report`
+_An ENSIA compliance finding — risk, shortcoming, or improvement opportunity identified from VNG norm comparison. Auto-generated when maturity score < VNG normniveau; tracked through mitigation lifecycle._
+**Primary spec:** bookkeeping-ensia-zelfevaluatie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| cyclusId | string | Yes | FK to ENSIAJaarcyclus (register relation) |
+| vraagId | string | No | FK to Evaluatievraag (nullable; null for manually added findings) |
+| type | enum | Yes | Finding type: tekortkoming, verbeterpunt, risico-acceptatie |
+| beschrijving | string | Yes | Finding description and context (auto-populated from question + score gap) |
+| impact | string | No | Impact assessment of the identified risk |
+| kans | string | No | Likelihood assessment of the risk materialising |
+| mitigatieActie | string | No | Planned mitigation action description |
+| verantwoordelijke | string | No | User-reference: owner responsible for mitigation |
+| streefDatum | date | No | Target date for mitigation or acceptance |
+| status | enum | Yes | Mitigation status: open, in-behandeling, gerealiseerd, geaccepteerd |
+| administrationId | string | Yes | FK to Administration owning this finding |
+
+**Relations:**
+- → ENSIAJaarcyclus (many-to-one)
+- → Evaluatievraag (many-to-one, nullable)
 
 ### Bid
 **Schema.org:** `schema:Offer`
@@ -716,6 +924,34 @@ _Risk assessment for regulatory, operational, and compliance threats with mitiga
 **Relations:**
 - → Organization (many-to-one)
 - → ComplianceDocument (one-to-many)
+
+### ComplianceAuditTrail
+**Schema.org:** `schema:Event`
+_Auditor working log per administration tracking SiSa audit findings (critical/major/minor), governance observations, and remediation status per REQ-SISA-005. Referenced by SisaReport aggregation to compute finding counts and overall opinion._
+**Primary spec:** bookkeeping-sisa-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| trailNumber | string | Yes | Unique compliance audit trail identifier |
+| administrationId | string | Yes | FK to Administration under audit |
+| fiscalYear | integer | Yes | Fiscal year under audit |
+| findingNumber | string | No | Reference number of an individual audit finding |
+| findingSeverity | enum | No | One of: critical, major, minor |
+| findingDescription | text | No | Detailed description of the audit finding |
+| observationNumber | string | No | Reference number of a governance observation |
+| observationDescription | text | No | Governance improvement observation |
+| remediationDueDate | date | No | Target date for remediation completion |
+| remediationStatus | enum | No | One of: pending, in-progress, completed, overdue |
+| remediationCompletionDate | date | No | Date remediation was completed |
+| auditorName | string | No | Auditor or audit firm name |
+| auditDate | date | Yes | Date of the audit fieldwork or finding issuance |
+| status | enum | Yes | One of: draft, submitted, closed |
+
+**Relations:**
+- → Administration (many-to-one)
+- → SisaReport (many-to-one, via administrationId + fiscalYear aggregation)
+
+> **Deduplication note:** `AuditFinding` (primary spec: compliance-audit) is the baseline data-model entity for individual findings. `ComplianceAuditTrail` is the SiSa-specific aggregation and working-log register that contains findings per administration/fiscal year. They coexist: `AuditFinding` is the data-model baseline; `ComplianceAuditTrail` is the SiSa-specific register.
 
 ### ConsentRecord
 **Schema.org:** `schema:Action`
@@ -1096,6 +1332,34 @@ _Multi-currency balance tracking per account for foreign currency management_
 **Relations:**
 - → BankAccount (many-to-one)
 
+### CustomerMaster
+**Schema.org:** `schema:Organization`
+_Customer party record for accounts receivable. Holds billing details, credit limit, payment terms, and dunning policy reference for a customer within a single administration._
+**Primary spec:** bookkeeping-accounts-receivable-core
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| customerNumber | string | Yes | Stable identifier per administration |
+| name | string | Yes | Legal name |
+| tradingName | string | No | Alternate / DBA name |
+| kvkNumber | string | No | Dutch KvK number (8 digits) |
+| btwNumber | string | No | Dutch BTW / EU VAT number |
+| paymentTermDays | integer | Yes | Default payment term in days (default 30) |
+| defaultRevenueAccountNumber | string | No | FK to Account.accountNumber for default revenue coding |
+| creditLimit | number | No | Credit limit ≥ 0; if set, REQ-AR-006 evaluates open AR balance |
+| dunningPolicyRef | string | No | FK to OR dunning-workflow policy record if extension is stable per ADR-022; else null |
+| peppolEndpoint | string | No | Peppol BIS endpoint identifier (used by T4 e-invoicing) |
+| address | object | No | Street/number/postcode/city/country |
+| email | string | No | Primary billing email |
+| phone | string | No | Primary contact phone |
+| administrationId | string | Yes | FK to administration |
+| lifecycleState | enum | Yes | One of active, blocked, archived |
+| contactRef | string | No | FK to OR contact abstraction if stable per ADR-022; else null |
+
+**Relations:**
+- → ARInvoice (one-to-many, outstanding invoices for credit-limit aggregation)
+- → Administration (many-to-one)
+
 ### DebitNote
 **Schema.org:** `schema:Invoice`
 _A document issued to increase vendor debt for account adjustments_
@@ -1256,6 +1520,49 @@ _Follow-up notice for overdue unpaid transactions, escalating through dunning le
 - → APTransaction (many-to-one)
 - → Payee (many-to-one)
 
+### DunningRecord
+**Schema.org:** `schema:Event`
+_Per-invoice dunning timeline entry recording each reminder level dispatched to the customer. Written by the AR lifecycle when the dunning-workflow engine fires; read by the AR invoice detail page to surface the dunning timeline._
+**Primary spec:** bookkeeping-accounts-receivable-core
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| invoiceRef | string | Yes | FK to ARInvoice UUID |
+| reminderLevel | enum | Yes | One of reminder-1, reminder-2, formal-notice, collection |
+| dispatchedAt | datetime | Yes | When the reminder was dispatched |
+| dispatchedBy | string | Yes | Actor (system or operator) |
+| templateRef | string | No | FK to OR notification template |
+| acknowledgedAt | datetime | No | When the customer responded |
+| administrationId | string | Yes | FK to administration |
+
+**Relations:**
+- → ARInvoice (many-to-one, via invoiceRef)
+- → Administration (many-to-one)
+
+### ENSIAJaarcyclus
+**Schema.org:** `schema:Event`
+_Annual ENSIA (Eenduidige Normatiek Single Information Audit) compliance evaluation cycle for Dutch public-sector organisations. Governs the full lifecycle from intake through portal submission._
+**Primary spec:** bookkeeping-ensia-zelfevaluatie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| jaar | integer | Yes | Calendar year of the ENSIA evaluation (e.g., 2026) |
+| organisatieNaam | string | Yes | Official organisation name |
+| organisatieKvK | string | Yes | KvK registration number of the organisation |
+| status | enum | Yes | Lifecycle status: in-voorbereiding, in-uitvoering, peer-review, college-akkoord, ingediend, afgerond |
+| startDatum | date | Yes | Date cycle was initiated |
+| deadlineColleges | date | Yes | College approval deadline |
+| deadlineMinister | date | Yes | Minister submission deadline (1 May per VNG law) |
+| verantwoordingsdomeinen | array | Yes | Selected VNG domains: BIO, DigiD, SUWI, BAG, BGT, BRP, WOZ |
+| procesEigenaar | string | Yes | User-reference: CISO or FIB responsible for the cycle |
+| vraagSetVersion | string | No | Version of the VNG question set used (e.g., BIO-1.04-2026); set on cycle init |
+| verklaringFile | string | No | File-reference: signed college declaration document |
+| administrationId | string | Yes | FK to Administration owning this cycle |
+
+**Relations:**
+- → Evaluatievraag (one-to-many)
+- → Bevinding (one-to-many)
+
 ### Entitlement
 _Grant of access or permission to use specific features, resources, or data within the system_
 **Primary spec:** access-control-authorisation
@@ -1289,6 +1596,33 @@ _A legal entity or business managed within a multi-entity system_
 **Relations:**
 - → Organization (many-to-one)
 - → Person (one-to-many)
+
+### Evaluatievraag
+**Schema.org:** `schema:Question`
+_An individual ENSIA evaluation question within a jaarcyclus. Carries the BIO/domain question code, answer, maturity score, evidence attachments, peer-review status, and full audit trail per change._
+**Primary spec:** bookkeeping-ensia-zelfevaluatie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| cyclusId | string | Yes | FK to ENSIAJaarcyclus (register relation) |
+| domein | enum | Yes | VNG domain: BIO, DigiD, SUWI, BAG, BGT, BRP, WOZ |
+| onderwerp | string | Yes | Question subject area (e.g., Toegangsbeveiliging, Backup & Recovery) |
+| vraagCode | string | Yes | Stable VNG question code (e.g., BIO-9.1.1) |
+| vraagtekst | string | Yes | Full question text from VNG question set |
+| antwoordType | enum | Yes | Answer type: ja-nee-nvt, volwassenheidsniveau-1-5, vrije-tekst |
+| antwoord | string | No | The answer value (yes/no/nvt, 1-5, or free text) |
+| volwassenheidsScore | integer | No | Maturity score 1-5 (nullable; only for antwoordType volwassenheidsniveau-1-5) |
+| toelichting | string | No | Textual justification (≥ 50 chars required when score ≥ 3) |
+| beantwoorder | string | No | User-reference: assigned answerer for this question |
+| peerReviewer | string | No | User-reference: assigned peer-reviewer (nullable until peer-review phase) |
+| peerReviewStatus | enum | Yes | Peer-review status: nog-niet-beoordeeld, akkoord, wijziging-gevraagd |
+| peerReviewCommentaar | string | No | Reviewer comment routed back to beantwoorder on wijziging-gevraagd |
+| bewijsstukken | array | No | Evidence attachments: array of {fileRef: docudesk-URI, omschrijving: string} |
+| administrationId | string | Yes | FK to Administration owning this question |
+
+**Relations:**
+- → ENSIAJaarcyclus (many-to-one)
+- → Bevinding (one-to-many, via vraagId)
 
 ### EvaluationCriterion
 **Schema.org:** `schema:Thing`
@@ -2055,19 +2389,30 @@ _Grouping of items in procurement process for evaluation and award at lot level_
 
 ### ManagementLetter
 **Schema.org:** `schema:DigitalDocument`
-_Auditor communication documenting findings and observations from annual audits_
+_Auditor communication documenting findings and observations from annual audits. Two related declarations exist: the original compliance-audit entity (fields below) and the SiSa-specific register in bookkeeping-sisa-reporting (letterNumber, sisaReportId, findingsSummary, observationsSummary, remediationRecommendations, status). A T2/T4 consolidation change will reconcile or disambiguate these._
 **Primary spec:** compliance-audit
+**Co-declaring spec:** bookkeeping-sisa-reporting (SiSa-specific fields)
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| auditDate | date | Yes | Date of the audit |
-| auditScope | string | Yes | Scope of audit (e.g., annual financial statements 2025) |
+| auditDate | date | Yes | Date of the audit (compliance-audit) |
+| auditScope | string | Yes | Scope of audit e.g. annual financial statements 2025 (compliance-audit) |
 | auditorName | string | Yes | Auditing firm or auditor name |
-| findings | text | No | Summary of audit findings |
+| findings | text | No | Summary of audit findings (compliance-audit) |
+| letterNumber | string | Yes | Unique management letter identifier (bookkeeping-sisa-reporting) |
+| sisaReportId | string | Yes | FK to SisaReport (bookkeeping-sisa-reporting) |
+| issuedDate | date | Yes | Date letter was issued (bookkeeping-sisa-reporting) |
+| dueResponseDate | date | No | Management response deadline (bookkeeping-sisa-reporting) |
+| findingsSummary | text | No | Summary of findings (bookkeeping-sisa-reporting) |
+| observationsSummary | text | No | Summary of observations (bookkeeping-sisa-reporting) |
+| remediationRecommendations | text | No | Recommended corrective actions (bookkeeping-sisa-reporting) |
+| auditOpinion | string | No | Auditor's opinion pre-computed from SisaReport (bookkeeping-sisa-reporting) |
+| status | enum | Yes | One of: draft, issued, acknowledged, archived (bookkeeping-sisa-reporting) |
 
 **Relations:**
 - → Organization (many-to-one)
 - → AuditFinding (one-to-many)
+- → SisaReport (many-to-one, via sisaReportId)
 
 ### Mandate
 **Schema.org:** `schema:DigitalDocument`
@@ -3393,6 +3738,39 @@ _Delegation of signing rights to a specific person with defined scope and limits
 **Relations:**
 - → Mandate (many-to-one)
 
+### SisaReport
+**Schema.org:** `schema:Report`
+_Single Information Single Audit (SiSa) compliance report per fiscal year for a Dutch government administration. Aggregates transaction counts, on-time settlement %, audit findings from ComplianceAuditTrail, and overall audit opinion (unqualified/qualified/adverse/disclaimer) per REQ-SISA-001 and REQ-SISA-002._
+**Primary spec:** bookkeeping-sisa-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| reportNumber | string | Yes | Unique report identifier per administration |
+| fiscalYear | integer | Yes | Fiscal year covered by this SiSa report |
+| administrationId | string | Yes | FK to Administration |
+| reportDate | datetime | Yes | Date the report was generated or finalised |
+| totalTransactionCount | integer | No | Total number of financial transactions in the fiscal period |
+| onTimeSettlementPercent | number | No | Percentage of obligations settled by due date (0–100) |
+| totalAmount | number | No | Total financial value of all transactions |
+| currency | string | Yes | ISO 4217 currency code (EUR) |
+| criticalFindingsCount | integer | No | Count of critical-severity audit findings |
+| majorFindingsCount | integer | No | Count of major-severity audit findings |
+| minorFindingsCount | integer | No | Count of minor-severity audit findings |
+| observationsCount | integer | No | Count of governance observations |
+| remediationOverdueCount | integer | No | Count of overdue remediation actions |
+| auditOpinion | enum | Yes | One of: unqualified, qualified, adverse, disclaimer |
+| managementLetterId | string | No | FK to ManagementLetter record |
+| complianceStatus | enum | Yes | One of: compliant, non-compliant, under-review |
+| lifecycleState | enum | Yes | One of: draft, finalized, submitted, archived |
+| submissionDate | datetime | No | Date report submitted to the relevant authority |
+
+**Relations:**
+- → Administration (many-to-one)
+- → ComplianceAuditTrail (one-to-many, aggregated per administrationId + fiscalYear)
+- → ManagementLetter (one-to-one, via managementLetterId)
+
+> **Deduplication note:** `ComplianceReport` (primary spec: obligation-financial-administration) tracks obligation settlement compliance metrics. `SisaReport` is SiSa-specific with fiscal-year + audit-opinion + on-time-settlement aggregations. They coexist; if they converge, a T2 consolidation change will merge them with a migration step.
+
 ### SourcingEvent
 **Schema.org:** `schema:Event`
 _Sourcing event (RFQ, RFP, RFI) with supplier invitation and response tracking_
@@ -4347,3 +4725,76 @@ _XBRL (eXtensible Business Reporting Language) taxonomy definitions for structur
 
 **Relations:**
 - → TaxReturn (one-to-many)
+
+### BBVProgramma
+**Schema.org:** `schema:DefinedTerm`
+_A BBV programma-indeling entry grouping GL postings by taakveld (gemeente/provincie) or kostentoedeling (waterschap). The `programmaStructure` discriminator controls which classification hierarchy is used per REQ-WSB-002. Declared alongside `WaterschapHeffingPosting` in this change as the T3 `bookkeeping-bbv-compliance` spec shares the same `bbvVariant` overlay. Cross-referencing spec: `bookkeeping-waterschappen-bbv-variant` (add-shillinq-waterschappen-bbv-variant, 2026-06-01)._
+**Primary spec:** bookkeeping-waterschappen-bbv-variant
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| code | string | Yes | Unique programma code within the administration (e.g. 'watersysteembeheer') |
+| naam | string | Yes | Human-readable Dutch programma name |
+| beschrijving | string | No | Operator-authored description of this programma |
+| administrationId | string | Yes | FK to the Administration owning this programma |
+| programmaStructure | enum | Yes | One of taakveld, kostentoedeling — discriminator controlling aggregation hierarchy |
+| bbvVariant | enum | No | One of gemeente, waterschap, provincie — default gemeente |
+| parentCode | string | No | FK to parent BBVProgramma.code for hierarchical navigation |
+
+**Relations:**
+- self → BBVProgramma (many-to-one, via parentCode → code; hoofdprogramma hierarchy)
+- → GLLine (one-to-many, via postingsByProgramma aggregation honouring programmaStructure discriminator)
+
+### WaterschapHeffingPosting
+**Schema.org:** `schema:Invoice`
+_Sector-specific belasting posting for the three waterschapsbelastingen (watersysteemheffing, zuiveringsheffing, verontreinigingsheffing). On transition to 'posted', materialises a balanced 2-line GLTransaction per T1 REQ-GL-001 with `sourceReference` pointing back to this posting. Does NOT carry its own ledger lines (D3 from design.md). The `emuExclusionRule` field controls EMU-saldo inclusion per the EMU-bijlage waterschappen handleiding 2026 and is read by the `bookkeeping-emu-reporting` sibling spec. Lifecycle is declarative via `x-openregister-lifecycle` — no PHP service class. Cross-referencing spec: `bookkeeping-waterschappen-bbv-variant` (add-shillinq-waterschappen-bbv-variant, 2026-06-01)._
+**Primary spec:** bookkeeping-waterschappen-bbv-variant
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| heffingType | enum | Yes | One of watersysteemheffing, zuiveringsheffing, verontreinigingsheffing |
+| aanslagJaar | integer | Yes | Belastingjaar of this aanslag |
+| tariefGrondslag | string | Yes | Canonical grondslag for tarief computation (e.g. 'vervuilingseenheden') |
+| tarief | number | Yes | Applied tarief per grondslag-eenheid in EUR; minimum 0 |
+| aanslagBedrag | number | Yes | Total aanslag amount in EUR; materialised into balanced GLTransaction on post |
+| journalEntryId | string | No | FK to the materialised GLTransaction.id; set by lifecycle engine on 'posted' |
+| emuExclusionRule | enum | No | One of included, excluded, partial — default included; controls EMU-saldo contribution |
+| administrationId | string | Yes | FK to the waterschap Administration owning this posting |
+| debitAccountNumber | string | No | Account to debit in materialised GLTransaction |
+| creditAccountNumber | string | No | Account to credit in materialised GLTransaction |
+| state | enum | Yes | One of draft, posted, reversed |
+| description | string | No | Operator-authored description or reference |
+
+**Relations:**
+- → GLTransaction (one-to-one, via journalEntryId; materialised on 'posted' transition)
+- → Account (many-to-one, via debitAccountNumber → Account.accountNumber)
+- → Account (many-to-one, via creditAccountNumber → Account.accountNumber)
+
+### RetentionRule
+**Schema.org:** `schema:DefinedTerm`
+_Archiefwet 1995 + Selectielijst Gemeenten 2020 retention rule. A coded retention classifier declaring the statutory retention obligation (period, trigger, disposition) for a category of shillinq-managed records. Seeded from `selectielijst-gemeenten-2020.json`; operators MAY add administration-scoped overrides above the statutory minimum per the local archiefverordening._
+**Primary spec:** bookkeeping-archiefwet-retention
+
+> **Per-schema retention-rule reference pattern (add-shillinq-archiefwet-retention, 2026-06-01):**
+> Every shillinq schema subject to Archiefwet retention MUST declare an
+> `x-openregister-lifecycle.retention.rule` block referencing a `RetentionRule`
+> record by `selectielijstCode`. The reference takes the form
+> `rule: "selectielijst:<code>"` (e.g. `"selectielijst:5.1.2"`). OpenRegister's
+> retention engine reads the rule from the `RetentionRule` register and enforces
+> the retention period, disposition, and optional operator override — shillinq does
+> NOT implement parallel retention logic per ADR-022 + ADR-031.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| selectielijstCode | string | Yes | Selectielijst classifier code (e.g. 5.1.2, 3.5.1, 1.1.1) |
+| description | string | Yes | Plain-Dutch description of the record category |
+| recordCategory | enum | Yes | financial, subsidie, personeel, algemeen-bestuur, verantwoording, correspondentie, archief |
+| retentionYears | integer | No | Absolute retention in years from record creation date (mutually exclusive with retentionTrigger) |
+| retentionTrigger | string | No | Relative retention (e.g. "10 years after vaststellingDate") |
+| disposition | enum | Yes | destroy, archive, anonymise, keep_indefinite |
+| legalBasis | string | Yes | Citation: Archiefwet article + Selectielijst paragraph |
+| effectiveFrom | date | Yes | Date from which this rule is valid |
+| effectiveTo | date | No | Date until which this rule is valid (absent = no end date) |
+| customRetentionYears | integer | No | Operator extension above statutory minimum (MUST be >= retentionYears; never shorter) |
+| administrationId | string | No | Administration scope for per-organisation override rules (absent = applies to all) |
+| daysUntilRetention | integer (derived) | No | Days until rule expires per x-openregister-calculations (null for keep_indefinite) |

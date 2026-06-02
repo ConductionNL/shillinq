@@ -3,7 +3,7 @@
   "info": {
     "title": "Shillinq Register",
     "description": "Register containing all schemas for the Shillinq application.",
-    "version": "0.3.0"
+    "version": "0.4.0"
   },
   "x-openregister": {
     "type": "application",
@@ -34,6 +34,322 @@
             "type": "string",
             "description": "An optional description",
             "example": "This is an example"
+          }
+        }
+      },
+      "BankConnection": {
+        "slug": "BankConnection",
+        "icon": "BankOutline",
+        "version": "0.1.0",
+        "title": "Bank Connection",
+        "description": "A PSD2 AIS bank connection authorising access to one or more bank accounts via an openconnector aggregator source. Credentials live in openconnector; this record carries the consent reference only.",
+        "type": "object",
+        "x-schema-org": "schema:FinancialProduct",
+        "required": [
+          "connectionNumber",
+          "aggregator",
+          "aggregatorSourceSlug",
+          "bankBic",
+          "bankCountry",
+          "bankAccountIban",
+          "consentReference",
+          "consentGrantedAt",
+          "consentExpiresAt",
+          "lifecycleState",
+          "administrationId"
+        ],
+        "properties": {
+          "connectionNumber": {
+            "type": "string",
+            "description": "Operator-readable reference for this bank connection.",
+            "example": "BC-2026-001"
+          },
+          "aggregator": {
+            "type": "string",
+            "description": "PSD2 AIS aggregator providing the connection. Credentials live in the corresponding openconnector Source record.",
+            "enum": [
+              "tink",
+              "klarna-kosma",
+              "plaid-eu",
+              "yapily",
+              "manual"
+            ],
+            "example": "tink"
+          },
+          "aggregatorSourceSlug": {
+            "type": "string",
+            "description": "FK to the openconnector Source slug that holds the aggregator OAuth credentials. shillinq carries this reference only; credentials never land here.",
+            "example": "tink-nl-production"
+          },
+          "bankBic": {
+            "type": "string",
+            "description": "BIC/SWIFT code of the bank the connection covers.",
+            "example": "RABONL2U"
+          },
+          "bankCountry": {
+            "type": "string",
+            "description": "ISO 3166-1 alpha-2 country code of the bank.",
+            "minLength": 2,
+            "maxLength": 2,
+            "example": "NL"
+          },
+          "bankAccountIban": {
+            "type": "string",
+            "description": "IBAN of the linked bank account.",
+            "example": "NL01RABO0123456789"
+          },
+          "consentReference": {
+            "type": "string",
+            "description": "Aggregator-issued consent identifier returned from the SCA flow. Non-credential metadata — NOT an OAuth token or client secret.",
+            "example": "consent-ref-abc123"
+          },
+          "consentGrantedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when the PSD2 consent was granted.",
+            "example": "2026-07-01T10:00:00Z"
+          },
+          "consentExpiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when the PSD2 consent expires. PSD2 mandates SCA renewal every 90 days.",
+            "example": "2026-09-30T10:00:00Z"
+          },
+          "lastSyncAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the most recent successful transaction pull.",
+            "nullable": true,
+            "example": "2026-06-01T06:00:00Z"
+          },
+          "lifecycleState": {
+            "type": "string",
+            "description": "Current PSD2 consent lifecycle state.",
+            "enum": [
+              "pending",
+              "active",
+              "expiring",
+              "expired",
+              "revoked"
+            ],
+            "example": "active",
+            "default": "pending"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration that owns this bank connection.",
+            "example": "adm-1"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "pending",
+          "states": {
+            "pending": {
+              "label": "Pending",
+              "description": "SCA consent flow not yet completed; connection not usable."
+            },
+            "active": {
+              "label": "Active",
+              "description": "Consent granted and valid; transaction polling enabled."
+            },
+            "expiring": {
+              "label": "Expiring",
+              "description": "Consent expires within 14 days; operator must trigger renewal."
+            },
+            "expired": {
+              "label": "Expired",
+              "description": "Consent has lapsed; transaction polling suspended until renewed."
+            },
+            "revoked": {
+              "label": "Revoked",
+              "description": "Operator or bank revoked consent; connection permanently disabled."
+            }
+          },
+          "transitions": {
+            "activate": {
+              "from": "pending",
+              "to": "active",
+              "label": "Activate connection",
+              "description": "SCA consent flow completed successfully; activate the connection."
+            },
+            "warnExpiry": {
+              "from": "active",
+              "to": "expiring",
+              "label": "Mark as expiring",
+              "description": "Auto-transition fires 14 days before consentExpiresAt.",
+              "timeBased": {
+                "field": "consentExpiresAt",
+                "offsetDays": -14
+              }
+            },
+            "expire": {
+              "from": "expiring",
+              "to": "expired",
+              "label": "Mark as expired",
+              "description": "Auto-transition fires when consentExpiresAt is reached.",
+              "timeBased": {
+                "field": "consentExpiresAt",
+                "offsetDays": 0
+              }
+            },
+            "renew": {
+              "from": [
+                "expiring",
+                "expired"
+              ],
+              "to": "active",
+              "label": "Renew consent",
+              "description": "Operator triggered SCA renewal via openconnector source reauthorise action; updates consentReference and consentExpiresAt on success."
+            },
+            "revoke": {
+              "from": [
+                "active",
+                "expiring",
+                "expired"
+              ],
+              "to": "revoked",
+              "label": "Revoke connection",
+              "description": "Permanently revoke the bank connection."
+            }
+          },
+          "notifications": {
+            "onEnterExpiring": {
+              "state": "expiring",
+              "recipient": "configured-operator",
+              "channel": [
+                "in-app",
+                "email"
+              ],
+              "template": "bank-connection-expiring",
+              "description": "Notify configured recipient 14 days before consent expires."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "treasurer": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "consentRemainingDays": {
+            "expression": "dateDiffDays(@self.consentExpiresAt, now())",
+            "type": "integer",
+            "description": "Number of days until the PSD2 consent expires. Negative when already expired.",
+            "example": 14
+          }
+        }
+      },
+      "BankStatement": {
+        "slug": "BankStatement",
+        "icon": "FileDocumentOutline",
+        "version": "0.1.0",
+        "title": "Bank Statement",
+        "description": "A CAMT.053 bank statement generated by the scheduled transaction polling workflow from aggregator data. The generated XML is attached via docudesk.",
+        "type": "object",
+        "x-schema-org": "schema:Report",
+        "required": [
+          "bankConnectionId",
+          "statementFormat",
+          "statementDate",
+          "administrationId"
+        ],
+        "properties": {
+          "bankConnectionId": {
+            "type": "string",
+            "description": "FK to the BankConnection that sourced this statement.",
+            "example": "bank-conn-uuid-1"
+          },
+          "statementFormat": {
+            "type": "string",
+            "description": "CAMT XML format version of the generated statement.",
+            "enum": [
+              "camt.053.001.08"
+            ],
+            "example": "camt.053.001.08",
+            "default": "camt.053.001.08"
+          },
+          "statementDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the statement generation run.",
+            "example": "2026-06-01T06:00:00Z"
+          },
+          "statementAttachmentUri": {
+            "type": "string",
+            "description": "docudesk attachment URI referencing the generated CAMT.053 XML document.",
+            "nullable": true,
+            "example": "docudesk://attachments/shillinq/bank-statement-2026-06-01.xml"
+          },
+          "transactionCount": {
+            "type": "integer",
+            "description": "Number of transactions included in this statement.",
+            "example": 5
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration that owns this statement.",
+            "example": "adm-1"
+          }
+        },
+        "x-openregister-notifications": {
+          "onNewStatement": {
+            "trigger": "onCreate",
+            "recipient": {
+              "resolver": "bank-connection-operator",
+              "fallback": "administration-treasurer"
+            },
+            "channels": [
+              "in-app",
+              "email"
+            ],
+            "template": "bank-statement-available",
+            "description": "Notify the configured bank-connection operator when a new statement is available. Declarative fan-out per ADR-031; no BankNotificationService."
+          }
+        },
+        "x-openregister-relations": {
+          "bankConnection": {
+            "localField": "bankConnectionId",
+            "relatedSchema": "BankConnection",
+            "relatedField": "id",
+            "cardinality": "many-to-one",
+            "description": "The PSD2 bank connection that generated this statement."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "treasurer": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
           }
         }
       },
@@ -82,7 +398,7 @@
             "type": "number",
             "minimum": 0,
             "description": "Non-negative posting amount in the transaction's currency.",
-            "example": 100.00
+            "example": 100.0
           },
           "currency": {
             "type": "string",
@@ -191,7 +507,7 @@
             "minimum": 0,
             "maximum": 1,
             "description": "Quotum-aandeel (participation share) of this deelnemer in the GR. Must be 0 ≤ x ≤ 1. The sum across all actief deelnemers SHOULD equal 1.0.",
-            "example": 0.40
+            "example": 0.4
           },
           "actief": {
             "type": "boolean",
@@ -287,7 +603,11 @@
               "type": "string"
             },
             "description": "Array of Account.accountNumber strings identifying the cost cluster this verdeelsleutel applies to.",
-            "example": ["4100", "4101", "4199"]
+            "example": [
+              "4100",
+              "4101",
+              "4199"
+            ]
           },
           "verdelingsType": {
             "type": "string",
@@ -304,9 +624,9 @@
             "nullable": true,
             "description": "Per-deelnemer split parameters validated against verdelingsType. For vast-percentage: object keyed by GRDeelnemer.id with values summing to 1.0. For custom-formula: arbitrary JSON.",
             "example": {
-              "deelnemer-1": 0.40,
-              "deelnemer-2": 0.40,
-              "deelnemer-3": 0.20
+              "deelnemer-1": 0.4,
+              "deelnemer-2": 0.4,
+              "deelnemer-3": 0.2
             }
           },
           "lineNumber": {
@@ -418,9 +738,25 @@
             "type": "boolean",
             "description": "Whether VAT/BTW applies to transactions posted to this account.",
             "default": false
+          },
+          "bbvVariant": {
+            "type": "string",
+            "enum": [
+              "gemeente",
+              "waterschap",
+              "provincie"
+            ],
+            "default": "gemeente",
+            "description": "BBV regulatory variant under which this account is interpreted. 'waterschap' activates the BBVW (BBV-Waterschappen) framework per REQ-WSB-001.",
+            "nullable": true,
+            "example": "waterschap"
           }
         },
         "x-openregister-lifecycle": {
+          "retention": {
+            "rule": "selectielijst:5.1.1",
+            "description": "Chart-of-accounts records are kept indefinitely per Selectielijst Gemeenten 2020 § 5.1.1 (begroting, jaarrekening, rekeningschema)."
+          },
           "field": "lifecycleState",
           "initialState": "active",
           "states": {
@@ -481,10 +817,16 @@
         "x-openregister-rbac": {
           "roles": {
             "bookkeeper": {
-              "permissions": ["create", "read", "update"]
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
             },
             "auditor": {
-              "permissions": ["read"]
+              "permissions": [
+                "read"
+              ]
             }
           }
         },
@@ -500,6 +842,829 @@
             "operation": "count",
             "description": "Number of accounts per lifecycleState.",
             "groupBy": "lifecycleState"
+          }
+        },
+        "x-openregister-calculations": {
+          "daysUntilRetention": {
+            "expression": "null",
+            "description": "Account records are kept indefinitely (disposition: keep_indefinite per selectielijst:5.1.1). This field always returns null for Account objects."
+          }
+        }
+      },
+      "RetentionRule": {
+        "slug": "RetentionRule",
+        "icon": "ShieldCheckOutline",
+        "version": "0.1.0",
+        "title": "Bewaartermijn",
+        "description": "Archiefwet 1995 + Selectielijst Gemeenten 2020 retention rule. Declares the statutory retention obligation for a record category per Selectielijst code. Seeded from selectielijst-gemeenten-2020.json; operators MAY add administration-scoped overrides above the statutory minimum per REQ-ARC-004.",
+        "x-schema-org": "schema:DefinedTerm",
+        "type": "object",
+        "required": [
+          "selectielijstCode",
+          "description",
+          "recordCategory",
+          "disposition",
+          "legalBasis",
+          "effectiveFrom"
+        ],
+        "x-openregister-calculations": {
+          "daysUntilRetention": {
+            "expression": "@self.effectiveTo != null ? datediff(today(), @self.effectiveTo) : null",
+            "description": "Days until this retention rule expires. Null when effectiveTo is absent (rules without an end date)."
+          }
+        },
+        "x-openregister-widgets": {
+          "nearing-retention": {
+            "title": "Bewaartermijnen verlopen binnenkort",
+            "type": "stats-block",
+            "filter": {
+              "field": "daysUntilRetention",
+              "operator": "lt",
+              "value": 90
+            },
+            "roles": ["archivist"],
+            "description": "Count of records nearing retention disposition within THRESHOLD_DAYS (default 90). Surfaced on the Bewaartermijnen dashboard per REQ-ARC-008."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "archivist": {
+              "permissions": ["create", "read", "update", "delete"],
+              "description": "Full access to view, create, and override retention rules."
+            },
+            "auditor": {
+              "permissions": ["read"],
+              "description": "Read-only access for audit and compliance inspection."
+            }
+          }
+        },
+        "properties": {
+          "selectielijstCode": {
+            "type": "string",
+            "description": "Selectielijst Gemeenten 2020 classifier code (e.g. 5.1.2, 3.5.1, 1.1.1).",
+            "example": "5.1.2",
+            "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?$"
+          },
+          "description": {
+            "type": "string",
+            "description": "Plain-Dutch description of the record category covered by this rule.",
+            "example": "Dagelijkse financiële verantwoording (facturen, betalingen, dagboeken, bankafschriften)"
+          },
+          "recordCategory": {
+            "type": "string",
+            "description": "High-level category of records covered by this rule.",
+            "enum": [
+              "financial",
+              "subsidie",
+              "personeel",
+              "algemeen-bestuur",
+              "verantwoording",
+              "correspondentie",
+              "archief"
+            ],
+            "example": "financial"
+          },
+          "retentionYears": {
+            "type": "integer",
+            "description": "Absolute retention period in years from record creation date. Mutually exclusive with retentionTrigger.",
+            "minimum": 0,
+            "example": 7
+          },
+          "retentionTrigger": {
+            "type": "string",
+            "description": "Relative retention expression (e.g. '10 years after vaststellingDate'). Mutually exclusive with retentionYears.",
+            "example": "10 years after vaststellingDate"
+          },
+          "disposition": {
+            "type": "string",
+            "description": "Action taken when the retention period expires.",
+            "enum": [
+              "destroy",
+              "archive",
+              "anonymise",
+              "keep_indefinite"
+            ],
+            "example": "archive"
+          },
+          "legalBasis": {
+            "type": "string",
+            "description": "Citation of the legal basis: Archiefwet article + Selectielijst paragraph.",
+            "example": "Archiefwet 1995 art. 5 + Selectielijst Gemeenten 2020 § 5.1.2"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "Date from which this rule is valid.",
+            "example": "2020-01-01"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date",
+            "description": "Date until which this rule is valid. Absent means the rule has no end date.",
+            "nullable": true
+          },
+          "customRetentionYears": {
+            "type": "integer",
+            "description": "Operator-defined extension of the statutory retention period (archiefverordening override). MUST be >= retentionYears — operators may extend retention but NEVER shorten below the Archiefwet floor (REQ-ARC-004).",
+            "minimum": 0,
+            "x-openregister-validation": {
+              "rule": "gte_field",
+              "field": "retentionYears",
+              "message": "customRetentionYears MUST be >= retentionYears. Operators may extend retention but not shorten it below the statutory minimum (Archiefwet 1995 + REQ-ARC-004)."
+            },
+            "example": 10
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "Administration identifier for per-administration override rules (archiefverordening scope). Absent on seeded default rules which apply to all administrations.",
+            "example": "gem-almelo",
+            "nullable": true
+          },
+          "_meta": {
+            "type": "object",
+            "description": "Record metadata.",
+            "properties": {
+              "source": {
+                "type": "string",
+                "description": "Origin: 'seeded' for Selectielijst defaults, 'operator-edited' for administration-specific overrides.",
+                "enum": ["seeded", "operator-edited"],
+                "example": "seeded"
+              }
+            }
+          }
+        }
+      },
+      "BalanceSheet": {
+        "slug": "BalanceSheet",
+        "icon": "TableAccountOutline",
+        "version": "0.1.0",
+        "title": "Balance Sheet",
+        "description": "Financial statement showing assets, liabilities, and equity at a fiscal-period snapshot. Status lifecycle: draft → final → published. Totals are computed via x-openregister-aggregations from GL entries grouped by Account.accountType per REQ-FS-004.",
+        "x-schema-org": "schema:Table",
+        "type": "object",
+        "required": [
+          "reportDate",
+          "currency",
+          "status",
+          "fiscalYearId",
+          "administrationId"
+        ],
+        "properties": {
+          "reportDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Snapshot date of the balance sheet (typically fiscal-year-end).",
+            "example": "2026-12-31T00:00:00+00:00"
+          },
+          "totalAssets": {
+            "type": "number",
+            "description": "Computed total assets in base currency. Populated by balance-sheet aggregation on draft→final transition.",
+            "nullable": true,
+            "example": 150000.00
+          },
+          "totalLiabilities": {
+            "type": "number",
+            "description": "Computed total liabilities in base currency. Populated by balance-sheet aggregation on draft→final transition.",
+            "nullable": true,
+            "example": 50000.00
+          },
+          "totalEquity": {
+            "type": "number",
+            "description": "Computed total equity in base currency. Populated by balance-sheet aggregation on draft→final transition.",
+            "nullable": true,
+            "example": 100000.00
+          },
+          "isBalanced": {
+            "type": "boolean",
+            "description": "Computed flag: totalAssets = totalLiabilities + totalEquity. Surfaced with diagnostic when false.",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 base currency code.",
+            "minLength": 3,
+            "maxLength": 3,
+            "default": "EUR",
+            "example": "EUR"
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle state of the balance sheet.",
+            "enum": [
+              "draft",
+              "final",
+              "published",
+              "archived"
+            ],
+            "default": "draft",
+            "example": "draft"
+          },
+          "fiscalYearId": {
+            "type": "string",
+            "description": "FK to the FiscalYear this balance sheet covers.",
+            "example": "fy-2026"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this balance sheet belongs to.",
+            "example": "adm-1"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Balance sheet under preparation; GL entries may still be posted."
+            },
+            "final": {
+              "label": "Final",
+              "description": "GL period closed; all entries posted; aggregations computed and verified."
+            },
+            "published": {
+              "label": "Published",
+              "description": "Released to stakeholders via OR publication extension. Immutable — no further edits."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Retained for audit trail per administration retention policy."
+            }
+          },
+          "transitions": {
+            "finalise": {
+              "from": "draft",
+              "to": "final",
+              "label": "Finalise balance sheet",
+              "description": "Operator or scheduled workflow closes fiscal period. Triggers balance-sheet aggregation (REQ-FS-004).",
+              "requires": "OCA\\Shillinq\\Consolidation\\ConsolidationGuard::requireFiscalPeriodClosed"
+            },
+            "publish": {
+              "from": "final",
+              "to": "published",
+              "label": "Publish balance sheet",
+              "description": "Operator (role: controller) releases to stakeholders via OR publication extension or ConsolidationGuard fallback per ADR-031.",
+              "requires": "OCA\\Shillinq\\Consolidation\\ConsolidationGuard::requirePublicationApproval"
+            },
+            "archive": {
+              "from": "published",
+              "to": "archived",
+              "label": "Archive balance sheet",
+              "description": "Operator archives after retention period per administration retention policy."
+            }
+          },
+          "hooks": {
+            "onFinalise": {
+              "trigger": "lifecycle:finalise",
+              "description": "Fire balance-sheet aggregation to populate totalAssets, totalLiabilities, totalEquity, and isBalanced from GL entries (REQ-FS-004). Also triggers TrialBalance finalisation for the same fiscalYearId and administrationId.",
+              "action": "x-openregister-aggregation-compute",
+              "actionParameters": {
+                "aggregations": ["balanceSheetTotals"]
+              }
+            },
+            "onPublish": {
+              "trigger": "lifecycle:publish",
+              "description": "Publication workflow via OR publication extension (ADR-022) or ConsolidationGuard fallback per ADR-031. Records publication timestamp and actor. Marks statement immutable.",
+              "action": "x-openregister-publication",
+              "actionParameters": {
+                "notifyStakeholders": true,
+                "immutable": true
+              }
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "balanceSheetTotals": {
+            "description": "Computes totalAssets, totalLiabilities, totalEquity from GLLine entries grouped by Account.accountType for the fiscal period. Satisfies REQ-FS-004. No BalanceSheetService — pure declarative aggregation per ADR-031.",
+            "join": {
+              "from": "GLLine.accountNumber",
+              "through": "Account",
+              "on": "Account.accountNumber",
+              "select": "Account.accountType"
+            },
+            "filter": {
+              "administrationId": "@self.administrationId",
+              "fiscalYearId": "@self.fiscalYearId",
+              "eliminationFlag": false
+            },
+            "groupBy": "Account.accountType",
+            "operations": {
+              "totalAssets": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "Account.accountType = 'assets'",
+                "target": "totalAssets"
+              },
+              "totalLiabilities": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "Account.accountType = 'liabilities'",
+                "target": "totalLiabilities"
+              },
+              "totalEquity": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "Account.accountType = 'equity'",
+                "target": "totalEquity"
+              },
+              "isBalanced": {
+                "operation": "check",
+                "expression": "totalAssets = totalLiabilities + totalEquity",
+                "target": "isBalanced",
+                "diagnostic": "Balance-sheet equation violated: assets({{totalAssets}}) ≠ liabilities({{totalLiabilities}}) + equity({{totalEquity}})"
+              }
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "controller": {
+              "permissions": ["create", "read", "update", "publish"]
+            },
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "TrialBalance": {
+        "slug": "TrialBalance",
+        "icon": "ScaleBalanceOutline",
+        "version": "0.1.0",
+        "title": "Trial Balance",
+        "description": "Listing of all GL accounts with debit/credit balances for period verification. isBalanced flag (totalDebits = totalCredits) computed via aggregation per REQ-FS-005. No TrialBalanceService.",
+        "x-schema-org": "schema:Table",
+        "type": "object",
+        "required": [
+          "reportDate",
+          "status",
+          "fiscalYearId",
+          "administrationId"
+        ],
+        "properties": {
+          "reportDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Snapshot date of the trial balance (typically fiscal-year-end).",
+            "example": "2026-12-31T00:00:00+00:00"
+          },
+          "totalDebits": {
+            "type": "number",
+            "description": "Sum of all debit balances across all accounts for the fiscal period.",
+            "nullable": true,
+            "example": 500000.00
+          },
+          "totalCredits": {
+            "type": "number",
+            "description": "Sum of all credit balances across all accounts for the fiscal period.",
+            "nullable": true,
+            "example": 500000.00
+          },
+          "isBalanced": {
+            "type": "boolean",
+            "description": "Computed flag: totalDebits = totalCredits. Surfaced with diagnostic when false.",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle state of the trial balance.",
+            "enum": [
+              "draft",
+              "verified",
+              "final",
+              "published",
+              "archived"
+            ],
+            "default": "draft",
+            "example": "draft"
+          },
+          "preparedBy": {
+            "type": "string",
+            "description": "Actor who prepared or verified the trial balance (audit trail).",
+            "nullable": true,
+            "example": "jan.bookkeeper@example.nl"
+          },
+          "fiscalYearId": {
+            "type": "string",
+            "description": "FK to the FiscalYear this trial balance covers.",
+            "example": "fy-2026"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this trial balance belongs to.",
+            "example": "adm-1"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Trial balance under preparation; GL entries may still be posted."
+            },
+            "verified": {
+              "label": "Verified",
+              "description": "Aggregation run; isBalanced confirmed true by bookkeeper."
+            },
+            "final": {
+              "label": "Final",
+              "description": "GL period closed; all entries posted; trial balance verified and locked."
+            },
+            "published": {
+              "label": "Published",
+              "description": "Released to stakeholders via OR publication extension. Immutable."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Retained for audit trail per administration retention policy."
+            }
+          },
+          "transitions": {
+            "verify": {
+              "from": "draft",
+              "to": "verified",
+              "label": "Run trial-balance verification",
+              "description": "Triggers trial-balance aggregation (REQ-FS-005); sets isBalanced. Bookkeeper confirms result."
+            },
+            "finalise": {
+              "from": "verified",
+              "to": "final",
+              "label": "Finalise trial balance",
+              "description": "Operator or scheduled workflow closes fiscal period. Also triggered by BalanceSheet finalise hook.",
+              "requires": "OCA\\Shillinq\\Consolidation\\ConsolidationGuard::requireFiscalPeriodClosed"
+            },
+            "publish": {
+              "from": "final",
+              "to": "published",
+              "label": "Publish trial balance",
+              "description": "Operator (role: controller) releases to stakeholders via OR publication extension or ConsolidationGuard fallback per ADR-031.",
+              "requires": "OCA\\Shillinq\\Consolidation\\ConsolidationGuard::requirePublicationApproval"
+            },
+            "archive": {
+              "from": "published",
+              "to": "archived",
+              "label": "Archive trial balance",
+              "description": "Operator archives after retention period per administration retention policy."
+            }
+          },
+          "hooks": {
+            "onVerify": {
+              "trigger": "lifecycle:verify",
+              "description": "Fire trial-balance aggregation to populate totalDebits, totalCredits, and isBalanced. Surfaces diagnostic when not balanced per REQ-FS-005.",
+              "action": "x-openregister-aggregation-compute",
+              "actionParameters": {
+                "aggregations": ["trialBalanceTotals", "trialBalanceByAccount"]
+              }
+            },
+            "onPublish": {
+              "trigger": "lifecycle:publish",
+              "description": "Publication workflow via OR publication extension (ADR-022) or ConsolidationGuard fallback per ADR-031. Records publication timestamp and actor. Marks statement immutable.",
+              "action": "x-openregister-publication",
+              "actionParameters": {
+                "notifyStakeholders": true,
+                "immutable": true
+              }
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "trialBalanceTotals": {
+            "description": "Computes totalDebits, totalCredits, and isBalanced flag from GLLine entries for the fiscal period. Satisfies REQ-FS-005 verification check. No TrialBalanceService — pure declarative aggregation per ADR-031.",
+            "filter": {
+              "administrationId": "@self.administrationId",
+              "fiscalYearId": "@self.fiscalYearId",
+              "eliminationFlag": false
+            },
+            "operations": {
+              "totalDebits": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "GLLine.side = 'debit'",
+                "target": "totalDebits"
+              },
+              "totalCredits": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "GLLine.side = 'credit'",
+                "target": "totalCredits"
+              },
+              "isBalanced": {
+                "operation": "check",
+                "expression": "totalDebits = totalCredits",
+                "target": "isBalanced",
+                "diagnostic": "Trial balance is not balanced: debits({{totalDebits}}) ≠ credits({{totalCredits}}), discrepancy = {{totalDebits - totalCredits}}"
+              }
+            }
+          },
+          "trialBalanceByAccount": {
+            "description": "Per-account trial balance listing: accountNumber, name, accountType, totalDebits, totalCredits per REQ-FS-005 for the fiscal period.",
+            "join": {
+              "from": "GLLine.accountNumber",
+              "through": "Account",
+              "on": "Account.accountNumber",
+              "select": ["Account.accountNumber", "Account.name", "Account.accountType"]
+            },
+            "filter": {
+              "administrationId": "@self.administrationId",
+              "fiscalYearId": "@self.fiscalYearId",
+              "eliminationFlag": false
+            },
+            "groupBy": ["Account.accountNumber", "Account.name", "Account.accountType"],
+            "operations": {
+              "totalDebits": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "GLLine.side = 'debit'"
+              },
+              "totalCredits": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "GLLine.side = 'credit'"
+              }
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "controller": {
+              "permissions": ["create", "read", "update", "publish"]
+            },
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "ConsolidationGroup": {
+        "slug": "ConsolidationGroup",
+        "icon": "AccountMultipleOutline",
+        "version": "0.1.0",
+        "title": "Consolidation Group",
+        "description": "A group of organizations consolidated together for financial reporting across multiple administrations. Holds the consolidation method (full/proportional/equity per IFRS 10/11/12) and inter-company elimination rules. Consumed by ConsolidatedReport per REQ-FS-006.",
+        "x-schema-org": "schema:Organization",
+        "type": "object",
+        "required": [
+          "name",
+          "consolidationMethod",
+          "status",
+          "administrationIds"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable name of the consolidation group.",
+            "example": "Acme BV Group"
+          },
+          "consolidationMethod": {
+            "type": "string",
+            "description": "Consolidation method per IFRS 10/11/12.",
+            "enum": [
+              "full",
+              "proportional",
+              "equity"
+            ],
+            "example": "full"
+          },
+          "status": {
+            "type": "string",
+            "description": "Status of the consolidation group.",
+            "enum": [
+              "active",
+              "inactive",
+              "archived"
+            ],
+            "default": "active",
+            "example": "active"
+          },
+          "parentOrganizationId": {
+            "type": "string",
+            "description": "FK to the parent organization if part of a larger group.",
+            "nullable": true,
+            "example": "org-acme-bv"
+          },
+          "eliminationRules": {
+            "type": "object",
+            "description": "Inter-company elimination rules. Simple patterns (offset-by-FK, percentage-based) are declarative; complex custom rules defined by admin. Consumed by OR consolidation engine or ConsolidationGuard per ADR-031 exception.",
+            "nullable": true,
+            "example": {
+              "intercompanySales": {
+                "type": "offset-by-account",
+                "accountNumbers": ["8000", "8001"],
+                "description": "Eliminate inter-company sales between group members"
+              }
+            }
+          },
+          "administrationIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "FKs to Administration records being consolidated into this group.",
+            "example": ["adm-acme-bv", "adm-acme-services-bv"]
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Consolidation group is in use for consolidated reporting."
+            },
+            "inactive": {
+              "label": "Inactive",
+              "description": "Consolidation group temporarily suspended; no new consolidated reports."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Historical group; remains queryable but no new consolidated reports."
+            }
+          },
+          "transitions": {
+            "deactivate": {
+              "from": "active",
+              "to": "inactive",
+              "label": "Deactivate group",
+              "description": "Suspend consolidation group without archiving."
+            },
+            "reactivate": {
+              "from": "inactive",
+              "to": "active",
+              "label": "Reactivate group",
+              "description": "Restore consolidation group to active use."
+            },
+            "archive": {
+              "from": ["active", "inactive"],
+              "to": "archived",
+              "label": "Archive group",
+              "description": "Archive consolidation group for historical reference."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "controller": {
+              "permissions": ["create", "read", "update"]
+            },
+            "bookkeeper": {
+              "permissions": ["read"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "ConsolidatedReport": {
+        "slug": "ConsolidatedReport",
+        "icon": "FileChartOutline",
+        "version": "0.1.0",
+        "title": "Consolidated Report",
+        "description": "Aggregated financial report combining data from multiple administrations with consolidation method and inter-company elimination tracking per REQ-FS-006. Lifecycle draft → final → published consumes OR publication extension or ConsolidationGuard fallback per ADR-031.",
+        "x-schema-org": "schema:Report",
+        "type": "object",
+        "required": [
+          "reportNumber",
+          "reportDate",
+          "consolidationGroupId",
+          "consolidationMethod",
+          "status",
+          "fiscalYearId"
+        ],
+        "properties": {
+          "reportNumber": {
+            "type": "string",
+            "description": "Unique identifier for the consolidated report.",
+            "example": "CR-2026-001"
+          },
+          "reportDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Consolidation snapshot date.",
+            "example": "2026-12-31T00:00:00+00:00"
+          },
+          "consolidationGroupId": {
+            "type": "string",
+            "description": "FK to the ConsolidationGroup defining which organizations are consolidated.",
+            "example": "cg-acme-group"
+          },
+          "consolidationMethod": {
+            "type": "string",
+            "description": "Method used for this consolidated report (full/proportional/equity per IFRS 10/11/12).",
+            "enum": [
+              "full",
+              "proportional",
+              "equity"
+            ],
+            "example": "full"
+          },
+          "eliminationsApplied": {
+            "type": "boolean",
+            "description": "Whether inter-company eliminations have been posted for this report.",
+            "default": false,
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle state of the consolidated report.",
+            "enum": [
+              "draft",
+              "final",
+              "published",
+              "archived"
+            ],
+            "default": "draft",
+            "example": "draft"
+          },
+          "fiscalYearId": {
+            "type": "string",
+            "description": "FK to the FiscalYear this consolidated report covers.",
+            "example": "fy-2026"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Consolidated report under preparation. Individual administration statements may still be in draft."
+            },
+            "final": {
+              "label": "Final",
+              "description": "All member administrations finalised; consolidation and eliminations applied; report locked."
+            },
+            "published": {
+              "label": "Published",
+              "description": "Released to stakeholders via OR publication extension. Immutable."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Retained for audit trail per group retention policy."
+            }
+          },
+          "transitions": {
+            "finalise": {
+              "from": "draft",
+              "to": "final",
+              "label": "Finalise consolidated report",
+              "description": "Applies consolidation workflow and inter-company eliminations per ConsolidationGroup.eliminationRules. Consumed via OR consolidation extension (ADR-022) or ConsolidationGuard fallback per ADR-031 exception.",
+              "requires": "OCA\\Shillinq\\Consolidation\\ConsolidationGuard::requireAllMembersFinalised"
+            },
+            "publish": {
+              "from": "final",
+              "to": "published",
+              "label": "Publish consolidated report",
+              "description": "Operator (role: controller) releases to stakeholders via OR publication extension or ConsolidationGuard fallback per ADR-031.",
+              "requires": "OCA\\Shillinq\\Consolidation\\ConsolidationGuard::requirePublicationApproval"
+            },
+            "archive": {
+              "from": "published",
+              "to": "archived",
+              "label": "Archive consolidated report",
+              "description": "Operator archives after retention period per group retention policy."
+            }
+          },
+          "hooks": {
+            "onFinalise": {
+              "trigger": "lifecycle:finalise",
+              "description": "Executes consolidation workflow via OR consolidation extension (ADR-022) or ConsolidationGuard. Sets eliminationsApplied=true after inter-company eliminations. Records audit trail of elimination amounts per REQ-FS-006.",
+              "action": "x-openregister-consolidation",
+              "actionParameters": {
+                "consolidationGroupRef": "consolidationGroupId",
+                "applyEliminations": true,
+                "auditEliminations": true
+              }
+            },
+            "onPublish": {
+              "trigger": "lifecycle:publish",
+              "description": "Publication workflow via OR publication extension (ADR-022) or ConsolidationGuard fallback per ADR-031. Records publication timestamp and actor. Marks statement immutable.",
+              "action": "x-openregister-publication",
+              "actionParameters": {
+                "notifyStakeholders": true,
+                "immutable": true
+              }
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "controller": {
+              "permissions": ["create", "read", "update", "publish"]
+            },
+            "bookkeeper": {
+              "permissions": ["read"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
           }
         }
       },
@@ -532,7 +1697,12 @@
           "reportingQuarter": {
             "type": "string",
             "description": "Quarter of the reporting period.",
-            "enum": ["Q1", "Q2", "Q3", "Q4"],
+            "enum": [
+              "Q1",
+              "Q2",
+              "Q3",
+              "Q4"
+            ],
             "example": "Q1"
           },
           "iv3Version": {
@@ -546,7 +1716,10 @@
             "additionalProperties": {
               "type": "number"
             },
-            "example": {"IV3-001": 125000.00, "IV3-002": -18500.00}
+            "example": {
+              "IV3-001": 125000.0,
+              "IV3-002": -18500.0
+            }
           },
           "xmlAttachmentUri": {
             "type": "string",
@@ -557,7 +1730,14 @@
           "state": {
             "type": "string",
             "description": "Current lifecycle state of the IV3 export.",
-            "enum": ["generated", "validated", "submitted", "accepted", "rejected", "corrected"],
+            "enum": [
+              "generated",
+              "validated",
+              "submitted",
+              "accepted",
+              "rejected",
+              "corrected"
+            ],
             "example": "generated",
             "default": "generated"
           },
@@ -697,10 +1877,16 @@
         "x-openregister-rbac": {
           "roles": {
             "bbv-controller": {
-              "permissions": ["create", "read", "update"]
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
             },
             "auditor": {
-              "permissions": ["read"]
+              "permissions": [
+                "read"
+              ]
             }
           }
         },
@@ -714,8 +1900,1029 @@
             "schema": "Iv3Export",
             "enabled": true,
             "filter": {
-              "administrationType": ["gemeente", "provincie", "waterschap"]
+              "administrationType": [
+                "gemeente",
+                "provincie",
+                "waterschap"
+              ]
             }
+          }
+        }
+      },
+      "BBVProgramma": {
+        "slug": "BBVProgramma",
+        "icon": "FormatListBulletedSquare",
+        "version": "0.1.0",
+        "title": "BBV Programma",
+        "description": "A BBV programma-indeling entry grouping GL postings by taakveld (gemeente/provincie) or kostentoedeling (waterschap). The programmaStructure discriminator controls which classification hierarchy is used per REQ-WSB-002.",
+        "x-schema-org": "schema:DefinedTerm",
+        "type": "object",
+        "required": [
+          "code",
+          "naam",
+          "administrationId",
+          "programmaStructure"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Unique programma code within the administration (e.g. 'watersysteembeheer', 'taakveld-0.1').",
+            "example": "watersysteembeheer"
+          },
+          "naam": {
+            "type": "string",
+            "description": "Human-readable Dutch programma name.",
+            "example": "Watersysteembeheer"
+          },
+          "beschrijving": {
+            "type": "string",
+            "description": "Optional operator-authored description of this programma.",
+            "nullable": true,
+            "example": "Beheer van het watersysteem inclusief veiligheid en kwaliteit."
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this programma. Scopes uniqueness of code.",
+            "example": "adm-waterschap-1"
+          },
+          "programmaStructure": {
+            "type": "string",
+            "enum": [
+              "taakveld",
+              "kostentoedeling"
+            ],
+            "default": "taakveld",
+            "description": "Discriminator that controls the classification hierarchy used at aggregation / rollup time. 'kostentoedeling' is the BBVW-canonical structure for waterschappen per REQ-WSB-002.",
+            "example": "kostentoedeling"
+          },
+          "bbvVariant": {
+            "type": "string",
+            "enum": [
+              "gemeente",
+              "waterschap",
+              "provincie"
+            ],
+            "default": "gemeente",
+            "description": "BBV regulatory variant under which this programma is interpreted per REQ-WSB-001.",
+            "nullable": true,
+            "example": "waterschap"
+          },
+          "parentCode": {
+            "type": "string",
+            "description": "FK to the parent BBVProgramma.code for hierarchical programma navigation.",
+            "nullable": true,
+            "example": "watersysteembeheer"
+          }
+        },
+        "x-openregister-aggregations": {
+          "postingsByProgramma": {
+            "description": "Aggregates GL debit/credit totals per programma code, honouring the programmaStructure discriminator. When programmaStructure is 'kostentoedeling', groups by kostentoedeling cluster; when 'taakveld', groups by taakveld code.",
+            "sourceSchema": "GLLine",
+            "groupBy": "BBVProgramma.code",
+            "join": {
+              "from": "GLLine.accountNumber",
+              "through": "Account",
+              "on": "Account.accountNumber",
+              "select": "BBVProgramma.code"
+            },
+            "operations": {
+              "totalDebit": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "GLLine.side = 'debit'"
+              },
+              "totalCredit": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "GLLine.side = 'credit'"
+              }
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "parentProgramma": {
+            "localField": "parentCode",
+            "relatedSchema": "BBVProgramma",
+            "relatedField": "code",
+            "cardinality": "many-to-one",
+            "description": "Self-relation for hierarchical programma navigation (hoofdprogramma → sub-programma)."
+          }
+        }
+      },
+      "WaterschapHeffingPosting": {
+        "slug": "WaterschapHeffingPosting",
+        "icon": "WaterOutline",
+        "version": "0.1.0",
+        "title": "Waterschap Heffing Posting",
+        "description": "Sector-specific belasting posting for the three waterschapsbelastingen: watersysteemheffing, zuiveringsheffing, and verontreinigingsheffing. On transition to 'posted', materialises a balanced 2-line GLTransaction per T1 REQ-GL-001 with sourceReference back to this posting. Does NOT carry its own ledger lines per design D3.",
+        "x-schema-org": "schema:Invoice",
+        "type": "object",
+        "required": [
+          "heffingType",
+          "aanslagJaar",
+          "tariefGrondslag",
+          "tarief",
+          "aanslagBedrag",
+          "administrationId",
+          "state"
+        ],
+        "properties": {
+          "heffingType": {
+            "type": "string",
+            "enum": [
+              "watersysteemheffing",
+              "zuiveringsheffing",
+              "verontreinigingsheffing"
+            ],
+            "description": "Type of waterschap belasting per REQ-WSB-004.",
+            "example": "zuiveringsheffing"
+          },
+          "aanslagJaar": {
+            "type": "integer",
+            "description": "Belastingjaar of this aanslag.",
+            "example": 2026
+          },
+          "tariefGrondslag": {
+            "type": "string",
+            "description": "Canonical grondslag for the tarief computation (e.g. 'vervuilingseenheden', 'oppervlakte-m2', 'inwonerequivalenten').",
+            "example": "vervuilingseenheden"
+          },
+          "tarief": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Applied tarief per grondslag-eenheid in EUR.",
+            "example": 85.5
+          },
+          "aanslagBedrag": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Total aanslag amount in EUR (tarief × grondslag-quantity). This amount is materialised into a balanced GLTransaction on post.",
+            "example": 1500.0
+          },
+          "journalEntryId": {
+            "type": "string",
+            "description": "FK to the materialised GLTransaction.id. Set by the lifecycle engine on transition to 'posted'. Null until posted.",
+            "nullable": true,
+            "example": "txn-wsh-2026-001"
+          },
+          "emuExclusionRule": {
+            "type": "string",
+            "enum": [
+              "included",
+              "excluded",
+              "partial"
+            ],
+            "default": "included",
+            "description": "Controls whether this posting contributes to the waterschap EMU-saldo per REQ-WSB-005 and the EMU-bijlage waterschappen handleiding 2026. 'excluded' = posting is omitted from the EMU-saldo aggregation; 'partial' = operator-defined partial inclusion.",
+            "example": "excluded"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the waterschap Administration owning this heffing posting.",
+            "example": "adm-waterschap-1"
+          },
+          "debitAccountNumber": {
+            "type": "string",
+            "description": "Account to debit in the materialised GLTransaction (e.g. receivable account for the heffing aanslag).",
+            "nullable": true,
+            "example": "1300"
+          },
+          "creditAccountNumber": {
+            "type": "string",
+            "description": "Account to credit in the materialised GLTransaction (e.g. revenue account for the heffing type).",
+            "nullable": true,
+            "example": "8100"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "posted",
+              "reversed"
+            ],
+            "default": "draft",
+            "description": "Current lifecycle state of the heffing posting.",
+            "example": "draft"
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional operator-authored description or reference number.",
+            "nullable": true,
+            "example": "Zuiveringsheffing aanslag 2026 perceel Noord"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Heffing posting is being prepared; no GL impact yet."
+            },
+            "posted": {
+              "label": "Geboekt",
+              "description": "Posting is confirmed; a balanced 2-line GLTransaction has been materialised per REQ-GL-001."
+            },
+            "reversed": {
+              "label": "Gestorneerd",
+              "description": "Posting has been reversed; a contra-GLTransaction has been materialised."
+            }
+          },
+          "transitions": {
+            "post": {
+              "from": "draft",
+              "to": "posted",
+              "label": "Boek aanslag",
+              "description": "Materialise a balanced 2-line GLTransaction (debit receivable, credit revenue) for the aanslagBedrag and set journalEntryId."
+            },
+            "reverse": {
+              "from": "posted",
+              "to": "reversed",
+              "label": "Storneer aanslag",
+              "description": "Materialise a contra-GLTransaction to reverse the original posting."
+            }
+          },
+          "hooks": {
+            "onPost": {
+              "trigger": "state:posted",
+              "description": "Materialise a balanced 2-line GLTransaction per T1 REQ-GL-001. Debit debitAccountNumber for aanslagBedrag, credit creditAccountNumber for aanslagBedrag. Set sourceReference to WaterschapHeffingPosting.id. Write journalEntryId FK back to this record. Idempotency key: (administrationId, id) prevents re-posting on repair-step re-run.",
+              "action": "x-openregister-materialise-gl-transaction",
+              "actionParameters": {
+                "debitField": "debitAccountNumber",
+                "creditField": "creditAccountNumber",
+                "amountField": "aanslagBedrag",
+                "currency": "EUR",
+                "sourceReference": "@self.id",
+                "journalEntryIdField": "journalEntryId",
+                "idempotencyKey": "(administrationId, id)"
+              }
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "totalByHeffingType": {
+            "description": "Total aanslag bedrag per heffingType for the administration, excluding reversed postings. Used by the waterschapsbelastingen index page.",
+            "filter": "state != 'reversed'",
+            "groupBy": "heffingType",
+            "operations": {
+              "totalAanslag": {
+                "field": "aanslagBedrag",
+                "operation": "sum"
+              },
+              "count": {
+                "field": "id",
+                "operation": "count"
+              }
+            }
+          },
+          "emuIncludedTotal": {
+            "description": "Total aanslag bedrag for postings included in the EMU-saldo computation (emuExclusionRule != 'excluded'). Read by the bookkeeping-emu-reporting sibling spec.",
+            "filter": "state = 'posted' AND emuExclusionRule != 'excluded'",
+            "operations": {
+              "emuTotal": {
+                "field": "aanslagBedrag",
+                "operation": "sum"
+              }
+            }
+          }
+        }
+      }
+    },
+      "SisaReport": {
+        "slug": "SisaReport",
+        "icon": "FileDocumentCheckOutline",
+        "version": "0.1.0",
+        "title": "SiSa Report",
+        "description": "Single Information Single Audit (SiSa) compliance report per fiscal year per REQ-SISA-001. Aggregates transaction counts, on-time settlement %, audit findings, and overall audit opinion for Dutch government grant compliance (WBSO, BBV).",
+        "x-schema-org": "schema:Report",
+        "type": "object",
+        "required": [
+          "reportNumber",
+          "fiscalYear",
+          "administrationId",
+          "reportDate",
+          "currency",
+          "auditOpinion",
+          "complianceStatus",
+          "lifecycleState"
+        ],
+        "properties": {
+          "reportNumber": {
+            "type": "string",
+            "description": "Unique report identifier per administration (e.g., SISA-2026-ADM001).",
+            "example": "SISA-2026-ADM001"
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "minimum": 2000,
+            "maximum": 2100,
+            "description": "Fiscal year covered by this SiSa report (e.g., 2026).",
+            "example": 2026
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration this report belongs to.",
+            "example": "adm-gem-amsterdam"
+          },
+          "reportDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date the report was generated or finalised.",
+            "example": "2026-12-31T00:00:00Z"
+          },
+          "totalTransactionCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Total number of financial transactions in the fiscal period.",
+            "nullable": true,
+            "example": 1250
+          },
+          "onTimeSettlementPercent": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Percentage of obligations settled by their due date (0–100). Computed via x-openregister-aggregations.onTimeSettlement.",
+            "nullable": true,
+            "example": 95.4
+          },
+          "totalAmount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Total financial value of all transactions in the fiscal period (EUR).",
+            "nullable": true,
+            "example": 4250000.00
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "description": "ISO 4217 currency code for all monetary amounts in this report.",
+            "default": "EUR",
+            "example": "EUR"
+          },
+          "criticalFindingsCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Count of critical-severity audit findings from ComplianceAuditTrail.",
+            "nullable": true,
+            "example": 0
+          },
+          "majorFindingsCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Count of major-severity audit findings.",
+            "nullable": true,
+            "example": 1
+          },
+          "minorFindingsCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Count of minor-severity audit findings.",
+            "nullable": true,
+            "example": 3
+          },
+          "observationsCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Count of governance observations from ComplianceAuditTrail.",
+            "nullable": true,
+            "example": 2
+          },
+          "remediationOverdueCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Count of remediation actions that are overdue (remediationDueDate < today AND remediationStatus != completed).",
+            "nullable": true,
+            "example": 0
+          },
+          "auditOpinion": {
+            "type": "string",
+            "enum": ["unqualified", "qualified", "adverse", "disclaimer"],
+            "description": "Overall audit opinion per REQ-SISA-009: unqualified (0 findings), qualified (1-2 major), adverse (3+ major or any critical), disclaimer (any overdue remediation).",
+            "example": "unqualified"
+          },
+          "managementLetterId": {
+            "type": "string",
+            "description": "FK to the ManagementLetter record associated with this report.",
+            "nullable": true,
+            "example": "mgmt-letter-2026-001"
+          },
+          "complianceStatus": {
+            "type": "string",
+            "enum": ["compliant", "non-compliant", "under-review"],
+            "description": "Overall compliance status of the administration for this fiscal year.",
+            "example": "compliant"
+          },
+          "lifecycleState": {
+            "type": "string",
+            "enum": ["draft", "finalized", "submitted", "archived"],
+            "description": "Lifecycle state of this SiSa report.",
+            "default": "draft",
+            "example": "draft"
+          },
+          "submissionDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date this report was submitted to the relevant authority.",
+            "nullable": true,
+            "example": "2027-03-01T09:00:00Z"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Report is being compiled. Aggregation data may be incomplete."
+            },
+            "finalized": {
+              "label": "Finalized",
+              "description": "Audit opinion computed; report is ready for authority submission."
+            },
+            "submitted": {
+              "label": "Submitted",
+              "description": "Report submitted to the relevant government authority."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Historical archive state; retained per audit-retention rules."
+            }
+          },
+          "transitions": {
+            "finalize": {
+              "from": "draft",
+              "to": "finalized",
+              "label": "Finalize report",
+              "description": "Lock aggregation data and compute audit opinion. Calls SisaReportingService::calculateAuditOpinion() per ADR-031 exception if OR conditional aggregations are not stable.",
+              "requires": "OCA\\Shillinq\\Service\\SisaReportingService::canBeFinalized"
+            },
+            "submit": {
+              "from": "finalized",
+              "to": "submitted",
+              "label": "Submit to authority",
+              "description": "Mark report as submitted to the government authority."
+            },
+            "archive": {
+              "from": "submitted",
+              "to": "archived",
+              "label": "Archive report",
+              "description": "Move to historical archive after authority acknowledgement."
+            },
+            "reopen": {
+              "from": "finalized",
+              "to": "draft",
+              "label": "Reopen for correction",
+              "description": "Return finalized report to draft for correction (before submission only)."
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "onTimeSettlement": {
+            "description": "On-time settlement compliance per REQ-SISA-007: COUNT(obligations settled by dueDate) / COUNT(all non-draft, non-voided obligations) * 100. Source: Obligation and Payment registers from T1 bookkeeping-general-ledger. Filters to isSISAEligible grants only.",
+            "sourceSchema": "Obligation",
+            "sourceRegister": "shillinq",
+            "filter": {
+              "administrationId": "@self.administrationId",
+              "fiscalYear": "@self.fiscalYear",
+              "grantIsSISAEligible": true,
+              "status": { "not_in": ["draft", "voided", "written-off"] }
+            },
+            "operations": {
+              "totalObligations": {
+                "field": "id",
+                "operation": "count"
+              },
+              "onTimeObligations": {
+                "field": "id",
+                "operation": "count",
+                "condition": "settledDate <= dueDate"
+              }
+            },
+            "output": "onTimeSettlementPercent",
+            "outputFormula": "onTimeObligations / totalObligations * 100"
+          },
+          "findingCounts": {
+            "description": "Aggregate audit finding counts per REQ-SISA-008 from ComplianceAuditTrail. Groups by severity and counts overdue remediations.",
+            "sourceSchema": "ComplianceAuditTrail",
+            "sourceRegister": "shillinq",
+            "filter": {
+              "administrationId": "@self.administrationId",
+              "fiscalYear": "@self.fiscalYear"
+            },
+            "operations": {
+              "criticalFindingsCount": {
+                "field": "id",
+                "operation": "count",
+                "condition": "findingSeverity = 'critical'"
+              },
+              "majorFindingsCount": {
+                "field": "id",
+                "operation": "count",
+                "condition": "findingSeverity = 'major'"
+              },
+              "minorFindingsCount": {
+                "field": "id",
+                "operation": "count",
+                "condition": "findingSeverity = 'minor'"
+              },
+              "observationsCount": {
+                "field": "id",
+                "operation": "count",
+                "condition": "observationNumber IS NOT NULL"
+              },
+              "remediationOverdueCount": {
+                "field": "id",
+                "operation": "count",
+                "condition": "remediationStatus = 'overdue'"
+              }
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "auditOpinion": {
+            "description": "Declarative audit opinion rule per REQ-SISA-009. If OR conditional aggregations are not stable, OCA\\Shillinq\\Service\\SisaReportingService::calculateAuditOpinion() implements the same rule as an ADR-031 exception.",
+            "expression": "IF remediationOverdueCount > 0 THEN 'disclaimer' ELSE IF criticalFindingsCount > 0 OR majorFindingsCount >= 3 THEN 'adverse' ELSE IF majorFindingsCount >= 1 THEN 'qualified' ELSE 'unqualified'"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "sisa-controller": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "AuditDocument": {
+        "slug": "AuditDocument",
+        "icon": "FileSignOutline",
+        "version": "0.1.0",
+        "title": "Audit Document",
+        "description": "A financial document participating in SiSa audit (invoice, purchase order, journal entry, payment). Every state transition triggers an immutable audit-trail event via OR's audit service per REQ-SISA-001 and REQ-SISA-003.",
+        "x-schema-org": "schema:DigitalDocument",
+        "type": "object",
+        "required": [
+          "documentNumber",
+          "documentType",
+          "glTransactionId",
+          "administrationId",
+          "signingUser",
+          "signingTimestamp",
+          "state",
+          "lifecycleState",
+          "currency"
+        ],
+        "properties": {
+          "documentNumber": {
+            "type": "string",
+            "description": "Unique document identifier per administration.",
+            "example": "DOC-2026-00001"
+          },
+          "documentType": {
+            "type": "string",
+            "enum": ["invoice", "purchase-order", "journal-entry", "payment"],
+            "description": "Type of financial document participating in SiSa audit.",
+            "example": "invoice"
+          },
+          "glTransactionId": {
+            "type": "string",
+            "description": "FK to the related GLTransaction (T1 general-ledger).",
+            "example": "glt-2026-00123"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this document.",
+            "example": "adm-gem-amsterdam"
+          },
+          "signingUser": {
+            "type": "string",
+            "description": "Nextcloud user ID who signed or issued the document. Captured by OR audit service on the issued/signed transition.",
+            "example": "alice@gemeente-amsterdam.nl"
+          },
+          "signingTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the document was signed. Captured by OR audit service.",
+            "example": "2026-06-15T10:30:00Z"
+          },
+          "signingReason": {
+            "type": "string",
+            "description": "Optional reason or comment on signing (e.g., 'approved per committee decision 2026-06-14').",
+            "nullable": true,
+            "example": "Approved per procurement committee decision 2026-06-14"
+          },
+          "state": {
+            "type": "string",
+            "enum": ["draft", "issued", "signed", "voided"],
+            "description": "Document signing state per REQ-SISA-004 lifecycle.",
+            "default": "draft",
+            "example": "draft"
+          },
+          "lifecycleState": {
+            "type": "string",
+            "enum": ["active", "archived"],
+            "description": "Archival lifecycle state.",
+            "default": "active",
+            "example": "active"
+          },
+          "relatedTransactionAmount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Amount of the related GL transaction for context display.",
+            "nullable": true,
+            "example": 12500.00
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "description": "ISO 4217 currency code for relatedTransactionAmount.",
+            "default": "EUR",
+            "example": "EUR"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "OR audit service captures every state transition automatically (actor, timestamp, action, before/after state). No app-local event table per ADR-022 D2."
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Document is being prepared. Not yet legally effective."
+            },
+            "issued": {
+              "label": "Issued",
+              "description": "Document issued and legally effective. Awaiting authorised signature."
+            },
+            "signed": {
+              "label": "Signed",
+              "description": "Document signed by authorised user. Immutable; captured in OR audit trail."
+            },
+            "voided": {
+              "label": "Voided",
+              "description": "Document voided. Compensating GL posting required per T1 REQ-GL-004."
+            }
+          },
+          "transitions": {
+            "issue": {
+              "from": "draft",
+              "to": "issued",
+              "label": "Issue document",
+              "description": "Operator issues the document after validating format against the linked GL transaction."
+            },
+            "sign": {
+              "from": "issued",
+              "to": "signed",
+              "label": "Sign document",
+              "description": "Authorised user signs the document. Signature authority verified per T2 authorization-mandate-management (deferred to T3 if not yet stable)."
+            },
+            "voidFromDraft": {
+              "from": "draft",
+              "to": "voided",
+              "label": "Void draft",
+              "description": "Operator cancels the document before issuance."
+            },
+            "voidFromSigned": {
+              "from": "signed",
+              "to": "voided",
+              "label": "Void signed document",
+              "description": "Operator reverses a signed document. Requires compensating GL posting created per T1 REQ-GL-004."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "sisa-controller": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "ComplianceAuditTrail": {
+        "slug": "ComplianceAuditTrail",
+        "icon": "ClipboardCheckOutline",
+        "version": "0.1.0",
+        "title": "Compliance Audit Trail",
+        "description": "Auditor working log per administration tracking audit findings (critical/major/minor), governance observations, and remediation status per REQ-SISA-005. Referenced by SisaReport aggregation to compute finding counts and overall opinion.",
+        "x-schema-org": "schema:Event",
+        "type": "object",
+        "required": [
+          "trailNumber",
+          "administrationId",
+          "fiscalYear",
+          "auditDate",
+          "status"
+        ],
+        "properties": {
+          "trailNumber": {
+            "type": "string",
+            "description": "Unique compliance audit trail identifier.",
+            "example": "CAT-2026-ADM001-001"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration under audit.",
+            "example": "adm-gem-amsterdam"
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "minimum": 2000,
+            "maximum": 2100,
+            "description": "Fiscal year under audit.",
+            "example": 2026
+          },
+          "findingNumber": {
+            "type": "string",
+            "description": "Reference number of an individual audit finding.",
+            "nullable": true,
+            "example": "FIND-2026-001"
+          },
+          "findingSeverity": {
+            "type": "string",
+            "enum": ["critical", "major", "minor"],
+            "description": "Severity classification of the finding.",
+            "nullable": true,
+            "example": "major"
+          },
+          "findingDescription": {
+            "type": "string",
+            "description": "Detailed description of the audit finding.",
+            "nullable": true,
+            "example": "BTW-afdracht over Q3 2026 niet tijdig ingediend; €18.500 achterstalling."
+          },
+          "observationNumber": {
+            "type": "string",
+            "description": "Reference number of an individual governance observation.",
+            "nullable": true,
+            "example": "OBS-2026-001"
+          },
+          "observationDescription": {
+            "type": "string",
+            "description": "Governance improvement observation (non-finding, informational).",
+            "nullable": true,
+            "example": "Inkoopproces mist formele budgethouder-goedkeuring voor orders boven €10.000."
+          },
+          "remediationDueDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Target date for remediation completion.",
+            "nullable": true,
+            "example": "2027-03-31"
+          },
+          "remediationStatus": {
+            "type": "string",
+            "enum": ["pending", "in-progress", "completed", "overdue"],
+            "description": "Current remediation status.",
+            "nullable": true,
+            "example": "pending"
+          },
+          "remediationCompletionDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date remediation was completed.",
+            "nullable": true,
+            "example": null
+          },
+          "auditorName": {
+            "type": "string",
+            "description": "Auditor or audit firm name responsible for this trail entry.",
+            "nullable": true,
+            "example": "Ernst & Young Accountants LLP"
+          },
+          "auditDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of the audit fieldwork or finding issuance.",
+            "example": "2026-11-15"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["draft", "submitted", "closed"],
+            "description": "Status of this audit trail record.",
+            "default": "draft",
+            "example": "submitted"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Trail entry being compiled by auditor."
+            },
+            "submitted": {
+              "label": "Submitted",
+              "description": "Trail entry submitted to management for acknowledgement."
+            },
+            "closed": {
+              "label": "Closed",
+              "description": "Finding remediated or observation acknowledged; trail closed."
+            }
+          },
+          "transitions": {
+            "submit": {
+              "from": "draft",
+              "to": "submitted",
+              "label": "Submit to management",
+              "description": "Auditor submits the finding or observation to management."
+            },
+            "close": {
+              "from": "submitted",
+              "to": "closed",
+              "label": "Close trail",
+              "description": "Management acknowledges finding or remediation is complete."
+            }
+          }
+        }
+      },
+      "ManagementLetter": {
+        "slug": "ManagementLetter",
+        "icon": "EmailOutline",
+        "version": "0.1.0",
+        "title": "Management Letter",
+        "description": "Formal auditor-to-management communication documenting SiSa findings, observations, and remediation recommendations per REQ-SISA-006. T2 provides the data structure; T4 attaches external auditor signature and authority submission. Note: a ManagementLetter entity also exists in compliance-audit spec; reconciliation during T2/T4 implementing cycle will merge or disambiguate.",
+        "x-schema-org": "schema:DigitalDocument",
+        "type": "object",
+        "required": [
+          "letterNumber",
+          "sisaReportId",
+          "auditorName",
+          "issuedDate",
+          "status"
+        ],
+        "properties": {
+          "letterNumber": {
+            "type": "string",
+            "description": "Unique management letter identifier.",
+            "example": "ML-2026-ADM001-001"
+          },
+          "sisaReportId": {
+            "type": "string",
+            "description": "FK to the SisaReport this letter belongs to.",
+            "example": "sisa-report-uuid-001"
+          },
+          "auditorName": {
+            "type": "string",
+            "description": "Auditor or audit firm name who issued this letter.",
+            "example": "Deloitte Accountants B.V."
+          },
+          "issuedDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date this management letter was issued.",
+            "example": "2027-01-15"
+          },
+          "dueResponseDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Deadline for management to respond to the letter.",
+            "nullable": true,
+            "example": "2027-02-15"
+          },
+          "findingsSummary": {
+            "type": "string",
+            "description": "Summary of audit findings included in this letter.",
+            "nullable": true,
+            "example": "1 major bevinding (BTW-afdracht) en 3 mineure bevindingen aangetroffen in FY2026."
+          },
+          "observationsSummary": {
+            "type": "string",
+            "description": "Summary of governance improvement observations.",
+            "nullable": true,
+            "example": "Aanbeveling: versterking van het inkoopproces voor orders boven €10.000."
+          },
+          "remediationRecommendations": {
+            "type": "string",
+            "description": "Recommended corrective actions for identified findings.",
+            "nullable": true,
+            "example": "Herstel BTW-aangifte Q3 2026 vóór 31 maart 2027. Implementeer budgethouder-goedkeuring."
+          },
+          "auditOpinion": {
+            "type": "string",
+            "description": "Auditor's audit opinion as stated in this letter (pre-computed from SisaReport.auditOpinion).",
+            "nullable": true,
+            "example": "qualified"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["draft", "issued", "acknowledged", "archived"],
+            "description": "Status of this management letter.",
+            "default": "draft",
+            "example": "issued"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Letter is being composed."
+            },
+            "issued": {
+              "label": "Issued",
+              "description": "Letter formally issued to management."
+            },
+            "acknowledged": {
+              "label": "Acknowledged",
+              "description": "Management has acknowledged receipt and committed to remediation."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Letter archived after remediation cycle completion."
+            }
+          },
+          "transitions": {
+            "issue": {
+              "from": "draft",
+              "to": "issued",
+              "label": "Issue letter",
+              "description": "Auditor formally issues the management letter."
+            },
+            "acknowledge": {
+              "from": "issued",
+              "to": "acknowledged",
+              "label": "Acknowledge",
+              "description": "Management acknowledges the letter and commits to action."
+            },
+            "archive": {
+              "from": "acknowledged",
+              "to": "archived",
+              "label": "Archive",
+              "description": "Archive letter after remediation cycle is complete."
+            }
+          }
+        }
+      },
+      "Grant": {
+        "slug": "Grant",
+        "icon": "HandCoinOutline",
+        "version": "0.1.0",
+        "title": "Grant",
+        "description": "A financial grant or subsidy awarded to an organization under a subsidy scheme (WBSO, BBV, NSO, Tozo). Includes isSISAEligible flag per REQ-SISA-010 to control SiSa report aggregation filtering. Full grant lifecycle (application, disbursement, compliance) is declared by add-shillinq-grant-subsidy-management; this stub adds the SiSa eligibility field.",
+        "x-schema-org": "schema:Grant",
+        "type": "object",
+        "required": [
+          "grantId",
+          "name",
+          "awardedAmount",
+          "awardDate",
+          "status"
+        ],
+        "properties": {
+          "grantId": {
+            "type": "string",
+            "description": "Unique grant identifier.",
+            "example": "WBSO-2026-AMS-001"
+          },
+          "name": {
+            "type": "string",
+            "description": "Grant name or description.",
+            "example": "WBSO Subsidie 2026 — R&D innovatie"
+          },
+          "awardedAmount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Total amount awarded in EUR.",
+            "example": 125000.00
+          },
+          "awardDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date the grant was formally awarded.",
+            "example": "2026-01-01T00:00:00Z"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "completed", "suspended", "revoked"],
+            "description": "Current grant status.",
+            "default": "active",
+            "example": "active"
+          },
+          "accountingStandard": {
+            "type": "string",
+            "description": "Governmental accounting standard applied (e.g., BBV, RJ290).",
+            "nullable": true,
+            "example": "BBV"
+          },
+          "isSISAEligible": {
+            "type": "boolean",
+            "description": "Whether this grant requires Single Information Single Audit compliance per REQ-SISA-010. WBSO and BBV grants are eligible; Tozo and NSO grants are not.",
+            "default": false,
+            "example": true
           }
         }
       }
@@ -745,6 +2952,285 @@
           }
         }
       }
-    }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "openregister",
+          "schema": "ScheduledWorkflow",
+          "slug": "shillinq-bank-transaction-polling"
+        },
+        "name": "Bank Transaction Polling",
+        "description": "Periodic polling workflow that calls the openconnector PSD2 aggregator source by slug, normalises aggregator JSON to CAMT.053 format, attaches the document via docudesk, and creates BankStatement records. Runs 4× daily per REQ-BC-004 + ADR-031 path 2. No shillinq-side TimedJob.",
+        "register": "shillinq",
+        "schema": "BankConnection",
+        "cronExpression": "0 */6 * * *",
+        "workflowSource": "openconnector",
+        "workflowName": "shillinq-bank-transaction-import",
+        "isEnabled": true
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "SisaReport",
+          "slug": "sisa-2024-adm-amsterdam"
+        },
+        "reportNumber": "SISA-2024-ADM-AMS001",
+        "fiscalYear": 2024,
+        "administrationId": "adm-gem-amsterdam",
+        "reportDate": "2025-02-28T00:00:00Z",
+        "totalTransactionCount": 1842,
+        "onTimeSettlementPercent": 97.8,
+        "totalAmount": 8350000.00,
+        "currency": "EUR",
+        "criticalFindingsCount": 0,
+        "majorFindingsCount": 0,
+        "minorFindingsCount": 2,
+        "observationsCount": 1,
+        "remediationOverdueCount": 0,
+        "auditOpinion": "unqualified",
+        "complianceStatus": "compliant",
+        "lifecycleState": "submitted",
+        "submissionDate": "2025-03-01T09:00:00Z"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "SisaReport",
+          "slug": "sisa-2025-adm-amsterdam"
+        },
+        "reportNumber": "SISA-2025-ADM-AMS001",
+        "fiscalYear": 2025,
+        "administrationId": "adm-gem-amsterdam",
+        "reportDate": "2026-02-15T00:00:00Z",
+        "totalTransactionCount": 1975,
+        "onTimeSettlementPercent": 94.2,
+        "totalAmount": 9120000.00,
+        "currency": "EUR",
+        "criticalFindingsCount": 0,
+        "majorFindingsCount": 2,
+        "minorFindingsCount": 3,
+        "observationsCount": 2,
+        "remediationOverdueCount": 0,
+        "auditOpinion": "qualified",
+        "complianceStatus": "non-compliant",
+        "lifecycleState": "finalized"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "SisaReport",
+          "slug": "sisa-2025-adm-rotterdam"
+        },
+        "reportNumber": "SISA-2025-ADM-ROT001",
+        "fiscalYear": 2025,
+        "administrationId": "adm-gem-rotterdam",
+        "reportDate": "2026-03-01T00:00:00Z",
+        "totalTransactionCount": 2240,
+        "onTimeSettlementPercent": 88.5,
+        "totalAmount": 12450000.00,
+        "currency": "EUR",
+        "criticalFindingsCount": 1,
+        "majorFindingsCount": 1,
+        "minorFindingsCount": 4,
+        "observationsCount": 3,
+        "remediationOverdueCount": 1,
+        "auditOpinion": "disclaimer",
+        "complianceStatus": "non-compliant",
+        "lifecycleState": "draft"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ComplianceAuditTrail",
+          "slug": "cat-2025-amsterdam-btw"
+        },
+        "trailNumber": "CAT-2025-AMS-001",
+        "administrationId": "adm-gem-amsterdam",
+        "fiscalYear": 2025,
+        "findingNumber": "FIND-2025-AMS-001",
+        "findingSeverity": "major",
+        "findingDescription": "BTW-afdracht over Q3 2025 niet tijdig ingediend bij de Belastingdienst. Achterstalling van €18.500 geconstateerd in boeking 4320.",
+        "observationNumber": null,
+        "observationDescription": null,
+        "remediationDueDate": "2026-06-30",
+        "remediationStatus": "in-progress",
+        "remediationCompletionDate": null,
+        "auditorName": "Ernst & Young Accountants LLP",
+        "auditDate": "2025-11-15",
+        "status": "submitted"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ComplianceAuditTrail",
+          "slug": "cat-2025-amsterdam-inkoop"
+        },
+        "trailNumber": "CAT-2025-AMS-002",
+        "administrationId": "adm-gem-amsterdam",
+        "fiscalYear": 2025,
+        "findingNumber": "FIND-2025-AMS-002",
+        "findingSeverity": "major",
+        "findingDescription": "Inkoopopdrachten boven €25.000 zonder formele aanbestedingsprocedure (6 gevallen, totaal €187.000).",
+        "observationNumber": "OBS-2025-AMS-001",
+        "observationDescription": "Aanbeveling: implementeer automatische drempelwaarde-controle in inkoopsysteem voor orders boven €10.000.",
+        "remediationDueDate": "2026-09-30",
+        "remediationStatus": "pending",
+        "remediationCompletionDate": null,
+        "auditorName": "Ernst & Young Accountants LLP",
+        "auditDate": "2025-11-15",
+        "status": "submitted"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ComplianceAuditTrail",
+          "slug": "cat-2025-rotterdam-critical"
+        },
+        "trailNumber": "CAT-2025-ROT-001",
+        "administrationId": "adm-gem-rotterdam",
+        "fiscalYear": 2025,
+        "findingNumber": "FIND-2025-ROT-001",
+        "findingSeverity": "critical",
+        "findingDescription": "Tekenbevoegdheid overschreden: factuur van €450.000 getekend door functionaris zonder mandaat voor bedragen boven €100.000 (REQ-SISA-004 handtekeningbevoegdheid).",
+        "observationNumber": null,
+        "observationDescription": null,
+        "remediationDueDate": "2026-04-30",
+        "remediationStatus": "overdue",
+        "remediationCompletionDate": null,
+        "auditorName": "Deloitte Accountants B.V.",
+        "auditDate": "2026-01-20",
+        "status": "submitted"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "AuditDocument",
+          "slug": "auditdoc-2025-inv-00123"
+        },
+        "documentNumber": "DOC-2025-00123",
+        "documentType": "invoice",
+        "glTransactionId": "glt-2025-00123",
+        "administrationId": "adm-gem-amsterdam",
+        "signingUser": "j.de.vries@amsterdam.nl",
+        "signingTimestamp": "2025-09-15T14:22:00Z",
+        "signingReason": "Goedgekeurd conform inkooporder IO-2025-0456",
+        "state": "signed",
+        "lifecycleState": "active",
+        "relatedTransactionAmount": 12500.00,
+        "currency": "EUR"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "AuditDocument",
+          "slug": "auditdoc-2025-po-00456"
+        },
+        "documentNumber": "DOC-2025-00456",
+        "documentType": "purchase-order",
+        "glTransactionId": "glt-2025-00456",
+        "administrationId": "adm-gem-rotterdam",
+        "signingUser": "m.bakker@rotterdam.nl",
+        "signingTimestamp": "2025-11-01T09:45:00Z",
+        "signingReason": null,
+        "state": "issued",
+        "lifecycleState": "active",
+        "relatedTransactionAmount": 87300.00,
+        "currency": "EUR"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "AuditDocument",
+          "slug": "auditdoc-2025-je-00789"
+        },
+        "documentNumber": "DOC-2025-00789",
+        "documentType": "journal-entry",
+        "glTransactionId": "glt-2025-00789",
+        "administrationId": "adm-gem-amsterdam",
+        "signingUser": "s.hoekstra@amsterdam.nl",
+        "signingTimestamp": "2025-12-31T16:00:00Z",
+        "signingReason": "Jaarafsluiting 2025 memoriaalpost",
+        "state": "signed",
+        "lifecycleState": "active",
+        "relatedTransactionAmount": 0.00,
+        "currency": "EUR"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ManagementLetter",
+          "slug": "mgmt-letter-2025-amsterdam"
+        },
+        "letterNumber": "ML-2025-AMS-001",
+        "sisaReportId": "sisa-2025-adm-amsterdam",
+        "auditorName": "Ernst & Young Accountants LLP",
+        "issuedDate": "2026-02-20",
+        "dueResponseDate": "2026-03-20",
+        "findingsSummary": "Twee majeure bevindingen aangetroffen: (1) BTW-afdracht Q3 2025 niet tijdig ingediend; (2) inkoopopdrachten zonder aanbestedingsprocedure. Geen kritieke bevindingen.",
+        "observationsSummary": "Aanbeveling versterking inkoopproces voor drempelwaarden boven €10.000.",
+        "remediationRecommendations": "1. Herstel BTW-aangifte Q3 2025 vóór 30 juni 2026. 2. Implementeer automatische drempelwaarde-controle. 3. Train inkoopmedewerkers op aanbestedingsregels.",
+        "auditOpinion": "qualified",
+        "status": "issued"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ManagementLetter",
+          "slug": "mgmt-letter-2025-rotterdam"
+        },
+        "letterNumber": "ML-2025-ROT-001",
+        "sisaReportId": "sisa-2025-adm-rotterdam",
+        "auditorName": "Deloitte Accountants B.V.",
+        "issuedDate": "2026-03-10",
+        "dueResponseDate": "2026-04-10",
+        "findingsSummary": "Kritieke bevinding: overschrijding tekenbevoegdheid (€450.000 zonder mandaat). Herstel niet tijdig afgerond — remediëring verloopt.",
+        "observationsSummary": "Drie governance-observaties t.a.v. inkoopproces, budgetbeheer en periodieke mandaatcontroles.",
+        "remediationRecommendations": "1. Onmiddellijk mandaatregister actualiseren. 2. Terugbetalingsregeling treffen voor bedrag boven mandaat. 3. Kwartaalcontrole op tekenbevoegdheden implementeren.",
+        "auditOpinion": "disclaimer",
+        "status": "draft"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Grant",
+          "slug": "grant-wbso-2026-amsterdam"
+        },
+        "grantId": "WBSO-2026-AMS-001",
+        "name": "WBSO Subsidie 2026 — Softwareontwikkeling gemeente Amsterdam",
+        "awardedAmount": 125000.00,
+        "awardDate": "2026-01-01T00:00:00Z",
+        "status": "active",
+        "accountingStandard": "BBV",
+        "isSISAEligible": true
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Grant",
+          "slug": "grant-tozo-2025-rotterdam"
+        },
+        "grantId": "TOZO-2025-ROT-001",
+        "name": "Tozo Overbruggingskrediet 2025 — Rotterdam",
+        "awardedAmount": 45000.00,
+        "awardDate": "2025-04-01T00:00:00Z",
+        "status": "completed",
+        "accountingStandard": null,
+        "isSISAEligible": false
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Grant",
+          "slug": "grant-bbv-2026-amsterdam"
+        },
+        "grantId": "BBV-2026-AMS-001",
+        "name": "BBV Specifieke Uitkering 2026 — Amsterdam Jeugdzorg",
+        "awardedAmount": 2350000.00,
+        "awardDate": "2026-01-15T00:00:00Z",
+        "status": "active",
+        "accountingStandard": "BBV",
+        "isSISAEligible": true
+      }
+    ]
   }
-}
