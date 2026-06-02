@@ -280,12 +280,12 @@
 					{
 						"key": "fiscalYear",
 						"label": "Fiscal Year",
-						"type": "integer"
+						"type": "number"
 					},
 					{
 						"key": "snapshotDate",
 						"label": "As of Date",
-						"type": "date"
+						"type": "string"
 					},
 					{
 						"key": "configurationVersionId",
@@ -295,7 +295,7 @@
 					{
 						"key": "glTransactionCount",
 						"label": "GL Transactions Included",
-						"type": "integer"
+						"type": "number"
 					},
 					{
 						"key": "ytdTaxableIncome",
@@ -384,7 +384,7 @@
 					{
 						"key": "fiscalYear",
 						"label": "Fiscal Year",
-						"type": "integer"
+						"type": "number"
 					},
 					{
 						"key": "regimeType",
@@ -410,7 +410,7 @@
 					{
 						"key": "filingDeadline",
 						"label": "Filing Deadline",
-						"type": "date"
+						"type": "string"
 					},
 					{
 						"key": "categoryMappingRules",
@@ -431,12 +431,12 @@
 					{
 						"key": "effectiveFrom",
 						"label": "Effective From",
-						"type": "date"
+						"type": "string"
 					},
 					{
 						"key": "effectiveUntil",
 						"label": "Effective Until",
-						"type": "date"
+						"type": "string"
 					},
 					{
 						"key": "status",
