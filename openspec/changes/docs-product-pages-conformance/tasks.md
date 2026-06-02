@@ -121,31 +121,31 @@
 
 ## Verification
 
-- [ ] All tasks checked off
-- [ ] `openspec validate` passes
-- [ ] Manual testing against acceptance criteria
-- [ ] Code review against spec requirements
-- [ ] `git grep -E '—' docs/ ':(exclude)docs/node_modules' ':(exclude)*.lock' ':(exclude)*.lock.*'` returns 1 (no matches)
-- [ ] `cd docs && npm install --legacy-peer-deps && npm run build` exits 0
+- [x] All tasks checked off
+- [x] `openspec validate` passes
+- [x] Manual testing against acceptance criteria
+- [x] Code review against spec requirements
+- [x] `git grep -E '—' docs/ ':(exclude)docs/node_modules' ':(exclude)*.lock' ':(exclude)*.lock.*'` returns 1 (no matches)
+- [x] `cd docs && npm install --legacy-peer-deps && npm run build` exits 0
 
 ## Tests (company-wide ADR-009)
 
 <!-- Required for all changes. Mark N/A with justification if not applicable. -->
 
-- [ ] PHPUnit unit tests for new/changed business logic (`tests/Unit/`) — N/A: no PHP code changes in this change
-- [ ] Newman/Postman tests for new/changed API endpoints — N/A: no API endpoints added or changed
-- [ ] Browser tests (Playwright MCP) for UI changes — N/A: docs site changes; build pass is the verification gate
-- [ ] All tests pass (`composer test`, `newman run`) — N/A: docs-only change; `npm run build` in `docs/` is the test gate
+- [x] PHPUnit unit tests for new/changed business logic (`tests/Unit/`) — N/A: no PHP code changes in this change
+- [x] Newman/Postman tests for new/changed API endpoints — N/A: no API endpoints added or changed
+- [x] Browser tests (Playwright MCP) for UI changes — N/A: docs site changes; build pass is the verification gate
+- [x] All tests pass (`composer test`, `newman run`) — N/A: docs-only change; `npm run build` in `docs/` is the test gate
 
 ## Documentation (company-wide ADR-010)
 
 <!-- This change IS the documentation update — it brings docs/ into canonical conformance. -->
 
 - [x] Feature documentation updated in `docs/` — this change IS the docs update
-- [ ] Screenshot captured and committed to `docs/images/` — N/A: structural/config changes only; no new UI screenshots required
+- [x] Screenshot captured and committed to `docs/images/` — N/A: structural/config changes only; no new UI screenshots required
 
 ## i18n (company-wide ADR-005)
 
 <!-- No new user-facing application strings are added. The nl locale is declared in config (issue #79 ships translation content). -->
 
-- [ ] Dutch (`nl_NL`) and English (`en_US`) translation strings added — N/A: no new app strings; nl locale is declared but translation content ships via issue #79
+- [x] Dutch (`nl_NL`) and English (`en_US`) translation strings added — N/A: no new app strings; nl locale is declared but translation content ships via issue #79
