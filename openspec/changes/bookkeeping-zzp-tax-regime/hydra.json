@@ -11,7 +11,7 @@
       "cycle": 1,
       "trigger": "build:queued",
       "started_at": "2026-06-01T23:07:16Z",
-      "ended_at": "2026-06-02T17:06:13Z",
+      "ended_at": "2026-06-02T18:41:29Z",
       "outcome": "done",
       "outcome_reason": "pipeline complete \u2014 reviews passed and applier passed (if run)",
       "pattern_tags": [],
