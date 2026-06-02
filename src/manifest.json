@@ -441,7 +441,8 @@
 					"label": "Bewaartermijnen",
 					"icon": "ShieldCheckOutline",
 					"route": "Bewaartermijnen",
-					"order": 10				}
+					"order": 10
+				}
 			]
 		},
 		{
@@ -826,7 +827,9 @@
 			"order": 26,
 			"visibility": {
 				"field": "administrationType",
-				"in": ["mkb"]
+				"in": [
+					"mkb"
+				]
 			},
 			"children": [
 				{
@@ -865,6 +868,42 @@
 					"order": 50
 				}
 			]
+		},
+		{
+			"id": "Receivables",
+			"label": "Accounts receivable",
+			"icon": "icon-category-organization",
+			"order": 25,
+			"children": [
+				{
+					"id": "Customers",
+					"label": "Customers",
+					"icon": "AccountTieOutline",
+					"route": "Customers",
+					"order": 10
+				},
+				{
+					"id": "ARInvoices",
+					"label": "Accounts receivable",
+					"icon": "FileDocumentOutline",
+					"route": "ARInvoices",
+					"order": 20
+				},
+				{
+					"id": "ARAging",
+					"label": "AR aging",
+					"icon": "ChartTimelineVariant",
+					"route": "ARAging",
+					"order": 30
+				},
+				{
+					"id": "DunningLog",
+					"label": "Dunning log",
+					"icon": "BellAlertOutline",
+					"route": "DunningLog",
+					"order": 40
+				}
+			]
 		}
 	],
 	"pages": [
@@ -877,12 +916,36 @@
 				"register": "shillinq",
 				"schema": "PensionPlan",
 				"columns": [
-					{ "key": "planName", "label": "Plan Name", "sortable": true },
-					{ "key": "planType", "label": "Type", "sortable": true },
-					{ "key": "regulatoryFramework", "label": "Framework", "sortable": true },
-					{ "key": "provider", "label": "Provider", "sortable": true },
-					{ "key": "participantCountActive", "label": "Active", "sortable": true },
-					{ "key": "status", "label": "Status", "sortable": true }
+					{
+						"key": "planName",
+						"label": "Plan Name",
+						"sortable": true
+					},
+					{
+						"key": "planType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "regulatoryFramework",
+						"label": "Framework",
+						"sortable": true
+					},
+					{
+						"key": "provider",
+						"label": "Provider",
+						"sortable": true
+					},
+					{
+						"key": "participantCountActive",
+						"label": "Active",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "planName",
 				"detailRoute": "PensionPlanDetail"
@@ -897,23 +960,91 @@
 				"register": "shillinq",
 				"schema": "PensionPlan",
 				"fields": [
-					{ "key": "planName", "label": "Plan Name", "type": "string" },
-					{ "key": "planType", "label": "Plan Type", "type": "string" },
-					{ "key": "country", "label": "Country", "type": "string" },
-					{ "key": "regulatoryFramework", "label": "Regulatory Framework", "type": "string" },
-					{ "key": "funded", "label": "Funded", "type": "boolean" },
-					{ "key": "provider", "label": "Provider", "type": "string" },
-					{ "key": "inceptionDate", "label": "Inception Date", "type": "date" },
-					{ "key": "terminationDate", "label": "Termination Date", "type": "date" },
-					{ "key": "accrualRate", "label": "Accrual Rate", "type": "number" },
-					{ "key": "pensionableSalaryDefinition", "label": "Pensionable Salary Definition", "type": "string" },
-					{ "key": "retirementAge", "label": "Retirement Age", "type": "integer" },
-					{ "key": "participantCountActive", "label": "Active Participants", "type": "integer" },
-					{ "key": "participantCountDeferred", "label": "Deferred Participants", "type": "integer" },
-					{ "key": "participantCountRetirees", "label": "Retirees", "type": "integer" },
-					{ "key": "linkedHrmqGroup", "label": "HRMQ Roster Group", "type": "string" },
-					{ "key": "status", "label": "Status", "type": "string" },
-					{ "key": "notes", "label": "Notes", "type": "string" }
+					{
+						"key": "planName",
+						"label": "Plan Name",
+						"type": "string"
+					},
+					{
+						"key": "planType",
+						"label": "Plan Type",
+						"type": "string"
+					},
+					{
+						"key": "country",
+						"label": "Country",
+						"type": "string"
+					},
+					{
+						"key": "regulatoryFramework",
+						"label": "Regulatory Framework",
+						"type": "string"
+					},
+					{
+						"key": "funded",
+						"label": "Funded",
+						"type": "boolean"
+					},
+					{
+						"key": "provider",
+						"label": "Provider",
+						"type": "string"
+					},
+					{
+						"key": "inceptionDate",
+						"label": "Inception Date",
+						"type": "date"
+					},
+					{
+						"key": "terminationDate",
+						"label": "Termination Date",
+						"type": "date"
+					},
+					{
+						"key": "accrualRate",
+						"label": "Accrual Rate",
+						"type": "number"
+					},
+					{
+						"key": "pensionableSalaryDefinition",
+						"label": "Pensionable Salary Definition",
+						"type": "string"
+					},
+					{
+						"key": "retirementAge",
+						"label": "Retirement Age",
+						"type": "integer"
+					},
+					{
+						"key": "participantCountActive",
+						"label": "Active Participants",
+						"type": "integer"
+					},
+					{
+						"key": "participantCountDeferred",
+						"label": "Deferred Participants",
+						"type": "integer"
+					},
+					{
+						"key": "participantCountRetirees",
+						"label": "Retirees",
+						"type": "integer"
+					},
+					{
+						"key": "linkedHrmqGroup",
+						"label": "HRMQ Roster Group",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "notes",
+						"label": "Notes",
+						"type": "string"
+					}
 				],
 				"lifecycleActions": true,
 				"relatedLists": [
@@ -921,28 +1052,68 @@
 						"id": "plan-valuations",
 						"title": "Actuarial Valuations",
 						"schema": "ActuarialValuation",
-						"filter": { "plan": "@self.id" },
+						"filter": {
+							"plan": "@self.id"
+						},
 						"columns": [
-							{ "key": "valuationDate", "label": "Valuation Date" },
-							{ "key": "actuary", "label": "Actuary" },
-							{ "key": "methodology", "label": "Method" },
-							{ "key": "dboGross", "label": "DBO (EUR)" },
-							{ "key": "planAssetsFairValue", "label": "Plan Assets (EUR)" },
-							{ "key": "netPensionLiability", "label": "Net Liability (EUR)" },
-							{ "key": "approvalStatus", "label": "Status" }
+							{
+								"key": "valuationDate",
+								"label": "Valuation Date"
+							},
+							{
+								"key": "actuary",
+								"label": "Actuary"
+							},
+							{
+								"key": "methodology",
+								"label": "Method"
+							},
+							{
+								"key": "dboGross",
+								"label": "DBO (EUR)"
+							},
+							{
+								"key": "planAssetsFairValue",
+								"label": "Plan Assets (EUR)"
+							},
+							{
+								"key": "netPensionLiability",
+								"label": "Net Liability (EUR)"
+							},
+							{
+								"key": "approvalStatus",
+								"label": "Status"
+							}
 						]
 					},
 					{
 						"id": "plan-movements",
 						"title": "Pension Movements",
 						"schema": "PensionMovement",
-						"filter": { "plan": "@self.id" },
+						"filter": {
+							"plan": "@self.id"
+						},
 						"columns": [
-							{ "key": "period", "label": "Period" },
-							{ "key": "serviceCostCurrent", "label": "Service Cost (EUR)" },
-							{ "key": "netInterestCost", "label": "Net Interest (EUR)" },
-							{ "key": "netPensionMovementPL", "label": "P&L (EUR)" },
-							{ "key": "netPensionMovementOCI", "label": "OCI (EUR)" }
+							{
+								"key": "period",
+								"label": "Period"
+							},
+							{
+								"key": "serviceCostCurrent",
+								"label": "Service Cost (EUR)"
+							},
+							{
+								"key": "netInterestCost",
+								"label": "Net Interest (EUR)"
+							},
+							{
+								"key": "netPensionMovementPL",
+								"label": "P&L (EUR)"
+							},
+							{
+								"key": "netPensionMovementOCI",
+								"label": "OCI (EUR)"
+							}
 						]
 					}
 				],
@@ -958,13 +1129,41 @@
 				"register": "shillinq",
 				"schema": "ActuarialValuation",
 				"columns": [
-					{ "key": "valuationDate", "label": "Valuation Date", "sortable": true },
-					{ "key": "plan", "label": "Plan", "sortable": true },
-					{ "key": "actuary", "label": "Actuary", "sortable": true },
-					{ "key": "methodology", "label": "Method", "sortable": true },
-					{ "key": "dboGross", "label": "DBO (EUR)", "sortable": true },
-					{ "key": "netPensionLiability", "label": "Net Liability (EUR)", "sortable": true },
-					{ "key": "approvalStatus", "label": "Status", "sortable": true }
+					{
+						"key": "valuationDate",
+						"label": "Valuation Date",
+						"sortable": true
+					},
+					{
+						"key": "plan",
+						"label": "Plan",
+						"sortable": true
+					},
+					{
+						"key": "actuary",
+						"label": "Actuary",
+						"sortable": true
+					},
+					{
+						"key": "methodology",
+						"label": "Method",
+						"sortable": true
+					},
+					{
+						"key": "dboGross",
+						"label": "DBO (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "netPensionLiability",
+						"label": "Net Liability (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "approvalStatus",
+						"label": "Status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "-valuationDate",
 				"detailRoute": "ActuarialValuationDetail"
@@ -979,28 +1178,116 @@
 				"register": "shillinq",
 				"schema": "ActuarialValuation",
 				"fields": [
-					{ "key": "plan", "label": "Plan", "type": "string" },
-					{ "key": "valuationDate", "label": "Valuation Date", "type": "date" },
-					{ "key": "actuary", "label": "Actuary", "type": "string" },
-					{ "key": "actuaryCertificationNumber", "label": "Certification Number", "type": "string" },
-					{ "key": "methodology", "label": "Methodology", "type": "string" },
-					{ "key": "dboGross", "label": "DBO Gross (EUR)", "type": "number" },
-					{ "key": "dboPastService", "label": "DBO Past Service (EUR)", "type": "number" },
-					{ "key": "dboFutureService", "label": "DBO Future Service (EUR)", "type": "number" },
-					{ "key": "discountRate", "label": "Discount Rate (%)", "type": "number" },
-					{ "key": "discountRateSource", "label": "Discount Rate Source", "type": "string" },
-					{ "key": "discountRateGovernmentBondFlag", "label": "Government-Bond Source", "type": "boolean" },
-					{ "key": "salaryGrowthAssumption", "label": "Salary Growth (%)", "type": "number" },
-					{ "key": "pensionGrowthAssumption", "label": "Pension Growth (%)", "type": "number" },
-					{ "key": "inflationAssumption", "label": "Inflation (%)", "type": "number" },
-					{ "key": "mortalityTable", "label": "Mortality Table", "type": "string" },
-					{ "key": "retirementAgeAssumption", "label": "Retirement Age", "type": "integer" },
-					{ "key": "planAssetsFairValue", "label": "Plan Assets Fair Value (EUR)", "type": "number" },
-					{ "key": "assetCeilingApplied", "label": "Asset Ceiling Applied (EUR)", "type": "number" },
-					{ "key": "netPensionLiability", "label": "Net Pension Liability (EUR)", "type": "number" },
-					{ "key": "approvalStatus", "label": "Approval Status", "type": "string" },
-					{ "key": "approvedBy", "label": "Approved By", "type": "string" },
-					{ "key": "approvedAt", "label": "Approved At", "type": "date-time" }
+					{
+						"key": "plan",
+						"label": "Plan",
+						"type": "string"
+					},
+					{
+						"key": "valuationDate",
+						"label": "Valuation Date",
+						"type": "date"
+					},
+					{
+						"key": "actuary",
+						"label": "Actuary",
+						"type": "string"
+					},
+					{
+						"key": "actuaryCertificationNumber",
+						"label": "Certification Number",
+						"type": "string"
+					},
+					{
+						"key": "methodology",
+						"label": "Methodology",
+						"type": "string"
+					},
+					{
+						"key": "dboGross",
+						"label": "DBO Gross (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "dboPastService",
+						"label": "DBO Past Service (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "dboFutureService",
+						"label": "DBO Future Service (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "discountRate",
+						"label": "Discount Rate (%)",
+						"type": "number"
+					},
+					{
+						"key": "discountRateSource",
+						"label": "Discount Rate Source",
+						"type": "string"
+					},
+					{
+						"key": "discountRateGovernmentBondFlag",
+						"label": "Government-Bond Source",
+						"type": "boolean"
+					},
+					{
+						"key": "salaryGrowthAssumption",
+						"label": "Salary Growth (%)",
+						"type": "number"
+					},
+					{
+						"key": "pensionGrowthAssumption",
+						"label": "Pension Growth (%)",
+						"type": "number"
+					},
+					{
+						"key": "inflationAssumption",
+						"label": "Inflation (%)",
+						"type": "number"
+					},
+					{
+						"key": "mortalityTable",
+						"label": "Mortality Table",
+						"type": "string"
+					},
+					{
+						"key": "retirementAgeAssumption",
+						"label": "Retirement Age",
+						"type": "integer"
+					},
+					{
+						"key": "planAssetsFairValue",
+						"label": "Plan Assets Fair Value (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "assetCeilingApplied",
+						"label": "Asset Ceiling Applied (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "netPensionLiability",
+						"label": "Net Pension Liability (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "approvalStatus",
+						"label": "Approval Status",
+						"type": "string"
+					},
+					{
+						"key": "approvedBy",
+						"label": "Approved By",
+						"type": "string"
+					},
+					{
+						"key": "approvedAt",
+						"label": "Approved At",
+						"type": "date-time"
+					}
 				],
 				"lifecycleActions": true,
 				"relatedLists": [
@@ -1008,23 +1295,48 @@
 						"id": "valuation-sensitivity",
 						"title": "Sensitivity Analysis",
 						"schema": "PensionAssumptionSensitivity",
-						"filter": { "valuation": "@self.id" },
+						"filter": {
+							"valuation": "@self.id"
+						},
 						"columns": [
-							{ "key": "assumption", "label": "Assumption" },
-							{ "key": "direction", "label": "Direction" },
-							{ "key": "effectOnDBO", "label": "Effect on DBO (EUR)" },
-							{ "key": "effectOnServiceCost", "label": "Effect on Service Cost (EUR)" }
+							{
+								"key": "assumption",
+								"label": "Assumption"
+							},
+							{
+								"key": "direction",
+								"label": "Direction"
+							},
+							{
+								"key": "effectOnDBO",
+								"label": "Effect on DBO (EUR)"
+							},
+							{
+								"key": "effectOnServiceCost",
+								"label": "Effect on Service Cost (EUR)"
+							}
 						]
 					},
 					{
 						"id": "valuation-assets",
 						"title": "Asset Breakdown",
 						"schema": "PensionAssetDetail",
-						"filter": { "valuation": "@self.id" },
+						"filter": {
+							"valuation": "@self.id"
+						},
 						"columns": [
-							{ "key": "assetCategory", "label": "Category" },
-							{ "key": "fairValue", "label": "Fair Value (EUR)" },
-							{ "key": "level", "label": "IFRS 13 Level" }
+							{
+								"key": "assetCategory",
+								"label": "Category"
+							},
+							{
+								"key": "fairValue",
+								"label": "Fair Value (EUR)"
+							},
+							{
+								"key": "level",
+								"label": "IFRS 13 Level"
+							}
 						]
 					}
 				],
@@ -1040,9 +1352,21 @@
 				"register": "shillinq",
 				"schema": "PensionDisclosureTabel",
 				"columns": [
-					{ "key": "valuationDate", "label": "Valuation Date", "sortable": true },
-					{ "key": "plan", "label": "Plan", "sortable": true },
-					{ "key": "status", "label": "Status", "sortable": true }
+					{
+						"key": "valuationDate",
+						"label": "Valuation Date",
+						"sortable": true
+					},
+					{
+						"key": "plan",
+						"label": "Plan",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "-valuationDate",
 				"detailRoute": "PensionDisclosureTableDetail"
@@ -1057,12 +1381,36 @@
 				"register": "shillinq",
 				"schema": "PensionDisclosureTabel",
 				"fields": [
-					{ "key": "plan", "label": "Plan", "type": "string" },
-					{ "key": "valuationDate", "label": "Valuation Date", "type": "date" },
-					{ "key": "tableContent", "label": "Disclosure Table", "type": "json" },
-					{ "key": "status", "label": "Status", "type": "string" },
-					{ "key": "approvedBy", "label": "Approved By", "type": "string" },
-					{ "key": "approvedAt", "label": "Approved At", "type": "date-time" }
+					{
+						"key": "plan",
+						"label": "Plan",
+						"type": "string"
+					},
+					{
+						"key": "valuationDate",
+						"label": "Valuation Date",
+						"type": "date"
+					},
+					{
+						"key": "tableContent",
+						"label": "Disclosure Table",
+						"type": "json"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "approvedBy",
+						"label": "Approved By",
+						"type": "string"
+					},
+					{
+						"key": "approvedAt",
+						"label": "Approved At",
+						"type": "date-time"
+					}
 				],
 				"lifecycleActions": true,
 				"indexRoute": "PensionDisclosureTables"
@@ -11305,12 +11653,36 @@
 				"register": "shillinq",
 				"schema": "Belastingplichtige",
 				"columns": [
-					{ "key": "naam", "label": "Naam", "sortable": true },
-					{ "key": "rsin", "label": "RSIN", "sortable": true },
-					{ "key": "kvkNummer", "label": "KvK-nummer", "sortable": true },
-					{ "key": "rechtsvorm", "label": "Rechtsvorm", "sortable": true },
-					{ "key": "eHerkenningsNiveau", "label": "eHerkenning", "sortable": true },
-					{ "key": "status", "label": "Status", "sortable": true }
+					{
+						"key": "naam",
+						"label": "Naam",
+						"sortable": true
+					},
+					{
+						"key": "rsin",
+						"label": "RSIN",
+						"sortable": true
+					},
+					{
+						"key": "kvkNummer",
+						"label": "KvK-nummer",
+						"sortable": true
+					},
+					{
+						"key": "rechtsvorm",
+						"label": "Rechtsvorm",
+						"sortable": true
+					},
+					{
+						"key": "eHerkenningsNiveau",
+						"label": "eHerkenning",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "naam",
 				"detailRoute": "BelastingplichtigeDetail"
@@ -11325,15 +11697,51 @@
 				"register": "shillinq",
 				"schema": "Belastingplichtige",
 				"fields": [
-					{ "key": "naam", "label": "Naam", "type": "string" },
-					{ "key": "rsin", "label": "RSIN", "type": "string" },
-					{ "key": "kvkNummer", "label": "KvK-nummer", "type": "string" },
-					{ "key": "rechtsvorm", "label": "Rechtsvorm", "type": "string" },
-					{ "key": "boekjaarStart", "label": "Boekjaar van", "type": "string" },
-					{ "key": "boekjaarEind", "label": "Boekjaar tot", "type": "string" },
-					{ "key": "eHerkenningsNiveau", "label": "eHerkenning-niveau", "type": "string" },
-					{ "key": "digipoortCertificaat", "label": "Digipoort-certificaat", "type": "string" },
-					{ "key": "status", "label": "Status", "type": "string" }
+					{
+						"key": "naam",
+						"label": "Naam",
+						"type": "string"
+					},
+					{
+						"key": "rsin",
+						"label": "RSIN",
+						"type": "string"
+					},
+					{
+						"key": "kvkNummer",
+						"label": "KvK-nummer",
+						"type": "string"
+					},
+					{
+						"key": "rechtsvorm",
+						"label": "Rechtsvorm",
+						"type": "string"
+					},
+					{
+						"key": "boekjaarStart",
+						"label": "Boekjaar van",
+						"type": "string"
+					},
+					{
+						"key": "boekjaarEind",
+						"label": "Boekjaar tot",
+						"type": "string"
+					},
+					{
+						"key": "eHerkenningsNiveau",
+						"label": "eHerkenning-niveau",
+						"type": "string"
+					},
+					{
+						"key": "digipoortCertificaat",
+						"label": "Digipoort-certificaat",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
 				]
 			}
 		},
@@ -11341,16 +11749,41 @@
 			"id": "VpbAangiftes",
 			"route": "/vpb/aangiftes",
 			"type": "index",
-			"title": "Vpb-aangiftes",			"config": {
+			"title": "Vpb-aangiftes",
+			"config": {
 				"register": "shillinq",
 				"schema": "VpbAangifte",
 				"columns": [
-					{ "key": "belastingjaar", "label": "Belastingjaar", "sortable": true },
-					{ "key": "belastingplichtige", "label": "Belastingplichtige", "sortable": true },
-					{ "key": "status", "label": "Status", "sortable": true },
-					{ "key": "fiscaleWinstBelastbaar", "label": "Belastbare winst", "sortable": true },
-					{ "key": "verschuldigdeVpb", "label": "Verschuldigde Vpb", "sortable": true },
-					{ "key": "teBetalen", "label": "Te betalen", "sortable": true }
+					{
+						"key": "belastingjaar",
+						"label": "Belastingjaar",
+						"sortable": true
+					},
+					{
+						"key": "belastingplichtige",
+						"label": "Belastingplichtige",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "fiscaleWinstBelastbaar",
+						"label": "Belastbare winst",
+						"sortable": true
+					},
+					{
+						"key": "verschuldigdeVpb",
+						"label": "Verschuldigde Vpb",
+						"sortable": true
+					},
+					{
+						"key": "teBetalen",
+						"label": "Te betalen",
+						"sortable": true
+					}
 				],
 				"defaultSort": "belastingjaar",
 				"detailRoute": "VpbAangifteDetail"
@@ -11365,20 +11798,76 @@
 				"register": "shillinq",
 				"schema": "VpbAangifte",
 				"fields": [
-					{ "key": "belastingjaar", "label": "Belastingjaar", "type": "number" },
-					{ "key": "belastingplichtige", "label": "Belastingplichtige", "type": "string" },
-					{ "key": "boekjaarVan", "label": "Boekjaar van", "type": "string" },
-					{ "key": "boekjaarTot", "label": "Boekjaar tot", "type": "string" },
-					{ "key": "status", "label": "Status", "type": "string" },
-					{ "key": "commercieleWinstBedrag", "label": "Commerciële winst", "type": "number" },
-					{ "key": "fiscaleWinstVoorVerliezen", "label": "Fiscale winst voor verliezen", "type": "number" },
-					{ "key": "voorvoegingsverliesToegepast", "label": "Voorvoegingsverlies toegepast", "type": "number" },
-					{ "key": "fiscaleWinstBelastbaar", "label": "Belastbare fiscale winst", "type": "number" },
-					{ "key": "verschuldigdeVpb", "label": "Verschuldigde Vpb", "type": "number" },
-					{ "key": "voorheffingen", "label": "Voorheffingen", "type": "number" },
-					{ "key": "teBetalen", "label": "Te betalen", "type": "number" },
-					{ "key": "ingediendOp", "label": "Ingediend op", "type": "string" },
-					{ "key": "digipoortReceiptId", "label": "Digipoort-receipt", "type": "string" }
+					{
+						"key": "belastingjaar",
+						"label": "Belastingjaar",
+						"type": "number"
+					},
+					{
+						"key": "belastingplichtige",
+						"label": "Belastingplichtige",
+						"type": "string"
+					},
+					{
+						"key": "boekjaarVan",
+						"label": "Boekjaar van",
+						"type": "string"
+					},
+					{
+						"key": "boekjaarTot",
+						"label": "Boekjaar tot",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "commercieleWinstBedrag",
+						"label": "Commerciële winst",
+						"type": "number"
+					},
+					{
+						"key": "fiscaleWinstVoorVerliezen",
+						"label": "Fiscale winst voor verliezen",
+						"type": "number"
+					},
+					{
+						"key": "voorvoegingsverliesToegepast",
+						"label": "Voorvoegingsverlies toegepast",
+						"type": "number"
+					},
+					{
+						"key": "fiscaleWinstBelastbaar",
+						"label": "Belastbare fiscale winst",
+						"type": "number"
+					},
+					{
+						"key": "verschuldigdeVpb",
+						"label": "Verschuldigde Vpb",
+						"type": "number"
+					},
+					{
+						"key": "voorheffingen",
+						"label": "Voorheffingen",
+						"type": "number"
+					},
+					{
+						"key": "teBetalen",
+						"label": "Te betalen",
+						"type": "number"
+					},
+					{
+						"key": "ingediendOp",
+						"label": "Ingediend op",
+						"type": "string"
+					},
+					{
+						"key": "digipoortReceiptId",
+						"label": "Digipoort-receipt",
+						"type": "string"
+					}
 				]
 			}
 		},
@@ -11391,11 +11880,31 @@
 				"register": "shillinq",
 				"schema": "FiscaleCorrectie",
 				"columns": [
-					{ "key": "code", "label": "Code", "sortable": true },
-					{ "key": "omschrijving", "label": "Omschrijving", "sortable": true },
-					{ "key": "commercieelBedrag", "label": "Commercieel", "sortable": true },
-					{ "key": "fiscaalBedrag", "label": "Fiscaal", "sortable": true },
-					{ "key": "correctieBedrag", "label": "Correctie", "sortable": true }
+					{
+						"key": "code",
+						"label": "Code",
+						"sortable": true
+					},
+					{
+						"key": "omschrijving",
+						"label": "Omschrijving",
+						"sortable": true
+					},
+					{
+						"key": "commercieelBedrag",
+						"label": "Commercieel",
+						"sortable": true
+					},
+					{
+						"key": "fiscaalBedrag",
+						"label": "Fiscaal",
+						"sortable": true
+					},
+					{
+						"key": "correctieBedrag",
+						"label": "Correctie",
+						"sortable": true
+					}
 				],
 				"defaultSort": "code",
 				"detailRoute": "FiscaleCorrectieDetail"
@@ -11410,13 +11919,41 @@
 				"register": "shillinq",
 				"schema": "FiscaleCorrectie",
 				"fields": [
-					{ "key": "aangifte", "label": "Aangifte", "type": "string" },
-					{ "key": "code", "label": "Code", "type": "string" },
-					{ "key": "omschrijving", "label": "Omschrijving", "type": "string" },
-					{ "key": "commercieelBedrag", "label": "Commercieel bedrag", "type": "number" },
-					{ "key": "fiscaalBedrag", "label": "Fiscaal bedrag", "type": "number" },
-					{ "key": "correctieBedrag", "label": "Correctiebedrag", "type": "number" },
-					{ "key": "toelichting", "label": "Toelichting", "type": "string" }
+					{
+						"key": "aangifte",
+						"label": "Aangifte",
+						"type": "string"
+					},
+					{
+						"key": "code",
+						"label": "Code",
+						"type": "string"
+					},
+					{
+						"key": "omschrijving",
+						"label": "Omschrijving",
+						"type": "string"
+					},
+					{
+						"key": "commercieelBedrag",
+						"label": "Commercieel bedrag",
+						"type": "number"
+					},
+					{
+						"key": "fiscaalBedrag",
+						"label": "Fiscaal bedrag",
+						"type": "number"
+					},
+					{
+						"key": "correctieBedrag",
+						"label": "Correctiebedrag",
+						"type": "number"
+					},
+					{
+						"key": "toelichting",
+						"label": "Toelichting",
+						"type": "string"
+					}
 				]
 			}
 		},
@@ -11429,11 +11966,31 @@
 				"register": "shillinq",
 				"schema": "Innovatiebox",
 				"columns": [
-					{ "key": "aangifte", "label": "Aangifte", "sortable": true },
-					{ "key": "methodType", "label": "Methode", "sortable": true },
-					{ "key": "innovatieboxWinst", "label": "Innovatieboxwinst", "sortable": true },
-					{ "key": "effectiefTarief", "label": "Effectief tarief", "sortable": true },
-					{ "key": "soVerklaringReferentie", "label": "S&O-verklaring", "sortable": true }
+					{
+						"key": "aangifte",
+						"label": "Aangifte",
+						"sortable": true
+					},
+					{
+						"key": "methodType",
+						"label": "Methode",
+						"sortable": true
+					},
+					{
+						"key": "innovatieboxWinst",
+						"label": "Innovatieboxwinst",
+						"sortable": true
+					},
+					{
+						"key": "effectiefTarief",
+						"label": "Effectief tarief",
+						"sortable": true
+					},
+					{
+						"key": "soVerklaringReferentie",
+						"label": "S&O-verklaring",
+						"sortable": true
+					}
 				],
 				"defaultSort": "aangifte",
 				"detailRoute": "InnovatieboxDetail"
@@ -11448,14 +12005,46 @@
 				"register": "shillinq",
 				"schema": "Innovatiebox",
 				"fields": [
-					{ "key": "aangifte", "label": "Aangifte", "type": "string" },
-					{ "key": "methodType", "label": "Methode", "type": "string" },
-					{ "key": "nexusFactor", "label": "Nexus-factor", "type": "number" },
-					{ "key": "innovatieboxWinst", "label": "Innovatieboxwinst", "type": "number" },
-					{ "key": "effectiefTarief", "label": "Effectief tarief", "type": "number" },
-					{ "key": "soVerklaringReferentie", "label": "S&O-verklaring-referentie", "type": "string" },
-					{ "key": "forfaitaireGeldigheidTot", "label": "Forfaitair geldig tot", "type": "string" },
-					{ "key": "innovatieboxBedrag", "label": "Innovatiebox-voordeel", "type": "number" }
+					{
+						"key": "aangifte",
+						"label": "Aangifte",
+						"type": "string"
+					},
+					{
+						"key": "methodType",
+						"label": "Methode",
+						"type": "string"
+					},
+					{
+						"key": "nexusFactor",
+						"label": "Nexus-factor",
+						"type": "number"
+					},
+					{
+						"key": "innovatieboxWinst",
+						"label": "Innovatieboxwinst",
+						"type": "number"
+					},
+					{
+						"key": "effectiefTarief",
+						"label": "Effectief tarief",
+						"type": "number"
+					},
+					{
+						"key": "soVerklaringReferentie",
+						"label": "S&O-verklaring-referentie",
+						"type": "string"
+					},
+					{
+						"key": "forfaitaireGeldigheidTot",
+						"label": "Forfaitair geldig tot",
+						"type": "string"
+					},
+					{
+						"key": "innovatieboxBedrag",
+						"label": "Innovatiebox-voordeel",
+						"type": "number"
+					}
 				]
 			}
 		},
@@ -11468,12 +12057,36 @@
 				"register": "shillinq",
 				"schema": "BezwaarBeroep",
 				"columns": [
-					{ "key": "type", "label": "Type", "sortable": true },
-					{ "key": "aanslag", "label": "Aanslag", "sortable": true },
-					{ "key": "ingediendOp", "label": "Ingediend op", "sortable": true },
-					{ "key": "status", "label": "Status", "sortable": true },
-					{ "key": "termijnEinde", "label": "Termijn einde", "sortable": true },
-					{ "key": "termijnVerstreken", "label": "Verstreken", "sortable": true }
+					{
+						"key": "type",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "aanslag",
+						"label": "Aanslag",
+						"sortable": true
+					},
+					{
+						"key": "ingediendOp",
+						"label": "Ingediend op",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "termijnEinde",
+						"label": "Termijn einde",
+						"sortable": true
+					},
+					{
+						"key": "termijnVerstreken",
+						"label": "Verstreken",
+						"sortable": true
+					}
 				],
 				"defaultSort": "ingediendOp",
 				"detailRoute": "BezwaarBeroepDetail"
@@ -11488,17 +12101,338 @@
 				"register": "shillinq",
 				"schema": "BezwaarBeroep",
 				"fields": [
-					{ "key": "aanslag", "label": "Aanslag", "type": "string" },
-					{ "key": "type", "label": "Type", "type": "string" },
-					{ "key": "ingediendOp", "label": "Ingediend op", "type": "string" },
-					{ "key": "motivering", "label": "Motivering", "type": "string" },
-					{ "key": "uitspraak", "label": "Uitspraak", "type": "string" },
-					{ "key": "uitspraakDatum", "label": "Uitspraakdatum", "type": "string" },
-					{ "key": "vervolgInstantie", "label": "Vervolginstantie", "type": "string" },
-					{ "key": "termijnEinde", "label": "Termijn einde", "type": "string" },
-					{ "key": "termijnVerstreken", "label": "Termijn verstreken", "type": "boolean" },
-					{ "key": "status", "label": "Status", "type": "string" }
+					{
+						"key": "aanslag",
+						"label": "Aanslag",
+						"type": "string"
+					},
+					{
+						"key": "type",
+						"label": "Type",
+						"type": "string"
+					},
+					{
+						"key": "ingediendOp",
+						"label": "Ingediend op",
+						"type": "string"
+					},
+					{
+						"key": "motivering",
+						"label": "Motivering",
+						"type": "string"
+					},
+					{
+						"key": "uitspraak",
+						"label": "Uitspraak",
+						"type": "string"
+					},
+					{
+						"key": "uitspraakDatum",
+						"label": "Uitspraakdatum",
+						"type": "string"
+					},
+					{
+						"key": "vervolgInstantie",
+						"label": "Vervolginstantie",
+						"type": "string"
+					},
+					{
+						"key": "termijnEinde",
+						"label": "Termijn einde",
+						"type": "string"
+					},
+					{
+						"key": "termijnVerstreken",
+						"label": "Termijn verstreken",
+						"type": "boolean"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
 				]
+			}
+		},
+		{
+			"id": "ARInvoices",
+			"route": "/invoices",
+			"type": "index",
+			"title": "Accounts receivable",
+			"config": {
+				"register": "shillinq",
+				"schema": "ARInvoice",
+				"columns": [
+					{
+						"key": "invoiceNumber",
+						"label": "Invoice number",
+						"sortable": true
+					},
+					{
+						"key": "customerNumber",
+						"label": "Customer",
+						"sortable": true
+					},
+					{
+						"key": "totalCents",
+						"label": "Total",
+						"sortable": true
+					},
+					{
+						"key": "dueDate",
+						"label": "Due date",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "dueDate",
+				"detailRoute": "ARInvoiceDetail"
+			}
+		},
+		{
+			"id": "ARInvoiceDetail",
+			"route": "/invoices/:id",
+			"type": "detail",
+			"title": "AR invoice",
+			"config": {
+				"register": "shillinq",
+				"schema": "ARInvoice",
+				"fields": [
+					{
+						"key": "invoiceNumber",
+						"label": "Invoice number",
+						"type": "string"
+					},
+					{
+						"key": "customerNumber",
+						"label": "Customer",
+						"type": "string"
+					},
+					{
+						"key": "invoiceDate",
+						"label": "Invoice date",
+						"type": "string"
+					},
+					{
+						"key": "dueDate",
+						"label": "Due date",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "netCents",
+						"label": "Net (cents)",
+						"type": "integer"
+					},
+					{
+						"key": "taxCents",
+						"label": "Tax (cents)",
+						"type": "integer"
+					},
+					{
+						"key": "totalCents",
+						"label": "Total (cents)",
+						"type": "integer"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "paidDate",
+						"label": "Paid date",
+						"type": "string"
+					},
+					{
+						"key": "paidCents",
+						"label": "Paid (cents)",
+						"type": "integer"
+					},
+					{
+						"key": "sourceDocumentUri",
+						"label": "Source document",
+						"type": "link"
+					},
+					{
+						"key": "writeOffReason",
+						"label": "Write-off reason",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "notes",
+						"label": "Notes",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ARInvoices"
+			}
+		},
+		{
+			"id": "ARAging",
+			"route": "/ar-aging",
+			"type": "index",
+			"title": "AR aging",
+			"config": {
+				"register": "shillinq",
+				"schema": "ARInvoice",
+				"aggregation": "outstandingByCustomer",
+				"columns": [
+					{
+						"key": "customerNumber",
+						"label": "Customer",
+						"sortable": true
+					},
+					{
+						"key": "invoiceNumber",
+						"label": "Invoice number",
+						"sortable": true
+					},
+					{
+						"key": "dueDate",
+						"label": "Due date",
+						"sortable": true
+					},
+					{
+						"key": "totalCents",
+						"label": "Outstanding",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "dueDate",
+				"detailRoute": "ARInvoiceDetail"
+			}
+		},
+		{
+			"id": "DunningLog",
+			"route": "/dunning",
+			"type": "index",
+			"title": "Dunning log",
+			"config": {
+				"register": "shillinq",
+				"schema": "DunningRecord",
+				"columns": [
+					{
+						"key": "dunningId",
+						"label": "Dunning number",
+						"sortable": true
+					},
+					{
+						"key": "customerNumber",
+						"label": "Customer",
+						"sortable": true
+					},
+					{
+						"key": "invoiceNumber",
+						"label": "Invoice number",
+						"sortable": true
+					},
+					{
+						"key": "level",
+						"label": "Level",
+						"sortable": true
+					},
+					{
+						"key": "sentDate",
+						"label": "Sent date",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-sentDate",
+				"detailRoute": "DunningDetail"
+			}
+		},
+		{
+			"id": "DunningDetail",
+			"route": "/dunning/:id",
+			"type": "detail",
+			"title": "Dunning record",
+			"config": {
+				"register": "shillinq",
+				"schema": "DunningRecord",
+				"fields": [
+					{
+						"key": "dunningId",
+						"label": "Dunning number",
+						"type": "string"
+					},
+					{
+						"key": "invoiceNumber",
+						"label": "Invoice number",
+						"type": "string"
+					},
+					{
+						"key": "customerNumber",
+						"label": "Customer",
+						"type": "string"
+					},
+					{
+						"key": "level",
+						"label": "Level",
+						"type": "integer"
+					},
+					{
+						"key": "sentDate",
+						"label": "Sent date",
+						"type": "string"
+					},
+					{
+						"key": "dueDate",
+						"label": "Due date",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "policyRef",
+						"label": "Policy",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "notes",
+						"label": "Notes",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "DunningLog"
 			}
 		}
 	]
