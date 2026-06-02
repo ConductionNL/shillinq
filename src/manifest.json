@@ -441,8 +441,7 @@
 					"label": "Bewaartermijnen",
 					"icon": "ShieldCheckOutline",
 					"route": "Bewaartermijnen",
-					"order": 10
-				}
+					"order": 10				}
 			]
 		},
 		{
@@ -11342,8 +11341,7 @@
 			"id": "VpbAangiftes",
 			"route": "/vpb/aangiftes",
 			"type": "index",
-			"title": "Vpb-aangiftes",
-			"config": {
+			"title": "Vpb-aangiftes",			"config": {
 				"register": "shillinq",
 				"schema": "VpbAangifte",
 				"columns": [

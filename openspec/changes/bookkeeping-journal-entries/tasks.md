@@ -44,7 +44,7 @@ and `bookkeeping-general-ledger` in the same change envelope.
 
 ## Phase 2: Manifest Navigation & Pages
 
-- [ ] **Task 2.1: Add Journal Entries navigation entry in `src/manifest.json`**
+- [x] **Task 2.1: Add Journal Entries navigation entry in `src/manifest.json`**
   - Add a navigation group `Bookkeeping > Journals` (or `Journaalposten` in Dutch)
   - Add `type: index` page binding to the `JournalEntry` register
   - Add `type: detail` page binding to the `JournalEntry` register
@@ -52,13 +52,13 @@ and `bookkeeping-general-ledger` in the same change envelope.
   - No bespoke Vue files for journal entry CRUD
   - Spec traceability: `@spec openspec/changes/bookkeeping-journal-entries/specs/bookkeeping-journal-entries/spec.md#REQ-JE-009`
 
-- [ ] **Task 2.2: Configure manifest index page columns (REQ-JE-009)**
+- [x] **Task 2.2: Configure manifest index page columns (REQ-JE-009)**
   - Columns: `journalNumber`, `entryDate`, `description`, `journalType`, `state`, `approvalState`
   - Sorting: default by `entryDate` descending
   - Filtering: by `journalType`, `state`, `approvalState`
   - Spec traceability: `@spec openspec/changes/bookkeeping-journal-entries/specs/bookkeeping-journal-entries/spec.md#REQ-JE-009`
 
-- [ ] **Task 2.3: Configure manifest detail page sections**
+- [x] **Task 2.3: Configure manifest detail page sections**
   - Section 1: Journal Header (`journalNumber`, `entryDate`, `description`, `journalType`)
   - Section 2: Line Preview (`lines` array rendered as a table)
   - Section 3: Approval & Posting (`approvalState`, approval history, post button)
