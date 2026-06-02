@@ -223,7 +223,8 @@ class ComplianceValidator
             return false;
         }
 
-        return (bool) preg_match(pattern: '/'.$pattern.'/', subject: $iban);
+        // Use ~ as delimiter so a / in pattern does not break the regex.
+        return (@preg_match(pattern: '~'.$pattern.'~', subject: $iban) === 1);
 
     }//end evaluateIbanFormat()
 
