@@ -1,25 +1,87 @@
 {
-  "spec": "openspec/changes/bookkeeping-sisa-reporting",
-  "verified": [
-    {"task": "1", "file": null, "ok": true, "note": "Confirmed no SisaReport/AuditDocument/ComplianceAuditTrail schemas in register; no lib/Service/Sisa* or lib/Service/Audit* PHP classes present."},
-    {"task": "2", "file": "openspec/changes/bookkeeping-sisa-reporting/specs/bookkeeping-sisa-reporting/spec.md", "ok": true},
-    {"task": "3", "file": "openspec/changes/bookkeeping-sisa-reporting/proposal.md", "ok": true},
-    {"task": "4", "file": "openspec/changes/bookkeeping-sisa-reporting/design.md", "ok": true},
-    {"task": "5", "file": "lib/Settings/shillinq_register.json#SisaReport", "ok": true},
-    {"task": "6", "file": "lib/Settings/shillinq_register.json#AuditDocument", "ok": true},
-    {"task": "7", "file": "lib/Settings/shillinq_register.json#ComplianceAuditTrail", "ok": true},
-    {"task": "8", "file": "lib/Settings/shillinq_register.json#ManagementLetter", "ok": true},
-    {"task": "9", "file": "lib/Settings/shillinq_register.json#AuditDocument.x-openregister-lifecycle", "ok": true},
-    {"task": "10", "file": "lib/Settings/shillinq_register.json#SisaReport.x-openregister-aggregations.onTimeSettlement", "ok": true},
-    {"task": "11", "file": "lib/Settings/shillinq_register.json#SisaReport.x-openregister-aggregations.findingCounts", "ok": true},
-    {"task": "12", "file": "lib/Service/SisaReportingService.php", "ok": true, "note": "ADR-031 exception: single-method read-only service + x-openregister-calculations declarative backup; 11 unit tests."},
-    {"task": "13", "file": "lib/Settings/shillinq_register.json#Grant.isSISAEligible", "ok": true},
-    {"task": "14", "file": "lib/Settings/shillinq_register.json#SisaReport.x-openregister-aggregations.onTimeSettlement", "ok": true, "note": "filter.grantIsSISAEligible: true wires the eligibility filtering."},
-    {"task": "15", "file": "lib/Settings/shillinq_register.json#AuditDocument.x-openregister-lifecycle", "ok": true, "note": "AuditDocument lifecycle declared. APTransaction/ARInvoice/JournalEntry lifecycle is T1 spec responsibility."},
-    {"task": "16", "file": "src/manifest.json#Compliance", "ok": true, "note": "4 nav entries + 8 pages added. validate-manifest.js roadmap type failure is pre-existing."},
-    {"task": "17", "file": "openspec/architecture/adr-000-data-model.md", "ok": true, "note": "AuditDocument, ComplianceAuditTrail, SisaReport entries added; entity count 226->229."},
-    {"task": "18", "file": "lib/Settings/shillinq_register.json#components.objects", "ok": true, "note": "14 seed objects with realistic Dutch values."}
-  ],
-  "stubs": [],
-  "missing_routes": []
+    "spec": "openspec/changes/add-shillinq-kor-kleine-ondernemersregeling",
+    "verified": [
+        {
+            "task": "1",
+            "file": "lib/Settings/shillinq_register.json",
+            "ok": true,
+            "note": "Scanned - no KorRegime/KorThreshold schema present before this change"
+        },
+        {
+            "task": "2",
+            "file": "openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md",
+            "ok": true
+        },
+        {
+            "task": "3",
+            "file": "openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/proposal.md",
+            "ok": true
+        },
+        {
+            "task": "4",
+            "file": "openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/design.md",
+            "ok": true
+        },
+        {
+            "task": "5",
+            "file": "lib/Settings/shillinq_register.json",
+            "ok": true,
+            "note": "KorRegime schema added with all REQ-KOR-002 fields"
+        },
+        {
+            "task": "6",
+            "file": "lib/Settings/shillinq_register.json",
+            "ok": true,
+            "note": "x-openregister-lifecycle with 5 states, calculation-crossing transitions"
+        },
+        {
+            "task": "7",
+            "file": "lib/Settings/shillinq_register.json",
+            "ok": true,
+            "note": "KorThreshold schema added"
+        },
+        {
+            "task": "8",
+            "file": "lib/Settings/shillinq_register.json",
+            "ok": true,
+            "note": "x-openregister-calculations for ytdRevenue over Invoice T2"
+        },
+        {
+            "task": "9",
+            "file": "lib/Settings/seeds/kor-thresholds-2026.json",
+            "ok": true
+        },
+        {
+            "task": "10",
+            "file": "lib/Settings/shillinq_register.json",
+            "ok": true,
+            "note": "hook onOptOut creates JournalEntry in state: pending"
+        },
+        {
+            "task": "11",
+            "file": "lib/Settings/shillinq_register.json",
+            "ok": true,
+            "note": "x-openregister-notifications + x-openregister-widgets declared"
+        },
+        {
+            "task": "12",
+            "file": "lib/Repair/InitializeSettings.php",
+            "ok": true,
+            "note": "seedKorThresholds() method added, called from run()"
+        },
+        {
+            "task": "13",
+            "file": "src/manifest.json",
+            "ok": true,
+            "note": "Belastingen > KOR-status menu + KorStatus + KorStatusDetail pages added with mkb/zzp visibility predicate"
+        },
+        {
+            "task": "14",
+            "file": "openspec/architecture/adr-000-data-model.md",
+            "ok": true,
+            "note": "KorRegime + KorThreshold entities added, entity count updated 226->228"
+        }
+    ],
+    "stubs": [],
+    "missing_routes": []
 }
