@@ -3,7 +3,7 @@
   "info": {
     "title": "Shillinq Register",
     "description": "Register containing all schemas for the Shillinq application.",
-    "version": "0.3.0"
+    "version": "0.4.0"
   },
   "x-openregister": {
     "type": "application",
@@ -418,6 +418,14 @@
             "type": "boolean",
             "description": "Whether VAT/BTW applies to transactions posted to this account.",
             "default": false
+          },
+          "bbvVariant": {
+            "type": "string",
+            "enum": ["gemeente", "waterschap", "provincie"],
+            "default": "gemeente",
+            "description": "BBV regulatory variant under which this account is interpreted. 'waterschap' activates the BBVW (BBV-Waterschappen) framework per REQ-WSB-001.",
+            "nullable": true,
+            "example": "waterschap"
           }
         },
         "x-openregister-lifecycle": {
@@ -1168,6 +1176,266 @@
                 "operation": "count",
                 "condition": "daysSinceCompliant > 60",
                 "description": "Accounts over 60 days since last compliance check — highest risk."
+              }
+            }
+          }
+        }
+      }
+      ,
+      "BBVProgramma": {
+        "slug": "BBVProgramma",
+        "icon": "FormatListBulletedSquare",
+        "version": "0.1.0",
+        "title": "BBV Programma",
+        "description": "A BBV programma-indeling entry grouping GL postings by taakveld (gemeente/provincie) or kostentoedeling (waterschap). The programmaStructure discriminator controls which classification hierarchy is used per REQ-WSB-002.",
+        "x-schema-org": "schema:DefinedTerm",
+        "type": "object",
+        "required": [
+          "code",
+          "naam",
+          "administrationId",
+          "programmaStructure"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Unique programma code within the administration (e.g. 'watersysteembeheer', 'taakveld-0.1').",
+            "example": "watersysteembeheer"
+          },
+          "naam": {
+            "type": "string",
+            "description": "Human-readable Dutch programma name.",
+            "example": "Watersysteembeheer"
+          },
+          "beschrijving": {
+            "type": "string",
+            "description": "Optional operator-authored description of this programma.",
+            "nullable": true,
+            "example": "Beheer van het watersysteem inclusief veiligheid en kwaliteit."
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this programma. Scopes uniqueness of code.",
+            "example": "adm-waterschap-1"
+          },
+          "programmaStructure": {
+            "type": "string",
+            "enum": ["taakveld", "kostentoedeling"],
+            "default": "taakveld",
+            "description": "Discriminator that controls the classification hierarchy used at aggregation / rollup time. 'kostentoedeling' is the BBVW-canonical structure for waterschappen per REQ-WSB-002.",
+            "example": "kostentoedeling"
+          },
+          "bbvVariant": {
+            "type": "string",
+            "enum": ["gemeente", "waterschap", "provincie"],
+            "default": "gemeente",
+            "description": "BBV regulatory variant under which this programma is interpreted per REQ-WSB-001.",
+            "nullable": true,
+            "example": "waterschap"
+          },
+          "parentCode": {
+            "type": "string",
+            "description": "FK to the parent BBVProgramma.code for hierarchical programma navigation.",
+            "nullable": true,
+            "example": "watersysteembeheer"
+          }
+        },
+        "x-openregister-aggregations": {
+          "postingsByProgramma": {
+            "description": "Aggregates GL debit/credit totals per programma code, honouring the programmaStructure discriminator. When programmaStructure is 'kostentoedeling', groups by kostentoedeling cluster; when 'taakveld', groups by taakveld code.",
+            "sourceSchema": "GLLine",
+            "groupBy": "BBVProgramma.code",
+            "join": {
+              "from": "GLLine.accountNumber",
+              "through": "Account",
+              "on": "Account.accountNumber",
+              "select": "BBVProgramma.code"
+            },
+            "operations": {
+              "totalDebit": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "GLLine.side = 'debit'"
+              },
+              "totalCredit": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "GLLine.side = 'credit'"
+              }
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "parentProgramma": {
+            "localField": "parentCode",
+            "relatedSchema": "BBVProgramma",
+            "relatedField": "code",
+            "cardinality": "many-to-one",
+            "description": "Self-relation for hierarchical programma navigation (hoofdprogramma → sub-programma)."
+          }
+        }
+      },
+      "WaterschapHeffingPosting": {
+        "slug": "WaterschapHeffingPosting",
+        "icon": "WaterOutline",
+        "version": "0.1.0",
+        "title": "Waterschap Heffing Posting",
+        "description": "Sector-specific belasting posting for the three waterschapsbelastingen: watersysteemheffing, zuiveringsheffing, and verontreinigingsheffing. On transition to 'posted', materialises a balanced 2-line GLTransaction per T1 REQ-GL-001 with sourceReference back to this posting. Does NOT carry its own ledger lines per design D3.",
+        "x-schema-org": "schema:Invoice",
+        "type": "object",
+        "required": [
+          "heffingType",
+          "aanslagJaar",
+          "tariefGrondslag",
+          "tarief",
+          "aanslagBedrag",
+          "administrationId",
+          "state"
+        ],
+        "properties": {
+          "heffingType": {
+            "type": "string",
+            "enum": ["watersysteemheffing", "zuiveringsheffing", "verontreinigingsheffing"],
+            "description": "Type of waterschap belasting per REQ-WSB-004.",
+            "example": "zuiveringsheffing"
+          },
+          "aanslagJaar": {
+            "type": "integer",
+            "description": "Belastingjaar of this aanslag.",
+            "example": 2026
+          },
+          "tariefGrondslag": {
+            "type": "string",
+            "description": "Canonical grondslag for the tarief computation (e.g. 'vervuilingseenheden', 'oppervlakte-m2', 'inwonerequivalenten').",
+            "example": "vervuilingseenheden"
+          },
+          "tarief": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Applied tarief per grondslag-eenheid in EUR.",
+            "example": 85.50
+          },
+          "aanslagBedrag": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Total aanslag amount in EUR (tarief × grondslag-quantity). This amount is materialised into a balanced GLTransaction on post.",
+            "example": 1500.00
+          },
+          "journalEntryId": {
+            "type": "string",
+            "description": "FK to the materialised GLTransaction.id. Set by the lifecycle engine on transition to 'posted'. Null until posted.",
+            "nullable": true,
+            "example": "txn-wsh-2026-001"
+          },
+          "emuExclusionRule": {
+            "type": "string",
+            "enum": ["included", "excluded", "partial"],
+            "default": "included",
+            "description": "Controls whether this posting contributes to the waterschap EMU-saldo per REQ-WSB-005 and the EMU-bijlage waterschappen handleiding 2026. 'excluded' = posting is omitted from the EMU-saldo aggregation; 'partial' = operator-defined partial inclusion.",
+            "example": "excluded"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the waterschap Administration owning this heffing posting.",
+            "example": "adm-waterschap-1"
+          },
+          "debitAccountNumber": {
+            "type": "string",
+            "description": "Account to debit in the materialised GLTransaction (e.g. receivable account for the heffing aanslag).",
+            "nullable": true,
+            "example": "1300"
+          },
+          "creditAccountNumber": {
+            "type": "string",
+            "description": "Account to credit in the materialised GLTransaction (e.g. revenue account for the heffing type).",
+            "nullable": true,
+            "example": "8100"
+          },
+          "state": {
+            "type": "string",
+            "enum": ["draft", "posted", "reversed"],
+            "default": "draft",
+            "description": "Current lifecycle state of the heffing posting.",
+            "example": "draft"
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional operator-authored description or reference number.",
+            "nullable": true,
+            "example": "Zuiveringsheffing aanslag 2026 perceel Noord"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Heffing posting is being prepared; no GL impact yet."
+            },
+            "posted": {
+              "label": "Geboekt",
+              "description": "Posting is confirmed; a balanced 2-line GLTransaction has been materialised per REQ-GL-001."
+            },
+            "reversed": {
+              "label": "Gestorneerd",
+              "description": "Posting has been reversed; a contra-GLTransaction has been materialised."
+            }
+          },
+          "transitions": {
+            "post": {
+              "from": "draft",
+              "to": "posted",
+              "label": "Boek aanslag",
+              "description": "Materialise a balanced 2-line GLTransaction (debit receivable, credit revenue) for the aanslagBedrag and set journalEntryId."
+            },
+            "reverse": {
+              "from": "posted",
+              "to": "reversed",
+              "label": "Storneer aanslag",
+              "description": "Materialise a contra-GLTransaction to reverse the original posting."
+            }
+          },
+          "hooks": {
+            "onPost": {
+              "trigger": "state:posted",
+              "description": "Materialise a balanced 2-line GLTransaction per T1 REQ-GL-001. Debit debitAccountNumber for aanslagBedrag, credit creditAccountNumber for aanslagBedrag. Set sourceReference to WaterschapHeffingPosting.id. Write journalEntryId FK back to this record. Idempotency key: (administrationId, id) prevents re-posting on repair-step re-run.",
+              "action": "x-openregister-materialise-gl-transaction",
+              "actionParameters": {
+                "debitField": "debitAccountNumber",
+                "creditField": "creditAccountNumber",
+                "amountField": "aanslagBedrag",
+                "currency": "EUR",
+                "sourceReference": "@self.id",
+                "journalEntryIdField": "journalEntryId",
+                "idempotencyKey": "(administrationId, id)"
+              }
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "totalByHeffingType": {
+            "description": "Total aanslag bedrag per heffingType for the administration, excluding reversed postings. Used by the waterschapsbelastingen index page.",
+            "filter": "state != 'reversed'",
+            "groupBy": "heffingType",
+            "operations": {
+              "totalAanslag": {
+                "field": "aanslagBedrag",
+                "operation": "sum"
+              },
+              "count": {
+                "field": "id",
+                "operation": "count"
+              }
+            }
+          },
+          "emuIncludedTotal": {
+            "description": "Total aanslag bedrag for postings included in the EMU-saldo computation (emuExclusionRule != 'excluded'). Read by the bookkeeping-emu-reporting sibling spec.",
+            "filter": "state = 'posted' AND emuExclusionRule != 'excluded'",
+            "operations": {
+              "emuTotal": {
+                "field": "aanslagBedrag",
+                "operation": "sum"
               }
             }
           }
