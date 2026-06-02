@@ -353,6 +353,146 @@
 					}
 				}
 			},
+			"GLTransaction": {
+				"slug": "GLTransaction",
+				"icon": "LedgerOutline",
+				"version": "0.1.0",
+				"title": "GL Transaction",
+				"description": "A double-entry general-ledger posting header. Owns the lifecycle and the balance invariant; child GLLine rows carry the debit/credit amounts per REQ-GL-001.",
+				"x-schema-org": "schema:AccountingTransaction",
+				"type": "object",
+				"required": [
+					"transactionNumber",
+					"postingDate",
+					"periodId",
+					"currency",
+					"description",
+					"state",
+					"administrationId"
+				],
+				"properties": {
+					"transactionNumber": {
+						"type": "string",
+						"description": "Sequential transaction number unique per administration + fiscal year.",
+						"example": "GL-2026-0001"
+					},
+					"postingDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Effective accounting date of the posting.",
+						"example": "2026-01-31"
+					},
+					"periodId": {
+						"type": "string",
+						"description": "FK to the FiscalPeriod record (T3 introduces the schema; T1 accepts any string). Auto-resolved on the post transition per REQ-GL-006.",
+						"example": "2026-Q1"
+					},
+					"currency": {
+						"type": "string",
+						"description": "ISO 4217 base currency for this posting.",
+						"minLength": 3,
+						"maxLength": 3,
+						"default": "EUR",
+						"example": "EUR"
+					},
+					"description": {
+						"type": "string",
+						"description": "Human-readable summary of the posting.",
+						"example": "Q1 consulting revenue recognition"
+					},
+					"sourceReference": {
+						"type": "string",
+						"description": "External document number (invoice no., bank statement ref, asset repair ID, etc.).",
+						"nullable": true,
+						"example": "INV-2026-0042"
+					},
+					"state": {
+						"type": "string",
+						"enum": [
+							"draft",
+							"posted",
+							"reversed"
+						],
+						"description": "Lifecycle state. draft: under construction; posted: immutable and in trial balance; reversed: superseded by a compensating transaction.",
+						"default": "draft",
+						"example": "draft"
+					},
+					"journalEntryId": {
+						"type": "string",
+						"description": "Back-reference to the JournalEntry that materialised this posting, if any.",
+						"nullable": true,
+						"example": "je-2026-001"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this posting.",
+						"example": "adm-consultancy-nl"
+					},
+					"reversesTransactionId": {
+						"type": "string",
+						"description": "FK to the GLTransaction that this transaction reverses. Required on the reversed transaction for the reversal guard.",
+						"nullable": true
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "state",
+					"initialState": "draft",
+					"states": {
+						"draft": {
+							"label": "Draft",
+							"description": "Under construction. Lines may be added, edited, or deleted."
+						},
+						"posted": {
+							"label": "Posted",
+							"description": "Immutable. Header and lines are locked; appears in trial balance (T3)."
+						},
+						"reversed": {
+							"label": "Reversed",
+							"description": "Superseded by a compensating transaction. Excluded from balance aggregations but remains queryable for audit."
+						}
+					},
+					"transitions": {
+						"post": {
+							"from": "draft",
+							"to": "posted",
+							"label": "Post transaction",
+							"description": "Transition draft posting to posted state. Enforces balance invariant and account-state guard.",
+							"requires": "OCA\\Shillinq\\Lifecycle\\BalanceGuard::isBalanced"
+						},
+						"reverse": {
+							"from": "posted",
+							"to": "reversed",
+							"label": "Reverse transaction",
+							"description": "Mark this transaction as reversed. A compensating GLTransaction referencing this one via reversesTransactionId must exist."
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"lines": {
+						"localField": "id",
+						"relatedSchema": "GLLine",
+						"relatedField": "transactionId",
+						"cardinality": "one-to-many",
+						"description": "All GLLine rows belonging to this transaction."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
 			"GLLine": {
 				"slug": "GLLine",
 				"icon": "TableRowOutline",
@@ -444,6 +584,22 @@
 						"type": "boolean",
 						"default": false,
 						"description": "When true, excludes this line from the consolidated trial-balance and financial-statement aggregations. Used to eliminate inter-GR transactions from consolidated views per REQ-GRC-003."
+					}
+				},
+				"x-openregister-relations": {
+					"parentTransaction": {
+						"localField": "transactionId",
+						"relatedSchema": "GLTransaction",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "The parent GLTransaction that owns this line."
+					},
+					"account": {
+						"localField": "accountNumber",
+						"relatedSchema": "Account",
+						"relatedField": "accountNumber",
+						"cardinality": "many-to-one",
+						"description": "FK to Account.accountNumber (bookkeeping-chart-of-accounts). Requires Account.lifecycleState = active on the post transition."
 					}
 				},
 				"x-openregister-aggregations": {
@@ -3489,6 +3645,161 @@
 		}
 	},
 	"objects": [
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "GLTransaction",
+				"slug": "gl-txn-2026-q1-revenue"
+			},
+			"transactionNumber": "GL-2026-0001",
+			"postingDate": "2026-01-31",
+			"periodId": "2026-Q1",
+			"currency": "EUR",
+			"description": "Q1 consulting revenue recognition",
+			"sourceReference": "INV-2026-0042",
+			"state": "posted",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "GLTransaction",
+				"slug": "gl-txn-2026-q1-payroll"
+			},
+			"transactionNumber": "GL-2026-0002",
+			"postingDate": "2026-01-31",
+			"periodId": "2026-Q1",
+			"currency": "EUR",
+			"description": "January payroll",
+			"state": "posted",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "GLTransaction",
+				"slug": "gl-txn-2026-q1-bank-recon"
+			},
+			"transactionNumber": "GL-2026-0003",
+			"postingDate": "2026-01-31",
+			"periodId": "2026-Q1",
+			"currency": "EUR",
+			"description": "Bank reconciliation January",
+			"state": "posted",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "GLLine",
+				"slug": "gl-line-revenue-1-debit"
+			},
+			"transactionId": "gl-txn-2026-q1-revenue",
+			"lineNumber": 1,
+			"accountNumber": "1300",
+			"side": "debit",
+			"amount": 12100.0,
+			"currency": "EUR",
+			"description": "AR: invoice INV-2026-0042"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "GLLine",
+				"slug": "gl-line-revenue-2-credit-revenue"
+			},
+			"transactionId": "gl-txn-2026-q1-revenue",
+			"lineNumber": 2,
+			"accountNumber": "8000",
+			"side": "credit",
+			"amount": 10000.0,
+			"currency": "EUR",
+			"description": "Revenue account"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "GLLine",
+				"slug": "gl-line-revenue-3-credit-vat"
+			},
+			"transactionId": "gl-txn-2026-q1-revenue",
+			"lineNumber": 3,
+			"accountNumber": "1510",
+			"side": "credit",
+			"amount": 2100.0,
+			"currency": "EUR",
+			"description": "VAT payable"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "GLLine",
+				"slug": "gl-line-payroll-1-debit-salaries"
+			},
+			"transactionId": "gl-txn-2026-q1-payroll",
+			"lineNumber": 1,
+			"accountNumber": "4100",
+			"side": "debit",
+			"amount": 25000.0,
+			"currency": "EUR",
+			"description": "Gross salaries"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "GLLine",
+				"slug": "gl-line-payroll-2-credit-net"
+			},
+			"transactionId": "gl-txn-2026-q1-payroll",
+			"lineNumber": 2,
+			"accountNumber": "2000",
+			"side": "credit",
+			"amount": 19000.0,
+			"currency": "EUR",
+			"description": "Net wages payable"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "GLLine",
+				"slug": "gl-line-payroll-3-credit-tax"
+			},
+			"transactionId": "gl-txn-2026-q1-payroll",
+			"lineNumber": 3,
+			"accountNumber": "1520",
+			"side": "credit",
+			"amount": 6000.0,
+			"currency": "EUR",
+			"description": "Tax and social charges payable"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "GLLine",
+				"slug": "gl-line-bankrecon-1-debit"
+			},
+			"transactionId": "gl-txn-2026-q1-bank-recon",
+			"lineNumber": 1,
+			"accountNumber": "1100",
+			"side": "debit",
+			"amount": 50000.0,
+			"currency": "EUR",
+			"description": "Bank account balance"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "GLLine",
+				"slug": "gl-line-bankrecon-2-credit"
+			},
+			"transactionId": "gl-txn-2026-q1-bank-recon",
+			"lineNumber": 2,
+			"accountNumber": "1300",
+			"side": "credit",
+			"amount": 50000.0,
+			"currency": "EUR",
+			"description": "AR settlement"
+		},
 		{
 			"@self": {
 				"register": "openregister",

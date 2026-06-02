@@ -1981,8 +1981,8 @@ _**DEPRECATED.** Superseded by the `Account` entry (bookkeeping-chart-of-account
 - → JournalEntry (one-to-many)
 
 ### GeneralLedgerEntry
-**Schema.org:** `schema:Thing`
-_An individual entry in the general ledger representing a financial transaction with debit and credit amounts_
+**Schema.org:** `schema:Thing` _(deprecated — use `GLTransaction` + `GLLine` instead)_
+_**DEPRECATED.** Superseded by the `GLTransaction` / `GLLine` header-line split (bookkeeping-general-ledger, 2026-06-02). The flat single-entry model could not express the balance invariant declaratively (see design.md Decision D2). Retained here for historical reference only; new register declarations MUST use `GLTransaction` and `GLLine`. Downstream specs (trial balance T3, financial reporting T4) MUST reference `GLTransaction` as the posting header and `GLLine.accountNumber` as the FK target._
 **Primary spec:** financial-reporting-accountability
 
 | Property | Type | Required | Description |
@@ -2000,6 +2000,13 @@ _An individual entry in the general ledger representing a financial transaction 
 - → FiscalYear (many-to-one)
 - → Organization (many-to-one)
 - → APTransaction (many-to-one)
+
+> **Reconciliation note (bookkeeping-general-ledger, 2026-06-02):** `GeneralLedgerEntry` is superseded
+> by the `GLTransaction` (header) + `GLLine` (line) split introduced in the
+> `bookkeeping-general-ledger` change. The flat model was rejected because the balance constraint
+> (SUM debits = SUM credits) cannot be expressed declaratively on a single-entry shape — it requires
+> grouping over a *set* of lines. The header/line split is canonical in RGS and every reference SMB
+> accounting product. Spec: `openspec/changes/bookkeeping-general-ledger/design.md` Decision D1.
 
 ### GoodsReceipt
 **Schema.org:** `schema:Thing`
@@ -2080,6 +2087,56 @@ _A managed collection of grants for organizational tracking, compliance monitori
 **Relations:**
 - → Organization (many-to-one)
 - → Grant (one-to-many)
+
+### GLLine
+**Schema.org:** `schema:MonetaryAmount`
+_A debit-or-credit line within a GLTransaction, encoding polarity in the `side` enum. `amount` is always non-negative; sign lives in `side`. Supersedes the flat `GeneralLedgerEntry` shape (see reconciliation note on that entry). Extended with `eliminationFlag` for GR consolidation per REQ-GRC-003._
+**Primary spec:** bookkeeping-general-ledger
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| transactionId | string | Yes | FK to the parent GLTransaction.id |
+| lineNumber | integer | Yes | Stable 1-based ordering within the transaction |
+| accountNumber | string | Yes | FK to Account.accountNumber |
+| side | enum | Yes | One of debit, credit |
+| amount | number ≥ 0 | Yes | Non-negative amount in the transaction's currency |
+| currency | string | Yes | ISO 4217 currency code; must equal GLTransaction.currency (T1 single-currency invariant) |
+| periodId | string | No | Auto-resolved by lifecycle engine on GLTransaction.post transition (stub string in T1, FK to FiscalPeriod in T3) |
+| subLedgerType | enum | No | One of ap, ar, project, none (T2 owns the sub-ledger registers) |
+| subLedgerRef | string | No | FK identifier into the sub-ledger when subLedgerType ≠ none |
+| costCenter | string | No | Cost-center code for allocation reporting |
+| description | string | No | Line-level description |
+| eliminationFlag | boolean | No | When true, excludes line from consolidated trial-balance (GR consolidation per REQ-GRC-003) |
+
+**Relations:**
+- → GLTransaction (many-to-one, via transactionId → GLTransaction.id)
+- → Account (many-to-one, via accountNumber → Account.accountNumber)
+
+### GLTransaction
+**Schema.org:** `schema:AccountingTransaction`
+_Double-entry general-ledger posting header. Owns the lifecycle (draft → posted → reversed) and the balance invariant (SUM debits = SUM credits across child GLLine rows). Introduced in T1 (bookkeeping-general-ledger, 2026-06-02) as the canonical replacement for the flat `GeneralLedgerEntry` shape (see that entry's reconciliation note). Balance precondition references `OCA\Shillinq\Lifecycle\BalanceGuard::isBalanced` as an ADR-031 exception-path guard._
+**Primary spec:** bookkeeping-general-ledger
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| transactionNumber | string | Yes | Sequential number unique per administration + fiscal year |
+| postingDate | date | Yes | Effective accounting date |
+| periodId | string | Yes | FK to FiscalPeriod (T3); plain string identifier in T1 |
+| currency | string | Yes | ISO 4217 base currency for the posting |
+| description | string | Yes | Human-readable summary |
+| sourceReference | string | No | External document number (invoice, bank statement ref, asset repair ID) |
+| state | enum | Yes | One of draft, posted, reversed |
+| journalEntryId | string | No | Back-reference to the JournalEntry that materialised this posting |
+| administrationId | string | Yes | FK to the Administration owning the posting |
+| reversesTransactionId | string | No | FK to the GLTransaction that this transaction reverses |
+
+**Relations:**
+- → GLLine (one-to-many, via id → GLLine.transactionId)
+
+> **T1 split rationale (bookkeeping-general-ledger, 2026-06-02):** The header/line split is required
+> for the balance constraint to be expressible declaratively (ADR-031): the invariant operates over
+> a *group* of lines, not a single row. A flat `GeneralLedgerEntry` model would force the check into
+> application code at write-time. Spec: `openspec/changes/bookkeeping-general-ledger/design.md` D1–D2.
 
 ### GRDeelnemer
 **Schema.org:** `schema:Organization`
