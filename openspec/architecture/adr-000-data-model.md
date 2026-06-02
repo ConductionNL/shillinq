@@ -4431,3 +4431,47 @@ _XBRL (eXtensible Business Reporting Language) taxonomy definitions for structur
 
 **Relations:**
 - → TaxReturn (one-to-many)
+
+### BBVProgramma
+**Schema.org:** `schema:DefinedTerm`
+_A BBV programma-indeling entry grouping GL postings by taakveld (gemeente/provincie) or kostentoedeling (waterschap). The `programmaStructure` discriminator controls which classification hierarchy is used per REQ-WSB-002. Declared alongside `WaterschapHeffingPosting` in this change as the T3 `bookkeeping-bbv-compliance` spec shares the same `bbvVariant` overlay. Cross-referencing spec: `bookkeeping-waterschappen-bbv-variant` (add-shillinq-waterschappen-bbv-variant, 2026-06-01)._
+**Primary spec:** bookkeeping-waterschappen-bbv-variant
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| code | string | Yes | Unique programma code within the administration (e.g. 'watersysteembeheer') |
+| naam | string | Yes | Human-readable Dutch programma name |
+| beschrijving | string | No | Operator-authored description of this programma |
+| administrationId | string | Yes | FK to the Administration owning this programma |
+| programmaStructure | enum | Yes | One of taakveld, kostentoedeling — discriminator controlling aggregation hierarchy |
+| bbvVariant | enum | No | One of gemeente, waterschap, provincie — default gemeente |
+| parentCode | string | No | FK to parent BBVProgramma.code for hierarchical navigation |
+
+**Relations:**
+- self → BBVProgramma (many-to-one, via parentCode → code; hoofdprogramma hierarchy)
+- → GLLine (one-to-many, via postingsByProgramma aggregation honouring programmaStructure discriminator)
+
+### WaterschapHeffingPosting
+**Schema.org:** `schema:Invoice`
+_Sector-specific belasting posting for the three waterschapsbelastingen (watersysteemheffing, zuiveringsheffing, verontreinigingsheffing). On transition to 'posted', materialises a balanced 2-line GLTransaction per T1 REQ-GL-001 with `sourceReference` pointing back to this posting. Does NOT carry its own ledger lines (D3 from design.md). The `emuExclusionRule` field controls EMU-saldo inclusion per the EMU-bijlage waterschappen handleiding 2026 and is read by the `bookkeeping-emu-reporting` sibling spec. Lifecycle is declarative via `x-openregister-lifecycle` — no PHP service class. Cross-referencing spec: `bookkeeping-waterschappen-bbv-variant` (add-shillinq-waterschappen-bbv-variant, 2026-06-01)._
+**Primary spec:** bookkeeping-waterschappen-bbv-variant
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| heffingType | enum | Yes | One of watersysteemheffing, zuiveringsheffing, verontreinigingsheffing |
+| aanslagJaar | integer | Yes | Belastingjaar of this aanslag |
+| tariefGrondslag | string | Yes | Canonical grondslag for tarief computation (e.g. 'vervuilingseenheden') |
+| tarief | number | Yes | Applied tarief per grondslag-eenheid in EUR; minimum 0 |
+| aanslagBedrag | number | Yes | Total aanslag amount in EUR; materialised into balanced GLTransaction on post |
+| journalEntryId | string | No | FK to the materialised GLTransaction.id; set by lifecycle engine on 'posted' |
+| emuExclusionRule | enum | No | One of included, excluded, partial — default included; controls EMU-saldo contribution |
+| administrationId | string | Yes | FK to the waterschap Administration owning this posting |
+| debitAccountNumber | string | No | Account to debit in materialised GLTransaction |
+| creditAccountNumber | string | No | Account to credit in materialised GLTransaction |
+| state | enum | Yes | One of draft, posted, reversed |
+| description | string | No | Operator-authored description or reference |
+
+**Relations:**
+- → GLTransaction (one-to-one, via journalEntryId; materialised on 'posted' transition)
+- → Account (many-to-one, via debitAccountNumber → Account.accountNumber)
+- → Account (many-to-one, via creditAccountNumber → Account.accountNumber)
