@@ -53,11 +53,13 @@ _Hierarchical chart-of-accounts entry conforming to the RGS (Referentie Grootboe
 | description | string | No | Operator-authored free-text description |
 | vatApplicable | boolean | No | Whether VAT/BTW applies to transactions on this account |
 | iban | string | No | Dutch IBAN for bank/cash accounts |
+| iv3FieldCode | string | No | CBS IV3 field code this account maps to (e.g. K1000, K2100). Optional; if set, IV3 report aggregation groups GL transactions for this account under the given field code per REQ-IV3-003 (bookkeeping-iv3-reporting). |
 
 **Relations:**
 - self → Account (many-to-one, via parentAccountNumber → accountNumber; hierarchy navigation)
 - → GLLine (one-to-many, from T1 general-ledger change)
 - → Administration (many-to-one)
+- → IV3ReportLine (one-to-many, via iv3FieldCode grouping in quarterly aggregation)
 
 > **Reconciliation note (add-shillinq-chart-of-accounts, 2026-05-18):** The earlier
 > `GeneralLedgerAccount` entry (Schema.org `schema:Product`, primary spec
@@ -1959,6 +1961,56 @@ _Quarterly IV3 (Informatie voor Derden) export submitted to CBS by Dutch decentr
 - accepted → corrected (file a new Iv3Export with correctionOf set)
 
 **Submission:** OR ScheduledWorkflow (cron `0 0 1 */3 *`) via OpenConnector `cbs-iv3` source (ADR-019). No app-local HTTP client.
+
+### IV3Report
+**Schema.org:** `schema:Report`
+_Quarterly IV3 (Informatie voor Derden) report for Dutch SMB and non-profit administrations. Represents a GL aggregation for a single calendar quarter, materialised into IV3ReportLine items and submitted to CBS via the cbs-gateway app. Distinct from Iv3Export (overheid/BBV flow): IV3Report is SMB/ZZP-focused and uses Account.iv3FieldCode mapping rather than BbvAccountMapping._
+**Primary spec:** bookkeeping-iv3-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| reportNumber | string | Yes | Unique IV3 report identifier, auto-assigned on creation |
+| administrationId | string | Yes | FK to Administration; determines GL source for aggregation |
+| fiscalYear | integer | Yes | Reporting year (e.g. 2026) |
+| quarter | enum | Yes | One of Q1, Q2, Q3, Q4 |
+| status | enum | Yes | One of draft, validated, submitted, filed |
+| reportDate | datetime | No | Date and time the report was generated |
+| submissionDate | datetime | No | Date and time submitted to CBS |
+| filedDate | datetime | No | Date and time CBS confirmed filing |
+| cbsReceiptNumber | string | No | Receipt number returned by CBS gateway on submission |
+| notes | string | No | Operator comments or submission notes |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- → IV3ReportLine (one-to-many, via reportId; materialised from quarterly GL aggregation)
+
+**Lifecycle (x-openregister-lifecycle):**
+- draft → validated (operator validates; precondition: all mandatory CBS fields K1000, K1100, K2000, K2100, K3000, K4000, K5000 have ≥1 mapped Account.iv3FieldCode)
+- validated → submitted (operator submits; hook POSTs to cbs-gateway /api/iv3/submit; receipt recorded)
+- submitted → filed (CBS gateway callback confirms receipt; filedDate recorded; terminal state)
+
+**Aggregation (x-openregister-aggregations):**
+- `quarterlyGlSum`: SUM(GLLine.amount) grouped by Account.iv3FieldCode, filtered to quarter boundaries, excluding GLLine.eliminationFlag = true; materialises IV3ReportLine items on creation.
+- `mandatoryFieldCheck`: Verifies all mandatory CBS IV3 fields (K1000, K1100, K2000, K2100, K3000, K4000, K5000) are mapped in chart of accounts. Used as validate precondition.
+
+### IV3ReportLine
+**Schema.org:** `schema:MonetaryAmount`
+_A single aggregated line item within an IV3Report, representing the sum of GL transactions for one CBS IV3 field code in a given quarter. Materialised declaratively from GL aggregation via x-openregister-aggregations; not manually entered._
+**Primary spec:** bookkeeping-iv3-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| reportId | string | Yes | FK to the parent IV3Report.id |
+| iv3FieldCode | string | Yes | CBS IV3 field code (e.g. K1000, K2100) this line represents |
+| accountNumber | string | Yes | RGS account code from chart of accounts aggregated into this field |
+| debitAmount | number | No | Total aggregated debit amount from GL for this account/field in EUR |
+| creditAmount | number | No | Total aggregated credit amount from GL for this account/field in EUR |
+| netAmount | number | Yes | Net amount (creditAmount - debitAmount) in EUR; negative values valid |
+| sequence | integer | Yes | Display order within the IV3 report |
+
+**Relations:**
+- → IV3Report (many-to-one, via reportId)
+- → Account (many-to-one, via accountNumber → Account.accountNumber)
 
 ### JointVenture
 **Schema.org:** `schema:Organization`

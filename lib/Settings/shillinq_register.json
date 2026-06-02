@@ -418,6 +418,12 @@
             "type": "boolean",
             "description": "Whether VAT/BTW applies to transactions posted to this account.",
             "default": false
+          },
+          "iv3FieldCode": {
+            "type": "string",
+            "description": "CBS IV3 field code this account maps to (e.g. 'K1000', 'K2100'). When set, IV3 report aggregation groups GL transactions for this account under the given CBS field code per REQ-IV3-003.",
+            "nullable": true,
+            "example": "K1000"
           }
         },
         "x-openregister-lifecycle": {
@@ -500,6 +506,320 @@
             "operation": "count",
             "description": "Number of accounts per lifecycleState.",
             "groupBy": "lifecycleState"
+          }
+        }
+      },
+      "IV3Report": {
+        "slug": "IV3Report",
+        "icon": "FileChartOutline",
+        "version": "0.1.0",
+        "title": "IV3 Report",
+        "description": "Quarterly IV3 report for Dutch SMB and non-profit administrations. Represents a GL aggregation for a single calendar quarter, materialised into IV3ReportLine items and submitted to CBS via the cbs-gateway app. Lifecycle: draft → validated → submitted → filed per REQ-IV3-004.",
+        "x-schema-org": "schema:Report",
+        "type": "object",
+        "required": [
+          "reportNumber",
+          "administrationId",
+          "fiscalYear",
+          "quarter",
+          "status"
+        ],
+        "properties": {
+          "reportNumber": {
+            "type": "string",
+            "description": "Unique IV3 report identifier, auto-assigned on creation.",
+            "example": "IV3-2026-Q2-001"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration that owns this report. Determines GL source for aggregation.",
+            "example": "demo-001"
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "description": "Reporting year (e.g. 2026).",
+            "example": 2026
+          },
+          "quarter": {
+            "type": "string",
+            "enum": ["Q1", "Q2", "Q3", "Q4"],
+            "description": "Calendar quarter of the reporting period.",
+            "example": "Q2"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["draft", "validated", "submitted", "filed"],
+            "description": "Current lifecycle status of the IV3 report.",
+            "default": "draft",
+            "example": "draft"
+          },
+          "reportDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date and time the report was generated.",
+            "nullable": true,
+            "example": "2026-07-05T09:00:00+02:00"
+          },
+          "submissionDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date and time the report was submitted to CBS.",
+            "nullable": true,
+            "example": "2026-07-08T14:30:00+02:00"
+          },
+          "filedDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date and time CBS confirmed the filing.",
+            "nullable": true,
+            "example": "2026-07-10T10:00:00+02:00"
+          },
+          "cbsReceiptNumber": {
+            "type": "string",
+            "description": "Receipt number returned by CBS gateway on submission.",
+            "nullable": true,
+            "example": "CBS-2026-Q2-4812793"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Operator comments or submission notes.",
+            "nullable": true,
+            "example": "Q2 review complete. All mandatory CBS fields mapped."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Report instantiated. GL aggregation runs on creation; IV3ReportLine items materialised. Awaiting operator validation."
+            },
+            "validated": {
+              "label": "Validated",
+              "description": "All mandatory CBS IV3 fields verified as mapped in chart of accounts. GL balances confirmed. Ready for CBS submission."
+            },
+            "submitted": {
+              "label": "Submitted",
+              "description": "Report POSTed to CBS gateway (cbs-gateway app). Receipt number recorded. Awaiting CBS filing confirmation."
+            },
+            "filed": {
+              "label": "Filed",
+              "description": "CBS confirmed filing. Terminal state. Report archived per Archiefwet retention rules."
+            }
+          },
+          "transitions": {
+            "validate": {
+              "from": "draft",
+              "to": "validated",
+              "label": "Validate",
+              "description": "Verify all mandatory CBS IV3 fields (K1000, K1100, K2000, K2100, K3000, K4000, K5000) have ≥1 mapped GL account in chart of accounts. Rejects with error message if any field is unmapped per REQ-IV3-005.",
+              "precondition": {
+                "type": "aggregation-check",
+                "aggregation": "mandatoryFieldCheck",
+                "condition": "allMandatoryFieldsMapped = true",
+                "errorMessage": "Cannot validate report: CBS field {code} is unmapped. Add a GL account mapped to {code} in chart of accounts and try again."
+              }
+            },
+            "submit": {
+              "from": "validated",
+              "to": "submitted",
+              "label": "Submit to CBS",
+              "description": "POST report metadata and all IV3ReportLine items to CBS gateway endpoint (/api/iv3/submit). Record receipt number and submission timestamp per REQ-IV3-009.",
+              "hook": {
+                "trigger": "cbs-gateway:submitIv3Report",
+                "parameters": {
+                  "endpoint": "/api/iv3/submit",
+                  "payload": "@self",
+                  "receiptField": "cbsReceiptNumber",
+                  "timestampField": "submissionDate"
+                }
+              }
+            },
+            "file": {
+              "from": "submitted",
+              "to": "filed",
+              "label": "Mark as Filed",
+              "description": "CBS gateway confirms receipt and filing. Records filedDate. Terminal state per REQ-IV3-004.",
+              "hook": {
+                "trigger": "cbs-gateway:iv3ReportFiled",
+                "parameters": {
+                  "timestampField": "filedDate"
+                }
+              }
+            }
+          },
+          "retention": {
+            "rule": "selectielijst:5.1.4",
+            "period": "P10Y",
+            "description": "IV3 quarterly financial reports retained 10 years per Archiefwet 1995."
+          }
+        },
+        "x-openregister-aggregations": {
+          "quarterlyGlSum": {
+            "description": "Quarterly GL aggregation for IV3: SUM(GLLine.amount) grouped by Account.iv3FieldCode, filtered to the report's administration + calendar quarter boundaries, excluding inter-company elimination lines (GLLine.eliminationFlag = false) per REQ-IV3-006 and REQ-IV3-007. Materialises IV3ReportLine items on report creation.",
+            "sourceSchema": "GLLine",
+            "sourceRegister": "shillinq",
+            "filter": {
+              "administrationId": "@self.administrationId",
+              "eliminationFlag": false,
+              "transactionDate": {
+                "gte": "@self.quarterStart",
+                "lte": "@self.quarterEnd"
+              }
+            },
+            "join": {
+              "from": "GLLine.accountNumber",
+              "through": "Account",
+              "on": "Account.accountNumber",
+              "select": "Account.iv3FieldCode",
+              "condition": "Account.iv3FieldCode IS NOT NULL"
+            },
+            "groupBy": "Account.iv3FieldCode",
+            "operations": {
+              "totalDebit": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "GLLine.side = 'debit'"
+              },
+              "totalCredit": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "GLLine.side = 'credit'"
+              },
+              "netAmount": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "expression": "credit - debit"
+              }
+            },
+            "materialise": {
+              "targetSchema": "IV3ReportLine",
+              "targetRegister": "shillinq",
+              "mapping": {
+                "reportId": "@self.id",
+                "iv3FieldCode": "Account.iv3FieldCode",
+                "accountNumber": "GLLine.accountNumber",
+                "debitAmount": "totalDebit",
+                "creditAmount": "totalCredit",
+                "netAmount": "netAmount"
+              }
+            }
+          },
+          "mandatoryFieldCheck": {
+            "description": "Validation precondition: verifies that every mandatory CBS IV3 field (K1000, K1100, K2000, K2100, K3000, K4000, K5000) has at least one Account with a matching iv3FieldCode in the chart of accounts for this administration per REQ-IV3-005.",
+            "sourceSchema": "Account",
+            "sourceRegister": "shillinq",
+            "filter": {
+              "administrationId": "@self.administrationId",
+              "lifecycleState": "active"
+            },
+            "operations": {
+              "mappedFields": {
+                "field": "iv3FieldCode",
+                "operation": "distinct-values",
+                "condition": "iv3FieldCode IS NOT NULL"
+              },
+              "allMandatoryFieldsMapped": {
+                "operation": "check-superset",
+                "field": "iv3FieldCode",
+                "requiredValues": ["K1000", "K1100", "K2000", "K2100", "K3000", "K4000", "K5000"]
+              }
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "reportLines": {
+            "localField": "id",
+            "relatedSchema": "IV3ReportLine",
+            "relatedField": "reportId",
+            "cardinality": "one-to-many",
+            "description": "All IV3ReportLine items materialised from GL aggregation for this report."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "IV3ReportLine": {
+        "slug": "IV3ReportLine",
+        "icon": "TableRowOutline",
+        "version": "0.1.0",
+        "title": "IV3 Report Line",
+        "description": "A single aggregated line item within an IV3Report, representing the sum of GL transactions for one CBS IV3 field code in a given quarter. Materialised declaratively from GL aggregation per REQ-IV3-002.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "type": "object",
+        "required": [
+          "reportId",
+          "iv3FieldCode",
+          "accountNumber",
+          "netAmount",
+          "sequence"
+        ],
+        "properties": {
+          "reportId": {
+            "type": "string",
+            "description": "FK to the parent IV3Report.id.",
+            "example": "iv3-report-2026-q2"
+          },
+          "iv3FieldCode": {
+            "type": "string",
+            "description": "CBS IV3 field code (e.g. 'K1000', 'K2100') this line item represents.",
+            "example": "K1000"
+          },
+          "accountNumber": {
+            "type": "string",
+            "description": "RGS account code from the chart of accounts that was aggregated into this IV3 field.",
+            "example": "1000"
+          },
+          "debitAmount": {
+            "type": "number",
+            "description": "Total aggregated debit amount from GL for this account/field in EUR.",
+            "nullable": true,
+            "example": 25000.00
+          },
+          "creditAmount": {
+            "type": "number",
+            "description": "Total aggregated credit amount from GL for this account/field in EUR.",
+            "nullable": true,
+            "example": 12000.00
+          },
+          "netAmount": {
+            "type": "number",
+            "description": "Net amount (creditAmount - debitAmount) in EUR. Negative values are valid.",
+            "example": -13000.00
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Display order within the IV3 report.",
+            "example": 1
+          }
+        },
+        "x-openregister-relations": {
+          "report": {
+            "localField": "reportId",
+            "relatedSchema": "IV3Report",
+            "relatedField": "id",
+            "cardinality": "many-to-one",
+            "description": "Parent IV3Report this line item belongs to."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": ["read"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
           }
         }
       },
@@ -720,6 +1040,188 @@
         }
       }
     },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "IV3Report",
+          "id": "iv3-report-2026-q1"
+        },
+        "reportNumber": "IV3-2026-Q1-001",
+        "administrationId": "demo-001",
+        "fiscalYear": 2026,
+        "quarter": "Q1",
+        "status": "draft",
+        "reportDate": "2026-04-08T09:00:00+02:00",
+        "submissionDate": null,
+        "filedDate": null,
+        "cbsReceiptNumber": null,
+        "notes": "Q1 2026 GL aggregation complete. Awaiting validation before CBS submission."
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "IV3Report",
+          "id": "iv3-report-2026-q2"
+        },
+        "reportNumber": "IV3-2026-Q2-001",
+        "administrationId": "demo-001",
+        "fiscalYear": 2026,
+        "quarter": "Q2",
+        "status": "validated",
+        "reportDate": "2026-07-05T09:00:00+02:00",
+        "submissionDate": null,
+        "filedDate": null,
+        "cbsReceiptNumber": null,
+        "notes": "Validated. All mandatory CBS fields mapped. Ready for submission."
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "IV3Report",
+          "id": "iv3-report-2026-q3"
+        },
+        "reportNumber": "IV3-2026-Q3-001",
+        "administrationId": "demo-001",
+        "fiscalYear": 2026,
+        "quarter": "Q3",
+        "status": "submitted",
+        "reportDate": "2026-10-05T10:00:00+02:00",
+        "submissionDate": "2026-10-08T14:30:00+02:00",
+        "filedDate": null,
+        "cbsReceiptNumber": "CBS-2026-Q3-4812793",
+        "notes": "Submitted to CBS. Awaiting filing confirmation."
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "IV3Report",
+          "id": "iv3-report-2025-q4"
+        },
+        "reportNumber": "IV3-2025-Q4-001",
+        "administrationId": "demo-001",
+        "fiscalYear": 2025,
+        "quarter": "Q4",
+        "status": "filed",
+        "reportDate": "2026-01-08T09:00:00+01:00",
+        "submissionDate": "2026-01-09T11:00:00+01:00",
+        "filedDate": "2026-01-10T10:00:00+01:00",
+        "cbsReceiptNumber": "CBS-2025-Q4-3917642",
+        "notes": "Filed. Q4 2025 definitief ingediend en bevestigd door CBS."
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "IV3ReportLine",
+          "id": "iv3-line-2026-q2-k1000"
+        },
+        "reportId": "iv3-report-2026-q2",
+        "iv3FieldCode": "K1000",
+        "accountNumber": "1000",
+        "debitAmount": 0.00,
+        "creditAmount": 125000.00,
+        "netAmount": 125000.00,
+        "sequence": 1
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "IV3ReportLine",
+          "id": "iv3-line-2026-q2-k1100"
+        },
+        "reportId": "iv3-report-2026-q2",
+        "iv3FieldCode": "K1100",
+        "accountNumber": "1100",
+        "debitAmount": 18500.00,
+        "creditAmount": 0.00,
+        "netAmount": -18500.00,
+        "sequence": 2
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "IV3ReportLine",
+          "id": "iv3-line-2026-q2-k2000"
+        },
+        "reportId": "iv3-report-2026-q2",
+        "iv3FieldCode": "K2000",
+        "accountNumber": "2000",
+        "debitAmount": 45000.00,
+        "creditAmount": 12000.00,
+        "netAmount": -33000.00,
+        "sequence": 3
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "IV3ReportLine",
+          "id": "iv3-line-2026-q2-k2100"
+        },
+        "reportId": "iv3-report-2026-q2",
+        "iv3FieldCode": "K2100",
+        "accountNumber": "2100",
+        "debitAmount": 0.00,
+        "creditAmount": 67500.00,
+        "netAmount": 67500.00,
+        "sequence": 4
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "IV3ReportLine",
+          "id": "iv3-line-2026-q2-k3000"
+        },
+        "reportId": "iv3-report-2026-q2",
+        "iv3FieldCode": "K3000",
+        "accountNumber": "3000",
+        "debitAmount": 0.00,
+        "creditAmount": 215000.00,
+        "netAmount": 215000.00,
+        "sequence": 5
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "IV3ReportLine",
+          "id": "iv3-line-2026-q2-k4000"
+        },
+        "reportId": "iv3-report-2026-q2",
+        "iv3FieldCode": "K4000",
+        "accountNumber": "4000",
+        "debitAmount": 187500.00,
+        "creditAmount": 0.00,
+        "netAmount": -187500.00,
+        "sequence": 6
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "IV3ReportLine",
+          "id": "iv3-line-2026-q2-k5000"
+        },
+        "reportId": "iv3-report-2026-q2",
+        "iv3FieldCode": "K5000",
+        "accountNumber": "5000",
+        "debitAmount": 92300.00,
+        "creditAmount": 15600.00,
+        "netAmount": -76700.00,
+        "sequence": 7
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "IV3ReportLine",
+          "id": "iv3-line-2026-q2-k6000"
+        },
+        "reportId": "iv3-report-2026-q2",
+        "iv3FieldCode": "K6000",
+        "accountNumber": "6000",
+        "debitAmount": 34800.00,
+        "creditAmount": 0.00,
+        "netAmount": -34800.00,
+        "sequence": 8
+      }
+    ],
     "mappings": {
       "iv3-xml-transformation": {
         "slug": "iv3-xml-transformation",
