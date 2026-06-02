@@ -150,6 +150,354 @@
           }
         }
       },
+      "JournalEntry": {
+        "slug": "JournalEntry",
+        "icon": "BookOpenPageVariantOutline",
+        "version": "0.1.0",
+        "title": "Journal Entry",
+        "description": "A human-authored journal entry (memoriaalboeking, recurring template, or reversing accrual). Posting one materialises exactly one balanced GLTransaction per REQ-JE-007. Distinct from GLTransaction: recurring and reversing journals are templates that produce postings on a schedule, not postings themselves (design.md Decision D3). Consumes OR's audit-trail-immutable and approval-workflow abstractions per ADR-022 — no app-local audit or approval table.",
+        "x-schema-org": "schema:AccountingTransaction",
+        "type": "object",
+        "required": [
+          "journalNumber",
+          "entryDate",
+          "description",
+          "lines",
+          "journalType",
+          "approvalState",
+          "administrationId",
+          "state"
+        ],
+        "properties": {
+          "journalNumber": {
+            "type": "string",
+            "description": "Sequential journal number, unique per administration and fiscal year.",
+            "example": "M-2026-0001"
+          },
+          "entryDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Operator-authored entry date.",
+            "example": "2026-03-01"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the journal entry.",
+            "example": "Bankkosten Q1"
+          },
+          "lines": {
+            "type": "array",
+            "description": "Embedded line preview. Each row materialises 1:1 into a GLLine on post per REQ-JE-007. Amounts are non-negative integer cents (server-authoritative; no client-trusted totals).",
+            "items": {
+              "type": "object",
+              "required": [
+                "accountNumber",
+                "side",
+                "amountCents"
+              ],
+              "properties": {
+                "accountNumber": {
+                  "type": "string",
+                  "description": "FK to Account.accountNumber.",
+                  "example": "4500"
+                },
+                "side": {
+                  "type": "string",
+                  "enum": [
+                    "debit",
+                    "credit"
+                  ],
+                  "description": "Debit or credit polarity; amountCents is always non-negative."
+                },
+                "amountCents": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Non-negative posting amount in integer cents (server-authoritative). Avoids IEEE-754 float-equality drift in the balance invariant per REQ-JE-007.",
+                  "example": 2500
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Optional line-level description.",
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "sourceDocumentUri": {
+            "type": "string",
+            "format": "uri",
+            "description": "FK URI to a docudesk attachment (source document: invoice scan, bank statement). Content lives in docudesk per ADR-022 / REQ-JE-006 — no embedded blob, no file-storage code in shillinq.",
+            "nullable": true,
+            "example": "docudesk://attachments/0d4e9c7f-.../factuur-2026-0001.pdf"
+          },
+          "sourceDocumentApp": {
+            "type": "string",
+            "enum": [
+              "docudesk",
+              "external"
+            ],
+            "description": "Origin app of the source-document URI per REQ-JE-006.",
+            "nullable": true
+          },
+          "journalType": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "recurring",
+              "reversing"
+            ],
+            "description": "Closed enum per REQ-JE-003. manual = one-off memoriaalboeking; recurring = cadence-driven template; reversing = auto-inverted at a future period boundary. Adding a sub-type requires a future openspec change.",
+            "example": "manual"
+          },
+          "cadence": {
+            "type": "object",
+            "description": "Recurrence schedule consumed by OR's ScheduledWorkflow primitive. Required when journalType is 'recurring', forbidden otherwise (REQ-JE-005). The object shape allows future interval types (business-day, week-of-month) without a schema-breaking change (design.md D6).",
+            "nullable": true,
+            "required": [
+              "interval",
+              "anchor"
+            ],
+            "properties": {
+              "interval": {
+                "type": "string",
+                "enum": [
+                  "daily",
+                  "weekly",
+                  "monthly",
+                  "yearly"
+                ],
+                "description": "Recurrence interval."
+              },
+              "anchor": {
+                "type": "string",
+                "format": "date",
+                "description": "First materialisation date (ISO date).",
+                "example": "2026-01-01"
+              },
+              "endsOn": {
+                "type": "string",
+                "format": "date",
+                "description": "Optional end date; null for open-ended.",
+                "nullable": true
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Optional maximum number of materialisations; null for unbounded.",
+                "nullable": true
+              }
+            }
+          },
+          "reversesOn": {
+            "type": "string",
+            "description": "FK to the FiscalPeriod (periodId) whose start triggers the inverse posting. Required when journalType is 'reversing', forbidden otherwise (REQ-JE-004).",
+            "nullable": true,
+            "example": "2027-01"
+          },
+          "glTransactionId": {
+            "type": "string",
+            "description": "Back-reference to the materialised GLTransaction once the journal is posted (REQ-JE-007).",
+            "nullable": true,
+            "example": "txn-001"
+          },
+          "approvalState": {
+            "type": "string",
+            "enum": [
+              "not-required",
+              "pending",
+              "approved",
+              "rejected"
+            ],
+            "default": "not-required",
+            "description": "Approval state per REQ-JE-008. Driven by OR's approval-workflow extension — shillinq declares the trigger, OR runs the routing. No app-local approval table.",
+            "example": "not-required"
+          },
+          "approvalPolicy": {
+            "type": "string",
+            "description": "Optional administration approval-policy identifier resolved by OR's approval-workflow extension on the post transition (design.md D4).",
+            "nullable": true
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration owning the entry. Scopes per-tenant authorisation; never client-trusted for authorisation decisions.",
+            "example": "adm-1"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "pending",
+              "posted",
+              "voided"
+            ],
+            "default": "draft",
+            "description": "Journal lifecycle state per REQ-JE-008. Managed by x-openregister-lifecycle below."
+          }
+        },
+        "x-openregister-conditional-validation": {
+          "cadenceRequiredForRecurring": {
+            "description": "cadence is required when journalType is 'recurring' and forbidden otherwise, per REQ-JE-005.",
+            "if": {
+              "journalType": "recurring"
+            },
+            "then": {
+              "required": [
+                "cadence"
+              ]
+            },
+            "else": {
+              "forbidden": [
+                "cadence"
+              ]
+            },
+            "errorMessage": "Cadence is vereist voor terugkerende journaalposten"
+          },
+          "reversesOnRequiredForReversing": {
+            "description": "reversesOn is required when journalType is 'reversing' and forbidden otherwise, per REQ-JE-004.",
+            "if": {
+              "journalType": "reversing"
+            },
+            "then": {
+              "required": [
+                "reversesOn"
+              ]
+            },
+            "else": {
+              "forbidden": [
+                "reversesOn"
+              ]
+            },
+            "errorMessage": "reversesOn-periode is vereist voor omgekeerde journaalposten"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Editable working state. Not yet materialised into the general ledger."
+            },
+            "pending": {
+              "label": "Pending approval",
+              "description": "Submitted for approval; awaiting an approver per the administration's approval policy. No GLTransaction exists yet."
+            },
+            "posted": {
+              "label": "Posted",
+              "description": "Materialised into a balanced GLTransaction (glTransactionId set). Immutable except via void."
+            },
+            "voided": {
+              "label": "Voided",
+              "description": "Cancelled after posting. Remains queryable for audit but excluded from default listings and reconciliation aggregations per REQ-JE-010."
+            }
+          },
+          "transitions": {
+            "submit": {
+              "from": "draft",
+              "to": "pending",
+              "label": "Submit for approval",
+              "description": "Operator submits a journal that requires approval per the administration policy (REQ-JE-008).",
+              "requires": "OCA\\Shillinq\\Guard\\JournalPostingGuard::requireBalanced"
+            },
+            "postDirect": {
+              "from": "draft",
+              "to": "posted",
+              "label": "Post journal",
+              "description": "Operator posts a journal that does not require approval (approvalState becomes not-required). Materialises exactly one balanced GLTransaction per REQ-JE-007.",
+              "requires": "OCA\\Shillinq\\Guard\\JournalPostingGuard::requirePostable"
+            },
+            "postApproved": {
+              "from": "pending",
+              "to": "posted",
+              "label": "Approve and post",
+              "description": "Approver posts after approval (approvalState becomes approved). Materialises exactly one balanced GLTransaction per REQ-JE-007.",
+              "requires": "OCA\\Shillinq\\Guard\\JournalPostingGuard::requirePostable"
+            },
+            "reject": {
+              "from": "pending",
+              "to": "draft",
+              "label": "Reject",
+              "description": "Approver rejects the journal; approvalState becomes rejected and the journal returns to draft (REQ-JE-008)."
+            },
+            "void": {
+              "from": "posted",
+              "to": "voided",
+              "label": "Void journal",
+              "description": "Void a posted journal. Requires the materialised GLTransaction to already be reversed per REQ-GL-004 / REQ-JE-010.",
+              "requires": "OCA\\Shillinq\\Guard\\JournalVoidGuard::requireReversedGLTransaction"
+            }
+          },
+          "hooks": {
+            "onPost": {
+              "trigger": "JournalEntry:posted",
+              "description": "On every transition into 'posted', materialise exactly one balanced GLTransaction (with N GLLine rows derived 1:1 from lines) and write back glTransactionId, atomically, per REQ-JE-007. Cross-schema materialisation is executed by the JournalPostingGuard::requirePostable seam (ADR-031 Risk-3 exception) because the declarative engine cannot emit cross-schema GLTransaction + GLLine effects in T1; documented as an OR gap.",
+              "action": "OCA\\Shillinq\\Guard\\JournalPostingGuard::materializeGLTransaction"
+            },
+            "onReversingPeriodBoundary": {
+              "trigger": "bookkeeping-period-close:periodStarted",
+              "condition": "journalType = 'reversing' AND state = 'posted' AND reversesOn = @event.periodId",
+              "description": "When the period named in reversesOn begins, materialise an inverse GLTransaction (every line's side flipped), post it, and link it back via reversesTransactionId per REQ-JE-004. RECOMMENDED path is OR's lifecycle action driven by T3's period-close transition; MUST NOT be a per-app *Job walking findAll() (ADR-031 anti-pattern).",
+              "action": "x-openregister-cross-schema-reverse"
+            },
+            "onRecurringCadenceTick": {
+              "trigger": "x-openregister-scheduled-workflow:tick",
+              "condition": "journalType = 'recurring' AND state = 'posted'",
+              "description": "On each ScheduledWorkflow tick derived from cadence, materialise a new balanced GLTransaction from the template lines, post it, and back-reference the template via journalEntryId, until endsOn or count is exhausted per REQ-JE-005."
+            }
+          }
+        },
+        "x-openregister-scheduled-workflows": {
+          "recurring-journal-materialisation": {
+            "name": "Recurring journal materialisation",
+            "description": "Materialises postings for recurring journals on their declared cadence per REQ-JE-005. The cadence object (interval/anchor/endsOn/count) is consumed by OR's ScheduledWorkflow primitive; no app-local cron Job. Disabled until OR's ScheduledWorkflow + n8n adapter is confirmed stable in T1 (design.md Risk 2) — recurring may defer to T2.",
+            "register": "shillinq",
+            "schema": "JournalEntry",
+            "cadenceField": "cadence",
+            "enabled": false,
+            "filter": {
+              "journalType": "recurring",
+              "state": "posted"
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "glTransaction": {
+            "localField": "glTransactionId",
+            "relatedSchema": "GLTransaction",
+            "relatedField": "id",
+            "cardinality": "one-to-one",
+            "description": "Back-reference to the materialised GLTransaction once posted (REQ-JE-007)."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "approver": {
+              "permissions": ["read", "update"],
+              "transitions": ["postApproved", "reject"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "countByState": {
+            "field": "state",
+            "operation": "count",
+            "description": "Number of journal entries per lifecycle state.",
+            "groupBy": "state"
+          },
+          "countByType": {
+            "field": "journalType",
+            "operation": "count",
+            "description": "Number of journal entries per journalType.",
+            "groupBy": "journalType"
+          }
+        }
+      },
       "GRDeelnemer": {
         "slug": "GRDeelnemer",
         "icon": "AccountGroupOutline",

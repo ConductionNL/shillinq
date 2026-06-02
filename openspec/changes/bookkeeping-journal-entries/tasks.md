@@ -9,7 +9,7 @@ and `bookkeeping-general-ledger` in the same change envelope.
 
 ## Phase 1: Register Schema Declaration
 
-- [ ] **Task 1.1: Declare `JournalEntry` register schema in `lib/Settings/shillinq_register.json`**
+- [x] **Task 1.1: Declare `JournalEntry` register schema in `lib/Settings/shillinq_register.json`**
   - Add the `JournalEntry` schema with fields from REQ-JE-002
   - Declare `x-openregister-lifecycle` with state transitions per REQ-JE-008
   - Declare approval-workflow gate via `x-openregister-lifecycle.requires.approval-workflow`
@@ -19,7 +19,7 @@ and `bookkeeping-general-ledger` in the same change envelope.
   - Declare RBAC roles: `bookkeeper` (create/read), `approver` (post transition), `auditor` (read-only)
   - Spec traceability: add `@spec openspec/changes/bookkeeping-journal-entries/specs/bookkeeping-journal-entries/spec.md#REQ-JE-001` to schema
 
-- [ ] **Task 1.2: Declare cross-schema lifecycle actions for materialization (REQ-JE-007)**
+- [x] **Task 1.2: Declare cross-schema lifecycle actions for materialization (REQ-JE-007)**
   - In the `JournalEntry.post` transition, declare a lifecycle action that emits a CloudEvent
   - Event payload: journal ID + lines array
   - Event name: `journal-entry.posted` or similar
@@ -31,12 +31,12 @@ and `bookkeeping-general-ledger` in the same change envelope.
     - Reference the service from the lifecycle's `requires` or action handler
   - Spec traceability: `@spec openspec/changes/bookkeeping-journal-entries/specs/bookkeeping-journal-entries/spec.md#REQ-JE-007`
 
-- [ ] **Task 1.3: Declare recurring journal scheduled-workflow integration (REQ-JE-005)**
+- [x] **Task 1.3: Declare recurring journal scheduled-workflow integration (REQ-JE-005)**
   - In the `JournalEntry` schema, declare that `journalType: recurring` triggers OR's `ScheduledWorkflow` primitive
   - The `cadence` object is consumed by the scheduled-workflow engine
   - Spec traceability: `@spec openspec/changes/bookkeeping-journal-entries/specs/bookkeeping-journal-entries/spec.md#REQ-JE-005`
 
-- [ ] **Task 1.4: Declare reversing journal period-boundary trigger (REQ-JE-004)**
+- [x] **Task 1.4: Declare reversing journal period-boundary trigger (REQ-JE-004)**
   - The reversing journal materialisation is driven by the period-close lifecycle action (T3)
   - Declare that `journalType: reversing` with `reversesOn: <periodId>` creates an inverse `GLTransaction` at period start
   - May be a scheduled-workflow path or a T3 lifecycle action; coordinate with T3 spec
@@ -68,17 +68,17 @@ and `bookkeeping-general-ledger` in the same change envelope.
 
 ## Phase 3: Schema Validation & Constraints
 
-- [ ] **Task 3.1: Implement `journalType` enum constraint (REQ-JE-003)**
+- [x] **Task 3.1: Implement `journalType` enum constraint (REQ-JE-003)**
   - Enum values: `manual`, `recurring`, `reversing`
   - Validation error message (Dutch): "Journaaltype moet een van de volgende zijn: handmatig, terugkerend, omgekeerd"
   - Spec traceability: `@spec openspec/changes/bookkeeping-journal-entries/specs/bookkeeping-journal-entries/spec.md#REQ-JE-003`
 
-- [ ] **Task 3.2: Implement conditional validation: `cadence` required for recurring (REQ-JE-005)**
+- [x] **Task 3.2: Implement conditional validation: `cadence` required for recurring (REQ-JE-005)**
   - JSON Schema validation: `if journalType is "recurring" then cadence must be present`
   - Validation error (Dutch): "Cadence is vereist voor terugkerende journaalposten"
   - Spec traceability: `@spec openspec/changes/bookkeeping-journal-entries/specs/bookkeeping-journal-entries/spec.md#REQ-JE-005`
 
-- [ ] **Task 3.3: Implement conditional validation: `reversesOn` required for reversing (REQ-JE-004)**
+- [x] **Task 3.3: Implement conditional validation: `reversesOn` required for reversing (REQ-JE-004)**
   - JSON Schema validation: `if journalType is "reversing" then reversesOn must be present`
   - Validation error (Dutch): "reversesOn-periode is vereist voor omgekeerde journaalposten"
   - Spec traceability: `@spec openspec/changes/bookkeeping-journal-entries/specs/bookkeeping-journal-entries/spec.md#REQ-JE-004`
@@ -91,7 +91,7 @@ and `bookkeeping-general-ledger` in the same change envelope.
 
 ## Phase 4: Lifecycle & State Machine
 
-- [ ] **Task 4.1: Implement journal state machine transitions (REQ-JE-008)**
+- [x] **Task 4.1: Implement journal state machine transitions (REQ-JE-008)**
   - Transitions:
     - `draft → pending` (submit for approval, if approval required)
     - `draft → posted` (post directly, if approval not required or below threshold)
@@ -137,7 +137,7 @@ and `bookkeeping-general-ledger` in the same change envelope.
   - Audit data: actor, before/after state, timestamp, hash chain
   - Spec traceability: `@spec openspec/changes/bookkeeping-journal-entries/specs/bookkeeping-journal-entries/spec.md#REQ-JE-001`
 
-- [ ] **Task 6.2: Verify RBAC roles are declared (REQ-JE-008)**
+- [x] **Task 6.2: Verify RBAC roles are declared (REQ-JE-008)**
   - `bookkeeper` role: create/read `JournalEntry`
   - `approver` role: can execute `post` transition on journals needing approval
   - `auditor` role: read-only on all journals (including voided)
