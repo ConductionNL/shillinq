@@ -1,74 +1,22 @@
 {
-  "spec": "openspec/changes/add-shillinq-gr-consolidation",
+  "spec": "openspec/changes/bookkeeping-fixed-assets-depreciation",
   "verified": [
-    {
-      "task": "1",
-      "description": "Confirmed no GRDeelnemer, GRVerdeelsleutel, or bookkeeping-gr-consolidation already existed in lib/Settings/shillinq_register.json",
-      "ok": true
-    },
-    {
-      "task": "2",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/specs/bookkeeping-gr-consolidation/spec.md",
-      "ok": true
-    },
-    {
-      "task": "3",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/proposal.md",
-      "ok": true
-    },
-    {
-      "task": "4",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/design.md",
-      "ok": true
-    },
-    {
-      "task": "5",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer schema declared with deelnemerType enum, deelnemerNaam, administrationId (optional), aandeel (0-1 validated), actief boolean, lifecycleState",
-      "ok": true
-    },
-    {
-      "task": "6",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRVerdeelsleutel schema declared with sleutelNaam, costClusterAccountNumbers array, verdelingsType enum (vast-percentage/inwoner-aantal/gewogen-oppervlak/custom-formula), parameters object, lineNumber",
-      "ok": true
-    },
-    {
-      "task": "7",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GLLine schema declared with eliminationFlag: boolean (default false); x-openregister-aggregations.consolidatedTrialBalance declared with filter: eliminationFlag = false",
-      "ok": true
-    },
-    {
-      "task": "8",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRVerdeelsleutel.x-openregister-aggregations.doorbelastingPerDeelnemer declared with join on GLLine WHERE accountNumber IN costClusterAccountNumbers AND eliminationFlag = false, grouped by deelnemerId",
-      "ok": true
-    },
-    {
-      "task": "9",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer.x-openregister-lifecycle.hooks.onGrPeriodClose declared: trigger bookkeeping-period-close:grPeriodClosed, condition administrationId IS NOT NULL, idempotency key (grAdministrationId, deelnemerId, periodId)",
-      "ok": true
-    },
-    {
-      "task": "10",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer.x-openregister-aggregations.aandeelSumCheck declared: filter actief = true, sum of aandeel field; non-blocking warning when result differs from 1.0",
-      "ok": true
-    },
-    {
-      "task": "11",
-      "file": "src/manifest.json",
-      "description": "featureFlags.gov-gr added; Gemeenschappelijke regeling menu entry under Bookkeeping with 3 children (Deelnemers, Verdeelsleutels, Geconsolideerde view); 5 pages added (GRDeelnemers, GRDeelnemerDetail, GRVerdeelsleutels, GRVerdeelsleutelDetail, GRConsolidated); node tests/validate-manifest.js: only pre-existing roadmap-type failure, no new failures",
-      "ok": true
-    },
-    {
-      "task": "12",
-      "file": "openspec/architecture/adr-000-data-model.md",
-      "description": "GRDeelnemer and GRVerdeelsleutel entity entries added alphabetically after GrantPortfolio, cross-referencing bookkeeping-gr-consolidation spec",
-      "ok": true
-    }
+    {"task": "1", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "No existing FixedAsset/DepreciationSchedule schemas; no lib/Service/Asset* or lib/Service/Depreciation* PHP classes"},
+    {"task": "2", "file": "openspec/changes/bookkeeping-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md", "ok": true},
+    {"task": "3", "file": "openspec/changes/bookkeeping-fixed-assets-depreciation/proposal.md", "ok": true},
+    {"task": "4", "file": "openspec/changes/bookkeeping-fixed-assets-depreciation/design.md", "ok": true},
+    {"task": "5", "file": "lib/Settings/shillinq_register.json#FixedAsset", "ok": true, "note": "All REQ-FA-002 fields declared"},
+    {"task": "6", "file": "lib/Settings/shillinq_register.json#DepreciationSchedule", "ok": true, "note": "All REQ-FA-003 fields; bookValue via x-openregister-calculations"},
+    {"task": "7", "file": "lib/Settings/shillinq_register.json#FixedAsset.x-openregister-lifecycle", "ok": true, "note": "Transitions active<->inactive, active->retired; hooks for schedule creation and GL posting; yearly-depreciation scheduled workflow"},
+    {"task": "8", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "floatPrecisionSource: nextcloud-system-settings, fallback: 2 declared in hooks and scheduled workflows"},
+    {"task": "9", "file": "lib/Settings/shillinq_register.json#FixedAsset.hooks.onTransfer", "ok": true, "note": "Transfer updates costCenterCode; no GL posting"},
+    {"task": "10", "file": "lib/Settings/shillinq_register.json#FixedAsset.hooks.onAcquisitionGL", "ok": true, "note": "Balanced GLTransaction on active transition; subLedgerType: fa"},
+    {"task": "11", "file": "lib/Settings/shillinq_register.json#FixedAsset.yearly-depreciation", "ok": true, "note": "Scheduled workflow 1 Jan; DepreciationSchedule + GLTransaction"},
+    {"task": "12", "file": "lib/Settings/shillinq_register.json#FixedAsset.hooks.onRetirementGL", "ok": true, "note": "Compensating GLTransaction on retirement; gain/loss on disposal"},
+    {"task": "13", "file": "lib/Settings/shillinq_register.json#DepreciationSchedule.x-openregister-aggregations", "ok": true, "note": "4 aggregations: byMethod, byCostCenter, accumulatedByAsset, bookValuesByStatus"},
+    {"task": "14", "file": "src/manifest.json", "ok": true, "note": "3 menu entries + 5 pages added"},
+    {"task": "15", "file": "lib/Settings/shillinq_register.json#components.objects", "ok": true, "note": "4 FixedAsset + 4 DepreciationSchedule seed objects"},
+    {"task": "16", "file": "openspec/architecture/adr-000-data-model.md", "ok": true, "note": "FixedAsset and DepreciationSchedule entries updated with GL-link pattern"}
   ],
   "stubs": [],
   "missing_routes": []
