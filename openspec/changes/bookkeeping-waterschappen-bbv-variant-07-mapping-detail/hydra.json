@@ -1,0 +1,7 @@
+{
+  "schema_version": 2,
+  "spec_slug": "bookkeeping-waterschappen-bbv-variant-07-mapping-detail",
+  "app": "shillinq",
+  "kind": "code",
+  "depends_on": ["bookkeeping-waterschappen-bbv-variant-06-mapping-index"]
+}
