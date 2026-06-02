@@ -1,74 +1,20 @@
 {
-  "spec": "openspec/changes/add-shillinq-gr-consolidation",
+  "spec": "openspec/changes/bookkeeping-sbr-xbrl-reporting",
   "verified": [
-    {
-      "task": "1",
-      "description": "Confirmed no GRDeelnemer, GRVerdeelsleutel, or bookkeeping-gr-consolidation already existed in lib/Settings/shillinq_register.json",
-      "ok": true
-    },
-    {
-      "task": "2",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/specs/bookkeeping-gr-consolidation/spec.md",
-      "ok": true
-    },
-    {
-      "task": "3",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/proposal.md",
-      "ok": true
-    },
-    {
-      "task": "4",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/design.md",
-      "ok": true
-    },
-    {
-      "task": "5",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer schema declared with deelnemerType enum, deelnemerNaam, administrationId (optional), aandeel (0-1 validated), actief boolean, lifecycleState",
-      "ok": true
-    },
-    {
-      "task": "6",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRVerdeelsleutel schema declared with sleutelNaam, costClusterAccountNumbers array, verdelingsType enum (vast-percentage/inwoner-aantal/gewogen-oppervlak/custom-formula), parameters object, lineNumber",
-      "ok": true
-    },
-    {
-      "task": "7",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GLLine schema declared with eliminationFlag: boolean (default false); x-openregister-aggregations.consolidatedTrialBalance declared with filter: eliminationFlag = false",
-      "ok": true
-    },
-    {
-      "task": "8",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRVerdeelsleutel.x-openregister-aggregations.doorbelastingPerDeelnemer declared with join on GLLine WHERE accountNumber IN costClusterAccountNumbers AND eliminationFlag = false, grouped by deelnemerId",
-      "ok": true
-    },
-    {
-      "task": "9",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer.x-openregister-lifecycle.hooks.onGrPeriodClose declared: trigger bookkeeping-period-close:grPeriodClosed, condition administrationId IS NOT NULL, idempotency key (grAdministrationId, deelnemerId, periodId)",
-      "ok": true
-    },
-    {
-      "task": "10",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer.x-openregister-aggregations.aandeelSumCheck declared: filter actief = true, sum of aandeel field; non-blocking warning when result differs from 1.0",
-      "ok": true
-    },
-    {
-      "task": "11",
-      "file": "src/manifest.json",
-      "description": "featureFlags.gov-gr added; Gemeenschappelijke regeling menu entry under Bookkeeping with 3 children (Deelnemers, Verdeelsleutels, Geconsolideerde view); 5 pages added (GRDeelnemers, GRDeelnemerDetail, GRVerdeelsleutels, GRVerdeelsleutelDetail, GRConsolidated); node tests/validate-manifest.js: only pre-existing roadmap-type failure, no new failures",
-      "ok": true
-    },
-    {
-      "task": "12",
-      "file": "openspec/architecture/adr-000-data-model.md",
-      "description": "GRDeelnemer and GRVerdeelsleutel entity entries added alphabetically after GrantPortfolio, cross-referencing bookkeeping-gr-consolidation spec",
-      "ok": true
-    }
+    {"task": "1", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "No XBRL/SBR/Reporting PHP service files present; confirmed via glob scan."},
+    {"task": "2", "file": "openspec/changes/bookkeeping-sbr-xbrl-reporting/specs/bookkeeping-sbr-xbrl-reporting/spec.md", "ok": true},
+    {"task": "3", "file": "openspec/changes/bookkeeping-sbr-xbrl-reporting/proposal.md", "ok": true},
+    {"task": "4", "file": "openspec/changes/bookkeeping-sbr-xbrl-reporting/design.md", "ok": true},
+    {"task": "5", "file": "lib/Settings/shillinq_register.json#XBRLTaxonomy", "ok": true, "note": "All REQ-SBR-002 fields declared."},
+    {"task": "6", "file": "lib/Settings/shillinq_register.json#SBRDocumentType", "ok": true, "note": "All REQ-SBR-003 fields declared."},
+    {"task": "7", "file": "lib/Settings/shillinq_register.json#XBRLMapping", "ok": true, "note": "All REQ-SBR-004 fields; x-openregister-relations to Account and XBRLTaxonomy."},
+    {"task": "8", "file": "lib/Settings/shillinq_register.json#SBRDocumentType.x-openregister-lifecycle", "ok": true, "note": "6 transitions declared: validate, submit, approve, reject, revert, remediate."},
+    {"task": "9", "file": "lib/Settings/shillinq_register.json#SBRDocumentType.x-openregister-aggregations", "ok": true, "note": "4 aggregations: glCompleteness, mappingCoverage, mandatoryFieldsCheck, glBalanceCheck."},
+    {"task": "10", "file": "lib/Settings/shillinq_register.json#SBRDocumentType.x-openregister-aggregations.unmappedAccounts", "ok": true},
+    {"task": "11", "file": "lib/Settings/shillinq_register.json#SBRDocumentType.x-openregister-notifications", "ok": true, "note": "filingDeadlineReminder: 30 days before filingDeadline."},
+    {"task": "12", "file": "src/manifest.json", "ok": true, "note": "6 new pages; SBR/XBRL menu group at order 25."},
+    {"task": "13", "file": "lib/Settings/seeds/xbrl-seed.json", "ok": true, "note": "2+2+2 seed objects; seedXBRLData() in SettingsService; called from InitializeSettings."},
+    {"task": "14", "file": "openspec/architecture/adr-000-data-model.md", "ok": true}
   ],
   "stubs": [],
   "missing_routes": []
