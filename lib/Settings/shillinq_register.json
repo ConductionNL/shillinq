@@ -503,6 +503,680 @@
           }
         }
       },
+      "BalanceSheet": {
+        "slug": "BalanceSheet",
+        "icon": "TableAccountOutline",
+        "version": "0.1.0",
+        "title": "Balance Sheet",
+        "description": "Financial statement showing assets, liabilities, and equity at a fiscal-period snapshot. Status lifecycle: draft → final → published. Totals are computed via x-openregister-aggregations from GL entries grouped by Account.accountType per REQ-FS-004.",
+        "x-schema-org": "schema:Table",
+        "type": "object",
+        "required": [
+          "reportDate",
+          "currency",
+          "status",
+          "fiscalYearId",
+          "administrationId"
+        ],
+        "properties": {
+          "reportDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Snapshot date of the balance sheet (typically fiscal-year-end).",
+            "example": "2026-12-31T00:00:00+00:00"
+          },
+          "totalAssets": {
+            "type": "number",
+            "description": "Computed total assets in base currency. Populated by balance-sheet aggregation on draft→final transition.",
+            "nullable": true,
+            "example": 150000.00
+          },
+          "totalLiabilities": {
+            "type": "number",
+            "description": "Computed total liabilities in base currency. Populated by balance-sheet aggregation on draft→final transition.",
+            "nullable": true,
+            "example": 50000.00
+          },
+          "totalEquity": {
+            "type": "number",
+            "description": "Computed total equity in base currency. Populated by balance-sheet aggregation on draft→final transition.",
+            "nullable": true,
+            "example": 100000.00
+          },
+          "isBalanced": {
+            "type": "boolean",
+            "description": "Computed flag: totalAssets = totalLiabilities + totalEquity. Surfaced with diagnostic when false.",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 base currency code.",
+            "minLength": 3,
+            "maxLength": 3,
+            "default": "EUR",
+            "example": "EUR"
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle state of the balance sheet.",
+            "enum": [
+              "draft",
+              "final",
+              "published",
+              "archived"
+            ],
+            "default": "draft",
+            "example": "draft"
+          },
+          "fiscalYearId": {
+            "type": "string",
+            "description": "FK to the FiscalYear this balance sheet covers.",
+            "example": "fy-2026"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this balance sheet belongs to.",
+            "example": "adm-1"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Balance sheet under preparation; GL entries may still be posted."
+            },
+            "final": {
+              "label": "Final",
+              "description": "GL period closed; all entries posted; aggregations computed and verified."
+            },
+            "published": {
+              "label": "Published",
+              "description": "Released to stakeholders via OR publication extension. Immutable — no further edits."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Retained for audit trail per administration retention policy."
+            }
+          },
+          "transitions": {
+            "finalise": {
+              "from": "draft",
+              "to": "final",
+              "label": "Finalise balance sheet",
+              "description": "Operator or scheduled workflow closes fiscal period. Triggers balance-sheet aggregation (REQ-FS-004).",
+              "requires": "OCA\\Shillinq\\Consolidation\\ConsolidationGuard::requireFiscalPeriodClosed"
+            },
+            "publish": {
+              "from": "final",
+              "to": "published",
+              "label": "Publish balance sheet",
+              "description": "Operator (role: controller) releases to stakeholders via OR publication extension or ConsolidationGuard fallback per ADR-031.",
+              "requires": "OCA\\Shillinq\\Consolidation\\ConsolidationGuard::requirePublicationApproval"
+            },
+            "archive": {
+              "from": "published",
+              "to": "archived",
+              "label": "Archive balance sheet",
+              "description": "Operator archives after retention period per administration retention policy."
+            }
+          },
+          "hooks": {
+            "onFinalise": {
+              "trigger": "lifecycle:finalise",
+              "description": "Fire balance-sheet aggregation to populate totalAssets, totalLiabilities, totalEquity, and isBalanced from GL entries (REQ-FS-004). Also triggers TrialBalance finalisation for the same fiscalYearId and administrationId.",
+              "action": "x-openregister-aggregation-compute",
+              "actionParameters": {
+                "aggregations": ["balanceSheetTotals"]
+              }
+            },
+            "onPublish": {
+              "trigger": "lifecycle:publish",
+              "description": "Publication workflow via OR publication extension (ADR-022) or ConsolidationGuard fallback per ADR-031. Records publication timestamp and actor. Marks statement immutable.",
+              "action": "x-openregister-publication",
+              "actionParameters": {
+                "notifyStakeholders": true,
+                "immutable": true
+              }
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "balanceSheetTotals": {
+            "description": "Computes totalAssets, totalLiabilities, totalEquity from GLLine entries grouped by Account.accountType for the fiscal period. Satisfies REQ-FS-004. No BalanceSheetService — pure declarative aggregation per ADR-031.",
+            "join": {
+              "from": "GLLine.accountNumber",
+              "through": "Account",
+              "on": "Account.accountNumber",
+              "select": "Account.accountType"
+            },
+            "filter": {
+              "administrationId": "@self.administrationId",
+              "fiscalYearId": "@self.fiscalYearId",
+              "eliminationFlag": false
+            },
+            "groupBy": "Account.accountType",
+            "operations": {
+              "totalAssets": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "Account.accountType = 'assets'",
+                "target": "totalAssets"
+              },
+              "totalLiabilities": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "Account.accountType = 'liabilities'",
+                "target": "totalLiabilities"
+              },
+              "totalEquity": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "Account.accountType = 'equity'",
+                "target": "totalEquity"
+              },
+              "isBalanced": {
+                "operation": "check",
+                "expression": "totalAssets = totalLiabilities + totalEquity",
+                "target": "isBalanced",
+                "diagnostic": "Balance-sheet equation violated: assets({{totalAssets}}) ≠ liabilities({{totalLiabilities}}) + equity({{totalEquity}})"
+              }
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "controller": {
+              "permissions": ["create", "read", "update", "publish"]
+            },
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "TrialBalance": {
+        "slug": "TrialBalance",
+        "icon": "ScaleBalanceOutline",
+        "version": "0.1.0",
+        "title": "Trial Balance",
+        "description": "Listing of all GL accounts with debit/credit balances for period verification. isBalanced flag (totalDebits = totalCredits) computed via aggregation per REQ-FS-005. No TrialBalanceService.",
+        "x-schema-org": "schema:Table",
+        "type": "object",
+        "required": [
+          "reportDate",
+          "status",
+          "fiscalYearId",
+          "administrationId"
+        ],
+        "properties": {
+          "reportDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Snapshot date of the trial balance (typically fiscal-year-end).",
+            "example": "2026-12-31T00:00:00+00:00"
+          },
+          "totalDebits": {
+            "type": "number",
+            "description": "Sum of all debit balances across all accounts for the fiscal period.",
+            "nullable": true,
+            "example": 500000.00
+          },
+          "totalCredits": {
+            "type": "number",
+            "description": "Sum of all credit balances across all accounts for the fiscal period.",
+            "nullable": true,
+            "example": 500000.00
+          },
+          "isBalanced": {
+            "type": "boolean",
+            "description": "Computed flag: totalDebits = totalCredits. Surfaced with diagnostic when false.",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle state of the trial balance.",
+            "enum": [
+              "draft",
+              "verified",
+              "final",
+              "published",
+              "archived"
+            ],
+            "default": "draft",
+            "example": "draft"
+          },
+          "preparedBy": {
+            "type": "string",
+            "description": "Actor who prepared or verified the trial balance (audit trail).",
+            "nullable": true,
+            "example": "jan.bookkeeper@example.nl"
+          },
+          "fiscalYearId": {
+            "type": "string",
+            "description": "FK to the FiscalYear this trial balance covers.",
+            "example": "fy-2026"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this trial balance belongs to.",
+            "example": "adm-1"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Trial balance under preparation; GL entries may still be posted."
+            },
+            "verified": {
+              "label": "Verified",
+              "description": "Aggregation run; isBalanced confirmed true by bookkeeper."
+            },
+            "final": {
+              "label": "Final",
+              "description": "GL period closed; all entries posted; trial balance verified and locked."
+            },
+            "published": {
+              "label": "Published",
+              "description": "Released to stakeholders via OR publication extension. Immutable."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Retained for audit trail per administration retention policy."
+            }
+          },
+          "transitions": {
+            "verify": {
+              "from": "draft",
+              "to": "verified",
+              "label": "Run trial-balance verification",
+              "description": "Triggers trial-balance aggregation (REQ-FS-005); sets isBalanced. Bookkeeper confirms result."
+            },
+            "finalise": {
+              "from": "verified",
+              "to": "final",
+              "label": "Finalise trial balance",
+              "description": "Operator or scheduled workflow closes fiscal period. Also triggered by BalanceSheet finalise hook.",
+              "requires": "OCA\\Shillinq\\Consolidation\\ConsolidationGuard::requireFiscalPeriodClosed"
+            },
+            "publish": {
+              "from": "final",
+              "to": "published",
+              "label": "Publish trial balance",
+              "description": "Operator (role: controller) releases to stakeholders via OR publication extension or ConsolidationGuard fallback per ADR-031.",
+              "requires": "OCA\\Shillinq\\Consolidation\\ConsolidationGuard::requirePublicationApproval"
+            },
+            "archive": {
+              "from": "published",
+              "to": "archived",
+              "label": "Archive trial balance",
+              "description": "Operator archives after retention period per administration retention policy."
+            }
+          },
+          "hooks": {
+            "onVerify": {
+              "trigger": "lifecycle:verify",
+              "description": "Fire trial-balance aggregation to populate totalDebits, totalCredits, and isBalanced. Surfaces diagnostic when not balanced per REQ-FS-005.",
+              "action": "x-openregister-aggregation-compute",
+              "actionParameters": {
+                "aggregations": ["trialBalanceTotals", "trialBalanceByAccount"]
+              }
+            },
+            "onPublish": {
+              "trigger": "lifecycle:publish",
+              "description": "Publication workflow via OR publication extension (ADR-022) or ConsolidationGuard fallback per ADR-031. Records publication timestamp and actor. Marks statement immutable.",
+              "action": "x-openregister-publication",
+              "actionParameters": {
+                "notifyStakeholders": true,
+                "immutable": true
+              }
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "trialBalanceTotals": {
+            "description": "Computes totalDebits, totalCredits, and isBalanced flag from GLLine entries for the fiscal period. Satisfies REQ-FS-005 verification check. No TrialBalanceService — pure declarative aggregation per ADR-031.",
+            "filter": {
+              "administrationId": "@self.administrationId",
+              "fiscalYearId": "@self.fiscalYearId",
+              "eliminationFlag": false
+            },
+            "operations": {
+              "totalDebits": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "GLLine.side = 'debit'",
+                "target": "totalDebits"
+              },
+              "totalCredits": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "GLLine.side = 'credit'",
+                "target": "totalCredits"
+              },
+              "isBalanced": {
+                "operation": "check",
+                "expression": "totalDebits = totalCredits",
+                "target": "isBalanced",
+                "diagnostic": "Trial balance is not balanced: debits({{totalDebits}}) ≠ credits({{totalCredits}}), discrepancy = {{totalDebits - totalCredits}}"
+              }
+            }
+          },
+          "trialBalanceByAccount": {
+            "description": "Per-account trial balance listing: accountNumber, name, accountType, totalDebits, totalCredits per REQ-FS-005 for the fiscal period.",
+            "join": {
+              "from": "GLLine.accountNumber",
+              "through": "Account",
+              "on": "Account.accountNumber",
+              "select": ["Account.accountNumber", "Account.name", "Account.accountType"]
+            },
+            "filter": {
+              "administrationId": "@self.administrationId",
+              "fiscalYearId": "@self.fiscalYearId",
+              "eliminationFlag": false
+            },
+            "groupBy": ["Account.accountNumber", "Account.name", "Account.accountType"],
+            "operations": {
+              "totalDebits": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "GLLine.side = 'debit'"
+              },
+              "totalCredits": {
+                "field": "GLLine.amount",
+                "operation": "sum",
+                "condition": "GLLine.side = 'credit'"
+              }
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "controller": {
+              "permissions": ["create", "read", "update", "publish"]
+            },
+            "bookkeeper": {
+              "permissions": ["create", "read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "ConsolidationGroup": {
+        "slug": "ConsolidationGroup",
+        "icon": "AccountMultipleOutline",
+        "version": "0.1.0",
+        "title": "Consolidation Group",
+        "description": "A group of organizations consolidated together for financial reporting across multiple administrations. Holds the consolidation method (full/proportional/equity per IFRS 10/11/12) and inter-company elimination rules. Consumed by ConsolidatedReport per REQ-FS-006.",
+        "x-schema-org": "schema:Organization",
+        "type": "object",
+        "required": [
+          "name",
+          "consolidationMethod",
+          "status",
+          "administrationIds"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable name of the consolidation group.",
+            "example": "Acme BV Group"
+          },
+          "consolidationMethod": {
+            "type": "string",
+            "description": "Consolidation method per IFRS 10/11/12.",
+            "enum": [
+              "full",
+              "proportional",
+              "equity"
+            ],
+            "example": "full"
+          },
+          "status": {
+            "type": "string",
+            "description": "Status of the consolidation group.",
+            "enum": [
+              "active",
+              "inactive",
+              "archived"
+            ],
+            "default": "active",
+            "example": "active"
+          },
+          "parentOrganizationId": {
+            "type": "string",
+            "description": "FK to the parent organization if part of a larger group.",
+            "nullable": true,
+            "example": "org-acme-bv"
+          },
+          "eliminationRules": {
+            "type": "object",
+            "description": "Inter-company elimination rules. Simple patterns (offset-by-FK, percentage-based) are declarative; complex custom rules defined by admin. Consumed by OR consolidation engine or ConsolidationGuard per ADR-031 exception.",
+            "nullable": true,
+            "example": {
+              "intercompanySales": {
+                "type": "offset-by-account",
+                "accountNumbers": ["8000", "8001"],
+                "description": "Eliminate inter-company sales between group members"
+              }
+            }
+          },
+          "administrationIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "FKs to Administration records being consolidated into this group.",
+            "example": ["adm-acme-bv", "adm-acme-services-bv"]
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Consolidation group is in use for consolidated reporting."
+            },
+            "inactive": {
+              "label": "Inactive",
+              "description": "Consolidation group temporarily suspended; no new consolidated reports."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Historical group; remains queryable but no new consolidated reports."
+            }
+          },
+          "transitions": {
+            "deactivate": {
+              "from": "active",
+              "to": "inactive",
+              "label": "Deactivate group",
+              "description": "Suspend consolidation group without archiving."
+            },
+            "reactivate": {
+              "from": "inactive",
+              "to": "active",
+              "label": "Reactivate group",
+              "description": "Restore consolidation group to active use."
+            },
+            "archive": {
+              "from": ["active", "inactive"],
+              "to": "archived",
+              "label": "Archive group",
+              "description": "Archive consolidation group for historical reference."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "controller": {
+              "permissions": ["create", "read", "update"]
+            },
+            "bookkeeper": {
+              "permissions": ["read"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "ConsolidatedReport": {
+        "slug": "ConsolidatedReport",
+        "icon": "FileChartOutline",
+        "version": "0.1.0",
+        "title": "Consolidated Report",
+        "description": "Aggregated financial report combining data from multiple administrations with consolidation method and inter-company elimination tracking per REQ-FS-006. Lifecycle draft → final → published consumes OR publication extension or ConsolidationGuard fallback per ADR-031.",
+        "x-schema-org": "schema:Report",
+        "type": "object",
+        "required": [
+          "reportNumber",
+          "reportDate",
+          "consolidationGroupId",
+          "consolidationMethod",
+          "status",
+          "fiscalYearId"
+        ],
+        "properties": {
+          "reportNumber": {
+            "type": "string",
+            "description": "Unique identifier for the consolidated report.",
+            "example": "CR-2026-001"
+          },
+          "reportDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Consolidation snapshot date.",
+            "example": "2026-12-31T00:00:00+00:00"
+          },
+          "consolidationGroupId": {
+            "type": "string",
+            "description": "FK to the ConsolidationGroup defining which organizations are consolidated.",
+            "example": "cg-acme-group"
+          },
+          "consolidationMethod": {
+            "type": "string",
+            "description": "Method used for this consolidated report (full/proportional/equity per IFRS 10/11/12).",
+            "enum": [
+              "full",
+              "proportional",
+              "equity"
+            ],
+            "example": "full"
+          },
+          "eliminationsApplied": {
+            "type": "boolean",
+            "description": "Whether inter-company eliminations have been posted for this report.",
+            "default": false,
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle state of the consolidated report.",
+            "enum": [
+              "draft",
+              "final",
+              "published",
+              "archived"
+            ],
+            "default": "draft",
+            "example": "draft"
+          },
+          "fiscalYearId": {
+            "type": "string",
+            "description": "FK to the FiscalYear this consolidated report covers.",
+            "example": "fy-2026"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Consolidated report under preparation. Individual administration statements may still be in draft."
+            },
+            "final": {
+              "label": "Final",
+              "description": "All member administrations finalised; consolidation and eliminations applied; report locked."
+            },
+            "published": {
+              "label": "Published",
+              "description": "Released to stakeholders via OR publication extension. Immutable."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Retained for audit trail per group retention policy."
+            }
+          },
+          "transitions": {
+            "finalise": {
+              "from": "draft",
+              "to": "final",
+              "label": "Finalise consolidated report",
+              "description": "Applies consolidation workflow and inter-company eliminations per ConsolidationGroup.eliminationRules. Consumed via OR consolidation extension (ADR-022) or ConsolidationGuard fallback per ADR-031 exception.",
+              "requires": "OCA\\Shillinq\\Consolidation\\ConsolidationGuard::requireAllMembersFinalised"
+            },
+            "publish": {
+              "from": "final",
+              "to": "published",
+              "label": "Publish consolidated report",
+              "description": "Operator (role: controller) releases to stakeholders via OR publication extension or ConsolidationGuard fallback per ADR-031.",
+              "requires": "OCA\\Shillinq\\Consolidation\\ConsolidationGuard::requirePublicationApproval"
+            },
+            "archive": {
+              "from": "published",
+              "to": "archived",
+              "label": "Archive consolidated report",
+              "description": "Operator archives after retention period per group retention policy."
+            }
+          },
+          "hooks": {
+            "onFinalise": {
+              "trigger": "lifecycle:finalise",
+              "description": "Executes consolidation workflow via OR consolidation extension (ADR-022) or ConsolidationGuard. Sets eliminationsApplied=true after inter-company eliminations. Records audit trail of elimination amounts per REQ-FS-006.",
+              "action": "x-openregister-consolidation",
+              "actionParameters": {
+                "consolidationGroupRef": "consolidationGroupId",
+                "applyEliminations": true,
+                "auditEliminations": true
+              }
+            },
+            "onPublish": {
+              "trigger": "lifecycle:publish",
+              "description": "Publication workflow via OR publication extension (ADR-022) or ConsolidationGuard fallback per ADR-031. Records publication timestamp and actor. Marks statement immutable.",
+              "action": "x-openregister-publication",
+              "actionParameters": {
+                "notifyStakeholders": true,
+                "immutable": true
+              }
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "controller": {
+              "permissions": ["create", "read", "update", "publish"]
+            },
+            "bookkeeper": {
+              "permissions": ["read"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
       "Iv3Export": {
         "slug": "Iv3Export",
         "icon": "FileChartOutline",

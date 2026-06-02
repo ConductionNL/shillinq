@@ -331,22 +331,107 @@ _Legal notice of award with publication deadline and standstill enforcement for 
 
 ### BalanceSheet
 **Schema.org:** `schema:Table`
-_A financial statement showing assets, liabilities, and equity at a specific point in time_
-**Primary spec:** financial-reporting-accountability
+_A financial statement showing assets, liabilities, and equity at a fiscal-period snapshot. A read-only aggregate over GL transactions — totals (totalAssets, totalLiabilities, totalEquity, isBalanced) are computed via x-openregister-aggregations from GLLine entries grouped by Account.accountType per REQ-FS-004. No BalanceSheetService or FinancialStatementLine table. Lifecycle: draft → final → published → archived per REQ-FS-003 consuming OR publication extension or ConsolidationGuard fallback per ADR-031._
+**Primary spec:** bookkeeping-financial-statements
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| reportDate | datetime | Yes | Date of the balance sheet snapshot |
-| totalAssets | number | No | Total assets in base currency |
-| totalLiabilities | number | No | Total liabilities in base currency |
-| totalEquity | number | No | Total equity in base currency |
-| currency | string | Yes | Currency code for amounts |
-| status | string | Yes | Status (draft, final, published) |
+| reportDate | datetime | Yes | Snapshot date of the balance sheet (typically fiscal-year-end) |
+| totalAssets | number | No | Computed total assets in base currency (x-openregister-aggregations) |
+| totalLiabilities | number | No | Computed total liabilities in base currency (x-openregister-aggregations) |
+| totalEquity | number | No | Computed total equity in base currency (x-openregister-aggregations) |
+| isBalanced | boolean | No | Computed flag: totalAssets = totalLiabilities + totalEquity |
+| currency | string | Yes | ISO 4217 base currency code; default EUR |
+| status | enum | Yes | One of draft, final, published, archived |
+| fiscalYearId | string | Yes | FK to FiscalYear |
+| administrationId | string | Yes | FK to administration |
 
 **Relations:**
 - → FiscalYear (many-to-one)
-- → Organization (many-to-one)
-- → GeneralLedgerEntry (one-to-many)
+- → GLLine (one-to-many, via aggregation — not a direct DB join)
+
+> **Note (bookkeeping-financial-statements, 2026-06-02):** This entry supersedes
+> the earlier BalanceSheet entry (primary spec: financial-reporting-accountability).
+> Key changes: (1) declares this as a **read-only aggregate** over GL transactions
+> — no separate FinancialStatementLine table; (2) adds fiscalYearId + administrationId
+> required fields; (3) adds isBalanced computed flag; (4) updates lifecycle to
+> draft → final → published → archived; (5) removes stale → Organization and
+> → GeneralLedgerEntry relations (GeneralLedgerEntry is deprecated; GLLine is the
+> canonical T1 posting schema; aggregation is computed, not a FK join).
+
+### TrialBalance
+**Schema.org:** `schema:Table`
+_A read-only aggregate listing all GL accounts with debit/credit balances for period verification. isBalanced flag (totalDebits = totalCredits) is computed via x-openregister-aggregations per REQ-FS-005. No TrialBalanceService. Lifecycle: draft → verified → final → published → archived per REQ-FS-003._
+**Primary spec:** bookkeeping-financial-statements
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| reportDate | datetime | Yes | Snapshot date (typically fiscal-year-end) |
+| totalDebits | number | No | Sum of all debit balances (x-openregister-aggregations) |
+| totalCredits | number | No | Sum of all credit balances (x-openregister-aggregations) |
+| isBalanced | boolean | No | Computed flag: totalDebits = totalCredits |
+| status | enum | Yes | One of draft, verified, final, published, archived |
+| preparedBy | string | No | Actor who prepared or verified (audit trail) |
+| fiscalYearId | string | Yes | FK to FiscalYear |
+| administrationId | string | Yes | FK to administration |
+
+**Relations:**
+- → FiscalYear (many-to-one)
+- → GLLine (one-to-many, via aggregation)
+
+### ConsolidationGroup
+**Schema.org:** `schema:Organization`
+_A group of organizations consolidated together for consolidated financial reporting across multiple administrations. Holds the consolidation method (full/proportional/equity per IFRS 10/11/12) and inter-company elimination rules. Consumed by ConsolidatedReport per REQ-FS-006._
+**Primary spec:** bookkeeping-financial-statements
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| name | string | Yes | Name of the consolidation group |
+| consolidationMethod | enum | Yes | One of full, proportional, equity (IFRS 10/11/12) |
+| status | enum | Yes | One of active, inactive, archived |
+| parentOrganizationId | string | No | FK to parent organization |
+| eliminationRules | object | No | Inter-company elimination rules (offset-by-FK, percentage-based, custom) |
+| administrationIds | array of string | Yes | FKs to Administration records being consolidated |
+
+**Relations:**
+- → ConsolidatedReport (one-to-many)
+
+> **Note (bookkeeping-financial-statements, 2026-06-02):** This entry supersedes
+> the earlier ConsolidationGroup entry (primary spec: financial-reporting-accountability).
+> Key changes: (1) adds administrationIds required field (array of FK strings);
+> (2) replaces parentOrganization (string name) with parentOrganizationId (FK);
+> (3) adds lifecycle (active → inactive → archived); (4) removes stale
+> → Organization (one-to-many) relation — consolidated administrations are now
+> referenced by administrationIds array field.
+
+### ConsolidatedReport
+**Schema.org:** `schema:Report`
+_A read-only aggregate combining financials across multiple administrations with consolidation method and inter-company elimination tracking. Lifecycle: draft → final → published → archived per REQ-FS-003. Consolidation workflow consumes OR consolidation extension (ADR-022) or ConsolidationGuard fallback per ADR-031._
+**Primary spec:** bookkeeping-financial-statements
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| reportNumber | string | Yes | Unique identifier for the consolidated report |
+| reportDate | datetime | Yes | Consolidation snapshot date |
+| consolidationGroupId | string | Yes | FK to ConsolidationGroup |
+| consolidationMethod | enum | Yes | One of full, proportional, equity |
+| eliminationsApplied | boolean | No | Whether inter-company eliminations have been applied |
+| status | enum | Yes | One of draft, final, published, archived |
+| fiscalYearId | string | Yes | FK to FiscalYear |
+
+**Relations:**
+- → ConsolidationGroup (many-to-one)
+- → FiscalYear (many-to-one)
+
+> **Note (bookkeeping-financial-statements, 2026-06-02):** This entry supersedes
+> the earlier ConsolidatedReport entry (primary spec: financial-reporting-accountability).
+> Key changes: (1) replaces isPublished boolean with full lifecycle (draft → final
+> → published → archived); (2) adds consolidationGroupId FK (replaces stale
+> → ConsolidationGroup many-to-one relation); (3) adds fiscalYearId required field;
+> (4) removes stale → BalanceSheet (one-to-many) relation — the consolidated
+> report aggregates over member administrations' BalanceSheets via aggregation,
+> not a FK join; (5) removes finalized/archived from status enum — these are now
+> expressed as lifecycle states.
 
 ### BankAccount
 **Schema.org:** `schema:BankAccount`
