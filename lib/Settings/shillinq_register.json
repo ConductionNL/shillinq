@@ -255,7 +255,8 @@
 						"description": "Number of days until the PSD2 consent expires. Negative when already expired.",
 						"example": 14
 					}
-				}
+				},
+				"x-openregister-audit": true
 			},
 			"BankStatement": {
 				"slug": "BankStatement",
@@ -351,7 +352,8 @@
 							]
 						}
 					}
-				}
+				},
+				"x-openregister-audit": true
 			},
 			"GLLine": {
 				"slug": "GLLine",
@@ -870,13 +872,19 @@
 					"onMarkedForDestruction": {
 						"event": "account.marked-for-destruction",
 						"template": "Account {accountNumber} ({name}) marked for destruction by {actor} per Archiefwet Article 7",
-						"recipients": ["auditor", "compliance-officer"],
+						"recipients": [
+							"auditor",
+							"compliance-officer"
+						],
 						"trigger": "lifecycle:archived→marked-for-destruction"
 					},
 					"onDestructionCompleted": {
 						"event": "account.destruction-completed",
 						"template": "Account {accountNumber} ({name}) destruction completed by {actor}. Hash-chain certified.",
-						"recipients": ["auditor", "compliance-officer"],
+						"recipients": [
+							"auditor",
+							"compliance-officer"
+						],
 						"trigger": "lifecycle:marked-for-destruction→destruction-completed"
 					}
 				},
@@ -1054,7 +1062,8 @@
 							}
 						}
 					}
-				}
+				},
+				"x-openregister-audit": true
 			},
 			"BalanceSheet": {
 				"slug": "BalanceSheet",
@@ -1263,7 +1272,8 @@
 							]
 						}
 					}
-				}
+				},
+				"x-openregister-audit": true
 			},
 			"TrialBalance": {
 				"slug": "TrialBalance",
@@ -1497,7 +1507,8 @@
 							]
 						}
 					}
-				}
+				},
+				"x-openregister-audit": true
 			},
 			"ConsolidationGroup": {
 				"slug": "ConsolidationGroup",
@@ -1634,7 +1645,8 @@
 							]
 						}
 					}
-				}
+				},
+				"x-openregister-audit": true
 			},
 			"ConsolidatedReport": {
 				"slug": "ConsolidatedReport",
@@ -1789,7 +1801,8 @@
 							]
 						}
 					}
-				}
+				},
+				"x-openregister-audit": true
 			},
 			"Iv3Export": {
 				"slug": "Iv3Export",
@@ -2309,7 +2322,8 @@
 							}
 						}
 					}
-				}
+				},
+				"x-openregister-audit": true
 			},
 			"KorThreshold": {
 				"slug": "KorThreshold",
@@ -2376,7 +2390,8 @@
 							]
 						}
 					}
-				}
+				},
+				"x-openregister-audit": true
 			},
 			"KorRegime": {
 				"slug": "KorRegime",
@@ -2699,7 +2714,8 @@
 							]
 						}
 					}
-				}
+				},
+				"x-openregister-audit": true
 			}
 		},
 		"SisaReport": {
