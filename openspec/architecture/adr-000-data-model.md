@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 226
+**Entities:** 229
 
 ## Context
 
@@ -256,6 +256,29 @@ _Auction format for competitive bidding with multiple formats and real-time bid 
 **Relations:**
 - → Lot (many-to-one)
 - → Offer (one-to-many)
+
+### AuditDocument
+**Schema.org:** `schema:DigitalDocument`
+_A financial document participating in SiSa audit (invoice, purchase order, journal entry, payment). Every state transition triggers an immutable audit-trail event via OR's audit service per REQ-SISA-001 and REQ-SISA-003._
+**Primary spec:** bookkeeping-sisa-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| documentNumber | string | Yes | Unique document identifier per administration |
+| documentType | enum | Yes | One of: invoice, purchase-order, journal-entry, payment |
+| glTransactionId | string | Yes | FK to GLTransaction (T1 general-ledger) |
+| administrationId | string | Yes | FK to Administration |
+| signingUser | string | Yes | Nextcloud user ID who signed or issued the document |
+| signingTimestamp | datetime | Yes | Timestamp when document was signed (captured by OR audit service) |
+| signingReason | string | No | Optional reason or comment on signing |
+| state | enum | Yes | One of: draft, issued, signed, voided (lifecycle per REQ-SISA-004) |
+| lifecycleState | enum | Yes | One of: active, archived |
+| relatedTransactionAmount | number | No | Amount of related GL transaction for context display |
+| currency | string | Yes | ISO 4217 currency code |
+
+**Relations:**
+- → GLTransaction (many-to-one)
+- → Administration (many-to-one)
 
 ### AuditFinding
 **Schema.org:** `schema:Report`
@@ -716,6 +739,34 @@ _Risk assessment for regulatory, operational, and compliance threats with mitiga
 **Relations:**
 - → Organization (many-to-one)
 - → ComplianceDocument (one-to-many)
+
+### ComplianceAuditTrail
+**Schema.org:** `schema:Event`
+_Auditor working log per administration tracking SiSa audit findings (critical/major/minor), governance observations, and remediation status per REQ-SISA-005. Referenced by SisaReport aggregation to compute finding counts and overall opinion._
+**Primary spec:** bookkeeping-sisa-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| trailNumber | string | Yes | Unique compliance audit trail identifier |
+| administrationId | string | Yes | FK to Administration under audit |
+| fiscalYear | integer | Yes | Fiscal year under audit |
+| findingNumber | string | No | Reference number of an individual audit finding |
+| findingSeverity | enum | No | One of: critical, major, minor |
+| findingDescription | text | No | Detailed description of the audit finding |
+| observationNumber | string | No | Reference number of a governance observation |
+| observationDescription | text | No | Governance improvement observation |
+| remediationDueDate | date | No | Target date for remediation completion |
+| remediationStatus | enum | No | One of: pending, in-progress, completed, overdue |
+| remediationCompletionDate | date | No | Date remediation was completed |
+| auditorName | string | No | Auditor or audit firm name |
+| auditDate | date | Yes | Date of the audit fieldwork or finding issuance |
+| status | enum | Yes | One of: draft, submitted, closed |
+
+**Relations:**
+- → Administration (many-to-one)
+- → SisaReport (many-to-one, via administrationId + fiscalYear aggregation)
+
+> **Deduplication note:** `AuditFinding` (primary spec: compliance-audit) is the baseline data-model entity for individual findings. `ComplianceAuditTrail` is the SiSa-specific aggregation and working-log register that contains findings per administration/fiscal year. They coexist: `AuditFinding` is the data-model baseline; `ComplianceAuditTrail` is the SiSa-specific register.
 
 ### ConsentRecord
 **Schema.org:** `schema:Action`
@@ -2055,19 +2106,30 @@ _Grouping of items in procurement process for evaluation and award at lot level_
 
 ### ManagementLetter
 **Schema.org:** `schema:DigitalDocument`
-_Auditor communication documenting findings and observations from annual audits_
+_Auditor communication documenting findings and observations from annual audits. Two related declarations exist: the original compliance-audit entity (fields below) and the SiSa-specific register in bookkeeping-sisa-reporting (letterNumber, sisaReportId, findingsSummary, observationsSummary, remediationRecommendations, status). A T2/T4 consolidation change will reconcile or disambiguate these._
 **Primary spec:** compliance-audit
+**Co-declaring spec:** bookkeeping-sisa-reporting (SiSa-specific fields)
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| auditDate | date | Yes | Date of the audit |
-| auditScope | string | Yes | Scope of audit (e.g., annual financial statements 2025) |
+| auditDate | date | Yes | Date of the audit (compliance-audit) |
+| auditScope | string | Yes | Scope of audit e.g. annual financial statements 2025 (compliance-audit) |
 | auditorName | string | Yes | Auditing firm or auditor name |
-| findings | text | No | Summary of audit findings |
+| findings | text | No | Summary of audit findings (compliance-audit) |
+| letterNumber | string | Yes | Unique management letter identifier (bookkeeping-sisa-reporting) |
+| sisaReportId | string | Yes | FK to SisaReport (bookkeeping-sisa-reporting) |
+| issuedDate | date | Yes | Date letter was issued (bookkeeping-sisa-reporting) |
+| dueResponseDate | date | No | Management response deadline (bookkeeping-sisa-reporting) |
+| findingsSummary | text | No | Summary of findings (bookkeeping-sisa-reporting) |
+| observationsSummary | text | No | Summary of observations (bookkeeping-sisa-reporting) |
+| remediationRecommendations | text | No | Recommended corrective actions (bookkeeping-sisa-reporting) |
+| auditOpinion | string | No | Auditor's opinion pre-computed from SisaReport (bookkeeping-sisa-reporting) |
+| status | enum | Yes | One of: draft, issued, acknowledged, archived (bookkeeping-sisa-reporting) |
 
 **Relations:**
 - → Organization (many-to-one)
 - → AuditFinding (one-to-many)
+- → SisaReport (many-to-one, via sisaReportId)
 
 ### Mandate
 **Schema.org:** `schema:DigitalDocument`
@@ -3392,6 +3454,39 @@ _Delegation of signing rights to a specific person with defined scope and limits
 
 **Relations:**
 - → Mandate (many-to-one)
+
+### SisaReport
+**Schema.org:** `schema:Report`
+_Single Information Single Audit (SiSa) compliance report per fiscal year for a Dutch government administration. Aggregates transaction counts, on-time settlement %, audit findings from ComplianceAuditTrail, and overall audit opinion (unqualified/qualified/adverse/disclaimer) per REQ-SISA-001 and REQ-SISA-002._
+**Primary spec:** bookkeeping-sisa-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| reportNumber | string | Yes | Unique report identifier per administration |
+| fiscalYear | integer | Yes | Fiscal year covered by this SiSa report |
+| administrationId | string | Yes | FK to Administration |
+| reportDate | datetime | Yes | Date the report was generated or finalised |
+| totalTransactionCount | integer | No | Total number of financial transactions in the fiscal period |
+| onTimeSettlementPercent | number | No | Percentage of obligations settled by due date (0–100) |
+| totalAmount | number | No | Total financial value of all transactions |
+| currency | string | Yes | ISO 4217 currency code (EUR) |
+| criticalFindingsCount | integer | No | Count of critical-severity audit findings |
+| majorFindingsCount | integer | No | Count of major-severity audit findings |
+| minorFindingsCount | integer | No | Count of minor-severity audit findings |
+| observationsCount | integer | No | Count of governance observations |
+| remediationOverdueCount | integer | No | Count of overdue remediation actions |
+| auditOpinion | enum | Yes | One of: unqualified, qualified, adverse, disclaimer |
+| managementLetterId | string | No | FK to ManagementLetter record |
+| complianceStatus | enum | Yes | One of: compliant, non-compliant, under-review |
+| lifecycleState | enum | Yes | One of: draft, finalized, submitted, archived |
+| submissionDate | datetime | No | Date report submitted to the relevant authority |
+
+**Relations:**
+- → Administration (many-to-one)
+- → ComplianceAuditTrail (one-to-many, aggregated per administrationId + fiscalYear)
+- → ManagementLetter (one-to-one, via managementLetterId)
+
+> **Deduplication note:** `ComplianceReport` (primary spec: obligation-financial-administration) tracks obligation settlement compliance metrics. `SisaReport` is SiSa-specific with fiscal-year + audit-opinion + on-time-settlement aggregations. They coexist; if they converge, a T2 consolidation change will merge them with a migration step.
 
 ### SourcingEvent
 **Schema.org:** `schema:Event`
