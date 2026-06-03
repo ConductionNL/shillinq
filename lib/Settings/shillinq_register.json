@@ -456,8 +456,25 @@
 							"from": "draft",
 							"to": "posted",
 							"label": "Post transaction",
-							"description": "Transition draft posting to posted state. Enforces balance invariant and account-state guard.",
-							"requires": "OCA\\Shillinq\\Lifecycle\\BalanceGuard::isBalanced"
+							"description": "Transition draft posting to posted state. Enforces balance invariant and account-state guard. After balance check passes, evaluates active per-posting AllocationRule records per REQ-CC-004 + design D2.",
+							"requires": "OCA\\Shillinq\\Lifecycle\\BalanceGuard::isBalanced",
+							"actions": [
+								{
+									"trigger": "x-openregister-lifecycle-action",
+									"action": "evaluate-allocation-rules",
+									"description": "Evaluate all active AllocationRule records with cadence=per-posting whose sourceAccountPattern matches a line in this transaction. Emits additional balanced GLLine rows distributing source amounts per the rule targets per REQ-CC-004.",
+									"actionParameters": {
+										"register": "shillinq",
+										"schema": "AllocationRule",
+										"filter": {
+											"lifecycleState": "active",
+											"cadence": "per-posting"
+										},
+										"keepBalanced": true,
+										"idempotencyKey": "transactionId"
+									}
+								}
+							]
 						},
 						"reverse": {
 							"from": "posted",
@@ -584,6 +601,36 @@
 						"type": "boolean",
 						"default": false,
 						"description": "When true, excludes this line from the consolidated trial-balance and financial-statement aggregations. Used to eliminate inter-GR transactions from consolidated views per REQ-GRC-003."
+					},
+					"costCenterCode": {
+						"type": "string",
+						"description": "FK to CostCenter.code for analytical cost-center reporting. Backwards-compatible with the existing costCenter field per REQ-CC-003.",
+						"nullable": true,
+						"example": "KC-100"
+					},
+					"kostenDragerCode": {
+						"type": "string",
+						"description": "FK to KostenDrager.code for cost-unit analytical reporting per REQ-CC-003.",
+						"nullable": true,
+						"example": "KD-001"
+					},
+					"projectCode": {
+						"type": "string",
+						"description": "FK to Project.code for project accounting and WBSO time-per-project pre-positioning per REQ-CC-003 + REQ-CC-007.",
+						"nullable": true,
+						"example": "PRJ-2026-001"
+					},
+					"dimensions": {
+						"type": "object",
+						"description": "Free-form key-to-value map for custom analytical dimensions. Each key MUST match a registered custom dimension register declared with x-openregister-purpose: dimension; each value MUST resolve to an existing record code in that register. Validation is declared via OR relations engine per REQ-CC-003.",
+						"nullable": true,
+						"additionalProperties": {
+							"type": "string"
+						},
+						"example": {
+							"region": "NL-WEST",
+							"channel": "ONLINE"
+						}
 					}
 				},
 				"x-openregister-relations": {
@@ -600,6 +647,27 @@
 						"relatedField": "accountNumber",
 						"cardinality": "many-to-one",
 						"description": "FK to Account.accountNumber (bookkeeping-chart-of-accounts). Requires Account.lifecycleState = active on the post transition."
+					},
+					"costCenterRelation": {
+						"localField": "costCenterCode",
+						"relatedSchema": "CostCenter",
+						"relatedField": "code",
+						"cardinality": "many-to-one",
+						"description": "FK to CostCenter.code for dimension-tagged analytical reporting per REQ-CC-003."
+					},
+					"kostenDragerRelation": {
+						"localField": "kostenDragerCode",
+						"relatedSchema": "KostenDrager",
+						"relatedField": "code",
+						"cardinality": "many-to-one",
+						"description": "FK to KostenDrager.code for cost-unit analytical reporting per REQ-CC-003."
+					},
+					"projectRelation": {
+						"localField": "projectCode",
+						"relatedSchema": "Project",
+						"relatedField": "code",
+						"cardinality": "many-to-one",
+						"description": "FK to Project.code for project accounting and WBSO time-per-project per REQ-CC-003 + REQ-CC-007."
 					}
 				},
 				"x-openregister-aggregations": {
@@ -618,6 +686,99 @@
 								"operation": "sum",
 								"condition": "side = 'credit'"
 							}
+						}
+					},
+					"segmentPnlByCostCenter": {
+						"description": "Segment P&L roll-up keyed by costCenterCode and fiscalYearId. Aggregates debit and credit amounts per cost center, rolling child cost centers up to their parent via the CostCenter self-relation per REQ-CC-005. Consumed by launchpad widgets via runtime GraphQL and by CostCenter detail pages.",
+						"filter": {
+							"eliminationFlag": false,
+							"costCenterCode": {
+								"operator": "isNotNull"
+							}
+						},
+						"groupBy": ["costCenterCode", "fiscalYearId", "accountNumber"],
+						"operations": {
+							"totalDebit": {
+								"field": "amount",
+								"operation": "sum",
+								"condition": "side = 'debit'"
+							},
+							"totalCredit": {
+								"field": "amount",
+								"operation": "sum",
+								"condition": "side = 'credit'"
+							},
+							"netAmount": {
+								"operation": "expression",
+								"expression": "totalDebit - totalCredit"
+							}
+						},
+						"hierarchyRollup": {
+							"relation": "costCenterRelation",
+							"parentField": "parentCode",
+							"depth": 4
+						}
+					},
+					"segmentPnlByKostenDrager": {
+						"description": "Segment P&L roll-up keyed by kostenDragerCode and fiscalYearId. Mirrors the cost-center aggregation for the kostendrager dimension per REQ-CC-005.",
+						"filter": {
+							"eliminationFlag": false,
+							"kostenDragerCode": {
+								"operator": "isNotNull"
+							}
+						},
+						"groupBy": ["kostenDragerCode", "fiscalYearId", "accountNumber"],
+						"operations": {
+							"totalDebit": {
+								"field": "amount",
+								"operation": "sum",
+								"condition": "side = 'debit'"
+							},
+							"totalCredit": {
+								"field": "amount",
+								"operation": "sum",
+								"condition": "side = 'credit'"
+							},
+							"netAmount": {
+								"operation": "expression",
+								"expression": "totalDebit - totalCredit"
+							}
+						},
+						"hierarchyRollup": {
+							"relation": "kostenDragerRelation",
+							"parentField": "parentCode",
+							"depth": 4
+						}
+					},
+					"segmentPnlByProject": {
+						"description": "Segment P&L roll-up keyed by projectCode and fiscalYearId. Used for project accounting and as the time-per-project projection target for WBSO pre-positioning per REQ-CC-005 + REQ-CC-007.",
+						"filter": {
+							"eliminationFlag": false,
+							"projectCode": {
+								"operator": "isNotNull"
+							}
+						},
+						"groupBy": ["projectCode", "fiscalYearId", "accountNumber"],
+						"operations": {
+							"totalDebit": {
+								"field": "amount",
+								"operation": "sum",
+								"condition": "side = 'debit'"
+							},
+							"totalCredit": {
+								"field": "amount",
+								"operation": "sum",
+								"condition": "side = 'credit'"
+							},
+							"netAmount": {
+								"operation": "expression",
+								"expression": "totalDebit - totalCredit"
+							}
+						},
+						"hierarchyRollup": {
+							"relation": "projectRelation",
+							"parentField": "parentCode",
+							"depth": 4
 						}
 					}
 				}
@@ -3752,6 +3913,607 @@
 							"permissions": [
 								"read"
 							]
+						}
+					}
+				}
+			},
+			"CostCenter": {
+				"slug": "CostCenter",
+				"icon": "OfficeBuilding",
+				"version": "0.1.0",
+				"title": "Cost Center",
+				"description": "An analytical cost center (kostenplaats) for tracking, allocating, and analysing departmental or functional expenses. Declared as an OR-managed register per REQ-CC-001 and REQ-CC-002. Hierarchy is navigable via the parentCode self-relation.",
+				"x-schema-org": "schema:Organization",
+				"x-openregister-purpose": "dimension",
+				"type": "object",
+				"required": [
+					"code",
+					"name",
+					"lifecycleState",
+					"administrationId"
+				],
+				"properties": {
+					"code": {
+						"type": "string",
+						"description": "Operator-assigned unique reference within the administration per REQ-CC-002.",
+						"example": "KC-100"
+					},
+					"name": {
+						"type": "string",
+						"description": "Human-readable cost center name.",
+						"example": "Sales"
+					},
+					"parentCode": {
+						"type": "string",
+						"description": "FK to parent CostCenter.code for hierarchy navigation via x-openregister-relations self-relation per REQ-CC-002.",
+						"nullable": true,
+						"example": "KC-000"
+					},
+					"responsibleUser": {
+						"type": "string",
+						"description": "Nextcloud user id of the cost-center owner.",
+						"nullable": true,
+						"example": "jan.manager"
+					},
+					"lifecycleState": {
+						"type": "string",
+						"description": "Current lifecycle state mirroring Account.lifecycleState per REQ-CoA-005 and REQ-CC-002.",
+						"enum": [
+							"active",
+							"blocked",
+							"archived"
+						],
+						"default": "active",
+						"example": "active"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this cost center.",
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Usable for GL line dimension tagging."
+						},
+						"blocked": {
+							"label": "Blocked",
+							"description": "Readable but rejected as target of new GL line dimension tags."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Historical only; no new dimension tags."
+						}
+					},
+					"transitions": {
+						"block": {
+							"from": "active",
+							"to": "blocked",
+							"label": "Block cost center",
+							"description": "Prevent new GL line tagging against this cost center."
+						},
+						"unblock": {
+							"from": "blocked",
+							"to": "active",
+							"label": "Unblock cost center",
+							"description": "Re-enable GL line tagging against this cost center."
+						},
+						"archive": {
+							"from": ["active", "blocked"],
+							"to": "archived",
+							"label": "Archive cost center",
+							"description": "Move to historical archive; GL lines with this code remain queryable."
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"parentCostCenter": {
+						"localField": "parentCode",
+						"relatedSchema": "CostCenter",
+						"relatedField": "code",
+						"cardinality": "many-to-one",
+						"description": "Self-relation enabling hierarchical cost-center navigation per REQ-CC-002."
+					}
+				},
+				"x-openregister-aggregations": {
+					"segmentPnl": {
+						"description": "Segment P&L for this cost center: sum of GLLine amounts whose costCenterCode equals this record's code, including child cost centers rolled up via parentCode. Consumed by the CostCenter detail page per REQ-CC-005.",
+						"join": {
+							"schema": "GLLine",
+							"condition": "GLLine.costCenterCode = @self.code AND GLLine.eliminationFlag = false"
+						},
+						"groupBy": ["GLLine.fiscalYearId", "GLLine.accountNumber"],
+						"operations": {
+							"totalDebit": {
+								"field": "GLLine.amount",
+								"operation": "sum",
+								"condition": "GLLine.side = 'debit'"
+							},
+							"totalCredit": {
+								"field": "GLLine.amount",
+								"operation": "sum",
+								"condition": "GLLine.side = 'credit'"
+							}
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": ["create", "read", "update"]
+						},
+						"auditor": {
+							"permissions": ["read"]
+						}
+					}
+				}
+			},
+			"KostenDrager": {
+				"slug": "KostenDrager",
+				"icon": "CubeOutline",
+				"version": "0.1.0",
+				"title": "Kostendrager",
+				"description": "An analytical cost unit (kostendrager / cost object) for tracking costs per product, service, or cost bearer per Dutch GAAP. Same shape as CostCenter; the distinction is semantic per REQ-CC-002. Hierarchy navigable via parentCode self-relation.",
+				"x-schema-org": "schema:Product",
+				"x-openregister-purpose": "dimension",
+				"type": "object",
+				"required": [
+					"code",
+					"name",
+					"lifecycleState",
+					"administrationId"
+				],
+				"properties": {
+					"code": {
+						"type": "string",
+						"description": "Operator-assigned unique reference within the administration per REQ-CC-002.",
+						"example": "KD-001"
+					},
+					"name": {
+						"type": "string",
+						"description": "Human-readable kostendrager name.",
+						"example": "Product A"
+					},
+					"parentCode": {
+						"type": "string",
+						"description": "FK to parent KostenDrager.code for hierarchy navigation per REQ-CC-002.",
+						"nullable": true,
+						"example": "KD-000"
+					},
+					"responsibleUser": {
+						"type": "string",
+						"description": "Nextcloud user id of the kostendrager owner.",
+						"nullable": true,
+						"example": "lisa.product"
+					},
+					"lifecycleState": {
+						"type": "string",
+						"description": "Current lifecycle state per REQ-CC-002.",
+						"enum": [
+							"active",
+							"blocked",
+							"archived"
+						],
+						"default": "active",
+						"example": "active"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this kostendrager.",
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Usable for GL line dimension tagging."
+						},
+						"blocked": {
+							"label": "Blocked",
+							"description": "Readable but rejected as target of new GL line tags."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Historical only; no new dimension tags."
+						}
+					},
+					"transitions": {
+						"block": {
+							"from": "active",
+							"to": "blocked",
+							"label": "Block kostendrager",
+							"description": "Prevent new GL line tagging against this kostendrager."
+						},
+						"unblock": {
+							"from": "blocked",
+							"to": "active",
+							"label": "Unblock kostendrager",
+							"description": "Re-enable GL line tagging against this kostendrager."
+						},
+						"archive": {
+							"from": ["active", "blocked"],
+							"to": "archived",
+							"label": "Archive kostendrager",
+							"description": "Move to historical archive."
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"parentKostenDrager": {
+						"localField": "parentCode",
+						"relatedSchema": "KostenDrager",
+						"relatedField": "code",
+						"cardinality": "many-to-one",
+						"description": "Self-relation enabling hierarchical kostendrager navigation per REQ-CC-002."
+					}
+				},
+				"x-openregister-aggregations": {
+					"segmentPnl": {
+						"description": "Segment P&L for this kostendrager: sum of GLLine amounts whose kostenDragerCode equals this record's code per REQ-CC-005.",
+						"join": {
+							"schema": "GLLine",
+							"condition": "GLLine.kostenDragerCode = @self.code AND GLLine.eliminationFlag = false"
+						},
+						"groupBy": ["GLLine.fiscalYearId", "GLLine.accountNumber"],
+						"operations": {
+							"totalDebit": {
+								"field": "GLLine.amount",
+								"operation": "sum",
+								"condition": "GLLine.side = 'debit'"
+							},
+							"totalCredit": {
+								"field": "GLLine.amount",
+								"operation": "sum",
+								"condition": "GLLine.side = 'credit'"
+							}
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": ["create", "read", "update"]
+						},
+						"auditor": {
+							"permissions": ["read"]
+						}
+					}
+				}
+			},
+			"Project": {
+				"slug": "Project",
+				"icon": "BriefcaseOutline",
+				"version": "0.1.0",
+				"title": "Project",
+				"description": "An analytical project for tracking time, materials, and costs per project. Same shape as CostCenter and KostenDrager per REQ-CC-002. The timeBookingEnabled flag pre-positions WBSO time-per-project per REQ-CC-007.",
+				"x-schema-org": "schema:Project",
+				"x-openregister-purpose": "dimension",
+				"type": "object",
+				"required": [
+					"code",
+					"name",
+					"lifecycleState",
+					"administrationId"
+				],
+				"properties": {
+					"code": {
+						"type": "string",
+						"description": "Operator-assigned unique reference within the administration per REQ-CC-002.",
+						"example": "PRJ-2026-001"
+					},
+					"name": {
+						"type": "string",
+						"description": "Human-readable project name.",
+						"example": "Cloud Platform 2026"
+					},
+					"parentCode": {
+						"type": "string",
+						"description": "FK to parent Project.code for hierarchy navigation per REQ-CC-002.",
+						"nullable": true,
+						"example": "PRJ-2026-000"
+					},
+					"responsibleUser": {
+						"type": "string",
+						"description": "Nextcloud user id of the project owner.",
+						"nullable": true,
+						"example": "kim.pm"
+					},
+					"timeBookingEnabled": {
+						"type": "boolean",
+						"description": "When true, time bookings may reference this project for WBSO hours-per-project derivation per REQ-CC-007. Non-required; false by default.",
+						"default": false,
+						"example": true
+					},
+					"lifecycleState": {
+						"type": "string",
+						"description": "Current lifecycle state per REQ-CC-002.",
+						"enum": [
+							"active",
+							"blocked",
+							"archived"
+						],
+						"default": "active",
+						"example": "active"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this project.",
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Usable for GL line and time-entry dimension tagging."
+						},
+						"blocked": {
+							"label": "Blocked",
+							"description": "Readable but rejected as target of new GL line or time-entry tags."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Historical only; no new dimension tags."
+						}
+					},
+					"transitions": {
+						"block": {
+							"from": "active",
+							"to": "blocked",
+							"label": "Block project",
+							"description": "Prevent new GL line or time-entry tagging against this project."
+						},
+						"unblock": {
+							"from": "blocked",
+							"to": "active",
+							"label": "Unblock project",
+							"description": "Re-enable tagging against this project."
+						},
+						"archive": {
+							"from": ["active", "blocked"],
+							"to": "archived",
+							"label": "Archive project",
+							"description": "Move to historical archive."
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"parentProject": {
+						"localField": "parentCode",
+						"relatedSchema": "Project",
+						"relatedField": "code",
+						"cardinality": "many-to-one",
+						"description": "Self-relation enabling hierarchical project navigation per REQ-CC-002."
+					}
+				},
+				"x-openregister-aggregations": {
+					"segmentPnl": {
+						"description": "Segment P&L for this project: sum of GLLine amounts whose projectCode equals this record's code per REQ-CC-005. Shape is sufficient for WBSO time-per-project join per REQ-CC-007.",
+						"join": {
+							"schema": "GLLine",
+							"condition": "GLLine.projectCode = @self.code AND GLLine.eliminationFlag = false"
+						},
+						"groupBy": ["GLLine.fiscalYearId", "GLLine.accountNumber"],
+						"operations": {
+							"totalDebit": {
+								"field": "GLLine.amount",
+								"operation": "sum",
+								"condition": "GLLine.side = 'debit'"
+							},
+							"totalCredit": {
+								"field": "GLLine.amount",
+								"operation": "sum",
+								"condition": "GLLine.side = 'credit'"
+							}
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": ["create", "read", "update"]
+						},
+						"auditor": {
+							"permissions": ["read"]
+						}
+					}
+				}
+			},
+			"AllocationRule": {
+				"slug": "AllocationRule",
+				"icon": "TransferRight",
+				"version": "0.1.0",
+				"title": "Allocation Rule",
+				"description": "A cost-allocation rule declared as schema metadata per ADR-031 (design D2). Stores the rule shape: source pattern, driver, targets, target dimension, and cadence. Per-posting rules fire as x-openregister-lifecycle action on GLTransaction.post; monthly/period-close rules fire via OR ScheduledWorkflow. No AllocationService.allocate() ever runs the rule. Compliance: REQ-CC-004.",
+				"x-schema-org": "schema:Thing",
+				"type": "object",
+				"required": [
+					"name",
+					"sourceAccountPattern",
+					"driver",
+					"targets",
+					"targetDimension",
+					"cadence",
+					"lifecycleState",
+					"administrationId"
+				],
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "Operator-readable rule name per REQ-CC-004.",
+						"example": "Overhead spread by headcount"
+					},
+					"sourceAccountPattern": {
+						"type": "string",
+						"description": "Glob or range pattern matching source GL accounts (e.g. 1000-1099 or 4900). Evaluated against GLLine.accountNumber on per-posting rules per REQ-CC-004.",
+						"example": "1000-1099"
+					},
+					"driver": {
+						"type": "string",
+						"description": "Named distribution driver per REQ-CC-004.",
+						"enum": [
+							"fixed-percentage",
+							"fixed-amount",
+							"volume",
+							"headcount"
+						],
+						"example": "fixed-percentage"
+					},
+					"targets": {
+						"type": "array",
+						"description": "At least 2 target entries. For fixed-percentage: percentages MUST sum to 100 (enforced by x-openregister-lifecycle.requires on save per REQ-CC-004). For fixed-amount: amounts specify absolute allocation per target. For volume/headcount: source specifies the reference register or field.",
+						"minItems": 2,
+						"items": {
+							"type": "object",
+							"required": ["code"],
+							"properties": {
+								"code": {
+									"type": "string",
+									"description": "Target dimension code (FK to CostCenter.code, KostenDrager.code, or Project.code depending on targetDimension).",
+									"example": "KC-100"
+								},
+								"percentage": {
+									"type": "number",
+									"description": "Allocation percentage for fixed-percentage driver. All targets MUST sum to 100.",
+									"minimum": 0,
+									"maximum": 100,
+									"example": 50.0
+								},
+								"amount": {
+									"type": "number",
+									"description": "Fixed allocation amount for fixed-amount driver.",
+									"minimum": 0,
+									"example": 500.0
+								},
+								"source": {
+									"type": "string",
+									"description": "Reference field or register for volume/headcount driver.",
+									"example": "headcount-register"
+								}
+							}
+						},
+						"example": [
+							{"code": "KC-100", "percentage": 50.0},
+							{"code": "KC-200", "percentage": 30.0},
+							{"code": "KC-300", "percentage": 20.0}
+						]
+					},
+					"targetDimension": {
+						"type": "string",
+						"description": "Which dimension the targets[].code values refer to per REQ-CC-004.",
+						"enum": [
+							"cost-center",
+							"kosten-drager",
+							"project"
+						],
+						"example": "cost-center"
+					},
+					"cadence": {
+						"type": "string",
+						"description": "Execution cadence per REQ-CC-004. per-posting fires on GLTransaction.post lifecycle action; monthly and period-close fire via OR ScheduledWorkflow.",
+						"enum": [
+							"per-posting",
+							"monthly",
+							"period-close"
+						],
+						"example": "per-posting"
+					},
+					"lifecycleState": {
+						"type": "string",
+						"description": "Activation state. Seeded rules ship in paused state per design Seed Data section.",
+						"enum": [
+							"active",
+							"paused",
+							"archived"
+						],
+						"default": "paused",
+						"example": "paused"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this allocation rule.",
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "paused",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Rule is evaluated on its cadence. For per-posting: on every GLTransaction.post."
+						},
+						"paused": {
+							"label": "Paused",
+							"description": "Rule is stored but not evaluated. Default for seeded example rules."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Rule is retired; no longer evaluated or activatable."
+						}
+					},
+					"requires": {
+						"save": {
+							"guard": "percentages-sum-to-100",
+							"condition": "driver = 'fixed-percentage'",
+							"expression": "sum(targets[*].percentage) = 100",
+							"message": "Fixed-percentage allocation rule: target percentages must sum to 100 per REQ-CC-004."
+						}
+					},
+					"transitions": {
+						"activate": {
+							"from": "paused",
+							"to": "active",
+							"label": "Activate rule",
+							"description": "Operator confirms the rule and activates it for evaluation on its cadence."
+						},
+						"pause": {
+							"from": "active",
+							"to": "paused",
+							"label": "Pause rule",
+							"description": "Temporarily suspend rule evaluation without archiving."
+						},
+						"archive": {
+							"from": ["active", "paused"],
+							"to": "archived",
+							"label": "Archive rule",
+							"description": "Retire the rule permanently."
+						}
+					},
+					"workflows": {
+						"monthlyAllocation": {
+							"cadence": "monthly",
+							"trigger": "ScheduledWorkflow",
+							"description": "Evaluates all active AllocationRule records with cadence=monthly against the previous month's posted GLLines per REQ-CC-004 design D2. No PHP AllocationService orchestrates this — the rule body lives in this schema.",
+							"condition": "lifecycleState = 'active' AND cadence = 'monthly'"
+						},
+						"periodCloseAllocation": {
+							"cadence": "period-close",
+							"trigger": "ScheduledWorkflow",
+							"description": "Evaluates all active AllocationRule records with cadence=period-close when the fiscal period closes per REQ-CC-004 design D2.",
+							"condition": "lifecycleState = 'active' AND cadence = 'period-close'"
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"controller": {
+							"permissions": ["create", "read", "update", "delete"]
+						},
+						"bookkeeper": {
+							"permissions": ["read"]
+						},
+						"auditor": {
+							"permissions": ["read"]
 						}
 					}
 				}
