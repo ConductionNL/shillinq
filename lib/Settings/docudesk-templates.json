@@ -56,6 +56,184 @@
         }
       ],
       "footer": "Gegenereerd vanuit de Shillinq innovatiebox-administratie aggregatie (REQ-IBA-003, REQ-IBA-005). Bronnen: Wet Vpb art. 12b/12bg."
+    },
+    {
+      "templateId": "nivra-bestand",
+      "title": "NIVRA-bestand audit-trail export",
+      "description": "Gestandaardiseerd audit-bestand conform de NIVRA-standaard (controleprotocol). Bevat elke boeking in de periode (header + regels), alle auditgebeurtenissen voor die boekingen, de saldibalans, en het grootboekschema dat van kracht was. Uitvoerformaat: XML per het controleprotocol in _meta.standardVersion. REQ-REK-002.",
+      "register": "shillinq",
+      "schema": "GLTransaction",
+      "aggregation": "nivraBestanden",
+      "outputFormat": "xml",
+      "templateUri": "docudesk://templates/shillinq/nivra-bestand-{standardVersion}.xml",
+      "fieldBindings": {
+        "periodId": "params.periodId",
+        "administrationId": "params.administrationId",
+        "standardVersion": "params.standardVersion",
+        "transactions": "sources.transactions",
+        "lines": "sources.lines",
+        "trialBalance": "sources.trialBalance",
+        "chartOfAccounts": "sources.chartOfAccounts",
+        "auditEvents": "sources.auditEvents"
+      },
+      "sections": [
+        {
+          "sectionId": "header",
+          "title": "Header — periode en administratie",
+          "fields": [
+            { "key": "periodId", "label": "Periode", "type": "string" },
+            { "key": "standardVersion", "label": "Controleprotocol versie", "type": "string" },
+            { "key": "administrationId", "label": "Administratie", "type": "string" }
+          ]
+        },
+        {
+          "sectionId": "transactions",
+          "title": "Boekingen",
+          "sourceSchema": "GLTransaction",
+          "joinField": "periodId",
+          "columns": [
+            { "key": "transactionNumber", "label": "Boekstuknummer" },
+            { "key": "postingDate", "label": "Boekdatum" },
+            { "key": "description", "label": "Omschrijving" },
+            { "key": "currency", "label": "Valuta" },
+            { "key": "state", "label": "Status" }
+          ]
+        },
+        {
+          "sectionId": "lines",
+          "title": "Boekingsregels",
+          "sourceSchema": "GLLine",
+          "joinField": "transactionId",
+          "columns": [
+            { "key": "lineNumber", "label": "Regelnummer" },
+            { "key": "accountNumber", "label": "Grootboekrekening" },
+            { "key": "side", "label": "D/C" },
+            { "key": "amount", "label": "Bedrag", "type": "currency" },
+            { "key": "currency", "label": "Valuta" }
+          ]
+        },
+        {
+          "sectionId": "auditEvents",
+          "title": "Auditgebeurtenissen",
+          "sourceSchema": "audit-trail-immutable",
+          "columns": [
+            { "key": "eventType", "label": "Gebeurtenistype" },
+            { "key": "actor", "label": "Actor" },
+            { "key": "timestamp", "label": "Tijdstip" },
+            { "key": "eventHash", "label": "Hash" }
+          ]
+        },
+        {
+          "sectionId": "trialBalance",
+          "title": "Saldibalans",
+          "sourceSchema": "TrialBalance",
+          "fields": [
+            { "key": "totalDebits", "label": "Totaal debet", "type": "currency" },
+            { "key": "totalCredits", "label": "Totaal credit", "type": "currency" },
+            { "key": "isBalanced", "label": "Gebalanceerd", "type": "boolean" }
+          ]
+        }
+      ],
+      "footer": "NIVRA-bestand gegenereerd vanuit de Shillinq audit-pack aggregatie. REQ-REK-002. Conform controleprotocol {{standardVersion}}."
+    },
+    {
+      "templateId": "steekproef-werkpapier",
+      "title": "Steekproef werkpapier",
+      "description": "Reproduceerbare steekproef van GLTransaction-records voor een periode. Gegeven periodId, sampleSize en seed worden altijd dezelfde records geretourneerd. REQ-REK-003.",
+      "register": "shillinq",
+      "schema": "GLTransaction",
+      "aggregation": "steekproef",
+      "outputFormat": "xml",
+      "templateUri": "docudesk://templates/shillinq/steekproef-werkpapier.xml",
+      "fieldBindings": {
+        "periodId": "params.periodId",
+        "sampleSize": "params.sampleSize",
+        "seed": "params.seed",
+        "administrationId": "params.administrationId",
+        "transactions": "sources.transactions"
+      },
+      "sections": [
+        {
+          "sectionId": "header",
+          "title": "Steekproefparameters",
+          "fields": [
+            { "key": "periodId", "label": "Periode", "type": "string" },
+            { "key": "sampleSize", "label": "Steekproefgrootte", "type": "integer" },
+            { "key": "seed", "label": "Seed (reproductie-sleutel)", "type": "string" },
+            { "key": "administrationId", "label": "Administratie", "type": "string" }
+          ]
+        },
+        {
+          "sectionId": "transactions",
+          "title": "Geselecteerde boekingen",
+          "sourceSchema": "GLTransaction",
+          "columns": [
+            { "key": "transactionNumber", "label": "Boekstuknummer" },
+            { "key": "postingDate", "label": "Boekdatum" },
+            { "key": "description", "label": "Omschrijving" },
+            { "key": "currency", "label": "Valuta" },
+            { "key": "periodId", "label": "Periode" },
+            { "key": "state", "label": "Status" }
+          ]
+        }
+      ],
+      "footer": "Steekproef werkpapier gegenereerd vanuit de Shillinq audit-pack aggregatie (REQ-REK-003). Seed: {{seed}}. Reproductie-hash: {{_meta.reproductieHash}}."
+    },
+    {
+      "templateId": "ledenraadpleging-export",
+      "title": "Ledenraadpleging-export (geredacteerd)",
+      "description": "Geredacteerd overzicht van periodeboekingen voor raadsleden. Persoonsgegevens in vrije-tekstvelden (omschrijving) en sub-grootboekverwijzingen (AP/AR) worden vervangen door een stabiele SHA-256 hash. Numerieke en rekeningcodeervelden blijven intact. REQ-REK-004.",
+      "register": "shillinq",
+      "schema": "GLTransaction",
+      "aggregation": "ledenraadpleging",
+      "outputFormat": "xml",
+      "templateUri": "docudesk://templates/shillinq/ledenraadpleging-export.xml",
+      "fieldBindings": {
+        "periodId": "params.periodId",
+        "administrationId": "params.administrationId",
+        "transactions": "sources.transactions",
+        "lines": "sources.lines"
+      },
+      "redactionProfile": "raadsleden",
+      "sections": [
+        {
+          "sectionId": "header",
+          "title": "Exportparameters",
+          "fields": [
+            { "key": "periodId", "label": "Periode", "type": "string" },
+            { "key": "administrationId", "label": "Administratie", "type": "string" },
+            { "key": "redactionProfile", "label": "Redactieprofiel", "type": "string" }
+          ]
+        },
+        {
+          "sectionId": "transactions",
+          "title": "Boekingen (geredacteerd)",
+          "sourceSchema": "GLTransaction",
+          "columns": [
+            { "key": "transactionNumber", "label": "Boekstuknummer" },
+            { "key": "postingDate", "label": "Boekdatum" },
+            { "key": "description", "label": "Omschrijving", "redacted": true, "redactedPlaceholder": "[GEREDACTEERD]" },
+            { "key": "currency", "label": "Valuta" },
+            { "key": "state", "label": "Status" }
+          ]
+        },
+        {
+          "sectionId": "lines",
+          "title": "Boekingsregels (geredacteerd)",
+          "sourceSchema": "GLLine",
+          "joinField": "transactionId",
+          "columns": [
+            { "key": "lineNumber", "label": "Regelnummer" },
+            { "key": "accountNumber", "label": "Grootboekrekening" },
+            { "key": "side", "label": "D/C" },
+            { "key": "amount", "label": "Bedrag", "type": "currency" },
+            { "key": "currency", "label": "Valuta" },
+            { "key": "description", "label": "Omschrijving", "redacted": true, "redactedPlaceholder": "[GEREDACTEERD]" },
+            { "key": "subLedgerRef", "label": "Sub-grootboek ref.", "redacted": true, "redactedPlaceholder": "[GEREDACTEERD]" }
+          ]
+        }
+      ],
+      "footer": "Ledenraadpleging-export gegenereerd vanuit de Shillinq audit-pack aggregatie (REQ-REK-004). Redactieprofiel: raadsleden. Persoonsgegevens zijn vervangen door SHA-256 hash."
     }
   ]
 }

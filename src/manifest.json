@@ -189,6 +189,39 @@
 					"route": "InnovatieboxElections",
 					"order": 85,
 					"featureFlag": "mkb-innovatiebox"
+				},
+				{
+					"id": "AuditPack",
+					"label": "Audit pack",
+					"icon": "ShieldSearchOutline",
+					"order": 86,
+					"featureFlag": "gov-rekenkamer",
+					"children": [
+						{
+							"id": "NivraExport",
+							"label": "NIVRA-bestand",
+							"icon": "FileExportOutline",
+							"route": "NivraExport",
+							"order": 10,
+							"featureFlag": "gov-rekenkamer"
+						},
+						{
+							"id": "Steekproef",
+							"label": "Steekproef",
+							"icon": "FilterVariantOutline",
+							"route": "Steekproef",
+							"order": 20,
+							"featureFlag": "gov-rekenkamer"
+						},
+						{
+							"id": "LedenraadplegingExport",
+							"label": "Ledenraadpleging",
+							"icon": "AccountGroupOutline",
+							"route": "LedenraadplegingExport",
+							"order": 30,
+							"featureFlag": "gov-rekenkamer"
+						}
+					]
 				}
 			]
 		},
@@ -4025,6 +4058,103 @@
 				],
 				"auditTrail": true,
 				"indexRoute": "InnovatieboxElections"
+			}
+		},
+		{
+			"id": "NivraExport",
+			"route": "/bookkeeping/audit-pack/nivra",
+			"type": "index",
+			"title": "NIVRA-bestand export",
+			"featureFlag": "gov-rekenkamer",
+			"config": {
+				"register": "shillinq",
+				"schema": "GLTransaction",
+				"aggregation": "nivraBestanden",
+				"featureFlag": "gov-rekenkamer",
+				"description": "Exporteer een NIVRA-bestand voor een afsluiting periode. Bevat alle boekingen, auditgebeurtenissen, saldibalans en grootboekschema. REQ-REK-002.",
+				"params": [
+					{ "key": "periodId", "label": "Periode", "type": "string", "required": true },
+					{ "key": "administrationId", "label": "Administratie", "type": "string", "required": true },
+					{ "key": "standardVersion", "label": "Controleprotocol versie", "type": "string", "required": true, "default": "2026" }
+				],
+				"columns": [
+					{ "key": "transactionNumber", "label": "Boekstuknummer", "sortable": true },
+					{ "key": "postingDate", "label": "Boekdatum", "sortable": true },
+					{ "key": "description", "label": "Omschrijving", "sortable": false },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "transactionNumber",
+				"exportAction": {
+					"label": "Exporteer NIVRA-bestand",
+					"icon": "FileExportOutline",
+					"template": "nivra-bestand",
+					"auditEventType": "audit-pack.nivra.exported"
+				}
+			}
+		},
+		{
+			"id": "Steekproef",
+			"route": "/bookkeeping/audit-pack/steekproef",
+			"type": "index",
+			"title": "Steekproef",
+			"featureFlag": "gov-rekenkamer",
+			"config": {
+				"register": "shillinq",
+				"schema": "GLTransaction",
+				"aggregation": "steekproef",
+				"featureFlag": "gov-rekenkamer",
+				"description": "Reproduceerbare steekproef van boekingen voor substantieel toetsing. Geef periode, steekproefgrootte en seed op. Dezelfde seed geeft altijd dezelfde selectie. REQ-REK-003.",
+				"params": [
+					{ "key": "periodId", "label": "Periode", "type": "string", "required": true },
+					{ "key": "administrationId", "label": "Administratie", "type": "string", "required": true },
+					{ "key": "sampleSize", "label": "Steekproefgrootte", "type": "integer", "required": true, "default": 30 },
+					{ "key": "seed", "label": "Seed (reproductie-sleutel)", "type": "string", "required": true }
+				],
+				"columns": [
+					{ "key": "transactionNumber", "label": "Boekstuknummer", "sortable": true },
+					{ "key": "postingDate", "label": "Boekdatum", "sortable": true },
+					{ "key": "description", "label": "Omschrijving", "sortable": false },
+					{ "key": "periodId", "label": "Periode", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "transactionNumber",
+				"exportAction": {
+					"label": "Exporteer steekproef werkpapier",
+					"icon": "FileExportOutline",
+					"template": "steekproef-werkpapier",
+					"auditEventType": "audit-pack.steekproef.exported"
+				}
+			}
+		},
+		{
+			"id": "LedenraadplegingExport",
+			"route": "/bookkeeping/audit-pack/ledenraadpleging",
+			"type": "index",
+			"title": "Ledenraadpleging-export",
+			"featureFlag": "gov-rekenkamer",
+			"config": {
+				"register": "shillinq",
+				"schema": "GLTransaction",
+				"aggregation": "ledenraadpleging",
+				"featureFlag": "gov-rekenkamer",
+				"description": "Geredacteerd overzicht van periodeboekingen voor raadsleden. Persoonsgegevens in vrije-tekstvelden worden vervangen door een SHA-256 hash. Rekeningcodes en bedragen blijven intact. REQ-REK-004.",
+				"params": [
+					{ "key": "periodId", "label": "Periode", "type": "string", "required": true },
+					{ "key": "administrationId", "label": "Administratie", "type": "string", "required": true }
+				],
+				"columns": [
+					{ "key": "transactionNumber", "label": "Boekstuknummer", "sortable": true },
+					{ "key": "postingDate", "label": "Boekdatum", "sortable": true },
+					{ "key": "description", "label": "Omschrijving (geredacteerd)", "sortable": false },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "transactionNumber",
+				"exportAction": {
+					"label": "Exporteer ledenraadpleging",
+					"icon": "FileExportOutline",
+					"template": "ledenraadpleging-export",
+					"auditEventType": "audit-pack.ledenraadpleging.exported"
+				}
 			}
 		},
 		{

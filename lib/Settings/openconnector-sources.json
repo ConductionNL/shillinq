@@ -1,0 +1,32 @@
+{
+  "_spdx": {
+    "SPDX-FileCopyrightText": "2026 Conduction B.V.",
+    "SPDX-License-Identifier": "EUPL-1.2"
+  },
+  "_meta": {
+    "description": "Openconnector source registry for Shillinq. External submission targets referenced by slug; credentials and protocol mapping live in openconnector (ADR-019). Shillinq carries slug references only.",
+    "idempotency": "sourceSlug"
+  },
+  "sources": [
+    {
+      "sourceSlug": "audit-portal-accountant",
+      "title": "Audit portal — accountant",
+      "description": "Openconnector source row for external submission of audit-pack outputs to the accountant's audit portal. Per-accountant, per-administration: one source row per (accountant × administration) pair. Protocol mapping (endpoint URL, authentication, data format) is openconnector-side per ADR-019. Shillinq references this source by slug when triggering audit-pack exports. REQ-REK-002 / REQ-REK-003 / REQ-REK-004.",
+      "type": "audit-portal",
+      "auth": {
+        "strategy": "openconnector-managed",
+        "description": "Credentials, OAuth tokens, and mTLS certificates live exclusively in the openconnector Source record. Shillinq MUST NOT store or log any credential — only this slug reference."
+      },
+      "protocol": {
+        "mapping": "openconnector-side",
+        "description": "Endpoint URL, HTTP verb, payload format (e.g. NIVRA XML multipart upload, JSON metadata envelope), and retry policy are declared in the openconnector Source record, not here."
+      },
+      "usage": {
+        "triggeredBy": ["nivraBestanden", "steekproef", "ledenraadpleging"],
+        "description": "Shillinq audit-pack aggregations call this source slug to submit the generated docudesk attachment to the external audit portal after the export audit event is recorded."
+      },
+      "administrationScoped": true,
+      "description_nl": "Openconnector bronrij voor het aanleveren van audit-pack outputs aan het accountantsportaal. Per accountant per administratie: één bronrij per combinatie. Protocol-mapping (endpoint-URL, authenticatie, dataformaat) staat in openconnector. Shillinq verwijst uitsluitend via slug."
+    }
+  ]
+}

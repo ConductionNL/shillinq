@@ -9,18 +9,18 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `RekenkamerExport`, `NivraRecord`, or parallel audit register exists, and no `bookkeeping-rekenkamer-audit-pack` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `openspec/changes/**`)
-- [ ] Task 2: Author `specs/bookkeeping-rekenkamer-audit-pack/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4-specialized (NL gov sector)` / `Depends on: bookkeeping-audit-trail, bookkeeping-financial-statements` header, `REQ-REK-NNN` requirements, `#### Scenario:` blocks with GIVEN/WHEN/THEN
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec; include the "no parallel audit register" non-goal per ADR-022 and Risk / Rollback / Open Questions sections
-- [ ] Task 4: Author `design.md` with Reuse Analysis table; accountant-reviewer persona confirms NIVRA + steekproef + raadsleden shapes match real auditor expectations
-- [ ] Task 5: Declare the NIVRA-bestand aggregation in the OR aggregation registry — projecting `(GLTransaction + GLLine + audit-trail events + trial-balance + chart-of-accounts)` for a period, with `_meta.standardVersion` referencing the controleprotocol, output via a docudesk XML template per REQ-REK-002
-- [ ] Task 6: Declare the steekproef aggregation taking `(periodId, sampleSize, seed)` and returning a deterministic sample of `GLTransaction` records per REQ-REK-003; if engine cannot guarantee determinism, document the ADR-031 exception path for a ~20-LOC PHP sampler
-- [ ] Task 7: Declare the ledenraadpleging-export aggregation with `redactFor: ['raadsleden']` metadata on `description`-level free-text fields + AP/AR sub-ledger refs, replacing redacted fields with stable hash or `[REDACTED]` placeholder per REQ-REK-004
-- [ ] Task 8: Register the three docudesk template references (NIVRA-bestand XML, steekproef werkpapier, raadsleden-export) in `lib/Settings/docudesk-templates.json`; field bindings match the aggregations' output shapes per REQ-REK-001
-- [ ] Task 9: Register the audit-portal openconnector source row in `lib/Settings/openconnector-sources.json` (per accountant per administration; protocol mapping is openconnector-side per ADR-019)
-- [ ] Task 10: Wire every export to write an immutable audit event of type `audit-pack.{nivra,steekproef,ledenraadpleging}.exported` with operator id, period id, document URI, SHA-256 of the produced document per REQ-REK-005; enforcement via OR's audit engine, not app-local logging
-- [ ] Task 11: Add Audit pack navigation + 3 sub-pages to `src/manifest.json` (`featureFlags.gov-rekenkamer`, `Bookkeeping > Audit pack`, three sub-pages for NIVRA export, steekproef, ledenraadpleging-export) per REQ-REK-006; `node tests/validate-manifest.js` exits 0
-- [ ] Task 12: Update `openspec/architecture/adr-000-data-model.md` with a one-paragraph annotation explicitly noting that the audit-pack does NOT introduce a parallel audit register and projects from audit-trail-immutable per ADR-022
+- [x] Task 1: Confirm no `RekenkamerExport`, `NivraRecord`, or parallel audit register exists, and no `bookkeeping-rekenkamer-audit-pack` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `openspec/changes/**`)
+- [x] Task 2: Author `specs/bookkeeping-rekenkamer-audit-pack/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4-specialized (NL gov sector)` / `Depends on: bookkeeping-audit-trail, bookkeeping-financial-statements` header, `REQ-REK-NNN` requirements, `#### Scenario:` blocks with GIVEN/WHEN/THEN
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec; include the "no parallel audit register" non-goal per ADR-022 and Risk / Rollback / Open Questions sections
+- [x] Task 4: Author `design.md` with Reuse Analysis table; accountant-reviewer persona confirms NIVRA + steekproef + raadsleden shapes match real auditor expectations
+- [x] Task 5: Declare the NIVRA-bestand aggregation in the OR aggregation registry — projecting `(GLTransaction + GLLine + audit-trail events + trial-balance + chart-of-accounts)` for a period, with `_meta.standardVersion` referencing the controleprotocol, output via a docudesk XML template per REQ-REK-002
+- [x] Task 6: Declare the steekproef aggregation taking `(periodId, sampleSize, seed)` and returning a deterministic sample of `GLTransaction` records per REQ-REK-003; if engine cannot guarantee determinism, document the ADR-031 exception path for a ~20-LOC PHP sampler
+- [x] Task 7: Declare the ledenraadpleging-export aggregation with `redactFor: ['raadsleden']` metadata on `description`-level free-text fields + AP/AR sub-ledger refs, replacing redacted fields with stable hash or `[REDACTED]` placeholder per REQ-REK-004
+- [x] Task 8: Register the three docudesk template references (NIVRA-bestand XML, steekproef werkpapier, raadsleden-export) in `lib/Settings/docudesk-templates.json`; field bindings match the aggregations' output shapes per REQ-REK-001
+- [x] Task 9: Register the audit-portal openconnector source row in `lib/Settings/openconnector-sources.json` (per accountant per administration; protocol mapping is openconnector-side per ADR-019)
+- [x] Task 10: Wire every export to write an immutable audit event of type `audit-pack.{nivra,steekproef,ledenraadpleging}.exported` with operator id, period id, document URI, SHA-256 of the produced document per REQ-REK-005; enforcement via OR's audit engine, not app-local logging
+- [x] Task 11: Add Audit pack navigation + 3 sub-pages to `src/manifest.json` (`featureFlags.gov-rekenkamer`, `Bookkeeping > Audit pack`, three sub-pages for NIVRA export, steekproef, ledenraadpleging-export) per REQ-REK-006; `node tests/validate-manifest.js` exits 0
+- [x] Task 12: Update `openspec/architecture/adr-000-data-model.md` with a one-paragraph annotation explicitly noting that the audit-pack does NOT introduce a parallel audit register and projects from audit-trail-immutable per ADR-022
 
 ## Verification
 
