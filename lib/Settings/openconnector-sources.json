@@ -1,0 +1,43 @@
+{
+  "_spdx": {
+    "SPDX-FileCopyrightText": "2026 Conduction B.V.",
+    "SPDX-License-Identifier": "EUPL-1.2"
+  },
+  "_meta": {
+    "description": "OpenConnector source registry for Shillinq. External sources are registered here and consumed via the openconnector integration (ADR-019). No app-local HTTP clients.",
+    "idempotency": "slug"
+  },
+  "sources": [
+    {
+      "slug": "rvo-wbso-mededeling-submission",
+      "name": "RvO WBSO — Mededeling / Rapportage indiening",
+      "description": "OpenConnector source voor RvO WBSO-indiening: kwartaalmededeling, kwartaalrapportage en jaarrapport. Alle transmissies richting RvO verlopen via deze source; shillinq bevat geen app-lokale RvO HTTP-client per ADR-019 + REQ-WBSO-005. RvO-reacties (gezaghebbende afdrachtvermindering) worden opgeslagen in het audit-trail-immutable per ADR-022.",
+      "type": "rest",
+      "baseUrl": "https://www.rvo.nl/subsidies-financiering/wbso/api/v1",
+      "authType": "oauth2-client-credentials",
+      "credentialsLocation": "openconnector",
+      "endpoints": {
+        "mededeling": {
+          "path": "/mededelingen",
+          "method": "POST",
+          "description": "Indienen kwartaalmededeling gerealiseerde S&O-uren + loonkosten per REQ-WBSO-003.",
+          "docudeskTemplateId": "wbso-mededeling-kwartaal"
+        },
+        "kwartaalrapportage": {
+          "path": "/rapportages/kwartaal",
+          "method": "POST",
+          "description": "Indienen kwartaalrapportage operationele voortgang per project per REQ-WBSO-004.",
+          "docudeskTemplateId": "wbso-kwartaalrapportage"
+        },
+        "jaarrapport": {
+          "path": "/rapportages/jaar",
+          "method": "POST",
+          "description": "Indienen jaarrapport jaarsluiting + resultaten per REQ-WBSO-004.",
+          "docudeskTemplateId": "wbso-jaarrapport"
+        }
+      },
+      "auditTrail": "audit-trail-immutable",
+      "specRef": "openspec/changes/add-shillinq-wbso-sno-administratie/tasks.md#task-10"
+    }
+  ]
+}

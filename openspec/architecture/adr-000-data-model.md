@@ -5474,3 +5474,52 @@ _Operator-curated batch of selected APInvoice UUIDs producing SEPA pain.001.001.
 - → APInvoice (many-to-many, via invoiceRefs array)
 
 - → Administration (many-to-one)
+
+---
+
+## WBSO / S&O Administratie
+
+> **Annotation (add-shillinq-wbso-sno-administratie, 2026-06-03):** Two new registers for WBSO S&O-administratie per Wet vermindering afdracht loonbelasting hoofdstuk VA. `SoProject` carries the RvO project link; `SoUrenStaat` carries per-medewerker per-week per-project S&O-uren with a lifecycle (draft → goedgekeurd → afgesloten) and approval-workflow on the `goedgekeurd` transition. Both registers are declarative — no app-local PHP service. Full spec: `openspec/changes/add-shillinq-wbso-sno-administratie/`.
+
+### SoProject
+**Schema.org:** `schema:Project`
+_WBSO S&O-project registered with RvO. Carries rvoProjectNummer, sEnOCertificaatNummer, looptijdStart/Eind, a costCenterId FK to the bookkeeping-cost-centers-dimensions T4-base CostCenter, and a status lifecycle (aangevraagd → toegekend → afgerond). No app-local PHP service per ADR-031._
+**Primary spec:** bookkeeping-wbso-sno-administratie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| projectNaam | string | Yes | Naam van het S&O-project zoals opgegeven bij de RvO-aanvraag |
+| rvoProjectNummer | string | Yes | Projectnummer toegekend door RvO bij de WBSO-beschikking |
+| sEnOCertificaatNummer | string | No | S&O-certificaatnummer afgegeven door RvO |
+| looptijdStart | date | Yes | Startdatum van de S&O-projectlooptijd |
+| looptijdEind | date | Yes | Einddatum van de S&O-projectlooptijd |
+| costCenterId | string | No | FK to CostCenter (bookkeeping-cost-centers-dimensions T4-base) |
+| status | enum | Yes | One of aangevraagd, toegekend, afgerond |
+| administrationId | string | Yes | FK to administration |
+
+**Relations:**
+- → CostCenter (many-to-one, via costCenterId — bookkeeping-cost-centers-dimensions)
+- ← SoUrenStaat (one-to-many, via SoUrenStaat.soProjectId)
+- → Administration (many-to-one)
+
+### SoUrenStaat
+**Schema.org:** `schema:Action`
+_Per-medewerker per-week per-project S&O-urenstaat for WBSO-administratie. Lifecycle `draft → goedgekeurd → afgesloten` with approval-workflow required on the `goedgekeurd` transition per ADR-022. `x-openregister-aggregations` declare quarterly mededeling (state ≠ draft, grouped per soProjectId + kwartaal) and annual jaarrapport rollup. `x-openregister-calculations` declare projected afdrachtvermindering (aantalUren × sEnOUurloon × actueelAfdrachtPercentage, 32% standard / 40% starters per RvO 2026) shown side-by-side with the RvO gezaghebbende mededeling value. RBAC restricts read to bookkeeper, payroll-officer, auditor. Audit-trail-immutable per ADR-022 logs all access. No app-local PHP service per ADR-031. Per REQ-WBSO-002 through REQ-WBSO-006._
+**Primary spec:** bookkeeping-wbso-sno-administratie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| soProjectId | string | Yes | FK to SoProject.id |
+| medewerkerId | string | Yes | Nextcloud uid or Detachering record FK (sibling add-shillinq-detachering-payroll-administratie) |
+| weekISO | string (ISO-8601 week) | Yes | Week wherein S&O-work was performed (e.g. 2026-W14) |
+| aantalUren | number ≥ 0 | Yes | Number of S&O-hours (multiples of 0.25) |
+| taakOmschrijving | string | Yes | Description of S&O-work performed |
+| state | enum | Yes | One of draft, goedgekeurd, afgesloten |
+| sEnOUurloon | number | No | S&O-uurloon snapshot for afdracht calculation (REQ-WBSO-006) |
+| projectedAfdrachtvermindering | number (calculated) | No | aantalUren × sEnOUurloon × actueelAfdrachtPercentage (x-openregister-calculations output, readOnly) |
+| rvoMededelingAfdracht | number (calculated) | No | Gezaghebbende afdracht from RvO mededeling via openconnector (x-openregister-calculations output, readOnly) |
+| administrationId | string | Yes | FK to administration |
+
+**Relations:**
+- → SoProject (many-to-one, via soProjectId)
+- → Administration (many-to-one)

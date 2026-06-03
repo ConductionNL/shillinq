@@ -189,6 +189,47 @@
 					"route": "RDSubsidies",
 					"order": 86,
 					"featureFlag": "mkb-r-d-subsidies"
+				},
+				{
+					"id": "WBSO",
+					"label": "WBSO",
+					"icon": "ClockCheckOutline",
+					"order": 87,
+					"featureFlag": "mkb-wbso",
+					"children": [
+						{
+							"id": "WBSOProjecten",
+							"label": "Projecten",
+							"icon": "FlaskOutline",
+							"route": "WBSOProjecten",
+							"order": 10,
+							"featureFlag": "mkb-wbso"
+						},
+						{
+							"id": "WBSOUrenStaten",
+							"label": "Uren-staten",
+							"icon": "ClockOutline",
+							"route": "WBSOUrenStaten",
+							"order": 20,
+							"featureFlag": "mkb-wbso"
+						},
+						{
+							"id": "WBSOMededelingen",
+							"label": "Mededelingen & Rapportages",
+							"icon": "FileDocumentOutline",
+							"route": "WBSOMededelingen",
+							"order": 30,
+							"featureFlag": "mkb-wbso"
+						},
+						{
+							"id": "WBSOAfdrachtvermindering",
+							"label": "Afdrachtvermindering",
+							"icon": "CurrencyEur",
+							"route": "WBSOAfdrachtvermindering",
+							"order": 40,
+							"featureFlag": "mkb-wbso"
+						}
+					]
 				}
 			]
 		},
@@ -4583,6 +4624,376 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "RDSubsidies"
+			}
+		},
+		{
+			"id": "WBSOProjecten",
+			"route": "/bookkeeping/wbso/projecten",
+			"type": "index",
+			"title": "WBSO Projecten",
+			"featureFlag": "mkb-wbso",
+			"config": {
+				"register": "shillinq",
+				"schema": "SoProject",
+				"featureFlag": "mkb-wbso",
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"mkb"
+					]
+				},
+				"columns": [
+					{
+						"key": "projectNaam",
+						"label": "Projectnaam",
+						"sortable": true
+					},
+					{
+						"key": "rvoProjectNummer",
+						"label": "RvO-projectnummer",
+						"sortable": true
+					},
+					{
+						"key": "sEnOCertificaatNummer",
+						"label": "S&O-certificaat",
+						"sortable": true
+					},
+					{
+						"key": "looptijdStart",
+						"label": "Looptijd start",
+						"sortable": true
+					},
+					{
+						"key": "looptijdEind",
+						"label": "Looptijd eind",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-looptijdStart",
+				"detailRoute": "WBSOProjectDetail"
+			}
+		},
+		{
+			"id": "WBSOProjectDetail",
+			"route": "/bookkeeping/wbso/projecten/:id",
+			"type": "detail",
+			"title": "WBSO Project",
+			"featureFlag": "mkb-wbso",
+			"config": {
+				"register": "shillinq",
+				"schema": "SoProject",
+				"featureFlag": "mkb-wbso",
+				"fields": [
+					{
+						"key": "projectNaam",
+						"label": "Projectnaam",
+						"type": "string"
+					},
+					{
+						"key": "rvoProjectNummer",
+						"label": "RvO-projectnummer",
+						"type": "string"
+					},
+					{
+						"key": "sEnOCertificaatNummer",
+						"label": "S&O-certificaatnummer",
+						"type": "string"
+					},
+					{
+						"key": "looptijdStart",
+						"label": "Looptijd start",
+						"type": "date"
+					},
+					{
+						"key": "looptijdEind",
+						"label": "Looptijd eind",
+						"type": "date"
+					},
+					{
+						"key": "costCenterId",
+						"label": "Kostenplaats",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"relatedLists": [
+					{
+						"id": "urenstaten",
+						"title": "S&O-uren-staten",
+						"schema": "SoUrenStaat",
+						"filter": {
+							"soProjectId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "medewerkerId",
+								"label": "Medewerker"
+							},
+							{
+								"key": "weekISO",
+								"label": "Week"
+							},
+							{
+								"key": "aantalUren",
+								"label": "Uren"
+							},
+							{
+								"key": "state",
+								"label": "Status"
+							}
+						]
+					}
+				],
+				"lifecycleActions": false,
+				"indexRoute": "WBSOProjecten"
+			}
+		},
+		{
+			"id": "WBSOUrenStaten",
+			"route": "/bookkeeping/wbso/urenstaten",
+			"type": "index",
+			"title": "S&O-uren-staten",
+			"featureFlag": "mkb-wbso",
+			"config": {
+				"register": "shillinq",
+				"schema": "SoUrenStaat",
+				"featureFlag": "mkb-wbso",
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"mkb"
+					]
+				},
+				"columns": [
+					{
+						"key": "soProjectId",
+						"label": "S&O-project",
+						"sortable": true
+					},
+					{
+						"key": "medewerkerId",
+						"label": "Medewerker",
+						"sortable": true
+					},
+					{
+						"key": "weekISO",
+						"label": "Week",
+						"sortable": true
+					},
+					{
+						"key": "aantalUren",
+						"label": "Uren",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-weekISO",
+				"detailRoute": "WBSOUrenStaatDetail"
+			}
+		},
+		{
+			"id": "WBSOUrenStaatDetail",
+			"route": "/bookkeeping/wbso/urenstaten/:id",
+			"type": "detail",
+			"title": "S&O-uren-staat",
+			"featureFlag": "mkb-wbso",
+			"config": {
+				"register": "shillinq",
+				"schema": "SoUrenStaat",
+				"featureFlag": "mkb-wbso",
+				"fields": [
+					{
+						"key": "soProjectId",
+						"label": "S&O-project",
+						"type": "string"
+					},
+					{
+						"key": "medewerkerId",
+						"label": "Medewerker",
+						"type": "string"
+					},
+					{
+						"key": "weekISO",
+						"label": "ISO-week",
+						"type": "string"
+					},
+					{
+						"key": "aantalUren",
+						"label": "Aantal uren",
+						"type": "number"
+					},
+					{
+						"key": "taakOmschrijving",
+						"label": "Taakbeschrijving",
+						"type": "string"
+					},
+					{
+						"key": "sEnOUurloon",
+						"label": "S&O-uurloon (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "projectedAfdrachtvermindering",
+						"label": "Geprojecteerde afdrachtvermindering (EUR)",
+						"type": "number",
+						"readOnly": true
+					},
+					{
+						"key": "rvoMededelingAfdracht",
+						"label": "RvO gezaghebbende afdracht (EUR)",
+						"type": "number",
+						"readOnly": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "WBSOUrenStaten"
+			}
+		},
+		{
+			"id": "WBSOMededelingen",
+			"route": "/bookkeeping/wbso/mededelingen",
+			"type": "index",
+			"title": "Mededelingen & Rapportages",
+			"featureFlag": "mkb-wbso",
+			"config": {
+				"register": "shillinq",
+				"schema": "SoUrenStaat",
+				"featureFlag": "mkb-wbso",
+				"aggregation": "mededeling",
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"mkb"
+					]
+				},
+				"columns": [
+					{
+						"key": "kwartaal",
+						"label": "Kwartaal",
+						"sortable": true
+					},
+					{
+						"key": "soProjectId",
+						"label": "S&O-project",
+						"sortable": true
+					},
+					{
+						"key": "totaalUren",
+						"label": "Totaal uren",
+						"sortable": true
+					},
+					{
+						"key": "aantalUrenstaatRegels",
+						"label": "Uren-staat regels",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-kwartaal",
+				"actions": [
+					{
+						"id": "generate-mededeling",
+						"label": "Mededeling genereren",
+						"icon": "FileDocumentOutline",
+						"docudeskTemplateId": "wbso-mededeling-kwartaal"
+					},
+					{
+						"id": "generate-kwartaalrapportage",
+						"label": "Kwartaalrapportage genereren",
+						"icon": "ChartBarOutline",
+						"docudeskTemplateId": "wbso-kwartaalrapportage"
+					},
+					{
+						"id": "generate-jaarrapport",
+						"label": "Jaarrapport genereren",
+						"icon": "FileChartOutline",
+						"docudeskTemplateId": "wbso-jaarrapport"
+					}
+				]
+			}
+		},
+		{
+			"id": "WBSOAfdrachtvermindering",
+			"route": "/bookkeeping/wbso/afdrachtvermindering",
+			"type": "index",
+			"title": "Afdrachtvermindering loonheffing",
+			"featureFlag": "mkb-wbso",
+			"config": {
+				"register": "shillinq",
+				"schema": "SoUrenStaat",
+				"featureFlag": "mkb-wbso",
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"mkb"
+					]
+				},
+				"filter": {
+					"state": {
+						"not": "draft"
+					}
+				},
+				"columns": [
+					{
+						"key": "medewerkerId",
+						"label": "Medewerker",
+						"sortable": true
+					},
+					{
+						"key": "soProjectId",
+						"label": "S&O-project",
+						"sortable": true
+					},
+					{
+						"key": "weekISO",
+						"label": "Week",
+						"sortable": true
+					},
+					{
+						"key": "aantalUren",
+						"label": "Uren",
+						"sortable": true
+					},
+					{
+						"key": "projectedAfdrachtvermindering",
+						"label": "Geprojecteerde afdracht (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "rvoMededelingAfdracht",
+						"label": "RvO gezaghebbende afdracht (EUR)",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-weekISO",
+				"description": "Toont de geprojecteerde afdrachtvermindering naast de gezaghebbende RvO-mededeling waarde voor reconciliatie per REQ-WBSO-006. Een delta ≥ 2% activeert een reconciliatie-waarschuwing."
 			}
 		}
 	]

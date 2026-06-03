@@ -552,6 +552,270 @@
         }
       ],
       "footer": "Gegenereerd vanuit Shillinq R&D Subsidies — EFRO aanbestedingsdossier (REQ-RDS-004)."
+    },
+    {
+      "templateId": "wbso-mededeling-kwartaal",
+      "title": "WBSO Mededeling — Kwartaalperiode",
+      "description": "RvO-mededeling van gerealiseerde S&O-uren + loonkosten per kwartaal per project. Gegenereerd vanuit de SoUrenStaat-aggregatie (state ≠ draft). Per REQ-WBSO-003.",
+      "register": "shillinq",
+      "schema": "SoUrenStaat",
+      "aggregation": "mededeling",
+      "outputChannel": {
+        "connector": "openconnector",
+        "sourceSlug": "rvo-wbso-mededeling-submission"
+      },
+      "sections": [
+        {
+          "sectionId": "wbso-mededeling-header",
+          "title": "WBSO Mededeling — {{kwartaal}}",
+          "fields": [
+            {
+              "key": "kwartaal",
+              "label": "Kwartaal",
+              "type": "string"
+            },
+            {
+              "key": "administrationId",
+              "label": "Administratie",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "sectionId": "wbso-mededeling-uren-per-project",
+          "title": "Gerealiseerde S&O-uren per project",
+          "sourceSchema": "SoUrenStaat",
+          "aggregationId": "mededeling",
+          "columns": [
+            {
+              "key": "soProjectId",
+              "label": "S&O-project"
+            },
+            {
+              "key": "kwartaal",
+              "label": "Kwartaal"
+            },
+            {
+              "key": "totaalUren",
+              "label": "Totaal S&O-uren",
+              "type": "number"
+            },
+            {
+              "key": "aantalUrenstaatRegels",
+              "label": "Aantal urenstaat-regels",
+              "type": "number"
+            }
+          ],
+          "totals": [
+            {
+              "label": "Totaal gerealiseerde S&O-uren",
+              "field": "totaalUren",
+              "operation": "sum"
+            }
+          ]
+        }
+      ],
+      "footer": "Gegenereerd vanuit Shillinq WBSO-administratie — kwartaalmededeling (REQ-WBSO-003). Bronnen: Wet vermindering afdracht loonbelasting hoofdstuk VA."
+    },
+    {
+      "templateId": "wbso-kwartaalrapportage",
+      "title": "WBSO Kwartaalrapportage",
+      "description": "RvO kwartaalrapportage met operationele voortgang per S&O-project en urenoverzicht per medewerker. Per REQ-WBSO-004.",
+      "register": "shillinq",
+      "schema": "SoUrenStaat",
+      "aggregation": "mededeling",
+      "outputChannel": {
+        "connector": "openconnector",
+        "sourceSlug": "rvo-wbso-mededeling-submission"
+      },
+      "sections": [
+        {
+          "sectionId": "wbso-kwartaalrapportage-header",
+          "title": "WBSO Kwartaalrapportage — {{kwartaal}}",
+          "fields": [
+            {
+              "key": "kwartaal",
+              "label": "Kwartaal",
+              "type": "string"
+            },
+            {
+              "key": "administrationId",
+              "label": "Administratie",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "sectionId": "wbso-kwartaalrapportage-uren-per-project",
+          "title": "S&O-uren per project",
+          "sourceSchema": "SoUrenStaat",
+          "aggregationId": "mededeling",
+          "columns": [
+            {
+              "key": "soProjectId",
+              "label": "S&O-project"
+            },
+            {
+              "key": "totaalUren",
+              "label": "Totaal S&O-uren",
+              "type": "number"
+            }
+          ],
+          "totals": [
+            {
+              "label": "Totaal S&O-uren kwartaal",
+              "field": "totaalUren",
+              "operation": "sum"
+            }
+          ]
+        },
+        {
+          "sectionId": "wbso-kwartaalrapportage-uren-per-medewerker",
+          "title": "S&O-uren per medewerker",
+          "sourceSchema": "SoUrenStaat",
+          "filter": {
+            "state": { "not": "draft" }
+          },
+          "columns": [
+            {
+              "key": "medewerkerId",
+              "label": "Medewerker"
+            },
+            {
+              "key": "soProjectId",
+              "label": "Project"
+            },
+            {
+              "key": "weekISO",
+              "label": "Week"
+            },
+            {
+              "key": "aantalUren",
+              "label": "Uren",
+              "type": "number"
+            },
+            {
+              "key": "taakOmschrijving",
+              "label": "Taakbeschrijving"
+            }
+          ]
+        }
+      ],
+      "footer": "Gegenereerd vanuit Shillinq WBSO-administratie — kwartaalrapportage (REQ-WBSO-004). Bronnen: Wet vermindering afdracht loonbelasting hoofdstuk VA."
+    },
+    {
+      "templateId": "wbso-jaarrapport",
+      "title": "WBSO Jaarrapport",
+      "description": "RvO jaarrapport met jaarsluiting en resultaten per S&O-project. De jaarrapport-totaaluren MOETEN gelijk zijn aan de som van de vier kwartaalmededelingen per REQ-WBSO-004. Per jaarrapport-aggregatie op SoUrenStaat.",
+      "register": "shillinq",
+      "schema": "SoUrenStaat",
+      "aggregation": "jaarrapport",
+      "outputChannel": {
+        "connector": "openconnector",
+        "sourceSlug": "rvo-wbso-mededeling-submission"
+      },
+      "sections": [
+        {
+          "sectionId": "wbso-jaarrapport-header",
+          "title": "WBSO Jaarrapport — {{jaar}}",
+          "fields": [
+            {
+              "key": "jaar",
+              "label": "Jaar",
+              "type": "integer"
+            },
+            {
+              "key": "administrationId",
+              "label": "Administratie",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "sectionId": "wbso-jaarrapport-uren-per-project",
+          "title": "Jaaroverzicht S&O-uren per project",
+          "sourceSchema": "SoUrenStaat",
+          "aggregationId": "jaarrapport",
+          "columns": [
+            {
+              "key": "soProjectId",
+              "label": "S&O-project"
+            },
+            {
+              "key": "jaar",
+              "label": "Jaar"
+            },
+            {
+              "key": "totaalUren",
+              "label": "Totaal S&O-uren jaar",
+              "type": "number"
+            }
+          ],
+          "totals": [
+            {
+              "label": "Totaal S&O-uren boekjaar (= som vier kwartaalmededelingen)",
+              "field": "totaalUren",
+              "operation": "sum"
+            }
+          ]
+        }
+      ],
+      "footer": "Gegenereerd vanuit Shillinq WBSO-administratie — jaarrapport (REQ-WBSO-004). Jaartotaal MOET overeenkomen met de som van de vier kwartaalmededelingen."
+    },
+    {
+      "templateId": "wbso-aanvraag",
+      "title": "WBSO Aanvraag",
+      "description": "Aanvraagtemplate voor een nieuwe WBSO S&O-beschikking bij RvO. Gebaseerd op SoProject-gegevens. Per REQ-WBSO-001.",
+      "register": "shillinq",
+      "schema": "SoProject",
+      "outputChannel": {
+        "connector": "openconnector",
+        "sourceSlug": "rvo-wbso-mededeling-submission"
+      },
+      "sections": [
+        {
+          "sectionId": "wbso-aanvraag-header",
+          "title": "WBSO Aanvraag — {{projectNaam}}",
+          "fields": [
+            {
+              "key": "projectNaam",
+              "label": "Projectnaam",
+              "type": "string"
+            },
+            {
+              "key": "rvoProjectNummer",
+              "label": "RvO-projectnummer",
+              "type": "string"
+            },
+            {
+              "key": "sEnOCertificaatNummer",
+              "label": "S&O-certificaatnummer",
+              "type": "string"
+            },
+            {
+              "key": "looptijdStart",
+              "label": "Looptijd start",
+              "type": "date"
+            },
+            {
+              "key": "looptijdEind",
+              "label": "Looptijd eind",
+              "type": "date"
+            },
+            {
+              "key": "status",
+              "label": "Status",
+              "type": "string"
+            },
+            {
+              "key": "costCenterId",
+              "label": "Kostenplaats",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "footer": "Gegenereerd vanuit Shillinq WBSO-administratie — aanvraagtemplate (REQ-WBSO-001). Bronnen: Wet vermindering afdracht loonbelasting hoofdstuk VA."
     }
   ]
 }
