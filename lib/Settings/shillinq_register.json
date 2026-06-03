@@ -2172,6 +2172,239 @@
           }
         }
       },
+      "BankAccount": {
+        "slug": "BankAccount",
+        "icon": "BankOutline",
+        "version": "0.2.0",
+        "title": "Bank Account",
+        "description": "A bank account held by a business, supporting multi-currency operations. Extends schema:BankAccount with optional primaryCurrency declaration per REQ-MC-002 (bookkeeping-multi-currency). Existing single-currency accounts implicitly carry primaryCurrency: EUR on read.",
+        "x-schema-org": "schema:BankAccount",
+        "type": "object",
+        "required": [
+          "accountName",
+          "iban",
+          "lifecycleState"
+        ],
+        "properties": {
+          "accountName": {
+            "type": "string",
+            "description": "Display name for the bank account.",
+            "example": "EUR-operationeel"
+          },
+          "iban": {
+            "type": "string",
+            "description": "IBAN number of the bank account.",
+            "example": "NL23ABNA0123456789"
+          },
+          "bic": {
+            "type": "string",
+            "description": "BIC/SWIFT code of the bank.",
+            "nullable": true,
+            "example": "ABNANL2A"
+          },
+          "bankName": {
+            "type": "string",
+            "description": "Name of the bank holding the account.",
+            "nullable": true,
+            "example": "ABN AMRO"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Base currency of the account (ISO 4217). Kept for backwards compatibility with T1 GL accounts; use primaryCurrency for multi-currency declarations.",
+            "minLength": 3,
+            "maxLength": 3,
+            "default": "EUR",
+            "example": "EUR"
+          },
+          "primaryCurrency": {
+            "type": "string",
+            "description": "Native currency of the bank account per bank statement (ISO 4217 code). Null or omitted means EUR (backward compatible). Must be a valid ISO 4217 code when present. Per REQ-MC-002.",
+            "nullable": true,
+            "minLength": 3,
+            "maxLength": 3,
+            "pattern": "^[A-Z]{3}$",
+            "default": "EUR",
+            "example": "USD"
+          },
+          "balance": {
+            "type": "number",
+            "description": "Current balance (legacy single-currency field). Multi-currency balances are tracked via CurrencyBalance register.",
+            "nullable": true,
+            "example": 45230.50
+          },
+          "lifecycleState": {
+            "type": "string",
+            "enum": [
+              "active",
+              "archived"
+            ],
+            "default": "active",
+            "description": "Lifecycle state of the bank account record."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Bank account is active and available for multi-currency balance tracking."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Bank account is archived; historical CurrencyBalance records remain queryable."
+            }
+          },
+          "transitions": {
+            "archive": {
+              "from": "active",
+              "to": "archived",
+              "label": "Archive account",
+              "description": "Archive the bank account without deleting balance history."
+            },
+            "reactivate": {
+              "from": "archived",
+              "to": "active",
+              "label": "Reactivate account",
+              "description": "Restore the bank account to active status."
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "currencyBalances": {
+            "localField": "id",
+            "relatedSchema": "CurrencyBalance",
+            "relatedField": "accountId",
+            "cardinality": "one-to-many",
+            "description": "All CurrencyBalance snapshot records for this bank account across currencies."
+          }
+        },
+        "x-openregister-aggregations": {
+          "balanceByCurrency": {
+            "description": "Latest balance per currency for this bank account. Aggregates CurrencyBalance records grouped by currency. Used for T3 cash-position dashboards per REQ-MC-004.",
+            "sourceSchema": "CurrencyBalance",
+            "filter": "accountId = @self.id",
+            "groupBy": "currency",
+            "operations": {
+              "latestBalance": {
+                "field": "balance",
+                "operation": "last",
+                "orderBy": "lastUpdated"
+              }
+            }
+          }
+        }
+      },
+      "CurrencyBalance": {
+        "slug": "CurrencyBalance",
+        "icon": "CurrencyEurOutline",
+        "version": "0.1.0",
+        "title": "Currency Balance",
+        "description": "Point-in-time balance snapshot for one (account, currency) pair. Enables per-currency cash-position tracking for Dutch SMBs with foreign operations. Snapshot-based; not a transactional ledger. Per REQ-MC-003 (bookkeeping-multi-currency).",
+        "x-schema-org": "schema:Thing",
+        "type": "object",
+        "required": [
+          "balanceId",
+          "accountId",
+          "currency",
+          "balance",
+          "lastUpdated"
+        ],
+        "properties": {
+          "balanceId": {
+            "type": "string",
+            "description": "Unique identifier for this balance record (e.g., bal-usd-001). Used as idempotency key on upsert.",
+            "example": "bal-eur-001"
+          },
+          "accountId": {
+            "type": "string",
+            "description": "FK to BankAccount.id. Identifies which bank account this balance belongs to.",
+            "example": "bank-eur-op"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code for this balance snapshot (e.g., EUR, USD, GBP).",
+            "minLength": 3,
+            "maxLength": 3,
+            "pattern": "^[A-Z]{3}$",
+            "example": "EUR"
+          },
+          "balance": {
+            "type": "number",
+            "description": "Current balance amount in the specified currency. Input from bank API, operator entry, or imported statement. Never auto-calculated from GL postings (per D4).",
+            "example": 45230.50
+          },
+          "previousBalance": {
+            "type": "number",
+            "description": "Previous balance amount for variance and trend tracking. Set to the old balance value when updating; enables % change calculation in reports.",
+            "nullable": true,
+            "example": 42150.00
+          },
+          "lastUpdated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the most recent balance update. Used to determine snapshot freshness for reconciliation and cash-position reports.",
+            "example": "2026-05-21T09:00:00Z"
+          }
+        },
+        "x-openregister-relations": {
+          "bankAccount": {
+            "localField": "accountId",
+            "relatedSchema": "BankAccount",
+            "relatedField": "id",
+            "cardinality": "many-to-one",
+            "description": "The bank account this balance snapshot belongs to. FK enabling account metadata lookup on the detail page."
+          }
+        },
+        "x-openregister-filters": {
+          "accountId": {
+            "field": "accountId",
+            "type": "exact",
+            "description": "Filter by bank account ID — returns all currency balances for one account. Query: ?accountId=bank-001 per REQ-MC-004."
+          },
+          "currency": {
+            "field": "currency",
+            "type": "exact",
+            "description": "Filter by ISO 4217 currency code — returns all accounts with a balance in this currency. Query: ?currency=USD per REQ-MC-004."
+          },
+          "balanceGte": {
+            "field": "balance",
+            "operator": "gte",
+            "description": "Filter records where balance >= threshold. Query: ?balance[gte]=5000 per REQ-MC-004."
+          },
+          "balanceLte": {
+            "field": "balance",
+            "operator": "lte",
+            "description": "Filter records where balance <= threshold. Query: ?balance[lte]=50000 per REQ-MC-004."
+          }
+        },
+        "x-openregister-aggregations": {
+          "totalByCurrency": {
+            "description": "Aggregate total balance across all accounts grouped by currency. Enables multi-account EUR/USD/GBP cash-position reporting without custom PHP per REQ-MC-004.",
+            "groupBy": "currency",
+            "operations": {
+              "totalBalance": {
+                "field": "balance",
+                "operation": "sum"
+              },
+              "accountCount": {
+                "field": "accountId",
+                "operation": "count"
+              }
+            }
+          },
+          "lowLiquidityAccounts": {
+            "description": "Identify (account, currency) pairs with balance < 5000 (low-liquidity warning). Used for risk-level filtering in the Currency Balances index page.",
+            "filter": "balance < 5000",
+            "operations": {
+              "count": {
+                "field": "balanceId",
+                "operation": "count"
+              }
+            }
+          }
+        }
+      },
       "Iv3Export": {
         "slug": "Iv3Export",
         "icon": "FileChartOutline",

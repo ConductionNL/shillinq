@@ -1380,19 +1380,20 @@ _A document issued to reduce customer debt due to returns or corrections_
 
 ### CurrencyBalance
 **Schema.org:** `schema:Thing`
-_Multi-currency balance tracking per account for foreign currency management_
-**Primary spec:** treasury-cash-management
+_Point-in-time balance snapshot for one (account, currency) pair. Enables per-currency cash-position tracking for Dutch SMBs with foreign operations (EUR, USD, GBP accounts). Snapshot-based; T4 bank connectors refresh snapshots on sync. Uniqueness constraint: (accountId, currency) — upsert semantics, latest timestamp wins. Full register declaration in `lib/Settings/shillinq_register.json`. Authoritative contract: `bookkeeping-multi-currency/spec.md` REQ-MC-003 (2026-06-01)._
+**Primary spec:** bookkeeping-multi-currency
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| balanceId | string | Yes | Unique balance record identifier |
-| currency | string | Yes | Currency code (ISO 4217) |
-| balance | number | Yes | Current balance amount |
-| previousBalance | number | No | Previous balance for variance tracking |
-| lastUpdated | datetime | Yes | Last update timestamp |
+| balanceId | string | Yes | Unique balance record identifier (idempotency key for upsert) |
+| accountId | string | Yes | FK to BankAccount.id — identifies the bank account this snapshot belongs to |
+| currency | string | Yes | ISO 4217 currency code for this balance snapshot (e.g., EUR, USD, GBP) |
+| balance | number | Yes | Current balance amount in the specified currency; operator-entered or bank-synced, never auto-calculated |
+| previousBalance | number | No | Previous balance for variance tracking and % change display on detail page |
+| lastUpdated | datetime | Yes | Timestamp of the most recent balance update; used to determine snapshot freshness |
 
 **Relations:**
-- → BankAccount (many-to-one)
+- → BankAccount (many-to-one, via accountId → BankAccount.id)
 
 ### CustomerMaster
 **Schema.org:** `schema:Organization`
