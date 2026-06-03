@@ -78,6 +78,7 @@ class InitializeSettings implements IRepairStep
      * Phase 3: seeds the Archiefwet Selectielijst Gemeenten 2020 retention rules.
      * Phase 4: registers the IV3 quarterly CBS ScheduledWorkflow if not yet present.
      * Phase 5: seeds KOR thresholds from kor-thresholds-2026.json idempotently.
+     * Phase 6: seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -86,6 +87,7 @@ class InitializeSettings implements IRepairStep
      * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
      * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-10
      * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
+     * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
      */
     public function run(IOutput $output): void
     {
@@ -134,6 +136,7 @@ class InitializeSettings implements IRepairStep
             $this->seedSelectielijstRules(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
+            $this->seedAllocationRuleExamples(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -331,6 +334,96 @@ class InitializeSettings implements IRepairStep
         }//end try
 
     }//end seedKorThresholds()
+
+    /**
+     * Seed the AllocationRule example records from seeds/allocation-rules/, idempotently.
+     *
+     * Each seed file ships with lifecycleState: paused so operators can review before
+     * activating. Deduplication key is rule name + administrationId. Safe on re-run.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
+     */
+    private function seedAllocationRuleExamples(IOutput $output): void
+    {
+        if ($this->settingsService->isOpenRegisterAvailable() === false) {
+            return;
+        }
+
+        $seedDir = __DIR__.'/../Settings/seeds/allocation-rules/';
+        if (is_dir($seedDir) === false) {
+            return;
+        }
+
+        $files = glob($seedDir.'*.json');
+        if (empty($files) === true) {
+            return;
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->settingsService->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($files as $file) {
+                $content = file_get_contents($file);
+                if ($content === false) {
+                    continue;
+                }
+
+                $data = json_decode($content, associative: true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    continue;
+                }
+
+                $objects = ($data['objects'] ?? []);
+
+                foreach ($objects as $rule) {
+                    $name = ($rule['name'] ?? null);
+                    if ($name === null) {
+                        continue;
+                    }
+
+                    $existing = $objectService
+                        ->setRegister($registerSlug)
+                        ->setSchema('AllocationRule')
+                        ->findAll(
+                            [
+                                'filters' => ['name' => $name],
+                                'limit'   => 1,
+                            ]
+                        );
+
+                    if (empty($existing) === false) {
+                        $skipped++;
+                        continue;
+                    }
+
+                    $objectService->saveObject(
+                        object: $rule,
+                        register: $registerSlug,
+                        schema: 'AllocationRule',
+                    );
+                    $seeded++;
+                }//end foreach
+            }//end foreach
+
+            $output->info(
+                'Shillinq: AllocationRule examples seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        } catch (\Throwable $e) {
+            $output->warning('Shillinq: AllocationRule seeding failed: '.$e->getMessage());
+            $this->logger->warning(
+                'Shillinq: AllocationRule seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+        }//end try
+
+    }//end seedAllocationRuleExamples()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.
