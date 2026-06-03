@@ -9,10 +9,10 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `esaClassifier` field on Account, no `EmuComputationResult` register, and no `bookkeeping-emu-reporting` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `openspec/changes/**`)
-- [ ] Task 2: Author `specs/bookkeeping-emu-reporting/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4-specialized (NL gov sector)` / `Depends on: bookkeeping-bbv-compliance, bookkeeping-iv3-reporting` header, `REQ-EMU-NNN` requirements, `#### Scenario:` blocks with GIVEN/WHEN/THEN
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions; explicitly cite the ADR-031 exception path for multi-sector filter expressivity
-- [ ] Task 4: Author `design.md` with Reuse Analysis table and Seed Data section; BBV-reviewer persona confirms the EMU computation shape matches handleiding
+- [x] Task 1: Confirm no `esaClassifier` field on Account, no `EmuComputationResult` register, and no `bookkeeping-emu-reporting` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `openspec/changes/**`)
+- [x] Task 2: Author `specs/bookkeeping-emu-reporting/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4-specialized (NL gov sector)` / `Depends on: bookkeeping-bbv-compliance, bookkeeping-iv3-reporting` header, `REQ-EMU-NNN` requirements, `#### Scenario:` blocks with GIVEN/WHEN/THEN
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions; explicitly cite the ADR-031 exception path for multi-sector filter expressivity
+- [x] Task 4: Author `design.md` with Reuse Analysis table and Seed Data section; BBV-reviewer persona confirms the EMU computation shape matches handleiding
 - [ ] Task 5: Add `esaClassifier` enum field on `Account` in `lib/Settings/shillinq_register.json` with values S.1311 / S.1312 / S.1313 / S.1314 / S.11 / S.12 / S.13 / S.14 / S.15 / S.2 per REQ-EMU-002
 - [ ] Task 6: Ship `lib/Settings/seeds/esa-2010-classifier.json` declaring the canonical ESA-2010 sector codes; SPDX in docblock; `_meta` block (`source: 'ESA 2010 Eurostat'`, `year: 2010`) per REQ-EMU-002
 - [ ] Task 7: Declare the quarterly EMU aggregation grouping `GLLine` by ESA sector, filtered + summed per the BBV handleiding rules, riding the T3 IV3 quarterly aggregation per REQ-EMU-003
