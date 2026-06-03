@@ -78,6 +78,9 @@ class InitializeSettings implements IRepairStep
      * Phase 3: seeds the Archiefwet Selectielijst Gemeenten 2020 retention rules.
      * Phase 4: registers the IV3 quarterly CBS ScheduledWorkflow if not yet present.
      * Phase 5: seeds KOR thresholds from kor-thresholds-2026.json idempotently.
+     * Phase 6: seeds the SiSa controleprotocol 2026 indicatoren when featureFlags.gov-sisa
+     * is enabled. Operator edits to indicator records persist across re-runs (idempotent
+     * deduplication key: regelingCode + indicatorCode per REQ-SISA-002).
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -86,6 +89,7 @@ class InitializeSettings implements IRepairStep
      * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
      * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-10
      * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
+     * @spec openspec/changes/add-shillinq-sisa-reporting/tasks.md#task-7
      */
     public function run(IOutput $output): void
     {
@@ -134,6 +138,7 @@ class InitializeSettings implements IRepairStep
             $this->seedSelectielijstRules(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
+            $this->seedSisaControleprotocol(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -389,4 +394,113 @@ class InitializeSettings implements IRepairStep
         }
 
     }//end seedChartOfAccounts()
+
+    /**
+     * Seed the SiSa controleprotocol 2026 indicatoren, idempotently, when gov-sisa is enabled.
+     *
+     * Deduplication key is (regelingCode, indicatorCode): if a record with the same
+     * pair already exists, the seed entry is skipped so operator edits persist across
+     * re-runs. Seeding is skipped entirely when featureFlags.gov-sisa is not enabled
+     * per REQ-SISA-002. No SisaControleprotocolService — the seed is loaded from the
+     * JSON file via the same pattern as KOR thresholds (ADR-031).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-sisa-reporting/tasks.md#task-7
+     */
+    private function seedSisaControleprotocol(IOutput $output): void
+    {
+        if ($this->settingsService->isOpenRegisterAvailable() === false) {
+            return;
+        }
+
+        $settings    = $this->settingsService->getSettings();
+        $govSisaFlag = ($settings['featureFlags'] ?? []);
+        $sisaEnabled = (is_array($govSisaFlag) === true)
+            ? (bool) ($govSisaFlag['gov-sisa'] ?? false)
+            : false;
+
+        if ($sisaEnabled === false) {
+            $output->info('Shillinq: featureFlags.gov-sisa not enabled, skipping SiSa controleprotocol seed');
+            return;
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/sisa-controleprotocol-2026.json';
+        if (file_exists($seedPath) === false) {
+            $output->warning('Shillinq: SiSa controleprotocol seed file not found, skipping');
+            return;
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            $output->warning('Shillinq: failed to read SiSa controleprotocol seed file, skipping');
+            return;
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $output->warning('Shillinq: failed to parse SiSa controleprotocol seed: '.json_last_error_msg());
+            return;
+        }
+
+        $indicatoren = ($data['indicatoren'] ?? []);
+        if (empty($indicatoren) === true) {
+            $output->info('Shillinq: SiSa controleprotocol seed contains no indicatoren, skipping');
+            return;
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->settingsService->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($indicatoren as $indicator) {
+                $regelingCode  = ($indicator['regelingCode'] ?? null);
+                $indicatorCode = ($indicator['indicatorCode'] ?? null);
+                if ($regelingCode === null || $indicatorCode === null) {
+                    continue;
+                }
+
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('SisaRegelingIndicator')
+                    ->findAll(
+                            [
+                                'filters' => [
+                                    'regelingCode'  => $regelingCode,
+                                    'indicatorCode' => $indicatorCode,
+                                ],
+                                'limit'   => 1,
+                            ]
+                            );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $indicator,
+                    register: $registerSlug,
+                    schema: 'SisaRegelingIndicator',
+                );
+                $seeded++;
+            }//end foreach
+
+            $output->info(
+                'Shillinq: SiSa controleprotocol 2026 seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        } catch (\Throwable $e) {
+            $output->warning('Shillinq: SiSa controleprotocol seeding failed: '.$e->getMessage());
+            $this->logger->warning(
+                'Shillinq: SiSa controleprotocol seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+        }//end try
+
+    }//end seedSisaControleprotocol()
+
 }//end class

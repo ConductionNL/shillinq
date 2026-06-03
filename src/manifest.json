@@ -102,6 +102,14 @@
 					"icon": "FileChartOutline",
 					"route": "Iv3Reports",
 					"order": 84
+				},
+				{
+					"id": "SisaRapportage",
+					"label": "SiSa-rapportage",
+					"icon": "FileDocumentCheckOutline",
+					"route": "SisaRapportage",
+					"order": 85,
+					"featureFlag": "gov-sisa"
 				}
 			]
 		},
@@ -2736,6 +2744,141 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "Dashboard"
+			}
+		},
+		{
+			"id": "SisaRapportage",
+			"route": "/sisa-rapportage",
+			"type": "index",
+			"title": "SiSa-rapportage",
+			"featureFlag": "gov-sisa",
+			"config": {
+				"register": "shillinq",
+				"schema": "SisaRegelingIndicator",
+				"featureFlag": "gov-sisa",
+				"columns": [
+					{
+						"key": "regelingCode",
+						"label": "Regeling",
+						"sortable": true
+					},
+					{
+						"key": "indicatorCode",
+						"label": "Indicatorcode",
+						"sortable": true
+					},
+					{
+						"key": "indicatorOmschrijving",
+						"label": "Omschrijving",
+						"sortable": false
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Verantwoordingsjaar",
+						"sortable": true
+					},
+					{
+						"key": "peilDatum",
+						"label": "Peildatum",
+						"sortable": true
+					},
+					{
+						"key": "sisaSubmissionStatus",
+						"label": "Indienstatus",
+						"sortable": true
+					}
+				],
+				"defaultSort": "regelingCode",
+				"detailRoute": "SisaRapportageDetail",
+				"filters": [
+					{
+						"key": "fiscalYear",
+						"label": "Verantwoordingsjaar",
+						"type": "integer"
+					},
+					{
+						"key": "regelingCode",
+						"label": "Regeling",
+						"type": "string"
+					},
+					{
+						"key": "sisaSubmissionStatus",
+						"label": "Indienstatus",
+						"type": "enum",
+						"options": ["not-submitted", "submitted", "accepted", "rejected"]
+					}
+				]
+			}
+		},
+		{
+			"id": "SisaRapportageDetail",
+			"route": "/sisa-rapportage/:id",
+			"type": "detail",
+			"title": "SiSa-bijlage detail",
+			"featureFlag": "gov-sisa",
+			"config": {
+				"register": "shillinq",
+				"schema": "SisaRegelingIndicator",
+				"featureFlag": "gov-sisa",
+				"fields": [
+					{
+						"key": "regelingCode",
+						"label": "Regelingcode",
+						"type": "string"
+					},
+					{
+						"key": "indicatorCode",
+						"label": "Indicatorcode",
+						"type": "string"
+					},
+					{
+						"key": "indicatorOmschrijving",
+						"label": "Indicatoromschrijving",
+						"type": "string"
+					},
+					{
+						"key": "indicatorWaarde",
+						"label": "Indicatorwaarde",
+						"type": "string"
+					},
+					{
+						"key": "indicatorEenheid",
+						"label": "Eenheid",
+						"type": "string"
+					},
+					{
+						"key": "peilDatum",
+						"label": "Peildatum",
+						"type": "date"
+					},
+					{
+						"key": "controleprotocol",
+						"label": "Controleprotocol",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Verantwoordingsjaar",
+						"type": "integer"
+					},
+					{
+						"key": "sisaSubmissionStatus",
+						"label": "Indienstatus BZK",
+						"type": "string"
+					},
+					{
+						"key": "bijlageDocumentUri",
+						"label": "SiSa-bijlage document",
+						"type": "string"
+					},
+					{
+						"key": "submissionAuditEventId",
+						"label": "Audit event",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": false,
+				"indexRoute": "SisaRapportage"
 			}
 		}
 	]

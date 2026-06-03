@@ -9,19 +9,19 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `SisaRegelingIndicator` schema, parallel SiSa register, or `bookkeeping-sisa-reporting` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `openspec/changes/**`)
-- [ ] Task 2: Author `specs/bookkeeping-sisa-reporting/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4-specialized (NL gov sector)` / `Depends on: bookkeeping-subsidie-verantwoording` header, `REQ-SISA-NNN` requirements, `#### Scenario:` blocks with GIVEN/WHEN/THEN
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions
-- [ ] Task 4: Author `design.md` with Reuse Analysis table and Seed Data section; SiSa-reviewer persona confirms the indicator shape + bijlage layout match the 2026 BZK controleprotocol
-- [ ] Task 5: Declare the `SisaRegelingIndicator` schema in `lib/Settings/shillinq_register.json` with `subsidieId` FK (to subsidie subtype `specifieke-uitkering`), `regelingCode`, `indicatorCode`, `indicatorOmschrijving`, `indicatorWaarde`, `indicatorEenheid`, `peilDatum` per REQ-SISA-001
-- [ ] Task 6: Ship `lib/Settings/seeds/sisa-controleprotocol-2026.json` declaring indicatoren per regeling for the 2026 SiSa controleprotocol; SPDX in docblock; `_meta` block (`source: 'BZK SiSa-controleprotocol'`, `year: 2026`); indicator definitions carry `verplicht: boolean` per REQ-SISA-002
-- [ ] Task 7: Extend the repair step under `lib/Migration/` to import the controleprotocol seed idempotently when `featureFlags.gov-sisa` is enabled (operator edits persist across re-runs)
-- [ ] Task 8: Declare the annual SiSa-bijlage aggregation grouping `SisaRegelingIndicator` records by `(regelingCode, controleprotocol)` for the closed fiscal year per REQ-SISA-003; missing `verplicht: true` indicatoren surface as warnings in audit preview
-- [ ] Task 9: Register the SiSa-bijlage docudesk template matching the BZK-vastgestelde layout in `lib/Settings/docudesk-templates.json` per REQ-SISA-003
-- [ ] Task 10: Register the BZK SiSa upload openconnector source row in `lib/Settings/openconnector-sources.json` per REQ-SISA-004 (auth and protocol mapping are openconnector-side); no app-local HTTP client per ADR-019
-- [ ] Task 11: Wire every SiSa submission to write an immutable audit event of type `sisa.submitted` with operator id, regelingen list, controleprotocol version, document SHA-256, BZK response status, document URI per REQ-SISA-005; linked to the parent jaarrekening via the audit-trail hash chain
-- [ ] Task 12: Add SiSa-rapportage navigation + pages to `src/manifest.json` (`featureFlags.gov-sisa`, `Bookkeeping > SiSa-rapportage`, `type: index` listing indicatoren per regeling per year + `type: detail` for the annual bijlage met submission status) per REQ-SISA-006; `node tests/validate-manifest.js` exits 0
-- [ ] Task 13: Update `openspec/architecture/adr-000-data-model.md` with a one-paragraph annotation for `SisaRegelingIndicator` cross-referencing this spec
+- [x] Task 1: Confirm no `SisaRegelingIndicator` schema, parallel SiSa register, or `bookkeeping-sisa-reporting` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `openspec/changes/**`)
+- [x] Task 2: Author `specs/bookkeeping-sisa-reporting/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4-specialized (NL gov sector)` / `Depends on: bookkeeping-subsidie-verantwoording` header, `REQ-SISA-NNN` requirements, `#### Scenario:` blocks with GIVEN/WHEN/THEN
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions
+- [x] Task 4: Author `design.md` with Reuse Analysis table and Seed Data section; SiSa-reviewer persona confirms the indicator shape + bijlage layout match the 2026 BZK controleprotocol
+- [x] Task 5: Declare the `SisaRegelingIndicator` schema in `lib/Settings/shillinq_register.json` with `subsidieId` FK (to subsidie subtype `specifieke-uitkering`), `regelingCode`, `indicatorCode`, `indicatorOmschrijving`, `indicatorWaarde`, `indicatorEenheid`, `peilDatum` per REQ-SISA-001
+- [x] Task 6: Ship `lib/Settings/seeds/sisa-controleprotocol-2026.json` declaring indicatoren per regeling for the 2026 SiSa controleprotocol; SPDX in docblock; `_meta` block (`source: 'BZK SiSa-controleprotocol'`, `year: 2026`); indicator definitions carry `verplicht: boolean` per REQ-SISA-002
+- [x] Task 7: Extend the repair step under `lib/Repair/` to import the controleprotocol seed idempotently when `featureFlags.gov-sisa` is enabled (operator edits persist across re-runs)
+- [x] Task 8: Declare the annual SiSa-bijlage aggregation grouping `SisaRegelingIndicator` records by `(regelingCode, controleprotocol)` for the closed fiscal year per REQ-SISA-003; missing `verplicht: true` indicatoren surface as warnings in audit preview
+- [x] Task 9: Register the SiSa-bijlage docudesk template matching the BZK-vastgestelde layout in `lib/Settings/docudesk-templates.json` per REQ-SISA-003
+- [x] Task 10: Register the BZK SiSa upload openconnector source row in `lib/Settings/openconnector-sources.json` per REQ-SISA-004 (auth and protocol mapping are openconnector-side); no app-local HTTP client per ADR-019
+- [x] Task 11: Wire every SiSa submission to write an immutable audit event of type `sisa.submitted` with operator id, regelingen list, controleprotocol version, document SHA-256, BZK response status, document URI per REQ-SISA-005; linked to the parent jaarrekening via the audit-trail hash chain
+- [x] Task 12: Add SiSa-rapportage navigation + pages to `src/manifest.json` (`featureFlags.gov-sisa`, `Bookkeeping > SiSa-rapportage`, `type: index` listing indicatoren per regeling per year + `type: detail` for the annual bijlage met submission status) per REQ-SISA-006; `node tests/validate-manifest.js` exits 0
+- [x] Task 13: Update `openspec/architecture/adr-000-data-model.md` with a one-paragraph annotation for `SisaRegelingIndicator` cross-referencing this spec
 
 ## Verification
 

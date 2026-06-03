@@ -1,0 +1,80 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"description": "Docudesk template registry for Shillinq. Templates are loaded via ConfigurationService::importFromApp() on install/upgrade. Each template declares the output-channel (openconnector source slug) for external submission.",
+		"imported": "2026-06-03T00:00:00Z"
+	},
+	"templates": [
+		{
+			"slug": "sisa-bijlage-2026",
+			"title": "SiSa-bijlage Jaarrekening 2026",
+			"description": "Annual SiSa (Single Information Single Audit) bijlage rendered per BZK-vastgestelde layout for the 2026 controleprotocol. Groups SisaRegelingIndicator records by (regelingCode, controleprotocol) for the closed fiscal year. Missing verplicht: true indicatoren surface as warnings in the audit preview before submission per REQ-SISA-003.",
+			"version": "1.0.0",
+			"outputFormat": "pdf",
+			"schema": "SisaRegelingIndicator",
+			"register": "shillinq",
+			"aggregation": "sisaBijlagePerRegelingPerYear",
+			"featureFlag": "gov-sisa",
+			"outputChannel": {
+				"type": "openconnector",
+				"sourceSlug": "bzk-sisa-upload-2026",
+				"description": "BZK SiSa upload via openconnector source. Auth and protocol mapping are openconnector-side per ADR-019. Shillinq references by sourceSlug only."
+			},
+			"auditEvent": {
+				"type": "sisa.submitted",
+				"immutable": true,
+				"requiredPayload": [
+					"operatorId",
+					"regelingenList",
+					"controleprotocolVersion",
+					"documentSha256",
+					"bzkResponseStatus",
+					"documentUri"
+				],
+				"hashChainLink": "jaarrekening",
+				"description": "Written by docudesk on every BZK submission attempt per REQ-SISA-005. Linked to the parent jaarrekening via audit-trail hash chain."
+			},
+			"templateSections": [
+				{
+					"sectionId": "header",
+					"title": "SiSa-bijlage Verantwoordingsinformatie",
+					"fields": [
+						{"key": "organisatieNaam", "label": "Organisatienaam", "source": "administration.name"},
+						{"key": "organisatieKvK", "label": "KvK-nummer", "source": "administration.kvkNumber"},
+						{"key": "verantwoordingsjaar", "label": "Verantwoordingsjaar", "source": "fiscalYear"},
+						{"key": "controleprotocol", "label": "Controleprotocol", "source": "controleprotocol"},
+						{"key": "dagtekening", "label": "Dagtekening", "source": "peilDatum"}
+					]
+				},
+				{
+					"sectionId": "indicatoren",
+					"title": "Indicatoren per regeling",
+					"groupBy": ["regelingCode"],
+					"fields": [
+						{"key": "regelingCode", "label": "Regelingcode", "source": "regelingCode"},
+						{"key": "indicatorCode", "label": "Indicatorcode", "source": "indicatorCode"},
+						{"key": "indicatorOmschrijving", "label": "Omschrijving", "source": "indicatorOmschrijving"},
+						{"key": "indicatorWaarde", "label": "Waarde", "source": "indicatorWaarde"},
+						{"key": "indicatorEenheid", "label": "Eenheid", "source": "indicatorEenheid"},
+						{"key": "peilDatum", "label": "Peildatum", "source": "peilDatum"}
+					]
+				},
+				{
+					"sectionId": "audit-warnings",
+					"title": "Waarschuwingen ontbrekende verplichte indicatoren",
+					"description": "Lists verplicht: true indicatoren from the seeded controleprotocol that have no matching SisaRegelingIndicator record for the (regelingCode, fiscalYear).",
+					"source": "aggregation.sisaBijlagePerRegelingPerYear.warnings.missingVerplichtIndicatoren"
+				},
+				{
+					"sectionId": "signature",
+					"title": "Ondertekening",
+					"fields": [
+						{"key": "bevoegdGezag", "label": "Bevoegd gezag", "source": "administration.authorisedOfficer"},
+						{"key": "ondertekeningsdatum", "label": "Ondertekeningsdatum", "source": "now"}
+					]
+				}
+			]
+		}
+	]
+}
