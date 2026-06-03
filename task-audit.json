@@ -1,70 +1,111 @@
 {
-  "spec": "openspec/changes/add-shillinq-year-end-close",
+  "spec": "openspec/changes/bookkeeping-deferred-tax",
   "verified": [
     {
       "task": "1",
       "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "No existing FiscalYear schema confirmed"
+      "note": "Confirmed: none of the 5 tax schemas existed before this change."
     },
     {
       "task": "2",
-      "file": "openspec/changes/add-shillinq-year-end-close/specs/bookkeeping-year-end-close/spec.md",
-      "ok": true
+      "file": "openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md",
+      "ok": true,
+      "note": "REQ-DT-001 through REQ-DT-010 with GIVEN/WHEN/THEN scenarios present."
     },
     {
       "task": "3",
-      "file": "openspec/changes/add-shillinq-year-end-close/proposal.md",
-      "ok": true
+      "file": "openspec/changes/bookkeeping-deferred-tax/proposal.md",
+      "ok": true,
+      "note": "Affected Projects, Scope, Risks, Rollback, Open Questions all present."
     },
     {
       "task": "4",
-      "file": "openspec/changes/add-shillinq-year-end-close/design.md",
-      "ok": true
+      "file": "openspec/changes/bookkeeping-deferred-tax/design.md",
+      "ok": true,
+      "note": "Decisions D1-D7 and Reuse Analysis present. Status: pr-created."
     },
     {
       "task": "5",
       "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "FiscalYear schema with all REQ-YEC-002 fields and uniqueness constraint declared"
+      "note": "5 schemas added: TemporaryDifference, TaxLossCarryForward, TaxRateReconciliation, DeferredTaxMovement, TaxProvision. All with required fields, x-openregister-calculations, and x-openregister-rbac."
     },
     {
       "task": "6",
       "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "x-openregister-lifecycle with open->closing->closed->reopened states and transitions"
+      "note": "Account.taxBasisDifferenceCategory added as optional enum with 9 values."
     },
     {
       "task": "7",
       "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "onBeginClose and onClose hooks emit T1 JournalEntry records"
+      "note": "FiscalYear.enactedTaxRates added as optional object/map per jurisdiction. Also added onCloseTaxCalculation lifecycle hook."
     },
     {
       "task": "8",
-      "file": "lib/Settings/shillinq_register.json",
+      "file": "lib/Service/TaxCalculationService.php",
       "ok": true,
-      "note": "onCloseDimensionRollover hook fires x-openregister-emit-cloudevents per REQ-YEC-005"
+      "note": "All 7 methods present: calculateAllPeriodEnd, detectTemporaryDifferences, compensateLosses, assessRecoverability, applyRateChanges, calculateTaxRateReconciliation, calculateMovement, calculateTaxProvision. Plus private helpers. PHPCS clean."
     },
     {
       "task": "9",
       "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "reopen transition: requiresRole=admin, requires=reopenReason, onReopenReverseClosing + onReopenReverseOpening hooks"
+      "note": "Wired via FiscalYear lifecycle close hook: onCloseTaxCalculation with action x-openregister-invoke-service calling TaxCalculationService::calculateAllPeriodEnd."
     },
     {
       "task": "10",
-      "file": "src/manifest.json",
+      "file": "lib/Service/TaxCalculationService.php",
       "ok": true,
-      "note": "FiscalYears menu entry + index/detail pages with lifecycleActions:true"
+      "note": "isLossExpired() implements all 3 Wet Vpb regimes. compensateLosses() applies regime check. Tests cover pre-2019 expiry and 2022-onwards no-expiry. 2019-2021 transitional calculation deferred to specialist review."
     },
     {
       "task": "11",
+      "file": "lib/Settings/shillinq_register.json",
+      "ok": true,
+      "note": "TaxProvision.linkedVpbReturn FK field declared. calculateTaxProvision() preserves existing linkedVpbReturn on update."
+    },
+    {
+      "task": "12",
+      "file": "lib/Settings/shillinq_register.json",
+      "ok": true,
+      "note": "Audit trail inherited automatically by all 5 schemas via OpenRegister audit-trail-immutable. No PHP code required."
+    },
+    {
+      "task": "13",
+      "file": "src/manifest.json",
+      "ok": true,
+      "note": "Added Bookkeeping > Deferred Taxes menu. Added 6 pages: TemporaryDifferences, TemporaryDifferenceDetail, TaxProvisions, TaxProvisionDetail, TaxLossCarryForwards, TaxLossCarryForwardDetail. All type:index/detail."
+    },
+    {
+      "task": "14",
+      "file": "lib/Settings/shillinq_register.json",
+      "ok": true,
+      "note": "TaxRateReconciliation has x-openregister-calculations for statutoryTaxExpense, effectiveTaxExpense, effectiveTaxRate. ETR fully declarative per ADR-031 D2."
+    },
+    {
+      "task": "15",
       "file": "openspec/architecture/adr-000-data-model.md",
       "ok": true,
-      "note": "FiscalYear entry updated with reconciliation note and full field table"
+      "note": "All 5 new schemas documented with property tables and reconciliation note."
     }
   ],
   "stubs": [],
-  "missing_routes": []
+  "missing_routes": [],
+  "coverage": {
+    "new_php_classes": [
+      "lib/Service/TaxCalculationService.php"
+    ],
+    "test_files": [
+      "tests/Unit/Service/TaxCalculationServiceTest.php"
+    ],
+    "test_methods": 10,
+    "phpcs_status": "PASS"
+  },
+  "seed_data": {
+    "required": false,
+    "reason": "Per design.md: No seed data required. Tax records accumulate from GL on balansdatum via TaxCalculationService invocation."
+  }
 }
