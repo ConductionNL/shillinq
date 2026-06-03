@@ -140,6 +140,7 @@ class InitializeSettings implements IRepairStep
             $this->seedSelectielijstRules(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
+            $this->seedNotificationTemplates(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -452,4 +453,30 @@ class InitializeSettings implements IRepairStep
         }
 
     }//end seedChartOfAccounts()
+
+    /**
+     * Seed default booking notification templates, idempotently.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-14
+     */
+    private function seedNotificationTemplates(IOutput $output): void
+    {
+        $output->info('Seeding booking notification templates...');
+
+        $result = $this->settingsService->seedNotificationTemplates();
+
+        if ($result['success'] === true) {
+            $output->info(
+                'Notification templates seeded: '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
+            );
+            return;
+        }
+
+        $output->warning('Notification templates seeding issue: '.($result['message'] ?? 'unknown error'));
+
+    }//end seedNotificationTemplates()
 }//end class

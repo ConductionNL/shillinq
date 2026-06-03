@@ -789,6 +789,29 @@ class SettingsService
     }//end seedAllocationRules()
 
     /**
+     * Seed default booking notification templates, idempotently.
+     *
+     * Reads lib/Settings/seeds/booking-notification-templates.json and imports
+     * BookingNotificationTemplate records into OpenRegister. Deduplication key
+     * is (name, trigger). Already-existing records are skipped.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-14
+     */
+    public function seedNotificationTemplates(): array
+    {
+        return $this->seedGenericFile(
+            seedFileName: 'booking-notification-templates.json',
+            itemsKey: 'templates',
+            dedupeKey: 'name',
+            schema: 'BookingNotificationTemplate',
+            logLabel: 'booking notification templates'
+        );
+
+    }//end seedNotificationTemplates()
+
+    /**
      * Load configuration from shillinq_register.json via OpenRegister.
      *
      * Skips import when the register is already configured (idempotent).

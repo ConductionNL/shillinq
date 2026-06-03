@@ -21,9 +21,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\AppInfo;
 
+use OCA\Shillinq\BackgroundJob\BookingReminderJob;
+use OCA\Shillinq\Listener\BookingEventListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Repair\InitializeSettings;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
+use OCA\OpenRegister\Event\ObjectCreatedEvent;
+use OCA\OpenRegister\Event\ObjectDeletedEvent;
+use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -54,6 +59,8 @@ class Application extends App implements IBootstrap
      * @return void
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     *
+     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-6
      */
     public function register(IRegistrationContext $context): void
     {
@@ -63,6 +70,23 @@ class Application extends App implements IBootstrap
             event: DeepLinkRegistrationEvent::class,
             listener: DeepLinkRegistrationListener::class
         );
+
+        // Booking lifecycle events → notification trigger evaluation.
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: BookingEventListener::class
+        );
+        $context->registerEventListener(
+            event: ObjectUpdatedEvent::class,
+            listener: BookingEventListener::class
+        );
+        $context->registerEventListener(
+            event: ObjectDeletedEvent::class,
+            listener: BookingEventListener::class
+        );
+
+        // Hourly background job for reminder notifications.
+        $context->registerBackgroundJob(BookingReminderJob::class);
 
         // Initialize register and schemas on install/upgrade.
         $context->registerRepairStep(InitializeSettings::class);

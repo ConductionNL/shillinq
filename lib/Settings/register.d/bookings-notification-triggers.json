@@ -1,0 +1,269 @@
+{
+	"components": {
+		"schemas": {
+			"BookingNotificationTrigger": {
+				"slug": "BookingNotificationTrigger",
+				"icon": "BellOutline",
+				"version": "0.1.0",
+				"title": "Booking Notification Trigger",
+				"description": "Defines when and how notifications are sent on booking lifecycle events (created, changed, cancelled, reminder). Stored declaratively per ADR-031.",
+				"type": "object",
+				"required": [
+					"name",
+					"eventType",
+					"active"
+				],
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "Human-readable identifier for this trigger.",
+						"example": "Booking Confirmation"
+					},
+					"eventType": {
+						"type": "string",
+						"description": "Booking lifecycle event that fires this trigger.",
+						"enum": [
+							"created",
+							"changed",
+							"cancelled",
+							"reminder"
+						],
+						"example": "created"
+					},
+					"active": {
+						"type": "boolean",
+						"description": "Whether this trigger is currently enabled.",
+						"default": true,
+						"example": true
+					},
+					"bookingId": {
+						"type": "string",
+						"description": "Optional UUID of a specific booking this trigger applies to. Null = global trigger.",
+						"nullable": true,
+						"example": null
+					},
+					"templateId": {
+						"type": "string",
+						"description": "UUID of the BookingNotificationTemplate to use when this trigger fires.",
+						"example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+					},
+					"recipients": {
+						"type": "array",
+						"description": "Ordered list of recipient rules evaluated when the trigger fires.",
+						"items": {
+							"type": "object",
+							"required": [
+								"role",
+								"channels"
+							],
+							"properties": {
+								"role": {
+									"type": "string",
+									"description": "Recipient role: customer, organizer, or admin_group.",
+									"enum": [
+										"customer",
+										"organizer",
+										"admin_group"
+									],
+									"example": "customer"
+								},
+								"channels": {
+									"type": "array",
+									"description": "Preferred delivery channels in priority order.",
+									"items": {
+										"type": "string",
+										"enum": [
+											"email",
+											"sms",
+											"chat"
+										]
+									},
+									"example": ["email", "sms"]
+								},
+								"condition": {
+									"type": "string",
+									"description": "Simple expression evaluated against the booking object. Rule is skipped if false.",
+									"example": "booking.status == 'confirmed'"
+								}
+							}
+						},
+						"example": [
+							{
+								"role": "customer",
+								"channels": ["email", "sms"],
+								"condition": "booking.status == 'confirmed'"
+							}
+						]
+					},
+					"rateLimitPerBookingPerHour": {
+						"type": "integer",
+						"description": "Maximum notifications per booking per hour. Default 10.",
+						"default": 10,
+						"example": 10
+					},
+					"rateLimitPerOrganizerPerDay": {
+						"type": "integer",
+						"description": "Maximum notifications per organizer per day. Default 100.",
+						"default": 100,
+						"example": 100
+					},
+					"deduplicationWindowMinutes": {
+						"type": "integer",
+						"description": "Deduplicate identical recipient+trigger sends within this window (minutes). Default 5.",
+						"default": 5,
+						"example": 5
+					}
+				}
+			},
+			"BookingNotificationTemplate": {
+				"slug": "BookingNotificationTemplate",
+				"icon": "FileDocumentEditOutline",
+				"version": "0.1.0",
+				"title": "Booking Notification Template",
+				"description": "Content template for booking notifications. Subject and body use Twig-style {{ variable }} substitution. Stored declaratively per ADR-031.",
+				"type": "object",
+				"required": [
+					"name",
+					"trigger",
+					"subject",
+					"body",
+					"language",
+					"active"
+				],
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "Identifier for this template.",
+						"example": "New Booking Confirmation"
+					},
+					"trigger": {
+						"type": "string",
+						"description": "Which booking event uses this template.",
+						"enum": [
+							"created",
+							"changed",
+							"cancelled",
+							"reminder"
+						],
+						"example": "created"
+					},
+					"subject": {
+						"type": "string",
+						"description": "Notification subject line. Supports {{ booking.* }}, {{ recipient.* }}, {{ system.* }} variables.",
+						"example": "Bevestiging boeking {{ booking.organizer }} - {{ booking.startTime | date('d M Y') }}"
+					},
+					"body": {
+						"type": "string",
+						"description": "Notification body text. Supports {{ booking.* }}, {{ recipient.* }}, {{ system.* }} variables.",
+						"example": "Hallo {{ booking.guestName }},\n\nUw boeking is bevestigd.\n\n..."
+					},
+					"language": {
+						"type": "string",
+						"description": "Language code for this template.",
+						"enum": [
+							"nl_NL",
+							"en_US"
+						],
+						"default": "nl_NL",
+						"example": "nl_NL"
+					},
+					"active": {
+						"type": "boolean",
+						"description": "Whether this template is enabled.",
+						"default": true,
+						"example": true
+					}
+				}
+			},
+			"NotificationDelivery": {
+				"slug": "NotificationDelivery",
+				"icon": "CheckCircleOutline",
+				"version": "0.1.0",
+				"title": "Notification Delivery",
+				"description": "Audit trail record for every notification dispatch attempt. Tamper-evident per ADR-022. Never deleted.",
+				"type": "object",
+				"required": [
+					"triggerName",
+					"triggerType",
+					"bookingId",
+					"recipient",
+					"channel",
+					"status",
+					"sentAt"
+				],
+				"properties": {
+					"triggerName": {
+						"type": "string",
+						"description": "Name of the trigger that fired.",
+						"example": "Booking Confirmation"
+					},
+					"triggerType": {
+						"type": "string",
+						"description": "Lifecycle event type.",
+						"enum": [
+							"created",
+							"changed",
+							"cancelled",
+							"reminder"
+						],
+						"example": "created"
+					},
+					"bookingId": {
+						"type": "string",
+						"description": "UUID of the booking this notification is for.",
+						"example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+					},
+					"recipient": {
+						"type": "string",
+						"description": "Recipient address (email, phone, or chat ID). PII — handle per AVG/GDPR.",
+						"example": "alice@example.com"
+					},
+					"channel": {
+						"type": "string",
+						"description": "Channel used for delivery.",
+						"enum": [
+							"email",
+							"sms",
+							"chat"
+						],
+						"example": "email"
+					},
+					"templateName": {
+						"type": "string",
+						"description": "Name of the template rendered for this send.",
+						"example": "New Booking Confirmation"
+					},
+					"status": {
+						"type": "string",
+						"description": "Delivery outcome.",
+						"enum": [
+							"sent",
+							"pending",
+							"failed",
+							"skipped"
+						],
+						"example": "sent"
+					},
+					"failureReason": {
+						"type": "string",
+						"description": "Error message if status is failed or skipped.",
+						"nullable": true,
+						"example": "SMTP connection timeout"
+					},
+					"retryCount": {
+						"type": "integer",
+						"description": "Number of retry attempts made.",
+						"default": 0,
+						"example": 0
+					},
+					"sentAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "ISO-8601 timestamp when the send was attempted.",
+						"example": "2026-06-03T10:00:00Z"
+					}
+				}
+			}
+		}
+	}
+}
