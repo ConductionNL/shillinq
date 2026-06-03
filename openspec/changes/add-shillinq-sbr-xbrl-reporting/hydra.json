@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "spec_slug": "add-shillinq-sbr-xbrl-reporting",
+  "repo": "https://codeberg.org/Conduction/shillinq",
+  "issue": 39,
+  "cycles": [
+    {
+      "cycle": 1,
+      "trigger": "build:queued",
+      "started_at": "2026-06-03T19:01:08Z",
+      "ended_at": null,
+      "outcome": "in-flight",
+      "outcome_reason": null,
+      "pattern_tags": [],
+      "stages": []
+    }
+  ]
+}
