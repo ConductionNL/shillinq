@@ -84,13 +84,16 @@ class AccountBalanceGuard
      * must be zero before it can be archived (otherwise downstream period-close
      * + financial-statements would see orphan postings).
      *
-     * **T1 behaviour:** balance is implicitly 0 because no GLLine register
-     * exists yet (T2 `bookkeeping-general-ledger` introduces it). Returns
-     * true unconditionally with a debug log noting the deferral.
+     * **T1 behaviour:** ObjectService is not installed (OR plugin absent) — balance
+     * is implicitly 0 because no GLLine register exists yet. Returns true with a
+     * debug log noting the deferral.
      *
      * **T2+ behaviour:** retrieves all GLLine records for the account via
      * OR's real `setRegister()->setSchema()->findAll()` API and sums
      * debit minus credit in PHP. Returns true iff the sum is zero.
+     *
+     * Fail-closed: any runtime error during the balance query (DB failure,
+     * schema misconfiguration, etc.) returns false, denying the archive.
      *
      * @param array<string, mixed> $account Account object array (loaded by OR)
      *
@@ -100,7 +103,10 @@ class AccountBalanceGuard
      */
     public function requireZeroBalance(array $account): bool
     {
-        if ($this->isGLLineRegisterAvailable() === false) {
+        // Phase 1: T1 detection — ObjectService not installed means OR is absent.
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+        } catch (\Throwable) {
             $this->logger->debug(
                 'AccountBalanceGuard: GLLine register not present (T1 state) — archive permitted by default',
                 ['accountNumber' => ($account['accountNumber'] ?? 'unknown')]
@@ -108,9 +114,8 @@ class AccountBalanceGuard
             return true;
         }
 
+        // Phase 2: balance query — fail-closed on any runtime error (DB failure, missing schema, etc.).
         try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-
             // Page through all GLLine records in batches to avoid hitting the
             // default findAll() limit when an account has many postings (L1).
             $pageSize  = 500;
@@ -228,30 +233,5 @@ class AccountBalanceGuard
         }//end try
     }//end requireSingleClosingAccount()
 
-    /**
-     * Probe whether the GLLine schema is declared in the configured register
-     * (i.e. T2 has shipped). Uses OR's real API: attempt to fetch at most one
-     * GLLine record; a "schema not found" exception means T1 state.
-     *
-     * C5: calling setRegister/setSchema alone does NOT validate schema existence —
-     * those setters merely stash the slug strings. We must execute an actual query
-     * so that a missing GLLine schema triggers the schema-not-found exception that
-     * proves T1 state. An empty result (schema exists but has no records) is still
-     * T2 — the schema is present, so we return true.
-     *
-     * @return bool True when the GLLine schema exists in OR's configured register.
-     */
-    private function isGLLineRegisterAvailable(): bool
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $objectService
-                ->setRegister($this->getRegisterSlug())
-                ->setSchema('GLLine')
-                ->findAll(['limit' => 1]);
-            return true;
-        } catch (\Throwable) {
-            return false;
-        }
-    }//end isGLLineRegisterAvailable()
+
 }//end class

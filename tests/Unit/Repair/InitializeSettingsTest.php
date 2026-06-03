@@ -24,6 +24,7 @@ use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -45,6 +46,13 @@ class InitializeSettingsTest extends TestCase
      * @var LoggerInterface&MockObject
      */
     private LoggerInterface&MockObject $logger;
+
+    /**
+     * Mock ContainerInterface.
+     *
+     * @var ContainerInterface&MockObject
+     */
+    private ContainerInterface&MockObject $container;
 
     /**
      * Mock IOutput.
@@ -71,11 +79,13 @@ class InitializeSettingsTest extends TestCase
 
         $this->settingsService = $this->createMock(SettingsService::class);
         $this->logger          = $this->createMock(LoggerInterface::class);
+        $this->container       = $this->createMock(ContainerInterface::class);
         $this->output          = $this->createMock(IOutput::class);
 
         $this->repairStep = new InitializeSettings(
             settingsService: $this->settingsService,
             logger: $this->logger,
+            container: $this->container,
         );
 
     }//end setUp()
