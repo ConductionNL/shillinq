@@ -5170,11 +5170,82 @@ _Billable hour log entry for ZZP / consultancy work. Base schema from bookkeepin
 | projectAssignmentId | string | No | FK to the ProjectAssignment governing this hour entry — added by CPA extension (REQ-CPA-009) |
 | recognisedRate | number | No | Snapshot of the applicable RateCard.hourlyRate at write time per RJ 270 §3.2.4 — immutable after creation; subsequent rate-card revisions do NOT retroactively change this field (REQ-CPA-009) |
 | glTransactionId | string | No | FK to the GLTransaction when this hour is posted to GL |
+| wbsoTagId | string | No | FK to WBSOTag — auto-assigned from Project.wbsoTagId on creation if project carries WBSO metadata; null for non-subsidized entries (REQ-WBSO-004) |
+| activityCodeId | string | No | FK to WBSOActivityCode — auto-assigned from Project.activityCodeId on creation if project carries WBSO metadata; null for non-subsidized entries (REQ-WBSO-004) |
+| wbsoTaggedAt | datetime | No | Timestamp when WBSO tags were assigned — auto or manual (REQ-WBSO-004) |
+| tagSource | enum | No | How WBSO tags were assigned: auto (from project metadata), manual (operator), or untagged (pending assignment) (REQ-WBSO-004) |
 
 **Relations:**
 - → ProjectAssignment (many-to-one, via projectAssignmentId)
 - → Project (many-to-one, via projectId)
 - → GLTransaction (many-to-one, via glTransactionId)
+- → WBSOTag (many-to-one, via wbsoTagId)
+- → WBSOActivityCode (many-to-one, via activityCodeId)
+
+
+### WBSOActivityCode
+**Schema.org:** `schema:DefinedTerm`
+_Activity classification register for WBSO subsidy hours — A-codes (allowed R&D activities) and B-codes (non-eligible overhead). Baseline codes ship with the app; administrations may add custom variants per subsidy agreement via parentActivityCode FK (REQ-WBSO-003, REQ-WBSO-009). Per ADR-024 this is a full OR register, not a config table._
+**Primary spec:** bookkeeping-wbso-hours-tagging-and-export
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| activityCode | string | Yes | Activity code identifier: A001–A999 for allowed R&D activities, B001+ for restricted/overhead, or custom per subsidy agreement |
+| description | string | Yes | Activity description per RVO guidelines |
+| category | enum | Yes | One of: research-development, support, non-eligible, infrastructure |
+| isAllowed | boolean | Yes | true = eligible for WBSO subsidy hours; false = tracked but excluded from RVO submission totals |
+| parentActivityCode | string | No | FK to the baseline activityCode this entry is a custom variant of; custom variants inherit isAllowed from parent unless explicitly overridden (REQ-WBSO-009) |
+| administrationId | string | Yes | FK to the Administration owning this code entry |
+| lifecycleState | enum | Yes | One of: active, archived, deprecated |
+
+**Relations:**
+- → UrenRegistratie (one-to-many, via activityCodeId)
+- → WBSOActivityCode (many-to-one, via parentActivityCode — custom variant hierarchy)
+
+### WBSOExportLog
+**Schema.org:** `schema:DigitalDocument`
+_Tracks WBSO uren-export operations and their RVO validation lifecycle. Lifecycle: draft → generated → validated → submitted → archived (with generated → rejected fallback). Validation guards enforce complete WBSO tagging on all included UrenRegistratie entries before RVO submission (REQ-WBSO-005, REQ-WBSO-006). Per ADR-031 the lifecycle is fully declarative — no PHP export service._
+**Primary spec:** bookkeeping-wbso-hours-tagging-and-export
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| exportId | string | Yes | Unique export identifier in format EXP-{YEAR}-{PERIOD}-{SEQ} |
+| periodStart | date | Yes | Start of the export date range (inclusive), typically fiscal quarter start |
+| periodEnd | date | Yes | End of the export date range (inclusive), typically fiscal quarter end |
+| exportFormat | enum | Yes | One of: csv, pdf, xml |
+| status | enum | Yes | One of: draft, generated, validated, submitted, archived, rejected |
+| recordCount | integer | Yes | Number of UrenRegistratie entries included in this export |
+| totalHours | number | Yes | Total eligible hours (A-codes) included in the export; excludes B-code entries |
+| totalHoursIneligible | number | No | Total non-eligible hours (B-codes) tracked but excluded from RVO submission totals |
+| exportFilters | object | No | Filter parameters applied on generation: wbsoTagId, activityCodeId, isAllowed, employee, date range (REQ-WBSO-008) |
+| generatedAt | datetime | No | Timestamp when the export file was materialized |
+| validatedAt | datetime | No | Timestamp when RVO validation passed |
+| validationErrors | array | No | List of validation error messages; empty if validated successfully |
+| submittedAt | datetime | No | Timestamp when submitted to RVO portal or operator recorded manual upload |
+| fileUri | string | No | Storage path or cloud URL of the generated export file |
+| administrationId | string | Yes | FK to the Administration owning this export log |
+
+**Relations:**
+- → UrenRegistratie (one-to-many — export covers entries in the period matching the filters)
+- → Administration (many-to-one, via administrationId)
+
+### WBSOTag
+**Schema.org:** `schema:DefinedTerm`
+_WBSO project code register — SO (Stand-alone Project), TWO (TechnoWise Open), SMART (SME Collaboration) and custom codes per WBSO legislation (Wet Bevordering Speur- en Ontwikkelingswerk). Administration-configurable; not hardcoded. Per ADR-024 this is a full OR register, not a config table (REQ-WBSO-002). Unique NL moat — zero competitor coverage (2026-05-20 market research)._
+**Primary spec:** bookkeeping-wbso-hours-tagging-and-export
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| wbsoCode | string | Yes | Official WBSO project code (SO, TWO, SMART) or custom code per WBSO legislation — not an enum, operators may add custom codes per subsidy agreement |
+| displayName | string | Yes | Dutch display name shown in UI and exports |
+| description | string | No | RVO alignment notes and subsidy conditions for this code |
+| rvoCertificationUrl | string | No | Link to the official RVO directive or legislation reference |
+| administrationId | string | Yes | FK to the Administration owning this WBSO code entry |
+| lifecycleState | enum | Yes | One of: active, archived, deprecated |
+
+**Relations:**
+- → UrenRegistratie (one-to-many, via wbsoTagId — auto-assigned from Project metadata)
+- → Project (one-to-many, via Project.wbsoTagId — project carries the WBSO code metadata that triggers auto-tagging)
 
 ### User
 **Schema.org:** `schema:Person`
