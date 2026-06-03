@@ -397,6 +397,35 @@
 					"order": 30
 				}
 			]
+		},
+		{
+			"id": "Inkoop",
+			"label": "Inkoop",
+			"icon": "ShoppingOutline",
+			"order": 35,
+			"children": [
+				{
+					"id": "Receipts",
+					"label": "Receipts",
+					"icon": "ReceiptOutline",
+					"route": "Receipts",
+					"order": 10
+				},
+				{
+					"id": "ExpenseClaims",
+					"label": "Expense Claims",
+					"icon": "ClipboardTextOutline",
+					"route": "ExpenseClaims",
+					"order": 20
+				},
+				{
+					"id": "MileageLog",
+					"label": "Mileage Log",
+					"icon": "CarOutline",
+					"route": "MileageLog",
+					"order": 30
+				}
+			]
 		}
 	],
 	"pages": [
@@ -4927,7 +4956,10 @@
 			"type": "index",
 			"title": "Rate Cards",
 			"visibilityPredicate": {
-				"administrationType": ["mkb", "zzp"],
+				"administrationType": [
+					"mkb",
+					"zzp"
+				],
 				"role": "project-administrator"
 			},
 			"config": {
@@ -5019,7 +5051,10 @@
 			"type": "index",
 			"title": "Rate Schedules",
 			"visibilityPredicate": {
-				"administrationType": ["mkb", "zzp"],
+				"administrationType": [
+					"mkb",
+					"zzp"
+				],
 				"role": "project-administrator"
 			},
 			"config": {
@@ -5141,7 +5176,10 @@
 			"type": "index",
 			"title": "Rate Audit Trail",
 			"visibilityPredicate": {
-				"administrationType": ["mkb", "zzp"],
+				"administrationType": [
+					"mkb",
+					"zzp"
+				],
 				"role": "project-administrator"
 			},
 			"config": {
@@ -5264,6 +5302,512 @@
 					}
 				],
 				"indexRoute": "RateAuditTrail"
+			}
+		},
+		{
+			"id": "Receipts",
+			"route": "/inkoop/receipts",
+			"type": "index",
+			"title": "Receipts",
+			"config": {
+				"register": "shillinq",
+				"schema": "Receipt",
+				"columns": [
+					{
+						"key": "receiptDate",
+						"label": "Date",
+						"sortable": true,
+						"type": "date"
+					},
+					{
+						"key": "vendorName",
+						"label": "Vendor",
+						"sortable": true
+					},
+					{
+						"key": "category",
+						"label": "Category",
+						"sortable": true
+					},
+					{
+						"key": "amount",
+						"label": "Amount",
+						"sortable": true,
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"sortable": true
+					},
+					{
+						"key": "amountInBaseCurrency",
+						"label": "Amount (EUR)",
+						"sortable": true,
+						"type": "number"
+					},
+					{
+						"key": "claimId",
+						"label": "Claim",
+						"sortable": false
+					}
+				],
+				"defaultSort": "receiptDate",
+				"filters": [
+					{
+						"key": "category",
+						"label": "Category",
+						"type": "string"
+					},
+					{
+						"key": "receiptDate",
+						"label": "Date Range",
+						"type": "date-range"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "claimId",
+						"label": "Has Claim",
+						"type": "boolean"
+					}
+				],
+				"detailRoute": "ReceiptDetail"
+			}
+		},
+		{
+			"id": "ReceiptDetail",
+			"route": "/inkoop/receipts/:id",
+			"type": "detail",
+			"title": "Receipt",
+			"config": {
+				"register": "shillinq",
+				"schema": "Receipt",
+				"fields": [
+					{
+						"key": "receiptNumber",
+						"label": "Receipt #",
+						"type": "string"
+					},
+					{
+						"key": "photoUri",
+						"label": "Photo",
+						"type": "file-upload"
+					},
+					{
+						"key": "receiptDate",
+						"label": "Date",
+						"type": "date"
+					},
+					{
+						"key": "vendorName",
+						"label": "Vendor",
+						"type": "string"
+					},
+					{
+						"key": "category",
+						"label": "Category",
+						"type": "string"
+					},
+					{
+						"key": "amount",
+						"label": "Original Amount",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "amountInBaseCurrency",
+						"label": "Amount (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "exchangeRate",
+						"label": "Exchange Rate",
+						"type": "number"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "costCentreCode",
+						"label": "Cost Centre",
+						"type": "string"
+					},
+					{
+						"key": "claimId",
+						"label": "Claim",
+						"type": "string"
+					},
+					{
+						"key": "extractedText",
+						"label": "Extracted Text (T3)",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"indexRoute": "Receipts"
+			}
+		},
+		{
+			"id": "ExpenseClaims",
+			"route": "/inkoop/expense-claims",
+			"type": "index",
+			"title": "Expense Claims",
+			"config": {
+				"register": "shillinq",
+				"schema": "ExpenseClaimEntry",
+				"columns": [
+					{
+						"key": "claimNumber",
+						"label": "Claim #",
+						"sortable": true
+					},
+					{
+						"key": "employeeId",
+						"label": "Employee",
+						"sortable": true
+					},
+					{
+						"key": "fromDate",
+						"label": "From",
+						"sortable": true,
+						"type": "date"
+					},
+					{
+						"key": "toDate",
+						"label": "To",
+						"sortable": true,
+						"type": "date"
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total (EUR)",
+						"sortable": true,
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "approvalState",
+						"label": "Approval",
+						"sortable": true
+					}
+				],
+				"defaultSort": "claimNumber",
+				"filters": [
+					{
+						"key": "employeeId",
+						"label": "Employee",
+						"type": "string"
+					},
+					{
+						"key": "fromDate",
+						"label": "Date Range",
+						"type": "date-range"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "enum",
+						"options": [
+							"draft",
+							"submitted",
+							"approved",
+							"posted",
+							"reimbursed",
+							"disputed",
+							"voided"
+						]
+					},
+					{
+						"key": "approvalState",
+						"label": "Approval State",
+						"type": "enum",
+						"options": [
+							"not-required",
+							"pending",
+							"approved",
+							"rejected"
+						]
+					}
+				],
+				"detailRoute": "ExpenseClaimDetail"
+			}
+		},
+		{
+			"id": "ExpenseClaimDetail",
+			"route": "/inkoop/expense-claims/:id",
+			"type": "detail",
+			"title": "Expense Claim",
+			"config": {
+				"register": "shillinq",
+				"schema": "ExpenseClaimEntry",
+				"fields": [
+					{
+						"key": "claimNumber",
+						"label": "Claim #",
+						"type": "string"
+					},
+					{
+						"key": "employeeId",
+						"label": "Employee",
+						"type": "string"
+					},
+					{
+						"key": "fromDate",
+						"label": "From Date",
+						"type": "date"
+					},
+					{
+						"key": "toDate",
+						"label": "To Date",
+						"type": "date"
+					},
+					{
+						"key": "submittedDate",
+						"label": "Submitted",
+						"type": "date-time"
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "approvalState",
+						"label": "Approval State",
+						"type": "string"
+					},
+					{
+						"key": "glTransactionId",
+						"label": "GL Transaction",
+						"type": "string"
+					},
+					{
+						"key": "costCentreAllocations",
+						"label": "Cost Centre Allocations",
+						"type": "object"
+					},
+					{
+						"key": "receiptIds",
+						"label": "Receipts",
+						"type": "relation-list",
+						"relatedSchema": "Receipt"
+					},
+					{
+						"key": "mileageIds",
+						"label": "Mileage Entries",
+						"type": "relation-list",
+						"relatedSchema": "MileageEntry"
+					},
+					{
+						"key": "perDiemIds",
+						"label": "Per Diem",
+						"type": "relation-list",
+						"relatedSchema": "PerDiem"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"indexRoute": "ExpenseClaims"
+			}
+		},
+		{
+			"id": "MileageLog",
+			"route": "/inkoop/mileage-log",
+			"type": "index",
+			"title": "Mileage Log",
+			"config": {
+				"register": "shillinq",
+				"schema": "MileageEntry",
+				"columns": [
+					{
+						"key": "mileageNumber",
+						"label": "Mileage #",
+						"sortable": true
+					},
+					{
+						"key": "journeyDate",
+						"label": "Date",
+						"sortable": true,
+						"type": "date"
+					},
+					{
+						"key": "fromLocation",
+						"label": "From",
+						"sortable": false
+					},
+					{
+						"key": "toLocation",
+						"label": "To",
+						"sortable": false
+					},
+					{
+						"key": "distance",
+						"label": "Distance (km)",
+						"sortable": true,
+						"type": "number"
+					},
+					{
+						"key": "vehicleType",
+						"label": "Vehicle",
+						"sortable": true
+					},
+					{
+						"key": "ratePerKm",
+						"label": "Rate (€/km)",
+						"sortable": true,
+						"type": "number"
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total (EUR)",
+						"sortable": true,
+						"type": "number"
+					},
+					{
+						"key": "costCentreCode",
+						"label": "Cost Centre",
+						"sortable": true
+					}
+				],
+				"defaultSort": "journeyDate",
+				"filters": [
+					{
+						"key": "vehicleType",
+						"label": "Vehicle Type",
+						"type": "enum",
+						"options": [
+							"car",
+							"motorcycle",
+							"van",
+							"bicycle"
+						]
+					},
+					{
+						"key": "journeyDate",
+						"label": "Date Range",
+						"type": "date-range"
+					},
+					{
+						"key": "costCentreCode",
+						"label": "Cost Centre",
+						"type": "string"
+					},
+					{
+						"key": "claimId",
+						"label": "Has Claim",
+						"type": "boolean"
+					}
+				],
+				"detailRoute": "MileageLogDetail"
+			}
+		},
+		{
+			"id": "MileageLogDetail",
+			"route": "/inkoop/mileage-log/:id",
+			"type": "detail",
+			"title": "Mileage Entry",
+			"config": {
+				"register": "shillinq",
+				"schema": "MileageEntry",
+				"fields": [
+					{
+						"key": "mileageNumber",
+						"label": "Mileage #",
+						"type": "string"
+					},
+					{
+						"key": "journeyDate",
+						"label": "Journey Date",
+						"type": "date"
+					},
+					{
+						"key": "fromLocation",
+						"label": "From",
+						"type": "string"
+					},
+					{
+						"key": "toLocation",
+						"label": "To",
+						"type": "string"
+					},
+					{
+						"key": "distance",
+						"label": "Distance (km)",
+						"type": "number"
+					},
+					{
+						"key": "vehicleType",
+						"label": "Vehicle Type",
+						"type": "string"
+					},
+					{
+						"key": "ratePerKm",
+						"label": "Rate (€/km)",
+						"type": "number"
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "purpose",
+						"label": "Purpose",
+						"type": "string"
+					},
+					{
+						"key": "costCentreCode",
+						"label": "Cost Centre",
+						"type": "string"
+					},
+					{
+						"key": "claimId",
+						"label": "Claim",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"indexRoute": "MileageLog"
 			}
 		}
 	]

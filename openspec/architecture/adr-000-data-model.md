@@ -1803,6 +1803,8 @@ _Expense claim submissions with receipt tracking, approval workflow, and reimbur
 - → Receipt (one-to-many)
 - → Payment (many-to-one)
 
+> **Reconciliation note (expense-capture-core, 2026-06-03):** The existing `ExpenseClaim` entry (primary spec: approval-workflow-management) is a generic claim schema without cost-centre allocation, multi-currency support, or GL materialisation. `ExpenseClaimEntry` is the shillinq bookkeeping-tier expense claim with full lifecycle (draft → submitted → approved → posted → reimbursed), OR approval-workflow routing per ADR-022, GL materialisation per REQ-EC-012, multi-currency, and cost-centre allocation per line. New expense-capture implementations in shillinq MUST use `ExpenseClaimEntry`. The `ExpenseClaim` entry is retained for generic approval-workflow-management usage outside the bookkeeping tier.
+
 ### ExpenseLineItem
 **Schema.org:** `schema:Thing`
 _A line item within an expense record with detailed coding for department allocation and cost center tracking_
@@ -3167,6 +3169,8 @@ _Daily allowance for employees on company travel, calculated based on country-sp
 - → Person (many-to-one)
 - → CostCenter (many-to-one)
 
+> **Reconciliation note (expense-capture-core, 2026-06-03):** The existing `PerDiem` entry (primary spec: cost-accounting-allocation) is a generic daily-allowance schema (date, country, nights, rate, amount). The expense-capture-core `PerDiem` schema in `lib/Settings/shillinq_register.json` is the shillinq bookkeeping-tier per-diem record with travelStartDate/travelEndDate, nightCount, ISO-3166 country validation, auto-calculated allowanceAmount (nightCount × dailyRate from PerDiemRate master table), cost-centre allocation, and FK to `ExpenseClaimEntry`. New per-diem implementations in shillinq expense flows MUST use the expense-capture-core schema. The generic `PerDiem` entry is retained for cost-accounting-allocation usage outside the expense-capture flow.
+
 ### PerformanceImprovementAction
 **Schema.org:** `schema:Action`
 _Action plan for addressing performance gaps and improving supplier performance against metrics and SLAs_
@@ -3945,6 +3949,8 @@ _Digital document storing scanned receipts, invoices, or proof of transaction fo
 
 **Relations:**
 - → APTransaction (many-to-one)
+
+> **Reconciliation note (expense-capture-core, 2026-06-03):** The existing `Receipt` entry (primary spec: accounts-payable-receivable) is a generic document-attachment schema (fileName, encodingFormat, contentSize) linked to APTransaction. The expense-capture-core `Receipt` schema in `lib/Settings/shillinq_register.json` is the shillinq expense-capture receipt with amount, currency, multi-currency conversion, category, vendorName, and FK to `ExpenseClaimEntry`. The two schemas serve different purposes — the AP receipt is a document reference; the expense receipt is a financial entry. Implementations MUST use the AP-linked schema for AP document attachments and the expense-capture schema for employee expense receipts.
 
 ### Report
 **Schema.org:** `schema:Report`
@@ -5576,3 +5582,87 @@ _Operator-curated batch of selected APInvoice UUIDs producing SEPA pain.001.001.
 - → APInvoice (many-to-many, via invoiceRefs array)
 
 - → Administration (many-to-one)
+
+### ExpenseClaimEntry
+**Schema.org:** `schema:Invoice`
+_Shillinq bookkeeping-tier expense claim grouping N receipts, mileage journeys, and per-diem records into a single approval-and-reimbursement batch. Lifecycle: draft → submitted → approved → posted → reimbursed with disputed/voided branches. Approval routing consumes OR approval-workflow per ADR-022 (no app-local approval table). Posting materialises a balanced GLTransaction per T1 REQ-JE-007 pattern._
+**Primary spec:** expense-capture-core
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| claimNumber | string | Yes | Shillinq-side sequential ID per administration (e.g. EXP-2026-0001) |
+| employeeId | string | Yes | FK to Person (employee submitting the claim) |
+| submittedDate | datetime | No | Timestamp when claim was formally submitted; set by submit lifecycle transition |
+| fromDate | date | Yes | Start date of expense period covered |
+| toDate | date | Yes | End date of expense period covered |
+| totalAmount | number | Yes | Auto-aggregated sum: Receipt.amountInBaseCurrency + MileageEntry.totalAmount + PerDiem.allowanceAmount (always EUR in T2) |
+| currency | string | Yes | Always EUR (base currency) in T2; T5 adds multi-currency claims |
+| description | string | No | Claim summary or business purpose |
+| receiptIds | array | No | FKs to linked Receipt records |
+| mileageIds | array | No | FKs to linked MileageEntry records |
+| perDiemIds | array | No | FKs to linked PerDiem records |
+| approvalState | enum | Yes | One of not-required, pending, approved, rejected — managed by OR approval-workflow engine |
+| state | enum | Yes | One of draft, submitted, approved, posted, reimbursed, disputed, voided |
+| glTransactionId | string | No | Back-reference to materialised GLTransaction UUID once posted |
+| costCentreAllocations | object | No | Claim-wide cost centre allocation map ({costCentreCode: percentage}); per-line codes take precedence |
+| administrationId | string | Yes | FK to administration |
+
+**Relations:**
+- → Receipt (one-to-many, via receiptIds)
+- → MileageEntry (one-to-many, via mileageIds)
+- → PerDiem (one-to-many, via perDiemIds)
+- → GLTransaction (many-to-one, via glTransactionId — materialised on post)
+- → Administration (many-to-one)
+
+> **Reconciliation note (expense-capture-core, 2026-06-03):** The earlier `ExpenseClaim` entry (primary spec: approval-workflow-management) is a generic claim schema. `ExpenseClaimEntry` is the canonical bookkeeping-tier entity with full lifecycle, OR approval-workflow integration, GL materialisation, and cost-centre allocation. New expense-capture implementations MUST use `ExpenseClaimEntry`.
+
+### MileageEntry
+**Schema.org:** `schema:Thing`
+_Journey log capturing distance travelled, vehicle type, and applicable reimbursement rate per kilometre. totalAmount is auto-calculated as distance × ratePerKm from the MileageRate master table. Linked to a parent ExpenseClaimEntry for approval and reimbursement._
+**Primary spec:** expense-capture-core
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| mileageNumber | string | Yes | Shillinq-side sequential ID per administration (e.g. MLG-2026-0001) |
+| journeyDate | date | Yes | Date the journey occurred |
+| fromLocation | string | Yes | Starting address or city |
+| toLocation | string | Yes | Ending address or city |
+| distance | number | Yes | Distance in kilometres (manual entry in T2; optional geocoding in T3); must be positive |
+| vehicleType | enum | Yes | One of: car, motorcycle, van, bicycle |
+| ratePerKm | number | Yes | Rate in EUR/km looked up from MileageRate master table (fiscalYear, vehicleType, country); locked at claim submission |
+| totalAmount | number | Yes | Auto-calculated: distance × ratePerKm |
+| purpose | string | No | Reason for travel |
+| claimId | string | No | FK to parent ExpenseClaimEntry.id; null until added to a claim |
+| costCentreCode | string | No | Cost centre for GL line allocation |
+| administrationId | string | Yes | FK to administration |
+
+**Relations:**
+- → ExpenseClaimEntry (many-to-one, via claimId)
+- → MileageRate (many-to-one, rate lookup by fiscalYear, vehicleType, country)
+- → Administration (many-to-one)
+
+### MileageRate
+**Schema.org:** `schema:PriceSpecification`
+_Master data table of reimbursement rates per kilometre by fiscal year, vehicle type, and tax jurisdiction. Seeded with NL 2026 (car €0.21/km, motorcycle €0.16/km) and FI 2026 (car €0.42/km) rates. Operators maintain rates per fiscal year; MileageEntry.ratePerKm is locked at claim submission._
+**Primary spec:** expense-capture-core
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| fiscalYear | integer | Yes | Fiscal year this rate applies to |
+| country | string | Yes | ISO 3166-1 alpha-2 country code |
+| vehicleType | enum | Yes | One of: car, motorcycle, van, bicycle |
+| ratePerKm | number | Yes | Rate per kilometre in EUR |
+| notes | string | No | Source or regulatory reference |
+
+### PerDiemRate
+**Schema.org:** `schema:PriceSpecification`
+_Master data table of official daily travel allowance rates per country and calendar year. Seeded with NL 2026 (€125/day), FI 2026 (€45/day), and US 2026 (€150/day) rates. Operators maintain rates per calendar year; PerDiem.dailyRate is locked at claim submission._
+**Primary spec:** expense-capture-core
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| calendarYear | integer | Yes | Calendar year this rate applies to |
+| country | string | Yes | ISO 3166-1 alpha-2 country code |
+| dailyRate | number | Yes | Official daily allowance rate in the stated currency |
+| currency | string | Yes | ISO 4217 currency code (almost always EUR for NL/FI) |
+| source | string | No | Regulatory source for this rate |
