@@ -55,13 +55,6 @@ class InitializeSettingsTest extends TestCase
     private LoggerInterface&MockObject $logger;
 
     /**
-     * Mock ContainerInterface.
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
-
-    /**
      * Mock IOutput.
      *
      * @var IOutput&MockObject
@@ -87,7 +80,6 @@ class InitializeSettingsTest extends TestCase
         $this->settingsService = $this->createMock(originalClassName: SettingsService::class);
         $this->container       = $this->createMock(originalClassName: ContainerInterface::class);
         $this->logger          = $this->createMock(originalClassName: LoggerInterface::class);
-        $this->container       = $this->createMock(originalClassName: ContainerInterface::class);
         $this->output          = $this->createMock(originalClassName: IOutput::class);
 
         $this->repairStep = new InitializeSettings(
