@@ -2,7 +2,7 @@
   "schema_version": 2,
   "spec_slug": "add-shillinq-kor-kleine-ondernemersregeling",
   "repo": "https://codeberg.org/Conduction/shillinq",
-  "issue": 32,
+  "issue": 31,
   "cycles": [
     {
       "cycle": 1,
@@ -10,7 +10,7 @@
       "started_at": "2026-06-01T22:44:01Z",
       "ended_at": "2026-06-02T16:47:37Z",
       "outcome": "done",
-      "outcome_reason": "pipeline complete \u2014 reviews passed and applier passed (if run)",
+      "outcome_reason": "pipeline complete — reviews passed and applier passed (if run)",
       "pattern_tags": [],
       "stages": [
         {
@@ -42,7 +42,7 @@
         },
         {
           "stage": "applier",
-          "persona": "Axel Pli\u00e9r",
+          "persona": "Axel Pliér",
           "model": "sonnet",
           "container": "hydra-applier",
           "started_at": "2026-06-02T16:45:34Z",
@@ -60,17 +60,50 @@
           "duration_seconds": 103
         }
       ]
+    },
+    {
+      "cycle": 2,
+      "trigger": "build:queued",
+      "started_at": "2026-06-03T00:00:00Z",
+      "ended_at": null,
+      "outcome": "in-progress",
+      "outcome_reason": "build cycle 2 — correcting issue reference to #31; implementation already present in development from cycle 1 applier",
+      "pattern_tags": [],
+      "stages": [
+        {
+          "stage": "build",
+          "persona": "Al Gorithm",
+          "model": "sonnet",
+          "container": "hydra-builder",
+          "started_at": "2026-06-03T00:00:00Z",
+          "ended_at": null,
+          "exit_code": null,
+          "turns_used": 0,
+          "turns_budget": 200,
+          "checks_run": [],
+          "checks_skipped": [],
+          "findings": [],
+          "decisions": [
+            {
+              "id": "issue-correction",
+              "note": "hydra.json previously recorded issue 32 (stale); corrected to canonical issue #31 per run inputs. All 14 tasks were completed and applied to development in cycle 1."
+            }
+          ],
+          "verdict": null,
+          "duration_seconds": null
+        }
+      ]
     }
   ],
   "totals": {
-    "runs": 2,
+    "runs": 3,
     "turns_used": 17,
     "cost_usd": 0.0,
     "duration_seconds": 1878,
-    "cycles": 1,
+    "cycles": 2,
     "by_stage": {
       "build": {
-        "runs": 1,
+        "runs": 2,
         "turns_used": 0,
         "cost_usd": 0.0,
         "duration_seconds": 1775
