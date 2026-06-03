@@ -100,17 +100,21 @@ class AccountBalanceGuard
      */
     public function requireZeroBalance(array $account): bool
     {
-        if ($this->isGLLineRegisterAvailable() === false) {
+        // T1 check: if ObjectService itself is unavailable (OR not installed), permit
+        // archive by default — no GLLine register can exist without OR (T1 state).
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+        } catch (\Throwable) {
             $this->logger->debug(
-                'AccountBalanceGuard: GLLine register not present (T1 state) — archive permitted by default',
+                'AccountBalanceGuard: ObjectService not present (T1 state) — archive permitted by default',
                 ['accountNumber' => ($account['accountNumber'] ?? 'unknown')]
             );
             return true;
         }
 
+        // T2+ check: compute balance via GLLine records. Fail-closed on any error
+        // so a transient DB failure denies archive rather than silently permitting it.
         try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-
             // Page through all GLLine records in batches to avoid hitting the
             // default findAll() limit when an account has many postings (L1).
             $pageSize  = 500;
@@ -227,31 +231,4 @@ class AccountBalanceGuard
             return false;
         }//end try
     }//end requireSingleClosingAccount()
-
-    /**
-     * Probe whether the GLLine schema is declared in the configured register
-     * (i.e. T2 has shipped). Uses OR's real API: attempt to fetch at most one
-     * GLLine record; a "schema not found" exception means T1 state.
-     *
-     * C5: calling setRegister/setSchema alone does NOT validate schema existence —
-     * those setters merely stash the slug strings. We must execute an actual query
-     * so that a missing GLLine schema triggers the schema-not-found exception that
-     * proves T1 state. An empty result (schema exists but has no records) is still
-     * T2 — the schema is present, so we return true.
-     *
-     * @return bool True when the GLLine schema exists in OR's configured register.
-     */
-    private function isGLLineRegisterAvailable(): bool
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $objectService
-                ->setRegister($this->getRegisterSlug())
-                ->setSchema('GLLine')
-                ->findAll(['limit' => 1]);
-            return true;
-        } catch (\Throwable) {
-            return false;
-        }
-    }//end isGLLineRegisterAvailable()
 }//end class

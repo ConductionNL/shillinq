@@ -136,7 +136,6 @@ class InitializeSettings implements IRepairStep
             $this->seedSelectielijstRules(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
-            $this->seedAllocationRuleExamples(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -197,10 +196,6 @@ class InitializeSettings implements IRepairStep
      */
     private function registerIv3ScheduledWorkflow(IOutput $output): void
     {
-        if ($this->settingsService->isOpenRegisterAvailable() === false) {
-            return;
-        }
-
         try {
             $workflowMapper = $this->container->get(
                 'OCA\OpenRegister\Db\ScheduledWorkflowMapper'
@@ -259,10 +254,6 @@ class InitializeSettings implements IRepairStep
      */
     private function seedKorThresholds(IOutput $output): void
     {
-        if ($this->settingsService->isOpenRegisterAvailable() === false) {
-            return;
-        }
-
         $seedPath = __DIR__.'/../Settings/seeds/kor-thresholds-2026.json';
         if (file_exists($seedPath) === false) {
             $output->warning('Shillinq: KOR threshold seed file not found, skipping');
@@ -336,96 +327,6 @@ class InitializeSettings implements IRepairStep
     }//end seedKorThresholds()
 
     /**
-     * Seed the AllocationRule example records from seeds/allocation-rules/, idempotently.
-     *
-     * Each seed file ships with lifecycleState: paused so operators can review before
-     * activating. Deduplication key is rule name + administrationId. Safe on re-run.
-     *
-     * @param IOutput $output The output interface for progress reporting.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
-     */
-    private function seedAllocationRuleExamples(IOutput $output): void
-    {
-        if ($this->settingsService->isOpenRegisterAvailable() === false) {
-            return;
-        }
-
-        $seedDir = __DIR__.'/../Settings/seeds/allocation-rules/';
-        if (is_dir($seedDir) === false) {
-            return;
-        }
-
-        $files = glob($seedDir.'*.json');
-        if (empty($files) === true) {
-            return;
-        }
-
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $registerSlug  = $this->settingsService->getRegisterSlug();
-            $seeded        = 0;
-            $skipped       = 0;
-
-            foreach ($files as $file) {
-                $content = file_get_contents($file);
-                if ($content === false) {
-                    continue;
-                }
-
-                $data = json_decode($content, associative: true);
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    continue;
-                }
-
-                $objects = ($data['objects'] ?? []);
-
-                foreach ($objects as $rule) {
-                    $name = ($rule['name'] ?? null);
-                    if ($name === null) {
-                        continue;
-                    }
-
-                    $existing = $objectService
-                        ->setRegister($registerSlug)
-                        ->setSchema('AllocationRule')
-                        ->findAll(
-                            [
-                                'filters' => ['name' => $name],
-                                'limit'   => 1,
-                            ]
-                        );
-
-                    if (empty($existing) === false) {
-                        $skipped++;
-                        continue;
-                    }
-
-                    $objectService->saveObject(
-                        object: $rule,
-                        register: $registerSlug,
-                        schema: 'AllocationRule',
-                    );
-                    $seeded++;
-                }//end foreach
-            }//end foreach
-
-            $output->info(
-                'Shillinq: AllocationRule examples seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
-            );
-        } catch (\Throwable $e) {
-            $output->warning('Shillinq: AllocationRule seeding failed: '.$e->getMessage());
-            $this->logger->warning(
-                'Shillinq: AllocationRule seeding failed',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
-
-    }//end seedAllocationRuleExamples()
-
-    /**
      * Seed the chart of accounts from the configured RGS template, idempotently.
      *
      * Seeding is skipped when administration_id is not configured (C2) to prevent
@@ -479,6 +380,21 @@ class InitializeSettings implements IRepairStep
         if ($seedResult['success'] !== true) {
             $message = ($seedResult['message'] ?? 'unknown error');
             $output->warning('Chart of accounts seeding issue: '.$message);
+        }
+
+        $allocationResult = $this->settingsService->seedAllocationRules(administrationId: $administrationId);
+
+        if ($allocationResult['success'] === true) {
+            $seeded  = ($allocationResult['seeded'] ?? 0);
+            $skipped = ($allocationResult['skipped'] ?? 0);
+            $output->info(
+                'AllocationRule examples seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        }
+
+        if ($allocationResult['success'] !== true) {
+            $message = ($allocationResult['message'] ?? 'unknown error');
+            $output->warning('AllocationRule seeding issue: '.$message);
         }
 
     }//end seedChartOfAccounts()
