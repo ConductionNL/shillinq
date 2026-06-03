@@ -3976,6 +3976,32 @@ _Payment scheduled for future execution with support for recurring transactions_
 - → BankAccount (many-to-one)
 - → Payment (one-to-many)
 
+### Service
+**Schema.org:** `schema:Service`
+_A bookable service in the service catalogue. Foundational T1 schema enabling all scheduling, booking, and appointment workloads. Declares temporal dimensions (duration, preparation time, buffers), pricing (base price + dynamic flag), categorization, resource-type linking, and status lifecycle._
+**Primary spec:** bookings-service-catalog
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| name | string | Yes | Human-readable service name (e.g. "Haircut", "1-hour consultation") |
+| code | string | Yes | Stable slug identifier unique per administration (e.g. "haircut", "consult-1h"); MUST NOT change once assigned |
+| description | string | No | Detailed service description for UI display |
+| duration | integer ≥ 0 | Yes | Service duration in minutes; 0 for non-scheduled services (subscriptions, products) |
+| prepareTime | integer ≥ 0 | Yes (default 0) | Setup/preparation time in minutes applied before service window; total calendar block = prepareTime + duration + bufferAfter |
+| bufferBefore | integer ≥ 0 | Yes (default 0) | Gap in minutes required before service begins (e.g. travel time); typically 0 for collocated resources |
+| bufferAfter | integer ≥ 0 | Yes (default 0) | Gap in minutes after service ends for turnover (e.g. room cleaning, chair turnover) |
+| basePrice | decimal ≥ 0 | Yes | Base unit price in the specified currency; final price when dynamicPricing = false |
+| currency | string (ISO 4217) | Yes | Currency code; default EUR for Dutch organisations |
+| dynamicPricing | boolean | Yes (default false) | If true, dependent pricing specs MUST compute actual price via rules; basePrice is reference/fallback only |
+| serviceCategory | string | Yes | Flat category grouping (e.g. "Hair Services", "Consulting"); nested hierarchies deferred to T2+ |
+| resourceTypeRef | string | No | FK to resource type concept (skill, room, staff specialty, or generic resource class); resolved by dependent specs; null for no resource requirement (TBD resolution during opsx-ff discovery) |
+| status | enum | Yes | One of `draft`, `active`, `archived`; lifecycle: draft → active → archived → active (restoration allowed) |
+| administrationId | string | Yes | FK to administration for multi-tenant isolation; scopes uniqueness of service code |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- Referenced by dependent booking, scheduling, and resource-allocation specs via `resourceTypeRef`
+
 ### ServiceLevelAgreement
 **Schema.org:** `schema:Service`
 _Formal agreement defining service level targets, performance expectations, and remedies with a supplier_
