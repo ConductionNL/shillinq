@@ -1,0 +1,31 @@
+{
+	"_comment": "SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> SPDX-License-Identifier: EUPL-1.2",
+	"_meta": {
+		"source": "shillinq-default",
+		"variant": "volume",
+		"description": "Example IT-spend allocation rule that spreads IT accounts 4500-4599 across cost centers weighted by transaction volume. Shipped in lifecycleState: paused — activate after operator review per design Seed Data section."
+	},
+	"register": "shillinq",
+	"schema": "AllocationRule",
+	"objects": [
+		{
+			"name": "IT spend allocation by volume",
+			"sourceAccountPattern": "4500-4599",
+			"driver": "volume",
+			"targets": [
+				{
+					"code": "KC-100",
+					"source": "volume-register"
+				},
+				{
+					"code": "KC-200",
+					"source": "volume-register"
+				}
+			],
+			"targetDimension": "cost-center",
+			"cadence": "monthly",
+			"lifecycleState": "paused",
+			"administrationId": "example-administration-id"
+		}
+	]
+}
