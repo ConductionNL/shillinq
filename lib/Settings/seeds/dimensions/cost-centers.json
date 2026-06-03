@@ -1,0 +1,62 @@
+{
+	"_comment": "SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> SPDX-License-Identifier: EUPL-1.2",
+	"_meta": {
+		"source": "shillinq-default",
+		"variant": "dimensions",
+		"description": "Example cost center seed records for Dutch organisations. 3 top-level cost centers demonstrating the code/name/parentCode hierarchy per REQ-CD-002. Shipped as lifecycleState: active — operators may archive or extend."
+	},
+	"register": "shillinq",
+	"schema": "CostCenter",
+	"objects": [
+		{
+			"code": "CC-001",
+			"name": "Administratie, Amsterdam",
+			"description": "Centrale administratie en financiële verwerking — hoofdkantoor Amsterdam per REQ-CD-002.",
+			"parentCode": null,
+			"responsibleUser": null,
+			"budget": 150000.00,
+			"lifecycleState": "active",
+			"administrationId": "example-administration-id"
+		},
+		{
+			"code": "CC-010",
+			"name": "Verkoop, Utrecht",
+			"description": "Regionale verkoopafdeling Utrecht — verantwoordelijk voor klantrelaties in de regio Midden-Nederland.",
+			"parentCode": null,
+			"responsibleUser": null,
+			"budget": 250000.00,
+			"lifecycleState": "active",
+			"administrationId": "example-administration-id"
+		},
+		{
+			"code": "CC-020",
+			"name": "Logistiek, Rotterdam",
+			"description": "Logistiek distributiecentrum Rotterdam — verantwoordelijk voor opslag, transport en distributie.",
+			"parentCode": null,
+			"responsibleUser": null,
+			"budget": 200000.00,
+			"lifecycleState": "active",
+			"administrationId": "example-administration-id"
+		},
+		{
+			"code": "CC-030",
+			"name": "IT & Systemen, Amsterdam",
+			"description": "IT-afdeling en systeembeheer — infrastructuur, applicatiebeheer en helpdesk.",
+			"parentCode": "CC-001",
+			"responsibleUser": null,
+			"budget": 80000.00,
+			"lifecycleState": "active",
+			"administrationId": "example-administration-id"
+		},
+		{
+			"code": "CC-040",
+			"name": "HR & Personeelszaken, Amsterdam",
+			"description": "Personeelszaken en HR-administratie — werving, opleiding en arbeidsrelaties.",
+			"parentCode": "CC-001",
+			"responsibleUser": null,
+			"budget": 60000.00,
+			"lifecycleState": "active",
+			"administrationId": "example-administration-id"
+		}
+	]
+}

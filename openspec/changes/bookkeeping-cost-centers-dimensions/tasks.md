@@ -4,19 +4,19 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `CostCenter` / `Project` / `AnalyticalDimension` schemas or `bookkeeping-cost-centers-dimensions` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `adr-000-data-model.md`)
-- [ ] Task 2: Author `specs/bookkeeping-cost-centers-dimensions/spec.md` with `Status: proposed` / `Scope: bookkeeping` / `Tier: T2 (advanced features)` / `Depends on: bookkeeping-general-ledger (T1)` header, `REQ-CD-NNN` requirements using RFC 2119 keywords, `#### Scenario:` blocks with GIVEN/WHEN/THEN
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions per ADR-032 guidelines
-- [ ] Task 4: Author `design.md` with Decisions (dimensions as registers, hierarchy via self-relations, segment P&L as aggregation, custom dimensions) and Reuse Analysis table per hydra `rules.design`
-- [ ] Task 5: Declare the `CostCenter` schema in app register configuration with REQ-CD-002 fields (code, name, parentCode, manager, budget, status, administrationId), `x-openregister-relations` self-relation for hierarchy, RBAC role definitions
-- [ ] Task 6: Declare the `Project` schema with REQ-CD-002 equivalent fields, `x-openregister-relations` self-relation for hierarchy, RBAC role definitions
-- [ ] Task 7: Declare the `AnalyticalDimension` schema with REQ-CD-006 fields (code, name, dataType, isHierarchical, administrationId) for operator-defined custom dimensions
-- [ ] Task 8: Additively patch the T1 `GLLine` schema with dimension fields (`costCenterCode`, `projectCode`, `dimensions` map) per REQ-CD-003; the `dimensions` map validates against registered analytical dimensions via OR relations engine
-- [ ] Task 9: Declare segment P&L roll-up as `x-openregister-aggregations` on `GLLine` keyed by dimension and hierarchical parent per REQ-CD-004 + REQ-CD-007; consumed by dashboard via runtime GraphQL and by manifest detail pages
-- [ ] Task 10: Ship cost center and analytical dimension example seeds under `lib/Settings/seeds/dimensions/` (3-5 realistic Dutch cost centers: Administratie Amsterdam, Sales Utrecht, Sales Amsterdam, Logistics Rotterdam; 2 example custom dimension definitions: Region, Product Line) with SPDX header + `_meta` block per `feedback_spdx-in-docblock.md`
-- [ ] Task 11: Extend the repair step under `lib/Migration/` to import dimension example seeds idempotently per REQ-CD-002 + REQ-CD-006
-- [ ] Task 12: Add Dimensions navigation + pages to `src/manifest.json` (entries under `Bookkeeping > Dimensions` for `CostCenter`, `Project`, `AnalyticalDimension` with matching `type: index` + `type: detail` pages; custom analytical dimensions appear automatically with no PHP/Vue edits) per REQ-CD-005; `node tests/validate-manifest.js` exits 0
-- [ ] Task 13: Update `openspec/architecture/adr-000-data-model.md` with one-paragraph reconciliation notes introducing `CostCenter`, `Project`, `AnalyticalDimension` and the additive dimension fields on `GLLine`; document that custom dimensions are operator-extensible via the `AnalyticalDimension` register
+- [x] Task 1: Confirm no `CostCenter` / `Project` / `AnalyticalDimension` schemas or `bookkeeping-cost-centers-dimensions` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `adr-000-data-model.md`)
+- [x] Task 2: Author `specs/bookkeeping-cost-centers-dimensions/spec.md` with `Status: proposed` / `Scope: bookkeeping` / `Tier: T2 (advanced features)` / `Depends on: bookkeeping-general-ledger (T1)` header, `REQ-CD-NNN` requirements using RFC 2119 keywords, `#### Scenario:` blocks with GIVEN/WHEN/THEN
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions per ADR-032 guidelines
+- [x] Task 4: Author `design.md` with Decisions (dimensions as registers, hierarchy via self-relations, segment P&L as aggregation, custom dimensions) and Reuse Analysis table per hydra `rules.design`
+- [x] Task 5: Declare the `CostCenter` schema in app register configuration with REQ-CD-002 fields (code, name, parentCode, manager, budget, status, administrationId), `x-openregister-relations` self-relation for hierarchy, RBAC role definitions
+- [x] Task 6: Declare the `Project` schema with REQ-CD-002 equivalent fields, `x-openregister-relations` self-relation for hierarchy, RBAC role definitions
+- [x] Task 7: Declare the `AnalyticalDimension` schema with REQ-CD-006 fields (code, name, dataType, isHierarchical, administrationId) for operator-defined custom dimensions
+- [x] Task 8: Additively patch the T1 `GLLine` schema with dimension fields (`costCenterCode`, `projectCode`, `dimensions` map) per REQ-CD-003; the `dimensions` map validates against registered analytical dimensions via OR relations engine
+- [x] Task 9: Declare segment P&L roll-up as `x-openregister-aggregations` on `GLLine` keyed by dimension and hierarchical parent per REQ-CD-004 + REQ-CD-007; consumed by dashboard via runtime GraphQL and by manifest detail pages
+- [x] Task 10: Ship cost center and analytical dimension example seeds under `lib/Settings/seeds/dimensions/` (3-5 realistic Dutch cost centers: Administratie Amsterdam, Sales Utrecht, Sales Amsterdam, Logistics Rotterdam; 2 example custom dimension definitions: Region, Product Line) with SPDX header + `_meta` block per `feedback_spdx-in-docblock.md`
+- [x] Task 11: Extend the repair step under `lib/Migration/` to import dimension example seeds idempotently per REQ-CD-002 + REQ-CD-006
+- [x] Task 12: Add Dimensions navigation + pages to `src/manifest.json` (entries under `Bookkeeping > Dimensions` for `CostCenter`, `Project`, `AnalyticalDimension` with matching `type: index` + `type: detail` pages; custom analytical dimensions appear automatically with no PHP/Vue edits) per REQ-CD-005; `node tests/validate-manifest.js` exits 0
+- [x] Task 13: Update `openspec/architecture/adr-000-data-model.md` with one-paragraph reconciliation notes introducing `CostCenter`, `Project`, `AnalyticalDimension` and the additive dimension fields on `GLLine`; document that custom dimensions are operator-extensible via the `AnalyticalDimension` register
 
 ## Deduplication Check
 

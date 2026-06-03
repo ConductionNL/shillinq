@@ -1279,4 +1279,135 @@ class SettingsService
         }//end try
 
     }//end seedProductAttributes()
+
+    /**
+     * Seed example CostCenter and AnalyticalDimension records, idempotently.
+     *
+     * Imports cost-centers.json (3-5 realistic Dutch cost centers) and
+     * analytical-dimensions.json (Region, Product Line dimension definitions)
+     * from lib/Settings/seeds/dimensions/. Deduplication key is the `code` field
+     * per schema per administration — re-importing skips existing records and
+     * preserves operator edits per REQ-CD-002 + REQ-CD-006.
+     *
+     * @param string $administrationId The administration FK to stamp on seeded records.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/bookkeeping-cost-centers-dimensions/tasks.md#task-10
+     * @spec openspec/changes/bookkeeping-cost-centers-dimensions/tasks.md#task-11
+     */
+    public function seedDimensions(string $administrationId): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        if ($administrationId === '') {
+            return [
+                'success' => false,
+                'message' => 'administrationId must not be empty.',
+            ];
+        }
+
+        $seedFiles = [
+            ['file' => 'cost-centers.json', 'schema' => 'CostCenter', 'key' => 'objects'],
+            ['file' => 'analytical-dimensions.json', 'schema' => 'AnalyticalDimension', 'key' => 'objects'],
+        ];
+
+        $seeded  = 0;
+        $skipped = 0;
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+
+            foreach ($seedFiles as $seedConfig) {
+                $seedPath = __DIR__.'/../Settings/seeds/dimensions/'.$seedConfig['file'];
+
+                if (file_exists(filename: $seedPath) === false) {
+                    $this->logger->warning(
+                        'Shillinq: dimension seed file not found at '.$seedPath
+                    );
+                    continue;
+                }
+
+                $content = file_get_contents(filename: $seedPath);
+                if ($content === false) {
+                    $this->logger->warning(
+                        'Shillinq: failed to read dimension seed file: '.$seedConfig['file']
+                    );
+                    continue;
+                }
+
+                $data = json_decode(json: $content, associative: true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    $this->logger->warning(
+                        'Shillinq: failed to parse dimension seed file: '.$seedConfig['file']
+                    );
+                    continue;
+                }
+
+                $objects = ($data[$seedConfig['key']] ?? []);
+
+                foreach ($objects as $object) {
+                    $code = ($object['code'] ?? null);
+                    if ($code === null) {
+                        continue;
+                    }
+
+                    $object['administrationId'] = $administrationId;
+
+                    $existing = $objectService->findObjects(
+                        register: $registerSlug,
+                        schema: $seedConfig['schema'],
+                        params: [
+                            'code'             => $code,
+                            'administrationId' => $administrationId,
+                            '_limit'           => 1,
+                        ]
+                    );
+
+                    if (empty($existing) === false) {
+                        $skipped++;
+                        continue;
+                    }
+
+                    $objectService->saveObject(
+                        register: $registerSlug,
+                        schema: $seedConfig['schema'],
+                        object: $object,
+                    );
+                    $seeded++;
+                }//end foreach
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: dimension seeds imported',
+                [
+                    'seeded'  => $seeded,
+                    'skipped' => $skipped,
+                ]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'Dimension seeds imported successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: dimension seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedDimensions()
 }//end class

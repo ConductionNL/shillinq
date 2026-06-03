@@ -1,5 +1,7 @@
 # Design — Cost Centers & Analytical Dimensions
 
+**Status:** pr-created
+
 ## Decisions
 
 ### D1 — Dimensions are first-class registers, not free-form strings on `GLLine`
@@ -34,7 +36,7 @@ The `AnalyticalDimension` register allows operators to define new dimension type
 | Dimension definitions | New `AnalyticalDimension` register | Operator-declared; validates keys in `GLLine.dimensions` |
 | Hierarchy navigation | `x-openregister-relations` self-relation | Standard relation shape on `parentCode` FK |
 | Custom dimensions | OR register abstraction (ADR-022) | `GLLine.dimensions` free-form map validates against registered dimension records via relations engine |
-| Segment P&L aggregation | `x-openregister-aggregations` on `GLLine` (ADR-031) | Keyed by dimension; consumed by mydash + manifest pages |
+| Segment P&L aggregation | `x-openregister-aggregations` on `GLLine` (ADR-031) | Keyed by dimension; consumed by launchpad + manifest pages |
 | Audit trail | OR audit-trail-immutable | Consumed automatically |
 | Manifest navigation | `src/manifest.json` + `CnAppRoot` (Tier-1 generic) | Adds navigation entries + matching index/detail page pairs |
 

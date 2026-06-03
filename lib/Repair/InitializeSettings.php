@@ -82,6 +82,7 @@ class InitializeSettings implements IRepairStep
      * Phase 6: seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
      * Phase 7: seeds RJ-270 stages and rate-card templates for consultancy project accounting.
      * Phase 8: seeds ProductAttribute templates (office, it_hardware, logistics, food_beverage, clothing) per REQ-IPC-007.
+     * Phase 9: seeds example CostCenter and AnalyticalDimension records from seeds/dimensions/ per REQ-CD-002 + REQ-CD-006.
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -93,6 +94,7 @@ class InitializeSettings implements IRepairStep
      * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
      * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
      * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
+     * @spec openspec/changes/bookkeeping-cost-centers-dimensions/tasks.md#task-11
      */
     public function run(IOutput $output): void
     {
@@ -143,6 +145,7 @@ class InitializeSettings implements IRepairStep
             $this->registerIv3ScheduledWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
             $this->seedProductAttributeTemplates(output: $output);
+            $this->seedDimensionExamples(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -418,6 +421,47 @@ class InitializeSettings implements IRepairStep
         }//end foreach
 
     }//end seedProductAttributeTemplates()
+
+    /**
+     * Seed example CostCenter and AnalyticalDimension records, idempotently.
+     *
+     * Seeds 5 example cost centers (Dutch municipal/business structure) and
+     * 2 analytical dimension definitions (Region, Product Line) from
+     * lib/Settings/seeds/dimensions/. Requires administration_id to be configured.
+     * Skipped when administration_id is absent (C2: prevents orphan seed data).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-cost-centers-dimensions/tasks.md#task-11
+     */
+    private function seedDimensionExamples(IOutput $output): void
+    {
+        $settings         = $this->settingsService->getSettings();
+        $administrationId = ($settings['administration_id'] ?? '');
+
+        if ($administrationId === '') {
+            $output->warning(
+                'Shillinq: administration_id not configured — skipping dimension example seed.'
+            );
+            return;
+        }
+
+        $output->info('Seeding example cost centers and analytical dimensions...');
+        $result = $this->settingsService->seedDimensions(administrationId: $administrationId);
+
+        if ($result['success'] === true) {
+            $output->info(
+                'Dimension examples seeded: '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if ($result['success'] !== true) {
+            $output->warning('Dimension seeding issue: '.($result['message'] ?? 'unknown error'));
+        }
+
+    }//end seedDimensionExamples()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.

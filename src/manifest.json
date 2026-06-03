@@ -1030,6 +1030,94 @@
 			}
 		},
 		{
+			"id": "AnalyticalDimensions",
+			"route": "/bookkeeping/dimensions/analytical-dimensions",
+			"type": "index",
+			"title": "Analytical Dimensions",
+			"config": {
+				"register": "shillinq",
+				"schema": "AnalyticalDimension",
+				"columns": [
+					{
+						"key": "code",
+						"label": "Code",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "dataType",
+						"label": "Data Type",
+						"sortable": true
+					},
+					{
+						"key": "isHierarchical",
+						"label": "Hierarchical",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "code",
+				"detailRoute": "AnalyticalDimensionDetail"
+			}
+		},
+		{
+			"id": "AnalyticalDimensionDetail",
+			"route": "/bookkeeping/dimensions/analytical-dimensions/:id",
+			"type": "detail",
+			"title": "Analytical Dimension",
+			"config": {
+				"register": "shillinq",
+				"schema": "AnalyticalDimension",
+				"fields": [
+					{
+						"key": "code",
+						"label": "Code",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "dataType",
+						"label": "Data Type",
+						"type": "string"
+					},
+					{
+						"key": "isHierarchical",
+						"label": "Hierarchical",
+						"type": "boolean"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "AnalyticalDimensions"
+			}
+		},
+		{
 			"id": "FeaturesRoadmap",
 			"route": "/features-roadmap",
 			"type": "roadmap",
@@ -4927,7 +5015,10 @@
 			"type": "index",
 			"title": "Rate Cards",
 			"visibilityPredicate": {
-				"administrationType": ["mkb", "zzp"],
+				"administrationType": [
+					"mkb",
+					"zzp"
+				],
 				"role": "project-administrator"
 			},
 			"config": {
@@ -5019,7 +5110,10 @@
 			"type": "index",
 			"title": "Rate Schedules",
 			"visibilityPredicate": {
-				"administrationType": ["mkb", "zzp"],
+				"administrationType": [
+					"mkb",
+					"zzp"
+				],
 				"role": "project-administrator"
 			},
 			"config": {
@@ -5141,7 +5235,10 @@
 			"type": "index",
 			"title": "Rate Audit Trail",
 			"visibilityPredicate": {
-				"administrationType": ["mkb", "zzp"],
+				"administrationType": [
+					"mkb",
+					"zzp"
+				],
 				"role": "project-administrator"
 			},
 			"config": {

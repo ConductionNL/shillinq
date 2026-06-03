@@ -4069,6 +4069,19 @@
 						"nullable": true,
 						"example": "jan.manager"
 					},
+					"description": {
+						"type": "string",
+						"description": "Detailed cost center description and responsibilities per REQ-CD-002.",
+						"nullable": true,
+						"example": "Verantwoordelijk voor administratieve verwerking en interne rapportage"
+					},
+					"budget": {
+						"type": "number",
+						"description": "Allocated annual or periodic budget amount in EUR per REQ-CD-002.",
+						"nullable": true,
+						"minimum": 0,
+						"example": 250000.0
+					},
 					"lifecycleState": {
 						"type": "string",
 						"description": "Current lifecycle state mirroring Account.lifecycleState per REQ-CoA-005 and REQ-CC-002.",
@@ -5269,7 +5282,13 @@
 								"blended"
 							]
 						},
-						"example": ["user", "role", "project", "client", "blended"]
+						"example": [
+							"user",
+							"role",
+							"project",
+							"client",
+							"blended"
+						]
 					},
 					"currency": {
 						"type": "string",
@@ -5286,7 +5305,10 @@
 					},
 					"lifecycleState": {
 						"type": "string",
-						"enum": ["active", "archived"],
+						"enum": [
+							"active",
+							"archived"
+						],
 						"description": "Lifecycle state of the template.",
 						"example": "active"
 					},
@@ -5328,10 +5350,17 @@
 				"x-openregister-rbac": {
 					"roles": {
 						"project-administrator": {
-							"permissions": ["create", "read", "update", "delete"]
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
 						},
 						"bookkeeper": {
-							"permissions": ["read"]
+							"permissions": [
+								"read"
+							]
 						}
 					}
 				}
@@ -5377,7 +5406,12 @@
 					},
 					"status": {
 						"type": "string",
-						"enum": ["draft", "active", "expired", "archived"],
+						"enum": [
+							"draft",
+							"active",
+							"expired",
+							"archived"
+						],
 						"description": "Lifecycle status of this version.",
 						"example": "active"
 					},
@@ -5422,7 +5456,11 @@
 							"description": "Mark as expired (typically automatic when expiryDate passes)."
 						},
 						"archive": {
-							"from": ["draft", "active", "expired"],
+							"from": [
+								"draft",
+								"active",
+								"expired"
+							],
 							"to": "archived",
 							"label": "Archive version",
 							"description": "Retire this version."
@@ -5454,10 +5492,17 @@
 				"x-openregister-rbac": {
 					"roles": {
 						"project-administrator": {
-							"permissions": ["create", "read", "update", "delete"]
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
 						},
 						"bookkeeper": {
-							"permissions": ["read"]
+							"permissions": [
+								"read"
+							]
 						}
 					}
 				}
@@ -5493,7 +5538,13 @@
 					},
 					"tier": {
 						"type": "string",
-						"enum": ["user", "role", "project", "client", "blended"],
+						"enum": [
+							"user",
+							"role",
+							"project",
+							"client",
+							"blended"
+						],
 						"description": "Rate tier. Precedence: user > role > project > client > blended (REQ-RATE-005, D6).",
 						"example": "user"
 					},
@@ -5511,7 +5562,12 @@
 					},
 					"unit": {
 						"type": "string",
-						"enum": ["hourly", "daily", "monthly", "fixedPrice"],
+						"enum": [
+							"hourly",
+							"daily",
+							"monthly",
+							"fixedPrice"
+						],
 						"description": "Billing unit for this rate.",
 						"example": "hourly"
 					},
@@ -5534,7 +5590,10 @@
 						"description": "Optional volume-discount brackets. Applied in ascending minUnits order; the matching bracket rate overrides the base rate.",
 						"items": {
 							"type": "object",
-							"required": ["minUnits", "rate"],
+							"required": [
+								"minUnits",
+								"rate"
+							],
 							"properties": {
 								"minUnits": {
 									"type": "number",
@@ -5551,7 +5610,17 @@
 								}
 							}
 						},
-						"example": [{"minUnits": 40, "maxUnits": 80, "rate": 120}, {"minUnits": 81, "rate": 110}]
+						"example": [
+							{
+								"minUnits": 40,
+								"maxUnits": 80,
+								"rate": 120
+							},
+							{
+								"minUnits": 81,
+								"rate": 110
+							}
+						]
 					},
 					"administrationId": {
 						"type": "string",
@@ -5560,7 +5629,11 @@
 					},
 					"status": {
 						"type": "string",
-						"enum": ["active", "inactive", "archived"],
+						"enum": [
+							"active",
+							"inactive",
+							"archived"
+						],
 						"description": "Status of this rate schedule.",
 						"example": "active"
 					}
@@ -5596,7 +5669,10 @@
 							"description": "Restore this schedule for rate lookups."
 						},
 						"archive": {
-							"from": ["active", "inactive"],
+							"from": [
+								"active",
+								"inactive"
+							],
 							"to": "archived",
 							"label": "Archive",
 							"description": "Retire this schedule permanently."
@@ -5610,20 +5686,49 @@
 					"resolveRate": {
 						"description": "Rate-lookup aggregation (REQ-RATE-005): given (userId, roleId, projectId, clientId, lookupDate), resolves the most-specific applicable rate by tier precedence (user > role > project > client > blended). Filters by effectiveDate <= lookupDate <= expiryDate, status = active. Returns first match ranked by tier precedence. Per ADR-031: declarative aggregation preferred; falls back to OCA\\Shillinq\\Guard\\RateResolutionGuard if OR aggregation engine does not support parameterised tier-rank sorting.",
 						"parameters": {
-							"userId": {"type": "string", "nullable": true},
-							"roleId": {"type": "string", "nullable": true},
-							"projectId": {"type": "string", "nullable": true},
-							"clientId": {"type": "string", "nullable": true},
-							"lookupDate": {"type": "string", "format": "date"},
-							"administrationId": {"type": "string"}
+							"userId": {
+								"type": "string",
+								"nullable": true
+							},
+							"roleId": {
+								"type": "string",
+								"nullable": true
+							},
+							"projectId": {
+								"type": "string",
+								"nullable": true
+							},
+							"clientId": {
+								"type": "string",
+								"nullable": true
+							},
+							"lookupDate": {
+								"type": "string",
+								"format": "date"
+							},
+							"administrationId": {
+								"type": "string"
+							}
 						},
 						"filter": {
 							"status": "active",
-							"effectiveDate": {"operator": "lte", "value": "@params.lookupDate"},
-							"expiryDate": {"operator": "gte_or_null", "value": "@params.lookupDate"},
+							"effectiveDate": {
+								"operator": "lte",
+								"value": "@params.lookupDate"
+							},
+							"expiryDate": {
+								"operator": "gte_or_null",
+								"value": "@params.lookupDate"
+							},
 							"administrationId": "@params.administrationId"
 						},
-						"tierPrecedence": ["user", "role", "project", "client", "blended"],
+						"tierPrecedence": [
+							"user",
+							"role",
+							"project",
+							"client",
+							"blended"
+						],
 						"fallbackGuard": "OCA\\Shillinq\\Guard\\RateResolutionGuard::resolveByTierPrecedence"
 					},
 					"activeSchedulesByTier": {
@@ -5634,8 +5739,14 @@
 						},
 						"groupBy": "tier",
 						"operations": {
-							"count": {"field": "scheduleId", "operation": "count"},
-							"avgRate": {"field": "rate", "operation": "avg"}
+							"count": {
+								"field": "scheduleId",
+								"operation": "count"
+							},
+							"avgRate": {
+								"field": "rate",
+								"operation": "avg"
+							}
 						}
 					}
 				},
@@ -5654,10 +5765,17 @@
 				"x-openregister-rbac": {
 					"roles": {
 						"project-administrator": {
-							"permissions": ["create", "read", "update", "delete"]
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
 						},
 						"bookkeeper": {
-							"permissions": ["read"]
+							"permissions": [
+								"read"
+							]
 						}
 					}
 				}
@@ -5719,7 +5837,13 @@
 					},
 					"resolvedTier": {
 						"type": "string",
-						"enum": ["user", "role", "project", "client", "blended"],
+						"enum": [
+							"user",
+							"role",
+							"project",
+							"client",
+							"blended"
+						],
 						"description": "Winning tier from rate-lookup precedence (user > role > project > client > blended).",
 						"example": "user"
 					},
@@ -5735,7 +5859,12 @@
 					},
 					"resolvedUnit": {
 						"type": "string",
-						"enum": ["hourly", "daily", "monthly", "fixedPrice"],
+						"enum": [
+							"hourly",
+							"daily",
+							"monthly",
+							"fixedPrice"
+						],
 						"description": "Billing unit of the resolved rate.",
 						"example": "hourly"
 					},
@@ -5768,10 +5897,20 @@
 					"historicalRatesByUser": {
 						"description": "Historical rate audit aggregation (REQ-RATE-010): rate records grouped by resolvedTier and resolvedRate for a given userId and date range. Used by Rate Audit Trail page.",
 						"parameters": {
-							"userId": {"type": "string"},
-							"dateFrom": {"type": "string", "format": "date"},
-							"dateTo": {"type": "string", "format": "date"},
-							"administrationId": {"type": "string"}
+							"userId": {
+								"type": "string"
+							},
+							"dateFrom": {
+								"type": "string",
+								"format": "date"
+							},
+							"dateTo": {
+								"type": "string",
+								"format": "date"
+							},
+							"administrationId": {
+								"type": "string"
+							}
 						},
 						"filter": {
 							"userId": "@params.userId",
@@ -5782,32 +5921,57 @@
 							},
 							"administrationId": "@params.administrationId"
 						},
-						"groupBy": ["resolvedTier", "resolvedRate", "resolvedUnit"],
+						"groupBy": [
+							"resolvedTier",
+							"resolvedRate",
+							"resolvedUnit"
+						],
 						"operations": {
-							"count": {"field": "recordId", "operation": "count"},
-							"firstLookup": {"field": "lookupDate", "operation": "min"},
-							"lastLookup": {"field": "lookupDate", "operation": "max"}
+							"count": {
+								"field": "recordId",
+								"operation": "count"
+							},
+							"firstLookup": {
+								"field": "lookupDate",
+								"operation": "min"
+							},
+							"lastLookup": {
+								"field": "lookupDate",
+								"operation": "max"
+							}
 						}
 					},
 					"countByTier": {
 						"description": "Count of rate lookups per resolved tier for an administration. Used by Rate Audit Trail widget.",
-						"filter": {"administrationId": "@params.administrationId"},
+						"filter": {
+							"administrationId": "@params.administrationId"
+						},
 						"groupBy": "resolvedTier",
 						"operations": {
-							"count": {"field": "recordId", "operation": "count"}
+							"count": {
+								"field": "recordId",
+								"operation": "count"
+							}
 						}
 					}
 				},
 				"x-openregister-rbac": {
 					"roles": {
 						"project-administrator": {
-							"permissions": ["create", "read"]
+							"permissions": [
+								"create",
+								"read"
+							]
 						},
 						"bookkeeper": {
-							"permissions": ["read"]
+							"permissions": [
+								"read"
+							]
 						},
 						"auditor": {
-							"permissions": ["read"]
+							"permissions": [
+								"read"
+							]
 						}
 					}
 				}
@@ -6308,6 +6472,125 @@
 						},
 						"title": "Boekjaar heropend",
 						"message": "Boekjaar @self.yearNumber is heropend door @self.reopenedBy. Reden: @self.reopenReason"
+					}
+				}
+			},
+			"AnalyticalDimension": {
+				"slug": "AnalyticalDimension",
+				"icon": "TagMultipleOutline",
+				"version": "0.1.0",
+				"title": "Analytical Dimension",
+				"description": "An operator-defined custom analytical dimension (e.g. region, product line, channel). Allows administrations to extend GLLine.dimensions with new dimension types without code changes per REQ-CD-001 and REQ-CD-006. Values for each dimension are stored as separate OR register instances.",
+				"x-schema-org": "schema:DefinedTerm",
+				"x-openregister-purpose": "dimension",
+				"type": "object",
+				"required": [
+					"code",
+					"name",
+					"dataType",
+					"administrationId"
+				],
+				"properties": {
+					"code": {
+						"type": "string",
+						"description": "Unique dimension identifier used as keys in GLLine.dimensions map (e.g. region, product-line). Must be lowercase kebab-case per REQ-CD-006.",
+						"pattern": "^[a-z][a-z0-9-]*$",
+						"example": "region"
+					},
+					"name": {
+						"type": "string",
+						"description": "Human-readable dimension name shown in the UI per REQ-CD-006.",
+						"example": "Regio"
+					},
+					"description": {
+						"type": "string",
+						"description": "Description of what this dimension captures per REQ-CD-006.",
+						"nullable": true,
+						"example": "Geographic region for segment P&L analysis"
+					},
+					"dataType": {
+						"type": "string",
+						"enum": [
+							"string",
+							"number",
+							"date"
+						],
+						"description": "Value data type determining validation of dimension values per REQ-CD-006.",
+						"example": "string"
+					},
+					"isHierarchical": {
+						"type": "boolean",
+						"default": false,
+						"description": "Whether values in this dimension support parent-child relationships for hierarchical roll-up per REQ-CD-006 + REQ-CD-007.",
+						"example": false
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this analytical dimension per REQ-CD-006.",
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Dimension is usable in GLLine.dimensions map entries."
+						},
+						"blocked": {
+							"label": "Blocked",
+							"description": "Readable but rejected as target of new GLLine dimension entries."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Historical only; GLLine entries with this dimension code remain queryable."
+						}
+					},
+					"transitions": {
+						"block": {
+							"from": "active",
+							"to": "blocked",
+							"label": "Block dimension",
+							"description": "Prevent new GLLine entries using this dimension key."
+						},
+						"unblock": {
+							"from": "blocked",
+							"to": "active",
+							"label": "Unblock dimension",
+							"description": "Re-enable GLLine entries using this dimension key."
+						},
+						"archive": {
+							"from": [
+								"active",
+								"blocked"
+							],
+							"to": "archived",
+							"label": "Archive dimension",
+							"description": "Move to historical archive; existing GLLine dimension entries remain queryable."
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						},
+						"admin": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
 					}
 				}
 			}
@@ -8544,7 +8827,7 @@
 					"type": "number",
 					"format": "double",
 					"description": "Unit price for purchase or sale in the specified currency per REQ-IPC-002.",
-					"example": 1899.00
+					"example": 1899.0
 				},
 				"currency": {
 					"type": "string",
@@ -8579,7 +8862,11 @@
 					"description": "Multiple barcodes per REQ-IPC-005. Each entry carries code, format (GTIN-8/12/13/14/custom), and type (item/case/pallet).",
 					"items": {
 						"type": "object",
-						"required": ["code", "format", "type"],
+						"required": [
+							"code",
+							"format",
+							"type"
+						],
 						"properties": {
 							"code": {
 								"type": "string",
@@ -8589,23 +8876,42 @@
 							"format": {
 								"type": "string",
 								"description": "Barcode format per UN/EAN standards.",
-								"enum": ["GTIN-8", "GTIN-12", "GTIN-13", "GTIN-14", "custom"],
+								"enum": [
+									"GTIN-8",
+									"GTIN-12",
+									"GTIN-13",
+									"GTIN-14",
+									"custom"
+								],
 								"example": "GTIN-13"
 							},
 							"type": {
 								"type": "string",
 								"description": "Barcode scope: item (single unit), case (multiple units), pallet (full pallet).",
-								"enum": ["item", "case", "pallet"],
+								"enum": [
+									"item",
+									"case",
+									"pallet"
+								],
 								"example": "item"
 							}
 						}
 					},
-					"example": [{"code": "4014300889755", "format": "GTIN-13", "type": "item"}]
+					"example": [
+						{
+							"code": "4014300889755",
+							"format": "GTIN-13",
+							"type": "item"
+						}
+					]
 				},
 				"status": {
 					"type": "string",
 					"description": "Product lifecycle status per REQ-IPC-009. active = in normal use; discontinued = phased out.",
-					"enum": ["active", "discontinued"],
+					"enum": [
+						"active",
+						"discontinued"
+					],
 					"default": "active",
 					"example": "active"
 				},
@@ -8618,13 +8924,24 @@
 			"x-openregister-rbac": {
 				"roles": {
 					"procurement": {
-						"permissions": ["create", "read", "update", "delete"]
+						"permissions": [
+							"create",
+							"read",
+							"update",
+							"delete"
+						]
 					},
 					"inventory": {
-						"permissions": ["create", "read", "update"]
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
 					},
 					"auditor": {
-						"permissions": ["read"]
+						"permissions": [
+							"read"
+						]
 					}
 				}
 			}
@@ -8636,7 +8953,12 @@
 			"title": "Product Attribute",
 			"description": "Attribute type definitions for products per REQ-IPC-003 and REQ-IPC-004. Category-scoped via applicableToCategories. Seed templates for common categories shipped in lib/Settings/seeds/ per REQ-IPC-006.",
 			"type": "object",
-			"required": ["name", "dataType", "applicableToCategories", "status"],
+			"required": [
+				"name",
+				"dataType",
+				"applicableToCategories",
+				"status"
+			],
 			"properties": {
 				"name": {
 					"type": "string",
@@ -8646,7 +8968,13 @@
 				"dataType": {
 					"type": "string",
 					"description": "Value data type for this attribute per REQ-IPC-004.",
-					"enum": ["text", "number", "boolean", "enum", "date"],
+					"enum": [
+						"text",
+						"number",
+						"boolean",
+						"enum",
+						"date"
+					],
 					"example": "number"
 				},
 				"applicableToCategories": {
@@ -8676,7 +9004,10 @@
 				"status": {
 					"type": "string",
 					"description": "Attribute lifecycle status. active = in use; archived = retired but retained for history.",
-					"enum": ["active", "archived"],
+					"enum": [
+						"active",
+						"archived"
+					],
 					"default": "active",
 					"example": "active"
 				}
@@ -8684,13 +9015,22 @@
 			"x-openregister-rbac": {
 				"roles": {
 					"procurement": {
-						"permissions": ["create", "read", "update", "delete"]
+						"permissions": [
+							"create",
+							"read",
+							"update",
+							"delete"
+						]
 					},
 					"inventory": {
-						"permissions": ["read"]
+						"permissions": [
+							"read"
+						]
 					},
 					"auditor": {
-						"permissions": ["read"]
+						"permissions": [
+							"read"
+						]
 					}
 				}
 			}
@@ -9555,7 +9895,13 @@
 			"templateId": "RCT-2026-001",
 			"name": "2026 Consulting Rates",
 			"description": "Multi-tier billing rates for consulting services. Covers user, role, project, client, and blended-default tiers.",
-			"tierStructure": ["user", "role", "project", "client", "blended"],
+			"tierStructure": [
+				"user",
+				"role",
+				"project",
+				"client",
+				"blended"
+			],
 			"currency": "EUR",
 			"administrationId": "adm-1",
 			"lifecycleState": "active",
