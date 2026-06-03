@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/add-shillinq-chart-of-accounts/specs/bookkeeping-chart-of-accounts/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -76,9 +79,9 @@ class AccountBalanceGuardTest extends TestCase
     {
         parent::setUp();
 
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->logger    = $this->createMock(LoggerInterface::class);
+        $this->container = $this->createMock(originalClassName: ContainerInterface::class);
+        $this->appConfig = $this->createMock(originalClassName: IAppConfig::class);
+        $this->logger    = $this->createMock(originalClassName: LoggerInterface::class);
 
         // Default: return the canonical register slug.
         $this->appConfig->method('getValueString')->willReturn('shillinq');
@@ -92,7 +95,7 @@ class AccountBalanceGuardTest extends TestCase
     }//end setUp()
 
     /**
-     * requireZeroBalance returns true when the GLLine register is unavailable (T1).
+     * RequireZeroBalance returns true when the GLLine register is unavailable (T1).
      *
      * @return void
      */
@@ -104,12 +107,12 @@ class AccountBalanceGuardTest extends TestCase
 
         $result = $this->guard->requireZeroBalance(['accountNumber' => '0001', 'administrationId' => 'adm-1']);
 
-        self::assertTrue($result, 'T1 state: archive should be permitted when GLLine register is absent');
+        self::assertTrue(condition: $result, message: 'T1 state: archive should be permitted when GLLine register is absent');
 
     }//end testRequireZeroBalancePermitsArchiveInT1State()
 
     /**
-     * requireZeroBalance uses integer-cent arithmetic so 0.1 + 0.2 - 0.3 is treated as balanced (C1).
+     * RequireZeroBalance uses integer-cent arithmetic so 0.1 + 0.2 - 0.3 is treated as balanced (C1).
      *
      * IEEE-754: (float)(0.1 + 0.2 - 0.3) !== 0.0, but (int)round(0.1*100) + (int)round(0.2*100) - (int)round(0.3*100) === 0.
      *
@@ -129,12 +132,12 @@ class AccountBalanceGuardTest extends TestCase
 
         $result = $this->guard->requireZeroBalance(['accountNumber' => '0001', 'administrationId' => 'adm-1']);
 
-        self::assertTrue($result, 'C1: 0.1+0.2-0.3 must be treated as balanced via integer-cent arithmetic');
+        self::assertTrue(condition: $result, message: 'C1: 0.1+0.2-0.3 must be treated as balanced via integer-cent arithmetic');
 
     }//end testRequireZeroBalanceTreatsFloatRoundingAsBalanced()
 
     /**
-     * requireZeroBalance returns false when debit > credit (actual non-zero balance).
+     * RequireZeroBalance returns false when debit > credit (actual non-zero balance).
      *
      * @return void
      */
@@ -149,12 +152,12 @@ class AccountBalanceGuardTest extends TestCase
 
         $result = $this->guard->requireZeroBalance(['accountNumber' => '0001', 'administrationId' => 'adm-1']);
 
-        self::assertFalse($result, 'Non-zero balance must deny archive');
+        self::assertFalse(condition: $result, message: 'Non-zero balance must deny archive');
 
     }//end testRequireZeroBalanceReturnsFalseForNonZeroBalance()
 
     /**
-     * requireZeroBalance is fail-closed: returns false (denies archive) on exception.
+     * RequireZeroBalance is fail-closed: returns false (denies archive) on exception.
      *
      * @return void
      */
@@ -165,12 +168,12 @@ class AccountBalanceGuardTest extends TestCase
 
         $result = $this->guard->requireZeroBalance(['accountNumber' => '0001', 'administrationId' => 'adm-1']);
 
-        self::assertFalse($result, 'Fail-closed: exception must deny archive');
+        self::assertFalse(condition: $result, message: 'Fail-closed: exception must deny archive');
 
     }//end testRequireZeroBalanceIsFailClosedOnException()
 
     /**
-     * requireSingleClosingAccount returns true trivially when account is not a closing account.
+     * RequireSingleClosingAccount returns true trivially when account is not a closing account.
      *
      * @return void
      */
@@ -181,12 +184,12 @@ class AccountBalanceGuardTest extends TestCase
 
         $result = $this->guard->requireSingleClosingAccount(['isClosingAccount' => false]);
 
-        self::assertTrue($result);
+        self::assertTrue(condition: $result);
 
     }//end testRequireSingleClosingAccountPermitsNonClosingAccount()
 
     /**
-     * requireSingleClosingAccount permits save when no other closing account exists.
+     * RequireSingleClosingAccount permits save when no other closing account exists.
      *
      * @return void
      */
@@ -195,18 +198,20 @@ class AccountBalanceGuardTest extends TestCase
         $objectService = $this->buildObjectServiceStub(lines: [], closingAccounts: []);
         $this->container->method('get')->willReturn($objectService);
 
-        $result = $this->guard->requireSingleClosingAccount([
-            'isClosingAccount' => true,
-            'accountNumber'    => 'CLOSE',
-            'administrationId' => 'adm-1',
-        ]);
+        $result = $this->guard->requireSingleClosingAccount(
+                [
+                    'isClosingAccount' => true,
+                    'accountNumber'    => 'CLOSE',
+                    'administrationId' => 'adm-1',
+                ]
+                );
 
-        self::assertTrue($result);
+        self::assertTrue(condition: $result);
 
     }//end testRequireSingleClosingAccountPermitsFirstClosingAccount()
 
     /**
-     * requireSingleClosingAccount denies save when another closing account exists.
+     * RequireSingleClosingAccount denies save when another closing account exists.
      *
      * @return void
      */
@@ -218,14 +223,16 @@ class AccountBalanceGuardTest extends TestCase
         $objectService   = $this->buildObjectServiceStub(lines: [], closingAccounts: $existingClosing);
         $this->container->method('get')->willReturn($objectService);
 
-        $result = $this->guard->requireSingleClosingAccount([
-            'isClosingAccount' => true,
-            'id'               => 'new-uuid',
-            'accountNumber'    => 'CLOSE-NEW',
-            'administrationId' => 'adm-1',
-        ]);
+        $result = $this->guard->requireSingleClosingAccount(
+                [
+                    'isClosingAccount' => true,
+                    'id'               => 'new-uuid',
+                    'accountNumber'    => 'CLOSE-NEW',
+                    'administrationId' => 'adm-1',
+                ]
+                );
 
-        self::assertFalse($result, 'A second closing account must be denied');
+        self::assertFalse(condition: $result, message: 'A second closing account must be denied');
 
     }//end testRequireSingleClosingAccountDeniesDuplicateClosingAccount()
 
@@ -241,29 +248,72 @@ class AccountBalanceGuardTest extends TestCase
     private function buildObjectServiceStub(array $lines, array $closingAccounts): object
     {
         return new class($lines, $closingAccounts) {
+
+            /**
+             * GLLine records returned for balance queries.
+             *
+             * @var array<mixed>
+             */
             private array $lines;
+
+            /**
+             * Account records returned for uniqueness queries.
+             *
+             * @var array<mixed>
+             */
             private array $closingAccounts;
+
+            /**
+             * Current schema name for routing findAll results.
+             *
+             * @var string
+             */
             private string $currentSchema = '';
 
+            /**
+             * Constructor.
+             *
+             * @param array<mixed> $lines           GLLine records.
+             * @param array<mixed> $closingAccounts Account records.
+             *
+             * @return void
+             */
             public function __construct(array $lines, array $closingAccounts)
             {
                 $this->lines           = $lines;
                 $this->closingAccounts = $closingAccounts;
-            }
+            }//end __construct()
 
+            /**
+             * Set the register slug.
+             *
+             * @param string $register Register slug.
+             *
+             * @return static
+             */
             public function setRegister(string $register): static
             {
                 return $this;
-            }
+            }//end setRegister()
 
+            /**
+             * Set the schema name and track it for findAll routing.
+             *
+             * @param string $schema Schema name.
+             *
+             * @return static
+             */
             public function setSchema(string $schema): static
             {
                 $this->currentSchema = $schema;
                 return $this;
-            }
+            }//end setSchema()
 
             /**
-             * @param array<string,mixed> $params
+             * Return records for the given query params.
+             *
+             * @param array<string,mixed> $params Query parameters.
+             *
              * @return array<mixed>
              */
             public function findAll(array $params=[]): array
@@ -271,8 +321,9 @@ class AccountBalanceGuardTest extends TestCase
                 if ($this->currentSchema === 'GLLine') {
                     return $this->lines;
                 }
+
                 return $this->closingAccounts;
-            }
+            }//end findAll()
         };
     }//end buildObjectServiceStub()
 
@@ -284,15 +335,29 @@ class AccountBalanceGuardTest extends TestCase
     private function buildObjectServiceStubThatThrows(): object
     {
         return new class {
+            /**
+             * Set the register slug.
+             *
+             * @param string $register Register slug.
+             *
+             * @return static
+             */
             public function setRegister(string $register): static
             {
                 return $this;
-            }
+            }//end setRegister()
 
+            /**
+             * Set the schema name.
+             *
+             * @param string $schema Schema name.
+             *
+             * @return static
+             */
             public function setSchema(string $schema): static
             {
                 return $this;
-            }
+            }//end setSchema()
 
             /**
              * Returns empty array for the availability probe (no 'filters' key),
@@ -300,7 +365,8 @@ class AccountBalanceGuardTest extends TestCase
              * This ensures isGLLineRegisterAvailable() returns true so the
              * fail-closed path inside requireZeroBalance() is actually exercised.
              *
-             * @param array<string,mixed> $params
+             * @param array<string,mixed> $params Query parameters.
+             *
              * @return array<mixed>
              */
             public function findAll(array $params=[]): array
@@ -310,7 +376,7 @@ class AccountBalanceGuardTest extends TestCase
                 }
 
                 return [];
-            }
+            }//end findAll()
         };
     }//end buildObjectServiceStubThatThrows()
 }//end class
