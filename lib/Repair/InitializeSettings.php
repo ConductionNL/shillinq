@@ -168,6 +168,11 @@ class InitializeSettings implements IRepairStep
             return;
         }
 
+        if ($workflowMapper === null) {
+            $output->info('Shillinq: ScheduledWorkflowMapper not available, skipping IV3 workflow registration');
+            return;
+        }
+
         $slug = 'shillinq-iv3-quarterly-cbs-submission';
 
         $existing = $workflowMapper->findAll();
@@ -248,6 +253,11 @@ class InitializeSettings implements IRepairStep
             return;
         }
 
+        if ($objectService === null) {
+            $output->info('Shillinq: ObjectService not available, skipping BTW tariff seed');
+            return;
+        }
+
         $seeded  = 0;
         $skipped = 0;
 
@@ -308,6 +318,11 @@ class InitializeSettings implements IRepairStep
                 'OCA\OpenRegister\Db\ScheduledWorkflowMapper'
             );
         } catch (\Throwable $e) {
+            $output->info('Shillinq: ScheduledWorkflowMapper not available, skipping BTW SBR workflow registration');
+            return;
+        }
+
+        if ($workflowMapper === null) {
             $output->info('Shillinq: ScheduledWorkflowMapper not available, skipping BTW SBR workflow registration');
             return;
         }
