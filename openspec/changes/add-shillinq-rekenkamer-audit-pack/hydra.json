@@ -1,0 +1,61 @@
+{
+  "schema_version": 2,
+  "spec_slug": "add-shillinq-rekenkamer-audit-pack",
+  "repo": "https://codeberg.org/Conduction/shillinq",
+  "issue": 37,
+  "cycles": [
+    {
+      "cycle": 1,
+      "trigger": "build:queued",
+      "started_at": "2026-06-03T19:25:49Z",
+      "ended_at": "2026-06-03T19:25:59Z",
+      "outcome": "needs-input",
+      "outcome_reason": "builder container exited non-zero",
+      "pattern_tags": [],
+      "stages": [
+        {
+          "stage": "build",
+          "persona": "Al Gorithm",
+          "model": "sonnet",
+          "container": "hydra-builder",
+          "started_at": "2026-06-03T19:12:17Z",
+          "ended_at": "2026-06-03T19:25:44Z",
+          "exit_code": 1,
+          "turns_used": 0,
+          "turns_budget": 40,
+          "checks_run": [],
+          "checks_skipped": [],
+          "findings": [
+            {
+              "id": "build-failed",
+              "severity": "CRITICAL",
+              "gate": "builder",
+              "rule": "builder container exited non-zero",
+              "status": "open",
+              "note": "Builder container failed to complete. See logs/pipeline-*/builder-build.jsonl for detail.",
+              "autofixable": false
+            }
+          ],
+          "decisions": [],
+          "verdict": "fail",
+          "duration_seconds": 807
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "runs": 1,
+    "turns_used": 0,
+    "cost_usd": 0.0,
+    "duration_seconds": 807,
+    "cycles": 1,
+    "by_stage": {
+      "build": {
+        "runs": 1,
+        "turns_used": 0,
+        "cost_usd": 0.0,
+        "duration_seconds": 807
+      }
+    }
+  }
+}
