@@ -1,0 +1,59 @@
+{
+	"_comment": "Innovatiebox tariefschedule en forfaitair parameters per Wet Vpb art. 12b/12bg. EUPL-1.2 — Copyright 2026 Conduction B.V. Source: Wet Vpb art. 12b/12bg.",
+	"_meta": {
+		"source": "Wet Vpb art. 12b/12bg",
+		"description": "Historic innovatiebox tariff schedule and current forfaitair parameters. Loaded via ConfigurationService::importFromApp() in the repair step. A future statutory tariff change ships as a new seed file (innovatiebox-tariefen-2028.json); no code change required per REQ-IBA-007.",
+		"license": "EUPL-1.2",
+		"copyright": "2026 Conduction B.V."
+	},
+	"objects": [
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InnovatieboxTariff",
+				"slug": "innovatiebox-tarief-before-2018"
+			},
+			"effectiveFrom": 2007,
+			"effectiveTo": 2017,
+			"applicableTariff": 0.05,
+			"forfaitairPercentage": null,
+			"forfaitairCapBedrag": null,
+			"description": "Innovatiebox tarief 2007–2017 (voor 2018) — 5% per Wet Vpb art. 12b origineel regime",
+			"_meta": {
+				"source": "Wet Vpb art. 12b/12bg"
+			}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InnovatieboxTariff",
+				"slug": "innovatiebox-tarief-2018-2020"
+			},
+			"effectiveFrom": 2018,
+			"effectiveTo": 2020,
+			"applicableTariff": 0.07,
+			"forfaitairPercentage": 0.25,
+			"forfaitairCapBedrag": 25000.0,
+			"description": "Innovatiebox tarief 2018–2020 — 7% per Wet Vpb art. 12b interim tarief; forfaitair cap EUR 25.000 per art. 12bg",
+			"_meta": {
+				"source": "Wet Vpb art. 12b/12bg"
+			}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InnovatieboxTariff",
+				"slug": "innovatiebox-tarief-2021-heden"
+			},
+			"effectiveFrom": 2021,
+			"effectiveTo": null,
+			"applicableTariff": 0.09,
+			"forfaitairPercentage": 0.25,
+			"forfaitairCapBedrag": 25000.0,
+			"description": "Innovatiebox tarief 2021-heden — 9% huidig wettelijk tarief per Wet Vpb art. 12b 2026; forfaitair: 25% van fiscale winst capped op EUR 25.000 per art. 12bg",
+			"_meta": {
+				"source": "Wet Vpb art. 12b/12bg"
+			}
+		}
+	]
+}

@@ -5042,3 +5042,78 @@ _Archiefwet 1995 + Selectielijst Gemeenten 2020 retention rule. A coded retentio
 | customRetentionYears | integer | No | Operator extension above statutory minimum (MUST be >= retentionYears; never shorter) |
 | administrationId | string | No | Administration scope for per-organisation override rules (absent = applies to all) |
 | daysUntilRetention | integer (derived) | No | Days until rule expires per x-openregister-calculations (null for keep_indefinite) |
+
+### InnovatieboxTariff
+**Schema.org:** `schema:DefinedTerm`
+_Seeded historic innovatiebox tariff schedule and forfaitair parameters per Wet Vpb art. 12b/12bg. Loaded from `lib/Settings/seeds/innovatiebox-tariefen.json` via `ConfigurationService::importFromApp()`. A future statutory tariff change ships as a new seed file without code changes (REQ-IBA-007). No tariffs are hard-coded in schema enums per ADR-031._
+**Primary spec:** bookkeeping-innovatiebox-administratie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| effectiveFrom | integer | Yes | First fiscal year this tariff applies to (inclusive) |
+| effectiveTo | integer | No | Last fiscal year this tariff applies to (inclusive); null = open-ended |
+| applicableTariff | number | Yes | Statutory tariff as decimal (e.g. 0.09 for 9%) |
+| forfaitairPercentage | number | No | Forfaitair profit percentage (0.25 from 2018 per Wet Vpb art. 12bg) |
+| forfaitairCapBedrag | number | No | Forfaitair statutory cap in EUR (25000 from 2018 per Wet Vpb art. 12bg) |
+| description | string | No | Human-readable label for this tariff period |
+
+### InnovatieboxElection
+**Schema.org:** `schema:Event`
+_Per-fiscal-year route election for the innovatiebox: forfaitair (Wet Vpb art. 12bg — 25% of operating profit capped at EUR 25 000) or afpelmethode (Wet Vpb art. 12b — explicit per-IP-asset valuation + winsttoerekening). Exactly one election per `(administrationId, fiscalYear)` is enforced by the `electionsPerAdministrationYear` aggregation. The `innovatieboxAdministratie` aggregation computes innovation-attributed profit and Vpb impact per REQ-IBA-003. No PHP method-selector per ADR-031._
+**Primary spec:** bookkeeping-innovatiebox-administratie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to Administration |
+| fiscalYear | integer | Yes | Fiscal year the election covers |
+| route | enum | Yes | `forfaitair \| afpelmethode` — mutually exclusive per (administrationId, fiscalYear) |
+| applicableTariff | number | Yes | Innovatiebox tariff for the fiscal year; default 0.09 (2026 statutory per Wet Vpb art. 12b) |
+| forfaitairCapBedrag | number | No | Statutory cap EUR 25 000 (required for forfaitair; default 25000 per seed) |
+| forfaitairPercentage | number | No | 25% profit attribution (required for forfaitair; default 0.25 per seed) |
+| operatingProfit | number | No | Fiscal-year operating profit consumed by the forfaitair aggregation |
+| vpbAangifteId | string | No | Optional FK to the Vpb-aangifte this election is attached to |
+
+**Relations:**
+- → Administration (many-to-one)
+- → IPAssetValuation (one-to-many, afpelmethode only; via administrationId)
+
+> **Annotation (add-shillinq-innovatiebox-administratie, 2026-06-03):** `InnovatieboxElection` is the T4-specialized per-fiscal-year election register for the innovatiebox administratie. The mutual-exclusion invariant (one election per `administrationId + fiscalYear`) is enforced declaratively via the `electionsPerAdministrationYear` aggregation. Cap-application and tariff-application events are recorded in the immutable audit trail via `x-openregister-audit-trail`. The `innovatieboxAdministratie` aggregation branches on `route`: forfaitair computes `min(forfaitairPercentage × operatingProfit, forfaitairCapBedrag)`; afpelmethode sums `WinstToerekening.toegerekendeWinst × applicableTariff` per asset. See `openspec/changes/add-shillinq-innovatiebox-administratie/design.md`.
+
+### IPAssetValuation
+**Schema.org:** `schema:Intangible`
+_Immaterieel activum qualifying for the innovatiebox under the afpelmethode (Wet Vpb art. 12b). Applies to the afpelmethode route ONLY — forfaitair taxpayers do NOT register per-asset valuations (REQ-IBA-001). Carries `wbsoVerklaringNummer` FK when `assetType: s-en-o-certificaat` (cross-reference to `add-shillinq-wbso-sno-administratie`) and `vpbBalansLinkId` FK to the Vpb-balans (cross-reference to `add-shillinq-vpb-corporate-tax`). No PHP IP-service per ADR-031._
+**Primary spec:** bookkeeping-innovatiebox-administratie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| assetNaam | string | Yes | Human-readable name of the IP asset |
+| assetType | enum | Yes | `s-en-o-certificaat \| octrooi \| kwekersrecht \| softwareprogrammatuur \| model-tekening` |
+| wbsoVerklaringNummer | string | No | FK to WBSO S&O-verklaring (required when assetType is s-en-o-certificaat) |
+| octrooiNummer | string | No | Patent registration number (required when assetType is octrooi) |
+| valuationBedrag | number | Yes | Capitalised valuation in euros (≥ 0) |
+| valuationDate | date | Yes | Effective valuation date |
+| applicableTariff | number | Yes | Innovatiebox tariff at valuationDate; default 0.09 (from InnovatieboxTariff seed) |
+| vpbBalansLinkId | string | Yes | FK to VpbBalansLink (REQ-VPB-002 from bookkeeping-vpb-corporate-tax) |
+| administrationId | string | Yes | FK to Administration |
+
+**Relations:**
+- → WinstToerekening (one-to-many, via ipAssetId)
+- → Administration (many-to-one)
+
+### WinstToerekening
+**Schema.org:** `schema:QuantitativeValue`
+_Per-period profit attribution from operating profit to one or more IP assets via a configurable verdeelsleutel. Used by the afpelmethode route of the innovatiebox aggregation (REQ-IBA-004). MUST NOT be populated when `InnovatieboxElection.route` is `forfaitair`. The `verdeelsleutelRatio` calculation is declarative per ADR-031. Three verdeelsleutel methods: `omzet-aandeel` (revenue share), `r-en-d-uren` (R&D hours), `custom-formula` (arbitrary JSON parameters)._
+**Primary spec:** bookkeeping-innovatiebox-administratie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| ipAssetId | string | Yes | FK to IPAssetValuation.id |
+| periodId | string | Yes | FK to FiscalPeriod |
+| toegerekendeWinst | number | Yes | Profit attributed to the IP asset for this period in euros (≥ 0) |
+| verdeelsleutel | enum | Yes | `omzet-aandeel \| r-en-d-uren \| custom-formula` |
+| parameters | object | No | Verdeelsleutel parameters: `{totalRevenue, ipRevenue}` for omzet-aandeel; `{totalHours, ipHours}` for r-en-d-uren; arbitrary JSON for custom-formula |
+| administrationId | string | Yes | FK to Administration |
+
+**Relations:**
+- → IPAssetValuation (many-to-one, via ipAssetId)
+- → Administration (many-to-one)
