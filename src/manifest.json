@@ -93,6 +93,13 @@
 					"icon": "FileDocumentEditOutline",
 					"route": "BtwCorrecties",
 					"order": 30
+				},
+				{
+					"id": "BtwTarieven",
+					"label": "BTW-tarieven",
+					"icon": "PercentOutline",
+					"route": "BtwTarieven",
+					"order": 40
 				}
 			]
 		},
@@ -433,6 +440,98 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "BtwCorrecties"
+			}
+		},
+		{
+			"id": "BtwTarieven",
+			"route": "/belastingen/btw-tarieven",
+			"type": "index",
+			"title": "BTW-tarieven",
+			"config": {
+				"register": "shillinq",
+				"schema": "VatTariff",
+				"columns": [
+					{
+						"key": "code",
+						"label": "Code",
+						"sortable": true
+					},
+					{
+						"key": "description",
+						"label": "Omschrijving",
+						"sortable": true
+					},
+					{
+						"key": "rate",
+						"label": "Tarief",
+						"sortable": true
+					},
+					{
+						"key": "category",
+						"label": "Categorie",
+						"sortable": true
+					},
+					{
+						"key": "effectiveFrom",
+						"label": "Geldig vanaf",
+						"sortable": true
+					}
+				],
+				"defaultSort": "code",
+				"detailRoute": "BtwTarievenDetail"
+			}
+		},
+		{
+			"id": "BtwTarievenDetail",
+			"route": "/belastingen/btw-tarieven/:id",
+			"type": "detail",
+			"title": "BTW-tarief",
+			"config": {
+				"register": "shillinq",
+				"schema": "VatTariff",
+				"fields": [
+					{
+						"key": "code",
+						"label": "Code",
+						"type": "string"
+					},
+					{
+						"key": "rate",
+						"label": "Tarief (decimaal)",
+						"type": "number"
+					},
+					{
+						"key": "description",
+						"label": "Omschrijving",
+						"type": "string"
+					},
+					{
+						"key": "category",
+						"label": "Categorie",
+						"type": "string"
+					},
+					{
+						"key": "rubriek",
+						"label": "Rubriek",
+						"type": "string"
+					},
+					{
+						"key": "effectiveFrom",
+						"label": "Geldig vanaf",
+						"type": "date"
+					},
+					{
+						"key": "effectiveTo",
+						"label": "Geldig t/m",
+						"type": "date"
+					},
+					{
+						"key": "defaultAccounts",
+						"label": "Standaardrekeningen (RGS hints)",
+						"type": "object"
+					}
+				],
+				"indexRoute": "BtwTarieven"
 			}
 		},
 		{
