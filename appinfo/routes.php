@@ -15,12 +15,12 @@ return [
         ['name' => 'preferences#setPreference', 'url' => '/api/preferences/{key}', 'verb' => 'PUT'],
 
         // Booking notification trigger configuration (organizer, per booking).
-        ['name' => 'booking_notification#getBookingTriggers',  'url' => '/api/bookings/{id}/notification-triggers', 'verb' => 'GET'],
-        ['name' => 'booking_notification#updateBookingTriggers', 'url' => '/api/bookings/{id}/notification-triggers', 'verb' => 'PATCH'],
+        ['name' => 'bookingNotification#getBookingTriggers',    'url' => '/api/bookings/{id}/notification-triggers', 'verb' => 'GET'],
+        ['name' => 'bookingNotification#updateBookingTriggers', 'url' => '/api/bookings/{id}/notification-triggers', 'verb' => 'PATCH'],
 
         // Admin notification monitor dashboard.
-        ['name' => 'booking_notification#getNotificationMonitor', 'url' => '/api/admin/notification-monitor', 'verb' => 'GET'],
-        ['name' => 'booking_notification#disableAllTriggers',     'url' => '/api/admin/notification-monitor/disable-all', 'verb' => 'POST'],
+        ['name' => 'bookingNotification#getNotificationMonitor', 'url' => '/api/admin/notification-monitor', 'verb' => 'GET'],
+        ['name' => 'bookingNotification#disableAllTriggers',     'url' => '/api/admin/notification-monitor/disable-all', 'verb' => 'POST'],
 
         // Prometheus metrics endpoint.
         ['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
