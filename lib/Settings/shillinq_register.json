@@ -4232,6 +4232,195 @@
 					"example": true
 				}
 			}
+		},
+		"XbrlInstance": {
+			"slug": "XbrlInstance",
+			"icon": "FileXmlOutline",
+			"version": "0.1.0",
+			"title": "XBRL Instance",
+			"description": "An SBR/XBRL annual filing instance generated as a declarative transformation on top of a FinancialStatement. Declares the draft → validated → submitted → accepted / rejected lifecycle per ADR-031; Digipoort submission routes through openconnector (ADR-022); no PHP XbrlReportService.",
+			"type": "object",
+			"x-schema-org": "schema:DigitalDocument",
+			"required": [
+				"instanceNumber",
+				"entryPoint",
+				"taxonomyVersion",
+				"reportingPeriodStart",
+				"reportingPeriodEnd",
+				"sourceStatementId",
+				"mappingId",
+				"instanceXml",
+				"instanceHash",
+				"state",
+				"administrationId"
+			],
+			"properties": {
+				"instanceNumber": {
+					"type": "string",
+					"description": "Sequential reference unique per administration + reporting period.",
+					"example": "XBRL-2026-0001"
+				},
+				"entryPoint": {
+					"type": "string",
+					"description": "SBR entry point that determines the NL-taxonomie schema set.",
+					"enum": [
+						"kvk-jaarrekening",
+						"belastingdienst-vpb",
+						"belastingdienst-ib",
+						"sbr-banken-kredietrapportage",
+						"sbr-wonen"
+					],
+					"example": "kvk-jaarrekening"
+				},
+				"taxonomyVersion": {
+					"type": "string",
+					"description": "NL-taxonomie version pinned at generation time (e.g. nt17, nt18). Immutable after creation — historical instances remain verifiable against the version they were generated with.",
+					"example": "nt18"
+				},
+				"reportingPeriodStart": {
+					"type": "string",
+					"format": "date",
+					"description": "Start of the fiscal period covered by this filing.",
+					"example": "2026-01-01"
+				},
+				"reportingPeriodEnd": {
+					"type": "string",
+					"format": "date",
+					"description": "End of the fiscal period covered by this filing.",
+					"example": "2026-12-31"
+				},
+				"sourceStatementId": {
+					"type": "string",
+					"description": "FK to the FinancialStatement record this instance derives from. XBRL is a transformation on top of the already-balanced statement, not a re-aggregation per ADR design D1.",
+					"example": "fin-stmt-uuid-2026"
+				},
+				"mappingId": {
+					"type": "string",
+					"description": "FK to the Mapping record that defines FinancialStatement line → NL-taxonomie concept mapping for the applicable entry point and taxonomy version.",
+					"example": "map-kvk-jaarrekening-nt18"
+				},
+				"instanceXml": {
+					"type": "string",
+					"description": "The generated XBRL instance document stored as a UTF-8 XML string.",
+					"example": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><xbrl xmlns=\"http://www.xbrl.org/2003/instance\">...</xbrl>"
+				},
+				"instanceHash": {
+					"type": "string",
+					"description": "SHA-256 of the canonicalised instance XML for tamper-evidence. Verified on submission.",
+					"example": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+				},
+				"state": {
+					"type": "string",
+					"description": "Current lifecycle state of the XBRL instance.",
+					"enum": [
+						"draft",
+						"validated",
+						"submitted",
+						"accepted",
+						"rejected"
+					],
+					"default": "draft",
+					"example": "draft"
+				},
+				"digipoortReceiptId": {
+					"type": "string",
+					"nullable": true,
+					"description": "Receipt ID returned by Digipoort on submission acknowledgement. Null until the submitted → accepted transition; required for the accepted state.",
+					"example": "DGPRT-2026-REC-00042"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the Administration this filing belongs to. Per-administration scope allows divergent mappings per ADR design D4.",
+					"example": "adm-consultancy-nl"
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "state",
+				"initialState": "draft",
+				"states": {
+					"draft": {
+						"label": "Concept",
+						"description": "XBRL instance generated from FinancialStatement; not yet validated against the NL-taxonomie schema."
+					},
+					"validated": {
+						"label": "Gevalideerd",
+						"description": "Instance validated against the NL-taxonomie XSD for the declared entry point and taxonomyVersion."
+					},
+					"submitted": {
+						"label": "Ingediend",
+						"description": "Submitted to Digipoort via the configured openconnector Source; awaiting acknowledgement."
+					},
+					"accepted": {
+						"label": "Geaccepteerd",
+						"description": "Digipoort acknowledged the filing with status accepted; digipoortReceiptId has been set."
+					},
+					"rejected": {
+						"label": "Afgewezen",
+						"description": "Digipoort returned a rejection; operator must amend the source FinancialStatement and resubmit."
+					}
+				},
+				"transitions": {
+					"validate": {
+						"from": "draft",
+						"to": "validated",
+						"label": "Valideer",
+						"description": "Validate the XBRL instance XML against the NL-taxonomie XSD for the declared entry point.",
+						"requires": "xmlValidatesAgainstTaxonomySchema"
+					},
+					"submit": {
+						"from": "validated",
+						"to": "submitted",
+						"label": "Indien bij Digipoort",
+						"description": "Submit the instance to Digipoort via the openconnector Source configured for the administration. No Digipoort credentials are stored in shillinq — submission routes through openconnector per ADR-022 design D2.",
+						"action": {
+							"type": "openconnector-source",
+							"sourceSlug": "digipoort-prod",
+							"payloadField": "instanceXml"
+						}
+					},
+					"accept": {
+						"from": "submitted",
+						"to": "accepted",
+						"label": "Markeer als geaccepteerd",
+						"description": "Inbound Digipoort acknowledgement with status accepted; sets digipoortReceiptId.",
+						"requires": "digipoortReceiptIdPresent"
+					},
+					"reject": {
+						"from": "submitted",
+						"to": "rejected",
+						"label": "Markeer als afgewezen",
+						"description": "Inbound Digipoort error response; operator must amend and resubmit."
+					},
+					"resetToDraft": {
+						"from": "rejected",
+						"to": "draft",
+						"label": "Terugzetten naar concept",
+						"description": "Operator resets the rejected instance to draft to amend the source statement, regenerate, validate, and resubmit per REQ-SBR-003."
+					}
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"treasurer": {
+						"permissions": [
+							"create",
+							"read",
+							"update",
+							"delete"
+						]
+					},
+					"bookkeeper": {
+						"permissions": [
+							"read"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
 		}
 	},
 	"mappings": {

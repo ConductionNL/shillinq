@@ -1,0 +1,135 @@
+{
+	"_meta": {
+		"source": "NL-taxonomie",
+		"variant": "sbr-wonen",
+		"taxonomyVersion": "nt17",
+		"entryPoint": "sbr-wonen",
+		"authority": "Aw / WSW",
+		"description": "SBR-Wonen rapportage — NL-taxonomie nt17 mapping templates. Maps FinancialStatement line labels to NL-taxonomie nt17 concepts for reporting by housing corporations (woningcorporaties) to Autoriteit woningcorporaties (Aw) and Waarborgfonds Sociale Woningbouw (WSW).",
+		"imported": "2026-06-03T00:00:00Z",
+		"copyright": "Conduction B.V. 2026",
+		"license": "EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+	},
+	"mappings": [
+		{
+			"financialStatementLineId": "assets-total",
+			"taxonomyConcept": "sbr-wonen:TotaalActiva",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Totaal activa",
+			"description": "Totale activa per balansdatum (woningcorporatie)."
+		},
+		{
+			"financialStatementLineId": "assets-fixed-tangible",
+			"taxonomyConcept": "sbr-wonen:Vastgoedbeleggingen",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Vastgoedbeleggingen",
+			"description": "DAEB en niet-DAEB vastgoedbeleggingen (sociaal en commercieel)."
+		},
+		{
+			"financialStatementLineId": "assets-fixed-financial",
+			"taxonomyConcept": "sbr-wonen:FinancieleVasteActiva",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Financiële vaste activa",
+			"description": "Deelnemingen verbonden partijen, overige financiële activa."
+		},
+		{
+			"financialStatementLineId": "assets-current-receivables",
+			"taxonomyConcept": "sbr-wonen:HuurdersvorderingenKort",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Huurdersvorderingen",
+			"description": "Openstaande huurvorderingen per balansdatum."
+		},
+		{
+			"financialStatementLineId": "assets-current-cash",
+			"taxonomyConcept": "sbr-wonen:LiquideMiddelen",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Liquide middelen",
+			"description": "Kasgeld en banktegoeden (woningcorporatie)."
+		},
+		{
+			"financialStatementLineId": "equity-total",
+			"taxonomyConcept": "sbr-wonen:EigenVermogen",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Eigen vermogen",
+			"description": "Totaal eigen vermogen woningcorporatie."
+		},
+		{
+			"financialStatementLineId": "equity-result",
+			"taxonomyConcept": "sbr-wonen:ResultaatBoekjaar",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Resultaat boekjaar",
+			"description": "Nettowinst of -verlies van het boekjaar."
+		},
+		{
+			"financialStatementLineId": "liabilities-longterm",
+			"taxonomyConcept": "sbr-wonen:LanglopendeSchulden",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Langlopende schulden",
+			"description": "WSW-geborgde leningen en overige langlopende schulden."
+		},
+		{
+			"financialStatementLineId": "liabilities-shortterm",
+			"taxonomyConcept": "sbr-wonen:KortlopendeSchulden",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Kortlopende schulden",
+			"description": "Kortlopende schulden inclusief crediteuren."
+		},
+		{
+			"financialStatementLineId": "revenue-total",
+			"taxonomyConcept": "sbr-wonen:HuuropbrengstenTotaal",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Huuropbrengsten",
+			"description": "DAEB en niet-DAEB huuropbrengsten."
+		},
+		{
+			"financialStatementLineId": "operating-expenses-staff",
+			"taxonomyConcept": "sbr-wonen:Personeelskosten",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Personeelskosten",
+			"description": "Lonen, sociale lasten en pensioenlasten (woningcorporatie)."
+		},
+		{
+			"financialStatementLineId": "operating-expenses-other",
+			"taxonomyConcept": "sbr-wonen:LastenonroerendeZaken",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Lasten onroerende zaken",
+			"description": "Onderhoud, beheer en overige exploitatielasten vastgoed."
+		},
+		{
+			"financialStatementLineId": "operating-result",
+			"taxonomyConcept": "sbr-wonen:Bedrijfsresultaat",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Bedrijfsresultaat",
+			"description": "Resultaat uit bedrijfsactiviteiten (woningcorporatie)."
+		},
+		{
+			"financialStatementLineId": "result-before-tax",
+			"taxonomyConcept": "sbr-wonen:ResultaatVoorBelasting",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Resultaat vóór belasting",
+			"description": "Resultaat voor belasting (woningcorporatie)."
+		},
+		{
+			"financialStatementLineId": "result-after-tax",
+			"taxonomyConcept": "sbr-wonen:NettoResultaat",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Nettoresultaat",
+			"description": "Nettoresultaat na belasting (woningcorporatie)."
+		}
+	]
+}

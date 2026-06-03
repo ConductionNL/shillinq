@@ -10,16 +10,16 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `XbrlInstance` schema or `bookkeeping-sbr-xbrl-reporting` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `adr-000-data-model.md`)
-- [ ] Task 2: Author `specs/bookkeeping-sbr-xbrl-reporting/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4 (advanced engine)` / `Depends on: bookkeeping-financial-statements (T3), bookkeeping-vat-btw-filing (T3)` header, `REQ-SBR-NNN` requirements using RFC 2119 keywords, `#### Scenario:` blocks with GIVEN/WHEN/THEN
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions per shillinq config.yaml `rules.proposal`
-- [ ] Task 4: Author `design.md` with Decisions (XBRL-as-transformation, openconnector Digipoort consumption, declarative state machine, per-administration overrides), Reuse Analysis table, and Seed Data section per hydra `rules.design`
-- [ ] Task 5: Declare the `XbrlInstance` schema in `lib/Settings/shillinq_register.json` with all REQ-SBR-002 fields (entryPoint, taxonomyVersion, financialStatementId, contextRefs, instanceDocumentUri, submissionReceiptUri, submittedAt, acceptedAt, rejectionReason, lifecycleState, administrationId)
-- [ ] Task 6: Add `x-openregister-lifecycle` block to `XbrlInstance` declaring `draft → validated → submitted → accepted` and `submitted → rejected` transitions per REQ-SBR-003; submission action routes through openconnector source slug per REQ-SBR-004
-- [ ] Task 7: Ship NL-taxonomie mapping seed templates under `lib/Settings/seeds/sbr-mappings/` (kvk-jaarrekening-nt17/nt18, belastingdienst-vpb-nt17/nt18, belastingdienst-ib-nt17, sbr-banken-kredietrapportage-nt17, sbr-wonen-nt17) per REQ-SBR-005 + REQ-SBR-006, each with SPDX header + `_meta` block per `feedback_spdx-in-docblock.md`
-- [ ] Task 8: Extend the repair step under `lib/Migration/` to import NL-taxonomie mapping seeds idempotently (operator edits persist across re-runs) per REQ-SBR-006
-- [ ] Task 9: Add SBR/XBRL Filings navigation + pages to `src/manifest.json` (menu entry `Bookkeeping > SBR/XBRL Filings`, `type: index` page binding to `XbrlInstance`, `type: detail` page) per REQ-SBR-007; `node tests/validate-manifest.js` exits 0
-- [ ] Task 10: Update `openspec/architecture/adr-000-data-model.md` with a one-paragraph reconciliation note introducing `XbrlInstance` and its relationship to the T3 `FinancialStatement` (transformation, not re-aggregation)
+- [x] Task 1: Confirm no `XbrlInstance` schema or `bookkeeping-sbr-xbrl-reporting` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `adr-000-data-model.md`)
+- [x] Task 2: Author `specs/bookkeeping-sbr-xbrl-reporting/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4 (advanced engine)` / `Depends on: bookkeeping-financial-statements (T3), bookkeeping-vat-btw-filing (T3)` header, `REQ-SBR-NNN` requirements using RFC 2119 keywords, `#### Scenario:` blocks with GIVEN/WHEN/THEN
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions per shillinq config.yaml `rules.proposal`
+- [x] Task 4: Author `design.md` with Decisions (XBRL-as-transformation, openconnector Digipoort consumption, declarative state machine, per-administration overrides), Reuse Analysis table, and Seed Data section per hydra `rules.design`
+- [x] Task 5: Declare the `XbrlInstance` schema in `lib/Settings/shillinq_register.json` with all REQ-SBR-002 fields (instanceNumber, entryPoint, taxonomyVersion, reportingPeriodStart, reportingPeriodEnd, sourceStatementId, mappingId, instanceXml, instanceHash, state, digipoortReceiptId, administrationId)
+- [x] Task 6: Add `x-openregister-lifecycle` block to `XbrlInstance` declaring `draft → validated → submitted → accepted` and `submitted → rejected` transitions per REQ-SBR-003; submission action routes through openconnector source slug per REQ-SBR-004
+- [x] Task 7: Ship NL-taxonomie mapping seed templates under `lib/Settings/seeds/sbr-mappings/` (kvk-jaarrekening-nt17/nt18, belastingdienst-vpb-nt17/nt18, belastingdienst-ib-nt17, sbr-banken-kredietrapportage-nt17, sbr-wonen-nt17) per REQ-SBR-005 + REQ-SBR-006, each with SPDX header + `_meta` block per `feedback_spdx-in-docblock.md`
+- [x] Task 8: Extend the repair step under `lib/Repair/InitializeSettings.php` to import NL-taxonomie mapping seeds idempotently via `seedSbrMappings()` (operator edits persist across re-runs) per REQ-SBR-006
+- [x] Task 9: Add SBR/XBRL Filings navigation + pages to `src/manifest.json` (menu entry `Bookkeeping > SBR/XBRL Filings`, `type: index` page binding to `XbrlInstance`, `type: detail` page) per REQ-SBR-007; `node tests/validate-manifest.js` exits 0
+- [x] Task 10: Update `openspec/architecture/adr-000-data-model.md` with a one-paragraph reconciliation note introducing `XbrlInstance` and its relationship to the T3 `FinancialStatement` (transformation, not re-aggregation)
 
 ## Verification
 

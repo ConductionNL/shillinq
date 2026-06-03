@@ -1,0 +1,111 @@
+{
+	"_meta": {
+		"source": "NL-taxonomie",
+		"variant": "belastingdienst-vpb",
+		"taxonomyVersion": "nt18",
+		"entryPoint": "belastingdienst-vpb",
+		"authority": "Belastingdienst",
+		"description": "Aangifte vennootschapsbelasting (VPB) — NL-taxonomie nt18 mapping templates. Maps FinancialStatement line labels to NL-taxonomie nt18 concepts for the annual corporate income tax return filed with Belastingdienst.",
+		"imported": "2026-06-03T00:00:00Z",
+		"copyright": "Conduction B.V. 2026",
+		"license": "EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+	},
+	"mappings": [
+		{
+			"financialStatementLineId": "revenue-total",
+			"taxonomyConcept": "bd-vpb:Opbrengsten",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Opbrengsten",
+			"description": "Totale opbrengsten voor VPB-aangifte."
+		},
+		{
+			"financialStatementLineId": "costs-of-goods-sold",
+			"taxonomyConcept": "bd-vpb:KostenGoederen",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Kosten goederen",
+			"description": "Inkoopwaarde van verkochte goederen/diensten."
+		},
+		{
+			"financialStatementLineId": "operating-expenses-staff",
+			"taxonomyConcept": "bd-vpb:Personeelskosten",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Personeelskosten",
+			"description": "Salarissen, sociale lasten en pensioenlasten."
+		},
+		{
+			"financialStatementLineId": "operating-expenses-depreciation",
+			"taxonomyConcept": "bd-vpb:Afschrijvingen",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Afschrijvingen",
+			"description": "Fiscale afschrijvingen materiële en immateriële activa."
+		},
+		{
+			"financialStatementLineId": "operating-expenses-other",
+			"taxonomyConcept": "bd-vpb:OverigeKosten",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Overige kosten",
+			"description": "Overige aftrekbare bedrijfskosten."
+		},
+		{
+			"financialStatementLineId": "operating-result",
+			"taxonomyConcept": "bd-vpb:FiscaleWinst",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Fiscale winst",
+			"description": "Totale opbrengsten minus aftrekbare kosten."
+		},
+		{
+			"financialStatementLineId": "financial-income-expenses",
+			"taxonomyConcept": "bd-vpb:FinancieleResultaten",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Financiële resultaten",
+			"description": "Rente, deelnemingsresultaten, valutaresultaten."
+		},
+		{
+			"financialStatementLineId": "result-before-tax",
+			"taxonomyConcept": "bd-vpb:BelastbaarBedrag",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Belastbaar bedrag",
+			"description": "Belastbaar bedrag na aftrek investeringsaftrek en verliescompensatie."
+		},
+		{
+			"financialStatementLineId": "income-tax",
+			"taxonomyConcept": "bd-vpb:VerschuldigdeVpb",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Verschuldigde VPB",
+			"description": "Berekende vennootschapsbelasting."
+		},
+		{
+			"financialStatementLineId": "assets-total",
+			"taxonomyConcept": "bd-vpb:TotaalActiva",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Totaal activa (fiscaal)",
+			"description": "Fiscale waarde totale activa per jaareinde."
+		},
+		{
+			"financialStatementLineId": "equity-total",
+			"taxonomyConcept": "bd-vpb:FiscaalEigenVermogen",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Fiscaal eigen vermogen",
+			"description": "Fiscale boekwaarde eigen vermogen."
+		},
+		{
+			"financialStatementLineId": "liabilities-total",
+			"taxonomyConcept": "bd-vpb:TotaalSchulden",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Totaal schulden (fiscaal)",
+			"description": "Fiscale boekwaarde totale schulden."
+		}
+	]
+}

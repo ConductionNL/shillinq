@@ -102,6 +102,13 @@
 					"icon": "FileChartOutline",
 					"route": "Iv3Reports",
 					"order": 84
+				},
+				{
+					"id": "SbrXbrlFilings",
+					"label": "SBR/XBRL Filings",
+					"icon": "FileXmlOutline",
+					"route": "SbrXbrlFilings",
+					"order": 85
 				}
 			]
 		},
@@ -629,6 +636,146 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "Waterschapsbelastingen"
+			}
+		},
+		{
+			"id": "SbrXbrlFilings",
+			"route": "/sbr-xbrl-filings",
+			"type": "index",
+			"title": "SBR/XBRL Filings",
+			"config": {
+				"register": "shillinq",
+				"schema": "XbrlInstance",
+				"columns": [
+					{
+						"key": "instanceNumber",
+						"label": "Filing Reference",
+						"sortable": true
+					},
+					{
+						"key": "entryPoint",
+						"label": "Entry Point",
+						"sortable": true
+					},
+					{
+						"key": "reportingPeriodEnd",
+						"label": "Period End",
+						"sortable": true
+					},
+					{
+						"key": "taxonomyVersion",
+						"label": "Taxonomy",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "digipoortReceiptId",
+						"label": "Digipoort Receipt",
+						"sortable": false
+					}
+				],
+				"defaultSort": "-reportingPeriodEnd",
+				"filters": [
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "enum",
+						"options": [
+							"draft",
+							"validated",
+							"submitted",
+							"accepted",
+							"rejected"
+						]
+					},
+					{
+						"key": "entryPoint",
+						"label": "Entry Point",
+						"type": "enum",
+						"options": [
+							"kvk-jaarrekening",
+							"belastingdienst-vpb",
+							"belastingdienst-ib",
+							"sbr-banken-kredietrapportage",
+							"sbr-wonen"
+						]
+					}
+				],
+				"detailRoute": "SbrXbrlFilingDetail"
+			}
+		},
+		{
+			"id": "SbrXbrlFilingDetail",
+			"route": "/sbr-xbrl-filings/:id",
+			"type": "detail",
+			"title": "SBR/XBRL Filing",
+			"config": {
+				"register": "shillinq",
+				"schema": "XbrlInstance",
+				"fields": [
+					{
+						"key": "instanceNumber",
+						"label": "Filing Reference",
+						"type": "string"
+					},
+					{
+						"key": "entryPoint",
+						"label": "Entry Point",
+						"type": "string"
+					},
+					{
+						"key": "taxonomyVersion",
+						"label": "NL-taxonomie Version",
+						"type": "string"
+					},
+					{
+						"key": "reportingPeriodStart",
+						"label": "Period Start",
+						"type": "date"
+					},
+					{
+						"key": "reportingPeriodEnd",
+						"label": "Period End",
+						"type": "date"
+					},
+					{
+						"key": "sourceStatementId",
+						"label": "Source Financial Statement",
+						"type": "string"
+					},
+					{
+						"key": "mappingId",
+						"label": "NL-taxonomie Mapping",
+						"type": "string"
+					},
+					{
+						"key": "instanceHash",
+						"label": "Instance SHA-256",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "digipoortReceiptId",
+						"label": "Digipoort Receipt ID",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"auditTrail": true,
+				"indexRoute": "SbrXbrlFilings"
 			}
 		},
 		{

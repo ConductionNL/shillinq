@@ -1,0 +1,239 @@
+{
+	"_meta": {
+		"source": "NL-taxonomie",
+		"variant": "kvk-jaarrekening",
+		"taxonomyVersion": "nt18",
+		"entryPoint": "kvk-jaarrekening",
+		"authority": "KvK",
+		"description": "KvK jaarrekening deponering — NL-taxonomie nt18 mapping templates. Maps FinancialStatement line labels to NL-taxonomie nt18 concepts for the standard annual accounts deposit for Dutch limited-liability entities. Operators may edit per-administration entries to add company-specific extension concepts.",
+		"imported": "2026-06-03T00:00:00Z",
+		"copyright": "Conduction B.V. 2026",
+		"license": "EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+	},
+	"mappings": [
+		{
+			"financialStatementLineId": "assets-total",
+			"taxonomyConcept": "kvk-abstr:SomActiva",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Totaal activa",
+			"description": "Som van alle activa per balansdatum."
+		},
+		{
+			"financialStatementLineId": "assets-fixed-total",
+			"taxonomyConcept": "kvk-abstr:VasteActiva",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Vaste activa",
+			"description": "Totaal vaste activa."
+		},
+		{
+			"financialStatementLineId": "assets-fixed-intangible",
+			"taxonomyConcept": "kvk:ImmaterieleVasteActiva",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Immateriële vaste activa",
+			"description": "Goodwill, ontwikkelingskosten, overige immateriële activa."
+		},
+		{
+			"financialStatementLineId": "assets-fixed-tangible",
+			"taxonomyConcept": "kvk:MaterieleVasteActiva",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Materiële vaste activa",
+			"description": "Bedrijfsgebouwen, machines, inventaris, vervoermiddelen."
+		},
+		{
+			"financialStatementLineId": "assets-fixed-financial",
+			"taxonomyConcept": "kvk:FinancieleVasteActiva",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Financiële vaste activa",
+			"description": "Deelnemingen, leningen u/g, overige financiële vaste activa."
+		},
+		{
+			"financialStatementLineId": "assets-current-total",
+			"taxonomyConcept": "kvk-abstr:VlottendeActiva",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Vlottende activa",
+			"description": "Totaal vlottende activa."
+		},
+		{
+			"financialStatementLineId": "assets-current-inventories",
+			"taxonomyConcept": "kvk:Voorraden",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Voorraden",
+			"description": "Grond- en hulpstoffen, onderhanden werk, gereed product, handelsgoederen."
+		},
+		{
+			"financialStatementLineId": "assets-current-receivables",
+			"taxonomyConcept": "kvk:Vorderingen",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Vorderingen",
+			"description": "Handelsdebiteuren, overige vorderingen, nog te ontvangen posten."
+		},
+		{
+			"financialStatementLineId": "assets-current-cash",
+			"taxonomyConcept": "kvk:LiquideMiddelen",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Liquide middelen",
+			"description": "Kasgeld, banktegoeden, deposito's met looptijd < 1 jaar."
+		},
+		{
+			"financialStatementLineId": "equity-total",
+			"taxonomyConcept": "kvk-abstr:EigenVermogen",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Eigen vermogen",
+			"description": "Totaal eigen vermogen."
+		},
+		{
+			"financialStatementLineId": "equity-share-capital",
+			"taxonomyConcept": "kvk:Aandelenkapitaal",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Aandelenkapitaal",
+			"description": "Geplaatst en volgestort aandelenkapitaal."
+		},
+		{
+			"financialStatementLineId": "equity-retained-earnings",
+			"taxonomyConcept": "kvk:Reserves",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Reserves",
+			"description": "Agio, wettelijke reserves, overige reserves."
+		},
+		{
+			"financialStatementLineId": "equity-result",
+			"taxonomyConcept": "kvk:ResultaatBoekjaar",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Resultaat boekjaar",
+			"description": "Nettowinst of -verlies van het boekjaar."
+		},
+		{
+			"financialStatementLineId": "liabilities-total",
+			"taxonomyConcept": "kvk-abstr:Schulden",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Totaal schulden",
+			"description": "Totaal lang- en kortlopende schulden."
+		},
+		{
+			"financialStatementLineId": "liabilities-longterm",
+			"taxonomyConcept": "kvk:LanglopendeSchulden",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Langlopende schulden",
+			"description": "Schulden met looptijd > 1 jaar."
+		},
+		{
+			"financialStatementLineId": "liabilities-shortterm",
+			"taxonomyConcept": "kvk:KortlopendeSchulden",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Kortlopende schulden",
+			"description": "Schulden met looptijd ≤ 1 jaar, crediteuren, belastingen."
+		},
+		{
+			"financialStatementLineId": "revenue-total",
+			"taxonomyConcept": "kvk:NettoOmzet",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Netto-omzet",
+			"description": "Opbrengsten uit de gewone bedrijfsvoering."
+		},
+		{
+			"financialStatementLineId": "costs-of-goods-sold",
+			"taxonomyConcept": "kvk:KostenOmzet",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Kosten omzet",
+			"description": "Inkoopwaarde van de omzet."
+		},
+		{
+			"financialStatementLineId": "gross-profit",
+			"taxonomyConcept": "kvk:Brutowinst",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Brutowinst",
+			"description": "Netto-omzet minus kosten omzet."
+		},
+		{
+			"financialStatementLineId": "operating-expenses-total",
+			"taxonomyConcept": "kvk-abstr:Bedrijfslasten",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Bedrijfslasten",
+			"description": "Totaal bedrijfslasten inclusief personeelskosten, afschrijvingen, overige."
+		},
+		{
+			"financialStatementLineId": "operating-expenses-staff",
+			"taxonomyConcept": "kvk:Personeelskosten",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Personeelskosten",
+			"description": "Salarissen, sociale lasten, pensioenlasten."
+		},
+		{
+			"financialStatementLineId": "operating-expenses-depreciation",
+			"taxonomyConcept": "kvk:AfschrijvingenAmortisaties",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Afschrijvingen en amortisaties",
+			"description": "Afschrijvingen op materiële en immateriële vaste activa."
+		},
+		{
+			"financialStatementLineId": "operating-expenses-other",
+			"taxonomyConcept": "kvk:OverigeBedrijfskosten",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Overige bedrijfskosten",
+			"description": "Huisvestingskosten, verkoopkosten, kantoorkosten."
+		},
+		{
+			"financialStatementLineId": "operating-result",
+			"taxonomyConcept": "kvk:Bedrijfsresultaat",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Bedrijfsresultaat",
+			"description": "Brutowinst minus bedrijfslasten."
+		},
+		{
+			"financialStatementLineId": "financial-income-expenses",
+			"taxonomyConcept": "kvk:FinancieleLastenEnBaten",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Financiële lasten en baten",
+			"description": "Rentebaten, rentelasten, valutaresultaten."
+		},
+		{
+			"financialStatementLineId": "result-before-tax",
+			"taxonomyConcept": "kvk:ResultaatVoorBelasting",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Resultaat vóór belasting",
+			"description": "Bedrijfsresultaat plus financiële baten/lasten."
+		},
+		{
+			"financialStatementLineId": "income-tax",
+			"taxonomyConcept": "kvk:Belastingen",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Belastingen",
+			"description": "Vennootschapsbelasting en overige belastingen."
+		},
+		{
+			"financialStatementLineId": "result-after-tax",
+			"taxonomyConcept": "kvk:ResultaatNaBelasting",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Resultaat ná belasting",
+			"description": "Nettowinst of -verlies na belasting."
+		}
+	]
+}

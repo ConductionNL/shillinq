@@ -78,6 +78,8 @@ class InitializeSettings implements IRepairStep
      * Phase 3: seeds the Archiefwet Selectielijst Gemeenten 2020 retention rules.
      * Phase 4: registers the IV3 quarterly CBS ScheduledWorkflow if not yet present.
      * Phase 5: seeds KOR thresholds from kor-thresholds-2026.json idempotently.
+     * Phase 6: seeds NL-taxonomie SBR mapping templates from sbr-mappings/ idempotently
+     *           per REQ-SBR-006. Operator edits to existing Mapping records persist.
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -86,6 +88,7 @@ class InitializeSettings implements IRepairStep
      * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
      * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-10
      * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
+     * @spec openspec/changes/add-shillinq-sbr-xbrl-reporting/tasks.md#task-8
      */
     public function run(IOutput $output): void
     {
@@ -134,6 +137,7 @@ class InitializeSettings implements IRepairStep
             $this->seedSelectielijstRules(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
+            $this->seedSbrMappings(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -331,6 +335,119 @@ class InitializeSettings implements IRepairStep
         }//end try
 
     }//end seedKorThresholds()
+
+    /**
+     * Seed NL-taxonomie SBR mapping templates from sbr-mappings/ idempotently.
+     *
+     * Each seed file under lib/Settings/seeds/sbr-mappings/ carries an _meta block
+     * identifying the entry point and taxonomy version; the deduplication key is
+     * entryPoint + taxonomyVersion. Existing Mapping records (including operator edits
+     * such as company-specific extension concepts) are left untouched on re-run.
+     *
+     * Per REQ-SBR-005 the five canonical entry points ship with nt17 and/or nt18
+     * templates: kvk-jaarrekening-nt17/nt18, belastingdienst-vpb-nt17/nt18,
+     * belastingdienst-ib-nt17, sbr-banken-kredietrapportage-nt17, sbr-wonen-nt17.
+     *
+     * @param IOutput $output The output interface for progress reporting
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-sbr-xbrl-reporting/tasks.md#task-8
+     */
+    private function seedSbrMappings(IOutput $output): void
+    {
+        if ($this->settingsService->isOpenRegisterAvailable() === false) {
+            return;
+        }
+
+        $seedDir = __DIR__.'/../Settings/seeds/sbr-mappings';
+        if (is_dir($seedDir) === false) {
+            $output->warning('Shillinq: SBR mappings seed directory not found, skipping');
+            return;
+        }
+
+        $seedFiles = glob($seedDir.'/*.json');
+        if ($seedFiles === false || empty($seedFiles) === true) {
+            $output->info('Shillinq: no SBR mapping seed files found, skipping');
+            return;
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->settingsService->getRegisterSlug();
+            $totalSeeded   = 0;
+            $totalSkipped  = 0;
+
+            foreach ($seedFiles as $seedFile) {
+                $content = file_get_contents($seedFile);
+                if ($content === false) {
+                    $output->warning('Shillinq: failed to read SBR mapping seed file: '.$seedFile);
+                    continue;
+                }
+
+                $data = json_decode($content, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    $output->warning('Shillinq: invalid JSON in SBR mapping seed: '.$seedFile);
+                    continue;
+                }
+
+                $meta         = ($data['_meta'] ?? []);
+                $entryPoint   = ($meta['entryPoint'] ?? null);
+                $taxVersion   = ($meta['taxonomyVersion'] ?? null);
+
+                if ($entryPoint === null || $taxVersion === null) {
+                    $output->warning('Shillinq: SBR seed file missing _meta.entryPoint or taxonomyVersion: '.$seedFile);
+                    continue;
+                }
+
+                // Deduplication: skip if a Mapping with this entryPoint + taxonomyVersion already exists.
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('Mapping')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'entryPoint'      => $entryPoint,
+                                'taxonomyVersion' => $taxVersion,
+                            ],
+                            'limit' => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    $totalSkipped++;
+                    continue;
+                }
+
+                $mappingRecord = [
+                    'entryPoint'      => $entryPoint,
+                    'taxonomyVersion' => $taxVersion,
+                    'source'          => ($meta['source'] ?? 'NL-taxonomie'),
+                    'authority'       => ($meta['authority'] ?? ''),
+                    'description'     => ($meta['description'] ?? ''),
+                    'mappings'        => ($data['mappings'] ?? []),
+                ];
+
+                $objectService->saveObject(
+                    object: $mappingRecord,
+                    register: $registerSlug,
+                    schema: 'Mapping',
+                );
+                $totalSeeded++;
+            }//end foreach
+
+            $output->info(
+                'Shillinq: SBR mapping seeds imported: '.$totalSeeded.' created, '.$totalSkipped.' skipped (already exist).'
+            );
+        } catch (\Throwable $e) {
+            $output->warning('Shillinq: SBR mapping seed import failed: '.$e->getMessage());
+            $this->logger->warning(
+                'Shillinq: SBR mapping seed import failed',
+                ['exception' => $e->getMessage()]
+            );
+        }//end try
+
+    }//end seedSbrMappings()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.

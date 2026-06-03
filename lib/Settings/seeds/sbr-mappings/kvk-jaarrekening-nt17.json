@@ -1,0 +1,183 @@
+{
+	"_meta": {
+		"source": "NL-taxonomie",
+		"variant": "kvk-jaarrekening",
+		"taxonomyVersion": "nt17",
+		"entryPoint": "kvk-jaarrekening",
+		"authority": "KvK",
+		"description": "KvK jaarrekening deponering — NL-taxonomie nt17 mapping templates. Maps FinancialStatement line labels to NL-taxonomie nt17 concepts. Retained alongside nt18 so historical instances filed under nt17 remain verifiable.",
+		"imported": "2026-06-03T00:00:00Z",
+		"copyright": "Conduction B.V. 2026",
+		"license": "EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+	},
+	"mappings": [
+		{
+			"financialStatementLineId": "assets-total",
+			"taxonomyConcept": "kvk-nt17-abstr:SomActiva",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Totaal activa",
+			"description": "Som van alle activa per balansdatum (nt17)."
+		},
+		{
+			"financialStatementLineId": "assets-fixed-total",
+			"taxonomyConcept": "kvk-nt17-abstr:VasteActiva",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Vaste activa",
+			"description": "Totaal vaste activa (nt17)."
+		},
+		{
+			"financialStatementLineId": "assets-fixed-intangible",
+			"taxonomyConcept": "kvk-nt17:ImmaterieleVasteActiva",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Immateriële vaste activa",
+			"description": "Goodwill, ontwikkelingskosten, overige immateriële activa (nt17)."
+		},
+		{
+			"financialStatementLineId": "assets-fixed-tangible",
+			"taxonomyConcept": "kvk-nt17:MaterieleVasteActiva",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Materiële vaste activa",
+			"description": "Bedrijfsgebouwen, machines, inventaris, vervoermiddelen (nt17)."
+		},
+		{
+			"financialStatementLineId": "assets-fixed-financial",
+			"taxonomyConcept": "kvk-nt17:FinancieleVasteActiva",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Financiële vaste activa",
+			"description": "Deelnemingen, leningen u/g, overige financiële vaste activa (nt17)."
+		},
+		{
+			"financialStatementLineId": "assets-current-total",
+			"taxonomyConcept": "kvk-nt17-abstr:VlottendeActiva",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Vlottende activa",
+			"description": "Totaal vlottende activa (nt17)."
+		},
+		{
+			"financialStatementLineId": "assets-current-inventories",
+			"taxonomyConcept": "kvk-nt17:Voorraden",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Voorraden",
+			"description": "Grond- en hulpstoffen, onderhanden werk, gereed product (nt17)."
+		},
+		{
+			"financialStatementLineId": "assets-current-receivables",
+			"taxonomyConcept": "kvk-nt17:Vorderingen",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Vorderingen",
+			"description": "Handelsdebiteuren, overige vorderingen (nt17)."
+		},
+		{
+			"financialStatementLineId": "assets-current-cash",
+			"taxonomyConcept": "kvk-nt17:LiquideMiddelen",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Liquide middelen",
+			"description": "Kasgeld, banktegoeden (nt17)."
+		},
+		{
+			"financialStatementLineId": "equity-total",
+			"taxonomyConcept": "kvk-nt17-abstr:EigenVermogen",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Eigen vermogen",
+			"description": "Totaal eigen vermogen (nt17)."
+		},
+		{
+			"financialStatementLineId": "equity-share-capital",
+			"taxonomyConcept": "kvk-nt17:Aandelenkapitaal",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Aandelenkapitaal",
+			"description": "Geplaatst en volgestort aandelenkapitaal (nt17)."
+		},
+		{
+			"financialStatementLineId": "equity-retained-earnings",
+			"taxonomyConcept": "kvk-nt17:Reserves",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Reserves",
+			"description": "Agio, wettelijke reserves, overige reserves (nt17)."
+		},
+		{
+			"financialStatementLineId": "equity-result",
+			"taxonomyConcept": "kvk-nt17:ResultaatBoekjaar",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Resultaat boekjaar",
+			"description": "Nettowinst of -verlies van het boekjaar (nt17)."
+		},
+		{
+			"financialStatementLineId": "liabilities-total",
+			"taxonomyConcept": "kvk-nt17-abstr:Schulden",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Totaal schulden",
+			"description": "Totaal lang- en kortlopende schulden (nt17)."
+		},
+		{
+			"financialStatementLineId": "liabilities-longterm",
+			"taxonomyConcept": "kvk-nt17:LanglopendeSchulden",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Langlopende schulden",
+			"description": "Schulden met looptijd > 1 jaar (nt17)."
+		},
+		{
+			"financialStatementLineId": "liabilities-shortterm",
+			"taxonomyConcept": "kvk-nt17:KortlopendeSchulden",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Kortlopende schulden",
+			"description": "Schulden met looptijd ≤ 1 jaar (nt17)."
+		},
+		{
+			"financialStatementLineId": "revenue-total",
+			"taxonomyConcept": "kvk-nt17:NettoOmzet",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Netto-omzet",
+			"description": "Opbrengsten uit de gewone bedrijfsvoering (nt17)."
+		},
+		{
+			"financialStatementLineId": "operating-result",
+			"taxonomyConcept": "kvk-nt17:Bedrijfsresultaat",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Bedrijfsresultaat",
+			"description": "Bedrijfsresultaat (nt17)."
+		},
+		{
+			"financialStatementLineId": "result-before-tax",
+			"taxonomyConcept": "kvk-nt17:ResultaatVoorBelasting",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Resultaat vóór belasting",
+			"description": "Resultaat voor belasting (nt17)."
+		},
+		{
+			"financialStatementLineId": "income-tax",
+			"taxonomyConcept": "kvk-nt17:Belastingen",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Belastingen",
+			"description": "Vennootschapsbelasting en overige belastingen (nt17)."
+		},
+		{
+			"financialStatementLineId": "result-after-tax",
+			"taxonomyConcept": "kvk-nt17:ResultaatNaBelasting",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Resultaat ná belasting",
+			"description": "Nettowinst of -verlies na belasting (nt17)."
+		}
+	]
+}

@@ -1,0 +1,111 @@
+{
+	"_meta": {
+		"source": "NL-taxonomie",
+		"variant": "sbr-banken-kredietrapportage",
+		"taxonomyVersion": "nt17",
+		"entryPoint": "sbr-banken-kredietrapportage",
+		"authority": "SBR-banken consortium",
+		"description": "SBR-banken kredietrapportage — NL-taxonomie nt17 mapping templates. Maps FinancialStatement line labels to NL-taxonomie nt17 concepts for credit reporting to consortium banks (ABN AMRO, ING, Rabobank, etc.).",
+		"imported": "2026-06-03T00:00:00Z",
+		"copyright": "Conduction B.V. 2026",
+		"license": "EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+	},
+	"mappings": [
+		{
+			"financialStatementLineId": "assets-total",
+			"taxonomyConcept": "sbr-bank:BalanssomActiva",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Balansssom activa",
+			"description": "Totale activa per balansdatum (kredietrapportage)."
+		},
+		{
+			"financialStatementLineId": "assets-fixed-tangible",
+			"taxonomyConcept": "sbr-bank:MaterieleActiva",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Materiële activa",
+			"description": "Materiële vaste activa (kredietrapportage)."
+		},
+		{
+			"financialStatementLineId": "assets-current-inventories",
+			"taxonomyConcept": "sbr-bank:Voorraden",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Voorraden",
+			"description": "Voorraden per balansdatum (kredietrapportage)."
+		},
+		{
+			"financialStatementLineId": "assets-current-receivables",
+			"taxonomyConcept": "sbr-bank:HandelsdebiteureKort",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Handelsdebiteuren (kort)",
+			"description": "Kortlopende handelsvorderingen (kredietrapportage)."
+		},
+		{
+			"financialStatementLineId": "assets-current-cash",
+			"taxonomyConcept": "sbr-bank:KasEnBank",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Kas en bank",
+			"description": "Liquide middelen (kredietrapportage)."
+		},
+		{
+			"financialStatementLineId": "equity-total",
+			"taxonomyConcept": "sbr-bank:EigenVermogenTotaal",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Eigen vermogen",
+			"description": "Totaal eigen vermogen (kredietrapportage)."
+		},
+		{
+			"financialStatementLineId": "liabilities-longterm",
+			"taxonomyConcept": "sbr-bank:LanglopendeSchulden",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Langlopende schulden",
+			"description": "Langlopende schulden inclusief bankfinancieringen (kredietrapportage)."
+		},
+		{
+			"financialStatementLineId": "liabilities-shortterm",
+			"taxonomyConcept": "sbr-bank:KortlopendeSchulden",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Kortlopende schulden",
+			"description": "Kortlopende schulden (kredietrapportage)."
+		},
+		{
+			"financialStatementLineId": "revenue-total",
+			"taxonomyConcept": "sbr-bank:NettoOmzet",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Netto-omzet",
+			"description": "Netto-omzet (kredietrapportage)."
+		},
+		{
+			"financialStatementLineId": "operating-result",
+			"taxonomyConcept": "sbr-bank:Ebitda",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "EBITDA",
+			"description": "Earnings before interest, taxes, depreciation and amortisation (kredietrapportage)."
+		},
+		{
+			"financialStatementLineId": "result-before-tax",
+			"taxonomyConcept": "sbr-bank:ResultaatVoorBelasting",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Resultaat vóór belasting",
+			"description": "Resultaat voor belasting (kredietrapportage)."
+		},
+		{
+			"financialStatementLineId": "result-after-tax",
+			"taxonomyConcept": "sbr-bank:NettoResultaat",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Nettoresultaat",
+			"description": "Nettoresultaat na belasting (kredietrapportage)."
+		}
+	]
+}

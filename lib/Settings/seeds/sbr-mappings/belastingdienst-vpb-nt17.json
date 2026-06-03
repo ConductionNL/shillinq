@@ -1,0 +1,87 @@
+{
+	"_meta": {
+		"source": "NL-taxonomie",
+		"variant": "belastingdienst-vpb",
+		"taxonomyVersion": "nt17",
+		"entryPoint": "belastingdienst-vpb",
+		"authority": "Belastingdienst",
+		"description": "Aangifte vennootschapsbelasting (VPB) — NL-taxonomie nt17 mapping templates. Retained alongside nt18 so historical VPB returns filed under nt17 remain verifiable.",
+		"imported": "2026-06-03T00:00:00Z",
+		"copyright": "Conduction B.V. 2026",
+		"license": "EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+	},
+	"mappings": [
+		{
+			"financialStatementLineId": "revenue-total",
+			"taxonomyConcept": "bd-vpb-nt17:Opbrengsten",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Opbrengsten",
+			"description": "Totale opbrengsten voor VPB-aangifte (nt17)."
+		},
+		{
+			"financialStatementLineId": "costs-of-goods-sold",
+			"taxonomyConcept": "bd-vpb-nt17:KostenGoederen",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Kosten goederen",
+			"description": "Inkoopwaarde van verkochte goederen/diensten (nt17)."
+		},
+		{
+			"financialStatementLineId": "operating-expenses-staff",
+			"taxonomyConcept": "bd-vpb-nt17:Personeelskosten",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Personeelskosten",
+			"description": "Salarissen, sociale lasten en pensioenlasten (nt17)."
+		},
+		{
+			"financialStatementLineId": "operating-expenses-depreciation",
+			"taxonomyConcept": "bd-vpb-nt17:Afschrijvingen",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Afschrijvingen",
+			"description": "Fiscale afschrijvingen materiële en immateriële activa (nt17)."
+		},
+		{
+			"financialStatementLineId": "operating-result",
+			"taxonomyConcept": "bd-vpb-nt17:FiscaleWinst",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Fiscale winst",
+			"description": "Totale opbrengsten minus aftrekbare kosten (nt17)."
+		},
+		{
+			"financialStatementLineId": "result-before-tax",
+			"taxonomyConcept": "bd-vpb-nt17:BelastbaarBedrag",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Belastbaar bedrag",
+			"description": "Belastbaar bedrag na aftrek (nt17)."
+		},
+		{
+			"financialStatementLineId": "income-tax",
+			"taxonomyConcept": "bd-vpb-nt17:VerschuldigdeVpb",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Verschuldigde VPB",
+			"description": "Berekende vennootschapsbelasting (nt17)."
+		},
+		{
+			"financialStatementLineId": "assets-total",
+			"taxonomyConcept": "bd-vpb-nt17:TotaalActiva",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Totaal activa (fiscaal)",
+			"description": "Fiscale waarde totale activa (nt17)."
+		},
+		{
+			"financialStatementLineId": "equity-total",
+			"taxonomyConcept": "bd-vpb-nt17:FiscaalEigenVermogen",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Fiscaal eigen vermogen",
+			"description": "Fiscale boekwaarde eigen vermogen (nt17)."
+		}
+	]
+}

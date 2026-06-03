@@ -1,0 +1,95 @@
+{
+	"_meta": {
+		"source": "NL-taxonomie",
+		"variant": "belastingdienst-ib",
+		"taxonomyVersion": "nt17",
+		"entryPoint": "belastingdienst-ib",
+		"authority": "Belastingdienst",
+		"description": "Aangifte inkomstenbelasting winst uit onderneming (IB-ondernemer) — NL-taxonomie nt17 mapping templates. Maps FinancialStatement line labels to NL-taxonomie nt17 concepts for ZZP/eenmanszaak IB returns.",
+		"imported": "2026-06-03T00:00:00Z",
+		"copyright": "Conduction B.V. 2026",
+		"license": "EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+	},
+	"mappings": [
+		{
+			"financialStatementLineId": "revenue-total",
+			"taxonomyConcept": "bd-ib:OmzetZelfstandige",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Omzet zelfstandige",
+			"description": "Totale omzet of opbrengsten uit onderneming."
+		},
+		{
+			"financialStatementLineId": "costs-of-goods-sold",
+			"taxonomyConcept": "bd-ib:InkoopwaardeOmzet",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Inkoopwaarde omzet",
+			"description": "Directe kosten gemoeid met behaalde omzet."
+		},
+		{
+			"financialStatementLineId": "operating-expenses-other",
+			"taxonomyConcept": "bd-ib:AlgemeneKosten",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Algemene bedrijfskosten",
+			"description": "Kantoorkosten, reiskosten, overige zakelijke kosten."
+		},
+		{
+			"financialStatementLineId": "operating-expenses-depreciation",
+			"taxonomyConcept": "bd-ib:AfschrijvingenActiva",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Afschrijvingen activa",
+			"description": "Afschrijvingen op bedrijfsmiddelen."
+		},
+		{
+			"financialStatementLineId": "operating-result",
+			"taxonomyConcept": "bd-ib:WinstUitOnderneming",
+			"contextRef": "duration",
+			"unitRef": "EUR",
+			"label": "Winst uit onderneming",
+			"description": "Fiscale winst na zelfstandigenaftrek en MKB-winstvrijstelling."
+		},
+		{
+			"financialStatementLineId": "assets-fixed-tangible",
+			"taxonomyConcept": "bd-ib:BedrijfsmiddelenActiva",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Bedrijfsmiddelen",
+			"description": "Boekwaarde bedrijfsmiddelen per jaareinde."
+		},
+		{
+			"financialStatementLineId": "assets-current-receivables",
+			"taxonomyConcept": "bd-ib:Debiteuren",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Debiteuren",
+			"description": "Openstaande vorderingen per jaareinde."
+		},
+		{
+			"financialStatementLineId": "assets-current-cash",
+			"taxonomyConcept": "bd-ib:KasBank",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Kas en bank",
+			"description": "Saldo kasgeld en bankrekeningen per jaareinde."
+		},
+		{
+			"financialStatementLineId": "liabilities-shortterm",
+			"taxonomyConcept": "bd-ib:Crediteuren",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Crediteuren",
+			"description": "Openstaande leveranciersschulden per jaareinde."
+		},
+		{
+			"financialStatementLineId": "equity-result",
+			"taxonomyConcept": "bd-ib:OndernemingsvermogenResultaat",
+			"contextRef": "endInstant",
+			"unitRef": "EUR",
+			"label": "Ondernemingsvermogen",
+			"description": "Fiscaal ondernemingsvermogen per jaareinde."
+		}
+	]
+}
