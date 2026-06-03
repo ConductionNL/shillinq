@@ -10,7 +10,7 @@
       "started_at": "2026-06-01T22:44:01Z",
       "ended_at": "2026-06-02T16:47:37Z",
       "outcome": "done",
-      "outcome_reason": "pipeline complete — reviews passed and applier passed (if run)",
+      "outcome_reason": "pipeline complete \u2014 reviews passed and applier passed (if run)",
       "pattern_tags": [],
       "stages": [
         {
@@ -42,7 +42,7 @@
         },
         {
           "stage": "applier",
-          "persona": "Axel Pliér",
+          "persona": "Axel Pli\u00e9r",
           "model": "sonnet",
           "container": "hydra-applier",
           "started_at": "2026-06-02T16:45:34Z",
@@ -67,7 +67,7 @@
       "started_at": "2026-06-03T00:00:00Z",
       "ended_at": null,
       "outcome": "in-progress",
-      "outcome_reason": "build cycle 2 — correcting issue reference to #31; implementation already present in development from cycle 1 applier",
+      "outcome_reason": "build cycle 2 \u2014 correcting issue reference to #31; implementation already present in development from cycle 1 applier",
       "pattern_tags": [],
       "stages": [
         {
@@ -93,6 +93,16 @@
           "duration_seconds": null
         }
       ]
+    },
+    {
+      "cycle": 3,
+      "trigger": "build:queued",
+      "started_at": "2026-06-03T18:54:42Z",
+      "ended_at": null,
+      "outcome": "in-flight",
+      "outcome_reason": null,
+      "pattern_tags": [],
+      "stages": []
     }
   ],
   "totals": {
