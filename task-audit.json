@@ -1,89 +1,74 @@
 {
-  "spec": "openspec/changes/add-shillinq-innovatiebox-administratie",
+  "spec": "openspec/changes/add-shillinq-r-d-subsidies-mkb",
   "verified": [
     {
       "task": "1",
       "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "Confirmed no IPAssetValuation, InnovatieboxElection, WinstToerekening schemas existed before this change."
+      "note": "Confirmed no subsidieRegeling enum or parallel R&D register existed before this change."
     },
     {
       "task": "2",
-      "file": "openspec/changes/add-shillinq-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md",
-      "ok": true,
-      "note": "Spec file exists with Status: proposed, Scope: shillinq, REQ-IBA-NNN requirements and Scenario blocks."
+      "file": "openspec/specs/bookkeeping-r-d-subsidies-mkb/spec.md",
+      "ok": true
     },
     {
       "task": "3",
-      "file": "openspec/changes/add-shillinq-innovatiebox-administratie/proposal.md",
-      "ok": true,
-      "note": "Proposal references nextcloud-app spec, includes Affected Projects, Scope, Risks, Rollback, Open Questions."
+      "file": "openspec/changes/add-shillinq-r-d-subsidies-mkb/proposal.md",
+      "ok": true
     },
     {
       "task": "4",
-      "file": "openspec/changes/add-shillinq-innovatiebox-administratie/design.md",
-      "ok": true,
-      "note": "Design includes Reuse Analysis table and Seed Data section."
+      "file": "openspec/changes/add-shillinq-r-d-subsidies-mkb/design.md",
+      "ok": true
     },
     {
       "task": "5",
       "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "InnovatieboxElection schema declared with administrationId, fiscalYear, route enum (forfaitair|afpelmethode), applicableTariff (default 0.09), forfaitairCapBedrag (default 25000), forfaitairPercentage (default 0.25)."
+      "note": "Subsidie schema added with subsidieRegeling enum (mit|sbir|eu-horizon|efro|react-eu|other) and schema:Grant annotation."
     },
     {
       "task": "6",
       "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "IPAssetValuation schema declared with all required fields, x-schema-org: schema:Intangible, applicableTariff default 0.09."
+      "note": "Kostenpost schema with allOf/if-then per-regeling kostencategorie constraints for MIT/SBIR/EU-Horizon/EFRO/REACT-EU."
     },
     {
       "task": "7",
       "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "WinstToerekening schema declared with ipAssetId, periodId, toegerekendeWinst, verdeelsleutel enum, parameters."
+      "note": "voortgangsrapportage aggregation on Subsidie grouping Kostenpost by (kostencategorie, periodId)."
     },
     {
       "task": "8",
-      "file": "lib/Settings/seeds/innovatiebox-tariefen.json",
+      "file": "lib/Settings/docudesk-templates.json",
       "ok": true,
-      "note": "Seed file with historic tariff schedule (before 2018: 0.05, 2018-2020: 0.07, 2021-present: 0.09) + forfaitair parameters (cap 25000, percentage 0.25). SPDX in _spdx block, _meta source field."
+      "note": "Voortgangsrapportage templates: rd-subsidie-horizon-periodic-report, rd-subsidie-mit-voortgangsrapport, rd-subsidie-efro-progress-dossier."
     },
     {
       "task": "9",
-      "file": "lib/Settings/shillinq_register.json",
+      "file": "lib/Settings/docudesk-templates.json",
       "ok": true,
-      "note": "x-openregister-aggregations.innovatieboxAdministratie declared on InnovatieboxElection with branch on route, forfaitair formula min(forfaitairPercentage * operatingProfit, forfaitairCapBedrag), afpelmethode sum via WinstToerekening."
+      "note": "Audit-pack templates: rd-subsidie-horizon-audit-pack (with S&O-uren-staat URI refs), rd-subsidie-mit-declaration, rd-subsidie-efro-procurement-dossier."
     },
     {
       "task": "10",
       "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "x-openregister-constraints.uniqueElectionPerFiscalYear declares unique constraint on (administrationId, fiscalYear). Aggregation requires at least one IPAssetValuation for afpelmethode."
+      "note": "EU-Horizon indirect-25% calculations: horizonDirectCosts, horizonIndirect25MaxBedrag (25%), horizonIndirect25UsageBedrag, horizonIndirect25UsagePercent, horizonIndirect25Warning (>=90%)."
     },
     {
       "task": "11",
-      "file": "lib/Settings/docudesk-templates.json",
+      "file": "src/manifest.json",
       "ok": true,
-      "note": "New file created registering vpb-aangifte-innovatiebox-sectie template with forfaitair and afpelmethode sections."
+      "note": "R&D Subsidies menu under Bookkeeping (featureFlag mkb-r-d-subsidies). Pages: RDSubsidies (index), RDSubsidieDetail (detail with aggregation + kostenposten), KostenpostDetail."
     },
     {
       "task": "12",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "note": "x-openregister-notifications declared on InnovatieboxElection: onRouteElection (onCreate), onRouteChange (onUpdate), onCapApplication (onCalculation), onTariffApplication (onCalculation) — all auditLevel: immutable."
-    },
-    {
-      "task": "13",
-      "file": "src/manifest.json",
-      "ok": true,
-      "note": "Innovatiebox menu entry added under Bookkeeping with featureFlag: mkb-innovatiebox, order 80. Pages: InnovatieboxElections (index), InnovatieboxDetail (detail), InnovatieboxIPAssetDetail (detail). node tests/validate-manifest.js not run (test file does not exist in this repo)."
-    },
-    {
-      "task": "14",
       "file": "openspec/architecture/adr-000-data-model.md",
       "ok": true,
-      "note": "Entries added for InnovatieboxElection (alphabetically after Investment), IPAssetValuation (after InnovatieboxElection), and WinstToerekening (alphabetically before WOZAssessment) with annotations referencing this spec."
+      "note": "Subsidie + Kostenpost entity annotations added with subsidieRegeling overlay description."
     }
   ],
   "stubs": [],
