@@ -3840,6 +3840,94 @@ _Supplier rate and pricing structure matching contract terms with volume discoun
 > distinct personnel rate-card register schema. **Primary spec (CPA variant):**
 > bookkeeping-consultancy-project-accounting
 
+
+### RateCardTemplate
+**Schema.org:** `schema:Thing`
+_Reusable rate-card structure definition for multi-tier billing rates (user / role / project / client / blended). Versioned via RateCardVersion. Per-OU isolation._
+**Primary spec:** rate-card-management
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| templateId | string | Yes | Unique rate-card template identifier |
+| name | string | Yes | Human-readable template name |
+| description | string | No | Purpose and scope of this template |
+| tierStructure | enum array | Yes | Ordered list of tiers: `["user", "role", "project", "client", "blended"]` |
+| currency | string | Yes | ISO 4217 currency code (default EUR) |
+| administrationId | string | Yes | FK to administration (per-OU isolation; REQ-RATE-002) |
+| lifecycleState | enum | Yes | One of `active`, `archived` |
+| createdAt | datetime | Yes | Template creation timestamp (immutable) |
+
+**Relations:**
+- → RateCardVersion (one-to-many)
+
+> **Note:** `RateCardTemplate` is distinct from the supplier-management `RateCard` entity (above). `RateCard` covers supplier pricing; `RateCardTemplate`/`RateCardVersion`/`RateSchedule` cover employee/project/client billing rate hierarchies in the rate-card-engine capability.
+
+### RateCardVersion
+**Schema.org:** `schema:Thing`
+_Effective-dated variant of a RateCardTemplate. Multiple concurrent versions per administration, each covering a non-overlapping effective-date window. REQ-RATE-003._
+**Primary spec:** rate-card-management
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| versionId | string | Yes | Unique version identifier |
+| templateId | string | Yes | FK to `RateCardTemplate` |
+| effectiveDate | date | Yes | Start date this version is active (inclusive); MUST be ≥ today at creation |
+| expiryDate | date | No | End date (inclusive); null = open-ended |
+| status | enum | Yes | One of `draft`, `active`, `expired`, `archived` |
+| administrationId | string | Yes | FK to administration |
+
+**Relations:**
+- → RateCardTemplate (many-to-one)
+- → RateSchedule (one-to-many)
+
+### RateSchedule
+**Schema.org:** `schema:Thing`
+_Tier-specific rate entry for a RateCardVersion. Non-overlapping effective windows per (tier, entityId) enforced (REQ-RATE-006)._
+**Primary spec:** rate-card-management
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| scheduleId | string | Yes | Unique rate schedule identifier |
+| versionId | string | Yes | FK to `RateCardVersion` |
+| tier | enum | Yes | One of `user`, `role`, `project`, `client`, `blended` |
+| entityId | string | No | Entity identifier (userId, roleId, projectId, clientId); null for blended-default |
+| rate | number | Yes | Fixed rate per unit in template currency |
+| unit | enum | Yes | One of `hourly`, `daily`, `monthly`, `fixedPrice` |
+| effectiveDate | date | Yes | Start date this rate is active (inclusive) |
+| expiryDate | date | No | End date (inclusive); null = open-ended |
+| volumeBrackets | array | No | Optional volume-discount brackets `[{minUnits, maxUnits, rate}]` |
+| administrationId | string | Yes | FK to administration |
+| status | enum | Yes | One of `active`, `inactive`, `archived` |
+
+**Relations:**
+- → RateCardVersion (many-to-one)
+- → RateRecord (one-to-many, via resolvedScheduleId)
+
+### RateRecord
+**Schema.org:** `schema:Thing`
+_Immutable materialized audit-trail entry created for each rate lookup. Stores resolved tier, rate, effective window, and lookup context. Historical rates remain queryable and disputable (REQ-RATE-007, REQ-RATE-010)._
+**Primary spec:** rate-card-management
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| recordId | string | Yes | Unique audit record identifier |
+| lookupDate | date | Yes | Date the rate lookup occurred |
+| userId | string | No | Input userId from lookup request |
+| roleId | string | No | Input roleId from lookup request |
+| projectId | string | No | Input projectId from lookup request |
+| clientId | string | No | Input clientId from lookup request |
+| resolvedTier | enum | Yes | Winning tier: user/role/project/client/blended |
+| resolvedScheduleId | string | Yes | FK to winning `RateSchedule` (immutable snapshot) |
+| resolvedRate | number | Yes | Final resolved rate (immutable) |
+| resolvedUnit | enum | Yes | hourly/daily/monthly/fixedPrice |
+| effectiveWindowStart | date | Yes | Schedule's effective start at lookup time |
+| effectiveWindowEnd | date | No | Schedule's effective end at lookup time |
+| administrationId | string | Yes | FK to administration |
+| createdAt | datetime | Yes | Materialization timestamp (immutable) |
+
+**Relations:**
+- → RateSchedule (many-to-one, via resolvedScheduleId)
+
 ### Receipt
 **Schema.org:** `schema:DigitalDocument`
 _Digital document storing scanned receipts, invoices, or proof of transaction for audit trail and digital archiving._
