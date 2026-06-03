@@ -13,6 +13,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/spec/tasks.md#task-11
+ * @spec openspec/changes/bookkeeping-consultancy-project-accounting/tasks.md#task-16
  */
 
 declare(strict_types=1);
@@ -165,6 +166,12 @@ class InitializeSettingsTest extends TestCase
             ->method('seedAllocationRules')
             ->with(administrationId: 'adm-1')
             ->willReturn(['success' => true, 'seeded' => 3, 'skipped' => 0]);
+
+        // Container returns null for all service IDs; the repair step's try-catch
+        // in seedProjectTemplates and seedCostCenterTemplates handles any Throwable.
+        $this->container->expects($this->any())
+            ->method('get')
+            ->willReturn(null);
 
         $this->repairStep->run(output: $this->output);
 

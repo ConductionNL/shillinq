@@ -1,0 +1,84 @@
+{
+	"_spdx": {
+		"SPDX-FileCopyrightText": "2026 Conduction B.V. <info@conduction.nl>",
+		"SPDX-License-Identifier": "EUPL-1.2"
+	},
+	"_meta": {
+		"source": "Consultancy defaults",
+		"variant": "bookkeeping-consultancy-project-accounting",
+		"description": "Standard project templates for Dutch consultancy and service organisations. Three representative project types: service engagement, product development, and internal optimisation. Operators may rename, archive, or clone these templates to create real projects.",
+		"generated": "2026-06-03",
+		"idempotencyKey": "projectNumber"
+	},
+	"projects": [
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostProject",
+				"slug": "template-service-engagement"
+			},
+			"projectNumber": "PROJ-SVC-TEMPLATE",
+			"name": "IT-Dienstverlening Template",
+			"description": "Standaard projecttemplate voor IT-dienstverlening en adviesopdrachten. Bevat de typische fasering van aanbieding tot oplevering voor consultancyprojecten bij Nederlandse MKB-klanten.",
+			"lifecycleState": "active",
+			"startDate": null,
+			"endDate": null,
+			"totalBudget": 50000.00,
+			"totalEstimatedCosts": 45000.00,
+			"costsIncurredToDate": 0.00,
+			"administrationId": null,
+			"costCenterCode": null,
+			"_meta": {
+				"source": "Consultancy defaults",
+				"isTemplate": true,
+				"templateType": "service-engagement"
+			}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostProject",
+				"slug": "template-product-development"
+			},
+			"projectNumber": "PROJ-PROD-TEMPLATE",
+			"name": "Productontwikkeling Template",
+			"description": "Standaard projecttemplate voor productontwikkeling en softwareprojecten. Geschikt voor interne R&D-projecten en productlanceringsinitiatieven. Bevat mijlpalen voor concept, ontwikkeling, testen en marktintroductie.",
+			"lifecycleState": "active",
+			"startDate": null,
+			"endDate": null,
+			"totalBudget": 120000.00,
+			"totalEstimatedCosts": 110000.00,
+			"costsIncurredToDate": 0.00,
+			"administrationId": null,
+			"costCenterCode": null,
+			"_meta": {
+				"source": "Consultancy defaults",
+				"isTemplate": true,
+				"templateType": "product-development"
+			}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostProject",
+				"slug": "template-internal-optimization"
+			},
+			"projectNumber": "PROJ-INT-TEMPLATE",
+			"name": "Interne Optimalisatie Template",
+			"description": "Standaard projecttemplate voor interne verbeteringsprojecten en procesoptimalisatie. Voorbeelden: automatisering van administratieve processen, efficiëntieverbeteringen in de bedrijfsvoering, en kwaliteitsborging.",
+			"lifecycleState": "active",
+			"startDate": null,
+			"endDate": null,
+			"totalBudget": 25000.00,
+			"totalEstimatedCosts": 22000.00,
+			"costsIncurredToDate": 0.00,
+			"administrationId": null,
+			"costCenterCode": null,
+			"_meta": {
+				"source": "Consultancy defaults",
+				"isTemplate": true,
+				"templateType": "internal-optimization"
+			}
+		}
+	]
+}

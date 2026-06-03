@@ -35,6 +35,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
  * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
+ * @spec openspec/changes/bookkeeping-consultancy-project-accounting/tasks.md#task-16
  */
 class InitializeSettings implements IRepairStep
 {
@@ -60,6 +61,7 @@ class InitializeSettings implements IRepairStep
      * @return string
      *
      * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
+     * @spec openspec/changes/bookkeeping-consultancy-project-accounting/tasks.md#task-16
      */
     public function getName(): string
     {
@@ -81,6 +83,8 @@ class InitializeSettings implements IRepairStep
      * Phase 5: seeds KOR thresholds from kor-thresholds-2026.json idempotently.
      * Phase 6: seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
      * Phase 7: seeds RJ-270 stages and rate-card templates for consultancy project accounting.
+     * Phase 8: seeds project templates (CostProject) from project-templates.json idempotently.
+     * Phase 9: seeds cost center templates (CostCenter) from cost-center-templates.json idempotently.
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -91,6 +95,7 @@ class InitializeSettings implements IRepairStep
      * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
      * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
      * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
+     * @spec openspec/changes/bookkeeping-consultancy-project-accounting/tasks.md#task-16
      */
     public function run(IOutput $output): void
     {
@@ -140,6 +145,8 @@ class InitializeSettings implements IRepairStep
             $this->seedSelectielijstRules(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
+            $this->seedProjectTemplates(output: $output);
+            $this->seedCostCenterTemplates(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -379,6 +386,187 @@ class InitializeSettings implements IRepairStep
         }//end try
 
     }//end seedKorThresholds()
+
+    /**
+     * Seed project templates (CostProject) from project-templates.json, idempotently.
+     *
+     * Deduplication key is projectNumber: if a CostProject record with the same
+     * projectNumber already exists in OpenRegister the seed entry is skipped,
+     * preserving operator edits made to seeded records. Per REQ-CPA-010 and REQ-CPA-012.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-consultancy-project-accounting/tasks.md#task-16
+     */
+    private function seedProjectTemplates(IOutput $output): void
+    {
+        $seedPath = __DIR__.'/../Settings/seeds/project-templates.json';
+        if (file_exists(filename: $seedPath) === false) {
+            $output->info('Shillinq: project-templates.json not found, skipping');
+            return;
+        }
+
+        $content = file_get_contents(filename: $seedPath);
+        if ($content === false) {
+            $output->warning('Shillinq: failed to read project-templates.json, skipping');
+            return;
+        }
+
+        $data = json_decode(json: $content, associative: true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $output->warning('Shillinq: failed to parse project-templates.json: '.json_last_error_msg());
+            return;
+        }
+
+        $projects = ($data['projects'] ?? []);
+        if (empty($projects) === true) {
+            $output->info('Shillinq: project-templates.json contains no projects, skipping');
+            return;
+        }
+
+        try {
+            $objectService = $this->container->get(id: 'OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->settingsService->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($projects as $project) {
+                $projectNumber = ($project['projectNumber'] ?? null);
+                if ($projectNumber === null) {
+                    continue;
+                }
+
+                // Strip @self envelope before checking/saving.
+                $selfEnvelope = ($project['@self'] ?? null);
+                unset($project['@self']);
+
+                $existing = $objectService
+                    ->setRegister(register: $registerSlug)
+                    ->setSchema(schema: 'CostProject')
+                    ->findAll(
+                        parameters: [
+                            'filters' => ['projectNumber' => $projectNumber],
+                            'limit'   => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $project,
+                    register: $registerSlug,
+                    schema: 'CostProject',
+                );
+                $seeded++;
+            }//end foreach
+
+            $output->info(
+                'Shillinq: project templates seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        } catch (\Throwable $e) {
+            $output->warning('Shillinq: project template seeding failed: '.$e->getMessage());
+            $this->logger->warning(
+                'Shillinq: project template seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+        }//end try
+
+    }//end seedProjectTemplates()
+
+    /**
+     * Seed cost center templates (CostCenter) from cost-center-templates.json, idempotently.
+     *
+     * Deduplication key is code: if a CostCenter record with the same code already
+     * exists in OpenRegister the seed entry is skipped, preserving operator edits.
+     * Per REQ-CPA-011 and REQ-CPA-012.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-consultancy-project-accounting/tasks.md#task-16
+     */
+    private function seedCostCenterTemplates(IOutput $output): void
+    {
+        $seedPath = __DIR__.'/../Settings/seeds/cost-center-templates.json';
+        if (file_exists(filename: $seedPath) === false) {
+            $output->info('Shillinq: cost-center-templates.json not found, skipping');
+            return;
+        }
+
+        $content = file_get_contents(filename: $seedPath);
+        if ($content === false) {
+            $output->warning('Shillinq: failed to read cost-center-templates.json, skipping');
+            return;
+        }
+
+        $data = json_decode(json: $content, associative: true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $output->warning('Shillinq: failed to parse cost-center-templates.json: '.json_last_error_msg());
+            return;
+        }
+
+        $costCenters = ($data['costCenters'] ?? []);
+        if (empty($costCenters) === true) {
+            $output->info('Shillinq: cost-center-templates.json contains no cost centers, skipping');
+            return;
+        }
+
+        try {
+            $objectService = $this->container->get(id: 'OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->settingsService->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($costCenters as $costCenter) {
+                $code = ($costCenter['code'] ?? null);
+                if ($code === null) {
+                    continue;
+                }
+
+                // Strip @self envelope before checking/saving.
+                unset($costCenter['@self']);
+
+                $existing = $objectService
+                    ->setRegister(register: $registerSlug)
+                    ->setSchema(schema: 'CostCenter')
+                    ->findAll(
+                        parameters: [
+                            'filters' => ['code' => $code],
+                            'limit'   => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $costCenter,
+                    register: $registerSlug,
+                    schema: 'CostCenter',
+                );
+                $seeded++;
+            }//end foreach
+
+            $output->info(
+                'Shillinq: cost center templates seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        } catch (\Throwable $e) {
+            $output->warning('Shillinq: cost center template seeding failed: '.$e->getMessage());
+            $this->logger->warning(
+                'Shillinq: cost center template seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+        }//end try
+
+    }//end seedCostCenterTemplates()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.

@@ -1,0 +1,338 @@
+{
+	"_spdx": {
+		"SPDX-FileCopyrightText": "2026 Conduction B.V. <info@conduction.nl>",
+		"SPDX-License-Identifier": "EUPL-1.2"
+	},
+	"_meta": {
+		"source": "Consultancy defaults",
+		"variant": "bookkeeping-consultancy-project-accounting",
+		"description": "Hierarchical cost center structure for Dutch SMB consultancy and service organisations. Includes five main departments (Sales, Engineering/Development, Operations, Finance, Administration) with typical sub-departments. Codes follow CC-NNN / CC-NNN-NN pattern for hierarchy clarity. Operators may rename, archive, or add cost centers to match their actual organisational structure.",
+		"generated": "2026-06-03",
+		"idempotencyKey": "code"
+	},
+	"costCenters": [
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"slug": "cc-sales"
+			},
+			"code": "CC-001",
+			"name": "Verkoop & Acquisitie",
+			"description": "Afdeling verantwoordelijk voor klantenwerving, offertes en contractbeheer.",
+			"lifecycleState": "active",
+			"budget": 100000.00,
+			"parentCode": null,
+			"administrationId": null,
+			"organizationId": null,
+			"_meta": {
+				"source": "Consultancy defaults",
+				"isTemplate": true
+			}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"slug": "cc-sales-new-business"
+			},
+			"code": "CC-001-01",
+			"name": "Nieuwe Klanten",
+			"description": "Acquisitie van nieuwe klanten en marktontwikkeling.",
+			"lifecycleState": "active",
+			"budget": 50000.00,
+			"parentCode": "CC-001",
+			"administrationId": null,
+			"organizationId": null,
+			"_meta": {
+				"source": "Consultancy defaults",
+				"isTemplate": true
+			}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"slug": "cc-sales-account-management"
+			},
+			"code": "CC-001-02",
+			"name": "Accountbeheer",
+			"description": "Relatiebeheer en upsell bij bestaande klanten.",
+			"lifecycleState": "active",
+			"budget": 50000.00,
+			"parentCode": "CC-001",
+			"administrationId": null,
+			"organizationId": null,
+			"_meta": {
+				"source": "Consultancy defaults",
+				"isTemplate": true
+			}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"slug": "cc-engineering"
+			},
+			"code": "CC-002",
+			"name": "Engineering & Ontwikkeling",
+			"description": "Afdeling verantwoordelijk voor softwareontwikkeling, implementatie en technische consultancy.",
+			"lifecycleState": "active",
+			"budget": 300000.00,
+			"parentCode": null,
+			"administrationId": null,
+			"organizationId": null,
+			"_meta": {
+				"source": "Consultancy defaults",
+				"isTemplate": true
+			}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"slug": "cc-engineering-development"
+			},
+			"code": "CC-002-01",
+			"name": "Softwareontwikkeling",
+			"description": "Ontwikkeling van softwareproducten en klantspecifieke maatwerksoftware.",
+			"lifecycleState": "active",
+			"budget": 150000.00,
+			"parentCode": "CC-002",
+			"administrationId": null,
+			"organizationId": null,
+			"_meta": {
+				"source": "Consultancy defaults",
+				"isTemplate": true
+			}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"slug": "cc-engineering-consultancy"
+			},
+			"code": "CC-002-02",
+			"name": "Technische Consultancy",
+			"description": "Implementatietrajecten en technisch advies bij klanten.",
+			"lifecycleState": "active",
+			"budget": 100000.00,
+			"parentCode": "CC-002",
+			"administrationId": null,
+			"organizationId": null,
+			"_meta": {
+				"source": "Consultancy defaults",
+				"isTemplate": true
+			}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"slug": "cc-engineering-qa"
+			},
+			"code": "CC-002-03",
+			"name": "Kwaliteitsborging",
+			"description": "Testen, kwaliteitscontrole en geautomatiseerd testonderhoud.",
+			"lifecycleState": "active",
+			"budget": 50000.00,
+			"parentCode": "CC-002",
+			"administrationId": null,
+			"organizationId": null,
+			"_meta": {
+				"source": "Consultancy defaults",
+				"isTemplate": true
+			}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"slug": "cc-operations"
+			},
+			"code": "CC-003",
+			"name": "Bedrijfsvoering & Operaties",
+			"description": "Afdeling verantwoordelijk voor dagelijkse bedrijfsprocessen, facilitaire zaken en IT-beheer.",
+			"lifecycleState": "active",
+			"budget": 150000.00,
+			"parentCode": null,
+			"administrationId": null,
+			"organizationId": null,
+			"_meta": {
+				"source": "Consultancy defaults",
+				"isTemplate": true
+			}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"slug": "cc-operations-it"
+			},
+			"code": "CC-003-01",
+			"name": "Interne IT",
+			"description": "Beheer van interne IT-infrastructuur, werkplekken en informatiebeveiliging.",
+			"lifecycleState": "active",
+			"budget": 75000.00,
+			"parentCode": "CC-003",
+			"administrationId": null,
+			"organizationId": null,
+			"_meta": {
+				"source": "Consultancy defaults",
+				"isTemplate": true
+			}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"slug": "cc-operations-facilities"
+			},
+			"code": "CC-003-02",
+			"name": "Facilitaire Zaken",
+			"description": "Huisvesting, kantoorinrichting, beveiliging en inkoop.",
+			"lifecycleState": "active",
+			"budget": 75000.00,
+			"parentCode": "CC-003",
+			"administrationId": null,
+			"organizationId": null,
+			"_meta": {
+				"source": "Consultancy defaults",
+				"isTemplate": true
+			}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"slug": "cc-finance"
+			},
+			"code": "CC-004",
+			"name": "Financiën & Control",
+			"description": "Afdeling verantwoordelijk voor financiële administratie, rapportage, controlling en treasury.",
+			"lifecycleState": "active",
+			"budget": 120000.00,
+			"parentCode": null,
+			"administrationId": null,
+			"organizationId": null,
+			"_meta": {
+				"source": "Consultancy defaults",
+				"isTemplate": true
+			}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"slug": "cc-finance-accounting"
+			},
+			"code": "CC-004-01",
+			"name": "Boekhouding",
+			"description": "Debiteurenbeheer, crediteurenadministratie en dagboekverwerking.",
+			"lifecycleState": "active",
+			"budget": 60000.00,
+			"parentCode": "CC-004",
+			"administrationId": null,
+			"organizationId": null,
+			"_meta": {
+				"source": "Consultancy defaults",
+				"isTemplate": true
+			}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"slug": "cc-finance-control"
+			},
+			"code": "CC-004-02",
+			"name": "Controlling & Rapportage",
+			"description": "Budgetbewaking, managementrapportages en financiële analyse.",
+			"lifecycleState": "active",
+			"budget": 60000.00,
+			"parentCode": "CC-004",
+			"administrationId": null,
+			"organizationId": null,
+			"_meta": {
+				"source": "Consultancy defaults",
+				"isTemplate": true
+			}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"slug": "cc-administration"
+			},
+			"code": "CC-005",
+			"name": "Directie & Administratie",
+			"description": "Afdeling verantwoordelijk voor strategische sturing, HR, juridische zaken en algemene bedrijfsadministratie.",
+			"lifecycleState": "active",
+			"budget": 200000.00,
+			"parentCode": null,
+			"administrationId": null,
+			"organizationId": null,
+			"_meta": {
+				"source": "Consultancy defaults",
+				"isTemplate": true
+			}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"slug": "cc-administration-hr"
+			},
+			"code": "CC-005-01",
+			"name": "Human Resources",
+			"description": "Personeelszaken, werving, salarisadministratie en opleidingen.",
+			"lifecycleState": "active",
+			"budget": 100000.00,
+			"parentCode": "CC-005",
+			"administrationId": null,
+			"organizationId": null,
+			"_meta": {
+				"source": "Consultancy defaults",
+				"isTemplate": true
+			}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"slug": "cc-administration-legal"
+			},
+			"code": "CC-005-02",
+			"name": "Juridische Zaken",
+			"description": "Contractbeheer, compliance en juridisch advies.",
+			"lifecycleState": "active",
+			"budget": 50000.00,
+			"parentCode": "CC-005",
+			"administrationId": null,
+			"organizationId": null,
+			"_meta": {
+				"source": "Consultancy defaults",
+				"isTemplate": true
+			}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"slug": "cc-administration-management"
+			},
+			"code": "CC-005-03",
+			"name": "Directie",
+			"description": "Strategische sturing, stakeholdermanagement en besluitvorming.",
+			"lifecycleState": "active",
+			"budget": 50000.00,
+			"parentCode": "CC-005",
+			"administrationId": null,
+			"organizationId": null,
+			"_meta": {
+				"source": "Consultancy defaults",
+				"isTemplate": true
+			}
+		}
+	]
+}

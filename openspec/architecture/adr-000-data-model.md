@@ -1293,6 +1293,8 @@ _An analytical cost center (kostenplaats) for tracking, allocating, and analysin
 - → GLLine (one-to-many, via costCenterCode FK, additive dimension field per REQ-CC-003)
 
 > **Reconciliation note (add-shillinq-cost-centers-dimensions, 2026-06-03):** The earlier `CostCenter` entry (primary spec: cost-accounting-allocation) described a generic cost center with `description/status/budget/createdDate`. This entry supersedes it for the shillinq bookkeeping tier with the T4 dimensional accounting shape per REQ-CC-002: `parentCode` self-relation for hierarchy, `lifecycleState` enum mirroring Account, and `administrationId` FK. The OR-managed register pattern (ADR-022) replaces any parallel database table. No new PHP classes — this is a schema-only declaration per ADR-031.
+>
+> **Reconciliation note (bookkeeping-consultancy-project-accounting, 2026-06-03):** The `bookkeeping-consultancy-project-accounting` change extends `CostCenter` with project accounting fields: `budget` (direct allocation), `spentToDate` (aggregated from GL via x-openregister-aggregations per REQ-CPA-006), `allocatedBudget` (rolled up from children via x-openregister-calculations per REQ-CPA-007), and `organizationId` (optional org FK). No new PHP service class — all three new derived fields are declarative per ADR-031.
 
 ### KostenDrager
 **Schema.org:** `schema:Product`
@@ -1315,22 +1317,47 @@ _An analytical cost unit (kostendrager / cost object) for tracking costs per pro
 ### CostProject
 **Schema.org:** `schema:Project`
 _Project or cost object for tracking time, materials, and costs on a project basis with budget monitoring and multi-dimensional reporting_
-**Primary spec:** cost-accounting-allocation
+**Primary spec:** bookkeeping-consultancy-project-accounting
+**Reconciliation note (2026-06-03):** This entry was declared in the ADR before register implementation. The `bookkeeping-consultancy-project-accounting` change realizes this entry as the `CostProject` schema in `lib/Settings/shillinq_register.json` (distinct from the RJ 270 `Project` schema introduced by consultancy-project-accounting). The field shape was extended to align with OR lifecycle and aggregation conventions.
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| code | string | Yes | Unique project cost code |
+| projectNumber | string | Yes | Unique project identifier per administration |
 | name | string | Yes | Project name |
 | description | string | No | Project description and scope |
-| budget | number | No | Total project budget |
-| totalCost | number | No | Total costs incurred to date |
-| startDate | datetime | Yes | Project start date |
-| endDate | datetime | No | Project completion or planned end date |
-| status | string | Yes | Status: active, closed, or archived |
+| totalBudget | number | No | Authorised spend limit (operator-set) |
+| totalEstimatedCosts | number | No | Project manager's cost estimate |
+| costsIncurredToDate | number | No | Derived via x-openregister-aggregations: sum of expense GL lines tagged to this project |
+| profitAndLoss | number | No | Derived: revenue minus costs to date |
+| startDate | date | No | Project activation date |
+| endDate | date | No | Target project close date |
+| lifecycleState | string | Yes | Lifecycle state: draft / active / on-hold / closed / archived |
+| administrationId | string | No | FK to the Administration owning this project |
+| costCenterCode | string | No | FK to primary CostCenter.code for dimensional reporting |
 
 **Relations:**
-- → Organization (many-to-one)
-- → CostCenter (many-to-one)
+- → CostCenter (many-to-one, via costCenterCode → CostCenter.code)
+- → ProjectBudget (one-to-many, via ProjectBudget.projectId)
+- → UrenRegistratie (one-to-many, via UrenRegistratie.costProjectId)
+
+### ProjectBudget
+**Schema.org:** `schema:MonetaryAmount`
+_Period-level budget allocation for a CostProject. Tracks approved spend authority per fiscal period._
+**Primary spec:** bookkeeping-consultancy-project-accounting
+**Reconciliation note (2026-06-03):** New schema introduced by `bookkeeping-consultancy-project-accounting`. Declared in `lib/Settings/shillinq_register.json` with lifecycle `pending → approved → allocated → spent` per REQ-CPA-015. No PHP service class — lifecycle is declarative via x-openregister-lifecycle per ADR-031.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| allocationNumber | string | Yes | Unique allocation identifier |
+| amount | number | Yes | Allocated budget amount |
+| status | string | Yes | Lifecycle state: pending / approved / allocated / spent |
+| projectId | string | Yes | FK to CostProject.id |
+| fiscalPeriod | string | Yes | Fiscal period covered (e.g. 2026-Q1) |
+| notes | string | No | Optional justification notes |
+| administrationId | string | No | FK to the Administration |
+
+**Relations:**
+- → CostProject (many-to-one, via projectId → CostProject.id)
 
 ### CreditNote
 **Schema.org:** `schema:Invoice`
