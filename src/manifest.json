@@ -302,26 +302,6 @@
 			]
 		},
 		{
-			"id": "Overheid",
-			"label": "Overheid",
-			"icon": "icon-category-organization",
-			"order": 30,
-			"visibilityFilter": {
-				"field": "administrationType",
-				"operator": "in",
-				"values": ["gemeente", "provincie", "waterschap"]
-			},
-			"children": [
-				{
-					"id": "Iv3Rapportages",
-					"label": "IV3-rapportages",
-					"icon": "FileDocumentOutline",
-					"route": "Iv3Rapportages",
-					"order": 10
-				}
-			]
-		},
-		{
 			"id": "Documentation",
 			"label": "Documentation",
 			"icon": "icon-info",
