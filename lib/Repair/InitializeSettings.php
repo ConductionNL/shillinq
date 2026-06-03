@@ -34,6 +34,7 @@ use Psr\Log\LoggerInterface;
  * Repair step that initializes Shillinq configuration via SettingsService.
  *
  * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
+ * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
  */
 class InitializeSettings implements IRepairStep
 {
@@ -79,6 +80,7 @@ class InitializeSettings implements IRepairStep
      * Phase 4: registers the IV3 quarterly CBS ScheduledWorkflow if not yet present.
      * Phase 5: seeds KOR thresholds from kor-thresholds-2026.json idempotently.
      * Phase 6: seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
+     * Phase 7: seeds RJ-270 stages and rate-card templates for consultancy project accounting.
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -88,20 +90,21 @@ class InitializeSettings implements IRepairStep
      * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-10
      * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
      * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
+     * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
      */
     public function run(IOutput $output): void
     {
         $output->info('Initializing Shillinq configuration...');
 
-        if ($this->settingsService->isOpenRegisterAvailable() === false) {
-            $output->warning(
-                'OpenRegister is not installed or enabled. Skipping auto-configuration.'
-            );
-            $this->logger->warning(
-                'Shillinq: OpenRegister not available, skipping register initialization'
-            );
-            return;
-        }
+    if ($this->settingsService->isOpenRegisterAvailable() === false) {
+        $output->warning(
+            'OpenRegister is not installed or enabled. Skipping auto-configuration.'
+        );
+        $this->logger->warning(
+            'Shillinq: OpenRegister not available, skipping register initialization'
+        );
+        return;
+    }
 
         try {
             // C8: use loadConfigurationForced() so OR's per-register/per-schema
@@ -109,30 +112,31 @@ class InitializeSettings implements IRepairStep
             // routine upgrades when the shillinq_register.json version hasn't changed.
             $result = $this->settingsService->loadConfigurationForced();
 
-            if ($result['success'] === true) {
-                $skipped = (($result['skipped'] ?? false) === true);
-                $version = ($result['version'] ?? 'unknown');
-                if ($skipped === true) {
-                    $output->info('Shillinq configuration already up-to-date (version-unchanged skip)');
-                }
+    if ($result['success'] === true) {
+        $skipped = (($result['skipped'] ?? false) === true);
+        $version = ($result['version'] ?? 'unknown');
+        if ($skipped === true) {
+            $output->info('Shillinq configuration already up-to-date (version-unchanged skip)');
+        }
 
-                if ($skipped !== true) {
-                    $output->info(
-                        'Shillinq configuration imported successfully (version: '.$version.')'
-                    );
-                }
-            }
+        if ($skipped !== true) {
+            $output->info(
+                'Shillinq configuration imported successfully (version: '.$version.')'
+            );
+        }
+    }
 
-            if ($result['success'] !== true) {
-                $message = ($result['message'] ?? 'unknown error');
-                $output->warning('Shillinq configuration import issue: '.$message);
-                // H2: skip account seed when schema import failed to avoid writing
-                // accounts into an uninitialized register.
-                $output->warning('Shillinq: schema import failed, skipping account seed');
-                return;
-            }
+    if ($result['success'] !== true) {
+        $message = ($result['message'] ?? 'unknown error');
+        $output->warning('Shillinq configuration import issue: '.$message);
+        // H2: skip account seed when schema import failed to avoid writing
+        // accounts into an uninitialized register.
+        $output->warning('Shillinq: schema import failed, skipping account seed');
+        return;
+    }
 
             $this->seedChartOfAccounts(output: $output);
+            $this->seedProjectData(output: $output);
             $this->seedSelectielijstRules(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
@@ -145,6 +149,56 @@ class InitializeSettings implements IRepairStep
         }//end try
 
     }//end run()
+
+    /**
+     * Seed project accounting data (RJ-270 stages and rate-card templates), idempotently.
+     *
+     * RJ-270 stages are seeded unconditionally (not tenant-specific).
+     * Rate-card templates require a configured administrationId (C2).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
+     */
+    private function seedProjectData(IOutput $output): void
+    {
+        $output->info('Seeding RJ-270 stages...');
+        $rj270Result = $this->settingsService->seedRj270Stages();
+        if ($rj270Result['success'] === true) {
+            $output->info(
+                'RJ-270 stages seeded: '.($rj270Result['seeded'] ?? 0).' created, '.($rj270Result['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if ($rj270Result['success'] !== true) {
+            $output->warning('RJ-270 stages seeding issue: '.($rj270Result['message'] ?? 'unknown error'));
+        }
+
+        $settings         = $this->settingsService->getSettings();
+        $administrationId = ($settings['administration_id'] ?? '');
+
+        if ($administrationId === '') {
+            $output->warning(
+                'Shillinq: administration_id not configured — skipping rate-card template seed.'
+            );
+            return;
+        }
+
+        $output->info('Seeding rate-card templates...');
+        $rcResult = $this->settingsService->seedRateCardTemplates(administrationId: $administrationId);
+        if ($rcResult['success'] === true) {
+            $output->info(
+                'Rate-card templates seeded: '.($rcResult['seeded'] ?? 0).' created, '.($rcResult['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if ($rcResult['success'] !== true) {
+            $output->warning('Rate-card templates seeding issue: '.($rcResult['message'] ?? 'unknown error'));
+        }
+
+    }//end seedProjectData()
 
     /**
      * Import the Selectielijst Gemeenten 2020 retention rules, idempotently.
@@ -398,4 +452,4 @@ class InitializeSettings implements IRepairStep
         }
 
     }//end seedChartOfAccounts()
-}//end class
+    }//end class
