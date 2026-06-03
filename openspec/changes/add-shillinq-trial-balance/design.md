@@ -1,5 +1,7 @@
 # Design — Trial Balance
 
+**Status:** pr-created
+
 ## Context
 
 T1's balanced double-entry GL surface (`GLTransaction` + `GLLine`)
@@ -45,11 +47,12 @@ The change is **spec-only**. Implementation lands later through
 
 ### D1 — Trial balance is an aggregation, not a report builder
 
-Per ADR-031, the trial balance is declared as one (or three
-composed) `x-openregister-aggregations` queries grouping `GLLine`
-by `(period_id, account_number, side)` with opening / movement /
-closing buckets. Resolution of "one query vs three" happens during
-`opsx-ff` design discovery; both shapes are declarative.
+Per ADR-031, the trial balance is declared as **three composed**
+`x-openregister-aggregations` queries on `GLLine` (see D5 below
+for the one-vs-three resolution): `trialBalanceOpening`,
+`trialBalanceMovement`, `trialBalanceClosing`. Each groups by
+`accountNumber`; the manifest renderer composes the three result
+sets client-side. No shillinq PHP service.
 
 **Alternative considered**: A PHP `TrialBalanceReportService`
 mirroring Exact / Twinfield / AFAS. Rejected per ADR-031 —
@@ -105,12 +108,37 @@ shape; matches Exact / AFAS / Twinfield.
 | Behaviour | Decision | Why |
 |---|---|---|
 | Trial balance assembly | Declarative (`x-openregister-aggregations`) | Pure GROUP BY + SUM over T1's `GLLine` |
-| Bucket discrimination (opening / movement / closing) | Declarative — one query if engine supports, else three composed | Both shapes declarative |
-| Balance invariant | Declarative — schema invariant on aggregation output | Engine evaluates during aggregation |
-| Drill-through | Declarative — manifest-side URL template | No app routing code |
-| Reversed-transaction exclusion | Declarative — aggregation filter clause | Pure data filter |
+| Bucket discrimination (opening / movement / closing) | **Three composed queries** — `trialBalanceOpening`, `trialBalanceMovement`, `trialBalanceClosing` (see D5) | OR engine cannot express cross-period bucket discriminators in a single declarative query at current capability level |
+| Balance invariant | Declarative — `x-invariant` on `trialBalanceMovement` output | Engine evaluates during aggregation; surfaces delta to cent on fail per REQ-TB-003 |
+| Drill-through | Declarative — manifest-side `rowLink.urlTemplate` | No app routing code per ADR-031 D2 |
+| Reversed-transaction exclusion | Declarative — `parentTransaction.state__neq: reversed` filter on all three aggregations | Pure data filter; lines remain queryable per REQ-TB-002 |
 
 No service class authored in this envelope.
+
+### D5 — One aggregation vs three: resolved as three composed (Task 10)
+
+**Decision**: Three composed aggregations (`trialBalanceOpening`,
+`trialBalanceMovement`, `trialBalanceClosing`) declared on
+`GLLine.x-openregister-aggregations` in
+`lib/Settings/shillinq_register.json`.
+
+**Rationale**: OR's aggregation engine at the current version
+(`^v0.2.10`) cannot express opening balance (aggregation over
+periods *before* the requested period) in the same query as the
+movement (aggregation over *exactly* the requested period) without
+a subquery mechanism not yet supported in `x-openregister-aggregations`.
+Three separate queries — each a straightforward GROUP BY + SUM —
+are issued by the manifest renderer; closing is derived as
+`opening + movement` client-side in `trialBalanceClosing.composedFrom`.
+Both shapes satisfy REQ-TB-001 ("one or composed three"); this
+resolution lands the three-composed shape. The balance invariant
+(`x-invariant.balanceInvariant`) is attached to `trialBalanceMovement`,
+the query that produces the period's debits and credits.
+
+**Renderer path**: `type: index` fallback (not `type: report`) —
+`CnReportPage` is not yet stable at the time of this PR. The page
+is declared in `src/manifest.json` with explicit six-column shape
+and a `rowLink.urlTemplate` drill-through per REQ-TB-004.
 
 ## Seed Data
 
@@ -142,9 +170,8 @@ and queryable through normal CRUD.
 
 ## Open Questions
 
-1. **One aggregation vs three** — resolved in `opsx-ff` discovery.
+1. **One aggregation vs three** — **Resolved**: three composed aggregations (see D5).
 2. **Default comparative period count** — resolved during the
    implementing cycle's UX review.
 3. **Renderer path** (`CnReportPage` vs `CnIndexPage` fallback) —
-   resolved during the implementing cycle based on library
-   readiness.
+   **Resolved**: `type: index` fallback used; `CnReportPage` not yet stable.

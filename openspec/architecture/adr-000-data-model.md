@@ -439,6 +439,23 @@ _A read-only aggregate listing all GL accounts with debit/credit balances for pe
 - → FiscalYear (many-to-one)
 - → GLLine (one-to-many, via aggregation)
 
+> **Aggregation note (add-shillinq-trial-balance, 2026-06-03):** The `TrialBalance`
+> schema above (primary spec: bookkeeping-financial-statements) is the **finalized
+> snapshot** of the trial balance — a lifecycle-managed object used for year-end
+> publication. The **live, on-demand trial balance** — per REQ-TB-001 through
+> REQ-TB-006 — is expressed as three composed `x-openregister-aggregations` on the
+> `GLLine` schema: `trialBalanceOpening`, `trialBalanceMovement`, and
+> `trialBalanceClosing` (see `lib/Settings/shillinq_register.json`). Per ADR-031,
+> no `TrialBalanceService` or report-builder PHP class is authored; the aggregation
+> engine evaluates opening / movement / closing buckets declaratively. Per ADR-022,
+> no parallel report-storage table exists alongside `GLLine` — the trial balance is
+> purely computed. The balance invariant (sum of period debits = sum of period credits
+> across all accounts) is declared as `x-invariant.balanceInvariant` on
+> `trialBalanceMovement`, not as a PHP service check. The `src/manifest.json` page
+> `TrialBalance` (route `/trial-balance`) binds these three aggregations to the
+> `CnIndexPage` renderer with a per-row drill-through URL template to the GL index
+> page per REQ-TB-004 REQ-TB-005.
+
 ### ConsolidationGroup
 **Schema.org:** `schema:Organization`
 _A group of organizations consolidated together for consolidated financial reporting across multiple administrations. Holds the consolidation method (full/proportional/equity per IFRS 10/11/12) and inter-company elimination rules. Consumed by ConsolidatedReport per REQ-FS-006._

@@ -1498,95 +1498,87 @@
 		},
 		{
 			"id": "TrialBalance",
-			"route": "/financial-statements/trial-balance",
+			"route": "/trial-balance",
 			"type": "index",
 			"title": "Trial Balance",
 			"config": {
 				"register": "shillinq",
-				"schema": "TrialBalance",
+				"schema": "GLLine",
+				"aggregation": "trialBalanceMovement",
+				"params": {
+					"period": {
+						"source": "query",
+						"key": "period",
+						"default": "@activeFiscalPeriod",
+						"description": "Fiscal period (e.g. 2026-Q1). Defaults to the active FiscalPeriod per REQ-TB-005."
+					}
+				},
 				"columns": [
 					{
-						"key": "reportDate",
-						"label": "Report Date",
+						"key": "accountNumber",
+						"label": "Account",
 						"sortable": true
 					},
 					{
-						"key": "administrationId",
-						"label": "Administration",
-						"sortable": true
+						"key": "openingDebit",
+						"label": "Opening Dr",
+						"sortable": false,
+						"aggregation": "trialBalanceOpening",
+						"aggregationField": "openingDebit",
+						"format": "currency"
 					},
 					{
-						"key": "fiscalYearId",
-						"label": "Fiscal Year",
-						"sortable": true
+						"key": "openingCredit",
+						"label": "Opening Cr",
+						"sortable": false,
+						"aggregation": "trialBalanceOpening",
+						"aggregationField": "openingCredit",
+						"format": "currency"
 					},
 					{
-						"key": "status",
-						"label": "Status",
-						"sortable": true
+						"key": "movementDebit",
+						"label": "Movement Dr",
+						"sortable": false,
+						"format": "currency"
 					},
 					{
-						"key": "isBalanced",
-						"label": "Balanced",
-						"sortable": true
+						"key": "movementCredit",
+						"label": "Movement Cr",
+						"sortable": false,
+						"format": "currency"
+					},
+					{
+						"key": "closingDebit",
+						"label": "Closing Dr",
+						"sortable": false,
+						"aggregation": "trialBalanceClosing",
+						"aggregationField": "closingDebit",
+						"format": "currency"
+					},
+					{
+						"key": "closingCredit",
+						"label": "Closing Cr",
+						"sortable": false,
+						"aggregation": "trialBalanceClosing",
+						"aggregationField": "closingCredit",
+						"format": "currency"
 					}
 				],
-				"defaultSort": "-reportDate",
-				"detailRoute": "TrialBalanceDetail"
-			}
-		},
-		{
-			"id": "TrialBalanceDetail",
-			"route": "/financial-statements/trial-balance/:id",
-			"type": "detail",
-			"title": "Trial Balance",
-			"config": {
-				"register": "shillinq",
-				"schema": "TrialBalance",
-				"fields": [
-					{
-						"key": "reportDate",
-						"label": "Report Date",
-						"type": "date-time"
-					},
-					{
-						"key": "fiscalYearId",
-						"label": "Fiscal Year",
-						"type": "string"
-					},
-					{
-						"key": "administrationId",
-						"label": "Administration",
-						"type": "string"
-					},
-					{
-						"key": "status",
-						"label": "Status",
-						"type": "string"
-					},
-					{
-						"key": "preparedBy",
-						"label": "Prepared By",
-						"type": "string"
-					},
-					{
-						"key": "totalDebits",
-						"label": "Total Debits",
-						"type": "number"
-					},
-					{
-						"key": "totalCredits",
-						"label": "Total Credits",
-						"type": "number"
-					},
-					{
-						"key": "isBalanced",
-						"label": "Balanced",
-						"type": "boolean"
+				"defaultSort": "accountNumber",
+				"rowLink": {
+					"description": "Drill-through per REQ-TB-004: each row navigates to the GL index filtered to (period, account). Manifest-declared URL template; no shillinq routing code per ADR-031 D2.",
+					"urlTemplate": "/index.php/apps/shillinq/general-ledger?period={{params.period}}&account={{accountNumber}}"
+				},
+				"totalsRow": {
+					"description": "Totals row proving the balance invariant per REQ-TB-003.",
+					"columns": ["movementDebit", "movementCredit", "closingDebit", "closingCredit"],
+					"invariantCheck": {
+						"debitField": "movementDebit",
+						"creditField": "movementCredit",
+						"label": "Balance check",
+						"onImbalance": "error"
 					}
-				],
-				"lifecycleActions": true,
-				"indexRoute": "TrialBalance"
+				}
 			}
 		},
 		{

@@ -619,6 +619,98 @@
 								"condition": "side = 'credit'"
 							}
 						}
+					},
+					"trialBalanceOpening": {
+						"description": "Opening balance per account for a given period: SUM of all posted GLLines with periodId strictly before the requested period, excluding lines whose parent GLTransaction.state is reversed per REQ-TB-002. Groups by accountNumber. Resolved as three composed aggregations (opening / movement / closing) per design.md Task 10 — the OR engine expresses each bucket as a separate query; composition happens in the manifest renderer with no PHP service per ADR-031.",
+						"filter": {
+							"parentTransaction.state__neq": "reversed",
+							"eliminationFlag": false,
+							"periodId__lt": "@params.period"
+						},
+						"groupBy": ["accountNumber"],
+						"operations": {
+							"openingDebit": {
+								"field": "amount",
+								"operation": "sum",
+								"condition": "side = 'debit'"
+							},
+							"openingCredit": {
+								"field": "amount",
+								"operation": "sum",
+								"condition": "side = 'credit'"
+							}
+						},
+						"params": {
+							"period": {
+								"type": "string",
+								"description": "Period identifier (e.g. 2026-Q1). Defaults to the active FiscalPeriod when omitted per REQ-TB-005.",
+								"required": false
+							}
+						}
+					},
+					"trialBalanceMovement": {
+						"description": "Period movement per account for the requested periodId: SUM of posted GLLines for that period, excluding lines whose parent GLTransaction.state is reversed per REQ-TB-002 REQ-TB-003. Groups by accountNumber. Carries the debit-credit balance invariant: sum of movementDebit across all accounts MUST equal sum of movementCredit. A failed invariant surfaces an error to the consumer with the discrepancy to the cent per REQ-TB-003.",
+						"filter": {
+							"parentTransaction.state__neq": "reversed",
+							"eliminationFlag": false,
+							"periodId": "@params.period"
+						},
+						"groupBy": ["accountNumber"],
+						"operations": {
+							"movementDebit": {
+								"field": "amount",
+								"operation": "sum",
+								"condition": "side = 'debit'"
+							},
+							"movementCredit": {
+								"field": "amount",
+								"operation": "sum",
+								"condition": "side = 'credit'"
+							}
+						},
+						"x-invariant": {
+							"balanceInvariant": {
+								"description": "Debit-credit balance verifies per REQ-TB-003: sum of all period debits across all accounts MUST equal sum of all period credits. A failed invariant MUST surface as an error naming the delta to the cent and listing the offending account numbers.",
+								"expression": "SUM(movementDebit) = SUM(movementCredit)",
+								"onFail": {
+									"surfaceError": true,
+									"errorMessage": "Trial balance is not balanced for period {{params.period}}: total debits ({{SUM(movementDebit)}}) ≠ total credits ({{SUM(movementCredit)}}), discrepancy = {{SUM(movementDebit) - SUM(movementCredit)}}. Offending accounts: {{accounts where movementDebit ≠ movementCredit}}"
+								}
+							}
+						},
+						"params": {
+							"period": {
+								"type": "string",
+								"description": "Period identifier (e.g. 2026-Q1). Defaults to the active FiscalPeriod when omitted per REQ-TB-005.",
+								"required": false
+							}
+						}
+					},
+					"trialBalanceClosing": {
+						"description": "Closing balance per account: opening + movement, composed from trialBalanceOpening and trialBalanceMovement per REQ-TB-002. The renderer issues trialBalanceOpening and trialBalanceMovement independently and computes closing = opening + movement client-side; no PHP service per ADR-031. The drill-through URL for each row is /index.php/apps/shillinq/general-ledger?period={{periodId}}&account={{accountNumber}} per REQ-TB-004 REQ-TB-005.",
+						"composedFrom": ["trialBalanceOpening", "trialBalanceMovement"],
+						"groupBy": ["accountNumber"],
+						"operations": {
+							"closingDebit": {
+								"description": "openingDebit + movementDebit; positive = debit balance.",
+								"expression": "openingDebit + movementDebit"
+							},
+							"closingCredit": {
+								"description": "openingCredit + movementCredit; positive = credit balance.",
+								"expression": "openingCredit + movementCredit"
+							}
+						},
+						"drillThrough": {
+							"urlTemplate": "/index.php/apps/shillinq/general-ledger?period={{periodId}}&account={{accountNumber}}",
+							"description": "Per REQ-TB-004 REQ-TB-005: each trial-balance row links to the filtered GL index page showing all posted lines for the (period, account) pair. OR-canonical filter query-param shape; no shillinq routing code."
+						},
+						"params": {
+							"period": {
+								"type": "string",
+								"description": "Period identifier (e.g. 2026-Q1). Defaults to the active FiscalPeriod when omitted per REQ-TB-005.",
+								"required": false
+							}
+						}
 					}
 				}
 			},
