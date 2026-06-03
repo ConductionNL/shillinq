@@ -231,29 +231,4 @@ class AccountBalanceGuard
             return false;
         }//end try
     }//end requireSingleClosingAccount()
-
-    /**
-     * Probe whether OR's ObjectService is available in the DI container (T1 vs T2 probe).
-     *
-     * T1 state is defined as: OR is not installed / ObjectService is not registered in
-     * the DI container. In that case `container->get()` throws, and we return false
-     * (allowing requireZeroBalance to skip the query and permit the archive by default).
-     *
-     * This intentionally does NOT execute a findAll probe: a findAll failure (DB error,
-     * unavailable schema) is a computation error — it must propagate to requireZeroBalance's
-     * catch block so the method stays fail-closed (returns false = deny archive). Swallowing
-     * findAll exceptions here would convert any transient failure into an unconditional permit.
-     *
-     * @return bool True when OR's ObjectService is resolvable from the container.
-     */
-    private function isGLLineRegisterAvailable(): bool
-    {
-        try {
-            $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            return true;
-        } catch (\Throwable) {
-            return false;
-        }
-    }//end isGLLineRegisterAvailable()
-
-    }//end class
+}//end class
