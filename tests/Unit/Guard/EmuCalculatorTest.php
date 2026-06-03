@@ -63,7 +63,7 @@ class EmuCalculatorTest extends TestCase
     {
         parent::setUp();
 
-        $this->logger     = $this->createMock(LoggerInterface::class);
+        $this->logger     = $this->createMock(originalClassName: LoggerInterface::class);
         $this->calculator = new EmuCalculator(logger: $this->logger);
 
     }//end setUp()
@@ -97,9 +97,9 @@ class EmuCalculatorTest extends TestCase
         );
 
         // Only the included line contributes: (1000 - 400) * 100 = 60 000 cents.
-        self::assertSame(60000, $result['S.1313'] ?? null);
+        self::assertSame(expected: 60000, actual: $result['S.1313'] ?? null);
         // Excluded line produces no additional contribution.
-        self::assertSame(60000, $result['S.1313']);
+        self::assertSame(expected: 60000, actual: $result['S.1313']);
 
     }//end testIncludedLineContributesAndExcludedLineIsOmitted()
 
@@ -125,7 +125,7 @@ class EmuCalculatorTest extends TestCase
         );
 
         // 50 % of 200 000 cents = 100 000 cents.
-        self::assertSame(100000, $result['S.1314'] ?? null);
+        self::assertSame(expected: 100000, actual: $result['S.1314'] ?? null);
 
     }//end testPartialLineContributesAtFiftyPercent()
 
@@ -150,7 +150,7 @@ class EmuCalculatorTest extends TestCase
             params: ['quarter' => 'Q2', 'year' => 2026]
         );
 
-        self::assertEmpty($result, 'Lines without esaClassifier must not appear in output.');
+        self::assertEmpty(actual: $result, message: 'Lines without esaClassifier must not appear in output.');
 
     }//end testLinesWithoutEsaClassifierAreSkipped()
 
@@ -188,9 +188,9 @@ class EmuCalculatorTest extends TestCase
         );
 
         // S.1311: (500-100+200-0)*100 = 60 000.
-        self::assertSame(60000, $result['S.1311'] ?? null);
+        self::assertSame(expected: 60000, actual: $result['S.1311'] ?? null);
         // S.1313: (300-50)*100 = 25 000.
-        self::assertSame(25000, $result['S.1313'] ?? null);
+        self::assertSame(expected: 25000, actual: $result['S.1313'] ?? null);
 
     }//end testMultipleSectorsGroupedIndependently()
 
@@ -215,7 +215,7 @@ class EmuCalculatorTest extends TestCase
         $first  = $this->calculator->computeAnnualSaldo(glLines: $glLines, params: $params);
         $second = $this->calculator->computeAnnualSaldo(glLines: $glLines, params: $params);
 
-        self::assertSame($first, $second, 'Same inputs must always produce identical output (REQ-EMU-005).');
+        self::assertSame(expected: $first, actual: $second, message: 'Same inputs must always produce identical output (REQ-EMU-005).');
 
     }//end testReproducibilitySameInputProducesIdenticalOutput()
 
@@ -247,12 +247,12 @@ class EmuCalculatorTest extends TestCase
         );
 
         // (0.1 + 0.2 - 0.3) in euros = 0 cents exactly when using integer rounding.
-        self::assertSame(0, $result['S.1313'] ?? null);
+        self::assertSame(expected: 0, actual: $result['S.1313'] ?? null);
 
     }//end testIntegerCentsAvoidIeeeDrift()
 
     /**
-     * esaClassifier may also appear flat on the line (not nested in 'account').
+     * EsaClassifier may also appear flat on the line (not nested in 'account').
      *
      * @return void
      */
@@ -272,8 +272,7 @@ class EmuCalculatorTest extends TestCase
             params: ['quarter' => 'Q4', 'year' => 2026]
         );
 
-        self::assertSame(10000, $result['S.11'] ?? null);
+        self::assertSame(expected: 10000, actual: $result['S.11'] ?? null);
 
     }//end testFlatEsaClassifierOnLineIsAlsoRead()
-
 }//end class
