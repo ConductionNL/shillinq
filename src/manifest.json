@@ -40,6 +40,20 @@
           "order": 25
         },
         {
+          "id": "BankAccounts",
+          "label": "Bank Accounts",
+          "icon": "BankOutline",
+          "route": "BankAccounts",
+          "order": 26
+        },
+        {
+          "id": "CurrencyBalances",
+          "label": "Currency Balances",
+          "icon": "CurrencyEurOutline",
+          "route": "CurrencyBalances",
+          "order": 27
+        },
+        {
           "id": "FixedAssets",
           "label": "Fixed Assets",
           "icon": "OfficeBuildingOutline",
@@ -4328,6 +4342,215 @@
         ],
         "defaultSort": "-fiscalYear",
         "detailRoute": "InnovatieboxElectionDetail"
+      }
+    },
+    {
+      "id": "BankAccounts",
+      "route": "/bank-accounts",
+      "type": "index",
+      "title": "Bank Accounts",
+      "config": {
+        "register": "shillinq",
+        "schema": "BankAccount",
+        "columns": [
+          {
+            "key": "accountName",
+            "label": "Account Name",
+            "sortable": true
+          },
+          {
+            "key": "iban",
+            "label": "IBAN",
+            "sortable": true
+          },
+          {
+            "key": "bankName",
+            "label": "Bank",
+            "sortable": true
+          },
+          {
+            "key": "primaryCurrency",
+            "label": "Primary Currency",
+            "sortable": true
+          },
+          {
+            "key": "lifecycleState",
+            "label": "Status",
+            "sortable": true
+          }
+        ],
+        "defaultSort": "accountName",
+        "detailRoute": "BankAccountDetail"
+      }
+    },
+    {
+      "id": "BankAccountDetail",
+      "route": "/bank-accounts/:id",
+      "type": "detail",
+      "title": "Bank Account",
+      "config": {
+        "register": "shillinq",
+        "schema": "BankAccount",
+        "fields": [
+          {
+            "key": "accountName",
+            "label": "Account Name",
+            "type": "string"
+          },
+          {
+            "key": "iban",
+            "label": "IBAN",
+            "type": "string"
+          },
+          {
+            "key": "bic",
+            "label": "BIC",
+            "type": "string"
+          },
+          {
+            "key": "bankName",
+            "label": "Bank Name",
+            "type": "string"
+          },
+          {
+            "key": "primaryCurrency",
+            "label": "Primary Currency",
+            "type": "string"
+          },
+          {
+            "key": "balance",
+            "label": "Balance",
+            "type": "number"
+          },
+          {
+            "key": "lifecycleState",
+            "label": "Status",
+            "type": "string"
+          },
+          {
+            "key": "administrationId",
+            "label": "Administration",
+            "type": "string"
+          }
+        ],
+        "lifecycleActions": true
+      }
+    },
+    {
+      "id": "CurrencyBalances",
+      "route": "/currency-balances",
+      "type": "index",
+      "title": "Currency Balances",
+      "config": {
+        "register": "shillinq",
+        "schema": "CurrencyBalance",
+        "columns": [
+          {
+            "key": "accountId",
+            "label": "Account",
+            "sortable": true
+          },
+          {
+            "key": "currency",
+            "label": "Currency",
+            "sortable": true
+          },
+          {
+            "key": "balance",
+            "label": "Balance",
+            "sortable": true
+          },
+          {
+            "key": "previousBalance",
+            "label": "Previous Balance",
+            "sortable": false
+          },
+          {
+            "key": "lastUpdated",
+            "label": "Last Updated",
+            "sortable": true
+          }
+        ],
+        "filters": [
+          {
+            "key": "accountId",
+            "label": "Account",
+            "type": "string"
+          },
+          {
+            "key": "currency",
+            "label": "Currency",
+            "type": "enum",
+            "options": ["EUR", "USD", "GBP"]
+          },
+          {
+            "key": "balance",
+            "label": "Balance (min)",
+            "type": "number",
+            "operator": "gte"
+          },
+          {
+            "key": "balance",
+            "label": "Balance (max)",
+            "type": "number",
+            "operator": "lte"
+          }
+        ],
+        "defaultSort": "accountId",
+        "detailRoute": "CurrencyBalanceDetail"
+      }
+    },
+    {
+      "id": "CurrencyBalanceDetail",
+      "route": "/currency-balances/:id",
+      "type": "detail",
+      "title": "Currency Balance",
+      "config": {
+        "register": "shillinq",
+        "schema": "CurrencyBalance",
+        "fields": [
+          {
+            "key": "accountId",
+            "label": "Account",
+            "type": "string"
+          },
+          {
+            "key": "currency",
+            "label": "Currency",
+            "type": "string"
+          },
+          {
+            "key": "balance",
+            "label": "Balance",
+            "type": "number"
+          },
+          {
+            "key": "previousBalance",
+            "label": "Previous Balance",
+            "type": "number"
+          },
+          {
+            "key": "balanceChange",
+            "label": "Change",
+            "type": "calculated"
+          },
+          {
+            "key": "balanceChangePercent",
+            "label": "Change %",
+            "type": "calculated"
+          },
+          {
+            "key": "lastUpdated",
+            "label": "Last Updated",
+            "type": "string"
+          },
+          {
+            "key": "isLowLiquidity",
+            "label": "Low Liquidity",
+            "type": "calculated"
+          }
+        ],
+        "auditTrail": true
       }
     }
   ]

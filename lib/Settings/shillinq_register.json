@@ -6982,6 +6982,244 @@
           }
         }
       }
+    },
+    "BankAccount": {
+      "slug": "BankAccount",
+      "icon": "BankOutline",
+      "version": "0.1.0",
+      "title": "Bank Account",
+      "description": "A physical bank account held by an administration. Extends the T1 chart-of-accounts foundation with multi-currency declaration via the optional primaryCurrency field (ISO 4217). Per REQ-MC-001 and REQ-MC-002 (bookkeeping-multi-currency).",
+      "type": "object",
+      "x-schema-org": "schema:BankAccount",
+      "required": [
+        "accountName",
+        "iban",
+        "administrationId",
+        "lifecycleState"
+      ],
+      "properties": {
+        "accountName": {
+          "type": "string",
+          "description": "Display name for the bank account.",
+          "example": "EUR-operationeel"
+        },
+        "iban": {
+          "type": "string",
+          "description": "IBAN number of the bank account.",
+          "example": "NL23ABNA0123456789"
+        },
+        "bic": {
+          "type": "string",
+          "description": "BIC/SWIFT code of the bank.",
+          "nullable": true,
+          "example": "ABNANL2A"
+        },
+        "bankName": {
+          "type": "string",
+          "description": "Name of the bank holding the account.",
+          "nullable": true,
+          "example": "ABN AMRO"
+        },
+        "primaryCurrency": {
+          "type": "string",
+          "description": "ISO 4217 currency code declaring the account's native currency. Null or absent means EUR (backward compatible). Operators set this to USD, GBP, etc. for foreign-currency accounts. Per REQ-MC-002.",
+          "minLength": 3,
+          "maxLength": 3,
+          "pattern": "^[A-Z]{3}$",
+          "nullable": true,
+          "default": "EUR",
+          "example": "USD"
+        },
+        "balance": {
+          "type": "number",
+          "description": "Current balance in the account's primaryCurrency (informational snapshot; authoritative balances are in CurrencyBalance).",
+          "nullable": true,
+          "example": 45230.50
+        },
+        "administrationId": {
+          "type": "string",
+          "description": "FK to the Administration that owns this bank account.",
+          "example": "adm-1"
+        },
+        "lifecycleState": {
+          "type": "string",
+          "description": "Current lifecycle state of the bank account.",
+          "enum": [
+            "active",
+            "dormant",
+            "closed"
+          ],
+          "example": "active",
+          "default": "active"
+        }
+      },
+      "x-openregister-lifecycle": {
+        "field": "lifecycleState",
+        "initialState": "active",
+        "states": {
+          "active": {
+            "label": "Active",
+            "description": "Account is in active use."
+          },
+          "dormant": {
+            "label": "Dormant",
+            "description": "Account is temporarily inactive."
+          },
+          "closed": {
+            "label": "Closed",
+            "description": "Account has been closed."
+          }
+        },
+        "transitions": {
+          "makeDormant": {
+            "from": "active",
+            "to": "dormant",
+            "label": "Mark as dormant",
+            "description": "Temporarily suspend use of the account."
+          },
+          "reactivate": {
+            "from": "dormant",
+            "to": "active",
+            "label": "Reactivate",
+            "description": "Resume active use of the account."
+          },
+          "close": {
+            "from": ["active", "dormant"],
+            "to": "closed",
+            "label": "Close account",
+            "description": "Permanently close the bank account."
+          }
+        }
+      },
+      "x-openregister-relations": {
+        "currencyBalances": {
+          "localField": "id",
+          "relatedSchema": "CurrencyBalance",
+          "relatedField": "accountId",
+          "cardinality": "one-to-many",
+          "description": "Per-currency balance snapshots for this bank account."
+        }
+      },
+      "x-openregister-rbac": {
+        "roles": {
+          "treasurer": {
+            "permissions": ["create", "read", "update", "delete"]
+          },
+          "bookkeeper": {
+            "permissions": ["read"]
+          },
+          "auditor": {
+            "permissions": ["read"]
+          }
+        }
+      }
+    },
+    "CurrencyBalance": {
+      "slug": "CurrencyBalance",
+      "icon": "CurrencyEurOutline",
+      "version": "0.1.0",
+      "title": "Currency Balance",
+      "description": "Point-in-time balance snapshot for one (BankAccount, currency) pair. Enables multi-currency cash-position reporting for T3 treasury without custom PHP. One record per (accountId, currency) pair; upsert on duplicate (latest timestamp wins). Per REQ-MC-003 and REQ-MC-004 (bookkeeping-multi-currency).",
+      "type": "object",
+      "x-schema-org": "schema:Thing",
+      "required": [
+        "balanceId",
+        "accountId",
+        "currency",
+        "balance",
+        "lastUpdated"
+      ],
+      "properties": {
+        "balanceId": {
+          "type": "string",
+          "description": "Unique balance record identifier. Slug-based for idempotent re-import.",
+          "example": "bal-eur-001"
+        },
+        "accountId": {
+          "type": "string",
+          "description": "FK to BankAccount.id — the account this balance snapshot belongs to.",
+          "example": "bank-eur-op"
+        },
+        "currency": {
+          "type": "string",
+          "description": "ISO 4217 currency code of the balance snapshot.",
+          "minLength": 3,
+          "maxLength": 3,
+          "pattern": "^[A-Z]{3}$",
+          "example": "EUR"
+        },
+        "balance": {
+          "type": "number",
+          "description": "Current balance amount in the specified currency.",
+          "example": 45230.50
+        },
+        "previousBalance": {
+          "type": "number",
+          "description": "Previous balance amount in the specified currency. Used for variance tracking and trend analysis.",
+          "nullable": true,
+          "example": 42150.00
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of the most recent balance update.",
+          "example": "2026-05-21T09:00:00Z"
+        }
+      },
+      "x-openregister-relations": {
+        "bankAccount": {
+          "localField": "accountId",
+          "relatedSchema": "BankAccount",
+          "relatedField": "id",
+          "cardinality": "many-to-one",
+          "description": "The bank account this balance snapshot belongs to."
+        }
+      },
+      "x-openregister-aggregations": {
+        "totalByCurrency": {
+          "description": "Sum of all current balances grouped by currency across all accounts. Enables multi-account EUR/USD/GBP cash position totals per REQ-MC-004.",
+          "groupBy": "currency",
+          "operations": {
+            "totalBalance": {
+              "field": "balance",
+              "operation": "sum"
+            }
+          }
+        }
+      },
+      "x-openregister-calculations": {
+        "balanceChange": {
+          "expression": "balance - previousBalance",
+          "type": "number",
+          "description": "Absolute change from previous to current balance. Null if previousBalance is absent.",
+          "example": 3080.50
+        },
+        "balanceChangePercent": {
+          "expression": "previousBalance != null && previousBalance != 0 ? ((balance - previousBalance) / previousBalance) * 100 : null",
+          "type": "number",
+          "description": "Percentage change from previous to current balance. Null if previousBalance is absent or zero.",
+          "example": 7.31
+        },
+        "isLowLiquidity": {
+          "expression": "balance < 5000",
+          "type": "boolean",
+          "description": "True when balance is below the 5000 low-liquidity warning threshold per REQ-MC-005.",
+          "example": false
+        }
+      },
+      "x-openregister-rbac": {
+        "roles": {
+          "treasurer": {
+            "permissions": ["create", "read", "update", "delete"]
+          },
+          "bookkeeper": {
+            "permissions": ["read"]
+          },
+          "auditor": {
+            "permissions": ["read"]
+          }
+        }
+      }
     }
   },
   "mappings": {
@@ -7833,6 +8071,90 @@
       "paymentMethod": "ideal",
       "state": "executed",
       "administrationId": "adm-1"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BankAccount",
+        "slug": "bank-eur-operationeel"
+      },
+      "accountName": "EUR-operationeel",
+      "iban": "NL23ABNA0123456789",
+      "bic": "ABNANL2A",
+      "bankName": "ABN AMRO",
+      "primaryCurrency": "EUR",
+      "balance": 45230.50,
+      "administrationId": "adm-1",
+      "lifecycleState": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BankAccount",
+        "slug": "bank-usd-export"
+      },
+      "accountName": "USD-export",
+      "iban": "NL45RABO9876543210",
+      "bic": "RABONL2U",
+      "bankName": "Rabobank",
+      "primaryCurrency": "USD",
+      "balance": 18750.00,
+      "administrationId": "adm-1",
+      "lifecycleState": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BankAccount",
+        "slug": "bank-gbp-trade"
+      },
+      "accountName": "GBP-trade",
+      "iban": "NL67BUNQ1234567890",
+      "bic": "BUNQNL2A",
+      "bankName": "Bunq",
+      "primaryCurrency": "GBP",
+      "balance": 12340.75,
+      "administrationId": "adm-1",
+      "lifecycleState": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CurrencyBalance",
+        "slug": "bal-eur-001"
+      },
+      "balanceId": "bal-eur-001",
+      "accountId": "bank-eur-operationeel",
+      "currency": "EUR",
+      "balance": 45230.50,
+      "previousBalance": 42150.00,
+      "lastUpdated": "2026-05-21T09:00:00Z"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CurrencyBalance",
+        "slug": "bal-usd-001"
+      },
+      "balanceId": "bal-usd-001",
+      "accountId": "bank-usd-export",
+      "currency": "USD",
+      "balance": 18750.00,
+      "previousBalance": 20000.00,
+      "lastUpdated": "2026-05-21T09:00:00Z"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CurrencyBalance",
+        "slug": "bal-gbp-001"
+      },
+      "balanceId": "bal-gbp-001",
+      "accountId": "bank-gbp-trade",
+      "currency": "GBP",
+      "balance": 12340.75,
+      "previousBalance": 11500.00,
+      "lastUpdated": "2026-05-21T08:30:00Z"
     }
   ]
 }

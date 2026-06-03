@@ -508,7 +508,8 @@ _A read-only aggregate combining financials across multiple administrations with
 
 ### BankAccount
 **Schema.org:** `schema:BankAccount`
-_Schema.org BankAccount — standard vocabulary for bankaccount data_
+_A physical bank account held by an administration. Extended by bookkeeping-multi-currency with the optional `primaryCurrency` field (ISO 4217) for multi-currency tracking._
+**Primary spec:** bookkeeping-multi-currency
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
@@ -516,8 +517,34 @@ _Schema.org BankAccount — standard vocabulary for bankaccount data_
 | iban | string | Yes | IBAN number |
 | bic | string | No | BIC/SWIFT code |
 | bankName | string | No | Name of the bank |
-| currency | string | Yes | Account currency |
-| balance | number | No | Current balance |
+| primaryCurrency | string | No | ISO 4217 native currency (default EUR; backward compatible) |
+| balance | number | No | Current balance snapshot in primaryCurrency |
+| administrationId | string | Yes | FK to owning Administration |
+| lifecycleState | enum | Yes | One of active, dormant, closed |
+
+**Relations:**
+- → CurrencyBalance (one-to-many, via CurrencyBalance.accountId)
+
+> **Multi-currency extension (bookkeeping-multi-currency, 2026-06-03):** `BankAccount` extends with optional `primaryCurrency` (ISO 4217; null = EUR). Existing records are backward compatible. `CurrencyBalance` (one-to-many) tracks per-currency balance snapshots; authoritative balances live there, not in `BankAccount.balance`. See `openspec/changes/bookkeeping-multi-currency/spec.md` REQ-MC-001 and REQ-MC-002 for the authoritative contract.
+
+### CurrencyBalance
+**Schema.org:** `schema:Thing`
+_Point-in-time balance snapshot for one (BankAccount, currency) pair. Enables per-currency cash-position reporting for T3 treasury without custom PHP. One record per (accountId, currency) pair; upsert on duplicate (latest timestamp wins). Per bookkeeping-multi-currency REQ-MC-003._
+**Primary spec:** bookkeeping-multi-currency
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| balanceId | string | Yes | Unique balance record identifier (slug-based for idempotent import) |
+| accountId | string | Yes | FK to BankAccount.id |
+| currency | string | Yes | ISO 4217 currency code (e.g. EUR, USD, GBP) |
+| balance | number | Yes | Current balance amount in the specified currency |
+| previousBalance | number | No | Previous balance (for variance tracking and trend analysis) |
+| lastUpdated | datetime | Yes | ISO 8601 timestamp of the most recent balance update |
+
+**Relations:**
+- → BankAccount (many-to-one, via accountId)
+
+> **Reconciliation note (bookkeeping-multi-currency, 2026-06-03):** `CurrencyBalance` is the authoritative balance record for multi-currency accounts. Queried via OpenRegister `ObjectService.findAll()` with filter parameters (`accountId`, `currency`, `balance[gte]`/`balance[lte]`) — no custom PHP query builder. Aggregations (`totalByCurrency`) declared as `x-openregister-aggregations`. Balance change and liquidity flag derived via `x-openregister-calculations`. See `openspec/changes/bookkeeping-multi-currency/spec.md` REQ-MC-003 and REQ-MC-004.
 
 ### BankConnection
 **Schema.org:** `schema:FinancialProduct`
