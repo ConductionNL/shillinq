@@ -1,21 +1,78 @@
 {
-  "spec": "openspec/changes/add-shillinq-cost-centers-dimensions",
+  "spec": "openspec/changes/add-shillinq-iv3-reporting",
   "verified": [
-    {"task": "1", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "Confirmed no pre-existing CostCenter/KostenDrager/Project/AllocationRule schemas before this spec"},
-    {"task": "2", "file": "openspec/changes/add-shillinq-cost-centers-dimensions/specs/bookkeeping-cost-centers-dimensions/spec.md", "ok": true},
-    {"task": "3", "file": "openspec/changes/add-shillinq-cost-centers-dimensions/proposal.md", "ok": true},
-    {"task": "4", "file": "openspec/changes/add-shillinq-cost-centers-dimensions/design.md", "ok": true},
-    {"task": "5", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "CostCenter+KostenDrager+Project schemas declared with x-openregister-relations self-relation for hierarchy, RBAC; Project.timeBookingEnabled per REQ-CC-007"},
-    {"task": "6", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "AllocationRule schema with 4 drivers; fixed-percentage sum-to-100 precondition in x-openregister-lifecycle.requires.save per REQ-CC-004"},
-    {"task": "7", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "GLLine additively patched with costCenterCode, kostenDragerCode, projectCode, dimensions + x-openregister-relations per REQ-CC-003"},
-    {"task": "8", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "GLTransaction.post action evaluate-allocation-rules wired; monthly/period-close via ScheduledWorkflow in AllocationRule schema per REQ-CC-004"},
-    {"task": "9", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "segmentPnlByCostCenter+ByKostenDrager+ByProject on GLLine; segmentPnl per-schema aggregation on each dimension schema per REQ-CC-005"},
-    {"task": "10a", "file": "lib/Settings/seeds/allocation-rules/overhead-by-headcount.json", "ok": true},
-    {"task": "10b", "file": "lib/Settings/seeds/allocation-rules/it-by-volume.json", "ok": true},
-    {"task": "10c", "file": "lib/Settings/seeds/allocation-rules/facility-by-fixed-percentage.json", "ok": true},
-    {"task": "11", "file": "lib/Repair/InitializeSettings.php", "ok": true, "note": "seedAllocationRules() called idempotently from seedChartOfAccounts() per REQ-CC-004"},
-    {"task": "12", "file": "src/manifest.json", "ok": true, "note": "Bookkeeping > Dimensions submenu with CostCenters, KostenDragers, Projects, AllocationRules — 4 index + 4 detail pages per REQ-CC-006"},
-    {"task": "13", "file": "openspec/architecture/adr-000-data-model.md", "ok": true, "note": "Reconciliation notes added for CostCenter, KostenDrager, Project, AllocationRule, GLLine additive dimension extension"}
+    {
+      "task": "1",
+      "file": "lib/Settings/shillinq_register.json",
+      "ok": true,
+      "note": "Confirmed Iv3Export schema declared at line 2157; bookkeeping-iv3-reporting spec present in openspec/specs/; no pre-existing cbs-iv3 conflicts."
+    },
+    {
+      "task": "2",
+      "file": "openspec/specs/bookkeeping-iv3-reporting/spec.md",
+      "ok": true,
+      "note": "Spec authored with Status: proposed, Scope: shillinq, Tier: T3, REQ-IV3-001..009 with RFC 2119 keywords and GIVEN/WHEN/THEN scenarios per ADR-009."
+    },
+    {
+      "task": "3",
+      "file": "openspec/changes/add-shillinq-iv3-reporting/proposal.md",
+      "ok": true,
+      "note": "Proposal authored referencing nextcloud-app spec; Affected Projects, Scope, Risks, Rollback, Open Questions present; kind: config per ADR-032."
+    },
+    {
+      "task": "4",
+      "file": "openspec/changes/add-shillinq-iv3-reporting/design.md",
+      "ok": true,
+      "note": "Design authored with Reuse Analysis and Declarative-vs-imperative decision tables; D1-D4 decisions; D3 ADR-031 exception path for thin XML renderer documented."
+    },
+    {
+      "task": "5",
+      "file": "lib/Settings/shillinq_register.json",
+      "ok": true,
+      "note": "Iv3Export schema declared with all REQ-IV3-002 fields: administrationId, reportingYear, reportingQuarter, iv3Version, buckets, xmlAttachmentUri, state (generated/validated/submitted/accepted/rejected/corrected), generatedAt, submittedAt, acceptedAt, cbsMessageId, correctionOf. x-schema-org: schema:Dataset."
+    },
+    {
+      "task": "6",
+      "file": "lib/Settings/shillinq_register.json",
+      "ok": true,
+      "note": "x-openregister-lifecycle on Iv3Export: 6 states, 6 transitions (validate/submit/accept/reject/revalidate/correct); retention rule selectielijst:5.1.4 P10Y per REQ-IV3-005 + REQ-IV3-009. No Iv3LifecycleService per ADR-031."
+    },
+    {
+      "task": "7",
+      "file": "lib/Settings/shillinq_register.json",
+      "ok": true,
+      "note": "x-openregister-aggregations.buckets: SUM(debit-credit) per iv3Bucket over closed GLLine rows for administrationId+quarter; joins GLLine.accountNumber → BbvAccountMapping.iv3Bucket via T3 bbv-compliance; filters to closed periodIds via T2 period-close per REQ-IV3-003."
+    },
+    {
+      "task": "8",
+      "file": "lib/Settings/shillinq_register.json",
+      "ok": true,
+      "note": "mappings.iv3-xml-transformation declared: OR mapping engine maps Iv3Export→CBS IV3-bestand XML structure (Aanlevering.Verslagperiode.*, Aanlevering.Bestand.Specificatie, Aanlevering.Bedragen.IVBucket). ADR-031 exception annotation for Iv3XmlRenderer in description per REQ-IV3-004."
+    },
+    {
+      "task": "9",
+      "file": "lib/Settings/shillinq_register.json",
+      "ok": true,
+      "note": "x-openregister-scheduled-workflows.quarterly-cbs-submission on Iv3Export: cron 0 0 1 */3 *, source cbs-iv3, filter {gemeente,provincie,waterschap} per REQ-IV3-006. No CbsClient per ADR-019."
+    },
+    {
+      "task": "10",
+      "file": "lib/Repair/InitializeSettings.php",
+      "ok": true,
+      "note": "registerIv3ScheduledWorkflow() called from run() as Phase 4; idempotent via slug 'shillinq-iv3-quarterly-cbs-submission'; @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-9."
+    },
+    {
+      "task": "11",
+      "file": "src/manifest.json",
+      "ok": true,
+      "note": "Overheid section with visibility {gemeente,provincie,waterschap}: Iv3Rapportages (type: index, route /iv3-rapportages, schema Iv3Export, columns: jaar/kwartaal/admin/status/ingediend-op) and Iv3RapportagesDetail (type: detail, lifecycleActions: true, fields: all REQ-IV3-007 fields incl. buckets+xmlAttachmentUri). validate-manifest.js passes for IV3 pages."
+    },
+    {
+      "task": "12",
+      "file": "openspec/architecture/adr-000-data-model.md",
+      "ok": true,
+      "note": "Iv3Export entity section added: Primary spec bookkeeping-iv3-reporting, full field table (12 fields), 6 lifecycle states, correctionOf self-relation."
+    }
   ],
   "stubs": [],
   "missing_routes": []
