@@ -5225,9 +5225,9 @@
 			"UrenRegistratie": {
 				"slug": "UrenRegistratie",
 				"icon": "ClockOutline",
-				"version": "0.1.0",
+				"version": "0.2.0",
 				"title": "Urenregistratie",
-				"description": "Billable hour logging for ZZP / consultancy. Base schema from bookkeeping-zzp-tax-regime; extended here with recognisedRate (rate-at-write snapshot per RJ 270 §3.2.4) and projectAssignmentId (FK to ProjectAssignment, REQ-CPA-009).",
+				"description": "Billable hour logging for ZZP / consultancy. Base schema from bookkeeping-zzp-tax-regime (REQ-ZZP-002); extended by bookkeeping-consultancy-project-accounting with recognisedRate (rate-at-write snapshot per RJ 270 §3.2.4) and projectAssignmentId (FK to ProjectAssignment, REQ-CPA-009).",
 				"type": "object",
 				"x-schema-org": "schema:HowToStep",
 				"required": [
@@ -5235,8 +5235,17 @@
 					"personId",
 					"date",
 					"hours",
-					"description"
+					"category"
 				],
+				"x-openregister-validation": {
+					"excludedReasonRequired": {
+						"rule": "required_if",
+						"field": "excludedReason",
+						"when": "category",
+						"eq": "excluded",
+						"message": "excludedReason is required when category is 'excluded' (Wet IB 2001 art. 3.6 lid 4 — REQ-ZZP-002)."
+					}
+				},
 				"properties": {
 					"administrationId": {
 						"type": "string",
@@ -5245,7 +5254,7 @@
 					},
 					"personId": {
 						"type": "string",
-						"description": "FK to the person logging the hours.",
+						"description": "FK to the person logging the hours (typically the ZZP-er themselves).",
 						"example": "user-1"
 					},
 					"date": {
@@ -5257,12 +5266,36 @@
 					"hours": {
 						"type": "number",
 						"minimum": 0,
-						"description": "Number of hours worked.",
-						"example": 8
+						"description": "Decimal hours worked (e.g. 7.5). Per REQ-ZZP-002.",
+						"example": 7.5
+					},
+					"category": {
+						"type": "string",
+						"description": "Hour category per Wet IB 2001 art. 3.6. Only non-excluded categories count toward the 1225-urencriterium. REQ-ZZP-002.",
+						"enum": [
+							"billable",
+							"non-billable-admin",
+							"non-billable-acquisition",
+							"non-billable-training",
+							"excluded"
+						],
+						"example": "billable"
+					},
+					"excludedReason": {
+						"type": "string",
+						"description": "Required when category is 'excluded'. Classifies the exclusion per Wet IB 2001 art. 3.6 lid 4. REQ-ZZP-002.",
+						"enum": [
+							"sick",
+							"parental-leave",
+							"vacation"
+						],
+						"nullable": true,
+						"example": null
 					},
 					"description": {
 						"type": "string",
-						"description": "Description of work performed.",
+						"description": "Operator-authored context for this hour record.",
+						"nullable": true,
 						"example": "Design session OR data model"
 					},
 					"projectId": {
@@ -5292,8 +5325,25 @@
 						"example": "glt-1"
 					}
 				},
+				"x-openregister-lifecycle": {
+					"field": "_meta.status",
+					"retention": {
+						"rule": "selectielijst:5.1.2",
+						"period": "P7Y",
+						"description": "Financial records retained 7 years per AWR art. 52 (REQ-ZZP-009)."
+					}
+				},
 				"x-openregister-rbac": {
 					"roles": {
+						"zzp-administrator": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							],
+							"description": "Full access for ZZP operators managing their own hour records."
+						},
 						"bookkeeper": {
 							"permissions": [
 								"create",
@@ -5411,6 +5461,490 @@
 								"read"
 							],
 							"description": "Read-only; WipBalance records are system-generated, never manually created."
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"ZzpDeduction": {
+				"slug": "ZzpDeduction",
+				"icon": "CalculatorVariantOutline",
+				"version": "0.1.0",
+				"title": "ZZP-aftrek",
+				"description": "Annual ZZP deduction record tracking zelfstandigenaftrek, startersaftrek, and MKB-winstvrijstelling for a person per fiscal year. All monetary amounts are declarative x-openregister-calculations over UrenRegistratie + GL revenue per ADR-031 + REQ-ZZP-005.",
+				"type": "object",
+				"x-schema-org": "schema:MonetaryAmount",
+				"required": [
+					"administrationId",
+					"personId",
+					"taxYear"
+				],
+				"properties": {
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the ZZP administration.",
+						"example": "adm-1"
+					},
+					"personId": {
+						"type": "string",
+						"description": "FK to the ZZP-er (person) this deduction record belongs to.",
+						"example": "user-1"
+					},
+					"taxYear": {
+						"type": "integer",
+						"minimum": 2000,
+						"maximum": 2100,
+						"description": "Calendar year for which this deduction record is computed (REQ-ZZP-005).",
+						"example": 2026
+					},
+					"ytdQualifyingHours": {
+						"type": "number",
+						"minimum": 0,
+						"nullable": true,
+						"readOnly": true,
+						"description": "Year-to-date qualifying hours toward the 1225-urencriterium. Derived via x-openregister-calculations. Excludes category=excluded per Wet IB 2001 art. 3.6. REQ-ZZP-003.",
+						"example": 1100.0
+					},
+					"qualifiesForUrencriterium": {
+						"type": "boolean",
+						"nullable": true,
+						"readOnly": true,
+						"description": "Derived: ytdQualifyingHours >= 1225 (or 800 for starters-opvolgers). REQ-ZZP-005.",
+						"example": false
+					},
+					"isStartersOpvolger": {
+						"type": "boolean",
+						"description": "True when the ZZP-er qualifies as a starters-opvolger (lower 800-hour threshold). Operator-set flag; default false.",
+						"default": false,
+						"example": false
+					},
+					"isStarter": {
+						"type": "boolean",
+						"description": "True when the ZZP-er is in their first 5 years of self-employment and may claim startersaftrek.",
+						"default": false,
+						"example": false
+					},
+					"startersClaimsThisRegime": {
+						"type": "integer",
+						"minimum": 0,
+						"maximum": 3,
+						"description": "Number of startersaftrek claims made within the 5-year starter window (max 3 per Wet IB 2001 art. 3.77). Lifecycle gates startersaftrek to <= 3 claims per REQ-ZZP-006.",
+						"default": 0,
+						"example": 1
+					},
+					"taxableProfit": {
+						"type": "number",
+						"nullable": true,
+						"readOnly": true,
+						"description": "Taxable profit for taxYear derived via x-openregister-aggregations from GL. REQ-ZZP-006.",
+						"example": 60000.0
+					},
+					"zelfstandigenaftrekAmount": {
+						"type": "number",
+						"minimum": 0,
+						"nullable": true,
+						"readOnly": true,
+						"description": "Zelfstandigenaftrek deduction amount. Derived from seeded deduction-amounts + qualifiesForUrencriterium per Wet IB 2001 art. 3.76. REQ-ZZP-005.",
+						"example": 3750.0
+					},
+					"startersaftrekAmount": {
+						"type": "number",
+						"minimum": 0,
+						"nullable": true,
+						"readOnly": true,
+						"description": "Startersaftrek amount. Zero when isStarter false OR startersClaimsThisRegime >= 3. Wet IB 2001 art. 3.77. REQ-ZZP-005.",
+						"example": 2123.0
+					},
+					"mkbWinstvrijstellingPercentage": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 1,
+						"nullable": true,
+						"readOnly": true,
+						"description": "MKB-winstvrijstelling percentage from seeded deduction-amounts (e.g. 0.127 = 12.7%). Wet IB 2001 art. 3.79a. REQ-ZZP-005.",
+						"example": 0.127
+					},
+					"mkbWinstvrijstellingAmount": {
+						"type": "number",
+						"minimum": 0,
+						"nullable": true,
+						"readOnly": true,
+						"description": "Derived: (taxableProfit - zelfstandigenaftrekAmount - startersaftrekAmount) x mkbWinstvrijstellingPercentage. Wet IB 2001 art. 3.79a. REQ-ZZP-005.",
+						"example": 6876.51
+					},
+					"totalDeduction": {
+						"type": "number",
+						"minimum": 0,
+						"nullable": true,
+						"readOnly": true,
+						"description": "Sum of zelfstandigenaftrekAmount + startersaftrekAmount + mkbWinstvrijstellingAmount. REQ-ZZP-005.",
+						"example": 12749.51
+					}
+				},
+				"x-openregister-calculations": {
+					"ytdQualifyingHours": {
+						"description": "YTD sum of UrenRegistratie.hours for same (administrationId, personId) within taxYear where category in {billable, non-billable-admin, non-billable-acquisition, non-billable-training}. Per REQ-ZZP-003. ADR-031 exception path: if OR engine cannot express the period-filter aggregation, UrencriteriumGuard::currentYtdHours(string $personId, int $year): float applies (~30 LOC, no state).",
+						"expression": "sum(UrenRegistratie.hours)",
+						"sourceSchema": "UrenRegistratie",
+						"sourceRegister": "shillinq",
+						"filter": {
+							"administrationId": "@self.administrationId",
+							"personId": "@self.personId",
+							"date": {
+								"gte": "@self.taxYear + '-01-01'",
+								"lte": "@self.taxYear + '-12-31'"
+							},
+							"category": {
+								"in": [
+									"billable",
+									"non-billable-admin",
+									"non-billable-acquisition",
+									"non-billable-training"
+								]
+							}
+						}
+					},
+					"qualifiesForUrencriterium": {
+						"description": "True when ytdQualifyingHours >= threshold (1225 regular, 800 starters-opvolgers). REQ-ZZP-007.",
+						"expression": "@self.isStartersOpvolger ? @self.ytdQualifyingHours >= 800 : @self.ytdQualifyingHours >= 1225"
+					},
+					"taxableProfit": {
+						"description": "GL-derived profit for taxYear: self-employment income aggregated from T1 GL.",
+						"expression": "sum(GLLine.amount)",
+						"sourceSchema": "GLLine",
+						"sourceRegister": "shillinq",
+						"filter": {
+							"administrationId": "@self.administrationId",
+							"fiscalYear": "@self.taxYear",
+							"taxCategory": "self-employment-income"
+						}
+					},
+					"zelfstandigenaftrekAmount": {
+						"description": "Zelfstandigenaftrek from seeded zzp-deduction-amounts table for taxYear, applied when qualifiesForUrencriterium. Wet IB 2001 art. 3.76.",
+						"expression": "@self.qualifiesForUrencriterium ? lookup('ZzpDeductionAmounts', taxYear: @self.taxYear, field: 'zelfstandigenaftrek') : 0"
+					},
+					"startersaftrekAmount": {
+						"description": "Startersaftrek from seeded table. Applied when isStarter AND startersClaimsThisRegime < 3 AND qualifiesForUrencriterium. Wet IB 2001 art. 3.77.",
+						"expression": "(@self.isStarter && @self.startersClaimsThisRegime < 3 && @self.qualifiesForUrencriterium) ? lookup('ZzpDeductionAmounts', taxYear: @self.taxYear, field: 'startersaftrek') : 0"
+					},
+					"mkbWinstvrijstellingPercentage": {
+						"description": "MKB-winstvrijstelling percentage from seeded table for taxYear. Wet IB 2001 art. 3.79a.",
+						"expression": "lookup('ZzpDeductionAmounts', taxYear: @self.taxYear, field: 'mkbWinstvrijstellingPercentage')"
+					},
+					"mkbWinstvrijstellingAmount": {
+						"description": "Derived: (taxableProfit - zelfstandigenaftrekAmount - startersaftrekAmount) x mkbWinstvrijstellingPercentage.",
+						"expression": "(@self.taxableProfit - @self.zelfstandigenaftrekAmount - @self.startersaftrekAmount) * @self.mkbWinstvrijstellingPercentage"
+					},
+					"totalDeduction": {
+						"description": "Sum of the three deduction amounts.",
+						"expression": "@self.zelfstandigenaftrekAmount + @self.startersaftrekAmount + @self.mkbWinstvrijstellingAmount"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "_meta.status",
+					"retention": {
+						"rule": "selectielijst:5.1.2",
+						"period": "P7Y",
+						"description": "Financial records retained 7 years per AWR art. 52 (REQ-ZZP-009)."
+					}
+				},
+				"x-openregister-notifications": {
+					"onCriteriumMet": {
+						"trigger": "calculation-crossing:qualifiesForUrencriterium",
+						"condition": "@self.qualifiesForUrencriterium === true",
+						"description": "Notify zzp-administrator when 1225-urencriterium is met. REQ-ZZP-004.",
+						"recipients": {
+							"role": "zzp-administrator",
+							"scope": "@self.administrationId"
+						},
+						"title": "Urencriterium gehaald",
+						"message": "Het urencriterium voor @self.taxYear is gehaald (@self.ytdQualifyingHours uren). Zelfstandigenaftrek is van toepassing."
+					},
+					"onCriteriumAtRisk": {
+						"trigger": "scheduled:monthly",
+						"condition": "@self.ytdQualifyingHours * (12 / currentMonth()) < 1225",
+						"description": "Monthly projection: warn zzp-administrator when projected EOY qualifying hours < 1225. REQ-ZZP-004.",
+						"recipients": {
+							"role": "zzp-administrator",
+							"scope": "@self.administrationId"
+						},
+						"title": "Dreigend onderschrijden urencriterium",
+						"message": "Projectie einde jaar: @projected uur (< 1225). Dreigend onderschrijden urencriterium @self.taxYear."
+					}
+				},
+				"x-openregister-widgets": {
+					"urencriteriumTracker": {
+						"id": "urencriterium-tracker",
+						"title": "Urencriterium",
+						"description": "YTD qualifying hours progress toward the 1225-urencriterium (or 800 for starters-opvolgers), green/yellow/red bands. Threshold from urencriterium-thresholds.json per REQ-ZZP-004.",
+						"type": "progress-with-state",
+						"register": "shillinq",
+						"schema": "ZzpDeduction",
+						"visibility": {
+							"field": "administrationType",
+							"in": [
+								"zzp"
+							]
+						},
+						"fields": {
+							"ytdQualifyingHours": {
+								"label": "Uren YTD (kwalificerend)",
+								"type": "number"
+							},
+							"qualifiesForUrencriterium": {
+								"label": "Urencriterium gehaald",
+								"type": "boolean-badge"
+							},
+							"progress": {
+								"label": "Voortgang",
+								"type": "progress-bar",
+								"value": "ytdQualifyingHours / 1225 * 100",
+								"thresholds": [
+									{
+										"value": 60,
+										"variant": "warning"
+									},
+									{
+										"value": 100,
+										"variant": "success"
+									}
+								]
+							}
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"zzp-administrator": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							],
+							"description": "ZZP operators may view and update their own deduction records."
+						},
+						"bookkeeper": {
+							"permissions": [
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"IbAangifteExport": {
+				"slug": "IbAangifteExport",
+				"icon": "FileDocumentCheckOutline",
+				"version": "0.1.0",
+				"title": "IB-aangifte export",
+				"description": "Per-tax-year IB-aangifteformulier export record for a ZZP operator. Aggregates GL revenue, costs, and ZzpDeduction values ready for Belastingdienst submission. Lifecycle: draft -> generated -> exported. REQ-ZZP-006.",
+				"type": "object",
+				"x-schema-org": "schema:Report",
+				"required": [
+					"administrationId",
+					"personId",
+					"taxYear",
+					"state"
+				],
+				"properties": {
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the ZZP administration.",
+						"example": "adm-1"
+					},
+					"personId": {
+						"type": "string",
+						"description": "FK to the ZZP-er.",
+						"example": "user-1"
+					},
+					"taxYear": {
+						"type": "integer",
+						"minimum": 2000,
+						"maximum": 2100,
+						"description": "Fiscal year this aangifte export covers.",
+						"example": 2026
+					},
+					"state": {
+						"type": "string",
+						"description": "Lifecycle state of the aangifte export.",
+						"enum": [
+							"draft",
+							"generated",
+							"exported"
+						],
+						"example": "draft"
+					},
+					"revenue": {
+						"type": "number",
+						"minimum": 0,
+						"nullable": true,
+						"readOnly": true,
+						"description": "GL-derived total revenue for taxYear via x-openregister-aggregations per REQ-ZZP-006.",
+						"example": 80000.0
+					},
+					"costs": {
+						"type": "number",
+						"minimum": 0,
+						"nullable": true,
+						"readOnly": true,
+						"description": "GL-derived total deductible costs for taxYear via x-openregister-aggregations per REQ-ZZP-006.",
+						"example": 20000.0
+					},
+					"profit": {
+						"type": "number",
+						"nullable": true,
+						"readOnly": true,
+						"description": "Derived: revenue - costs. REQ-ZZP-006.",
+						"example": 60000.0
+					},
+					"ytdQualifyingHours": {
+						"type": "number",
+						"minimum": 0,
+						"nullable": true,
+						"description": "Copy from ZzpDeduction.ytdQualifyingHours at generation time.",
+						"example": 1350.0
+					},
+					"deductions": {
+						"type": "object",
+						"nullable": true,
+						"description": "Snapshot of ZzpDeduction values at generation time: zelfstandigenaftrek, startersaftrek, mkbWinstvrijstelling, totalDeduction (REQ-ZZP-006).",
+						"properties": {
+							"zelfstandigenaftrekAmount": {
+								"type": "number",
+								"example": 3750.0
+							},
+							"startersaftrekAmount": {
+								"type": "number",
+								"example": 0.0
+							},
+							"mkbWinstvrijstellingAmount": {
+								"type": "number",
+								"example": 7160.25
+							},
+							"totalDeduction": {
+								"type": "number",
+								"example": 10910.25
+							}
+						}
+					},
+					"attachmentUri": {
+						"type": "string",
+						"nullable": true,
+						"description": "docudesk URI of the rendered IB-aangifte PDF. Per ADR-022 (docudesk is document-generation abstraction).",
+						"example": "docudesk://docs/ib-aangifte-2026-user-1.pdf"
+					},
+					"generatedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true,
+						"description": "Timestamp when the generate transition was executed.",
+						"example": "2027-03-01T10:00:00Z"
+					},
+					"exportedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true,
+						"description": "Timestamp when the aangifte was marked as submitted to Belastingdienst.",
+						"example": "2027-03-15T14:30:00Z"
+					}
+				},
+				"x-openregister-aggregations": {
+					"revenue": {
+						"description": "Sum of GL revenue lines for administrationId within taxYear.",
+						"expression": "sum(amount)",
+						"sourceSchema": "GLLine",
+						"sourceRegister": "shillinq",
+						"filter": {
+							"administrationId": "@self.administrationId",
+							"fiscalYear": "@self.taxYear",
+							"entryType": "credit",
+							"accountType": "revenue"
+						}
+					},
+					"costs": {
+						"description": "Sum of GL expense lines for administrationId within taxYear.",
+						"expression": "sum(amount)",
+						"sourceSchema": "GLLine",
+						"sourceRegister": "shillinq",
+						"filter": {
+							"administrationId": "@self.administrationId",
+							"fiscalYear": "@self.taxYear",
+							"entryType": "debit",
+							"accountType": "expense"
+						}
+					},
+					"profit": {
+						"description": "Derived: revenue - costs.",
+						"expression": "@self.revenue - @self.costs"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "state",
+					"initialState": "draft",
+					"retention": {
+						"rule": "selectielijst:5.1.2",
+						"period": "P7Y",
+						"description": "Financial records retained 7 years per AWR art. 52 (REQ-ZZP-009)."
+					},
+					"states": {
+						"draft": {
+							"label": "Concept",
+							"description": "IB-aangifte export is being prepared."
+						},
+						"generated": {
+							"label": "Gegenereerd",
+							"description": "IB-aangifte payload generated (PDF/XML via docudesk). Ready for review."
+						},
+						"exported": {
+							"label": "Ingediend",
+							"description": "Aangifte submitted to Belastingdienst portal by the operator."
+						}
+					},
+					"transitions": {
+						"generate": {
+							"from": "draft",
+							"to": "generated",
+							"label": "Genereer aangifte",
+							"description": "Materialises GL aggregations, copies ZzpDeduction snapshot, triggers docudesk PDF/XML rendering via OR Mapping. ADR-031 exception path: if OR Mapping cannot express Belastingdienst payload shape, a thin IbAangifteRenderer (~30 LOC) is permitted per design.md D4.",
+							"sets": {
+								"generatedAt": "@now"
+							}
+						},
+						"export": {
+							"from": "generated",
+							"to": "exported",
+							"label": "Markeer als ingediend",
+							"description": "Operator confirms the aangifte has been submitted to the Belastingdienst portal.",
+							"sets": {
+								"exportedAt": "@now"
+							}
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"zzp-administrator": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							],
+							"description": "ZZP operators may create, view, and update their own aangifte exports."
+						},
+						"bookkeeper": {
+							"permissions": [
+								"read",
+								"update"
+							]
 						},
 						"auditor": {
 							"permissions": [

@@ -213,6 +213,39 @@
 					"order": 10
 				},
 				{
+					"id": "Urenregistratie",
+					"label": "Urenregistratie",
+					"icon": "ClockOutline",
+					"route": "Urenregistratie",
+					"order": 15,
+					"visibility": {
+						"field": "administrationType",
+						"in": ["zzp"]
+					}
+				},
+				{
+					"id": "ZzpAftrek",
+					"label": "ZZP-aftrek",
+					"icon": "CalculatorVariantOutline",
+					"route": "ZzpAftrek",
+					"order": 16,
+					"visibility": {
+						"field": "administrationType",
+						"in": ["zzp"]
+					}
+				},
+				{
+					"id": "IbAangifte",
+					"label": "IB-aangifte",
+					"icon": "FileDocumentCheckOutline",
+					"route": "IbAangifte",
+					"order": 17,
+					"visibility": {
+						"field": "administrationType",
+						"in": ["zzp"]
+					}
+				},
+				{
 					"id": "TaxFilingPrep",
 					"label": "Tax Filing Prep",
 					"icon": "FileDocumentCheckOutline",
@@ -1024,6 +1057,330 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "KorStatus"
+			}
+		},
+		{
+			"id": "Urenregistratie",
+			"route": "/belastingen/urenregistratie",
+			"type": "index",
+			"title": "Urenregistratie",
+			"config": {
+				"register": "shillinq",
+				"schema": "UrenRegistratie",
+				"visibility": {
+					"field": "administrationType",
+					"in": ["zzp"]
+				},
+				"columns": [
+					{
+						"key": "date",
+						"label": "Datum",
+						"sortable": true
+					},
+					{
+						"key": "hours",
+						"label": "Uren",
+						"sortable": true
+					},
+					{
+						"key": "category",
+						"label": "Categorie",
+						"sortable": true
+					},
+					{
+						"key": "description",
+						"label": "Omschrijving",
+						"sortable": false
+					},
+					{
+						"key": "excludedReason",
+						"label": "Uitsluitingsreden",
+						"sortable": true
+					},
+					{
+						"key": "projectId",
+						"label": "Project",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-date",
+				"detailRoute": "UrenregistratieDetail",
+				"widget": "urencriterium-tracker"
+			}
+		},
+		{
+			"id": "UrenregistratieDetail",
+			"route": "/belastingen/urenregistratie/:id",
+			"type": "detail",
+			"title": "Urenregistratie",
+			"config": {
+				"register": "shillinq",
+				"schema": "UrenRegistratie",
+				"fields": [
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "personId",
+						"label": "Persoon",
+						"type": "string"
+					},
+					{
+						"key": "date",
+						"label": "Datum",
+						"type": "date"
+					},
+					{
+						"key": "hours",
+						"label": "Uren",
+						"type": "number"
+					},
+					{
+						"key": "category",
+						"label": "Categorie",
+						"type": "string"
+					},
+					{
+						"key": "excludedReason",
+						"label": "Uitsluitingsreden",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Omschrijving",
+						"type": "string"
+					},
+					{
+						"key": "projectId",
+						"label": "Project",
+						"type": "string"
+					}
+				],
+				"indexRoute": "Urenregistratie"
+			}
+		},
+		{
+			"id": "ZzpAftrek",
+			"route": "/belastingen/zzp-aftrek",
+			"type": "index",
+			"title": "ZZP-aftrek",
+			"config": {
+				"register": "shillinq",
+				"schema": "ZzpDeduction",
+				"visibility": {
+					"field": "administrationType",
+					"in": ["zzp"]
+				},
+				"columns": [
+					{
+						"key": "taxYear",
+						"label": "Belastingjaar",
+						"sortable": true
+					},
+					{
+						"key": "personId",
+						"label": "Persoon",
+						"sortable": true
+					},
+					{
+						"key": "ytdQualifyingHours",
+						"label": "Kwalificerende uren (YTD)",
+						"sortable": true
+					},
+					{
+						"key": "qualifiesForUrencriterium",
+						"label": "Urencriterium gehaald",
+						"sortable": true
+					},
+					{
+						"key": "zelfstandigenaftrekAmount",
+						"label": "Zelfstandigenaftrek",
+						"sortable": false
+					},
+					{
+						"key": "totalDeduction",
+						"label": "Totaal aftrek",
+						"sortable": false
+					}
+				],
+				"defaultSort": "-taxYear",
+				"detailRoute": "ZzpAftrekDetail"
+			}
+		},
+		{
+			"id": "ZzpAftrekDetail",
+			"route": "/belastingen/zzp-aftrek/:id",
+			"type": "detail",
+			"title": "ZZP-aftrek detail",
+			"config": {
+				"register": "shillinq",
+				"schema": "ZzpDeduction",
+				"fields": [
+					{
+						"key": "taxYear",
+						"label": "Belastingjaar",
+						"type": "integer"
+					},
+					{
+						"key": "personId",
+						"label": "Persoon",
+						"type": "string"
+					},
+					{
+						"key": "ytdQualifyingHours",
+						"label": "Kwalificerende uren (YTD)",
+						"type": "number"
+					},
+					{
+						"key": "qualifiesForUrencriterium",
+						"label": "Urencriterium gehaald",
+						"type": "boolean"
+					},
+					{
+						"key": "isStarter",
+						"label": "Starter",
+						"type": "boolean"
+					},
+					{
+						"key": "startersClaimsThisRegime",
+						"label": "Startersaftrek claims (max 3)",
+						"type": "integer"
+					},
+					{
+						"key": "zelfstandigenaftrekAmount",
+						"label": "Zelfstandigenaftrek",
+						"type": "currency"
+					},
+					{
+						"key": "startersaftrekAmount",
+						"label": "Startersaftrek",
+						"type": "currency"
+					},
+					{
+						"key": "mkbWinstvrijstellingAmount",
+						"label": "MKB-winstvrijstelling",
+						"type": "currency"
+					},
+					{
+						"key": "totalDeduction",
+						"label": "Totaal aftrek",
+						"type": "currency"
+					}
+				],
+				"indexRoute": "ZzpAftrek"
+			}
+		},
+		{
+			"id": "IbAangifte",
+			"route": "/belastingen/ib-aangifte",
+			"type": "index",
+			"title": "IB-aangifte",
+			"config": {
+				"register": "shillinq",
+				"schema": "IbAangifteExport",
+				"visibility": {
+					"field": "administrationType",
+					"in": ["zzp"]
+				},
+				"columns": [
+					{
+						"key": "taxYear",
+						"label": "Belastingjaar",
+						"sortable": true
+					},
+					{
+						"key": "personId",
+						"label": "Persoon",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "profit",
+						"label": "Winst",
+						"sortable": false
+					},
+					{
+						"key": "generatedAt",
+						"label": "Gegenereerd op",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-taxYear",
+				"detailRoute": "IbAangifteDetail"
+			}
+		},
+		{
+			"id": "IbAangifteDetail",
+			"route": "/belastingen/ib-aangifte/:id",
+			"type": "detail",
+			"title": "IB-aangifte detail",
+			"config": {
+				"register": "shillinq",
+				"schema": "IbAangifteExport",
+				"fields": [
+					{
+						"key": "taxYear",
+						"label": "Belastingjaar",
+						"type": "integer"
+					},
+					{
+						"key": "personId",
+						"label": "Persoon",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "revenue",
+						"label": "Omzet",
+						"type": "currency"
+					},
+					{
+						"key": "costs",
+						"label": "Kosten",
+						"type": "currency"
+					},
+					{
+						"key": "profit",
+						"label": "Winst",
+						"type": "currency"
+					},
+					{
+						"key": "ytdQualifyingHours",
+						"label": "Kwalificerende uren",
+						"type": "number"
+					},
+					{
+						"key": "deductions",
+						"label": "Aftrekposten",
+						"type": "object"
+					},
+					{
+						"key": "attachmentUri",
+						"label": "Aangifte PDF",
+						"type": "string"
+					},
+					{
+						"key": "generatedAt",
+						"label": "Gegenereerd op",
+						"type": "datetime"
+					},
+					{
+						"key": "exportedAt",
+						"label": "Ingediend op",
+						"type": "datetime"
+					}
+				],
+				"indexRoute": "IbAangifte"
 			}
 		},
 		{

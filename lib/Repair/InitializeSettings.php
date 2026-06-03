@@ -35,6 +35,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
  * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
+ * @spec openspec/changes/add-shillinq-zzp-tax-regime/tasks.md#task-13
  */
 class InitializeSettings implements IRepairStep
 {
@@ -81,6 +82,7 @@ class InitializeSettings implements IRepairStep
      * Phase 5: seeds KOR thresholds from kor-thresholds-2026.json idempotently.
      * Phase 6: seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
      * Phase 7: seeds RJ-270 stages and rate-card templates for consultancy project accounting.
+     * Phase 8: seeds ZZP urencriterium thresholds and deduction amounts (bookkeeping-zzp-tax-regime).
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -91,6 +93,7 @@ class InitializeSettings implements IRepairStep
      * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
      * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
      * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
+     * @spec openspec/changes/add-shillinq-zzp-tax-regime/tasks.md#task-13
      */
     public function run(IOutput $output): void
     {
@@ -140,6 +143,7 @@ class InitializeSettings implements IRepairStep
             $this->seedSelectielijstRules(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
+            $this->seedZzpData(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -379,6 +383,182 @@ class InitializeSettings implements IRepairStep
         }//end try
 
     }//end seedKorThresholds()
+
+    /**
+     * Seed ZZP urencriterium thresholds and deduction amounts, idempotently.
+     *
+     * Imports urencriterium-thresholds.json and zzp-deduction-amounts-2026.json per REQ-ZZP-007.
+     * Deduplication key for thresholds is `id`; for deduction amounts is `id`.
+     * Safe to call on every install/upgrade — existing records are skipped.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-zzp-tax-regime/tasks.md#task-13
+     */
+    private function seedZzpData(IOutput $output): void
+    {
+        $this->seedZzpThresholds(output: $output);
+        $this->seedZzpDeductionAmounts(output: $output);
+
+    }//end seedZzpData()
+
+    /**
+     * Seed urencriterium thresholds from urencriterium-thresholds.json, idempotently.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-zzp-tax-regime/tasks.md#task-13
+     */
+    private function seedZzpThresholds(IOutput $output): void
+    {
+        $seedPath = __DIR__.'/../Settings/seeds/urencriterium-thresholds.json';
+        if (file_exists($seedPath) === false) {
+            $output->warning('Shillinq: urencriterium thresholds seed file not found, skipping');
+            return;
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            $output->warning('Shillinq: failed to read urencriterium thresholds seed file, skipping');
+            return;
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $output->warning('Shillinq: failed to parse urencriterium thresholds seed: '.json_last_error_msg());
+            return;
+        }
+
+        $thresholds = ($data['thresholds'] ?? []);
+        if (empty($thresholds) === true) {
+            $output->info('Shillinq: urencriterium thresholds seed contains no records, skipping');
+            return;
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->settingsService->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($thresholds as $threshold) {
+                $thresholdId = ($threshold['id'] ?? null);
+                if ($thresholdId === null) {
+                    continue;
+                }
+
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('UrencriteriumThreshold')
+                    ->findAll(['filters' => ['id' => $thresholdId], 'limit' => 1]);
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $threshold,
+                    register: $registerSlug,
+                    schema: 'UrencriteriumThreshold',
+                );
+                $seeded++;
+            }//end foreach
+
+            $output->info(
+                'Shillinq: urencriterium thresholds seeded: '.$seeded.' created, '.$skipped.' skipped.'
+            );
+        } catch (\Throwable $e) {
+            $output->warning('Shillinq: urencriterium threshold seeding failed: '.$e->getMessage());
+            $this->logger->warning(
+                'Shillinq: urencriterium threshold seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+        }//end try
+
+    }//end seedZzpThresholds()
+
+    /**
+     * Seed ZZP deduction amounts from zzp-deduction-amounts-2026.json, idempotently.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-zzp-tax-regime/tasks.md#task-13
+     */
+    private function seedZzpDeductionAmounts(IOutput $output): void
+    {
+        $seedPath = __DIR__.'/../Settings/seeds/zzp-deduction-amounts-2026.json';
+        if (file_exists($seedPath) === false) {
+            $output->warning('Shillinq: ZZP deduction amounts seed file not found, skipping');
+            return;
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            $output->warning('Shillinq: failed to read ZZP deduction amounts seed file, skipping');
+            return;
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $output->warning('Shillinq: failed to parse ZZP deduction amounts seed: '.json_last_error_msg());
+            return;
+        }
+
+        $amounts = ($data['amounts'] ?? []);
+        if (empty($amounts) === true) {
+            $output->info('Shillinq: ZZP deduction amounts seed contains no records, skipping');
+            return;
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->settingsService->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($amounts as $amount) {
+                $amountId = ($amount['id'] ?? null);
+                if ($amountId === null) {
+                    continue;
+                }
+
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('ZzpDeductionAmounts')
+                    ->findAll(['filters' => ['id' => $amountId], 'limit' => 1]);
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $amount,
+                    register: $registerSlug,
+                    schema: 'ZzpDeductionAmounts',
+                );
+                $seeded++;
+            }//end foreach
+
+            $output->info(
+                'Shillinq: ZZP deduction amounts seeded: '.$seeded.' created, '.$skipped.' skipped.'
+            );
+        } catch (\Throwable $e) {
+            $output->warning('Shillinq: ZZP deduction amounts seeding failed: '.$e->getMessage());
+            $this->logger->warning(
+                'Shillinq: ZZP deduction amounts seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+        }//end try
+
+    }//end seedZzpDeductionAmounts()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.

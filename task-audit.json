@@ -1,75 +1,21 @@
 {
-  "spec": "openspec/changes/add-shillinq-r-d-subsidies-mkb",
+  "spec": "openspec/changes/add-shillinq-zzp-tax-regime",
   "verified": [
-    {
-      "task": "1",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "note": "Confirmed no subsidieRegeling enum or parallel R&D register existed before this change."
-    },
-    {
-      "task": "2",
-      "file": "openspec/specs/bookkeeping-r-d-subsidies-mkb/spec.md",
-      "ok": true
-    },
-    {
-      "task": "3",
-      "file": "openspec/changes/add-shillinq-r-d-subsidies-mkb/proposal.md",
-      "ok": true
-    },
-    {
-      "task": "4",
-      "file": "openspec/changes/add-shillinq-r-d-subsidies-mkb/design.md",
-      "ok": true
-    },
-    {
-      "task": "5",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "note": "Subsidie schema added with subsidieRegeling enum (mit|sbir|eu-horizon|efro|react-eu|other) and schema:Grant annotation."
-    },
-    {
-      "task": "6",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "note": "Kostenpost schema with allOf/if-then per-regeling kostencategorie constraints for MIT/SBIR/EU-Horizon/EFRO/REACT-EU."
-    },
-    {
-      "task": "7",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "note": "voortgangsrapportage aggregation on Subsidie grouping Kostenpost by (kostencategorie, periodId)."
-    },
-    {
-      "task": "8",
-      "file": "lib/Settings/docudesk-templates.json",
-      "ok": true,
-      "note": "Voortgangsrapportage templates: rd-subsidie-horizon-periodic-report, rd-subsidie-mit-voortgangsrapport, rd-subsidie-efro-progress-dossier."
-    },
-    {
-      "task": "9",
-      "file": "lib/Settings/docudesk-templates.json",
-      "ok": true,
-      "note": "Audit-pack templates: rd-subsidie-horizon-audit-pack (with S&O-uren-staat URI refs), rd-subsidie-mit-declaration, rd-subsidie-efro-procurement-dossier."
-    },
-    {
-      "task": "10",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "note": "EU-Horizon indirect-25% calculations: horizonDirectCosts, horizonIndirect25MaxBedrag (25%), horizonIndirect25UsageBedrag, horizonIndirect25UsagePercent, horizonIndirect25Warning (>=90%)."
-    },
-    {
-      "task": "11",
-      "file": "src/manifest.json",
-      "ok": true,
-      "note": "R&D Subsidies menu under Bookkeeping (featureFlag mkb-r-d-subsidies). Pages: RDSubsidies (index), RDSubsidieDetail (detail with aggregation + kostenposten), KostenpostDetail."
-    },
-    {
-      "task": "12",
-      "file": "openspec/architecture/adr-000-data-model.md",
-      "ok": true,
-      "note": "Subsidie + Kostenpost entity annotations added with subsidieRegeling overlay description."
-    }
+    {"task": "1", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "UrenRegistratie existed (CPA extension); ZzpDeduction and IbAangifteExport confirmed absent before this PR"},
+    {"task": "2", "file": "openspec/changes/add-shillinq-zzp-tax-regime/specs/bookkeeping-zzp-tax-regime/spec.md", "ok": true},
+    {"task": "3", "file": "openspec/changes/add-shillinq-zzp-tax-regime/proposal.md", "ok": true},
+    {"task": "4", "file": "openspec/changes/add-shillinq-zzp-tax-regime/design.md", "ok": true},
+    {"task": "5", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "UrenRegistratie updated to v0.2.0 with category + excludedReason enums + lifecycle retention"},
+    {"task": "6", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "ZzpDeduction added to components.schemas with all REQ-ZZP-005 fields"},
+    {"task": "7", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "ZzpDeduction.ytdQualifyingHours declared as x-openregister-calculations with ADR-031 exception path documented"},
+    {"task": "8", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "All deduction derivations declared as x-openregister-calculations; startersaftrek gated to startersClaimsThisRegime < 3"},
+    {"task": "9", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "IbAangifteExport added with x-openregister-lifecycle draft->generated->exported + x-openregister-aggregations"},
+    {"task": "10", "file": "lib/Settings/seeds/urencriterium-thresholds.json", "ok": true},
+    {"task": "11", "file": "lib/Settings/seeds/zzp-deduction-amounts-2026.json", "ok": true},
+    {"task": "12", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "x-openregister-notifications and x-openregister-widgets declared on ZzpDeduction"},
+    {"task": "13", "file": "lib/Repair/InitializeSettings.php", "ok": true, "note": "seedZzpData() + seedZzpThresholds() + seedZzpDeductionAmounts() added"},
+    {"task": "14", "file": "src/manifest.json", "ok": true, "note": "Urenregistratie, ZzpAftrek, IbAangifte nav entries + 6 page configs added under Belastingen"},
+    {"task": "15", "file": "openspec/architecture/adr-000-data-model.md", "ok": true, "note": "UrenRegistratie updated, ZzpDeduction and IbAangifteExport entities added; entity count bumped to 241"}
   ],
   "stubs": [],
   "missing_routes": []

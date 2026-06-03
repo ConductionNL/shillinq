@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 238
+**Entities:** 241
 
 ## Context
 
@@ -5054,22 +5054,25 @@ _A report listing all general ledger accounts with debit or credit balances for 
 
 ### UrenRegistratie
 **Schema.org:** `schema:HowToStep`
-_Billable hour log entry for ZZP / consultancy work. Base schema from bookkeeping-zzp-tax-regime (T3); extended by bookkeeping-consultancy-project-accounting (T3) with `recognisedRate` (rate-at-write snapshot per RJ 270 §3.2.4) and `projectAssignmentId` (FK to ProjectAssignment)._
-**Primary spec:** bookkeeping-consultancy-project-accounting
+_Billable hour log entry for ZZP / consultancy work. Base schema from bookkeeping-zzp-tax-regime (T3) — REQ-ZZP-002; extended by bookkeeping-consultancy-project-accounting (T3) with `recognisedRate` (rate-at-write snapshot per RJ 270 §3.2.4) and `projectAssignmentId` (FK to ProjectAssignment, REQ-CPA-009). The `category` and `excludedReason` fields drive the 1225-urencriterium qualifying-hours calculation: only non-excluded categories count per Wet IB 2001 art. 3.6._
+**Primary spec:** bookkeeping-zzp-tax-regime
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
 | administrationId | string | Yes | FK to the Administration owning this hour entry |
-| personId | string | Yes | FK to the person logging the hours |
+| personId | string | Yes | FK to the ZZP-er (person) logging the hours |
 | date | date | Yes | Date on which the work was performed (performance date, NOT invoice date) |
-| hours | number | Yes | Number of hours worked |
-| description | string | Yes | Description of work performed |
+| hours | number | Yes | Decimal hours worked (e.g. 7.5) per REQ-ZZP-002 |
+| category | enum | Yes | One of billable, non-billable-admin, non-billable-acquisition, non-billable-training, excluded — per Wet IB 2001 art. 3.6 (REQ-ZZP-002) |
+| excludedReason | enum | No (required if category=excluded) | One of sick, parental-leave, vacation — per Wet IB 2001 art. 3.6 lid 4 (REQ-ZZP-002) |
+| description | string | No | Operator-authored context for this hour record |
 | projectId | string | No | Optional FK to the Project this hour is billed against |
 | projectAssignmentId | string | No | FK to the ProjectAssignment governing this hour entry — added by CPA extension (REQ-CPA-009) |
 | recognisedRate | number | No | Snapshot of the applicable RateCard.hourlyRate at write time per RJ 270 §3.2.4 — immutable after creation; subsequent rate-card revisions do NOT retroactively change this field (REQ-CPA-009) |
 | glTransactionId | string | No | FK to the GLTransaction when this hour is posted to GL |
 
 **Relations:**
+- → ZzpDeduction (many-to-one, via administrationId + personId + date.year — qualifying hours feed ytdQualifyingHours)
 - → ProjectAssignment (many-to-one, via projectAssignmentId)
 - → Project (many-to-one, via projectId)
 - → GLTransaction (many-to-one, via glTransactionId)
@@ -5473,4 +5476,55 @@ _Operator-curated batch of selected APInvoice UUIDs producing SEPA pain.001.001.
 **Relations:**
 - → APInvoice (many-to-many, via invoiceRefs array)
 
+- → Administration (many-to-one)
+
+### ZzpDeduction
+**Schema.org:** `schema:MonetaryAmount`
+_Annual ZZP deduction record tracking zelfstandigenaftrek, startersaftrek, and MKB-winstvrijstelling for a ZZP-er per fiscal year. All monetary derivations are declarative `x-openregister-calculations` reading seeded `ZzpDeductionAmounts` + T1 GL profit per ADR-031. No PHP ZzpDeductionCalculatorService. REQ-ZZP-005._
+**Primary spec:** bookkeeping-zzp-tax-regime
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the ZZP administration |
+| personId | string | Yes | FK to the ZZP-er |
+| taxYear | integer | Yes | Calendar year for which this deduction record is computed |
+| ytdQualifyingHours | number | Yes (calculated) | YTD qualifying hours toward 1225-urencriterium; derived via x-openregister-calculations summing UrenRegistratie.hours where category ≠ excluded (REQ-ZZP-003) |
+| qualifiesForUrencriterium | boolean | Yes (calculated) | Derived: ytdQualifyingHours >= 1225 (or 800 for starters-opvolgers) |
+| isStartersOpvolger | boolean | No | True when ZZP-er qualifies as starters-opvolger (lower 800-hour threshold) |
+| isStarter | boolean | No | True when ZZP-er is in first 5 years of self-employment |
+| startersClaimsThisRegime | integer | No | Number of startersaftrek claims made (max 3 per Wet IB 2001 art. 3.77) — REQ-ZZP-006 |
+| taxableProfit | number | Yes (calculated) | GL-derived taxable profit for taxYear |
+| zelfstandigenaftrekAmount | number | Yes (calculated) | Zelfstandigenaftrek per seeded amounts + qualifiesForUrencriterium (Wet IB 2001 art. 3.76) |
+| startersaftrekAmount | number | Yes (calculated) | Startersaftrek per seeded amounts; zero when isStarter false OR claims >= 3 (Wet IB 2001 art. 3.77) |
+| mkbWinstvrijstellingPercentage | number | Yes (calculated) | MKB-winstvrijstelling percentage from seeded amounts (Wet IB 2001 art. 3.79a) |
+| mkbWinstvrijstellingAmount | number | Yes (calculated) | (taxableProfit − zelfstandigenaftrek − startersaftrek) × mkbWinstvrijstellingPercentage |
+| totalDeduction | number | Yes (calculated) | Sum of the three deduction amounts |
+
+**Relations:**
+- → UrenRegistratie (one-to-many, qualifying hours aggregation)
+- → IbAangifteExport (one-to-one per taxYear, snapshot copied at generate transition)
+- → Administration (many-to-one)
+
+### IbAangifteExport
+**Schema.org:** `schema:Report`
+_Per-tax-year IB-aangifteformulier export record for a ZZP operator. Aggregates GL revenue, costs, and ZzpDeduction values ready for Belastingdienst submission. Lifecycle: draft → generated → exported declared via `x-openregister-lifecycle`. GL aggregations declared via `x-openregister-aggregations`. No PHP IbAangifteService per ADR-031. REQ-ZZP-006._
+**Primary spec:** bookkeeping-zzp-tax-regime
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the ZZP administration |
+| personId | string | Yes | FK to the ZZP-er |
+| taxYear | integer | Yes | Fiscal year this aangifte export covers |
+| state | enum | Yes | One of draft, generated, exported |
+| revenue | number | Yes (calculated) | GL-derived total revenue for taxYear via x-openregister-aggregations |
+| costs | number | Yes (calculated) | GL-derived total deductible costs for taxYear via x-openregister-aggregations |
+| profit | number | Yes (calculated) | Derived: revenue − costs |
+| ytdQualifyingHours | number | No | Copy from ZzpDeduction.ytdQualifyingHours at generation time |
+| deductions | object | No | Snapshot of ZzpDeduction values: zelfstandigenaftrek, startersaftrek, mkbWinstvrijstelling, totalDeduction |
+| attachmentUri | string | No | docudesk URI of the rendered IB-aangifte PDF (per ADR-022) |
+| generatedAt | datetime | No | Timestamp when generate transition executed |
+| exportedAt | datetime | No | Timestamp when aangifte submitted to Belastingdienst |
+
+**Relations:**
+- → ZzpDeduction (one-to-one per taxYear, via administrationId + personId + taxYear)
 - → Administration (many-to-one)
