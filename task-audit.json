@@ -1,74 +1,68 @@
 {
-  "spec": "openspec/changes/add-shillinq-r-d-subsidies-mkb",
+  "spec": "openspec/changes/add-shillinq-year-end-close",
   "verified": [
     {
       "task": "1",
       "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "Confirmed no subsidieRegeling enum or parallel R&D register existed before this change."
+      "note": "No existing FiscalYear schema confirmed"
     },
     {
       "task": "2",
-      "file": "openspec/specs/bookkeeping-r-d-subsidies-mkb/spec.md",
+      "file": "openspec/changes/add-shillinq-year-end-close/specs/bookkeeping-year-end-close/spec.md",
       "ok": true
     },
     {
       "task": "3",
-      "file": "openspec/changes/add-shillinq-r-d-subsidies-mkb/proposal.md",
+      "file": "openspec/changes/add-shillinq-year-end-close/proposal.md",
       "ok": true
     },
     {
       "task": "4",
-      "file": "openspec/changes/add-shillinq-r-d-subsidies-mkb/design.md",
+      "file": "openspec/changes/add-shillinq-year-end-close/design.md",
       "ok": true
     },
     {
       "task": "5",
       "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "Subsidie schema added with subsidieRegeling enum (mit|sbir|eu-horizon|efro|react-eu|other) and schema:Grant annotation."
+      "note": "FiscalYear schema with all REQ-YEC-002 fields and uniqueness constraint declared"
     },
     {
       "task": "6",
       "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "Kostenpost schema with allOf/if-then per-regeling kostencategorie constraints for MIT/SBIR/EU-Horizon/EFRO/REACT-EU."
+      "note": "x-openregister-lifecycle with open->closing->closed->reopened states and transitions"
     },
     {
       "task": "7",
       "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "voortgangsrapportage aggregation on Subsidie grouping Kostenpost by (kostencategorie, periodId)."
+      "note": "onBeginClose and onClose hooks emit T1 JournalEntry records"
     },
     {
       "task": "8",
-      "file": "lib/Settings/docudesk-templates.json",
+      "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "Voortgangsrapportage templates: rd-subsidie-horizon-periodic-report, rd-subsidie-mit-voortgangsrapport, rd-subsidie-efro-progress-dossier."
+      "note": "onCloseDimensionRollover hook fires x-openregister-emit-cloudevents per REQ-YEC-005"
     },
     {
       "task": "9",
-      "file": "lib/Settings/docudesk-templates.json",
+      "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "Audit-pack templates: rd-subsidie-horizon-audit-pack (with S&O-uren-staat URI refs), rd-subsidie-mit-declaration, rd-subsidie-efro-procurement-dossier."
+      "note": "reopen transition: requiresRole=admin, requires=reopenReason, onReopenReverseClosing + onReopenReverseOpening hooks"
     },
     {
       "task": "10",
-      "file": "lib/Settings/shillinq_register.json",
+      "file": "src/manifest.json",
       "ok": true,
-      "note": "EU-Horizon indirect-25% calculations: horizonDirectCosts, horizonIndirect25MaxBedrag (25%), horizonIndirect25UsageBedrag, horizonIndirect25UsagePercent, horizonIndirect25Warning (>=90%)."
+      "note": "FiscalYears menu entry + index/detail pages with lifecycleActions:true"
     },
     {
       "task": "11",
-      "file": "src/manifest.json",
-      "ok": true,
-      "note": "R&D Subsidies menu under Bookkeeping (featureFlag mkb-r-d-subsidies). Pages: RDSubsidies (index), RDSubsidieDetail (detail with aggregation + kostenposten), KostenpostDetail."
-    },
-    {
-      "task": "12",
       "file": "openspec/architecture/adr-000-data-model.md",
       "ok": true,
-      "note": "Subsidie + Kostenpost entity annotations added with subsidieRegeling overlay description."
+      "note": "FiscalYear entry updated with reconciliation note and full field table"
     }
   ],
   "stubs": [],

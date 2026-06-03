@@ -189,6 +189,13 @@
 					"route": "RDSubsidies",
 					"order": 86,
 					"featureFlag": "mkb-r-d-subsidies"
+				},
+				{
+					"id": "FiscalYears",
+					"label": "Fiscal Years",
+					"icon": "CalendarCheckOutline",
+					"route": "FiscalYears",
+					"order": 87
 				}
 			]
 		},
@@ -4583,6 +4590,119 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "RDSubsidies"
+			}
+		},
+		{
+			"id": "FiscalYears",
+			"route": "/bookkeeping/fiscal-years",
+			"type": "index",
+			"title": "Fiscal Years",
+			"config": {
+				"register": "shillinq",
+				"schema": "FiscalYear",
+				"columns": [
+					{
+						"key": "yearNumber",
+						"label": "Year",
+						"sortable": true
+					},
+					{
+						"key": "startDate",
+						"label": "Start Date",
+						"sortable": true
+					},
+					{
+						"key": "endDate",
+						"label": "End Date",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-yearNumber",
+				"detailRoute": "FiscalYearDetail"
+			}
+		},
+		{
+			"id": "FiscalYearDetail",
+			"route": "/bookkeeping/fiscal-years/:id",
+			"type": "detail",
+			"title": "Fiscal Year",
+			"config": {
+				"register": "shillinq",
+				"schema": "FiscalYear",
+				"fields": [
+					{
+						"key": "yearNumber",
+						"label": "Year",
+						"type": "integer"
+					},
+					{
+						"key": "startDate",
+						"label": "Start Date",
+						"type": "date"
+					},
+					{
+						"key": "endDate",
+						"label": "End Date",
+						"type": "date"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "closingJournalId",
+						"label": "Closing Journal",
+						"type": "string"
+					},
+					{
+						"key": "openingJournalId",
+						"label": "Opening Journal",
+						"type": "string"
+					},
+					{
+						"key": "closedAt",
+						"label": "Closed At",
+						"type": "date-time"
+					},
+					{
+						"key": "closedBy",
+						"label": "Closed By",
+						"type": "string"
+					},
+					{
+						"key": "reopenedAt",
+						"label": "Reopened At",
+						"type": "date-time"
+					},
+					{
+						"key": "reopenedBy",
+						"label": "Reopened By",
+						"type": "string"
+					},
+					{
+						"key": "reopenReason",
+						"label": "Reopen Reason",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "FiscalYears"
 			}
 		}
 	]

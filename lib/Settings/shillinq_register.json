@@ -5419,6 +5419,307 @@
 						}
 					}
 				}
+			},
+			"FiscalYear": {
+				"slug": "FiscalYear",
+				"icon": "CalendarCheckOutline",
+				"version": "0.1.0",
+				"title": "Fiscal Year",
+				"description": "Fiscal year lifecycle record tracking the open -> closing -> closed -> reopened state machine for year-end close per REQ-YEC-001 through REQ-YEC-006. The open -> closing transition emits a balanced retained-earnings transfer JournalEntry (manual sub-type). The closing -> closed transition emits an opening-balance JournalEntry for the next year (balance-sheet accounts only) and fires CloudEvents for dimensional rollover. The admin-only closed -> reopened transition emits two reversing JournalEntry records pairing with the original journals for full audit traceability. No YearEndCloseService PHP class; all close logic is schema-declared per ADR-031.",
+				"x-schema-org": "schema:AccountingPeriod",
+				"type": "object",
+				"x-openregister-unique": [
+					[
+						"yearNumber",
+						"administrationId"
+					]
+				],
+				"required": [
+					"yearNumber",
+					"startDate",
+					"endDate",
+					"state",
+					"administrationId"
+				],
+				"properties": {
+					"yearNumber": {
+						"type": "integer",
+						"description": "Calendar year reference (e.g. 2026). MUST be unique per administrationId per REQ-YEC-002.",
+						"example": 2026
+					},
+					"startDate": {
+						"type": "string",
+						"format": "date",
+						"description": "First day of the fiscal year. Typically YYYY-01-01 but supports broken fiscal years per REQ-YEC-002.",
+						"example": "2026-01-01"
+					},
+					"endDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Last day of the fiscal year per REQ-YEC-002.",
+						"example": "2026-12-31"
+					},
+					"state": {
+						"type": "string",
+						"enum": [
+							"open",
+							"closing",
+							"closed",
+							"reopened"
+						],
+						"default": "open",
+						"description": "Current lifecycle state of the fiscal year per REQ-YEC-002."
+					},
+					"closingJournalId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to the JournalEntry that posted the year-end retained-earnings transfer (set by open -> closing action per REQ-YEC-003).",
+						"example": "je-uuid-closing-2026"
+					},
+					"openingJournalId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to the JournalEntry that posted the next-year opening balances (set by closing -> closed action per REQ-YEC-004).",
+						"example": "je-uuid-opening-2027"
+					},
+					"closedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true,
+						"description": "ISO 8601 timestamp when the close completed. Required when state = closed per REQ-YEC-002.",
+						"example": "2026-12-31T23:59:00Z"
+					},
+					"closedBy": {
+						"type": "string",
+						"nullable": true,
+						"description": "NC user id of the actor who completed the close. Required when state = closed per REQ-YEC-002.",
+						"example": "bookkeeper"
+					},
+					"reopenedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true,
+						"description": "ISO 8601 timestamp when the year was reopened. Required when state = reopened per REQ-YEC-002.",
+						"example": "2027-02-15T10:00:00Z"
+					},
+					"reopenedBy": {
+						"type": "string",
+						"nullable": true,
+						"description": "NC user id of the admin who reopened the fiscal year. Required when state = reopened per REQ-YEC-002.",
+						"example": "admin"
+					},
+					"reopenReason": {
+						"type": "string",
+						"nullable": true,
+						"description": "Operator-supplied justification for the reopen. Required (non-empty) when initiating the closed -> reopened transition per REQ-YEC-006.",
+						"example": "Correction of retained-earnings posting following 2026 audit finding"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration that owns this fiscal year. Combined with yearNumber forms the composite uniqueness key per D5.",
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "state",
+					"initialState": "open",
+					"states": {
+						"open": {
+							"label": "Open",
+							"description": "Fiscal year is active; GL transactions post normally to this period."
+						},
+						"closing": {
+							"label": "Closing",
+							"description": "Year-end close is in progress; retained-earnings transfer JournalEntry posted. GL still writable until the closed transition completes."
+						},
+						"closed": {
+							"label": "Closed",
+							"description": "Fiscal year is closed. Opening-balance JournalEntry posted for the next year. Dimensional rollover CloudEvents fired. GL becomes immutable for this period."
+						},
+						"reopened": {
+							"label": "Reopened",
+							"description": "Admin-initiated escape hatch. Two reversing JournalEntry records pair with the original closing and opening journals. GL is writable again."
+						}
+					},
+					"transitions": {
+						"beginClose": {
+							"from": "open",
+							"to": "closing",
+							"label": "Begin year-end close",
+							"description": "Starts the year-end close. Requires all T3 fiscal periods within this year to be in state closed per REQ-YEC-007. Emits a balanced retained-earnings transfer JournalEntry (manual sub-type): credits revenue account closing balances to the closing account (isClosingAccount: true per REQ-CoA-009), debits expense account closing balances, posts net result to the retained-earnings equity account per REQ-YEC-003.",
+							"requires": "OCA\\Shillinq\\Lifecycle\\FiscalYearGuard::requireAllPeriodsClosedForYear",
+							"sets": {
+								"closingJournalId": "@created.id"
+							}
+						},
+						"close": {
+							"from": "closing",
+							"to": "closed",
+							"label": "Complete year-end close",
+							"description": "Completes the year-end close. Emits an opening-balance JournalEntry for the next FiscalYear (balance-sheet accounts only; P&L accounts excluded per REQ-YEC-004). Auto-creates next FiscalYear record in state open if absent. Fires CloudEvents per dimension register (CostCenter, KostenDrager, Project) for dimensional rollover; each subscriber carries active dimensions forward and skips archived per REQ-YEC-005.",
+							"sets": {
+								"closedAt": "@now",
+								"closedBy": "@currentUser",
+								"openingJournalId": "@created.id"
+							}
+						},
+						"reopen": {
+							"from": "closed",
+							"to": "reopened",
+							"label": "Reopen fiscal year",
+							"description": "Admin-only escape hatch per REQ-YEC-006. Emits two JournalEntry records of sub-type reversing pairing with closingJournalId and openingJournalId respectively. Recorded as a CloudEvent in the admin notifications stream. Non-empty reopenReason required.",
+							"requiresRole": "admin",
+							"requires": "reopenReason",
+							"sets": {
+								"reopenedAt": "@now",
+								"reopenedBy": "@currentUser"
+							}
+						}
+					},
+					"hooks": {
+						"onBeginClose": {
+							"trigger": "transition:beginClose",
+							"description": "Emit retained-earnings transfer JournalEntry on open -> closing per REQ-YEC-003. OR engine sums revenue account closing balances (credit to closing account) and expense account closing balances (debit from closing account); net result posted to retained-earnings equity account.",
+							"action": "x-openregister-create-related",
+							"actionParameters": {
+								"register": "shillinq",
+								"schema": "JournalEntry",
+								"data": {
+									"type": "manual",
+									"subType": "year-end-closing",
+									"state": "posted",
+									"description": "Year-end retained-earnings transfer — boekjaar @self.yearNumber. Omzet- en kostenrekeningen afgesloten naar sluitrekening; nettoresultaat geboekt op eigen-vermogenrekening.",
+									"administrationId": "@self.administrationId"
+								}
+							}
+						},
+						"onClose": {
+							"trigger": "transition:close",
+							"description": "Emit opening-balance JournalEntry for the next fiscal year on closing -> closed per REQ-YEC-004. Balance-sheet accounts only (assets, liabilities, equity); P&L accounts excluded. Auto-create next FiscalYear in state open if absent.",
+							"action": "x-openregister-create-related",
+							"actionParameters": {
+								"register": "shillinq",
+								"schema": "JournalEntry",
+								"data": {
+									"type": "manual",
+									"subType": "year-end-opening-balance",
+									"state": "posted",
+									"description": "Openingsbalans boekjaar @self.yearNumber + 1. Balansrekeningen overgenomen uit afsluiting boekjaar @self.yearNumber; resultaatrekeningen op nul.",
+									"administrationId": "@self.administrationId"
+								}
+							}
+						},
+						"onCloseDimensionRollover": {
+							"trigger": "transition:close",
+							"description": "Fire CloudEvents for dimensional rollover on closing -> closed per REQ-YEC-005. CostCenter, KostenDrager, and Project subscribers carry active dimensions forward; archived dimensions skipped.",
+							"action": "x-openregister-emit-cloudevents",
+							"actionParameters": {
+								"eventType": "nl.conduction.shillinq.fiscal-year.dimension-rollover",
+								"targets": [
+									"CostCenter",
+									"KostenDrager",
+									"Project"
+								],
+								"filter": {
+									"administrationId": "@self.administrationId",
+									"lifecycleState": {
+										"not": "archived"
+									}
+								}
+							}
+						},
+						"onReopenReverseClosing": {
+							"trigger": "transition:reopen",
+							"description": "Emit reversing JournalEntry for the retained-earnings transfer journal (closingJournalId) on closed -> reopened per REQ-YEC-006.",
+							"action": "x-openregister-create-related",
+							"actionParameters": {
+								"register": "shillinq",
+								"schema": "JournalEntry",
+								"data": {
+									"type": "reversing",
+									"subType": "year-end-reopen-closing-reversal",
+									"state": "posted",
+									"description": "Tegenboeking jaarafsluiting @self.yearNumber (heropen door @currentUser). Reden: @self.reopenReason",
+									"reversedJournalId": "@self.closingJournalId",
+									"administrationId": "@self.administrationId"
+								}
+							}
+						},
+						"onReopenReverseOpening": {
+							"trigger": "transition:reopen",
+							"description": "Emit reversing JournalEntry for the opening-balance journal (openingJournalId) on closed -> reopened per REQ-YEC-006.",
+							"action": "x-openregister-create-related",
+							"actionParameters": {
+								"register": "shillinq",
+								"schema": "JournalEntry",
+								"data": {
+									"type": "reversing",
+									"subType": "year-end-reopen-opening-reversal",
+									"state": "posted",
+									"description": "Tegenboeking openingsbalans boekjaar @self.yearNumber + 1 (heropen door @currentUser). Reden: @self.reopenReason",
+									"reversedJournalId": "@self.openingJournalId",
+									"administrationId": "@self.administrationId"
+								}
+							}
+						},
+						"onReopenNotify": {
+							"trigger": "transition:reopen",
+							"description": "Record the reopen as a CloudEvent in the admin notifications stream per REQ-YEC-006.",
+							"action": "x-openregister-emit-cloudevents",
+							"actionParameters": {
+								"eventType": "nl.conduction.shillinq.fiscal-year.reopened"
+							}
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						},
+						"approver": {
+							"permissions": [
+								"read"
+							],
+							"lifecycleTransitions": [
+								"beginClose",
+								"close"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						},
+						"admin": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							],
+							"lifecycleTransitions": [
+								"beginClose",
+								"close",
+								"reopen"
+							]
+						}
+					}
+				},
+				"x-openregister-notifications": {
+					"onReopen": {
+						"trigger": "lifecycle.reopen",
+						"description": "Notify all administration admins when a fiscal year is reopened. A reopened closed year is a high-stakes audit event.",
+						"recipients": {
+							"role": "admin",
+							"scope": "@self.administrationId"
+						},
+						"title": "Boekjaar heropend",
+						"message": "Boekjaar @self.yearNumber is heropend door @self.reopenedBy. Reden: @self.reopenReason"
+					}
+				}
 			}
 		},
 		"SisaReport": {

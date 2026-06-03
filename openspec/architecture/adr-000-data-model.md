@@ -1895,21 +1895,35 @@ _Exported financial statements (annual, management, or consolidated) generated f
 - → FiscalYear (many-to-one)
 
 ### FiscalYear
-**Schema.org:** `schema:Event`
-_An accounting period representing a fiscal year for financial reporting and regulatory compliance._
-**Primary spec:** financial-reporting-accountability
+**Schema.org:** `schema:AccountingPeriod`
+_A fiscal year lifecycle record tracking the `open → closing → closed → reopened` state machine for the year-end close process. Closing emits a balanced retained-earnings transfer `JournalEntry` (manual sub-type) and an opening-balance `JournalEntry` for the next year (balance-sheet accounts only). Dimensional rollover fires via CloudEvents consumed by CostCenter, KostenDrager, and Project registers. Admin-only reopen emits two reversing `JournalEntry` records pairing with the original journals for full audit traceability. All close logic is schema-declared per ADR-031; no `YearEndCloseService` PHP class._
+**Primary spec:** bookkeeping-year-end-close
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| year | integer | Yes | The fiscal year number (e.g., 2024) |
-| startDate | date | Yes | The first day of the fiscal period |
-| endDate | date | Yes | The last day of the fiscal period |
-| isClosed | boolean | No | Whether the fiscal year is closed for amendments |
-| closingDate | date | No | Date when the fiscal year was officially closed |
+| yearNumber | integer | Yes | Calendar year reference (e.g. 2026). Unique per `administrationId` (composite uniqueness constraint) |
+| startDate | date | Yes | First day of the fiscal year (typically YYYY-01-01; supports broken fiscal years) |
+| endDate | date | Yes | Last day of the fiscal year |
+| state | enum | Yes | One of `open`, `closing`, `closed`, `reopened` |
+| closingJournalId | string | No | FK to the `JournalEntry` that posted the year-end retained-earnings transfer (set by `open → closing` action) |
+| openingJournalId | string | No | FK to the `JournalEntry` that posted the next-year opening balances (set by `closing → closed` action) |
+| closedAt | date-time | No | When the close completed (required when `state = closed`) |
+| closedBy | string | No | NC user id of the actor who completed the close (required when `state = closed`) |
+| reopenedAt | date-time | No | When the year was reopened (required when `state = reopened`) |
+| reopenedBy | string | No | NC user id of the admin who reopened the year (required when `state = reopened`) |
+| reopenReason | string | No | Operator-supplied justification for the reopen (required when initiating `closed → reopened`) |
+| administrationId | string | Yes | FK to the Administration. Combined with `yearNumber` forms the composite uniqueness key |
 
 **Relations:**
-- → FinancialReport (one-to-many)
-- → JournalEntry (one-to-many)
+- → JournalEntry (one-to-many, via `closingJournalId` and `openingJournalId` for the close/reopen journal pair; reversing entries reference original journal ids for full audit traceability)
+- → CostCenter, KostenDrager, Project (via CloudEvents on `closing → closed` for dimensional rollover)
+
+**Lifecycle (x-openregister-lifecycle):**
+- `open → closing` (beginClose): requires all T3 fiscal periods closed (FiscalYearGuard); emits retained-earnings transfer JournalEntry
+- `closing → closed` (close): emits opening-balance JournalEntry for next year; fires dimensional rollover CloudEvents; sets `closedAt`, `closedBy`
+- `closed → reopened` (reopen): admin-only (`requiresRole: admin`); requires non-empty `reopenReason`; emits two reversing JournalEntry records; sets `reopenedAt`, `reopenedBy`
+
+> **Reconciliation note (add-shillinq-year-end-close, 2026-06-03):** The original `FiscalYear` entry (primary spec: `financial-reporting-accountability`) declared a minimal 5-field schema (`year`, `startDate`, `endDate`, `isClosed`, `closingDate`) without lifecycle machinery. This entry supersedes it with the full T4 year-end close lifecycle declared in `lib/Settings/shillinq_register.json`. The field `year` is renamed `yearNumber` (integer type, composite uniqueness with `administrationId`); `isClosed` and `closingDate` are replaced by the `state` enum and `closedAt`/`closedBy` pair. New `JournalEntry` records now reference `FiscalYear` via `fiscalYearId` for close/reopen journal pairing (previously the reference existed only in the generic `JournalEntry → FiscalYear` relation). Implementations using the old field names must migrate to the new schema shape.
 
 ### FixedAsset
 **Schema.org:** `schema:Thing`
