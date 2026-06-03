@@ -255,6 +255,27 @@
 						"description": "Number of days until the PSD2 consent expires. Negative when already expired.",
 						"example": 14
 					}
+				},
+				"x-openregister-scheduled-workflows": {
+					"shillinq-bank-transaction-polling": {
+						"name": "Bank transaction polling",
+						"description": "Pulls transactions from the PSD2 aggregator via the openconnector source slug, normalises the aggregator JSON to CAMT.053 XML, attaches the XML via docudesk, and creates a BankStatement record per active BankConnection. Runs 4× daily per REQ-BC-004. No BankPollingJob extends TimedJob.",
+						"cron": "0 */6 * * *",
+						"source": "@self.aggregatorSourceSlug",
+						"register": "shillinq",
+						"schema": "BankConnection",
+						"enabled": true,
+						"filter": {
+							"lifecycleState": [
+								"active",
+								"expiring"
+							]
+						},
+						"outputs": {
+							"creates": "BankStatement",
+							"attaches": "camt.053.001.08"
+						}
+					}
 				}
 			},
 			"BankStatement": {
