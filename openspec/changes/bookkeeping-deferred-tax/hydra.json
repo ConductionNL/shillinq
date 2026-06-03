@@ -2,7 +2,7 @@
   "spec_slug": "bookkeeping-deferred-tax",
   "title": "bookkeeping-deferred-tax",
   "app": "shillinq",
-  "repo": "https://github.com/ConductionNL/shillinq",
+  "repo": "https://codeberg.org/Conduction/shillinq",
   "depends_on": [],
   "issue": null
 }

@@ -4,26 +4,26 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm that `temporary-difference`, `tax-loss-carry-forward`, `tax-rate-reconciliation`, `deferred-tax-movement`, and `tax-provision` schemas do not already exist (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `adr-000-data-model.md`)
+- [x] Task 1: Confirm that `temporary-difference`, `tax-loss-carry-forward`, `tax-rate-reconciliation`, `deferred-tax-movement`, and `tax-provision` schemas do not already exist (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `adr-000-data-model.md`)
 
-- [ ] Task 2: Author `specs/bookkeeping-deferred-tax/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T3 (financial reporting)` / `Depends on: bookkeeping-general-ledger (T1), bookkeeping-vpb-mkb (T3)` header, REQ-DT-001 through REQ-DT-010 requirements using RFC 2119 keywords, `#### Scenario:` blocks with GIVEN/WHEN/THEN; finalize language per Dutch/English GAAP nuance
+- [x] Task 2: Author `specs/bookkeeping-deferred-tax/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T3 (financial reporting)` / `Depends on: bookkeeping-general-ledger (T1), bookkeeping-vpb-mkb (T3)` header, REQ-DT-001 through REQ-DT-010 requirements using RFC 2119 keywords, `#### Scenario:` blocks with GIVEN/WHEN/THEN; finalize language per Dutch/English GAAP nuance
 
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects (shillinq primary, openregister + downstream consumers), Scope (5 tax schemas, Account/FiscalPeriod extensions, 10 requirements), Risks (fiscal-regime complexity, recoverability subjectivity, rate-change edge cases, permanent-vs-temporary classification), Rollback (spec-only, safe), Open Questions (Pillar-2 aggregation scope, intercompany saldering, historical adjustments) per hydra configuration
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects (shillinq primary, openregister + downstream consumers), Scope (5 tax schemas, Account/FiscalPeriod extensions, 10 requirements), Risks (fiscal-regime complexity, recoverability subjectivity, rate-change edge cases, permanent-vs-temporary classification), Rollback (spec-only, safe), Open Questions (Pillar-2 aggregation scope, intercompany saldering, historical adjustments) per hydra configuration
 
-- [ ] Task 4: Author `design.md` with Decisions (D1 detection at balansdatum not incremental, D2 calculations schema-declared not service, D3 loss regime jurisdiction-scoped, D4 recoverability documented, D5 rate changes per-reversal-year, D6 permanent diffs in ETR only, D7 saldering per-jurisdiction gated by legal right) and Reuse Analysis table per ADR-031 patterns
+- [x] Task 4: Author `design.md` with Decisions (D1 detection at balansdatum not incremental, D2 calculations schema-declared not service, D3 loss regime jurisdiction-scoped, D4 recoverability documented, D5 rate changes per-reversal-year, D6 permanent diffs in ETR only, D7 saldering per-jurisdiction gated by legal right) and Reuse Analysis table per ADR-031 patterns
 
-- [ ] Task 5: Declare five `tax` register schemas in `lib/Settings/shillinq_register.json`:
+- [x] Task 5: Declare five `tax` register schemas in `lib/Settings/shillinq_register.json`:
   - `temporary-difference` with fields: `period` (FK), `jurisdiction`, `account` (FK), `category` (enum: depreciation/provision/receivable-impairment/inventory-valuation/development-cost/fair-value-adjustment/lease-ifrs16/pension/other), `commercialCarryingAmount`, `taxCarryingAmount`, `temporaryDifference` (computed), `type` (taxable/deductible), `reversalPattern` (short-term/long-term/indefinite), `expectedReversalYear`, `taxRate`, `deferredTaxBalance` (computed), `notes`
   - `tax-loss-carry-forward` with fields: `jurisdiction`, `originatingYear`, `originalAmount`, `utilisedAmount`, `remainingAmount` (computed), `expirationYear`, `applicableRegime` (pre-2019/2019-2021-transition/2022-onwards), `dtaRecognised`, `dtaRecoverabilityRationale`, `recoverabilityHorizon`, `linkedProjections`
   - `tax-rate-reconciliation` with fields: `period` (FK), `jurisdiction`, `profitBeforeTax`, `statutoryRate`, `statutoryTaxExpense` (computed), `reconciliationItems[]` (array of {description, type, amount, taxEffect}), `effectiveTaxExpense` (computed), `effectiveTaxRate` (computed), `disclosureNarrative`
   - `deferred-tax-movement` with fields: `period` (FK), `jurisdiction`, `category`, `openingBalance`, `originatedInPeriod`, `reversedInPeriod`, `rateChangeAdjustment`, `acquiredViaBusinessCombination`, `translationAdjustment`, `recognisedInPL` (computed), `recognisedInOCI`, `closingBalance` (computed), `linkedJournalEntries[]`
   - `tax-provision` with fields: `period` (FK), `jurisdiction`, `currentTaxPayable`, `currentTaxPrepaid`, `dtaTotal`, `dtlTotal`, `netDtaDtlPosition` (computed), `presentationOnBalanceSheet` (gross/net), `linkedVpbReturn` (FK)
 
-- [ ] Task 6: Extend T1 `Account` schema additively with: `taxBasisDifferenceCategory` (optional enum: depreciation/provision/receivable-impairment/inventory-valuation/development-cost/fair-value-adjustment/lease-ifrs16/pension/other) — an optional hint for GL detection logic
+- [x] Task 6: Extend T1 `Account` schema additively with: `taxBasisDifferenceCategory` (optional enum: depreciation/provision/receivable-impairment/inventory-valuation/development-cost/fair-value-adjustment/lease-ifrs16/pension/other) — an optional hint for GL detection logic
 
-- [ ] Task 7: Extend `FiscalPeriod` schema additively with: `enactedTaxRates` (object/map: `{jurisdiction: {rate: decimal, effectiveDate: date}}`) to store tax rates effective on or after balansdatum for rate-change adjustment per REQ-DT-005
+- [x] Task 7: Extend `FiscalPeriod` schema additively with: `enactedTaxRates` (object/map: `{jurisdiction: {rate: decimal, effectiveDate: date}}`) to store tax rates effective on or after balansdatum for rate-change adjustment per REQ-DT-005
 
-- [ ] Task 8: Author `lib/Services/TaxCalculationService.php` with methods:
+- [x] Task 8: Author `lib/Services/TaxCalculationService.php` with methods:
   - `detectTemporaryDifferences(FiscalPeriod, Administration): void` — reads GL balances per Account, applies category hints or manual category, detects and stores `temporary-difference` records
   - `compensateLosses(FiscalPeriod, Administration): void` — reads `tax-loss-carry-forward` records, applies jurisdiction-specific regime rules, generates compensation entries, updates `utilisedAmount` and `remainingAmount`
   - `assessRecoverability(FiscalPeriod, Administration): void` — reads DTA loss component, queries linked projections, validates `dtaRecoverabilityRationale` is present, adjusts DTA recognition percentage
@@ -32,27 +32,27 @@
   - `calculateMovement(FiscalPeriod, Administration, jurisdiction, category): DeferredTaxMovement` — computes opening/origination/reversal/rate/M&A/FX/closing per category
   - `calculateTaxProvision(FiscalPeriod, Administration, jurisdiction): TaxProvision` — aggregates all components, decides saldering, links to Vpb
 
-- [ ] Task 9: Wire the GL close process (likely in `bookkeeping-general-ledger` close / post hook) to invoke `TaxCalculationService::calculateAllPeriodEnd(FiscalPeriod, Administration)` after GL validation per REQ-DT-001 through REQ-DT-010
+- [x] Task 9: Wire the GL close process (likely in `bookkeeping-general-ledger` close / post hook) to invoke `TaxCalculationService::calculateAllPeriodEnd(FiscalPeriod, Administration)` after GL validation per REQ-DT-001 through REQ-DT-010
 
-- [ ] Task 10: Implement `tax-loss-carry-forward` compensation logic per Wet Vpb articles 8, 20, 20a:
+- [x] Task 10: Implement `tax-loss-carry-forward` compensation logic per Wet Vpb articles 8, 20, 20a:
   - Pre-2019 regime: 6-year expiration, 100% utilisation
   - 2019–2021 transition: hybrid rules (coordinate with tax specialist + law firm)
   - 2022+: unlimited with 50% cap above EUR 1M threshold
   - Test all three regime paths in PHPUnit with real Wet Vpb scenarios
 
-- [ ] Task 11: Link `tax-provision` to Vpb-aangifte via `linkedVpbReturn` (FK to `bookkeeping-vpb-mkb` record) for current-tax reconciliation per REQ-DT-010
+- [x] Task 11: Link `tax-provision` to Vpb-aangifte via `linkedVpbReturn` (FK to `bookkeeping-vpb-mkb` record) for current-tax reconciliation per REQ-DT-010
 
-- [ ] Task 12: Ensure all deferred-tax records inherit OR's audit-trail-immutable; all changes (manual edits, system recalculation, rate adjustment) appear in `auditTrail` with user, timestamp, change description
+- [x] Task 12: Ensure all deferred-tax records inherit OR's audit-trail-immutable; all changes (manual edits, system recalculation, rate adjustment) appear in `auditTrail` with user, timestamp, change description
 
-- [ ] Task 13: Add manifest navigation entry `Accounting > Taxes > Deferred Taxes` surfacing:
+- [x] Task 13: Add manifest navigation entry `Accounting > Taxes > Deferred Taxes` surfacing:
   - Index page for `temporary-difference` (filtered by period + jurisdiction)
   - Detail page for `tax-provision` (per-jurisdiction summary)
   - Index page for `tax-loss-carry-forward` (showing open losses per jurisdiction)
   - `type: index` / `type: detail` pages using generic `CnIndexPage` / `CnDetailPage` (no bespoke Vue)
 
-- [ ] Task 14: Declare `tax-rate-reconciliation` as `x-openregister-calculations` output (per ADR-031) so it is produced from schema metadata, not a PHP report service
+- [x] Task 14: Declare `tax-rate-reconciliation` as `x-openregister-calculations` output (per ADR-031) so it is produced from schema metadata, not a PHP report service
 
-- [ ] Task 15: Update `openspec/architecture/adr-000-data-model.md` with reconciliation notes introducing the five `tax` register schemas and extensions on `Account` / `FiscalPeriod`
+- [x] Task 15: Update `openspec/architecture/adr-000-data-model.md` with reconciliation notes introducing the five `tax` register schemas and extensions on `Account` / `FiscalPeriod`
 
 ## Verification
 

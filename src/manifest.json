@@ -196,6 +196,35 @@
 					"icon": "CalendarCheckOutline",
 					"route": "FiscalYears",
 					"order": 87
+				},
+				{
+					"id": "DeferredTaxes",
+					"label": "Deferred Taxes",
+					"icon": "ScaleBalanceOutline",
+					"order": 88,
+					"children": [
+						{
+							"id": "TemporaryDifferences",
+							"label": "Temporary Differences",
+							"icon": "SwapHorizontalOutline",
+							"route": "TemporaryDifferences",
+							"order": 10
+						},
+						{
+							"id": "TaxProvisions",
+							"label": "Tax Provisions",
+							"icon": "ScaleBalanceOutline",
+							"route": "TaxProvisions",
+							"order": 20
+						},
+						{
+							"id": "TaxLossCarryForwards",
+							"label": "Loss Carry-forwards",
+							"icon": "TrendingDownOutline",
+							"route": "TaxLossCarryForwards",
+							"order": 30
+						}
+					]
 				}
 			]
 		},
@@ -5264,6 +5293,332 @@
 					}
 				],
 				"indexRoute": "RateAuditTrail"
+			}
+		},
+		{
+			"id": "TemporaryDifferences",
+			"route": "/accounting/deferred-taxes/temporary-differences",
+			"type": "index",
+			"title": "Temporary Differences",
+			"config": {
+				"register": "shillinq",
+				"schema": "TemporaryDifference",
+				"columns": [
+					{
+						"key": "jurisdiction",
+						"label": "Jurisdiction",
+						"sortable": true
+					},
+					{
+						"key": "category",
+						"label": "Category",
+						"sortable": true
+					},
+					{
+						"key": "type",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "temporaryDifference",
+						"label": "Temporary Difference (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "taxRate",
+						"label": "Tax Rate",
+						"sortable": true
+					},
+					{
+						"key": "deferredTaxBalance",
+						"label": "Deferred Tax Balance (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "reversalPattern",
+						"label": "Reversal Pattern",
+						"sortable": true
+					}
+				],
+				"defaultSort": "jurisdiction",
+				"detailRoute": "TemporaryDifferenceDetail"
+			}
+		},
+		{
+			"id": "TemporaryDifferenceDetail",
+			"route": "/accounting/deferred-taxes/temporary-differences/:id",
+			"type": "detail",
+			"title": "Temporary Difference",
+			"config": {
+				"register": "shillinq",
+				"schema": "TemporaryDifference",
+				"fields": [
+					{
+						"key": "jurisdiction",
+						"label": "Jurisdiction",
+						"type": "string"
+					},
+					{
+						"key": "category",
+						"label": "Category",
+						"type": "string"
+					},
+					{
+						"key": "type",
+						"label": "Type (taxable / deductible)",
+						"type": "string"
+					},
+					{
+						"key": "commercialCarryingAmount",
+						"label": "Commercial Carrying Amount (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "taxCarryingAmount",
+						"label": "Tax Carrying Amount (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "temporaryDifference",
+						"label": "Temporary Difference (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "taxRate",
+						"label": "Tax Rate",
+						"type": "number"
+					},
+					{
+						"key": "deferredTaxBalance",
+						"label": "Deferred Tax Balance (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "reversalPattern",
+						"label": "Reversal Pattern",
+						"type": "string"
+					},
+					{
+						"key": "expectedReversalYear",
+						"label": "Expected Reversal Year",
+						"type": "number"
+					},
+					{
+						"key": "notes",
+						"label": "Notes",
+						"type": "string"
+					}
+				],
+				"indexRoute": "TemporaryDifferences"
+			}
+		},
+		{
+			"id": "TaxProvisions",
+			"route": "/accounting/deferred-taxes/tax-provisions",
+			"type": "index",
+			"title": "Tax Provisions",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxProvision",
+				"columns": [
+					{
+						"key": "jurisdiction",
+						"label": "Jurisdiction",
+						"sortable": true
+					},
+					{
+						"key": "dtaTotal",
+						"label": "DTA Total (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "dtlTotal",
+						"label": "DTL Total (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "netDtaDtlPosition",
+						"label": "Net DTA/DTL (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "presentationOnBalanceSheet",
+						"label": "Presentation",
+						"sortable": true
+					},
+					{
+						"key": "currentTaxPayable",
+						"label": "Current Tax Payable (EUR)",
+						"sortable": true
+					}
+				],
+				"defaultSort": "jurisdiction",
+				"detailRoute": "TaxProvisionDetail"
+			}
+		},
+		{
+			"id": "TaxProvisionDetail",
+			"route": "/accounting/deferred-taxes/tax-provisions/:id",
+			"type": "detail",
+			"title": "Tax Provision",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxProvision",
+				"fields": [
+					{
+						"key": "jurisdiction",
+						"label": "Jurisdiction",
+						"type": "string"
+					},
+					{
+						"key": "currentTaxPayable",
+						"label": "Current Tax Payable (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "currentTaxPrepaid",
+						"label": "Current Tax Prepaid (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "dtaTotal",
+						"label": "Deferred Tax Asset Total (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "dtlTotal",
+						"label": "Deferred Tax Liability Total (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "netDtaDtlPosition",
+						"label": "Net DTA / DTL Position (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "presentationOnBalanceSheet",
+						"label": "Balance Sheet Presentation",
+						"type": "string"
+					},
+					{
+						"key": "linkedVpbReturn",
+						"label": "Linked Vpb Return",
+						"type": "string"
+					}
+				],
+				"indexRoute": "TaxProvisions"
+			}
+		},
+		{
+			"id": "TaxLossCarryForwards",
+			"route": "/accounting/deferred-taxes/tax-loss-carry-forwards",
+			"type": "index",
+			"title": "Tax-loss Carry-forwards",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxLossCarryForward",
+				"columns": [
+					{
+						"key": "jurisdiction",
+						"label": "Jurisdiction",
+						"sortable": true
+					},
+					{
+						"key": "originatingYear",
+						"label": "Originating Year",
+						"sortable": true
+					},
+					{
+						"key": "applicableRegime",
+						"label": "Regime",
+						"sortable": true
+					},
+					{
+						"key": "originalAmount",
+						"label": "Original Amount (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "utilisedAmount",
+						"label": "Utilised (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "remainingAmount",
+						"label": "Remaining (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "dtaRecognised",
+						"label": "DTA Recognised (EUR)",
+						"sortable": true
+					}
+				],
+				"defaultSort": "jurisdiction",
+				"detailRoute": "TaxLossCarryForwardDetail"
+			}
+		},
+		{
+			"id": "TaxLossCarryForwardDetail",
+			"route": "/accounting/deferred-taxes/tax-loss-carry-forwards/:id",
+			"type": "detail",
+			"title": "Tax-loss Carry-forward",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxLossCarryForward",
+				"fields": [
+					{
+						"key": "jurisdiction",
+						"label": "Jurisdiction",
+						"type": "string"
+					},
+					{
+						"key": "originatingYear",
+						"label": "Originating Year",
+						"type": "number"
+					},
+					{
+						"key": "applicableRegime",
+						"label": "Compensation Regime",
+						"type": "string"
+					},
+					{
+						"key": "originalAmount",
+						"label": "Original Amount (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "utilisedAmount",
+						"label": "Utilised Amount (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "remainingAmount",
+						"label": "Remaining Amount (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "expirationYear",
+						"label": "Expiration Year",
+						"type": "number"
+					},
+					{
+						"key": "dtaRecognised",
+						"label": "DTA Recognised (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "dtaRecoverabilityRationale",
+						"label": "Recoverability Rationale",
+						"type": "string"
+					},
+					{
+						"key": "recoverabilityHorizon",
+						"label": "Recoverability Horizon (years)",
+						"type": "number"
+					}
+				],
+				"indexRoute": "TaxLossCarryForwards"
 			}
 		}
 	]

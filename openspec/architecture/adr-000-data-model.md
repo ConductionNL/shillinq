@@ -5576,3 +5576,115 @@ _Operator-curated batch of selected APInvoice UUIDs producing SEPA pain.001.001.
 - → APInvoice (many-to-many, via invoiceRefs array)
 
 - → Administration (many-to-one)
+
+### TemporaryDifference
+**Schema.org:** `schema:AccountingService`
+_A temporary difference between the commercial (IFRS/RJ 272) carrying amount and the tax basis of a balance-sheet account on balansdatum. A taxable difference creates a deferred tax liability; a deductible difference creates a deferred tax asset. Computed automatically by TaxCalculationService on FiscalYear close._
+**Primary spec:** bookkeeping-deferred-tax
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| period | string | Yes | FK to FiscalYear UUID (balansdatum = FiscalYear.endDate) |
+| jurisdiction | string | Yes | Tax jurisdiction (ISO 3166-1 alpha-2, e.g. NL, DE, BE) |
+| account | string | Yes | FK to Account UUID (source balance-sheet account) |
+| category | enum | Yes | One of depreciation / provision / receivable-impairment / inventory-valuation / development-cost / fair-value-adjustment / lease-ifrs16 / pension / other |
+| commercialCarryingAmount | number | Yes | IFRS/RJ 272 carrying amount on balansdatum (EUR) |
+| taxCarryingAmount | number | Yes | Fiscal (Vpb) carrying amount on balansdatum (EUR) |
+| temporaryDifference | number | No (calculated) | commercialCarryingAmount − taxCarryingAmount (x-openregister-calculations) |
+| type | enum | Yes | taxable (DTL) or deductible (DTA) |
+| reversalPattern | enum | Yes | short-term / long-term / indefinite |
+| expectedReversalYear | integer | No | Expected reversal calendar year (used for rate-change adjustment per REQ-DT-005) |
+| taxRate | number | Yes | Enacted rate at expected reversal year (decimal, e.g. 0.258) |
+| deferredTaxBalance | number | No (calculated) | temporaryDifference × taxRate (x-openregister-calculations) |
+| notes | string | No | Audit-evidence notes |
+| administrationId | string | Yes | FK to Administration |
+
+**Relations:**
+- → FiscalYear (many-to-one, via period)
+- → Account (many-to-one, via account)
+- → Administration (many-to-one)
+
+> **Reconciliation note (bookkeeping-deferred-tax, 2026-06-03):** These five `tax` register schemas (TemporaryDifference, TaxLossCarryForward, TaxRateReconciliation, DeferredTaxMovement, TaxProvision) are net-new T3 additions. The `Account` schema gains the optional `taxBasisDifferenceCategory` field for GL detection hints. The `FiscalYear` schema gains the optional `enactedTaxRates` map for rate-change handling per IAS 12 §47. All five schemas include `x-openregister-calculations` for derived fields; the ETR reconciliation is fully declarative per ADR-031 D2. The only new PHP service class is `TaxCalculationService` (cross-schema GL detection + Wet Vpb regime orchestration — an ADR-031 documented exception).
+
+### TaxLossCarryForward
+**Schema.org:** `schema:AccountingService`
+_A compensable tax loss (compensabel verlies) per jurisdiction per originating year. Records the applicable Wet Vpb compensation regime and tracks utilised and remaining balance per REQ-DT-003 / REQ-DT-004._
+**Primary spec:** bookkeeping-deferred-tax
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| jurisdiction | string | Yes | Tax jurisdiction (ISO 3166-1 alpha-2) |
+| originatingYear | integer | Yes | Calendar year the loss arose |
+| originalAmount | number | Yes | Original compensable loss (EUR) |
+| utilisedAmount | number | Yes | Running utilised total (EUR) |
+| remainingAmount | number | No (calculated) | originalAmount − utilisedAmount (x-openregister-calculations) |
+| expirationYear | integer | No | Expiry year (pre-2019: originatingYear + 6; 2022+: null = unlimited) |
+| applicableRegime | enum | Yes | pre-2019 / 2019-2021-transition / 2022-onwards |
+| dtaRecognised | number | Yes | DTA recognised (EUR); may be < full loss × taxRate when recoverability < 100% |
+| dtaRecoverabilityRationale | string | No | Required non-empty when dtaRecognised > 0 per REQ-DT-004 |
+| recoverabilityHorizon | integer | No | Years within which recognised DTA is expected to be recovered |
+| linkedProjections | array | No | FK array to bookkeeping-budget-multi-year forecast records |
+| administrationId | string | Yes | FK to Administration |
+
+### TaxRateReconciliation
+**Schema.org:** `schema:AccountingService`
+_Effective tax rate (ETR) reconciliation per fiscal period per jurisdiction per REQ-DT-006. Produced as x-openregister-calculations output (ADR-031 D2). Bridges statutory rate × profit-before-tax to effective tax expense. Consumable by bookkeeping-financial-statements for jaarrekening toelichting per RJ 272 / IFRS._
+**Primary spec:** bookkeeping-deferred-tax
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| period | string | Yes | FK to FiscalYear UUID |
+| jurisdiction | string | Yes | Tax jurisdiction (ISO 3166-1 alpha-2) |
+| profitBeforeTax | number | Yes | Commercial profit before income tax (EUR) |
+| statutoryRate | number | Yes | Blended statutory Vpb rate (decimal, e.g. 0.258) |
+| statutoryTaxExpense | number | No (calculated) | profitBeforeTax × statutoryRate (x-openregister-calculations) |
+| reconciliationItems | array | No | [{description, type, amount, taxEffect}] — permanent / temporary / rate-change / prior-year-adjustment / withholding / other |
+| effectiveTaxExpense | number | No (calculated) | statutoryTaxExpense + sum(reconciliationItems[].taxEffect) (x-openregister-calculations) |
+| effectiveTaxRate | number | No (calculated) | effectiveTaxExpense / profitBeforeTax (x-openregister-calculations) |
+| disclosureNarrative | string | No | Free-form narrative for jaarrekening notes |
+| administrationId | string | Yes | FK to Administration |
+
+### DeferredTaxMovement
+**Schema.org:** `schema:AccountingService`
+_Period roll-forward of deferred tax balances per jurisdiction per temporary-difference category per REQ-DT-009. Captures opening balance, originations, reversals, rate-change adjustments, business-combination gains, FX adjustments, and closing balance._
+**Primary spec:** bookkeeping-deferred-tax
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| period | string | Yes | FK to FiscalYear UUID |
+| jurisdiction | string | Yes | Tax jurisdiction (ISO 3166-1 alpha-2) |
+| category | enum | Yes | Temporary-difference category (see TemporaryDifference.category) |
+| openingBalance | number | Yes | Deferred tax balance at period start (EUR; DTL positive, DTA negative) |
+| originatedInPeriod | number | No | New deferred tax from new differences (EUR) |
+| reversedInPeriod | number | No | DT eliminated as prior differences reversed (EUR; typically negative) |
+| rateChangeAdjustment | number | No | Remeasurement on enacted rate changes per REQ-DT-005 (EUR) |
+| acquiredViaBusinessCombination | number | No | DT from business-combination PPA (EUR) |
+| translationAdjustment | number | No | FX translation adjustment on foreign branches (EUR) |
+| recognisedInPL | number | No (calculated) | origination + reversal + rateChange (x-openregister-calculations) |
+| recognisedInOCI | number | No | DT via other comprehensive income (EUR) |
+| closingBalance | number | No (calculated) | opening + all movements (x-openregister-calculations) |
+| linkedJournalEntries | array | No | FK array to GL journal entry UUIDs |
+| administrationId | string | Yes | FK to Administration |
+
+### TaxProvision
+**Schema.org:** `schema:AccountingService`
+_Aggregated deferred tax asset / liability position per fiscal period per jurisdiction per REQ-DT-008 / REQ-DT-010. Combines current tax payable/prepaid with total DTA and DTL. Determines balance-sheet presentation (gross vs. net per IAS 12 §71–78) and links to the Vpb-aangifte for current-tax reconciliation._
+**Primary spec:** bookkeeping-deferred-tax
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| period | string | Yes | FK to FiscalYear UUID |
+| jurisdiction | string | Yes | Tax jurisdiction (ISO 3166-1 alpha-2) |
+| currentTaxPayable | number | Yes | Current-year Vpb payable per Vpb-aangifte (EUR) |
+| currentTaxPrepaid | number | Yes | Vpb prepaid via provisional assessments (EUR) |
+| dtaTotal | number | Yes | Sum of all deductible deferred tax balances (EUR) |
+| dtlTotal | number | Yes | Sum of all taxable deferred tax balances (EUR) |
+| netDtaDtlPosition | number | No (calculated) | dtaTotal − dtlTotal (x-openregister-calculations) |
+| presentationOnBalanceSheet | enum | Yes | gross (separate DTA/DTL lines) or net (combined line per IAS 12 §71–78) |
+| linkedVpbReturn | string | No | FK to bookkeeping-vpb-mkb Vpb-aangifte UUID per REQ-DT-010 |
+| administrationId | string | Yes | FK to Administration |
+
+**Relations:**
+- → FiscalYear (many-to-one)
+- → Administration (many-to-one)
+- → VpbReturn / bookkeeping-vpb-mkb (many-to-one, via linkedVpbReturn)

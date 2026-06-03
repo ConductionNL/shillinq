@@ -1118,6 +1118,23 @@
 						"description": "BBV regulatory variant under which this account is interpreted. 'waterschap' activates the BBVW (BBV-Waterschappen) framework per REQ-WSB-001.",
 						"nullable": true,
 						"example": "waterschap"
+					},
+					"taxBasisDifferenceCategory": {
+						"type": "string",
+						"description": "Optional hint indicating the typical deferred-tax category for GL balances on this account. When set, the TaxCalculationService uses this value to classify temporary differences automatically without requiring manual override per REQ-DT-001 / REQ-DT-002.",
+						"enum": [
+							"depreciation",
+							"provision",
+							"receivable-impairment",
+							"inventory-valuation",
+							"development-cost",
+							"fair-value-adjustment",
+							"lease-ifrs16",
+							"pension",
+							"other"
+						],
+						"nullable": true,
+						"example": "provision"
 					}
 				},
 				"x-openregister-lifecycle": {
@@ -6108,6 +6125,40 @@
 						"type": "string",
 						"description": "FK to the Administration that owns this fiscal year. Combined with yearNumber forms the composite uniqueness key per D5.",
 						"example": "adm-1"
+					},
+					"enactedTaxRates": {
+						"type": "object",
+						"description": "Map of jurisdiction → enacted tax rate metadata for rate-change adjustment per REQ-DT-005. Keyed by jurisdiction code (e.g. NL, DE, BE). A rate is 'substantively enacted' per IAS 12 §47 once the relevant legislative body has passed the measure, even if the effective date is in the future.",
+						"nullable": true,
+						"additionalProperties": {
+							"type": "object",
+							"properties": {
+								"rate": {
+									"type": "number",
+									"description": "Tax rate as a decimal fraction (e.g. 0.258 for 25.8%).",
+									"example": 0.258
+								},
+								"effectiveDate": {
+									"type": "string",
+									"format": "date",
+									"description": "ISO 8601 date from which this rate applies.",
+									"example": "2028-01-01"
+								},
+								"description": {
+									"type": "string",
+									"description": "Human-readable note (e.g. Belastingplan 2026 — Vpb-tarief hoog).",
+									"nullable": true,
+									"example": "Belastingplan 2026 — Vpb-tarief hoog verhoogd naar 27%"
+								}
+							}
+						},
+						"example": {
+							"NL": {
+								"rate": 0.27,
+								"effectiveDate": "2028-01-01",
+								"description": "Belastingplan 2026 — Vpb-tarief hoog"
+							}
+						}
 					}
 				},
 				"x-openregister-lifecycle": {
@@ -6195,6 +6246,19 @@
 									"subType": "year-end-opening-balance",
 									"state": "posted",
 									"description": "Openingsbalans boekjaar @self.yearNumber + 1. Balansrekeningen overgenomen uit afsluiting boekjaar @self.yearNumber; resultaatrekeningen op nul.",
+									"administrationId": "@self.administrationId"
+								}
+							}
+						},
+						"onCloseTaxCalculation": {
+							"trigger": "transition:close",
+							"description": "Invoke TaxCalculationService::calculateAllPeriodEnd after year-end close to detect temporary differences, apply loss-compensation, rate-change adjustments, and produce the tax provision per REQ-DT-001 through REQ-DT-010.",
+							"action": "x-openregister-invoke-service",
+							"actionParameters": {
+								"service": "OCA\\Shillinq\\Service\\TaxCalculationService",
+								"method": "calculateAllPeriodEnd",
+								"args": {
+									"fiscalYearId": "@self.id",
 									"administrationId": "@self.administrationId"
 								}
 							}
@@ -6308,6 +6372,617 @@
 						},
 						"title": "Boekjaar heropend",
 						"message": "Boekjaar @self.yearNumber is heropend door @self.reopenedBy. Reden: @self.reopenReason"
+					}
+				}
+			}
+		},
+		"TemporaryDifference": {
+			"slug": "TemporaryDifference",
+			"icon": "SwapHorizontalOutline",
+			"version": "0.1.0",
+			"title": "Temporary Difference",
+			"description": "A temporary difference between the commercial (IFRS/RJ 272) carrying amount and the tax basis of a balance-sheet account per REQ-DT-001 / REQ-DT-002. A taxable difference creates a deferred tax liability; a deductible difference creates a deferred tax asset. Computed automatically by TaxCalculationService on balansdatum.",
+			"x-schema-org": "schema:AccountingService",
+			"type": "object",
+			"required": [
+				"period",
+				"jurisdiction",
+				"account",
+				"category",
+				"commercialCarryingAmount",
+				"taxCarryingAmount",
+				"type",
+				"reversalPattern",
+				"taxRate",
+				"administrationId"
+			],
+			"properties": {
+				"period": {
+					"type": "string",
+					"description": "FK to the FiscalYear UUID for which this temporary difference was detected (balansdatum = FiscalYear.endDate).",
+					"example": "fy-uuid-2026"
+				},
+				"jurisdiction": {
+					"type": "string",
+					"description": "Tax jurisdiction (ISO 3166-1 alpha-2, e.g. NL, DE, BE).",
+					"example": "NL"
+				},
+				"account": {
+					"type": "string",
+					"description": "FK to the Account UUID (source balance-sheet account from which the difference was detected).",
+					"example": "account-uuid-1200"
+				},
+				"category": {
+					"type": "string",
+					"description": "Deferred-tax category classifying the economic origin of the temporary difference per REQ-DT-001.",
+					"enum": [
+						"depreciation",
+						"provision",
+						"receivable-impairment",
+						"inventory-valuation",
+						"development-cost",
+						"fair-value-adjustment",
+						"lease-ifrs16",
+						"pension",
+						"other"
+					],
+					"example": "depreciation"
+				},
+				"commercialCarryingAmount": {
+					"type": "number",
+					"description": "IFRS/RJ 272 carrying amount of the asset or liability on balansdatum (EUR).",
+					"example": 2400000.0
+				},
+				"taxCarryingAmount": {
+					"type": "number",
+					"description": "Fiscal (Vpb) carrying amount of the asset or liability on balansdatum (EUR).",
+					"example": 1900000.0
+				},
+				"temporaryDifference": {
+					"type": "number",
+					"description": "Computed: commercialCarryingAmount minus taxCarryingAmount. Positive = taxable (DTL); negative = deductible (DTA).",
+					"example": 500000.0
+				},
+				"type": {
+					"type": "string",
+					"description": "Whether the difference creates a deferred tax liability (taxable) or a deferred tax asset (deductible).",
+					"enum": [
+						"taxable",
+						"deductible"
+					],
+					"example": "taxable"
+				},
+				"reversalPattern": {
+					"type": "string",
+					"description": "Expected reversal horizon for the temporary difference.",
+					"enum": [
+						"short-term",
+						"long-term",
+						"indefinite"
+					],
+					"example": "long-term"
+				},
+				"expectedReversalYear": {
+					"type": "integer",
+					"description": "Expected calendar year in which this difference will reverse. Used to determine applicable tax rate when rate changes are enacted per REQ-DT-005.",
+					"nullable": true,
+					"example": 2035
+				},
+				"taxRate": {
+					"type": "number",
+					"description": "Enacted tax rate applied to this difference at the expected reversal year (decimal fraction, e.g. 0.258).",
+					"example": 0.258
+				},
+				"deferredTaxBalance": {
+					"type": "number",
+					"description": "Computed: temporaryDifference times taxRate. The deferred tax asset or liability on the balance sheet.",
+					"example": 129000.0
+				},
+				"notes": {
+					"type": "string",
+					"description": "Operator-authored notes or audit evidence for this temporary difference.",
+					"nullable": true
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the Administration that owns this record.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-calculations": {
+				"temporaryDifference": {
+					"expression": "@self.commercialCarryingAmount - @self.taxCarryingAmount",
+					"description": "Commercial minus tax carrying amount. Positive = taxable (DTL), negative = deductible (DTA)."
+				},
+				"deferredTaxBalance": {
+					"expression": "(@self.commercialCarryingAmount - @self.taxCarryingAmount) * @self.taxRate",
+					"description": "Deferred tax balance = temporary difference times enacted tax rate."
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": ["create", "read", "update"]
+					},
+					"auditor": {
+						"permissions": ["read"]
+					},
+					"admin": {
+						"permissions": ["create", "read", "update", "delete"]
+					}
+				}
+			}
+		},
+		"TaxLossCarryForward": {
+			"slug": "TaxLossCarryForward",
+			"icon": "TrendingDownOutline",
+			"version": "0.1.0",
+			"title": "Tax-loss Carry-forward",
+			"description": "A compensable tax loss (compensabel verlies) per jurisdiction per originating year. Records the applicable compensation regime (pre-2019 6-year, 2019-2021 transitional, 2022+ unlimited with 50%-cap) and tracks utilised and remaining balance per Wet Vpb articles 8, 20, 20a. REQ-DT-003 / REQ-DT-004.",
+			"x-schema-org": "schema:AccountingService",
+			"type": "object",
+			"required": [
+				"jurisdiction",
+				"originatingYear",
+				"originalAmount",
+				"utilisedAmount",
+				"applicableRegime",
+				"dtaRecognised",
+				"administrationId"
+			],
+			"properties": {
+				"jurisdiction": {
+					"type": "string",
+					"description": "Tax jurisdiction (ISO 3166-1 alpha-2).",
+					"example": "NL"
+				},
+				"originatingYear": {
+					"type": "integer",
+					"description": "Calendar year in which the compensable loss arose.",
+					"example": 2024
+				},
+				"originalAmount": {
+					"type": "number",
+					"description": "Original compensable loss amount as determined in the Vpb return for the originating year (EUR, positive value).",
+					"example": 3200000.0
+				},
+				"utilisedAmount": {
+					"type": "number",
+					"description": "Running total of loss utilised against taxable profits in subsequent periods (EUR).",
+					"default": 0.0,
+					"example": 1400000.0
+				},
+				"remainingAmount": {
+					"type": "number",
+					"description": "Computed: originalAmount minus utilisedAmount.",
+					"example": 1800000.0
+				},
+				"expirationYear": {
+					"type": "integer",
+					"description": "Year in which the loss expires if not utilised. NL pre-2019 regime: originatingYear + 6. NL 2022+: unlimited (null). Transitional: depends on regime-specific rules.",
+					"nullable": true,
+					"example": 2025
+				},
+				"applicableRegime": {
+					"type": "string",
+					"description": "Compensation regime per Wet Vpb art. 20, 20a.",
+					"enum": [
+						"pre-2019",
+						"2019-2021-transition",
+						"2022-onwards"
+					],
+					"example": "2022-onwards"
+				},
+				"dtaRecognised": {
+					"type": "number",
+					"description": "Deferred tax asset recognised on this loss (EUR). May be less than originalAmount times taxRate when full recoverability cannot be demonstrated per REQ-DT-004.",
+					"default": 0.0,
+					"example": 774000.0
+				},
+				"dtaRecoverabilityRationale": {
+					"type": "string",
+					"description": "Required audit-evidence text explaining the basis for recognising the DTA. Must reference linkedProjections when dtaRecognised > 0 per REQ-DT-004.",
+					"nullable": true,
+					"example": "Supported by 5-year projection (budget-2026-2030); EUR 3M cumulative taxable profit assumed."
+				},
+				"recoverabilityHorizon": {
+					"type": "integer",
+					"description": "Number of years within which the recognised DTA is expected to be recovered from future taxable profits.",
+					"nullable": true,
+					"example": 5
+				},
+				"linkedProjections": {
+					"type": "array",
+					"description": "FK array referencing bookkeeping-budget-multi-year forecast records supporting the recoverability assessment.",
+					"nullable": true,
+					"items": {
+						"type": "string"
+					},
+					"example": ["budget-projection-uuid-2026"]
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the Administration that owns this record.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-calculations": {
+				"remainingAmount": {
+					"expression": "@self.originalAmount - @self.utilisedAmount",
+					"description": "Remaining compensable loss = original minus utilised."
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": ["create", "read", "update"]
+					},
+					"auditor": {
+						"permissions": ["read"]
+					},
+					"admin": {
+						"permissions": ["create", "read", "update", "delete"]
+					}
+				}
+			}
+		},
+		"TaxRateReconciliation": {
+			"slug": "TaxRateReconciliation",
+			"icon": "CalculatorOutline",
+			"version": "0.1.0",
+			"title": "Tax Rate Reconciliation",
+			"description": "Effective tax rate (ETR) reconciliation per fiscal period per jurisdiction per REQ-DT-006. Bridges statutory rate times profit-before-tax to effective tax expense via permanent differences, temporary-difference movements, rate changes, and prior-year adjustments. Produced as x-openregister-calculations output per ADR-031 D2. Consumable by bookkeeping-financial-statements for jaarrekening toelichting per RJ 272 / IFRS.",
+			"x-schema-org": "schema:AccountingService",
+			"type": "object",
+			"required": [
+				"period",
+				"jurisdiction",
+				"profitBeforeTax",
+				"statutoryRate",
+				"administrationId"
+			],
+			"properties": {
+				"period": {
+					"type": "string",
+					"description": "FK to the FiscalYear UUID.",
+					"example": "fy-uuid-2026"
+				},
+				"jurisdiction": {
+					"type": "string",
+					"description": "Tax jurisdiction (ISO 3166-1 alpha-2).",
+					"example": "NL"
+				},
+				"profitBeforeTax": {
+					"type": "number",
+					"description": "Commercial profit before income tax for the period (EUR).",
+					"example": 4200000.0
+				},
+				"statutoryRate": {
+					"type": "number",
+					"description": "Blended statutory Vpb rate for the period (decimal fraction). NL 2026: 0.258 blended (0.19 below EUR 200K + 0.258 above).",
+					"example": 0.258
+				},
+				"statutoryTaxExpense": {
+					"type": "number",
+					"description": "Computed: profitBeforeTax times statutoryRate.",
+					"example": 1083600.0
+				},
+				"reconciliationItems": {
+					"type": "array",
+					"description": "Ordered list of adjustments bridging statutory to effective tax expense. Each item carries a description, type, amount (pre-tax), and taxEffect (EUR).",
+					"items": {
+						"type": "object",
+						"properties": {
+							"description": {
+								"type": "string",
+								"description": "Human-readable label for the adjustment."
+							},
+							"type": {
+								"type": "string",
+								"description": "Classification of the adjustment.",
+								"enum": [
+									"permanent",
+									"temporary",
+									"rate-change",
+									"prior-year-adjustment",
+									"withholding",
+									"other"
+								]
+							},
+							"amount": {
+								"type": "number",
+								"description": "Pre-tax amount of the adjustment (EUR)."
+							},
+							"taxEffect": {
+								"type": "number",
+								"description": "Tax effect in EUR. Positive = increases tax expense; negative = reduces."
+							}
+						}
+					},
+					"example": [
+						{
+							"description": "Dividend exemption (deelnemingsvrijstelling)",
+							"type": "permanent",
+							"amount": -480000.0,
+							"taxEffect": -124000.0
+						}
+					]
+				},
+				"effectiveTaxExpense": {
+					"type": "number",
+					"description": "Computed: statutoryTaxExpense + sum of reconciliationItems[].taxEffect.",
+					"example": 950000.0
+				},
+				"effectiveTaxRate": {
+					"type": "number",
+					"description": "Computed: effectiveTaxExpense / profitBeforeTax.",
+					"example": 0.226
+				},
+				"disclosureNarrative": {
+					"type": "string",
+					"description": "Free-form narrative for jaarrekening toelichting per RJ 272 / IFRS.",
+					"nullable": true
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the Administration that owns this record.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-calculations": {
+				"statutoryTaxExpense": {
+					"expression": "@self.profitBeforeTax * @self.statutoryRate",
+					"description": "Statutory tax expense = profit before tax times statutory rate."
+				},
+				"effectiveTaxExpense": {
+					"expression": "@self.profitBeforeTax * @self.statutoryRate + sum(@self.reconciliationItems[].taxEffect)",
+					"description": "Effective tax expense = statutory expense + sum of all reconciliation item tax effects."
+				},
+				"effectiveTaxRate": {
+					"expression": "(@self.profitBeforeTax * @self.statutoryRate + sum(@self.reconciliationItems[].taxEffect)) / @self.profitBeforeTax",
+					"description": "Effective tax rate = effective tax expense / profit before tax."
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": ["create", "read", "update"]
+					},
+					"auditor": {
+						"permissions": ["read"]
+					},
+					"admin": {
+						"permissions": ["create", "read", "update", "delete"]
+					}
+				}
+			}
+		},
+		"DeferredTaxMovement": {
+			"slug": "DeferredTaxMovement",
+			"icon": "ArrowRightBoldOutline",
+			"version": "0.1.0",
+			"title": "Deferred Tax Movement",
+			"description": "Period roll-forward of deferred tax balances per jurisdiction per temporary-difference category per REQ-DT-009. Captures opening balance, originations, reversals, rate-change adjustments, business-combination gains, FX adjustments, and closing balance with linkage to GL journal entries.",
+			"x-schema-org": "schema:AccountingService",
+			"type": "object",
+			"required": [
+				"period",
+				"jurisdiction",
+				"category",
+				"openingBalance",
+				"administrationId"
+			],
+			"properties": {
+				"period": {
+					"type": "string",
+					"description": "FK to the FiscalYear UUID.",
+					"example": "fy-uuid-2026"
+				},
+				"jurisdiction": {
+					"type": "string",
+					"description": "Tax jurisdiction (ISO 3166-1 alpha-2).",
+					"example": "NL"
+				},
+				"category": {
+					"type": "string",
+					"description": "Temporary-difference category for this roll-forward.",
+					"enum": [
+						"depreciation",
+						"provision",
+						"receivable-impairment",
+						"inventory-valuation",
+						"development-cost",
+						"fair-value-adjustment",
+						"lease-ifrs16",
+						"pension",
+						"other"
+					],
+					"example": "depreciation"
+				},
+				"openingBalance": {
+					"type": "number",
+					"description": "Deferred tax balance at the start of the period (EUR). DTL = positive; DTA = negative.",
+					"example": 380000.0
+				},
+				"originatedInPeriod": {
+					"type": "number",
+					"description": "New deferred tax arising from new temporary differences created in the period (EUR).",
+					"default": 0.0,
+					"example": 95000.0
+				},
+				"reversedInPeriod": {
+					"type": "number",
+					"description": "Deferred tax eliminated as prior temporary differences reversed in the period (EUR, typically negative).",
+					"default": 0.0,
+					"example": -42000.0
+				},
+				"rateChangeAdjustment": {
+					"type": "number",
+					"description": "Remeasurement effect when a new tax rate is substantively enacted per REQ-DT-005 (EUR).",
+					"default": 0.0,
+					"example": 8000.0
+				},
+				"acquiredViaBusinessCombination": {
+					"type": "number",
+					"description": "Deferred tax recognised on assets / liabilities acquired via a business combination (EUR).",
+					"default": 0.0,
+					"nullable": true,
+					"example": 0.0
+				},
+				"translationAdjustment": {
+					"type": "number",
+					"description": "FX translation adjustment on deferred tax positions of foreign subsidiaries/branches (EUR).",
+					"default": 0.0,
+					"nullable": true,
+					"example": 0.0
+				},
+				"recognisedInPL": {
+					"type": "number",
+					"description": "Computed: originatedInPeriod + reversedInPeriod + rateChangeAdjustment. Income-statement effect of deferred tax.",
+					"example": 61000.0
+				},
+				"recognisedInOCI": {
+					"type": "number",
+					"description": "Deferred tax recognised in other comprehensive income (e.g. on revaluations via OCI) (EUR).",
+					"default": 0.0,
+					"nullable": true,
+					"example": 0.0
+				},
+				"closingBalance": {
+					"type": "number",
+					"description": "Computed: openingBalance + all movement components.",
+					"example": 441000.0
+				},
+				"linkedJournalEntries": {
+					"type": "array",
+					"description": "FK array referencing GL journal entry UUIDs for the deferred tax expense posting per REQ-DT-009.",
+					"nullable": true,
+					"items": {
+						"type": "string"
+					}
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the Administration that owns this record.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-calculations": {
+				"recognisedInPL": {
+					"expression": "@self.originatedInPeriod + @self.reversedInPeriod + @self.rateChangeAdjustment",
+					"description": "P&L deferred tax = originations + reversals + rate-change effect."
+				},
+				"closingBalance": {
+					"expression": "@self.openingBalance + @self.originatedInPeriod + @self.reversedInPeriod + @self.rateChangeAdjustment + coalesce(@self.acquiredViaBusinessCombination, 0) + coalesce(@self.translationAdjustment, 0) + coalesce(@self.recognisedInOCI, 0)",
+					"description": "Closing balance = opening + all movement components."
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": ["create", "read", "update"]
+					},
+					"auditor": {
+						"permissions": ["read"]
+					},
+					"admin": {
+						"permissions": ["create", "read", "update", "delete"]
+					}
+				}
+			}
+		},
+		"TaxProvision": {
+			"slug": "TaxProvision",
+			"icon": "ScaleBalanceOutline",
+			"version": "0.1.0",
+			"title": "Tax Provision",
+			"description": "Aggregated deferred tax asset / liability position per fiscal period per jurisdiction per REQ-DT-008 / REQ-DT-010. Determines balance-sheet presentation (gross vs. net per IAS 12 para 71-78) and links to the Vpb-aangifte record for current-tax reconciliation.",
+			"x-schema-org": "schema:AccountingService",
+			"type": "object",
+			"required": [
+				"period",
+				"jurisdiction",
+				"currentTaxPayable",
+				"currentTaxPrepaid",
+				"dtaTotal",
+				"dtlTotal",
+				"presentationOnBalanceSheet",
+				"administrationId"
+			],
+			"properties": {
+				"period": {
+					"type": "string",
+					"description": "FK to the FiscalYear UUID.",
+					"example": "fy-uuid-2026"
+				},
+				"jurisdiction": {
+					"type": "string",
+					"description": "Tax jurisdiction (ISO 3166-1 alpha-2).",
+					"example": "NL"
+				},
+				"currentTaxPayable": {
+					"type": "number",
+					"description": "Current-year Vpb payable per Vpb-aangifte (EUR). Sourced from bookkeeping-vpb-mkb via linkedVpbReturn per REQ-DT-010.",
+					"example": 540000.0
+				},
+				"currentTaxPrepaid": {
+					"type": "number",
+					"description": "Vpb prepaid via provisional assessments in the period (EUR).",
+					"default": 0.0,
+					"example": 0.0
+				},
+				"dtaTotal": {
+					"type": "number",
+					"description": "Sum of all deductible deferred tax balances for this jurisdiction (EUR, positive value).",
+					"example": 320000.0
+				},
+				"dtlTotal": {
+					"type": "number",
+					"description": "Sum of all taxable deferred tax balances for this jurisdiction (EUR, positive value).",
+					"example": 480000.0
+				},
+				"netDtaDtlPosition": {
+					"type": "number",
+					"description": "Computed: dtaTotal minus dtlTotal. Positive = net DTA; negative = net DTL.",
+					"example": -160000.0
+				},
+				"presentationOnBalanceSheet": {
+					"type": "string",
+					"description": "Balance-sheet presentation per IAS 12 para 71-78. gross = separate DTA/DTL lines; net = combined line when legal right to offset exists per REQ-DT-008.",
+					"enum": [
+						"gross",
+						"net"
+					],
+					"example": "net"
+				},
+				"linkedVpbReturn": {
+					"type": "string",
+					"description": "FK to the bookkeeping-vpb-mkb Vpb-aangifte UUID for current-tax reconciliation per REQ-DT-010.",
+					"nullable": true,
+					"example": "vpb-return-uuid-2026"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the Administration that owns this record.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-calculations": {
+				"netDtaDtlPosition": {
+					"expression": "@self.dtaTotal - @self.dtlTotal",
+					"description": "Net DTA/DTL = DTA total minus DTL total. Positive = net asset; negative = net liability."
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": ["create", "read", "update"]
+					},
+					"auditor": {
+						"permissions": ["read"]
+					},
+					"admin": {
+						"permissions": ["create", "read", "update", "delete"]
 					}
 				}
 			}
