@@ -41,6 +41,13 @@ class InitializeSettingsTest extends TestCase
     private SettingsService&MockObject $settingsService;
 
     /**
+     * Mock ContainerInterface.
+     *
+     * @var ContainerInterface&MockObject
+     */
+    private ContainerInterface&MockObject $container;
+
+    /**
      * Mock LoggerInterface.
      *
      * @var LoggerInterface&MockObject
@@ -78,6 +85,7 @@ class InitializeSettingsTest extends TestCase
         parent::setUp();
 
         $this->settingsService = $this->createMock(SettingsService::class);
+        $this->container       = $this->createMock(ContainerInterface::class);
         $this->logger          = $this->createMock(LoggerInterface::class);
         $this->container       = $this->createMock(ContainerInterface::class);
         $this->output          = $this->createMock(IOutput::class);
@@ -127,7 +135,7 @@ class InitializeSettingsTest extends TestCase
     }//end testRunSkipsWhenOpenRegisterUnavailable()
 
     /**
-     * Test that run() calls loadConfiguration and seedRgsTemplate on success.
+     * Test that run() calls loadConfiguration, seedRgsTemplate, and seedAllocationRules on success.
      *
      * @return void
      */
@@ -139,7 +147,7 @@ class InitializeSettingsTest extends TestCase
 
         $this->settingsService->expects($this->once())
             ->method('loadConfigurationForced')
-            ->willReturn(['success' => true, 'version' => '0.2.0']);
+            ->willReturn(['success' => true, 'version' => '0.3.0']);
 
         $this->settingsService->expects($this->atLeastOnce())
             ->method('getSettings')
@@ -160,6 +168,11 @@ class InitializeSettingsTest extends TestCase
                 administrationId: 'adm-1'
             )
             ->willReturn(['success' => true, 'seeded' => 150, 'skipped' => 0]);
+
+        $this->settingsService->expects($this->once())
+            ->method('seedAllocationRules')
+            ->with(administrationId: 'adm-1')
+            ->willReturn(['success' => true, 'seeded' => 3, 'skipped' => 0]);
 
         $this->repairStep->run(output: $this->output);
 
@@ -194,9 +207,12 @@ class InitializeSettingsTest extends TestCase
                     ]
                     );
 
-        // C2: seedRgsTemplate must NOT be called when administrationId is empty.
+        // C2: seedRgsTemplate and seedAllocationRules must NOT be called when administrationId is empty.
         $this->settingsService->expects($this->never())
             ->method('seedRgsTemplate');
+
+        $this->settingsService->expects($this->never())
+            ->method('seedAllocationRules');
 
         $this->output->expects($this->atLeastOnce())
             ->method('warning')
@@ -223,9 +239,12 @@ class InitializeSettingsTest extends TestCase
             ->method('loadConfigurationForced')
             ->willReturn(['success' => false, 'message' => 'Config import error']);
 
-        // H2: seedRgsTemplate must NOT be called when schema import failed.
+        // H2: seedRgsTemplate and seedAllocationRules must NOT be called when schema import failed.
         $this->settingsService->expects($this->never())
             ->method('seedRgsTemplate');
+
+        $this->settingsService->expects($this->never())
+            ->method('seedAllocationRules');
 
         $this->output->expects($this->atLeastOnce())
             ->method('warning');

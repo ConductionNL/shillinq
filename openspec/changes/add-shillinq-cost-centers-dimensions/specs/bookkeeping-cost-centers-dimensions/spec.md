@@ -152,7 +152,7 @@ Per ADR-031, segment P&L (P&L broken down by cost-center / project
 (`fiscalYearId`, `accountNumber`, dimension code). The aggregation
 MUST be consumable by:
 
-- mydash dashboard widgets (per ADR-022 — mydash reads aggregations
+- launchpad dashboard widgets (per ADR-022 — launchpad reads aggregations
   via runtime GraphQL)
 - the SBR/XBRL builder (per `bookkeeping-sbr-xbrl-reporting`) when
   segment reporting is required

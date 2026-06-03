@@ -1,0 +1,35 @@
+{
+	"_comment": "SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> SPDX-License-Identifier: EUPL-1.2",
+	"_meta": {
+		"source": "shillinq-default",
+		"variant": "fixed-percentage",
+		"description": "Example facility-cost allocation rule that spreads facility accounts 4800-4899 across three cost centers at fixed 50/30/20 percentage split. Target percentages sum to 100 per REQ-CC-004. Shipped in lifecycleState: paused — activate after operator review per design Seed Data section."
+	},
+	"register": "shillinq",
+	"schema": "AllocationRule",
+	"objects": [
+		{
+			"name": "Facility cost fixed-percentage split",
+			"sourceAccountPattern": "4800-4899",
+			"driver": "fixed-percentage",
+			"targets": [
+				{
+					"code": "KC-100",
+					"percentage": 50.0
+				},
+				{
+					"code": "KC-200",
+					"percentage": 30.0
+				},
+				{
+					"code": "KC-300",
+					"percentage": 20.0
+				}
+			],
+			"targetDimension": "cost-center",
+			"cadence": "per-posting",
+			"lifecycleState": "paused",
+			"administrationId": "example-administration-id"
+		}
+	]
+}

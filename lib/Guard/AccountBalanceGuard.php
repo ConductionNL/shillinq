@@ -100,20 +100,20 @@ class AccountBalanceGuard
      */
     public function requireZeroBalance(array $account): bool
     {
-        // T1 detection: if OR's ObjectService cannot be resolved, the GLLine
-        // register does not exist yet — permit archive unconditionally (T1 deferral).
-        // This is a separate catch from the balance-query catch below so that a
-        // real query failure (DB error, network blip) is still fail-closed.
+        // T1 check: if ObjectService itself is unavailable (OR not installed), permit
+        // archive by default — no GLLine register can exist without OR (T1 state).
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             $this->logger->debug(
-                'AccountBalanceGuard: GLLine register not present (T1 state) — archive permitted by default',
+                'AccountBalanceGuard: ObjectService not present (T1 state) — archive permitted by default',
                 ['accountNumber' => ($account['accountNumber'] ?? 'unknown')]
             );
             return true;
         }
 
+        // T2+ check: compute balance via GLLine records. Fail-closed on any error
+        // so a transient DB failure denies archive rather than silently permitting it.
         try {
             // Page through all GLLine records in batches to avoid hitting the
             // default findAll() limit when an account has many postings (L1).
