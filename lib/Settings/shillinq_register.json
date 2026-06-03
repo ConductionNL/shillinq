@@ -8486,6 +8486,214 @@
 					}
 				}
 			}
+		},
+		"Product": {
+			"slug": "Product",
+			"icon": "PackageVariantOutline",
+			"version": "0.1.0",
+			"title": "Product",
+			"description": "Universal product master data — SKU, name, category, pricing, barcodes, and status. Foundation for POS, procurement, and inventory workflows per REQ-IPC-001 through REQ-IPC-010. SKU uniqueness is scoped to (organizationId, sku) to support multi-tenant Nextcloud instances.",
+			"x-schema-org": "schema:Product",
+			"type": "object",
+			"x-openregister-unique": [
+				[
+					"organizationId",
+					"sku"
+				]
+			],
+			"required": [
+				"sku",
+				"name",
+				"category",
+				"unitPrice",
+				"currency",
+				"status",
+				"organizationId"
+			],
+			"properties": {
+				"sku": {
+					"type": "string",
+					"description": "Stock keeping unit identifier. Unique per (organizationId, sku) per REQ-IPC-002 D2.",
+					"example": "LAPTOP-001"
+				},
+				"name": {
+					"type": "string",
+					"description": "Human-readable product name.",
+					"example": "Dell XPS 13 Laptop"
+				},
+				"category": {
+					"type": "string",
+					"description": "Product category. Standard values: office, it_hardware, logistics, food_beverage, clothing. Custom values allowed for extensibility.",
+					"enum": [
+						"office",
+						"it_hardware",
+						"logistics",
+						"food_beverage",
+						"clothing",
+						"custom"
+					],
+					"example": "it_hardware"
+				},
+				"description": {
+					"type": "string",
+					"nullable": true,
+					"description": "Detailed product description.",
+					"example": "13-inch FHD display, Intel Core i7, 16GB RAM, 512GB SSD"
+				},
+				"unitPrice": {
+					"type": "number",
+					"format": "double",
+					"description": "Unit price for purchase or sale in the specified currency per REQ-IPC-002.",
+					"example": 1899.00
+				},
+				"currency": {
+					"type": "string",
+					"description": "ISO 4217 currency code for unitPrice.",
+					"minLength": 3,
+					"maxLength": 3,
+					"example": "EUR"
+				},
+				"unitCode": {
+					"type": "string",
+					"nullable": true,
+					"description": "UN/CEFACT unit of measure code. ST=piece, KG=kilogram, L=litre, HR=hour. Null means each/piece.",
+					"example": "ST"
+				},
+				"taxRate": {
+					"type": "number",
+					"nullable": true,
+					"minimum": 0,
+					"maximum": 100,
+					"description": "Applicable VAT/tax rate as a percentage (0-100). E.g. 21 for Dutch standard VAT.",
+					"example": 21
+				},
+				"primaryBarcode": {
+					"type": "string",
+					"nullable": true,
+					"description": "Primary barcode for fast product lookup (e.g. GTIN-13 or custom).",
+					"example": "4014300889755"
+				},
+				"barcodes": {
+					"type": "array",
+					"nullable": true,
+					"description": "Multiple barcodes per REQ-IPC-005. Each entry carries code, format (GTIN-8/12/13/14/custom), and type (item/case/pallet).",
+					"items": {
+						"type": "object",
+						"required": ["code", "format", "type"],
+						"properties": {
+							"code": {
+								"type": "string",
+								"description": "The barcode value.",
+								"example": "4014300889755"
+							},
+							"format": {
+								"type": "string",
+								"description": "Barcode format per UN/EAN standards.",
+								"enum": ["GTIN-8", "GTIN-12", "GTIN-13", "GTIN-14", "custom"],
+								"example": "GTIN-13"
+							},
+							"type": {
+								"type": "string",
+								"description": "Barcode scope: item (single unit), case (multiple units), pallet (full pallet).",
+								"enum": ["item", "case", "pallet"],
+								"example": "item"
+							}
+						}
+					},
+					"example": [{"code": "4014300889755", "format": "GTIN-13", "type": "item"}]
+				},
+				"status": {
+					"type": "string",
+					"description": "Product lifecycle status per REQ-IPC-009. active = in normal use; discontinued = phased out.",
+					"enum": ["active", "discontinued"],
+					"default": "active",
+					"example": "active"
+				},
+				"organizationId": {
+					"type": "string",
+					"description": "FK to the organization owning this product. Combined with sku forms the uniqueness key per D2. Queries MUST be scoped per organization per REQ-IPC-010.",
+					"example": "org-123"
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"procurement": {
+						"permissions": ["create", "read", "update", "delete"]
+					},
+					"inventory": {
+						"permissions": ["create", "read", "update"]
+					},
+					"auditor": {
+						"permissions": ["read"]
+					}
+				}
+			}
+		},
+		"ProductAttribute": {
+			"slug": "ProductAttribute",
+			"icon": "TagOutline",
+			"version": "0.1.0",
+			"title": "Product Attribute",
+			"description": "Attribute type definitions for products per REQ-IPC-003 and REQ-IPC-004. Category-scoped via applicableToCategories. Seed templates for common categories shipped in lib/Settings/seeds/ per REQ-IPC-006.",
+			"type": "object",
+			"required": ["name", "dataType", "applicableToCategories", "status"],
+			"properties": {
+				"name": {
+					"type": "string",
+					"description": "Attribute display name recognizable to procurement practitioners.",
+					"example": "RAM (GB)"
+				},
+				"dataType": {
+					"type": "string",
+					"description": "Value data type for this attribute per REQ-IPC-004.",
+					"enum": ["text", "number", "boolean", "enum", "date"],
+					"example": "number"
+				},
+				"applicableToCategories": {
+					"type": "string",
+					"description": "Comma-separated product categories to which this attribute applies per D4. E.g. 'it_hardware' or 'it_hardware,office'.",
+					"example": "it_hardware"
+				},
+				"isRequired": {
+					"type": "boolean",
+					"nullable": true,
+					"default": false,
+					"description": "Whether this attribute is mandatory for products in applicable categories.",
+					"example": false
+				},
+				"displayOrder": {
+					"type": "integer",
+					"nullable": true,
+					"description": "Sequence number for UI ordering (ascending). Lower numbers appear first.",
+					"example": 1
+				},
+				"validationRule": {
+					"type": "string",
+					"nullable": true,
+					"description": "Validation constraint as a human-readable string. E.g. 'min: 4, max: 256' for number ranges or 'SSD, HDD, hybrid' for enum values.",
+					"example": "min: 4, max: 256"
+				},
+				"status": {
+					"type": "string",
+					"description": "Attribute lifecycle status. active = in use; archived = retired but retained for history.",
+					"enum": ["active", "archived"],
+					"default": "active",
+					"example": "active"
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"procurement": {
+						"permissions": ["create", "read", "update", "delete"]
+					},
+					"inventory": {
+						"permissions": ["read"]
+					},
+					"auditor": {
+						"permissions": ["read"]
+					}
+				}
+			}
 		}
 	},
 	"mappings": {

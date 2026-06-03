@@ -127,9 +127,11 @@ class InitializeSettingsTest extends TestCase
     }//end testRunSkipsWhenOpenRegisterUnavailable()
 
     /**
-     * Test that run() calls loadConfiguration, seedRgsTemplate, and seedAllocationRules on success.
+     * Test that run() calls loadConfiguration, seedRgsTemplate, seedAllocationRules, and seedProductAttributes on success.
      *
      * @return void
+     *
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
      */
     public function testRunCallsLoadConfigurationAndSeedTemplate(): void
     {
@@ -165,6 +167,28 @@ class InitializeSettingsTest extends TestCase
             ->method('seedAllocationRules')
             ->with(administrationId: 'adm-1')
             ->willReturn(['success' => true, 'seeded' => 3, 'skipped' => 0]);
+
+        $this->settingsService->method('seedRj270Stages')
+            ->willReturn(['success' => true, 'seeded' => 5, 'skipped' => 0]);
+
+        $this->settingsService->method('seedRateCardTemplates')
+            ->willReturn(['success' => true, 'seeded' => 2, 'skipped' => 0]);
+
+        $this->settingsService->method('seedSelectielijst')
+            ->willReturn(['success' => true, 'seeded' => 100, 'skipped' => 0]);
+
+        // ProductAttribute seeds are called once per category (5 categories) per REQ-IPC-007.
+        $this->settingsService->expects($this->exactly(5))
+            ->method('seedProductAttributes')
+            ->willReturn(['success' => true, 'seeded' => 12, 'skipped' => 0]);
+
+        $this->settingsService->method('getRegisterSlug')
+            ->willReturn('shillinq');
+
+        // Container get() throws for ScheduledWorkflowMapper so registerIv3ScheduledWorkflow
+        // exits via its inner catch block without reaching the outer try/catch in run().
+        $this->container->method('get')
+            ->willThrowException(new \RuntimeException('Not available in test'));
 
         $this->repairStep->run(output: $this->output);
 

@@ -1150,4 +1150,133 @@ class SettingsService
         }//end try
 
     }//end seedAllocationRuleExamples()
+
+    /**
+     * Seed ProductAttribute templates from a category seed file, idempotently.
+     *
+     * Reads the specified seed file from lib/Settings/seeds/ and imports
+     * ProductAttribute records via OpenRegister's ObjectService. Already-existing
+     * records (matched by name + applicableToCategories) are skipped, preserving
+     * operator edits across repair re-runs per REQ-IPC-007.
+     *
+     * @param string $category Seed category key: office, it_hardware, logistics, food_beverage, clothing.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
+     */
+    public function seedProductAttributes(string $category): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        // Category keys use underscores (it_hardware, food_beverage); filenames use hyphens.
+        $filename = 'product-attributes-'.str_replace('_', '-', $category).'.json';
+        $seedPath = __DIR__.'/../Settings/seeds/'.$filename;
+
+        if (file_exists($seedPath) === false) {
+            return [
+                'success' => false,
+                'message' => 'Seed file not found: '.$filename,
+            ];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return [
+                'success' => false,
+                'message' => 'Failed to read seed file: '.$filename,
+            ];
+        }
+
+        $data = json_decode($content, associative: true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return [
+                'success' => false,
+                'message' => 'Failed to parse seed file '.$filename.': '.json_last_error_msg(),
+            ];
+        }
+
+        $attributes = ($data['productAttributes'] ?? []);
+        if (empty($attributes) === true) {
+            return [
+                'success' => true,
+                'message' => 'Seed file contains no productAttributes, nothing to import.',
+                'seeded'  => 0,
+                'skipped' => 0,
+            ];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($attributes as $attribute) {
+                $name       = ($attribute['name'] ?? null);
+                $categories = ($attribute['applicableToCategories'] ?? null);
+
+                if ($name === null || $categories === null) {
+                    continue;
+                }
+
+                // Deduplication key: name + applicableToCategories preserves operator edits.
+                $existing = $objectService->findObjects(
+                    register: $registerSlug,
+                    schema: 'ProductAttribute',
+                    params: [
+                        'name'                   => $name,
+                        'applicableToCategories' => $categories,
+                        '_limit'                 => 1,
+                    ]
+                );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    register: $registerSlug,
+                    schema: 'ProductAttribute',
+                    object: $attribute,
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: ProductAttribute seed imported',
+                [
+                    'category' => $category,
+                    'seeded'   => $seeded,
+                    'skipped'  => $skipped,
+                ]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'ProductAttribute seed imported successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: ProductAttribute seeding failed',
+                [
+                    'category'  => $category,
+                    'exception' => $e->getMessage(),
+                ]
+            );
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedProductAttributes()
 }//end class
