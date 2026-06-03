@@ -2,13 +2,13 @@
   "schema_version": 2,
   "spec_slug": "add-shillinq-cost-centers-dimensions",
   "repo": "https://codeberg.org/Conduction/shillinq",
-  "issue": 18,
+  "issue": 19,
   "cycles": [
     {
       "cycle": 1,
       "trigger": "build:queued",
-      "started_at": "2026-06-01T20:41:27Z",
-      "ended_at": "2026-06-01T20:41:59Z",
+      "started_at": "2026-06-01T20:32:57Z",
+      "ended_at": "2026-06-01T20:33:19Z",
       "outcome": "needs-input",
       "outcome_reason": "builder container exited non-zero",
       "pattern_tags": [],
@@ -18,8 +18,8 @@
           "persona": "Al Gorithm",
           "model": "sonnet",
           "container": "hydra-builder",
-          "started_at": "2026-06-01T20:03:22Z",
-          "ended_at": "2026-06-01T20:41:24Z",
+          "started_at": "2026-06-01T20:03:53Z",
+          "ended_at": "2026-06-01T20:32:53Z",
           "exit_code": 1,
           "turns_used": 0,
           "turns_budget": 40,
@@ -38,7 +38,7 @@
           ],
           "decisions": [],
           "verdict": "fail",
-          "duration_seconds": 2282
+          "duration_seconds": 1740
         }
       ]
     }
@@ -47,14 +47,14 @@
     "runs": 1,
     "turns_used": 0,
     "cost_usd": 0.0,
-    "duration_seconds": 2282,
+    "duration_seconds": 1740,
     "cycles": 1,
     "by_stage": {
       "build": {
         "runs": 1,
         "turns_used": 0,
         "cost_usd": 0.0,
-        "duration_seconds": 2282
+        "duration_seconds": 1740
       }
     }
   }
