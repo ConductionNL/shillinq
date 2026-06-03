@@ -121,21 +121,53 @@
       "outcome": "in-flight",
       "outcome_reason": null,
       "pattern_tags": [],
-      "stages": []
+      "stages": [
+        {
+          "stage": "build",
+          "persona": "Al Gorithm",
+          "model": "sonnet",
+          "container": "hydra-builder",
+          "started_at": "2026-06-03T19:31:33Z",
+          "ended_at": "2026-06-03T19:59:43Z",
+          "exit_code": 0,
+          "turns_used": 245,
+          "turns_budget": 200,
+          "checks_run": [
+            "composer check:strict (phpcs)"
+          ],
+          "checks_skipped": [
+            "composer test:unit (phpunit) \u2014 Rule 0b"
+          ],
+          "findings": [
+            {
+              "id": "build-rule-0b-skipped",
+              "severity": "CRITICAL",
+              "gate": "rule-0b",
+              "rule": "builder did not invoke mandatory pre-push gate (phpunit)",
+              "status": "open",
+              "note": "Rule 0b in images/builder/CLAUDE.md requires composer check:strict + phpunit before push. No invocations found in transcript \u2014 the pipeline will likely catch pre-review-quality failures downstream.",
+              "autofixable": false
+            }
+          ],
+          "decisions": [],
+          "verdict": "pass",
+          "duration_seconds": 1690
+        }
+      ]
     }
   ],
   "totals": {
-    "runs": 3,
-    "turns_used": 313,
+    "runs": 4,
+    "turns_used": 558,
     "cost_usd": 0.0,
-    "duration_seconds": 5078,
-    "cycles": 2,
+    "duration_seconds": 6768,
+    "cycles": 3,
     "by_stage": {
       "build": {
-        "runs": 3,
-        "turns_used": 313,
+        "runs": 4,
+        "turns_used": 558,
         "cost_usd": 0.0,
-        "duration_seconds": 5078
+        "duration_seconds": 6768
       }
     }
   }
