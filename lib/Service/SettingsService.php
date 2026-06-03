@@ -559,6 +559,144 @@ class SettingsService
     }//end seedAllocationRules()
 
     /**
+     * Seed NL-taxonomie SBR mapping templates from lib/Settings/seeds/sbr-mappings/, idempotently.
+     *
+     * Each seed file covers one entry-point + taxonomy-version combination. Deduplication
+     * key is the combination of entryPoint + taxonomyVersion + financialStatementLineId:
+     * if a Mapping record with the same triple already exists in OpenRegister the seed
+     * entry is skipped, preserving operator edits. Safe to call on every install/upgrade.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/add-shillinq-sbr-xbrl-reporting/tasks.md#task-8
+     */
+    public function seedSbrMappings(): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        $seedFiles = [
+            'kvk-jaarrekening-nt17.json',
+            'kvk-jaarrekening-nt18.json',
+            'belastingdienst-vpb-nt17.json',
+            'belastingdienst-vpb-nt18.json',
+            'belastingdienst-ib-nt17.json',
+            'sbr-banken-kredietrapportage-nt17.json',
+            'sbr-wonen-nt17.json',
+        ];
+
+        $seeded  = 0;
+        $skipped = 0;
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+
+            foreach ($seedFiles as $seedFile) {
+                $seedPath = __DIR__.'/../Settings/seeds/sbr-mappings/'.$seedFile;
+
+                if (file_exists($seedPath) === false) {
+                    $this->logger->warning('Shillinq: SBR mapping seed file not found: '.$seedPath);
+                    continue;
+                }
+
+                $content = file_get_contents($seedPath);
+                if ($content === false) {
+                    $this->logger->warning('Shillinq: failed to read SBR mapping seed file: '.$seedFile);
+                    continue;
+                }
+
+                $data = json_decode($content, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    $this->logger->warning('Shillinq: failed to parse SBR mapping seed file: '.$seedFile);
+                    continue;
+                }
+
+                $meta     = ($data['_meta'] ?? []);
+                $mappings = ($data['mappings'] ?? []);
+
+                if (empty($mappings) === true) {
+                    $this->logger->info('Shillinq: SBR mapping seed file '.$seedFile.' has no mappings, skipping.');
+                    continue;
+                }
+
+                $entryPoint      = ($meta['entryPoint'] ?? '');
+                $taxonomyVersion = ($meta['taxonomyVersion'] ?? '');
+
+                foreach ($mappings as $mapping) {
+                    $lineId = ($mapping['financialStatementLineId'] ?? '');
+                    if ($lineId === '') {
+                        continue;
+                    }
+
+                    $existing = $objectService
+                        ->setRegister($registerSlug)
+                        ->setSchema('Mapping')
+                        ->findAll(
+                            [
+                                'filters' => [
+                                    'entryPoint'               => $entryPoint,
+                                    'taxonomyVersion'          => $taxonomyVersion,
+                                    'financialStatementLineId' => $lineId,
+                                ],
+                                'limit'   => 1,
+                            ]
+                        );
+
+                    if (empty($existing) === false) {
+                        $skipped++;
+                        continue;
+                    }
+
+                    $record = array_merge(
+                        $mapping,
+                        [
+                            'entryPoint'      => $entryPoint,
+                            'taxonomyVersion' => $taxonomyVersion,
+                        ]
+                    );
+
+                    $objectService->saveObject(
+                        object: $record,
+                        register: $registerSlug,
+                        schema: 'Mapping',
+                    );
+                    $seeded++;
+                }//end foreach
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: SBR mapping seeds imported',
+                [
+                    'seeded'  => $seeded,
+                    'skipped' => $skipped,
+                ]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'SBR mapping seeds imported successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: SBR mapping seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedSbrMappings()
+
+    /**
      * Load configuration from shillinq_register.json via OpenRegister.
      *
      * Skips import when the register is already configured (idempotent).

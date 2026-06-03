@@ -79,6 +79,7 @@ class InitializeSettings implements IRepairStep
      * Phase 4: registers the IV3 quarterly CBS ScheduledWorkflow if not yet present.
      * Phase 5: seeds KOR thresholds from kor-thresholds-2026.json idempotently.
      * Phase 6: seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
+     * Phase 7: seeds NL-taxonomie SBR mapping templates from seeds/sbr-mappings/ idempotently.
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -88,6 +89,7 @@ class InitializeSettings implements IRepairStep
      * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-10
      * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
      * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
+     * @spec openspec/changes/add-shillinq-sbr-xbrl-reporting/tasks.md#task-8
      */
     public function run(IOutput $output): void
     {
@@ -136,6 +138,7 @@ class InitializeSettings implements IRepairStep
             $this->seedSelectielijstRules(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
+            $this->seedSbrMappings(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -325,6 +328,41 @@ class InitializeSettings implements IRepairStep
         }//end try
 
     }//end seedKorThresholds()
+
+    /**
+     * Seed NL-taxonomie SBR mapping templates idempotently (Phase 7).
+     *
+     * Delegates to SettingsService::seedSbrMappings() which reads the seed files
+     * under lib/Settings/seeds/sbr-mappings/ and skips already-existing Mapping
+     * records (matched by entryPoint + taxonomyVersion + financialStatementLineId).
+     * Operator edits to mapping records are preserved across re-runs.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-sbr-xbrl-reporting/tasks.md#task-8
+     */
+    private function seedSbrMappings(IOutput $output): void
+    {
+        $output->info('Seeding NL-taxonomie SBR mapping templates...');
+
+        $result = $this->settingsService->seedSbrMappings();
+
+        if ($result['success'] === true) {
+            $seeded  = ($result['seeded'] ?? 0);
+            $skipped = ($result['skipped'] ?? 0);
+            $output->info(
+                'SBR mapping seeds: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        }
+
+        if ($result['success'] !== true) {
+            $message = ($result['message'] ?? 'unknown error');
+            $output->warning('SBR mapping seeding issue: '.$message);
+        }
+
+    }//end seedSbrMappings()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.

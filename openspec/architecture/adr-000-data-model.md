@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 235
+**Entities:** 236
 
 ## Context
 
@@ -5009,6 +5009,40 @@ _Property tax valuation assessment (Waardering Onroerende Zaken) with automated 
 
 **Relations:**
 - → Property (many-to-one)
+
+### XbrlInstance
+**Schema.org:** `schema:Dataset`
+_SBR/XBRL instance document for Dutch annual filings (KvK jaarrekening, Belastingdienst VPB/IB, SBR-banken, SBR-Wonen). The document is a **declarative transformation** on top of the T3 `FinancialStatement` — it maps each already-balanced statement line to the configured NL-taxonomie concept via an OpenRegister `Mapping` record (per ADR-022). The XBRL instance MUST NOT re-aggregate ledger lines; all monetary totals originate from the `FinancialStatement` that the operator already saw and signed off. Digipoort submission is consumed from an openconnector `Source` by slug; no embedded SOAP/WS-Security client exists in shillinq (ADR-022). The lifecycle `draft → validated → submitted → accepted / rejected` is declared via `x-openregister-lifecycle` (ADR-031); no PHP `XbrlReportService` class orchestrates the transitions._
+**Primary spec:** bookkeeping-sbr-xbrl-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| instanceNumber | string | Yes | Sequential reference unique per administration + reporting period |
+| entryPoint | enum | Yes | One of kvk-jaarrekening, belastingdienst-vpb, belastingdienst-ib, sbr-banken-kredietrapportage, sbr-wonen |
+| taxonomyVersion | string | Yes | NL-taxonomie version pinned at generation (e.g. nt17, nt18) |
+| reportingPeriodStart | date | Yes | Start of the period covered |
+| reportingPeriodEnd | date | Yes | End of the period covered |
+| sourceStatementId | string | Yes | FK to the FinancialStatement record this instance derives from |
+| mappingId | string | Yes | FK to the Mapping record defining line → concept mapping |
+| instanceXml | string | Yes | The generated XBRL instance document as a UTF-8 string |
+| instanceHash | string | Yes | SHA-256 of the canonicalised XML for tamper-evidence |
+| state | enum | Yes | One of draft, validated, submitted, accepted, rejected |
+| digipoortReceiptId | string | No | Receipt ID returned by Digipoort on acknowledgement |
+| administrationId | string | Yes | FK to the administration |
+
+**Relations:**
+- → FinancialStatement (many-to-one, via sourceStatementId — transformation source)
+- → Mapping (many-to-one, via mappingId — NL-taxonomie line→concept template)
+- → Administration (many-to-one)
+
+> **Reconciliation note (add-shillinq-sbr-xbrl-reporting, 2026-06-03):** `XbrlInstance`
+> (this entry) is the T4 SBR bookkeeping-engine schema introduced by
+> `bookkeeping-sbr-xbrl-reporting`. It is distinct from the existing `XBRLInstance`
+> entry (primary spec: `tax-levy-management`) which covers NTA7/SBR-NT tax-levy XBRL
+> documents and has a different field shape. The two schemas coexist; `XbrlInstance`
+> maps to the `shillinq` register under schema slug `XbrlInstance`, while the
+> `XBRLInstance` tax-levy entry maps to its own register. New SBR annual-filing
+> declarations in shillinq MUST use `XbrlInstance`.
 
 ### XBRLInstance
 **Schema.org:** `schema:DigitalDocument`

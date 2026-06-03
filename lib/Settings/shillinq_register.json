@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Shillinq Register",
 		"description": "Register containing all schemas for the Shillinq application.",
-		"version": "0.4.0"
+		"version": "0.5.0"
 	},
 	"x-openregister": {
 		"type": "application",
@@ -6226,6 +6226,203 @@
 							"create",
 							"read",
 							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
+		"XbrlInstance": {
+			"slug": "XbrlInstance",
+			"icon": "FileXmlOutline",
+			"version": "0.1.0",
+			"title": "XBRL Instance",
+			"description": "An SBR/XBRL instance document derived from a T3 FinancialStatement, mapping each statement line to the configured NL-taxonomie concept via a Mapping record. Submission to Digipoort is routed through an openconnector Source by slug (ADR-022). No re-aggregation of ledger lines; the XBRL document is a declarative transformation on top of the already-balanced FinancialStatement (D1 in openspec/changes/add-shillinq-sbr-xbrl-reporting/design.md).",
+			"x-schema-org": "schema:Dataset",
+			"type": "object",
+			"required": [
+				"instanceNumber",
+				"entryPoint",
+				"taxonomyVersion",
+				"reportingPeriodStart",
+				"reportingPeriodEnd",
+				"sourceStatementId",
+				"mappingId",
+				"instanceXml",
+				"instanceHash",
+				"state",
+				"administrationId"
+			],
+			"properties": {
+				"instanceNumber": {
+					"type": "string",
+					"description": "Sequential reference unique per administration and reporting period (e.g. XBRL-2026-001).",
+					"example": "XBRL-2026-001"
+				},
+				"entryPoint": {
+					"type": "string",
+					"description": "NL-taxonomie entry point identifying the filing authority and filing type.",
+					"enum": [
+						"kvk-jaarrekening",
+						"belastingdienst-vpb",
+						"belastingdienst-ib",
+						"sbr-banken-kredietrapportage",
+						"sbr-wonen"
+					],
+					"example": "kvk-jaarrekening"
+				},
+				"taxonomyVersion": {
+					"type": "string",
+					"description": "NL-taxonomie version pinned at the time of generation (e.g. nt17, nt18). Pinned per instance so historical filings remain verifiable even after taxonomy upgrades.",
+					"example": "nt18"
+				},
+				"reportingPeriodStart": {
+					"type": "string",
+					"format": "date",
+					"description": "ISO 8601 start date of the reporting period covered by this filing.",
+					"example": "2025-01-01"
+				},
+				"reportingPeriodEnd": {
+					"type": "string",
+					"format": "date",
+					"description": "ISO 8601 end date of the reporting period covered by this filing.",
+					"example": "2025-12-31"
+				},
+				"sourceStatementId": {
+					"type": "string",
+					"description": "FK to the FinancialStatement record this instance derives from. The XBRL document is a transformation on top of the already-balanced statement — not a re-aggregation.",
+					"example": "fin-stmt-2025-annual-adm-1"
+				},
+				"mappingId": {
+					"type": "string",
+					"description": "FK to the OR Mapping record that defines the FinancialStatement line → NL-taxonomie concept mapping for this entry point and taxonomy version.",
+					"example": "map-kvk-jaarrekening-nt18"
+				},
+				"instanceXml": {
+					"type": "string",
+					"description": "The generated XBRL instance document, stored as a UTF-8 string. Populated during the draft → validated transition.",
+					"example": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!-- XBRL instance -->"
+				},
+				"instanceHash": {
+					"type": "string",
+					"description": "SHA-256 of the canonicalised XBRL XML, used for tamper-evidence. Recalculated on every generation; checked before submission.",
+					"example": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+				},
+				"state": {
+					"type": "string",
+					"description": "Current lifecycle state of this XBRL instance.",
+					"enum": [
+						"draft",
+						"validated",
+						"submitted",
+						"accepted",
+						"rejected"
+					],
+					"default": "draft",
+					"example": "draft"
+				},
+				"digipoortReceiptId": {
+					"type": "string",
+					"nullable": true,
+					"description": "Receipt ID returned by Digipoort on submission acknowledgement. Null until the instance reaches state submitted or beyond.",
+					"example": "dp-receipt-2025-abc123"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the administration this filing belongs to. Used for multi-tenancy scoping.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "state",
+				"initialState": "draft",
+				"states": {
+					"draft": {
+						"label": "Draft",
+						"description": "Instance document generated but not yet schema-validated against the NL-taxonomie."
+					},
+					"validated": {
+						"label": "Validated",
+						"description": "Instance XML has been validated against the NL-taxonomie schema for the entry point; ready for submission to Digipoort."
+					},
+					"submitted": {
+						"label": "Submitted",
+						"description": "Instance submitted to Digipoort via the openconnector source; awaiting acknowledgement."
+					},
+					"accepted": {
+						"label": "Accepted",
+						"description": "Digipoort returned a receipt with status accepted; filing is complete."
+					},
+					"rejected": {
+						"label": "Rejected",
+						"description": "Digipoort returned an error receipt; operator must amend and resubmit."
+					}
+				},
+				"transitions": {
+					"validate": {
+						"from": "draft",
+						"to": "validated",
+						"label": "Validate",
+						"description": "Operator triggers XML validation against the NL-taxonomie schema for the configured entry point and taxonomy version. Transition only succeeds when the instance validates cleanly.",
+						"guard": {
+							"type": "schema-validation",
+							"entryPointField": "entryPoint",
+							"taxonomyVersionField": "taxonomyVersion"
+						}
+					},
+					"submit": {
+						"from": "validated",
+						"to": "submitted",
+						"label": "Submit to Digipoort",
+						"description": "Operator triggers submission to Digipoort via the openconnector source slug digipoort-prod. Transition only succeeds when the openconnector source is reachable and the submission call returns a receipt.",
+						"action": {
+							"type": "openconnector-source",
+							"sourceSlug": "digipoort-prod",
+							"payloadField": "instanceXml",
+							"receiptField": "digipoortReceiptId"
+						}
+					},
+					"accept": {
+						"from": "submitted",
+						"to": "accepted",
+						"label": "Mark accepted",
+						"description": "Inbound Digipoort acknowledgement with status accepted. Requires digipoortReceiptId to be present.",
+						"guard": {
+							"type": "required-field",
+							"field": "digipoortReceiptId"
+						}
+					},
+					"reject": {
+						"from": "submitted",
+						"to": "rejected",
+						"label": "Mark rejected",
+						"description": "Inbound Digipoort error receipt with status rejected. Records the rejection reason."
+					},
+					"amend": {
+						"from": "rejected",
+						"to": "draft",
+						"label": "Amend and resubmit",
+						"description": "Operator amends the source statement, regenerates the instance, and re-enters the validation flow. Audit trail records both submission attempts."
+					}
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"treasurer": {
+						"permissions": [
+							"create",
+							"read",
+							"update",
+							"delete"
+						]
+					},
+					"bookkeeper": {
+						"permissions": [
+							"read"
 						]
 					},
 					"auditor": {

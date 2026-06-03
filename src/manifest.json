@@ -139,6 +139,13 @@
 					"order": 84
 				},
 				{
+					"id": "SbrXbrlFilings",
+					"label": "SBR/XBRL Filings",
+					"icon": "FileCodeOutline",
+					"route": "SbrXbrlFilings",
+					"order": 85
+				},
+				{
 					"id": "EmuRapportage",
 					"label": "EMU-rapportage",
 					"icon": "ChartBarOutline",
@@ -3820,6 +3827,126 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "PaymentRuns"
+			}
+		},
+		{
+			"id": "SbrXbrlFilings",
+			"route": "/bookkeeping/sbr-xbrl-filings",
+			"type": "index",
+			"title": "SBR/XBRL Filings",
+			"config": {
+				"register": "shillinq",
+				"schema": "XbrlInstance",
+				"columns": [
+					{
+						"key": "instanceNumber",
+						"label": "Instance Number",
+						"sortable": true
+					},
+					{
+						"key": "entryPoint",
+						"label": "Entry Point",
+						"sortable": true
+					},
+					{
+						"key": "reportingPeriodEnd",
+						"label": "Period End",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "State",
+						"sortable": true
+					},
+					{
+						"key": "digipoortReceiptId",
+						"label": "Digipoort Receipt",
+						"sortable": false
+					}
+				],
+				"defaultSort": "instanceNumber",
+				"filters": [
+					{
+						"key": "state",
+						"label": "State",
+						"type": "chip"
+					},
+					{
+						"key": "entryPoint",
+						"label": "Entry Point",
+						"type": "chip"
+					}
+				],
+				"detailRoute": "SbrXbrlFilingDetail"
+			}
+		},
+		{
+			"id": "SbrXbrlFilingDetail",
+			"route": "/bookkeeping/sbr-xbrl-filings/:id",
+			"type": "detail",
+			"title": "XBRL Filing",
+			"config": {
+				"register": "shillinq",
+				"schema": "XbrlInstance",
+				"fields": [
+					{
+						"key": "instanceNumber",
+						"label": "Instance Number",
+						"type": "string"
+					},
+					{
+						"key": "entryPoint",
+						"label": "Entry Point",
+						"type": "string"
+					},
+					{
+						"key": "taxonomyVersion",
+						"label": "Taxonomy Version",
+						"type": "string"
+					},
+					{
+						"key": "reportingPeriodStart",
+						"label": "Period Start",
+						"type": "date"
+					},
+					{
+						"key": "reportingPeriodEnd",
+						"label": "Period End",
+						"type": "date"
+					},
+					{
+						"key": "sourceStatementId",
+						"label": "Source Statement",
+						"type": "string"
+					},
+					{
+						"key": "mappingId",
+						"label": "Mapping",
+						"type": "string"
+					},
+					{
+						"key": "instanceHash",
+						"label": "Instance Hash (SHA-256)",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "State",
+						"type": "string"
+					},
+					{
+						"key": "digipoortReceiptId",
+						"label": "Digipoort Receipt ID",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "SbrXbrlFilings"
 			}
 		}
 	]
