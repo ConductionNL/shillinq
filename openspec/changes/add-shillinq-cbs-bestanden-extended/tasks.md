@@ -9,21 +9,21 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no extended CBS-bestand aggregations, `kernGegevensConfig` schema, `ozbCategorie` flag, or `bookkeeping-cbs-bestanden-extended` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `openspec/changes/**`)
-- [ ] Task 2: Author `specs/bookkeeping-cbs-bestanden-extended/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4-specialized (NL gov sector)` / `Depends on: bookkeeping-iv3-reporting` header, `REQ-CBSE-NNN` requirements, `#### Scenario:` blocks with GIVEN/WHEN/THEN
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions
-- [ ] Task 4: Author `design.md` with Reuse Analysis table; BBV-reviewer persona confirms the four bestanden + Kerngegevens denominators match CBS-spec
-- [ ] Task 5: Declare the small `kernGegevensConfig` admin-level schema in `lib/Settings/shillinq_register.json` with `inwonerAantal`, `oppervlak`, `gewogenOppervlak`, `bestuursOmvang` per REQ-CBSE-003
-- [ ] Task 6: Add `ozbCategorie` array flag on `GLLine` (values: `eigenaars-woning`, `eigenaars-niet-woning`, `gebruikers-woning`, `gebruikers-niet-woning`) per REQ-CBSE-004
-- [ ] Task 7: Declare the Iv3-detail aggregation grouping `GLLine` by `(periodId, taakveld, categorie)` summing `(debit - credit)` per REQ-CBSE-002; quarterly submission
-- [ ] Task 8: Declare the Kerngegevens jaarstaten aggregation consuming the closed-year jaarrekening + `kernGegevensConfig` denominators per REQ-CBSE-003; annual submission; XML output
-- [ ] Task 9: Declare the Iv3-OZB aggregation grouping OZB-postings by `(periodId, ozbCategorie)` per REQ-CBSE-004; CSV per CBS Iv3-OZB layout
-- [ ] Task 10: Declare the EMU-bestand aggregation consuming the sibling EMU-reporting computation (ESA-2010 classifier + inclusion/exclusion rules); CBS EMU XML layout per REQ-CBSE-005; invariant test that EMU-bestand saldo equals EMU-reporting saldo (€0 tolerance)
-- [ ] Task 11: Register 4 docudesk template references (Iv3-detail CSV, Kerngegevens XML, Iv3-OZB CSV, EMU-bestand XML) in `lib/Settings/docudesk-templates.json` per REQ-CBSE-001
-- [ ] Task 12: Register 4 CBS openconnector source rows (Iv3-detail, Kerngegevens, Iv3-OZB, EMU-bestand) in `lib/Settings/openconnector-sources.json` per REQ-CBSE-006; no app-local HTTP client per ADR-019
-- [ ] Task 13: Bind the periodic triggers — quarterly bestanden ride the OR `ScheduledWorkflow` primitive; annual bestanden trigger on jaarrekening-close lifecycle event from T3
-- [ ] Task 14: Add CBS-bestanden navigation + per-bestand sub-pages to `src/manifest.json` (`featureFlags.gov-cbs-extended`, `Bookkeeping > CBS-bestanden`, sub-pages for Iv3-detail / Kerngegevens / Iv3-OZB / EMU-bestand with `type: detail` showing latest run + history) per REQ-CBSE-007; `node tests/validate-manifest.js` exits 0
-- [ ] Task 15: Update `openspec/architecture/adr-000-data-model.md` with a one-paragraph annotation for `kernGegevensConfig` + `ozbCategorie` cross-referencing this spec
+- [x] Task 1: Confirm no extended CBS-bestand aggregations, `kernGegevensConfig` schema, `ozbCategorie` flag, or `bookkeeping-cbs-bestanden-extended` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `openspec/changes/**`)
+- [x] Task 2: Author `specs/bookkeeping-cbs-bestanden-extended/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4-specialized (NL gov sector)` / `Depends on: bookkeeping-iv3-reporting` header, `REQ-CBSE-NNN` requirements, `#### Scenario:` blocks with GIVEN/WHEN/THEN
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions
+- [x] Task 4: Author `design.md` with Reuse Analysis table; BBV-reviewer persona confirms the four bestanden + Kerngegevens denominators match CBS-spec
+- [x] Task 5: Declare the small `kernGegevensConfig` admin-level schema in `lib/Settings/shillinq_register.json` with `inwonerAantal`, `oppervlak`, `gewogenOppervlak`, `bestuursOmvang` per REQ-CBSE-003
+- [x] Task 6: Add `ozbCategorie` array flag on `GLLine` (values: `eigenaars-woning`, `eigenaars-niet-woning`, `gebruikers-woning`, `gebruikers-niet-woning`) per REQ-CBSE-004
+- [x] Task 7: Declare the Iv3-detail aggregation grouping `GLLine` by `(periodId, taakveld, categorie)` summing `(debit - credit)` per REQ-CBSE-002; quarterly submission
+- [x] Task 8: Declare the Kerngegevens jaarstaten aggregation consuming the closed-year jaarrekening + `kernGegevensConfig` denominators per REQ-CBSE-003; annual submission; XML output
+- [x] Task 9: Declare the Iv3-OZB aggregation grouping OZB-postings by `(periodId, ozbCategorie)` per REQ-CBSE-004; CSV per CBS Iv3-OZB layout
+- [x] Task 10: Declare the EMU-bestand aggregation consuming the sibling EMU-reporting computation (ESA-2010 classifier + inclusion/exclusion rules); CBS EMU XML layout per REQ-CBSE-005; invariant test that EMU-bestand saldo equals EMU-reporting saldo (€0 tolerance)
+- [x] Task 11: Register 4 docudesk template references (Iv3-detail CSV, Kerngegevens XML, Iv3-OZB CSV, EMU-bestand XML) in `lib/Settings/docudesk-templates.json` per REQ-CBSE-001
+- [x] Task 12: Register 4 CBS openconnector source rows (Iv3-detail, Kerngegevens, Iv3-OZB, EMU-bestand) in `lib/Settings/openconnector-sources.json` per REQ-CBSE-006; no app-local HTTP client per ADR-019
+- [x] Task 13: Bind the periodic triggers — quarterly bestanden ride the OR `ScheduledWorkflow` primitive; annual bestanden trigger on jaarrekening-close lifecycle event from T3
+- [x] Task 14: Add CBS-bestanden navigation + per-bestand sub-pages to `src/manifest.json` (`featureFlags.gov-cbs-extended`, `Bookkeeping > CBS-bestanden`, sub-pages for Iv3-detail / Kerngegevens / Iv3-OZB / EMU-bestand with `type: detail` showing latest run + history) per REQ-CBSE-007; `node tests/validate-manifest.js` exits 0
+- [x] Task 15: Update `openspec/architecture/adr-000-data-model.md` with a one-paragraph annotation for `kernGegevensConfig` + `ozbCategorie` cross-referencing this spec
 
 ## Verification
 

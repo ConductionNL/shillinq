@@ -139,6 +139,47 @@
 					"order": 84
 				},
 				{
+					"id": "CbsBestanden",
+					"label": "CBS-bestanden",
+					"icon": "FileChartOutline",
+					"order": 85,
+					"featureFlag": "gov-cbs-extended",
+					"children": [
+						{
+							"id": "CbsIv3Detail",
+							"label": "Iv3-detail",
+							"icon": "TableOutline",
+							"route": "CbsIv3Detail",
+							"type": "detail",
+							"order": 10
+						},
+						{
+							"id": "CbsKerngegevens",
+							"label": "Kerngegevens jaarstaten",
+							"icon": "ChartBarOutline",
+							"route": "CbsKerngegevens",
+							"type": "detail",
+							"order": 20
+						},
+						{
+							"id": "CbsIv3Ozb",
+							"label": "Iv3-OZB",
+							"icon": "HomeOutline",
+							"route": "CbsIv3Ozb",
+							"type": "detail",
+							"order": 30
+						},
+						{
+							"id": "CbsEmuBestand",
+							"label": "EMU-bestand",
+							"icon": "BankOutline",
+							"route": "CbsEmuBestand",
+							"type": "detail",
+							"order": 40
+						}
+					]
+				},
+				{
 					"id": "Dimensions",
 					"label": "Dimensions",
 					"icon": "ChartBubble",

@@ -1,0 +1,60 @@
+{
+	"_meta": {
+		"description": "Docudesk template references registered by Shillinq. Each entry references a template slug in the docudesk service. Templates render output from x-openregister-aggregations declarations via openconnector sources per ADR-022 + ADR-031.",
+		"version": "0.1.0"
+	},
+	"templates": {
+		"iv3-detail-2026.csv": {
+			"slug": "iv3-detail-2026.csv",
+			"name": "IV3-detail bestand 2026 (CSV)",
+			"description": "CBS-canonical CSV layout for the Iv3-detail bestand. Renders the iv3DetailByTaakveldCategorie aggregation result from GLLine grouped by (periodId, taakveld, categorie). Per-quarter submission via openconnector source cbs-iv3-detail. cbsSpec version: 2026.",
+			"format": "csv",
+			"cbsSpec": "iv3-detail-2026",
+			"aggregationSource": "GLLine.iv3DetailByTaakveldCategorie",
+			"openconnectorSource": "cbs-iv3-detail",
+			"cadence": "quarterly",
+			"_meta": {
+				"specRef": "openspec/changes/add-shillinq-cbs-bestanden-extended/specs/bookkeeping-cbs-bestanden-extended/spec.md#req-cbse-002"
+			}
+		},
+		"kerngegevens-2026.xml": {
+			"slug": "kerngegevens-2026.xml",
+			"name": "Kerngegevens jaarstaten 2026 (XML)",
+			"description": "CBS-conformant XML payload for the Kerngegevens jaarstaten bestand. Renders the kerngegevensRatios aggregation result from kernGegevensConfig consuming the closed fiscal-year jaarrekening + inwonerAantal denominators. Annual submission via openconnector source cbs-kerngegevens. cbsSpec version: 2026.",
+			"format": "xml",
+			"cbsSpec": "kerngegevens-2026",
+			"aggregationSource": "kernGegevensConfig.kerngegevensRatios",
+			"openconnectorSource": "cbs-kerngegevens",
+			"cadence": "annual",
+			"_meta": {
+				"specRef": "openspec/changes/add-shillinq-cbs-bestanden-extended/specs/bookkeeping-cbs-bestanden-extended/spec.md#req-cbse-003"
+			}
+		},
+		"iv3-ozb-2026.csv": {
+			"slug": "iv3-ozb-2026.csv",
+			"name": "IV3-OZB bestand 2026 (CSV)",
+			"description": "CBS Iv3-OZB layout CSV for OZB-inkomsten and WOZ-waarden per heffingstijdvak. Renders the iv3OzbByCategorieHeffing aggregation result from GLLine grouped by (periodId, ozbCategorie). Periodic submission via openconnector source cbs-iv3-ozb. cbsSpec version: 2026.",
+			"format": "csv",
+			"cbsSpec": "iv3-ozb-2026",
+			"aggregationSource": "GLLine.iv3OzbByCategorieHeffing",
+			"openconnectorSource": "cbs-iv3-ozb",
+			"cadence": "periodic",
+			"_meta": {
+				"specRef": "openspec/changes/add-shillinq-cbs-bestanden-extended/specs/bookkeeping-cbs-bestanden-extended/spec.md#req-cbse-004"
+			}
+		},
+		"emu-bestand-2026.xml": {
+			"slug": "emu-bestand-2026.xml",
+			"name": "EMU-bestand 2026 (XML)",
+			"description": "CBS EMU XML layout for EMU-saldo and EMU-schuld per period. Renders the emuBestandSaldo aggregation result from Iv3Export consuming the ESA-2010 classifier from sibling bookkeeping-emu-reporting. Quarterly and annual submission via openconnector source cbs-emu-bestand. cbsSpec version: 2026.",
+			"format": "xml",
+			"cbsSpec": "emu-bestand-2026",
+			"aggregationSource": "Iv3Export.emuBestandSaldo",
+			"openconnectorSource": "cbs-emu-bestand",
+			"cadence": "quarterly-and-annual",
+			"_meta": {
+				"specRef": "openspec/changes/add-shillinq-cbs-bestanden-extended/specs/bookkeeping-cbs-bestanden-extended/spec.md#req-cbse-005"
+			}
+		}
+	}
+}

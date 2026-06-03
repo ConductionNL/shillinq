@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 235
+**Entities:** 236
 
 ## Context
 
@@ -2165,6 +2165,7 @@ _A debit-or-credit line within a GLTransaction, encoding polarity in the `side` 
 | kostenDragerCode | string | No | FK to KostenDrager.code for cost-unit analytical reporting per REQ-CC-003 |
 | projectCode | string | No | FK to Project.code for project accounting and WBSO pre-positioning per REQ-CC-003 + REQ-CC-007 |
 | dimensions | object | No | Free-form key→value map for custom analytical dimensions; each key matches a registered custom dimension register, each value matches that register's code field; validated via OR relations engine per REQ-CC-003 |
+| ozbCategorie | array of enum | No | OZB category flags for the Iv3-OZB aggregation: one or more of eigenaars-woning, eigenaars-niet-woning, gebruikers-woning, gebruikers-niet-woning. Null on non-OZB lines per REQ-CBSE-004. |
 
 **Relations:**
 - → GLTransaction (many-to-one, via transactionId → GLTransaction.id)
@@ -2172,6 +2173,8 @@ _A debit-or-credit line within a GLTransaction, encoding polarity in the `side` 
 - → CostCenter (many-to-one, via costCenterCode → CostCenter.code; additive per REQ-CC-003)
 - → KostenDrager (many-to-one, via kostenDragerCode → KostenDrager.code; additive per REQ-CC-003)
 - → Project (many-to-one, via projectCode → Project.code; additive per REQ-CC-003 + REQ-CC-007)
+
+> **Reconciliation note (add-shillinq-cbs-bestanden-extended, 2026-06-03):** The `GLLine` schema is additively extended with the `ozbCategorie` array flag per REQ-CBSE-004 enabling the `iv3OzbByCategorieHeffing` aggregation to split OZB-postings by eigenaars/gebruikers-deel and woning/niet-woning for the CBS Iv3-OZB bestand. The field is nullable and non-required — existing non-OZB lines remain unaffected. Two new `x-openregister-aggregations` are also added: `iv3DetailByTaakveldCategorie` (groups by periodId + taakveld + categorie for the Iv3-detail quarterly bestand per REQ-CBSE-002) and `iv3OzbByCategorieHeffing` (groups by periodId + ozbCategorie for the Iv3-OZB bestand per REQ-CBSE-004). See also: `kernGegevensConfig` below.
 
 > **Reconciliation note (add-shillinq-cost-centers-dimensions, 2026-06-03):** The T1 `GLLine` schema is additively extended with four new optional fields (`costCenterCode`, `kostenDragerCode`, `projectCode`, `dimensions`) per REQ-CC-003. The existing `costCenter` field is retained as the backwards-compatible alias for `costCenterCode`. T1 single-dimension callers remain correct — the new fields are nullable and non-required. Segment P&L aggregations (`segmentPnlByCostCenter`, `segmentPnlByKostenDrager`, `segmentPnlByProject`) are declared on `GLLine` as `x-openregister-aggregations` per ADR-031 + REQ-CC-005; no PHP `SegmentReportService` is authored.
 
@@ -2506,6 +2509,28 @@ _A balanced transaction record affecting two or more GL accounts (debits equal c
 **Relations:**
 - → GeneralLedgerAccount (many-to-many)
 - → FiscalYear (many-to-one)
+
+### kernGegevensConfig
+**Schema.org:** `schema:Dataset`
+_Administration-level configuration record holding the denominators required for the CBS Kerngegevens jaarstaten computation per REQ-CBSE-003. One record per administration per fiscal year. Operators set the denominator values yearly; the `denominatorStaleWarning` calculation surfaces a warning when any value is >12 months old. The `kerngegevensRatios` aggregation consumes these denominators together with the closed fiscal-year jaarrekening (BalanceSheet + GLLine) to produce the CBS-canonical lasten per inwoner, baten per inwoner, and related ratios. No PHP transformation service per ADR-031._
+**Primary spec:** bookkeeping-cbs-bestanden-extended
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the Administration (gemeente/provincie/waterschap) |
+| fiscalYearId | string | Yes | FK to the FiscalYear for which these denominators apply |
+| inwonerAantal | integer ≥ 0 | Yes | Number of inhabitants; denominator for lasten/baten per inwoner ratios |
+| oppervlak | number ≥ 0 | No | Total surface area in km²; denominator for oppervlak-based ratios |
+| gewogenOppervlak | number ≥ 0 | No | Weighted surface area in km² (land + water weighted); CBS-specific denominator |
+| bestuursOmvang | integer ≥ 0 | No | Elected council seats; denominator for bestuursomvang-based ratios |
+| ambtenarenAantal | integer ≥ 0 | No | FTE count of civil servants; denominator for personeelslasten per fte |
+| lastUpdatedAt | date | No | Date operator last updated the denominators; stale warning fires when >12 months |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- → FiscalYear (many-to-one, via fiscalYearId)
+
+> **Annotation (add-shillinq-cbs-bestanden-extended, 2026-06-03):** `kernGegevensConfig` is the only new register schema introduced by the extended CBS-bestanden capability. All four CBS bestanden (Iv3-detail, Kerngegevens jaarstaten, Iv3-OZB, EMU-bestand) are declarative transformations: `x-openregister-aggregations` on `GLLine` and `Iv3Export`, docudesk templates, and openconnector source rows per ADR-019 + ADR-022 + ADR-031. No PHP transformation service is introduced. The `ozbCategorie` flag on `GLLine` is the only other schema extension — see the `GLLine` reconciliation note above. Spec: `openspec/changes/add-shillinq-cbs-bestanden-extended/`.
 
 ### KorRegime
 **Schema.org:** `schema:GovernmentPermit`

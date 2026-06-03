@@ -1,0 +1,68 @@
+{
+	"_meta": {
+		"description": "OpenConnector source rows registered by Shillinq for external CBS submissions. Each source row references a CBS endpoint; the actual HTTP call is openconnector's per ADR-019. Shillinq references sources by slug from x-openregister-aggregations outputChannel declarations and x-openregister-scheduled-workflows. No app-local HTTP client to CBS.",
+		"version": "0.1.0"
+	},
+	"sources": {
+		"cbs-iv3": {
+			"slug": "cbs-iv3",
+			"name": "CBS IV3 (base quarterly)",
+			"description": "OpenConnector source for the base CBS IV3 quarterly submission (Informatie voor Derden). Used by the Iv3Export quarterly-cbs-submission workflow and the Iv3Export lifecycle submit transition. No Shillinq-side HTTP client per REQ-CBSE-006 + ADR-019.",
+			"type": "openconnector-source",
+			"protocol": "https",
+			"endpointReference": "cbs-iv3-aanlevering-v2",
+			"authMethod": "client-certificate",
+			"_meta": {
+				"specRef": "openspec/changes/add-shillinq-iv3-reporting"
+			}
+		},
+		"cbs-iv3-detail": {
+			"slug": "cbs-iv3-detail",
+			"name": "CBS IV3-detail (quarterly)",
+			"description": "OpenConnector source for the CBS Iv3-detail bestand submission (per-taakveld-per-categorie detail). Used by the quarterly-cbs-iv3-detail-submission scheduled workflow on kernGegevensConfig. No Shillinq-side HTTP client per REQ-CBSE-006 + ADR-019.",
+			"type": "openconnector-source",
+			"protocol": "https",
+			"endpointReference": "cbs-iv3-detail-aanlevering-v1",
+			"authMethod": "client-certificate",
+			"_meta": {
+				"specRef": "openspec/changes/add-shillinq-cbs-bestanden-extended/specs/bookkeeping-cbs-bestanden-extended/spec.md#req-cbse-002"
+			}
+		},
+		"cbs-kerngegevens": {
+			"slug": "cbs-kerngegevens",
+			"name": "CBS Kerngegevens jaarstaten (annual)",
+			"description": "OpenConnector source for the CBS Kerngegevens jaarstaten XML submission. Used by the annual-cbs-kerngegevens-submission scheduled workflow on kernGegevensConfig, triggered annually after jaarrekening-close. No Shillinq-side HTTP client per REQ-CBSE-006 + ADR-019.",
+			"type": "openconnector-source",
+			"protocol": "https",
+			"endpointReference": "cbs-kerngegevens-aanlevering-v1",
+			"authMethod": "client-certificate",
+			"_meta": {
+				"specRef": "openspec/changes/add-shillinq-cbs-bestanden-extended/specs/bookkeeping-cbs-bestanden-extended/spec.md#req-cbse-003"
+			}
+		},
+		"cbs-iv3-ozb": {
+			"slug": "cbs-iv3-ozb",
+			"name": "CBS IV3-OZB (periodic)",
+			"description": "OpenConnector source for the CBS Iv3-OZB bestand CSV submission (OZB-inkomsten per heffingstijdvak). Used by the quarterly-cbs-iv3-ozb-submission scheduled workflow on kernGegevensConfig. No Shillinq-side HTTP client per REQ-CBSE-006 + ADR-019.",
+			"type": "openconnector-source",
+			"protocol": "https",
+			"endpointReference": "cbs-iv3-ozb-aanlevering-v1",
+			"authMethod": "client-certificate",
+			"_meta": {
+				"specRef": "openspec/changes/add-shillinq-cbs-bestanden-extended/specs/bookkeeping-cbs-bestanden-extended/spec.md#req-cbse-004"
+			}
+		},
+		"cbs-emu-bestand": {
+			"slug": "cbs-emu-bestand",
+			"name": "CBS EMU-bestand (quarterly + annual)",
+			"description": "OpenConnector source for the CBS EMU-bestand XML submission (EMU-saldo and EMU-schuld). Used by the annual-cbs-emu-bestand-submission scheduled workflow on kernGegevensConfig. Consumes ESA-2010 classifier from sibling bookkeeping-emu-reporting. No Shillinq-side HTTP client per REQ-CBSE-006 + ADR-019.",
+			"type": "openconnector-source",
+			"protocol": "https",
+			"endpointReference": "cbs-emu-bestand-aanlevering-v1",
+			"authMethod": "client-certificate",
+			"_meta": {
+				"specRef": "openspec/changes/add-shillinq-cbs-bestanden-extended/specs/bookkeeping-cbs-bestanden-extended/spec.md#req-cbse-005"
+			}
+		}
+	}
+}
