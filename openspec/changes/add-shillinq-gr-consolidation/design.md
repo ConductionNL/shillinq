@@ -1,5 +1,7 @@
 # Design — GR Consolidation
 
+**status: pr-created**
+
 ## Context
 
 A gemeenschappelijke regeling (GR) is a separate juridical entity
