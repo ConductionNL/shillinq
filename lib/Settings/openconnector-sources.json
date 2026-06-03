@@ -1,0 +1,148 @@
+[
+	{
+		"slug": "adp-salaris-nl",
+		"name": "ADP Salarissen Nederland",
+		"description": "ADP WorkforceNow salaris-feed source for NL payroll batches. Delivers per-employee per-loontijdvak payroll data via REST to SalarisFeed. Credentials (OAuth2 client credentials) live exclusively in openconnector — no PHP payroll client in shillinq per REQ-DPA-001 and ADR-019.",
+		"type": "rest",
+		"location": "https://api.adp.com/workforce-now/v1/payroll/earnings-by-period",
+		"auth": {
+			"type": "oauth2",
+			"grant": "client_credentials",
+			"tokenEndpoint": "https://accounts.adp.com/auth/oauth/v2/token",
+			"scope": "openid profile payroll"
+		},
+		"mapping": {
+			"targetRegister": "shillinq",
+			"targetSchema": "SalarisFeed",
+			"sourceSlugField": "adp-salaris-nl"
+		},
+		"configuration": {
+			"contentType": "application/json",
+			"method": "GET",
+			"pagination": {
+				"type": "offset",
+				"limitParam": "$top",
+				"offsetParam": "$skip"
+			}
+		},
+		"retentionClass": "7-year-personnel-records"
+	},
+	{
+		"slug": "loket-salaris-nl",
+		"name": "Loket.nl Salarisadministratie",
+		"description": "Loket.nl REST API salaris-feed source for NL payroll batches. Delivers per-employee per-loontijdvak payroll data to SalarisFeed. OAuth2 credentials managed by openconnector per REQ-DPA-001 and ADR-019.",
+		"type": "rest",
+		"location": "https://api.loket.nl/v2/payslips",
+		"auth": {
+			"type": "oauth2",
+			"grant": "client_credentials",
+			"tokenEndpoint": "https://login.loket.nl/connect/token",
+			"scope": "payroll.read"
+		},
+		"mapping": {
+			"targetRegister": "shillinq",
+			"targetSchema": "SalarisFeed",
+			"sourceSlugField": "loket-salaris-nl"
+		},
+		"configuration": {
+			"contentType": "application/json",
+			"method": "GET",
+			"pagination": {
+				"type": "cursor",
+				"cursorParam": "cursor",
+				"cursorField": "nextCursor"
+			}
+		},
+		"retentionClass": "7-year-personnel-records"
+	},
+	{
+		"slug": "visma-salaris-nl",
+		"name": "Visma.net Salarisadministratie NL",
+		"description": "Visma.net HRM API salaris-feed source for NL payroll batches. Delivers per-employee per-loontijdvak payroll data to SalarisFeed. OAuth2 credentials managed by openconnector per REQ-DPA-001 and ADR-019.",
+		"type": "rest",
+		"location": "https://api.visma.net/payroll/v1/nl/payslips",
+		"auth": {
+			"type": "oauth2",
+			"grant": "client_credentials",
+			"tokenEndpoint": "https://connect.visma.net/connect/token",
+			"scope": "payroll:read"
+		},
+		"mapping": {
+			"targetRegister": "shillinq",
+			"targetSchema": "SalarisFeed",
+			"sourceSlugField": "visma-salaris-nl"
+		},
+		"configuration": {
+			"contentType": "application/json",
+			"method": "GET",
+			"pagination": {
+				"type": "page",
+				"pageParam": "page",
+				"sizeParam": "pageSize"
+			}
+		},
+		"retentionClass": "7-year-personnel-records"
+	},
+	{
+		"slug": "nmbrs-salaris-nl",
+		"name": "Nmbrs Salarisadministratie",
+		"description": "Nmbrs REST API salaris-feed source for NL payroll batches. Delivers per-employee per-loontijdvak payroll data to SalarisFeed. OAuth2 credentials managed by openconnector per REQ-DPA-001 and ADR-019.",
+		"type": "rest",
+		"location": "https://api.nmbrs.nl/soap/v3/PayrollWebService",
+		"auth": {
+			"type": "oauth2",
+			"grant": "client_credentials",
+			"tokenEndpoint": "https://login.nmbrs.nl/oauth2/token",
+			"scope": "payroll.read"
+		},
+		"mapping": {
+			"targetRegister": "shillinq",
+			"targetSchema": "SalarisFeed",
+			"sourceSlugField": "nmbrs-salaris-nl"
+		},
+		"configuration": {
+			"contentType": "application/json",
+			"method": "GET",
+			"pagination": {
+				"type": "offset",
+				"limitParam": "limit",
+				"offsetParam": "offset"
+			}
+		},
+		"retentionClass": "7-year-personnel-records"
+	},
+	{
+		"slug": "belastingdienst-ib47-nl",
+		"name": "Belastingdienst IB47 Aanlevering",
+		"description": "Belastingdienst IB47 yearly batch submission source. Accepts the IB47 XML payload (per the Belastingdienst XML schema 2026) rendered by the IB47 docudesk template. Every successful submission triggers an audit-trail event recording the submission hash and HTTP response status per REQ-DPA-006 and ADR-022. Credentials managed by openconnector — no app-local IB47 HTTP client.",
+		"type": "rest",
+		"location": "https://aanleverpunt.belastingdienst.nl/ib47/v1/batch",
+		"auth": {
+			"type": "oauth2",
+			"grant": "client_credentials",
+			"tokenEndpoint": "https://iam.belastingdienst.nl/oauth2/token",
+			"scope": "ib47:submit"
+		},
+		"mapping": {
+			"targetRegister": "shillinq",
+			"targetSchema": "IB47Record",
+			"responseMapping": {
+				"submissionHash": "$.transactionId",
+				"responseStatus": "$.status"
+			}
+		},
+		"configuration": {
+			"contentType": "application/xml",
+			"method": "POST",
+			"auditOnTransmit": true,
+			"auditTrailImmutable": true,
+			"auditFields": [
+				"submissionHash",
+				"responseStatus",
+				"transmittedAt",
+				"actor"
+			]
+		},
+		"retentionClass": "7-year-personnel-records"
+	}
+]

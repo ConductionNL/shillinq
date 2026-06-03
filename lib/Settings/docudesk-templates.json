@@ -1,0 +1,80 @@
+[
+	{
+		"slug": "shillinq-opdrachtgeversverklaring",
+		"name": "Standaard Opdrachtgeversverklaring (Wet DBA)",
+		"description": "Belastingdienst-conform opdrachtgeversverklaring template rendered from OpdrachtgeversVerklaring fields. Generates the standard opdrachtgever declaration document per REQ-DPA-004. Triggered on the OpdrachtgeversVerklaring overeenkomen lifecycle transition; the output URI is written back to verklaringDocumentUri. Render flow is docudesk-side per ADR-022 — shillinq declares the template and field bindings only.",
+		"sourceRegister": "shillinq",
+		"sourceSchema": "OpdrachtgeversVerklaring",
+		"outputFormat": "pdf",
+		"outputChannel": "docudesk://templates/shillinq/opdrachtgeversverklaring",
+		"fieldBindings": {
+			"opdrachtgeverNaam": "@source.administrationId",
+			"opdrachtNemernaam": "@source.zzpNaam",
+			"opdrachtNemerId": "@source.zzpId",
+			"opdrachtOmschrijving": "@source.opdrachtBeschrijving",
+			"startDatum": "@source.looptijdStart",
+			"eindDatum": "@source.looptijdEind",
+			"modelOvereenkomstUri": "@source.modelOvereenkomst",
+			"risicoBeoordeling": "@source.risicoBeoordeling",
+			"verklaringDatum": "today()"
+		},
+		"templateMeta": {
+			"language": "nl",
+			"version": "2026.1",
+			"legalBasis": "Wet DBA 2016 (Wet deregulering beoordeling arbeidsrelaties)",
+			"belastingdienstConform": true
+		},
+		"retentionClass": "7-year-personnel-records"
+	},
+	{
+		"slug": "shillinq-ib47-formulier",
+		"name": "IB47-formulier 2026 (Belastingdienst XML)",
+		"description": "IB47 jaaropgaaf form template rendering per the Belastingdienst XML schema 2026 per REQ-DPA-006. Groups IB47Record entries per (belastingjaar, opdrachtgeverId) into a single XML batch. The rendered XML is transmitted via the belastingdienst-ib47-nl openconnector source (referenced by output-channel). Every transmission writes an audit-trail event with submission hash and response status per ADR-022.",
+		"sourceRegister": "shillinq",
+		"sourceSchema": "IB47Record",
+		"outputFormat": "xml",
+		"outputChannel": "openconnector://sources/belastingdienst-ib47-nl",
+		"fieldBindings": {
+			"belastingjaar": "@source.belastingjaar",
+			"opdrachtgeverId": "@source.opdrachtgeverId",
+			"ontvangerNaam": "@source.ontvangerNaam",
+			"ontvangerBSN": "@source.ontvangerBSN",
+			"ontvangerAdres": "@source.ontvangerAdres",
+			"betalingenTotaal": "@source.betalingenTotaal",
+			"betalingTypeCode": "@source.betalingTypeCode"
+		},
+		"groupBy": [
+			"belastingjaar",
+			"opdrachtgeverId"
+		],
+		"aggregation": "ib47TotalsPerTaxYear",
+		"filter": {
+			"isDryRun": false
+		},
+		"xmlSchema": {
+			"namespace": "http://www.belastingdienst.nl/ib47/2026",
+			"rootElement": "IB47AangifteSet",
+			"version": "2026.1"
+		},
+		"auditOnTransmit": {
+			"enabled": true,
+			"auditTrail": "immutable",
+			"captureFields": [
+				"submissionHash",
+				"responseStatus",
+				"transmittedAt",
+				"actor",
+				"belastingjaar",
+				"opdrachtgeverId"
+			]
+		},
+		"templateMeta": {
+			"language": "nl",
+			"version": "2026.1",
+			"legalBasis": "Wet op de loonbelasting 1964 art. 22a + IB47-schema 2026",
+			"belastingdienstConform": true,
+			"xmlSchemaUrl": "https://www.belastingdienst.nl/schemas/ib47/2026/ib47-aangifte-2026.xsd"
+		},
+		"retentionClass": "7-year-personnel-records"
+	}
+]

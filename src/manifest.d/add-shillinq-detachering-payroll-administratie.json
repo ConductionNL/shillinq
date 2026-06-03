@@ -1,0 +1,386 @@
+{
+	"menu": [
+		{
+			"id": "Bookkeeping",
+			"children": [
+				{
+					"id": "DetacheringPayroll",
+					"label": "Detachering en payroll",
+					"icon": "AccountCashOutline",
+					"order": 45,
+					"featureFlag": "mkb-detachering",
+					"children": [
+						{
+							"id": "SalarisFeed",
+							"label": "Salaris-feeds",
+							"icon": "FileImportOutline",
+							"route": "SalarisFeed",
+							"order": 10
+						},
+						{
+							"id": "OpdrachtgeversVerklaringen",
+							"label": "Opdrachtgevers-verklaringen",
+							"icon": "FileSignOutline",
+							"route": "OpdrachtgeversVerklaringen",
+							"order": 20
+						},
+						{
+							"id": "IB47Jaarbatch",
+							"label": "IB47-jaarbatch",
+							"icon": "FileDocumentOutline",
+							"route": "IB47Jaarbatch",
+							"order": 30
+						}
+					]
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "SalarisFeed",
+			"route": "/bookkeeping/detachering-payroll/salaris-feeds",
+			"type": "index",
+			"title": "Salaris-feeds",
+			"featureFlag": "mkb-detachering",
+			"config": {
+				"register": "shillinq",
+				"schema": "SalarisFeed",
+				"featureFlag": "mkb-detachering",
+				"columns": [
+					{
+						"key": "salarisbureauSlug",
+						"label": "Salarisbureau",
+						"sortable": true
+					},
+					{
+						"key": "loontijdvak",
+						"label": "Loontijdvak",
+						"sortable": true
+					},
+					{
+						"key": "employeeName",
+						"label": "Medewerker",
+						"sortable": true
+					},
+					{
+						"key": "loonkosten",
+						"label": "Loonkosten (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "importState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-loontijdvak",
+				"detailRoute": "SalarisFeedDetail"
+			}
+		},
+		{
+			"id": "SalarisFeedDetail",
+			"route": "/bookkeeping/detachering-payroll/salaris-feeds/:id",
+			"type": "detail",
+			"title": "Salaris-feed",
+			"featureFlag": "mkb-detachering",
+			"config": {
+				"register": "shillinq",
+				"schema": "SalarisFeed",
+				"featureFlag": "mkb-detachering",
+				"fields": [
+					{
+						"key": "salarisbureauSlug",
+						"label": "Salarisbureau",
+						"type": "string"
+					},
+					{
+						"key": "loontijdvak",
+						"label": "Loontijdvak",
+						"type": "string"
+					},
+					{
+						"key": "employeeId",
+						"label": "Medewerker-ID",
+						"type": "string"
+					},
+					{
+						"key": "employeeName",
+						"label": "Medewerker",
+						"type": "string"
+					},
+					{
+						"key": "loonkosten",
+						"label": "Loonkosten (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "nettoloon",
+						"label": "Nettoloon (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "socialePremies",
+						"label": "Sociale premies (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "loonheffing",
+						"label": "Loonheffing (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "pensioen",
+						"label": "Pensioen (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "importState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "journalEntryId",
+						"label": "Journaalpost",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "SalarisFeed"
+			}
+		},
+		{
+			"id": "OpdrachtgeversVerklaringen",
+			"route": "/bookkeeping/detachering-payroll/opdrachtgeversverklaringen",
+			"type": "index",
+			"title": "Opdrachtgevers-verklaringen",
+			"featureFlag": "mkb-detachering",
+			"config": {
+				"register": "shillinq",
+				"schema": "OpdrachtgeversVerklaring",
+				"featureFlag": "mkb-detachering",
+				"columns": [
+					{
+						"key": "zzpNaam",
+						"label": "ZZP-er",
+						"sortable": true
+					},
+					{
+						"key": "looptijdStart",
+						"label": "Startdatum",
+						"sortable": true
+					},
+					{
+						"key": "looptijdEind",
+						"label": "Einddatum",
+						"sortable": true
+					},
+					{
+						"key": "verklaringStatus",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "risicoBeoordeling",
+						"label": "Risicobeoordeling",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-looptijdStart",
+				"detailRoute": "OpdrachtgeversVerklaringDetail"
+			}
+		},
+		{
+			"id": "OpdrachtgeversVerklaringDetail",
+			"route": "/bookkeeping/detachering-payroll/opdrachtgeversverklaringen/:id",
+			"type": "detail",
+			"title": "Opdrachtgeversverklaring",
+			"featureFlag": "mkb-detachering",
+			"config": {
+				"register": "shillinq",
+				"schema": "OpdrachtgeversVerklaring",
+				"featureFlag": "mkb-detachering",
+				"fields": [
+					{
+						"key": "zzpId",
+						"label": "ZZP-er ID",
+						"type": "string"
+					},
+					{
+						"key": "zzpNaam",
+						"label": "ZZP-er naam",
+						"type": "string"
+					},
+					{
+						"key": "opdrachtBeschrijving",
+						"label": "Opdrachtomschrijving",
+						"type": "string"
+					},
+					{
+						"key": "looptijdStart",
+						"label": "Startdatum",
+						"type": "date"
+					},
+					{
+						"key": "looptijdEind",
+						"label": "Einddatum",
+						"type": "date"
+					},
+					{
+						"key": "verklaringStatus",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "modelOvereenkomst",
+						"label": "Modelovereenkomst",
+						"type": "string"
+					},
+					{
+						"key": "verklaringDocumentUri",
+						"label": "Verklaringsdocument",
+						"type": "link"
+					},
+					{
+						"key": "risicoBeoordeling",
+						"label": "Risicobeoordeling",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"actions": [
+					{
+						"id": "generate-verklaring",
+						"label": "Document genereren",
+						"icon": "FileDocumentEditOutline",
+						"visibleWhen": {
+							"field": "verklaringStatus",
+							"in": ["concept"]
+						},
+						"type": "lifecycle-transition",
+						"transition": "overeenkomen",
+						"description": "Bevestig overeenkomst en genereer het opdrachtgeversverklaring-document via docudesk."
+					}
+				],
+				"indexRoute": "OpdrachtgeversVerklaringen"
+			}
+		},
+		{
+			"id": "IB47Jaarbatch",
+			"route": "/bookkeeping/detachering-payroll/ib47",
+			"type": "index",
+			"title": "IB47-jaarbatch",
+			"featureFlag": "mkb-detachering",
+			"config": {
+				"register": "shillinq",
+				"schema": "IB47Record",
+				"featureFlag": "mkb-detachering",
+				"columns": [
+					{
+						"key": "belastingjaar",
+						"label": "Belastingjaar",
+						"sortable": true
+					},
+					{
+						"key": "ontvangerNaam",
+						"label": "Ontvanger",
+						"sortable": true
+					},
+					{
+						"key": "betalingenTotaal",
+						"label": "Betalingen totaal (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "betalingTypeCode",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "isDryRun",
+						"label": "Proefrun",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-belastingjaar",
+				"detailRoute": "IB47RecordDetail"
+			}
+		},
+		{
+			"id": "IB47RecordDetail",
+			"route": "/bookkeeping/detachering-payroll/ib47/:id",
+			"type": "detail",
+			"title": "IB47-record",
+			"featureFlag": "mkb-detachering",
+			"config": {
+				"register": "shillinq",
+				"schema": "IB47Record",
+				"featureFlag": "mkb-detachering",
+				"fields": [
+					{
+						"key": "belastingjaar",
+						"label": "Belastingjaar",
+						"type": "integer"
+					},
+					{
+						"key": "opdrachtgeverId",
+						"label": "Opdrachtgever",
+						"type": "string"
+					},
+					{
+						"key": "ontvangerNaam",
+						"label": "Ontvanger naam",
+						"type": "string"
+					},
+					{
+						"key": "ontvangerBSN",
+						"label": "BSN (versleuteld)",
+						"type": "string",
+						"help": "Versleuteld en alleen leesbaar voor de payroll-officer rol."
+					},
+					{
+						"key": "ontvangerAdres",
+						"label": "Ontvanger adres",
+						"type": "string"
+					},
+					{
+						"key": "betalingenTotaal",
+						"label": "Betalingen totaal (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "betalingTypeCode",
+						"label": "Betalingtype code",
+						"type": "string"
+					},
+					{
+						"key": "isDryRun",
+						"label": "Proefrun",
+						"type": "boolean"
+					},
+					{
+						"key": "dryRunMonth",
+						"label": "Proefrun maand",
+						"type": "integer"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"indexRoute": "IB47Jaarbatch"
+			}
+		}
+	]
+}

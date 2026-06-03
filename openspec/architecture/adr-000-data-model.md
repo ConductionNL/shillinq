@@ -5104,3 +5104,65 @@ _Archiefwet 1995 + Selectielijst Gemeenten 2020 retention rule. A coded retentio
 | customRetentionYears | integer | No | Operator extension above statutory minimum (MUST be >= retentionYears; never shorter) |
 | administrationId | string | No | Administration scope for per-organisation override rules (absent = applies to all) |
 | daysUntilRetention | integer (derived) | No | Days until rule expires per x-openregister-calculations (null for keep_indefinite) |
+
+### SalarisFeed
+**Schema.org:** `schema:DataFeed`
+_Raw salarisbureau import batch materialised before mapping to balanced JournalEntry records. Decouples "what came in" from "what got booked" and provides an audit trail for reconciliation when a batch fails halfway. Incoming batches arrive via one of four openconnector source rows (ADP / Loket / Visma / Nmbrs). The declarative `x-openregister-mappings` block converts each SalarisFeed record into a balanced `JournalEntry` of subtype `loonkosten` (loonkosten DR = nettoloon CR + sociale-premies CR + loonheffing CR + pensioen CR) without a PHP mapper service per ADR-031. Personnel records inherit the 7-year retention class from the T3 bookkeeping-archiefwet-retention spec (Selectielijst Gemeenten 2020 § 5.1.2)._
+**Primary spec:** bookkeeping-detachering-payroll-administratie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| salarisbureauSlug | enum | Yes | FK to the openconnector source slug; one of adp-salaris-nl, loket-salaris-nl, visma-salaris-nl, nmbrs-salaris-nl |
+| loontijdvak | string | Yes | Payroll period (YYYY-MM format) |
+| employeeId | string | Yes | External employee identifier from the salarisbureau |
+| employeeName | string | No | Employee display name for reconciliation reference |
+| loonkosten | number | No | Total gross wage cost for this employee in this loontijdvak (DR side) |
+| nettoloon | number | No | Net salary (CR side) |
+| socialePremies | number | No | Employer social premiums WW/ZW/WAO (CR side) |
+| loonheffing | number | No | Wage tax withheld (CR side) |
+| pensioen | number | No | Employer pension contribution (CR side) |
+| rawPayload | object | Yes | Raw feed payload as received; stored verbatim for audit |
+| importState | enum | Yes | One of received, mapped, failed |
+| journalEntryId | string | No | Back-reference to the materialised JournalEntry |
+| administrationId | string | Yes | FK to the Administration |
+
+**Relations:**
+- → JournalEntry (many-to-one, via journalEntryId — back-reference after mapping)
+
+### OpdrachtgeversVerklaring
+**Schema.org:** `schema:DigitalDocument`
+_Wet DBA (Deregulering Beoordeling Arbeidsrelaties) position record per ZZP assignment. Records the opdrachtgever–opdrachtnemer relationship, the risicobeoordeling, and the reference to the applicable Belastingdienst model overeenkomst. The lifecycle (`concept → overeengekomen → beëindigd`) triggers the docudesk template render of the standaard opdrachtgeversverklaring on the `overeenkomen` transition — the generated document URI is written back to `verklaringDocumentUri`. No PHP DBA service per ADR-031. Personnel records inherit the 7-year retention class from the T3 bookkeeping-archiefwet-retention spec._
+**Primary spec:** bookkeeping-detachering-payroll-administratie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| zzpId | string | Yes | External identifier for the ZZP-er |
+| zzpNaam | string | Yes | Full name of the ZZP-er |
+| opdrachtBeschrijving | string | Yes | Description of the assignment this verklaring covers |
+| looptijdStart | date | Yes | Assignment start date |
+| looptijdEind | date | Yes | Assignment end date |
+| verklaringStatus | enum | Yes | One of concept, overeengekomen, beëindigd |
+| modelOvereenkomst | string | No | URI to the Belastingdienst model overeenkomst used |
+| verklaringDocumentUri | string | No | docudesk attachment URI of the generated document |
+| risicoBeoordeling | enum | Yes | One of geen, laag, midden, hoog |
+| administrationId | string | Yes | FK to the Administration |
+
+### IB47Record
+**Schema.org:** `schema:TaxForm`
+_Annual IB47 form payload per recipient for submission to the Belastingdienst. The `ontvangerBSN` field is stored encrypted at-rest (`x-openregister-encryption`) and RBAC-restricted: only the `payroll-officer` role may read or write it; every read access is logged to audit-trail-immutable per ADR-022 (AVG + Wet op de loonbelasting requirement). Aggregation over a tax year is declarative via `x-openregister-aggregations` grouping by `(belastingjaar, opdrachtgeverId)`. The reconciliation invariant — final yearly batch totals MUST equal the sum of 12 monthly dry-runs (€0 tolerance) — is declared as an `x-openregister-aggregations.ib47ReconciliationCheck` block. Batch submission flows to the Belastingdienst via the `belastingdienst-ib47-nl` openconnector source referenced from the IB47 docudesk template output-channel per ADR-019. Personnel records inherit the 7-year retention class from the T3 bookkeeping-archiefwet-retention spec (Selectielijst Gemeenten 2020 § 5.1.2)._
+**Primary spec:** bookkeeping-detachering-payroll-administratie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| belastingjaar | integer | Yes | Tax year this IB47 record covers |
+| opdrachtgeverId | string | Yes | FK to the Administration (opdrachtgever) that made the betalingen |
+| ontvangerNaam | string | Yes | Full name of the payment recipient |
+| ontvangerBSN | string | Yes | BSN of the recipient — encrypted at-rest; RBAC-read restricted to payroll-officer; every read logged to audit-trail-immutable |
+| ontvangerAdres | string | Yes | Full postal address of the recipient |
+| betalingenTotaal | number | Yes | Total payments to this recipient in the belastingjaar (EUR ≥ 0) |
+| betalingTypeCode | enum | Yes | Belastingdienst IB47 payment type code (1–9 per IB47 schema 2026) |
+| isDryRun | boolean | No | True = monthly dry-run; false = final yearly batch record (default false) |
+| dryRunMonth | integer | No | Month number (1–12) this dry-run covers; only meaningful when isDryRun = true |
+| administrationId | string | Yes | FK to the Administration |
+
+> **Retention note (add-shillinq-detachering-payroll-administratie, 2026-06-03):** `SalarisFeed`, `OpdrachtgeversVerklaring`, and `IB47Record` are personnel-records schemas and inherit the 7-year retention class from the T3 `bookkeeping-archiefwet-retention` spec (Selectielijst Gemeenten 2020 § 5.1.2 — dagelijkse financiële verantwoording). Each schema declares `x-openregister-lifecycle.retention.rule: "selectielijst:5.1.2"` in its register fragment. The `IB47Record.ontvangerBSN` field additionally inherits AVG (GDPR) constraints: encryption at-rest, RBAC read-restriction to `payroll-officer`, and immutable audit-trail logging on every read, consistent with `bookkeeping-archiefwet-retention` REQ-ARC-003 (AVG-stelregels).
