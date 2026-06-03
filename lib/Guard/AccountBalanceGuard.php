@@ -232,6 +232,4 @@ class AccountBalanceGuard
             return false;
         }//end try
     }//end requireSingleClosingAccount()
-
-
 }//end class

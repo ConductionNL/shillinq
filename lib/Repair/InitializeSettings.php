@@ -194,10 +194,6 @@ class InitializeSettings implements IRepairStep
      */
     private function registerIv3ScheduledWorkflow(IOutput $output): void
     {
-        if ($this->settingsService->isOpenRegisterAvailable() === false) {
-            return;
-        }
-
         try {
             $workflowMapper = $this->container->get(
                 'OCA\OpenRegister\Db\ScheduledWorkflowMapper'
@@ -256,10 +252,6 @@ class InitializeSettings implements IRepairStep
      */
     private function seedKorThresholds(IOutput $output): void
     {
-        if ($this->settingsService->isOpenRegisterAvailable() === false) {
-            return;
-        }
-
         $seedPath = __DIR__.'/../Settings/seeds/kor-thresholds-2026.json';
         if (file_exists($seedPath) === false) {
             $output->warning('Shillinq: KOR threshold seed file not found, skipping');
