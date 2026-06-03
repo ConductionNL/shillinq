@@ -391,9 +391,9 @@ class InitializeSettings implements IRepairStep
                     continue;
                 }
 
-                $meta         = ($data['_meta'] ?? []);
-                $entryPoint   = ($meta['entryPoint'] ?? null);
-                $taxVersion   = ($meta['taxonomyVersion'] ?? null);
+                $meta       = ($data['_meta'] ?? []);
+                $entryPoint = ($meta['entryPoint'] ?? null);
+                $taxVersion = ($meta['taxonomyVersion'] ?? null);
 
                 if ($entryPoint === null || $taxVersion === null) {
                     $output->warning('Shillinq: SBR seed file missing _meta.entryPoint or taxonomyVersion: '.$seedFile);
@@ -410,7 +410,7 @@ class InitializeSettings implements IRepairStep
                                 'entryPoint'      => $entryPoint,
                                 'taxonomyVersion' => $taxVersion,
                             ],
-                            'limit' => 1,
+                            'limit'   => 1,
                         ]
                     );
 

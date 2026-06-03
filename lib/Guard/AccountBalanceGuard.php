@@ -229,26 +229,23 @@ class AccountBalanceGuard
     }//end requireSingleClosingAccount()
 
     /**
-     * Probe whether the GLLine schema is declared in the configured register
-     * (i.e. T2 has shipped). Uses OR's real API: attempt to fetch at most one
-     * GLLine record; a "schema not found" exception means T1 state.
+     * Probe whether OR's ObjectService is available in the DI container (T1 vs T2 probe).
      *
-     * C5: calling setRegister/setSchema alone does NOT validate schema existence —
-     * those setters merely stash the slug strings. We must execute an actual query
-     * so that a missing GLLine schema triggers the schema-not-found exception that
-     * proves T1 state. An empty result (schema exists but has no records) is still
-     * T2 — the schema is present, so we return true.
+     * T1 state is defined as: OR is not installed / ObjectService is not registered in
+     * the DI container. In that case `container->get()` throws, and we return false
+     * (allowing requireZeroBalance to skip the query and permit the archive by default).
      *
-     * @return bool True when the GLLine schema exists in OR's configured register.
+     * This intentionally does NOT execute a findAll probe: a findAll failure (DB error,
+     * unavailable schema) is a computation error — it must propagate to requireZeroBalance's
+     * catch block so the method stays fail-closed (returns false = deny archive). Swallowing
+     * findAll exceptions here would convert any transient failure into an unconditional permit.
+     *
+     * @return bool True when OR's ObjectService is resolvable from the container.
      */
     private function isGLLineRegisterAvailable(): bool
     {
         try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $objectService
-                ->setRegister($this->getRegisterSlug())
-                ->setSchema('GLLine')
-                ->findAll(['limit' => 1]);
+            $this->container->get('OCA\OpenRegister\Service\ObjectService');
             return true;
         } catch (\Throwable) {
             return false;
