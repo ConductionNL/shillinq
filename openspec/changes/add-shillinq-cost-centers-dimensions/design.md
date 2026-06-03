@@ -2,6 +2,8 @@ status: pr-created
 
 # Design — Cost Centers & Dimensions
 
+**status: pr-created**
+
 ## Decisions
 
 ### D1 — Dimensions are first-class registers, not free-form strings on `GLLine`

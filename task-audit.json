@@ -1,78 +1,21 @@
 {
-  "spec": "openspec/changes/docs-product-pages-conformance",
+  "spec": "openspec/changes/add-shillinq-cost-centers-dimensions",
   "verified": [
-    {
-      "task": "1",
-      "file": "docs/user-guide/",
-      "ok": true,
-      "note": "tutorials/ renamed to user-guide/ via git mv in commit 59c4321; admin/ and user/ subdirs present with all tutorial files"
-    },
-    {
-      "task": "2",
-      "file": "docs/Features/index.md",
-      "ok": true,
-      "note": "FEATURES.md moved to Features/index.md; zero em-dashes confirmed"
-    },
-    {
-      "task": "3",
-      "file": "docs/Technical/architecture.md",
-      "ok": true,
-      "note": "ARCHITECTURE.md moved to Technical/architecture.md; all em-dashes replaced"
-    },
-    {
-      "task": "4",
-      "file": "docs/UseCases/index.md",
-      "ok": true,
-      "note": "draft: true frontmatter stub with reference to issue #78"
-    },
-    {
-      "task": "4",
-      "file": "docs/Integrations/index.md",
-      "ok": true,
-      "note": "draft: true frontmatter stub with reference to issue #78"
-    },
-    {
-      "task": "5",
-      "file": "docs/installation.md",
-      "ok": true,
-      "note": "Contains Prerequisites, Install steps, Initial configuration, Next steps; zero em-dashes"
-    },
-    {
-      "task": "6",
-      "file": "docs/intro.md",
-      "ok": true,
-      "note": "All three em-dashes replaced (lines 8, 11, 23)"
-    },
-    {
-      "task": "7",
-      "file": "docs/package.json",
-      "ok": true,
-      "note": "redocusaurus: ^2.0.0 in dependencies block"
-    },
-    {
-      "task": "8",
-      "file": "docs/docusaurus.config.js",
-      "ok": true,
-      "note": "redocusaurus preset with spec: static/oas/shillinq.json and route: /api; API Documentation navbar link positioned after Documentation"
-    },
-    {
-      "task": "9",
-      "file": "docs/docusaurus.config.js",
-      "ok": true,
-      "note": "i18n.locales: ['en', 'nl'] with comment referencing issue #79 and ADR-030 escape hatch"
-    },
-    {
-      "task": "10",
-      "file": "docs/",
-      "ok": true,
-      "note": "grep -rE em-dash docs/ --include=*.md returns exit 1 (no matches fleet-wide)"
-    },
-    {
-      "task": "11",
-      "file": "docs/",
-      "ok": true,
-      "note": "npm install --legacy-peer-deps && npm run build exits 0; both en and nl locales build successfully; AI-baseline 10/10 checks passed"
-    }
+    {"task": "1", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "Confirmed no pre-existing CostCenter/KostenDrager/Project/AllocationRule schemas; only example and Account existed"},
+    {"task": "2", "file": "openspec/changes/add-shillinq-cost-centers-dimensions/specs/bookkeeping-cost-centers-dimensions/spec.md", "ok": true},
+    {"task": "3", "file": "openspec/changes/add-shillinq-cost-centers-dimensions/proposal.md", "ok": true},
+    {"task": "4", "file": "openspec/changes/add-shillinq-cost-centers-dimensions/design.md", "ok": true},
+    {"task": "5", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "CostCenter, KostenDrager, Project schemas added with x-openregister-lifecycle/-relations/-rbac; timeBookingEnabled on Project"},
+    {"task": "6", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "AllocationRule schema with fixed-percentage/fixed-amount/volume/headcount drivers; precondition on save"},
+    {"task": "7", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "GLLine declared with T1 base fields + T4 dimension fields; GLTransaction also declared (T1 dependency)"},
+    {"task": "8", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "x-openregister-lifecycle.actions.applyOnPost wires per-posting cadence; monthly/period-close routed via ScheduledWorkflow per ADR-031 path 2"},
+    {"task": "9", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "x-openregister-aggregations on GLLine: segmentPnlByCostCenter, segmentPnlByProject, segmentPnlByKostenDrager"},
+    {"task": "10.1", "file": "lib/Settings/seeds/allocation-rules/overhead-by-headcount.json", "ok": true},
+    {"task": "10.2", "file": "lib/Settings/seeds/allocation-rules/it-by-volume.json", "ok": true},
+    {"task": "10.3", "file": "lib/Settings/seeds/allocation-rules/facility-by-fixed-percentage.json", "ok": true},
+    {"task": "11", "file": "lib/Repair/InitializeSettings.php", "ok": true, "note": "seedAllocationRules() added to repair step; SettingsService.seedAllocationRules() added"},
+    {"task": "12", "file": "src/manifest.json", "ok": true, "note": "Dimensions submenu + 8 pages (4 index + 4 detail) added under Bookkeeping > Dimensions"},
+    {"task": "13", "file": "openspec/architecture/adr-000-data-model.md", "ok": true, "note": "AllocationRule, CostCenter, KostenDrager, Project, GLLine, GLTransaction entries added/reconciled"}
   ],
   "stubs": [],
   "missing_routes": []
