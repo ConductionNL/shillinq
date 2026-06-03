@@ -5222,6 +5222,596 @@
 					}
 				}
 			},
+			"RateCardTemplate": {
+				"slug": "RateCardTemplate",
+				"icon": "CardAccountDetailsOutline",
+				"version": "0.1.0",
+				"title": "Rate Card Template",
+				"description": "Reusable rate-card structure definition for multi-tier billing rates (user / role / project / client / blended). Versioned via RateCardVersion; tier-specific rates declared in RateSchedule. Per-OU isolation (administrationId). REQ-RATE-002.",
+				"type": "object",
+				"x-schema-org": "schema:Thing",
+				"required": [
+					"templateId",
+					"name",
+					"tierStructure",
+					"currency",
+					"administrationId",
+					"lifecycleState",
+					"createdAt"
+				],
+				"properties": {
+					"templateId": {
+						"type": "string",
+						"description": "Unique rate-card template identifier.",
+						"example": "RCT-2026-001"
+					},
+					"name": {
+						"type": "string",
+						"description": "Human-readable template name.",
+						"example": "2026 Consulting Rates"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "Purpose and scope of this rate-card template.",
+						"example": "Multi-tier rates for consulting services"
+					},
+					"tierStructure": {
+						"type": "array",
+						"description": "Ordered list of rate tiers, highest precedence first (user > role > project > client > blended).",
+						"items": {
+							"type": "string",
+							"enum": [
+								"user",
+								"role",
+								"project",
+								"client",
+								"blended"
+							]
+						},
+						"example": ["user", "role", "project", "client", "blended"]
+					},
+					"currency": {
+						"type": "string",
+						"minLength": 3,
+						"maxLength": 3,
+						"description": "ISO 4217 currency code. All rates on schedules tied to this template MUST use this currency.",
+						"example": "EUR",
+						"default": "EUR"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the administration owning this template (per-OU isolation; REQ-RATE-002).",
+						"example": "adm-1"
+					},
+					"lifecycleState": {
+						"type": "string",
+						"enum": ["active", "archived"],
+						"description": "Lifecycle state of the template.",
+						"example": "active"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Template creation timestamp (immutable).",
+						"example": "2026-01-01T00:00:00Z"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Template is in use; new RateCardVersion entries may reference it."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Template is retired; no new versions may be created but historical data is preserved."
+						}
+					},
+					"transitions": {
+						"archive": {
+							"from": "active",
+							"to": "archived",
+							"label": "Archive template",
+							"description": "Retire this rate-card template. Existing versions and schedules remain queryable."
+						},
+						"reactivate": {
+							"from": "archived",
+							"to": "active",
+							"label": "Reactivate template",
+							"description": "Restore an archived template to active state."
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"project-administrator": {
+							"permissions": ["create", "read", "update", "delete"]
+						},
+						"bookkeeper": {
+							"permissions": ["read"]
+						}
+					}
+				}
+			},
+			"RateCardVersion": {
+				"slug": "RateCardVersion",
+				"icon": "CalendarRangeOutline",
+				"version": "0.1.0",
+				"title": "Rate Card Version",
+				"description": "Effective-dated variant of a RateCardTemplate. Multiple concurrent versions per administration are supported, each covering a non-overlapping effective-date window. REQ-RATE-003.",
+				"type": "object",
+				"x-schema-org": "schema:Thing",
+				"required": [
+					"versionId",
+					"templateId",
+					"effectiveDate",
+					"status",
+					"administrationId"
+				],
+				"properties": {
+					"versionId": {
+						"type": "string",
+						"description": "Unique version identifier.",
+						"example": "RCV-2026-001"
+					},
+					"templateId": {
+						"type": "string",
+						"description": "FK to the parent RateCardTemplate.",
+						"example": "RCT-2026-001"
+					},
+					"effectiveDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Start date this version is active (inclusive). MUST be >= today at creation time (REQ-RATE-009).",
+						"example": "2026-01-01"
+					},
+					"expiryDate": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "End date (inclusive); null = open-ended. Effective-date windows per template MUST NOT overlap (REQ-RATE-003).",
+						"example": "2026-03-31"
+					},
+					"status": {
+						"type": "string",
+						"enum": ["draft", "active", "expired", "archived"],
+						"description": "Lifecycle status of this version.",
+						"example": "active"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the administration owning this version (per-OU isolation).",
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "status",
+					"initialState": "draft",
+					"states": {
+						"draft": {
+							"label": "Draft",
+							"description": "Version being prepared; not yet in use for rate lookups."
+						},
+						"active": {
+							"label": "Active",
+							"description": "Version is live; rate lookups use schedules tied to this version within its effective-date window."
+						},
+						"expired": {
+							"label": "Expired",
+							"description": "Version expiryDate has passed; historical only."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Manually retired; no longer in use."
+						}
+					},
+					"transitions": {
+						"activate": {
+							"from": "draft",
+							"to": "active",
+							"label": "Activate version",
+							"description": "Make this version live for rate lookups. Validates non-overlapping effective-date window."
+						},
+						"expire": {
+							"from": "active",
+							"to": "expired",
+							"label": "Expire version",
+							"description": "Mark as expired (typically automatic when expiryDate passes)."
+						},
+						"archive": {
+							"from": ["draft", "active", "expired"],
+							"to": "archived",
+							"label": "Archive version",
+							"description": "Retire this version."
+						}
+					}
+				},
+				"x-openregister-aggregations": {
+					"schedulesByTier": {
+						"description": "Rate schedules grouped by tier for this version. Used by rate-lookup UI and aggregation queries.",
+						"source": "RateSchedule",
+						"joinOn": "versionId",
+						"groupBy": "tier",
+						"operations": {
+							"count": {
+								"field": "scheduleId",
+								"operation": "count"
+							},
+							"minRate": {
+								"field": "rate",
+								"operation": "min"
+							},
+							"maxRate": {
+								"field": "rate",
+								"operation": "max"
+							}
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"project-administrator": {
+							"permissions": ["create", "read", "update", "delete"]
+						},
+						"bookkeeper": {
+							"permissions": ["read"]
+						}
+					}
+				}
+			},
+			"RateSchedule": {
+				"slug": "RateSchedule",
+				"icon": "TableRowOutline",
+				"version": "0.1.0",
+				"title": "Rate Schedule",
+				"description": "Tier-specific rate entry for a RateCardVersion. Defines a fixed or volume-bracketed rate for a single tier (user / role / project / client / blended) within an effective-date window. Non-overlapping effective windows per (tier, entityId) are enforced (REQ-RATE-006). REQ-RATE-004.",
+				"type": "object",
+				"x-schema-org": "schema:Thing",
+				"required": [
+					"scheduleId",
+					"versionId",
+					"tier",
+					"rate",
+					"unit",
+					"effectiveDate",
+					"administrationId",
+					"status"
+				],
+				"properties": {
+					"scheduleId": {
+						"type": "string",
+						"description": "Unique rate schedule identifier.",
+						"example": "RS-2026-001"
+					},
+					"versionId": {
+						"type": "string",
+						"description": "FK to the parent RateCardVersion.",
+						"example": "RCV-2026-001"
+					},
+					"tier": {
+						"type": "string",
+						"enum": ["user", "role", "project", "client", "blended"],
+						"description": "Rate tier. Precedence: user > role > project > client > blended (REQ-RATE-005, D6).",
+						"example": "user"
+					},
+					"entityId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Entity identifier for user/role/project/client tiers. NULL for blended-default tier (REQ-RATE-004).",
+						"example": "user-alice"
+					},
+					"rate": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Fixed rate per unit in the template currency.",
+						"example": 130
+					},
+					"unit": {
+						"type": "string",
+						"enum": ["hourly", "daily", "monthly", "fixedPrice"],
+						"description": "Billing unit for this rate.",
+						"example": "hourly"
+					},
+					"effectiveDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Start date this schedule is active (inclusive). MUST be >= today at creation time (REQ-RATE-009).",
+						"example": "2026-01-01"
+					},
+					"expiryDate": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "End date (inclusive); null = open-ended. (tier, entityId) pairs MUST NOT have overlapping effective-date windows (REQ-RATE-006).",
+						"example": "2026-03-31"
+					},
+					"volumeBrackets": {
+						"type": "array",
+						"nullable": true,
+						"description": "Optional volume-discount brackets. Applied in ascending minUnits order; the matching bracket rate overrides the base rate.",
+						"items": {
+							"type": "object",
+							"required": ["minUnits", "rate"],
+							"properties": {
+								"minUnits": {
+									"type": "number",
+									"description": "Minimum units (hours/days) for this bracket to apply."
+								},
+								"maxUnits": {
+									"type": "number",
+									"nullable": true,
+									"description": "Maximum units (inclusive); null = unbounded."
+								},
+								"rate": {
+									"type": "number",
+									"description": "Rate per unit at this volume bracket."
+								}
+							}
+						},
+						"example": [{"minUnits": 40, "maxUnits": 80, "rate": 120}, {"minUnits": 81, "rate": 110}]
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the administration (per-OU isolation).",
+						"example": "adm-1"
+					},
+					"status": {
+						"type": "string",
+						"enum": ["active", "inactive", "archived"],
+						"description": "Status of this rate schedule.",
+						"example": "active"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "status",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Schedule is in use for rate lookups within its effective-date window."
+						},
+						"inactive": {
+							"label": "Inactive",
+							"description": "Schedule is suspended; excluded from rate lookups."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Retired; historical only."
+						}
+					},
+					"transitions": {
+						"deactivate": {
+							"from": "active",
+							"to": "inactive",
+							"label": "Deactivate",
+							"description": "Suspend this schedule from rate lookups."
+						},
+						"reactivate": {
+							"from": "inactive",
+							"to": "active",
+							"label": "Reactivate",
+							"description": "Restore this schedule for rate lookups."
+						},
+						"archive": {
+							"from": ["active", "inactive"],
+							"to": "archived",
+							"label": "Archive",
+							"description": "Retire this schedule permanently."
+						}
+					},
+					"preconditions": {
+						"save": "OCA\\Shillinq\\Guard\\RateScheduleOverlapGuard::requireNonOverlappingWindow"
+					}
+				},
+				"x-openregister-aggregations": {
+					"resolveRate": {
+						"description": "Rate-lookup aggregation (REQ-RATE-005): given (userId, roleId, projectId, clientId, lookupDate), resolves the most-specific applicable rate by tier precedence (user > role > project > client > blended). Filters by effectiveDate <= lookupDate <= expiryDate, status = active. Returns first match ranked by tier precedence. Per ADR-031: declarative aggregation preferred; falls back to OCA\\Shillinq\\Guard\\RateResolutionGuard if OR aggregation engine does not support parameterised tier-rank sorting.",
+						"parameters": {
+							"userId": {"type": "string", "nullable": true},
+							"roleId": {"type": "string", "nullable": true},
+							"projectId": {"type": "string", "nullable": true},
+							"clientId": {"type": "string", "nullable": true},
+							"lookupDate": {"type": "string", "format": "date"},
+							"administrationId": {"type": "string"}
+						},
+						"filter": {
+							"status": "active",
+							"effectiveDate": {"operator": "lte", "value": "@params.lookupDate"},
+							"expiryDate": {"operator": "gte_or_null", "value": "@params.lookupDate"},
+							"administrationId": "@params.administrationId"
+						},
+						"tierPrecedence": ["user", "role", "project", "client", "blended"],
+						"fallbackGuard": "OCA\\Shillinq\\Guard\\RateResolutionGuard::resolveByTierPrecedence"
+					},
+					"activeSchedulesByTier": {
+						"description": "Count of active schedules per tier for a given administrationId. Used by Rate Cards index page.",
+						"filter": {
+							"status": "active",
+							"administrationId": "@params.administrationId"
+						},
+						"groupBy": "tier",
+						"operations": {
+							"count": {"field": "scheduleId", "operation": "count"},
+							"avgRate": {"field": "rate", "operation": "avg"}
+						}
+					}
+				},
+				"x-openregister-calculations": {
+					"isCurrentlyEffective": {
+						"description": "True when today falls within [effectiveDate, expiryDate] and status=active.",
+						"expression": "status == 'active' AND effectiveDate <= @today AND (expiryDate IS NULL OR expiryDate >= @today)",
+						"type": "boolean"
+					},
+					"effectiveWindowLabel": {
+						"description": "Human-readable effective-date window string for UI display.",
+						"expression": "effectiveDate || ' – ' || COALESCE(expiryDate, 'open-ended')",
+						"type": "string"
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"project-administrator": {
+							"permissions": ["create", "read", "update", "delete"]
+						},
+						"bookkeeper": {
+							"permissions": ["read"]
+						}
+					}
+				}
+			},
+			"RateRecord": {
+				"slug": "RateRecord",
+				"icon": "HistoryOutline",
+				"version": "0.1.0",
+				"title": "Rate Record",
+				"description": "Immutable materialized audit-trail entry created for each rate lookup. Stores the resolved tier, rate, effective window, and lookup context so historical rates remain queryable and disputable (REQ-RATE-007, REQ-RATE-010, D4). No updates after creation.",
+				"type": "object",
+				"x-schema-org": "schema:Thing",
+				"required": [
+					"recordId",
+					"lookupDate",
+					"resolvedTier",
+					"resolvedScheduleId",
+					"resolvedRate",
+					"resolvedUnit",
+					"effectiveWindowStart",
+					"administrationId",
+					"createdAt"
+				],
+				"properties": {
+					"recordId": {
+						"type": "string",
+						"description": "Unique audit record identifier.",
+						"example": "RR-2026-001"
+					},
+					"lookupDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Date the rate lookup occurred.",
+						"example": "2026-02-15"
+					},
+					"userId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Input userId from the rate-lookup request.",
+						"example": "user-alice"
+					},
+					"roleId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Input roleId from the rate-lookup request.",
+						"example": "role-senior-consultant"
+					},
+					"projectId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Input projectId from the rate-lookup request.",
+						"example": null
+					},
+					"clientId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Input clientId from the rate-lookup request.",
+						"example": null
+					},
+					"resolvedTier": {
+						"type": "string",
+						"enum": ["user", "role", "project", "client", "blended"],
+						"description": "Winning tier from rate-lookup precedence (user > role > project > client > blended).",
+						"example": "user"
+					},
+					"resolvedScheduleId": {
+						"type": "string",
+						"description": "FK to the winning RateSchedule at lookup time (immutable snapshot reference).",
+						"example": "RS-2026-004"
+					},
+					"resolvedRate": {
+						"type": "number",
+						"description": "Final resolved rate amount at lookup time. Immutable.",
+						"example": 130
+					},
+					"resolvedUnit": {
+						"type": "string",
+						"enum": ["hourly", "daily", "monthly", "fixedPrice"],
+						"description": "Billing unit of the resolved rate.",
+						"example": "hourly"
+					},
+					"effectiveWindowStart": {
+						"type": "string",
+						"format": "date",
+						"description": "effectiveDate of the winning RateSchedule at lookup time.",
+						"example": "2026-02-01"
+					},
+					"effectiveWindowEnd": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "expiryDate of the winning RateSchedule at lookup time; null if open-ended.",
+						"example": "2026-03-31"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the administration (per-OU isolation).",
+						"example": "adm-1"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Materialization timestamp. Immutable once created.",
+						"example": "2026-02-15T10:30:00Z"
+					}
+				},
+				"x-openregister-aggregations": {
+					"historicalRatesByUser": {
+						"description": "Historical rate audit aggregation (REQ-RATE-010): rate records grouped by resolvedTier and resolvedRate for a given userId and date range. Used by Rate Audit Trail page.",
+						"parameters": {
+							"userId": {"type": "string"},
+							"dateFrom": {"type": "string", "format": "date"},
+							"dateTo": {"type": "string", "format": "date"},
+							"administrationId": {"type": "string"}
+						},
+						"filter": {
+							"userId": "@params.userId",
+							"lookupDate": {
+								"operator": "between",
+								"from": "@params.dateFrom",
+								"to": "@params.dateTo"
+							},
+							"administrationId": "@params.administrationId"
+						},
+						"groupBy": ["resolvedTier", "resolvedRate", "resolvedUnit"],
+						"operations": {
+							"count": {"field": "recordId", "operation": "count"},
+							"firstLookup": {"field": "lookupDate", "operation": "min"},
+							"lastLookup": {"field": "lookupDate", "operation": "max"}
+						}
+					},
+					"countByTier": {
+						"description": "Count of rate lookups per resolved tier for an administration. Used by Rate Audit Trail widget.",
+						"filter": {"administrationId": "@params.administrationId"},
+						"groupBy": "resolvedTier",
+						"operations": {
+							"count": {"field": "recordId", "operation": "count"}
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"project-administrator": {
+							"permissions": ["create", "read"]
+						},
+						"bookkeeper": {
+							"permissions": ["read"]
+						},
+						"auditor": {
+							"permissions": ["read"]
+						}
+					}
+				}
+			},
 			"UrenRegistratie": {
 				"slug": "UrenRegistratie",
 				"icon": "ClockOutline",
@@ -8747,6 +9337,145 @@
 			"paymentMethod": "ideal",
 			"state": "executed",
 			"administrationId": "adm-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "RateCardTemplate",
+				"slug": "rct-2026-consulting"
+			},
+			"templateId": "RCT-2026-001",
+			"name": "2026 Consulting Rates",
+			"description": "Multi-tier billing rates for consulting services. Covers user, role, project, client, and blended-default tiers.",
+			"tierStructure": ["user", "role", "project", "client", "blended"],
+			"currency": "EUR",
+			"administrationId": "adm-1",
+			"lifecycleState": "active",
+			"createdAt": "2026-01-01T00:00:00Z"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "RateCardVersion",
+				"slug": "rcv-2026-q1"
+			},
+			"versionId": "RCV-2026-001",
+			"templateId": "RCT-2026-001",
+			"effectiveDate": "2026-01-01",
+			"expiryDate": "2026-03-31",
+			"status": "active",
+			"administrationId": "adm-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "RateSchedule",
+				"slug": "rs-2026-q1-blended"
+			},
+			"scheduleId": "RS-2026-001",
+			"versionId": "RCV-2026-001",
+			"tier": "blended",
+			"entityId": null,
+			"rate": 85.0,
+			"unit": "hourly",
+			"effectiveDate": "2026-01-01",
+			"expiryDate": "2026-03-31",
+			"volumeBrackets": null,
+			"administrationId": "adm-1",
+			"status": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "RateSchedule",
+				"slug": "rs-2026-q1-role-senior"
+			},
+			"scheduleId": "RS-2026-002",
+			"versionId": "RCV-2026-001",
+			"tier": "role",
+			"entityId": "role-senior-consultant",
+			"rate": 120.0,
+			"unit": "hourly",
+			"effectiveDate": "2026-01-01",
+			"expiryDate": "2026-03-31",
+			"volumeBrackets": null,
+			"administrationId": "adm-1",
+			"status": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "RateSchedule",
+				"slug": "rs-2026-q1-role-junior"
+			},
+			"scheduleId": "RS-2026-003",
+			"versionId": "RCV-2026-001",
+			"tier": "role",
+			"entityId": "role-junior-consultant",
+			"rate": 65.0,
+			"unit": "hourly",
+			"effectiveDate": "2026-01-01",
+			"expiryDate": "2026-03-31",
+			"volumeBrackets": null,
+			"administrationId": "adm-1",
+			"status": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "RateSchedule",
+				"slug": "rs-2026-q1-user-alice"
+			},
+			"scheduleId": "RS-2026-004",
+			"versionId": "RCV-2026-001",
+			"tier": "user",
+			"entityId": "user-alice",
+			"rate": 130.0,
+			"unit": "hourly",
+			"effectiveDate": "2026-02-01",
+			"expiryDate": "2026-03-31",
+			"volumeBrackets": null,
+			"administrationId": "adm-1",
+			"status": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "RateSchedule",
+				"slug": "rs-2026-q1-project-gemeente"
+			},
+			"scheduleId": "RS-2026-005",
+			"versionId": "RCV-2026-001",
+			"tier": "project",
+			"entityId": "proj-gemeente-migration",
+			"rate": 95.0,
+			"unit": "hourly",
+			"effectiveDate": "2026-01-01",
+			"expiryDate": "2026-03-31",
+			"volumeBrackets": null,
+			"administrationId": "adm-1",
+			"status": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "RateRecord",
+				"slug": "rr-2026-alice-20260215"
+			},
+			"recordId": "RR-2026-001",
+			"lookupDate": "2026-02-15",
+			"userId": "user-alice",
+			"roleId": "role-senior-consultant",
+			"projectId": null,
+			"clientId": null,
+			"resolvedTier": "user",
+			"resolvedScheduleId": "RS-2026-004",
+			"resolvedRate": 130.0,
+			"resolvedUnit": "hourly",
+			"effectiveWindowStart": "2026-02-01",
+			"effectiveWindowEnd": "2026-03-31",
+			"administrationId": "adm-1",
+			"createdAt": "2026-02-15T10:30:00Z"
 		}
 	]
 }
