@@ -24,6 +24,7 @@ use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -45,6 +46,13 @@ class InitializeSettingsTest extends TestCase
      * @var LoggerInterface&MockObject
      */
     private LoggerInterface&MockObject $logger;
+
+    /**
+     * Mock ContainerInterface.
+     *
+     * @var ContainerInterface&MockObject
+     */
+    private ContainerInterface&MockObject $container;
 
     /**
      * Mock IOutput.
@@ -73,9 +81,16 @@ class InitializeSettingsTest extends TestCase
         $this->logger          = $this->createMock(LoggerInterface::class);
         $this->output          = $this->createMock(IOutput::class);
 
+        $this->container = $this->createMock(ContainerInterface::class);
+        // Container deps (ScheduledWorkflowMapper, ObjectService) are unavailable in unit
+        // tests — make them throw so registerIv3ScheduledWorkflow / seedKorThresholds bail
+        // gracefully without hitting real infrastructure.
+        $this->container->method('get')->willThrowException(new \RuntimeException('not available in unit tests'));
+
         $this->repairStep = new InitializeSettings(
             settingsService: $this->settingsService,
             logger: $this->logger,
+            container: $this->container,
         );
 
     }//end setUp()
@@ -123,9 +138,11 @@ class InitializeSettingsTest extends TestCase
      */
     public function testRunCallsLoadConfigurationAndSeedTemplate(): void
     {
-        $this->settingsService->expects($this->once())
+        // First call (start of run()) returns true; subsequent calls (registerIv3ScheduledWorkflow,
+        // seedKorThresholds) return false so those methods bail before touching the container.
+        $this->settingsService->expects($this->atLeastOnce())
             ->method('isOpenRegisterAvailable')
-            ->willReturn(true);
+            ->willReturnOnConsecutiveCalls(true, false, false);
 
         $this->settingsService->expects($this->once())
             ->method('loadConfigurationForced')
@@ -149,6 +166,9 @@ class InitializeSettingsTest extends TestCase
             )
             ->willReturn(['success' => true, 'seeded' => 150, 'skipped' => 0]);
 
+        $this->settingsService->method('seedSelectielijst')
+            ->willReturn(['success' => true, 'seeded' => 0, 'skipped' => 0]);
+
         $this->repairStep->run(output: $this->output);
 
     }//end testRunCallsLoadConfigurationAndSeedTemplate()
@@ -162,9 +182,11 @@ class InitializeSettingsTest extends TestCase
      */
     public function testRunSkipsSeedWhenAdministrationIdUnset(): void
     {
-        $this->settingsService->expects($this->once())
+        // First call (start of run()) returns true; subsequent calls (registerIv3ScheduledWorkflow,
+        // seedKorThresholds) return false so those methods bail before touching the container.
+        $this->settingsService->expects($this->atLeastOnce())
             ->method('isOpenRegisterAvailable')
-            ->willReturn(true);
+            ->willReturnOnConsecutiveCalls(true, false, false);
 
         $this->settingsService->expects($this->once())
             ->method('loadConfigurationForced')
@@ -183,6 +205,9 @@ class InitializeSettingsTest extends TestCase
         // C2: seedRgsTemplate must NOT be called when administrationId is empty.
         $this->settingsService->expects($this->never())
             ->method('seedRgsTemplate');
+
+        $this->settingsService->method('seedSelectielijst')
+            ->willReturn(['success' => true, 'seeded' => 0, 'skipped' => 0]);
 
         $this->output->expects($this->atLeastOnce())
             ->method('warning')

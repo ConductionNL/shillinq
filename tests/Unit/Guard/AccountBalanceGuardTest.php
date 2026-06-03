@@ -295,12 +295,21 @@ class AccountBalanceGuardTest extends TestCase
             }
 
             /**
+             * Returns empty array for the availability probe (no 'filters' key),
+             * and throws for the actual balance query (has 'filters' key).
+             * This ensures isGLLineRegisterAvailable() returns true so the
+             * fail-closed path inside requireZeroBalance() is actually exercised.
+             *
              * @param array<string,mixed> $params
              * @return array<mixed>
              */
             public function findAll(array $params=[]): array
             {
-                throw new \RuntimeException('DB error');
+                if (array_key_exists('filters', $params) === true) {
+                    throw new \RuntimeException('DB error');
+                }
+
+                return [];
             }
         };
     }//end buildObjectServiceStubThatThrows()
