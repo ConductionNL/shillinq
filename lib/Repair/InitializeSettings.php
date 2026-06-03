@@ -78,6 +78,7 @@ class InitializeSettings implements IRepairStep
      * Phase 3: seeds the Archiefwet Selectielijst Gemeenten 2020 retention rules.
      * Phase 4: registers the IV3 quarterly CBS ScheduledWorkflow if not yet present.
      * Phase 5: seeds KOR thresholds from kor-thresholds-2026.json idempotently.
+     * Phase 1 also seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
      * Phase 6: seeds NL-taxonomie SBR mapping templates from sbr-mappings/ idempotently
      *           per REQ-SBR-006. Operator edits to existing Mapping records persist.
      *
@@ -88,6 +89,7 @@ class InitializeSettings implements IRepairStep
      * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
      * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-10
      * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
+     * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
      * @spec openspec/changes/add-shillinq-sbr-xbrl-reporting/tasks.md#task-8
      */
     public function run(IOutput $output): void
@@ -198,10 +200,6 @@ class InitializeSettings implements IRepairStep
      */
     private function registerIv3ScheduledWorkflow(IOutput $output): void
     {
-        if ($this->settingsService->isOpenRegisterAvailable() === false) {
-            return;
-        }
-
         try {
             $workflowMapper = $this->container->get(
                 'OCA\OpenRegister\Db\ScheduledWorkflowMapper'
@@ -260,10 +258,6 @@ class InitializeSettings implements IRepairStep
      */
     private function seedKorThresholds(IOutput $output): void
     {
-        if ($this->settingsService->isOpenRegisterAvailable() === false) {
-            return;
-        }
-
         $seedPath = __DIR__.'/../Settings/seeds/kor-thresholds-2026.json';
         if (file_exists($seedPath) === false) {
             $output->warning('Shillinq: KOR threshold seed file not found, skipping');
@@ -503,6 +497,21 @@ class InitializeSettings implements IRepairStep
         if ($seedResult['success'] !== true) {
             $message = ($seedResult['message'] ?? 'unknown error');
             $output->warning('Chart of accounts seeding issue: '.$message);
+        }
+
+        $allocationResult = $this->settingsService->seedAllocationRules(administrationId: $administrationId);
+
+        if ($allocationResult['success'] === true) {
+            $seeded  = ($allocationResult['seeded'] ?? 0);
+            $skipped = ($allocationResult['skipped'] ?? 0);
+            $output->info(
+                'AllocationRule examples seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        }
+
+        if ($allocationResult['success'] !== true) {
+            $message = ($allocationResult['message'] ?? 'unknown error');
+            $output->warning('AllocationRule seeding issue: '.$message);
         }
 
     }//end seedChartOfAccounts()

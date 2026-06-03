@@ -1,0 +1,221 @@
+{
+  "_meta": {
+    "source": "ESA 2010 Eurostat",
+    "year": 2010,
+    "description": "Canonical ESA 2010 sector classifier codes for Dutch decentrale overheden EMU reporting per BBV handleiding EMU-saldo. Loaded via ConfigurationService::importFromApp() in the repair step.",
+    "spdx": "EUPL-1.2",
+    "copyright": "2026 Conduction B.V."
+  },
+  "register": "shillinq",
+  "schema": "EsaClassifier",
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "EsaClassifier",
+        "slug": "esa-S.13"
+      },
+      "code": "S.13",
+      "label": "Overheid",
+      "labelNl": "Overheid",
+      "labelEn": "General government",
+      "description": "De overheidssector in zijn geheel (S.1311 t/m S.1314).",
+      "isNlRelevant": true,
+      "isGovernmentSector": true
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "EsaClassifier",
+        "slug": "esa-S.1311"
+      },
+      "code": "S.1311",
+      "label": "Centrale overheid",
+      "labelNl": "Centrale overheid",
+      "labelEn": "Central government",
+      "description": "Rijksoverheid en organisaties die volledig worden gefinancierd en gecontroleerd door de centrale overheid.",
+      "isNlRelevant": true,
+      "isGovernmentSector": true,
+      "parentCode": "S.13"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "EsaClassifier",
+        "slug": "esa-S.1312"
+      },
+      "code": "S.1312",
+      "label": "Deelstaatoverheid",
+      "labelNl": "Deelstaatoverheid (n.v.t. in Nederland)",
+      "labelEn": "State government",
+      "description": "Deelstatelijke overheid. Niet van toepassing in Nederland (unitaire staat).",
+      "isNlRelevant": false,
+      "isGovernmentSector": true,
+      "parentCode": "S.13"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "EsaClassifier",
+        "slug": "esa-S.1313"
+      },
+      "code": "S.1313",
+      "label": "Lokale overheid",
+      "labelNl": "Lokale overheid",
+      "labelEn": "Local government",
+      "description": "Gemeenten, provincies, waterschappen en gemeenschappelijke regelingen. Primaire sector voor BBV-plichtige instellingen in Shillinq.",
+      "isNlRelevant": true,
+      "isGovernmentSector": true,
+      "parentCode": "S.13"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "EsaClassifier",
+        "slug": "esa-S.1314"
+      },
+      "code": "S.1314",
+      "label": "Wettelijke sociale verzekering",
+      "labelNl": "Wettelijke sociale verzekering",
+      "labelEn": "Social security funds",
+      "description": "Fondsen voor wettelijke sociale verzekeringen (UWV, SVB e.d.).",
+      "isNlRelevant": true,
+      "isGovernmentSector": true,
+      "parentCode": "S.13"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "EsaClassifier",
+        "slug": "esa-S.11"
+      },
+      "code": "S.11",
+      "label": "Niet-financiële vennootschappen",
+      "labelNl": "Niet-financiële vennootschappen",
+      "labelEn": "Non-financial corporations",
+      "description": "Marktproducenten van goederen en niet-financiële diensten (BV's, NV's, overheids-BV's etc.).",
+      "isNlRelevant": true,
+      "isGovernmentSector": false
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "EsaClassifier",
+        "slug": "esa-S.12"
+      },
+      "code": "S.12",
+      "label": "Financiële instellingen",
+      "labelNl": "Financiële instellingen",
+      "labelEn": "Financial corporations",
+      "description": "Banken, verzekeringsmaatschappijen en andere financiële intermediairs.",
+      "isNlRelevant": true,
+      "isGovernmentSector": false
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "EsaClassifier",
+        "slug": "esa-S.14"
+      },
+      "code": "S.14",
+      "label": "Huishoudens",
+      "labelNl": "Huishoudens",
+      "labelEn": "Households",
+      "description": "Individuen en huishoudelijke eenheden als consumenten en producenten.",
+      "isNlRelevant": true,
+      "isGovernmentSector": false
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "EsaClassifier",
+        "slug": "esa-S.15"
+      },
+      "code": "S.15",
+      "label": "Non-profitinstellingen t.b.v. huishoudens",
+      "labelNl": "Non-profitinstellingen t.b.v. huishoudens",
+      "labelEn": "Non-profit institutions serving households",
+      "description": "Stichtingen, verenigingen en andere NPISH-entiteiten die huishoudens bedienen.",
+      "isNlRelevant": true,
+      "isGovernmentSector": false
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "EsaClassifier",
+        "slug": "esa-S.2"
+      },
+      "code": "S.2",
+      "label": "Buitenland",
+      "labelNl": "Buitenland",
+      "labelEn": "Rest of the world",
+      "description": "Alle niet-ingezetenen die transacties hebben met ingezeten eenheden. Gebruikt voor cross-border EMU-correcties.",
+      "isNlRelevant": true,
+      "isGovernmentSector": false
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "EsaClassifier",
+        "slug": "esa-S.1311-gem"
+      },
+      "code": "S.1313-gemeente",
+      "label": "Gemeente (lokale overheid)",
+      "labelNl": "Gemeente",
+      "labelEn": "Municipality",
+      "description": "Subclassificatie van S.1313 voor gemeenten. Gebruik S.1313 als primaire ESA-2010 code.",
+      "isNlRelevant": true,
+      "isGovernmentSector": true,
+      "parentCode": "S.1313",
+      "isSubClassifier": true
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "EsaClassifier",
+        "slug": "esa-S.1313-provincie"
+      },
+      "code": "S.1313-provincie",
+      "label": "Provincie (lokale overheid)",
+      "labelNl": "Provincie",
+      "labelEn": "Province",
+      "description": "Subclassificatie van S.1313 voor provincies. Gebruik S.1313 als primaire ESA-2010 code.",
+      "isNlRelevant": true,
+      "isGovernmentSector": true,
+      "parentCode": "S.1313",
+      "isSubClassifier": true
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "EsaClassifier",
+        "slug": "esa-S.1313-waterschap"
+      },
+      "code": "S.1313-waterschap",
+      "label": "Waterschap (lokale overheid)",
+      "labelNl": "Waterschap",
+      "labelEn": "Water authority",
+      "description": "Subclassificatie van S.1313 voor waterschappen. Gebruik S.1313 als primaire ESA-2010 code.",
+      "isNlRelevant": true,
+      "isGovernmentSector": true,
+      "parentCode": "S.1313",
+      "isSubClassifier": true
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "EsaClassifier",
+        "slug": "esa-S.1313-gr"
+      },
+      "code": "S.1313-gr",
+      "label": "Gemeenschappelijke regeling (lokale overheid)",
+      "labelNl": "Gemeenschappelijke regeling",
+      "labelEn": "Joint administrative body",
+      "description": "Subclassificatie van S.1313 voor gemeenschappelijke regelingen (Wgr). Gebruik S.1313 als primaire ESA-2010 code.",
+      "isNlRelevant": true,
+      "isGovernmentSector": true,
+      "parentCode": "S.1313",
+      "isSubClassifier": true
+    }
+  ]
+}

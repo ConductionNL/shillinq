@@ -88,6 +88,7 @@ _Hierarchical chart-of-accounts entry conforming to the RGS (Referentie Grootboe
 | description | string | No | Operator-authored free-text description |
 | vatApplicable | boolean | No | Whether VAT/BTW applies to transactions on this account |
 | iban | string | No | Dutch IBAN for bank/cash accounts |
+| esaClassifier | enum | No | ESA 2010 sector code (S.1311/S.1312/S.1313/S.1314/S.11/S.12/S.13/S.14/S.15/S.2) driving EMU-saldo computation — see annotation below |
 | iv3FieldCode | string | No | CBS IV3 field code this account maps to (e.g. K1000, K2100). Optional; if set, IV3 report aggregation groups GL transactions for this account under the given field code per REQ-IV3-003 (bookkeeping-iv3-reporting). |
 
 **Relations:**
@@ -95,6 +96,16 @@ _Hierarchical chart-of-accounts entry conforming to the RGS (Referentie Grootboe
 - → GLLine (one-to-many, from T1 general-ledger change)
 - → Administration (many-to-one)
 - → IV3ReportLine (one-to-many, via iv3FieldCode grouping in quarterly aggregation)
+
+> **ESA-2010 classifier annotation (add-shillinq-emu-reporting, 2026-06-01):** The
+> optional `esaClassifier` field added by the T4-specialized change
+> `add-shillinq-emu-reporting` carries the canonical ESA 2010 (European System of
+> Accounts) sector code for each account. This field drives the EMU-saldo and
+> EMU-schuld computations declared as `x-openregister-aggregations` on the Account
+> schema per REQ-EMU-002. The canonical classifier list ships as
+> `lib/Settings/seeds/esa-2010-classifier.json`. See
+> `openspec/changes/add-shillinq-emu-reporting/design.md` for the full
+> Reuse Analysis and the ADR-031 declarative-vs-imperative decision.
 
 > **Reconciliation note (add-shillinq-chart-of-accounts, 2026-05-18):** The earlier
 > `GeneralLedgerAccount` entry (Schema.org `schema:Product`, primary spec
@@ -147,24 +158,26 @@ _Accounting administration unit for a specific business year of a corporation. S
 
 ### AllocationRule
 **Schema.org:** `schema:Thing`
-_Recurring rule for automatically allocating overhead and shared costs between cost centers based on percentage, fixed amount, or calculation formula_
-**Primary spec:** cost-accounting-allocation
+_Cost-allocation rule declared as schema metadata per ADR-031 (design D2). Stores the rule shape: source account pattern, named driver (fixed-percentage, fixed-amount, volume, headcount), targets with target dimension (cost-center, kosten-drager, project), and cadence (per-posting, monthly, period-close). Per-posting rules fire as x-openregister-lifecycle action on GLTransaction.post; monthly/period-close rules fire via OR ScheduledWorkflow. No AllocationService.allocate() ever executes the rule. A fixed-percentage precondition that target percentages sum to 100 is declared as x-openregister-lifecycle.requires on AllocationRule.save per REQ-CC-004._
+**Primary spec:** bookkeeping-cost-centers-dimensions
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| name | string | Yes | Name of the allocation rule |
-| ruleType | string | Yes | Type: percentage, fixed amount, or formula-based |
-| percentage | number | No | Percentage to allocate (if percentage-based) |
-| fixedAmount | number | No | Fixed amount to allocate per period |
-| frequency | string | Yes | Frequency: monthly, quarterly, or yearly |
-| isActive | boolean | Yes | Whether rule is currently active |
-| startDate | datetime | Yes | Date rule becomes effective |
-| endDate | datetime | No | Date rule expires |
-| description | string | No |  |
+| name | string | Yes | Operator-readable rule name |
+| sourceAccountPattern | string | Yes | Glob or range pattern matching source GL accounts (e.g. 1000-1099) |
+| driver | enum | Yes | One of fixed-percentage, fixed-amount, volume, headcount |
+| targets | array | Yes | At least 2 targets; percentages MUST sum to 100 when driver = fixed-percentage |
+| targetDimension | enum | Yes | One of cost-center, kosten-drager, project |
+| cadence | enum | Yes | One of per-posting, monthly, period-close |
+| lifecycleState | enum | Yes | One of active, paused, archived |
+| administrationId | string | Yes | FK to the Administration |
 
 **Relations:**
-- → CostCenter (many-to-one)
-- → CostCenter (many-to-one)
+- → CostCenter (many-to-one, via targets[].code when targetDimension = cost-center)
+- → KostenDrager (many-to-one, via targets[].code when targetDimension = kosten-drager)
+- → Project (many-to-one, via targets[].code when targetDimension = project)
+
+> **Reconciliation note (add-shillinq-cost-centers-dimensions, 2026-06-03):** The earlier `AllocationRule` entry (primary spec: cost-accounting-allocation) described a generic allocation rule with `ruleType/percentage/fixedAmount/frequency/isActive/startDate/endDate` shape. This entry supersedes it for the shillinq bookkeeping tier with the T4 schema-declarative shape per ADR-031 and REQ-CC-004: `sourceAccountPattern/driver/targets/targetDimension/cadence/lifecycleState`. Key changes: (1) no PHP `AllocationService` — rule declared in schema metadata; (2) four named drivers replace free-form `ruleType`; (3) cadence routes execution to lifecycle action (per-posting) or OR ScheduledWorkflow (monthly/period-close); (4) `fixed-percentage` sum-to-100 precondition declared as `x-openregister-lifecycle.requires`. Example seeds ship in `lifecycleState: paused` under `lib/Settings/seeds/allocation-rules/`.
 
 ### ApprovalChain
 **Schema.org:** `ApprovalChain`
@@ -1263,21 +1276,41 @@ _Transaction allocating or distributing costs from one cost center to another, w
 
 ### CostCenter
 **Schema.org:** `schema:Organization`
-_A cost center for tracking, allocating, and analyzing departmental or functional expenses across the organization_
-**Primary spec:** cost-accounting-allocation
+_An analytical cost center (kostenplaats) for tracking, allocating, and analysing departmental or functional expenses. Declared as an OR-managed register per REQ-CC-001 and REQ-CC-002. Hierarchy is navigable via the parentCode self-relation. The same shape is shared by KostenDrager and Project; the distinction is semantic per Dutch GAAP. Segment P&L aggregation is declared as x-openregister-aggregations on GLLine keyed by costCenterCode per REQ-CC-005._
+**Primary spec:** bookkeeping-cost-centers-dimensions
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| code | string | Yes | Unique cost center identifier |
-| name | string | Yes | Name of the cost center |
-| description | string | No | Detailed description of responsibilities and scope |
-| status | string | Yes | Current status: active or inactive |
-| budget | number | No | Allocated annual or periodic budget |
-| createdDate | datetime | Yes | Date when cost center was created |
+| code | string | Yes | Operator-assigned unique reference within the administration |
+| name | string | Yes | Human-readable cost center name |
+| parentCode | string | No | FK to parent CostCenter.code for hierarchy via self-relation |
+| responsibleUser | string | No | NC user id of the cost-center owner |
+| lifecycleState | enum | Yes | One of active, blocked, archived (mirrors Account lifecycle per REQ-CoA-005) |
+| administrationId | string | Yes | FK to the Administration |
 
 **Relations:**
-- → Person (many-to-one)
-- → Organization (many-to-one)
+- self → CostCenter (many-to-one, via parentCode → code; hierarchy navigation)
+- → GLLine (one-to-many, via costCenterCode FK, additive dimension field per REQ-CC-003)
+
+> **Reconciliation note (add-shillinq-cost-centers-dimensions, 2026-06-03):** The earlier `CostCenter` entry (primary spec: cost-accounting-allocation) described a generic cost center with `description/status/budget/createdDate`. This entry supersedes it for the shillinq bookkeeping tier with the T4 dimensional accounting shape per REQ-CC-002: `parentCode` self-relation for hierarchy, `lifecycleState` enum mirroring Account, and `administrationId` FK. The OR-managed register pattern (ADR-022) replaces any parallel database table. No new PHP classes — this is a schema-only declaration per ADR-031.
+
+### KostenDrager
+**Schema.org:** `schema:Product`
+_An analytical cost unit (kostendrager / cost object) for tracking costs per product, service, or cost bearer per Dutch GAAP. Same field shape as CostCenter; the distinction is semantic. Hierarchy navigable via parentCode self-relation per REQ-CC-002. Segment P&L aggregation declared on GLLine keyed by kostenDragerCode per REQ-CC-005._
+**Primary spec:** bookkeeping-cost-centers-dimensions
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| code | string | Yes | Operator-assigned unique reference within the administration |
+| name | string | Yes | Human-readable kostendrager name |
+| parentCode | string | No | FK to parent KostenDrager.code for hierarchy |
+| responsibleUser | string | No | NC user id of the kostendrager owner |
+| lifecycleState | enum | Yes | One of active, blocked, archived |
+| administrationId | string | Yes | FK to the Administration |
+
+**Relations:**
+- self → KostenDrager (many-to-one, via parentCode → code; hierarchy navigation)
+- → GLLine (one-to-many, via kostenDragerCode FK, additive dimension field per REQ-CC-003)
 
 ### CostProject
 **Schema.org:** `schema:Project`
@@ -1880,22 +1913,54 @@ _An accounting period representing a fiscal year for financial reporting and reg
 
 ### FixedAsset
 **Schema.org:** `schema:Thing`
-_A tangible business asset with long-term value subject to annual depreciation calculation and tracking_
-**Primary spec:** obligation-financial-administration
+_A capitalised tangible or intangible business asset with declarative depreciation rules (linear, degressive, units-of-production, none), parallel commercial/fiscal streams, and a managed lifecycle (proposed → active → disposed → archived). Depreciation values are derived on demand via `x-openregister-calculations` — no materialised schedule table._
+**Primary spec:** bookkeeping-fixed-assets-depreciation
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| assetNumber | string | Yes | Unique identifier for the fixed asset |
-| name | string | Yes | Name of the fixed asset |
-| assetType | string | Yes | Type of asset: equipment, vehicle, property, building, etc. |
-| purchaseDate | datetime | Yes | Date when the asset was purchased |
-| purchaseCost | number | Yes | Original acquisition cost of the asset |
-| status | string | Yes | Current status: active, inactive, retired |
-| location | string | No | Physical location of the asset |
+| assetNumber | string | Yes | Operator-assigned unique reference within the administration (e.g. FA-0001) |
+| name | string | Yes | Human-readable asset name |
+| assetCategory | enum | Yes | One of buildings, vehicles, machinery, it-equipment, furniture, intangibles |
+| acquisitionDate | date | Yes | Date the asset entered service |
+| acquisitionCost | number ≥ 0 | Yes | Original cost in the administration's base currency |
+| currency | string (ISO 4217) | Yes | Currency of the acquisition cost |
+| usefulLifeMonths | integer ≥ 1 | Yes | Useful life expressed in months |
+| residualValue | number ≥ 0 | Yes | Estimated salvage value at end of useful life |
+| depreciationMethod | enum | Yes | One of linear, degressive, units-of-production, none |
+| degressiveRate | number | No | Annual declining-balance percentage when depreciationMethod = degressive |
+| commercialRate | number | No | Annual rate for commercial books (IFRS / Dutch GAAP) — enables parallel commercial stream |
+| fiscalRate | number | No | Annual rate for fiscal books (Wet IB / Wet VPB) — may differ from commercialRate |
+| assetAccountNumber | string | Yes | FK to Account carrying the asset's gross value |
+| accumulatedDepAccountNumber | string | Yes | FK to contra Account for accumulated depreciation |
+| depreciationExpenseAccountNumber | string | Yes | FK to P&L Account for the depreciation expense charge |
+| disposalDate | date | No | Date the asset was disposed of (sale, scrap, donation) |
+| disposalAccountingTreatment | enum | No | One of sale, scrap, donation, transfer (required when disposalDate is set) |
+| lifecycleState | enum | Yes | One of proposed, active, disposed, archived |
+| administrationId | string | Yes | FK to the Administration owning the asset |
+
+**Calculated fields (x-openregister-calculations, not stored):**
+- `monthlyDepreciation` — monthly charge for the current period
+- `currentBookValue` — net book value as of today
+- `commercialBookValue` — book value under the commercial rate stream
+- `fiscalBookValue` — book value under the fiscal rate stream
 
 **Relations:**
-- → Organization (many-to-one)
-- → DepreciationSchedule (one-to-many)
+- → Administration (many-to-one, via administrationId)
+- → Account (many-to-one, via assetAccountNumber → accountNumber; gross value account)
+- → Account (many-to-one, via accumulatedDepAccountNumber → accountNumber; accumulated depreciation)
+- → Account (many-to-one, via depreciationExpenseAccountNumber → accountNumber; P&L expense)
+- → GLLine (one-to-many, via `GLLine.subLedgerRef` when `GLLine.subLedgerType = fixed-asset`; the general ledger lines arising from depreciation postings reference back to this asset)
+
+> **Reconciliation note (add-shillinq-fixed-assets-depreciation, 2026-06-01):** The earlier
+> `FixedAsset` entry (primary spec `obligation-financial-administration`, using `purchaseDate`
+> / `purchaseCost` / `assetType` / `status`) has been superseded by this updated entry.
+> `FixedAsset` is now the canonical T4 fixed-assets register schema declared in
+> `lib/Settings/shillinq_register.json`, conforming to REQ-FA-002 of the
+> `bookkeeping-fixed-assets-depreciation` spec. The `DepreciationSchedule` relation below
+> is replaced by `x-openregister-calculations` derived fields — no materialised schedule
+> table (design D2). The `GLLine.subLedgerRef` link is the only cross-register pointer;
+> downward specs referencing `FixedAsset` MUST use `assetNumber` as the FK target and
+> `administrationId` for administration scoping.
 
 ### FrameworkAgreement
 **Schema.org:** `schema:Service`
@@ -2104,13 +2169,22 @@ _A debit-or-credit line within a GLTransaction, encoding polarity in the `side` 
 | periodId | string | No | Auto-resolved by lifecycle engine on GLTransaction.post transition (stub string in T1, FK to FiscalPeriod in T3) |
 | subLedgerType | enum | No | One of ap, ar, project, none (T2 owns the sub-ledger registers) |
 | subLedgerRef | string | No | FK identifier into the sub-ledger when subLedgerType ≠ none |
-| costCenter | string | No | Cost-center code for allocation reporting |
+| costCenter | string | No | Cost-center code for allocation reporting (backwards-compatible alias; see costCenterCode) |
 | description | string | No | Line-level description |
 | eliminationFlag | boolean | No | When true, excludes line from consolidated trial-balance (GR consolidation per REQ-GRC-003) |
+| costCenterCode | string | No | FK to CostCenter.code for dimension-tagged analytical reporting per REQ-CC-003 |
+| kostenDragerCode | string | No | FK to KostenDrager.code for cost-unit analytical reporting per REQ-CC-003 |
+| projectCode | string | No | FK to Project.code for project accounting and WBSO pre-positioning per REQ-CC-003 + REQ-CC-007 |
+| dimensions | object | No | Free-form key→value map for custom analytical dimensions; each key matches a registered custom dimension register, each value matches that register's code field; validated via OR relations engine per REQ-CC-003 |
 
 **Relations:**
 - → GLTransaction (many-to-one, via transactionId → GLTransaction.id)
 - → Account (many-to-one, via accountNumber → Account.accountNumber)
+- → CostCenter (many-to-one, via costCenterCode → CostCenter.code; additive per REQ-CC-003)
+- → KostenDrager (many-to-one, via kostenDragerCode → KostenDrager.code; additive per REQ-CC-003)
+- → Project (many-to-one, via projectCode → Project.code; additive per REQ-CC-003 + REQ-CC-007)
+
+> **Reconciliation note (add-shillinq-cost-centers-dimensions, 2026-06-03):** The T1 `GLLine` schema is additively extended with four new optional fields (`costCenterCode`, `kostenDragerCode`, `projectCode`, `dimensions`) per REQ-CC-003. The existing `costCenter` field is retained as the backwards-compatible alias for `costCenterCode`. T1 single-dimension callers remain correct — the new fields are nullable and non-required. Segment P&L aggregations (`segmentPnlByCostCenter`, `segmentPnlByKostenDrager`, `segmentPnlByProject`) are declared on `GLLine` as `x-openregister-aggregations` per ADR-031 + REQ-CC-005; no PHP `SegmentReportService` is authored.
 
 ### GLTransaction
 **Schema.org:** `schema:AccountingTransaction`
@@ -3311,25 +3385,24 @@ _Schema.org Product — standard vocabulary for product data_
 
 ### Project
 **Schema.org:** `schema:Project`
-_Project container for organizing tasks, milestones, and team collaboration with resource and timeline management_
-**Primary spec:** approval-workflow-management
+_An analytical project for tracking time, materials, and costs per project in the shillinq bookkeeping tier. Same field shape as CostCenter and KostenDrager per REQ-CC-002. The `timeBookingEnabled` flag pre-positions the WBSO time-per-project shape: a WBSO capability can join `TimeEntry.projectCode` to `Project.code` and aggregate hours per project per fiscal year per REQ-CC-007 without modifying this schema. Segment P&L aggregation declared on GLLine keyed by projectCode per REQ-CC-005._
+**Primary spec:** bookkeeping-cost-centers-dimensions
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| projectId | string | Yes | Unique project identifier |
-| name | string | Yes | Project name |
-| description | string | No | Project description and objectives |
-| status | string | No | active/inactive/completed/onHold |
-| owner | string | No | Person/User ID who owns the project |
-| startDate | datetime | No | Project start date |
-| endDate | datetime | No | Planned end date |
-| budget | number | No | Project budget in base currency |
+| code | string | Yes | Operator-assigned unique reference within the administration |
+| name | string | Yes | Human-readable project name |
+| parentCode | string | No | FK to parent Project.code for hierarchy |
+| responsibleUser | string | No | NC user id of the project owner |
+| timeBookingEnabled | boolean | No | When true, time bookings may reference this project for WBSO derivation per REQ-CC-007 |
+| lifecycleState | enum | Yes | One of active, blocked, archived |
+| administrationId | string | Yes | FK to the Administration |
 
 **Relations:**
-- → ProjectTask (one-to-many)
-- → Milestone (one-to-many)
-- → Person (many-to-one)
-- → Organization (many-to-one)
+- self → Project (many-to-one, via parentCode → code; hierarchy navigation)
+- → GLLine (one-to-many, via projectCode FK, additive dimension field per REQ-CC-003)
+
+> **Reconciliation note (add-shillinq-cost-centers-dimensions, 2026-06-03):** The earlier `Project` entry (primary spec: approval-workflow-management) described a generic project management container with `projectId/description/status/owner/startDate/endDate/budget` fields related to ProjectTask and Milestone. That entry is for the approval-workflow-management domain and is NOT the bookkeeping-tier `Project` register declared by `add-shillinq-cost-centers-dimensions`. These are distinct OR registers: the approval-workflow Project is a management entity; the bookkeeping-tier Project declared here is an analytical dimension for cost tracking and WBSO pre-positioning. The bookkeeping-tier `Project` uses `code` (not `projectId`) as the primary key, mirrors the CostCenter shape, and carries the `timeBookingEnabled` flag. Both entries coexist.
 
 ### ProjectTask
 **Schema.org:** `schema:Action`
@@ -5069,3 +5142,87 @@ _Archiefwet 1995 + Selectielijst Gemeenten 2020 retention rule. A coded retentio
 | customRetentionYears | integer | No | Operator extension above statutory minimum (MUST be >= retentionYears; never shorter) |
 | administrationId | string | No | Administration scope for per-organisation override rules (absent = applies to all) |
 | daysUntilRetention | integer (derived) | No | Days until rule expires per x-openregister-calculations (null for keep_indefinite) |
+
+### VendorMaster
+**Schema.org:** `schema:Organization`
+_Vendor party record for accounts payable. Holds bank IBAN, payment terms, tax registration, and dunning-policy reference for a vendor within a single administration. Per REQ-AP-002._
+**Primary spec:** bookkeeping-accounts-payable-core
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| vendorNumber | string | Yes | Stable vendor identifier unique per administration |
+| name | string | Yes | Legal name of the vendor |
+| tradingName | string | No | Alternate or DBA trading name |
+| kvkNumber | string | No | Dutch KvK number (8 digits) |
+| btwNumber | string | No | Dutch BTW / EU VAT number |
+| iban | string | No | Default IBAN for outgoing payments to this vendor |
+| bic | string | No | BIC/SWIFT code matching the IBAN bank |
+| paymentTermDays | integer | Yes (default 30) | Default payment term in days; auto-sets APInvoice.dueDate |
+| defaultExpenseAccountNumber | string | No | FK to Account.accountNumber for default expense coding |
+| address | object | No | Street/number/postcode/city/country |
+| email | string | No | Primary contact email for invoice queries |
+| phone | string | No | Primary contact phone |
+| dunningPolicyId | string | No | FK to OR dunning-workflow policy record per ADR-022 |
+| contactRef | string | No | FK to OR contact abstraction if stable per ADR-022; else null |
+| administrationId | string | Yes | FK to the administration owning this vendor record |
+| lifecycleState | enum | Yes | One of active, blocked, archived |
+
+**Relations:**
+- → APInvoice (one-to-many, open invoices from this vendor)
+- → Administration (many-to-one)
+
+> **Reconciliation note (add-shillinq-accounts-payable-core, 2026-06-03):** No earlier `Vendor` or `VendorMaster` entry existed in this ADR. `VendorMaster` is the new T2 canonical vendor party register declared in `lib/Settings/shillinq_register.json`. Fields `purchaseOrderRef`/`goodsReceiptRef` on `APInvoice` are declared as FK stubs for future T4 procurement attachment; no PO/GR register exists yet. Per ADR-022, approval routing for AP invoices comes from OR's approval-workflow, not from an app-local approver table.
+
+### APInvoice
+**Schema.org:** `schema:Invoice`
+_Accounts payable sub-ledger invoice recording vendor billing and payment obligation. Posting materialises a balanced GLTransaction per T1 REQ-JE-007. Lifecycle: draft → pending → approved → posted → paid with disputed/voided branches. Approval routing consumes OR approval-workflow per ADR-022 (no app-local approval table). Per REQ-AP-003 and REQ-AP-004._
+**Primary spec:** bookkeeping-accounts-payable-core
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| invoiceNumber | string | Yes | Shillinq-side reference (auto-generated per administration) |
+| vendorInvoiceRef | string | Yes | The vendor's own invoice number as it appears on the document |
+| vendorId | string | Yes | FK to VendorMaster UUID |
+| invoiceDate | date | Yes | Date on the vendor's invoice |
+| dueDate | date | Yes | Auto-calculated from invoiceDate + vendor.paymentTermDays; overrideable |
+| currency | string (ISO 4217) | Yes | T2: base currency only; T5 adds multi-currency |
+| totalAmount | number ≥ 0 | Yes | Total amount including tax |
+| taxAmount | number | No | VAT/BTW amount (T3 adds posting automation; T2 carries the field) |
+| lines | array | Yes | {description, accountNumber, amount, taxCode, quantity, unitPrice} rows |
+| sourceDocumentUri | string | No | docudesk FK URI per bookkeeping-document-attachment-integration |
+| purchaseOrderRef | string | No | FK to PO register (future T4 procurement; nullable in T2) |
+| goodsReceiptRef | string | No | FK to Goods Receipt register (future T4; nullable in T2) |
+| approvalState | enum | Yes | One of not-required, pending, approved, rejected |
+| state | enum | Yes | One of draft, pending, approved, posted, paid, disputed, voided |
+| glTransactionId | string | No | Back-reference to materialised GLTransaction once posted |
+| idealLink | string | No | Per-invoice iDEAL payment link (x-openregister-calculations output) |
+| periodId | string | No | FK to FiscalPeriod (resolved on post transition) |
+| administrationId | string | Yes | FK to administration |
+
+**Relations:**
+- → VendorMaster (many-to-one, via vendorId)
+- → GLTransaction (many-to-one, via glTransactionId — materialised on post)
+- → Administration (many-to-one)
+
+> **Reconciliation note (add-shillinq-accounts-payable-core, 2026-06-03):** The existing `APTransaction` entry (primary spec: accounts-payable-receivable) is a generic AP/AR transaction schema. `APInvoice` is the shillinq bookkeeping-tier AP sub-ledger invoice with full lifecycle, GL materialisation, 3-way match guard, and SEPA/iDEAL calculation fields. The `APTransaction` entry is retained for generic accounts-payable-receivable usage; new AP bookkeeping register declarations in shillinq MUST use `APInvoice`. `GLLine.subLedgerType: "ap"` + `subLedgerRef: <APInvoice UUID>` (T1 REQ-GL-009 stub) now resolves to this register.
+
+### PaymentRun
+**Schema.org:** `schema:PaymentService`
+_Operator-curated batch of selected APInvoice UUIDs producing SEPA pain.001.001.03 XML and iDEAL payment links as x-openregister-calculations outputs. No PaymentRunService, SepaXmlBuilder, or IdealLinkBuilder PHP classes per ADR-031. Live PSD2 bank initiation is T4. Per REQ-AP-007._
+**Primary spec:** bookkeeping-accounts-payable-core
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| runNumber | string | Yes | Sequential identifier per administration |
+| runDate | date | Yes | Scheduled execution date |
+| invoiceRefs | array of string | Yes | List of APInvoice UUIDs to include |
+| totalAmount | number | Yes (calculated) | Sum of selected invoices' totalAmount (x-openregister-calculations) |
+| paymentMethod | enum | Yes | One of sepa-pain001, ideal |
+| sepaXml | string | Yes (calculated) | pain.001.001.03 XML (x-openregister-calculations; populated when paymentMethod=sepa-pain001) |
+| idealLinks | array of object | Yes (calculated) | {invoiceRef, url, amount, expiresAt} per invoice (x-openregister-calculations; when paymentMethod=ideal) |
+| state | enum | Yes | One of draft, ready, submitted, executed, failed |
+| administrationId | string | Yes | FK to administration |
+
+**Relations:**
+- → APInvoice (many-to-many, via invoiceRefs array)
+- → Administration (many-to-one)

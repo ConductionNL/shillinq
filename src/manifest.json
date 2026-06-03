@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"dependencies": [
 		"openregister"
 	],
@@ -38,6 +38,41 @@
 					"icon": "BankOutline",
 					"route": "BankConnections",
 					"order": 25
+				},
+				{
+					"id": "FixedAssets",
+					"label": "Fixed Assets",
+					"icon": "OfficeBuildingOutline",
+					"route": "FixedAssets",
+					"order": 30
+				},
+				{
+					"id": "Vendors",
+					"label": "Vendors",
+					"icon": "StoreOutline",
+					"route": "Vendors",
+					"order": 31
+				},
+				{
+					"id": "AccountsPayable",
+					"label": "Accounts Payable",
+					"icon": "ReceiptTextOutline",
+					"route": "AccountsPayable",
+					"order": 32
+				},
+				{
+					"id": "APAging",
+					"label": "AP Aging",
+					"icon": "CalendarClockOutline",
+					"route": "APAging",
+					"order": 33
+				},
+				{
+					"id": "PaymentRuns",
+					"label": "Payment Runs",
+					"icon": "BankTransferOutline",
+					"route": "PaymentRuns",
+					"order": 34
 				},
 				{
 					"id": "Waterschapsbelastingen",
@@ -102,6 +137,50 @@
 					"icon": "FileChartOutline",
 					"route": "Iv3Reports",
 					"order": 84
+				},
+				{
+					"id": "EmuRapportage",
+					"label": "EMU-rapportage",
+					"icon": "ChartBarOutline",
+					"route": "EmuRapportage",
+					"order": 20,
+					"featureFlag": "gov-emu"
+				},
+				{
+					"id": "Dimensions",
+					"label": "Dimensions",
+					"icon": "ChartBubble",
+					"order": 90,
+					"children": [
+						{
+							"id": "CostCenters",
+							"label": "Cost Centers",
+							"icon": "OfficeBuilding",
+							"route": "CostCenters",
+							"order": 10
+						},
+						{
+							"id": "KostenDragers",
+							"label": "Kostendragers",
+							"icon": "CubeOutline",
+							"route": "KostenDragers",
+							"order": 20
+						},
+						{
+							"id": "Projects",
+							"label": "Projects",
+							"icon": "BriefcaseOutline",
+							"route": "Projects",
+							"order": 30
+						},
+						{
+							"id": "AllocationRules",
+							"label": "Allocation Rules",
+							"icon": "TransferRight",
+							"route": "AllocationRules",
+							"order": 40
+						}
+					]
 				},
 				{
 					"id": "SbrXbrlFilings",
@@ -256,12 +335,463 @@
 	],
 	"pages": [
 		{
+			"id": "CostCenters",
+			"route": "/bookkeeping/dimensions/cost-centers",
+			"type": "index",
+			"title": "Cost Centers",
+			"config": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"columns": [
+					{
+						"key": "code",
+						"label": "Code",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "parentCode",
+						"label": "Parent",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "code",
+				"detailRoute": "CostCenterDetail"
+			}
+		},
+		{
+			"id": "CostCenterDetail",
+			"route": "/bookkeeping/dimensions/cost-centers/:id",
+			"type": "detail",
+			"title": "Cost Center",
+			"config": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"fields": [
+					{
+						"key": "code",
+						"label": "Code",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "parentCode",
+						"label": "Parent Cost Center",
+						"type": "string"
+					},
+					{
+						"key": "responsibleUser",
+						"label": "Responsible User",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"aggregation": "segmentPnl",
+				"indexRoute": "CostCenters"
+			}
+		},
+		{
+			"id": "KostenDragers",
+			"route": "/bookkeeping/dimensions/kostendragers",
+			"type": "index",
+			"title": "Kostendragers",
+			"config": {
+				"register": "shillinq",
+				"schema": "KostenDrager",
+				"columns": [
+					{
+						"key": "code",
+						"label": "Code",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "parentCode",
+						"label": "Parent",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "code",
+				"detailRoute": "KostenDragerDetail"
+			}
+		},
+		{
+			"id": "KostenDragerDetail",
+			"route": "/bookkeeping/dimensions/kostendragers/:id",
+			"type": "detail",
+			"title": "Kostendrager",
+			"config": {
+				"register": "shillinq",
+				"schema": "KostenDrager",
+				"fields": [
+					{
+						"key": "code",
+						"label": "Code",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "parentCode",
+						"label": "Parent Kostendrager",
+						"type": "string"
+					},
+					{
+						"key": "responsibleUser",
+						"label": "Responsible User",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"aggregation": "segmentPnl",
+				"indexRoute": "KostenDragers"
+			}
+		},
+		{
+			"id": "Projects",
+			"route": "/bookkeeping/dimensions/projects",
+			"type": "index",
+			"title": "Projects",
+			"config": {
+				"register": "shillinq",
+				"schema": "Project",
+				"columns": [
+					{
+						"key": "code",
+						"label": "Code",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "parentCode",
+						"label": "Parent",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "code",
+				"detailRoute": "ProjectDetail"
+			}
+		},
+		{
+			"id": "ProjectDetail",
+			"route": "/bookkeeping/dimensions/projects/:id",
+			"type": "detail",
+			"title": "Project",
+			"config": {
+				"register": "shillinq",
+				"schema": "Project",
+				"fields": [
+					{
+						"key": "code",
+						"label": "Code",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "parentCode",
+						"label": "Parent Project",
+						"type": "string"
+					},
+					{
+						"key": "responsibleUser",
+						"label": "Responsible User",
+						"type": "string"
+					},
+					{
+						"key": "timeBookingEnabled",
+						"label": "Time Booking (WBSO)",
+						"type": "boolean"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"aggregation": "segmentPnl",
+				"indexRoute": "Projects"
+			}
+		},
+		{
+			"id": "AllocationRules",
+			"route": "/bookkeeping/dimensions/allocation-rules",
+			"type": "index",
+			"title": "Allocation Rules",
+			"config": {
+				"register": "shillinq",
+				"schema": "AllocationRule",
+				"columns": [
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "driver",
+						"label": "Driver",
+						"sortable": true
+					},
+					{
+						"key": "targetDimension",
+						"label": "Target Dimension",
+						"sortable": true
+					},
+					{
+						"key": "cadence",
+						"label": "Cadence",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "name",
+				"detailRoute": "AllocationRuleDetail"
+			}
+		},
+		{
+			"id": "AllocationRuleDetail",
+			"route": "/bookkeeping/dimensions/allocation-rules/:id",
+			"type": "detail",
+			"title": "Allocation Rule",
+			"config": {
+				"register": "shillinq",
+				"schema": "AllocationRule",
+				"fields": [
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "sourceAccountPattern",
+						"label": "Source Account Pattern",
+						"type": "string"
+					},
+					{
+						"key": "driver",
+						"label": "Driver",
+						"type": "string"
+					},
+					{
+						"key": "targets",
+						"label": "Targets",
+						"type": "json"
+					},
+					{
+						"key": "targetDimension",
+						"label": "Target Dimension",
+						"type": "string"
+					},
+					{
+						"key": "cadence",
+						"label": "Cadence",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"actions": [
+					{
+						"id": "activate-rule",
+						"label": "Try it",
+						"icon": "PlayCircleOutline",
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": [
+								"paused"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "activate",
+						"description": "Review the rule targets and activate it for evaluation on its cadence."
+					}
+				],
+				"indexRoute": "AllocationRules"
+			}
+		},
+		{
 			"id": "FeaturesRoadmap",
 			"route": "/features-roadmap",
 			"type": "roadmap",
 			"title": "Features & roadmap",
 			"config": {
 				"documentationUrl": "https://shillinq.conduction.nl"
+			}
+		},
+		{
+			"id": "EmuRapportage",
+			"route": "/emu-rapportage",
+			"type": "index",
+			"title": "EMU-rapportage",
+			"featureFlag": "gov-emu",
+			"config": {
+				"register": "shillinq",
+				"schema": "Account",
+				"aggregation": "emuSaldoByQuarter",
+				"columns": [
+					{
+						"key": "period",
+						"label": "Periode",
+						"sortable": true
+					},
+					{
+						"key": "sector",
+						"label": "ESA-2010 sector",
+						"sortable": true
+					},
+					{
+						"key": "emuSaldo",
+						"label": "EMU-saldo (€)",
+						"sortable": true
+					},
+					{
+						"key": "emuAggregationHash",
+						"label": "Reproductie-hash",
+						"sortable": false
+					}
+				],
+				"defaultSort": "period",
+				"detailRoute": "EmuRapportageDetail"
+			}
+		},
+		{
+			"id": "EmuRapportageDetail",
+			"route": "/emu-rapportage/:id",
+			"type": "detail",
+			"title": "EMU-rapportage details",
+			"featureFlag": "gov-emu",
+			"config": {
+				"register": "shillinq",
+				"schema": "Account",
+				"fields": [
+					{
+						"key": "period",
+						"label": "Periode",
+						"type": "string"
+					},
+					{
+						"key": "sector",
+						"label": "ESA-2010 sector",
+						"type": "string"
+					},
+					{
+						"key": "esaClassifier",
+						"label": "ESA-classifier code",
+						"type": "string"
+					},
+					{
+						"key": "emuInclusionRule",
+						"label": "Inclusieregel",
+						"type": "string"
+					},
+					{
+						"key": "emuSaldo",
+						"label": "EMU-saldo (€)",
+						"type": "number"
+					},
+					{
+						"key": "emuSchuld",
+						"label": "EMU-schuld (€)",
+						"type": "number"
+					},
+					{
+						"key": "emuAggregationHash",
+						"label": "Reproductie-hash (SHA-256)",
+						"type": "string"
+					},
+					{
+						"key": "contributingPeriods",
+						"label": "Bijdragende periodes",
+						"type": "array"
+					},
+					{
+						"key": "classifierStateAtCompute",
+						"label": "Classifier-staat bij berekening",
+						"type": "object"
+					},
+					{
+						"key": "exclusionRulesApplied",
+						"label": "Toegepaste exclusieregels",
+						"type": "object"
+					}
+				],
+				"indexRoute": "EmuRapportage"
 			}
 		},
 		{
@@ -636,146 +1166,6 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "Waterschapsbelastingen"
-			}
-		},
-		{
-			"id": "SbrXbrlFilings",
-			"route": "/sbr-xbrl-filings",
-			"type": "index",
-			"title": "SBR/XBRL Filings",
-			"config": {
-				"register": "shillinq",
-				"schema": "XbrlInstance",
-				"columns": [
-					{
-						"key": "instanceNumber",
-						"label": "Filing Reference",
-						"sortable": true
-					},
-					{
-						"key": "entryPoint",
-						"label": "Entry Point",
-						"sortable": true
-					},
-					{
-						"key": "reportingPeriodEnd",
-						"label": "Period End",
-						"sortable": true
-					},
-					{
-						"key": "taxonomyVersion",
-						"label": "Taxonomy",
-						"sortable": true
-					},
-					{
-						"key": "state",
-						"label": "Status",
-						"sortable": true
-					},
-					{
-						"key": "digipoortReceiptId",
-						"label": "Digipoort Receipt",
-						"sortable": false
-					}
-				],
-				"defaultSort": "-reportingPeriodEnd",
-				"filters": [
-					{
-						"key": "state",
-						"label": "Status",
-						"type": "enum",
-						"options": [
-							"draft",
-							"validated",
-							"submitted",
-							"accepted",
-							"rejected"
-						]
-					},
-					{
-						"key": "entryPoint",
-						"label": "Entry Point",
-						"type": "enum",
-						"options": [
-							"kvk-jaarrekening",
-							"belastingdienst-vpb",
-							"belastingdienst-ib",
-							"sbr-banken-kredietrapportage",
-							"sbr-wonen"
-						]
-					}
-				],
-				"detailRoute": "SbrXbrlFilingDetail"
-			}
-		},
-		{
-			"id": "SbrXbrlFilingDetail",
-			"route": "/sbr-xbrl-filings/:id",
-			"type": "detail",
-			"title": "SBR/XBRL Filing",
-			"config": {
-				"register": "shillinq",
-				"schema": "XbrlInstance",
-				"fields": [
-					{
-						"key": "instanceNumber",
-						"label": "Filing Reference",
-						"type": "string"
-					},
-					{
-						"key": "entryPoint",
-						"label": "Entry Point",
-						"type": "string"
-					},
-					{
-						"key": "taxonomyVersion",
-						"label": "NL-taxonomie Version",
-						"type": "string"
-					},
-					{
-						"key": "reportingPeriodStart",
-						"label": "Period Start",
-						"type": "date"
-					},
-					{
-						"key": "reportingPeriodEnd",
-						"label": "Period End",
-						"type": "date"
-					},
-					{
-						"key": "sourceStatementId",
-						"label": "Source Financial Statement",
-						"type": "string"
-					},
-					{
-						"key": "mappingId",
-						"label": "NL-taxonomie Mapping",
-						"type": "string"
-					},
-					{
-						"key": "instanceHash",
-						"label": "Instance SHA-256",
-						"type": "string"
-					},
-					{
-						"key": "state",
-						"label": "Status",
-						"type": "string"
-					},
-					{
-						"key": "digipoortReceiptId",
-						"label": "Digipoort Receipt ID",
-						"type": "string"
-					},
-					{
-						"key": "administrationId",
-						"label": "Administration",
-						"type": "string"
-					}
-				],
-				"lifecycleActions": true,
-				"auditTrail": true,
-				"indexRoute": "SbrXbrlFilings"
 			}
 		},
 		{
@@ -1455,6 +1845,184 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "ChartOfAccounts"
+			}
+		},
+		{
+			"id": "FixedAssets",
+			"route": "/fixed-assets",
+			"type": "index",
+			"title": "Fixed Assets",
+			"config": {
+				"register": "shillinq",
+				"schema": "FixedAsset",
+				"columns": [
+					{
+						"key": "assetNumber",
+						"label": "Asset Number",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "assetCategory",
+						"label": "Category",
+						"sortable": true
+					},
+					{
+						"key": "acquisitionDate",
+						"label": "Acquisition Date",
+						"sortable": true
+					},
+					{
+						"key": "acquisitionCost",
+						"label": "Cost",
+						"sortable": true
+					},
+					{
+						"key": "currentBookValue",
+						"label": "Book Value",
+						"sortable": false
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "assetNumber",
+				"detailRoute": "FixedAssetDetail"
+			}
+		},
+		{
+			"id": "FixedAssetDetail",
+			"route": "/fixed-assets/:id",
+			"type": "detail",
+			"title": "Fixed Asset",
+			"config": {
+				"register": "shillinq",
+				"schema": "FixedAsset",
+				"fields": [
+					{
+						"key": "assetNumber",
+						"label": "Asset Number",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "assetCategory",
+						"label": "Category",
+						"type": "string"
+					},
+					{
+						"key": "acquisitionDate",
+						"label": "Acquisition Date",
+						"type": "string"
+					},
+					{
+						"key": "acquisitionCost",
+						"label": "Acquisition Cost",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "usefulLifeMonths",
+						"label": "Useful Life (months)",
+						"type": "number"
+					},
+					{
+						"key": "residualValue",
+						"label": "Residual Value",
+						"type": "number"
+					},
+					{
+						"key": "depreciationMethod",
+						"label": "Depreciation Method",
+						"type": "string"
+					},
+					{
+						"key": "degressiveRate",
+						"label": "Degressive Rate",
+						"type": "number"
+					},
+					{
+						"key": "commercialRate",
+						"label": "Commercial Rate",
+						"type": "number"
+					},
+					{
+						"key": "fiscalRate",
+						"label": "Fiscal Rate",
+						"type": "number"
+					},
+					{
+						"key": "assetAccountNumber",
+						"label": "Asset Account",
+						"type": "string"
+					},
+					{
+						"key": "accumulatedDepAccountNumber",
+						"label": "Accumulated Depreciation Account",
+						"type": "string"
+					},
+					{
+						"key": "depreciationExpenseAccountNumber",
+						"label": "Depreciation Expense Account",
+						"type": "string"
+					},
+					{
+						"key": "currentBookValue",
+						"label": "Current Book Value",
+						"type": "number"
+					},
+					{
+						"key": "monthlyDepreciation",
+						"label": "Monthly Depreciation",
+						"type": "number"
+					},
+					{
+						"key": "commercialBookValue",
+						"label": "Commercial Book Value",
+						"type": "number"
+					},
+					{
+						"key": "fiscalBookValue",
+						"label": "Fiscal Book Value",
+						"type": "number"
+					},
+					{
+						"key": "disposalDate",
+						"label": "Disposal Date",
+						"type": "string"
+					},
+					{
+						"key": "disposalAccountingTreatment",
+						"label": "Disposal Treatment",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "FixedAssets"
 			}
 		},
 		{
@@ -2883,6 +3451,522 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "Dashboard"
+			}
+		},
+		{
+			"id": "Vendors",
+			"route": "/bookkeeping/vendors",
+			"type": "index",
+			"title": "Vendors",
+			"config": {
+				"register": "shillinq",
+				"schema": "VendorMaster",
+				"columns": [
+					{
+						"key": "vendorNumber",
+						"label": "Vendor #",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "iban",
+						"label": "IBAN",
+						"sortable": false
+					},
+					{
+						"key": "paymentTermDays",
+						"label": "Payment Terms (days)",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "vendorNumber",
+				"detailRoute": "VendorDetail"
+			}
+		},
+		{
+			"id": "VendorDetail",
+			"route": "/bookkeeping/vendors/:id",
+			"type": "detail",
+			"title": "Vendor",
+			"config": {
+				"register": "shillinq",
+				"schema": "VendorMaster",
+				"fields": [
+					{
+						"key": "vendorNumber",
+						"label": "Vendor #",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Legal Name",
+						"type": "string"
+					},
+					{
+						"key": "tradingName",
+						"label": "Trading Name",
+						"type": "string"
+					},
+					{
+						"key": "kvkNumber",
+						"label": "KvK Number",
+						"type": "string"
+					},
+					{
+						"key": "btwNumber",
+						"label": "BTW Number",
+						"type": "string"
+					},
+					{
+						"key": "iban",
+						"label": "IBAN",
+						"type": "string"
+					},
+					{
+						"key": "bic",
+						"label": "BIC",
+						"type": "string"
+					},
+					{
+						"key": "paymentTermDays",
+						"label": "Payment Terms (days)",
+						"type": "integer"
+					},
+					{
+						"key": "defaultExpenseAccountNumber",
+						"label": "Default Expense Account",
+						"type": "string"
+					},
+					{
+						"key": "email",
+						"label": "Email",
+						"type": "string"
+					},
+					{
+						"key": "phone",
+						"label": "Phone",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "Vendors"
+			}
+		},
+		{
+			"id": "AccountsPayable",
+			"route": "/bookkeeping/accounts-payable",
+			"type": "index",
+			"title": "Accounts Payable",
+			"config": {
+				"register": "shillinq",
+				"schema": "APInvoice",
+				"columns": [
+					{
+						"key": "invoiceNumber",
+						"label": "Invoice #",
+						"sortable": true
+					},
+					{
+						"key": "vendorInvoiceRef",
+						"label": "Vendor Ref",
+						"sortable": true
+					},
+					{
+						"key": "vendorId",
+						"label": "Vendor",
+						"sortable": true
+					},
+					{
+						"key": "invoiceDate",
+						"label": "Invoice Date",
+						"sortable": true
+					},
+					{
+						"key": "dueDate",
+						"label": "Due Date",
+						"sortable": true
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "dueDate",
+				"detailRoute": "APInvoiceDetail"
+			}
+		},
+		{
+			"id": "APInvoiceDetail",
+			"route": "/bookkeeping/accounts-payable/:id",
+			"type": "detail",
+			"title": "AP Invoice",
+			"config": {
+				"register": "shillinq",
+				"schema": "APInvoice",
+				"fields": [
+					{
+						"key": "invoiceNumber",
+						"label": "Invoice #",
+						"type": "string"
+					},
+					{
+						"key": "vendorInvoiceRef",
+						"label": "Vendor Invoice Ref",
+						"type": "string"
+					},
+					{
+						"key": "vendorId",
+						"label": "Vendor",
+						"type": "string"
+					},
+					{
+						"key": "invoiceDate",
+						"label": "Invoice Date",
+						"type": "date"
+					},
+					{
+						"key": "dueDate",
+						"label": "Due Date",
+						"type": "date"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total Amount",
+						"type": "number"
+					},
+					{
+						"key": "taxAmount",
+						"label": "Tax Amount",
+						"type": "number"
+					},
+					{
+						"key": "approvalState",
+						"label": "Approval Status",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "glTransactionId",
+						"label": "GL Transaction",
+						"type": "string"
+					},
+					{
+						"key": "sourceDocumentUri",
+						"label": "Source Document",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "AccountsPayable"
+			}
+		},
+		{
+			"id": "APAging",
+			"route": "/bookkeeping/ap-aging",
+			"type": "index",
+			"title": "AP Aging",
+			"config": {
+				"register": "shillinq",
+				"schema": "APInvoice",
+				"aggregation": "apAging",
+				"columns": [
+					{
+						"key": "vendorId",
+						"label": "Vendor",
+						"sortable": true
+					},
+					{
+						"key": "agingBucket",
+						"label": "Aging Bucket",
+						"sortable": true
+					},
+					{
+						"key": "count",
+						"label": "Invoices",
+						"sortable": true
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total Outstanding (EUR)",
+						"sortable": true
+					}
+				],
+				"defaultSort": "agingBucket",
+				"description": "AP aging report grouping open invoices by vendor and aging bucket per REQ-AP-009. Excludes paid and voided invoices."
+			}
+		},
+		{
+			"id": "PaymentRuns",
+			"route": "/bookkeeping/payment-runs",
+			"type": "index",
+			"title": "Payment Runs",
+			"config": {
+				"register": "shillinq",
+				"schema": "PaymentRun",
+				"columns": [
+					{
+						"key": "runNumber",
+						"label": "Run #",
+						"sortable": true
+					},
+					{
+						"key": "runDate",
+						"label": "Run Date",
+						"sortable": true
+					},
+					{
+						"key": "paymentMethod",
+						"label": "Method",
+						"sortable": true
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "runDate",
+				"detailRoute": "PaymentRunDetail"
+			}
+		},
+		{
+			"id": "PaymentRunDetail",
+			"route": "/bookkeeping/payment-runs/:id",
+			"type": "detail",
+			"title": "Payment Run",
+			"config": {
+				"register": "shillinq",
+				"schema": "PaymentRun",
+				"fields": [
+					{
+						"key": "runNumber",
+						"label": "Run #",
+						"type": "string"
+					},
+					{
+						"key": "runDate",
+						"label": "Scheduled Date",
+						"type": "date"
+					},
+					{
+						"key": "paymentMethod",
+						"label": "Payment Method",
+						"type": "string"
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total Amount",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "sepaXml",
+						"label": "SEPA pain.001 XML",
+						"type": "download",
+						"mimeType": "text/xml",
+						"filename": "sepa-pain001.xml"
+					},
+					{
+						"key": "idealLinks",
+						"label": "iDEAL Payment Links",
+						"type": "list"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "PaymentRuns"
+			}
+		},
+		{
+			"id": "SbrXbrlFilings",
+			"route": "/sbr-xbrl-filings",
+			"type": "index",
+			"title": "SBR/XBRL Filings",
+			"config": {
+				"register": "shillinq",
+				"schema": "XbrlInstance",
+				"columns": [
+					{
+						"key": "instanceNumber",
+						"label": "Filing Reference",
+						"sortable": true
+					},
+					{
+						"key": "entryPoint",
+						"label": "Entry Point",
+						"sortable": true
+					},
+					{
+						"key": "reportingPeriodEnd",
+						"label": "Period End",
+						"sortable": true
+					},
+					{
+						"key": "taxonomyVersion",
+						"label": "Taxonomy",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "digipoortReceiptId",
+						"label": "Digipoort Receipt",
+						"sortable": false
+					}
+				],
+				"defaultSort": "-reportingPeriodEnd",
+				"filters": [
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "enum",
+						"options": [
+							"draft",
+							"validated",
+							"submitted",
+							"accepted",
+							"rejected"
+						]
+					},
+					{
+						"key": "entryPoint",
+						"label": "Entry Point",
+						"type": "enum",
+						"options": [
+							"kvk-jaarrekening",
+							"belastingdienst-vpb",
+							"belastingdienst-ib",
+							"sbr-banken-kredietrapportage",
+							"sbr-wonen"
+						]
+					}
+				],
+				"detailRoute": "SbrXbrlFilingDetail"
+			}
+		},
+		{
+			"id": "SbrXbrlFilingDetail",
+			"route": "/sbr-xbrl-filings/:id",
+			"type": "detail",
+			"title": "SBR/XBRL Filing",
+			"config": {
+				"register": "shillinq",
+				"schema": "XbrlInstance",
+				"fields": [
+					{
+						"key": "instanceNumber",
+						"label": "Filing Reference",
+						"type": "string"
+					},
+					{
+						"key": "entryPoint",
+						"label": "Entry Point",
+						"type": "string"
+					},
+					{
+						"key": "taxonomyVersion",
+						"label": "NL-taxonomie Version",
+						"type": "string"
+					},
+					{
+						"key": "reportingPeriodStart",
+						"label": "Period Start",
+						"type": "date"
+					},
+					{
+						"key": "reportingPeriodEnd",
+						"label": "Period End",
+						"type": "date"
+					},
+					{
+						"key": "sourceStatementId",
+						"label": "Source Financial Statement",
+						"type": "string"
+					},
+					{
+						"key": "mappingId",
+						"label": "NL-taxonomie Mapping",
+						"type": "string"
+					},
+					{
+						"key": "instanceHash",
+						"label": "Instance SHA-256",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "digipoortReceiptId",
+						"label": "Digipoort Receipt ID",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"auditTrail": true,
+				"indexRoute": "SbrXbrlFilings"
 			}
 		}
 	]
