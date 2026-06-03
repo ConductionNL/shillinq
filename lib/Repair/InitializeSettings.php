@@ -80,6 +80,7 @@ class InitializeSettings implements IRepairStep
      * Phase 4: registers the IV3 quarterly CBS ScheduledWorkflow if not yet present.
      * Phase 5: seeds KOR thresholds from kor-thresholds-2026.json idempotently.
      * Phase 6: seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
+     * Phase 7: seeds RJ-270 stages and rate-card templates for consultancy project accounting.
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -89,6 +90,7 @@ class InitializeSettings implements IRepairStep
      * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-10
      * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
      * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
+     * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
      */
     public function run(IOutput $output): void
     {
