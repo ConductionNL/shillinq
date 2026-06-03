@@ -9,19 +9,19 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `Subsidie`/`RepaymentInstallment` schema and no `bookkeeping-subsidie-verantwoording` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `adr-000-data-model.md`)
-- [ ] Task 2: Author `specs/bookkeeping-subsidie-verantwoording/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T3 (operations + NL compliance core)` / `Depends on: bookkeeping-general-ledger (T1)` header, `REQ-SUB-NNN` requirements with RFC 2119 keywords, `#### Scenario:` GIVEN/WHEN/THEN blocks
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec; include Affected Projects / Scope / Risks / Rollback / Open Questions per shillinq config.yaml `rules.proposal`
-- [ ] Task 4: Author `design.md` with Reuse Analysis, Seed Data, and Declarative-vs-imperative decision tables; document D2 (terugvordering as FK register not parallel state machine) and D3 (uitbetaling journal entry `pending`)
-- [ ] Task 5: Declare the `Subsidie` schema in `lib/Settings/shillinq_register.json` with all REQ-SUB-002 fields (subsidienummer, recipientId, amount, programLabel, state, aangevraagdOp, verleendOp, vastgesteldOp, uitbetaaldOp, beschikkingUri, parentSubsidieId, administrationId)
-- [ ] Task 6: Add `x-openregister-lifecycle` to `Subsidie` declaring the 8 transitions per REQ-SUB-003 (aanvraag → verleend, verleend → ingetrokken, verleend → gewijzigd → verleend, verleend → vastgesteld, vastgesteld → uitbetaald, uitbetaald → teruggevorderd, teruggevorderd → in-afbetalingsregeling, in-afbetalingsregeling → uitbetaald) with `requires.approval-workflow` on `verleen` and `terugvorder`
-- [ ] Task 7: Declare the `RepaymentInstallment` schema with all REQ-SUB-007 fields (subsidieId, installmentNumber, dueDate, amount, state, paidOn); state enum `scheduled / paid / overdue / written-off`
-- [ ] Task 8: Declare the `vastgesteld → uitbetaald` post-transition action: create a `JournalEntry` in `state: pending` (NEVER auto-posted), with accountant approval gate per REQ-SUB-005
-- [ ] Task 9: Declare `x-openregister-notifications` firing on vervaldatum approaching, instalment overdue, terugvordering due per REQ-SUB-006
-- [ ] Task 10: Ship `lib/Settings/seeds/asv-model-lifecycle.json` (6+ canonical lifecycle states with their Awb article citations) with SPDX header + `_meta.source: "Awb 4.2 + VNG ASV-model 2022"` per REQ-SUB-006
-- [ ] Task 11: Extend the repair step under `lib/Migration/` to import the ASV-model seed idempotently
-- [ ] Task 12: Add `Subsidies > Aanvragen` and `> Terugvorderingen` navigation + pages to `src/manifest.json` with `type: index` + `type: detail` per REQ-SUB-008; `node tests/validate-manifest.js` exits 0
-- [ ] Task 13: Update `openspec/architecture/adr-000-data-model.md` with the 2 new entities (`Subsidie`, `RepaymentInstallment`) and their `Primary spec:` references
+- [x] Task 1: Confirm no `Subsidie`/`RepaymentInstallment` schema and no `bookkeeping-subsidie-verantwoording` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `adr-000-data-model.md`)
+- [x] Task 2: Author `specs/bookkeeping-subsidie-verantwoording/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T3 (operations + NL compliance core)` / `Depends on: bookkeeping-general-ledger (T1)` header, `REQ-SUB-NNN` requirements with RFC 2119 keywords, `#### Scenario:` GIVEN/WHEN/THEN blocks
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec; include Affected Projects / Scope / Risks / Rollback / Open Questions per shillinq config.yaml `rules.proposal`
+- [x] Task 4: Author `design.md` with Reuse Analysis, Seed Data, and Declarative-vs-imperative decision tables; document D2 (terugvordering as FK register not parallel state machine) and D3 (uitbetaling journal entry `pending`)
+- [x] Task 5: Declare the `Subsidie` schema in `lib/Settings/shillinq_register.json` with all REQ-SUB-002 fields (subsidienummer, recipientId, amount, programLabel, state, aangevraagdOp, verleendOp, vastgesteldOp, uitbetaaldOp, beschikkingUri, parentSubsidieId, administrationId)
+- [x] Task 6: Add `x-openregister-lifecycle` to `Subsidie` declaring the 8 transitions per REQ-SUB-003 (aanvraag → verleend, verleend → ingetrokken, verleend → gewijzigd → verleend, verleend → vastgesteld, vastgesteld → uitbetaald, uitbetaald → teruggevorderd, teruggevorderd → in-afbetalingsregeling, in-afbetalingsregeling → uitbetaald) with `requires.approval-workflow` on `verleen` and `terugvorder`
+- [x] Task 7: Declare the `RepaymentInstallment` schema with all REQ-SUB-007 fields (subsidieId, installmentNumber, dueDate, amount, state, paidOn); state enum `scheduled / paid / overdue / written-off`
+- [x] Task 8: Declare the `vastgesteld → uitbetaald` post-transition action: create a `JournalEntry` in `state: pending` (NEVER auto-posted), with accountant approval gate per REQ-SUB-005
+- [x] Task 9: Declare `x-openregister-notifications` firing on vervaldatum approaching, instalment overdue, terugvordering due per REQ-SUB-006
+- [x] Task 10: Ship `lib/Settings/seeds/asv-model-lifecycle.json` (6+ canonical lifecycle states with their Awb article citations) with SPDX header + `_meta.source: "Awb 4.2 + VNG ASV-model 2022"` per REQ-SUB-006
+- [x] Task 11: Extend the repair step under `lib/Migration/` to import the ASV-model seed idempotently
+- [x] Task 12: Add `Subsidies > Aanvragen` and `> Terugvorderingen` navigation + pages to `src/manifest.json` with `type: index` + `type: detail` per REQ-SUB-008; `node tests/validate-manifest.js` exits 0
+- [x] Task 13: Update `openspec/architecture/adr-000-data-model.md` with the 2 new entities (`Subsidie`, `RepaymentInstallment`) and their `Primary spec:` references
 
 ## Verification
 

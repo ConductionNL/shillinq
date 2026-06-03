@@ -78,6 +78,7 @@ class InitializeSettings implements IRepairStep
      * Phase 3: seeds the Archiefwet Selectielijst Gemeenten 2020 retention rules.
      * Phase 4: registers the IV3 quarterly CBS ScheduledWorkflow if not yet present.
      * Phase 5: seeds KOR thresholds from kor-thresholds-2026.json idempotently.
+     * Phase 6: seeds ASV-model lifecycle state metadata from asv-model-lifecycle.json idempotently.
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -86,6 +87,7 @@ class InitializeSettings implements IRepairStep
      * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
      * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-10
      * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
+     * @spec openspec/changes/add-shillinq-subsidie-verantwoording/tasks.md#task-11
      */
     public function run(IOutput $output): void
     {
@@ -134,6 +136,7 @@ class InitializeSettings implements IRepairStep
             $this->seedSelectielijstRules(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
+            $this->seedAsvModelLifecycle(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -331,6 +334,90 @@ class InitializeSettings implements IRepairStep
         }//end try
 
     }//end seedKorThresholds()
+
+    /**
+     * Seed the ASV-model lifecycle state metadata from asv-model-lifecycle.json, idempotently.
+     *
+     * Reads the canonical Awb afdeling 4.2 lifecycle state data (state labels, Awb article
+     * citations, operator labels) and stores it in app config key 'asv-model-lifecycle'.
+     * This allows the UI to surface 'Vereisten voor deze stap' per Awb article on
+     * the Subsidie detail page without a separate schema or service.
+     *
+     * Idempotent: skips if the app config key already contains the expected version.
+     * Per-administration override is allowed for state labels (translation) but not
+     * Awb citations per the subsidie spec design.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-subsidie-verantwoording/tasks.md#task-11
+     */
+    private function seedAsvModelLifecycle(IOutput $output): void
+    {
+        $seedPath = __DIR__.'/../Settings/seeds/asv-model-lifecycle.json';
+        if (file_exists($seedPath) === false) {
+            $output->warning('Shillinq: ASV-model lifecycle seed file not found, skipping');
+            return;
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            $output->warning('Shillinq: failed to read ASV-model lifecycle seed file, skipping');
+            return;
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $output->warning(
+                'Shillinq: failed to parse ASV-model lifecycle seed file: '.json_last_error_msg()
+            );
+            return;
+        }
+
+        $expectedVersion = ($data['_meta']['version'] ?? null);
+
+        // Idempotent: skip if already loaded at the same version.
+        try {
+            $appConfig     = $this->container->get(\OCP\IAppConfig::class);
+            $storedVersion = $appConfig->getValueString(
+                app: 'shillinq',
+                key: 'asv_model_lifecycle_version',
+                default: ''
+            );
+
+            if ($storedVersion === $expectedVersion && $expectedVersion !== null) {
+                $output->info(
+                    'Shillinq: ASV-model lifecycle metadata already loaded (version: '.$expectedVersion.'), skipping'
+                );
+                return;
+            }
+
+            $appConfig->setValueString(
+                app: 'shillinq',
+                key: 'asv_model_lifecycle',
+                value: $content
+            );
+            $appConfig->setValueString(
+                app: 'shillinq',
+                key: 'asv_model_lifecycle_version',
+                value: ($expectedVersion ?? 'unknown')
+            );
+
+            $stateCount = count(($data['states'] ?? []));
+            $output->info(
+                'Shillinq: ASV-model lifecycle metadata seeded ('.$stateCount.' states, version: '
+                .($expectedVersion ?? 'unknown').').'
+            );
+        } catch (\Throwable $e) {
+            $output->warning('Shillinq: ASV-model lifecycle seeding failed: '.$e->getMessage());
+            $this->logger->warning(
+                'Shillinq: ASV-model lifecycle seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+        }//end try
+
+    }//end seedAsvModelLifecycle()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.

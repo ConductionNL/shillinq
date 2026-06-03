@@ -3421,6 +3421,590 @@
 						}
 					}
 				}
+			},
+			"Subsidie": {
+				"slug": "Subsidie",
+				"icon": "CashMultiple",
+				"version": "0.1.0",
+				"title": "Subsidie",
+				"description": "Grant administration record per Awb afdeling 4.2 + VNG ASV-model 2022. Covers the full lifecycle for both outgoing grants (gemeente grants to beneficiary) and incoming grants (gemeente receives from granting body). Lifecycle declared via x-openregister-lifecycle per ADR-031; no SubsidieLifecycleService.",
+				"x-schema-org": "schema:Grant",
+				"type": "object",
+				"required": [
+					"administrationId",
+					"direction",
+					"subsidieNumber",
+					"counterpartyName",
+					"regelingNaam",
+					"aanvraagDate",
+					"aangevraagdBedrag",
+					"state"
+				],
+				"properties": {
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration that owns this subsidie record.",
+						"example": "gem-almelo"
+					},
+					"direction": {
+						"type": "string",
+						"enum": [
+							"outgoing",
+							"incoming"
+						],
+						"description": "outgoing: administration grants to a beneficiary. incoming: administration receives from a granting body.",
+						"example": "outgoing"
+					},
+					"subsidieNumber": {
+						"type": "string",
+						"description": "Unique subsidie number per administration + fiscal year (e.g. SUB-2026-001).",
+						"example": "SUB-2026-001"
+					},
+					"counterpartyName": {
+						"type": "string",
+						"description": "Beneficiary (outgoing) or granting body (incoming) name.",
+						"example": "Stichting Cultuur Almelo"
+					},
+					"counterpartyId": {
+						"type": "string",
+						"description": "Optional FK to a contact record for the counterparty.",
+						"nullable": true,
+						"example": null
+					},
+					"regelingNaam": {
+						"type": "string",
+						"description": "Name of the underlying subsidieregeling (e.g. Subsidieregeling cultuur 2026).",
+						"example": "Subsidieregeling cultuur 2026"
+					},
+					"regelingArtikel": {
+						"type": "string",
+						"description": "Specific article reference within the regeling.",
+						"nullable": true,
+						"example": "Art. 3.1"
+					},
+					"aanvraagDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Date of the subsidie aanvraag (Awb 4:5).",
+						"example": "2026-02-01"
+					},
+					"beschikkingDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Date of the verleningsbeschikking (Awb 4:43/4:48).",
+						"nullable": true,
+						"example": "2026-03-15"
+					},
+					"vaststellingDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Date of the vaststellingsbeschikking (Awb 4:46). Used as retention trigger start per REQ-SUB-009.",
+						"nullable": true,
+						"example": "2026-10-01"
+					},
+					"aangevraagdBedrag": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Applied-for amount in EUR.",
+						"example": 25000.0
+					},
+					"verleendBedrag": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Granted amount in EUR. Required on verleen transition.",
+						"nullable": true,
+						"example": 20000.0
+					},
+					"vastgesteldBedrag": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Settled amount in EUR. Required on vaststel transition.",
+						"nullable": true,
+						"example": 18500.0
+					},
+					"uitbetaaldBedrag": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Paid amount in EUR. Required on uitbetaal transition.",
+						"nullable": true,
+						"example": 18500.0
+					},
+					"teruggevorderdBedrag": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Reclaimed amount in EUR. Required on terugvorder transition.",
+						"nullable": true,
+						"example": null
+					},
+					"state": {
+						"type": "string",
+						"enum": [
+							"aanvraag",
+							"verleend",
+							"vastgesteld",
+							"uitbetaald",
+							"teruggevorderd",
+							"afgehandeld"
+						],
+						"description": "Current lifecycle state per Awb afdeling 4.2 + VNG ASV-model.",
+						"default": "aanvraag",
+						"example": "aanvraag"
+					},
+					"beschikkingUri": {
+						"type": "string",
+						"description": "docudesk URI of the verleningsbeschikking PDF (Awb 4:43/4:48).",
+						"nullable": true,
+						"example": "docudesk://shillinq/beschikkingen/SUB-2026-001-verlening.pdf"
+					},
+					"vaststellingUri": {
+						"type": "string",
+						"description": "docudesk URI of the vaststellingsbeschikking PDF (Awb 4:46).",
+						"nullable": true,
+						"example": null
+					},
+					"prestatieverantwoording": {
+						"type": "string",
+						"description": "Free-text or structured prestatieverantwoording. Required on vaststel transition.",
+						"nullable": true,
+						"example": "De subsidie is aangewend voor de geplande cultuuractiviteiten zoals beschreven in het activiteitenplan."
+					},
+					"afwijzingsReden": {
+						"type": "string",
+						"description": "Reason for rejection (afwijzing). Required on afhandel transition from aanvraag.",
+						"nullable": true,
+						"example": null
+					},
+					"repaymentPlanId": {
+						"type": "string",
+						"description": "FK to a RepaymentInstallment parent record if a terugvorderingsplan applies.",
+						"nullable": true,
+						"example": null
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "state",
+					"initialState": "aanvraag",
+					"retention": {
+						"rule": "selectielijst:3.5.1",
+						"triggerField": "vaststellingDate",
+						"period": "P10Y",
+						"description": "Subsidie-records retained 10 years after vaststellingDate per Selectielijst Gemeenten 2020 + Awb 4:52 (REQ-SUB-009). Trigger: vaststellingDate or paidDate of last RepaymentInstallment."
+					},
+					"states": {
+						"aanvraag": {
+							"label": "Aanvraag",
+							"description": "Subsidie aanvraag ingediend. Awb 4:5 — aanvraag indiening."
+						},
+						"verleend": {
+							"label": "Verleend",
+							"description": "Subsidie verleend per beschikking. Awb 4:43/4:48 — verlening of weigering."
+						},
+						"vastgesteld": {
+							"label": "Vastgesteld",
+							"description": "Subsidie vastgesteld op basis van verantwoording. Awb 4:46 — vaststelling."
+						},
+						"uitbetaald": {
+							"label": "Uitbetaald",
+							"description": "Subsidie uitbetaald; journal entry created in state pending. Awb 4:52 — bevoorschotting / betaling."
+						},
+						"teruggevorderd": {
+							"label": "Teruggevorderd",
+							"description": "Subsidie (gedeeltelijk) teruggevorderd. Awb 4:57 — terugvordering."
+						},
+						"afgehandeld": {
+							"label": "Afgehandeld",
+							"description": "Dossier gesloten (afwijzing, einde verplichtingen, of volledige terugbetaling)."
+						}
+					},
+					"transitions": {
+						"verleen": {
+							"from": "aanvraag",
+							"to": "verleend",
+							"label": "Verlenen",
+							"description": "Verleen de subsidie na goedkeuring. Vereist verleendBedrag en (SHOULD) beschikkingUri. Approval-workflow gated per REQ-SUB-004.",
+							"requires": {
+								"approval-workflow": {
+									"policy": "subsidie-coordinator-manager-dual-control",
+									"description": "Subsidie-coordinator initieert, manager keurt goed (dual control per REQ-SUB-004)."
+								},
+								"fields": [
+									"verleendBedrag"
+								]
+							}
+						},
+						"afwijzen": {
+							"from": "aanvraag",
+							"to": "afgehandeld",
+							"label": "Afwijzen",
+							"description": "Wijs de subsidie-aanvraag af. Vereist afwijzingsReden.",
+							"requires": {
+								"fields": [
+									"afwijzingsReden"
+								]
+							}
+						},
+						"vaststellen": {
+							"from": "verleend",
+							"to": "vastgesteld",
+							"label": "Vaststellen",
+							"description": "Stel de subsidie vast na ontvangen verantwoording. Vereist prestatieverantwoording en vastgesteldBedrag.",
+							"requires": {
+								"fields": [
+									"prestatieverantwoording",
+									"vastgesteldBedrag"
+								]
+							}
+						},
+						"uitbetalen": {
+							"from": "vastgesteld",
+							"to": "uitbetaald",
+							"label": "Uitbetalen",
+							"description": "Betaal de vastgestelde subsidie uit. Vereist uitbetaaldBedrag. Aanmaken van JournalEntry in state pending per REQ-SUB-005 (NOOIT auto-posted).",
+							"requires": {
+								"fields": [
+									"uitbetaaldBedrag"
+								]
+							},
+							"postTransition": {
+								"action": "x-openregister-create-related",
+								"schema": "JournalEntry",
+								"register": "shillinq",
+								"template": {
+									"state": "pending",
+									"subType": "manual",
+									"sourceReference": "@self.id",
+									"description": "Subsidie uitbetaling — @self.subsidieNumber (@self.counterpartyName)",
+									"lines": [
+										{
+											"side": "debit",
+											"accountType": "subsidiekosten",
+											"amount": "@self.uitbetaaldBedrag",
+											"condition": "direction = 'outgoing'"
+										},
+										{
+											"side": "credit",
+											"accountType": "cash",
+											"amount": "@self.uitbetaaldBedrag",
+											"condition": "direction = 'outgoing'"
+										},
+										{
+											"side": "debit",
+											"accountType": "cash",
+											"amount": "@self.uitbetaaldBedrag",
+											"condition": "direction = 'incoming'"
+										},
+										{
+											"side": "credit",
+											"accountType": "subsidieopbrengsten",
+											"amount": "@self.uitbetaaldBedrag",
+											"condition": "direction = 'incoming'"
+										}
+									]
+								},
+								"description": "Create a JournalEntry in state pending with two balanced lines. Accountant approval gates posting per REQ-SUB-005 + T1 REQ-JE-008. NEVER auto-posted."
+							}
+						},
+						"terugvorderen": {
+							"from": "uitbetaald",
+							"to": "teruggevorderd",
+							"label": "Terugvorderen",
+							"description": "Vorder (een deel van) de subsidie terug. Vereist teruggevorderdBedrag en afwijzingsReden. Approval-workflow gated per REQ-SUB-004.",
+							"requires": {
+								"approval-workflow": {
+									"policy": "subsidie-coordinator-manager-dual-control",
+									"description": "Subsidie-coordinator initieert, manager keurt goed (dual control per REQ-SUB-004)."
+								},
+								"fields": [
+									"teruggevorderdBedrag",
+									"afwijzingsReden"
+								]
+							}
+						},
+						"afhandelenVanuitUitbetaald": {
+							"from": "uitbetaald",
+							"to": "afgehandeld",
+							"label": "Dossier sluiten (na bewaartermijn)",
+							"description": "Sluit het subsidiedossier na verstrijken van de bewaarplicht. Kalender-trigger na selectielijst:3.5.1 retentieperiode.",
+							"timeBased": {
+								"field": "vaststellingDate",
+								"offsetYears": 10
+							}
+						},
+						"afhandelenVanuitTeruggevorderd": {
+							"from": "teruggevorderd",
+							"to": "afgehandeld",
+							"label": "Dossier sluiten (terugbetaling voltooid)",
+							"description": "Sluit het subsidiedossier na volledige terugbetaling (repaymentBalance = 0).",
+							"requires": {
+								"guard": "OCA\\Shillinq\\Guard\\SubsidieRepaymentGuard::requireZeroRepaymentBalance"
+							}
+						}
+					},
+					"notifications": {
+						"onVerleend": {
+							"trigger": "lifecycle:verleen",
+							"recipient": {
+								"resolver": "counterparty-user",
+								"fallback": "subsidie-coordinator"
+							},
+							"channels": [
+								"in-app",
+								"email"
+							],
+							"template": "subsidie-verleend",
+							"description": "Notify counterparty user on subsidie verlening per REQ-SUB-010. Message: Uw subsidie-aanvraag is verleend (€{verleendBedrag})."
+						},
+						"onVastgesteld": {
+							"trigger": "lifecycle:vaststellen",
+							"recipient": "subsidie-coordinator",
+							"channels": [
+								"in-app"
+							],
+							"template": "subsidie-vastgesteld",
+							"description": "Notify subsidie-coordinator on vaststelling per REQ-SUB-010."
+						},
+						"onUitbetaald": {
+							"trigger": "lifecycle:uitbetalen",
+							"recipient": "subsidie-coordinator",
+							"channels": [
+								"in-app"
+							],
+							"template": "subsidie-uitbetaald",
+							"description": "Notify subsidie-coordinator that JournalEntry pending is created and awaits accountant approval per REQ-SUB-010."
+						},
+						"onTeruggevorderd": {
+							"trigger": "lifecycle:terugvorderen",
+							"recipient": {
+								"resolver": "counterparty-user",
+								"fallback": "subsidie-coordinator"
+							},
+							"channels": [
+								"in-app",
+								"email"
+							],
+							"template": "subsidie-teruggevorderd",
+							"description": "Notify counterparty user on terugvordering per REQ-SUB-010."
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"repaymentInstallments": {
+						"localField": "id",
+						"relatedSchema": "RepaymentInstallment",
+						"relatedField": "subsidieId",
+						"cardinality": "one-to-many",
+						"description": "Child RepaymentInstallment records for the terugvordering afbetalingsregeling per REQ-SUB-007. NOT a parallel state machine per ADR-022."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"subsidie-coordinator": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							],
+							"description": "Full CRUD access; initiates lifecycle transitions."
+						},
+						"manager": {
+							"permissions": [
+								"read",
+								"approve"
+							],
+							"description": "Read access and approval authority on verleen + terugvorder transitions."
+						},
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							],
+							"description": "Read access for journal entry reconciliation."
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							],
+							"description": "Read-only access for compliance audit."
+						}
+					}
+				}
+			},
+			"RepaymentInstallment": {
+				"slug": "RepaymentInstallment",
+				"icon": "CalendarCheckOutline",
+				"version": "0.1.0",
+				"title": "Repayment Installment",
+				"description": "Instalment record within a terugvordering afbetalingsregeling for a Subsidie. FK-linked to Subsidie via subsidieId. Per ADR-022, this is NOT a parallel state machine on Subsidie — it is a separate register record. Per REQ-SUB-007.",
+				"x-schema-org": "schema:LoanOrCredit",
+				"type": "object",
+				"required": [
+					"subsidieId",
+					"installmentNumber",
+					"dueDate",
+					"amount",
+					"state"
+				],
+				"properties": {
+					"subsidieId": {
+						"type": "string",
+						"description": "FK to the Subsidie.id that this instalment belongs to.",
+						"example": "sub-terugvordering-uuid"
+					},
+					"installmentNumber": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "Sequential instalment number within the repayment plan (1, 2, 3...).",
+						"example": 1
+					},
+					"dueDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Date by which this instalment must be paid.",
+						"example": "2026-08-01"
+					},
+					"amount": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Instalment amount in EUR.",
+						"example": 2000.0
+					},
+					"state": {
+						"type": "string",
+						"enum": [
+							"scheduled",
+							"paid",
+							"overdue",
+							"cancelled"
+						],
+						"description": "Payment state of this instalment.",
+						"default": "scheduled",
+						"example": "scheduled"
+					},
+					"paidDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Date this instalment was paid. Set on transition to paid.",
+						"nullable": true,
+						"example": null
+					},
+					"journalEntryId": {
+						"type": "string",
+						"description": "Back-reference to the T1 JournalEntry posting the receipt of this instalment.",
+						"nullable": true,
+						"example": null
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "state",
+					"initialState": "scheduled",
+					"states": {
+						"scheduled": {
+							"label": "Gepland",
+							"description": "Betaling gepland voor dueDate."
+						},
+						"paid": {
+							"label": "Betaald",
+							"description": "Termijn ontvangen en geboekt."
+						},
+						"overdue": {
+							"label": "Achterstallig",
+							"description": "dueDate verstreken zonder betaling."
+						},
+						"cancelled": {
+							"label": "Geannuleerd",
+							"description": "Termijn geannuleerd (bijv. herstructurering plan)."
+						}
+					},
+					"transitions": {
+						"markPaid": {
+							"from": "scheduled",
+							"to": "paid",
+							"label": "Markeer als betaald",
+							"description": "Registreer ontvangst van de termijn.",
+							"requires": {
+								"fields": [
+									"paidDate"
+								]
+							}
+						},
+						"markOverdue": {
+							"from": "scheduled",
+							"to": "overdue",
+							"label": "Markeer als achterstallig",
+							"description": "Auto-transition op dueDate + 1 dag als nog niet betaald.",
+							"timeBased": {
+								"field": "dueDate",
+								"offsetDays": 1
+							}
+						},
+						"cancel": {
+							"from": [
+								"scheduled",
+								"overdue"
+							],
+							"to": "cancelled",
+							"label": "Annuleer termijn",
+							"description": "Annuleer deze termijn."
+						},
+						"markPaidFromOverdue": {
+							"from": "overdue",
+							"to": "paid",
+							"label": "Markeer als betaald (was achterstallig)",
+							"description": "Registreer alsnog ontvangst van de achterstallige termijn.",
+							"requires": {
+								"fields": [
+									"paidDate"
+								]
+							}
+						}
+					}
+				},
+				"x-openregister-calculations": {
+					"isOverdue": {
+						"expression": "(@self.state = 'scheduled' OR @self.state = 'overdue') AND @self.dueDate < today()",
+						"type": "boolean",
+						"description": "Derived flag: true when dueDate is past and instalment is not yet paid or cancelled. No TimedJob needed — value is fresh on every read per ADR-031.",
+						"example": false
+					}
+				},
+				"x-openregister-notifications": {
+					"onOverdue": {
+						"trigger": "lifecycle:markOverdue",
+						"recipient": "subsidie-coordinator",
+						"channels": [
+							"in-app",
+							"email"
+						],
+						"template": "repayment-instalment-overdue",
+						"description": "Notify subsidie-coordinator when a repayment instalment becomes overdue per REQ-SUB-007 + REQ-SUB-010."
+					}
+				},
+				"x-openregister-relations": {
+					"subsidie": {
+						"localField": "subsidieId",
+						"relatedSchema": "Subsidie",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "The Subsidie record for which this instalment is part of the afbetalingsregeling per REQ-SUB-007."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"subsidie-coordinator": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							],
+							"description": "Full CRUD access to manage repayment instalments."
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							],
+							"description": "Read-only access for compliance audit."
+						}
+					}
+				}
 			}
 		},
 		"SisaReport": {
@@ -4897,6 +5481,143 @@
 			"estimatedNetLiability": 8050.0,
 			"currency": "EUR",
 			"status": "current"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"slug": "subsidie-cultuur-almelo-2026"
+			},
+			"administrationId": "gem-almelo",
+			"direction": "outgoing",
+			"subsidieNumber": "SUB-2026-001",
+			"counterpartyName": "Stichting Cultuur Almelo",
+			"regelingNaam": "Subsidieregeling cultuur 2026",
+			"regelingArtikel": "Art. 3.1",
+			"aanvraagDate": "2026-02-01",
+			"aangevraagdBedrag": 25000.0,
+			"state": "aanvraag"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"slug": "subsidie-sport-almelo-2026"
+			},
+			"administrationId": "gem-almelo",
+			"direction": "outgoing",
+			"subsidieNumber": "SUB-2026-002",
+			"counterpartyName": "Sportgala Almelo e.o.",
+			"regelingNaam": "Subsidieregeling sport en bewegen 2026",
+			"aanvraagDate": "2026-01-15",
+			"beschikkingDate": "2026-03-01",
+			"aangevraagdBedrag": 12500.0,
+			"verleendBedrag": 10000.0,
+			"beschikkingUri": "docudesk://shillinq/beschikkingen/SUB-2026-002-verlening.pdf",
+			"state": "verleend"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"slug": "subsidie-efro-fonds-2026"
+			},
+			"administrationId": "gem-almelo",
+			"direction": "incoming",
+			"subsidieNumber": "SUB-2026-003",
+			"counterpartyName": "Europees Fonds voor Regionale Ontwikkeling (EFRO)",
+			"regelingNaam": "EFRO Innovatiefonds Oost-Nederland 2021-2027",
+			"regelingArtikel": "Art. 5 verordening 2021/1060/EU",
+			"aanvraagDate": "2025-09-01",
+			"beschikkingDate": "2026-01-20",
+			"vaststellingDate": "2026-05-15",
+			"aangevraagdBedrag": 150000.0,
+			"verleendBedrag": 140000.0,
+			"vastgesteldBedrag": 137500.0,
+			"prestatieverantwoording": "Het project Digitale Transformatie Twente is conform planning uitgevoerd. Deliverables zijn behaald en gecertificeerd door externe auditor.",
+			"vaststellingUri": "docudesk://shillinq/beschikkingen/SUB-2026-003-vaststelling.pdf",
+			"state": "vastgesteld"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"slug": "subsidie-welzijn-almelo-2025"
+			},
+			"administrationId": "gem-almelo",
+			"direction": "outgoing",
+			"subsidieNumber": "SUB-2025-007",
+			"counterpartyName": "Stichting Welzijn Almelo",
+			"regelingNaam": "Subsidieregeling maatschappelijke ondersteuning 2025",
+			"aanvraagDate": "2025-03-01",
+			"beschikkingDate": "2025-04-15",
+			"vaststellingDate": "2025-11-30",
+			"aangevraagdBedrag": 45000.0,
+			"verleendBedrag": 42000.0,
+			"vastgesteldBedrag": 41000.0,
+			"uitbetaaldBedrag": 41000.0,
+			"prestatieverantwoording": "De geplande welzijnsactiviteiten zijn volledig uitgevoerd conform het werkplan.",
+			"state": "uitbetaald"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"slug": "subsidie-terugvordering-2025"
+			},
+			"administrationId": "gem-almelo",
+			"direction": "outgoing",
+			"subsidieNumber": "SUB-2025-012",
+			"counterpartyName": "Stichting Buurtwerk Almelo Noord",
+			"regelingNaam": "Subsidieregeling leefbaarheid 2025",
+			"aanvraagDate": "2025-01-10",
+			"beschikkingDate": "2025-03-01",
+			"vaststellingDate": "2025-12-15",
+			"aangevraagdBedrag": 30000.0,
+			"verleendBedrag": 28000.0,
+			"vastgesteldBedrag": 22000.0,
+			"uitbetaaldBedrag": 28000.0,
+			"teruggevorderdBedrag": 6000.0,
+			"prestatieverantwoording": "Gedeeltelijke verantwoording ingediend. Activiteiten niet volledig gerealiseerd.",
+			"afwijzingsReden": "Subsidie gedeeltelijk teruggevorderd wegens niet-naleving activiteitenplan (€6.000 onrechtmatig besteed).",
+			"state": "teruggevorderd"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "RepaymentInstallment",
+				"slug": "repayment-sub-2025-012-termijn-1"
+			},
+			"subsidieId": "subsidie-terugvordering-2025",
+			"installmentNumber": 1,
+			"dueDate": "2026-03-01",
+			"amount": 2000.0,
+			"state": "paid",
+			"paidDate": "2026-02-28"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "RepaymentInstallment",
+				"slug": "repayment-sub-2025-012-termijn-2"
+			},
+			"subsidieId": "subsidie-terugvordering-2025",
+			"installmentNumber": 2,
+			"dueDate": "2026-04-01",
+			"amount": 2000.0,
+			"state": "scheduled"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "RepaymentInstallment",
+				"slug": "repayment-sub-2025-012-termijn-3"
+			},
+			"subsidieId": "subsidie-terugvordering-2025",
+			"installmentNumber": 3,
+			"dueDate": "2026-05-01",
+			"amount": 2000.0,
+			"state": "scheduled"
 		}
 	]
 }

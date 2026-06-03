@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 235
+**Entities:** 237
 
 ## Context
 
@@ -3694,6 +3694,25 @@ _Schema.org Report — standard vocabulary for report data_
 | period | string | No | Reporting period |
 | generatedAt | datetime | No | When the report was generated |
 
+### RepaymentInstallment
+**Schema.org:** `schema:LoanOrCredit`
+_Instalment record within a terugvordering afbetalingsregeling for a Subsidie. FK-linked to Subsidie via subsidieId. Per ADR-022, this is NOT a parallel state machine on Subsidie — it is a separate register record. Lifecycle covers scheduled → paid / overdue / cancelled with time-based auto-transition to overdue (dueDate + 1 day) and x-openregister-calculations for derived isOverdue flag. Per REQ-SUB-007._
+**Primary spec:** add-shillinq-subsidie-administratie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| subsidieId | string | Yes | FK to the Subsidie.id that this instalment belongs to |
+| installmentNumber | integer | Yes | Sequential instalment number within the repayment plan (1, 2, 3...) |
+| dueDate | date | Yes | Date by which this instalment must be paid |
+| amount | number | Yes | Instalment amount in EUR |
+| state | enum | Yes | One of: scheduled, paid, overdue, cancelled |
+| paidDate | date | No | Date this instalment was paid. Set on transition to paid |
+| journalEntryId | string | No | Back-reference to the T1 JournalEntry posting the receipt of this instalment |
+| isOverdue | boolean (derived) | No | Derived flag: true when dueDate is past and instalment is not yet paid or cancelled (x-openregister-calculations) |
+
+**Relations:**
+- → Subsidie (many-to-one, via subsidieId)
+
 ### RequestForQuotation
 **Schema.org:** `schema:Quotation`
 _Request for quotation supporting RFx management with templated events, multi-round negotiations, and digital lockbox_
@@ -4107,6 +4126,39 @@ _A government subsidy program defining eligibility criteria, award conditions, a
 **Relations:**
 - → Organization (many-to-one)
 - → Grant (one-to-many)
+
+### Subsidie
+**Schema.org:** `schema:Grant`
+_Grant administration record per Awb afdeling 4.2 + VNG ASV-model 2022. Covers the full lifecycle for both outgoing grants (gemeente grants to beneficiary) and incoming grants (gemeente receives from a granting body). Lifecycle declared via x-openregister-lifecycle per ADR-031; no SubsidieLifecycleService. Retention: 10 years after vaststellingDate per Selectielijst Gemeenten 2020 § 3.5.1 (REQ-SUB-009). Dual-control approval-workflow on verleen and terugvorder transitions per REQ-SUB-004. JournalEntry in state pending created on uitbetalen transition (NEVER auto-posted) per REQ-SUB-005. ASV-model lifecycle state metadata seeded via asv-model-lifecycle.json repair step for UI Awb citation display._
+**Primary spec:** add-shillinq-subsidie-administratie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the Administration that owns this subsidie record |
+| direction | enum | Yes | One of: outgoing, incoming |
+| subsidieNumber | string | Yes | Unique subsidie number per administration + fiscal year (e.g. SUB-2026-001) |
+| counterpartyName | string | Yes | Beneficiary (outgoing) or granting body (incoming) name |
+| counterpartyId | string | No | Optional FK to a contact record for the counterparty |
+| regelingNaam | string | Yes | Name of the underlying subsidieregeling |
+| regelingArtikel | string | No | Specific article reference within the regeling |
+| aanvraagDate | date | Yes | Date of the subsidie aanvraag (Awb 4:5) |
+| beschikkingDate | date | No | Date of the verleningsbeschikking (Awb 4:43/4:48) |
+| vaststellingDate | date | No | Date of the vaststellingsbeschikking (Awb 4:46); retention trigger start per REQ-SUB-009 |
+| aangevraagdBedrag | number | Yes | Applied-for amount in EUR |
+| verleendBedrag | number | No | Granted amount in EUR; required on verleen transition |
+| vastgesteldBedrag | number | No | Settled amount in EUR; required on vaststel transition |
+| uitbetaaldBedrag | number | No | Paid amount in EUR; required on uitbetaal transition |
+| teruggevorderdBedrag | number | No | Reclaimed amount in EUR; required on terugvorder transition |
+| state | enum | Yes | One of: aanvraag, verleend, vastgesteld, uitbetaald, teruggevorderd, afgehandeld |
+| beschikkingUri | string | No | docudesk URI of the verleningsbeschikking PDF |
+| vaststellingUri | string | No | docudesk URI of the vaststellingsbeschikking PDF |
+| prestatieverantwoording | string | No | Free-text prestatieverantwoording; required on vaststel transition |
+| afwijzingsReden | string | No | Reason for rejection; required on afwijzen / terugvorder transitions |
+| repaymentPlanId | string | No | FK to a RepaymentInstallment parent record if a terugvorderingsplan applies |
+
+**Relations:**
+- → Administration (many-to-one)
+- → RepaymentInstallment (one-to-many, via repaymentInstallments x-openregister-relations)
 
 ### Supplier
 **Schema.org:** `schema:Organization`

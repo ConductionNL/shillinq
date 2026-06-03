@@ -1,0 +1,57 @@
+{
+	"_meta": {
+		"source": "Awb 4.2 + VNG ASV-model 2022",
+		"version": "2022.1",
+		"description": "Canonical Awb afdeling 4.2 lifecycle state metadata with article citations for the Dutch grant/subsidie administration lifecycle per VNG ASV-model 2022."
+	},
+	"states": [
+		{
+			"state": "aanvraag",
+			"label": "Aanvraag",
+			"awbArticle": "Awb 4:5",
+			"description": "Aanvraag indiening. De subsidie-aanvraag is ingediend bij het bestuursorgaan.",
+			"operatorLabel": "In behandeling",
+			"awbCitation": "Awb art. 4:5 — Het bestuursorgaan stelt de aanvrager in de gelegenheid de aanvraag aan te vullen wanneer de aanvraag niet voldoet aan de wettelijke vereisten."
+		},
+		{
+			"state": "verleend",
+			"label": "Verleend",
+			"awbArticle": "Awb 4:43 / 4:48",
+			"description": "Subsidie verleend per beschikking.",
+			"operatorLabel": "Verleend",
+			"awbCitation": "Awb art. 4:43/4:48 — Het bestuursorgaan kan de subsidie verlenen onder voorwaarden of verplichtingen. Weigeringsbeschikking is ook een verlening (ontzegging)."
+		},
+		{
+			"state": "vastgesteld",
+			"label": "Vastgesteld",
+			"awbArticle": "Awb 4:46",
+			"description": "Subsidie vastgesteld op basis van prestatieverantwoording.",
+			"operatorLabel": "Vastgesteld",
+			"awbCitation": "Awb art. 4:46 — Na ontvangst van de aanvraag tot vaststelling stelt het bestuursorgaan de subsidie vast."
+		},
+		{
+			"state": "uitbetaald",
+			"label": "Uitbetaald",
+			"awbArticle": "Awb 4:52",
+			"description": "Subsidie uitbetaald; betalingsopdracht gegeven.",
+			"operatorLabel": "Uitbetaald",
+			"awbCitation": "Awb art. 4:52 — Indien de subsidie is vastgesteld, betaalt het bestuursorgaan de subsidie."
+		},
+		{
+			"state": "teruggevorderd",
+			"label": "Teruggevorderd",
+			"awbArticle": "Awb 4:57",
+			"description": "Subsidie (gedeeltelijk) teruggevorderd wegens niet-nakoming verplichtingen.",
+			"operatorLabel": "Terugvordering loopt",
+			"awbCitation": "Awb art. 4:57 — Het bestuursorgaan kan onverschuldigd betaalde subsidiebedragen terugvorderen."
+		},
+		{
+			"state": "afgehandeld",
+			"label": "Afgehandeld",
+			"awbArticle": "(bestuurlijk)",
+			"description": "Dossier administratief gesloten: afwijzing, einde bewaarplicht, of volledige terugbetaling.",
+			"operatorLabel": "Gesloten",
+			"awbCitation": "Geen specifiek Awb-artikel; administratieve afsluiting na verstrijken van de bewaar- en verplichtingenperiode (Selectielijst Gemeenten 2020 § 3.5.1)."
+		}
+	]
+}
