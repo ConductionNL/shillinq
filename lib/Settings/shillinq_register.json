@@ -255,6 +255,27 @@
 						"description": "Number of days until the PSD2 consent expires. Negative when already expired.",
 						"example": 14
 					}
+				},
+				"x-openregister-scheduled-workflows": {
+					"shillinq-bank-transaction-polling": {
+						"name": "Bank transaction polling",
+						"description": "Pulls transactions from the PSD2 aggregator via the openconnector source slug, normalises the aggregator JSON to CAMT.053 XML, attaches the XML via docudesk, and creates a BankStatement record per active BankConnection. Runs 4× daily per REQ-BC-004. No BankPollingJob extends TimedJob.",
+						"cron": "0 */6 * * *",
+						"source": "@self.aggregatorSourceSlug",
+						"register": "shillinq",
+						"schema": "BankConnection",
+						"enabled": true,
+						"filter": {
+							"lifecycleState": [
+								"active",
+								"expiring"
+							]
+						},
+						"outputs": {
+							"creates": "BankStatement",
+							"attaches": "camt.053.001.08"
+						}
+					}
 				}
 			},
 			"BankStatement": {
@@ -456,8 +477,25 @@
 							"from": "draft",
 							"to": "posted",
 							"label": "Post transaction",
-							"description": "Transition draft posting to posted state. Enforces balance invariant and account-state guard.",
-							"requires": "OCA\\Shillinq\\Lifecycle\\BalanceGuard::isBalanced"
+							"description": "Transition draft posting to posted state. Enforces balance invariant and account-state guard. After balance check passes, evaluates active per-posting AllocationRule records per REQ-CC-004 + design D2.",
+							"requires": "OCA\\Shillinq\\Lifecycle\\BalanceGuard::isBalanced",
+							"actions": [
+								{
+									"trigger": "x-openregister-lifecycle-action",
+									"action": "evaluate-allocation-rules",
+									"description": "Evaluate all active AllocationRule records with cadence=per-posting whose sourceAccountPattern matches a line in this transaction. Emits additional balanced GLLine rows distributing source amounts per the rule targets per REQ-CC-004.",
+									"actionParameters": {
+										"register": "shillinq",
+										"schema": "AllocationRule",
+										"filter": {
+											"lifecycleState": "active",
+											"cadence": "per-posting"
+										},
+										"keepBalanced": true,
+										"idempotencyKey": "transactionId"
+									}
+								}
+							]
 						},
 						"reverse": {
 							"from": "posted",
@@ -584,6 +622,36 @@
 						"type": "boolean",
 						"default": false,
 						"description": "When true, excludes this line from the consolidated trial-balance and financial-statement aggregations. Used to eliminate inter-GR transactions from consolidated views per REQ-GRC-003."
+					},
+					"costCenterCode": {
+						"type": "string",
+						"description": "FK to CostCenter.code for analytical cost-center reporting. Backwards-compatible with the existing costCenter field per REQ-CC-003.",
+						"nullable": true,
+						"example": "KC-100"
+					},
+					"kostenDragerCode": {
+						"type": "string",
+						"description": "FK to KostenDrager.code for cost-unit analytical reporting per REQ-CC-003.",
+						"nullable": true,
+						"example": "KD-001"
+					},
+					"projectCode": {
+						"type": "string",
+						"description": "FK to Project.code for project accounting and WBSO time-per-project pre-positioning per REQ-CC-003 + REQ-CC-007.",
+						"nullable": true,
+						"example": "PRJ-2026-001"
+					},
+					"dimensions": {
+						"type": "object",
+						"description": "Free-form key-to-value map for custom analytical dimensions. Each key MUST match a registered custom dimension register declared with x-openregister-purpose: dimension; each value MUST resolve to an existing record code in that register. Validation is declared via OR relations engine per REQ-CC-003.",
+						"nullable": true,
+						"additionalProperties": {
+							"type": "string"
+						},
+						"example": {
+							"region": "NL-WEST",
+							"channel": "ONLINE"
+						}
 					}
 				},
 				"x-openregister-relations": {
@@ -600,6 +668,27 @@
 						"relatedField": "accountNumber",
 						"cardinality": "many-to-one",
 						"description": "FK to Account.accountNumber (bookkeeping-chart-of-accounts). Requires Account.lifecycleState = active on the post transition."
+					},
+					"costCenterRelation": {
+						"localField": "costCenterCode",
+						"relatedSchema": "CostCenter",
+						"relatedField": "code",
+						"cardinality": "many-to-one",
+						"description": "FK to CostCenter.code for dimension-tagged analytical reporting per REQ-CC-003."
+					},
+					"kostenDragerRelation": {
+						"localField": "kostenDragerCode",
+						"relatedSchema": "KostenDrager",
+						"relatedField": "code",
+						"cardinality": "many-to-one",
+						"description": "FK to KostenDrager.code for cost-unit analytical reporting per REQ-CC-003."
+					},
+					"projectRelation": {
+						"localField": "projectCode",
+						"relatedSchema": "Project",
+						"relatedField": "code",
+						"cardinality": "many-to-one",
+						"description": "FK to Project.code for project accounting and WBSO time-per-project per REQ-CC-003 + REQ-CC-007."
 					}
 				},
 				"x-openregister-aggregations": {
@@ -618,6 +707,111 @@
 								"operation": "sum",
 								"condition": "side = 'credit'"
 							}
+						}
+					},
+					"segmentPnlByCostCenter": {
+						"description": "Segment P&L roll-up keyed by costCenterCode and fiscalYearId. Aggregates debit and credit amounts per cost center, rolling child cost centers up to their parent via the CostCenter self-relation per REQ-CC-005. Consumed by launchpad widgets via runtime GraphQL and by CostCenter detail pages.",
+						"filter": {
+							"eliminationFlag": false,
+							"costCenterCode": {
+								"operator": "isNotNull"
+							}
+						},
+						"groupBy": [
+							"costCenterCode",
+							"fiscalYearId",
+							"accountNumber"
+						],
+						"operations": {
+							"totalDebit": {
+								"field": "amount",
+								"operation": "sum",
+								"condition": "side = 'debit'"
+							},
+							"totalCredit": {
+								"field": "amount",
+								"operation": "sum",
+								"condition": "side = 'credit'"
+							},
+							"netAmount": {
+								"operation": "expression",
+								"expression": "totalDebit - totalCredit"
+							}
+						},
+						"hierarchyRollup": {
+							"relation": "costCenterRelation",
+							"parentField": "parentCode",
+							"depth": 4
+						}
+					},
+					"segmentPnlByKostenDrager": {
+						"description": "Segment P&L roll-up keyed by kostenDragerCode and fiscalYearId. Mirrors the cost-center aggregation for the kostendrager dimension per REQ-CC-005.",
+						"filter": {
+							"eliminationFlag": false,
+							"kostenDragerCode": {
+								"operator": "isNotNull"
+							}
+						},
+						"groupBy": [
+							"kostenDragerCode",
+							"fiscalYearId",
+							"accountNumber"
+						],
+						"operations": {
+							"totalDebit": {
+								"field": "amount",
+								"operation": "sum",
+								"condition": "side = 'debit'"
+							},
+							"totalCredit": {
+								"field": "amount",
+								"operation": "sum",
+								"condition": "side = 'credit'"
+							},
+							"netAmount": {
+								"operation": "expression",
+								"expression": "totalDebit - totalCredit"
+							}
+						},
+						"hierarchyRollup": {
+							"relation": "kostenDragerRelation",
+							"parentField": "parentCode",
+							"depth": 4
+						}
+					},
+					"segmentPnlByProject": {
+						"description": "Segment P&L roll-up keyed by projectCode and fiscalYearId. Used for project accounting and as the time-per-project projection target for WBSO pre-positioning per REQ-CC-005 + REQ-CC-007.",
+						"filter": {
+							"eliminationFlag": false,
+							"projectCode": {
+								"operator": "isNotNull"
+							}
+						},
+						"groupBy": [
+							"projectCode",
+							"fiscalYearId",
+							"accountNumber"
+						],
+						"operations": {
+							"totalDebit": {
+								"field": "amount",
+								"operation": "sum",
+								"condition": "side = 'debit'"
+							},
+							"totalCredit": {
+								"field": "amount",
+								"operation": "sum",
+								"condition": "side = 'credit'"
+							},
+							"netAmount": {
+								"operation": "expression",
+								"expression": "totalDebit - totalCredit"
+							}
+						},
+						"hierarchyRollup": {
+							"relation": "projectRelation",
+							"parentField": "parentCode",
+							"depth": 4
 						}
 					}
 				}
@@ -895,6 +1089,24 @@
 						"description": "Whether VAT/BTW applies to transactions posted to this account.",
 						"default": false
 					},
+					"esaClassifier": {
+						"type": "string",
+						"description": "ESA 2010 (European System of Accounts) sector classifier. Drives EMU-saldo computation's sector grouping per REQ-EMU-002. S.1311 = centrale overheid, S.1312 = deelstaatoverheid (N/A in NL), S.1313 = lokale overheid (gemeente/provincie/waterschap), S.1314 = wettelijke sociale verzekering. S.11–S.15/S.2 are non-government sectors per ESA 2010.",
+						"enum": [
+							"S.1311",
+							"S.1312",
+							"S.1313",
+							"S.1314",
+							"S.11",
+							"S.12",
+							"S.13",
+							"S.14",
+							"S.15",
+							"S.2"
+						],
+						"nullable": true,
+						"example": "S.1313"
+					},
 					"bbvVariant": {
 						"type": "string",
 						"enum": [
@@ -998,12 +1210,57 @@
 						"operation": "count",
 						"description": "Number of accounts per lifecycleState.",
 						"groupBy": "lifecycleState"
+					},
+					"emuSaldoByQuarter": {
+						"description": "Quarterly EMU-saldo (debit minus credit) grouped by ESA-2010 sector for a given quarter, riding the IV3-base quarterly data per REQ-EMU-003. Filters GLLine rows by period and respects per-line emuInclusionRule (included|partial only; excluded lines are omitted). Partial lines count at 50% contribution. If the declarative engine cannot express the combined multi-sector + emuInclusionRule filter, the guard OCA\\Shillinq\\Guard\\EmuCalculator::computeQuarterlySaldo is invoked per ADR-031 exception path.",
+						"source": "GLLine",
+						"joinOn": "accountNumber",
+						"filter": {
+							"periodQuarter": "@params.quarter",
+							"periodYear": "@params.year",
+							"periodState": "closed",
+							"emuInclusionRule": ["included", "partial"]
+						},
+						"groupBy": "esaClassifier",
+						"operation": "sum",
+						"field": "debit - credit",
+						"guard": "OCA\\Shillinq\\Guard\\EmuCalculator::computeQuarterlySaldo",
+						"meta": {
+							"cadence": "quarterly",
+							"auditHashFields": ["periodYear", "periodQuarter", "esaClassifier", "emuInclusionRule"],
+							"reproducible": true
+						}
+					},
+					"emuSaldoByYear": {
+						"description": "Annual EMU-saldo and EMU-schuld from the closed jaarrekening per REQ-EMU-003. Filters all closed-year GLLine rows, groups by ESA-2010 sector, and respects emuInclusionRule. EMU-schuld is derived as the cumulative net liability position across S.13 sectors. Same guard fallback as quarterly per ADR-031.",
+						"source": "GLLine",
+						"joinOn": "accountNumber",
+						"filter": {
+							"fiscalYear": "@params.fiscalYear",
+							"periodState": "closed",
+							"emuInclusionRule": ["included", "partial"]
+						},
+						"groupBy": "esaClassifier",
+						"operation": "sum",
+						"field": "debit - credit",
+						"guard": "OCA\\Shillinq\\Guard\\EmuCalculator::computeAnnualSaldo",
+						"meta": {
+							"cadence": "annual",
+							"outputs": ["emuSaldo", "emuSchuld"],
+							"auditHashFields": ["fiscalYear", "esaClassifier", "emuInclusionRule"],
+							"reproducible": true
+						}
 					}
 				},
 				"x-openregister-calculations": {
 					"daysUntilRetention": {
 						"expression": "null",
 						"description": "Account records are kept indefinitely (disposition: keep_indefinite per selectielijst:5.1.1). This field always returns null for Account objects."
+					},
+					"emuAggregationHash": {
+						"description": "Stable SHA-256 hash of the contributing GL line IDs + esaClassifier state + applied emuInclusionRule values for the last EMU computation. Same inputs always produce the same hash, enabling audit-trail reproducibility per REQ-EMU-005.",
+						"expression": "sha256(@aggregation.contributingIds + ':' + @self.esaClassifier + ':' + @params.emuInclusionRule)",
+						"nullable": true
 					}
 				}
 			},
@@ -2416,6 +2673,340 @@
 					}
 				}
 			},
+			"FixedAsset": {
+				"slug": "FixedAsset",
+				"icon": "OfficeBuildingOutline",
+				"version": "0.1.0",
+				"title": "Fixed Asset",
+				"description": "A capitalised tangible or intangible business asset with declarative depreciation rules, parallel commercial/fiscal streams, and a managed lifecycle (proposed → active → disposed → archived). Depreciation values are derived on demand — no materialised schedule table.",
+				"type": "object",
+				"x-schema-org": "schema:Thing",
+				"required": [
+					"assetNumber",
+					"name",
+					"assetCategory",
+					"acquisitionDate",
+					"acquisitionCost",
+					"currency",
+					"usefulLifeMonths",
+					"residualValue",
+					"depreciationMethod",
+					"assetAccountNumber",
+					"accumulatedDepAccountNumber",
+					"depreciationExpenseAccountNumber",
+					"lifecycleState",
+					"administrationId"
+				],
+				"properties": {
+					"assetNumber": {
+						"type": "string",
+						"description": "Operator-assigned unique reference within the administration (e.g. FA-0001).",
+						"example": "FA-0001"
+					},
+					"name": {
+						"type": "string",
+						"description": "Human-readable asset name (e.g. Dell laptop XPS-15).",
+						"example": "Dell laptop XPS-15"
+					},
+					"assetCategory": {
+						"type": "string",
+						"description": "Asset category classification.",
+						"enum": [
+							"buildings",
+							"vehicles",
+							"machinery",
+							"it-equipment",
+							"furniture",
+							"intangibles"
+						],
+						"example": "it-equipment"
+					},
+					"acquisitionDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Date the asset entered service.",
+						"example": "2026-01-01"
+					},
+					"acquisitionCost": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Original cost in the administration's base currency.",
+						"example": 2400
+					},
+					"currency": {
+						"type": "string",
+						"description": "ISO 4217 currency of the acquisition cost.",
+						"minLength": 3,
+						"maxLength": 3,
+						"example": "EUR",
+						"default": "EUR"
+					},
+					"usefulLifeMonths": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "Useful life expressed in months.",
+						"example": 48
+					},
+					"residualValue": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Estimated salvage value at end of useful life.",
+						"example": 0
+					},
+					"depreciationMethod": {
+						"type": "string",
+						"description": "Depreciation method applied to this asset.",
+						"enum": [
+							"linear",
+							"degressive",
+							"units-of-production",
+							"none"
+						],
+						"example": "linear"
+					},
+					"degressiveRate": {
+						"type": "number",
+						"description": "Annual declining-balance percentage when depreciationMethod = degressive (e.g. 0.20 for 20%). Required when method is degressive.",
+						"example": 0.2,
+						"nullable": true
+					},
+					"commercialRate": {
+						"type": "number",
+						"description": "Annual depreciation rate for commercial books (IFRS / Dutch GAAP). When set together with fiscalRate, two parallel streams are produced.",
+						"example": 0.2,
+						"nullable": true
+					},
+					"fiscalRate": {
+						"type": "number",
+						"description": "Annual depreciation rate for fiscal books (Wet IB / Wet VPB). May differ from commercialRate (e.g. Wet IB 20% cap rule).",
+						"example": 0.33,
+						"nullable": true
+					},
+					"assetAccountNumber": {
+						"type": "string",
+						"description": "FK to the Account carrying the asset's gross value (e.g. 0220).",
+						"example": "0220"
+					},
+					"accumulatedDepAccountNumber": {
+						"type": "string",
+						"description": "FK to the contra Account for accumulated depreciation (e.g. 0225).",
+						"example": "0225"
+					},
+					"depreciationExpenseAccountNumber": {
+						"type": "string",
+						"description": "FK to the P&L Account for the depreciation expense charge (e.g. 4500).",
+						"example": "4500"
+					},
+					"disposalDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Date the asset was disposed of (sale, scrap, donation). Set when lifecycleState transitions to disposed.",
+						"nullable": true
+					},
+					"disposalAccountingTreatment": {
+						"type": "string",
+						"description": "Accounting treatment on disposal. Required when disposalDate is set.",
+						"enum": [
+							"sale",
+							"scrap",
+							"donation",
+							"transfer"
+						],
+						"nullable": true
+					},
+					"lifecycleState": {
+						"type": "string",
+						"description": "Current lifecycle state of the asset.",
+						"enum": [
+							"proposed",
+							"active",
+							"disposed",
+							"archived"
+						],
+						"example": "active",
+						"default": "proposed"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this asset. Scopes uniqueness of assetNumber.",
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-calculations": {
+					"monthlyDepreciation": {
+						"description": "Monthly depreciation charge for the current period under the linear method. Zero when depreciationMethod = none.",
+						"expression": "(depreciationMethod == 'none') ? 0 : (depreciationMethod == 'linear') ? (acquisitionCost - residualValue) / usefulLifeMonths : (depreciationMethod == 'degressive') ? (currentBookValue * degressiveRate / 12) : 0",
+						"dependsOn": [
+							"acquisitionCost",
+							"residualValue",
+							"usefulLifeMonths",
+							"depreciationMethod",
+							"degressiveRate",
+							"acquisitionDate"
+						]
+					},
+					"currentBookValue": {
+						"description": "Current net book value. Equals acquisitionCost minus accumulated depreciation calculated from acquisitionDate to today. For none-method assets this always equals acquisitionCost.",
+						"expression": "(depreciationMethod == 'none') ? acquisitionCost : max(residualValue, acquisitionCost - ((acquisitionCost - residualValue) / usefulLifeMonths) * monthsElapsed(@self.acquisitionDate))",
+						"dependsOn": [
+							"acquisitionCost",
+							"residualValue",
+							"usefulLifeMonths",
+							"depreciationMethod",
+							"acquisitionDate"
+						]
+					},
+					"commercialBookValue": {
+						"description": "Net book value under the commercial depreciation stream (IFRS / Dutch GAAP). Only meaningful when commercialRate is set.",
+						"expression": "(commercialRate == null) ? currentBookValue : max(0, acquisitionCost * (1 - commercialRate * (monthsElapsed(@self.acquisitionDate) / 12)))",
+						"dependsOn": [
+							"acquisitionCost",
+							"commercialRate",
+							"acquisitionDate"
+						]
+					},
+					"fiscalBookValue": {
+						"description": "Net book value under the fiscal depreciation stream (Wet IB / Wet VPB). Only meaningful when fiscalRate is set.",
+						"expression": "(fiscalRate == null) ? currentBookValue : max(0, acquisitionCost * (1 - fiscalRate * (monthsElapsed(@self.acquisitionDate) / 12)))",
+						"dependsOn": [
+							"acquisitionCost",
+							"fiscalRate",
+							"acquisitionDate"
+						]
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "proposed",
+					"states": {
+						"proposed": {
+							"label": "Proposed",
+							"description": "Asset is under consideration for capitalisation. Not yet active on the balance sheet."
+						},
+						"active": {
+							"label": "Active",
+							"description": "Asset is capitalised and subject to periodic depreciation postings."
+						},
+						"disposed": {
+							"label": "Disposed",
+							"description": "Asset has been sold, scrapped, donated, or transferred. A closing JournalEntry has been emitted."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Asset record is retained for historical reference only. No further postings or edits."
+						}
+					},
+					"transitions": {
+						"activate": {
+							"from": "proposed",
+							"to": "active",
+							"label": "Activate asset",
+							"description": "Capitalise the asset and start the depreciation clock."
+						},
+						"dispose": {
+							"from": "active",
+							"to": "disposed",
+							"label": "Dispose asset",
+							"description": "Dispose of the asset and emit a closing JournalEntry (credits asset account for gross value, debits accumulated depreciation, posts gain/loss based on disposalAccountingTreatment and disposal proceeds).",
+							"action": {
+								"type": "emit-journal-entry",
+								"subType": "disposal",
+								"description": "Emits a balanced JournalEntry zeroing the asset account and accumulated depreciation, and posting any gain or loss to the configured P&L account based on disposalAccountingTreatment.",
+								"requiredInput": [
+									"disposalDate",
+									"disposalAccountingTreatment",
+									"disposalProceeds"
+								]
+							}
+						},
+						"archive": {
+							"from": "disposed",
+							"to": "archived",
+							"label": "Archive asset",
+							"description": "Move disposed asset to historical archive."
+						},
+						"rejectProposal": {
+							"from": "proposed",
+							"to": "archived",
+							"label": "Reject proposal",
+							"description": "Reject the asset proposal without capitalising it."
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"administration": {
+						"localField": "administrationId",
+						"relatedSchema": "Administration",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "Administration that owns this asset."
+					},
+					"assetAccount": {
+						"localField": "assetAccountNumber",
+						"relatedSchema": "Account",
+						"relatedField": "accountNumber",
+						"cardinality": "many-to-one",
+						"description": "Balance-sheet account carrying the asset's gross value."
+					},
+					"accumulatedDepAccount": {
+						"localField": "accumulatedDepAccountNumber",
+						"relatedSchema": "Account",
+						"relatedField": "accountNumber",
+						"cardinality": "many-to-one",
+						"description": "Contra account for accumulated depreciation."
+					},
+					"depreciationExpenseAccount": {
+						"localField": "depreciationExpenseAccountNumber",
+						"relatedSchema": "Account",
+						"relatedField": "accountNumber",
+						"cardinality": "many-to-one",
+						"description": "P&L account for the periodic depreciation expense charge."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						},
+						"admin": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						}
+					}
+				},
+				"x-openregister-aggregations": {
+					"totalByCategory": {
+						"field": "assetCategory",
+						"operation": "count",
+						"description": "Number of active assets per assetCategory.",
+						"groupBy": "assetCategory",
+						"filter": {
+							"lifecycleState": "active"
+						}
+					},
+					"totalAcquisitionCost": {
+						"field": "acquisitionCost",
+						"operation": "sum",
+						"description": "Total gross acquisition cost of all active assets.",
+						"filter": {
+							"lifecycleState": "active"
+						}
+					}
+				}
+			},
 			"KorThreshold": {
 				"slug": "KorThreshold",
 				"icon": "PercentOutline",
@@ -3421,6 +4012,666 @@
 						}
 					}
 				}
+			},
+			"CostCenter": {
+				"slug": "CostCenter",
+				"icon": "OfficeBuilding",
+				"version": "0.1.0",
+				"title": "Cost Center",
+				"description": "An analytical cost center (kostenplaats) for tracking, allocating, and analysing departmental or functional expenses. Declared as an OR-managed register per REQ-CC-001 and REQ-CC-002. Hierarchy is navigable via the parentCode self-relation.",
+				"x-schema-org": "schema:Organization",
+				"x-openregister-purpose": "dimension",
+				"type": "object",
+				"required": [
+					"code",
+					"name",
+					"lifecycleState",
+					"administrationId"
+				],
+				"properties": {
+					"code": {
+						"type": "string",
+						"description": "Operator-assigned unique reference within the administration per REQ-CC-002.",
+						"example": "KC-100"
+					},
+					"name": {
+						"type": "string",
+						"description": "Human-readable cost center name.",
+						"example": "Sales"
+					},
+					"parentCode": {
+						"type": "string",
+						"description": "FK to parent CostCenter.code for hierarchy navigation via x-openregister-relations self-relation per REQ-CC-002.",
+						"nullable": true,
+						"example": "KC-000"
+					},
+					"responsibleUser": {
+						"type": "string",
+						"description": "Nextcloud user id of the cost-center owner.",
+						"nullable": true,
+						"example": "jan.manager"
+					},
+					"lifecycleState": {
+						"type": "string",
+						"description": "Current lifecycle state mirroring Account.lifecycleState per REQ-CoA-005 and REQ-CC-002.",
+						"enum": [
+							"active",
+							"blocked",
+							"archived"
+						],
+						"default": "active",
+						"example": "active"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this cost center.",
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Usable for GL line dimension tagging."
+						},
+						"blocked": {
+							"label": "Blocked",
+							"description": "Readable but rejected as target of new GL line dimension tags."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Historical only; no new dimension tags."
+						}
+					},
+					"transitions": {
+						"block": {
+							"from": "active",
+							"to": "blocked",
+							"label": "Block cost center",
+							"description": "Prevent new GL line tagging against this cost center."
+						},
+						"unblock": {
+							"from": "blocked",
+							"to": "active",
+							"label": "Unblock cost center",
+							"description": "Re-enable GL line tagging against this cost center."
+						},
+						"archive": {
+							"from": [
+								"active",
+								"blocked"
+							],
+							"to": "archived",
+							"label": "Archive cost center",
+							"description": "Move to historical archive; GL lines with this code remain queryable."
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"parentCostCenter": {
+						"localField": "parentCode",
+						"relatedSchema": "CostCenter",
+						"relatedField": "code",
+						"cardinality": "many-to-one",
+						"description": "Self-relation enabling hierarchical cost-center navigation per REQ-CC-002."
+					}
+				},
+				"x-openregister-aggregations": {
+					"segmentPnl": {
+						"description": "Segment P&L for this cost center: sum of GLLine amounts whose costCenterCode equals this record's code, including child cost centers rolled up via parentCode. Consumed by the CostCenter detail page per REQ-CC-005.",
+						"join": {
+							"schema": "GLLine",
+							"condition": "GLLine.costCenterCode = @self.code AND GLLine.eliminationFlag = false"
+						},
+						"groupBy": [
+							"GLLine.fiscalYearId",
+							"GLLine.accountNumber"
+						],
+						"operations": {
+							"totalDebit": {
+								"field": "GLLine.amount",
+								"operation": "sum",
+								"condition": "GLLine.side = 'debit'"
+							},
+							"totalCredit": {
+								"field": "GLLine.amount",
+								"operation": "sum",
+								"condition": "GLLine.side = 'credit'"
+							}
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"KostenDrager": {
+				"slug": "KostenDrager",
+				"icon": "CubeOutline",
+				"version": "0.1.0",
+				"title": "Kostendrager",
+				"description": "An analytical cost unit (kostendrager / cost object) for tracking costs per product, service, or cost bearer per Dutch GAAP. Same shape as CostCenter; the distinction is semantic per REQ-CC-002. Hierarchy navigable via parentCode self-relation.",
+				"x-schema-org": "schema:Product",
+				"x-openregister-purpose": "dimension",
+				"type": "object",
+				"required": [
+					"code",
+					"name",
+					"lifecycleState",
+					"administrationId"
+				],
+				"properties": {
+					"code": {
+						"type": "string",
+						"description": "Operator-assigned unique reference within the administration per REQ-CC-002.",
+						"example": "KD-001"
+					},
+					"name": {
+						"type": "string",
+						"description": "Human-readable kostendrager name.",
+						"example": "Product A"
+					},
+					"parentCode": {
+						"type": "string",
+						"description": "FK to parent KostenDrager.code for hierarchy navigation per REQ-CC-002.",
+						"nullable": true,
+						"example": "KD-000"
+					},
+					"responsibleUser": {
+						"type": "string",
+						"description": "Nextcloud user id of the kostendrager owner.",
+						"nullable": true,
+						"example": "lisa.product"
+					},
+					"lifecycleState": {
+						"type": "string",
+						"description": "Current lifecycle state per REQ-CC-002.",
+						"enum": [
+							"active",
+							"blocked",
+							"archived"
+						],
+						"default": "active",
+						"example": "active"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this kostendrager.",
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Usable for GL line dimension tagging."
+						},
+						"blocked": {
+							"label": "Blocked",
+							"description": "Readable but rejected as target of new GL line tags."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Historical only; no new dimension tags."
+						}
+					},
+					"transitions": {
+						"block": {
+							"from": "active",
+							"to": "blocked",
+							"label": "Block kostendrager",
+							"description": "Prevent new GL line tagging against this kostendrager."
+						},
+						"unblock": {
+							"from": "blocked",
+							"to": "active",
+							"label": "Unblock kostendrager",
+							"description": "Re-enable GL line tagging against this kostendrager."
+						},
+						"archive": {
+							"from": [
+								"active",
+								"blocked"
+							],
+							"to": "archived",
+							"label": "Archive kostendrager",
+							"description": "Move to historical archive."
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"parentKostenDrager": {
+						"localField": "parentCode",
+						"relatedSchema": "KostenDrager",
+						"relatedField": "code",
+						"cardinality": "many-to-one",
+						"description": "Self-relation enabling hierarchical kostendrager navigation per REQ-CC-002."
+					}
+				},
+				"x-openregister-aggregations": {
+					"segmentPnl": {
+						"description": "Segment P&L for this kostendrager: sum of GLLine amounts whose kostenDragerCode equals this record's code per REQ-CC-005.",
+						"join": {
+							"schema": "GLLine",
+							"condition": "GLLine.kostenDragerCode = @self.code AND GLLine.eliminationFlag = false"
+						},
+						"groupBy": [
+							"GLLine.fiscalYearId",
+							"GLLine.accountNumber"
+						],
+						"operations": {
+							"totalDebit": {
+								"field": "GLLine.amount",
+								"operation": "sum",
+								"condition": "GLLine.side = 'debit'"
+							},
+							"totalCredit": {
+								"field": "GLLine.amount",
+								"operation": "sum",
+								"condition": "GLLine.side = 'credit'"
+							}
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"Project": {
+				"slug": "Project",
+				"icon": "BriefcaseOutline",
+				"version": "0.1.0",
+				"title": "Project",
+				"description": "An analytical project for tracking time, materials, and costs per project. Same shape as CostCenter and KostenDrager per REQ-CC-002. The timeBookingEnabled flag pre-positions WBSO time-per-project per REQ-CC-007.",
+				"x-schema-org": "schema:Project",
+				"x-openregister-purpose": "dimension",
+				"type": "object",
+				"required": [
+					"code",
+					"name",
+					"lifecycleState",
+					"administrationId"
+				],
+				"properties": {
+					"code": {
+						"type": "string",
+						"description": "Operator-assigned unique reference within the administration per REQ-CC-002.",
+						"example": "PRJ-2026-001"
+					},
+					"name": {
+						"type": "string",
+						"description": "Human-readable project name.",
+						"example": "Cloud Platform 2026"
+					},
+					"parentCode": {
+						"type": "string",
+						"description": "FK to parent Project.code for hierarchy navigation per REQ-CC-002.",
+						"nullable": true,
+						"example": "PRJ-2026-000"
+					},
+					"responsibleUser": {
+						"type": "string",
+						"description": "Nextcloud user id of the project owner.",
+						"nullable": true,
+						"example": "kim.pm"
+					},
+					"timeBookingEnabled": {
+						"type": "boolean",
+						"description": "When true, time bookings may reference this project for WBSO hours-per-project derivation per REQ-CC-007. Non-required; false by default.",
+						"default": false,
+						"example": true
+					},
+					"lifecycleState": {
+						"type": "string",
+						"description": "Current lifecycle state per REQ-CC-002.",
+						"enum": [
+							"active",
+							"blocked",
+							"archived"
+						],
+						"default": "active",
+						"example": "active"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this project.",
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Usable for GL line and time-entry dimension tagging."
+						},
+						"blocked": {
+							"label": "Blocked",
+							"description": "Readable but rejected as target of new GL line or time-entry tags."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Historical only; no new dimension tags."
+						}
+					},
+					"transitions": {
+						"block": {
+							"from": "active",
+							"to": "blocked",
+							"label": "Block project",
+							"description": "Prevent new GL line or time-entry tagging against this project."
+						},
+						"unblock": {
+							"from": "blocked",
+							"to": "active",
+							"label": "Unblock project",
+							"description": "Re-enable tagging against this project."
+						},
+						"archive": {
+							"from": [
+								"active",
+								"blocked"
+							],
+							"to": "archived",
+							"label": "Archive project",
+							"description": "Move to historical archive."
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"parentProject": {
+						"localField": "parentCode",
+						"relatedSchema": "Project",
+						"relatedField": "code",
+						"cardinality": "many-to-one",
+						"description": "Self-relation enabling hierarchical project navigation per REQ-CC-002."
+					}
+				},
+				"x-openregister-aggregations": {
+					"segmentPnl": {
+						"description": "Segment P&L for this project: sum of GLLine amounts whose projectCode equals this record's code per REQ-CC-005. Shape is sufficient for WBSO time-per-project join per REQ-CC-007.",
+						"join": {
+							"schema": "GLLine",
+							"condition": "GLLine.projectCode = @self.code AND GLLine.eliminationFlag = false"
+						},
+						"groupBy": [
+							"GLLine.fiscalYearId",
+							"GLLine.accountNumber"
+						],
+						"operations": {
+							"totalDebit": {
+								"field": "GLLine.amount",
+								"operation": "sum",
+								"condition": "GLLine.side = 'debit'"
+							},
+							"totalCredit": {
+								"field": "GLLine.amount",
+								"operation": "sum",
+								"condition": "GLLine.side = 'credit'"
+							}
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"AllocationRule": {
+				"slug": "AllocationRule",
+				"icon": "TransferRight",
+				"version": "0.1.0",
+				"title": "Allocation Rule",
+				"description": "A cost-allocation rule declared as schema metadata per ADR-031 (design D2). Stores the rule shape: source pattern, driver, targets, target dimension, and cadence. Per-posting rules fire as x-openregister-lifecycle action on GLTransaction.post; monthly/period-close rules fire via OR ScheduledWorkflow. No AllocationService.allocate() ever runs the rule. Compliance: REQ-CC-004.",
+				"x-schema-org": "schema:Thing",
+				"type": "object",
+				"required": [
+					"name",
+					"sourceAccountPattern",
+					"driver",
+					"targets",
+					"targetDimension",
+					"cadence",
+					"lifecycleState",
+					"administrationId"
+				],
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "Operator-readable rule name per REQ-CC-004.",
+						"example": "Overhead spread by headcount"
+					},
+					"sourceAccountPattern": {
+						"type": "string",
+						"description": "Glob or range pattern matching source GL accounts (e.g. 1000-1099 or 4900). Evaluated against GLLine.accountNumber on per-posting rules per REQ-CC-004.",
+						"example": "1000-1099"
+					},
+					"driver": {
+						"type": "string",
+						"description": "Named distribution driver per REQ-CC-004.",
+						"enum": [
+							"fixed-percentage",
+							"fixed-amount",
+							"volume",
+							"headcount"
+						],
+						"example": "fixed-percentage"
+					},
+					"targets": {
+						"type": "array",
+						"description": "At least 2 target entries. For fixed-percentage: percentages MUST sum to 100 (enforced by x-openregister-lifecycle.requires on save per REQ-CC-004). For fixed-amount: amounts specify absolute allocation per target. For volume/headcount: source specifies the reference register or field.",
+						"minItems": 2,
+						"items": {
+							"type": "object",
+							"required": [
+								"code"
+							],
+							"properties": {
+								"code": {
+									"type": "string",
+									"description": "Target dimension code (FK to CostCenter.code, KostenDrager.code, or Project.code depending on targetDimension).",
+									"example": "KC-100"
+								},
+								"percentage": {
+									"type": "number",
+									"description": "Allocation percentage for fixed-percentage driver. All targets MUST sum to 100.",
+									"minimum": 0,
+									"maximum": 100,
+									"example": 50.0
+								},
+								"amount": {
+									"type": "number",
+									"description": "Fixed allocation amount for fixed-amount driver.",
+									"minimum": 0,
+									"example": 500.0
+								},
+								"source": {
+									"type": "string",
+									"description": "Reference field or register for volume/headcount driver.",
+									"example": "headcount-register"
+								}
+							}
+						},
+						"example": [
+							{
+								"code": "KC-100",
+								"percentage": 50.0
+							},
+							{
+								"code": "KC-200",
+								"percentage": 30.0
+							},
+							{
+								"code": "KC-300",
+								"percentage": 20.0
+							}
+						]
+					},
+					"targetDimension": {
+						"type": "string",
+						"description": "Which dimension the targets[].code values refer to per REQ-CC-004.",
+						"enum": [
+							"cost-center",
+							"kosten-drager",
+							"project"
+						],
+						"example": "cost-center"
+					},
+					"cadence": {
+						"type": "string",
+						"description": "Execution cadence per REQ-CC-004. per-posting fires on GLTransaction.post lifecycle action; monthly and period-close fire via OR ScheduledWorkflow.",
+						"enum": [
+							"per-posting",
+							"monthly",
+							"period-close"
+						],
+						"example": "per-posting"
+					},
+					"lifecycleState": {
+						"type": "string",
+						"description": "Activation state. Seeded rules ship in paused state per design Seed Data section.",
+						"enum": [
+							"active",
+							"paused",
+							"archived"
+						],
+						"default": "paused",
+						"example": "paused"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this allocation rule.",
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "paused",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Rule is evaluated on its cadence. For per-posting: on every GLTransaction.post."
+						},
+						"paused": {
+							"label": "Paused",
+							"description": "Rule is stored but not evaluated. Default for seeded example rules."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Rule is retired; no longer evaluated or activatable."
+						}
+					},
+					"requires": {
+						"save": {
+							"guard": "percentages-sum-to-100",
+							"condition": "driver = 'fixed-percentage'",
+							"expression": "sum(targets[*].percentage) = 100",
+							"message": "Fixed-percentage allocation rule: target percentages must sum to 100 per REQ-CC-004."
+						}
+					},
+					"transitions": {
+						"activate": {
+							"from": "paused",
+							"to": "active",
+							"label": "Activate rule",
+							"description": "Operator confirms the rule and activates it for evaluation on its cadence."
+						},
+						"pause": {
+							"from": "active",
+							"to": "paused",
+							"label": "Pause rule",
+							"description": "Temporarily suspend rule evaluation without archiving."
+						},
+						"archive": {
+							"from": [
+								"active",
+								"paused"
+							],
+							"to": "archived",
+							"label": "Archive rule",
+							"description": "Retire the rule permanently."
+						}
+					},
+					"workflows": {
+						"monthlyAllocation": {
+							"cadence": "monthly",
+							"trigger": "ScheduledWorkflow",
+							"description": "Evaluates all active AllocationRule records with cadence=monthly against the previous month's posted GLLines per REQ-CC-004 design D2. No PHP AllocationService orchestrates this — the rule body lives in this schema.",
+							"condition": "lifecycleState = 'active' AND cadence = 'monthly'"
+						},
+						"periodCloseAllocation": {
+							"cadence": "period-close",
+							"trigger": "ScheduledWorkflow",
+							"description": "Evaluates all active AllocationRule records with cadence=period-close when the fiscal period closes per REQ-CC-004 design D2.",
+							"condition": "lifecycleState = 'active' AND cadence = 'period-close'"
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"controller": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						},
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
 			}
 		},
 		"SisaReport": {
@@ -4232,6 +5483,758 @@
 					"example": true
 				}
 			}
+		},
+		"VendorMaster": {
+			"slug": "VendorMaster",
+			"icon": "StoreOutline",
+			"version": "0.1.0",
+			"title": "Vendor",
+			"description": "Vendor party record for accounts payable. Holds bank IBAN, payment terms, tax registration, and dunning-policy reference for a vendor within a single administration. Per REQ-AP-002.",
+			"x-schema-org": "schema:Organization",
+			"type": "object",
+			"required": [
+				"vendorNumber",
+				"name",
+				"paymentTermDays",
+				"administrationId",
+				"lifecycleState"
+			],
+			"properties": {
+				"vendorNumber": {
+					"type": "string",
+					"description": "Stable vendor identifier unique per administration.",
+					"example": "V-2026-001"
+				},
+				"name": {
+					"type": "string",
+					"description": "Legal name of the vendor.",
+					"example": "Acme Leveranciers BV"
+				},
+				"tradingName": {
+					"type": "string",
+					"description": "Alternate or DBA trading name.",
+					"nullable": true,
+					"example": "Acme"
+				},
+				"kvkNumber": {
+					"type": "string",
+					"description": "Dutch KvK number (8 digits).",
+					"nullable": true,
+					"example": "12345678"
+				},
+				"btwNumber": {
+					"type": "string",
+					"description": "Dutch BTW / EU VAT number.",
+					"nullable": true,
+					"example": "NL123456789B01"
+				},
+				"iban": {
+					"type": "string",
+					"description": "Default IBAN for outgoing payments to this vendor.",
+					"nullable": true,
+					"example": "NL01RABO0123456789"
+				},
+				"bic": {
+					"type": "string",
+					"description": "BIC/SWIFT code matching the IBAN bank.",
+					"nullable": true,
+					"example": "RABONL2U"
+				},
+				"paymentTermDays": {
+					"type": "integer",
+					"minimum": 0,
+					"default": 30,
+					"description": "Default payment term in days (auto-sets APInvoice.dueDate on creation).",
+					"example": 30
+				},
+				"defaultExpenseAccountNumber": {
+					"type": "string",
+					"description": "FK to Account.accountNumber for default expense coding on AP invoices.",
+					"nullable": true,
+					"example": "7000"
+				},
+				"address": {
+					"type": "object",
+					"description": "Postal address of the vendor.",
+					"nullable": true,
+					"properties": {
+						"street": {
+							"type": "string"
+						},
+						"houseNumber": {
+							"type": "string"
+						},
+						"postcode": {
+							"type": "string"
+						},
+						"city": {
+							"type": "string"
+						},
+						"country": {
+							"type": "string",
+							"default": "NL"
+						}
+					}
+				},
+				"email": {
+					"type": "string",
+					"format": "email",
+					"description": "Primary contact email for invoice queries.",
+					"nullable": true,
+					"example": "facturatie@acme.nl"
+				},
+				"phone": {
+					"type": "string",
+					"description": "Primary contact phone number.",
+					"nullable": true,
+					"example": "+31201234567"
+				},
+				"dunningPolicyId": {
+					"type": "string",
+					"description": "FK to OR dunning-workflow policy record if the extension is stable per ADR-022; else null.",
+					"nullable": true
+				},
+				"contactRef": {
+					"type": "string",
+					"description": "FK to OR contact abstraction if stable per ADR-022; else null. Resolution deferred to implementing cycle.",
+					"nullable": true
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the administration owning this vendor record.",
+					"example": "adm-1"
+				},
+				"lifecycleState": {
+					"type": "string",
+					"enum": [
+						"active",
+						"blocked",
+						"archived"
+					],
+					"description": "Vendor master lifecycle state. blocked: payments suspended; archived: historical reference only.",
+					"default": "active",
+					"example": "active"
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "lifecycleState",
+				"initialState": "active",
+				"states": {
+					"active": {
+						"label": "Active",
+						"description": "Vendor is active; AP invoices may be created and paid."
+					},
+					"blocked": {
+						"label": "Blocked",
+						"description": "Vendor is blocked; new AP invoices cannot transition to approved or posted."
+					},
+					"archived": {
+						"label": "Archived",
+						"description": "Vendor is archived for historical reference; no new invoices may be created."
+					}
+				},
+				"transitions": {
+					"block": {
+						"from": "active",
+						"to": "blocked",
+						"label": "Block vendor",
+						"description": "Suspend payments to this vendor."
+					},
+					"unblock": {
+						"from": "blocked",
+						"to": "active",
+						"label": "Unblock vendor",
+						"description": "Restore vendor to active status."
+					},
+					"archive": {
+						"from": [
+							"active",
+							"blocked"
+						],
+						"to": "archived",
+						"label": "Archive vendor",
+						"description": "Archive vendor after all open AP invoices are settled."
+					}
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
+		"APInvoice": {
+			"slug": "APInvoice",
+			"icon": "ReceiptTextOutline",
+			"version": "0.1.0",
+			"title": "AP Invoice",
+			"description": "Accounts payable sub-ledger invoice recording vendor billing and payment obligation. Posting materialises a balanced GLTransaction per T1 REQ-JE-007. Lifecycle: draft → pending → approved → posted → paid with disputed/voided branches. Approval routing consumes OR approval-workflow per ADR-022. Per REQ-AP-003 and REQ-AP-004.",
+			"x-schema-org": "schema:Invoice",
+			"type": "object",
+			"required": [
+				"invoiceNumber",
+				"vendorInvoiceRef",
+				"vendorId",
+				"invoiceDate",
+				"dueDate",
+				"currency",
+				"totalAmount",
+				"lines",
+				"approvalState",
+				"state",
+				"administrationId"
+			],
+			"properties": {
+				"invoiceNumber": {
+					"type": "string",
+					"description": "Shillinq-side reference (auto-generated per administration).",
+					"example": "INV-V-2026-0001"
+				},
+				"vendorInvoiceRef": {
+					"type": "string",
+					"description": "The vendor's own invoice number as it appears on the paper/PDF invoice.",
+					"example": "ACME-2026-00123"
+				},
+				"vendorId": {
+					"type": "string",
+					"description": "FK to VendorMaster UUID.",
+					"example": "vendor-acme-1"
+				},
+				"invoiceDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Date on the vendor's invoice.",
+					"example": "2026-01-15"
+				},
+				"dueDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Auto-calculated from invoiceDate + vendor.paymentTermDays; overrideable by operator.",
+					"example": "2026-02-14"
+				},
+				"currency": {
+					"type": "string",
+					"minLength": 3,
+					"maxLength": 3,
+					"description": "ISO 4217 currency code. T2: base currency only; T5 adds multi-currency.",
+					"default": "EUR",
+					"example": "EUR"
+				},
+				"totalAmount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Total amount including tax. Credit notes are separate journal types, not negative totals.",
+					"example": 1250.0
+				},
+				"taxAmount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "VAT/BTW amount. T3 adds automated VAT posting; T2 carries the field for reporting.",
+					"nullable": true,
+					"example": 217.98
+				},
+				"lines": {
+					"type": "array",
+					"minItems": 1,
+					"description": "Invoice line breakdown. Each line maps to one GL expense account.",
+					"items": {
+						"type": "object",
+						"required": [
+							"description",
+							"accountNumber",
+							"amount"
+						],
+						"properties": {
+							"description": {
+								"type": "string",
+								"description": "Line description."
+							},
+							"accountNumber": {
+								"type": "string",
+								"description": "FK to Account.accountNumber (expense account)."
+							},
+							"amount": {
+								"type": "number",
+								"minimum": 0,
+								"description": "Line amount (non-negative; see REQ-AP-003)."
+							},
+							"taxCode": {
+								"type": "string",
+								"description": "Tax code for this line (e.g. BTW21, BTW9, BTW0).",
+								"nullable": true
+							},
+							"quantity": {
+								"type": "number",
+								"description": "Quantity ordered/received (required for 3-way match when PO/GR present).",
+								"nullable": true
+							},
+							"unitPrice": {
+								"type": "number",
+								"description": "Unit price (required for 3-way match quantity parity check).",
+								"nullable": true
+							}
+						}
+					}
+				},
+				"sourceDocumentUri": {
+					"type": "string",
+					"description": "docudesk FK URI per bookkeeping-document-attachment-integration. Points to the scanned vendor invoice PDF.",
+					"nullable": true,
+					"example": "docudesk://files/shillinq/invoices/acme-2026-00123.pdf"
+				},
+				"purchaseOrderRef": {
+					"type": "string",
+					"description": "FK to PO register UUID (future T4 procurement; nullable in T2). Declared so T4 attaches additively per REQ-AP-006.",
+					"nullable": true
+				},
+				"goodsReceiptRef": {
+					"type": "string",
+					"description": "FK to Goods Receipt register UUID (future T4; nullable in T2). Declared so T4 attaches additively per REQ-AP-006.",
+					"nullable": true
+				},
+				"approvalState": {
+					"type": "string",
+					"enum": [
+						"not-required",
+						"pending",
+						"approved",
+						"rejected"
+					],
+					"description": "OR approval-workflow state mirror per REQ-AP-005. Tracks the approval routing status.",
+					"example": "pending"
+				},
+				"state": {
+					"type": "string",
+					"enum": [
+						"draft",
+						"pending",
+						"approved",
+						"posted",
+						"paid",
+						"disputed",
+						"voided"
+					],
+					"description": "AP invoice lifecycle state per REQ-AP-004.",
+					"default": "draft",
+					"example": "draft"
+				},
+				"glTransactionId": {
+					"type": "string",
+					"description": "Back-reference to the materialised GLTransaction once the invoice is posted.",
+					"nullable": true,
+					"example": "gl-txn-2026-ap-0001"
+				},
+				"idealLink": {
+					"type": "string",
+					"description": "Per-invoice iDEAL payment link (x-openregister-calculations output per REQ-AP-007). Populated when paymentMethod=ideal.",
+					"nullable": true
+				},
+				"periodId": {
+					"type": "string",
+					"description": "FK to the FiscalPeriod for GL posting (resolved on post transition per REQ-AP-004).",
+					"nullable": true,
+					"example": "2026-Q1"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the administration owning this AP invoice.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "state",
+				"initialState": "draft",
+				"states": {
+					"draft": {
+						"label": "Draft",
+						"description": "Under construction. Lines and header fields may be edited."
+					},
+					"pending": {
+						"label": "Pending approval",
+						"description": "Submitted for approval. Awaiting OR approval-workflow decision."
+					},
+					"approved": {
+						"label": "Approved",
+						"description": "Approved by authorised approver(s). Ready for posting."
+					},
+					"posted": {
+						"label": "Posted",
+						"description": "Immutable. GL transaction materialised. Awaiting payment matching."
+					},
+					"paid": {
+						"label": "Paid",
+						"description": "Full payment matched via bank reconciliation or PaymentRun."
+					},
+					"disputed": {
+						"label": "Disputed",
+						"description": "Payment held; under investigation. Operator records investigation note."
+					},
+					"voided": {
+						"label": "Voided",
+						"description": "Voided. Corresponding GLTransaction must already be reversed."
+					}
+				},
+				"transitions": {
+					"submit": {
+						"from": "draft",
+						"to": "pending",
+						"label": "Submit for approval",
+						"description": "Operator submits the draft invoice for approval routing via OR approval-workflow per REQ-AP-005."
+					},
+					"approve": {
+						"from": "pending",
+						"to": "approved",
+						"label": "Approve",
+						"description": "Approved by authorised approver(s) via OR approval-workflow. Sets approvalState: approved.",
+						"requires": "x-openregister-approval"
+					},
+					"reject": {
+						"from": "pending",
+						"to": "draft",
+						"label": "Reject (return to draft)",
+						"description": "Approver rejects; sets approvalState: rejected and returns invoice to draft for operator revision."
+					},
+					"post": {
+						"from": [
+							"approved",
+							"draft"
+						],
+						"to": "posted",
+						"label": "Post",
+						"description": "Post the invoice. Guards: (1) 3-way match per REQ-AP-006 (conditional on PO/GR presence); (2) FiscalPeriod open per REQ-PC-004. Action: materialise balanced GLTransaction per T1 REQ-JE-007 pattern.",
+						"requires": "OCA\\Shillinq\\Lifecycle\\ThreeWayMatchGuard::matches",
+						"actions": [
+							{
+								"trigger": "x-openregister-lifecycle-action",
+								"action": "materialise-gl-transaction",
+								"description": "Emit one balanced GLTransaction with debit to expense accounts per lines and credit to AP control account (Account.isAPControlAccount = true) per T1 REQ-JE-007 pattern. Sets glTransactionId back-reference.",
+								"actionParameters": {
+									"register": "shillinq",
+									"targetSchema": "GLTransaction",
+									"debitMapping": "lines[].accountNumber",
+									"creditMapping": "Account[isAPControlAccount=true].accountNumber",
+									"subLedgerType": "ap",
+									"subLedgerRefField": "id",
+									"keepBalanced": true
+								}
+							}
+						]
+					},
+					"matchPaid": {
+						"from": "posted",
+						"to": "paid",
+						"label": "Mark as paid",
+						"description": "Transition to paid when bank-reconciliation engine matches an exact-amount bank statement line per REQ-AP-008. No shillinq matcher service — OR event-driven."
+					},
+					"dispute": {
+						"from": "posted",
+						"to": "disputed",
+						"label": "Raise dispute",
+						"description": "Operator places payment hold pending investigation."
+					},
+					"resolveDispute": {
+						"from": "disputed",
+						"to": "posted",
+						"label": "Resolve dispute",
+						"description": "Operator resolves dispute; invoice returns to posted awaiting payment."
+					},
+					"void": {
+						"from": "posted",
+						"to": "voided",
+						"label": "Void",
+						"description": "Void a posted invoice. Guard: the materialised GLTransaction MUST already be reversed per T1 REQ-GL-004.",
+						"requires": "OCA\\Shillinq\\Lifecycle\\GLReversalGuard::isReversed"
+					}
+				}
+			},
+			"x-openregister-calculations": {
+				"idealLink": {
+					"expression": "ideal.generatePaymentLink({invoiceNumber: invoiceNumber, amount: totalAmount, currency: currency, vendorRef: vendorInvoiceRef})",
+					"description": "Per-invoice iDEAL payment link generated by the OR calculations engine per REQ-AP-007. Populated automatically when the invoice is included in a PaymentRun with paymentMethod=ideal."
+				}
+			},
+			"x-openregister-aggregations": {
+				"apAging": {
+					"label": "AP Aging",
+					"description": "Groups open AP invoices by vendor and aging bucket per REQ-AP-009. Excludes paid and voided invoices.",
+					"register": "shillinq",
+					"schema": "APInvoice",
+					"filter": {
+						"state": {
+							"not-in": [
+								"paid",
+								"voided"
+							]
+						}
+					},
+					"groupBy": [
+						"vendorId",
+						"agingBucket"
+					],
+					"computedFields": {
+						"agingBucket": {
+							"type": "date-bucket",
+							"field": "dueDate",
+							"referenceDate": "today",
+							"direction": "past",
+							"buckets": [
+								{
+									"label": "current",
+									"maxDaysOverdue": 0
+								},
+								{
+									"label": "1-30 days",
+									"minDaysOverdue": 1,
+									"maxDaysOverdue": 30
+								},
+								{
+									"label": "31-60 days",
+									"minDaysOverdue": 31,
+									"maxDaysOverdue": 60
+								},
+								{
+									"label": "61-90 days",
+									"minDaysOverdue": 61,
+									"maxDaysOverdue": 90
+								},
+								{
+									"label": ">90 days",
+									"minDaysOverdue": 91
+								}
+							]
+						}
+					},
+					"metrics": [
+						"count",
+						"totalAmount"
+					]
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"approver": {
+						"permissions": [
+							"read",
+							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
+		"PaymentRun": {
+			"slug": "PaymentRun",
+			"icon": "BankTransferOutline",
+			"version": "0.1.0",
+			"title": "Payment Run",
+			"description": "Operator-curated batch of selected APInvoice UUIDs with SEPA pain.001 XML and iDEAL link outputs generated as x-openregister-calculations fields. No PaymentRunService or SepaXmlBuilder PHP classes per ADR-031. Per REQ-AP-007.",
+			"x-schema-org": "schema:PaymentService",
+			"type": "object",
+			"required": [
+				"runNumber",
+				"runDate",
+				"invoiceRefs",
+				"paymentMethod",
+				"state",
+				"administrationId"
+			],
+			"properties": {
+				"runNumber": {
+					"type": "string",
+					"description": "Sequential payment run identifier per administration.",
+					"example": "PR-2026-001"
+				},
+				"runDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Scheduled execution date for payments.",
+					"example": "2026-02-28"
+				},
+				"invoiceRefs": {
+					"type": "array",
+					"minItems": 1,
+					"description": "List of APInvoice UUIDs to include in this payment run.",
+					"items": {
+						"type": "string",
+						"description": "APInvoice UUID."
+					}
+				},
+				"totalAmount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Sum of selected invoices' totalAmount (x-openregister-calculations output).",
+					"nullable": true
+				},
+				"paymentMethod": {
+					"type": "string",
+					"enum": [
+						"sepa-pain001",
+						"ideal"
+					],
+					"description": "Payment method for this run. Determines which calculation output is populated.",
+					"example": "sepa-pain001"
+				},
+				"sepaXml": {
+					"type": "string",
+					"description": "SEPA pain.001.001.03 XML document (x-openregister-calculations output per REQ-AP-007). Populated when paymentMethod=sepa-pain001. Operator downloads and uploads to bank portal.",
+					"nullable": true
+				},
+				"idealLinks": {
+					"type": "array",
+					"description": "Per-invoice iDEAL payment links (x-openregister-calculations output per REQ-AP-007). Populated when paymentMethod=ideal.",
+					"nullable": true,
+					"items": {
+						"type": "object",
+						"properties": {
+							"invoiceRef": {
+								"type": "string",
+								"description": "APInvoice UUID."
+							},
+							"url": {
+								"type": "string",
+								"description": "iDEAL payment URL."
+							},
+							"amount": {
+								"type": "number",
+								"description": "Invoice amount."
+							},
+							"expiresAt": {
+								"type": "string",
+								"format": "date-time",
+								"description": "Link expiry timestamp."
+							}
+						}
+					}
+				},
+				"state": {
+					"type": "string",
+					"enum": [
+						"draft",
+						"ready",
+						"submitted",
+						"executed",
+						"failed"
+					],
+					"description": "Payment run lifecycle state.",
+					"default": "draft",
+					"example": "draft"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the administration owning this payment run.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "state",
+				"initialState": "draft",
+				"states": {
+					"draft": {
+						"label": "Draft",
+						"description": "Operator selects invoices and configures the run."
+					},
+					"ready": {
+						"label": "Ready",
+						"description": "SEPA XML or iDEAL links generated. Ready for download / submission."
+					},
+					"submitted": {
+						"label": "Submitted",
+						"description": "Operator has uploaded the SEPA file or shared iDEAL links."
+					},
+					"executed": {
+						"label": "Executed",
+						"description": "Payments executed (confirmed via bank reconciliation)."
+					},
+					"failed": {
+						"label": "Failed",
+						"description": "Run failed (e.g. bank rejection). Operator must investigate and retry."
+					}
+				},
+				"transitions": {
+					"prepare": {
+						"from": "draft",
+						"to": "ready",
+						"label": "Generate payment file",
+						"description": "Triggers x-openregister-calculations to compose sepaXml (pain.001.001.03) or idealLinks per paymentMethod selection."
+					},
+					"submit": {
+						"from": "ready",
+						"to": "submitted",
+						"label": "Mark as submitted",
+						"description": "Operator confirms upload to bank portal or dispatch of iDEAL links."
+					},
+					"execute": {
+						"from": "submitted",
+						"to": "executed",
+						"label": "Mark as executed",
+						"description": "Bank confirms payment execution (or bank reconciliation auto-matches)."
+					},
+					"fail": {
+						"from": "submitted",
+						"to": "failed",
+						"label": "Mark as failed",
+						"description": "Bank rejects the payment file or iDEAL transaction."
+					},
+					"retry": {
+						"from": "failed",
+						"to": "draft",
+						"label": "Retry (return to draft)",
+						"description": "Return to draft for operator to correct and re-generate."
+					}
+				}
+			},
+			"x-openregister-calculations": {
+				"totalAmount": {
+					"expression": "invoiceRefs.map(id => APInvoice[id].totalAmount).sum()",
+					"description": "Sum of selected APInvoice totals, computed on save per REQ-AP-007."
+				},
+				"sepaXml": {
+					"expression": "sepa.composePain001({invoiceRefs: invoiceRefs, runDate: runDate, schemaVersion: 'pain.001.001.03', administrationId: administrationId})",
+					"description": "SEPA pain.001.001.03 XML document composed from selected invoice vendor IBANs, amounts, and run date per REQ-AP-007. Populated when paymentMethod=sepa-pain001."
+				},
+				"idealLinks": {
+					"expression": "invoiceRefs.map(id => ideal.generatePaymentLink({invoiceRef: id, amount: APInvoice[id].totalAmount, currency: APInvoice[id].currency}))",
+					"description": "Per-invoice iDEAL payment link array per REQ-AP-007. Populated when paymentMethod=ideal."
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
 		}
 	},
 	"mappings": {
@@ -4897,6 +6900,192 @@
 			"estimatedNetLiability": 8050.0,
 			"currency": "EUR",
 			"status": "current"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "VendorMaster",
+				"slug": "vendor-acme-bv-2026"
+			},
+			"vendorNumber": "V-2026-001",
+			"name": "Acme Leveranciers BV",
+			"tradingName": "Acme",
+			"kvkNumber": "12345678",
+			"btwNumber": "NL123456789B01",
+			"iban": "NL01RABO0123456789",
+			"bic": "RABONL2U",
+			"paymentTermDays": 30,
+			"defaultExpenseAccountNumber": "7000",
+			"email": "facturatie@acme.nl",
+			"phone": "+31201234567",
+			"administrationId": "adm-1",
+			"lifecycleState": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "VendorMaster",
+				"slug": "vendor-techsupply-2026"
+			},
+			"vendorNumber": "V-2026-002",
+			"name": "TechSupply Nederland BV",
+			"kvkNumber": "87654321",
+			"btwNumber": "NL987654321B01",
+			"iban": "NL02INGB0001234567",
+			"bic": "INGBNL2A",
+			"paymentTermDays": 14,
+			"defaultExpenseAccountNumber": "7100",
+			"email": "ap@techsupply.nl",
+			"administrationId": "adm-1",
+			"lifecycleState": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "VendorMaster",
+				"slug": "vendor-kantoor-co-2026"
+			},
+			"vendorNumber": "V-2026-003",
+			"name": "Kantoor & Co BV",
+			"kvkNumber": "11223344",
+			"iban": "NL03ABNA0417164300",
+			"bic": "ABNANL2A",
+			"paymentTermDays": 30,
+			"defaultExpenseAccountNumber": "7200",
+			"email": "rekeningen@kantoorco.nl",
+			"administrationId": "adm-1",
+			"lifecycleState": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "APInvoice",
+				"slug": "ap-inv-2026-v-001-draft"
+			},
+			"invoiceNumber": "INV-V-2026-0001",
+			"vendorInvoiceRef": "ACME-2026-00123",
+			"vendorId": "vendor-acme-bv-2026",
+			"invoiceDate": "2026-01-15",
+			"dueDate": "2026-02-14",
+			"currency": "EUR",
+			"totalAmount": 1250.0,
+			"taxAmount": 217.98,
+			"lines": [
+				{
+					"description": "Kantoorartikelen Q1 2026",
+					"accountNumber": "7000",
+					"amount": 1032.02,
+					"taxCode": "BTW21"
+				}
+			],
+			"approvalState": "not-required",
+			"state": "draft",
+			"administrationId": "adm-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "APInvoice",
+				"slug": "ap-inv-2026-v-002-approved"
+			},
+			"invoiceNumber": "INV-V-2026-0002",
+			"vendorInvoiceRef": "TECH-2026-00456",
+			"vendorId": "vendor-techsupply-2026",
+			"invoiceDate": "2026-01-20",
+			"dueDate": "2026-02-03",
+			"currency": "EUR",
+			"totalAmount": 4840.0,
+			"taxAmount": 840.0,
+			"lines": [
+				{
+					"description": "Laptops (4x) voor projectteam",
+					"accountNumber": "7100",
+					"amount": 4000.0,
+					"taxCode": "BTW21",
+					"quantity": 4,
+					"unitPrice": 1000.0
+				}
+			],
+			"approvalState": "approved",
+			"state": "approved",
+			"administrationId": "adm-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "APInvoice",
+				"slug": "ap-inv-2026-v-003-posted"
+			},
+			"invoiceNumber": "INV-V-2026-0003",
+			"vendorInvoiceRef": "KC-2026-00789",
+			"vendorId": "vendor-kantoor-co-2026",
+			"invoiceDate": "2026-01-10",
+			"dueDate": "2026-02-09",
+			"currency": "EUR",
+			"totalAmount": 363.0,
+			"taxAmount": 63.0,
+			"lines": [
+				{
+					"description": "Printer papier A4 (10 dozen)",
+					"accountNumber": "7200",
+					"amount": 300.0,
+					"taxCode": "BTW21",
+					"quantity": 10,
+					"unitPrice": 30.0
+				}
+			],
+			"approvalState": "not-required",
+			"state": "posted",
+			"glTransactionId": "gl-txn-2026-ap-0003",
+			"periodId": "2026-Q1",
+			"administrationId": "adm-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "PaymentRun",
+				"slug": "pr-2026-001-draft"
+			},
+			"runNumber": "PR-2026-001",
+			"runDate": "2026-02-28",
+			"invoiceRefs": [
+				"ap-inv-2026-v-003-posted"
+			],
+			"totalAmount": 363.0,
+			"paymentMethod": "sepa-pain001",
+			"state": "draft",
+			"administrationId": "adm-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "PaymentRun",
+				"slug": "pr-2026-002-ready"
+			},
+			"runNumber": "PR-2026-002",
+			"runDate": "2026-03-15",
+			"invoiceRefs": [
+				"ap-inv-2026-v-002-approved"
+			],
+			"totalAmount": 4840.0,
+			"paymentMethod": "sepa-pain001",
+			"state": "ready",
+			"sepaXml": "<?xml version='1.0' encoding='UTF-8'?><Document xmlns='urn:iso:std:iso:20022:tech:xsd:pain.001.001.03'><!-- pain.001.001.03 stub --></Document>",
+			"administrationId": "adm-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "PaymentRun",
+				"slug": "pr-2026-003-executed"
+			},
+			"runNumber": "PR-2026-003",
+			"runDate": "2026-01-31",
+			"invoiceRefs": [],
+			"totalAmount": 0.0,
+			"paymentMethod": "ideal",
+			"state": "executed",
+			"administrationId": "adm-1"
 		}
 	]
 }
