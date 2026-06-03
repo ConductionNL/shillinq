@@ -83,6 +83,14 @@
 					"featureFlag": "gov-waterschap"
 				},
 				{
+					"id": "ProvincialeFondsen",
+					"label": "Provinciale fondsen",
+					"icon": "BankOutline",
+					"route": "ProvincialeFondsen",
+					"order": 45,
+					"featureFlag": "gov-provincie"
+				},
+				{
 					"id": "GRDeelnemers",
 					"label": "Deelnemers",
 					"icon": "AccountMultipleOutline",
@@ -1159,6 +1167,113 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "Waterschapsbelastingen"
+			}
+		},
+		{
+			"id": "ProvincialeFondsen",
+			"route": "/provinciale-fondsen",
+			"type": "index",
+			"title": "Provinciale fondsen",
+			"featureFlag": "gov-provincie",
+			"config": {
+				"register": "shillinq",
+				"schema": "ProvincialeFondsPosting",
+				"featureFlag": "gov-provincie",
+				"columns": [
+					{
+						"key": "fondsType",
+						"label": "Fonds type",
+						"sortable": true
+					},
+					{
+						"key": "uitkeringJaar",
+						"label": "Uitkeringjaar",
+						"sortable": true
+					},
+					{
+						"key": "uitkeringBedrag",
+						"label": "Uitkering bedrag",
+						"sortable": true
+					},
+					{
+						"key": "uitkeringBeschikking",
+						"label": "Beschikkingnummer",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-uitkeringJaar",
+				"detailRoute": "ProvincialeFondsenDetail"
+			}
+		},
+		{
+			"id": "ProvincialeFondsenDetail",
+			"route": "/provinciale-fondsen/:id",
+			"type": "detail",
+			"title": "Provinciale fonds posting",
+			"featureFlag": "gov-provincie",
+			"config": {
+				"register": "shillinq",
+				"schema": "ProvincialeFondsPosting",
+				"featureFlag": "gov-provincie",
+				"fields": [
+					{
+						"key": "fondsType",
+						"label": "Fonds type",
+						"type": "string"
+					},
+					{
+						"key": "uitkeringJaar",
+						"label": "Uitkeringjaar",
+						"type": "integer"
+					},
+					{
+						"key": "uitkeringBedrag",
+						"label": "Uitkering bedrag (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "uitkeringBeschikking",
+						"label": "Beschikkingnummer",
+						"type": "string"
+					},
+					{
+						"key": "journalEntryId",
+						"label": "Journal entry",
+						"type": "link"
+					},
+					{
+						"key": "debitAccountNumber",
+						"label": "Debet rekening",
+						"type": "string"
+					},
+					{
+						"key": "creditAccountNumber",
+						"label": "Credit rekening",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Omschrijving",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ProvincialeFondsen"
 			}
 		},
 		{

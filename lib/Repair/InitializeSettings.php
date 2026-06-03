@@ -79,6 +79,8 @@ class InitializeSettings implements IRepairStep
      * Phase 4: registers the IV3 quarterly CBS ScheduledWorkflow if not yet present.
      * Phase 5: seeds KOR thresholds from kor-thresholds-2026.json idempotently.
      * Phase 6: seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
+     * Phase 7: seeds provinciale BBV kerntaken from bbv-provincies-kerntaken-2026.json
+     *          when the 'gov-provincie' feature flag is enabled.
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -88,6 +90,7 @@ class InitializeSettings implements IRepairStep
      * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-10
      * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
      * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
+     * @spec openspec/changes/add-shillinq-provincies-bbv-variant/tasks.md#task-10
      */
     public function run(IOutput $output): void
     {
@@ -136,6 +139,7 @@ class InitializeSettings implements IRepairStep
             $this->seedSelectielijstRules(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
+            $this->seedProvinciesKerntaken(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -398,4 +402,112 @@ class InitializeSettings implements IRepairStep
         }
 
     }//end seedChartOfAccounts()
+
+    /**
+     * Seed the provinciale BBV kerntaken from bbv-provincies-kerntaken-2026.json,
+     * idempotently, when the 'gov-provincie' feature flag is enabled.
+     *
+     * Deduplication key is (code, bbvVariant = 'provincie'): if a BBVProgramma
+     * with the same code and bbvVariant already exists, the entry is skipped.
+     * Safe to call on every install/upgrade — the seed is idempotent.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-provincies-bbv-variant/tasks.md#task-10
+     */
+    private function seedProvinciesKerntaken(IOutput $output): void
+    {
+        try {
+            $appConfig = $this->container->get(\OCP\IAppConfig::class);
+        } catch (\Throwable $e) {
+            $output->info('Shillinq: IAppConfig not available — skipping provinciale kerntaken seed.');
+            return;
+        }
+
+        $govProvincieFlag = $appConfig->getValueString(
+            app: 'shillinq',
+            key: 'gov_provincie',
+            default: ''
+        );
+        if ($govProvincieFlag !== '1' && $govProvincieFlag !== 'true') {
+            $output->info('Shillinq: gov-provincie feature flag not set — skipping provinciale kerntaken seed.');
+            return;
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/bbv-provincies-kerntaken-2026.json';
+        if (file_exists($seedPath) === false) {
+            $output->warning('Shillinq: provinciale kerntaken seed file not found, skipping');
+            return;
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            $output->warning('Shillinq: failed to read provinciale kerntaken seed file, skipping');
+            return;
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $output->warning('Shillinq: failed to parse provinciale kerntaken seed file: '.json_last_error_msg());
+            return;
+        }
+
+        $programmas = ($data['programmas'] ?? []);
+        if (empty($programmas) === true) {
+            $output->info('Shillinq: provinciale kerntaken seed file contains no programmas, skipping');
+            return;
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->settingsService->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($programmas as $programma) {
+                $code = ($programma['code'] ?? null);
+                if ($code === null) {
+                    continue;
+                }
+
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('BBVProgramma')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'code'       => $code,
+                                'bbvVariant' => 'provincie',
+                            ],
+                            'limit'   => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $programma,
+                    register: $registerSlug,
+                    schema: 'BBVProgramma',
+                );
+                $seeded++;
+            }//end foreach
+
+            $output->info(
+                'Shillinq: provinciale kerntaken seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        } catch (\Throwable $e) {
+            $output->warning('Shillinq: provinciale kerntaken seeding failed: '.$e->getMessage());
+            $this->logger->warning(
+                'Shillinq: provinciale kerntaken seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+        }//end try
+
+    }//end seedProvinciesKerntaken()
 }//end class

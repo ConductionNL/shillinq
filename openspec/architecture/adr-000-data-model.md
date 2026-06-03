@@ -5087,6 +5087,29 @@ _Sector-specific belasting posting for the three waterschapsbelastingen (watersy
 - → Account (many-to-one, via debitAccountNumber → Account.accountNumber)
 - → Account (many-to-one, via creditAccountNumber → Account.accountNumber)
 
+### ProvincialeFondsPosting
+**Schema.org:** `schema:Invoice`
+_Sector-specific posting for provinciale fondsen: provinciefonds, algemene uitkering, decentralisatie-uitkering, and integratie-uitkering. On transition to 'posted', materialises a balanced 2-line GLTransaction per T1 REQ-GL-001 with `sourceReference` pointing back to this posting. Does NOT carry its own ledger lines (design D3). The `fondsType` enum covers the four categories of provinciale uitkeringen from the Rijksoverheid. Lifecycle is declarative via `x-openregister-lifecycle` — no PHP service class. Manifest navigation behind `featureFlags.gov-provincie`. Cross-referencing spec: `bookkeeping-provincies-bbv-variant` (add-shillinq-provincies-bbv-variant, 2026-06-03)._
+**Primary spec:** bookkeeping-provincies-bbv-variant
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| fondsType | enum | Yes | One of provinciefonds, algemene-uitkering, decentralisatie-uitkering, integratie-uitkering |
+| uitkeringJaar | integer | Yes | Fiscal year for this uitkering |
+| uitkeringBedrag | number | Yes | Total uitkering amount in EUR; minimum 0; materialised into balanced GLTransaction on post |
+| uitkeringBeschikking | string | No | Beschikkingnummer (official reference number from the relevant ministry) |
+| journalEntryId | string | No | FK to the materialised GLTransaction.id; set by lifecycle engine on 'posted' |
+| administrationId | string | Yes | FK to the provincie Administration owning this fonds posting |
+| debitAccountNumber | string | No | Account to debit in materialised GLTransaction |
+| creditAccountNumber | string | No | Account to credit in materialised GLTransaction |
+| state | enum | Yes | One of draft, posted, reversed |
+| description | string | No | Operator-authored description or reference |
+
+**Relations:**
+- → GLTransaction (one-to-one, via journalEntryId; materialised on 'posted' transition)
+- → Account (many-to-one, via debitAccountNumber → Account.accountNumber)
+- → Account (many-to-one, via creditAccountNumber → Account.accountNumber)
+
 ### RetentionRule
 **Schema.org:** `schema:DefinedTerm`
 _Archiefwet 1995 + Selectielijst Gemeenten 2020 retention rule. A coded retention classifier declaring the statutory retention obligation (period, trigger, disposition) for a category of shillinq-managed records. Seeded from `selectielijst-gemeenten-2020.json`; operators MAY add administration-scoped overrides above the statutory minimum per the local archiefverordening._

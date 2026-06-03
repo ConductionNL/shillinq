@@ -9,19 +9,19 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `ProvincialeFondsPosting` schema or `bookkeeping-provincies-bbv-variant` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `openspec/changes/**`)
-- [ ] Task 2: Author `specs/bookkeeping-provincies-bbv-variant/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4-specialized (NL gov sector)` / `Depends on: bookkeeping-bbv-compliance` header, `REQ-PRB-NNN` requirements using RFC 2119, `#### Scenario:` blocks with GIVEN/WHEN/THEN
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions
-- [ ] Task 4: Author `design.md` with Reuse Analysis table and Seed Data section; BBV-reviewer persona confirms the kerntaken shape + provinciale-fonds posting shape match handleiding
-- [ ] Task 5: Extend the `bbvVariant` enum (declared by sibling `add-shillinq-waterschappen-bbv-variant`) to accept `'provincie'` per REQ-PRB-001 in `lib/Settings/shillinq_register.json`
-- [ ] Task 6: Extend the `programmaStructure` discriminator (same sibling) to accept `'kerntaak'` per REQ-PRB-002; aggregations honour the kerntaak rollup
-- [ ] Task 7: Declare the `ProvincialeFondsPosting` schema with `fondsType` enum (provinciefonds / algemene-uitkering / decentralisatie-uitkering / integratie-uitkering), `uitkeringJaar`, `uitkeringBedrag`, `uitkeringBeschikking`, `journalEntryId` FK per REQ-PRB-004
-- [ ] Task 8: Add `opcentenTarief: number ≥ 0` optional field on `GLLine` per REQ-PRB-005, with an aggregation rolling up opcenten-inkomsten per provincie per period
-- [ ] Task 9: Ship `lib/Settings/seeds/bbv-provincies-kerntaken-2026.json` declaring the seven canonical kerntaken (ruimte, mobiliteit, water, milieu, cultuur, economie, bestuur) with RGS-aligned account sub-trees; SPDX in docblock; `_meta` (`source: 'Provinciale handleiding BBV'`, `year: 2026`) per REQ-PRB-003
-- [ ] Task 10: Extend the repair step under `lib/Migration/` to import the kerntaken seed idempotently when `featureFlags.gov-provincie` is enabled
-- [ ] Task 11: Wire `ProvincialeFondsPosting` to materialise a balanced 2-line `GLTransaction` per T1 REQ-GL-001 when state transitions to `posted`, with `sourceReference` back to the fonds-posting per REQ-PRB-004
-- [ ] Task 12: Add Provinciale fondsen navigation + pages to `src/manifest.json` (`featureFlags.gov-provincie`, `Bookkeeping > Provinciale fondsen`, `type: index` binding to `ProvincialeFondsPosting`, `type: detail`) per REQ-PRB-006; `node tests/validate-manifest.js` exits 0
-- [ ] Task 13: Update `openspec/architecture/adr-000-data-model.md` with a one-paragraph annotation for `ProvincialeFondsPosting` cross-referencing this spec
+- [x] Task 1: Confirm no `ProvincialeFondsPosting` schema or `bookkeeping-provincies-bbv-variant` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `openspec/changes/**`)
+- [x] Task 2: Author `specs/bookkeeping-provincies-bbv-variant/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4-specialized (NL gov sector)` / `Depends on: bookkeeping-bbv-compliance` header, `REQ-PRB-NNN` requirements using RFC 2119, `#### Scenario:` blocks with GIVEN/WHEN/THEN
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions
+- [x] Task 4: Author `design.md` with Reuse Analysis table and Seed Data section; BBV-reviewer persona confirms the kerntaken shape + provinciale-fonds posting shape match handleiding
+- [x] Task 5: Extend the `bbvVariant` enum (declared by sibling `add-shillinq-waterschappen-bbv-variant`) to accept `'provincie'` per REQ-PRB-001 in `lib/Settings/shillinq_register.json`
+- [x] Task 6: Extend the `programmaStructure` discriminator (same sibling) to accept `'kerntaak'` per REQ-PRB-002; aggregations honour the kerntaak rollup
+- [x] Task 7: Declare the `ProvincialeFondsPosting` schema with `fondsType` enum (provinciefonds / algemene-uitkering / decentralisatie-uitkering / integratie-uitkering), `uitkeringJaar`, `uitkeringBedrag`, `uitkeringBeschikking`, `journalEntryId` FK per REQ-PRB-004
+- [x] Task 8: Add `opcentenTarief: number ≥ 0` optional field on `GLLine` per REQ-PRB-005, with an aggregation rolling up opcenten-inkomsten per provincie per period
+- [x] Task 9: Ship `lib/Settings/seeds/bbv-provincies-kerntaken-2026.json` declaring the seven canonical kerntaken (ruimte, mobiliteit, water, milieu, cultuur, economie, bestuur) with RGS-aligned account sub-trees; SPDX in docblock; `_meta` (`source: 'Provinciale handleiding BBV'`, `year: 2026`) per REQ-PRB-003
+- [x] Task 10: Extend the repair step under `lib/Migration/` to import the kerntaken seed idempotently when `featureFlags.gov-provincie` is enabled
+- [x] Task 11: Wire `ProvincialeFondsPosting` to materialise a balanced 2-line `GLTransaction` per T1 REQ-GL-001 when state transitions to `posted`, with `sourceReference` back to the fonds-posting per REQ-PRB-004
+- [x] Task 12: Add Provinciale fondsen navigation + pages to `src/manifest.json` (`featureFlags.gov-provincie`, `Bookkeeping > Provinciale fondsen`, `type: index` binding to `ProvincialeFondsPosting`, `type: detail`) per REQ-PRB-006; `node tests/validate-manifest.js` exits 0
+- [x] Task 13: Update `openspec/architecture/adr-000-data-model.md` with a one-paragraph annotation for `ProvincialeFondsPosting` cross-referencing this spec
 
 ## Verification
 
