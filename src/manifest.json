@@ -189,6 +189,39 @@
 					"route": "InnovatieboxElections",
 					"order": 85,
 					"featureFlag": "mkb-innovatiebox"
+				},
+				{
+					"id": "AuditPack",
+					"label": "Audit pack",
+					"icon": "ShieldCheckOutline",
+					"order": 86,
+					"featureFlag": "gov-rekenkamer",
+					"children": [
+						{
+							"id": "NivraBestand",
+							"label": "NIVRA-bestand",
+							"icon": "FileChartOutline",
+							"route": "NivraBestand",
+							"order": 10,
+							"featureFlag": "gov-rekenkamer"
+						},
+						{
+							"id": "Steekproef",
+							"label": "Steekproef",
+							"icon": "ScaleBalanceOutline",
+							"route": "Steekproef",
+							"order": 20,
+							"featureFlag": "gov-rekenkamer"
+						},
+						{
+							"id": "LedenraadplegingExport",
+							"label": "Ledenraadpleging",
+							"icon": "EyeOffOutline",
+							"route": "LedenraadplegingExport",
+							"order": 30,
+							"featureFlag": "gov-rekenkamer"
+						}
+					]
 				}
 			]
 		},
@@ -4068,6 +4101,165 @@
 				],
 				"defaultSort": "-fiscalYear",
 				"detailRoute": "InnovatieboxElectionDetail"
+			}
+		},
+		{
+			"id": "NivraBestand",
+			"route": "/bookkeeping/audit-pack/nivra-bestand",
+			"type": "index",
+			"title": "NIVRA-bestand",
+			"featureFlag": "gov-rekenkamer",
+			"config": {
+				"register": "shillinq",
+				"schema": "GLTransaction",
+				"aggregation": "nivraBericht",
+				"featureFlag": "gov-rekenkamer",
+				"visibility": {
+					"field": "administrationType",
+					"in": ["gemeente", "provincie", "waterschap", "gemeenschappelijke-regeling"]
+				},
+				"columns": [
+					{
+						"key": "periodId",
+						"label": "Periode",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"sortable": true
+					},
+					{
+						"key": "sha256",
+						"label": "SHA-256 hash",
+						"sortable": false
+					},
+					{
+						"key": "exportDate",
+						"label": "Exportdatum",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-exportDate",
+				"headerActions": [
+					{
+						"id": "export-nivra",
+						"label": "NIVRA-bestand exporteren",
+						"icon": "FileExportOutline",
+						"action": "triggerAggregation",
+						"aggregation": "nivraBericht",
+						"template": "nivra-bestand-xml"
+					}
+				]
+			}
+		},
+		{
+			"id": "Steekproef",
+			"route": "/bookkeeping/audit-pack/steekproef",
+			"type": "index",
+			"title": "Steekproef",
+			"featureFlag": "gov-rekenkamer",
+			"config": {
+				"register": "shillinq",
+				"schema": "GLTransaction",
+				"aggregation": "steekproef",
+				"featureFlag": "gov-rekenkamer",
+				"visibility": {
+					"field": "administrationType",
+					"in": ["gemeente", "provincie", "waterschap", "gemeenschappelijke-regeling"]
+				},
+				"columns": [
+					{
+						"key": "periodId",
+						"label": "Periode",
+						"sortable": true
+					},
+					{
+						"key": "sampleSize",
+						"label": "Steekproefomvang",
+						"sortable": false
+					},
+					{
+						"key": "seed",
+						"label": "Seed",
+						"sortable": false
+					},
+					{
+						"key": "sha256",
+						"label": "SHA-256 hash",
+						"sortable": false
+					},
+					{
+						"key": "exportDate",
+						"label": "Exportdatum",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-exportDate",
+				"headerActions": [
+					{
+						"id": "export-steekproef",
+						"label": "Steekproef exporteren",
+						"icon": "ScaleBalanceOutline",
+						"action": "triggerAggregation",
+						"aggregation": "steekproef",
+						"template": "steekproef-werkpapier",
+						"params": [
+							{"key": "sampleSize", "label": "Steekproefomvang", "type": "integer", "default": 30},
+							{"key": "seed", "label": "Seed", "type": "string", "placeholder": "audit-2026-q1"}
+						]
+					}
+				]
+			}
+		},
+		{
+			"id": "LedenraadplegingExport",
+			"route": "/bookkeeping/audit-pack/ledenraadpleging",
+			"type": "index",
+			"title": "Ledenraadpleging",
+			"featureFlag": "gov-rekenkamer",
+			"config": {
+				"register": "shillinq",
+				"schema": "GLTransaction",
+				"aggregation": "ledenraadpleging",
+				"featureFlag": "gov-rekenkamer",
+				"visibility": {
+					"field": "administrationType",
+					"in": ["gemeente", "provincie", "waterschap", "gemeenschappelijke-regeling"]
+				},
+				"columns": [
+					{
+						"key": "periodId",
+						"label": "Periode",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"sortable": true
+					},
+					{
+						"key": "sha256",
+						"label": "SHA-256 hash",
+						"sortable": false
+					},
+					{
+						"key": "exportDate",
+						"label": "Exportdatum",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-exportDate",
+				"headerActions": [
+					{
+						"id": "export-ledenraadpleging",
+						"label": "Ledenraadpleging exporteren",
+						"icon": "EyeOffOutline",
+						"action": "triggerAggregation",
+						"aggregation": "ledenraadpleging",
+						"template": "raadsleden-export"
+					}
+				]
 			}
 		}
 	]

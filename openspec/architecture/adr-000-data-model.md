@@ -2212,6 +2212,16 @@ _Double-entry general-ledger posting header. Owns the lifecycle (draft → poste
 > a *group* of lines, not a single row. A flat `GeneralLedgerEntry` model would force the check into
 > application code at write-time. Spec: `openspec/changes/bookkeeping-general-ledger/design.md` D1–D2.
 
+> **Annotation (add-shillinq-rekenkamer-audit-pack, 2026-06-03):** The rekenkamer + accountantscontrole
+> audit-pack does **NOT** introduce a parallel audit register. Per ADR-022, OR's `audit-trail-immutable`
+> abstraction is the single source of audit truth. The audit-pack is expressed entirely as three
+> `x-openregister-aggregations` declarations on `GLTransaction` (nivraBericht, steekproef,
+> ledenraadpleging) that project the existing GL + audit-trail surface into the required output shapes.
+> No `RekenkamerExport`, `NivraRecord`, `SteekproefResult`, or any parallel audit-event schema is
+> introduced. The three aggregations write immutable OR audit events of type
+> `audit-pack.{nivra,steekproef,ledenraadpleging}.exported` via OR's audit engine on each export
+> execution — not via app-local logging. Spec: `openspec/changes/add-shillinq-rekenkamer-audit-pack/design.md`.
+
 ### GRDeelnemer
 **Schema.org:** `schema:Organization`
 _A deelnemer (participating municipality, province, or waterboard) of a gemeenschappelijke regeling (GR). Holds the quotum-aandeel and an optional cross-administration FK enabling doorbelasting materialisation when the deelnemer also runs shillinq. The active/archived lifecycle is declarative; no PHP service. Cross-referencing spec: `bookkeeping-gr-consolidation` (add-shillinq-gr-consolidation, 2026-06-01)._

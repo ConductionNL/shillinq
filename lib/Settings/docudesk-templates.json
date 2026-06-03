@@ -56,6 +56,166 @@
         }
       ],
       "footer": "Gegenereerd vanuit de Shillinq innovatiebox-administratie aggregatie (REQ-IBA-003, REQ-IBA-005). Bronnen: Wet Vpb art. 12b/12bg."
+    },
+    {
+      "templateId": "nivra-bestand-xml",
+      "title": "NIVRA-bestand (XML)",
+      "description": "Standaard auditbestand conform het NIVRA controleprotocol. Bevat elke boeking in de periode (header + regels), audittrail-events, de proefbalans en het rekeningschema. Output is XML conform _meta.standardVersion. Vereist per REQ-REK-002.",
+      "register": "shillinq",
+      "schema": "GLTransaction",
+      "aggregation": "nivraBericht",
+      "format": "xml",
+      "sections": [
+        {
+          "sectionId": "nivra-header",
+          "title": "Auditbestand-header",
+          "fields": [
+            {"key": "administrationId", "label": "Administratie-ID", "type": "string"},
+            {"key": "periodId", "label": "Periode", "type": "string"},
+            {"key": "standardVersion", "label": "Controleprotocol versie", "type": "string"},
+            {"key": "exportDate", "label": "Exportdatum", "type": "date"},
+            {"key": "sha256", "label": "SHA-256 bestandshash", "type": "string"}
+          ]
+        },
+        {
+          "sectionId": "nivra-transactions",
+          "title": "Boekingen",
+          "sourceSchema": "GLTransaction",
+          "columns": [
+            {"key": "transactionNumber", "label": "Boekingsnummer"},
+            {"key": "postingDate", "label": "Boekingsdatum", "type": "date"},
+            {"key": "description", "label": "Omschrijving"},
+            {"key": "currency", "label": "Valuta"},
+            {"key": "state", "label": "Status"}
+          ]
+        },
+        {
+          "sectionId": "nivra-lines",
+          "title": "Boekingsregels",
+          "sourceSchema": "GLLine",
+          "columns": [
+            {"key": "transactionId", "label": "Boeking-ID"},
+            {"key": "accountNumber", "label": "Rekeningnummer"},
+            {"key": "side", "label": "D/C"},
+            {"key": "amount", "label": "Bedrag (EUR)", "type": "currency"},
+            {"key": "periodId", "label": "Periode"}
+          ]
+        },
+        {
+          "sectionId": "nivra-trial-balance",
+          "title": "Proefbalans",
+          "sourceSchema": "TrialBalance",
+          "columns": [
+            {"key": "accountNumber", "label": "Rekeningnummer"},
+            {"key": "totalDebit", "label": "Totaal debet (EUR)", "type": "currency"},
+            {"key": "totalCredit", "label": "Totaal credit (EUR)", "type": "currency"}
+          ],
+          "totals": [
+            {"label": "Totaal debet", "field": "totalDebit", "operation": "sum"},
+            {"label": "Totaal credit", "field": "totalCredit", "operation": "sum"}
+          ]
+        },
+        {
+          "sectionId": "nivra-chart-of-accounts",
+          "title": "Rekeningschema",
+          "sourceSchema": "Account",
+          "columns": [
+            {"key": "accountNumber", "label": "Rekeningnummer"},
+            {"key": "accountName", "label": "Naam"},
+            {"key": "accountType", "label": "Rekeningtype"}
+          ]
+        }
+      ],
+      "footer": "Gegenereerd vanuit de Shillinq rekenkamer audit-pack aggregatie (REQ-REK-002). Conform NIVRA controleprotocol."
+    },
+    {
+      "templateId": "steekproef-werkpapier",
+      "title": "Steekproef werkpapier",
+      "description": "Werkpapier met een reproduceerbare steekproef van boekingen voor substantiële controle. Dezelfde seed en sampleSize produceren altijd dezelfde set GLTransaction-records in dezelfde volgorde. Vereist per REQ-REK-003.",
+      "register": "shillinq",
+      "schema": "GLTransaction",
+      "aggregation": "steekproef",
+      "sections": [
+        {
+          "sectionId": "steekproef-params",
+          "title": "Steekproef-parameters",
+          "fields": [
+            {"key": "periodId", "label": "Periode", "type": "string"},
+            {"key": "sampleSize", "label": "Steekproefomvang", "type": "integer"},
+            {"key": "seed", "label": "Reproducibility-seed", "type": "string"},
+            {"key": "exportDate", "label": "Exportdatum", "type": "date"},
+            {"key": "sha256", "label": "SHA-256 bestandshash", "type": "string"}
+          ]
+        },
+        {
+          "sectionId": "steekproef-transactions",
+          "title": "Geselecteerde boekingen",
+          "sourceSchema": "GLTransaction",
+          "columns": [
+            {"key": "transactionNumber", "label": "Boekingsnummer"},
+            {"key": "postingDate", "label": "Boekingsdatum", "type": "date"},
+            {"key": "description", "label": "Omschrijving"},
+            {"key": "currency", "label": "Valuta"}
+          ]
+        },
+        {
+          "sectionId": "steekproef-lines",
+          "title": "Boekingsregels van steekproef",
+          "sourceSchema": "GLLine",
+          "columns": [
+            {"key": "transactionId", "label": "Boeking-ID"},
+            {"key": "accountNumber", "label": "Rekeningnummer"},
+            {"key": "side", "label": "D/C"},
+            {"key": "amount", "label": "Bedrag (EUR)", "type": "currency"}
+          ]
+        }
+      ],
+      "footer": "Gegenereerd vanuit de Shillinq rekenkamer audit-pack steekproef-aggregatie (REQ-REK-003). Reproduceerbaar met dezelfde seed."
+    },
+    {
+      "templateId": "raadsleden-export",
+      "title": "Ledenraadpleging-export (geredacteerd)",
+      "description": "Geredacteerde export van boekingen voor raadsleden. Vrije-tekst velden (description, sourceReference) zijn vervangen door een stabiele SHA-256 hash of [REDACTED]-plaatshouder. Numerieke velden en rekeningnummers blijven intact. Vereist per REQ-REK-004.",
+      "register": "shillinq",
+      "schema": "GLTransaction",
+      "aggregation": "ledenraadpleging",
+      "sections": [
+        {
+          "sectionId": "raadsleden-header",
+          "title": "Exportgegevens",
+          "fields": [
+            {"key": "administrationId", "label": "Administratie-ID", "type": "string"},
+            {"key": "periodId", "label": "Periode", "type": "string"},
+            {"key": "exportDate", "label": "Exportdatum", "type": "date"},
+            {"key": "redactionProfile", "label": "Redactieprofiel", "type": "string"},
+            {"key": "sha256", "label": "SHA-256 bestandshash", "type": "string"}
+          ]
+        },
+        {
+          "sectionId": "raadsleden-transactions",
+          "title": "Boekingen (geredacteerd)",
+          "sourceSchema": "GLTransaction",
+          "columns": [
+            {"key": "transactionNumber", "label": "Boekingsnummer"},
+            {"key": "postingDate", "label": "Boekingsdatum", "type": "date"},
+            {"key": "description", "label": "Omschrijving (gehashed)", "redacted": true},
+            {"key": "currency", "label": "Valuta"}
+          ]
+        },
+        {
+          "sectionId": "raadsleden-lines",
+          "title": "Boekingsregels (geredacteerd)",
+          "sourceSchema": "GLLine",
+          "columns": [
+            {"key": "transactionId", "label": "Boeking-ID"},
+            {"key": "accountNumber", "label": "Rekeningnummer"},
+            {"key": "side", "label": "D/C"},
+            {"key": "amount", "label": "Bedrag (EUR)", "type": "currency"},
+            {"key": "description", "label": "Regelomschrijving (gehashed)", "redacted": true}
+          ]
+        }
+      ],
+      "footer": "Gegenereerd vanuit de Shillinq rekenkamer audit-pack ledenraadpleging-aggregatie (REQ-REK-004). Geredacteerd voor raadsleden: persoonsgegevens vervangen door hash of [REDACTED]."
     }
   ]
 }

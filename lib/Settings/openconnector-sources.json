@@ -1,0 +1,28 @@
+{
+  "_spdx": {
+    "SPDX-FileCopyrightText": "2026 Conduction B.V.",
+    "SPDX-License-Identifier": "EUPL-1.2"
+  },
+  "_meta": {
+    "description": "OpenConnector source registry for Shillinq. External submission targets are registered here and referenced by slug. Protocol mapping is openconnector-side per ADR-019; shillinq carries only the source reference.",
+    "idempotency": "sourceId"
+  },
+  "sources": [
+    {
+      "sourceId": "audit-portal",
+      "title": "Accountant Audit Portal",
+      "description": "External audit portal for submission of NIVRA-bestand, steekproef, and ledenraadpleging-export by the accountant. One source row per accountant per administration; protocol mapping (SOAP/REST/SFTP) is declared in openconnector. Shillinq references this source by its sourceId when triggering submission from the audit-pack export pages per REQ-REK-002 and ADR-019.",
+      "type": "openconnector",
+      "protocol": "to-be-configured-by-operator",
+      "scope": "per-accountant-per-administration",
+      "exportTypes": [
+        "audit-pack.nivra.exported",
+        "audit-pack.steekproef.exported",
+        "audit-pack.ledenraadpleging.exported"
+      ],
+      "authMethod": "to-be-configured-by-operator",
+      "configurationNote": "Operators configure the actual endpoint URL and credentials via openconnector's source management UI. Shillinq holds only the sourceId reference; credentials never land in shillinq per ADR-019 principle.",
+      "spec": "openspec/changes/add-shillinq-rekenkamer-audit-pack/tasks.md#task-9"
+    }
+  ]
+}
