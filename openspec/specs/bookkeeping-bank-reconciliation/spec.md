@@ -1,343 +1,387 @@
-# Spec: Bank Reconciliation
-
-**Scope:** bookkeeping-bank-reconciliation
-**Tier:** T1 — core workflow
-**Status:** draft
-**Applies to:** Shillinq (Nextcloud Bookkeeping)
-
-## Overview
-
-Bank reconciliation workflow for matching bank statement transactions against journal entries (accounts payable/receivable). Operators import bank statements (CSV/OFX), system performs automatic matching by amount + date + reference, operator reviews exceptions and approves reconciliation. Reconciliation session tracks opening/closing balance, reconciled balance, variance, and audit trail per match decision.
-
-## Data Model
-
-@e2e exclude unbuilt UI: reconciliation pages not yet implemented
-
-
-### BankReconciliation
-
-Represents one bank account reconciliation session for a fiscal period (month, quarter, or custom range).
-
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
-| id | string | Yes | Unique reconciliation identifier (UUID) |
-| name | string | Yes | Human-readable name (e.g., "Checking Account — May 2026") |
-| bankAccountId | string | Yes | FK to BankAccount being reconciled |
-| statementStartDate | date | Yes | First date on the bank statement |
-| statementEndDate | date | Yes | Last date on the bank statement |
-| openingBalance | number | Yes | Balance at statement start (from bank statement) |
-| closingBalance | number | Yes | Balance at statement end (from bank statement) |
-| reconciledBalance | number | No | Opening + sum of approved matches (calculated) |
-| variance | number | No | closingBalance - reconciledBalance |
-| matchedCount | integer | No | Total approved matches |
-| unmatchedBankCount | integer | No | Bank transactions without match |
-| unmatchedJournalCount | integer | No | Journal entries without match |
-| status | enum | Yes | draft, in-progress, reconciled, archived |
-| approvedBy | string | No | User ID of approver |
-| approvedAt | datetime | No | Timestamp of approval |
-| notes | string | No | Operator notes (discrepancies, variance explanation) |
-| createdAt | datetime | Yes | Creation timestamp |
-| updatedAt | datetime | Yes | Last modification timestamp |
-
-**Relations:**
-- → BankAccount (many-to-one)
-- → BankReconciliationMatch (one-to-many)
-- → Organization (many-to-one)
-
-### BankReconciliationMatch
-
-Represents one paired transaction: a bank statement transaction matched to a journal entry (APTransaction, GLLine, or Payment).
-
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
-| id | string | Yes | Unique match identifier (UUID) |
-| reconciliationId | string | Yes | FK to parent BankReconciliation |
-| bankTransactionRef | string | Yes | Bank statement transaction reference (external ID, date, amount key) |
-| bankTransactionAmount | number | Yes | Amount from bank statement (cached for display) |
-| journalEntryId | string | No | FK to APTransaction, GLLine, or Payment being matched |
-| journalEntryDescription | string | No | Description of journal entry (cached) |
-| matchType | enum | Yes | auto-matched, pending-review, approved, rejected |
-| confidenceScore | integer | No | Match confidence 0–100 (for auto-matching threshold) |
-| operatorNotes | string | No | Operator comments on decision |
-| createdAt | datetime | Yes | Match creation timestamp |
-| createdBy | string | Yes | User ID or "system-auto-match" |
-| approvedAt | datetime | No | When operator approved the match |
-| approvedBy | string | No | User ID of approver |
-
-**Relations:**
-- → BankReconciliation (many-to-one)
-- → APTransaction (many-to-one, optional)
-
-## Bank Transaction Reference
-
-Bank transactions are sourced from external imports (CSV, OFX, API). They are not persisted as OpenRegister objects; instead, they are cached in BankReconciliationMatch for display. The bankTransactionRef key is:
-```
-{bankAccountId}#{statementDate}#{amount}#{externalId}
-```
-
-Example: `bank-acct-abc#2026-05-21#150.00#TXN-2026-05-21-001`
-
-This ensures deduplication across multiple imports of the same statement.
-
-## Requirements
-
-### REQ-BBR-001: Create bank reconciliation session
-
-#### Scenario: Bookkeeper initiates reconciliation for a bank account
-
-**GIVEN** a bookkeeper with access to bank accounts,
-**WHEN** the bookkeeper clicks "New Reconciliation", selects a bank account, and enters:
-- Statement period: May 1–31, 2026
-- Opening balance: €5,000.00
-- Closing balance: €6,250.50
-- Statement file: download CSV from bank website
-
-**THEN** the system creates a BankReconciliation with status `draft`. The bookkeeper is directed to the reconciliation detail page.
-
-### REQ-BBR-002: Import bank statement and auto-match
-
-#### Scenario: System auto-matches bank transactions to journal entries
-
-**GIVEN** a BankReconciliation in status `draft` with no transactions loaded,
-**WHEN** the bookkeeper uploads a CSV bank statement with columns: [Date | Amount | Reference | Description],
-**AND** the system maps columns to [statementDate | amount | invoiceRef | memo],
-**THEN** the system:
-1. Imports each row as a BankTransaction (cached in memory; not persisted yet)
-2. Runs auto-matching algorithm:
-   - For each bank transaction, search journal entries where amount matches ±€0.01
-   - AND transaction date is within ±3 days of journal entry date
-   - AND (bank memo contains journal ref OR invoice# found in memo)
-   - Score: +100 exact amount, +20 if reference found, -10 per day past deadline
-3. Creates BankReconciliationMatch records:
-   - Exact matches (score ≥70) with matchType `auto-matched`
-   - Ambiguous matches (30 ≤ score < 70) with matchType `pending-review`
-   - No match (score <30) creates orphaned BankReconciliationMatch with journalEntryId = null, matchType `pending-review`
-4. Displays:
-   - Count of matched transactions
-   - List of unmatched bank transactions (no journal entry found)
-   - List of unmatched journal entries (no bank match found)
-
-### REQ-BBR-003: Operator reviews pending matches
-
-#### Scenario: Bookkeeper manually resolves ambiguous matches
-
-**GIVEN** a reconciliation with pending-review matches (score 30–70),
-**WHEN** the bookkeeper clicks a pending match and sees:
-- Bank transaction: €500.00, "INVOICE PAYMENT"
-- Possible journal entries: [Invoice #INV-001 €500, Invoice #INV-002 €495, Payment #PAY-001 €500]
-
-**THEN** the bookkeeper can:
-1. Click to pair with Invoice #INV-001 (or any candidate)
-2. Or reject (mark no match, variance to explain)
-3. OR for ambiguous multi-match (€500 matches 3 invoices), note "Aggregated payment" and approve as-is
-
-System updates match:
-```json
-{
-  "journalEntryId": "apl-tx-uuid-INV-001",
-  "matchType": "approved",
-  "confidenceScore": 50,
-  "operatorNotes": "Manual override: operator confirmed customer paid invoice INV-001",
-  "approvedAt": "2026-05-31T16:00:00Z",
-  "approvedBy": "user-jane-doe"
-}
-```
-
-### REQ-BBR-004: Reject unmatched transactions
-
-#### Scenario: Operator documents and rejects orphaned transactions
-
-**GIVEN** unmatched bank transactions (no journal entry found),
-**WHEN** the bookkeeper reviews a bank transaction (e.g., €25.00 refund, "MISC DEPOSIT") that has no matching invoice or payment,
-**AND** the bookkeeper clicks "Reject Match",
-
-**THEN** the system marks the BankReconciliationMatch with:
-```json
-{
-  "matchType": "rejected",
-  "journalEntryId": null,
-  "operatorNotes": "Unknown deposit — contacted customer on 2026-06-01; no invoice found. Holding as variance.",
-  "approvedAt": "2026-05-31T17:00:00Z",
-  "approvedBy": "user-jane-doe"
-}
-```
-
-The bank transaction remains in variance report.
-
-### REQ-BBR-005: Calculate reconciliation balance and variance
-
-#### Scenario: System calculates reconciled balance
-
-**GIVEN** a BankReconciliation with imported transactions and all matches reviewed (all matchType values set),
-**WHEN** the system calculates:
-
-```
-reconciledBalance = openingBalance + sum(approved_matches.bankTransactionAmount)
-variance = closingBalance - reconciledBalance
-```
-
-**THEN** the system displays:
-- Reconciled Balance: €6,250.49
-- Closing Balance: €6,250.50
-- Variance: €0.01 (green — acceptable rounding)
-
-Visual indicator:
-- Variance < €0.01: **Green** (✓ Acceptable)
-- Variance €0.01–10: **Yellow** (⚠ Review unmatched items)
-- Variance > €10 OR closing < opening: **Red** (❌ Data error; investigate)
-
-### REQ-BBR-006: Approve reconciliation with variance
-
-#### Scenario: Bookkeeper approves despite non-zero variance
-
-**GIVEN** a reconciliation with variance €5.00 (yellow flag),
-**AND** the bookkeeper has reviewed all unmatched transactions and documented the variance (bank fee, timing difference),
-**WHEN** the bookkeeper clicks "Approve Reconciliation" and enters:
-- Approver signature (electronic confirmation)
-- Variance reason: "Bank charged €5.00 monthly fee (posted 2026-06-01, not yet journaled)"
-
-**THEN** the system:
-1. Sets BankReconciliation.status = `reconciled`
-2. Sets approvedBy = current user
-3. Sets approvedAt = current timestamp
-4. Stores variance reason in notes
-5. Locks reconciliation for editing (immutable for audit trail)
-6. Displays audit summary: "Reconciled by Jane Doe on 2026-05-31 | 12 matched | 0 unmatched | €0.01 variance"
-
-### REQ-BBR-007: Export variance report
-
-#### Scenario: Bookkeeper exports reconciliation variance for auditor
-
-**GIVEN** a reconciliation with status `reconciled`,
-**WHEN** the bookkeeper clicks "Export Variance Report" (CSV),
-
-**THEN** the system exports:
-```csv
-Reconciliation ID,Period,Opening Balance,Closing Balance,Reconciled Balance,Variance,Status
-reconciliation-2026-05-abc-checking,2026-05-01 to 2026-05-31,5000.00,6250.50,6250.49,0.01,reconciled
-
-Unmatched Bank Transactions:
-Date,Amount,Reference,Bank Description,Status
-[none for reconciled]
-
-Unmatched Journal Entries:
-Transaction ID,Date,Amount,Description,Account,Status
-[none for reconciled]
-
-Approval:
-Approved By: Jane Doe
-Approved At: 2026-05-31 16:00:00
-Notes: Variance due to rounding; acceptable under materiality threshold
-```
-
-### REQ-BBR-008: Reject/unmatch a transaction
-
-#### Scenario: Operator decides a match was incorrect
-
-**GIVEN** a BankReconciliationMatch with matchType `approved`,
-**WHEN** the bookkeeper clicks "Unmatch" and confirms,
-
-**THEN** the system:
-1. Sets matchType back to `pending-review`
-2. Adds operator note: "Unmatched on 2026-06-01 by user: originally matched incorrectly"
-3. Recalculates variance
-4. Requires operator to re-approve the reconciliation if variance changes materially
-
-(Reconciliation must be `draft` or `in-progress` for unmatching; locked reconciliations cannot be unmatched without creating a new correction session.)
-
-### REQ-BBR-009: Archive reconciliation
-
-#### Scenario: Bookkeeper archives completed reconciliation
-
-**GIVEN** a reconciliation with status `reconciled` approved ≥30 days ago,
-**WHEN** the bookkeeper clicks "Archive",
-
-**THEN** the system:
-1. Sets status = `archived`
-2. Moves reconciliation to archive view (separate tab)
-3. Reconciliation remains queryable for audit but not editable
-
-### REQ-BBR-010: Bulk matching for high-volume reconciliation
-
-#### Scenario: Bookkeeper bulk-approves low-risk matches
-
-**GIVEN** a reconciliation with 50 pending-review matches, all with confidence score ≥80,
-**WHEN** the bookkeeper clicks "Approve All Pending (≥80% confidence)" with 1-click confirmation,
-
-**THEN** the system:
-1. Updates all matching records: matchType = `approved`, approvedBy = current user, approvedAt = now
-2. Recalculates variance
-3. Displays summary: "49 matches approved | 1 skipped (confidence 45%)"
-
-## Workflow Sequence
-
-```
-1. Create BankReconciliation (draft)
-   ↓
-2. Upload Statement File (CSV/OFX)
-   ↓
-3. Auto-Matching Runs
-   - Bank TXN: €150 [Invoice #INV-001] ✓ Match approved (score 95)
-   - Bank TXN: €500 [Description unknown] ⚠ Pending review (score 45)
-   - Journal Entry: Payment #PAY-001 €75 ❌ Unmatched
-   ↓
-4. Operator Reviews Pending & Unmatched
-   - Approve €500 match: paired with Invoice #INV-002
-   - Reject Payment #PAY-001: "Posting delay; will match next period"
-   ↓
-5. Calculate Variance
-   - Opening: €5,000
-   - Matches: +€650
-   - Closing: €6,250.50
-   - Reconciled: €6,250
-   - Variance: €0.50 (yellow flag)
-   ↓
-6. Operator Approves with Variance Explanation
-   - "Variance due to unprocessed payment; expected next month"
-   - Status → reconciled
-   ↓
-7. Archive (30+ days later)
-```
-
-## Data Validation
-
-### Import Validation
-
-- **Date format**: must parse as ISO 8601 (YYYY-MM-DD) or locale format (configurable)
-- **Amount format**: numeric, 2 decimal places, no currency symbol
-- **Required fields**: statementDate, amount, (reference OR description)
-- **Deduplication key**: (bankAccountId, statementDate, amount, externalId) — reject duplicates silently
-
-### Match Validation
-
-- **Amount precision**: match only if difference ≤€0.01 (float rounding tolerance)
-- **Date range**: transaction date must be within ±3 days of journal entry date (configurable per organization)
-- **Reference matching**: substring case-insensitive (e.g., bank memo "INV-001-ABC" matches journal ref "INV-001")
-- **Single match per transaction**: if multiple journal entries qualify, flag as `pending-review` (ambiguous)
-
-### Approval Validation
-
-- **Approver identity**: must be authenticated user with permission on BankAccount
-- **Variance materiality**: if variance >€100 (configurable), require manager approval, not just bookkeeper
-- **Immutability**: once approved, reconciliation is locked; corrections require new session
-
-## Audit Trail
-
-Every match (auto, pending, approved, rejected) is timestamped and attributed:
-```json
-{
-  "id": "match-uuid",
-  "createdAt": "2026-05-22T08:00:00Z",
-  "createdBy": "system-auto-match",
-  "approvedAt": "2026-05-31T16:00:00Z",
-  "approvedBy": "user-jane-doe",
-  "matchType": "approved",
-  "operatorNotes": "Approved by supervisor; matches well-documented payment"
-}
-```
-
-System logs:
-- Auto-match run timestamp, transaction count, match count
-- Operator actions: match/unmatch, approve/reject, approval timestamp
-- Variance calculation (opening, matched sum, closing, variance)
-- Reconciliation approval (approver, timestamp, variance explanation)
+# Spec: bookkeeping-bank-reconciliation
+
+**Status:** proposed
+**Scope:** shillinq
+**Tier:** T2 (compliance + operations)
+**Depends on:** `../add-shillinq-bookkeeping-foundation/specs/bookkeeping-general-ledger/spec.md` (T1 GL),
+`./bookkeeping-document-attachment-integration/spec.md` (docudesk FK contract for statement archival)
+
+## ADDED Requirements
+
+### REQ-BR-001: Bank reconciliation SHALL be declared as `BankStatement` + `BankStatementLine` + `ReconciliationMatch` + `MatchingRule` registers, not parallel storage
+
+Bank reconciliation MUST be expressed as four new registers in
+`lib/Settings/shillinq_register.json` per ADR-024:
+
+- `BankStatement` — per-import header (bank account, period
+  covered, opening + closing balance, source file URI to
+  docudesk).
+- `BankStatementLine` — per-transaction row (date, counterparty,
+  amount, reference, raw description).
+- `MatchingRule` — operator-authored rule declaring predicates
+  for auto-matching against AP / AR / other.
+- `ReconciliationMatch` — produced match record linking one or
+  more `BankStatementLine` to one or more
+  `APInvoice` / `ARInvoice` / `GLTransaction`.
+
+No custom database tables. Per ADR-022, all four consume OR's
+audit-trail-immutable abstraction.
+
+#### Scenario: Reviewer confirms no parallel bank-rec storage
+
+- **GIVEN** the shillinq codebase
+- **WHEN** scanned for `lib/Db/` Mapper classes naming
+  `bank_statement`, `bank_line`, `reconciliation_*`, or
+  `match_rule`
+- **THEN** no such classes SHALL exist.
+
+#### Scenario: All four registers carry audit-on
+
+- **GIVEN** `lib/Settings/shillinq_register.json`
+- **WHEN** the four bank-rec schemas are inspected
+- **THEN** each MUST carry `x-openregister-audit: true` per
+  REQ-AT-001.
+
+### REQ-BR-002: Bank statement import SHALL accept CAMT.053, MT940, and manual CSV upload; live PSD2 connectors are T4
+
+The `BankStatement` register MUST support import from three
+sources:
+
+| Format | File extension | Mechanism |
+|---|---|---|
+| CAMT.053 (ISO 20022) | `.xml` | Operator uploads via the manifest's "Import statement" action; the file is parsed by the `bankStatementParse` calculation per REQ-BR-003 |
+| MT940 (SWIFT) | `.sta` / `.txt` / `.940` | Same upload path; parsed by the same calculation |
+| Manual CSV | `.csv` | Operator uploads a CSV matching the documented column shape (`date, counterparty, amount, reference, description`); parsed directly |
+
+The original uploaded file MUST be archived via docudesk per the
+`bookkeeping-document-attachment-integration` contract — the
+`BankStatement.sourceDocumentUri` field carries the docudesk URI.
+
+PSD2 live-feed connectors (auto-import on bank webhook, real-time
+balance polling) are **explicitly deferred to T4**. T2 declares
+the registers + import flow only.
+
+#### Scenario: CAMT.053 import produces a BankStatement + lines
+
+- **GIVEN** a valid CAMT.053 XML file containing 25 transactions
+- **WHEN** an operator uploads it via the manifest's "Import
+  statement" action
+- **THEN** one `BankStatement` MUST be created with the
+  statement-header fields populated; **AND** 25
+  `BankStatementLine` records MUST be created against it;
+  **AND** the original XML MUST be archived to docudesk and the
+  URI persisted in `sourceDocumentUri`.
+
+#### Scenario: MT940 import produces equivalent output
+
+- **GIVEN** an MT940 statement covering the same 25 transactions
+- **WHEN** the operator uploads it
+- **THEN** the resulting `BankStatement` + `BankStatementLine`
+  records MUST be functionally equivalent to the CAMT.053 case
+  (same line count, same amounts, same dates).
+
+#### Scenario: T2 does not auto-import via PSD2 webhook
+
+- **GIVEN** T2 is live
+- **WHEN** scanned for `lib/Controller/*Psd2*.php`,
+  `lib/Service/*Psd2*.php`, or `appinfo/routes.php` entries
+  matching `/psd2/webhook`
+- **THEN** no such files or routes SHALL exist (T4 will add them).
+
+### REQ-BR-003: CAMT.053 / MT940 parsing SHALL be declarative (`x-openregister-calculations`) when OR supports structured-text parsing; otherwise a single-method PHP guard per ADR-031 exception
+
+The bank-statement parser MUST be expressed as an
+`x-openregister-calculations` field consuming the uploaded file
+and emitting structured `BankStatementLine` records, IF OR's
+calculation extension supports XML / structured-text parsing.
+
+If OR's calculation extension does NOT yet support the required
+parsing primitives, the shape-neutral fallback per ADR-031
+exception is a single-method
+`OCA\Shillinq\Lifecycle\StatementParser` called *by* the
+calculation engine (single method `parse(string $contents, string
+$format): array`, ~50 LOC, no state, no orchestration).
+
+The choice is documented in `bookkeeping-bank-reconciliation/design.md`
+discovery. The spec is shape-neutral.
+
+#### Scenario: Reviewer confirms parser shape
+
+- **GIVEN** the shillinq codebase
+- **WHEN** scanned
+- **THEN** EITHER a `x-openregister-calculations` declaration
+  referencing the parse function MUST exist in the register file,
+  OR a single-method `StatementParser` MUST exist with an
+  ADR-031-exception annotation in its file header; not both.
+
+#### Scenario: Parser handles a CAMT.053 statement with 25 transactions
+
+- **GIVEN** a valid CAMT.053 file
+- **WHEN** the parser runs against it
+- **THEN** the result MUST be an array of 25 records each with
+  `{date, counterparty, amount, reference, description}`;
+  amount signs MUST be preserved (debits negative, credits
+  positive per CAMT convention).
+
+### REQ-BR-004: `MatchingRule` SHALL declare match predicates as schema metadata; rule evaluation is an aggregation, not a service
+
+`MatchingRule` MUST be a register declaring rule predicates as
+schema metadata consumed by an
+`x-openregister-aggregations` query that emits candidate
+`ReconciliationMatch` records. No `MatchingService.php`,
+`RuleEngine.php`, or similar PHP service. Per ADR-031.
+
+Each rule MUST declare:
+
+| Field | Type | Required | Purpose |
+|---|---|---|---|
+| `ruleName` | string | Yes | Human-readable name |
+| `priority` | integer | Yes | Lower = earlier evaluation |
+| `targetType` | enum | Yes | One of `ap-invoice`, `ar-invoice`, `gl-transaction`, `customer`, `vendor` |
+| `predicates` | array of object | Yes | List of predicate objects (per REQ-BR-005) |
+| `autoConfirm` | boolean | Yes (default false) | If true, matches are auto-confirmed; else operator-confirmed |
+| `administrationId` | string | Yes | FK to administration |
+| `lifecycleState` | enum | Yes | One of `active`, `disabled`, `archived` |
+
+#### Scenario: Reviewer confirms no rule-engine service
+
+- **GIVEN** the shillinq codebase
+- **WHEN** scanned for `lib/Service/*Match*.php`,
+  `lib/Service/*RuleEngine*.php`, `lib/Service/*Reconcil*.php`
+- **THEN** no such files SHALL exist.
+
+#### Scenario: Reordering rules by priority changes match precedence
+
+- **GIVEN** two rules both targeting `ar-invoice` — rule A with
+  `priority: 10`, rule B with `priority: 20`
+- **WHEN** a bank line could match both
+- **THEN** rule A's match MUST be emitted; rule B MUST NOT
+  produce a duplicate match for the same line.
+
+### REQ-BR-005: Predicates SHALL include exact-amount, amount-range, reference-match, counterparty-fuzzy, and date-window
+
+The supported predicate shapes (T2 baseline; extensible in later
+tiers) MUST include:
+
+| Predicate | Shape | Semantics |
+|---|---|---|
+| `exact-amount` | `{op: "exact-amount", amount: <number>}` | Line amount equals the predicate amount |
+| `amount-range` | `{op: "amount-range", min: <n>, max: <n>}` | Line amount within range |
+| `reference-match` | `{op: "reference-match", pattern: "<regex>"}` | Line reference matches the regex |
+| `counterparty-fuzzy` | `{op: "counterparty-fuzzy", name: "<string>", threshold: <0-1>}` | Levenshtein similarity ≥ threshold |
+| `date-window` | `{op: "date-window", days: <integer>}` | Line date within N days of the target object's `invoiceDate` / `dueDate` |
+
+Predicates in the same rule MUST be combined with logical AND.
+Cross-rule combinations are handled by REQ-BR-004's priority
+ordering.
+
+#### Scenario: Exact-amount + reference-match rule matches an AR invoice
+
+- **GIVEN** an AR invoice for €500 with `invoiceNumber:
+  INV-C-2026-0001` and a bank line of €500 with reference
+  containing `INV-C-2026-0001`
+- **AND** a `MatchingRule` with predicates `[{op:
+  "exact-amount", amount: 500}, {op: "reference-match", pattern:
+  "INV-C-2026-0001"}]`
+- **WHEN** the matching aggregation runs
+- **THEN** a `ReconciliationMatch` MUST be emitted linking the
+  bank line to the AR invoice.
+
+#### Scenario: Counterparty fuzzy match handles typos
+
+- **GIVEN** a `MatchingRule` with `counterparty-fuzzy:
+  {name: "Acme BV", threshold: 0.85}`
+- **AND** a bank line with counterparty `"Acme B.V."` (similarity
+  0.91)
+- **WHEN** the aggregation runs
+- **THEN** a candidate match MUST be emitted; **AND** because
+  `autoConfirm` is `false`, the operator MUST confirm before the
+  match is finalised per REQ-BR-006.
+
+### REQ-BR-006: Confirmed matches SHALL emit lifecycle events that AP/AR consume to transition `posted → paid` (or `partially-paid`)
+
+When a `ReconciliationMatch` is confirmed (either auto via
+`autoConfirm: true` or operator-confirmed via UI), the match
+engine MUST emit a CloudEvent (or OR-native equivalent) that the
+matched AP/AR invoice's lifecycle consumes per REQ-AP-008 /
+REQ-AR-007. No shillinq matcher service forwards the event;
+declarative emission is OR's responsibility.
+
+Partial matches (bank line amount < invoice total) MUST emit an
+event tagged `partial: true`; AP/AR specs transition to
+`partially-paid` (AR) or remain `posted` with a partial-payment
+audit event (AP) per their respective REQ-*-004/008/007.
+
+Multi-line matches (one bank line covering multiple invoices, or
+multiple bank lines covering one invoice) MUST be supported — the
+`ReconciliationMatch` schema MUST carry `bankLineRefs: array<string>`
+and `targetRefs: array<string>` with N×M cardinality.
+
+#### Scenario: Auto-confirmed match marks invoice paid
+
+- **GIVEN** a `MatchingRule` with `autoConfirm: true`
+- **AND** a candidate match is emitted per REQ-BR-005
+- **WHEN** the matching aggregation runs
+- **THEN** the `ReconciliationMatch` MUST be created with
+  `confirmedAt` set; **AND** the matched AR invoice MUST
+  transition to `paid` per REQ-AR-007.
+
+#### Scenario: Operator-confirmed match marks invoice paid
+
+- **GIVEN** an unconfirmed candidate `ReconciliationMatch`
+- **WHEN** the operator opens the bank-rec detail page and
+  confirms the match
+- **THEN** the match MUST be confirmed; **AND** the matched
+  invoice MUST transition per REQ-AP-008 / REQ-AR-007.
+
+#### Scenario: Multi-line aggregate match
+
+- **GIVEN** three bank lines of €100, €200, €700 with the same
+  customer reference and an AR invoice for €1 000 from the same
+  customer
+- **WHEN** an operator manually creates a `ReconciliationMatch`
+  with `bankLineRefs: [line1, line2, line3]` and `targetRefs: [invoice1]`
+- **THEN** the match MUST be confirmed; **AND** the AR invoice
+  MUST transition to `paid`.
+
+### REQ-BR-007: Unmatched lines SHALL route to a designated suspense account; the assignment is a lifecycle action, not a service
+
+The administration MUST designate exactly one `Account` (or one
+per bank account) as the "bank reconciliation suspense account"
+— per T1 REQ-CoA-009's closing-account pattern, declared either
+by an additive `isSuspenseAccount` boolean on T1's `Account`
+schema or by an administration-settings field. The choice is
+documented in `bookkeeping-bank-reconciliation/design.md`
+discovery; the spec is shape-neutral.
+
+When the operator marks a `BankStatementLine` as "unmatched and
+final" (no more matching attempts), the line's lifecycle action
+MUST materialise a `GLTransaction` debiting (or crediting,
+depending on the bank line's sign) the suspense account against
+the bank account's GL account. The materialisation is declarative
+per the same T1 REQ-JE-007 pattern, not a PHP service.
+
+The suspense balance is itself reportable through trial balance
+(per REQ-TB-001); a non-zero suspense balance is a follow-up flag
+the administration tracks until resolved.
+
+#### Scenario: Marking a line unmatched posts to suspense
+
+- **GIVEN** a `BankStatementLine` of €50 credit (incoming) that
+  the operator marks "unmatched final"
+- **WHEN** the lifecycle action fires
+- **THEN** a balanced `GLTransaction` MUST be materialised
+  debiting the bank-account GL (€50) and crediting the
+  designated suspense account (€50); **AND** the line MUST be
+  marked `routed-to-suspense`.
+
+#### Scenario: Suspense balance is visible in trial balance
+
+- **GIVEN** five unmatched lines totalling €250 routed to the
+  suspense account over a period
+- **WHEN** the period's trial balance is requested per REQ-TB-002
+- **THEN** the suspense account row MUST show a €250 closing
+  balance; **AND** the auditor MUST see this flagged via the
+  bank-rec UI's outstanding-suspense indicator.
+
+### REQ-BR-008: `BankStatement` SHALL declare an imported → in-progress → reconciled → audit-locked lifecycle
+
+`BankStatement` MUST declare an `x-openregister-lifecycle` block
+with the following transitions:
+
+| From | To | Trigger | Guard |
+|---|---|---|---|
+| `imported` | `in-progress` | first matching action (auto or operator) | none |
+| `in-progress` | `reconciled` | operator action | every `BankStatementLine` on the statement MUST be matched OR `routed-to-suspense` |
+| `reconciled` | `audit-locked` | auditor sign-off (role `auditor`) | none |
+| `imported` | `imported` | re-import attempt for the same file | rejected — duplicate import detection via file checksum + statement-period overlap |
+
+Per ADR-031, no PHP service implements transitions; the lifecycle
+is declared in the schema. Audit per ADR-022.
+
+#### Scenario: Reconcile fails with unmatched lines
+
+- **GIVEN** a `BankStatement` with 25 lines of which 23 are
+  matched and 2 are still unmatched (not routed to suspense)
+- **WHEN** the operator attempts the `in-progress → reconciled`
+  transition
+- **THEN** the transition MUST fail with a "2 lines outstanding
+  — match or route to suspense first" error.
+
+#### Scenario: Audit-lock is irreversible
+
+- **GIVEN** a `BankStatement` in state `audit-locked`
+- **WHEN** any actor attempts the `audit-locked → reconciled`
+  transition
+- **THEN** the transition MUST be rejected — audit-locked
+  statements are immutable per the same REQ-PC-003 pattern.
+
+### REQ-BR-009: Duplicate import detection SHALL be a declarative uniqueness constraint, not a PHP service
+
+When an operator uploads a bank statement, the system MUST
+reject the import if (a) a `BankStatement` with the same file
+checksum already exists in the administration, OR (b) a
+`BankStatement` with overlapping bank-account + period exists.
+
+The constraint MUST be declared as an OR uniqueness rule on
+`BankStatement` (composite key on `administrationId + fileChecksum`
+and a range overlap on `bankAccount + periodFrom + periodTo`).
+If OR's uniqueness validator cannot express composite-key + range-
+overlap shapes, a thin lifecycle precondition on
+`BankStatement.create` MAY enforce it per ADR-031 exception.
+
+#### Scenario: Re-uploading the same CAMT file fails
+
+- **GIVEN** a CAMT.053 file was imported on Monday producing
+  `BankStatement BS-001`
+- **WHEN** the same file is uploaded again on Tuesday
+- **THEN** the import MUST fail with a "duplicate statement —
+  file already imported on Monday as BS-001" error referencing
+  the existing statement.
+
+#### Scenario: Overlapping-period import fails
+
+- **GIVEN** `BankStatement BS-001` covers `2026-04-01` to `2026-04-30`
+  on bank account `NL00ABNA0123456789`
+- **WHEN** the operator imports a different file covering
+  `2026-04-15` to `2026-05-15` on the same account
+- **THEN** the import MUST fail with a "overlapping statement
+  period" error naming the conflicting statement.
+
+### REQ-BR-010: Bank reconciliation SHALL be reachable through the shillinq manifest navigation
+
+`src/manifest.json` MUST declare:
+
+- `Bookkeeping > Bank Reconciliation` — `type: index` +
+  `type: detail` on `BankStatement`. Detail page MUST surface
+  the lines grid, the candidate matches sub-grid, the
+  manual-match action, the route-to-suspense action, and the
+  lifecycle transition buttons.
+- `Bookkeeping > Matching Rules` — `type: index` +
+  `type: detail` on `MatchingRule` for operator authoring of
+  rules.
+
+Rendering MUST use `@conduction/nextcloud-vue` generic components
+per ADR-024 Tier-4 — no bespoke Vue files (with the standard
+caveat that the manifest may bind a `CnGridPage` or similar if
+the lines grid needs specialised affordances; bespoke Vue is
+out of scope).
+
+#### Scenario: Bank reconciliation index lists statements
+
+- **GIVEN** the manifest declares the Bank Reconciliation pages
+- **WHEN** an operator opens
+  `/index.php/apps/shillinq/bank-reconciliation`
+- **THEN** `CnIndexPage` MUST render columns including
+  `bankAccount`, `periodFrom`, `periodTo`, `state`, line count,
+  matched count.
+
+#### Scenario: Statement detail surfaces lines + candidate matches
+
+- **GIVEN** a `BankStatement` with 25 lines, 18 matched, 5
+  unmatched candidates, 2 routed-to-suspense
+- **WHEN** an operator opens the detail page
+- **THEN** the page MUST render the lines grid with the match
+  state per line; **AND** a candidate-matches sub-grid showing
+  the 5 unmatched candidates with one-click confirm /
+  route-to-suspense actions.

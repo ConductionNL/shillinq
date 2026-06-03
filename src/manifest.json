@@ -181,6 +181,20 @@
 							"order": 40
 						}
 					]
+				},
+				{
+					"id": "BankReconciliation",
+					"label": "Bank Reconciliation",
+					"icon": "BankCheckOutline",
+					"route": "BankReconciliation",
+					"order": 26
+				},
+				{
+					"id": "MatchingRules",
+					"label": "Matching Rules",
+					"icon": "RuleOutline",
+					"route": "MatchingRules",
+					"order": 27
 				}
 			]
 		},
@@ -3820,6 +3834,308 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "PaymentRuns"
+			}
+		},
+		{
+			"id": "BankReconciliation",
+			"route": "/bookkeeping/bank-reconciliation",
+			"type": "index",
+			"title": "Bank Reconciliation",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankStatement",
+				"columns": [
+					{
+						"key": "bankAccountIban",
+						"label": "IBAN",
+						"sortable": true
+					},
+					{
+						"key": "bankAccountName",
+						"label": "Account",
+						"sortable": true
+					},
+					{
+						"key": "periodStart",
+						"label": "Period From",
+						"sortable": true
+					},
+					{
+						"key": "periodEnd",
+						"label": "Period To",
+						"sortable": true
+					},
+					{
+						"key": "format",
+						"label": "Format",
+						"sortable": true
+					},
+					{
+						"key": "lineCount",
+						"label": "Lines",
+						"sortable": true
+					},
+					{
+						"key": "matchedCount",
+						"label": "Matched",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "periodStart",
+				"detailRoute": "BankReconciliationDetail"
+			}
+		},
+		{
+			"id": "BankReconciliationDetail",
+			"route": "/bookkeeping/bank-reconciliation/:id",
+			"type": "detail",
+			"title": "Bank Statement",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankStatement",
+				"fields": [
+					{
+						"key": "bankAccountIban",
+						"label": "IBAN",
+						"type": "string"
+					},
+					{
+						"key": "bankAccountName",
+						"label": "Account Name",
+						"type": "string"
+					},
+					{
+						"key": "format",
+						"label": "Format",
+						"type": "string"
+					},
+					{
+						"key": "periodStart",
+						"label": "Period From",
+						"type": "date"
+					},
+					{
+						"key": "periodEnd",
+						"label": "Period To",
+						"type": "date"
+					},
+					{
+						"key": "openingBalance",
+						"label": "Opening Balance",
+						"type": "number"
+					},
+					{
+						"key": "closingBalance",
+						"label": "Closing Balance",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "lineCount",
+						"label": "Total Lines",
+						"type": "number"
+					},
+					{
+						"key": "matchedCount",
+						"label": "Matched Lines",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "importedAt",
+						"label": "Imported At",
+						"type": "datetime"
+					},
+					{
+						"key": "importedBy",
+						"label": "Imported By",
+						"type": "string"
+					},
+					{
+						"key": "sourceDocumentUri",
+						"label": "Statement File",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"subGrids": [
+					{
+						"id": "statementLines",
+						"title": "Statement Lines",
+						"schema": "BankStatementLine",
+						"filter": {
+							"statementId": "$.id"
+						},
+						"columns": [
+							{
+								"key": "lineNumber",
+								"label": "#",
+								"sortable": true
+							},
+							{
+								"key": "valueDate",
+								"label": "Date",
+								"sortable": true
+							},
+							{
+								"key": "amount",
+								"label": "Amount",
+								"sortable": true
+							},
+							{
+								"key": "counterpartyName",
+								"label": "Counterparty",
+								"sortable": true
+							},
+							{
+								"key": "reference",
+								"label": "Reference",
+								"sortable": true
+							},
+							{
+								"key": "matchState",
+								"label": "Match Status",
+								"sortable": true
+							}
+						],
+						"actions": [
+							{
+								"label": "Confirm Match",
+								"lifecycle": "confirm-match",
+								"condition": {
+									"matchState": "candidate"
+								}
+							},
+							{
+								"label": "Route to Suspense",
+								"lifecycle": "route-to-suspense",
+								"condition": {
+									"matchState": [
+										"unmatched",
+										"candidate"
+									]
+								}
+							}
+						]
+					}
+				],
+				"indexRoute": "BankReconciliation"
+			}
+		},
+		{
+			"id": "MatchingRules",
+			"route": "/bookkeeping/matching-rules",
+			"type": "index",
+			"title": "Matching Rules",
+			"config": {
+				"register": "shillinq",
+				"schema": "MatchingRule",
+				"columns": [
+					{
+						"key": "ruleName",
+						"label": "Rule Name",
+						"sortable": true
+					},
+					{
+						"key": "priority",
+						"label": "Priority",
+						"sortable": true
+					},
+					{
+						"key": "targetType",
+						"label": "Target",
+						"sortable": true
+					},
+					{
+						"key": "autoConfirm",
+						"label": "Auto-Confirm",
+						"sortable": false
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "priority",
+				"detailRoute": "MatchingRuleDetail"
+			}
+		},
+		{
+			"id": "MatchingRuleDetail",
+			"route": "/bookkeeping/matching-rules/:id",
+			"type": "detail",
+			"title": "Matching Rule",
+			"config": {
+				"register": "shillinq",
+				"schema": "MatchingRule",
+				"fields": [
+					{
+						"key": "ruleName",
+						"label": "Rule Name",
+						"type": "string"
+					},
+					{
+						"key": "priority",
+						"label": "Priority",
+						"type": "number"
+					},
+					{
+						"key": "targetType",
+						"label": "Target Type",
+						"type": "string"
+					},
+					{
+						"key": "predicates",
+						"label": "Predicates",
+						"type": "json"
+					},
+					{
+						"key": "autoConfirm",
+						"label": "Auto-Confirm",
+						"type": "boolean"
+					},
+					{
+						"key": "confidenceScore",
+						"label": "Confidence Score",
+						"type": "number"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "MatchingRules"
 			}
 		}
 	]
