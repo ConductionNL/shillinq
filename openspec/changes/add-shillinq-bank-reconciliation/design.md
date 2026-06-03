@@ -165,13 +165,15 @@ Down-direction: registers are non-destructive — reverting removes
 the manifest entries; statements + matches remain queryable but
 unreferenced.
 
-## Open Questions
+## Open Questions — Resolution (implementation cycle 2026-06-03)
 
-1. **Parser path** — resolved in `opsx-ff` discovery against OR's
-   calculation extension capability.
-2. **Suspense account designation** (schema flag vs administration
-   setting) — resolved in `opsx-ff` discovery.
-3. **Matching-rule seed packs** — current decision: no T2 seeds;
-   operators author rules; rule-template packs are roadmap.
-4. **Auto-confirm above confidence threshold** — explicitly out of
-   v1; future enhancement once rule packs are mature.
+1. **Parser path** — RESOLVED: OR's calculation extension does not yet support
+   CAMT.053 XML / MT940 structured-text parsing. `lib/Lifecycle/StatementParser.php`
+   ships as ADR-031 exception (single-method, ~100 LOC including MT940 + CSV paths).
+   Annotated for removal when OR extension lands.
+2. **Suspense account designation** — RESOLVED: schema-flag path chosen.
+   `Account.isSuspenseAccount: true` additive boolean declared on T1 Account schema.
+3. **Matching-rule seed packs** — no seeds shipped; operators author rules on first use;
+   rule-template packs remain roadmap item.
+4. **Auto-confirm above confidence threshold** — explicitly out of v1; future enhancement
+   once rule packs are mature.
