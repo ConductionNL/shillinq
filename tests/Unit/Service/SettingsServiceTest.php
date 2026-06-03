@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/spec/tasks.md#task-11
+ * @spec openspec/changes/add-shillinq-provincies-bbv-variant/tasks.md#task-10
  */
 
 declare(strict_types=1);
@@ -198,5 +198,82 @@ class SettingsServiceTest extends TestCase
         self::assertTrue($result);
 
     }//end testIsOpenRegisterAvailableDelegatesToAppManager()
+
+    /**
+     * Test that seedBbvProvinciesKerntaken returns failure when OpenRegister is unavailable.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-provincies-bbv-variant/tasks.md#task-10
+     */
+    public function testSeedBbvProvinciesKerntakenFailsWhenOpenRegisterUnavailable(): void
+    {
+        $this->appManager->expects($this->once())
+            ->method('isInstalled')
+            ->with('openregister')
+            ->willReturn(false);
+
+        $result = $this->service->seedBbvProvinciesKerntaken(administrationId: 'adm-provincie-1');
+
+        self::assertFalse($result['success']);
+        self::assertStringContainsString('OpenRegister', $result['message']);
+
+    }//end testSeedBbvProvinciesKerntakenFailsWhenOpenRegisterUnavailable()
+
+    /**
+     * Test that seedBbvProvinciesKerntaken returns failure when administrationId is empty.
+     *
+     * C2: seeding under empty id contaminates real tenant data.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-provincies-bbv-variant/tasks.md#task-10
+     */
+    public function testSeedBbvProvinciesKerntakenFailsWhenAdministrationIdEmpty(): void
+    {
+        $this->appManager->expects($this->once())
+            ->method('isInstalled')
+            ->with('openregister')
+            ->willReturn(true);
+
+        $result = $this->service->seedBbvProvinciesKerntaken(administrationId: '');
+
+        self::assertFalse($result['success']);
+        self::assertStringContainsString('administrationId', $result['message']);
+
+    }//end testSeedBbvProvinciesKerntakenFailsWhenAdministrationIdEmpty()
+
+    /**
+     * Test that seedBbvProvinciesKerntaken returns a result array with success key.
+     *
+     * The seed file is present at lib/Settings/seeds/bbv-provincies-kerntaken-2026.json
+     * and contains 7 canonical kerntaken per REQ-PRB-003.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-provincies-bbv-variant/tasks.md#task-10
+     */
+    public function testSeedBbvProvinciesKerntakenReturnsResultArray(): void
+    {
+        $this->appManager->expects($this->once())
+            ->method('isInstalled')
+            ->with('openregister')
+            ->willReturn(true);
+
+        $mockObjectService = $this->createMock(\stdClass::class);
+
+        $this->container->expects($this->once())
+            ->method('get')
+            ->with('OCA\OpenRegister\Service\ObjectService')
+            ->willReturn($mockObjectService);
+
+        $result = $this->service->seedBbvProvinciesKerntaken(
+            administrationId: 'adm-provincie-1'
+        );
+
+        self::assertArrayHasKey('success', $result);
+        self::assertArrayHasKey('message', $result);
+
+    }//end testSeedBbvProvinciesKerntakenReturnsResultArray()
 
 }//end class
