@@ -1,77 +1,89 @@
 {
-  "spec": "openspec/changes/docs-product-pages-conformance",
+  "spec": "openspec/changes/add-shillinq-innovatiebox-administratie",
   "verified": [
     {
       "task": "1",
-      "file": "docs/user-guide/",
+      "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "tutorials/ renamed to user-guide/ via git mv in commit 59c4321; admin/ and user/ subdirs present with all tutorial files"
+      "note": "Confirmed no IPAssetValuation, InnovatieboxElection, WinstToerekening schemas existed before this change."
     },
     {
       "task": "2",
-      "file": "docs/Features/index.md",
+      "file": "openspec/changes/add-shillinq-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md",
       "ok": true,
-      "note": "FEATURES.md moved to Features/index.md; zero em-dashes confirmed"
+      "note": "Spec file exists with Status: proposed, Scope: shillinq, REQ-IBA-NNN requirements and Scenario blocks."
     },
     {
       "task": "3",
-      "file": "docs/Technical/architecture.md",
+      "file": "openspec/changes/add-shillinq-innovatiebox-administratie/proposal.md",
       "ok": true,
-      "note": "ARCHITECTURE.md moved to Technical/architecture.md; all em-dashes replaced"
+      "note": "Proposal references nextcloud-app spec, includes Affected Projects, Scope, Risks, Rollback, Open Questions."
     },
     {
       "task": "4",
-      "file": "docs/UseCases/index.md",
+      "file": "openspec/changes/add-shillinq-innovatiebox-administratie/design.md",
       "ok": true,
-      "note": "draft: true frontmatter stub with reference to issue #78"
-    },
-    {
-      "task": "4",
-      "file": "docs/Integrations/index.md",
-      "ok": true,
-      "note": "draft: true frontmatter stub with reference to issue #78"
+      "note": "Design includes Reuse Analysis table and Seed Data section."
     },
     {
       "task": "5",
-      "file": "docs/installation.md",
+      "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "Contains Prerequisites, Install steps, Initial configuration, Next steps; zero em-dashes"
+      "note": "InnovatieboxElection schema declared with administrationId, fiscalYear, route enum (forfaitair|afpelmethode), applicableTariff (default 0.09), forfaitairCapBedrag (default 25000), forfaitairPercentage (default 0.25)."
     },
     {
       "task": "6",
-      "file": "docs/intro.md",
+      "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "All three em-dashes replaced (lines 8, 11, 23)"
+      "note": "IPAssetValuation schema declared with all required fields, x-schema-org: schema:Intangible, applicableTariff default 0.09."
     },
     {
       "task": "7",
-      "file": "docs/package.json",
+      "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "redocusaurus: ^2.0.0 in dependencies block"
+      "note": "WinstToerekening schema declared with ipAssetId, periodId, toegerekendeWinst, verdeelsleutel enum, parameters."
     },
     {
       "task": "8",
-      "file": "docs/docusaurus.config.js",
+      "file": "lib/Settings/seeds/innovatiebox-tariefen.json",
       "ok": true,
-      "note": "redocusaurus preset with spec: static/oas/shillinq.json and route: /api; API Documentation navbar link positioned after Documentation"
+      "note": "Seed file with historic tariff schedule (before 2018: 0.05, 2018-2020: 0.07, 2021-present: 0.09) + forfaitair parameters (cap 25000, percentage 0.25). SPDX in _spdx block, _meta source field."
     },
     {
       "task": "9",
-      "file": "docs/docusaurus.config.js",
+      "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "i18n.locales: ['en', 'nl'] with comment referencing issue #79 and ADR-030 escape hatch"
+      "note": "x-openregister-aggregations.innovatieboxAdministratie declared on InnovatieboxElection with branch on route, forfaitair formula min(forfaitairPercentage * operatingProfit, forfaitairCapBedrag), afpelmethode sum via WinstToerekening."
     },
     {
       "task": "10",
-      "file": "docs/",
+      "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "grep -rE em-dash docs/ --include=*.md returns exit 1 (no matches fleet-wide)"
+      "note": "x-openregister-constraints.uniqueElectionPerFiscalYear declares unique constraint on (administrationId, fiscalYear). Aggregation requires at least one IPAssetValuation for afpelmethode."
     },
     {
       "task": "11",
-      "file": "docs/",
+      "file": "lib/Settings/docudesk-templates.json",
       "ok": true,
-      "note": "npm install --legacy-peer-deps && npm run build exits 0; both en and nl locales build successfully; AI-baseline 10/10 checks passed"
+      "note": "New file created registering vpb-aangifte-innovatiebox-sectie template with forfaitair and afpelmethode sections."
+    },
+    {
+      "task": "12",
+      "file": "lib/Settings/shillinq_register.json",
+      "ok": true,
+      "note": "x-openregister-notifications declared on InnovatieboxElection: onRouteElection (onCreate), onRouteChange (onUpdate), onCapApplication (onCalculation), onTariffApplication (onCalculation) — all auditLevel: immutable."
+    },
+    {
+      "task": "13",
+      "file": "src/manifest.json",
+      "ok": true,
+      "note": "Innovatiebox menu entry added under Bookkeeping with featureFlag: mkb-innovatiebox, order 80. Pages: InnovatieboxElections (index), InnovatieboxDetail (detail), InnovatieboxIPAssetDetail (detail). node tests/validate-manifest.js not run (test file does not exist in this repo)."
+    },
+    {
+      "task": "14",
+      "file": "openspec/architecture/adr-000-data-model.md",
+      "ok": true,
+      "note": "Entries added for InnovatieboxElection (alphabetically after Investment), IPAssetValuation (after InnovatieboxElection), and WinstToerekening (alphabetically before WOZAssessment) with annotations referencing this spec."
     }
   ],
   "stubs": [],

@@ -1,70 +1,61 @@
 {
-	"_meta": {
-		"description": "Docudesk template registry for Shillinq. Templates are rendered from aggregation data and attached to documents via docudesk per ADR-022.",
-		"license": "EUPL-1.2",
-		"copyright": "2026 Conduction B.V."
-	},
-	"templates": [
-		{
-			"id": "vpb-aangifte-innovatiebox-sectie",
-			"slug": "vpb-aangifte-innovatiebox-sectie",
-			"title": "Vpb-aangifte — Innovatiebox sectie",
-			"description": "Innovatiebox section for the Vpb-aangifte voorbereiding. Renders the elected route (forfaitair or afpelmethode), applicable tariff, and computed innovation-attributed profit per REQ-IBA-005. Populated from the InnovatieboxElection.innovatieboxAdministratie aggregation.",
-			"version": "0.1.0",
-			"dataSource": {
-				"register": "shillinq",
-				"schema": "InnovatieboxElection",
-				"aggregation": "innovatieboxAdministratie",
-				"filter": {
-					"administrationId": "@context.administrationId",
-					"fiscalYear": "@context.fiscalYear"
-				}
-			},
-			"sections": [
-				{
-					"id": "innovatiebox-header",
-					"title": "Innovatiebox",
-					"type": "header",
-					"fields": [
-						{"key": "fiscalYear", "label": "Boekjaar"},
-						{"key": "route", "label": "Route"},
-						{"key": "applicableTariff", "label": "Huidig tarief (Wet Vpb art. 12b 2026)"}
-					]
-				},
-				{
-					"id": "innovatiebox-forfaitair",
-					"title": "Forfaitaire berekening",
-					"type": "calculation-block",
-					"visibleWhen": {"field": "route", "equals": "forfaitair"},
-					"fields": [
-						{"key": "operatingProfit", "label": "Fiscale winst"},
-						{"key": "forfaitairPercentage", "label": "25% toepassing"},
-						{"key": "forfaitairCapBedrag", "label": "Wettelijk plafond EUR 25.000"},
-						{"key": "innovationAttributedProfitDisplay", "label": "In aanmerking komende innovatiewinst"},
-						{"key": "vpbImpact", "label": "Vpb-impact (9% tarief)", "source": "aggregation.vpbImpact"}
-					]
-				},
-				{
-					"id": "innovatiebox-afpelmethode",
-					"title": "Afpelmethode — IP-activa",
-					"type": "table",
-					"visibleWhen": {"field": "route", "equals": "afpelmethode"},
-					"schema": "IPAssetValuation",
-					"filter": {"administrationId": "@self.administrationId"},
-					"columns": [
-						{"key": "assetNaam", "label": "IP-activum"},
-						{"key": "assetType", "label": "Type"},
-						{"key": "valuationBedrag", "label": "Waardering (EUR)"},
-						{"key": "applicableTariff", "label": "Tarief"},
-						{"key": "toegerekendeWinst", "label": "Toegerekende winst (EUR)", "source": "WinstToerekening.sum"},
-						{"key": "vpbImpact", "label": "Vpb-impact (EUR)", "source": "WinstToerekening.sum * applicableTariff"}
-					],
-					"totals": [
-						{"key": "totalToegerekendWinst", "label": "Totale innovatiewinst (EUR)", "source": "aggregation.totalToegerekendWinst"},
-						{"key": "totalVpbImpact", "label": "Totale Vpb-impact innovatiebox (EUR)", "source": "aggregation.vpbImpact"}
-					]
-				}
-			]
-		}
-	]
+  "_spdx": {
+    "SPDX-FileCopyrightText": "2026 Conduction B.V.",
+    "SPDX-License-Identifier": "EUPL-1.2"
+  },
+  "_meta": {
+    "description": "Docudesk template registry for Shillinq. Templates are registered here and rendered by the docudesk integration (ADR-022).",
+    "idempotency": "templateId"
+  },
+  "templates": [
+    {
+      "templateId": "vpb-aangifte-innovatiebox-sectie",
+      "title": "Vpb-aangifte — Innovatiebox sectie",
+      "description": "Sectie voor de innovatiebox in de Vpb-aangifte voorbereiding. Rendert de gekozen route (forfaitair of afpelmethode), de van toepassing zijnde tarieven, en de innovatie-toegerekende winst per belastingjaar.",
+      "register": "shillinq",
+      "schema": "InnovatieboxElection",
+      "aggregation": "innovatieboxAdministratie",
+      "sections": [
+        {
+          "sectionId": "innovatiebox-route",
+          "title": "Innovatiebox route ({{fiscalYear}})",
+          "fields": [
+            {"key": "route", "label": "Gekozen route", "type": "string"},
+            {"key": "applicableTariff", "label": "Toepasselijk tarief", "type": "percentage"},
+            {"key": "fiscalYear", "label": "Belastingjaar", "type": "integer"}
+          ]
+        },
+        {
+          "sectionId": "innovatiebox-forfaitair",
+          "title": "Forfaitaire berekening",
+          "condition": "route == 'forfaitair'",
+          "fields": [
+            {"key": "operatingProfit", "label": "Belastbare winst", "type": "currency"},
+            {"key": "forfaitairPercentage", "label": "Forfaitair percentage", "type": "percentage"},
+            {"key": "forfaitairCapBedrag", "label": "Plafond innovatie-toegerekende winst", "type": "currency"},
+            {"key": "innovatieboxProfit", "label": "Innovatie-toegerekende winst (min(25% x winst, plafond))", "type": "currency"},
+            {"key": "capApplied", "label": "Plafond van toepassing", "type": "boolean"}
+          ]
+        },
+        {
+          "sectionId": "innovatiebox-afpelmethode",
+          "title": "Afpelmethode — per IP-activum",
+          "condition": "route == 'afpelmethode'",
+          "sourceSchema": "IPAssetValuation",
+          "joinField": "administrationId",
+          "columns": [
+            {"key": "assetNaam", "label": "IP-activum"},
+            {"key": "assetType", "label": "Activumtype"},
+            {"key": "valuationBedrag", "label": "Gekapitaliseerde waarde (EUR)", "type": "currency"},
+            {"key": "applicableTariff", "label": "Toepasselijk tarief", "type": "percentage"},
+            {"key": "vpbImpact", "label": "Vpb-impact (EUR)", "type": "currency"}
+          ],
+          "totals": [
+            {"label": "Totale innovatiebox-grondslag", "field": "vpbImpact", "operation": "sum"}
+          ]
+        }
+      ],
+      "footer": "Gegenereerd vanuit de Shillinq innovatiebox-administratie aggregatie (REQ-IBA-003, REQ-IBA-005). Bronnen: Wet Vpb art. 12b/12bg."
+    }
+  ]
 }
