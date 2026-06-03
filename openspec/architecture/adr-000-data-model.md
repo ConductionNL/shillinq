@@ -5349,3 +5349,25 @@ _Operator-curated batch of selected APInvoice UUIDs producing SEPA pain.001.001.
 - → APInvoice (many-to-many, via invoiceRefs array)
 
 - → Administration (many-to-one)
+
+## Audit-Pack Note (add-shillinq-rekenkamer-audit-pack)
+
+The `bookkeeping-rekenkamer-audit-pack` capability intentionally does NOT introduce a
+parallel audit register. Per ADR-022, the OR `audit-trail-immutable` abstraction is the
+single source of audit truth for all shillinq entities (GLTransaction, GLLine, APInvoice,
+etc.). The audit-pack outputs — NIVRA-bestand export, steekproef, ledenraadpleging-export
+— are expressed exclusively as:
+
+1. `x-openregister-aggregations` declarations on the `GLTransaction` schema
+   (see `lib/Settings/shillinq_register.json`, aggregations `nivraBestanden`,
+   `steekproef`, `ledenraadpleging`).
+2. Docudesk template references in `lib/Settings/docudesk-templates.json`.
+3. An openconnector source row in `lib/Settings/openconnector-sources.json` for
+   external audit-portal submission.
+
+No `RekenkamerExport`, `NivraRecord`, or parallel audit-pack register exists or is
+permitted. Reviewers MUST reject any PR introducing such a register or a
+`RekenkamerAuditService` PHP class — both are explicit anti-patterns per ADR-022 and
+ADR-031. Every audit-pack export itself writes an immutable audit event (type
+`audit-pack.{nivra,steekproef,ledenraadpleging}.exported`) enforced by OR's audit
+engine, not by app-local logging.
