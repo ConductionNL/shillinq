@@ -277,7 +277,9 @@ class AccountBalanceGuardTest extends TestCase
     }//end buildObjectServiceStub()
 
     /**
-     * Build an ObjectService stub that throws on findAll().
+     * Build an ObjectService stub that throws on findAll() only when filters are
+     * present (i.e. the actual balance-computation query), allowing the T1-probe
+     * call (no filters) to succeed so we reach the fail-closed catch branch.
      *
      * @return object
      */
@@ -300,6 +302,12 @@ class AccountBalanceGuardTest extends TestCase
              */
             public function findAll(array $params=[]): array
             {
+                // Allow the availability probe (no filters) to succeed so requireZeroBalance
+                // enters the balance-computation branch and can test fail-closed behavior.
+                if (empty($params['filters']) === true) {
+                    return [];
+                }
+
                 throw new \RuntimeException('DB error');
             }
         };

@@ -418,9 +418,11 @@ class InitializeSettings implements IRepairStep
 
         $settings    = $this->settingsService->getSettings();
         $govSisaFlag = ($settings['featureFlags'] ?? []);
-        $sisaEnabled = (is_array($govSisaFlag) === true)
-            ? (bool) ($govSisaFlag['gov-sisa'] ?? false)
-            : false;
+        if (is_array($govSisaFlag) === true) {
+            $sisaEnabled = (bool) ($govSisaFlag['gov-sisa'] ?? false);
+        } else {
+            $sisaEnabled = false;
+        }
 
         if ($sisaEnabled === false) {
             $output->info('Shillinq: featureFlags.gov-sisa not enabled, skipping SiSa controleprotocol seed');
@@ -502,5 +504,4 @@ class InitializeSettings implements IRepairStep
         }//end try
 
     }//end seedSisaControleprotocol()
-
 }//end class

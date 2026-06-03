@@ -24,6 +24,7 @@ use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -45,6 +46,13 @@ class InitializeSettingsTest extends TestCase
      * @var LoggerInterface&MockObject
      */
     private LoggerInterface&MockObject $logger;
+
+    /**
+     * Mock ContainerInterface.
+     *
+     * @var ContainerInterface&MockObject
+     */
+    private ContainerInterface&MockObject $container;
 
     /**
      * Mock IOutput.
@@ -71,11 +79,13 @@ class InitializeSettingsTest extends TestCase
 
         $this->settingsService = $this->createMock(SettingsService::class);
         $this->logger          = $this->createMock(LoggerInterface::class);
+        $this->container       = $this->createMock(ContainerInterface::class);
         $this->output          = $this->createMock(IOutput::class);
 
         $this->repairStep = new InitializeSettings(
             settingsService: $this->settingsService,
             logger: $this->logger,
+            container: $this->container,
         );
 
     }//end setUp()
@@ -123,7 +133,8 @@ class InitializeSettingsTest extends TestCase
      */
     public function testRunCallsLoadConfigurationAndSeedTemplate(): void
     {
-        $this->settingsService->expects($this->once())
+        // isOpenRegisterAvailable is called in run() and in each private phase method.
+        $this->settingsService->expects($this->atLeastOnce())
             ->method('isOpenRegisterAvailable')
             ->willReturn(true);
 
@@ -149,6 +160,14 @@ class InitializeSettingsTest extends TestCase
             )
             ->willReturn(['success' => true, 'seeded' => 150, 'skipped' => 0]);
 
+        // Selectielijst seed runs; return a valid result to avoid null-access PHP warnings.
+        $this->settingsService->method('seedSelectielijst')
+            ->willReturn(['success' => true, 'seeded' => 0, 'skipped' => 0]);
+
+        // Phase methods that need the DI container exit early when it throws.
+        $this->container->method('get')
+            ->willThrowException(new \RuntimeException('service not available'));
+
         $this->repairStep->run(output: $this->output);
 
     }//end testRunCallsLoadConfigurationAndSeedTemplate()
@@ -162,7 +181,8 @@ class InitializeSettingsTest extends TestCase
      */
     public function testRunSkipsSeedWhenAdministrationIdUnset(): void
     {
-        $this->settingsService->expects($this->once())
+        // isOpenRegisterAvailable is called in run() and in each private phase method.
+        $this->settingsService->expects($this->atLeastOnce())
             ->method('isOpenRegisterAvailable')
             ->willReturn(true);
 
@@ -183,6 +203,14 @@ class InitializeSettingsTest extends TestCase
         // C2: seedRgsTemplate must NOT be called when administrationId is empty.
         $this->settingsService->expects($this->never())
             ->method('seedRgsTemplate');
+
+        // Selectielijst seed runs; return a valid result to avoid null-access PHP warnings.
+        $this->settingsService->method('seedSelectielijst')
+            ->willReturn(['success' => true, 'seeded' => 0, 'skipped' => 0]);
+
+        // Phase methods that need the DI container exit early when it throws.
+        $this->container->method('get')
+            ->willThrowException(new \RuntimeException('service not available'));
 
         $this->output->expects($this->atLeastOnce())
             ->method('warning')
