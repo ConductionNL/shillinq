@@ -1,75 +1,24 @@
 {
-  "spec": "openspec/changes/add-shillinq-r-d-subsidies-mkb",
+  "spec": "openspec/changes/bookings-nl-btw-invoice",
   "verified": [
-    {
-      "task": "1",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "note": "Confirmed no subsidieRegeling enum or parallel R&D register existed before this change."
-    },
-    {
-      "task": "2",
-      "file": "openspec/specs/bookkeeping-r-d-subsidies-mkb/spec.md",
-      "ok": true
-    },
-    {
-      "task": "3",
-      "file": "openspec/changes/add-shillinq-r-d-subsidies-mkb/proposal.md",
-      "ok": true
-    },
-    {
-      "task": "4",
-      "file": "openspec/changes/add-shillinq-r-d-subsidies-mkb/design.md",
-      "ok": true
-    },
-    {
-      "task": "5",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "note": "Subsidie schema added with subsidieRegeling enum (mit|sbir|eu-horizon|efro|react-eu|other) and schema:Grant annotation."
-    },
-    {
-      "task": "6",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "note": "Kostenpost schema with allOf/if-then per-regeling kostencategorie constraints for MIT/SBIR/EU-Horizon/EFRO/REACT-EU."
-    },
-    {
-      "task": "7",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "note": "voortgangsrapportage aggregation on Subsidie grouping Kostenpost by (kostencategorie, periodId)."
-    },
-    {
-      "task": "8",
-      "file": "lib/Settings/docudesk-templates.json",
-      "ok": true,
-      "note": "Voortgangsrapportage templates: rd-subsidie-horizon-periodic-report, rd-subsidie-mit-voortgangsrapport, rd-subsidie-efro-progress-dossier."
-    },
-    {
-      "task": "9",
-      "file": "lib/Settings/docudesk-templates.json",
-      "ok": true,
-      "note": "Audit-pack templates: rd-subsidie-horizon-audit-pack (with S&O-uren-staat URI refs), rd-subsidie-mit-declaration, rd-subsidie-efro-procurement-dossier."
-    },
-    {
-      "task": "10",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "note": "EU-Horizon indirect-25% calculations: horizonDirectCosts, horizonIndirect25MaxBedrag (25%), horizonIndirect25UsageBedrag, horizonIndirect25UsagePercent, horizonIndirect25Warning (>=90%)."
-    },
-    {
-      "task": "11",
-      "file": "src/manifest.json",
-      "ok": true,
-      "note": "R&D Subsidies menu under Bookkeeping (featureFlag mkb-r-d-subsidies). Pages: RDSubsidies (index), RDSubsidieDetail (detail with aggregation + kostenposten), KostenpostDetail."
-    },
-    {
-      "task": "12",
-      "file": "openspec/architecture/adr-000-data-model.md",
-      "ok": true,
-      "note": "Subsidie + Kostenpost entity annotations added with subsidieRegeling overlay description."
-    }
+    {"task": "1", "file": "openspec/changes/bookings-nl-btw-invoice/tasks.md", "ok": true, "note": "Confirmed: no pre-existing VATAuditRecord schema, no lib/Service/VAT*.php classes"},
+    {"task": "2", "file": "openspec/changes/bookings-nl-btw-invoice/specs/bookkeeping-invoice-vat-kassakoppeling.md", "ok": true},
+    {"task": "3", "file": "openspec/changes/bookings-nl-btw-invoice/proposal.md", "ok": true},
+    {"task": "4", "file": "openspec/changes/bookings-nl-btw-invoice/design.md", "ok": true},
+    {"task": "5", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "InvoiceLine schema with vatRate/vatAmount/serviceCategory added under components.InvoiceLine"},
+    {"task": "6", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "VATAuditRecord schema added with x-openregister-immutable: true, all required fields"},
+    {"task": "7", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "ARInvoice schema with x-openregister-lifecycle, issue transition with GL materialisation template"},
+    {"task": "8", "file": "lib/Lifecycle/VatPreconditionGuard.php", "ok": true, "note": "VatPreconditionGuard referenced from ARInvoice.issue.requires; validates REQ-VAT-002 + REQ-VAT-006"},
+    {"task": "9", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "ServiceCategoryOverride schema declared"},
+    {"task": "10", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "VATGLAccounts schema declared with vat21/9/6/0Account fields, RGS defaults 2020-2023"},
+    {"task": "11", "file": "lib/Data/VAT/nl_vat_rates_2026.json", "ok": true, "note": "4 NL standard VAT rates (21%/9%/6%/0%), readOnly: true, versionLocked"},
+    {"task": "12", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "x-openregister-aggregations.vatByPeriod on VATAuditRecord schema"},
+    {"task": "13", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "TaxPeriod schema; VATAuditRecord.settlementPeriodId FK; bind-settlement-period lifecycle action"},
+    {"task": "14", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "x-openregister-calculations.vatAmount: ROUND(lineAmount*vatRate/100, 2, 'HALF_EVEN') on InvoiceLine"},
+    {"task": "15", "file": "src/manifest.json", "ok": true, "note": "VatByPeriod (index) + VatReconciliation (detail with checklist) pages + Belastingen menu entries"},
+    {"task": "16", "file": "lib/Lifecycle/VatPreconditionGuard.php", "ok": true, "note": "Error messages logged per REQ-VAT-008: vat-gl-accounts-configured, service-category-valid, settlement-period-resolvable preconditions"},
+    {"task": "17", "file": "openspec/architecture/adr-000-data-model.md", "ok": true, "note": "InvoiceLine (reconciled), ServiceCategoryOverride, VATAuditRecord, VATGLAccounts, TaxPeriod entities added"},
+    {"task": "18", "file": "openspec/architecture/adr-000-data-model.md", "ok": true, "note": "RGS GL mapping annotated: 2020=BTW21%, 2021=BTW9%, 2022=BTW6%, 2023=BTW0% in VATGLAccounts entity note"}
   ],
   "stubs": [],
   "missing_routes": []
