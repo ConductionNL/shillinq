@@ -1,65 +1,77 @@
 {
-  "spec": "openspec/changes/add-shillinq-fixed-assets-depreciation",
+  "spec": "openspec/changes/docs-product-pages-conformance",
   "verified": [
     {
       "task": "1",
-      "file": "lib/Settings/shillinq_register.json",
+      "file": "docs/user-guide/",
       "ok": true,
-      "note": "Confirmed no pre-existing FixedAsset schema; no lib/Db/ Mapper classes for fixed_asset or depreciation."
+      "note": "tutorials/ renamed to user-guide/ via git mv in commit 59c4321; admin/ and user/ subdirs present with all tutorial files"
     },
     {
       "task": "2",
-      "file": "openspec/changes/add-shillinq-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md",
+      "file": "docs/Features/index.md",
       "ok": true,
-      "note": "Spec file present with Status/Scope/Tier/Depends-on header, REQ-FA-001 through REQ-FA-007, GIVEN/WHEN/THEN scenarios."
+      "note": "FEATURES.md moved to Features/index.md; zero em-dashes confirmed"
     },
     {
       "task": "3",
-      "file": "openspec/changes/add-shillinq-fixed-assets-depreciation/proposal.md",
+      "file": "docs/Technical/architecture.md",
       "ok": true,
-      "note": "Proposal present with kind:config, Affected Projects, Scope, Risks, Rollback, Open Questions."
+      "note": "ARCHITECTURE.md moved to Technical/architecture.md; all em-dashes replaced"
     },
     {
       "task": "4",
-      "file": "openspec/changes/add-shillinq-fixed-assets-depreciation/design.md",
+      "file": "docs/UseCases/index.md",
       "ok": true,
-      "note": "Design present with D1-D4 decisions (declarative lifecycle, derived fields, parallel streams, ScheduledWorkflow) and Reuse Analysis table."
+      "note": "draft: true frontmatter stub with reference to issue #78"
+    },
+    {
+      "task": "4",
+      "file": "docs/Integrations/index.md",
+      "ok": true,
+      "note": "draft: true frontmatter stub with reference to issue #78"
     },
     {
       "task": "5",
-      "file": "lib/Settings/shillinq_register.json",
+      "file": "docs/installation.md",
       "ok": true,
-      "note": "FixedAsset schema declared with all 19 REQ-FA-002 fields (assetNumber, name, assetCategory, acquisitionDate, acquisitionCost, currency, usefulLifeMonths, residualValue, depreciationMethod, degressiveRate, commercialRate, fiscalRate, assetAccountNumber, accumulatedDepAccountNumber, depreciationExpenseAccountNumber, disposalDate, disposalAccountingTreatment, lifecycleState, administrationId)."
+      "note": "Contains Prerequisites, Install steps, Initial configuration, Next steps; zero em-dashes"
     },
     {
       "task": "6",
-      "file": "lib/Settings/shillinq_register.json",
+      "file": "docs/intro.md",
       "ok": true,
-      "note": "x-openregister-calculations added: monthlyDepreciation, currentBookValue, commercialBookValue, fiscalBookValue."
+      "note": "All three em-dashes replaced (lines 8, 11, 23)"
     },
     {
       "task": "7",
-      "file": "lib/Settings/shillinq_register.json",
+      "file": "docs/package.json",
       "ok": true,
-      "note": "x-openregister-lifecycle added with proposed→active→disposed→archived states and transitions. The active→disposed transition has an emit-journal-entry action per REQ-FA-006."
+      "note": "redocusaurus: ^2.0.0 in dependencies block"
     },
     {
       "task": "8",
-      "file": "lib/Settings/shillinq_register.json",
+      "file": "docs/docusaurus.config.js",
       "ok": true,
-      "note": "ScheduledWorkflow object registered in components.objects for monthly depreciation run targeting active FixedAsset records via monthlyDepreciation calculated field. No DepreciationJob extends TimedJob class created."
+      "note": "redocusaurus preset with spec: static/oas/shillinq.json and route: /api; API Documentation navbar link positioned after Documentation"
     },
     {
       "task": "9",
-      "file": "src/manifest.json",
+      "file": "docs/docusaurus.config.js",
       "ok": true,
-      "note": "Fixed Assets navigation entry added under Bookkeeping menu. FixedAssets (type:index) and FixedAssetDetail (type:detail) pages declared with full field config and lifecycleActions:true."
+      "note": "i18n.locales: ['en', 'nl'] with comment referencing issue #79 and ADR-030 escape hatch"
     },
     {
       "task": "10",
-      "file": "openspec/architecture/adr-000-data-model.md",
+      "file": "docs/",
       "ok": true,
-      "note": "FixedAsset entry reconciled with new canonical field set, calculated fields listed, GLLine.subLedgerRef relation documented, reconciliation note added."
+      "note": "grep -rE em-dash docs/ --include=*.md returns exit 1 (no matches fleet-wide)"
+    },
+    {
+      "task": "11",
+      "file": "docs/",
+      "ok": true,
+      "note": "npm install --legacy-peer-deps && npm run build exits 0; both en and nl locales build successfully; AI-baseline 10/10 checks passed"
     }
   ],
   "stubs": [],
