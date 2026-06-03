@@ -102,6 +102,13 @@
 					"icon": "FileChartOutline",
 					"route": "Iv3Reports",
 					"order": 84
+				},
+				{
+					"id": "FixedAssets",
+					"label": "Fixed Assets",
+					"icon": "PackageVariantOutline",
+					"route": "FixedAssets",
+					"order": 85
 				}
 			]
 		},
@@ -2736,6 +2743,184 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "Dashboard"
+			}
+		},
+		{
+			"id": "FixedAssets",
+			"route": "/bookkeeping/fixed-assets",
+			"type": "index",
+			"title": "Fixed Assets",
+			"config": {
+				"register": "shillinq",
+				"schema": "FixedAsset",
+				"columns": [
+					{
+						"key": "assetNumber",
+						"label": "Asset Number",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "assetCategory",
+						"label": "Category",
+						"sortable": true
+					},
+					{
+						"key": "acquisitionDate",
+						"label": "Acquisition Date",
+						"sortable": true
+					},
+					{
+						"key": "acquisitionCost",
+						"label": "Acquisition Cost",
+						"sortable": true
+					},
+					{
+						"key": "currentBookValue",
+						"label": "Book Value",
+						"sortable": false
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "assetNumber",
+				"detailRoute": "FixedAssetDetail"
+			}
+		},
+		{
+			"id": "FixedAssetDetail",
+			"route": "/bookkeeping/fixed-assets/:id",
+			"type": "detail",
+			"title": "Fixed Asset",
+			"config": {
+				"register": "shillinq",
+				"schema": "FixedAsset",
+				"fields": [
+					{
+						"key": "assetNumber",
+						"label": "Asset Number",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "assetCategory",
+						"label": "Category",
+						"type": "string"
+					},
+					{
+						"key": "acquisitionDate",
+						"label": "Acquisition Date",
+						"type": "date"
+					},
+					{
+						"key": "acquisitionCost",
+						"label": "Acquisition Cost",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "usefulLifeMonths",
+						"label": "Useful Life (months)",
+						"type": "integer"
+					},
+					{
+						"key": "residualValue",
+						"label": "Residual Value",
+						"type": "number"
+					},
+					{
+						"key": "depreciationMethod",
+						"label": "Depreciation Method",
+						"type": "string"
+					},
+					{
+						"key": "degressiveRate",
+						"label": "Degressive Rate",
+						"type": "number"
+					},
+					{
+						"key": "commercialRate",
+						"label": "Commercial Rate",
+						"type": "number"
+					},
+					{
+						"key": "fiscalRate",
+						"label": "Fiscal Rate",
+						"type": "number"
+					},
+					{
+						"key": "assetAccountNumber",
+						"label": "Asset Account",
+						"type": "string"
+					},
+					{
+						"key": "accumulatedDepAccountNumber",
+						"label": "Accumulated Depreciation Account",
+						"type": "string"
+					},
+					{
+						"key": "depreciationExpenseAccountNumber",
+						"label": "Depreciation Expense Account",
+						"type": "string"
+					},
+					{
+						"key": "currentBookValue",
+						"label": "Current Book Value",
+						"type": "number"
+					},
+					{
+						"key": "monthlyDepreciation",
+						"label": "Monthly Depreciation",
+						"type": "number"
+					},
+					{
+						"key": "commercialBookValue",
+						"label": "Commercial Book Value",
+						"type": "number"
+					},
+					{
+						"key": "fiscalBookValue",
+						"label": "Fiscal Book Value",
+						"type": "number"
+					},
+					{
+						"key": "disposalDate",
+						"label": "Disposal Date",
+						"type": "date"
+					},
+					{
+						"key": "disposalAccountingTreatment",
+						"label": "Disposal Treatment",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "FixedAssets"
 			}
 		}
 	]

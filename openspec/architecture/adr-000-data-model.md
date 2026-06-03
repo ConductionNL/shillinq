@@ -1879,23 +1879,55 @@ _An accounting period representing a fiscal year for financial reporting and reg
 - → JournalEntry (one-to-many)
 
 ### FixedAsset
-**Schema.org:** `schema:Thing`
-_A tangible business asset with long-term value subject to annual depreciation calculation and tracking_
-**Primary spec:** obligation-financial-administration
+**Schema.org:** `schema:Product`
+_A capitalised tangible asset subject to commercial and/or fiscal depreciation per the bookkeeping-fixed-assets-depreciation T4 capability. Depreciation values (monthlyDepreciation, currentBookValue, commercialBookValue, fiscalBookValue) are derived on demand via x-openregister-calculations — no persisted DepreciationSchedule table. The lifecycle (proposed → active → disposed → archived) is declared as x-openregister-lifecycle; the active → disposed transition auto-emits a closing JournalEntry via CloudEvent. Monthly depreciation postings are driven by OR ScheduledWorkflow (slug: shillinq-monthly-depreciation), not a per-app TimedJob per ADR-031 path 2._
+**Primary spec:** bookkeeping-fixed-assets-depreciation
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| assetNumber | string | Yes | Unique identifier for the fixed asset |
-| name | string | Yes | Name of the fixed asset |
-| assetType | string | Yes | Type of asset: equipment, vehicle, property, building, etc. |
-| purchaseDate | datetime | Yes | Date when the asset was purchased |
-| purchaseCost | number | Yes | Original acquisition cost of the asset |
-| status | string | Yes | Current status: active, inactive, retired |
-| location | string | No | Physical location of the asset |
+| assetNumber | string | Yes | Operator-assigned unique reference within the administration |
+| name | string | Yes | Human-readable name (e.g. "Dell laptop XPS-15") |
+| assetCategory | enum | Yes | One of buildings, vehicles, machinery, it-equipment, furniture, intangibles |
+| acquisitionDate | date | Yes | Date the asset entered service |
+| acquisitionCost | number | Yes | Original cost in the administration's base currency |
+| currency | string | Yes | ISO 4217 currency code |
+| usefulLifeMonths | integer | Yes | Useful life expressed in months |
+| residualValue | number | Yes | Estimated value at end of useful life |
+| depreciationMethod | enum | Yes | One of linear, degressive, units-of-production, none |
+| degressiveRate | number | No | Annual percentage when depreciationMethod = degressive |
+| commercialRate | number | No | Rate for commercial books (IFRS / Dutch GAAP) |
+| fiscalRate | number | No | Rate for fiscal books (Wet IB / Wet VPB) — may differ from commercialRate |
+| assetAccountNumber | string | Yes | FK to Account.accountNumber carrying the asset's gross value |
+| accumulatedDepAccountNumber | string | Yes | FK to the contra Account for accumulated depreciation |
+| depreciationExpenseAccountNumber | string | Yes | FK to the P&L Account for depreciation expense |
+| disposalDate | date | No | Date the asset was disposed of |
+| disposalAccountingTreatment | enum | No | One of sale, scrap, donation, transfer |
+| lifecycleState | enum | Yes | One of proposed, active, disposed, archived |
+| administrationId | string | Yes | FK to the Administration owning the asset |
+
+**Derived fields (x-openregister-calculations, never stored):**
+- `monthlyDepreciation` — monthly charge for current period
+- `currentBookValue` — net book value at today's date
+- `commercialBookValue` — NBV under commercial-books stream (when commercialRate is set)
+- `fiscalBookValue` — NBV under fiscal-books stream (when fiscalRate is set)
 
 **Relations:**
-- → Organization (many-to-one)
-- → DepreciationSchedule (one-to-many)
+- → Account (many-to-one, via assetAccountNumber → accountNumber)
+- → Account (many-to-one, via accumulatedDepAccountNumber → accountNumber)
+- → Account (many-to-one, via depreciationExpenseAccountNumber → accountNumber)
+- → Administration (many-to-one, via administrationId)
+- → GLLine (many-to-many, via GLLine.subLedgerRef when GLLine.subLedgerType = fixed-asset — sub-ledger linkage for T4 bookkeeping)
+
+> **Reconciliation note (add-shillinq-fixed-assets-depreciation, 2026-06-03):** The earlier
+> `FixedAsset` entry (primary spec: obligation-financial-administration, Schema.org `schema:Thing`)
+> used a materialised `DepreciationSchedule` relation for depreciation tracking. This entry
+> supersedes it: depreciation is now a derived field (`x-openregister-calculations`) per ADR-031
+> D2, and the lifecycle is declarative (`x-openregister-lifecycle`). The `DepreciationSchedule`
+> schema relation is removed; existing DepreciationSchedule records from
+> obligation-financial-administration remain accessible but are not created for new FixedAsset
+> records declared under this spec. New fixed-asset declarations MUST use this entry.
+> `GLLine.subLedgerRef` references a FixedAsset UUID when `GLLine.subLedgerType = fixed-asset`,
+> enabling the trial balance to segregate the fixed-asset sub-ledger from other GL lines.
 
 ### FrameworkAgreement
 **Schema.org:** `schema:Service`

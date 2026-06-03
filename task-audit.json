@@ -1,79 +1,67 @@
 {
-  "spec": "openspec/changes/docs-product-pages-conformance",
-  "verified": [
-    {
-      "task": "1",
-      "file": "docs/user-guide/",
-      "ok": true,
-      "note": "tutorials/ renamed to user-guide/ via git mv in commit 59c4321; admin/ and user/ subdirs present with all tutorial files"
-    },
-    {
-      "task": "2",
-      "file": "docs/Features/index.md",
-      "ok": true,
-      "note": "FEATURES.md moved to Features/index.md; zero em-dashes confirmed"
-    },
-    {
-      "task": "3",
-      "file": "docs/Technical/architecture.md",
-      "ok": true,
-      "note": "ARCHITECTURE.md moved to Technical/architecture.md; all em-dashes replaced"
-    },
-    {
-      "task": "4",
-      "file": "docs/UseCases/index.md",
-      "ok": true,
-      "note": "draft: true frontmatter stub with reference to issue #78"
-    },
-    {
-      "task": "4",
-      "file": "docs/Integrations/index.md",
-      "ok": true,
-      "note": "draft: true frontmatter stub with reference to issue #78"
-    },
-    {
-      "task": "5",
-      "file": "docs/installation.md",
-      "ok": true,
-      "note": "Contains Prerequisites, Install steps, Initial configuration, Next steps; zero em-dashes"
-    },
-    {
-      "task": "6",
-      "file": "docs/intro.md",
-      "ok": true,
-      "note": "All three em-dashes replaced (lines 8, 11, 23)"
-    },
-    {
-      "task": "7",
-      "file": "docs/package.json",
-      "ok": true,
-      "note": "redocusaurus: ^2.0.0 in dependencies block"
-    },
-    {
-      "task": "8",
-      "file": "docs/docusaurus.config.js",
-      "ok": true,
-      "note": "redocusaurus preset with spec: static/oas/shillinq.json and route: /api; API Documentation navbar link positioned after Documentation"
-    },
-    {
-      "task": "9",
-      "file": "docs/docusaurus.config.js",
-      "ok": true,
-      "note": "i18n.locales: ['en', 'nl'] with comment referencing issue #79 and ADR-030 escape hatch"
-    },
-    {
-      "task": "10",
-      "file": "docs/",
-      "ok": true,
-      "note": "grep -rE em-dash docs/ --include=*.md returns exit 1 (no matches fleet-wide)"
-    },
-    {
-      "task": "11",
-      "file": "docs/",
-      "ok": true,
-      "note": "npm install --legacy-peer-deps && npm run build exits 0; both en and nl locales build successfully; AI-baseline 10/10 checks passed"
-    }
-  ],
-  "stubs": [],
-  "missing_routes": []
+	"spec": "openspec/changes/add-shillinq-fixed-assets-depreciation",
+	"verified": [
+		{
+			"task": "1",
+			"file": "lib/Settings/shillinq_register.json",
+			"ok": true,
+			"note": "Confirmed no FixedAsset schema existed; DepreciationSchedule had a FK to FixedAsset in adr-000 but no FixedAsset register declaration in shillinq_register.json."
+		},
+		{
+			"task": "2",
+			"file": "openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md",
+			"ok": true,
+			"note": "Spec file pre-existing in repo; confirmed Status: proposed, Scope: shillinq, Tier: T4, all REQ-FA-001 through REQ-FA-007 present with GIVEN/WHEN/THEN scenarios."
+		},
+		{
+			"task": "3",
+			"file": "openspec/changes/add-shillinq-fixed-assets-depreciation/proposal.md",
+			"ok": true,
+			"note": "proposal.md present with Affected Projects, Scope, Risks, Rollback, Open Questions."
+		},
+		{
+			"task": "4",
+			"file": "openspec/changes/add-shillinq-fixed-assets-depreciation/design.md",
+			"ok": true,
+			"note": "design.md present with D1-D4 decisions and Reuse Analysis table."
+		},
+		{
+			"task": "5",
+			"file": "lib/Settings/shillinq_register.json#FixedAsset",
+			"ok": true,
+			"note": "FixedAsset schema declared with all 19 REQ-FA-002 fields; required fields match spec exactly."
+		},
+		{
+			"task": "6",
+			"file": "lib/Settings/shillinq_register.json#FixedAsset.x-openregister-calculations",
+			"ok": true,
+			"note": "monthlyDepreciation, monthsElapsed, currentBookValue, commercialBookValue, fiscalBookValue, monthlyCommercialDepreciation, monthlyFiscalDepreciation declared as derived fields per REQ-FA-003 + REQ-FA-004."
+		},
+		{
+			"task": "7",
+			"file": "lib/Settings/shillinq_register.json#FixedAsset.x-openregister-lifecycle",
+			"ok": true,
+			"note": "proposed → active → disposed → archived lifecycle declared; active → disposed transition has cloud-event action emitting shillinq.fixed-asset.disposal CloudEvent per REQ-FA-006."
+		},
+		{
+			"task": "8",
+			"file": "lib/Settings/shillinq_register.json#objects[shillinq-monthly-depreciation]",
+			"ok": true,
+			"note": "ScheduledWorkflow seed registered with slug shillinq-monthly-depreciation, schema FixedAsset, cronExpression 0 2 1 * * (monthly). No DepreciationJob PHP class."
+		},
+		{
+			"task": "9",
+			"file": "src/manifest.json",
+			"ok": true,
+			"note": "Fixed Assets menu entry added under Bookkeeping (order 85). FixedAssets index page and FixedAssetDetail detail page added with all calculated fields surfaced."
+		},
+		{
+			"task": "10",
+			"file": "openspec/architecture/adr-000-data-model.md#FixedAsset",
+			"ok": true,
+			"note": "FixedAsset entry updated with reconciliation note, full field table, derived fields section, and GLLine.subLedgerRef sub-ledger linkage note."
+		}
+	],
+	"stubs": [],
+	"missing_routes": []
 }
