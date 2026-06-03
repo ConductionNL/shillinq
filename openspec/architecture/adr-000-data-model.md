@@ -5104,3 +5104,87 @@ _Archiefwet 1995 + Selectielijst Gemeenten 2020 retention rule. A coded retentio
 | customRetentionYears | integer | No | Operator extension above statutory minimum (MUST be >= retentionYears; never shorter) |
 | administrationId | string | No | Administration scope for per-organisation override rules (absent = applies to all) |
 | daysUntilRetention | integer (derived) | No | Days until rule expires per x-openregister-calculations (null for keep_indefinite) |
+
+### VendorMaster
+**Schema.org:** `schema:Organization`
+_Vendor party record for accounts payable. Holds bank IBAN, payment terms, tax registration, and dunning-policy reference for a vendor within a single administration. Per REQ-AP-002._
+**Primary spec:** bookkeeping-accounts-payable-core
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| vendorNumber | string | Yes | Stable vendor identifier unique per administration |
+| name | string | Yes | Legal name of the vendor |
+| tradingName | string | No | Alternate or DBA trading name |
+| kvkNumber | string | No | Dutch KvK number (8 digits) |
+| btwNumber | string | No | Dutch BTW / EU VAT number |
+| iban | string | No | Default IBAN for outgoing payments to this vendor |
+| bic | string | No | BIC/SWIFT code matching the IBAN bank |
+| paymentTermDays | integer | Yes (default 30) | Default payment term in days; auto-sets APInvoice.dueDate |
+| defaultExpenseAccountNumber | string | No | FK to Account.accountNumber for default expense coding |
+| address | object | No | Street/number/postcode/city/country |
+| email | string | No | Primary contact email for invoice queries |
+| phone | string | No | Primary contact phone |
+| dunningPolicyId | string | No | FK to OR dunning-workflow policy record per ADR-022 |
+| contactRef | string | No | FK to OR contact abstraction if stable per ADR-022; else null |
+| administrationId | string | Yes | FK to the administration owning this vendor record |
+| lifecycleState | enum | Yes | One of active, blocked, archived |
+
+**Relations:**
+- → APInvoice (one-to-many, open invoices from this vendor)
+- → Administration (many-to-one)
+
+> **Reconciliation note (add-shillinq-accounts-payable-core, 2026-06-03):** No earlier `Vendor` or `VendorMaster` entry existed in this ADR. `VendorMaster` is the new T2 canonical vendor party register declared in `lib/Settings/shillinq_register.json`. Fields `purchaseOrderRef`/`goodsReceiptRef` on `APInvoice` are declared as FK stubs for future T4 procurement attachment; no PO/GR register exists yet. Per ADR-022, approval routing for AP invoices comes from OR's approval-workflow, not from an app-local approver table.
+
+### APInvoice
+**Schema.org:** `schema:Invoice`
+_Accounts payable sub-ledger invoice recording vendor billing and payment obligation. Posting materialises a balanced GLTransaction per T1 REQ-JE-007. Lifecycle: draft → pending → approved → posted → paid with disputed/voided branches. Approval routing consumes OR approval-workflow per ADR-022 (no app-local approval table). Per REQ-AP-003 and REQ-AP-004._
+**Primary spec:** bookkeeping-accounts-payable-core
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| invoiceNumber | string | Yes | Shillinq-side reference (auto-generated per administration) |
+| vendorInvoiceRef | string | Yes | The vendor's own invoice number as it appears on the document |
+| vendorId | string | Yes | FK to VendorMaster UUID |
+| invoiceDate | date | Yes | Date on the vendor's invoice |
+| dueDate | date | Yes | Auto-calculated from invoiceDate + vendor.paymentTermDays; overrideable |
+| currency | string (ISO 4217) | Yes | T2: base currency only; T5 adds multi-currency |
+| totalAmount | number ≥ 0 | Yes | Total amount including tax |
+| taxAmount | number | No | VAT/BTW amount (T3 adds posting automation; T2 carries the field) |
+| lines | array | Yes | {description, accountNumber, amount, taxCode, quantity, unitPrice} rows |
+| sourceDocumentUri | string | No | docudesk FK URI per bookkeeping-document-attachment-integration |
+| purchaseOrderRef | string | No | FK to PO register (future T4 procurement; nullable in T2) |
+| goodsReceiptRef | string | No | FK to Goods Receipt register (future T4; nullable in T2) |
+| approvalState | enum | Yes | One of not-required, pending, approved, rejected |
+| state | enum | Yes | One of draft, pending, approved, posted, paid, disputed, voided |
+| glTransactionId | string | No | Back-reference to materialised GLTransaction once posted |
+| idealLink | string | No | Per-invoice iDEAL payment link (x-openregister-calculations output) |
+| periodId | string | No | FK to FiscalPeriod (resolved on post transition) |
+| administrationId | string | Yes | FK to administration |
+
+**Relations:**
+- → VendorMaster (many-to-one, via vendorId)
+- → GLTransaction (many-to-one, via glTransactionId — materialised on post)
+- → Administration (many-to-one)
+
+> **Reconciliation note (add-shillinq-accounts-payable-core, 2026-06-03):** The existing `APTransaction` entry (primary spec: accounts-payable-receivable) is a generic AP/AR transaction schema. `APInvoice` is the shillinq bookkeeping-tier AP sub-ledger invoice with full lifecycle, GL materialisation, 3-way match guard, and SEPA/iDEAL calculation fields. The `APTransaction` entry is retained for generic accounts-payable-receivable usage; new AP bookkeeping register declarations in shillinq MUST use `APInvoice`. `GLLine.subLedgerType: "ap"` + `subLedgerRef: <APInvoice UUID>` (T1 REQ-GL-009 stub) now resolves to this register.
+
+### PaymentRun
+**Schema.org:** `schema:PaymentService`
+_Operator-curated batch of selected APInvoice UUIDs producing SEPA pain.001.001.03 XML and iDEAL payment links as x-openregister-calculations outputs. No PaymentRunService, SepaXmlBuilder, or IdealLinkBuilder PHP classes per ADR-031. Live PSD2 bank initiation is T4. Per REQ-AP-007._
+**Primary spec:** bookkeeping-accounts-payable-core
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| runNumber | string | Yes | Sequential identifier per administration |
+| runDate | date | Yes | Scheduled execution date |
+| invoiceRefs | array of string | Yes | List of APInvoice UUIDs to include |
+| totalAmount | number | Yes (calculated) | Sum of selected invoices' totalAmount (x-openregister-calculations) |
+| paymentMethod | enum | Yes | One of sepa-pain001, ideal |
+| sepaXml | string | Yes (calculated) | pain.001.001.03 XML (x-openregister-calculations; populated when paymentMethod=sepa-pain001) |
+| idealLinks | array of object | Yes (calculated) | {invoiceRef, url, amount, expiresAt} per invoice (x-openregister-calculations; when paymentMethod=ideal) |
+| state | enum | Yes | One of draft, ready, submitted, executed, failed |
+| administrationId | string | Yes | FK to administration |
+
+**Relations:**
+- → APInvoice (many-to-many, via invoiceRefs array)
+- → Administration (many-to-one)

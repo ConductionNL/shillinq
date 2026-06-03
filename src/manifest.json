@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"dependencies": [
 		"openregister"
 	],
@@ -45,6 +45,34 @@
 					"icon": "OfficeBuildingOutline",
 					"route": "FixedAssets",
 					"order": 30
+				},
+				{
+					"id": "Vendors",
+					"label": "Vendors",
+					"icon": "StoreOutline",
+					"route": "Vendors",
+					"order": 31
+				},
+				{
+					"id": "AccountsPayable",
+					"label": "Accounts Payable",
+					"icon": "ReceiptTextOutline",
+					"route": "AccountsPayable",
+					"order": 32
+				},
+				{
+					"id": "APAging",
+					"label": "AP Aging",
+					"icon": "CalendarClockOutline",
+					"route": "APAging",
+					"order": 33
+				},
+				{
+					"id": "PaymentRuns",
+					"label": "Payment Runs",
+					"icon": "BankTransferOutline",
+					"route": "PaymentRuns",
+					"order": 34
 				},
 				{
 					"id": "Waterschapsbelastingen",
@@ -630,7 +658,9 @@
 						"icon": "PlayCircleOutline",
 						"visibleWhen": {
 							"field": "lifecycleState",
-							"in": ["paused"]
+							"in": [
+								"paused"
+							]
 						},
 						"type": "lifecycle-transition",
 						"transition": "activate",
@@ -3306,6 +3336,382 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "Dashboard"
+			}
+		},
+		{
+			"id": "Vendors",
+			"route": "/bookkeeping/vendors",
+			"type": "index",
+			"title": "Vendors",
+			"config": {
+				"register": "shillinq",
+				"schema": "VendorMaster",
+				"columns": [
+					{
+						"key": "vendorNumber",
+						"label": "Vendor #",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "iban",
+						"label": "IBAN",
+						"sortable": false
+					},
+					{
+						"key": "paymentTermDays",
+						"label": "Payment Terms (days)",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "vendorNumber",
+				"detailRoute": "VendorDetail"
+			}
+		},
+		{
+			"id": "VendorDetail",
+			"route": "/bookkeeping/vendors/:id",
+			"type": "detail",
+			"title": "Vendor",
+			"config": {
+				"register": "shillinq",
+				"schema": "VendorMaster",
+				"fields": [
+					{
+						"key": "vendorNumber",
+						"label": "Vendor #",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Legal Name",
+						"type": "string"
+					},
+					{
+						"key": "tradingName",
+						"label": "Trading Name",
+						"type": "string"
+					},
+					{
+						"key": "kvkNumber",
+						"label": "KvK Number",
+						"type": "string"
+					},
+					{
+						"key": "btwNumber",
+						"label": "BTW Number",
+						"type": "string"
+					},
+					{
+						"key": "iban",
+						"label": "IBAN",
+						"type": "string"
+					},
+					{
+						"key": "bic",
+						"label": "BIC",
+						"type": "string"
+					},
+					{
+						"key": "paymentTermDays",
+						"label": "Payment Terms (days)",
+						"type": "integer"
+					},
+					{
+						"key": "defaultExpenseAccountNumber",
+						"label": "Default Expense Account",
+						"type": "string"
+					},
+					{
+						"key": "email",
+						"label": "Email",
+						"type": "string"
+					},
+					{
+						"key": "phone",
+						"label": "Phone",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "Vendors"
+			}
+		},
+		{
+			"id": "AccountsPayable",
+			"route": "/bookkeeping/accounts-payable",
+			"type": "index",
+			"title": "Accounts Payable",
+			"config": {
+				"register": "shillinq",
+				"schema": "APInvoice",
+				"columns": [
+					{
+						"key": "invoiceNumber",
+						"label": "Invoice #",
+						"sortable": true
+					},
+					{
+						"key": "vendorInvoiceRef",
+						"label": "Vendor Ref",
+						"sortable": true
+					},
+					{
+						"key": "vendorId",
+						"label": "Vendor",
+						"sortable": true
+					},
+					{
+						"key": "invoiceDate",
+						"label": "Invoice Date",
+						"sortable": true
+					},
+					{
+						"key": "dueDate",
+						"label": "Due Date",
+						"sortable": true
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "dueDate",
+				"detailRoute": "APInvoiceDetail"
+			}
+		},
+		{
+			"id": "APInvoiceDetail",
+			"route": "/bookkeeping/accounts-payable/:id",
+			"type": "detail",
+			"title": "AP Invoice",
+			"config": {
+				"register": "shillinq",
+				"schema": "APInvoice",
+				"fields": [
+					{
+						"key": "invoiceNumber",
+						"label": "Invoice #",
+						"type": "string"
+					},
+					{
+						"key": "vendorInvoiceRef",
+						"label": "Vendor Invoice Ref",
+						"type": "string"
+					},
+					{
+						"key": "vendorId",
+						"label": "Vendor",
+						"type": "string"
+					},
+					{
+						"key": "invoiceDate",
+						"label": "Invoice Date",
+						"type": "date"
+					},
+					{
+						"key": "dueDate",
+						"label": "Due Date",
+						"type": "date"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total Amount",
+						"type": "number"
+					},
+					{
+						"key": "taxAmount",
+						"label": "Tax Amount",
+						"type": "number"
+					},
+					{
+						"key": "approvalState",
+						"label": "Approval Status",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "glTransactionId",
+						"label": "GL Transaction",
+						"type": "string"
+					},
+					{
+						"key": "sourceDocumentUri",
+						"label": "Source Document",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "AccountsPayable"
+			}
+		},
+		{
+			"id": "APAging",
+			"route": "/bookkeeping/ap-aging",
+			"type": "index",
+			"title": "AP Aging",
+			"config": {
+				"register": "shillinq",
+				"schema": "APInvoice",
+				"aggregation": "apAging",
+				"columns": [
+					{
+						"key": "vendorId",
+						"label": "Vendor",
+						"sortable": true
+					},
+					{
+						"key": "agingBucket",
+						"label": "Aging Bucket",
+						"sortable": true
+					},
+					{
+						"key": "count",
+						"label": "Invoices",
+						"sortable": true
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total Outstanding (EUR)",
+						"sortable": true
+					}
+				],
+				"defaultSort": "agingBucket",
+				"description": "AP aging report grouping open invoices by vendor and aging bucket per REQ-AP-009. Excludes paid and voided invoices."
+			}
+		},
+		{
+			"id": "PaymentRuns",
+			"route": "/bookkeeping/payment-runs",
+			"type": "index",
+			"title": "Payment Runs",
+			"config": {
+				"register": "shillinq",
+				"schema": "PaymentRun",
+				"columns": [
+					{
+						"key": "runNumber",
+						"label": "Run #",
+						"sortable": true
+					},
+					{
+						"key": "runDate",
+						"label": "Run Date",
+						"sortable": true
+					},
+					{
+						"key": "paymentMethod",
+						"label": "Method",
+						"sortable": true
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "runDate",
+				"detailRoute": "PaymentRunDetail"
+			}
+		},
+		{
+			"id": "PaymentRunDetail",
+			"route": "/bookkeeping/payment-runs/:id",
+			"type": "detail",
+			"title": "Payment Run",
+			"config": {
+				"register": "shillinq",
+				"schema": "PaymentRun",
+				"fields": [
+					{
+						"key": "runNumber",
+						"label": "Run #",
+						"type": "string"
+					},
+					{
+						"key": "runDate",
+						"label": "Scheduled Date",
+						"type": "date"
+					},
+					{
+						"key": "paymentMethod",
+						"label": "Payment Method",
+						"type": "string"
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total Amount",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "sepaXml",
+						"label": "SEPA pain.001 XML",
+						"type": "download",
+						"mimeType": "text/xml",
+						"filename": "sepa-pain001.xml"
+					},
+					{
+						"key": "idealLinks",
+						"label": "iDEAL Payment Links",
+						"type": "list"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "PaymentRuns"
 			}
 		}
 	]
