@@ -56,6 +56,61 @@
         }
       ],
       "footer": "Gegenereerd vanuit de Shillinq innovatiebox-administratie aggregatie (REQ-IBA-003, REQ-IBA-005). Bronnen: Wet Vpb art. 12b/12bg."
+    },
+    {
+      "templateId": "vpb-aangifte-voorbereiding",
+      "title": "Vpb-aangifte voorbereiding",
+      "description": "Voorbereiding van de vennootschapsbelasting aangifte voor een ondernemingsactiviteit. Populatie vanuit de VpbBalansFiltered aggregatie (REQ-VPB-004). De feitelijke aangifte-transmissie rijdt op het T4-base bookkeeping-sbr-xbrl-reporting SBR-eindpunt (ADR-019) — geen nieuwe SBR-client.",
+      "register": "shillinq",
+      "schema": "VpbBalansLink",
+      "aggregation": "vpbBalansFiltered",
+      "sbrBinding": {
+        "endpoint": "bookkeeping-sbr-xbrl-reporting",
+        "entryPoint": "belastingdienst-vpb",
+        "xsdReference": "vpb-aangifte-{{ fiscalYear }}.xsd",
+        "note": "XSD-versie wordt per fiscaal jaar bepaald. Meerdere templateversies kunnen naast elkaar bestaan per Risk 1 in design.md."
+      },
+      "sections": [
+        {
+          "sectionId": "vpb-administratie-kop",
+          "title": "Vpb-administratie — {{administrationId}} / {{fiscalYear}}",
+          "fields": [
+            {"key": "administrationId", "label": "Administratie", "type": "string"},
+            {"key": "fiscalYear", "label": "Belastingjaar", "type": "integer"},
+            {"key": "costCenterId", "label": "Ondernemingsactiviteit (kostenplaats)", "type": "string"},
+            {"key": "vpbPligtigVanaf", "label": "Vpb-pligtig vanaf", "type": "date"}
+          ]
+        },
+        {
+          "sectionId": "vpb-balans",
+          "title": "Vpb-balans",
+          "fields": [
+            {"key": "totalActiva", "label": "Activa (EUR)", "type": "currency"},
+            {"key": "totalPassiva", "label": "Passiva (EUR)", "type": "currency"},
+            {"key": "totalResultaat", "label": "Resultaat (EUR)", "type": "currency"}
+          ]
+        },
+        {
+          "sectionId": "vpb-balans-accounts",
+          "title": "Vpb-pligtige rekeningen",
+          "sourceSchema": "GLLine",
+          "joinField": "accountNumber",
+          "filterField": "accountNumbers",
+          "columns": [
+            {"key": "accountNumber", "label": "Rekeningnummer"},
+            {"key": "accountName", "label": "Rekeningnaam"},
+            {"key": "debit", "label": "Debet (EUR)", "type": "currency"},
+            {"key": "credit", "label": "Credit (EUR)", "type": "currency"},
+            {"key": "saldo", "label": "Saldo (EUR)", "type": "currency"}
+          ],
+          "totals": [
+            {"label": "Totaal activa", "field": "debit", "operation": "sum", "condition": "accountType IN ('assets')"},
+            {"label": "Totaal passiva", "field": "credit", "operation": "sum", "condition": "accountType IN ('liabilities', 'equity')"},
+            {"label": "Netto resultaat", "field": "saldo", "operation": "sum", "condition": "accountType IN ('revenue', 'expenses')"}
+          ]
+        }
+      ],
+      "footer": "Gegenereerd vanuit de Shillinq VpbBalansFiltered aggregatie (REQ-VPB-003, REQ-VPB-004). Bron: Wet modernisering Vpb-plicht (2016). Aangifte-transmissie via T4-base SBR-XBRL eindpunt."
     }
   ]
 }

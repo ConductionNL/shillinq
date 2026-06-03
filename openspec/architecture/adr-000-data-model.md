@@ -107,6 +107,18 @@ _Hierarchical chart-of-accounts entry conforming to the RGS (Referentie Grootboe
 > `openspec/changes/add-shillinq-emu-reporting/design.md` for the full
 > Reuse Analysis and the ADR-031 declarative-vs-imperative decision.
 
+> **Vpb-pligtig annotation (add-shillinq-vpb-corporate-tax, 2026-06-03):** The
+> optional `vpbPligtig: boolean` field (default `false`) added by
+> `add-shillinq-vpb-corporate-tax` marks an account as Vpb-pligtig per Wet
+> modernisering Vpb-plicht (2016). Postings against accounts with `vpbPligtig: true`
+> contribute to the Vpb-balans aggregation declared on `VpbBalansLink`
+> (`vpbBalansFiltered`, REQ-VPB-003). The flag is a schema metadata field per ADR-031
+> — no parallel `VpbAccount` register exists. Accounts with `vpbPligtig: true` that
+> are not referenced by any `VpbBalansLink.accountNumbers` in their administration are
+> surfaced as orphaned Vpb-pligt warnings in the Vpb menu detail view (REQ-VPB-002).
+> See `openspec/changes/add-shillinq-vpb-corporate-tax/design.md` §D1 for the
+> declarative-vs-parallel-register decision.
+
 > **Reconciliation note (add-shillinq-chart-of-accounts, 2026-05-18):** The earlier
 > `GeneralLedgerAccount` entry (Schema.org `schema:Product`, primary spec
 > financial-reporting-accountability) has been reconciled into this `Account` entry.
@@ -1293,6 +1305,14 @@ _An analytical cost center (kostenplaats) for tracking, allocating, and analysin
 - → GLLine (one-to-many, via costCenterCode FK, additive dimension field per REQ-CC-003)
 
 > **Reconciliation note (add-shillinq-cost-centers-dimensions, 2026-06-03):** The earlier `CostCenter` entry (primary spec: cost-accounting-allocation) described a generic cost center with `description/status/budget/createdDate`. This entry supersedes it for the shillinq bookkeeping tier with the T4 dimensional accounting shape per REQ-CC-002: `parentCode` self-relation for hierarchy, `lifecycleState` enum mirroring Account, and `administrationId` FK. The OR-managed register pattern (ADR-022) replaces any parallel database table. No new PHP classes — this is a schema-only declaration per ADR-031.
+
+> **Ondernemingsactiviteit annotation (add-shillinq-vpb-corporate-tax, 2026-06-03):**
+> The optional `ondernemingsActiviteit: boolean` field (default `false`) marks a
+> cost-center as an ondernemingsactiviteit per Wet modernisering Vpb-plicht (2016)
+> and bookkeeping-market-government-separation. Cost-centers with
+> `ondernemingsActiviteit: true` may be referenced by a `VpbBalansLink.costCenterId`
+> (REQ-VPB-002). See `openspec/changes/add-shillinq-vpb-corporate-tax/design.md` §D2
+> for the design decision (overlay over parallel register).
 
 ### KostenDrager
 **Schema.org:** `schema:Product`
@@ -4995,6 +5015,32 @@ _User-specific preferences for display settings, notifications, language, and ot
 
 **Relations:**
 - → User (many-to-one)
+
+### VpbBalansLink
+**Schema.org:** `schema:Dataset`
+_Overlay register tying an ondernemingsactiviteit cost-center to its cluster of Vpb-pligtige accounts. Declared per REQ-VPB-002 from bookkeeping-vpb-corporate-tax. No PHP service — pure schema overlay per ADR-031. The `vpbBalansFiltered` aggregation declared on this schema filters GLLine rows per `accountNumbers` and `fiscalYearPeriods`, groups per `costCenterId`, and produces Activa / Passiva / Resultaat per ondernemingsactiviteit (REQ-VPB-003). The SBR payload binding maps the aggregation output to Belastingdienst Vpb XSD fields; actual transmission rides the T4-base `bookkeeping-sbr-xbrl-reporting` SBR endpoint (REQ-VPB-004, ADR-019). See `openspec/changes/add-shillinq-vpb-corporate-tax/design.md` §D2–D4._
+**Primary spec:** bookkeeping-vpb-corporate-tax
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| costCenterId | string | Yes | FK to CostCenter with ondernemingsActiviteit: true |
+| accountNumbers | array | Yes | Array of Account.accountNumber strings (vpbPligtig: true) |
+| vpbPligtigVanaf | date | Yes | Start date of Vpb-pligtigheid for this cluster |
+| administrationId | string | Yes | FK to the Administration |
+| description | string | No | Operator description of the ondernemingsactiviteit cluster |
+
+**Relations:**
+- → CostCenter (many-to-one, via costCenterId → code; ondernemingsActiviteit must be true)
+- → Account (many-to-many, via accountNumbers → accountNumber; vpbPligtig must be true on each)
+- → GLLine (aggregation source for vpbBalansFiltered)
+
+> **Annotation (add-shillinq-vpb-corporate-tax, 2026-06-03):** `VpbBalansLink`
+> carries the `vpbBalansFiltered` aggregation (REQ-VPB-003) and the SBR payload
+> binding for Vpb-aangifte voorbereiding (REQ-VPB-004). Orphaned-Vpb-pligt invariant:
+> accounts with `vpbPligtig: true` not referenced by any `VpbBalansLink.accountNumbers`
+> in their administration surface as warnings in the Vpb menu detail view (Task 11).
+> The Vpb-aangifte voorbereiding docudesk template is registered in
+> `lib/Settings/docudesk-templates.json` under `templateId: vpb-aangifte-voorbereiding`.
 
 ### VATReturn
 **Schema.org:** `schema:Thing`

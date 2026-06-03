@@ -1118,6 +1118,12 @@
 						"description": "BBV regulatory variant under which this account is interpreted. 'waterschap' activates the BBVW (BBV-Waterschappen) framework per REQ-WSB-001.",
 						"nullable": true,
 						"example": "waterschap"
+					},
+					"vpbPligtig": {
+						"type": "boolean",
+						"description": "Marks this account as Vpb-pligtig per Wet modernisering Vpb-plicht (2016). When true, postings against this account contribute to the Vpb-balans aggregation (REQ-VPB-001). Default false — only accounts explicitly tagged by the bookkeeper contribute.",
+						"default": false,
+						"example": false
 					}
 				},
 				"x-openregister-lifecycle": {
@@ -4084,6 +4090,12 @@
 						"type": "string",
 						"description": "FK to the Administration owning this cost center.",
 						"example": "adm-1"
+					},
+					"ondernemingsActiviteit": {
+						"type": "boolean",
+						"description": "Marks this cost center as an ondernemingsactiviteit per Wet modernisering Vpb-plicht (2016) and bookkeeping-market-government-separation. When true, the cost center may be referenced by a VpbBalansLink (REQ-VPB-002). Default false.",
+						"default": false,
+						"example": false
 					}
 				},
 				"x-openregister-lifecycle": {
@@ -6745,6 +6757,144 @@
 				"idealLinks": {
 					"expression": "invoiceRefs.map(id => ideal.generatePaymentLink({invoiceRef: id, amount: APInvoice[id].totalAmount, currency: APInvoice[id].currency}))",
 					"description": "Per-invoice iDEAL payment link array per REQ-AP-007. Populated when paymentMethod=ideal."
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
+		"VpbBalansLink": {
+			"slug": "VpbBalansLink",
+			"icon": "ScaleBalanceOutline",
+			"version": "0.1.0",
+			"title": "Vpb-balans Link",
+			"description": "Overlay register tying an ondernemingsactiviteit cost-center to its cluster of Vpb-pligtige accounts. Declared per REQ-VPB-002 from bookkeeping-vpb-corporate-tax. No PHP service — pure schema overlay per ADR-031.",
+			"type": "object",
+			"x-schema-org": "schema:Dataset",
+			"required": [
+				"costCenterId",
+				"accountNumbers",
+				"vpbPligtigVanaf",
+				"administrationId"
+			],
+			"properties": {
+				"costCenterId": {
+					"type": "string",
+					"description": "FK to a CostCenter with ondernemingsActiviteit: true. The ondernemingsactiviteit whose Vpb-pligtige accounts this link declares.",
+					"example": "KC-OA-001"
+				},
+				"accountNumbers": {
+					"type": "array",
+					"description": "Array of Account.accountNumber strings identifying the Vpb-pligtige accounts belonging to this ondernemingsactiviteit. All referenced accounts MUST have vpbPligtig: true.",
+					"items": {
+						"type": "string"
+					},
+					"minItems": 1,
+					"example": ["4100", "4200", "4300", "8000", "8100"]
+				},
+				"vpbPligtigVanaf": {
+					"type": "string",
+					"format": "date",
+					"description": "Start date of Vpb-pligtigheid for this ondernemingsactiviteit cluster per Wet modernisering Vpb-plicht (2016). Postings before this date are excluded from the Vpb-balans.",
+					"example": "2016-01-01"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the Administration owning this link. Scopes the link to one bookkeeping administration.",
+					"example": "adm-1"
+				},
+				"description": {
+					"type": "string",
+					"description": "Operator-authored description of the ondernemingsactiviteit Vpb cluster.",
+					"nullable": true,
+					"example": "Zwembad exploitatie — ondernemingsactiviteit per Vpb-plicht 2016"
+				}
+			},
+			"x-openregister-aggregations": {
+				"vpbBalansFiltered": {
+					"description": "Vpb-balans per ondernemingsactiviteit (REQ-VPB-003): filters GLLine rows where accountNumber is in this link's accountNumbers AND the periodId falls within a closed fiscal year (fiscalYearPeriods), groups per costCenterId, and produces Activa / Passiva / Resultaat columns. Balanced per T1 REQ-GL-005 invariant — unbalanced cost-centers surface as warnings. Output carries schema:Dataset annotation per ADR-031.",
+					"outputType": "VpbBalansFiltered",
+					"schemaOrg": "schema:Dataset",
+					"source": "GLLine",
+					"filter": {
+						"accountNumber": {
+							"operator": "in",
+							"field": "@self.accountNumbers"
+						},
+						"periodId": {
+							"operator": "in",
+							"field": "@params.fiscalYearPeriods"
+						},
+						"periodState": "closed"
+					},
+					"groupBy": "costCenterId",
+					"operations": {
+						"totalActiva": {
+							"field": "GLLine.amount",
+							"operation": "sum",
+							"condition": "GLLine.side = 'debit' AND Account[GLLine.accountNumber].accountType IN ('assets')"
+						},
+						"totalPassiva": {
+							"field": "GLLine.amount",
+							"operation": "sum",
+							"condition": "GLLine.side = 'credit' AND Account[GLLine.accountNumber].accountType IN ('liabilities', 'equity')"
+						},
+						"totalResultaat": {
+							"field": "GLLine.debit - GLLine.credit",
+							"operation": "sum",
+							"condition": "Account[GLLine.accountNumber].accountType IN ('revenue', 'expenses')"
+						}
+					},
+					"invariants": [
+						{
+							"id": "balance-check",
+							"description": "Per REQ-GL-005 (T1 balance invariant): totalActiva MUST equal totalPassiva + totalResultaat per ondernemingsactiviteit. Unbalanced cost-centers surface as warnings, not hard failures, per REQ-VPB-003.",
+							"expression": "abs(totalActiva - (totalPassiva + totalResultaat)) < 0.005",
+							"severity": "warning"
+						},
+						{
+							"id": "orphaned-vpb-pligt",
+							"description": "Per REQ-VPB-003 + REQ-VPB-002: every Account with vpbPligtig: true in this administration MUST appear in at least one VpbBalansLink.accountNumbers. Accounts not referenced by any link are orphaned Vpb-pligtige accounts and surface as warnings in the Vpb menu detail view (REQ-VPB-002 + Task 11).",
+							"expression": "Account.filter(a => a.vpbPligtig AND a.administrationId = @self.administrationId).every(a => @self.accountNumbers.includes(a.accountNumber))",
+							"severity": "warning"
+						}
+					],
+					"sbrPayloadBinding": {
+						"description": "SBR payload binding for Vpb-aangifte transmission. The VpbBalansFiltered aggregation output maps to Belastingdienst Vpb XSD fields. Actual transmission rides the T4-base bookkeeping-sbr-xbrl-reporting SBR endpoint per REQ-VPB-004 and ADR-019 — no new SBR client is declared here.",
+						"endpoint": "bookkeeping-sbr-xbrl-reporting",
+						"entryPoint": "belastingdienst-vpb",
+						"xsdReference": "vpb-aangifte-{{ fiscalYear }}.xsd",
+						"fieldMapping": {
+							"VpbAangifte.FiscaalJaar": "@params.fiscalYear",
+							"VpbAangifte.AdministratieId": "administrationId",
+							"VpbAangifte.CostCenterId": "costCenterId",
+							"VpbAangifte.Activa": "totalActiva",
+							"VpbAangifte.Passiva": "totalPassiva",
+							"VpbAangifte.Resultaat": "totalResultaat"
+						}
+					}
+				}
+			},
+			"x-openregister-relations": {
+				"costCenter": {
+					"localField": "costCenterId",
+					"relatedSchema": "CostCenter",
+					"relatedField": "code",
+					"cardinality": "many-to-one",
+					"description": "FK to the ondernemingsactiviteit cost-center. CostCenter.ondernemingsActiviteit MUST be true per REQ-VPB-002."
 				}
 			},
 			"x-openregister-rbac": {

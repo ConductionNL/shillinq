@@ -189,6 +189,45 @@
 					"route": "InnovatieboxElections",
 					"order": 85,
 					"featureFlag": "mkb-innovatiebox"
+				},
+				{
+					"id": "Vennootschapsbelasting",
+					"label": "Vennootschapsbelasting",
+					"icon": "ScaleBalanceOutline",
+					"order": 86,
+					"featureFlag": "mkb-vpb",
+					"children": [
+						{
+							"id": "VpbCostCenters",
+							"label": "Ondernemingsactiviteiten",
+							"icon": "OfficeBuildingOutline",
+							"route": "VpbCostCenters",
+							"type": "index",
+							"order": 10,
+							"featureFlag": "mkb-vpb",
+							"description": "Index van Vpb-pligtige ondernemingsactiviteiten (cost-centers met ondernemingsActiviteit: true) en hun gekoppelde Vpb-pligtige rekeningen per REQ-VPB-005."
+						},
+						{
+							"id": "VpbBalans",
+							"label": "Vpb-balans",
+							"icon": "TableAccountOutline",
+							"route": "VpbBalans",
+							"type": "detail",
+							"order": 20,
+							"featureFlag": "mkb-vpb",
+							"description": "Vpb-balans per ondernemingsactiviteit — Activa / Passiva / Resultaat gefilterd op Vpb-pligtige rekeningen per gesloten fiscaal jaar (VpbBalansFiltered aggregatie, REQ-VPB-003)."
+						},
+						{
+							"id": "VpbAangifteVoorbereiding",
+							"label": "Aangifte voorbereiding",
+							"icon": "FileDocumentCheckOutline",
+							"route": "VpbAangifteVoorbereiding",
+							"type": "detail",
+							"order": 30,
+							"featureFlag": "mkb-vpb",
+							"description": "Vpb-aangifte voorbereiding per ondernemingsactiviteit via docudesk template (REQ-VPB-004). Aangifte-transmissie rijdt op T4-base bookkeeping-sbr-xbrl-reporting SBR-eindpunt."
+						}
+					]
 				}
 			]
 		},
