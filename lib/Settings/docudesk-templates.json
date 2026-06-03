@@ -1,0 +1,61 @@
+{
+  "_spdx": {
+    "SPDX-FileCopyrightText": "2026 Conduction B.V.",
+    "SPDX-License-Identifier": "EUPL-1.2"
+  },
+  "_meta": {
+    "description": "Docudesk template registry for Shillinq. Templates are registered here and rendered by the docudesk integration (ADR-022).",
+    "idempotency": "templateId"
+  },
+  "templates": [
+    {
+      "templateId": "vpb-aangifte-innovatiebox-sectie",
+      "title": "Vpb-aangifte — Innovatiebox sectie",
+      "description": "Sectie voor de innovatiebox in de Vpb-aangifte voorbereiding. Rendert de gekozen route (forfaitair of afpelmethode), de van toepassing zijnde tarieven, en de innovatie-toegerekende winst per belastingjaar.",
+      "register": "shillinq",
+      "schema": "InnovatieboxElection",
+      "aggregation": "innovatieboxAdministratie",
+      "sections": [
+        {
+          "sectionId": "innovatiebox-route",
+          "title": "Innovatiebox route ({{fiscalYear}})",
+          "fields": [
+            {"key": "route", "label": "Gekozen route", "type": "string"},
+            {"key": "applicableTariff", "label": "Toepasselijk tarief", "type": "percentage"},
+            {"key": "fiscalYear", "label": "Belastingjaar", "type": "integer"}
+          ]
+        },
+        {
+          "sectionId": "innovatiebox-forfaitair",
+          "title": "Forfaitaire berekening",
+          "condition": "route == 'forfaitair'",
+          "fields": [
+            {"key": "operatingProfit", "label": "Belastbare winst", "type": "currency"},
+            {"key": "forfaitairPercentage", "label": "Forfaitair percentage", "type": "percentage"},
+            {"key": "forfaitairCapBedrag", "label": "Plafond innovatie-toegerekende winst", "type": "currency"},
+            {"key": "innovatieboxProfit", "label": "Innovatie-toegerekende winst (min(25% x winst, plafond))", "type": "currency"},
+            {"key": "capApplied", "label": "Plafond van toepassing", "type": "boolean"}
+          ]
+        },
+        {
+          "sectionId": "innovatiebox-afpelmethode",
+          "title": "Afpelmethode — per IP-activum",
+          "condition": "route == 'afpelmethode'",
+          "sourceSchema": "IPAssetValuation",
+          "joinField": "administrationId",
+          "columns": [
+            {"key": "assetNaam", "label": "IP-activum"},
+            {"key": "assetType", "label": "Activumtype"},
+            {"key": "valuationBedrag", "label": "Gekapitaliseerde waarde (EUR)", "type": "currency"},
+            {"key": "applicableTariff", "label": "Toepasselijk tarief", "type": "percentage"},
+            {"key": "vpbImpact", "label": "Vpb-impact (EUR)", "type": "currency"}
+          ],
+          "totals": [
+            {"label": "Totale innovatiebox-grondslag", "field": "vpbImpact", "operation": "sum"}
+          ]
+        }
+      ],
+      "footer": "Gegenereerd vanuit de Shillinq innovatiebox-administratie aggregatie (REQ-IBA-003, REQ-IBA-005). Bronnen: Wet Vpb art. 12b/12bg."
+    }
+  ]
+}

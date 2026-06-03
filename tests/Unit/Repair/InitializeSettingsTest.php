@@ -77,10 +77,10 @@ class InitializeSettingsTest extends TestCase
     {
         parent::setUp();
 
-        $this->settingsService = $this->createMock(SettingsService::class);
-        $this->container       = $this->createMock(ContainerInterface::class);
-        $this->logger          = $this->createMock(LoggerInterface::class);
-        $this->output          = $this->createMock(IOutput::class);
+        $this->settingsService = $this->createMock(originalClassName: SettingsService::class);
+        $this->container       = $this->createMock(originalClassName: ContainerInterface::class);
+        $this->logger          = $this->createMock(originalClassName: LoggerInterface::class);
+        $this->output          = $this->createMock(originalClassName: IOutput::class);
 
         $this->repairStep = new InitializeSettings(
             settingsService: $this->settingsService,
@@ -99,8 +99,8 @@ class InitializeSettingsTest extends TestCase
     {
         $name = $this->repairStep->getName();
 
-        self::assertIsString($name);
-        self::assertNotEmpty($name);
+        self::assertIsString(actual: $name);
+        self::assertNotEmpty(actual: $name);
 
     }//end testGetNameReturnsDescriptiveString()
 
@@ -120,7 +120,7 @@ class InitializeSettingsTest extends TestCase
 
         $this->output->expects($this->once())
             ->method('warning')
-            ->with($this->stringContains('OpenRegister'));
+            ->with($this->stringContains(string: 'OpenRegister'));
 
         $this->repairStep->run(output: $this->output);
 
@@ -143,13 +143,15 @@ class InitializeSettingsTest extends TestCase
 
         $this->settingsService->expects($this->atLeastOnce())
             ->method('getSettings')
-            ->willReturn([
-                'rgs_template'      => 'mkb',
-                'administration_id' => 'adm-1',
-                'register'          => '',
-                'openregisters'     => true,
-                'isAdmin'           => false,
-            ]);
+            ->willReturn(
+                    [
+                        'rgs_template'      => 'mkb',
+                        'administration_id' => 'adm-1',
+                        'register'          => '',
+                        'openregisters'     => true,
+                        'isAdmin'           => false,
+                    ]
+                    );
 
         $this->settingsService->expects($this->once())
             ->method('seedRgsTemplate')
@@ -187,13 +189,15 @@ class InitializeSettingsTest extends TestCase
 
         $this->settingsService->expects($this->atLeastOnce())
             ->method('getSettings')
-            ->willReturn([
-                'rgs_template'      => 'mkb',
-                'administration_id' => '',
-                'register'          => '',
-                'openregisters'     => true,
-                'isAdmin'           => false,
-            ]);
+            ->willReturn(
+                    [
+                        'rgs_template'      => 'mkb',
+                        'administration_id' => '',
+                        'register'          => '',
+                        'openregisters'     => true,
+                        'isAdmin'           => false,
+                    ]
+                    );
 
         // C2: seedRgsTemplate and seedAllocationRules must NOT be called when administrationId is empty.
         $this->settingsService->expects($this->never())
@@ -204,7 +208,7 @@ class InitializeSettingsTest extends TestCase
 
         $this->output->expects($this->atLeastOnce())
             ->method('warning')
-            ->with($this->stringContains('administration_id'));
+            ->with($this->stringContains(string: 'administration_id'));
 
         $this->repairStep->run(output: $this->output);
 
@@ -240,5 +244,4 @@ class InitializeSettingsTest extends TestCase
         $this->repairStep->run(output: $this->output);
 
     }//end testRunSkipsSeedWhenLoadConfigurationFails()
-
 }//end class
