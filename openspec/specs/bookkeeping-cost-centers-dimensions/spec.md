@@ -1,151 +1,211 @@
 # Spec: bookkeeping-cost-centers-dimensions
 
 **Status:** proposed
-**Scope:** bookkeeping
-**Tier:** T2 (advanced features)
+**Scope:** shillinq
+**Tier:** T4 (advanced engine)
 **Depends on:** bookkeeping-general-ledger (T1)
 
 ## ADDED Requirements
 
-@e2e exclude pure backend/schema: cost centre register — not browser-testable
+### REQ-CC-001: The system SHALL store analytical dimensions as OpenRegister-managed registers declared in the app manifest
 
-
-### REQ-CD-001: The system SHALL store analytical dimensions as OpenRegister-managed registers declared in the app manifest
-
-Cost centers, projects, and custom analytical dimensions MUST be declared as registers in the app configuration (e.g., `lib/Settings/shillinq_register.json`) and surfaced through `src/manifest.json` per ADR-024. The set of supported dimension types MUST be open: an administration MAY add a custom dimension register (e.g., "region", "product line", "department") by declaring it the same way, without code changes to the bookkeeping PHP layer (per ADR-022 — consume OR's register abstraction rather than write a parallel dimension table).
+Cost centers, kostendragers (cost units), projects, and any custom
+analytical dimension MUST be declared as registers in
+`lib/Settings/shillinq_register.json` and surfaced through
+`src/manifest.json` per ADR-024. The set of supported dimension
+types MUST be open: an administration MAY add a custom dimension
+register (e.g. "department", "product line", "campaign") by
+declaring it the same way, without code changes to shillinq's
+PHP layer (per ADR-022 — consume OR's register abstraction rather
+than write a parallel dimension table).
 
 #### Scenario: Reviewer confirms no parallel dimension table
 
-- **GIVEN** the bookkeeping codebase
-- **WHEN** scanned for `lib/Db/` Mapper classes naming `cost_center` / `dimension` / `cost_object`
-- **THEN** no such classes SHALL exist; all dimensions are OR-managed registers.
+- **GIVEN** the shillinq codebase
+- **WHEN** scanned for `lib/Db/` Mapper classes naming
+  `cost_center` / `dimension` / `cost_unit`
+- **THEN** no such classes SHALL exist; all dimensions are
+  OR-managed registers.
 
-#### Scenario: A custom analytical dimension register is consumable through the same path as the built-in ones
+#### Scenario: A custom dimension register is consumable through the same path as the built-in ones
 
-- **GIVEN** an operator-defined `Region` register declared in app configuration with `x-openregister-purpose: dimension`
+- **GIVEN** an operator-defined `Campaign` register declared in
+  `lib/Settings/shillinq_register.json` with
+  `x-openregister-purpose: dimension`
 - **WHEN** the manifest declares an index/detail page for it
-- **THEN** the dimension MUST be selectable from the GL line entry form alongside the built-in cost-center and project dimensions, with no bookkeeping PHP edits.
+- **THEN** the dimension MUST be selectable from the GL line entry
+  form alongside the built-in cost-center and kostendrager
+  dimensions, with no shillinq PHP edits.
 
-### REQ-CD-002: The `CostCenter` schema SHALL declare a fixed minimum field set with hierarchy support
+### REQ-CC-002: The `CostCenter` schema SHALL declare a fixed minimum field set with hierarchy
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
-| `code` | string | Yes | Operator-assigned unique reference within the administration (e.g., `CC-001`) |
-| `name` | string | Yes | Human-readable name (e.g., `Sales, Amsterdam`) |
-| `description` | string | No | Detailed cost center description and responsibilities |
+| `code` | string | Yes | Operator-assigned unique reference within the administration |
+| `name` | string | Yes | Human-readable name |
 | `parentCode` | string | No | FK to parent `CostCenter.code` for hierarchy via `x-openregister-relations` self-relation |
-| `manager` | string | No | User ID of the cost-center owner or manager |
-| `budget` | number | No | Allocated annual or periodic budget amount in EUR |
-| `status` | enum | Yes | One of `active`, `blocked`, `archived` |
+| `responsibleUser` | string | No | NC user id of the cost-center owner |
+| `lifecycleState` | enum | Yes | One of `active`, `blocked`, `archived` (mirrors `Account` lifecycle per REQ-CoA-005) |
 | `administrationId` | string | Yes | FK to the administration |
 
-The `Project` schema MUST declare an equivalent shape (code, name, parentCode for hierarchy, manager, budget, status, administrationId) for project-based analytical accounting.
+Equivalent schemas MUST be declared for `KostenDrager` (cost unit /
+cost object) and `Project`. The three share the same shape; the
+distinction is semantic (per Dutch GAAP and accounting practice)
+and surfaces in the UI labels.
 
 #### Scenario: A cost-center hierarchy resolves via OR's relation engine
 
-- **GIVEN** cost-center `CC-001 Administratie` and child `CC-010 Administratie, Utrecht`
-- **WHEN** the child's `parentCode` is set to `CC-001`
-- **THEN** OR's relation engine MUST resolve the parent on read; **AND** the segment P&L (per REQ-CD-004) MUST roll child amounts up to the parent.
+- **GIVEN** cost-center `KC-100 Sales` and child `KC-110 Sales NL`
+- **WHEN** the child's `parentCode` is set to `KC-100`
+- **THEN** OR's relation engine MUST resolve the parent on read;
+  **AND** the segment P&L (per REQ-CC-005) MUST roll child amounts
+  up to the parent.
 
-### REQ-CD-003: The `GLLine` schema SHALL carry optional dimension references additively
+### REQ-CC-003: The `GLLine` schema SHALL carry optional dimension references additively
 
-The tier-1 `GLLine` schema MUST be extended additively with the following optional fields:
+The T1 `GLLine` schema MUST be extended additively with the
+following optional fields (the T1 `costCenter` field is the
+backwards-compatible alias for `costCenterCode`):
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
-| `costCenterCode` | string | No | FK to `CostCenter.code` for cost-center-based analysis |
-| `projectCode` | string | No | FK to `Project.code` for project-based analysis |
-| `dimensions` | object | No | Free-form key→value map for custom analytical dimensions, where each key matches a registered `AnalyticalDimension` register code and the value matches that dimension's code value |
+| `costCenterCode` | string | No | FK to `CostCenter.code` |
+| `kostenDragerCode` | string | No | FK to `KostenDrager.code` |
+| `projectCode` | string | No | FK to `Project.code` |
+| `dimensions` | object | No | Free-form key→value map for custom dimensions, where each key matches a registered custom dimension register and the value matches that register's `code` field |
 
-The `dimensions` map MUST be validated per registered analytical dimension (each key MUST point at an existing `AnalyticalDimension` register, each value MUST resolve to an existing record's code in that dimension). Validation is declared via OR's relation engine, not written in PHP.
+The `dimensions` map MUST be validated per registered custom
+dimension (each key MUST point at an existing custom dimension
+register, each value MUST resolve to an existing record in that
+register). Validation is declared via OR's relation engine, not
+written in PHP.
 
 #### Scenario: A line referencing a non-existent custom dimension key fails validation
 
-- **GIVEN** no `Region` analytical dimension register is registered
-- **WHEN** a `GLLine` is saved with `dimensions: {"region": "NL"}`
+- **GIVEN** no `Campaign` register is registered
+- **WHEN** a `GLLine` is saved with `dimensions: {"campaign": "SUMMER2026"}`
 - **THEN** the save MUST fail with an "unknown dimension key" error.
 
 #### Scenario: A line referencing a missing dimension value fails validation
 
-- **GIVEN** the `Region` analytical dimension register is registered but contains no record with code `"NL"`
-- **WHEN** a `GLLine` is saved with `dimensions: {"region": "NL"}`
+- **GIVEN** the `Campaign` register is registered but contains no
+  record with `code: "SUMMER2026"`
+- **WHEN** a `GLLine` is saved with `dimensions: {"campaign": "SUMMER2026"}`
 - **THEN** the save MUST fail with an "unknown dimension value" error.
 
-### REQ-CD-004: The system SHALL expose a segment P&L derived from dimension-tagged GL lines via `x-openregister-aggregations`
+### REQ-CC-004: Cost allocation rules SHALL be declared as schema metadata per ADR-031, not authored as service classes
 
-Per ADR-031, segment P&L (P&L broken down by cost-center, project, or custom dimension) MUST be declared as `x-openregister-aggregations` on `GLLine` keyed by (`fiscalYearId`, `accountNumber`, dimension code). The aggregation MUST be consumable by:
-
-- Dashboard widgets (per ADR-022 — dashboard reads aggregations via runtime GraphQL)
-- Manifest detail pages on a cost-center or project record (which render that segment's roll-up)
-- Reporting exports (P&L by cost center, by project, by region, etc.)
-
-No PHP `SegmentReportService.getByDimension()` aggregates from ledger lines — the aggregation is declarative.
-
-#### Scenario: Aggregation rolls dimension amounts up to a parent
-
-- **GIVEN** posted lines tagged `CC-010 Sales, Utrecht` and `CC-020 Sales, Amsterdam` (both children of `CC-001 Sales`)
-- **WHEN** the segment P&L aggregation is queried for `CC-001`
-- **THEN** the result MUST include the sum of both children's amounts under `CC-001`.
-
-#### Scenario: Multiple dimensions can be analyzed in parallel
-
-- **GIVEN** posted lines tagged with both cost-center and project dimensions
-- **WHEN** the segment P&L aggregation is queried
-- **THEN** separate aggregations MUST be available for cost-center roll-up AND project roll-up, without data duplication or schema changes.
-
-### REQ-CD-005: Analytical dimensions and cost centers SHALL be reachable through the manifest navigation
-
-`src/manifest.json` MUST declare navigation entries (under `Bookkeeping > Dimensions`) with `type: index` + `type: detail` pages for `CostCenter`, `Project`, `AnalyticalDimension`, and any operator-registered custom dimension register. All pages MUST be rendered by the generic `@conduction/nextcloud-vue` `CnIndexPage` / `CnDetailPage` components — no bespoke Vue files (per ADR-024).
-
-#### Scenario: A newly registered custom analytical dimension appears in the nav after manifest reload
-
-- **GIVEN** the operator adds a `Department` analytical dimension register and a corresponding manifest entry
-- **WHEN** the manifest is reloaded
-- **THEN** the `Bookkeeping > Dimensions > Department` entry MUST appear with no PHP / Vue edits.
-
-### REQ-CD-006: The `AnalyticalDimension` register SHALL define custom dimension shape and governance
-
-The `AnalyticalDimension` register MUST declare the shape for operator-defined custom analytical dimensions:
+A cost-allocation rule (e.g. "spread overhead 1000-1099 across
+KC-100/KC-200/KC-300 by 50/30/20") MUST be declared as an
+`AllocationRule` register record. The schema MUST capture:
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
-| `code` | string | Yes | Unique dimension identifier used in `GLLine.dimensions` map keys (e.g., `region`, `product-line`) |
-| `name` | string | Yes | Human-readable dimension name (e.g., `Regio`, `Productlijn`) |
-| `description` | string | No | Description of what this dimension captures |
-| `dataType` | enum | Yes | One of `string`, `number`, `date` (determines value validation) |
-| `isHierarchical` | boolean | No | Whether values in this dimension support parent-child relationships |
+| `name` | string | Yes | Operator-readable rule name |
+| `sourceAccountPattern` | string | Yes | Glob or range pattern that matches source accounts (e.g. `1000-1099`) |
+| `driver` | enum | Yes | One of `fixed-percentage`, `fixed-amount`, `volume`, `headcount` |
+| `targets[]` | array of `{code, percentage?, amount?, source?}` | Yes | At least 2 entries; percentages MUST sum to 100 when `driver = fixed-percentage` |
+| `targetDimension` | enum | Yes | One of `cost-center`, `kosten-drager`, `project` — identifies which dimension the `targets[].code` refers to |
+| `cadence` | enum | Yes | One of `per-posting`, `monthly`, `period-close` |
+| `lifecycleState` | enum | Yes | `active` / `paused` / `archived` |
 | `administrationId` | string | Yes | FK to the administration |
 
-Each analytical dimension's **values** (e.g., regions: NL, BE, DE) are stored as a separate register instance (dynamically created or operator-managed). The `GLLine.dimensions` map references these values via the dimension's code.
+When `cadence = per-posting`, the rule is evaluated by an
+`x-openregister-lifecycle` action on `GLTransaction.post` that
+creates additional balanced `GLLine` rows distributing the source
+amount per the rule. When `cadence = monthly` or `period-close`,
+an OR `ScheduledWorkflow` evaluates the rule on its cadence (per
+ADR-031). No PHP `AllocationService.allocate()` ever runs the rule.
 
-#### Scenario: An operator defines a custom region dimension
+#### Scenario: Reviewer confirms no allocation service
 
-- **GIVEN** an `AnalyticalDimension` record with `code: region`, `name: Regio`, `isHierarchical: false`
-- **WHEN** an administration operator creates region value records (NL, BE, DE)
-- **THEN** GL lines MAY reference them via `dimensions: {"region": "NL"}` with automatic validation.
+- **GIVEN** the shillinq codebase
+- **WHEN** scanned for `lib/Service/` classes with method names
+  matching `allocate*` / `distributeCost*` / `spread*`
+- **THEN** no such classes SHALL exist; allocation MUST be schema-
+  declared.
 
-### REQ-CD-007: Multi-dimensional hierarchies SHALL support roll-up and drill-down analysis
+#### Scenario: A fixed-percentage rule fails validation when targets do not sum to 100
 
-The segment P&L aggregation MUST support hierarchical roll-up — when a cost-center or project has a parent, aggregated amounts for the child MUST be automatically rolled up to the parent level without duplication or double-counting.
+- **GIVEN** the `AllocationRule` schema
+- **WHEN** a rule is saved with `driver: fixed-percentage` and
+  `targets: [{code: "KC-100", percentage: 60}, {code: "KC-200", percentage: 30}]`
+- **THEN** the save MUST fail with a "percentages must sum to 100"
+  error.
 
-#### Scenario: Hierarchical roll-up sums child costs to parent
+#### Scenario: A per-posting rule splits a line on post
 
-- **GIVEN** cost centers arranged: CC-001 (parent) → CC-010, CC-020 (children)
-- **WHEN** GL lines are posted tagged to CC-010 (€100) and CC-020 (€200)
-- **THEN** querying segment P&L for CC-001 MUST return €300 total, with child breakdowns visible on drill-down.
+- **GIVEN** an active `AllocationRule` matching source account
+  `4900` with `driver: fixed-percentage`, targets
+  `[{code: KC-100, percentage: 50}, {code: KC-200, percentage: 50}]`,
+  `cadence: per-posting`
+- **WHEN** a `GLTransaction` is posted with a single line `Dr 4900 €1000`
+- **THEN** the lifecycle action MUST emit two additional
+  cost-center-tagged lines splitting €500/€500, keeping the
+  transaction balanced.
 
-#### Scenario: Drill-down shows child dimensions under a parent
+### REQ-CC-005: The system SHALL expose a segment P&L derived from dimension-tagged GL lines via `x-openregister-aggregations`
 
-- **GIVEN** a user viewing segment P&L for CC-001
-- **WHEN** they drill down or expand CC-001
-- **THEN** child cost-center breakdowns (CC-010: €100, CC-020: €200) MUST appear inline or in a detail view.
+Per ADR-031, segment P&L (P&L broken down by cost-center / project
+/ custom dimension) MUST be declared as an
+`x-openregister-aggregations` on `GLLine` keyed by
+(`fiscalYearId`, `accountNumber`, dimension code). The aggregation
+MUST be consumable by:
 
-### REQ-CD-008: The capability SHALL support multi-dimensional analysis (cost center AND project AND custom dimension simultaneously)
+- launchpad dashboard widgets (per ADR-022 — launchpad reads aggregations
+  via runtime GraphQL)
+- the SBR/XBRL builder (per `bookkeeping-sbr-xbrl-reporting`) when
+  segment reporting is required
+- the manifest detail page on a CostCenter record (which renders
+  that segment's roll-up)
 
-GL lines MAY be tagged with multiple dimensions simultaneously (e.g., cost-center + project + region). The aggregation engine MUST support independent roll-ups for each dimension without requiring separate data storage or cross-dimensional computation.
+No PHP `SegmentReportService.getByDimension()` aggregates from
+ledger lines — the aggregation is declarative.
 
-#### Scenario: A line tagged with three dimensions is aggregated correctly in each dimension
+#### Scenario: Aggregation rolls dimension amounts up to a parent
 
-- **GIVEN** a GL line tagged: `costCenterCode: CC-001`, `projectCode: PROJ-100`, `dimensions: {region: NL}`
-- **WHEN** segment P&L aggregations are queried for each dimension separately
-- **THEN** the line's amount MUST appear in CC-001's roll-up, in PROJ-100's roll-up, AND in the NL region's roll-up.
+- **GIVEN** posted lines tagged `KC-110 Sales NL` and `KC-120 Sales BE`
+  (both children of `KC-100 Sales`)
+- **WHEN** the segment P&L aggregation is queried for `KC-100`
+- **THEN** the result MUST include the sum of both children's
+  amounts under `KC-100`.
+
+### REQ-CC-006: Cost centers and other dimensions SHALL be reachable through the shillinq manifest navigation
+
+`src/manifest.json` MUST declare navigation entries (under
+`Bookkeeping > Dimensions`) with `type: index` + `type: detail`
+pages for `CostCenter`, `KostenDrager`, `Project`, and any
+operator-registered custom dimension register. The
+`AllocationRule` register MUST also surface as an index/detail
+page. All pages MUST be rendered by the generic
+`@conduction/nextcloud-vue` `CnIndexPage` / `CnDetailPage`
+components — no bespoke Vue files (per ADR-024 Tier-4).
+
+#### Scenario: A newly registered custom dimension appears in the nav after manifest reload
+
+- **GIVEN** the operator adds a `Campaign` dimension register and
+  a corresponding manifest entry
+- **WHEN** the manifest is reloaded
+- **THEN** the `Bookkeeping > Dimensions > Campaign` entry MUST
+  appear with no PHP / Vue edits.
+
+### REQ-CC-007: This capability SHALL pre-position `time-per-cost-center` as the data shape WBSO (T4-specialized) will consume
+
+The fields and aggregations declared here MUST be sufficient for a
+later T4-specialized WBSO capability to derive `hours-per-project`
+totals without modification — i.e. the `Project` register's `code`
+field, the `GLLine.projectCode` FK, and the segment P&L
+aggregation MUST shape such that a WBSO time-tracking capability
+can join time records to projects and aggregate hours per project
+per fiscal year. This requirement names a downstream dependency;
+it does not require any WBSO code in this capability.
+
+#### Scenario: A WBSO-style projection query works without changes
+
+- **GIVEN** a hypothetical `TimeEntry` register tagged by
+  `projectCode`
+- **WHEN** an aggregation joins `TimeEntry.hours` to
+  `Project.code` and groups by `Project.code` and
+  `Project.fiscalYearId`
+- **THEN** the join MUST resolve cleanly using the dimension shape
+  declared here, with no schema changes required.
