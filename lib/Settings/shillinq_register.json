@@ -6763,6 +6763,418 @@
 					}
 				}
 			}
+		},
+		"Budget": {
+			"slug": "Budget",
+			"icon": "CashMultiple",
+			"version": "0.1.0",
+			"title": "Budget",
+			"description": "Per-account per-period budget line for variance analysis against actual GL postings. Used by the reconciliation reports (REQ-RR-004) to compute budget vs actual variance. Each row represents the operator-maintained budget for one account in one period within one administration.",
+			"x-schema-org": "schema:BudgetDistribution",
+			"type": "object",
+			"required": [
+				"accountNumber",
+				"periodId",
+				"budgetAmount",
+				"currency",
+				"administrationId",
+				"lifecycleState"
+			],
+			"properties": {
+				"accountNumber": {
+					"type": "string",
+					"description": "FK to Account.accountNumber. Scoped to administrationId.",
+					"example": "4100"
+				},
+				"periodId": {
+					"type": "string",
+					"description": "Fiscal period identifier (e.g. 2026-Q1 or 2026-07). Must match the periodId used by GLLine records for the variance join.",
+					"example": "2026-Q1"
+				},
+				"budgetAmount": {
+					"type": "number",
+					"description": "Operator-maintained budget amount for this account in this period. Non-negative.",
+					"minimum": 0,
+					"example": 10000.0
+				},
+				"currency": {
+					"type": "string",
+					"description": "ISO 4217 currency code. Must equal the administration's base currency.",
+					"minLength": 3,
+					"maxLength": 3,
+					"default": "EUR",
+					"example": "EUR"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the Administration that owns this budget line. Scopes accountNumber uniqueness.",
+					"example": "adm-1"
+				},
+				"lifecycleState": {
+					"type": "string",
+					"description": "Budget line lifecycle state.",
+					"enum": [
+						"draft",
+						"approved",
+						"archived"
+					],
+					"default": "draft",
+					"example": "draft"
+				},
+				"notes": {
+					"type": "string",
+					"description": "Operator-authored free-text notes for this budget line (e.g. budget basis, assumptions).",
+					"nullable": true
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "lifecycleState",
+				"initialState": "draft",
+				"states": {
+					"draft": {
+						"label": "Draft",
+						"description": "Budget line is being prepared; not yet in effect for variance reporting."
+					},
+					"approved": {
+						"label": "Approved",
+						"description": "Budget line is approved and active for variance analysis."
+					},
+					"archived": {
+						"label": "Archived",
+						"description": "Historical budget line; no longer editable but remains queryable for multi-year trend analysis."
+					}
+				},
+				"transitions": {
+					"approve": {
+						"from": "draft",
+						"to": "approved",
+						"label": "Approve budget",
+						"description": "Confirm the budget amount for this account and period."
+					},
+					"revise": {
+						"from": "approved",
+						"to": "draft",
+						"label": "Revise budget",
+						"description": "Return to draft for amendment; variance report excludes draft lines."
+					},
+					"archive": {
+						"from": [
+							"draft",
+							"approved"
+						],
+						"to": "archived",
+						"label": "Archive budget",
+						"description": "Close out a historical period's budget line."
+					}
+				}
+			},
+			"x-openregister-relations": {
+				"account": {
+					"localField": "accountNumber",
+					"relatedSchema": "Account",
+					"relatedField": "accountNumber",
+					"cardinality": "many-to-one",
+					"description": "The account this budget line is maintained for. FK resolves administrationId-scoped accountNumber."
+				}
+			},
+			"x-openregister-aggregations": {
+				"totalApprovedByPeriod": {
+					"description": "Sum of approved budget amounts per period for an administration.",
+					"filter": {
+						"administrationId": "@params.administrationId",
+						"lifecycleState": "approved"
+					},
+					"groupBy": "periodId",
+					"operation": "sum",
+					"field": "budgetAmount"
+				},
+				"totalApprovedByAccount": {
+					"description": "Sum of approved budget amounts per account for an administration and period.",
+					"filter": {
+						"administrationId": "@params.administrationId",
+						"lifecycleState": "approved",
+						"periodId": "@params.periodId"
+					},
+					"groupBy": "accountNumber",
+					"operation": "sum",
+					"field": "budgetAmount"
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"controller": {
+						"permissions": [
+							"create",
+							"read",
+							"update",
+							"delete"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
+		"SavedQuery": {
+			"slug": "SavedQuery",
+			"icon": "DatabaseSearchOutline",
+			"version": "0.1.0",
+			"title": "Saved Query",
+			"description": "Named parameterised aggregation query consumed by launchpad dashboard widgets and shillinq manifest detail pages via runtime GraphQL. No ReportingService; queries are declared as x-openregister-aggregations per ADR-031 and REQ-RR-001. Four canonical reconciliation-report queries ship here: sub-ledger vs GL (REQ-RR-002), intercompany match (REQ-RR-003), budget variance (REQ-RR-004), controller exceptions (REQ-RR-005).",
+			"x-schema-org": "schema:DataCatalog",
+			"type": "object",
+			"required": [
+				"querySlug",
+				"queryType",
+				"title",
+				"administrationId"
+			],
+			"properties": {
+				"querySlug": {
+					"type": "string",
+					"description": "Unique slug identifying this saved query. Used as the discovery key by launchpad GraphQL (e.g. subledger-ap-vs-gl-1700).",
+					"example": "subledger-ap-vs-gl-1700"
+				},
+				"queryType": {
+					"type": "string",
+					"description": "Which reconciliation aggregation this record invokes.",
+					"enum": [
+						"subledger-gl-reconciliation",
+						"intercompany-match",
+						"budget-variance",
+						"controller-exceptions"
+					],
+					"example": "subledger-gl-reconciliation"
+				},
+				"title": {
+					"type": "string",
+					"description": "Human-readable report title displayed in the manifest page.",
+					"example": "AP vs GL Control Account 1700"
+				},
+				"description": {
+					"type": "string",
+					"description": "Operator-authored description of the query purpose.",
+					"nullable": true
+				},
+				"parameters": {
+					"type": "object",
+					"description": "Query-specific parameter overrides (e.g. controlAccountNumber, varianceThreshold). Merged with administration-level defaults at runtime.",
+					"nullable": true,
+					"example": {
+						"controlAccountNumber": "1700",
+						"subLedgerType": "ap"
+					}
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the Administration this saved query runs against.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-aggregations": {
+				"subledgerGlReconciliation": {
+					"description": "Sub-ledger vs GL control-account reconciliation per REQ-RR-002. Produces rows (controlAccountNumber, period, subLedgerOpenBalance, glControlAccountBalance, difference, isReconciled, severity). Joins APInvoice/ARInvoice sub-ledger balances against GLLine control-account aggregations on subLedgerRef. Flags rows where |difference| > administrationTolerance (default EUR 0.01) as exceptions. Severity calculated field: critical if |difference| > 100, warning if > 0.01, info otherwise. Cross-schema join: if OR aggregation engine cannot express the subLedgerType join declaratively, the guard OCA\\Shillinq\\Aggregation\\SubledgerGlMatchGuard::reconcile is invoked per ADR-031 exception path (design.md D4).",
+					"source": "GLLine",
+					"joinOn": "subLedgerRef",
+					"filter": {
+						"periodId": "@params.periodId",
+						"administrationId": "@params.administrationId",
+						"subLedgerType": "@params.subLedgerType",
+						"periodState": "closed"
+					},
+					"groupBy": [
+						"accountNumber",
+						"periodId"
+					],
+					"operation": "sum",
+					"field": "amount",
+					"calculatedFields": {
+						"difference": {
+							"expression": "glControlAccountBalance - subLedgerOpenBalance",
+							"description": "Variance between GL control account balance and sub-ledger open balance."
+						},
+						"isReconciled": {
+							"expression": "abs(difference) <= @administration.toleranceAmount",
+							"description": "True when variance is within the administration's reconciliation tolerance."
+						},
+						"severity": {
+							"expression": "abs(difference) > 100 ? 'critical' : (abs(difference) > 0.01 ? 'warning' : 'info')",
+							"description": "Severity classification per REQ-RR-005. Encoded as calculated field — no PHP logic (ADR-031)."
+						}
+					},
+					"meta": {
+						"reportSlug": "subledger-ap-vs-gl",
+						"reproducible": true,
+						"auditHashFields": [
+							"periodId",
+							"administrationId",
+							"subLedgerType"
+						]
+					}
+				},
+				"intercompanyMatch": {
+					"description": "Intercompany posting match across group administrations per REQ-RR-003. Produces rows (groupId, period, legAAdministration, legBAdministration, amountA, amountB, difference, matchedAt, severity). Cross-administration join: shape-neutral per design.md D4 — if OR aggregation engine cannot express the cross-administration join declaratively, the guard OCA\\Shillinq\\Aggregation\\IntercompanyMatchGuard::matchPostings is invoked per ADR-031 exception path. FK shape: each Administration MAY carry a groupId field referencing a Group record (declared in T5 intercompany; FK pre-positioned here).",
+					"source": "GLLine",
+					"joinOn": "groupId",
+					"filter": {
+						"periodId": "@params.periodId",
+						"groupId": "@params.groupId",
+						"accountNumberPattern": "@params.icAccountPattern"
+					},
+					"groupBy": [
+						"groupId",
+						"periodId",
+						"administrationId"
+					],
+					"operation": "sum",
+					"field": "amount",
+					"calculatedFields": {
+						"difference": {
+							"expression": "amountA - amountB",
+							"description": "Variance between leg A and leg B posting amounts."
+						},
+						"matchedAt": {
+							"expression": "amountA == amountB ? max(legA.updatedAt, legB.updatedAt) : null",
+							"description": "Timestamp of the most recent posting when legs are matched; null when unmatched."
+						},
+						"severity": {
+							"expression": "matchedAt == null ? 'critical' : (abs(difference) > 0.01 ? 'warning' : 'info')",
+							"description": "Severity classification. Unmatched legs are critical; small differences are warnings."
+						}
+					},
+					"meta": {
+						"reportSlug": "intercompany-match",
+						"reproducible": true,
+						"auditHashFields": [
+							"periodId",
+							"groupId"
+						]
+					}
+				},
+				"budgetVariance": {
+					"description": "Variance analysis comparing actual GL postings to operator-maintained Budget per REQ-RR-004. Produces rows (accountNumber, period, actualAmount, budgetAmount, varianceAmount, variancePct, severity). Joins GLLine aggregations to Budget register on (accountNumber, periodId, administrationId). Flags rows where |variancePct| > administrationVarianceThreshold (default 10%) as exceptions. If OR aggregation engine cannot express the Budget cross-schema join declaratively, the guard OCA\\Shillinq\\Aggregation\\BudgetVarianceJoinGuard::computeVariance is invoked per ADR-031 exception path (design.md D4).",
+					"source": "GLLine",
+					"joinOn": [
+						"accountNumber",
+						"periodId",
+						"administrationId"
+					],
+					"joinSchema": "Budget",
+					"filter": {
+						"periodId": "@params.periodId",
+						"administrationId": "@params.administrationId",
+						"Budget.lifecycleState": "approved"
+					},
+					"groupBy": [
+						"accountNumber",
+						"periodId"
+					],
+					"operation": "sum",
+					"field": "amount",
+					"calculatedFields": {
+						"varianceAmount": {
+							"expression": "actualAmount - budgetAmount",
+							"description": "Absolute variance (actual minus budget)."
+						},
+						"variancePct": {
+							"expression": "budgetAmount != 0 ? (varianceAmount / budgetAmount) * 100 : null",
+							"description": "Variance as a percentage of budget amount."
+						},
+						"severity": {
+							"expression": "abs(variancePct) > (@administration.varianceThresholdPct || 10) ? (abs(variancePct) > 25 ? 'critical' : 'warning') : 'info'",
+							"description": "Severity classification per REQ-RR-005. Above threshold: critical if >25%, warning if >threshold. Within threshold: info. Encoded as calculated field — no PHP logic (ADR-031)."
+						}
+					},
+					"meta": {
+						"reportSlug": "budget-variance",
+						"reproducible": true,
+						"defaultVarianceThresholdPct": 10,
+						"auditHashFields": [
+							"periodId",
+							"administrationId"
+						]
+					}
+				},
+				"controllerExceptions": {
+					"description": "Controller exception report consolidating sub-ledger mismatches (REQ-RR-002), unmatched intercompany legs (REQ-RR-003), and above-threshold variances (REQ-RR-004) per REQ-RR-005. Produces rows ordered by severity (critical > warning > info) then administration. Consumed by launchpad dashboard widget via runtime GraphQL — no PHP controller in the call path (REQ-RR-001, REQ-RR-007). Aggregates exception rows from the three underlying saved-query aggregations. Severity classification is a calculated field per design.md D2.",
+					"source": "SavedQuery",
+					"unionSources": [
+						"subledgerGlReconciliation",
+						"intercompanyMatch",
+						"budgetVariance"
+					],
+					"filter": {
+						"administrationId": "@params.administrationId",
+						"periodId": "@params.periodId",
+						"severity": [
+							"critical",
+							"warning"
+						]
+					},
+					"orderBy": [
+						{
+							"field": "severity",
+							"order": "desc"
+						},
+						{
+							"field": "administrationId",
+							"order": "asc"
+						}
+					],
+					"calculatedFields": {
+						"exceptionType": {
+							"expression": "@source == 'subledgerGlReconciliation' ? 'subledger-mismatch' : (@source == 'intercompanyMatch' ? 'intercompany-unmatched' : 'budget-variance')",
+							"description": "Source exception category for display and drill-down navigation."
+						},
+						"drillDownRoute": {
+							"expression": "exceptionType == 'subledger-mismatch' ? '/bookkeeping/reconciliation-reports/subledger-gl?period=' + periodId : (exceptionType == 'intercompany-unmatched' ? '/bookkeeping/reconciliation-reports/intercompany?period=' + periodId : '/bookkeeping/reconciliation-reports/budget-variance?period=' + periodId)",
+							"description": "Manifest route for per-row drill-down into the underlying GL / sub-ledger objects per REQ-RR-006."
+						}
+					},
+					"meta": {
+						"reportSlug": "controller-exceptions",
+						"reproducible": true,
+						"auditHashFields": [
+							"periodId",
+							"administrationId"
+						]
+					}
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"controller": {
+						"permissions": [
+							"create",
+							"read",
+							"update",
+							"delete"
+						],
+						"description": "Controllers manage and run reconciliation exception reports per REQ-RR-005."
+					},
+					"bookkeeper": {
+						"permissions": [
+							"read"
+						],
+						"description": "Bookkeepers can view reconciliation reports but not configure saved queries."
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
 		}
 	},
 	"mappings": {

@@ -189,6 +189,20 @@
 					"route": "InnovatieboxElections",
 					"order": 85,
 					"featureFlag": "mkb-innovatiebox"
+				},
+				{
+					"id": "ReconciliationReports",
+					"label": "Reconciliation Reports",
+					"icon": "FileChartCheckOutline",
+					"route": "ReconciliationReports",
+					"order": 86
+				},
+				{
+					"id": "Budgets",
+					"label": "Budgets",
+					"icon": "CashMultiple",
+					"route": "Budgets",
+					"order": 87
 				}
 			]
 		},
@@ -4068,6 +4082,194 @@
 				],
 				"defaultSort": "-fiscalYear",
 				"detailRoute": "InnovatieboxElectionDetail"
+			}
+		},
+		{
+			"id": "ReconciliationReports",
+			"route": "/bookkeeping/reconciliation-reports",
+			"type": "index",
+			"title": "Reconciliation Reports",
+			"config": {
+				"register": "shillinq",
+				"schema": "SavedQuery",
+				"columns": [
+					{
+						"key": "title",
+						"label": "Report",
+						"sortable": true
+					},
+					{
+						"key": "queryType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					}
+				],
+				"defaultSort": "queryType",
+				"detailRoute": "ReconciliationReportDetail"
+			}
+		},
+		{
+			"id": "ReconciliationReportDetail",
+			"route": "/bookkeeping/reconciliation-reports/:id",
+			"type": "detail",
+			"title": "Reconciliation Report",
+			"config": {
+				"register": "shillinq",
+				"schema": "SavedQuery",
+				"fields": [
+					{
+						"key": "title",
+						"label": "Report Title",
+						"type": "string"
+					},
+					{
+						"key": "queryType",
+						"label": "Report Type",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "parameters",
+						"label": "Parameters",
+						"type": "object"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"aggregation": "controllerExceptions",
+				"aggregationColumns": [
+					{
+						"key": "exceptionType",
+						"label": "Exception Type",
+						"sortable": true
+					},
+					{
+						"key": "severity",
+						"label": "Severity",
+						"sortable": true,
+						"badge": {
+							"critical": "error",
+							"warning": "warning",
+							"info": "info"
+						}
+					},
+					{
+						"key": "accountNumber",
+						"label": "Account",
+						"sortable": true
+					},
+					{
+						"key": "difference",
+						"label": "Variance",
+						"sortable": true
+					},
+					{
+						"key": "drillDownRoute",
+						"label": "Details",
+						"type": "link"
+					}
+				],
+				"indexRoute": "ReconciliationReports"
+			}
+		},
+		{
+			"id": "Budgets",
+			"route": "/bookkeeping/budgets",
+			"type": "index",
+			"title": "Budgets",
+			"config": {
+				"register": "shillinq",
+				"schema": "Budget",
+				"columns": [
+					{
+						"key": "accountNumber",
+						"label": "Account",
+						"sortable": true
+					},
+					{
+						"key": "periodId",
+						"label": "Period",
+						"sortable": true
+					},
+					{
+						"key": "budgetAmount",
+						"label": "Budget Amount",
+						"sortable": true
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-periodId",
+				"detailRoute": "BudgetDetail"
+			}
+		},
+		{
+			"id": "BudgetDetail",
+			"route": "/bookkeeping/budgets/:id",
+			"type": "detail",
+			"title": "Budget",
+			"config": {
+				"register": "shillinq",
+				"schema": "Budget",
+				"fields": [
+					{
+						"key": "accountNumber",
+						"label": "Account Number",
+						"type": "string"
+					},
+					{
+						"key": "periodId",
+						"label": "Period",
+						"type": "string"
+					},
+					{
+						"key": "budgetAmount",
+						"label": "Budget Amount",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "notes",
+						"label": "Notes",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "Budgets"
 			}
 		}
 	]

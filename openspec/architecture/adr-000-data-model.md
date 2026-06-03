@@ -717,6 +717,8 @@ _A financial plan allocating resources for a specific period, organization, and 
 - → BudgetAmendment (one-to-many)
 - → ExpenditureRequest (one-to-many)
 
+> **Reconciliation note (add-shillinq-reconciliation-reports, 2026-06-03):** The generic `Budget` entry above (primary spec: budget-planning-control) is a planning-control entity with period/allocation/amendment relations. The shillinq bookkeeping tier introduces a distinct `Budget` register in `lib/Settings/shillinq_register.json` for per-account per-period variance analysis (REQ-RR-004). Key shape differences: (1) bookkeeping Budget uses `accountNumber + periodId` as the compound key (GL-aligned), not `budgetName + fiscalYear`; (2) lifecycle is `draft → approved → archived` with no allocation/amendment sub-objects; (3) the bookkeeping Budget is consumed by the `SavedQuery.budgetVariance` aggregation joining `GLLine` to `Budget` on `(accountNumber, periodId, administrationId)`. The generic planning Budget and the bookkeeping Budget coexist as distinct registers — they are not merged. New variance reporting in shillinq MUST use the bookkeeping-tier `Budget` register.
+
 ### BudgetAllocation
 _A subdivision of budget resources allocated to a specific department, funding source, or purpose_
 **Primary spec:** budget-planning-control
@@ -4015,6 +4017,31 @@ _Delegation of signing rights to a specific person with defined scope and limits
 
 **Relations:**
 - → Mandate (many-to-one)
+
+### SavedQuery
+**Schema.org:** `schema:DataCatalog`
+_Named parameterised aggregation query catalogued in the shillinq register and consumed by launchpad dashboard widgets and manifest detail pages via runtime GraphQL. Introduced by the reconciliation-reports capability (add-shillinq-reconciliation-reports, 2026-06-03) to expose four canonical reconciliation queries without authoring a PHP report engine per ADR-031 and REQ-RR-001. Each `SavedQuery` object is bound to one of four `queryType` values: `subledger-gl-reconciliation`, `intercompany-match`, `budget-variance`, `controller-exceptions`._
+**Primary spec:** bookkeeping-reconciliation-reports
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| querySlug | string | Yes | Unique slug used as launchpad GraphQL discovery key |
+| queryType | enum | Yes | One of: subledger-gl-reconciliation, intercompany-match, budget-variance, controller-exceptions |
+| title | string | Yes | Human-readable report title shown in manifest pages |
+| description | string | No | Operator-authored description of report purpose |
+| parameters | object | No | Query-specific parameter overrides (e.g. controlAccountNumber, varianceThreshold) |
+| administrationId | string | Yes | FK to the Administration this saved query runs against |
+
+**Aggregations (x-openregister-aggregations):**
+- `subledgerGlReconciliation` — sub-ledger ↔ GL control-account match per REQ-RR-002
+- `intercompanyMatch` — cross-administration intercompany posting match per REQ-RR-003
+- `budgetVariance` — actual vs Budget join per REQ-RR-004; cross-schema join via `BudgetVarianceJoinGuard` if engine limit reached (ADR-031 D4)
+- `controllerExceptions` — union of the three above sorted by severity per REQ-RR-005; consumed by launchpad at runtime with no install-time dep (REQ-RR-007)
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+
+> **No PHP report engine:** shillinq MUST NOT declare `lib/Service/*Report*.php` / `*Reconciliation*.php` / `*Variance*.php` classes. The SavedQuery schema's `x-openregister-aggregations` block IS the implementation. Any proposal to author such a service is rejected at code review per REQ-RR-001.
 
 ### SisaReport
 **Schema.org:** `schema:Report`
