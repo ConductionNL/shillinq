@@ -45,7 +45,6 @@ use Psr\Log\LoggerInterface;
  */
 class ExpenseClaimGuard
 {
-
     /**
      * Construct the guard with DI dependencies.
      *
@@ -59,7 +58,6 @@ class ExpenseClaimGuard
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Return the configured register slug, falling back to 'shillinq'.
@@ -76,7 +74,6 @@ class ExpenseClaimGuard
         return $slug;
 
     }//end getRegisterSlug()
-
 
     /**
      * Precondition for the submit transition.
@@ -96,10 +93,10 @@ class ExpenseClaimGuard
     public function requireCostCentresAndItems(array $claim): bool
     {
         try {
-            $receiptIds  = (array) ($claim['receiptIds'] ?? []);
-            $mileageIds  = (array) ($claim['mileageIds'] ?? []);
-            $perDiemIds  = (array) ($claim['perDiemIds'] ?? []);
-            $allItemIds  = array_merge($receiptIds, $mileageIds, $perDiemIds);
+            $receiptIds = (array) ($claim['receiptIds'] ?? []);
+            $mileageIds = (array) ($claim['mileageIds'] ?? []);
+            $perDiemIds = (array) ($claim['perDiemIds'] ?? []);
+            $allItemIds = array_merge($receiptIds, $mileageIds, $perDiemIds);
 
             if (count($allItemIds) === 0) {
                 $this->logger->info(
@@ -124,7 +121,6 @@ class ExpenseClaimGuard
         }//end try
 
     }//end requireCostCentresAndItems()
-
 
     /**
      * Precondition for the post transition.
@@ -155,7 +151,8 @@ class ExpenseClaimGuard
                 receiptIds: $receiptIds,
                 mileageIds: $mileageIds,
                 perDiemIds: $perDiemIds,
-            ) === false) {
+            ) === false
+            ) {
                 return false;
             }
 
@@ -169,7 +166,6 @@ class ExpenseClaimGuard
         }//end try
 
     }//end requireOpenPeriodAndCostCentres()
-
 
     /**
      * Verify that all linked expense items have a non-empty costCentreCode.
@@ -223,7 +219,6 @@ class ExpenseClaimGuard
 
     }//end allItemsHaveCostCentres()
 
-
     /**
      * Check that the FiscalYear covering the claim's fromDate is in state 'open'.
      *
@@ -241,8 +236,8 @@ class ExpenseClaimGuard
      */
     private function isFiscalPeriodOpen(array $claim): bool
     {
-        $fromDate      = (string) ($claim['fromDate'] ?? '');
-        $adminId       = (string) ($claim['administrationId'] ?? '');
+        $fromDate = (string) ($claim['fromDate'] ?? '');
+        $adminId  = (string) ($claim['administrationId'] ?? '');
 
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
@@ -267,7 +262,7 @@ class ExpenseClaimGuard
                 ['claimId' => ($claim['id'] ?? 'unknown')]
             );
             return true;
-        }
+        }//end try
 
         if (count($years) === 0) {
             // No FiscalYear covering fromDate — permit posting with a warning.
@@ -282,6 +277,4 @@ class ExpenseClaimGuard
         return ($year['state'] ?? '') === 'open';
 
     }//end isFiscalPeriodOpen()
-
-
 }//end class

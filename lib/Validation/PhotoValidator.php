@@ -34,16 +34,19 @@ namespace OCA\Shillinq\Validation;
 class PhotoValidator
 {
 
-    /** Maximum file size in bytes: 10 MB per REQ-EC-008. */
+    /**
+     * Maximum file size in bytes: 10 MB per REQ-EC-008.
+     */
     private const MAX_SIZE_BYTES = 10 * 1024 * 1024;
 
-    /** Allowed MIME types per REQ-EC-008. */
+    /**
+     * Allowed MIME types per REQ-EC-008.
+     */
     private const ALLOWED_MIME_TYPES = [
         'image/jpeg',
         'image/png',
         'application/pdf',
     ];
-
 
     /**
      * Validate a receipt photo upload for file type and size.
@@ -80,6 +83,4 @@ class PhotoValidator
         return true;
 
     }//end validate()
-
-
 }//end class

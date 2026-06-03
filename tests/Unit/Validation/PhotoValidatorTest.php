@@ -48,7 +48,6 @@ class PhotoValidatorTest extends TestCase
      */
     private ?string $tmpFile = null;
 
-
     /**
      * Set up test fixtures.
      *
@@ -60,7 +59,6 @@ class PhotoValidatorTest extends TestCase
         $this->validator = new PhotoValidator();
 
     }//end setUp()
-
 
     /**
      * Clean up temporary files.
@@ -77,7 +75,6 @@ class PhotoValidatorTest extends TestCase
 
     }//end tearDown()
 
-
     /**
      * Create a temporary file of given size for testing.
      *
@@ -87,13 +84,12 @@ class PhotoValidatorTest extends TestCase
      */
     private function makeTmpFile(int $bytes): string
     {
-        $path          = sys_get_temp_dir() . '/photo_validator_test_' . uniqid() . '.tmp';
+        $path          = sys_get_temp_dir().'/photo_validator_test_'.uniqid().'.tmp';
         $this->tmpFile = $path;
         file_put_contents(filename: $path, data: str_repeat(string: 'x', times: $bytes));
         return $path;
 
     }//end makeTmpFile()
-
 
     /**
      * JPEG MIME type is accepted when size is within limit.
@@ -110,7 +106,6 @@ class PhotoValidatorTest extends TestCase
 
     }//end testJpegIsAccepted()
 
-
     /**
      * PNG MIME type is accepted when size is within limit.
      *
@@ -125,7 +120,6 @@ class PhotoValidatorTest extends TestCase
         );
 
     }//end testPngIsAccepted()
-
 
     /**
      * PDF MIME type is accepted when size is within limit.
@@ -142,7 +136,6 @@ class PhotoValidatorTest extends TestCase
 
     }//end testPdfIsAccepted()
 
-
     /**
      * Unsupported file type (text/plain) is rejected.
      *
@@ -157,7 +150,6 @@ class PhotoValidatorTest extends TestCase
         );
 
     }//end testUnsupportedMimeTypeIsRejected()
-
 
     /**
      * File exceeding 10 MB is rejected.
@@ -176,7 +168,6 @@ class PhotoValidatorTest extends TestCase
 
     }//end testFileTooLargeIsRejected()
 
-
     /**
      * Non-existent file path is rejected (fail-closed).
      *
@@ -186,7 +177,7 @@ class PhotoValidatorTest extends TestCase
     {
         self::assertFalse(
             condition: $this->validator->validate(
-                filePath: '/tmp/non_existent_file_' . uniqid() . '.jpg',
+                filePath: '/tmp/non_existent_file_'.uniqid().'.jpg',
                 mimeType: 'image/jpeg',
                 fileSize: 1024
             ),
@@ -194,7 +185,6 @@ class PhotoValidatorTest extends TestCase
         );
 
     }//end testNonExistentFileIsRejected()
-
 
     /**
      * Exactly 10 MB is accepted (boundary condition).
@@ -211,6 +201,4 @@ class PhotoValidatorTest extends TestCase
         );
 
     }//end testExactlyTenMbIsAccepted()
-
-
 }//end class

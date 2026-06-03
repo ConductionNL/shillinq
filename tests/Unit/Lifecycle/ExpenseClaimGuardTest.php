@@ -30,13 +30,13 @@ use Psr\Log\LoggerInterface;
  * Tests for ExpenseClaimGuard per REQ-EC-007.
  *
  * Covers:
- * - requireCostCentresAndItems: empty claim denied
- * - requireCostCentresAndItems: item missing costCentreCode denied
- * - requireCostCentresAndItems: all items have cost centres — permitted
- * - requireOpenPeriodAndCostCentres: fiscal year not present → permitted (T1)
- * - requireOpenPeriodAndCostCentres: fiscal year open → permitted
- * - requireOpenPeriodAndCostCentres: fiscal year closed → denied
- * - Fail-closed on exception
+ * - Empty claim denied on submit.
+ * - Item missing costCentreCode denied on submit.
+ * - All items with cost centres permitted on submit.
+ * - FiscalYear register absent permits posting (T1 state).
+ * - Open FiscalYear permits posting.
+ * - Closed FiscalYear denies posting.
+ * - Exception is fail-closed on submit.
  */
 class ExpenseClaimGuardTest extends TestCase
 {
@@ -69,7 +69,6 @@ class ExpenseClaimGuardTest extends TestCase
      */
     private ExpenseClaimGuard $guard;
 
-
     /**
      * Set up test fixtures.
      *
@@ -79,9 +78,11 @@ class ExpenseClaimGuardTest extends TestCase
     {
         parent::setUp();
 
+        // phpcs:disable CustomSniffs.Functions.NamedParameters
         $this->container = $this->createMock(ContainerInterface::class);
         $this->appConfig = $this->createMock(IAppConfig::class);
         $this->logger    = $this->createMock(LoggerInterface::class);
+        // phpcs:enable CustomSniffs.Functions.NamedParameters
 
         $this->appConfig->method('getValueString')->willReturn('shillinq');
 
@@ -93,47 +94,103 @@ class ExpenseClaimGuardTest extends TestCase
 
     }//end setUp()
 
-
     /**
-     * Build a fluent ObjectService stub that returns given items by schema.
+     * Build a fluent ObjectService stub returning items by schema.
      *
-     * @param array<string, array> $itemsBySchema Map of schema → [item arrays].
-     * @param array                $fiscalYears   FiscalYear records for isFiscalPeriodOpen.
+     * @param array<string, array<mixed>> $itemsBySchema Map of schema → records.
+     * @param array<mixed>                $fiscalYears   FiscalYear records for period check.
      *
      * @return object
      */
-    private function buildObjectServiceStub(array $itemsBySchema = [], array $fiscalYears = []): object
+    private function buildObjectServiceStub(array $itemsBySchema=[], array $fiscalYears=[]): object
     {
-        $currentSchema = null;
-        $stub          = new class ($itemsBySchema, $fiscalYears) {
+        return new class ($itemsBySchema, $fiscalYears) {
+
+            /**
+             * Map of schema name → record arrays.
+             *
+             * @var array<string, array<mixed>>
+             */
+            private array $itemsBySchema;
+
+            /**
+             * FiscalYear records.
+             *
+             * @var array<mixed>
+             */
+            private array $fiscalYears;
+
+            /**
+             * Currently active schema name.
+             *
+             * @var string
+             */
             public string $currentSchema = '';
 
-            public function __construct(
-                private array $itemsBySchema,
-                private array $fiscalYears,
-            ) {
-            }
+            /**
+             * Constructor.
+             *
+             * @param array<string, array<mixed>> $itemsBySchema Items by schema.
+             * @param array<mixed>                $fiscalYears   FiscalYear records.
+             */
+            public function __construct(array $itemsBySchema, array $fiscalYears)
+            {
+                $this->itemsBySchema = $itemsBySchema;
+                $this->fiscalYears   = $fiscalYears;
 
+            }//end __construct()
+
+            /**
+             * Fluent register setter.
+             *
+             * @param string $register Register slug.
+             *
+             * @return static
+             */
             public function setRegister(string $register): static
             {
                 return $this;
-            }
 
+            }//end setRegister()
+
+            /**
+             * Fluent schema setter.
+             *
+             * @param string $schema Schema name.
+             *
+             * @return static
+             */
             public function setSchema(string $schema): static
             {
                 $this->currentSchema = $schema;
                 return $this;
-            }
 
-            public function findAll(array $params = []): array
+            }//end setSchema()
+
+            /**
+             * Return all stubbed records for the current schema.
+             *
+             * @param array<string, mixed> $params Query parameters (unused in stub).
+             *
+             * @return array<mixed>
+             */
+            public function findAll(array $params=[]): array
             {
                 if ($this->currentSchema === 'FiscalYear') {
                     return $this->fiscalYears;
                 }
 
                 return $this->itemsBySchema[$this->currentSchema] ?? [];
-            }
 
+            }//end findAll()
+
+            /**
+             * Find a single record by ID in the current schema.
+             *
+             * @param string $id Record ID.
+             *
+             * @return array<mixed>|null Null when not found.
+             */
             public function find(string $id): ?array
             {
                 $items = $this->itemsBySchema[$this->currentSchema] ?? [];
@@ -144,16 +201,14 @@ class ExpenseClaimGuardTest extends TestCase
                 }
 
                 return null;
-            }
-        };
 
-        return $stub;
+            }//end find()
+        };
 
     }//end buildObjectServiceStub()
 
-
     /**
-     * requireCostCentresAndItems denies a claim with no line items.
+     * Empty claim (no receipts, no mileage, no per-diem) is denied on submit.
      *
      * @return void
      */
@@ -167,9 +222,8 @@ class ExpenseClaimGuardTest extends TestCase
 
     }//end testRequireCostCentresAndItemsDeniesEmptyClaim()
 
-
     /**
-     * requireCostCentresAndItems denies a claim when a receipt is missing costCentreCode.
+     * Claim with a receipt missing costCentreCode is denied on submit.
      *
      * @return void
      */
@@ -190,9 +244,8 @@ class ExpenseClaimGuardTest extends TestCase
 
     }//end testRequireCostCentresAndItemsDeniesItemMissingCostCentre()
 
-
     /**
-     * requireCostCentresAndItems permits a claim when all items have costCentreCode.
+     * Claim with all items having costCentreCode is permitted on submit.
      *
      * @return void
      */
@@ -214,9 +267,8 @@ class ExpenseClaimGuardTest extends TestCase
 
     }//end testRequireCostCentresAndItemsPermitsWhenAllHaveCostCentre()
 
-
     /**
-     * requireCostCentresAndItems is fail-closed on exception.
+     * Exception from ObjectService is fail-closed — submit is denied.
      *
      * @return void
      */
@@ -233,17 +285,13 @@ class ExpenseClaimGuardTest extends TestCase
 
     }//end testRequireCostCentresAndItemsIsFailClosedOnException()
 
-
     /**
-     * requireOpenPeriodAndCostCentres permits posting when FiscalYear register is absent (T1 state).
+     * Posting is permitted when the FiscalYear register is absent (T1 state).
      *
      * @return void
      */
     public function testRequireOpenPeriodPermitsPostingInT1State(): void
     {
-        // First call (allItemsHaveCostCentres) returns object service with item data.
-        // Second call (isFiscalPeriodOpen) throws (T1: FiscalYear register absent).
-        $callCount     = 0;
         $objectService = $this->buildObjectServiceStub(
             itemsBySchema: [
                 'Receipt' => [['id' => 'rec-1', 'costCentreCode' => 'CC100']],
@@ -251,49 +299,103 @@ class ExpenseClaimGuardTest extends TestCase
             fiscalYears: []
         );
 
-        // Simulate T1: FiscalYear findAll throws because the schema doesn't exist yet.
+        // FiscalYear schema throws to simulate T1 state (schema not yet seeded).
         $throwingStub = new class ($objectService) {
-            private int $calls = 0;
 
-            public function __construct(private object $delegate)
+            /**
+             * Delegate for non-FiscalYear schemas.
+             *
+             * @var object
+             */
+            private object $delegate;
+
+            /**
+             * Currently active schema name.
+             *
+             * @var string
+             */
+            private string $currentSchema = '';
+
+            /**
+             * Constructor.
+             *
+             * @param object $delegate Delegate object service stub.
+             */
+            public function __construct(object $delegate)
             {
-            }
+                $this->delegate = $delegate;
 
+            }//end __construct()
+
+            /**
+             * Fluent register setter.
+             *
+             * @param string $register Register slug.
+             *
+             * @return static
+             */
             public function setRegister(string $register): static
             {
                 return $this;
-            }
 
+            }//end setRegister()
+
+            /**
+             * Fluent schema setter — throws when schema is FiscalYear.
+             *
+             * @param string $schema Schema name.
+             *
+             * @return static
+             *
+             * @throws \RuntimeException When schema is FiscalYear (T1 simulation).
+             */
             public function setSchema(string $schema): static
             {
-                $this->calls++;
+                $this->currentSchema = $schema;
                 if ($schema === 'FiscalYear') {
                     throw new \RuntimeException('FiscalYear schema not found');
                 }
 
                 $this->delegate->setSchema(schema: $schema);
                 return $this;
-            }
 
-            public function findAll(array $params = []): array
+            }//end setSchema()
+
+            /**
+             * Return all records for current schema via delegate.
+             *
+             * @param array<string, mixed> $params Query parameters.
+             *
+             * @return array<mixed>
+             */
+            public function findAll(array $params=[]): array
             {
                 return $this->delegate->findAll(params: $params);
-            }
 
+            }//end findAll()
+
+            /**
+             * Find record by ID via delegate.
+             *
+             * @param string $id Record ID.
+             *
+             * @return array<mixed>|null
+             */
             public function find(string $id): ?array
             {
                 return $this->delegate->find(id: $id);
-            }
+
+            }//end find()
         };
 
         $this->container->method('get')->willReturn($throwingStub);
 
         $claim = [
-            'id'             => 'claim-1',
-            'receiptIds'     => ['rec-1'],
-            'mileageIds'     => [],
-            'perDiemIds'     => [],
-            'fromDate'       => '2026-06-01',
+            'id'               => 'claim-1',
+            'receiptIds'       => ['rec-1'],
+            'mileageIds'       => [],
+            'perDiemIds'       => [],
+            'fromDate'         => '2026-06-01',
             'administrationId' => 'adm-1',
         ];
 
@@ -303,9 +405,8 @@ class ExpenseClaimGuardTest extends TestCase
 
     }//end testRequireOpenPeriodPermitsPostingInT1State()
 
-
     /**
-     * requireOpenPeriodAndCostCentres permits posting when the FiscalYear is open.
+     * Open FiscalYear covering fromDate permits posting.
      *
      * @return void
      */
@@ -322,11 +423,11 @@ class ExpenseClaimGuardTest extends TestCase
         $this->container->method('get')->willReturn($objectService);
 
         $claim = [
-            'id'              => 'claim-1',
-            'receiptIds'      => ['rec-1'],
-            'mileageIds'      => [],
-            'perDiemIds'      => [],
-            'fromDate'        => '2026-06-01',
+            'id'               => 'claim-1',
+            'receiptIds'       => ['rec-1'],
+            'mileageIds'       => [],
+            'perDiemIds'       => [],
+            'fromDate'         => '2026-06-01',
             'administrationId' => 'adm-1',
         ];
 
@@ -336,9 +437,8 @@ class ExpenseClaimGuardTest extends TestCase
 
     }//end testRequireOpenPeriodPermitsPostingWhenFiscalYearIsOpen()
 
-
     /**
-     * requireOpenPeriodAndCostCentres denies posting when the FiscalYear is closed.
+     * Closed FiscalYear covering fromDate denies posting.
      *
      * @return void
      */
@@ -355,11 +455,11 @@ class ExpenseClaimGuardTest extends TestCase
         $this->container->method('get')->willReturn($objectService);
 
         $claim = [
-            'id'              => 'claim-1',
-            'receiptIds'      => ['rec-1'],
-            'mileageIds'      => [],
-            'perDiemIds'      => [],
-            'fromDate'        => '2026-06-01',
+            'id'               => 'claim-1',
+            'receiptIds'       => ['rec-1'],
+            'mileageIds'       => [],
+            'perDiemIds'       => [],
+            'fromDate'         => '2026-06-01',
             'administrationId' => 'adm-1',
         ];
 
@@ -368,6 +468,4 @@ class ExpenseClaimGuardTest extends TestCase
         self::assertFalse(condition: $result, message: 'Closed FiscalYear must deny posting');
 
     }//end testRequireOpenPeriodDeniesPostingWhenFiscalYearIsClosed()
-
-
 }//end class
