@@ -4,18 +4,18 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `subsidieRegeling` enum, parallel R&D subsidie register, or `bookkeeping-r-d-subsidies-mkb` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `openspec/changes/**`)
-- [ ] Task 2: Author `specs/bookkeeping-r-d-subsidies-mkb/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4-specialized (MKB / innovation)` / `Depends on: bookkeeping-subsidie-verantwoording` header, `REQ-RDS-NNN` requirements, `#### Scenario:` blocks with GIVEN/WHEN/THEN
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions
-- [ ] Task 4: Author `design.md` with Reuse Analysis table; R&D subsidie reviewer persona confirms per-regeling kostencategorieën + audit-pack shapes match RvO / EU praktijk
-- [ ] Task 5: Add `subsidieRegeling: mit | sbir | eu-horizon | efro | react-eu | other` enum on `Subsidie` in `lib/Settings/shillinq_register.json` per REQ-RDS-001; `schema:Grant` annotation (with `schema:ResearchProject` materialisation)
-- [ ] Task 6: Declare per-regeling kostencategorieën constraints via JSON Schema `oneOf`/`if-then` — MIT (personnel/materials/external-services/equipment-depreciation/other-direct), SBIR (subset), EU Horizon (personnel/subcontracting/other-direct/indirect-25-percent), EFRO (personnel/external-services/materials/equipment/other/indirect-flat-rate), REACT-EU (EFRO + green-recovery) per REQ-RDS-002
-- [ ] Task 7: Declare per-regeling voortgangsrapportage aggregations grouping `kostenpost` by `(kostencategorie, periodId)` filtered on the parent subsidie per REQ-RDS-003
-- [ ] Task 8: Register per-regeling voortgangsrapportage docudesk templates in `lib/Settings/docudesk-templates.json` — Horizon Periodic Report layout, MIT voortgangsrapport, EFRO progress dossier, etc. per REQ-RDS-003
-- [ ] Task 9: Register per-regeling audit-pack docudesk templates per REQ-RDS-004 — Horizon Audit Certificate (with personnel/timesheet URI refs to S&O-uren-staten from sibling WBSO spec), MIT declaration template referencing WBSO/S&O administration, EFRO procurement dossier template
-- [ ] Task 10: Declare per-regeling budget monitoring `x-openregister-calculations` block surfacing ≥90% warning when a kostencategorie sub-max approaches (e.g. Horizon indirect-25% bound to 25% of direct costs) per REQ-RDS-005
-- [ ] Task 11: Add R&D Subsidies navigation + pages to `src/manifest.json` (`featureFlags.mkb-r-d-subsidies`, `Bookkeeping > R&D Subsidies`, `type: index` per regeling + `type: detail` per subsidie showing budget / kostendossier / voortgangsrapportage / audit-pack) per REQ-RDS-006; `node tests/validate-manifest.js` exits 0
-- [ ] Task 12: Update `openspec/architecture/adr-000-data-model.md` with a one-paragraph annotation for `subsidieRegeling` overlay cross-referencing this spec
+- [x] Task 1: Confirm no `subsidieRegeling` enum, parallel R&D subsidie register, or `bookkeeping-r-d-subsidies-mkb` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `openspec/changes/**`)
+- [x] Task 2: Author `specs/bookkeeping-r-d-subsidies-mkb/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4-specialized (MKB / innovation)` / `Depends on: bookkeeping-subsidie-verantwoording` header, `REQ-RDS-NNN` requirements, `#### Scenario:` blocks with GIVEN/WHEN/THEN
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions
+- [x] Task 4: Author `design.md` with Reuse Analysis table; R&D subsidie reviewer persona confirms per-regeling kostencategorieën + audit-pack shapes match RvO / EU praktijk
+- [x] Task 5: Add `subsidieRegeling: mit | sbir | eu-horizon | efro | react-eu | other` enum on `Subsidie` in `lib/Settings/shillinq_register.json` per REQ-RDS-001; `schema:Grant` annotation (with `schema:ResearchProject` materialisation)
+- [x] Task 6: Declare per-regeling kostencategorieën constraints via JSON Schema `oneOf`/`if-then` — MIT (personnel/materials/external-services/equipment-depreciation/other-direct), SBIR (subset), EU Horizon (personnel/subcontracting/other-direct/indirect-25-percent), EFRO (personnel/external-services/materials/equipment/other/indirect-flat-rate), REACT-EU (EFRO + green-recovery) per REQ-RDS-002
+- [x] Task 7: Declare per-regeling voortgangsrapportage aggregations grouping `kostenpost` by `(kostencategorie, periodId)` filtered on the parent subsidie per REQ-RDS-003
+- [x] Task 8: Register per-regeling voortgangsrapportage docudesk templates in `lib/Settings/docudesk-templates.json` — Horizon Periodic Report layout, MIT voortgangsrapport, EFRO progress dossier, etc. per REQ-RDS-003
+- [x] Task 9: Register per-regeling audit-pack docudesk templates per REQ-RDS-004 — Horizon Audit Certificate (with personnel/timesheet URI refs to S&O-uren-staten from sibling WBSO spec), MIT declaration template referencing WBSO/S&O administration, EFRO procurement dossier template
+- [x] Task 10: Declare per-regeling budget monitoring `x-openregister-calculations` block surfacing ≥90% warning when a kostencategorie sub-max approaches (e.g. Horizon indirect-25% bound to 25% of direct costs) per REQ-RDS-005
+- [x] Task 11: Add R&D Subsidies navigation + pages to `src/manifest.json` (`featureFlags.mkb-r-d-subsidies`, `Bookkeeping > R&D Subsidies`, `type: index` per regeling + `type: detail` per subsidie showing budget / kostendossier / voortgangsrapportage / audit-pack) per REQ-RDS-006; `node tests/validate-manifest.js` exits 0
+- [x] Task 12: Update `openspec/architecture/adr-000-data-model.md` with a one-paragraph annotation for `subsidieRegeling` overlay cross-referencing this spec
 
 ## Verification
 
