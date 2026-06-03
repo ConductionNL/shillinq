@@ -14,11 +14,11 @@
 - [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec; include Affected Projects / Scope / Risks / Rollback / Open Questions per shillinq config.yaml `rules.proposal`
 - [x] Task 4: Author `design.md` with Reuse Analysis and Declarative-vs-imperative decision tables; document D3 ADR-031 exception path for the conditional XML renderer
 - [x] Task 5: Declare the `Iv3Export` schema in `lib/Settings/shillinq_register.json` with all REQ-IV3-002 fields (periodId, buckets, totalAmount, state, generatedOn, submittedOn, attachmentUri, administrationId)
-- [x] Task 6: Add `x-openregister-lifecycle` to `Iv3Export` declaring `draft → generated → submitted → accepted` (and `rejected`) transitions per REQ-IV3-005
+- [x] Task 6: Add `x-openregister-lifecycle` to `Iv3Export` declaring `generated → validated → submitted → accepted` (and `rejected`, `corrected`) transitions per REQ-IV3-005
 - [x] Task 7: Declare `Iv3Export.buckets` as a derived field via `x-openregister-aggregations` (sum-by-iv3Bucket projection over T1 `GLLine` filtered by quarterly `periodId`, joining `BbvAccountMapping.iv3Bucket`) per REQ-IV3-003
 - [x] Task 8: Declare the IV3 XML generation as an OR Mapping transformation, with ADR-031 exception annotation for the conditional thin renderer path (`Iv3XmlRenderer::render` single-method ~30 LOC if Mapping engine cannot express mixed-content) per REQ-IV3-004
 - [x] Task 9: Declare the quarterly CBS submission as an OR `ScheduledWorkflow` (cron `0 0 1 */3 *` default, operator-configurable) consuming `cbs-iv3` per REQ-IV3-006
-- [x] Task 10: Extend the repair step under `lib/Migration/` to register the IV3 Mapping + `ScheduledWorkflow`; idempotent on re-run — handled by the existing `lib/Repair/InitializeSettings.php` repair step via `ConfigurationService::importFromApp()`, which reads `shillinq_register.json` including the new `x-openregister-mappings` and `x-openregister-workflows` declarations
+- [x] Task 10: Extend the repair step under `lib/Repair/InitializeSettings.php` to register the IV3 Mapping + `ScheduledWorkflow`; idempotent on re-run
 - [x] Task 11: Add `Overheid > IV3-rapportages` navigation + pages to `src/manifest.json` with `type: index` + `type: detail`, visibility predicate scoped to municipal admin types per REQ-IV3-007; `node tests/validate-manifest.js` exits 0
 - [x] Task 12: Update `openspec/architecture/adr-000-data-model.md` with the new `Iv3Export` entity and its `Primary spec:` reference
 

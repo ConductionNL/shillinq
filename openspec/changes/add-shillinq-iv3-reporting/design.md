@@ -1,6 +1,6 @@
 # Design — IV3 Reporting
 
-**Status:** pr-created
+**status: pr-created**
 
 ## Context
 

@@ -112,7 +112,7 @@ THEN registreert het systeem: tijdstip, gebruiker, oude antwoord, nieuwe antwoor
 - **docudesk**: opslag bewijsstukken + beleidsdocumenten waarnaar bevindingen verwijzen
 - **opencatalogi**: VNG-vragensets als externe katalogus
 - **planix**: mitigatie-acties als planix-tasks (cross-link naar verbeter-projecten)
-- **mydash**: voortgangs-dashboard ENSIA-cyclus, top-5-tekortkomingen-widget
+- **launchpad**: voortgangs-dashboard ENSIA-cyclus, top-5-tekortkomingen-widget
 - **decidesk**: collegebesluit-workflow voor de uiteindelijke verklaring
 
 ## Target users

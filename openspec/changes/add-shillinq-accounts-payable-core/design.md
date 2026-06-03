@@ -1,5 +1,7 @@
 # Design — Accounts Payable (Core)
 
+**status: pr-created**
+
 ## Context
 
 Shillinq's original scope was customer invoicing (AR); AP is the

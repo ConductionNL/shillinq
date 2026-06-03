@@ -1,5 +1,7 @@
 # Design — Fixed Assets & Depreciation
 
+**status: pr-created**
+
 ## Decisions
 
 ### D1 — Asset state machine is declarative

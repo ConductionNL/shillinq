@@ -1,0 +1,22 @@
+{
+  "spec": "openspec/changes/add-shillinq-cost-centers-dimensions",
+  "verified": [
+    {"task": "1", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "Confirmed no pre-existing CostCenter/KostenDrager/Project/AllocationRule schemas before this spec"},
+    {"task": "2", "file": "openspec/changes/add-shillinq-cost-centers-dimensions/specs/bookkeeping-cost-centers-dimensions/spec.md", "ok": true},
+    {"task": "3", "file": "openspec/changes/add-shillinq-cost-centers-dimensions/proposal.md", "ok": true},
+    {"task": "4", "file": "openspec/changes/add-shillinq-cost-centers-dimensions/design.md", "ok": true},
+    {"task": "5", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "CostCenter+KostenDrager+Project schemas declared with x-openregister-relations self-relation for hierarchy, RBAC; Project.timeBookingEnabled per REQ-CC-007"},
+    {"task": "6", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "AllocationRule schema with 4 drivers; fixed-percentage sum-to-100 precondition in x-openregister-lifecycle.requires.save per REQ-CC-004"},
+    {"task": "7", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "GLLine additively patched with costCenterCode, kostenDragerCode, projectCode, dimensions + x-openregister-relations per REQ-CC-003"},
+    {"task": "8", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "GLTransaction.post action evaluate-allocation-rules wired; monthly/period-close via ScheduledWorkflow in AllocationRule schema per REQ-CC-004"},
+    {"task": "9", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "segmentPnlByCostCenter+ByKostenDrager+ByProject on GLLine; segmentPnl per-schema aggregation on each dimension schema per REQ-CC-005"},
+    {"task": "10a", "file": "lib/Settings/seeds/allocation-rules/overhead-by-headcount.json", "ok": true},
+    {"task": "10b", "file": "lib/Settings/seeds/allocation-rules/it-by-volume.json", "ok": true},
+    {"task": "10c", "file": "lib/Settings/seeds/allocation-rules/facility-by-fixed-percentage.json", "ok": true},
+    {"task": "11", "file": "lib/Repair/InitializeSettings.php", "ok": true, "note": "seedAllocationRules() called idempotently from seedChartOfAccounts() per REQ-CC-004"},
+    {"task": "12", "file": "src/manifest.json", "ok": true, "note": "Bookkeeping > Dimensions submenu with CostCenters, KostenDragers, Projects, AllocationRules — 4 index + 4 detail pages per REQ-CC-006"},
+    {"task": "13", "file": "openspec/architecture/adr-000-data-model.md", "ok": true, "note": "Reconciliation notes added for CostCenter, KostenDrager, Project, AllocationRule, GLLine additive dimension extension"}
+  ],
+  "stubs": [],
+  "missing_routes": []
+}
