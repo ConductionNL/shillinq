@@ -1,0 +1,70 @@
+[
+	{
+		"@self": {
+			"register": "shillinq",
+			"schema": "TaxRate",
+			"slug": "nl-vat-standard-21-2026"
+		},
+		"name": "NL Standard (21%)",
+		"description": "Standaard BTW-tarief — producten en de meeste diensten (Wet OB 1968 art. 9 lid 1).",
+		"rate": 21,
+		"category": "product",
+		"validFrom": "2026-01-01",
+		"validTo": null,
+		"country": "NL",
+		"legalBasis": "Wet OB 1968 art. 9 lid 1",
+		"readOnly": true,
+		"versionLocked": "2026-01-01"
+	},
+	{
+		"@self": {
+			"register": "shillinq",
+			"schema": "TaxRate",
+			"slug": "nl-vat-reduced-services-9-2026"
+		},
+		"name": "NL Reduced Services (9%)",
+		"description": "Verlaagd BTW-tarief — diensten zoals reparatie, kappers, catering, sport (Wet OB 1968 Tabel I).",
+		"rate": 9,
+		"category": "service",
+		"validFrom": "2026-01-01",
+		"validTo": null,
+		"country": "NL",
+		"legalBasis": "Wet OB 1968 Tabel I, onderdeel b",
+		"readOnly": true,
+		"versionLocked": "2026-01-01"
+	},
+	{
+		"@self": {
+			"register": "shillinq",
+			"schema": "TaxRate",
+			"slug": "nl-vat-books-media-6-2026"
+		},
+		"name": "NL Books/Media (6%)",
+		"description": "Verlaagd BTW-tarief — boeken, kranten, tijdschriften en elektronische uitgaven (Wet OB 1968 Tabel I).",
+		"rate": 6,
+		"category": "product",
+		"validFrom": "2026-01-01",
+		"validTo": null,
+		"country": "NL",
+		"legalBasis": "Wet OB 1968 Tabel I, onderdeel a post a-31",
+		"readOnly": true,
+		"versionLocked": "2026-01-01"
+	},
+	{
+		"@self": {
+			"register": "shillinq",
+			"schema": "TaxRate",
+			"slug": "nl-vat-exempt-0-2026"
+		},
+		"name": "Exempt / Export (0%)",
+		"description": "Nul-tarief of vrijgesteld — export buiten de EU, bepaalde vrijgestelde prestaties (Wet OB 1968 art. 9 lid 2 / Tabel II).",
+		"rate": 0,
+		"category": "exempt",
+		"validFrom": "2026-01-01",
+		"validTo": null,
+		"country": "NL",
+		"legalBasis": "Wet OB 1968 art. 9 lid 2 jo. Tabel II",
+		"readOnly": true,
+		"versionLocked": "2026-01-01"
+	}
+]

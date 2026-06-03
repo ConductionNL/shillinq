@@ -2420,23 +2420,118 @@ _Financial document detailing goods/services provided and creating an obligation
 - → Payment (one-to-many)
 
 ### InvoiceLine
-**Schema.org:** `schema:InvoiceItem`
-_A line item detailing goods or services on an invoice_
-**Primary spec:** accounts-payable-receivable
+**Schema.org:** `schema:UnitPriceSpecification`
+_A single line item on an ARInvoice carrying the per-line VAT rate, computed VAT amount, and service-category classification. vatAmount is computed via banker's rounding (ROUND(lineAmount × vatRate / 100, 2)) per REQ-VAT-007. serviceCategory gates which vatRate values are permitted per REQ-VAT-002._
+**Primary spec:** bookings-nl-btw-invoice
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| lineNumber | number | Yes | Sequential line number |
-| description | string | Yes | Item description |
-| quantity | number | Yes | Quantity of items |
-| unitPrice | number | Yes | Price per unit |
-| lineAmount | number | Yes | Total line amount before tax |
-| tax | number | No | Tax on line item |
-| unit | string | No | Unit of measurement |
+| invoiceId | string | Yes | FK to parent ARInvoice UUID |
+| lineSequence | integer | Yes | Line number within the invoice (1-based, immutable once issued) |
+| description | string | Yes | Item or service description as printed on the invoice |
+| quantity | number | No | Quantity (units, hours, etc.) |
+| unitPrice | number | No | Unit price before VAT |
+| lineAmount | number | Yes | Line total before VAT (quantity × unitPrice or directly entered) |
+| vatRate | enum(0,6,9,21) | Yes | VAT rate: 21 (standard), 9 (reduced services), 6 (books/media), 0 (exempt). Default: 21 |
+| vatAmount | number | Yes | Computed VAT: ROUND(lineAmount × vatRate / 100, 2) banker's rounding; do not set directly |
+| serviceCategory | enum | Yes | "product" (permits 0/6/21%), "service" (permits 0/9/21%), "exempt" (only 0%) per REQ-VAT-002 |
+| accountNumber | string | No | FK to Account.accountNumber (revenue account for this line) |
+| administrationId | string | Yes | FK to Administration |
 
 **Relations:**
-- → Invoice (many-to-one)
-- → Product (many-to-one)
+- → ARInvoice (many-to-one, via invoiceId)
+- → Administration (many-to-one)
+
+> **Reconciliation note (bookings-nl-btw-invoice, 2026-06-03):** The earlier `InvoiceLine` entry (primary spec: accounts-payable-receivable, schema.org: schema:InvoiceItem) was a generic line item. This entry supersedes it with the full VAT-compliant shape per REQ-VAT-001. New AR line declarations in shillinq MUST use the fields above. The `x-openregister-calculations` declaration on the `vatAmount` field enforces banker's rounding at the OR engine level.
+
+### ServiceCategoryOverride
+**Schema.org:** `schema:PermitIssuedBy`
+_Administration-configurable exception allowing a normally-forbidden serviceCategory + vatRate combination per REQ-VAT-002. Each override records the category, rate, reason, and who created it. The VatPreconditionGuard checks this table before rejecting an invoice line._
+**Primary spec:** bookings-nl-btw-invoice
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| serviceCategory | enum | Yes | The service category granted the exception ("product", "service", "exempt") |
+| vatRate | enum(0,6,9,21) | Yes | The VAT rate exceptionally permitted for the category |
+| administrationId | string | Yes | FK to Administration — override applies only to this administration |
+| reason | string | Yes | Mandatory justification (e.g. "Special consulting agreement with client X") |
+| effectiveFrom | date | No | Date from which override is effective; defaults to creation date |
+| effectiveTo | date | No | Expiry date; null = indefinite |
+| createdBy | string | Yes | Nextcloud user ID of the administrator who created the override |
+| createdAt | datetime | No | Timestamp of override creation (auto-set) |
+
+**Relations:**
+- → Administration (many-to-one)
+
+### VATAuditRecord
+**Schema.org:** `schema:AuditEvent`
+_Immutable append-only kassakoppeling audit record per invoice line per lifecycle event per REQ-VAT-004. One record is created per InvoiceLine when the parent ARInvoice transitions to issued, paid, written_off, or reversed. No update or delete operations are permitted. Retention: 7 years per Belastingdienst kassakoppeling rules._
+**Primary spec:** bookings-nl-btw-invoice
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| invoiceNumber | string | Yes | Invoice identifier at time of event (immutable copy) |
+| invoiceDate | date | Yes | Invoice issuance date (immutable copy) |
+| lineSequence | integer | Yes | Line number within the invoice |
+| lineDescription | string | Yes | Item description at time of issue (immutable copy) |
+| lineAmount | number | Yes | Line amount before VAT at time of event (immutable copy) |
+| vatRate | enum(0,6,9,21) | Yes | VAT rate applied |
+| vatAmount | number | Yes | VAT amount accrued (immutable copy, banker's rounding per REQ-VAT-007) |
+| serviceCategory | enum | Yes | "product", "service", or "exempt" (immutable copy) |
+| lifecycleEvent | enum | Yes | One of "issued", "paid", "written_off", "reversed" |
+| eventDate | datetime | Yes | UTC timestamp of the lifecycle event |
+| paymentDate | date | No | Date of payment receipt (null until paid) |
+| settlementPeriodId | string | Yes | FK to TaxPeriod — bound immutably at invoice issuance per REQ-VAT-005 |
+| administrationId | string | Yes | FK to Administration |
+
+**Relations:**
+- → TaxPeriod (many-to-one, via settlementPeriodId — immutable FK)
+- → Administration (many-to-one)
+
+**Aggregation (x-openregister-aggregations.vatByPeriod):** Groups by (administrationId, settlementPeriodId), sums vatAmount by rate bucket, returns totalNetAmount / totalVAT21/9/6/0 / totalGrossAmount / invoiceCount / recordCount per REQ-VAT-009.
+
+### VATGLAccounts
+**Schema.org:** `schema:FinancialProduct`
+_Administration-level configuration mapping VAT payable GL account numbers per rate bucket per REQ-VAT-006. One record per administration. Default accounts follow RGS standard: 2020 (21%), 2021 (9%), 2022 (6%), 2023 (0%). Installer creates defaults; admin can reassign. All four accounts must be present and unique before invoices can be issued._
+**Primary spec:** bookings-nl-btw-invoice
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to Administration (one record per administration) |
+| vat21Account | string | Yes | GL account for VAT payable 21% (RGS default: 2020) |
+| vat9Account | string | Yes | GL account for VAT payable 9% (RGS default: 2021) |
+| vat6Account | string | Yes | GL account for VAT payable 6%/books (RGS default: 2022) |
+| vat0Account | string | Yes | GL account for VAT 0%/exempt (RGS default: 2023) |
+| arControlAccount | string | No | AR control account for debit side of VAT accrual (RGS default: 1200) |
+| createdAt | datetime | No | Record creation timestamp |
+| updatedAt | datetime | No | Last update timestamp |
+
+**Relations:**
+- → Administration (many-to-one)
+
+> **GL account mapping (RGS per bookings-nl-btw-invoice, Task 18):**
+> RGS account 2020 = Belastingdienst BTW hoog (21%), 2021 = BTW laag diensten (9%),
+> 2022 = BTW laag boeken/media (6%), 2023 = BTW vrijgesteld / 0%. Admin can override
+> during setup in Settings > Accounting > Tax Configuration.
+
+### TaxPeriod
+**Schema.org:** `schema:Schedule`
+_A VAT settlement period (month, quarter, or year) per administration per REQ-VAT-005. VATAuditRecord.settlementPeriodId is an immutable FK to TaxPeriod at invoice issuance time. When administration reconfigures filing frequency, old records remain bound to their original period._
+**Primary spec:** bookings-nl-btw-invoice
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to Administration |
+| periodCode | string | Yes | Human-readable identifier (e.g. "May 2026 (monthly)", "Q2 2026 (quarterly)") |
+| startDate | date | Yes | First day of the settlement period |
+| endDate | date | Yes | Last day of the settlement period |
+| filingFrequency | enum | Yes | "monthly", "quarterly", or "annual" — immutable once set |
+| filingDeadline | date | No | Deadline for filing VAT return (typically last day of following month) |
+| state | enum | Yes | One of "open", "closed", "filed", "assessed" |
+
+**Relations:**
+- → Administration (many-to-one)
+- → VATAuditRecord (one-to-many, via settlementPeriodId)
 
 ### Iv3Export
 **Schema.org:** `schema:Dataset`

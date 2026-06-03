@@ -232,6 +232,20 @@
 					"icon": "CogOutline",
 					"route": "TaxConfiguration",
 					"order": 40
+				},
+				{
+					"id": "VatByPeriod",
+					"label": "VAT by Period",
+					"icon": "CalendarCheckOutline",
+					"route": "VatByPeriod",
+					"order": 50
+				},
+				{
+					"id": "VatReconciliation",
+					"label": "VAT Reconciliation",
+					"icon": "CheckCircleOutline",
+					"route": "VatReconciliation",
+					"order": 55
 				}
 			]
 		},
@@ -4583,6 +4597,234 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "RDSubsidies"
+			}
+		},
+		{
+			"id": "VatByPeriod",
+			"route": "/belastingen/btw-per-periode",
+			"type": "index",
+			"title": "VAT by Period",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxPeriod",
+				"aggregation": "vatByPeriod",
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"mkb",
+						"zzp"
+					]
+				},
+				"columns": [
+					{
+						"key": "periodCode",
+						"label": "Period",
+						"sortable": true
+					},
+					{
+						"key": "totalNetAmount",
+						"label": "Net Amount (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "totalVAT21",
+						"label": "VAT 21% (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "totalVAT9",
+						"label": "VAT 9% (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "totalVAT6",
+						"label": "VAT 6% (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "totalVAT0",
+						"label": "VAT 0% (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "totalGrossAmount",
+						"label": "Gross Amount (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "invoiceCount",
+						"label": "Invoices",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-startDate",
+				"detailRoute": "VatReconciliation",
+				"description": "VAT by Period lists all settlement periods with aggregated totals (net, VAT by rate, gross) per REQ-VAT-009 and REQ-VAT-010. Operator can click a period to view the full VAT Reconciliation detail."
+			}
+		},
+		{
+			"id": "VatReconciliation",
+			"route": "/belastingen/btw-per-periode/:id",
+			"type": "detail",
+			"title": "VAT Reconciliation",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxPeriod",
+				"fields": [
+					{
+						"key": "periodCode",
+						"label": "Period",
+						"type": "string"
+					},
+					{
+						"key": "filingFrequency",
+						"label": "Filing Frequency",
+						"type": "string"
+					},
+					{
+						"key": "startDate",
+						"label": "Start Date",
+						"type": "date"
+					},
+					{
+						"key": "endDate",
+						"label": "End Date",
+						"type": "date"
+					},
+					{
+						"key": "filingDeadline",
+						"label": "Filing Deadline",
+						"type": "date"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "totalNetAmount",
+						"label": "Total Net Amount (EUR)",
+						"type": "calculated"
+					},
+					{
+						"key": "totalVAT21",
+						"label": "Total VAT 21% (EUR)",
+						"type": "calculated"
+					},
+					{
+						"key": "totalVAT9",
+						"label": "Total VAT 9% (EUR)",
+						"type": "calculated"
+					},
+					{
+						"key": "totalVAT6",
+						"label": "Total VAT 6% (EUR)",
+						"type": "calculated"
+					},
+					{
+						"key": "totalVAT0",
+						"label": "Total VAT 0% (EUR)",
+						"type": "calculated"
+					},
+					{
+						"key": "totalGrossAmount",
+						"label": "Total Gross Amount (EUR)",
+						"type": "calculated"
+					},
+					{
+						"key": "invoiceCount",
+						"label": "Invoice Count",
+						"type": "calculated"
+					},
+					{
+						"key": "recordCount",
+						"label": "VAT Audit Record Count",
+						"type": "calculated"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"aggregation": "vatByPeriod",
+				"lifecycleActions": true,
+				"relatedLists": [
+					{
+						"id": "vat-audit-records",
+						"title": "VAT Audit Records",
+						"schema": "VATAuditRecord",
+						"filter": {
+							"settlementPeriodId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "invoiceNumber",
+								"label": "Invoice"
+							},
+							{
+								"key": "invoiceDate",
+								"label": "Invoice Date"
+							},
+							{
+								"key": "lineSequence",
+								"label": "Line"
+							},
+							{
+								"key": "lineDescription",
+								"label": "Description"
+							},
+							{
+								"key": "lineAmount",
+								"label": "Net Amount (EUR)"
+							},
+							{
+								"key": "vatRate",
+								"label": "VAT Rate (%)"
+							},
+							{
+								"key": "vatAmount",
+								"label": "VAT Amount (EUR)"
+							},
+							{
+								"key": "serviceCategory",
+								"label": "Category"
+							},
+							{
+								"key": "lifecycleEvent",
+								"label": "Event"
+							},
+							{
+								"key": "paymentDate",
+								"label": "Payment Date"
+							}
+						]
+					}
+				],
+				"checklist": [
+					{
+						"id": "all-invoices-issued",
+						"label": "All invoices in period are issued or paid",
+						"check": "VATAuditRecord[settlementPeriodId=@self.id, lifecycleEvent=issued OR lifecycleEvent=paid] COUNT > 0"
+					},
+					{
+						"id": "gl-accounts-balanced",
+						"label": "GL VAT payable accounts balance with VAT audit record totals",
+						"check": "MANUAL"
+					},
+					{
+						"id": "no-draft-invoices",
+						"label": "No draft invoices remain open in this period",
+						"check": "MANUAL"
+					}
+				],
+				"description": "VAT Reconciliation shows full breakdown for a single settlement period: line-by-line audit records, aggregated VAT totals per rate, and a 'Ready for Filing' checklist per REQ-VAT-009 and REQ-VAT-010.",
+				"indexRoute": "VatByPeriod"
 			}
 		}
 	]

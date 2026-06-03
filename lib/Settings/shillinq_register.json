@@ -7595,6 +7595,862 @@
 					}
 				}
 			}
+		},
+		"InvoiceLine": {
+			"slug": "InvoiceLine",
+			"icon": "FileDocumentOutline",
+			"version": "0.1.0",
+			"title": "Invoice Line",
+			"description": "A single line item on an ARInvoice carrying per-line VAT rate, VAT amount, and service-category classification per REQ-VAT-001. vatAmount is computed as ROUND(lineAmount × vatRate / 100, 2) using banker's rounding per REQ-VAT-007. serviceCategory gates which vatRate values are permitted per REQ-VAT-002.",
+			"x-schema-org": "schema:UnitPriceSpecification",
+			"type": "object",
+			"required": [
+				"invoiceId",
+				"lineSequence",
+				"description",
+				"lineAmount",
+				"vatRate",
+				"serviceCategory",
+				"administrationId"
+			],
+			"properties": {
+				"invoiceId": {
+					"type": "string",
+					"description": "FK to the parent ARInvoice UUID.",
+					"example": "ar-inv-2026-001234"
+				},
+				"lineSequence": {
+					"type": "integer",
+					"minimum": 1,
+					"description": "Line number within the invoice (1-based). Immutable once issued.",
+					"example": 1
+				},
+				"description": {
+					"type": "string",
+					"description": "Item or service description as it appears on the invoice.",
+					"example": "Website hosting - May 2026"
+				},
+				"quantity": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Quantity (units, hours, etc.).",
+					"nullable": true,
+					"example": 1
+				},
+				"unitPrice": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Unit price before VAT.",
+					"nullable": true,
+					"example": 200.0
+				},
+				"lineAmount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Line total before VAT (quantity × unitPrice or directly entered).",
+					"example": 200.0
+				},
+				"vatRate": {
+					"type": "integer",
+					"enum": [
+						0,
+						6,
+						9,
+						21
+					],
+					"description": "VAT rate applied to this line: 21 (standard), 9 (reduced services), 6 (books/media), 0 (exempt/export). Default is administration's standard rate (21). Validated against serviceCategory per REQ-VAT-002.",
+					"default": 21,
+					"example": 9
+				},
+				"vatAmount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "VAT amount: ROUND(lineAmount × vatRate / 100, 2) using banker's rounding per REQ-VAT-007. Computed; do not set directly.",
+					"example": 18.0
+				},
+				"serviceCategory": {
+					"type": "string",
+					"enum": [
+						"product",
+						"service",
+						"exempt"
+					],
+					"description": "Service/product category determining permitted VAT rates per REQ-VAT-002. product: 0/6/21 permitted. service: 0/9/21 permitted. exempt: only 0 permitted.",
+					"default": "product",
+					"example": "service"
+				},
+				"accountNumber": {
+					"type": "string",
+					"description": "FK to Account.accountNumber (revenue account for this line).",
+					"nullable": true,
+					"example": "8000"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the Administration owning this invoice line.",
+					"example": "adm-consultancy-nl"
+				}
+			},
+			"x-openregister-calculations": {
+				"vatAmount": {
+					"formula": "ROUND(@self.lineAmount * @self.vatRate / 100, 2, 'HALF_EVEN')",
+					"description": "Banker's rounding (HALF_EVEN) per REQ-VAT-007. Computed on save; stored for audit trail."
+				}
+			}
+		},
+		"ARInvoice": {
+			"slug": "ARInvoice",
+			"icon": "ReceiptTextOutline",
+			"version": "0.2.0",
+			"title": "AR Invoice",
+			"description": "Accounts receivable sub-ledger invoice. On issue, validates service-category per REQ-VAT-002 and materialises a balanced GL posting with VAT accrual per rate bucket (REQ-VAT-003). Immutable VATAuditRecord rows are generated per line per lifecycle event (REQ-VAT-004). Settlement period is bound at issue time and is immutable (REQ-VAT-005).",
+			"x-schema-org": "schema:Invoice",
+			"type": "object",
+			"required": [
+				"invoiceNumber",
+				"customerId",
+				"invoiceDate",
+				"dueDate",
+				"currency",
+				"totalAmount",
+				"state",
+				"administrationId"
+			],
+			"properties": {
+				"invoiceNumber": {
+					"type": "string",
+					"description": "Auto-generated invoice number per administration (e.g. 2026-001234).",
+					"example": "2026-001234"
+				},
+				"customerId": {
+					"type": "string",
+					"description": "FK to CustomerMaster UUID.",
+					"example": "cust-bakker-1"
+				},
+				"invoiceDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Date of invoice issuance.",
+					"example": "2026-05-15"
+				},
+				"dueDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Payment due date (invoiceDate + customer paymentTermDays; overrideable).",
+					"example": "2026-06-14"
+				},
+				"currency": {
+					"type": "string",
+					"minLength": 3,
+					"maxLength": 3,
+					"default": "EUR",
+					"description": "ISO 4217 currency. T2: EUR only.",
+					"example": "EUR"
+				},
+				"totalAmount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Invoice total including VAT (sum of InvoiceLine.lineAmount + InvoiceLine.vatAmount).",
+					"example": 218.0
+				},
+				"totalVatAmount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Sum of all InvoiceLine.vatAmount values. Derived; do not set directly.",
+					"nullable": true,
+					"example": 18.0
+				},
+				"state": {
+					"type": "string",
+					"enum": [
+						"draft",
+						"issued",
+						"partially-paid",
+						"paid",
+						"overdue",
+						"disputed",
+						"written-off",
+						"voided"
+					],
+					"default": "draft",
+					"description": "AR invoice lifecycle state.",
+					"example": "draft"
+				},
+				"settlementPeriodId": {
+					"type": "string",
+					"description": "FK to TaxPeriod UUID. Bound immutably at issue time per REQ-VAT-005. Null until issued.",
+					"nullable": true,
+					"example": "tax-period-2026-05-monthly"
+				},
+				"glTransactionId": {
+					"type": "string",
+					"description": "Back-reference to the materialised GLTransaction (set on issue).",
+					"nullable": true,
+					"example": "gl-txn-inv-2026-001234"
+				},
+				"sourceDocumentUri": {
+					"type": "string",
+					"description": "docudesk FK URI to scanned/PDF invoice.",
+					"nullable": true
+				},
+				"paidDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Date of full payment receipt.",
+					"nullable": true
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to Administration.",
+					"example": "adm-consultancy-nl"
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "state",
+				"initialState": "draft",
+				"states": {
+					"draft": {
+						"label": "Draft",
+						"description": "Under construction. Lines may be added, edited, or deleted."
+					},
+					"issued": {
+						"label": "Issued",
+						"description": "Invoice issued. VAT accrued to GL. VATAuditRecord rows created. SettlementPeriod bound."
+					},
+					"partially-paid": {
+						"label": "Partially paid",
+						"description": "Partial payment received."
+					},
+					"paid": {
+						"label": "Paid",
+						"description": "Fully paid. VATAuditRecord 'paid' rows created."
+					},
+					"overdue": {
+						"label": "Overdue",
+						"description": "Past due date, still unpaid."
+					},
+					"disputed": {
+						"label": "Disputed",
+						"description": "Customer has raised a dispute."
+					},
+					"written-off": {
+						"label": "Written off",
+						"description": "Debt written off. Compensating GL posting materialised."
+					},
+					"voided": {
+						"label": "Voided",
+						"description": "Voided before issuance (draft only)."
+					}
+				},
+				"transitions": {
+					"issue": {
+						"from": "draft",
+						"to": "issued",
+						"label": "Issue invoice",
+						"description": "Issue the invoice. Validates service-category per REQ-VAT-002, checks VAT GL accounts configured per REQ-VAT-006, binds settlement period per REQ-VAT-005, materialises GL posting per REQ-VAT-003, creates VATAuditRecord rows per REQ-VAT-004.",
+						"requires": "OCA\\Shillinq\\Lifecycle\\VatPreconditionGuard::validate",
+						"preconditions": [
+							{
+								"id": "vat-gl-accounts-configured",
+								"description": "VAT GL accounts must be configured. Error: 'Cannot issue invoice: VAT GL accounts not configured. Go to Settings > Accounting > Tax Configuration to assign VAT GL accounts.'",
+								"check": "VATGLAccounts[administrationId=@self.administrationId].vat21Account IS NOT NULL"
+							},
+							{
+								"id": "service-category-valid",
+								"description": "Each InvoiceLine.serviceCategory must permit its vatRate. product: {0,6,21}; service: {0,9,21}; exempt: {0}. Override via ServiceCategoryOverride record. Error: 'Line N: Service category \\'X\\' does not permit Y% VAT. Check admin settings for service-category overrides.'",
+								"check": "ALL(InvoiceLine[invoiceId=@self.id], line => vatRatePermitted(line.serviceCategory, line.vatRate, @self.administrationId))"
+							},
+							{
+								"id": "settlement-period-resolvable",
+								"description": "Administration must have a filing-frequency setting to resolve the settlement period. Error: 'Cannot issue invoice: VAT settlement period cannot be resolved. Configure VAT filing frequency in Tax Configuration.'",
+								"check": "TaxPeriod[administrationId=@self.administrationId, contains=@self.invoiceDate] EXISTS"
+							}
+						],
+						"actions": [
+							{
+								"trigger": "x-openregister-lifecycle-action",
+								"action": "materialise-gl-posting",
+								"description": "Materialise balanced GL transaction: debit AR control account (1200), credit VATPayable accounts by rate bucket (2020/2021/2022/2023). One sub-entry per rate bucket per REQ-VAT-003 + REQ-VAT-006.",
+								"template": {
+									"register": "shillinq",
+									"schema": "GLTransaction",
+									"data": {
+										"transactionNumber": "GL-VAT-@self.invoiceNumber",
+										"postingDate": "@self.invoiceDate",
+										"description": "VAT accrual for invoice @self.invoiceNumber",
+										"currency": "@self.currency",
+										"state": "posted",
+										"administrationId": "@self.administrationId",
+										"lines": [
+											{
+												"accountNumber": "1200",
+												"side": "debit",
+												"amount": "@self.totalAmount",
+												"description": "AR control - @self.invoiceNumber"
+											},
+											{
+												"accountNumber": "VATGLAccounts[@self.administrationId].vat21Account",
+												"side": "credit",
+												"amount": "SUM(InvoiceLine[invoiceId=@self.id, vatRate=21].vatAmount)",
+												"description": "VAT payable 21%",
+												"condition": "SUM > 0"
+											},
+											{
+												"accountNumber": "VATGLAccounts[@self.administrationId].vat9Account",
+												"side": "credit",
+												"amount": "SUM(InvoiceLine[invoiceId=@self.id, vatRate=9].vatAmount)",
+												"description": "VAT payable 9%",
+												"condition": "SUM > 0"
+											},
+											{
+												"accountNumber": "VATGLAccounts[@self.administrationId].vat6Account",
+												"side": "credit",
+												"amount": "SUM(InvoiceLine[invoiceId=@self.id, vatRate=6].vatAmount)",
+												"description": "VAT payable 6%",
+												"condition": "SUM > 0"
+											},
+											{
+												"accountNumber": "VATGLAccounts[@self.administrationId].vat0Account",
+												"side": "credit",
+												"amount": "SUM(InvoiceLine[invoiceId=@self.id, vatRate=0].vatAmount)",
+												"description": "VAT payable 0%/exempt",
+												"condition": "SUM > 0"
+											},
+											{
+												"accountNumber": "8000",
+												"side": "credit",
+												"amount": "SUM(InvoiceLine[invoiceId=@self.id].lineAmount)",
+												"description": "Net revenue - @self.invoiceNumber"
+											}
+										]
+									}
+								}
+							},
+							{
+								"trigger": "x-openregister-lifecycle-action",
+								"action": "create-vat-audit-records",
+								"description": "Create immutable VATAuditRecord per InvoiceLine per REQ-VAT-004. lifecycleEvent=issued.",
+								"template": {
+									"register": "shillinq",
+									"schema": "VATAuditRecord",
+									"foreach": "InvoiceLine[invoiceId=@self.id]",
+									"data": {
+										"invoiceNumber": "@self.invoiceNumber",
+										"invoiceDate": "@self.invoiceDate",
+										"lineSequence": "@line.lineSequence",
+										"lineDescription": "@line.description",
+										"lineAmount": "@line.lineAmount",
+										"vatRate": "@line.vatRate",
+										"vatAmount": "@line.vatAmount",
+										"serviceCategory": "@line.serviceCategory",
+										"lifecycleEvent": "issued",
+										"eventDate": "@now",
+										"paymentDate": null,
+										"settlementPeriodId": "@self.settlementPeriodId",
+										"administrationId": "@self.administrationId"
+									}
+								}
+							},
+							{
+								"trigger": "x-openregister-lifecycle-action",
+								"action": "bind-settlement-period",
+								"description": "Resolve and bind TaxPeriod based on invoiceDate + administration filing frequency per REQ-VAT-005. Sets @self.settlementPeriodId.",
+								"resolver": "TaxPeriod[administrationId=@self.administrationId, contains=@self.invoiceDate].id"
+							}
+						]
+					},
+					"pay": {
+						"from": [
+							"issued",
+							"partially-paid",
+							"overdue"
+						],
+						"to": "paid",
+						"label": "Mark paid",
+						"description": "Mark invoice as fully paid. Creates VATAuditRecord rows with lifecycleEvent=paid.",
+						"actions": [
+							{
+								"trigger": "x-openregister-lifecycle-action",
+								"action": "create-vat-audit-records",
+								"description": "Create VATAuditRecord per line with lifecycleEvent=paid and paymentDate=today.",
+								"template": {
+									"register": "shillinq",
+									"schema": "VATAuditRecord",
+									"foreach": "InvoiceLine[invoiceId=@self.id]",
+									"data": {
+										"invoiceNumber": "@self.invoiceNumber",
+										"invoiceDate": "@self.invoiceDate",
+										"lineSequence": "@line.lineSequence",
+										"lineDescription": "@line.description",
+										"lineAmount": "@line.lineAmount",
+										"vatRate": "@line.vatRate",
+										"vatAmount": "@line.vatAmount",
+										"serviceCategory": "@line.serviceCategory",
+										"lifecycleEvent": "paid",
+										"eventDate": "@now",
+										"paymentDate": "@now",
+										"settlementPeriodId": "@self.settlementPeriodId",
+										"administrationId": "@self.administrationId"
+									}
+								}
+							}
+						]
+					},
+					"write-off": {
+						"from": [
+							"issued",
+							"overdue",
+							"partially-paid",
+							"disputed"
+						],
+						"to": "written-off",
+						"label": "Write off",
+						"description": "Write off outstanding balance. Creates VATAuditRecord rows with lifecycleEvent=written_off.",
+						"actions": [
+							{
+								"trigger": "x-openregister-lifecycle-action",
+								"action": "create-vat-audit-records",
+								"description": "Create VATAuditRecord per line with lifecycleEvent=written_off.",
+								"template": {
+									"register": "shillinq",
+									"schema": "VATAuditRecord",
+									"foreach": "InvoiceLine[invoiceId=@self.id]",
+									"data": {
+										"invoiceNumber": "@self.invoiceNumber",
+										"invoiceDate": "@self.invoiceDate",
+										"lineSequence": "@line.lineSequence",
+										"lineDescription": "@line.description",
+										"lineAmount": "@line.lineAmount",
+										"vatRate": "@line.vatRate",
+										"vatAmount": "@line.vatAmount",
+										"serviceCategory": "@line.serviceCategory",
+										"lifecycleEvent": "written_off",
+										"eventDate": "@now",
+										"paymentDate": null,
+										"settlementPeriodId": "@self.settlementPeriodId",
+										"administrationId": "@self.administrationId"
+									}
+								}
+							}
+						]
+					},
+					"void": {
+						"from": "draft",
+						"to": "voided",
+						"label": "Void",
+						"description": "Void the invoice before issuance."
+					},
+					"mark-overdue": {
+						"from": "issued",
+						"to": "overdue",
+						"label": "Mark overdue",
+						"description": "Mark as overdue (typically triggered by background job on dueDate + 1)."
+					},
+					"dispute": {
+						"from": [
+							"issued",
+							"overdue"
+						],
+						"to": "disputed",
+						"label": "Mark disputed",
+						"description": "Customer has raised a payment dispute."
+					}
+				}
+			}
+		},
+		"VATAuditRecord": {
+			"slug": "VATAuditRecord",
+			"icon": "ShieldCheckOutline",
+			"version": "0.1.0",
+			"title": "VAT Audit Record",
+			"description": "Immutable append-only kassakoppeling audit record per invoice line per lifecycle event per REQ-VAT-004. One record is created per InvoiceLine when the parent ARInvoice transitions to issued, paid, written_off, or reversed. No update or delete operations are permitted — Belastingdienst audits inspect these records. Retention: 7 years per Belastingdienst kassakoppeling rules.",
+			"x-schema-org": "schema:AuditEvent",
+			"type": "object",
+			"x-openregister-immutable": true,
+			"required": [
+				"invoiceNumber",
+				"invoiceDate",
+				"lineSequence",
+				"lineDescription",
+				"lineAmount",
+				"vatRate",
+				"vatAmount",
+				"serviceCategory",
+				"lifecycleEvent",
+				"eventDate",
+				"settlementPeriodId",
+				"administrationId"
+			],
+			"properties": {
+				"invoiceNumber": {
+					"type": "string",
+					"description": "Invoice identifier at time of event (immutable copy per REQ-VAT-004).",
+					"example": "2026-001234"
+				},
+				"invoiceDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Invoice issuance date (immutable copy).",
+					"example": "2026-05-15"
+				},
+				"lineSequence": {
+					"type": "integer",
+					"minimum": 1,
+					"description": "Line number within the invoice.",
+					"example": 1
+				},
+				"lineDescription": {
+					"type": "string",
+					"description": "Item description at time of issue (immutable copy).",
+					"example": "Website hosting - May 2026"
+				},
+				"lineAmount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Line amount before VAT at time of event (immutable copy).",
+					"example": 200.0
+				},
+				"vatRate": {
+					"type": "integer",
+					"enum": [
+						0,
+						6,
+						9,
+						21
+					],
+					"description": "VAT rate applied: 21, 9, 6, or 0.",
+					"example": 9
+				},
+				"vatAmount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "VAT amount accrued at time of event (immutable copy, banker's rounding per REQ-VAT-007).",
+					"example": 18.0
+				},
+				"serviceCategory": {
+					"type": "string",
+					"enum": [
+						"product",
+						"service",
+						"exempt"
+					],
+					"description": "Service/product category at time of event (immutable copy).",
+					"example": "service"
+				},
+				"lifecycleEvent": {
+					"type": "string",
+					"enum": [
+						"issued",
+						"paid",
+						"written_off",
+						"reversed"
+					],
+					"description": "Lifecycle event that triggered this audit record creation.",
+					"example": "issued"
+				},
+				"eventDate": {
+					"type": "string",
+					"format": "date-time",
+					"description": "UTC timestamp of the lifecycle event.",
+					"example": "2026-05-15T14:32:00Z"
+				},
+				"paymentDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Date of payment receipt (null until paid; populated on paid event).",
+					"nullable": true,
+					"example": null
+				},
+				"settlementPeriodId": {
+					"type": "string",
+					"description": "FK to TaxPeriod UUID — bound immutably at invoice issuance per REQ-VAT-005. Survives administration reconfiguration.",
+					"example": "tax-period-2026-05-monthly"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to Administration.",
+					"example": "adm-consultancy-nl"
+				}
+			},
+			"x-openregister-aggregations": {
+				"vatByPeriod": {
+					"description": "VAT-by-period aggregation per REQ-VAT-009. Groups VATAuditRecord by settlementPeriodId and vatRate, sums vatAmount and lineAmount. Returns totalNetAmount, totalVAT21/9/6/0, totalGrossAmount, invoiceCount, recordCount.",
+					"groupBy": [
+						"administrationId",
+						"settlementPeriodId"
+					],
+					"filter": {
+						"lifecycleEvent": "issued"
+					},
+					"fields": {
+						"totalNetAmount": {
+							"aggregate": "SUM",
+							"field": "lineAmount",
+							"description": "Sum of all line amounts (before VAT) in the period."
+						},
+						"totalVAT21": {
+							"aggregate": "SUM",
+							"field": "vatAmount",
+							"filter": {
+								"vatRate": 21
+							},
+							"description": "Sum of vatAmount where vatRate=21."
+						},
+						"totalVAT9": {
+							"aggregate": "SUM",
+							"field": "vatAmount",
+							"filter": {
+								"vatRate": 9
+							},
+							"description": "Sum of vatAmount where vatRate=9."
+						},
+						"totalVAT6": {
+							"aggregate": "SUM",
+							"field": "vatAmount",
+							"filter": {
+								"vatRate": 6
+							},
+							"description": "Sum of vatAmount where vatRate=6."
+						},
+						"totalVAT0": {
+							"aggregate": "SUM",
+							"field": "vatAmount",
+							"filter": {
+								"vatRate": 0
+							},
+							"description": "Sum of vatAmount where vatRate=0."
+						},
+						"totalGrossAmount": {
+							"aggregate": "FORMULA",
+							"formula": "totalNetAmount + totalVAT21 + totalVAT9 + totalVAT6 + totalVAT0",
+							"description": "Total gross: net + all VAT buckets."
+						},
+						"invoiceCount": {
+							"aggregate": "COUNT_DISTINCT",
+							"field": "invoiceNumber",
+							"description": "Number of distinct invoices in the period."
+						},
+						"recordCount": {
+							"aggregate": "COUNT",
+							"field": "id",
+							"description": "Total VATAuditRecord rows (may exceed invoiceCount if reversed and reissued)."
+						}
+					}
+				}
+			},
+			"x-openregister-retention": {
+				"rule": "kassakoppeling:belastingdienst",
+				"period": "P7Y",
+				"description": "Kassakoppeling audit records retained 7 years per Belastingdienst requirements."
+			}
+		},
+		"ServiceCategoryOverride": {
+			"slug": "ServiceCategoryOverride",
+			"icon": "ShieldEditOutline",
+			"version": "0.1.0",
+			"title": "Service Category Override",
+			"description": "Administration-configurable exception allowing a normally-forbidden serviceCategory + vatRate combination per REQ-VAT-002. Each override records the category, rate, reason, and who created it. The VatPreconditionGuard checks this table before rejecting an invoice line. Audit trail is mandatory.",
+			"x-schema-org": "schema:PermitIssuedBy",
+			"type": "object",
+			"required": [
+				"serviceCategory",
+				"vatRate",
+				"administrationId",
+				"reason",
+				"createdBy"
+			],
+			"properties": {
+				"serviceCategory": {
+					"type": "string",
+					"enum": [
+						"product",
+						"service",
+						"exempt"
+					],
+					"description": "The service category for which an exception is granted.",
+					"example": "service"
+				},
+				"vatRate": {
+					"type": "integer",
+					"enum": [
+						0,
+						6,
+						9,
+						21
+					],
+					"description": "The VAT rate that is exceptionally permitted for the given serviceCategory.",
+					"example": 21
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to Administration. Override applies only to this administration.",
+					"example": "adm-consultancy-nl"
+				},
+				"reason": {
+					"type": "string",
+					"description": "Mandatory justification for the exception (e.g. 'Special consulting agreement with client X').",
+					"example": "Special consulting agreement — technical support billed at 21% per contract"
+				},
+				"effectiveFrom": {
+					"type": "string",
+					"format": "date",
+					"description": "Date from which this override is effective. Defaults to creation date.",
+					"nullable": true,
+					"example": "2026-01-01"
+				},
+				"effectiveTo": {
+					"type": "string",
+					"format": "date",
+					"description": "Expiry date of this override. Null = indefinite.",
+					"nullable": true,
+					"example": null
+				},
+				"createdBy": {
+					"type": "string",
+					"description": "Nextcloud user ID of the administrator who created this override.",
+					"example": "admin-user"
+				},
+				"createdAt": {
+					"type": "string",
+					"format": "date-time",
+					"description": "Timestamp of override creation (auto-set).",
+					"example": "2026-01-01T10:00:00Z"
+				}
+			}
+		},
+		"VATGLAccounts": {
+			"slug": "VATGLAccounts",
+			"icon": "BankOutline",
+			"version": "0.1.0",
+			"title": "VAT GL Accounts",
+			"description": "Administration-level configuration of VAT payable GL accounts per rate bucket per REQ-VAT-006. One record per administration. Default accounts follow RGS standard (2020/2021/2022/2023). Installer creates defaults on first run; admin can reassign. All four accounts must be configured and unique before invoices can be issued.",
+			"x-schema-org": "schema:FinancialProduct",
+			"type": "object",
+			"required": [
+				"administrationId",
+				"vat21Account",
+				"vat9Account",
+				"vat6Account",
+				"vat0Account"
+			],
+			"properties": {
+				"administrationId": {
+					"type": "string",
+					"description": "FK to Administration (one record per administration).",
+					"example": "adm-consultancy-nl"
+				},
+				"vat21Account": {
+					"type": "string",
+					"description": "GL account number for VAT payable 21% (Belastingdienst BTW hoog). Default: 2020 per RGS.",
+					"default": "2020",
+					"example": "2020"
+				},
+				"vat9Account": {
+					"type": "string",
+					"description": "GL account number for VAT payable 9% (Belastingdienst BTW laag - diensten). Default: 2021 per RGS.",
+					"default": "2021",
+					"example": "2021"
+				},
+				"vat6Account": {
+					"type": "string",
+					"description": "GL account number for VAT payable 6% (Belastingdienst BTW laag - boeken/media). Default: 2022 per RGS.",
+					"default": "2022",
+					"example": "2022"
+				},
+				"vat0Account": {
+					"type": "string",
+					"description": "GL account number for VAT 0% / exempt (Belastingdienst BTW vrijgesteld / 0%). Default: 2023 per RGS.",
+					"default": "2023",
+					"example": "2023"
+				},
+				"arControlAccount": {
+					"type": "string",
+					"description": "AR control account for debit side of VAT accrual posting. Default: 1200 per RGS.",
+					"default": "1200",
+					"example": "1200"
+				},
+				"createdAt": {
+					"type": "string",
+					"format": "date-time",
+					"description": "Record creation timestamp.",
+					"nullable": true
+				},
+				"updatedAt": {
+					"type": "string",
+					"format": "date-time",
+					"description": "Last update timestamp.",
+					"nullable": true
+				}
+			}
+		},
+		"TaxPeriod": {
+			"slug": "TaxPeriod",
+			"icon": "CalendarOutline",
+			"version": "0.1.0",
+			"title": "Tax Period",
+			"description": "A VAT settlement period (month, quarter, or year) per administration per REQ-VAT-005. TaxPeriod records are created by the filing-frequency configuration. VATAuditRecord.settlementPeriodId is an immutable FK to TaxPeriod at the time of invoice issuance. When administration reconfigures to a different frequency, old records remain bound to their original period.",
+			"x-schema-org": "schema:Schedule",
+			"type": "object",
+			"required": [
+				"administrationId",
+				"periodCode",
+				"startDate",
+				"endDate",
+				"filingFrequency"
+			],
+			"properties": {
+				"administrationId": {
+					"type": "string",
+					"description": "FK to Administration.",
+					"example": "adm-consultancy-nl"
+				},
+				"periodCode": {
+					"type": "string",
+					"description": "Human-readable period identifier (e.g. 'May 2026 (monthly)', 'Q2 2026 (quarterly)').",
+					"example": "May 2026 (monthly)"
+				},
+				"startDate": {
+					"type": "string",
+					"format": "date",
+					"description": "First day of the settlement period.",
+					"example": "2026-05-01"
+				},
+				"endDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Last day of the settlement period.",
+					"example": "2026-05-31"
+				},
+				"filingFrequency": {
+					"type": "string",
+					"enum": [
+						"monthly",
+						"quarterly",
+						"annual"
+					],
+					"description": "Filing frequency in effect at the time this period was created. Immutable once set.",
+					"example": "monthly"
+				},
+				"filingDeadline": {
+					"type": "string",
+					"format": "date",
+					"description": "Deadline for filing VAT return for this period (typically last day of following month).",
+					"nullable": true,
+					"example": "2026-06-30"
+				},
+				"state": {
+					"type": "string",
+					"enum": [
+						"open",
+						"closed",
+						"filed",
+						"assessed"
+					],
+					"default": "open",
+					"description": "Period state: open (active), closed (end date passed), filed (BTW return submitted), assessed (Belastingdienst confirmation received).",
+					"example": "open"
+				}
+			}
 		}
 	},
 	"mappings": {
@@ -8446,6 +9302,305 @@
 			"paymentMethod": "ideal",
 			"state": "executed",
 			"administrationId": "adm-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "VATGLAccounts",
+				"slug": "vat-gl-accounts-consultancy-nl"
+			},
+			"administrationId": "adm-consultancy-nl",
+			"vat21Account": "2020",
+			"vat9Account": "2021",
+			"vat6Account": "2022",
+			"vat0Account": "2023",
+			"arControlAccount": "1200"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "VATGLAccounts",
+				"slug": "vat-gl-accounts-gemeente-demo"
+			},
+			"administrationId": "adm-gemeente-demo",
+			"vat21Account": "2020",
+			"vat9Account": "2021",
+			"vat6Account": "2022",
+			"vat0Account": "2023",
+			"arControlAccount": "1200"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "TaxPeriod",
+				"slug": "tax-period-2026-04-monthly"
+			},
+			"administrationId": "adm-consultancy-nl",
+			"periodCode": "April 2026 (monthly)",
+			"startDate": "2026-04-01",
+			"endDate": "2026-04-30",
+			"filingFrequency": "monthly",
+			"filingDeadline": "2026-05-31",
+			"state": "filed"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "TaxPeriod",
+				"slug": "tax-period-2026-05-monthly"
+			},
+			"administrationId": "adm-consultancy-nl",
+			"periodCode": "May 2026 (monthly)",
+			"startDate": "2026-05-01",
+			"endDate": "2026-05-31",
+			"filingFrequency": "monthly",
+			"filingDeadline": "2026-06-30",
+			"state": "open"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "TaxPeriod",
+				"slug": "tax-period-2026-06-monthly"
+			},
+			"administrationId": "adm-consultancy-nl",
+			"periodCode": "June 2026 (monthly)",
+			"startDate": "2026-06-01",
+			"endDate": "2026-06-30",
+			"filingFrequency": "monthly",
+			"filingDeadline": "2026-07-31",
+			"state": "open"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "TaxPeriod",
+				"slug": "tax-period-2026-q2-quarterly"
+			},
+			"administrationId": "adm-gemeente-demo",
+			"periodCode": "Q2 2026 (quarterly)",
+			"startDate": "2026-04-01",
+			"endDate": "2026-06-30",
+			"filingFrequency": "quarterly",
+			"filingDeadline": "2026-07-31",
+			"state": "open"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "ARInvoice",
+				"slug": "ar-invoice-2026-001234"
+			},
+			"invoiceNumber": "2026-001234",
+			"customerId": "cust-bakker-bv-1",
+			"invoiceDate": "2026-05-15",
+			"dueDate": "2026-06-14",
+			"currency": "EUR",
+			"totalAmount": 242.0,
+			"totalVatAmount": 42.0,
+			"state": "issued",
+			"settlementPeriodId": "tax-period-2026-05-monthly",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "ARInvoice",
+				"slug": "ar-invoice-2026-001235"
+			},
+			"invoiceNumber": "2026-001235",
+			"customerId": "cust-gemeente-amsterdam-1",
+			"invoiceDate": "2026-05-20",
+			"dueDate": "2026-06-19",
+			"currency": "EUR",
+			"totalAmount": 545.0,
+			"totalVatAmount": 45.0,
+			"state": "paid",
+			"paidDate": "2026-06-01",
+			"settlementPeriodId": "tax-period-2026-05-monthly",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "ARInvoice",
+				"slug": "ar-invoice-2026-001236"
+			},
+			"invoiceNumber": "2026-001236",
+			"customerId": "cust-media-producties-1",
+			"invoiceDate": "2026-06-01",
+			"dueDate": "2026-06-30",
+			"currency": "EUR",
+			"totalAmount": 159.0,
+			"totalVatAmount": 9.0,
+			"state": "draft",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InvoiceLine",
+				"slug": "inv-line-2026-001234-1"
+			},
+			"invoiceId": "ar-invoice-2026-001234",
+			"lineSequence": 1,
+			"description": "Advies dienstverlening - mei 2026",
+			"quantity": 8,
+			"unitPrice": 125.0,
+			"lineAmount": 1000.0,
+			"vatRate": 21,
+			"vatAmount": 210.0,
+			"serviceCategory": "service",
+			"accountNumber": "8000",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InvoiceLine",
+				"slug": "inv-line-2026-001234-2"
+			},
+			"invoiceId": "ar-invoice-2026-001234",
+			"lineSequence": 2,
+			"description": "Website onderhoud (hosting)",
+			"quantity": 1,
+			"unitPrice": 200.0,
+			"lineAmount": 200.0,
+			"vatRate": 9,
+			"vatAmount": 18.0,
+			"serviceCategory": "service",
+			"accountNumber": "8100",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InvoiceLine",
+				"slug": "inv-line-2026-001235-1"
+			},
+			"invoiceId": "ar-invoice-2026-001235",
+			"lineSequence": 1,
+			"description": "Procesoptimalisatie consultancy",
+			"quantity": 4,
+			"unitPrice": 125.0,
+			"lineAmount": 500.0,
+			"vatRate": 21,
+			"vatAmount": 105.0,
+			"serviceCategory": "service",
+			"accountNumber": "8000",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InvoiceLine",
+				"slug": "inv-line-2026-001236-1"
+			},
+			"invoiceId": "ar-invoice-2026-001236",
+			"lineSequence": 1,
+			"description": "Beginners Nederlands - leerboek",
+			"quantity": 10,
+			"unitPrice": 15.0,
+			"lineAmount": 150.0,
+			"vatRate": 6,
+			"vatAmount": 9.0,
+			"serviceCategory": "product",
+			"accountNumber": "8200",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "VATAuditRecord",
+				"slug": "vat-audit-2026-001234-line1-issued"
+			},
+			"invoiceNumber": "2026-001234",
+			"invoiceDate": "2026-05-15",
+			"lineSequence": 1,
+			"lineDescription": "Advies dienstverlening - mei 2026",
+			"lineAmount": 1000.0,
+			"vatRate": 21,
+			"vatAmount": 210.0,
+			"serviceCategory": "service",
+			"lifecycleEvent": "issued",
+			"eventDate": "2026-05-15T10:00:00Z",
+			"paymentDate": null,
+			"settlementPeriodId": "tax-period-2026-05-monthly",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "VATAuditRecord",
+				"slug": "vat-audit-2026-001234-line2-issued"
+			},
+			"invoiceNumber": "2026-001234",
+			"invoiceDate": "2026-05-15",
+			"lineSequence": 2,
+			"lineDescription": "Website onderhoud (hosting)",
+			"lineAmount": 200.0,
+			"vatRate": 9,
+			"vatAmount": 18.0,
+			"serviceCategory": "service",
+			"lifecycleEvent": "issued",
+			"eventDate": "2026-05-15T10:00:00Z",
+			"paymentDate": null,
+			"settlementPeriodId": "tax-period-2026-05-monthly",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "VATAuditRecord",
+				"slug": "vat-audit-2026-001235-line1-issued"
+			},
+			"invoiceNumber": "2026-001235",
+			"invoiceDate": "2026-05-20",
+			"lineSequence": 1,
+			"lineDescription": "Procesoptimalisatie consultancy",
+			"lineAmount": 500.0,
+			"vatRate": 21,
+			"vatAmount": 105.0,
+			"serviceCategory": "service",
+			"lifecycleEvent": "issued",
+			"eventDate": "2026-05-20T09:00:00Z",
+			"paymentDate": null,
+			"settlementPeriodId": "tax-period-2026-05-monthly",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "VATAuditRecord",
+				"slug": "vat-audit-2026-001235-line1-paid"
+			},
+			"invoiceNumber": "2026-001235",
+			"invoiceDate": "2026-05-20",
+			"lineSequence": 1,
+			"lineDescription": "Procesoptimalisatie consultancy",
+			"lineAmount": 500.0,
+			"vatRate": 21,
+			"vatAmount": 105.0,
+			"serviceCategory": "service",
+			"lifecycleEvent": "paid",
+			"eventDate": "2026-06-01T11:30:00Z",
+			"paymentDate": "2026-06-01",
+			"settlementPeriodId": "tax-period-2026-05-monthly",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "ServiceCategoryOverride",
+				"slug": "vat-override-consultancy-service-21"
+			},
+			"serviceCategory": "service",
+			"vatRate": 21,
+			"administrationId": "adm-consultancy-nl",
+			"reason": "Technische consultancy-overeenkomst met klant Bakker B.V. — 21% BTW per contractafspraak",
+			"effectiveFrom": "2026-01-01",
+			"effectiveTo": null,
+			"createdBy": "admin"
 		}
 	]
 }
