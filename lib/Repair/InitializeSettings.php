@@ -81,6 +81,7 @@ class InitializeSettings implements IRepairStep
      * Phase 5: seeds KOR thresholds from kor-thresholds-2026.json idempotently.
      * Phase 6: seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
      * Phase 7: seeds RJ-270 stages and rate-card templates for consultancy project accounting.
+     * Phase 8: seeds ProductAttribute templates (office, it_hardware, logistics, food_beverage, clothing) per REQ-IPC-007.
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -91,6 +92,7 @@ class InitializeSettings implements IRepairStep
      * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
      * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
      * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
      */
     public function run(IOutput $output): void
     {
@@ -140,6 +142,7 @@ class InitializeSettings implements IRepairStep
             $this->seedSelectielijstRules(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
+            $this->seedProductAttributeTemplates(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -379,6 +382,42 @@ class InitializeSettings implements IRepairStep
         }//end try
 
     }//end seedKorThresholds()
+
+    /**
+     * Seed ProductAttribute templates for all five standard categories, idempotently.
+     *
+     * Calls SettingsService::seedProductAttributes() per category. Idempotent:
+     * attributes matched by name + applicableToCategories are skipped, preserving
+     * operator edits per REQ-IPC-007.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
+     */
+    private function seedProductAttributeTemplates(IOutput $output): void
+    {
+        $categories = ['office', 'it_hardware', 'logistics', 'food_beverage', 'clothing'];
+
+        foreach ($categories as $category) {
+            $output->info('Seeding ProductAttribute template: '.$category.'...');
+            $result = $this->settingsService->seedProductAttributes(category: $category);
+
+            if ($result['success'] === true) {
+                $output->info(
+                    'ProductAttribute ('.$category.'): '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
+                );
+            }
+
+            if ($result['success'] !== true) {
+                $output->warning(
+                    'ProductAttribute ('.$category.') seeding issue: '.($result['message'] ?? 'unknown error')
+                );
+            }
+        }//end foreach
+
+    }//end seedProductAttributeTemplates()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.

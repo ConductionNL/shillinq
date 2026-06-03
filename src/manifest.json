@@ -200,6 +200,28 @@
 			]
 		},
 		{
+			"id": "Inventory",
+			"label": "Inventory",
+			"icon": "icon-category-customization",
+			"order": 22,
+			"children": [
+				{
+					"id": "Products",
+					"label": "Products",
+					"icon": "PackageVariantOutline",
+					"route": "Products",
+					"order": 10
+				},
+				{
+					"id": "ProductAttributes",
+					"label": "Product Attributes",
+					"icon": "TagOutline",
+					"route": "ProductAttributes",
+					"order": 20
+				}
+			]
+		},
+		{
 			"id": "Belastingen",
 			"label": "Belastingen",
 			"icon": "icon-category-monitoring",
@@ -378,6 +400,200 @@
 		}
 	],
 	"pages": [
+		{
+			"id": "Products",
+			"route": "/inventory/products",
+			"type": "index",
+			"title": "Products",
+			"config": {
+				"register": "shillinq",
+				"schema": "Product",
+				"columns": [
+					{
+						"key": "sku",
+						"label": "SKU",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "category",
+						"label": "Category",
+						"sortable": true
+					},
+					{
+						"key": "unitPrice",
+						"label": "Unit Price",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "sku",
+				"detailRoute": "ProductDetail"
+			}
+		},
+		{
+			"id": "ProductDetail",
+			"route": "/inventory/products/:id",
+			"type": "detail",
+			"title": "Product",
+			"config": {
+				"register": "shillinq",
+				"schema": "Product",
+				"fields": [
+					{
+						"key": "sku",
+						"label": "SKU",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "category",
+						"label": "Category",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "unitPrice",
+						"label": "Unit Price",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "unitCode",
+						"label": "Unit Code",
+						"type": "string"
+					},
+					{
+						"key": "taxRate",
+						"label": "Tax Rate (%)",
+						"type": "number"
+					},
+					{
+						"key": "primaryBarcode",
+						"label": "Primary Barcode",
+						"type": "string"
+					},
+					{
+						"key": "barcodes",
+						"label": "Barcodes",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "organizationId",
+						"label": "Organization",
+						"type": "string"
+					}
+				],
+				"indexRoute": "Products"
+			}
+		},
+		{
+			"id": "ProductAttributes",
+			"route": "/inventory/product-attributes",
+			"type": "index",
+			"title": "Product Attributes",
+			"config": {
+				"register": "shillinq",
+				"schema": "ProductAttribute",
+				"columns": [
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "dataType",
+						"label": "Data Type",
+						"sortable": true
+					},
+					{
+						"key": "applicableToCategories",
+						"label": "Categories",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "name",
+				"detailRoute": "ProductAttributeDetail"
+			}
+		},
+		{
+			"id": "ProductAttributeDetail",
+			"route": "/inventory/product-attributes/:id",
+			"type": "detail",
+			"title": "Product Attribute",
+			"config": {
+				"register": "shillinq",
+				"schema": "ProductAttribute",
+				"fields": [
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "dataType",
+						"label": "Data Type",
+						"type": "string"
+					},
+					{
+						"key": "applicableToCategories",
+						"label": "Applicable Categories",
+						"type": "string"
+					},
+					{
+						"key": "isRequired",
+						"label": "Required",
+						"type": "boolean"
+					},
+					{
+						"key": "displayOrder",
+						"label": "Display Order",
+						"type": "number"
+					},
+					{
+						"key": "validationRule",
+						"label": "Validation Rule",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"indexRoute": "ProductAttributes"
+			}
+		},
 		{
 			"id": "CostCenters",
 			"route": "/bookkeeping/dimensions/cost-centers",
