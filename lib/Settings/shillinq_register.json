@@ -696,7 +696,11 @@
 								"operator": "isNotNull"
 							}
 						},
-						"groupBy": ["costCenterCode", "fiscalYearId", "accountNumber"],
+						"groupBy": [
+							"costCenterCode",
+							"fiscalYearId",
+							"accountNumber"
+						],
 						"operations": {
 							"totalDebit": {
 								"field": "amount",
@@ -727,7 +731,11 @@
 								"operator": "isNotNull"
 							}
 						},
-						"groupBy": ["kostenDragerCode", "fiscalYearId", "accountNumber"],
+						"groupBy": [
+							"kostenDragerCode",
+							"fiscalYearId",
+							"accountNumber"
+						],
 						"operations": {
 							"totalDebit": {
 								"field": "amount",
@@ -758,7 +766,11 @@
 								"operator": "isNotNull"
 							}
 						},
-						"groupBy": ["projectCode", "fiscalYearId", "accountNumber"],
+						"groupBy": [
+							"projectCode",
+							"fiscalYearId",
+							"accountNumber"
+						],
 						"operations": {
 							"totalDebit": {
 								"field": "amount",
@@ -4003,7 +4015,10 @@
 							"description": "Re-enable GL line tagging against this cost center."
 						},
 						"archive": {
-							"from": ["active", "blocked"],
+							"from": [
+								"active",
+								"blocked"
+							],
 							"to": "archived",
 							"label": "Archive cost center",
 							"description": "Move to historical archive; GL lines with this code remain queryable."
@@ -4026,7 +4041,10 @@
 							"schema": "GLLine",
 							"condition": "GLLine.costCenterCode = @self.code AND GLLine.eliminationFlag = false"
 						},
-						"groupBy": ["GLLine.fiscalYearId", "GLLine.accountNumber"],
+						"groupBy": [
+							"GLLine.fiscalYearId",
+							"GLLine.accountNumber"
+						],
 						"operations": {
 							"totalDebit": {
 								"field": "GLLine.amount",
@@ -4044,10 +4062,16 @@
 				"x-openregister-rbac": {
 					"roles": {
 						"bookkeeper": {
-							"permissions": ["create", "read", "update"]
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
 						},
 						"auditor": {
-							"permissions": ["read"]
+							"permissions": [
+								"read"
+							]
 						}
 					}
 				}
@@ -4138,7 +4162,10 @@
 							"description": "Re-enable GL line tagging against this kostendrager."
 						},
 						"archive": {
-							"from": ["active", "blocked"],
+							"from": [
+								"active",
+								"blocked"
+							],
 							"to": "archived",
 							"label": "Archive kostendrager",
 							"description": "Move to historical archive."
@@ -4161,7 +4188,10 @@
 							"schema": "GLLine",
 							"condition": "GLLine.kostenDragerCode = @self.code AND GLLine.eliminationFlag = false"
 						},
-						"groupBy": ["GLLine.fiscalYearId", "GLLine.accountNumber"],
+						"groupBy": [
+							"GLLine.fiscalYearId",
+							"GLLine.accountNumber"
+						],
 						"operations": {
 							"totalDebit": {
 								"field": "GLLine.amount",
@@ -4179,10 +4209,16 @@
 				"x-openregister-rbac": {
 					"roles": {
 						"bookkeeper": {
-							"permissions": ["create", "read", "update"]
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
 						},
 						"auditor": {
-							"permissions": ["read"]
+							"permissions": [
+								"read"
+							]
 						}
 					}
 				}
@@ -4279,7 +4315,10 @@
 							"description": "Re-enable tagging against this project."
 						},
 						"archive": {
-							"from": ["active", "blocked"],
+							"from": [
+								"active",
+								"blocked"
+							],
 							"to": "archived",
 							"label": "Archive project",
 							"description": "Move to historical archive."
@@ -4302,7 +4341,10 @@
 							"schema": "GLLine",
 							"condition": "GLLine.projectCode = @self.code AND GLLine.eliminationFlag = false"
 						},
-						"groupBy": ["GLLine.fiscalYearId", "GLLine.accountNumber"],
+						"groupBy": [
+							"GLLine.fiscalYearId",
+							"GLLine.accountNumber"
+						],
 						"operations": {
 							"totalDebit": {
 								"field": "GLLine.amount",
@@ -4320,10 +4362,16 @@
 				"x-openregister-rbac": {
 					"roles": {
 						"bookkeeper": {
-							"permissions": ["create", "read", "update"]
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
 						},
 						"auditor": {
-							"permissions": ["read"]
+							"permissions": [
+								"read"
+							]
 						}
 					}
 				}
@@ -4374,7 +4422,9 @@
 						"minItems": 2,
 						"items": {
 							"type": "object",
-							"required": ["code"],
+							"required": [
+								"code"
+							],
 							"properties": {
 								"code": {
 									"type": "string",
@@ -4402,9 +4452,18 @@
 							}
 						},
 						"example": [
-							{"code": "KC-100", "percentage": 50.0},
-							{"code": "KC-200", "percentage": 30.0},
-							{"code": "KC-300", "percentage": 20.0}
+							{
+								"code": "KC-100",
+								"percentage": 50.0
+							},
+							{
+								"code": "KC-200",
+								"percentage": 30.0
+							},
+							{
+								"code": "KC-300",
+								"percentage": 20.0
+							}
 						]
 					},
 					"targetDimension": {
@@ -4483,7 +4542,10 @@
 							"description": "Temporarily suspend rule evaluation without archiving."
 						},
 						"archive": {
-							"from": ["active", "paused"],
+							"from": [
+								"active",
+								"paused"
+							],
 							"to": "archived",
 							"label": "Archive rule",
 							"description": "Retire the rule permanently."
@@ -4507,13 +4569,22 @@
 				"x-openregister-rbac": {
 					"roles": {
 						"controller": {
-							"permissions": ["create", "read", "update", "delete"]
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
 						},
 						"bookkeeper": {
-							"permissions": ["read"]
+							"permissions": [
+								"read"
+							]
 						},
 						"auditor": {
-							"permissions": ["read"]
+							"permissions": [
+								"read"
+							]
 						}
 					}
 				}
@@ -5328,6 +5399,758 @@
 					"example": true
 				}
 			}
+		},
+		"VendorMaster": {
+			"slug": "VendorMaster",
+			"icon": "StoreOutline",
+			"version": "0.1.0",
+			"title": "Vendor",
+			"description": "Vendor party record for accounts payable. Holds bank IBAN, payment terms, tax registration, and dunning-policy reference for a vendor within a single administration. Per REQ-AP-002.",
+			"x-schema-org": "schema:Organization",
+			"type": "object",
+			"required": [
+				"vendorNumber",
+				"name",
+				"paymentTermDays",
+				"administrationId",
+				"lifecycleState"
+			],
+			"properties": {
+				"vendorNumber": {
+					"type": "string",
+					"description": "Stable vendor identifier unique per administration.",
+					"example": "V-2026-001"
+				},
+				"name": {
+					"type": "string",
+					"description": "Legal name of the vendor.",
+					"example": "Acme Leveranciers BV"
+				},
+				"tradingName": {
+					"type": "string",
+					"description": "Alternate or DBA trading name.",
+					"nullable": true,
+					"example": "Acme"
+				},
+				"kvkNumber": {
+					"type": "string",
+					"description": "Dutch KvK number (8 digits).",
+					"nullable": true,
+					"example": "12345678"
+				},
+				"btwNumber": {
+					"type": "string",
+					"description": "Dutch BTW / EU VAT number.",
+					"nullable": true,
+					"example": "NL123456789B01"
+				},
+				"iban": {
+					"type": "string",
+					"description": "Default IBAN for outgoing payments to this vendor.",
+					"nullable": true,
+					"example": "NL01RABO0123456789"
+				},
+				"bic": {
+					"type": "string",
+					"description": "BIC/SWIFT code matching the IBAN bank.",
+					"nullable": true,
+					"example": "RABONL2U"
+				},
+				"paymentTermDays": {
+					"type": "integer",
+					"minimum": 0,
+					"default": 30,
+					"description": "Default payment term in days (auto-sets APInvoice.dueDate on creation).",
+					"example": 30
+				},
+				"defaultExpenseAccountNumber": {
+					"type": "string",
+					"description": "FK to Account.accountNumber for default expense coding on AP invoices.",
+					"nullable": true,
+					"example": "7000"
+				},
+				"address": {
+					"type": "object",
+					"description": "Postal address of the vendor.",
+					"nullable": true,
+					"properties": {
+						"street": {
+							"type": "string"
+						},
+						"houseNumber": {
+							"type": "string"
+						},
+						"postcode": {
+							"type": "string"
+						},
+						"city": {
+							"type": "string"
+						},
+						"country": {
+							"type": "string",
+							"default": "NL"
+						}
+					}
+				},
+				"email": {
+					"type": "string",
+					"format": "email",
+					"description": "Primary contact email for invoice queries.",
+					"nullable": true,
+					"example": "facturatie@acme.nl"
+				},
+				"phone": {
+					"type": "string",
+					"description": "Primary contact phone number.",
+					"nullable": true,
+					"example": "+31201234567"
+				},
+				"dunningPolicyId": {
+					"type": "string",
+					"description": "FK to OR dunning-workflow policy record if the extension is stable per ADR-022; else null.",
+					"nullable": true
+				},
+				"contactRef": {
+					"type": "string",
+					"description": "FK to OR contact abstraction if stable per ADR-022; else null. Resolution deferred to implementing cycle.",
+					"nullable": true
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the administration owning this vendor record.",
+					"example": "adm-1"
+				},
+				"lifecycleState": {
+					"type": "string",
+					"enum": [
+						"active",
+						"blocked",
+						"archived"
+					],
+					"description": "Vendor master lifecycle state. blocked: payments suspended; archived: historical reference only.",
+					"default": "active",
+					"example": "active"
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "lifecycleState",
+				"initialState": "active",
+				"states": {
+					"active": {
+						"label": "Active",
+						"description": "Vendor is active; AP invoices may be created and paid."
+					},
+					"blocked": {
+						"label": "Blocked",
+						"description": "Vendor is blocked; new AP invoices cannot transition to approved or posted."
+					},
+					"archived": {
+						"label": "Archived",
+						"description": "Vendor is archived for historical reference; no new invoices may be created."
+					}
+				},
+				"transitions": {
+					"block": {
+						"from": "active",
+						"to": "blocked",
+						"label": "Block vendor",
+						"description": "Suspend payments to this vendor."
+					},
+					"unblock": {
+						"from": "blocked",
+						"to": "active",
+						"label": "Unblock vendor",
+						"description": "Restore vendor to active status."
+					},
+					"archive": {
+						"from": [
+							"active",
+							"blocked"
+						],
+						"to": "archived",
+						"label": "Archive vendor",
+						"description": "Archive vendor after all open AP invoices are settled."
+					}
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
+		"APInvoice": {
+			"slug": "APInvoice",
+			"icon": "ReceiptTextOutline",
+			"version": "0.1.0",
+			"title": "AP Invoice",
+			"description": "Accounts payable sub-ledger invoice recording vendor billing and payment obligation. Posting materialises a balanced GLTransaction per T1 REQ-JE-007. Lifecycle: draft → pending → approved → posted → paid with disputed/voided branches. Approval routing consumes OR approval-workflow per ADR-022. Per REQ-AP-003 and REQ-AP-004.",
+			"x-schema-org": "schema:Invoice",
+			"type": "object",
+			"required": [
+				"invoiceNumber",
+				"vendorInvoiceRef",
+				"vendorId",
+				"invoiceDate",
+				"dueDate",
+				"currency",
+				"totalAmount",
+				"lines",
+				"approvalState",
+				"state",
+				"administrationId"
+			],
+			"properties": {
+				"invoiceNumber": {
+					"type": "string",
+					"description": "Shillinq-side reference (auto-generated per administration).",
+					"example": "INV-V-2026-0001"
+				},
+				"vendorInvoiceRef": {
+					"type": "string",
+					"description": "The vendor's own invoice number as it appears on the paper/PDF invoice.",
+					"example": "ACME-2026-00123"
+				},
+				"vendorId": {
+					"type": "string",
+					"description": "FK to VendorMaster UUID.",
+					"example": "vendor-acme-1"
+				},
+				"invoiceDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Date on the vendor's invoice.",
+					"example": "2026-01-15"
+				},
+				"dueDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Auto-calculated from invoiceDate + vendor.paymentTermDays; overrideable by operator.",
+					"example": "2026-02-14"
+				},
+				"currency": {
+					"type": "string",
+					"minLength": 3,
+					"maxLength": 3,
+					"description": "ISO 4217 currency code. T2: base currency only; T5 adds multi-currency.",
+					"default": "EUR",
+					"example": "EUR"
+				},
+				"totalAmount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Total amount including tax. Credit notes are separate journal types, not negative totals.",
+					"example": 1250.0
+				},
+				"taxAmount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "VAT/BTW amount. T3 adds automated VAT posting; T2 carries the field for reporting.",
+					"nullable": true,
+					"example": 217.98
+				},
+				"lines": {
+					"type": "array",
+					"minItems": 1,
+					"description": "Invoice line breakdown. Each line maps to one GL expense account.",
+					"items": {
+						"type": "object",
+						"required": [
+							"description",
+							"accountNumber",
+							"amount"
+						],
+						"properties": {
+							"description": {
+								"type": "string",
+								"description": "Line description."
+							},
+							"accountNumber": {
+								"type": "string",
+								"description": "FK to Account.accountNumber (expense account)."
+							},
+							"amount": {
+								"type": "number",
+								"minimum": 0,
+								"description": "Line amount (non-negative; see REQ-AP-003)."
+							},
+							"taxCode": {
+								"type": "string",
+								"description": "Tax code for this line (e.g. BTW21, BTW9, BTW0).",
+								"nullable": true
+							},
+							"quantity": {
+								"type": "number",
+								"description": "Quantity ordered/received (required for 3-way match when PO/GR present).",
+								"nullable": true
+							},
+							"unitPrice": {
+								"type": "number",
+								"description": "Unit price (required for 3-way match quantity parity check).",
+								"nullable": true
+							}
+						}
+					}
+				},
+				"sourceDocumentUri": {
+					"type": "string",
+					"description": "docudesk FK URI per bookkeeping-document-attachment-integration. Points to the scanned vendor invoice PDF.",
+					"nullable": true,
+					"example": "docudesk://files/shillinq/invoices/acme-2026-00123.pdf"
+				},
+				"purchaseOrderRef": {
+					"type": "string",
+					"description": "FK to PO register UUID (future T4 procurement; nullable in T2). Declared so T4 attaches additively per REQ-AP-006.",
+					"nullable": true
+				},
+				"goodsReceiptRef": {
+					"type": "string",
+					"description": "FK to Goods Receipt register UUID (future T4; nullable in T2). Declared so T4 attaches additively per REQ-AP-006.",
+					"nullable": true
+				},
+				"approvalState": {
+					"type": "string",
+					"enum": [
+						"not-required",
+						"pending",
+						"approved",
+						"rejected"
+					],
+					"description": "OR approval-workflow state mirror per REQ-AP-005. Tracks the approval routing status.",
+					"example": "pending"
+				},
+				"state": {
+					"type": "string",
+					"enum": [
+						"draft",
+						"pending",
+						"approved",
+						"posted",
+						"paid",
+						"disputed",
+						"voided"
+					],
+					"description": "AP invoice lifecycle state per REQ-AP-004.",
+					"default": "draft",
+					"example": "draft"
+				},
+				"glTransactionId": {
+					"type": "string",
+					"description": "Back-reference to the materialised GLTransaction once the invoice is posted.",
+					"nullable": true,
+					"example": "gl-txn-2026-ap-0001"
+				},
+				"idealLink": {
+					"type": "string",
+					"description": "Per-invoice iDEAL payment link (x-openregister-calculations output per REQ-AP-007). Populated when paymentMethod=ideal.",
+					"nullable": true
+				},
+				"periodId": {
+					"type": "string",
+					"description": "FK to the FiscalPeriod for GL posting (resolved on post transition per REQ-AP-004).",
+					"nullable": true,
+					"example": "2026-Q1"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the administration owning this AP invoice.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "state",
+				"initialState": "draft",
+				"states": {
+					"draft": {
+						"label": "Draft",
+						"description": "Under construction. Lines and header fields may be edited."
+					},
+					"pending": {
+						"label": "Pending approval",
+						"description": "Submitted for approval. Awaiting OR approval-workflow decision."
+					},
+					"approved": {
+						"label": "Approved",
+						"description": "Approved by authorised approver(s). Ready for posting."
+					},
+					"posted": {
+						"label": "Posted",
+						"description": "Immutable. GL transaction materialised. Awaiting payment matching."
+					},
+					"paid": {
+						"label": "Paid",
+						"description": "Full payment matched via bank reconciliation or PaymentRun."
+					},
+					"disputed": {
+						"label": "Disputed",
+						"description": "Payment held; under investigation. Operator records investigation note."
+					},
+					"voided": {
+						"label": "Voided",
+						"description": "Voided. Corresponding GLTransaction must already be reversed."
+					}
+				},
+				"transitions": {
+					"submit": {
+						"from": "draft",
+						"to": "pending",
+						"label": "Submit for approval",
+						"description": "Operator submits the draft invoice for approval routing via OR approval-workflow per REQ-AP-005."
+					},
+					"approve": {
+						"from": "pending",
+						"to": "approved",
+						"label": "Approve",
+						"description": "Approved by authorised approver(s) via OR approval-workflow. Sets approvalState: approved.",
+						"requires": "x-openregister-approval"
+					},
+					"reject": {
+						"from": "pending",
+						"to": "draft",
+						"label": "Reject (return to draft)",
+						"description": "Approver rejects; sets approvalState: rejected and returns invoice to draft for operator revision."
+					},
+					"post": {
+						"from": [
+							"approved",
+							"draft"
+						],
+						"to": "posted",
+						"label": "Post",
+						"description": "Post the invoice. Guards: (1) 3-way match per REQ-AP-006 (conditional on PO/GR presence); (2) FiscalPeriod open per REQ-PC-004. Action: materialise balanced GLTransaction per T1 REQ-JE-007 pattern.",
+						"requires": "OCA\\Shillinq\\Lifecycle\\ThreeWayMatchGuard::matches",
+						"actions": [
+							{
+								"trigger": "x-openregister-lifecycle-action",
+								"action": "materialise-gl-transaction",
+								"description": "Emit one balanced GLTransaction with debit to expense accounts per lines and credit to AP control account (Account.isAPControlAccount = true) per T1 REQ-JE-007 pattern. Sets glTransactionId back-reference.",
+								"actionParameters": {
+									"register": "shillinq",
+									"targetSchema": "GLTransaction",
+									"debitMapping": "lines[].accountNumber",
+									"creditMapping": "Account[isAPControlAccount=true].accountNumber",
+									"subLedgerType": "ap",
+									"subLedgerRefField": "id",
+									"keepBalanced": true
+								}
+							}
+						]
+					},
+					"matchPaid": {
+						"from": "posted",
+						"to": "paid",
+						"label": "Mark as paid",
+						"description": "Transition to paid when bank-reconciliation engine matches an exact-amount bank statement line per REQ-AP-008. No shillinq matcher service — OR event-driven."
+					},
+					"dispute": {
+						"from": "posted",
+						"to": "disputed",
+						"label": "Raise dispute",
+						"description": "Operator places payment hold pending investigation."
+					},
+					"resolveDispute": {
+						"from": "disputed",
+						"to": "posted",
+						"label": "Resolve dispute",
+						"description": "Operator resolves dispute; invoice returns to posted awaiting payment."
+					},
+					"void": {
+						"from": "posted",
+						"to": "voided",
+						"label": "Void",
+						"description": "Void a posted invoice. Guard: the materialised GLTransaction MUST already be reversed per T1 REQ-GL-004.",
+						"requires": "OCA\\Shillinq\\Lifecycle\\GLReversalGuard::isReversed"
+					}
+				}
+			},
+			"x-openregister-calculations": {
+				"idealLink": {
+					"expression": "ideal.generatePaymentLink({invoiceNumber: invoiceNumber, amount: totalAmount, currency: currency, vendorRef: vendorInvoiceRef})",
+					"description": "Per-invoice iDEAL payment link generated by the OR calculations engine per REQ-AP-007. Populated automatically when the invoice is included in a PaymentRun with paymentMethod=ideal."
+				}
+			},
+			"x-openregister-aggregations": {
+				"apAging": {
+					"label": "AP Aging",
+					"description": "Groups open AP invoices by vendor and aging bucket per REQ-AP-009. Excludes paid and voided invoices.",
+					"register": "shillinq",
+					"schema": "APInvoice",
+					"filter": {
+						"state": {
+							"not-in": [
+								"paid",
+								"voided"
+							]
+						}
+					},
+					"groupBy": [
+						"vendorId",
+						"agingBucket"
+					],
+					"computedFields": {
+						"agingBucket": {
+							"type": "date-bucket",
+							"field": "dueDate",
+							"referenceDate": "today",
+							"direction": "past",
+							"buckets": [
+								{
+									"label": "current",
+									"maxDaysOverdue": 0
+								},
+								{
+									"label": "1-30 days",
+									"minDaysOverdue": 1,
+									"maxDaysOverdue": 30
+								},
+								{
+									"label": "31-60 days",
+									"minDaysOverdue": 31,
+									"maxDaysOverdue": 60
+								},
+								{
+									"label": "61-90 days",
+									"minDaysOverdue": 61,
+									"maxDaysOverdue": 90
+								},
+								{
+									"label": ">90 days",
+									"minDaysOverdue": 91
+								}
+							]
+						}
+					},
+					"metrics": [
+						"count",
+						"totalAmount"
+					]
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"approver": {
+						"permissions": [
+							"read",
+							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
+		"PaymentRun": {
+			"slug": "PaymentRun",
+			"icon": "BankTransferOutline",
+			"version": "0.1.0",
+			"title": "Payment Run",
+			"description": "Operator-curated batch of selected APInvoice UUIDs with SEPA pain.001 XML and iDEAL link outputs generated as x-openregister-calculations fields. No PaymentRunService or SepaXmlBuilder PHP classes per ADR-031. Per REQ-AP-007.",
+			"x-schema-org": "schema:PaymentService",
+			"type": "object",
+			"required": [
+				"runNumber",
+				"runDate",
+				"invoiceRefs",
+				"paymentMethod",
+				"state",
+				"administrationId"
+			],
+			"properties": {
+				"runNumber": {
+					"type": "string",
+					"description": "Sequential payment run identifier per administration.",
+					"example": "PR-2026-001"
+				},
+				"runDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Scheduled execution date for payments.",
+					"example": "2026-02-28"
+				},
+				"invoiceRefs": {
+					"type": "array",
+					"minItems": 1,
+					"description": "List of APInvoice UUIDs to include in this payment run.",
+					"items": {
+						"type": "string",
+						"description": "APInvoice UUID."
+					}
+				},
+				"totalAmount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Sum of selected invoices' totalAmount (x-openregister-calculations output).",
+					"nullable": true
+				},
+				"paymentMethod": {
+					"type": "string",
+					"enum": [
+						"sepa-pain001",
+						"ideal"
+					],
+					"description": "Payment method for this run. Determines which calculation output is populated.",
+					"example": "sepa-pain001"
+				},
+				"sepaXml": {
+					"type": "string",
+					"description": "SEPA pain.001.001.03 XML document (x-openregister-calculations output per REQ-AP-007). Populated when paymentMethod=sepa-pain001. Operator downloads and uploads to bank portal.",
+					"nullable": true
+				},
+				"idealLinks": {
+					"type": "array",
+					"description": "Per-invoice iDEAL payment links (x-openregister-calculations output per REQ-AP-007). Populated when paymentMethod=ideal.",
+					"nullable": true,
+					"items": {
+						"type": "object",
+						"properties": {
+							"invoiceRef": {
+								"type": "string",
+								"description": "APInvoice UUID."
+							},
+							"url": {
+								"type": "string",
+								"description": "iDEAL payment URL."
+							},
+							"amount": {
+								"type": "number",
+								"description": "Invoice amount."
+							},
+							"expiresAt": {
+								"type": "string",
+								"format": "date-time",
+								"description": "Link expiry timestamp."
+							}
+						}
+					}
+				},
+				"state": {
+					"type": "string",
+					"enum": [
+						"draft",
+						"ready",
+						"submitted",
+						"executed",
+						"failed"
+					],
+					"description": "Payment run lifecycle state.",
+					"default": "draft",
+					"example": "draft"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the administration owning this payment run.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "state",
+				"initialState": "draft",
+				"states": {
+					"draft": {
+						"label": "Draft",
+						"description": "Operator selects invoices and configures the run."
+					},
+					"ready": {
+						"label": "Ready",
+						"description": "SEPA XML or iDEAL links generated. Ready for download / submission."
+					},
+					"submitted": {
+						"label": "Submitted",
+						"description": "Operator has uploaded the SEPA file or shared iDEAL links."
+					},
+					"executed": {
+						"label": "Executed",
+						"description": "Payments executed (confirmed via bank reconciliation)."
+					},
+					"failed": {
+						"label": "Failed",
+						"description": "Run failed (e.g. bank rejection). Operator must investigate and retry."
+					}
+				},
+				"transitions": {
+					"prepare": {
+						"from": "draft",
+						"to": "ready",
+						"label": "Generate payment file",
+						"description": "Triggers x-openregister-calculations to compose sepaXml (pain.001.001.03) or idealLinks per paymentMethod selection."
+					},
+					"submit": {
+						"from": "ready",
+						"to": "submitted",
+						"label": "Mark as submitted",
+						"description": "Operator confirms upload to bank portal or dispatch of iDEAL links."
+					},
+					"execute": {
+						"from": "submitted",
+						"to": "executed",
+						"label": "Mark as executed",
+						"description": "Bank confirms payment execution (or bank reconciliation auto-matches)."
+					},
+					"fail": {
+						"from": "submitted",
+						"to": "failed",
+						"label": "Mark as failed",
+						"description": "Bank rejects the payment file or iDEAL transaction."
+					},
+					"retry": {
+						"from": "failed",
+						"to": "draft",
+						"label": "Retry (return to draft)",
+						"description": "Return to draft for operator to correct and re-generate."
+					}
+				}
+			},
+			"x-openregister-calculations": {
+				"totalAmount": {
+					"expression": "invoiceRefs.map(id => APInvoice[id].totalAmount).sum()",
+					"description": "Sum of selected APInvoice totals, computed on save per REQ-AP-007."
+				},
+				"sepaXml": {
+					"expression": "sepa.composePain001({invoiceRefs: invoiceRefs, runDate: runDate, schemaVersion: 'pain.001.001.03', administrationId: administrationId})",
+					"description": "SEPA pain.001.001.03 XML document composed from selected invoice vendor IBANs, amounts, and run date per REQ-AP-007. Populated when paymentMethod=sepa-pain001."
+				},
+				"idealLinks": {
+					"expression": "invoiceRefs.map(id => ideal.generatePaymentLink({invoiceRef: id, amount: APInvoice[id].totalAmount, currency: APInvoice[id].currency}))",
+					"description": "Per-invoice iDEAL payment link array per REQ-AP-007. Populated when paymentMethod=ideal."
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
 		}
 	},
 	"mappings": {
@@ -5993,6 +6816,192 @@
 			"estimatedNetLiability": 8050.0,
 			"currency": "EUR",
 			"status": "current"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "VendorMaster",
+				"slug": "vendor-acme-bv-2026"
+			},
+			"vendorNumber": "V-2026-001",
+			"name": "Acme Leveranciers BV",
+			"tradingName": "Acme",
+			"kvkNumber": "12345678",
+			"btwNumber": "NL123456789B01",
+			"iban": "NL01RABO0123456789",
+			"bic": "RABONL2U",
+			"paymentTermDays": 30,
+			"defaultExpenseAccountNumber": "7000",
+			"email": "facturatie@acme.nl",
+			"phone": "+31201234567",
+			"administrationId": "adm-1",
+			"lifecycleState": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "VendorMaster",
+				"slug": "vendor-techsupply-2026"
+			},
+			"vendorNumber": "V-2026-002",
+			"name": "TechSupply Nederland BV",
+			"kvkNumber": "87654321",
+			"btwNumber": "NL987654321B01",
+			"iban": "NL02INGB0001234567",
+			"bic": "INGBNL2A",
+			"paymentTermDays": 14,
+			"defaultExpenseAccountNumber": "7100",
+			"email": "ap@techsupply.nl",
+			"administrationId": "adm-1",
+			"lifecycleState": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "VendorMaster",
+				"slug": "vendor-kantoor-co-2026"
+			},
+			"vendorNumber": "V-2026-003",
+			"name": "Kantoor & Co BV",
+			"kvkNumber": "11223344",
+			"iban": "NL03ABNA0417164300",
+			"bic": "ABNANL2A",
+			"paymentTermDays": 30,
+			"defaultExpenseAccountNumber": "7200",
+			"email": "rekeningen@kantoorco.nl",
+			"administrationId": "adm-1",
+			"lifecycleState": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "APInvoice",
+				"slug": "ap-inv-2026-v-001-draft"
+			},
+			"invoiceNumber": "INV-V-2026-0001",
+			"vendorInvoiceRef": "ACME-2026-00123",
+			"vendorId": "vendor-acme-bv-2026",
+			"invoiceDate": "2026-01-15",
+			"dueDate": "2026-02-14",
+			"currency": "EUR",
+			"totalAmount": 1250.0,
+			"taxAmount": 217.98,
+			"lines": [
+				{
+					"description": "Kantoorartikelen Q1 2026",
+					"accountNumber": "7000",
+					"amount": 1032.02,
+					"taxCode": "BTW21"
+				}
+			],
+			"approvalState": "not-required",
+			"state": "draft",
+			"administrationId": "adm-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "APInvoice",
+				"slug": "ap-inv-2026-v-002-approved"
+			},
+			"invoiceNumber": "INV-V-2026-0002",
+			"vendorInvoiceRef": "TECH-2026-00456",
+			"vendorId": "vendor-techsupply-2026",
+			"invoiceDate": "2026-01-20",
+			"dueDate": "2026-02-03",
+			"currency": "EUR",
+			"totalAmount": 4840.0,
+			"taxAmount": 840.0,
+			"lines": [
+				{
+					"description": "Laptops (4x) voor projectteam",
+					"accountNumber": "7100",
+					"amount": 4000.0,
+					"taxCode": "BTW21",
+					"quantity": 4,
+					"unitPrice": 1000.0
+				}
+			],
+			"approvalState": "approved",
+			"state": "approved",
+			"administrationId": "adm-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "APInvoice",
+				"slug": "ap-inv-2026-v-003-posted"
+			},
+			"invoiceNumber": "INV-V-2026-0003",
+			"vendorInvoiceRef": "KC-2026-00789",
+			"vendorId": "vendor-kantoor-co-2026",
+			"invoiceDate": "2026-01-10",
+			"dueDate": "2026-02-09",
+			"currency": "EUR",
+			"totalAmount": 363.0,
+			"taxAmount": 63.0,
+			"lines": [
+				{
+					"description": "Printer papier A4 (10 dozen)",
+					"accountNumber": "7200",
+					"amount": 300.0,
+					"taxCode": "BTW21",
+					"quantity": 10,
+					"unitPrice": 30.0
+				}
+			],
+			"approvalState": "not-required",
+			"state": "posted",
+			"glTransactionId": "gl-txn-2026-ap-0003",
+			"periodId": "2026-Q1",
+			"administrationId": "adm-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "PaymentRun",
+				"slug": "pr-2026-001-draft"
+			},
+			"runNumber": "PR-2026-001",
+			"runDate": "2026-02-28",
+			"invoiceRefs": [
+				"ap-inv-2026-v-003-posted"
+			],
+			"totalAmount": 363.0,
+			"paymentMethod": "sepa-pain001",
+			"state": "draft",
+			"administrationId": "adm-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "PaymentRun",
+				"slug": "pr-2026-002-ready"
+			},
+			"runNumber": "PR-2026-002",
+			"runDate": "2026-03-15",
+			"invoiceRefs": [
+				"ap-inv-2026-v-002-approved"
+			],
+			"totalAmount": 4840.0,
+			"paymentMethod": "sepa-pain001",
+			"state": "ready",
+			"sepaXml": "<?xml version='1.0' encoding='UTF-8'?><Document xmlns='urn:iso:std:iso:20022:tech:xsd:pain.001.001.03'><!-- pain.001.001.03 stub --></Document>",
+			"administrationId": "adm-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "PaymentRun",
+				"slug": "pr-2026-003-executed"
+			},
+			"runNumber": "PR-2026-003",
+			"runDate": "2026-01-31",
+			"invoiceRefs": [],
+			"totalAmount": 0.0,
+			"paymentMethod": "ideal",
+			"state": "executed",
+			"administrationId": "adm-1"
 		}
 	]
 }
