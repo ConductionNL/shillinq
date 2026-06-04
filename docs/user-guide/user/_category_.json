@@ -1,0 +1,11 @@
+{
+  "label": "User guide",
+  "position": 1,
+  "collapsible": true,
+  "collapsed": false,
+  "link": {
+    "type": "generated-index",
+    "title": "User guide",
+    "description": "Workflows for individual users,sending invoices, recording supplier bills, creating purchase orders, reconciling bank statements, managing contracts, preparing VAT returns, and reading financial statements."
+  }
+}

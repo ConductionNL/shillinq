@@ -1,0 +1,11 @@
+{
+  "spec_slug": "inventory-mobile-scanner",
+  "title": "Inventory Mobile Scanner (PWA, offline)",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [
+    "inventory-stock-tracking",
+    "inventory-barcode-sku"
+  ],
+  "issue": null
+}

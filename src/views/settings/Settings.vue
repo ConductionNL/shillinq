@@ -46,11 +46,23 @@ export default {
 			successMessage: '',
 		}
 	},
+	/**
+	 * Prefill the register form field from the loaded settings store.
+	 *
+	 * @spec exclude UI glue — one-line form prefill from store state; no
+	 * observable app behavior beyond seeding the input.
+	 */
 	created() {
 		const settingsStore = useSettingsStore()
 		this.form.register = settingsStore.settings?.register || ''
 	},
 	methods: {
+		/**
+		 * Persist the configuration form via the settings store and show a
+		 * success message.
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-1
+		 */
 		async save() {
 			this.saving = true
 			this.successMessage = ''
@@ -69,11 +81,13 @@ export default {
 .form-group {
 	margin-bottom: 12px;
 }
+
 .form-group label {
 	display: block;
 	margin-bottom: 4px;
 	font-weight: 600;
 }
+
 .success-message {
 	color: var(--color-success);
 	margin-bottom: 8px;

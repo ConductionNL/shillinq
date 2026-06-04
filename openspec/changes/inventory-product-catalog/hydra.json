@@ -1,0 +1,8 @@
+{
+  "spec_slug": "inventory-product-catalog",
+  "title": "Inventory Product Catalog (items, SKUs, attributes, UoM)",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [],
+  "issue": null
+}

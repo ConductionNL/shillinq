@@ -1,0 +1,120 @@
+{
+  "spec": "openspec/changes/expense-capture-core",
+  "verified": [
+    {
+      "task": "1",
+      "file": "lib/Settings/shillinq_register.json",
+      "ok": true,
+      "size": 344153
+    },
+    {
+      "task": "5-8",
+      "file": "lib/Settings/shillinq_register.json",
+      "ok": true,
+      "size": 344153
+    },
+    {
+      "task": "9",
+      "file": "lib/Lifecycle/ExpenseClaimGuard.php",
+      "ok": true,
+      "size": 10439
+    },
+    {
+      "task": "11",
+      "file": "lib/Validation/PhotoValidator.php",
+      "ok": true,
+      "size": 2541
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json",
+      "ok": true,
+      "size": 117716
+    },
+    {
+      "task": "18",
+      "file": "openspec/architecture/adr-000-data-model.md",
+      "ok": true,
+      "size": 301720
+    },
+    {
+      "task": "test-11",
+      "file": "tests/Unit/Validation/PhotoValidatorTest.php",
+      "ok": true,
+      "size": 5529
+    },
+    {
+      "task": "test-9",
+      "file": "tests/Unit/Lifecycle/ExpenseClaimGuardTest.php",
+      "ok": true,
+      "size": 14622
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::Receipt",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::MileageEntry",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::PerDiem",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::ExpenseClaimEntry",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::MileageRate",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::PerDiemRate",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::Receipts",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::ReceiptDetail",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::ExpenseClaims",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::ExpenseClaimDetail",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::MileageLog",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::MileageLogDetail",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::Inkoop menu",
+      "ok": true
+    }
+  ],
+  "stubs": [],
+  "missing_routes": []
+}

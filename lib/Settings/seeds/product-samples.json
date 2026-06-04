@@ -1,0 +1,94 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"source": "Nextcloud Shillinq",
+		"category": "samples",
+		"version": "1.0",
+		"description": "Sample Product records for demo and testing in Dutch SMB context (toner cartridge, laptop, packaging box). NOT required for production.",
+		"imported": "2026-06-03T00:00:00Z"
+	},
+	"products": [
+		{
+			"name": "Toner Cartridge HP LaserJet Pro M404",
+			"sku": "HP-LJ-M404-TONER-BK",
+			"category": "office",
+			"description": "Black toner cartridge, compatible with HP LaserJet Pro M404 series printers",
+			"unitPrice": 78.50,
+			"currency": "EUR",
+			"unitCode": "ST",
+			"taxRate": 21,
+			"primaryBarcode": "4014300889755",
+			"barcodes": [
+				{ "code": "4014300889755", "format": "GTIN-13", "type": "item" }
+			],
+			"status": "active",
+			"organizationId": "sample-org"
+		},
+		{
+			"name": "Dell XPS 13 Laptop",
+			"sku": "DELL-XPS-13-2024",
+			"category": "it_hardware",
+			"description": "13-inch FHD display, Intel Core i7, 16GB RAM, 512GB SSD",
+			"unitPrice": 1899.00,
+			"currency": "EUR",
+			"unitCode": "ST",
+			"taxRate": 21,
+			"primaryBarcode": "0711719454837",
+			"barcodes": [
+				{ "code": "0711719454837", "format": "GTIN-12", "type": "item" }
+			],
+			"status": "active",
+			"organizationId": "sample-org"
+		},
+		{
+			"name": "Custom Packaging Box (carton)",
+			"sku": "PKG-CUSTOM-CARTON-A5",
+			"category": "logistics",
+			"description": "White corrugated carton, 200x150x100mm, 1000 units per pallet",
+			"unitPrice": 0.35,
+			"currency": "EUR",
+			"unitCode": "ST",
+			"taxRate": 21,
+			"primaryBarcode": "3663602910000",
+			"barcodes": [
+				{ "code": "3663602910000", "format": "GTIN-13", "type": "item" },
+				{ "code": "3663602910017", "format": "GTIN-14", "type": "case" }
+			],
+			"status": "active",
+			"organizationId": "sample-org"
+		},
+		{
+			"name": "Heineken Bier Flesje 33cl",
+			"sku": "HEINEKEN-BIER-33CL",
+			"category": "food_beverage",
+			"description": "Heineken pilsner bier, 33cl flesje, 5% alcohol",
+			"unitPrice": 0.89,
+			"currency": "EUR",
+			"unitCode": "ST",
+			"taxRate": 21,
+			"primaryBarcode": "8714800010005",
+			"barcodes": [
+				{ "code": "8714800010005", "format": "GTIN-13", "type": "item" }
+			],
+			"status": "active",
+			"organizationId": "sample-org"
+		},
+		{
+			"name": "Werkbroek Snickers AllroundWork",
+			"sku": "SNICKERS-ALLROUNDWORK-BLK-50",
+			"category": "clothing",
+			"description": "Zwarte werkbroek maat 50, 65% polyester 35% katoen, kniebeschermers inbegrepen",
+			"unitPrice": 89.95,
+			"currency": "EUR",
+			"unitCode": "ST",
+			"taxRate": 21,
+			"primaryBarcode": "7332515241509",
+			"barcodes": [
+				{ "code": "7332515241509", "format": "GTIN-13", "type": "item" }
+			],
+			"status": "active",
+			"organizationId": "sample-org"
+		}
+	]
+}

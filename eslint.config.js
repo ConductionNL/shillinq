@@ -23,7 +23,6 @@ module.exports = defineConfig([{
 				map: [
 					['@', './src'],
 					['@floating-ui/dom-actual', './node_modules/@floating-ui/dom'],
-					['@conduction/nextcloud-vue', '../nextcloud-vue/src'],
 				],
 				extensions: ['.js', '.ts', '.vue', '.json', '.css'],
 			},
@@ -37,9 +36,10 @@ module.exports = defineConfig([{
 		'vue/first-attribute-linebreak': 'off',
 		'@typescript-eslint/no-explicit-any': 'off',
 		'n/no-missing-import': 'off',
-		'import/namespace': 'off', // disable namespace checking to avoid parser requirement
-		'import/default': 'off', // disable default import checking to avoid parser requirement
-		'import/no-named-as-default': 'off', // disable named-as-default checking to avoid parser requirement
-		'import/no-named-as-default-member': 'off', // disable named-as-default-member checking to avoid parser requirement
+		'import/namespace': 'off',
+		'import/default': 'off',
+		'import/no-named-as-default': 'off',
+		'import/no-named-as-default-member': 'off',
+		'import/no-unresolved': ['error', { ignore: ['^@conduction/nextcloud-vue'] }],
 	},
 }])
