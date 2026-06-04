@@ -70,6 +70,11 @@ return [
         ['name' => 'taxReport#annual', 'url' => '/api/tax-reports/{year}', 'verb' => 'GET'],
         ['name' => 'taxPayment#reconcile', 'url' => '/api/tax-payments/{id}/reconcile', 'verb' => 'POST'],
 
+        // Deposit payment webhook (bookings-deposits). Public but signature-verified
+        // (ADR-005): Mollie / Stripe async confirmation routed via OpenConnector.
+        // Static/verb route declared before the SPA catch-all (ADR-016).
+        ['name' => 'depositWebhook#handle', 'url' => '/api/deposits/webhook/{gateway}', 'verb' => 'POST'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
