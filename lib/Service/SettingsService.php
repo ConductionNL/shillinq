@@ -333,7 +333,6 @@ class SettingsService
     }//end importAccounts()
 
     /**
-    /**
      * Seed RJ-270 stages from the rj-270-stages.json seed file, idempotently.
      *
      * Imports the 4 canonical percentage-of-completion stage definitions.
@@ -354,6 +353,50 @@ class SettingsService
         );
 
     }//end seedRj270Stages()
+
+    /**
+     * Seed statutory BTW tariffs from btw-tariffs-2026.json, idempotently.
+     *
+     * Imports the current Dutch VAT rates into the VatTariff schema. Deduplication
+     * key is code. Idempotent on re-run; operator-added rates are preserved.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-vat-btw-filing/spec.md
+     */
+    public function seedBtwTariffs(): array
+    {
+        return $this->seedGenericFile(
+            seedFileName: 'btw-tariffs-2026.json',
+            itemsKey: 'tariffs',
+            dedupeKey: 'code',
+            schema: 'VatTariff',
+            logLabel: 'BTW tariffs'
+        );
+
+    }//end seedBtwTariffs()
+
+    /**
+     * Seed the BBV taakveld catalogue from bbv-taakvelden-2024.json, idempotently.
+     *
+     * Imports the canonical Besluit BBV bijlage IV taakvelden into the BbvTaakveld
+     * schema. Deduplication key is code. Idempotent on re-run.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-bbv-compliance/spec.md
+     */
+    public function seedBbvTaakvelden(): array
+    {
+        return $this->seedGenericFile(
+            seedFileName: 'bbv-taakvelden-2024.json',
+            itemsKey: 'taakvelden',
+            dedupeKey: 'code',
+            schema: 'BbvTaakveld',
+            logLabel: 'BBV taakvelden'
+        );
+
+    }//end seedBbvTaakvelden()
 
     /**
      * Seed default rate-card templates from rate-card-templates.json, idempotently.
