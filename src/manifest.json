@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "1.2.0",
+	"version": "1.3.0",
 	"dependencies": [
 		"openregister"
 	],
@@ -31,6 +31,13 @@
 					"icon": "BookOutline",
 					"route": "GeneralLedger",
 					"order": 20
+				},
+				{
+					"id": "Journals",
+					"label": "Journals",
+					"icon": "BookEditOutline",
+					"route": "Journals",
+					"order": 22
 				},
 				{
 					"id": "BankConnections",
@@ -1941,6 +1948,129 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "GeneralLedger"
+			}
+		},
+		{
+			"id": "Journals",
+			"route": "/journals",
+			"type": "index",
+			"title": "Journals",
+			"config": {
+				"register": "shillinq",
+				"schema": "JournalEntry",
+				"columns": [
+					{
+						"key": "journalNumber",
+						"label": "Number",
+						"sortable": true
+					},
+					{
+						"key": "entryDate",
+						"label": "Entry Date",
+						"sortable": true
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"sortable": true
+					},
+					{
+						"key": "journalType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "State",
+						"sortable": true
+					},
+					{
+						"key": "approvalState",
+						"label": "Approval",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-entryDate",
+				"detailRoute": "JournalDetail"
+			}
+		},
+		{
+			"id": "JournalDetail",
+			"route": "/journals/:id",
+			"type": "detail",
+			"title": "Journal Entry",
+			"config": {
+				"register": "shillinq",
+				"schema": "JournalEntry",
+				"fields": [
+					{
+						"key": "journalNumber",
+						"label": "Journal Number",
+						"type": "string"
+					},
+					{
+						"key": "entryDate",
+						"label": "Entry Date",
+						"type": "date"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "journalType",
+						"label": "Type",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "State",
+						"type": "string"
+					},
+					{
+						"key": "approvalState",
+						"label": "Approval State",
+						"type": "string"
+					},
+					{
+						"key": "cadence",
+						"label": "Cadence",
+						"type": "object"
+					},
+					{
+						"key": "reversesOn",
+						"label": "Reverses On",
+						"type": "string"
+					},
+					{
+						"key": "sourceDocumentUri",
+						"label": "Source Document",
+						"type": "string"
+					},
+					{
+						"key": "sourceDocumentApp",
+						"label": "Source App",
+						"type": "string"
+					},
+					{
+						"key": "glTransactionId",
+						"label": "GL Transaction",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "lines",
+						"label": "Lines",
+						"type": "array"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "Journals"
 			}
 		},
 		{
