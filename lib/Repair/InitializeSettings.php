@@ -83,6 +83,7 @@ class InitializeSettings implements IRepairStep
      * Phase 6: seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
      * Phase 7: seeds RJ-270 stages and rate-card templates for consultancy project accounting.
      * Phase 8: seeds ZZP urencriterium thresholds and deduction amounts (bookkeeping-zzp-tax-regime).
+     * Phase 9: seeds ProductAttribute templates (office, it_hardware, logistics, food_beverage, clothing) per REQ-IPC-007.
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -144,6 +145,8 @@ class InitializeSettings implements IRepairStep
             $this->registerIv3ScheduledWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
             $this->seedZzpData(output: $output);
+            $this->seedComplianceReferenceData(output: $output);
+            $this->seedProductAttributeTemplates(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -385,6 +388,47 @@ class InitializeSettings implements IRepairStep
     }//end seedKorThresholds()
 
     /**
+     * Seed T3 NL-compliance reference data (BTW tariffs + BBV taakvelden), idempotently.
+     *
+     * Both seeds are statutory reference catalogues that are not tenant-specific,
+     * so they are seeded unconditionally. Deduplication is handled inside the
+     * SettingsService seed helpers (by code), keeping re-runs safe.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-bookkeeping-operations/tasks.md#task-311
+     */
+    private function seedComplianceReferenceData(IOutput $output): void
+    {
+        $output->info('Seeding BTW tariffs...');
+        $btwResult = $this->settingsService->seedBtwTariffs();
+        if ($btwResult['success'] === true) {
+            $output->info(
+                'BTW tariffs seeded: '.($btwResult['seeded'] ?? 0).' created, '.($btwResult['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if ($btwResult['success'] !== true) {
+            $output->warning('BTW tariffs seeding issue: '.($btwResult['message'] ?? 'unknown error'));
+        }
+
+        $output->info('Seeding BBV taakvelden...');
+        $bbvResult = $this->settingsService->seedBbvTaakvelden();
+        if ($bbvResult['success'] === true) {
+            $output->info(
+                'BBV taakvelden seeded: '.($bbvResult['seeded'] ?? 0).' created, '.($bbvResult['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if ($bbvResult['success'] !== true) {
+            $output->warning('BBV taakvelden seeding issue: '.($bbvResult['message'] ?? 'unknown error'));
+        }
+
+    }//end seedComplianceReferenceData()
+
+    /**
      * Seed ZZP urencriterium thresholds and deduction amounts, idempotently.
      *
      * Imports urencriterium-thresholds.json and zzp-deduction-amounts-2026.json per REQ-ZZP-007.
@@ -559,6 +603,42 @@ class InitializeSettings implements IRepairStep
         }//end try
 
     }//end seedZzpDeductionAmounts()
+
+    /**
+     * Seed ProductAttribute templates for all five standard categories, idempotently.
+     *
+     * Calls SettingsService::seedProductAttributes() per category. Idempotent:
+     * attributes matched by name + applicableToCategories are skipped, preserving
+     * operator edits per REQ-IPC-007.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
+     */
+    private function seedProductAttributeTemplates(IOutput $output): void
+    {
+        $categories = ['office', 'it_hardware', 'logistics', 'food_beverage', 'clothing'];
+
+        foreach ($categories as $category) {
+            $output->info('Seeding ProductAttribute template: '.$category.'...');
+            $result = $this->settingsService->seedProductAttributes(category: $category);
+
+            if ($result['success'] === true) {
+                $output->info(
+                    'ProductAttribute ('.$category.'): '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
+                );
+            }
+
+            if ($result['success'] !== true) {
+                $output->warning(
+                    'ProductAttribute ('.$category.') seeding issue: '.($result['message'] ?? 'unknown error')
+                );
+            }
+        }//end foreach
+
+    }//end seedProductAttributeTemplates()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.
