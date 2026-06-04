@@ -28,33 +28,57 @@ Maps GL accounts to ESA 2010 sectors for aggregation.
 | esaSector | enum | Yes | ESA classification |
 | effectiveFrom | date | Yes | Effective date |
 
-## Requirements
+## ADDED Requirements
 
-### REQ-EMU-001: EsaClassifier overlay schema
+### Requirement: REQ-EMU-001 — EsaClassifier overlay schema
 
-SHALL declare `EsaClassifier` overlay enabling per-account ESA 2010 classification.
+The system SHALL declare the `EsaClassifier` overlay enabling per-account ESA 2010 classification.
 
-### REQ-EMU-002: ESA-2010 seed data
+#### Scenario: An account carries an ESA 2010 sector classification
 
-SHALL ship `lib/Settings/seeds/esa-2010-classifier.json` with ~25 ESA sector mappings per ESA 2010 standard.
+- **GIVEN** a GL account
+- **WHEN** an EsaClassifier mapping with an `esaSector` is applied from its `effectiveFrom` date
+- **THEN** the account MUST resolve to that ESA 2010 sector for EMU aggregation.
 
-### REQ-EMU-003: EMU-saldo quarterly calculation
+### Requirement: REQ-EMU-002 — ESA-2010 seed data
 
-SHALL declare `x-openregister-calculations` (or thin PHP guard if engine gap confirmed) computing EMU-saldo per sector quarterly with inclusion/exclusion rules per regulation.
+The system SHALL ship `lib/Settings/seeds/esa-2010-classifier.json` with the ESA sector mappings per the ESA 2010 standard.
+
+#### Scenario: ESA-2010 seed loads the sector mappings
+
+- **GIVEN** a fresh install with EMU reporting enabled
+- **WHEN** the repair-step seeding runs
+- **THEN** the ESA-2010 sector mappings MUST be present and idempotent on re-run.
+
+### Requirement: REQ-EMU-003 — EMU-saldo quarterly calculation
+
+The system SHALL declare `x-openregister-calculations` (or a thin PHP guard if an engine gap is confirmed) computing EMU-saldo per sector quarterly with the inclusion/exclusion rules per regulation.
 
 #### Scenario: EMU saldo computed correctly
 
-GIVEN Q4 2025 postings classified to ESA sectors  
-WHEN EMU-saldo is calculated  
-THEN result matches CBS-published benchmark.
+- **GIVEN** Q4 2025 postings classified to ESA sectors
+- **WHEN** EMU-saldo is calculated
+- **THEN** the result MUST match the CBS-published benchmark.
 
-### REQ-EMU-004: EMU-schuld annual aggregation
+### Requirement: REQ-EMU-004 — EMU-schuld annual aggregation
 
-SHALL declare EMU-schuld aggregation for annual jaarrekening (debt by sector per ESA).
+The system SHALL declare an EMU-schuld aggregation for the annual jaarrekening (debt by sector per ESA).
 
-### REQ-EMU-005: Manifest navigation entry
+#### Scenario: EMU-schuld aggregates debt by ESA sector
 
-SHALL add `featureFlags.gov-emu` navigation for EMU reporting views.
+- **GIVEN** liability postings classified to ESA sectors for a year
+- **WHEN** the annual EMU-schuld aggregation runs
+- **THEN** debt MUST be grouped per ESA sector matching the jaarrekening totals.
+
+### Requirement: REQ-EMU-005 — Manifest navigation entry
+
+The system SHALL add a `featureFlags.gov-emu` navigation entry for EMU reporting views.
+
+#### Scenario: EMU navigation is feature-flag gated
+
+- **GIVEN** the `gov-emu` feature flag is off
+- **WHEN** the UI renders the menu
+- **THEN** the EMU reporting entry MUST NOT appear; it appears only when the flag is on.
 
 ## Test Plan
 

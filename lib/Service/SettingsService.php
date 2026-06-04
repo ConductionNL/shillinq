@@ -1256,41 +1256,10 @@ class SettingsService
 
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $registerSlug  = $this->getRegisterSlug();
-            $seeded        = 0;
-            $skipped       = 0;
-
-            foreach ($attributes as $attribute) {
-                $name       = ($attribute['name'] ?? null);
-                $categories = ($attribute['applicableToCategories'] ?? null);
-
-                if ($name === null || $categories === null) {
-                    continue;
-                }
-
-                // Deduplication key: name + applicableToCategories preserves operator edits.
-                $existing = $objectService->findObjects(
-                    register: $registerSlug,
-                    schema: 'ProductAttribute',
-                    params: [
-                        'name'                   => $name,
-                        'applicableToCategories' => $categories,
-                        '_limit'                 => 1,
-                    ]
-                );
-
-                if (empty($existing) === false) {
-                    $skipped++;
-                    continue;
-                }
-
-                $objectService->saveObject(
-                    register: $registerSlug,
-                    schema: 'ProductAttribute',
-                    object: $attribute,
-                );
-                $seeded++;
-            }//end foreach
+            ['seeded' => $seeded, 'skipped' => $skipped] = $this->importProductAttributes(
+                objectService: $objectService,
+                attributes: $attributes
+            );
 
             $this->logger->info(
                 'Shillinq: ProductAttribute seed imported',
@@ -1322,4 +1291,63 @@ class SettingsService
         }//end try
 
     }//end seedProductAttributes()
+
+    /**
+     * Import ProductAttribute records into OpenRegister, skipping existing ones.
+     *
+     * Deduplication key is (name, applicableToCategories), preserving operator
+     * edits across repair re-runs per REQ-IPC-007. Records missing either key
+     * field are skipped silently.
+     *
+     * @param object       $objectService OpenRegister ObjectService.
+     * @param array<mixed> $attributes    ProductAttribute records to import.
+     *
+     * @return array{seeded: int, skipped: int}
+     */
+    private function importProductAttributes(object $objectService, array $attributes): array
+    {
+        $registerSlug = $this->getRegisterSlug();
+        $seeded       = 0;
+        $skipped      = 0;
+
+        foreach ($attributes as $attribute) {
+            $name       = ($attribute['name'] ?? null);
+            $categories = ($attribute['applicableToCategories'] ?? null);
+
+            if ($name === null || $categories === null) {
+                continue;
+            }
+
+            // Deduplication key: name + applicableToCategories preserves operator edits.
+            // ADR-022: use the real ObjectService fluent API (setRegister/setSchema/findAll);
+            // findObjects() does not exist on OpenRegister's ObjectService.
+            $existing = $objectService
+                ->setRegister($registerSlug)
+                ->setSchema('ProductAttribute')
+                ->findAll(
+                    [
+                        'filters' => [
+                            'name'                   => $name,
+                            'applicableToCategories' => $categories,
+                        ],
+                        'limit'   => 1,
+                    ]
+                );
+
+            if (empty($existing) === false) {
+                $skipped++;
+                continue;
+            }
+
+            $objectService->saveObject(
+                object: $attribute,
+                register: $registerSlug,
+                schema: 'ProductAttribute',
+            );
+            $seeded++;
+        }//end foreach
+
+        return ['seeded' => $seeded, 'skipped' => $skipped];
+
+    }//end importProductAttributes()
 }//end class
