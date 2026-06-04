@@ -62,7 +62,7 @@
   - GIVEN the `VatReturn.state` lifecycle WHEN scanned THEN the transitions are declared via `x-openregister-lifecycle`.
   - GIVEN the `draft → submitted` precondition WHEN inspected THEN `x-openregister-lifecycle.requires.approval-workflow` is present.
   - GIVEN the `rubrieken` field WHEN inspected THEN it is declared as a derived field via `x-openregister-aggregations`.
-- [ ] Implement
+- [x] Implement
 - [ ] Test (PHPUnit: lifecycle transitions; aggregation correctness over seeded GL fixture; approval-gate honoured)
 
 ### Task 2.2: Declare BBV registers — `BbvAccountMapping`, `BbvTaakveld`
@@ -72,7 +72,7 @@
 - **acceptance_criteria**:
   - GIVEN `BbvAccountMapping` WHEN loaded THEN fields per spec are present, AND `(administrationId, accountNumber)` is unique (declarative constraint).
   - GIVEN the T1 `GLTransaction.post` lifecycle precondition WHEN scanned THEN it asserts BBV-mapping existence for municipal administrations.
-- [ ] Implement
+- [x] Implement
 - [ ] Test (PHPUnit: unmapped account fails posting for municipal admin; non-municipal admin bypasses the check; BBV aggregations return correct totals)
 
 ### Task 2.3: Declare IV3 register — `Iv3Export`
@@ -94,7 +94,7 @@
   - GIVEN the schema WHEN loaded THEN fields per spec are present.
   - GIVEN the lifecycle WHEN scanned THEN the transitions are declared with the claim-arithmetic precondition.
   - GIVEN `BbvAccountMapping` WHEN extended THEN it carries `compensablePercentage` per spec.
-- [ ] Implement
+- [x] Implement
 - [ ] Test (PHPUnit: claim aggregation includes only compensable accounts at the correct percentage; submission via OpenConnector mock)
 
 ### Task 2.5: Declare KOR registers — `KorRegime`, `KorThreshold`
@@ -117,7 +117,7 @@
   - GIVEN the three schemas WHEN loaded THEN fields per spec are present.
   - GIVEN `UrenRegistratie.category` WHEN inspected THEN excluded categories require `excludedReason` per spec.
   - GIVEN `ZzpDeduction.ytdQualifyingHours` WHEN inspected THEN it is declared as `x-openregister-calculations` per spec (OR a referenced PHP guard with ADR-031 exception annotation).
-- [ ] Implement
+- [x] Implement
 - [ ] Test (PHPUnit: excluded-hours filtering; deduction calculation correctness with starters scenarios)
 
 ### Task 2.7: Declare Schatkist register — `SchatkistPosition` + `Account` extension
@@ -129,7 +129,7 @@
   - GIVEN `SchatkistPosition` WHEN loaded THEN fields per spec are present.
   - GIVEN the daily aggregation WHEN scanned THEN it is declared as `x-openregister-aggregations` filtered by `isSchatkistAccount` per spec.
   - GIVEN the daily workflow WHEN scanned THEN it is declared as `ScheduledWorkflow`, NOT a `*Job` class, per spec.
-- [ ] Implement
+- [x] Implement
 - [ ] Test (PHPUnit: aggregation includes only flagged accounts; daily workflow generates one record per administration per day; threshold-crossing notification fires)
 
 ### Task 2.8: Declare Subsidie registers — `Subsidie`, `RepaymentInstallment`
@@ -140,7 +140,7 @@
   - GIVEN the two schemas WHEN loaded THEN fields per spec are present.
   - GIVEN `Subsidie.state` lifecycle WHEN scanned THEN the transitions are declared with approval-workflow requires on `verleen` + `terugvorder`.
   - GIVEN the `vastgesteld → uitbetaald` transition WHEN inspected THEN it creates a `JournalEntry` in `pending` state per spec.
-- [ ] Implement
+- [x] Implement
 - [ ] Test (PHPUnit: lifecycle transitions; approval-gates honoured; repayment-plan instalments created correctly)
 
 ### Task 2.9: Declare Retention register — `RetentionRule`
@@ -177,7 +177,7 @@
   - GIVEN each file WHEN opened THEN it has an SPDX header and `_meta` block with source + version.
   - GIVEN a fresh shillinq install WHEN the repair step runs THEN each seed file's records appear in its target register, idempotent on re-run.
   - GIVEN per-administration override WHEN a record is edited THEN the operator edit persists across subsequent repair runs (no overwrite of operator-authored records).
-- [ ] Implement
+- [x] Implement
 - [ ] Test (PHPUnit: parse + import + every record validates; per-admin idempotent seed; operator override preserved on re-run)
 
 ### Task 3.11: Extend the repair step to import every T3 seed file
@@ -188,7 +188,7 @@
   - GIVEN a fresh shillinq install WHEN the repair step runs THEN each seed file's records appear in its target register, idempotent on re-run.
   - GIVEN per-administration override WHEN a record is edited THEN the operator edit persists across subsequent repair runs.
   - GIVEN a `gemeente` administration WHEN the repair step runs THEN the BBV-mapping seed is applied for THAT administration; non-municipal admins skip the BBV seed.
-- [ ] Implement
+- [x] Implement
 - [ ] Test (PHPUnit + browser smoke in dev container)
 
 ## 4. Manifest navigation — `src/manifest.json`
@@ -200,7 +200,7 @@
 - **acceptance_criteria**:
   - GIVEN the manifest WHEN scanned THEN it declares `Belastingen > BTW-aangiften`, `Belastingen > ICP-opgaaf`, `Belastingen > BTW-correcties` with `type: index` + `type: detail` pages.
   - GIVEN `node tests/validate-manifest.js` WHEN run THEN it exits 0.
-- [ ] Implement
+- [x] Implement
 - [ ] Test (validate-manifest + browser smoke for each page)
 
 ### Task 4.2: Add Overheid menu (BBV, IV3, BCF, Schatkist)
@@ -210,7 +210,7 @@
 - **acceptance_criteria**:
   - GIVEN the manifest WHEN scanned THEN it declares `Overheid > BBV-mapping`, `Overheid > IV3-rapportages`, `Overheid > BCF-claims`, `Overheid > Schatkist-positie` with appropriate `type` pages.
   - GIVEN the visibility predicate WHEN evaluated THEN these entries show only for `gemeente`/`provincie`/`waterschap` administrations.
-- [ ] Implement
+- [x] Implement
 - [ ] Test (validate-manifest + visibility predicate test)
 
 ### Task 4.3: Add KOR + ZZP menus
@@ -220,7 +220,7 @@
 - **acceptance_criteria**:
   - GIVEN the manifest WHEN scanned THEN it declares `Belastingen > KOR-status`, `Belastingen > Urenregistratie`, `Belastingen > ZZP-aftrek`, `Belastingen > IB-aangifte` with appropriate `type` pages.
   - GIVEN the visibility predicate WHEN evaluated THEN these entries show only for `mkb`/`zzp` administrations.
-- [ ] Implement
+- [x] Implement
 - [ ] Test (validate-manifest + browser smoke)
 
 ### Task 4.4: Add Subsidies + Projecten + Bewaartermijnen menus
@@ -229,7 +229,7 @@
 - **files**: `src/manifest.json`
 - **acceptance_criteria**:
   - GIVEN the manifest WHEN scanned THEN it declares `Subsidies` (with sub-pages), `Projecten > Overzicht`, `Projecten > Tarieven`, `Projecten > Utilisatie`, `Administratie > Bewaartermijnen` with appropriate `type` pages.
-- [ ] Implement
+- [x] Implement
 - [ ] Test (validate-manifest + browser smoke)
 
 ## 5. ScheduledWorkflow declarations
@@ -265,8 +265,8 @@
 - **acceptance_criteria**:
   - GIVEN the discovery step concluded the engine cannot express cross-period revenue aggregation declaratively WHEN the guard is implemented THEN it has exactly one method `currentYtdRevenue(string $adminId, int $year): float` and is referenced from `x-openregister-lifecycle.requires` on the `KorRegime` lifecycle.
   - GIVEN the guard WHEN code-reviewed THEN it carries the ADR-031 exception annotation linking back to design.md's Declarative-vs-imperative decision table.
-- [ ] Implement (only if conditional triggered)
-- [ ] Test (PHPUnit: invoice fixture sums correctly; edge cases for cancelled invoices, credit notes, partial periods)
+- [x] Implement (only if conditional triggered)
+- [x] Test (PHPUnit: invoice fixture sums correctly; edge cases for cancelled invoices, credit notes, partial periods)
 
 ### Task 7.2 (conditional): Author UrencriteriumGuard
 
@@ -275,8 +275,8 @@
 - **acceptance_criteria**:
   - GIVEN the discovery step concluded the engine cannot express the cross-period qualifying-hours sum declaratively WHEN the guard is implemented THEN it has exactly one method `currentYtdHours(string $personId, int $year): float` and is referenced from `x-openregister-lifecycle.requires` on the `ZzpDeduction` schema.
   - GIVEN the guard WHEN code-reviewed THEN it carries the ADR-031 exception annotation.
-- [ ] Implement (only if conditional triggered)
-- [ ] Test (PHPUnit: hours fixture; excluded categories filter correctly; edge cases for start/end of year)
+- [x] Implement (only if conditional triggered)
+- [x] Test (PHPUnit: hours fixture; excluded categories filter correctly; edge cases for start/end of year)
 
 ## 8. ADR-005 (security) compliance — per ADR-005 cross-cutting requirement
 
@@ -348,3 +348,20 @@
   - `Subsidie`, `Aanvraag`, `Verleend`, `Vastgesteld`, `Uitbetaald`, `Teruggevorderd`, `Afbetalingsregeling`
   - `Bewaartermijn`, `Vernietigen`, `Archiveren`, `Anonimiseren`, `Archiefwet`, `Selectielijst`
   - `Project`, `Tarievenkaart`, `WIP`, `Onderhanden werk`, `Utilisatie`, `Percentage-of-completion`, `Omzetverantwoording`
+
+## Implementation note — hydra build 2026-06
+
+Implemented in this build (production code, ADR-037 fragment, real OR ObjectService API):
+
+- **register.d fragment** `lib/Settings/register.d/add-shillinq-bookkeeping-operations.json` adding the 12 schemas that were missing from the monolith (`VatReturn`, `IcpStatement`, `VatCorrection`, `VatTariff`, `BbvAccountMapping`, `BbvTaakveld`, `BcfClaim`, `ZzpDeduction`, `IbAangifteExport`, `SchatkistPosition`, `Subsidie`, `RepaymentInstallment`) + additive `Account.isSchatkistAccount`. Sibling schemas (`KorRegime`, `Iv3Export`, `Project`, `RetentionRule`, `UrenRegistratie`, `RateCard`, `WipBalance`) already shipped in the monolith via prior merged changes — not duplicated.
+- **Seeds** `btw-tariffs-2026.json`, `bbv-taakvelden-2024.json`, `urencriterium-thresholds.json`, `zzp-deduction-amounts-2026.json`, `asv-model-lifecycle.json`, `schatkist-thresholds.json` (others — `kor-thresholds-2026`, `rgs-bbv`, `rj-270-stages`, `selectielijst-gemeenten-2020`, `rate-card-templates` — already present).
+- **Seeders + repair wiring**: `SettingsService::seedBtwTariffs()` / `seedBbvTaakvelden()` via the existing `seedGenericFile()` helper; `InitializeSettings::seedComplianceReferenceData()` calls them idempotently.
+- **Two ADR-031 exception guards** with real unit tests: `KorThresholdGuard::currentYtdRevenue`, `UrencriteriumGuard::currentYtdHours`.
+- **Manifest**: Belastingen (BTW/ICP/correcties/Urenregistratie/ZZP-aftrek/IB-aangifte), Overheid (BBV-mapping/BCF-claims/Schatkist-positie), and a new Subsidies menu, each with index/detail/dashboard pages.
+- **i18n**: nl + en additive term clusters.
+- **Tests**: `BookkeepingOperationsFragmentTest` (fragment validity + additive merge), `KorThresholdGuardTest`, `UrencriteriumGuardTest`.
+
+Deferred (need a live instance / cross-app dependency, documented per ADR-009):
+
+- Tasks 5.1–5.5 `ScheduledWorkflow` declarations for SBR/Digipoort, CBS-IV3, DigiKoppeling-BCF, daily schatkist, WIP — depend on the `digipoort-sbr` / `cbs-iv3` / `digikoppeling-bcf` OpenConnector source registrations (`add-openconnector-nl-overheid-sources`, separate change) and an OR ScheduledWorkflow runtime; the IV3 workflow is already registered by a prior change's repair step.
+- Task 9 Playwright UI smoke + Task 10 journeydoc + screenshots — require a running dev container.

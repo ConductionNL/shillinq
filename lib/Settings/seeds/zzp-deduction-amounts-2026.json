@@ -1,0 +1,18 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Wet IB 2001 art. 3.76 (zelfstandigenaftrek), art. 3.76 lid 3 (startersaftrek), art. 3.79a (MKB-winstvrijstelling)",
+    "version": "2026",
+    "description": "ZZP deduction amounts for 2026 (REQ-ZZP-005). Values are illustrative defaults aligned to the spec; operators confirm against the actual Belastingdienst tarieven for the tax year. Statutory amounts move per annual Belastingplan.",
+    "imported": "2026-06-01T00:00:00Z"
+  },
+  "deductions": {
+    "zelfstandigenaftrek": 5000,
+    "startersaftrek": 1000,
+    "mkbWinstvrijstelling": 900,
+    "currency": "EUR",
+    "fiscalYear": 2026,
+    "thresholds": {"urencriterium": 1225, "starters": 800}
+  }
+}

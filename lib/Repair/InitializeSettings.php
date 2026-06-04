@@ -142,6 +142,7 @@ class InitializeSettings implements IRepairStep
             $this->seedSelectielijstRules(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
+            $this->seedComplianceReferenceData(output: $output);
             $this->seedProductAttributeTemplates(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
@@ -295,6 +296,47 @@ class InitializeSettings implements IRepairStep
         $output->info('Shillinq: IV3 quarterly CBS ScheduledWorkflow registered (interval: 90 days)');
 
     }//end registerIv3ScheduledWorkflow()
+
+    /**
+     * Seed T3 NL-compliance reference data (BTW tariffs + BBV taakvelden), idempotently.
+     *
+     * Both seeds are statutory reference catalogues that are not tenant-specific,
+     * so they are seeded unconditionally. Deduplication is handled inside the
+     * SettingsService seed helpers (by code), keeping re-runs safe.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-bookkeeping-operations/tasks.md#task-311
+     */
+    private function seedComplianceReferenceData(IOutput $output): void
+    {
+        $output->info('Seeding BTW tariffs...');
+        $btwResult = $this->settingsService->seedBtwTariffs();
+        if ($btwResult['success'] === true) {
+            $output->info(
+                'BTW tariffs seeded: '.($btwResult['seeded'] ?? 0).' created, '.($btwResult['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if ($btwResult['success'] !== true) {
+            $output->warning('BTW tariffs seeding issue: '.($btwResult['message'] ?? 'unknown error'));
+        }
+
+        $output->info('Seeding BBV taakvelden...');
+        $bbvResult = $this->settingsService->seedBbvTaakvelden();
+        if ($bbvResult['success'] === true) {
+            $output->info(
+                'BBV taakvelden seeded: '.($bbvResult['seeded'] ?? 0).' created, '.($bbvResult['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if ($bbvResult['success'] !== true) {
+            $output->warning('BBV taakvelden seeding issue: '.($bbvResult['message'] ?? 'unknown error'));
+        }
+
+    }//end seedComplianceReferenceData()
 
     /**
      * Seed the KOR thresholds from kor-thresholds-2026.json, idempotently.
