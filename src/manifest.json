@@ -512,6 +512,35 @@
 					"icon": "ShieldCheckOutline",
 					"route": "Bewaartermijnen",
 					"order": 10
+				},
+				{
+					"id": "BookingEmailTemplates",
+					"label": "Booking Email Templates",
+					"icon": "EmailOutline",
+					"order": 20,
+					"children": [
+						{
+							"id": "ConfirmationTemplates",
+							"label": "Confirmation Templates",
+							"icon": "EmailCheckOutline",
+							"route": "ConfirmationTemplates",
+							"order": 10
+						},
+						{
+							"id": "ReminderTemplates",
+							"label": "Reminder Templates",
+							"icon": "EmailClockOutline",
+							"route": "ReminderTemplates",
+							"order": 20
+						},
+						{
+							"id": "CancellationTemplates",
+							"label": "Cancellation Templates",
+							"icon": "EmailRemoveOutline",
+							"route": "CancellationTemplates",
+							"order": 30
+						}
+					]
 				}
 			]
 		},
@@ -999,6 +1028,352 @@
 		}
 	],
 	"pages": [
+		{
+			"id": "ConfirmationTemplates",
+			"route": "/administratie/email-templates/confirmation",
+			"type": "index",
+			"title": "Confirmation Templates",
+			"config": {
+				"register": "shillinq",
+				"schema": "BookingConfirmationTemplate",
+				"columns": [
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "locale",
+						"label": "Language",
+						"sortable": true
+					},
+					{
+						"key": "subjectLine",
+						"label": "Subject",
+						"sortable": false
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "activatedAt",
+						"label": "Published",
+						"sortable": true
+					}
+				],
+				"defaultSort": "name",
+				"detailRoute": "ConfirmationTemplateDetail"
+			}
+		},
+		{
+			"id": "ConfirmationTemplateDetail",
+			"route": "/administratie/email-templates/confirmation/:id",
+			"type": "detail",
+			"title": "Confirmation Template",
+			"config": {
+				"register": "shillinq",
+				"schema": "BookingConfirmationTemplate",
+				"fields": [
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "locale",
+						"label": "Language",
+						"type": "string"
+					},
+					{
+						"key": "subjectLine",
+						"label": "Subject",
+						"type": "string"
+					},
+					{
+						"key": "htmlBody",
+						"label": "HTML Body",
+						"type": "string"
+					},
+					{
+						"key": "plainTextBody",
+						"label": "Plain-text Body",
+						"type": "string"
+					},
+					{
+						"key": "logoUri",
+						"label": "Logo URL",
+						"type": "string"
+					},
+					{
+						"key": "accentColor",
+						"label": "Accent Colour",
+						"type": "string"
+					},
+					{
+						"key": "footerText",
+						"label": "Footer",
+						"type": "string"
+					},
+					{
+						"key": "senderName",
+						"label": "Sender Name",
+						"type": "string"
+					},
+					{
+						"key": "senderAddress",
+						"label": "Sender Address",
+						"type": "string"
+					},
+					{
+						"key": "activatedAt",
+						"label": "Published At",
+						"type": "string"
+					}
+				],
+				"indexRoute": "ConfirmationTemplates"
+			}
+		},
+		{
+			"id": "ReminderTemplates",
+			"route": "/administratie/email-templates/reminder",
+			"type": "index",
+			"title": "Reminder Templates",
+			"config": {
+				"register": "shillinq",
+				"schema": "BookingReminderTemplate",
+				"columns": [
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "locale",
+						"label": "Language",
+						"sortable": true
+					},
+					{
+						"key": "hoursBeforeBooking",
+						"label": "Hours Before",
+						"sortable": true
+					},
+					{
+						"key": "subjectLine",
+						"label": "Subject",
+						"sortable": false
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "hoursBeforeBooking",
+				"detailRoute": "ReminderTemplateDetail"
+			}
+		},
+		{
+			"id": "ReminderTemplateDetail",
+			"route": "/administratie/email-templates/reminder/:id",
+			"type": "detail",
+			"title": "Reminder Template",
+			"config": {
+				"register": "shillinq",
+				"schema": "BookingReminderTemplate",
+				"fields": [
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "locale",
+						"label": "Language",
+						"type": "string"
+					},
+					{
+						"key": "hoursBeforeBooking",
+						"label": "Hours Before Booking",
+						"type": "number"
+					},
+					{
+						"key": "subjectLine",
+						"label": "Subject",
+						"type": "string"
+					},
+					{
+						"key": "htmlBody",
+						"label": "HTML Body",
+						"type": "string"
+					},
+					{
+						"key": "plainTextBody",
+						"label": "Plain-text Body",
+						"type": "string"
+					},
+					{
+						"key": "logoUri",
+						"label": "Logo URL",
+						"type": "string"
+					},
+					{
+						"key": "accentColor",
+						"label": "Accent Colour",
+						"type": "string"
+					},
+					{
+						"key": "footerText",
+						"label": "Footer",
+						"type": "string"
+					},
+					{
+						"key": "senderName",
+						"label": "Sender Name",
+						"type": "string"
+					},
+					{
+						"key": "senderAddress",
+						"label": "Sender Address",
+						"type": "string"
+					},
+					{
+						"key": "activatedAt",
+						"label": "Published At",
+						"type": "string"
+					}
+				],
+				"indexRoute": "ReminderTemplates"
+			}
+		},
+		{
+			"id": "CancellationTemplates",
+			"route": "/administratie/email-templates/cancellation",
+			"type": "index",
+			"title": "Cancellation Templates",
+			"config": {
+				"register": "shillinq",
+				"schema": "BookingCancellationTemplate",
+				"columns": [
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "locale",
+						"label": "Language",
+						"sortable": true
+					},
+					{
+						"key": "subjectLine",
+						"label": "Subject",
+						"sortable": false
+					},
+					{
+						"key": "cancellationReasonRequired",
+						"label": "Reason Required",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "name",
+				"detailRoute": "CancellationTemplateDetail"
+			}
+		},
+		{
+			"id": "CancellationTemplateDetail",
+			"route": "/administratie/email-templates/cancellation/:id",
+			"type": "detail",
+			"title": "Cancellation Template",
+			"config": {
+				"register": "shillinq",
+				"schema": "BookingCancellationTemplate",
+				"fields": [
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "locale",
+						"label": "Language",
+						"type": "string"
+					},
+					{
+						"key": "subjectLine",
+						"label": "Subject",
+						"type": "string"
+					},
+					{
+						"key": "htmlBody",
+						"label": "HTML Body",
+						"type": "string"
+					},
+					{
+						"key": "plainTextBody",
+						"label": "Plain-text Body",
+						"type": "string"
+					},
+					{
+						"key": "cancellationReasonRequired",
+						"label": "Reason Required",
+						"type": "boolean"
+					},
+					{
+						"key": "logoUri",
+						"label": "Logo URL",
+						"type": "string"
+					},
+					{
+						"key": "accentColor",
+						"label": "Accent Colour",
+						"type": "string"
+					},
+					{
+						"key": "footerText",
+						"label": "Footer",
+						"type": "string"
+					},
+					{
+						"key": "senderName",
+						"label": "Sender Name",
+						"type": "string"
+					},
+					{
+						"key": "senderAddress",
+						"label": "Sender Address",
+						"type": "string"
+					},
+					{
+						"key": "activatedAt",
+						"label": "Published At",
+						"type": "string"
+					}
+				],
+				"indexRoute": "CancellationTemplates"
+			}
+		},
 		{
 			"id": "PensionPlans",
 			"route": "/pension/plans",
