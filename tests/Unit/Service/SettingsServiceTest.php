@@ -596,4 +596,51 @@ class SettingsServiceTest extends TestCase
 
     }//end testSeedRetentionPoliciesCreatesDefaultsOnFreshInstall()
 
+    /**
+     * seedStatementManifests imports all three manifests when none are yet persisted.
+     *
+     * Per REQ-FS-002: a fresh install imports balance-sheet, P&L, and cash-flow.
+     *
+     * @return void
+     */
+    public function testSeedStatementManifestsImportsAllWhenAbsent(): void
+    {
+        // No manifest persisted yet → every getValueString returns ''.
+        $this->appConfig->method('getValueString')->willReturn('');
+
+        // Each manifest is persisted exactly once → three setValueString calls.
+        $this->appConfig->expects($this->exactly(3))
+            ->method('setValueString');
+
+        $result = $this->service->seedStatementManifests();
+
+        self::assertTrue($result['success']);
+        self::assertSame(3, $result['imported']);
+        self::assertSame(0, $result['skipped']);
+
+    }//end testSeedStatementManifestsImportsAllWhenAbsent()
+
+    /**
+     * seedStatementManifests preserves operator edits — already-persisted manifests are skipped.
+     *
+     * Per REQ-FS-002: a manifest the operator has customised is never re-overwritten.
+     *
+     * @return void
+     */
+    public function testSeedStatementManifestsSkipsPersisted(): void
+    {
+        // Every manifest already persisted → getValueString returns a non-empty value.
+        $this->appConfig->method('getValueString')->willReturn('{"_meta":{"imported":"2026-01-01T00:00:00Z"}}');
+
+        // Nothing is re-persisted.
+        $this->appConfig->expects($this->never())
+            ->method('setValueString');
+
+        $result = $this->service->seedStatementManifests();
+
+        self::assertTrue($result['success']);
+        self::assertSame(0, $result['imported']);
+        self::assertSame(3, $result['skipped']);
+
+    }//end testSeedStatementManifestsSkipsPersisted()
 }//end class

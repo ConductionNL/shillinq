@@ -170,6 +170,7 @@ class InitializeSettings implements IRepairStep
             $this->importStatementManifests(output: $output);
             $this->seedMandaatTemplates(output: $output);
             $this->seedRetentionPolicies(output: $output);
+            $this->seedStatementManifests(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -663,6 +664,38 @@ class InitializeSettings implements IRepairStep
         }
 
     }//end seedMandaatTemplates()
+
+    /**
+     * Import the RJ 270 statement presentation manifests, idempotently.
+     *
+     * Calls SettingsService::seedStatementManifests() which imports the balance
+     * sheet, P&L, and cash-flow presentation manifests into app config and skips
+     * any manifest the operator has already customised per REQ-FS-002.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-3.4
+     */
+    private function seedStatementManifests(IOutput $output): void
+    {
+        $output->info('Importing RJ 270 statement presentation manifests...');
+
+        $result = $this->settingsService->seedStatementManifests();
+
+        if ($result['success'] === true) {
+            $output->info(
+                'Statement manifests imported: '.($result['imported'] ?? 0).' imported, '
+                .($result['skipped'] ?? 0).' skipped (already present).'
+            );
+        }
+
+        if ($result['success'] !== true) {
+            $output->warning('Statement manifest import issue: '.($result['message'] ?? 'unknown error'));
+        }
+
+    }//end seedStatementManifests()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.

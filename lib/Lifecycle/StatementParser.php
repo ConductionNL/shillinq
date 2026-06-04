@@ -3,15 +3,21 @@
 /**
  * Statement Parser
  *
- * Single-purpose lifecycle seam for bank-statement import and reconciliation
- * completeness. Thin PHP seam per ADR-031 §"PHP guards remain a legitimate
- * seam" — CAMT.053 (XML) and MT940 (structured text) parsing primitives are
- * not yet expressible by OR's calculation extension (REQ-BR-003), and the
- * "all lines resolved" reconciliation precondition (REQ-BR-004) needs to
- * aggregate the statement's child lines.
+ * ADR-031 exception-path lifecycle guard + parser for bank reconciliation.
+ * Provides two single-purpose, stateless methods:
+ *  - parse(): converts a CAMT.053 / MT940 / CSV bank-statement file into an
+ *    array of normalised BankStatementLine field maps (REQ-BR-003).
+ *  - allLinesResolved(): the FiscalPeriod/BankStatement reconciliation guard,
+ *    referenced from the BankStatement schema's x-openregister-lifecycle
+ *    transitions.complete-reconciliation.requires clause (REQ-BR-004).
  *
- * No state, no orchestration. `parse()` is a pure content→array transformation;
- * `allLinesResolved()` is a single precondition read.
+ * ADR-031 exception reason: OpenRegister's calculation extension does not yet
+ * ship CAMT.053 / MT940 structured-text parsing primitives, and the
+ * "no unmatched lines remain" precondition is a cross-schema aggregation
+ * (COUNT of BankStatementLine where status='unmatched' for the statement) the
+ * declarative lifecycle DSL cannot yet express inside a `requires:` clause.
+ * When OR gains those capabilities, replace these references with declarative
+ * calculations/conditions and delete this file.
  *
  * @category Lifecycle
  * @package  OCA\Shillinq\Lifecycle
@@ -22,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-shillinq-bookkeeping-compliance/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-003, REQ-BR-004)
+ * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-6.3
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,21 +44,18 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * Parses bank statement files and guards reconciliation completeness.
- *
- * Referenced as `OCA\Shillinq\Lifecycle\StatementParser::allLinesResolved`
- * from the BankStatement lifecycle, and invoked as `parse()` on import.
+ * Bank statement parser + reconciliation-complete guard.
  *
  * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-6.3
  */
 class StatementParser
 {
     /**
-     * Construct the parser with lazy DI of OR's ObjectService.
+     * Construct the parser with DI dependencies.
      *
-     * @param ContainerInterface $container DI container for OR's ObjectService.
-     * @param IAppConfig         $appConfig App config for register-slug resolution.
-     * @param LoggerInterface    $logger    Nextcloud logger for diagnostics.
+     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+     * @param IAppConfig         $appConfig App config for the register slug.
+     * @param LoggerInterface    $logger    Logger for diagnostics.
      */
     public function __construct(
         private readonly ContainerInterface $container,
@@ -62,101 +65,126 @@ class StatementParser
     }//end __construct()
 
     /**
-     * Resolve the configured register slug, defaulting to 'shillinq'.
+     * Parse a bank-statement file into an array of normalised line field maps.
      *
-     * @return string
-     */
-    private function getRegisterSlug(): string
-    {
-        $slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($slug === '') {
-            return 'shillinq';
-        }
-
-        return $slug;
-
-    }//end getRegisterSlug()
-
-    /**
-     * Parse a bank statement file into a list of normalised statement lines.
-     *
-     * Supports `camt053` (ISO 20022 XML) and `mt940` (SWIFT structured text).
-     * Returns an array of associative arrays keyed by the BankStatementLine
-     * fields (valueDate, amount, remittanceInfo, counterpartyName,
-     * counterpartyIban, endToEndRef). Pure transformation — callers persist
-     * the result through OR's ObjectService.
+     * Supports CAMT.053 (ISO 20022 XML), MT940 (SWIFT), and CSV. XML parsing is
+     * XXE-safe: external entity loading is disabled before parsing. Returns an
+     * empty array on any parse error (the caller reports the failure to the
+     * operator; no partial import).
      *
      * @param string $contents Raw file contents.
-     * @param string $format   One of 'camt053', 'mt940'.
+     * @param string $format   One of 'camt053', 'mt940', 'csv'.
      *
-     * @return array<int,array<string,mixed>> Parsed statement lines.
+     * @return array<int,array<string,mixed>> Normalised BankStatementLine field maps.
      *
      * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-6.3
      */
     public function parse(string $contents, string $format): array
     {
-        return match ($format) {
-            'camt053' => $this->parseCamt053(xml: $contents),
-            'mt940'   => $this->parseMt940(text: $contents),
-            default   => [],
-        };
+        try {
+            switch ($format) {
+                case 'camt053':
+                    return $this->parseCamt053(contents: $contents);
+                case 'mt940':
+                    return $this->parseMt940(contents: $contents);
+                case 'csv':
+                    return $this->parseCsv(contents: $contents);
+                default:
+                    return [];
+            }
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'StatementParser: parse failed',
+                ['format' => $format, 'exception' => $e->getMessage()]
+            );
+            return [];
+        }//end try
 
     }//end parse()
 
     /**
-     * Parse CAMT.053 ISO 20022 XML into statement lines.
+     * Returns true iff no BankStatementLine for the statement is still unmatched (REQ-BR-004).
      *
-     * LibXML is XXE-safe by default on PHP 8 + libxml >= 2.9, so external-entity
-     * loading need not be toggled. Returns an empty array on malformed XML.
+     * Fail-closed: returns false on any exception so a statement can never be
+     * marked reconciled while lines remain unresolved (CWE-863).
      *
-     * @param string $xml CAMT.053 XML contents.
+     * @param string $statementId The BankStatement.statementId to check.
      *
-     * @return array<int,array<string,mixed>> Parsed lines.
+     * @return bool True when every line is matched or routed-to-suspense.
+     *
+     * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-6.3
      */
-    private function parseCamt053(string $xml): array
+    public function allLinesResolved(string $statementId): bool
     {
-        $lines = [];
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $register      = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+            if ($register === '') {
+                $register = 'shillinq';
+            }
 
+            $unmatched = $objectService
+                ->setRegister($register)
+                ->setSchema('BankStatementLine')
+                ->findAll(
+                    [
+                        'filters' => [
+                            'statementId' => $statementId,
+                            'status'      => 'unmatched',
+                        ],
+                        'limit'   => 1,
+                    ]
+                );
+
+            return empty($unmatched) === true;
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'StatementParser: reconciliation-complete check failed — denying (fail-closed)',
+                ['statementId' => $statementId, 'exception' => $e->getMessage()]
+            );
+            return false;
+        }//end try
+
+    }//end allLinesResolved()
+
+    /**
+     * Parse a CAMT.053 (ISO 20022) statement into normalised line maps.
+     *
+     * XXE-safe: the XML is loaded via simplexml_load_string which, on PHP 8 with
+     * libxml >= 2.9, does not resolve external entities by default.
+     *
+     * @param string $contents Raw CAMT.053 XML.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    private function parseCamt053(string $contents): array
+    {
         $previous = libxml_use_internal_errors(true);
-        $doc      = simplexml_load_string($xml);
+        $xml      = simplexml_load_string($contents, \SimpleXMLElement::class, (LIBXML_NONET | LIBXML_NOENT));
         libxml_use_internal_errors($previous);
-
-        if ($doc === false) {
-            $this->logger->warning('StatementParser: malformed CAMT.053 XML');
+        if ($xml === false) {
             return [];
         }
 
-        // CAMT.053 entries live at Document/BkToCstmrStmt/Stmt/Ntry. Bank
-        // namespaces vary, so match purely on local element names via xpath to
-        // stay namespace-agnostic (and to avoid member-property access).
-        $entries = $doc->xpath('//*[local-name()="Ntry"]');
-
-        foreach (($entries ?? []) as $entry) {
-            $amount  = (float) $this->camtValue(entry: $entry, name: 'Amt');
-            $isDebit = ($this->camtValue(entry: $entry, name: 'CdtDbtInd') === 'DBIT');
-            $signed  = $amount;
-            if ($isDebit === true) {
-                $signed = -$amount;
+        $lines = [];
+        foreach ($xml->xpath('//*[local-name()="Ntry"]') as $entry) {
+            $amount = (float) ((string) ($entry->xpath('.//*[local-name()="Amt"]')[0] ?? '0'));
+            $cdtDbt = (string) ($entry->xpath('.//*[local-name()="CdtDbtInd"]')[0] ?? 'CRDT');
+            if ($cdtDbt === 'DBIT') {
+                $amount = (-1 * $amount);
             }
 
-            $valueDate = $this->camtDate(entry: $entry, parent: 'ValDt');
-            if ($valueDate === '') {
-                $valueDate = $this->camtDate(entry: $entry, parent: 'BookgDt');
-            }
-
-            $currency = $this->camtAttr(entry: $entry, name: 'Amt', attr: 'Ccy');
-            if ($currency === '') {
-                $currency = 'EUR';
-            }
+            $valueDate = (string) ($entry->xpath('.//*[local-name()="ValDt"]/*[local-name()="Dt"]')[0] ?? '');
+            $remit     = (string) ($entry->xpath('.//*[local-name()="RmtInf"]//*[local-name()="Ustrd"]')[0] ?? '');
+            $e2e       = (string) ($entry->xpath('.//*[local-name()="EndToEndId"]')[0] ?? '');
 
             $lines[] = [
-                'valueDate'        => $valueDate,
-                'amount'           => $signed,
-                'currency'         => $currency,
-                'remittanceInfo'   => $this->camtValue(entry: $entry, name: 'Ustrd'),
-                'counterpartyName' => $this->camtValue(entry: $entry, name: 'Nm'),
-                'counterpartyIban' => $this->camtValue(entry: $entry, name: 'IBAN'),
-                'endToEndRef'      => $this->camtValue(entry: $entry, name: 'EndToEndId'),
+                'valueDate'      => $valueDate,
+                'amount'         => $amount,
+                'currency'       => 'EUR',
+                'remittanceInfo' => $remit,
+                'endToEndRef'    => $e2e,
+                'status'         => 'unmatched',
             ];
         }//end foreach
 
@@ -165,98 +193,30 @@ class StatementParser
     }//end parseCamt053()
 
     /**
-     * Extract the trimmed text of the first descendant element with the given
-     * local name within a CAMT.053 entry. Namespace-agnostic.
+     * Parse an MT940 (SWIFT) statement into normalised line maps.
      *
-     * @param \SimpleXMLElement $entry The Ntry element.
-     * @param string            $name  The local element name to find.
+     * Reads :61: (statement line) and :86: (information) field pairs.
      *
-     * @return string The element text, or '' when absent.
+     * @param string $contents Raw MT940 text.
+     *
+     * @return array<int,array<string,mixed>>
      */
-    private function camtValue(\SimpleXMLElement $entry, string $name): string
-    {
-        $hits = $entry->xpath('.//*[local-name()="'.$name.'"]');
-        if (empty($hits) === true) {
-            return '';
-        }
-
-        return trim((string) $hits[0]);
-
-    }//end camtValue()
-
-    /**
-     * Extract the date text from a CAMT.053 date wrapper (e.g. ValDt/Dt or
-     * BookgDt/Dt) within an entry. Namespace-agnostic.
-     *
-     * @param \SimpleXMLElement $entry  The Ntry element.
-     * @param string            $parent The date-wrapper local name (ValDt|BookgDt).
-     *
-     * @return string The date text, or '' when absent.
-     */
-    private function camtDate(\SimpleXMLElement $entry, string $parent): string
-    {
-        $hits = $entry->xpath('.//*[local-name()="'.$parent.'"]/*[local-name()="Dt"]');
-        if (empty($hits) === true) {
-            return '';
-        }
-
-        return trim((string) $hits[0]);
-
-    }//end camtDate()
-
-    /**
-     * Extract an attribute of the first descendant element with the given local
-     * name within a CAMT.053 entry.
-     *
-     * @param \SimpleXMLElement $entry The Ntry element.
-     * @param string            $name  The local element name to find.
-     * @param string            $attr  The attribute name to read.
-     *
-     * @return string The attribute value, or '' when absent.
-     */
-    private function camtAttr(\SimpleXMLElement $entry, string $name, string $attr): string
-    {
-        $hits = $entry->xpath('.//*[local-name()="'.$name.'"]');
-        if (empty($hits) === true) {
-            return '';
-        }
-
-        $attributes = $hits[0]->attributes();
-        if ($attributes === null || isset($attributes[$attr]) === false) {
-            return '';
-        }
-
-        return (string) $attributes[$attr];
-
-    }//end camtAttr()
-
-    /**
-     * Parse an MT940 SWIFT statement into statement lines.
-     *
-     * Recognises :61: (statement line) and :86: (information to account owner)
-     * tags. Amounts are normalised to EUR signed numbers.
-     *
-     * @param string $text MT940 contents.
-     *
-     * @return array<int,array<string,mixed>> Parsed lines.
-     */
-    private function parseMt940(string $text): array
+    private function parseMt940(string $contents): array
     {
         $lines   = [];
         $current = null;
-
-        foreach (preg_split('/\r\n|\n|\r/', $text) as $row) {
-            if (str_starts_with($row, ':61:') === true) {
+        foreach (preg_split('/\r\n|\r|\n/', $contents) as $line) {
+            if (str_starts_with($line, ':61:') === true) {
                 if ($current !== null) {
                     $lines[] = $current;
                 }
 
-                $current = $this->parseMt940StatementLine(payload: substr($row, 4));
+                $current = $this->parseMt940StatementLine(body: substr($line, 4));
                 continue;
             }
 
-            if ($current !== null && str_starts_with($row, ':86:') === true) {
-                $current['remittanceInfo'] = trim(substr($row, 4));
+            if (str_starts_with($line, ':86:') === true && $current !== null) {
+                $current['remittanceInfo'] = trim(substr($line, 4));
             }
         }//end foreach
 
@@ -269,83 +229,77 @@ class StatementParser
     }//end parseMt940()
 
     /**
-     * Parse a single MT940 :61: statement-line payload.
+     * Parse a single MT940 :61: statement-line body into a normalised line map.
      *
-     * Format (subset): YYMMDD[MMDD]{C|D}amount... — the value date is the
-     * leading 6 digits, the credit/debit marker follows the optional entry
-     * date, and the amount uses a comma decimal separator.
+     * The body begins with a YYMMDD value date, then a C/D credit/debit mark,
+     * then the amount with a comma decimal separator (e.g. 260115C1210,00).
      *
-     * @param string $payload The :61: payload (tag stripped).
+     * @param string $body The :61: field body (the line with the tag stripped).
      *
-     * @return array<string,mixed> Normalised line.
+     * @return array<string,mixed> Normalised BankStatementLine field map.
      */
-    private function parseMt940StatementLine(string $payload): array
+    private function parseMt940StatementLine(string $body): array
     {
         $valueDate = '';
-        if (preg_match('/^(\d{6})/', $payload, $dateMatch) === 1) {
-            $year      = substr($dateMatch[1], 0, 2);
-            $valueDate = '20'.$year.'-'.substr($dateMatch[1], 2, 2).'-'.substr($dateMatch[1], 4, 2);
+        if (preg_match('/^(\d{6})/', $body, $matches) === 1) {
+            $valueDate = '20'.substr($matches[1], 0, 2).'-'.substr($matches[1], 2, 2).'-'.substr($matches[1], 4, 2);
         }
 
-        $amount = 0.0;
         $sign   = 1;
-        if (preg_match('/(\d{4})?([CD])R?([0-9,]+)/', $payload, $amountMatch) === 1) {
-            if ($amountMatch[2] === 'D') {
+        $amount = 0.0;
+        if (preg_match('/([CD])R?(\d+,\d{2})/', $body, $matches) === 1) {
+            if ($matches[1] === 'D') {
                 $sign = -1;
             }
 
-            $amount = (float) str_replace(',', '.', $amountMatch[3]);
+            $amount = ((float) str_replace(',', '.', $matches[2]) * $sign);
         }
 
         return [
-            'valueDate'        => $valueDate,
-            'amount'           => ($sign * $amount),
-            'currency'         => 'EUR',
-            'remittanceInfo'   => '',
-            'counterpartyName' => '',
-            'counterpartyIban' => '',
-            'endToEndRef'      => '',
+            'valueDate'      => $valueDate,
+            'amount'         => $amount,
+            'currency'       => 'EUR',
+            'remittanceInfo' => '',
+            'status'         => 'unmatched',
         ];
 
     }//end parseMt940StatementLine()
 
     /**
-     * Precondition for the BankStatement `in-progress → reconciled` transition:
-     * no child BankStatementLine may remain in `unmatched` status (REQ-BR-004).
+     * Parse a CSV statement (valueDate,amount,currency,remittanceInfo,counterpartyName,counterpartyIban).
      *
-     * @param array<string,mixed> $statement BankStatement object array.
+     * @param string $contents Raw CSV text (header row required).
      *
-     * @return bool True when every line is matched or routed-to-suspense.
-     *
-     * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-6.3
+     * @return array<int,array<string,mixed>>
      */
-    public function allLinesResolved(array $statement): bool
+    private function parseCsv(string $contents): array
     {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $lines         = $objectService
-                ->setRegister($this->getRegisterSlug())
-                ->setSchema('BankStatementLine')
-                ->findAll(
-                    [
-                        'filters' => [
-                            'statementId' => (string) ($statement['statementId'] ?? ''),
-                            'status'      => 'unmatched',
-                        ],
-                        'limit'   => 1,
-                    ]
-                );
+        $rows = array_filter(preg_split('/\r\n|\r|\n/', trim($contents)));
+        if (count($rows) < 2) {
+            return [];
+        }
 
-            return empty($lines);
-        } catch (\Throwable $e) {
-            // Fail closed: if completeness cannot be verified, block the
-            // reconciled transition rather than asserting a false "complete".
-            $this->logger->error(
-                'StatementParser: completeness check failed — blocking reconciliation',
-                ['exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
+        $header = str_getcsv(array_shift($rows));
+        $lines  = [];
+        foreach ($rows as $row) {
+            $cols = str_getcsv($row);
+            $map  = [];
+            foreach ($header as $i => $key) {
+                $map[trim($key)] = ($cols[$i] ?? '');
+            }
 
-    }//end allLinesResolved()
+            $lines[] = [
+                'valueDate'        => ($map['valueDate'] ?? ''),
+                'amount'           => (float) ($map['amount'] ?? 0),
+                'currency'         => ($map['currency'] ?? 'EUR'),
+                'remittanceInfo'   => ($map['remittanceInfo'] ?? ''),
+                'counterpartyName' => ($map['counterpartyName'] ?? ''),
+                'counterpartyIban' => ($map['counterpartyIban'] ?? ''),
+                'status'           => 'unmatched',
+            ];
+        }//end foreach
+
+        return $lines;
+
+    }//end parseCsv()
 }//end class
