@@ -62,6 +62,14 @@ return [
         // KOR (Tier 2): read-only drempel-bewaking (running omzet, benutting, prognose, alert-schijf).
         ['name' => 'kor#monitor', 'url' => '/api/kor/monitor', 'verb' => 'GET'],
 
+        // Vpb corporate tax (Tier 2): read-only quarterly/annual tax statements
+        // and payment reconciliation. Deadline/payment CRUD is served by
+        // OpenRegister's generic object API. Specific verb routes precede the
+        // catch-all wildcard below.
+        ['name' => 'taxReport#quarter', 'url' => '/api/tax-reports/{year}/{quarter}', 'verb' => 'GET'],
+        ['name' => 'taxReport#annual', 'url' => '/api/tax-reports/{year}', 'verb' => 'GET'],
+        ['name' => 'taxPayment#reconcile', 'url' => '/api/tax-payments/{id}/reconcile', 'verb' => 'POST'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],

@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\AppInfo;
 
+use OCA\Shillinq\BackgroundJob\TaxDeadlineReminderJob;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Repair\InitializeSettings;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
@@ -28,6 +29,9 @@ use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OCP\BackgroundJob\IJobList;
+use Psr\Log\LoggerInterface;
+use Throwable;
 
 /**
  * Main application class for the Shillinq Nextcloud app.
@@ -72,13 +76,25 @@ class Application extends App implements IBootstrap
     /**
      * Boot the application.
      *
+     * Enqueues the daily Vpb deadline reminder job (REQ-VPB-013) idempotently —
+     * IJobList::add() is a no-op when the job is already registered. The job's
+     * constructor dependencies are auto-wired by the Nextcloud DI container.
+     *
      * @param IBootContext $context The boot context
      *
      * @return void
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function boot(IBootContext $context): void
     {
+        try {
+            $jobList = $context->getServerContainer()->get(IJobList::class);
+            $jobList->add(TaxDeadlineReminderJob::class);
+        } catch (Throwable $e) {
+            $context->getServerContainer()->get(LoggerInterface::class)->warning(
+                'Shillinq: failed to enqueue Vpb deadline reminder job',
+                ['exception' => $e->getMessage()]
+            );
+        }
+
     }//end boot()
 }//end class

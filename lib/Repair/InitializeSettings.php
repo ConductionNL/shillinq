@@ -132,7 +132,7 @@ class InitializeSettings implements IRepairStep
             // routine upgrades when the shillinq_register.json version hasn't changed.
             $result = $this->settingsService->loadConfigurationForced();
 
-            if ($result['success'] === true) {
+            if (($result['success'] ?? false) === true) {
                 $skipped = (($result['skipped'] ?? false) === true);
                 $version = ($result['version'] ?? 'unknown');
                 if ($skipped === true) {
@@ -146,7 +146,7 @@ class InitializeSettings implements IRepairStep
                 }
             }
 
-            if ($result['success'] !== true) {
+            if (($result['success'] ?? false) !== true) {
                 $message = ($result['message'] ?? 'unknown error');
                 $output->warning('Shillinq configuration import issue: '.$message);
                 // H2: skip account seed when schema import failed to avoid writing
@@ -245,13 +245,13 @@ class InitializeSettings implements IRepairStep
 
         $output->info('Seeding rate-card templates...');
         $rcResult = $this->settingsService->seedRateCardTemplates(administrationId: $administrationId);
-        if ($rcResult['success'] === true) {
+        if (($rcResult['success'] ?? false) === true) {
             $output->info(
                 'Rate-card templates seeded: '.($rcResult['seeded'] ?? 0).' created, '.($rcResult['skipped'] ?? 0).' skipped.'
             );
         }
 
-        if ($rcResult['success'] !== true) {
+        if (($rcResult['success'] ?? false) !== true) {
             $output->warning('Rate-card templates seeding issue: '.($rcResult['message'] ?? 'unknown error'));
         }
 
@@ -276,7 +276,7 @@ class InitializeSettings implements IRepairStep
 
         $result = $this->settingsService->seedSelectielijst();
 
-        if ($result['success'] === true) {
+        if (($result['success'] ?? false) === true) {
             $seeded  = ($result['seeded'] ?? 0);
             $skipped = ($result['skipped'] ?? 0);
             $output->info(
@@ -284,7 +284,7 @@ class InitializeSettings implements IRepairStep
             );
         }
 
-        if ($result['success'] !== true) {
+        if (($result['success'] ?? false) !== true) {
             $message = ($result['message'] ?? 'unknown error');
             $output->warning('Selectielijst seeding issue: '.$message);
         }
@@ -565,13 +565,13 @@ class InitializeSettings implements IRepairStep
             $output->info('Seeding ProductAttribute template: '.$category.'...');
             $result = $this->settingsService->seedProductAttributes(category: $category);
 
-            if ($result['success'] === true) {
+            if (($result['success'] ?? false) === true) {
                 $output->info(
                     'ProductAttribute ('.$category.'): '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
                 );
             }
 
-            if ($result['success'] !== true) {
+            if (($result['success'] ?? false) !== true) {
                 $output->warning(
                     'ProductAttribute ('.$category.') seeding issue: '.($result['message'] ?? 'unknown error')
                 );
@@ -663,7 +663,7 @@ class InitializeSettings implements IRepairStep
             administrationId: $administrationId
         );
 
-        if ($seedResult['success'] === true) {
+        if (($seedResult['success'] ?? false) === true) {
             $seeded  = ($seedResult['seeded'] ?? 0);
             $skipped = ($seedResult['skipped'] ?? 0);
             $output->info(
@@ -671,14 +671,14 @@ class InitializeSettings implements IRepairStep
             );
         }
 
-        if ($seedResult['success'] !== true) {
+        if (($seedResult['success'] ?? false) !== true) {
             $message = ($seedResult['message'] ?? 'unknown error');
             $output->warning('Chart of accounts seeding issue: '.$message);
         }
 
         $allocationResult = $this->settingsService->seedAllocationRules(administrationId: $administrationId);
 
-        if ($allocationResult['success'] === true) {
+        if (($allocationResult['success'] ?? false) === true) {
             $seeded  = ($allocationResult['seeded'] ?? 0);
             $skipped = ($allocationResult['skipped'] ?? 0);
             $output->info(
@@ -686,7 +686,7 @@ class InitializeSettings implements IRepairStep
             );
         }
 
-        if ($allocationResult['success'] !== true) {
+        if (($allocationResult['success'] ?? false) !== true) {
             $message = ($allocationResult['message'] ?? 'unknown error');
             $output->warning('AllocationRule seeding issue: '.$message);
         }
