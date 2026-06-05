@@ -1,0 +1,426 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "expense-reimbursement-or-passthrough",
+		"adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+		"description": "T2 — dual-mode expense settlement: classify a captured expense (Receipt) as reimbursable (pay employee via SEPA, GL to expense-payable) or pass-through (bill client at cost + markup, GL to customer AR). Extends the existing Receipt and ExpenseClaimEntry schemas (from expense-capture-core) additively and adds two new master-data schemas (ReimbursementPolicy, PassThroughMarkupRule). Spec names 'Expense'/'ExpenseClaim'; the real upstream schemas are Receipt/ExpenseClaimEntry — corrected per ADR-022 (real OR model). settlementMode is left optional (not added to required) so the 58 existing seed objects keep validating; null = unclassified per REQ-ERP-003 mixed-mode rule."
+	},
+	"components": {
+		"schemas": {
+			"Receipt": {
+				"properties": {
+					"settlementMode": {
+						"type": "string",
+						"enum": [
+							"reimbursable",
+							"pass-through"
+						],
+						"nullable": true,
+						"description": "Settlement classification (REQ-ERP-001/002): reimbursable = pay employee; pass-through = bill linked customer at cost + markup. Immutable after the parent claim is submitted (enforced by SettlementGuard, REQ-ERP-010). Null = unclassified.",
+						"example": "pass-through"
+					},
+					"linkedCustomerId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to Organization (customer). Required when settlementMode = pass-through (validated by SettlementGuard, REQ-ERP-002); null when reimbursable.",
+						"example": "CUST-123"
+					},
+					"markupRuleId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to PassThroughMarkupRule.ruleId — the rule matched at submission for this receipt (REQ-ERP-002/005). Locked at submission for audit (REQ-ERP-010).",
+						"example": "RULE-002"
+					},
+					"markupRateApplied": {
+						"type": "number",
+						"nullable": true,
+						"description": "Markup percentage actually applied (e.g. 0.15 = 15%) for percentage rules, or null for fixed-amount rules. Locked at submission (REQ-ERP-010); future rule changes do not affect this receipt.",
+						"example": 0.15
+					},
+					"markupAmountCalculated": {
+						"type": "number",
+						"nullable": true,
+						"description": "The pass-through markup amount in base currency (REQ-ERP-002). For percentage rules: amountInBaseCurrency × markupRateApplied. For fixed-amount rules: markupValue. Calculated and locked at submission; null when reimbursable. See x-openregister-calculations.",
+						"example": 15.0
+					},
+					"passthroughDebitAccountCode": {
+						"type": "string",
+						"nullable": true,
+						"description": "GL account code the pass-through debit posts to (customer AR control or deferred-revenue account, per ReimbursementPolicy). Required at submit time for pass-through receipts (REQ-ERP-002); validated by SettlementGuard.",
+						"example": "1300"
+					}
+				},
+				"x-openregister-calculations": {
+					"markupAmountCalculated": {
+						"description": "REQ-ERP-002/009 markup calculation. When settlementMode = pass-through, look up the matching PassThroughMarkupRule for linkedCustomerId + category with priority (customer+category > customer-only > global default), then apply: percentage → amountInBaseCurrency × markupValue; fixedAmount → markupValue. Null when reimbursable. Locked at submission per REQ-ERP-010. ADR-031 exception: cross-schema priority lookup + submission-time locking are not yet expressible in the declarative DSL; OCA\\Shillinq\\Lifecycle\\SettlementGuard::computeMarkupAmount provides the fallback.",
+						"expr": "settlementMode == 'pass-through' ? (markupType == 'percentage' ? amountInBaseCurrency * markupRateApplied : markupValue) : null",
+						"guard": "OCA\\Shillinq\\Lifecycle\\SettlementGuard::computeMarkupAmount"
+					}
+				}
+			},
+			"ExpenseClaimEntry": {
+				"properties": {
+					"settlementMode": {
+						"type": "string",
+						"enum": [
+							"reimbursable",
+							"pass-through"
+						],
+						"nullable": true,
+						"description": "Claim-level settlement mode (REQ-ERP-001/003). All child line items MUST share this mode (or be null); a mixed-mode claim is rejected at submit (REQ-ERP-003, enforced by SettlementGuard). Immutable after submission (REQ-ERP-010).",
+						"example": "reimbursable"
+					},
+					"totalReimbursableAmount": {
+						"type": "number",
+						"nullable": true,
+						"description": "Aggregate (REQ-ERP-003): sum of child Receipt.amountInBaseCurrency where settlementMode = reimbursable. See x-openregister-calculations.",
+						"example": 50.0
+					},
+					"totalPassThroughAmount": {
+						"type": "number",
+						"nullable": true,
+						"description": "Aggregate (REQ-ERP-003): sum of (child Receipt.amountInBaseCurrency + markupAmountCalculated) where settlementMode = pass-through. See x-openregister-calculations.",
+						"example": 150.25
+					},
+					"passThroughCustomerIds": {
+						"type": "array",
+						"nullable": true,
+						"items": {
+							"type": "string"
+						},
+						"description": "Aggregate (REQ-ERP-003): unique list of linkedCustomerId across pass-through child receipts. One AR GL entry is materialised per customer on post (REQ-ERP-009).",
+						"example": [
+							"CUST-123",
+							"CUST-456"
+						]
+					},
+					"glReimbursableTransactionId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Back-reference to the materialised reimbursable GLTransaction (debit expense-payable) once posted (REQ-ERP-007). Distinct from the existing glTransactionId so dual-path posting can record both legs.",
+						"example": "gl-txn-2026-erp-reimb-0001"
+					},
+					"glPassThroughTransactionId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Back-reference to the materialised pass-through GLTransaction (debit customer AR) once posted (REQ-ERP-007/009).",
+						"example": "gl-txn-2026-erp-ar-0001"
+					}
+				},
+				"x-openregister-calculations": {
+					"totalReimbursableAmount": {
+						"description": "REQ-ERP-003 aggregate. Sum of child Receipt.amountInBaseCurrency where settlementMode = reimbursable. ADR-031 exception: cross-schema aggregation over child receipts is not yet expressible declaratively; OCA\\Shillinq\\Lifecycle\\SettlementGuard::aggregateClaimTotals provides the fallback.",
+						"expr": "sum(Receipt.amountInBaseCurrency where claimId == @self.id and settlementMode == 'reimbursable')",
+						"guard": "OCA\\Shillinq\\Lifecycle\\SettlementGuard::aggregateClaimTotals"
+					},
+					"totalPassThroughAmount": {
+						"description": "REQ-ERP-003 aggregate. Sum of (Receipt.amountInBaseCurrency + markupAmountCalculated) where settlementMode = pass-through. ADR-031 exception fallback: OCA\\Shillinq\\Lifecycle\\SettlementGuard::aggregateClaimTotals.",
+						"expr": "sum(Receipt.amountInBaseCurrency + Receipt.markupAmountCalculated where claimId == @self.id and settlementMode == 'pass-through')",
+						"guard": "OCA\\Shillinq\\Lifecycle\\SettlementGuard::aggregateClaimTotals"
+					},
+					"passThroughCustomerIds": {
+						"description": "REQ-ERP-003 aggregate. Unique linkedCustomerId across pass-through child receipts. ADR-031 exception fallback: OCA\\Shillinq\\Lifecycle\\SettlementGuard::aggregateClaimTotals.",
+						"expr": "unique(Receipt.linkedCustomerId where claimId == @self.id and settlementMode == 'pass-through')",
+						"guard": "OCA\\Shillinq\\Lifecycle\\SettlementGuard::aggregateClaimTotals"
+					}
+				},
+				"x-openregister-settlement": {
+					"description": "REQ-ERP-007/008/009/011 dual-path settlement contract. Augments (does not replace) the expense-capture-core post action: the existing single materialise-gl-transaction handles the reimbursable path; this declares the pass-through branch + reimbursement notification + reversal-on-mode-change, all keyed under a new extension so the fragment unions cleanly onto the monolith without duplicating the post transition's action list (ADR-037).",
+					"modeField": "settlementMode",
+					"submitGuard": "OCA\\Shillinq\\Lifecycle\\SettlementGuard::requireSettlementClassification",
+					"reimbursable": {
+						"glBranch": "expense-capture-core post action (debit expense-payable, credit cost-centre lines)",
+						"glReferenceField": "glReimbursableTransactionId",
+						"notification": {
+							"event": "ExpenseClaimReimbursementNotification",
+							"description": "REQ-ERP-008: emitted on post; payload carries claimId, employeeId, employeeBankAccount, amount, currency, glEntryId, policyId. Logged in the audit trail and published to the event bus for asynchronous treasury consumption. Event delivery failure does not block posting.",
+							"emitter": "OCA\\Shillinq\\Lifecycle\\SettlementGuard::onReimbursablePosted",
+							"payloadFields": [
+								"claimId",
+								"employeeId",
+								"employeeBankAccount",
+								"amount",
+								"currency",
+								"glEntryId",
+								"policyId"
+							]
+						}
+					},
+					"passThrough": {
+						"description": "REQ-ERP-007/009: one balanced GLTransaction per pass-through customer — debit customer AR (passthroughDebitAccountCode), credit cost-centre expense lines + revenue-deferral for the markup. Linked to the customer AR record so the next AR invoice cycle (T2 accounts-receivable) includes the claim cost + markup. ADR-022 real OR ObjectService API only.",
+						"glReferenceField": "glPassThroughTransactionId",
+						"debitAccountField": "passthroughDebitAccountCode",
+						"creditCostCentres": "Account[category=@receipt.category].accountNumber",
+						"markupCreditAccount": "Account[isRevenueDeferralAccount=true].accountNumber",
+						"perCustomer": true,
+						"emitter": "OCA\\Shillinq\\Lifecycle\\SettlementGuard::materialisePassThroughEntries"
+					},
+					"modeChangeReversal": {
+						"description": "REQ-ERP-011: changing settlementMode after a claim is posted reverses the existing GLTransaction (credit/debit swapped per T1 REQ-GL-004) before materialising the new-mode entry. High-privilege only (bookkeeper role). Markup rate stays locked on the reversed entry's metadata for audit.",
+						"requires": "OCA\\Shillinq\\Lifecycle\\SettlementGuard::canChangeSettlementMode"
+					}
+				}
+			},
+			"ReimbursementPolicy": {
+				"slug": "ReimbursementPolicy",
+				"icon": "AccountCashOutline",
+				"version": "0.1.0",
+				"title": "Reimbursement Policy",
+				"description": "Master data (REQ-ERP-004): per-administration settlement policy — auto-approval threshold, optional markup-approval threshold, and the default employee SEPA bank-account mapping used for the reimbursement notification (REQ-ERP-008).",
+				"x-schema-org": "schema:Thing",
+				"x-spec": "openspec/changes/expense-reimbursement-or-passthrough/specs/expense-reimbursement-or-passthrough/spec.md",
+				"type": "object",
+				"required": [
+					"policyId",
+					"name",
+					"administrationId"
+				],
+				"properties": {
+					"policyId": {
+						"type": "string",
+						"description": "Unique policy identifier per administration.",
+						"example": "POL-NL-01"
+					},
+					"name": {
+						"type": "string",
+						"description": "Human-readable policy name.",
+						"example": "Netherlands Standard"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "Policy description and scope.",
+						"example": "Standard Dutch expense policy"
+					},
+					"autoApproveThreshold": {
+						"type": "number",
+						"nullable": true,
+						"description": "Reimbursable claims at or below this amount auto-approve (REQ-ERP-004), consistent with the existing ExpenseClaimEntry approval thresholds.",
+						"example": 500.0
+					},
+					"requiresMarkupApprovalThreshold": {
+						"type": "number",
+						"nullable": true,
+						"description": "When set, pass-through markup amounts at or above this value require an extra approver gate on the submitted→approved transition (REQ-ERP-006), consumed via OR approval-workflow (ADR-022). Null = no markup approval gate.",
+						"example": 100.0
+					},
+					"employeeBankAccountMapping": {
+						"type": "string",
+						"nullable": true,
+						"description": "Reference to the default SEPA account source for reimbursement (or 'standard'). Used in the ExpenseClaimReimbursementNotification payload (REQ-ERP-008).",
+						"example": "standard"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to Administration.",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							],
+							"description": "Bookkeepers maintain settlement policy per administration."
+						},
+						"manager": {
+							"permissions": [
+								"read"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"PassThroughMarkupRule": {
+				"slug": "PassThroughMarkupRule",
+				"icon": "PercentOutline",
+				"version": "0.1.0",
+				"title": "Pass-through Markup Rule",
+				"description": "Master data (REQ-ERP-005): per-customer / per-category markup rate for pass-through billing. Matched at claim submission with priority (customer+category > customer-only > global default) and locked onto the receipt for audit (REQ-ERP-010).",
+				"x-schema-org": "schema:Offer",
+				"x-spec": "openspec/changes/expense-reimbursement-or-passthrough/specs/expense-reimbursement-or-passthrough/spec.md",
+				"type": "object",
+				"required": [
+					"ruleId",
+					"markupType",
+					"markupValue",
+					"currency",
+					"effectiveFromYear",
+					"administrationId"
+				],
+				"properties": {
+					"ruleId": {
+						"type": "string",
+						"description": "Unique rule identifier.",
+						"example": "RULE-001"
+					},
+					"targetCustomerId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to Organization (customer); null = global default (REQ-ERP-005).",
+						"example": "CUST-123"
+					},
+					"targetCategory": {
+						"type": "string",
+						"nullable": true,
+						"description": "Expense category (travel, meals, …); null = all categories (REQ-ERP-005).",
+						"example": "travel"
+					},
+					"markupType": {
+						"type": "string",
+						"enum": [
+							"percentage",
+							"fixedAmount"
+						],
+						"description": "Markup kind (REQ-ERP-005).",
+						"example": "percentage"
+					},
+					"markupValue": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Markup as a fraction (0.15 = 15%) for percentage, or a base-currency amount (2.50) for fixedAmount.",
+						"example": 0.15
+					},
+					"currency": {
+						"type": "string",
+						"description": "ISO 4217 currency code.",
+						"example": "EUR"
+					},
+					"effectiveFromYear": {
+						"type": "integer",
+						"description": "Fiscal year this rule applies from (REQ-ERP-005). Rule selection is scoped to the claim's fiscal year.",
+						"example": 2026
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to Administration.",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							],
+							"description": "Bookkeepers maintain markup rules per administration and fiscal year."
+						},
+						"manager": {
+							"permissions": [
+								"read"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			}
+		}
+	},
+	"objects": [
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "ReimbursementPolicy",
+				"slug": "pol-nl-01-netherlands-standard"
+			},
+			"policyId": "POL-NL-01",
+			"name": "Netherlands Standard",
+			"description": "Standard Dutch expense policy. Reimbursable claims at or below €500 auto-approve; no markup-approval gate.",
+			"autoApproveThreshold": 500.0,
+			"requiresMarkupApprovalThreshold": null,
+			"employeeBankAccountMapping": "standard",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "ReimbursementPolicy",
+				"slug": "pol-nl-02-netherlands-high-touch"
+			},
+			"policyId": "POL-NL-02",
+			"name": "Netherlands High-Touch",
+			"description": "For complex multi-customer claims. Lower €100 auto-approval threshold; pass-through markup at or above €100 requires manager sign-off.",
+			"autoApproveThreshold": 100.0,
+			"requiresMarkupApprovalThreshold": 100.0,
+			"employeeBankAccountMapping": "standard",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "PassThroughMarkupRule",
+				"slug": "rule-001-global-default-15pct"
+			},
+			"ruleId": "RULE-001",
+			"targetCustomerId": null,
+			"targetCategory": null,
+			"markupType": "percentage",
+			"markupValue": 0.15,
+			"currency": "EUR",
+			"effectiveFromYear": 2026,
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "PassThroughMarkupRule",
+				"slug": "rule-002-cust-123-travel-10pct"
+			},
+			"ruleId": "RULE-002",
+			"targetCustomerId": "CUST-123",
+			"targetCategory": "travel",
+			"markupType": "percentage",
+			"markupValue": 0.10,
+			"currency": "EUR",
+			"effectiveFromYear": 2026,
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "PassThroughMarkupRule",
+				"slug": "rule-003-cust-456-all-20pct"
+			},
+			"ruleId": "RULE-003",
+			"targetCustomerId": "CUST-456",
+			"targetCategory": null,
+			"markupType": "percentage",
+			"markupValue": 0.20,
+			"currency": "EUR",
+			"effectiveFromYear": 2026,
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "PassThroughMarkupRule",
+				"slug": "rule-004-global-meals-fixed-250"
+			},
+			"ruleId": "RULE-004",
+			"targetCustomerId": null,
+			"targetCategory": "meals",
+			"markupType": "fixedAmount",
+			"markupValue": 2.50,
+			"currency": "EUR",
+			"effectiveFromYear": 2026,
+			"administrationId": "adm-consultancy-nl"
+		}
+	]
+}

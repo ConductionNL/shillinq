@@ -1,0 +1,317 @@
+{
+	"menu": [
+		{
+			"id": "Settlement",
+			"label": "Onkostenverrekening",
+			"icon": "CashRefund",
+			"order": 36,
+			"children": [
+				{
+					"id": "SettlementClassifier",
+					"label": "Verrekening classificeren",
+					"icon": "CashSync",
+					"route": "SettlementClassifier",
+					"order": 10
+				},
+				{
+					"id": "ReimbursementPolicies",
+					"label": "Vergoedingsbeleid",
+					"icon": "AccountCashOutline",
+					"route": "ReimbursementPolicies",
+					"order": 20
+				},
+				{
+					"id": "MarkupRules",
+					"label": "Doorbelastingsregels",
+					"icon": "PercentOutline",
+					"route": "MarkupRules",
+					"order": 30
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "SettlementClassifier",
+			"route": "/onkosten/verrekening",
+			"type": "index",
+			"title": "Expense Settlement Classifier",
+			"config": {
+				"register": "shillinq",
+				"schema": "Receipt",
+				"columns": [
+					{
+						"key": "receiptDate",
+						"label": "Date",
+						"sortable": true,
+						"type": "date"
+					},
+					{
+						"key": "vendorName",
+						"label": "Vendor",
+						"sortable": true
+					},
+					{
+						"key": "category",
+						"label": "Category",
+						"sortable": true
+					},
+					{
+						"key": "amountInBaseCurrency",
+						"label": "Amount (EUR)",
+						"sortable": true,
+						"type": "number"
+					},
+					{
+						"key": "settlementMode",
+						"label": "Settlement Mode",
+						"sortable": true
+					},
+					{
+						"key": "linkedCustomerId",
+						"label": "Linked Customer",
+						"sortable": true
+					},
+					{
+						"key": "markupRateApplied",
+						"label": "Markup Rate",
+						"sortable": false,
+						"type": "number"
+					},
+					{
+						"key": "markupAmountCalculated",
+						"label": "Markup (EUR)",
+						"sortable": true,
+						"type": "number"
+					}
+				],
+				"defaultSort": "receiptDate",
+				"filters": [
+					{
+						"key": "settlementMode",
+						"label": "Settlement Mode",
+						"options": [
+							{
+								"value": "reimbursable",
+								"label": "Reimbursable"
+							},
+							{
+								"value": "pass-through",
+								"label": "Pass-through"
+							}
+						]
+					},
+					{
+						"key": "category",
+						"label": "Category"
+					}
+				],
+				"detailRoute": "ReceiptDetail"
+			}
+		},
+		{
+			"id": "ReimbursementPolicies",
+			"route": "/onkosten/vergoedingsbeleid",
+			"type": "index",
+			"title": "Reimbursement Policies",
+			"config": {
+				"register": "shillinq",
+				"schema": "ReimbursementPolicy",
+				"columns": [
+					{
+						"key": "policyId",
+						"label": "Policy",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "autoApproveThreshold",
+						"label": "Auto-approve ≤ (EUR)",
+						"sortable": true,
+						"type": "number"
+					},
+					{
+						"key": "requiresMarkupApprovalThreshold",
+						"label": "Markup approval ≥ (EUR)",
+						"sortable": true,
+						"type": "number"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					}
+				],
+				"defaultSort": "policyId",
+				"detailRoute": "ReimbursementPolicyDetail"
+			}
+		},
+		{
+			"id": "ReimbursementPolicyDetail",
+			"route": "/onkosten/vergoedingsbeleid/:id",
+			"type": "detail",
+			"title": "Reimbursement Policy",
+			"config": {
+				"register": "shillinq",
+				"schema": "ReimbursementPolicy",
+				"fields": [
+					{
+						"key": "policyId",
+						"label": "Policy ID",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "autoApproveThreshold",
+						"label": "Auto-approve Threshold (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "requiresMarkupApprovalThreshold",
+						"label": "Markup Approval Threshold (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "employeeBankAccountMapping",
+						"label": "Employee Bank Account Mapping",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"indexRoute": "ReimbursementPolicies"
+			}
+		},
+		{
+			"id": "MarkupRules",
+			"route": "/onkosten/doorbelastingsregels",
+			"type": "index",
+			"title": "Pass-through Markup Rules",
+			"config": {
+				"register": "shillinq",
+				"schema": "PassThroughMarkupRule",
+				"columns": [
+					{
+						"key": "ruleId",
+						"label": "Rule",
+						"sortable": true
+					},
+					{
+						"key": "targetCustomerId",
+						"label": "Customer",
+						"sortable": true
+					},
+					{
+						"key": "targetCategory",
+						"label": "Category",
+						"sortable": true
+					},
+					{
+						"key": "markupType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "markupValue",
+						"label": "Value",
+						"sortable": true,
+						"type": "number"
+					},
+					{
+						"key": "effectiveFromYear",
+						"label": "From Year",
+						"sortable": true,
+						"type": "number"
+					}
+				],
+				"defaultSort": "ruleId",
+				"filters": [
+					{
+						"key": "markupType",
+						"label": "Markup Type",
+						"options": [
+							{
+								"value": "percentage",
+								"label": "Percentage"
+							},
+							{
+								"value": "fixedAmount",
+								"label": "Fixed Amount"
+							}
+						]
+					}
+				],
+				"detailRoute": "MarkupRuleDetail"
+			}
+		},
+		{
+			"id": "MarkupRuleDetail",
+			"route": "/onkosten/doorbelastingsregels/:id",
+			"type": "detail",
+			"title": "Pass-through Markup Rule",
+			"config": {
+				"register": "shillinq",
+				"schema": "PassThroughMarkupRule",
+				"fields": [
+					{
+						"key": "ruleId",
+						"label": "Rule ID",
+						"type": "string"
+					},
+					{
+						"key": "targetCustomerId",
+						"label": "Target Customer",
+						"type": "string"
+					},
+					{
+						"key": "targetCategory",
+						"label": "Target Category",
+						"type": "string"
+					},
+					{
+						"key": "markupType",
+						"label": "Markup Type",
+						"type": "string"
+					},
+					{
+						"key": "markupValue",
+						"label": "Markup Value",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "effectiveFromYear",
+						"label": "Effective From Year",
+						"type": "number"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"indexRoute": "MarkupRules"
+			}
+		}
+	]
+}

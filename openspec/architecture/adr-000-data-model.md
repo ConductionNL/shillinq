@@ -4500,6 +4500,8 @@ _Digital document storing scanned receipts, invoices, or proof of transaction fo
 
 > **Reconciliation note (expense-capture-core, 2026-06-03):** The existing `Receipt` entry (primary spec: accounts-payable-receivable) is a generic document-attachment schema (fileName, encodingFormat, contentSize) linked to APTransaction. The expense-capture-core `Receipt` schema in `lib/Settings/shillinq_register.json` is the shillinq expense-capture receipt with amount, currency, multi-currency conversion, category, vendorName, and FK to `ExpenseClaimEntry`. The two schemas serve different purposes — the AP receipt is a document reference; the expense receipt is a financial entry. Implementations MUST use the AP-linked schema for AP document attachments and the expense-capture schema for employee expense receipts.
 
+> **Settlement extension (expense-reimbursement-or-passthrough):** The expense-capture `Receipt` schema is extended **additively** (via `lib/Settings/register.d/expense-reimbursement-or-passthrough.json`, ADR-037) with dual-mode settlement fields: `settlementMode` (enum `reimbursable | pass-through`, optional — null = unclassified, kept optional so existing seed objects keep validating), `linkedCustomerId` (FK Organization, required for pass-through), `markupRuleId` (FK PassThroughMarkupRule), `markupRateApplied`, `markupAmountCalculated` (x-openregister-calculations, locked at submission per REQ-ERP-010), and `passthroughDebitAccountCode`. The spec authored these against schema names `Expense`/`ExpenseClaim`; those do not exist in the shillinq model — the real upstream schemas are `Receipt` (line item) and `ExpenseClaimEntry` (claim), corrected per ADR-022.
+
 ### Report
 **Schema.org:** `schema:Report`
 _Schema.org Report — standard vocabulary for report data_
@@ -6163,6 +6165,46 @@ _Shillinq bookkeeping-tier expense claim grouping N receipts, mileage journeys, 
 - → Administration (many-to-one)
 
 > **Reconciliation note (expense-capture-core, 2026-06-03):** The earlier `ExpenseClaim` entry (primary spec: approval-workflow-management) is a generic claim schema. `ExpenseClaimEntry` is the canonical bookkeeping-tier entity with full lifecycle, OR approval-workflow integration, GL materialisation, and cost-centre allocation. New expense-capture implementations MUST use `ExpenseClaimEntry`.
+
+> **Settlement extension (expense-reimbursement-or-passthrough):** `ExpenseClaimEntry` is extended **additively** (ADR-037 fragment) with claim-level dual-path settlement fields: `settlementMode` (enum, optional; all classified child receipts must share it or be null — mixed-mode rejected at submit per REQ-ERP-003), `totalReimbursableAmount`, `totalPassThroughAmount`, `passThroughCustomerIds` (x-openregister-calculations aggregates over child receipts), `glReimbursableTransactionId`, and `glPassThroughTransactionId` (distinct from the existing `glTransactionId` so both legs of a dual-path post are referenceable). On post, the existing expense-capture post action handles the reimbursable GL leg (debit expense-payable); the new `x-openregister-settlement` contract adds the pass-through branch (one balanced GLTransaction per customer — debit customer AR, credit cost-centre lines + revenue-deferral for markup, REQ-ERP-007/009), a `ExpenseClaimReimbursementNotification` event for treasury (REQ-ERP-008), and GL reversal on a post-submission mode change (REQ-ERP-011). Cross-schema/immutability logic that the declarative DSL cannot express lives in `OCA\Shillinq\Lifecycle\SettlementGuard` (ADR-031 exception path).
+
+### ReimbursementPolicy
+**Schema.org:** `schema:Thing`
+_Master data (expense-reimbursement-or-passthrough, REQ-ERP-004): per-administration settlement policy — auto-approval threshold, optional markup-approval threshold, and the default employee SEPA bank-account mapping used for the reimbursement notification._
+**Primary spec:** expense-reimbursement-or-passthrough
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| policyId | string | Yes | Unique policy identifier per administration |
+| name | string | Yes | Human-readable policy name |
+| description | string | No | Policy description and scope |
+| autoApproveThreshold | number | No | Reimbursable claims at or below this amount auto-approve |
+| requiresMarkupApprovalThreshold | number | No | Pass-through markup at or above this triggers an extra approver gate (REQ-ERP-006) |
+| employeeBankAccountMapping | string | No | Default SEPA account source for the reimbursement notification (REQ-ERP-008) |
+| administrationId | string | Yes | FK to Administration |
+
+**Relations:**
+- → Administration (many-to-one)
+
+### PassThroughMarkupRule
+**Schema.org:** `schema:Offer`
+_Master data (expense-reimbursement-or-passthrough, REQ-ERP-005): per-customer / per-category pass-through markup rate, matched at claim submission with priority (customer+category > customer-only > global default) and locked onto the receipt for audit (REQ-ERP-010)._
+**Primary spec:** expense-reimbursement-or-passthrough
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| ruleId | string | Yes | Unique rule identifier |
+| targetCustomerId | string | No | FK Organization (customer); null = global default |
+| targetCategory | string | No | Expense category; null = all categories |
+| markupType | enum | Yes | percentage or fixedAmount |
+| markupValue | number | Yes | Fraction (0.15 = 15%) for percentage, or base-currency amount for fixedAmount |
+| currency | string | Yes | ISO 4217 |
+| effectiveFromYear | integer | Yes | Fiscal year the rule applies from |
+| administrationId | string | Yes | FK to Administration |
+
+**Relations:**
+- → Administration (many-to-one)
+- → Organization (many-to-one, via targetCustomerId)
 
 ### MileageEntry
 **Schema.org:** `schema:Thing`
