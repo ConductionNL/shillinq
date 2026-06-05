@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "1.3.0",
+	"version": "1.4.0",
 	"dependencies": [
 		"openregister"
 	],
@@ -550,9 +550,168 @@
 					"order": 30
 				}
 			]
+		},
+		{
+			"id": "Investeringsaftrek",
+			"label": "Investeringsaftrek",
+			"icon": "Finance",
+			"order": 38,
+			"visibilityPredicate": {
+				"administrationType": [
+					"mkb",
+					"zzp"
+				]
+			},
+			"children": [
+				{
+					"id": "InvestmentAssets",
+					"label": "Investeringsbedrijfsmiddelen",
+					"icon": "PackageVariantClosed",
+					"route": "InvestmentAssets",
+					"order": 10
+				},
+				{
+					"id": "RvOAanvragen",
+					"label": "RvO Aanvragen",
+					"icon": "FileDocumentArrowRightOutline",
+					"route": "RvOAanvragen",
+					"order": 20
+				},
+				{
+					"id": "DesinvesteringsbijtellingWatch",
+					"label": "Desinvesteringsbijtelling",
+					"icon": "CalendarAlert",
+					"route": "DesinvesteringsbijtellingWatch",
+					"order": 30
+				},
+				{
+					"id": "InvesteringsaftrekCalculator",
+					"label": "Ex-ante Calculator",
+					"icon": "Calculator",
+					"route": "InvesteringsaftrekCalculator",
+					"order": 40
+				}
+			]
 		}
 	],
 	"pages": [
+		{
+			"id": "InvestmentAssets",
+			"route": "/investeringsaftrek/bedrijfsmiddelen",
+			"type": "index",
+			"title": "Investeringsbedrijfsmiddelen",
+			"config": {
+				"register": "shillinq",
+				"schema": "InvestmentAsset",
+				"columns": [
+					{ "key": "omschrijving", "label": "Omschrijving", "sortable": true },
+					{ "key": "leverancier", "label": "Leverancier", "sortable": true },
+					{ "key": "aanschafwaarde", "label": "Aanschafwaarde", "sortable": true },
+					{ "key": "opdrachtverleningDatum", "label": "Opdrachtverlening", "sortable": true },
+					{ "key": "rvoMeldingDeadline", "label": "Meldingstermijn", "sortable": true },
+					{ "key": "rvoMeldingStatus", "label": "RvO status", "sortable": true }
+				],
+				"defaultSort": "opdrachtverleningDatum",
+				"detailRoute": "InvestmentAssetDetail"
+			}
+		},
+		{
+			"id": "InvestmentAssetDetail",
+			"route": "/investeringsaftrek/bedrijfsmiddelen/:id",
+			"type": "detail",
+			"title": "Investeringsbedrijfsmiddel",
+			"config": {
+				"register": "shillinq",
+				"schema": "InvestmentAsset",
+				"fields": [
+					{ "key": "omschrijving", "label": "Omschrijving", "type": "string" },
+					{ "key": "leverancier", "label": "Leverancier", "type": "string" },
+					{ "key": "factuurnummer", "label": "Factuurnummer", "type": "string" },
+					{ "key": "aanschafdatum", "label": "Aanschafdatum", "type": "string" },
+					{ "key": "opdrachtverleningDatum", "label": "Opdrachtverleningsdatum", "type": "string" },
+					{ "key": "ingebruiknameDatum", "label": "Ingebruikname", "type": "string" },
+					{ "key": "aanschafwaarde", "label": "Aanschafwaarde", "type": "number" },
+					{ "key": "valuta", "label": "Valuta", "type": "string" },
+					{ "key": "categorie", "label": "Categorie", "type": "string" },
+					{ "key": "energielijstCode", "label": "Energielijst-code", "type": "string" },
+					{ "key": "milieulijstCode", "label": "Milieulijst-code", "type": "string" },
+					{ "key": "kiaEligible", "label": "KIA", "type": "boolean" },
+					{ "key": "eiaEligible", "label": "EIA", "type": "boolean" },
+					{ "key": "miaEligible", "label": "MIA", "type": "boolean" },
+					{ "key": "vamilEligible", "label": "Vamil", "type": "boolean" },
+					{ "key": "rvoMeldingStatus", "label": "RvO meldingstatus", "type": "string" },
+					{ "key": "rvoMeldingDeadline", "label": "Meldingstermijn", "type": "string" },
+					{ "key": "rvoReferentie", "label": "RvO referentie", "type": "string" }
+				]
+			}
+		},
+		{
+			"id": "RvOAanvragen",
+			"route": "/investeringsaftrek/rvo-aanvragen",
+			"type": "index",
+			"title": "RvO Aanvragen",
+			"config": {
+				"register": "shillinq",
+				"schema": "InvesteringsaftrekClaim",
+				"columns": [
+					{ "key": "scheme", "label": "Regeling", "sortable": true },
+					{ "key": "boekjaar", "label": "Boekjaar", "sortable": true },
+					{ "key": "aftrekbedrag", "label": "Aftrekbedrag", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "boekjaar",
+				"detailRoute": "RvOAanvraagDetail"
+			}
+		},
+		{
+			"id": "RvOAanvraagDetail",
+			"route": "/investeringsaftrek/rvo-aanvragen/:id",
+			"type": "detail",
+			"title": "RvO Aanvraag",
+			"config": {
+				"register": "shillinq",
+				"schema": "InvesteringsaftrekClaim",
+				"fields": [
+					{ "key": "scheme", "label": "Regeling", "type": "string" },
+					{ "key": "boekjaar", "label": "Boekjaar", "type": "number" },
+					{ "key": "grondslag", "label": "Grondslag", "type": "number" },
+					{ "key": "percentage", "label": "Percentage", "type": "number" },
+					{ "key": "aftrekbedrag", "label": "Aftrekbedrag", "type": "number" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "ingediendInAangifte", "label": "Ingediend in aangifte", "type": "boolean" },
+					{ "key": "vrijwilligeVerlaging", "label": "Vrijwillige verlaging", "type": "number" },
+					{ "key": "verlaginRationale", "label": "Reden verlaging", "type": "string" }
+				]
+			}
+		},
+		{
+			"id": "DesinvesteringsbijtellingWatch",
+			"route": "/investeringsaftrek/desinvesteringsbijtelling",
+			"type": "index",
+			"title": "Desinvesteringsbijtelling Watch",
+			"config": {
+				"register": "shillinq",
+				"schema": "InvestmentAsset",
+				"columns": [
+					{ "key": "omschrijving", "label": "Omschrijving", "sortable": true },
+					{ "key": "aanschafdatum", "label": "Aanschafdatum", "sortable": true },
+					{ "key": "aanschafwaarde", "label": "Aanschafwaarde", "sortable": true },
+					{ "key": "categorie", "label": "Categorie", "sortable": true }
+				],
+				"defaultSort": "aanschafdatum",
+				"detailRoute": "InvestmentAssetDetail"
+			}
+		},
+		{
+			"id": "InvesteringsaftrekCalculator",
+			"route": "/investeringsaftrek/calculator",
+			"type": "dashboard",
+			"title": "Ex-ante Calculator",
+			"config": {
+				"register": "shillinq",
+				"widgets": []
+			}
+		},
 		{
 			"id": "Products",
 			"route": "/inventory/products",
