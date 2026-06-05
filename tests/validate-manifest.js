@@ -34,6 +34,8 @@ const REPO_ROOT = path.resolve(__dirname, '..')
 
 const MANIFEST_PATH = path.join(REPO_ROOT, 'src', 'manifest.json')
 
+const MANIFEST_FRAGMENT_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
+
 const SCHEMA_CANDIDATES = [
 	process.env.APP_MANIFEST_SCHEMA,
 	path.join(REPO_ROOT, 'node_modules', '@conduction', 'nextcloud-vue', 'src', 'schemas', 'app-manifest.schema.json'),
@@ -58,6 +60,39 @@ function findSchemaPath() {
 function loadJson(file) {
 	const raw = fs.readFileSync(file, 'utf8')
 	return JSON.parse(raw)
+}
+
+/**
+ * Merge the ADR-037 manifest.d/*.json fragments onto the base manifest, mirroring
+ * the runtime merge in src/main.js. Each fragment appends its menu + pages so the
+ * validator lints the same merged manifest the app actually renders, catching
+ * fragment-page reachability and duplicate-id issues at gate time.
+ *
+ * @param {object} base The parsed base manifest.
+ * @return {object} The merged manifest (base is not mutated).
+ */
+function mergeFragments(base) {
+	const merged = {
+		...base,
+		menu: Array.isArray(base.menu) ? [...base.menu] : [],
+		pages: Array.isArray(base.pages) ? [...base.pages] : [],
+	}
+	if (!fs.existsSync(MANIFEST_FRAGMENT_DIR)) return merged
+	const files = fs.readdirSync(MANIFEST_FRAGMENT_DIR)
+		.filter((f) => f.endsWith('.json'))
+		.sort()
+	for (const file of files) {
+		let frag
+		try {
+			frag = loadJson(path.join(MANIFEST_FRAGMENT_DIR, file))
+		} catch (e) {
+			console.error(`[validate-manifest] skipping malformed fragment ${file}: ${e.message}`)
+			process.exit(1)
+		}
+		if (Array.isArray(frag.menu)) merged.menu.push(...frag.menu)
+		if (Array.isArray(frag.pages)) merged.pages.push(...frag.pages)
+	}
+	return merged
 }
 
 function loadAjv() {
@@ -100,7 +135,7 @@ function structuralLint(manifest) {
 	}
 	if (!Array.isArray(manifest.menu)) errors.push('top-level: menu (array) is required')
 	if (!Array.isArray(manifest.pages)) errors.push('top-level: pages (array) is required')
-	const allowedTypes = new Set(['index', 'detail', 'dashboard', 'logs', 'settings', 'chat', 'files', 'custom'])
+	const allowedTypes = new Set(['index', 'detail', 'dashboard', 'logs', 'settings', 'chat', 'files', 'custom', 'roadmap', 'report'])
 	const seenIds = new Set()
 	for (let i = 0; i < (manifest.pages || []).length; i++) {
 		const page = manifest.pages[i]
@@ -180,10 +215,11 @@ function main() {
 		process.exit(1)
 	}
 
-	const manifest = loadJson(MANIFEST_PATH)
+	const baseManifest = loadJson(MANIFEST_PATH)
+	const manifest = mergeFragments(baseManifest)
 	console.log(`[validate-manifest] manifest: ${MANIFEST_PATH}`)
 	console.log(`[validate-manifest] manifest.version: ${manifest.version}`)
-	console.log(`[validate-manifest] pages: ${(manifest.pages || []).length}`)
+	console.log(`[validate-manifest] pages: ${(manifest.pages || []).length} (base + manifest.d fragments)`)
 
 	const schemaPath = findSchemaPath()
 	if (!schemaPath) {

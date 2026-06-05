@@ -1,0 +1,490 @@
+{
+	"info": {
+		"version": "0.1.0-bookkeeping-market-government-separation"
+	},
+	"components": {
+		"schemas": {
+			"CommercialActivity": {
+				"slug": "CommercialActivity",
+				"icon": "StorefrontOutline",
+				"version": "0.1.0",
+				"title": "Commercial Activity",
+				"description": "A market-facing (commerciële) activity offered by a Dutch bestuursorgaan (gemeente, provincie, waterschap, GR) under the Wet Markt en Overheid (Mededingingswet hfd. 4b). Each activity is a first-class WMO register record carrying ACM meldingstatus, kostprijsmethode, kostenplaats/kostendrager coupling and the optional algemeen-belang-besluit exemption link (REQ-WMO-001). Splits, IKP calculation and ACM reporting all scope to this record. A customer/afnemer is a Nextcloud contact entity, not a bespoke schema — afnemers holds the external references only.",
+				"x-schema-org": "schema:Service",
+				"x-openregister-purpose": "fact",
+				"type": "object",
+				"required": [
+					"administrationId",
+					"code",
+					"naam",
+					"bestuursorgaan",
+					"organisatieonderdeel",
+					"beschrijving",
+					"marktsegment",
+					"concurrenten",
+					"startDatum",
+					"kostprijsMethode",
+					"kostenplaatsCode",
+					"kostendragerCode",
+					"isExempted",
+					"acmMelding"
+				],
+				"properties": {
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this activity for tenant isolation (REQ-WMO-001).",
+						"example": "adm-tilburg"
+					},
+					"code": {
+						"type": "string",
+						"description": "Operator-assigned unique code within the administration (e.g. MO-SP-014 = Markt Ondernemen-Sporten).",
+						"example": "MO-SP-014"
+					},
+					"naam": {
+						"type": "string",
+						"description": "Human-readable name of the commercial activity.",
+						"example": "Dansschool de Maten"
+					},
+					"bestuursorgaan": {
+						"type": "string",
+						"description": "The bestuursorgaan operating the activity (gemeente/provincie/waterschap/GR name or FK).",
+						"example": "Gemeente Apeldoorn"
+					},
+					"organisatieonderdeel": {
+						"type": "string",
+						"description": "Department/section responsible for the activity.",
+						"example": "Afdeling Cultuur & Erfgoed"
+					},
+					"beschrijving": {
+						"type": "string",
+						"description": "Description of the goods/services offered on the market.",
+						"example": "Verhuur zaalruimte voor commerciële danslessen"
+					},
+					"marktsegment": {
+						"type": "string",
+						"description": "Market segment in which the activity competes.",
+						"example": "privédansscholen Apeldoorn"
+					},
+					"concurrenten": {
+						"type": "array",
+						"items": {"type": "string"},
+						"description": "Named private competitors operating in the same market segment.",
+						"example": ["Dansacademie Sint-Hubert"]
+					},
+					"afnemers": {
+						"type": "array",
+						"items": {"type": "string"},
+						"nullable": true,
+						"description": "Known customers/buyers. Each afnemer is a Nextcloud contact entity reference, not a bespoke schema.",
+						"example": ["contact:dansvereniging-apeldoorn"]
+					},
+					"startDatum": {
+						"type": "string",
+						"format": "date",
+						"description": "Effective start date of the commercial activity.",
+						"example": "2024-01-15"
+					},
+					"eindDatum": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "Closure date, if the activity has ended.",
+						"example": null
+					},
+					"kostprijsMethode": {
+						"type": "string",
+						"enum": [
+							"integrale-kostprijs-art-25i",
+							"kostprijs-monitor-zonder-winstopslag"
+						],
+						"description": "Cost-price methodology. Integrale kostprijs (Art. 25i) is the default; the monitor-variant without winstopslag is only valid under an algemeen-belang-besluit exemption.",
+						"default": "integrale-kostprijs-art-25i",
+						"example": "integrale-kostprijs-art-25i"
+					},
+					"kostenplaatsCode": {
+						"type": "string",
+						"description": "FK to CostCenter.code (bookkeeping-cost-centers-dimensions); the direct-cost source for IKP calculation.",
+						"example": "K-SP-014"
+					},
+					"kostendragerCode": {
+						"type": "string",
+						"description": "FK to KostenDrager.code (bookkeeping-cost-centers-dimensions); the commerciële sub-administratie dimension.",
+						"example": "D-MO-SP-014"
+					},
+					"isExempted": {
+						"type": "boolean",
+						"description": "Whether the activity is exempted from the gedragsregels via an algemeen-belang-besluit.",
+						"default": false,
+						"example": false
+					},
+					"exemptionBesluitId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to AlgemeenBelangBesluit.id when isExempted is true (Phase 2).",
+						"example": null
+					},
+					"jaaromzet": {
+						"type": "number",
+						"nullable": true,
+						"description": "Last-known annual turnover in EUR (informational).",
+						"example": 92000
+					},
+					"acmMelding": {
+						"type": "object",
+						"description": "ACM notification status for the activity.",
+						"properties": {
+							"ingediend": {
+								"type": "boolean",
+								"description": "Whether the activity has been reported to the ACM.",
+								"default": false
+							},
+							"datum": {
+								"type": "string",
+								"format": "date",
+								"nullable": true,
+								"description": "ACM submission date."
+							},
+							"kenmerk": {
+								"type": "string",
+								"nullable": true,
+								"description": "ACM reference number (e.g. ACM/UIT/498321)."
+							}
+						},
+						"required": ["ingediend"]
+					},
+					"lastReviewedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true,
+						"description": "Timestamp of the last annual compliance review. Drives the stale-activity review-task generator (REQ-WMO-001c): a task is generated when this is more than 365 days old.",
+						"example": "2025-12-31T00:00:00Z"
+					}
+				}
+			},
+			"IntegralCostPrice": {
+				"slug": "IntegralCostPrice",
+				"icon": "CalculatorVariantOutline",
+				"version": "0.1.0",
+				"title": "Integral Cost Price",
+				"description": "A time-versioned, immutable record of the integrale kostprijs (IKP, Art. 25i) for one commercial activity in one period (REQ-WMO-002). Each period (month/quarter/year) produces a record with status voorlopig (monthly) or definitief (year-end 31-Mar lock). Components follow the six statutory IKP groups: directe loonkosten, directe materialen, directe afschrijvingen, indirecte overhead (via BBV taakveld 0.4 sleutel), vermogenskosten (WACC) and winstopslag. Prior records remain immutable for audit; a restatement is a new record, never a mutation.",
+				"x-schema-org": "schema:PriceSpecification",
+				"x-openregister-purpose": "fact",
+				"type": "object",
+				"required": [
+					"administrationId",
+					"commercialActivityId",
+					"periode",
+					"berekendOp",
+					"status",
+					"componenten",
+					"totaleKosten",
+					"compliant"
+				],
+				"properties": {
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning the activity for tenant isolation.",
+						"example": "adm-tilburg"
+					},
+					"commercialActivityId": {
+						"type": "string",
+						"description": "FK to CommercialActivity.id.",
+						"example": "ca-zaalverhuur-001"
+					},
+					"periode": {
+						"type": "string",
+						"description": "Period identifier (e.g. 2026-Q1 or 2026-03).",
+						"example": "2026-Q1"
+					},
+					"berekendOp": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Timestamp the calculation was run (or the accountant sign-off timestamp for a definitief lock).",
+						"example": "2026-04-05T03:00:00Z"
+					},
+					"status": {
+						"type": "string",
+						"enum": ["voorlopig", "definitief"],
+						"description": "voorlopig = provisional monthly calculation; definitief = year-end (31-Mar) accountant-signed lock.",
+						"default": "voorlopig",
+						"example": "voorlopig"
+					},
+					"componenten": {
+						"type": "object",
+						"description": "The six statutory IKP cost components in EUR.",
+						"properties": {
+							"directeLoonkosten": {"type": "number", "description": "Direct labour cost."},
+							"directeMaterialen": {"type": "number", "description": "Direct materials cost."},
+							"directeAfschrijvingen": {"type": "number", "description": "Direct depreciation."},
+							"indirecteOverhead": {
+								"type": "object",
+								"description": "Indirect overhead allocated via the BBV taakveld 0.4 sleutel.",
+								"additionalProperties": {"type": "number"}
+							},
+							"vermogenskosten": {"type": "number", "description": "Cost of capital via WACC rate."},
+							"winstopslag": {"type": "number", "description": "Profit mark-up (winstopslag)."}
+						},
+						"required": [
+							"directeLoonkosten",
+							"directeMaterialen",
+							"directeAfschrijvingen",
+							"indirecteOverhead",
+							"vermogenskosten",
+							"winstopslag"
+						]
+					},
+					"totaleKosten": {
+						"type": "number",
+						"description": "Sum of all components in EUR.",
+						"example": 87390
+					},
+					"verkochteEenheden": {
+						"type": "number",
+						"nullable": true,
+						"description": "Units sold/delivered in the period (for per-unit costing).",
+						"example": 312
+					},
+					"eenheidLabel": {
+						"type": "string",
+						"nullable": true,
+						"description": "Unit name.",
+						"example": "dagdeel-zaalhuur"
+					},
+					"kostprijsPerEenheid": {
+						"type": "number",
+						"nullable": true,
+						"description": "IKP per unit = totaleKosten / verkochteEenheden.",
+						"example": 280.10
+					},
+					"gehanteerdTarief": {
+						"type": "number",
+						"nullable": true,
+						"description": "Actual price charged to customers, used for the compliance check.",
+						"example": 295
+					},
+					"marge": {
+						"type": "number",
+						"nullable": true,
+						"description": "gehanteerdTarief minus (kostprijsPerEenheid or totaleKosten). Must be >= 0 to be compliant.",
+						"example": 14.90
+					},
+					"margePercentage": {
+						"type": "number",
+						"nullable": true,
+						"description": "marge / (kostprijsPerEenheid or totaleKosten) * 100.",
+						"example": 5.3
+					},
+					"compliant": {
+						"type": "boolean",
+						"description": "True when gehanteerdTarief >= kostprijsPerEenheid (or totaleKosten when no units tracked) — Art. 25i cost-coverage.",
+						"default": false,
+						"example": true
+					},
+					"toelichting": {
+						"type": "string",
+						"nullable": true,
+						"description": "Notes on cost-center scope, allocation method and assumptions.",
+						"example": "BBV-sleutel personele-fte 7.2% op corporate overhead."
+					}
+				}
+			},
+			"ActivityCostAllocation": {
+				"slug": "ActivityCostAllocation",
+				"icon": "CallSplit",
+				"version": "0.1.0",
+				"title": "Activity Cost Allocation",
+				"description": "A reversible, immutable split record describing how a journal-entry line touching a commercial activity is divided across publieke and commerciële sub-administraties per the geldende OverheadDistributionRule (AllocationRule) for the posting date (REQ-WMO-003). The journal entry itself is never mutated; the split is derived for reporting (or optionally materialised as balanced GL lines). A handmatige override requires verplichte motivering and 4-ogen-akkoord (two approver user-ids); the original is marked status=overridden and a new record carries automatischToegepast=false.",
+				"x-schema-org": "schema:MonetaryAmount",
+				"x-openregister-purpose": "fact",
+				"type": "object",
+				"required": [
+					"administrationId",
+					"journalEntryId",
+					"commercialActivityId",
+					"originalAmount",
+					"splits",
+					"verdeelsleutel",
+					"automatischToegepast",
+					"status"
+				],
+				"properties": {
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning the activity for tenant isolation.",
+						"example": "adm-vechtstromen"
+					},
+					"journalEntryId": {
+						"type": "string",
+						"description": "FK to the journal entry / GL line being split.",
+						"example": "je-eneco-2026-03"
+					},
+					"commercialActivityId": {
+						"type": "string",
+						"description": "FK to the CommercialActivity matched by kostenplaats/kostendrager code.",
+						"example": "ca-slibverwerking-001"
+					},
+					"originalAmount": {
+						"type": "number",
+						"description": "Total transaction amount in EUR being split.",
+						"example": 18400
+					},
+					"splits": {
+						"type": "array",
+						"description": "The resulting split lines; ratios sum to 1.0 and amounts sum to originalAmount.",
+						"items": {
+							"type": "object",
+							"properties": {
+								"kostendrager": {"type": "string", "description": "Target KostenDrager.code for the split line."},
+								"ratio": {"type": "number", "description": "Fraction of the original amount (0..1)."},
+								"amount": {"type": "number", "description": "Calculated split amount in EUR."},
+								"grootboek": {"type": "string", "nullable": true, "description": "Optional target GL account for the split line."},
+								"dimensie": {"type": "string", "description": "Sub-administratie dimension label (PUBL or MO)."}
+							},
+							"required": ["kostendrager", "ratio", "amount", "dimensie"]
+						}
+					},
+					"verdeelsleutel": {
+						"type": "string",
+						"description": "FK to the OverheadDistributionRule (AllocationRule.id) applied.",
+						"example": "ar-sbv-64-36"
+					},
+					"automatischToegepast": {
+						"type": "boolean",
+						"description": "True for an automatic split; false when manually overridden.",
+						"default": true,
+						"example": true
+					},
+					"status": {
+						"type": "string",
+						"enum": ["active", "overridden", "reversed"],
+						"description": "active = current; overridden = superseded by a manual split; reversed = source transaction reversed.",
+						"default": "active",
+						"example": "active"
+					},
+					"handmatigeOverride": {
+						"type": "object",
+						"nullable": true,
+						"description": "Present when automatischToegepast is false: the 4-ogen-akkoord and motivering.",
+						"properties": {
+							"approvedBy": {
+								"type": "array",
+								"items": {"type": "string"},
+								"description": "The two approver user-ids (4-ogen-akkoord)."
+							},
+							"reason": {"type": "string", "description": "Verplichte motivering for the override."},
+							"timestamp": {"type": "string", "format": "date-time", "description": "When the override was approved."}
+						},
+						"required": ["approvedBy", "reason", "timestamp"]
+					}
+				}
+			}
+		}
+	},
+	"objects": [
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CommercialActivity",
+				"slug": "wmo-ca-zaalverhuur-tilburg"
+			},
+			"administrationId": "adm-tilburg",
+			"code": "MO-SP-001",
+			"naam": "Zaalverhuur sportaccommodatie",
+			"bestuursorgaan": "Gemeente Tilburg",
+			"organisatieonderdeel": "Afdeling Sport & Accommodaties",
+			"beschrijving": "Commerciële verhuur van zaalruimte in de gemeentelijke sporthal aan zakelijke afnemers.",
+			"marktsegment": "zakelijke evenementenlocaties Midden-Brabant",
+			"concurrenten": ["LocHal Tilburg BV", "Faxx Theater"],
+			"afnemers": ["contact:evenementenbureau-brabant"],
+			"startDatum": "2023-01-01",
+			"kostprijsMethode": "integrale-kostprijs-art-25i",
+			"kostenplaatsCode": "K-SPORT-001",
+			"kostendragerCode": "D-MO-SPORT-001",
+			"isExempted": false,
+			"jaaromzet": 92000,
+			"acmMelding": {"ingediend": true, "datum": "2023-02-10", "kenmerk": "ACM/UIT/498321"},
+			"lastReviewedAt": "2025-12-31T00:00:00Z",
+			"_meta": {"source": "shillinq-documentation", "variant": "test-gemeente", "lifecycleState": "archived", "imported": "2026-06-01T00:00:00Z"}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CommercialActivity",
+				"slug": "wmo-ca-parkeren-tilburg"
+			},
+			"administrationId": "adm-tilburg",
+			"code": "MO-PK-002",
+			"naam": "Parkeerexploitatie centrumgarage",
+			"bestuursorgaan": "Gemeente Tilburg",
+			"organisatieonderdeel": "Afdeling Mobiliteit",
+			"beschrijving": "Commerciële exploitatie van parkeerplaatsen in de centrumgarage voor langparkeerders.",
+			"marktsegment": "betaald parkeren binnenstad Tilburg",
+			"concurrenten": ["Q-Park Nederland BV", "Interparking"],
+			"afnemers": [],
+			"startDatum": "2022-06-01",
+			"kostprijsMethode": "integrale-kostprijs-art-25i",
+			"kostenplaatsCode": "K-PARK-001",
+			"kostendragerCode": "D-MO-PARK-001",
+			"isExempted": false,
+			"jaaromzet": 410000,
+			"acmMelding": {"ingediend": true, "datum": "2022-07-15", "kenmerk": "ACM/UIT/501882"},
+			"lastReviewedAt": "2024-12-31T00:00:00Z",
+			"_meta": {"source": "shillinq-documentation", "variant": "test-gemeente", "lifecycleState": "archived", "imported": "2026-06-01T00:00:00Z"}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CommercialActivity",
+				"slug": "wmo-ca-slibverwerking-vechtstromen"
+			},
+			"administrationId": "adm-vechtstromen",
+			"code": "MO-SBV-001",
+			"naam": "Slibverwerking commercieel",
+			"bestuursorgaan": "Waterschap Vechtstromen",
+			"organisatieonderdeel": "Unit Afvalwaterzuivering",
+			"beschrijving": "Commerciële verwerking van extern slib op de afvalwaterzuiveringsinstallatie voor derden.",
+			"marktsegment": "industriële slibverwerking Oost-Nederland",
+			"concurrenten": ["SNB Slibverwerking Noord-Brabant", "HVC Groep"],
+			"afnemers": ["contact:industrie-twente-bv"],
+			"startDatum": "2021-04-01",
+			"kostprijsMethode": "integrale-kostprijs-art-25i",
+			"kostenplaatsCode": "K-SBV-001",
+			"kostendragerCode": "D-MO-SVS-04",
+			"isExempted": false,
+			"jaaromzet": 265000,
+			"acmMelding": {"ingediend": true, "datum": "2021-05-20", "kenmerk": "ACM/UIT/477120"},
+			"lastReviewedAt": "2025-06-30T00:00:00Z",
+			"_meta": {"source": "shillinq-documentation", "variant": "test-waterschap", "lifecycleState": "archived", "imported": "2026-06-01T00:00:00Z"}
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "IntegralCostPrice",
+				"slug": "wmo-ikp-zaalverhuur-2026-q1"
+			},
+			"administrationId": "adm-tilburg",
+			"commercialActivityId": "wmo-ca-zaalverhuur-tilburg",
+			"periode": "2026-Q1",
+			"berekendOp": "2026-04-05T03:00:00Z",
+			"status": "voorlopig",
+			"componenten": {
+				"directeLoonkosten": 41250,
+				"directeMaterialen": 8730,
+				"directeAfschrijvingen": 6900,
+				"indirecteOverhead": {"huisvesting": 12000, "ict": 6140, "directieEnStaf": 5000, "facilitair": 3000},
+				"vermogenskosten": 1820,
+				"winstopslag": 2550
+			},
+			"totaleKosten": 87390,
+			"verkochteEenheden": 312,
+			"eenheidLabel": "dagdeel-zaalhuur",
+			"kostprijsPerEenheid": 280.10,
+			"gehanteerdTarief": 295,
+			"marge": 14.90,
+			"margePercentage": 5.3,
+			"compliant": true,
+			"toelichting": "BBV-sleutel personele-fte 7.2% op corporate overhead €365.8k; vermogenskosten WACC 4.5% op €40.4k equipment; winstopslag 3%.",
+			"_meta": {"source": "shillinq-documentation", "variant": "test-gemeente", "lifecycleState": "archived", "imported": "2026-06-01T00:00:00Z"}
+		}
+	]
+}

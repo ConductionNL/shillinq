@@ -203,7 +203,25 @@
         "Booking cancelled": "Boeking geannuleerd",
         "Invoice could not be created. It will be retried automatically.": "Factuur kon niet worden aangemaakt. Het wordt automatisch opnieuw geprobeerd.",
         "Deposit not authorised; cannot invoice this booking.": "Borgsom niet geautoriseerd; deze boeking kan niet gefactureerd worden.",
-        "This booking has already been invoiced.": "Deze boeking is al gefactureerd."
+        "This booking has already been invoiced.": "Deze boeking is al gefactureerd.",
+        "WMO Compliance": "Wet Markt en Overheid",
+        "Commercial Activities": "Commerciële activiteiten",
+        "Commercial Activity": "Commerciële activiteit",
+        "Integral Cost Prices": "Integrale kostprijzen",
+        "Integral Cost Price": "Integrale kostprijs",
+        "Activity Cost Allocations": "Kostenverdelingen activiteit",
+        "Activity Cost Allocation": "Kostenverdeling activiteit",
+        "Market Segment": "Marktsegment",
+        "Competitors": "Concurrenten",
+        "Customers": "Afnemers",
+        "Cost Method": "Kostprijsmethode",
+        "Cost Coverage Ratio": "Kostendekkingsratio",
+        "Charged Tariff": "Gehanteerd tarief",
+        "Compliant": "Conform",
+        "Bestuursorgaan": "Bestuursorgaan",
+        "Annual review due: {code} {name}": "Jaarlijkse evaluatie vereist: {code} {name}",
+        "Allocation Rule": "Verdeelsleutel",
+        "Original Amount": "Oorspronkelijk bedrag"
     },
     "plurals": ""
 }

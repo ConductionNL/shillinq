@@ -203,7 +203,25 @@
         "Booking cancelled": "Booking cancelled",
         "Invoice could not be created. It will be retried automatically.": "Invoice could not be created. It will be retried automatically.",
         "Deposit not authorised; cannot invoice this booking.": "Deposit not authorised; cannot invoice this booking.",
-        "This booking has already been invoiced.": "This booking has already been invoiced."
+        "This booking has already been invoiced.": "This booking has already been invoiced.",
+        "WMO Compliance": "WMO Compliance",
+        "Commercial Activities": "Commercial Activities",
+        "Commercial Activity": "Commercial Activity",
+        "Integral Cost Prices": "Integral Cost Prices",
+        "Integral Cost Price": "Integral Cost Price",
+        "Activity Cost Allocations": "Activity Cost Allocations",
+        "Activity Cost Allocation": "Activity Cost Allocation",
+        "Market Segment": "Market Segment",
+        "Competitors": "Competitors",
+        "Customers": "Customers",
+        "Cost Method": "Cost Method",
+        "Cost Coverage Ratio": "Cost Coverage Ratio",
+        "Charged Tariff": "Charged Tariff",
+        "Compliant": "Compliant",
+        "Bestuursorgaan": "Public body",
+        "Annual review due: {code} {name}": "Annual review due: {code} {name}",
+        "Allocation Rule": "Allocation Rule",
+        "Original Amount": "Original Amount"
     },
     "plurals": ""
 }
