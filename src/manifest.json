@@ -834,6 +834,18 @@
 			]
 		},
 		{
+			"id": "Retainers",
+			"label": "Retainers",
+			"icon": "WalletOutline",
+			"order": 23,
+			"children": [
+				{ "id": "RetainerPools", "label": "Retainer Pools", "icon": "WalletOutline", "route": "RetainerPools", "order": 10 },
+				{ "id": "RetainerDrawdowns", "label": "Drawdowns", "icon": "ArrowDownBoldCircleOutline", "route": "RetainerDrawdowns", "order": 20 },
+				{ "id": "RetainerRollovers", "label": "Rollovers", "icon": "CalendarSync", "route": "RetainerRollovers", "order": 30 },
+				{ "id": "RetainerTrueUps", "label": "True-Ups", "icon": "ScaleBalance", "route": "RetainerTrueUps", "order": 40 }
+			]
+		},
+		{
 			"id": "Consolidatie",
 			"label": "Consolidatie",
 			"icon": "Sitemap",
@@ -16601,6 +16613,175 @@
 						}
 					]
 				}
+			}
+		},
+		{
+			"id": "RetainerPools",
+			"route": "/retainers/pools",
+			"type": "index",
+			"title": "Retainer Pools",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetainerPool",
+				"columns": [
+					{ "key": "poolId", "label": "Pool", "sortable": true },
+					{ "key": "clientId", "label": "Client", "sortable": true },
+					{ "key": "periodStart", "label": "Period Start", "sortable": true },
+					{ "key": "periodEnd", "label": "Period End", "sortable": true },
+					{ "key": "poolAmount", "label": "Pool Amount", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "periodStart",
+				"detailRoute": "RetainerPoolDetail"
+			}
+		},
+		{
+			"id": "RetainerPoolDetail",
+			"route": "/retainers/pools/:id",
+			"type": "detail",
+			"title": "Retainer Pool",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetainerPool",
+				"fields": [
+					{ "key": "poolId", "label": "Pool", "type": "string" },
+					{ "key": "clientId", "label": "Client", "type": "string" },
+					{ "key": "projectId", "label": "Project", "type": "string" },
+					{ "key": "periodStart", "label": "Period Start", "type": "string" },
+					{ "key": "periodEnd", "label": "Period End", "type": "string" },
+					{ "key": "poolAmount", "label": "Pool Amount", "type": "number" },
+					{ "key": "currency", "label": "Currency", "type": "string" },
+					{ "key": "retainerRate", "label": "Retainer Rate", "type": "number" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				],
+				"indexRoute": "RetainerPools"
+			}
+		},
+		{
+			"id": "RetainerDrawdowns",
+			"route": "/retainers/drawdowns",
+			"type": "index",
+			"title": "Drawdowns",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetainerDrawdown",
+				"columns": [
+					{ "key": "drawdownId", "label": "Drawdown", "sortable": true },
+					{ "key": "poolId", "label": "Pool", "sortable": true },
+					{ "key": "drawdownDate", "label": "Date", "sortable": true },
+					{ "key": "hoursOrAmount", "label": "Hours/Amount", "sortable": true },
+					{ "key": "drawdownAmount", "label": "Drawdown Amount", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "drawdownDate",
+				"detailRoute": "RetainerDrawdownDetail"
+			}
+		},
+		{
+			"id": "RetainerDrawdownDetail",
+			"route": "/retainers/drawdowns/:id",
+			"type": "detail",
+			"title": "Drawdown",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetainerDrawdown",
+				"fields": [
+					{ "key": "drawdownId", "label": "Drawdown", "type": "string" },
+					{ "key": "poolId", "label": "Pool", "type": "string" },
+					{ "key": "timeEntryId", "label": "Time Entry", "type": "string" },
+					{ "key": "drawdownDate", "label": "Date", "type": "string" },
+					{ "key": "hoursOrAmount", "label": "Hours/Amount", "type": "number" },
+					{ "key": "drawdownRate", "label": "Drawdown Rate", "type": "number" },
+					{ "key": "drawdownAmount", "label": "Drawdown Amount", "type": "number" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				],
+				"indexRoute": "RetainerDrawdowns"
+			}
+		},
+		{
+			"id": "RetainerRollovers",
+			"route": "/retainers/rollovers",
+			"type": "index",
+			"title": "Rollovers",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetainerRollover",
+				"columns": [
+					{ "key": "rolloverId", "label": "Rollover", "sortable": true },
+					{ "key": "sourcePeriodPoolId", "label": "Source Pool", "sortable": true },
+					{ "key": "targetPeriodPoolId", "label": "Target Pool", "sortable": true },
+					{ "key": "carryoverAmount", "label": "Carryover Amount", "sortable": true },
+					{ "key": "carryoverCapApplied", "label": "Cap Applied", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "rolloverId",
+				"detailRoute": "RetainerRolloverDetail"
+			}
+		},
+		{
+			"id": "RetainerRolloverDetail",
+			"route": "/retainers/rollovers/:id",
+			"type": "detail",
+			"title": "Rollover",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetainerRollover",
+				"fields": [
+					{ "key": "rolloverId", "label": "Rollover", "type": "string" },
+					{ "key": "sourcePeriodPoolId", "label": "Source Pool", "type": "string" },
+					{ "key": "targetPeriodPoolId", "label": "Target Pool", "type": "string" },
+					{ "key": "carryoverAmount", "label": "Carryover Amount", "type": "number" },
+					{ "key": "carryoverHours", "label": "Carryover Hours", "type": "number" },
+					{ "key": "carryoverCapApplied", "label": "Cap Applied", "type": "boolean" },
+					{ "key": "resetBalance", "label": "Reset Balance", "type": "boolean" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				],
+				"indexRoute": "RetainerRollovers"
+			}
+		},
+		{
+			"id": "RetainerTrueUps",
+			"route": "/retainers/true-ups",
+			"type": "index",
+			"title": "True-Ups",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetainerTrueUp",
+				"columns": [
+					{ "key": "trueUpId", "label": "True-Up", "sortable": true },
+					{ "key": "poolId", "label": "Pool", "sortable": true },
+					{ "key": "actualDrawdown", "label": "Actual Drawdown", "sortable": true },
+					{ "key": "poolAmount", "label": "Pool Amount", "sortable": true },
+					{ "key": "overageAmount", "label": "Overage Amount", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "generatedAt",
+				"detailRoute": "RetainerTrueUpDetail"
+			}
+		},
+		{
+			"id": "RetainerTrueUpDetail",
+			"route": "/retainers/true-ups/:id",
+			"type": "detail",
+			"title": "True-Up",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetainerTrueUp",
+				"fields": [
+					{ "key": "trueUpId", "label": "True-Up", "type": "string" },
+					{ "key": "poolId", "label": "Pool", "type": "string" },
+					{ "key": "periodEndDate", "label": "Period End", "type": "string" },
+					{ "key": "actualDrawdown", "label": "Actual Drawdown", "type": "number" },
+					{ "key": "poolAmount", "label": "Pool Amount", "type": "number" },
+					{ "key": "overageAmount", "label": "Overage Amount", "type": "number" },
+					{ "key": "overageRate", "label": "Overage Rate", "type": "number" },
+					{ "key": "overageInvoiceAmount", "label": "Adjustment Invoice", "type": "number" },
+					{ "key": "approvedBy", "label": "Approved By", "type": "string" },
+					{ "key": "approvalDate", "label": "Approval Date", "type": "string" },
+					{ "key": "invoiceId", "label": "Invoice", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				],
+				"indexRoute": "RetainerTrueUps"
 			}
 		}
 	]

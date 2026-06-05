@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 244
+**Entities:** 248
 
 ## Context
 
@@ -6700,3 +6700,15 @@ _BBV programmabegroting (municipal/provincial/waterschap budget code) data model
 | aiFlags | array | No | Close-assistant warnings {id, severity, message, category, detectedAt} |
 
 **Relations:** → GLTransaction (1:N via periodId), → Administration (N:1), → FiscalYear (N:1 via fiscalYear).
+
+### RetainerPool / RetainerDrawdown / RetainerRollover / RetainerTrueUp
+**Schema.org:** `schema:Invoice` (RetainerPool, RetainerTrueUp)
+_Retainer billing engine introduced by the `retainer-billing-engine` change (T2). `RetainerPool` is a monthly retainer allocation per (clientId, projectId) with an effective-period window, a configured `retainerRate`, and a pool-level `rolloverPolicy` (carryover cap in amount or hours, or reset). `RetainerDrawdown` is the immutable record of a single TimeEntry's consumption of a pool — `drawdownAmount = hoursOrAmount × the pool's retainerRate` (NOT the timesheet rate), so pool consumption is decoupled from invoice billing. `RetainerRollover` records the unused-balance carryover at period-end after applying the source pool's policy. `RetainerTrueUp` is the period-end reconciliation (actual vs. allocated): it computes overage and converts it to a billing amount at the standard rate resolved from `rate-card-engine` (RateCard/RateRecord), with a role-gated approval (`retainer:approve-true-up`, ADR-023) and optional adjustment-invoice generation. All four are schema-declared register-fragment metadata (ADR-037 fragment `register.d/retainer-billing-engine.json`); `RetainerPool.actualDrawdown` rolls up declaratively via `x-openregister-aggregations` over RetainerDrawdown (ADR-022) — no `RetainerService.php`. The only PHP exception-path code is `lib/Lifecycle/RetainerGuard.php` (ADR-031): non-overlapping-period enforcement on pool activation, drawdown rate-immutability on materialization, and approver-present on true-up approval. clientId / projectId / timeEntryId / invoiceId / administrationId are entity references (a client/time-entry/administration is an NC/cross-app entity, never an invented schema)._
+**Primary spec:** retainer-billing-management
+
+| Entity | Schema.org | Key fields | Primary relations |
+|--------|-----------|-----------|-------------------|
+| RetainerPool | schema:Invoice | poolId, clientId, projectId, periodStart/End, poolAmount, retainerRate, rolloverPolicy, status | → RetainerDrawdown (1:N), → RetainerTrueUp (1:1), → Organization/administration (N:1), self-FK sourcePoolId (rollover chain) |
+| RetainerDrawdown | schema:Action | drawdownId, poolId, timeEntryId, drawdownDate, hoursOrAmount, drawdownRate, drawdownAmount, status | → RetainerPool (N:1), → TimeEntry (N:1, cross-app), self-FK reversalOf |
+| RetainerRollover | schema:Action | rolloverId, sourcePeriodPoolId, targetPeriodPoolId, carryoverAmount, carryoverHours, carryoverCapApplied, resetBalance, status | → RetainerPool source/target (N:1) |
+| RetainerTrueUp | schema:Invoice | trueUpId, poolId, actualDrawdown, poolAmount, overageAmount, overageRate, overageInvoiceAmount, approvedBy, invoiceId, status | → RetainerPool (1:1), → Invoice (1:1, cross-app), → Person approver (N:1), depends on rate-card-engine for overage rate, self-FK reversalOf |
