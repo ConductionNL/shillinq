@@ -819,6 +819,53 @@
 					"order": 30
 				}
 			]
+		},
+		{
+			"id": "Vennootschapsbelasting",
+			"label": "Vennootschapsbelasting",
+			"icon": "icon-category-monitoring",
+			"order": 26,
+			"visibility": {
+				"field": "administrationType",
+				"in": ["mkb"]
+			},
+			"children": [
+				{
+					"id": "Belastingplichtigen",
+					"label": "Belastingplichtigen",
+					"icon": "OfficeBuildingOutline",
+					"route": "Belastingplichtigen",
+					"order": 10
+				},
+				{
+					"id": "VpbAangiftes",
+					"label": "Vpb-aangiftes",
+					"icon": "FileDocumentOutline",
+					"route": "VpbAangiftes",
+					"order": 20
+				},
+				{
+					"id": "FiscaleCorrecties",
+					"label": "Fiscale correcties",
+					"icon": "SwapHorizontalBold",
+					"route": "FiscaleCorrecties",
+					"order": 30
+				},
+				{
+					"id": "Faciliteitenberekening",
+					"label": "Faciliteitenberekening",
+					"icon": "LightbulbOnOutline",
+					"route": "Faciliteitenberekening",
+					"order": 40
+				},
+				{
+					"id": "BezwaarBeroep",
+					"label": "Bezwaar / Beroep",
+					"icon": "GavelOutline",
+					"route": "BezwaarBeroep",
+					"order": 50
+				}
+			]
 		}
 	],
 	"pages": [
@@ -11248,6 +11295,212 @@
 					}
 				],
 				"indexRoute": "MatchingRules"
+			}
+		},
+		{
+			"id": "Belastingplichtigen",
+			"route": "/vpb/belastingplichtigen",
+			"type": "index",
+			"title": "Belastingplichtigen",
+			"config": {
+				"register": "shillinq",
+				"schema": "Belastingplichtige",
+				"columns": [
+					{ "key": "naam", "label": "Naam", "sortable": true },
+					{ "key": "rsin", "label": "RSIN", "sortable": true },
+					{ "key": "kvkNummer", "label": "KvK-nummer", "sortable": true },
+					{ "key": "rechtsvorm", "label": "Rechtsvorm", "sortable": true },
+					{ "key": "eHerkenningsNiveau", "label": "eHerkenning", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "naam",
+				"detailRoute": "BelastingplichtigeDetail"
+			}
+		},
+		{
+			"id": "BelastingplichtigeDetail",
+			"route": "/vpb/belastingplichtigen/:id",
+			"type": "detail",
+			"title": "Belastingplichtige",
+			"config": {
+				"register": "shillinq",
+				"schema": "Belastingplichtige",
+				"fields": [
+					{ "key": "naam", "label": "Naam", "type": "string" },
+					{ "key": "rsin", "label": "RSIN", "type": "string" },
+					{ "key": "kvkNummer", "label": "KvK-nummer", "type": "string" },
+					{ "key": "rechtsvorm", "label": "Rechtsvorm", "type": "string" },
+					{ "key": "boekjaarStart", "label": "Boekjaar van", "type": "string" },
+					{ "key": "boekjaarEind", "label": "Boekjaar tot", "type": "string" },
+					{ "key": "eHerkenningsNiveau", "label": "eHerkenning-niveau", "type": "string" },
+					{ "key": "digipoortCertificaat", "label": "Digipoort-certificaat", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				]
+			}
+		},
+		{
+			"id": "VpbAangiftes",
+			"route": "/vpb/aangiftes",
+			"type": "index",
+			"title": "Vpb-aangiftes",
+			"config": {
+				"register": "shillinq",
+				"schema": "VpbAangifte",
+				"columns": [
+					{ "key": "belastingjaar", "label": "Belastingjaar", "sortable": true },
+					{ "key": "belastingplichtige", "label": "Belastingplichtige", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "fiscaleWinstBelastbaar", "label": "Belastbare winst", "sortable": true },
+					{ "key": "verschuldigdeVpb", "label": "Verschuldigde Vpb", "sortable": true },
+					{ "key": "teBetalen", "label": "Te betalen", "sortable": true }
+				],
+				"defaultSort": "belastingjaar",
+				"detailRoute": "VpbAangifteDetail"
+			}
+		},
+		{
+			"id": "VpbAangifteDetail",
+			"route": "/vpb/aangiftes/:id",
+			"type": "detail",
+			"title": "Vpb-aangifte",
+			"config": {
+				"register": "shillinq",
+				"schema": "VpbAangifte",
+				"fields": [
+					{ "key": "belastingjaar", "label": "Belastingjaar", "type": "number" },
+					{ "key": "belastingplichtige", "label": "Belastingplichtige", "type": "string" },
+					{ "key": "boekjaarVan", "label": "Boekjaar van", "type": "string" },
+					{ "key": "boekjaarTot", "label": "Boekjaar tot", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "commercieleWinstBedrag", "label": "Commerciële winst", "type": "number" },
+					{ "key": "fiscaleWinstVoorVerliezen", "label": "Fiscale winst voor verliezen", "type": "number" },
+					{ "key": "voorvoegingsverliesToegepast", "label": "Voorvoegingsverlies toegepast", "type": "number" },
+					{ "key": "fiscaleWinstBelastbaar", "label": "Belastbare fiscale winst", "type": "number" },
+					{ "key": "verschuldigdeVpb", "label": "Verschuldigde Vpb", "type": "number" },
+					{ "key": "voorheffingen", "label": "Voorheffingen", "type": "number" },
+					{ "key": "teBetalen", "label": "Te betalen", "type": "number" },
+					{ "key": "ingediendOp", "label": "Ingediend op", "type": "string" },
+					{ "key": "digipoortReceiptId", "label": "Digipoort-receipt", "type": "string" }
+				]
+			}
+		},
+		{
+			"id": "FiscaleCorrecties",
+			"route": "/vpb/correcties",
+			"type": "index",
+			"title": "Fiscale correcties",
+			"config": {
+				"register": "shillinq",
+				"schema": "FiscaleCorrectie",
+				"columns": [
+					{ "key": "code", "label": "Code", "sortable": true },
+					{ "key": "omschrijving", "label": "Omschrijving", "sortable": true },
+					{ "key": "commercieelBedrag", "label": "Commercieel", "sortable": true },
+					{ "key": "fiscaalBedrag", "label": "Fiscaal", "sortable": true },
+					{ "key": "correctieBedrag", "label": "Correctie", "sortable": true }
+				],
+				"defaultSort": "code",
+				"detailRoute": "FiscaleCorrectieDetail"
+			}
+		},
+		{
+			"id": "FiscaleCorrectieDetail",
+			"route": "/vpb/correcties/:id",
+			"type": "detail",
+			"title": "Fiscale correctie",
+			"config": {
+				"register": "shillinq",
+				"schema": "FiscaleCorrectie",
+				"fields": [
+					{ "key": "aangifte", "label": "Aangifte", "type": "string" },
+					{ "key": "code", "label": "Code", "type": "string" },
+					{ "key": "omschrijving", "label": "Omschrijving", "type": "string" },
+					{ "key": "commercieelBedrag", "label": "Commercieel bedrag", "type": "number" },
+					{ "key": "fiscaalBedrag", "label": "Fiscaal bedrag", "type": "number" },
+					{ "key": "correctieBedrag", "label": "Correctiebedrag", "type": "number" },
+					{ "key": "toelichting", "label": "Toelichting", "type": "string" }
+				]
+			}
+		},
+		{
+			"id": "Faciliteitenberekening",
+			"route": "/vpb/faciliteiten",
+			"type": "index",
+			"title": "Faciliteitenberekening",
+			"config": {
+				"register": "shillinq",
+				"schema": "Innovatiebox",
+				"columns": [
+					{ "key": "aangifte", "label": "Aangifte", "sortable": true },
+					{ "key": "methodType", "label": "Methode", "sortable": true },
+					{ "key": "innovatieboxWinst", "label": "Innovatieboxwinst", "sortable": true },
+					{ "key": "effectiefTarief", "label": "Effectief tarief", "sortable": true },
+					{ "key": "soVerklaringReferentie", "label": "S&O-verklaring", "sortable": true }
+				],
+				"defaultSort": "aangifte",
+				"detailRoute": "InnovatieboxDetail"
+			}
+		},
+		{
+			"id": "InnovatieboxDetail",
+			"route": "/vpb/faciliteiten/:id",
+			"type": "detail",
+			"title": "Innovatiebox-claim",
+			"config": {
+				"register": "shillinq",
+				"schema": "Innovatiebox",
+				"fields": [
+					{ "key": "aangifte", "label": "Aangifte", "type": "string" },
+					{ "key": "methodType", "label": "Methode", "type": "string" },
+					{ "key": "nexusFactor", "label": "Nexus-factor", "type": "number" },
+					{ "key": "innovatieboxWinst", "label": "Innovatieboxwinst", "type": "number" },
+					{ "key": "effectiefTarief", "label": "Effectief tarief", "type": "number" },
+					{ "key": "soVerklaringReferentie", "label": "S&O-verklaring-referentie", "type": "string" },
+					{ "key": "forfaitaireGeldigheidTot", "label": "Forfaitair geldig tot", "type": "string" },
+					{ "key": "innovatieboxBedrag", "label": "Innovatiebox-voordeel", "type": "number" }
+				]
+			}
+		},
+		{
+			"id": "BezwaarBeroep",
+			"route": "/vpb/bezwaar-beroep",
+			"type": "index",
+			"title": "Bezwaar / Beroep",
+			"config": {
+				"register": "shillinq",
+				"schema": "BezwaarBeroep",
+				"columns": [
+					{ "key": "type", "label": "Type", "sortable": true },
+					{ "key": "aanslag", "label": "Aanslag", "sortable": true },
+					{ "key": "ingediendOp", "label": "Ingediend op", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "termijnEinde", "label": "Termijn einde", "sortable": true },
+					{ "key": "termijnVerstreken", "label": "Verstreken", "sortable": true }
+				],
+				"defaultSort": "ingediendOp",
+				"detailRoute": "BezwaarBeroepDetail"
+			}
+		},
+		{
+			"id": "BezwaarBeroepDetail",
+			"route": "/vpb/bezwaar-beroep/:id",
+			"type": "detail",
+			"title": "Bezwaar / Beroep",
+			"config": {
+				"register": "shillinq",
+				"schema": "BezwaarBeroep",
+				"fields": [
+					{ "key": "aanslag", "label": "Aanslag", "type": "string" },
+					{ "key": "type", "label": "Type", "type": "string" },
+					{ "key": "ingediendOp", "label": "Ingediend op", "type": "string" },
+					{ "key": "motivering", "label": "Motivering", "type": "string" },
+					{ "key": "uitspraak", "label": "Uitspraak", "type": "string" },
+					{ "key": "uitspraakDatum", "label": "Uitspraakdatum", "type": "string" },
+					{ "key": "vervolgInstantie", "label": "Vervolginstantie", "type": "string" },
+					{ "key": "termijnEinde", "label": "Termijn einde", "type": "string" },
+					{ "key": "termijnVerstreken", "label": "Termijn verstreken", "type": "boolean" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				]
 			}
 		}
 	]
