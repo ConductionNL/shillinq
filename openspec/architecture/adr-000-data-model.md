@@ -6949,3 +6949,17 @@ _Post-month-end forecast accuracy report comparing actual vs forecast by categor
 | betalingsgedragUpdates | array | No | Customers with re-calculated offsets |
 | pipelineConversionUpdates | array | No | Deals with re-calibrated probability |
 | administrationId | string | Yes | FK to the administration (tenant scope) |
+### Barcode
+**Schema.org:** `schema:Product`
+_A scannable code (EAN, GTIN, UPC, SSCC, or internal) bound to a product (InventoryItem) at a specific unit-of-measure. A single product carries 1..N barcodes — one per UoM or channel (EAN-13 per unit, GTIN-14 per carton, SSCC per pallet). Declared as a separate register (not an inline array on InventoryItem) so barcodes are queryable, individually auditable, and have an independent lifecycle. Unique per (productSku, barcodeType, uomCode). Consumed by the shillinq barcode lookup endpoint (`GET /api/barcode/lookup/{code}`) and the pipelinq pos-barcode-scan module. Demo-seeded with 5 Dutch retail examples (pet food unit/carton/pallet + supplement internal/UPC)._
+**Primary spec:** inventory-barcode-sku
+| barcode | string | Yes | The barcode value as printed/scanned (e.g. 5410317126589) |
+| barcodeType | enum | Yes | One of: EAN, GTIN, UPC, SSCC, INTERNAL |
+| format | string | Yes | Specific format (e.g. EAN-13, GTIN-14, UPC-A, SSCC-18, INTERNAL) |
+| productSku | string | Yes | FK to InventoryItem.sku (many-to-one, x-openregister-relations) |
+| uomCode | string | Yes | UN/CEFACT unit-of-measure code (EA, CA, PL, …) |
+| quantity | number | Yes | Base units this barcode represents (>= 1; 1=unit, 4=carton, 100=pallet) |
+| isDefault | boolean | No | True if the primary/default barcode scanned at POS (default false) |
+| isActive | boolean | No | True if in use; inactive barcodes are excluded from the lookup endpoint (default true) |
+| notes | string | No | Operator-authored free text |
+> **InventoryItem patch (inventory-barcode-sku, REQ-SKU-006):** the `InventoryItem` register (primary spec: inventory-product-catalog) gains three additive, optional fields — `skuTemplate` (reference to a SKU generation template in `lib/Settings/sku-templates.json`), `defaultBarcode` (the default barcode value scanned at POS), and `barcodeFormat` (preferred format for new barcodes). All three are non-breaking; existing items without them remain valid. SKU generation itself is declarative (`sku-templates.json`) with a single ADR-031 exception-path service `OCA\Shillinq\Service\SkuGenerator`.

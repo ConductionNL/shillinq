@@ -1,0 +1,162 @@
+{
+	"info": {
+		"version": "0.1.0-inventory-barcode-sku"
+	},
+	"components": {
+		"schemas": {
+			"Barcode": {
+				"slug": "Barcode",
+				"icon": "BarcodeOutline",
+				"version": "0.1.0",
+				"title": "Barcode",
+				"description": "A scannable code (EAN, GTIN, UPC, SSCC, or internal) bound to a product (InventoryItem) at a specific unit-of-measure. A single product carries 1..N barcodes — one per UoM or channel (e.g. EAN-13 per unit, GTIN-14 per carton, SSCC per pallet). Declared as a separate register (not an inline array on InventoryItem) so barcodes are queryable, individually auditable, and have an independent lifecycle (deactivate without delete). Consumed by the shillinq barcode lookup endpoint and the pipelinq pos-barcode-scan module. Part of inventory-barcode-sku (depends on inventory-product-catalog for InventoryItem).",
+				"x-schema-org": "schema:Product",
+				"x-openregister-purpose": "dimension",
+				"type": "object",
+				"x-openregister-unique": [
+					[
+						"productSku",
+						"barcodeType",
+						"uomCode"
+					]
+				],
+				"required": [
+					"barcode",
+					"barcodeType",
+					"format",
+					"productSku",
+					"uomCode",
+					"quantity"
+				],
+				"properties": {
+					"barcode": {
+						"type": "string",
+						"description": "The barcode value as printed/scanned (e.g. 5410317126589 for an EAN-13).",
+						"example": "5410317126589"
+					},
+					"barcodeType": {
+						"type": "string",
+						"description": "The barcode standard family. EAN/GTIN/UPC/SSCC are GS1 standards; INTERNAL is a non-standard custom code (e.g. a legacy ERP code).",
+						"enum": [
+							"EAN",
+							"GTIN",
+							"UPC",
+							"SSCC",
+							"INTERNAL"
+						],
+						"example": "EAN"
+					},
+					"format": {
+						"type": "string",
+						"description": "The specific barcode format for disambiguation within a type (e.g. EAN-13, EAN-8, GTIN-14, UPC-A, SSCC-18, INTERNAL).",
+						"example": "EAN-13"
+					},
+					"productSku": {
+						"type": "string",
+						"description": "FK to InventoryItem.sku — the product this barcode identifies (inventory-product-catalog). Required.",
+						"example": "DV-KAT-SENIOR-2KG"
+					},
+					"uomCode": {
+						"type": "string",
+						"description": "UN/CEFACT unit-of-measure code this barcode represents: EA (each), CA (carton/case), PL (pallet), etc.",
+						"example": "EA"
+					},
+					"quantity": {
+						"type": "number",
+						"minimum": 1,
+						"description": "How many base units this barcode represents (1 for a single unit, 4 for a carton of four, 100 for a pallet). Must be >= 1.",
+						"example": 1
+					},
+					"isDefault": {
+						"type": "boolean",
+						"default": false,
+						"description": "True when this is the primary/default barcode scanned at retail POS for the product.",
+						"example": true
+					},
+					"isActive": {
+						"type": "boolean",
+						"default": true,
+						"description": "True when the barcode is in use. Inactive barcodes (deprecated supplier/legacy codes) are retained for audit but excluded from the lookup endpoint per REQ-SKU-008.",
+						"example": true
+					},
+					"notes": {
+						"type": "string",
+						"nullable": true,
+						"description": "Operator-authored free text (e.g. 'Carton of 4 bags').",
+						"example": "Unit barcode for individual 2kg bag"
+					}
+				},
+				"x-openregister-relations": {
+					"product": {
+						"localField": "productSku",
+						"relatedSchema": "InventoryItem",
+						"relatedField": "sku",
+						"cardinality": "many-to-one",
+						"description": "The InventoryItem product this barcode identifies (inventory-product-catalog). Resolvable via ?expand=productSku per REQ-SKU-004."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"warehouse_manager": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						},
+						"pos_terminal": {
+							"permissions": [
+								"read"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"InventoryItem": {
+				"slug": "InventoryItem",
+				"icon": "PackageVariantClosed",
+				"version": "0.1.1",
+				"title": "Inventory Item",
+				"description": "A stock-managed product in the inventory catalog (inventory-product-catalog). Declared here as a forward reference so the inventory-barcode-sku change can additively patch the three barcode/SKU fields (skuTemplate, defaultBarcode, barcodeFormat) before the full inventory-product-catalog register fragment lands. The owning change supplies the complete field set; these additive fields union cleanly per ADR-037 deepMergeConfig (schemas merge by key, properties union by key).",
+				"x-schema-org": "schema:Product",
+				"x-openregister-purpose": "dimension",
+				"type": "object",
+				"required": [
+					"sku"
+				],
+				"properties": {
+					"sku": {
+						"type": "string",
+						"description": "Stock-keeping unit — the unique product identifier referenced by Barcode.productSku.",
+						"example": "DV-KAT-SENIOR-2KG"
+					},
+					"skuTemplate": {
+						"type": "string",
+						"nullable": true,
+						"description": "Additive (inventory-barcode-sku, REQ-SKU-006). Reference to a SKU generation template ID in sku-templates.json (e.g. RETAIL_APPAREL_TEMPLATE). Optional; existing items without it remain valid.",
+						"example": "PET_FOOD_TEMPLATE"
+					},
+					"defaultBarcode": {
+						"type": "string",
+						"nullable": true,
+						"description": "Additive (inventory-barcode-sku, REQ-SKU-006). The barcode value of the default barcode scanned at POS for this product. Optional.",
+						"example": "5410317126589"
+					},
+					"barcodeFormat": {
+						"type": "string",
+						"nullable": true,
+						"description": "Additive (inventory-barcode-sku, REQ-SKU-006). Preferred format for new barcodes on this product (e.g. EAN-13). Optional.",
+						"example": "EAN-13"
+					}
+				}
+			}
+		}
+	},
+	"objects": []
+}
