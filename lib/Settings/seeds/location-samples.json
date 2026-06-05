@@ -1,0 +1,123 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"source": "Nextcloud Shillinq",
+		"category": "samples",
+		"version": "1.0",
+		"description": "Sample Location records illustrating warehouse → zone → bin hierarchy for Dutch SMB operators. Includes single-warehouse, multi-warehouse, and in-transit examples per inventory-multi-warehouse design.md Seed Data. NOT required for production.",
+		"imported": "2026-06-05T00:00:00Z"
+	},
+	"locations": [
+		{
+			"id": "loc-w01",
+			"code": "W-01",
+			"name": "Amsterdam Central Warehouse",
+			"locationType": "warehouse",
+			"parentLocationId": null,
+			"address": "Damrak 1, 1012 LG Amsterdam",
+			"region": "Noord-Holland",
+			"status": "active",
+			"administrationId": "sample-org"
+		},
+		{
+			"id": "loc-w01-z01",
+			"code": "Z-01",
+			"name": "Receiving Zone",
+			"locationType": "zone",
+			"parentLocationId": "loc-w01",
+			"address": null,
+			"region": null,
+			"status": "active",
+			"administrationId": "sample-org"
+		},
+		{
+			"id": "loc-w01-z02",
+			"code": "Z-02",
+			"name": "Shelving Zone",
+			"locationType": "zone",
+			"parentLocationId": "loc-w01",
+			"address": null,
+			"region": null,
+			"status": "active",
+			"administrationId": "sample-org"
+		},
+		{
+			"id": "loc-w01-z03",
+			"code": "Z-03",
+			"name": "Dispatch Zone",
+			"locationType": "zone",
+			"parentLocationId": "loc-w01",
+			"address": null,
+			"region": null,
+			"status": "active",
+			"administrationId": "sample-org"
+		},
+		{
+			"id": "loc-w01-z02-b101",
+			"code": "B-101",
+			"name": "Shelf Bin 101",
+			"locationType": "bin",
+			"parentLocationId": "loc-w01-z02",
+			"address": null,
+			"region": null,
+			"status": "active",
+			"administrationId": "sample-org"
+		},
+		{
+			"id": "loc-w01-z02-b102",
+			"code": "B-102",
+			"name": "Shelf Bin 102",
+			"locationType": "bin",
+			"parentLocationId": "loc-w01-z02",
+			"address": null,
+			"region": null,
+			"status": "active",
+			"administrationId": "sample-org"
+		},
+		{
+			"id": "loc-w-east",
+			"code": "W-EAST",
+			"name": "Rotterdam East Warehouse",
+			"locationType": "warehouse",
+			"parentLocationId": null,
+			"address": "Waalhaven Zuidzijde 15, 3089 JH Rotterdam",
+			"region": "Zuid-Holland",
+			"status": "active",
+			"administrationId": "sample-org"
+		},
+		{
+			"id": "loc-w-east-z01",
+			"code": "Z-E01",
+			"name": "East Receiving",
+			"locationType": "zone",
+			"parentLocationId": "loc-w-east",
+			"address": null,
+			"region": null,
+			"status": "active",
+			"administrationId": "sample-org"
+		},
+		{
+			"id": "loc-w-east-z02",
+			"code": "Z-E02",
+			"name": "East Shelving",
+			"locationType": "zone",
+			"parentLocationId": "loc-w-east",
+			"address": null,
+			"region": null,
+			"status": "active",
+			"administrationId": "sample-org"
+		},
+		{
+			"id": "loc-in-transit-w01-east",
+			"code": "IT-W01-EAST",
+			"name": "In-Transit: Amsterdam → Rotterdam",
+			"locationType": "in-transit",
+			"parentLocationId": null,
+			"address": null,
+			"region": null,
+			"status": "active",
+			"administrationId": "sample-org"
+		}
+	]
+}

@@ -7474,6 +7474,176 @@
 						}
 					}
 				}
+			},
+			"Location": {
+				"slug": "Location",
+				"icon": "MapMarkerOutline",
+				"version": "0.1.0",
+				"title": "Location",
+				"description": "Physical or virtual storage location in the inventory hierarchy (warehouse → zone → bin). Hierarchy expressed via parent-child FK per inventory-multi-warehouse spec; rollup aggregation via x-openregister-aggregations per ADR-031. No PHP LocationService — hierarchy and rollup are declarative.",
+				"x-schema-org": "schema:Place",
+				"type": "object",
+				"required": [
+					"name",
+					"code",
+					"locationType",
+					"administrationId"
+				],
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "Human-readable location name.",
+						"example": "Amsterdam Central Warehouse"
+					},
+					"code": {
+						"type": "string",
+						"description": "Location code unique per administration (e.g., W-01, Z-01, B-100). Immutable after creation per REQ-LOC-002.",
+						"example": "W-01"
+					},
+					"address": {
+						"type": "string",
+						"description": "Physical address (warehouse street/city).",
+						"nullable": true,
+						"example": "Damrak 1, 1012 LG Amsterdam"
+					},
+					"region": {
+						"type": "string",
+						"description": "Geographic region for rollup reporting.",
+						"nullable": true,
+						"example": "Noord-Holland"
+					},
+					"locationType": {
+						"type": "string",
+						"description": "Location type in the storage hierarchy. warehouse: top-level physical location; zone: section within warehouse; bin: most-granular storage unit; in-transit: virtual holding for transfers in progress per REQ-LOC-004.",
+						"enum": [
+							"warehouse",
+							"zone",
+							"bin",
+							"in-transit"
+						],
+						"example": "warehouse"
+					},
+					"parentLocationId": {
+						"type": "string",
+						"description": "FK to parent Location (null for warehouse/in-transit; required for zone/bin per REQ-LOC-002). Hierarchy depth ≤ 4 per REQ-LOC-003.",
+						"nullable": true,
+						"example": "loc-w01"
+					},
+					"status": {
+						"type": "string",
+						"description": "Lifecycle state of the location.",
+						"enum": [
+							"active",
+							"inactive",
+							"archived"
+						],
+						"default": "active",
+						"example": "active"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the administration owning this location. Scopes all queries per REQ-LOC-008.",
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "status",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Location is in use for inventory operations."
+						},
+						"inactive": {
+							"label": "Inactive",
+							"description": "Location temporarily not in use; existing stock may still be present."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Location permanently closed; historical reference only."
+						}
+					},
+					"transitions": {
+						"deactivate": {
+							"from": "active",
+							"to": "inactive",
+							"label": "Deactivate",
+							"description": "Suspend location from new stock operations."
+						},
+						"reactivate": {
+							"from": "inactive",
+							"to": "active",
+							"label": "Reactivate",
+							"description": "Return location to active operational status."
+						},
+						"archive": {
+							"from": [
+								"active",
+								"inactive"
+							],
+							"to": "archived",
+							"label": "Archive",
+							"description": "Permanently close location; requires stock migration first."
+						}
+					}
+				},
+				"x-openregister-aggregations": {
+					"totalStockQuantity": {
+						"description": "Total stock quantity across all descendant bin locations (warehouse-level rollup per REQ-LOC-005). Aggregates InventoryStock.quantity for all bins descended from this location.",
+						"type": "sum",
+						"field": "InventoryStock.quantity",
+						"filter": {
+							"locationType": "bin",
+							"ancestorOf": "this.id"
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"parentLocation": {
+						"description": "Parent location in hierarchy. FK: parentLocationId → Location.id. Max depth 4 per REQ-LOC-003.",
+						"type": "many-to-one",
+						"target": "Location",
+						"foreignKey": "parentLocationId"
+					},
+					"childLocations": {
+						"description": "Direct child locations (zones under warehouse, bins under zone).",
+						"type": "one-to-many",
+						"target": "Location",
+						"foreignKey": "parentLocationId"
+					},
+					"inventoryStock": {
+						"description": "InventoryStock records at bin level (most-granular location per REQ-LOC-009).",
+						"type": "one-to-many",
+						"target": "InventoryStock",
+						"foreignKey": "locationId"
+					}
+				},
+				"x-openregister-validations": {
+					"zoneRequiresParent": {
+						"when": {
+							"locationType": {
+								"in": [
+									"zone",
+									"bin"
+								]
+							}
+						},
+						"requires": "parentLocationId",
+						"message": "Zone and bin locations require a parentLocationId per REQ-LOC-002."
+					},
+					"warehouseNoParent": {
+						"when": {
+							"locationType": {
+								"in": [
+									"warehouse",
+									"in-transit"
+								]
+							}
+						},
+						"forbids": "parentLocationId",
+						"message": "Warehouse and in-transit locations must not have a parent per REQ-LOC-002."
+					}
+				}
 			}
 		},
 		"SisaReport": {
