@@ -99,6 +99,11 @@ return [
         ['name' => 'icp#validateVatId', 'url' => '/api/icp/validate-vat-id', 'verb' => 'POST'],
         ['name' => 'icp#correction', 'url' => '/api/icp/correction', 'verb' => 'POST'],
 
+        // IFRS 16 leases (Tier 4-specialized): read-only computed surfaces.
+        // Lease contracts are created/updated via OpenRegister's generic CRUD.
+        ['name' => 'lease#schedule', 'url' => '/api/leases/schedule', 'verb' => 'GET'],
+        ['name' => 'lease#disclosure', 'url' => '/api/leases/disclosure', 'verb' => 'GET'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
