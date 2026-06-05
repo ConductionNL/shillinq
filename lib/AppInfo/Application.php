@@ -23,7 +23,10 @@ namespace OCA\Shillinq\AppInfo;
 
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Repair\InitializeSettings;
+use OCA\Shillinq\Service\FifoValuationService;
+use OCA\Shillinq\Service\MovingAverageValuationService;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
+use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -31,6 +34,8 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
  * Main application class for the Shillinq Nextcloud app.
+ *
+ * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-10
  */
 class Application extends App implements IBootstrap
 {
@@ -54,6 +59,8 @@ class Application extends App implements IBootstrap
      * @return void
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     *
+     * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-10
      */
     public function register(IRegistrationContext $context): void
     {
@@ -62,6 +69,17 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: DeepLinkRegistrationEvent::class,
             listener: DeepLinkRegistrationListener::class
+        );
+
+        // Inventory valuation event listeners — FIFO and moving-average costing
+        // on StockMovement creation events (REQ-INV-003, REQ-INV-004, Task 10).
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: FifoValuationService::class
+        );
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: MovingAverageValuationService::class
         );
 
         // Initialize register and schemas on install/upgrade.
@@ -77,6 +95,8 @@ class Application extends App implements IBootstrap
      * @return void
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     *
+     * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-10
      */
     public function boot(IBootContext $context): void
     {

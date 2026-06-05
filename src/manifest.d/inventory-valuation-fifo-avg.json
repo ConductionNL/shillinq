@@ -1,0 +1,63 @@
+{
+	"menu": [
+		{
+			"id": "Inventory",
+			"children": [
+				{
+					"id": "InventoryValuations",
+					"label": "Valuations",
+					"icon": "CalculatorOutline",
+					"route": "InventoryValuations",
+					"order": 30
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "InventoryValuations",
+			"route": "/inventory/valuations",
+			"type": "index",
+			"title": "Inventory Valuations",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryValuation",
+				"columns": [
+					{"key": "warehouse", "label": "Warehouse", "sortable": true},
+					{"key": "quantity", "label": "Quantity", "sortable": true},
+					{"key": "unitCost", "label": "Unit Cost", "sortable": true},
+					{"key": "totalValue", "label": "Total Value", "sortable": true},
+					{"key": "valuationMethod", "label": "Method", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true}
+				],
+				"defaultSort": "date",
+				"detailRoute": "InventoryValuationDetail"
+			}
+		},
+		{
+			"id": "InventoryValuationDetail",
+			"route": "/inventory/valuations/:id",
+			"type": "detail",
+			"title": "Inventory Valuation",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryValuation",
+				"fields": [
+					{"key": "name", "label": "Name", "type": "string"},
+					{"key": "quantity", "label": "Quantity", "type": "number"},
+					{"key": "unitCost", "label": "Unit Cost", "type": "number"},
+					{"key": "totalValue", "label": "Total Value", "type": "number"},
+					{"key": "valuationMethod", "label": "Valuation Method", "type": "string"},
+					{"key": "date", "label": "Date", "type": "string"},
+					{"key": "warehouse", "label": "Warehouse", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "productId", "label": "Product", "type": "string"},
+					{"key": "costCenterId", "label": "Cost Center", "type": "string"},
+					{"key": "pendingCogs", "label": "Pending COGS", "type": "boolean"},
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"indexRoute": "InventoryValuations"
+			}
+		}
+	]
+}

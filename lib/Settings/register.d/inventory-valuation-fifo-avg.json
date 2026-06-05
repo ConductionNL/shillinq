@@ -1,0 +1,265 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "inventory-valuation-fifo-avg",
+		"adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+		"description": "Inventory valuation schema supporting FIFO and weighted-average costing methods. Lifecycle guards prevent method switching when stock quantity is non-zero. Declarative x-openregister-lifecycle handles status transitions; x-openregister-relations links to Product and CostCenter; x-openregister-rbac controls bookkeeper/auditor access. No app-local valuation service — all costing logic is schema-declarative per ADR-031."
+	},
+	"components": {
+		"schemas": {
+			"InventoryValuation": {
+				"slug": "InventoryValuation",
+				"icon": "WarehouseOutline",
+				"version": "0.1.0",
+				"title": "Inventory Valuation",
+				"description": "Records the monetary valuation of an inventory position for a specific product, warehouse, and costing method (FIFO or weighted average). One record per product-warehouse-method combination per valuation run. Costing-method changes are blocked when on-hand quantity exceeds zero (REQ-INV-003).",
+				"x-schema-org": "schema:Product",
+				"x-spec": "openspec/changes/inventory-valuation-fifo-avg/specs/inventory-valuation-fifo-avg/spec.md",
+				"type": "object",
+				"required": [
+					"quantity",
+					"unitCost",
+					"totalValue",
+					"valuationMethod",
+					"date",
+					"status",
+					"administrationId"
+				],
+				"properties": {
+					"quantity": {
+						"type": "number",
+						"description": "On-hand quantity of the product at the time of valuation.",
+						"example": 50
+					},
+					"unitCost": {
+						"type": "number",
+						"multipleOf": 0.0001,
+						"description": "Cost per unit with up to 4 decimal places precision (supports sub-cent costing for bulk goods).",
+						"example": 12.5000
+					},
+					"totalValue": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"description": "Total inventory value (quantity × unitCost), rounded to 2 decimal places.",
+						"example": 625.00
+					},
+					"valuationMethod": {
+						"type": "string",
+						"enum": ["FIFO", "average"],
+						"description": "Costing method applied: FIFO (first-in first-out) or weighted average. Changing method when quantity > 0 is blocked by InventoryValuationMethodGuard (REQ-INV-003).",
+						"example": "FIFO"
+					},
+					"date": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Datetime at which this valuation snapshot was taken.",
+						"example": "2026-05-01T00:00:00Z"
+					},
+					"warehouse": {
+						"type": "string",
+						"description": "Warehouse or storage location identifier. Optional; null means the default administration warehouse.",
+						"nullable": true,
+						"example": "Magazijn Noord"
+					},
+					"status": {
+						"type": "string",
+						"enum": ["active", "adjusted", "obsolete"],
+						"description": "Lifecycle status. active: current valuation; adjusted: under manual correction; obsolete: archived, excluded from active stock value summaries.",
+						"default": "active",
+						"example": "active"
+					},
+					"productId": {
+						"type": "string",
+						"description": "FK to the Product schema record this valuation belongs to.",
+						"nullable": true,
+						"example": "product-gt-10-2026"
+					},
+					"costCenterId": {
+						"type": "string",
+						"description": "FK to the CostCenter this inventory value should be allocated to.",
+						"nullable": true,
+						"example": "cc-magazijn-noord"
+					},
+					"pendingCogs": {
+						"type": "boolean",
+						"description": "Flag set to true when the GL configuration required to book Cost of Goods Sold is missing. Allows the valuation to be recorded while the finance team completes the chart-of-accounts mapping.",
+						"default": false,
+						"example": false
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this valuation record.",
+						"example": "default"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "status",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Current, authoritative valuation. Included in stock-value aggregations and COGS calculations."
+						},
+						"adjusted": {
+							"label": "Adjusted",
+							"description": "Valuation is under manual correction. Excluded from automated COGS booking until confirmed."
+						},
+						"obsolete": {
+							"label": "Obsolete",
+							"description": "Archived valuation. Retained for audit trail; excluded from active stock value summaries."
+						}
+					},
+					"transitions": {
+						"adjust": {
+							"from": "active",
+							"to": "adjusted",
+							"label": "Mark as adjusted",
+							"description": "Flag this valuation for manual correction. Use when a discrepancy is detected that requires review before the next COGS run."
+						},
+						"confirm": {
+							"from": "adjusted",
+							"to": "active",
+							"label": "Confirm correction complete",
+							"description": "Return the valuation to active after manual adjustment has been verified and accepted."
+						},
+						"obsolete_from_active": {
+							"from": "active",
+							"to": "obsolete",
+							"label": "Archive",
+							"description": "Archive an active valuation. Blocked when on-hand quantity is greater than zero to prevent silent stock write-offs.",
+							"requires": "OCA\\Shillinq\\Lifecycle\\InventoryValuationMethodGuard::checkZeroStock"
+						},
+						"obsolete_from_adjusted": {
+							"from": "adjusted",
+							"to": "obsolete",
+							"label": "Archive",
+							"description": "Archive an adjusted valuation. Blocked when on-hand quantity is greater than zero.",
+							"requires": "OCA\\Shillinq\\Lifecycle\\InventoryValuationMethodGuard::checkZeroStock"
+						},
+						"methodChange": {
+							"from": "active",
+							"to": "active",
+							"label": "Change valuation method",
+							"description": "Switch FIFO ↔ average. Blocked when quantity > 0.",
+							"requires": "OCA\\Shillinq\\Lifecycle\\InventoryValuationMethodGuard::checkZeroStock"
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"product": {
+						"localField": "productId",
+						"relatedSchema": "Product",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "The Product whose stock position this valuation record describes."
+					},
+					"costCenter": {
+						"localField": "costCenterId",
+						"relatedSchema": "CostCenter",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "The CostCenter to which this inventory value is allocated."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": ["create", "read", "write"]
+						},
+						"auditor": {
+							"permissions": ["read"]
+						}
+					}
+				}
+			}
+		}
+	},
+	"objects": [
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryValuation",
+				"slug": "inv-val-GT-10-2026-noord"
+			},
+			"name": "Inventory Valuation - GT-10-2026 - Magazijn Noord",
+			"quantity": 50,
+			"unitCost": 12.5000,
+			"totalValue": 625.00,
+			"valuationMethod": "FIFO",
+			"date": "2026-05-01T00:00:00Z",
+			"warehouse": "Magazijn Noord",
+			"status": "active",
+			"administrationId": "default",
+			"_meta": { "source": "seed-example" }
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryValuation",
+				"slug": "inv-val-KP-A4-500-depot"
+			},
+			"name": "Inventory Valuation - KP-A4-500 - Centraal Depot",
+			"quantity": 200,
+			"unitCost": 3.7500,
+			"totalValue": 750.00,
+			"valuationMethod": "average",
+			"date": "2026-05-01T00:00:00Z",
+			"warehouse": "Centraal Depot",
+			"status": "active",
+			"administrationId": "default",
+			"_meta": { "source": "seed-example" }
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryValuation",
+				"slug": "inv-val-HP-200-B-zuid"
+			},
+			"name": "Inventory Valuation - HP-200-B - Magazijn Zuid",
+			"quantity": 15,
+			"unitCost": 89.0000,
+			"totalValue": 1335.00,
+			"valuationMethod": "FIFO",
+			"date": "2026-05-01T00:00:00Z",
+			"warehouse": "Magazijn Zuid",
+			"status": "active",
+			"administrationId": "default",
+			"_meta": { "source": "seed-example" }
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryValuation",
+				"slug": "inv-val-SM-5L-PRO-depot"
+			},
+			"name": "Inventory Valuation - SM-5L-PRO - Centraal Depot",
+			"quantity": 100,
+			"unitCost": 8.4000,
+			"totalValue": 840.00,
+			"valuationMethod": "average",
+			"date": "2026-05-01T00:00:00Z",
+			"warehouse": "Centraal Depot",
+			"status": "active",
+			"administrationId": "default",
+			"_meta": { "source": "seed-example" }
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryValuation",
+				"slug": "inv-val-VHG-S-M-noord"
+			},
+			"name": "Inventory Valuation - VHG-S-M - Magazijn Noord",
+			"quantity": 300,
+			"unitCost": 1.2000,
+			"totalValue": 360.00,
+			"valuationMethod": "FIFO",
+			"date": "2026-05-01T00:00:00Z",
+			"warehouse": "Magazijn Noord",
+			"status": "active",
+			"administrationId": "default",
+			"_meta": { "source": "seed-example" }
+		}
+	]
+}

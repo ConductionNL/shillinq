@@ -1,0 +1,78 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"source": "seed-example",
+		"category": "samples",
+		"version": "0.1.0",
+		"description": "Sample InventoryValuation records for demo and testing. Five records covering two warehouses, two costing methods (FIFO and weighted average), and representative Dutch SMB product SKUs. NOT required for production.",
+		"imported": "2026-05-01T00:00:00Z"
+	},
+	"valuations": [
+		{
+			"slug": "inv-val-GT-10-2026-noord",
+			"name": "Inventory Valuation - GT-10-2026 - Magazijn Noord",
+			"quantity": 50,
+			"unitCost": 12.5000,
+			"totalValue": 625.00,
+			"valuationMethod": "FIFO",
+			"date": "2026-05-01T00:00:00Z",
+			"warehouse": "Magazijn Noord",
+			"status": "active",
+			"administrationId": "default",
+			"_meta": { "source": "seed-example" }
+		},
+		{
+			"slug": "inv-val-KP-A4-500-depot",
+			"name": "Inventory Valuation - KP-A4-500 - Centraal Depot",
+			"quantity": 200,
+			"unitCost": 3.7500,
+			"totalValue": 750.00,
+			"valuationMethod": "average",
+			"date": "2026-05-01T00:00:00Z",
+			"warehouse": "Centraal Depot",
+			"status": "active",
+			"administrationId": "default",
+			"_meta": { "source": "seed-example" }
+		},
+		{
+			"slug": "inv-val-HP-200-B-zuid",
+			"name": "Inventory Valuation - HP-200-B - Magazijn Zuid",
+			"quantity": 15,
+			"unitCost": 89.0000,
+			"totalValue": 1335.00,
+			"valuationMethod": "FIFO",
+			"date": "2026-05-01T00:00:00Z",
+			"warehouse": "Magazijn Zuid",
+			"status": "active",
+			"administrationId": "default",
+			"_meta": { "source": "seed-example" }
+		},
+		{
+			"slug": "inv-val-SM-5L-PRO-depot",
+			"name": "Inventory Valuation - SM-5L-PRO - Centraal Depot",
+			"quantity": 100,
+			"unitCost": 8.4000,
+			"totalValue": 840.00,
+			"valuationMethod": "average",
+			"date": "2026-05-01T00:00:00Z",
+			"warehouse": "Centraal Depot",
+			"status": "active",
+			"administrationId": "default",
+			"_meta": { "source": "seed-example" }
+		},
+		{
+			"slug": "inv-val-VHG-S-M-noord",
+			"name": "Inventory Valuation - VHG-S-M - Magazijn Noord",
+			"quantity": 300,
+			"unitCost": 1.2000,
+			"totalValue": 360.00,
+			"valuationMethod": "FIFO",
+			"date": "2026-05-01T00:00:00Z",
+			"warehouse": "Magazijn Noord",
+			"status": "active",
+			"administrationId": "default",
+			"_meta": { "source": "seed-example" }
+		}
+	]
+}
