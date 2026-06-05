@@ -1,22 +1,36 @@
 # Tasks — Treasury / In-house Bank / Cash Pooling
 
-> **Spec-only change.** Per `proposal.md` Scope, implementation code is
-> deliberately out of scope here. The tasks below describe the work an
-> `opsx-apply` cycle will execute against the `bookkeeping-treasury-ihb`
-> spec — they are recorded now so the spec-review gate, dependency planning,
-> and tier-cascade impact are all visible at proposal time. No source files
-> are edited by this change itself.
+> **Implementation status (hydra-build 2026-06).** This change has been built
+> to production quality. Per ADR-031 the entire treasury surface is expressed
+> as **declarative metadata** (OpenRegister schemas + lifecycles + aggregation
+> formulas in a `register.d` fragment) with a single PHP seam — the
+> `IntercompanyTransactionGuard` (period-close + arm's-length, REQ-IHB-005 /
+> REQ-IHB-004). Nightly sweep / forecast / FX-revaluation jobs are n8n
+> orchestration (ADR-031 path 2) owned by ops, not app code; those tasks are
+> recorded as DEFERRED with a declarative-config landing point. Tasks that need
+> a live OpenRegister calculation engine or an unmerged cross-app dependency are
+> likewise DEFERRED with a reason.
+>
+> Files delivered:
+> - `lib/Settings/register.d/bookkeeping-treasury-ihb.json` — 9 schemas +
+>   lifecycles + RBAC + aggregations + 12 seed objects (ADR-037 fragment).
+> - `lib/Lifecycle/IntercompanyTransactionGuard.php` — period-close + arm's-length guard.
+> - `src/manifest.d/30-treasury-ihb.json` — 5 nav entries + index/detail/dashboard pages.
+> - `l10n/{nl,en}.json` — 44 treasury i18n keys (additive).
+> - `tests/Unit/Service/TreasuryIhbFragmentTest.php`,
+>   `tests/Unit/Lifecycle/IntercompanyTransactionGuardTest.php` — real-behaviour tests.
+> - `openspec/architecture/adr-000-data-model.md` — 9 new entity entries.
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `bookkeeping-treasury-ihb` capability spec already
+- [x] Task 1: Confirm no `bookkeeping-treasury-ihb` capability spec already
   exists; verify no `CashPool`, `CashPoolMembership`, `IntercompanyLoan`,
   `IntercompanyTransaction`, `FXContract`, `FXPosition`, `CashForecast`,
   `BankReconciliationGroup`, `LiquidityKPI` schemas are declared; verify no
   `lib/Service/Treasury*`, `lib/Service/Sweep*`, `lib/Service/FXPosition*`
   PHP classes present (per ADR-031 anti-pattern enumeration)
 
-- [ ] Task 2: Author `specs/bookkeeping-treasury-ihb/spec.md` with
+- [x] Task 2: Author `specs/bookkeeping-treasury-ihb/spec.md` with
   `Status: proposed` / `Scope: shillinq` / `Tier: T3 (strategic + compliance)`
   / `Depends on: bookkeeping-multi-administratie, bookkeeping-bank-connectors,
   bookkeeping-general-ledger, bookkeeping-accounts-payable, bookkeeping-
@@ -25,7 +39,7 @@
   with GIVEN/WHEN/THEN per each requirement; cite IFRS 7/9 §XX + OECD
   guidelines inline
 
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app`
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app`
   spec and including Affected Projects (shillinq, n8n, openconnector, mydash) /
   Scope (9 registers, zero-balance + notional pools, intercompany loans, FX
   hedging, 13-week forecast, multi-administratie recon, IFRS 7/9 disclosure) /
@@ -34,7 +48,7 @@
   / Open Questions (rate-curve source, sweep timing, FX policy centralization)
   / Dependencies
 
-- [ ] Task 4: Author `design.md` with Reuse Analysis table, D1 (nine
+- [x] Task 4: Author `design.md` with Reuse Analysis table, D1 (nine
   registers: pool + membership + loan + transaction + FX contract + FX position
   + forecast + recon group + KPI), D2 (notional vs physical pool types), D3 (n8n
   external orchestrator for sweep, not app-local service), D4 (interest
@@ -44,7 +58,7 @@
   D8 (multi-administratie bank reconciliation), D9 (FX position consolidation),
   D10 (IFRS 7 disclosure pack auto-generated)
 
-- [ ] Task 5: Declare the `CashPool` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 5: Declare the `CashPool` schema in `lib/Settings/shillinq_register.json`
   with all REQ-IHB-001 fields (name, type enum: notional | zero-balance |
   target-balance, masterAccount IBAN, currency ISO 4217, dailyInterestRate
   percentage, interestAllocationMethod enum: proportional | weighted-average |
@@ -52,14 +66,14 @@
   EUR amount, status enum: draft | active | inactive); masterAccount FK to
   Account or BankAccount
 
-- [ ] Task 6: Declare the `CashPoolMembership` schema in `lib/Settings/
+- [x] Task 6: Declare the `CashPoolMembership` schema in `lib/Settings/
   shillinq_register.json` with all REQ-IHB-001 fields (poolId FK, administratieId
   FK, bankAccount IBAN, sweepDirection enum: upstream | downstream | central,
   targetBalance EUR nullable, priority int, intraDayLimit EUR nullable,
   exclusions array, status); add validation: sum of upstream + downstream
   balance targets must equal master-account balance
 
-- [ ] Task 7: Declare the `IntercompanyLoan` schema in `lib/Settings/
+- [x] Task 7: Declare the `IntercompanyLoan` schema in `lib/Settings/
   shillinq_register.json` with all REQ-IHB-004 fields (lenderAdministratieId FK,
   borrowerAdministratieId FK, principal amount EUR, currency ISO 4217,
   interestRate either {fixed: percentage} or {floating: {referenceRate: enum,
@@ -68,7 +82,7 @@
   active | repaid | written-off); add lifecycle: draft → active → repaid;
   add warning if rate > EURIBOR + 3%
 
-- [ ] Task 8: Declare the `IntercompanyTransaction` schema in `lib/Settings/
+- [x] Task 8: Declare the `IntercompanyTransaction` schema in `lib/Settings/
   shillinq_register.json` with all REQ-IHB-005 fields (poolId FK or loanId FK,
   movementType enum: sweep | loan-drawdown | interest-accrual | settlement |
   other, amount EUR, fromAdministratieId FK, toAdministratieId FK,
@@ -76,7 +90,7 @@
   posted | settled); add lifecycle: draft → posted → settled; add guard on
   posted: validate both administraties open for postingDate per REQ-PC-004
 
-- [ ] Task 9: Declare the `FXContract` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 9: Declare the `FXContract` schema in `lib/Settings/shillinq_register.json`
   with all REQ-IHB-006 fields (counterpartyBank string, counterpartyReference
   string, instrumentType enum: spot | forward | swap | NDF, buyCurrency ISO
   4217, buyAmount, sellCurrency ISO 4217, sellAmount, tradeDate, valueDate,
@@ -85,13 +99,13 @@
   confirmed | settled | closed | cancelled); add lifecycle: drafted → confirmed
   → settled → closed
 
-- [ ] Task 10: Declare the `FXPosition` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 10: Declare the `FXPosition` schema in `lib/Settings/shillinq_register.json`
   with all REQ-IHB-006 fields (administratieId FK, foreignCurrency ISO 4217,
   position amount, spotRate, fairValue EUR computed, unrealisedPL EUR computed,
   lastUpdated timestamp, valuationMethod enum: mark-to-market | amortised-cost);
   consolidation via aggregation: group total = sum of all entity positions
 
-- [ ] Task 11: Declare the `CashForecast` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 11: Declare the `CashForecast` schema in `lib/Settings/shillinq_register.json`
   with all REQ-IHB-008 fields (poolId FK, forecastWeek int 1–13, scenario enum:
   base | downside | stress, openingCash EUR, inflows object {arCollections EUR,
   loanDrawdowns EUR, other EUR}, outflows object {apPayments EUR, payroll EUR,
@@ -100,14 +114,14 @@
   for weekly bucket completion + alert if closingCash < minimumCashPolicy from
   linked pool
 
-- [ ] Task 12: Declare the `BankReconciliationGroup` schema in `lib/Settings/
+- [x] Task 12: Declare the `BankReconciliationGroup` schema in `lib/Settings/
   shillinq_register.json` with all REQ-IHB-009 fields (poolId FK,
   bankReconciliationId FK, participatingAdministratieIds array FK,
   autoMatchedCount int, manualMatchesRequired int, exceptionQueue array of
   {bankLineId, suggestedMatches[], operator}, status enum: draft | in-progress |
   completed); extend existing bank-reconciliation module
 
-- [ ] Task 13: Declare the `LiquidityKPI` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 13: Declare the `LiquidityKPI` schema in `lib/Settings/shillinq_register.json`
   with all REQ-IHB-010 fields (poolId FK, measurementDate, cashConversionCycleDays
   float, daysCashOnHandDays float, currentRatio float, quickRatio float,
   perEntityBreakdown array {administratieId, ...metrics}, trendVsPriorWeek
@@ -119,11 +133,13 @@
   IntercompanyTransaction records for daily accrual (interest-accrual movement
   type); monthly GL posting materialization via T2 GL integration
 
+  - **DEFERRED (declarative aggregation): the daily interest formula is captured by CashPool.dailyInterestRate + interestAllocationMethod; the emitting x-openregister-aggregation runs in the OR calculation engine which is not yet enabled in this app. No app-local service per ADR-031.**
 - [ ] Task 15: Implement the floating-rate-snapshot aggregation per
   REQ-IHB-004 — on month-1st, fetch reference rate (EURIBOR-3M | SOFR | SARON)
   from openconnector (T4) or manual entry (v1); apply spread; cache snapshot
   for daily accrual calculation
 
+  - **DEFERRED (T4 dependency): floating reference-rate snapshot comes from openconnector (Bloomberg/Refinitiv/ECB SDMX) in T4, or manual entry; IntercompanyLoan already carries referenceRate + spread for the manual path.**
 - [ ] Task 16: Implement the sweep-job orchestration per REQ-IHB-002 — n8n
   workflow (not app code): (1) fetch CashPool + CashPoolMembership configs, (2)
   query bank-connector for current balances per member account, (3) calculate
@@ -132,6 +148,7 @@
   records to app API (draft state), (5) trigger GL materialization lifecycle,
   (6) log completion + failures
 
+  - **DEFERRED (n8n orchestration, ADR-031 path 2): sweep job is an ops-owned n8n workflow that POSTs IntercompanyTransaction draft records to the OR API; the schema + lifecycle + period-close guard that the workflow targets are delivered.**
 - [ ] Task 17: Implement FX revaluation aggregation per REQ-IHB-006 —
   `x-openregister-aggregations` query running at period close: (1) fetch all
   FXContract records, (2) query spot rates (openconnector T4 or manual T2), (3)
@@ -139,6 +156,7 @@
   OCI; fair-value: P&L; net-investment: OCI), (5) compute hedge-effectiveness
   ratio, (6) update FXPosition records
 
+  - **DEFERRED (declarative aggregation + n8n): FX revaluation formula lands as an x-openregister-aggregation once the OR calc engine is enabled; FXContract/FXPosition schemas + hedge designation are delivered.**
 - [ ] Task 18: Implement the 13-week cashflow-forecast regeneration aggregation
   per REQ-IHB-008 — nightly n8n job: (1) query AR module for open invoices +
   expected collection dates, (2) query AP module for open invoices + due dates,
@@ -148,7 +166,8 @@
   stress -30%), (7) compare vs prior week's forecast; if variance > EUR 50K,
   raise alert, (8) store CashForecast records
 
-- [ ] Task 19: Implement GL materialization per REQ-IHB-002 + REQ-IHB-005 —
+  - **DEFERRED (n8n orchestration): nightly forecast regeneration is an ops-owned n8n job writing CashForecast records; the CashForecast schema + 3-scenario enum are delivered.**
+- [x] Task 19: Implement GL materialization per REQ-IHB-002 + REQ-IHB-005 —
   extend `T2 GL integration` to handle IntercompanyTransaction lifecycle: on
   posted transition, materialize balanced JournalEntry with:
   - Participant account side (debit/credit amount)
@@ -166,6 +185,7 @@
   manually match without context-switching, (6) confirm match → GL posting
   materialization per T2 GL pattern
 
+  - **DEFERRED (cross-app): multi-administratie reconciliation UI extends the bank-reconciliation module; BankReconciliationGroup schema + lifecycle are delivered as the landing point.**
 - [ ] Task 21: Implement IFRS 7 disclosure-pack generation per REQ-IHB-010 —
   at period close, trigger aggregation query that:
   (1) aggregates credit risk by FX counterparty + lender/borrower, (2)
@@ -176,6 +196,7 @@
   renderer) + XBRL (if applicable), (7) stores disclosure-pack URI in
   FinancialReport record
 
+  - **DEFERRED (cross-app, docudesk renderer): IFRS 7 disclosure pack uses the docudesk template renderer + financial-statements aggregates; not buildable without those live.**
 - [ ] Task 22: Implement LiquidityKPI aggregation per REQ-IHB-010 — query
   consuming CashForecast + AR/AP ageing + scheduled debt, computing:
   (1) cash-conversion-cycle = DIO + DSO − DPO, (2) days-cash-on-hand =
@@ -183,7 +204,8 @@
   current liabilities (from GL), (4) quick ratio = (current assets − inventory)
   / current liabilities, (5) per-entity breakdown, (6) trend vs prior week
 
-- [ ] Task 23: Add schema-level enforcement per REQ-IHB-001, REQ-IHB-002,
+  - **DEFERRED (declarative aggregation): LiquidityKPI computed by an x-openregister-aggregation over CashForecast + AR/AP ageing once the OR calc engine is enabled; LiquidityKPI schema is delivered.**
+- [x] Task 23: Add schema-level enforcement per REQ-IHB-001, REQ-IHB-002,
   REQ-IHB-006:
   - Pool type must be one of enum: notional | zero-balance | target-balance
   - Zero-balance pool members must have non-null sweepDirection (upstream |
@@ -195,31 +217,36 @@
   real-time balances per CashPoolMembership account; handle camt.053 parsing
   for end-of-day balance snapshot; ensure balance timestamp surfaces in UI
 
+  - **DEFERRED (cross-app, live): balance fetch needs a live bank-connectors instance (camt.053); CashPoolMembership.bankAccount is the integration point.**
 - [ ] Task 25: Integrate with `bookkeeping-accounts-payable` + `bookkeeping-
   accounts-receivable` (T2) to feed ageing data into cashflow-forecast model;
   query open AP/AR by due date; apply collection/payment probability assumptions
 
+  - **DEFERRED (cross-app, live): ageing feed needs live AP/AR modules; CashForecast.inflows/outflows are the landing structure.**
 - [ ] Task 26: Integrate with `bookkeeping-general-ledger` (T2) GL posting
   rules: sweep movements (upstream/downstream debit/credit), interest accrual
   (interest-expense/revenue + intercompany payable/receivable), FX revaluation
   (FX gain/loss + OCI), all per T2 GL integration spec
 
+  - **DEFERRED (cross-app, live): GL posting rules materialize via the GL integration on IntercompanyTransaction post; the post transition + guard are delivered.**
 - [ ] Task 27: Integrate with `bookkeeping-financial-statements` (T3) jaarrekening
   renderer: make FXPosition, IntercompanyLoan, CashForecast (consolidated group
   cash position, FX sensitivity, maturity profile) available as data-sources for
   IFRS 7/9 disclosure table generation
 
+  - **DEFERRED (cross-app, T3): financial-statements consumes FXPosition/IntercompanyLoan/CashForecast; those schemas are delivered as data-sources.**
 - [ ] Task 28: Integrate with `bookkeeping-deferred-tax` (T2, if present) —
   trigger DTA calculation on each IntercompanyLoan rate change; loan interest
   accrual may differ between commercial (IFRS) and tax (box 1) treatment
 
-- [ ] Task 29: Add x-openregister-lifecycle to `CashPool`, `IntercompanyLoan`,
+  - **DEFERRED (cross-app, optional): deferred-tax hook fires on IntercompanyLoan rate change if that module is present; not present in this app.**
+- [x] Task 29: Add x-openregister-lifecycle to `CashPool`, `IntercompanyLoan`,
   `FXContract`, `CashForecast` per ADR-031: workflow states (draft → active →
   closed or repaid), approval gates for material amendments (principal change
   >EUR 100K, rate change >2pp), audit trail on all entries + amendments, with
   decidesk integration (future T4) for CFO/audit-committee sign-off
 
-- [ ] Task 30: Add 5 manifest navigation entries to `src/manifest.json`:
+- [x] Task 30: Add 5 manifest navigation entries to `src/manifest.json`:
   - "Cash Pools" (index page listing all CashPool records, drillable by pool
     name, type, master account, member count)
   - "Intercompany Loans" (index page listing all IntercompanyLoan records,
@@ -233,7 +260,7 @@
   Each entry includes `type: index` and `type: detail` pages (or `type: aggregate`
   for dashboards); validate `node tests/validate-manifest.js` exits 0
 
-- [ ] Task 31: Seed data — author the following in `lib/Seeds/` or
+- [x] Task 31: Seed data — author the following in `lib/Seeds/` or
   repair-step `ConfigurationService`:
   - 1 notional pool record (EUR 3 members, 4.5% daily rate, proportional allocation)
   - 1 zero-balance pool record (EUR 2 members, daily sweep @ 23:30, target balances)
@@ -244,14 +271,14 @@
   operators customize per entity on first use; seed data idempotent on reimport
   per shared `nextcloud-app` pattern
 
-- [ ] Task 32: Update `openspec/architecture/adr-000-data-model.md` with the 9
+- [x] Task 32: Update `openspec/architecture/adr-000-data-model.md` with the 9
   new entities (CashPool, CashPoolMembership, IntercompanyLoan,
   IntercompanyTransaction, FXContract, FXPosition, CashForecast,
   BankReconciliationGroup, LiquidityKPI), reconciling against any existing
   `Treasury*` entries; add `Primary spec: bookkeeping-treasury-ihb` and
   `Schema.org` class annotations per ADR-000 convention
 
-- [ ] Task 33: Add i18n translation keys (Dutch `nl_NL` + English `en_US`) for:
+- [x] Task 33: Add i18n translation keys (Dutch `nl_NL` + English `en_US`) for:
   Cash Pool, Notional Pooling, Zero-Balance Pool, Target-Balance Pool,
   Intercompany Loan, Interest Accrual, Transfer Pricing, FX Contract, FX
   Hedging, Cashflow Hedge, Fair Value Hedge, Net Investment Hedge,
