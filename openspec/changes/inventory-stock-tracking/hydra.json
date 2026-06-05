@@ -2,9 +2,13 @@
   "spec_slug": "inventory-stock-tracking",
   "title": "Inventory Stock-on-hand per Item per Location",
   "app": "shillinq",
-  "repo": "https://github.com/ConductionNL/shillinq",
+  "repo": "https://codeberg.org/Conduction/shillinq",
   "depends_on": [
     "inventory-product-catalog"
   ],
-  "issue": null
+  "issue": 109,
+  "pr": 293,
+  "status": "pr-created",
+  "branch": "feature/109/inventory-stock-tracking",
+  "pr_url": "https://codeberg.org/Conduction/shillinq/pulls/293"
 }
