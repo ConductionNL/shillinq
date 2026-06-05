@@ -232,6 +232,20 @@
 					"icon": "TagOutline",
 					"route": "ProductAttributes",
 					"order": 20
+				},
+				{
+					"id": "InventoryPostingConfig",
+					"label": "Posting Configuratie",
+					"icon": "AccountCogOutline",
+					"route": "InventoryPostingConfig",
+					"order": 30
+				},
+				{
+					"id": "InventoryPostingHistory",
+					"label": "Posting Historie",
+					"icon": "LedgerOutline",
+					"route": "InventoryPostingHistory",
+					"order": 40
 				}
 			]
 		},
@@ -745,6 +759,144 @@
 					}
 				],
 				"indexRoute": "ProductAttributes"
+			}
+		},
+		{
+			"id": "InventoryPostingConfig",
+			"route": "/inventory/posting-config",
+			"type": "index",
+			"title": "Posting Configuratie",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryGLConfig",
+				"columns": [
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"sortable": true
+					},
+					{
+						"key": "cogsAccountNumber",
+						"label": "COGS Rekening",
+						"sortable": true
+					},
+					{
+						"key": "inventoryAssetAccountNumber",
+						"label": "Voorraden Rekening",
+						"sortable": true
+					},
+					{
+						"key": "grIrClearingAccountNumber",
+						"label": "GR/IR Rekening",
+						"sortable": true
+					},
+					{
+						"key": "inventoryAdjustmentAccountNumber",
+						"label": "Mutaties Rekening",
+						"sortable": true
+					},
+					{
+						"key": "isActive",
+						"label": "Actief",
+						"sortable": true
+					}
+				],
+				"defaultSort": "administrationId",
+				"detailRoute": "InventoryPostingConfigDetail"
+			}
+		},
+		{
+			"id": "InventoryPostingConfigDetail",
+			"route": "/inventory/posting-config/:id",
+			"type": "detail",
+			"title": "Posting Configuratie",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryGLConfig",
+				"fields": [
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "cogsAccountNumber",
+						"label": "Kostprijs Rekening (COGS)",
+						"type": "string",
+						"description": "Wordt gedebiteerd bij verkoop/afgifte. RGS standaard: 7000 Kostprijs omzet."
+					},
+					{
+						"key": "inventoryAssetAccountNumber",
+						"label": "Voorraden Rekening",
+						"type": "string",
+						"description": "Wordt gedebiteerd bij goederenontvangst, gecrediteerd bij verkoop. RGS standaard: 1400 Voorraden."
+					},
+					{
+						"key": "grIrClearingAccountNumber",
+						"label": "GR/IR Clearing Rekening",
+						"type": "string",
+						"description": "Wordt gecrediteerd bij goederenontvangst; verrekend bij inkoopfactuur. RGS standaard: 1800."
+					},
+					{
+						"key": "inventoryAdjustmentAccountNumber",
+						"label": "Voorraadmutaties Rekening",
+						"type": "string",
+						"description": "Debet/credit bij telverschil. RGS standaard: 7100 Voorraadmutaties."
+					},
+					{
+						"key": "isActive",
+						"label": "Boeking Actief",
+						"type": "boolean"
+					},
+					{
+						"key": "description",
+						"label": "Omschrijving",
+						"type": "string"
+					}
+				],
+				"indexRoute": "InventoryPostingConfig"
+			}
+		},
+		{
+			"id": "InventoryPostingHistory",
+			"route": "/inventory/posting-history",
+			"type": "index",
+			"title": "Posting Historie",
+			"config": {
+				"register": "shillinq",
+				"schema": "GLTransaction",
+				"defaultFilter": {
+					"subLedgerType": "inventory"
+				},
+				"columns": [
+					{
+						"key": "transactionNumber",
+						"label": "Boekingsnummer",
+						"sortable": true
+					},
+					{
+						"key": "description",
+						"label": "Omschrijving",
+						"sortable": false
+					},
+					{
+						"key": "postingDate",
+						"label": "Boekingsdatum",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "postingDate",
+				"detailRoute": "GLTransactionDetail"
 			}
 		},
 		{

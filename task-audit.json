@@ -1,119 +1,21 @@
 {
-  "spec": "openspec/changes/expense-capture-core",
+  "spec": "openspec/changes/inventory-cogs-posting",
   "verified": [
-    {
-      "task": "1",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "size": 344153
-    },
-    {
-      "task": "5-8",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "size": 344153
-    },
-    {
-      "task": "9",
-      "file": "lib/Lifecycle/ExpenseClaimGuard.php",
-      "ok": true,
-      "size": 10439
-    },
-    {
-      "task": "11",
-      "file": "lib/Validation/PhotoValidator.php",
-      "ok": true,
-      "size": 2541
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json",
-      "ok": true,
-      "size": 117716
-    },
-    {
-      "task": "18",
-      "file": "openspec/architecture/adr-000-data-model.md",
-      "ok": true,
-      "size": 301720
-    },
-    {
-      "task": "test-11",
-      "file": "tests/Unit/Validation/PhotoValidatorTest.php",
-      "ok": true,
-      "size": 5529
-    },
-    {
-      "task": "test-9",
-      "file": "tests/Unit/Lifecycle/ExpenseClaimGuardTest.php",
-      "ok": true,
-      "size": 14622
-    },
-    {
-      "task": "5-16",
-      "file": "shillinq_register.json::Receipt",
-      "ok": true
-    },
-    {
-      "task": "5-16",
-      "file": "shillinq_register.json::MileageEntry",
-      "ok": true
-    },
-    {
-      "task": "5-16",
-      "file": "shillinq_register.json::PerDiem",
-      "ok": true
-    },
-    {
-      "task": "5-16",
-      "file": "shillinq_register.json::ExpenseClaimEntry",
-      "ok": true
-    },
-    {
-      "task": "5-16",
-      "file": "shillinq_register.json::MileageRate",
-      "ok": true
-    },
-    {
-      "task": "5-16",
-      "file": "shillinq_register.json::PerDiemRate",
-      "ok": true
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json::Receipts",
-      "ok": true
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json::ReceiptDetail",
-      "ok": true
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json::ExpenseClaims",
-      "ok": true
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json::ExpenseClaimDetail",
-      "ok": true
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json::MileageLog",
-      "ok": true
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json::MileageLogDetail",
-      "ok": true
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json::Inkoop menu",
-      "ok": true
-    }
+    { "task": "1", "file": "lib/Settings/shillinq_register.json", "ok": true, "notes": "No conflicting schemas or service classes pre-existed" },
+    { "task": "2", "file": "openspec/changes/inventory-cogs-posting/specs/inventory-cogs-posting/spec.md", "ok": true },
+    { "task": "3", "file": "openspec/changes/inventory-cogs-posting/proposal.md", "ok": true },
+    { "task": "4", "file": "openspec/changes/inventory-cogs-posting/design.md", "ok": true },
+    { "task": "5", "file": "lib/Settings/shillinq_register.json", "ok": true, "notes": "InventoryGLConfig schema with 7 fields + FK validation relations" },
+    { "task": "6", "file": "lib/Settings/shillinq_register.json", "ok": true, "notes": "InventoryValuation extended with glTransactionId + postingEvent" },
+    { "task": "7", "file": "lib/Settings/shillinq_register.json", "ok": true, "notes": "postCOGS action on saleDispatch" },
+    { "task": "8", "file": "lib/Settings/shillinq_register.json", "ok": true, "notes": "postReceipt action on goodsReceipt with GR/IR two-step" },
+    { "task": "9", "file": "lib/Settings/shillinq_register.json", "ok": true, "notes": "postVariance with InventoryPostingGuard::direction ADR-031 exception" },
+    { "task": "9-guard", "file": "lib/Lifecycle/InventoryPostingGuard.php", "ok": true },
+    { "task": "9-test", "file": "tests/Unit/Lifecycle/InventoryPostingGuardTest.php", "ok": true, "notes": "5/5 tests pass" },
+    { "task": "10", "file": "lib/Settings/shillinq_register.json", "ok": true, "notes": "inventory added to GLLine.subLedgerType enum" },
+    { "task": "11", "file": "lib/Settings/shillinq_register.json", "ok": true, "notes": "2 InventoryGLConfig + 3 InventoryValuation + 3 GLTransaction seeds" },
+    { "task": "12", "file": "src/manifest.json", "ok": true, "notes": "Posting Configuratie index+detail + Posting Historie index" },
+    { "task": "13", "file": "openspec/architecture/adr-000-data-model.md", "ok": true }
   ],
   "stubs": [],
   "missing_routes": []

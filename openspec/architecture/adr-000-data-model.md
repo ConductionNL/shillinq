@@ -2183,7 +2183,7 @@ _A debit-or-credit line within a GLTransaction, encoding polarity in the `side` 
 | amount | number ≥ 0 | Yes | Non-negative amount in the transaction's currency |
 | currency | string | Yes | ISO 4217 currency code; must equal GLTransaction.currency (T1 single-currency invariant) |
 | periodId | string | No | Auto-resolved by lifecycle engine on GLTransaction.post transition (stub string in T1, FK to FiscalPeriod in T3) |
-| subLedgerType | enum | No | One of ap, ar, project, none (T2 owns the sub-ledger registers) |
+| subLedgerType | enum | No | One of ap, ar, project, inventory, none (T2 owns the sub-ledger registers; `inventory` added per inventory-cogs-posting REQ-CG-005) |
 | subLedgerRef | string | No | FK identifier into the sub-ledger when subLedgerType ≠ none |
 | costCenter | string | No | Cost-center code for allocation reporting (backwards-compatible alias; see costCenterCode) |
 | description | string | No | Line-level description |
@@ -2201,6 +2201,8 @@ _A debit-or-credit line within a GLTransaction, encoding polarity in the `side` 
 - → Project (many-to-one, via projectCode → Project.code; additive per REQ-CC-003 + REQ-CC-007)
 
 > **Reconciliation note (add-shillinq-cost-centers-dimensions, 2026-06-03):** The T1 `GLLine` schema is additively extended with four new optional fields (`costCenterCode`, `kostenDragerCode`, `projectCode`, `dimensions`) per REQ-CC-003. The existing `costCenter` field is retained as the backwards-compatible alias for `costCenterCode`. T1 single-dimension callers remain correct — the new fields are nullable and non-required. Segment P&L aggregations (`segmentPnlByCostCenter`, `segmentPnlByKostenDrager`, `segmentPnlByProject`) are declared on `GLLine` as `x-openregister-aggregations` per ADR-031 + REQ-CC-005; no PHP `SegmentReportService` is authored.
+
+> **Reconciliation note (inventory-cogs-posting, 2026-06-05):** `GLLine.subLedgerType` enum gains the `"inventory"` value per REQ-CG-005. The existing `ap`, `ar`, `project`, `none` values are unchanged. When `subLedgerType = "inventory"`, `subLedgerRef` carries the `InventoryValuation.id` UUID for drill-down from the GL line to the originating inventory movement.
 
 ### GLTransaction
 **Schema.org:** `schema:AccountingTransaction`
@@ -2325,24 +2327,50 @@ _Stock levels, inventory tracking, and reorder management by location_
 - → Product (many-to-one)
 - → Organization (many-to-one)
 
-### InventoryValuation
-**Schema.org:** `schema:Product`
-_Valuation of on-hand inventory items using cost accounting methods such as FIFO or average cost for P&L and balance sheet reporting_
-**Primary spec:** cost-accounting-allocation
+### InventoryGLConfig
+**Schema.org:** `schema:Thing`
+_Account mapping for perpetual inventory GL posting per administration. Maps three posting event types (saleDispatch, goodsReceipt, countVariance) to GL accounts. Per ADR-022 account mapping is configuration; per ADR-031 the lifecycle action on InventoryValuation reads this config at post time — no CogsPostingService. All four account numbers are FK-validated to resolve to active Account records within the same administrationId._
+**Primary spec:** inventory-cogs-posting
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| quantity | number | Yes | Quantity of items currently in stock |
-| unitCost | number | Yes | Cost per unit under the selected valuation method |
-| totalValue | number | Yes | Total inventory value (quantity × unitCost) |
-| valuationMethod | string | Yes | Costing method: FIFO, average, specific, or weighted average |
-| date | datetime | Yes | Date of valuation or inventory count |
-| warehouse | string | No | Warehouse or storage location identifier |
-| status | string | Yes | Status: active, adjusted, or obsolete |
+| administrationId | string | Yes | FK to the Administration owning this config |
+| cogsAccountNumber | string | Yes | FK to Account.accountNumber — debit on saleDispatch (Dutch RGS default: 7000 Kostprijs omzet) |
+| inventoryAssetAccountNumber | string | Yes | FK to Account.accountNumber — debit on goodsReceipt, credit on saleDispatch (Dutch RGS default: 1400 Voorraden) |
+| grIrClearingAccountNumber | string | Yes | FK to Account.accountNumber — credit on goodsReceipt; cleared by AP invoice post (Dutch RGS default: 1800 GR/IR clearing) |
+| inventoryAdjustmentAccountNumber | string | Yes | FK to Account.accountNumber — debit/credit on countVariance (Dutch RGS default: 7100 Voorraadmutaties) |
+| isActive | boolean | Yes | When false, all lifecycle posting actions skip with reason posting_disabled |
+| description | string | No | Operator notes |
 
 **Relations:**
-- → Product (many-to-one)
+- → Account ×4 (many-to-one, all four account FK fields validated on save per REQ-CG-001)
+
+### InventoryValuation
+**Schema.org:** `schema:Product`
+_Valuation of on-hand inventory items using cost accounting methods such as FIFO or average cost for P&L and balance sheet reporting. Lifecycle posting actions postCOGS, postReceipt, and postVariance emit balanced GLTransaction records per T1 REQ-JE-007 on stock movement events per REQ-CG-002/003/004._
+**Primary spec:** inventory-cogs-posting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| sku | string | Yes | FK to Product.sku |
+| warehouse | string | Yes | Warehouse or storage location identifier |
+| quantity | number | Yes | Quantity of items currently in stock |
+| unitCost | number | No | Cost per unit under the selected valuation method (provided by inventory-valuation-fifo-avg; null until valuation runs) |
+| totalValue | number | No | Total inventory value (quantity × unitCost) |
+| valuationMethod | string | Yes | Costing method: fifo, average, specific, or weightedAverage |
+| date | date | Yes | Date of valuation or inventory count |
+| status | enum | Yes | One of active, adjusted, obsolete — managed by x-openregister-lifecycle |
+| administrationId | string | Yes | FK to Administration; used to resolve InventoryGLConfig at posting time |
+| glTransactionId | string | No | Back-reference to the materialised GLTransaction after posting action fires (D5) |
+| postingEvent | enum | No | One of saleDispatch, goodsReceipt, countVariance, returnDispatch — records the last stock movement event that triggered a GL posting |
+
+**Relations:**
+- → Product (many-to-one, via sku → Product.sku)
 - → CostCenter (many-to-one)
+- → GLTransaction (many-to-one, via glTransactionId — materialised on posting action)
+- → InventoryGLConfig (many-to-one, via administrationId — resolved at posting time)
+
+> **Reconciliation note (inventory-cogs-posting, 2026-06-05):** `InventoryValuation` schema is additively extended with two new optional fields (`glTransactionId`, `postingEvent`) per REQ-CG-002/003/004. The `x-openregister-lifecycle` extension on `InventoryValuation` adds four stock movement transitions (`saleDispatch`, `goodsReceipt`, `countVariance`, `returnDispatch`) that each fire a GL posting action. ADR-031 exception: `InventoryPostingGuard::direction(int $delta)` resolves count-variance sign direction (the lifecycle engine cannot yet express inline sign-conditional GL-line orientation). No `CogsPostingService` is authored.
 
 ### Investment
 **Schema.org:** `schema:FinancialProduct`

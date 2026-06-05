@@ -598,9 +598,10 @@
 							"ap",
 							"ar",
 							"project",
+							"inventory",
 							"none"
 						],
-						"description": "Sub-ledger discriminator; T2 owns the actual sub-ledger registers.",
+						"description": "Sub-ledger discriminator; T2 owns the actual sub-ledger registers. inventory added per inventory-cogs-posting REQ-CG-005.",
 						"nullable": true
 					},
 					"subLedgerRef": {
@@ -9914,6 +9915,677 @@
 						]
 					}
 				}
+			},
+			"InventoryGLConfig": {
+				"slug": "InventoryGLConfig",
+				"icon": "AccountCogOutline",
+				"version": "0.1.0",
+				"title": "Inventory GL Config",
+				"description": "Account mapping for perpetual inventory GL posting per administration. Maps the three posting event types (saleDispatch, goodsReceipt, countVariance) to GL accounts per REQ-CG-001. Per ADR-022 account mapping is configuration not hardcoded logic; per ADR-031 the lifecycle action on InventoryValuation reads this config at post time — no CogsPostingService.",
+				"x-schema-org": "schema:Thing",
+				"type": "object",
+				"required": [
+					"administrationId",
+					"cogsAccountNumber",
+					"inventoryAssetAccountNumber",
+					"grIrClearingAccountNumber",
+					"inventoryAdjustmentAccountNumber",
+					"isActive"
+				],
+				"properties": {
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this GL config.",
+						"example": "adm-demo-1"
+					},
+					"cogsAccountNumber": {
+						"type": "string",
+						"description": "FK to Account.accountNumber — debited on saleDispatch event. Dutch RGS default: 7000 Kostprijs omzet.",
+						"example": "7000"
+					},
+					"inventoryAssetAccountNumber": {
+						"type": "string",
+						"description": "FK to Account.accountNumber — debited on goodsReceipt, credited on saleDispatch and negative countVariance. Dutch RGS default: 1400 Voorraden.",
+						"example": "1400"
+					},
+					"grIrClearingAccountNumber": {
+						"type": "string",
+						"description": "FK to Account.accountNumber — credited on goodsReceipt; cleared by AP invoice post per bookkeeping-accounts-payable-core REQ-AP-003 (D3 two-step). Dutch RGS default: 1800 GR/IR clearing.",
+						"example": "1800"
+					},
+					"inventoryAdjustmentAccountNumber": {
+						"type": "string",
+						"description": "FK to Account.accountNumber — debit or credit on countVariance (direction from InventoryPostingGuard::direction). Dutch RGS default: 7100 Voorraadmutaties.",
+						"example": "7100"
+					},
+					"isActive": {
+						"type": "boolean",
+						"default": true,
+						"description": "When false, all lifecycle posting actions for this administration are skipped with a structured warning event (reason: posting_disabled)."
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "Operator notes for this configuration record.",
+						"example": "Shillinq demo administratie 2026"
+					}
+				},
+				"x-openregister-relations": {
+					"cogsAccount": {
+						"localField": "cogsAccountNumber",
+						"relatedSchema": "Account",
+						"relatedField": "accountNumber",
+						"cardinality": "many-to-one",
+						"description": "FK to Account for COGS debit on saleDispatch. MUST resolve to an active Account within the same administrationId per REQ-CG-001.",
+						"validateOnSave": true
+					},
+					"inventoryAssetAccount": {
+						"localField": "inventoryAssetAccountNumber",
+						"relatedSchema": "Account",
+						"relatedField": "accountNumber",
+						"cardinality": "many-to-one",
+						"description": "FK to Account for Inventory Asset. MUST resolve within the same administrationId per REQ-CG-001.",
+						"validateOnSave": true
+					},
+					"grIrClearingAccount": {
+						"localField": "grIrClearingAccountNumber",
+						"relatedSchema": "Account",
+						"relatedField": "accountNumber",
+						"cardinality": "many-to-one",
+						"description": "FK to Account for GR/IR clearing. MUST resolve within the same administrationId per REQ-CG-001.",
+						"validateOnSave": true
+					},
+					"inventoryAdjustmentAccount": {
+						"localField": "inventoryAdjustmentAccountNumber",
+						"relatedSchema": "Account",
+						"relatedField": "accountNumber",
+						"cardinality": "many-to-one",
+						"description": "FK to Account for inventory adjustment on countVariance. MUST resolve within the same administrationId per REQ-CG-001.",
+						"validateOnSave": true
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"InventoryValuation": {
+				"slug": "InventoryValuation",
+				"icon": "PackageVariantOutline",
+				"version": "0.1.0",
+				"title": "Inventory Valuation",
+				"description": "Monetary valuation of on-hand inventory items using cost accounting methods (FIFO, average). Primary spec: inventory-cogs-posting. Lifecycle actions postCOGS, postReceipt, and postVariance emit balanced GLTransaction records per T1 REQ-JE-007 on the three stock movement events per REQ-CG-002/003/004. Per ADR-031: no CogsPostingService — posting is fully declarative via x-openregister-lifecycle. ADR-031 exception: InventoryPostingGuard::direction() resolves count-variance sign direction because the lifecycle engine cannot yet express inline sign-conditional GL-line orientation.",
+				"x-schema-org": "schema:Product",
+				"type": "object",
+				"required": [
+					"sku",
+					"warehouse",
+					"quantity",
+					"valuationMethod",
+					"date",
+					"status",
+					"administrationId"
+				],
+				"properties": {
+					"sku": {
+						"type": "string",
+						"description": "Stock keeping unit identifier. FK to Product.sku.",
+						"example": "KZA-001"
+					},
+					"warehouse": {
+						"type": "string",
+						"description": "Warehouse or storage location identifier.",
+						"example": "Magazijn Amsterdam"
+					},
+					"quantity": {
+						"type": "number",
+						"description": "Quantity of items currently in stock.",
+						"example": 15
+					},
+					"unitCost": {
+						"type": "number",
+						"nullable": true,
+						"description": "Cost per unit under the selected valuation method. Provided by inventory-valuation-fifo-avg. Null when valuation has not yet run; lifecycle posting actions are skipped with warning event reason unitCost_missing when null per REQ-CG-002.",
+						"example": 45.00
+					},
+					"totalValue": {
+						"type": "number",
+						"nullable": true,
+						"description": "Total inventory value (quantity × unitCost). Computed by inventory-valuation-fifo-avg.",
+						"example": 675.00
+					},
+					"valuationMethod": {
+						"type": "string",
+						"enum": [
+							"fifo",
+							"average",
+							"specific",
+							"weightedAverage"
+						],
+						"description": "Costing method used to derive unitCost.",
+						"example": "fifo"
+					},
+					"date": {
+						"type": "string",
+						"format": "date",
+						"description": "Date of valuation or inventory count.",
+						"example": "2026-05-01"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"active",
+							"adjusted",
+							"obsolete"
+						],
+						"default": "active",
+						"description": "Lifecycle status managed by x-openregister-lifecycle.",
+						"example": "active"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this valuation. Used to resolve InventoryGLConfig at posting time.",
+						"example": "adm-demo-1"
+					},
+					"glTransactionId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Back-reference to the materialised GLTransaction after the lifecycle posting action fires per D5. Allows drill-down from inventory line to GL transaction and vice versa.",
+						"example": "gl-txn-inv-001"
+					},
+					"postingEvent": {
+						"type": "string",
+						"nullable": true,
+						"enum": [
+							"saleDispatch",
+							"goodsReceipt",
+							"countVariance",
+							"returnDispatch"
+						],
+						"description": "The stock movement event type that triggered the last GL posting. Written back by the lifecycle action alongside glTransactionId.",
+						"example": "saleDispatch"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "status",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Normal on-hand inventory valuation. Stock movement events fire from this state."
+						},
+						"adjusted": {
+							"label": "Adjusted",
+							"description": "Valuation after a count-correction event. Returns to active on the next goodsReceipt or saleDispatch."
+						},
+						"obsolete": {
+							"label": "Obsolete",
+							"description": "Product discontinued or quantity zeroed. No further posting events."
+						}
+					},
+					"transitions": {
+						"saleDispatch": {
+							"from": "active",
+							"to": "active",
+							"label": "Sale / Dispatch",
+							"description": "Quantity decreased by a sale or dispatch event. Fires postCOGS action per REQ-CG-002: Dr cogsAccountNumber, Cr inventoryAssetAccountNumber.",
+							"actions": [
+								{
+									"id": "postCOGS",
+									"trigger": "x-openregister-lifecycle-action",
+									"action": "emit-gl-transaction",
+									"description": "Emit balanced COGS + Inventory Asset GLTransaction per REQ-CG-002. Skipped if unitCost is null (reason: unitCost_missing) or InventoryGLConfig.isActive is false (reason: posting_disabled).",
+									"guard": {
+										"allOf": [
+											{
+												"field": "@self.unitCost",
+												"operator": "notNull"
+											},
+											{
+												"lookup": {
+													"schema": "InventoryGLConfig",
+													"filter": {
+														"administrationId": "@self.administrationId",
+														"isActive": true
+													}
+												},
+												"exists": true
+											}
+										]
+									},
+									"actionParameters": {
+										"register": "shillinq",
+										"targetSchema": "GLTransaction",
+										"fields": {
+											"transactionNumber": {
+												"pattern": "INV-GL-{year}-{seq}"
+											},
+											"postingDate": "@self.date",
+											"periodId": {
+												"autoResolve": "activeFiscalPeriod"
+											},
+											"currency": "EUR",
+											"journalCode": "inkoop",
+											"description": {
+												"template": "COGS verkoop {deltaQuantity}× {sku}"
+											},
+											"state": "posted",
+											"administrationId": "@self.administrationId"
+										},
+										"lines": [
+											{
+												"lineNumber": 1,
+												"side": "debit",
+												"accountNumber": {
+													"lookupFrom": "InventoryGLConfig.cogsAccountNumber",
+													"filter": {
+														"administrationId": "@self.administrationId"
+													}
+												},
+												"amount": {
+													"compute": "@self.deltaQuantity * @self.unitCost"
+												},
+												"currency": "EUR",
+												"subLedgerType": "inventory",
+												"subLedgerRef": "@self.id",
+												"description": {
+													"template": "COGS verkoop {deltaQuantity}× {sku}"
+												}
+											},
+											{
+												"lineNumber": 2,
+												"side": "credit",
+												"accountNumber": {
+													"lookupFrom": "InventoryGLConfig.inventoryAssetAccountNumber",
+													"filter": {
+														"administrationId": "@self.administrationId"
+													}
+												},
+												"amount": {
+													"compute": "@self.deltaQuantity * @self.unitCost"
+												},
+												"currency": "EUR",
+												"subLedgerType": "inventory",
+												"subLedgerRef": "@self.id"
+											}
+										],
+										"writeback": {
+											"fields": {
+												"glTransactionId": "@emitted.id",
+												"postingEvent": "saleDispatch"
+											}
+										}
+									}
+								}
+							]
+						},
+						"goodsReceipt": {
+							"from": "active",
+							"to": "active",
+							"label": "Goods Receipt",
+							"description": "Quantity increased by a confirmed GoodsReceipt. Fires postReceipt action per REQ-CG-003: Dr inventoryAssetAccountNumber, Cr grIrClearingAccountNumber (GR/IR two-step per D3).",
+							"actions": [
+								{
+									"id": "postReceipt",
+									"trigger": "x-openregister-lifecycle-action",
+									"action": "emit-gl-transaction",
+									"description": "Emit balanced Inventory Asset + GR/IR clearing GLTransaction per REQ-CG-003. GR/IR cleared by AP invoice post per bookkeeping-accounts-payable-core REQ-AP-003.",
+									"guard": {
+										"allOf": [
+											{
+												"field": "@self.unitCost",
+												"operator": "notNull"
+											},
+											{
+												"lookup": {
+													"schema": "InventoryGLConfig",
+													"filter": {
+														"administrationId": "@self.administrationId",
+														"isActive": true
+													}
+												},
+												"exists": true
+											}
+										]
+									},
+									"actionParameters": {
+										"register": "shillinq",
+										"targetSchema": "GLTransaction",
+										"fields": {
+											"transactionNumber": {
+												"pattern": "INV-GL-{year}-{seq}"
+											},
+											"postingDate": "@self.date",
+											"periodId": {
+												"autoResolve": "activeFiscalPeriod"
+											},
+											"currency": "EUR",
+											"journalCode": "inkoop",
+											"description": {
+												"template": "Ontvangst {receivedQuantity}× {sku} van leverancier"
+											},
+											"state": "posted",
+											"administrationId": "@self.administrationId"
+										},
+										"lines": [
+											{
+												"lineNumber": 1,
+												"side": "debit",
+												"accountNumber": {
+													"lookupFrom": "InventoryGLConfig.inventoryAssetAccountNumber",
+													"filter": {
+														"administrationId": "@self.administrationId"
+													}
+												},
+												"amount": {
+													"compute": "@self.receivedQuantity * @self.unitCost"
+												},
+												"currency": "EUR",
+												"subLedgerType": "inventory",
+												"subLedgerRef": "@self.id",
+												"description": {
+													"template": "Ontvangst {receivedQuantity}× {sku}"
+												}
+											},
+											{
+												"lineNumber": 2,
+												"side": "credit",
+												"accountNumber": {
+													"lookupFrom": "InventoryGLConfig.grIrClearingAccountNumber",
+													"filter": {
+														"administrationId": "@self.administrationId"
+													}
+												},
+												"amount": {
+													"compute": "@self.receivedQuantity * @self.unitCost"
+												},
+												"currency": "EUR",
+												"subLedgerType": "inventory",
+												"subLedgerRef": "@self.id"
+											}
+										],
+										"writeback": {
+											"fields": {
+												"glTransactionId": "@emitted.id",
+												"postingEvent": "goodsReceipt"
+											}
+										}
+									}
+								}
+							]
+						},
+						"countVariance": {
+							"from": "active",
+							"to": "adjusted",
+							"label": "Count Variance",
+							"description": "Non-zero quantity variance from an inventory count. Fires postVariance action per REQ-CG-004. Direction (debit/credit for Inventory Asset) resolved by ADR-031 exception-path guard OCA\\Shillinq\\Lifecycle\\InventoryPostingGuard::direction. Zero-delta is skipped.",
+							"actions": [
+								{
+									"id": "postVariance",
+									"trigger": "x-openregister-lifecycle-action",
+									"action": "emit-gl-transaction",
+									"description": "Emit balanced Inventory Adjustment + Inventory Asset GLTransaction per REQ-CG-004. Direction determined by InventoryPostingGuard::direction(delta) — positive: Dr Inventory Asset / Cr Inventory Adjustment; negative: Dr Inventory Adjustment / Cr Inventory Asset.",
+									"guard": {
+										"allOf": [
+											{
+												"field": "@self.unitCost",
+												"operator": "notNull"
+											},
+											{
+												"field": "@self.deltaQuantity",
+												"operator": "!=",
+												"value": 0
+											},
+											{
+												"lookup": {
+													"schema": "InventoryGLConfig",
+													"filter": {
+														"administrationId": "@self.administrationId",
+														"isActive": true
+													}
+												},
+												"exists": true
+											}
+										]
+									},
+									"directionGuard": "OCA\\Shillinq\\Lifecycle\\InventoryPostingGuard::direction",
+									"actionParameters": {
+										"register": "shillinq",
+										"targetSchema": "GLTransaction",
+										"fields": {
+											"transactionNumber": {
+												"pattern": "INV-GL-{year}-{seq}"
+											},
+											"postingDate": "@self.date",
+											"periodId": {
+												"autoResolve": "activeFiscalPeriod"
+											},
+											"currency": "EUR",
+											"journalCode": "memo",
+											"description": {
+												"template": "Telkorting/telmeerdering {absDeltaQuantity}× {sku}"
+											},
+											"state": "posted",
+											"administrationId": "@self.administrationId"
+										},
+										"lines": [
+											{
+												"lineNumber": 1,
+												"side": {
+													"guardResult": "direction",
+													"positiveValue": "debit",
+													"negativeValue": "credit"
+												},
+												"accountNumber": {
+													"lookupFrom": "InventoryGLConfig.inventoryAssetAccountNumber",
+													"filter": {
+														"administrationId": "@self.administrationId"
+													}
+												},
+												"amount": {
+													"compute": "@self.absDeltaQuantity * @self.unitCost"
+												},
+												"currency": "EUR",
+												"subLedgerType": "inventory",
+												"subLedgerRef": "@self.id",
+												"description": {
+													"template": "Voorraadmutatie {absDeltaQuantity}× {sku}"
+												}
+											},
+											{
+												"lineNumber": 2,
+												"side": {
+													"guardResult": "direction",
+													"positiveValue": "credit",
+													"negativeValue": "debit"
+												},
+												"accountNumber": {
+													"lookupFrom": "InventoryGLConfig.inventoryAdjustmentAccountNumber",
+													"filter": {
+														"administrationId": "@self.administrationId"
+													}
+												},
+												"amount": {
+													"compute": "@self.absDeltaQuantity * @self.unitCost"
+												},
+												"currency": "EUR",
+												"subLedgerType": "inventory",
+												"subLedgerRef": "@self.id"
+											}
+										],
+										"writeback": {
+											"fields": {
+												"glTransactionId": "@emitted.id",
+												"postingEvent": "countVariance"
+											}
+										}
+									}
+								}
+							]
+						},
+						"returnDispatch": {
+							"from": "active",
+							"to": "active",
+							"label": "Return / Reverse Dispatch",
+							"description": "Quantity increased by a customer return. Emits a reverse GLTransaction (T1 REQ-GL-004 reversal pattern): Dr inventoryAssetAccountNumber, Cr cogsAccountNumber.",
+							"actions": [
+								{
+									"id": "postReturnDispatch",
+									"trigger": "x-openregister-lifecycle-action",
+									"action": "emit-gl-transaction",
+									"description": "Reverse COGS posting for a returned dispatch: Dr Inventory Asset, Cr COGS per REQ-CG-002 reversal.",
+									"guard": {
+										"allOf": [
+											{
+												"field": "@self.unitCost",
+												"operator": "notNull"
+											},
+											{
+												"lookup": {
+													"schema": "InventoryGLConfig",
+													"filter": {
+														"administrationId": "@self.administrationId",
+														"isActive": true
+													}
+												},
+												"exists": true
+											}
+										]
+									},
+									"actionParameters": {
+										"register": "shillinq",
+										"targetSchema": "GLTransaction",
+										"fields": {
+											"transactionNumber": {
+												"pattern": "INV-GL-{year}-{seq}"
+											},
+											"postingDate": "@self.date",
+											"periodId": {
+												"autoResolve": "activeFiscalPeriod"
+											},
+											"currency": "EUR",
+											"journalCode": "inkoop",
+											"description": {
+												"template": "Retour {deltaQuantity}× {sku}"
+											},
+											"state": "posted",
+											"administrationId": "@self.administrationId"
+										},
+										"lines": [
+											{
+												"lineNumber": 1,
+												"side": "debit",
+												"accountNumber": {
+													"lookupFrom": "InventoryGLConfig.inventoryAssetAccountNumber",
+													"filter": {
+														"administrationId": "@self.administrationId"
+													}
+												},
+												"amount": {
+													"compute": "@self.deltaQuantity * @self.unitCost"
+												},
+												"currency": "EUR",
+												"subLedgerType": "inventory",
+												"subLedgerRef": "@self.id",
+												"description": {
+													"template": "Retour {deltaQuantity}× {sku}"
+												}
+											},
+											{
+												"lineNumber": 2,
+												"side": "credit",
+												"accountNumber": {
+													"lookupFrom": "InventoryGLConfig.cogsAccountNumber",
+													"filter": {
+														"administrationId": "@self.administrationId"
+													}
+												},
+												"amount": {
+													"compute": "@self.deltaQuantity * @self.unitCost"
+												},
+												"currency": "EUR",
+												"subLedgerType": "inventory",
+												"subLedgerRef": "@self.id"
+											}
+										],
+										"writeback": {
+											"fields": {
+												"glTransactionId": "@emitted.id",
+												"postingEvent": "returnDispatch"
+											}
+										}
+									}
+								}
+							]
+						},
+						"markObsolete": {
+							"from": [
+								"active",
+								"adjusted"
+							],
+							"to": "obsolete",
+							"label": "Mark Obsolete",
+							"description": "Product discontinued or on-hand quantity zeroed. No further posting events fire from obsolete state."
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"product": {
+						"localField": "sku",
+						"relatedSchema": "Product",
+						"relatedField": "sku",
+						"cardinality": "many-to-one",
+						"description": "FK to Product.sku for the valuated item."
+					},
+					"glTransaction": {
+						"localField": "glTransactionId",
+						"relatedSchema": "GLTransaction",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "Back-reference to the last materialised GLTransaction per D5."
+					},
+					"inventoryGLConfig": {
+						"localField": "administrationId",
+						"relatedSchema": "InventoryGLConfig",
+						"relatedField": "administrationId",
+						"cardinality": "many-to-one",
+						"description": "Resolved at posting time to obtain GL account numbers per REQ-CG-001."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						},
+						"inventory": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
 			}
 		}
 	},
@@ -10983,6 +11655,127 @@
 			"dailyRate": 150.0,
 			"currency": "EUR",
 			"source": "US federal per diem rates (converted to EUR at budget rate)"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryGLConfig",
+				"slug": "invglcfg-adm-demo-1"
+			},
+			"administrationId": "adm-demo-1",
+			"cogsAccountNumber": "7000",
+			"inventoryAssetAccountNumber": "1400",
+			"grIrClearingAccountNumber": "1800",
+			"inventoryAdjustmentAccountNumber": "7100",
+			"isActive": true,
+			"description": "Shillinq demo administratie 2026 — Dutch RGS default account mapping"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryGLConfig",
+				"slug": "invglcfg-adm-demo-2"
+			},
+			"administrationId": "adm-demo-2",
+			"cogsAccountNumber": "7001",
+			"inventoryAssetAccountNumber": "1401",
+			"grIrClearingAccountNumber": "1801",
+			"inventoryAdjustmentAccountNumber": "7101",
+			"isActive": true,
+			"description": "Horecabedrijf De Tulp BV 2026"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryValuation",
+				"slug": "invval-kza-001-amsterdam"
+			},
+			"sku": "KZA-001",
+			"warehouse": "Magazijn Amsterdam",
+			"quantity": 15,
+			"unitCost": 45.00,
+			"totalValue": 675.00,
+			"valuationMethod": "fifo",
+			"date": "2026-05-01",
+			"status": "active",
+			"administrationId": "adm-demo-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryValuation",
+				"slug": "invval-msc-002-amsterdam"
+			},
+			"sku": "MSC-002",
+			"warehouse": "Magazijn Amsterdam",
+			"quantity": 40,
+			"unitCost": 12.50,
+			"totalValue": 500.00,
+			"valuationMethod": "average",
+			"date": "2026-05-01",
+			"status": "active",
+			"administrationId": "adm-demo-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryValuation",
+				"slug": "invval-kbn-003-rotterdam"
+			},
+			"sku": "KBN-003",
+			"warehouse": "Magazijn Rotterdam",
+			"quantity": 120,
+			"unitCost": 8.75,
+			"totalValue": 1050.00,
+			"valuationMethod": "fifo",
+			"date": "2026-05-01",
+			"status": "active",
+			"administrationId": "adm-demo-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "GLTransaction",
+				"slug": "gl-txn-inv-2026-0001"
+			},
+			"transactionNumber": "INV-GL-2026-0001",
+			"postingDate": "2026-05-01",
+			"periodId": "2026-Q2",
+			"currency": "EUR",
+			"journalCode": "inkoop",
+			"description": "COGS verkoop 5× KZA-001",
+			"state": "posted",
+			"administrationId": "adm-demo-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "GLTransaction",
+				"slug": "gl-txn-inv-2026-0002"
+			},
+			"transactionNumber": "INV-GL-2026-0002",
+			"postingDate": "2026-05-01",
+			"periodId": "2026-Q2",
+			"currency": "EUR",
+			"journalCode": "inkoop",
+			"description": "Ontvangst 20× MSC-002 van leverancier",
+			"state": "posted",
+			"administrationId": "adm-demo-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "GLTransaction",
+				"slug": "gl-txn-inv-2026-0003"
+			},
+			"transactionNumber": "INV-GL-2026-0003",
+			"postingDate": "2026-05-01",
+			"periodId": "2026-Q2",
+			"currency": "EUR",
+			"journalCode": "memo",
+			"description": "Telkorting voorraadopname KBN-003",
+			"state": "posted",
+			"administrationId": "adm-demo-1"
 		}
 	]
 }
