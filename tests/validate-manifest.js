@@ -100,7 +100,13 @@ function structuralLint(manifest) {
 	}
 	if (!Array.isArray(manifest.menu)) errors.push('top-level: menu (array) is required')
 	if (!Array.isArray(manifest.pages)) errors.push('top-level: pages (array) is required')
-	const allowedTypes = new Set(['index', 'detail', 'dashboard', 'logs', 'settings', 'chat', 'files', 'custom', 'roadmap', 'report'])
+	// Library default page types (app-manifest schema v1.5: index/detail/dashboard/
+	// logs/settings/chat/files/form/map plus the "custom" escape hatch), extended
+	// with the app-local renderer types Shillinq registers (roadmap, report).
+	const allowedTypes = new Set([
+		'index', 'detail', 'dashboard', 'logs', 'settings', 'chat', 'files',
+		'form', 'map', 'custom', 'roadmap', 'report',
+	])
 	const seenIds = new Set()
 	for (let i = 0; i < (manifest.pages || []).length; i++) {
 		const page = manifest.pages[i]

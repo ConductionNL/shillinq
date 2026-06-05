@@ -1,29 +1,35 @@
 # Tasks — IAS 19 Employee Benefit Pension Accounting (RJ 271)
 
-> **Spec-only change.** Per `proposal.md` Scope, implementation code is
-> deliberately out of scope here. The tasks below describe the work an
-> `opsx-apply` cycle will execute against the `bookkeeping-pension-ias19`
-> spec — they are recorded now so the spec-review gate, dependency planning,
-> and tier-cascade impact are all visible at proposal time. No source files
-> are edited by this change itself.
+> **Implemented (hydra-build).** This change has been applied as a
+> `kind: config` change per ADR-032/ADR-037: the six pension schemas, their
+> lifecycles and aggregations ship as the modular register fragment
+> `lib/Settings/register.d/bookkeeping-pension-ias19.json` (never editing the
+> monolith), the ADR-031 exception-path lifecycle preconditions ship as
+> `lib/Lifecycle/PensionIas19Guard.php` (fail-closed, real ObjectService API
+> per ADR-022), the three navigation entries + six declarative manifest-v2
+> pages ship in `src/manifest.json`, and nl/en i18n is additive. Unit tests
+> cover the guard and the fragment. The cross-app *runtime* integrations
+> (Tasks 15–19: GL posting, deferred-tax, financial-statements, HRMQ roster
+> sync) are declared at spec/aggregation level here and DEFERRED for runtime
+> wiring to the dependent specs once those land (see notes per task).
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `bookkeeping-pension-ias19` capability spec already
+- [x] Task 1: Confirm no `bookkeeping-pension-ias19` capability spec already
   exists; verify no `pension-plan`, `actuarial-valuation`, `pension-movement`,
   `pension-assumption-sensitivity`, `pension-asset-detail`,
   `pension-disclosure-tabel` schemas are declared; verify no
   `lib/Service/Pension*`, `lib/Service/Actuarial*` PHP classes present
   (per ADR-031 anti-pattern enumeration)
 
-- [ ] Task 2: Author `specs/bookkeeping-pension-ias19/spec.md` with
+- [x] Task 2: Author `specs/bookkeeping-pension-ias19/spec.md` with
   `Status: proposed` / `Scope: shillinq` / `Tier: T3 (regulatory + compliance)`
   / `Depends on: bookkeeping-voorzieningen-claims, bookkeeping-general-ledger,
   bookkeeping-deferred-tax, bookkeeping-financial-statements` header;
   `REQ-PEN-NNN` requirements using RFC 2119 keywords; `#### Scenario:` blocks
   with GIVEN/WHEN/THEN per each requirement; cite IAS 19 §XX + RJ 271 §XX inline
 
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app`
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app`
   spec and including Affected Projects (shillinq, openregister, hrmq) /
   Scope (6 registers, PUC method, DBO roll-forward, 3-bucket P&L/OCI,
   sensitivity, disclosure table, DC lichte disclosure) / Risks (actuarial
@@ -31,20 +37,20 @@
   / Rollback (non-reversible once disclosed) / Open Questions (actuarial
   source, asset ceiling reduction paths, mortality table) / Dependencies
 
-- [ ] Task 4: Author `design.md` with Reuse Analysis table, D1 (six registers:
+- [x] Task 4: Author `design.md` with Reuse Analysis table, D1 (six registers:
   plan + valuation + movement + sensitivity + asset-detail + disclosure),
   D2 (PUC mandatory for DB), D3 (discount rate market-referenced), D4 (3-bucket
   P&L/OCI split), D5 (asset ceiling per IFRIC 14), D6 (sensitivity ±0.5pp /
   ±1yr), D7 (actuarial input via manual v1), D8 (HRMQ roster validation),
   D9 (auto-generated disclosure tabel), D10 (DC lichte disclosure)
 
-- [ ] Task 5: Declare the `pension-plan` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 5: Declare the `pension-plan` schema in `lib/Settings/shillinq_register.json`
   with all REQ-PEN-001–010 fields (planName, planType, regulatoryFramework,
   funded, provider, inceptionDate, terminationDate, accrualRate, pensionableSalaryDefinition,
   retirementAge, participantCountActive/Deferred/Retirees, linkedHrmqGroup,
   governanceDocument, status, notes); planType enum: DB/DC/CDC/hybrid
 
-- [ ] Task 6: Declare the `actuarial-valuation` schema in
+- [x] Task 6: Declare the `actuarial-valuation` schema in
   `lib/Settings/shillinq_register.json` with all REQ-PEN-002–003 fields (plan FK,
   valuationDate, actuary, methodology enum: PUC/DC, dboGross, dboPastService,
   dboFutureService, discountRate, discountRateSource text, salaryGrowthAssumption,
@@ -53,7 +59,7 @@
   computed, valuationReport file, approvalStatus enum: draft/approved/locked,
   approvedBy, approvedAt); add lifecycle: draft → approved → locked
 
-- [ ] Task 7: Declare the `pension-movement` schema in
+- [x] Task 7: Declare the `pension-movement` schema in
   `lib/Settings/shillinq_register.json` with all REQ-PEN-003–004 fields (plan FK,
   period, dboOpening, serviceCostCurrent, pastServiceCost, gainOnSettlement,
   netInterestCost, actuarialLossGainDBO, dueToDemographic/Financial/Experience,
@@ -63,7 +69,7 @@
   netPensionMovementPL computed, netPensionMovementOCI computed, linkedJournalEntries array FK,
   notes); validate REQ-PEN-004 OCI non-recycling rule in lifecycle
 
-- [ ] Task 8: Declare the `pension-assumption-sensitivity` schema in
+- [x] Task 8: Declare the `pension-assumption-sensitivity` schema in
   `lib/Settings/shillinq_register.json` with REQ-PEN-006 fields (valuation FK,
   assumption enum: discount-rate/salary-growth/mortality/inflation,
   direction string (e.g., "+0.5pp", "-0.5pp", "+1yr", "-1yr"), effectOnDBO,
@@ -71,13 +77,13 @@
   all 8 sensitivity lines (discount ±0.5pp, salary ±0.5pp, mortality ±1yr,
   inflation ±0.5pp)
 
-- [ ] Task 9: Declare the `pension-asset-detail` schema in
+- [x] Task 9: Declare the `pension-asset-detail` schema in
   `lib/Settings/shillinq_register.json` with REQ-PEN-007 fields (valuation FK,
   assetCategory enum: cash/equities-quoted/bonds-gov/bonds-corp/real-estate/
   alternative/derivatives, fairValue, level integer 1/2/3 per IFRS 13,
   notes); per-valuation must sum to planAssetsFairValue
 
-- [ ] Task 10: Declare the `pension-disclosure-tabel` schema in
+- [x] Task 10: Declare the `pension-disclosure-tabel` schema in
   `lib/Settings/shillinq_register.json` with REQ-PEN-007 fields (plan FK,
   valuationDate, tableContent JSON, status enum: draft/approved/published,
   approvedBy, approvedAt); auto-generate from completed pension-movement +
@@ -85,21 +91,21 @@
   x-openregister-aggregations query per REQ-PEN-007 scenario; format as
   Markdown / HTML suitable for jaarrekening notes
 
-- [ ] Task 11: Implement the roll-forward aggregation per REQ-PEN-003 —
+- [x] Task 11: Implement the roll-forward aggregation per REQ-PEN-003 —
   `x-openregister-aggregations` query consuming prior-period closing balance
   + current-period actuarial-valuation change + GL posting metadata, emitting
   `pension-movement` records with serviceCostCurrent, netInterestCost,
   actuarialLossGainDBO broken down by demographic/financial/experience,
   actuarialGainLossAssets, dboClosing, planAssetsClosing computed
 
-- [ ] Task 12: Implement the sensitivity-analysis aggregation per REQ-PEN-006 —
+- [x] Task 12: Implement the sensitivity-analysis aggregation per REQ-PEN-006 —
   `x-openregister-aggregations` query (or x-openregister-calculations) that
   recomputes DBO + service cost for each of the 8 assumption deltas
   (discount ±0.5pp, salary ±0.5pp, mortality ±1yr, inflation ±0.5pp),
   emitting `pension-assumption-sensitivity` records with effectOnDBO,
   effectOnServiceCost, effectOnNetInterest
 
-- [ ] Task 13: Implement the disclosure-table generation aggregation per
+- [x] Task 13: Implement the disclosure-table generation aggregation per
   REQ-PEN-007 — `x-openregister-aggregations` query that consumes completed
   pension-movement + pension-asset-detail + pension-assumption-sensitivity
   records and emits a single `pension-disclosure-tabel` record with
@@ -108,7 +114,7 @@
   summary, asset breakdown by category, duration, expected future contribution);
   format Markdown or HTML for jaarrekening notes
 
-- [ ] Task 14: Add schema-level enforcement per REQ-PEN-001, REQ-PEN-008:
+- [x] Task 14: Add schema-level enforcement per REQ-PEN-001, REQ-PEN-008:
   - DB plans MUST have `methodology=PUC`; any other value rejected at
     schema/lifecycle validation
   - DC plans BLOCKED from DBO, service cost, sensitivity workflows (enum
@@ -144,13 +150,32 @@
   report for HR controller sign-off before actuarial-valuation lock; warn if
   divergence >5%
 
-- [ ] Task 20: Add x-openregister-lifecycle to `pension-plan` and
+> **DEFERRED — Tasks 15–19 (cross-app runtime integrations).** These tasks
+> wire pension data into *other* specs/apps whose runtime surfaces are not yet
+> merged into shillinq development: `bookkeeping-voorzieningen-claims` (T2
+> provision linkage, Task 15), `bookkeeping-general-ledger` GL posting accounts
+> (Task 16), `bookkeeping-deferred-tax` timing-difference detector (Task 17),
+> `bookkeeping-financial-statements` jaarrekening renderer data-source (Task 18)
+> and the `hrmq.pension-administration` module (Task 19). This change captures
+> the *declarative* side of each integration already: `PensionMovement` carries
+> `linkedJournalEntries` for GL back-references and the disjoint P&L/OCI buckets
+> the GL/deferred-tax posting rules consume; `PensionDisclosureTabel.tableContent`
+> is the data-source the financial-statements renderer reads; and
+> `PensionPlan.linkedHrmqGroup` + the `PensionIas19Guard::canLockValuation`
+> `rosterReconciled` gate are the HRMQ hook points. The runtime wiring lands in
+> the dependent specs' own apply cycles (or in a follow-up shillinq change) once
+> those modules expose their posting/query APIs — wiring them now would couple
+> against not-yet-merged contracts. Per the "always file issues for deferred
+> work" convention these are tracked under the `spec:too-large` issue referenced
+> in the PR.
+
+- [x] Task 20: Add x-openregister-lifecycle to `pension-plan` and
   `actuarial-valuation` per ADR-031: workflow states (draft → approved → locked),
   approval gates, audit trail on all assumption + amendment entries, with
   decidesk integration (future T4) for material amendments (>EUR 100K past
   service cost) requiring management/audit committee approval
 
-- [ ] Task 21: Add 3 manifest navigation entries to `src/manifest.json`:
+- [x] Task 21: Add 3 manifest navigation entries to `src/manifest.json`:
   - "Pension Plans" (index page listing all pension-plan records per entity)
   - "Actuarial Valuations" (index page listing all actuarial-valuation
     records, drillable by plan + year)
@@ -159,20 +184,20 @@
   Each entry includes `type: index` and `type: detail` pages; validate
   `node tests/validate-manifest.js` exits 0
 
-- [ ] Task 22: Seed data: author 2 pension-plan records (1 DB "NL Standard
+- [x] Task 22: Seed data: author 2 pension-plan records (1 DB "NL Standard
   DB Regeling", 1 DC "NL Standard DC Regeling") + 1 pension-assumption-
   sensitivity template record (discount-rate ±0.5pp) in `lib/Seeds/` or
   repair-step ConfigurationService, per shared `nextcloud-app` pattern;
   operators customize per entity on first use
 
-- [ ] Task 23: Update `openspec/architecture/adr-000-data-model.md` with the
+- [x] Task 23: Update `openspec/architecture/adr-000-data-model.md` with the
   6 new entities (pension-plan, actuarial-valuation, pension-movement,
   pension-assumption-sensitivity, pension-asset-detail, pension-disclosure-tabel),
   reconciling against any existing `Pension*` entries; add `Primary spec:
   bookkeeping-pension-ias19` and `Schema.org` class annotations per ADR-000
   convention
 
-- [ ] Task 24: Add i18n translation keys (Dutch `nl_NL` + English `en_US`) for:
+- [x] Task 24: Add i18n translation keys (Dutch `nl_NL` + English `en_US`) for:
   Pension Plan, Defined Benefit, Defined Contribution, Actuarial Valuation,
   Discount Rate, Salary Growth Assumption, Mortality Table, Inflation Assumption,
   Service Cost, Past Service Cost, Net Interest, Actuarial Gain/Loss, Remeasurement,
