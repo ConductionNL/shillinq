@@ -1,0 +1,677 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "invoice-from-time-and-expense",
+		"adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+		"description": "T2 — Invoice generation from approved billable time (UrenRegistratie) and expenses (Receipt/ExpenseClaimEntry). Two new schemas: Invoice (header + billing model + source references + snapshot summary) and InvoiceLine (per-line source-typed cost with snapshot rate, child of Invoice). Five billing models (t_and_m, fixed_fee, milestone, retainer, mixed). All line totals, VAT and invoice roll-ups are declarative (x-openregister-calculations on InvoiceLine, x-openregister-aggregations on Invoice) per ADR-031 — no BillingModelEngine.php / VATCalculationService.php / InvoiceGenerationService.php services. Lifecycle (draft → posted → cancelled) is declarative; cross-schema preconditions (source-id deduplication to prevent double-invoicing, journal balance on post, milestone-completion gate, retainer presence) delegate to OCA\\Shillinq\\Lifecycle\\InvoiceGuard (ADR-031 exception path, fail-closed). Reuses existing schemas — RateCard for rates, UrenRegistratie for time, Receipt for expenses, Project for the customer FK (a customer is a Project.customerId contact reference, never an invented schema), JournalEntry/GLTransaction for GL posting (ADR-022 real ObjectService API only). Posting materialises one balanced JournalEntry via the JournalEntry lifecycle action (Debit 1300 AR, Credit revenue-by-model, Credit 1500 BTW payable). Seed data ships three worked invoices (T&M, fixed-fee, retainer+overage) matching design.md examples. Multi-currency, payment processing, recurring invoicing, milestone revenue recognition and PDF templating are DEFERRED (out of scope per proposal.md / design.md Non-Goals) — see tasks.md."
+	},
+	"components": {
+		"schemas": {
+			"Invoice": {
+				"slug": "Invoice",
+				"icon": "FileDocumentOutline",
+				"version": "0.1.0",
+				"title": "Invoice",
+				"description": "A sales invoice drafted from approved billable time (UrenRegistratie) and expenses (Receipt), supporting five billing models (REQ-ITE-001). The header snapshots the customer, billing model, source-id sets and the rate/retainer references used at draft time; per-line cost detail lives in child InvoiceLine rows. Net/VAT/gross roll up declaratively from the lines (x-openregister-aggregations). Posting materialises exactly one balanced JournalEntry (REQ-ITE-005). Rate snapshots are immutable after draft so a later RateCard change never alters a historical invoice (design D2).",
+				"x-schema-org": "schema:Invoice",
+				"x-spec": "openspec/changes/invoice-from-time-and-expense/specs/invoice-from-time-and-expense/spec.md",
+				"type": "object",
+				"required": [
+					"invoiceNumber",
+					"invoiceDate",
+					"dueDate",
+					"billingModel",
+					"customerId",
+					"administrationId",
+					"state"
+				],
+				"properties": {
+					"invoiceNumber": {
+						"type": "string",
+						"description": "Sequential invoice number unique per administration + fiscal year (REQ-ITE-001).",
+						"example": "2026-001"
+					},
+					"invoiceDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Invoice issue date.",
+						"example": "2026-05-21"
+					},
+					"dueDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Payment due date (typically invoiceDate + 30 days).",
+						"example": "2026-06-20"
+					},
+					"billingModel": {
+						"type": "string",
+						"enum": [
+							"t_and_m",
+							"fixed_fee",
+							"milestone",
+							"retainer",
+							"mixed"
+						],
+						"description": "Billing model that defines how line items are calculated and grouped (REQ-ITE-001, design D1). Set at draft time, immutable after posting."
+					},
+					"customerId": {
+						"type": "string",
+						"description": "FK to the customer contact record (Project.customerId / NC contact). A customer is a Nextcloud contact reference, never an invented schema.",
+						"example": "cust-1"
+					},
+					"projectId": {
+						"type": "string",
+						"description": "FK to Project.code the invoice is raised against (single-project per invoice in T2).",
+						"nullable": true,
+						"example": "PRJ-WIDGET"
+					},
+					"rateCardId": {
+						"type": "string",
+						"description": "FK to the RateCard applied for T&M / overage rate resolution (null for pure fixed-fee / milestone).",
+						"nullable": true,
+						"example": "rate-card-consulting"
+					},
+					"retainerScheduleId": {
+						"type": "string",
+						"description": "FK to the RetainerSchedule applied for retainer / mixed models (null otherwise). Resolved as RateSchedule in this app's register.",
+						"nullable": true,
+						"example": "retainer-support-monthly"
+					},
+					"timeEntryIds": {
+						"type": "array",
+						"description": "UrenRegistratie ids included in this invoice. Deduplicated against other non-cancelled invoices on draft/post to prevent double-invoicing (REQ-ITE-007, design D9).",
+						"items": {
+							"type": "string"
+						}
+					},
+					"expenseIds": {
+						"type": "array",
+						"description": "Receipt ids included in this invoice. Deduplicated against other non-cancelled invoices on draft/post (REQ-ITE-007).",
+						"items": {
+							"type": "string"
+						}
+					},
+					"vatRate": {
+						"type": "number",
+						"description": "Default Dutch BTW rate applied where a line does not override it. One of 21, 9, 6, 0 (REQ-ITE-009).",
+						"enum": [
+							21,
+							9,
+							6,
+							0
+						],
+						"default": 21,
+						"example": 21
+					},
+					"paymentTerms": {
+						"type": "string",
+						"description": "Human-readable payment terms shown on the invoice.",
+						"default": "net 30",
+						"example": "net 30"
+					},
+					"notes": {
+						"type": "string",
+						"description": "Optional free-text note shown on the invoice footer.",
+						"nullable": true
+					},
+					"lineItemsByModel": {
+						"type": "object",
+						"description": "Audit metadata keyed by source type → {count, costAmount} in cents. For fixed-fee / milestone the time_entry bucket carries the logged-hours count but zero cost (design D5/D6).",
+						"additionalProperties": true,
+						"nullable": true
+					},
+					"glTransactionId": {
+						"type": "string",
+						"description": "FK to the GLTransaction materialised on posting via the JournalEntry it created (REQ-ITE-005). Set by the lifecycle action.",
+						"nullable": true
+					},
+					"journalEntryId": {
+						"type": "string",
+						"description": "FK to the JournalEntry materialised on posting (REQ-ITE-005).",
+						"nullable": true
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the administration this invoice belongs to (RBAC + numbering scope).",
+						"example": "admin-1"
+					},
+					"state": {
+						"type": "string",
+						"description": "Lifecycle state — see x-openregister-lifecycle.",
+						"default": "draft"
+					}
+				},
+				"x-openregister-aggregations": {
+					"netAmount": {
+						"description": "net = SUM(InvoiceLine.costAmount) over this invoice's lines, in cents (REQ-ITE-003).",
+						"join": {
+							"schema": "InvoiceLine",
+							"condition": "InvoiceLine.invoiceId = @self.id"
+						},
+						"operations": {
+							"netAmount": {
+								"field": "InvoiceLine.costAmount",
+								"operation": "sum"
+							}
+						}
+					},
+					"vatAmount": {
+						"description": "vat = SUM(InvoiceLine.lineVatAmount) over this invoice's lines, in cents (REQ-ITE-009).",
+						"join": {
+							"schema": "InvoiceLine",
+							"condition": "InvoiceLine.invoiceId = @self.id"
+						},
+						"operations": {
+							"vatAmount": {
+								"field": "InvoiceLine.lineVatAmount",
+								"operation": "sum"
+							}
+						}
+					},
+					"grossAmount": {
+						"description": "gross = SUM(InvoiceLine.lineGrossAmount) over this invoice's lines, in cents (REQ-ITE-009).",
+						"join": {
+							"schema": "InvoiceLine",
+							"condition": "InvoiceLine.invoiceId = @self.id"
+						},
+						"operations": {
+							"grossAmount": {
+								"field": "InvoiceLine.lineGrossAmount",
+								"operation": "sum"
+							}
+						}
+					},
+					"lineCount": {
+						"description": "Number of InvoiceLine rows on this invoice.",
+						"join": {
+							"schema": "InvoiceLine",
+							"condition": "InvoiceLine.invoiceId = @self.id"
+						},
+						"operations": {
+							"lineCount": {
+								"field": "InvoiceLine.id",
+								"operation": "count"
+							}
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"lines": {
+						"localField": "id",
+						"relatedSchema": "InvoiceLine",
+						"relatedField": "invoiceId",
+						"cardinality": "one-to-many",
+						"description": "The cost lines of this invoice (REQ-ITE-002)."
+					},
+					"rateCard": {
+						"localField": "rateCardId",
+						"relatedSchema": "RateCard",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "The rate card whose rates were snapshot at draft time (design D2)."
+					},
+					"project": {
+						"localField": "projectId",
+						"relatedSchema": "Project",
+						"relatedField": "code",
+						"cardinality": "many-to-one",
+						"description": "The project this invoice is raised against."
+					},
+					"journalEntry": {
+						"localField": "journalEntryId",
+						"relatedSchema": "JournalEntry",
+						"relatedField": "id",
+						"cardinality": "one-to-one",
+						"description": "The JournalEntry materialised when this invoice was posted (REQ-ITE-005)."
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "state",
+					"initialState": "draft",
+					"states": {
+						"draft": {
+							"label": "Draft",
+							"description": "Editable. Lines, rates and source references may be changed before posting. Source ids are deduplicated against other non-cancelled invoices."
+						},
+						"posted": {
+							"label": "Posted",
+							"description": "Booked to accounts receivable. Materialised into exactly one balanced JournalEntry (REQ-ITE-005). Immutable — billing model and rate snapshots are frozen."
+						},
+						"cancelled": {
+							"label": "Cancelled",
+							"description": "Superseded draft. Releases its source ids for re-invoicing. A posted invoice is never cancelled — corrections are made by a credit note (T3+)."
+						}
+					},
+					"transitions": {
+						"post": {
+							"from": "draft",
+							"to": "posted",
+							"label": "Post to AR",
+							"description": "Validate (no duplicate source ids, model-consistent lines, retainer present for retainer/mixed, milestone complete for milestone) then materialise one balanced JournalEntry: Debit 1300 (AR) gross, Credit revenue-by-model net, Credit 1500 (BTW payable) vat (REQ-ITE-005). Gated by the InvoiceGuard cross-schema precondition.",
+							"requires": "OCA\\Shillinq\\Lifecycle\\InvoiceGuard::canPost",
+							"actions": [
+								{
+									"trigger": "x-openregister-lifecycle-action",
+									"action": "materialise-journal-entry",
+									"description": "Materialise exactly one balanced JournalEntry per REQ-ITE-005; sets journalEntryId / glTransactionId."
+								}
+							]
+						},
+						"cancel": {
+							"from": "draft",
+							"to": "cancelled",
+							"label": "Cancel draft",
+							"description": "Cancel an un-posted draft, releasing its time/expense source ids for re-invoicing (REQ-ITE-007). Posted invoices cannot be cancelled.",
+							"requires": "OCA\\Shillinq\\Lifecycle\\InvoiceGuard::canCancel"
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"billing-operator": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"bookkeeper": {
+							"permissions": [
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"InvoiceLine": {
+				"slug": "InvoiceLine",
+				"icon": "FormatListNumbered",
+				"version": "0.1.0",
+				"title": "Invoice Line",
+				"description": "A single cost line on an Invoice, typed by source (time_entry, expense, retainer_charge, fixed_fee, milestone, manual) (REQ-ITE-002). For time lines the applied rate is snapshot into rateApplied so a later RateCard change never re-prices a historical line (design D2). lineNetAmount, lineVatAmount and lineGrossAmount are derived declaratively (x-openregister-calculations) from costAmount × vatRate — no VATCalculationService.php (ADR-031). costAmount is the authoritative net line cost in cents.",
+				"x-schema-org": "schema:Invoice",
+				"x-spec": "openspec/changes/invoice-from-time-and-expense/specs/invoice-from-time-and-expense/spec.md",
+				"type": "object",
+				"required": [
+					"invoiceId",
+					"lineNumber",
+					"sourceType",
+					"description",
+					"costAmount",
+					"administrationId"
+				],
+				"properties": {
+					"invoiceId": {
+						"type": "string",
+						"description": "FK to the parent Invoice.id (REQ-ITE-002).",
+						"example": "inv-1"
+					},
+					"lineNumber": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "1-based position of this line on the invoice.",
+						"example": 1
+					},
+					"sourceType": {
+						"type": "string",
+						"enum": [
+							"time_entry",
+							"expense",
+							"retainer_charge",
+							"fixed_fee",
+							"milestone",
+							"manual"
+						],
+						"description": "Origin of this line (REQ-ITE-002)."
+					},
+					"sourceId": {
+						"type": "string",
+						"description": "FK to the originating record (UrenRegistratie id for time_entry, Receipt id for expense). Null for synthetic lines (retainer_charge / fixed_fee / milestone).",
+						"nullable": true
+					},
+					"description": {
+						"type": "string",
+						"description": "Human-readable line description, e.g. 'Senior Consultant — 40 hours @ €150/hr'.",
+						"example": "Senior Consultant — 40 hours @ €150/hr"
+					},
+					"billableUnits": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Hours (time) or count (expense) before markup. Informational; cost is authoritative.",
+						"nullable": true,
+						"example": 40
+					},
+					"rateApplied": {
+						"type": "object",
+						"description": "Snapshot of the rate used: {rate (cents/unit), currency, rateCardVersion, effectiveDate}. Immutable after draft (design D2). Null for expense / non-rate lines.",
+						"nullable": true,
+						"additionalProperties": true
+					},
+					"markup": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 100,
+						"description": "Markup percentage applied to the raw rate × units (0-100). Default 0 (REQ-ITE-002).",
+						"default": 0,
+						"example": 0
+					},
+					"costAmount": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Final net line cost in cents after rate × units × (1 + markup/100), banker's-rounded to the cent (REQ-ITE-002 / REQ-ITE-009). Authoritative.",
+						"example": 600000
+					},
+					"vatRate": {
+						"type": "number",
+						"enum": [
+							21,
+							9,
+							6,
+							0
+						],
+						"description": "Dutch BTW rate for this line (REQ-ITE-009).",
+						"default": 21,
+						"example": 21
+					},
+					"modelSpecificFields": {
+						"type": "object",
+						"description": "{milestoneId, milestoneCompletedAt, milestoneName} for milestone lines; {retainerMonth} for retainer_charge lines; {} otherwise (design D6, REQ-ITE-008).",
+						"nullable": true,
+						"additionalProperties": true
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the administration (RBAC scope), mirrors the parent invoice.",
+						"example": "admin-1"
+					}
+				},
+				"x-openregister-calculations": {
+					"lineVatAmount": {
+						"type": "integer",
+						"description": "Line BTW in cents = round(costAmount × vatRate / 100) (REQ-ITE-009). Declarative per ADR-031 — no VATCalculationService.php.",
+						"expr": "round(@self.costAmount * @self.vatRate / 100)"
+					},
+					"lineNetAmount": {
+						"type": "integer",
+						"description": "Net line amount in cents (alias of costAmount, exposed for invoice-line reporting parity).",
+						"expr": "@self.costAmount"
+					},
+					"lineGrossAmount": {
+						"type": "integer",
+						"description": "Gross line amount in cents = costAmount + lineVatAmount (REQ-ITE-009).",
+						"expr": "@self.costAmount + round(@self.costAmount * @self.vatRate / 100)"
+					}
+				},
+				"x-openregister-relations": {
+					"invoice": {
+						"localField": "invoiceId",
+						"relatedSchema": "Invoice",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "The parent invoice (REQ-ITE-002)."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"billing-operator": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			}
+		},
+		"objects": [
+			{
+				"@self": {
+					"register": "shillinq",
+					"schema": "Invoice",
+					"slug": "ite-sample-tm-2026-001"
+				},
+				"invoiceNumber": "2026-001",
+				"invoiceDate": "2026-05-21",
+				"dueDate": "2026-06-20",
+				"billingModel": "t_and_m",
+				"customerId": "cust-clientcorp",
+				"projectId": "PRJ-WIDGET",
+				"rateCardId": "rate-card-consulting",
+				"retainerScheduleId": null,
+				"timeEntryIds": [
+					"ite-time-001",
+					"ite-time-002"
+				],
+				"expenseIds": [
+					"ite-expense-001"
+				],
+				"vatRate": 21,
+				"paymentTerms": "net 30",
+				"lineItemsByModel": {
+					"time_entry": {
+						"count": 2,
+						"costAmount": 800000
+					},
+					"expense": {
+						"count": 1,
+						"costAmount": 15000
+					}
+				},
+				"administrationId": "admin-1",
+				"state": "posted"
+			},
+			{
+				"@self": {
+					"register": "shillinq",
+					"schema": "InvoiceLine",
+					"slug": "ite-sample-tm-line-1"
+				},
+				"invoiceId": "ite-sample-tm-2026-001",
+				"lineNumber": 1,
+				"sourceType": "time_entry",
+				"sourceId": "ite-time-001",
+				"description": "Senior Consultant — 40 hours @ €150/hr",
+				"billableUnits": 40,
+				"rateApplied": {
+					"rate": 15000,
+					"currency": "EUR",
+					"rateCardVersion": "v1",
+					"effectiveDate": "2026-05-21"
+				},
+				"markup": 0,
+				"costAmount": 600000,
+				"vatRate": 21,
+				"administrationId": "admin-1"
+			},
+			{
+				"@self": {
+					"register": "shillinq",
+					"schema": "InvoiceLine",
+					"slug": "ite-sample-tm-line-2"
+				},
+				"invoiceId": "ite-sample-tm-2026-001",
+				"lineNumber": 2,
+				"sourceType": "time_entry",
+				"sourceId": "ite-time-002",
+				"description": "Junior Consultant — 20 hours @ €100/hr",
+				"billableUnits": 20,
+				"rateApplied": {
+					"rate": 10000,
+					"currency": "EUR",
+					"rateCardVersion": "v1",
+					"effectiveDate": "2026-05-21"
+				},
+				"markup": 0,
+				"costAmount": 200000,
+				"vatRate": 21,
+				"administrationId": "admin-1"
+			},
+			{
+				"@self": {
+					"register": "shillinq",
+					"schema": "InvoiceLine",
+					"slug": "ite-sample-tm-line-3"
+				},
+				"invoiceId": "ite-sample-tm-2026-001",
+				"lineNumber": 3,
+				"sourceType": "expense",
+				"sourceId": "ite-expense-001",
+				"description": "Travel costs — Amsterdam to Rotterdam",
+				"billableUnits": 1,
+				"rateApplied": null,
+				"markup": 0,
+				"costAmount": 15000,
+				"vatRate": 21,
+				"administrationId": "admin-1"
+			},
+			{
+				"@self": {
+					"register": "shillinq",
+					"schema": "Invoice",
+					"slug": "ite-sample-fixed-2026-002"
+				},
+				"invoiceNumber": "2026-002",
+				"invoiceDate": "2026-05-21",
+				"dueDate": "2026-06-20",
+				"billingModel": "fixed_fee",
+				"customerId": "cust-startupcorp",
+				"projectId": "PRJ-REDESIGN",
+				"rateCardId": null,
+				"retainerScheduleId": null,
+				"timeEntryIds": [
+					"ite-time-004",
+					"ite-time-005"
+				],
+				"expenseIds": [],
+				"vatRate": 21,
+				"paymentTerms": "net 30",
+				"lineItemsByModel": {
+					"time_entry": {
+						"count": 2,
+						"costAmount": 0
+					},
+					"fixed_fee": {
+						"count": 1,
+						"costAmount": 5000000
+					}
+				},
+				"administrationId": "admin-1",
+				"state": "posted"
+			},
+			{
+				"@self": {
+					"register": "shillinq",
+					"schema": "InvoiceLine",
+					"slug": "ite-sample-fixed-line-1"
+				},
+				"invoiceId": "ite-sample-fixed-2026-002",
+				"lineNumber": 1,
+				"sourceType": "fixed_fee",
+				"sourceId": null,
+				"description": "Website redesign — Q2 2026 project (fixed fee)",
+				"billableUnits": 1,
+				"rateApplied": null,
+				"markup": 0,
+				"costAmount": 5000000,
+				"vatRate": 21,
+				"modelSpecificFields": {},
+				"administrationId": "admin-1"
+			},
+			{
+				"@self": {
+					"register": "shillinq",
+					"schema": "Invoice",
+					"slug": "ite-sample-retainer-2026-003"
+				},
+				"invoiceNumber": "2026-003",
+				"invoiceDate": "2026-05-21",
+				"dueDate": "2026-06-20",
+				"billingModel": "retainer",
+				"customerId": "cust-enterprisecorp",
+				"projectId": "PRJ-SUPPORT",
+				"rateCardId": "rate-card-support",
+				"retainerScheduleId": "retainer-support-monthly",
+				"timeEntryIds": [
+					"ite-time-008"
+				],
+				"expenseIds": [],
+				"vatRate": 21,
+				"paymentTerms": "net 30",
+				"lineItemsByModel": {
+					"retainer_charge": {
+						"count": 1,
+						"costAmount": 300000
+					},
+					"time_entry": {
+						"count": 1,
+						"costAmount": 100000
+					}
+				},
+				"administrationId": "admin-1",
+				"state": "posted"
+			},
+			{
+				"@self": {
+					"register": "shillinq",
+					"schema": "InvoiceLine",
+					"slug": "ite-sample-retainer-line-1"
+				},
+				"invoiceId": "ite-sample-retainer-2026-003",
+				"lineNumber": 1,
+				"sourceType": "retainer_charge",
+				"sourceId": null,
+				"description": "Monthly retainer — May 2026",
+				"billableUnits": 1,
+				"rateApplied": null,
+				"markup": 0,
+				"costAmount": 300000,
+				"vatRate": 21,
+				"modelSpecificFields": {
+					"retainerMonth": "2026-05"
+				},
+				"administrationId": "admin-1"
+			},
+			{
+				"@self": {
+					"register": "shillinq",
+					"schema": "InvoiceLine",
+					"slug": "ite-sample-retainer-line-2"
+				},
+				"invoiceId": "ite-sample-retainer-2026-003",
+				"lineNumber": 2,
+				"sourceType": "time_entry",
+				"sourceId": "ite-time-008",
+				"description": "Overage — 10 hours @ €100/hr",
+				"billableUnits": 10,
+				"rateApplied": {
+					"rate": 10000,
+					"currency": "EUR",
+					"rateCardVersion": "v1",
+					"effectiveDate": "2026-05-21"
+				},
+				"markup": 0,
+				"costAmount": 100000,
+				"vatRate": 21,
+				"administrationId": "admin-1"
+			}
+		]
+	}
+}

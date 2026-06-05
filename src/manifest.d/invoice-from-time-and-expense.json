@@ -1,0 +1,148 @@
+{
+	"menu": [
+		{
+			"id": "Billing",
+			"label": "Billing",
+			"icon": "FileDocumentOutline",
+			"order": 60,
+			"children": [
+				{
+					"id": "Invoices",
+					"label": "Invoices",
+					"icon": "FileDocumentMultipleOutline",
+					"route": "Invoices",
+					"order": 10
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "Invoices",
+			"route": "/billing/invoices",
+			"type": "index",
+			"title": "Invoices",
+			"config": {
+				"register": "shillinq",
+				"schema": "Invoice",
+				"columns": [
+					{
+						"key": "invoiceNumber",
+						"label": "Invoice number",
+						"sortable": true
+					},
+					{
+						"key": "invoiceDate",
+						"label": "Invoice date",
+						"sortable": true
+					},
+					{
+						"key": "dueDate",
+						"label": "Due date",
+						"sortable": true
+					},
+					{
+						"key": "billingModel",
+						"label": "Billing model",
+						"sortable": true
+					},
+					{
+						"key": "customerId",
+						"label": "Customer",
+						"sortable": true
+					},
+					{
+						"key": "grossAmount",
+						"label": "Gross amount",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "State",
+						"sortable": true
+					}
+				],
+				"defaultSort": "invoiceDate",
+				"detailRoute": "InvoiceDetail"
+			}
+		},
+		{
+			"id": "InvoiceDetail",
+			"route": "/billing/invoices/:id",
+			"type": "detail",
+			"title": "Invoice",
+			"config": {
+				"register": "shillinq",
+				"schema": "Invoice",
+				"fields": [
+					{
+						"key": "invoiceNumber",
+						"label": "Invoice number",
+						"type": "string"
+					},
+					{
+						"key": "invoiceDate",
+						"label": "Invoice date",
+						"type": "string"
+					},
+					{
+						"key": "dueDate",
+						"label": "Due date",
+						"type": "string"
+					},
+					{
+						"key": "billingModel",
+						"label": "Billing model",
+						"type": "string"
+					},
+					{
+						"key": "customerId",
+						"label": "Customer",
+						"type": "string"
+					},
+					{
+						"key": "projectId",
+						"label": "Project",
+						"type": "string"
+					},
+					{
+						"key": "rateCardId",
+						"label": "Rate card",
+						"type": "string"
+					},
+					{
+						"key": "retainerScheduleId",
+						"label": "Retainer schedule",
+						"type": "string"
+					},
+					{
+						"key": "netAmount",
+						"label": "Net amount",
+						"type": "number"
+					},
+					{
+						"key": "vatAmount",
+						"label": "BTW amount",
+						"type": "number"
+					},
+					{
+						"key": "grossAmount",
+						"label": "Gross amount",
+						"type": "number"
+					},
+					{
+						"key": "paymentTerms",
+						"label": "Payment terms",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "State",
+						"type": "string"
+					}
+				],
+				"indexRoute": "Invoices"
+			}
+		}
+	]
+}
