@@ -137,7 +137,23 @@
         "Materiële vaste activa": "Materiële vaste activa",
         "Eigen vermogen": "Eigen vermogen",
         "Schulden": "Schulden",
-        "Niet-uit-balans-verplichtingen": "Niet-uit-balans-verplichtingen"
+        "Niet-uit-balans-verplichtingen": "Niet-uit-balans-verplichtingen",
+        "Trial Balance": "Proefbalans",
+        "Trial Balance (by account)": "Proefbalans (per rekening)",
+        "Trial Balance Line": "Proefbalansregel",
+        "Period": "Periode",
+        "Account Number": "Rekeningnummer",
+        "Account Name": "Rekeningnaam",
+        "Account Type": "Rekeningtype",
+        "Opening Balance": "Openingsbalans",
+        "Debits": "Debet",
+        "Credits": "Credit",
+        "Closing Balance": "Eindbalans",
+        "Total Assets": "Totaal activa",
+        "Total Liabilities": "Totaal passiva",
+        "Total Equity": "Totaal eigen vermogen",
+        "Trial balance is balanced": "Proefbalans is in balans",
+        "Trial balance is not balanced": "Proefbalans is niet in balans"
     },
     "plurals": ""
 }

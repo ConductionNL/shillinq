@@ -125,6 +125,13 @@
 					"order": 81
 				},
 				{
+					"id": "TrialBalanceLines",
+					"label": "Trial Balance (by account)",
+					"icon": "ScaleBalance",
+					"route": "TrialBalanceLines",
+					"order": 815
+				},
+				{
 					"id": "Consolidations",
 					"label": "Consolidations",
 					"icon": "AccountMultipleOutline",
@@ -2915,6 +2922,76 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "TrialBalance"
+			}
+		},
+		{
+			"id": "TrialBalanceLines",
+			"route": "/financial-statements/trial-balance-lines",
+			"type": "index",
+			"title": "Trial Balance (by account)",
+			"config": {
+				"register": "shillinq",
+				"schema": "TrialBalanceLine",
+				"columns": [
+					{
+						"key": "periodId",
+						"label": "Period",
+						"sortable": true
+					},
+					{
+						"key": "accountNumber",
+						"label": "Account Number",
+						"sortable": true
+					},
+					{
+						"key": "accountName",
+						"label": "Account Name",
+						"sortable": true
+					},
+					{
+						"key": "accountType",
+						"label": "Account Type",
+						"sortable": true
+					},
+					{
+						"key": "openingBalance",
+						"label": "Opening Balance",
+						"sortable": true
+					},
+					{
+						"key": "debitMovement",
+						"label": "Debits",
+						"sortable": true
+					},
+					{
+						"key": "creditMovement",
+						"label": "Credits",
+						"sortable": true
+					},
+					{
+						"key": "closingBalance",
+						"label": "Closing Balance",
+						"sortable": true
+					}
+				],
+				"filters": [
+					{
+						"key": "periodId",
+						"label": "Period",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "accountType",
+						"label": "Account Type",
+						"type": "string"
+					}
+				],
+				"defaultSort": "accountNumber"
 			}
 		},
 		{
