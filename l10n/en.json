@@ -248,7 +248,27 @@
         "Taxable base": "Taxable base",
         "VAT amount": "VAT amount",
         "Quarter": "Quarter",
-        "Year": "Year"
+        "Year": "Year",
+        "Administrations": "Administrations",
+        "Create Administration": "Create Administration",
+        "Archive Administration": "Archive Administration",
+        "Archived": "Archived",
+        "Switch Administration": "Switch Administration",
+        "Administration not found": "Administration not found",
+        "Owner": "Owner",
+        "Controller": "Controller",
+        "Bookkeeper": "Bookkeeper",
+        "Viewer": "Viewer",
+        "External Accountant": "External Accountant",
+        "Intercompany Transaction": "Intercompany Transaction",
+        "Consolidation Mapping": "Consolidation Mapping",
+        "Fixed Asset Transfer": "Fixed Asset Transfer",
+        "Accounting Period": "Accounting Period",
+        "Backup Schedule": "Backup Schedule",
+        "Data Retention": "Data Retention",
+        "Fiscal Unit (VPB)": "Fiscal Unit (VPB)",
+        "Fiscal Unit (VAT)": "Fiscal Unit (VAT)",
+        "Insufficient rights in this administration": "Insufficient rights in this administration"
     },
     "plurals": ""
 }

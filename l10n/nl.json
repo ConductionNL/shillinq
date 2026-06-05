@@ -248,7 +248,27 @@
         "Taxable base": "Belastbare grondslag",
         "VAT amount": "BTW-bedrag",
         "Quarter": "Kwartaal",
-        "Year": "Jaar"
+        "Year": "Jaar",
+        "Administrations": "Administraties",
+        "Create Administration": "Administratie aanmaken",
+        "Archive Administration": "Administratie archiveren",
+        "Archived": "Gearchiveerd",
+        "Switch Administration": "Administratie wisselen",
+        "Administration not found": "Administratie niet gevonden",
+        "Owner": "Eigenaar",
+        "Controller": "Controller",
+        "Bookkeeper": "Boekhouder",
+        "Viewer": "Inkijker",
+        "External Accountant": "Accountant extern",
+        "Intercompany Transaction": "Intercompany journaalpost",
+        "Consolidation Mapping": "Consolidatie mapping",
+        "Fixed Asset Transfer": "Activaoverdracht",
+        "Accounting Period": "Boekhoudperiode",
+        "Backup Schedule": "Backup planning",
+        "Data Retention": "Gegevensretentie",
+        "Fiscal Unit (VPB)": "Fiscale eenheid (VPB)",
+        "Fiscal Unit (VAT)": "Fiscale eenheid (BTW)",
+        "Insufficient rights in this administration": "Onvoldoende rechten in deze administratie"
     },
     "plurals": ""
 }
