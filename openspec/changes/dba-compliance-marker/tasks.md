@@ -9,40 +9,56 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `dba-compliance-marker` capability spec already exists, no `DBAOpdracht`/`DBAIntake`/`DBAModelovereenkomst`/`DBARisicoflag`/`DBAPortfolioRisico`/`DBAEvidenceDossier` schemas are declared, and no `lib/Service/DBA*` or `lib/Service/Scoring*` / `lib/Service/Flag*` PHP classes are present (per ADR-031 anti-pattern enumeration)
-- [ ] Task 2: Author `specs/dba-compliance-marker/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T2 (compliance + operations)` header, `REQ-DBA-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks with GIVEN/WHEN/THEN; cite Wet DBA articles, Deliveroo-arrest (HR 24-3-2023), VBAR (2025/2026), AWR art. 52; explicitly address Dutch SMB DBA compliance + ZZP risk-management + opdrachtgever-inhuur safety
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks (3-way match conditional, SEPA pain.001 downloadable, vendor-master ADR-022 question) / Rollback / Open Questions
-- [ ] Task 4: Author `design.md` with Reuse Analysis table, D1 (per-opdracht intake + monitoring lifecycle), D2 (declarative risk scoring 0–100 with four bands), D3 (automated flag generation replaces manual judgment), D4 (intake verplicht before first factuur), D5 (modelovereenkomst register with versioning), D6 (portfolio-risico annual aggregation), D7 (evidence-dossier is stukkenlijst with file-refs + SHA-256), D8 (intermediair-mode optional, not MVP)
-- [ ] Task 5: Declare the `DBAOpdracht` schema in `lib/Settings/shillinq_register.json` with all REQ-DBA-001 fields (ondernemingId, klantId, opdrachtNaam, startDatum, verwachteEindDatum, feitelijkeEindDatum, verwachteOmzet, gerealiseerdeOmzet, modelOvereenkomstId, intakeStatus, intakeDatum, actueleRisicoscore, risicoNiveau, openFlags, evidenceDossierId, administrationId)
-- [ ] Task 6: Declare the `DBAIntake` schema in `lib/Settings/shillinq_register.json` with all REQ-DBA-003 fields (opdrachtId, ingevuldOp, ingevuldDoor, gezagsverhouding subtotals, persoonlijkeArbeid subtotals, financieelRisico subtotals, deliverooCriteria subtotals, totaalScore, maxScore, interpretatie)
-- [ ] Task 7: Declare the `DBAModelovereenkomst` schema in `lib/Settings/shillinq_register.json` with all REQ-DBA-002 fields (naam, bron, publicatieURL, goedkeuringDatum, geldigTot, essentieleBepalingen array, actueleVersie)
-- [ ] Task 8: Declare the `DBARisicoflag` schema in `lib/Settings/shillinq_register.json` with all REQ-DBA-004 fields (opdrachtId, type enum, detectieMoment, ernst, details object, fiscaleBron, actieSuggestie, status, weergegevenAanGebruiker)
-- [ ] Task 9: Declare the `DBAPortfolioRisico` schema in `lib/Settings/shillinq_register.json` with all REQ-DBA-005 fields (ondernemingId, peilDatum, actieveOpdrachten, concentratie object, langjarigeRelaties array, exclusieveRelaties count, overallRisico)
-- [ ] Task 10: Declare the `DBAEvidenceDossier` schema in `lib/Settings/shillinq_register.json` with all REQ-DBA-007 fields (opdrachtId, stukken array with type/fileRef/datum/sha256, compleetheidScore, bewaarTermijn, archiveDate)
-- [ ] Task 11: Add `x-openregister-lifecycle` to `DBAOpdracht` declaring intake workflow (draft → submitted → voltooid) per REQ-DBA-001; add `x-openregister-lifecycle` to `DBAIntake` (draft → submitted → completed)
-- [ ] Task 12: Declare risk-score calculation as `x-openregister-calculations` on `DBAIntake.totaalScore` per REQ-DBA-003 (sum gezagsverhouding + persoonlijkeArbeid + financieelRisico + deliverooCriteria subtotals); if engine cannot express, register single-method PHP `OCA\Shillinq\Lifecycle\DBAScoreCalculator::computeTotal(DBAIntake $intake): int` (ADR-031 exception)
-- [ ] Task 13: Declare compleetheids-score as `x-openregister-calculations` on `DBAEvidenceDossier.compleetheidScore` per REQ-DBA-007 (based on stuk-inventory; 0–1 scale)
-- [ ] Task 14: Implement daily background job for automated flag generation per REQ-DBA-004/-005/-006 (factuurfrequentie patterns, concentratie-waarschuwing, langjarige-hoofdrelatie, multiple-engagement-zelfde-concern); job generates immutable `DBARisicoflag` records
-- [ ] Task 15: Implement monthly background job for portfolio-aggregatie per REQ-DBA-005 (compute `DBAPortfolioRisico` for each active onderneming; aggregate omzetconcentratie, langjarige relaties, exclusiviteit patterns)
-- [ ] Task 16: Declare VBAR-grens constant (EUR 33, peil 2024) in `lib/Enums/DBAConstants.php` as mutable via administration settings per REQ-DBA-016
-- [ ] Task 17: Implement VBAR uurtarief-monitoring per REQ-DBA-016 (compute effective hourly rate on each factuur; generate flag if < EUR 33; block in hard-mode, warn in soft-mode)
-- [ ] Task 18: Seed `DBAModelovereenkomst` register with known Belastingdienst templates (tussenkomstvrij v3 – 2024, leverancier-zelfstandig v2, etc.) and allow operator upload of custom models per REQ-DBA-002
-- [ ] Task 19: Implement DBA intake wizard (3-step for eenmalig <€5k, 20-question for standard) per REQ-DBA-000/-001; enforce intake before first factuur; store answers in `DBAIntake` register
-- [ ] Task 20: Implement evidence-dossier curation UI (stukkenlijst with file-upload, type-selection, SHA-256 hash storage) per REQ-DBA-007; integrate with openregister file-api or docudesk
-- [ ] Task 21: Implement AVG-compliant email-archive opt-in per REQ-DBA-012 (explicit `ConsentRecord` for wederpartij communication; 7-year retention per AWR art. 52)
-- [ ] Task 22: Implement compliance-mode configuration per REQ-DBA-000 (soft/hard/intermediair modes; stored on administration config)
-- [ ] Task 23: Implement audit-rapport PDF generation per REQ-DBA-008 (intake summary, model-checklist, risk-score progression, flags, evidence inventory with SHA-256 hashes)
-- [ ] Task 24: Implement yearly herbeoordeling trigger per REQ-DBA-009 (notification on intake-anniversary for opdrachtnen >12 months; flag if no response within 30 days)
-- [ ] Task 25: Implement opdrachtgever-inhuur-intake mirror (optional MVP or later phase) per REQ-DBA-010; block PO at HOOG-risico in hard-mode
-- [ ] Task 26: Implement Belastingdienst WBA-integratie per REQ-DBA-013 (allow upload + storage of WBA assessment result; track validity period)
-- [ ] Task 27: Implement beëindiging-procedure per REQ-DBA-018 (mark opdracht ended, generate end-report, start 7-year retention-period clock per AWR art. 52)
-- [ ] Task 28: Implement tussenkomst-driehoek modelling (optional, later phase) per REQ-DBA-017 (separate intakes + risk-scores for ZZP–intermediair and intermediair–eindklant; Waadi/Wka flagging)
-- [ ] Task 29: Add 3 manifest navigation entries (`DBA Intake Wizard`, `DBA Portfolio Dashboard`, `Evidence Browser`) + their pages to `src/manifest.json` per REQ-DBA-001/-005/-007; `node tests/validate-manifest.js` exits 0
-- [ ] Task 30: Update `openspec/architecture/adr-000-data-model.md` with `DBAOpdracht`/`DBAIntake`/`DBAModelovereenkomst`/`DBARisicoflag`/`DBAPortfolioRisico`/`DBAEvidenceDossier` entries, reconciling against any existing DBA-related data-model entries
-- [ ] Task 31: Hook AP/AR factuurfrequentie-monitoring (optional) to trigger flag-generation (non-blocking if AP/AR not deployed)
-- [ ] Task 32: Hook AP/AR uurtarief-detectie (optional) to feed VBAR-grens check per REQ-DBA-016 (non-blocking if AP/AR not deployed)
-- [ ] Task 33: Documentation: Author `docs/user-guide/compliance/dba-compliance-marker.md` per ADR-030 journeydoc convention; include DBA intake flow, risk-scoring explanation, flag interpretation, evidence-dossier management, audit-rapport export
-- [ ] Task 34: i18n (Dutch `nl_NL` + English `en_US`): Translate all user-facing strings (Compliance Mode, Soft Mode, Hard Mode, DBA Intake, Risk Score, Risk Band names, Flag types + suggestions, Evidence Dossier, Audit Report, VBAR Threshold Warning, Portfolio Risk, Modelovereenkomst Register, etc.)
+> **Implementation note (ADR-037 / ADR-031 / ADR-022).** Tasks 5–10, 12–13 and
+> 18 name `lib/Settings/shillinq_register.json` (the monolith). Per **ADR-037** the
+> six schemas, lifecycles, calculations, aggregations and all seed objects were
+> declared in the modular fragment `lib/Settings/register.d/dba-compliance-marker.json`
+> instead — the monolith is never edited. The `SettingsService::deepMergeConfig`
+> loader already unions `components.schemas` by key and concatenates
+> `components.objects[]`, and OpenRegister's `ImportHandler` reads seeds from
+> `components.objects[]` (verified), so no loader change was needed. Per **ADR-031**
+> the centre of mass is declarative; the single PHP exception-path file
+> `lib/Lifecycle/DBAComplianceGuard.php` carries the band-derivation, first-factuur
+> gate, VBAR breach and completeness ratio the declarative DSL cannot yet express
+> (Task 16's VBAR constant lives on that guard as `VBAR_GRENS_EUR`, admin-overridable
+> via app config `dba_vbar_grens`). Per **ADR-022** object reads use the real
+> ObjectService API (`setRegister`/`setSchema`/`findAll`) only. A klant is a
+> Nextcloud-addressbook contact (`klantId`), never a bespoke person schema.
+
+- [x] Task 1: Confirmed no prior `dba-compliance-marker` spec/schemas/`DBA*` service classes exist; the only PHP shipped is the ADR-031 exception-path `DBAComplianceGuard` (no `DBAService`/`ScoringService`/`FlagEngine`).
+- [x] Task 2: `specs/dba-compliance-marker/spec.md` authored — proposed/shillinq/T2 header, REQ-DBA-000..018, GIVEN/WHEN/THEN scenarios, citing Wet DBA, Deliveroo-arrest (HR 24-3-2023), VBAR, AWR art. 52.
+- [x] Task 3: `proposal.md` authored with Affected Projects / Scope / Risks / Rollback / Open Questions, referencing the shared `nextcloud-app` spec.
+- [x] Task 4: `design.md` authored with the Reuse Analysis table and decisions D1–D8.
+- [x] Task 5: `DBAOpdracht` declared (ADR-037 fragment, NOT the monolith) with the REQ-DBA-001 fields (ondernemingId, klantId, opdrachtNaam, startDatum, verwachte/feitelijkeEindDatum, verwachte/gerealiseerdeOmzet, modelOvereenkomstId, intakeStatus, intakeDatum, actueleRisicoscore, risicoNiveau, openFlags, evidenceDossierId, administrationId).
+- [x] Task 6: `DBAIntake` declared (fragment) with the REQ-DBA-003 fields — the three pijler sub-scores + subtotals, Deliveroo criteria + subtotal, totaalScore, maxScore, interpretatie.
+- [x] Task 7: `DBAModelovereenkomst` declared (fragment) with the REQ-DBA-002 fields (naam, bron, publicatieURL, goedkeuringDatum, geldigTot, essentieleBepalingen[], versie, actueleVersie).
+- [x] Task 8: `DBARisicoflag` declared (fragment) with the REQ-DBA-004 fields and `x-openregister.immutable: true` (append-only audit record).
+- [x] Task 9: `DBAPortfolioRisico` declared (fragment) with the REQ-DBA-005 fields (ondernemingId, peilDatum, actieveOpdrachten, concentratie{}, langjarigeRelaties[], exclusieveRelaties, overallRisico).
+- [x] Task 10: `DBAEvidenceDossier` declared (fragment) with the REQ-DBA-007 fields (opdrachtId, stukken[] type/fileRef/datum/sha256, emailArchiefOptIn, compleetheidScore, ontbrekendeStukken[], bewaarTermijn, archiveDate).
+- [x] Task 11: `x-openregister-lifecycle` declared on `DBAOpdracht` (draft → actief → beeindigd) and `DBAIntake` (draft → submitted → completed), with guard-backed transitions.
+- [x] Task 12: Risk-score `x-openregister-calculations` declared on `DBAIntake.totaalScore` (sum of the four subtotals); the ADR-031 exception band derivation + score recomputation ships as `DBAComplianceGuard::computeTotaalScore` / `::deriveRiskBand` (named per design as the `DBAScoreCalculator` role, folded into the single guard file to keep one exception class).
+- [x] Task 13: Completeness `x-openregister-calculations` declared on `DBAEvidenceDossier.compleetheidScore`; the ratio is computed by `DBAComplianceGuard::computeCompleteness` (0–1) with the missing-stukken list.
+- [ ] Task 14: **DEFERRED** — daily flag-generation background job (factuurfrequentie/concentratie/langjarigheid/multiple-engagement). Imperative monitoring job; needs a live instance + AP/AR factuur data to exercise. Out of scope for this declarative `kind: config` change; lands in a follow-up apply cycle. The immutable `DBARisicoflag` target + the detection thresholds are fully specced and seeded.
+- [ ] Task 15: **DEFERRED** — monthly portfolio-aggregatie job. Same rationale as Task 14; the `DBAPortfolioRisico` schema + `x-openregister-aggregations` shape + a worked seed record are shipped, the job that materialises them is deferred.
+- [x] Task 16: VBAR-grens constant shipped as `DBAComplianceGuard::VBAR_GRENS_EUR = 33.0`, admin-overridable via app config key `dba_vbar_grens` (resolved in `resolveVbarGrens()`). No separate `lib/Enums/DBAConstants.php` — co-located on the single ADR-031 exception class.
+- [x] Task 17: VBAR effective-rate logic shipped as `DBAComplianceGuard::effectiveHourlyRateBreach(bedrag, uren)` (breach when rate < grens; non-positive inputs → no breach). The per-factuur hook that calls it + hard-mode blocking is the deferred job surface (Task 14/31/32).
+- [x] Task 18: `DBAModelovereenkomst` register seeded (fragment `components.objects[]`) with tussenkomstvrij v3 (2024), leverancier-zelfstandig v2 (2023) and an expired geen-werkgeversgezag (2021) example; operator upload is the standard OR register create.
+- [ ] Task 19: **DEFERRED** — bespoke intake wizard Vue component (3-step / 20-question). The declarative manifest index/detail pages for `DBAIntake` ship; a bespoke multi-step wizard component is a later UI slice.
+- [ ] Task 20: **DEFERRED** — bespoke evidence-dossier curation UI with file-upload + client-side SHA-256. Declarative index/detail pages for `DBAEvidenceDossier` ship; the upload/hash widget is a later UI slice.
+- [ ] Task 21: **DEFERRED** — AVG e-mail-archive opt-in flow. The `emailArchiefOptIn` field + the 7-jaar bewaartermijn are declared; the ConsentRecord interaction is deferred.
+- [ ] Task 22: **DEFERRED** — compliance-mode (soft/hard/intermediair) administration-config UI + enforcement. The modes are specced (REQ-DBA-000) and `intermediairMode` is a schema field; the config surface + hard-mode blocking is a later slice tied to the factuur hook.
+- [ ] Task 23: **DEFERRED** — audit-rapport PDF generation. Needs OR/docudesk report generation + a live dossier; deferred.
+- [ ] Task 24: **DEFERRED** — yearly herbeoordeling trigger + HERBEOORDELING_OVERDUE flag. Background-job surface; flag type is declared in the `DBARisicoflag` enum.
+- [ ] Task 25: **DEFERRED** — opdrachtgever-inhuur-intake mirror + PO blocking. Optional, later phase per design D-scope; requires hrmq/PO integration.
+- [ ] Task 26: **DEFERRED** — WBA upload UI. The `wbaBeoordelingResultaat` + `wbaGeldigTot` fields are declared on `DBAOpdracht`; the upload interaction is a later slice.
+- [x] Task 27: Beeindiging precondition shipped as `DBAComplianceGuard::canBeeindigOpdracht` (requires feitelijkeEindDatum to start the 7-jaar clock); the `beeindig` lifecycle transition is declared. End-report PDF generation is part of the deferred report surface (Task 23).
+- [ ] Task 28: **DEFERRED** — tussenkomst-driehoek modelling. Optional later phase per design D8; `intermediairMode` flag is declared as the entry point.
+- [x] Task 29: Manifest navigation + pages added via the modular fragment `src/manifest.d/dba-compliance-marker.json` (ADR-037-style) — DBA Compliance menu with DBA Opdrachten, DBA Intake Wizard, Modelovereenkomst Register, DBA Portfolio Dashboard, Evidence Browser and Risk Flags, each with index + detail pages. JSON validates.
+- [x] Task 30: `openspec/architecture/adr-000-data-model.md` updated with the six DBA entries (descriptions + entity/relations table).
+- [ ] Task 31: **DEFERRED** — AP/AR factuurfrequentie hook to flag-generation. Optional, non-blocking; ships with the deferred monitoring job (Task 14).
+- [ ] Task 32: **DEFERRED** — AP/AR uurtarief-detectie hook into the VBAR check. The pure VBAR breach helper (Task 17) is ready to be called from the hook; the wiring is deferred with Task 14.
+- [x] Task 33: `docs/user-guide/compliance/dba-compliance-marker.md` authored (+ `compliance/_category_.json`) — intake flow, risk-scoring, flag interpretation, evidence-dossier management, audit-rapport export, legal basis.
+- [x] Task 34: i18n — Dutch (`l10n/nl.json`) and English (`l10n/en.json`) strings added additively for the DBA compliance vocabulary (modes, intake, risk bands, flag types, evidence dossier, audit report, VBAR, portfolio, modelovereenkomst).
 
 ## Verification
 

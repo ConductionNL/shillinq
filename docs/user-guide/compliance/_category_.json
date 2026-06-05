@@ -1,0 +1,11 @@
+{
+  "label": "Compliance guide",
+  "position": 3,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "generated-index",
+    "title": "Compliance guide",
+    "description": "Compliance workflows for Dutch SMB and ZZP: the DBA compliance marker (Wet DBA intake, risk scoring, monitoring flags, evidence dossier, and audit-report export for the Belastingdienst)."
+  }
+}
