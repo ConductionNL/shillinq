@@ -137,7 +137,23 @@
         "Materiële vaste activa": "Tangible fixed assets",
         "Eigen vermogen": "Equity",
         "Schulden": "Liabilities",
-        "Niet-uit-balans-verplichtingen": "Off-balance-sheet commitments"
+        "Niet-uit-balans-verplichtingen": "Off-balance-sheet commitments",
+        "Trial Balance": "Trial Balance",
+        "Trial Balance (by account)": "Trial Balance (by account)",
+        "Trial Balance Line": "Trial Balance Line",
+        "Period": "Period",
+        "Account Number": "Account Number",
+        "Account Name": "Account Name",
+        "Account Type": "Account Type",
+        "Opening Balance": "Opening Balance",
+        "Debits": "Debits",
+        "Credits": "Credits",
+        "Closing Balance": "Closing Balance",
+        "Total Assets": "Total Assets",
+        "Total Liabilities": "Total Liabilities",
+        "Total Equity": "Total Equity",
+        "Trial balance is balanced": "Trial balance is balanced",
+        "Trial balance is not balanced": "Trial balance is not balanced"
     },
     "plurals": ""
 }
