@@ -36,9 +36,9 @@ Province-specific fund posting (opcenten MRB, provinciefonds, decentralisatie-ui
 |----------|------|----------|-------------|
 | variantStructure | enum | No | `gemeente-functional`, `waterschap-kostentoedeling`, or `provincie-kerntaak` |
 
-## Requirements
+## ADDED Requirements
 
-### REQ-PRB-001: Account bbvVariant flag supports provincie
+### Requirement: REQ-PRB-001 — Account bbvVariant flag supports provincie
 
 SHALL provide `bbvVariant: 'provincie'` enum value on `Account` schema.
 
@@ -48,7 +48,7 @@ GIVEN a new provincies administration
 WHEN accounts are created with `bbvVariant: 'provincie'`  
 THEN accounts filter to provincie-scoped views only.
 
-### REQ-PRB-002: ProvincialeFondsPosting register
+### Requirement: REQ-PRB-002 — ProvincialeFondsPosting register
 
 SHALL declare the `ProvincialeFondsPosting` register with kerntaak-scoped fund tracking.
 
@@ -58,7 +58,7 @@ GIVEN a provinciefonds allocation in January 2026
 WHEN posted to general ledger  
 THEN the posting is immutable once status reaches `posted`.
 
-### REQ-PRB-003: Provincies programma seed data
+### Requirement: REQ-PRB-003 — Provincies programma seed data
 
 SHALL ship `lib/Settings/seeds/bbv-provincies-kerntaken-2026.json` with ~15 kerntaken (mobiliteit, economie, ruimte, cultuur, etc.) programma-indeling entries per 2026 provincial regulations.
 
@@ -68,7 +68,7 @@ GIVEN a provincie selects kerntaken feature flag
 WHEN repair step runs  
 THEN 15 programma entries reflecting core responsibilities are seeded.
 
-### REQ-PRB-004: Opcenten MRB calculation
+### Requirement: REQ-PRB-004 — Opcenten MRB calculation
 
 SHALL declare declarative aggregation rules for opcenten MRB (surcharges on vehicle registration tax) per provincial variant.
 

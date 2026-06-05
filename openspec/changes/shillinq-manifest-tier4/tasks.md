@@ -77,7 +77,7 @@
 
 ## 7. Wrap-up
 
-- [ ] 7.1 Update `openspec/changes/shillinq-manifest-tier4/tasks.md`
+- [x] 7.1 Update `openspec/changes/shillinq-manifest-tier4/tasks.md`
   checkboxes as completed.
-- [ ] 7.2 Hand off PR creation to the Hydra coordination flow (not part
+- [x] 7.2 Hand off PR creation to the Hydra coordination flow (not part
   of this change's tasks).

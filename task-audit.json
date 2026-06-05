@@ -1,21 +1,119 @@
 {
-  "spec": "openspec/changes/add-shillinq-cost-centers-dimensions",
+  "spec": "openspec/changes/expense-capture-core",
   "verified": [
-    {"task": "1", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "Confirmed no pre-existing CostCenter/KostenDrager/Project/AllocationRule schemas; only example and Account existed"},
-    {"task": "2", "file": "openspec/changes/add-shillinq-cost-centers-dimensions/specs/bookkeeping-cost-centers-dimensions/spec.md", "ok": true},
-    {"task": "3", "file": "openspec/changes/add-shillinq-cost-centers-dimensions/proposal.md", "ok": true},
-    {"task": "4", "file": "openspec/changes/add-shillinq-cost-centers-dimensions/design.md", "ok": true},
-    {"task": "5", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "CostCenter, KostenDrager, Project schemas added with x-openregister-lifecycle/-relations/-rbac; timeBookingEnabled on Project"},
-    {"task": "6", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "AllocationRule schema with fixed-percentage/fixed-amount/volume/headcount drivers; precondition on save"},
-    {"task": "7", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "GLLine declared with T1 base fields + T4 dimension fields; GLTransaction also declared (T1 dependency)"},
-    {"task": "8", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "x-openregister-lifecycle.actions.applyOnPost wires per-posting cadence; monthly/period-close routed via ScheduledWorkflow per ADR-031 path 2"},
-    {"task": "9", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "x-openregister-aggregations on GLLine: segmentPnlByCostCenter, segmentPnlByProject, segmentPnlByKostenDrager"},
-    {"task": "10.1", "file": "lib/Settings/seeds/allocation-rules/overhead-by-headcount.json", "ok": true},
-    {"task": "10.2", "file": "lib/Settings/seeds/allocation-rules/it-by-volume.json", "ok": true},
-    {"task": "10.3", "file": "lib/Settings/seeds/allocation-rules/facility-by-fixed-percentage.json", "ok": true},
-    {"task": "11", "file": "lib/Repair/InitializeSettings.php", "ok": true, "note": "seedAllocationRules() added to repair step; SettingsService.seedAllocationRules() added"},
-    {"task": "12", "file": "src/manifest.json", "ok": true, "note": "Dimensions submenu + 8 pages (4 index + 4 detail) added under Bookkeeping > Dimensions"},
-    {"task": "13", "file": "openspec/architecture/adr-000-data-model.md", "ok": true, "note": "AllocationRule, CostCenter, KostenDrager, Project, GLLine, GLTransaction entries added/reconciled"}
+    {
+      "task": "1",
+      "file": "lib/Settings/shillinq_register.json",
+      "ok": true,
+      "size": 344153
+    },
+    {
+      "task": "5-8",
+      "file": "lib/Settings/shillinq_register.json",
+      "ok": true,
+      "size": 344153
+    },
+    {
+      "task": "9",
+      "file": "lib/Lifecycle/ExpenseClaimGuard.php",
+      "ok": true,
+      "size": 10439
+    },
+    {
+      "task": "11",
+      "file": "lib/Validation/PhotoValidator.php",
+      "ok": true,
+      "size": 2541
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json",
+      "ok": true,
+      "size": 117716
+    },
+    {
+      "task": "18",
+      "file": "openspec/architecture/adr-000-data-model.md",
+      "ok": true,
+      "size": 301720
+    },
+    {
+      "task": "test-11",
+      "file": "tests/Unit/Validation/PhotoValidatorTest.php",
+      "ok": true,
+      "size": 5529
+    },
+    {
+      "task": "test-9",
+      "file": "tests/Unit/Lifecycle/ExpenseClaimGuardTest.php",
+      "ok": true,
+      "size": 14622
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::Receipt",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::MileageEntry",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::PerDiem",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::ExpenseClaimEntry",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::MileageRate",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::PerDiemRate",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::Receipts",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::ReceiptDetail",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::ExpenseClaims",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::ExpenseClaimDetail",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::MileageLog",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::MileageLogDetail",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::Inkoop menu",
+      "ok": true
+    }
   ],
   "stubs": [],
   "missing_routes": []

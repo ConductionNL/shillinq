@@ -34,6 +34,7 @@ use Psr\Log\LoggerInterface;
  * Repair step that initializes Shillinq configuration via SettingsService.
  *
  * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
+ * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
  */
 class InitializeSettings implements IRepairStep
 {
@@ -79,6 +80,8 @@ class InitializeSettings implements IRepairStep
      * Phase 4: registers the IV3 quarterly CBS ScheduledWorkflow if not yet present.
      * Phase 5: seeds KOR thresholds from kor-thresholds-2026.json idempotently.
      * Phase 6: seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
+     * Phase 7: seeds RJ-270 stages and rate-card templates for consultancy project accounting.
+     * Phase 8: seeds ProductAttribute templates (office, it_hardware, logistics, food_beverage, clothing) per REQ-IPC-007.
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -88,6 +91,8 @@ class InitializeSettings implements IRepairStep
      * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-10
      * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
      * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
+     * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
      */
     public function run(IOutput $output): void
     {
@@ -95,7 +100,7 @@ class InitializeSettings implements IRepairStep
 
         if ($this->settingsService->isOpenRegisterAvailable() === false) {
             $output->warning(
-                'OpenRegister is not installed or enabled. Skipping auto-configuration.'
+            'OpenRegister is not installed or enabled. Skipping auto-configuration.'
             );
             $this->logger->warning(
                 'Shillinq: OpenRegister not available, skipping register initialization'
@@ -133,9 +138,12 @@ class InitializeSettings implements IRepairStep
             }
 
             $this->seedChartOfAccounts(output: $output);
+            $this->seedProjectData(output: $output);
             $this->seedSelectielijstRules(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
+            $this->seedComplianceReferenceData(output: $output);
+            $this->seedProductAttributeTemplates(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -145,6 +153,56 @@ class InitializeSettings implements IRepairStep
         }//end try
 
     }//end run()
+
+    /**
+     * Seed project accounting data (RJ-270 stages and rate-card templates), idempotently.
+     *
+     * RJ-270 stages are seeded unconditionally (not tenant-specific).
+     * Rate-card templates require a configured administrationId (C2).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
+     */
+    private function seedProjectData(IOutput $output): void
+    {
+        $output->info('Seeding RJ-270 stages...');
+        $rj270Result = $this->settingsService->seedRj270Stages();
+        if ($rj270Result['success'] === true) {
+            $output->info(
+                'RJ-270 stages seeded: '.($rj270Result['seeded'] ?? 0).' created, '.($rj270Result['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if ($rj270Result['success'] !== true) {
+            $output->warning('RJ-270 stages seeding issue: '.($rj270Result['message'] ?? 'unknown error'));
+        }
+
+        $settings         = $this->settingsService->getSettings();
+        $administrationId = ($settings['administration_id'] ?? '');
+
+        if ($administrationId === '') {
+            $output->warning(
+                'Shillinq: administration_id not configured — skipping rate-card template seed.'
+            );
+            return;
+        }
+
+        $output->info('Seeding rate-card templates...');
+        $rcResult = $this->settingsService->seedRateCardTemplates(administrationId: $administrationId);
+        if ($rcResult['success'] === true) {
+            $output->info(
+                'Rate-card templates seeded: '.($rcResult['seeded'] ?? 0).' created, '.($rcResult['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if ($rcResult['success'] !== true) {
+            $output->warning('Rate-card templates seeding issue: '.($rcResult['message'] ?? 'unknown error'));
+        }
+
+    }//end seedProjectData()
 
     /**
      * Import the Selectielijst Gemeenten 2020 retention rules, idempotently.
@@ -240,6 +298,47 @@ class InitializeSettings implements IRepairStep
     }//end registerIv3ScheduledWorkflow()
 
     /**
+     * Seed T3 NL-compliance reference data (BTW tariffs + BBV taakvelden), idempotently.
+     *
+     * Both seeds are statutory reference catalogues that are not tenant-specific,
+     * so they are seeded unconditionally. Deduplication is handled inside the
+     * SettingsService seed helpers (by code), keeping re-runs safe.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-bookkeeping-operations/tasks.md#task-311
+     */
+    private function seedComplianceReferenceData(IOutput $output): void
+    {
+        $output->info('Seeding BTW tariffs...');
+        $btwResult = $this->settingsService->seedBtwTariffs();
+        if ($btwResult['success'] === true) {
+            $output->info(
+                'BTW tariffs seeded: '.($btwResult['seeded'] ?? 0).' created, '.($btwResult['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if ($btwResult['success'] !== true) {
+            $output->warning('BTW tariffs seeding issue: '.($btwResult['message'] ?? 'unknown error'));
+        }
+
+        $output->info('Seeding BBV taakvelden...');
+        $bbvResult = $this->settingsService->seedBbvTaakvelden();
+        if ($bbvResult['success'] === true) {
+            $output->info(
+                'BBV taakvelden seeded: '.($bbvResult['seeded'] ?? 0).' created, '.($bbvResult['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if ($bbvResult['success'] !== true) {
+            $output->warning('BBV taakvelden seeding issue: '.($bbvResult['message'] ?? 'unknown error'));
+        }
+
+    }//end seedComplianceReferenceData()
+
+    /**
      * Seed the KOR thresholds from kor-thresholds-2026.json, idempotently.
      *
      * Deduplication key is fiscalYear: if a KorThreshold record with the same
@@ -325,6 +424,42 @@ class InitializeSettings implements IRepairStep
         }//end try
 
     }//end seedKorThresholds()
+
+    /**
+     * Seed ProductAttribute templates for all five standard categories, idempotently.
+     *
+     * Calls SettingsService::seedProductAttributes() per category. Idempotent:
+     * attributes matched by name + applicableToCategories are skipped, preserving
+     * operator edits per REQ-IPC-007.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
+     */
+    private function seedProductAttributeTemplates(IOutput $output): void
+    {
+        $categories = ['office', 'it_hardware', 'logistics', 'food_beverage', 'clothing'];
+
+        foreach ($categories as $category) {
+            $output->info('Seeding ProductAttribute template: '.$category.'...');
+            $result = $this->settingsService->seedProductAttributes(category: $category);
+
+            if ($result['success'] === true) {
+                $output->info(
+                    'ProductAttribute ('.$category.'): '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
+                );
+            }
+
+            if ($result['success'] !== true) {
+                $output->warning(
+                    'ProductAttribute ('.$category.') seeding issue: '.($result['message'] ?? 'unknown error')
+                );
+            }
+        }//end foreach
+
+    }//end seedProductAttributeTemplates()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.

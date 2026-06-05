@@ -6,6 +6,8 @@ T3's `bookkeeping-subsidie-verantwoording` already provides the generic subsidie
 
 This change is **spec-only**. Implementation lands later through `opsx-apply`; this doc explains *why* the shape is what it is.
 
+**status: pr-created** — All tasks verified complete; implementation already present in development from bookkeeping-subsidie-verantwoording + add-shillinq-r-d-subsidies-mkb. PR #103 formalises the spec documents.
+
 ## Decisions
 
 ### D1 — Each regeling as a variant overlay on existing `Subsidie`, NOT a parallel `RDSubsidie` register

@@ -15,6 +15,9 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -328,6 +331,276 @@ class SettingsService
         return ['seeded' => $seeded, 'skipped' => $skipped];
 
     }//end importAccounts()
+
+    /**
+     * Seed RJ-270 stages from the rj-270-stages.json seed file, idempotently.
+     *
+     * Imports the 4 canonical percentage-of-completion stage definitions.
+     * Deduplication key is stageId. Idempotent on re-run.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-14
+     */
+    public function seedRj270Stages(): array
+    {
+        return $this->seedGenericFile(
+            seedFileName: 'rj-270-stages.json',
+            itemsKey: 'stages',
+            dedupeKey: 'stageId',
+            schema: 'RJ270Stage',
+            logLabel: 'RJ-270 stages'
+        );
+
+    }//end seedRj270Stages()
+
+    /**
+     * Seed statutory BTW tariffs from btw-tariffs-2026.json, idempotently.
+     *
+     * Imports the current Dutch VAT rates into the VatTariff schema. Deduplication
+     * key is code. Idempotent on re-run; operator-added rates are preserved.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-vat-btw-filing/spec.md
+     */
+    public function seedBtwTariffs(): array
+    {
+        return $this->seedGenericFile(
+            seedFileName: 'btw-tariffs-2026.json',
+            itemsKey: 'tariffs',
+            dedupeKey: 'code',
+            schema: 'VatTariff',
+            logLabel: 'BTW tariffs'
+        );
+
+    }//end seedBtwTariffs()
+
+    /**
+     * Seed the BBV taakveld catalogue from bbv-taakvelden-2024.json, idempotently.
+     *
+     * Imports the canonical Besluit BBV bijlage IV taakvelden into the BbvTaakveld
+     * schema. Deduplication key is code. Idempotent on re-run.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-bbv-compliance/spec.md
+     */
+    public function seedBbvTaakvelden(): array
+    {
+        return $this->seedGenericFile(
+            seedFileName: 'bbv-taakvelden-2024.json',
+            itemsKey: 'taakvelden',
+            dedupeKey: 'code',
+            schema: 'BbvTaakveld',
+            logLabel: 'BBV taakvelden'
+        );
+
+    }//end seedBbvTaakvelden()
+
+    /**
+     * Seed default rate-card templates from rate-card-templates.json, idempotently.
+     *
+     * Requires a non-empty administrationId; seeding is skipped otherwise (C2).
+     * Deduplication key is level + effectiveFrom + administrationId.
+     *
+     * @param string $administrationId The administrationId to stamp on seeded records.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-14
+     */
+    public function seedRateCardTemplates(string $administrationId): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        if ($administrationId === '') {
+            return [
+                'success' => false,
+                'message' => 'administrationId must not be empty.',
+            ];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/rate-card-templates.json';
+        if (file_exists($seedPath) === false) {
+            return ['success' => false, 'message' => 'Seed file not found: rate-card-templates.json'];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return ['success' => false, 'message' => 'Failed to read rate-card-templates.json'];
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return ['success' => false, 'message' => 'Failed to parse rate-card-templates.json: '.json_last_error_msg()];
+        }
+
+        $rateCards = ($data['rateCards'] ?? []);
+        if (empty($rateCards) === true) {
+            return ['success' => false, 'message' => 'Seed file contains no rateCards.'];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($rateCards as $rateCard) {
+                $rateCard['administrationId'] = $administrationId;
+
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('RateCard')
+                    ->findAll(
+                            [
+                                'filters' => [
+                                    'level'            => $rateCard['level'],
+                                    'effectiveFrom'    => $rateCard['effectiveFrom'],
+                                    'administrationId' => $administrationId,
+                                ],
+                                'limit'   => 1,
+                            ]
+                            );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $rateCard,
+                    register: $registerSlug,
+                    schema: 'RateCard',
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: rate-card templates seeded',
+                [
+                    'seeded'  => $seeded,
+                    'skipped' => $skipped,
+                ]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'Rate-card templates seeded successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: rate-card templates seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedRateCardTemplates()
+
+    /**
+     * Generic seed helper for single-schema seed files that don't require an administrationId.
+     *
+     * @param string $seedFileName Name of the seed file under lib/Settings/seeds/.
+     * @param string $itemsKey     Key in the JSON holding the items array.
+     * @param string $dedupeKey    Field used as deduplication key.
+     * @param string $schema       OpenRegister schema slug to import into.
+     * @param string $logLabel     Label for log messages.
+     *
+     * @return array<string,mixed>
+     */
+    private function seedGenericFile(
+        string $seedFileName,
+        string $itemsKey,
+        string $dedupeKey,
+        string $schema,
+        string $logLabel
+    ): array {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return ['success' => false, 'message' => 'OpenRegister is not installed or enabled.'];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/'.$seedFileName;
+        if (file_exists($seedPath) === false) {
+            return ['success' => false, 'message' => 'Seed file not found: '.$seedFileName];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return ['success' => false, 'message' => 'Failed to read '.$seedFileName];
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return ['success' => false, 'message' => 'Failed to parse '.$seedFileName.': '.json_last_error_msg()];
+        }
+
+        $items = ($data[$itemsKey] ?? []);
+        if (empty($items) === true) {
+            return ['success' => false, 'message' => 'Seed file '.$seedFileName.' contains no '.$itemsKey.'.'];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($items as $item) {
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema($schema)
+                    ->findAll(
+                            [
+                                'filters' => [$dedupeKey => $item[$dedupeKey]],
+                                'limit'   => 1,
+                            ]
+                            );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $item,
+                    register: $registerSlug,
+                    schema: $schema,
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: '.$logLabel.' seeded',
+                ['seeded' => $seeded, 'skipped' => $skipped]
+            );
+
+            return [
+                'success' => true,
+                'message' => $logLabel.' seeded successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: '.$logLabel.' seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return ['success' => false, 'message' => $e->getMessage()];
+        }//end try
+
+    }//end seedGenericFile()
 
     /**
      * Seed retention rules from the Selectielijst Gemeenten 2020 seed file, idempotently.
@@ -797,4 +1070,284 @@ class SettingsService
             ];
         }//end try
     }//end runLoadConfiguration()
+
+    /**
+     * Seed allocation-rule example objects from the default seed files, idempotently.
+     *
+     * Reads the three example seed files from lib/Settings/seeds/allocation-rules/
+     * and imports AllocationRule records via OpenRegister's ObjectService.
+     * Already-existing rules (matched by name + administrationId) are skipped,
+     * preserving operator edits. Seeds ship in lifecycleState: paused so operators
+     * can review and activate per REQ-CC-004.
+     *
+     * @param string $administrationId The administrationId to stamp on seeded rules.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
+     */
+    public function seedAllocationRuleExamples(string $administrationId): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        if ($administrationId === '') {
+            return [
+                'success' => false,
+                'message' => 'administrationId must not be empty.',
+            ];
+        }
+
+        $seedFiles = [
+            'overhead-by-headcount.json',
+            'it-by-volume.json',
+            'facility-by-fixed-percentage.json',
+        ];
+
+        $seeded  = 0;
+        $skipped = 0;
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+
+            foreach ($seedFiles as $fileName) {
+                $seedPath = __DIR__.'/../Settings/seeds/allocation-rules/'.$fileName;
+                if (file_exists($seedPath) === false) {
+                    $this->logger->warning('Shillinq: allocation rule seed file not found: '.$seedPath);
+                    continue;
+                }
+
+                $content = file_get_contents($seedPath);
+                if ($content === false) {
+                    $this->logger->warning('Shillinq: failed to read allocation rule seed file: '.$seedPath);
+                    continue;
+                }
+
+                $data = json_decode($content, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    $this->logger->warning(
+                        'Shillinq: failed to parse allocation rule seed file: '.$fileName.': '.json_last_error_msg()
+                    );
+                    continue;
+                }
+
+                $rules = ($data['allocationRules'] ?? []);
+                foreach ($rules as $rule) {
+                    $rule['administrationId'] = $administrationId;
+
+                    $existing = $objectService
+                        ->setRegister($registerSlug)
+                        ->setSchema('AllocationRule')
+                        ->findAll(
+                            [
+                                'filters' => [
+                                    'name'             => $rule['name'],
+                                    'administrationId' => $administrationId,
+                                ],
+                                'limit'   => 1,
+                            ]
+                        );
+
+                    if (empty($existing) === false) {
+                        $skipped++;
+                        continue;
+                    }
+
+                    $objectService->saveObject(
+                        object: $rule,
+                        register: $registerSlug,
+                        schema: 'AllocationRule',
+                    );
+                    $seeded++;
+                }//end foreach
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: allocation rule examples seeded',
+                [
+                    'seeded'  => $seeded,
+                    'skipped' => $skipped,
+                ]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'Allocation rule examples seeded successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: allocation rule seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedAllocationRuleExamples()
+
+    /**
+     * Seed ProductAttribute templates from a category seed file, idempotently.
+     *
+     * Reads the specified seed file from lib/Settings/seeds/ and imports
+     * ProductAttribute records via OpenRegister's ObjectService. Already-existing
+     * records (matched by name + applicableToCategories) are skipped, preserving
+     * operator edits across repair re-runs per REQ-IPC-007.
+     *
+     * @param string $category Seed category key: office, it_hardware, logistics, food_beverage, clothing.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
+     */
+    public function seedProductAttributes(string $category): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        // Category keys use underscores (it_hardware, food_beverage); filenames use hyphens.
+        $filename = 'product-attributes-'.str_replace('_', '-', $category).'.json';
+        $seedPath = __DIR__.'/../Settings/seeds/'.$filename;
+
+        if (file_exists($seedPath) === false) {
+            return [
+                'success' => false,
+                'message' => 'Seed file not found: '.$filename,
+            ];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return [
+                'success' => false,
+                'message' => 'Failed to read seed file: '.$filename,
+            ];
+        }
+
+        $data = json_decode($content, associative: true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return [
+                'success' => false,
+                'message' => 'Failed to parse seed file '.$filename.': '.json_last_error_msg(),
+            ];
+        }
+
+        $attributes = ($data['productAttributes'] ?? []);
+        if (empty($attributes) === true) {
+            return [
+                'success' => true,
+                'message' => 'Seed file contains no productAttributes, nothing to import.',
+                'seeded'  => 0,
+                'skipped' => 0,
+            ];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            ['seeded' => $seeded, 'skipped' => $skipped] = $this->importProductAttributes(
+                objectService: $objectService,
+                attributes: $attributes
+            );
+
+            $this->logger->info(
+                'Shillinq: ProductAttribute seed imported',
+                [
+                    'category' => $category,
+                    'seeded'   => $seeded,
+                    'skipped'  => $skipped,
+                ]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'ProductAttribute seed imported successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: ProductAttribute seeding failed',
+                [
+                    'category'  => $category,
+                    'exception' => $e->getMessage(),
+                ]
+            );
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedProductAttributes()
+
+    /**
+     * Import ProductAttribute records into OpenRegister, skipping existing ones.
+     *
+     * Deduplication key is (name, applicableToCategories), preserving operator
+     * edits across repair re-runs per REQ-IPC-007. Records missing either key
+     * field are skipped silently.
+     *
+     * @param object       $objectService OpenRegister ObjectService.
+     * @param array<mixed> $attributes    ProductAttribute records to import.
+     *
+     * @return array{seeded: int, skipped: int}
+     */
+    private function importProductAttributes(object $objectService, array $attributes): array
+    {
+        $registerSlug = $this->getRegisterSlug();
+        $seeded       = 0;
+        $skipped      = 0;
+
+        foreach ($attributes as $attribute) {
+            $name       = ($attribute['name'] ?? null);
+            $categories = ($attribute['applicableToCategories'] ?? null);
+
+            if ($name === null || $categories === null) {
+                continue;
+            }
+
+            // Deduplication key: name + applicableToCategories preserves operator edits.
+            // ADR-022: use the real ObjectService fluent API (setRegister/setSchema/findAll);
+            // findObjects() does not exist on OpenRegister's ObjectService.
+            $existing = $objectService
+                ->setRegister($registerSlug)
+                ->setSchema('ProductAttribute')
+                ->findAll(
+                    [
+                        'filters' => [
+                            'name'                   => $name,
+                            'applicableToCategories' => $categories,
+                        ],
+                        'limit'   => 1,
+                    ]
+                );
+
+            if (empty($existing) === false) {
+                $skipped++;
+                continue;
+            }
+
+            $objectService->saveObject(
+                object: $attribute,
+                register: $registerSlug,
+                schema: 'ProductAttribute',
+            );
+            $seeded++;
+        }//end foreach
+
+        return ['seeded' => $seeded, 'skipped' => $skipped];
+
+    }//end importProductAttributes()
 }//end class

@@ -1,5 +1,7 @@
 # Design — Consultancy Project Accounting
 
+**status: pr-created**
+
 ## Context
 
 Consultancy operators (Conduction's own primary customer profile)

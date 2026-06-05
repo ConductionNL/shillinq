@@ -1,0 +1,15 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Wet houdbare overheidsfinanciën (Wet HOF) art. 2 + ministeriële regeling drempelbedragen",
+    "version": "2026",
+    "description": "Schatkistbankieren drempelbedrag percentages by municipality size (REQ-SBK-005). The drempelbedrag is a percentage of the begrotingstotaal; balances above it must be deposited with the State Treasury per Wet HOF.",
+    "imported": "2026-06-01T00:00:00Z"
+  },
+  "thresholds": [
+    {"size": "small_municipality", "percentageOfBegroting": 0.75, "label": "Kleine medeoverheid (begroting ≤ €500 mln)", "citation": "Wet HOF art. 2 + Regeling schatkistbankieren decentrale overheden"},
+    {"size": "large_municipality", "percentageOfBegroting": 0.5, "label": "Grote medeoverheid (begroting > €500 mln)", "citation": "Wet HOF art. 2 + Regeling schatkistbankieren decentrale overheden"}
+  ],
+  "legislative_reference": "Wet HOF art. 2 + ministerial regeling"
+}

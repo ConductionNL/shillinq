@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Shillinq Register",
 		"description": "Register containing all schemas for the Shillinq application.",
-		"version": "0.4.0"
+		"version": "0.5.0"
 	},
 	"x-openregister": {
 		"type": "application",
@@ -254,6 +254,27 @@
 						"type": "integer",
 						"description": "Number of days until the PSD2 consent expires. Negative when already expired.",
 						"example": 14
+					}
+				},
+				"x-openregister-scheduled-workflows": {
+					"shillinq-bank-transaction-polling": {
+						"name": "Bank transaction polling",
+						"description": "Pulls transactions from the PSD2 aggregator via the openconnector source slug, normalises the aggregator JSON to CAMT.053 XML, attaches the XML via docudesk, and creates a BankStatement record per active BankConnection. Runs 4× daily per REQ-BC-004. No BankPollingJob extends TimedJob.",
+						"cron": "0 */6 * * *",
+						"source": "@self.aggregatorSourceSlug",
+						"register": "shillinq",
+						"schema": "BankConnection",
+						"enabled": true,
+						"filter": {
+							"lifecycleState": [
+								"active",
+								"expiring"
+							]
+						},
+						"outputs": {
+							"creates": "BankStatement",
+							"attaches": "camt.053.001.08"
+						}
 					}
 				}
 			},
@@ -696,7 +717,11 @@
 								"operator": "isNotNull"
 							}
 						},
-						"groupBy": ["costCenterCode", "fiscalYearId", "accountNumber"],
+						"groupBy": [
+							"costCenterCode",
+							"fiscalYearId",
+							"accountNumber"
+						],
 						"operations": {
 							"totalDebit": {
 								"field": "amount",
@@ -727,7 +752,11 @@
 								"operator": "isNotNull"
 							}
 						},
-						"groupBy": ["kostenDragerCode", "fiscalYearId", "accountNumber"],
+						"groupBy": [
+							"kostenDragerCode",
+							"fiscalYearId",
+							"accountNumber"
+						],
 						"operations": {
 							"totalDebit": {
 								"field": "amount",
@@ -758,7 +787,11 @@
 								"operator": "isNotNull"
 							}
 						},
-						"groupBy": ["projectCode", "fiscalYearId", "accountNumber"],
+						"groupBy": [
+							"projectCode",
+							"fiscalYearId",
+							"accountNumber"
+						],
 						"operations": {
 							"totalDebit": {
 								"field": "amount",
@@ -1056,6 +1089,24 @@
 						"description": "Whether VAT/BTW applies to transactions posted to this account.",
 						"default": false
 					},
+					"esaClassifier": {
+						"type": "string",
+						"description": "ESA 2010 (European System of Accounts) sector classifier. Drives EMU-saldo computation's sector grouping per REQ-EMU-002. S.1311 = centrale overheid, S.1312 = deelstaatoverheid (N/A in NL), S.1313 = lokale overheid (gemeente/provincie/waterschap), S.1314 = wettelijke sociale verzekering. S.11–S.15/S.2 are non-government sectors per ESA 2010.",
+						"enum": [
+							"S.1311",
+							"S.1312",
+							"S.1313",
+							"S.1314",
+							"S.11",
+							"S.12",
+							"S.13",
+							"S.14",
+							"S.15",
+							"S.2"
+						],
+						"nullable": true,
+						"example": "S.1313"
+					},
 					"bbvVariant": {
 						"type": "string",
 						"enum": [
@@ -1159,12 +1210,75 @@
 						"operation": "count",
 						"description": "Number of accounts per lifecycleState.",
 						"groupBy": "lifecycleState"
+					},
+					"emuSaldoByQuarter": {
+						"description": "Quarterly EMU-saldo (debit minus credit) grouped by ESA-2010 sector for a given quarter, riding the IV3-base quarterly data per REQ-EMU-003. Filters GLLine rows by period and respects per-line emuInclusionRule (included|partial only; excluded lines are omitted). Partial lines count at 50% contribution. If the declarative engine cannot express the combined multi-sector + emuInclusionRule filter, the guard OCA\\Shillinq\\Guard\\EmuCalculator::computeQuarterlySaldo is invoked per ADR-031 exception path.",
+						"source": "GLLine",
+						"joinOn": "accountNumber",
+						"filter": {
+							"periodQuarter": "@params.quarter",
+							"periodYear": "@params.year",
+							"periodState": "closed",
+							"emuInclusionRule": [
+								"included",
+								"partial"
+							]
+						},
+						"groupBy": "esaClassifier",
+						"operation": "sum",
+						"field": "debit - credit",
+						"guard": "OCA\\Shillinq\\Guard\\EmuCalculator::computeQuarterlySaldo",
+						"meta": {
+							"cadence": "quarterly",
+							"auditHashFields": [
+								"periodYear",
+								"periodQuarter",
+								"esaClassifier",
+								"emuInclusionRule"
+							],
+							"reproducible": true
+						}
+					},
+					"emuSaldoByYear": {
+						"description": "Annual EMU-saldo and EMU-schuld from the closed jaarrekening per REQ-EMU-003. Filters all closed-year GLLine rows, groups by ESA-2010 sector, and respects emuInclusionRule. EMU-schuld is derived as the cumulative net liability position across S.13 sectors. Same guard fallback as quarterly per ADR-031.",
+						"source": "GLLine",
+						"joinOn": "accountNumber",
+						"filter": {
+							"fiscalYear": "@params.fiscalYear",
+							"periodState": "closed",
+							"emuInclusionRule": [
+								"included",
+								"partial"
+							]
+						},
+						"groupBy": "esaClassifier",
+						"operation": "sum",
+						"field": "debit - credit",
+						"guard": "OCA\\Shillinq\\Guard\\EmuCalculator::computeAnnualSaldo",
+						"meta": {
+							"cadence": "annual",
+							"outputs": [
+								"emuSaldo",
+								"emuSchuld"
+							],
+							"auditHashFields": [
+								"fiscalYear",
+								"esaClassifier",
+								"emuInclusionRule"
+							],
+							"reproducible": true
+						}
 					}
 				},
 				"x-openregister-calculations": {
 					"daysUntilRetention": {
 						"expression": "null",
 						"description": "Account records are kept indefinitely (disposition: keep_indefinite per selectielijst:5.1.1). This field always returns null for Account objects."
+					},
+					"emuAggregationHash": {
+						"description": "Stable SHA-256 hash of the contributing GL line IDs + esaClassifier state + applied emuInclusionRule values for the last EMU computation. Same inputs always produce the same hash, enabling audit-trail reproducibility per REQ-EMU-005.",
+						"expression": "sha256(@aggregation.contributingIds + ':' + @self.esaClassifier + ':' + @params.emuInclusionRule)",
+						"nullable": true
 					}
 				}
 			},
@@ -4003,7 +4117,10 @@
 							"description": "Re-enable GL line tagging against this cost center."
 						},
 						"archive": {
-							"from": ["active", "blocked"],
+							"from": [
+								"active",
+								"blocked"
+							],
 							"to": "archived",
 							"label": "Archive cost center",
 							"description": "Move to historical archive; GL lines with this code remain queryable."
@@ -4026,7 +4143,10 @@
 							"schema": "GLLine",
 							"condition": "GLLine.costCenterCode = @self.code AND GLLine.eliminationFlag = false"
 						},
-						"groupBy": ["GLLine.fiscalYearId", "GLLine.accountNumber"],
+						"groupBy": [
+							"GLLine.fiscalYearId",
+							"GLLine.accountNumber"
+						],
 						"operations": {
 							"totalDebit": {
 								"field": "GLLine.amount",
@@ -4044,10 +4164,16 @@
 				"x-openregister-rbac": {
 					"roles": {
 						"bookkeeper": {
-							"permissions": ["create", "read", "update"]
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
 						},
 						"auditor": {
-							"permissions": ["read"]
+							"permissions": [
+								"read"
+							]
 						}
 					}
 				}
@@ -4138,7 +4264,10 @@
 							"description": "Re-enable GL line tagging against this kostendrager."
 						},
 						"archive": {
-							"from": ["active", "blocked"],
+							"from": [
+								"active",
+								"blocked"
+							],
 							"to": "archived",
 							"label": "Archive kostendrager",
 							"description": "Move to historical archive."
@@ -4161,7 +4290,10 @@
 							"schema": "GLLine",
 							"condition": "GLLine.kostenDragerCode = @self.code AND GLLine.eliminationFlag = false"
 						},
-						"groupBy": ["GLLine.fiscalYearId", "GLLine.accountNumber"],
+						"groupBy": [
+							"GLLine.fiscalYearId",
+							"GLLine.accountNumber"
+						],
 						"operations": {
 							"totalDebit": {
 								"field": "GLLine.amount",
@@ -4179,28 +4311,40 @@
 				"x-openregister-rbac": {
 					"roles": {
 						"bookkeeper": {
-							"permissions": ["create", "read", "update"]
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
 						},
 						"auditor": {
-							"permissions": ["read"]
+							"permissions": [
+								"read"
+							]
 						}
 					}
 				}
 			},
 			"Project": {
 				"slug": "Project",
-				"icon": "BriefcaseOutline",
+				"icon": "FolderOpenOutline",
 				"version": "0.1.0",
 				"title": "Project",
-				"description": "An analytical project for tracking time, materials, and costs per project. Same shape as CostCenter and KostenDrager per REQ-CC-002. The timeBookingEnabled flag pre-positions WBSO time-per-project per REQ-CC-007.",
+				"description": "Consultancy project with RJ 270 / IFRS 15 percentage-of-completion revenue recognition. Lifecycle offerte → active → on-hold → closed → archived.",
 				"x-schema-org": "schema:Project",
 				"x-openregister-purpose": "dimension",
 				"type": "object",
 				"required": [
-					"code",
+					"administrationId",
+					"projectNumber",
 					"name",
-					"lifecycleState",
-					"administrationId"
+					"customerId",
+					"state",
+					"totalContractValue",
+					"totalEstimatedCosts",
+					"recognitionMethod",
+					"recognitionStage",
+					"currency"
 				],
 				"properties": {
 					"code": {
@@ -4211,7 +4355,7 @@
 					"name": {
 						"type": "string",
 						"description": "Human-readable project name.",
-						"example": "Cloud Platform 2026"
+						"example": "OR-rollout client X"
 					},
 					"parentCode": {
 						"type": "string",
@@ -4246,23 +4390,153 @@
 						"type": "string",
 						"description": "FK to the Administration owning this project.",
 						"example": "adm-1"
+					},
+					"projectNumber": {
+						"type": "string",
+						"description": "Unique project identifier per administration (e.g. PRJ-2026-001).",
+						"example": "PRJ-2026-001"
+					},
+					"customerId": {
+						"type": "string",
+						"description": "FK to the customer contact record.",
+						"example": "cust-1"
+					},
+					"state": {
+						"type": "string",
+						"description": "Current lifecycle state of the project.",
+						"enum": [
+							"offerte",
+							"active",
+							"on-hold",
+							"closed",
+							"archived"
+						],
+						"example": "active",
+						"default": "offerte"
+					},
+					"startDate": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "Project activation date.",
+						"example": "2026-01-15"
+					},
+					"endDate": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "Target project close date.",
+						"example": "2026-12-31"
+					},
+					"totalContractValue": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Total contracted revenue in project currency (operator-set).",
+						"example": 100000
+					},
+					"totalEstimatedCosts": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Total estimated costs (operator-set; revised over project life; revision triggers audit-trail entry).",
+						"example": 70000
+					},
+					"costsIncurredToDate": {
+						"type": "number",
+						"minimum": 0,
+						"readOnly": true,
+						"description": "Derived from GL via x-openregister-aggregations: sum of GLLine amounts on expense accounts tagged to this project (REQ-CPA-006).",
+						"example": 35000
+					},
+					"recognisedRevenue": {
+						"type": "number",
+						"minimum": 0,
+						"readOnly": true,
+						"description": "Derived via x-openregister-calculations: RJ 270 / IFRS 15 percentage-of-completion formula (REQ-CPA-007).",
+						"example": 50000
+					},
+					"billedRevenue": {
+						"type": "number",
+						"minimum": 0,
+						"readOnly": true,
+						"description": "Derived from invoices (T2 AR) referencing this project via subLedgerRef.",
+						"example": 40000
+					},
+					"wipBalance": {
+						"type": "number",
+						"readOnly": true,
+						"description": "Derived: recognisedRevenue - billedRevenue (REQ-CPA-008).",
+						"example": 10000
+					},
+					"recognitionMethod": {
+						"type": "string",
+						"description": "Revenue recognition method per RJ 270 / IFRS 15.",
+						"enum": [
+							"percentage-of-completion-cost-to-cost",
+							"percentage-of-completion-output",
+							"completed-contract"
+						],
+						"example": "percentage-of-completion-cost-to-cost"
+					},
+					"recognitionStage": {
+						"type": "string",
+						"description": "Current RJ 270 completion stage (from rj-270-stages.json seed).",
+						"enum": [
+							"initiation",
+							"execution",
+							"closeout",
+							"complete"
+						],
+						"example": "execution"
+					},
+					"percentageComplete": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 100,
+						"nullable": true,
+						"description": "Operator-supplied completion percentage for output-based recognition method.",
+						"example": 50
+					},
+					"currency": {
+						"type": "string",
+						"minLength": 3,
+						"maxLength": 3,
+						"description": "ISO 4217 project currency.",
+						"example": "EUR",
+						"default": "EUR"
+					},
+					"closureJustification": {
+						"type": "string",
+						"nullable": true,
+						"description": "Operator justification when closing a project with non-zero WIP balance."
 					}
 				},
 				"x-openregister-lifecycle": {
-					"field": "lifecycleState",
-					"initialState": "active",
+					"field": "state",
+					"initialState": "offerte",
 					"states": {
 						"active": {
-							"label": "Active",
-							"description": "Usable for GL line and time-entry dimension tagging."
+							"label": "Actief",
+							"description": "Project is in execution; GL postings and hour logging are permitted."
 						},
 						"blocked": {
 							"label": "Blocked",
 							"description": "Readable but rejected as target of new GL line or time-entry tags."
 						},
 						"archived": {
-							"label": "Archived",
-							"description": "Historical only; no new dimension tags."
+							"label": "Gearchiveerd",
+							"description": "Historical only; remains queryable per 7-year retention rule."
+						},
+						"offerte": {
+							"label": "Offerte",
+							"description": "Project is at quotation stage; no GL postings yet."
+						},
+						"on-hold": {
+							"label": "On hold",
+							"description": "Project is paused; no new GL postings; reason required."
+						},
+						"closed": {
+							"label": "Afgesloten",
+							"description": "Project is complete; final WIP snapshot and recognition adjustment triggered."
 						}
 					},
 					"transitions": {
@@ -4279,11 +4553,43 @@
 							"description": "Re-enable tagging against this project."
 						},
 						"archive": {
-							"from": ["active", "blocked"],
+							"from": "closed",
 							"to": "archived",
-							"label": "Archive project",
-							"description": "Move to historical archive."
+							"label": "Archiveer project",
+							"description": "Move closed project to archive (typically 12 months post-close)."
+						},
+						"activate": {
+							"from": "offerte",
+							"to": "active",
+							"label": "Activeer project",
+							"description": "Move project from quotation to active execution. startDate must be set.",
+							"requires": "OCA\\Shillinq\\Guard\\ProjectActivationGuard::requireStartDate"
+						},
+						"putOnHold": {
+							"from": "active",
+							"to": "on-hold",
+							"label": "Zet on hold",
+							"description": "Pause project; closureJustification (reason) field must be set.",
+							"requires": "OCA\\Shillinq\\Guard\\ProjectTransitionGuard::requireReason"
+						},
+						"reactivate": {
+							"from": "on-hold",
+							"to": "active",
+							"label": "Heractiveer project",
+							"description": "Resume project from on-hold state."
+						},
+						"close": {
+							"from": "active",
+							"to": "closed",
+							"label": "Sluit project",
+							"description": "Close project; triggers final WIP snapshot + recognition adjustment. Open WIP balance surfaces warning requiring operator justification.",
+							"requires": "OCA\\Shillinq\\Guard\\ProjectCloseGuard::requireWipJustificationOrZero"
 						}
+					},
+					"retention": {
+						"rule": "selectielijst:5.1.2",
+						"years": 7,
+						"description": "Financial records — 7 years per Selectielijst 5.1.2 (REQ-CPA-014)."
 					}
 				},
 				"x-openregister-relations": {
@@ -4302,7 +4608,10 @@
 							"schema": "GLLine",
 							"condition": "GLLine.projectCode = @self.code AND GLLine.eliminationFlag = false"
 						},
-						"groupBy": ["GLLine.fiscalYearId", "GLLine.accountNumber"],
+						"groupBy": [
+							"GLLine.fiscalYearId",
+							"GLLine.accountNumber"
+						],
 						"operations": {
 							"totalDebit": {
 								"field": "GLLine.amount",
@@ -4315,16 +4624,115 @@
 								"condition": "GLLine.side = 'credit'"
 							}
 						}
+					},
+					"costsIncurredToDate": {
+						"description": "Sum of GL expense-account postings tagged to this project via GLLine.subLedgerRef (REQ-CPA-006).",
+						"operation": "sum",
+						"field": "amount",
+						"source": {
+							"register": "@register",
+							"schema": "GLLine"
+						},
+						"filter": {
+							"subLedgerType": "project",
+							"subLedgerRef": "@self.id",
+							"account.accountType": "expenses"
+						}
+					},
+					"billedRevenue": {
+						"description": "Sum of invoice lines referencing this project via T2 AR sub-ledger.",
+						"operation": "sum",
+						"field": "amount",
+						"source": {
+							"register": "@register",
+							"schema": "GLLine"
+						},
+						"filter": {
+							"subLedgerType": "project",
+							"subLedgerRef": "@self.id",
+							"account.accountType": "revenue"
+						}
+					},
+					"profitAndLoss": {
+						"description": "Project P&L: recognised revenue minus costs incurred to date (REQ-CPA-010).",
+						"operation": "derived",
+						"fields": {
+							"recognisedRevenue": "@self.recognisedRevenue",
+							"costsIncurredToDate": "@self.costsIncurredToDate",
+							"grossMargin": {
+								"formula": "@self.recognisedRevenue - @self.costsIncurredToDate"
+							},
+							"grossMarginPercentage": {
+								"formula": "@self.recognisedRevenue > 0 ? ((@self.recognisedRevenue - @self.costsIncurredToDate) / @self.recognisedRevenue * 100) : 0"
+							}
+						}
 					}
 				},
 				"x-openregister-rbac": {
 					"roles": {
 						"bookkeeper": {
-							"permissions": ["create", "read", "update"]
+							"permissions": [
+								"read",
+								"update"
+							],
+							"description": "Read and update project financial fields."
 						},
 						"auditor": {
-							"permissions": ["read"]
+							"permissions": [
+								"read"
+							]
+						},
+						"project-administrator": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							],
+							"description": "Full project management access; visibility predicate: administrationType ∈ {mkb, zzp}."
 						}
+					}
+				},
+				"x-openregister-calculations": {
+					"recognisedRevenue": {
+						"description": "RJ 270 / IFRS 15 percentage-of-completion recognised revenue (REQ-CPA-007). Clamped to [0, totalContractValue].",
+						"type": "number",
+						"conditions": [
+							{
+								"when": {
+									"recognitionMethod": "completed-contract",
+									"state": {
+										"not": "closed"
+									}
+								},
+								"value": 0,
+								"description": "completed-contract: recognise nothing until state=closed."
+							},
+							{
+								"when": {
+									"recognitionMethod": "completed-contract",
+									"state": "closed"
+								},
+								"formula": "@self.totalContractValue",
+								"description": "completed-contract: recognise full contract value on close."
+							},
+							{
+								"when": {
+									"recognitionMethod": "percentage-of-completion-output"
+								},
+								"formula": "@self.totalContractValue * (@self.percentageComplete / 100)",
+								"description": "output-based: operator-supplied percentageComplete drives recognition."
+							}
+						],
+						"default": {
+							"formula": "@self.totalEstimatedCosts > 0 ? max(0, @self.totalContractValue * (@self.costsIncurredToDate / @self.totalEstimatedCosts)) : 0",
+							"description": "cost-to-cost (default): totalContractValue × (costsIncurredToDate / totalEstimatedCosts), clamped ≥ 0."
+						}
+					},
+					"wipBalance": {
+						"description": "Work-in-progress balance: recognised revenue minus billed revenue (REQ-CPA-008).",
+						"type": "number",
+						"formula": "@self.recognisedRevenue - @self.billedRevenue"
 					}
 				}
 			},
@@ -4374,7 +4782,9 @@
 						"minItems": 2,
 						"items": {
 							"type": "object",
-							"required": ["code"],
+							"required": [
+								"code"
+							],
 							"properties": {
 								"code": {
 									"type": "string",
@@ -4402,9 +4812,18 @@
 							}
 						},
 						"example": [
-							{"code": "KC-100", "percentage": 50.0},
-							{"code": "KC-200", "percentage": 30.0},
-							{"code": "KC-300", "percentage": 20.0}
+							{
+								"code": "KC-100",
+								"percentage": 50.0
+							},
+							{
+								"code": "KC-200",
+								"percentage": 30.0
+							},
+							{
+								"code": "KC-300",
+								"percentage": 20.0
+							}
 						]
 					},
 					"targetDimension": {
@@ -4483,7 +4902,10 @@
 							"description": "Temporarily suspend rule evaluation without archiving."
 						},
 						"archive": {
-							"from": ["active", "paused"],
+							"from": [
+								"active",
+								"paused"
+							],
 							"to": "archived",
 							"label": "Archive rule",
 							"description": "Retire the rule permanently."
@@ -4507,13 +4929,2548 @@
 				"x-openregister-rbac": {
 					"roles": {
 						"controller": {
-							"permissions": ["create", "read", "update", "delete"]
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
 						},
 						"bookkeeper": {
-							"permissions": ["read"]
+							"permissions": [
+								"read"
+							]
 						},
 						"auditor": {
-							"permissions": ["read"]
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"ProjectAssignment": {
+				"slug": "ProjectAssignment",
+				"icon": "AccountArrowRightOutline",
+				"version": "0.1.0",
+				"title": "Projectopdracht",
+				"description": "Assignment of a person to a project with rate-card reference and utilisation tracking (REQ-CPA-004).",
+				"type": "object",
+				"x-schema-org": "schema:JobPosting",
+				"required": [
+					"projectId",
+					"personId",
+					"rateCardId",
+					"recognisedRate",
+					"startDate",
+					"state"
+				],
+				"properties": {
+					"projectId": {
+						"type": "string",
+						"description": "FK to the parent Project.id.",
+						"example": "proj-1"
+					},
+					"personId": {
+						"type": "string",
+						"description": "FK to the assigned person (Nextcloud user or OR Person record).",
+						"example": "user-1"
+					},
+					"rateCardId": {
+						"type": "string",
+						"description": "FK to the RateCard effective at assignment time.",
+						"example": "rc-1"
+					},
+					"recognisedRate": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Snapshot of RateCard.hourlyRate at assignment time per RJ 270 §3.2.4. Immutable after creation.",
+						"example": 180
+					},
+					"estimatedHours": {
+						"type": "number",
+						"minimum": 0,
+						"nullable": true,
+						"description": "Operator estimate of hours this person will spend on this project.",
+						"example": 200
+					},
+					"startDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Assignment start date.",
+						"example": "2026-01-15"
+					},
+					"endDate": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "Assignment end date.",
+						"example": "2026-12-31"
+					},
+					"state": {
+						"type": "string",
+						"description": "Assignment lifecycle state.",
+						"enum": [
+							"planned",
+							"active",
+							"completed"
+						],
+						"example": "active",
+						"default": "planned"
+					},
+					"capacityHoursPerWeek": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Operator-set weekly capacity hours for utilisation calculation. Default 40 per Wet IB (36-hour workweek; operator override allowed).",
+						"example": 40,
+						"default": 40
+					},
+					"utilization": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 1,
+						"readOnly": true,
+						"description": "Derived: billableHoursThisPeriod / capacityHoursThisPeriod (REQ-CPA-011).",
+						"example": 0.75
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "state",
+					"initialState": "planned",
+					"retention": {
+						"rule": "selectielijst:5.1.2",
+						"years": 7
+					},
+					"states": {
+						"planned": {
+							"label": "Gepland",
+							"description": "Assignment is planned; BillableHour records may not yet reference it."
+						},
+						"active": {
+							"label": "Actief",
+							"description": "Assignment is active; BillableHour records may reference projectId + personId."
+						},
+						"completed": {
+							"label": "Afgerond",
+							"description": "Assignment is complete."
+						}
+					},
+					"transitions": {
+						"activate": {
+							"from": "planned",
+							"to": "active",
+							"label": "Activeer opdracht",
+							"description": "Activate the assignment; hour logging becomes available."
+						},
+						"complete": {
+							"from": "active",
+							"to": "completed",
+							"label": "Sluit opdracht",
+							"description": "Mark assignment as completed."
+						}
+					}
+				},
+				"x-openregister-calculations": {
+					"utilization": {
+						"description": "Billable hours this period divided by capacity hours this period per person (REQ-CPA-011).",
+						"type": "number",
+						"formula": "@self.capacityHoursThisPeriod > 0 ? (@self.billableHoursThisPeriod / @self.capacityHoursThisPeriod) : 0",
+						"note": "billableHoursThisPeriod is aggregated from UrenRegistratie records for this assignment in the current FiscalPeriod; capacityHoursThisPeriod = capacityHoursPerWeek × workingWeeksInPeriod."
+					}
+				},
+				"x-openregister-widgets": {
+					"utilisatieWidget": {
+						"title": "Utilisatie",
+						"description": "Per-person utilisation for the current period with green/yellow/red bands (REQ-CPA-013).",
+						"type": "utilisation-chart",
+						"dataSource": {
+							"register": "@register",
+							"schema": "ProjectAssignment",
+							"calculation": "utilization"
+						},
+						"bands": [
+							{
+								"min": 0.8,
+								"color": "success",
+								"label": "Hoog (>80%)"
+							},
+							{
+								"min": 0.5,
+								"color": "warning",
+								"label": "Gemiddeld (50-80%)"
+							},
+							{
+								"min": 0,
+								"color": "error",
+								"label": "Laag (<50%)"
+							}
+						],
+						"visibilityPredicate": {
+							"administrationType": [
+								"mkb",
+								"zzp"
+							],
+							"role": "project-administrator"
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"project-administrator": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						},
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"RateCard": {
+				"slug": "RateCard",
+				"icon": "CurrencyEur",
+				"version": "0.1.0",
+				"title": "Tarievenkaart",
+				"description": "Rate card with per-level hourly rates and effectivity windows. Default templates seeded from rate-card-templates.json (REQ-CPA-005).",
+				"type": "object",
+				"x-schema-org": "schema:PriceSpecification",
+				"required": [
+					"administrationId",
+					"level",
+					"currency",
+					"hourlyRate",
+					"effectiveFrom"
+				],
+				"properties": {
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this rate card.",
+						"example": "adm-1"
+					},
+					"level": {
+						"type": "string",
+						"description": "Personnel level for this rate. Operator-extensible via seed.",
+						"enum": [
+							"junior",
+							"medior",
+							"senior",
+							"partner"
+						],
+						"example": "senior"
+					},
+					"currency": {
+						"type": "string",
+						"minLength": 3,
+						"maxLength": 3,
+						"description": "ISO 4217 currency for hourlyRate.",
+						"example": "EUR",
+						"default": "EUR"
+					},
+					"hourlyRate": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Rate per hour in the specified currency.",
+						"example": 165
+					},
+					"effectiveFrom": {
+						"type": "string",
+						"format": "date",
+						"description": "First date this rate is valid (inclusive).",
+						"example": "2026-01-01"
+					},
+					"effectiveTo": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "Last date this rate is valid (inclusive). Null = currently valid.",
+						"example": "2026-12-31"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "Optional description of this rate card entry."
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "_meta.status",
+					"retention": {
+						"rule": "selectielijst:5.1.2",
+						"years": 7
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"project-administrator": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						},
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"RateCardTemplate": {
+				"slug": "RateCardTemplate",
+				"icon": "CardAccountDetailsOutline",
+				"version": "0.1.0",
+				"title": "Rate Card Template",
+				"description": "Reusable rate-card structure definition for multi-tier billing rates (user / role / project / client / blended). Versioned via RateCardVersion; tier-specific rates declared in RateSchedule. Per-OU isolation (administrationId). REQ-RATE-002.",
+				"type": "object",
+				"x-schema-org": "schema:Thing",
+				"required": [
+					"templateId",
+					"name",
+					"tierStructure",
+					"currency",
+					"administrationId",
+					"lifecycleState",
+					"createdAt"
+				],
+				"properties": {
+					"templateId": {
+						"type": "string",
+						"description": "Unique rate-card template identifier.",
+						"example": "RCT-2026-001"
+					},
+					"name": {
+						"type": "string",
+						"description": "Human-readable template name.",
+						"example": "2026 Consulting Rates"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "Purpose and scope of this rate-card template.",
+						"example": "Multi-tier rates for consulting services"
+					},
+					"tierStructure": {
+						"type": "array",
+						"description": "Ordered list of rate tiers, highest precedence first (user > role > project > client > blended).",
+						"items": {
+							"type": "string",
+							"enum": [
+								"user",
+								"role",
+								"project",
+								"client",
+								"blended"
+							]
+						},
+						"example": [
+							"user",
+							"role",
+							"project",
+							"client",
+							"blended"
+						]
+					},
+					"currency": {
+						"type": "string",
+						"minLength": 3,
+						"maxLength": 3,
+						"description": "ISO 4217 currency code. All rates on schedules tied to this template MUST use this currency.",
+						"example": "EUR",
+						"default": "EUR"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the administration owning this template (per-OU isolation; REQ-RATE-002).",
+						"example": "adm-1"
+					},
+					"lifecycleState": {
+						"type": "string",
+						"enum": [
+							"active",
+							"archived"
+						],
+						"description": "Lifecycle state of the template.",
+						"example": "active"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Template creation timestamp (immutable).",
+						"example": "2026-01-01T00:00:00Z"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Template is in use; new RateCardVersion entries may reference it."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Template is retired; no new versions may be created but historical data is preserved."
+						}
+					},
+					"transitions": {
+						"archive": {
+							"from": "active",
+							"to": "archived",
+							"label": "Archive template",
+							"description": "Retire this rate-card template. Existing versions and schedules remain queryable."
+						},
+						"reactivate": {
+							"from": "archived",
+							"to": "active",
+							"label": "Reactivate template",
+							"description": "Restore an archived template to active state."
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"project-administrator": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						},
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"RateCardVersion": {
+				"slug": "RateCardVersion",
+				"icon": "CalendarRangeOutline",
+				"version": "0.1.0",
+				"title": "Rate Card Version",
+				"description": "Effective-dated variant of a RateCardTemplate. Multiple concurrent versions per administration are supported, each covering a non-overlapping effective-date window. REQ-RATE-003.",
+				"type": "object",
+				"x-schema-org": "schema:Thing",
+				"required": [
+					"versionId",
+					"templateId",
+					"effectiveDate",
+					"status",
+					"administrationId"
+				],
+				"properties": {
+					"versionId": {
+						"type": "string",
+						"description": "Unique version identifier.",
+						"example": "RCV-2026-001"
+					},
+					"templateId": {
+						"type": "string",
+						"description": "FK to the parent RateCardTemplate.",
+						"example": "RCT-2026-001"
+					},
+					"effectiveDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Start date this version is active (inclusive). MUST be >= today at creation time (REQ-RATE-009).",
+						"example": "2026-01-01"
+					},
+					"expiryDate": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "End date (inclusive); null = open-ended. Effective-date windows per template MUST NOT overlap (REQ-RATE-003).",
+						"example": "2026-03-31"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"draft",
+							"active",
+							"expired",
+							"archived"
+						],
+						"description": "Lifecycle status of this version.",
+						"example": "active"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the administration owning this version (per-OU isolation).",
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "status",
+					"initialState": "draft",
+					"states": {
+						"draft": {
+							"label": "Draft",
+							"description": "Version being prepared; not yet in use for rate lookups."
+						},
+						"active": {
+							"label": "Active",
+							"description": "Version is live; rate lookups use schedules tied to this version within its effective-date window."
+						},
+						"expired": {
+							"label": "Expired",
+							"description": "Version expiryDate has passed; historical only."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Manually retired; no longer in use."
+						}
+					},
+					"transitions": {
+						"activate": {
+							"from": "draft",
+							"to": "active",
+							"label": "Activate version",
+							"description": "Make this version live for rate lookups. Validates non-overlapping effective-date window."
+						},
+						"expire": {
+							"from": "active",
+							"to": "expired",
+							"label": "Expire version",
+							"description": "Mark as expired (typically automatic when expiryDate passes)."
+						},
+						"archive": {
+							"from": [
+								"draft",
+								"active",
+								"expired"
+							],
+							"to": "archived",
+							"label": "Archive version",
+							"description": "Retire this version."
+						}
+					}
+				},
+				"x-openregister-aggregations": {
+					"schedulesByTier": {
+						"description": "Rate schedules grouped by tier for this version. Used by rate-lookup UI and aggregation queries.",
+						"source": "RateSchedule",
+						"joinOn": "versionId",
+						"groupBy": "tier",
+						"operations": {
+							"count": {
+								"field": "scheduleId",
+								"operation": "count"
+							},
+							"minRate": {
+								"field": "rate",
+								"operation": "min"
+							},
+							"maxRate": {
+								"field": "rate",
+								"operation": "max"
+							}
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"project-administrator": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						},
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"RateSchedule": {
+				"slug": "RateSchedule",
+				"icon": "TableRowOutline",
+				"version": "0.1.0",
+				"title": "Rate Schedule",
+				"description": "Tier-specific rate entry for a RateCardVersion. Defines a fixed or volume-bracketed rate for a single tier (user / role / project / client / blended) within an effective-date window. Non-overlapping effective windows per (tier, entityId) are enforced (REQ-RATE-006). REQ-RATE-004.",
+				"type": "object",
+				"x-schema-org": "schema:Thing",
+				"required": [
+					"scheduleId",
+					"versionId",
+					"tier",
+					"rate",
+					"unit",
+					"effectiveDate",
+					"administrationId",
+					"status"
+				],
+				"properties": {
+					"scheduleId": {
+						"type": "string",
+						"description": "Unique rate schedule identifier.",
+						"example": "RS-2026-001"
+					},
+					"versionId": {
+						"type": "string",
+						"description": "FK to the parent RateCardVersion.",
+						"example": "RCV-2026-001"
+					},
+					"tier": {
+						"type": "string",
+						"enum": [
+							"user",
+							"role",
+							"project",
+							"client",
+							"blended"
+						],
+						"description": "Rate tier. Precedence: user > role > project > client > blended (REQ-RATE-005, D6).",
+						"example": "user"
+					},
+					"entityId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Entity identifier for user/role/project/client tiers. NULL for blended-default tier (REQ-RATE-004).",
+						"example": "user-alice"
+					},
+					"rate": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Fixed rate per unit in the template currency.",
+						"example": 130
+					},
+					"unit": {
+						"type": "string",
+						"enum": [
+							"hourly",
+							"daily",
+							"monthly",
+							"fixedPrice"
+						],
+						"description": "Billing unit for this rate.",
+						"example": "hourly"
+					},
+					"effectiveDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Start date this schedule is active (inclusive). MUST be >= today at creation time (REQ-RATE-009).",
+						"example": "2026-01-01"
+					},
+					"expiryDate": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "End date (inclusive); null = open-ended. (tier, entityId) pairs MUST NOT have overlapping effective-date windows (REQ-RATE-006).",
+						"example": "2026-03-31"
+					},
+					"volumeBrackets": {
+						"type": "array",
+						"nullable": true,
+						"description": "Optional volume-discount brackets. Applied in ascending minUnits order; the matching bracket rate overrides the base rate.",
+						"items": {
+							"type": "object",
+							"required": [
+								"minUnits",
+								"rate"
+							],
+							"properties": {
+								"minUnits": {
+									"type": "number",
+									"description": "Minimum units (hours/days) for this bracket to apply."
+								},
+								"maxUnits": {
+									"type": "number",
+									"nullable": true,
+									"description": "Maximum units (inclusive); null = unbounded."
+								},
+								"rate": {
+									"type": "number",
+									"description": "Rate per unit at this volume bracket."
+								}
+							}
+						},
+						"example": [
+							{
+								"minUnits": 40,
+								"maxUnits": 80,
+								"rate": 120
+							},
+							{
+								"minUnits": 81,
+								"rate": 110
+							}
+						]
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the administration (per-OU isolation).",
+						"example": "adm-1"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"active",
+							"inactive",
+							"archived"
+						],
+						"description": "Status of this rate schedule.",
+						"example": "active"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "status",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Schedule is in use for rate lookups within its effective-date window."
+						},
+						"inactive": {
+							"label": "Inactive",
+							"description": "Schedule is suspended; excluded from rate lookups."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Retired; historical only."
+						}
+					},
+					"transitions": {
+						"deactivate": {
+							"from": "active",
+							"to": "inactive",
+							"label": "Deactivate",
+							"description": "Suspend this schedule from rate lookups."
+						},
+						"reactivate": {
+							"from": "inactive",
+							"to": "active",
+							"label": "Reactivate",
+							"description": "Restore this schedule for rate lookups."
+						},
+						"archive": {
+							"from": [
+								"active",
+								"inactive"
+							],
+							"to": "archived",
+							"label": "Archive",
+							"description": "Retire this schedule permanently."
+						}
+					},
+					"preconditions": {
+						"save": "OCA\\Shillinq\\Guard\\RateScheduleOverlapGuard::requireNonOverlappingWindow"
+					}
+				},
+				"x-openregister-aggregations": {
+					"resolveRate": {
+						"description": "Rate-lookup aggregation (REQ-RATE-005): given (userId, roleId, projectId, clientId, lookupDate), resolves the most-specific applicable rate by tier precedence (user > role > project > client > blended). Filters by effectiveDate <= lookupDate <= expiryDate, status = active. Returns first match ranked by tier precedence. Per ADR-031: declarative aggregation preferred; falls back to OCA\\Shillinq\\Guard\\RateResolutionGuard if OR aggregation engine does not support parameterised tier-rank sorting.",
+						"parameters": {
+							"userId": {
+								"type": "string",
+								"nullable": true
+							},
+							"roleId": {
+								"type": "string",
+								"nullable": true
+							},
+							"projectId": {
+								"type": "string",
+								"nullable": true
+							},
+							"clientId": {
+								"type": "string",
+								"nullable": true
+							},
+							"lookupDate": {
+								"type": "string",
+								"format": "date"
+							},
+							"administrationId": {
+								"type": "string"
+							}
+						},
+						"filter": {
+							"status": "active",
+							"effectiveDate": {
+								"operator": "lte",
+								"value": "@params.lookupDate"
+							},
+							"expiryDate": {
+								"operator": "gte_or_null",
+								"value": "@params.lookupDate"
+							},
+							"administrationId": "@params.administrationId"
+						},
+						"tierPrecedence": [
+							"user",
+							"role",
+							"project",
+							"client",
+							"blended"
+						],
+						"fallbackGuard": "OCA\\Shillinq\\Guard\\RateResolutionGuard::resolveByTierPrecedence"
+					},
+					"activeSchedulesByTier": {
+						"description": "Count of active schedules per tier for a given administrationId. Used by Rate Cards index page.",
+						"filter": {
+							"status": "active",
+							"administrationId": "@params.administrationId"
+						},
+						"groupBy": "tier",
+						"operations": {
+							"count": {
+								"field": "scheduleId",
+								"operation": "count"
+							},
+							"avgRate": {
+								"field": "rate",
+								"operation": "avg"
+							}
+						}
+					}
+				},
+				"x-openregister-calculations": {
+					"isCurrentlyEffective": {
+						"description": "True when today falls within [effectiveDate, expiryDate] and status=active.",
+						"expression": "status == 'active' AND effectiveDate <= @today AND (expiryDate IS NULL OR expiryDate >= @today)",
+						"type": "boolean"
+					},
+					"effectiveWindowLabel": {
+						"description": "Human-readable effective-date window string for UI display.",
+						"expression": "effectiveDate || ' – ' || COALESCE(expiryDate, 'open-ended')",
+						"type": "string"
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"project-administrator": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						},
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"RateRecord": {
+				"slug": "RateRecord",
+				"icon": "HistoryOutline",
+				"version": "0.1.0",
+				"title": "Rate Record",
+				"description": "Immutable materialized audit-trail entry created for each rate lookup. Stores the resolved tier, rate, effective window, and lookup context so historical rates remain queryable and disputable (REQ-RATE-007, REQ-RATE-010, D4). No updates after creation.",
+				"type": "object",
+				"x-schema-org": "schema:Thing",
+				"required": [
+					"recordId",
+					"lookupDate",
+					"resolvedTier",
+					"resolvedScheduleId",
+					"resolvedRate",
+					"resolvedUnit",
+					"effectiveWindowStart",
+					"administrationId",
+					"createdAt"
+				],
+				"properties": {
+					"recordId": {
+						"type": "string",
+						"description": "Unique audit record identifier.",
+						"example": "RR-2026-001"
+					},
+					"lookupDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Date the rate lookup occurred.",
+						"example": "2026-02-15"
+					},
+					"userId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Input userId from the rate-lookup request.",
+						"example": "user-alice"
+					},
+					"roleId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Input roleId from the rate-lookup request.",
+						"example": "role-senior-consultant"
+					},
+					"projectId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Input projectId from the rate-lookup request.",
+						"example": null
+					},
+					"clientId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Input clientId from the rate-lookup request.",
+						"example": null
+					},
+					"resolvedTier": {
+						"type": "string",
+						"enum": [
+							"user",
+							"role",
+							"project",
+							"client",
+							"blended"
+						],
+						"description": "Winning tier from rate-lookup precedence (user > role > project > client > blended).",
+						"example": "user"
+					},
+					"resolvedScheduleId": {
+						"type": "string",
+						"description": "FK to the winning RateSchedule at lookup time (immutable snapshot reference).",
+						"example": "RS-2026-004"
+					},
+					"resolvedRate": {
+						"type": "number",
+						"description": "Final resolved rate amount at lookup time. Immutable.",
+						"example": 130
+					},
+					"resolvedUnit": {
+						"type": "string",
+						"enum": [
+							"hourly",
+							"daily",
+							"monthly",
+							"fixedPrice"
+						],
+						"description": "Billing unit of the resolved rate.",
+						"example": "hourly"
+					},
+					"effectiveWindowStart": {
+						"type": "string",
+						"format": "date",
+						"description": "effectiveDate of the winning RateSchedule at lookup time.",
+						"example": "2026-02-01"
+					},
+					"effectiveWindowEnd": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "expiryDate of the winning RateSchedule at lookup time; null if open-ended.",
+						"example": "2026-03-31"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the administration (per-OU isolation).",
+						"example": "adm-1"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Materialization timestamp. Immutable once created.",
+						"example": "2026-02-15T10:30:00Z"
+					}
+				},
+				"x-openregister-aggregations": {
+					"historicalRatesByUser": {
+						"description": "Historical rate audit aggregation (REQ-RATE-010): rate records grouped by resolvedTier and resolvedRate for a given userId and date range. Used by Rate Audit Trail page.",
+						"parameters": {
+							"userId": {
+								"type": "string"
+							},
+							"dateFrom": {
+								"type": "string",
+								"format": "date"
+							},
+							"dateTo": {
+								"type": "string",
+								"format": "date"
+							},
+							"administrationId": {
+								"type": "string"
+							}
+						},
+						"filter": {
+							"userId": "@params.userId",
+							"lookupDate": {
+								"operator": "between",
+								"from": "@params.dateFrom",
+								"to": "@params.dateTo"
+							},
+							"administrationId": "@params.administrationId"
+						},
+						"groupBy": [
+							"resolvedTier",
+							"resolvedRate",
+							"resolvedUnit"
+						],
+						"operations": {
+							"count": {
+								"field": "recordId",
+								"operation": "count"
+							},
+							"firstLookup": {
+								"field": "lookupDate",
+								"operation": "min"
+							},
+							"lastLookup": {
+								"field": "lookupDate",
+								"operation": "max"
+							}
+						}
+					},
+					"countByTier": {
+						"description": "Count of rate lookups per resolved tier for an administration. Used by Rate Audit Trail widget.",
+						"filter": {
+							"administrationId": "@params.administrationId"
+						},
+						"groupBy": "resolvedTier",
+						"operations": {
+							"count": {
+								"field": "recordId",
+								"operation": "count"
+							}
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"project-administrator": {
+							"permissions": [
+								"create",
+								"read"
+							]
+						},
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"UrenRegistratie": {
+				"slug": "UrenRegistratie",
+				"icon": "ClockOutline",
+				"version": "0.1.0",
+				"title": "Urenregistratie",
+				"description": "Billable hour logging for ZZP / consultancy. Base schema from bookkeeping-zzp-tax-regime; extended here with recognisedRate (rate-at-write snapshot per RJ 270 §3.2.4) and projectAssignmentId (FK to ProjectAssignment, REQ-CPA-009).",
+				"type": "object",
+				"x-schema-org": "schema:HowToStep",
+				"required": [
+					"administrationId",
+					"personId",
+					"date",
+					"hours",
+					"description"
+				],
+				"properties": {
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this hour entry.",
+						"example": "adm-1"
+					},
+					"personId": {
+						"type": "string",
+						"description": "FK to the person logging the hours.",
+						"example": "user-1"
+					},
+					"date": {
+						"type": "string",
+						"format": "date",
+						"description": "Date on which the work was performed (performance date, NOT invoice date).",
+						"example": "2026-03-15"
+					},
+					"hours": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Number of hours worked.",
+						"example": 8
+					},
+					"description": {
+						"type": "string",
+						"description": "Description of work performed.",
+						"example": "Design session OR data model"
+					},
+					"projectId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Optional FK to the Project this hour is billed against.",
+						"example": "proj-1"
+					},
+					"projectAssignmentId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to the ProjectAssignment governing this hour entry. References the assignment for rate-card lookup and utilisation aggregation (REQ-CPA-009).",
+						"example": "pa-1"
+					},
+					"recognisedRate": {
+						"type": "number",
+						"minimum": 0,
+						"nullable": true,
+						"readOnly": true,
+						"description": "Snapshot of the applicable RateCard.hourlyRate at the time this record is written, per RJ 270 §3.2.4 (rate as of performance date, not invoice date). Immutable after creation — subsequent rate-card revisions do NOT retroactively change this field (REQ-CPA-009).",
+						"example": 180
+					},
+					"glTransactionId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to the GLTransaction when this hour is posted to GL.",
+						"example": "glt-1"
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"project-administrator": {
+							"permissions": [
+								"read"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"WipBalance": {
+				"slug": "WipBalance",
+				"icon": "ChartLineVariant",
+				"version": "0.1.0",
+				"title": "WIP-saldo",
+				"description": "Period-end work-in-progress snapshot per project, generated by an OR ScheduledWorkflow on T2 period close (REQ-CPA-008).",
+				"type": "object",
+				"x-schema-org": "schema:MonetaryAmount",
+				"required": [
+					"projectId",
+					"periodId",
+					"recognisedRevenue",
+					"billedRevenue",
+					"wipBalance",
+					"costsIncurredToDate",
+					"createdAt"
+				],
+				"properties": {
+					"projectId": {
+						"type": "string",
+						"description": "FK to the snapshotted Project.id.",
+						"example": "proj-1"
+					},
+					"periodId": {
+						"type": "string",
+						"description": "FK to the FiscalPeriod for which this snapshot was taken.",
+						"example": "fp-2026-Q1"
+					},
+					"recognisedRevenue": {
+						"type": "number",
+						"description": "Snapshot of Project.recognisedRevenue at period close.",
+						"example": 50000
+					},
+					"billedRevenue": {
+						"type": "number",
+						"description": "Snapshot of Project.billedRevenue at period close.",
+						"example": 40000
+					},
+					"wipBalance": {
+						"type": "number",
+						"description": "Snapshot: recognisedRevenue - billedRevenue at period close.",
+						"example": 10000
+					},
+					"costsIncurredToDate": {
+						"type": "number",
+						"description": "Snapshot of Project.costsIncurredToDate at period close.",
+						"example": 35000
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Timestamp when this snapshot was generated.",
+						"example": "2026-04-01T00:00:00Z"
+					}
+				},
+				"x-openregister-scheduled-workflow": {
+					"trigger": "event",
+					"event": "PeriodClosed",
+					"description": "Triggered by T2 PeriodClosed event. Generates one WipBalance record per active Project per period close (REQ-CPA-008).",
+					"action": {
+						"forEach": {
+							"register": "@register",
+							"schema": "Project",
+							"filter": {
+								"state": "active"
+							}
+						},
+						"create": {
+							"register": "@register",
+							"schema": "WipBalance",
+							"fields": {
+								"projectId": "@item.id",
+								"periodId": "@event.periodId",
+								"recognisedRevenue": "@item.recognisedRevenue",
+								"billedRevenue": "@item.billedRevenue",
+								"wipBalance": "@item.wipBalance",
+								"costsIncurredToDate": "@item.costsIncurredToDate",
+								"createdAt": "@event.closedAt"
+							}
+						}
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "_meta.status",
+					"retention": {
+						"rule": "selectielijst:5.1.2",
+						"years": 7,
+						"description": "Financial records — 7 years per Selectielijst 5.1.2 (REQ-CPA-014)."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"project-administrator": {
+							"permissions": [
+								"read"
+							],
+							"description": "Read-only; WipBalance records are system-generated, never manually created."
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"FiscalYear": {
+				"slug": "FiscalYear",
+				"icon": "CalendarCheckOutline",
+				"version": "0.1.0",
+				"title": "Fiscal Year",
+				"description": "Fiscal year lifecycle record tracking the open -> closing -> closed -> reopened state machine for year-end close per REQ-YEC-001 through REQ-YEC-006. The open -> closing transition emits a balanced retained-earnings transfer JournalEntry (manual sub-type). The closing -> closed transition emits an opening-balance JournalEntry for the next year (balance-sheet accounts only) and fires CloudEvents for dimensional rollover. The admin-only closed -> reopened transition emits two reversing JournalEntry records pairing with the original journals for full audit traceability. No YearEndCloseService PHP class; all close logic is schema-declared per ADR-031.",
+				"x-schema-org": "schema:AccountingPeriod",
+				"type": "object",
+				"x-openregister-unique": [
+					[
+						"yearNumber",
+						"administrationId"
+					]
+				],
+				"required": [
+					"yearNumber",
+					"startDate",
+					"endDate",
+					"state",
+					"administrationId"
+				],
+				"properties": {
+					"yearNumber": {
+						"type": "integer",
+						"description": "Calendar year reference (e.g. 2026). MUST be unique per administrationId per REQ-YEC-002.",
+						"example": 2026
+					},
+					"startDate": {
+						"type": "string",
+						"format": "date",
+						"description": "First day of the fiscal year. Typically YYYY-01-01 but supports broken fiscal years per REQ-YEC-002.",
+						"example": "2026-01-01"
+					},
+					"endDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Last day of the fiscal year per REQ-YEC-002.",
+						"example": "2026-12-31"
+					},
+					"state": {
+						"type": "string",
+						"enum": [
+							"open",
+							"closing",
+							"closed",
+							"reopened"
+						],
+						"default": "open",
+						"description": "Current lifecycle state of the fiscal year per REQ-YEC-002."
+					},
+					"closingJournalId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to the JournalEntry that posted the year-end retained-earnings transfer (set by open -> closing action per REQ-YEC-003).",
+						"example": "je-uuid-closing-2026"
+					},
+					"openingJournalId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to the JournalEntry that posted the next-year opening balances (set by closing -> closed action per REQ-YEC-004).",
+						"example": "je-uuid-opening-2027"
+					},
+					"closedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true,
+						"description": "ISO 8601 timestamp when the close completed. Required when state = closed per REQ-YEC-002.",
+						"example": "2026-12-31T23:59:00Z"
+					},
+					"closedBy": {
+						"type": "string",
+						"nullable": true,
+						"description": "NC user id of the actor who completed the close. Required when state = closed per REQ-YEC-002.",
+						"example": "bookkeeper"
+					},
+					"reopenedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true,
+						"description": "ISO 8601 timestamp when the year was reopened. Required when state = reopened per REQ-YEC-002.",
+						"example": "2027-02-15T10:00:00Z"
+					},
+					"reopenedBy": {
+						"type": "string",
+						"nullable": true,
+						"description": "NC user id of the admin who reopened the fiscal year. Required when state = reopened per REQ-YEC-002.",
+						"example": "admin"
+					},
+					"reopenReason": {
+						"type": "string",
+						"nullable": true,
+						"description": "Operator-supplied justification for the reopen. Required (non-empty) when initiating the closed -> reopened transition per REQ-YEC-006.",
+						"example": "Correction of retained-earnings posting following 2026 audit finding"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration that owns this fiscal year. Combined with yearNumber forms the composite uniqueness key per D5.",
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "state",
+					"initialState": "open",
+					"states": {
+						"open": {
+							"label": "Open",
+							"description": "Fiscal year is active; GL transactions post normally to this period."
+						},
+						"closing": {
+							"label": "Closing",
+							"description": "Year-end close is in progress; retained-earnings transfer JournalEntry posted. GL still writable until the closed transition completes."
+						},
+						"closed": {
+							"label": "Closed",
+							"description": "Fiscal year is closed. Opening-balance JournalEntry posted for the next year. Dimensional rollover CloudEvents fired. GL becomes immutable for this period."
+						},
+						"reopened": {
+							"label": "Reopened",
+							"description": "Admin-initiated escape hatch. Two reversing JournalEntry records pair with the original closing and opening journals. GL is writable again."
+						}
+					},
+					"transitions": {
+						"beginClose": {
+							"from": "open",
+							"to": "closing",
+							"label": "Begin year-end close",
+							"description": "Starts the year-end close. Requires all T3 fiscal periods within this year to be in state closed per REQ-YEC-007. Emits a balanced retained-earnings transfer JournalEntry (manual sub-type): credits revenue account closing balances to the closing account (isClosingAccount: true per REQ-CoA-009), debits expense account closing balances, posts net result to the retained-earnings equity account per REQ-YEC-003.",
+							"requires": "OCA\\Shillinq\\Lifecycle\\FiscalYearGuard::requireAllPeriodsClosedForYear",
+							"sets": {
+								"closingJournalId": "@created.id"
+							}
+						},
+						"close": {
+							"from": "closing",
+							"to": "closed",
+							"label": "Complete year-end close",
+							"description": "Completes the year-end close. Emits an opening-balance JournalEntry for the next FiscalYear (balance-sheet accounts only; P&L accounts excluded per REQ-YEC-004). Auto-creates next FiscalYear record in state open if absent. Fires CloudEvents per dimension register (CostCenter, KostenDrager, Project) for dimensional rollover; each subscriber carries active dimensions forward and skips archived per REQ-YEC-005.",
+							"sets": {
+								"closedAt": "@now",
+								"closedBy": "@currentUser",
+								"openingJournalId": "@created.id"
+							}
+						},
+						"reopen": {
+							"from": "closed",
+							"to": "reopened",
+							"label": "Reopen fiscal year",
+							"description": "Admin-only escape hatch per REQ-YEC-006. Emits two JournalEntry records of sub-type reversing pairing with closingJournalId and openingJournalId respectively. Recorded as a CloudEvent in the admin notifications stream. Non-empty reopenReason required.",
+							"requiresRole": "admin",
+							"requires": "reopenReason",
+							"sets": {
+								"reopenedAt": "@now",
+								"reopenedBy": "@currentUser"
+							}
+						}
+					},
+					"hooks": {
+						"onBeginClose": {
+							"trigger": "transition:beginClose",
+							"description": "Emit retained-earnings transfer JournalEntry on open -> closing per REQ-YEC-003. OR engine sums revenue account closing balances (credit to closing account) and expense account closing balances (debit from closing account); net result posted to retained-earnings equity account.",
+							"action": "x-openregister-create-related",
+							"actionParameters": {
+								"register": "shillinq",
+								"schema": "JournalEntry",
+								"data": {
+									"type": "manual",
+									"subType": "year-end-closing",
+									"state": "posted",
+									"description": "Year-end retained-earnings transfer — boekjaar @self.yearNumber. Omzet- en kostenrekeningen afgesloten naar sluitrekening; nettoresultaat geboekt op eigen-vermogenrekening.",
+									"administrationId": "@self.administrationId"
+								}
+							}
+						},
+						"onClose": {
+							"trigger": "transition:close",
+							"description": "Emit opening-balance JournalEntry for the next fiscal year on closing -> closed per REQ-YEC-004. Balance-sheet accounts only (assets, liabilities, equity); P&L accounts excluded. Auto-create next FiscalYear in state open if absent.",
+							"action": "x-openregister-create-related",
+							"actionParameters": {
+								"register": "shillinq",
+								"schema": "JournalEntry",
+								"data": {
+									"type": "manual",
+									"subType": "year-end-opening-balance",
+									"state": "posted",
+									"description": "Openingsbalans boekjaar @self.yearNumber + 1. Balansrekeningen overgenomen uit afsluiting boekjaar @self.yearNumber; resultaatrekeningen op nul.",
+									"administrationId": "@self.administrationId"
+								}
+							}
+						},
+						"onCloseDimensionRollover": {
+							"trigger": "transition:close",
+							"description": "Fire CloudEvents for dimensional rollover on closing -> closed per REQ-YEC-005. CostCenter, KostenDrager, and Project subscribers carry active dimensions forward; archived dimensions skipped.",
+							"action": "x-openregister-emit-cloudevents",
+							"actionParameters": {
+								"eventType": "nl.conduction.shillinq.fiscal-year.dimension-rollover",
+								"targets": [
+									"CostCenter",
+									"KostenDrager",
+									"Project"
+								],
+								"filter": {
+									"administrationId": "@self.administrationId",
+									"lifecycleState": {
+										"not": "archived"
+									}
+								}
+							}
+						},
+						"onReopenReverseClosing": {
+							"trigger": "transition:reopen",
+							"description": "Emit reversing JournalEntry for the retained-earnings transfer journal (closingJournalId) on closed -> reopened per REQ-YEC-006.",
+							"action": "x-openregister-create-related",
+							"actionParameters": {
+								"register": "shillinq",
+								"schema": "JournalEntry",
+								"data": {
+									"type": "reversing",
+									"subType": "year-end-reopen-closing-reversal",
+									"state": "posted",
+									"description": "Tegenboeking jaarafsluiting @self.yearNumber (heropen door @currentUser). Reden: @self.reopenReason",
+									"reversedJournalId": "@self.closingJournalId",
+									"administrationId": "@self.administrationId"
+								}
+							}
+						},
+						"onReopenReverseOpening": {
+							"trigger": "transition:reopen",
+							"description": "Emit reversing JournalEntry for the opening-balance journal (openingJournalId) on closed -> reopened per REQ-YEC-006.",
+							"action": "x-openregister-create-related",
+							"actionParameters": {
+								"register": "shillinq",
+								"schema": "JournalEntry",
+								"data": {
+									"type": "reversing",
+									"subType": "year-end-reopen-opening-reversal",
+									"state": "posted",
+									"description": "Tegenboeking openingsbalans boekjaar @self.yearNumber + 1 (heropen door @currentUser). Reden: @self.reopenReason",
+									"reversedJournalId": "@self.openingJournalId",
+									"administrationId": "@self.administrationId"
+								}
+							}
+						},
+						"onReopenNotify": {
+							"trigger": "transition:reopen",
+							"description": "Record the reopen as a CloudEvent in the admin notifications stream per REQ-YEC-006.",
+							"action": "x-openregister-emit-cloudevents",
+							"actionParameters": {
+								"eventType": "nl.conduction.shillinq.fiscal-year.reopened"
+							}
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						},
+						"approver": {
+							"permissions": [
+								"read"
+							],
+							"lifecycleTransitions": [
+								"beginClose",
+								"close"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						},
+						"admin": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							],
+							"lifecycleTransitions": [
+								"beginClose",
+								"close",
+								"reopen"
+							]
+						}
+					}
+				},
+				"x-openregister-notifications": {
+					"onReopen": {
+						"trigger": "lifecycle.reopen",
+						"description": "Notify all administration admins when a fiscal year is reopened. A reopened closed year is a high-stakes audit event.",
+						"recipients": {
+							"role": "admin",
+							"scope": "@self.administrationId"
+						},
+						"title": "Boekjaar heropend",
+						"message": "Boekjaar @self.yearNumber is heropend door @self.reopenedBy. Reden: @self.reopenReason"
+					}
+				}
+			},
+			"Receipt": {
+				"slug": "Receipt",
+				"icon": "ReceiptOutline",
+				"version": "0.1.0",
+				"title": "Receipt",
+				"description": "Scanned or uploaded receipt photo with amount, date, expense category, and multi-currency support. Linked to a parent ExpenseClaimEntry for approval and reimbursement. Per REQ-EC-002.",
+				"x-schema-org": "schema:DigitalDocument",
+				"type": "object",
+				"required": [
+					"receiptNumber",
+					"photoUri",
+					"amount",
+					"currency",
+					"amountInBaseCurrency",
+					"receiptDate",
+					"category",
+					"administrationId"
+				],
+				"properties": {
+					"receiptNumber": {
+						"type": "string",
+						"description": "Shillinq-side sequential receipt ID per administration (e.g. REC-2026-0001).",
+						"example": "REC-2026-0001"
+					},
+					"photoUri": {
+						"type": "string",
+						"description": "URI to the uploaded receipt photo (S3, local FS, or docudesk). Required before claim submission per REQ-EC-002.",
+						"example": "s3://shillinq-receipts/2026/REC-2026-0001.jpg",
+						"nullable": true
+					},
+					"extractedText": {
+						"type": "string",
+						"description": "OCR placeholder — populated in T3. Null in T2.",
+						"nullable": true,
+						"example": "ACME BV / Amsterdam / EUR 45.00 / 2026-06-01"
+					},
+					"amount": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Receipt total in the original currency. Must be non-negative per REQ-EC-002.",
+						"example": 45.0
+					},
+					"currency": {
+						"type": "string",
+						"minLength": 3,
+						"maxLength": 3,
+						"description": "ISO 4217 currency code of the original receipt amount.",
+						"example": "USD"
+					},
+					"amountInBaseCurrency": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Amount converted to base currency (EUR) at capture time per REQ-EC-009. Auto-set by multi-currency capability lookup.",
+						"example": 41.4
+					},
+					"exchangeRate": {
+						"type": "number",
+						"description": "Conversion rate used (original / base); null when receipt was already in base currency. Retained for audit immutability per REQ-EC-009.",
+						"nullable": true,
+						"example": 0.92
+					},
+					"receiptDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Date printed on the receipt.",
+						"example": "2026-06-01"
+					},
+					"category": {
+						"type": "string",
+						"description": "Expense category (e.g. travel, meals, supplies, accommodation).",
+						"example": "travel"
+					},
+					"description": {
+						"type": "string",
+						"description": "Operator-entered notes or additional context.",
+						"nullable": true,
+						"example": "Taxi to client meeting"
+					},
+					"claimId": {
+						"type": "string",
+						"description": "FK to parent ExpenseClaimEntry.id; null until the receipt is added to a claim.",
+						"nullable": true,
+						"example": "exp-claim-2026-0001"
+					},
+					"costCentreCode": {
+						"type": "string",
+						"description": "Cost centre allocation for this receipt line (may differ per claim line).",
+						"nullable": true,
+						"example": "CC100"
+					},
+					"vendorName": {
+						"type": "string",
+						"description": "Vendor or business where the expense was incurred.",
+						"nullable": true,
+						"example": "ACME BV"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this receipt.",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-calculations": {
+					"photoValidation": {
+						"description": "File-type and size guard for receipt photo uploads per REQ-EC-008. Accepted types: image/jpeg, image/png, application/pdf. Maximum size: 10 MB. Declarative file-type check not supported by the OR engine — ADR-031 exception guard OCA\\Shillinq\\Validation\\PhotoValidator::validate() is invoked instead.",
+						"expression": null,
+						"guard": "OCA\\Shillinq\\Validation\\PhotoValidator::validate",
+						"guardParams": {
+							"filePath": "@upload.tmpPath",
+							"mimeType": "@upload.mimeType",
+							"fileSize": "@upload.size"
+						},
+						"nullable": true
+					},
+					"multiCurrencyConversion": {
+						"description": "When currency != base (EUR), looks up the exchange rate for receiptDate from the multi-currency capability snapshot and populates amountInBaseCurrency and exchangeRate per REQ-EC-009. Prompts operator to enter manual rate if snapshot is unavailable.",
+						"expression": "@self.currency == 'EUR' ? @self.amount : @self.amount * lookup('ExchangeRate', {sourceCurrency: @self.currency, targetCurrency: 'EUR', rateDate: @self.receiptDate})",
+						"targetField": "amountInBaseCurrency",
+						"nullable": true
+					}
+				},
+				"x-openregister-relations": {
+					"claim": {
+						"localField": "claimId",
+						"relatedSchema": "ExpenseClaimEntry",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "Parent expense claim this receipt belongs to."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"employee": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							],
+							"description": "Employees may upload and edit their own receipts."
+						},
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							],
+							"description": "Bookkeepers have full access for corrections and audit."
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							],
+							"description": "Read-only access for audit."
+						}
+					}
+				}
+			},
+			"MileageEntry": {
+				"slug": "MileageEntry",
+				"icon": "CarOutline",
+				"version": "0.1.0",
+				"title": "Mileage Entry",
+				"description": "Journey log capturing distance travelled, vehicle type, and applicable rate per kilometre. totalAmount is auto-calculated as distance × ratePerKm per REQ-EC-003. Linked to a parent ExpenseClaimEntry for approval and reimbursement.",
+				"x-schema-org": "schema:Thing",
+				"type": "object",
+				"required": [
+					"mileageNumber",
+					"journeyDate",
+					"fromLocation",
+					"toLocation",
+					"distance",
+					"vehicleType",
+					"ratePerKm",
+					"totalAmount",
+					"administrationId"
+				],
+				"properties": {
+					"mileageNumber": {
+						"type": "string",
+						"description": "Shillinq-side sequential mileage ID per administration (e.g. MLG-2026-0001).",
+						"example": "MLG-2026-0001"
+					},
+					"journeyDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Date the journey occurred.",
+						"example": "2026-06-01"
+					},
+					"fromLocation": {
+						"type": "string",
+						"description": "Starting address or city.",
+						"example": "Amsterdam, Conduction HQ"
+					},
+					"toLocation": {
+						"type": "string",
+						"description": "Ending address or city.",
+						"example": "Utrecht, Client Office"
+					},
+					"distance": {
+						"type": "number",
+						"exclusiveMinimum": 0,
+						"description": "Distance in kilometres (manual entry in T2; optional geocoding in T3). Must be positive per REQ-EC-003.",
+						"example": 150.0
+					},
+					"vehicleType": {
+						"type": "string",
+						"enum": [
+							"car",
+							"motorcycle",
+							"van",
+							"bicycle"
+						],
+						"description": "Vehicle type used for the journey; drives rate lookup from MileageRate master table.",
+						"example": "car"
+					},
+					"ratePerKm": {
+						"type": "number",
+						"exclusiveMinimum": 0,
+						"description": "Applied rate in EUR per kilometre, looked up from MileageRate master table for (fiscalYear, vehicleType, country). Locked at claim submission for audit immutability.",
+						"example": 0.21
+					},
+					"totalAmount": {
+						"type": "number",
+						"exclusiveMinimum": 0,
+						"description": "Auto-calculated reimbursement: distance × ratePerKm per REQ-EC-003. Do not set directly.",
+						"example": 31.5
+					},
+					"purpose": {
+						"type": "string",
+						"description": "Reason for travel (business meeting, client visit, training, etc.).",
+						"nullable": true,
+						"example": "Client onboarding meeting"
+					},
+					"claimId": {
+						"type": "string",
+						"description": "FK to parent ExpenseClaimEntry.id; null until added to a claim.",
+						"nullable": true,
+						"example": "exp-claim-2026-0001"
+					},
+					"costCentreCode": {
+						"type": "string",
+						"description": "Cost centre for GL line allocation.",
+						"nullable": true,
+						"example": "CC200"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this mileage entry.",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-calculations": {
+					"totalAmount": {
+						"description": "Auto-calculated: distance × ratePerKm per REQ-EC-003. Recalculated on every save while the parent claim is in draft state.",
+						"expression": "@self.distance * @self.ratePerKm",
+						"targetField": "totalAmount"
+					},
+					"ratePerKmLookup": {
+						"description": "Looks up the current rate per km from MileageRate master table by (fiscalYear derived from journeyDate, vehicleType, country derived from administrationId). Populates ratePerKm field. Locked at claim submission.",
+						"expression": "lookup('MileageRate', {fiscalYear: year(@self.journeyDate), vehicleType: @self.vehicleType, country: @administration.country})",
+						"targetField": "ratePerKm",
+						"nullable": true
+					}
+				},
+				"x-openregister-relations": {
+					"claim": {
+						"localField": "claimId",
+						"relatedSchema": "ExpenseClaimEntry",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "Parent expense claim this mileage entry belongs to."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"employee": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							],
+							"description": "Employees may create and edit their own mileage entries."
+						},
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							],
+							"description": "Full access for corrections and audit."
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"PerDiem": {
+				"slug": "PerDiem",
+				"icon": "CalendarAccountOutline",
+				"version": "0.1.0",
+				"title": "Per Diem",
+				"description": "Daily travel allowance claimed per country and night count. allowanceAmount is auto-calculated as nightCount × dailyRate per REQ-EC-004. Country-specific rates are maintained in the PerDiemRate master table per fiscal year.",
+				"x-schema-org": "schema:Offer",
+				"type": "object",
+				"required": [
+					"perDiemNumber",
+					"travelStartDate",
+					"travelEndDate",
+					"nightCount",
+					"country",
+					"dailyRate",
+					"allowanceAmount",
+					"administrationId"
+				],
+				"properties": {
+					"perDiemNumber": {
+						"type": "string",
+						"description": "Shillinq-side sequential per-diem ID per administration (e.g. PDM-2026-0001).",
+						"example": "PDM-2026-0001"
+					},
+					"travelStartDate": {
+						"type": "string",
+						"format": "date",
+						"description": "First day of the travel period.",
+						"example": "2026-06-01"
+					},
+					"travelEndDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Last day of the travel period.",
+						"example": "2026-06-03"
+					},
+					"nightCount": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Number of nights away from home base. System issues a warning (not error) when nightCount does not match travelStartDate/travelEndDate span per REQ-EC-004.",
+						"example": 2
+					},
+					"country": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 2,
+						"description": "ISO 3166-1 alpha-2 country code where travel occurred. Must be a valid code per REQ-EC-004.",
+						"example": "NL"
+					},
+					"dailyRate": {
+						"type": "number",
+						"exclusiveMinimum": 0,
+						"description": "Official daily allowance rate in EUR per day, looked up from PerDiemRate master table by (country, calendarYear). Locked at claim submission for audit immutability.",
+						"example": 125.0
+					},
+					"allowanceAmount": {
+						"type": "number",
+						"exclusiveMinimum": 0,
+						"description": "Auto-calculated: nightCount × dailyRate per REQ-EC-004. Do not set directly.",
+						"example": 250.0
+					},
+					"description": {
+						"type": "string",
+						"description": "Purpose of travel.",
+						"nullable": true,
+						"example": "Conference attendance — Helsinki 2026"
+					},
+					"claimId": {
+						"type": "string",
+						"description": "FK to parent ExpenseClaimEntry.id; null until added to a claim.",
+						"nullable": true,
+						"example": "exp-claim-2026-0001"
+					},
+					"costCentreCode": {
+						"type": "string",
+						"description": "Cost centre for GL line allocation.",
+						"nullable": true,
+						"example": "CC100"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this per-diem record.",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-calculations": {
+					"allowanceAmount": {
+						"description": "Auto-calculated: nightCount × dailyRate per REQ-EC-004. Recalculated on every save while parent claim is in draft state.",
+						"expression": "@self.nightCount * @self.dailyRate",
+						"targetField": "allowanceAmount"
+					},
+					"dailyRateLookup": {
+						"description": "Looks up the current daily rate from PerDiemRate master table by (calendarYear derived from travelStartDate, country). Populates dailyRate field. Locked at claim submission.",
+						"expression": "lookup('PerDiemRate', {calendarYear: year(@self.travelStartDate), country: @self.country})",
+						"targetField": "dailyRate",
+						"nullable": true
+					},
+					"nightCountWarning": {
+						"description": "Issues a non-blocking warning when nightCount does not match the calendar span (travelEndDate - travelStartDate) per REQ-EC-004. Returns null when counts match, a warning message string otherwise.",
+						"expression": "datediff(@self.travelEndDate, @self.travelStartDate) != @self.nightCount ? 'Night count does not match travel dates — please verify' : null",
+						"nullable": true,
+						"severity": "warning"
+					}
+				},
+				"x-openregister-relations": {
+					"claim": {
+						"localField": "claimId",
+						"relatedSchema": "ExpenseClaimEntry",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "Parent expense claim this per-diem record belongs to."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"employee": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							],
+							"description": "Employees may create and edit their own per-diem entries."
+						},
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							],
+							"description": "Full access for corrections and audit."
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"ExpenseClaimEntry": {
+				"slug": "ExpenseClaimEntry",
+				"icon": "ClipboardTextOutline",
+				"version": "0.1.0",
+				"title": "Expense Claim",
+				"description": "Operator-curated batch grouping N receipts, mileage journeys, and per-diem records into a single claim for approval and reimbursement. Lifecycle: draft → submitted → approved → posted → reimbursed with disputed/voided branches. Approval routing consumes OR approval-workflow per ADR-022 (no app-local approval table). Posting materialises a balanced GL entry per T1 REQ-JE-007 pattern. Per REQ-EC-005 through REQ-EC-013.",
+				"x-schema-org": "schema:Invoice",
+				"type": "object",
+				"required": [
+					"claimNumber",
+					"employeeId",
+					"fromDate",
+					"toDate",
+					"totalAmount",
+					"currency",
+					"approvalState",
+					"state",
+					"administrationId"
+				],
+				"properties": {
+					"claimNumber": {
+						"type": "string",
+						"description": "Shillinq-side sequential claim ID per administration (e.g. EXP-2026-0001).",
+						"example": "EXP-2026-0001"
+					},
+					"employeeId": {
+						"type": "string",
+						"description": "FK to Person (employee submitting the claim).",
+						"example": "person-alice"
+					},
+					"submittedDate": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Timestamp when the claim was formally submitted for approval. Set by the submit lifecycle transition.",
+						"nullable": true,
+						"example": "2026-06-01T09:00:00Z"
+					},
+					"fromDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Start date of the expense period covered by this claim.",
+						"example": "2026-05-01"
+					},
+					"toDate": {
+						"type": "string",
+						"format": "date",
+						"description": "End date of the expense period covered by this claim.",
+						"example": "2026-05-31"
+					},
+					"totalAmount": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Sum of Receipt.amountInBaseCurrency + MileageEntry.totalAmount + PerDiem.allowanceAmount across all linked items. Auto-aggregated; always EUR (base currency) per REQ-EC-005.",
+						"example": 331.5
+					},
+					"currency": {
+						"type": "string",
+						"minLength": 3,
+						"maxLength": 3,
+						"default": "EUR",
+						"description": "Always EUR (base currency) in T2. T5 adds multi-currency claims.",
+						"example": "EUR"
+					},
+					"description": {
+						"type": "string",
+						"description": "Claim summary or business purpose.",
+						"nullable": true,
+						"example": "May 2026 field work expenses"
+					},
+					"receiptIds": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"description": "FKs to linked Receipt records.",
+						"nullable": true,
+						"example": [
+							"REC-2026-0001",
+							"REC-2026-0002"
+						]
+					},
+					"mileageIds": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"description": "FKs to linked MileageEntry records.",
+						"nullable": true,
+						"example": [
+							"MLG-2026-0001"
+						]
+					},
+					"perDiemIds": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"description": "FKs to linked PerDiem records.",
+						"nullable": true,
+						"example": [
+							"PDM-2026-0001"
+						]
+					},
+					"approvalState": {
+						"type": "string",
+						"enum": [
+							"not-required",
+							"pending",
+							"approved",
+							"rejected"
+						],
+						"description": "State of the OR approval-workflow for this claim per REQ-EC-006. Managed by OR approval-workflow engine; do not set directly.",
+						"example": "pending"
+					},
+					"state": {
+						"type": "string",
+						"enum": [
+							"draft",
+							"submitted",
+							"approved",
+							"posted",
+							"reimbursed",
+							"disputed",
+							"voided"
+						],
+						"description": "Lifecycle state of the expense claim per REQ-EC-007.",
+						"example": "draft"
+					},
+					"glTransactionId": {
+						"type": "string",
+						"description": "Back-reference to the materialised GLTransaction UUID once the claim is posted. Set by the post lifecycle action per REQ-EC-012.",
+						"nullable": true,
+						"example": "txn-2026-exp-0001"
+					},
+					"costCentreAllocations": {
+						"type": "object",
+						"description": "Claim-wide cost centre allocation map ({costCentreCode: percentage}). Per-line codes on Receipt/MileageEntry/PerDiem take precedence.",
+						"nullable": true,
+						"additionalProperties": {
+							"type": "number"
+						},
+						"example": {
+							"CC100": 0.6,
+							"CC200": 0.4
+						}
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this claim.",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "state",
+					"initialState": "draft",
+					"states": {
+						"draft": {
+							"label": "Draft",
+							"description": "Under construction. Line items may be added, edited, or removed."
+						},
+						"submitted": {
+							"label": "Submitted",
+							"description": "Submitted for approval. Awaiting OR approval-workflow decision per REQ-EC-006."
+						},
+						"approved": {
+							"label": "Approved",
+							"description": "Approved by authorised approver(s). Ready for GL posting."
+						},
+						"posted": {
+							"label": "Posted",
+							"description": "Immutable. GL entry materialised; awaiting reimbursement payment match per REQ-EC-012."
+						},
+						"reimbursed": {
+							"label": "Reimbursed",
+							"description": "Reimbursement payment matched or recorded. Claim closed."
+						},
+						"disputed": {
+							"label": "Disputed",
+							"description": "Payment held under investigation. GL entry remains valid."
+						},
+						"voided": {
+							"label": "Voided",
+							"description": "Claim voided. Corresponding GLTransaction must already be reversed per T1 REQ-GL-004."
+						}
+					},
+					"transitions": {
+						"submit": {
+							"from": "draft",
+							"to": "submitted",
+							"label": "Submit for approval",
+							"description": "Operator submits the draft claim. Guard: all line items (receipts, mileage, per-diem) must have costCentreCode set per REQ-EC-007. Claim must have at least one line item.",
+							"requires": "OCA\\Shillinq\\Lifecycle\\ExpenseClaimGuard::requireCostCentresAndItems"
+						},
+						"approve": {
+							"from": "submitted",
+							"to": "approved",
+							"label": "Approve",
+							"description": "Approved by authorised approver(s) via OR approval-workflow per REQ-EC-006. Sets approvalState: approved.",
+							"requires": "x-openregister-approval"
+						},
+						"reject": {
+							"from": "submitted",
+							"to": "draft",
+							"label": "Reject (return to draft)",
+							"description": "Approver rejects the claim; sets approvalState: rejected and returns claim to draft for operator revision."
+						},
+						"post": {
+							"from": [
+								"approved",
+								"draft"
+							],
+							"to": "posted",
+							"label": "Post",
+							"description": "Post the claim. Guards: (1) FiscalPeriod open per REQ-PC-004; (2) all line items have costCentreCode set. Action: materialise one balanced GLTransaction per REQ-EC-012 (debit expense lines per cost centre, credit expense-payable account).",
+							"requires": "OCA\\Shillinq\\Lifecycle\\ExpenseClaimGuard::requireOpenPeriodAndCostCentres",
+							"actions": [
+								{
+									"trigger": "x-openregister-lifecycle-action",
+									"action": "materialise-gl-transaction",
+									"description": "Emit one balanced GLTransaction: debit per expense line (Receipt→expense account/CC, MileageEntry→mileage-reimbursement account/CC, PerDiem→per-diem account/CC), credit to expense-payable account (Account.isExpenseControlAccount=true). Sets glTransactionId back-reference per REQ-EC-012.",
+									"actionParameters": {
+										"register": "shillinq",
+										"targetSchema": "GLTransaction",
+										"debitSources": [
+											{
+												"schema": "Receipt",
+												"idField": "receiptIds",
+												"amountField": "amountInBaseCurrency",
+												"costCentreField": "costCentreCode",
+												"accountLookup": "Account[category=@receipt.category].accountNumber"
+											},
+											{
+												"schema": "MileageEntry",
+												"idField": "mileageIds",
+												"amountField": "totalAmount",
+												"costCentreField": "costCentreCode",
+												"accountLookup": "Account[isExpenseMileageAccount=true].accountNumber"
+											},
+											{
+												"schema": "PerDiem",
+												"idField": "perDiemIds",
+												"amountField": "allowanceAmount",
+												"costCentreField": "costCentreCode",
+												"accountLookup": "Account[isExpensePerDiemAccount=true].accountNumber"
+											}
+										],
+										"creditMapping": "Account[isExpenseControlAccount=true].accountNumber",
+										"subLedgerType": "expense",
+										"subLedgerRefField": "id",
+										"keepBalanced": true
+									}
+								}
+							]
+						},
+						"markReimbursed": {
+							"from": "posted",
+							"to": "reimbursed",
+							"label": "Mark as reimbursed",
+							"description": "Transition to reimbursed when a payment record or bank-reconciliation event matches the claim total per REQ-EC-007."
+						},
+						"dispute": {
+							"from": "posted",
+							"to": "disputed",
+							"label": "Raise dispute",
+							"description": "Operator places payment hold pending investigation. GL entry remains valid."
+						},
+						"resolveDispute": {
+							"from": "disputed",
+							"to": "posted",
+							"label": "Resolve dispute",
+							"description": "Operator resolves the dispute; claim returns to posted awaiting payment."
+						},
+						"void": {
+							"from": "posted",
+							"to": "voided",
+							"label": "Void",
+							"description": "Void a posted claim. Guard: the materialised GLTransaction MUST already be reversed per T1 REQ-GL-004.",
+							"requires": "OCA\\Shillinq\\Lifecycle\\GLReversalGuard::isReversed"
+						}
+					}
+				},
+				"x-openregister-approval": {
+					"field": "approvalState",
+					"thresholds": [
+						{
+							"condition": "totalAmount <= 500",
+							"action": "auto-approve",
+							"description": "Claims at or below €500 are auto-approved (approvalState: not-required) per REQ-EC-010."
+						},
+						{
+							"condition": "totalAmount > 500 AND totalAmount <= 5000",
+							"action": "route-to-approver",
+							"role": "manager",
+							"description": "Claims above €500 and at or below €5,000 require manager approval per REQ-EC-010."
+						},
+						{
+							"condition": "totalAmount > 5000",
+							"action": "route-to-approver",
+							"role": "cfo",
+							"dualControl": true,
+							"description": "Claims above €5,000 require CFO approval with dual-control (two independent approvals) per REQ-EC-010."
+						}
+					],
+					"delegationSupport": true,
+					"configuredViaOR": true,
+					"note": "All approval policy configuration (thresholds, roles, delegation) is managed through OR's approval-workflow UI per ADR-022. No app-local approval table."
+				},
+				"x-openregister-aggregations": {
+					"expenseReportByCategoryAndCostCentre": {
+						"description": "Expense report grouping ExpenseClaimEntry by expense category and cost centre for management reporting and tax audit per REQ-EC-011. Excludes voided and disputed claims.",
+						"source": "Receipt",
+						"joinOn": "claimId",
+						"filter": {
+							"state": {
+								"not": [
+									"voided",
+									"disputed"
+								]
+							},
+							"submittedDate": {
+								"gte": "@params.fromDate",
+								"lte": "@params.toDate"
+							}
+						},
+						"groupBy": [
+							"category",
+							"costCentreCode"
+						],
+						"operations": {
+							"totalByGroup": {
+								"field": "amountInBaseCurrency",
+								"operation": "sum"
+							},
+							"countByGroup": {
+								"field": "id",
+								"operation": "count"
+							}
+						},
+						"exportFormats": [
+							"csv",
+							"pdf"
+						]
+					},
+					"claimTotalAmount": {
+						"description": "Auto-aggregates totalAmount from all linked Receipt.amountInBaseCurrency + MileageEntry.totalAmount + PerDiem.allowanceAmount. Recalculated on every line-item save per REQ-EC-005.",
+						"sources": [
+							{
+								"schema": "Receipt",
+								"joinField": "claimId",
+								"amountField": "amountInBaseCurrency"
+							},
+							{
+								"schema": "MileageEntry",
+								"joinField": "claimId",
+								"amountField": "totalAmount"
+							},
+							{
+								"schema": "PerDiem",
+								"joinField": "claimId",
+								"amountField": "allowanceAmount"
+							}
+						],
+						"operation": "sum",
+						"targetField": "totalAmount"
+					}
+				},
+				"x-openregister-relations": {
+					"receipts": {
+						"localField": "receiptIds",
+						"relatedSchema": "Receipt",
+						"relatedField": "id",
+						"cardinality": "one-to-many",
+						"description": "All Receipt records linked to this claim."
+					},
+					"mileageEntries": {
+						"localField": "mileageIds",
+						"relatedSchema": "MileageEntry",
+						"relatedField": "id",
+						"cardinality": "one-to-many",
+						"description": "All MileageEntry records linked to this claim."
+					},
+					"perDiemEntries": {
+						"localField": "perDiemIds",
+						"relatedSchema": "PerDiem",
+						"relatedField": "id",
+						"cardinality": "one-to-many",
+						"description": "All PerDiem records linked to this claim."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"employee": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							],
+							"description": "Employees may create and edit their own claims in draft state."
+						},
+						"manager": {
+							"permissions": [
+								"read",
+								"update"
+							],
+							"description": "Managers may approve or reject submitted claims."
+						},
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							],
+							"description": "Full access for corrections and GL posting."
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"MileageRate": {
+				"slug": "MileageRate",
+				"icon": "RoadVariantOutline",
+				"version": "0.1.0",
+				"title": "Mileage Rate",
+				"description": "Master data table of reimbursement rates per kilometre by fiscal year, vehicle type, and tax jurisdiction. Seeded with NL and FI 2026 rates per design.md Seed Data. Operators maintain rates per fiscal year; MileageEntry.ratePerKm is looked up from this table at capture time and locked at claim submission per REQ-EC-003 and Task 16.",
+				"x-schema-org": "schema:PriceSpecification",
+				"type": "object",
+				"required": [
+					"fiscalYear",
+					"country",
+					"vehicleType",
+					"ratePerKm"
+				],
+				"properties": {
+					"fiscalYear": {
+						"type": "integer",
+						"description": "Fiscal year this rate applies to (e.g. 2026).",
+						"example": 2026
+					},
+					"country": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 2,
+						"description": "ISO 3166-1 alpha-2 country code for the tax jurisdiction.",
+						"example": "NL"
+					},
+					"vehicleType": {
+						"type": "string",
+						"enum": [
+							"car",
+							"motorcycle",
+							"van",
+							"bicycle"
+						],
+						"description": "Vehicle type this rate applies to.",
+						"example": "car"
+					},
+					"ratePerKm": {
+						"type": "number",
+						"exclusiveMinimum": 0,
+						"description": "Rate per kilometre in EUR for the given fiscal year, country, and vehicle type.",
+						"example": 0.21
+					},
+					"notes": {
+						"type": "string",
+						"description": "Source or regulatory reference for this rate (e.g. 'IB 2025 rules').",
+						"nullable": true,
+						"example": "Belastingdienst 2026 — kilometertarief personenauto"
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							],
+							"description": "Bookkeepers maintain mileage rate master data per fiscal year."
+						},
+						"employee": {
+							"permissions": [
+								"read"
+							],
+							"description": "Read-only: employees may view the applicable rate."
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"PerDiemRate": {
+				"slug": "PerDiemRate",
+				"icon": "CurrencyEurOutline",
+				"version": "0.1.0",
+				"title": "Per Diem Rate",
+				"description": "Master data table of official daily travel allowance rates per country and calendar year. Seeded with NL and FI 2026 rates per design.md Seed Data. Operators maintain rates per calendar year; PerDiem.dailyRate is looked up from this table at capture time and locked at claim submission per REQ-EC-004 and Task 16.",
+				"x-schema-org": "schema:PriceSpecification",
+				"type": "object",
+				"required": [
+					"calendarYear",
+					"country",
+					"dailyRate",
+					"currency"
+				],
+				"properties": {
+					"calendarYear": {
+						"type": "integer",
+						"description": "Calendar year this rate applies to (e.g. 2026).",
+						"example": 2026
+					},
+					"country": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 2,
+						"description": "ISO 3166-1 alpha-2 country code.",
+						"example": "NL"
+					},
+					"dailyRate": {
+						"type": "number",
+						"exclusiveMinimum": 0,
+						"description": "Official daily allowance rate in the stated currency.",
+						"example": 125.0
+					},
+					"currency": {
+						"type": "string",
+						"minLength": 3,
+						"maxLength": 3,
+						"default": "EUR",
+						"description": "ISO 4217 currency code of the daily rate (almost always EUR for NL/FI).",
+						"example": "EUR"
+					},
+					"source": {
+						"type": "string",
+						"description": "Regulatory source for this rate (e.g. 'Ministry travel rules').",
+						"nullable": true,
+						"example": "Ministerie van Financiën — reiskostenvergoeding 2026"
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							],
+							"description": "Bookkeepers maintain per-diem rate master data per calendar year."
+						},
+						"employee": {
+							"permissions": [
+								"read"
+							],
+							"description": "Read-only: employees may view applicable rates."
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
 						}
 					}
 				}
@@ -5328,6 +8285,1636 @@
 					"example": true
 				}
 			}
+		},
+		"VendorMaster": {
+			"slug": "VendorMaster",
+			"icon": "StoreOutline",
+			"version": "0.1.0",
+			"title": "Vendor",
+			"description": "Vendor party record for accounts payable. Holds bank IBAN, payment terms, tax registration, and dunning-policy reference for a vendor within a single administration. Per REQ-AP-002.",
+			"x-schema-org": "schema:Organization",
+			"type": "object",
+			"required": [
+				"vendorNumber",
+				"name",
+				"paymentTermDays",
+				"administrationId",
+				"lifecycleState"
+			],
+			"properties": {
+				"vendorNumber": {
+					"type": "string",
+					"description": "Stable vendor identifier unique per administration.",
+					"example": "V-2026-001"
+				},
+				"name": {
+					"type": "string",
+					"description": "Legal name of the vendor.",
+					"example": "Acme Leveranciers BV"
+				},
+				"tradingName": {
+					"type": "string",
+					"description": "Alternate or DBA trading name.",
+					"nullable": true,
+					"example": "Acme"
+				},
+				"kvkNumber": {
+					"type": "string",
+					"description": "Dutch KvK number (8 digits).",
+					"nullable": true,
+					"example": "12345678"
+				},
+				"btwNumber": {
+					"type": "string",
+					"description": "Dutch BTW / EU VAT number.",
+					"nullable": true,
+					"example": "NL123456789B01"
+				},
+				"iban": {
+					"type": "string",
+					"description": "Default IBAN for outgoing payments to this vendor.",
+					"nullable": true,
+					"example": "NL01RABO0123456789"
+				},
+				"bic": {
+					"type": "string",
+					"description": "BIC/SWIFT code matching the IBAN bank.",
+					"nullable": true,
+					"example": "RABONL2U"
+				},
+				"paymentTermDays": {
+					"type": "integer",
+					"minimum": 0,
+					"default": 30,
+					"description": "Default payment term in days (auto-sets APInvoice.dueDate on creation).",
+					"example": 30
+				},
+				"defaultExpenseAccountNumber": {
+					"type": "string",
+					"description": "FK to Account.accountNumber for default expense coding on AP invoices.",
+					"nullable": true,
+					"example": "7000"
+				},
+				"address": {
+					"type": "object",
+					"description": "Postal address of the vendor.",
+					"nullable": true,
+					"properties": {
+						"street": {
+							"type": "string"
+						},
+						"houseNumber": {
+							"type": "string"
+						},
+						"postcode": {
+							"type": "string"
+						},
+						"city": {
+							"type": "string"
+						},
+						"country": {
+							"type": "string",
+							"default": "NL"
+						}
+					}
+				},
+				"email": {
+					"type": "string",
+					"format": "email",
+					"description": "Primary contact email for invoice queries.",
+					"nullable": true,
+					"example": "facturatie@acme.nl"
+				},
+				"phone": {
+					"type": "string",
+					"description": "Primary contact phone number.",
+					"nullable": true,
+					"example": "+31201234567"
+				},
+				"dunningPolicyId": {
+					"type": "string",
+					"description": "FK to OR dunning-workflow policy record if the extension is stable per ADR-022; else null.",
+					"nullable": true
+				},
+				"contactRef": {
+					"type": "string",
+					"description": "FK to OR contact abstraction if stable per ADR-022; else null. Resolution deferred to implementing cycle.",
+					"nullable": true
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the administration owning this vendor record.",
+					"example": "adm-1"
+				},
+				"lifecycleState": {
+					"type": "string",
+					"enum": [
+						"active",
+						"blocked",
+						"archived"
+					],
+					"description": "Vendor master lifecycle state. blocked: payments suspended; archived: historical reference only.",
+					"default": "active",
+					"example": "active"
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "lifecycleState",
+				"initialState": "active",
+				"states": {
+					"active": {
+						"label": "Active",
+						"description": "Vendor is active; AP invoices may be created and paid."
+					},
+					"blocked": {
+						"label": "Blocked",
+						"description": "Vendor is blocked; new AP invoices cannot transition to approved or posted."
+					},
+					"archived": {
+						"label": "Archived",
+						"description": "Vendor is archived for historical reference; no new invoices may be created."
+					}
+				},
+				"transitions": {
+					"block": {
+						"from": "active",
+						"to": "blocked",
+						"label": "Block vendor",
+						"description": "Suspend payments to this vendor."
+					},
+					"unblock": {
+						"from": "blocked",
+						"to": "active",
+						"label": "Unblock vendor",
+						"description": "Restore vendor to active status."
+					},
+					"archive": {
+						"from": [
+							"active",
+							"blocked"
+						],
+						"to": "archived",
+						"label": "Archive vendor",
+						"description": "Archive vendor after all open AP invoices are settled."
+					}
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
+		"APInvoice": {
+			"slug": "APInvoice",
+			"icon": "ReceiptTextOutline",
+			"version": "0.1.0",
+			"title": "AP Invoice",
+			"description": "Accounts payable sub-ledger invoice recording vendor billing and payment obligation. Posting materialises a balanced GLTransaction per T1 REQ-JE-007. Lifecycle: draft → pending → approved → posted → paid with disputed/voided branches. Approval routing consumes OR approval-workflow per ADR-022. Per REQ-AP-003 and REQ-AP-004.",
+			"x-schema-org": "schema:Invoice",
+			"type": "object",
+			"required": [
+				"invoiceNumber",
+				"vendorInvoiceRef",
+				"vendorId",
+				"invoiceDate",
+				"dueDate",
+				"currency",
+				"totalAmount",
+				"lines",
+				"approvalState",
+				"state",
+				"administrationId"
+			],
+			"properties": {
+				"invoiceNumber": {
+					"type": "string",
+					"description": "Shillinq-side reference (auto-generated per administration).",
+					"example": "INV-V-2026-0001"
+				},
+				"vendorInvoiceRef": {
+					"type": "string",
+					"description": "The vendor's own invoice number as it appears on the paper/PDF invoice.",
+					"example": "ACME-2026-00123"
+				},
+				"vendorId": {
+					"type": "string",
+					"description": "FK to VendorMaster UUID.",
+					"example": "vendor-acme-1"
+				},
+				"invoiceDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Date on the vendor's invoice.",
+					"example": "2026-01-15"
+				},
+				"dueDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Auto-calculated from invoiceDate + vendor.paymentTermDays; overrideable by operator.",
+					"example": "2026-02-14"
+				},
+				"currency": {
+					"type": "string",
+					"minLength": 3,
+					"maxLength": 3,
+					"description": "ISO 4217 currency code. T2: base currency only; T5 adds multi-currency.",
+					"default": "EUR",
+					"example": "EUR"
+				},
+				"totalAmount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Total amount including tax. Credit notes are separate journal types, not negative totals.",
+					"example": 1250.0
+				},
+				"taxAmount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "VAT/BTW amount. T3 adds automated VAT posting; T2 carries the field for reporting.",
+					"nullable": true,
+					"example": 217.98
+				},
+				"lines": {
+					"type": "array",
+					"minItems": 1,
+					"description": "Invoice line breakdown. Each line maps to one GL expense account.",
+					"items": {
+						"type": "object",
+						"required": [
+							"description",
+							"accountNumber",
+							"amount"
+						],
+						"properties": {
+							"description": {
+								"type": "string",
+								"description": "Line description."
+							},
+							"accountNumber": {
+								"type": "string",
+								"description": "FK to Account.accountNumber (expense account)."
+							},
+							"amount": {
+								"type": "number",
+								"minimum": 0,
+								"description": "Line amount (non-negative; see REQ-AP-003)."
+							},
+							"taxCode": {
+								"type": "string",
+								"description": "Tax code for this line (e.g. BTW21, BTW9, BTW0).",
+								"nullable": true
+							},
+							"quantity": {
+								"type": "number",
+								"description": "Quantity ordered/received (required for 3-way match when PO/GR present).",
+								"nullable": true
+							},
+							"unitPrice": {
+								"type": "number",
+								"description": "Unit price (required for 3-way match quantity parity check).",
+								"nullable": true
+							}
+						}
+					}
+				},
+				"sourceDocumentUri": {
+					"type": "string",
+					"description": "docudesk FK URI per bookkeeping-document-attachment-integration. Points to the scanned vendor invoice PDF.",
+					"nullable": true,
+					"example": "docudesk://files/shillinq/invoices/acme-2026-00123.pdf"
+				},
+				"purchaseOrderRef": {
+					"type": "string",
+					"description": "FK to PO register UUID (future T4 procurement; nullable in T2). Declared so T4 attaches additively per REQ-AP-006.",
+					"nullable": true
+				},
+				"goodsReceiptRef": {
+					"type": "string",
+					"description": "FK to Goods Receipt register UUID (future T4; nullable in T2). Declared so T4 attaches additively per REQ-AP-006.",
+					"nullable": true
+				},
+				"approvalState": {
+					"type": "string",
+					"enum": [
+						"not-required",
+						"pending",
+						"approved",
+						"rejected"
+					],
+					"description": "OR approval-workflow state mirror per REQ-AP-005. Tracks the approval routing status.",
+					"example": "pending"
+				},
+				"state": {
+					"type": "string",
+					"enum": [
+						"draft",
+						"pending",
+						"approved",
+						"posted",
+						"paid",
+						"disputed",
+						"voided"
+					],
+					"description": "AP invoice lifecycle state per REQ-AP-004.",
+					"default": "draft",
+					"example": "draft"
+				},
+				"glTransactionId": {
+					"type": "string",
+					"description": "Back-reference to the materialised GLTransaction once the invoice is posted.",
+					"nullable": true,
+					"example": "gl-txn-2026-ap-0001"
+				},
+				"idealLink": {
+					"type": "string",
+					"description": "Per-invoice iDEAL payment link (x-openregister-calculations output per REQ-AP-007). Populated when paymentMethod=ideal.",
+					"nullable": true
+				},
+				"periodId": {
+					"type": "string",
+					"description": "FK to the FiscalPeriod for GL posting (resolved on post transition per REQ-AP-004).",
+					"nullable": true,
+					"example": "2026-Q1"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the administration owning this AP invoice.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "state",
+				"initialState": "draft",
+				"states": {
+					"draft": {
+						"label": "Draft",
+						"description": "Under construction. Lines and header fields may be edited."
+					},
+					"pending": {
+						"label": "Pending approval",
+						"description": "Submitted for approval. Awaiting OR approval-workflow decision."
+					},
+					"approved": {
+						"label": "Approved",
+						"description": "Approved by authorised approver(s). Ready for posting."
+					},
+					"posted": {
+						"label": "Posted",
+						"description": "Immutable. GL transaction materialised. Awaiting payment matching."
+					},
+					"paid": {
+						"label": "Paid",
+						"description": "Full payment matched via bank reconciliation or PaymentRun."
+					},
+					"disputed": {
+						"label": "Disputed",
+						"description": "Payment held; under investigation. Operator records investigation note."
+					},
+					"voided": {
+						"label": "Voided",
+						"description": "Voided. Corresponding GLTransaction must already be reversed."
+					}
+				},
+				"transitions": {
+					"submit": {
+						"from": "draft",
+						"to": "pending",
+						"label": "Submit for approval",
+						"description": "Operator submits the draft invoice for approval routing via OR approval-workflow per REQ-AP-005."
+					},
+					"approve": {
+						"from": "pending",
+						"to": "approved",
+						"label": "Approve",
+						"description": "Approved by authorised approver(s) via OR approval-workflow. Sets approvalState: approved.",
+						"requires": "x-openregister-approval"
+					},
+					"reject": {
+						"from": "pending",
+						"to": "draft",
+						"label": "Reject (return to draft)",
+						"description": "Approver rejects; sets approvalState: rejected and returns invoice to draft for operator revision."
+					},
+					"post": {
+						"from": [
+							"approved",
+							"draft"
+						],
+						"to": "posted",
+						"label": "Post",
+						"description": "Post the invoice. Guards: (1) 3-way match per REQ-AP-006 (conditional on PO/GR presence); (2) FiscalPeriod open per REQ-PC-004. Action: materialise balanced GLTransaction per T1 REQ-JE-007 pattern.",
+						"requires": "OCA\\Shillinq\\Lifecycle\\ThreeWayMatchGuard::matches",
+						"actions": [
+							{
+								"trigger": "x-openregister-lifecycle-action",
+								"action": "materialise-gl-transaction",
+								"description": "Emit one balanced GLTransaction with debit to expense accounts per lines and credit to AP control account (Account.isAPControlAccount = true) per T1 REQ-JE-007 pattern. Sets glTransactionId back-reference.",
+								"actionParameters": {
+									"register": "shillinq",
+									"targetSchema": "GLTransaction",
+									"debitMapping": "lines[].accountNumber",
+									"creditMapping": "Account[isAPControlAccount=true].accountNumber",
+									"subLedgerType": "ap",
+									"subLedgerRefField": "id",
+									"keepBalanced": true
+								}
+							}
+						]
+					},
+					"matchPaid": {
+						"from": "posted",
+						"to": "paid",
+						"label": "Mark as paid",
+						"description": "Transition to paid when bank-reconciliation engine matches an exact-amount bank statement line per REQ-AP-008. No shillinq matcher service — OR event-driven."
+					},
+					"dispute": {
+						"from": "posted",
+						"to": "disputed",
+						"label": "Raise dispute",
+						"description": "Operator places payment hold pending investigation."
+					},
+					"resolveDispute": {
+						"from": "disputed",
+						"to": "posted",
+						"label": "Resolve dispute",
+						"description": "Operator resolves dispute; invoice returns to posted awaiting payment."
+					},
+					"void": {
+						"from": "posted",
+						"to": "voided",
+						"label": "Void",
+						"description": "Void a posted invoice. Guard: the materialised GLTransaction MUST already be reversed per T1 REQ-GL-004.",
+						"requires": "OCA\\Shillinq\\Lifecycle\\GLReversalGuard::isReversed"
+					}
+				}
+			},
+			"x-openregister-calculations": {
+				"idealLink": {
+					"expression": "ideal.generatePaymentLink({invoiceNumber: invoiceNumber, amount: totalAmount, currency: currency, vendorRef: vendorInvoiceRef})",
+					"description": "Per-invoice iDEAL payment link generated by the OR calculations engine per REQ-AP-007. Populated automatically when the invoice is included in a PaymentRun with paymentMethod=ideal."
+				}
+			},
+			"x-openregister-aggregations": {
+				"apAging": {
+					"label": "AP Aging",
+					"description": "Groups open AP invoices by vendor and aging bucket per REQ-AP-009. Excludes paid and voided invoices.",
+					"register": "shillinq",
+					"schema": "APInvoice",
+					"filter": {
+						"state": {
+							"not-in": [
+								"paid",
+								"voided"
+							]
+						}
+					},
+					"groupBy": [
+						"vendorId",
+						"agingBucket"
+					],
+					"computedFields": {
+						"agingBucket": {
+							"type": "date-bucket",
+							"field": "dueDate",
+							"referenceDate": "today",
+							"direction": "past",
+							"buckets": [
+								{
+									"label": "current",
+									"maxDaysOverdue": 0
+								},
+								{
+									"label": "1-30 days",
+									"minDaysOverdue": 1,
+									"maxDaysOverdue": 30
+								},
+								{
+									"label": "31-60 days",
+									"minDaysOverdue": 31,
+									"maxDaysOverdue": 60
+								},
+								{
+									"label": "61-90 days",
+									"minDaysOverdue": 61,
+									"maxDaysOverdue": 90
+								},
+								{
+									"label": ">90 days",
+									"minDaysOverdue": 91
+								}
+							]
+						}
+					},
+					"metrics": [
+						"count",
+						"totalAmount"
+					]
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"approver": {
+						"permissions": [
+							"read",
+							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
+		"PaymentRun": {
+			"slug": "PaymentRun",
+			"icon": "BankTransferOutline",
+			"version": "0.1.0",
+			"title": "Payment Run",
+			"description": "Operator-curated batch of selected APInvoice UUIDs with SEPA pain.001 XML and iDEAL link outputs generated as x-openregister-calculations fields. No PaymentRunService or SepaXmlBuilder PHP classes per ADR-031. Per REQ-AP-007.",
+			"x-schema-org": "schema:PaymentService",
+			"type": "object",
+			"required": [
+				"runNumber",
+				"runDate",
+				"invoiceRefs",
+				"paymentMethod",
+				"state",
+				"administrationId"
+			],
+			"properties": {
+				"runNumber": {
+					"type": "string",
+					"description": "Sequential payment run identifier per administration.",
+					"example": "PR-2026-001"
+				},
+				"runDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Scheduled execution date for payments.",
+					"example": "2026-02-28"
+				},
+				"invoiceRefs": {
+					"type": "array",
+					"minItems": 1,
+					"description": "List of APInvoice UUIDs to include in this payment run.",
+					"items": {
+						"type": "string",
+						"description": "APInvoice UUID."
+					}
+				},
+				"totalAmount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Sum of selected invoices' totalAmount (x-openregister-calculations output).",
+					"nullable": true
+				},
+				"paymentMethod": {
+					"type": "string",
+					"enum": [
+						"sepa-pain001",
+						"ideal"
+					],
+					"description": "Payment method for this run. Determines which calculation output is populated.",
+					"example": "sepa-pain001"
+				},
+				"sepaXml": {
+					"type": "string",
+					"description": "SEPA pain.001.001.03 XML document (x-openregister-calculations output per REQ-AP-007). Populated when paymentMethod=sepa-pain001. Operator downloads and uploads to bank portal.",
+					"nullable": true
+				},
+				"idealLinks": {
+					"type": "array",
+					"description": "Per-invoice iDEAL payment links (x-openregister-calculations output per REQ-AP-007). Populated when paymentMethod=ideal.",
+					"nullable": true,
+					"items": {
+						"type": "object",
+						"properties": {
+							"invoiceRef": {
+								"type": "string",
+								"description": "APInvoice UUID."
+							},
+							"url": {
+								"type": "string",
+								"description": "iDEAL payment URL."
+							},
+							"amount": {
+								"type": "number",
+								"description": "Invoice amount."
+							},
+							"expiresAt": {
+								"type": "string",
+								"format": "date-time",
+								"description": "Link expiry timestamp."
+							}
+						}
+					}
+				},
+				"state": {
+					"type": "string",
+					"enum": [
+						"draft",
+						"ready",
+						"submitted",
+						"executed",
+						"failed"
+					],
+					"description": "Payment run lifecycle state.",
+					"default": "draft",
+					"example": "draft"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the administration owning this payment run.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "state",
+				"initialState": "draft",
+				"states": {
+					"draft": {
+						"label": "Draft",
+						"description": "Operator selects invoices and configures the run."
+					},
+					"ready": {
+						"label": "Ready",
+						"description": "SEPA XML or iDEAL links generated. Ready for download / submission."
+					},
+					"submitted": {
+						"label": "Submitted",
+						"description": "Operator has uploaded the SEPA file or shared iDEAL links."
+					},
+					"executed": {
+						"label": "Executed",
+						"description": "Payments executed (confirmed via bank reconciliation)."
+					},
+					"failed": {
+						"label": "Failed",
+						"description": "Run failed (e.g. bank rejection). Operator must investigate and retry."
+					}
+				},
+				"transitions": {
+					"prepare": {
+						"from": "draft",
+						"to": "ready",
+						"label": "Generate payment file",
+						"description": "Triggers x-openregister-calculations to compose sepaXml (pain.001.001.03) or idealLinks per paymentMethod selection."
+					},
+					"submit": {
+						"from": "ready",
+						"to": "submitted",
+						"label": "Mark as submitted",
+						"description": "Operator confirms upload to bank portal or dispatch of iDEAL links."
+					},
+					"execute": {
+						"from": "submitted",
+						"to": "executed",
+						"label": "Mark as executed",
+						"description": "Bank confirms payment execution (or bank reconciliation auto-matches)."
+					},
+					"fail": {
+						"from": "submitted",
+						"to": "failed",
+						"label": "Mark as failed",
+						"description": "Bank rejects the payment file or iDEAL transaction."
+					},
+					"retry": {
+						"from": "failed",
+						"to": "draft",
+						"label": "Retry (return to draft)",
+						"description": "Return to draft for operator to correct and re-generate."
+					}
+				}
+			},
+			"x-openregister-calculations": {
+				"totalAmount": {
+					"expression": "invoiceRefs.map(id => APInvoice[id].totalAmount).sum()",
+					"description": "Sum of selected APInvoice totals, computed on save per REQ-AP-007."
+				},
+				"sepaXml": {
+					"expression": "sepa.composePain001({invoiceRefs: invoiceRefs, runDate: runDate, schemaVersion: 'pain.001.001.03', administrationId: administrationId})",
+					"description": "SEPA pain.001.001.03 XML document composed from selected invoice vendor IBANs, amounts, and run date per REQ-AP-007. Populated when paymentMethod=sepa-pain001."
+				},
+				"idealLinks": {
+					"expression": "invoiceRefs.map(id => ideal.generatePaymentLink({invoiceRef: id, amount: APInvoice[id].totalAmount, currency: APInvoice[id].currency}))",
+					"description": "Per-invoice iDEAL payment link array per REQ-AP-007. Populated when paymentMethod=ideal."
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
+		"Subsidie": {
+			"slug": "Subsidie",
+			"icon": "FileDocumentOutline",
+			"version": "0.1.0",
+			"title": "Subsidie",
+			"description": "Grant/subsidie record covering the full ASV-model lifecycle (aanvraag → verleend → vastgesteld → uitbetaald). Works for both outgoing grants (gemeente to beneficiary) and incoming grants (beneficiary from granting body). The subsidieRegeling enum field overlays per-regeling R&D constraints (REQ-RDS-001). schema:Grant annotation; schema:ResearchProject materialisation when subsidieRegeling indicates an R&D regeling. Per bookkeeping-subsidie-verantwoording + bookkeeping-r-d-subsidies-mkb.",
+			"x-schema-org": "schema:Grant",
+			"type": "object",
+			"required": [
+				"administrationId",
+				"direction",
+				"subsidieNumber",
+				"counterpartyName",
+				"regelingNaam",
+				"aanvraagDate",
+				"aangevraagdBedrag",
+				"state"
+			],
+			"properties": {
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the administration owning this subsidie record.",
+					"example": "adm-1"
+				},
+				"direction": {
+					"type": "string",
+					"enum": [
+						"outgoing",
+						"incoming"
+					],
+					"description": "outgoing: this administration grants to a beneficiary. incoming: this administration receives from a granting body.",
+					"example": "incoming"
+				},
+				"subsidieNumber": {
+					"type": "string",
+					"description": "Unique subsidie identifier per administration and fiscal year.",
+					"example": "SUB-2026-001"
+				},
+				"counterpartyName": {
+					"type": "string",
+					"description": "Beneficiary name (outgoing) or granting body name (incoming).",
+					"example": "RVO.nl"
+				},
+				"counterpartyId": {
+					"type": "string",
+					"nullable": true,
+					"description": "FK to a contact record if available.",
+					"example": "contact-rvo-nl"
+				},
+				"regelingNaam": {
+					"type": "string",
+					"description": "Name of the underlying regeling.",
+					"example": "MIT 2026 haalbaarheidsproject"
+				},
+				"regelingArtikel": {
+					"type": "string",
+					"nullable": true,
+					"description": "Specific article reference within the regeling.",
+					"example": "Art. 3.2"
+				},
+				"subsidieRegeling": {
+					"type": "string",
+					"enum": [
+						"mit",
+						"sbir",
+						"eu-horizon",
+						"efro",
+						"react-eu",
+						"other"
+					],
+					"description": "R&D subsidie regeling variant. When set, per-regeling kostencategorie constraints (REQ-RDS-002) apply to linked Kostenpost records. Per REQ-RDS-001.",
+					"nullable": true,
+					"example": "eu-horizon"
+				},
+				"aanvraagDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Date of the subsidie aanvraag.",
+					"example": "2026-01-15"
+				},
+				"beschikkingDate": {
+					"type": "string",
+					"format": "date",
+					"nullable": true,
+					"description": "Date of the verleningsbeschikking.",
+					"example": "2026-03-01"
+				},
+				"vaststellingDate": {
+					"type": "string",
+					"format": "date",
+					"nullable": true,
+					"description": "Date of the vaststellingsbeschikking.",
+					"example": "2027-04-01"
+				},
+				"aangevraagdBedrag": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Applied-for amount in euros.",
+					"example": 150000.0
+				},
+				"verleendBedrag": {
+					"type": "number",
+					"minimum": 0,
+					"nullable": true,
+					"description": "Granted amount set on verleen transition.",
+					"example": 135000.0
+				},
+				"vastgesteldBedrag": {
+					"type": "number",
+					"minimum": 0,
+					"nullable": true,
+					"description": "Settled amount set on vaststel transition.",
+					"example": 120000.0
+				},
+				"uitbetaaldBedrag": {
+					"type": "number",
+					"minimum": 0,
+					"nullable": true,
+					"description": "Paid amount set on uitbetaal transition.",
+					"example": 120000.0
+				},
+				"teruggevorderdBedrag": {
+					"type": "number",
+					"minimum": 0,
+					"nullable": true,
+					"description": "Reclaimed amount set on terugvorder transition.",
+					"example": 0.0
+				},
+				"state": {
+					"type": "string",
+					"enum": [
+						"aanvraag",
+						"verleend",
+						"vastgesteld",
+						"uitbetaald",
+						"teruggevorderd",
+						"afgehandeld"
+					],
+					"description": "ASV-model lifecycle state.",
+					"default": "aanvraag",
+					"example": "aanvraag"
+				},
+				"beschikkingUri": {
+					"type": "string",
+					"nullable": true,
+					"description": "docudesk URI of the verleningsbeschikking PDF.",
+					"example": "docudesk://shillinq/beschikking-sub-2026-001.pdf"
+				},
+				"vaststellingUri": {
+					"type": "string",
+					"nullable": true,
+					"description": "docudesk URI of the vaststellingsbeschikking PDF.",
+					"example": "docudesk://shillinq/vaststelling-sub-2026-001.pdf"
+				},
+				"prestatieverantwoording": {
+					"type": "string",
+					"nullable": true,
+					"description": "Free-text prestatieverantwoording.",
+					"example": "Project afgerond conform plan."
+				}
+			},
+			"x-openregister-lifecycle": {
+				"states": {
+					"aanvraag": "Subsidie is ingediend.",
+					"verleend": "Subsidie is toegekend via verleningsbeschikking.",
+					"vastgesteld": "Subsidie is vastgesteld na prestatieverantwoording.",
+					"uitbetaald": "Subsidiebedrag is uitbetaald.",
+					"teruggevorderd": "Subsidie (deels) teruggevorderd.",
+					"afgehandeld": "Subsidie is volledig afgehandeld."
+				},
+				"transitions": {
+					"verleen": {
+						"from": "aanvraag",
+						"to": "verleend",
+						"label": "Verleen",
+						"description": "Verleningsbeschikking ontvangen.",
+						"requires": {
+							"fields": [
+								"verleendBedrag"
+							]
+						}
+					},
+					"wijs-af": {
+						"from": "aanvraag",
+						"to": "afgehandeld",
+						"label": "Afwijzing",
+						"description": "Aanvraag afgewezen."
+					},
+					"vaststel": {
+						"from": "verleend",
+						"to": "vastgesteld",
+						"label": "Vaststel",
+						"description": "Vaststellingsbeschikking verwerkt.",
+						"requires": {
+							"fields": [
+								"vastgesteldBedrag",
+								"prestatieverantwoording"
+							]
+						}
+					},
+					"betaal-uit": {
+						"from": "vastgesteld",
+						"to": "uitbetaald",
+						"label": "Uitbetaal",
+						"description": "Subsidiebedrag uitbetaald.",
+						"requires": {
+							"fields": [
+								"uitbetaaldBedrag"
+							]
+						}
+					},
+					"vorder-terug": {
+						"from": "uitbetaald",
+						"to": "teruggevorderd",
+						"label": "Terugvordering",
+						"description": "Terugvordering gestart.",
+						"requires": {
+							"fields": [
+								"teruggevorderdBedrag"
+							]
+						}
+					},
+					"handel-af": {
+						"from": [
+							"uitbetaald",
+							"teruggevorderd"
+						],
+						"to": "afgehandeld",
+						"label": "Afhandelen",
+						"description": "Subsidie volledig afgehandeld."
+					}
+				}
+			},
+			"x-openregister-aggregations": {
+				"voortgangsrapportage": {
+					"description": "Groups Kostenpost records per kostencategorie and periodId for the parent subsidie. Consumed by per-regeling docudesk voortgangsrapportage templates. Per REQ-RDS-003.",
+					"join": {
+						"schema": "Kostenpost",
+						"filter": {
+							"subsidieId": "@self.id"
+						}
+					},
+					"groupBy": [
+						"kostencategorie",
+						"periodId"
+					],
+					"operations": {
+						"totalAmount": {
+							"field": "amount",
+							"operation": "sum",
+							"target": "totalAmount"
+						},
+						"count": {
+							"field": "id",
+							"operation": "count",
+							"target": "count"
+						}
+					}
+				},
+				"budgetMonitoringByCategory": {
+					"description": "Aggregates total approved amount per kostencategorie. Feeds per-regeling sub-max calculations (REQ-RDS-005).",
+					"join": {
+						"schema": "Kostenpost",
+						"filter": {
+							"subsidieId": "@self.id",
+							"state": "approved"
+						}
+					},
+					"groupBy": [
+						"kostencategorie"
+					],
+					"operations": {
+						"totalApproved": {
+							"field": "amount",
+							"operation": "sum",
+							"target": "totalApproved"
+						}
+					}
+				}
+			},
+			"x-openregister-calculations": {
+				"horizonDirectCosts": {
+					"description": "Sum of approved direct-category kostenpost amounts for EU-Horizon subsidies. Basis for indirect-25% cap. Per REQ-RDS-005.",
+					"expression": "@self.subsidieRegeling == 'eu-horizon' ? sum(Kostenpost.amount, filter: {subsidieId: @self.id, state: 'approved', kostencategorie: {not: 'indirect-25-percent'}}) : null",
+					"type": "number",
+					"nullable": true,
+					"example": 100000.0
+				},
+				"horizonIndirect25MaxBedrag": {
+					"description": "Maximum allowed indirect-25-percent amount: 25% of direct costs per EC Grant Agreement Art. 6(2). Per REQ-RDS-005.",
+					"expression": "@self.horizonDirectCosts != null ? 0.25 * @self.horizonDirectCosts : null",
+					"type": "number",
+					"nullable": true,
+					"example": 25000.0
+				},
+				"horizonIndirect25UsageBedrag": {
+					"description": "Current approved total of indirect-25-percent kostenposten. Per REQ-RDS-005.",
+					"expression": "@self.subsidieRegeling == 'eu-horizon' ? sum(Kostenpost.amount, filter: {subsidieId: @self.id, state: 'approved', kostencategorie: 'indirect-25-percent'}) : null",
+					"type": "number",
+					"nullable": true,
+					"example": 22500.0
+				},
+				"horizonIndirect25UsagePercent": {
+					"description": "Current usage percentage of EU-Horizon indirect-25% cap. Warning fires at >=90% per REQ-RDS-005.",
+					"expression": "@self.horizonIndirect25MaxBedrag != null && @self.horizonIndirect25MaxBedrag > 0 ? (@self.horizonIndirect25UsageBedrag / @self.horizonIndirect25MaxBedrag) * 100 : null",
+					"type": "number",
+					"nullable": true,
+					"example": 90.0
+				},
+				"horizonIndirect25Warning": {
+					"description": "TRUE when EU-Horizon indirect-25% usage is >=90% of cap. Per REQ-RDS-005.",
+					"expression": "@self.horizonIndirect25UsagePercent != null && @self.horizonIndirect25UsagePercent >= 90",
+					"type": "boolean",
+					"nullable": true,
+					"warningMessage": "indirect-25% limit of EUR {{horizonIndirect25MaxBedrag}} approaching; current usage {{horizonIndirect25UsagePercent}}%"
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"subsidie-coordinator": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"manager": {
+						"permissions": [
+							"create",
+							"read",
+							"update",
+							"delete"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
+		"Kostenpost": {
+			"slug": "Kostenpost",
+			"icon": "ReceiptTextOutline",
+			"version": "0.1.0",
+			"title": "Kostenpost",
+			"description": "Individual expense line item within a subsidie dossier. Linked to parent Subsidie via subsidieId. The allowed kostencategorie values are constrained per-regeling via JSON Schema allOf/if-then blocks (REQ-RDS-002). MIT: personnel/materials/external-services/equipment-depreciation/other-direct. SBIR: personnel/materials/equipment-depreciation/other-direct. EU Horizon: personnel/subcontracting/other-direct/indirect-25-percent. EFRO: personnel/external-services/materials/equipment/other/indirect-flat-rate. REACT-EU: EFRO + green-recovery. No PHP category validator per ADR-031.",
+			"x-schema-org": "schema:MonetaryAmount",
+			"type": "object",
+			"required": [
+				"subsidieId",
+				"subsidieRegeling",
+				"kostencategorie",
+				"amount",
+				"periodId",
+				"administrationId"
+			],
+			"properties": {
+				"subsidieId": {
+					"type": "string",
+					"description": "FK to parent Subsidie.id.",
+					"example": "subsidie-rdsubsidie-2026-001"
+				},
+				"subsidieRegeling": {
+					"type": "string",
+					"enum": [
+						"mit",
+						"sbir",
+						"eu-horizon",
+						"efro",
+						"react-eu",
+						"other"
+					],
+					"description": "Denormalized regeling from parent Subsidie. Drives if/then kostencategorie constraint enforcement at save time (REQ-RDS-002).",
+					"example": "eu-horizon"
+				},
+				"kostencategorie": {
+					"type": "string",
+					"enum": [
+						"personnel",
+						"materials",
+						"external-services",
+						"equipment-depreciation",
+						"subcontracting",
+						"other-direct",
+						"indirect-25-percent",
+						"equipment",
+						"other",
+						"indirect-flat-rate",
+						"green-recovery"
+					],
+					"description": "Expense category for this kostenpost. Allowed values are constrained per subsidieRegeling (REQ-RDS-002).",
+					"example": "personnel"
+				},
+				"amount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Expense amount in euros.",
+					"example": 5000.0
+				},
+				"description": {
+					"type": "string",
+					"nullable": true,
+					"description": "Description of the expense.",
+					"example": "Personeelskosten Q1 2026"
+				},
+				"periodId": {
+					"type": "string",
+					"description": "FK to FiscalPeriod this kostenpost covers.",
+					"example": "2026-Q1"
+				},
+				"attachmentUri": {
+					"type": "string",
+					"nullable": true,
+					"description": "docudesk URI of supporting documentation. Per ADR-022.",
+					"example": "docudesk://shillinq/kostenpost-2026-001.pdf"
+				},
+				"soUrenStaatUri": {
+					"type": "string",
+					"nullable": true,
+					"description": "docudesk URI of the S&O-uren-staat for personnel kostenposten in EU-Horizon subsidies. Referenced in Horizon audit-pack per REQ-RDS-004.",
+					"example": "docudesk://shillinq/so-uren-staat-2026-q1.pdf"
+				},
+				"state": {
+					"type": "string",
+					"enum": [
+						"entered",
+						"approved",
+						"rejected"
+					],
+					"description": "Approval state.",
+					"default": "entered",
+					"example": "entered"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the administration owning this record.",
+					"example": "adm-1"
+				}
+			},
+			"allOf": [
+				{
+					"if": {
+						"properties": {
+							"subsidieRegeling": {
+								"const": "mit"
+							}
+						},
+						"required": [
+							"subsidieRegeling"
+						]
+					},
+					"then": {
+						"properties": {
+							"kostencategorie": {
+								"enum": [
+									"personnel",
+									"materials",
+									"external-services",
+									"equipment-depreciation",
+									"other-direct"
+								]
+							}
+						}
+					}
+				},
+				{
+					"if": {
+						"properties": {
+							"subsidieRegeling": {
+								"const": "sbir"
+							}
+						},
+						"required": [
+							"subsidieRegeling"
+						]
+					},
+					"then": {
+						"properties": {
+							"kostencategorie": {
+								"enum": [
+									"personnel",
+									"materials",
+									"equipment-depreciation",
+									"other-direct"
+								]
+							}
+						}
+					}
+				},
+				{
+					"if": {
+						"properties": {
+							"subsidieRegeling": {
+								"const": "eu-horizon"
+							}
+						},
+						"required": [
+							"subsidieRegeling"
+						]
+					},
+					"then": {
+						"properties": {
+							"kostencategorie": {
+								"enum": [
+									"personnel",
+									"subcontracting",
+									"other-direct",
+									"indirect-25-percent"
+								]
+							}
+						}
+					}
+				},
+				{
+					"if": {
+						"properties": {
+							"subsidieRegeling": {
+								"const": "efro"
+							}
+						},
+						"required": [
+							"subsidieRegeling"
+						]
+					},
+					"then": {
+						"properties": {
+							"kostencategorie": {
+								"enum": [
+									"personnel",
+									"external-services",
+									"materials",
+									"equipment",
+									"other",
+									"indirect-flat-rate"
+								]
+							}
+						}
+					}
+				},
+				{
+					"if": {
+						"properties": {
+							"subsidieRegeling": {
+								"const": "react-eu"
+							}
+						},
+						"required": [
+							"subsidieRegeling"
+						]
+					},
+					"then": {
+						"properties": {
+							"kostencategorie": {
+								"enum": [
+									"personnel",
+									"external-services",
+									"materials",
+									"equipment",
+									"other",
+									"indirect-flat-rate",
+									"green-recovery"
+								]
+							}
+						}
+					}
+				}
+			],
+			"x-openregister-lifecycle": {
+				"states": {
+					"entered": "Ingevoerd, wacht op goedkeuring.",
+					"approved": "Goedgekeurd, telt mee in voortgangsrapportage.",
+					"rejected": "Afgewezen."
+				},
+				"transitions": {
+					"approve": {
+						"from": "entered",
+						"to": "approved",
+						"label": "Goedkeuren",
+						"description": "Kostenpost goedkeuren."
+					},
+					"reject": {
+						"from": "entered",
+						"to": "rejected",
+						"label": "Afwijzen",
+						"description": "Kostenpost afwijzen."
+					},
+					"reopen": {
+						"from": "rejected",
+						"to": "entered",
+						"label": "Heropen",
+						"description": "Kostenpost heropenen voor correctie."
+					}
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"subsidie-coordinator": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
+		"Product": {
+			"slug": "Product",
+			"icon": "PackageVariantOutline",
+			"version": "0.1.0",
+			"title": "Product",
+			"description": "Universal product master data — SKU, name, category, pricing, barcodes, and status. Foundation for POS, procurement, and inventory workflows per REQ-IPC-001 through REQ-IPC-010. SKU uniqueness is scoped to (organizationId, sku) to support multi-tenant Nextcloud instances.",
+			"x-schema-org": "schema:Product",
+			"type": "object",
+			"x-openregister-unique": [
+				[
+					"organizationId",
+					"sku"
+				]
+			],
+			"required": [
+				"sku",
+				"name",
+				"category",
+				"unitPrice",
+				"currency",
+				"status",
+				"organizationId"
+			],
+			"properties": {
+				"sku": {
+					"type": "string",
+					"description": "Stock keeping unit identifier. Unique per (organizationId, sku) per REQ-IPC-002 D2.",
+					"example": "LAPTOP-001"
+				},
+				"name": {
+					"type": "string",
+					"description": "Human-readable product name.",
+					"example": "Dell XPS 13 Laptop"
+				},
+				"category": {
+					"type": "string",
+					"description": "Product category. Standard values: office, it_hardware, logistics, food_beverage, clothing. Custom values allowed for extensibility.",
+					"enum": [
+						"office",
+						"it_hardware",
+						"logistics",
+						"food_beverage",
+						"clothing",
+						"custom"
+					],
+					"example": "it_hardware"
+				},
+				"description": {
+					"type": "string",
+					"nullable": true,
+					"description": "Detailed product description.",
+					"example": "13-inch FHD display, Intel Core i7, 16GB RAM, 512GB SSD"
+				},
+				"unitPrice": {
+					"type": "number",
+					"format": "double",
+					"description": "Unit price for purchase or sale in the specified currency per REQ-IPC-002.",
+					"example": 1899.0
+				},
+				"currency": {
+					"type": "string",
+					"description": "ISO 4217 currency code for unitPrice.",
+					"minLength": 3,
+					"maxLength": 3,
+					"example": "EUR"
+				},
+				"unitCode": {
+					"type": "string",
+					"nullable": true,
+					"description": "UN/CEFACT unit of measure code. ST=piece, KG=kilogram, L=litre, HR=hour. Null means each/piece.",
+					"example": "ST"
+				},
+				"taxRate": {
+					"type": "number",
+					"nullable": true,
+					"minimum": 0,
+					"maximum": 100,
+					"description": "Applicable VAT/tax rate as a percentage (0-100). E.g. 21 for Dutch standard VAT.",
+					"example": 21
+				},
+				"primaryBarcode": {
+					"type": "string",
+					"nullable": true,
+					"description": "Primary barcode for fast product lookup (e.g. GTIN-13 or custom).",
+					"example": "4014300889755"
+				},
+				"barcodes": {
+					"type": "array",
+					"nullable": true,
+					"description": "Multiple barcodes per REQ-IPC-005. Each entry carries code, format (GTIN-8/12/13/14/custom), and type (item/case/pallet).",
+					"items": {
+						"type": "object",
+						"required": [
+							"code",
+							"format",
+							"type"
+						],
+						"properties": {
+							"code": {
+								"type": "string",
+								"description": "The barcode value.",
+								"example": "4014300889755"
+							},
+							"format": {
+								"type": "string",
+								"description": "Barcode format per UN/EAN standards.",
+								"enum": [
+									"GTIN-8",
+									"GTIN-12",
+									"GTIN-13",
+									"GTIN-14",
+									"custom"
+								],
+								"example": "GTIN-13"
+							},
+							"type": {
+								"type": "string",
+								"description": "Barcode scope: item (single unit), case (multiple units), pallet (full pallet).",
+								"enum": [
+									"item",
+									"case",
+									"pallet"
+								],
+								"example": "item"
+							}
+						}
+					},
+					"example": [
+						{
+							"code": "4014300889755",
+							"format": "GTIN-13",
+							"type": "item"
+						}
+					]
+				},
+				"status": {
+					"type": "string",
+					"description": "Product lifecycle status per REQ-IPC-009. active = in normal use; discontinued = phased out.",
+					"enum": [
+						"active",
+						"discontinued"
+					],
+					"default": "active",
+					"example": "active"
+				},
+				"organizationId": {
+					"type": "string",
+					"description": "FK to the organization owning this product. Combined with sku forms the uniqueness key per D2. Queries MUST be scoped per organization per REQ-IPC-010.",
+					"example": "org-123"
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"procurement": {
+						"permissions": [
+							"create",
+							"read",
+							"update",
+							"delete"
+						]
+					},
+					"inventory": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
+		"ProductAttribute": {
+			"slug": "ProductAttribute",
+			"icon": "TagOutline",
+			"version": "0.1.0",
+			"title": "Product Attribute",
+			"description": "Attribute type definitions for products per REQ-IPC-003 and REQ-IPC-004. Category-scoped via applicableToCategories. Seed templates for common categories shipped in lib/Settings/seeds/ per REQ-IPC-006.",
+			"type": "object",
+			"required": [
+				"name",
+				"dataType",
+				"applicableToCategories",
+				"status"
+			],
+			"properties": {
+				"name": {
+					"type": "string",
+					"description": "Attribute display name recognizable to procurement practitioners.",
+					"example": "RAM (GB)"
+				},
+				"dataType": {
+					"type": "string",
+					"description": "Value data type for this attribute per REQ-IPC-004.",
+					"enum": [
+						"text",
+						"number",
+						"boolean",
+						"enum",
+						"date"
+					],
+					"example": "number"
+				},
+				"applicableToCategories": {
+					"type": "string",
+					"description": "Comma-separated product categories to which this attribute applies per D4. E.g. 'it_hardware' or 'it_hardware,office'.",
+					"example": "it_hardware"
+				},
+				"isRequired": {
+					"type": "boolean",
+					"nullable": true,
+					"default": false,
+					"description": "Whether this attribute is mandatory for products in applicable categories.",
+					"example": false
+				},
+				"displayOrder": {
+					"type": "integer",
+					"nullable": true,
+					"description": "Sequence number for UI ordering (ascending). Lower numbers appear first.",
+					"example": 1
+				},
+				"validationRule": {
+					"type": "string",
+					"nullable": true,
+					"description": "Validation constraint as a human-readable string. E.g. 'min: 4, max: 256' for number ranges or 'SSD, HDD, hybrid' for enum values.",
+					"example": "min: 4, max: 256"
+				},
+				"status": {
+					"type": "string",
+					"description": "Attribute lifecycle status. active = in use; archived = retired but retained for history.",
+					"enum": [
+						"active",
+						"archived"
+					],
+					"default": "active",
+					"example": "active"
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"procurement": {
+						"permissions": [
+							"create",
+							"read",
+							"update",
+							"delete"
+						]
+					},
+					"inventory": {
+						"permissions": [
+							"read"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
 		}
 	},
 	"mappings": {
@@ -5993,6 +10580,409 @@
 			"estimatedNetLiability": 8050.0,
 			"currency": "EUR",
 			"status": "current"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "VendorMaster",
+				"slug": "vendor-acme-bv-2026"
+			},
+			"vendorNumber": "V-2026-001",
+			"name": "Acme Leveranciers BV",
+			"tradingName": "Acme",
+			"kvkNumber": "12345678",
+			"btwNumber": "NL123456789B01",
+			"iban": "NL01RABO0123456789",
+			"bic": "RABONL2U",
+			"paymentTermDays": 30,
+			"defaultExpenseAccountNumber": "7000",
+			"email": "facturatie@acme.nl",
+			"phone": "+31201234567",
+			"administrationId": "adm-1",
+			"lifecycleState": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "VendorMaster",
+				"slug": "vendor-techsupply-2026"
+			},
+			"vendorNumber": "V-2026-002",
+			"name": "TechSupply Nederland BV",
+			"kvkNumber": "87654321",
+			"btwNumber": "NL987654321B01",
+			"iban": "NL02INGB0001234567",
+			"bic": "INGBNL2A",
+			"paymentTermDays": 14,
+			"defaultExpenseAccountNumber": "7100",
+			"email": "ap@techsupply.nl",
+			"administrationId": "adm-1",
+			"lifecycleState": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "VendorMaster",
+				"slug": "vendor-kantoor-co-2026"
+			},
+			"vendorNumber": "V-2026-003",
+			"name": "Kantoor & Co BV",
+			"kvkNumber": "11223344",
+			"iban": "NL03ABNA0417164300",
+			"bic": "ABNANL2A",
+			"paymentTermDays": 30,
+			"defaultExpenseAccountNumber": "7200",
+			"email": "rekeningen@kantoorco.nl",
+			"administrationId": "adm-1",
+			"lifecycleState": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "APInvoice",
+				"slug": "ap-inv-2026-v-001-draft"
+			},
+			"invoiceNumber": "INV-V-2026-0001",
+			"vendorInvoiceRef": "ACME-2026-00123",
+			"vendorId": "vendor-acme-bv-2026",
+			"invoiceDate": "2026-01-15",
+			"dueDate": "2026-02-14",
+			"currency": "EUR",
+			"totalAmount": 1250.0,
+			"taxAmount": 217.98,
+			"lines": [
+				{
+					"description": "Kantoorartikelen Q1 2026",
+					"accountNumber": "7000",
+					"amount": 1032.02,
+					"taxCode": "BTW21"
+				}
+			],
+			"approvalState": "not-required",
+			"state": "draft",
+			"administrationId": "adm-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "APInvoice",
+				"slug": "ap-inv-2026-v-002-approved"
+			},
+			"invoiceNumber": "INV-V-2026-0002",
+			"vendorInvoiceRef": "TECH-2026-00456",
+			"vendorId": "vendor-techsupply-2026",
+			"invoiceDate": "2026-01-20",
+			"dueDate": "2026-02-03",
+			"currency": "EUR",
+			"totalAmount": 4840.0,
+			"taxAmount": 840.0,
+			"lines": [
+				{
+					"description": "Laptops (4x) voor projectteam",
+					"accountNumber": "7100",
+					"amount": 4000.0,
+					"taxCode": "BTW21",
+					"quantity": 4,
+					"unitPrice": 1000.0
+				}
+			],
+			"approvalState": "approved",
+			"state": "approved",
+			"administrationId": "adm-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "APInvoice",
+				"slug": "ap-inv-2026-v-003-posted"
+			},
+			"invoiceNumber": "INV-V-2026-0003",
+			"vendorInvoiceRef": "KC-2026-00789",
+			"vendorId": "vendor-kantoor-co-2026",
+			"invoiceDate": "2026-01-10",
+			"dueDate": "2026-02-09",
+			"currency": "EUR",
+			"totalAmount": 363.0,
+			"taxAmount": 63.0,
+			"lines": [
+				{
+					"description": "Printer papier A4 (10 dozen)",
+					"accountNumber": "7200",
+					"amount": 300.0,
+					"taxCode": "BTW21",
+					"quantity": 10,
+					"unitPrice": 30.0
+				}
+			],
+			"approvalState": "not-required",
+			"state": "posted",
+			"glTransactionId": "gl-txn-2026-ap-0003",
+			"periodId": "2026-Q1",
+			"administrationId": "adm-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "PaymentRun",
+				"slug": "pr-2026-001-draft"
+			},
+			"runNumber": "PR-2026-001",
+			"runDate": "2026-02-28",
+			"invoiceRefs": [
+				"ap-inv-2026-v-003-posted"
+			],
+			"totalAmount": 363.0,
+			"paymentMethod": "sepa-pain001",
+			"state": "draft",
+			"administrationId": "adm-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "PaymentRun",
+				"slug": "pr-2026-002-ready"
+			},
+			"runNumber": "PR-2026-002",
+			"runDate": "2026-03-15",
+			"invoiceRefs": [
+				"ap-inv-2026-v-002-approved"
+			],
+			"totalAmount": 4840.0,
+			"paymentMethod": "sepa-pain001",
+			"state": "ready",
+			"sepaXml": "<?xml version='1.0' encoding='UTF-8'?><Document xmlns='urn:iso:std:iso:20022:tech:xsd:pain.001.001.03'><!-- pain.001.001.03 stub --></Document>",
+			"administrationId": "adm-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "PaymentRun",
+				"slug": "pr-2026-003-executed"
+			},
+			"runNumber": "PR-2026-003",
+			"runDate": "2026-01-31",
+			"invoiceRefs": [],
+			"totalAmount": 0.0,
+			"paymentMethod": "ideal",
+			"state": "executed",
+			"administrationId": "adm-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "RateCardTemplate",
+				"slug": "rct-2026-consulting"
+			},
+			"templateId": "RCT-2026-001",
+			"name": "2026 Consulting Rates",
+			"description": "Multi-tier billing rates for consulting services. Covers user, role, project, client, and blended-default tiers.",
+			"tierStructure": [
+				"user",
+				"role",
+				"project",
+				"client",
+				"blended"
+			],
+			"currency": "EUR",
+			"administrationId": "adm-1",
+			"lifecycleState": "active",
+			"createdAt": "2026-01-01T00:00:00Z"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "RateCardVersion",
+				"slug": "rcv-2026-q1"
+			},
+			"versionId": "RCV-2026-001",
+			"templateId": "RCT-2026-001",
+			"effectiveDate": "2026-01-01",
+			"expiryDate": "2026-03-31",
+			"status": "active",
+			"administrationId": "adm-1"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "RateSchedule",
+				"slug": "rs-2026-q1-blended"
+			},
+			"scheduleId": "RS-2026-001",
+			"versionId": "RCV-2026-001",
+			"tier": "blended",
+			"entityId": null,
+			"rate": 85.0,
+			"unit": "hourly",
+			"effectiveDate": "2026-01-01",
+			"expiryDate": "2026-03-31",
+			"volumeBrackets": null,
+			"administrationId": "adm-1",
+			"status": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "RateSchedule",
+				"slug": "rs-2026-q1-role-senior"
+			},
+			"scheduleId": "RS-2026-002",
+			"versionId": "RCV-2026-001",
+			"tier": "role",
+			"entityId": "role-senior-consultant",
+			"rate": 120.0,
+			"unit": "hourly",
+			"effectiveDate": "2026-01-01",
+			"expiryDate": "2026-03-31",
+			"volumeBrackets": null,
+			"administrationId": "adm-1",
+			"status": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "RateSchedule",
+				"slug": "rs-2026-q1-role-junior"
+			},
+			"scheduleId": "RS-2026-003",
+			"versionId": "RCV-2026-001",
+			"tier": "role",
+			"entityId": "role-junior-consultant",
+			"rate": 65.0,
+			"unit": "hourly",
+			"effectiveDate": "2026-01-01",
+			"expiryDate": "2026-03-31",
+			"volumeBrackets": null,
+			"administrationId": "adm-1",
+			"status": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "RateSchedule",
+				"slug": "rs-2026-q1-user-alice"
+			},
+			"scheduleId": "RS-2026-004",
+			"versionId": "RCV-2026-001",
+			"tier": "user",
+			"entityId": "user-alice",
+			"rate": 130.0,
+			"unit": "hourly",
+			"effectiveDate": "2026-02-01",
+			"expiryDate": "2026-03-31",
+			"volumeBrackets": null,
+			"administrationId": "adm-1",
+			"status": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "RateSchedule",
+				"slug": "rs-2026-q1-project-gemeente"
+			},
+			"scheduleId": "RS-2026-005",
+			"versionId": "RCV-2026-001",
+			"tier": "project",
+			"entityId": "proj-gemeente-migration",
+			"rate": 95.0,
+			"unit": "hourly",
+			"effectiveDate": "2026-01-01",
+			"expiryDate": "2026-03-31",
+			"volumeBrackets": null,
+			"administrationId": "adm-1",
+			"status": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "RateRecord",
+				"slug": "rr-2026-alice-20260215"
+			},
+			"recordId": "RR-2026-001",
+			"lookupDate": "2026-02-15",
+			"userId": "user-alice",
+			"roleId": "role-senior-consultant",
+			"projectId": null,
+			"clientId": null,
+			"resolvedTier": "user",
+			"resolvedScheduleId": "RS-2026-004",
+			"resolvedRate": 130.0,
+			"resolvedUnit": "hourly",
+			"effectiveWindowStart": "2026-02-01",
+			"effectiveWindowEnd": "2026-03-31",
+			"administrationId": "adm-1",
+			"createdAt": "2026-02-15T10:30:00Z"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "MileageRate",
+				"slug": "mileagerate-2026-nl-car"
+			},
+			"fiscalYear": 2026,
+			"country": "NL",
+			"vehicleType": "car",
+			"ratePerKm": 0.21,
+			"notes": "Belastingdienst 2026 — IB 2025 rules: €0.21/km personenauto"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "MileageRate",
+				"slug": "mileagerate-2026-nl-motorcycle"
+			},
+			"fiscalYear": 2026,
+			"country": "NL",
+			"vehicleType": "motorcycle",
+			"ratePerKm": 0.16,
+			"notes": "Belastingdienst 2026 — IB 2025 rules: €0.16/km motorfiets"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "MileageRate",
+				"slug": "mileagerate-2026-fi-car"
+			},
+			"fiscalYear": 2026,
+			"country": "FI",
+			"vehicleType": "car",
+			"ratePerKm": 0.42,
+			"notes": "Verohallinto 2026 — Finnish tax rules: €0.42/km"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "PerDiemRate",
+				"slug": "perdiem-2026-nl"
+			},
+			"calendarYear": 2026,
+			"country": "NL",
+			"dailyRate": 125.0,
+			"currency": "EUR",
+			"source": "Ministerie van Financiën — reiskostenvergoeding 2026"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "PerDiemRate",
+				"slug": "perdiem-2026-fi"
+			},
+			"calendarYear": 2026,
+			"country": "FI",
+			"dailyRate": 45.0,
+			"currency": "EUR",
+			"source": "Verohallinto — daily allowance 2026"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "PerDiemRate",
+				"slug": "perdiem-2026-us"
+			},
+			"calendarYear": 2026,
+			"country": "US",
+			"dailyRate": 150.0,
+			"currency": "EUR",
+			"source": "US federal per diem rates (converted to EUR at budget rate)"
 		}
 	]
 }

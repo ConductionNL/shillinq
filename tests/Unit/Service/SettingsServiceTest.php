@@ -199,4 +199,118 @@ class SettingsServiceTest extends TestCase
 
     }//end testIsOpenRegisterAvailableDelegatesToAppManager()
 
+    /**
+     * Test seedProductAttributes returns failure when OpenRegister is unavailable.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
+     */
+    public function testSeedProductAttributesFailsWhenOpenRegisterUnavailable(): void
+    {
+        $this->appManager->expects($this->once())
+            ->method('isInstalled')
+            ->with('openregister')
+            ->willReturn(false);
+
+        $result = $this->service->seedProductAttributes(category: 'office');
+
+        self::assertFalse($result['success']);
+        self::assertStringContainsString('OpenRegister', $result['message']);
+
+    }//end testSeedProductAttributesFailsWhenOpenRegisterUnavailable()
+
+    /**
+     * Test seedProductAttributes returns failure for unknown category.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
+     */
+    public function testSeedProductAttributesFailsForUnknownCategory(): void
+    {
+        $this->appManager->expects($this->once())
+            ->method('isInstalled')
+            ->with('openregister')
+            ->willReturn(true);
+
+        $result = $this->service->seedProductAttributes(category: 'nonexistent_category');
+
+        self::assertFalse($result['success']);
+        self::assertStringContainsString('nonexistent', $result['message']);
+
+    }//end testSeedProductAttributesFailsForUnknownCategory()
+
+    /**
+     * Test that all five ProductAttribute seed files exist and parse as valid JSON.
+     *
+     * Covers REQ-IPC-006: seed files parse and validate.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-8
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-9
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-10
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-11
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-12
+     */
+    public function testProductAttributeSeedFilesAreValidJson(): void
+    {
+        $categories = ['office', 'it_hardware', 'logistics', 'food_beverage', 'clothing'];
+        $seedDir    = __DIR__.'/../../../lib/Settings/seeds/';
+
+        foreach ($categories as $category) {
+            $filename = $seedDir.'product-attributes-'.str_replace('_', '-', $category).'.json';
+            self::assertFileExists($filename, 'Seed file must exist for category: '.$category);
+
+            $content = file_get_contents($filename);
+            self::assertNotFalse($content, 'Must be able to read seed file: '.$filename);
+
+            $data = json_decode($content, associative: true);
+            self::assertSame(JSON_ERROR_NONE, json_last_error(), 'Seed file must be valid JSON: '.$filename);
+            self::assertArrayHasKey('productAttributes', $data, 'Seed file must have productAttributes key: '.$filename);
+            self::assertNotEmpty($data['productAttributes'], 'Seed file must have at least one attribute: '.$filename);
+
+            foreach ($data['productAttributes'] as $attr) {
+                self::assertArrayHasKey('name', $attr, 'Each attribute must have name in: '.$filename);
+                self::assertArrayHasKey('dataType', $attr, 'Each attribute must have dataType in: '.$filename);
+                self::assertArrayHasKey('applicableToCategories', $attr, 'Each attribute must have applicableToCategories in: '.$filename);
+                self::assertArrayHasKey('status', $attr, 'Each attribute must have status in: '.$filename);
+                self::assertContains($attr['dataType'], ['text', 'number', 'boolean', 'enum', 'date'], 'dataType must be valid enum value in: '.$filename);
+                self::assertContains($attr['status'], ['active', 'archived'], 'status must be active or archived in: '.$filename);
+            }
+        }//end foreach
+
+    }//end testProductAttributeSeedFilesAreValidJson()
+
+    /**
+     * Test seedProductAttributes calls ObjectService for a known category.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
+     */
+    public function testSeedProductAttributesCallsObjectServiceForKnownCategory(): void
+    {
+        $this->appManager->expects($this->once())
+            ->method('isInstalled')
+            ->with('openregister')
+            ->willReturn(true);
+
+        $this->appConfig->expects($this->once())
+            ->method('getValueString')
+            ->willReturn('shillinq');
+
+        $mockObjectService = $this->createMock(\stdClass::class);
+
+        $this->container->expects($this->once())
+            ->method('get')
+            ->with('OCA\OpenRegister\Service\ObjectService')
+            ->willReturn($mockObjectService);
+
+        $result = $this->service->seedProductAttributes(category: 'office');
+
+        self::assertArrayHasKey('success', $result);
+
+    }//end testSeedProductAttributesCallsObjectServiceForKnownCategory()
 }//end class
