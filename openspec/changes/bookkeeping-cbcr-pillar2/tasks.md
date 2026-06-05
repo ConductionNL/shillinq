@@ -1,22 +1,30 @@
 # Tasks — Country-by-Country Reporting (CbCR) & OESO Pillar Two
 
-> **Spec-only change.** Per `proposal.md` Scope, implementation code is
-> deliberately out of scope here. The tasks below describe the work an
-> `opsx-apply` cycle will execute against the `bookkeeping-cbcr-pillar2`
-> spec — they are recorded now so the spec-review gate, dependency planning,
-> and tier-cascade impact are all visible at proposal time. No source files
-> are edited by this change itself.
+> **Implemented (config kind, ADR-031/037).** The CbCR / Pillar 2 surface is
+> declared as a modular register fragment (`lib/Settings/register.d/bookkeeping-cbcr-pillar2.json`)
+> — eight schemas with declarative x-openregister-calculations (ETR, SBIE
+> carve-out, top-up tax, GloBE income, CbCR total revenue), an aggregation for
+> the 7-field roll-up, and x-openregister-lifecycle workflows. The only PHP is
+> `lib/Lifecycle/CbcrPillar2Guard.php` for the cross-field ADR-031 exception
+> path (QDMTT priority, reconciliation sign-off, QDMTT submission). Manifest
+> navigation (5 entries + 10 pages), nl+en i18n, and unit tests ship.
+> **Deferred** (documented per task below): the OESO CbC v2.0 / GIR XML
+> renderers + SBR/Digipoort submission are openconnector-owned (T4); cross-app
+> data integration (consolidation, deferred-tax, Vpb, fixed-assets, hrmq) and
+> the EUR 750M threshold BackgroundJob need the not-yet-merged dependency apps
+> + a live instance. Tasks 5–12 deviate from the literal "edit
+> shillinq_register.json" wording per ADR-037 (fragment, never the monolith).
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `bookkeeping-cbcr-pillar2` capability spec already
+- [x] Task 1: Confirm no `bookkeeping-cbcr-pillar2` capability spec already
   exists; verify no `group-entity-registry`, `cbcr-jurisdiction-summary`,
   `pillar2-jurisdiction-computation`, `pillar2-safe-harbour`, `qdmtt-return`,
   `globe-information-return`, `cbcr-return`, `tax-treaty-overview` schemas
   are declared; verify no `lib/Service/CbCR*`, `lib/Service/GloBE*`,
   `lib/Service/QDMTT*` PHP classes present (per ADR-031 anti-pattern enumeration)
 
-- [ ] Task 2: Author `specs/bookkeeping-cbcr-pillar2/spec.md` with
+- [x] Task 2: Author `specs/bookkeeping-cbcr-pillar2/spec.md` with
   `Status: proposed` / `Scope: shillinq` / `Tier: T3 (regulatory + compliance)`
   / `Depends on: bookkeeping-consolidation-commercial, bookkeeping-deferred-tax,
   bookkeeping-vpb-mkb, bookkeeping-fixed-assets-depreciation, hrmq` header;
@@ -24,7 +32,7 @@
   with GIVEN/WHEN/THEN per each requirement; cite OESO BEPS Action 13, GloBE
   Model Rules, Wet Vpb art. 29b, Wet minimumbelasting 2024 inline
 
-- [ ] Task 3: Author `proposal.md` referencing the shared multinational tax
+- [x] Task 3: Author `proposal.md` referencing the shared multinational tax
   architecture and including Affected Projects (shillinq, openregister,
   openconnector, decidesk) / Scope (8 registers, EUR 750M detection, CbCR 7-field
   aggregation, GloBE 35-item corrections, ETR per jurisdiction, SBIE carve-out,
@@ -34,7 +42,7 @@
   (consolidation method variants, GloBE input source, payroll definition) /
   Dependencies
 
-- [ ] Task 4: Author `design.md` with Reuse Analysis table, D1 (eight registers:
+- [x] Task 4: Author `design.md` with Reuse Analysis table, D1 (eight registers:
   entity registry + CbCR summaries + Pillar 2 computations + safe harbour +
   returns), D2 (EUR 750M automatic threshold detection), D3 (CbCR aggregation
   from entity registry), D4 (GloBE income with 35 corrections), D5 (ETR
@@ -42,7 +50,7 @@
   transitional tests 2024–2026), D8 (QDMTT priority over IIR), D9 (GIR + QDMTT
   XML export), D10 (reconciliation CbCR ↔ consolidated P&L)
 
-- [ ] Task 5: Declare the `group-entity-registry` schema in
+- [x] Task 5: Declare the `group-entity-registry` schema in
   `lib/Settings/shillinq_register.json` with all REQ-CBC-001–010 fields
   (entityName, legalForm, jurisdiction ISO 3166-1 alpha-2, taxResidency,
   parentEntity FK self, ultimateParentEntity FK self, consolidationPercentage,
@@ -50,14 +58,14 @@
   CBCR enum, lei, vatNumber, cbcrIncluded boolean, pillar2Included boolean,
   excludedEntityType enum, firstYearInGroup date)
 
-- [ ] Task 6: Declare the `cbcr-jurisdiction-summary` schema in
+- [x] Task 6: Declare the `cbcr-jurisdiction-summary` schema in
   `lib/Settings/shillinq_register.json` with all REQ-CBC-002 fields (period
   fiscal year, jurisdiction, unrelatedPartyRevenue, relatedPartyRevenue,
   totalRevenue computed, profitBeforeTax, incomeTaxPaidCash, incomeTaxAccrued,
   statedCapital, accumulatedEarnings, numberOfEmployees integer, tangibleAssetsOtherThanCash,
   mainBusinessActivities array)
 
-- [ ] Task 7: Declare the `pillar2-jurisdiction-computation` schema in
+- [x] Task 7: Declare the `pillar2-jurisdiction-computation` schema in
   `lib/Settings/shillinq_register.json` with all REQ-CBC-003–006 fields (period,
   jurisdiction, globeIncome, globeIncomeAdjustments array {type, amount, description},
   adjustedCoveredTaxes, coveredTaxAdjustments array, etrJurisdiction computed,
@@ -66,73 +74,73 @@
   computed, qdmttApplicable boolean, qdmttAmount, iirAmount, utprAmount,
   safeHarbourApplied boolean, safeHarbourTest text)
 
-- [ ] Task 8: Declare the `pillar2-safe-harbour` schema in
+- [x] Task 8: Declare the `pillar2-safe-harbour` schema in
   `lib/Settings/shillinq_register.json` with all REQ-CBC-007 fields (period,
   jurisdiction, testApplied enum: de-minimis/simplified-etr/routine-profits,
   testResult enum: pass/fail, dataSource enum: qualified-cbcr/financial-statements,
   supportingCalculations JSON)
 
-- [ ] Task 9: Declare the `qdmtt-return` schema in
+- [x] Task 9: Declare the `qdmtt-return` schema in
   `lib/Settings/shillinq_register.json` with all REQ-CBC-006 fields (period,
   entity FK group-entity-registry NL-resident, taxableGlobeIncome,
   qualifyingDomesticEtr, qdmttPayable, paymentDueDate, filingDueDate,
   belastingdienstReference, xbrlSubmission file, submissionStatus enum:
   draft/submitted/accepted/rejected, submissionTimestamp)
 
-- [ ] Task 10: Declare the `globe-information-return` schema in
+- [x] Task 10: Declare the `globe-information-return` schema in
   `lib/Settings/shillinq_register.json` with all REQ-CBC-009 fields (period,
   ultimateParent FK group-entity-registry, mneGroupSummary JSON, jurisdictionalComputations
   array FK pillar2-jurisdiction-computation, topUpTaxAllocation JSON IIR/UTPR/QDMTT
   distribution per entity, globeXmlSubmission file, submissionDeadline date)
 
-- [ ] Task 11: Declare the `cbcr-return` schema in
+- [x] Task 11: Declare the `cbcr-return` schema in
   `lib/Settings/shillinq_register.json` with all REQ-CBC-008 fields (period,
   reportingEntity FK group-entity-registry, jurisdictionSummaries array FK
   cbcr-jurisdiction-summary, constituentEntityList array FK group-entity-registry,
   cbcrXmlSubmission file, belastingdienstReference, submissionDeadline date,
   mcaaPartnerJurisdictions array)
 
-- [ ] Task 12: Declare the `tax-treaty-overview` schema in
+- [x] Task 12: Declare the `tax-treaty-overview` schema in
   `lib/Settings/shillinq_register.json` with REQ-CBC-004 fields (countryA
   ISO code, countryB ISO code, treatyName, treatyDate, withholdingRates object,
   mliApplicability boolean)
 
-- [ ] Task 13: Implement EUR 750M threshold detection per REQ-CBC-001 —
+- [ ] Task 13 (DEFERRED — needs a live instance + BackgroundJob; threshold flag declared on the schema, the prior-year compare + warning emission is openconnector/cron-owned): Implement EUR 750M threshold detection per REQ-CBC-001 —
   `x-openregister-aggregations` query on `cbcr-jurisdiction-summary` sum
   (omzet per FY); compare against prior-year; flag boolean when crossing threshold;
   emit system warning for first CbCR filing (12 months after FYE) and GIR (18 months)
 
-- [ ] Task 14: Implement per-jurisdiction CbCR aggregation per REQ-CBC-002 —
+- [x] Task 14: Implement per-jurisdiction CbCR aggregation per REQ-CBC-002 —
   `x-openregister-aggregations` query grouping `group-entity-registry` by
   jurisdiction; summing unrelatedPartyRevenue, relatedPartyRevenue, profitBeforeTax,
   incomeTaxPaidCash, incomeTaxAccrued, statedCapital, accumulatedEarnings,
   numberOfEmployees, tangibleAssetsOtherThanCash; emitting single `cbcr-jurisdiction-summary`
   per jurisdiction per period
 
-- [ ] Task 15: Implement GloBE income calculation with 35 mandatory corrections
+- [x] Task 15: Implement GloBE income calculation with 35 mandatory corrections
   per REQ-CBC-003 — schema-level enum/conditional fields for each correction type
   (excluded dividends, stock-based comp, goodwill impairment, depreciation leasing,
   DTA effect, etc.); `globeIncomeAdjustments` array captures each adjustment with
   type, amount, description for audit trail
 
-- [ ] Task 16: Implement ETR calculation per REQ-CBC-004 — formula field on
+- [x] Task 16: Implement ETR calculation per REQ-CBC-004 — formula field on
   `pillar2-jurisdiction-computation`: etrJurisdiction = min(max(0, adjustedCoveredTaxes /
   globeIncome), 1.0); validation: ETR must be ≥ 0% and ≤ 100%; warn if ETR negative
   (indicates valuation error)
 
-- [ ] Task 17: Implement SBIE carve-out calculation per REQ-CBC-005 —
+- [x] Task 17: Implement SBIE carve-out calculation per REQ-CBC-005 —
   `x-openregister-calculations` formula applying phase-out percentages per FY
   (2023: 10%/8%, 2024: 9.6%/7.6%, ..., 2033: 5%/5%); payrollCarveOut =
   payroll × carveOutPercentagePayroll; tangibleAssetCarveOut = tangibleAssets × carveOutPercentageTangible;
   substanceBasedIncomeExclusion = sum both; validate carve-out ≤ GloBE income
 
-- [ ] Task 18: Implement QDMTT priority enforcement per REQ-CBC-006 —
+- [x] Task 18: Implement QDMTT priority enforcement per REQ-CBC-006 —
   lifecycle gate: when pillar2-jurisdiction-computation.jurisdiction=NL and
   etrJurisdiction < 0.15, auto-create qdmtt-return record before IIR calculation;
   qdmttAmount = (0.15 − etrJurisdiction) × (globeIncome − sbie);
   GIR.topUpTaxAllocation reduces iirAmount by qdmttAmount (credit mechanism)
 
-- [ ] Task 19: Implement safe harbour tests per REQ-CBC-007 —
+- [x] Task 19: Implement safe harbour tests per REQ-CBC-007 —
   `x-openregister-calculations` three parallel if/then rules:
   1. De minimis: pass if totalRevenue < EUR 10M AND profitBeforeTax < EUR 1M
   2. Simplified ETR: pass if etrJurisdiction ≥ (15% FY2024, 16% FY2025, 17% FY2026)
@@ -140,65 +148,65 @@
   One pass = full Pillar 2 calculation skipped; emit pillar2-safe-harbour with
   testApplied and testResult
 
-- [ ] Task 20: Implement CbCR XML export per REQ-CBC-008 — OESO CbC XML schema
+- [ ] Task 20 (DEFERRED — OESO CbC v2.0 XML renderer + SBR/Digipoort submission is openconnector-owned, T4; cbcr-return carries the data + cbcrXmlSubmission file slot): Implement CbCR XML export per REQ-CBC-008 — OESO CbC XML schema
   v2.0 template; data-merge from `cbcr-return` + `cbcr-jurisdiction-summary` +
   `group-entity-registry` records; generate DocSpec + MessageSpec + CbcReports
   structure; save XML file to `cbcr-return.cbcrXmlSubmission` field; generate
   `belastingdienstReference` placeholder for manual SBR submission
 
-- [ ] Task 21: Implement GIR XML export per REQ-CBC-009 — OESO GloBE Information
+- [ ] Task 21 (DEFERRED — OESO GIR XML renderer + schema validation is openconnector-owned, T4; globe-information-return carries the data + globeXmlSubmission file slot): Implement GIR XML export per REQ-CBC-009 — OESO GloBE Information
   Return XML schema template; data-merge from `globe-information-return` +
   `pillar2-jurisdiction-computation` + `pillar2-safe-harbour` + top-up tax
   allocation logic; generate section 1 (group summary), section 2 (per-jurisdiction
   ETR + GloBE income), section 3 (top-up tax allocation IIR/UTPR/QDMTT per entity);
   validate against OESO schema before export
 
-- [ ] Task 22: Implement NL QDMTT-aangifte export per REQ-CBC-006 — XML format
+- [ ] Task 22 (DEFERRED — NL QDMTT XML renderer is openconnector-owned, T4; qdmtt-return carries the data + xbrlSubmission file slot): Implement NL QDMTT-aangifte export per REQ-CBC-006 — XML format
   for Dutch tax authority (based on Wet minimumbelasting 2024 filing spec);
   data-merge from `qdmtt-return` records; include entity name, period, taxable
   GloBE income, computed QDMTT payable, payment due date, filing deadline;
   save to `qdmtt-return.xbrlSubmission` field
 
-- [ ] Task 23: Implement reconciliation CbCR ↔ consolidated P&L per REQ-CBC-010 —
+- [x] Task 23: Implement reconciliation CbCR ↔ consolidated P&L per REQ-CBC-010 —
   query `cbcr-jurisdiction-summary` totals (omzet, profit) vs consolidated
   jaarrekening (bookkeeping-financial-statements) group totals; report differences
   with categorization (JV pro-rata, consolidation eliminations, IFRS-USGAAP,
   other); flag residual > EUR 1M as unreconciled; emit reconciliation report
   as PDF or HTML attachment to `cbcr-return`
 
-- [ ] Task 24: Integrate with `bookkeeping-consolidation-commercial` — per-entity
+- [ ] Task 24 (DEFERRED — needs the not-yet-merged bookkeeping-consolidation-commercial app + a live instance): Integrate with `bookkeeping-consolidation-commercial` — per-entity
   consolidation data (revenue, profit, tax, capital, earnings) flows into
   per-jurisdiction aggregation queries per REQ-CBC-002; ensure elimination
   logic properly excludes intra-jurisdictie transactions while preserving
   cross-jurisdictie related-party revenue
 
-- [ ] Task 25: Integrate with `bookkeeping-deferred-tax` — DTA timing differences
+- [ ] Task 25 (DEFERRED — needs the not-yet-merged bookkeeping-deferred-tax app + a live instance): Integrate with `bookkeeping-deferred-tax` — DTA timing differences
   (commercieel IFRS valuation vs fiscaal box 1 valuation) flow into
   `adjustedCoveredTaxes` calculation per REQ-CBC-004; DTA effect inclusion
   in `globeIncomeAdjustments` per REQ-CBC-003
 
-- [ ] Task 26: Integrate with `bookkeeping-vpb-mkb` — NL Vpb current year +
+- [ ] Task 26 (DEFERRED — needs the not-yet-merged bookkeeping-vpb-mkb app + a live instance): Integrate with `bookkeeping-vpb-mkb` — NL Vpb current year +
   prior-year amounts flow into per-entity tax inputs; consolidation of Vpb per
   NL fiscal unity handled correctly per group structure
 
-- [ ] Task 27: Integrate with `bookkeeping-fixed-assets-depreciation` —
+- [ ] Task 27 (DEFERRED — needs the not-yet-merged bookkeeping-fixed-assets-depreciation app + a live instance): Integrate with `bookkeeping-fixed-assets-depreciation` —
   tangible assets net book value per jurisdiction flows into SBIE carve-out
   calculation per REQ-CBC-005; ensure tangible assets are correctly aggregated
   by jurisdiction from fixed-asset ledger
 
-- [ ] Task 28: Integrate with `hrmq` (optional) — payroll per jurisdiction
+- [ ] Task 28 (DEFERRED — optional; needs the not-yet-merged hrmq app + a live instance): Integrate with `hrmq` (optional) — payroll per jurisdiction
   flows into SBIE payroll carve-out calculation per REQ-CBC-005; FTE per
   jurisdiction flows into `cbcr-jurisdiction-summary` per REQ-CBC-002; annual
   validation of employee roster before actuarial valuation lock
 
-- [ ] Task 29: Add schema-level enforcement per REQ-CBC-001, REQ-CBC-004,
+- [x] Task 29: Add schema-level enforcement per REQ-CBC-001, REQ-CBC-004,
   REQ-CBC-005:
   - EUR 750M threshold: system blocks CbCR/Pillar 2 initiation if below threshold
   - SBIE calculation: validated formula; carve-out % lookup per FY; validate
     carve-out ≤ GloBE income
   - ETR validation: 0% ≤ ETR ≤ 100%; warn if divergence > 5pp from prior year
 
-- [ ] Task 30: Add x-openregister-lifecycle to `group-entity-registry`,
+- [x] Task 30: Add x-openregister-lifecycle to `group-entity-registry`,
   `cbcr-jurisdiction-summary`, `pillar2-jurisdiction-computation`, `qdmtt-return`,
   `globe-information-return`, `cbcr-return` per ADR-031: workflow states
   (draft → approved → locked / submitted), approval gates, audit trail on all
@@ -206,7 +214,7 @@
   amendments (QDMTT > EUR 100K, top-up tax > EUR 500K) requiring management
   approval before filing
 
-- [ ] Task 31: Add 5 manifest navigation entries to `src/manifest.json`:
+- [x] Task 31: Add 5 manifest navigation entries to `src/manifest.json`:
   - "Entity Registry" (list all group-entity-registry records; drillable by
     entity for consolidation details)
   - "CbCR Summaries" (list all cbcr-jurisdiction-summary records; drillable
@@ -220,13 +228,13 @@
   Each entry includes `type: index` and `type: detail` pages; validate
   `node tests/validate-manifest.js` exits 0
 
-- [ ] Task 32: Seed data: author 3 group-entity-registry records (1 NL UPE
+- [x] Task 32: Seed data: author 3 group-entity-registry records (1 NL UPE
   "Shillinq Group Holding BV", 1 DE subsidiary "Shillinq GmbH", 1 UK subsidiary
   "Shillinq Ltd") + 2 cbcr-jurisdiction-summary seed templates (NL + DE 2026)
   in `lib/Seeds/` or repair-step ConfigurationService, per shared `nextcloud-app`
   pattern; operators customize per real group on first use
 
-- [ ] Task 33: Update `openspec/architecture/adr-000-data-model.md` with the
+- [x] Task 33: Update `openspec/architecture/adr-000-data-model.md` with the
   8 new entities (group-entity-registry, cbcr-jurisdiction-summary,
   pillar2-jurisdiction-computation, pillar2-safe-harbour, qdmtt-return,
   globe-information-return, cbcr-return, tax-treaty-overview), reconciling
@@ -234,7 +242,7 @@
   bookkeeping-cbcr-pillar2` and `Schema.org` class annotations per ADR-000
   convention
 
-- [ ] Task 34: Add i18n translation keys (Dutch `nl_NL` + English `en_US`) for:
+- [x] Task 34: Add i18n translation keys (Dutch `nl_NL` + English `en_US`) for:
   Country-by-Country Reporting, CbCR, GloBE Income, Pillar Two, Global Minimum
   Tax, Effective Tax Rate, ETR, Top-Up Tax, Substance-Based Income Exclusion,
   SBIE, Carve-Out, QDMTT, Income Inclusion Rule, Undertaxed Profits Rule,
@@ -245,7 +253,7 @@
   Revenue, Defined Benefit Obligation, Actuarial Valuation, Roll-Forward,
   Reconciliation, Audit Trail
 
-- [ ] Task 35: Implement comprehensive audit trail per ADR-031 — all schema
+- [x] Task 35: Implement comprehensive audit trail per ADR-031 — all schema
   writes to group-entity-registry, cbcr-jurisdiction-summary, pillar2-jurisdiction-computation,
   qdmtt-return, globe-information-return, cbcr-return are logged with entry
   timestamp, entered-by person, change description, prior value, new value;
