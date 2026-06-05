@@ -37,7 +37,7 @@ seeding.
 **Referenced by:**
 - `add-shillinq-gov-sector-mkb-advanced` (BBV variant, tax reporting)
 
-## Motivation
+## Why
 
 VAT compliance is mandatory for Dutch registered businesses (KVK
 mandatory, VAT number ING if turnover > €20K threshold). Belastingdienst
@@ -114,7 +114,7 @@ and general ledger.
 - **Advanced regimes** — margin scheme, second-hand goods, consignment,
   return/exchange flows beyond standard deductible/payable dichotomy.
 
-## Approach
+## What Changes
 
 One delta, adding ADDED Requirements to a brand-new spec:
 

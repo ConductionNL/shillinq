@@ -143,11 +143,11 @@ VAT amount, rate, type, and GL reference for audit.
 
 ---
 
-## Requirements
+## ADDED Requirements
 
-### REQ-VAT-001: VAT Return Registration
+### Requirement: REQ-VAT-001 — The system SHALL create and register a VAT return for a specific fiscal period and regime
 
-**Capability:** Create and register a VAT return for a specific fiscal
+The system SHALL create and register a VAT return for a specific fiscal
 period and regime.
 
 #### Scenario: Operator creates a Q1 2026 VAT return
@@ -172,9 +172,9 @@ period and regime.
 
 ---
 
-### REQ-VAT-002: VAT Reconciliation from GL
+### Requirement: REQ-VAT-002 — The system SHALL automatically derive VAT lines from GL transactions where the account is VAT-applicable
 
-**Capability:** Automatically derive VAT lines from GL transactions
+The system SHALL automatically derive VAT lines from GL transactions
 where `Account.vatApplicable = true`.
 
 #### Scenario: Q1 sales create a VAT collected line
@@ -198,9 +198,9 @@ where `Account.vatApplicable = true`.
 
 ---
 
-### REQ-VAT-003: Multi-Rate VAT Support
+### Requirement: REQ-VAT-003 — The system SHALL track VAT at multiple rates (21%, 9%, 0%) and reverse-charge scenarios in one return
 
-**Capability:** Track VAT at multiple rates (21%, 9%, 0%) and
+The system SHALL track VAT at multiple rates (21%, 9%, 0%) and
 reverse-charge scenarios in one return.
 
 #### Scenario: Return with multiple rates and reverse-charge
@@ -226,9 +226,9 @@ reverse-charge scenarios in one return.
 
 ---
 
-### REQ-VAT-004: VAT Regime Variants
+### Requirement: REQ-VAT-004 — The system SHALL support VAT regime selection (standard, reduced rates, KOR small-business exemption, reverse-charge)
 
-**Capability:** Support VAT regime selection: standard rate,
+The system SHALL support VAT regime selection: standard rate,
 reduced rates, KOR (small-business exemption), reverse-charge.
 
 #### Scenario: KOR-eligible business exempted from VAT
@@ -250,9 +250,9 @@ reduced rates, KOR (small-business exemption), reverse-charge.
 
 ---
 
-### REQ-VAT-005: VAT Return Submission Workflow
+### Requirement: REQ-VAT-005 — The system SHALL manage VAT return state transitions through draft → submitted → verified → filed
 
-**Capability:** Manage VAT return state transitions through
+The system SHALL manage VAT return state transitions through
 `draft → submitted → verified → filed`.
 
 #### Scenario: Operator submits a VAT return
@@ -277,9 +277,9 @@ reduced rates, KOR (small-business exemption), reverse-charge.
 
 ---
 
-### REQ-VAT-006: VAT Balance Calculation
+### Requirement: REQ-VAT-006 — The system SHALL calculate the VAT balance (refund vs. payment) for a return
 
-**Capability:** Calculate VAT balance (refund vs. payment) for a return.
+The system SHALL calculate the VAT balance (refund vs. payment) for a return.
 
 #### Scenario: Return shows €1,050 owed
 
@@ -298,9 +298,9 @@ reduced rates, KOR (small-business exemption), reverse-charge.
 
 ---
 
-### REQ-VAT-007: VAT Report Overview
+### Requirement: REQ-VAT-007 — The system SHALL provide a VAT report dashboard showing VAT by period, regime and balance status
 
-**Capability:** Dashboard view showing VAT by period, regime, and
+The system SHALL provide a dashboard view showing VAT by period, regime, and
 balance status.
 
 #### Scenario: Operator views VAT Report for 2026
@@ -325,9 +325,9 @@ balance status.
 
 ---
 
-### REQ-VAT-008: VAT Return Period Lock
+### Requirement: REQ-VAT-008 — The system SHALL prevent modification of VAT returns after submission (rebase required to edit)
 
-**Capability:** Prevent modification of VAT returns after submission.
+The system SHALL prevent modification of VAT returns after submission.
 
 #### Scenario: Operator attempts to edit submitted return
 
@@ -347,9 +347,9 @@ balance status.
 
 ---
 
-### REQ-VAT-009: VAT Audit Trail
+### Requirement: REQ-VAT-009 — The system SHALL track all VAT return changes and submissions with a full audit trail
 
-**Capability:** Track all VAT return changes and submissions with
+The system SHALL track all VAT return changes and submissions with a
 full audit trail.
 
 #### Scenario: Operator reviews return history
@@ -373,9 +373,9 @@ full audit trail.
 
 ---
 
-### REQ-VAT-010: Reverse-Charge VAT Tracking
+### Requirement: REQ-VAT-010 — The system SHALL track reverse-charge VAT (intra-EU purchases, imports, cross-border services) separately
 
-**Capability:** Track reverse-charge VAT (intra-EU purchases,
+The system SHALL track reverse-charge VAT (intra-EU purchases,
 imports, cross-border services) separately.
 
 #### Scenario: Company purchases software from German vendor (reverse-charge)
@@ -402,9 +402,9 @@ imports, cross-border services) separately.
 
 ---
 
-### REQ-VAT-011: VAT Aggregations and Reconciliation
+### Requirement: REQ-VAT-011 — The system SHALL use aggregation queries to derive return totals reliably
 
-**Capability:** Use aggregation queries to derive return totals
+The system SHALL use aggregation queries to derive return totals
 reliably.
 
 #### Scenario: System calculates totals from GL
@@ -429,9 +429,9 @@ reliably.
 
 ---
 
-### REQ-VAT-012: Manifest Navigation Entries
+### Requirement: REQ-VAT-012 — The system SHALL provide manifest navigation entries for VAT Returns list, detail and Reports dashboard
 
-**Capability:** UI navigation for VAT Returns list, detail, and
+The system SHALL provide UI navigation for VAT Returns list, detail, and
 Reports dashboard.
 
 #### Scenario: Operator navigates to VAT management

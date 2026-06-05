@@ -1,39 +1,71 @@
 # Tasks — VAT / BTW Filing
 
-**Status:** Pending implementation via `opsx-apply`
+**Status:** Implemented (declarative envelope).
+
+> **Scope correction (ADR-031 / ADR-037).** The proposal and design class
+> this as a `kind: config`, spec-only change: *"No PHP VAT calculation
+> service; business logic driven by schema lifecycle and aggregations"*
+> and *"Implementation code … is deliberately not in this proposal"*.
+> The whole VAT surface is therefore expressed declaratively —
+> three registers + the VATReturn lifecycle + the reconciliation
+> aggregations + manifest pages + seed data — in a single ADR-037
+> register fragment plus a manifest fragment. Per ADR-037 the monolith
+> `lib/Settings/shillinq_register.json` is **not** edited; the new schemas
+> live in `lib/Settings/register.d/bookkeeping-vat-btw-filing.json` and
+> the pages in `src/manifest.d/30-bookkeeping-vat-btw-filing.json`.
+>
+> The "Backend — Controllers & Services", "Frontend — Vue Components",
+> bespoke component tests, and the smoke/integration suites in the
+> sections below describe an **imperative** implementation that directly
+> contradicts the declarative decision in `design.md` (D1–D6, "No service
+> class authored in this envelope. All VAT logic is declarative.").
+> They are therefore marked **N/A — superseded by the declarative
+> envelope**; CRUD, list/detail, and lifecycle transitions are provided
+> by OpenRegister's generic object API + the CnIndexPage/CnDetailPage
+> renderers driven by the manifest, exactly like every other Shillinq
+> bookkeeping register. The fragment-merge unit test
+> (`tests/Unit/Service/VatBtwFilingFragmentTest.php`) asserts the real
+> behaviour of the declarative envelope.
 
 ---
 
 ## Schema & Data Model
 
-- [ ] **Define `VATReturn` schema** in `lib/Settings/shillinq_register.json`
+- [x] **Define `VATReturn` schema** in `lib/Settings/register.d/bookkeeping-vat-btw-filing.json` (ADR-037 fragment, not the monolith)
   - Properties: returnNumber, period, periodYear, periodNumber, startDate, endDate, regime, administrationId, statusCode, submissionDate, verificationDate, filingReference, totalVATCollected, totalVATPaid, vatBalance, totalTaxableAmount, notes
   - Type: Register with `x-openregister-lifecycle` transition block
   - Lifecycle: `draft → submitted → verified → filed`
   - Aggregations: SUM(VATLine.vatAmount WHERE type='collected'), SUM(VATLine.vatAmount WHERE type='paid')
   - Seed: 1 Q1 2026 standard-rate return, 1 Q1 2026 KOR return, 1 Q2 2026 reverse-charge return
 
-- [ ] **Define `VATDeclaration` schema** in `lib/Settings/shillinq_register.json`
+- [x] **Define `VATDeclaration` schema** in `lib/Settings/register.d/bookkeeping-vat-btw-filing.json`
   - Properties: declarationNumber, returnId, type, taxRate, totalVATAmount, totalTaxableAmount, lineCount, notes
   - Type: Register
   - Seed: 6 declarations (3 per return: collected, paid, or reverse-charge)
 
-- [ ] **Define `VATLine` schema** in `lib/Settings/shillinq_register.json`
+- [x] **Define `VATLine` schema** in `lib/Settings/register.d/bookkeeping-vat-btw-filing.json`
   - Properties: lineNumber, returnId, declarationId, glAccountNumber, glAccountName, glTransactionId, type, taxableAmount, taxRate, vatAmount, description, reverseChargeApplicable
   - Type: Register
   - Immutable after parent return is submitted
   - Seed: 12-15 VAT lines across all seeded returns (5 per return, mixed rates + reverse-charge)
 
-- [ ] **Update `Account` schema** in `lib/Settings/shillinq_register.json` (if needed)
-  - Verify `vatApplicable: boolean` field exists
-  - Verify `accountType` enum includes revenue, expenses, etc.
-  - If missing, add via non-breaking change (optional fields)
+- [x] **Verify `Account` schema** — no change needed. The monolith `Account`
+  schema already carries `vatApplicable` (and the operations fragment extends
+  it additively). VATLine references `Account.accountNumber` by value
+  (`glAccountNumber`); no schema edit required.
 
 ---
 
-## Backend — Controllers & Services
+## Backend — Controllers & Services — N/A (superseded by declarative envelope)
 
-- [ ] **Create `VATReturnController`** (`lib/Controller/VATReturnController.php`)
+> Not built. Per `design.md` (D1–D6) and ADR-031, no `VATReturnService`,
+> `VATReturnController`, `VATDeclarationController` or `VATLineController` is
+> authored. CRUD + filtering + lifecycle transitions are served by
+> OpenRegister's generic object API consumed through the manifest renderers
+> (ADR-022). The original imperative task descriptions are retained below as a
+> record of the rejected approach.
+
+- [ ] ~~**Create `VATReturnController`** (`lib/Controller/VATReturnController.php`)~~ (N/A)
   - Method: `list()` — GET `/api/vat-returns` (paginated, filterable by period/regime/status)
   - Method: `detail()` — GET `/api/vat-returns/{returnId}`
   - Method: `create()` — POST `/api/vat-returns` (body: period, periodYear, periodNumber, regime, administrationId)
@@ -83,9 +115,22 @@
 
 ---
 
-## Frontend — Vue Components & Pages
+## Frontend — Vue Components & Pages — N/A (declarative manifest pages instead)
 
-- [ ] **Create `VATReturnIndexPage`** (`src/pages/VATReturnIndexPage.vue`)
+> Not built as bespoke `.vue` files. The VAT Returns index, VAT Return detail,
+> and VAT Reports dashboard are declared as manifest-v2 pages in
+> `src/manifest.d/30-bookkeeping-vat-btw-filing.json` (types `index`, `detail`,
+> `report`) and rendered by the CnIndexPage / CnDetailPage / report renderers
+> from `@conduction/nextcloud-vue` — identical to every other Shillinq register.
+> No `src/pages/*.vue`, no create-dialog component, no hand-rolled router.
+> Menu entries (VAT Returns, VAT Reports) are added under a dedicated
+> `BtwFiling` group (label "BTW (VAT)", order 26). A distinct group id is used
+> rather than re-declaring the base `Belastingen` group, because the manifest
+> fragment merge concatenates `menu[]` without deduplicating by id — reusing
+> the existing id would render a second "Belastingen" header.
+> Original imperative tasks retained below for record.
+
+- [ ] ~~**Create `VATReturnIndexPage`** (`src/pages/VATReturnIndexPage.vue`)~~ (N/A — manifest `index` page `VATReturns`)
   - Use `CnIndexPage` with `useListView()`
   - Columns: returnNumber, period, regime, totalVATCollected, totalVATPaid, vatBalance, statusCode
   - Filters: period (dropdown), regime (checkbox), status (checkbox)
@@ -128,7 +173,18 @@
 
 ## Backend — Tests
 
-- [ ] **Unit tests: `VATReturnService`** (`tests/Unit/Service/VATReturnServiceTest.php`)
+- [x] **Unit tests: declarative VAT fragment** (`tests/Unit/Service/VatBtwFilingFragmentTest.php`)
+  — asserts the fragment is valid JSON; declares the three VAT registers;
+  VATReturn declares the `draft → submitted → verified → filed` lifecycle on
+  `statusCode` with all four transitions; declares the `vatCollectedByRate` /
+  `vatPaidByRate` reconciliation aggregations sourced from VATLine; every seed
+  object resolves to a defined schema with a unique slug; seed VATLine
+  `vatAmount` equals `taxableAmount × taxRate / 100` (reverse-charge = 0); and
+  the fragment merges additively onto the monolith with no schema dropped and
+  seed objects concatenated (ADR-037). This replaces the service/controller
+  unit tests below, which target code that is not authored.
+
+- [ ] ~~**Unit tests: `VATReturnService`** (`tests/Unit/Service/VATReturnServiceTest.php`)~~ (N/A — no service authored)
   - Test `createReturn()` — creates return + derives VAT lines from GL
   - Test `deriveVATLines()` — correctly groups GL by (accountNumber, rate, type)
   - Test `deriveVATLines()` with mixed rates (21%, 9%, 0%)
@@ -153,9 +209,13 @@
 
 ---
 
-## Frontend — Tests
+## Frontend — Tests — N/A (no bespoke components)
 
-- [ ] **Component tests: `VATReturnIndexPage`** (if test framework exists)
+> No component tests: there are no bespoke `.vue` components to test. The
+> manifest pages are rendered by the shared `@conduction/nextcloud-vue`
+> renderers, which carry their own test suite in that library.
+
+- [ ] ~~**Component tests: `VATReturnIndexPage`** (if test framework exists)~~ (N/A)
   - Test loads list of returns
   - Test filter by period works
   - Test filter by regime works
@@ -171,9 +231,14 @@
 
 ---
 
-## Integration Tests (Postman/Newman Collection)
+## Integration Tests (Postman/Newman Collection) — DEFERRED (needs live instance)
 
-- [ ] **Create `tests/integration/VAT_Filings.postman_collection.json`**
+> Deferred: VAT CRUD + lifecycle run against OpenRegister's generic object API.
+> An end-to-end Newman collection requires a live Nextcloud + OpenRegister
+> instance with the register imported and GL seed data, which is not available
+> in the build sandbox. Tracked for the verify phase.
+
+- [ ] ~~**Create `tests/integration/VAT_Filings.postman_collection.json`**~~ (DEFERRED — live instance)
   - **Happy path:**
     - POST `/api/vat-returns` (create Q1 2026 standard return)
     - GET `/api/vat-returns/{returnId}` (verify created)
@@ -193,16 +258,11 @@
 
 ## Documentation & Smoke Tests
 
-- [ ] **Write user docs** (`docs/vat-filings.md`)
-  - Overview of VAT filing workflow
-  - Step-by-step: Create return → Review VAT lines → Submit → Rebase if needed
-  - Regime explanation (standard, KOR, reverse-charge)
-  - Screenshot: VAT Return index page
-  - Screenshot: VAT Return detail with declarations + lines
-  - Screenshot: VAT Report dashboard
-  - FAQ: What if GL is wrong? Rebase the return. What if return already filed? Contact tax authority.
+- [x] **Write user docs** (`docs/vat-filings.md`) — workflow overview, step-by-step
+  (create → review lines → submit → rebase), regime explanation, FAQ. Screenshots
+  deferred to the verify phase (require a live instance).
 
-- [ ] **Smoke test — create and submit VAT return**
+- [ ] ~~**Smoke test — create and submit VAT return**~~ (DEFERRED — live instance)
   - Manually create GL transactions with `vatApplicable=true` markers
   - Create VAT Return for period covering those transactions
   - Verify VAT lines are auto-derived from GL
@@ -210,37 +270,29 @@
   - Submit return → verify status change + audit trail
   - Rebase → verify lines recalculated
 
-- [ ] **Smoke test — multi-rate returns**
-  - Create GL transactions at 21%, 9%, 0% rates
-  - Create VAT Return → verify declarations for each rate
-  - Verify totals and balance calculations
-
-- [ ] **Smoke test — reverse-charge VAT**
-  - Create GL transaction with `reverseChargeApplicable=true`
-  - Create VAT Return → verify reverse-charge declaration
-  - Verify operator notes displayed: "Operator liable for VAT under intra-EU reverse-charge rules"
-
-- [ ] **Smoke test — KOR regime**
-  - Create VAT Return with `regime='kor'`
-  - Verify totalVATCollected = 0, totalVATPaid = 0
-  - Verify UI note: "KOR exemption applied"
+- [ ] ~~**Smoke test — multi-rate returns**~~ (DEFERRED — live instance; covered statically by the multi-rate seed return + `VatBtwFilingFragmentTest`)
+- [ ] ~~**Smoke test — reverse-charge VAT**~~ (DEFERRED — live instance; covered statically by the reverse-charge seed line + test assertion)
+- [ ] ~~**Smoke test — KOR regime**~~ (DEFERRED — live instance; covered statically by the KOR seed return)
 
 ---
 
 ## Deduplication Check
 
-- [ ] **Search openspec/ and lib/Service/ for existing VAT/tax logic**
-  - Check if `TaxReportingService` exists (T4 specialized)
-  - Check if `VATCalculationService` exists in openregister
-  - Verify no overlap with `bookkeeping-iv3-reporting` (T3)
-  - Verify no overlap with `bookkeeping-vpb-corporate-tax` (T4-specialized)
-  - Findings: No duplication found. VAT return preparation (T3) is distinct from IV3 reporting and VpB tax calculation (both T4).
+- [x] **Search openspec/ and lib/Service/ for existing VAT/tax logic** — done.
+  Findings: a government-focused `VatReturn` schema (title "BTW-aangifte",
+  Digipoort/rubrieken, slug `VatReturn`) already exists from
+  `add-shillinq-bookkeeping-operations`. This change uses **distinct** slugs
+  `VATReturn` / `VATDeclaration` / `VATLine` (all-caps VAT) for the SMB/ZZP
+  line-itemised preparation flow — no slug collision (asserted by
+  `VatBtwFilingFragmentTest::testFragmentMergesAdditivelyWithoutCollision`).
+  No `VATCalculationService` / `TaxReportingService` exists in lib/Service/.
+  No overlap with `bookkeeping-iv3-reporting` or `bookkeeping-vpb-corporate-tax`.
 
 ---
 
 ## Seed Data Generation
 
-- [ ] **Create seed VATReturn records** (3 examples)
+- [x] **Create seed VATReturn records** (3 examples — in the register fragment `objects[]`)
   - Return 1: Q1 2026 standard rate (21%)
     - totalVATCollected: €3,150
     - totalVATPaid: €2,100
@@ -256,7 +308,7 @@
     - vatBalance: €110 (refund)
     - Status: draft
 
-- [ ] **Create seed VATDeclaration records** (6 examples)
+- [x] **Create seed VATDeclaration records** (in the register fragment `objects[]`)
   - Standard rate (21%) collected: €3,150 on €15,000
   - Standard rate (21%) paid: €2,100 on €10,000
   - Reduced rate (9%) collected: €180 on €2,000
@@ -264,7 +316,7 @@
   - Reverse-charge paid: €-2,100 on €10,000
   - KOR (no VAT)
 
-- [ ] **Create seed VATLine records** (12-15 examples)
+- [x] **Create seed VATLine records** (in the register fragment `objects[]`)
   - Account 4000 (Revenue 21%): €15,000 → €3,150 VAT
   - Account 4010 (Food 9%): €2,000 → €180 VAT
   - Account 4020 (Export 0%): €5,000 → €0 VAT
@@ -278,20 +330,20 @@
 
 Before opening PR:
 
-- [ ] All 3 schemas defined in shillinq_register.json
-- [ ] 3 controllers created + all methods have `@spec` tags
-- [ ] 2 services created with business logic
-- [ ] Unit tests ≥80% coverage of service methods
-- [ ] Integration test collection covers happy path + error paths
-- [ ] Vue components render without errors (no console exceptions)
-- [ ] VAT lines are correctly derived from GL in integration test
-- [ ] Manifest entries appear in Shillinq main menu
-- [ ] Smoke tests pass (create, submit, rebase returns)
-- [ ] User documentation written with screenshots
-- [ ] Seed data is idempotent (re-import does not duplicate)
-- [ ] No PHP services authored for logic that should be aggregation
-- [ ] All user-facing strings use `t(appName, 'key')` (i18n)
-- [ ] l10n/en.json and l10n/nl.json are in sync
+- [x] All 3 schemas defined in the ADR-037 register fragment (not the monolith)
+- [x] ~~3 controllers + `@spec` tags~~ N/A — no controllers (declarative; OR generic API)
+- [x] ~~2 services with business logic~~ N/A — no services (ADR-031 declarative)
+- [x] Unit test covers the declarative envelope (fragment validity, lifecycle, aggregations, seed integrity, additive merge)
+- [ ] ~~Integration test collection~~ DEFERRED — needs live instance
+- [x] ~~Vue components render~~ N/A — declarative manifest pages (shared renderers)
+- [ ] ~~VAT lines derived from GL in integration test~~ DEFERRED — live instance; seed consistency asserted in unit test
+- [x] Manifest entries declared under a dedicated `BtwFiling` group (VAT Returns, VAT Reports)
+- [ ] ~~Smoke tests pass~~ DEFERRED — live instance
+- [x] User documentation written (`docs/vat-filings.md`); screenshots deferred to verify phase
+- [x] Seed data is idempotent — stable `@self.slug` per object (re-import upserts, no duplication)
+- [x] No PHP services authored for logic that should be aggregation (ADR-031 honoured)
+- [x] User-facing manifest strings added to the gettext catalogue (nl + en)
+- [x] l10n/en.json and l10n/nl.json are in sync (128 keys each)
 
 ---
 
