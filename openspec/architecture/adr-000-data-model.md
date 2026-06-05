@@ -357,7 +357,7 @@ _Hierarchical chart-of-accounts entry conforming to the RGS (Referentie Grootboe
 
 ### AccountabilityReport
 **Schema.org:** `schema:Report`
-_An official accountability report submitted by an organization for a fiscal period covering financial position and transactions_
+_An official accountability report submitted by an organization for a fiscal period covering financial position and transactions. Generic fiscal-period report — distinct from the grant-scoped **SubsidieVerantwoording** (primary spec bookkeeping-subsidie-verantwoording), which is FK-linked to a single Subsidie and carries the subsidie accountability lifecycle and auditor-gate._
 **Primary spec:** financial-reporting-accountability
 
 | Property | Type | Required | Description |
@@ -586,21 +586,41 @@ _Individual finding or observation from audit requiring management action or res
 
 ### AuditorStatement
 **Schema.org:** `schema:Statement`
-_An auditor statement registering and verifying grant compliance and authenticity for large subsidies_
+_An auditor statement registering and verifying grant compliance and authenticity for large subsidies. Materialised as a concrete OpenRegister schema by **bookkeeping-subsidie-verantwoording** (register.d fragment) with a declarative `pending → under-review → approved/rejected/conditional` lifecycle (REQ-SUBV-004/005), auto-created in `pending` when a SubsidieVerantwoording crosses the auditor threshold (REQ-SUBV-006), and `findings` modelled as an FK array to AuditFindingTemplate._
 **Primary spec:** grant-subsidy-management
+**Implementing change:** bookkeeping-subsidie-verantwoording (governance lifecycle + auto-trigger)
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
 | statementId | string | Yes | Unique statement identifier |
-| verificationDate | datetime | Yes | Date of auditor verification |
-| isVerified | boolean | Yes |  |
-| findings | string | No | Audit findings and observations |
-| verdict | string | No | Audit verdict: approved, rejected, conditional |
+| grantId | string | Yes | FK to the Subsidie grant master (Subsidie.subsidieNumber) |
+| auditThresholdApplied | boolean | Yes | Whether the grant exceeded the auditor threshold |
+| auditDate | datetime | Yes | Date of auditor verification |
+| auditorUserId | string | Yes | User (auditor) who performed verification |
+| status | enum | Yes | pending, under-review, approved, rejected, conditional |
+| findings | array | No | FK array to AuditFindingTemplate + per-finding notes and resolution |
+| attestationDocumentUri | string | No | URI to the docudesk auditor sign-off PDF |
+| verdict | string | No | Audit verdict: approved, rejected, conditional-with-caveats |
+| administrationId | string | Yes | FK to Administration |
 
 **Relations:**
-- → Grant (many-to-one)
+- → Subsidie (many-to-one, via grantId)
+- → AuditFindingTemplate (findings FK array)
 - → Person (many-to-one)
 - → DigitalDocument (one-to-one)
+
+### AuditFindingTemplate
+**Schema.org:** `schema:DefinedTerm`
+_Reusable audit-finding category with default severity and remediation template, used when an auditor adds findings to an AuditorStatement (REQ-SUBV-007). Seeded from audit-finding-templates.json (Awb 4.2 + VNG guidelines); operator-editable per administration._
+**Primary spec:** bookkeeping-subsidie-verantwoording
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| categoryId | string | Yes | Stable category identifier referenced by AuditorStatement.findings[].categoryId |
+| categoryName | string | Yes | Human-readable category name |
+| severity | enum | Yes | critical, high, medium, low |
+| defaultRemediationTemplate | string | No | Default remediation text proposed when selected |
+| administrationId | string | No | Optional FK to Administration for an operator override |
 
 ### AwardDecision
 **Schema.org:** `schema:Order`
@@ -4936,6 +4956,29 @@ _ASV-model subsidie register covering the full lifecycle (aanvraag → verleend 
 
 **Relations:**
 - → Kostenpost (one-to-many, via Kostenpost.subsidieId)
+
+### SubsidieVerantwoording
+**Schema.org:** `schema:GovernmentService`
+_Accountability record (verantwoording) for a Subsidie grant per Awb 4.2 — the governance/accountability layer over the grant master. Auto-generated in `draft` on grant award/disbursement (REQ-SUBV-009), submitted, approved (gated by the SubsidieVerantwoordingGuard when a large grant has a non-approved AuditorStatement — REQ-SUBV-003), and finalised. Distinct from the company-wide `AccountabilityReport` entity (primary spec financial-reporting-accountability), which is a generic fiscal-period report; SubsidieVerantwoording is grant-scoped and FK-linked to a single Subsidie._
+**Primary spec:** bookkeeping-subsidie-verantwoording
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| verantwoordingId | string | Yes | Unique accountability record identifier |
+| grantId | string | Yes | FK to the Subsidie grant master (Subsidie.subsidieNumber) |
+| reportDate | datetime | Yes | Date the accountability report was generated |
+| reportingPeriod | string | Yes | Period covered (auto-calculated from grant award to report date) |
+| status | enum | Yes | draft, submitted, approved, final |
+| submittedDate | datetime | No | Date submitted for approval |
+| approverUserId | string | No | User who approved the report |
+| approvalDate | datetime | No | Date of approval |
+| reportContent | string | No | Full text or summary of the accountability narrative |
+| awardedAmount | number | No | Awarded-amount snapshot used to evaluate the auditor threshold |
+| administrationId | string | Yes | FK to Administration |
+
+**Relations:**
+- → Subsidie (many-to-one, via grantId)
+- → AuditorStatement (one-to-one for large grants, via grantId)
 
 ### Kostenpost
 **Schema.org:** `schema:MonetaryAmount`

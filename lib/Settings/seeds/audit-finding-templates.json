@@ -1,0 +1,59 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Awb 4.2 + VNG guidelines",
+    "version": "2026.1",
+    "description": "Audit-finding category templates for AuditorStatement findings (REQ-SUBV-007). Categories follow Awb 4.2 + VNG grant-management guidance. Per-administration override allowed for categoryName/translations but not the severity mapping."
+  },
+  "auditFindingTemplates": [
+    {
+      "categoryId": "eligibility",
+      "categoryName": "Eligibility",
+      "severity": "high",
+      "defaultRemediationTemplate": "Verify the grantee and the funded activity meet all eligibility criteria stated in the beschikking (Awb 4:2). Provide supporting documentation within the remediation period."
+    },
+    {
+      "categoryId": "documentation",
+      "categoryName": "Documentation",
+      "severity": "medium",
+      "defaultRemediationTemplate": "Supply the missing or incomplete documentation (invoices, contracts, activity reports) supporting the grant expenditure."
+    },
+    {
+      "categoryId": "financial-control",
+      "categoryName": "Financial Control",
+      "severity": "high",
+      "defaultRemediationTemplate": "Reconcile the reported expenditure against the general-ledger postings and demonstrate adequate internal financial controls."
+    },
+    {
+      "categoryId": "tax",
+      "categoryName": "Tax",
+      "severity": "medium",
+      "defaultRemediationTemplate": "Clarify the VAT/BTW treatment of the funded expenditure and confirm the grantee's tax registration status."
+    },
+    {
+      "categoryId": "compliance",
+      "categoryName": "Compliance",
+      "severity": "critical",
+      "defaultRemediationTemplate": "Address the identified non-compliance with the grant conditions or applicable regulation (SISA, Awb 4.2) before settlement can proceed."
+    },
+    {
+      "categoryId": "procurement",
+      "categoryName": "Procurement",
+      "severity": "high",
+      "defaultRemediationTemplate": "Demonstrate that procurement for grant-funded activity followed the applicable aanbestedingsregels and provide the procurement audit trail."
+    },
+    {
+      "categoryId": "reporting-timeliness",
+      "categoryName": "Reporting Timeliness",
+      "severity": "low",
+      "defaultRemediationTemplate": "Submit the outstanding accountability report or interim statement by the agreed deadline."
+    },
+    {
+      "categoryId": "other",
+      "categoryName": "Other",
+      "severity": "low",
+      "defaultRemediationTemplate": "Address the auditor's note. See the attached comment for the specific remediation required."
+    }
+  ]
+}

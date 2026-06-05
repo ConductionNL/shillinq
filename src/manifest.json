@@ -741,6 +741,27 @@
 					"icon": "CashRefund",
 					"route": "SubsidiesTeruggevorderd",
 					"order": 30
+				},
+				{
+					"id": "SubsidieVerantwoordingOverview",
+					"label": "Verantwoording overzicht",
+					"icon": "ViewDashboardOutline",
+					"route": "SubsidieVerantwoordingOverview",
+					"order": 40
+				},
+				{
+					"id": "AccountabilityReports",
+					"label": "Accountability Reports",
+					"icon": "FileDocumentCheckOutline",
+					"route": "AccountabilityReports",
+					"order": 50
+				},
+				{
+					"id": "AuditorStatements",
+					"label": "Auditor Statements",
+					"icon": "ClipboardCheckOutline",
+					"route": "AuditorStatements",
+					"order": 60
 				}
 			]
 		},
@@ -17277,6 +17298,162 @@
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
 				],
 				"indexRoute": "SepaRejections"
+			}
+		},
+		{
+			"id": "SubsidieVerantwoordingOverview",
+			"route": "/subsidies/verantwoording/overview",
+			"type": "dashboard",
+			"title": "Subsidie Verantwoording Overview",
+			"config": {
+				"widgets": [
+					{
+						"id": "compliance-status",
+						"title": "Compliance Status",
+						"type": "stats-block",
+						"iconClass": "icon-checkmark",
+						"props": { "countLabel": "in afwachting", "variant": "primary" },
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "SubsidieVerantwoording",
+							"filter": { "status": "submitted" },
+							"aggregate": "count"
+						}
+					},
+					{
+						"id": "auditor-queue",
+						"title": "Auditor Queue",
+						"type": "stats-block",
+						"iconClass": "icon-category-monitoring",
+						"props": { "countLabel": "in beoordeling", "variant": "warning" },
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "AuditorStatement",
+							"filter": { "status": "under-review" },
+							"aggregate": "count"
+						}
+					},
+					{
+						"id": "overdue-reports",
+						"title": "Overdue Reports",
+						"type": "stats-block",
+						"iconClass": "icon-error",
+						"props": { "countLabel": "te laat (>90d)", "variant": "error" },
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "SubsidieVerantwoording",
+							"filter": { "status": "draft" },
+							"aggregate": "count"
+						}
+					},
+					{
+						"id": "settlement-final",
+						"title": "Settlement Status",
+						"type": "stats-block",
+						"iconClass": "icon-checkmark",
+						"props": { "countLabel": "afgerond", "variant": "success" },
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "SubsidieVerantwoording",
+							"filter": { "status": "final" },
+							"aggregate": "count"
+						}
+					}
+				],
+				"layout": [
+					{ "id": "layout-compliance-status", "widgetId": "compliance-status", "gridX": 0, "gridY": 0, "gridWidth": 3, "gridHeight": 2 },
+					{ "id": "layout-auditor-queue", "widgetId": "auditor-queue", "gridX": 3, "gridY": 0, "gridWidth": 3, "gridHeight": 2 },
+					{ "id": "layout-overdue-reports", "widgetId": "overdue-reports", "gridX": 6, "gridY": 0, "gridWidth": 3, "gridHeight": 2 },
+					{ "id": "layout-settlement-final", "widgetId": "settlement-final", "gridX": 9, "gridY": 0, "gridWidth": 3, "gridHeight": 2 }
+				]
+			}
+		},
+		{
+			"id": "AccountabilityReports",
+			"route": "/subsidies/accountability-reports",
+			"type": "index",
+			"title": "Accountability Reports",
+			"config": {
+				"register": "shillinq",
+				"schema": "SubsidieVerantwoording",
+				"columns": [
+					{ "key": "verantwoordingId", "label": "Reference", "sortable": true },
+					{ "key": "grantId", "label": "Grant", "sortable": true },
+					{ "key": "awardedAmount", "label": "Amount", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "reportDate", "label": "Report Date", "sortable": true },
+					{ "key": "submittedDate", "label": "Submitted", "sortable": true }
+				],
+				"defaultSort": "reportDate",
+				"detailRoute": "AccountabilityReportDetail"
+			}
+		},
+		{
+			"id": "AccountabilityReportDetail",
+			"route": "/subsidies/accountability-reports/:id",
+			"type": "detail",
+			"title": "Accountability Report",
+			"config": {
+				"register": "shillinq",
+				"schema": "SubsidieVerantwoording",
+				"fields": [
+					{ "key": "verantwoordingId", "label": "Reference", "type": "string" },
+					{ "key": "grantId", "label": "Grant", "type": "string" },
+					{ "key": "reportDate", "label": "Report Date", "type": "string" },
+					{ "key": "reportingPeriod", "label": "Reporting Period", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "submittedDate", "label": "Submitted", "type": "string" },
+					{ "key": "approverUserId", "label": "Approver", "type": "string" },
+					{ "key": "approvalDate", "label": "Approval Date", "type": "string" },
+					{ "key": "reportContent", "label": "Report Content", "type": "string" },
+					{ "key": "awardedAmount", "label": "Awarded Amount", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "AccountabilityReports"
+			}
+		},
+		{
+			"id": "AuditorStatements",
+			"route": "/subsidies/auditor-statements",
+			"type": "index",
+			"title": "Auditor Statements",
+			"config": {
+				"register": "shillinq",
+				"schema": "AuditorStatement",
+				"columns": [
+					{ "key": "statementId", "label": "Reference", "sortable": true },
+					{ "key": "grantId", "label": "Grant", "sortable": true },
+					{ "key": "auditorUserId", "label": "Auditor", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "auditDate", "label": "Audit Date", "sortable": true }
+				],
+				"defaultSort": "auditDate",
+				"detailRoute": "AuditorStatementDetail"
+			}
+		},
+		{
+			"id": "AuditorStatementDetail",
+			"route": "/subsidies/auditor-statements/:id",
+			"type": "detail",
+			"title": "Auditor Statement",
+			"config": {
+				"register": "shillinq",
+				"schema": "AuditorStatement",
+				"fields": [
+					{ "key": "statementId", "label": "Reference", "type": "string" },
+					{ "key": "grantId", "label": "Grant", "type": "string" },
+					{ "key": "auditThresholdApplied", "label": "Threshold Applied", "type": "boolean" },
+					{ "key": "auditDate", "label": "Audit Date", "type": "string" },
+					{ "key": "auditorUserId", "label": "Auditor", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "findings", "label": "Findings", "type": "array" },
+					{ "key": "attestationDocumentUri", "label": "Attestation Document", "type": "string" },
+					{ "key": "verdict", "label": "Verdict", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "AuditorStatements"
 			}
 		}
 	]

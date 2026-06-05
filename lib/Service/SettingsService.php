@@ -654,6 +654,29 @@ class SettingsService
     }//end seedBtwTariffs()
 
     /**
+     * Seed audit-finding templates from audit-finding-templates.json, idempotently.
+     *
+     * Imports the Awb 4.2 + VNG audit-finding categories into the
+     * AuditFindingTemplate schema. Deduplication key is categoryId. Idempotent on
+     * re-run; operator-customised categories are preserved (REQ-SUBV-007).
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+     */
+    public function seedAuditFindingTemplates(): array
+    {
+        return $this->seedGenericFile(
+            seedFileName: 'audit-finding-templates.json',
+            itemsKey: 'auditFindingTemplates',
+            dedupeKey: 'categoryId',
+            schema: 'AuditFindingTemplate',
+            logLabel: 'audit-finding templates'
+        );
+
+    }//end seedAuditFindingTemplates()
+
+    /**
      * Seed the BBV taakveld catalogue from bbv-taakvelden-2024.json, idempotently.
      *
      * Imports the canonical Besluit BBV bijlage IV taakvelden into the BbvTaakveld

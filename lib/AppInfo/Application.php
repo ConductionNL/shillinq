@@ -23,6 +23,7 @@ namespace OCA\Shillinq\AppInfo;
 
 use OCA\Shillinq\BackgroundJob\TaxDeadlineReminderJob;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
+use OCA\Shillinq\Notification\Notifier;
 use OCA\Shillinq\Repair\InitializeSettings;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCP\AppFramework\App;
@@ -74,6 +75,9 @@ class Application extends App implements IBootstrap
         // The daily SEPA mandate dormancy-expiry job (REQ-SDD-008, ADR-031
         // exception pending OpenRegister ScheduledWorkflow) is registered via
         // appinfo/info.xml <background-jobs> and autowired by the DI container.
+
+        // Register the notifier for Shillinq in-app notifications (REQ-SUBV-010).
+        $context->registerNotifierService(Notifier::class);
     }//end register()
 
     /**

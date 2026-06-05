@@ -1,0 +1,515 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-subsidie-verantwoording",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "T3 governance: subsidie administratie & verantwoording. Adds the SubsidieVerantwoording (accountability record) and AuditorStatement (auditor verification) schemas with declarative lifecycles (ADR-031), state-change notifications (ADR-031), and cross-schema approval/threshold guards (ADR-031 exception-path). Merged additively onto the monolith via ConfigFileLoaderService::deepMergeConfig (ADR-037)."
+  },
+  "components": {
+    "schemas": {
+      "AuditFindingTemplate": {
+        "slug": "AuditFindingTemplate",
+        "icon": "FormatListChecks",
+        "version": "0.1.0",
+        "title": "Audit Finding Template",
+        "description": "Reusable audit-finding category with a default severity and remediation template, used when an auditor adds findings to an AuditorStatement (REQ-SUBV-007). Seeded from audit-finding-templates.json (Awb 4.2 + VNG guidelines); operator-editable per administration.",
+        "x-schema-org": "schema:DefinedTerm",
+        "x-spec": "openspec/changes/bookkeeping-subsidie-verantwoording/specs.md",
+        "type": "object",
+        "required": ["categoryId", "categoryName", "severity"],
+        "properties": {
+          "categoryId": {
+            "type": "string",
+            "description": "Stable category identifier referenced by AuditorStatement.findings[].categoryId (REQ-SUBV-007).",
+            "example": "documentation"
+          },
+          "categoryName": {
+            "type": "string",
+            "description": "Human-readable category name.",
+            "example": "Documentation"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"],
+            "description": "Default severity for findings in this category (REQ-SUBV-007)."
+          },
+          "defaultRemediationTemplate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Default remediation text proposed when the auditor selects this category."
+          },
+          "administrationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional FK to the Administration owning an operator-customised override; null for the bundled defaults."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "auditor": {
+              "permissions": ["read"]
+            },
+            "subsidie-coordinator": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "SubsidieVerantwoording": {
+        "slug": "SubsidieVerantwoording",
+        "icon": "FileDocumentCheckOutline",
+        "version": "0.1.0",
+        "title": "Subsidie Verantwoording",
+        "description": "Accountability record (verantwoording) for a Subsidie grant per Awb 4.2 (REQ-SUBV-002). Auto-generated in draft on grant award/disbursement (REQ-SUBV-009), submitted for approval, approved (gated when a blocking AuditorStatement exists on a large grant — REQ-SUBV-003), and finalised. Distinct from the Subsidie grant master it references via grantId.",
+        "x-schema-org": "schema:GovernmentService",
+        "x-spec": "openspec/changes/bookkeeping-subsidie-verantwoording/specs.md",
+        "type": "object",
+        "required": [
+          "verantwoordingId",
+          "grantId",
+          "reportDate",
+          "reportingPeriod",
+          "status",
+          "administrationId"
+        ],
+        "properties": {
+          "verantwoordingId": {
+            "type": "string",
+            "description": "Unique accountability record identifier (REQ-SUBV-002).",
+            "example": "SV-2026-0001"
+          },
+          "grantId": {
+            "type": "string",
+            "description": "FK to the Subsidie grant master (Subsidie.subsidieNumber).",
+            "example": "SUB-2026-0001"
+          },
+          "reportDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the accountability report was generated (REQ-SUBV-002).",
+            "example": "2026-03-01"
+          },
+          "reportingPeriod": {
+            "type": "string",
+            "description": "Period covered, auto-calculated from grant award date to report date (REQ-SUBV-009).",
+            "example": "2024-01-01 to 2024-12-31"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["draft", "submitted", "approved", "final"],
+            "default": "draft",
+            "description": "Accountability report lifecycle state (REQ-SUBV-003).",
+            "example": "draft"
+          },
+          "submittedDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the report was submitted for approval."
+          },
+          "approverUserId": {
+            "type": "string",
+            "nullable": true,
+            "description": "User (finance officer) who approved the report."
+          },
+          "approvalDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date of approval."
+          },
+          "reportContent": {
+            "type": "string",
+            "nullable": true,
+            "description": "Full text or summary of the accountability narrative."
+          },
+          "awardedAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Awarded amount snapshot copied from the Subsidie grant, used to evaluate the auditor threshold (REQ-SUBV-006) without a cross-schema join at transition time.",
+            "example": 50000
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this record.",
+            "example": "adm-gemeente-1"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "retention": {
+            "rule": "selectielijst:5.1.3",
+            "period": "P10Y",
+            "description": "Subsidie verantwoording records retained 10 years after vaststelling per Archiefwet 1995 + Selectielijst Gemeenten 2020."
+          },
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Editable accountability report; auto-generated on grant award/disbursement (REQ-SUBV-009)."
+            },
+            "submitted": {
+              "label": "Submitted",
+              "description": "Submitted for finance-officer approval (REQ-SUBV-003)."
+            },
+            "approved": {
+              "label": "Approved",
+              "description": "Approved by the finance officer. Approval is blocked while a large grant has a non-approved AuditorStatement (REQ-SUBV-003)."
+            },
+            "final": {
+              "label": "Final",
+              "description": "Published accountability report; timestamp recorded."
+            }
+          },
+          "transitions": {
+            "submit": {
+              "from": "draft",
+              "to": "submitted",
+              "label": "Submit for Approval",
+              "description": "Operator submits the draft report for finance-officer approval (REQ-SUBV-003). Audit-logged."
+            },
+            "approve": {
+              "from": "submitted",
+              "to": "approved",
+              "label": "Approve",
+              "description": "Finance officer approves. Gated when the grant is above the auditor threshold and its AuditorStatement is not yet approved/conditional (REQ-SUBV-003). No app-local approval table (ADR-022).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\SubsidieVerantwoordingGuard::canApprove"
+            },
+            "finalize": {
+              "from": "approved",
+              "to": "final",
+              "label": "Finalize",
+              "description": "Publish the approved accountability report; timestamp recorded (REQ-SUBV-003)."
+            },
+            "resubmit": {
+              "from": "final",
+              "to": "submitted",
+              "label": "Re-submit",
+              "description": "Resubmission when corrections are needed after finalisation (REQ-SUBV-003)."
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "onSubmitted": {
+            "trigger": "lifecycle.submit",
+            "description": "Notify the finance officer when an accountability report is ready for approval (REQ-SUBV-003 / ADR-031).",
+            "recipient": {
+              "resolver": "finance-officer",
+              "fallback": "subsidie-coordinator"
+            },
+            "channels": ["in-app", "email"],
+            "title": "Report Ready for Approval",
+            "message": "Subsidie verantwoording @self.verantwoordingId is submitted for approval."
+          },
+          "onApproved": {
+            "trigger": "lifecycle.approve",
+            "description": "Notify the grant owner when the accountability report is approved (ADR-031).",
+            "recipient": {
+              "resolver": "subsidie-coordinator",
+              "fallback": "administration-treasurer"
+            },
+            "channels": ["in-app"],
+            "title": "Accountability Report Approved",
+            "message": "Subsidie verantwoording @self.verantwoordingId is approved."
+          },
+          "onFinal": {
+            "trigger": "lifecycle.finalize",
+            "description": "Notify the grant owner when the accountability report is finalised (ADR-031).",
+            "recipient": {
+              "resolver": "subsidie-coordinator",
+              "fallback": "administration-treasurer"
+            },
+            "channels": ["in-app"],
+            "title": "Accountability Report Finalised",
+            "message": "Subsidie verantwoording @self.verantwoordingId is finalised."
+          }
+        },
+        "x-openregister-relations": {
+          "grant": {
+            "localField": "grantId",
+            "relatedSchema": "Subsidie",
+            "relatedField": "subsidieNumber",
+            "cardinality": "many-to-one",
+            "description": "The Subsidie grant master this accountability record verantwoordt (REQ-SUBV-002)."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "subsidie-coordinator": {
+              "permissions": ["create", "read", "update"]
+            },
+            "finance-officer": {
+              "permissions": ["read", "update"]
+            },
+            "auditor": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      },
+      "AuditorStatement": {
+        "slug": "AuditorStatement",
+        "icon": "ClipboardCheckOutline",
+        "version": "0.1.0",
+        "title": "Auditor Statement",
+        "description": "Auditor verification record for a large Subsidie grant (>= configurable threshold, default EUR 25k) per SISA + Awb 4.2 (REQ-SUBV-004). Auto-created in pending when a SubsidieVerantwoording is created for a grant above the threshold (REQ-SUBV-006); auditor accepts (under-review), then approves / rejects / approves-conditionally (REQ-SUBV-005).",
+        "x-schema-org": "schema:GovernmentService",
+        "x-spec": "openspec/changes/bookkeeping-subsidie-verantwoording/specs.md",
+        "type": "object",
+        "required": [
+          "statementId",
+          "grantId",
+          "auditThresholdApplied",
+          "auditDate",
+          "auditorUserId",
+          "status",
+          "administrationId"
+        ],
+        "properties": {
+          "statementId": {
+            "type": "string",
+            "description": "Unique auditor statement identifier (REQ-SUBV-004).",
+            "example": "AS-2026-0001"
+          },
+          "grantId": {
+            "type": "string",
+            "description": "FK to the Subsidie grant master (Subsidie.subsidieNumber).",
+            "example": "SUB-2026-0001"
+          },
+          "auditThresholdApplied": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether the grant exceeded the auditor threshold and verification is mandatory (REQ-SUBV-004)."
+          },
+          "auditDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of audit verification (REQ-SUBV-004).",
+            "example": "2026-03-15"
+          },
+          "auditorUserId": {
+            "type": "string",
+            "description": "User (auditor) who performs verification (REQ-SUBV-004).",
+            "example": "auditor-jansen"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "under-review", "approved", "rejected", "conditional"],
+            "default": "pending",
+            "description": "Auditor verification lifecycle state (REQ-SUBV-005).",
+            "example": "pending"
+          },
+          "findings": {
+            "type": "array",
+            "nullable": true,
+            "description": "Audit findings: FK to audit-finding-template categoryId plus per-finding notes and resolution status (REQ-SUBV-005).",
+            "items": {
+              "type": "object",
+              "required": ["categoryId"],
+              "properties": {
+                "categoryId": {
+                  "type": "string",
+                  "description": "FK to audit-finding-template.categoryId.",
+                  "example": "documentation"
+                },
+                "severity": {
+                  "type": "string",
+                  "enum": ["critical", "high", "medium", "low"],
+                  "description": "Severity copied from the template at selection time; operator may override."
+                },
+                "note": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Auditor free-text note for this finding."
+                },
+                "resolution": {
+                  "type": "string",
+                  "enum": ["open", "resolved"],
+                  "default": "open",
+                  "description": "Per-finding resolution status. All findings must be resolved (or none present) before approval (REQ-SUBV-005)."
+                }
+              }
+            }
+          },
+          "attestationDocumentUri": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "URI to the docudesk PDF of the auditor sign-off (REQ-SUBV-004). The file lives in docudesk; no blob embedded (ADR-022).",
+            "example": "docudesk://attachments/aabbccdd-1122-3344-5566-778899aabbcc/auditor-signoff.pdf"
+          },
+          "verdict": {
+            "type": "string",
+            "nullable": true,
+            "enum": ["approved", "rejected", "conditional-with-caveats"],
+            "description": "Final auditor verdict (REQ-SUBV-004)."
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this record.",
+            "example": "adm-gemeente-1"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "pending",
+          "retention": {
+            "rule": "selectielijst:5.1.3",
+            "period": "P10Y",
+            "description": "Auditor statements retained 10 years per Archiefwet 1995 + Selectielijst Gemeenten 2020."
+          },
+          "states": {
+            "pending": {
+              "label": "Pending",
+              "description": "Auto-created when a SubsidieVerantwoording is created for a large grant (REQ-SUBV-006). Awaiting auditor acceptance."
+            },
+            "under-review": {
+              "label": "Under Review",
+              "description": "Auditor has accepted the task and is verifying (REQ-SUBV-005)."
+            },
+            "approved": {
+              "label": "Approved",
+              "description": "Auditor signed off; grant settlement may proceed (REQ-SUBV-005)."
+            },
+            "rejected": {
+              "label": "Rejected",
+              "description": "Auditor identified blocking issues; grant settlement is blocked (REQ-SUBV-005)."
+            },
+            "conditional": {
+              "label": "Conditional",
+              "description": "Auditor approved with caveats; SubsidieVerantwoording may proceed with a compliance flag (REQ-SUBV-005)."
+            }
+          },
+          "transitions": {
+            "accept": {
+              "from": "pending",
+              "to": "under-review",
+              "label": "Accept for Review",
+              "description": "Auditor accepts the verification task (REQ-SUBV-005)."
+            },
+            "approve": {
+              "from": "under-review",
+              "to": "approved",
+              "label": "Approve",
+              "description": "Auditor signs off and uploads the attestation document. Requires no findings, or all findings resolved (REQ-SUBV-005).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\AuditorStatementGuard::canApprove"
+            },
+            "reject": {
+              "from": "under-review",
+              "to": "rejected",
+              "label": "Reject",
+              "description": "Auditor identifies issues and blocks grant settlement (REQ-SUBV-005)."
+            },
+            "conditional": {
+              "from": "under-review",
+              "to": "conditional",
+              "label": "Approve with Caveats",
+              "description": "Auditor approves with caveats requiring follow-up (REQ-SUBV-005)."
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "onUnderReview": {
+            "trigger": "lifecycle.accept",
+            "description": "Notify the grant owner when the auditor accepts the verification task (ADR-031).",
+            "recipient": {
+              "resolver": "subsidie-coordinator",
+              "fallback": "administration-treasurer"
+            },
+            "channels": ["in-app"],
+            "title": "Auditor Statement — Under Review",
+            "message": "Auditor statement @self.statementId is now under review."
+          },
+          "onApproved": {
+            "trigger": "lifecycle.approve",
+            "description": "Notify the grant owner of auditor approval (ADR-031).",
+            "recipient": {
+              "resolver": "subsidie-coordinator",
+              "fallback": "administration-treasurer"
+            },
+            "channels": ["in-app", "email"],
+            "title": "Auditor Statement — Approved",
+            "message": "Auditor statement @self.statementId is approved."
+          },
+          "onRejected": {
+            "trigger": "lifecycle.reject",
+            "description": "Notify the grant owner of auditor rejection (ADR-031).",
+            "recipient": {
+              "resolver": "subsidie-coordinator",
+              "fallback": "administration-treasurer"
+            },
+            "channels": ["in-app", "email"],
+            "title": "Auditor Statement — Rejected",
+            "message": "Auditor statement @self.statementId is rejected; grant settlement is blocked."
+          },
+          "onConditional": {
+            "trigger": "lifecycle.conditional",
+            "description": "Notify the grant owner of conditional auditor approval (REQ-SUBV-005 / ADR-031).",
+            "recipient": {
+              "resolver": "subsidie-coordinator",
+              "fallback": "administration-treasurer"
+            },
+            "channels": ["in-app", "email"],
+            "title": "Auditor Statement — Conditional Approval",
+            "message": "Auditor statement @self.statementId is conditionally approved with caveats."
+          }
+        },
+        "x-openregister-relations": {
+          "grant": {
+            "localField": "grantId",
+            "relatedSchema": "Subsidie",
+            "relatedField": "subsidieNumber",
+            "cardinality": "many-to-one",
+            "description": "The Subsidie grant master this auditor statement verifies (REQ-SUBV-004)."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "auditor": {
+              "permissions": ["create", "read", "update"]
+            },
+            "finance-officer": {
+              "permissions": ["read"]
+            },
+            "subsidie-coordinator": {
+              "permissions": ["read"]
+            }
+          }
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "SubsidieVerantwoording",
+        "slug": "sv-2026-sample-cultuursubsidie"
+      },
+      "verantwoordingId": "SV-2026-0001",
+      "grantId": "SUB-2026-0001",
+      "reportDate": "2026-03-01",
+      "reportingPeriod": "2026-01-01 to 2026-03-01",
+      "status": "draft",
+      "reportContent": "Verantwoording cultuursubsidie 2026: besteding conform beschikking.",
+      "awardedAmount": 50000,
+      "administrationId": "adm-gemeente-1"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "AuditorStatement",
+        "slug": "as-2026-sample-cultuursubsidie"
+      },
+      "statementId": "AS-2026-0001",
+      "grantId": "SUB-2026-0001",
+      "auditThresholdApplied": true,
+      "auditDate": "2026-03-15",
+      "auditorUserId": "auditor-jansen",
+      "status": "pending",
+      "findings": [],
+      "administrationId": "adm-gemeente-1"
+    }
+  ]
+}
