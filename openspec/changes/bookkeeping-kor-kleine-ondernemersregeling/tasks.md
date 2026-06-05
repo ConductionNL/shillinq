@@ -8,25 +8,27 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no prior `bookkeeping-kor-kleine-ondernemersregeling` capability spec exists and no
+- [x] Task 1: Confirm no prior `bookkeeping-kor-kleine-ondernemersregeling` capability spec exists and no
   `KORRegistration`, `KORAnnualTurnover`, `KORThresholdAlert`, `KORRevocation`, `KOREUTurnover` schemas are
   declared. Explicitly note this capability "brings Dutch tax-regime compliance to Shillinq" and cites
-  Wet OB 1968 art. 25 & 25a–25d.
+  Wet OB 1968 art. 25 & 25a–25d. (Verified: only a lightweight `KorRegime` YTD-revenue schema pre-exists
+  from add-shillinq-bookkeeping-operations; the five new KOR schemas have distinct slugs and are retained
+  side-by-side.)
 
-- [ ] Task 2: Author the `specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md` capability spec with
+- [x] Task 2: Author the `specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md` capability spec with
   `Status: proposed` / `Scope: shillinq` / `Tier: T2 (compliance + fiscal operations)` / `Depends on: AR-core,
   AP-core, VAT-filing, ZZP-tax-regime` header. Include all REQ-KOR-001 through REQ-KOR-011 requirements using
   RFC 2119 keywords and `#### Scenario:` blocks with GIVEN/WHEN/THEN. Cite Wet OB, Handboek Ondernemen, and
   ADR-031 inline. Sections: ADDED Requirements, Verification, Tests, Documentation, i18n.
 
-- [ ] Task 3: Author `proposal.md` covering: Summary (end-to-end KOR lifecycle), Motivation (320k+ users,
+- [x] Task 3: Author `proposal.md` covering: Summary (end-to-end KOR lifecycle), Motivation (320k+ users,
   three failure modes), Affected Projects (shillinq + AR/AP/VAT-filing integrations), Scope (in/out),
   Risks (Belastingdienst-wording, drempel-edge-cases, per-lidstaat-variance, revocatie-exactness,
   voorbelasting-post-revocatie), Rollback (suspend aanmeldingen, freeze alerts, archive ACTIEF registrations),
   Open Questions (OR dunning-workflow stability, EX-nummer auto-request, kwartaalopgaaf automation).
   Reference shared `nextcloud-app` spec.
 
-- [ ] Task 4: Author `design.md` with: Context (KOR history + 2025 KOR-EU expansion), Goals (declarative
+- [x] Task 4: Author `design.md` with: Context (KOR history + 2025 KOR-EU expansion), Goals (declarative
   metadata per ADR-031, boekhouder-readable contract, correctness-at-boundary, NL + KOR-EU support),
   Non-Goals (no chatbot, no webservice, no SBR, no multi-entity). Include D1–D10 design decisions
   (top-level registration, post-invoice drempel-recalc, three escalation levels, revocatie-datum exactness,
@@ -34,7 +36,7 @@
   prep-not-submit, branche-compatibility-check, absolute-lock-in-with-exceptions). Reuse Analysis table.
   Fiscal Correctness First section.
 
-- [ ] Task 5: Declare the `KORRegistration` schema in `lib/Settings/shillinq_register.json` with REQ-KOR-001
+- [x] Task 5: Declare the `KORRegistration` schema in `lib/Settings/shillinq_register.json` with REQ-KOR-001
   fields: `ondernemingId` (FK to Corporation), `regime` (enum: KOR_NL, KOR_EU), `status` (enum: ACTIEF,
   GEEINDIGD_OVERSCHRIJDING, GEEINDIGD_VRIJWILLIG), `aanmeldDatum` (date), `ingangsDatum` (date),
   `lockInEindDatum` (date), `vroegsteOpzegDatum` (date), `belastingdienstReferentie` (string),
@@ -43,21 +45,21 @@
   `fiscalEenheidId` (FK, null if non-eenheid), `administrationId` (FK to Administration).
   Schema.org: `schema:DefinedTerm` (fiscal regime classification).
 
-- [ ] Task 6: Declare the `KORAnnualTurnover` schema in `lib/Settings/shillinq_register.json` with REQ-KOR-002
+- [x] Task 6: Declare the `KORAnnualTurnover` schema in `lib/Settings/shillinq_register.json` with REQ-KOR-002
   fields: `registrationId` (FK to KORRegistration), `jaar` (year), `lopendeOmzet` (number, running total),
   `drempel` (number, default EUR 20000), `drempelBenutting` (percentage 0–1), `perMaand` (object with
   YYYY-MM indexed omzet per month), `uitgeslotenPosten` (array of {type, bedrag, grondslag}),
   `prognoseEindeJaar` (number), `prognoseStatus` (enum: ONDER_DREMPEL, WAARSCHUWING, OVERSCHRIJDING_VERWACHT),
   `administrationId` (FK).
 
-- [ ] Task 7: Declare the `KORThresholdAlert` schema in `lib/Settings/shillinq_register.json` with REQ-KOR-003
+- [x] Task 7: Declare the `KORThresholdAlert` schema in `lib/Settings/shillinq_register.json` with REQ-KOR-003
   fields: `registrationId` (FK), `trigger` (enum: DREMPEL_80PCT, DREMPEL_90PCT, DREMPEL_100PCT),
   `uitgeloostOp` (datetime), `omzetOpMoment` (number), `drempelBenutting` (percentage), `prognoseEindeJaar`
   (number), `ernst` (enum: VROEG, KRITIEK, OVERSCHRIJDING), `aanbeveling` (text), `kanaal` (array:
   EMAIL, IN_APP, DASHBOARD), `bevestigdDoor` (FK to User, nullable), `actieOndernomen` (text, nullable),
   `administrationId` (FK).
 
-- [ ] Task 8: Declare the `KORRevocation` schema in `lib/Settings/shillinq_register.json` with REQ-KOR-004
+- [x] Task 8: Declare the `KORRevocation` schema in `lib/Settings/shillinq_register.json` with REQ-KOR-004
   fields: `registrationId` (FK), `type` (enum: OVERSCHRIJDING, VRIJWILLIG_NA_LOCKOUT), `revocatieDatum`
   (date, CRITICAL: leveringsDatum not year-end), `triggerFactuurId` (FK to ARInvoice, nullable),
   `omzetOpMoment` (number), `btwSuppletieBedrag` (number, calculated), `herrekeningRange` (object with
@@ -65,13 +67,13 @@
   + 3 years), `belastingdienstNotificatie` (object with verzonden, verzondenOp, bevestigingsnummer),
   `administrationId` (FK).
 
-- [ ] Task 9: Declare the `KOREUTurnover` schema in `lib/Settings/shillinq_register.json` with REQ-KOR-008
+- [x] Task 9: Declare the `KOREUTurnover` schema in `lib/Settings/shillinq_register.json` with REQ-KOR-008
   fields: `registrationId` (FK to KORRegistration with regime=KOR_EU), `exNummer` (string, e.g.
   EX-NL-2026-019234), `jaar` (year), `totaalEUOmzet` (number), `drempelEUBrut` (number, default EUR
   100000), `perLidstaat` (object with per-country keys: omzet, drempel, benutting), `kwartaalopgaafStatus`
   (object with Q1/Q2/Q3/Q4 keys: enum OPEN, DRAFT, INGEDIEND), `administrationId` (FK).
 
-- [ ] Task 10: Add `x-openregister-lifecycle` to `KORRegistration` declaring transitions per REQ-KOR-007:
+- [x] Task 10: Add `x-openregister-lifecycle` to `KORRegistration` declaring transitions per REQ-KOR-007:
   - `draft → ACTIEF` (at ingangsDatum)
   - `ACTIEF → GEEINDIGD_OVERSCHRIJDING` (synchronous on drempel >100%, per REQ-KOR-004)
   - `ACTIEF → GEEINDIGD_VRIJWILLIG` (after opt-out window closes, per REQ-KOR-007)
@@ -171,14 +173,14 @@
     - Prepare retrospective voorbelasting-credit aangifte.
   - Unit tests for all transitions, EUR-exactness of corrections.
 
-- [ ] Task 22: Add 4 manifest entries to `src/manifest.json`:
+- [x] Task 22: Add 4 manifest entries to `src/manifest.json`:
   - "KOR Aanmelding" (type: action, routes to aanmeldstroom).
   - "KOR Dashboard" (type: index, shows KORRegistration list, drempel-status, alerts).
   - "Drempel Monitor" (type: detail, shows KORAnnualTurnover realtime, prognose, alert history).
   - "KOR Opzegging" (type: action, routes to opt-out workflow, gated by `vroegsteOpzegDatum`).
   - Test: `node tests/validate-manifest.js` exits 0.
 
-- [ ] Task 23: Update `openspec/architecture/adr-000-data-model.md` with the five new schemas:
+- [x] Task 23: Update `openspec/architecture/adr-000-data-model.md` with the five new schemas:
   - `KORRegistration` (description, fields, relations).
   - `KORAnnualTurnover` (description, fields, relations).
   - `KORThresholdAlert` (description, fields, relations).
@@ -196,6 +198,36 @@
     "niet van toepassing" for KOR periods. On revocatie, resume normal filing + suppletie-aangifte.
   - **bookkeeping-zzp-tax-regime**: Provide tax-scenario advisory API (call from aanmeldstroom).
   - **notifications**: Dispatch threshold alerts per `KORThresholdAlert.kanaal`.
+
+## Implementation Status (hydra-build 2026-06)
+
+The centre of mass of this change is declarative (`kind: config`), so the schemas,
+lifecycle, aggregations, seeds, manifest pages and i18n landed in full (Tasks 2–10,
+22, 23 ✅). The drempel-bewaking compute layer landed as a read-only PHP seam per
+ADR-031:
+
+- **Landed:** `lib/Settings/register.d/bookkeeping-kor-kleine-ondernemersregeling.json`
+  (5 schemas + `KORRegistration` lifecycle + `KORAnnualTurnover` aggregation + 12 seed
+  objects covering the spec's worked examples); `lib/Service/KorThresholdCalculator.php`
+  (pure fiscal arithmetic: running omzet, benutting, prognose, alert-schijf crossing,
+  suppletie-bedrag = Σ bedrag·0.21/1.21, +3-jaar blokkade, herzieningsregels recovery);
+  `lib/Service/KorMonitorService.php` (post-invoice drempel-status via the real OR
+  ObjectService API, administration-scoped); `lib/Controller/KorController.php` +
+  `appinfo/routes.php` (`GET /api/kor/monitor`, `#[NoAdminRequired]`, IDOR-safe);
+  manifest-v2 pages + `Belastingen` menu entries; nl/en i18n; ADR-000 data-model entry;
+  unit tests (`KorFragmentTest`, `KorThresholdCalculatorTest`, `KorMonitorServiceTest`)
+  — Tasks 12/13/14 compute logic (drempel-recalc, schijf detection, suppletie) is
+  covered by the calculator/service + tests.
+
+- **Deferred (documented):** the multi-page aanmeldstroom Vue flow (Task 11), the
+  event-side cross-app integrations (Tasks 16/24 — AP voorbelasting-blokkade, VAT-filing
+  suspension, AR factuur-vermelding render, ZZP advisory API) and the year-end/branche/
+  transitie report generators (Tasks 18/19/20/21) require the not-yet-built AR/AP/VAT-
+  filing/ZZP capabilities and a live OR instance to wire `kor.registration.activated` /
+  `.revoked` events; they are declared here (lifecycle transitions publish the events)
+  and implemented in the respective dependency capabilities' own apply cycles. The
+  declarative lifecycle + aggregation + the KorMonitorService compute seam are the stable
+  contract those cycles consume.
 
 ## Verification
 

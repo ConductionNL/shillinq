@@ -256,6 +256,34 @@
 					"order": 10
 				},
 				{
+					"id": "KorRegistrations",
+					"label": "KOR-aanmeldingen",
+					"icon": "ShieldCheckOutline",
+					"route": "KorRegistrations",
+					"order": 11
+				},
+				{
+					"id": "KorDrempelMonitor",
+					"label": "Drempel Monitor",
+					"icon": "ChartLineVariant",
+					"route": "KorDrempelMonitor",
+					"order": 12
+				},
+				{
+					"id": "KorAlerts",
+					"label": "KOR-waarschuwingen",
+					"icon": "AlertOutline",
+					"route": "KorAlerts",
+					"order": 13
+				},
+				{
+					"id": "KorRevocations",
+					"label": "KOR-beëindigingen",
+					"icon": "FileDocumentRemoveOutline",
+					"route": "KorRevocations",
+					"order": 14
+				},
+				{
 					"id": "TaxFilingPrep",
 					"label": "Tax Filing Prep",
 					"icon": "FileDocumentCheckOutline",
@@ -6454,6 +6482,189 @@
 				],
 				"defaultSort": "subsidieNumber",
 				"detailRoute": "SubsidieDetail"
+			}
+		},
+		{
+			"id": "KorRegistrations",
+			"route": "/belastingen/kor/aanmeldingen",
+			"type": "index",
+			"title": "KOR-aanmeldingen",
+			"config": {
+				"register": "shillinq",
+				"schema": "KORRegistration",
+				"columns": [
+					{ "key": "ondernemingId", "label": "Onderneming", "sortable": true },
+					{ "key": "regime", "label": "Regime", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "ingangsDatum", "label": "Ingangsdatum", "sortable": true },
+					{ "key": "lockInEindDatum", "label": "Lock-in einde", "sortable": true }
+				],
+				"defaultSort": "-ingangsDatum",
+				"detailRoute": "KorRegistrationDetail"
+			}
+		},
+		{
+			"id": "KorRegistrationDetail",
+			"route": "/belastingen/kor/aanmeldingen/:id",
+			"type": "detail",
+			"title": "KOR-aanmelding",
+			"config": {
+				"register": "shillinq",
+				"schema": "KORRegistration",
+				"fields": [
+					{ "key": "ondernemingId", "label": "Onderneming", "type": "string" },
+					{ "key": "regime", "label": "Regime", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "aanmeldDatum", "label": "Aanmelddatum", "type": "date" },
+					{ "key": "ingangsDatum", "label": "Ingangsdatum", "type": "date" },
+					{ "key": "lockInEindDatum", "label": "Lock-in einddatum", "type": "date" },
+					{ "key": "vroegsteOpzegDatum", "label": "Vroegste opzegdatum", "type": "date" },
+					{ "key": "belastingdienstReferentie", "label": "Belastingdienst-referentie", "type": "string" },
+					{ "key": "aanmeldKanaal", "label": "Aanmeldkanaal", "type": "string" },
+					{ "key": "drempelJaar", "label": "Jaardrempel (EUR)", "type": "number" },
+					{ "key": "voorgaandeOmzet", "label": "Voorgaande omzet", "type": "object" },
+					{ "key": "omzettingsRegeling", "label": "Omzettingsregeling", "type": "boolean" },
+					{ "key": "fiscalEenheidId", "label": "Fiscale eenheid", "type": "string" },
+					{ "key": "administrationId", "label": "Administratie", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"relatedLists": [
+					{ "id": "kor-turnover", "title": "Jaaromzet", "schema": "KORAnnualTurnover", "foreignKey": "registrationId" },
+					{ "id": "kor-alerts", "title": "Waarschuwingen", "schema": "KORThresholdAlert", "foreignKey": "registrationId" },
+					{ "id": "kor-revocations", "title": "Beëindigingen", "schema": "KORRevocation", "foreignKey": "registrationId" }
+				],
+				"indexRoute": "KorRegistrations"
+			}
+		},
+		{
+			"id": "KorDrempelMonitor",
+			"route": "/belastingen/kor/drempel-monitor",
+			"type": "index",
+			"title": "Drempel Monitor",
+			"config": {
+				"register": "shillinq",
+				"schema": "KORAnnualTurnover",
+				"columns": [
+					{ "key": "jaar", "label": "Jaar", "sortable": true },
+					{ "key": "lopendeOmzet", "label": "Lopende omzet", "sortable": true },
+					{ "key": "drempel", "label": "Drempel", "sortable": false },
+					{ "key": "drempelBenutting", "label": "Benutting", "sortable": true },
+					{ "key": "prognoseEindeJaar", "label": "Prognose eindejaar", "sortable": true },
+					{ "key": "prognoseStatus", "label": "Prognose-status", "sortable": true }
+				],
+				"defaultSort": "-jaar",
+				"detailRoute": "KorAnnualTurnoverDetail"
+			}
+		},
+		{
+			"id": "KorAnnualTurnoverDetail",
+			"route": "/belastingen/kor/drempel-monitor/:id",
+			"type": "detail",
+			"title": "KOR-jaaromzet",
+			"config": {
+				"register": "shillinq",
+				"schema": "KORAnnualTurnover",
+				"fields": [
+					{ "key": "registrationId", "label": "Aanmelding", "type": "string" },
+					{ "key": "jaar", "label": "Jaar", "type": "integer" },
+					{ "key": "lopendeOmzet", "label": "Lopende omzet (EUR)", "type": "number" },
+					{ "key": "drempel", "label": "Drempel (EUR)", "type": "number" },
+					{ "key": "drempelBenutting", "label": "Drempel-benutting", "type": "number" },
+					{ "key": "perMaand", "label": "Omzet per maand", "type": "object" },
+					{ "key": "uitgeslotenPosten", "label": "Uitgesloten posten", "type": "array" },
+					{ "key": "prognoseEindeJaar", "label": "Prognose eindejaar (EUR)", "type": "number" },
+					{ "key": "prognoseStatus", "label": "Prognose-status", "type": "string" },
+					{ "key": "administrationId", "label": "Administratie", "type": "string" }
+				],
+				"aggregation": "korTurnoverByYear",
+				"indexRoute": "KorDrempelMonitor"
+			}
+		},
+		{
+			"id": "KorAlerts",
+			"route": "/belastingen/kor/waarschuwingen",
+			"type": "index",
+			"title": "KOR-waarschuwingen",
+			"config": {
+				"register": "shillinq",
+				"schema": "KORThresholdAlert",
+				"columns": [
+					{ "key": "trigger", "label": "Schijf", "sortable": true },
+					{ "key": "ernst", "label": "Ernst", "sortable": true },
+					{ "key": "uitgeloostOp", "label": "Uitgelost op", "sortable": true },
+					{ "key": "omzetOpMoment", "label": "Omzet op moment", "sortable": true },
+					{ "key": "drempelBenutting", "label": "Benutting", "sortable": true }
+				],
+				"defaultSort": "-uitgeloostOp",
+				"detailRoute": "KorAlertDetail"
+			}
+		},
+		{
+			"id": "KorAlertDetail",
+			"route": "/belastingen/kor/waarschuwingen/:id",
+			"type": "detail",
+			"title": "KOR-waarschuwing",
+			"config": {
+				"register": "shillinq",
+				"schema": "KORThresholdAlert",
+				"fields": [
+					{ "key": "registrationId", "label": "Aanmelding", "type": "string" },
+					{ "key": "trigger", "label": "Drempelschijf", "type": "string" },
+					{ "key": "ernst", "label": "Ernst", "type": "string" },
+					{ "key": "uitgeloostOp", "label": "Uitgelost op", "type": "date-time" },
+					{ "key": "omzetOpMoment", "label": "Omzet op moment (EUR)", "type": "number" },
+					{ "key": "drempelBenutting", "label": "Benutting", "type": "number" },
+					{ "key": "prognoseEindeJaar", "label": "Prognose eindejaar (EUR)", "type": "number" },
+					{ "key": "aanbeveling", "label": "Aanbeveling", "type": "string" },
+					{ "key": "kanaal", "label": "Kanaal", "type": "array" },
+					{ "key": "bevestigdDoor", "label": "Bevestigd door", "type": "string" },
+					{ "key": "actieOndernomen", "label": "Actie ondernomen", "type": "string" },
+					{ "key": "administrationId", "label": "Administratie", "type": "string" }
+				],
+				"indexRoute": "KorAlerts"
+			}
+		},
+		{
+			"id": "KorRevocations",
+			"route": "/belastingen/kor/beeindigingen",
+			"type": "index",
+			"title": "KOR-beëindigingen",
+			"config": {
+				"register": "shillinq",
+				"schema": "KORRevocation",
+				"columns": [
+					{ "key": "type", "label": "Type", "sortable": true },
+					{ "key": "revocatieDatum", "label": "Revocatiedatum", "sortable": true },
+					{ "key": "omzetOpMoment", "label": "Omzet op moment", "sortable": true },
+					{ "key": "btwSuppletieBedrag", "label": "Suppletie-bedrag", "sortable": true }
+				],
+				"defaultSort": "-revocatieDatum",
+				"detailRoute": "KorRevocationDetail"
+			}
+		},
+		{
+			"id": "KorRevocationDetail",
+			"route": "/belastingen/kor/beeindigingen/:id",
+			"type": "detail",
+			"title": "KOR-beëindiging",
+			"config": {
+				"register": "shillinq",
+				"schema": "KORRevocation",
+				"fields": [
+					{ "key": "registrationId", "label": "Aanmelding", "type": "string" },
+					{ "key": "type", "label": "Type", "type": "string" },
+					{ "key": "revocatieDatum", "label": "Revocatiedatum (leveringsdatum)", "type": "date" },
+					{ "key": "triggerFactuurId", "label": "Triggerfactuur", "type": "string" },
+					{ "key": "omzetOpMoment", "label": "Omzet op moment (EUR)", "type": "number" },
+					{ "key": "btwSuppletieVerschuldigd", "label": "Suppletie verschuldigd", "type": "boolean" },
+					{ "key": "btwSuppletieBedrag", "label": "Suppletie-bedrag (EUR)", "type": "number" },
+					{ "key": "herrekeningRange", "label": "Herrekening-periode", "type": "object" },
+					{ "key": "nieuwRegime", "label": "Nieuw regime", "type": "string" },
+					{ "key": "blokkadeHeraanmelding", "label": "Blokkade heraanmelding", "type": "date" },
+					{ "key": "belastingdienstNotificatie", "label": "Belastingdienst-notificatie", "type": "object" },
+					{ "key": "administrationId", "label": "Administratie", "type": "string" }
+				],
+				"indexRoute": "KorRevocations"
 			}
 		}
 	]
