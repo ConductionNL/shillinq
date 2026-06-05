@@ -123,6 +123,16 @@ return [
         ['name' => 'inventoryScan#sync', 'url' => '/api/inventory/sync', 'verb' => 'GET'],
         ['name' => 'inventoryScan#scan', 'url' => '/api/inventory/scan', 'verb' => 'POST'],
 
+        // Public self-service booking widget API (API-key authenticated, ADR-005).
+        // Static segments precede the SPA {path} catch-all so they win in Symfony.
+        ['name' => 'widgetApi#services', 'url' => '/api/widget/{businessId}/services', 'verb' => 'GET'],
+        ['name' => 'widgetApi#slots', 'url' => '/api/widget/{businessId}/slots', 'verb' => 'GET'],
+        ['name' => 'widgetApi#createAppointment', 'url' => '/api/widget/{businessId}/appointments', 'verb' => 'POST'],
+
+        // Admin-only widget API-key management (AuthorizedAdminSetting, ADR-005).
+        ['name' => 'widgetSettings#rotate', 'url' => '/api/widget-keys/rotate', 'verb' => 'POST'],
+        ['name' => 'widgetSettings#revoke', 'url' => '/api/widget-keys/revoke', 'verb' => 'POST'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
