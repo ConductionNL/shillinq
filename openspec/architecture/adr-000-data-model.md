@@ -6538,3 +6538,46 @@ _Uitstaande schuld per instrument per peildatum per REQ-EMU-004. Bruto nominaal 
 | categorieEurostat | enum | Yes | AF.2-deposits / AF.3-securities / AF.4-loans / AF.7-derivatives / overig |
 
 **Relations:** → EMUReport (many-to-one via reportId)
+
+## Innovatiebox Administratie — five-register model (bookkeeping-innovatiebox-administratie, 2026-06-05)
+
+> **Annotation (bookkeeping-innovatiebox-administratie, 2026-06-05):** This change **supersedes** the earlier `InnovatieboxElection` / `IPAssetValuation` / `WinstToerekening` / `InnovatieboxTariff` model annotated above (add-shillinq-innovatiebox-administratie, 2026-06-01/03). Those schemas were retired from `shillinq_register.json`; the orphaned manifest pages, docudesk template and tariff seed are reconciled to the new model in this change. The innovatiebox administratieve keten is now five interconnected registers declared as an ADR-037 fragment (`lib/Settings/register.d/bookkeeping-innovatiebox-administratie.json`). Per REQ-IBA-010 the statutory tariff `0.09` is **hard-coded** (in the schema defaults and the calculation services), not seed-configurable — the `InnovatieboxTariff` seed register is removed.
+
+### QualifyingAsset
+
+_Kwalificerend immaterieel activum (IP asset) with a validated `toegangsticket` per Wet Vpb art. 12ba (REQ-IBA-001). Three routes: octrooi, S&O-verklaring, and combinatie (both). `QualifyingAssetValidator` derives `status` (valid | invalid_access_ticket | awaiting_renewal | expired); only `status: valid` assets enter the innovatiebox aggregations. The root anchor for the other four registers (FK `qualifying_asset_id`)._
+**Primary spec:** bookkeeping-innovatiebox-administratie
+
+- → NexusCalculation (one-to-many, via qualifying_asset_id)
+- → IBProfitAttribution (one-to-one per boekjaar, via qualifying_asset_id)
+- → IBExpenseAllocation (one-to-many, via qualifying_asset_id)
+- → CarryForwardLoss (one-to-many, via qualifying_asset_id)
+
+### NexusCalculation
+
+_OECD BEPS Action 5 modified-nexus calculation per asset per boekjaar (REQ-IBA-002, Wet Vpb art. 12bc): `nexusbreuk = min(1; 1.3 × (eigen + uitbesteed_derden) / totaal)`. Related-party R&D (`rd_kosten_uitbesteed_verbonden`) only enlarges the noemer. `NexusCalculationService` computes the breakdown; the record is immutable after creation (`x-openregister.immutable`)._
+**Primary spec:** bookkeeping-innovatiebox-administratie
+
+- → QualifyingAsset (many-to-one, via qualifying_asset_id)
+
+### IBProfitAttribution
+
+_Per-asset winsttoerekening per boekjaar using one of three methods (REQ-IBA-003, Wet Vpb art. 12bd): `per_asset_afpelmethode`, `forfaitair_25pct` (25% capped at EUR 25 000, no nexus), `cost_plus`. Exactly one record per `(qualifying_asset_id, boekjaar)`. `ProfitAttributionService` computes the qualifying profit and Vpb impact; the `innovatieboxAdministratie` aggregation rolls the per-asset rows up to Vpb-aangifte regel 23. `vso_locked` makes the record read-only once the year is signed off in a VSO (REQ-IBA-008)._
+**Primary spec:** bookkeeping-innovatiebox-administratie
+
+- → QualifyingAsset (many-to-one, via qualifying_asset_id)
+- → NexusCalculation (many-to-one, via nexus_calculation_id)
+
+### IBExpenseAllocation
+
+_Kostentoerekening per asset per periode with the doorsnijdingsverbod flag `exclusief_in_winstbepaling` (REQ-IBA-004, Wet Vpb art. 12bd lid 2). When true, the same `(grootboekrekening, kostenplaats)` pair MUST NOT appear in the regular GL deduction feed; `DoorsnijdingsVerbodValidator` cross-checks both feeds and blocks the year-end close on a duplicate._
+**Primary spec:** bookkeeping-innovatiebox-administratie
+
+- → QualifyingAsset (many-to-one, via qualifying_asset_id)
+
+### CarryForwardLoss
+
+_Asset-specific voortwenteling verlies per Wet Vpb art. 12be (REQ-IBA-005, REQ-IBA-007): a loss from asset A can only offset future profit on asset A. `CarryForwardLossService` recovers the open loss FIRST at the full statutory tariff (not nexus-reduced), then taxes the residual at 0.09 × nexus. Immutable after creation; the `verrekend_boekjaar` array records each offset application._
+**Primary spec:** bookkeeping-innovatiebox-administratie
+
+- → QualifyingAsset (many-to-one, via qualifying_asset_id)
