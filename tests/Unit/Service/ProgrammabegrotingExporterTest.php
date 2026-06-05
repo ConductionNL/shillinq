@@ -1,0 +1,132 @@
+<?php
+
+/**
+ * Unit tests for ProgrammabegrotingExporter.
+ *
+ * @category Test
+ * @package  OCA\Shillinq\Tests\Unit\Service
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @link https://conduction.nl
+ *
+ * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-28
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+declare(strict_types=1);
+
+namespace OCA\Shillinq\Tests\Unit\Service;
+
+use OCA\Shillinq\Service\ProgrammabegrotingExporter;
+use PHPUnit\Framework\TestCase;
+
+/**
+ * Tests the iv3 / EMU / JSON exports (REQ-012).
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters
+ */
+final class ProgrammabegrotingExporterTest extends TestCase
+{
+
+    /**
+     * The exporter under test.
+     *
+     * @var ProgrammabegrotingExporter
+     */
+    private ProgrammabegrotingExporter $exporter;
+
+    /**
+     * Set up the exporter.
+     *
+     * @return void
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->exporter = new ProgrammabegrotingExporter();
+
+    }//end setUp()
+
+    /**
+     * REQ-012 scenario: iv3 aggregates baten/lasten per taakveldCode across programma's.
+     *
+     * @return void
+     */
+    public function testIv3AggregatesPerTaakveld(): void
+    {
+        $rows = $this->exporter->iv3Rows(
+            taakvelden: [
+                ['taakveldCode' => '1.1', 'baten' => 50.0, 'lasten' => 450.0],
+                ['taakveldCode' => '1.1', 'baten' => 10.0, 'lasten' => 50.0],
+                ['taakveldCode' => '6.1', 'baten' => 120.0, 'lasten' => 1300.0],
+            ]
+        );
+
+        self::assertCount(2, $rows);
+        // Sorted by code: 1.1 first, aggregated 60 / 500.
+        self::assertSame('1.1', $rows[0]['taakveldCode']);
+        self::assertSame(60.0, $rows[0]['baten']);
+        self::assertSame(500.0, $rows[0]['lasten']);
+        self::assertSame('6.1', $rows[1]['taakveldCode']);
+
+    }//end testIv3AggregatesPerTaakveld()
+
+    /**
+     * REQ-012: EMU-saldo adds back capitalised investeringen and reserve mutations.
+     *
+     * @return void
+     */
+    public function testEmuSaldoAppliesCorrections(): void
+    {
+        // Σbaten - Σlasten = 100 - 600 = -500; + investering 400 + reserve 50 = -50.
+        $saldo = $this->exporter->emuSaldo(
+            taakvelden: [['baten' => 100.0, 'lasten' => 600.0]],
+            investeringen: [['bruto' => 400.0]],
+            reserveMutaties: 50.0
+        );
+        self::assertSame(-50.0, $saldo);
+
+    }//end testEmuSaldoAppliesCorrections()
+
+    /**
+     * REQ-012 scenario: the JSON export carries metadata, programma's, taakvelden, paragrafen.
+     *
+     * @return void
+     */
+    public function testJsonExportShapeIsComplete(): void
+    {
+        $export = $this->exporter->jsonExport(
+            begroting: [
+                'begrotingsjaar'      => 2027,
+                'organisationType'    => 'gemeente',
+                'status'              => 'vastgesteld',
+                'vaststellingsDatum'  => '2026-11-09',
+                'sluitendStructureel' => true,
+                'sluitendReëel'       => true,
+                'toezichtRegime'      => 'repressief',
+            ],
+            programmas: [['nummer' => '1', 'naam' => 'Veiligheid', 'doelstellingen' => 'x', 'batenTotaal' => 80.0, 'lastenTotaal' => 650.0]],
+            taakvelden: [['taakveldCode' => '1.1', 'baten' => 50.0, 'lasten' => 450.0]],
+            paragrafen: [['type' => 'lokaleHeffingen', 'narrative' => 'tekst', 'kerncijfers' => []]]
+        );
+
+        self::assertSame(2027, $export['metadata']['begrotingsjaar']);
+        self::assertTrue($export['metadata']['sluitendStructureel']);
+        self::assertCount(1, $export['programmas']);
+        self::assertSame('Veiligheid', $export['programmas'][0]['naam']);
+        self::assertCount(1, $export['taakvelden']);
+        self::assertSame('1.1', $export['taakvelden'][0]['taakveldCode']);
+        self::assertCount(1, $export['paragrafen']);
+        self::assertSame('lokaleHeffingen', $export['paragrafen'][0]['type']);
+        // The whole shape must be json-encodable.
+        self::assertIsString(json_encode($export));
+
+    }//end testJsonExportShapeIsComplete()
+
+    // phpcs:enable CustomSniffs.Functions.NamedParameters
+}//end class
