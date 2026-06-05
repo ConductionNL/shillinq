@@ -1,0 +1,160 @@
+{
+	"menu": [
+		{
+			"id": "Bookkeeping",
+			"label": "Bookkeeping",
+			"icon": "icon-category-organization",
+			"order": 20,
+			"children": [
+				{
+					"id": "WbsoBeschikkingen",
+					"label": "WBSO Beschikkingen",
+					"icon": "CertificateOutline",
+					"route": "WbsoBeschikkingen",
+					"order": 70
+				},
+				{
+					"id": "SoUurregistratie",
+					"label": "S&O Uurregistratie",
+					"icon": "ClockOutline",
+					"route": "SoUurregistratie",
+					"order": 71
+				},
+				{
+					"id": "WbsoMededelingen",
+					"label": "WBSO Mededelingen",
+					"icon": "FileSendOutline",
+					"route": "WbsoMededelingen",
+					"order": 72
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "WbsoBeschikkingen",
+			"route": "/bookkeeping/wbso/beschikkingen",
+			"type": "index",
+			"title": "WBSO Beschikkingen",
+			"config": {
+				"register": "shillinq",
+				"schema": "WbsoBeschikking",
+				"columns": [
+					{ "key": "beschikkingNumber", "label": "Beschikking", "sortable": true },
+					{ "key": "rvoReference", "label": "RVO referentie", "sortable": true },
+					{ "key": "projectNumber", "label": "Project", "sortable": true },
+					{ "key": "grantedSoHours", "label": "Toegekende S&O-uren", "sortable": true },
+					{ "key": "periodStart", "label": "Vanaf", "sortable": true },
+					{ "key": "periodEnd", "label": "Tot", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "beschikkingNumber",
+				"detailRoute": "WbsoBeschikkingDetail"
+			}
+		},
+		{
+			"id": "WbsoBeschikkingDetail",
+			"route": "/bookkeeping/wbso/beschikkingen/:id",
+			"type": "detail",
+			"title": "WBSO Beschikking",
+			"config": {
+				"register": "shillinq",
+				"schema": "WbsoBeschikking",
+				"fields": [
+					{ "key": "beschikkingNumber", "label": "Beschikkingnummer", "type": "string" },
+					{ "key": "rvoReference", "label": "RVO referentie", "type": "string" },
+					{ "key": "projectNumber", "label": "Project", "type": "string" },
+					{ "key": "periodStart", "label": "Periode start", "type": "string" },
+					{ "key": "periodEnd", "label": "Periode eind", "type": "string" },
+					{ "key": "grantedSoHours", "label": "Toegekende S&O-uren", "type": "number" },
+					{ "key": "soHourlyRate", "label": "S&O-uurloon", "type": "number" },
+					{ "key": "description", "label": "Omschrijving", "type": "string" },
+					{ "key": "state", "label": "Status", "type": "string" },
+					{ "key": "administrationId", "label": "Administratie", "type": "string" }
+				],
+				"indexRoute": "WbsoBeschikkingen"
+			}
+		},
+		{
+			"id": "SoUurregistratie",
+			"route": "/bookkeeping/wbso/uren",
+			"type": "index",
+			"title": "S&O Uurregistratie",
+			"config": {
+				"register": "shillinq",
+				"schema": "SoUurregistratie",
+				"columns": [
+					{ "key": "registrationNumber", "label": "Registratie", "sortable": true },
+					{ "key": "beschikkingNumber", "label": "Beschikking", "sortable": true },
+					{ "key": "employeeId", "label": "Medewerker", "sortable": true },
+					{ "key": "workDate", "label": "Datum", "sortable": true },
+					{ "key": "hours", "label": "Uren", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "workDate",
+				"detailRoute": "SoUurregistratieDetail"
+			}
+		},
+		{
+			"id": "SoUurregistratieDetail",
+			"route": "/bookkeeping/wbso/uren/:id",
+			"type": "detail",
+			"title": "S&O Uurregistratie",
+			"config": {
+				"register": "shillinq",
+				"schema": "SoUurregistratie",
+				"fields": [
+					{ "key": "registrationNumber", "label": "Registratienummer", "type": "string" },
+					{ "key": "beschikkingNumber", "label": "Beschikking", "type": "string" },
+					{ "key": "employeeId", "label": "Medewerker", "type": "string" },
+					{ "key": "workDate", "label": "Werkdatum", "type": "string" },
+					{ "key": "hours", "label": "Uren", "type": "number" },
+					{ "key": "activityDescription", "label": "Activiteit", "type": "string" },
+					{ "key": "state", "label": "Status", "type": "string" },
+					{ "key": "administrationId", "label": "Administratie", "type": "string" }
+				],
+				"indexRoute": "SoUurregistratie"
+			}
+		},
+		{
+			"id": "WbsoMededelingen",
+			"route": "/bookkeeping/wbso/mededelingen",
+			"type": "index",
+			"title": "WBSO Mededelingen",
+			"config": {
+				"register": "shillinq",
+				"schema": "WbsoMededeling",
+				"columns": [
+					{ "key": "mededelingNumber", "label": "Mededeling", "sortable": true },
+					{ "key": "beschikkingNumber", "label": "Beschikking", "sortable": true },
+					{ "key": "reportingYear", "label": "Jaar", "sortable": true },
+					{ "key": "realisedSoHours", "label": "Gerealiseerde uren", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "mededelingNumber",
+				"detailRoute": "WbsoMededelingDetail"
+			}
+		},
+		{
+			"id": "WbsoMededelingDetail",
+			"route": "/bookkeeping/wbso/mededelingen/:id",
+			"type": "detail",
+			"title": "WBSO Mededeling",
+			"config": {
+				"register": "shillinq",
+				"schema": "WbsoMededeling",
+				"fields": [
+					{ "key": "mededelingNumber", "label": "Mededelingnummer", "type": "string" },
+					{ "key": "beschikkingNumber", "label": "Beschikking", "type": "string" },
+					{ "key": "reportingYear", "label": "Verslagjaar", "type": "number" },
+					{ "key": "realisedSoHours", "label": "Gerealiseerde S&O-uren", "type": "number" },
+					{ "key": "submittedAt", "label": "Ingediend op", "type": "string" },
+					{ "key": "rvoReceiptReference", "label": "RVO ontvangstbewijs", "type": "string" },
+					{ "key": "state", "label": "Status", "type": "string" },
+					{ "key": "administrationId", "label": "Administratie", "type": "string" }
+				],
+				"indexRoute": "WbsoMededelingen"
+			}
+		}
+	]
+}

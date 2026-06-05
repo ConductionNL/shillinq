@@ -1,0 +1,517 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-wbso-sno-administratie",
+		"adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+		"spec": "openspec/changes/bookkeeping-wbso-sno-administratie/specs.md",
+		"description": "Tier 1 — WBSO/S&O (RVO speur- en ontwikkelingswerk) subsidie-administratie. Three new schemas (WbsoBeschikking, SoUurregistratie, WbsoMededeling) modelling the S&O-afdrachtvermindering beschikking, the legally required urenadministratie, and the annual realisatie-mededeling to RVO. Lifecycle/RBAC/relations are declared as schema metadata per ADR-031; the single cross-schema submit precondition (realisedSoHours <= grantedSoHours on a still-granted beschikking, REQ-WBSO-005) is delegated to OCA\\Shillinq\\Lifecycle\\WbsoMededelingGuard::canSubmit (ADR-031 exception path). Employees reuse the Nextcloud identity (employeeId), no app-local person schema (ADR-022). Seed data pre-loads one worked FY2026 sample beschikking + uren + mededeling.",
+		"imported": "2026-06-05T00:00:00Z"
+	},
+	"components": {
+		"schemas": {
+			"WbsoBeschikking": {
+				"slug": "WbsoBeschikking",
+				"icon": "CertificateOutline",
+				"version": "0.1.0",
+				"title": "WBSO Beschikking",
+				"description": "An RVO S&O-afdrachtvermindering decision (WBSO-beschikking). Records the granted speur- en ontwikkelingswerk hours, the S&O-uurloon, the validity period and the RVO reference per administration. Source of truth for the realisatie ceiling enforced on the WbsoMededeling (REQ-WBSO-001).",
+				"x-schema-org": "schema:GovernmentPermit",
+				"x-spec": "openspec/changes/bookkeeping-wbso-sno-administratie/specs.md",
+				"type": "object",
+				"required": [
+					"beschikkingNumber",
+					"rvoReference",
+					"projectNumber",
+					"periodStart",
+					"periodEnd",
+					"grantedSoHours",
+					"soHourlyRate",
+					"state",
+					"administrationId"
+				],
+				"properties": {
+					"beschikkingNumber": {
+						"type": "string",
+						"description": "Internal beschikking number, unique per administration (REQ-WBSO-001).",
+						"example": "WBSO-2026-0001"
+					},
+					"rvoReference": {
+						"type": "string",
+						"description": "The reference number issued by RVO on the S&O-beschikking.",
+						"example": "S&O 2026/00123456"
+					},
+					"projectNumber": {
+						"type": "string",
+						"description": "FK to Project.projectNumber the S&O work is booked against (REQ-WBSO-006).",
+						"example": "PRJ-2026-0007"
+					},
+					"periodStart": {
+						"type": "string",
+						"format": "date",
+						"description": "First day the beschikking is valid (ISO 8601).",
+						"example": "2026-01-01"
+					},
+					"periodEnd": {
+						"type": "string",
+						"format": "date",
+						"description": "Last day the beschikking is valid (ISO 8601).",
+						"example": "2026-06-30"
+					},
+					"grantedSoHours": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Granted speur- en ontwikkelingswerk hours; the realisatie ceiling (REQ-WBSO-005).",
+						"example": 1200
+					},
+					"soHourlyRate": {
+						"type": "number",
+						"minimum": 0,
+						"description": "The S&O-uurloon in EUR applied to realised hours.",
+						"example": 29.0
+					},
+					"description": {
+						"type": "string",
+						"description": "Free-text description of the granted S&O project scope.",
+						"nullable": true,
+						"example": "Ontwikkeling declaratieve lifecycle-engine"
+					},
+					"state": {
+						"type": "string",
+						"enum": [
+							"granted",
+							"expired",
+							"withdrawn"
+						],
+						"description": "Beschikking lifecycle state. granted: active; expired: period elapsed; withdrawn: revoked by RVO.",
+						"default": "granted",
+						"example": "granted"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this beschikking (REQ-WBSO-004).",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "state",
+					"initialState": "granted",
+					"states": {
+						"granted": {
+							"label": "Granted",
+							"description": "Active beschikking; S&O hours may be booked and a mededeling filed."
+						},
+						"expired": {
+							"label": "Expired",
+							"description": "Validity period has elapsed; retained for audit."
+						},
+						"withdrawn": {
+							"label": "Withdrawn",
+							"description": "Revoked by RVO; no further realisatie may be filed."
+						}
+					},
+					"transitions": {
+						"expire": {
+							"from": "granted",
+							"to": "expired",
+							"label": "Mark expired",
+							"description": "Mark a beschikking expired once its periodEnd has passed."
+						},
+						"withdraw": {
+							"from": "granted",
+							"to": "withdrawn",
+							"label": "Withdraw",
+							"description": "Record an RVO withdrawal of the beschikking."
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"project": {
+						"localField": "projectNumber",
+						"relatedSchema": "Project",
+						"relatedField": "projectNumber",
+						"cardinality": "many-to-one",
+						"description": "The Project the S&O work is booked against (REQ-WBSO-006)."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"bookkeeping-approver": {
+							"permissions": [
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"SoUurregistratie": {
+				"slug": "SoUurregistratie",
+				"icon": "ClockOutline",
+				"version": "0.1.0",
+				"title": "S&O Uurregistratie",
+				"description": "A legally required speur- en ontwikkelingswerk hour entry. Each row logs hours worked by one employee on one WBSO-beschikking on one date, forming the urenadministratie RVO can inspect (REQ-WBSO-002, REQ-WBSO-003).",
+				"x-schema-org": "schema:Action",
+				"x-spec": "openspec/changes/bookkeeping-wbso-sno-administratie/specs.md",
+				"type": "object",
+				"required": [
+					"registrationNumber",
+					"beschikkingNumber",
+					"employeeId",
+					"workDate",
+					"hours",
+					"state",
+					"administrationId"
+				],
+				"properties": {
+					"registrationNumber": {
+						"type": "string",
+						"description": "Sequential registration number, unique per administration (REQ-WBSO-002).",
+						"example": "SO-2026-000001"
+					},
+					"beschikkingNumber": {
+						"type": "string",
+						"description": "FK to WbsoBeschikking.beschikkingNumber the hours count toward (REQ-WBSO-005).",
+						"example": "WBSO-2026-0001"
+					},
+					"employeeId": {
+						"type": "string",
+						"description": "Nextcloud user id of the employee who performed the S&O work. Reuses the NC identity; no app-local person schema (ADR-022).",
+						"example": "j.devries"
+					},
+					"workDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Date the S&O hours were worked (ISO 8601). MUST fall within the beschikking period (REQ-WBSO-007).",
+						"example": "2026-02-03"
+					},
+					"hours": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 24,
+						"description": "S&O hours worked on workDate; non-negative, capped at 24 per day (REQ-WBSO-003).",
+						"example": 6.5
+					},
+					"activityDescription": {
+						"type": "string",
+						"description": "Description of the speur- en ontwikkelingswerk performed (required by RVO for the urenadministratie).",
+						"nullable": true,
+						"example": "Prototype lifecycle DSL parser"
+					},
+					"state": {
+						"type": "string",
+						"enum": [
+							"draft",
+							"confirmed",
+							"locked"
+						],
+						"description": "Entry lifecycle. draft: editable; confirmed: submitted by employee; locked: included in a filed mededeling, immutable (REQ-WBSO-008).",
+						"default": "draft",
+						"example": "draft"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this entry (REQ-WBSO-004).",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "state",
+					"initialState": "draft",
+					"states": {
+						"draft": {
+							"label": "Draft",
+							"description": "Editable hour entry, not yet confirmed."
+						},
+						"confirmed": {
+							"label": "Confirmed",
+							"description": "Confirmed by the employee; counts toward the realisatie but may still be corrected."
+						},
+						"locked": {
+							"label": "Locked",
+							"description": "Included in a submitted WbsoMededeling; immutable (REQ-WBSO-008)."
+						}
+					},
+					"transitions": {
+						"confirm": {
+							"from": "draft",
+							"to": "confirmed",
+							"label": "Confirm hours",
+							"description": "Employee confirms the hour entry."
+						},
+						"lock": {
+							"from": "confirmed",
+							"to": "locked",
+							"label": "Lock",
+							"description": "Lock the entry when the covering WbsoMededeling is submitted (REQ-WBSO-008)."
+						},
+						"reopen": {
+							"from": "confirmed",
+							"to": "draft",
+							"label": "Reopen",
+							"description": "Return a confirmed-but-not-yet-locked entry to draft for correction."
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"beschikking": {
+						"localField": "beschikkingNumber",
+						"relatedSchema": "WbsoBeschikking",
+						"relatedField": "beschikkingNumber",
+						"cardinality": "many-to-one",
+						"description": "The WBSO beschikking these hours count toward (REQ-WBSO-005)."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"bookkeeping-approver": {
+							"permissions": [
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"WbsoMededeling": {
+				"slug": "WbsoMededeling",
+				"icon": "FileSendOutline",
+				"version": "0.1.0",
+				"title": "WBSO Mededeling",
+				"description": "The mandatory annual realisatie report (mededeling) of S&O hours to RVO per WBSO-beschikking. Aggregates the locked SoUurregistratie hours and carries the submission lifecycle draft -> submitted -> accepted (REQ-WBSO-009).",
+				"x-schema-org": "schema:Report",
+				"x-spec": "openspec/changes/bookkeeping-wbso-sno-administratie/specs.md",
+				"type": "object",
+				"required": [
+					"mededelingNumber",
+					"beschikkingNumber",
+					"reportingYear",
+					"realisedSoHours",
+					"state",
+					"administrationId"
+				],
+				"properties": {
+					"mededelingNumber": {
+						"type": "string",
+						"description": "Mededeling number, unique per administration (REQ-WBSO-009).",
+						"example": "MED-2026-0001"
+					},
+					"beschikkingNumber": {
+						"type": "string",
+						"description": "FK to WbsoBeschikking.beschikkingNumber being reported on.",
+						"example": "WBSO-2026-0001"
+					},
+					"reportingYear": {
+						"type": "integer",
+						"minimum": 2000,
+						"description": "Calendar year the realisatie is reported for.",
+						"example": 2026
+					},
+					"realisedSoHours": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Total realised S&O hours reported. MUST NOT exceed the beschikking grantedSoHours (REQ-WBSO-005).",
+						"example": 980
+					},
+					"submittedAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Timestamp the mededeling was submitted to RVO. Set on the submit transition.",
+						"nullable": true,
+						"example": "2026-03-31T10:00:00+02:00"
+					},
+					"rvoReceiptReference": {
+						"type": "string",
+						"description": "Receipt reference returned by RVO on acceptance.",
+						"nullable": true,
+						"example": "RVO-REC-2026-998877"
+					},
+					"state": {
+						"type": "string",
+						"enum": [
+							"draft",
+							"submitted",
+							"accepted",
+							"rejected"
+						],
+						"description": "Mededeling lifecycle. draft: editable; submitted: filed with RVO; accepted: confirmed by RVO; rejected: returned for correction (REQ-WBSO-009).",
+						"default": "draft",
+						"example": "draft"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this mededeling (REQ-WBSO-004).",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "state",
+					"initialState": "draft",
+					"states": {
+						"draft": {
+							"label": "Draft",
+							"description": "Editable realisatie report, not yet filed."
+						},
+						"submitted": {
+							"label": "Submitted",
+							"description": "Filed with RVO; covered hour entries are locked (REQ-WBSO-008)."
+						},
+						"accepted": {
+							"label": "Accepted",
+							"description": "Accepted by RVO; immutable."
+						},
+						"rejected": {
+							"label": "Rejected",
+							"description": "Returned by RVO for correction; may be re-submitted after edit."
+						}
+					},
+					"transitions": {
+						"submit": {
+							"from": "draft",
+							"to": "submitted",
+							"label": "Submit to RVO",
+							"description": "Submit the realisatie. Gated by WbsoMededelingGuard::canSubmit which enforces realisedSoHours <= grantedSoHours (REQ-WBSO-005).",
+							"requires": "OCA\\Shillinq\\Lifecycle\\WbsoMededelingGuard::canSubmit"
+						},
+						"accept": {
+							"from": "submitted",
+							"to": "accepted",
+							"label": "Mark accepted",
+							"description": "Record RVO acceptance of the mededeling."
+						},
+						"reject": {
+							"from": "submitted",
+							"to": "rejected",
+							"label": "Mark rejected",
+							"description": "Record an RVO rejection."
+						},
+						"resubmit": {
+							"from": "rejected",
+							"to": "submitted",
+							"label": "Resubmit",
+							"description": "Resubmit a corrected mededeling.",
+							"requires": "OCA\\Shillinq\\Lifecycle\\WbsoMededelingGuard::canSubmit"
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"beschikking": {
+						"localField": "beschikkingNumber",
+						"relatedSchema": "WbsoBeschikking",
+						"relatedField": "beschikkingNumber",
+						"cardinality": "many-to-one",
+						"description": "The WBSO beschikking this mededeling reports on."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"bookkeeping-approver": {
+							"permissions": [
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			}
+		}
+	},
+	"objects": [
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "WbsoBeschikking",
+				"slug": "wbso-2026-sample-beschikking"
+			},
+			"beschikkingNumber": "WBSO-2026-0001",
+			"rvoReference": "S&O 2026/00123456",
+			"projectNumber": "PRJ-2026-0007",
+			"periodStart": "2026-01-01",
+			"periodEnd": "2026-06-30",
+			"grantedSoHours": 1200,
+			"soHourlyRate": 29.0,
+			"description": "Ontwikkeling declaratieve lifecycle-engine (sample S&O-project).",
+			"state": "granted",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "SoUurregistratie",
+				"slug": "wbso-2026-sample-uur-001"
+			},
+			"registrationNumber": "SO-2026-000001",
+			"beschikkingNumber": "WBSO-2026-0001",
+			"employeeId": "j.devries",
+			"workDate": "2026-02-03",
+			"hours": 6.5,
+			"activityDescription": "Prototype lifecycle DSL parser",
+			"state": "confirmed",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "SoUurregistratie",
+				"slug": "wbso-2026-sample-uur-002"
+			},
+			"registrationNumber": "SO-2026-000002",
+			"beschikkingNumber": "WBSO-2026-0001",
+			"employeeId": "j.devries",
+			"workDate": "2026-02-04",
+			"hours": 7.0,
+			"activityDescription": "Unit tests voor de lifecycle guards",
+			"state": "draft",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "WbsoMededeling",
+				"slug": "wbso-2026-sample-mededeling"
+			},
+			"mededelingNumber": "MED-2026-0001",
+			"beschikkingNumber": "WBSO-2026-0001",
+			"reportingYear": 2026,
+			"realisedSoHours": 980,
+			"state": "draft",
+			"administrationId": "adm-consultancy-nl"
+		}
+	]
+}

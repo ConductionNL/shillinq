@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Bookkeeping": "Boekhouding",
         "Sustainability": "Duurzaamheid",
         "Materiality Assessments": "Materialiteitsbeoordelingen",
         "Materiality Assessment": "Materialiteitsbeoordeling",
@@ -203,7 +204,32 @@
         "Booking cancelled": "Boeking geannuleerd",
         "Invoice could not be created. It will be retried automatically.": "Factuur kon niet worden aangemaakt. Het wordt automatisch opnieuw geprobeerd.",
         "Deposit not authorised; cannot invoice this booking.": "Borgsom niet geautoriseerd; deze boeking kan niet gefactureerd worden.",
-        "This booking has already been invoiced.": "Deze boeking is al gefactureerd."
+        "This booking has already been invoiced.": "Deze boeking is al gefactureerd.",
+        "WBSO Beschikkingen": "WBSO Beschikkingen",
+        "WBSO Beschikking": "WBSO Beschikking",
+        "Beschikking": "Beschikking",
+        "RVO referentie": "RVO-referentie",
+        "Toegekende S&O-uren": "Toegekende S&O-uren",
+        "S&O Uurregistratie": "S&O-uurregistratie",
+        "S&O-uurloon": "S&O-uurloon",
+        "WBSO Mededelingen": "WBSO-mededelingen",
+        "WBSO Mededeling": "WBSO-mededeling",
+        "Mededeling": "Mededeling",
+        "Gerealiseerde uren": "Gerealiseerde uren",
+        "Gerealiseerde S&O-uren": "Gerealiseerde S&O-uren",
+        "Medewerker": "Medewerker",
+        "Werkdatum": "Werkdatum",
+        "Activiteit": "Activiteit",
+        "Verslagjaar": "Verslagjaar",
+        "Ingediend op": "Ingediend op",
+        "RVO ontvangstbewijs": "RVO-ontvangstbewijs",
+        "Granted": "Toegekend",
+        "Withdrawn": "Ingetrokken",
+        "Confirmed": "Bevestigd",
+        "Locked": "Vergrendeld",
+        "Submitted": "Ingediend",
+        "Accepted": "Geaccepteerd",
+        "Realisatie exceeds the granted S&O hours; the WBSO notification cannot be submitted.": "De realisatie overschrijdt de toegekende S&O-uren; de WBSO-mededeling kan niet worden ingediend."
     },
     "plurals": ""
 }

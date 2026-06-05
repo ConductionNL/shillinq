@@ -1,6 +1,25 @@
-# Tasks — Financial Administration Foundation
+# Tasks — WBSO S&O-administratie
 
-> **Spec-only change.** Per `proposal.md` Scope, implementation code is deliberately out of scope here. The tasks below describe the work an `opsx-apply` cycle will execute against the `bookkeeping-financial-administration` spec — they are recorded now so the spec-review gate, dependency planning, and tier-cascade impact are all visible at proposal time. No source files are edited by this change itself.
+> **Scope correction (hydra-build, ADR-022/037).** The original tasks below were
+> authored against a stale generic-foundation template proposing `Account`,
+> `Transaction` and `Document` schemas. Those schemas (and `GLTransaction`,
+> `JournalEntry`, `FiscalYear`, the docudesk document templates, the audit-trail
+> immutability and RBAC scaffolding) ALREADY EXIST in this app's monolith +
+> `register.d` fragments — re-declaring them would duplicate keys and break the
+> ADR-037 disjoint-union merge. The change id `bookkeeping-wbso-sno-administratie`
+> denotes the genuinely-new capability: the **WBSO S&O (speur- en
+> ontwikkelingswerk) administratie** — the RVO-facing R&D wage-tax administration.
+>
+> This build therefore delivers the WBSO-specific layer that did NOT exist:
+> `WbsoBeschikking` (RVO grant decision + ceiling), `SoUurregistratie` (the
+> legally-required S&O hour administration, reusing the Nextcloud employee
+> identity per ADR-022 — no app-local person schema), and `WbsoMededeling` (the
+> annual realisatie report to RVO with a guarded submit transition enforcing
+> `realisedSoHours <= grantedSoHours`). Each carries its lifecycle, relations,
+> RBAC and audit-trail metadata; seeds load via the existing
+> `SettingsService` repair step; a read-only realisatie API + declarative
+> manifest pages surface it. The generic Account/Transaction/Document tasks are
+> marked `[~]` (already satisfied by existing schemas) rather than duplicated.
 
 ## Tasks
 
@@ -151,6 +170,22 @@
   - RBAC enforcement matches REQ-WBSO-005 (roles and read/write permissions aligned)
   - 7-year document retention rule is implemented per Archiefwet 1995
   - All seed data is marked as synthetic and can be purged from demo instances
+
+## Build Outcome (hydra-build, WBSO scope)
+
+Delivered against the corrected WBSO S&O scope:
+
+- [x] **Register fragment** `lib/Settings/register.d/bookkeeping-wbso-sno-administratie.json` — declares `WbsoBeschikking`, `SoUurregistratie`, `WbsoMededeling` with full `x-openregister-lifecycle`, `x-openregister-relations`, `x-openregister-rbac`, `x-spec`/`x-schema-org` metadata; loaded additively via the existing ADR-037 `SettingsService::deepMergeConfig` union (no monolith edit).
+- [x] **Seed objects** — sample beschikking, two S&O hour entries (confirmed + draft), and a draft mededeling, top-level `objects[]` targeting the `shillinq` register; consistency asserted by the fragment test (realisatie within ceiling, hours within 0..24).
+- [x] **Lifecycle guard** `lib/Lifecycle/WbsoMededelingGuard::canSubmit` — fail-closed cross-schema ceiling check (`realisedSoHours <= grantedSoHours` + beschikking `granted` + administration-scoped lookup); ADR-031 exception-path documented.
+- [x] **Read service** `lib/Service/WbsoAdministratieService` — on-demand per-beschikking realisatie summary (confirmed+locked hour roll-up, draft excluded, exceeded flag), real OR ObjectService `findAll` API, administration-scoped (REQ-WBSO-004).
+- [x] **Controller + route** `lib/Controller/WbsoAdministratieController` `GET /api/wbso/realisatie` — `#[NoAdminRequired]`, input-validated, IDOR-safe (administration scope), no stack traces (ADR-005); route registered before the SPA `{path}` wildcard (ADR-016).
+- [x] **Manifest fragment** `src/manifest.d/bookkeeping-wbso-sno-administratie.json` — declarative manifest-v2 index/detail pages for the three schemas under the Bookkeeping menu (no hand-written `.vue` views/router).
+- [x] **i18n** — WBSO/S&O strings added additively to `l10n/en.json` + `l10n/nl.json` (nl primary).
+- [x] **Tests** — `WbsoSnoAdministratieFragmentTest`, `WbsoMededelingGuardTest`, `WbsoAdministratieServiceTest`, `WbsoAdministratieControllerTest` (real behaviour: ceiling boundary, draft exclusion, cross-tenant denial, 400/500 paths, additive merge).
+- [x] **Version bump** `appinfo/info.xml` 0.1.8 → 0.1.9 (bundled manifest changed).
+
+The generic Account/Transaction/Document/Audit/RBAC tasks (1–48 below) are **already satisfied** by the app's existing `Account`/`GLTransaction`/`JournalEntry`/`FiscalYear` schemas, docudesk templates, and OR audit-trail/RBAC extensions — re-declaring them is intentionally avoided (ADR-037 disjoint union). Live-instance browser QA + journeydoc screenshots (Tasks 41–43, 47–48) are **deferred** as they require a running Nextcloud + RVO context.
 
 ## Verification
 

@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Bookkeeping": "Bookkeeping",
         "Sustainability": "Sustainability",
         "Materiality Assessments": "Materiality Assessments",
         "Materiality Assessment": "Materiality Assessment",
@@ -203,7 +204,32 @@
         "Booking cancelled": "Booking cancelled",
         "Invoice could not be created. It will be retried automatically.": "Invoice could not be created. It will be retried automatically.",
         "Deposit not authorised; cannot invoice this booking.": "Deposit not authorised; cannot invoice this booking.",
-        "This booking has already been invoiced.": "This booking has already been invoiced."
+        "This booking has already been invoiced.": "This booking has already been invoiced.",
+        "WBSO Beschikkingen": "WBSO Decisions",
+        "WBSO Beschikking": "WBSO Decision",
+        "Beschikking": "Decision",
+        "RVO referentie": "RVO reference",
+        "Toegekende S&O-uren": "Granted R&D hours",
+        "S&O Uurregistratie": "R&D Hour Registration",
+        "S&O-uurloon": "R&D hourly wage",
+        "WBSO Mededelingen": "WBSO Notifications",
+        "WBSO Mededeling": "WBSO Notification",
+        "Mededeling": "Notification",
+        "Gerealiseerde uren": "Realised hours",
+        "Gerealiseerde S&O-uren": "Realised R&D hours",
+        "Medewerker": "Employee",
+        "Werkdatum": "Work date",
+        "Activiteit": "Activity",
+        "Verslagjaar": "Reporting year",
+        "Ingediend op": "Submitted at",
+        "RVO ontvangstbewijs": "RVO receipt",
+        "Granted": "Granted",
+        "Withdrawn": "Withdrawn",
+        "Confirmed": "Confirmed",
+        "Locked": "Locked",
+        "Submitted": "Submitted",
+        "Accepted": "Accepted",
+        "Realisatie exceeds the granted S&O hours; the WBSO notification cannot be submitted.": "Realisatie exceeds the granted S&O hours; the WBSO notification cannot be submitted."
     },
     "plurals": ""
 }
