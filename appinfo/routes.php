@@ -139,8 +139,14 @@ return [
         ['name' => 'calendar#show', 'url' => '/api/v2/calendars/{calendarId}', 'verb' => 'GET'],
         ['name' => 'calendar#bookings', 'url' => '/api/v2/calendars/{calendarId}/bookings', 'verb' => 'GET'],
         ['name' => 'calendar#createBooking', 'url' => '/api/v2/calendars/{calendarId}/bookings', 'verb' => 'POST'],
-// SEPA Direct Debit mandate audit dossier export (REQ-SDD-010).
+        // SEPA Direct Debit mandate audit dossier export (REQ-SDD-010).
         ['name' => 'sepaAudit#exportMandate', 'url' => '/api/v1/sepa-mandate/{mandateId}/audit-export', 'verb' => 'GET'],
+
+        // External payroll software webhook (REQ-PAY-009). Signature-verified
+        // CloudEvents receiver; GET returns 501. Registered before the SPA
+        // catch-all so the wildcard does not swallow it.
+        ['name' => 'payrollWebhook#info', 'url' => '/api/payroll/webhook', 'verb' => 'GET'],
+        ['name' => 'payrollWebhook#receive', 'url' => '/api/payroll/webhook', 'verb' => 'POST'],
 
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).

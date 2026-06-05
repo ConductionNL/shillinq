@@ -1664,6 +1664,8 @@ _Payroll deduction such as taxes, social security, or garnishments_
 **Relations:**
 - → Payroll (many-to-one)
 
+> **Reconciliation note (bookkeeping-detachering-payroll-administratie, 2026-06-05):** The concrete T2 `Deduction` register declared in `lib/Settings/register.d/bookkeeping-detachering-payroll-administratie.json` (primary spec `bookkeeping-payroll-detachering`) refines this entry: `deductionType` is a closed enum (`income-tax | social-security-employee | social-security-employer | pension | garnishment | other`), and the schema adds `payrollId`, `deductionName`, `rate`, `rateSource`, `taxYear`, and `administrationId`. `taxYear` + `deductionType` drive the per-employee annual aggregation that validates statutory limits on the Payroll `calculate` precondition (REQ-PAY-005). `social-security-employer` is an employer cost and is excluded from the Payroll net aggregation.
+
 ### Delegation
 **Schema.org:** `schema:Action`
 _A delegation of mandate authority from one signing authority to another for a specified period_
@@ -1724,6 +1726,29 @@ _A detailed schedule defining depreciation method, rate, and yearly calculations
 
 **Relations:**
 - → FixedAsset (many-to-one)
+
+### DeterminationLetter
+**Schema.org:** `schema:DigitalDocument`
+_Immutable archival payroll document (loonstrookje, werkgeversverklaring, salary certificate) generated on payroll issue per REQ-PAY-006. PDF rendering is delegated to an external service and attached via the OpenRegister files relation (no template engine in Shillinq). 7-year retention per the Archiefwet; the `current → archived` lifecycle marks records read-only after the active period._
+**Primary spec:** bookkeeping-payroll-detachering
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| payrollId | string | Yes | FK to the source Payroll |
+| letterType | enum | Yes | `loonstrookje \| werkgeversverklaring \| salary-certificate` |
+| generatedDate | date | Yes | Generation date |
+| year | integer | No | Reporting year for annual certificates |
+| content | string | No | Human-readable summary (no raw BSN) |
+| fileUri | string | No | URI of the attached rendered PDF (OR files relation) |
+| archiveStatus | enum | Yes | `current \| archived` |
+| retentionExpiryDate | date | No | 7 years after generation |
+| administrationId | string | Yes | FK to the Administration |
+
+**Relations:**
+- → Payroll (many-to-one, via payrollId)
+
+**Lifecycle:**
+- current → archived (archive)
 
 ### DigitalDocument
 **Schema.org:** `schema:DigitalDocument`
@@ -1810,6 +1835,37 @@ _Per-invoice dunning timeline entry recording each reminder level dispatched to 
 **Relations:**
 - → ARInvoice (many-to-one, via invoiceRef)
 - → Administration (many-to-one)
+
+### Employee
+**Schema.org:** `schema:Person`
+_Employee / detached worker / freelancer master record for the payroll-administration projection (a contact/person is a Nextcloud entity; this register holds only the payroll view). Carries BSN (11-proef validated, masked `***<last4>` on display, never logged — ADR-005), contract classification, and the `active → inactive` lifecycle. Setting `exitDate` transitions to inactive; payroll with a period after the exit date is rejected (REQ-PAY-001 / REQ-PAY-007)._
+**Primary spec:** bookkeeping-payroll-detachering
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| employeeNumber | string | Yes | Employee number, unique per administration |
+| legalName | string | Yes | Legal name of the employee or contracting entity |
+| bsn | string | No | Burgerservicenummer (special-category PII; 11-proef validated, masked on display) |
+| contractType | enum | Yes | `employee \| freelancer \| detached` |
+| taxClassification | enum | Yes | `employee \| detached-worker \| b2b-contractor` |
+| taxNumber | string | No | Loonheffingennummer / BTW number for B2B contractors |
+| onboardingDate | date | Yes | Start date |
+| exitDate | date | No | Exit date; gates payroll period eligibility |
+| salaryScale | string | No | Applicable salary scale reference |
+| placementAgencyId | string | No | FK to placement agency supplier (detached workers) |
+| salaryExpenseAccount | string | No | GL salary-expense account (defaults by contractType) |
+| contactEmail | string | No | Primary contact email |
+| contactPhone | string | No | Primary contact phone |
+| administrationId | string | Yes | FK to the Administration |
+| state | enum | Yes | `active \| inactive` |
+
+**Relations:**
+- → Payroll (one-to-many, via employeeId)
+- → Administration (many-to-one)
+
+**Lifecycle:**
+- active → inactive (exit): requires exitDate set
+- inactive → active (reinstate)
 
 ### ENSIAJaarcyclus
 **Schema.org:** `schema:Event`
@@ -3659,6 +3715,7 @@ _Auto-generated jaarrekening disclosure table per IAS 19 §135–149 for a plan 
 
 **Relations:**
 - → PensionPlan (many-to-one)
+> **Reconciliation note (bookkeeping-detachering-payroll-administratie, 2026-06-05):** The concrete T2 `Payroll` register declared in `lib/Settings/register.d/bookkeeping-detachering-payroll-administratie.json` (primary spec `bookkeeping-payroll-detachering`) refines this entry as a sub-ledger with the `draft → calculated → issued → paid` lifecycle (`status` field). `netAmount` is computed via `x-openregister-aggregations` over employee-borne `Deduction` lines (no PHP math). On `issue` it materialises a balanced salary-expense `GLTransaction` (debit by `Employee.contractType`: 4100/4110/4120, credit payroll-liability) per REQ-PAY-008, generates a loonstrookje `DeterminationLetter`, and publishes the `nl.conduction.payroll.issued` CloudEvent. Detached workers additionally carry `placementFeeAmount` + `placementAgencyId`, materialising an AP placement-fee posting. The `calculate` and `issue` transitions are gated by `OCA\Shillinq\Lifecycle\PayrollGuard` (ADR-031 exception — cross-schema SUM + statutory ceilings). UBL Peppol BIS 30 field shape is declared for T4 passthrough but NOT computed here.
 
 ### PeppolAccessPoint
 **Schema.org:** `schema:Service`

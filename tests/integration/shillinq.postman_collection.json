@@ -291,6 +291,60 @@
 					]
 				}
 			]
+		},
+		{
+			"name": "Payroll Webhook",
+			"item": [
+				{
+					"name": "GET webhook returns 501",
+					"request": {
+						"method": "GET",
+						"url": "{{base_url}}/index.php/apps/shillinq/api/payroll/webhook",
+						"description": "REQ-PAY-009: the webhook endpoint accepts POST only; GET returns 501 Not Implemented."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('GET webhook returns 501', function () {",
+									"    pm.response.to.have.status(501);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Unsigned POST is rejected",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"specversion\":\"1.0\",\"type\":\"nl.conduction.payroll.calculated\",\"id\":\"ext-1\",\"data\":{\"payrollId\":\"payroll-2026-05-emp-001\",\"deductions\":[]}}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/payroll/webhook",
+						"description": "ADR-005: a POST without a valid X-Shillinq-Signature HMAC is rejected fail-closed before any object is touched."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Unsigned webhook POST is rejected', function () {",
+									"    pm.expect([401, 412]).to.include(pm.response.code);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				}
+			]
 		}
 	]
 }
