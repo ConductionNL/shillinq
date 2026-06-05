@@ -15,5 +15,14 @@
 //
 // Example entry:
 //   'SomePage': { kind: 'page', component: SomePage },
+//
+// ConfirmationPortal (bookings-confirm-flow): justified custom page — the
+// customer-facing confirmation portal is token-driven (validate-on-load,
+// confirm-on-click) with no register list/detail equivalent, so it cannot be
+// expressed as a built-in declarative page type. See the component's docblock.
 
-export default {}
+import ConfirmationPortal from './views/ConfirmationPortal.vue'
+
+export default {
+	ConfirmationPortal: { kind: 'page', component: ConfirmationPortal },
+}

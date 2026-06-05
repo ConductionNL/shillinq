@@ -6600,3 +6600,54 @@ _IFRS 15 / ASC 606 five-step revenue-recognition data model introduced by the `b
 | VariableConsiderationAdjustment | schema:MonetaryAmount | contractId, adjustmentDate, priorEstimate, newEstimate, constraintReason, deltaAmount, glTransactionId, operatorId | → Contract (N:1), → GLTransaction (1:1), → Person (N:1) |
 | ContractCostAsset | schema:MonetaryAmount | contractId, costType, initialCapitalisation, amortisationSchedule, poSatisfactionPattern, amortisedToDate, carriedAmount, impairmentTestDate | → Contract (N:1), → PerformanceObligation (N:1) |
 | RevenueWaterfall | schema:MonetaryAmount | contractId, contractGroupId, segment*, periodStart/End, transactionPriceAllocated, cumulativeRecognised, remainingAmount, remainingMonths, deferredLiability, accrualAsset (read-only) | → Contract (N:1) |
+
+### Appointment
+**Schema.org:** `schema:Reservation`
+_A bookable appointment between a customer (a Nextcloud contact — never an app-local person schema) and a service provider. Self-booked appointments start in `pending_confirmation` and must be confirmed via a ConfirmationToken before `confirmationDeadline`, after which the CancelUnconfirmedAppointments job auto-cancels them. Admin-created appointments start `confirmed` and skip the confirmation flow (REQ-BCF-010). Declared in the `register.d/bookings-confirm-flow.json` fragment per ADR-037._
+**Primary spec:** bookings-confirm-flow
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| appointmentNumber | string | Yes | Human-readable unique reference |
+| contactId | string | No | Customer as a Nextcloud contact (addressbook-synced) |
+| customerEmail | string | No | Email for confirmation delivery |
+| customerTimezone | string | No | IANA timezone for ICS TZID/VTIMEZONE + email local time |
+| serviceName | string | Yes | Service name (ICS SUMMARY) |
+| providerName | string | No | Provider name (ICS ORGANIZER) |
+| location | string | No | Location (ICS LOCATION) |
+| notes | string | No | Notes (ICS DESCRIPTION) |
+| startTime | datetime | Yes | Start (ISO 8601 UTC) |
+| endTime | datetime | Yes | End (ISO 8601 UTC) |
+| status | enum | Yes | pending_confirmation, confirmed, completed, cancelled |
+| confirmationDeadline | datetime | No | CHANGED: latest confirm time before auto-cancel (REQ-BCF-005) |
+| confirmedAt | datetime | No | CHANGED: timestamp moved to confirmed (REQ-BCF-004) |
+| confirmationTokenId | string | No | CHANGED: current valid ConfirmationToken reference |
+| cancelledReason | string | No | Reason recorded on cancellation |
+| administrationId | string | Yes | Tenant administration scope (IDOR-safety) |
+
+**Lifecycle (`x-openregister-lifecycle`, field `status`):** pending_confirmation → confirmed (token-guarded) | pending_confirmation → cancelled (deadline) | confirmed → completed | confirmed → cancelled.
+
+**Relations:**
+- → ConfirmationToken (one-to-many across resends, via confirmationTokenId / ConfirmationToken.appointmentId)
+
+### ConfirmationToken
+**Schema.org:** `schema:Token`
+_A single-use, time-limited token authorising a customer to confirm a pending Appointment via an email link or web portal (REQ-BCF-001/002). The raw 32-char URL-safe token is delivered once and never persisted — only its bcrypt hash is stored, and `tokenString` is masked on API reads. Resends revoke the prior token and issue a fresh one (REQ-BCF-006). Declared in the `register.d/bookings-confirm-flow.json` fragment per ADR-037._
+**Primary spec:** bookings-confirm-flow
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| tokenId | string | No | Unique token identifier |
+| appointmentId | string | Yes | FK to the Appointment being confirmed |
+| tokenString | string | Yes | Bcrypt hash of the raw token (masked on reads) |
+| expiresAt | datetime | Yes | ISO 8601 UTC expiry (typically +7 days) |
+| status | enum | Yes | active, redeemed, expired, revoked |
+| redeemedAt | datetime | No | Timestamp the token was redeemed |
+| createdAt | datetime | Yes (auto) | Creation timestamp |
+| createdBy | string | No | Triggering user ('system' for auto-generated) |
+| administrationId | string | No | Tenant administration scope (IDOR-safety) |
+
+**Lifecycle (`x-openregister-lifecycle`, field `status`):** active → redeemed (confirm) | active → revoked (resend) | active → expired (expiry).
+
+**Relations:**
+- → Appointment (many-to-one, via appointmentId)

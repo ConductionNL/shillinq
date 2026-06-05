@@ -1,0 +1,347 @@
+{
+	"info": {
+		"x-fragment": "bookings-confirm-flow",
+		"x-fragment-description": "ADR-037 register fragment for the appointment confirmation flow. Declares the Appointment and ConfirmationToken schemas plus their lifecycle state machines and demo seed objects, without editing shillinq_register.json."
+	},
+	"components": {
+		"schemas": {
+			"Appointment": {
+				"slug": "Appointment",
+				"icon": "CalendarCheckOutline",
+				"version": "0.1.0",
+				"title": "Appointment",
+				"description": "A bookable appointment between a customer (a Nextcloud contact) and a service provider. Self-booked appointments start in pending_confirmation and must be confirmed by the customer via a ConfirmationToken before the deadline, after which they auto-cancel. Admin-created appointments start confirmed and skip the confirmation flow (REQ-BCF-010).",
+				"x-schema-org": "schema:Reservation",
+				"type": "object",
+				"required": [
+					"appointmentNumber",
+					"serviceName",
+					"startTime",
+					"endTime",
+					"status",
+					"administrationId"
+				],
+				"properties": {
+					"appointmentNumber": {
+						"type": "string",
+						"description": "Human-readable unique appointment reference.",
+						"example": "APT-2026-0001"
+					},
+					"contactId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Reference to the customer as a Nextcloud contact (addressbook-synced contact identifier). A customer is always a Nextcloud entity per the fleet contact convention — never an app-local person schema.",
+						"example": "addressbook:abc-123"
+					},
+					"customerEmail": {
+						"type": "string",
+						"format": "email",
+						"nullable": true,
+						"description": "Customer email used to deliver the confirmation message; resolved from the contact where available.",
+						"example": "jan@example.nl"
+					},
+					"customerTimezone": {
+						"type": "string",
+						"nullable": true,
+						"description": "IANA timezone name used for ICS TZID/VTIMEZONE and email local-time display (REQ-BCF-009). Falls back to the server default when unset.",
+						"example": "Europe/Amsterdam"
+					},
+					"serviceName": {
+						"type": "string",
+						"description": "Name of the booked service, used as the ICS SUMMARY.",
+						"example": "Tax advice consultation"
+					},
+					"providerName": {
+						"type": "string",
+						"nullable": true,
+						"description": "Name of the service provider rendering the appointment.",
+						"example": "Conduction B.V."
+					},
+					"location": {
+						"type": "string",
+						"nullable": true,
+						"description": "Physical or virtual location, used as the ICS LOCATION.",
+						"example": "Lauriergracht 14h, Amsterdam"
+					},
+					"notes": {
+						"type": "string",
+						"nullable": true,
+						"description": "Free-form appointment notes, used as the ICS DESCRIPTION.",
+						"example": "Bring last year's annual accounts."
+					},
+					"startTime": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Appointment start in ISO 8601 (UTC).",
+						"example": "2026-05-22T12:30:00Z"
+					},
+					"endTime": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Appointment end in ISO 8601 (UTC).",
+						"example": "2026-05-22T13:00:00Z"
+					},
+					"status": {
+						"type": "string",
+						"description": "Appointment lifecycle status (REQ-BCF-004).",
+						"enum": [
+							"pending_confirmation",
+							"confirmed",
+							"completed",
+							"cancelled"
+						],
+						"example": "pending_confirmation"
+					},
+					"confirmationDeadline": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true,
+						"description": "CHANGED (REQ-BCF-004): latest moment the customer may confirm before the appointment auto-cancels (REQ-BCF-005).",
+						"example": "2026-05-20T23:59:59Z"
+					},
+					"confirmedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true,
+						"description": "CHANGED (REQ-BCF-004): timestamp the appointment moved from pending_confirmation to confirmed.",
+						"example": "2026-05-20T09:15:00Z"
+					},
+					"confirmationTokenId": {
+						"type": "string",
+						"nullable": true,
+						"description": "CHANGED (REQ-BCF-004): reference to the current valid ConfirmationToken record.",
+						"example": "tok-7f3a"
+					},
+					"cancelledReason": {
+						"type": "string",
+						"nullable": true,
+						"description": "Reason recorded when the appointment is cancelled (e.g. 'Confirmation deadline passed').",
+						"example": "Confirmation deadline passed"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "Tenant administration identifier, used to scope reads and writes per IDOR-safety.",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "status",
+					"initialState": "pending_confirmation",
+					"states": {
+						"pending_confirmation": {
+							"label": "Pending confirmation",
+							"description": "Customer self-booked; awaiting confirmation via the ConfirmationToken before the deadline."
+						},
+						"confirmed": {
+							"label": "Confirmed",
+							"description": "Customer confirmed attendance; the appointment is active."
+						},
+						"completed": {
+							"label": "Completed",
+							"description": "The appointment took place."
+						},
+						"cancelled": {
+							"label": "Cancelled",
+							"description": "The appointment was cancelled manually or auto-cancelled after the confirmation deadline passed."
+						}
+					},
+					"transitions": {
+						"appointment_confirmed": {
+							"from": "pending_confirmation",
+							"to": "confirmed",
+							"label": "Confirm appointment",
+							"description": "Guarded by ConfirmationToken validation. Invoked by ConfirmationApiController::confirm (REQ-BCF-004)."
+						},
+						"appointment_auto_cancelled": {
+							"from": "pending_confirmation",
+							"to": "cancelled",
+							"label": "Auto-cancel on deadline",
+							"description": "The deadline passed without confirmation; cancelled by CancelUnconfirmedAppointments (REQ-BCF-005)."
+						},
+						"appointment_cancelled": {
+							"from": "confirmed",
+							"to": "cancelled",
+							"label": "Cancel appointment",
+							"description": "Manual cancellation of a confirmed appointment."
+						},
+						"appointment_completed": {
+							"from": "confirmed",
+							"to": "completed",
+							"label": "Complete appointment",
+							"description": "The appointment took place and is marked completed."
+						}
+					}
+				}
+			},
+			"ConfirmationToken": {
+				"slug": "ConfirmationToken",
+				"icon": "TicketConfirmationOutline",
+				"version": "0.1.0",
+				"title": "Confirmation Token",
+				"description": "A single-use, time-limited token authorising a customer to confirm a pending appointment via an email link or web portal (REQ-BCF-001/002). The raw token string is never stored — only a bcrypt hash — and is excluded from API reads. Resends revoke the prior token and issue a fresh one (REQ-BCF-006).",
+				"x-schema-org": "schema:Token",
+				"type": "object",
+				"required": [
+					"appointmentId",
+					"tokenString",
+					"expiresAt",
+					"status"
+				],
+				"properties": {
+					"tokenId": {
+						"type": "string",
+						"description": "Unique token identifier.",
+						"example": "tok-7f3a"
+					},
+					"appointmentId": {
+						"type": "string",
+						"description": "Reference to the Appointment being confirmed (FK).",
+						"example": "apt-2026-0001"
+					},
+					"tokenString": {
+						"type": "string",
+						"description": "Bcrypt hash of the 32-character URL-safe token. The raw token is delivered to the customer once and never persisted; this field is masked on API reads (REQ-BCF-002).",
+						"example": "$2y$12$abcdefghijklmnopqrstuv"
+					},
+					"expiresAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "ISO 8601 UTC token expiry (typically +7 days from creation).",
+						"example": "2026-05-28T12:30:00Z"
+					},
+					"status": {
+						"type": "string",
+						"description": "Token lifecycle status.",
+						"enum": [
+							"active",
+							"redeemed",
+							"expired",
+							"revoked"
+						],
+						"example": "active"
+					},
+					"redeemedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true,
+						"description": "Timestamp the token was redeemed to confirm the appointment.",
+						"example": "2026-05-20T09:15:00Z"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Token creation timestamp (auto).",
+						"example": "2026-05-21T09:15:00Z"
+					},
+					"createdBy": {
+						"type": "string",
+						"nullable": true,
+						"description": "User id that triggered creation; 'system' for auto-generated tokens.",
+						"example": "system"
+					},
+					"administrationId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Tenant administration identifier copied from the appointment, used to scope reads per IDOR-safety.",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "status",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Token may be redeemed to confirm the appointment until it expires."
+						},
+						"redeemed": {
+							"label": "Redeemed",
+							"description": "Token was used to confirm the appointment and cannot be reused."
+						},
+						"revoked": {
+							"label": "Revoked",
+							"description": "Token was invalidated by a resend request."
+						},
+						"expired": {
+							"label": "Expired",
+							"description": "Token passed its expiresAt and is no longer valid."
+						}
+					},
+					"transitions": {
+						"token_redeemed": {
+							"from": "active",
+							"to": "redeemed",
+							"label": "Redeem token",
+							"description": "Customer confirmed the appointment (REQ-BCF-004)."
+						},
+						"token_revoked": {
+							"from": "active",
+							"to": "revoked",
+							"label": "Revoke token",
+							"description": "A resend request invalidated this token (REQ-BCF-006)."
+						},
+						"token_expired": {
+							"from": "active",
+							"to": "expired",
+							"label": "Expire token",
+							"description": "Auto-computed when expiresAt passes."
+						}
+					}
+				}
+			}
+		}
+	},
+	"objects": [
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Appointment",
+				"slug": "apt-demo-pending"
+			},
+			"appointmentNumber": "APT-2026-0001",
+			"serviceName": "Tax advice consultation",
+			"providerName": "Conduction B.V.",
+			"location": "Lauriergracht 14h, Amsterdam",
+			"customerEmail": "jan@example.nl",
+			"customerTimezone": "Europe/Amsterdam",
+			"startTime": "2026-05-23T12:30:00Z",
+			"endTime": "2026-05-23T13:00:00Z",
+			"status": "pending_confirmation",
+			"confirmationDeadline": "2026-05-21T23:59:59Z",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Appointment",
+				"slug": "apt-demo-confirmed"
+			},
+			"appointmentNumber": "APT-2026-0002",
+			"serviceName": "Annual accounts review",
+			"providerName": "Conduction B.V.",
+			"location": "Lauriergracht 14h, Amsterdam",
+			"customerEmail": "sanne@example.nl",
+			"customerTimezone": "Europe/Amsterdam",
+			"startTime": "2026-05-25T14:00:00Z",
+			"endTime": "2026-05-25T14:30:00Z",
+			"status": "confirmed",
+			"confirmedAt": "2026-05-20T09:15:00Z",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "ConfirmationToken",
+				"slug": "tok-demo-active"
+			},
+			"tokenId": "tok-demo-active",
+			"appointmentId": "apt-demo-pending",
+			"tokenString": "$2y$12$placeholderhashplaceholderhashplaceholderhashplaceholderha",
+			"expiresAt": "2026-05-28T12:30:00Z",
+			"status": "active",
+			"createdAt": "2026-05-21T09:15:00Z",
+			"createdBy": "system",
+			"administrationId": "adm-consultancy-nl"
+		}
+	]
+}

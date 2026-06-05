@@ -83,6 +83,14 @@ return [
         // IFRS 15 revenue cut-off (Tier 2): read-only per-contract asset/liability + waterfall.
         ['name' => 'revenue#cutoff', 'url' => '/api/revenue-cutoff', 'verb' => 'GET'],
 
+        // Appointment confirmation flow (bookings-confirm-flow). Static/verb routes
+        // are declared before the SPA catch-all wildcard so they resolve first.
+        ['name' => 'confirmationApi#validate', 'url' => '/api/appointments/validate-confirmation-token', 'verb' => 'GET'],
+        ['name' => 'confirmationApi#confirm', 'url' => '/api/appointments/{appointmentId}/confirm', 'verb' => 'PATCH'],
+        ['name' => 'confirmationApi#resend', 'url' => '/api/appointments/{appointmentId}/resend-confirmation', 'verb' => 'POST'],
+        // Public token-based confirmation portal page.
+        ['name' => 'confirmationApi#portal', 'url' => '/confirm', 'verb' => 'GET'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],

@@ -1,0 +1,67 @@
+{
+	"menu": [
+		{
+			"id": "Confirmations",
+			"label": "Pending Confirmations",
+			"icon": "TicketConfirmationOutline",
+			"route": "Confirmations",
+			"order": 60
+		}
+	],
+	"pages": [
+		{
+			"id": "Confirmations",
+			"route": "/bookings/confirmations",
+			"type": "index",
+			"title": "Pending Confirmations",
+			"config": {
+				"register": "shillinq",
+				"schema": "Appointment",
+				"filters": {
+					"status": "pending_confirmation"
+				},
+				"columns": [
+					{
+						"key": "appointmentNumber",
+						"label": "Reference",
+						"sortable": true
+					},
+					{
+						"key": "serviceName",
+						"label": "Service",
+						"sortable": true
+					},
+					{
+						"key": "customerEmail",
+						"label": "Customer",
+						"sortable": true
+					},
+					{
+						"key": "startTime",
+						"label": "Start",
+						"sortable": true
+					},
+					{
+						"key": "confirmationDeadline",
+						"label": "Confirm by",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "confirmationDeadline",
+				"detailRoute": "ConfirmationDetail"
+			}
+		},
+		{
+			"id": "ConfirmationPortal",
+			"route": "/confirm",
+			"type": "custom",
+			"component": "ConfirmationPortal",
+			"title": "Confirm Your Appointment"
+		}
+	]
+}
