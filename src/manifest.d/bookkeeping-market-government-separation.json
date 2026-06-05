@@ -1,0 +1,167 @@
+{
+	"menu": [
+		{
+			"id": "WmoCompliance",
+			"label": "WMO Compliance",
+			"icon": "ScaleBalance",
+			"order": 80,
+			"children": [
+				{
+					"id": "CommercialActivities",
+					"label": "Commercial Activities",
+					"icon": "StorefrontOutline",
+					"route": "CommercialActivities",
+					"order": 10
+				},
+				{
+					"id": "IntegralCostPrices",
+					"label": "Integral Cost Prices",
+					"icon": "CalculatorVariantOutline",
+					"route": "IntegralCostPrices",
+					"order": 20
+				},
+				{
+					"id": "ActivityCostAllocations",
+					"label": "Activity Cost Allocations",
+					"icon": "CallSplit",
+					"route": "ActivityCostAllocations",
+					"order": 30
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "CommercialActivities",
+			"route": "/wmo/commercial-activities",
+			"type": "index",
+			"title": "Commercial Activities",
+			"config": {
+				"register": "shillinq",
+				"schema": "CommercialActivity",
+				"columns": [
+					{"key": "code", "label": "Code", "sortable": true},
+					{"key": "naam", "label": "Name", "sortable": true},
+					{"key": "bestuursorgaan", "label": "Bestuursorgaan", "sortable": true},
+					{"key": "marktsegment", "label": "Market Segment", "sortable": true},
+					{"key": "isExempted", "label": "Exempted", "sortable": true},
+					{"key": "kostprijsMethode", "label": "Cost Method", "sortable": true}
+				],
+				"defaultSort": "code",
+				"detailRoute": "CommercialActivityDetail"
+			}
+		},
+		{
+			"id": "CommercialActivityDetail",
+			"route": "/wmo/commercial-activities/:id",
+			"type": "detail",
+			"title": "Commercial Activity",
+			"config": {
+				"register": "shillinq",
+				"schema": "CommercialActivity",
+				"fields": [
+					{"key": "code", "label": "Code", "type": "string"},
+					{"key": "naam", "label": "Name", "type": "string"},
+					{"key": "bestuursorgaan", "label": "Bestuursorgaan", "type": "string"},
+					{"key": "organisatieonderdeel", "label": "Department", "type": "string"},
+					{"key": "beschrijving", "label": "Description", "type": "string"},
+					{"key": "marktsegment", "label": "Market Segment", "type": "string"},
+					{"key": "startDatum", "label": "Start Date", "type": "string"},
+					{"key": "eindDatum", "label": "End Date", "type": "string"},
+					{"key": "kostprijsMethode", "label": "Cost Method", "type": "string"},
+					{"key": "kostenplaatsCode", "label": "Cost Center", "type": "string"},
+					{"key": "kostendragerCode", "label": "Cost Object", "type": "string"},
+					{"key": "isExempted", "label": "Exempted", "type": "boolean"},
+					{"key": "jaaromzet", "label": "Annual Turnover", "type": "number"},
+					{"key": "lastReviewedAt", "label": "Last Reviewed", "type": "string"}
+				],
+				"indexRoute": "CommercialActivities"
+			}
+		},
+		{
+			"id": "IntegralCostPrices",
+			"route": "/wmo/integral-cost-prices",
+			"type": "index",
+			"title": "Integral Cost Prices",
+			"config": {
+				"register": "shillinq",
+				"schema": "IntegralCostPrice",
+				"columns": [
+					{"key": "commercialActivityId", "label": "Activity", "sortable": true},
+					{"key": "periode", "label": "Period", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true},
+					{"key": "totaleKosten", "label": "Total Cost", "sortable": true},
+					{"key": "kostprijsPerEenheid", "label": "Cost / Unit", "sortable": true},
+					{"key": "compliant", "label": "Compliant", "sortable": true}
+				],
+				"defaultSort": "periode",
+				"detailRoute": "IntegralCostPriceDetail"
+			}
+		},
+		{
+			"id": "IntegralCostPriceDetail",
+			"route": "/wmo/integral-cost-prices/:id",
+			"type": "detail",
+			"title": "Integral Cost Price",
+			"config": {
+				"register": "shillinq",
+				"schema": "IntegralCostPrice",
+				"fields": [
+					{"key": "commercialActivityId", "label": "Activity", "type": "string"},
+					{"key": "periode", "label": "Period", "type": "string"},
+					{"key": "berekendOp", "label": "Calculated At", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "totaleKosten", "label": "Total Cost", "type": "number"},
+					{"key": "verkochteEenheden", "label": "Units Sold", "type": "number"},
+					{"key": "eenheidLabel", "label": "Unit", "type": "string"},
+					{"key": "kostprijsPerEenheid", "label": "Cost / Unit", "type": "number"},
+					{"key": "gehanteerdTarief", "label": "Charged Tariff", "type": "number"},
+					{"key": "marge", "label": "Margin", "type": "number"},
+					{"key": "margePercentage", "label": "Margin %", "type": "number"},
+					{"key": "compliant", "label": "Compliant", "type": "boolean"},
+					{"key": "toelichting", "label": "Notes", "type": "string"}
+				],
+				"indexRoute": "IntegralCostPrices"
+			}
+		},
+		{
+			"id": "ActivityCostAllocations",
+			"route": "/wmo/activity-cost-allocations",
+			"type": "index",
+			"title": "Activity Cost Allocations",
+			"config": {
+				"register": "shillinq",
+				"schema": "ActivityCostAllocation",
+				"columns": [
+					{"key": "journalEntryId", "label": "Journal Entry", "sortable": true},
+					{"key": "commercialActivityId", "label": "Activity", "sortable": true},
+					{"key": "originalAmount", "label": "Original Amount", "sortable": true},
+					{"key": "verdeelsleutel", "label": "Allocation Rule", "sortable": true},
+					{"key": "automatischToegepast", "label": "Automatic", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true}
+				],
+				"defaultSort": "journalEntryId",
+				"detailRoute": "ActivityCostAllocationDetail"
+			}
+		},
+		{
+			"id": "ActivityCostAllocationDetail",
+			"route": "/wmo/activity-cost-allocations/:id",
+			"type": "detail",
+			"title": "Activity Cost Allocation",
+			"config": {
+				"register": "shillinq",
+				"schema": "ActivityCostAllocation",
+				"fields": [
+					{"key": "journalEntryId", "label": "Journal Entry", "type": "string"},
+					{"key": "commercialActivityId", "label": "Activity", "type": "string"},
+					{"key": "originalAmount", "label": "Original Amount", "type": "number"},
+					{"key": "verdeelsleutel", "label": "Allocation Rule", "type": "string"},
+					{"key": "automatischToegepast", "label": "Automatic", "type": "boolean"},
+					{"key": "status", "label": "Status", "type": "string"}
+				],
+				"indexRoute": "ActivityCostAllocations"
+			}
+		}
+	]
+}

@@ -521,7 +521,25 @@
         "Unrelated Party Revenue": "Omzet derden",
         "Tax Treaty Overview": "Belastingverdragoverzicht",
         "Reconciliation": "Aansluiting",
-        "Audit Trail": "Controlespoor"
+        "Audit Trail": "Controlespoor",
+        "WMO Compliance": "Wet Markt en Overheid",
+        "Commercial Activities": "Commerciële activiteiten",
+        "Commercial Activity": "Commerciële activiteit",
+        "Integral Cost Prices": "Integrale kostprijzen",
+        "Integral Cost Price": "Integrale kostprijs",
+        "Activity Cost Allocations": "Kostenverdelingen activiteit",
+        "Activity Cost Allocation": "Kostenverdeling activiteit",
+        "Market Segment": "Marktsegment",
+        "Competitors": "Concurrenten",
+        "Customers": "Afnemers",
+        "Cost Method": "Kostprijsmethode",
+        "Cost Coverage Ratio": "Kostendekkingsratio",
+        "Charged Tariff": "Gehanteerd tarief",
+        "Compliant": "Conform",
+        "Bestuursorgaan": "Bestuursorgaan",
+        "Annual review due: {code} {name}": "Jaarlijkse evaluatie vereist: {code} {name}",
+        "Allocation Rule": "Verdeelsleutel",
+        "Original Amount": "Oorspronkelijk bedrag"
     },
     "plurals": ""
 }
