@@ -32,4 +32,15 @@ import BookingWidgetKeys from './views/BookingWidgetKeys.vue'
 export default {
 	ConfirmationPortal: { kind: 'page', component: ConfirmationPortal },
 	BookingWidgetKeys: { kind: 'page', component: BookingWidgetKeys },
+// Bookings module (bookings-resource-calendar): the calendar (month/week/day)
+// and booking-form pages are genuinely custom — neither fits the declarative
+// `index`/`detail` page types because they render a time grid with conflict
+// highlighting and an inline conflict-resolution flow (design REQ-006/REQ-007).
+// Justified per ADR-024: a custom page kind is the minimal surface that covers
+// the calendar grid; the underlying Resource/Calendar/Booking lists still use
+// declarative index pages in the manifest fragment.
+import CalendarView from './views/bookings/CalendarView.vue'
+import BookingForm from './views/bookings/BookingForm.vue'
+	BookingsCalendar: { kind: 'page', component: CalendarView },
+	BookingsForm: { kind: 'page', component: BookingForm },
 }

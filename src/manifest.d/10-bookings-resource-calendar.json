@@ -1,0 +1,136 @@
+{
+	"menu": [
+		{
+			"id": "Bookings",
+			"label": "Bookings",
+			"icon": "CalendarClockOutline",
+			"order": 55,
+			"children": [
+				{
+					"id": "Resources",
+					"label": "Resources",
+					"icon": "AccountHardHatOutline",
+					"route": "Resources",
+					"order": 10
+				},
+				{
+					"id": "Calendars",
+					"label": "Calendars",
+					"icon": "CalendarOutline",
+					"route": "Calendars",
+					"order": 20
+				},
+				{
+					"id": "BookingList",
+					"label": "Bookings",
+					"icon": "CalendarClockOutline",
+					"route": "BookingList",
+					"order": 30
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "Resources",
+			"route": "/bookings/resources",
+			"type": "index",
+			"title": "Resources",
+			"config": {
+				"register": "shillinq",
+				"schema": "Resource",
+				"columns": [
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "type", "label": "Type", "sortable": true },
+					{ "key": "organization", "label": "Organization", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "name",
+				"detailRoute": "ResourceDetail"
+			}
+		},
+		{
+			"id": "ResourceDetail",
+			"route": "/bookings/resources/:id",
+			"type": "detail",
+			"title": "Resource",
+			"config": {
+				"register": "shillinq",
+				"schema": "Resource"
+			}
+		},
+		{
+			"id": "Calendars",
+			"route": "/bookings/calendars",
+			"type": "index",
+			"title": "Calendars",
+			"config": {
+				"register": "shillinq",
+				"schema": "Calendar",
+				"columns": [
+					{ "key": "resource", "label": "Resource", "sortable": true },
+					{ "key": "timeZone", "label": "Time Zone", "sortable": true },
+					{ "key": "organization", "label": "Organization", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "resource",
+				"detailRoute": "CalendarDetail"
+			}
+		},
+		{
+			"id": "CalendarDetail",
+			"route": "/bookings/calendars/:id",
+			"type": "detail",
+			"title": "Calendar",
+			"config": {
+				"register": "shillinq",
+				"schema": "Calendar"
+			}
+		},
+		{
+			"id": "BookingList",
+			"route": "/bookings/list",
+			"type": "index",
+			"title": "Bookings",
+			"config": {
+				"register": "shillinq",
+				"schema": "Booking",
+				"columns": [
+					{ "key": "title", "label": "Title", "sortable": true },
+					{ "key": "resource", "label": "Resource", "sortable": true },
+					{ "key": "startTime", "label": "Start", "sortable": true },
+					{ "key": "endTime", "label": "End", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "startTime",
+				"detailRoute": "BookingDetail"
+			}
+		},
+		{
+			"id": "BookingDetail",
+			"route": "/bookings/list/:id",
+			"type": "detail",
+			"title": "Booking",
+			"config": {
+				"register": "shillinq",
+				"schema": "Booking"
+			}
+		},
+		{
+			"id": "BookingsCalendar",
+			"route": "/bookings/calendar/:calendarId",
+			"type": "custom",
+			"title": "Calendar View",
+			"component": "BookingsCalendar",
+			"_note": "Per-resource month/week/day calendar grid with conflict highlighting (REQ-006). Custom because the time-grid layout and slot:clicked / booking:selected interaction model do not fit the declarative index/detail page types. Resolved against registry.js kind:page."
+		},
+		{
+			"id": "BookingsForm",
+			"route": "/bookings/calendar/:calendarId/new",
+			"type": "custom",
+			"title": "New Booking",
+			"component": "BookingsForm",
+			"_note": "Booking creation form with client-side validation and 409 conflict-resolution dialog (REQ-007). Custom because it owns the POST/409-override flow; resolved against registry.js kind:page."
+		}
+	]
+}
