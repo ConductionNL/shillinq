@@ -1,0 +1,163 @@
+{
+	"menu": [
+		{
+			"id": "Verplichtingen",
+			"label": "Verplichtingen",
+			"icon": "FileSign",
+			"order": 30,
+			"children": [
+				{
+					"id": "Verplichtingenregister",
+					"label": "Verplichtingenregister",
+					"icon": "FileSign",
+					"route": "Verplichtingenregister",
+					"order": 10
+				},
+				{
+					"id": "Mandaten",
+					"label": "Mandaten",
+					"icon": "AccountKey",
+					"route": "Mandaten",
+					"order": 20
+				},
+				{
+					"id": "Goedkeuringsstappen",
+					"label": "Goedkeuringen",
+					"icon": "ClipboardCheckOutline",
+					"route": "Goedkeuringsstappen",
+					"order": 30
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "Verplichtingenregister",
+			"route": "/verplichtingen",
+			"type": "index",
+			"title": "Verplichtingenregister",
+			"config": {
+				"register": "shillinq",
+				"schema": "Verplichting",
+				"columns": [
+					{"key": "verplichtingsnummer", "label": "Nummer", "sortable": true},
+					{"key": "soort", "label": "Soort", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true},
+					{"key": "totaalbedrag_excl_btw", "label": "Bedrag (excl. btw)", "sortable": true},
+					{"key": "aangaandatum", "label": "Aangaandatum", "sortable": true},
+					{"key": "mandaat_toegepast", "label": "Mandaat", "sortable": true}
+				],
+				"defaultSort": "verplichtingsnummer",
+				"detailRoute": "VerplichtingDetail"
+			}
+		},
+		{
+			"id": "VerplichtingDetail",
+			"route": "/verplichtingen/:id",
+			"type": "detail",
+			"title": "Verplichting",
+			"config": {
+				"register": "shillinq",
+				"schema": "Verplichting",
+				"fields": [
+					{"key": "verplichtingsnummer", "label": "Nummer", "type": "string"},
+					{"key": "soort", "label": "Soort", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "aangaandatum", "label": "Aangaandatum", "type": "string"},
+					{"key": "looptijd_van", "label": "Looptijd van", "type": "string"},
+					{"key": "looptijd_tot", "label": "Looptijd tot", "type": "string"},
+					{"key": "totaalbedrag_excl_btw", "label": "Totaalbedrag (excl. btw)", "type": "number"},
+					{"key": "totaalbedrag_incl_btw", "label": "Totaalbedrag (incl. btw)", "type": "number"},
+					{"key": "valuta", "label": "Valuta", "type": "string"},
+					{"key": "btw_regime", "label": "Btw-regime", "type": "string"},
+					{"key": "mandaat_toegepast", "label": "Mandaat", "type": "string"},
+					{"key": "override_reden", "label": "Override-reden", "type": "string"},
+					{"key": "interne_kenmerk", "label": "Intern kenmerk", "type": "string"}
+				],
+				"indexRoute": "Verplichtingenregister"
+			}
+		},
+		{
+			"id": "Mandaten",
+			"route": "/verplichtingen/mandaten",
+			"type": "index",
+			"title": "Mandaten",
+			"config": {
+				"register": "shillinq",
+				"schema": "Mandaat",
+				"columns": [
+					{"key": "mandaatcode", "label": "Code", "sortable": true},
+					{"key": "naam", "label": "Naam", "sortable": true},
+					{"key": "maximumbedrag", "label": "Maximumbedrag", "sortable": true},
+					{"key": "is_override", "label": "Override", "sortable": true},
+					{"key": "geldig_tot", "label": "Geldig tot", "sortable": true}
+				],
+				"defaultSort": "mandaatcode",
+				"detailRoute": "MandaatDetail"
+			}
+		},
+		{
+			"id": "MandaatDetail",
+			"route": "/verplichtingen/mandaten/:id",
+			"type": "detail",
+			"title": "Mandaat",
+			"config": {
+				"register": "shillinq",
+				"schema": "Mandaat",
+				"fields": [
+					{"key": "mandaatcode", "label": "Code", "type": "string"},
+					{"key": "naam", "label": "Naam", "type": "string"},
+					{"key": "houder", "label": "Houder", "type": "string"},
+					{"key": "houder_type", "label": "Houder-type", "type": "string"},
+					{"key": "maximumbedrag", "label": "Maximumbedrag", "type": "number"},
+					{"key": "is_override", "label": "Override-mandaat", "type": "boolean"},
+					{"key": "vereist_tweede_handtekening_boven", "label": "Tweede handtekening boven", "type": "number"},
+					{"key": "geldig_van", "label": "Geldig van", "type": "string"},
+					{"key": "geldig_tot", "label": "Geldig tot", "type": "string"},
+					{"key": "vastgesteld_bij", "label": "Vastgesteld bij", "type": "string"}
+				],
+				"indexRoute": "Mandaten"
+			}
+		},
+		{
+			"id": "Goedkeuringsstappen",
+			"route": "/verplichtingen/goedkeuringen",
+			"type": "index",
+			"title": "Goedkeuringen",
+			"config": {
+				"register": "shillinq",
+				"schema": "Goedkeuringsstap",
+				"columns": [
+					{"key": "verplichting", "label": "Verplichting", "sortable": true},
+					{"key": "stapnummer", "label": "Stap", "sortable": true},
+					{"key": "rol_vereist", "label": "Rol", "sortable": true},
+					{"key": "toegewezen_aan", "label": "Toegewezen aan", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true}
+				],
+				"defaultSort": "verplichting",
+				"detailRoute": "GoedkeuringsstapDetail"
+			}
+		},
+		{
+			"id": "GoedkeuringsstapDetail",
+			"route": "/verplichtingen/goedkeuringen/:id",
+			"type": "detail",
+			"title": "Goedkeuringsstap",
+			"config": {
+				"register": "shillinq",
+				"schema": "Goedkeuringsstap",
+				"fields": [
+					{"key": "verplichting", "label": "Verplichting", "type": "string"},
+					{"key": "stapnummer", "label": "Stap", "type": "number"},
+					{"key": "rol_vereist", "label": "Rol vereist", "type": "string"},
+					{"key": "toegewezen_aan", "label": "Toegewezen aan", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "behandeld_op", "label": "Behandeld op", "type": "string"},
+					{"key": "opmerking", "label": "Opmerking", "type": "string"},
+					{"key": "vereist_handtekening", "label": "Handtekening vereist", "type": "boolean"}
+				],
+				"indexRoute": "Goedkeuringsstappen"
+			}
+		}
+	]
+}

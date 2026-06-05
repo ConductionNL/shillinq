@@ -167,6 +167,7 @@ class InitializeSettings implements IRepairStep
             $this->seedProductAttributeTemplates(output: $output);
             $this->seedIntercompanyToleranceRules(output: $output);
             $this->importStatementManifests(output: $output);
+            $this->seedMandaatTemplates(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -619,6 +620,47 @@ class InitializeSettings implements IRepairStep
         }
 
     }//end seedBbvStamData()
+
+    /**
+     * Seed mandaat (signing-authority) templates for verplichtingenadministratie, idempotently.
+     *
+     * Calls SettingsService::seedMandaatTemplates() with the configured
+     * administrationId. Requires a non-empty administrationId (C2); skips with a
+     * warning when unset. Idempotent: mandates matched by mandaatcode +
+     * administrationId are skipped, preserving operator edits per REQ-VPL-002.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-2.2
+     */
+    private function seedMandaatTemplates(IOutput $output): void
+    {
+        $settings         = $this->settingsService->getSettings();
+        $administrationId = ($settings['administration_id'] ?? '');
+
+        if ($administrationId === '') {
+            $output->warning(
+                'Shillinq: administration_id not configured — skipping mandaat template seed.'
+            );
+            return;
+        }
+
+        $output->info('Seeding mandaat templates...');
+        $result = $this->settingsService->seedMandaatTemplates(administrationId: $administrationId);
+
+        if ($result['success'] === true) {
+            $output->info(
+                'Mandaat templates seeded: '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if ($result['success'] !== true) {
+            $output->warning('Mandaat templates seeding issue: '.($result['message'] ?? 'unknown error'));
+        }
+
+    }//end seedMandaatTemplates()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.
