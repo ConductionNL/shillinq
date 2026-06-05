@@ -59,6 +59,9 @@ return [
         // BCF claims (Tier 3): read-only compensable-VAT breakdown for a quarter.
         ['name' => 'bcfClaim#compensation', 'url' => '/api/bcf-claims/compensation', 'verb' => 'GET'],
 
+        // KOR (Tier 2): read-only drempel-bewaking (running omzet, benutting, prognose, alert-schijf).
+        ['name' => 'kor#monitor', 'url' => '/api/kor/monitor', 'verb' => 'GET'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
