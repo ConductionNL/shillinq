@@ -232,6 +232,27 @@
 					"icon": "TagOutline",
 					"route": "ProductAttributes",
 					"order": 20
+				},
+				{
+					"id": "StockLevels",
+					"label": "Stock Levels",
+					"icon": "PackageVariantClosedOutline",
+					"route": "StockLevels",
+					"order": 30
+				},
+				{
+					"id": "StockByLocation",
+					"label": "Stock by Location",
+					"icon": "WarehouseOutline",
+					"route": "StockByLocation",
+					"order": 40
+				},
+				{
+					"id": "ReserveStock",
+					"label": "Reserve Stock",
+					"icon": "PackageLockOutline",
+					"route": "ReserveStock",
+					"order": 50
 				}
 			]
 		},
@@ -6454,6 +6475,207 @@
 				],
 				"defaultSort": "subsidieNumber",
 				"detailRoute": "SubsidieDetail"
+			}
+		},
+		{
+			"id": "StockLevels",
+			"route": "/inventory/stock-levels",
+			"type": "index",
+			"title": "Stock Levels",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryStock",
+				"columns": [
+					{
+						"key": "product",
+						"label": "Product",
+						"sortable": true
+					},
+					{
+						"key": "location",
+						"label": "Location",
+						"sortable": true
+					},
+					{
+						"key": "quantityOnHand",
+						"label": "On Hand",
+						"sortable": true
+					},
+					{
+						"key": "quantityReserved",
+						"label": "Reserved",
+						"sortable": true
+					},
+					{
+						"key": "quantityAvailable",
+						"label": "Available",
+						"sortable": true
+					},
+					{
+						"key": "lastRestockDate",
+						"label": "Last Restock",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "product",
+				"detailRoute": "StockLevelDetail"
+			}
+		},
+		{
+			"id": "StockLevelDetail",
+			"route": "/inventory/stock-levels/:id",
+			"type": "detail",
+			"title": "Stock Level",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryStock",
+				"fields": [
+					{
+						"key": "product",
+						"label": "Product",
+						"type": "string"
+					},
+					{
+						"key": "location",
+						"label": "Location",
+						"type": "string"
+					},
+					{
+						"key": "quantityOnHand",
+						"label": "Quantity On Hand",
+						"type": "number"
+					},
+					{
+						"key": "quantityReserved",
+						"label": "Quantity Reserved",
+						"type": "number"
+					},
+					{
+						"key": "quantityInTransit",
+						"label": "Quantity In Transit",
+						"type": "number"
+					},
+					{
+						"key": "quantityAvailable",
+						"label": "Quantity Available",
+						"type": "number"
+					},
+					{
+						"key": "unitCost",
+						"label": "Unit Cost (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "lastRestockDate",
+						"label": "Last Restock Date",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "organizationId",
+						"label": "Organization",
+						"type": "string"
+					}
+				],
+				"indexRoute": "StockLevels"
+			}
+		},
+		{
+			"id": "StockByLocation",
+			"route": "/inventory/stock-by-location",
+			"type": "index",
+			"title": "Stock by Location",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryStock",
+				"columns": [
+					{
+						"key": "location",
+						"label": "Location",
+						"sortable": true
+					},
+					{
+						"key": "product",
+						"label": "Product",
+						"sortable": true
+					},
+					{
+						"key": "quantityOnHand",
+						"label": "On Hand",
+						"sortable": true
+					},
+					{
+						"key": "quantityReserved",
+						"label": "Reserved",
+						"sortable": true
+					},
+					{
+						"key": "quantityAvailable",
+						"label": "Available",
+						"sortable": true
+					},
+					{
+						"key": "unitCost",
+						"label": "Unit Cost",
+						"sortable": true
+					}
+				],
+				"defaultSort": "location",
+				"detailRoute": "StockLevelDetail"
+			}
+		},
+		{
+			"id": "ReserveStock",
+			"route": "/inventory/reserve-stock",
+			"type": "index",
+			"title": "Reserve Stock",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryStock",
+				"filter": { "quantityReserved[gt]": 0 },
+				"columns": [
+					{
+						"key": "product",
+						"label": "Product",
+						"sortable": true
+					},
+					{
+						"key": "location",
+						"label": "Location",
+						"sortable": true
+					},
+					{
+						"key": "quantityReserved",
+						"label": "Reserved",
+						"sortable": true
+					},
+					{
+						"key": "quantityOnHand",
+						"label": "On Hand",
+						"sortable": true
+					},
+					{
+						"key": "quantityAvailable",
+						"label": "Available",
+						"sortable": true
+					},
+					{
+						"key": "lastRestockDate",
+						"label": "Last Restock",
+						"sortable": true
+					}
+				],
+				"defaultSort": "product",
+				"detailRoute": "StockLevelDetail"
 			}
 		}
 	]

@@ -1350,4 +1350,253 @@ class SettingsService
         return ['seeded' => $seeded, 'skipped' => $skipped];
 
     }//end importProductAttributes()
+
+    /**
+     * Seed Location records from locations.json, idempotently.
+     *
+     * Deduplication key is (code, organizationId). Re-running is safe and preserves
+     * operator edits per REQ-IST-009.
+     *
+     * @return array{success: bool, message: string, seeded?: int, skipped?: int}
+     *
+     * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-19
+     */
+    public function seedLocations(): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/locations.json';
+        if (file_exists($seedPath) === false) {
+            return [
+                'success' => false,
+                'message' => 'Seed file not found: locations.json',
+            ];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return [
+                'success' => false,
+                'message' => 'Failed to read seed file: locations.json',
+            ];
+        }
+
+        $data = json_decode($content, associative: true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return [
+                'success' => false,
+                'message' => 'Failed to parse locations.json: '.json_last_error_msg(),
+            ];
+        }
+
+        $locations = ($data['locations'] ?? []);
+        if (empty($locations) === true) {
+            return [
+                'success' => true,
+                'message' => 'Seed file contains no locations, nothing to import.',
+                'seeded'  => 0,
+                'skipped' => 0,
+            ];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($locations as $location) {
+                $code           = ($location['code'] ?? null);
+                $organizationId = ($location['organizationId'] ?? null);
+                if ($code === null || $organizationId === null) {
+                    continue;
+                }
+
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('Location')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'code'           => $code,
+                                'organizationId' => $organizationId,
+                            ],
+                            'limit'   => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $location,
+                    register: $registerSlug,
+                    schema: 'Location',
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: Location seed imported',
+                [
+                    'seeded'  => $seeded,
+                    'skipped' => $skipped,
+                ]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'Location seed imported successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: Location seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedLocations()
+
+    /**
+     * Seed InventoryStock records from a location-specific seed file, idempotently.
+     *
+     * Deduplication key is (product, location, organizationId) per REQ-IST-009.
+     * Re-running is safe and preserves operator edits to stock levels.
+     *
+     * @param string $locationFile Basename of the seed file (e.g. 'stock-amsterdam.json').
+     *
+     * @return array{success: bool, message: string, seeded?: int, skipped?: int}
+     *
+     * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-12
+     */
+    public function seedInventoryStock(string $locationFile): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/'.$locationFile;
+        if (file_exists($seedPath) === false) {
+            return [
+                'success' => false,
+                'message' => 'Seed file not found: '.$locationFile,
+            ];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return [
+                'success' => false,
+                'message' => 'Failed to read seed file: '.$locationFile,
+            ];
+        }
+
+        $data = json_decode($content, associative: true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return [
+                'success' => false,
+                'message' => 'Failed to parse '.$locationFile.': '.json_last_error_msg(),
+            ];
+        }
+
+        $stockRecords = ($data['inventoryStock'] ?? []);
+        if (empty($stockRecords) === true) {
+            return [
+                'success' => true,
+                'message' => 'Seed file contains no inventoryStock records, nothing to import.',
+                'seeded'  => 0,
+                'skipped' => 0,
+            ];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($stockRecords as $stock) {
+                $product        = ($stock['product'] ?? null);
+                $location       = ($stock['location'] ?? null);
+                $organizationId = ($stock['organizationId'] ?? null);
+
+                if ($product === null || $location === null || $organizationId === null) {
+                    continue;
+                }
+
+                // Deduplication key: (product, location, organizationId) per REQ-IST-009.
+                // Preserves operator edits to stock levels across repair re-runs.
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('InventoryStock')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'product'        => $product,
+                                'location'       => $location,
+                                'organizationId' => $organizationId,
+                            ],
+                            'limit'   => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $stock,
+                    register: $registerSlug,
+                    schema: 'InventoryStock',
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: InventoryStock seed imported',
+                [
+                    'file'    => $locationFile,
+                    'seeded'  => $seeded,
+                    'skipped' => $skipped,
+                ]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'InventoryStock seed imported successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: InventoryStock seeding failed',
+                [
+                    'file'      => $locationFile,
+                    'exception' => $e->getMessage(),
+                ]
+            );
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedInventoryStock()
 }//end class

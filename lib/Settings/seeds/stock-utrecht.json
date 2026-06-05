@@ -1,0 +1,68 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"source": "Nextcloud Inventory",
+		"location": "Utrecht Store",
+		"version": "1.0",
+		"description": "Sample InventoryStock records for Utrecht Store (UTC-ST) — retail outlet. Demonstrates smaller quantities, higher reservation rates typical of retail, and no in-transit stock.",
+		"imported": "2026-06-05T00:00:00Z"
+	},
+	"inventoryStock": [
+		{
+			"product": "DELL-XPS-13-2024",
+			"location": "UTC-ST",
+			"quantityOnHand": 3.00,
+			"quantityReserved": 1.00,
+			"quantityInTransit": 0.00,
+			"unitCost": 1899.00,
+			"lastRestockDate": "2026-05-18T00:00:00Z",
+			"status": "active",
+			"organizationId": "sample-org"
+		},
+		{
+			"product": "HP-LJ-M404-TONER-BK",
+			"location": "UTC-ST",
+			"quantityOnHand": 40.00,
+			"quantityReserved": 0.00,
+			"quantityInTransit": 0.00,
+			"unitCost": 45.00,
+			"lastRestockDate": "2026-05-14T00:00:00Z",
+			"status": "active",
+			"organizationId": "sample-org"
+		},
+		{
+			"product": "PKG-CUSTOM-CARTON-A5",
+			"location": "UTC-ST",
+			"quantityOnHand": 200.00,
+			"quantityReserved": 50.00,
+			"quantityInTransit": 0.00,
+			"unitCost": 0.35,
+			"lastRestockDate": "2026-05-02T00:00:00Z",
+			"status": "active",
+			"organizationId": "sample-org"
+		},
+		{
+			"product": "NOTEBOOK-A4-100",
+			"location": "UTC-ST",
+			"quantityOnHand": 25.00,
+			"quantityReserved": 5.00,
+			"quantityInTransit": 0.00,
+			"unitCost": 3.50,
+			"lastRestockDate": "2026-04-25T00:00:00Z",
+			"status": "active",
+			"organizationId": "sample-org"
+		},
+		{
+			"product": "USB-DRIVE-32GB-KS",
+			"location": "UTC-ST",
+			"quantityOnHand": 30.00,
+			"quantityReserved": 8.00,
+			"quantityInTransit": 0.00,
+			"unitCost": 12.00,
+			"lastRestockDate": "2026-05-10T00:00:00Z",
+			"status": "active",
+			"organizationId": "sample-org"
+		}
+	]
+}

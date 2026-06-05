@@ -1,0 +1,49 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"source": "Nextcloud Inventory",
+		"category": "locations",
+		"version": "1.0",
+		"description": "Sample Location records for demo and testing — Amsterdam Warehouse, Rotterdam Warehouse, Utrecht Store. NOT required for production.",
+		"imported": "2026-06-05T00:00:00Z"
+	},
+	"locations": [
+		{
+			"name": "Amsterdam Warehouse",
+			"code": "AMS-WH",
+			"description": "Head office distribution center — serves NL and BE markets",
+			"address": "Hoofddorpweg 10A, 1131 PA Amsterdam",
+			"region": "Amsterdam",
+			"locationType": "distribution_center",
+			"capacityUnits": 5000,
+			"manager": "Jan de Vries",
+			"status": "active",
+			"organizationId": "sample-org"
+		},
+		{
+			"name": "Rotterdam Warehouse",
+			"code": "RTM-WH",
+			"description": "Regional logistics hub — port-adjacent, serves logistics and import/export",
+			"address": "Betuweweg 45, 3196 KE Rotterdam-Pernis",
+			"region": "Rotterdam",
+			"locationType": "warehouse",
+			"capacityUnits": 8000,
+			"manager": "Maria González",
+			"status": "active",
+			"organizationId": "sample-org"
+		},
+		{
+			"name": "Utrecht Store",
+			"code": "UTC-ST",
+			"description": "Retail outlet in city center — smaller stock capacity, high turnover",
+			"address": "Neude 3, 3512 AD Utrecht",
+			"region": "Utrecht",
+			"locationType": "store",
+			"capacityUnits": 500,
+			"manager": "Erik Vermeulen",
+			"status": "active",
+			"organizationId": "sample-org"
+		}
+	]
+}

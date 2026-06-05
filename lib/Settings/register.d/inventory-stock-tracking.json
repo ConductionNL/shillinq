@@ -1,0 +1,266 @@
+{
+	"info": {
+		"version": "0.1.0-inventory-stock-tracking"
+	},
+	"components": {
+		"schemas": {
+			"Location": {
+				"slug": "Location",
+				"icon": "WarehouseOutline",
+				"version": "0.1.0",
+				"title": "Location",
+				"description": "A physical inventory holding site — warehouse, distribution center, retail store, or other storage location. Foundation for multi-location stock tracking per REQ-IST-005. Declared in shillinq pending budget-planning-control spec landing.",
+				"x-schema-org": "schema:Place",
+				"x-spec": "openspec/changes/inventory-stock-tracking/tasks.md#task-19",
+				"type": "object",
+				"x-openregister-unique": [
+					[
+						"organizationId",
+						"code"
+					]
+				],
+				"required": [
+					"name",
+					"code",
+					"status",
+					"organizationId"
+				],
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "Human-readable location name recognizable to warehouse operators.",
+						"example": "Amsterdam Warehouse"
+					},
+					"code": {
+						"type": "string",
+						"description": "Short operator-assigned location code. Unique per (organizationId, code).",
+						"example": "AMS-WH"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "Optional description of the location's purpose or characteristics.",
+						"example": "Head office distribution center — serves NL and BE markets"
+					},
+					"address": {
+						"type": "string",
+						"nullable": true,
+						"description": "Full postal address of the location.",
+						"example": "Hoofddorpweg 10A, 1131 PA Amsterdam"
+					},
+					"region": {
+						"type": "string",
+						"nullable": true,
+						"description": "City or regional grouping for reporting aggregations.",
+						"example": "Amsterdam"
+					},
+					"locationType": {
+						"type": "string",
+						"nullable": true,
+						"description": "Kind of location: warehouse, store, distribution_center, depot, or other.",
+						"enum": [
+							"warehouse",
+							"store",
+							"distribution_center",
+							"depot",
+							"other"
+						],
+						"example": "warehouse"
+					},
+					"capacityUnits": {
+						"type": "number",
+						"nullable": true,
+						"description": "Maximum stock capacity in units. Informational; enforcement is downstream.",
+						"example": 5000
+					},
+					"manager": {
+						"type": "string",
+						"nullable": true,
+						"description": "Name or ID of the location manager.",
+						"example": "Jan de Vries"
+					},
+					"status": {
+						"type": "string",
+						"description": "Location lifecycle status. active = in use; inactive = closed or out of service.",
+						"enum": [
+							"active",
+							"inactive"
+						],
+						"default": "active",
+						"example": "active"
+					},
+					"organizationId": {
+						"type": "string",
+						"description": "FK to the organization owning this location. Combined with code forms the uniqueness key.",
+						"example": "org-123"
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"inventory": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						},
+						"procurement": {
+							"permissions": [
+								"read"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"InventoryStock": {
+				"slug": "InventoryStock",
+				"icon": "PackageVariantClosedOutline",
+				"version": "0.1.0",
+				"title": "Inventory Stock",
+				"description": "Stock quantity snapshot per (product, location). Tracks on-hand, reserved, in-transit, and available quantities for multi-warehouse inventory management per REQ-IST-001 through REQ-IST-013. Foundation for downstream StockMove, reorder automation, and COGS posting specs.",
+				"x-schema-org": "schema:Product",
+				"x-spec": "openspec/changes/inventory-stock-tracking/tasks.md#task-5",
+				"type": "object",
+				"x-openregister-unique": [
+					[
+						"product",
+						"location",
+						"organizationId"
+					]
+				],
+				"required": [
+					"product",
+					"location",
+					"quantityOnHand",
+					"status",
+					"organizationId"
+				],
+				"properties": {
+					"product": {
+						"type": "string",
+						"description": "FK to Product register (from inventory-product-catalog). Required per REQ-IST-004. Uniqueness constraint on (product, location, organizationId).",
+						"example": "LAPTOP-DELL-XPS13"
+					},
+					"location": {
+						"type": "string",
+						"description": "FK to Location entity. Required per REQ-IST-005. Represents warehouse, distribution center, store, or other holding site.",
+						"example": "AMS-WH"
+					},
+					"quantityOnHand": {
+						"type": "number",
+						"format": "double",
+						"description": "Physical quantity currently in the location per REQ-IST-002. Supports fractional units (0.5L, 2.25kg). Default 0.00.",
+						"default": 0.00,
+						"example": 15.00
+					},
+					"quantityReserved": {
+						"type": "number",
+						"format": "double",
+						"description": "Quantity allocated to pending orders, production plans, or shipments. Not available for new allocations per REQ-IST-002. Default 0.00.",
+						"default": 0.00,
+						"nullable": true,
+						"example": 3.00
+					},
+					"quantityInTransit": {
+						"type": "number",
+						"format": "double",
+						"description": "Quantity en route from supplier or between locations. Not yet received; not in on-hand count per REQ-IST-003. Default 0.00.",
+						"default": 0.00,
+						"nullable": true,
+						"example": 5.00
+					},
+					"quantityAvailable": {
+						"type": "number",
+						"format": "double",
+						"description": "Computed read-only field: quantityOnHand minus quantityReserved per REQ-IST-008. Never stored; recalculated on every retrieval.",
+						"readOnly": true,
+						"nullable": true,
+						"example": 12.00
+					},
+					"unitCost": {
+						"type": "number",
+						"format": "double",
+						"description": "Standard or average cost per unit at time of last receipt per REQ-IST-006. Used for P&L (COGS) and balance sheet valuation. Currency matches Product.currency.",
+						"nullable": true,
+						"example": 1899.00
+					},
+					"lastRestockDate": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Timestamp of the most recent stock receipt or manual adjustment per REQ-IST-012. Supports aging queries and replenishment planning.",
+						"nullable": true,
+						"example": "2026-05-15T00:00:00Z"
+					},
+					"status": {
+						"type": "string",
+						"description": "Stock record status. Mirrors Product.status for query efficiency per REQ-IST-011. active = in normal use; discontinued = product phased out.",
+						"enum": [
+							"active",
+							"discontinued"
+						],
+						"default": "active",
+						"example": "active"
+					},
+					"organizationId": {
+						"type": "string",
+						"description": "FK to the organization owning this stock record. Multi-tenancy scoping per REQ-IST-007. Combined with product+location forms the uniqueness key.",
+						"example": "org-123"
+					}
+				},
+				"x-openregister-calculations": {
+					"quantityAvailable": {
+						"expression": "quantityOnHand - (quantityReserved ?? 0)",
+						"description": "Derived available-to-promise quantity: on-hand minus reserved per REQ-IST-008. Recalculated on every read; not stored in the database.",
+						"readOnly": true,
+						"type": "number"
+					}
+				},
+				"x-openregister-relations": {
+					"productRecord": {
+						"localField": "product",
+						"relatedSchema": "Product",
+						"relatedField": "sku",
+						"cardinality": "many-to-one",
+						"description": "The product this stock record tracks. FK to Product register per REQ-IST-004."
+					},
+					"locationRecord": {
+						"localField": "location",
+						"relatedSchema": "Location",
+						"relatedField": "code",
+						"cardinality": "many-to-one",
+						"description": "The physical location where this stock is held. FK to Location per REQ-IST-005."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"inventory": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						},
+						"procurement": {
+							"permissions": [
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			}
+		}
+	}
+}

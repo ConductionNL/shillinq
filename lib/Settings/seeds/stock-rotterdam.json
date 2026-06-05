@@ -1,0 +1,68 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"source": "Nextcloud Inventory",
+		"location": "Rotterdam Warehouse",
+		"version": "1.0",
+		"description": "Sample InventoryStock records for Rotterdam Warehouse (RTM-WH) — regional logistics hub. Demonstrates higher in-transit volumes from port operations and lower reservation rates.",
+		"imported": "2026-06-05T00:00:00Z"
+	},
+	"inventoryStock": [
+		{
+			"product": "DELL-XPS-13-2024",
+			"location": "RTM-WH",
+			"quantityOnHand": 8.00,
+			"quantityReserved": 2.00,
+			"quantityInTransit": 0.00,
+			"unitCost": 1899.00,
+			"lastRestockDate": "2026-05-12T00:00:00Z",
+			"status": "active",
+			"organizationId": "sample-org"
+		},
+		{
+			"product": "HP-LJ-M404-TONER-BK",
+			"location": "RTM-WH",
+			"quantityOnHand": 75.00,
+			"quantityReserved": 10.00,
+			"quantityInTransit": 50.00,
+			"unitCost": 45.00,
+			"lastRestockDate": "2026-04-28T00:00:00Z",
+			"status": "active",
+			"organizationId": "sample-org"
+		},
+		{
+			"product": "PKG-CUSTOM-CARTON-A5",
+			"location": "RTM-WH",
+			"quantityOnHand": 5000.00,
+			"quantityReserved": 800.00,
+			"quantityInTransit": 2000.00,
+			"unitCost": 0.35,
+			"lastRestockDate": "2026-05-05T00:00:00Z",
+			"status": "active",
+			"organizationId": "sample-org"
+		},
+		{
+			"product": "NOTEBOOK-A4-100",
+			"location": "RTM-WH",
+			"quantityOnHand": 40.00,
+			"quantityReserved": 0.00,
+			"quantityInTransit": 40.00,
+			"unitCost": 3.50,
+			"lastRestockDate": "2026-04-20T00:00:00Z",
+			"status": "active",
+			"organizationId": "sample-org"
+		},
+		{
+			"product": "USB-DRIVE-32GB-KS",
+			"location": "RTM-WH",
+			"quantityOnHand": 120.00,
+			"quantityReserved": 15.00,
+			"quantityInTransit": 100.00,
+			"unitCost": 12.00,
+			"lastRestockDate": "2026-05-18T00:00:00Z",
+			"status": "active",
+			"organizationId": "sample-org"
+		}
+	]
+}

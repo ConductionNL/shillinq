@@ -82,6 +82,8 @@ class InitializeSettings implements IRepairStep
      * Phase 6: seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
      * Phase 7: seeds RJ-270 stages and rate-card templates for consultancy project accounting.
      * Phase 8: seeds ProductAttribute templates (office, it_hardware, logistics, food_beverage, clothing) per REQ-IPC-007.
+     * Phase 9: seeds Location records (Amsterdam, Rotterdam, Utrecht) per REQ-IST-009.
+     * Phase 10: seeds InventoryStock records for all three warehouse locations per REQ-IST-009.
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -93,6 +95,7 @@ class InitializeSettings implements IRepairStep
      * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
      * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
      * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
+     * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-12
      */
     public function run(IOutput $output): void
     {
@@ -144,6 +147,8 @@ class InitializeSettings implements IRepairStep
             $this->seedKorThresholds(output: $output);
             $this->seedComplianceReferenceData(output: $output);
             $this->seedProductAttributeTemplates(output: $output);
+            $this->seedWarehouseLocations(output: $output);
+            $this->seedInventoryStockLevels(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -460,6 +465,71 @@ class InitializeSettings implements IRepairStep
         }//end foreach
 
     }//end seedProductAttributeTemplates()
+
+    /**
+     * Seed Location records (Amsterdam, Rotterdam, Utrecht warehouses), idempotently.
+     *
+     * Location seed is unconditional (not tenant-specific) because location master data
+     * is shared infrastructure. Deduplication is by (code, organizationId) inside
+     * SettingsService::seedLocations() per REQ-IST-009.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-19
+     */
+    private function seedWarehouseLocations(IOutput $output): void
+    {
+        $output->info('Seeding warehouse locations...');
+        $result = $this->settingsService->seedLocations();
+        if ($result['success'] === true) {
+            $output->info(
+                'Locations seeded: '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if ($result['success'] !== true) {
+            $output->warning('Locations seeding issue: '.($result['message'] ?? 'unknown error'));
+        }
+
+    }//end seedWarehouseLocations()
+
+    /**
+     * Seed InventoryStock records for all three warehouse locations, idempotently.
+     *
+     * Seeding is unconditional (demo data). Deduplication key is (product, location, organizationId)
+     * inside SettingsService::seedInventoryStock() per REQ-IST-009.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-12
+     */
+    private function seedInventoryStockLevels(IOutput $output): void
+    {
+        $locationFiles = [
+            'stock-amsterdam.json',
+            'stock-rotterdam.json',
+            'stock-utrecht.json',
+        ];
+
+        foreach ($locationFiles as $file) {
+            $output->info('Seeding InventoryStock from '.$file.'...');
+            $result = $this->settingsService->seedInventoryStock(locationFile: $file);
+            if ($result['success'] === true) {
+                $output->info(
+                    'InventoryStock ('.$file.'): '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
+                );
+            }
+
+            if ($result['success'] !== true) {
+                $output->warning('InventoryStock ('.$file.') seeding issue: '.($result['message'] ?? 'unknown error'));
+            }
+        }//end foreach
+
+    }//end seedInventoryStockLevels()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.
