@@ -232,6 +232,27 @@
 					"icon": "TagOutline",
 					"route": "ProductAttributes",
 					"order": 20
+				},
+				{
+					"id": "CycleCounts",
+					"label": "Cycle Counts",
+					"icon": "ClipboardCheckOutline",
+					"route": "CycleCounts",
+					"order": 30
+				},
+				{
+					"id": "CountTemplates",
+					"label": "Count Templates",
+					"icon": "ClipboardTextOutline",
+					"route": "CountTemplates",
+					"order": 40
+				},
+				{
+					"id": "VarianceReports",
+					"label": "Variance Reports",
+					"icon": "ChartBarOutline",
+					"route": "VarianceReports",
+					"order": 50
 				}
 			]
 		},
@@ -553,6 +574,193 @@
 		}
 	],
 	"pages": [
+		{
+			"id": "CycleCounts",
+			"route": "/inventory/cycle-counts",
+			"type": "index",
+			"title": "Cycle Counts",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryCycleCount",
+				"columns": [
+					{
+						"key": "countId",
+						"label": "Count ID",
+						"sortable": true
+					},
+					{
+						"key": "countDate",
+						"label": "Count Date",
+						"sortable": true
+					},
+					{
+						"key": "countType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "locationFilter",
+						"label": "Location",
+						"sortable": true
+					},
+					{
+						"key": "variancePercentage",
+						"label": "Variance %",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-countDate",
+				"filters": [
+					{"key": "state", "label": "Status", "type": "enum"},
+					{"key": "countDate", "label": "Date Range", "type": "date-range"},
+					{"key": "locationFilter", "label": "Location", "type": "string"}
+				],
+				"detailRoute": "CycleCountDetail"
+			}
+		},
+		{
+			"id": "CycleCountDetail",
+			"route": "/inventory/cycle-counts/:id",
+			"type": "detail",
+			"title": "Cycle Count",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryCycleCount",
+				"fields": [
+					{"key": "countId", "label": "Count ID", "type": "string"},
+					{"key": "countDate", "label": "Count Date", "type": "date"},
+					{"key": "initiatedBy", "label": "Initiated By", "type": "string"},
+					{"key": "countType", "label": "Count Type", "type": "string"},
+					{"key": "locationFilter", "label": "Location Filter", "type": "string"},
+					{"key": "categoryFilter", "label": "Category Filter", "type": "string"},
+					{"key": "expectedValue", "label": "Expected Value (€)", "type": "number"},
+					{"key": "countedValue", "label": "Counted Value (€)", "type": "number"},
+					{"key": "varianceValue", "label": "Variance (€)", "type": "number"},
+					{"key": "variancePercentage", "label": "Variance %", "type": "number"},
+					{"key": "state", "label": "Status", "type": "string"},
+					{"key": "notes", "label": "Notes", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"lifecycleActions": true,
+				"relatedLists": [
+					{
+						"id": "count-lines",
+						"title": "Count Lines",
+						"schema": "InventoryCycleCountLine",
+						"foreignKey": "countId",
+						"columns": [
+							{"key": "sku", "label": "SKU"},
+							{"key": "productName", "label": "Product"},
+							{"key": "expectedQuantity", "label": "Expected Qty"},
+							{"key": "countedQuantity", "label": "Counted Qty"},
+							{"key": "quantityVariance", "label": "Qty Variance"},
+							{"key": "valueVariance", "label": "Value Variance (€)"},
+							{"key": "requiresReason", "label": "Requires Reason"},
+							{"key": "reasonCode", "label": "Reason Code"}
+						]
+					}
+				],
+				"indexRoute": "CycleCounts"
+			}
+		},
+		{
+			"id": "CountTemplates",
+			"route": "/inventory/count-templates",
+			"type": "index",
+			"title": "Count Templates",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryCycleCount",
+				"columns": [
+					{"key": "countId", "label": "Template ID", "sortable": true},
+					{"key": "countType", "label": "Type", "sortable": true},
+					{"key": "locationFilter", "label": "Location", "sortable": true},
+					{"key": "categoryFilter", "label": "Category", "sortable": true},
+					{"key": "state", "label": "Status", "sortable": true}
+				],
+				"defaultSort": "countId",
+				"description": "Pre-defined count batch configurations for recurring cycle counts (annual full count, monthly zone rotations, etc.).",
+				"detailRoute": "CountTemplateDetail"
+			}
+		},
+		{
+			"id": "CountTemplateDetail",
+			"route": "/inventory/count-templates/:id",
+			"type": "detail",
+			"title": "Count Template",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryCycleCount",
+				"fields": [
+					{"key": "countId", "label": "Template ID", "type": "string"},
+					{"key": "countType", "label": "Count Type", "type": "string"},
+					{"key": "locationFilter", "label": "Location Filter", "type": "string"},
+					{"key": "categoryFilter", "label": "Category Filter", "type": "string"},
+					{"key": "notes", "label": "Description", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"indexRoute": "CountTemplates"
+			}
+		},
+		{
+			"id": "VarianceReports",
+			"route": "/inventory/variance-reports",
+			"type": "index",
+			"title": "Variance Reports",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryCycleCountLine",
+				"columns": [
+					{"key": "countId", "label": "Count ID", "sortable": true},
+					{"key": "sku", "label": "SKU", "sortable": true},
+					{"key": "productName", "label": "Product", "sortable": true},
+					{"key": "quantityVariance", "label": "Qty Variance", "sortable": true},
+					{"key": "valueVariance", "label": "Value Variance (€)", "sortable": true},
+					{"key": "requiresReason", "label": "Flagged", "sortable": true},
+					{"key": "reasonCode", "label": "Reason Code", "sortable": true}
+				],
+				"defaultSort": "-valueVariance",
+				"description": "Aggregated view of all count variances by reason code, location, and SKU for trend analysis and audit. Drill down to individual count lines.",
+				"filters": [
+					{"key": "reasonCode", "label": "Reason Code", "type": "string"},
+					{"key": "countId", "label": "Count ID", "type": "string"},
+					{"key": "requiresReason", "label": "Flagged Only", "type": "boolean"}
+				],
+				"detailRoute": "VarianceReportDetail"
+			}
+		},
+		{
+			"id": "VarianceReportDetail",
+			"route": "/inventory/variance-reports/:id",
+			"type": "detail",
+			"title": "Variance Line",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryCycleCountLine",
+				"fields": [
+					{"key": "lineId", "label": "Line ID", "type": "string"},
+					{"key": "countId", "label": "Count ID", "type": "string"},
+					{"key": "sku", "label": "SKU", "type": "string"},
+					{"key": "productName", "label": "Product Name", "type": "string"},
+					{"key": "expectedQuantity", "label": "Expected Qty", "type": "number"},
+					{"key": "countedQuantity", "label": "Counted Qty", "type": "number"},
+					{"key": "unitCost", "label": "Unit Cost (€)", "type": "number"},
+					{"key": "expectedValue", "label": "Expected Value (€)", "type": "number"},
+					{"key": "countedValue", "label": "Counted Value (€)", "type": "number"},
+					{"key": "quantityVariance", "label": "Qty Variance", "type": "number"},
+					{"key": "valueVariance", "label": "Value Variance (€)", "type": "number"},
+					{"key": "requiresReason", "label": "Requires Investigation", "type": "boolean"},
+					{"key": "reasonCode", "label": "Reason Code", "type": "string"},
+					{"key": "notes", "label": "Notes", "type": "string"}
+				],
+				"indexRoute": "VarianceReports"
+			}
+		},
 		{
 			"id": "Products",
 			"route": "/inventory/products",

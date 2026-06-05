@@ -5708,3 +5708,26 @@ _Booking deposit-to-invoice data model introduced by the `bookings-deposit-to-in
 | InvoiceLine | schema:TradeLineItem | administrationId, invoiceId, lineNumber, lineType (service/deposit_credit), lineAmount, taxRate, taxAmount, grossAmount | → Invoice (N:1) |
 | CreditNote | schema:Invoice | administrationId, creditNoteId, creditNoteNumber, linkedInvoiceId, customerId, creditDate, grossAmount, state | → Invoice (N:1) |
 | DepositPayment | schema:PaymentChargeSpecification | administrationId, depositPaymentId, orderId, amount, refundPolicy, state (authorized/captured/refunded) | → Order (N:1) |
+
+
+### InventoryCycleCount / InventoryCycleCountLine / InventoryVarianceReason
+**Schema.org:** `schema:InventoryCount` (InventoryCycleCount), `schema:TradeLineItem` (InventoryCycleCountLine), `schema:DefinedTerm` (InventoryVarianceReason)
+_Inventory cycle-count / stock-take data model introduced by the `inventory-cycle-count` change (T2). `InventoryCycleCount` represents a single count batch (full or partial by location/zone/category), carrying count date, initiating user, location/category scope, and aggregate variance values. Its lifecycle runs draft → submitted → counting → posted → reconciled, with cancellation from any pre-reconciled state (REQ-ICC-006). On submit, the declarative lifecycle action snapshots `InventoryStock` into `InventoryCycleCountLine` records (one per SKU in scope). On reconcile, variance lines generate `InventoryAdjustment` records (see stub below), update `InventoryStock.quantity`, and post GL impact to the variance-expense account. `InventoryCycleCountLine` holds expected-vs-counted data for one SKU: calculated fields (`expectedValue`, `countedValue`, `quantityVariance`, `valueVariance`, `requiresReason`) are declared as `x-openregister-calculations`. The `requiresReason` flag fires when `|quantityVariance|` exceeds the configured threshold % or `|valueVariance|` exceeds the configured absolute threshold (defaults: 5% / €500); if the OR calculation engine cannot resolve parent-schema metadata references, the ADR-031 exception fallback is `lib/Lifecycle/VarianceGate.php::requiresInvestigation()`. `InventoryVarianceReason` is a configurable reason-code registry (not a hardcoded enum) scoped per administration; 7 system-seed codes (DMG, OBS, ERR-COUNT, ERR-STOCK, THEFT, SYS, OTHER) are seeded in `lib/Settings/shillinq_register.json`. Variance threshold configuration lives in `InventoryCycleCount.x-openregister-metadata`. The only PHP code added is `lib/Lifecycle/VarianceGate.php` (ADR-031 exception — cross-schema child-line aggregation for the `counting → posted` guard and optional calculation fallback). No `CycleCountService.php` is added (ADR-031 non-goal in design.md)._
+**Primary spec:** inventory-cycle-count
+
+| Entity | Schema.org | Key fields | Primary relations |
+|--------|-----------|-----------|-------------------|
+| InventoryCycleCount | schema:InventoryCount | countId, countDate, initiatedBy, countType (full/partial), locationFilter, categoryFilter, expectedValue, countedValue, varianceValue, variancePercentage, state, notes, administrationId | → InventoryCycleCountLine (1:N), → InventoryAdjustment (1:N, on reconcile) |
+| InventoryCycleCountLine | schema:TradeLineItem | lineId, countId, sku, productName, expectedQuantity, countedQuantity, unitCost, expectedValue\*, countedValue\*, quantityVariance\*, valueVariance\*, requiresReason\*, reasonCode, notes | → InventoryCycleCount (N:1), → InventoryVarianceReason (N:1, via reasonCode) |
+| InventoryVarianceReason | schema:DefinedTerm | reasonId, name, category (damage/loss/obsolescence/error-counting/error-stocking/system-discrepancy/other), description, isActive, administrationId | — |
+
+\* = calculated field via `x-openregister-calculations`
+
+### InventoryAdjustment (stub)
+**Schema.org:** `schema:MonetaryAmount`
+_Adjustment transaction linking an `InventoryCycleCount` reconciliation to GL impact and `InventoryStock` quantity update. Introduced as a stub reference in the `inventory-cycle-count` spec; full schema definition is deferred to a separate `inventory-adjustment` spec (T2 follow-up). Back-reference from `InventoryCycleCount.id` enables full audit traceability (REQ-ICC-007)._
+**Primary spec:** inventory-cycle-count (stub); inventory-adjustment (T2, full definition — TBD)
+
+| Entity | Schema.org | Key fields (stub) | Primary relations |
+|--------|-----------|-----------|-------------------|
+| InventoryAdjustment | schema:MonetaryAmount | adjustmentId, cycleCountId (FK to InventoryCycleCount), lineId, sku, quantityDelta, valueDelta, reasonCode, glTransactionId, administrationId | → InventoryCycleCount (N:1), → GLTransaction (N:1), → InventoryVarianceReason (N:1) |

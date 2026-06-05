@@ -9915,6 +9915,554 @@
 					}
 				}
 			}
+		},
+		"InventoryCycleCount": {
+			"slug": "InventoryCycleCount",
+			"icon": "ClipboardCheckOutline",
+			"version": "0.1.0",
+			"title": "Inventory Cycle Count",
+			"description": "A single inventory count batch (cycle count / stock-take). Carries count date, scope (full or partial by location/category), initiating user, and aggregate variance values. Line items live in InventoryCycleCountLine. Lifecycle: draft → submitted → counting → posted → reconciled, plus cancelled from any state per REQ-ICC-006. Variance calculation is declarative per ADR-031; no CycleCountService.php.",
+			"x-schema-org": "schema:InventoryCount",
+			"type": "object",
+			"required": [
+				"countId",
+				"countDate",
+				"initiatedBy",
+				"countType",
+				"state",
+				"administrationId"
+			],
+			"properties": {
+				"countId": {
+					"type": "string",
+					"description": "Unique count identifier, auto-generated in CC-YYYY-MM-NNNNN format per REQ-ICC-002.",
+					"example": "CC-2026-05-00001"
+				},
+				"countDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Date the physical count was performed.",
+					"example": "2026-05-20"
+				},
+				"initiatedBy": {
+					"type": "string",
+					"description": "FK to Person (user) who initiated the count.",
+					"example": "user-001"
+				},
+				"countType": {
+					"type": "string",
+					"enum": [
+						"full",
+						"partial"
+					],
+					"description": "full = all SKUs in all locations; partial = scoped to locationFilter or categoryFilter per REQ-ICC-002.",
+					"example": "partial"
+				},
+				"locationFilter": {
+					"type": "string",
+					"nullable": true,
+					"description": "Location or zone code for partial counts (FK to Location). Required when countType = partial and no categoryFilter is set per REQ-ICC-008.",
+					"example": "warehouse-a"
+				},
+				"categoryFilter": {
+					"type": "string",
+					"nullable": true,
+					"description": "Product category code for partial counts. Required when countType = partial and no locationFilter is set per REQ-ICC-008.",
+					"example": "logistics"
+				},
+				"expectedValue": {
+					"type": "number",
+					"nullable": true,
+					"description": "Total book value of in-scope inventory at count start (sum of InventoryCycleCountLine.expectedValue). Calculated via x-openregister-aggregations on submit transition.",
+					"example": 45000.0
+				},
+				"countedValue": {
+					"type": "number",
+					"nullable": true,
+					"description": "Total physical value (sum of line.countedValue). Null until count is complete.",
+					"example": 43750.0
+				},
+				"varianceValue": {
+					"type": "number",
+					"nullable": true,
+					"description": "Calculated: countedValue − expectedValue. Negative = shrinkage; positive = overcount.",
+					"example": -1250.0
+				},
+				"variancePercentage": {
+					"type": "number",
+					"nullable": true,
+					"description": "Calculated: (varianceValue / expectedValue) × 100. Null when expectedValue is null or zero.",
+					"example": -2.78
+				},
+				"state": {
+					"type": "string",
+					"enum": [
+						"draft",
+						"submitted",
+						"counting",
+						"posted",
+						"reconciled",
+						"cancelled"
+					],
+					"description": "Lifecycle state per REQ-ICC-006. draft: under construction; submitted: scope locked; counting: data entry in progress; posted: variance reviewed, reason codes attached; reconciled: GL posted and stock updated; cancelled: count abandoned.",
+					"default": "draft",
+					"example": "counting"
+				},
+				"notes": {
+					"type": "string",
+					"nullable": true,
+					"description": "Supervisor or investigator notes for the count batch.",
+					"example": "Zone A quarterly count — expect higher shrinkage in northeast corner"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to Administration owning this count per multi-tenant scoping.",
+					"example": "adm-2026"
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "state",
+				"initialState": "draft",
+				"states": {
+					"draft": {
+						"label": "Draft",
+						"description": "Count batch under construction. Scope and filters may be edited."
+					},
+					"submitted": {
+						"label": "Submitted",
+						"description": "Supervisor has submitted the count; scope locked. InventoryCycleCountLine records created from InventoryStock snapshot."
+					},
+					"counting": {
+						"label": "Counting",
+						"description": "Warehouse staff entering counted quantities per line. Manual entry or mobile-scanner webhook (T4)."
+					},
+					"posted": {
+						"label": "Posted",
+						"description": "Supervisor reviewed all variances; all flagged lines have reason codes attached. Ready for GL reconciliation."
+					},
+					"reconciled": {
+						"label": "Reconciled",
+						"description": "Finance posted variance adjustments to GL. InventoryAdjustment records created; InventoryStock.quantity updated."
+					},
+					"cancelled": {
+						"label": "Cancelled",
+						"description": "Count was abandoned or superseded. No GL posting. Count may be re-initiated."
+					}
+				},
+				"transitions": {
+					"submit": {
+						"from": "draft",
+						"to": "submitted",
+						"label": "Submit Count",
+						"description": "Supervisor submits the count for counting. Validates scope (partial counts require location or category filter). Snapshot of InventoryStock taken into InventoryCycleCountLine records per REQ-ICC-006.",
+						"requires": "OCA\\Shillinq\\Lifecycle\\VarianceGate::countScopeIsValid",
+						"actions": [
+							{
+								"trigger": "x-openregister-lifecycle-action",
+								"action": "create-count-lines-from-stock-snapshot",
+								"description": "Query InventoryStock records filtered by locationFilter or categoryFilter (if partial count), create one InventoryCycleCountLine per SKU with expectedQuantity from current InventoryStock.quantity and unitCost from Product per REQ-ICC-006. Overlapping count conflicts are detected and reported.",
+								"actionParameters": {
+									"register": "shillinq",
+									"schema": "InventoryStock",
+									"targetSchema": "InventoryCycleCountLine",
+									"filterFields": [
+										"locationFilter",
+										"categoryFilter"
+									],
+									"snapshotMapping": {
+										"expectedQuantity": "quantity",
+										"unitCost": "unitCost",
+										"productName": "productName",
+										"sku": "sku"
+									}
+								}
+							}
+						]
+					},
+					"beginCounting": {
+						"from": "submitted",
+						"to": "counting",
+						"label": "Begin Counting",
+						"description": "Warehouse staff begin data entry. Line items are already created; operators enter countedQuantity per line."
+					},
+					"post": {
+						"from": "counting",
+						"to": "posted",
+						"label": "Complete Count",
+						"description": "Supervisor marks count complete after reviewing all variances. All lines with requiresReason = true must have a reasonCode attached per REQ-ICC-004 and REQ-ICC-005. Guarded by VarianceGate::allFlaggedLinesHaveReasonCodes (ADR-031 exception: cross-schema child-line aggregation not yet expressible declaratively).",
+						"requires": "OCA\\Shillinq\\Lifecycle\\VarianceGate::allFlaggedLinesHaveReasonCodes"
+					},
+					"reconcile": {
+						"from": "posted",
+						"to": "reconciled",
+						"label": "Reconcile Count",
+						"description": "Finance posts variance adjustments. Creates one InventoryAdjustment per non-zero-variance line, updates InventoryStock.quantity, and posts GL impact to variance-expense account with reason-code FK per REQ-ICC-007.",
+						"actions": [
+							{
+								"trigger": "x-openregister-lifecycle-action",
+								"action": "post-variance-adjustments",
+								"description": "For each InventoryCycleCountLine with non-zero quantityVariance: create InventoryAdjustment record (with cycleCountId + reasonCode FK), update InventoryStock.quantity by delta, and post a balanced GLTransaction to the variance-expense account per cost-accounting-allocation. Serialises overlapping adjustments per REQ-ICC-007.",
+								"actionParameters": {
+									"register": "shillinq",
+									"sourceLines": "InventoryCycleCountLine",
+									"adjustmentSchema": "InventoryAdjustment",
+									"stockSchema": "InventoryStock",
+									"glSchema": "GLTransaction",
+									"varianceExpenseAccount": "7800",
+									"serialisationLock": true
+								}
+							}
+						]
+					},
+					"cancel": {
+						"from": [
+							"draft",
+							"submitted",
+							"counting",
+							"posted"
+						],
+						"to": "cancelled",
+						"label": "Cancel Count",
+						"description": "Cancel the count at any pre-reconciled state. No GL posting occurs. Count may be re-initiated if needed."
+					}
+				}
+			},
+			"x-openregister-calculations": {
+				"varianceValue": {
+					"expression": "(countedValue != null AND expectedValue != null) ? (countedValue - expectedValue) : null",
+					"type": "number",
+					"description": "Calculated: countedValue − expectedValue. Populated once all lines have countedQuantity entered.",
+					"example": -1250.0
+				},
+				"variancePercentage": {
+					"expression": "(varianceValue != null AND expectedValue != null AND expectedValue != 0) ? ((varianceValue / expectedValue) * 100) : null",
+					"type": "number",
+					"description": "Calculated: (varianceValue / expectedValue) × 100. Null when expectedValue is zero or null.",
+					"example": -2.78
+				}
+			},
+			"x-openregister-aggregations": {
+				"expectedValue": {
+					"source": "InventoryCycleCountLine",
+					"foreignKey": "countId",
+					"operation": "sum",
+					"field": "expectedValue",
+					"description": "Sum of all InventoryCycleCountLine.expectedValue for this count batch."
+				},
+				"countedValue": {
+					"source": "InventoryCycleCountLine",
+					"foreignKey": "countId",
+					"operation": "sum",
+					"field": "countedValue",
+					"filter": {
+						"countedQuantity": {
+							"operator": "!=",
+							"value": null
+						}
+					},
+					"description": "Sum of all InventoryCycleCountLine.countedValue where countedQuantity is entered."
+				}
+			},
+			"x-openregister-metadata": {
+				"quantityVarianceThresholdPercent": {
+					"type": "number",
+					"default": 5,
+					"minimum": 0,
+					"maximum": 100,
+					"description": "% quantity variance threshold above which a line is flagged (requiresReason = true). Configurable per administration. Default: 5%."
+				},
+				"valueVarianceThresholdAbsolute": {
+					"type": "number",
+					"default": 500,
+					"minimum": 0,
+					"description": "Absolute cost variance threshold (EUR) above which a line is flagged regardless of quantity %. Configurable per administration. Default: €500."
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"warehouse-supervisor": {
+						"permissions": [
+							"create",
+							"read",
+							"update",
+							"delete"
+						],
+						"description": "Supervisors manage the full cycle-count lifecycle."
+					},
+					"warehouse-staff": {
+						"permissions": [
+							"read",
+							"update"
+						],
+						"description": "Staff may enter counted quantities; cannot submit or post."
+					},
+					"finance": {
+						"permissions": [
+							"read",
+							"update"
+						],
+						"description": "Finance role executes the reconcile transition."
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
+		"InventoryCycleCountLine": {
+			"slug": "InventoryCycleCountLine",
+			"icon": "FormatListBulletedSquare",
+			"version": "0.1.0",
+			"title": "Inventory Cycle Count Line",
+			"description": "A single line item within an InventoryCycleCount batch. Holds expected vs. counted quantities for one SKU. Calculated fields (expectedValue, countedValue, quantityVariance, valueVariance, requiresReason) are derived via x-openregister-calculations per ADR-031. The requiresReason field flags lines exceeding the variance thresholds configured in InventoryCycleCount.x-openregister-metadata. If the OR calculation engine cannot express the conditional threshold logic, the fallback is OCA\\Shillinq\\Lifecycle\\VarianceGate::requiresInvestigation() per ADR-031 exception per REQ-ICC-004.",
+			"type": "object",
+			"required": [
+				"lineId",
+				"countId",
+				"sku",
+				"expectedQuantity",
+				"unitCost"
+			],
+			"properties": {
+				"lineId": {
+					"type": "string",
+					"description": "Unique line identifier within the count (CC-YYYY-MM-NNNNN-LLL format).",
+					"example": "CC-2026-05-00001-001"
+				},
+				"countId": {
+					"type": "string",
+					"description": "FK to InventoryCycleCount batch owning this line.",
+					"example": "CC-2026-05-00001"
+				},
+				"sku": {
+					"type": "string",
+					"description": "Product SKU being counted. FK to Product.sku.",
+					"example": "SKU-4521"
+				},
+				"productName": {
+					"type": "string",
+					"nullable": true,
+					"description": "Denormalized product name from Product at count-snapshot time.",
+					"example": "Industrial Bearing"
+				},
+				"expectedQuantity": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Quantity from InventoryStock snapshot at count-submit time. Set by the submit lifecycle action; operators cannot modify.",
+					"example": 150
+				},
+				"countedQuantity": {
+					"type": "number",
+					"minimum": 0,
+					"nullable": true,
+					"description": "Quantity physically counted by operator. Null until data is entered. Schema rejects negative values per REQ-ICC-003.",
+					"example": 145
+				},
+				"unitCost": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Unit cost (EUR) at count date, sourced from Product.unitPrice at snapshot time.",
+					"example": 45.0
+				},
+				"expectedValue": {
+					"type": "number",
+					"nullable": true,
+					"description": "Calculated: expectedQuantity × unitCost.",
+					"example": 6750.0
+				},
+				"countedValue": {
+					"type": "number",
+					"nullable": true,
+					"description": "Calculated: countedQuantity × unitCost. Null until countedQuantity is entered.",
+					"example": 6525.0
+				},
+				"quantityVariance": {
+					"type": "number",
+					"nullable": true,
+					"description": "Calculated: countedQuantity − expectedQuantity. Null until countedQuantity is entered.",
+					"example": -5
+				},
+				"valueVariance": {
+					"type": "number",
+					"nullable": true,
+					"description": "Calculated: countedValue − expectedValue. Null until countedQuantity is entered.",
+					"example": -225.0
+				},
+				"requiresReason": {
+					"type": "boolean",
+					"description": "Calculated: true if |quantityVariance| > expectedQuantity × threshold% OR |valueVariance| > absolute threshold. Thresholds from InventoryCycleCount.x-openregister-metadata. False when countedQuantity is null.",
+					"default": false,
+					"example": true
+				},
+				"reasonCode": {
+					"type": "string",
+					"nullable": true,
+					"description": "FK to InventoryVarianceReason.reasonId. Mandatory when requiresReason = true; count cannot transition to posted without this per REQ-ICC-004 and REQ-ICC-005.",
+					"example": "DMG"
+				},
+				"notes": {
+					"type": "string",
+					"nullable": true,
+					"description": "Line-level investigation notes from the operator or supervisor.",
+					"example": "Found 5 units damaged in northeast corner of warehouse-a"
+				}
+			},
+			"x-openregister-calculations": {
+				"expectedValue": {
+					"expression": "expectedQuantity * unitCost",
+					"type": "number",
+					"description": "Calculated: expectedQuantity × unitCost.",
+					"example": 6750.0
+				},
+				"countedValue": {
+					"expression": "(countedQuantity != null) ? (countedQuantity * unitCost) : null",
+					"type": "number",
+					"description": "Calculated: countedQuantity × unitCost. Null until countedQuantity is entered.",
+					"example": 6525.0
+				},
+				"quantityVariance": {
+					"expression": "(countedQuantity != null) ? (countedQuantity - expectedQuantity) : null",
+					"type": "number",
+					"description": "Calculated: countedQuantity − expectedQuantity.",
+					"example": -5
+				},
+				"valueVariance": {
+					"expression": "(countedValue != null) ? (countedValue - expectedValue) : null",
+					"type": "number",
+					"description": "Calculated: countedValue − expectedValue.",
+					"example": -225.0
+				},
+				"requiresReason": {
+					"expression": "(countedQuantity != null AND quantityVariance != null AND valueVariance != null) ? ((abs(quantityVariance) > (expectedQuantity * 5 / 100)) OR (abs(valueVariance) > 500)) : false",
+					"type": "boolean",
+					"description": "Calculated: true if |quantityVariance| exceeds 5% of expectedQuantity OR |valueVariance| exceeds €500. Thresholds use InventoryCycleCount schema defaults (quantityVarianceThresholdPercent=5, valueVarianceThresholdAbsolute=500). If the calculation engine cannot resolve parent-schema config references, fallback is VarianceGate::requiresInvestigation() per ADR-031 exception.",
+					"example": true
+				}
+			},
+			"x-openregister-relations": {
+				"cycleCount": {
+					"localField": "countId",
+					"relatedSchema": "InventoryCycleCount",
+					"relatedField": "countId",
+					"cardinality": "many-to-one",
+					"description": "The parent cycle count batch this line belongs to."
+				},
+				"varianceReason": {
+					"localField": "reasonCode",
+					"relatedSchema": "InventoryVarianceReason",
+					"relatedField": "reasonId",
+					"cardinality": "many-to-one",
+					"description": "The selected variance reason code (FK to InventoryVarianceReason)."
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"warehouse-supervisor": {
+						"permissions": [
+							"create",
+							"read",
+							"update",
+							"delete"
+						]
+					},
+					"warehouse-staff": {
+						"permissions": [
+							"read",
+							"update"
+						],
+						"description": "Staff may enter countedQuantity and reasonCode."
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
+		"InventoryVarianceReason": {
+			"slug": "InventoryVarianceReason",
+			"icon": "AlertCircleOutline",
+			"version": "0.1.0",
+			"title": "Inventory Variance Reason",
+			"description": "Configurable reason-code registry for inventory variance categorisation. Each administration maintains its own reason-code set (not hardcoded enum) for audit-ready GL posting per REQ-ICC-005 and design D2. System seeds 7 default reason codes (DMG, OBS, ERR-COUNT, ERR-STOCK, THEFT, SYS, OTHER) on administration creation.",
+			"type": "object",
+			"required": [
+				"reasonId",
+				"name",
+				"category",
+				"isActive",
+				"administrationId"
+			],
+			"properties": {
+				"reasonId": {
+					"type": "string",
+					"description": "Unique reason code within the administration (e.g. DMG, OBS, ERR-COUNT). Used as FK from InventoryCycleCountLine.reasonCode.",
+					"example": "DMG"
+				},
+				"name": {
+					"type": "string",
+					"description": "Human-readable reason name displayed to operators.",
+					"example": "Damaged Goods"
+				},
+				"category": {
+					"type": "string",
+					"enum": [
+						"damage",
+						"loss",
+						"obsolescence",
+						"error-counting",
+						"error-stocking",
+						"system-discrepancy",
+						"other"
+					],
+					"description": "Coarse category for GL audit trail grouping per REQ-ICC-005.",
+					"example": "damage"
+				},
+				"description": {
+					"type": "string",
+					"nullable": true,
+					"description": "Extended explanation for auditors. Appears on the GL audit trail entry.",
+					"example": "Physical damage discovered during count"
+				},
+				"isActive": {
+					"type": "boolean",
+					"description": "Reason is available for use on new count lines. Inactive reasons remain queryable for historical audit trail.",
+					"default": true,
+					"example": true
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to Administration — reason codes are scoped per administration for per-org customisation.",
+					"example": "adm-2026"
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"warehouse-supervisor": {
+						"permissions": [
+							"create",
+							"read",
+							"update",
+							"delete"
+						],
+						"description": "Supervisors manage reason-code taxonomy."
+					},
+					"warehouse-staff": {
+						"permissions": [
+							"read"
+						],
+						"description": "Staff may view reason codes to select on count lines."
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
 		}
 	},
 	"mappings": {
@@ -10983,6 +11531,220 @@
 			"dailyRate": 150.0,
 			"currency": "EUR",
 			"source": "US federal per diem rates (converted to EUR at budget rate)"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryVarianceReason",
+				"slug": "variance-reason-dmg"
+			},
+			"reasonId": "DMG",
+			"name": "Damaged Goods",
+			"category": "damage",
+			"description": "Physical damage discovered during count — dents, breaks, moisture damage, or contamination.",
+			"isActive": true,
+			"administrationId": "adm-seed"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryVarianceReason",
+				"slug": "variance-reason-obs"
+			},
+			"reasonId": "OBS",
+			"name": "Obsolescence",
+			"category": "obsolescence",
+			"description": "Product no longer in active use; designated for write-off or disposal.",
+			"isActive": true,
+			"administrationId": "adm-seed"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryVarianceReason",
+				"slug": "variance-reason-err-count"
+			},
+			"reasonId": "ERR-COUNT",
+			"name": "Counting Error",
+			"category": "error-counting",
+			"description": "Recount revealed previous count was inaccurate — miscounting during initial entry.",
+			"isActive": true,
+			"administrationId": "adm-seed"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryVarianceReason",
+				"slug": "variance-reason-err-stock"
+			},
+			"reasonId": "ERR-STOCK",
+			"name": "Stocking Error",
+			"category": "error-stocking",
+			"description": "Product placed in wrong location or shelved under incorrect SKU.",
+			"isActive": true,
+			"administrationId": "adm-seed"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryVarianceReason",
+				"slug": "variance-reason-theft"
+			},
+			"reasonId": "THEFT",
+			"name": "Loss / Theft",
+			"category": "loss",
+			"description": "Product missing due to theft or unexplained loss; reported to management.",
+			"isActive": true,
+			"administrationId": "adm-seed"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryVarianceReason",
+				"slug": "variance-reason-sys"
+			},
+			"reasonId": "SYS",
+			"name": "System Discrepancy",
+			"category": "system-discrepancy",
+			"description": "Variance caused by system data entry error, import failure, or integration mismatch.",
+			"isActive": true,
+			"administrationId": "adm-seed"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryVarianceReason",
+				"slug": "variance-reason-other"
+			},
+			"reasonId": "OTHER",
+			"name": "Other",
+			"category": "other",
+			"description": "Variance reason not covered by standard categories. Provide explanation in notes.",
+			"isActive": true,
+			"administrationId": "adm-seed"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryCycleCount",
+				"slug": "cycle-count-2026-05-00001"
+			},
+			"countId": "CC-2026-05-00001",
+			"countDate": "2026-05-20",
+			"initiatedBy": "user-001",
+			"countType": "partial",
+			"locationFilter": "warehouse-a",
+			"categoryFilter": null,
+			"expectedValue": 45000.0,
+			"countedValue": 43750.0,
+			"varianceValue": -1250.0,
+			"variancePercentage": -2.78,
+			"state": "posted",
+			"notes": "Zone A quarterly count — slight shrinkage in fasteners and bearings",
+			"administrationId": "adm-sample-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryCycleCount",
+				"slug": "cycle-count-2026-03-00001"
+			},
+			"countId": "CC-2026-03-00001",
+			"countDate": "2026-03-31",
+			"initiatedBy": "user-002",
+			"countType": "full",
+			"locationFilter": null,
+			"categoryFilter": null,
+			"expectedValue": 182000.0,
+			"countedValue": 181800.0,
+			"varianceValue": -200.0,
+			"variancePercentage": -0.11,
+			"state": "reconciled",
+			"notes": "Q1 2026 full inventory count — minimal variance, within threshold",
+			"administrationId": "adm-sample-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryCycleCount",
+				"slug": "cycle-count-2026-06-00001"
+			},
+			"countId": "CC-2026-06-00001",
+			"countDate": "2026-06-05",
+			"initiatedBy": "user-001",
+			"countType": "partial",
+			"locationFilter": null,
+			"categoryFilter": "logistics",
+			"expectedValue": null,
+			"countedValue": null,
+			"varianceValue": null,
+			"variancePercentage": null,
+			"state": "counting",
+			"notes": "Logistics category spot check — triggered by discrepancy report from receiving",
+			"administrationId": "adm-sample-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryCycleCountLine",
+				"slug": "ccl-2026-05-00001-001"
+			},
+			"lineId": "CC-2026-05-00001-001",
+			"countId": "CC-2026-05-00001",
+			"sku": "SKU-4521",
+			"productName": "Industrial Bearing 6205",
+			"expectedQuantity": 150,
+			"countedQuantity": 145,
+			"unitCost": 45.0,
+			"expectedValue": 6750.0,
+			"countedValue": 6525.0,
+			"quantityVariance": -5,
+			"valueVariance": -225.0,
+			"requiresReason": true,
+			"reasonCode": "DMG",
+			"notes": "5 units found damaged in northeast storage rack"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryCycleCountLine",
+				"slug": "ccl-2026-05-00001-002"
+			},
+			"lineId": "CC-2026-05-00001-002",
+			"countId": "CC-2026-05-00001",
+			"sku": "SKU-7812",
+			"productName": "Hydraulic Hose 10mm x 2m",
+			"expectedQuantity": 80,
+			"countedQuantity": 79,
+			"unitCost": 28.5,
+			"expectedValue": 2280.0,
+			"countedValue": 2251.5,
+			"quantityVariance": -1,
+			"valueVariance": -28.5,
+			"requiresReason": false,
+			"reasonCode": null,
+			"notes": null
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryCycleCountLine",
+				"slug": "ccl-2026-05-00001-003"
+			},
+			"lineId": "CC-2026-05-00001-003",
+			"countId": "CC-2026-05-00001",
+			"sku": "SKU-3309",
+			"productName": "Safety Gloves L (pair)",
+			"expectedQuantity": 200,
+			"countedQuantity": 186,
+			"unitCost": 8.75,
+			"expectedValue": 1750.0,
+			"countedValue": 1627.5,
+			"quantityVariance": -14,
+			"valueVariance": -122.5,
+			"requiresReason": true,
+			"reasonCode": "ERR-STOCK",
+			"notes": "14 pairs found in shipping area — incorrectly stored after last delivery"
 		}
 	]
 }
