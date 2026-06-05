@@ -1037,7 +1037,24 @@
         "Te betalen / te ontvangen": "To pay / to receive",
         "Urencriterium niet behaald": "Hours criterion not met",
         "Zelfstandigenaftrek niet toegestaan — urencriterium niet behaald": "Self-employed deduction not allowed — hours criterion not met",
-        "Wijziging vereist correctieaangifte (suppletie)": "Change requires a corrective return (supplement)"
+        "Wijziging vereist correctieaangifte (suppletie)": "Change requires a corrective return (supplement)",
+        "Inter-Company Transactions": "Inter-Company Transactions",
+        "Inter-Company Transaction": "Inter-Company Transaction",
+        "Elimination Rules": "Elimination Rules",
+        "Elimination Rule": "Elimination Rule",
+        "Elimination Status": "Elimination Status",
+        "From Member": "From Member",
+        "To Member": "To Member",
+        "Account From": "Account From",
+        "Account To": "Account To",
+        "Rule Type": "Rule Type",
+        "Amount Tolerance": "Amount Tolerance",
+        "Manual Override": "Manual Override",
+        "Override Reason": "Override Reason",
+        "Eliminated By Rule": "Eliminated By Rule",
+        "Consolidation Group": "Consolidation Group",
+        "Consolidated Report": "Consolidated Report",
+        "Cannot modify elimination status of transactions in a finalized or published report": "Cannot modify elimination status of transactions in a finalized or published report"
     },
     "plurals": ""
 }
