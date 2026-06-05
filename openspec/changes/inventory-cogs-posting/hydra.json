@@ -6,5 +6,18 @@
   "depends_on": [
     "inventory-valuation-fifo-avg"
   ],
-  "issue": null
+  "issue": null,
+  "schema_version": 2,
+  "cycles": [
+    {
+      "cycle": 1,
+      "trigger": "build:queued",
+      "started_at": "2026-06-05T21:20:16Z",
+      "ended_at": null,
+      "outcome": "in-flight",
+      "outcome_reason": null,
+      "pattern_tags": [],
+      "stages": []
+    }
+  ]
 }
