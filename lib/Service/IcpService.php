@@ -154,6 +154,25 @@ class IcpService
     }//end reconcile()
 
     /**
+     * Return the administration's IcpSupply records whose supplyDate is in the period.
+     *
+     * Public read accessor reused by IcpFilingService for the audit-trail export
+     * (REQ-ICP-010); the administration scope is server-resolved (REQ-ICP-001).
+     *
+     * @param string $administrationId Administration scope (server-resolved).
+     * @param string $period           Filing period (YYYY-Qn or YYYY-MM).
+     *
+     * @return array<int,array<string,mixed>> In-period IcpSupply records.
+     *
+     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     */
+    public function suppliesInPeriod(string $administrationId, string $period): array
+    {
+        return $this->suppliesForPeriod(administrationId: $administrationId, period: $period);
+
+    }//end suppliesInPeriod()
+
+    /**
      * Fetch the administration's IcpSupply records whose supplyDate is in the period.
      *
      * @param string $administrationId Administration scope (REQ-ICP-001).

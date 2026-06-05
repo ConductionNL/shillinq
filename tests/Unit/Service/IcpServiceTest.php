@@ -72,14 +72,16 @@ final class IcpServiceTest extends TestCase
     /**
      * Build the service with an ObjectService stub returning the given data sets.
      *
-     * @param array<int,array<string,mixed>> $supplies IcpSupply records.
-     * @param array<int,array<string,mixed>> $returns  VatReturn records.
+     * @param array<int,array<string,mixed>> $supplies    IcpSupply records.
+     * @param array<int,array<string,mixed>> $returns     VatReturn records.
+     * @param array<int,array<string,mixed>> $validations ViesValidation records.
+     * @param array<int,array<string,mixed>> $opgaven     IcpOpgaaf records.
      *
      * @return IcpService
      */
-    private function buildService(array $supplies, array $returns): IcpService
+    private function buildService(array $supplies, array $returns, array $validations=[], array $opgaven=[]): IcpService
     {
-        $stub = new class($supplies, $returns) {
+        $stub = new class($supplies, $returns, $validations, $opgaven) {
 
             /**
              * Data sets keyed by schema slug.
@@ -98,14 +100,18 @@ final class IcpServiceTest extends TestCase
             /**
              * Constructor.
              *
-             * @param array<int,array<string,mixed>> $supplies IcpSupply records.
-             * @param array<int,array<string,mixed>> $returns  VatReturn records.
+             * @param array<int,array<string,mixed>> $supplies    IcpSupply records.
+             * @param array<int,array<string,mixed>> $returns     VatReturn records.
+             * @param array<int,array<string,mixed>> $validations ViesValidation records.
+             * @param array<int,array<string,mixed>> $opgaven     IcpOpgaaf records.
              */
-            public function __construct(array $supplies, array $returns)
+            public function __construct(array $supplies, array $returns, array $validations, array $opgaven)
             {
                 $this->data = [
-                    'IcpSupply' => $supplies,
-                    'VatReturn' => $returns,
+                    'IcpSupply'      => $supplies,
+                    'VatReturn'      => $returns,
+                    'ViesValidation' => $validations,
+                    'IcpOpgaaf'      => $opgaven,
                 ];
             }//end __construct()
 
@@ -133,6 +139,28 @@ final class IcpServiceTest extends TestCase
                 $this->schema = $schema;
                 return $this;
             }//end setSchema()
+
+            /**
+             * Captured saved objects keyed by schema slug.
+             *
+             * @var array<string,array<int,array<string,mixed>>>
+             */
+            public array $saved = [];
+
+            /**
+             * Capture a saved object (mirrors the real ObjectService::saveObject).
+             *
+             * @param array<string,mixed> $object   The object to save.
+             * @param string              $register Register slug.
+             * @param string              $schema   Schema slug.
+             *
+             * @return array<string,mixed>
+             */
+            public function saveObject(array $object, string $register='', string $schema=''): array
+            {
+                $this->saved[$schema][] = $object;
+                return $object;
+            }//end saveObject()
 
             /**
              * Return the data set for the active schema, applying equality filters.
@@ -344,6 +372,26 @@ final class IcpServiceTest extends TestCase
         self::assertSame(1000.0, $outcome['difference']);
 
     }//end testReconcileMismatch()
+
+    /**
+     * The suppliesInPeriod accessor exposes the in-period supplies for the audit-export path.
+     *
+     * @return void
+     */
+    public function testSuppliesInPeriodFiltersByPeriod(): void
+    {
+        $supplies = [
+            $this->supply('adm-1', '2026-06-15', 'BE0123456789', 'L', 25000.0),
+            $this->supply('adm-1', '2026-09-15', 'BE0123456789', 'L', 5000.0),
+        ];
+
+        $service = $this->buildService($supplies, []);
+        $inQ2    = $service->suppliesInPeriod(administrationId: 'adm-1', period: '2026-Q2');
+
+        self::assertCount(1, $inQ2);
+        self::assertSame('2026-06-15', $inQ2[0]['supplyDate']);
+
+    }//end testSuppliesInPeriodFiltersByPeriod()
 
     // phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

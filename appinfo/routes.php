@@ -95,6 +95,9 @@ return [
         ['name' => 'icp#ledger', 'url' => '/api/icp/ledger', 'verb' => 'GET'],
         ['name' => 'icp#reconcile', 'url' => '/api/icp/reconcile', 'verb' => 'GET'],
         ['name' => 'icp#periodicity', 'url' => '/api/icp/periodicity', 'verb' => 'GET'],
+        ['name' => 'icp#auditExport', 'url' => '/api/icp/audit-export', 'verb' => 'GET'],
+        ['name' => 'icp#validateVatId', 'url' => '/api/icp/validate-vat-id', 'verb' => 'POST'],
+        ['name' => 'icp#correction', 'url' => '/api/icp/correction', 'verb' => 'POST'],
 
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).

@@ -23,7 +23,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\IcpController;
+use OCA\Shillinq\Service\IcpFilingService;
 use OCA\Shillinq\Service\IcpService;
+use OCA\Shillinq\Service\ViesService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
@@ -58,6 +60,20 @@ final class IcpControllerTest extends TestCase
     private IcpService&MockObject $service;
 
     /**
+     * Mock IcpFilingService.
+     *
+     * @var IcpFilingService&MockObject
+     */
+    private IcpFilingService&MockObject $filing;
+
+    /**
+     * Mock ViesService.
+     *
+     * @var ViesService&MockObject
+     */
+    private ViesService&MockObject $vies;
+
+    /**
      * Mock LoggerInterface.
      *
      * @var LoggerInterface&MockObject
@@ -81,10 +97,14 @@ final class IcpControllerTest extends TestCase
         parent::setUp();
         $this->request    = $this->createMock(IRequest::class);
         $this->service    = $this->createMock(IcpService::class);
+        $this->filing     = $this->createMock(IcpFilingService::class);
+        $this->vies       = $this->createMock(ViesService::class);
         $this->logger     = $this->createMock(LoggerInterface::class);
         $this->controller = new IcpController(
             request: $this->request,
             icpService: $this->service,
+            filingService: $this->filing,
+            viesService: $this->vies,
             logger: $this->logger,
         );
 
@@ -246,6 +266,138 @@ final class IcpControllerTest extends TestCase
         self::assertStringNotContainsStringIgnoringCase('boom', (string) json_encode($response->getData()));
 
     }//end testServiceFailureReturns500WithoutStackTrace()
+
+    /**
+     * The validateVatId endpoint delegates to ViesService and returns the outcome (REQ-ICP-001).
+     *
+     * @return void
+     */
+    public function testValidateVatIdReturns200(): void
+    {
+        $this->withParams(['vat_id' => 'BE0123456789', 'administration_id' => 'adm-1']);
+        $this->vies->method('validate')->willReturn(
+            [
+                'vatId'               => 'BE0123456789',
+                'valid'               => true,
+                'outage'              => false,
+                'requestId'           => 'X',
+                'validationTimestamp' => 't',
+                'validUntil'          => 't',
+                'name'                => '',
+                'address'             => '',
+                'saved'               => true,
+                'reusedPrior'         => false,
+            ]
+        );
+
+        $response = $this->controller->validateVatId();
+
+        self::assertSame(Http::STATUS_OK, $response->getStatus());
+        self::assertTrue($response->getData()['valid']);
+
+    }//end testValidateVatIdReturns200()
+
+    /**
+     * The validateVatId endpoint rejects a malformed VAT-ID with 400 (input validation, ADR-005).
+     *
+     * @return void
+     */
+    public function testValidateVatIdRejectsBadInput(): void
+    {
+        $this->withParams(['vat_id' => 'BE@@@inject;', 'administration_id' => 'adm-1']);
+
+        $response = $this->controller->validateVatId();
+
+        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+
+    }//end testValidateVatIdRejectsBadInput()
+
+    /**
+     * The correction endpoint delegates to IcpService::createCorrection (REQ-ICP-008).
+     *
+     * @return void
+     */
+    public function testCorrectionReturns200(): void
+    {
+        $this->request->method('getParam')->willReturnCallback(
+            static function (string $key, mixed $default=null): mixed {
+                return match ($key) {
+                    'administration_id' => 'adm-1',
+                    'corrects_period'   => '2026-Q1',
+                    'reason'            => 'late supply',
+                    'lines'             => [['buyerVatId' => 'BE0123456789', 'supplyType' => 'S', 'amountExclVat' => 1200.0]],
+                    default             => $default,
+                };
+            }
+        );
+        $this->filing->method('createCorrection')->willReturn(
+            [
+                'administrationId'   => 'adm-1',
+                'type'               => 'correction',
+                'status'             => 'draft',
+                'correctsPeriod'     => '2026-Q1',
+                'correctionReason'   => 'late supply',
+                'lines'              => [],
+                'total'              => 1200.0,
+                'totalGoods'         => 0.0,
+                'totalServices'      => 1200.0,
+                'totalTriangulation' => 0.0,
+                'evidence'           => [],
+                'saved'              => true,
+            ]
+        );
+
+        $response = $this->controller->correction();
+
+        self::assertSame(Http::STATUS_OK, $response->getStatus());
+        self::assertSame('correction', $response->getData()['type']);
+
+    }//end testCorrectionReturns200()
+
+    /**
+     * The correction endpoint rejects an empty lines array with 400.
+     *
+     * @return void
+     */
+    public function testCorrectionRejectsEmptyLines(): void
+    {
+        $this->request->method('getParam')->willReturnCallback(
+            static function (string $key, mixed $default=null): mixed {
+                return match ($key) {
+                    'administration_id' => 'adm-1',
+                    'corrects_period'   => '2026-Q1',
+                    'lines'             => [],
+                    default             => $default,
+                };
+            }
+        );
+
+        $response = $this->controller->correction();
+
+        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+
+    }//end testCorrectionRejectsEmptyLines()
+
+    /**
+     * The auditExport endpoint returns bundle metadata without leaking the server temp path (REQ-ICP-010).
+     *
+     * @return void
+     */
+    public function testAuditExportReturns200WithoutPath(): void
+    {
+        $this->withParams(['period_id' => '2026-Q2', 'administration_id' => 'adm-1']);
+        $this->filing->method('exportForInspection')->willReturn(
+            ['period' => '2026-Q2', 'zipPath' => '/tmp/secret_path.zip', 'supplyCount' => 3, 'manifest' => ['supplies.csv'], 'kenmerk' => 'BD-1']
+        );
+
+        $response = $this->controller->auditExport();
+
+        self::assertSame(Http::STATUS_OK, $response->getStatus());
+        $data = $response->getData();
+        self::assertArrayNotHasKey('zipPath', $data);
+        self::assertSame(3, $data['supplyCount']);
+
+    }//end testAuditExportReturns200WithoutPath()
 
     // phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

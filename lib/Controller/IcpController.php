@@ -33,7 +33,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\IcpFilingService;
 use OCA\Shillinq\Service\IcpService;
+use OCA\Shillinq\Service\ViesService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -58,15 +60,19 @@ class IcpController extends Controller
     /**
      * Constructor for the IcpController.
      *
-     * @param IRequest        $request    The request object.
-     * @param IcpService      $icpService The ICP computation service.
-     * @param LoggerInterface $logger     Logger for diagnostics (no stack traces to client).
+     * @param IRequest         $request       The request object.
+     * @param IcpService       $icpService    The ICP read-side computation service.
+     * @param IcpFilingService $filingService The ICP filing write service (correction + export).
+     * @param ViesService      $viesService   The VIES validation service.
+     * @param LoggerInterface  $logger        Logger for diagnostics (no stack traces to client).
      *
      * @return void
      */
     public function __construct(
         IRequest $request,
         private readonly IcpService $icpService,
+        private readonly IcpFilingService $filingService,
+        private readonly ViesService $viesService,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -166,6 +172,132 @@ class IcpController extends Controller
         );
 
     }//end periodicity()
+
+    /**
+     * Validate a buyer VAT-ID against VIES and persist evidence (REQ-ICP-001, REQ-ICP-009).
+     *
+     * Body parameters:
+     *  - vat_id            (required) the buyer VAT-ID to verify.
+     *  - administration_id (required) administration scope (IDOR-safe, REQ-ICP-001).
+     *
+     * @return JSONResponse 200 with the validation outcome; 400 on a bad parameter;
+     *                      500 (no stack trace) on failure.
+     *
+     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     */
+    #[NoAdminRequired]
+    public function validateVatId(): JSONResponse
+    {
+        $vatId            = trim((string) $this->request->getParam('vat_id', ''));
+        $administrationId = trim((string) $this->request->getParam('administration_id', ''));
+
+        if ($vatId === '' || strlen($vatId) > 32 || preg_match('/^[A-Za-z0-9 .\\-]{1,32}$/', $vatId) !== 1) {
+            return new JSONResponse(['error' => 'vat_id must be a valid VAT identifier'], Http::STATUS_BAD_REQUEST);
+        }
+
+        $error = $this->validateId(value: $administrationId, label: 'administration_id');
+        if ($error !== null) {
+            return $error;
+        }
+
+        return $this->run(
+            action: 'validate VAT-ID',
+            compute: fn (): array => $this->viesService->validate(
+                administrationId: $administrationId,
+                vatId: $vatId
+            ),
+            context: ['administrationId' => $administrationId]
+        );
+
+    }//end validateVatId()
+
+    /**
+     * Create a correction ICP-opgaaf for an already-submitted period (REQ-ICP-008).
+     *
+     * Body parameters:
+     *  - administration_id (required) administration scope.
+     *  - corrects_period   (required) the period being corrected (YYYY-Qn / YYYY-MM).
+     *  - lines             (required) array of {buyerVatId, supplyType, amountExclVat}.
+     *  - reason            (optional) free-text correction reason.
+     *
+     * @return JSONResponse 200 with the draft correction; 400 / 500 as above.
+     *
+     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     */
+    #[NoAdminRequired]
+    public function correction(): JSONResponse
+    {
+        $administrationId = trim((string) $this->request->getParam('administration_id', ''));
+        $correctsPeriod   = trim((string) $this->request->getParam('corrects_period', ''));
+        $reason           = trim((string) $this->request->getParam('reason', ''));
+        $lines            = $this->request->getParam('lines', []);
+
+        $error = $this->validateId(value: $administrationId, label: 'administration_id');
+        if ($error !== null) {
+            return $error;
+        }
+
+        $error = $this->validateId(value: $correctsPeriod, label: 'corrects_period');
+        if ($error !== null) {
+            return $error;
+        }
+
+        if (is_array($lines) === false || $lines === []) {
+            return new JSONResponse(['error' => 'lines must be a non-empty array'], Http::STATUS_BAD_REQUEST);
+        }
+
+        return $this->run(
+            action: 'create ICP correction',
+            compute: fn (): array => $this->filingService->createCorrection(
+                administrationId: $administrationId,
+                correctsPeriod: $correctsPeriod,
+                correctiveLines: $lines,
+                reason: $reason
+            ),
+            context: ['administrationId' => $administrationId, 'period' => $correctsPeriod]
+        );
+
+    }//end correction()
+
+    /**
+     * Export the Belastingdienst inspection bundle (ZIP) for a period (REQ-ICP-010).
+     *
+     * Query parameters:
+     *  - period_id         (required) filing period.
+     *  - administration_id (required) administration scope (IDOR-safe).
+     *
+     * @return JSONResponse 200 with the bundle metadata (zipPath, manifest,
+     *                      supplyCount); 400 / 500 as above. The actual byte stream
+     *                      is delivered by the OpenRegister file surface once a live
+     *                      instance is available (documented deferral).
+     *
+     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     */
+    #[NoAdminRequired]
+    public function auditExport(): JSONResponse
+    {
+        $params = $this->periodAndAdministration();
+        if (($params['error'] ?? null) !== null) {
+            return $params['error'];
+        }
+
+        return $this->run(
+            action: 'export ICP audit bundle',
+            compute: function () use ($params): array {
+                $bundle = $this->filingService->exportForInspection(
+                    administrationId: $params['administrationId'],
+                    period: $params['period']
+                );
+
+                // Do not leak the server temp path to the client; report the manifest.
+                unset($bundle['zipPath']);
+
+                return $bundle;
+            },
+            context: ['administrationId' => $params['administrationId'], 'period' => $params['period']]
+        );
+
+    }//end auditExport()
 
     /**
      * Validate and extract the shared period_id + administration_id parameters.

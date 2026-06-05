@@ -1,6 +1,10 @@
 # Tasks — ICP-opgaaf (Intra-Community Supplies Filing)
 
-> **Implementation cycle (hydra-build).** The proposal framed this as spec-only; this build executes the implementation against the `bookkeeping-icp-opgaaf` spec per ADR-037 (modular register fragment, never edit the monolith), ADR-031 (declarative-first metadata + engine-side fallback only for what the engine cannot express), ADR-022 (OpenRegister approval-workflow, no app-local submission table) and ADR-005 (auth/IDOR posture). Tasks 12, 18, 19, 20, 21, 26 are DEFERRED (need a live instance / a not-yet-merged cross-app dependency: openconnector VIES+Digipoort, the not-yet-declared Invoice/Counterparty AR-core schemas, the docudesk PDF pipeline) — documented inline.
+> **Implementation cycle (hydra-build).** The proposal framed this as spec-only; this build executes the implementation against the `bookkeeping-icp-opgaaf` spec per ADR-037 (modular register fragment, never edit the monolith), ADR-031 (declarative-first metadata + engine-side fallback only for what the engine cannot express), ADR-022 (OpenRegister approval-workflow, no app-local submission table) and ADR-005 (auth/IDOR posture).
+>
+> Tasks 12, 19, 20, 21 are now IMPLEMENTED against the `ViesValidation` / `IcpSupply` / `IcpOpgaaf` schemas this change owns (`ViesService` VIES validation + outage fallback, `IcpService::createCorrection`, `ViesOutageRetryJob`, `IcpService::exportForInspection` + controller endpoints / routes), correcting the spec's now-impossible references to `Invoice.icpContext` (the AR-core Invoice register schema does not exist in this app yet — see below).
+>
+> Tasks 9, 10, 18, 26 remain DEFERRED with documented reasons: Tasks 9/10 extend `Invoice` / `Counterparty` register schemas that `bookkeeping-accounts-receivable-core` has NOT declared in this app (no Invoice/Counterparty schema exists in `shillinq_register.json` or any fragment — verified); inventing them is forbidden (a contact/customer is a Nextcloud entity, ADR guardrail). Task 18 needs the docudesk PDF render pipeline (absent). Task 26 (Playwright) needs a live instance and a built frontend route. The VIES-validation logic (Task 12) is implemented imperatively now (against `ViesValidation`) and re-attaches as a declarative calculation on `Invoice.icpContext` once AR-core ships that schema (additive overlay, no rework).
 
 ## Tasks
 
@@ -26,7 +30,7 @@
 
 - [x] Task 11: Declare `x-openregister-lifecycle` on `IcpOpgaaf` per REQ-ICP-004, REQ-ICP-005 with states: `draft` → `finalized` (gate: reconciliation check against rubriek 3b per REQ-ICP-004, SBR schema validation per REQ-ICP-005) → `submitted` (approval workflow per ADR-022) → `accepted` / `rejected` / `corrected` (post-Belastingdienst states).
 
-- [ ] Task 12: Implement VIES validation as `x-openregister-calculations` field on `Invoice.icpContext.viesValidationId` per REQ-ICP-001 — call ec.europa.eu/taxation_customs/vies SOAP/REST endpoint, persist `ViesValidation` record, handle outage per REQ-ICP-009 (check prior valid record < 30 days, queue revalidation job).
+- [x] Task 12: VIES validation implemented in `lib/Service/ViesService.php` — calls the EU VIES REST proxy via `IClientService`, canonicalises the VAT-ID, persists an immutable `ViesValidation` record (with `requestId` audit proof), and on a transient outage reuses a recent (< 30 days) valid record and flags `outage: true` for the daily retry job (REQ-ICP-001, REQ-ICP-009). Response parsing is a pure `parseViesResponse()` transform (unit-tested without a network). Exposed as `POST /api/icp/validate-vat-id`. (Spec corrected: implemented against the owned `ViesValidation` schema rather than the not-yet-existent `Invoice.icpContext`; re-attaches as a declarative calculation when AR-core declares Invoice.)
 
 - [x] Task 13: Implement SBR XBRL generation as `x-openregister-calculations` field on `IcpOpgaaf.xmlPayload` per REQ-ICP-005 — conform to `bd-rpt-icp-2026.xsd` (NT18), include BSN/RSIN, period in `gl-cor:periodIdentifier`, one `bd-i:IntracommunautairePrestatieMutatieSpecificatie` per line, validate against schema on finalize.
 
@@ -40,11 +44,11 @@
 
 - [ ] Task 18: Extend invoice PDF rendering per REQ-ICP-007 — on `Invoice.icpContext.treatAsIcp: true`, include buyer VAT-ID, seller NL VAT-ID, "BTW verlegd / VAT reverse-charged" notice, supply-type; fail render with `icp.invoice.vatid.missing` if buyer VAT-ID absent.
 
-- [ ] Task 19: Implement correction workflow per REQ-ICP-008 — new `IcpOpgaaf` with `type: correction`, `correctsPeriod`, `correctionReason`; re-attach original `ViesValidation` records (no re-query); support correction as separate filing in Digipoort.
+- [x] Task 19: Correction workflow implemented in `IcpService::createCorrection()` — materialises a new `IcpOpgaaf` with `type: correction`, `correctsPeriod`, `correctionReason` and the aggregated corrective lines (positive/negative), re-attaching the original contemporaneous `ViesValidation` evidence by buyer VAT-ID (no VIES re-query, REQ-ICP-008) via `ViesService::findRecentValid()`. Starts in `draft` so the reconciliation gate still applies. Exposed as `POST /api/icp/correction`. Digipoort delivery of the correction is the openconnector integration (deferred — live instance).
 
-- [ ] Task 20: Implement VIES outage retry scheduling per REQ-ICP-009 — distinguish `valid: false` (definitive rejection) from `outage: true` (transient); schedule daily revalidation job; escalate to bookkeeper after 14 days without answer.
+- [x] Task 20: VIES outage retry scheduling implemented in `lib/BackgroundJob/ViesOutageRetryJob.php` (TimedJob, 24h interval) + `IcpService::pendingOutages()` — distinguishes `valid: false` (definitive) from `outage: true` (transient), re-validates pending outages daily via `ViesService::validate()`, and escalates to the bookkeeper via the notification manager once an outage has persisted beyond 14 days (REQ-ICP-009, subject `icp.vies.outage_escalated`).
 
-- [ ] Task 21: Implement audit-trail export per REQ-ICP-010 — on `IcpOpgaaf.exportForInspection()`, produce ZIP bundle containing: XBRL payload, Belastingdienst kenmerk, CSV of 47+ supplies with VIES request IDs, source invoice PDFs (via docudesk FK), manifest; deliver within 10 seconds.
+- [x] Task 21: Audit-trail export implemented in `IcpService::exportForInspection()` — builds a `ZipArchive` bundle containing the archived XBRL payload (`opgaaf.xbrl`), the Belastingdienst `kenmerk.txt`, the `supplies.csv` of all supplies with their VIES request IDs (via `IcpCalculator::buildSuppliesCsv`), and a `manifest.txt` (REQ-ICP-010). Exposed as `GET /api/icp/audit-export` (the server temp path is stripped from the response — no path leak). Source-invoice PDF attachment (docudesk/OR file surface) is the deferred live-instance step.
 
 - [x] Task 22: Add 3 chart-of-accounts entries per proposal and design: `8190 Omzet ICP goederen` (zero-rated), `8195 Omzet ICP diensten` (zero-rated), `8196 Omzet ICP driehoekstransacties` (zero-rated), per RGS pattern; routing helper: supplyType L → 8190, S → 8195, T → 8196.
 
