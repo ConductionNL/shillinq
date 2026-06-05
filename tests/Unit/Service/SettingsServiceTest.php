@@ -313,4 +313,92 @@ class SettingsServiceTest extends TestCase
         self::assertArrayHasKey('success', $result);
 
     }//end testSeedProductAttributesCallsObjectServiceForKnownCategory()
+
+    /**
+     * Test seedInventoryLotsDemoData returns failure when OpenRegister is unavailable.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-lot-batch-expiry/tasks.md#task-14
+     */
+    public function testSeedInventoryLotsDemoDataFailsWhenOpenRegisterUnavailable(): void
+    {
+        $this->appManager->expects($this->once())
+            ->method('isInstalled')
+            ->with('openregister')
+            ->willReturn(false);
+
+        $result = $this->service->seedInventoryLotsDemoData();
+
+        self::assertFalse($result['success']);
+        self::assertStringContainsString('OpenRegister', $result['message']);
+
+    }//end testSeedInventoryLotsDemoDataFailsWhenOpenRegisterUnavailable()
+
+    /**
+     * Test that the inventory-lots-demo.json seed file exists and parses as valid JSON.
+     *
+     * Covers REQ-LOT-design.md seed data section: 5 Dutch pet-food lots with correct structure.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-lot-batch-expiry/tasks.md#task-14
+     */
+    public function testInventoryLotsDemoSeedFileIsValidJson(): void
+    {
+        $seedPath = __DIR__.'/../../../lib/Settings/seeds/inventory-lots-demo.json';
+        self::assertFileExists($seedPath, 'Demo seed file must exist: inventory-lots-demo.json');
+
+        $content = file_get_contents($seedPath);
+        self::assertNotFalse($content, 'Must be able to read inventory-lots-demo.json');
+
+        $data = json_decode($content, associative: true);
+        self::assertSame(JSON_ERROR_NONE, json_last_error(), 'Seed file must be valid JSON');
+        self::assertArrayHasKey('inventoryLots', $data, 'Seed file must have inventoryLots key');
+        self::assertCount(5, $data['inventoryLots'], 'Seed file must contain exactly 5 demo lots');
+
+        $requiredFields = ['lotNumber', 'productSku', 'quantity', 'lotStatus'];
+        foreach ($data['inventoryLots'] as $lot) {
+            foreach ($requiredFields as $field) {
+                self::assertArrayHasKey($field, $lot, 'Each lot must have required field: '.$field);
+            }
+
+            self::assertContains(
+                $lot['lotStatus'],
+                ['active', 'quarantined', 'expired', 'exhausted'],
+                'lotStatus must be a valid enum value'
+            );
+            self::assertGreaterThanOrEqual(0, $lot['quantity'], 'quantity must be >= 0');
+        }
+
+    }//end testInventoryLotsDemoSeedFileIsValidJson()
+
+    /**
+     * Test that all demo seed lots with an expiryDate have a valid ISO-8601 date format.
+     *
+     * FEFO sort order is enforced at query time via x-openregister-sort; seed file order is
+     * independent. This test confirms date values are well-formed per REQ-LOT-002.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-lot-batch-expiry/tasks.md#task-14
+     */
+    public function testInventoryLotsDemoSeedExpiryDatesAreValidFormat(): void
+    {
+        $seedPath = __DIR__.'/../../../lib/Settings/seeds/inventory-lots-demo.json';
+        $data     = json_decode(file_get_contents($seedPath), associative: true);
+
+        foreach ($data['inventoryLots'] as $lot) {
+            if (isset($lot['expiryDate']) === false || $lot['expiryDate'] === null) {
+                continue;
+            }
+
+            self::assertMatchesRegularExpression(
+                '/^\d{4}-\d{2}-\d{2}$/',
+                $lot['expiryDate'],
+                'expiryDate must be ISO 8601 date (YYYY-MM-DD) in lot: '.($lot['lotNumber'] ?? 'unknown')
+            );
+        }
+
+    }//end testInventoryLotsDemoSeedExpiryDatesAreValidFormat()
 }//end class

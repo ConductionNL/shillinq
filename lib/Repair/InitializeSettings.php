@@ -82,6 +82,7 @@ class InitializeSettings implements IRepairStep
      * Phase 6: seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
      * Phase 7: seeds RJ-270 stages and rate-card templates for consultancy project accounting.
      * Phase 8: seeds ProductAttribute templates (office, it_hardware, logistics, food_beverage, clothing) per REQ-IPC-007.
+     * Phase 9: seeds demo InventoryLot records from inventory-lots-demo.json when APP_ENV=development per REQ-LOT design.md.
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -93,6 +94,7 @@ class InitializeSettings implements IRepairStep
      * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
      * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
      * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
+     * @spec openspec/changes/inventory-lot-batch-expiry/tasks.md#task-14
      */
     public function run(IOutput $output): void
     {
@@ -144,6 +146,7 @@ class InitializeSettings implements IRepairStep
             $this->seedKorThresholds(output: $output);
             $this->seedComplianceReferenceData(output: $output);
             $this->seedProductAttributeTemplates(output: $output);
+            $this->seedInventoryLotsDemoData(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -460,6 +463,42 @@ class InitializeSettings implements IRepairStep
         }//end foreach
 
     }//end seedProductAttributeTemplates()
+
+    /**
+     * Seed demo InventoryLot records when APP_ENV=development, idempotently.
+     *
+     * Skipped on production environments. Loads five Dutch pet-food lot examples
+     * for development and QA so the Lots & Batches page has visible data out of
+     * the box. Safe to call on every install/upgrade — deduplication by lotNumber.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-lot-batch-expiry/tasks.md#task-14
+     */
+    private function seedInventoryLotsDemoData(IOutput $output): void
+    {
+        if (getenv('APP_ENV') !== 'development') {
+            return;
+        }
+
+        $output->info('Seeding demo InventoryLot records (APP_ENV=development)...');
+        $result = $this->settingsService->seedInventoryLotsDemoData();
+
+        if ($result['success'] === true) {
+            $output->info(
+                'InventoryLot demo: '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if ($result['success'] !== true) {
+            $output->warning(
+                'InventoryLot demo seeding issue: '.($result['message'] ?? 'unknown error')
+            );
+        }
+
+    }//end seedInventoryLotsDemoData()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.

@@ -1,3 +1,7 @@
+---
+status: pr-created
+---
+
 # Design — Inventory Lot/Batch + Expiry with FEFO
 
 ## Context

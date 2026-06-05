@@ -1,119 +1,21 @@
 {
-  "spec": "openspec/changes/expense-capture-core",
+  "spec": "openspec/changes/inventory-lot-batch-expiry",
   "verified": [
-    {
-      "task": "1",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "size": 344153
-    },
-    {
-      "task": "5-8",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "size": 344153
-    },
-    {
-      "task": "9",
-      "file": "lib/Lifecycle/ExpenseClaimGuard.php",
-      "ok": true,
-      "size": 10439
-    },
-    {
-      "task": "11",
-      "file": "lib/Validation/PhotoValidator.php",
-      "ok": true,
-      "size": 2541
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json",
-      "ok": true,
-      "size": 117716
-    },
-    {
-      "task": "18",
-      "file": "openspec/architecture/adr-000-data-model.md",
-      "ok": true,
-      "size": 301720
-    },
-    {
-      "task": "test-11",
-      "file": "tests/Unit/Validation/PhotoValidatorTest.php",
-      "ok": true,
-      "size": 5529
-    },
-    {
-      "task": "test-9",
-      "file": "tests/Unit/Lifecycle/ExpenseClaimGuardTest.php",
-      "ok": true,
-      "size": 14622
-    },
-    {
-      "task": "5-16",
-      "file": "shillinq_register.json::Receipt",
-      "ok": true
-    },
-    {
-      "task": "5-16",
-      "file": "shillinq_register.json::MileageEntry",
-      "ok": true
-    },
-    {
-      "task": "5-16",
-      "file": "shillinq_register.json::PerDiem",
-      "ok": true
-    },
-    {
-      "task": "5-16",
-      "file": "shillinq_register.json::ExpenseClaimEntry",
-      "ok": true
-    },
-    {
-      "task": "5-16",
-      "file": "shillinq_register.json::MileageRate",
-      "ok": true
-    },
-    {
-      "task": "5-16",
-      "file": "shillinq_register.json::PerDiemRate",
-      "ok": true
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json::Receipts",
-      "ok": true
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json::ReceiptDetail",
-      "ok": true
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json::ExpenseClaims",
-      "ok": true
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json::ExpenseClaimDetail",
-      "ok": true
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json::MileageLog",
-      "ok": true
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json::MileageLogDetail",
-      "ok": true
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json::Inkoop menu",
-      "ok": true
-    }
+    {"task": "1", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "Confirmed no InventoryLot or ExpiryAlert before this PR; Product schema catalogued as InventoryItem equivalent"},
+    {"task": "2", "file": "openspec/changes/inventory-lot-batch-expiry/tasks.md", "ok": true, "note": "Dependency gap noted: StockMovement not yet in register; documented in tasks.md"},
+    {"task": "3", "file": "openspec/specs/inventory-lot-batch-expiry/spec.md", "ok": true, "note": "spec.md present with all REQ-LOT-001 through REQ-LOT-009 requirements"},
+    {"task": "4", "file": "openspec/changes/inventory-lot-batch-expiry/proposal.md", "ok": true, "note": "proposal.md with all required sections"},
+    {"task": "5", "file": "openspec/changes/inventory-lot-batch-expiry/design.md", "ok": true, "note": "design.md with D1-D4 decisions; status set to pr-created"},
+    {"task": "6", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "InventoryLot schema with all REQ-LOT-002 fields; x-schema-org: schema:Product"},
+    {"task": "7", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "x-openregister-sort: expiryDate asc nulls-last declared"},
+    {"task": "8", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "x-openregister-lifecycle: 4 states, 5 transitions"},
+    {"task": "9", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "x-openregister-relations: productSku->Product.sku, goodsReceiptId->GoodsReceipt.id"},
+    {"task": "10", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "ExpiryAlert schema with lifecycle and relations"},
+    {"task": "11", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "Product schema patched with requiresLotTracking boolean"},
+    {"task": "12", "file": "lib/Settings/shillinq_register.json", "ok": true, "note": "x-openregister-validation precondition declared on InventoryLot"},
+    {"task": "13", "file": "src/manifest.json", "ok": true, "note": "InventoryLots + InventoryLotDetail pages added to manifest"},
+    {"task": "14", "file": "lib/Settings/seeds/inventory-lots-demo.json", "ok": true, "note": "5 demo lots; seedInventoryLotsDemoData() + Phase 9 in repair step"},
+    {"task": "15", "file": "openspec/architecture/adr-000-data-model.md", "ok": true, "note": "InventoryLot + ExpiryAlert entities added; requiresLotTracking note on InventoryItem"}
   ],
   "stubs": [],
   "missing_routes": []

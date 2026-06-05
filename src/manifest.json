@@ -232,6 +232,13 @@
 					"icon": "TagOutline",
 					"route": "ProductAttributes",
 					"order": 20
+				},
+				{
+					"id": "InventoryLots",
+					"label": "Lots & Batches",
+					"icon": "PackageVariantClosedOutline",
+					"route": "InventoryLots",
+					"order": 30
 				}
 			]
 		},
@@ -745,6 +752,128 @@
 					}
 				],
 				"indexRoute": "ProductAttributes"
+			}
+		},
+		{
+			"id": "InventoryLots",
+			"route": "/inventory/lots",
+			"type": "index",
+			"title": "Lots & Batches",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryLot",
+				"columns": [
+					{
+						"key": "lotNumber",
+						"label": "Lot Number",
+						"sortable": true
+					},
+					{
+						"key": "productSku",
+						"label": "Product SKU",
+						"sortable": true
+					},
+					{
+						"key": "expiryDate",
+						"label": "Expiry Date",
+						"sortable": true
+					},
+					{
+						"key": "quantity",
+						"label": "Quantity",
+						"sortable": true
+					},
+					{
+						"key": "lotStatus",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "expiryDate",
+				"detailRoute": "InventoryLotDetail"
+			}
+		},
+		{
+			"id": "InventoryLotDetail",
+			"route": "/inventory/lots/:id",
+			"type": "detail",
+			"title": "Lot / Batch",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryLot",
+				"fields": [
+					{
+						"key": "lotNumber",
+						"label": "Lot Number",
+						"type": "string"
+					},
+					{
+						"key": "batchCode",
+						"label": "Batch Code",
+						"type": "string"
+					},
+					{
+						"key": "productSku",
+						"label": "Product SKU",
+						"type": "string"
+					},
+					{
+						"key": "manufactureDate",
+						"label": "Manufacture Date",
+						"type": "string"
+					},
+					{
+						"key": "expiryDate",
+						"label": "Expiry Date",
+						"type": "string"
+					},
+					{
+						"key": "bestBeforeDate",
+						"label": "Best Before Date",
+						"type": "string"
+					},
+					{
+						"key": "quantity",
+						"label": "Quantity",
+						"type": "number"
+					},
+					{
+						"key": "unitCode",
+						"label": "Unit Code",
+						"type": "string"
+					},
+					{
+						"key": "unitCost",
+						"label": "Unit Cost (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "warehouseLocation",
+						"label": "Warehouse Location",
+						"type": "string"
+					},
+					{
+						"key": "lotStatus",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "receivedDate",
+						"label": "Received Date",
+						"type": "string"
+					},
+					{
+						"key": "goodsReceiptId",
+						"label": "Goods Receipt",
+						"type": "string"
+					},
+					{
+						"key": "notes",
+						"label": "Notes",
+						"type": "string"
+					}
+				],
+				"indexRoute": "InventoryLots"
 			}
 		},
 		{

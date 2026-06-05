@@ -1350,4 +1350,120 @@ class SettingsService
         return ['seeded' => $seeded, 'skipped' => $skipped];
 
     }//end importProductAttributes()
+
+    /**
+     * Seed demo InventoryLot records from inventory-lots-demo.json, idempotently.
+     *
+     * Reads lib/Settings/seeds/inventory-lots-demo.json and imports InventoryLot
+     * records via OpenRegister's ObjectService. Deduplication key is lotNumber —
+     * already-existing lots are skipped so re-runs are safe.
+     * Only called when APP_ENV=development per REQ-LOT design.md seed data section.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/inventory-lot-batch-expiry/tasks.md#task-14
+     */
+    public function seedInventoryLotsDemoData(): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/inventory-lots-demo.json';
+
+        if (file_exists($seedPath) === false) {
+            return [
+                'success' => false,
+                'message' => 'Seed file not found: inventory-lots-demo.json',
+            ];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return [
+                'success' => false,
+                'message' => 'Failed to read seed file: inventory-lots-demo.json',
+            ];
+        }
+
+        $data = json_decode($content, associative: true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return [
+                'success' => false,
+                'message' => 'Failed to parse inventory-lots-demo.json: '.json_last_error_msg(),
+            ];
+        }
+
+        $lots = ($data['inventoryLots'] ?? []);
+        if (empty($lots) === true) {
+            return [
+                'success' => true,
+                'message' => 'Seed file contains no inventoryLots, nothing to import.',
+                'seeded'  => 0,
+                'skipped' => 0,
+            ];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($lots as $lot) {
+                $lotNumber = ($lot['lotNumber'] ?? '');
+                if ($lotNumber === '') {
+                    $skipped++;
+                    continue;
+                }
+
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('InventoryLot')
+                    ->findAll(
+                        [
+                            'filters' => ['lotNumber' => $lotNumber],
+                            'limit'   => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $lot,
+                    register: $registerSlug,
+                    schema: 'InventoryLot',
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: InventoryLot demo seed imported',
+                ['seeded' => $seeded, 'skipped' => $skipped]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'InventoryLot demo seed imported successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: InventoryLot demo seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedInventoryLotsDemoData()
 }//end class

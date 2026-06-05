@@ -9800,6 +9800,13 @@
 					"type": "string",
 					"description": "FK to the organization owning this product. Combined with sku forms the uniqueness key per D2. Queries MUST be scoped per organization per REQ-IPC-010.",
 					"example": "org-123"
+				},
+				"requiresLotTracking": {
+					"type": "boolean",
+					"nullable": true,
+					"default": false,
+					"description": "When true, every inbound receipt of this SKU MUST be assigned to an InventoryLot. Additive field per REQ-LOT-008 — existing Product objects without this field are treated as false.",
+					"example": false
 				}
 			},
 			"x-openregister-rbac": {
@@ -9906,6 +9913,398 @@
 					"inventory": {
 						"permissions": [
 							"read"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
+		"InventoryLot": {
+			"slug": "InventoryLot",
+			"icon": "PackageVariantClosedOutline",
+			"version": "0.1.0",
+			"title": "Inventory Lot",
+			"description": "A discrete, homogeneous quantity of a product received together from one supplier on one date, carrying a single expiryDate. Foundation for FEFO picking and expiry alerting per REQ-LOT-001. No custom database table — managed by OpenRegister's generic CRUD surface (ADR-022).",
+			"type": "object",
+			"x-schema-org": "schema:Product",
+			"required": [
+				"lotNumber",
+				"productSku",
+				"quantity",
+				"lotStatus"
+			],
+			"properties": {
+				"lotNumber": {
+					"type": "string",
+					"description": "Unique lot identifier assigned at receipt time.",
+					"example": "LOT-2026-001"
+				},
+				"batchCode": {
+					"type": "string",
+					"nullable": true,
+					"description": "Supplier-assigned batch or charge reference.",
+					"example": "PF-KAT-A001"
+				},
+				"productSku": {
+					"type": "string",
+					"description": "FK to Product.sku — identifies the product tracked in this lot.",
+					"example": "DV-KAT-SENIOR-2KG"
+				},
+				"manufactureDate": {
+					"type": "string",
+					"format": "date",
+					"nullable": true,
+					"description": "Date of manufacture (ISO 8601 date).",
+					"example": "2026-01-15"
+				},
+				"expiryDate": {
+					"type": "string",
+					"format": "date",
+					"nullable": true,
+					"description": "Legal expiry date (ISO 8601 date). Drives FEFO sort; NULL-last semantics when absent.",
+					"example": "2027-01-15"
+				},
+				"bestBeforeDate": {
+					"type": "string",
+					"format": "date",
+					"nullable": true,
+					"description": "Best-before quality date (ISO 8601 date). May precede expiryDate per EU food law.",
+					"example": "2026-12-15"
+				},
+				"quantity": {
+					"type": "number",
+					"format": "double",
+					"minimum": 0,
+					"description": "Current available quantity in this lot. Reduced by StockMovement records.",
+					"example": 240
+				},
+				"unitCode": {
+					"type": "string",
+					"nullable": true,
+					"description": "UN/CEFACT unit of measure code (e.g. ZAK=bag, BLIK=tin, KG=kilogram, ST=piece).",
+					"example": "ZAK"
+				},
+				"unitCost": {
+					"type": "number",
+					"format": "double",
+					"nullable": true,
+					"description": "Cost per unit in EUR at time of receipt.",
+					"example": 8.75
+				},
+				"warehouseLocation": {
+					"type": "string",
+					"nullable": true,
+					"description": "Physical bin/rack location code in the warehouse.",
+					"example": "REK-A3-VAK2"
+				},
+				"lotStatus": {
+					"type": "string",
+					"description": "Lifecycle state of this lot. Managed by x-openregister-lifecycle.",
+					"enum": [
+						"active",
+						"quarantined",
+						"expired",
+						"exhausted"
+					],
+					"default": "active",
+					"example": "active"
+				},
+				"receivedDate": {
+					"type": "string",
+					"format": "date",
+					"nullable": true,
+					"description": "Date this lot was received into the warehouse (ISO 8601 date).",
+					"example": "2026-01-20"
+				},
+				"goodsReceiptId": {
+					"type": "string",
+					"nullable": true,
+					"description": "FK to GoodsReceipt.id — the receipt event that created this lot.",
+					"example": "gr-2026-001"
+				},
+				"notes": {
+					"type": "string",
+					"nullable": true,
+					"description": "Operator-authored free text — quality notes, sourcing remarks, etc.",
+					"example": "Droogvoer kat senior, leverancier Prins Petfoods"
+				}
+			},
+			"x-openregister-sort": [
+				{
+					"field": "expiryDate",
+					"direction": "asc",
+					"nulls": "last"
+				}
+			],
+			"x-openregister-lifecycle": {
+				"field": "lotStatus",
+				"initialState": "active",
+				"states": {
+					"active": {
+						"label": "Active",
+						"description": "Lot is available for FEFO picking."
+					},
+					"quarantined": {
+						"label": "Quarantined",
+						"description": "Lot is held for quality inspection and must not be picked."
+					},
+					"expired": {
+						"label": "Expired",
+						"description": "Lot has passed its legal expiryDate. Terminal state — no further picking allowed."
+					},
+					"exhausted": {
+						"label": "Exhausted",
+						"description": "Lot quantity has been fully consumed (quantity == 0). Terminal state."
+					}
+				},
+				"transitions": {
+					"quarantine": {
+						"from": "active",
+						"to": "quarantined",
+						"label": "Quarantine lot",
+						"description": "Operator or automated quality flag places lot on hold."
+					},
+					"releaseFromQuarantine": {
+						"from": "quarantined",
+						"to": "active",
+						"label": "Release from quarantine",
+						"description": "Quality inspection passed; lot returned to pickable state."
+					},
+					"expireFromActive": {
+						"from": "active",
+						"to": "expired",
+						"label": "Mark as expired",
+						"description": "Scheduled daily check transitions lot when today > expiryDate.",
+						"guard": "today > expiryDate",
+						"timeBased": {
+							"field": "expiryDate",
+							"offsetDays": 0
+						}
+					},
+					"expireFromQuarantined": {
+						"from": "quarantined",
+						"to": "expired",
+						"label": "Mark quarantined lot as expired",
+						"description": "Operator or scheduled check transitions quarantined lot when today > expiryDate.",
+						"guard": "today > expiryDate",
+						"timeBased": {
+							"field": "expiryDate",
+							"offsetDays": 0
+						}
+					},
+					"exhaust": {
+						"from": "active",
+						"to": "exhausted",
+						"label": "Mark as exhausted",
+						"description": "Automated transition fired when a StockMovement reduces quantity to 0.",
+						"guard": "quantity == 0",
+						"postcondition": {
+							"trigger": "StockMovement.post",
+							"condition": "quantity == 0"
+						}
+					}
+				}
+			},
+			"x-openregister-relations": {
+				"productSku": {
+					"schema": "Product",
+					"field": "sku",
+					"cardinality": "many-to-one",
+					"required": true,
+					"description": "FK to Product.sku — identifies the tracked product."
+				},
+				"goodsReceiptId": {
+					"schema": "GoodsReceipt",
+					"field": "id",
+					"cardinality": "many-to-one",
+					"required": false,
+					"description": "FK to GoodsReceipt.id — the inbound receipt event that created this lot."
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"warehouse-operator": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"warehouse-manager": {
+						"permissions": [
+							"create",
+							"read",
+							"update",
+							"delete",
+							"transition"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			},
+			"x-openregister-validation": {
+				"requiresLotNumberWhenTracked": {
+					"description": "When the linked Product has requiresLotTracking: true, lotNumber must be non-empty. Declares the guard for Task 12; enforcement requires GoodsReceipt schema from inventory-stock-movement-ledger.",
+					"precondition": {
+						"if": {
+							"relation": "productSku",
+							"field": "requiresLotTracking",
+							"equals": true
+						},
+						"then": {
+							"require": "lotNumber",
+							"error": "lot number required for tracked item"
+						}
+					}
+				}
+			}
+		},
+		"ExpiryAlert": {
+			"slug": "ExpiryAlert",
+			"icon": "AlertCircleOutline",
+			"version": "0.1.0",
+			"title": "Expiry Alert",
+			"description": "Tracks approaching-expiry and missing-expiry notifications for InventoryLot records. Separate from InventoryLot so multiple alerts at different thresholds can exist per lot and alert history is queryable after lot exhaustion per REQ-LOT-007.",
+			"type": "object",
+			"required": [
+				"lotId",
+				"alertType",
+				"alertDate",
+				"status"
+			],
+			"properties": {
+				"lotId": {
+					"type": "string",
+					"description": "FK to InventoryLot.id — the lot triggering this alert.",
+					"example": "lot-uuid-001"
+				},
+				"alertType": {
+					"type": "string",
+					"description": "Type of expiry alert.",
+					"enum": [
+						"approaching_expiry",
+						"expired",
+						"missing_expiry_date"
+					],
+					"example": "approaching_expiry"
+				},
+				"daysBeforeExpiry": {
+					"type": "number",
+					"nullable": true,
+					"description": "Number of days before expiryDate at which this alert was generated.",
+					"example": 30
+				},
+				"alertDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Date the alert was generated (ISO 8601 date).",
+					"example": "2026-05-16"
+				},
+				"status": {
+					"type": "string",
+					"description": "Lifecycle state of this alert.",
+					"enum": [
+						"pending",
+						"acknowledged",
+						"resolved"
+					],
+					"default": "pending",
+					"example": "pending"
+				},
+				"resolvedDate": {
+					"type": "string",
+					"format": "date",
+					"nullable": true,
+					"description": "Date the alert was acknowledged or resolved (ISO 8601 date).",
+					"example": "2026-05-20"
+				},
+				"recipientId": {
+					"type": "string",
+					"nullable": true,
+					"description": "FK to Person.id — the warehouse operator notified.",
+					"example": "person-uuid-001"
+				},
+				"notes": {
+					"type": "string",
+					"nullable": true,
+					"description": "Operator acknowledgement notes or action taken.",
+					"example": "Lot scheduled for disposal on 2026-06-20"
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "status",
+				"initialState": "pending",
+				"states": {
+					"pending": {
+						"label": "Pending",
+						"description": "Alert generated and awaiting operator acknowledgement."
+					},
+					"acknowledged": {
+						"label": "Acknowledged",
+						"description": "Operator has seen the alert and is taking action."
+					},
+					"resolved": {
+						"label": "Resolved",
+						"description": "Alert has been resolved (lot disposed, transferred, or relabelled)."
+					}
+				},
+				"transitions": {
+					"acknowledge": {
+						"from": "pending",
+						"to": "acknowledged",
+						"label": "Acknowledge alert",
+						"description": "Operator confirms the alert has been reviewed."
+					},
+					"resolve": {
+						"from": [
+							"pending",
+							"acknowledged"
+						],
+						"to": "resolved",
+						"label": "Resolve alert",
+						"description": "Alert resolved — lot has been disposed, quarantined, or relabelled."
+					}
+				}
+			},
+			"x-openregister-relations": {
+				"lotId": {
+					"schema": "InventoryLot",
+					"field": "id",
+					"cardinality": "many-to-one",
+					"required": true,
+					"description": "FK to InventoryLot.id — the lot for which this alert was raised."
+				},
+				"recipientId": {
+					"schema": "Person",
+					"field": "id",
+					"cardinality": "many-to-one",
+					"required": false,
+					"description": "FK to Person.id — the operator assigned to act on this alert."
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"warehouse-operator": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"warehouse-manager": {
+						"permissions": [
+							"create",
+							"read",
+							"update",
+							"delete"
 						]
 					},
 					"auditor": {
