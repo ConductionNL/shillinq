@@ -1,5 +1,15 @@
 {
     "translations": {
+        "Sustainability": "Sustainability",
+        "Materiality Assessments": "Materiality Assessments",
+        "Materiality Assessment": "Materiality Assessment",
+        "ESRS Data Points": "ESRS Data Points",
+        "ESRS Data Point": "ESRS Data Point",
+        "GHG Inventory": "GHG Inventory",
+        "Value Chain Actors": "Value Chain Actors",
+        "Value Chain Actor": "Value Chain Actor",
+        "Assurance Engagements": "Assurance Engagements",
+        "Assurance Engagement": "Assurance Engagement",
         "Shillinq settings": "Shillinq settings",
         "Configure the app settings": "Configure the app settings",
         "Configuration": "Configuration",
