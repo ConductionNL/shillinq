@@ -34,6 +34,16 @@ use Psr\Log\LoggerInterface;
 /**
  * Repair step that initializes Shillinq configuration via SettingsService.
  *
+ * This step legitimately aggregates the registration of many independent,
+ * tenant-agnostic seed catalogues (KOR thresholds, compliance reference data,
+ * investeringsaftrek RvO lists, product-attribute templates, scheduled
+ * workflows). Each addition is a single self-contained delegation to
+ * SettingsService, so the overall class complexity is high by composition
+ * rather than by tangled control flow — suppressed in line with the same
+ * pattern on AppointmentGuard.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ *
  * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
  * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
  */
@@ -148,6 +158,7 @@ class InitializeSettings implements IRepairStep
             $this->registerIv3ScheduledWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
             $this->seedComplianceReferenceData(output: $output);
+            $this->seedInvesteringsaftrekReferenceData(output: $output);
             $this->seedProductAttributeTemplates(output: $output);
             $this->seedIntercompanyToleranceRules(output: $output);
         } catch (\Throwable $e) {
@@ -402,6 +413,43 @@ class InitializeSettings implements IRepairStep
         }
 
     }//end seedIntercompanyToleranceRules()
+
+    /**
+     * Seed the investeringsaftrek reference data (KIA tiers, Energielijst, Milieulijst).
+     *
+     * All three are statutory RvO reference catalogues that are not
+     * tenant-specific, so they are seeded unconditionally. Deduplication is
+     * handled inside the SettingsService seed helpers (by tier/code), keeping
+     * re-runs safe and preserving operator additions.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+     */
+    private function seedInvesteringsaftrekReferenceData(IOutput $output): void
+    {
+        $seeds = [
+            ['label' => 'KIA tiers', 'result' => $this->settingsService->seedKiaTiers()],
+            ['label' => 'RvO Energielijst', 'result' => $this->settingsService->seedEnergielijst()],
+            ['label' => 'RvO Milieulijst', 'result' => $this->settingsService->seedMilieulijst()],
+        ];
+
+        foreach ($seeds as $seed) {
+            $result  = $seed['result'];
+            $success = 'no';
+            if (($result['success'] ?? false) === true) {
+                $success = 'yes';
+            }
+
+            $output->info(
+                $seed['label'].': '.($result['seeded'] ?? 0).' created, '
+                .($result['skipped'] ?? 0).' skipped, success='.$success.'.'
+            );
+        }
+
+    }//end seedInvesteringsaftrekReferenceData()
 
     /**
      * Seed the KOR thresholds from kor-thresholds-2026.json, idempotently.

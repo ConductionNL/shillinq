@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 238
+**Entities:** 244
 
 ## Context
 
@@ -2399,6 +2399,131 @@ _Investment or capital contribution in an entity with terms and expected returns
 **Relations:**
 - → Entity (many-to-one)
 - → Person (many-to-one)
+
+### InvestmentAsset
+**Schema.org:** `schema:Thing`
+_Capitalised asset evaluated against the four investeringsaftrek schemes (KIA/EIA/MIA/Vamil) per Wet IB 2001 art. 3.40–3.47. 1-to-1 overlay on FixedAsset that carries eligibility classification, RvO meldingstermijn tracking, and the disposal-window clock._
+**Primary spec:** bookkeeping-investeringsaftrek
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | Owning administration (tenant scope) |
+| fixedAssetId | string | No | 1-to-1 FK to the FixedAsset (nullable, back-tag safe) |
+| omschrijving | string | Yes | Asset description |
+| leverancier | string | No | Supplier |
+| factuurnummer | string | No | Invoice number |
+| aanschafdatum | date | No | Acquisition (invoice) date |
+| opdrachtverleningDatum | date | No | Order placement date — authoritative for the RvO 3-month meldingstermijn |
+| ingebruiknameDatum | date | No | Commissioning date |
+| aanschafwaarde | integer | Yes | Acquisition value in EUR cents |
+| valuta | string | No | Currency code (default EUR) |
+| btwRegime | string | No | VAT regime affecting the deductible basis |
+| categorie | string | No | Asset category |
+| energielijstCode | string | No | Matched Energielijst code (EIA) |
+| milieulijstCode | string | No | Matched Milieulijst code (MIA/Vamil) |
+| kiaEligible | boolean | No | KIA classification (machine baseline, overridable) |
+| eiaEligible | boolean | No | EIA classification |
+| miaEligible | boolean | No | MIA classification |
+| vamilEligible | boolean | No | Vamil classification |
+| eligibilityOverride | string | No | Boekhouder override rationale (audited) |
+| rvoMeldingStatus | enum | No | RvO notification status (ingediend / definitief / vervallen) |
+| rvoMeldingDatum | date | No | Date the RvO melding was sent |
+| rvoMeldingDeadline | date | No | Computed deadline = opdrachtverleningDatum + 3 months |
+| rvoReferentie | string | No | RvO reference number |
+
+**Relations:**
+- → FixedAsset (one-to-one)
+- → InvesteringsaftrekClaim (one-to-many)
+- → VamilDepreciation (one-to-many)
+
+### EnergielijstCode
+**Schema.org:** `schema:DefinedTerm`
+_Versioned RvO Energielijst reference code for EIA eligibility. Seeded per fiscal year (investeringsaftrek-energielijst-YYYY.json) and resolved against the opdrachtverleningDatum year, not the current year._
+**Primary spec:** bookkeeping-investeringsaftrek
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| code | string | Yes | Energielijst code (e.g. 251701) |
+| jaartal | integer | Yes | Fiscal year the list applies to |
+| categorie | string | No | Category grouping |
+| omschrijving | string | Yes | Description (searchable) |
+| deelpercentage | number | No | Eligible portion percentage |
+| maxBedragPerEenheid | integer | No | Maximum eligible amount per unit, EUR cents |
+| eenheid | string | No | Unit of measure |
+| ingangsdatum | date | No | Effective from |
+| vervaldatum | date | No | Expires on |
+
+### MilieulijstCode
+**Schema.org:** `schema:DefinedTerm`
+_Versioned RvO Milieulijst reference code for MIA and Vamil eligibility, including the MIA percentage band and whether Vamil (willekeurige afschrijving) is permitted._
+**Primary spec:** bookkeeping-investeringsaftrek
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| code | string | Yes | Milieulijst code (e.g. G3110) |
+| jaartal | integer | Yes | Fiscal year the list applies to |
+| categorie | string | No | Category grouping |
+| omschrijving | string | Yes | Description (searchable) |
+| miaPercentage | number | No | MIA deduction percentage (27/36/45) |
+| vamilToegestaan | boolean | No | Whether Vamil is permitted for this code |
+| deelpercentage | number | No | Eligible portion percentage |
+| maxBedrag | integer | No | Maximum eligible amount, EUR cents |
+| ingangsdatum | date | No | Effective from |
+
+### InvesteringsaftrekClaim
+**Schema.org:** `schema:Thing`
+_A per-scheme aftrek claim against an InvestmentAsset for a boekjaar, with the RvO beschikking lifecycle (ingediend → definitief) and a vrijwillige-verlaging audit trail._
+**Primary spec:** bookkeeping-investeringsaftrek
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| investmentAssetId | string | Yes | FK to the InvestmentAsset |
+| boekjaar | integer | Yes | Fiscal year of the claim |
+| scheme | enum | Yes | KIA / EIA / MIA / Vamil |
+| grondslag | integer | Yes | Deduction basis in EUR cents |
+| percentage | number | No | Applied percentage |
+| aftrekbedrag | integer | Yes | Computed deduction in EUR cents |
+| status | enum | Yes | ingediend / definitief |
+| ingediendInAangifte | boolean | No | Whether included in the filed aangifte |
+| rvoBeschikking | object | No | Nested RvO decision (beschikkingsdatum, toegekendBedrag) |
+| vrijwilligeVerlaging | integer | No | Voluntary reduction in EUR cents (>= 0, not carry-forwardable for EIA/MIA) |
+| verlaginRationale | string | No | Mandatory rationale when a reduction is applied |
+
+**Relations:**
+- → InvestmentAsset (many-to-one)
+- → Account (zero-to-one, GL posting on disposal)
+
+### VamilDepreciation
+**Schema.org:** `schema:Thing`
+_Modified depreciation schedule for a MIA+Vamil asset: 75% direct in the ingebruikname year, 25% via the regular schedule over the useful life._
+**Primary spec:** bookkeeping-investeringsaftrek
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| investmentAssetId | string | Yes | FK to the InvestmentAsset |
+| boekjaar | integer | Yes | Fiscal year of commissioning |
+| aanschafwaarde | integer | Yes | Acquisition value in EUR cents |
+| directeAfschrijving | integer | Yes | 75% direct depreciation in EUR cents |
+| gespreidDeel | integer | Yes | 25% spread portion in EUR cents |
+| regulierAfschrijfschema | object | No | Nested schedule (methode, looptijdJaren, restwaarde, jaarlijkseAfschrijving) |
+
+**Relations:**
+- → InvestmentAsset (many-to-one)
+
+### KIATier
+**Schema.org:** `schema:DefinedTerm`
+_The annually-indexed KIA tier table (Wet IB 2001 art. 3.41). KIA is aggregated at boekjaar level over the running kiaJaartotaal; tier 4 carries a tapering formula._
+**Primary spec:** bookkeeping-investeringsaftrek
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| tier | integer | Yes | Tier ordinal (1–5) |
+| jaartal | integer | Yes | Fiscal year |
+| vanaf | integer | Yes | Lower bound of the band, EUR cents (inclusive) |
+| tot | integer | No | Upper bound, EUR cents (exclusive; null = open) |
+| percentage | number | No | Tier percentage (negative = taper rate) |
+| vastBedrag | integer | No | Fixed deduction amount, EUR cents |
+| regel | string | No | Human-readable rule description |
 
 ### InnovatieboxElection
 **Schema.org:** `schema:Event`
