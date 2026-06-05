@@ -1,7 +1,6 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 248
 **Entities:** 253
 
 ## Context
@@ -6949,3 +6948,110 @@ _Post-month-end forecast accuracy report comparing actual vs forecast by categor
 | betalingsgedragUpdates | array | No | Customers with re-calculated offsets |
 | pipelineConversionUpdates | array | No | Deals with re-calibrated probability |
 | administrationId | string | Yes | FK to the administration (tenant scope) |
+### UrencriteriumYear
+**Schema.org:** `schema:Quantity`
+_Per-onderneming, per-kalenderjaar rolling dashboard of the urencriterium (art. 3.6 Wet IB 2001). Tracks the doel-norm (1.225 / 800 / 525), the running tally, the year-end forecast, the drempel-status (OP_KOERS/RISICO/KRITIEK/BEHAALD) and the grotendeels-criterium outcome. Save guarded by UrencriteriumYearGuard (ADR-031)._
+**Primary spec:** zzp-urencriterium-tracker
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the owning Administration for tenant isolation |
+| ondernemingId | string | Yes | FK to the onderneming; the criterion applies per business |
+| kalenderjaar | integer | Yes | Calendar year tracked |
+| doelNorm | enum | Yes | Applicable norm in hours: 1225, 800 or 525 |
+| normGrondslag | string | Yes | Legal grondslag citation for the norm |
+| lopendeUren | number | No | Cumulative realised hours, updated daily by the tally batch |
+| prognoseEindeJaar | number | No | Forecast year-end hours |
+| prognoseConfidence | number | No | Confidence interval (0-1) of the forecast |
+| drempelStatus | enum | Yes | OP_KOERS / RISICO / KRITIEK / BEHAALD |
+| grotendeelsCriterium | enum | No | NIET_TOEPASSELIJK / GROTENDEELS_ONDERNEMING / NIET_GROTENDEELS_ONDERNEMING |
+| berekendOp | date-time | No | Timestamp of the last tally/forecast recompute |
+
+### UrenDagregistratie
+**Schema.org:** `schema:HowToStep`
+_Daily fiscal-categorised hour ledger feeding the urencriterium. Separate from the billable UrenRegistratie (time-tracking) which flows in as BILLABLE_KLANTWERK; non-billable overhead is recorded manually or agenda-derived. Reistijd-cap (4h/day) and backfill rules enforced by UrenDagregistratieGuard (ADR-031). Named distinctly from the existing monolith UrenRegistratie schema (ADR-037)._
+**Primary spec:** zzp-urencriterium-tracker
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the owning Administration for tenant isolation |
+| ondernemingId | string | Yes | FK to the onderneming the hours count under |
+| datum | date | Yes | Performance date (not invoice date) |
+| categorie | enum | Yes | One of the Belastingdienst-recognised category codes |
+| uren | number | Yes | Hours registered in this category that day |
+| getoldeUren | number | No | Effective counted hours after category caps (read-only) |
+| capNotitie | string | No | Audit note when a cap was applied (read-only) |
+| bronnen | array | No | Source references for evidence traceability |
+| registratieMoment | date-time | No | Registration timestamp (drives backfill detection) |
+| backfillLabel | string | No | Auto-stamped "Backfill T+N dagen" label (read-only) |
+| backfillReden | string | No | Mandatory reason for backfill older than 7 days |
+| backfillBewijs | string | No | FK to uploaded evidence for backfill older than 7 days |
+
+### UrenCategorie
+**Schema.org:** `schema:DefinedTerm`
+_Definition table of Belastingdienst-recognised hour categories with fiscal grondslag (Hoge Raad caselaw), weighting/cap rules and evidence requirements. Configuration table so 2026+ jurisprudence is absorbed as data. Admin-only edit after init. Seeded with the seven standard categories._
+**Primary spec:** zzp-urencriterium-tracker
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| code | enum | Yes | Unique category code, FK target from UrenDagregistratie.categorie |
+| label | string | Yes | Human-readable category label |
+| telTMee | boolean | Yes | Whether hours in this category count toward the criterion |
+| fiscaleBron | string | No | Fiscal grondslag reference (caselaw) |
+| voorwaarden | array | No | Conditions under which the hours count |
+| maxPerDag | number | No | Max counted hours/day for this category (4 for reistijd) |
+| bewijsVereist | boolean | No | Whether registration requires evidence upload |
+| voorbeelden | array | No | Example activities in this category |
+
+### UrenPrognose
+**Schema.org:** `schema:Quantity`
+_Year-end forecast using a rolling-12-week average + seasonality correction + planned holidays + scheduled assignments. Stores the model version (v3.2-12wk-seasonal); transparent (no ML), readable by a bookkeeper._
+**Primary spec:** zzp-urencriterium-tracker
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the owning Administration for tenant isolation |
+| ondernemingId | string | Yes | FK to the onderneming the forecast applies to |
+| berekendOp | date-time | No | Timestamp of the calculation |
+| modelVersie | string | Yes | Forecast model version |
+| perMaandPrognose | object | No | Forecast hours per remaining month |
+| vakanties | array | No | Planned holiday periods set to 0 hours |
+| totaalPrognose | number | Yes | Forecast year-end total hours |
+| kansBehaaldNorm | number | No | Estimated probability (0-1) of meeting the norm |
+
+### UrenAlert
+**Schema.org:** `schema:Message`
+_Warning generated at quarter-end or on a drempel-status omslag (OP_KOERS→RISICO, RISICO→KRITIEK) with at least three concrete handelingsperspectieven tied to the entrepreneur's situation._
+**Primary spec:** zzp-urencriterium-tracker
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the owning Administration for tenant isolation |
+| ondernemingId | string | Yes | FK to the onderneming the alert concerns |
+| type | enum | Yes | KWARTAAL_EINDE / PROGNOSE_RISICO_DROP / OMSLAG_RISICO / OMSLAG_KRITIEK |
+| aanleidingDatum | date | No | Date that triggered the alert |
+| lopendeUren | number | No | Running hours at alert time |
+| norm | integer | No | Applicable norm at alert time |
+| prognoseEindeJaar | number | No | Forecast year-end at alert time |
+| tekort | number | No | Expected shortfall vs the norm |
+| urgentie | enum | Yes | INFO / WAARSCHUWING / KRITIEK |
+| oorzaak | string | No | Explanation of the omslag cause |
+| handelingsperspectief | array | Yes | At least three concrete remediation actions |
+
+### UrenEvidence
+**Schema.org:** `schema:DigitalDocument`
+_Per-quarter PDF-A3 evidence dossier that survives a Belastingdienst audit. Contains daily registrations, categorisation and source references, with a SHA-256 hash and a 7-year retention term (art. 52 AWR). Retrievable by a retention index on (ondernemingId, periode)._
+**Primary spec:** zzp-urencriterium-tracker
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the owning Administration for tenant isolation |
+| ondernemingId | string | Yes | FK to the onderneming the dossier concerns |
+| periode | string | Yes | Quarter period (e.g. 2026-Q1) |
+| totaalUren | number | No | Total hours in the period |
+| perCategorie | object | No | Hours per category in the period |
+| exportFormaat | enum | Yes | PDF-A3 or XLSX |
+| fileRef | string | No | FK to the stored file in openregister file-storage |
+| sha256 | string | No | SHA-256 hash for integrity validation at audit |
+| gegenereerdOp | date-time | No | Generation timestamp |
+| bewaarTermijn | date | Yes | Retention end date (7 years after generation) |
