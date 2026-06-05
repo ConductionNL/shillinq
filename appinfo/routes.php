@@ -91,6 +91,11 @@ return [
         // Public token-based confirmation portal page.
         ['name' => 'confirmationApi#portal', 'url' => '/confirm', 'verb' => 'GET'],
 
+        // ICP-opgaaf (Tier 3): read-only intra-community supplies ledger, reconciliation, periodicity.
+        ['name' => 'icp#ledger', 'url' => '/api/icp/ledger', 'verb' => 'GET'],
+        ['name' => 'icp#reconcile', 'url' => '/api/icp/reconcile', 'verb' => 'GET'],
+        ['name' => 'icp#periodicity', 'url' => '/api/icp/periodicity', 'verb' => 'GET'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],

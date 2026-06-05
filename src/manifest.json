@@ -14715,6 +14715,307 @@
 				],
 				"defaultSort": "contractId"
 			}
+		},
+		{
+			"id": "IcpSupplies",
+			"route": "/belastingen/icp-leveringen",
+			"type": "index",
+			"title": "ICP-leveringen",
+			"config": {
+				"register": "shillinq",
+				"schema": "IcpSupply",
+				"columns": [
+					{
+						"key": "supplyDate",
+						"label": "Leveringsdatum",
+						"sortable": true
+					},
+					{
+						"key": "buyerVatId",
+						"label": "BTW-id afnemer",
+						"sortable": true
+					},
+					{
+						"key": "supplyType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "amountExclVat",
+						"label": "Bedrag excl. btw",
+						"sortable": true
+					}
+				],
+				"defaultSort": "supplyDate",
+				"detailRoute": "IcpSupplyDetail"
+			}
+		},
+		{
+			"id": "IcpSupplyDetail",
+			"route": "/belastingen/icp-leveringen/:id",
+			"type": "detail",
+			"title": "ICP-levering",
+			"config": {
+				"register": "shillinq",
+				"schema": "IcpSupply",
+				"fields": [
+					{
+						"key": "invoiceId",
+						"label": "Factuur",
+						"type": "string"
+					},
+					{
+						"key": "supplyDate",
+						"label": "Leveringsdatum",
+						"type": "string"
+					},
+					{
+						"key": "buyerVatId",
+						"label": "BTW-id afnemer",
+						"type": "string"
+					},
+					{
+						"key": "buyerCountry",
+						"label": "Land",
+						"type": "string"
+					},
+					{
+						"key": "supplyType",
+						"label": "Type",
+						"type": "string"
+					},
+					{
+						"key": "amountExclVat",
+						"label": "Bedrag excl. btw",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Valuta",
+						"type": "string"
+					},
+					{
+						"key": "viesValidationId",
+						"label": "VIES-validatie",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"indexRoute": "IcpSupplies"
+			}
+		},
+		{
+			"id": "IcpFilings",
+			"route": "/belastingen/icp-aangiften",
+			"type": "index",
+			"title": "ICP-aangiften",
+			"config": {
+				"register": "shillinq",
+				"schema": "IcpOpgaaf",
+				"columns": [
+					{
+						"key": "period",
+						"label": "Periode",
+						"sortable": true
+					},
+					{
+						"key": "periodicity",
+						"label": "Frequentie",
+						"sortable": true
+					},
+					{
+						"key": "type",
+						"label": "Soort",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "total",
+						"label": "Totaal",
+						"sortable": true
+					}
+				],
+				"defaultSort": "period",
+				"detailRoute": "IcpFilingDetail"
+			}
+		},
+		{
+			"id": "IcpFilingDetail",
+			"route": "/belastingen/icp-aangiften/:id",
+			"type": "detail",
+			"title": "ICP-aangifte",
+			"config": {
+				"register": "shillinq",
+				"schema": "IcpOpgaaf",
+				"fields": [
+					{
+						"key": "period",
+						"label": "Periode",
+						"type": "string"
+					},
+					{
+						"key": "periodicity",
+						"label": "Frequentie",
+						"type": "string"
+					},
+					{
+						"key": "type",
+						"label": "Soort",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "correctsPeriod",
+						"label": "Corrigeert periode",
+						"type": "string"
+					},
+					{
+						"key": "correctionReason",
+						"label": "Reden correctie",
+						"type": "string"
+					},
+					{
+						"key": "total",
+						"label": "Totaal",
+						"type": "number"
+					},
+					{
+						"key": "totalGoods",
+						"label": "Totaal goederen",
+						"type": "number"
+					},
+					{
+						"key": "totalServices",
+						"label": "Totaal diensten",
+						"type": "number"
+					},
+					{
+						"key": "totalTriangulation",
+						"label": "Totaal driehoek",
+						"type": "number"
+					},
+					{
+						"key": "belastingdienstKenmerk",
+						"label": "Belastingdienst-kenmerk",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"indexRoute": "IcpFilings"
+			}
+		},
+		{
+			"id": "IcpAuditTrail",
+			"route": "/belastingen/icp-controlespoor",
+			"type": "index",
+			"title": "ICP-controlespoor",
+			"config": {
+				"register": "shillinq",
+				"schema": "ViesValidation",
+				"columns": [
+					{
+						"key": "vatId",
+						"label": "BTW-id",
+						"sortable": true
+					},
+					{
+						"key": "validationTimestamp",
+						"label": "Gevalideerd op",
+						"sortable": true
+					},
+					{
+						"key": "valid",
+						"label": "Geldig",
+						"sortable": true
+					},
+					{
+						"key": "requestId",
+						"label": "VIES-kenmerk",
+						"sortable": true
+					},
+					{
+						"key": "outage",
+						"label": "Storing",
+						"sortable": true
+					}
+				],
+				"defaultSort": "validationTimestamp",
+				"detailRoute": "IcpAuditTrailDetail"
+			}
+		},
+		{
+			"id": "IcpAuditTrailDetail",
+			"route": "/belastingen/icp-controlespoor/:id",
+			"type": "detail",
+			"title": "VIES-validatie",
+			"config": {
+				"register": "shillinq",
+				"schema": "ViesValidation",
+				"fields": [
+					{
+						"key": "vatId",
+						"label": "BTW-id",
+						"type": "string"
+					},
+					{
+						"key": "validationTimestamp",
+						"label": "Gevalideerd op",
+						"type": "string"
+					},
+					{
+						"key": "validUntil",
+						"label": "Geldig tot",
+						"type": "string"
+					},
+					{
+						"key": "valid",
+						"label": "Geldig",
+						"type": "boolean"
+					},
+					{
+						"key": "name",
+						"label": "Naam",
+						"type": "string"
+					},
+					{
+						"key": "address",
+						"label": "Adres",
+						"type": "string"
+					},
+					{
+						"key": "requestId",
+						"label": "VIES-kenmerk",
+						"type": "string"
+					},
+					{
+						"key": "outage",
+						"label": "Storing",
+						"type": "boolean"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"indexRoute": "IcpAuditTrail"
+			}
 		}
 	]
 }
