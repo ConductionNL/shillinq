@@ -336,7 +336,7 @@ English (`src/locales/en_US.json`) and Dutch (`src/locales/nl_NL.json`) translat
 {
   "Cancellation": "Annulering",
   "Cancellation Policy": "Annuleringsbeleid",
-  "Cancellation Fee": "Annuleringsgebeur",
+  "Cancellation Fee": "Annuleringskosten",
   "Late Cancellation": "Laat Annulering",
   "No-Show Fee": "No-Show Tarief",
   "Minimum Notice": "Minimale Opzegtermijn",
@@ -353,6 +353,13 @@ English (`src/locales/en_US.json`) and Dutch (`src/locales/nl_NL.json`) translat
   "Failed": "Mislukt"
 }
 ```
+
+#### Scenario: All cancellation labels are translated in both locales
+
+- **GIVEN** the app ships `l10n/en.json` and `l10n/nl.json`
+- **WHEN** the cancellation capability is loaded in either an English or a Dutch session
+- **THEN** every cancellation, fee, refund, reason and status label above MUST resolve to a non-empty translation in the active locale
+- **AND** no cancellation label MAY fall back to the untranslated source string
 
 ---
 
