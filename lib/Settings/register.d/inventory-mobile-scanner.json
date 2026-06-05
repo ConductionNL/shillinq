@@ -1,0 +1,423 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "inventory-mobile-scanner",
+		"adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+		"version": "0.1.0-inventory-mobile-scanner",
+		"description": "Inventory mobile scanner — server-authoritative warehouse operations (receive, transfer, pick, count). Introduces the inventory data model that the upstream inventory-stock-tracking / inventory-barcode-sku dependency specs were to deliver but which is not yet present in shillinq: InventoryItem (SKU + barcode source of truth), InventoryLocation, InventoryStock (the location-aware ledger), the operation records GoodsReceipt / InventoryTransfer / InventoryCount, and the unified MobileScanOperation batch record that carries the client-generated transactionId for idempotent offline sync (REQ-SYNC-001/002). Role-based permission gating (REQ-PERM-001), non-negative-quantity invariants, transaction idempotency and variance computation run in OCA\\Shillinq\\Guard\\InventoryScanGuard (ADR-031 exception path) referenced from MobileScanOperation.x-openregister-lifecycle.preconditions.save. The client-side PWA offline layer (service worker, IndexedDB mirror, getUserMedia camera + jsQR/quagga decoding) is DEFERRED — see openspec/changes/inventory-mobile-scanner/tasks.md — because it is a client rewrite incompatible with the published @conduction/nextcloud-vue CnPageRenderer shell and requires a live instance to verify. Barcode capture falls back to the declarative manual-entry path (REQ-BARCODE-002). Seed data pre-loads the design.md sample locations, items and stock."
+	},
+	"components": {
+		"schemas": {
+			"InventoryItem": {
+				"slug": "InventoryItem",
+				"icon": "PackageVariantClosed",
+				"version": "0.1.0",
+				"title": "Inventory Item",
+				"description": "Catalogue record for a stock-keeping unit (SKU). The single source of truth for barcode → SKU resolution (REQ-SKU-001): the barcode field is matched by the InventoryScanController resolve endpoint. Replaces the never-built inventory-barcode-sku dependency schema.",
+				"x-schema-org": "schema:Product",
+				"x-openregister-purpose": "dimension",
+				"x-spec": "openspec/changes/inventory-mobile-scanner/specs/inventory-mobile-scanner/spec.md",
+				"type": "object",
+				"required": ["sku", "name"],
+				"properties": {
+					"administrationId": {
+						"type": "string",
+						"description": "Administration this item belongs to (tenant scope)."
+					},
+					"sku": {
+						"type": "string",
+						"description": "Stock-keeping unit code, unique within an administration (REQ-SKU-001).",
+						"example": "WIDGET-001"
+					},
+					"barcode": {
+						"type": "string",
+						"description": "Primary EAN-13 / QR / Code-128 barcode value resolved to this SKU (REQ-SKU-001).",
+						"example": "5901234123457",
+						"nullable": true
+					},
+					"name": {
+						"type": "string",
+						"description": "Human-readable product name.",
+						"example": "Blue Widget"
+					},
+					"category": {
+						"type": "string",
+						"description": "Product category.",
+						"nullable": true
+					},
+					"unitPrice": {
+						"type": "number",
+						"description": "Unit price (EUR per ADR-000; multi-currency is future work).",
+						"minimum": 0,
+						"nullable": true
+					},
+					"currency": {
+						"type": "string",
+						"description": "ISO-4217 currency code (EUR per ADR-000).",
+						"example": "EUR",
+						"default": "EUR"
+					},
+					"status": {
+						"type": "string",
+						"enum": ["active", "discontinued"],
+						"description": "Catalogue status.",
+						"default": "active"
+					}
+				}
+			},
+			"InventoryLocation": {
+				"slug": "InventoryLocation",
+				"icon": "MapMarkerOutline",
+				"version": "0.1.0",
+				"title": "Inventory Location",
+				"description": "A warehouse storage location / bin. Multi-location support (REQ-DATA-001). Stock and operations reference a location by its code.",
+				"x-schema-org": "schema:Place",
+				"x-openregister-purpose": "dimension",
+				"x-spec": "openspec/changes/inventory-mobile-scanner/specs/inventory-mobile-scanner/spec.md",
+				"type": "object",
+				"required": ["code", "name"],
+				"properties": {
+					"administrationId": {
+						"type": "string",
+						"description": "Administration this location belongs to (tenant scope)."
+					},
+					"code": {
+						"type": "string",
+						"description": "Short location code, unique within an administration.",
+						"example": "WH-A1"
+					},
+					"name": {
+						"type": "string",
+						"description": "Human-readable location name.",
+						"example": "Warehouse A, Aisle 1"
+					},
+					"warehouse": {
+						"type": "string",
+						"description": "Parent warehouse / site name.",
+						"example": "Amsterdam",
+						"nullable": true
+					},
+					"organization": {
+						"type": "string",
+						"description": "Owning organization identifier (single-organization scope per design Non-Goals).",
+						"nullable": true
+					},
+					"status": {
+						"type": "string",
+						"enum": ["active", "inactive"],
+						"description": "Location status.",
+						"default": "active"
+					}
+				}
+			},
+			"InventoryStock": {
+				"slug": "InventoryStock",
+				"icon": "Warehouse",
+				"version": "0.1.0",
+				"title": "Inventory Stock",
+				"description": "Location-aware on-hand quantity for a (SKU, location) pair — the trustworthy stock ledger (REQ-DATA-001). All four warehouse operations mutate this record server-side via OCA\\Shillinq\\Service\\InventoryScanService. Replaces the never-built inventory-stock-tracking dependency schema. lastModified drives the last-write-wins delta sync (REQ-OFFLINE-003).",
+				"x-schema-org": "schema:Offer",
+				"x-openregister-purpose": "fact",
+				"x-spec": "openspec/changes/inventory-mobile-scanner/specs/inventory-mobile-scanner/spec.md",
+				"type": "object",
+				"required": ["sku", "location", "quantity"],
+				"properties": {
+					"administrationId": {
+						"type": "string",
+						"description": "Administration this stock record belongs to (tenant scope)."
+					},
+					"sku": {
+						"type": "string",
+						"description": "SKU (FK to InventoryItem.sku).",
+						"example": "WIDGET-001"
+					},
+					"location": {
+						"type": "string",
+						"description": "Location code (FK to InventoryLocation.code).",
+						"example": "WH-A1"
+					},
+					"quantity": {
+						"type": "number",
+						"description": "Current on-hand quantity. Never negative (enforced by InventoryScanGuard).",
+						"minimum": 0,
+						"example": 45
+					},
+					"lastModified": {
+						"type": "string",
+						"format": "date-time",
+						"description": "ISO-8601 UTC timestamp of the last mutation. Drives last-write-wins conflict resolution (REQ-OFFLINE-003).",
+						"example": "2026-05-21T14:23:00Z",
+						"nullable": true
+					},
+					"lastRestockDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Date of last restock.",
+						"nullable": true
+					},
+					"status": {
+						"type": "string",
+						"enum": ["active", "quarantine", "blocked"],
+						"description": "Stock status.",
+						"default": "active"
+					}
+				},
+				"x-openregister-relations": {
+					"item": {
+						"localField": "sku",
+						"relatedSchema": "InventoryItem",
+						"relatedField": "sku",
+						"cardinality": "many-to-one",
+						"description": "The catalogue item this stock record holds."
+					},
+					"inventoryLocation": {
+						"localField": "location",
+						"relatedSchema": "InventoryLocation",
+						"relatedField": "code",
+						"cardinality": "many-to-one",
+						"description": "The storage location this stock sits in."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"warehouse_manager": {"permissions": ["create", "read", "update"]},
+						"inventory_operator": {"permissions": ["read", "update"]},
+						"counter": {"permissions": ["read", "update"]},
+						"auditor": {"permissions": ["read"]}
+					}
+				}
+			},
+			"GoodsReceipt": {
+				"slug": "GoodsReceipt",
+				"icon": "TruckCheckOutline",
+				"version": "0.1.0",
+				"title": "Goods Receipt",
+				"description": "Immutable audit record of a receive operation (REQ-INVENTORY-001). Created server-side when a warehouse_manager confirms a receive. Records the SKU, location, quantity received and the resulting on-hand quantity.",
+				"x-schema-org": "schema:Action",
+				"x-openregister-purpose": "fact",
+				"x-spec": "openspec/changes/inventory-mobile-scanner/specs/inventory-mobile-scanner/spec.md",
+				"type": "object",
+				"required": ["sku", "location", "quantity"],
+				"properties": {
+					"administrationId": {"type": "string", "description": "Administration scope."},
+					"sku": {"type": "string", "description": "Received SKU."},
+					"location": {"type": "string", "description": "Receiving location code."},
+					"quantity": {"type": "number", "minimum": 0, "description": "Quantity received."},
+					"resultingQuantity": {"type": "number", "minimum": 0, "description": "On-hand quantity after the receive.", "nullable": true},
+					"receivedBy": {"type": "string", "description": "Nextcloud user id of the receiving clerk (a person is an NC entity).", "nullable": true},
+					"receivedAt": {"type": "string", "format": "date-time", "description": "ISO-8601 UTC receive timestamp.", "nullable": true},
+					"transactionId": {"type": "string", "description": "Idempotency key (UUID) of the originating scan operation.", "nullable": true}
+				}
+			},
+			"InventoryTransfer": {
+				"slug": "InventoryTransfer",
+				"icon": "SwapHorizontal",
+				"version": "0.1.0",
+				"title": "Inventory Transfer",
+				"description": "Immutable audit record of a transfer operation (REQ-INVENTORY-002). A single record tracks both sides of the move (source decrement + destination increment) for atomic auditing.",
+				"x-schema-org": "schema:Action",
+				"x-openregister-purpose": "fact",
+				"x-spec": "openspec/changes/inventory-mobile-scanner/specs/inventory-mobile-scanner/spec.md",
+				"type": "object",
+				"required": ["sku", "fromLocation", "toLocation", "quantity"],
+				"properties": {
+					"administrationId": {"type": "string", "description": "Administration scope."},
+					"sku": {"type": "string", "description": "Transferred SKU."},
+					"fromLocation": {"type": "string", "description": "Source location code."},
+					"toLocation": {"type": "string", "description": "Destination location code."},
+					"quantity": {"type": "number", "minimum": 0, "description": "Transferred quantity."},
+					"transferredBy": {"type": "string", "description": "Nextcloud user id of the operator.", "nullable": true},
+					"transferredAt": {"type": "string", "format": "date-time", "description": "ISO-8601 UTC transfer timestamp.", "nullable": true},
+					"transactionId": {"type": "string", "description": "Idempotency key (UUID).", "nullable": true}
+				}
+			},
+			"InventoryCount": {
+				"slug": "InventoryCount",
+				"icon": "ClipboardListOutline",
+				"version": "0.1.0",
+				"title": "Inventory Count",
+				"description": "Reconciliation record of a physical count operation (REQ-INVENTORY-004). Captures system quantity, physical quantity and the computed variance. A count is a reference point and MUST NOT auto-correct stock; the on-hand update is a separate, manually-approved scan operation.",
+				"x-schema-org": "schema:Action",
+				"x-openregister-purpose": "fact",
+				"x-spec": "openspec/changes/inventory-mobile-scanner/specs/inventory-mobile-scanner/spec.md",
+				"type": "object",
+				"required": ["sku", "location", "physicalQuantity"],
+				"properties": {
+					"administrationId": {"type": "string", "description": "Administration scope."},
+					"sku": {"type": "string", "description": "Counted SKU."},
+					"location": {"type": "string", "description": "Counted location code."},
+					"systemQuantity": {"type": "number", "description": "System on-hand quantity at count time.", "nullable": true},
+					"physicalQuantity": {"type": "number", "minimum": 0, "description": "Physically counted quantity."},
+					"variance": {"type": "number", "description": "physicalQuantity - systemQuantity (computed server-side).", "nullable": true},
+					"countedBy": {"type": "string", "description": "Nextcloud user id of the counter.", "nullable": true},
+					"countedAt": {"type": "string", "format": "date-time", "description": "ISO-8601 UTC count timestamp.", "nullable": true},
+					"applied": {"type": "boolean", "description": "Whether the count was applied to stock (manual approval).", "default": false},
+					"transactionId": {"type": "string", "description": "Idempotency key (UUID).", "nullable": true}
+				}
+			},
+			"MobileScanOperation": {
+				"slug": "MobileScanOperation",
+				"icon": "BarcodeScan",
+				"version": "0.1.0",
+				"title": "Mobile Scan Operation",
+				"description": "The unit of work uploaded by the mobile scanner (REQ-OFFLINE-002). One record per receive/transfer/pick/count. Carries the client-generated transactionId (UUID) for server-side idempotent deduplication (REQ-SYNC-001/002), the operation type, the acting role, and a state lifecycle (pending → applied / rejected). The save precondition (InventoryScanGuard::validateOperation) enforces role-based permission gating (REQ-PERM-001), non-negative quantities, the idempotency invariant and variance correctness before any stock mutation is persisted.",
+				"x-schema-org": "schema:Action",
+				"x-openregister-purpose": "fact",
+				"x-spec": "openspec/changes/inventory-mobile-scanner/specs/inventory-mobile-scanner/spec.md",
+				"type": "object",
+				"required": ["type", "transactionId", "state"],
+				"properties": {
+					"administrationId": {"type": "string", "description": "Administration scope."},
+					"type": {
+						"type": "string",
+						"enum": ["receive", "transfer", "pick", "count"],
+						"description": "Operation type (REQ-INVENTORY-001..004)."
+					},
+					"transactionId": {
+						"type": "string",
+						"description": "Client-generated UUID (RFC 4122). Server deduplicates on this within 24h (REQ-SYNC-001).",
+						"example": "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+					},
+					"sku": {"type": "string", "description": "Affected SKU.", "nullable": true},
+					"location": {"type": "string", "description": "Affected location code (source location for a transfer).", "nullable": true},
+					"toLocation": {"type": "string", "description": "Destination location code (transfer only).", "nullable": true},
+					"quantity": {"type": "number", "description": "Operation quantity (delta received/transferred/picked, or physical count).", "nullable": true},
+					"role": {
+						"type": "string",
+						"enum": ["warehouse_manager", "inventory_operator", "counter"],
+						"description": "Role asserted client-side; re-checked server-side against the actual user role (REQ-PERM-001).",
+						"nullable": true
+					},
+					"performedBy": {"type": "string", "description": "Nextcloud user id that performed the operation (IDOR scope).", "nullable": true},
+					"clientTimestamp": {"type": "string", "format": "date-time", "description": "ISO-8601 UTC timestamp recorded on the client when the operation was captured offline.", "nullable": true},
+					"syncedAt": {"type": "string", "format": "date-time", "description": "ISO-8601 UTC timestamp the server confirmed (ACK) the operation.", "nullable": true},
+					"state": {
+						"type": "string",
+						"enum": ["pending", "applied", "rejected", "duplicate"],
+						"description": "Server-side outcome state.",
+						"default": "pending"
+					},
+					"rejectionReason": {"type": "string", "description": "Why the operation was rejected (permission / validation), if any.", "nullable": true}
+				},
+				"x-openregister-lifecycle": {
+					"field": "state",
+					"initialState": "pending",
+					"states": {
+						"pending": {"label": "Pending", "description": "Captured; awaiting server validation and stock mutation."},
+						"applied": {"label": "Applied", "description": "Validated and applied to the stock ledger."},
+						"rejected": {"label": "Rejected", "description": "Denied by a permission or validation check."},
+						"duplicate": {"label": "Duplicate", "description": "Deduplicated against a previously processed transactionId."}
+					},
+					"preconditions": {
+						"save": "OCA\\Shillinq\\Guard\\InventoryScanGuard::validateOperation"
+					},
+					"transitions": {
+						"apply": {"from": "pending", "to": "applied", "label": "Apply operation", "description": "Apply the validated operation to the stock ledger."},
+						"reject": {"from": "pending", "to": "rejected", "label": "Reject operation", "description": "Reject on a permission or validation failure."}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"warehouse_manager": {"permissions": ["create", "read"]},
+						"inventory_operator": {"permissions": ["create", "read"]},
+						"counter": {"permissions": ["create", "read"]},
+						"auditor": {"permissions": ["read"]}
+					}
+				}
+			}
+		}
+	},
+	"objects": [
+		{
+			"@self": {"register": "shillinq", "schema": "InventoryLocation", "slug": "imc-loc-wh-a1"},
+			"administrationId": "adm-1",
+			"code": "WH-A1",
+			"name": "Warehouse A, Aisle 1",
+			"warehouse": "Amsterdam",
+			"organization": "org-123",
+			"status": "active"
+		},
+		{
+			"@self": {"register": "shillinq", "schema": "InventoryLocation", "slug": "imc-loc-wh-a2"},
+			"administrationId": "adm-1",
+			"code": "WH-A2",
+			"name": "Warehouse A, Aisle 2",
+			"warehouse": "Amsterdam",
+			"organization": "org-123",
+			"status": "active"
+		},
+		{
+			"@self": {"register": "shillinq", "schema": "InventoryLocation", "slug": "imc-loc-wh-b1"},
+			"administrationId": "adm-1",
+			"code": "WH-B1",
+			"name": "Warehouse B, Aisle 1",
+			"warehouse": "Benelux Hub",
+			"organization": "org-123",
+			"status": "active"
+		},
+		{
+			"@self": {"register": "shillinq", "schema": "InventoryItem", "slug": "imc-item-widget-001"},
+			"administrationId": "adm-1",
+			"sku": "WIDGET-001",
+			"barcode": "5901234123457",
+			"name": "Blue Widget",
+			"category": "Widgets",
+			"unitPrice": 12.50,
+			"currency": "EUR",
+			"status": "active"
+		},
+		{
+			"@self": {"register": "shillinq", "schema": "InventoryItem", "slug": "imc-item-gadget-002"},
+			"administrationId": "adm-1",
+			"sku": "GADGET-002",
+			"barcode": "4006381333931",
+			"name": "Silver Gadget",
+			"category": "Gadgets",
+			"unitPrice": 25.00,
+			"currency": "EUR",
+			"status": "active"
+		},
+		{
+			"@self": {"register": "shillinq", "schema": "InventoryItem", "slug": "imc-item-part-003"},
+			"administrationId": "adm-1",
+			"sku": "PART-003",
+			"barcode": "8710398502019",
+			"name": "Replacement Part",
+			"category": "Parts",
+			"unitPrice": 5.75,
+			"currency": "EUR",
+			"status": "active"
+		},
+		{
+			"@self": {"register": "shillinq", "schema": "InventoryStock", "slug": "imc-stock-widget-001-wh-a1"},
+			"administrationId": "adm-1",
+			"sku": "WIDGET-001",
+			"location": "WH-A1",
+			"quantity": 45,
+			"lastRestockDate": "2026-05-19",
+			"lastModified": "2026-05-19T08:00:00Z",
+			"status": "active"
+		},
+		{
+			"@self": {"register": "shillinq", "schema": "InventoryStock", "slug": "imc-stock-gadget-002-wh-a1"},
+			"administrationId": "adm-1",
+			"sku": "GADGET-002",
+			"location": "WH-A1",
+			"quantity": 12,
+			"lastRestockDate": "2026-05-18",
+			"lastModified": "2026-05-18T08:00:00Z",
+			"status": "active"
+		},
+		{
+			"@self": {"register": "shillinq", "schema": "InventoryStock", "slug": "imc-stock-widget-001-wh-a2"},
+			"administrationId": "adm-1",
+			"sku": "WIDGET-001",
+			"location": "WH-A2",
+			"quantity": 8,
+			"lastRestockDate": "2026-05-15",
+			"lastModified": "2026-05-15T08:00:00Z",
+			"status": "active"
+		}
+	]
+}

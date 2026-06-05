@@ -117,6 +117,11 @@ return [
         ['name' => 'periodClose#lockAudit', 'url' => '/api/period-close/{periodId}/lock-audit', 'verb' => 'POST'],
         ['name' => 'periodClose#aiFlags', 'url' => '/api/period-close/{periodId}/ai-flags', 'verb' => 'GET'],
         ['name' => 'periodClose#show', 'url' => '/api/period-close/{periodId}', 'verb' => 'GET'],
+        // Inventory mobile scanner — server-authoritative warehouse operations.
+        // Static verb routes MUST precede the SPA catch-all wildcard (ADR-016).
+        ['name' => 'inventoryScan#resolve', 'url' => '/api/inventory/resolve', 'verb' => 'GET'],
+        ['name' => 'inventoryScan#sync', 'url' => '/api/inventory/sync', 'verb' => 'GET'],
+        ['name' => 'inventoryScan#scan', 'url' => '/api/inventory/scan', 'verb' => 'POST'],
 
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
