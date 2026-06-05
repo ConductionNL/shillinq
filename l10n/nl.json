@@ -190,7 +190,20 @@
         "Actuary Signoff": "Actuariële goedkeuring",
         "Audit Evidence": "Controle-bewijs",
         "Drill-down": "Doorklikken",
-        "Framework Conversion": "Stelselconversie"
+        "Framework Conversion": "Stelselconversie",
+        "Invoice Created": "Factuur gemaakt",
+        "Invoice Due": "Vervaldatum factuur",
+        "Payment Due": "Te betalen",
+        "Deposit Applied": "Borgsom toegepast",
+        "Deposit Credit Applied": "Borgsomkrediet toegepast",
+        "Invoice Paid": "Factuur betaald",
+        "Amount Due": "Openstaand bedrag",
+        "Credit Note": "Creditnota",
+        "Outstanding Invoices": "Openstaande facturen",
+        "Booking cancelled": "Boeking geannuleerd",
+        "Invoice could not be created. It will be retried automatically.": "Factuur kon niet worden aangemaakt. Het wordt automatisch opnieuw geprobeerd.",
+        "Deposit not authorised; cannot invoice this booking.": "Borgsom niet geautoriseerd; deze boeking kan niet gefactureerd worden.",
+        "This booking has already been invoiced.": "Deze boeking is al gefactureerd."
     },
     "plurals": ""
 }

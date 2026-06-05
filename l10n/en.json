@@ -190,7 +190,20 @@
         "Actuary Signoff": "Actuary Signoff",
         "Audit Evidence": "Audit Evidence",
         "Drill-down": "Drill-down",
-        "Framework Conversion": "Framework Conversion"
+        "Framework Conversion": "Framework Conversion",
+        "Invoice Created": "Invoice Created",
+        "Invoice Due": "Invoice Due",
+        "Payment Due": "Payment Due",
+        "Deposit Applied": "Deposit Applied",
+        "Deposit Credit Applied": "Deposit Credit Applied",
+        "Invoice Paid": "Invoice Paid",
+        "Amount Due": "Amount Due",
+        "Credit Note": "Credit Note",
+        "Outstanding Invoices": "Outstanding Invoices",
+        "Booking cancelled": "Booking cancelled",
+        "Invoice could not be created. It will be retried automatically.": "Invoice could not be created. It will be retried automatically.",
+        "Deposit not authorised; cannot invoice this booking.": "Deposit not authorised; cannot invoice this booking.",
+        "This booking has already been invoiced.": "This booking has already been invoiced."
     },
     "plurals": ""
 }
