@@ -10,5 +10,18 @@
   "pr": 293,
   "status": "pr-created",
   "branch": "feature/109/inventory-stock-tracking",
-  "pr_url": "https://codeberg.org/Conduction/shillinq/pulls/293"
+  "pr_url": "https://codeberg.org/Conduction/shillinq/pulls/293",
+  "schema_version": 2,
+  "cycles": [
+    {
+      "cycle": 1,
+      "trigger": "build:queued",
+      "started_at": "2026-06-05T19:29:07Z",
+      "ended_at": null,
+      "outcome": "in-flight",
+      "outcome_reason": null,
+      "pattern_tags": [],
+      "stages": []
+    }
+  ]
 }
