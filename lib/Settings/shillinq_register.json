@@ -7594,7 +7594,8 @@
 						"field": "InventoryStock.quantity",
 						"filter": {
 							"locationType": "bin",
-							"ancestorOf": "this.id"
+							"ancestorOf": "this.id",
+							"administrationId": "@self.administrationId"
 						}
 					}
 				},
