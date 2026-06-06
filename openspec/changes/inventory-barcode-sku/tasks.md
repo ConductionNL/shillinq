@@ -44,7 +44,7 @@
 
 - [x] **Task 13:** Wired `GET /index.php/apps/shillinq/api/barcode/lookup/{code}` in `appinfo/routes.php` directly above the SPA catch-all per ADR-016 route ordering. `requirements: ['code' => '.+']` so any printed/scanned barcode (including those with slashes / dashes / dots) routes through.
 
-- [ ] **Task 14:** Add `Barcodes` navigation entry to `src/manifest.json` (menu path `Inventory > Barcodes`, `type: index` page binding to `Barcode` register with default columns `barcode`, `barcodeType`, `format`, `productSku`, `uomCode`, `quantity`, `isDefault`, `isActive`; `type: detail` page per REQ-SKU-010); `node tests/validate-manifest.js` exits 0
+- [x] **Task 14:** Added the `Barcodes` child entry under the `Inventory` navigation in `src/manifest.json` (order 60, icon `BarcodeOutline`) plus an `id: Barcodes` index page at `/inventory/barcodes` bound to schema `Barcode` with default columns `barcode`, `barcodeType`, `format`, `productSku`, `uomCode`, `quantity`, `isDefault`, `isActive`, and an `id: BarcodeDetail` detail page at `/inventory/barcodes/:id` per REQ-SKU-010. `node tests/validate-manifest.js` reports structural + consistency lint PASS (0 issues, 123 pages).
 
 - [ ] **Task 15:** Ship demo seed data as `lib/Settings/seeds/inventory-barcodes-demo.json` with the 5 Dutch retail barcode examples from `design.md`; extend the repair step to load this file during initial installation (idempotent — no duplicate barcodes on re-run per REQ-SKU-011); confirm seed data references valid `InventoryItem` SKUs
 

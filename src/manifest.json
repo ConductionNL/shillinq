@@ -253,6 +253,13 @@
 					"icon": "ChartBarOutline",
 					"route": "StockLevelsDashboard",
 					"order": 50
+				},
+				{
+					"id": "Barcodes",
+					"label": "Barcodes",
+					"icon": "BarcodeOutline",
+					"route": "Barcodes",
+					"order": 60
 				}
 			]
 		},
@@ -816,6 +823,118 @@
 					}
 				],
 				"indexRoute": "ProductAttributes"
+			}
+		},
+		{
+			"id": "Barcodes",
+			"route": "/inventory/barcodes",
+			"type": "index",
+			"title": "Barcodes",
+			"config": {
+				"register": "shillinq",
+				"schema": "Barcode",
+				"columns": [
+					{
+						"key": "barcode",
+						"label": "Barcode",
+						"sortable": true
+					},
+					{
+						"key": "barcodeType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "format",
+						"label": "Format",
+						"sortable": true
+					},
+					{
+						"key": "productSku",
+						"label": "Product SKU",
+						"sortable": true
+					},
+					{
+						"key": "uomCode",
+						"label": "UoM",
+						"sortable": true
+					},
+					{
+						"key": "quantity",
+						"label": "Quantity",
+						"sortable": true
+					},
+					{
+						"key": "isDefault",
+						"label": "Default",
+						"sortable": true
+					},
+					{
+						"key": "isActive",
+						"label": "Active",
+						"sortable": true
+					}
+				],
+				"defaultSort": "productSku",
+				"detailRoute": "BarcodeDetail"
+			}
+		},
+		{
+			"id": "BarcodeDetail",
+			"route": "/inventory/barcodes/:id",
+			"type": "detail",
+			"title": "Barcode",
+			"config": {
+				"register": "shillinq",
+				"schema": "Barcode",
+				"fields": [
+					{
+						"key": "barcode",
+						"label": "Barcode",
+						"type": "string"
+					},
+					{
+						"key": "barcodeType",
+						"label": "Type",
+						"type": "string"
+					},
+					{
+						"key": "format",
+						"label": "Format",
+						"type": "string"
+					},
+					{
+						"key": "productSku",
+						"label": "Product SKU",
+						"type": "string"
+					},
+					{
+						"key": "uomCode",
+						"label": "UoM",
+						"type": "string"
+					},
+					{
+						"key": "quantity",
+						"label": "Quantity",
+						"type": "number"
+					},
+					{
+						"key": "isDefault",
+						"label": "Default",
+						"type": "boolean"
+					},
+					{
+						"key": "isActive",
+						"label": "Active",
+						"type": "boolean"
+					},
+					{
+						"key": "notes",
+						"label": "Notes",
+						"type": "string"
+					}
+				],
+				"indexRoute": "Barcodes"
 			}
 		},
 		{
