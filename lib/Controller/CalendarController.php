@@ -36,13 +36,13 @@ use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\Booking\TransactionalGuard;
 use OCA\Shillinq\Service\ConflictDetectionService;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\IDBConnection;
 use OCP\IRequest;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -71,7 +71,7 @@ class CalendarController extends Controller
      * @param SettingsService              $settings  Shillinq settings (register slug, OR availability).
      * @param ConflictDetectionService     $conflicts Conflict detection service (REQ-004).
      * @param AdministrationContextService $context   Per-administration IDOR guard (ADR-005).
-     * @param IDBConnection                $db        Database connection for the transaction guard.
+     * @param TransactionalGuard           $guard     Transaction + row-lock facade (production-wired with IDBConnection).
      * @param LoggerInterface              $logger    Logger for fail-closed diagnostics.
      */
     public function __construct(
@@ -80,7 +80,7 @@ class CalendarController extends Controller
         private readonly SettingsService $settings,
         private readonly ConflictDetectionService $conflicts,
         private readonly AdministrationContextService $context,
-        private readonly IDBConnection $db,
+        private readonly TransactionalGuard $guard,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -362,7 +362,7 @@ class CalendarController extends Controller
         // then — only if no overlap — the OR write fires. The transaction
         // boundary plus the resource row-lock together close the read-then-
         // write race-window (REQ-004).
-        $this->db->beginTransaction();
+        $this->guard->beginTransaction();
         try {
             $this->conflicts->lockResource(resourceId: $resourceId);
 
@@ -373,7 +373,7 @@ class CalendarController extends Controller
             );
 
             if ($existingConflicts !== [] && $override === false) {
-                $this->db->rollBack();
+                $this->guard->rollBack();
                 return new JSONResponse(
                     [
                         'error'     => 'conflict',
@@ -404,7 +404,7 @@ class CalendarController extends Controller
                 schema: 'Booking',
             );
 
-            $this->db->commit();
+            $this->guard->commit();
 
             $row = $this->toArray(object: $saved);
             // Merge in fields from our payload as a fallback if the OR layer
@@ -416,8 +416,8 @@ class CalendarController extends Controller
                 Http::STATUS_CREATED,
             );
         } catch (\Throwable $e) {
-            if ($this->db->inTransaction() === true) {
-                $this->db->rollBack();
+            if ($this->guard->inTransaction() === true) {
+                $this->guard->rollBack();
             }
 
             $this->logger->error(

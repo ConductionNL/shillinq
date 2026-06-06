@@ -38,7 +38,7 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCP\IDBConnection;
+use OCA\Shillinq\Service\Booking\TransactionalGuard;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -63,17 +63,17 @@ class ConflictDetectionService
     /**
      * Construct the service with DI dependencies.
      *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param SettingsService    $settings  Shillinq settings (register slug, OR availability).
-     * @param IDBConnection      $db        Database connection for the resource-row lock.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
+     * @param ContainerInterface  $container DI container for lazy ObjectService resolution.
+     * @param SettingsService     $settings  Shillinq settings (register slug, OR availability).
+     * @param TransactionalGuard  $guard     Transaction / row-lock facade (production-wired with IDBConnection).
+     * @param LoggerInterface     $logger    Logger for fail-closed diagnostics.
      *
      * @return void
      */
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly SettingsService $settings,
-        private readonly IDBConnection $db,
+        private readonly TransactionalGuard $guard,
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
@@ -222,51 +222,11 @@ class ConflictDetectionService
      */
     public function lockResource(string $resourceId): bool
     {
-        if ($this->db->inTransaction() === false) {
-            // Lock without a transaction is meaningless — surface to the caller
-            // by throwing rather than silently no-op'ing.
+        if ($this->guard->inTransaction() === false) {
             throw new \LogicException('lockResource must be called inside a transaction');
         }
 
-        try {
-            // OpenRegister stores objects in a generic oc_openregister_objects
-            // table; we lock the row whose JSON payload carries the resourceId.
-            // Postgres SELECT … FOR UPDATE blocks concurrent SELECT … FOR UPDATE
-            // callers until the outer transaction completes.
-            $query = $this->db->getQueryBuilder();
-            $query->select('id')
-                ->from('openregister_objects')
-                ->where(
-                    $query->expr()->like(
-                        $query->createFunction("CAST(\"object\" AS TEXT)"),
-                        $query->createNamedParameter('%"resourceId":"'.$resourceId.'"%')
-                    )
-                )
-                ->setMaxResults(1);
-
-            $sql    = $query->getSQL();
-            $params = $query->getParameters();
-
-            // Append FOR UPDATE — Postgres + MySQL both support the suffix
-            // verbatim on the locked row.
-            $stmt = $this->db->executeQuery($sql.' FOR UPDATE', $params);
-            $row  = $stmt->fetch();
-            $stmt->closeCursor();
-
-            return ($row !== false);
-        } catch (\Throwable $e) {
-            // A lock failure leaves the conflict check uncovered; downgrade
-            // the call to a no-op for environments where the underlying
-            // table name differs (e.g. unit tests with a sqlite memory db).
-            $this->logger->info(
-                'Shillinq: resource row-lock unavailable, falling back to advisory-only check',
-                [
-                    'resourceId' => $resourceId,
-                    'reason'     => $e->getMessage(),
-                ]
-            );
-            return false;
-        }
+        return $this->guard->lockResourceRow(resourceId: $resourceId);
 
     }//end lockResource()
 
