@@ -1,0 +1,260 @@
+{
+	"menu": [
+		{
+			"id": "Sustainability",
+			"label": "Sustainability",
+			"icon": "LeafOutline",
+			"order": 70,
+			"children": [
+				{
+					"id": "MaterialityAssessments",
+					"label": "Materiality Assessments",
+					"icon": "ScaleBalance",
+					"route": "MaterialityAssessments",
+					"order": 10
+				},
+				{
+					"id": "EsrsDataPoints",
+					"label": "ESRS Data Points",
+					"icon": "TableLarge",
+					"route": "EsrsDataPoints",
+					"order": 20
+				},
+				{
+					"id": "GhgInventories",
+					"label": "GHG Inventory",
+					"icon": "Molecule",
+					"route": "GhgInventories",
+					"order": 30
+				},
+				{
+					"id": "ValueChainActors",
+					"label": "Value Chain Actors",
+					"icon": "Truck",
+					"route": "ValueChainActors",
+					"order": 40
+				},
+				{
+					"id": "AssuranceEngagements",
+					"label": "Assurance Engagements",
+					"icon": "ClipboardCheckOutline",
+					"route": "AssuranceEngagements",
+					"order": 50
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "MaterialityAssessments",
+			"route": "/sustainability/materiality-assessments",
+			"type": "index",
+			"title": "Materiality Assessments",
+			"config": {
+				"register": "shillinq",
+				"schema": "MaterialityAssessment",
+				"columns": [
+					{"key": "reportingPeriod", "label": "Period", "sortable": true},
+					{"key": "assessmentScope", "label": "Scope", "sortable": true},
+					{"key": "thresholdImpact", "label": "Impact threshold", "sortable": true},
+					{"key": "thresholdFinancial", "label": "Financial threshold", "sortable": true},
+					{"key": "state", "label": "State", "sortable": true}
+				],
+				"defaultSort": "reportingPeriod",
+				"detailRoute": "MaterialityAssessmentDetail"
+			}
+		},
+		{
+			"id": "MaterialityAssessmentDetail",
+			"route": "/sustainability/materiality-assessments/:id",
+			"type": "detail",
+			"title": "Materiality Assessment",
+			"config": {
+				"register": "shillinq",
+				"schema": "MaterialityAssessment",
+				"fields": [
+					{"key": "reportingPeriod", "label": "Period", "type": "string"},
+					{"key": "methodologyVersion", "label": "Methodology", "type": "string"},
+					{"key": "assessmentScope", "label": "Scope", "type": "string"},
+					{"key": "responsibleOwner", "label": "Owner", "type": "string"},
+					{"key": "thresholdImpact", "label": "Impact threshold", "type": "number"},
+					{"key": "thresholdFinancial", "label": "Financial threshold", "type": "number"},
+					{"key": "approver", "label": "Approver", "type": "string"},
+					{"key": "approvalDate", "label": "Approved", "type": "string"},
+					{"key": "state", "label": "State", "type": "string"}
+				],
+				"indexRoute": "MaterialityAssessments"
+			}
+		},
+		{
+			"id": "EsrsDataPoints",
+			"route": "/sustainability/esrs-data-points",
+			"type": "index",
+			"title": "ESRS Data Points",
+			"config": {
+				"register": "shillinq",
+				"schema": "EsrsDataPoint",
+				"columns": [
+					{"key": "period", "label": "Period", "sortable": true},
+					{"key": "esrsDataPointId", "label": "Data point", "sortable": true},
+					{"key": "valueNumeric", "label": "Value", "sortable": true},
+					{"key": "unit", "label": "Unit", "sortable": true},
+					{"key": "valueSource", "label": "Source", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true}
+				],
+				"defaultSort": "esrsDataPointId",
+				"detailRoute": "EsrsDataPointDetail"
+			}
+		},
+		{
+			"id": "EsrsDataPointDetail",
+			"route": "/sustainability/esrs-data-points/:id",
+			"type": "detail",
+			"title": "ESRS Data Point",
+			"config": {
+				"register": "shillinq",
+				"schema": "EsrsDataPoint",
+				"fields": [
+					{"key": "period", "label": "Period", "type": "string"},
+					{"key": "esrsDataPointId", "label": "Data point", "type": "string"},
+					{"key": "valueType", "label": "Value type", "type": "string"},
+					{"key": "valueNumeric", "label": "Numeric value", "type": "number"},
+					{"key": "valueText", "label": "Text value", "type": "string"},
+					{"key": "unit", "label": "Unit", "type": "string"},
+					{"key": "valueSource", "label": "Source", "type": "string"},
+					{"key": "sourceReference", "label": "Source reference", "type": "string"},
+					{"key": "preparer", "label": "Preparer", "type": "string"},
+					{"key": "reviewer", "label": "Reviewer", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "narrativeComment", "label": "Narrative", "type": "string"}
+				],
+				"indexRoute": "EsrsDataPoints"
+			}
+		},
+		{
+			"id": "GhgInventories",
+			"route": "/sustainability/ghg-inventories",
+			"type": "index",
+			"title": "GHG Inventory",
+			"config": {
+				"register": "shillinq",
+				"schema": "GhgInventory",
+				"columns": [
+					{"key": "period", "label": "Period", "sortable": true},
+					{"key": "methodology", "label": "Methodology", "sortable": true},
+					{"key": "consolidationApproach", "label": "Consolidation", "sortable": true},
+					{"key": "baseYear", "label": "Base year", "sortable": true},
+					{"key": "state", "label": "State", "sortable": true}
+				],
+				"defaultSort": "period",
+				"detailRoute": "GhgInventoryDetail"
+			}
+		},
+		{
+			"id": "GhgInventoryDetail",
+			"route": "/sustainability/ghg-inventories/:id",
+			"type": "detail",
+			"title": "GHG Inventory",
+			"config": {
+				"register": "shillinq",
+				"schema": "GhgInventory",
+				"fields": [
+					{"key": "period", "label": "Period", "type": "string"},
+					{"key": "methodology", "label": "Methodology", "type": "string"},
+					{"key": "consolidationApproach", "label": "Consolidation", "type": "string"},
+					{"key": "boundaryNarrative", "label": "Boundary", "type": "string"},
+					{"key": "baseYear", "label": "Base year", "type": "string"},
+					{"key": "esrsTaxonomyVersion", "label": "ESRS taxonomy", "type": "string"},
+					{"key": "intensityHeadcount", "label": "Headcount", "type": "number"},
+					{"key": "intensityTurnover", "label": "Turnover (EUR)", "type": "number"},
+					{"key": "state", "label": "State", "type": "string"}
+				],
+				"indexRoute": "GhgInventories"
+			}
+		},
+		{
+			"id": "ValueChainActors",
+			"route": "/sustainability/value-chain-actors",
+			"type": "index",
+			"title": "Value Chain Actors",
+			"config": {
+				"register": "shillinq",
+				"schema": "ValueChainActor",
+				"columns": [
+					{"key": "counterpartyName", "label": "Counterparty", "sortable": true},
+					{"key": "role", "label": "Role", "sortable": true},
+					{"key": "tier", "label": "Tier", "sortable": true},
+					{"key": "country", "label": "Country", "sortable": true},
+					{"key": "engagementStatus", "label": "Engagement", "sortable": true},
+					{"key": "dataQualityScore", "label": "Data quality", "sortable": true}
+				],
+				"defaultSort": "counterpartyName",
+				"detailRoute": "ValueChainActorDetail"
+			}
+		},
+		{
+			"id": "ValueChainActorDetail",
+			"route": "/sustainability/value-chain-actors/:id",
+			"type": "detail",
+			"title": "Value Chain Actor",
+			"config": {
+				"register": "shillinq",
+				"schema": "ValueChainActor",
+				"fields": [
+					{"key": "counterpartyName", "label": "Counterparty", "type": "string"},
+					{"key": "counterparty", "label": "Counterparty (FK)", "type": "string"},
+					{"key": "role", "label": "Role", "type": "string"},
+					{"key": "tier", "label": "Tier", "type": "string"},
+					{"key": "country", "label": "Country", "type": "string"},
+					{"key": "sectorNaceCode", "label": "NACE", "type": "string"},
+					{"key": "dataCollectionMethod", "label": "Collection method", "type": "string"},
+					{"key": "engagementStatus", "label": "Engagement", "type": "string"},
+					{"key": "lastEngagementDate", "label": "Last engagement", "type": "string"},
+					{"key": "dataQualityScore", "label": "Data quality", "type": "number"}
+				],
+				"indexRoute": "ValueChainActors"
+			}
+		},
+		{
+			"id": "AssuranceEngagements",
+			"route": "/sustainability/assurance-engagements",
+			"type": "index",
+			"title": "Assurance Engagements",
+			"config": {
+				"register": "shillinq",
+				"schema": "AssuranceEngagement",
+				"columns": [
+					{"key": "period", "label": "Period", "sortable": true},
+					{"key": "auditFirm", "label": "Audit firm", "sortable": true},
+					{"key": "engagementLevel", "label": "Level", "sortable": true},
+					{"key": "opinionDate", "label": "Opinion date", "sortable": true},
+					{"key": "state", "label": "State", "sortable": true}
+				],
+				"defaultSort": "period",
+				"detailRoute": "AssuranceEngagementDetail"
+			}
+		},
+		{
+			"id": "AssuranceEngagementDetail",
+			"route": "/sustainability/assurance-engagements/:id",
+			"type": "detail",
+			"title": "Assurance Engagement",
+			"config": {
+				"register": "shillinq",
+				"schema": "AssuranceEngagement",
+				"fields": [
+					{"key": "period", "label": "Period", "type": "string"},
+					{"key": "auditFirm", "label": "Audit firm", "type": "string"},
+					{"key": "leadPartner", "label": "Lead partner", "type": "string"},
+					{"key": "engagementLevel", "label": "Level", "type": "string"},
+					{"key": "scopeStatement", "label": "Scope", "type": "string"},
+					{"key": "materialityThresholdQuantitative", "label": "Materiality (quant)", "type": "string"},
+					{"key": "opinionDate", "label": "Opinion date", "type": "string"},
+					{"key": "submissionKvkReceiptId", "label": "KvK receipt", "type": "string"},
+					{"key": "state", "label": "State", "type": "string"}
+				],
+				"indexRoute": "AssuranceEngagements"
+			}
+		}
+	]
+}

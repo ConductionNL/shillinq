@@ -31,27 +31,57 @@ Performance indicator for a specific subsidy regeling.
 |----------|------|----------|-------------|
 | sisaRegeling | boolean | No | Is this subsidy SISA-reportable? |
 
-## Requirements
+## ADDED Requirements
 
-### REQ-SISA-001: SisaRegelingIndicator register
+### Requirement: REQ-SISA-001 — SisaRegelingIndicator register
 
-SHALL declare the `SisaRegelingIndicator` register for per-regeling performance tracking.
+The system SHALL declare the `SisaRegelingIndicator` register for per-regeling performance tracking.
 
-### REQ-SISA-002: SiSa-controleprotocol seed
+#### Scenario: Indicator records track target versus actual per regeling
 
-SHALL ship `lib/Settings/seeds/sisa-controleprotocol-2026.json` with ~200 indicatoren per BZK 2026 release.
+- **GIVEN** a Subsidie flagged `sisaRegeling: true`
+- **WHEN** a SisaRegelingIndicator is created with a target and actual value
+- **THEN** the indicator MUST be persisted as an OR-managed object linked to its Subsidie via `subsidieId`.
 
-### REQ-SISA-003: SiSa-bijlage annual rollup
+### Requirement: REQ-SISA-002 — SiSa-controleprotocol seed
 
-SHALL declare an `x-openregister-aggregations` view producing SiSa-bijlage table per controleprotocol at jaarrekening.
+The system SHALL ship `lib/Settings/seeds/sisa-controleprotocol-2026.json` with the indicatoren per the BZK 2026 release.
 
-### REQ-SISA-004: Docudesk template reference
+#### Scenario: Controleprotocol seed imports idempotently
 
-SHALL reference docudesk template for SiSa-bijlage rendering + signing.
+- **GIVEN** a fresh install with the SiSa feature enabled
+- **WHEN** the repair-step seeding runs twice
+- **THEN** the controleprotocol indicators MUST be present exactly once (idempotent on re-run).
 
-### REQ-SISA-005: BZK submission via openconnector
+### Requirement: REQ-SISA-003 — SiSa-bijlage annual rollup
 
-SHALL declare openconnector source row for automatic SiSa upload to BZK endpoint.
+The system SHALL declare an `x-openregister-aggregations` view producing the SiSa-bijlage table per controleprotocol at jaarrekening.
+
+#### Scenario: Bijlage rollup matches the controleprotocol structure
+
+- **GIVEN** verified indicator records for a reporting year
+- **WHEN** the SiSa-bijlage aggregation runs
+- **THEN** the output MUST present one row per controleprotocol indicator with the actual value rolled up.
+
+### Requirement: REQ-SISA-004 — Docudesk template reference
+
+The system SHALL reference a docudesk template for SiSa-bijlage rendering and signing.
+
+#### Scenario: Bijlage rendering binds to a docudesk template
+
+- **GIVEN** a completed SiSa-bijlage aggregation
+- **WHEN** the document is generated
+- **THEN** rendering MUST resolve a docudesk template URI rather than a shillinq-local renderer.
+
+### Requirement: REQ-SISA-005 — BZK submission via openconnector
+
+The system SHALL declare an openconnector source row for automatic SiSa upload to the BZK endpoint.
+
+#### Scenario: BZK submission rides openconnector
+
+- **GIVEN** a signed SiSa-bijlage
+- **WHEN** submission to BZK is triggered
+- **THEN** it MUST route through an openconnector source row, not an app-local HTTP client.
 
 ## Test Plan
 

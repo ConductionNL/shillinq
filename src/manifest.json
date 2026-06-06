@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "1.2.0",
+	"version": "1.3.0",
 	"dependencies": [
 		"openregister"
 	],
@@ -31,6 +31,13 @@
 					"icon": "BookOutline",
 					"route": "GeneralLedger",
 					"order": 20
+				},
+				{
+					"id": "Journals",
+					"label": "Journals",
+					"icon": "BookEditOutline",
+					"route": "Journals",
+					"order": 22
 				},
 				{
 					"id": "BankConnections",
@@ -116,6 +123,13 @@
 					"icon": "ScaleBalanceOutline",
 					"route": "TrialBalance",
 					"order": 81
+				},
+				{
+					"id": "TrialBalanceLines",
+					"label": "Trial Balance (by account)",
+					"icon": "ScaleBalance",
+					"route": "TrialBalanceLines",
+					"order": 815
 				},
 				{
 					"id": "Consolidations",
@@ -261,6 +275,66 @@
 					"icon": "CogOutline",
 					"route": "TaxConfiguration",
 					"order": 40
+				},
+				{
+					"id": "BtwAangiften",
+					"label": "BTW-aangiften",
+					"icon": "FileDocumentOutline",
+					"route": "BtwAangiften",
+					"order": 50
+				},
+				{
+					"id": "IcpOpgaaf",
+					"label": "ICP-opgaaf",
+					"icon": "EarthArrowRight",
+					"route": "IcpOpgaaf",
+					"order": 60
+				},
+				{
+					"id": "BtwCorrecties",
+					"label": "BTW-correcties",
+					"icon": "FileDocumentEditOutline",
+					"route": "BtwCorrecties",
+					"order": 70
+				},
+				{
+					"id": "Urenregistratie",
+					"label": "Urenregistratie",
+					"icon": "ClockOutline",
+					"route": "Urenregistratie",
+					"order": 80,
+					"visibility": {
+						"field": "administrationType",
+						"in": [
+							"zzp"
+						]
+					}
+				},
+				{
+					"id": "ZzpAftrek",
+					"label": "ZZP-aftrek",
+					"icon": "AccountCashOutline",
+					"route": "ZzpAftrek",
+					"order": 90,
+					"visibility": {
+						"field": "administrationType",
+						"in": [
+							"zzp"
+						]
+					}
+				},
+				{
+					"id": "IbAangifte",
+					"label": "IB-aangifte",
+					"icon": "FileExportOutline",
+					"route": "IbAangifte",
+					"order": 100,
+					"visibility": {
+						"field": "administrationType",
+						"in": [
+							"zzp"
+						]
+					}
 				}
 			]
 		},
@@ -299,6 +373,56 @@
 					"icon": "FileChartOutline",
 					"route": "Iv3Rapportages",
 					"order": 10
+				},
+				{
+					"id": "BbvMapping",
+					"label": "BBV-mapping",
+					"icon": "TableArrowRight",
+					"route": "BbvMapping",
+					"order": 20
+				},
+				{
+					"id": "BcfClaims",
+					"label": "BCF-claims",
+					"icon": "CashRefund",
+					"route": "BcfClaims",
+					"order": 30
+				},
+				{
+					"id": "SchatkistPositie",
+					"label": "Schatkist-positie",
+					"icon": "BankOutline",
+					"route": "SchatkistPositie",
+					"order": 40
+				}
+			]
+		},
+		{
+			"id": "Subsidies",
+			"label": "Subsidies",
+			"icon": "HandHeartOutline",
+			"order": 32,
+			"children": [
+				{
+					"id": "SubsidiesOverzicht",
+					"label": "Overzicht",
+					"icon": "TableLarge",
+					"route": "SubsidiesOverzicht",
+					"order": 10
+				},
+				{
+					"id": "SubsidiesVerleend",
+					"label": "Verleende subsidies",
+					"icon": "CheckDecagramOutline",
+					"route": "SubsidiesVerleend",
+					"order": 20
+				},
+				{
+					"id": "SubsidiesTeruggevorderd",
+					"label": "Terugvorderingen",
+					"icon": "CashRefund",
+					"route": "SubsidiesTeruggevorderd",
+					"order": 30
 				}
 			]
 		},
@@ -1944,6 +2068,129 @@
 			}
 		},
 		{
+			"id": "Journals",
+			"route": "/journals",
+			"type": "index",
+			"title": "Journals",
+			"config": {
+				"register": "shillinq",
+				"schema": "JournalEntry",
+				"columns": [
+					{
+						"key": "journalNumber",
+						"label": "Number",
+						"sortable": true
+					},
+					{
+						"key": "entryDate",
+						"label": "Entry Date",
+						"sortable": true
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"sortable": true
+					},
+					{
+						"key": "journalType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "State",
+						"sortable": true
+					},
+					{
+						"key": "approvalState",
+						"label": "Approval",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-entryDate",
+				"detailRoute": "JournalDetail"
+			}
+		},
+		{
+			"id": "JournalDetail",
+			"route": "/journals/:id",
+			"type": "detail",
+			"title": "Journal Entry",
+			"config": {
+				"register": "shillinq",
+				"schema": "JournalEntry",
+				"fields": [
+					{
+						"key": "journalNumber",
+						"label": "Journal Number",
+						"type": "string"
+					},
+					{
+						"key": "entryDate",
+						"label": "Entry Date",
+						"type": "date"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "journalType",
+						"label": "Type",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "State",
+						"type": "string"
+					},
+					{
+						"key": "approvalState",
+						"label": "Approval State",
+						"type": "string"
+					},
+					{
+						"key": "cadence",
+						"label": "Cadence",
+						"type": "object"
+					},
+					{
+						"key": "reversesOn",
+						"label": "Reverses On",
+						"type": "string"
+					},
+					{
+						"key": "sourceDocumentUri",
+						"label": "Source Document",
+						"type": "string"
+					},
+					{
+						"key": "sourceDocumentApp",
+						"label": "Source App",
+						"type": "string"
+					},
+					{
+						"key": "glTransactionId",
+						"label": "GL Transaction",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "lines",
+						"label": "Lines",
+						"type": "array"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "Journals"
+			}
+		},
+		{
 			"id": "ChartOfAccounts",
 			"route": "/chart-of-accounts",
 			"type": "index",
@@ -2675,6 +2922,76 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "TrialBalance"
+			}
+		},
+		{
+			"id": "TrialBalanceLines",
+			"route": "/financial-statements/trial-balance-lines",
+			"type": "index",
+			"title": "Trial Balance (by account)",
+			"config": {
+				"register": "shillinq",
+				"schema": "TrialBalanceLine",
+				"columns": [
+					{
+						"key": "periodId",
+						"label": "Period",
+						"sortable": true
+					},
+					{
+						"key": "accountNumber",
+						"label": "Account Number",
+						"sortable": true
+					},
+					{
+						"key": "accountName",
+						"label": "Account Name",
+						"sortable": true
+					},
+					{
+						"key": "accountType",
+						"label": "Account Type",
+						"sortable": true
+					},
+					{
+						"key": "openingBalance",
+						"label": "Opening Balance",
+						"sortable": true
+					},
+					{
+						"key": "debitMovement",
+						"label": "Debits",
+						"sortable": true
+					},
+					{
+						"key": "creditMovement",
+						"label": "Credits",
+						"sortable": true
+					},
+					{
+						"key": "closingBalance",
+						"label": "Closing Balance",
+						"sortable": true
+					}
+				],
+				"filters": [
+					{
+						"key": "periodId",
+						"label": "Period",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "accountType",
+						"label": "Account Type",
+						"type": "string"
+					}
+				],
+				"defaultSort": "accountNumber"
 			}
 		},
 		{
@@ -5808,6 +6125,335 @@
 					}
 				],
 				"indexRoute": "MileageLog"
+			}
+		},
+		{
+			"id": "BtwAangiften",
+			"route": "/belastingen/btw-aangiften",
+			"type": "index",
+			"title": "BTW-aangiften",
+			"config": {
+				"register": "shillinq",
+				"schema": "VatReturn",
+				"columns": [
+					{ "key": "periodYear", "label": "Jaar", "sortable": true },
+					{ "key": "periodType", "label": "Periode", "sortable": true },
+					{ "key": "amount", "label": "Bedrag", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "periodYear",
+				"detailRoute": "BtwAangifteDetail"
+			}
+		},
+		{
+			"id": "BtwAangifteDetail",
+			"route": "/belastingen/btw-aangiften/:id",
+			"type": "detail",
+			"title": "BTW-aangifte",
+			"config": {
+				"register": "shillinq",
+				"schema": "VatReturn",
+				"fields": [
+					{ "key": "administrationId", "label": "Administratie", "type": "string" },
+					{ "key": "periodType", "label": "Periode-type", "type": "string" },
+					{ "key": "periodYear", "label": "Jaar", "type": "number" },
+					{ "key": "periodQuarter", "label": "Kwartaal", "type": "number" },
+					{ "key": "periodMonth", "label": "Maand", "type": "number" },
+					{ "key": "amount", "label": "BTW-bedrag", "type": "number" },
+					{ "key": "currency", "label": "Valuta", "type": "string" },
+					{ "key": "state", "label": "Status", "type": "string" },
+					{ "key": "notes", "label": "Notities", "type": "string" }
+				],
+				"indexRoute": "BtwAangiften"
+			}
+		},
+		{
+			"id": "IcpOpgaaf",
+			"route": "/belastingen/icp-opgaaf",
+			"type": "index",
+			"title": "ICP-opgaaf",
+			"config": {
+				"register": "shillinq",
+				"schema": "IcpStatement",
+				"columns": [
+					{ "key": "periodYear", "label": "Jaar", "sortable": true },
+					{ "key": "periodType", "label": "Periode", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "periodYear",
+				"detailRoute": "IcpOpgaafDetail"
+			}
+		},
+		{
+			"id": "IcpOpgaafDetail",
+			"route": "/belastingen/icp-opgaaf/:id",
+			"type": "detail",
+			"title": "ICP-opgaaf",
+			"config": {
+				"register": "shillinq",
+				"schema": "IcpStatement",
+				"fields": [
+					{ "key": "administrationId", "label": "Administratie", "type": "string" },
+					{ "key": "periodType", "label": "Periode-type", "type": "string" },
+					{ "key": "periodYear", "label": "Jaar", "type": "number" },
+					{ "key": "state", "label": "Status", "type": "string" }
+				],
+				"indexRoute": "IcpOpgaaf"
+			}
+		},
+		{
+			"id": "BtwCorrecties",
+			"route": "/belastingen/btw-correcties",
+			"type": "index",
+			"title": "BTW-correcties",
+			"config": {
+				"register": "shillinq",
+				"schema": "VatCorrection",
+				"columns": [
+					{ "key": "periodYear", "label": "Jaar", "sortable": true },
+					{ "key": "correctionReason", "label": "Reden", "sortable": true },
+					{ "key": "adjustmentAmount", "label": "Correctie", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "periodYear",
+				"detailRoute": "BtwCorrectieDetail"
+			}
+		},
+		{
+			"id": "BtwCorrectieDetail",
+			"route": "/belastingen/btw-correcties/:id",
+			"type": "detail",
+			"title": "BTW-correctie",
+			"config": {
+				"register": "shillinq",
+				"schema": "VatCorrection",
+				"fields": [
+					{ "key": "administrationId", "label": "Administratie", "type": "string" },
+					{ "key": "correctionReason", "label": "Reden", "type": "string" },
+					{ "key": "originalReturnId", "label": "Oorspronkelijke aangifte", "type": "string" },
+					{ "key": "adjustmentAmount", "label": "Correctiebedrag", "type": "number" },
+					{ "key": "state", "label": "Status", "type": "string" }
+				],
+				"indexRoute": "BtwCorrecties"
+			}
+		},
+		{
+			"id": "Urenregistratie",
+			"route": "/belastingen/urenregistratie",
+			"type": "index",
+			"title": "Urenregistratie",
+			"config": {
+				"register": "shillinq",
+				"schema": "UrenRegistratie",
+				"columns": [
+					{ "key": "workDate", "label": "Datum", "sortable": true },
+					{ "key": "hours", "label": "Uren", "sortable": true },
+					{ "key": "category", "label": "Categorie", "sortable": true }
+				],
+				"visibility": { "field": "administrationType", "in": [ "zzp" ] },
+				"defaultSort": "workDate"
+			}
+		},
+		{
+			"id": "ZzpAftrek",
+			"route": "/belastingen/zzp-aftrek",
+			"type": "index",
+			"title": "ZZP-aftrek",
+			"config": {
+				"register": "shillinq",
+				"schema": "ZzpDeduction",
+				"columns": [
+					{ "key": "year", "label": "Jaar", "sortable": true },
+					{ "key": "ytdQualifyingHours", "label": "Kwalificerende uren", "sortable": true },
+					{ "key": "qualifies1225", "label": "Voldoet 1225", "sortable": true },
+					{ "key": "totalAllowableDeduction", "label": "Totale aftrek", "sortable": true }
+				],
+				"visibility": { "field": "administrationType", "in": [ "zzp" ] },
+				"defaultSort": "year",
+				"detailRoute": "ZzpAftrekDetail"
+			}
+		},
+		{
+			"id": "ZzpAftrekDetail",
+			"route": "/belastingen/zzp-aftrek/:id",
+			"type": "detail",
+			"title": "ZZP-aftrek",
+			"config": {
+				"register": "shillinq",
+				"schema": "ZzpDeduction",
+				"fields": [
+					{ "key": "personId", "label": "Persoon", "type": "string" },
+					{ "key": "year", "label": "Jaar", "type": "number" },
+					{ "key": "ytdQualifyingHours", "label": "Kwalificerende uren", "type": "number" },
+					{ "key": "qualifies1225", "label": "Voldoet urencriterium", "type": "boolean" },
+					{ "key": "qualifiesStarters", "label": "Starter", "type": "boolean" },
+					{ "key": "zelfstandigenaftrek", "label": "Zelfstandigenaftrek", "type": "number" },
+					{ "key": "startersaftrek", "label": "Startersaftrek", "type": "number" },
+					{ "key": "mkbWinstvrijstelling", "label": "MKB-winstvrijstelling", "type": "number" },
+					{ "key": "totalAllowableDeduction", "label": "Totale aftrek", "type": "number" }
+				],
+				"indexRoute": "ZzpAftrek"
+			}
+		},
+		{
+			"id": "IbAangifte",
+			"route": "/belastingen/ib-aangifte",
+			"type": "index",
+			"title": "IB-aangifte",
+			"config": {
+				"register": "shillinq",
+				"schema": "IbAangifteExport",
+				"columns": [
+					{ "key": "year", "label": "Jaar", "sortable": true },
+					{ "key": "taxableIncome", "label": "Belastbaar inkomen", "sortable": true },
+					{ "key": "exportDate", "label": "Exportdatum", "sortable": true }
+				],
+				"visibility": { "field": "administrationType", "in": [ "zzp" ] },
+				"defaultSort": "year"
+			}
+		},
+		{
+			"id": "BbvMapping",
+			"route": "/overheid/bbv-mapping",
+			"type": "index",
+			"title": "BBV-mapping",
+			"config": {
+				"register": "shillinq",
+				"schema": "BbvAccountMapping",
+				"visibility": { "field": "administrationType", "in": [ "gemeente", "provincie", "waterschap" ] },
+				"columns": [
+					{ "key": "accountNumber", "label": "Grootboek", "sortable": true },
+					{ "key": "taakveld", "label": "Taakveld", "sortable": true },
+					{ "key": "programmaCode", "label": "Programma", "sortable": true },
+					{ "key": "bcfCompensable", "label": "BCF-compensabel", "sortable": true }
+				],
+				"defaultSort": "accountNumber"
+			}
+		},
+		{
+			"id": "BcfClaims",
+			"route": "/overheid/bcf-claims",
+			"type": "index",
+			"title": "BCF-claims",
+			"config": {
+				"register": "shillinq",
+				"schema": "BcfClaim",
+				"visibility": { "field": "administrationType", "in": [ "gemeente" ] },
+				"columns": [
+					{ "key": "claimNumber", "label": "Claimnummer", "sortable": true },
+					{ "key": "periodYear", "label": "Jaar", "sortable": true },
+					{ "key": "periodQuarter", "label": "Kwartaal", "sortable": true },
+					{ "key": "totalClaimAmount", "label": "Bedrag", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "periodYear",
+				"detailRoute": "BcfClaimDetail"
+			}
+		},
+		{
+			"id": "BcfClaimDetail",
+			"route": "/overheid/bcf-claims/:id",
+			"type": "detail",
+			"title": "BCF-claim",
+			"config": {
+				"register": "shillinq",
+				"schema": "BcfClaim",
+				"fields": [
+					{ "key": "claimNumber", "label": "Claimnummer", "type": "string" },
+					{ "key": "administrationId", "label": "Administratie", "type": "string" },
+					{ "key": "periodYear", "label": "Jaar", "type": "number" },
+					{ "key": "periodQuarter", "label": "Kwartaal", "type": "number" },
+					{ "key": "totalClaimAmount", "label": "Claimbedrag", "type": "number" },
+					{ "key": "state", "label": "Status", "type": "string" }
+				],
+				"indexRoute": "BcfClaims"
+			}
+		},
+		{
+			"id": "SchatkistPositie",
+			"route": "/overheid/schatkist-positie",
+			"type": "dashboard",
+			"title": "Schatkist-positie",
+			"config": {
+				"register": "shillinq",
+				"schema": "SchatkistPosition",
+				"visibility": { "field": "administrationType", "in": [ "gemeente" ] },
+				"widgets": [
+					{ "id": "schatkist-position", "type": "line-with-threshold", "title": "Schatkist-positie" }
+				]
+			}
+		},
+		{
+			"id": "SubsidiesOverzicht",
+			"route": "/subsidies/overzicht",
+			"type": "index",
+			"title": "Subsidies",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"columns": [
+					{ "key": "subsidieNumber", "label": "Nummer", "sortable": true },
+					{ "key": "subsidieName", "label": "Naam", "sortable": true },
+					{ "key": "awardAmount", "label": "Bedrag", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "subsidieNumber",
+				"detailRoute": "SubsidieDetail"
+			}
+		},
+		{
+			"id": "SubsidieDetail",
+			"route": "/subsidies/overzicht/:id",
+			"type": "detail",
+			"title": "Subsidie",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"fields": [
+					{ "key": "subsidieNumber", "label": "Nummer", "type": "string" },
+					{ "key": "subsidieName", "label": "Naam", "type": "string" },
+					{ "key": "granteeOrganization", "label": "Ontvanger", "type": "string" },
+					{ "key": "awardAmount", "label": "Toegekend bedrag", "type": "number" },
+					{ "key": "state", "label": "Status", "type": "string" },
+					{ "key": "hasRepaymentPlan", "label": "Afbetalingsregeling", "type": "boolean" }
+				],
+				"indexRoute": "SubsidiesOverzicht"
+			}
+		},
+		{
+			"id": "SubsidiesVerleend",
+			"route": "/subsidies/verleend",
+			"type": "index",
+			"title": "Verleende subsidies",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"filter": { "state": "verleend" },
+				"columns": [
+					{ "key": "subsidieNumber", "label": "Nummer", "sortable": true },
+					{ "key": "subsidieName", "label": "Naam", "sortable": true },
+					{ "key": "awardAmount", "label": "Bedrag", "sortable": true }
+				],
+				"defaultSort": "subsidieNumber",
+				"detailRoute": "SubsidieDetail"
+			}
+		},
+		{
+			"id": "SubsidiesTeruggevorderd",
+			"route": "/subsidies/teruggevorderd",
+			"type": "index",
+			"title": "Terugvorderingen",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"filter": { "state": "teruggevorderd" },
+				"columns": [
+					{ "key": "subsidieNumber", "label": "Nummer", "sortable": true },
+					{ "key": "subsidieName", "label": "Naam", "sortable": true },
+					{ "key": "awardAmount", "label": "Bedrag", "sortable": true }
+				],
+				"defaultSort": "subsidieNumber",
+				"detailRoute": "SubsidieDetail"
 			}
 		}
 	]

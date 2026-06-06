@@ -35,17 +35,29 @@ Per-period profit attribution to IP-assets via verdeelsleutel.
 | attributedWinst | number | Yes | Attributed profit in EUR |
 | verdeelsleutelBasis | string | Yes | Basis for attribution (e.g., `revenue-percentage`, `cost-allocation`) |
 
-## Requirements
+## ADDED Requirements
 
-### REQ-IBA-001: IPAssetValuation register
+### Requirement: REQ-IBA-001 — IPAssetValuation register
 
-SHALL declare `IPAssetValuation` register with valuation method options (forfaitair / afpelmethode).
+The system SHALL declare an `IPAssetValuation` register with valuation method options (forfaitair / afpelmethode).
 
-### REQ-IBA-002: WinstToerekening register
+#### Scenario: IP asset is valued via a declared method
 
-SHALL declare `WinstToerekening` register enabling per-period profit attribution per configurable verdeelsleutel.
+- **GIVEN** an IP asset of type `octrooi`
+- **WHEN** it is valued using the `afpelmethode`
+- **THEN** the IPAssetValuation record MUST persist the valuation and applicable 5% tariff.
 
-### REQ-IBA-003: 5%-tarief calculation
+### Requirement: REQ-IBA-002 — WinstToerekening register
+
+The system SHALL declare a `WinstToerekening` register enabling per-period profit attribution per configurable verdeelsleutel.
+
+#### Scenario: Profit is attributed to an IP asset per period
+
+- **GIVEN** an IPAssetValuation and a reporting period
+- **WHEN** a WinstToerekening is created with a verdeelsleutel basis
+- **THEN** the attributed winst MUST link to the IP asset for that period.
+
+### Requirement: REQ-IBA-003 — 5%-tarief calculation
 
 SHALL declare `x-openregister-calculations` computing 5%-tariffed winst per IP-asset per period.
 
@@ -55,13 +67,25 @@ GIVEN attributed winst €100k to S&O certificaat
 WHEN 5%-tarief calc runs  
 THEN taxable amount = €100k * 5% = €5k per Wet Vpb 12b.
 
-### REQ-IBA-004: Innovatiebox bijlage template
+### Requirement: REQ-IBA-004 — Innovatiebox bijlage template
 
-SHALL reference docudesk template for Vpb-aangifte innovatiebox section.
+The system SHALL reference a docudesk template for the Vpb-aangifte innovatiebox section.
 
-### REQ-IBA-005: Manifest navigation entry
+#### Scenario: Innovatiebox section renders from a docudesk template
 
-SHALL add `featureFlags.mkb-innovatiebox` navigation.
+- **GIVEN** computed 5%-tariffed winst for a period
+- **WHEN** the innovatiebox bijlage is generated
+- **THEN** rendering MUST resolve a docudesk template URI rather than a shillinq-local renderer.
+
+### Requirement: REQ-IBA-005 — Manifest navigation entry
+
+The system SHALL add a `featureFlags.mkb-innovatiebox` navigation entry.
+
+#### Scenario: Innovatiebox navigation is feature-flag gated
+
+- **GIVEN** the `mkb-innovatiebox` feature flag is off
+- **WHEN** the UI renders the menu
+- **THEN** the innovatiebox entry MUST NOT appear; it appears only when the flag is on.
 
 ## Test Plan
 
