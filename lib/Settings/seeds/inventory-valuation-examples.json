@@ -1,0 +1,89 @@
+{
+	"_meta": {
+		"source": "seed-example",
+		"description": "Example InventoryValuation records for shillinq demo/onboarding (Dutch MKB context). 5 records covering FIFO and moving-average methods across two warehouses.",
+		"spec": "openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-11"
+	},
+	"valuations": [
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryValuation",
+				"slug": "inv-val-gt-10-2026-noord"
+			},
+			"productId": "GT-10-2026",
+			"warehouse": "Magazijn Noord",
+			"quantity": 50,
+			"unitCost": 12.5,
+			"totalValue": 625.0,
+			"valuationMethod": "FIFO",
+			"date": "2026-05-01T00:00:00Z",
+			"status": "active",
+			"costCenterId": "CC-MAGAZIJN-001"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryValuation",
+				"slug": "inv-val-kp-a4-500-centraal"
+			},
+			"productId": "KP-A4-500",
+			"warehouse": "Centraal Depot",
+			"quantity": 200,
+			"unitCost": 3.75,
+			"totalValue": 750.0,
+			"valuationMethod": "average",
+			"date": "2026-05-01T00:00:00Z",
+			"status": "active",
+			"costCenterId": "CC-MAGAZIJN-001"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryValuation",
+				"slug": "inv-val-hp-200-b-zuid"
+			},
+			"productId": "HP-200-B",
+			"warehouse": "Magazijn Zuid",
+			"quantity": 15,
+			"unitCost": 89.0,
+			"totalValue": 1335.0,
+			"valuationMethod": "FIFO",
+			"date": "2026-05-01T00:00:00Z",
+			"status": "active",
+			"costCenterId": "CC-MAGAZIJN-001"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryValuation",
+				"slug": "inv-val-sm-5l-pro-centraal"
+			},
+			"productId": "SM-5L-PRO",
+			"warehouse": "Centraal Depot",
+			"quantity": 100,
+			"unitCost": 8.4,
+			"totalValue": 840.0,
+			"valuationMethod": "average",
+			"date": "2026-05-01T00:00:00Z",
+			"status": "active",
+			"costCenterId": "CC-MAGAZIJN-001"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryValuation",
+				"slug": "inv-val-vhg-s-m-noord"
+			},
+			"productId": "VHG-S-M",
+			"warehouse": "Magazijn Noord",
+			"quantity": 300,
+			"unitCost": 1.2,
+			"totalValue": 360.0,
+			"valuationMethod": "FIFO",
+			"date": "2026-05-01T00:00:00Z",
+			"status": "active",
+			"costCenterId": "CC-MAGAZIJN-001"
+		}
+	]
+}

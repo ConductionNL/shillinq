@@ -232,6 +232,13 @@
 					"icon": "TagOutline",
 					"route": "ProductAttributes",
 					"order": 20
+				},
+				{
+					"id": "InventoryValuation",
+					"label": "Valuation",
+					"icon": "ChartLineVariant",
+					"route": "InventoryValuation",
+					"order": 30
 				}
 			]
 		},
@@ -553,6 +560,119 @@
 		}
 	],
 	"pages": [
+		{
+			"id": "InventoryValuation",
+			"route": "/inventory/valuation",
+			"type": "index",
+			"title": "Inventory Valuation",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryValuation",
+				"columns": [
+					{
+						"key": "warehouse",
+						"label": "Warehouse",
+						"sortable": true
+					},
+					{
+						"key": "productId",
+						"label": "Product",
+						"sortable": true
+					},
+					{
+						"key": "quantity",
+						"label": "Quantity",
+						"sortable": true
+					},
+					{
+						"key": "unitCost",
+						"label": "Unit Cost",
+						"sortable": true
+					},
+					{
+						"key": "totalValue",
+						"label": "Total Value",
+						"sortable": true
+					},
+					{
+						"key": "valuationMethod",
+						"label": "Method",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "warehouse",
+				"detailRoute": "InventoryValuationDetail"
+			}
+		},
+		{
+			"id": "InventoryValuationDetail",
+			"route": "/inventory/valuation/:id",
+			"type": "detail",
+			"title": "Inventory Valuation",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryValuation",
+				"fields": [
+					{
+						"key": "productId",
+						"label": "Product",
+						"type": "string"
+					},
+					{
+						"key": "warehouse",
+						"label": "Warehouse",
+						"type": "string"
+					},
+					{
+						"key": "quantity",
+						"label": "Quantity",
+						"type": "number"
+					},
+					{
+						"key": "unitCost",
+						"label": "Unit Cost",
+						"type": "number"
+					},
+					{
+						"key": "totalValue",
+						"label": "Total Value",
+						"type": "number"
+					},
+					{
+						"key": "valuationMethod",
+						"label": "Valuation Method",
+						"type": "string"
+					},
+					{
+						"key": "date",
+						"label": "Valuation Date",
+						"type": "date-time"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "costCenterId",
+						"label": "Cost Center",
+						"type": "string"
+					},
+					{
+						"key": "pendingCogs",
+						"label": "COGS Pending",
+						"type": "boolean"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "InventoryValuation"
+			}
+		},
 		{
 			"id": "Products",
 			"route": "/inventory/products",

@@ -1,0 +1,194 @@
+{
+	"info": {
+		"version": "0.1.0-inventory-valuation-fifo-avg"
+	},
+	"components": {
+		"schemas": {
+			"InventoryValuation": {
+				"slug": "InventoryValuation",
+				"icon": "ChartLineVariant",
+				"version": "0.1.0",
+				"title": "Inventory Valuation",
+				"description": "Per-item, per-warehouse inventory valuation snapshot. Stores the current cost basis under FIFO or moving-average method. Updated on every StockMovement event; drives COGS posting to the shillinq GL. Formalises the ADR-000 InventoryValuation entity in the shillinq register.",
+				"x-schema-org": "schema:Product",
+				"x-openregister-purpose": "transaction",
+				"type": "object",
+				"required": [
+					"quantity",
+					"unitCost",
+					"totalValue",
+					"valuationMethod",
+					"date",
+					"status"
+				],
+				"properties": {
+					"quantity": {
+						"type": "number",
+						"description": "Quantity of items currently on hand for this product+warehouse combination.",
+						"example": 50
+					},
+					"unitCost": {
+						"type": "number",
+						"description": "Cost per unit under the selected valuation method. FIFO: weighted average of remaining open lots. Moving-average: running weighted average. Stored to 4 decimal places.",
+						"example": 12.5
+					},
+					"totalValue": {
+						"type": "number",
+						"description": "Total inventory value (quantity × unitCost). Rounded to 2 decimal places.",
+						"example": 625.0
+					},
+					"valuationMethod": {
+						"type": "string",
+						"description": "Costing method applied to this item-warehouse pair.",
+						"enum": [
+							"FIFO",
+							"average"
+						],
+						"default": "FIFO",
+						"example": "FIFO"
+					},
+					"date": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Date of the valuation snapshot or last update.",
+						"example": "2026-05-01T00:00:00Z"
+					},
+					"warehouse": {
+						"type": "string",
+						"nullable": true,
+						"description": "Warehouse or storage location identifier.",
+						"example": "Magazijn Noord"
+					},
+					"status": {
+						"type": "string",
+						"description": "Lifecycle status of this valuation record.",
+						"enum": [
+							"active",
+							"adjusted",
+							"obsolete"
+						],
+						"default": "active",
+						"example": "active"
+					},
+					"productId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to Product.id (many-to-one).",
+						"example": "prod-001"
+					},
+					"costCenterId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to CostCenter.id (many-to-one).",
+						"example": "CC-MAGAZIJN-001"
+					},
+					"pendingCogs": {
+						"type": "boolean",
+						"nullable": true,
+						"description": "Set to true when a COGS posting could not be completed because GL accounts are not configured. Cleared when the posting is successfully retried.",
+						"example": false
+					},
+					"lastProcessedMovementUuid": {
+						"type": "string",
+						"nullable": true,
+						"description": "UUID of the last StockMovement processed by the valuation engine. Used for idempotency on retry.",
+						"example": "550e8400-e29b-41d4-a716-446655440000"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "status",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Current in-use valuation snapshot; updated on every stock movement."
+						},
+						"adjusted": {
+							"label": "Adjusted",
+							"description": "Manual correction applied, or COGS posting pending due to missing GL config. Remains active for stock tracking purposes."
+						},
+						"obsolete": {
+							"label": "Obsolete",
+							"description": "Item discontinued or moved out; historical only. No new movements accepted."
+						}
+					},
+					"transitions": {
+						"adjust": {
+							"from": "active",
+							"to": "adjusted",
+							"label": "Mark as adjusted",
+							"description": "Apply a manual quantity correction or flag a pending COGS posting."
+						},
+						"restore": {
+							"from": "adjusted",
+							"to": "active",
+							"label": "Restore to active",
+							"description": "Operator confirms correction is complete."
+						},
+						"archiveFromActive": {
+							"from": "active",
+							"to": "obsolete",
+							"label": "Archive",
+							"description": "Discontinue item. Blocked when on-hand quantity is non-zero.",
+							"requires": "OCA\\Shillinq\\Lifecycle\\InventoryValuationMethodGuard::checkZeroStock"
+						},
+						"archiveFromAdjusted": {
+							"from": "adjusted",
+							"to": "obsolete",
+							"label": "Archive",
+							"description": "Discontinue item from adjusted state. Blocked when on-hand quantity is non-zero.",
+							"requires": "OCA\\Shillinq\\Lifecycle\\InventoryValuationMethodGuard::checkZeroStock"
+						},
+						"methodChange": {
+							"from": "active",
+							"to": "active",
+							"label": "Change valuation method",
+							"description": "Switch between FIFO and moving-average. Blocked when on-hand quantity is non-zero to prevent cost distortion.",
+							"requires": "OCA\\Shillinq\\Lifecycle\\InventoryValuationMethodGuard::checkZeroStock"
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"product": {
+						"localField": "productId",
+						"relatedSchema": "Product",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "The Product this valuation record tracks."
+					},
+					"costCenter": {
+						"localField": "costCenterId",
+						"relatedSchema": "CostCenter",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "The CostCenter dimension for this valuation."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				},
+				"x-openregister-uniqueness": {
+					"activeValuation": {
+						"fields": ["productId", "warehouse"],
+						"condition": {"status": "active"},
+						"message": "duplicate active valuation: an active InventoryValuation already exists for this product+warehouse combination."
+					}
+				}
+			}
+		}
+	},
+	"objects": []
+}

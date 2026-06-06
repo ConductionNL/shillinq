@@ -93,6 +93,7 @@ class InitializeSettings implements IRepairStep
      * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
      * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
      * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
+     * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-12
      */
     public function run(IOutput $output): void
     {
@@ -144,6 +145,7 @@ class InitializeSettings implements IRepairStep
             $this->seedKorThresholds(output: $output);
             $this->seedComplianceReferenceData(output: $output);
             $this->seedProductAttributeTemplates(output: $output);
+            $this->seedInventoryValuationExamples(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -460,6 +462,102 @@ class InitializeSettings implements IRepairStep
         }//end foreach
 
     }//end seedProductAttributeTemplates()
+
+    /**
+     * Seed the 5 example InventoryValuation records from inventory-valuation-examples.json.
+     *
+     * Deduplication key is productId + warehouse + status = active: if an active
+     * InventoryValuation for the same product+warehouse already exists it is skipped,
+     * preserving operator edits across re-runs. Idempotent per REQ-INV-001.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-12
+     */
+    private function seedInventoryValuationExamples(IOutput $output): void
+    {
+        $seedPath = __DIR__.'/../Settings/seeds/inventory-valuation-examples.json';
+        if (file_exists($seedPath) === false) {
+            $output->warning('Shillinq: inventory-valuation-examples.json not found, skipping');
+            return;
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            $output->warning('Shillinq: failed to read inventory-valuation-examples.json, skipping');
+            return;
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $output->warning('Shillinq: failed to parse inventory-valuation-examples.json: '.json_last_error_msg());
+            return;
+        }
+
+        $valuations = ($data['valuations'] ?? []);
+        if (empty($valuations) === true) {
+            $output->info('Shillinq: no inventory valuation examples to seed');
+            return;
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->settingsService->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($valuations as $valuation) {
+                $productId = ($valuation['productId'] ?? null);
+                $warehouse = ($valuation['warehouse'] ?? null);
+
+                if ($productId === null) {
+                    continue;
+                }
+
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('InventoryValuation')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'productId' => $productId,
+                                'warehouse' => $warehouse,
+                                'status'    => 'active',
+                            ],
+                            '_limit'  => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $record = $valuation;
+                unset($record['@self']);
+
+                $objectService->saveObject(
+                    object: $record,
+                    register: $registerSlug,
+                    schema: 'InventoryValuation',
+                );
+                $seeded++;
+            }//end foreach
+
+            $output->info(
+                'Shillinq: InventoryValuation examples seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        } catch (\Throwable $e) {
+            $output->warning('Shillinq: InventoryValuation examples seeding failed: '.$e->getMessage());
+            $this->logger->warning(
+                'Shillinq: InventoryValuation examples seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+        }//end try
+
+    }//end seedInventoryValuationExamples()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.

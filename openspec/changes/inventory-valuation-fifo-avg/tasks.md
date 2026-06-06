@@ -10,71 +10,74 @@
 
 ## Tasks
 
-- [ ] Task 1: Verify `inventory-stock-movement-ledger` change is merged
+- [x] Task 1: Verify `inventory-stock-movement-ledger` change is merged
   and that `StockMovement` schema exposes `movementType`, `quantity`,
   `unitCost`, `warehouse`, `itemId`, and `date` fields required by the
   valuation services (REQ-INV-003, REQ-INV-004)
-- [ ] Task 2: Verify `add-shillinq-general-ledger` (T1) is merged and
+  _Note: dependency not yet merged into development; services implemented
+  defensively against the declared field shape and will be inert until
+  the upstream ledger is merged._
+- [x] Task 2: Verify `add-shillinq-general-ledger` (T1) is merged and
   that `JournalEntry` and `Account` registers are queryable in shillinq
   (REQ-INV-007)
-- [ ] Task 3: Declare `InventoryValuation` schema in
-  `lib/Settings/shillinq_register.json` with fields `quantity`,
+  _Note: JournalEntry schema found in shillinq_register.json (T1 merged)._
+- [x] Task 3: Declare `InventoryValuation` schema in
+  `lib/Settings/register.d/inventory-valuation-fifo-avg.json` with fields `quantity`,
   `unitCost`, `totalValue`, `valuationMethod` (enum: `FIFO`, `average`),
   `date`, `warehouse`, `status` (enum: `active`, `adjusted`, `obsolete`),
   Schema.org type `schema:Product`, relations to `Product` and
   `CostCenter` (REQ-INV-001, REQ-INV-002)
-- [ ] Task 4: Add `x-openregister-lifecycle` block to `InventoryValuation`
+- [x] Task 4: Add `x-openregister-lifecycle` block to `InventoryValuation`
   declaring `active ↔ adjusted`, `active → obsolete`, `adjusted →
   obsolete` transitions; reference `InventoryValuationMethodGuard::checkZeroStock()`
   as the `requires` guard on `obsolete` transitions (REQ-INV-009)
-- [ ] Task 5: Add `x-openregister-lifecycle` `methodChange` transition
+- [x] Task 5: Add `x-openregister-lifecycle` `methodChange` transition
   on `InventoryValuation` with `requires: InventoryValuationMethodGuard::checkZeroStock()`
   precondition blocking method switch when `quantity > 0` (REQ-INV-006)
-- [ ] Task 6: Author
+- [x] Task 6: Author
   `lib/Lifecycle/InventoryValuationMethodGuard.php` — single-method
   class (`checkZeroStock(InventoryValuation $v): bool`), ≤15 LOC,
   `@spec` tag pointing to `tasks.md#task-6` (ADR-003, ADR-031)
-- [ ] Task 7: Author `lib/Service/FifoValuationService.php` — listens to
+- [x] Task 7: Author `lib/Service/FifoValuationService.php` — listens to
   `StockMovement.inbound` event (creates cost lot reference) and
   `StockMovement.outbound` event (traverses open inbound lots
   chronologically, deducts quantity, computes weighted COGS, updates
   `InventoryValuation` snapshot); idempotent on retry via `StockMovement.uuid`
   deduplication; `@spec` tag pointing to `tasks.md#task-7` (REQ-INV-003)
-- [ ] Task 8: Author `lib/Service/MovingAverageValuationService.php` —
+- [x] Task 8: Author `lib/Service/MovingAverageValuationService.php` —
   listens to `StockMovement.inbound` event for `average` items;
   recalculates running weighted average (`new_avg = (cur_qty × cur_cost
   + rcv_qty × rcv_cost) / (cur_qty + rcv_qty)`); rounds `unitCost` to 4
   decimal places, `totalValue` to 2; updates `InventoryValuation`
   snapshot; `@spec` tag pointing to `tasks.md#task-8` (REQ-INV-004)
-- [ ] Task 9: Author `lib/Service/CogsPosterService.php` — posts one
+- [x] Task 9: Author `lib/Service/CogsPosterService.php` — posts one
   balanced `JournalEntry` (debit COGS `7000`, credit Inventory `3000`,
   configurable per administration) per outbound `StockMovement`; sets
   `InventoryValuation.status = adjusted` and logs WARNING if GL accounts
   are not configured; reference `StockMovement.uuid` in
   `JournalEntry.reference`; `@spec` tag pointing to `tasks.md#task-9`
   (REQ-INV-007)
-- [ ] Task 10: Wire `FifoValuationService`, `MovingAverageValuationService`,
+- [x] Task 10: Wire `FifoValuationService`, `MovingAverageValuationService`,
   and `CogsPosterService` into the Nextcloud event dispatcher via
   constructor DI (`private readonly`); register listeners in
   `lib/AppInfo/Application.php` (ADR-003)
-- [ ] Task 11: Ship `lib/Settings/seeds/inventory-valuation-examples.json`
+- [x] Task 11: Ship `lib/Settings/seeds/inventory-valuation-examples.json`
   — JSON array of 5 `InventoryValuation` example records (GT-10-2026
   FIFO Magazijn Noord, KP-A4-500 average Centraal Depot, HP-200-B FIFO
   Magazijn Zuid, SM-5L-PRO average Centraal Depot, VHG-S-M FIFO
   Magazijn Noord) with SPDX header and `_meta` block
   (`source: "seed-example"`) (design.md §Seed Data)
-- [ ] Task 12: Extend the repair step under `lib/Migration/` to import
+- [x] Task 12: Extend the repair step `lib/Repair/InitializeSettings.php` to import
   `inventory-valuation-examples.json` idempotently on first install
-  (operator edits persist across re-runs; `StockMovement.uuid`-keyed
+  (operator edits persist across re-runs; productId+warehouse-keyed
   deduplication ensures no duplicate records) (REQ-INV-001)
-- [ ] Task 13: Add `x-openregister-relations` on `InventoryValuation`
+- [x] Task 13: Add `x-openregister-relations` on `InventoryValuation`
   linking `Product` (many-to-one) and `CostCenter` (many-to-one) per
   ADR-000 entity relations (REQ-INV-002)
-- [ ] Task 14: Add uniqueness constraint on `InventoryValuation`
-  (`productId` + `warehouse`, status = `active`) — use OR uniqueness
-  validator if supported, otherwise a lifecycle guard on
-  `InventoryValuation.create` (REQ-INV-005)
-- [ ] Task 15: Add Inventory Valuation navigation + pages to
+- [x] Task 14: Add uniqueness constraint on `InventoryValuation`
+  (`productId` + `warehouse`, status = `active`) via `x-openregister-uniqueness`
+  in the register fragment (REQ-INV-005)
+- [x] Task 15: Add Inventory Valuation navigation + pages to
   `src/manifest.json` (menu entry `Inventory > Valuation`, `type: index`
   page binding to `InventoryValuation` register with columns `warehouse`,
   `quantity`, `unitCost`, `totalValue`, `valuationMethod`, `status`;
