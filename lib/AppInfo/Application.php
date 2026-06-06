@@ -21,9 +21,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\AppInfo;
 
+use OCA\Shillinq\Listener\AppointmentCreatedListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Repair\InitializeSettings;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
+use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -62,6 +64,16 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: DeepLinkRegistrationEvent::class,
             listener: DeepLinkRegistrationListener::class
+        );
+
+        // bookings-confirm-flow REQ-BCF-001/010 — issue a ConfirmationToken
+        // + dispatch the confirmation email when a new Appointment record is
+        // created with status `pending_confirmation` (customer self-service).
+        // Admin-created bookings start `confirmed` and the listener ignores
+        // them. Idempotent: OR fires the event once per saveObject.
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: AppointmentCreatedListener::class
         );
 
         // Initialize register and schemas on install/upgrade.

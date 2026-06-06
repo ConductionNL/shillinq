@@ -22,25 +22,13 @@
   - `active` → `revoked` (on resend request)
   - `active` → `expired` (on expiration check, auto-computed from expiresAt)
 - [x] Task 9: Implement `lib/Service/IcsService.php` with method `generateIcs(array $appointment, array $customer, string $confirmUrl, array $context): string` per REQ-BCF-003 — emits CRLF-terminated VCALENDAR/VTIMEZONE/VEVENT with METHOD:REQUEST, DTSTART;TZID + DTEND;TZID via TimezoneResolver, SUMMARY/LOCATION/DESCRIPTION/ATTACH/URL/ATTENDEE/ORGANIZER. No file I/O.
-- [ ] Task 10: Implement `lib/Controller/ConfirmationApiController.php` with endpoints:
-  - `PATCH /ocs/v2.php/apps/bookings/api/v1/appointments/{appointmentId}/confirm` — validate token, update appointment status to `confirmed`, update token status to `redeemed` (REQ-BCF-004)
-  - `POST /ocs/v2.php/apps/bookings/api/v1/appointments/{appointmentId}/resend-confirmation` — revoke current token, generate new token, send new email (REQ-BCF-006)
-  - `GET /ocs/v2.php/apps/bookings/api/v1/appointments/validate-confirmation-token` — dry-run token validation for portal load (no side effects) (REQ-BCF-007)
-  - Include error handling for expired tokens, invalid tokens, already-confirmed appointments
-- [ ] Task 11: Implement token generation logic on appointment creation (likely in `AppointmentApiController` or a service listener) that:
-  - On appointment.create with status=`pending_confirmation`, automatically create `ConfirmationToken` (REQ-BCF-001)
-  - Generate 32-char random URL-safe token string
-  - Hash token with bcrypt for secure storage
-  - Set expiresAt to +7 days
-  - Set status to `active`
-  - Log token generation in appointment auditTrail
-- [ ] Task 12: Implement confirmation email delivery (via openconnector) that:
-  - Uses templates from `bookings-notification-triggers` with confirmation-specific variables
-  - Calls `IcsService::generateIcs()` to compose ICS content
-  - Attaches ICS as MIME part (Content-Type: text/calendar; charset=utf-8)
-  - Includes fallback web link `/index.php/apps/bookings/confirm?token={tokenString}`
-  - Displays appointment time in customer's local timezone
-  - Sends via openconnector email channel (REQ-BCF-003)
+- [x] Task 10: Implement `lib/Controller/ConfirmationApiController.php` with endpoints:
+  - `PATCH /index.php/apps/shillinq/api/v1/appointments/{appointmentId}/confirm` — validate token (constant-time hash), update appointment status to `confirmed`, mark token `redeemed`. #[PublicPage] — token is the auth factor. (REQ-BCF-004)
+  - `POST /index.php/apps/shillinq/api/v1/appointments/{appointmentId}/resend-confirmation` — #[NoAdminRequired] + per-appointment authorisation guard (customer / admin via AdministrationContextService::canAccess) → revoke current token, generate new, send new email. (REQ-BCF-006)
+  - `GET /index.php/apps/shillinq/api/v1/appointments/validate-confirmation-token` — #[PublicPage] dry-run, never mutates state. (REQ-BCF-007)
+  - Routes registered in `appinfo/routes.php` before the SPA catch-all.
+- [x] Task 11: Token generation on appointment creation via `lib/Listener/AppointmentCreatedListener.php` — listens to OR `ObjectCreatedEvent`, filters to schema=Appointment + status=pending_confirmation (REQ-BCF-010 skips admin-created `confirmed` bookings), calls `ConfirmationTokenService::issueAndSend` which generates 32-char base62, bcrypt-cost-12 hash, expiresAt=+7d, status=active, dispatches email + ICS. Wired in `Application::register()` against `ObjectCreatedEvent`.
+- [x] Task 12: Confirmation email delivery via openconnector in `ConfirmationTokenService::dispatchEmail` — payload references the `BookingConfirmationTemplate` (bookings-email-templates) with `customerName`, `appointmentDate`, `confirmUrl`, `serviceName`, `location` variables; ICS attached as `appointment.ics` with Content-Type `text/calendar; charset=utf-8`; absolute fallback URL built via IURLGenerator; appointment time rendered in customer timezone by `IcsService` via `TimezoneResolver`. Looks up `OCA\OpenConnector\Service\NotificationDispatcher` lazily; logs the prepared payload when openconnector is absent so flow remains observable in dev.
 - [ ] Task 13: Create `src/views/ConfirmationPortal.vue` per REQ-BCF-007 that:
   - Accepts token via URL query parameter (`?token=...`)
   - On mount, validates token with dry-run endpoint (no confirmation yet)
