@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.1.9</version>
+    <version>0.2.0</version>
     <licence>agpl</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
@@ -67,4 +67,13 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Shillinq\Repair\InitializeSettings</step>
         </post-migration>
     </repair-steps>
+
+    <background-jobs>
+        <!-- Cashflow 13wk: weekly horizon roll (Monday 02:00 UTC), daily bankfeed pull,
+             daily crisis-mode refresh, monthly calibration. REQ-CF-000/010/012/013. -->
+        <job>OCA\Shillinq\Cron\HorizonRollingJob</job>
+        <job>OCA\Shillinq\Cron\BankfeedReconciliationJob</job>
+        <job>OCA\Shillinq\Cron\CrisisModeRefreshJob</job>
+        <job>OCA\Shillinq\Cron\CalibrationBatchJob</job>
+    </background-jobs>
 </info>

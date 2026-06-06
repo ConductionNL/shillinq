@@ -3,13 +3,13 @@
 	"info": {
 		"title": "Shillinq Register",
 		"description": "Register containing all schemas for the Shillinq application.",
-		"version": "0.5.0"
+		"version": "0.6.0"
 	},
 	"x-openregister": {
 		"type": "application",
 		"app": "shillinq",
 		"openregister": "^v0.2.10",
-		"description": "Shillinq — open-source business administration suite for Dutch SMB, ZZP, and government."
+		"description": "Shillinq \u2014 open-source business administration suite for Dutch SMB, ZZP, and government."
 	},
 	"paths": {},
 	"components": {
@@ -19,7 +19,7 @@
 				"icon": "FileDocumentOutline",
 				"version": "0.1.0",
 				"title": "Example",
-				"description": "Example schema — replace with your app's actual schemas.",
+				"description": "Example schema \u2014 replace with your app's actual schemas.",
 				"type": "object",
 				"required": [
 					"title"
@@ -100,7 +100,7 @@
 					},
 					"consentReference": {
 						"type": "string",
-						"description": "Aggregator-issued consent identifier returned from the SCA flow. Non-credential metadata — NOT an OAuth token or client secret.",
+						"description": "Aggregator-issued consent identifier returned from the SCA flow. Non-credential metadata \u2014 NOT an OAuth token or client secret.",
 						"example": "consent-ref-abc123"
 					},
 					"consentGrantedAt": {
@@ -259,7 +259,7 @@
 				"x-openregister-scheduled-workflows": {
 					"shillinq-bank-transaction-polling": {
 						"name": "Bank transaction polling",
-						"description": "Pulls transactions from the PSD2 aggregator via the openconnector source slug, normalises the aggregator JSON to CAMT.053 XML, attaches the XML via docudesk, and creates a BankStatement record per active BankConnection. Runs 4× daily per REQ-BC-004. No BankPollingJob extends TimedJob.",
+						"description": "Pulls transactions from the PSD2 aggregator via the openconnector source slug, normalises the aggregator JSON to CAMT.053 XML, attaches the XML via docudesk, and creates a BankStatement record per active BankConnection. Runs 4\u00d7 daily per REQ-BC-004. No BankPollingJob extends TimedJob.",
 						"cron": "0 */6 * * *",
 						"source": "@self.aggregatorSourceSlug",
 						"register": "shillinq",
@@ -856,7 +856,7 @@
 						"type": "number",
 						"minimum": 0,
 						"maximum": 1,
-						"description": "Quotum-aandeel (participation share) of this deelnemer in the GR. Must be 0 ≤ x ≤ 1. The sum across all actief deelnemers SHOULD equal 1.0.",
+						"description": "Quotum-aandeel (participation share) of this deelnemer in the GR. Must be 0 \u2264 x \u2264 1. The sum across all actief deelnemers SHOULD equal 1.0.",
 						"example": 0.4
 					},
 					"actief": {
@@ -1091,7 +1091,7 @@
 					},
 					"esaClassifier": {
 						"type": "string",
-						"description": "ESA 2010 (European System of Accounts) sector classifier. Drives EMU-saldo computation's sector grouping per REQ-EMU-002. S.1311 = centrale overheid, S.1312 = deelstaatoverheid (N/A in NL), S.1313 = lokale overheid (gemeente/provincie/waterschap), S.1314 = wettelijke sociale verzekering. S.11–S.15/S.2 are non-government sectors per ESA 2010.",
+						"description": "ESA 2010 (European System of Accounts) sector classifier. Drives EMU-saldo computation's sector grouping per REQ-EMU-002. S.1311 = centrale overheid, S.1312 = deelstaatoverheid (N/A in NL), S.1313 = lokale overheid (gemeente/provincie/waterschap), S.1314 = wettelijke sociale verzekering. S.11\u2013S.15/S.2 are non-government sectors per ESA 2010.",
 						"enum": [
 							"S.1311",
 							"S.1312",
@@ -1123,7 +1123,7 @@
 				"x-openregister-lifecycle": {
 					"retention": {
 						"rule": "selectielijst:5.1.1",
-						"description": "Chart-of-accounts records are kept indefinitely per Selectielijst Gemeenten 2020 § 5.1.1 (begroting, jaarrekening, rekeningschema)."
+						"description": "Chart-of-accounts records are kept indefinitely per Selectielijst Gemeenten 2020 \u00a7 5.1.1 (begroting, jaarrekening, rekeningschema)."
 					},
 					"field": "lifecycleState",
 					"initialState": "active",
@@ -1138,7 +1138,7 @@
 						},
 						"archived": {
 							"label": "Archived",
-							"description": "Historical only — no new postings, no edits; remains queryable."
+							"description": "Historical only \u2014 no new postings, no edits; remains queryable."
 						}
 					},
 					"preconditions": {
@@ -1348,7 +1348,7 @@
 					"description": {
 						"type": "string",
 						"description": "Plain-Dutch description of the record category covered by this rule.",
-						"example": "Dagelijkse financiële verantwoording (facturen, betalingen, dagboeken, bankafschriften)"
+						"example": "Dagelijkse financi\u00eble verantwoording (facturen, betalingen, dagboeken, bankafschriften)"
 					},
 					"recordCategory": {
 						"type": "string",
@@ -1389,7 +1389,7 @@
 					"legalBasis": {
 						"type": "string",
 						"description": "Citation of the legal basis: Archiefwet article + Selectielijst paragraph.",
-						"example": "Archiefwet 1995 art. 5 + Selectielijst Gemeenten 2020 § 5.1.2"
+						"example": "Archiefwet 1995 art. 5 + Selectielijst Gemeenten 2020 \u00a7 5.1.2"
 					},
 					"effectiveFrom": {
 						"type": "string",
@@ -1405,7 +1405,7 @@
 					},
 					"customRetentionYears": {
 						"type": "integer",
-						"description": "Operator-defined extension of the statutory retention period (archiefverordening override). MUST be >= retentionYears — operators may extend retention but NEVER shorten below the Archiefwet floor (REQ-ARC-004).",
+						"description": "Operator-defined extension of the statutory retention period (archiefverordening override). MUST be >= retentionYears \u2014 operators may extend retention but NEVER shorten below the Archiefwet floor (REQ-ARC-004).",
 						"minimum": 0,
 						"x-openregister-validation": {
 							"rule": "gte_field",
@@ -1442,7 +1442,7 @@
 				"icon": "TableAccountOutline",
 				"version": "0.1.0",
 				"title": "Balance Sheet",
-				"description": "Financial statement showing assets, liabilities, and equity at a fiscal-period snapshot. Status lifecycle: draft → final → published. Totals are computed via x-openregister-aggregations from GL entries grouped by Account.accountType per REQ-FS-004.",
+				"description": "Financial statement showing assets, liabilities, and equity at a fiscal-period snapshot. Status lifecycle: draft \u2192 final \u2192 published. Totals are computed via x-openregister-aggregations from GL entries grouped by Account.accountType per REQ-FS-004.",
 				"x-schema-org": "schema:Table",
 				"type": "object",
 				"required": [
@@ -1461,19 +1461,19 @@
 					},
 					"totalAssets": {
 						"type": "number",
-						"description": "Computed total assets in base currency. Populated by balance-sheet aggregation on draft→final transition.",
+						"description": "Computed total assets in base currency. Populated by balance-sheet aggregation on draft\u2192final transition.",
 						"nullable": true,
 						"example": 150000.0
 					},
 					"totalLiabilities": {
 						"type": "number",
-						"description": "Computed total liabilities in base currency. Populated by balance-sheet aggregation on draft→final transition.",
+						"description": "Computed total liabilities in base currency. Populated by balance-sheet aggregation on draft\u2192final transition.",
 						"nullable": true,
 						"example": 50000.0
 					},
 					"totalEquity": {
 						"type": "number",
-						"description": "Computed total equity in base currency. Populated by balance-sheet aggregation on draft→final transition.",
+						"description": "Computed total equity in base currency. Populated by balance-sheet aggregation on draft\u2192final transition.",
 						"nullable": true,
 						"example": 100000.0
 					},
@@ -1527,7 +1527,7 @@
 						},
 						"published": {
 							"label": "Published",
-							"description": "Released to stakeholders via OR publication extension. Immutable — no further edits."
+							"description": "Released to stakeholders via OR publication extension. Immutable \u2014 no further edits."
 						},
 						"archived": {
 							"label": "Archived",
@@ -1580,7 +1580,7 @@
 				},
 				"x-openregister-aggregations": {
 					"balanceSheetTotals": {
-						"description": "Computes totalAssets, totalLiabilities, totalEquity from GLLine entries grouped by Account.accountType for the fiscal period. Satisfies REQ-FS-004. No BalanceSheetService — pure declarative aggregation per ADR-031.",
+						"description": "Computes totalAssets, totalLiabilities, totalEquity from GLLine entries grouped by Account.accountType for the fiscal period. Satisfies REQ-FS-004. No BalanceSheetService \u2014 pure declarative aggregation per ADR-031.",
 						"join": {
 							"from": "GLLine.accountNumber",
 							"through": "Account",
@@ -1616,7 +1616,7 @@
 								"operation": "check",
 								"expression": "totalAssets = totalLiabilities + totalEquity",
 								"target": "isBalanced",
-								"diagnostic": "Balance-sheet equation violated: assets({{totalAssets}}) ≠ liabilities({{totalLiabilities}}) + equity({{totalEquity}})"
+								"diagnostic": "Balance-sheet equation violated: assets({{totalAssets}}) \u2260 liabilities({{totalLiabilities}}) + equity({{totalEquity}})"
 							}
 						}
 					}
@@ -1792,7 +1792,7 @@
 				},
 				"x-openregister-aggregations": {
 					"trialBalanceTotals": {
-						"description": "Computes totalDebits, totalCredits, and isBalanced flag from GLLine entries for the fiscal period. Satisfies REQ-FS-005 verification check. No TrialBalanceService — pure declarative aggregation per ADR-031.",
+						"description": "Computes totalDebits, totalCredits, and isBalanced flag from GLLine entries for the fiscal period. Satisfies REQ-FS-005 verification check. No TrialBalanceService \u2014 pure declarative aggregation per ADR-031.",
 						"filter": {
 							"administrationId": "@self.administrationId",
 							"fiscalYearId": "@self.fiscalYearId",
@@ -1815,7 +1815,7 @@
 								"operation": "check",
 								"expression": "totalDebits = totalCredits",
 								"target": "isBalanced",
-								"diagnostic": "Trial balance is not balanced: debits({{totalDebits}}) ≠ credits({{totalCredits}}), discrepancy = {{totalDebits - totalCredits}}"
+								"diagnostic": "Trial balance is not balanced: debits({{totalDebits}}) \u2260 credits({{totalCredits}}), discrepancy = {{totalDebits - totalCredits}}"
 							}
 						}
 					},
@@ -2022,7 +2022,7 @@
 				"icon": "FileChartOutline",
 				"version": "0.1.0",
 				"title": "Consolidated Report",
-				"description": "Aggregated financial report combining data from multiple administrations with consolidation method and inter-company elimination tracking per REQ-FS-006. Lifecycle draft → final → published consumes OR publication extension or ConsolidationGuard fallback per ADR-031.",
+				"description": "Aggregated financial report combining data from multiple administrations with consolidation method and inter-company elimination tracking per REQ-FS-006. Lifecycle draft \u2192 final \u2192 published consumes OR publication extension or ConsolidationGuard fallback per ADR-031.",
 				"x-schema-org": "schema:Report",
 				"type": "object",
 				"required": [
@@ -2216,7 +2216,7 @@
 					},
 					"buckets": {
 						"type": "object",
-						"description": "Aggregated GL values keyed by IV3 bucket code (sum of debit minus credit per bucket for closed-period postings). Derived via x-openregister-aggregations — do not set directly.",
+						"description": "Aggregated GL values keyed by IV3 bucket code (sum of debit minus credit per bucket for closed-period postings). Derived via x-openregister-aggregations \u2014 do not set directly.",
 						"additionalProperties": {
 							"type": "number"
 						},
@@ -2352,7 +2352,7 @@
 				},
 				"x-openregister-aggregations": {
 					"buckets": {
-						"description": "Sum of (debit - credit) per IV3 bucket code over closed-period GLLine rows for this export's administrationId + quarter. Joins GLLine → Account → BbvAccountMapping.iv3Bucket (T3 bbv-compliance). Filters to periodIds closed per T2 period-close boundaries.",
+						"description": "Sum of (debit - credit) per IV3 bucket code over closed-period GLLine rows for this export's administrationId + quarter. Joins GLLine \u2192 Account \u2192 BbvAccountMapping.iv3Bucket (T3 bbv-compliance). Filters to periodIds closed per T2 period-close boundaries.",
 						"operation": "sum",
 						"sourceSchema": "GLLine",
 						"sourceRegister": "shillinq",
@@ -2509,7 +2509,7 @@
 						"relatedSchema": "BBVProgramma",
 						"relatedField": "code",
 						"cardinality": "many-to-one",
-						"description": "Self-relation for hierarchical programma navigation (hoofdprogramma → sub-programma)."
+						"description": "Self-relation for hierarchical programma navigation (hoofdprogramma \u2192 sub-programma)."
 					}
 				}
 			},
@@ -2560,7 +2560,7 @@
 					"aanslagBedrag": {
 						"type": "number",
 						"minimum": 0,
-						"description": "Total aanslag amount in EUR (tarief × grondslag-quantity). This amount is materialised into a balanced GLTransaction on post.",
+						"description": "Total aanslag amount in EUR (tarief \u00d7 grondslag-quantity). This amount is materialised into a balanced GLTransaction on post.",
 						"example": 1500.0
 					},
 					"journalEntryId": {
@@ -2696,7 +2696,7 @@
 				"icon": "OfficeBuildingOutline",
 				"version": "0.1.0",
 				"title": "Fixed Asset",
-				"description": "A capitalised tangible or intangible business asset with declarative depreciation rules, parallel commercial/fiscal streams, and a managed lifecycle (proposed → active → disposed → archived). Depreciation values are derived on demand — no materialised schedule table.",
+				"description": "A capitalised tangible or intangible business asset with declarative depreciation rules, parallel commercial/fiscal streams, and a managed lifecycle (proposed \u2192 active \u2192 disposed \u2192 archived). Depreciation values are derived on demand \u2014 no materialised schedule table.",
 				"type": "object",
 				"x-schema-org": "schema:Thing",
 				"required": [
@@ -3043,7 +3043,7 @@
 				"properties": {
 					"thresholdAmount": {
 						"type": "number",
-						"description": "Statutory KOR omzetdrempel in EUR (currently €20,000 per Wet OB 1968 art. 25 lid 1).",
+						"description": "Statutory KOR omzetdrempel in EUR (currently \u20ac20,000 per Wet OB 1968 art. 25 lid 1).",
 						"example": 20000
 					},
 					"warningPercentage": {
@@ -3137,7 +3137,7 @@
 					},
 					"thresholdAmount": {
 						"type": "number",
-						"description": "Active KOR omzetdrempel for currentCalendarYear; read from KorThreshold seed. Default €20,000.",
+						"description": "Active KOR omzetdrempel for currentCalendarYear; read from KorThreshold seed. Default \u20ac20,000.",
 						"default": 20000,
 						"example": 20000
 					},
@@ -3180,7 +3180,7 @@
 					"retention": {
 						"rule": "selectielijst:5.1.2",
 						"period": "P7Y",
-						"description": "KOR financial records retained 7 years per AWR art. 52 (financiële administratie bewaarplicht)."
+						"description": "KOR financial records retained 7 years per AWR art. 52 (financi\u00eble administratie bewaarplicht)."
 					},
 					"states": {
 						"outside": {
@@ -3218,7 +3218,7 @@
 							"from": "opted-in",
 							"to": "threshold-warning",
 							"label": "Drempelwaarschuwing",
-							"description": "Auto-transitions when ytdRevenue reaches warningPercentage % of thresholdAmount (default 80% = €16,000 on €20,000 threshold). Calculation-crossing trigger per ADR-031.",
+							"description": "Auto-transitions when ytdRevenue reaches warningPercentage % of thresholdAmount (default 80% = \u20ac16,000 on \u20ac20,000 threshold). Calculation-crossing trigger per ADR-031.",
 							"trigger": "calculation-crossing",
 							"requires": "ytdRevenue >= thresholdAmount * warningPercentage / 100"
 						},
@@ -3271,7 +3271,7 @@
 					"hooks": {
 						"onOptOut": {
 							"trigger": "transition:optOutFromExceeded",
-							"description": "On threshold-exceeded → opted-out: create a JournalEntry template for BTW reclamation reversal. MUST ship in state: pending per REQ-KOR-006 safety constraint. Operator + accountant approval required before posting.",
+							"description": "On threshold-exceeded \u2192 opted-out: create a JournalEntry template for BTW reclamation reversal. MUST ship in state: pending per REQ-KOR-006 safety constraint. Operator + accountant approval required before posting.",
 							"action": "x-openregister-create-related",
 							"actionParameters": {
 								"register": "shillinq",
@@ -3322,7 +3322,7 @@
 							"scope": "@self.administrationId"
 						},
 						"title": "KOR-drempelwaarschuwing",
-						"message": "KOR-omzet bedraagt €@self.ytdRevenue (@self.ytdRevenue / @self.thresholdAmount * 100% van de drempel). Actie aanbevolen."
+						"message": "KOR-omzet bedraagt \u20ac@self.ytdRevenue (@self.ytdRevenue / @self.thresholdAmount * 100% van de drempel). Actie aanbevolen."
 					},
 					"onThresholdExceeded": {
 						"trigger": "lifecycle.exceedThreshold",
@@ -3332,7 +3332,7 @@
 							"scope": "@self.administrationId"
 						},
 						"title": "KOR-drempel overschreden",
-						"message": "KOR-omzetdrempel van €@self.thresholdAmount is overschreden (ytdRevenue: €@self.ytdRevenue). Opt-out vereist; er wordt een journaalpost aangemaakt ter beoordeling."
+						"message": "KOR-omzetdrempel van \u20ac@self.thresholdAmount is overschreden (ytdRevenue: \u20ac@self.ytdRevenue). Opt-out vereist; er wordt een journaalpost aangemaakt ter beoordeling."
 					},
 					"onOptOut": {
 						"trigger": "lifecycle.optOutFromExceeded,lifecycle.optOutFromOptedIn",
@@ -3874,12 +3874,12 @@
 					},
 					"estimatedAnnualIncome": {
 						"type": "number",
-						"description": "Projected annual income: ytdTaxableIncome × (12 / months-elapsed). Months elapsed computed from snapshotDate and fiscalYear start per REQ-TAX-008.",
+						"description": "Projected annual income: ytdTaxableIncome \u00d7 (12 / months-elapsed). Months elapsed computed from snapshotDate and fiscalYear start per REQ-TAX-008.",
 						"example": 40800.0
 					},
 					"estimatedAnnualExpenses": {
 						"type": "number",
-						"description": "Projected annual expenses: ytdTaxableExpenses × (12 / months-elapsed) (EUR).",
+						"description": "Projected annual expenses: ytdTaxableExpenses \u00d7 (12 / months-elapsed) (EUR).",
 						"example": 9200.0
 					},
 					"estimatedAnnualNetIncome": {
@@ -3894,7 +3894,7 @@
 					},
 					"estimatedIncomeTax": {
 						"type": "number",
-						"description": "estimatedTaxableIncome × TaxRegimeConfiguration.incomeTaxRate (EUR).",
+						"description": "estimatedTaxableIncome \u00d7 TaxRegimeConfiguration.incomeTaxRate (EUR).",
 						"example": 7900.0
 					},
 					"witholdingCredits": {
@@ -4330,7 +4330,7 @@
 				"icon": "FolderOpenOutline",
 				"version": "0.1.0",
 				"title": "Project",
-				"description": "Consultancy project with RJ 270 / IFRS 15 percentage-of-completion revenue recognition. Lifecycle offerte → active → on-hold → closed → archived.",
+				"description": "Consultancy project with RJ 270 / IFRS 15 percentage-of-completion revenue recognition. Lifecycle offerte \u2192 active \u2192 on-hold \u2192 closed \u2192 archived.",
 				"x-schema-org": "schema:Project",
 				"x-openregister-purpose": "dimension",
 				"type": "object",
@@ -4589,7 +4589,7 @@
 					"retention": {
 						"rule": "selectielijst:5.1.2",
 						"years": 7,
-						"description": "Financial records — 7 years per Selectielijst 5.1.2 (REQ-CPA-014)."
+						"description": "Financial records \u2014 7 years per Selectielijst 5.1.2 (REQ-CPA-014)."
 					}
 				},
 				"x-openregister-relations": {
@@ -4689,7 +4689,7 @@
 								"update",
 								"delete"
 							],
-							"description": "Full project management access; visibility predicate: administrationType ∈ {mkb, zzp}."
+							"description": "Full project management access; visibility predicate: administrationType \u2208 {mkb, zzp}."
 						}
 					}
 				},
@@ -4726,7 +4726,7 @@
 						],
 						"default": {
 							"formula": "@self.totalEstimatedCosts > 0 ? max(0, @self.totalContractValue * (@self.costsIncurredToDate / @self.totalEstimatedCosts)) : 0",
-							"description": "cost-to-cost (default): totalContractValue × (costsIncurredToDate / totalEstimatedCosts), clamped ≥ 0."
+							"description": "cost-to-cost (default): totalContractValue \u00d7 (costsIncurredToDate / totalEstimatedCosts), clamped \u2265 0."
 						}
 					},
 					"wipBalance": {
@@ -4915,7 +4915,7 @@
 						"monthlyAllocation": {
 							"cadence": "monthly",
 							"trigger": "ScheduledWorkflow",
-							"description": "Evaluates all active AllocationRule records with cadence=monthly against the previous month's posted GLLines per REQ-CC-004 design D2. No PHP AllocationService orchestrates this — the rule body lives in this schema.",
+							"description": "Evaluates all active AllocationRule records with cadence=monthly against the previous month's posted GLLines per REQ-CC-004 design D2. No PHP AllocationService orchestrates this \u2014 the rule body lives in this schema.",
 							"condition": "lifecycleState = 'active' AND cadence = 'monthly'"
 						},
 						"periodCloseAllocation": {
@@ -4984,7 +4984,7 @@
 					"recognisedRate": {
 						"type": "number",
 						"minimum": 0,
-						"description": "Snapshot of RateCard.hourlyRate at assignment time per RJ 270 §3.2.4. Immutable after creation.",
+						"description": "Snapshot of RateCard.hourlyRate at assignment time per RJ 270 \u00a73.2.4. Immutable after creation.",
 						"example": 180
 					},
 					"estimatedHours": {
@@ -5075,7 +5075,7 @@
 						"description": "Billable hours this period divided by capacity hours this period per person (REQ-CPA-011).",
 						"type": "number",
 						"formula": "@self.capacityHoursThisPeriod > 0 ? (@self.billableHoursThisPeriod / @self.capacityHoursThisPeriod) : 0",
-						"note": "billableHoursThisPeriod is aggregated from UrenRegistratie records for this assignment in the current FiscalPeriod; capacityHoursThisPeriod = capacityHoursPerWeek × workingWeeksInPeriod."
+						"note": "billableHoursThisPeriod is aggregated from UrenRegistratie records for this assignment in the current FiscalPeriod; capacityHoursThisPeriod = capacityHoursPerWeek \u00d7 workingWeeksInPeriod."
 					}
 				},
 				"x-openregister-widgets": {
@@ -5745,7 +5745,7 @@
 					},
 					"effectiveWindowLabel": {
 						"description": "Human-readable effective-date window string for UI display.",
-						"expression": "effectiveDate || ' – ' || COALESCE(expiryDate, 'open-ended')",
+						"expression": "effectiveDate || ' \u2013 ' || COALESCE(expiryDate, 'open-ended')",
 						"type": "string"
 					}
 				},
@@ -5968,7 +5968,7 @@
 				"icon": "ClockOutline",
 				"version": "0.1.0",
 				"title": "Urenregistratie",
-				"description": "Billable hour logging for ZZP / consultancy. Base schema from bookkeeping-zzp-tax-regime; extended here with recognisedRate (rate-at-write snapshot per RJ 270 §3.2.4) and projectAssignmentId (FK to ProjectAssignment, REQ-CPA-009).",
+				"description": "Billable hour logging for ZZP / consultancy. Base schema from bookkeeping-zzp-tax-regime; extended here with recognisedRate (rate-at-write snapshot per RJ 270 \u00a73.2.4) and projectAssignmentId (FK to ProjectAssignment, REQ-CPA-009).",
 				"type": "object",
 				"x-schema-org": "schema:HowToStep",
 				"required": [
@@ -6023,7 +6023,7 @@
 						"minimum": 0,
 						"nullable": true,
 						"readOnly": true,
-						"description": "Snapshot of the applicable RateCard.hourlyRate at the time this record is written, per RJ 270 §3.2.4 (rate as of performance date, not invoice date). Immutable after creation — subsequent rate-card revisions do NOT retroactively change this field (REQ-CPA-009).",
+						"description": "Snapshot of the applicable RateCard.hourlyRate at the time this record is written, per RJ 270 \u00a73.2.4 (rate as of performance date, not invoice date). Immutable after creation \u2014 subsequent rate-card revisions do NOT retroactively change this field (REQ-CPA-009).",
 						"example": 180
 					},
 					"glTransactionId": {
@@ -6142,7 +6142,7 @@
 					"retention": {
 						"rule": "selectielijst:5.1.2",
 						"years": 7,
-						"description": "Financial records — 7 years per Selectielijst 5.1.2 (REQ-CPA-014)."
+						"description": "Financial records \u2014 7 years per Selectielijst 5.1.2 (REQ-CPA-014)."
 					}
 				},
 				"x-openregister-rbac": {
@@ -6329,7 +6329,7 @@
 									"type": "manual",
 									"subType": "year-end-closing",
 									"state": "posted",
-									"description": "Year-end retained-earnings transfer — boekjaar @self.yearNumber. Omzet- en kostenrekeningen afgesloten naar sluitrekening; nettoresultaat geboekt op eigen-vermogenrekening.",
+									"description": "Year-end retained-earnings transfer \u2014 boekjaar @self.yearNumber. Omzet- en kostenrekeningen afgesloten naar sluitrekening; nettoresultaat geboekt op eigen-vermogenrekening.",
 									"administrationId": "@self.administrationId"
 								}
 							}
@@ -6494,7 +6494,7 @@
 					},
 					"extractedText": {
 						"type": "string",
-						"description": "OCR placeholder — populated in T3. Null in T2.",
+						"description": "OCR placeholder \u2014 populated in T3. Null in T2.",
 						"nullable": true,
 						"example": "ACME BV / Amsterdam / EUR 45.00 / 2026-06-01"
 					},
@@ -6566,7 +6566,7 @@
 				},
 				"x-openregister-calculations": {
 					"photoValidation": {
-						"description": "File-type and size guard for receipt photo uploads per REQ-EC-008. Accepted types: image/jpeg, image/png, application/pdf. Maximum size: 10 MB. Declarative file-type check not supported by the OR engine — ADR-031 exception guard OCA\\Shillinq\\Validation\\PhotoValidator::validate() is invoked instead.",
+						"description": "File-type and size guard for receipt photo uploads per REQ-EC-008. Accepted types: image/jpeg, image/png, application/pdf. Maximum size: 10 MB. Declarative file-type check not supported by the OR engine \u2014 ADR-031 exception guard OCA\\Shillinq\\Validation\\PhotoValidator::validate() is invoked instead.",
 						"expression": null,
 						"guard": "OCA\\Shillinq\\Validation\\PhotoValidator::validate",
 						"guardParams": {
@@ -6625,7 +6625,7 @@
 				"icon": "CarOutline",
 				"version": "0.1.0",
 				"title": "Mileage Entry",
-				"description": "Journey log capturing distance travelled, vehicle type, and applicable rate per kilometre. totalAmount is auto-calculated as distance × ratePerKm per REQ-EC-003. Linked to a parent ExpenseClaimEntry for approval and reimbursement.",
+				"description": "Journey log capturing distance travelled, vehicle type, and applicable rate per kilometre. totalAmount is auto-calculated as distance \u00d7 ratePerKm per REQ-EC-003. Linked to a parent ExpenseClaimEntry for approval and reimbursement.",
 				"x-schema-org": "schema:Thing",
 				"type": "object",
 				"required": [
@@ -6687,7 +6687,7 @@
 					"totalAmount": {
 						"type": "number",
 						"exclusiveMinimum": 0,
-						"description": "Auto-calculated reimbursement: distance × ratePerKm per REQ-EC-003. Do not set directly.",
+						"description": "Auto-calculated reimbursement: distance \u00d7 ratePerKm per REQ-EC-003. Do not set directly.",
 						"example": 31.5
 					},
 					"purpose": {
@@ -6716,7 +6716,7 @@
 				},
 				"x-openregister-calculations": {
 					"totalAmount": {
-						"description": "Auto-calculated: distance × ratePerKm per REQ-EC-003. Recalculated on every save while the parent claim is in draft state.",
+						"description": "Auto-calculated: distance \u00d7 ratePerKm per REQ-EC-003. Recalculated on every save while the parent claim is in draft state.",
 						"expression": "@self.distance * @self.ratePerKm",
 						"targetField": "totalAmount"
 					},
@@ -6768,7 +6768,7 @@
 				"icon": "CalendarAccountOutline",
 				"version": "0.1.0",
 				"title": "Per Diem",
-				"description": "Daily travel allowance claimed per country and night count. allowanceAmount is auto-calculated as nightCount × dailyRate per REQ-EC-004. Country-specific rates are maintained in the PerDiemRate master table per fiscal year.",
+				"description": "Daily travel allowance claimed per country and night count. allowanceAmount is auto-calculated as nightCount \u00d7 dailyRate per REQ-EC-004. Country-specific rates are maintained in the PerDiemRate master table per fiscal year.",
 				"x-schema-org": "schema:Offer",
 				"type": "object",
 				"required": [
@@ -6821,14 +6821,14 @@
 					"allowanceAmount": {
 						"type": "number",
 						"exclusiveMinimum": 0,
-						"description": "Auto-calculated: nightCount × dailyRate per REQ-EC-004. Do not set directly.",
+						"description": "Auto-calculated: nightCount \u00d7 dailyRate per REQ-EC-004. Do not set directly.",
 						"example": 250.0
 					},
 					"description": {
 						"type": "string",
 						"description": "Purpose of travel.",
 						"nullable": true,
-						"example": "Conference attendance — Helsinki 2026"
+						"example": "Conference attendance \u2014 Helsinki 2026"
 					},
 					"claimId": {
 						"type": "string",
@@ -6850,7 +6850,7 @@
 				},
 				"x-openregister-calculations": {
 					"allowanceAmount": {
-						"description": "Auto-calculated: nightCount × dailyRate per REQ-EC-004. Recalculated on every save while parent claim is in draft state.",
+						"description": "Auto-calculated: nightCount \u00d7 dailyRate per REQ-EC-004. Recalculated on every save while parent claim is in draft state.",
 						"expression": "@self.nightCount * @self.dailyRate",
 						"targetField": "allowanceAmount"
 					},
@@ -6862,7 +6862,7 @@
 					},
 					"nightCountWarning": {
 						"description": "Issues a non-blocking warning when nightCount does not match the calendar span (travelEndDate - travelStartDate) per REQ-EC-004. Returns null when counts match, a warning message string otherwise.",
-						"expression": "datediff(@self.travelEndDate, @self.travelStartDate) != @self.nightCount ? 'Night count does not match travel dates — please verify' : null",
+						"expression": "datediff(@self.travelEndDate, @self.travelStartDate) != @self.nightCount ? 'Night count does not match travel dates \u2014 please verify' : null",
 						"nullable": true,
 						"severity": "warning"
 					}
@@ -6908,7 +6908,7 @@
 				"icon": "ClipboardTextOutline",
 				"version": "0.1.0",
 				"title": "Expense Claim",
-				"description": "Operator-curated batch grouping N receipts, mileage journeys, and per-diem records into a single claim for approval and reimbursement. Lifecycle: draft → submitted → approved → posted → reimbursed with disputed/voided branches. Approval routing consumes OR approval-workflow per ADR-022 (no app-local approval table). Posting materialises a balanced GL entry per T1 REQ-JE-007 pattern. Per REQ-EC-005 through REQ-EC-013.",
+				"description": "Operator-curated batch grouping N receipts, mileage journeys, and per-diem records into a single claim for approval and reimbursement. Lifecycle: draft \u2192 submitted \u2192 approved \u2192 posted \u2192 reimbursed with disputed/voided branches. Approval routing consumes OR approval-workflow per ADR-022 (no app-local approval table). Posting materialises a balanced GL entry per T1 REQ-JE-007 pattern. Per REQ-EC-005 through REQ-EC-013.",
 				"x-schema-org": "schema:Invoice",
 				"type": "object",
 				"required": [
@@ -7122,7 +7122,7 @@
 								{
 									"trigger": "x-openregister-lifecycle-action",
 									"action": "materialise-gl-transaction",
-									"description": "Emit one balanced GLTransaction: debit per expense line (Receipt→expense account/CC, MileageEntry→mileage-reimbursement account/CC, PerDiem→per-diem account/CC), credit to expense-payable account (Account.isExpenseControlAccount=true). Sets glTransactionId back-reference per REQ-EC-012.",
+									"description": "Emit one balanced GLTransaction: debit per expense line (Receipt\u2192expense account/CC, MileageEntry\u2192mileage-reimbursement account/CC, PerDiem\u2192per-diem account/CC), credit to expense-payable account (Account.isExpenseControlAccount=true). Sets glTransactionId back-reference per REQ-EC-012.",
 									"actionParameters": {
 										"register": "shillinq",
 										"targetSchema": "GLTransaction",
@@ -7190,20 +7190,20 @@
 						{
 							"condition": "totalAmount <= 500",
 							"action": "auto-approve",
-							"description": "Claims at or below €500 are auto-approved (approvalState: not-required) per REQ-EC-010."
+							"description": "Claims at or below \u20ac500 are auto-approved (approvalState: not-required) per REQ-EC-010."
 						},
 						{
 							"condition": "totalAmount > 500 AND totalAmount <= 5000",
 							"action": "route-to-approver",
 							"role": "manager",
-							"description": "Claims above €500 and at or below €5,000 require manager approval per REQ-EC-010."
+							"description": "Claims above \u20ac500 and at or below \u20ac5,000 require manager approval per REQ-EC-010."
 						},
 						{
 							"condition": "totalAmount > 5000",
 							"action": "route-to-approver",
 							"role": "cfo",
 							"dualControl": true,
-							"description": "Claims above €5,000 require CFO approval with dual-control (two independent approvals) per REQ-EC-010."
+							"description": "Claims above \u20ac5,000 require CFO approval with dual-control (two independent approvals) per REQ-EC-010."
 						}
 					],
 					"delegationSupport": true,
@@ -7374,7 +7374,7 @@
 						"type": "string",
 						"description": "Source or regulatory reference for this rate (e.g. 'IB 2025 rules').",
 						"nullable": true,
-						"example": "Belastingdienst 2026 — kilometertarief personenauto"
+						"example": "Belastingdienst 2026 \u2014 kilometertarief personenauto"
 					}
 				},
 				"x-openregister-rbac": {
@@ -7447,7 +7447,7 @@
 						"type": "string",
 						"description": "Regulatory source for this rate (e.g. 'Ministry travel rules').",
 						"nullable": true,
-						"example": "Ministerie van Financiën — reiskostenvergoeding 2026"
+						"example": "Ministerie van Financi\u00ebn \u2014 reiskostenvergoeding 2026"
 					}
 				},
 				"x-openregister-rbac": {
@@ -7480,7 +7480,7 @@
 				"icon": "CartArrowDownOutline",
 				"version": "0.1.0",
 				"title": "Inventory Reorder Rule",
-				"description": "Per-item, per-location reorder policy declaring min/max stock levels, lead-time-aware reorder-point thresholds, low-stock alert policy, and optional auto-purchase-order generation. Reorder decision logic is fully declarative via x-openregister-lifecycle, x-openregister-aggregations, and x-openregister-notifications per ADR-031 and ADR-022. No PHP InventoryReorderService — all reorder triggers and alert dispatch are schema-driven.",
+				"description": "Per-item, per-location reorder policy declaring min/max stock levels, lead-time-aware reorder-point thresholds, low-stock alert policy, and optional auto-purchase-order generation. Reorder decision logic is fully declarative via x-openregister-lifecycle, x-openregister-aggregations, and x-openregister-notifications per ADR-031 and ADR-022. No PHP InventoryReorderService \u2014 all reorder triggers and alert dispatch are schema-driven.",
 				"x-schema-org": "schema:Thing",
 				"type": "object",
 				"required": [
@@ -7520,7 +7520,7 @@
 					"reorderPoint": {
 						"type": "number",
 						"minimum": 0,
-						"description": "Stock quantity at which reorder is triggered, factoring supplier lead time. Formula: (expectedDailyUsage × leadTimeDays) + safetyStock. REQ-IRA-005.",
+						"description": "Stock quantity at which reorder is triggered, factoring supplier lead time. Formula: (expectedDailyUsage \u00d7 leadTimeDays) + safetyStock. REQ-IRA-005.",
 						"example": 75
 					},
 					"reorderQuantity": {
@@ -7549,7 +7549,7 @@
 						"minimum": 0,
 						"maximum": 100,
 						"default": 20,
-						"description": "Percentage above minimumLevel at which a warning alert fires (early warning before critical low-stock). E.g. 20 means alert at minimumLevel × 1.20.",
+						"description": "Percentage above minimumLevel at which a warning alert fires (early warning before critical low-stock). E.g. 20 means alert at minimumLevel \u00d7 1.20.",
 						"example": 20
 					},
 					"autoPurchaseOrder": {
@@ -7568,7 +7568,7 @@
 						"type": "number",
 						"minimum": 0,
 						"nullable": true,
-						"description": "Maximum spend per auto-generated PO in EUR. If reorderQuantity × supplier.currentPrice exceeds this, the auto-order is blocked and escalated to role='procurement-manager'. REQ-IRA-006.",
+						"description": "Maximum spend per auto-generated PO in EUR. If reorderQuantity \u00d7 supplier.currentPrice exceeds this, the auto-order is blocked and escalated to role='procurement-manager'. REQ-IRA-006.",
 						"example": 5000
 					},
 					"alertChannel": {
@@ -7625,7 +7625,7 @@
 					"states": {
 						"active": {
 							"label": "Active",
-							"description": "Rule is monitoring stock levels. Low-stock alerts fire when quantity ≤ minimumLevel. Auto-PO triggers if enabled."
+							"description": "Rule is monitoring stock levels. Low-stock alerts fire when quantity \u2264 minimumLevel. Auto-PO triggers if enabled."
 						},
 						"paused": {
 							"label": "Paused",
@@ -7716,7 +7716,7 @@
 				},
 				"x-openregister-notifications": {
 					"lowStockAlert": {
-						"description": "Dispatches a low-stock alert when InventoryStock.quantity ≤ minimumLevel and lifecycleState = active and (snoozeUntil is null or snoozeUntil < now). REQ-IRA-004.",
+						"description": "Dispatches a low-stock alert when InventoryStock.quantity \u2264 minimumLevel and lifecycleState = active and (snoozeUntil is null or snoozeUntil < now). REQ-IRA-004.",
 						"trigger": "aggregation:lowStockTrigger",
 						"guard": {
 							"field": "lifecycleState",
@@ -7780,7 +7780,7 @@
 				},
 				"x-openregister-calculations": {
 					"reorderPointCalculated": {
-						"description": "Computes the lead-time-aware reorder point. Formula: (expectedDailyUsage × leadTimeDays) + safetyStock. Falls back to minimumLevel + (leadTimeDays × 5) + 10 if expectedDailyUsage unavailable. Operator may override reorderPoint manually. REQ-IRA-005.",
+						"description": "Computes the lead-time-aware reorder point. Formula: (expectedDailyUsage \u00d7 leadTimeDays) + safetyStock. Falls back to minimumLevel + (leadTimeDays \u00d7 5) + 10 if expectedDailyUsage unavailable. Operator may override reorderPoint manually. REQ-IRA-005.",
 						"expression": "IF({expectedDailyUsage} IS NOT NULL, ({expectedDailyUsage} * COALESCE({leadTimeDays}, 7)) + ({expectedDailyUsage} * COALESCE({safetyStockDays}, 1)), {minimumLevel} + (COALESCE({leadTimeDays}, 7) * 5) + 10)",
 						"outputField": "reorderPointCalculated",
 						"type": "number"
@@ -7816,6 +7816,1446 @@
 							],
 							"description": "Read-only access to reorder rules for auditing."
 						}
+					}
+				}
+			},
+			"CashflowForecastHorizon": {
+				"slug": "CashflowForecastHorizon",
+				"icon": "ChartLineVariant",
+				"version": "0.1.0",
+				"title": "Cashflow Forecast Horizon",
+				"description": "Rolling 13-week cashflow forecast window for one administration. Window shifts forward every Monday 02:00 UTC: week-1 is archived, week-13 is appended. Aggregates AR/AP/recurring/tax projections via x-openregister-aggregations; no PHP forecast engine. Per ADR-031 and ADR-022. REQ-CF-000, REQ-CF-001.",
+				"x-schema-org": "schema:MonetaryAmount",
+				"type": "object",
+				"required": [
+					"horizonId",
+					"ondernemingId",
+					"horizonStart",
+					"horizonEind",
+					"rolledOp",
+					"openingSaldo",
+					"administrationId",
+					"lifecycleState"
+				],
+				"properties": {
+					"horizonId": {
+						"type": "string",
+						"description": "Unique identifier for this forecast horizon.",
+						"example": "horizon-ond-zzp-c001-2026-w22"
+					},
+					"ondernemingId": {
+						"type": "string",
+						"description": "FK to the Corporation/Onderneming owning this horizon. REQ-CF-001.",
+						"example": "ond-zzp-c001"
+					},
+					"horizonStart": {
+						"type": "string",
+						"format": "date",
+						"description": "First day (Monday) of the 13-week window.",
+						"example": "2026-05-25"
+					},
+					"horizonEind": {
+						"type": "string",
+						"format": "date",
+						"description": "Last day (Sunday) of the 13-week window (horizonStart + 90 days).",
+						"example": "2026-08-23"
+					},
+					"rolledOp": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Timestamp of the most recent weekly roll (Monday 02:00 UTC). REQ-CF-000.",
+						"example": "2026-05-25T02:00:00Z"
+					},
+					"openingSaldo": {
+						"type": "object",
+						"description": "Opening balance breakdown across the four spaardoel buckets. REQ-CF-001, REQ-CF-014.",
+						"required": [
+							"zakelijkeRekening",
+							"spaardoel_btw",
+							"spaardoel_ib",
+							"spaardoel_buffer",
+							"totaal"
+						],
+						"properties": {
+							"zakelijkeRekening": {
+								"type": "number",
+								"multipleOf": 0.01,
+								"description": "Saldo on the operational business account.",
+								"example": 14820.0
+							},
+							"spaardoel_btw": {
+								"type": "number",
+								"multipleOf": 0.01,
+								"description": "Reserve for quarterly BTW afdracht.",
+								"example": 3200.0
+							},
+							"spaardoel_ib": {
+								"type": "number",
+								"multipleOf": 0.01,
+								"description": "Reserve for annual IB/VPB aanslag.",
+								"example": 5800.0
+							},
+							"spaardoel_buffer": {
+								"type": "number",
+								"multipleOf": 0.01,
+								"description": "Emergency buffer (1-3 months vaste kosten).",
+								"example": 8200.0
+							},
+							"totaal": {
+								"type": "number",
+								"multipleOf": 0.01,
+								"description": "SUM of all four buckets.",
+								"example": 32020.0
+							}
+						}
+					},
+					"modelVersie": {
+						"type": "string",
+						"description": "Version of the forecast model in effect. REQ-CF-017.",
+						"example": "v4.1-klantspecifiek-betaalgedrag",
+						"default": "v4.1-klantspecifiek-betaalgedrag"
+					},
+					"kalibratieScore": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 1,
+						"description": "Forecast accuracy score (0-1) derived from prior-month MAPE calibration. REQ-CF-013.",
+						"example": 0.87
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration tenant. Multi-tenant isolation.",
+						"example": "adm-001"
+					},
+					"lifecycleState": {
+						"type": "string",
+						"description": "Lifecycle state per REQ-CF-000.",
+						"enum": [
+							"draft",
+							"active",
+							"rolling",
+							"archived"
+						],
+						"default": "draft"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "draft",
+					"states": {
+						"draft": {
+							"label": "Draft",
+							"description": "Horizon initialized but not yet activated."
+						},
+						"active": {
+							"label": "Active",
+							"description": "Horizon receives weekly Monday-02:00-UTC rolls and daily bankfeed reconciliation."
+						},
+						"rolling": {
+							"label": "Rolling",
+							"description": "Transient state during the Monday roll: week-1 is being archived, week-13 appended."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Horizon no longer rolling. Historical snapshot retained for audit and calibration trail."
+						}
+					},
+					"transitions": {
+						"activate": {
+							"from": "draft",
+							"to": "active",
+							"label": "Activate forecast",
+							"description": "Begin weekly Monday roll + daily bankfeed reconciliation."
+						},
+						"beginRoll": {
+							"from": "active",
+							"to": "rolling",
+							"label": "Begin weekly roll",
+							"description": "Triggered by HorizonRollingJob at Monday 02:00 UTC."
+						},
+						"completeRoll": {
+							"from": "rolling",
+							"to": "active",
+							"label": "Complete weekly roll",
+							"description": "Week-1 archived, week-13 appended, rolledOp updated."
+						},
+						"archive": {
+							"from": "active",
+							"to": "archived",
+							"label": "Archive horizon",
+							"description": "Stop all rolls. Retain for audit."
+						}
+					}
+				},
+				"x-openregister-aggregations": {
+					"bufferPolicyEvaluation": {
+						"description": "Evaluates each CashflowWeek under this horizon against its CashflowBufferPolicy. Powers REQ-CF-009 alert escalation.",
+						"type": "groupBy",
+						"source": "CashflowWeek",
+						"join": {
+							"schema": "CashflowBufferPolicy",
+							"on": "administrationId = CashflowBufferPolicy.administrationId"
+						},
+						"filter": "CashflowWeek.horizonId = {horizonId}",
+						"groupBy": "CashflowWeek.weeknummer",
+						"select": {
+							"weeknummer": "CashflowWeek.weeknummer",
+							"eindSaldo": "CashflowWeek.eindSaldo",
+							"bufferStatus": "CASE WHEN CashflowWeek.eindSaldo < CashflowBufferPolicy.alertOndergrens THEN 'CRISIS' WHEN CashflowWeek.eindSaldo < CashflowBufferPolicy.alertVooralarm THEN 'VOORALARM' ELSE 'BOVEN_BUFFER' END"
+						}
+					},
+					"crisisDetection": {
+						"description": "Detects weeks 1-4 with predicted negative saldo. Triggers crisis-mode activation. REQ-CF-010.",
+						"type": "condition",
+						"source": "CashflowWeek",
+						"filter": "CashflowWeek.horizonId = {horizonId} AND CashflowWeek.eindSaldo < 0 AND CashflowWeek.weeknummer <= ({horizonStart} + 28 days)",
+						"aggregate": {
+							"function": "COUNT",
+							"field": "weekId"
+						},
+						"condition": "result > 0",
+						"action": "activate-crisis-mode"
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"ondernemer": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"boekhouder": {
+							"permissions": [
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					},
+					"adminScope": {
+						"field": "administrationId",
+						"enforce": true
+					}
+				}
+			},
+			"CashflowWeek": {
+				"slug": "CashflowWeek",
+				"icon": "CalendarWeekOutline",
+				"version": "0.1.0",
+				"title": "Cashflow Week",
+				"description": "One weekly slot within a 13-week CashflowForecastHorizon. Aggregates projected inflows (AR, pipeline, overig) and outflows (AP, recurring, BTW, IB, investeringen) and computes net mutatie + eindSaldo. Buffer status and alerts are populated via x-openregister-aggregations. REQ-CF-002.",
+				"x-schema-org": "schema:MonetaryAmount",
+				"type": "object",
+				"required": [
+					"weekId",
+					"horizonId",
+					"weeknummer",
+					"weekStart",
+					"weekEind",
+					"openingSaldo",
+					"inflows_ar_geprognosticeerd",
+					"inflows_totaal",
+					"outflows_ap_geprognosticeerd",
+					"outflows_totaal",
+					"nettoMutatie",
+					"eindSaldo",
+					"administrationId"
+				],
+				"properties": {
+					"weekId": {
+						"type": "string",
+						"description": "Unique identifier for this weekly slot.",
+						"example": "week-horizon-ond-zzp-c001-2026-w22"
+					},
+					"horizonId": {
+						"type": "string",
+						"description": "FK to the parent CashflowForecastHorizon.",
+						"example": "horizon-ond-zzp-c001-2026-w22"
+					},
+					"weeknummer": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 53,
+						"description": "ISO 8601 week number (1-53).",
+						"example": 22
+					},
+					"weekStart": {
+						"type": "string",
+						"format": "date",
+						"description": "Monday of the week.",
+						"example": "2026-05-25"
+					},
+					"weekEind": {
+						"type": "string",
+						"format": "date",
+						"description": "Sunday of the week.",
+						"example": "2026-05-31"
+					},
+					"openingSaldo": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"description": "Opening balance for the week (= prior week's eindSaldo, or horizon openingSaldo.totaal for week-1).",
+						"example": 14820.0
+					},
+					"inflows_ar_geprognosticeerd": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"description": "Projected AR receipts (customer-specific betalingsgedrag-based). REQ-CF-003.",
+						"example": 12500.0
+					},
+					"inflows_ar_gerealiseerd": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"description": "Actual AR receipts from bankfeed (filled post-reconciliation). REQ-CF-012.",
+						"example": 11800.0
+					},
+					"inflows_pipeline": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"description": "Probabilistic revenue from pipelinq deals (deal.amount x deal.probability).",
+						"example": 4200.0
+					},
+					"inflows_overig": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"description": "Interest income, refunds, other miscellaneous inflows.",
+						"example": 0.0
+					},
+					"inflows_totaal": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"description": "SUM of all inflow categories.",
+						"example": 16700.0
+					},
+					"outflows_ap_geprognosticeerd": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"description": "Projected AP payments (due-date scheduled). REQ-CF-006.",
+						"example": 2100.0
+					},
+					"outflows_recurring_huur": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"description": "Recurring monthly rent (huur).",
+						"example": 1200.0
+					},
+					"outflows_recurring_verzekering": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"description": "Recurring insurance premiums.",
+						"example": 185.0
+					},
+					"outflows_recurring_abonnementen": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"description": "Recurring subscriptions (software, cloud, etc.).",
+						"example": 240.0
+					},
+					"outflows_recurring_dga_loon": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"description": "DGA salary (loon-uitkering).",
+						"example": 3500.0
+					},
+					"outflows_recurring_lijfrentepremie": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"description": "Pension (lijfrente) contributions.",
+						"example": 250.0
+					},
+					"outflows_btw_afdracht": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"description": "Quarterly BTW settlement (if due this week, per Belastingdienst calendar). REQ-CF-007.",
+						"example": 0.0
+					},
+					"outflows_ib_aanslag": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"description": "Annual IB/VPB settlement (if due this week, per peilmaanden). REQ-CF-008.",
+						"example": 0.0
+					},
+					"outflows_investeringen": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"description": "Capital expenditure scheduled for this week.",
+						"example": 0.0
+					},
+					"outflows_totaal": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"description": "SUM of all outflow categories.",
+						"example": 7475.0
+					},
+					"nettoMutatie": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"description": "inflows_totaal - outflows_totaal (computed).",
+						"example": 9225.0
+					},
+					"eindSaldo": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"description": "openingSaldo + nettoMutatie (computed).",
+						"example": 24045.0
+					},
+					"bufferStatus": {
+						"type": "string",
+						"description": "Buffer-policy status derived from eindSaldo vs CashflowBufferPolicy thresholds. REQ-CF-009.",
+						"enum": [
+							"BOVEN_BUFFER",
+							"VOORALARM",
+							"CRISIS"
+						],
+						"default": "BOVEN_BUFFER"
+					},
+					"alerts": {
+						"type": "array",
+						"description": "Alert records populated by buffer-policy evaluation. REQ-CF-009, REQ-CF-010.",
+						"items": {
+							"type": "object",
+							"properties": {
+								"type": {
+									"type": "string",
+									"enum": [
+										"BUFFER_ONDERSCHRIJDING",
+										"NEGATIEF_SALDO",
+										"VOORALARM"
+									]
+								},
+								"severity": {
+									"type": "string",
+									"enum": [
+										"RED",
+										"YELLOW"
+									]
+								},
+								"suggestedActions": {
+									"type": "array",
+									"items": {
+										"type": "string"
+									}
+								}
+							}
+						}
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration tenant.",
+						"example": "adm-001"
+					}
+				},
+				"x-openregister-aggregations": {
+					"arInflowProjection": {
+						"description": "Aggregates CashflowARProjection records into inflows_ar_geprognosticeerd by week. REQ-CF-002, REQ-CF-003.",
+						"type": "groupBy",
+						"source": "CashflowARProjection",
+						"filter": "CashflowARProjection.horizonId = {horizonId} AND CashflowARProjection.verwachtOntvangstWeek = {weeknummer}",
+						"groupBy": "CashflowARProjection.verwachtOntvangstWeek",
+						"select": {
+							"weeknummer": "CashflowARProjection.verwachtOntvangstWeek",
+							"inflows_ar_geprognosticeerd": "SUM(CashflowARProjection.openstaandBedrag)"
+						}
+					},
+					"apOutflowSchedule": {
+						"description": "Aggregates CashflowAPSchedule records into outflows_ap_geprognosticeerd by week. REQ-CF-006.",
+						"type": "groupBy",
+						"source": "CashflowAPSchedule",
+						"filter": "CashflowAPSchedule.horizonId = {horizonId}",
+						"groupBy": "WEEK(CashflowAPSchedule.geplandeBetaalDatum)",
+						"select": {
+							"weeknummer": "WEEK(CashflowAPSchedule.geplandeBetaalDatum)",
+							"outflows_ap_geprognosticeerd": "SUM(CashflowAPSchedule.bedrag)"
+						}
+					},
+					"recurringExpansion": {
+						"description": "Expands CashflowRecurring entries (huur, verzekering, abonnementen, dga_loon, lijfrentepremie) into per-category outflow columns by week. Applies geldigVan/geldigTot lifecycle filtering and CPI indexing on annual items. REQ-CF-005.",
+						"type": "crossJoin",
+						"source": "CashflowRecurring",
+						"join": {
+							"schema": "CashflowWeek",
+							"on": "CashflowRecurring.administrationId = CashflowWeek.administrationId"
+						},
+						"filter": "(CashflowRecurring.geldigVan <= CashflowWeek.weekEind) AND (CashflowRecurring.geldigTot IS NULL OR CashflowRecurring.geldigTot >= CashflowWeek.weekStart)",
+						"matchFrequency": {
+							"MAANDELIJKS": "DAY(CashflowWeek.weekStart) <= CashflowRecurring.dagVanMaand AND CashflowRecurring.dagVanMaand <= DAY(CashflowWeek.weekEind)",
+							"KWARTAALS": "MONTH(CashflowWeek.weekStart) IN (1,4,7,10) AND DAY(CashflowWeek.weekStart) = 1",
+							"JAARLIJKS": "MONTH(CashflowWeek.weekStart) = CashflowRecurring.maandVanJaar AND DAY(CashflowWeek.weekStart) <= CashflowRecurring.dagVanMaand AND CashflowRecurring.dagVanMaand <= DAY(CashflowWeek.weekEind)",
+							"WEKELIJKS": "true",
+							"TWEEWEKELIJKS": "WEEK(CashflowWeek.weekStart) % 2 = 0"
+						},
+						"applyIndexation": {
+							"FIXED": "CashflowRecurring.standaardBedrag",
+							"CPI_AFGELOPEN_JAAR": "CashflowRecurring.standaardBedrag * (1 + CBS.cpi_prior_year(YEAR(CashflowWeek.weekStart)))"
+						},
+						"select": {
+							"weeknummer": "CashflowWeek.weeknummer",
+							"categorie": "CashflowRecurring.categorie",
+							"amount": "applyIndexation(CashflowRecurring.indexatieRegel)"
+						}
+					},
+					"taxAfdrachtProjection": {
+						"description": "Hardcoded Belastingdienst calendar: Q1 due Apr 30, Q2 due Jul 31, Q3 due Oct 31, Q4 due Jan 31. Projects amounts based on trailing-quarter turnover x VAT rate (21% standard). REQ-CF-007, REQ-CF-008.",
+						"type": "calendar",
+						"calendar": {
+							"BTW_Q1": {
+								"dueDate": "{year}-04-30",
+								"category": "outflows_btw_afdracht",
+								"basis": "SUM(ARInvoice.totalAmount WHERE MONTH(invoiceDate) IN (1,2,3) AND YEAR(invoiceDate) = {year}) * 0.21"
+							},
+							"BTW_Q2": {
+								"dueDate": "{year}-07-31",
+								"category": "outflows_btw_afdracht",
+								"basis": "SUM(ARInvoice.totalAmount WHERE MONTH(invoiceDate) IN (4,5,6) AND YEAR(invoiceDate) = {year}) * 0.21"
+							},
+							"BTW_Q3": {
+								"dueDate": "{year}-10-31",
+								"category": "outflows_btw_afdracht",
+								"basis": "SUM(ARInvoice.totalAmount WHERE MONTH(invoiceDate) IN (7,8,9) AND YEAR(invoiceDate) = {year}) * 0.21"
+							},
+							"BTW_Q4": {
+								"dueDate": "{nextYear}-01-31",
+								"category": "outflows_btw_afdracht",
+								"basis": "SUM(ARInvoice.totalAmount WHERE MONTH(invoiceDate) IN (10,11,12) AND YEAR(invoiceDate) = {year}) * 0.21"
+							},
+							"IB_VA_MAY": {
+								"dueDate": "{year}-05-31",
+								"category": "outflows_ib_aanslag",
+								"basis": "prior_year_aanslag * (1 + projected_growth)"
+							},
+							"IB_VA_SEP": {
+								"dueDate": "{year}-09-30",
+								"category": "outflows_ib_aanslag",
+								"basis": "prior_year_aanslag * (1 + projected_growth)"
+							},
+							"IB_VA_NOV": {
+								"dueDate": "{year}-11-30",
+								"category": "outflows_ib_aanslag",
+								"basis": "prior_year_aanslag * (1 + projected_growth)"
+							}
+						}
+					},
+					"bufferStatusEvaluation": {
+						"description": "Evaluates eindSaldo against CashflowBufferPolicy thresholds and sets bufferStatus enum + alert records. REQ-CF-009, REQ-CF-010.",
+						"type": "condition",
+						"source": "CashflowBufferPolicy",
+						"filter": "CashflowBufferPolicy.administrationId = {administrationId}",
+						"computeField": "bufferStatus",
+						"rules": [
+							{
+								"when": "{eindSaldo} < CashflowBufferPolicy.alertOndergrens",
+								"set": "CRISIS",
+								"alert": {
+									"type": "BUFFER_ONDERSCHRIJDING",
+									"severity": "RED"
+								}
+							},
+							{
+								"when": "{eindSaldo} < CashflowBufferPolicy.alertVooralarm",
+								"set": "VOORALARM",
+								"alert": {
+									"type": "VOORALARM",
+									"severity": "YELLOW"
+								}
+							},
+							{
+								"when": "default",
+								"set": "BOVEN_BUFFER"
+							}
+						]
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"ondernemer": {
+							"permissions": [
+								"read"
+							]
+						},
+						"boekhouder": {
+							"permissions": [
+								"read"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					},
+					"adminScope": {
+						"field": "administrationId",
+						"enforce": true
+					}
+				}
+			},
+			"CashflowARProjection": {
+				"slug": "CashflowARProjection",
+				"icon": "CashFastOutline",
+				"version": "0.1.0",
+				"title": "Cashflow AR Projection",
+				"description": "Projected expected-receipt date per open AR invoice, derived from customer-specific betalingsgedrag (12-month moving average + confidence). REQ-CF-003, REQ-CF-004.",
+				"x-schema-org": "schema:MonetaryAmount",
+				"type": "object",
+				"required": [
+					"projId",
+					"horizonId",
+					"arInvoiceId",
+					"factuurDatum",
+					"vervalDatum",
+					"openstaandBedrag",
+					"verwachtOntvangstDatum",
+					"administrationId"
+				],
+				"properties": {
+					"projId": {
+						"type": "string",
+						"description": "Unique identifier.",
+						"example": "proj-fact-2026-0247"
+					},
+					"horizonId": {
+						"type": "string",
+						"description": "FK to CashflowForecastHorizon.",
+						"example": "horizon-ond-zzp-c001-2026-w22"
+					},
+					"arInvoiceId": {
+						"type": "string",
+						"description": "FK to the AR invoice. Read-only.",
+						"example": "fact-2026-0247"
+					},
+					"klantId": {
+						"type": "string",
+						"description": "De-normalized customer identifier for reporting + grouping.",
+						"example": "klant-acme-bv"
+					},
+					"factuurDatum": {
+						"type": "string",
+						"format": "date",
+						"description": "Invoice issuance date.",
+						"example": "2026-04-15"
+					},
+					"vervalDatum": {
+						"type": "string",
+						"format": "date",
+						"description": "Contract due date (per paymentTermDays).",
+						"example": "2026-05-15"
+					},
+					"openstaandBedrag": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"minimum": 0,
+						"description": "Outstanding amount in EUR.",
+						"example": 8400.0
+					},
+					"verwachtOntvangstDatum": {
+						"type": "string",
+						"format": "date",
+						"description": "Projected receipt date: vervalDatum + betalingsgedrag mean offset. REQ-CF-003.",
+						"example": "2026-05-28"
+					},
+					"verwachtOntvangstWeek": {
+						"type": "string",
+						"description": "ISO week-number string for grouping.",
+						"example": "2026-w22"
+					},
+					"betalingsHistorie_gemiddeldeAfwijking": {
+						"type": "string",
+						"description": "Mean payment offset from due date (e.g., '+13 days').",
+						"example": "+13 days"
+					},
+					"betalingsHistorie_facturen12mnd": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Number of settled invoices in 12-month sample for this customer.",
+						"example": 9
+					},
+					"betalingsHistorie_betaaldVoorVerval": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Number of those that were paid on-or-before due date.",
+						"example": 2
+					},
+					"betrouwbaarheidScore": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 1,
+						"description": "Confidence in projection (0-1). Equals min(1.0, facturen12mnd / 12). REQ-CF-003.",
+						"example": 0.75
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to Administration tenant.",
+						"example": "adm-001"
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"ondernemer": {
+							"permissions": [
+								"read"
+							]
+						},
+						"boekhouder": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					},
+					"adminScope": {
+						"field": "administrationId",
+						"enforce": true
+					}
+				}
+			},
+			"CashflowAPSchedule": {
+				"slug": "CashflowAPSchedule",
+				"icon": "CalendarMinusOutline",
+				"version": "0.1.0",
+				"title": "Cashflow AP Schedule",
+				"description": "Scheduled outflow per open AP invoice within the 13-week horizon. Read-only projection grouped per CashflowWeek. REQ-CF-006.",
+				"x-schema-org": "schema:MonetaryAmount",
+				"type": "object",
+				"required": [
+					"schedId",
+					"horizonId",
+					"apTransactionId",
+					"vervalDatum",
+					"geplandeBetaalDatum",
+					"bedrag",
+					"administrationId"
+				],
+				"properties": {
+					"schedId": {
+						"type": "string",
+						"description": "Unique identifier.",
+						"example": "sched-ap-kpn-2026-05-30"
+					},
+					"horizonId": {
+						"type": "string",
+						"description": "FK to CashflowForecastHorizon.",
+						"example": "horizon-ond-zzp-c001-2026-w22"
+					},
+					"apTransactionId": {
+						"type": "string",
+						"description": "FK to the AP invoice/transaction. Read-only.",
+						"example": "aptxn-2026-kpn-184"
+					},
+					"leverancierNaam": {
+						"type": "string",
+						"description": "Supplier display name.",
+						"example": "KPN Zakelijk"
+					},
+					"vervalDatum": {
+						"type": "string",
+						"format": "date",
+						"description": "Invoice due date.",
+						"example": "2026-05-30"
+					},
+					"geplandeBetaalDatum": {
+						"type": "string",
+						"format": "date",
+						"description": "Scheduled payment date (typically equals vervalDatum unless deferred).",
+						"example": "2026-05-30"
+					},
+					"bedrag": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"minimum": 0,
+						"description": "Outflow amount in EUR.",
+						"example": 184.0
+					},
+					"categorie": {
+						"type": "string",
+						"description": "AP category for grouping.",
+						"enum": [
+							"AP_GENERIC",
+							"AP_TELECOM",
+							"AP_UTILITIES",
+							"AP_PROFESSIONAL_SERVICES",
+							"AP_GOODS",
+							"AP_OTHER"
+						],
+						"default": "AP_GENERIC"
+					},
+					"betalingsmethode": {
+						"type": "string",
+						"description": "Payment method.",
+						"enum": [
+							"AUTOMATISCHE_INCASSO_SEPA",
+							"BANKTRANSFER",
+							"IDEAL",
+							"CREDIT_CARD",
+							"CASH",
+							"OVERIG"
+						],
+						"default": "BANKTRANSFER"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to Administration tenant.",
+						"example": "adm-001"
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"ondernemer": {
+							"permissions": [
+								"read"
+							]
+						},
+						"boekhouder": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					},
+					"adminScope": {
+						"field": "administrationId",
+						"enforce": true
+					}
+				}
+			},
+			"CashflowRecurring": {
+				"slug": "CashflowRecurring",
+				"icon": "RepeatVariant",
+				"version": "0.1.0",
+				"title": "Cashflow Recurring",
+				"description": "Declarative recurring-cost entry (huur, verzekering, abonnementen, DGA-loon, lijfrentepremie, leasing). Lifecycle: active/suspended/ended via geldigVan/geldigTot. Indexing: FIXED or CPI_AFGELOPEN_JAAR. REQ-CF-005.",
+				"x-schema-org": "schema:MonetaryAmount",
+				"type": "object",
+				"required": [
+					"recurId",
+					"ondernemingId",
+					"label",
+					"categorie",
+					"richting",
+					"frequentie",
+					"standaardBedrag",
+					"geldigVan",
+					"administrationId"
+				],
+				"properties": {
+					"recurId": {
+						"type": "string",
+						"description": "Unique identifier.",
+						"example": "rec-huur-kantoor"
+					},
+					"ondernemingId": {
+						"type": "string",
+						"description": "FK to Corporation.",
+						"example": "ond-zzp-c001"
+					},
+					"label": {
+						"type": "string",
+						"description": "Human-readable name.",
+						"example": "Huur kantoorruimte De Werkfabriek"
+					},
+					"categorie": {
+						"type": "string",
+						"description": "Recurring category. Determines which outflows_recurring_* column in CashflowWeek receives the amount.",
+						"enum": [
+							"RECURRING_HUUR",
+							"RECURRING_VERZEKERING",
+							"RECURRING_ABONNEMENTEN",
+							"RECURRING_SOFTWARE",
+							"RECURRING_DGA_LOON",
+							"RECURRING_LIJFRENTEPREMIE",
+							"RECURRING_LEASING",
+							"RECURRING_OVERIG"
+						]
+					},
+					"richting": {
+						"type": "string",
+						"description": "Direction: IN (inflow, e.g. recurring contract revenue) or OUT (outflow).",
+						"enum": [
+							"IN",
+							"OUT"
+						],
+						"default": "OUT"
+					},
+					"frequentie": {
+						"type": "string",
+						"description": "Recurrence frequency.",
+						"enum": [
+							"MAANDELIJKS",
+							"KWARTAALS",
+							"JAARLIJKS",
+							"WEKELIJKS",
+							"TWEEWEKELIJKS"
+						]
+					},
+					"dagVanMaand": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 31,
+						"nullable": true,
+						"description": "Day of month for monthly recurrence; null for non-monthly frequencies.",
+						"example": 1
+					},
+					"maandVanJaar": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 12,
+						"nullable": true,
+						"description": "Month for annual recurrence; null for non-annual.",
+						"example": 7
+					},
+					"standaardBedrag": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"minimum": 0,
+						"description": "Base amount in EUR.",
+						"example": 850.0
+					},
+					"indexatieRegel": {
+						"type": "string",
+						"description": "Annual indexation rule.",
+						"enum": [
+							"FIXED",
+							"CPI_AFGELOPEN_JAAR"
+						],
+						"default": "FIXED"
+					},
+					"geldigVan": {
+						"type": "string",
+						"format": "date",
+						"description": "Effective start date. Weeks before this are ignored.",
+						"example": "2024-09-01"
+					},
+					"geldigTot": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "Expiration date; null if indefinite. Weeks after this are ignored.",
+						"example": null
+					},
+					"accountNumberExpense": {
+						"type": "string",
+						"description": "GL account code for the recurring cost (used on settlement). FK to Account.accountNumber.",
+						"example": "4100"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to Administration tenant.",
+						"example": "adm-001"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Recurring item is being expanded into forecast horizons."
+						},
+						"suspended": {
+							"label": "Suspended",
+							"description": "Item temporarily skipped (e.g. payment pause negotiated with landlord)."
+						},
+						"ended": {
+							"label": "Ended",
+							"description": "geldigTot reached or contract terminated; no longer expanded."
+						}
+					},
+					"transitions": {
+						"suspend": {
+							"from": "active",
+							"to": "suspended",
+							"label": "Suspend recurring",
+							"description": "Pause expansion. Used during payment hold negotiations."
+						},
+						"resume": {
+							"from": "suspended",
+							"to": "active",
+							"label": "Resume recurring",
+							"description": "Resume expansion after suspension."
+						},
+						"end": {
+							"from": "active",
+							"to": "ended",
+							"label": "End recurring",
+							"description": "Contract terminated. No further expansion."
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"ondernemer": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						},
+						"boekhouder": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					},
+					"adminScope": {
+						"field": "administrationId",
+						"enforce": true
+					}
+				}
+			},
+			"CashflowBufferPolicy": {
+				"slug": "CashflowBufferPolicy",
+				"icon": "ShieldHalfFull",
+				"version": "0.1.0",
+				"title": "Cashflow Buffer Policy",
+				"description": "Operator-configurable minimum cash buffer for the business, with two-tier alert thresholds (VOORALARM at 150% of buffer, CRISIS at 50%). Buffer can be a fixed EUR amount, N months vaste kosten, or a custom formula. REQ-CF-009.",
+				"x-schema-org": "schema:MonetaryAmount",
+				"type": "object",
+				"required": [
+					"policyId",
+					"ondernemingId",
+					"policy",
+					"berekendeBuffer",
+					"alertOndergrens",
+					"alertVooralarm",
+					"administrationId"
+				],
+				"properties": {
+					"policyId": {
+						"type": "string",
+						"description": "Unique identifier.",
+						"example": "policy-ond-zzp-c001"
+					},
+					"ondernemingId": {
+						"type": "string",
+						"description": "FK to Corporation.",
+						"example": "ond-zzp-c001"
+					},
+					"policy": {
+						"type": "string",
+						"description": "Buffer-policy formula.",
+						"enum": [
+							"MIN_FIXED_AMOUNT",
+							"MIN_MONTHS_VASTE_KOSTEN",
+							"CUSTOM_FORMULA"
+						]
+					},
+					"fixedAmount": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"minimum": 0,
+						"nullable": true,
+						"description": "Operator-supplied EUR amount when policy = MIN_FIXED_AMOUNT.",
+						"example": 5200.0
+					},
+					"monthsVasteKosten": {
+						"type": "number",
+						"minimum": 0,
+						"nullable": true,
+						"description": "Number of months of vaste kosten when policy = MIN_MONTHS_VASTE_KOSTEN.",
+						"example": 1
+					},
+					"customFormula": {
+						"type": "string",
+						"nullable": true,
+						"description": "Custom formula expression when policy = CUSTOM_FORMULA."
+					},
+					"berekendeBuffer": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"minimum": 0,
+						"description": "Calculated buffer threshold in EUR (derived from policy).",
+						"example": 5200.0
+					},
+					"alertOndergrens": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"minimum": 0,
+						"description": "Critical alert threshold (= 50% of berekendeBuffer by default).",
+						"example": 2600.0
+					},
+					"alertVooralarm": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"minimum": 0,
+						"description": "Pre-alert threshold (= 150% of berekendeBuffer by default).",
+						"example": 7800.0
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to Administration tenant.",
+						"example": "adm-001"
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"ondernemer": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"boekhouder": {
+							"permissions": [
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					},
+					"adminScope": {
+						"field": "administrationId",
+						"enforce": true
+					}
+				}
+			},
+			"CashflowScenario": {
+				"slug": "CashflowScenario",
+				"icon": "SourceBranch",
+				"version": "0.1.0",
+				"title": "Cashflow Scenario",
+				"description": "Immutable point-in-time what-if snapshot of a CashflowForecastHorizon with one or more adjustments (AR override, recurring pause, new revenue, buffer override). The forecast is recomputed against the snapshot, leaving the baseline unchanged. REQ-CF-011.",
+				"x-schema-org": "schema:Thing",
+				"type": "object",
+				"required": [
+					"scenarioId",
+					"horizonId",
+					"naam",
+					"aanpassingen",
+					"createdAt",
+					"administrationId"
+				],
+				"properties": {
+					"scenarioId": {
+						"type": "string",
+						"description": "Unique identifier.",
+						"example": "scn-acme-doesnt-pay-2026-w22"
+					},
+					"horizonId": {
+						"type": "string",
+						"description": "FK to parent CashflowForecastHorizon.",
+						"example": "horizon-ond-zzp-c001-2026-w22"
+					},
+					"naam": {
+						"type": "string",
+						"description": "Scenario name.",
+						"example": "Acme pays late by 4 weeks"
+					},
+					"description": {
+						"type": "string",
+						"description": "Scenario description.",
+						"example": "Acme delays invoice fact-2026-0247 by 4 weeks; assess buffer impact."
+					},
+					"aanpassingen": {
+						"type": "array",
+						"description": "Array of adjustment rules. Supported types: AR_PROJECTION_OVERRIDE, RECURRING_COST_ADJUSTMENT, NEW_REVENUE, BUFFER_POLICY_OVERRIDE. REQ-CF-011.",
+						"items": {
+							"type": "object",
+							"required": [
+								"type"
+							],
+							"properties": {
+								"type": {
+									"type": "string",
+									"enum": [
+										"AR_PROJECTION_OVERRIDE",
+										"RECURRING_COST_ADJUSTMENT",
+										"NEW_REVENUE",
+										"BUFFER_POLICY_OVERRIDE"
+									]
+								},
+								"arInvoiceId": {
+									"type": "string",
+									"nullable": true
+								},
+								"recurId": {
+									"type": "string",
+									"nullable": true
+								},
+								"weekShift": {
+									"type": "integer",
+									"nullable": true
+								},
+								"kansVanBetaling": {
+									"type": "number",
+									"minimum": 0,
+									"maximum": 1,
+									"nullable": true
+								},
+								"adjustmentType": {
+									"type": "string",
+									"enum": [
+										"PAUSE",
+										"INCREASE",
+										"DECREASE"
+									],
+									"nullable": true
+								},
+								"weeks": {
+									"type": "array",
+									"items": {
+										"type": "integer"
+									},
+									"nullable": true
+								},
+								"name": {
+									"type": "string",
+									"nullable": true
+								},
+								"amount": {
+									"type": "number",
+									"multipleOf": 0.01,
+									"nullable": true
+								},
+								"probability": {
+									"type": "number",
+									"minimum": 0,
+									"maximum": 1,
+									"nullable": true
+								},
+								"expectedReceiptWeek": {
+									"type": "integer",
+									"nullable": true
+								},
+								"recurringMonthly": {
+									"type": "number",
+									"multipleOf": 0.01,
+									"nullable": true
+								},
+								"bufferAmount": {
+									"type": "number",
+									"multipleOf": 0.01,
+									"nullable": true
+								}
+							}
+						}
+					},
+					"resultaat": {
+						"type": "object",
+						"description": "Computed results after recomputing the horizon against the adjustments.",
+						"properties": {
+							"minBufferWeek": {
+								"type": "string",
+								"description": "ISO week-number string of the lowest saldo week."
+							},
+							"minBufferBedrag": {
+								"type": "number",
+								"multipleOf": 0.01,
+								"description": "Saldo value in that week."
+							},
+							"onderschrijdingBuffer": {
+								"type": "boolean",
+								"description": "Whether the scenario breaches the buffer policy."
+							},
+							"actiesuggesties": {
+								"type": "array",
+								"items": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Scenario creation timestamp.",
+						"example": "2026-05-25T14:32:00Z"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to Administration tenant.",
+						"example": "adm-001"
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"ondernemer": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						},
+						"boekhouder": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					},
+					"adminScope": {
+						"field": "administrationId",
+						"enforce": true
+					}
+				}
+			},
+			"CashflowCalibrationReport": {
+				"slug": "CashflowCalibrationReport",
+				"icon": "ChartBellCurveCumulative",
+				"version": "0.1.0",
+				"title": "Cashflow Calibration Report",
+				"description": "Monthly post-month-end forecast-accuracy report comparing actual vs forecast by category (AR/AP/recurring/tax). MAPE-based, used to update customer betalingsgedrag offsets and pipeline-deal conversion probabilities. REQ-CF-013.",
+				"x-schema-org": "schema:Report",
+				"type": "object",
+				"required": [
+					"reportId",
+					"horizonId",
+					"calibrationPeriod",
+					"generatedAt",
+					"ar_mape",
+					"ap_mape",
+					"recurring_mape",
+					"tax_mape",
+					"administrationId"
+				],
+				"properties": {
+					"reportId": {
+						"type": "string",
+						"description": "Unique identifier.",
+						"example": "calib-ond-zzp-c001-2026-05"
+					},
+					"horizonId": {
+						"type": "string",
+						"description": "FK to CashflowForecastHorizon evaluated.",
+						"example": "horizon-ond-zzp-c001-2026-w22"
+					},
+					"calibrationPeriod": {
+						"type": "string",
+						"description": "Period evaluated, ISO-month format.",
+						"example": "2026-05"
+					},
+					"generatedAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Timestamp of calibration run.",
+						"example": "2026-06-01T09:00:00Z"
+					},
+					"ar_mape": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Mean Absolute Percentage Error for AR projections (%).",
+						"example": 1.9
+					},
+					"ap_mape": {
+						"type": "number",
+						"minimum": 0,
+						"description": "MAPE for AP projections (%).",
+						"example": 1.7
+					},
+					"recurring_mape": {
+						"type": "number",
+						"minimum": 0,
+						"description": "MAPE for recurring costs (%).",
+						"example": 0.0
+					},
+					"tax_mape": {
+						"type": "number",
+						"minimum": 0,
+						"description": "MAPE for tax projections (%).",
+						"example": 3.2
+					},
+					"betalingsgedragUpdates": {
+						"type": "array",
+						"description": "Customers whose betalingsgedrag offset was updated.",
+						"items": {
+							"type": "object",
+							"properties": {
+								"klantId": {
+									"type": "string"
+								},
+								"oudGemiddeldeAfwijking": {
+									"type": "string"
+								},
+								"nieuwGemiddeldeAfwijking": {
+									"type": "string"
+								},
+								"sampleSize": {
+									"type": "integer"
+								}
+							}
+						}
+					},
+					"pipelineConversionUpdates": {
+						"type": "array",
+						"description": "Pipelinq deals whose conversion probability was recalibrated.",
+						"items": {
+							"type": "object",
+							"properties": {
+								"dealId": {
+									"type": "string"
+								},
+								"oudProbability": {
+									"type": "number"
+								},
+								"nieuwProbability": {
+									"type": "number"
+								}
+							}
+						}
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to Administration tenant.",
+						"example": "adm-001"
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"ondernemer": {
+							"permissions": [
+								"read"
+							]
+						},
+						"boekhouder": {
+							"permissions": [
+								"read"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					},
+					"adminScope": {
+						"field": "administrationId",
+						"enforce": true
 					}
 				}
 			}
@@ -7873,7 +9313,7 @@
 					"type": "number",
 					"minimum": 0,
 					"maximum": 100,
-					"description": "Percentage of obligations settled by their due date (0–100). Computed via x-openregister-aggregations.onTimeSettlement.",
+					"description": "Percentage of obligations settled by their due date (0\u2013100). Computed via x-openregister-aggregations.onTimeSettlement.",
 					"nullable": true,
 					"example": 95.4
 				},
@@ -8345,7 +9785,7 @@
 					"type": "string",
 					"description": "Detailed description of the audit finding.",
 					"nullable": true,
-					"example": "BTW-afdracht over Q3 2026 niet tijdig ingediend; €18.500 achterstalling."
+					"example": "BTW-afdracht over Q3 2026 niet tijdig ingediend; \u20ac18.500 achterstalling."
 				},
 				"observationNumber": {
 					"type": "string",
@@ -8357,7 +9797,7 @@
 					"type": "string",
 					"description": "Governance improvement observation (non-finding, informational).",
 					"nullable": true,
-					"example": "Inkoopproces mist formele budgethouder-goedkeuring voor orders boven €10.000."
+					"example": "Inkoopproces mist formele budgethouder-goedkeuring voor orders boven \u20ac10.000."
 				},
 				"remediationDueDate": {
 					"type": "string",
@@ -8496,13 +9936,13 @@
 					"type": "string",
 					"description": "Summary of governance improvement observations.",
 					"nullable": true,
-					"example": "Aanbeveling: versterking van het inkoopproces voor orders boven €10.000."
+					"example": "Aanbeveling: versterking van het inkoopproces voor orders boven \u20ac10.000."
 				},
 				"remediationRecommendations": {
 					"type": "string",
 					"description": "Recommended corrective actions for identified findings.",
 					"nullable": true,
-					"example": "Herstel BTW-aangifte Q3 2026 vóór 31 maart 2027. Implementeer budgethouder-goedkeuring."
+					"example": "Herstel BTW-aangifte Q3 2026 v\u00f3\u00f3r 31 maart 2027. Implementeer budgethouder-goedkeuring."
 				},
 				"auditOpinion": {
 					"type": "string",
@@ -8590,7 +10030,7 @@
 				"name": {
 					"type": "string",
 					"description": "Grant name or description.",
-					"example": "WBSO Subsidie 2026 — R&D innovatie"
+					"example": "WBSO Subsidie 2026 \u2014 R&D innovatie"
 				},
 				"awardedAmount": {
 					"type": "number",
@@ -8825,7 +10265,7 @@
 			"icon": "ReceiptTextOutline",
 			"version": "0.1.0",
 			"title": "AP Invoice",
-			"description": "Accounts payable sub-ledger invoice recording vendor billing and payment obligation. Posting materialises a balanced GLTransaction per T1 REQ-JE-007. Lifecycle: draft → pending → approved → posted → paid with disputed/voided branches. Approval routing consumes OR approval-workflow per ADR-022. Per REQ-AP-003 and REQ-AP-004.",
+			"description": "Accounts payable sub-ledger invoice recording vendor billing and payment obligation. Posting materialises a balanced GLTransaction per T1 REQ-JE-007. Lifecycle: draft \u2192 pending \u2192 approved \u2192 posted \u2192 paid with disputed/voided branches. Approval routing consumes OR approval-workflow per ADR-022. Per REQ-AP-003 and REQ-AP-004.",
 			"x-schema-org": "schema:Invoice",
 			"type": "object",
 			"required": [
@@ -9081,7 +10521,7 @@
 						"from": "posted",
 						"to": "paid",
 						"label": "Mark as paid",
-						"description": "Transition to paid when bank-reconciliation engine matches an exact-amount bank statement line per REQ-AP-008. No shillinq matcher service — OR event-driven."
+						"description": "Transition to paid when bank-reconciliation engine matches an exact-amount bank statement line per REQ-AP-008. No shillinq matcher service \u2014 OR event-driven."
 					},
 					"dispute": {
 						"from": "posted",
@@ -9387,7 +10827,7 @@
 			"icon": "FileDocumentOutline",
 			"version": "0.1.0",
 			"title": "Subsidie",
-			"description": "Grant/subsidie record covering the full ASV-model lifecycle (aanvraag → verleend → vastgesteld → uitbetaald). Works for both outgoing grants (gemeente to beneficiary) and incoming grants (beneficiary from granting body). The subsidieRegeling enum field overlays per-regeling R&D constraints (REQ-RDS-001). schema:Grant annotation; schema:ResearchProject materialisation when subsidieRegeling indicates an R&D regeling. Per bookkeeping-subsidie-verantwoording + bookkeeping-r-d-subsidies-mkb.",
+			"description": "Grant/subsidie record covering the full ASV-model lifecycle (aanvraag \u2192 verleend \u2192 vastgesteld \u2192 uitbetaald). Works for both outgoing grants (gemeente to beneficiary) and incoming grants (beneficiary from granting body). The subsidieRegeling enum field overlays per-regeling R&D constraints (REQ-RDS-001). schema:Grant annotation; schema:ResearchProject materialisation when subsidieRegeling indicates an R&D regeling. Per bookkeeping-subsidie-verantwoording + bookkeeping-r-d-subsidies-mkb.",
 			"x-schema-org": "schema:Grant",
 			"type": "object",
 			"required": [
@@ -10000,7 +11440,7 @@
 			"icon": "PackageVariantOutline",
 			"version": "0.1.0",
 			"title": "Product",
-			"description": "Universal product master data — SKU, name, category, pricing, barcodes, and status. Foundation for POS, procurement, and inventory workflows per REQ-IPC-001 through REQ-IPC-010. SKU uniqueness is scoped to (organizationId, sku) to support multi-tenant Nextcloud instances.",
+			"description": "Universal product master data \u2014 SKU, name, category, pricing, barcodes, and status. Foundation for POS, procurement, and inventory workflows per REQ-IPC-001 through REQ-IPC-010. SKU uniqueness is scoped to (organizationId, sku) to support multi-tenant Nextcloud instances.",
 			"x-schema-org": "schema:Product",
 			"type": "object",
 			"x-openregister-unique": [
@@ -10265,7 +11705,7 @@
 			"icon": "WarehouseOutline",
 			"version": "0.1.0",
 			"title": "Location",
-			"description": "Physical or virtual storage location in the warehouse hierarchy (warehouse → zone → bin → in-transit). Hierarchical parent-child FK (parentLocationId) enables rollup stock visibility and inter-location transfers per REQ-LOC-001 through REQ-LOC-009 and design.md D1-D6. No parallel warehouse table in PHP per ADR-031 — location hierarchy is pure declarative metadata.",
+			"description": "Physical or virtual storage location in the warehouse hierarchy (warehouse \u2192 zone \u2192 bin \u2192 in-transit). Hierarchical parent-child FK (parentLocationId) enables rollup stock visibility and inter-location transfers per REQ-LOC-001 through REQ-LOC-009 and design.md D1-D6. No parallel warehouse table in PHP per ADR-031 \u2014 location hierarchy is pure declarative metadata.",
 			"x-schema-org": "schema:Place",
 			"x-openregister-purpose": "dimension",
 			"type": "object",
@@ -10283,7 +11723,7 @@
 				},
 				"locationCode": {
 					"type": "string",
-					"description": "Operator-assigned location code unique per administration per REQ-LOC-002 and D5. Immutable after creation — operator must create new location + migrate stock if rename required. Examples: 'W-01', 'Z-01', 'B-100', 'IN-TRANSIT-W01-W02'.",
+					"description": "Operator-assigned location code unique per administration per REQ-LOC-002 and D5. Immutable after creation \u2014 operator must create new location + migrate stock if rename required. Examples: 'W-01', 'Z-01', 'B-100', 'IN-TRANSIT-W01-W02'.",
 					"example": "W-01",
 					"pattern": "^[A-Z0-9][A-Z0-9\\-_]{0,19}$"
 				},
@@ -10354,7 +11794,7 @@
 				},
 				"administrationId": {
 					"type": "string",
-					"description": "FK to the Administration owning this location per REQ-LOC-008. All location queries are scoped to this administration — cross-org access is rejected with 403.",
+					"description": "FK to the Administration owning this location per REQ-LOC-008. All location queries are scoped to this administration \u2014 cross-org access is rejected with 403.",
 					"example": "adm-1"
 				},
 				"notes": {
@@ -10571,7 +12011,7 @@
 			"icon": "TruckDeliveryOutline",
 			"version": "0.1.0",
 			"title": "Inventory Stock Transfer",
-			"description": "Inter-location transfer of stock between any two locations in the warehouse hierarchy per REQ-LOC-006. Transfer updates source and destination InventoryStock quantities. Optional GL integration via StockMove (if inventory-stock-movement-ledger is present). No PHP TransferService — transfer workflow is declarative per ADR-031.",
+			"description": "Inter-location transfer of stock between any two locations in the warehouse hierarchy per REQ-LOC-006. Transfer updates source and destination InventoryStock quantities. Optional GL integration via StockMove (if inventory-stock-movement-ledger is present). No PHP TransferService \u2014 transfer workflow is declarative per ADR-031.",
 			"x-schema-org": "schema:MoveAction",
 			"type": "object",
 			"required": [
@@ -10607,7 +12047,7 @@
 				"quantity": {
 					"type": "number",
 					"minimum": 0.001,
-					"description": "Quantity to transfer. Must be positive and ≤ available stock at source.",
+					"description": "Quantity to transfer. Must be positive and \u2264 available stock at source.",
 					"example": 50.0
 				},
 				"scheduledDate": {
@@ -10641,7 +12081,7 @@
 					"type": "string",
 					"nullable": true,
 					"description": "Operator notes about this transfer.",
-					"example": "Seasonal stock rebalancing W-MAIN → W-EAST"
+					"example": "Seasonal stock rebalancing W-MAIN \u2192 W-EAST"
 				},
 				"glPosted": {
 					"type": "boolean",
@@ -10701,7 +12141,7 @@
 						"to": "received",
 						"label": "Mark as received",
 						"labelNl": "Markeren als ontvangen",
-						"description": "Stock arrives at destination. InventoryStock updated atomically: source −qty, dest +qty. GL entry posted if GL present."
+						"description": "Stock arrives at destination. InventoryStock updated atomically: source \u2212qty, dest +qty. GL entry posted if GL present."
 					},
 					"cancel": {
 						"from": [
@@ -10836,7 +12276,7 @@
 			"slug": "iv3-xml-transformation",
 			"version": "0.1.0",
 			"name": "IV3 XML Transformation",
-			"description": "Maps an Iv3Export record (with aggregated buckets) to the CBS IV3-bestand XML structure. ADR-031 declarative path — preferred over a PHP renderer. If OR's mapping engine cannot express CBS mixed-content XML nodes, the Iv3XmlRenderer::render() exception path (documented in openspec/changes/add-shillinq-iv3-reporting/design.md §D3) applies.",
+			"description": "Maps an Iv3Export record (with aggregated buckets) to the CBS IV3-bestand XML structure. ADR-031 declarative path \u2014 preferred over a PHP renderer. If OR's mapping engine cannot express CBS mixed-content XML nodes, the Iv3XmlRenderer::render() exception path (documented in openspec/changes/add-shillinq-iv3-reporting/design.md \u00a7D3) applies.",
 			"passThrough": false,
 			"mapping": {
 				"Aanlevering.Verslagperiode.Jaar": "reportingYear",
@@ -11020,7 +12460,7 @@
 				"slug": "shillinq-bank-transaction-polling"
 			},
 			"name": "Bank Transaction Polling",
-			"description": "Periodic polling workflow that calls the openconnector PSD2 aggregator source by slug, normalises aggregator JSON to CAMT.053 format, attaches the document via docudesk, and creates BankStatement records. Runs 4× daily per REQ-BC-004 + ADR-031 path 2. No shillinq-side TimedJob.",
+			"description": "Periodic polling workflow that calls the openconnector PSD2 aggregator source by slug, normalises aggregator JSON to CAMT.053 format, attaches the document via docudesk, and creates BankStatement records. Runs 4\u00d7 daily per REQ-BC-004 + ADR-031 path 2. No shillinq-side TimedJob.",
 			"register": "shillinq",
 			"schema": "BankConnection",
 			"cronExpression": "0 */6 * * *",
@@ -11109,7 +12549,7 @@
 			"fiscalYear": 2025,
 			"findingNumber": "FIND-2025-AMS-001",
 			"findingSeverity": "major",
-			"findingDescription": "BTW-afdracht over Q3 2025 niet tijdig ingediend bij de Belastingdienst. Achterstalling van €18.500 geconstateerd in boeking 4320.",
+			"findingDescription": "BTW-afdracht over Q3 2025 niet tijdig ingediend bij de Belastingdienst. Achterstalling van \u20ac18.500 geconstateerd in boeking 4320.",
 			"observationNumber": null,
 			"observationDescription": null,
 			"remediationDueDate": "2026-06-30",
@@ -11130,9 +12570,9 @@
 			"fiscalYear": 2025,
 			"findingNumber": "FIND-2025-AMS-002",
 			"findingSeverity": "major",
-			"findingDescription": "Inkoopopdrachten boven €25.000 zonder formele aanbestedingsprocedure (6 gevallen, totaal €187.000).",
+			"findingDescription": "Inkoopopdrachten boven \u20ac25.000 zonder formele aanbestedingsprocedure (6 gevallen, totaal \u20ac187.000).",
 			"observationNumber": "OBS-2025-AMS-001",
-			"observationDescription": "Aanbeveling: implementeer automatische drempelwaarde-controle in inkoopsysteem voor orders boven €10.000.",
+			"observationDescription": "Aanbeveling: implementeer automatische drempelwaarde-controle in inkoopsysteem voor orders boven \u20ac10.000.",
 			"remediationDueDate": "2026-09-30",
 			"remediationStatus": "pending",
 			"remediationCompletionDate": null,
@@ -11151,7 +12591,7 @@
 			"fiscalYear": 2025,
 			"findingNumber": "FIND-2025-ROT-001",
 			"findingSeverity": "critical",
-			"findingDescription": "Tekenbevoegdheid overschreden: factuur van €450.000 getekend door functionaris zonder mandaat voor bedragen boven €100.000 (REQ-SISA-004 handtekeningbevoegdheid).",
+			"findingDescription": "Tekenbevoegdheid overschreden: factuur van \u20ac450.000 getekend door functionaris zonder mandaat voor bedragen boven \u20ac100.000 (REQ-SISA-004 handtekeningbevoegdheid).",
 			"observationNumber": null,
 			"observationDescription": null,
 			"remediationDueDate": "2026-04-30",
@@ -11227,8 +12667,8 @@
 			"issuedDate": "2026-02-20",
 			"dueResponseDate": "2026-03-20",
 			"findingsSummary": "Twee majeure bevindingen aangetroffen: (1) BTW-afdracht Q3 2025 niet tijdig ingediend; (2) inkoopopdrachten zonder aanbestedingsprocedure. Geen kritieke bevindingen.",
-			"observationsSummary": "Aanbeveling versterking inkoopproces voor drempelwaarden boven €10.000.",
-			"remediationRecommendations": "1. Herstel BTW-aangifte Q3 2025 vóór 30 juni 2026. 2. Implementeer automatische drempelwaarde-controle. 3. Train inkoopmedewerkers op aanbestedingsregels.",
+			"observationsSummary": "Aanbeveling versterking inkoopproces voor drempelwaarden boven \u20ac10.000.",
+			"remediationRecommendations": "1. Herstel BTW-aangifte Q3 2025 v\u00f3\u00f3r 30 juni 2026. 2. Implementeer automatische drempelwaarde-controle. 3. Train inkoopmedewerkers op aanbestedingsregels.",
 			"auditOpinion": "qualified",
 			"status": "issued"
 		},
@@ -11243,7 +12683,7 @@
 			"auditorName": "Deloitte Accountants B.V.",
 			"issuedDate": "2026-03-10",
 			"dueResponseDate": "2026-04-10",
-			"findingsSummary": "Kritieke bevinding: overschrijding tekenbevoegdheid (€450.000 zonder mandaat). Herstel niet tijdig afgerond — remediëring verloopt.",
+			"findingsSummary": "Kritieke bevinding: overschrijding tekenbevoegdheid (\u20ac450.000 zonder mandaat). Herstel niet tijdig afgerond \u2014 remedi\u00ebring verloopt.",
 			"observationsSummary": "Drie governance-observaties t.a.v. inkoopproces, budgetbeheer en periodieke mandaatcontroles.",
 			"remediationRecommendations": "1. Onmiddellijk mandaatregister actualiseren. 2. Terugbetalingsregeling treffen voor bedrag boven mandaat. 3. Kwartaalcontrole op tekenbevoegdheden implementeren.",
 			"auditOpinion": "disclaimer",
@@ -11256,7 +12696,7 @@
 				"slug": "grant-wbso-2026-amsterdam"
 			},
 			"grantId": "WBSO-2026-AMS-001",
-			"name": "WBSO Subsidie 2026 — Softwareontwikkeling gemeente Amsterdam",
+			"name": "WBSO Subsidie 2026 \u2014 Softwareontwikkeling gemeente Amsterdam",
 			"awardedAmount": 125000.0,
 			"awardDate": "2026-01-01T00:00:00Z",
 			"status": "active",
@@ -11270,7 +12710,7 @@
 				"slug": "grant-tozo-2025-rotterdam"
 			},
 			"grantId": "TOZO-2025-ROT-001",
-			"name": "Tozo Overbruggingskrediet 2025 — Rotterdam",
+			"name": "Tozo Overbruggingskrediet 2025 \u2014 Rotterdam",
 			"awardedAmount": 45000.0,
 			"awardDate": "2025-04-01T00:00:00Z",
 			"status": "completed",
@@ -11284,7 +12724,7 @@
 				"slug": "grant-bbv-2026-amsterdam"
 			},
 			"grantId": "BBV-2026-AMS-001",
-			"name": "BBV Specifieke Uitkering 2026 — Amsterdam Jeugdzorg",
+			"name": "BBV Specifieke Uitkering 2026 \u2014 Amsterdam Jeugdzorg",
 			"awardedAmount": 2350000.0,
 			"awardDate": "2026-01-15T00:00:00Z",
 			"status": "active",
@@ -11836,7 +13276,7 @@
 			"country": "NL",
 			"vehicleType": "car",
 			"ratePerKm": 0.21,
-			"notes": "Belastingdienst 2026 — IB 2025 rules: €0.21/km personenauto"
+			"notes": "Belastingdienst 2026 \u2014 IB 2025 rules: \u20ac0.21/km personenauto"
 		},
 		{
 			"@self": {
@@ -11848,7 +13288,7 @@
 			"country": "NL",
 			"vehicleType": "motorcycle",
 			"ratePerKm": 0.16,
-			"notes": "Belastingdienst 2026 — IB 2025 rules: €0.16/km motorfiets"
+			"notes": "Belastingdienst 2026 \u2014 IB 2025 rules: \u20ac0.16/km motorfiets"
 		},
 		{
 			"@self": {
@@ -11860,7 +13300,7 @@
 			"country": "FI",
 			"vehicleType": "car",
 			"ratePerKm": 0.42,
-			"notes": "Verohallinto 2026 — Finnish tax rules: €0.42/km"
+			"notes": "Verohallinto 2026 \u2014 Finnish tax rules: \u20ac0.42/km"
 		},
 		{
 			"@self": {
@@ -11872,7 +13312,7 @@
 			"country": "NL",
 			"dailyRate": 125.0,
 			"currency": "EUR",
-			"source": "Ministerie van Financiën — reiskostenvergoeding 2026"
+			"source": "Ministerie van Financi\u00ebn \u2014 reiskostenvergoeding 2026"
 		},
 		{
 			"@self": {
@@ -11884,7 +13324,7 @@
 			"country": "FI",
 			"dailyRate": 45.0,
 			"currency": "EUR",
-			"source": "Verohallinto — daily allowance 2026"
+			"source": "Verohallinto \u2014 daily allowance 2026"
 		},
 		{
 			"@self": {

@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "1.3.0",
+	"version": "1.3.1",
 	"dependencies": [
 		"openregister"
 	],
@@ -569,6 +569,56 @@
 					"icon": "CarOutline",
 					"route": "MileageLog",
 					"order": 30
+				}
+			]
+		},
+		{
+			"id": "Cashflow",
+			"label": "Cashflow",
+			"icon": "ChartLineVariant",
+			"order": 28,
+			"visibility": {
+				"field": "administrationType",
+				"in": [
+					"mkb",
+					"zzp"
+				]
+			},
+			"children": [
+				{
+					"id": "CashflowDashboard",
+					"label": "Cashflow Dashboard",
+					"icon": "ChartBarStacked",
+					"route": "CashflowDashboard",
+					"order": 10
+				},
+				{
+					"id": "CashflowScenarios",
+					"label": "Scenarios",
+					"icon": "SourceBranch",
+					"route": "CashflowScenarios",
+					"order": 20
+				},
+				{
+					"id": "CashflowBufferPolicy",
+					"label": "Buffer Policy",
+					"icon": "ShieldHalfFull",
+					"route": "CashflowBufferPolicy",
+					"order": 30
+				},
+				{
+					"id": "CashflowRecurring",
+					"label": "Recurring Costs",
+					"icon": "RepeatVariant",
+					"route": "CashflowRecurring",
+					"order": 40
+				},
+				{
+					"id": "CashflowCalibrationReport",
+					"label": "Calibration Report",
+					"icon": "ChartBellCurveCumulative",
+					"route": "CashflowCalibrationReport",
+					"order": 50
 				}
 			]
 		}
@@ -1235,7 +1285,7 @@
 					},
 					{
 						"key": "emuSaldo",
-						"label": "EMU-saldo (€)",
+						"label": "EMU-saldo (\u20ac)",
 						"sortable": true
 					},
 					{
@@ -1280,12 +1330,12 @@
 					},
 					{
 						"key": "emuSaldo",
-						"label": "EMU-saldo (€)",
+						"label": "EMU-saldo (\u20ac)",
 						"type": "number"
 					},
 					{
 						"key": "emuSchuld",
-						"label": "EMU-schuld (€)",
+						"label": "EMU-schuld (\u20ac)",
 						"type": "number"
 					},
 					{
@@ -3291,7 +3341,7 @@
 					},
 					{
 						"key": "remediationOverdueCount",
-						"label": "Achterstallige remediëringen",
+						"label": "Achterstallige remedi\u00ebringen",
 						"type": "integer"
 					},
 					{
@@ -3355,7 +3405,7 @@
 					},
 					{
 						"key": "remediationStatus",
-						"label": "Remediëringsstatus",
+						"label": "Remedi\u00ebringsstatus",
 						"sortable": true
 					},
 					{
@@ -3419,17 +3469,17 @@
 					},
 					{
 						"key": "remediationDueDate",
-						"label": "Remediëring vóór",
+						"label": "Remedi\u00ebring v\u00f3\u00f3r",
 						"type": "date"
 					},
 					{
 						"key": "remediationStatus",
-						"label": "Remediëringsstatus",
+						"label": "Remedi\u00ebringsstatus",
 						"type": "string"
 					},
 					{
 						"key": "remediationCompletionDate",
-						"label": "Remediëring voltooid op",
+						"label": "Remedi\u00ebring voltooid op",
 						"type": "date"
 					},
 					{
@@ -3537,7 +3587,7 @@
 					},
 					{
 						"key": "remediationRecommendations",
-						"label": "Remediëeringsaanbevelingen",
+						"label": "Remedi\u00eberingsaanbevelingen",
 						"type": "string"
 					},
 					{
@@ -3785,7 +3835,7 @@
 			"id": "BewaartermijnenDashboard",
 			"route": "/administratie/bewaartermijnen/dashboard",
 			"type": "dashboard",
-			"title": "Bewaartermijnen — Dashboard",
+			"title": "Bewaartermijnen \u2014 Dashboard",
 			"config": {
 				"widgets": [
 					{
@@ -4544,7 +4594,7 @@
 			"id": "ProjectenOverzicht",
 			"route": "/projecten",
 			"type": "index",
-			"title": "Projecten — Overzicht",
+			"title": "Projecten \u2014 Overzicht",
 			"visibilityPredicate": {
 				"administrationType": [
 					"mkb",
@@ -4666,7 +4716,7 @@
 							{
 								"min": 0.5,
 								"color": "warning",
-								"label": "Gemiddeld (50–80%)"
+								"label": "Gemiddeld (50\u201380%)"
 							},
 							{
 								"min": 0,
@@ -6027,7 +6077,7 @@
 					},
 					{
 						"key": "ratePerKm",
-						"label": "Rate (€/km)",
+						"label": "Rate (\u20ac/km)",
 						"sortable": true,
 						"type": "number"
 					},
@@ -6116,7 +6166,7 @@
 					},
 					{
 						"key": "ratePerKm",
-						"label": "Rate (€/km)",
+						"label": "Rate (\u20ac/km)",
 						"type": "number"
 					},
 					{
@@ -7172,6 +7222,244 @@
 						"gridHeight": 2
 					}
 				]
+			}
+		},
+		{
+			"id": "CashflowDashboard",
+			"route": "/cashflow/dashboard",
+			"type": "dashboard",
+			"title": "Cashflow Dashboard",
+			"config": {
+				"widgets": [
+					{
+						"id": "cashflow-13week-chart",
+						"title": "13-Week Cashflow Forecast",
+						"type": "chart",
+						"chartType": "bar",
+						"aggregation": "bufferPolicyEvaluation",
+						"schema": "CashflowWeek",
+						"register": "shillinq",
+						"description": "Stacked weekly inflows / outflows with the net saldo as overlay line and the buffer-policy band highlighted. REQ-CF-015."
+					},
+					{
+						"id": "buffer-status",
+						"title": "Buffer Status",
+						"type": "stats-block",
+						"schema": "CashflowBufferPolicy",
+						"register": "shillinq",
+						"props": {
+							"countLabel": "weeks under buffer",
+							"variant": "warning"
+						}
+					},
+					{
+						"id": "crisis-banner",
+						"title": "Crisis Mode",
+						"type": "alert",
+						"schema": "CashflowForecastHorizon",
+						"register": "shillinq",
+						"props": {
+							"severity": "error",
+							"visibilityCondition": "anyWeek.eindSaldo < 0 within next 4 weeks"
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "layout-chart",
+						"widgetId": "cashflow-13week-chart",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 8
+					},
+					{
+						"id": "layout-buffer",
+						"widgetId": "buffer-status",
+						"gridX": 0,
+						"gridY": 8,
+						"gridWidth": 4,
+						"gridHeight": 3
+					},
+					{
+						"id": "layout-crisis",
+						"widgetId": "crisis-banner",
+						"gridX": 4,
+						"gridY": 8,
+						"gridWidth": 8,
+						"gridHeight": 3
+					}
+				]
+			}
+		},
+		{
+			"id": "CashflowScenarios",
+			"route": "/cashflow/scenarios",
+			"type": "index",
+			"title": "Scenarios",
+			"config": {
+				"register": "shillinq",
+				"schema": "CashflowScenario",
+				"columns": [
+					{
+						"key": "naam",
+						"label": "Scenario",
+						"sortable": true
+					},
+					{
+						"key": "createdAt",
+						"label": "Created",
+						"sortable": true
+					},
+					{
+						"key": "resultaat.minBufferWeek",
+						"label": "Min Buffer Week"
+					},
+					{
+						"key": "resultaat.minBufferBedrag",
+						"label": "Min Buffer (EUR)"
+					},
+					{
+						"key": "resultaat.onderschrijdingBuffer",
+						"label": "Buffer breached"
+					}
+				],
+				"defaultSort": "createdAt",
+				"detailRoute": "CashflowScenarioDetail",
+				"filters": [
+					{
+						"key": "horizonId",
+						"label": "Horizon"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration"
+					}
+				]
+			}
+		},
+		{
+			"id": "CashflowBufferPolicy",
+			"route": "/cashflow/buffer-policy",
+			"type": "detail",
+			"title": "Buffer Policy",
+			"config": {
+				"register": "shillinq",
+				"schema": "CashflowBufferPolicy",
+				"fields": [
+					"policy",
+					"fixedAmount",
+					"monthsVasteKosten",
+					"customFormula",
+					"berekendeBuffer",
+					"alertOndergrens",
+					"alertVooralarm",
+					"administrationId"
+				],
+				"description": "Configure the cash buffer threshold and two-tier alert levels. REQ-CF-009."
+			}
+		},
+		{
+			"id": "CashflowRecurring",
+			"route": "/cashflow/recurring",
+			"type": "index",
+			"title": "Recurring Costs",
+			"config": {
+				"register": "shillinq",
+				"schema": "CashflowRecurring",
+				"columns": [
+					{
+						"key": "label",
+						"label": "Label",
+						"sortable": true
+					},
+					{
+						"key": "categorie",
+						"label": "Category",
+						"sortable": true
+					},
+					{
+						"key": "richting",
+						"label": "Direction"
+					},
+					{
+						"key": "frequentie",
+						"label": "Frequency",
+						"sortable": true
+					},
+					{
+						"key": "standaardBedrag",
+						"label": "Amount (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "indexatieRegel",
+						"label": "Indexation"
+					},
+					{
+						"key": "geldigVan",
+						"label": "Valid From"
+					},
+					{
+						"key": "geldigTot",
+						"label": "Valid To"
+					}
+				],
+				"defaultSort": "geldigVan",
+				"detailRoute": "CashflowRecurringDetail",
+				"filters": [
+					{
+						"key": "categorie",
+						"label": "Category"
+					},
+					{
+						"key": "frequentie",
+						"label": "Frequency"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration"
+					}
+				]
+			}
+		},
+		{
+			"id": "CashflowCalibrationReport",
+			"route": "/cashflow/calibration",
+			"type": "report",
+			"title": "Calibration Report",
+			"config": {
+				"register": "shillinq",
+				"schema": "CashflowCalibrationReport",
+				"columns": [
+					{
+						"key": "calibrationPeriod",
+						"label": "Period",
+						"sortable": true
+					},
+					{
+						"key": "generatedAt",
+						"label": "Generated"
+					},
+					{
+						"key": "ar_mape",
+						"label": "AR MAPE (%)"
+					},
+					{
+						"key": "ap_mape",
+						"label": "AP MAPE (%)"
+					},
+					{
+						"key": "recurring_mape",
+						"label": "Recurring MAPE (%)"
+					},
+					{
+						"key": "tax_mape",
+						"label": "Tax MAPE (%)"
+					}
+				],
+				"defaultSort": "calibrationPeriod",
+				"description": "Monthly post-month-end forecast-accuracy report. REQ-CF-013."
 			}
 		}
 	]
