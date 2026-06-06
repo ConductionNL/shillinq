@@ -8,7 +8,7 @@ cancelled/reminder) routed through openconnector channel adapters.
 
 ## Implementation Tasks
 
-- [ ] Task 1: Author `BookingNotificationTrigger` and `BookingNotificationTemplate` register schemas in `lib/Settings/bookings_register.json` per REQ-BNT-001, REQ-BNT-002; `openspec validate` exits 0
+- [x] Task 1: Author `BookingNotificationTrigger` and `BookingNotificationTemplate` register schemas in `lib/Settings/bookings_register.json` per REQ-BNT-001, REQ-BNT-002; `openspec validate` exits 0
 - [ ] Task 2: Create `BookingNotificationService.php` service class with methods: `evaluateEventTrigger(event, booking)`, `dispatchNotification(trigger, recipient, template, booking)`, `recordAuditTrail(notification, status, reason)` per REQ-BNT-001, REQ-BNT-004, REQ-BNT-005
 - [ ] Task 3: Implement Twig template rendering engine for variable substitution; register `{{ booking.* }}`, `{{ recipient.* }}`, `{{ system.* }}` variable namespaces per REQ-BNT-002; unit tests cover missing variables (rendered as empty)
 - [ ] Task 4: Implement recipient rule evaluation logic: parse recipient YAML/JSON rules, evaluate conditions (price > 100, status == confirmed), return ordered recipient list per REQ-BNT-003; unit tests cover conditional skip and role resolution
