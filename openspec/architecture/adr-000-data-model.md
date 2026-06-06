@@ -6005,3 +6005,70 @@ _A scheduled appointment on a resource calendar. Introduced by `bookings-resourc
 - → Administration (many-to-one, via administrationId)
 - → Calendar (many-to-one, via calendar)
 - → Resource (many-to-one, via resource — denormalised, must equal Calendar.resource)
+
+### AvailabilityRule
+**Schema.org:** `schema:OpeningHoursSpecification`
+_Per-resource availability rule header introduced by `bookings-availability-rules` (REQ-BAR-001). Owns the resource FK, a three-state status lifecycle (`draft → active → archived` with a `reactivate` reverse edge from `archived → draft`), and the effective-date window. Together with its child `ResourceBreak` and `BookingConstraint` records it expresses the declarative answer to "when can this resource be booked?". The three-schema split (rule header + recurring break pattern + booking-policy constraint) was deliberately chosen over a flat single-schema model so breaks and constraints can vary in cardinality, mirroring competitor evidence (Cal.com, Cogsworth, Easy-Appointments, Salonized, Resy). Effective-date semantics: a rule that is `active` but whose `effectiveFrom` is in the future is queryable yet does not yet constrain bookings; an `effectiveUntil` in the past stops constraining bookings even while the lifecycle status remains `active` (the operator-driven `archive` transition is independent and audit-friendly). Multi-tenant isolation via `administrationId` per ADR-005. Lifecycle is fully declarative per ADR-031; no app-side state machine ships at Tier 1._
+**Primary spec:** bookings-availability-rules
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to Administration for tenant isolation (ADR-005) |
+| availabilityRuleId | string | Yes | Operator-assigned unique rule identifier within the administration |
+| resource | string | Yes | FK to Resource.resourceId (declared by bookings-resource-calendar) |
+| status | enum | Yes | One of draft, active, archived; default draft |
+| effectiveFrom | date | No | Date the rule begins to apply; null = applies immediately on activation |
+| effectiveUntil | date | No | Date the rule stops applying; null = permanent until archived |
+| description | string | No | Administrator notes (e.g. "Standaard beschikbaarheid", "Zomervakantie") |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- → Resource (many-to-one, via resource)
+- → ResourceBreak (one-to-many, via ResourceBreak.availabilityRule)
+- → BookingConstraint (one-to-many, via BookingConstraint.availabilityRule)
+
+### ResourceBreak
+**Schema.org:** `schema:Action`
+_Recurring break window inside an AvailabilityRule introduced by `bookings-availability-rules` (REQ-BAR-002). Captures the day-of-week plus start/end time in the resource's calendar zone plus a break classifier (`lunch`, `coffee`, `prep`, `other`). `isRecurring` defaults to true (weekly repetition); future tiers may add one-off blocks by flipping the flag. `endTime` MUST be strictly greater than `startTime` (declared via JSON-Schema pattern plus a cross-field `x-openregister-calculations` validator). Lifecycle is declarative per ADR-031: `active → archived`, no other transitions. Per REQ-BAR-006 the `availabilityRule` FK powers the rule detail view's `Pauzes` section without any app-side join code._
+**Primary spec:** bookings-availability-rules
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to Administration for tenant isolation (ADR-005) |
+| resourceBreakId | string | Yes | Operator-assigned unique break identifier within the administration |
+| availabilityRule | string | Yes | FK to AvailabilityRule.availabilityRuleId |
+| breakType | enum | Yes | One of lunch, coffee, prep, other |
+| dayOfWeek | enum | Yes | One of monday, tuesday, wednesday, thursday, friday, saturday, sunday, daily |
+| startTime | string (HH:MM, 24h) | Yes | Break start time in the resource's calendar zone |
+| endTime | string (HH:MM, 24h) | Yes | Break end time; MUST be strictly greater than startTime |
+| isRecurring | boolean | No | True when the break repeats weekly (default true) |
+| status | enum | Yes | One of active, archived; default active |
+| description | string | No | Free-text notes |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- → AvailabilityRule (many-to-one, via availabilityRule)
+
+### BookingConstraint
+**Schema.org:** `schema:Restriction`
+_Booking-policy constraint attached to an AvailabilityRule introduced by `bookings-availability-rules` (REQ-BAR-003). Carries the advance-notice window (`minAdvanceNoticeDays` / `maxAdvanceNoticeDays`), the per-booking buffer minutes (`preBufferMinutes` / `postBufferMinutes`), the `cancellationDeadlineHours` window, and a `blackoutDates` array of `{startDate, endDate, reason}` ranges expressing holidays, vacation, or maintenance. Discrete fields were chosen over a DSL/rules-engine because all 17/21 competitors surveyed (Cal.com, Cogsworth, Easy-Appointments, Salonized, Resy …) ship the same flat shape; reading `minAdvanceNoticeDays: 5` is self-explanatory to an SMB operator. `maxAdvanceNoticeDays` MUST be >= `minAdvanceNoticeDays` when set (cross-field validator). Blackout dates are inlined as an array rather than promoted to a separate `ResourceBlackout` schema because SMB cardinality is low (10–20 spans/year) and a single query "show me all unavailable spans for resource X" stays trivial; bulk-import for large holiday calendars is a Tier-2 concern. Lifecycle is declarative per ADR-031: `active → archived`._
+**Primary spec:** bookings-availability-rules
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to Administration for tenant isolation (ADR-005) |
+| bookingConstraintId | string | Yes | Operator-assigned unique constraint identifier within the administration |
+| availabilityRule | string | Yes | FK to AvailabilityRule.availabilityRuleId |
+| minAdvanceNoticeDays | integer (≥0) | No | Minimum days in advance a booking may be made; default 0 |
+| maxAdvanceNoticeDays | integer (≥0) | No | Maximum days in advance; null = unlimited |
+| preBufferMinutes | integer (≥0) | No | Prep time required before each booking (minutes) |
+| postBufferMinutes | integer (≥0) | No | Cleanup time required after each booking (minutes) |
+| cancellationDeadlineHours | integer (≥0) | No | Minimum hours before the booking start that a cancellation is still allowed without late fee |
+| blackoutDates | array | No | Array of `{startDate, endDate, reason}` ranges during which no booking is allowed |
+| status | enum | Yes | One of active, archived; default active |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- → AvailabilityRule (many-to-one, via availabilityRule)
+
+> **Reconciliation note (bookings-availability-rules, 2026-06-07):** The three-schema model (`AvailabilityRule` + `ResourceBreak` + `BookingConstraint`) is the canonical availability surface for the Tier-1 bookings foundation. It complements but does not replace the simpler legacy fields already on the bookings-resource-calendar `Resource` entity (`openingTime` / `closingTime` / `allowOverlap`) which remain for backwards compatibility with the early bookings-create-appointment flow. The richer per-day templates and breaks live on `Calendar.workingHours` and `ResourceBreak` respectively; advance-notice and buffer policies live on `BookingConstraint`. The availability-query layer (implementation cycle) is responsible for merging these layers — `Resource` operational hours first, then `Calendar.workingHours` overrides, then `ResourceBreak` carve-outs, then `BookingConstraint` advance-notice / blackout guards — and emitting a single "is this slot bookable?" verdict. Cancellation policies remain owned by the `bookings-cancellation-rules` change; this change carries only the no-fee `cancellationDeadlineHours` advisory hint, not the late-fee bracket logic.
