@@ -1,5 +1,7 @@
 # Design — Year-End Close
 
+**status: pr-created**
+
 ## Decisions
 
 ### D1 — Year-end close is the highest-stakes operation; declarative makes it auditable

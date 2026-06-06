@@ -1,0 +1,11 @@
+{
+  "ran": true,
+  "pass": true,
+  "blocking": [],
+  "turns": 8,
+  "cost_usd": 0.3155,
+  "cost_eur": 0.2903,
+  "pr": 281,
+  "commit": "71965a1",
+  "timestamp": "2026-06-05T20:11:57.756918+00:00"
+}
