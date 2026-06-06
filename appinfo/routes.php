@@ -60,6 +60,15 @@ return [
         ['name' => 'vATDeclaration#listByReturn', 'url' => '/api/vat-returns/{returnId}/declarations', 'verb' => 'GET'],
         ['name' => 'vATLine#listByReturn', 'url' => '/api/vat-returns/{returnId}/lines', 'verb' => 'GET'],
         ['name' => 'vATLine#listByDeclaration', 'url' => '/api/vat-declarations/{declarationId}/lines', 'verb' => 'GET'],
+
+        // Calendar + booking REST API (bookings-resource-calendar, issue #117).
+        // Specific path segments (.../bookings) precede the bare {calendarId} route
+        // so Symfony matches the booking range/create endpoints first.
+        ['name' => 'calendar#index', 'url' => '/api/v2/calendars', 'verb' => 'GET'],
+        ['name' => 'calendar#listBookings', 'url' => '/api/v2/calendars/{calendarId}/bookings', 'verb' => 'GET'],
+        ['name' => 'calendar#createBooking', 'url' => '/api/v2/calendars/{calendarId}/bookings', 'verb' => 'POST'],
+        ['name' => 'calendar#show', 'url' => '/api/v2/calendars/{calendarId}', 'verb' => 'GET'],
+
         ['name' => 'vATReturn#show', 'url' => '/api/vat-returns/{returnId}', 'verb' => 'GET'],
         ['name' => 'vATReturn#update', 'url' => '/api/vat-returns/{returnId}', 'verb' => 'PUT'],
         ['name' => 'vATReturn#destroy', 'url' => '/api/vat-returns/{returnId}', 'verb' => 'DELETE'],
