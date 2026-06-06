@@ -1,89 +1,118 @@
 {
-  "spec": "openspec/changes/add-shillinq-innovatiebox-administratie",
+  "spec": "openspec/changes/expense-capture-core",
   "verified": [
     {
       "task": "1",
       "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "Confirmed no IPAssetValuation, InnovatieboxElection, WinstToerekening schemas existed before this change."
+      "size": 344153
     },
     {
-      "task": "2",
-      "file": "openspec/changes/add-shillinq-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md",
-      "ok": true,
-      "note": "Spec file exists with Status: proposed, Scope: shillinq, REQ-IBA-NNN requirements and Scenario blocks."
-    },
-    {
-      "task": "3",
-      "file": "openspec/changes/add-shillinq-innovatiebox-administratie/proposal.md",
-      "ok": true,
-      "note": "Proposal references nextcloud-app spec, includes Affected Projects, Scope, Risks, Rollback, Open Questions."
-    },
-    {
-      "task": "4",
-      "file": "openspec/changes/add-shillinq-innovatiebox-administratie/design.md",
-      "ok": true,
-      "note": "Design includes Reuse Analysis table and Seed Data section."
-    },
-    {
-      "task": "5",
+      "task": "5-8",
       "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "InnovatieboxElection schema declared with administrationId, fiscalYear, route enum (forfaitair|afpelmethode), applicableTariff (default 0.09), forfaitairCapBedrag (default 25000), forfaitairPercentage (default 0.25)."
-    },
-    {
-      "task": "6",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "note": "IPAssetValuation schema declared with all required fields, x-schema-org: schema:Intangible, applicableTariff default 0.09."
-    },
-    {
-      "task": "7",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "note": "WinstToerekening schema declared with ipAssetId, periodId, toegerekendeWinst, verdeelsleutel enum, parameters."
-    },
-    {
-      "task": "8",
-      "file": "lib/Settings/seeds/innovatiebox-tariefen.json",
-      "ok": true,
-      "note": "Seed file with historic tariff schedule (before 2018: 0.05, 2018-2020: 0.07, 2021-present: 0.09) + forfaitair parameters (cap 25000, percentage 0.25). SPDX in _spdx block, _meta source field."
+      "size": 344153
     },
     {
       "task": "9",
-      "file": "lib/Settings/shillinq_register.json",
+      "file": "lib/Lifecycle/ExpenseClaimGuard.php",
       "ok": true,
-      "note": "x-openregister-aggregations.innovatieboxAdministratie declared on InnovatieboxElection with branch on route, forfaitair formula min(forfaitairPercentage * operatingProfit, forfaitairCapBedrag), afpelmethode sum via WinstToerekening."
-    },
-    {
-      "task": "10",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "note": "x-openregister-constraints.uniqueElectionPerFiscalYear declares unique constraint on (administrationId, fiscalYear). Aggregation requires at least one IPAssetValuation for afpelmethode."
+      "size": 10439
     },
     {
       "task": "11",
-      "file": "lib/Settings/docudesk-templates.json",
+      "file": "lib/Validation/PhotoValidator.php",
       "ok": true,
-      "note": "New file created registering vpb-aangifte-innovatiebox-sectie template with forfaitair and afpelmethode sections."
+      "size": 2541
     },
     {
-      "task": "12",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "note": "x-openregister-notifications declared on InnovatieboxElection: onRouteElection (onCreate), onRouteChange (onUpdate), onCapApplication (onCalculation), onTariffApplication (onCalculation) — all auditLevel: immutable."
-    },
-    {
-      "task": "13",
+      "task": "17",
       "file": "src/manifest.json",
       "ok": true,
-      "note": "Innovatiebox menu entry added under Bookkeeping with featureFlag: mkb-innovatiebox, order 80. Pages: InnovatieboxElections (index), InnovatieboxDetail (detail), InnovatieboxIPAssetDetail (detail). node tests/validate-manifest.js not run (test file does not exist in this repo)."
+      "size": 117716
     },
     {
-      "task": "14",
+      "task": "18",
       "file": "openspec/architecture/adr-000-data-model.md",
       "ok": true,
-      "note": "Entries added for InnovatieboxElection (alphabetically after Investment), IPAssetValuation (after InnovatieboxElection), and WinstToerekening (alphabetically before WOZAssessment) with annotations referencing this spec."
+      "size": 301720
+    },
+    {
+      "task": "test-11",
+      "file": "tests/Unit/Validation/PhotoValidatorTest.php",
+      "ok": true,
+      "size": 5529
+    },
+    {
+      "task": "test-9",
+      "file": "tests/Unit/Lifecycle/ExpenseClaimGuardTest.php",
+      "ok": true,
+      "size": 14622
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::Receipt",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::MileageEntry",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::PerDiem",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::ExpenseClaimEntry",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::MileageRate",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::PerDiemRate",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::Receipts",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::ReceiptDetail",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::ExpenseClaims",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::ExpenseClaimDetail",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::MileageLog",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::MileageLogDetail",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::Inkoop menu",
+      "ok": true
     }
   ],
   "stubs": [],
