@@ -82,6 +82,14 @@ return [
         ['name' => 'invoiceApi#pdf', 'url' => '/api/v1/invoices/{invoiceId}/pdf', 'verb' => 'GET'],
         ['name' => 'invoiceApi#show', 'url' => '/api/v1/invoices/{invoiceId}', 'verb' => 'GET'],
 
+        // Booking notification triggers + admin monitor (bookings-notification-triggers,
+        // issue #115). Static admin segments precede the booking-scoped routes so the
+        // /api/admin/* prefix matches first under Symfony.
+        ['name' => 'notification#adminMonitor', 'url' => '/api/admin/notification-monitor', 'verb' => 'GET'],
+        ['name' => 'notification#adminDisableAll', 'url' => '/api/admin/notification-monitor/disable-all', 'verb' => 'POST'],
+        ['name' => 'notification#listForBooking', 'url' => '/api/bookings/{id}/notification-triggers', 'verb' => 'GET'],
+        ['name' => 'notification#updateForBooking', 'url' => '/api/bookings/{id}/notification-triggers', 'verb' => 'PATCH'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
