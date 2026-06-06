@@ -7,7 +7,7 @@
 
 ## ADDED Requirements
 
-### REQ-SC-001: Service catalogue SHALL be declared as a single `Service` register, with no parallel app-local service table
+### Requirement: REQ-SC-001 Service catalogue SHALL be declared as a single `Service` register, with no parallel app-local service table
 
 The service catalogue MUST be expressed as a new `Service` register in OpenRegister's
 global namespace, per ADR-024. No app-local service table (`booking_services`, `services`,
@@ -33,7 +33,9 @@ calendar, and resource-allocation specs across the Nextcloud app ecosystem.
 - **THEN** no such parallel structures SHALL exist; all service data flows through
   the canonical `Service` register.
 
-### REQ-SC-002: The `Service` schema SHALL declare a fixed minimum field set
+### Requirement: REQ-SC-002 The `Service` schema SHALL declare a fixed minimum field set
+
+The `Service` schema MUST declare the following field set with the indicated types, required status, and default values.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
@@ -73,7 +75,7 @@ Schema.org annotation: `schema:Service`.
 - **WHEN** another service is created with the same code in the same administration
 - **THEN** the save MUST fail with a "duplicate service code" uniqueness error.
 
-### REQ-SC-003: Service temporal dimensions SHALL be validated with Dutch SMB semantics
+### Requirement: REQ-SC-003 Service temporal dimensions SHALL be validated with Dutch SMB semantics
 
 Temporal field validation MUST follow:
 
@@ -107,7 +109,7 @@ Temporal field validation MUST follow:
 - **WHEN** saved with `{name:"Monthly Plan", duration:0, prepareTime:0, bufferBefore:0, bufferAfter:0}`
 - **THEN** validation MUST pass.
 
-### REQ-SC-004: Pricing SHALL support both fixed and dynamic models via a flag
+### Requirement: REQ-SC-004 Pricing SHALL support both fixed and dynamic models via a flag
 
 The `Service` schema MUST declare:
 
@@ -132,7 +134,7 @@ The `Service` schema MUST declare:
 - **THEN** the booking system MUST look up pricing rules in a dependent pricing-rule spec
   (T2+); `basePrice` MUST NOT be used as final price without rule application.
 
-### REQ-SC-005: Service SHALL declare a minimal lifecycle: draft → active → archived
+### Requirement: REQ-SC-005 Service SHALL declare a minimal lifecycle: draft → active → archived
 
 `Service` MUST declare a status with three valid states:
 
@@ -160,10 +162,10 @@ Transitions:
 - **THEN** it MUST NOT be available for new bookings; **AND** it MUST still be
   queryable for historical slot/booking references.
 
-### REQ-SC-006: Categorization SHALL be flat in T1; nesting deferred to T2+
+### Requirement: REQ-SC-006 Categorization SHALL be flat in T1; nesting deferred to T2+
 
-Services are grouped via a flat `serviceCategory` field (string). No hierarchical
-category register exists in T1. Nested/hierarchical category management deferred to T2+.
+Services MUST be grouped via a flat `serviceCategory` field (string). No hierarchical
+category register SHALL exist in T1. Nested/hierarchical category management is deferred to T2+.
 
 #### Scenario: Services grouped by category
 
@@ -172,7 +174,7 @@ category register exists in T1. Nested/hierarchical category management deferred
 - **THEN** the services MUST be grouped and displayed correctly; hierarchy is not
   required (flat list suffices for T1).
 
-### REQ-SC-007: Service SHALL support resource-type linking for dependent specs
+### Requirement: REQ-SC-007 Service SHALL support resource-type linking for dependent specs
 
 The `Service` schema MUST declare `resourceTypeRef` (string, optional FK). This field
 is a forward reference to "resource type" concepts (skill, room, staff specialty, etc.)
@@ -200,10 +202,10 @@ and validate `resourceTypeRef` according to their own requirements.
 - **WHEN** a dependent booking spec processes the service
 - **THEN** the dependent spec MUST handle null gracefully; no resource matching required.
 
-### REQ-SC-008: Service code SHALL be unique per administration and stable across time
+### Requirement: REQ-SC-008 Service code SHALL be unique per administration and stable across time
 
-The `code` field uniquely identifies a service within an administration. Once assigned,
-it MUST NOT change, as dependent specs may reference it for mapping, reporting, or
+The `code` field MUST uniquely identify a service within an administration. Once assigned,
+it MUST NOT change, as dependent specs MAY reference it for mapping, reporting, or
 external integrations.
 
 #### Scenario: Service code uniqueness per administration

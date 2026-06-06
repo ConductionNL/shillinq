@@ -4291,6 +4291,33 @@ _Payment scheduled for future execution with support for recurring transactions_
 - → BankAccount (many-to-one)
 - → Payment (one-to-many)
 
+### Service
+**Schema.org:** `schema:Service`
+_A bookable service offering — the foundational data-model for all scheduling, booking and appointment workloads (REQ-SC-001..008 of `bookings-service-catalog`). Carries identification (`serviceId`, stable per-administration `code` slug, `name`, `description`), temporal dimensions (`duration`, `prepareTime`, `bufferBefore`, `bufferAfter` — all in minutes; total calendar block = `prepareTime + duration + bufferAfter`), pricing (`basePrice` with two-decimal precision + `currency` ISO-4217 + `dynamicPricing` flag for T2+ rule engines), categorisation (`serviceCategory` flat string per REQ-SC-006, `resourceTypeRef` forward FK per REQ-SC-007), and lifecycle (`status`: draft → active → archived per REQ-SC-005). Code uniqueness is per-administration (REQ-SC-008). `dynamicPricing: true` signals downstream consumers that `basePrice` is a fallback only. `resourceTypeRef` resolution (skill/room/staff specialty/equipment class) is owned by dependent specs (`bookings-resource-calendar`, `bookings-availability-rules`). `duration: 0` is valid for non-scheduled services (subscriptions, products). Schema is declared declaratively in `lib/Settings/register.d/bookings-service-catalog.json` per ADR-031 + ADR-037; no `ServiceService` PHP class — validation/uniqueness/lifecycle/aggregations are expressed as `x-openregister-*` metadata._
+**Primary spec:** bookings-service-catalog
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to Administration for tenant isolation (ADR-005) |
+| serviceId | string | Yes | Operator-assigned unique service identifier within the administration |
+| code | string | Yes | Stable per-administration slug (`^[a-z0-9][a-z0-9-]*$`); MUST NOT change once assigned (REQ-SC-008) |
+| name | string | Yes | Human-readable service name |
+| description | string | No | Detailed service description for UI |
+| duration | integer ≥ 0 | Yes | Service duration in minutes; 0 for non-scheduled services |
+| prepareTime | integer ≥ 0 | Yes | Setup time in minutes applied before the service window (default 0) |
+| bufferBefore | integer ≥ 0 | Yes | Gap in minutes required before the service starts (default 0) |
+| bufferAfter | integer ≥ 0 | Yes | Gap in minutes after the service ends for turnover (default 0) |
+| basePrice | decimal ≥ 0 | Yes | Base unit price (multipleOf 0.01); final price when `dynamicPricing = false` |
+| currency | string | Yes | ISO 4217 currency code (default EUR) |
+| dynamicPricing | boolean | Yes | When true, dependent T2+ pricing specs MUST compute the actual price (default false) |
+| serviceCategory | string | Yes | Flat category grouping (e.g. "Hair Services") |
+| resourceTypeRef | string | No | Forward FK to resource-type concept owned by dependent specs |
+| status | enum | Yes | One of draft, active, archived (REQ-SC-005) |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- ← Appointment (one-to-many, via Appointment.serviceId — bookings-create-appointment)
+
 ### ServiceLevelAgreement
 **Schema.org:** `schema:Service`
 _Formal agreement defining service level targets, performance expectations, and remedies with a supplier_

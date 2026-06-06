@@ -1,0 +1,153 @@
+{
+	"menu": [
+		{
+			"id": "Verkoop",
+			"label": "Verkoop",
+			"icon": "CartOutline",
+			"order": 33,
+			"children": [
+				{
+					"id": "Diensten",
+					"label": "Diensten",
+					"icon": "BriefcaseOutline",
+					"route": "Diensten",
+					"order": 5
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "Diensten",
+			"route": "/verkoop/diensten",
+			"type": "index",
+			"title": "Diensten-catalogus",
+			"config": {
+				"register": "shillinq",
+				"schema": "Service",
+				"columns": [
+					{
+						"key": "code",
+						"label": "Code",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Service",
+						"sortable": true
+					},
+					{
+						"key": "serviceCategory",
+						"label": "Category",
+						"sortable": true
+					},
+					{
+						"key": "duration",
+						"label": "Duration (min)",
+						"sortable": true
+					},
+					{
+						"key": "basePrice",
+						"label": "Base price",
+						"sortable": true
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "name",
+				"detailRoute": "DienstDetail"
+			}
+		},
+		{
+			"id": "DienstDetail",
+			"route": "/verkoop/diensten/:id",
+			"type": "detail",
+			"title": "Dienst",
+			"config": {
+				"register": "shillinq",
+				"schema": "Service",
+				"fields": [
+					{
+						"key": "code",
+						"label": "Service Code",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Service Name",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Service Description",
+						"type": "string"
+					},
+					{
+						"key": "serviceCategory",
+						"label": "Service Category",
+						"type": "string"
+					},
+					{
+						"key": "resourceTypeRef",
+						"label": "Resource Type",
+						"type": "string"
+					},
+					{
+						"key": "duration",
+						"label": "Duration",
+						"type": "integer"
+					},
+					{
+						"key": "prepareTime",
+						"label": "Preparation Time",
+						"type": "integer"
+					},
+					{
+						"key": "bufferBefore",
+						"label": "Buffer Before",
+						"type": "integer"
+					},
+					{
+						"key": "bufferAfter",
+						"label": "Buffer After",
+						"type": "integer"
+					},
+					{
+						"key": "basePrice",
+						"label": "Base Price",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "dynamicPricing",
+						"label": "Dynamic Pricing",
+						"type": "boolean"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"indexRoute": "Diensten"
+			}
+		}
+	]
+}
