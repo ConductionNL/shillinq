@@ -10086,6 +10086,576 @@
 					}
 				}
 			}
+		},
+		"Location": {
+			"slug": "Location",
+			"icon": "WarehouseOutline",
+			"version": "0.1.0",
+			"title": "Location",
+			"description": "Physical or virtual storage location in the warehouse hierarchy (warehouse → zone → bin → in-transit). Hierarchical parent-child FK (parentLocationId) enables rollup stock visibility and inter-location transfers per REQ-LOC-001 through REQ-LOC-009 and design.md D1-D6. No parallel warehouse table in PHP per ADR-031 — location hierarchy is pure declarative metadata.",
+			"x-schema-org": "schema:Place",
+			"x-openregister-purpose": "dimension",
+			"type": "object",
+			"required": [
+				"name",
+				"locationCode",
+				"locationType",
+				"administrationId"
+			],
+			"properties": {
+				"name": {
+					"type": "string",
+					"description": "Human-readable location name per REQ-LOC-001.",
+					"example": "Amsterdam Central Warehouse"
+				},
+				"locationCode": {
+					"type": "string",
+					"description": "Operator-assigned location code unique per administration per REQ-LOC-002 and D5. Immutable after creation — operator must create new location + migrate stock if rename required. Examples: 'W-01', 'Z-01', 'B-100', 'IN-TRANSIT-W01-W02'.",
+					"example": "W-01",
+					"pattern": "^[A-Z0-9][A-Z0-9\\-_]{0,19}$"
+				},
+				"locationType": {
+					"type": "string",
+					"description": "Location type in warehouse hierarchy per REQ-LOC-002 D1. warehouse = physical site (no parent); zone = area within warehouse; bin = most-granular storage unit; in-transit = virtual holding for transfers per D2.",
+					"enum": [
+						"warehouse",
+						"zone",
+						"bin",
+						"in-transit"
+					],
+					"example": "warehouse"
+				},
+				"parentLocationId": {
+					"type": "string",
+					"nullable": true,
+					"description": "FK to parent Location id per REQ-LOC-001 D1. Null for warehouse and in-transit types (top-level or virtual). Required for zone and bin types. Max hierarchy depth 4 per REQ-LOC-003.",
+					"example": "loc-w01"
+				},
+				"address": {
+					"type": "string",
+					"nullable": true,
+					"description": "Physical address of warehouse (street + city). Applicable to warehouse type only.",
+					"example": "Westerdoksdijk 40, 1013 AE Amsterdam"
+				},
+				"region": {
+					"type": "string",
+					"nullable": true,
+					"description": "Geographic region for rollup reporting filters per REQ-LOC-007.",
+					"example": "Noord-Holland"
+				},
+				"binNamingConvention": {
+					"type": "string",
+					"nullable": true,
+					"description": "Administration-level bin naming preference per Task 6. One of: bin, slot, compartment, location. Defaults to 'bin'.",
+					"enum": [
+						"bin",
+						"slot",
+						"compartment",
+						"location"
+					],
+					"default": "bin",
+					"example": "bin"
+				},
+				"capacity": {
+					"type": "number",
+					"nullable": true,
+					"description": "Maximum storage capacity in operator-defined units. Used for capacity warning per REQ-LOC-009.",
+					"example": 500.0
+				},
+				"capacityUnit": {
+					"type": "string",
+					"nullable": true,
+					"description": "Unit of capacity measurement (e.g., 'pallets', 'items', 'kg').",
+					"example": "pallets"
+				},
+				"status": {
+					"type": "string",
+					"description": "Location lifecycle status per REQ-LOC-008.",
+					"enum": [
+						"active",
+						"inactive",
+						"archived"
+					],
+					"default": "active",
+					"example": "active"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the Administration owning this location per REQ-LOC-008. All location queries are scoped to this administration — cross-org access is rejected with 403.",
+					"example": "adm-1"
+				},
+				"notes": {
+					"type": "string",
+					"nullable": true,
+					"description": "Optional operator notes about this location.",
+					"example": "High-bay racking, forklift required"
+				}
+			},
+			"x-openregister-unique": [
+				[
+					"administrationId",
+					"locationCode"
+				]
+			],
+			"x-openregister-lifecycle": {
+				"field": "status",
+				"initialState": "active",
+				"states": {
+					"active": {
+						"label": "Active",
+						"labelNl": "Actief",
+						"description": "Location is operational and accepts stock movements."
+					},
+					"inactive": {
+						"label": "Inactive",
+						"labelNl": "Inactief",
+						"description": "Location is temporarily unavailable. Stock remains; no new movements."
+					},
+					"archived": {
+						"label": "Archived",
+						"labelNl": "Gearchiveerd",
+						"description": "Location is retired. Historical stock records are read-only."
+					}
+				},
+				"transitions": {
+					"deactivate": {
+						"from": "active",
+						"to": "inactive",
+						"label": "Deactivate",
+						"labelNl": "Deactiveren",
+						"description": "Temporarily close this location for new stock movements."
+					},
+					"reactivate": {
+						"from": "inactive",
+						"to": "active",
+						"label": "Reactivate",
+						"labelNl": "Heractiveren",
+						"description": "Re-open this location for stock movements."
+					},
+					"archive": {
+						"from": [
+							"active",
+							"inactive"
+						],
+						"to": "archived",
+						"label": "Archive",
+						"labelNl": "Archiveren",
+						"description": "Permanently retire this location."
+					}
+				},
+				"validations": {
+					"onCreate": {
+						"zoneRequiresParent": {
+							"condition": "locationType IN ('zone', 'bin') AND parentLocationId IS NULL",
+							"message": "Zone and bin locations require a parentLocationId.",
+							"messageNl": "Zone- en bin-locaties vereisen een bovenliggende locatie."
+						},
+						"warehouseNoParent": {
+							"condition": "locationType IN ('warehouse', 'in-transit') AND parentLocationId IS NOT NULL",
+							"message": "Warehouse and in-transit locations must not have a parent.",
+							"messageNl": "Warehouse- en in-transit-locaties mogen geen bovenliggende locatie hebben."
+						},
+						"maxDepth": {
+							"condition": "hierarchyDepth(parentLocationId) >= 4",
+							"message": "Location hierarchy exceeds maximum depth of 4.",
+							"messageNl": "Locatiehierarchie overschrijdt maximale diepte van 4.",
+							"guard": "OCA\\Shillinq\\Guard\\LocationHierarchyGuard::validateDepth"
+						},
+						"noCircularReference": {
+							"condition": "hasCircularReference(id, parentLocationId)",
+							"message": "Circular reference detected in location hierarchy.",
+							"messageNl": "Cirkelverwijzing gedetecteerd in locatiehierarchie.",
+							"guard": "OCA\\Shillinq\\Guard\\LocationHierarchyGuard::validateNoCircle"
+						}
+					},
+					"onUpdate": {
+						"locationCodeImmutable": {
+							"condition": "CHANGED(locationCode)",
+							"message": "Location code cannot be changed after creation per REQ-LOC-002. Create a new location and migrate stock.",
+							"messageNl": "Locatiecode kan na aanmaak niet worden gewijzigd. Maak een nieuwe locatie aan en migreer de voorraad."
+						}
+					}
+				}
+			},
+			"x-openregister-aggregations": {
+				"childCount": {
+					"description": "Number of direct child locations per REQ-LOC-007.",
+					"source": "Location",
+					"filter": {
+						"parentLocationId": "@self.id"
+					},
+					"operation": "count",
+					"field": "id",
+					"groupBy": "locationType"
+				},
+				"descendantCount": {
+					"description": "Total descendant locations at all depth levels (recursive) per REQ-LOC-007.",
+					"source": "Location",
+					"filter": {
+						"isDescendantOf": "@self.id"
+					},
+					"operation": "count",
+					"field": "id",
+					"guard": "OCA\\Shillinq\\Guard\\LocationHierarchyGuard::countDescendants"
+				},
+				"stockRollup": {
+					"description": "Warehouse/zone-level stock quantity = SUM(InventoryStock.quantity for all descendant bin locations) per REQ-LOC-005. Excludes in-transit stock. Returns aggregate per SKU.",
+					"source": "InventoryStock",
+					"filter": {
+						"locationId": {
+							"operator": "inDescendantsOf",
+							"value": "@self.id"
+						},
+						"location.locationType": "bin"
+					},
+					"groupBy": "sku",
+					"operations": {
+						"totalQuantity": {
+							"field": "quantity",
+							"operation": "sum"
+						},
+						"locationCount": {
+							"field": "locationId",
+							"operation": "countDistinct"
+						}
+					},
+					"performance": {
+						"indexHint": "(parentLocationId, locationType, administrationId)",
+						"targetMs": 50,
+						"scaleNote": "1000+ bins under warehouse returns aggregate in < 50ms per REQ-LOC-003"
+					}
+				},
+				"inTransitStock": {
+					"description": "Stock currently in-transit to/from this location per REQ-LOC-004.",
+					"source": "InventoryStock",
+					"filter": {
+						"locationId": "@self.id",
+						"location.locationType": "in-transit"
+					},
+					"groupBy": "sku",
+					"operations": {
+						"inTransitQuantity": {
+							"field": "quantity",
+							"operation": "sum"
+						}
+					}
+				}
+			},
+			"x-openregister-calculations": {
+				"hierarchyPath": {
+					"description": "Full path from warehouse to this location (e.g., 'W-01 / Z-01 / B-100') per D5.",
+					"guard": "OCA\\Shillinq\\Guard\\LocationHierarchyGuard::buildPath",
+					"output": "string",
+					"example": "W-01 / Z-01 / B-100"
+				},
+				"hierarchyDepthValue": {
+					"description": "Depth of this location in the hierarchy (0=warehouse, 1=zone, 2=aisle, 3=bin) per REQ-LOC-003.",
+					"guard": "OCA\\Shillinq\\Guard\\LocationHierarchyGuard::computeDepth",
+					"output": "integer",
+					"example": 2
+				},
+				"stockAvailabilityBadge": {
+					"description": "UI badge: 'In Stock', 'Low Stock', 'Empty', or 'Over Capacity' based on stockRollup vs capacity per REQ-LOC-019.",
+					"guard": "OCA\\Shillinq\\Guard\\LocationHierarchyGuard::stockBadge",
+					"output": "string",
+					"example": "In Stock"
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"warehouse_manager": {
+						"permissions": [
+							"create",
+							"read",
+							"update",
+							"delete"
+						],
+						"description": "Full location management including hierarchy setup and deactivation."
+					},
+					"inventory": {
+						"permissions": [
+							"read",
+							"update"
+						],
+						"description": "Can view and update stock at locations; cannot create/delete hierarchy."
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						],
+						"description": "Read-only access to locations for audit trail review."
+					}
+				},
+				"adminScope": {
+					"field": "administrationId",
+					"enforce": true,
+					"description": "Operators can only view/edit locations in their own administration per REQ-LOC-008."
+				}
+			}
+		},
+		"InventoryStockTransfer": {
+			"slug": "InventoryStockTransfer",
+			"icon": "TruckDeliveryOutline",
+			"version": "0.1.0",
+			"title": "Inventory Stock Transfer",
+			"description": "Inter-location transfer of stock between any two locations in the warehouse hierarchy per REQ-LOC-006. Transfer updates source and destination InventoryStock quantities. Optional GL integration via StockMove (if inventory-stock-movement-ledger is present). No PHP TransferService — transfer workflow is declarative per ADR-031.",
+			"x-schema-org": "schema:MoveAction",
+			"type": "object",
+			"required": [
+				"sourceLocationId",
+				"destinationLocationId",
+				"sku",
+				"quantity",
+				"administrationId",
+				"status"
+			],
+			"properties": {
+				"transferNumber": {
+					"type": "string",
+					"nullable": true,
+					"description": "Human-readable transfer reference (auto-generated if empty).",
+					"example": "TRF-2026-001"
+				},
+				"sourceLocationId": {
+					"type": "string",
+					"description": "FK to source Location per REQ-LOC-006. Any location type (warehouse/zone/bin).",
+					"example": "loc-w01"
+				},
+				"destinationLocationId": {
+					"type": "string",
+					"description": "FK to destination Location per REQ-LOC-006. Must differ from source.",
+					"example": "loc-w02"
+				},
+				"sku": {
+					"type": "string",
+					"description": "Product SKU being transferred. References Product.sku.",
+					"example": "LAPTOP-001"
+				},
+				"quantity": {
+					"type": "number",
+					"minimum": 0.001,
+					"description": "Quantity to transfer. Must be positive and ≤ available stock at source.",
+					"example": 50.0
+				},
+				"scheduledDate": {
+					"type": "string",
+					"format": "date",
+					"nullable": true,
+					"description": "Planned transfer execution date.",
+					"example": "2026-06-10"
+				},
+				"completedDate": {
+					"type": "string",
+					"format": "date",
+					"nullable": true,
+					"description": "Actual transfer completion date (when stock arrives at destination).",
+					"example": "2026-06-12"
+				},
+				"status": {
+					"type": "string",
+					"description": "Transfer lifecycle status per REQ-LOC-006.",
+					"enum": [
+						"draft",
+						"confirmed",
+						"in-transit",
+						"received",
+						"cancelled"
+					],
+					"default": "draft",
+					"example": "draft"
+				},
+				"notes": {
+					"type": "string",
+					"nullable": true,
+					"description": "Operator notes about this transfer.",
+					"example": "Seasonal stock rebalancing W-MAIN → W-EAST"
+				},
+				"glPosted": {
+					"type": "boolean",
+					"nullable": true,
+					"default": false,
+					"description": "Whether GL reclassification entry has been posted (optional, requires add-shillinq-general-ledger).",
+					"example": false
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to Administration owning this transfer. Scoped per org.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "status",
+				"initialState": "draft",
+				"states": {
+					"draft": {
+						"label": "Draft",
+						"labelNl": "Concept"
+					},
+					"confirmed": {
+						"label": "Confirmed",
+						"labelNl": "Bevestigd"
+					},
+					"in-transit": {
+						"label": "In Transit",
+						"labelNl": "Onderweg"
+					},
+					"received": {
+						"label": "Received",
+						"labelNl": "Ontvangen"
+					},
+					"cancelled": {
+						"label": "Cancelled",
+						"labelNl": "Geannuleerd"
+					}
+				},
+				"transitions": {
+					"confirm": {
+						"from": "draft",
+						"to": "confirmed",
+						"label": "Confirm transfer",
+						"labelNl": "Transfer bevestigen",
+						"description": "Confirm transfer intent. Reserves stock at source."
+					},
+					"ship": {
+						"from": "confirmed",
+						"to": "in-transit",
+						"label": "Mark as shipped",
+						"labelNl": "Markeren als verzonden",
+						"description": "Stock departs source location. In-transit holding location receives stock per D2."
+					},
+					"receive": {
+						"from": "in-transit",
+						"to": "received",
+						"label": "Mark as received",
+						"labelNl": "Markeren als ontvangen",
+						"description": "Stock arrives at destination. InventoryStock updated atomically: source −qty, dest +qty. GL entry posted if GL present."
+					},
+					"cancel": {
+						"from": [
+							"draft",
+							"confirmed"
+						],
+						"to": "cancelled",
+						"label": "Cancel transfer",
+						"labelNl": "Transfer annuleren"
+					}
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"warehouse_manager": {
+						"permissions": [
+							"create",
+							"read",
+							"update",
+							"delete"
+						]
+					},
+					"inventory": {
+						"permissions": [
+							"read",
+							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				},
+				"adminScope": {
+					"field": "administrationId",
+					"enforce": true
+				}
+			}
+		},
+		"InventoryStock": {
+			"slug": "InventoryStock",
+			"icon": "PackageVariantClosedOutline",
+			"version": "0.1.0",
+			"title": "Inventory Stock",
+			"description": "Stock level per SKU at a specific bin Location per REQ-LOC-009 and inventory-stock-tracking spec. Always recorded at bin level (most-granular); warehouse/zone aggregation via Location.stockRollup. locationId FK references bin-type Location only.",
+			"x-schema-org": "schema:Thing",
+			"type": "object",
+			"required": [
+				"sku",
+				"locationId",
+				"quantity",
+				"administrationId"
+			],
+			"properties": {
+				"sku": {
+					"type": "string",
+					"description": "Product SKU. References Product.sku.",
+					"example": "LAPTOP-001"
+				},
+				"locationId": {
+					"type": "string",
+					"description": "FK to Location (must be bin type per REQ-LOC-009). Aggregation queries traverse hierarchy upward.",
+					"example": "loc-w01-z01-b100"
+				},
+				"quantity": {
+					"type": "number",
+					"minimum": 0,
+					"description": "On-hand stock quantity at this bin location.",
+					"example": 25.0
+				},
+				"reservedQuantity": {
+					"type": "number",
+					"minimum": 0,
+					"nullable": true,
+					"default": 0,
+					"description": "Quantity reserved for pending orders (not available for new allocations).",
+					"example": 5.0
+				},
+				"unitCost": {
+					"type": "number",
+					"nullable": true,
+					"minimum": 0,
+					"description": "Unit cost at this location for inventory valuation.",
+					"example": 899.0
+				},
+				"lastMovementDate": {
+					"type": "string",
+					"format": "date",
+					"nullable": true,
+					"description": "Date of most recent stock movement at this location.",
+					"example": "2026-06-01"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to Administration. Scoped per org.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"warehouse_manager": {
+						"permissions": [
+							"create",
+							"read",
+							"update",
+							"delete"
+						]
+					},
+					"inventory": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				},
+				"adminScope": {
+					"field": "administrationId",
+					"enforce": true
+				}
+			}
 		}
 	},
 	"mappings": {
@@ -11154,6 +11724,177 @@
 			"dailyRate": 150.0,
 			"currency": "EUR",
 			"source": "US federal per diem rates (converted to EUR at budget rate)"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Location",
+				"slug": "loc-w01-amsterdam"
+			},
+			"name": "Amsterdam Centraal Magazijn",
+			"locationCode": "W-01",
+			"locationType": "warehouse",
+			"parentLocationId": null,
+			"address": "Westerdoksdijk 40, 1013 AE Amsterdam",
+			"region": "Noord-Holland",
+			"status": "active",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Location",
+				"slug": "loc-w01-z01-receiving"
+			},
+			"name": "Ontvangst",
+			"locationCode": "Z-01",
+			"locationType": "zone",
+			"parentLocationId": "loc-w01-amsterdam",
+			"status": "active",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Location",
+				"slug": "loc-w01-z02-shelving"
+			},
+			"name": "Stellingkast A-M",
+			"locationCode": "Z-02",
+			"locationType": "zone",
+			"parentLocationId": "loc-w01-amsterdam",
+			"status": "active",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Location",
+				"slug": "loc-w01-z03-dispatch"
+			},
+			"name": "Expeditie",
+			"locationCode": "Z-03",
+			"locationType": "zone",
+			"parentLocationId": "loc-w01-amsterdam",
+			"status": "active",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Location",
+				"slug": "loc-w-east-rotterdam"
+			},
+			"name": "Rotterdam Magazijn Oost",
+			"locationCode": "W-EAST",
+			"locationType": "warehouse",
+			"parentLocationId": null,
+			"address": "Waalhaven ZZ 15, 3089 JH Rotterdam",
+			"region": "Zuid-Holland",
+			"status": "active",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Location",
+				"slug": "loc-w-east-z01"
+			},
+			"name": "Ontvangst Rotterdam",
+			"locationCode": "RE-Z-01",
+			"locationType": "zone",
+			"parentLocationId": "loc-w-east-rotterdam",
+			"status": "active",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Location",
+				"slug": "loc-in-transit-ams-rtd"
+			},
+			"name": "In Transit AMS → RTD",
+			"locationCode": "IN-TRANSIT-W01-WEAST",
+			"locationType": "in-transit",
+			"parentLocationId": null,
+			"notes": "Virtual holding location for stock in transit from Amsterdam to Rotterdam",
+			"status": "active",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Location",
+				"slug": "loc-w01-z02-b100"
+			},
+			"name": "Bin 100",
+			"locationCode": "B-100",
+			"locationType": "bin",
+			"parentLocationId": "loc-w01-z02-shelving",
+			"capacity": 50.0,
+			"capacityUnit": "pallets",
+			"status": "active",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Location",
+				"slug": "loc-w01-z02-b101"
+			},
+			"name": "Bin 101",
+			"locationCode": "B-101",
+			"locationType": "bin",
+			"parentLocationId": "loc-w01-z02-shelving",
+			"capacity": 50.0,
+			"capacityUnit": "pallets",
+			"status": "active",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryStockTransfer",
+				"slug": "transfer-2026-001"
+			},
+			"transferNumber": "TRF-2026-001",
+			"sourceLocationId": "loc-w01-amsterdam",
+			"destinationLocationId": "loc-w-east-rotterdam",
+			"sku": "LAPTOP-001",
+			"quantity": 25.0,
+			"scheduledDate": "2026-06-10",
+			"status": "draft",
+			"notes": "Rebalancing laptop stock Amsterdam → Rotterdam",
+			"glPosted": false,
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryStock",
+				"slug": "stock-laptop-w01-z02-b100"
+			},
+			"sku": "LAPTOP-001",
+			"locationId": "loc-w01-z02-b100",
+			"quantity": 30.0,
+			"reservedQuantity": 5.0,
+			"unitCost": 899.0,
+			"lastMovementDate": "2026-06-01",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "InventoryStock",
+				"slug": "stock-laptop-w01-z02-b101"
+			},
+			"sku": "LAPTOP-001",
+			"locationId": "loc-w01-z02-b101",
+			"quantity": 20.0,
+			"reservedQuantity": 0.0,
+			"unitCost": 899.0,
+			"lastMovementDate": "2026-05-28",
+			"administrationId": "adm-consultancy-nl"
 		}
 	]
 }
