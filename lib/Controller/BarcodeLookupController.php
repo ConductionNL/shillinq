@@ -109,8 +109,9 @@ class BarcodeLookupController extends Controller
     #[NoCSRFRequired]
     public function lookup(string $code, ?string $uomCode=null): JSONResponse
     {
-        if ($this->isAuthorized() === false) {
-            return new JSONResponse(['error' => 'Unauthorized'], Http::STATUS_UNAUTHORIZED);
+        $guardResponse = $this->guard();
+        if ($guardResponse instanceof JSONResponse) {
+            return $guardResponse;
         }
 
         $code = trim($code);
@@ -131,6 +132,28 @@ class BarcodeLookupController extends Controller
         );
 
     }//end lookup()
+
+    /**
+     * Auth guard for the lookup endpoint (ADR-005, fail-secure).
+     *
+     * Returns a 401 `JSONResponse` when the caller is not authorized; returns
+     * `null` to indicate the caller may proceed. The actual auth check is
+     * delegated to `isAuthorized()` — keeping the 401 response shape isolated
+     * here mirrors the `WidgetApiController::guard()` pattern used elsewhere
+     * in the codebase and keeps the lookup endpoint body focused on its
+     * happy-path semantics.
+     *
+     * @return JSONResponse|null 401 response when blocked, null when allowed.
+     */
+    private function guard(): ?JSONResponse
+    {
+        if ($this->isAuthorized() === true) {
+            return null;
+        }
+
+        return new JSONResponse(['error' => 'Unauthorized'], 401);
+
+    }//end guard()
 
     /**
      * Verify the caller is authorized (ADR-005, fail-secure).
