@@ -2325,6 +2325,39 @@ _Stock level per SKU at a specific bin Location. Always recorded at bin (most-gr
 - → Product (many-to-one)
 - → Location (many-to-one, locationId FK → bin-type Location)
 - → Organization (many-to-one)
+- → InventoryReorderRule (one-to-many, via inventoryStockId — reorder policies per location)
+
+### InventoryReorderRule
+**Schema.org:** `schema:Thing`
+_Per-item, per-location reorder policy declaring min/max stock levels, lead-time-aware reorder-point thresholds, low-stock alert policy, and optional auto-purchase-order generation. Reorder decision logic is fully declarative via x-openregister-lifecycle, x-openregister-aggregations, and x-openregister-notifications per ADR-031 and ADR-022._
+**Primary spec:** inventory-reorder-automation
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| inventoryStockId | string (FK) | Yes | Reference to the InventoryStock record (item + location) |
+| supplierId | string (FK) | No | Primary supplier for reorder |
+| minimumLevel | number ≥ 0 | Yes | Stock quantity at or below which alert triggers |
+| maximumLevel | number > minimumLevel | Yes | Target stock quantity for replenishment |
+| reorderPoint | number ≥ minimumLevel | Yes | Stock quantity at which reorder is triggered (factors lead time) |
+| reorderQuantity | number > 0 | Yes | Standard quantity to order on alert |
+| leadTimeDays | integer ≥ 0 | No | Supplier lead time in days (defaults to supplier.leadTimeDays) |
+| safetyStockDays | integer ≥ 0 | No | Safety margin in days above lead time (default: 1) |
+| alertThreshold | number ≥ 0 | No | Percentage above minimum for early-warning alert (default: 20%) |
+| autoPurchaseOrder | boolean | Yes (default: false) | Whether to auto-generate PO on alert |
+| autoPurchaseOrderApprovalRequired | boolean | No (default: true) | Whether auto-PO requires operator approval |
+| spendingLimit | number ≥ 0 | No | Maximum spend per auto-generated PO; excess blocks auto-order |
+| alertChannel | enum | No | Notification channel: email, dashboard, slack, webhook (default: dashboard) |
+| alertRecipients | array of string | No | Email addresses or Nextcloud user IDs to notify |
+| snoozeUntil | datetime | No | Suppress alerts until this datetime |
+| lifecycleState | enum | Yes | One of `active`, `paused`, `archived` |
+| administrationId | string | Yes | FK to Administration |
+
+**Relations:**
+- → InventoryStock (many-to-one, via inventoryStockId)
+- → Supplier (many-to-one, via supplierId)
+- → Organization (many-to-one, via administrationId)
+
+> **Annotation (inventory-reorder-automation, 2026-06-05):** All reorder decision logic is declarative. `x-openregister-lifecycle` governs the active/paused/archived state machine. `x-openregister-aggregations` evaluates `SUM(InventoryStock.quantity) ≤ reorderPoint` on every stock quantity change and powers the Stock Levels Dashboard by location. `x-openregister-notifications` dispatches low-stock alerts via the configured channel with Order Now / Snooze / Update Rule action links. No PHP `InventoryReorderService` — this is the canonical ADR-031 pattern for reorder automation.
 
 > **Reconciliation note (inventory-multi-warehouse, 2026-06-05):** Original `InventoryStock` (primary spec: procurement-integration) used a free-text `location` string. This entry supersedes it with `locationId` FK to the hierarchical Location entity per REQ-LOC-009. Warehouse/zone-level stock is computed via `Location.stockRollup` aggregation (declarative, no separate warehouse table). The `quantity` field is now bin-only; calls for warehouse-level totals must use the `stockRollup` aggregation endpoint.
 

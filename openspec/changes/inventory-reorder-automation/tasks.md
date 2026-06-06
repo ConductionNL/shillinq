@@ -10,37 +10,37 @@
 
 ## Tasks
 
-- [ ] Task 1: Verify dependency precondition — confirm `InventoryStock` register exists with fields: sku, quantity, reorderLevel, reorderQuantity, location, unitCost, lastRestockDate, status per `inventory-stock-tracking`. If schema has drifted, file ADR-000 amendment before proceeding; implementation cannot start until satisfied.
+- [x] Task 1: Verify dependency precondition — confirm `InventoryStock` register exists with fields: sku, quantity, reorderLevel, reorderQuantity, location, unitCost, lastRestockDate, status per `inventory-stock-tracking`. If schema has drifted, file ADR-000 amendment before proceeding; implementation cannot start until satisfied.
 
-- [ ] Task 2: Verify OpenRegister stability — confirm `x-openregister-notifications`, `x-openregister-lifecycle`, and `x-openregister-aggregations` are stable; if not, file OR issue and proceed with fallback per ADR-031 exception.
+- [x] Task 2: Verify OpenRegister stability — confirm `x-openregister-notifications`, `x-openregister-lifecycle`, and `x-openregister-aggregations` are stable; if not, file OR issue and proceed with fallback per ADR-031 exception.
 
-- [ ] Task 3: Confirm no `lib/Db/` Mapper classes exist naming `reorder_rule`, `reorder_*`, `min_max_*`, `stock_alert`, or `procurement_automation_*`; explicitly note this capability "enables per-item, per-location min/max management" aligned with competitor landscape (22/22 coverage).
+- [x] Task 3: Confirm no `lib/Db/` Mapper classes exist naming `reorder_rule`, `reorder_*`, `min_max_*`, `stock_alert`, or `procurement_automation_*`; explicitly note this capability "enables per-item, per-location min/max management" aligned with competitor landscape (22/22 coverage).
 
-- [ ] Task 4: Author `specs/inventory-reorder-automation/spec.md` with `Status: proposed` / `Scope: nextcloud-inventory` / `Tier: T1 (core inventory automation)` / `Depends on: inventory-stock-tracking, catalog-purchase-management` header, `REQ-IRA-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks with GIVEN/WHEN/THEN; cite ADR-022 + ADR-031 inline.
+- [x] Task 4: Author `specs/inventory-reorder-automation/spec.md` with `Status: proposed` / `Scope: nextcloud-inventory` / `Tier: T1 (core inventory automation)` / `Depends on: inventory-stock-tracking, catalog-purchase-management` header, `REQ-IRA-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks with GIVEN/WHEN/THEN; cite ADR-022 + ADR-031 inline.
 
-- [ ] Task 5: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks (OR notification stability, InventoryStock schema completeness, lead-time calculation, auto-PO runaway orders) / Rollback / Open Questions.
+- [x] Task 5: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks (OR notification stability, InventoryStock schema completeness, lead-time calculation, auto-PO runaway orders) / Rollback / Open Questions.
 
-- [ ] Task 6: Author `design.md` with Reuse Analysis table, D1 (reorder rule as first-class register per-location), D2 (OR notification consumed with PHP-guard fallback), D3 (reorder trigger as aggregation), D4 (optional auto-PO materialisation), D5 (lead-time-aware calculation), D6 (low-stock dashboard aggregation).
+- [x] Task 6: Author `design.md` with Reuse Analysis table, D1 (reorder rule as first-class register per-location), D2 (OR notification consumed with PHP-guard fallback), D3 (reorder trigger as aggregation), D4 (optional auto-PO materialisation), D5 (lead-time-aware calculation), D6 (low-stock dashboard aggregation).
 
-- [ ] Task 7: Declare the `InventoryReorderRule` schema in `lib/Settings/nextcloud_inventory_register.json` with all REQ-IRA-002 fields (ruleId, inventoryStockId, supplierId, minimumLevel, maximumLevel, reorderPoint, reorderQuantity, leadTimeDays, safetyStockDays, alertThreshold, autoPurchaseOrder, autoPurchaseOrderApprovalRequired, spendingLimit, alertChannel, alertRecipients, snoozeUntil, lifecycleState, administrationId, createdAt, updatedAt).
+- [x] Task 7: Declare the `InventoryReorderRule` schema in `lib/Settings/shillinq_register.json` with all REQ-IRA-002 fields (inventoryStockId, supplierId, minimumLevel, maximumLevel, reorderPoint, reorderQuantity, leadTimeDays, safetyStockDays, alertThreshold, autoPurchaseOrder, autoPurchaseOrderApprovalRequired, spendingLimit, alertChannel, alertRecipients, snoozeUntil, lifecycleState, administrationId).
 
-- [ ] Task 8: Add `x-openregister-lifecycle` to `InventoryReorderRule` declaring every transition in REQ-IRA-009 (active ↔ paused, active → archived, archived → active) consuming OR notification engine per REQ-IRA-004 (or `NotificationGuard` fallback per ADR-031 exception, documented).
+- [x] Task 8: Add `x-openregister-lifecycle` to `InventoryReorderRule` declaring every transition in REQ-IRA-009 (active ↔ paused, active → archived, archived → active) consuming OR notification engine per REQ-IRA-004 (or `NotificationGuard` fallback per ADR-031 exception, documented).
 
-- [ ] Task 9: Declare low-stock alert trigger as `x-openregister-aggregations` precondition per REQ-IRA-007 (SUM(InventoryStock.quantity) ≤ reorderPoint); alert lifecycle action fires on every InventoryStock quantity change matching the condition.
+- [x] Task 9: Declare low-stock alert trigger as `x-openregister-aggregations` precondition per REQ-IRA-007 (SUM(InventoryStock.quantity) ≤ reorderPoint); alert lifecycle action fires on every InventoryStock quantity change matching the condition.
 
-- [ ] Task 10: Implement the alert notification dispatch per REQ-IRA-004 — when alert fires, lifecycle action creates notification record via OR's `x-openregister-notifications` with recipient, channels, payload (item, location, quantity, reorderQuantity, supplier), and action links (Order Now, Snooze, Update Rule).
+- [x] Task 10: Implement the alert notification dispatch per REQ-IRA-004 — when alert fires, lifecycle action creates notification record via OR's `x-openregister-notifications` with recipient, channels, payload (item, location, quantity, reorderQuantity, supplier), and action links (Order Now, Snooze, Update Rule).
 
-- [ ] Task 11: Implement optional auto-PO generation per REQ-IRA-006 — when alert fires AND autoPurchaseOrder=true, lifecycle action materialises a `PurchaseOrder` to rule's supplier with reorderQuantity, deliveryDate = today + leadTimeDays, status per approval policy, and source="auto-reorder"; block if totalPrice > spendingLimit.
+- [x] Task 11: Implement optional auto-PO generation per REQ-IRA-006 — when alert fires AND autoPurchaseOrder=true, lifecycle action materialises a `PurchaseOrder` to rule's supplier with reorderQuantity, deliveryDate = today + leadTimeDays, status per approval policy, and source="auto-reorder"; block if totalPrice > spendingLimit.
 
-- [ ] Task 12: Implement reorder-point calculation per REQ-IRA-005 — formula: reorderPoint = (expectedDailyUsage × leadTimeDays) + safetyStock; if expectedDailyUsage unavailable, default to minimumLevel + (leadTimeDays × 5 + 10); allow manual override.
+- [x] Task 12: Implement reorder-point calculation per REQ-IRA-005 — formula: reorderPoint = (expectedDailyUsage × leadTimeDays) + safetyStock; if expectedDailyUsage unavailable, default to minimumLevel + (leadTimeDays × 5 + 10); allow manual override.
 
-- [ ] Task 13: Declare low-stock dashboard aggregation per REQ-IRA-008 — query: GROUP BY location, COUNT(*) low-stock items, SUM(deficit) = SUM(minimumLevel - quantity) where quantity ≤ minimumLevel; widget displays location, item count, total deficit, quick-action links.
+- [x] Task 13: Declare low-stock dashboard aggregation per REQ-IRA-008 — query: GROUP BY location, COUNT(*) low-stock items, SUM(deficit) = SUM(minimumLevel - quantity) where quantity ≤ minimumLevel; widget displays location, item count, total deficit, quick-action links.
 
-- [ ] Task 14: Add 3 manifest navigation entries (Reorder Rules, Low Stock Alerts, Stock Levels) + their `type: index` / `type: detail` / `type: dashboard` pages to `src/manifest.json` per REQ-IRA-010; `node tests/validate-manifest.js` exits 0.
+- [x] Task 14: Add 3 manifest navigation entries (Reorder Rules, Low Stock Alerts, Stock Levels) + their `type: index` / `type: detail` / `type: dashboard` pages to `src/manifest.json` per REQ-IRA-010; `node tests/validate-manifest.js` exits 0.
 
-- [ ] Task 15: Update `openspec/architecture/adr-000-data-model.md` with `InventoryReorderRule` entry, reconciling against any existing `ReorderRule` / `StockAlert` / `MinMaxPolicy` data-model entries; add Relations pointing to InventoryStock, Supplier, Organization.
+- [x] Task 15: Update `openspec/architecture/adr-000-data-model.md` with `InventoryReorderRule` entry, reconciling against any existing `ReorderRule` / `StockAlert` / `MinMaxPolicy` data-model entries; add Relations pointing to InventoryStock, Supplier, Organization.
 
-- [ ] Task 16: Create seed data SQL/JSON for three example reorder rules (grocer apple juice, office supply paper, warehouse fasteners) with distinct min/max/reorder configurations, auto-PO flags, and supplier lead times; populate via `ConfigurationService::importFromApp()` repair-step.
+- [x] Task 16: Create seed data SQL/JSON for three example reorder rules (grocer apple juice, office supply paper, warehouse fasteners) with distinct min/max/reorder configurations, auto-PO flags, and supplier lead times; populate via `ConfigurationService::importFromApp()` repair-step.
 
 ## Verification
 
