@@ -27,10 +27,22 @@ import TransferPage from './views/inventory/TransferPage.vue'
 import PickPage from './views/inventory/PickPage.vue'
 import CountPage from './views/inventory/CountPage.vue'
 
+// invoice-from-time-and-expense (issue #111): drafting form + admin list
+// + detail page are imperative because the generator combines multi-source
+// dynamic look-ups (time entries + expenses + rate card + retainer) into
+// a single editable preview, which does not fit `index` / `detail`.
+import InvoiceGenerator from './components/invoice/InvoiceGenerator.vue'
+import AdminInvoiceList from './views/invoice/AdminInvoiceList.vue'
+import AdminInvoiceDetail from './views/invoice/AdminInvoiceDetail.vue'
+
 export default {
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
 	MobileScannerReceive: { kind: 'page', component: ReceivePage },
 	MobileScannerTransfer: { kind: 'page', component: TransferPage },
 	MobileScannerPick: { kind: 'page', component: PickPage },
 	MobileScannerCount: { kind: 'page', component: CountPage },
+
+	InvoiceGenerator: { kind: 'page', component: InvoiceGenerator },
+	AdminInvoiceList: { kind: 'page', component: AdminInvoiceList },
+	AdminInvoiceDetail: { kind: 'page', component: AdminInvoiceDetail },
 }

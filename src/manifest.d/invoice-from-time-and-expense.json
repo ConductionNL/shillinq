@@ -1,0 +1,56 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "invoice-from-time-and-expense",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Tier-2 invoice-from-time-and-expense UI surface (issue #111). Adds two custom routes — InvoiceList (admin list) and InvoiceGenerate (drafting form) — under a single navigation entry. Detail view InvoiceDetail is parameterised on :id. Pages are kind=custom (the InvoiceGenerator + lookup wizard does not fit any built-in manifest page type — see design.md D1)."
+	},
+	"menu": [
+		{
+			"id": "BillableInvoices",
+			"label": "Invoices",
+			"icon": "FileDocumentEditOutline",
+			"order": 36,
+			"children": [
+				{
+					"id": "BillableInvoiceList",
+					"label": "All invoices",
+					"icon": "FileDocumentMultipleOutline",
+					"route": "BillableInvoiceList",
+					"order": 10
+				},
+				{
+					"id": "BillableInvoiceGenerate",
+					"label": "Generate invoice",
+					"icon": "FileDocumentEditOutline",
+					"route": "BillableInvoiceGenerate",
+					"order": 20
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "BillableInvoiceList",
+			"route": "/invoice",
+			"type": "custom",
+			"title": "Invoices",
+			"component": "AdminInvoiceList"
+		},
+		{
+			"id": "BillableInvoiceGenerate",
+			"route": "/invoice/generate",
+			"type": "custom",
+			"title": "Generate Invoice",
+			"component": "InvoiceGenerator"
+		},
+		{
+			"id": "BillableInvoiceDetail",
+			"route": "/invoice/:invoiceId",
+			"type": "custom",
+			"title": "Invoice",
+			"component": "AdminInvoiceDetail"
+		}
+	]
+}

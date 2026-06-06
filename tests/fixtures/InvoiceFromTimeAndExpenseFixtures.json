@@ -1,0 +1,197 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "invoice-from-time-and-expense",
+		"description": "Tasks 31-34: shared fixture set covering the five billing models, three rate cards, three retainer schedules, and six BillableInvoice examples used by the unit + integration tests."
+	},
+	"rateCards": [
+		{
+			"id": "rate-card-consulting",
+			"label": "Consulting",
+			"defaultHourlyRate": 150.00,
+			"currency": "EUR",
+			"version": "v1",
+			"records": [
+				{"resourceType": "senior_consultant", "rateCents": 15000, "effectiveDate": "2026-01-01"},
+				{"resourceType": "junior_consultant", "rateCents": 10000, "effectiveDate": "2026-01-01"}
+			]
+		},
+		{
+			"id": "rate-card-support",
+			"label": "Support",
+			"defaultHourlyRate": 100.00,
+			"currency": "EUR",
+			"version": "v1",
+			"records": [
+				{"resourceType": "support_agent", "rateCents": 10000, "effectiveDate": "2026-01-01"}
+			]
+		},
+		{
+			"id": "rate-card-project",
+			"label": "Project Daily",
+			"defaultHourlyRate": 200.00,
+			"currency": "EUR",
+			"version": "v2",
+			"records": [
+				{"resourceType": "project_lead", "rateCents": 20000, "effectiveDate": "2026-01-01"},
+				{"resourceType": "project_lead", "rateCents": 22000, "effectiveDate": "2026-06-01"}
+			]
+		}
+	],
+	"retainerSchedules": [
+		{
+			"scheduleId": "retainer-support-monthly",
+			"customerId": "cust-enterprise",
+			"label": "Monthly support retainer",
+			"monthlyAmount": 3000.00,
+			"effectiveDate": "2026-01-01",
+			"status": "active"
+		},
+		{
+			"scheduleId": "retainer-support-monthly-v2",
+			"customerId": "cust-enterprise",
+			"label": "Monthly support retainer (Q2 increase)",
+			"monthlyAmount": 4000.00,
+			"effectiveDate": "2026-06-01",
+			"status": "active"
+		},
+		{
+			"scheduleId": "retainer-with-overage",
+			"customerId": "cust-startup",
+			"label": "Retainer + overage",
+			"monthlyAmount": 3000.00,
+			"overageHoursThreshold": 30.0,
+			"overageHourlyRate": 100.00,
+			"effectiveDate": "2026-01-01",
+			"status": "active"
+		}
+	],
+	"invoiceGenerationRequests": {
+		"tAndM": {
+			"billingModel": "t_and_m",
+			"customerId": "cust-techcorp",
+			"fromDate": "2026-05-01",
+			"toDate": "2026-05-31",
+			"rateCardId": "rate-card-consulting",
+			"timeEntryIds": ["uren-001", "uren-002"],
+			"expenseIds": ["exp-001"]
+		},
+		"fixedFee": {
+			"billingModel": "fixed_fee",
+			"customerId": "cust-startup",
+			"fromDate": "2026-04-01",
+			"toDate": "2026-06-30",
+			"timeEntryIds": ["uren-010", "uren-011", "uren-012", "uren-013"],
+			"expenseIds": [],
+			"fixedFeeCents": 5000000,
+			"notes": "Website redesign — Q2 2026"
+		},
+		"milestone": {
+			"billingModel": "milestone",
+			"customerId": "cust-corp",
+			"fromDate": "2026-03-01",
+			"toDate": "2026-05-20",
+			"milestoneId": "ms-design-phase",
+			"timeEntryIds": ["uren-100"]
+		},
+		"retainer": {
+			"billingModel": "retainer",
+			"customerId": "cust-startup",
+			"fromDate": "2026-05-01",
+			"toDate": "2026-05-31",
+			"retainerScheduleId": "retainer-with-overage",
+			"timeEntryIds": ["uren-200"]
+		},
+		"mixed": {
+			"billingModel": "mixed",
+			"customerId": "cust-enterprise",
+			"fromDate": "2026-05-01",
+			"toDate": "2026-05-31",
+			"retainerScheduleId": "retainer-support-monthly",
+			"rateCardId": "rate-card-consulting",
+			"fixedFeeCents": 100000,
+			"timeEntryIds": ["uren-300"],
+			"notes": "Setup fee"
+		}
+	},
+	"billableInvoices": [
+		{
+			"_label": "draft T&M",
+			"invoiceNumber": "BIL-2026-0001",
+			"billingModel": "t_and_m",
+			"customerId": "cust-techcorp",
+			"invoiceDate": "2026-05-31",
+			"dueDate": "2026-06-30",
+			"netAmount": 8150.00,
+			"vatAmount": 1711.50,
+			"grossAmount": 9861.50,
+			"status": "draft",
+			"posted": false
+		},
+		{
+			"_label": "posted T&M",
+			"invoiceNumber": "BIL-2026-0002",
+			"billingModel": "t_and_m",
+			"customerId": "cust-techcorp",
+			"invoiceDate": "2026-04-30",
+			"dueDate": "2026-05-30",
+			"netAmount": 5400.00,
+			"vatAmount": 1134.00,
+			"grossAmount": 6534.00,
+			"status": "posted",
+			"posted": true,
+			"obligationId": "obl-2026-0002"
+		},
+		{
+			"_label": "draft fixed-fee",
+			"invoiceNumber": "BIL-2026-0003",
+			"billingModel": "fixed_fee",
+			"customerId": "cust-startup",
+			"invoiceDate": "2026-06-30",
+			"dueDate": "2026-07-30",
+			"netAmount": 50000.00,
+			"vatAmount": 10500.00,
+			"grossAmount": 60500.00,
+			"status": "draft"
+		},
+		{
+			"_label": "posted fixed-fee",
+			"invoiceNumber": "BIL-2026-0004",
+			"billingModel": "fixed_fee",
+			"customerId": "cust-startup",
+			"invoiceDate": "2026-03-31",
+			"dueDate": "2026-04-30",
+			"netAmount": 25000.00,
+			"vatAmount": 5250.00,
+			"grossAmount": 30250.00,
+			"status": "posted",
+			"posted": true
+		},
+		{
+			"_label": "draft retainer",
+			"invoiceNumber": "BIL-2026-0005",
+			"billingModel": "retainer",
+			"customerId": "cust-enterprise",
+			"invoiceDate": "2026-05-31",
+			"dueDate": "2026-06-30",
+			"netAmount": 3000.00,
+			"vatAmount": 630.00,
+			"grossAmount": 3630.00,
+			"status": "draft"
+		},
+		{
+			"_label": "posted retainer",
+			"invoiceNumber": "BIL-2026-0006",
+			"billingModel": "retainer",
+			"customerId": "cust-enterprise",
+			"invoiceDate": "2026-04-30",
+			"dueDate": "2026-05-30",
+			"netAmount": 4500.00,
+			"vatAmount": 945.00,
+			"grossAmount": 5445.00,
+			"status": "posted",
+			"posted": true
+		}
+	]
+}
