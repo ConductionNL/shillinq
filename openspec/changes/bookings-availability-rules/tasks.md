@@ -9,29 +9,29 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `AvailabilityRule`, `ResourceBreak`, or `BookingConstraint` schema and no `bookings-availability-rules` capability already exist (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `adr-000-data-model.md`)
+- [x] Task 1: Confirm no `AvailabilityRule`, `ResourceBreak`, or `BookingConstraint` schema and no `bookings-availability-rules` capability already exist (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `adr-000-data-model.md`)
 
-- [ ] Task 2: Confirm `bookings-resource-calendar` change has landed and `Resource` schema is available in `lib/Settings/shillinq_register.json` (verify FK target exists)
+- [x] Task 2: Confirm `bookings-resource-calendar` change has landed and `Resource` schema is available in `lib/Settings/shillinq_register.json` (verify FK target exists)
 
-- [ ] Task 3: Author `specs/bookings-availability-rules/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T1 (booking foundation)` / `Depends on: bookings-resource-calendar` header, `REQ-BAR-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks with GIVEN/WHEN/THEN — declaring the three-schema model, lifecycle transitions, recurrence rules for breaks, advance-notice and buffer constraints
+- [x] Task 3: Author `specs/bookings-availability-rules/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T1 (booking foundation)` / `Depends on: bookings-resource-calendar` header, `REQ-BAR-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks with GIVEN/WHEN/THEN — declaring the three-schema model, lifecycle transitions, recurrence rules for breaks, advance-notice and buffer constraints
 
-- [ ] Task 4: Author `proposal.md` referencing `bookings-resource-calendar` dependency, competitor evidence (17/21 market leaders), and risks (effective-date transition logic, recurrence pattern complexity) per shillinq config.yaml `rules.proposal`
+- [x] Task 4: Author `proposal.md` referencing `bookings-resource-calendar` dependency, competitor evidence (17/21 market leaders), and risks (effective-date transition logic, recurrence pattern complexity) per shillinq config.yaml `rules.proposal`
 
-- [ ] Task 5: Author `design.md` with D1–D5 decision rationale (three-schema split, recurrence simplicity, discrete constraint fields, lifecycle, blackout-date handling), reuse analysis table vs. Cal.com/Cogsworth/Easy-Appointments/Salonized/Resy, and SMB bookkeeper persona acceptance criteria
+- [x] Task 5: Author `design.md` with D1–D5 decision rationale (three-schema split, recurrence simplicity, discrete constraint fields, lifecycle, blackout-date handling), reuse analysis table vs. Cal.com/Cogsworth/Easy-Appointments/Salonized/Resy, and SMB bookkeeper persona acceptance criteria
 
-- [ ] Task 6: Declare the `AvailabilityRule` (header) schema in `lib/Settings/shillinq_register.json` with all fields (resourceId FK, status enum, effectiveFrom, effectiveUntil, description) typed per spec; `status` default: `draft`
+- [x] Task 6: Declare the `AvailabilityRule` (header) schema in `lib/Settings/shillinq_register.json` with all fields (resourceId FK, status enum, effectiveFrom, effectiveUntil, description) typed per spec; `status` default: `draft`
 
-- [ ] Task 7: Declare the `ResourceBreak` schema in `lib/Settings/shillinq_register.json` with all fields (availabilityRuleId FK, breakType enum, dayOfWeek enum, startTime, endTime, isRecurring, status, description); add validation: `endTime > startTime`, valid time range
+- [x] Task 7: Declare the `ResourceBreak` schema in `lib/Settings/shillinq_register.json` with all fields (availabilityRuleId FK, breakType enum, dayOfWeek enum, startTime, endTime, isRecurring, status, description); add validation: `endTime > startTime`, valid time range
 
-- [ ] Task 8: Declare the `BookingConstraint` schema in `lib/Settings/shillinq_register.json` with all fields (availabilityRuleId FK, minAdvanceNotice, maxAdvanceNotice, preBufferMinutes, postBufferMinutes, cancellationDeadlineHours, blackoutDates array, status); add validation: non-negative fields, `maxAdvanceNotice >= minAdvanceNotice`
+- [x] Task 8: Declare the `BookingConstraint` schema in `lib/Settings/shillinq_register.json` with all fields (availabilityRuleId FK, minAdvanceNotice, maxAdvanceNotice, preBufferMinutes, postBufferMinutes, cancellationDeadlineHours, blackoutDates array, status); add validation: non-negative fields, `maxAdvanceNotice >= minAdvanceNotice`
 
-- [ ] Task 9: Add `x-openregister-relations` FKs on `ResourceBreak` and `BookingConstraint`: `availabilityRuleId → AvailabilityRule.id` (one-to-many); on `AvailabilityRule`: `resourceId → Resource.id` (many-to-one, depends on `bookings-resource-calendar`)
+- [x] Task 9: Add `x-openregister-relations` FKs on `ResourceBreak` and `BookingConstraint`: `availabilityRuleId → AvailabilityRule.id` (one-to-many); on `AvailabilityRule`: `resourceId → Resource.id` (many-to-one, depends on `bookings-resource-calendar`)
 
-- [ ] Task 10: Add Availability Rules navigation + pages to `src/manifest.json` (menu entry `Bookings > Availability Rules`, `type: index` page binding to `AvailabilityRule`, `type: detail` page showing rule header + breaks + constraints together) per REQ-BAR-007; `node tests/validate-manifest.js` exits 0
+- [x] Task 10: Add Availability Rules navigation + pages to `src/manifest.json` (menu entry `Bookings > Availability Rules`, `type: index` page binding to `AvailabilityRule`, `type: detail` page showing rule header + breaks + constraints together) per REQ-BAR-007; `node tests/validate-manifest.js` exits 0
 
-- [ ] Task 11: Update `openspec/architecture/adr-000-data-model.md` with new entities: `AvailabilityRule`, `ResourceBreak`, `BookingConstraint`; add reconciliation note explaining three-schema design rationale per Tier 1 booking foundation
+- [x] Task 11: Update `openspec/architecture/adr-000-data-model.md` with new entities: `AvailabilityRule`, `ResourceBreak`, `BookingConstraint`; add reconciliation note explaining three-schema design rationale per Tier 1 booking foundation
 
-- [ ] Task 12: Seed data: Insert 3–5 example `AvailabilityRule` records (Dutch values: "Standaard beschikbaarheid", "Zomervakantie") with associated `ResourceBreak` (lunch, coffee) and `BookingConstraint` records per design.md examples; use `openregister:repair-step` pattern for seeding
+- [x] Task 12: Seed data: Insert 3–5 example `AvailabilityRule` records (Dutch values: "Standaard beschikbaarheid", "Zomervakantie") with associated `ResourceBreak` (lunch, coffee) and `BookingConstraint` records per design.md examples; use `openregister:repair-step` pattern for seeding
 
 ## Verification
 
