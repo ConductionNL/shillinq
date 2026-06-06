@@ -86,7 +86,7 @@ final class LogSmsProviderAdapter implements SmsProviderAdapterInterface
             ]
         );
 
-        $reference = 'log-'.substr(hash('sha256', $connectorId.'|'.$e164Recipient.'|'.$body), 0, 16);
+        $reference = 'log-'.bin2hex(random_bytes(8));
 
         return new SmsSendResult(
             SmsSendResult::STATUS_PENDING,
