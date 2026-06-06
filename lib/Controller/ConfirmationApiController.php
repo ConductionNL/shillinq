@@ -287,7 +287,7 @@ class ConfirmationApiController extends Controller
      * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
      */
     #[PublicPage]
-    public function validateToken(): JSONResponse
+    public function lookupByToken(): JSONResponse
     {
         $token         = trim((string) $this->request->getParam('token', ''));
         $appointmentId = trim((string) $this->request->getParam('appointmentId', ''));

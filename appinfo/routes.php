@@ -87,7 +87,7 @@ return [
         // endpoints match first. `confirm` and `validate-confirmation-token` are
         // #[PublicPage]; `resend-confirmation` is #[NoAdminRequired] + per-
         // appointment IDOR guard inside the controller.
-        ['name' => 'confirmationApi#validateToken', 'url' => '/api/v1/appointments/validate-confirmation-token', 'verb' => 'GET'],
+        ['name' => 'confirmationApi#lookupByToken', 'url' => '/api/v1/appointments/validate-confirmation-token', 'verb' => 'GET'],
         ['name' => 'confirmationApi#confirm', 'url' => '/api/v1/appointments/{appointmentId}/confirm', 'verb' => 'PATCH'],
         ['name' => 'confirmationApi#resend', 'url' => '/api/v1/appointments/{appointmentId}/resend-confirmation', 'verb' => 'POST'],
 
