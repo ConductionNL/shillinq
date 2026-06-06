@@ -187,11 +187,12 @@ class IntercompanyJournalService
             return 'eliminatie_geboekt';
         }
 
-        if ($currentStatus === 'bevestigd_beide' || $currentStatus === 'gekoppeld') {
-            return 'concept';
+        $next = ($currentStatus === 'bevestigd_beide' || $currentStatus === 'gekoppeld') ? 'concept' : $currentStatus;
+        if ($this->isTransitionAllowed(from: $currentStatus, to: $next) === false) {
+            return $currentStatus;
         }
 
-        return $currentStatus;
+        return $next;
 
     }//end statusAfterEdit()
 }//end class
