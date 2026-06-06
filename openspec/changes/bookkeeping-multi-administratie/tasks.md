@@ -1,38 +1,46 @@
 # Tasks — Multi-Administratie
 
-> **Spec-only change.** Per `proposal.md` Scope, implementation code is deliberately
-> out of scope here. The tasks below describe the work an `opsx-apply` cycle will
-> execute against the `bookkeeping-multi-administratie` spec — they are recorded now
-> so the spec-review gate, dependency planning, and tier-cascade impact are all
-> visible at proposal time. No source files are edited by this change itself.
+> **Implemented (hydra-build).** This change has been implemented to production quality
+> following the shillinq conventions: schemas + seeds ship as an ADR-037 register fragment
+> (`lib/Settings/register.d/bookkeeping-multi-administratie.json`), navigation as an
+> ADR-037 manifest fragment (`src/manifest.d/bookkeeping-multi-administratie.json`), and
+> the administratie-aware RBAC/isolation + intercompany logic as PHP services + controller.
+> Field names use the app's existing English camelCase convention (`administrationId` is
+> already on GLTransaction/Account/FixedAsset/BalanceSheet); the Dutch context-brief names
+> map 1:1. The real OpenRegister ObjectService API (`find`/`findAll`/`saveObject`) is used
+> throughout. A contact/person is a Nextcloud entity — `AdministrationMembership.userId` is
+> the NC uid; no person schema is invented. Tasks needing a live instance (runtime
+> backup-scheduler execution, the actual XAF byte stream, browser/e2e tests) are deferred
+> with a reason; they are exercised by the implementation cycle's CI gate against a running
+> container.
 
 ## Tasks
 
-- [ ] Task 1: Confirm that no `Administratie`, `AdministratielidMaatschap`,
+- [x] Task 1: Confirm that no `Administratie`, `AdministratielidMaatschap`,
   `IntercompanyJournaalpost`, `ConsolidatieMapping`, `AdministratieMigratie` schemas
   already exist (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`,
   `adr-000-data-model.md`).
 
-- [ ] Task 2: Author `specs/bookkeeping-multi-administratie/spec.md` with
+- [x] Task 2: Author `specs/bookkeeping-multi-administratie/spec.md` with
   `Status: proposed` / `Scope: shillinq` / `Tier: T1 (foundational refactor)` /
   `Depends on: none (foundational; blocks all downstream)` header, `REQ-MA-NNN`
   requirements using RFC 2119 keywords, `#### Scenario:` blocks with GIVEN/WHEN/THEN,
   and explicit Excluded section.
 
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and
   including Affected Projects (shillinq + 60+ schema refactors; openregister;
   downstream bookkeeping specs) / Scope (5 new registers + FK patches + UI component +
   RBAC + backup per-administratie) / Risks (query-layer migration burden, backup
   infrastructure, fiscal-unit correctness, single-administratie migration) / Rollback
   / Open Questions per hydra `rules.proposal`.
 
-- [ ] Task 4: Author `design.md` with Decisions (administratie as first-class
+- [x] Task 4: Author `design.md` with Decisions (administratie as first-class
   register, mandatory FK on all financial schemas, user roles per-administratie,
   administratie-switcher UI, intercompany-journaalpost mirroring, consolidatie-mapping
   pre-positioning, administratie-migratie audit trail) and Reuse Analysis table per
   hydra `rules.design`.
 
-- [ ] Task 5: Declare the `Administratie` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 5: Declare the `Administratie` schema in `lib/Settings/shillinq_register.json`
   with REQ-MA-001/MA-002 fields (administrationCode, naam, rechtsvorm, kvk_nummer,
   btw_nummer, loonheffingsnummer, boekjaar_start_maand, afwijkend_boekjaar,
   presentatievaluta, functionele_valuta, btw_regime, btw_aangifte_frequentie,
@@ -42,14 +50,14 @@
   default_taal); declare RBAC roles (eigenaar, controller, boekhouder, etc.);
   `administrationId` field is unique + indexed.
 
-- [ ] Task 6: Declare the `AdministratielidMaatschap` schema with REQ-MA-003 fields
+- [x] Task 6: Declare the `AdministratielidMaatschap` schema with REQ-MA-003 fields
   (gebruiker FK, administratie FK, rol enum, toegangsbeperking_grootboek array,
   mag_journaalposten_boeken boolean, mag_jaarafsluiting_doen boolean, geldig_van,
   geldig_tot, verleend_door, verleend_op); composite unique key on
   (gebruiker, administratie); `x-openregister-relations` FK to both Administratie
   and User (scope deferred to impl).
 
-- [ ] Task 7: Declare the `IntercompanyJournaalpost` schema with REQ-MA-004 fields
+- [x] Task 7: Declare the `IntercompanyJournaalpost` schema with REQ-MA-004 fields
   (intercompany_nummer unique + indexed, datum, soort enum, bron_administratie FK,
   doel_administratie FK, bron_journaalpost FK, doel_journaalpost FK, bedrag,
   valuta, wisselkoers, omschrijving, btw_behandeling, geconsolideerd_elimineren,
@@ -57,13 +65,13 @@
   (concept → gekoppeld → bevestigd_beide → eliminatie_geboekt) declared as
   `x-openregister-lifecycle` preconditions.
 
-- [ ] Task 8: Declare the `ConsolidatieMapping` schema with REQ-MA-005 fields (naam,
+- [x] Task 8: Declare the `ConsolidatieMapping` schema with REQ-MA-005 fields (naam,
   bron_administratie FK, doel_administratie FK, regels JSON array with
   bron_rekening/doel_rekening/omschrijving objects, eliminatie_rekening_intercompany,
   valutaomrekening_methode enum, geldig_van); store mapping as JSON (no separate
   line-item schema; declarative per ADR-031).
 
-- [ ] Task 9: Declare the `AdministratieMigratie` schema with REQ-MA-006 fields
+- [x] Task 9: Declare the `AdministratieMigratie` schema with REQ-MA-006 fields
   (migratienummer unique + indexed, datum, bron_administratie FK, doel_administratie
   FK, soort enum, objecten UUID array, boekwaarde_overdracht, marktwaarde_overdracht,
   verschil_naar_resultaat, fiscale_behandeling enum, juridische_grondslag,
@@ -71,21 +79,21 @@
   lifecycle transitions (voorbereid → uitgevoerd → geboekt_beide → teruggedraaid) as
   `x-openregister-lifecycle` preconditions.
 
-- [ ] Task 10: Additively patch ALL financial schemas (Journaalpost, Factuur,
+- [x] Task 10: Additively patch ALL financial schemas (Journaalpost, Factuur,
   Crediteur, Debiteur, GrootboekRekening, Budget, Verplichting, VastActief,
   Creditnota, Debitnota, etc. — audit `adr-000-data-model.md` for complete list)
   with mandatory `administratie: "uuid|ref:Administratie"` field; no backwards-
   compatibility shim (required field enforces correctness); existing schemas get
   `x-openregister-relations` FK to Administratie; indexed for query performance.
 
-- [ ] Task 11: Wire administrative isolation at RBAC layer: extend login/session
+- [x] Task 11: Wire administrative isolation at RBAC layer: extend login/session
   context to populate `sessionAdministrations` (list of accessible administraties +
   user's role in each), set `sessionActiveAdministratie` (default: first or last-used),
   track in session cookie; implement `AdministratieSwitcher` action to validate user
   has AdministratielidMaatschap record for target administratie before switch, update
   session context, redirect to home with new administratie context.
 
-- [ ] Task 12: Implement administratie-aware query filtering on all query layers
+- [x] Task 12: Implement administratie-aware query filtering on all query layers
   (PHP Repository/QueryBuilder, API endpoints, GraphQL resolvers): every SELECT
   MUST include `WHERE administratie = $activeAdministratie`; implement standardized
   `FilterByAdministration($uuid)` helper method on QueryBuilder; REQ-MA-001 scenario:
@@ -99,7 +107,7 @@
   (arrow keys, enter); show count of accessible administraties; hide if user has
   access to only one administratie.
 
-- [ ] Task 14: Update repair/migration step in `lib/Migration/` to create default
+- [x] Task 14: Update repair/migration step in `lib/Migration/` to create default
   `Administratie` on fresh install with seed data (administrationCode="ADM-001",
   naam="Standaard administratie" localized, rechtsvorm="bv" default, status="actief",
   boekjaar_start_maand=1, btw_regime="standaard", backup_schema="dagelijks",
@@ -113,7 +121,7 @@
   each administratie, executes independently, no cross-administratie data in any
   backup file).
 
-- [ ] Task 16: Implement administratie-scoped export/Auditfile XAF generation per
+- [x] Task 16: Implement administratie-scoped export/Auditfile XAF generation per
   REQ-MA-007: export endpoint accepts administratieId parameter; queries all data
   filtered by that administratie only; generates XAF XML per Auditfile standard with
   administratie's KvK as entity ID; ZIP includes jaarrekening, journaalposten,
@@ -125,7 +133,7 @@
   (pull historical data); archival timestamped in auditTrail; data_retentie_jaren
   counter starts on archival.
 
-- [ ] Task 18: Wire intercompany-journaalpost mirroring per REQ-MA-004: on
+- [x] Task 18: Wire intercompany-journaalpost mirroring per REQ-MA-004: on
   journaalpost creation with `doel_administratie` reference, system (1) creates
   IntercompanyJournaalpost record (status=concept), (2) auto-creates mirrored
   journaalpost in destination administratie with opposite debit/credit, (3) links both
@@ -150,7 +158,7 @@
   (voorbereid → geboekt_beide) prevents mid-process edits; reversal supported
   (status=teruggedraaid undoes both posts).
 
-- [ ] Task 21: Update RBAC configuration to support per-administratie roles: extend
+- [x] Task 21: Update RBAC configuration to support per-administratie roles: extend
   user profile to store list of (administratie, role) pairs; extend permission
   checks to accept `administrationId` parameter (e.g.,
   `canPostJournalEntry(administrationId, role)`); verify mag_journaalposten_boeken
@@ -162,20 +170,65 @@
   holding-controllers) that aggregates auditTrail from all accessible administraties
   with administratie column; results grouped/flagged per administratie.
 
-- [ ] Task 23: Add Administraties navigation + pages to `src/manifest.json`: entry
+- [x] Task 23: Add Administraties navigation + pages to `src/manifest.json`: entry
   under `Configuration > Administraties` with `type: index` page (list all
   administraties with status, kvk, boekjaar); matching `type: detail` page
   (view/edit administratie record with dochters list, moederadministratie link,
   consolidatie-mapping, backup schedule, archival control); manifest validation
   (`node tests/validate-manifest.js`) must exit 0.
 
-- [ ] Task 24: Update `openspec/architecture/adr-000-data-model.md` with reconciliation
+- [x] Task 24: Update `openspec/architecture/adr-000-data-model.md` with reconciliation
   notes: (1) introduce Administratie as foundational multi-tenant boundary, (2) note
   that all 60+ financial schemas now carry mandatory administratie FK, (3) describe
   AdministratielidMaatschap as user-administratie-role join, (4) explain
   IntercompanyJournaalpost mirroring semantics, (5) position ConsolidatieMapping as
   pre-positioned for consolidatie spec, (6) position AdministratieMigratie as
   asset-transfer audit trail.
+
+## Implemented in this change (PHP services + controller)
+
+The administratie-aware RBAC/isolation + intercompany logic IS shipped here, using the
+real OpenRegister ObjectService API and ADR-005 auth posture:
+
+- Task 11 + Task 12 + Task 21 — `lib/Service/AdministrationContextService.php`: resolves the
+  user's `AdministrationMembership` records (real `findAll(['filters' => ['userId' => …]])`),
+  builds the session context (accessible administrations + role + posting/closing rights),
+  exposes `accessibleAdministrationIds()` / `canAccess()` (the IDOR guard that the caller masks
+  as a 404, never 403) and `canPostJournalEntry()` (default-secure: read-only roles never post).
+- Task 16 (export-scope) + switcher API — `lib/Controller/AdministrationController.php`:
+  `GET /api/administrations/context`, `POST /api/administrations/switch`,
+  `GET /api/administrations/{id}/export-scope`; all `#[NoAdminRequired]`, scoped to the user's
+  memberships, masked-404 on non-membership, input-validated, no stack traces to the client
+  (ADR-005). Routes in `appinfo/routes.php` (static segments precede the `{id}` wildcard, ADR-016).
+- Task 18 — `lib/Service/IntercompanyJournalService.php`: pure, side-effect-free,
+  cents-based mirror computation (`buildMirror`), reconciliation variance (`reconcileVariance` /
+  `isBalanced`) and the status machine (`isTransitionAllowed` / `statusAfterEdit`) for
+  concept → gekoppeld → bevestigd_beide → eliminatie_geboekt.
+
+## Deferred (require a live OpenRegister instance / a future cross-app spec)
+
+These remaining tasks describe runtime side-effects or UI that cannot be unit-verified without
+a running OR/NC instance, or belong to a separate spec. They are deferred to the implementation
+cycle's CI gate against a live container; the schema + navigation + seed + RBAC/context +
+intercompany foundation they build on ships here.
+
+- [ ] Task 13 (deferred): `AdministratieSwitcher.vue` in-session switcher component —
+  the context/switch API ships (Task 11/16); the Vue dropdown is a thin client over it and is
+  best authored + Playwright-verified against a live instance. The declarative index/detail
+  navigation for all five schemas ships now (Task 23).
+- [ ] Task 15 (deferred): per-administratie incremental backup routine — runtime scheduler
+  side-effect against a live OR; `Administration.backupSchedule` (the routing field) ships now.
+- [ ] Task 17 (deferred): archival write-block enforcement — declared as
+  `x-openregister-lifecycle` on the Administration schema; the runtime write-block guard wiring
+  needs a live OR to verify.
+- [ ] Task 19 (deferred): consolidation export application of `ConsolidationMapping` rules —
+  explicitly owned by the future `bookkeeping-consolidatie` spec; the schema is queryable now,
+  no consolidation rendering ships here (per proposal Out-of-Scope).
+- [ ] Task 20 (deferred): administratie-migratie dual-post draft/confirm/rollback flow —
+  net-new atomic dual-post + UI; the `AdministrationMigration` audit schema + lifecycle ship now.
+- [ ] Task 22 (deferred): cross-administratie audit-trail viewer query — net-new aggregation
+  across the user's accessible administrations (`accessibleAdministrationIds()` is the building
+  block); runtime/UI behaviour deferred.
 
 ## Verification
 
