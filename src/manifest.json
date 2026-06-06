@@ -234,27 +234,24 @@
 					"order": 20
 				},
 				{
-					"id": "WarehouseLocations",
-					"label": "Warehouse Locations",
-					"labelNl": "Magazijnlocaties",
-					"icon": "WarehouseOutline",
-					"route": "WarehouseLocations",
+					"id": "ReorderRules",
+					"label": "Reorder Rules",
+					"icon": "CartArrowDownOutline",
+					"route": "ReorderRules",
 					"order": 30
 				},
 				{
-					"id": "InterWarehouseTransfers",
-					"label": "Inter-Warehouse Transfers",
-					"labelNl": "Magazijntransfers",
-					"icon": "TruckDeliveryOutline",
-					"route": "InterWarehouseTransfers",
+					"id": "LowStockAlerts",
+					"label": "Low Stock Alerts",
+					"icon": "AlertCircleOutline",
+					"route": "LowStockAlerts",
 					"order": 40
 				},
 				{
-					"id": "InTransitInventory",
-					"label": "In-Transit Inventory",
-					"labelNl": "Onderweg-voorraad",
-					"icon": "TruckOutline",
-					"route": "InTransitInventory",
+					"id": "StockLevelsDashboard",
+					"label": "Stock Levels",
+					"icon": "ChartBarOutline",
+					"route": "StockLevelsDashboard",
 					"order": 50
 				}
 			]
@@ -6837,170 +6834,160 @@
 			}
 		},
 		{
-			"id": "WarehouseLocations",
-			"route": "/inventory/warehouse-locations",
+			"id": "ReorderRules",
+			"route": "/inventory/reorder-rules",
 			"type": "index",
-			"title": "Warehouse Locations",
-			"titleNl": "Magazijnlocaties",
+			"title": "Reorder Rules",
 			"config": {
 				"register": "shillinq",
-				"schema": "Location",
+				"schema": "InventoryReorderRule",
 				"columns": [
 					{
-						"key": "locationCode",
-						"label": "Code",
+						"key": "inventoryStockId",
+						"label": "Stock Item",
 						"sortable": true
 					},
 					{
-						"key": "name",
-						"label": "Name",
-						"labelNl": "Naam",
+						"key": "minimumLevel",
+						"label": "Minimum Level",
 						"sortable": true
 					},
 					{
-						"key": "locationType",
-						"label": "Type",
+						"key": "maximumLevel",
+						"label": "Maximum Level",
 						"sortable": true
 					},
 					{
-						"key": "hierarchyPath",
-						"label": "Path",
-						"sortable": false
+						"key": "reorderPoint",
+						"label": "Reorder Point",
+						"sortable": true
 					},
 					{
-						"key": "status",
+						"key": "autoPurchaseOrder",
+						"label": "Auto PO",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
 						"label": "Status",
 						"sortable": true
-					},
-					{
-						"key": "childCount",
-						"label": "Children",
-						"sortable": false
 					}
 				],
+				"defaultSort": "lifecycleState",
+				"detailRoute": "ReorderRuleDetail",
 				"filters": [
 					{
-						"key": "name",
-						"label": "Name"
-					},
-					{
-						"key": "locationType",
-						"label": "Type",
-						"options": [
-							{
-								"value": "warehouse",
-								"label": "Warehouse"
-							},
-							{
-								"value": "zone",
-								"label": "Zone"
-							},
-							{
-								"value": "bin",
-								"label": "Bin"
-							},
-							{
-								"value": "in-transit",
-								"label": "In-Transit"
-							}
-						]
-					},
-					{
-						"key": "status",
+						"key": "lifecycleState",
 						"label": "Status",
 						"options": [
-							{
-								"value": "active",
-								"label": "Active"
-							},
-							{
-								"value": "inactive",
-								"label": "Inactive"
-							}
+							"active",
+							"paused",
+							"archived"
 						]
+					},
+					{
+						"key": "autoPurchaseOrder",
+						"label": "Auto PO"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration"
 					}
-				],
-				"defaultSort": "locationCode",
-				"detailRoute": "WarehouseLocationDetail",
-				"hierarchyView": {
-					"enabled": true,
-					"parentField": "parentLocationId",
-					"rootFilter": {
-						"locationType": "warehouse"
-					}
-				}
+				]
 			}
 		},
 		{
-			"id": "WarehouseLocationDetail",
-			"route": "/inventory/warehouse-locations/:id",
+			"id": "ReorderRuleDetail",
+			"route": "/inventory/reorder-rules/:id",
 			"type": "detail",
-			"title": "Location",
-			"titleNl": "Locatie",
+			"title": "Reorder Rule",
 			"config": {
 				"register": "shillinq",
-				"schema": "Location",
+				"schema": "InventoryReorderRule",
 				"fields": [
 					{
-						"key": "name",
-						"label": "Name",
-						"labelNl": "Naam",
+						"key": "inventoryStockId",
+						"label": "Stock Item",
 						"type": "string"
 					},
 					{
-						"key": "locationCode",
-						"label": "Code",
-						"type": "string",
-						"readonly": true
-					},
-					{
-						"key": "locationType",
-						"label": "Type",
-						"type": "enum"
-					},
-					{
-						"key": "hierarchyPath",
-						"label": "Hierarchy Path",
-						"type": "computed"
-					},
-					{
-						"key": "parentLocationId",
-						"label": "Parent Location",
-						"type": "relation",
-						"relatedSchema": "Location"
-					},
-					{
-						"key": "address",
-						"label": "Address",
-						"labelNl": "Adres",
+						"key": "supplierId",
+						"label": "Supplier",
 						"type": "string"
 					},
 					{
-						"key": "region",
-						"label": "Region",
-						"labelNl": "Regio",
-						"type": "string"
-					},
-					{
-						"key": "status",
-						"label": "Status",
-						"type": "enum"
-					},
-					{
-						"key": "capacity",
-						"label": "Capacity",
-						"labelNl": "Capaciteit",
+						"key": "minimumLevel",
+						"label": "Minimum Level",
 						"type": "number"
 					},
 					{
-						"key": "capacityUnit",
-						"label": "Capacity Unit",
+						"key": "maximumLevel",
+						"label": "Maximum Level",
+						"type": "number"
+					},
+					{
+						"key": "reorderPoint",
+						"label": "Reorder Point",
+						"type": "number"
+					},
+					{
+						"key": "reorderPointCalculated",
+						"label": "Calculated Reorder Point",
+						"type": "calculated"
+					},
+					{
+						"key": "reorderQuantity",
+						"label": "Reorder Quantity",
+						"type": "number"
+					},
+					{
+						"key": "leadTimeDays",
+						"label": "Lead Time (days)",
+						"type": "number"
+					},
+					{
+						"key": "safetyStockDays",
+						"label": "Safety Stock (days)",
+						"type": "number"
+					},
+					{
+						"key": "alertThreshold",
+						"label": "Warning Threshold (%)",
+						"type": "number"
+					},
+					{
+						"key": "autoPurchaseOrder",
+						"label": "Auto Purchase Order",
+						"type": "boolean"
+					},
+					{
+						"key": "autoPurchaseOrderApprovalRequired",
+						"label": "Approval Required",
+						"type": "boolean"
+					},
+					{
+						"key": "spendingLimit",
+						"label": "Spending Limit (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "alertChannel",
+						"label": "Alert Channel",
 						"type": "string"
 					},
 					{
-						"key": "notes",
-						"label": "Notes",
-						"labelNl": "Notities",
+						"key": "alertRecipients",
+						"label": "Alert Recipients",
+						"type": "array"
+					},
+					{
+						"key": "snoozeUntil",
+						"label": "Snooze Until",
+						"type": "date-time"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
 						"type": "string"
 					},
 					{
@@ -7009,331 +6996,182 @@
 						"type": "string"
 					}
 				],
-				"sections": [
-					{
-						"id": "location-info",
-						"title": "Location Details",
-						"titleNl": "Locatiedetails",
-						"fields": [
-							"name",
-							"locationCode",
-							"locationType",
-							"hierarchyPath",
-							"parentLocationId",
-							"address",
-							"region",
-							"status",
-							"notes"
-						]
-					},
-					{
-						"id": "stock-info",
-						"title": "Stock Summary",
-						"titleNl": "Voorraadoverzicht",
-						"type": "aggregation",
-						"aggregation": "stockRollup",
-						"note": "Stock aggregated from all descendant bin locations per REQ-LOC-005."
-					},
-					{
-						"id": "children-list",
-						"title": "Child Locations",
-						"titleNl": "Onderliggende locaties",
-						"type": "related",
-						"relatedSchema": "Location",
-						"filter": {
-							"parentLocationId": "@self.id"
-						}
-					},
-					{
-						"id": "audit-trail",
-						"title": "Audit Trail",
-						"titleNl": "Auditspoor",
-						"type": "auditTrail"
-					}
-				],
+				"lifecycleActions": true,
 				"actions": [
 					{
-						"id": "edit",
-						"label": "Edit",
-						"labelNl": "Bewerken"
+						"id": "pause-rule",
+						"label": "Pause Rule",
+						"icon": "PauseCircleOutline",
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": [
+								"active"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "pause",
+						"description": "Suspend alert monitoring for this rule. Use when a planned stockout or supplier change is in progress."
 					},
 					{
-						"id": "deactivate",
-						"label": "Deactivate",
-						"labelNl": "Deactiveren",
-						"transition": "deactivate"
+						"id": "resume-rule",
+						"label": "Resume Rule",
+						"icon": "PlayCircleOutline",
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": [
+								"paused"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "resume",
+						"description": "Re-activate alert monitoring after planned suspension."
 					},
 					{
-						"id": "archive",
-						"label": "Archive",
-						"labelNl": "Archiveren",
-						"transition": "archive"
+						"id": "archive-rule",
+						"label": "Archive Rule",
+						"icon": "ArchiveArrowDownOutline",
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": [
+								"active"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "archive",
+						"description": "Permanently deactivate the rule. Audit trail is preserved."
 					},
 					{
-						"id": "bulkImport",
-						"label": "Bulk Import CSV",
-						"labelNl": "Bulk import CSV",
-						"type": "massImport",
-						"schema": "Location"
+						"id": "restore-rule",
+						"label": "Restore Rule",
+						"icon": "ArchiveArrowUpOutline",
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": [
+								"archived"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "restore",
+						"description": "Re-activate an archived rule."
 					}
-				]
+				],
+				"indexRoute": "ReorderRules"
 			}
 		},
 		{
-			"id": "InterWarehouseTransfers",
-			"route": "/inventory/transfers",
+			"id": "LowStockAlerts",
+			"route": "/inventory/low-stock-alerts",
 			"type": "index",
-			"title": "Inter-Warehouse Transfers",
-			"titleNl": "Magazijntransfers",
+			"title": "Low Stock Alerts",
 			"config": {
 				"register": "shillinq",
-				"schema": "InventoryStockTransfer",
+				"schema": "InventoryReorderRule",
+				"aggregation": "lowStockTrigger",
 				"columns": [
 					{
-						"key": "transferNumber",
-						"label": "Transfer #",
+						"key": "inventoryStockId",
+						"label": "Stock Item",
 						"sortable": true
 					},
 					{
-						"key": "sku",
-						"label": "SKU",
+						"key": "minimumLevel",
+						"label": "Minimum Level",
 						"sortable": true
 					},
 					{
-						"key": "sourceLocationId",
-						"label": "From",
-						"labelNl": "Van",
+						"key": "reorderPoint",
+						"label": "Reorder Point",
 						"sortable": true
 					},
 					{
-						"key": "destinationLocationId",
-						"label": "To",
-						"labelNl": "Naar",
+						"key": "autoPurchaseOrder",
+						"label": "Auto PO",
 						"sortable": true
 					},
 					{
-						"key": "quantity",
-						"label": "Quantity",
-						"labelNl": "Hoeveelheid",
+						"key": "snoozeUntil",
+						"label": "Snoozed Until",
 						"sortable": true
 					},
 					{
-						"key": "scheduledDate",
-						"label": "Scheduled",
-						"labelNl": "Gepland",
-						"sortable": true
-					},
-					{
-						"key": "status",
-						"label": "Status",
+						"key": "administrationId",
+						"label": "Administration",
 						"sortable": true
 					}
 				],
+				"defaultSort": "-administrationId",
+				"detailRoute": "ReorderRuleDetail",
 				"filters": [
 					{
-						"key": "sourceLocationId",
-						"label": "Source Warehouse"
+						"key": "administrationId",
+						"label": "Administration"
 					},
 					{
-						"key": "destinationLocationId",
-						"label": "Destination Warehouse"
-					},
+						"key": "autoPurchaseOrder",
+						"label": "Auto PO"
+					}
+				],
+				"description": "Items currently below their reorder point, grouped by administration. Dismiss by snoozing or placing an order."
+			}
+		},
+		{
+			"id": "StockLevelsDashboard",
+			"route": "/inventory/stock-levels",
+			"type": "dashboard",
+			"title": "Stock Levels Dashboard",
+			"config": {
+				"widgets": [
 					{
-						"key": "status",
-						"label": "Status",
-						"options": [
+						"id": "low-stock-by-location",
+						"title": "Low Stock by Location",
+						"type": "table",
+						"aggregation": "lowStockDashboard",
+						"schema": "InventoryReorderRule",
+						"register": "shillinq",
+						"columns": [
 							{
-								"value": "draft",
-								"label": "Draft"
+								"key": "location",
+								"label": "Location"
 							},
 							{
-								"value": "confirmed",
-								"label": "Confirmed"
+								"key": "itemCount",
+								"label": "Items Below Minimum"
 							},
 							{
-								"value": "in-transit",
-								"label": "In Transit"
-							},
-							{
-								"value": "received",
-								"label": "Received"
-							},
-							{
-								"value": "cancelled",
-								"label": "Cancelled"
+								"key": "totalDeficit",
+								"label": "Total Deficit (units)"
 							}
-						]
+						],
+						"description": "Locations with stock below minimum levels. Click a location to view its reorder rules."
 					},
 					{
-						"key": "scheduledDate",
-						"label": "Date Range",
-						"type": "dateRange"
+						"id": "auto-po-pending",
+						"title": "Auto-PO Pending Approval",
+						"type": "stats-block",
+						"props": {
+							"countLabel": "purchase orders awaiting approval",
+							"variant": "warning"
+						}
 					}
 				],
-				"defaultSort": "-scheduledDate",
-				"detailRoute": "InterWarehouseTransferDetail"
-			}
-		},
-		{
-			"id": "InterWarehouseTransferDetail",
-			"route": "/inventory/transfers/:id",
-			"type": "detail",
-			"title": "Transfer",
-			"titleNl": "Transfer",
-			"config": {
-				"register": "shillinq",
-				"schema": "InventoryStockTransfer",
-				"fields": [
+				"layout": [
 					{
-						"key": "transferNumber",
-						"label": "Transfer #",
-						"type": "string"
+						"id": "layout-low-stock-by-location",
+						"widgetId": "low-stock-by-location",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6
 					},
 					{
-						"key": "sku",
-						"label": "SKU",
-						"type": "string"
-					},
-					{
-						"key": "sourceLocationId",
-						"label": "From Location",
-						"type": "relation",
-						"relatedSchema": "Location"
-					},
-					{
-						"key": "destinationLocationId",
-						"label": "To Location",
-						"type": "relation",
-						"relatedSchema": "Location"
-					},
-					{
-						"key": "quantity",
-						"label": "Quantity",
-						"labelNl": "Hoeveelheid",
-						"type": "number"
-					},
-					{
-						"key": "scheduledDate",
-						"label": "Scheduled Date",
-						"type": "date"
-					},
-					{
-						"key": "completedDate",
-						"label": "Completed Date",
-						"type": "date"
-					},
-					{
-						"key": "status",
-						"label": "Status",
-						"type": "enum"
-					},
-					{
-						"key": "glPosted",
-						"label": "GL Posted",
-						"labelNl": "GL geboekt",
-						"type": "boolean"
-					},
-					{
-						"key": "notes",
-						"label": "Notes",
-						"labelNl": "Notities",
-						"type": "string"
-					}
-				],
-				"actions": [
-					{
-						"id": "confirm",
-						"label": "Confirm",
-						"labelNl": "Bevestigen",
-						"transition": "confirm"
-					},
-					{
-						"id": "ship",
-						"label": "Mark as Shipped",
-						"labelNl": "Markeren als verzonden",
-						"transition": "ship"
-					},
-					{
-						"id": "receive",
-						"label": "Mark as Received",
-						"labelNl": "Ontvangen",
-						"transition": "receive"
-					},
-					{
-						"id": "cancel",
-						"label": "Cancel",
-						"labelNl": "Annuleren",
-						"transition": "cancel"
+						"id": "layout-auto-po-pending",
+						"widgetId": "auto-po-pending",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 2
 					}
 				]
-			}
-		},
-		{
-			"id": "InTransitInventory",
-			"route": "/inventory/in-transit",
-			"type": "index",
-			"title": "In-Transit Inventory",
-			"titleNl": "Onderweg-voorraad",
-			"config": {
-				"register": "shillinq",
-				"schema": "InventoryStockTransfer",
-				"filter": {
-					"status": "in-transit"
-				},
-				"columns": [
-					{
-						"key": "sku",
-						"label": "SKU",
-						"sortable": true
-					},
-					{
-						"key": "sourceLocationId",
-						"label": "From Warehouse",
-						"labelNl": "Bronmagazijn",
-						"sortable": true
-					},
-					{
-						"key": "destinationLocationId",
-						"label": "To Warehouse",
-						"labelNl": "Doelmagazijn",
-						"sortable": true
-					},
-					{
-						"key": "quantity",
-						"label": "Quantity",
-						"labelNl": "Hoeveelheid",
-						"sortable": true
-					},
-					{
-						"key": "scheduledDate",
-						"label": "ETA",
-						"sortable": true
-					},
-					{
-						"key": "daysInTransit",
-						"label": "Days In Transit",
-						"labelNl": "Dagen onderweg",
-						"sortable": false
-					}
-				],
-				"groupBy": "sourceLocationId",
-				"filters": [
-					{
-						"key": "sourceLocationId",
-						"label": "Source Warehouse"
-					},
-					{
-						"key": "destinationLocationId",
-						"label": "Destination Warehouse"
-					},
-					{
-						"key": "sku",
-						"label": "SKU"
-					}
-				],
-				"defaultSort": "scheduledDate",
-				"detailRoute": "InterWarehouseTransferDetail",
-				"note": "Shows only in-transit transfers grouped by source → destination route per REQ-LOC-007."
 			}
 		}
 	]

@@ -7475,174 +7475,347 @@
 					}
 				}
 			},
-			"Location": {
-				"slug": "Location",
-				"icon": "MapMarkerOutline",
+			"InventoryReorderRule": {
+				"slug": "InventoryReorderRule",
+				"icon": "CartArrowDownOutline",
 				"version": "0.1.0",
-				"title": "Location",
-				"description": "Physical or virtual storage location in the inventory hierarchy (warehouse → zone → bin). Hierarchy expressed via parent-child FK per inventory-multi-warehouse spec; rollup aggregation via x-openregister-aggregations per ADR-031. No PHP LocationService — hierarchy and rollup are declarative.",
-				"x-schema-org": "schema:Place",
+				"title": "Inventory Reorder Rule",
+				"description": "Per-item, per-location reorder policy declaring min/max stock levels, lead-time-aware reorder-point thresholds, low-stock alert policy, and optional auto-purchase-order generation. Reorder decision logic is fully declarative via x-openregister-lifecycle, x-openregister-aggregations, and x-openregister-notifications per ADR-031 and ADR-022. No PHP InventoryReorderService — all reorder triggers and alert dispatch are schema-driven.",
+				"x-schema-org": "schema:Thing",
 				"type": "object",
 				"required": [
-					"name",
-					"code",
-					"locationType",
+					"inventoryStockId",
+					"minimumLevel",
+					"maximumLevel",
+					"reorderPoint",
+					"reorderQuantity",
+					"autoPurchaseOrder",
+					"lifecycleState",
 					"administrationId"
 				],
 				"properties": {
-					"name": {
+					"inventoryStockId": {
 						"type": "string",
-						"description": "Human-readable location name.",
-						"example": "Amsterdam Central Warehouse"
+						"description": "FK to InventoryStock record (item + location combination). The reorder rule applies specifically to this stock entry.",
+						"example": "stock-amsterdam-sku-001"
 					},
-					"code": {
+					"supplierId": {
 						"type": "string",
-						"description": "Location code unique per administration (e.g., W-01, Z-01, B-100). Immutable after creation per REQ-LOC-002.",
-						"example": "W-01"
-					},
-					"address": {
-						"type": "string",
-						"description": "Physical address (warehouse street/city).",
 						"nullable": true,
-						"example": "Damrak 1, 1012 LG Amsterdam"
+						"description": "FK to primary Supplier for reorder. If null, operator selects supplier manually at order time.",
+						"example": "supplier-fresh-foods-nl"
 					},
-					"region": {
-						"type": "string",
-						"description": "Geographic region for rollup reporting.",
+					"minimumLevel": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Stock quantity at or below which a low-stock alert is triggered. REQ-IRA-003.",
+						"example": 50
+					},
+					"maximumLevel": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Target stock quantity for replenishment. Must be greater than minimumLevel.",
+						"example": 200
+					},
+					"reorderPoint": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Stock quantity at which reorder is triggered, factoring supplier lead time. Formula: (expectedDailyUsage × leadTimeDays) + safetyStock. REQ-IRA-005.",
+						"example": 75
+					},
+					"reorderQuantity": {
+						"type": "number",
+						"minimum": 0,
+						"exclusiveMinimum": true,
+						"description": "Standard quantity to order on alert. Used as PO line quantity when auto-PO fires. REQ-IRA-006.",
+						"example": 100
+					},
+					"leadTimeDays": {
+						"type": "integer",
+						"minimum": 0,
 						"nullable": true,
-						"example": "Noord-Holland"
+						"description": "Supplier lead time in calendar days. Defaults to supplier.leadTimeDays when null; falls back to 7 days if supplier has no lead time. REQ-IRA-005.",
+						"example": 5
 					},
-					"locationType": {
+					"safetyStockDays": {
+						"type": "integer",
+						"minimum": 0,
+						"default": 1,
+						"description": "Safety margin in days above lead time for reorder-point calculation. REQ-IRA-005.",
+						"example": 1
+					},
+					"alertThreshold": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 100,
+						"default": 20,
+						"description": "Percentage above minimumLevel at which a warning alert fires (early warning before critical low-stock). E.g. 20 means alert at minimumLevel × 1.20.",
+						"example": 20
+					},
+					"autoPurchaseOrder": {
+						"type": "boolean",
+						"default": false,
+						"description": "Whether to automatically generate a PurchaseOrder when the low-stock alert fires. REQ-IRA-006.",
+						"example": false
+					},
+					"autoPurchaseOrderApprovalRequired": {
+						"type": "boolean",
+						"default": true,
+						"description": "Whether auto-generated PO requires operator approval before issue. When true PO lands in draft state; when false PO is issued immediately (within spendingLimit). REQ-IRA-006.",
+						"example": true
+					},
+					"spendingLimit": {
+						"type": "number",
+						"minimum": 0,
+						"nullable": true,
+						"description": "Maximum spend per auto-generated PO in EUR. If reorderQuantity × supplier.currentPrice exceeds this, the auto-order is blocked and escalated to role='procurement-manager'. REQ-IRA-006.",
+						"example": 5000
+					},
+					"alertChannel": {
 						"type": "string",
-						"description": "Location type in the storage hierarchy. warehouse: top-level physical location; zone: section within warehouse; bin: most-granular storage unit; in-transit: virtual holding for transfers in progress per REQ-LOC-004.",
 						"enum": [
-							"warehouse",
-							"zone",
-							"bin",
-							"in-transit"
+							"email",
+							"dashboard",
+							"slack",
+							"webhook"
 						],
-						"example": "warehouse"
+						"default": "dashboard",
+						"description": "Notification channel for low-stock alerts. REQ-IRA-004.",
+						"example": "dashboard"
 					},
-					"parentLocationId": {
-						"type": "string",
-						"description": "FK to parent Location (null for warehouse/in-transit; required for zone/bin per REQ-LOC-002). Hierarchy depth ≤ 4 per REQ-LOC-003.",
+					"alertRecipients": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
 						"nullable": true,
-						"example": "loc-w01"
+						"description": "Email addresses or Nextcloud user IDs to notify on low-stock alert. REQ-IRA-004.",
+						"example": [
+							"warehouse@example.nl",
+							"procurement@example.nl"
+						]
 					},
-					"status": {
+					"snoozeUntil": {
 						"type": "string",
-						"description": "Lifecycle state of the location.",
+						"format": "date-time",
+						"nullable": true,
+						"description": "Temporarily suppress low-stock alerts until this datetime. Operator sets this to acknowledge a situation in progress. REQ-IRA-003.",
+						"example": "2026-07-01T08:00:00Z"
+					},
+					"lifecycleState": {
+						"type": "string",
 						"enum": [
 							"active",
-							"inactive",
+							"paused",
 							"archived"
 						],
 						"default": "active",
+						"description": "Current reorder rule lifecycle state. Only active rules fire low-stock alerts and trigger auto-PO. REQ-IRA-009.",
 						"example": "active"
 					},
 					"administrationId": {
 						"type": "string",
-						"description": "FK to the administration owning this location. Scopes all queries per REQ-LOC-008.",
-						"example": "adm-1"
+						"description": "FK to Administration that owns this reorder rule. Rules are scoped per administration for multi-tenant isolation.",
+						"example": "adm-grocer-amsterdam"
 					}
 				},
 				"x-openregister-lifecycle": {
-					"field": "status",
+					"field": "lifecycleState",
 					"initialState": "active",
 					"states": {
 						"active": {
 							"label": "Active",
-							"description": "Location is in use for inventory operations."
+							"description": "Rule is monitoring stock levels. Low-stock alerts fire when quantity ≤ minimumLevel. Auto-PO triggers if enabled."
 						},
-						"inactive": {
-							"label": "Inactive",
-							"description": "Location temporarily not in use; existing stock may still be present."
+						"paused": {
+							"label": "Paused",
+							"description": "Alert dispatch disabled. No auto-PO until rule is resumed. Stock monitoring suspended (e.g. during planned stockout or supplier change)."
 						},
 						"archived": {
 							"label": "Archived",
-							"description": "Location permanently closed; historical reference only."
+							"description": "Rule permanently deactivated. No alerts, no auto-PO. Retained for audit trail."
 						}
 					},
 					"transitions": {
-						"deactivate": {
+						"pause": {
 							"from": "active",
-							"to": "inactive",
-							"label": "Deactivate",
-							"description": "Suspend location from new stock operations."
+							"to": "paused",
+							"label": "Pause rule",
+							"description": "Suspend alert monitoring. Use when a stockout is expected or the supplier relationship is on hold. REQ-IRA-009."
 						},
-						"reactivate": {
-							"from": "inactive",
+						"resume": {
+							"from": "paused",
 							"to": "active",
-							"label": "Reactivate",
-							"description": "Return location to active operational status."
+							"label": "Resume rule",
+							"description": "Re-activate alert monitoring after planned suspension. REQ-IRA-009."
 						},
 						"archive": {
-							"from": [
-								"active",
-								"inactive"
-							],
+							"from": "active",
 							"to": "archived",
-							"label": "Archive",
-							"description": "Permanently close location; requires stock migration first."
+							"label": "Archive rule",
+							"description": "Permanently deactivate the rule. Audit trail is preserved. REQ-IRA-009."
+						},
+						"restore": {
+							"from": "archived",
+							"to": "active",
+							"label": "Restore rule",
+							"description": "Re-activate an archived rule (e.g. seasonal product restocking). REQ-IRA-009."
+						}
+					},
+					"notifications": {
+						"onTransition": {
+							"pause": {
+								"notificationType": "inventory-rule-paused",
+								"recipient": "{alertRecipients}",
+								"channels": [
+									"{alertChannel}"
+								],
+								"payload": {
+									"inventoryStockId": "{inventoryStockId}",
+									"lifecycleState": "paused",
+									"message": "Reorder rule has been paused. No alerts will fire until resumed."
+								}
+							}
 						}
 					}
 				},
 				"x-openregister-aggregations": {
-					"totalStockQuantity": {
-						"description": "Total stock quantity across all descendant bin locations (warehouse-level rollup per REQ-LOC-005). Aggregates InventoryStock.quantity for all bins descended from this location.",
-						"type": "sum",
-						"field": "InventoryStock.quantity",
+					"lowStockTrigger": {
+						"description": "Evaluates whether the linked InventoryStock quantity has fallen to or below the reorderPoint. Fires on every InventoryStock quantity change. When true, triggers the low-stock alert lifecycle action. REQ-IRA-007.",
+						"type": "condition",
+						"source": "InventoryStock",
 						"filter": {
-							"locationType": "bin",
-							"ancestorOf": "this.id",
-							"administrationId": "@self.administrationId"
+							"field": "id",
+							"equals": "{inventoryStockId}"
+						},
+						"aggregate": {
+							"function": "SUM",
+							"field": "quantity"
+						},
+						"condition": "result <= {reorderPoint}",
+						"action": "trigger-low-stock-alert"
+					},
+					"lowStockDashboard": {
+						"description": "Aggregates InventoryStock records below their minimum level grouped by location. Powers the Stock Levels Dashboard widget. REQ-IRA-008.",
+						"type": "groupBy",
+						"source": "InventoryStock",
+						"join": {
+							"schema": "InventoryReorderRule",
+							"on": "inventoryStockId = InventoryStock.id",
+							"filter": "InventoryReorderRule.lifecycleState = active"
+						},
+						"filter": "InventoryStock.quantity <= InventoryReorderRule.minimumLevel",
+						"groupBy": "InventoryStock.location",
+						"select": {
+							"location": "InventoryStock.location",
+							"itemCount": "COUNT(*)",
+							"totalDeficit": "SUM(InventoryReorderRule.minimumLevel - InventoryStock.quantity)"
+						},
+						"orderBy": "totalDeficit DESC"
+					}
+				},
+				"x-openregister-notifications": {
+					"lowStockAlert": {
+						"description": "Dispatches a low-stock alert when InventoryStock.quantity ≤ minimumLevel and lifecycleState = active and (snoozeUntil is null or snoozeUntil < now). REQ-IRA-004.",
+						"trigger": "aggregation:lowStockTrigger",
+						"guard": {
+							"field": "lifecycleState",
+							"equals": "active"
+						},
+						"snoozeGuard": {
+							"field": "snoozeUntil",
+							"condition": "null OR past"
+						},
+						"notificationType": "inventory-low-stock",
+						"recipient": "{alertRecipients}",
+						"channels": [
+							"{alertChannel}"
+						],
+						"payload": {
+							"inventoryStockId": "{inventoryStockId}",
+							"supplierId": "{supplierId}",
+							"minimumLevel": "{minimumLevel}",
+							"reorderQuantity": "{reorderQuantity}",
+							"reorderPoint": "{reorderPoint}",
+							"autoPurchaseOrder": "{autoPurchaseOrder}"
+						},
+						"actionLinks": [
+							{
+								"id": "order-now",
+								"label": "Order Now",
+								"visibleWhen": "autoPurchaseOrder = true",
+								"action": "trigger-auto-po"
+							},
+							{
+								"id": "snooze",
+								"label": "Snooze",
+								"action": "snooze-alert"
+							},
+							{
+								"id": "update-rule",
+								"label": "Update Rule",
+								"action": "navigate",
+								"route": "InventoryReorderRuleDetail",
+								"params": {
+									"id": "{id}"
+								}
+							}
+						]
+					},
+					"spendingLimitExceeded": {
+						"description": "Dispatches an escalation notification to procurement-manager role when auto-PO total exceeds spendingLimit. REQ-IRA-006.",
+						"trigger": "auto-po-spending-limit-exceeded",
+						"notificationType": "inventory-spending-limit-exceeded",
+						"recipientRole": "procurement-manager",
+						"channels": [
+							"dashboard",
+							"email"
+						],
+						"payload": {
+							"inventoryStockId": "{inventoryStockId}",
+							"reorderQuantity": "{reorderQuantity}",
+							"spendingLimit": "{spendingLimit}"
 						}
 					}
 				},
-				"x-openregister-relations": {
-					"parentLocation": {
-						"description": "Parent location in hierarchy. FK: parentLocationId → Location.id. Max depth 4 per REQ-LOC-003.",
-						"type": "many-to-one",
-						"target": "Location",
-						"foreignKey": "parentLocationId"
+				"x-openregister-calculations": {
+					"reorderPointCalculated": {
+						"description": "Computes the lead-time-aware reorder point. Formula: (expectedDailyUsage × leadTimeDays) + safetyStock. Falls back to minimumLevel + (leadTimeDays × 5) + 10 if expectedDailyUsage unavailable. Operator may override reorderPoint manually. REQ-IRA-005.",
+						"expression": "IF({expectedDailyUsage} IS NOT NULL, ({expectedDailyUsage} * COALESCE({leadTimeDays}, 7)) + ({expectedDailyUsage} * COALESCE({safetyStockDays}, 1)), {minimumLevel} + (COALESCE({leadTimeDays}, 7) * 5) + 10)",
+						"outputField": "reorderPointCalculated",
+						"type": "number"
 					},
-					"childLocations": {
-						"description": "Direct child locations (zones under warehouse, bins under zone).",
-						"type": "one-to-many",
-						"target": "Location",
-						"foreignKey": "parentLocationId"
-					},
-					"inventoryStock": {
-						"description": "InventoryStock records at bin level (most-granular location per REQ-LOC-009).",
-						"type": "one-to-many",
-						"target": "InventoryStock",
-						"foreignKey": "locationId"
+					"isLowStock": {
+						"description": "True when the linked InventoryStock quantity is at or below minimumLevel and rule is active. Used for dashboard filtering without a separate aggregation round-trip.",
+						"expression": "{lifecycleState} = 'active' AND {linkedStockQuantity} <= {minimumLevel}",
+						"outputField": "isLowStock",
+						"type": "boolean"
 					}
 				},
-				"x-openregister-validations": {
-					"zoneRequiresParent": {
-						"when": {
-							"locationType": {
-								"in": [
-									"zone",
-									"bin"
-								]
-							}
+				"x-openregister-rbac": {
+					"roles": {
+						"warehouse-manager": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							],
+							"description": "Warehouse managers maintain reorder rules per location."
 						},
-						"requires": "parentLocationId",
-						"message": "Zone and bin locations require a parentLocationId per REQ-LOC-002."
-					},
-					"warehouseNoParent": {
-						"when": {
-							"locationType": {
-								"in": [
-									"warehouse",
-									"in-transit"
-								]
-							}
+						"procurement": {
+							"permissions": [
+								"read",
+								"update"
+							],
+							"description": "Procurement team monitors and adjusts reorder rules."
 						},
-						"forbids": "parentLocationId",
-						"message": "Warehouse and in-transit locations must not have a parent per REQ-LOC-002."
+						"inventory-viewer": {
+							"permissions": [
+								"read"
+							],
+							"description": "Read-only access to reorder rules for auditing."
+						}
 					}
 				}
 			}
@@ -11728,173 +11901,82 @@
 		{
 			"@self": {
 				"register": "shillinq",
-				"schema": "Location",
-				"slug": "loc-w01-amsterdam"
+				"schema": "InventoryReorderRule",
+				"slug": "reorder-rule-grocer-appelsap"
 			},
-			"name": "Amsterdam Centraal Magazijn",
-			"locationCode": "W-01",
-			"locationType": "warehouse",
-			"parentLocationId": null,
-			"address": "Westerdoksdijk 40, 1013 AE Amsterdam",
-			"region": "Noord-Holland",
-			"status": "active",
-			"administrationId": "adm-consultancy-nl"
+			"inventoryStockId": "stock-grocer-amsterdam-appelsap-1l",
+			"supplierId": "supplier-fresh-foods-nl",
+			"minimumLevel": 50,
+			"maximumLevel": 200,
+			"reorderPoint": 75,
+			"reorderQuantity": 100,
+			"leadTimeDays": 5,
+			"safetyStockDays": 2,
+			"alertThreshold": 20,
+			"autoPurchaseOrder": true,
+			"autoPurchaseOrderApprovalRequired": false,
+			"spendingLimit": null,
+			"alertChannel": "dashboard",
+			"alertRecipients": [
+				"inkoop@kruideniersgroothandel.nl"
+			],
+			"snoozeUntil": null,
+			"lifecycleState": "active",
+			"administrationId": "adm-grocer-amsterdam"
 		},
 		{
 			"@self": {
 				"register": "shillinq",
-				"schema": "Location",
-				"slug": "loc-w01-z01-receiving"
+				"schema": "InventoryReorderRule",
+				"slug": "reorder-rule-office-papier-a4"
 			},
-			"name": "Ontvangst",
-			"locationCode": "Z-01",
-			"locationType": "zone",
-			"parentLocationId": "loc-w01-amsterdam",
-			"status": "active",
-			"administrationId": "adm-consultancy-nl"
+			"inventoryStockId": "stock-office-supply-den-haag-papier-a4",
+			"supplierId": "supplier-kantoor-depot-nl",
+			"minimumLevel": 5,
+			"maximumLevel": 50,
+			"reorderPoint": 10,
+			"reorderQuantity": 20,
+			"leadTimeDays": 7,
+			"safetyStockDays": 1,
+			"alertThreshold": 20,
+			"autoPurchaseOrder": false,
+			"autoPurchaseOrderApprovalRequired": true,
+			"spendingLimit": null,
+			"alertChannel": "email",
+			"alertRecipients": [
+				"inkoop@kantoorsuply.nl",
+				"manager@kantoorsuply.nl"
+			],
+			"snoozeUntil": null,
+			"lifecycleState": "active",
+			"administrationId": "adm-office-supply-den-haag"
 		},
 		{
 			"@self": {
 				"register": "shillinq",
-				"schema": "Location",
-				"slug": "loc-w01-z02-shelving"
+				"schema": "InventoryReorderRule",
+				"slug": "reorder-rule-warehouse-bevestigingsmiddelen-amsterdam"
 			},
-			"name": "Stellingkast A-M",
-			"locationCode": "Z-02",
-			"locationType": "zone",
-			"parentLocationId": "loc-w01-amsterdam",
-			"status": "active",
-			"administrationId": "adm-consultancy-nl"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "Location",
-				"slug": "loc-w01-z03-dispatch"
-			},
-			"name": "Expeditie",
-			"locationCode": "Z-03",
-			"locationType": "zone",
-			"parentLocationId": "loc-w01-amsterdam",
-			"status": "active",
-			"administrationId": "adm-consultancy-nl"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "Location",
-				"slug": "loc-w-east-rotterdam"
-			},
-			"name": "Rotterdam Magazijn Oost",
-			"locationCode": "W-EAST",
-			"locationType": "warehouse",
-			"parentLocationId": null,
-			"address": "Waalhaven ZZ 15, 3089 JH Rotterdam",
-			"region": "Zuid-Holland",
-			"status": "active",
-			"administrationId": "adm-consultancy-nl"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "Location",
-				"slug": "loc-w-east-z01"
-			},
-			"name": "Ontvangst Rotterdam",
-			"locationCode": "RE-Z-01",
-			"locationType": "zone",
-			"parentLocationId": "loc-w-east-rotterdam",
-			"status": "active",
-			"administrationId": "adm-consultancy-nl"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "Location",
-				"slug": "loc-in-transit-ams-rtd"
-			},
-			"name": "In Transit AMS → RTD",
-			"locationCode": "IN-TRANSIT-W01-WEAST",
-			"locationType": "in-transit",
-			"parentLocationId": null,
-			"notes": "Virtual holding location for stock in transit from Amsterdam to Rotterdam",
-			"status": "active",
-			"administrationId": "adm-consultancy-nl"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "Location",
-				"slug": "loc-w01-z02-b100"
-			},
-			"name": "Bin 100",
-			"locationCode": "B-100",
-			"locationType": "bin",
-			"parentLocationId": "loc-w01-z02-shelving",
-			"capacity": 50.0,
-			"capacityUnit": "pallets",
-			"status": "active",
-			"administrationId": "adm-consultancy-nl"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "Location",
-				"slug": "loc-w01-z02-b101"
-			},
-			"name": "Bin 101",
-			"locationCode": "B-101",
-			"locationType": "bin",
-			"parentLocationId": "loc-w01-z02-shelving",
-			"capacity": 50.0,
-			"capacityUnit": "pallets",
-			"status": "active",
-			"administrationId": "adm-consultancy-nl"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "InventoryStockTransfer",
-				"slug": "transfer-2026-001"
-			},
-			"transferNumber": "TRF-2026-001",
-			"sourceLocationId": "loc-w01-amsterdam",
-			"destinationLocationId": "loc-w-east-rotterdam",
-			"sku": "LAPTOP-001",
-			"quantity": 25.0,
-			"scheduledDate": "2026-06-10",
-			"status": "draft",
-			"notes": "Rebalancing laptop stock Amsterdam → Rotterdam",
-			"glPosted": false,
-			"administrationId": "adm-consultancy-nl"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "InventoryStock",
-				"slug": "stock-laptop-w01-z02-b100"
-			},
-			"sku": "LAPTOP-001",
-			"locationId": "loc-w01-z02-b100",
-			"quantity": 30.0,
-			"reservedQuantity": 5.0,
-			"unitCost": 899.0,
-			"lastMovementDate": "2026-06-01",
-			"administrationId": "adm-consultancy-nl"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "InventoryStock",
-				"slug": "stock-laptop-w01-z02-b101"
-			},
-			"sku": "LAPTOP-001",
-			"locationId": "loc-w01-z02-b101",
-			"quantity": 20.0,
-			"reservedQuantity": 0.0,
-			"unitCost": 899.0,
-			"lastMovementDate": "2026-05-28",
-			"administrationId": "adm-consultancy-nl"
+			"inventoryStockId": "stock-warehouse-amsterdam-bevestigingsmiddelen",
+			"supplierId": "supplier-technische-unie-nl",
+			"minimumLevel": 500,
+			"maximumLevel": 5000,
+			"reorderPoint": 1500,
+			"reorderQuantity": 2000,
+			"leadTimeDays": 14,
+			"safetyStockDays": 5,
+			"alertThreshold": 20,
+			"autoPurchaseOrder": true,
+			"autoPurchaseOrderApprovalRequired": true,
+			"spendingLimit": 5000,
+			"alertChannel": "email",
+			"alertRecipients": [
+				"procurment@groothandel-amsterdam.nl",
+				"warehouse@groothandel-amsterdam.nl"
+			],
+			"snoozeUntil": null,
+			"lifecycleState": "active",
+			"administrationId": "adm-warehouse-amsterdam"
 		}
 	]
 }
