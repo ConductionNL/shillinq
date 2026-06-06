@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 241
+**Entities:** 243
 
 ## Context
 
@@ -6005,3 +6005,58 @@ _A scheduled appointment on a resource calendar. Introduced by `bookings-resourc
 - → Administration (many-to-one, via administrationId)
 - → Calendar (many-to-one, via calendar)
 - → Resource (many-to-one, via resource — denormalised, must equal Calendar.resource)
+
+### BookingNotificationTrigger
+**Schema.org:** `schema:Action`
+_Configurable trigger for booking lifecycle notifications. Introduced by `bookings-notification-triggers`. Selects an event type (`booking.created`, `booking.changed`, `booking.cancelled`, `booking.reminder`), an ordered list of recipient rules (role + channels + optional condition), a fallback channel order, rate-limit + dedupe bounds and an opt-out gate. Dispatched through OpenRegister's notification engine (ADR-022); template selection delegates to the existing `BookingConfirmationTemplate` / `BookingReminderTemplate` / `BookingCancellationTemplate` schemas (`bookings-email-templates`) — no template duplication. Lifecycle: `enabled` → `disabled` → `archived` (REQ-BNT-007/008). The trigger fragment declares its full engine binding in `x-openregister-notifications` (ADR-031 schema-declarative): `appliesWhen` filters by status, `scopeBy` honours per-booking overrides via `appliesToBookingSlug`, `selectTemplate.byType` maps each event type onto a template schema, `skipWhen` composes opt-out / rate-limit (per-booking-hour + per-organizer-day) / dedupe gates, and `audit.schema=NotificationDelivery` writes one immutable record per attempt. No PHP listener class — pure-logic gates (rate-limit, dedupe, condition, opt-out, template render) live in `OCA\Shillinq\Service\Notification\*` for unit-test coverage; live dispatch stays in OR's engine._
+**Primary spec:** bookings-notification-triggers
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| name | string | Yes | Human-readable trigger name shown in the admin list |
+| status | enum | Yes | enabled / disabled / archived lifecycle state |
+| triggerType | enum | Yes | booking.created / booking.changed / booking.cancelled / booking.reminder |
+| reminderHoursBeforeStart | integer | No | Only used when triggerType=booking.reminder; engine schedules dispatch at bookingStart − this value (±15 min tolerance) |
+| channels | array | Yes | Channel priority order for fallback (email/sms/chat/teams/slack) |
+| recipients | array | Yes | Ordered list of {role, channels, condition} rules; role ∈ customer/organizer/admin_group; condition is a single comparison expression evaluated against the booking payload |
+| rateLimitPerBookingPerHour | integer | No | Default 10; engine returns queued on cap-hit |
+| rateLimitPerOrganizerPerDay | integer | No | Default 100 |
+| deduplicationWindowMinutes | integer | No | Default 5; dedupe key = (recipient, triggerType, bookingId) |
+| respectOptOut | boolean | No | Default true; transactional triggers may opt out (AVG / GDPR) |
+| templateOverrideSlug | string | No | Optional per-trigger template slug override |
+| appliesToBookingSlug | string | No | When set, the trigger only fires for that single Booking — modal-driven override pattern |
+| lastDispatchedAt | datetime | No | Most-recent successful dispatch timestamp; surfaced in the admin monitor |
+| activatedAt | datetime | No | First-enable timestamp (lifecycle stamp) |
+
+**Relations:**
+- → BookingConfirmationTemplate / BookingReminderTemplate / BookingCancellationTemplate (selectTemplate.byType, declarative)
+- → Booking (scopeBy.appliesToBookingSlug → Booking.slug; nullMeansGlobal)
+- → NotificationDelivery (writes one record per dispatch attempt via x-openregister-notifications.audit)
+
+**Cites:** ADR-022 (notification engine), ADR-031 (schema-declarative), ADR-004 (modal isolation for the per-booking override UI), ADR-037 (modular register fragment).
+
+### NotificationDelivery
+**Schema.org:** `schema:DigitalDocument`
+_Immutable audit-trail record of a notification dispatch attempt (REQ-BNT-005, ADR-022). One record per (trigger, recipient, channel) attempt — fallback retries produce additional records linked by the same `dispatchGroupId`. Tamper-evidence is delegated to OpenRegister's audit-trail-immutable contract (`x-openregister-audit.immutable=true`, `tamperEvident=true`, `retentionDays=365`); the schema only declares the fields and the write-once lifecycle. Surfaces in the admin notification monitor (REQ-BNT-008) and supports operator drill-down per booking. The `recipient` field contains PII (email / E.164 phone / chat id); non-auditor list views render the `maskedRecipient` calculation (e.g. `a***@example.com`)._
+**Primary spec:** bookings-notification-triggers
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| triggerName | string | Yes | Denormalised from BookingNotificationTrigger.name for audit immutability |
+| triggerType | enum | Yes | booking.created / changed / cancelled / reminder |
+| bookingId | string | Yes | UUID / slug of the Booking |
+| recipient | string | Yes | Address (email / E.164 phone / chat id / group:admin). PII — masked in non-auditor views |
+| channel | enum | Yes | email / sms / chat / teams / slack |
+| templateName | string | No | Denormalised template name; null when status=queued/skipped pre-template |
+| status | enum | Yes | sent / failed / skipped / queued |
+| skipReason | enum | No | Machine-readable reason: opt-out / deduplicated / rate-limit-booking / rate-limit-organizer / condition-false / no-recipient-address / all-channels-failed / template-render-error / adapter-unavailable |
+| failureReason | string | No | Human-readable error detail when status=failed |
+| retryCount | integer | No | Number of fallback / retry attempts before this outcome (0 = first attempt) |
+| dispatchGroupId | string | No | UUID linking fallback / retry attempts for the same logical dispatch |
+| sentAt | datetime | Yes | ISO-8601 UTC timestamp of the attempt. Write-once |
+
+**Relations:**
+- → BookingNotificationTrigger (logical, via triggerName)
+- → Booking (logical, via bookingId)
+
+**Cites:** ADR-022 (audit-trail-immutable), ADR-031 (schema-declarative), ADR-004 (modal isolation).
