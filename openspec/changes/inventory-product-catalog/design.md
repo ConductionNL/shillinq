@@ -1,5 +1,7 @@
 # Design — Inventory Product Catalog
 
+**status: pr-created** | **app: shillinq** | **issue: #106**
+
 ## Context
 
 The Nextcloud ecosystem spans procurement (purchaseq), POS (pipelinq), bookkeeping (shillinq), and inventory management. Every workflow needs a canonical, shared product master data — items with SKUs, attributes, and pricing. Currently, product data is scattered: POS has its own item table, procurement has its own product codes, inventory has stock-keeping units.

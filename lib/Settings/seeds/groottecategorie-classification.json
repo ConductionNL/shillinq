@@ -1,0 +1,80 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Burgerlijk Wetboek Boek 2, art. 2:395a-398",
+    "description": "Two-of-three criterion thresholds for the Titel 9 groottecategorie classification (REQ-T9-001). A rechtspersoon falls in a category when, over two consecutive boekjaren, it does NOT exceed two of the three thresholds for that category. 'groot' has no upper bound (anything above middelgroot). Configuration-as-data per design D1; the classification algorithm is implemented separately and reads these thresholds.",
+    "imported": "2026-06-05T00:00:00Z",
+    "url": "https://wetten.overheid.nl/BWBR0003045/"
+  },
+  "twoYearRule": true,
+  "categories": [
+    {
+      "name": "micro",
+      "wettelijkeBasis": "art. 2:395a BW",
+      "thresholds": {
+        "balansTotaal": 450000,
+        "nettoOmzet": 900000,
+        "gemiddeldAantalWerknemers": 10
+      }
+    },
+    {
+      "name": "klein",
+      "wettelijkeBasis": "art. 2:396 BW",
+      "thresholds": {
+        "balansTotaal": 12000000,
+        "nettoOmzet": 24000000,
+        "gemiddeldAantalWerknemers": 50
+      }
+    },
+    {
+      "name": "middelgroot",
+      "wettelijkeBasis": "art. 2:397 BW",
+      "thresholds": {
+        "balansTotaal": 25000000,
+        "nettoOmzet": 50000000,
+        "gemiddeldAantalWerknemers": 250
+      }
+    },
+    {
+      "name": "groot",
+      "wettelijkeBasis": "art. 2:398 BW",
+      "thresholds": null
+    }
+  ],
+  "templateMatrix": {
+    "micro": {
+      "balans": "verkort",
+      "winstEnVerlies": false,
+      "toelichting": "minimaal",
+      "kasstroomoverzicht": false,
+      "bestuursverslag": false,
+      "accountantsverklaring": false
+    },
+    "klein": {
+      "balans": "verkort",
+      "winstEnVerlies": "niet-gedeponeerd",
+      "toelichting": "beperkt",
+      "kasstroomoverzicht": false,
+      "bestuursverslag": false,
+      "accountantsverklaring": "optioneel"
+    },
+    "middelgroot": {
+      "balans": "volledig",
+      "winstEnVerlies": true,
+      "toelichting": "volledig",
+      "kasstroomoverzicht": true,
+      "bestuursverslag": true,
+      "accountantsverklaring": true
+    },
+    "groot": {
+      "balans": "volledig",
+      "winstEnVerlies": true,
+      "toelichting": "volledig",
+      "kasstroomoverzicht": true,
+      "bestuursverslag": true,
+      "accountantsverklaring": true,
+      "esg": "csrd-ready"
+    }
+  }
+}

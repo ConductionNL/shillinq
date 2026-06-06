@@ -1,5 +1,7 @@
 # Design: docs-product-pages-conformance
 
+**status: pr-created**
+
 ## Architecture Overview
 
 This change is entirely within `docs/` (the Docusaurus documentation site) and `openspec/` (spec artifacts). No PHP backend, no Vue frontend, no database, no OpenRegister schema is touched.

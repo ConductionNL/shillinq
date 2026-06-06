@@ -1,65 +1,118 @@
 {
-  "spec": "openspec/changes/add-shillinq-fixed-assets-depreciation",
+  "spec": "openspec/changes/expense-capture-core",
   "verified": [
     {
       "task": "1",
       "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "Confirmed no pre-existing FixedAsset schema; no lib/Db/ Mapper classes for fixed_asset or depreciation."
+      "size": 344153
     },
     {
-      "task": "2",
-      "file": "openspec/changes/add-shillinq-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md",
-      "ok": true,
-      "note": "Spec file present with Status/Scope/Tier/Depends-on header, REQ-FA-001 through REQ-FA-007, GIVEN/WHEN/THEN scenarios."
-    },
-    {
-      "task": "3",
-      "file": "openspec/changes/add-shillinq-fixed-assets-depreciation/proposal.md",
-      "ok": true,
-      "note": "Proposal present with kind:config, Affected Projects, Scope, Risks, Rollback, Open Questions."
-    },
-    {
-      "task": "4",
-      "file": "openspec/changes/add-shillinq-fixed-assets-depreciation/design.md",
-      "ok": true,
-      "note": "Design present with D1-D4 decisions (declarative lifecycle, derived fields, parallel streams, ScheduledWorkflow) and Reuse Analysis table."
-    },
-    {
-      "task": "5",
+      "task": "5-8",
       "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "FixedAsset schema declared with all 19 REQ-FA-002 fields (assetNumber, name, assetCategory, acquisitionDate, acquisitionCost, currency, usefulLifeMonths, residualValue, depreciationMethod, degressiveRate, commercialRate, fiscalRate, assetAccountNumber, accumulatedDepAccountNumber, depreciationExpenseAccountNumber, disposalDate, disposalAccountingTreatment, lifecycleState, administrationId)."
-    },
-    {
-      "task": "6",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "note": "x-openregister-calculations added: monthlyDepreciation, currentBookValue, commercialBookValue, fiscalBookValue."
-    },
-    {
-      "task": "7",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "note": "x-openregister-lifecycle added with proposed→active→disposed→archived states and transitions. The active→disposed transition has an emit-journal-entry action per REQ-FA-006."
-    },
-    {
-      "task": "8",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "note": "ScheduledWorkflow object registered in components.objects for monthly depreciation run targeting active FixedAsset records via monthlyDepreciation calculated field. No DepreciationJob extends TimedJob class created."
+      "size": 344153
     },
     {
       "task": "9",
-      "file": "src/manifest.json",
+      "file": "lib/Lifecycle/ExpenseClaimGuard.php",
       "ok": true,
-      "note": "Fixed Assets navigation entry added under Bookkeeping menu. FixedAssets (type:index) and FixedAssetDetail (type:detail) pages declared with full field config and lifecycleActions:true."
+      "size": 10439
     },
     {
-      "task": "10",
+      "task": "11",
+      "file": "lib/Validation/PhotoValidator.php",
+      "ok": true,
+      "size": 2541
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json",
+      "ok": true,
+      "size": 117716
+    },
+    {
+      "task": "18",
       "file": "openspec/architecture/adr-000-data-model.md",
       "ok": true,
-      "note": "FixedAsset entry reconciled with new canonical field set, calculated fields listed, GLLine.subLedgerRef relation documented, reconciliation note added."
+      "size": 301720
+    },
+    {
+      "task": "test-11",
+      "file": "tests/Unit/Validation/PhotoValidatorTest.php",
+      "ok": true,
+      "size": 5529
+    },
+    {
+      "task": "test-9",
+      "file": "tests/Unit/Lifecycle/ExpenseClaimGuardTest.php",
+      "ok": true,
+      "size": 14622
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::Receipt",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::MileageEntry",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::PerDiem",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::ExpenseClaimEntry",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::MileageRate",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::PerDiemRate",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::Receipts",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::ReceiptDetail",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::ExpenseClaims",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::ExpenseClaimDetail",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::MileageLog",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::MileageLogDetail",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::Inkoop menu",
+      "ok": true
     }
   ],
   "stubs": [],

@@ -27,17 +27,29 @@ Links ondernemingsactiviteit to its Vpb-pligtig accounts for separate Vpb-balans
 | costCenterId | string | Yes | FK to CostCenter (ondernemingsactiviteit) |
 | accountNumber | string | Yes | FK to Account (vpbPligtig=true) |
 
-## Requirements
+## ADDED Requirements
 
-### REQ-VPB-001: vpbPligtig flag on Account
+### Requirement: REQ-VPB-001 — vpbPligtig flag on Account
 
-SHALL add `vpbPligtig: boolean` field to `Account` (default false).
+The system SHALL add a `vpbPligtig: boolean` field to the `Account` schema (default false).
 
-### REQ-VPB-002: VpbBalansLink register
+#### Scenario: An account is flagged Vpb-pligtig
 
-SHALL declare `VpbBalansLink` overlay enabling per-activity Vpb-balans computation.
+- **GIVEN** an Account
+- **WHEN** `vpbPligtig` is set to `true`
+- **THEN** the account MUST be included in the Vpb-balans aggregation.
 
-### REQ-VPB-003: Vpb-balans aggregation
+### Requirement: REQ-VPB-002 — VpbBalansLink register
+
+The system SHALL declare a `VpbBalansLink` overlay enabling per-activity Vpb-balans computation.
+
+#### Scenario: A Vpb-pligtig account is linked to an ondernemingsactiviteit
+
+- **GIVEN** a vpbPligtig Account and an ondernemingsactiviteit CostCenter
+- **WHEN** a VpbBalansLink is declared between them
+- **THEN** the account MUST roll up under that activity's Vpb-balans.
+
+### Requirement: REQ-VPB-003 — Vpb-balans aggregation
 
 SHALL declare filtered aggregation producing Vpb-balans (GL filtered to vpbPligtig=true accounts per ondernemingsactiviteit).
 
@@ -47,13 +59,25 @@ GIVEN mixed account postings (Vpb-pligtig and exempt)
 WHEN Vpb-balans is generated per activity  
 THEN only vpbPligtig=true accounts appear.
 
-### REQ-VPB-004: Vpb-aangifte voorbereiding template
+### Requirement: REQ-VPB-004 — Vpb-aangifte voorbereiding template
 
-SHALL reference docudesk template for Vpb-aangifte preparation.
+The system SHALL reference a docudesk template for Vpb-aangifte preparation.
 
-### REQ-VPB-005: SBR submission via openconnector
+#### Scenario: Vpb-aangifte renders from a docudesk template
 
-SHALL wire Vpb-aangifte submission to Belastingdienst SBR endpoint (consumed from T4-base `sbr-xbrl-reporting`).
+- **GIVEN** a generated Vpb-balans
+- **WHEN** the Vpb-aangifte voorbereiding document is produced
+- **THEN** rendering MUST resolve a docudesk template URI rather than a shillinq-local renderer.
+
+### Requirement: REQ-VPB-005 — SBR submission via openconnector
+
+The system SHALL wire Vpb-aangifte submission to the Belastingdienst SBR endpoint (consumed from the T4-base `sbr-xbrl-reporting` capability).
+
+#### Scenario: Vpb-aangifte submission rides openconnector/SBR
+
+- **GIVEN** a prepared Vpb-aangifte
+- **WHEN** submission to the Belastingdienst is triggered
+- **THEN** it MUST route through the SBR-XBRL openconnector path, not an app-local HTTP client.
 
 ## Test Plan
 

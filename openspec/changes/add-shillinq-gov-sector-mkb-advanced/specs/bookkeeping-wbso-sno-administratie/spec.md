@@ -38,25 +38,49 @@ Weekly hour statement per medewerker on a project.
 | uurloon | number | No | Hourly rate (EUR) |
 | status | enum | Yes | One of `draft`, `goedgekeurd`, `afgesloten` |
 
-## Requirements
+## ADDED Requirements
 
-### REQ-WBSO-001: SoProject register
+### Requirement: REQ-WBSO-001 — SoProject register
 
-SHALL declare `SoProject` register for project tracking with lifecycle state (draft → active → completed).
+The system SHALL declare a `SoProject` register for project tracking with lifecycle state (draft → active → completed).
 
-### REQ-WBSO-002: SoUrenStaat register
+#### Scenario: An S&O project advances through its lifecycle
 
-SHALL declare `SoUrenStaat` register with lifecycle (draft → goedgekeurd → afgesloten) and RBAC restricting read to bookkeeper/payroll-officer/auditor roles.
+- **GIVEN** a SoProject in `draft`
+- **WHEN** it is activated and later completed
+- **THEN** its lifecycle state MUST transition draft → active → completed.
 
-### REQ-WBSO-003: Quarterly RvO mededeling
+### Requirement: REQ-WBSO-002 — SoUrenStaat register
 
-SHALL declare docudesk template for quarterly RvO mededeling (uren summary + projected loonheffing afdracht).
+The system SHALL declare a `SoUrenStaat` register with lifecycle (draft → goedgekeurd → afgesloten) and RBAC restricting read to bookkeeper/payroll-officer/auditor roles.
 
-### REQ-WBSO-004: Annual jaarrapport
+#### Scenario: Urenstaat is RBAC-restricted personnel data
 
-SHALL declare docudesk template for annual S&O jaarrapport per RvO requirements.
+- **GIVEN** a SoUrenStaat record with personnel hours
+- **WHEN** a user without the bookkeeper, payroll-officer, or auditor role requests it
+- **THEN** the read MUST be denied; only the authorized roles MAY read it.
 
-### REQ-WBSO-005: Afdrachtvermindering calculation
+### Requirement: REQ-WBSO-003 — Quarterly RvO mededeling
+
+The system SHALL declare a docudesk template for the quarterly RvO mededeling (uren summary + projected loonheffing afdracht).
+
+#### Scenario: Quarterly mededeling renders from a docudesk template
+
+- **GIVEN** approved urenstaten for a quarter
+- **WHEN** the RvO mededeling is generated
+- **THEN** rendering MUST resolve a docudesk template URI rather than a shillinq-local renderer.
+
+### Requirement: REQ-WBSO-004 — Annual jaarrapport
+
+The system SHALL declare a docudesk template for the annual S&O jaarrapport per RvO requirements.
+
+#### Scenario: Annual jaarrapport renders from a docudesk template
+
+- **GIVEN** approved urenstaten for a year
+- **WHEN** the S&O jaarrapport is generated
+- **THEN** rendering MUST resolve a docudesk template URI rather than a shillinq-local renderer.
+
+### Requirement: REQ-WBSO-005 — Afdrachtvermindering calculation
 
 SHALL declare `x-openregister-calculations` computing loonheffing afdracht (wage tax reduction) from uren + uurloon per project.
 
@@ -66,9 +90,15 @@ GIVEN 100 S&O hours at €50/hour in Q1
 WHEN afdrachtvermindering is calculated  
 THEN result reflects correct wage tax reduction per RvO.
 
-### REQ-WBSO-006: Manifest navigation entry
+### Requirement: REQ-WBSO-006 — Manifest navigation entry
 
-SHALL add `featureFlags.mkb-wbso` navigation for S&O project administration.
+The system SHALL add a `featureFlags.mkb-wbso` navigation entry for S&O project administration.
+
+#### Scenario: WBSO navigation is feature-flag gated
+
+- **GIVEN** the `mkb-wbso` feature flag is off
+- **WHEN** the UI renders the menu
+- **THEN** the S&O administration entry MUST NOT appear; it appears only when the flag is on.
 
 ## Test Plan
 
