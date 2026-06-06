@@ -29,23 +29,10 @@
   - Routes registered in `appinfo/routes.php` before the SPA catch-all.
 - [x] Task 11: Token generation on appointment creation via `lib/Listener/AppointmentCreatedListener.php` — listens to OR `ObjectCreatedEvent`, filters to schema=Appointment + status=pending_confirmation (REQ-BCF-010 skips admin-created `confirmed` bookings), calls `ConfirmationTokenService::issueAndSend` which generates 32-char base62, bcrypt-cost-12 hash, expiresAt=+7d, status=active, dispatches email + ICS. Wired in `Application::register()` against `ObjectCreatedEvent`.
 - [x] Task 12: Confirmation email delivery via openconnector in `ConfirmationTokenService::dispatchEmail` — payload references the `BookingConfirmationTemplate` (bookings-email-templates) with `customerName`, `appointmentDate`, `confirmUrl`, `serviceName`, `location` variables; ICS attached as `appointment.ics` with Content-Type `text/calendar; charset=utf-8`; absolute fallback URL built via IURLGenerator; appointment time rendered in customer timezone by `IcsService` via `TimezoneResolver`. Looks up `OCA\OpenConnector\Service\NotificationDispatcher` lazily; logs the prepared payload when openconnector is absent so flow remains observable in dev.
-- [ ] Task 13: Create `src/views/ConfirmationPortal.vue` per REQ-BCF-007 that:
-  - Accepts token via URL query parameter (`?token=...`)
-  - On mount, validates token with dry-run endpoint (no confirmation yet)
-  - Displays appointment details (date, time, service name, provider, location, notes, timezone)
-  - Displays clear error messages for expired/invalid tokens
-  - Provides "Confirm Appointment" button that calls confirmation endpoint with token
-  - On success, displays "Appointment confirmed!" and redirects or closes after 2 seconds
-  - Handles loading states and error states
-- [ ] Task 14: Create `src/api/confirmationApi.js` with client methods:
-  - `validateConfirmationToken(token: string): Promise<Appointment>` — dry-run validation
-  - `confirmAppointment(appointmentId: string, token: string): Promise<Appointment>` — confirm endpoint
-  - `resendConfirmationEmail(appointmentId: string): Promise<{message}>` — resend endpoint
+- [x] Task 13: `src/views/bookings/ConfirmationPortal.vue` — pulls token + appointmentId from URL (path `/confirm/:appointmentId?token=...`), dry-runs validation on mount, switches between loading / error / form / success states, renders appointment time via Intl.DateTimeFormat in customer's local timezone, exposes Confirm + Resend buttons, all strings via t('shillinq', …). data-testid attributes for Playwright.
+- [x] Task 14: `src/api/confirmationApi.js` — three axios methods (@nextcloud/axios + @nextcloud/router) `validateConfirmationToken(appointmentId, token)`, `confirmAppointment(appointmentId, token)`, `resendConfirmationEmail(appointmentId)`. Default-exported for the portal.
 - [x] Task 15: Implement `lib/Cron/CancelUnconfirmedAppointmentsJob.php` per REQ-BCF-005 — daily TimedJob (86400s interval, TIME_INSENSITIVE, no parallel runs) that calls `ObjectService::findAll` for status=`pending_confirmation`, compares each record's `confirmationDeadline` to `ITimeFactory::getDateTime()`, and updates expired ones to status=`cancelled` with `cancelledReason="Confirmation deadline passed"`. Fail-soft: per-record exception logs and continues. Registered in `appinfo/info.xml` under `<background-jobs>`. App version bumped to 0.5.0 per immutable-cache-bust rule.
-- [ ] Task 16: Extend `src/manifest.json` per REQ-BCF-007:
-  - Add navigation entry `Confirmations` (admin-only view showing pending confirmations with expiration warning)
-  - Add modal action from appointment detail page: "Resend confirmation email" button
-  - Update `nextcloud-app` type and routes
+- [x] Task 16: Add `src/manifest.d/bookings-confirm-flow.json` (ADR-037 modular fragment) — declares the public `/confirm/:appointmentId` page (`public: true`), the admin `BookingsPendingConfirmations` page under Verkoop, and the menu entry. `BookingsConfirmationPortal` registered as a `kind:"page"` custom component in `src/registry.js`. l10n strings (en + nl) added for the portal + admin entry.
 - [x] Task 17: Implement token hash/validate logic in `lib/Util/TokenValidator.php` — generates 32-char base62 via random_int, hashes with bcrypt cost 12, verifies via password_verify (constant-time per OWASP), checks expiresAt vs now, fails closed on parse errors.
 - [x] Task 18: Add timezone handling logic in `lib/Service/Booking/TimezoneResolver.php` — reads core/timezone via IConfig::getUserValue for the customer's NC account, falls back to date_default_timezone_get(), then UTC. Validates with DateTimeZone before returning.
 - [ ] Task 19: Update `openspec/architecture/adr-000-data-model.md` with `ConfirmationToken` and updated `Appointment` entries, reconciling against any existing token/confirmation data-model entries

@@ -1,0 +1,36 @@
+{
+	"pages": [
+		{
+			"id": "BookingsConfirmationPortal",
+			"route": "/confirm/:appointmentId",
+			"type": "custom",
+			"customComponent": "BookingsConfirmationPortal",
+			"title": "Confirm your appointment",
+			"public": true
+		},
+		{
+			"id": "BookingsPendingConfirmations",
+			"route": "/verkoop/openstaande-bevestigingen",
+			"type": "custom",
+			"customComponent": "BookingsConfirmationPortal",
+			"title": "Openstaande bevestigingen"
+		}
+	],
+	"menu": [
+		{
+			"id": "Verkoop",
+			"label": "Verkoop",
+			"icon": "CartOutline",
+			"order": 33,
+			"children": [
+				{
+					"id": "BookingsPendingConfirmations",
+					"label": "Openstaande bevestigingen",
+					"icon": "EmailCheckOutline",
+					"route": "BookingsPendingConfirmations",
+					"order": 14
+				}
+			]
+		}
+	]
+}
