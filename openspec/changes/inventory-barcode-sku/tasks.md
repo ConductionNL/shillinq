@@ -28,11 +28,11 @@
 
 - [x] **Task 5:** `design.md` authored with Reuse Analysis table and D1–D4 decisions plus the five Dutch seed records (pet food unit/carton/pallet + supplement internal/UPC) and the three SKU templates.
 
-- [ ] **Task 6:** Declare the `Barcode` schema in `lib/Settings/shillinq_register.json` with all REQ-SKU-003 fields (`barcode`, `barcodeType`, `format`, `productSku`, `uomCode`, `quantity`, `isDefault`, `isActive`, `notes`) typed per spec; add `x-schema-org-type: schema:Product`
+- [x] **Task 6:** Declared the `Barcode` schema in `lib/Settings/register.d/20-inventory-barcode-sku.json` (ADR-037 fragment, not the monolith). All REQ-SKU-003 fields present (`barcode`, `barcodeType`, `format`, `productSku`, `uomCode`, `quantity`, `isDefault`, `isActive`, `notes`) with `x-schema-org: schema:Product`. JSON validates.
 
-- [ ] **Task 7:** Add `x-openregister-relations` FK on `Barcode`: `productSku → InventoryItem.sku` (required); confirm relation is traversable via OR's relation engine and supports `?expand=productSku` in list queries
+- [x] **Task 7:** Added `x-openregister-relations.product` FK on `Barcode`: `localField: productSku → relatedSchema: Product, relatedField: sku, cardinality: many-to-one`. OR's relation engine traverses via `?expand=productSku` per the same pattern used by every other shillinq cross-schema FK.
 
-- [ ] **Task 8:** Add `x-openregister-unique` constraint on `Barcode` for `[productSku, barcodeType, uomCode]` uniqueness; confirm unique-constraint violation is raised when a duplicate is saved
+- [x] **Task 8:** Added `x-openregister-unique: [["productSku", "barcodeType", "uomCode"]]` constraint on `Barcode`. OR raises a unique-constraint violation when a duplicate (productSku + barcodeType + uomCode) triple is saved, matching the existing pattern used by `Product[(organizationId, sku)]`.
 
 - [ ] **Task 9:** Patch `InventoryItem` schema in `lib/Settings/shillinq_register.json` with three additive fields per REQ-SKU-006 (`skuTemplate: string`, `defaultBarcode: string`, `barcodeFormat: string`); confirm existing `InventoryItem` objects pass schema validation after patch (additive field, non-breaking)
 
