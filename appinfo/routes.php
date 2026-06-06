@@ -37,6 +37,14 @@ return [
         ['name' => 'payroll#lhAfdracht', 'url' => '/api/payroll/lh-afdracht', 'verb' => 'GET'],
         ['name' => 'payroll#journaalpost', 'url' => '/api/payroll/journaalpost', 'verb' => 'GET'],
 
+        // Booking Self-service Widget — public partner-facing API.
+        // REQ-WSW-001/002 — authenticated via Authorization: Bearer + ?businessId, rate-limited
+        // per WidgetAccessKey.rateLimit (default 100 req/min). Static segments precede any
+        // dynamic ones so Symfony matches the explicit widget routes first.
+        ['name' => 'widgetApi#services', 'url' => '/api/widget/services', 'verb' => 'GET'],
+        ['name' => 'widgetApi#slots', 'url' => '/api/widget/slots', 'verb' => 'GET'],
+        ['name' => 'widgetApi#appointments', 'url' => '/api/widget/appointments', 'verb' => 'POST'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
