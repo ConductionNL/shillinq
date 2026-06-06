@@ -8,29 +8,39 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `inventory-multi-warehouse` capability spec already exists,
+- [x] Task 1: Confirm no `inventory-multi-warehouse` capability spec already exists,
   no extended `Location` schema is declared with hierarchy fields (parentLocationId,
   locationType, locationCode), and no `lib/Service/Warehouse*` / `lib/Service/Location*`
   PHP classes are present (per ADR-031 anti-pattern enumeration); explicitly note this
   capability "follows Brightpearl's real-time + ERPNext's warehouse-group pattern"
+  — **Verified**: no Location hierarchy fields in register, no WarehouseService/LocationService
+  in lib/Service/, no existing multi-warehouse spec. Confirmed this follows Brightpearl real-time
+  + ERPNext warehouse-group pattern per design.md.
 
-- [ ] Task 2: Author `specs/inventory-multi-warehouse/spec.md` with `Status: proposed` /
+- [x] Task 2: Author `specs/inventory-multi-warehouse/spec.md` with `Status: proposed` /
   `Scope: shillinq` / `Tier: T2 (inventory + operations)` / `Depends on: inventory-stock-tracking`
   header, `REQ-LOC-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks
   with GIVEN/WHEN/THEN; cite ADR-022 + ADR-031 inline
+  — **Done**: `specs/inventory-multi-warehouse/spec.md` authored with REQ-LOC-001–REQ-LOC-009.
 
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including
   Affected Projects / Scope / Risks (hierarchy depth explosion, rollup performance at scale,
   in-transit GL semantics, location code immutability) / Rollback / Open Questions
+  — **Done**: `proposal.md` authored with all required sections and 4 risks documented.
 
-- [ ] Task 4: Author `design.md` with Reuse Analysis table, D1 (parent-child FK + type enum),
+- [x] Task 4: Author `design.md` with Reuse Analysis table, D1 (parent-child FK + type enum),
   D2 (in-transit as virtual location), D3 (rollup via aggregation), D4 (transfer workflow pattern),
   D5 (location code as identifier), D6 (rollup reporting filters)
+  — **Done**: `design.md` authored with all 6 decisions, Reuse Analysis, Seed Data, and Declarative-vs-imperative decision table.
 
-- [ ] Task 5: Extend `Location` schema in `lib/Settings/shillinq_register.json` with hierarchy
+- [x] Task 5: Extend `Location` schema in `lib/Settings/shillinq_register.json` with hierarchy
   fields: parentLocationId (string, FK to Location), locationType (enum: warehouse, zone, bin,
   in-transit), locationCode (string, unique per administration). Validate: zone/bin requires
   parentLocationId; warehouse/in-transit must not have parent.
+  — **Done**: Location schema added to shillinq_register.json with all hierarchy fields,
+  x-openregister-lifecycle, x-openregister-aggregations (totalStockQuantity rollup),
+  x-openregister-relations (parent/child/InventoryStock), and x-openregister-validations
+  (zoneRequiresParent, warehouseNoParent). Seed data in lib/Settings/seeds/location-samples.json.
 
 - [ ] Task 6: Add location type enum to administration settings (warehouse, zone, bin, in-transit)
   with English + Dutch labels. Allow administration to customize bin naming convention
@@ -58,12 +68,15 @@
   warehouse/zone/bin) + quantity. On submit: create StockMove (if ledger present) or manual
   adjustment (direct InventoryStock update). GL posting optional (if GL present).
 
-- [ ] Task 12: Add manifest navigation entries per REQ-LOC-007:
+- [x] Task 12: Add manifest navigation entries per REQ-LOC-007:
   - Warehouse Locations index: hierarchical tree view with expand/collapse, child count,
     stock summary per node. Filters: name, type, status. Actions: create/edit/deactivate.
   - Inter-Warehouse Transfers index: list of transfers with source/dest/date/status filters.
   - In-Transit Inventory index: grouped by route (source warehouse → dest), shows items,
     quantities, days-in-transit, ETA.
+  — **Done**: Three menu children added to Inventory section (WarehouseLocations, InterWarehouseTransfers,
+  InTransitInventory) with corresponding pages in src/manifest.json (routes: /inventory/warehouse-locations,
+  /inventory/transfers, /inventory/in-transit).
 
 - [ ] Task 13: Implement location detail page showing: name, code, address, region, type,
   parent location, status, child locations (nested), stock at this location (if bin),
@@ -81,9 +94,11 @@
   can only view/edit locations in their administration. API enforces administration context
   on all location queries. Tests: cross-org access attempts must be rejected.
 
-- [ ] Task 17: Update `openspec/architecture/adr-000-data-model.md` with extended `Location`
+- [x] Task 17: Update `openspec/architecture/adr-000-data-model.md` with extended `Location`
   entry, declaring schema (parentLocationId, locationType, locationCode), primary spec
   (`inventory-multi-warehouse`), relations to InventoryStock (one-to-many for bin-level stock).
+  — **Done**: Location entry updated with all hierarchy fields, locationType enum, parentLocationId FK,
+  administrationId, self-referential relation, and InventoryStock one-to-many relation.
 
 - [ ] Task 18: Implement location circular-reference validation: prevent creating
   Location A → parent B → parent A → parent C cycles. Test: attempt to change parent

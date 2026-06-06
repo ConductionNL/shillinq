@@ -232,6 +232,27 @@
 					"icon": "TagOutline",
 					"route": "ProductAttributes",
 					"order": 20
+				},
+				{
+					"id": "WarehouseLocations",
+					"label": "Warehouse Locations",
+					"icon": "WarehouseOutline",
+					"route": "WarehouseLocations",
+					"order": 30
+				},
+				{
+					"id": "InterWarehouseTransfers",
+					"label": "Inter-Warehouse Transfers",
+					"icon": "TruckDeliveryOutline",
+					"route": "InterWarehouseTransfers",
+					"order": 40
+				},
+				{
+					"id": "InTransitInventory",
+					"label": "In-Transit Inventory",
+					"icon": "TransitTransfer",
+					"route": "InTransitInventory",
+					"order": 50
 				}
 			]
 		},
@@ -6136,10 +6157,26 @@
 				"register": "shillinq",
 				"schema": "VatReturn",
 				"columns": [
-					{ "key": "periodYear", "label": "Jaar", "sortable": true },
-					{ "key": "periodType", "label": "Periode", "sortable": true },
-					{ "key": "amount", "label": "Bedrag", "sortable": true },
-					{ "key": "state", "label": "Status", "sortable": true }
+					{
+						"key": "periodYear",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "periodType",
+						"label": "Periode",
+						"sortable": true
+					},
+					{
+						"key": "amount",
+						"label": "Bedrag",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "periodYear",
 				"detailRoute": "BtwAangifteDetail"
@@ -6154,15 +6191,51 @@
 				"register": "shillinq",
 				"schema": "VatReturn",
 				"fields": [
-					{ "key": "administrationId", "label": "Administratie", "type": "string" },
-					{ "key": "periodType", "label": "Periode-type", "type": "string" },
-					{ "key": "periodYear", "label": "Jaar", "type": "number" },
-					{ "key": "periodQuarter", "label": "Kwartaal", "type": "number" },
-					{ "key": "periodMonth", "label": "Maand", "type": "number" },
-					{ "key": "amount", "label": "BTW-bedrag", "type": "number" },
-					{ "key": "currency", "label": "Valuta", "type": "string" },
-					{ "key": "state", "label": "Status", "type": "string" },
-					{ "key": "notes", "label": "Notities", "type": "string" }
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "periodType",
+						"label": "Periode-type",
+						"type": "string"
+					},
+					{
+						"key": "periodYear",
+						"label": "Jaar",
+						"type": "number"
+					},
+					{
+						"key": "periodQuarter",
+						"label": "Kwartaal",
+						"type": "number"
+					},
+					{
+						"key": "periodMonth",
+						"label": "Maand",
+						"type": "number"
+					},
+					{
+						"key": "amount",
+						"label": "BTW-bedrag",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Valuta",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "notes",
+						"label": "Notities",
+						"type": "string"
+					}
 				],
 				"indexRoute": "BtwAangiften"
 			}
@@ -6176,9 +6249,21 @@
 				"register": "shillinq",
 				"schema": "IcpStatement",
 				"columns": [
-					{ "key": "periodYear", "label": "Jaar", "sortable": true },
-					{ "key": "periodType", "label": "Periode", "sortable": true },
-					{ "key": "state", "label": "Status", "sortable": true }
+					{
+						"key": "periodYear",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "periodType",
+						"label": "Periode",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "periodYear",
 				"detailRoute": "IcpOpgaafDetail"
@@ -6193,10 +6278,26 @@
 				"register": "shillinq",
 				"schema": "IcpStatement",
 				"fields": [
-					{ "key": "administrationId", "label": "Administratie", "type": "string" },
-					{ "key": "periodType", "label": "Periode-type", "type": "string" },
-					{ "key": "periodYear", "label": "Jaar", "type": "number" },
-					{ "key": "state", "label": "Status", "type": "string" }
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "periodType",
+						"label": "Periode-type",
+						"type": "string"
+					},
+					{
+						"key": "periodYear",
+						"label": "Jaar",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					}
 				],
 				"indexRoute": "IcpOpgaaf"
 			}
@@ -6210,10 +6311,26 @@
 				"register": "shillinq",
 				"schema": "VatCorrection",
 				"columns": [
-					{ "key": "periodYear", "label": "Jaar", "sortable": true },
-					{ "key": "correctionReason", "label": "Reden", "sortable": true },
-					{ "key": "adjustmentAmount", "label": "Correctie", "sortable": true },
-					{ "key": "state", "label": "Status", "sortable": true }
+					{
+						"key": "periodYear",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "correctionReason",
+						"label": "Reden",
+						"sortable": true
+					},
+					{
+						"key": "adjustmentAmount",
+						"label": "Correctie",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "periodYear",
 				"detailRoute": "BtwCorrectieDetail"
@@ -6228,11 +6345,31 @@
 				"register": "shillinq",
 				"schema": "VatCorrection",
 				"fields": [
-					{ "key": "administrationId", "label": "Administratie", "type": "string" },
-					{ "key": "correctionReason", "label": "Reden", "type": "string" },
-					{ "key": "originalReturnId", "label": "Oorspronkelijke aangifte", "type": "string" },
-					{ "key": "adjustmentAmount", "label": "Correctiebedrag", "type": "number" },
-					{ "key": "state", "label": "Status", "type": "string" }
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "correctionReason",
+						"label": "Reden",
+						"type": "string"
+					},
+					{
+						"key": "originalReturnId",
+						"label": "Oorspronkelijke aangifte",
+						"type": "string"
+					},
+					{
+						"key": "adjustmentAmount",
+						"label": "Correctiebedrag",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					}
 				],
 				"indexRoute": "BtwCorrecties"
 			}
@@ -6246,11 +6383,28 @@
 				"register": "shillinq",
 				"schema": "UrenRegistratie",
 				"columns": [
-					{ "key": "workDate", "label": "Datum", "sortable": true },
-					{ "key": "hours", "label": "Uren", "sortable": true },
-					{ "key": "category", "label": "Categorie", "sortable": true }
+					{
+						"key": "workDate",
+						"label": "Datum",
+						"sortable": true
+					},
+					{
+						"key": "hours",
+						"label": "Uren",
+						"sortable": true
+					},
+					{
+						"key": "category",
+						"label": "Categorie",
+						"sortable": true
+					}
 				],
-				"visibility": { "field": "administrationType", "in": [ "zzp" ] },
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"zzp"
+					]
+				},
 				"defaultSort": "workDate"
 			}
 		},
@@ -6263,12 +6417,33 @@
 				"register": "shillinq",
 				"schema": "ZzpDeduction",
 				"columns": [
-					{ "key": "year", "label": "Jaar", "sortable": true },
-					{ "key": "ytdQualifyingHours", "label": "Kwalificerende uren", "sortable": true },
-					{ "key": "qualifies1225", "label": "Voldoet 1225", "sortable": true },
-					{ "key": "totalAllowableDeduction", "label": "Totale aftrek", "sortable": true }
+					{
+						"key": "year",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "ytdQualifyingHours",
+						"label": "Kwalificerende uren",
+						"sortable": true
+					},
+					{
+						"key": "qualifies1225",
+						"label": "Voldoet 1225",
+						"sortable": true
+					},
+					{
+						"key": "totalAllowableDeduction",
+						"label": "Totale aftrek",
+						"sortable": true
+					}
 				],
-				"visibility": { "field": "administrationType", "in": [ "zzp" ] },
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"zzp"
+					]
+				},
 				"defaultSort": "year",
 				"detailRoute": "ZzpAftrekDetail"
 			}
@@ -6282,15 +6457,51 @@
 				"register": "shillinq",
 				"schema": "ZzpDeduction",
 				"fields": [
-					{ "key": "personId", "label": "Persoon", "type": "string" },
-					{ "key": "year", "label": "Jaar", "type": "number" },
-					{ "key": "ytdQualifyingHours", "label": "Kwalificerende uren", "type": "number" },
-					{ "key": "qualifies1225", "label": "Voldoet urencriterium", "type": "boolean" },
-					{ "key": "qualifiesStarters", "label": "Starter", "type": "boolean" },
-					{ "key": "zelfstandigenaftrek", "label": "Zelfstandigenaftrek", "type": "number" },
-					{ "key": "startersaftrek", "label": "Startersaftrek", "type": "number" },
-					{ "key": "mkbWinstvrijstelling", "label": "MKB-winstvrijstelling", "type": "number" },
-					{ "key": "totalAllowableDeduction", "label": "Totale aftrek", "type": "number" }
+					{
+						"key": "personId",
+						"label": "Persoon",
+						"type": "string"
+					},
+					{
+						"key": "year",
+						"label": "Jaar",
+						"type": "number"
+					},
+					{
+						"key": "ytdQualifyingHours",
+						"label": "Kwalificerende uren",
+						"type": "number"
+					},
+					{
+						"key": "qualifies1225",
+						"label": "Voldoet urencriterium",
+						"type": "boolean"
+					},
+					{
+						"key": "qualifiesStarters",
+						"label": "Starter",
+						"type": "boolean"
+					},
+					{
+						"key": "zelfstandigenaftrek",
+						"label": "Zelfstandigenaftrek",
+						"type": "number"
+					},
+					{
+						"key": "startersaftrek",
+						"label": "Startersaftrek",
+						"type": "number"
+					},
+					{
+						"key": "mkbWinstvrijstelling",
+						"label": "MKB-winstvrijstelling",
+						"type": "number"
+					},
+					{
+						"key": "totalAllowableDeduction",
+						"label": "Totale aftrek",
+						"type": "number"
+					}
 				],
 				"indexRoute": "ZzpAftrek"
 			}
@@ -6304,11 +6515,28 @@
 				"register": "shillinq",
 				"schema": "IbAangifteExport",
 				"columns": [
-					{ "key": "year", "label": "Jaar", "sortable": true },
-					{ "key": "taxableIncome", "label": "Belastbaar inkomen", "sortable": true },
-					{ "key": "exportDate", "label": "Exportdatum", "sortable": true }
+					{
+						"key": "year",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "taxableIncome",
+						"label": "Belastbaar inkomen",
+						"sortable": true
+					},
+					{
+						"key": "exportDate",
+						"label": "Exportdatum",
+						"sortable": true
+					}
 				],
-				"visibility": { "field": "administrationType", "in": [ "zzp" ] },
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"zzp"
+					]
+				},
 				"defaultSort": "year"
 			}
 		},
@@ -6320,12 +6548,35 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "BbvAccountMapping",
-				"visibility": { "field": "administrationType", "in": [ "gemeente", "provincie", "waterschap" ] },
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"gemeente",
+						"provincie",
+						"waterschap"
+					]
+				},
 				"columns": [
-					{ "key": "accountNumber", "label": "Grootboek", "sortable": true },
-					{ "key": "taakveld", "label": "Taakveld", "sortable": true },
-					{ "key": "programmaCode", "label": "Programma", "sortable": true },
-					{ "key": "bcfCompensable", "label": "BCF-compensabel", "sortable": true }
+					{
+						"key": "accountNumber",
+						"label": "Grootboek",
+						"sortable": true
+					},
+					{
+						"key": "taakveld",
+						"label": "Taakveld",
+						"sortable": true
+					},
+					{
+						"key": "programmaCode",
+						"label": "Programma",
+						"sortable": true
+					},
+					{
+						"key": "bcfCompensable",
+						"label": "BCF-compensabel",
+						"sortable": true
+					}
 				],
 				"defaultSort": "accountNumber"
 			}
@@ -6338,13 +6589,38 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "BcfClaim",
-				"visibility": { "field": "administrationType", "in": [ "gemeente" ] },
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"gemeente"
+					]
+				},
 				"columns": [
-					{ "key": "claimNumber", "label": "Claimnummer", "sortable": true },
-					{ "key": "periodYear", "label": "Jaar", "sortable": true },
-					{ "key": "periodQuarter", "label": "Kwartaal", "sortable": true },
-					{ "key": "totalClaimAmount", "label": "Bedrag", "sortable": true },
-					{ "key": "state", "label": "Status", "sortable": true }
+					{
+						"key": "claimNumber",
+						"label": "Claimnummer",
+						"sortable": true
+					},
+					{
+						"key": "periodYear",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "periodQuarter",
+						"label": "Kwartaal",
+						"sortable": true
+					},
+					{
+						"key": "totalClaimAmount",
+						"label": "Bedrag",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "periodYear",
 				"detailRoute": "BcfClaimDetail"
@@ -6359,12 +6635,36 @@
 				"register": "shillinq",
 				"schema": "BcfClaim",
 				"fields": [
-					{ "key": "claimNumber", "label": "Claimnummer", "type": "string" },
-					{ "key": "administrationId", "label": "Administratie", "type": "string" },
-					{ "key": "periodYear", "label": "Jaar", "type": "number" },
-					{ "key": "periodQuarter", "label": "Kwartaal", "type": "number" },
-					{ "key": "totalClaimAmount", "label": "Claimbedrag", "type": "number" },
-					{ "key": "state", "label": "Status", "type": "string" }
+					{
+						"key": "claimNumber",
+						"label": "Claimnummer",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "periodYear",
+						"label": "Jaar",
+						"type": "number"
+					},
+					{
+						"key": "periodQuarter",
+						"label": "Kwartaal",
+						"type": "number"
+					},
+					{
+						"key": "totalClaimAmount",
+						"label": "Claimbedrag",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					}
 				],
 				"indexRoute": "BcfClaims"
 			}
@@ -6377,9 +6677,18 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "SchatkistPosition",
-				"visibility": { "field": "administrationType", "in": [ "gemeente" ] },
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"gemeente"
+					]
+				},
 				"widgets": [
-					{ "id": "schatkist-position", "type": "line-with-threshold", "title": "Schatkist-positie" }
+					{
+						"id": "schatkist-position",
+						"type": "line-with-threshold",
+						"title": "Schatkist-positie"
+					}
 				]
 			}
 		},
@@ -6392,10 +6701,26 @@
 				"register": "shillinq",
 				"schema": "Subsidie",
 				"columns": [
-					{ "key": "subsidieNumber", "label": "Nummer", "sortable": true },
-					{ "key": "subsidieName", "label": "Naam", "sortable": true },
-					{ "key": "awardAmount", "label": "Bedrag", "sortable": true },
-					{ "key": "state", "label": "Status", "sortable": true }
+					{
+						"key": "subsidieNumber",
+						"label": "Nummer",
+						"sortable": true
+					},
+					{
+						"key": "subsidieName",
+						"label": "Naam",
+						"sortable": true
+					},
+					{
+						"key": "awardAmount",
+						"label": "Bedrag",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "subsidieNumber",
 				"detailRoute": "SubsidieDetail"
@@ -6410,12 +6735,36 @@
 				"register": "shillinq",
 				"schema": "Subsidie",
 				"fields": [
-					{ "key": "subsidieNumber", "label": "Nummer", "type": "string" },
-					{ "key": "subsidieName", "label": "Naam", "type": "string" },
-					{ "key": "granteeOrganization", "label": "Ontvanger", "type": "string" },
-					{ "key": "awardAmount", "label": "Toegekend bedrag", "type": "number" },
-					{ "key": "state", "label": "Status", "type": "string" },
-					{ "key": "hasRepaymentPlan", "label": "Afbetalingsregeling", "type": "boolean" }
+					{
+						"key": "subsidieNumber",
+						"label": "Nummer",
+						"type": "string"
+					},
+					{
+						"key": "subsidieName",
+						"label": "Naam",
+						"type": "string"
+					},
+					{
+						"key": "granteeOrganization",
+						"label": "Ontvanger",
+						"type": "string"
+					},
+					{
+						"key": "awardAmount",
+						"label": "Toegekend bedrag",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "hasRepaymentPlan",
+						"label": "Afbetalingsregeling",
+						"type": "boolean"
+					}
 				],
 				"indexRoute": "SubsidiesOverzicht"
 			}
@@ -6428,11 +6777,25 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "Subsidie",
-				"filter": { "state": "verleend" },
+				"filter": {
+					"state": "verleend"
+				},
 				"columns": [
-					{ "key": "subsidieNumber", "label": "Nummer", "sortable": true },
-					{ "key": "subsidieName", "label": "Naam", "sortable": true },
-					{ "key": "awardAmount", "label": "Bedrag", "sortable": true }
+					{
+						"key": "subsidieNumber",
+						"label": "Nummer",
+						"sortable": true
+					},
+					{
+						"key": "subsidieName",
+						"label": "Naam",
+						"sortable": true
+					},
+					{
+						"key": "awardAmount",
+						"label": "Bedrag",
+						"sortable": true
+					}
 				],
 				"defaultSort": "subsidieNumber",
 				"detailRoute": "SubsidieDetail"
@@ -6446,14 +6809,232 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "Subsidie",
-				"filter": { "state": "teruggevorderd" },
+				"filter": {
+					"state": "teruggevorderd"
+				},
 				"columns": [
-					{ "key": "subsidieNumber", "label": "Nummer", "sortable": true },
-					{ "key": "subsidieName", "label": "Naam", "sortable": true },
-					{ "key": "awardAmount", "label": "Bedrag", "sortable": true }
+					{
+						"key": "subsidieNumber",
+						"label": "Nummer",
+						"sortable": true
+					},
+					{
+						"key": "subsidieName",
+						"label": "Naam",
+						"sortable": true
+					},
+					{
+						"key": "awardAmount",
+						"label": "Bedrag",
+						"sortable": true
+					}
 				],
 				"defaultSort": "subsidieNumber",
 				"detailRoute": "SubsidieDetail"
+			}
+		},
+		{
+			"id": "WarehouseLocations",
+			"route": "/inventory/warehouse-locations",
+			"type": "index",
+			"title": "Warehouse Locations",
+			"config": {
+				"register": "shillinq",
+				"schema": "Location",
+				"columns": [
+					{
+						"key": "code",
+						"label": "Code",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "locationType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "parentLocationId",
+						"label": "Parent",
+						"sortable": false
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "code",
+				"filters": [
+					{
+						"key": "locationType",
+						"label": "Type",
+						"type": "select",
+						"options": [
+							"warehouse",
+							"zone",
+							"bin",
+							"in-transit"
+						]
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "select",
+						"options": [
+							"active",
+							"inactive",
+							"archived"
+						]
+					}
+				],
+				"detailRoute": "WarehouseLocationDetail"
+			}
+		},
+		{
+			"id": "WarehouseLocationDetail",
+			"route": "/inventory/warehouse-locations/:id",
+			"type": "detail",
+			"title": "Warehouse Location",
+			"config": {
+				"register": "shillinq",
+				"schema": "Location",
+				"fields": [
+					{
+						"key": "code",
+						"label": "Location Code",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "locationType",
+						"label": "Type",
+						"type": "string"
+					},
+					{
+						"key": "parentLocationId",
+						"label": "Parent Location",
+						"type": "string"
+					},
+					{
+						"key": "address",
+						"label": "Address",
+						"type": "string"
+					},
+					{
+						"key": "region",
+						"label": "Region",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"indexRoute": "WarehouseLocations"
+			}
+		},
+		{
+			"id": "InterWarehouseTransfers",
+			"route": "/inventory/transfers",
+			"type": "index",
+			"title": "Inter-Warehouse Transfers",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryStockMove",
+				"columns": [
+					{
+						"key": "sourceLocationId",
+						"label": "From",
+						"sortable": true
+					},
+					{
+						"key": "destinationLocationId",
+						"label": "To",
+						"sortable": true
+					},
+					{
+						"key": "quantity",
+						"label": "Quantity",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "createdAt",
+						"label": "Date",
+						"sortable": true
+					}
+				],
+				"defaultSort": "createdAt",
+				"filters": [
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "select",
+						"options": [
+							"draft",
+							"posted",
+							"cancelled"
+						]
+					}
+				],
+				"detailRoute": "InterWarehouseTransferDetail"
+			}
+		},
+		{
+			"id": "InTransitInventory",
+			"route": "/inventory/in-transit",
+			"type": "index",
+			"title": "In-Transit Inventory",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryStock",
+				"columns": [
+					{
+						"key": "locationId",
+						"label": "In-Transit Location",
+						"sortable": true
+					},
+					{
+						"key": "quantity",
+						"label": "Quantity",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "locationId",
+				"filters": [
+					{
+						"key": "locationType",
+						"label": "Location Type",
+						"type": "select",
+						"options": [
+							"in-transit"
+						]
+					}
+				]
 			}
 		}
 	]

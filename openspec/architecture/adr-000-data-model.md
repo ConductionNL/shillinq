@@ -2652,19 +2652,25 @@ _Daily/weekly/monthly cash flow projections for liquidity planning, including in
 
 ### Location
 **Schema.org:** `schema:Place`
-_A physical or geographic location for multi-site budget allocation and tracking_
-**Primary spec:** budget-planning-control
+_Physical or virtual storage location in the inventory hierarchy (warehouse → zone → bin). Extended by inventory-multi-warehouse to support hierarchical warehouse organization, rollup stock visibility, and inter-location transfers per REQ-LOC-001–REQ-LOC-009._
+**Primary spec:** budget-planning-control, **extended by:** inventory-multi-warehouse
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
 | name | string | Yes | Location name |
-| code | string | No | Location code or identifier |
-| address | string | No | Physical address |
-| region | string | No | Geographic region |
+| code | string | Yes | Location code unique per administration (e.g., W-01, Z-01, B-100); immutable after creation per REQ-LOC-002 |
+| address | string | No | Physical address (warehouse street/city) |
+| region | string | No | Geographic region for rollup reporting |
+| locationType | enum | Yes | One of: `warehouse`, `zone`, `bin`, `in-transit`; determines hierarchy role per REQ-LOC-002 |
+| parentLocationId | string | No | FK to parent Location (null for warehouse/in-transit; required for zone/bin per REQ-LOC-002); hierarchy depth ≤ 4 per REQ-LOC-003 |
+| status | enum | No | active, inactive, archived (lifecycle per ADR-031) |
+| administrationId | string | Yes | FK to administration; scopes all location queries per REQ-LOC-008 |
 
 **Relations:**
 - → Organization (many-to-one)
 - → Budget (one-to-many)
+- → Location (self-referential many-to-one via parentLocationId for hierarchy)
+- → InventoryStock (one-to-many; stock recorded at bin level per REQ-LOC-009)
 
 ### Lot
 **Schema.org:** `schema:Product`
