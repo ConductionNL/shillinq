@@ -7,17 +7,26 @@
 > planning, and tier-cascade impact are all visible at proposal time.
 > No source files are edited by this change itself.
 
+> **Schema-naming note (T1):** the `inventory-product-catalog` change shipped
+> its product schema under the slug `Product` (not `InventoryItem` as the
+> spec text reads). The barcode build below targets the live `Product`
+> schema: `Barcode.productSku → Product.sku`. The semantics — multi-barcode
+> per product, per-UoM quantity, SKU-template fields — are identical to
+> what the spec requires; only the slug differs. The spec's REQ-SKU-NNN
+> requirements are satisfied by treating "InventoryItem" and "Product" as
+> synonyms throughout this implementation.
+
 ## Tasks
 
-- [ ] **Task 1:** Confirm `inventory-product-catalog` change has landed and `InventoryItem` register is fully declared in `lib/Settings/shillinq_register.json`; if not, block this task and record the dependency gap
+- [x] **Task 1:** Confirm `inventory-product-catalog` change has landed and the product register is fully declared in `lib/Settings/shillinq_register.json`. Verified: the catalog change is merged on `development`; the schema is named `Product` (slug `Product`, `sku` unique per `(organizationId, sku)` at line 11438). Dependency satisfied; built barcode FK target is `Product.sku`.
 
-- [ ] **Task 2:** Confirm no `Barcode` schema already exists — scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, and `adr-000-data-model.md`; catalogue the existing `InventoryItem` entry for the additive patch
+- [x] **Task 2:** Confirm no `Barcode` schema already exists. Verified: `grep -n '"slug": "Barcode"' lib/Settings/shillinq_register.json` and the `lib/Settings/register.d/` fragments returns no match. Existing `Product` schema (slug `Product`, lines 11438-11613) is catalogued for the additive patch in Task 9. No collision with the existing `Product.barcodes` inline array — that array stays for backwards compatibility while the new `Barcode` register carries the per-UoM canonical surface.
 
-- [ ] **Task 3:** Author `specs/inventory-barcode-sku/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T2 (inventory operations)` / `Depends on: inventory-product-catalog` header; include `REQ-SKU-NNN` requirements using RFC 2119 keywords with `#### Scenario:` blocks using GIVEN/WHEN/THEN — covering Barcode register, SKU generation templates, per-UoM barcodes, barcode lookup endpoint, and InventoryItem patch
+- [x] **Task 3:** `specs/inventory-barcode-sku/spec.md` authored on the `spec/inventory-barcode-sku` branch with `Status: proposed` / `Scope: shillinq` / `Tier: T2 (inventory operations)` / `Depends on: inventory-product-catalog` header and REQ-SKU-001..011 with GIVEN/WHEN/THEN scenarios.
 
-- [ ] **Task 4:** Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope (in/out of scope) / Risks (Risk 1: template engine expressiveness; Risk 2: POS UoM ambiguity; Risk 3: barcode uniqueness) / Rollback / Open Questions per shillinq OpenSpec rules
+- [x] **Task 4:** `proposal.md` authored with Affected Projects (shillinq + pipelinq consumer), Scope, three Risks (template engine expressiveness, POS UoM ambiguity, barcode uniqueness), Rollback, Open Questions.
 
-- [ ] **Task 5:** Author `design.md` with Reuse Analysis table, including D1 (Barcode as separate register, not inline), D2 (SKU generation as declarative templates with ADR-031 exception fallback), D3 (per-UoM barcode tracking with explicit quantity), D4 (barcode lookup endpoint for POS); include 5-object Dutch seed data for pet food and dietary supplements
+- [x] **Task 5:** `design.md` authored with Reuse Analysis table and D1–D4 decisions plus the five Dutch seed records (pet food unit/carton/pallet + supplement internal/UPC) and the three SKU templates.
 
 - [ ] **Task 6:** Declare the `Barcode` schema in `lib/Settings/shillinq_register.json` with all REQ-SKU-003 fields (`barcode`, `barcodeType`, `format`, `productSku`, `uomCode`, `quantity`, `isDefault`, `isActive`, `notes`) typed per spec; add `x-schema-org-type: schema:Product`
 
