@@ -36,7 +36,7 @@
 
 - [x] **Task 9:** Patched the `Product` schema (the live name for the spec's `InventoryItem`) with three additive fields per REQ-SKU-006: `skuTemplate`, `defaultBarcode`, `barcodeFormat` — all optional + nullable. Patch lives in the same fragment (`lib/Settings/register.d/20-inventory-barcode-sku.json` under `components.Product.properties`), which ADR-037 `deepMergeConfig` unions into the monolith. Verified the merge preserves all 12 existing Product properties (sku, name, category, description, unitPrice, currency, unitCode, taxRate, primaryBarcode, barcodes, status, organizationId) and adds the 3 new ones — non-breaking.
 
-- [ ] **Task 10:** Create `lib/Settings/sku-templates.json` with the three example SKU generation templates from `design.md` (RETAIL_APPAREL_TEMPLATE, PET_FOOD_TEMPLATE, SUPPLEMENT_TEMPLATE); each template declares `templateId`, `pattern`, and `rules` per REQ-SKU-002
+- [x] **Task 10:** Shipped `lib/Settings/sku-templates.json` with the three example SKU generation templates (RETAIL_APPAREL_TEMPLATE, PET_FOOD_TEMPLATE, SUPPLEMENT_TEMPLATE) — each declares `templateId`, `pattern`, and `rules` per REQ-SKU-002. Includes `_meta` block linking back to the spec.
 
 - [ ] **Task 11:** Implement SKU template engine: a single-method PHP service ≤50 LOC `OCA\Shillinq\SkuGenerator::generate(InventoryItem $item, string $templateId): string` that reads the template from `sku-templates.json`, extracts product attributes, applies transformation rules (mapping, passthrough, hex), and interpolates into the pattern string; register explicitly as ADR-031 exception in code comment
 
