@@ -22,6 +22,10 @@ return [
         // Trial balance (Tier 2): read-only per-account period aggregation.
         ['name' => 'trialBalance#index', 'url' => '/api/trial-balance', 'verb' => 'GET'],
 
+        // OSS (One-Stop-Shop, Tier 2): destination-country rate resolution + quarterly return generation.
+        ['name' => 'oss#resolveRate', 'url' => '/api/oss/rate', 'verb' => 'GET'],
+        ['name' => 'oss#generateReturn', 'url' => '/api/oss/return', 'verb' => 'GET'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
