@@ -552,6 +552,102 @@
         }
       ],
       "footer": "Gegenereerd vanuit Shillinq R&D Subsidies — EFRO aanbestedingsdossier (REQ-RDS-004)."
+    },
+    {
+      "templateId": "tpl-dunning-stage1-nl",
+      "title": "Dunning stage 1 — Vriendelijke reminder",
+      "description": "Stage 1 dunning template — vriendelijke herinnering op de vervaldatum. Toon: vriendelijk. REQ-CCD-002.",
+      "register": "shillinq",
+      "schema": "DunningRun",
+      "mergeFields": [
+        "klantNaam",
+        "factuurNummer",
+        "factuurDatum",
+        "openstaandBedrag",
+        "vervaldatum",
+        "IBAN",
+        "betaaltermijn"
+      ],
+      "tone": "vriendelijk",
+      "subject": "Vriendelijke herinnering — factuur {{factuurNummer}}",
+      "body": "Beste {{klantNaam}},\n\nWellicht heeft u onze factuur {{factuurNummer}} van {{factuurDatum}} ter waarde van €{{openstaandBedrag}} over het hoofd gezien — de vervaldatum was {{vervaldatum}}. U kunt het bedrag overmaken naar {{IBAN}} onder vermelding van het factuurnummer.\n\nVragen? Reageer gerust op deze e-mail.\n\nMet vriendelijke groet,\nDe ondernemer"
+    },
+    {
+      "templateId": "tpl-dunning-stage2-nl",
+      "title": "Dunning stage 2 — Herinnering",
+      "description": "Stage 2 dunning template — herinnering 14 dagen na vervaldatum. Toon: zakelijk. REQ-CCD-002.",
+      "register": "shillinq",
+      "schema": "DunningRun",
+      "mergeFields": [
+        "klantNaam",
+        "factuurNummer",
+        "factuurDatum",
+        "openstaandBedrag",
+        "vervaldatum",
+        "IBAN",
+        "betaaltermijn"
+      ],
+      "tone": "zakelijk",
+      "subject": "Herinnering — factuur {{factuurNummer}}",
+      "body": "Beste {{klantNaam}},\n\nFactuur {{factuurNummer}} van {{factuurDatum}} ter waarde van €{{openstaandBedrag}} staat sinds {{vervaldatum}} open. Wij verzoeken u vriendelijk het bedrag binnen 7 dagen te voldoen op IBAN {{IBAN}} onder vermelding van het factuurnummer.\n\nMochten er onduidelijkheden zijn, laat het ons dan weten.\n\nMet vriendelijke groet,\nDe ondernemer"
+    },
+    {
+      "templateId": "tpl-dunning-stage3-nl",
+      "title": "Dunning stage 3 — Aanmaning + 14-dagen-brief (B2C)",
+      "description": "Stage 3 dunning template — aanmaning op dag 30. Voor B2C-debiteuren MOET de wettelijke 14-dagen-brief in de body staan (art. 6:96 lid 6 BW). REQ-CCD-006.",
+      "register": "shillinq",
+      "schema": "DunningRun",
+      "mergeFields": [
+        "klantNaam",
+        "factuurNummer",
+        "factuurDatum",
+        "openstaandBedrag",
+        "vervaldatum",
+        "IBAN",
+        "betaaltermijn",
+        "incassokosten",
+        "rente"
+      ],
+      "tone": "formeel",
+      "subject": "Aanmaning — factuur {{factuurNummer}} (€{{openstaandBedrag}})",
+      "body": "Geachte {{klantNaam}},\n\nUw factuur {{factuurNummer}} van {{factuurDatum}} ter waarde van €{{openstaandBedrag}} staat sinds {{vervaldatum}} open. U krijgt 14 dagen om de factuur alsnog te voldoen zonder dat incassokosten of rente verschuldigd worden. Na deze termijn kunnen incassokosten (€{{incassokosten}}) en wettelijke rente (€{{rente}}) verschuldigd zijn.\n\nU kunt het bedrag overmaken naar {{IBAN}} onder vermelding van het factuurnummer.\n\nMet vriendelijke groet,\nDe ondernemer\n\n— Deze brief geldt als wettelijke aanmaning conform art. 6:96 lid 6 BW (Wet Incassokosten). —"
+    },
+    {
+      "templateId": "tpl-dunning-stage4-nl",
+      "title": "Dunning stage 4 — Ingebrekestelling (aangetekend)",
+      "description": "Stage 4 dunning template — ingebrekestelling op dag 60 via aangetekende post (PostNL Track & Trace). Toon: juridisch. REQ-CCD-009.",
+      "register": "shillinq",
+      "schema": "DunningRun",
+      "mergeFields": [
+        "klantNaam",
+        "factuurNummer",
+        "factuurDatum",
+        "openstaandBedrag",
+        "vervaldatum",
+        "IBAN",
+        "incassokosten",
+        "rente",
+        "totaalVerschuldigd"
+      ],
+      "tone": "juridisch",
+      "subject": "Ingebrekestelling — factuur {{factuurNummer}}",
+      "body": "Geachte {{klantNaam}},\n\nHierbij stellen wij u formeel in gebreke met betrekking tot factuur {{factuurNummer}} van {{factuurDatum}} ter waarde van €{{openstaandBedrag}}, vervallen op {{vervaldatum}}.\n\nOndanks meerdere herinneringen is betaling uitgebleven. Op grond van art. 6:83 BW bent u in verzuim. Het totaal verschuldigde bedrag inclusief incassokosten (€{{incassokosten}}) en wettelijke rente (€{{rente}}) bedraagt thans €{{totaalVerschuldigd}}.\n\nWij sommeren u dit bedrag binnen 7 dagen na dagtekening van deze brief te voldoen op IBAN {{IBAN}}. Indien betaling uitblijft zullen wij de vordering ter incasso uit handen geven, met alle verdere kosten van dien.\n\nHoogachtend,\nDe ondernemer"
+    },
+    {
+      "templateId": "tpl-dunning-stage5-nl",
+      "title": "Dunning stage 5 — Overdracht incassobureau",
+      "description": "Stage 5 dunning template — kennisgeving van overdracht aan incassobureau op dag 90. REQ-CCD-008.",
+      "register": "shillinq",
+      "schema": "DunningRun",
+      "mergeFields": [
+        "klantNaam",
+        "factuurNummer",
+        "totaalVerschuldigd",
+        "incassobureauNaam"
+      ],
+      "tone": "juridisch",
+      "subject": "Overdracht incassobureau — factuur {{factuurNummer}}",
+      "body": "Geachte {{klantNaam}},\n\nDe vordering met betrekking tot factuur {{factuurNummer}} ter waarde van €{{totaalVerschuldigd}} is per heden overgedragen aan {{incassobureauNaam}}. Alle verdere correspondentie en betaling dient via genoemd bureau te worden afgehandeld.\n\nHoogachtend,\nDe ondernemer"
     }
   ]
 }
