@@ -192,22 +192,22 @@
 					"description": "Tokens are server-issued (system actor or scheduler resend). Customers can read but not create/update. Auditors are read-only for audit trail traceability per REQ-BCF-008."
 				}
 			}
-		},
-		"objects": [
-			{
-				"@self": {
-					"register": "shillinq",
-					"schema": "ConfirmationToken",
-					"slug": "bookings-confirm-flow-example-active"
-				},
-				"tokenId": "tok-example-active",
-				"appointmentId": "apt-001",
-				"tokenString": "$2y$12$exampleBcryptHashPlaceholder000000000000000000000000",
-				"expiresAt": "2026-05-28T12:30:00Z",
-				"status": "active",
-				"createdAt": "2026-05-21T12:30:00Z",
-				"createdBy": "system"
-			}
-		]
-	}
+		}
+	},
+	"objects": [
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "ConfirmationToken",
+				"slug": "bookings-confirm-flow-example-active"
+			},
+			"tokenId": "tok-example-active",
+			"appointmentId": "apt-001",
+			"tokenString": "$2y$12$exampleBcryptHashPlaceholder000000000000000000000000",
+			"expiresAt": "2026-05-28T12:30:00Z",
+			"status": "active",
+			"createdAt": "2026-05-21T12:30:00Z",
+			"createdBy": "system"
+		}
+	]
 }

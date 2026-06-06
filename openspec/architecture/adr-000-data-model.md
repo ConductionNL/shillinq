@@ -253,6 +253,50 @@ _Individual approval task assigned to a user within an approval workflow_
 - → Document (many-to-one)
 - → Person (many-to-one)
 
+### Appointment
+**Schema.org:** `schema:Reservation`
+_A booked appointment linking a customer Contact to a Service + Resource at a specific UTC time window. Owned by `bookings-create-appointment`. Extended by `bookings-confirm-flow` with the customer-facing confirmation workflow: customer self-service bookings start as `pending_confirmation` and require a redeemed `ConfirmationToken` to move to `confirmed`; admin-created bookings start directly at `confirmed`. The confirmationDeadline + auto-cancel sweep (CancelUnconfirmedAppointmentsJob) clears stale pending rows daily. Other phase-2 changes (bookings-cancellation-rules, bookings-deposits) operate on the same record._
+**Primary spec:** bookings-create-appointment
+**Extending specs:** bookings-confirm-flow (lifecycle confirmViaToken / autoCancelExpired + confirmationDeadline / confirmedAt / confirmationTokenId fields), bookings-resource-calendar, bookings-cancellation-rules
+
+**Confirmation fields (bookings-confirm-flow):**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| confirmationDeadline | datetime | No | Latest moment the customer can confirm before auto-cancel |
+| confirmedAt | datetime | No | Timestamp when the appointment moved to `confirmed` |
+| confirmationTokenId | string | No | FK to the currently-active ConfirmationToken |
+
+**Lifecycle transitions added by bookings-confirm-flow:**
+- pending_confirmation → confirmed (`confirmViaToken`, guarded by token validation)
+- pending_confirmation → cancelled (`autoCancelExpired`, by CancelUnconfirmedAppointmentsJob)
+
+### ConfirmationToken
+**Schema.org:** `schema:AuthorizationToken`
+_A short-lived secret used by a customer to confirm a pending Appointment via email link or the web confirmation portal. Tokens are stored as salted bcrypt hashes (cost 12) — never plaintext — and validated in constant time by TokenValidator::verify. Lifecycle: `active` → `redeemed` (on confirmation) or `revoked` (on resend) or `expired` (when expiresAt passes). One Appointment may have multiple ConfirmationToken rows over time (e.g. after resend); the appointment's `confirmationTokenId` points at the current active one._
+**Primary spec:** bookings-confirm-flow
+
+**Fields:**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| tokenId | string (UUID) | Yes | Unique token identifier |
+| appointmentId | string (FK) | Yes | FK to Appointment.appointmentId |
+| tokenString | string | Yes | Salted bcrypt hash of the plaintext token |
+| expiresAt | datetime | Yes | ISO 8601 UTC expiry (+7 days default) |
+| status | enum | Yes | active / redeemed / revoked / expired |
+| redeemedAt | datetime | No | Timestamp when redeemed |
+| createdAt | datetime | Yes | Auto-set creation timestamp |
+| createdBy | string | Yes | Actor that triggered creation (system / admin / customer id) |
+
+**Relations:**
+- → Appointment (many-to-one)
+
+**Lifecycle transitions:**
+- active → redeemed (`redeem`, on token validation by ConfirmationApiController::confirm)
+- active → revoked (`revoke`, on customer resend by ConfirmationApiController::resend)
+- active → expired (`expire`, when expiresAt < now, swept by background job)
+
 ### AssessmentCriteria
 **Schema.org:** `schema:Thing`
 _Weighted criteria schema for property scoring and evaluation_
