@@ -203,7 +203,24 @@
         "Booking cancelled": "Boeking geannuleerd",
         "Invoice could not be created. It will be retried automatically.": "Factuur kon niet worden aangemaakt. Het wordt automatisch opnieuw geprobeerd.",
         "Deposit not authorised; cannot invoice this booking.": "Borgsom niet geautoriseerd; deze boeking kan niet gefactureerd worden.",
-        "This booking has already been invoiced.": "Deze boeking is al gefactureerd."
+        "This booking has already been invoiced.": "Deze boeking is al gefactureerd.",
+        "Communication": "Communicatie",
+        "SMS Reminder Channels": "SMS-herinneringskanalen",
+        "SMS Reminder Channel": "SMS-herinneringskanaal",
+        "Message template": "Berichtsjabloon",
+        "Preview (sample data)": "Voorbeeld (voorbeeldgegevens)",
+        "Preview length": "Lengte voorbeeld",
+        "Send before (minutes)": "Versturen vooraf (minuten)",
+        "Send before (min)": "Vooraf (min)",
+        "Fallback phone number": "Standaard telefoonnummer",
+        "Fallback number valid": "Standaardnummer geldig",
+        "Sender ID": "Afzender-ID",
+        "Phone number format": "Telefoonnummerformaat",
+        "Retry attempts": "Aantal nieuwe pogingen",
+        "Retry interval (seconds)": "Interval nieuwe poging (seconden)",
+        "Respect opt-out": "Opt-out respecteren",
+        "Log SMS cost": "SMS-kosten loggen",
+        "First activated": "Eerst geactiveerd"
     },
     "plurals": ""
 }

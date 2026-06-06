@@ -203,7 +203,24 @@
         "Booking cancelled": "Booking cancelled",
         "Invoice could not be created. It will be retried automatically.": "Invoice could not be created. It will be retried automatically.",
         "Deposit not authorised; cannot invoice this booking.": "Deposit not authorised; cannot invoice this booking.",
-        "This booking has already been invoiced.": "This booking has already been invoiced."
+        "This booking has already been invoiced.": "This booking has already been invoiced.",
+        "Communication": "Communication",
+        "SMS Reminder Channels": "SMS Reminder Channels",
+        "SMS Reminder Channel": "SMS Reminder Channel",
+        "Message template": "Message template",
+        "Preview (sample data)": "Preview (sample data)",
+        "Preview length": "Preview length",
+        "Send before (minutes)": "Send before (minutes)",
+        "Send before (min)": "Send before (min)",
+        "Fallback phone number": "Fallback phone number",
+        "Fallback number valid": "Fallback number valid",
+        "Sender ID": "Sender ID",
+        "Phone number format": "Phone number format",
+        "Retry attempts": "Retry attempts",
+        "Retry interval (seconds)": "Retry interval (seconds)",
+        "Respect opt-out": "Respect opt-out",
+        "Log SMS cost": "Log SMS cost",
+        "First activated": "First activated"
     },
     "plurals": ""
 }
