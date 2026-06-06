@@ -1,0 +1,280 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "expense-reimbursement-or-passthrough",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json. ADR-031 declarative-first: bulk classification is a manifest form page, no custom Vue component.",
+		"description": "Tier-2 dual-mode expense settlement UI per REQ-ERP-001 / REQ-ERP-002 / REQ-ERP-003. Adds two top-level navigation entries under Bookkeeping: (1) Expense Settlement Classifier — bulk form for assigning settlementMode + linkedCustomerId + markupRule to N expenses at once; (2) ReimbursementPolicy + PassThroughMarkupRule master-data index + detail pages for bookkeeper-driven configuration. Index columns reflect summary fields; detail pages drive the standard CRUD lifecycle; the classifier page submits via the OR approval-workflow if the resolved policy's markup-approval threshold is exceeded (REQ-ERP-006)."
+	},
+	"menu": [
+		{
+			"id": "ExpenseSettlement",
+			"label": "Expense Settlement",
+			"icon": "ScaleBalance",
+			"order": 80,
+			"children": [
+				{
+					"id": "ExpenseSettlementClassifier",
+					"label": "Settlement Classifier",
+					"icon": "FormatListChecks",
+					"route": "ExpenseSettlementClassifier",
+					"order": 10
+				},
+				{
+					"id": "ReimbursementPolicies",
+					"label": "Reimbursement Policies",
+					"icon": "ShieldCheckOutline",
+					"route": "ReimbursementPolicies",
+					"order": 20
+				},
+				{
+					"id": "PassThroughMarkupRules",
+					"label": "Pass-through Markup Rules",
+					"icon": "PercentOutline",
+					"route": "PassThroughMarkupRules",
+					"order": 30
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "ExpenseSettlementClassifier",
+			"route": "/expense-settlement-classifier",
+			"type": "bulk-form",
+			"title": "Expense Settlement Classifier",
+			"config": {
+				"register": "shillinq",
+				"description": "Bulk-classify uncategorised receipts, mileage entries, and per-diem records as reimbursable (paid via SEPA) or pass-through (billed to a customer at cost + markup). The selected markup rule + customer are written to every selected line item; child items inherit the claim mode at parent-claim submission per REQ-ERP-001 / REQ-ERP-003.",
+				"sources": [
+					{
+						"id": "receipts",
+						"schema": "Receipt",
+						"label": "Receipts",
+						"filter": {"settlementMode": null, "claimId": null},
+						"columns": [
+							{"key": "receiptNumber", "label": "Receipt #", "sortable": true},
+							{"key": "vendorName", "label": "Vendor", "sortable": true},
+							{"key": "category", "label": "Category", "sortable": true},
+							{"key": "amountInBaseCurrency", "label": "Amount", "sortable": true, "type": "money"},
+							{"key": "receiptDate", "label": "Date", "sortable": true}
+						]
+					},
+					{
+						"id": "mileage",
+						"schema": "MileageEntry",
+						"label": "Mileage",
+						"filter": {"settlementMode": null, "claimId": null},
+						"columns": [
+							{"key": "mileageNumber", "label": "Mileage #", "sortable": true},
+							{"key": "totalAmount", "label": "Amount", "sortable": true, "type": "money"},
+							{"key": "travelDate", "label": "Date", "sortable": true}
+						]
+					},
+					{
+						"id": "perDiem",
+						"schema": "PerDiem",
+						"label": "Per-diem",
+						"filter": {"settlementMode": null, "claimId": null},
+						"columns": [
+							{"key": "perDiemNumber", "label": "Per-diem #", "sortable": true},
+							{"key": "allowanceAmount", "label": "Allowance", "sortable": true, "type": "money"},
+							{"key": "fromDate", "label": "From", "sortable": true},
+							{"key": "toDate", "label": "To", "sortable": true}
+						]
+					}
+				],
+				"form": {
+					"fields": [
+						{
+							"key": "settlementMode",
+							"label": "Settlement Mode",
+							"type": "select",
+							"required": true,
+							"options": [
+								{"value": "reimbursable", "label": "Reimbursable (SEPA to employee)"},
+								{"value": "pass-through", "label": "Pass-through (bill customer at cost + markup)"}
+							],
+							"description": "REQ-ERP-001 dual-mode classification. Immutable after the parent ExpenseClaimEntry is submitted (REQ-ERP-010)."
+						},
+						{
+							"key": "linkedCustomerId",
+							"label": "Linked Customer",
+							"type": "lookup",
+							"schema": "Organization",
+							"required": false,
+							"visibleWhen": "settlementMode == 'pass-through'",
+							"description": "REQ-ERP-002 customer FK. Required when settlementMode = pass-through."
+						},
+						{
+							"key": "markupRuleId",
+							"label": "Markup Rule",
+							"type": "lookup",
+							"schema": "PassThroughMarkupRule",
+							"required": false,
+							"visibleWhen": "settlementMode == 'pass-through'",
+							"description": "Optional explicit rule selection; defaults to the highest-priority rule matching (customer, category, fiscal year) per REQ-ERP-005."
+						},
+						{
+							"key": "passthroughDebitAccountCode",
+							"label": "Pass-through Debit Account",
+							"type": "string",
+							"required": false,
+							"visibleWhen": "settlementMode == 'pass-through'",
+							"description": "Optional override of the ReimbursementPolicy default; the customer AR / deferred revenue GL account that will be debited on claim post (REQ-ERP-002 / REQ-ERP-007)."
+						}
+					]
+				},
+				"submit": {
+					"verb": "POST",
+					"endpoint": "lifecycle.bulkUpdate",
+					"targetField": "settlementMode",
+					"description": "Bulk-write the form values to every selected line item across all sources. Triggers the parent ExpenseClaimEntry approval-workflow extra-approver gate per REQ-ERP-006 if the resolved policy threshold is exceeded."
+				}
+			}
+		},
+		{
+			"id": "ReimbursementPolicies",
+			"route": "/reimbursement-policies",
+			"type": "index",
+			"title": "Reimbursement Policies",
+			"config": {
+				"register": "shillinq",
+				"schema": "ReimbursementPolicy",
+				"columns": [
+					{"key": "policyId", "label": "Policy ID", "sortable": true},
+					{"key": "name", "label": "Name", "sortable": true},
+					{"key": "autoApproveThreshold", "label": "Auto-approve ≤", "sortable": true, "type": "money"},
+					{"key": "requiresMarkupApprovalThreshold", "label": "Markup approval ≥", "sortable": true, "type": "money"},
+					{"key": "passthroughDebitAccountCode", "label": "Pass-through Debit Account", "sortable": true},
+					{"key": "administrationId", "label": "Administration", "sortable": true}
+				],
+				"filters": [
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"defaultSort": "policyId",
+				"detailRoute": "ReimbursementPolicyDetail",
+				"createDialog": "ReimbursementPolicyCreateDialog"
+			}
+		},
+		{
+			"id": "ReimbursementPolicyDetail",
+			"route": "/reimbursement-policies/:id",
+			"type": "detail",
+			"title": "Reimbursement Policy",
+			"config": {
+				"register": "shillinq",
+				"schema": "ReimbursementPolicy",
+				"fields": [
+					{"key": "policyId", "label": "Policy ID", "type": "string"},
+					{"key": "name", "label": "Name", "type": "string"},
+					{"key": "description", "label": "Description", "type": "string"},
+					{"key": "autoApproveThreshold", "label": "Auto-approve Threshold", "type": "number"},
+					{"key": "requiresMarkupApprovalThreshold", "label": "Markup Approval Threshold", "type": "number"},
+					{"key": "passthroughDebitAccountCode", "label": "Pass-through Debit Account", "type": "string"},
+					{"key": "employeeBankAccountMapping", "label": "Employee Bank Account Mapping", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"},
+					{"key": "notes", "label": "Notes", "type": "string"}
+				]
+			}
+		},
+		{
+			"id": "ReimbursementPolicyCreateDialog",
+			"route": "/reimbursement-policies/new",
+			"type": "dialog",
+			"title": "New Reimbursement Policy",
+			"config": {
+				"register": "shillinq",
+				"schema": "ReimbursementPolicy",
+				"action": {"verb": "POST", "url": "/api/reimbursement-policies"},
+				"fields": [
+					{"key": "policyId", "label": "Policy ID", "type": "string", "required": true},
+					{"key": "name", "label": "Name", "type": "string", "required": true},
+					{"key": "administrationId", "label": "Administration", "type": "string", "required": true},
+					{"key": "autoApproveThreshold", "label": "Auto-approve Threshold", "type": "number"},
+					{"key": "requiresMarkupApprovalThreshold", "label": "Markup Approval Threshold", "type": "number"},
+					{"key": "passthroughDebitAccountCode", "label": "Pass-through Debit Account", "type": "string"},
+					{"key": "employeeBankAccountMapping", "label": "Employee Bank Account Mapping", "type": "string", "default": "standard"}
+				],
+				"onSuccess": "navigate:ReimbursementPolicyDetail"
+			}
+		},
+		{
+			"id": "PassThroughMarkupRules",
+			"route": "/passthrough-markup-rules",
+			"type": "index",
+			"title": "Pass-through Markup Rules",
+			"config": {
+				"register": "shillinq",
+				"schema": "PassThroughMarkupRule",
+				"columns": [
+					{"key": "ruleId", "label": "Rule ID", "sortable": true},
+					{"key": "targetCustomerId", "label": "Customer", "sortable": true},
+					{"key": "targetCategory", "label": "Category", "sortable": true},
+					{"key": "markupType", "label": "Type", "sortable": true},
+					{"key": "markupValue", "label": "Markup", "sortable": true, "type": "number"},
+					{"key": "currency", "label": "Currency", "sortable": true},
+					{"key": "effectiveFromYear", "label": "From Year", "sortable": true},
+					{"key": "effectiveToYear", "label": "To Year", "sortable": true},
+					{"key": "priority", "label": "Priority", "sortable": true}
+				],
+				"filters": [
+					{"key": "targetCustomerId", "label": "Customer", "type": "string"},
+					{"key": "targetCategory", "label": "Category", "type": "select", "options": ["travel", "meals", "supplies", "accommodation"]},
+					{"key": "markupType", "label": "Type", "type": "select", "options": ["percentage", "fixedAmount"]},
+					{"key": "effectiveFromYear", "label": "From Year", "type": "number"}
+				],
+				"defaultSort": "priority",
+				"detailRoute": "PassThroughMarkupRuleDetail",
+				"createDialog": "PassThroughMarkupRuleCreateDialog"
+			}
+		},
+		{
+			"id": "PassThroughMarkupRuleDetail",
+			"route": "/passthrough-markup-rules/:id",
+			"type": "detail",
+			"title": "Pass-through Markup Rule",
+			"config": {
+				"register": "shillinq",
+				"schema": "PassThroughMarkupRule",
+				"fields": [
+					{"key": "ruleId", "label": "Rule ID", "type": "string"},
+					{"key": "targetCustomerId", "label": "Target Customer", "type": "string"},
+					{"key": "targetCategory", "label": "Target Category", "type": "string"},
+					{"key": "markupType", "label": "Markup Type", "type": "string"},
+					{"key": "markupValue", "label": "Markup Value", "type": "number"},
+					{"key": "currency", "label": "Currency", "type": "string"},
+					{"key": "effectiveFromYear", "label": "Effective From Year", "type": "number"},
+					{"key": "effectiveToYear", "label": "Effective To Year", "type": "number"},
+					{"key": "priority", "label": "Priority", "type": "number"},
+					{"key": "administrationId", "label": "Administration", "type": "string"},
+					{"key": "notes", "label": "Notes", "type": "string"}
+				]
+			}
+		},
+		{
+			"id": "PassThroughMarkupRuleCreateDialog",
+			"route": "/passthrough-markup-rules/new",
+			"type": "dialog",
+			"title": "New Pass-through Markup Rule",
+			"config": {
+				"register": "shillinq",
+				"schema": "PassThroughMarkupRule",
+				"action": {"verb": "POST", "url": "/api/passthrough-markup-rules"},
+				"fields": [
+					{"key": "ruleId", "label": "Rule ID", "type": "string", "required": true},
+					{"key": "administrationId", "label": "Administration", "type": "string", "required": true},
+					{"key": "targetCustomerId", "label": "Target Customer", "type": "string"},
+					{"key": "targetCategory", "label": "Target Category", "type": "select", "options": ["travel", "meals", "supplies", "accommodation"]},
+					{"key": "markupType", "label": "Markup Type", "type": "select", "required": true, "options": ["percentage", "fixedAmount"], "default": "percentage"},
+					{"key": "markupValue", "label": "Markup Value", "type": "number", "required": true},
+					{"key": "currency", "label": "Currency", "type": "string", "required": true, "default": "EUR"},
+					{"key": "effectiveFromYear", "label": "Effective From Year", "type": "number", "required": true, "default": 2026},
+					{"key": "effectiveToYear", "label": "Effective To Year", "type": "number"},
+					{"key": "priority", "label": "Priority", "type": "number"}
+				],
+				"onSuccess": "navigate:PassThroughMarkupRuleDetail"
+			}
+		}
+	]
+}
