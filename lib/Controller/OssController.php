@@ -41,6 +41,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -64,6 +65,7 @@ class OssController extends Controller
      * @param OssRateResolver    $rateResolver    Destination-country VAT-rate resolver.
      * @param OssReturnGenerator $returnGenerator Quarterly return draft generator.
      * @param LoggerInterface    $logger          Logger (no stack traces to client).
+     * @param IUserSession       $userSession     The user session.
      *
      * @return void
      */
@@ -72,6 +74,7 @@ class OssController extends Controller
         private readonly OssRateResolver $rateResolver,
         private readonly OssReturnGenerator $returnGenerator,
         private readonly LoggerInterface $logger,
+        private readonly IUserSession $userSession,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
@@ -90,6 +93,10 @@ class OssController extends Controller
     #[NoAdminRequired]
     public function resolveRate(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
+
         $country  = strtoupper(trim((string) $this->request->getParam('country', '')));
         $category = trim((string) $this->request->getParam('category', 'standard'));
         $date     = trim((string) $this->request->getParam('date', ''));
@@ -137,6 +144,10 @@ class OssController extends Controller
     #[NoAdminRequired]
     public function generateReturn(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
+
         $administrationId = trim((string) $this->request->getParam('administration_id', ''));
         $periodYear       = (int) $this->request->getParam('period_year', 0);
         $periodQuarter    = trim((string) $this->request->getParam('period_quarter', ''));
