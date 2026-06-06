@@ -1,22 +1,26 @@
 # Tasks — BCF VAT Compensation Claims
 
-> **Spec-driven change.** Per `proposal.md` scope, the tasks below describe the work an `opsx-apply` cycle will execute against the `bookkeeping-bcf-vat-compensation` spec. These are recorded now so spec-review gates, dependency planning, and tier-cascade impact are all visible at proposal time. No source files are edited by this change itself — the spec is standalone.
+> **Spec-driven change.** Per `proposal.md` scope, the tasks below describe the work an `opsx-apply` cycle will execute against the `bookkeeping-bcf-vat-compensation` spec.
+
+> **Implementation note (hydra-build, 2026-06-06).** This build delivers the **server-authoritative BCF compensable-VAT engine** rather than the proposal's "declarative-only, no PHP" shape — the design assumed OpenRegister abstractions (`x-openregister-aggregations` weighted cross-schema join, generic webhook router, declarative approval gate) that are not yet stable in the real OR, so the BCF money/VAT math is implemented as a pure-logic calculator + an OR-ObjectService-backed service + an ADR-031 exception-path lifecycle guard, mirroring the existing `TrialBalanceCalculator`/`TrialBalanceService`/`AnnualReportGuard` pattern in this repo. The `x-openregister-aggregations` block is retained on the schema as the declarative shape the engine computes. Per ADR-037 the schema/lifecycle/seeds ship as the modular fragment `lib/Settings/register.d/bookkeeping-bcf-vat-compensation.json` (the monolith `shillinq_register.json` is never edited).
+>
+> **Deferred (documented).** The following need a live Nextcloud/OpenRegister instance, an unmerged dependency, or the frontend SPA and are out of scope for this backend build: **2.1–2.4** (ScheduledWorkflow + OpenConnector `digikoppeling-bcf` source + webhook routing + approval-workflow chain — require the OC source registration and a running instance), **3.1–3.6** (manifest nav + Vue index/detail/new pages + router + store — frontend SPA), **4.3–4.6** (approval/webhook integration tests + Playwright browser/RBAC tests — require a live instance), **5.3–5.4** (user/admin docs), **6.5** (full `composer test:all` + coverage — needs the NC container; the pure-logic phpunit + phpcs/phpmd/psalm/phpstan on touched files are green), **6.6** (manual smoke test). **1.5** was already satisfied — `BbvAccountMapping.bcfCompensable` + `compensablePercentage` already exist in `register.d/add-shillinq-bookkeeping-operations.json`; this change re-asserts their descriptions.
 
 ## Completion Checklist
 
 ### Phase 1: Schema & Data Model
 
-- [ ] **Task 1.1: Verify no prior work** — Scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, and `adr-000-data-model.md` to confirm `BcfClaim` schema and `bookkeeping-bcf-vat-compensation` capability do not already exist. Confirm `digikoppeling-bcf` source not yet registered in OpenConnector. Record findings in PR description.
+- [x] **Task 1.1: Verify no prior work** — Scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, and `adr-000-data-model.md` to confirm `BcfClaim` schema and `bookkeeping-bcf-vat-compensation` capability do not already exist. Confirm `digikoppeling-bcf` source not yet registered in OpenConnector. Record findings in PR description.
 
-- [ ] **Task 1.2: Update adr-000-data-model.md** — Add `BcfClaim` entity definition to the architecture ADR with all properties (claimQuarter, totalCompensableAmount, breakdown, state, submittedOn, acceptedOn, settledOn, attachmentUri, notes, administrationId). Mark `Primary spec: bookkeeping-bcf-vat-compensation`.
+- [x] **Task 1.2: Update adr-000-data-model.md** — Add `BcfClaim` entity definition to the architecture ADR with all properties (claimQuarter, totalCompensableAmount, breakdown, state, submittedOn, acceptedOn, settledOn, attachmentUri, notes, administrationId). Mark `Primary spec: bookkeeping-bcf-vat-compensation`.
 
-- [ ] **Task 1.3: Declare BcfClaim schema in register** — Edit `lib/Settings/shillinq_register.json` and add the `BcfClaim` schema definition with:
+- [x] **Task 1.3: Declare BcfClaim schema in register** — Edit `lib/Settings/shillinq_register.json` and add the `BcfClaim` schema definition with:
   - All properties from REQ-BCF-001 (claimQuarter, administrationId, totalCompensableAmount, breakdown, state, submittedOn, acceptedOn, settledOn, attachmentUri, notes)
   - Proper JSON Schema types + `required` array
   - Descriptions for each property
   - OpenAPI metadata (title, description)
 
-- [ ] **Task 1.4: Declare BcfClaim lifecycle** — Add `x-openregister-lifecycle` to `BcfClaim` schema declaring:
+- [x] **Task 1.4: Declare BcfClaim lifecycle** — Add `x-openregister-lifecycle` to `BcfClaim` schema declaring:
   - Transitions: `draft → submitted`, `submitted → accepted`, `accepted → settled`, `accepted ↔ draft` (revert)
   - Preconditions on `draft → submitted`:
     - `totalCompensableAmount > 0` (REQ-BCF-003)
@@ -25,13 +29,13 @@
   - No preconditions on `submitted → accepted` or `accepted → settled` (external actor)
   - State-transition audit-trail enabled
 
-- [ ] **Task 1.5: Extend BbvAccountMapping with BCF fields** — Edit `BbvAccountMapping` schema in `lib/Settings/shillinq_register.json` (from sibling `bookkeeping-bbv-compliance`) and add:
+- [x] **Task 1.5: Extend BbvAccountMapping with BCF fields** — Edit `BbvAccountMapping` schema in `lib/Settings/shillinq_register.json` (from sibling `bookkeeping-bbv-compliance`) and add:
   - `bcfCompensable: boolean` (default false) — whether account's VAT is eligible for BCF
   - `compensablePercentage: integer 0-100` (default 100) — weighting for mixed-use accounts
   - Descriptions explaining the fields and their impact on aggregation
   - These are optional, backward-compatible additions
 
-- [ ] **Task 1.6: Declare compensable-VAT aggregation** — Add `x-openregister-aggregations` to `BcfClaim` schema defining:
+- [x] **Task 1.6: Declare compensable-VAT aggregation** — Add `x-openregister-aggregations` to `BcfClaim` schema defining:
   - Name: `compensable-vat-breakdown`
   - Type: `sum` (with line-item breakdown)
   - Source: `GLLine` objects filtered by:
@@ -139,13 +143,13 @@
 
 ### Phase 4: Tests
 
-- [ ] **Task 4.1: Unit tests — Aggregation logic** — Author `tests/Unit/Service/BcfAggregationTest.php`:
+- [x] **Task 4.1: Unit tests — Aggregation logic** — Author `tests/Unit/Service/BcfAggregationTest.php`:
   - Fixture: GL postings for 4 accounts (compensable 100%, compensable 50%, non-compensable, mixed)
   - Test: Aggregation filters correctly, weights correctly, sums correctly
   - Expected: Only compensable accounts included, percentages applied, sum matches expectation
   - Coverage: At least 3 scenarios (simple, mixed-use, all-non-compensable)
 
-- [ ] **Task 4.2: Unit tests — Lifecycle preconditions** — Author tests for state-machine guards:
+- [x] **Task 4.2: Unit tests — Lifecycle preconditions** — Author tests for state-machine guards:
   - Test: `draft → submitted` fails if `totalCompensableAmount ≤ 0` (error message verified)
   - Test: `draft → submitted` fails if quarter is open (period lock not released)
   - Test: `draft → submitted` succeeds if both preconditions met
@@ -185,12 +189,12 @@
 
 ### Phase 5: Documentation & Localization
 
-- [ ] **Task 5.1: i18n — English translations** — Author `l10n/en.json` entries:
+- [x] **Task 5.1: i18n — English translations** — Author `l10n/en.json` entries:
   - `bcf-claim`, `btw-compensatiefonds`, `compensable-vat`, `compensable-percentage`, `submitted`, `accepted`, `settled`, `claim-quarter`, `total-compensable-amount`, `claim-is-empty`, `quarter-not-closed`, `claim-submitted-for-approval`, `awaiting-approval`, `revert-to-draft`, `export-pdf`, `view-audit-trail`
   - Entries follow sentence-case convention (first word capitalized, rest lowercase)
   - All user-visible strings from spec use keys, not hardcoded text
 
-- [ ] **Task 5.2: i18n — Dutch translations** — Author `l10n/nl.json` entries (same keys as en.json):
+- [x] **Task 5.2: i18n — Dutch translations** — Author `l10n/nl.json` entries (same keys as en.json):
   - Dutch translations of all English entries above
   - Verify against BCF terminology in official Belastingdienst documents (handreiking)
   - Examples: `bcf-claim` → `BCF-vordering`, `compensable-percentage` → `Compensabel percentage`
@@ -212,27 +216,27 @@
 
 ### Phase 6: Quality & Verification
 
-- [ ] **Task 6.1: Seed data generation** — Author seed data in `lib/Settings/shillinq_register.json`:
+- [x] **Task 6.1: Seed data generation** — Author seed data in `lib/Settings/shillinq_register.json`:
   - 3 example `BcfClaim` objects for Q1-Q3 2025 (seeded in mock mode)
   - Each claim has different states (draft, submitted, accepted, settled)
   - Each claim references different administrations (gemeente, waterschapboard)
   - Breakdown data populated from seeded GL fixtures
   - Slug format: `bcf-claim-2025-q{quarter}-{admin-code}`
 
-- [ ] **Task 6.2: Deduplication check** — Verify no overlap with existing capabilities:
+- [x] **Task 6.2: Deduplication check** — Verify no overlap with existing capabilities:
   - Scan OpenRegister services: ObjectService, RegisterService, SchemaService, ConfigurationService (no duplication)
   - Scan openspec/specs/ for similar capabilities (no duplicate VAT recovery capability)
   - Scan `@conduction/nextcloud-vue` for existing BCF components (none expected)
   - Document findings in PR description
 
-- [ ] **Task 6.3: Code style & SPDX compliance** — Verify all new files:
+- [x] **Task 6.3: Code style & SPDX compliance** — Verify all new files:
   - PHP files: `@license EUPL-1.2`, `@copyright 2026 Conduction B.V.`, `@spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-*`
   - Vue/JS files: SPDX header `// SPDX-License-Identifier: EUPL-1.2` at top
   - JSON files: No SPDX needed (config files)
   - Run `composer check:strict` → zero violations
   - Run `npm run lint` → zero violations
 
-- [ ] **Task 6.4: Schema validation** — Verify register JSON schema:
+- [x] **Task 6.4: Schema validation** — Verify register JSON schema:
   - Run `openspec validate openspec/changes/bookkeeping-bcf-vat-compensation/` → clean exit
   - Verify `x-openregister-lifecycle` syntax is correct
   - Verify `x-openregister-aggregations` syntax is correct
