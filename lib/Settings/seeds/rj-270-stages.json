@@ -1,0 +1,52 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "RJ 270 §3 + IFRS 15 §B14-B19",
+    "description": "Canonical percentage-of-completion stages for consultancy project revenue recognition under RJ 270 (Richtlijnen voor de Jaarverslaggeving §270) and IFRS 15 §B14-B19.",
+    "imported": "2026-06-01T00:00:00Z",
+    "url": "https://www.rjnet.nl/standaarden/richtlijnen-jaarverslaggeving/richtlijn-270"
+  },
+  "stages": [
+    {
+      "stageId": "initiation",
+      "label": "Initiatie",
+      "labelEn": "Initiation",
+      "description": "Project is in the initiation phase. Contract signed; work not yet substantially commenced. Percentage-of-completion: 0–10%.",
+      "completionRangeLow": 0,
+      "completionRangeHigh": 10,
+      "recognitionStage": "initiation",
+      "statutoryNote": "RJ 270 §3.2: revenue recognised only to the extent of recoverable costs in early stages."
+    },
+    {
+      "stageId": "execution",
+      "label": "Uitvoering",
+      "labelEn": "Execution",
+      "description": "Project is in active execution. The majority of deliverables are in progress. Percentage-of-completion: 10–85%.",
+      "completionRangeLow": 10,
+      "completionRangeHigh": 85,
+      "recognitionStage": "execution",
+      "statutoryNote": "RJ 270 §3.2 / IFRS 15 §B14-B19: cost-to-cost or output-based percentage drives recognised revenue."
+    },
+    {
+      "stageId": "closeout",
+      "label": "Afronding",
+      "labelEn": "Closeout",
+      "description": "Project deliverables are substantially complete; closeout activities and final acceptance in progress. Percentage-of-completion: 85–99%.",
+      "completionRangeLow": 85,
+      "completionRangeHigh": 99,
+      "recognitionStage": "closeout",
+      "statutoryNote": "RJ 270 §3.2: final acceptance not yet signed; retain small uncompleted portion unrealised."
+    },
+    {
+      "stageId": "complete",
+      "label": "Afgerond",
+      "labelEn": "Complete",
+      "description": "Project is fully delivered and accepted by the customer. All deliverables signed off. Percentage-of-completion: 100%.",
+      "completionRangeLow": 100,
+      "completionRangeHigh": 100,
+      "recognitionStage": "complete",
+      "statutoryNote": "RJ 270 §3.2 / IFRS 15 §B14-B19: 100% completion — full contract value may be recognised."
+    }
+  ]
+}
