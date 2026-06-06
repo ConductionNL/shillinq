@@ -21,13 +21,7 @@
   - `active` → `redeemed` (on token validation)
   - `active` → `revoked` (on resend request)
   - `active` → `expired` (on expiration check, auto-computed from expiresAt)
-- [ ] Task 9: Implement `lib/Service/IcsService.php` with method `generateIcs(Appointment $appt, Customer $customer): string` per REQ-BCF-003 that:
-  - Takes appointment and customer objects
-  - Retrieves customer's timezone from Nextcloud user account or default to server timezone
-  - Generates RFC 5545 compliant ICS with VEVENT, VTIMEZONE blocks
-  - Includes DTSTART;TZID, DTEND;TZID with correct timezone offset
-  - Includes METHOD:REQUEST, SUMMARY, LOCATION, DESCRIPTION, ATTACH properties
-  - Returns ICS as string (no file I/O in the service; caller handles attachment)
+- [x] Task 9: Implement `lib/Service/IcsService.php` with method `generateIcs(array $appointment, array $customer, string $confirmUrl, array $context): string` per REQ-BCF-003 — emits CRLF-terminated VCALENDAR/VTIMEZONE/VEVENT with METHOD:REQUEST, DTSTART;TZID + DTEND;TZID via TimezoneResolver, SUMMARY/LOCATION/DESCRIPTION/ATTACH/URL/ATTENDEE/ORGANIZER. No file I/O.
 - [ ] Task 10: Implement `lib/Controller/ConfirmationApiController.php` with endpoints:
   - `PATCH /ocs/v2.php/apps/bookings/api/v1/appointments/{appointmentId}/confirm` — validate token, update appointment status to `confirmed`, update token status to `redeemed` (REQ-BCF-004)
   - `POST /ocs/v2.php/apps/bookings/api/v1/appointments/{appointmentId}/resend-confirmation` — revoke current token, generate new token, send new email (REQ-BCF-006)
@@ -69,17 +63,8 @@
   - Add navigation entry `Confirmations` (admin-only view showing pending confirmations with expiration warning)
   - Add modal action from appointment detail page: "Resend confirmation email" button
   - Update `nextcloud-app` type and routes
-- [ ] Task 17: Implement token hash/validate logic in a helper class (e.g., `lib/Util/TokenValidator.php`) that:
-  - Generates 32-char random URL-safe token string (base62)
-  - Hashes token with bcrypt (cost 12)
-  - Validates submitted token against stored hash
-  - Checks expiration (expiresAt vs. now)
-  - Prevents timing attacks (constant-time comparison)
-- [ ] Task 18: Add timezone handling logic that:
-  - Retrieves customer's timezone from Nextcloud user account (account settings → locale → timezone map)
-  - Falls back to server default timezone if not set
-  - Passes timezone to `IcsService::generateIcs()` and email template renderer
-  - Ensures VTIMEZONE block includes correct DAYLIGHT/STANDARD transition rules
+- [x] Task 17: Implement token hash/validate logic in `lib/Util/TokenValidator.php` — generates 32-char base62 via random_int, hashes with bcrypt cost 12, verifies via password_verify (constant-time per OWASP), checks expiresAt vs now, fails closed on parse errors.
+- [x] Task 18: Add timezone handling logic in `lib/Service/Booking/TimezoneResolver.php` — reads core/timezone via IConfig::getUserValue for the customer's NC account, falls back to date_default_timezone_get(), then UTC. Validates with DateTimeZone before returning.
 - [ ] Task 19: Update `openspec/architecture/adr-000-data-model.md` with `ConfirmationToken` and updated `Appointment` entries, reconciling against any existing token/confirmation data-model entries
 - [ ] Task 20: Add 10+ unit tests covering:
   - Token generation (correct hash, expiration, status)
