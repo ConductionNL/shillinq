@@ -50,7 +50,7 @@
 
 - [x] **Task 16:** Added a `### Barcode` entity entry to `openspec/architecture/adr-000-data-model.md` (Schema.org `schema:Product`, Primary spec: `inventory-barcode-sku`) with the full property table, `→ Product` many-to-one relation, the `(productSku, barcodeType, uomCode)` uniqueness note, and a closing block flagging the three additive fields on the existing `Product` entry (`skuTemplate`, `defaultBarcode`, `barcodeFormat`) so future readers find the cross-reference.
 
-- [ ] **Task 17:** Confirm the barcode lookup endpoint is documented in `docs/api/barcode-lookup.md` (or equivalent) with curl examples and response schema for downstream consumers (pipelinq POS module)
+- [x] **Task 17:** Authored `docs/api/barcode-lookup.md` covering the endpoint URL, the ADR-005 Bearer auth model + fail-secure fallback, the `code` / `uomCode` parameters, 200 / 404 / 401 example payloads, two curl examples (provisioned POS scanning EAN-13 and forced carton GTIN-14), the REQ-SKU-009 POS UX requirement (`{quantity}× {uomCode} | {product.name}`), caching guidance, and operational notes on inactive barcodes + uniqueness + error-trace handling.
 
 - [ ] **Task 18:** Write PHPUnit unit tests for:
   - Barcode schema validation (minimal, enum, quantity constraints)
