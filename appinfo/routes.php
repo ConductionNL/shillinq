@@ -99,6 +99,12 @@ return [
         ['name' => 'notification#listForBooking', 'url' => '/api/bookings/{id}/notification-triggers', 'verb' => 'GET'],
         ['name' => 'notification#updateForBooking', 'url' => '/api/bookings/{id}/notification-triggers', 'verb' => 'PATCH'],
 
+        // Inventory barcode lookup endpoint (REQ-SKU-007 / REQ-SKU-008).
+        // Public route attribute (Bearer API-key in the controller body) so POS
+        // terminals without an NC session can call it; declared before the SPA
+        // catch-all so Symfony matches it first per ADR-016.
+        ['name' => 'barcodeLookup#lookup', 'url' => '/api/barcode/lookup/{code}', 'verb' => 'GET', 'requirements' => ['code' => '.+']],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],

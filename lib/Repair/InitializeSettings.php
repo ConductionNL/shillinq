@@ -83,6 +83,7 @@ class InitializeSettings implements IRepairStep
      * Phase 7: seeds RJ-270 stages and rate-card templates for consultancy project accounting.
      * Phase 8: seeds ProductAttribute templates (office, it_hardware, logistics, food_beverage, clothing) per REQ-IPC-007.
      * Phase 9: seeds ReimbursementPolicy + PassThroughMarkupRule master-data records per REQ-ERP-004 / REQ-ERP-005.
+     * Phase 10: seeds demo Barcode records (EAN/GTIN/SSCC/UPC/internal) per REQ-SKU-011.
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -148,6 +149,7 @@ class InitializeSettings implements IRepairStep
             $this->seedProductAttributeTemplates(output: $output);
             $this->seedReimbursementPolicies(output: $output);
             $this->seedPassThroughMarkupRules(output: $output);
+            $this->seedInventoryBarcodeDemo(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -494,6 +496,36 @@ class InitializeSettings implements IRepairStep
         }//end foreach
 
     }//end seedProductAttributeTemplates()
+
+    /**
+     * Seed the demo Barcode records, idempotently.
+     *
+     * Calls `SettingsService::seedInventoryBarcodes()`. Idempotent: barcodes
+     * matched by `(barcode, uomCode)` are skipped, preserving operator edits
+     * per REQ-SKU-011. The demo barcodes reference inventory-product-catalog
+     * demo SKUs (DV-KAT-SENIOR-2KG, VIT-C-1000MG-100CT).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-barcode-sku/tasks.md#task-15
+     */
+    private function seedInventoryBarcodeDemo(IOutput $output): void
+    {
+        $output->info('Seeding demo barcodes...');
+        $result = $this->settingsService->seedInventoryBarcodes();
+
+        if ($result['success'] === true) {
+            $output->info(
+                'Demo barcodes seeded: '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
+            );
+            return;
+        }
+
+        $output->warning('Demo barcode seeding issue: '.($result['message'] ?? 'unknown error'));
+
+    }//end seedInventoryBarcodeDemo()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.

@@ -550,6 +550,30 @@ _A read-only aggregate combining financials across multiple administrations with
 > not a FK join; (5) removes finalized/archived from status enum — these are now
 > expressed as lifecycle states.
 
+### Barcode
+**Schema.org:** `schema:Product`
+**Primary spec:** inventory-barcode-sku
+_A scannable code (EAN, GTIN, UPC, SSCC, or INTERNAL) bound to a Product at a specific unit-of-measure. A single Product carries 1..N barcodes — one per UoM or channel (EAN-13 per unit, GTIN-14 per carton, SSCC per pallet). Declared as a separate register (not an inline array on Product) so each barcode has its own queryable identity, audit trail, and lifecycle (deactivate without delete). Consumed by the shillinq `/api/barcode/lookup/{code}` endpoint and the pipelinq pos-barcode-scan module._
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| barcode | string | Yes | The barcode value as printed/scanned (e.g. 5410317126589) |
+| barcodeType | enum | Yes | One of EAN, GTIN, UPC, SSCC, INTERNAL |
+| format | string | Yes | Specific format (EAN-13, EAN-8, GTIN-14, UPC-A, SSCC-18, INTERNAL) |
+| productSku | string | Yes | FK to Product.sku — the product this barcode identifies |
+| uomCode | string | Yes | UN/CEFACT unit code (EA, CA, PL, …) the barcode represents |
+| quantity | number | Yes | How many base units this barcode represents (>= 1) |
+| isDefault | boolean | No | True when this is the primary/default barcode for scanning |
+| isActive | boolean | No | False excludes the barcode from lookup per REQ-SKU-008 |
+| notes | string | No | Operator-authored free text |
+
+**Relations:**
+- → Product (many-to-one, via `productSku → sku` per inventory-barcode-sku)
+
+**Uniqueness:** `(productSku, barcodeType, uomCode)` — one EAN per UoM per product, but multiple UoMs per product per REQ-SKU-005.
+
+**Additive Product fields (inventory-barcode-sku, REQ-SKU-006):** the Product schema (primary spec: inventory-product-catalog) gains three optional nullable fields here — `skuTemplate` (reference to a SKU generation template in `lib/Settings/sku-templates.json`), `defaultBarcode` (the value scanned by default at POS), and `barcodeFormat` (preferred format for new barcodes on this product). All three are non-breaking — existing Products remain valid.
+
 ### BankAccount
 **Schema.org:** `schema:BankAccount`
 _Schema.org BankAccount — standard vocabulary for bankaccount data_
