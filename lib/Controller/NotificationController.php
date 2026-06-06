@@ -55,6 +55,7 @@ use OCA\Shillinq\Service\Notification\NotificationRateLimiter;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
@@ -238,6 +239,7 @@ class NotificationController extends Controller
      *
      * @return JSONResponse `{summary: {…}, triggers: [{…}], recentFailures: [{…}]}`.
      */
+    #[AuthorizedAdminSetting(Application::APP_ID)]
     public function adminMonitor(): JSONResponse
     {
         try {
@@ -304,6 +306,7 @@ class NotificationController extends Controller
      *
      * @return JSONResponse `{disabled: N}` or error envelope.
      */
+    #[AuthorizedAdminSetting(Application::APP_ID)]
     public function adminDisableAll(): JSONResponse
     {
         try {
