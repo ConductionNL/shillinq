@@ -1,0 +1,212 @@
+{
+	"menu": [
+		{
+			"id": "Communicatie",
+			"label": "Communication",
+			"icon": "icon-comment",
+			"order": 36,
+			"children": [
+				{
+					"id": "ConfirmationTemplates",
+					"label": "Confirmation Templates",
+					"icon": "EmailCheckOutline",
+					"route": "ConfirmationTemplates",
+					"order": 20
+				},
+				{
+					"id": "ReminderTemplates",
+					"label": "Reminder Templates",
+					"icon": "EmailClockOutline",
+					"route": "ReminderTemplates",
+					"order": 30
+				},
+				{
+					"id": "CancellationTemplates",
+					"label": "Cancellation Templates",
+					"icon": "EmailRemoveOutline",
+					"route": "CancellationTemplates",
+					"order": 40
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "ConfirmationTemplates",
+			"route": "/communication/confirmation-templates",
+			"type": "index",
+			"title": "Confirmation Templates",
+			"config": {
+				"register": "shillinq",
+				"schema": "BookingConfirmationTemplate",
+				"columns": [
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "locale", "label": "Locale", "sortable": true },
+					{ "key": "subjectLine", "label": "Subject", "sortable": false },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "activatedAt", "label": "First activated", "sortable": true }
+				],
+				"defaultSort": "name",
+				"detailRoute": "ConfirmationTemplateDetail"
+			}
+		},
+		{
+			"id": "ConfirmationTemplateDetail",
+			"route": "/communication/confirmation-templates/:id",
+			"type": "detail",
+			"title": "Confirmation Template",
+			"config": {
+				"register": "shillinq",
+				"schema": "BookingConfirmationTemplate",
+				"fields": [
+					{ "key": "name", "label": "Name", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "locale", "label": "Locale", "type": "string", "help": "Template language (nl or en). The notification engine selects the locale matching the customer language preference at dispatch." },
+					{
+						"key": "subjectLine",
+						"label": "Subject line",
+						"type": "string",
+						"help": "Email subject. Supports {{customerName}}, {{bookingRef}}, {{bookingDate}}, {{bookingTime}}, {{bookingLocation}}, {{organizationName}}. Max 78 characters after variable substitution."
+					},
+					{
+						"key": "htmlBody",
+						"label": "HTML body",
+						"type": "string",
+						"help": "Inline styles only. Whitelisted elements: div, p, h1-h6, a, img, table, ul, ol, li, br, span, strong, em."
+					},
+					{
+						"key": "plainTextBody",
+						"label": "Plain-text body",
+						"type": "string",
+						"help": "Plain-text fallback for email clients without HTML rendering."
+					},
+					{ "key": "renderedSubjectPreview", "label": "Subject preview (sample data)", "type": "calculated" },
+					{ "key": "renderedBodyPreview", "label": "Body preview (sample data)", "type": "calculated" },
+					{ "key": "subjectLineLength", "label": "Rendered subject length", "type": "calculated", "help": "Warns when ≥78 (NFR-BET-002)." },
+					{ "key": "totalBodySizeBytes", "label": "Body size (bytes)", "type": "calculated", "help": "Combined HTML + plain-text ≤102 KB (NFR-BET-003)." },
+					{ "key": "htmlBodySafe", "label": "HTML whitelist valid", "type": "calculated" },
+					{ "key": "logoUri", "label": "Logo URL", "type": "string", "help": "CDN or document-store URI. Inline base64 not supported (NFR-BET-004)." },
+					{ "key": "accentColor", "label": "Accent colour", "type": "string", "help": "Six-digit hex code (e.g. #0066cc)." },
+					{ "key": "footerText", "label": "Footer text", "type": "string" },
+					{ "key": "senderName", "label": "Sender name", "type": "string" },
+					{ "key": "senderAddress", "label": "Sender address", "type": "string" },
+					{ "key": "activatedAt", "label": "First activated", "type": "date-time" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ConfirmationTemplates"
+			}
+		},
+		{
+			"id": "ReminderTemplates",
+			"route": "/communication/reminder-templates",
+			"type": "index",
+			"title": "Reminder Templates",
+			"config": {
+				"register": "shillinq",
+				"schema": "BookingReminderTemplate",
+				"columns": [
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "locale", "label": "Locale", "sortable": true },
+					{ "key": "hoursBeforeBooking", "label": "Hours before", "sortable": true },
+					{ "key": "subjectLine", "label": "Subject", "sortable": false },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "hoursBeforeBooking",
+				"detailRoute": "ReminderTemplateDetail"
+			}
+		},
+		{
+			"id": "ReminderTemplateDetail",
+			"route": "/communication/reminder-templates/:id",
+			"type": "detail",
+			"title": "Reminder Template",
+			"config": {
+				"register": "shillinq",
+				"schema": "BookingReminderTemplate",
+				"fields": [
+					{ "key": "name", "label": "Name", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "locale", "label": "Locale", "type": "string" },
+					{
+						"key": "hoursBeforeBooking",
+						"label": "Hours before booking",
+						"type": "number",
+						"help": "Hours before booking start to dispatch the reminder (1–720). Common values: 1, 2, 24, 48, 72."
+					},
+					{ "key": "subjectLine", "label": "Subject line", "type": "string" },
+					{ "key": "htmlBody", "label": "HTML body", "type": "string" },
+					{ "key": "plainTextBody", "label": "Plain-text body", "type": "string" },
+					{ "key": "renderedSubjectPreview", "label": "Subject preview (sample data)", "type": "calculated" },
+					{ "key": "renderedBodyPreview", "label": "Body preview (sample data)", "type": "calculated" },
+					{ "key": "subjectLineLength", "label": "Rendered subject length", "type": "calculated" },
+					{ "key": "totalBodySizeBytes", "label": "Body size (bytes)", "type": "calculated" },
+					{ "key": "htmlBodySafe", "label": "HTML whitelist valid", "type": "calculated" },
+					{ "key": "logoUri", "label": "Logo URL", "type": "string" },
+					{ "key": "accentColor", "label": "Accent colour", "type": "string" },
+					{ "key": "footerText", "label": "Footer text", "type": "string" },
+					{ "key": "senderName", "label": "Sender name", "type": "string" },
+					{ "key": "senderAddress", "label": "Sender address", "type": "string" },
+					{ "key": "activatedAt", "label": "First activated", "type": "date-time" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ReminderTemplates"
+			}
+		},
+		{
+			"id": "CancellationTemplates",
+			"route": "/communication/cancellation-templates",
+			"type": "index",
+			"title": "Cancellation Templates",
+			"config": {
+				"register": "shillinq",
+				"schema": "BookingCancellationTemplate",
+				"columns": [
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "locale", "label": "Locale", "sortable": true },
+					{ "key": "cancellationReasonRequired", "label": "Reason required", "sortable": true },
+					{ "key": "subjectLine", "label": "Subject", "sortable": false },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "name",
+				"detailRoute": "CancellationTemplateDetail"
+			}
+		},
+		{
+			"id": "CancellationTemplateDetail",
+			"route": "/communication/cancellation-templates/:id",
+			"type": "detail",
+			"title": "Cancellation Template",
+			"config": {
+				"register": "shillinq",
+				"schema": "BookingCancellationTemplate",
+				"fields": [
+					{ "key": "name", "label": "Name", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "locale", "label": "Locale", "type": "string" },
+					{ "key": "subjectLine", "label": "Subject line", "type": "string" },
+					{ "key": "htmlBody", "label": "HTML body", "type": "string" },
+					{ "key": "plainTextBody", "label": "Plain-text body", "type": "string" },
+					{
+						"key": "cancellationReasonRequired",
+						"label": "Include cancellation reason",
+						"type": "boolean",
+						"help": "When on, {{cancellationReason}} is included in the variable map at dispatch (REQ-BET-009)."
+					},
+					{ "key": "renderedSubjectPreview", "label": "Subject preview (sample data)", "type": "calculated" },
+					{ "key": "renderedBodyPreview", "label": "Body preview (sample data)", "type": "calculated" },
+					{ "key": "subjectLineLength", "label": "Rendered subject length", "type": "calculated" },
+					{ "key": "totalBodySizeBytes", "label": "Body size (bytes)", "type": "calculated" },
+					{ "key": "htmlBodySafe", "label": "HTML whitelist valid", "type": "calculated" },
+					{ "key": "logoUri", "label": "Logo URL", "type": "string" },
+					{ "key": "accentColor", "label": "Accent colour", "type": "string" },
+					{ "key": "footerText", "label": "Footer text", "type": "string" },
+					{ "key": "senderName", "label": "Sender name", "type": "string" },
+					{ "key": "senderAddress", "label": "Sender address", "type": "string" },
+					{ "key": "activatedAt", "label": "First activated", "type": "date-time" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "CancellationTemplates"
+			}
+		}
+	]
+}
