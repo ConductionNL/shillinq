@@ -56,6 +56,9 @@ return [
         ['name' => 'payroll#lhAfdracht', 'url' => '/api/payroll/lh-afdracht', 'verb' => 'GET'],
         ['name' => 'payroll#journaalpost', 'url' => '/api/payroll/journaalpost', 'verb' => 'GET'],
 
+        // BCF claims (Tier 3): read-only compensable-VAT breakdown for a quarter.
+        ['name' => 'bcfClaim#compensation', 'url' => '/api/bcf-claims/compensation', 'verb' => 'GET'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
