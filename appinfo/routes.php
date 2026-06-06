@@ -82,6 +82,15 @@ return [
         ['name' => 'invoiceApi#pdf', 'url' => '/api/v1/invoices/{invoiceId}/pdf', 'verb' => 'GET'],
         ['name' => 'invoiceApi#show', 'url' => '/api/v1/invoices/{invoiceId}', 'verb' => 'GET'],
 
+        // Appointment confirmation flow (bookings-confirm-flow, REQ-BCF-004/006/007).
+        // Static segments precede the SPA catch-all so the confirm/resend/validate
+        // endpoints match first. `confirm` and `validate-confirmation-token` are
+        // #[PublicPage]; `resend-confirmation` is #[NoAdminRequired] + per-
+        // appointment IDOR guard inside the controller.
+        ['name' => 'confirmationApi#lookupByToken', 'url' => '/api/v1/appointments/validate-confirmation-token', 'verb' => 'GET'],
+        ['name' => 'confirmationApi#confirm', 'url' => '/api/v1/appointments/{appointmentId}/confirm', 'verb' => 'PATCH'],
+        ['name' => 'confirmationApi#resend', 'url' => '/api/v1/appointments/{appointmentId}/resend-confirmation', 'verb' => 'POST'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],

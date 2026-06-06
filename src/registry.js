@@ -35,6 +35,16 @@ import CountPage from './views/inventory/CountPage.vue'
 //   manifest router still owns the URL → component mapping.
 import BookingsCalendarPage from './views/bookings/CalendarPage.vue'
 
+// bookings-confirm-flow (REQ-BCF-007): the customer-facing confirmation
+// portal at /confirm/:appointmentId is an imperative Vue component — it
+// owns its own URL-parameter parsing (token + appointmentId), runs a
+// dry-run validation request on mount, switches between loading /
+// error / form / success states, and renders the appointment time in
+// the customer's local timezone via Intl.DateTimeFormat. None of those
+// concerns fit any built-in index/detail/dashboard/settings page type,
+// so the portal is registered as a kind:"page" custom component.
+import BookingsConfirmationPortal from './views/bookings/ConfirmationPortal.vue'
+
 // invoice-from-time-and-expense (issue #111): drafting form + admin list
 // + detail page are imperative because the generator combines multi-source
 // dynamic look-ups (time entries + expenses + rate card + retainer) into
@@ -55,4 +65,5 @@ export default {
 	AdminInvoiceDetail: { kind: 'page', component: AdminInvoiceDetail },
 
 	BookingsCalendarPage: { kind: 'page', component: BookingsCalendarPage },
+	BookingsConfirmationPortal: { kind: 'page', component: BookingsConfirmationPortal },
 }
