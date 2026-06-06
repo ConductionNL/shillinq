@@ -121,7 +121,7 @@ class StatementParser
     {
         libxml_use_internal_errors(true);
         // phpcs:ignore CustomSniffs.Functions.NamedParameters -- simplexml_load_string internal, named params unsupported.
-        $xml = simplexml_load_string($contents);
+        $xml = simplexml_load_string($contents, 'SimpleXMLElement', LIBXML_NONET);
         if ($xml === false) {
             throw new \InvalidArgumentException('CAMT.053 XML parse error: '.libxml_get_last_error()->message);
         }
