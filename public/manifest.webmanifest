@@ -1,0 +1,52 @@
+{
+	"name": "Shillinq Inventory Mobile",
+	"short_name": "Inventory",
+	"description": "Offline-first warehouse PWA for receive, transfer, pick and count operations.",
+	"id": "/apps/shillinq/inventory/mobile",
+	"start_url": "/apps/shillinq/inventory/mobile",
+	"scope": "/apps/shillinq/inventory/",
+	"display": "standalone",
+	"orientation": "portrait",
+	"theme_color": "#0082c9",
+	"background_color": "#ffffff",
+	"icons": [
+		{
+			"src": "icons/inventory-192.png",
+			"sizes": "192x192",
+			"type": "image/png",
+			"purpose": "any maskable"
+		},
+		{
+			"src": "icons/inventory-512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "any maskable"
+		}
+	],
+	"shortcuts": [
+		{
+			"name": "Receive",
+			"short_name": "Receive",
+			"url": "/apps/shillinq/inventory/mobile/receive",
+			"icons": [{ "src": "icons/inventory-192.png", "sizes": "192x192" }]
+		},
+		{
+			"name": "Transfer",
+			"short_name": "Transfer",
+			"url": "/apps/shillinq/inventory/mobile/transfer",
+			"icons": [{ "src": "icons/inventory-192.png", "sizes": "192x192" }]
+		},
+		{
+			"name": "Pick",
+			"short_name": "Pick",
+			"url": "/apps/shillinq/inventory/mobile/pick",
+			"icons": [{ "src": "icons/inventory-192.png", "sizes": "192x192" }]
+		},
+		{
+			"name": "Count",
+			"short_name": "Count",
+			"url": "/apps/shillinq/inventory/mobile/count",
+			"icons": [{ "src": "icons/inventory-192.png", "sizes": "192x192" }]
+		}
+	]
+}

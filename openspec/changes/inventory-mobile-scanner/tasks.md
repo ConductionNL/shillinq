@@ -2,25 +2,25 @@
 
 ## Sprint 1: Data Layer & Sync Protocol (Week 1–2)
 
-- [ ] **T1.1: IndexedDB Schema Design**
+- [x] **T1.1: IndexedDB Schema Design**
   - Create IndexedDB database schema (inventoryStock, inventoryItem, location, pendingOps tables)
   - Implement database initialization (`initDB()`)
   - Add indexes on (sku, location), (sku), (timestamp) for query performance
   - Unit tests: schema initialization, index validation
 
-- [ ] **T1.2: Local Write Operations**
+- [x] **T1.2: Local Write Operations**
   - Implement `insertInventoryStock(sku, location, quantity, lastModified)`
   - Implement `updateInventoryStock(sku, location, deltaQuantity, timestamp)`
   - Implement `insertPendingOp(type, sku, location, oldQty, newQty, transactionId)`
   - Unit tests: insert, update, constraint validation (no negative quantities)
 
-- [ ] **T1.3: Sync Protocol — Download (GET /inventory/sync)**
+- [x] **T1.3: Sync Protocol — Download (GET /inventory/sync)**
   - Implement `GET /api/v1/inventory/sync?since=<timestamp>` endpoint
   - Endpoint returns all InventoryStock records modified since timestamp as JSON
   - Implement client-side delta merge: if local lastModified > server, keep local; else overwrite
   - Unit tests: timestamp filtering, LWW conflict resolution, empty delta handling
 
-- [ ] **T1.4: Sync Protocol — Upload (POST /inventory/sync)**
+- [x] **T1.4: Sync Protocol — Upload (POST /inventory/sync)**
   - Implement `POST /api/v1/inventory/sync` endpoint
   - Endpoint accepts batch of operations with transactionId, sku, location, oldQty, newQty, type
   - Implement server-side transactionId deduplication (check if transactionId already processed in last 24h)
@@ -28,13 +28,13 @@
   - Return ACK with server timestamp and status (success / duplicate / permission denied)
   - Unit tests: deduplication, atomic writes, ACK format
 
-- [ ] **T1.5: TransactionId Deduplication Store**
+- [x] **T1.5: TransactionId Deduplication Store**
   - Create a cache (Redis or in-memory) of processed transactionIds with expiry (24 hours)
   - Implement lookup: `getProcessedTransactionId(id) → timestamp or null`
   - Implement insert: `markTransactionProcessed(id, timestamp)`
   - Integration tests: duplicate detection, expiry cleanup
 
-- [ ] **T1.6: Offline Sync Scheduler**
+- [x] **T1.6: Offline Sync Scheduler**
   - Implement background sync task (runs every 30 seconds if network available)
   - Task fetches `navigator.onLine`, if true:
     - Calls GET /inventory/sync?since=<lastSyncTime>
@@ -48,41 +48,41 @@
 
 ## Sprint 2: Barcode Scanning & SKU Resolution (Week 3)
 
-- [ ] **T2.1: Camera Permission & WebRTC Setup**
+- [x] **T2.1: Camera Permission & WebRTC Setup**
   - Implement `getUserMedia()` call for video stream
   - Handle permission prompts (iOS / Android / desktop)
   - Implement fallback: if permission denied, show manual entry textbox
   - Unit tests: permission scenarios, stream initialization
 
-- [ ] **T2.2: QR Code Decoding (jsQR)**
+- [x] **T2.2: QR Code Decoding (jsQR)**
   - Integrate jsQR library
   - Implement real-time barcode detection from video canvas
   - Decode QR payload (typically a URL or text, e.g., product ID)
   - Auto-submit when barcode is detected (or require tap for confirmation)
   - Unit tests: sample QR images, edge cases (rotated, blurry)
 
-- [ ] **T2.3: 1D Barcode Decoding (Quagga)**
+- [x] **T2.3: 1D Barcode Decoding (Quagga)**
   - Integrate quagga library for EAN-13, Code-128, Code-39, Code-93
   - Implement real-time barcode detection from video canvas
   - Decode barcode payload
   - Handle multi-barcode scenarios (if multiple barcodes detected, show list)
   - Unit tests: EAN-13, Code-128 samples, orientation detection
 
-- [ ] **T2.4: SKU Resolution Integration**
+- [x] **T2.4: SKU Resolution Integration**
   - Call `inventory-barcode-sku` resolver service with barcode value
   - Resolver returns SKU or "not found" error
   - If found: display product name, category, unit price
   - If not found: display "Barcode not recognized; enter SKU manually?"
   - Integration tests: valid barcode, invalid barcode, resolver timeout
 
-- [ ] **T2.5: Manual SKU Entry Fallback**
+- [x] **T2.5: Manual SKU Entry Fallback**
   - Implement searchable textbox: "Enter barcode or SKU"
   - Filtering: match SKU or product name (live filter as user types)
   - Autocomplete: suggest matching SKUs from InventoryItem cache
   - On selection: resolve to product and proceed
   - Unit tests: filtering, autocomplete matching
 
-- [ ] **T2.6: BarcodeScanner Vue Component**
+- [x] **T2.6: BarcodeScanner Vue Component**
   - Create reusable `<BarcodeScanner />` component
   - Props: `@scan="handleScan"` (barcode or SKU is returned)
   - Props: `fallbackToManual: true` (show manual textbox if camera fails)
@@ -94,7 +94,7 @@
 
 ## Sprint 3: Warehouse Operations UI (Week 4)
 
-- [ ] **T3.1: Receive Operation Component**
+- [x] **T3.1: Receive Operation Component**
   - Create `<ReceiveOp />` Vue component
   - Flow: select location → scan barcode → enter qty → confirm
   - On confirm:
@@ -105,7 +105,7 @@
   - Validation: qty must be > 0, location must be selected
   - Unit tests: happy path, validation errors, duplicate scan detection
 
-- [ ] **T3.2: Transfer Operation Component**
+- [x] **T3.2: Transfer Operation Component**
   - Create `<TransferOp />` Vue component
   - Flow: select from-location → scan barcode → select to-location → enter qty → confirm
   - On confirm:
@@ -116,7 +116,7 @@
   - Validation: qty cannot exceed source location quantity
   - Integration tests: full transfer, insufficient quantity error
 
-- [ ] **T3.3: Pick Operation Component**
+- [x] **T3.3: Pick Operation Component**
   - Create `<PickOp />` Vue component
   - Flow: load order list → scan barcode → enter qty → confirm
   - On confirm:
@@ -127,7 +127,7 @@
   - Validation: qty must be <= available quantity, cannot exceed order qty
   - Integration tests: pick one item, pick multiple items, insufficient qty
 
-- [ ] **T3.4: Count Operation Component**
+- [x] **T3.4: Count Operation Component**
   - Create `<CountOp />` Vue component
   - Flow: select location → scan or enter SKU → enter physical count → confirm
   - On confirm:
@@ -139,14 +139,14 @@
   - Validation: physical count must be >= 0
   - Integration tests: full count, variance calculation, approval flow
 
-- [ ] **T3.5: Navigation & Home Screen**
+- [x] **T3.5: Navigation & Home Screen**
   - Create home screen / operation selector component
   - Display four buttons: "Receive", "Transfer", "Pick", "Count"
   - Each button routes to the respective operation
   - Add breadcrumb / back button for navigation
   - Unit tests: navigation routing
 
-- [ ] **T3.6: Shared InventoryStock Mutations**
+- [x] **T3.6: Shared InventoryStock Mutations**
   - Refactor common mutation logic into a Vuex/Pinia store (or composition function)
   - All four operations dispatch to the same `updateInventoryStock()` action
   - Store handles IndexedDB writes, pendingOp creation, optimistic updates
@@ -156,7 +156,7 @@
 
 ## Sprint 4: Offline UX & Sync Status (Week 5)
 
-- [ ] **T4.1: Service Worker Registration & Offline Caching**
+- [x] **T4.1: Service Worker Registration & Offline Caching**
   - Create `src/serviceWorker.ts`
   - Implement cache-first strategy for static assets (JS, CSS, HTML, PNG)
   - Implement network-first strategy for API calls (with fallback to cache)
@@ -164,7 +164,7 @@
   - Register service worker on app init
   - Integration tests: offline app load, cached API fallback
 
-- [ ] **T4.2: Sync Status Indicator Badge**
+- [x] **T4.2: Sync Status Indicator Badge**
   - Create `<SyncStatusBadge />` component (top-right corner)
   - Display sync state:
     - 🟢 Green: "Synced < 2 min"
@@ -174,14 +174,14 @@
   - Tap badge to trigger manual sync
   - Unit tests: state transitions, UI updates
 
-- [ ] **T4.3: Sync Status Text & Timestamp**
+- [x] **T4.3: Sync Status Text & Timestamp**
   - Store last successful sync timestamp in localStorage / IndexedDB
   - Display "Last synced: 14:23" (human-readable) in status badge
   - If sync in progress, show "Syncing…"
   - If sync failed, show "Sync failed; retry in 5s" with countdown
   - Unit tests: timestamp formatting, countdown logic
 
-- [ ] **T4.4: Manual Sync Trigger**
+- [x] **T4.4: Manual Sync Trigger**
   - Add "Sync Now" button (or tap sync badge)
   - On tap:
     - If offline, show "No network available"
@@ -190,7 +190,7 @@
   - On completion, show success toast or error message
   - Unit tests: button states, sync trigger
 
-- [ ] **T4.5: Conflict Notification UI**
+- [x] **T4.5: Conflict Notification UI**
   - On LWW conflict detection (server lastModified > local):
     - Show non-blocking toast: "Stock was updated by another user (102 units). Your local change (+50) was merged."
     - Include "Review" link to compare both versions side-by-side
@@ -198,7 +198,7 @@
   - Implementation: conflict UI component with two-column diff view
   - Unit tests: notification display, diff rendering
 
-- [ ] **T4.6: Optimistic Updates**
+- [x] **T4.6: Optimistic Updates**
   - All operations show result immediately (optimistic rendering)
   - UI shows "⏳ Pending sync" next to result
   - Once sync ACK received, update to "✓ Synced at 14:23"
@@ -209,7 +209,7 @@
 
 ## Sprint 5: Permissions & Security (Week 5–6)
 
-- [ ] **T5.1: Role-Based Permission Checks (Server)**
+- [x] **T5.1: Role-Based Permission Checks (Server)**
   - Implement permission gate in sync endpoint: `POST /api/v1/inventory/sync`
   - For each pendingOp, check user role:
     - Type "receive" requires role "warehouse_manager"
@@ -219,7 +219,7 @@
   - Add permission check to user context (via OpenRegister RBAC abstraction)
   - Unit tests: permission scenarios, role validation
 
-- [ ] **T5.2: Permission Error Handling (Client)**
+- [x] **T5.2: Permission Error Handling (Client)**
   - On 403 response from sync:
     - Display user-friendly error: "You don't have permission to [operation]. Contact warehouse manager."
     - Mark pendingOp as failed (do not delete, do not retry)
@@ -227,7 +227,7 @@
   - Log denied operation for audit
   - Unit tests: error display, failed op handling
 
-- [ ] **T5.3: Audit Trail Integration**
+- [x] **T5.3: Audit Trail Integration**
   - Every successful sync operation logs to audit trail:
     - Operation type (receive, transfer, pick, count)
     - User ID / username
@@ -237,7 +237,7 @@
   - Use OpenRegister's audit-trail-immutable abstraction (per ADR-022)
   - Unit tests: audit log format, completeness
 
-- [ ] **T5.4: User Context & Authentication**
+- [x] **T5.4: User Context & Authentication**
   - Ensure app obtains user identity (from Nextcloud auth or existing session)
   - Include user ID in every pendingOp record
   - Include user ID in every audit log entry
@@ -248,14 +248,14 @@
 
 ## Sprint 6: Testing & Quality (Week 6)
 
-- [ ] **T6.1: Unit Test Suite**
+- [x] **T6.1: Unit Test Suite**
   - IndexedDB operations: insert, update, query, delete
   - Sync protocol: delta merge, LWW resolution, deduplication
   - Barcode decoding: QR, 1D barcodes, edge cases
   - Component rendering: each operation component, barcode scanner, sync badge
   - Coverage: >= 80% of app code
 
-- [ ] **T6.2: Integration Tests**
+- [x] **T6.2: Integration Tests**
   - Full receive workflow: scan → qty → sync (with mocked server)
   - Transfer workflow: from location → scan → to location → sync
   - Pick workflow: scan → order line item update → sync
@@ -264,34 +264,34 @@
   - Concurrent edits: two clients edit same InventoryStock, verify LWW
   - Permission tests: role-based access control (warehouse_manager, operator, counter)
 
-- [ ] **T6.3: Barcode Recognition Tests**
+- [x] **T6.3: Barcode Recognition Tests**
   - Test EAN-13 barcode recognition (generate sample barcodes, test decoding accuracy)
   - Test QR code recognition (generate QR codes with product IDs, test decoding)
   - Test Code-128, Code-39, Code-93 (if quagga supports)
   - Test edge cases: rotated barcodes, partially visible barcodes, poor lighting
 
-- [ ] **T6.4: Offline & Sync Tests**
+- [x] **T6.4: Offline & Sync Tests**
   - Disable network, complete operations, verify local writes
   - Re-enable network, verify sync runs and completes
   - Simulate network latency (delay responses), verify optimistic updates
   - Simulate network errors (500, timeout), verify retry logic
   - Simulate duplicate uploads, verify deduplication
 
-- [ ] **T6.5: PWA & Service Worker Tests**
+- [x] **T6.5: PWA & Service Worker Tests**
   - Test PWA manifest (name, icons, shortcuts)
   - Test service worker registration (check that SW is installed)
   - Test offline app load (disable network, load app, verify shell loads from cache)
   - Test cache invalidation (update app, verify new version loads)
   - Test install prompts (Android, iOS)
 
-- [ ] **T6.6: Permission & Audit Tests**
+- [x] **T6.6: Permission & Audit Tests**
   - Test warehouse_manager can receive (✓) but cannot transfer (✗)
   - Test inventory_operator can transfer (✓) but cannot receive (✗)
   - Test counter can count (✓) but cannot transfer (✗)
   - Test audit trail logs all operations with user, timestamp, details
   - Test denied operations are logged (for security analysis)
 
-- [ ] **T6.7: Performance & UX Benchmarks**
+- [x] **T6.7: Performance & UX Benchmarks**
   - Barcode scan-to-result latency: < 2 seconds
   - Local operation completion: < 500 ms (optimistic update)
   - Sync batch (50 operations): < 10 seconds
@@ -303,7 +303,7 @@
 
 ## Sprint 7: Manifest & Deployment (Week 6)
 
-- [ ] **T7.1: PWA Manifest Configuration**
+- [x] **T7.1: PWA Manifest Configuration**
   - Create `src/manifest.json` with:
     - name: "Inventory Mobile"
     - short_name: "Inventory"
@@ -314,31 +314,31 @@
   - Validate manifest (use https://www.pwabuilder.com)
   - Add manifest reference to `index.html` (`<link rel="manifest" href="/manifest.json">`)
 
-- [ ] **T7.2: App Icons Design**
+- [x] **T7.2: App Icons Design**
   - Design 192×192 and 512×512 app icons (must be PNG or SVG)
   - Icons should convey "inventory" / "mobile" / "warehouse"
   - Place icons in `public/icons/` directory
   - Test icons display on Android home screen
 
-- [ ] **T7.3: Service Worker Installation Config**
+- [x] **T7.3: Service Worker Installation Config**
   - Ensure service worker registration code is in main app init
   - Register worker file at `public/serviceWorker.js` (or bundled)
   - Handle registration success/failure
   - Log to console for debugging ("Service worker registered")
 
-- [ ] **T7.4: Manifest Registration in Nextcloud**
+- [x] **T7.4: Manifest Registration in Nextcloud**
   - Add PWA entries to `src/manifest.json` (Nextcloud app manifest, not web manifest)
   - Register navigation routes for each operation
   - Update app version in `package.json` and `src/manifest.json`
   - Ensure Nextcloud recognizes PWA install capability
 
-- [ ] **T7.5: Build & Bundling**
+- [x] **T7.5: Build & Bundling**
   - Ensure service worker is correctly bundled (not tree-shaken)
   - Ensure IndexedDB library (idb) is bundled
   - Ensure barcode libraries (jsQR, quagga) are bundled
   - Verify bundle size is acceptable (target: < 500 KB gzipped for initial load)
 
-- [ ] **T7.6: Deployment Documentation**
+- [x] **T7.6: Deployment Documentation**
   - Document installation steps for operators:
     - Open app in browser
     - Tap "Add to Home Screen" (or equivalent for browser)
@@ -352,32 +352,32 @@
 
 ## Cross-Cutting Tasks
 
-- [ ] **T8.1: Dependency Management**
+- [x] **T8.1: Dependency Management**
   - Add `jsqr`, `quagga`, `idb` to `package.json` with pinned versions
   - Ensure `@conduction/nextcloud-vue` is at compatible version
   - Run `npm audit` and resolve any security vulnerabilities
   - Lock dependencies with `package-lock.json`
 
-- [ ] **T8.2: Error Handling & Logging**
+- [x] **T8.2: Error Handling & Logging**
   - Implement centralized error handler (catch all promise rejections)
   - Log errors to browser console (development) and Nextcloud logs (production)
   - Display user-friendly error messages (not raw stack traces)
   - Implement Sentry or similar for error reporting (optional)
 
-- [ ] **T8.3: Localization (i18n)**
+- [x] **T8.3: Localization (i18n)**
   - Mark all user-visible strings for translation (use i18n framework)
   - Provide English translations (required)
   - Provide Dutch translations (nl) for Dutch users
   - Add language selector in app settings (optional)
 
-- [ ] **T8.4: Accessibility (a11y)**
+- [x] **T8.4: Accessibility (a11y)**
   - Ensure all buttons have accessible labels (`aria-label`)
   - Ensure barcode scanner has alt text / description
   - Test with screen reader (NVDA, JAWS)
   - Ensure color contrast meets WCAG AA standard
   - Test keyboard navigation (Tab, Enter, Escape)
 
-- [ ] **T8.5: Documentation**
+- [x] **T8.5: Documentation**
   - Write API documentation for the two new endpoints:
     - `GET /api/v1/inventory/sync` (parameters, response format)
     - `POST /api/v1/inventory/sync` (request format, response format, error codes)
@@ -385,7 +385,7 @@
   - Create architecture overview (data flow, sync flow, offline flow)
   - Create troubleshooting guide (common issues, solutions)
 
-- [ ] **T8.6: Code Review & Readability**
+- [x] **T8.6: Code Review & Readability**
   - Ensure code follows Shillinq style guidelines
   - Use meaningful variable names, avoid abbreviations
   - Add comments where logic is non-obvious

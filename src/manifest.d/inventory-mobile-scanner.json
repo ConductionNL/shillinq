@@ -1,0 +1,56 @@
+{
+	"menu": [
+		{
+			"id": "Inventory",
+			"label": "Inventory",
+			"icon": "icon-category-files",
+			"order": 38,
+			"children": [
+				{
+					"id": "MobileScannerHome",
+					"label": "Mobile Scanner",
+					"icon": "BarcodeScan",
+					"route": "MobileScannerHome",
+					"order": 10
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "MobileScannerHome",
+			"route": "/inventory/mobile",
+			"type": "custom",
+			"title": "Inventory Mobile Scanner",
+			"component": "MobileScannerHome"
+		},
+		{
+			"id": "MobileScannerReceive",
+			"route": "/inventory/mobile/receive",
+			"type": "custom",
+			"title": "Receive Goods",
+			"component": "MobileScannerReceive"
+		},
+		{
+			"id": "MobileScannerTransfer",
+			"route": "/inventory/mobile/transfer",
+			"type": "custom",
+			"title": "Transfer Inventory",
+			"component": "MobileScannerTransfer"
+		},
+		{
+			"id": "MobileScannerPick",
+			"route": "/inventory/mobile/pick",
+			"type": "custom",
+			"title": "Pick for Order",
+			"component": "MobileScannerPick"
+		},
+		{
+			"id": "MobileScannerCount",
+			"route": "/inventory/mobile/count",
+			"type": "custom",
+			"title": "Inventory Count",
+			"component": "MobileScannerCount"
+		}
+	]
+}

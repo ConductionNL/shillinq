@@ -37,6 +37,12 @@ return [
         ['name' => 'payroll#lhAfdracht', 'url' => '/api/payroll/lh-afdracht', 'verb' => 'GET'],
         ['name' => 'payroll#journaalpost', 'url' => '/api/payroll/journaalpost', 'verb' => 'GET'],
 
+        // Inventory mobile scanner PWA sync endpoints (REQ-OFFLINE-002 / REQ-SYNC-001).
+        // Static segments precede the {path} SPA catch-all so the sync routes match first.
+        ['name' => 'inventoryMobileScanner#downloadDeltas', 'url' => '/api/v1/inventory/sync', 'verb' => 'GET'],
+        ['name' => 'inventoryMobileScanner#uploadOperations', 'url' => '/api/v1/inventory/sync', 'verb' => 'POST'],
+        ['name' => 'inventoryMobileScanner#listLocations', 'url' => '/api/v1/inventory/locations', 'verb' => 'GET'],
+
         // Booking Self-service Widget — public partner-facing API.
         // REQ-WSW-001/002 — authenticated via Authorization: Bearer + ?businessId, rate-limited
         // per WidgetAccessKey.rateLimit (default 100 req/min). Static segments precede any
