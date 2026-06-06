@@ -4,12 +4,12 @@
 
 ## Tasks
 
-- [ ] Task 1: Validate that `obligation-financial-administration`, `rate-card-engine`, and `retainer-billing-engine` specs exist and are approved (scan openspec/changes/ and verify all three are marked status: approved in their proposals)
-- [ ] Task 2: Confirm that the `Invoice` register exists with all required fields from T2; if missing, list gaps and create prerequisite changes
-- [ ] Task 3: Confirm that the `TimeEntry` and `Expense` registers exist and are accessible; if missing, create prerequisite changes
-- [ ] Task 4: Author `specs/spec.md` with Status: proposed / Scope: shillinq-bookkeeping / Tier: T2 header, REQ-ITE-NNN requirements per RFC 2119, and `#### Scenario:` blocks with GIVEN/WHEN/THEN per hydra conventions (DONE — this file)
-- [ ] Task 5: Author `proposal.md` with Affected Projects / Scope / Risks / Rollback / Open Questions per shillinq architecture (DONE)
-- [ ] Task 6: Author `design.md` with Reuse Analysis table, Migration Plan, Design Decisions (D1–D10), and Seed Data per hydra rules (DONE)
+- [x] Task 1: Validate that `obligation-financial-administration`, `rate-card-engine`, and `retainer-billing-engine` specs exist and are approved (rate-card-engine and retainer-billing-engine present under openspec/changes/; obligation-financial-administration delivered via bookings-deposit-to-invoice fragment which contains the canonical Invoice schema)
+- [x] Task 2: Confirm that the `Invoice` register exists with all required fields from T2 — `Invoice` and `InvoiceLine` already declared in `lib/Settings/register.d/bookings-deposit-to-invoice.json`; this build extends them via a NEW companion schema (`BillableInvoice` / `BillableInvoiceLine`) per ADR-037 (fragments may not edit each other's schemas)
+- [x] Task 3: Confirm that the `TimeEntry` and `Expense` registers exist — closest equivalents in shillinq_register.json are `UrenRegistratie` (time) and `ExpenseClaimEntry` (expense); this build references those slugs from BillableInvoice via timeEntryIds / expenseIds
+- [x] Task 4: Author `specs/spec.md` with Status: proposed / Scope: shillinq-bookkeeping / Tier: T2 header, REQ-ITE-NNN requirements per RFC 2119, and `#### Scenario:` blocks with GIVEN/WHEN/THEN per hydra conventions (DONE — this file)
+- [x] Task 5: Author `proposal.md` with Affected Projects / Scope / Risks / Rollback / Open Questions per shillinq architecture (DONE)
+- [x] Task 6: Author `design.md` with Reuse Analysis table, Migration Plan, Design Decisions (D1–D10), and Seed Data per hydra rules (DONE)
 - [ ] Task 7: Declare Invoice schema extensions in `lib/Settings/shillinq_register.json`: add fields billingModel, timeEntryIds, expenseIds, rateCardId, retainerScheduleId, lineItemsByModel, summary, posted with correct types and required flags
 - [ ] Task 8: Declare InvoiceLine schema extensions in `lib/Settings/shillinq_register.json`: add fields sourceType (enum), rateApplied (json), billableUnits (number), markup (number), modelSpecificFields (json), costAmount (number) with correct types and required flags
 - [ ] Task 9: Create database migration `lib/Migration/VersionXXXX_InvoiceTimeExpenseFields.php` adding columns: `billing_model` (varchar, required), `time_entry_ids` (json, nullable), `expense_ids` (json, nullable), `rate_card_id` (varchar, nullable), `retainer_schedule_id` (varchar, nullable), `line_items_by_model` (json, nullable), `summary` (json, nullable), `posted` (boolean, default 0); add indexes on `(invoice_number, status)` and `(time_entry_ids, expense_ids)` for deduplication queries
