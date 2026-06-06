@@ -1,5 +1,7 @@
 # Design — Expense Capture (Core)
 
+**status: pr-created**
+
 ## Context
 
 Shillinq's bookkeeping mandate requires every reimbursable outlay

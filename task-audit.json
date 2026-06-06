@@ -1,68 +1,118 @@
 {
-  "spec": "openspec/changes/add-shillinq-year-end-close",
+  "spec": "openspec/changes/expense-capture-core",
   "verified": [
     {
       "task": "1",
       "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "No existing FiscalYear schema confirmed"
+      "size": 344153
     },
     {
-      "task": "2",
-      "file": "openspec/changes/add-shillinq-year-end-close/specs/bookkeeping-year-end-close/spec.md",
-      "ok": true
-    },
-    {
-      "task": "3",
-      "file": "openspec/changes/add-shillinq-year-end-close/proposal.md",
-      "ok": true
-    },
-    {
-      "task": "4",
-      "file": "openspec/changes/add-shillinq-year-end-close/design.md",
-      "ok": true
-    },
-    {
-      "task": "5",
+      "task": "5-8",
       "file": "lib/Settings/shillinq_register.json",
       "ok": true,
-      "note": "FiscalYear schema with all REQ-YEC-002 fields and uniqueness constraint declared"
-    },
-    {
-      "task": "6",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "note": "x-openregister-lifecycle with open->closing->closed->reopened states and transitions"
-    },
-    {
-      "task": "7",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "note": "onBeginClose and onClose hooks emit T1 JournalEntry records"
-    },
-    {
-      "task": "8",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "note": "onCloseDimensionRollover hook fires x-openregister-emit-cloudevents per REQ-YEC-005"
+      "size": 344153
     },
     {
       "task": "9",
-      "file": "lib/Settings/shillinq_register.json",
+      "file": "lib/Lifecycle/ExpenseClaimGuard.php",
       "ok": true,
-      "note": "reopen transition: requiresRole=admin, requires=reopenReason, onReopenReverseClosing + onReopenReverseOpening hooks"
-    },
-    {
-      "task": "10",
-      "file": "src/manifest.json",
-      "ok": true,
-      "note": "FiscalYears menu entry + index/detail pages with lifecycleActions:true"
+      "size": 10439
     },
     {
       "task": "11",
+      "file": "lib/Validation/PhotoValidator.php",
+      "ok": true,
+      "size": 2541
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json",
+      "ok": true,
+      "size": 117716
+    },
+    {
+      "task": "18",
       "file": "openspec/architecture/adr-000-data-model.md",
       "ok": true,
-      "note": "FiscalYear entry updated with reconciliation note and full field table"
+      "size": 301720
+    },
+    {
+      "task": "test-11",
+      "file": "tests/Unit/Validation/PhotoValidatorTest.php",
+      "ok": true,
+      "size": 5529
+    },
+    {
+      "task": "test-9",
+      "file": "tests/Unit/Lifecycle/ExpenseClaimGuardTest.php",
+      "ok": true,
+      "size": 14622
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::Receipt",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::MileageEntry",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::PerDiem",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::ExpenseClaimEntry",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::MileageRate",
+      "ok": true
+    },
+    {
+      "task": "5-16",
+      "file": "shillinq_register.json::PerDiemRate",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::Receipts",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::ReceiptDetail",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::ExpenseClaims",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::ExpenseClaimDetail",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::MileageLog",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::MileageLogDetail",
+      "ok": true
+    },
+    {
+      "task": "17",
+      "file": "src/manifest.json::Inkoop menu",
+      "ok": true
     }
   ],
   "stubs": [],

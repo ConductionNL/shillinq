@@ -14,9 +14,8 @@
 			"description": "Centrale administratie en financiële verwerking — hoofdkantoor Amsterdam per REQ-CD-002.",
 			"parentCode": null,
 			"responsibleUser": null,
-			"budget": 150000.00,
-			"lifecycleState": "active",
-			"administrationId": "example-administration-id"
+			"budget": 150000.0,
+			"lifecycleState": "active"
 		},
 		{
 			"code": "CC-010",
@@ -24,9 +23,8 @@
 			"description": "Regionale verkoopafdeling Utrecht — verantwoordelijk voor klantrelaties in de regio Midden-Nederland.",
 			"parentCode": null,
 			"responsibleUser": null,
-			"budget": 250000.00,
-			"lifecycleState": "active",
-			"administrationId": "example-administration-id"
+			"budget": 250000.0,
+			"lifecycleState": "active"
 		},
 		{
 			"code": "CC-020",
@@ -34,9 +32,8 @@
 			"description": "Logistiek distributiecentrum Rotterdam — verantwoordelijk voor opslag, transport en distributie.",
 			"parentCode": null,
 			"responsibleUser": null,
-			"budget": 200000.00,
-			"lifecycleState": "active",
-			"administrationId": "example-administration-id"
+			"budget": 200000.0,
+			"lifecycleState": "active"
 		},
 		{
 			"code": "CC-030",
@@ -44,9 +41,8 @@
 			"description": "IT-afdeling en systeembeheer — infrastructuur, applicatiebeheer en helpdesk.",
 			"parentCode": "CC-001",
 			"responsibleUser": null,
-			"budget": 80000.00,
-			"lifecycleState": "active",
-			"administrationId": "example-administration-id"
+			"budget": 80000.0,
+			"lifecycleState": "active"
 		},
 		{
 			"code": "CC-040",
@@ -54,9 +50,8 @@
 			"description": "Personeelszaken en HR-administratie — werving, opleiding en arbeidsrelaties.",
 			"parentCode": "CC-001",
 			"responsibleUser": null,
-			"budget": 60000.00,
-			"lifecycleState": "active",
-			"administrationId": "example-administration-id"
+			"budget": 60000.0,
+			"lifecycleState": "active"
 		}
 	]
 }

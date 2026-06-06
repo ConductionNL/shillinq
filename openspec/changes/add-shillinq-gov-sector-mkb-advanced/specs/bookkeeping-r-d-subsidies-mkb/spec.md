@@ -18,13 +18,19 @@ Implement R&D subsidy administration variants (MIT, SBIR, EU Horizon, EFRO/REACT
 |----------|------|----------|-------------|
 | subsidieRegeling | enum | No | Scheme: `mit`, `sbir`, `eu-horizon`, `efro`, `react-eu` |
 
-## Requirements
+## ADDED Requirements
 
-### REQ-RDS-001: subsidieRegeling enum on Subsidie
+### Requirement: REQ-RDS-001 — subsidieRegeling enum on Subsidie
 
-SHALL add `subsidieRegeling` enum field to `Subsidie` schema.
+The system SHALL add a `subsidieRegeling` enum field to the `Subsidie` schema.
 
-### REQ-RDS-002: Per-regeling kostencategorieën
+#### Scenario: A subsidy is tagged with its R&D regeling
+
+- **GIVEN** a Subsidie
+- **WHEN** its `subsidieRegeling` is set to `eu-horizon`
+- **THEN** the subsidy MUST enforce the EU Horizon kostencategorieën constraints.
+
+### Requirement: REQ-RDS-002 — Per-regeling kostencategorieën
 
 SHALL declare per-regeling kostencategorieën enums (e.g., EU Horizon: "personnel costs", "subcontracting", "other direct", "indirect").
 
@@ -34,17 +40,35 @@ GIVEN SBIR subsidie
 WHEN posting expense category  
 THEN only SBIR-defined categories are allowed.
 
-### REQ-RDS-003: MIT audit-pack template
+### Requirement: REQ-RDS-003 — MIT audit-pack template
 
-SHALL reference docudesk template for MIT audit dossier format.
+The system SHALL reference a docudesk template for the MIT audit dossier format.
 
-### REQ-RDS-004: EU Horizon audit-pack template
+#### Scenario: MIT audit pack renders from a docudesk template
 
-SHALL reference docudesk template per EU Horizon audit requirements.
+- **GIVEN** a MIT subsidy with cost records
+- **WHEN** the MIT audit dossier is generated
+- **THEN** rendering MUST resolve a docudesk template URI rather than a shillinq-local renderer.
 
-### REQ-RDS-005: Manifest navigation entry
+### Requirement: REQ-RDS-004 — EU Horizon audit-pack template
 
-SHALL add `featureFlags.mkb-rd-subsidies` navigation for R&D subsidy administration.
+The system SHALL reference a docudesk template per EU Horizon audit requirements.
+
+#### Scenario: EU Horizon audit pack renders from a docudesk template
+
+- **GIVEN** an EU Horizon subsidy with cost records
+- **WHEN** the EU Horizon audit dossier is generated
+- **THEN** rendering MUST resolve a docudesk template URI rather than a shillinq-local renderer.
+
+### Requirement: REQ-RDS-005 — Manifest navigation entry
+
+The system SHALL add a `featureFlags.mkb-rd-subsidies` navigation entry for R&D subsidy administration.
+
+#### Scenario: R&D subsidies navigation is feature-flag gated
+
+- **GIVEN** the `mkb-rd-subsidies` feature flag is off
+- **WHEN** the UI renders the menu
+- **THEN** the R&D subsidies entry MUST NOT appear; it appears only when the flag is on.
 
 ## Test Plan
 

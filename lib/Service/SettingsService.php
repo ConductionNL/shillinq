@@ -333,7 +333,6 @@ class SettingsService
     }//end importAccounts()
 
     /**
-    /**
      * Seed RJ-270 stages from the rj-270-stages.json seed file, idempotently.
      *
      * Imports the 4 canonical percentage-of-completion stage definitions.
@@ -354,6 +353,50 @@ class SettingsService
         );
 
     }//end seedRj270Stages()
+
+    /**
+     * Seed statutory BTW tariffs from btw-tariffs-2026.json, idempotently.
+     *
+     * Imports the current Dutch VAT rates into the VatTariff schema. Deduplication
+     * key is code. Idempotent on re-run; operator-added rates are preserved.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-vat-btw-filing/spec.md
+     */
+    public function seedBtwTariffs(): array
+    {
+        return $this->seedGenericFile(
+            seedFileName: 'btw-tariffs-2026.json',
+            itemsKey: 'tariffs',
+            dedupeKey: 'code',
+            schema: 'VatTariff',
+            logLabel: 'BTW tariffs'
+        );
+
+    }//end seedBtwTariffs()
+
+    /**
+     * Seed the BBV taakveld catalogue from bbv-taakvelden-2024.json, idempotently.
+     *
+     * Imports the canonical Besluit BBV bijlage IV taakvelden into the BbvTaakveld
+     * schema. Deduplication key is code. Idempotent on re-run.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-bbv-compliance/spec.md
+     */
+    public function seedBbvTaakvelden(): array
+    {
+        return $this->seedGenericFile(
+            seedFileName: 'bbv-taakvelden-2024.json',
+            itemsKey: 'taakvelden',
+            dedupeKey: 'code',
+            schema: 'BbvTaakveld',
+            logLabel: 'BBV taakvelden'
+        );
+
+    }//end seedBbvTaakvelden()
 
     /**
      * Seed default rate-card templates from rate-card-templates.json, idempotently.
@@ -1213,41 +1256,10 @@ class SettingsService
 
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $registerSlug  = $this->getRegisterSlug();
-            $seeded        = 0;
-            $skipped       = 0;
-
-            foreach ($attributes as $attribute) {
-                $name       = ($attribute['name'] ?? null);
-                $categories = ($attribute['applicableToCategories'] ?? null);
-
-                if ($name === null || $categories === null) {
-                    continue;
-                }
-
-                // Deduplication key: name + applicableToCategories preserves operator edits.
-                $existing = $objectService->findObjects(
-                    register: $registerSlug,
-                    schema: 'ProductAttribute',
-                    params: [
-                        'name'                   => $name,
-                        'applicableToCategories' => $categories,
-                        '_limit'                 => 1,
-                    ]
-                );
-
-                if (empty($existing) === false) {
-                    $skipped++;
-                    continue;
-                }
-
-                $objectService->saveObject(
-                    register: $registerSlug,
-                    schema: 'ProductAttribute',
-                    object: $attribute,
-                );
-                $seeded++;
-            }//end foreach
+            ['seeded' => $seeded, 'skipped' => $skipped] = $this->importProductAttributes(
+                objectService: $objectService,
+                attributes: $attributes
+            );
 
             $this->logger->info(
                 'Shillinq: ProductAttribute seed imported',
@@ -1360,15 +1372,20 @@ class SettingsService
 
                     $object['administrationId'] = $administrationId;
 
-                    $existing = $objectService->findObjects(
-                        register: $registerSlug,
-                        schema: $seedConfig['schema'],
-                        params: [
-                            'code'             => $code,
-                            'administrationId' => $administrationId,
-                            '_limit'           => 1,
-                        ]
-                    );
+                    // ADR-022: use the real ObjectService fluent API (setRegister/setSchema/findAll);
+                    // findObjects() does not exist on OpenRegister's ObjectService.
+                    $existing = $objectService
+                        ->setRegister($registerSlug)
+                        ->setSchema($seedConfig['schema'])
+                        ->findAll(
+                            [
+                                'filters' => [
+                                    'code'             => $code,
+                                    'administrationId' => $administrationId,
+                                ],
+                                'limit'   => 1,
+                            ]
+                        );
 
                     if (empty($existing) === false) {
                         $skipped++;
@@ -1376,9 +1393,9 @@ class SettingsService
                     }
 
                     $objectService->saveObject(
+                        object: $object,
                         register: $registerSlug,
                         schema: $seedConfig['schema'],
-                        object: $object,
                     );
                     $seeded++;
                 }//end foreach
@@ -1398,16 +1415,80 @@ class SettingsService
                 'seeded'  => $seeded,
                 'skipped' => $skipped,
             ];
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
+            // Narrowed from \Throwable to \Exception per code-review (RR-Yellow):
+            // raw \Throwable messages can leak internal class paths into NC admin UI.
             $this->logger->error(
                 'Shillinq: dimension seeding failed',
-                ['exception' => $e->getMessage()]
+                [
+                    'exception' => $e->getMessage(),
+                    'trace'     => $e->getTraceAsString(),
+                ]
             );
             return [
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => 'Dimension seeding failed; check server logs for details.',
             ];
         }//end try
 
     }//end seedDimensions()
+
+    /**
+     * Import ProductAttribute records into OpenRegister, skipping existing ones.
+     *
+     * Deduplication key is (name, applicableToCategories), preserving operator
+     * edits across repair re-runs per REQ-IPC-007. Records missing either key
+     * field are skipped silently.
+     *
+     * @param object       $objectService OpenRegister ObjectService.
+     * @param array<mixed> $attributes    ProductAttribute records to import.
+     *
+     * @return array{seeded: int, skipped: int}
+     */
+    private function importProductAttributes(object $objectService, array $attributes): array
+    {
+        $registerSlug = $this->getRegisterSlug();
+        $seeded       = 0;
+        $skipped      = 0;
+
+        foreach ($attributes as $attribute) {
+            $name       = ($attribute['name'] ?? null);
+            $categories = ($attribute['applicableToCategories'] ?? null);
+
+            if ($name === null || $categories === null) {
+                continue;
+            }
+
+            // Deduplication key: name + applicableToCategories preserves operator edits.
+            // ADR-022: use the real ObjectService fluent API (setRegister/setSchema/findAll);
+            // findObjects() does not exist on OpenRegister's ObjectService.
+            $existing = $objectService
+                ->setRegister($registerSlug)
+                ->setSchema('ProductAttribute')
+                ->findAll(
+                    [
+                        'filters' => [
+                            'name'                   => $name,
+                            'applicableToCategories' => $categories,
+                        ],
+                        'limit'   => 1,
+                    ]
+                );
+
+            if (empty($existing) === false) {
+                $skipped++;
+                continue;
+            }
+
+            $objectService->saveObject(
+                object: $attribute,
+                register: $registerSlug,
+                schema: 'ProductAttribute',
+            );
+            $seeded++;
+        }//end foreach
+
+        return ['seeded' => $seeded, 'skipped' => $skipped];
+
+    }//end importProductAttributes()
 }//end class

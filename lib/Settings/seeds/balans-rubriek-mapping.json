@@ -1,0 +1,63 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Burgerlijk Wetboek Boek 2, art. 2:373 (balansmodel)",
+    "description": "Maps GL account ranges to the wettelijke balans rubrieken per art. 2:373 BW (REQ-T9-002). GL-to-rubriek mapping is configuration, not code (design D3); operators may customise per administration. Three example variant maps are provided (small-manufacturing, services, retail).",
+    "imported": "2026-06-05T00:00:00Z",
+    "url": "https://wetten.overheid.nl/BWBR0003045/"
+  },
+  "rubriekCatalogus": [
+    { "rubrieckCode": "B.I", "rubrieckLabel": "Immateriële vaste activa", "zijde": "activa" },
+    { "rubrieckCode": "B.II", "rubrieckLabel": "Materiële vaste activa", "zijde": "activa" },
+    { "rubrieckCode": "B.III", "rubrieckLabel": "Financiële vaste activa", "zijde": "activa" },
+    { "rubrieckCode": "C.I", "rubrieckLabel": "Voorraden", "zijde": "activa" },
+    { "rubrieckCode": "C.II", "rubrieckLabel": "Vorderingen", "zijde": "activa" },
+    { "rubrieckCode": "C.III", "rubrieckLabel": "Effecten", "zijde": "activa" },
+    { "rubrieckCode": "C.IV", "rubrieckLabel": "Liquide middelen", "zijde": "activa" },
+    { "rubrieckCode": "A", "rubrieckLabel": "Eigen vermogen", "zijde": "passiva" },
+    { "rubrieckCode": "B", "rubrieckLabel": "Voorzieningen", "zijde": "passiva" },
+    { "rubrieckCode": "C", "rubrieckLabel": "Langlopende schulden", "zijde": "passiva" },
+    { "rubrieckCode": "D", "rubrieckLabel": "Kortlopende schulden", "zijde": "passiva" }
+  ],
+  "variants": [
+    {
+      "variant": "small-manufacturing",
+      "mappings": [
+        { "glAccountRange": "1000-1099", "rubrieckCode": "B.I", "rubrieckLabel": "Immateriële vaste activa" },
+        { "glAccountRange": "1100-1299", "rubrieckCode": "B.II", "rubrieckLabel": "Materiële vaste activa" },
+        { "glAccountRange": "1300-1399", "rubrieckCode": "B.III", "rubrieckLabel": "Financiële vaste activa" },
+        { "glAccountRange": "3000-3099", "rubrieckCode": "C.I", "rubrieckLabel": "Voorraden" },
+        { "glAccountRange": "1400-1499", "rubrieckCode": "C.II", "rubrieckLabel": "Vorderingen" },
+        { "glAccountRange": "1000-1099b", "rubrieckCode": "C.IV", "rubrieckLabel": "Liquide middelen" },
+        { "glAccountRange": "0500-0599", "rubrieckCode": "A", "rubrieckLabel": "Eigen vermogen" },
+        { "glAccountRange": "0600-0699", "rubrieckCode": "B", "rubrieckLabel": "Voorzieningen" },
+        { "glAccountRange": "0700-0799", "rubrieckCode": "C", "rubrieckLabel": "Langlopende schulden" },
+        { "glAccountRange": "1500-1699", "rubrieckCode": "D", "rubrieckLabel": "Kortlopende schulden" }
+      ]
+    },
+    {
+      "variant": "services",
+      "mappings": [
+        { "glAccountRange": "0100-0199", "rubrieckCode": "B.I", "rubrieckLabel": "Immateriële vaste activa" },
+        { "glAccountRange": "0200-0299", "rubrieckCode": "B.II", "rubrieckLabel": "Materiële vaste activa" },
+        { "glAccountRange": "1300-1399", "rubrieckCode": "C.II", "rubrieckLabel": "Vorderingen" },
+        { "glAccountRange": "1000-1099", "rubrieckCode": "C.IV", "rubrieckLabel": "Liquide middelen" },
+        { "glAccountRange": "0500-0599", "rubrieckCode": "A", "rubrieckLabel": "Eigen vermogen" },
+        { "glAccountRange": "1600-1699", "rubrieckCode": "D", "rubrieckLabel": "Kortlopende schulden" }
+      ]
+    },
+    {
+      "variant": "retail",
+      "mappings": [
+        { "glAccountRange": "0200-0299", "rubrieckCode": "B.II", "rubrieckLabel": "Materiële vaste activa" },
+        { "glAccountRange": "3000-3099", "rubrieckCode": "C.I", "rubrieckLabel": "Voorraden" },
+        { "glAccountRange": "1300-1399", "rubrieckCode": "C.II", "rubrieckLabel": "Vorderingen" },
+        { "glAccountRange": "1000-1099", "rubrieckCode": "C.IV", "rubrieckLabel": "Liquide middelen" },
+        { "glAccountRange": "0500-0599", "rubrieckCode": "A", "rubrieckLabel": "Eigen vermogen" },
+        { "glAccountRange": "0700-0799", "rubrieckCode": "C", "rubrieckLabel": "Langlopende schulden" },
+        { "glAccountRange": "1500-1699", "rubrieckCode": "D", "rubrieckLabel": "Kortlopende schulden" }
+      ]
+    }
+  ]
+}

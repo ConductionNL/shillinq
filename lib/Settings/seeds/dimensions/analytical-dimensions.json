@@ -13,16 +13,14 @@
 			"name": "Regio",
 			"description": "Geografische regio voor segment-resultatenrekening analyse per REQ-CD-006. Waarden: NL-WEST, NL-OOST, NL-NOORD, NL-ZUID, BE, DE.",
 			"dataType": "string",
-			"isHierarchical": false,
-			"administrationId": "example-administration-id"
+			"isHierarchical": false
 		},
 		{
 			"code": "product-line",
 			"name": "Productlijn",
 			"description": "Productlijn of productcategorie voor categorisatie van opbrengsten en kosten per REQ-CD-006.",
 			"dataType": "string",
-			"isHierarchical": false,
-			"administrationId": "example-administration-id"
+			"isHierarchical": false
 		}
 	]
 }
