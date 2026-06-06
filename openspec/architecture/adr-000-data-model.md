@@ -1805,6 +1805,51 @@ _Expense claim submissions with receipt tracking, approval workflow, and reimbur
 
 > **Reconciliation note (expense-capture-core, 2026-06-03):** The existing `ExpenseClaim` entry (primary spec: approval-workflow-management) is a generic claim schema without cost-centre allocation, multi-currency support, or GL materialisation. `ExpenseClaimEntry` is the shillinq bookkeeping-tier expense claim with full lifecycle (draft → submitted → approved → posted → reimbursed), OR approval-workflow routing per ADR-022, GL materialisation per REQ-EC-012, multi-currency, and cost-centre allocation per line. New expense-capture implementations in shillinq MUST use `ExpenseClaimEntry`. The `ExpenseClaim` entry is retained for generic approval-workflow-management usage outside the bookkeeping tier.
 
+> **Extension note (expense-reimbursement-or-passthrough, 2026-06-07):** `Receipt`, `MileageEntry`, and `PerDiem` are extended with dual-mode settlement metadata: `settlementMode` (enum: `reimbursable` | `pass-through`), `linkedCustomerId` (FK to Organization), `markupRuleId` (FK to PassThroughMarkupRule), `markupRateApplied` (number), `markupAmountCalculated` (number), and `passthroughDebitAccountCode` (string). `ExpenseClaimEntry` gains claim-level `settlementMode`, `totalReimbursableAmount`, `totalPassThroughAmount`, `passThroughCustomerIds`, `glReimbursableTransactionId`, `glPassThroughTransactionId`, and `reimbursementPolicyId`; the lifecycle adds the `invoiced` closure state and the `markInvoiced` / `changeSettlementMode` transitions per REQ-ERP-007 / REQ-ERP-011. Two new master-data schemas — `ReimbursementPolicy` (per-administration auto-approve + markup-approval thresholds + employee bank account mapping) and `PassThroughMarkupRule` (per-customer / per-category percentage or fixed markup with priority customer+category > customer > global) — are declared per REQ-ERP-004 + REQ-ERP-005. All changes are non-destructive; reads remain queryable against historic data, and markup rates lock on claim submission for audit immutability per REQ-ERP-010.
+
+### ReimbursementPolicy
+**Schema.org:** `schema:Thing`
+_Per-administration master-data record configuring expense settlement policy: auto-approve threshold for reimbursable claims, optional markup-approval threshold for pass-through claims, default GL account code for the pass-through debit, and the employee bank-account mapping reference for the SEPA reimbursement notification._
+**Primary spec:** expense-reimbursement-or-passthrough
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| policyId | string | Yes | Unique policy identifier per administration (e.g. POL-NL-01) |
+| name | string | Yes | Human-readable policy name |
+| description | string | No | Policy description and scope |
+| autoApproveThreshold | number | No | Expense claims with totalAmount ≤ this value auto-approve (REQ-ERP-004) |
+| requiresMarkupApprovalThreshold | number | No | Pass-through markup amounts ≥ this value require an extra approver (REQ-ERP-006) |
+| passthroughDebitAccountCode | string | No | Default GL account code for the pass-through debit line (customer AR / deferred revenue) |
+| employeeBankAccountMapping | string | No | Reference for resolving the employee SEPA account in the reimbursement notification (REQ-ERP-008) |
+| notes | string | No | Operator notes (policy rationale, regulatory references) |
+| administrationId | string | Yes | FK to the Administration owning this policy |
+
+**Relations:**
+- → Administration (many-to-one)
+
+### PassThroughMarkupRule
+**Schema.org:** `schema:Offer`
+_Per-administration master-data record defining the markup applied to pass-through expenses. Lookup priority — customer+category > customer-only > global default — is enforced declaratively on Receipt / MileageEntry / PerDiem x-openregister-calculations._
+**Primary spec:** expense-reimbursement-or-passthrough
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| ruleId | string | Yes | Unique rule identifier per administration (e.g. RULE-001) |
+| targetCustomerId | string | No | FK to Organization (customer); null = global |
+| targetCategory | string | No | Expense category (travel, meals, etc.); null = all categories |
+| markupType | string | Yes | percentage \| fixedAmount (REQ-ERP-005) |
+| markupValue | number | Yes | Percentage (0.15) or fixedAmount (2.50) |
+| currency | string | Yes | ISO 4217 currency code (EUR in T2) |
+| effectiveFromYear | integer | Yes | Fiscal year this rule applies to |
+| effectiveToYear | integer | No | Last fiscal year (inclusive); null = open-ended |
+| priority | integer | No | Tie-breaker when multiple rules match |
+| notes | string | No | Operator notes (rule rationale, contract reference) |
+| administrationId | string | Yes | FK to the Administration owning this rule |
+
+**Relations:**
+- → Administration (many-to-one)
+- → Organization (many-to-one, optional — when targeting a specific customer)
+
 ### ExpenseLineItem
 **Schema.org:** `schema:Thing`
 _A line item within an expense record with detailed coding for department allocation and cost center tracking_
