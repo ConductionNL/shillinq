@@ -38,7 +38,7 @@
 
 - [x] **Task 10:** Shipped `lib/Settings/sku-templates.json` with the three example SKU generation templates (RETAIL_APPAREL_TEMPLATE, PET_FOOD_TEMPLATE, SUPPLEMENT_TEMPLATE) — each declares `templateId`, `pattern`, and `rules` per REQ-SKU-002. Includes `_meta` block linking back to the spec.
 
-- [ ] **Task 11:** Implement SKU template engine: a single-method PHP service ≤50 LOC `OCA\Shillinq\SkuGenerator::generate(InventoryItem $item, string $templateId): string` that reads the template from `sku-templates.json`, extracts product attributes, applies transformation rules (mapping, passthrough, hex), and interpolates into the pattern string; register explicitly as ADR-031 exception in code comment
+- [x] **Task 11:** Implemented `OCA\Shillinq\Service\SkuGenerator::generate(array $item, string $templateId): string` in `lib/Service/SkuGenerator.php` (one public method + two private helpers, body ~50 LOC). Reads the template from `sku-templates.json`, applies each rule (`mapping`, `passthrough`, `hex_first_3_chars`), and interpolates `{field}` placeholders. Class docblock explicitly registers the ADR-031 exception and links back to design D2. Functional spike confirmed: Apparel+Nike+M+Black → `AP-NK-M-000`, Dry Food+Cat+Senior+2kg → `DV-KAT-SENIOR-2KG`, Vitamin C+1000+mg+Capsule → `VIT-C-1000-MG-CAP`. Unknown template raises `InvalidArgumentException`.
 
 - [ ] **Task 12:** Implement the barcode lookup endpoint `GET /index.php/apps/shillinq/api/barcode/lookup/{code}` per REQ-SKU-007; endpoint MUST require Bearer token authentication (API key); support optional `?uomCode=` filter; return JSON with barcode + expanded product data; return HTTP 404 if not found; filter `isActive: true` only per REQ-SKU-008
 
