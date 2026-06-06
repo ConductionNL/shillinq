@@ -26,6 +26,14 @@ import ReceivePage from './views/inventory/ReceivePage.vue'
 import TransferPage from './views/inventory/TransferPage.vue'
 import PickPage from './views/inventory/PickPage.vue'
 import CountPage from './views/inventory/CountPage.vue'
+// bookings-resource-calendar exception (#117, per design.md):
+//   The booking month/week/day grid and the conflict-aware booking form are
+//   imperative Vue components — they own a custom calendar shell, modal
+//   isolation for the conflict dialog, and an inline POST → 409 retry path
+//   that does not fit any built-in index/detail/dashboard/settings page
+//   type. Registered here as a kind:"page" custom component so the
+//   manifest router still owns the URL → component mapping.
+import BookingsCalendarPage from './views/bookings/CalendarPage.vue'
 
 export default {
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
@@ -33,4 +41,5 @@ export default {
 	MobileScannerTransfer: { kind: 'page', component: TransferPage },
 	MobileScannerPick: { kind: 'page', component: PickPage },
 	MobileScannerCount: { kind: 'page', component: CountPage },
+	BookingsCalendarPage: { kind: 'page', component: BookingsCalendarPage },
 }
