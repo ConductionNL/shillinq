@@ -11,8 +11,8 @@
   - GIVEN the Resource entity is defined WHEN the schema is inspected THEN it includes type (enum: staff, room, equipment, furniture, other), name, organization, and status
   - GIVEN the Calendar entity is defined WHEN the schema is inspected THEN it includes resource (FK), timeZone, workingHours (JSON), organization, and status
   - GIVEN the Booking entity is defined WHEN the schema is inspected THEN it includes calendar (FK), resource (FK), title, startTime, endTime, attendee, status, externalId (optional)
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 2: Create OpenRegister register definition with Calendar and Booking schemas
 
@@ -23,8 +23,8 @@
   - GIVEN the `calendar` schema is inspected WHEN the properties are listed THEN `timeZone` is a string with default value `"Europe/Amsterdam"`
   - GIVEN the `booking` schema is inspected WHEN the properties are listed THEN all required fields (id, calendar, resource, title, startTime, endTime, attendee, status) are present
   - GIVEN the register is activated WHEN the app installer runs THEN the register and its schemas are created in the OpenRegister storage
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 3: Implement PHP API Controller for calendar endpoints
 
@@ -36,8 +36,8 @@
   - GIVEN the controller is implemented WHEN a GET request to `/api/v2/calendars/cal-001` is made THEN the calendar details are returned
   - GIVEN the controller is implemented WHEN a GET request to `/api/v2/calendars/cal-001/bookings?start=2026-05-21&end=2026-05-31` is made THEN all bookings in that range are returned, sorted by startTime
   - GIVEN the controller is implemented WHEN a POST request with a booking payload is made to `/api/v2/calendars/cal-001/bookings` THEN the booking is created with 201 response OR 409 Conflict if overlap detected
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 4: Implement conflict detection service with database transaction locking
 
@@ -49,8 +49,8 @@
   - GIVEN the service is called inside a booking creation transaction WHEN a conflict is detected THEN the transaction is rolled back and HTTP 409 is returned
   - GIVEN two concurrent booking requests on the same resource WHEN the service locks the resource row during conflict check THEN only one booking is created; the other receives HTTP 409
   - GIVEN two bookings that touch but don't overlap (A: 10:00-10:30, B: 10:30-11:00) WHEN `checkConflicts()` is called for B THEN no conflict is detected
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 5: Implement Vue CalendarView component with month/week/day views
 
@@ -64,8 +64,8 @@
   - GIVEN a booking has `status: pending` (conflicting) WHEN the calendar renders THEN the booking is highlighted in red
   - GIVEN the user clicks on an available time slot WHEN the click handler fires THEN the component emits `slot:clicked` with startTime and endTime
   - GIVEN the user clicks on a booking WHEN the click handler fires THEN the component emits `booking:selected` with the booking ID
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 6: Implement booking form component with conflict detection
 
@@ -78,8 +78,8 @@
   - GIVEN the API returns 409 Conflict WHEN the form receives the response THEN a dialog shows the conflicting bookings with options to Cancel or Confirm
   - GIVEN the user clicks Confirm in the conflict dialog WHEN the form resubmits THEN the booking is created despite the conflict (or the API allows override; implementation choice)
   - GIVEN a booking is successfully created WHEN the form processes the 201 response THEN it emits `booking:created` with the booking data and closes
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 7: Load seed data into the register
 
@@ -90,8 +90,8 @@
   - GIVEN the seed file is read WHEN the calendars array is inspected THEN it contains 3 calendars with correct timeZone and workingHours
   - GIVEN the seed file is read WHEN the bookings array is inspected THEN it contains 10 bookings with 2 intentional conflicts
   - GIVEN the app is installed WHEN the seed data is loaded THEN all 5+3+10 records are created in the register
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 8: Implement API tests for calendar endpoints (PHPUnit)
 
@@ -106,8 +106,8 @@
     - POST /api/v2/calendars/{id}/bookings (success case)
     - POST /api/v2/calendars/{id}/bookings (conflict case, 409 response)
   - GIVEN the test suite is run WHEN all tests pass THEN assertions verify response status codes, JSON structure, and data accuracy
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 9: Implement API tests for conflict detection (PHPUnit + Newman)
 
@@ -122,8 +122,8 @@
     - Transaction rollback on conflict
     - Race condition handling with locks
   - GIVEN the Newman collection is run WHEN all integration tests pass THEN the end-to-end conflict scenarios are verified
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 10: Implement UI tests for CalendarView component (Playwright)
 
@@ -138,8 +138,8 @@
     - Conflicting bookings are highlighted in red
     - Click on a time slot emits the correct event
   - GIVEN the test suite runs against a live calendar with seed data WHEN all assertions pass THEN the UI correctly displays all 10 bookings
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 11: Implement UI tests for BookingForm component (Playwright)
 
@@ -154,8 +154,8 @@
     - User can confirm despite conflict
     - Form closes after successful submission
   - GIVEN the tests run against a live app with seed data WHEN all assertions pass THEN the booking form works end-to-end
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 12: Add documentation to docs/user-guide/
 
@@ -169,16 +169,16 @@
     - Conflict resolution: what conflicts mean, how to resolve them
     - API reference: endpoint descriptions and example requests/responses
   - GIVEN the docs are built WHEN the build completes THEN the bookings section appears in the sidebar and is accessible
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ## Verification
 
-- [ ] All tasks checked off
-- [ ] `openspec validate` passes
+- [x] All tasks checked off
+- [x] `openspec validate` passes
 - [ ] Manual testing of calendar views and booking creation
-- [ ] Code review against spec requirements
-- [ ] All PHPUnit tests pass: `composer test`
+- [x] Code review against spec requirements
+- [x] All PHPUnit tests pass: `composer test`
 - [ ] All Newman tests pass: `newman run openspec/collections/bookings.postman_collection.json`
 - [ ] All Playwright tests pass: `npm run test:e2e`
 - [ ] `docs` build passes: `cd docs && npm run build`
@@ -198,11 +198,11 @@
 
 ## i18n (company-wide ADR-007)
 
-- [ ] Dutch (`nl_NL`) and English (`en_US`) translation strings added to `resources/translations/` for:
+- [x] Dutch (`nl_NL`) and English (`en_US`) translation strings added to `resources/translations/` for:
   - "Create Booking" (button)
   - "Booking Conflict Detected" (dialog title)
   - "Conflict with booking {title}" (error message)
   - "Calendar" (sidebar)
   - Calendar view labels (Month, Week, Day, etc.)
-- [ ] Strings are marked with `trans()` or `$t()` (Vue) for i18n extraction
+- [x] Strings are marked with `trans()` or `$t()` (Vue) for i18n extraction
 - Note: Full Dutch translation content ships via issue #XX (ADR-007); English is the primary language for Tier-1
