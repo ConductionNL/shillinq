@@ -125,6 +125,28 @@
 					}
 				}
 			}
+		},
+		"Product": {
+			"properties": {
+				"skuTemplate": {
+					"type": "string",
+					"nullable": true,
+					"description": "Additive (inventory-barcode-sku, REQ-SKU-006). Reference to a SKU generation template ID in sku-templates.json (e.g. RETAIL_APPAREL_TEMPLATE). Optional; existing items without it remain valid.",
+					"example": "PET_FOOD_TEMPLATE"
+				},
+				"defaultBarcode": {
+					"type": "string",
+					"nullable": true,
+					"description": "Additive (inventory-barcode-sku, REQ-SKU-006). The barcode value of the default barcode scanned at POS for this product. Optional. When set, SHOULD match the `barcode` of an active `Barcode` record with isDefault=true.",
+					"example": "5410317126589"
+				},
+				"barcodeFormat": {
+					"type": "string",
+					"nullable": true,
+					"description": "Additive (inventory-barcode-sku, REQ-SKU-006). Preferred format for new barcodes on this product (e.g. EAN-13, GTIN-14). Optional.",
+					"example": "EAN-13"
+				}
+			}
 		}
 	},
 	"objects": []

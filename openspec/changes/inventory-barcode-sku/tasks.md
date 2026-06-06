@@ -34,7 +34,7 @@
 
 - [x] **Task 8:** Added `x-openregister-unique: [["productSku", "barcodeType", "uomCode"]]` constraint on `Barcode`. OR raises a unique-constraint violation when a duplicate (productSku + barcodeType + uomCode) triple is saved, matching the existing pattern used by `Product[(organizationId, sku)]`.
 
-- [ ] **Task 9:** Patch `InventoryItem` schema in `lib/Settings/shillinq_register.json` with three additive fields per REQ-SKU-006 (`skuTemplate: string`, `defaultBarcode: string`, `barcodeFormat: string`); confirm existing `InventoryItem` objects pass schema validation after patch (additive field, non-breaking)
+- [x] **Task 9:** Patched the `Product` schema (the live name for the spec's `InventoryItem`) with three additive fields per REQ-SKU-006: `skuTemplate`, `defaultBarcode`, `barcodeFormat` — all optional + nullable. Patch lives in the same fragment (`lib/Settings/register.d/20-inventory-barcode-sku.json` under `components.Product.properties`), which ADR-037 `deepMergeConfig` unions into the monolith. Verified the merge preserves all 12 existing Product properties (sku, name, category, description, unitPrice, currency, unitCode, taxRate, primaryBarcode, barcodes, status, organizationId) and adds the 3 new ones — non-breaking.
 
 - [ ] **Task 10:** Create `lib/Settings/sku-templates.json` with the three example SKU generation templates from `design.md` (RETAIL_APPAREL_TEMPLATE, PET_FOOD_TEMPLATE, SUPPLEMENT_TEMPLATE); each template declares `templateId`, `pattern`, and `rules` per REQ-SKU-002
 
