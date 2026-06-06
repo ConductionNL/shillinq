@@ -399,6 +399,31 @@ class SettingsService
     }//end seedBbvTaakvelden()
 
     /**
+     * Seed default intercompany tolerance rules, idempotently.
+     *
+     * Imports the per-relation-type default ToleranceRule templates from
+     * intercompany-tolerance-rules.json into the ToleranceRule schema. These are
+     * group-template defaults (groupId / administrationId = 'default') that an
+     * operator clones or overrides per consolidation group. Deduplication key is
+     * ruleId, so re-running the repair step preserves operator-authored overrides.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-9
+     */
+    public function seedIntercompanyToleranceRules(): array
+    {
+        return $this->seedGenericFile(
+            seedFileName: 'intercompany-tolerance-rules.json',
+            itemsKey: 'rules',
+            dedupeKey: 'ruleId',
+            schema: 'ToleranceRule',
+            logLabel: 'Intercompany tolerance rules'
+        );
+
+    }//end seedIntercompanyToleranceRules()
+
+    /**
      * Seed default rate-card templates from rate-card-templates.json, idempotently.
      *
      * Requires a non-empty administrationId; seeding is skipped otherwise (C2).

@@ -1,0 +1,66 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-9 (REQ-ICE-004)",
+    "description": "Default intercompany tolerance rules per relation type for the elimination engine. These are group-template defaults (groupId / administrationId = 'default'); operators clone or override them per consolidation group. Thresholds follow common Dutch MKB consolidation practice: tighter on high-volume goods/services flows, looser on lumpy interest and dividend bookings. Deduplication key is ruleId.",
+    "imported": "2026-06-06T00:00:00Z"
+  },
+  "rules": [
+    {
+      "ruleId": "default-sales-of-goods",
+      "groupId": "default",
+      "relationTypeFilter": "sales-of-goods",
+      "toleranceAbsolute": 25,
+      "toleranceRelative": 0.5,
+      "toleranceMethod": "max-of-absolute-relative",
+      "fallbackAccount": "9999 - Eliminatie-rounding-restpost",
+      "autoResolve": true,
+      "administrationId": "default"
+    },
+    {
+      "ruleId": "default-sales-of-services",
+      "groupId": "default",
+      "relationTypeFilter": "sales-of-services",
+      "toleranceAbsolute": 10,
+      "toleranceRelative": 0.25,
+      "toleranceMethod": "max-of-absolute-relative",
+      "fallbackAccount": "9999 - Eliminatie-rounding-restpost",
+      "autoResolve": true,
+      "administrationId": "default"
+    },
+    {
+      "ruleId": "default-interest-on-loan",
+      "groupId": "default",
+      "relationTypeFilter": "interest-on-loan",
+      "toleranceAbsolute": 100,
+      "toleranceRelative": 0.1,
+      "toleranceMethod": "max-of-absolute-relative",
+      "fallbackAccount": "9999 - Eliminatie-rounding-restpost",
+      "autoResolve": true,
+      "administrationId": "default"
+    },
+    {
+      "ruleId": "default-dividend",
+      "groupId": "default",
+      "relationTypeFilter": "dividend",
+      "toleranceAbsolute": 5000,
+      "toleranceRelative": 0.01,
+      "toleranceMethod": "min-of-absolute-relative",
+      "fallbackAccount": "9999 - Eliminatie-rounding-restpost",
+      "autoResolve": false,
+      "administrationId": "default"
+    },
+    {
+      "ruleId": "default-management-fee",
+      "groupId": "default",
+      "relationTypeFilter": "management-fee",
+      "toleranceAbsolute": 20,
+      "toleranceRelative": 0.5,
+      "toleranceMethod": "max-of-absolute-relative",
+      "fallbackAccount": "9999 - Eliminatie-rounding-restpost",
+      "autoResolve": true,
+      "administrationId": "default"
+    }
+  ]
+}

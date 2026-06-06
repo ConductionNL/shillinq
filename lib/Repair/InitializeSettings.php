@@ -144,6 +144,7 @@ class InitializeSettings implements IRepairStep
             $this->seedKorThresholds(output: $output);
             $this->seedComplianceReferenceData(output: $output);
             $this->seedProductAttributeTemplates(output: $output);
+            $this->seedIntercompanyToleranceRules(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -337,6 +338,35 @@ class InitializeSettings implements IRepairStep
         }
 
     }//end seedComplianceReferenceData()
+
+    /**
+     * Seed default intercompany tolerance rules, idempotently.
+     *
+     * Delegates to SettingsService::seedIntercompanyToleranceRules, which imports the
+     * per-relation-type default ToleranceRule templates. Deduplication key is ruleId,
+     * so re-running the repair step preserves operator-authored overrides.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-9
+     */
+    private function seedIntercompanyToleranceRules(IOutput $output): void
+    {
+        $output->info('Seeding intercompany tolerance rules...');
+        $result = $this->settingsService->seedIntercompanyToleranceRules();
+        if ($result['success'] === true) {
+            $output->info(
+                'Intercompany tolerance rules seeded: '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if ($result['success'] !== true) {
+            $output->warning('Intercompany tolerance rules seeding issue: '.($result['message'] ?? 'unknown error'));
+        }
+
+    }//end seedIntercompanyToleranceRules()
 
     /**
      * Seed the KOR thresholds from kor-thresholds-2026.json, idempotently.
