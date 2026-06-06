@@ -109,6 +109,10 @@ class VATCalculationService
     /**
      * Whether a percentage matches one of the four statutory Dutch rates.
      *
+     * Used by callers that want to clamp client-supplied per-line VAT
+     * to the statutory set (21 / 9 / 6 / 0) before passing the line to
+     * calculateVAT(); also referenced from the unit test.
+     *
      * @param float $rate VAT percentage.
      *
      * @return bool

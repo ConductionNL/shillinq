@@ -92,7 +92,18 @@ class InvoiceGenerationService
         // 3. Drive the model.
         $lineDrafts = $this->driveModel(request: $request, timeEntries: $timeEntries, expenses: $expenses, hoursLogged: $hoursLogged);
 
-        // 4. Total with VAT.
+        // 4. Total with VAT — clamp any per-line rate to the four statutory
+        // Dutch rates (21 / 9 / 6 / 0) before totalling so a stray rate
+        // from a fixture / migration doesn't slip through (REQ-ITE-009).
+        foreach ($lineDrafts as &$_line) {
+            $_rate = (float) ($_line['vatRate'] ?? BillingModelEngine::DEFAULT_VAT_RATE);
+            if ($this->vat->isValidRate($_rate) === false) {
+                $_line['vatRate'] = BillingModelEngine::DEFAULT_VAT_RATE;
+            }
+        }
+
+        unset($_line);
+
         $totals = $this->vat->calculateVAT($lineDrafts);
         $invoiceNumber = $this->generateInvoiceNumber(administrationId: $request->administrationId, invoiceDate: $request->toDate);
         $dueDate       = $this->addDays($request->toDate, 30);
