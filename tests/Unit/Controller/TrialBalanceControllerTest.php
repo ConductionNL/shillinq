@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\TrialBalanceController;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\TrialBalanceService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -57,6 +58,13 @@ final class TrialBalanceControllerTest extends TestCase
     private TrialBalanceService&MockObject $service;
 
     /**
+     * Mock AdministrationContextService.
+     *
+     * @var AdministrationContextService&MockObject
+     */
+    private AdministrationContextService&MockObject $context;
+
+    /**
      * Mock LoggerInterface.
      *
      * @var LoggerInterface&MockObject
@@ -80,10 +88,19 @@ final class TrialBalanceControllerTest extends TestCase
         parent::setUp();
         $this->request    = $this->createMock(IRequest::class);
         $this->service    = $this->createMock(TrialBalanceService::class);
+        $this->context    = $this->createMock(AdministrationContextService::class);
         $this->logger     = $this->createMock(LoggerInterface::class);
+
+        // Default: an authenticated user with access to 'adm-1'.
+        $this->context->method('currentUserId')->willReturn('alice');
+        $this->context->method('canAccess')->willReturnCallback(
+            static fn (string $administrationId): bool => $administrationId === 'adm-1'
+        );
+
         $this->controller = new TrialBalanceController(
             request: $this->request,
             trialBalanceService: $this->service,
+            context: $this->context,
             logger: $this->logger,
         );
 
@@ -199,4 +216,48 @@ final class TrialBalanceControllerTest extends TestCase
         self::assertSame(['error' => 'Failed to compute trial balance'], $response->getData());
 
     }//end testServiceFailureReturns500WithoutStackTrace()
+
+    /**
+     * An unauthenticated request yields HTTP 401 before any data access (REQ-TB-016).
+     *
+     * @return void
+     */
+    public function testUnauthenticatedReturns401(): void
+    {
+        $request = $this->createMock(IRequest::class);
+        $service = $this->createMock(TrialBalanceService::class);
+        $context = $this->createMock(AdministrationContextService::class);
+        $logger  = $this->createMock(LoggerInterface::class);
+        $context->method('currentUserId')->willReturn(null);
+        $service->expects($this->never())->method('compute');
+
+        $controller = new TrialBalanceController(
+            request: $request,
+            trialBalanceService: $service,
+            context: $context,
+            logger: $logger,
+        );
+
+        $response = $controller->index();
+
+        self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+
+    }//end testUnauthenticatedReturns401()
+
+    /**
+     * A foreign administrationId is masked as HTTP 404 (REQ-TB-016, REQ-TB-017 IDOR guard).
+     *
+     * @return void
+     */
+    public function testForeignAdministrationIsMaskedAs404(): void
+    {
+        $this->withParams('2026-Q1', 'adm-other');
+        $this->service->expects($this->never())->method('compute');
+
+        $response = $this->controller->index();
+
+        self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+        self::assertSame(['error' => 'Administration not found'], $response->getData());
+
+    }//end testForeignAdministrationIsMaskedAs404()
 }//end class

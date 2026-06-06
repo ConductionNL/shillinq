@@ -32,6 +32,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\TrialBalanceService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -50,15 +51,17 @@ class TrialBalanceController extends Controller
     /**
      * Constructor for the TrialBalanceController.
      *
-     * @param IRequest            $request             The request object.
-     * @param TrialBalanceService $trialBalanceService The trial-balance computation service.
-     * @param LoggerInterface     $logger              Logger for diagnostics (no stack traces to client).
+     * @param IRequest                     $request             The request object.
+     * @param TrialBalanceService          $trialBalanceService The trial-balance computation service.
+     * @param AdministrationContextService $context             Admin-membership / RBAC context (REQ-TB-016).
+     * @param LoggerInterface              $logger              Logger for diagnostics (no stack traces to client).
      *
      * @return void
      */
     public function __construct(
         IRequest $request,
         private readonly TrialBalanceService $trialBalanceService,
+        private readonly AdministrationContextService $context,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -83,6 +86,17 @@ class TrialBalanceController extends Controller
     #[NoAdminRequired]
     public function index(): JSONResponse
     {
+        // Authentication gate — anonymous requests cannot read trial balances
+        // (REQ-TB-016). Although the NC SecurityMiddleware enforces this for
+        // #[NoAdminRequired] routes, we check explicitly so the IDOR guard below
+        // can rely on a resolved user id.
+        if ($this->context->currentUserId() === null) {
+            return new JSONResponse(
+                ['error' => 'Not authenticated'],
+                Http::STATUS_UNAUTHORIZED
+            );
+        }
+
         $periodId         = trim((string) $this->request->getParam('period_id', ''));
         $administrationId = trim((string) $this->request->getParam('administration_id', ''));
         $priorPeriodId    = trim((string) $this->request->getParam('prior_period_id', ''));
@@ -114,6 +128,33 @@ class TrialBalanceController extends Controller
             return new JSONResponse(
                 ['error' => 'administration_id must be a valid administration identifier'],
                 Http::STATUS_BAD_REQUEST
+            );
+        }
+
+        // Per-administration IDOR guard (REQ-TB-016, REQ-TB-017): the user must
+        // be a member of the administration. We mask non-membership as a 404 so
+        // foreign administration ids are not enumerable via a 403 oracle.
+        try {
+            $allowed = $this->context->canAccess(administrationId: $administrationId);
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'TrialBalanceController: failed to check administration access',
+                [
+                    'administrationId' => $administrationId,
+                    'exception'        => $e->getMessage(),
+                ]
+            );
+
+            return new JSONResponse(
+                ['error' => 'Failed to authorise trial balance'],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+
+        if ($allowed === false) {
+            return new JSONResponse(
+                ['error' => 'Administration not found'],
+                Http::STATUS_NOT_FOUND
             );
         }
 
