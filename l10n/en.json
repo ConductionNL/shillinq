@@ -203,7 +203,24 @@
         "Booking cancelled": "Booking cancelled",
         "Invoice could not be created. It will be retried automatically.": "Invoice could not be created. It will be retried automatically.",
         "Deposit not authorised; cannot invoice this booking.": "Deposit not authorised; cannot invoice this booking.",
-        "This booking has already been invoiced.": "This booking has already been invoiced."
+        "This booking has already been invoiced.": "This booking has already been invoiced.",
+        "BADO Audit": "BADO Audit",
+        "Audit Protocols": "Audit Protocols",
+        "Tolerance Matrices": "Tolerance Matrices",
+        "Audit Samples & Findings": "Audit Samples & Findings",
+        "Audit Verklaringen": "Audit Statements",
+        "Audit Protocol": "Audit Protocol",
+        "Tolerance Matrix": "Tolerance Matrix",
+        "Audit Finding": "Audit Finding",
+        "Audit Verklaring": "Audit Statement",
+        "Proposed Opinion": "Proposed Opinion",
+        "Materiality Amount": "Materiality Amount",
+        "Severity": "Severity",
+        "Controller Response": "Controller Response",
+        "Auditor Conclusion": "Auditor Conclusion",
+        "protocol_id is required": "protocol_id is required",
+        "protocol_id must be a valid protocol identifier": "protocol_id must be a valid protocol identifier",
+        "Failed to compute audit aggregation": "Failed to compute audit aggregation"
     },
     "plurals": ""
 }
