@@ -96,15 +96,44 @@
           "decisions": [],
           "verdict": "pass",
           "duration_seconds": 1508
+        },
+        {
+          "stage": "applier",
+          "persona": "Axel Pli\u00e9r",
+          "model": "sonnet",
+          "container": "hydra-applier",
+          "started_at": "2026-06-06T04:01:47Z",
+          "ended_at": "2026-06-06T04:02:03Z",
+          "exit_code": 1,
+          "turns_used": 0,
+          "turns_budget": 20,
+          "checks_run": [
+            "hydra.json-consumer"
+          ],
+          "checks_skipped": [],
+          "findings": [
+            {
+              "id": "applier-fail",
+              "severity": "CRITICAL",
+              "gate": "applier",
+              "rule": "applier returned fail verdict",
+              "status": "open",
+              "note": "Applier blocking items should be captured in hydra.json pipeline.applier.blocking[] by the container itself. See logs/pipeline-*/applier.jsonl for detail.",
+              "autofixable": false
+            }
+          ],
+          "decisions": [],
+          "verdict": "fail",
+          "duration_seconds": 16
         }
       ]
     }
   ],
   "totals": {
-    "runs": 3,
+    "runs": 4,
     "turns_used": 595,
     "cost_usd": 0.0,
-    "duration_seconds": 3542,
+    "duration_seconds": 3558,
     "cycles": 2,
     "by_stage": {
       "build": {
@@ -114,10 +143,10 @@
         "duration_seconds": 3476
       },
       "applier": {
-        "runs": 1,
+        "runs": 2,
         "turns_used": 8,
         "cost_usd": 0.0,
-        "duration_seconds": 66
+        "duration_seconds": 82
       }
     }
   }
