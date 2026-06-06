@@ -22,6 +22,15 @@ return [
         // Trial balance (Tier 2): read-only per-account period aggregation.
         ['name' => 'trialBalance#index', 'url' => '/api/trial-balance', 'verb' => 'GET'],
 
+        // Credit control & dunning ladder (Tier 2 — issue #124).
+        // Static segments first; the resume route uses a {pauseId} wildcard.
+        ['name' => 'dunning#bik', 'url' => '/api/dunning/bik', 'verb' => 'POST'],
+        ['name' => 'dunning#executeRun', 'url' => '/api/dunning/runs/execute', 'verb' => 'POST'],
+        ['name' => 'dunning#pause', 'url' => '/api/dunning/pauses', 'verb' => 'POST'],
+        ['name' => 'dunning#dossier', 'url' => '/api/dunning/incasso/dossier', 'verb' => 'POST'],
+        ['name' => 'dunning#writeOff', 'url' => '/api/dunning/writeoffs', 'verb' => 'POST'],
+        ['name' => 'dunning#resumePause', 'url' => '/api/dunning/pauses/{pauseId}/resume', 'verb' => 'POST'],
+
         // OSS (One-Stop-Shop, Tier 2): destination-country rate resolution + quarterly return generation.
         ['name' => 'oss#resolveRate', 'url' => '/api/oss/rate', 'verb' => 'GET'],
         ['name' => 'oss#generateReturn', 'url' => '/api/oss/return', 'verb' => 'GET'],
