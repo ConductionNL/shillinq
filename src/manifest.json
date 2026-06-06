@@ -82,6 +82,41 @@
 					"order": 34
 				},
 				{
+					"id": "DunningLadders",
+					"label": "Dunning Ladders",
+					"icon": "StairsUp",
+					"route": "DunningLadders",
+					"order": 35
+				},
+				{
+					"id": "DunningKlantOverrides",
+					"label": "Klant Overrides",
+					"icon": "AccountSwitchOutline",
+					"route": "DunningKlantOverrides",
+					"order": 36
+				},
+				{
+					"id": "DunningRuns",
+					"label": "Dunning Runs",
+					"icon": "EmailFastOutline",
+					"route": "DunningRuns",
+					"order": 37
+				},
+				{
+					"id": "IncassoKosten",
+					"label": "Incasso Kosten",
+					"icon": "CalculatorVariantOutline",
+					"route": "IncassoKosten",
+					"order": 38
+				},
+				{
+					"id": "OninbareAfschrijvingen",
+					"label": "Oninbare Afschrijvingen",
+					"icon": "FileRemoveOutline",
+					"route": "OninbareAfschrijvingen",
+					"order": 39
+				},
+				{
 					"id": "Waterschapsbelastingen",
 					"label": "Waterschapsbelastingen",
 					"icon": "WaterOutline",
@@ -7579,6 +7614,221 @@
 				],
 				"defaultSort": "calibrationPeriod",
 				"description": "Monthly post-month-end forecast-accuracy report. REQ-CF-013."
+			}
+		},
+		{
+			"id": "DunningLadders",
+			"route": "/bookkeeping/dunning/ladders",
+			"type": "index",
+			"title": "Dunning Ladders",
+			"config": {
+				"register": "shillinq",
+				"schema": "DunningLadder",
+				"columns": [
+					{ "key": "naam", "label": "Name", "sortable": true },
+					{ "key": "klantGroep", "label": "Customer group", "sortable": true },
+					{ "key": "actief", "label": "Active", "sortable": true },
+					{ "key": "lifecycleState", "label": "State", "sortable": true }
+				],
+				"defaultSort": "naam",
+				"detailRoute": "DunningLadderDetail",
+				"description": "Configure the multi-stage dunning ladder per customer group. REQ-CCD-001."
+			}
+		},
+		{
+			"id": "DunningLadderDetail",
+			"route": "/bookkeeping/dunning/ladders/:id",
+			"type": "detail",
+			"title": "Dunning Ladder",
+			"config": {
+				"register": "shillinq",
+				"schema": "DunningLadder",
+				"fields": [
+					{ "key": "naam", "label": "Name", "type": "string" },
+					{ "key": "klantGroep", "label": "Customer group", "type": "string" },
+					{ "key": "ondernemingId", "label": "Ondernemer", "type": "string" },
+					{ "key": "actief", "label": "Active", "type": "boolean" },
+					{ "key": "lifecycleState", "label": "State", "type": "string" },
+					{ "key": "stages", "label": "Stages", "type": "json" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "DunningLadders"
+			}
+		},
+		{
+			"id": "DunningKlantOverrides",
+			"route": "/bookkeeping/dunning/overrides",
+			"type": "index",
+			"title": "Klant Ladder Overrides",
+			"config": {
+				"register": "shillinq",
+				"schema": "KlantLadderOverride",
+				"columns": [
+					{ "key": "klantId", "label": "Customer", "sortable": true },
+					{ "key": "baseLadderId", "label": "Base ladder", "sortable": true },
+					{ "key": "reden", "label": "Reason", "sortable": false },
+					{ "key": "approvedBy", "label": "Approved by", "sortable": true },
+					{ "key": "lifecycleState", "label": "State", "sortable": true }
+				],
+				"defaultSort": "klantId",
+				"detailRoute": "DunningKlantOverrideDetail",
+				"description": "Per-customer exceptions on the base ladder (overheid extended terms, VIP skip stage 4/5). REQ-CCD-001."
+			}
+		},
+		{
+			"id": "DunningKlantOverrideDetail",
+			"route": "/bookkeeping/dunning/overrides/:id",
+			"type": "detail",
+			"title": "Klant Ladder Override",
+			"config": {
+				"register": "shillinq",
+				"schema": "KlantLadderOverride",
+				"fields": [
+					{ "key": "klantId", "label": "Customer", "type": "string" },
+					{ "key": "baseLadderId", "label": "Base ladder", "type": "string" },
+					{ "key": "overrides", "label": "Overrides", "type": "json" },
+					{ "key": "reden", "label": "Reason", "type": "string" },
+					{ "key": "createdBy", "label": "Created by", "type": "string" },
+					{ "key": "createdAt", "label": "Created at", "type": "datetime" },
+					{ "key": "approvedBy", "label": "Approved by", "type": "string" },
+					{ "key": "approvedAt", "label": "Approved at", "type": "datetime" },
+					{ "key": "lifecycleState", "label": "State", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "DunningKlantOverrides"
+			}
+		},
+		{
+			"id": "DunningRuns",
+			"route": "/bookkeeping/dunning/runs",
+			"type": "index",
+			"title": "Dunning Runs",
+			"config": {
+				"register": "shillinq",
+				"schema": "DunningRun",
+				"columns": [
+					{ "key": "factuurId", "label": "Invoice", "sortable": true },
+					{ "key": "stageNr", "label": "Stage", "sortable": true },
+					{ "key": "kanaal", "label": "Channel", "sortable": true },
+					{ "key": "deliveryStatus", "label": "Delivery", "sortable": true },
+					{ "key": "uitgevoerdOp", "label": "Executed at", "sortable": true }
+				],
+				"defaultSort": "uitgevoerdOp",
+				"detailRoute": "DunningRunDetail",
+				"description": "Per-invoice per-stage execution log with evidence trail. Immutable post-execute. REQ-CCD-002."
+			}
+		},
+		{
+			"id": "DunningRunDetail",
+			"route": "/bookkeeping/dunning/runs/:id",
+			"type": "detail",
+			"title": "Dunning Run",
+			"config": {
+				"register": "shillinq",
+				"schema": "DunningRun",
+				"fields": [
+					{ "key": "factuurId", "label": "Invoice", "type": "string" },
+					{ "key": "ladderId", "label": "Ladder", "type": "string" },
+					{ "key": "stageNr", "label": "Stage", "type": "integer" },
+					{ "key": "kanaal", "label": "Channel", "type": "string" },
+					{ "key": "ontvangerEmail", "label": "Recipient e-mail", "type": "string" },
+					{ "key": "ontvangerNaam", "label": "Recipient name", "type": "string" },
+					{ "key": "templateId", "label": "Template", "type": "string" },
+					{ "key": "renderedSubject", "label": "Subject", "type": "string" },
+					{ "key": "renderedBody", "label": "Body", "type": "text" },
+					{ "key": "renderedPdfHash", "label": "PDF SHA-256", "type": "string" },
+					{ "key": "deliveryStatus", "label": "Delivery status", "type": "string" },
+					{ "key": "uitgevoerdOp", "label": "Executed at", "type": "datetime" },
+					{ "key": "factuurBedrag", "label": "Invoice amount", "type": "money" },
+					{ "key": "incassokostenBedrag", "label": "Incasso costs", "type": "money" },
+					{ "key": "renteBedrag", "label": "Rente", "type": "money" },
+					{ "key": "lifecycleState", "label": "State", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "DunningRuns"
+			}
+		},
+		{
+			"id": "IncassoKosten",
+			"route": "/bookkeeping/dunning/incasso-kosten",
+			"type": "index",
+			"title": "Incasso Kosten",
+			"config": {
+				"register": "shillinq",
+				"schema": "IncassoKostenBerekening",
+				"columns": [
+					{ "key": "factuurId", "label": "Invoice", "sortable": true },
+					{ "key": "hoofdsom", "label": "Principal", "sortable": true },
+					{ "key": "partyType", "label": "Party type", "sortable": true },
+					{ "key": "totaalVerschuldigd", "label": "Total owed", "sortable": true }
+				],
+				"defaultSort": "factuurId",
+				"detailRoute": "IncassoKostenDetail",
+				"description": "BIK staffel + wettelijke rente per invoice (REQ-CCD-003)."
+			}
+		},
+		{
+			"id": "IncassoKostenDetail",
+			"route": "/bookkeeping/dunning/incasso-kosten/:id",
+			"type": "detail",
+			"title": "Incasso Kosten Berekening",
+			"config": {
+				"register": "shillinq",
+				"schema": "IncassoKostenBerekening",
+				"fields": [
+					{ "key": "factuurId", "label": "Invoice", "type": "string" },
+					{ "key": "hoofdsom", "label": "Principal", "type": "money" },
+					{ "key": "partyType", "label": "Party type", "type": "string" },
+					{ "key": "berekening", "label": "BIK staffel", "type": "json" },
+					{ "key": "wettelijkeRente", "label": "Wettelijke rente", "type": "json" },
+					{ "key": "totaalVerschuldigd", "label": "Total owed", "type": "money" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"indexRoute": "IncassoKosten"
+			}
+		},
+		{
+			"id": "OninbareAfschrijvingen",
+			"route": "/bookkeeping/dunning/oninbaar",
+			"type": "index",
+			"title": "Oninbare Afschrijvingen",
+			"config": {
+				"register": "shillinq",
+				"schema": "OninbaarAfschrijving",
+				"columns": [
+					{ "key": "factuurId", "label": "Invoice", "sortable": true },
+					{ "key": "hoofdsomAfgeschreven", "label": "Written off", "sortable": true },
+					{ "key": "btwBedrag", "label": "VAT recovery", "sortable": true },
+					{ "key": "btwAangiftePeriode", "label": "VAT period", "sortable": true },
+					{ "key": "lifecycleState", "label": "State", "sortable": true }
+				],
+				"defaultSort": "factuurId",
+				"detailRoute": "OninbareAfschrijvingDetail",
+				"description": "Write-offs + BTW-teruggaaf voorbereiding per art. 29 OB. REQ-CCD-010."
+			}
+		},
+		{
+			"id": "OninbareAfschrijvingDetail",
+			"route": "/bookkeeping/dunning/oninbaar/:id",
+			"type": "detail",
+			"title": "Oninbare Afschrijving",
+			"config": {
+				"register": "shillinq",
+				"schema": "OninbaarAfschrijving",
+				"fields": [
+					{ "key": "factuurId", "label": "Invoice", "type": "string" },
+					{ "key": "hoofdsomAfgeschreven", "label": "Written off (excl. VAT)", "type": "money" },
+					{ "key": "btwBedrag", "label": "VAT recovery (art. 29 OB)", "type": "money" },
+					{ "key": "art29OBVerklaring", "label": "Reason (art. 29 OB)", "type": "string" },
+					{ "key": "evidenceRef", "label": "Evidence", "type": "string" },
+					{ "key": "boekingId", "label": "GL posting", "type": "string" },
+					{ "key": "btwAangiftePeriode", "label": "BTW aangifte period", "type": "string" },
+					{ "key": "lifecycleState", "label": "State", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "OninbareAfschrijvingen"
 			}
 		}
 	]
