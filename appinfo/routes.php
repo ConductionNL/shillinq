@@ -40,16 +40,16 @@ return [
         // BTW-aangifte (Tier 3, bookkeeping-vat-btw-filing, issue #127). Specific
         // {returnId}/{action} routes precede the bare {returnId} routes so Symfony
         // matches them first; declaration + line endpoints are read-only.
-        ['name' => 'VATReturn#index', 'url' => '/api/vat-returns', 'verb' => 'GET'],
-        ['name' => 'VATReturn#create', 'url' => '/api/vat-returns', 'verb' => 'POST'],
-        ['name' => 'VATReturn#submit', 'url' => '/api/vat-returns/{returnId}/submit', 'verb' => 'POST'],
-        ['name' => 'VATReturn#rebase', 'url' => '/api/vat-returns/{returnId}/rebase', 'verb' => 'POST'],
-        ['name' => 'VATDeclaration#listByReturn', 'url' => '/api/vat-returns/{returnId}/declarations', 'verb' => 'GET'],
-        ['name' => 'VATLine#listByReturn', 'url' => '/api/vat-returns/{returnId}/lines', 'verb' => 'GET'],
-        ['name' => 'VATLine#listByDeclaration', 'url' => '/api/vat-declarations/{declarationId}/lines', 'verb' => 'GET'],
-        ['name' => 'VATReturn#show', 'url' => '/api/vat-returns/{returnId}', 'verb' => 'GET'],
-        ['name' => 'VATReturn#update', 'url' => '/api/vat-returns/{returnId}', 'verb' => 'PUT'],
-        ['name' => 'VATReturn#destroy', 'url' => '/api/vat-returns/{returnId}', 'verb' => 'DELETE'],
+        ['name' => 'vATReturn#index', 'url' => '/api/vat-returns', 'verb' => 'GET'],
+        ['name' => 'vATReturn#create', 'url' => '/api/vat-returns', 'verb' => 'POST'],
+        ['name' => 'vATReturn#submit', 'url' => '/api/vat-returns/{returnId}/submit', 'verb' => 'POST'],
+        ['name' => 'vATReturn#rebase', 'url' => '/api/vat-returns/{returnId}/rebase', 'verb' => 'POST'],
+        ['name' => 'vATDeclaration#listByReturn', 'url' => '/api/vat-returns/{returnId}/declarations', 'verb' => 'GET'],
+        ['name' => 'vATLine#listByReturn', 'url' => '/api/vat-returns/{returnId}/lines', 'verb' => 'GET'],
+        ['name' => 'vATLine#listByDeclaration', 'url' => '/api/vat-declarations/{declarationId}/lines', 'verb' => 'GET'],
+        ['name' => 'vATReturn#show', 'url' => '/api/vat-returns/{returnId}', 'verb' => 'GET'],
+        ['name' => 'vATReturn#update', 'url' => '/api/vat-returns/{returnId}', 'verb' => 'PUT'],
+        ['name' => 'vATReturn#destroy', 'url' => '/api/vat-returns/{returnId}', 'verb' => 'DELETE'],
 
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).

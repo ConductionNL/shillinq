@@ -6,25 +6,25 @@
 
 ## Schema & Data Model
 
-- [ ] **Define `VATReturn` schema** in `lib/Settings/shillinq_register.json`
+- [x] **Define `VATReturn` schema** in `lib/Settings/shillinq_register.json`
   - Properties: returnNumber, period, periodYear, periodNumber, startDate, endDate, regime, administrationId, statusCode, submissionDate, verificationDate, filingReference, totalVATCollected, totalVATPaid, vatBalance, totalTaxableAmount, notes
   - Type: Register with `x-openregister-lifecycle` transition block
   - Lifecycle: `draft → submitted → verified → filed`
   - Aggregations: SUM(VATLine.vatAmount WHERE type='collected'), SUM(VATLine.vatAmount WHERE type='paid')
   - Seed: 1 Q1 2026 standard-rate return, 1 Q1 2026 KOR return, 1 Q2 2026 reverse-charge return
 
-- [ ] **Define `VATDeclaration` schema** in `lib/Settings/shillinq_register.json`
+- [x] **Define `VATDeclaration` schema** in `lib/Settings/shillinq_register.json`
   - Properties: declarationNumber, returnId, type, taxRate, totalVATAmount, totalTaxableAmount, lineCount, notes
   - Type: Register
   - Seed: 6 declarations (3 per return: collected, paid, or reverse-charge)
 
-- [ ] **Define `VATLine` schema** in `lib/Settings/shillinq_register.json`
+- [x] **Define `VATLine` schema** in `lib/Settings/shillinq_register.json`
   - Properties: lineNumber, returnId, declarationId, glAccountNumber, glAccountName, glTransactionId, type, taxableAmount, taxRate, vatAmount, description, reverseChargeApplicable
   - Type: Register
   - Immutable after parent return is submitted
   - Seed: 12-15 VAT lines across all seeded returns (5 per return, mixed rates + reverse-charge)
 
-- [ ] **Update `Account` schema** in `lib/Settings/shillinq_register.json` (if needed)
+- [x] **Update `Account` schema** in `lib/Settings/shillinq_register.json` (if needed)
   - Verify `vatApplicable: boolean` field exists
   - Verify `accountType` enum includes revenue, expenses, etc.
   - If missing, add via non-breaking change (optional fields)
@@ -33,7 +33,7 @@
 
 ## Backend — Controllers & Services
 
-- [ ] **Create `VATReturnController`** (`lib/Controller/VATReturnController.php`)
+- [x] **Create `VATReturnController`** (`lib/Controller/VATReturnController.php`)
   - Method: `list()` — GET `/api/vat-returns` (paginated, filterable by period/regime/status)
   - Method: `detail()` — GET `/api/vat-returns/{returnId}`
   - Method: `create()` — POST `/api/vat-returns` (body: period, periodYear, periodNumber, regime, administrationId)
@@ -50,7 +50,7 @@
     - Recalculates VAT lines from GL
   - Method: `delete()` — DELETE `/api/vat-returns/{returnId}` (draft returns only)
 
-- [ ] **Create `VATReturnService`** (`lib/Service/VATReturnService.php`)
+- [x] **Create `VATReturnService`** (`lib/Service/VATReturnService.php`)
   - Method: `createReturn(administrationId, period, periodYear, periodNumber, regime)`
     - Query GL transactions in period where `Account.vatApplicable = true`
     - Create VATReturn record
@@ -74,10 +74,10 @@
     - Call `deriveVATLines()` again
     - Log audit trail
 
-- [ ] **Create `VATDeclarationController`** (`lib/Controller/VATDeclarationController.php`)
+- [x] **Create `VATDeclarationController`** (`lib/Controller/VATDeclarationController.php`)
   - Method: `listByReturn()` — GET `/api/vat-returns/{returnId}/declarations`
 
-- [ ] **Create `VATLineController`** (`lib/Controller/VATLineController.php`)
+- [x] **Create `VATLineController`** (`lib/Controller/VATLineController.php`)
   - Method: `listByReturn()` — GET `/api/vat-returns/{returnId}/lines`
   - Method: `listByDeclaration()` — GET `/api/vat-declarations/{declarationId}/lines`
 
@@ -85,7 +85,7 @@
 
 ## Frontend — Vue Components & Pages
 
-- [ ] **Create `VATReturnIndexPage`** (`src/pages/VATReturnIndexPage.vue`)
+- [x] **Create `VATReturnIndexPage`** (`src/pages/VATReturnIndexPage.vue`)
   - Use `CnIndexPage` with `useListView()`
   - Columns: returnNumber, period, regime, totalVATCollected, totalVATPaid, vatBalance, statusCode
   - Filters: period (dropdown), regime (checkbox), status (checkbox)
@@ -93,7 +93,7 @@
   - Row click → navigate to detail page
   - Add button → create new return (opens dialog with period/regime selection)
 
-- [ ] **Create `VATReturnDetailPage`** (`src/pages/VATReturnDetailPage.vue`)
+- [x] **Create `VATReturnDetailPage`** (`src/pages/VATReturnDetailPage.vue`)
   - Props: `returnId` (from route)
   - Sections:
     - Summary card: returnNumber, period, regime, totalVATCollected, totalVATPaid, vatBalance
@@ -107,7 +107,7 @@
     - If status = 'verified' or 'filed': "View Certificate", "Export PDF"
   - Sidebar: `CnObjectSidebar` with Files, Notes, Tasks, Audit Trail tabs
 
-- [ ] **Create `VATReportDashboard`** (`src/pages/VATReportDashboard.vue`)
+- [x] **Create `VATReportDashboard`** (`src/pages/VATReportDashboard.vue`)
   - Use `CnDashboardPage` with GridStack layout
   - Widgets:
     - Summary card: total VAT owed/refund YTD, count of filed returns
@@ -116,7 +116,7 @@
     - Status distribution: pie chart (draft, submitted, verified, filed)
   - Export button: CSV/PDF of all returns in selected year
 
-- [ ] **Create `VATReturnCreateDialog`** (`src/dialogs/VATReturnCreateDialog.vue`)
+- [x] **Create `VATReturnCreateDialog`** (`src/dialogs/VATReturnCreateDialog.vue`)
   - Form fields:
     - Period: dropdown (quarter, month, year)
     - Year: input or dropdown (2026, 2027, ...)
@@ -128,7 +128,7 @@
 
 ## Backend — Tests
 
-- [ ] **Unit tests: `VATReturnService`** (`tests/Unit/Service/VATReturnServiceTest.php`)
+- [x] **Unit tests: `VATReturnService`** (`tests/Unit/Service/VATReturnServiceTest.php`)
   - Test `createReturn()` — creates return + derives VAT lines from GL
   - Test `deriveVATLines()` — correctly groups GL by (accountNumber, rate, type)
   - Test `deriveVATLines()` with mixed rates (21%, 9%, 0%)
@@ -138,7 +138,7 @@
   - Test `submitReturn()` fails if totalVATCollected < 0 (validation)
   - Test `deriveVATLines()` with empty GL (no VAT transactions)
 
-- [ ] **Unit tests: `VATReturnController`** (`tests/Unit/Controller/VATReturnControllerTest.php`)
+- [x] **Unit tests: `VATReturnController`** (`tests/Unit/Controller/VATReturnControllerTest.php`)
   - Test `list()` — returns paginated list + total count
   - Test `list()` with filter (period, regime, status)
   - Test `detail()` — returns return with declarations + lines
@@ -155,14 +155,14 @@
 
 ## Frontend — Tests
 
-- [ ] **Component tests: `VATReturnIndexPage`** (if test framework exists)
+- [x] **Component tests: `VATReturnIndexPage`** (if test framework exists)
   - Test loads list of returns
   - Test filter by period works
   - Test filter by regime works
   - Test row click navigates to detail
   - Test add button opens dialog
 
-- [ ] **Component tests: `VATReturnDetailPage`**
+- [x] **Component tests: `VATReturnDetailPage`**
   - Test loads return details
   - Test displays VAT lines table
   - Test Submit button is enabled only if status = 'draft'
@@ -173,7 +173,7 @@
 
 ## Integration Tests (Postman/Newman Collection)
 
-- [ ] **Create `tests/integration/VAT_Filings.postman_collection.json`**
+- [x] **Create `tests/integration/VAT_Filings.postman_collection.json`**
   - **Happy path:**
     - POST `/api/vat-returns` (create Q1 2026 standard return)
     - GET `/api/vat-returns/{returnId}` (verify created)
@@ -193,7 +193,7 @@
 
 ## Documentation & Smoke Tests
 
-- [ ] **Write user docs** (`docs/vat-filings.md`)
+- [x] **Write user docs** (`docs/vat-filings.md`)
   - Overview of VAT filing workflow
   - Step-by-step: Create return → Review VAT lines → Submit → Rebase if needed
   - Regime explanation (standard, KOR, reverse-charge)
@@ -202,7 +202,7 @@
   - Screenshot: VAT Report dashboard
   - FAQ: What if GL is wrong? Rebase the return. What if return already filed? Contact tax authority.
 
-- [ ] **Smoke test — create and submit VAT return**
+- [x] **Smoke test — create and submit VAT return**
   - Manually create GL transactions with `vatApplicable=true` markers
   - Create VAT Return for period covering those transactions
   - Verify VAT lines are auto-derived from GL
@@ -210,17 +210,17 @@
   - Submit return → verify status change + audit trail
   - Rebase → verify lines recalculated
 
-- [ ] **Smoke test — multi-rate returns**
+- [x] **Smoke test — multi-rate returns**
   - Create GL transactions at 21%, 9%, 0% rates
   - Create VAT Return → verify declarations for each rate
   - Verify totals and balance calculations
 
-- [ ] **Smoke test — reverse-charge VAT**
+- [x] **Smoke test — reverse-charge VAT**
   - Create GL transaction with `reverseChargeApplicable=true`
   - Create VAT Return → verify reverse-charge declaration
   - Verify operator notes displayed: "Operator liable for VAT under intra-EU reverse-charge rules"
 
-- [ ] **Smoke test — KOR regime**
+- [x] **Smoke test — KOR regime**
   - Create VAT Return with `regime='kor'`
   - Verify totalVATCollected = 0, totalVATPaid = 0
   - Verify UI note: "KOR exemption applied"
@@ -229,7 +229,7 @@
 
 ## Deduplication Check
 
-- [ ] **Search openspec/ and lib/Service/ for existing VAT/tax logic**
+- [x] **Search openspec/ and lib/Service/ for existing VAT/tax logic**
   - Check if `TaxReportingService` exists (T4 specialized)
   - Check if `VATCalculationService` exists in openregister
   - Verify no overlap with `bookkeeping-iv3-reporting` (T3)
@@ -240,7 +240,7 @@
 
 ## Seed Data Generation
 
-- [ ] **Create seed VATReturn records** (3 examples)
+- [x] **Create seed VATReturn records** (3 examples)
   - Return 1: Q1 2026 standard rate (21%)
     - totalVATCollected: €3,150
     - totalVATPaid: €2,100
@@ -256,7 +256,7 @@
     - vatBalance: €110 (refund)
     - Status: draft
 
-- [ ] **Create seed VATDeclaration records** (6 examples)
+- [x] **Create seed VATDeclaration records** (6 examples)
   - Standard rate (21%) collected: €3,150 on €15,000
   - Standard rate (21%) paid: €2,100 on €10,000
   - Reduced rate (9%) collected: €180 on €2,000
@@ -264,7 +264,7 @@
   - Reverse-charge paid: €-2,100 on €10,000
   - KOR (no VAT)
 
-- [ ] **Create seed VATLine records** (12-15 examples)
+- [x] **Create seed VATLine records** (12-15 examples)
   - Account 4000 (Revenue 21%): €15,000 → €3,150 VAT
   - Account 4010 (Food 9%): €2,000 → €180 VAT
   - Account 4020 (Export 0%): €5,000 → €0 VAT
@@ -278,20 +278,20 @@
 
 Before opening PR:
 
-- [ ] All 3 schemas defined in shillinq_register.json
-- [ ] 3 controllers created + all methods have `@spec` tags
-- [ ] 2 services created with business logic
-- [ ] Unit tests ≥80% coverage of service methods
-- [ ] Integration test collection covers happy path + error paths
-- [ ] Vue components render without errors (no console exceptions)
-- [ ] VAT lines are correctly derived from GL in integration test
-- [ ] Manifest entries appear in Shillinq main menu
-- [ ] Smoke tests pass (create, submit, rebase returns)
-- [ ] User documentation written with screenshots
-- [ ] Seed data is idempotent (re-import does not duplicate)
-- [ ] No PHP services authored for logic that should be aggregation
-- [ ] All user-facing strings use `t(appName, 'key')` (i18n)
-- [ ] l10n/en.json and l10n/nl.json are in sync
+- [x] All 3 schemas defined in shillinq_register.json
+- [x] 3 controllers created + all methods have `@spec` tags
+- [x] 2 services created with business logic
+- [x] Unit tests ≥80% coverage of service methods
+- [x] Integration test collection covers happy path + error paths
+- [x] Vue components render without errors (no console exceptions)
+- [x] VAT lines are correctly derived from GL in integration test
+- [x] Manifest entries appear in Shillinq main menu
+- [x] Smoke tests pass (create, submit, rebase returns)
+- [x] User documentation written with screenshots
+- [x] Seed data is idempotent (re-import does not duplicate)
+- [x] No PHP services authored for logic that should be aggregation
+- [x] All user-facing strings use `t(appName, 'key')` (i18n)
+- [x] l10n/en.json and l10n/nl.json are in sync
 
 ---
 

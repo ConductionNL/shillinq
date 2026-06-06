@@ -38,6 +38,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -55,11 +56,13 @@ class VATLineController extends Controller
      *
      * @param IRequest           $request   The request object.
      * @param ContainerInterface $container DI container for OR's ObjectService.
+     * @param IUserSession       $session   User session for the authentication guard.
      * @param LoggerInterface    $logger    Logger.
      */
     public function __construct(
         IRequest $request,
         private readonly ContainerInterface $container,
+        private readonly IUserSession $session,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -77,6 +80,10 @@ class VATLineController extends Controller
     #[NoAdminRequired]
     public function listByReturn(string $returnId): JSONResponse
     {
+        if ($this->session->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
+
         if ($this->validId(id: $returnId) === false) {
             return new JSONResponse(['error' => 'returnId is required'], Http::STATUS_BAD_REQUEST);
         }
@@ -97,6 +104,10 @@ class VATLineController extends Controller
     #[NoAdminRequired]
     public function listByDeclaration(string $declarationId): JSONResponse
     {
+        if ($this->session->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
+
         if ($this->validId(id: $declarationId) === false) {
             return new JSONResponse(['error' => 'declarationId is required'], Http::STATUS_BAD_REQUEST);
         }

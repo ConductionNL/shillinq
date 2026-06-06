@@ -89,6 +89,13 @@ final class VATReturnControllerTest extends TestCase
     private VATReturnController $controller;
 
     /**
+     * Currently-authenticated user (mutable across a single test).
+     *
+     * @var IUser|null
+     */
+    private ?IUser $currentUser = null;
+
+    /**
      * Set up fixtures.
      *
      * @return void
@@ -108,6 +115,13 @@ final class VATReturnControllerTest extends TestCase
             session: $this->session,
             logger: $this->logger,
         );
+
+        // Bind the session once to a mutable reference; tests can override the
+        // current user mid-test via withUser() without re-stubbing the mock.
+        $this->session->method('getUser')->willReturnCallback(
+            fn (): ?IUser => $this->currentUser
+        );
+        $this->withUser(uid: 'admin');
 
     }//end setUp()
 
@@ -152,7 +166,7 @@ final class VATReturnControllerTest extends TestCase
     {
         $user = $this->createMock(IUser::class);
         $user->method('getUID')->willReturn($uid);
-        $this->session->method('getUser')->willReturn($user);
+        $this->currentUser = $user;
 
     }//end withUser()
 

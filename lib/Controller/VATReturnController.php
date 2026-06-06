@@ -93,6 +93,10 @@ class VATReturnController extends Controller
     #[NoAdminRequired]
     public function index(): JSONResponse
     {
+        if ($this->session->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
+
         $filters = $this->buildListFilters();
         $page    = max(1, (int) $this->request->getParam('_page', 1));
         $limit   = max(1, min(200, (int) $this->request->getParam('_limit', 25)));
@@ -142,6 +146,10 @@ class VATReturnController extends Controller
     #[NoAdminRequired]
     public function show(string $returnId): JSONResponse
     {
+        if ($this->session->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
+
         if ($this->validId(id: $returnId) === false) {
             return new JSONResponse(['error' => 'returnId is required'], Http::STATUS_BAD_REQUEST);
         }
@@ -191,6 +199,10 @@ class VATReturnController extends Controller
     #[NoAdminRequired]
     public function create(): JSONResponse
     {
+        if ($this->session->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
+
         $administrationId = trim((string) $this->request->getParam('administrationId', ''));
         $period           = trim((string) $this->request->getParam('period', 'quarter'));
         $periodYear       = (int) $this->request->getParam('periodYear', 0);
@@ -258,6 +270,10 @@ class VATReturnController extends Controller
     #[NoAdminRequired]
     public function update(string $returnId): JSONResponse
     {
+        if ($this->session->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
+
         if ($this->validId(id: $returnId) === false) {
             return new JSONResponse(['error' => 'returnId is required'], Http::STATUS_BAD_REQUEST);
         }
@@ -305,6 +321,10 @@ class VATReturnController extends Controller
     #[NoAdminRequired]
     public function submit(string $returnId): JSONResponse
     {
+        if ($this->session->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
+
         if ($this->validId(id: $returnId) === false) {
             return new JSONResponse(['error' => 'returnId is required'], Http::STATUS_BAD_REQUEST);
         }
@@ -340,6 +360,10 @@ class VATReturnController extends Controller
     #[NoAdminRequired]
     public function rebase(string $returnId): JSONResponse
     {
+        if ($this->session->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
+
         if ($this->validId(id: $returnId) === false) {
             return new JSONResponse(['error' => 'returnId is required'], Http::STATUS_BAD_REQUEST);
         }
@@ -375,6 +399,10 @@ class VATReturnController extends Controller
     #[NoAdminRequired]
     public function destroy(string $returnId): JSONResponse
     {
+        if ($this->session->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
+
         if ($this->validId(id: $returnId) === false) {
             return new JSONResponse(['error' => 'returnId is required'], Http::STATUS_BAD_REQUEST);
         }
