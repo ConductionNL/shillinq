@@ -38,6 +38,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -60,6 +61,7 @@ class PayrollController extends Controller
      *
      * @param IRequest        $request        The request object.
      * @param PayrollService  $payrollService The payroll computation service.
+     * @param IUserSession    $userSession    User session for authentication guard.
      * @param LoggerInterface $logger         Logger (no stack traces to client, no raw BSN).
      *
      * @return void
@@ -67,6 +69,7 @@ class PayrollController extends Controller
     public function __construct(
         IRequest $request,
         private readonly PayrollService $payrollService,
+        private readonly IUserSession $userSession,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -85,6 +88,10 @@ class PayrollController extends Controller
     #[NoAdminRequired]
     public function loonstrook(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
+
         $administrationId = $this->scopeParam(name: 'administration_id');
         $werknemerId      = $this->scopeParam(name: 'werknemer_id');
         $periodeId        = $this->scopeParam(name: 'periode_id');
@@ -132,6 +139,10 @@ class PayrollController extends Controller
     #[NoAdminRequired]
     public function lhAfdracht(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
+
         $administrationId = $this->scopeParam(name: 'administration_id');
         $periodeId        = $this->scopeParam(name: 'periode_id');
 
@@ -175,6 +186,10 @@ class PayrollController extends Controller
     #[NoAdminRequired]
     public function journaalpost(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
+
         $administrationId = $this->scopeParam(name: 'administration_id');
         $periodeId        = $this->scopeParam(name: 'periode_id');
 

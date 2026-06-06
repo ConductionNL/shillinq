@@ -27,6 +27,8 @@ use OCA\Shillinq\Service\PayrollService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUser;
+use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -57,6 +59,13 @@ final class PayrollControllerTest extends TestCase
     private PayrollService&MockObject $service;
 
     /**
+     * Mock IUserSession.
+     *
+     * @var IUserSession&MockObject
+     */
+    private IUserSession&MockObject $userSession;
+
+    /**
      * Mock LoggerInterface.
      *
      * @var LoggerInterface&MockObject
@@ -78,12 +87,16 @@ final class PayrollControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->request    = $this->createMock(IRequest::class);
-        $this->service    = $this->createMock(PayrollService::class);
-        $this->logger     = $this->createMock(LoggerInterface::class);
+        $this->request     = $this->createMock(IRequest::class);
+        $this->service     = $this->createMock(PayrollService::class);
+        $this->logger      = $this->createMock(LoggerInterface::class);
+        $this->userSession = $this->createMock(IUserSession::class);
+        $user = $this->createMock(IUser::class);
+        $this->userSession->method('getUser')->willReturn($user);
         $this->controller = new PayrollController(
             request: $this->request,
             payrollService: $this->service,
+            userSession: $this->userSession,
             logger: $this->logger,
         );
 
