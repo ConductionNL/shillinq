@@ -41,12 +41,7 @@
   - `validateConfirmationToken(token: string): Promise<Appointment>` — dry-run validation
   - `confirmAppointment(appointmentId: string, token: string): Promise<Appointment>` — confirm endpoint
   - `resendConfirmationEmail(appointmentId: string): Promise<{message}>` — resend endpoint
-- [ ] Task 15: Implement `lib/BackgroundJob/CancelUnconfirmedAppointments.php` per REQ-BCF-005 that:
-  - Runs daily (configurable in `CronJob` registration)
-  - Queries appointments with status=`pending_confirmation` and confirmationDeadline < now
-  - Updates each to status=`cancelled`, sets cancelledReason="Confirmation deadline passed"
-  - Logs cancellation in auditTrail (actor: system)
-  - Optionally sends cancellation notification to customer (if template exists)
+- [x] Task 15: Implement `lib/Cron/CancelUnconfirmedAppointmentsJob.php` per REQ-BCF-005 — daily TimedJob (86400s interval, TIME_INSENSITIVE, no parallel runs) that calls `ObjectService::findAll` for status=`pending_confirmation`, compares each record's `confirmationDeadline` to `ITimeFactory::getDateTime()`, and updates expired ones to status=`cancelled` with `cancelledReason="Confirmation deadline passed"`. Fail-soft: per-record exception logs and continues. Registered in `appinfo/info.xml` under `<background-jobs>`. App version bumped to 0.5.0 per immutable-cache-bust rule.
 - [ ] Task 16: Extend `src/manifest.json` per REQ-BCF-007:
   - Add navigation entry `Confirmations` (admin-only view showing pending confirmations with expiration warning)
   - Add modal action from appointment detail page: "Resend confirmation email" button
