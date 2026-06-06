@@ -7,7 +7,10 @@
 
 ## ADDED Requirements
 
-### REQ-BNT-001: Four trigger types SHALL be supported for booking lifecycle events
+### Requirement: REQ-BNT-001 — Four trigger types SHALL be supported for booking lifecycle events
+
+The system SHALL support four trigger types for booking lifecycle events:
+`booking.created`, `booking.changed`, `booking.cancelled`, and `booking.reminder`.
 
 Booking notifications are triggered by four events:
 - `booking.created` — when a new booking is made
@@ -51,7 +54,11 @@ Each trigger type MUST carry an event payload containing:
 - **WHEN** the background job runs at 2026-05-31 09:00 (24 hours before)
 - **THEN** the `booking.reminder` event MUST be emitted with `hoursUntilEvent: 24`
 
-### REQ-BNT-002: Notification templates SHALL support variable substitution for booking context
+### Requirement: REQ-BNT-002 — Notification templates SHALL support variable substitution for booking context
+
+The system SHALL render notification subject and body templates with Twig-style
+`{{ variable }}` substitution and SHALL render undefined variables as empty
+strings rather than errors.
 
 Notification templates are stored as `BookingNotificationTemplate` register
 entities with fields:
@@ -89,7 +96,11 @@ Variables not present in the booking MUST be rendered as empty string, not error
 - **WHEN** the template is rendered for a booking where location is null
 - **THEN** the subject MUST render as "Locatie: " (empty, not error)
 
-### REQ-BNT-003: Notifications SHALL target recipients based on configurable rules
+### Requirement: REQ-BNT-003 — Notifications SHALL target recipients based on configurable rules
+
+The system SHALL resolve recipients by evaluating each trigger's ordered rule list
+against the booking payload at dispatch time, skipping any rule whose `condition`
+expression is false.
 
 Each trigger defines a `recipients` rule list, evaluated in order:
 ```yaml
@@ -128,7 +139,10 @@ evaluated against the booking object. If condition is false, the rule is skipped
 - **WHEN** a booking with price €50 is created
 - **THEN** the admin_group rule MUST be skipped (condition false)
 
-### REQ-BNT-004: Notifications SHALL be routed through openconnector channel adapters
+### Requirement: REQ-BNT-004 — Notifications SHALL be routed through openconnector channel adapters
+
+The system SHALL dispatch every notification through openconnector channel
+adapters and SHALL fall back to the next configured channel on adapter failure.
 
 When a notification is sent, the dispatcher:
 1. Selects the recipient address (email, phone, or chat ID)
@@ -164,7 +178,10 @@ POST /openconnector/api/notifications/send
 - **WHEN** the email adapter returns error (e.g., SMTP unavailable)
 - **THEN** the system MUST automatically retry via SMS adapter
 
-### REQ-BNT-005: Every notification dispatch SHALL be recorded in audit trail
+### Requirement: REQ-BNT-005 — Every notification dispatch SHALL be recorded in audit trail
+
+The system SHALL record every notification dispatch attempt — sent, failed,
+skipped, or queued — as an immutable `NotificationDelivery` audit event.
 
 Per ADR-022, every notification send is recorded as a named audit event in
 OpenRegister with fields:
@@ -194,7 +211,10 @@ The audit record MUST be tamper-evident (hash-chained per OR standard).
 - **WHEN** all retry attempts are exhausted
 - **THEN** the audit event MUST record status "failed", failureReason: "SMTP connection timeout", retryCount: 3
 
-### REQ-BNT-006: Rate-limiting SHALL prevent notification storms
+### Requirement: REQ-BNT-006 — Rate-limiting SHALL prevent notification storms
+
+The system SHALL enforce per-booking and per-organizer rate-limits and SHALL
+deduplicate repeated dispatches of the same trigger to the same recipient.
 
 Notifications are rate-limited to prevent bulk sends on misconfiguration:
 - Maximum 10 notifications per booking per hour (calendar hour, UTC)
@@ -217,7 +237,7 @@ queued for manual review.
 - **WHEN** the same trigger fires again at 10:02 (duplicate event)
 - **THEN** the second notification MUST be skipped (deduplicated within 5 min window)
 
-### REQ-BNT-007: Notification configuration SHALL be accessible via modals on booking detail pages
+### Requirement: REQ-BNT-007 — Notification configuration SHALL be accessible via modals on booking detail pages
 
 The booking detail page (type: detail) MUST include a modal launcher for
 trigger configuration:
@@ -249,7 +269,11 @@ the app settings modal, accessible by admins only.
 - **WHEN** the organizer clicks Save
 - **THEN** the trigger configuration MUST be persisted and the modal MUST close
 
-### REQ-BNT-008: Admin dashboard SHALL monitor trigger activity and allow disable/reset
+### Requirement: REQ-BNT-008 — Admin dashboard SHALL monitor trigger activity and allow disable/reset
+
+The system SHALL expose an admin monitor surface that displays delivery counts,
+failure alerts, and a global disable-all toggle, and SHALL load within two
+seconds.
 
 An admin dashboard surface (Settings > Bookings > Notification Monitor)
 displays:
@@ -268,7 +292,11 @@ The dashboard MUST load in <2s and refresh data every 5 minutes.
 - **WHEN** the page loads
 - **THEN** the dashboard MUST display send counts, failure alerts, and enable the disable-all toggle
 
-### REQ-BNT-009: Recipient preferences and opt-out MUST be checked before send
+### Requirement: REQ-BNT-009 — Recipient preferences and opt-out MUST be checked before send
+
+The system MUST check recipient opt-out preferences before every dispatch and
+MUST skip the send (recording it as `skipped (opt-out)` in the audit trail) when
+the recipient has opted out of the trigger type or channel.
 
 Before sending a notification:
 1. Check if recipient has opted out of notifications globally or by trigger type
