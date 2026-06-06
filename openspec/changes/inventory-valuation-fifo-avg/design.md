@@ -1,5 +1,7 @@
 # Design — Inventory Valuation (FIFO + moving-average)
 
+**Status:** pr-created
+
 ## Context
 
 Shillinq's inventory sub-ledger tracks stock movements via the upstream
