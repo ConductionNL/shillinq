@@ -48,7 +48,7 @@
 
 - [x] **Task 15:** Shipped `lib/Settings/seeds/inventory-barcodes-demo.json` with the five Dutch retail barcode examples from `design.md` (pet food unit/carton/pallet — EAN/GTIN/SSCC — and dietary supplement internal/UPC). Extended `SettingsService::seedInventoryBarcodes()` to read the file and import via `ObjectService` (ADR-022 fluent API), deduplicating on `(barcode, uomCode)` so re-runs never create duplicates per REQ-SKU-011. Wired into `InitializeSettings` as **Phase 10**, executed after the Phase 9 reimbursement seed. Seeded SKUs reference the existing `inventory-product-catalog` demo products (DV-KAT-SENIOR-2KG, VIT-C-1000MG-100CT) — when those are absent the barcodes still load and become discoverable once the products land.
 
-- [ ] **Task 16:** Update `openspec/architecture/adr-000-data-model.md` with a new entity entry for `Barcode` (primary spec reference: `inventory-barcode-sku`, Schema.org type: `schema:Product`, core fields listed); include a note on the additive `skuTemplate`, `defaultBarcode`, `barcodeFormat` fields on `InventoryItem`
+- [x] **Task 16:** Added a `### Barcode` entity entry to `openspec/architecture/adr-000-data-model.md` (Schema.org `schema:Product`, Primary spec: `inventory-barcode-sku`) with the full property table, `→ Product` many-to-one relation, the `(productSku, barcodeType, uomCode)` uniqueness note, and a closing block flagging the three additive fields on the existing `Product` entry (`skuTemplate`, `defaultBarcode`, `barcodeFormat`) so future readers find the cross-reference.
 
 - [ ] **Task 17:** Confirm the barcode lookup endpoint is documented in `docs/api/barcode-lookup.md` (or equivalent) with curl examples and response schema for downstream consumers (pipelinq POS module)
 
