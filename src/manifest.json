@@ -236,6 +236,7 @@
 				{
 					"id": "WarehouseLocations",
 					"label": "Warehouse Locations",
+					"labelNl": "Magazijnlocaties",
 					"icon": "WarehouseOutline",
 					"route": "WarehouseLocations",
 					"order": 30
@@ -243,6 +244,7 @@
 				{
 					"id": "InterWarehouseTransfers",
 					"label": "Inter-Warehouse Transfers",
+					"labelNl": "Magazijntransfers",
 					"icon": "TruckDeliveryOutline",
 					"route": "InterWarehouseTransfers",
 					"order": 40
@@ -250,7 +252,8 @@
 				{
 					"id": "InTransitInventory",
 					"label": "In-Transit Inventory",
-					"icon": "TransitTransfer",
+					"labelNl": "Onderweg-voorraad",
+					"icon": "TruckOutline",
 					"route": "InTransitInventory",
 					"order": 50
 				}
@@ -6838,18 +6841,20 @@
 			"route": "/inventory/warehouse-locations",
 			"type": "index",
 			"title": "Warehouse Locations",
+			"titleNl": "Magazijnlocaties",
 			"config": {
 				"register": "shillinq",
 				"schema": "Location",
 				"columns": [
 					{
-						"key": "code",
+						"key": "locationCode",
 						"label": "Code",
 						"sortable": true
 					},
 					{
 						"key": "name",
 						"label": "Name",
+						"labelNl": "Naam",
 						"sortable": true
 					},
 					{
@@ -6858,85 +6863,144 @@
 						"sortable": true
 					},
 					{
-						"key": "parentLocationId",
-						"label": "Parent",
+						"key": "hierarchyPath",
+						"label": "Path",
 						"sortable": false
 					},
 					{
 						"key": "status",
 						"label": "Status",
 						"sortable": true
+					},
+					{
+						"key": "childCount",
+						"label": "Children",
+						"sortable": false
 					}
 				],
-				"defaultSort": "code",
 				"filters": [
+					{
+						"key": "name",
+						"label": "Name"
+					},
 					{
 						"key": "locationType",
 						"label": "Type",
-						"type": "select",
 						"options": [
-							"warehouse",
-							"zone",
-							"bin",
-							"in-transit"
+							{
+								"value": "warehouse",
+								"label": "Warehouse"
+							},
+							{
+								"value": "zone",
+								"label": "Zone"
+							},
+							{
+								"value": "bin",
+								"label": "Bin"
+							},
+							{
+								"value": "in-transit",
+								"label": "In-Transit"
+							}
 						]
 					},
 					{
 						"key": "status",
 						"label": "Status",
-						"type": "select",
 						"options": [
-							"active",
-							"inactive",
-							"archived"
+							{
+								"value": "active",
+								"label": "Active"
+							},
+							{
+								"value": "inactive",
+								"label": "Inactive"
+							}
 						]
 					}
 				],
-				"detailRoute": "WarehouseLocationDetail"
+				"defaultSort": "locationCode",
+				"detailRoute": "WarehouseLocationDetail",
+				"hierarchyView": {
+					"enabled": true,
+					"parentField": "parentLocationId",
+					"rootFilter": {
+						"locationType": "warehouse"
+					}
+				}
 			}
 		},
 		{
 			"id": "WarehouseLocationDetail",
 			"route": "/inventory/warehouse-locations/:id",
 			"type": "detail",
-			"title": "Warehouse Location",
+			"title": "Location",
+			"titleNl": "Locatie",
 			"config": {
 				"register": "shillinq",
 				"schema": "Location",
 				"fields": [
 					{
-						"key": "code",
-						"label": "Location Code",
+						"key": "name",
+						"label": "Name",
+						"labelNl": "Naam",
 						"type": "string"
 					},
 					{
-						"key": "name",
-						"label": "Name",
-						"type": "string"
+						"key": "locationCode",
+						"label": "Code",
+						"type": "string",
+						"readonly": true
 					},
 					{
 						"key": "locationType",
 						"label": "Type",
-						"type": "string"
+						"type": "enum"
+					},
+					{
+						"key": "hierarchyPath",
+						"label": "Hierarchy Path",
+						"type": "computed"
 					},
 					{
 						"key": "parentLocationId",
 						"label": "Parent Location",
-						"type": "string"
+						"type": "relation",
+						"relatedSchema": "Location"
 					},
 					{
 						"key": "address",
 						"label": "Address",
+						"labelNl": "Adres",
 						"type": "string"
 					},
 					{
 						"key": "region",
 						"label": "Region",
+						"labelNl": "Regio",
 						"type": "string"
 					},
 					{
 						"key": "status",
 						"label": "Status",
+						"type": "enum"
+					},
+					{
+						"key": "capacity",
+						"label": "Capacity",
+						"labelNl": "Capaciteit",
+						"type": "number"
+					},
+					{
+						"key": "capacityUnit",
+						"label": "Capacity Unit",
+						"type": "string"
+					},
+					{
+						"key": "notes",
+						"label": "Notes",
+						"labelNl": "Notities",
 						"type": "string"
 					},
 					{
@@ -6945,7 +7009,74 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "WarehouseLocations"
+				"sections": [
+					{
+						"id": "location-info",
+						"title": "Location Details",
+						"titleNl": "Locatiedetails",
+						"fields": [
+							"name",
+							"locationCode",
+							"locationType",
+							"hierarchyPath",
+							"parentLocationId",
+							"address",
+							"region",
+							"status",
+							"notes"
+						]
+					},
+					{
+						"id": "stock-info",
+						"title": "Stock Summary",
+						"titleNl": "Voorraadoverzicht",
+						"type": "aggregation",
+						"aggregation": "stockRollup",
+						"note": "Stock aggregated from all descendant bin locations per REQ-LOC-005."
+					},
+					{
+						"id": "children-list",
+						"title": "Child Locations",
+						"titleNl": "Onderliggende locaties",
+						"type": "related",
+						"relatedSchema": "Location",
+						"filter": {
+							"parentLocationId": "@self.id"
+						}
+					},
+					{
+						"id": "audit-trail",
+						"title": "Audit Trail",
+						"titleNl": "Auditspoor",
+						"type": "auditTrail"
+					}
+				],
+				"actions": [
+					{
+						"id": "edit",
+						"label": "Edit",
+						"labelNl": "Bewerken"
+					},
+					{
+						"id": "deactivate",
+						"label": "Deactivate",
+						"labelNl": "Deactiveren",
+						"transition": "deactivate"
+					},
+					{
+						"id": "archive",
+						"label": "Archive",
+						"labelNl": "Archiveren",
+						"transition": "archive"
+					},
+					{
+						"id": "bulkImport",
+						"label": "Bulk Import CSV",
+						"labelNl": "Bulk import CSV",
+						"type": "massImport",
+						"schema": "Location"
+					}
+				]
 			}
 		},
 		{
@@ -6953,50 +7084,188 @@
 			"route": "/inventory/transfers",
 			"type": "index",
 			"title": "Inter-Warehouse Transfers",
+			"titleNl": "Magazijntransfers",
 			"config": {
 				"register": "shillinq",
-				"schema": "InventoryStockMove",
+				"schema": "InventoryStockTransfer",
 				"columns": [
+					{
+						"key": "transferNumber",
+						"label": "Transfer #",
+						"sortable": true
+					},
+					{
+						"key": "sku",
+						"label": "SKU",
+						"sortable": true
+					},
 					{
 						"key": "sourceLocationId",
 						"label": "From",
+						"labelNl": "Van",
 						"sortable": true
 					},
 					{
 						"key": "destinationLocationId",
 						"label": "To",
+						"labelNl": "Naar",
 						"sortable": true
 					},
 					{
 						"key": "quantity",
 						"label": "Quantity",
+						"labelNl": "Hoeveelheid",
+						"sortable": true
+					},
+					{
+						"key": "scheduledDate",
+						"label": "Scheduled",
+						"labelNl": "Gepland",
 						"sortable": true
 					},
 					{
 						"key": "status",
 						"label": "Status",
 						"sortable": true
-					},
-					{
-						"key": "createdAt",
-						"label": "Date",
-						"sortable": true
 					}
 				],
-				"defaultSort": "createdAt",
 				"filters": [
 					{
+						"key": "sourceLocationId",
+						"label": "Source Warehouse"
+					},
+					{
+						"key": "destinationLocationId",
+						"label": "Destination Warehouse"
+					},
+					{
 						"key": "status",
 						"label": "Status",
-						"type": "select",
 						"options": [
-							"draft",
-							"posted",
-							"cancelled"
+							{
+								"value": "draft",
+								"label": "Draft"
+							},
+							{
+								"value": "confirmed",
+								"label": "Confirmed"
+							},
+							{
+								"value": "in-transit",
+								"label": "In Transit"
+							},
+							{
+								"value": "received",
+								"label": "Received"
+							},
+							{
+								"value": "cancelled",
+								"label": "Cancelled"
+							}
 						]
+					},
+					{
+						"key": "scheduledDate",
+						"label": "Date Range",
+						"type": "dateRange"
 					}
 				],
+				"defaultSort": "-scheduledDate",
 				"detailRoute": "InterWarehouseTransferDetail"
+			}
+		},
+		{
+			"id": "InterWarehouseTransferDetail",
+			"route": "/inventory/transfers/:id",
+			"type": "detail",
+			"title": "Transfer",
+			"titleNl": "Transfer",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryStockTransfer",
+				"fields": [
+					{
+						"key": "transferNumber",
+						"label": "Transfer #",
+						"type": "string"
+					},
+					{
+						"key": "sku",
+						"label": "SKU",
+						"type": "string"
+					},
+					{
+						"key": "sourceLocationId",
+						"label": "From Location",
+						"type": "relation",
+						"relatedSchema": "Location"
+					},
+					{
+						"key": "destinationLocationId",
+						"label": "To Location",
+						"type": "relation",
+						"relatedSchema": "Location"
+					},
+					{
+						"key": "quantity",
+						"label": "Quantity",
+						"labelNl": "Hoeveelheid",
+						"type": "number"
+					},
+					{
+						"key": "scheduledDate",
+						"label": "Scheduled Date",
+						"type": "date"
+					},
+					{
+						"key": "completedDate",
+						"label": "Completed Date",
+						"type": "date"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "enum"
+					},
+					{
+						"key": "glPosted",
+						"label": "GL Posted",
+						"labelNl": "GL geboekt",
+						"type": "boolean"
+					},
+					{
+						"key": "notes",
+						"label": "Notes",
+						"labelNl": "Notities",
+						"type": "string"
+					}
+				],
+				"actions": [
+					{
+						"id": "confirm",
+						"label": "Confirm",
+						"labelNl": "Bevestigen",
+						"transition": "confirm"
+					},
+					{
+						"id": "ship",
+						"label": "Mark as Shipped",
+						"labelNl": "Markeren als verzonden",
+						"transition": "ship"
+					},
+					{
+						"id": "receive",
+						"label": "Mark as Received",
+						"labelNl": "Ontvangen",
+						"transition": "receive"
+					},
+					{
+						"id": "cancel",
+						"label": "Cancel",
+						"labelNl": "Annuleren",
+						"transition": "cancel"
+					}
+				]
 			}
 		},
 		{
@@ -7004,37 +7273,67 @@
 			"route": "/inventory/in-transit",
 			"type": "index",
 			"title": "In-Transit Inventory",
+			"titleNl": "Onderweg-voorraad",
 			"config": {
 				"register": "shillinq",
-				"schema": "InventoryStock",
+				"schema": "InventoryStockTransfer",
+				"filter": {
+					"status": "in-transit"
+				},
 				"columns": [
 					{
-						"key": "locationId",
-						"label": "In-Transit Location",
+						"key": "sku",
+						"label": "SKU",
+						"sortable": true
+					},
+					{
+						"key": "sourceLocationId",
+						"label": "From Warehouse",
+						"labelNl": "Bronmagazijn",
+						"sortable": true
+					},
+					{
+						"key": "destinationLocationId",
+						"label": "To Warehouse",
+						"labelNl": "Doelmagazijn",
 						"sortable": true
 					},
 					{
 						"key": "quantity",
 						"label": "Quantity",
+						"labelNl": "Hoeveelheid",
 						"sortable": true
 					},
 					{
-						"key": "status",
-						"label": "Status",
+						"key": "scheduledDate",
+						"label": "ETA",
 						"sortable": true
+					},
+					{
+						"key": "daysInTransit",
+						"label": "Days In Transit",
+						"labelNl": "Dagen onderweg",
+						"sortable": false
 					}
 				],
-				"defaultSort": "locationId",
+				"groupBy": "sourceLocationId",
 				"filters": [
 					{
-						"key": "locationType",
-						"label": "Location Type",
-						"type": "select",
-						"options": [
-							"in-transit"
-						]
+						"key": "sourceLocationId",
+						"label": "Source Warehouse"
+					},
+					{
+						"key": "destinationLocationId",
+						"label": "Destination Warehouse"
+					},
+					{
+						"key": "sku",
+						"label": "SKU"
 					}
-				]
+				],
+				"defaultSort": "scheduledDate",
+				"detailRoute": "InterWarehouseTransferDetail",
+				"note": "Shows only in-transit transfers grouped by source → destination route per REQ-LOC-007."
 			}
 		}
 	]

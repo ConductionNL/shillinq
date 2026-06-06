@@ -2307,23 +2307,26 @@ _Product tracked in inventory with stock levels and sourcing information_
 
 ### InventoryStock
 **Schema.org:** `schema:Thing`
-_Stock levels, inventory tracking, and reorder management by location_
-**Primary spec:** procurement-integration
+_Stock level per SKU at a specific bin Location. Always recorded at bin (most-granular) level; warehouse/zone quantities are aggregated via Location.stockRollup per REQ-LOC-005 and REQ-LOC-009._
+**Primary spec:** inventory-multi-warehouse
+**Co-declaring spec:** procurement-integration (original generic shape)
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| sku | string | Yes | Stock Keeping Unit identifier |
-| quantity | number | Yes | Current stock quantity |
-| reorderLevel | number | No | Minimum quantity threshold for reorder trigger |
-| reorderQuantity | number | No | Standard reorder quantity |
-| location | string | No | Physical storage location or warehouse |
-| unitCost | number | No | Cost per unit |
-| lastRestockDate | datetime | No | Date of last stock replenishment |
-| status | string | Yes | Inventory status (active, inactive, discontinued) |
+| sku | string | Yes | Product SKU — references Product.sku |
+| locationId | string | Yes | FK to Location (must be bin type per REQ-LOC-009) |
+| quantity | number | Yes | On-hand stock quantity at this bin location |
+| reservedQuantity | number | No | Quantity reserved for pending orders |
+| unitCost | number | No | Unit cost at this location for inventory valuation |
+| lastMovementDate | date | No | Date of most recent stock movement |
+| administrationId | string | Yes | FK to Administration — scoped per org |
 
 **Relations:**
 - → Product (many-to-one)
+- → Location (many-to-one, locationId FK → bin-type Location)
 - → Organization (many-to-one)
+
+> **Reconciliation note (inventory-multi-warehouse, 2026-06-05):** Original `InventoryStock` (primary spec: procurement-integration) used a free-text `location` string. This entry supersedes it with `locationId` FK to the hierarchical Location entity per REQ-LOC-009. Warehouse/zone-level stock is computed via `Location.stockRollup` aggregation (declarative, no separate warehouse table). The `quantity` field is now bin-only; calls for warehouse-level totals must use the `stockRollup` aggregation endpoint.
 
 ### InventoryValuation
 **Schema.org:** `schema:Product`
@@ -2652,25 +2655,47 @@ _Daily/weekly/monthly cash flow projections for liquidity planning, including in
 
 ### Location
 **Schema.org:** `schema:Place`
-_Physical or virtual storage location in the inventory hierarchy (warehouse → zone → bin). Extended by inventory-multi-warehouse to support hierarchical warehouse organization, rollup stock visibility, and inter-location transfers per REQ-LOC-001–REQ-LOC-009._
-**Primary spec:** budget-planning-control, **extended by:** inventory-multi-warehouse
+_Physical or virtual storage location in the warehouse hierarchy (warehouse → zone → bin → in-transit). Extended from simple multi-site budget location to full hierarchical warehouse management per inventory-multi-warehouse spec._
+**Primary spec:** inventory-multi-warehouse
+**Co-declaring spec:** budget-planning-control (original simple Location shape)
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| name | string | Yes | Location name |
-| code | string | Yes | Location code unique per administration (e.g., W-01, Z-01, B-100); immutable after creation per REQ-LOC-002 |
-| address | string | No | Physical address (warehouse street/city) |
+| name | string | Yes | Human-readable location name |
+| locationCode | string | Yes | Unique code per administration (immutable after creation per REQ-LOC-002) |
+| locationType | enum | Yes | warehouse, zone, bin, in-transit |
+| parentLocationId | string | No | FK to parent Location (null for warehouse + in-transit; required for zone + bin) |
+| address | string | No | Physical address of warehouse |
 | region | string | No | Geographic region for rollup reporting |
-| locationType | enum | Yes | One of: `warehouse`, `zone`, `bin`, `in-transit`; determines hierarchy role per REQ-LOC-002 |
-| parentLocationId | string | No | FK to parent Location (null for warehouse/in-transit; required for zone/bin per REQ-LOC-002); hierarchy depth ≤ 4 per REQ-LOC-003 |
-| status | enum | No | active, inactive, archived (lifecycle per ADR-031) |
-| administrationId | string | Yes | FK to administration; scopes all location queries per REQ-LOC-008 |
+| binNamingConvention | enum | No | bin, slot, compartment, location (admin-configurable per Task 6) |
+| capacity | number | No | Maximum storage capacity in capacityUnit units |
+| capacityUnit | string | No | Unit for capacity (pallets, items, kg, etc.) |
+| status | enum | No | active, inactive, archived |
+| administrationId | string | Yes | FK to Administration — all queries scoped per org (REQ-LOC-008) |
+| notes | string | No | Operator notes |
+
+**Hierarchy rules (per REQ-LOC-001 through REQ-LOC-004):**
+- `warehouse` type: no parent, may have zone children.
+- `zone` type: requires parent (warehouse), may have bin children.
+- `bin` type: requires parent (zone), leaf node — InventoryStock recorded at this level.
+- `in-transit` type: no parent, virtual holding during transfers (D2).
+- Max hierarchy depth: 4 levels (warehouse → zone → aisle → bin) per REQ-LOC-003.
+- Circular references blocked by `LocationHierarchyGuard.validateNoCircle` per REQ-LOC-018.
+
+**Declarative extensions (ADR-031):**
+- `x-openregister-lifecycle`: status (active/inactive/archived), code-immutability validation on update.
+- `x-openregister-aggregations`: stockRollup (SUM InventoryStock.quantity for all descendant bins), childCount, descendantCount, inTransitStock.
+- `x-openregister-calculations`: hierarchyPath (full slash-separated code path), hierarchyDepthValue (0-3), stockAvailabilityBadge.
+- Guards: `LocationHierarchyGuard` for recursive operations (depth validation, circle detection, path building) per ADR-031 exception-path seam.
 
 **Relations:**
+- ↔ Location (self-referential parent-child for hierarchy, one-to-many)
+- → InventoryStock (one-to-many, bin-level stock; warehouse/zone rollup via aggregation)
+- → InventoryStockTransfer (one-to-many as sourceLocationId or destinationLocationId)
 - → Organization (many-to-one)
-- → Budget (one-to-many)
-- → Location (self-referential many-to-one via parentLocationId for hierarchy)
-- → InventoryStock (one-to-many; stock recorded at bin level per REQ-LOC-009)
+- → Budget (one-to-many, from co-declaring budget-planning-control spec)
+
+> **Reconciliation note (inventory-multi-warehouse, 2026-06-05):** The original `Location` entry (primary spec: budget-planning-control) described a simple location with `name/code/address/region` for multi-site budget tracking. This entry supersedes it for the shillinq inventory tier with the full hierarchical warehouse-management shape per REQ-LOC-001 through REQ-LOC-009: `locationCode/locationType/parentLocationId` for hierarchy, `status` lifecycle, `administrationId` tenant scope, and declarative aggregations for stock rollup. The `budget-planning-control` shape is retained as a co-declaring spec relationship — the budget FK to Location remains valid. Key change: `code` (budget-planning-control) renamed to `locationCode` in the inventory shape; implementors should map between them when combining tiers. No PHP service class added — location hierarchy is fully declarative per ADR-031.
 
 ### Lot
 **Schema.org:** `schema:Product`
