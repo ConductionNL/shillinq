@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 238
+**Entities:** 241
 
 ## Context
 
@@ -5785,3 +5785,66 @@ _Foundational multi-administratie (multi-tenant) data model introduced by the `b
 | IntercompanyJournalEntry | schema:Action | intercompanyNumber, date, kind, source/destinationAdministrationId, source/destinationJournalEntryId, amount, vatTreatment, eliminateOnConsolidation, status, varianceAmount | → Administration (source + destination), → GLTransaction (both sides) |
 | ConsolidationMapping | schema:PropertyValue | name, source/destinationAdministrationId, rules[] (sourceAccount→destinationAccount), intercompanyEliminationAccount, currencyTranslationMethod | → Administration (source + destination) |
 | AdministrationMigration | schema:Action | migrationNumber, date, source/destinationAdministrationId, kind, objectIds[], bookValue/marketValueTransferred, fiscalTreatment, legalBasis, source/destinationJournalEntryId, status | → Administration (source + destination), → GLTransaction (both sides) |
+
+### Resource
+**Schema.org:** `schema:Thing`
+_Bookable resource (staff member, room, equipment, furniture, or other) tracked by the per-resource calendar layer. The `bookings-resource-calendar` change extends the initial `Resource` declaration introduced by `bookings-create-appointment` (REQ-BCA-002) with an explicit `type` classifier so calendar consumers can render type-aware iconography and filter by resource type. The `openingTime` / `closingTime` / `allowOverlap` operational-hours fields stay on `Resource` for backwards compatibility; richer per-day templates live on the new `Calendar` entity. Multi-tenant isolation is enforced via `administrationId` per ADR-005. Status follows the standard active → inactive → archived OR lifecycle._
+**Primary spec:** bookings-resource-calendar
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to Administration for tenant isolation (ADR-005) |
+| resourceId | string | Yes | Operator-assigned unique resource identifier within the administration |
+| type | enum | Yes | One of staff, room, equipment, furniture, other (REQ-001 of bookings-resource-calendar) |
+| name | string | Yes | Human-readable resource name (e.g. "Jan Peeters", "Vergaderruimte A") |
+| openingTime | string | No | Legacy daily operational start time HH:MM UTC (carried from bookings-create-appointment). Null = no restriction. |
+| closingTime | string | No | Legacy daily operational end time HH:MM UTC. Null = no restriction. |
+| allowOverlap | boolean | No | When true, double-booking is permitted for this resource (e.g. group trainer). Defaults to false. |
+| status | enum | Yes | One of active, inactive, archived |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- → Calendar (one-to-many, via Calendar.resource)
+- → Booking (one-to-many, via Booking.resource — denormalised for query efficiency)
+
+### Calendar
+**Schema.org:** `schema:Schedule`
+_Per-resource calendar carrying time-zone and weekly working-hours configuration. Introduced by `bookings-resource-calendar`. Each Calendar is bound to exactly one Resource via the `resource` FK (multi-resource calendars are deferred to Tier-2). The `timeZone` is an IANA identifier (default `Europe/Amsterdam` for Dutch context); the API/UI converts UTC booking times into the calendar's zone for display. `workingHours` is an optional JSON template keyed by weekday — null entries mean the resource is closed that day; missing keys mean unrestricted availability. The OR-built-in lifecycle (`status`: active → inactive → archived) is used as a soft-delete signal so historical bookings stay queryable._
+**Primary spec:** bookings-resource-calendar
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to Administration for tenant isolation (ADR-005) |
+| calendarId | string | Yes | Operator-assigned unique calendar identifier within the administration |
+| resource | string | Yes | FK to Resource.resourceId — the resource this calendar represents |
+| timeZone | string | Yes | IANA time zone identifier (default "Europe/Amsterdam") |
+| workingHours | object | No | JSON template `{monday: "09:00-17:00", ..., saturday: null, sunday: null}`. Null per-day = closed; missing = 24/7. |
+| status | enum | Yes | One of active, inactive, archived |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- → Resource (many-to-one, via resource)
+- → Booking (one-to-many, via Booking.calendar)
+
+### Booking
+**Schema.org:** `schema:Reservation`
+_A scheduled appointment on a resource calendar. Introduced by `bookings-resource-calendar`. Distinct from the existing `Appointment` entity (bookings-create-appointment): `Appointment` is the customer/service-driven product (booking → invoice flow with FK to Service and to a customer Contact), whereas `Booking` is the lower-level calendar-cell record used by the per-resource calendar UI and the conflict-detection engine. The two co-exist; the conflict-detection service (REQ-004) reads both during overlap checks so the calendar view never double-books a resource regardless of the entry channel. All times are stored in UTC (ISO 8601, REQ-008). The `resource` FK is denormalised from `calendar.resource` for query efficiency (design D4); the API enforces the invariant on write. Status: `pending` is the conflicting / unconfirmed state used by the UI for red-highlighting; `confirmed` is the live state that blocks the slot; `cancelled` releases the slot without deleting the audit record._
+**Primary spec:** bookings-resource-calendar
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to Administration for tenant isolation (ADR-005) |
+| bookingId | string | Yes | Operator-assigned unique booking identifier within the administration |
+| calendar | string | Yes | FK to Calendar.calendarId |
+| resource | string | Yes | FK to Resource.resourceId — denormalised from calendar.resource for direct query (design D4) |
+| title | string | Yes | Booking title (e.g. "Klant: Anna de Wit") |
+| startTime | datetime | Yes | ISO 8601 UTC appointment start (REQ-008) |
+| endTime | datetime | Yes | ISO 8601 UTC appointment end. Duration must be ≥15 minutes (REQ-007). |
+| attendee | string | Yes | Attendee display name or external reference (free-text or Contact UID) |
+| status | enum | Yes | One of pending, confirmed, cancelled |
+| externalId | string | No | Optional external calendar event id (Google/Outlook), for future Tier-3 sync |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- → Calendar (many-to-one, via calendar)
+- → Resource (many-to-one, via resource — denormalised, must equal Calendar.resource)
