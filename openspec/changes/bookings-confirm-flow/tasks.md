@@ -14,15 +14,10 @@
 - [x] Task 2: Author `specs/bookings-confirm-flow/spec.md` with `Status: proposed` / `Scope: nextcloud-bookings` / `Tier: T2` / `Depends on: bookings-create-appointment, bookings-notification-triggers` header, `REQ-BCF-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks with GIVEN/WHEN/THEN; explicitly address confirmation workflow completion and timezone handling
 - [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks (ICS calendar app variation, token expiration UX, confirmation deadline automation, timezone TZID) / Rollback / Open Questions
 - [x] Task 4: Author `design.md` with Reuse Analysis table, D1 (confirmation as state transition), D2 (ConfirmationToken as separate register), D3 (ICS as utility service), D4 (openconnector for email), D5 (token expiration + one-time use phases), D6 (confirmation deadline), D7 (ICS METHOD REQUEST with ATTACH), D8 (TZID with VTIMEZONE)
-- [ ] Task 5: Declare the `ConfirmationToken` schema in `lib/Settings/bookings_register.json` with all REQ-BCF-002 fields (tokenId, appointmentId, tokenString, expiresAt, status, redeemedAt, createdAt, createdBy) with FK relation to `Appointment`
-- [ ] Task 6: Extend the `Appointment` schema in `lib/Settings/bookings_register.json` with CHANGED fields (confirmationDeadline, confirmedAt, confirmationTokenId) and update docstring to reference REQ-BCF-004
-- [ ] Task 7: Add `x-openregister-lifecycle` block to `Appointment` schema declaring state transitions per REQ-BCF-004:
-  - `pending_confirmation` → `confirmed` (guarded by token validation)
-  - `pending_confirmation` → `cancelled` (manual or deadline expiry)
-  - `confirmed` → `completed` (manual or time-based)
-  - `confirmed` → `cancelled` (manual cancellation)
-  - Include audit trail action names (`appointment_confirmed`, `appointment_auto_cancelled`, etc.)
-- [ ] Task 8: Add `x-openregister-lifecycle` block to `ConfirmationToken` schema declaring token status transitions:
+- [x] Task 5: Declare the `ConfirmationToken` schema in `lib/Settings/register.d/bookings-confirm-flow.json` with all REQ-BCF-002 fields (tokenId, appointmentId, tokenString, expiresAt, status, redeemedAt, createdAt, createdBy) with FK relation to `Appointment` (ADR-037 modular fragment)
+- [x] Task 6: Extend the `Appointment` schema via the same fragment with CHANGED fields (confirmationDeadline, confirmedAt, confirmationTokenId) — merged additively by SettingsService::deepMergeConfig
+- [x] Task 7: Add `x-openregister-lifecycle.transitions` extension to `Appointment` schema declaring `confirmViaToken` (pending_confirmation → confirmed) and `autoCancelExpired` (pending_confirmation → cancelled) — the four base transitions stay owned by bookings-create-appointment
+- [x] Task 8: Add `x-openregister-lifecycle` block to `ConfirmationToken` schema declaring token status transitions:
   - `active` → `redeemed` (on token validation)
   - `active` → `revoked` (on resend request)
   - `active` → `expired` (on expiration check, auto-computed from expiresAt)
