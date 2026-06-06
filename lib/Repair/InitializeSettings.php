@@ -82,6 +82,7 @@ class InitializeSettings implements IRepairStep
      * Phase 6: seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
      * Phase 7: seeds RJ-270 stages and rate-card templates for consultancy project accounting.
      * Phase 8: seeds ProductAttribute templates (office, it_hardware, logistics, food_beverage, clothing) per REQ-IPC-007.
+     * Phase 9: seeds ReimbursementPolicy + PassThroughMarkupRule master-data records per REQ-ERP-004 / REQ-ERP-005.
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -145,6 +146,8 @@ class InitializeSettings implements IRepairStep
             $this->seedKorThresholds(output: $output);
             $this->seedComplianceReferenceData(output: $output);
             $this->seedProductAttributeTemplates(output: $output);
+            $this->seedReimbursementPolicies(output: $output);
+            $this->seedPassThroughMarkupRules(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -564,4 +567,205 @@ class InitializeSettings implements IRepairStep
         }
 
     }//end seedChartOfAccounts()
+
+    /**
+     * Seed the ReimbursementPolicy master-data records from
+     * reimbursement-policies-2026.json, idempotently per administration.
+     *
+     * Deduplication key is (policyId, administrationId): if a ReimbursementPolicy
+     * record with the same policyId already exists for the seeded administration
+     * it is skipped. Re-running the repair step is safe and preserves operator
+     * edits per REQ-ERP-004 (one active policy per administration).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-18
+     */
+    private function seedReimbursementPolicies(IOutput $output): void
+    {
+        $seedPath = __DIR__.'/../Settings/seeds/reimbursement-policies-2026.json';
+        if (file_exists($seedPath) === false) {
+            $output->warning('Shillinq: ReimbursementPolicy seed file not found, skipping');
+            return;
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            $output->warning('Shillinq: failed to read ReimbursementPolicy seed file, skipping');
+            return;
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $output->warning('Shillinq: failed to parse ReimbursementPolicy seed file: '.json_last_error_msg());
+            return;
+        }
+
+        $policies = ($data['policies'] ?? []);
+        if (empty($policies) === true) {
+            $output->info('Shillinq: ReimbursementPolicy seed file contains no policies, skipping');
+            return;
+        }
+
+        try {
+            $objectService    = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug     = $this->settingsService->getRegisterSlug();
+            $settings         = $this->settingsService->getSettings();
+            $administrationId = ($settings['administration_id'] ?? '');
+            $seeded           = 0;
+            $skipped          = 0;
+
+            if ($administrationId === '') {
+                $output->info('Shillinq: ReimbursementPolicy seed skipped (no default administration configured)');
+                return;
+            }
+
+            foreach ($policies as $policy) {
+                $policyId = ($policy['policyId'] ?? null);
+                if ($policyId === null) {
+                    continue;
+                }
+
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('ReimbursementPolicy')
+                    ->findAll(
+                            [
+                                'filters' => [
+                                    'policyId'         => $policyId,
+                                    'administrationId' => $administrationId,
+                                ],
+                                'limit'   => 1,
+                            ]
+                            );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $policy['administrationId'] = $administrationId;
+                $objectService->saveObject(
+                    object: $policy,
+                    register: $registerSlug,
+                    schema: 'ReimbursementPolicy',
+                );
+                $seeded++;
+            }//end foreach
+
+            $output->info(
+                'Shillinq: ReimbursementPolicy seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        } catch (\Throwable $e) {
+            $output->warning('Shillinq: ReimbursementPolicy seeding failed: '.$e->getMessage());
+            $this->logger->warning(
+                'Shillinq: ReimbursementPolicy seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+        }//end try
+
+    }//end seedReimbursementPolicies()
+
+    /**
+     * Seed the PassThroughMarkupRule master-data records from
+     * passthrough-markup-rules-2026.json, idempotently per administration.
+     *
+     * Deduplication key is (ruleId, administrationId): re-running the repair
+     * step preserves operator edits per REQ-ERP-005. Lookup priority — customer
+     * + category > customer-only > global default — is enforced declaratively
+     * by Receipt/MileageEntry/PerDiem x-openregister-calculations.markupLookup;
+     * this seeder only loads the canonical RULE-001..RULE-004 fixtures.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md#task-19
+     */
+    private function seedPassThroughMarkupRules(IOutput $output): void
+    {
+        $seedPath = __DIR__.'/../Settings/seeds/passthrough-markup-rules-2026.json';
+        if (file_exists($seedPath) === false) {
+            $output->warning('Shillinq: PassThroughMarkupRule seed file not found, skipping');
+            return;
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            $output->warning('Shillinq: failed to read PassThroughMarkupRule seed file, skipping');
+            return;
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $output->warning('Shillinq: failed to parse PassThroughMarkupRule seed file: '.json_last_error_msg());
+            return;
+        }
+
+        $rules = ($data['rules'] ?? []);
+        if (empty($rules) === true) {
+            $output->info('Shillinq: PassThroughMarkupRule seed file contains no rules, skipping');
+            return;
+        }
+
+        try {
+            $objectService    = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug     = $this->settingsService->getRegisterSlug();
+            $settings         = $this->settingsService->getSettings();
+            $administrationId = ($settings['administration_id'] ?? '');
+            $seeded           = 0;
+            $skipped          = 0;
+
+            if ($administrationId === '') {
+                $output->info('Shillinq: PassThroughMarkupRule seed skipped (no default administration configured)');
+                return;
+            }
+
+            foreach ($rules as $rule) {
+                $ruleId = ($rule['ruleId'] ?? null);
+                if ($ruleId === null) {
+                    continue;
+                }
+
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('PassThroughMarkupRule')
+                    ->findAll(
+                            [
+                                'filters' => [
+                                    'ruleId'           => $ruleId,
+                                    'administrationId' => $administrationId,
+                                ],
+                                'limit'   => 1,
+                            ]
+                            );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $rule['administrationId'] = $administrationId;
+                $objectService->saveObject(
+                    object: $rule,
+                    register: $registerSlug,
+                    schema: 'PassThroughMarkupRule',
+                );
+                $seeded++;
+            }//end foreach
+
+            $output->info(
+                'Shillinq: PassThroughMarkupRule seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        } catch (\Throwable $e) {
+            $output->warning('Shillinq: PassThroughMarkupRule seeding failed: '.$e->getMessage());
+            $this->logger->warning(
+                'Shillinq: PassThroughMarkupRule seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+        }//end try
+
+    }//end seedPassThroughMarkupRules()
 }//end class

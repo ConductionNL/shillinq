@@ -1805,6 +1805,51 @@ _Expense claim submissions with receipt tracking, approval workflow, and reimbur
 
 > **Reconciliation note (expense-capture-core, 2026-06-03):** The existing `ExpenseClaim` entry (primary spec: approval-workflow-management) is a generic claim schema without cost-centre allocation, multi-currency support, or GL materialisation. `ExpenseClaimEntry` is the shillinq bookkeeping-tier expense claim with full lifecycle (draft → submitted → approved → posted → reimbursed), OR approval-workflow routing per ADR-022, GL materialisation per REQ-EC-012, multi-currency, and cost-centre allocation per line. New expense-capture implementations in shillinq MUST use `ExpenseClaimEntry`. The `ExpenseClaim` entry is retained for generic approval-workflow-management usage outside the bookkeeping tier.
 
+> **Extension note (expense-reimbursement-or-passthrough, 2026-06-07):** `Receipt`, `MileageEntry`, and `PerDiem` are extended with dual-mode settlement metadata: `settlementMode` (enum: `reimbursable` | `pass-through`), `linkedCustomerId` (FK to Organization), `markupRuleId` (FK to PassThroughMarkupRule), `markupRateApplied` (number), `markupAmountCalculated` (number), and `passthroughDebitAccountCode` (string). `ExpenseClaimEntry` gains claim-level `settlementMode`, `totalReimbursableAmount`, `totalPassThroughAmount`, `passThroughCustomerIds`, `glReimbursableTransactionId`, `glPassThroughTransactionId`, and `reimbursementPolicyId`; the lifecycle adds the `invoiced` closure state and the `markInvoiced` / `changeSettlementMode` transitions per REQ-ERP-007 / REQ-ERP-011. Two new master-data schemas — `ReimbursementPolicy` (per-administration auto-approve + markup-approval thresholds + employee bank account mapping) and `PassThroughMarkupRule` (per-customer / per-category percentage or fixed markup with priority customer+category > customer > global) — are declared per REQ-ERP-004 + REQ-ERP-005. All changes are non-destructive; reads remain queryable against historic data, and markup rates lock on claim submission for audit immutability per REQ-ERP-010.
+
+### ReimbursementPolicy
+**Schema.org:** `schema:Thing`
+_Per-administration master-data record configuring expense settlement policy: auto-approve threshold for reimbursable claims, optional markup-approval threshold for pass-through claims, default GL account code for the pass-through debit, and the employee bank-account mapping reference for the SEPA reimbursement notification._
+**Primary spec:** expense-reimbursement-or-passthrough
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| policyId | string | Yes | Unique policy identifier per administration (e.g. POL-NL-01) |
+| name | string | Yes | Human-readable policy name |
+| description | string | No | Policy description and scope |
+| autoApproveThreshold | number | No | Expense claims with totalAmount ≤ this value auto-approve (REQ-ERP-004) |
+| requiresMarkupApprovalThreshold | number | No | Pass-through markup amounts ≥ this value require an extra approver (REQ-ERP-006) |
+| passthroughDebitAccountCode | string | No | Default GL account code for the pass-through debit line (customer AR / deferred revenue) |
+| employeeBankAccountMapping | string | No | Reference for resolving the employee SEPA account in the reimbursement notification (REQ-ERP-008) |
+| notes | string | No | Operator notes (policy rationale, regulatory references) |
+| administrationId | string | Yes | FK to the Administration owning this policy |
+
+**Relations:**
+- → Administration (many-to-one)
+
+### PassThroughMarkupRule
+**Schema.org:** `schema:Offer`
+_Per-administration master-data record defining the markup applied to pass-through expenses. Lookup priority — customer+category > customer-only > global default — is enforced declaratively on Receipt / MileageEntry / PerDiem x-openregister-calculations._
+**Primary spec:** expense-reimbursement-or-passthrough
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| ruleId | string | Yes | Unique rule identifier per administration (e.g. RULE-001) |
+| targetCustomerId | string | No | FK to Organization (customer); null = global |
+| targetCategory | string | No | Expense category (travel, meals, etc.); null = all categories |
+| markupType | string | Yes | percentage \| fixedAmount (REQ-ERP-005) |
+| markupValue | number | Yes | Percentage (0.15) or fixedAmount (2.50) |
+| currency | string | Yes | ISO 4217 currency code (EUR in T2) |
+| effectiveFromYear | integer | Yes | Fiscal year this rule applies to |
+| effectiveToYear | integer | No | Last fiscal year (inclusive); null = open-ended |
+| priority | integer | No | Tie-breaker when multiple rules match |
+| notes | string | No | Operator notes (rule rationale, contract reference) |
+| administrationId | string | Yes | FK to the Administration owning this rule |
+
+**Relations:**
+- → Administration (many-to-one)
+- → Organization (many-to-one, optional — when targeting a specific customer)
+
 ### ExpenseLineItem
 **Schema.org:** `schema:Thing`
 _A line item within an expense record with detailed coding for department allocation and cost center tracking_
@@ -3995,6 +4040,118 @@ _Immutable materialized audit-trail entry created for each rate lookup. Stores r
 
 **Relations:**
 - → RateSchedule (many-to-one, via resolvedScheduleId)
+
+### RetainerPool
+**Schema.org:** `schema:MonetaryGrant`
+_Monthly retainer allocation per (clientId, projectId) with effective-period window, fixed pool amount + currency, retainer rate (hourly / daily / fixed) used to convert time-entry hours into drawdown amount, and pool-level rollover policy (carryover cap by amount or hours, or reset-balance for monthly reset). Operator-driven lifecycle draft → active → closed → archived. Once closed, pool amount/rate/policy are immutable so the true-up calculation remains deterministic. Overlapping periods for the same (client, project) pair are rejected at activation (REQ-RETN-001). Depends on rate-card-engine for overage-rate lookup (REQ-RETN-005)._
+**Primary spec:** retainer-billing-management
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| poolId | string | Yes | Unique pool identifier (REQ-RETN-001) |
+| clientId | string | Yes | FK to the client this retainer pool serves |
+| projectId | string | No | Optional FK to a project within the client engagement |
+| periodStart | date | Yes | Effective-period start (inclusive) |
+| periodEnd | date | Yes | Effective-period end (inclusive) |
+| poolAmount | number | Yes | Allocated retainer amount in pool currency (multipleOf 0.01) |
+| currency | string | Yes | ISO 4217 currency code; default EUR |
+| retainerRate | number | Yes | Rate used to convert time-entry hours into drawdownAmount (multipleOf 0.01) |
+| retainerRateUnit | enum | No | hour / day / fixed (default hour) |
+| rolloverPolicy | object | Yes | resetBalance + carryoverMaxAmount + carryoverMaxHours + carryoverCapUnit |
+| administrationId | string | Yes | FK to administration (per-OU isolation) |
+| status | enum | Yes | draft / active / closed / archived |
+| sourcePoolId | string | No | FK to prior-period pool when auto-created via rollover (REQ-RETN-009) |
+| description | string | No | Operator notes |
+
+**Relations:**
+- → Organization / Administration (many-to-one, via administrationId)
+- → Client / Contact (many-to-one, via clientId — Nextcloud contact entity)
+- → RetainerPool (many-to-one self-reference, via sourcePoolId — prior-period rollover chain)
+- → RetainerDrawdown (one-to-many)
+- → RetainerTrueUp (one-to-many, typically one per pool per period)
+- → RetainerRollover (one-to-many as sourcePeriodPoolId; one-to-one as targetPeriodPoolId)
+
+### RetainerDrawdown
+**Schema.org:** `schema:Action`
+_Immutable per-time-entry consumption record against a RetainerPool. Created by the TimeEntry create lifecycle hook (REQ-RETN-002). drawdownAmount = hoursOrAmount × drawdownRate where drawdownRate is the pool's retainerRate at materialization time — NOT the timesheet's billable rate. Once status=materialized, the record is read-only; reversal/adjustment creates a new record linking back via reversalOfDrawdownId for an immutable audit chain._
+**Primary spec:** retainer-billing-management
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| drawdownId | string | Yes | Unique drawdown identifier |
+| poolId | string | Yes | FK to RetainerPool being consumed |
+| timeEntryId | string | Yes | FK to consuming TimeEntry (audit link) |
+| drawdownDate | date | Yes | Date of the underlying time entry |
+| hoursOrAmount | number | Yes | Hours consumed (or fixed amount when pool.retainerRateUnit=fixed) |
+| drawdownRate | number | Yes | Snapshot of pool retainerRate at materialization (immutable) |
+| drawdownAmount | number | Yes | hoursOrAmount × drawdownRate (multipleOf 0.01) |
+| administrationId | string | Yes | FK to administration |
+| status | enum | Yes | pending / materialized / reversed / adjusted |
+| reversalOfDrawdownId | string | No | FK to prior drawdown this record reverses (audit chain) |
+| reversalReason | string | No | Free-text audit reason |
+| description | string | No | Cached time-entry description |
+
+**Relations:**
+- → RetainerPool (many-to-one, via poolId)
+- → TimeEntry (many-to-one, via timeEntryId)
+- → RetainerDrawdown (many-to-one self-reference, via reversalOfDrawdownId)
+
+### RetainerRollover
+**Schema.org:** `schema:Action`
+_Immutable carryover record between consecutive RetainerPools for the same (clientId, projectId) pair (REQ-RETN-004, REQ-RETN-009). Created on pool close, captures the unused balance, cap applied (if any), and whether resetBalance forced carryover to zero. Adjustments MUST create a new record (status=adjusted) referencing the original via adjustsRolloverId; original is never mutated._
+**Primary spec:** retainer-billing-management
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| rolloverId | string | Yes | Unique rollover identifier |
+| sourcePeriodPoolId | string | Yes | FK to the closing RetainerPool |
+| targetPeriodPoolId | string | No | FK to the next-period RetainerPool (null until next pool is created) |
+| carryoverAmount | number | Yes | Amount carried forward in pool currency (multipleOf 0.01) |
+| carryoverHours | number | No | Hours equivalent (= carryoverAmount / retainerRate); null when retainerRateUnit=fixed |
+| carryoverCapApplied | boolean | No | True when unused balance exceeded the policy cap and was trimmed |
+| capValueApplied | number | No | Cap value used when carryoverCapApplied=true |
+| resetBalance | boolean | Yes | Mirrors policy at execution; true forces carryoverAmount=0 |
+| administrationId | string | Yes | FK to administration |
+| status | enum | Yes | planned / executed / adjusted / archived |
+| adjustsRolloverId | string | No | FK to a prior rollover this record adjusts (audit chain) |
+| adjustmentReason | string | No | Free-text reason for adjustment |
+
+**Relations:**
+- → RetainerPool (many-to-one as sourcePeriodPoolId; many-to-one as targetPeriodPoolId)
+- → RetainerRollover (many-to-one self-reference, via adjustsRolloverId)
+
+### RetainerTrueUp
+**Schema.org:** `schema:Action`
+_Period-end reconciliation record per RetainerPool (REQ-RETN-006). Auto-created by the period-close lifecycle hook on RetainerPool.transitions.close or by manual operator trigger (REQ-RETN-007). Captures actualDrawdown vs. poolAmount, resolved overage rate via rate-card-engine (REQ-RETN-005), and the resulting overageInvoiceAmount destined for an adjustment Invoice (REQ-RETN-008). Operator-driven lifecycle generated → pending-approval → approved → invoiced → settled, with reversed as an out-of-band correction state (REQ-RETN-007). Approvals require the retainer:approve-true-up permission per ADR-023 (REQ-RETN-011)._
+**Primary spec:** retainer-billing-management
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| trueUpId | string | Yes | Unique true-up identifier |
+| poolId | string | Yes | FK to the closing RetainerPool |
+| actualDrawdown | number | Yes | Sum of RetainerDrawdown.drawdownAmount over the pool period |
+| poolAmount | number | Yes | Snapshot of RetainerPool.poolAmount at true-up (immutable) |
+| overageAmount | number | Yes | max(0, actualDrawdown - poolAmount) |
+| overageRate | number | No | Standard rate resolved from rate-card-engine (REQ-RETN-005); null when no overage |
+| overageInvoiceAmount | number | Yes | Overage converted from retainer-rate hours into standard-rate billing amount |
+| underUtilisationAmount | number | Yes | max(0, poolAmount - actualDrawdown) — for credit-note workflows |
+| administrationId | string | Yes | FK to administration |
+| status | enum | Yes | generated / pending-approval / approved / invoiced / settled / reversed |
+| generatedAt | datetime | Yes | Timestamp at true-up creation |
+| generatedBy | string | No | Operator UID that triggered (or 'system' for auto-close) |
+| approvedBy | string | No | UID of approver who advanced generated → approved |
+| approvalDate | datetime | No | Timestamp at approval |
+| invoiceId | string | No | FK to the generated adjustment Invoice once status=invoiced |
+| reversalOfTrueUpId | string | No | FK to a prior true-up this record reverses (audit chain) |
+| reversalReason | string | No | Free-text reason for reversal/adjustment |
+| manualTriggerReason | string | No | Free-text reason when triggered manually after a missed auto-close |
+
+**Relations:**
+- → RetainerPool (many-to-one, via poolId)
+- → Invoice (one-to-one, via invoiceId — adjustment invoice from REQ-RETN-008)
+- → Person / NC User (many-to-one, via approvedBy — REQ-RETN-011 approver)
+- → RetainerTrueUp (many-to-one self-reference, via reversalOfTrueUpId)
+- ← rate-card-engine.RateSchedule (overage-rate lookup, REQ-RETN-005)
 
 ### Receipt
 **Schema.org:** `schema:DigitalDocument`

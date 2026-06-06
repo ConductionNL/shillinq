@@ -1,0 +1,342 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "retainer-billing-engine",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "T2 retainer-billing UI: four sidebar entries (Retainer Pools, Drawdowns, Rollovers, True-Ups) per REQ-RETN-012, each with type:index and corresponding type:detail pages. Pool detail nests sections for Drawdowns, Rollovers, and True-Ups so operators can drill from the pool into its consumption + reconciliation trail (REQ-RETN-010). True-Up detail exposes lifecycle action buttons (submit → approve → invoice → settle, and reverse) wired to the RetainerTrueUp.x-openregister-lifecycle transitions; approve/reverse honour the retainer:approve-true-up permission per ADR-023 (REQ-RETN-011). A dialog page (RetainerPoolCreateDialog) provides the create-pool flow with non-overlapping-period validation surfaced at submit time (REQ-RETN-001). Manual true-up trigger (REQ-RETN-007) is exposed as a pool-detail action with confirmation modal; under-utilisation amount surfaces alongside overage in the true-up detail view for credit-note workflows (REQ-RETN-008)."
+	},
+	"menu": [
+		{
+			"id": "RetainerPools",
+			"label": "Retainer Pools",
+			"icon": "WalletOutline",
+			"route": "RetainerPools",
+			"order": 75
+		},
+		{
+			"id": "RetainerDrawdowns",
+			"label": "Drawdowns",
+			"icon": "ArrowDownBoldOutline",
+			"route": "RetainerDrawdowns",
+			"order": 76
+		},
+		{
+			"id": "RetainerRollovers",
+			"label": "Rollovers",
+			"icon": "ArrowRightBoldOutline",
+			"route": "RetainerRollovers",
+			"order": 77
+		},
+		{
+			"id": "RetainerTrueUps",
+			"label": "True-Ups",
+			"icon": "ScaleBalance",
+			"route": "RetainerTrueUps",
+			"order": 78
+		}
+	],
+	"pages": [
+		{
+			"id": "RetainerPools",
+			"route": "/retainer-pools",
+			"type": "index",
+			"title": "Retainer Pools",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetainerPool",
+				"columns": [
+					{"key": "poolId", "label": "Pool", "sortable": true},
+					{"key": "clientId", "label": "Client", "sortable": true},
+					{"key": "projectId", "label": "Project", "sortable": true},
+					{"key": "periodStart", "label": "Period start", "sortable": true},
+					{"key": "periodEnd", "label": "Period end", "sortable": true},
+					{"key": "poolAmount", "label": "Pool amount", "sortable": true, "type": "money"},
+					{"key": "retainerRate", "label": "Retainer rate", "sortable": true, "type": "money"},
+					{"key": "status", "label": "Status", "sortable": true}
+				],
+				"filters": [
+					{"key": "status", "label": "Status", "type": "select", "options": ["draft", "active", "closed", "archived"]},
+					{"key": "clientId", "label": "Client", "type": "string"},
+					{"key": "periodStart", "label": "Period", "type": "date"}
+				],
+				"defaultSort": "periodStart",
+				"detailRoute": "RetainerPoolDetail",
+				"createDialog": "RetainerPoolCreateDialog"
+			}
+		},
+		{
+			"id": "RetainerPoolDetail",
+			"route": "/retainer-pools/:id",
+			"type": "detail",
+			"title": "Retainer Pool",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetainerPool",
+				"fields": [
+					{"key": "poolId", "label": "Pool ID", "type": "string"},
+					{"key": "clientId", "label": "Client", "type": "string"},
+					{"key": "projectId", "label": "Project", "type": "string"},
+					{"key": "periodStart", "label": "Period start", "type": "string"},
+					{"key": "periodEnd", "label": "Period end", "type": "string"},
+					{"key": "poolAmount", "label": "Pool amount", "type": "number"},
+					{"key": "currency", "label": "Currency", "type": "string"},
+					{"key": "retainerRate", "label": "Retainer rate", "type": "number"},
+					{"key": "retainerRateUnit", "label": "Rate unit", "type": "string"},
+					{"key": "rolloverPolicy.resetBalance", "label": "Reset balance", "type": "boolean"},
+					{"key": "rolloverPolicy.carryoverMaxAmount", "label": "Carryover cap (amount)", "type": "number"},
+					{"key": "rolloverPolicy.carryoverMaxHours", "label": "Carryover cap (hours)", "type": "number"},
+					{"key": "administrationId", "label": "Administration", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "sourcePoolId", "label": "Source pool", "type": "string"},
+					{"key": "description", "label": "Description", "type": "string"}
+				],
+				"sections": [
+					{
+						"id": "Drawdowns",
+						"label": "Drawdowns",
+						"type": "table",
+						"register": "shillinq",
+						"schema": "RetainerDrawdown",
+						"filter": {"poolId": "@self.poolId"},
+						"columns": [
+							{"key": "drawdownDate", "label": "Date", "sortable": true},
+							{"key": "timeEntryId", "label": "Time entry", "sortable": true},
+							{"key": "hoursOrAmount", "label": "Hours", "sortable": true},
+							{"key": "drawdownRate", "label": "Rate", "sortable": true, "type": "money"},
+							{"key": "drawdownAmount", "label": "Amount", "sortable": true, "type": "money"},
+							{"key": "status", "label": "Status", "sortable": true}
+						]
+					},
+					{
+						"id": "TrueUps",
+						"label": "True-Ups",
+						"type": "table",
+						"register": "shillinq",
+						"schema": "RetainerTrueUp",
+						"filter": {"poolId": "@self.poolId"},
+						"columns": [
+							{"key": "trueUpId", "label": "True-Up", "sortable": true},
+							{"key": "generatedAt", "label": "Generated at", "sortable": true},
+							{"key": "actualDrawdown", "label": "Actual drawdown", "sortable": true, "type": "money"},
+							{"key": "overageAmount", "label": "Overage", "sortable": true, "type": "money"},
+							{"key": "overageInvoiceAmount", "label": "Invoice amount", "sortable": true, "type": "money"},
+							{"key": "status", "label": "Status", "sortable": true}
+						]
+					},
+					{
+						"id": "Rollovers",
+						"label": "Rollovers",
+						"type": "table",
+						"register": "shillinq",
+						"schema": "RetainerRollover",
+						"filter": {"sourcePeriodPoolId": "@self.poolId"},
+						"columns": [
+							{"key": "rolloverId", "label": "Rollover", "sortable": true},
+							{"key": "targetPeriodPoolId", "label": "Target pool", "sortable": true},
+							{"key": "carryoverAmount", "label": "Carryover", "sortable": true, "type": "money"},
+							{"key": "carryoverHours", "label": "Carryover hours", "sortable": true},
+							{"key": "carryoverCapApplied", "label": "Cap applied", "sortable": true},
+							{"key": "resetBalance", "label": "Reset balance", "sortable": true},
+							{"key": "status", "label": "Status", "sortable": true}
+						]
+					}
+				],
+				"actions": [
+					{"id": "activate", "label": "Activate", "type": "lifecycle", "transition": "activate", "enabledWhen": "status === 'draft'"},
+					{"id": "close", "label": "Close period", "type": "lifecycle", "transition": "close", "enabledWhen": "status === 'active'"},
+					{"id": "archive", "label": "Archive", "type": "lifecycle", "transition": "archive", "enabledWhen": "status === 'closed'"},
+					{"id": "manualTrueUp", "label": "Trigger true-up manually", "type": "callback", "callback": "retainer.triggerManualTrueUp", "enabledWhen": "status === 'active' || status === 'closed'", "confirm": "This will create a new RetainerTrueUp record for the pool period. Continue?"}
+				]
+			}
+		},
+		{
+			"id": "RetainerPoolCreateDialog",
+			"route": "/retainer-pools/new",
+			"type": "dialog",
+			"title": "New retainer pool",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetainerPool",
+				"action": {"verb": "POST", "url": "/api/retainer-pools"},
+				"fields": [
+					{"key": "administrationId", "label": "Administration", "type": "string", "required": true},
+					{"key": "clientId", "label": "Client", "type": "string", "required": true},
+					{"key": "projectId", "label": "Project (optional)", "type": "string"},
+					{"key": "periodStart", "label": "Period start", "type": "date", "required": true},
+					{"key": "periodEnd", "label": "Period end", "type": "date", "required": true},
+					{"key": "poolAmount", "label": "Pool amount", "type": "number", "required": true, "default": 3000.0},
+					{"key": "currency", "label": "Currency", "type": "select", "options": ["EUR", "USD", "GBP"], "default": "EUR", "required": true},
+					{"key": "retainerRate", "label": "Retainer rate", "type": "number", "required": true, "default": 75.0},
+					{"key": "retainerRateUnit", "label": "Rate unit", "type": "select", "options": ["hour", "day", "fixed"], "default": "hour", "required": true},
+					{"key": "rolloverPolicy.resetBalance", "label": "Reset balance at period-end", "type": "boolean", "default": false},
+					{"key": "rolloverPolicy.carryoverMaxAmount", "label": "Carryover cap (amount)", "type": "number"},
+					{"key": "rolloverPolicy.carryoverMaxHours", "label": "Carryover cap (hours)", "type": "number", "default": 50.0},
+					{"key": "rolloverPolicy.carryoverCapUnit", "label": "Cap unit", "type": "select", "options": ["amount", "hours"], "default": "hours"},
+					{"key": "description", "label": "Description", "type": "string"}
+				],
+				"onSuccess": "navigate:RetainerPoolDetail"
+			}
+		},
+		{
+			"id": "RetainerDrawdowns",
+			"route": "/retainer-drawdowns",
+			"type": "index",
+			"title": "Drawdowns",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetainerDrawdown",
+				"columns": [
+					{"key": "drawdownId", "label": "Drawdown", "sortable": true},
+					{"key": "poolId", "label": "Pool", "sortable": true},
+					{"key": "drawdownDate", "label": "Date", "sortable": true},
+					{"key": "timeEntryId", "label": "Time entry", "sortable": true},
+					{"key": "hoursOrAmount", "label": "Hours", "sortable": true},
+					{"key": "drawdownRate", "label": "Rate", "sortable": true, "type": "money"},
+					{"key": "drawdownAmount", "label": "Amount", "sortable": true, "type": "money"},
+					{"key": "status", "label": "Status", "sortable": true}
+				],
+				"filters": [
+					{"key": "poolId", "label": "Pool", "type": "string"},
+					{"key": "status", "label": "Status", "type": "select", "options": ["pending", "materialized", "reversed", "adjusted"]},
+					{"key": "drawdownDate", "label": "Date", "type": "date"}
+				],
+				"defaultSort": "drawdownDate",
+				"detailRoute": "RetainerDrawdownDetail"
+			}
+		},
+		{
+			"id": "RetainerDrawdownDetail",
+			"route": "/retainer-drawdowns/:id",
+			"type": "detail",
+			"title": "Drawdown",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetainerDrawdown",
+				"fields": [
+					{"key": "drawdownId", "label": "Drawdown ID", "type": "string"},
+					{"key": "poolId", "label": "Pool", "type": "string"},
+					{"key": "timeEntryId", "label": "Time entry", "type": "string"},
+					{"key": "drawdownDate", "label": "Date", "type": "string"},
+					{"key": "hoursOrAmount", "label": "Hours", "type": "number"},
+					{"key": "drawdownRate", "label": "Rate", "type": "number"},
+					{"key": "drawdownAmount", "label": "Amount", "type": "number"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "reversalOfDrawdownId", "label": "Reverses drawdown", "type": "string"},
+					{"key": "reversalReason", "label": "Reversal reason", "type": "string"},
+					{"key": "description", "label": "Description", "type": "string"}
+				]
+			}
+		},
+		{
+			"id": "RetainerRollovers",
+			"route": "/retainer-rollovers",
+			"type": "index",
+			"title": "Rollovers",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetainerRollover",
+				"columns": [
+					{"key": "rolloverId", "label": "Rollover", "sortable": true},
+					{"key": "sourcePeriodPoolId", "label": "Source pool", "sortable": true},
+					{"key": "targetPeriodPoolId", "label": "Target pool", "sortable": true},
+					{"key": "carryoverAmount", "label": "Carryover", "sortable": true, "type": "money"},
+					{"key": "carryoverHours", "label": "Carryover hours", "sortable": true},
+					{"key": "carryoverCapApplied", "label": "Cap applied", "sortable": true},
+					{"key": "resetBalance", "label": "Reset balance", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true}
+				],
+				"filters": [
+					{"key": "status", "label": "Status", "type": "select", "options": ["planned", "executed", "adjusted", "archived"]},
+					{"key": "resetBalance", "label": "Reset balance", "type": "boolean"}
+				],
+				"defaultSort": "rolloverId",
+				"detailRoute": "RetainerRolloverDetail"
+			}
+		},
+		{
+			"id": "RetainerRolloverDetail",
+			"route": "/retainer-rollovers/:id",
+			"type": "detail",
+			"title": "Rollover",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetainerRollover",
+				"fields": [
+					{"key": "rolloverId", "label": "Rollover ID", "type": "string"},
+					{"key": "sourcePeriodPoolId", "label": "Source pool", "type": "string"},
+					{"key": "targetPeriodPoolId", "label": "Target pool", "type": "string"},
+					{"key": "carryoverAmount", "label": "Carryover", "type": "number"},
+					{"key": "carryoverHours", "label": "Carryover hours", "type": "number"},
+					{"key": "carryoverCapApplied", "label": "Cap applied", "type": "boolean"},
+					{"key": "capValueApplied", "label": "Cap value", "type": "number"},
+					{"key": "resetBalance", "label": "Reset balance", "type": "boolean"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "adjustsRolloverId", "label": "Adjusts rollover", "type": "string"},
+					{"key": "adjustmentReason", "label": "Adjustment reason", "type": "string"}
+				]
+			}
+		},
+		{
+			"id": "RetainerTrueUps",
+			"route": "/retainer-true-ups",
+			"type": "index",
+			"title": "True-Ups",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetainerTrueUp",
+				"columns": [
+					{"key": "trueUpId", "label": "True-Up", "sortable": true},
+					{"key": "poolId", "label": "Pool", "sortable": true},
+					{"key": "generatedAt", "label": "Generated at", "sortable": true},
+					{"key": "actualDrawdown", "label": "Actual drawdown", "sortable": true, "type": "money"},
+					{"key": "poolAmount", "label": "Pool amount", "sortable": true, "type": "money"},
+					{"key": "overageAmount", "label": "Overage", "sortable": true, "type": "money"},
+					{"key": "overageInvoiceAmount", "label": "Invoice amount", "sortable": true, "type": "money"},
+					{"key": "status", "label": "Status", "sortable": true}
+				],
+				"filters": [
+					{"key": "status", "label": "Status", "type": "select", "options": ["generated", "pending-approval", "approved", "invoiced", "settled", "reversed"]},
+					{"key": "poolId", "label": "Pool", "type": "string"}
+				],
+				"defaultSort": "generatedAt",
+				"detailRoute": "RetainerTrueUpDetail"
+			}
+		},
+		{
+			"id": "RetainerTrueUpDetail",
+			"route": "/retainer-true-ups/:id",
+			"type": "detail",
+			"title": "True-Up",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetainerTrueUp",
+				"fields": [
+					{"key": "trueUpId", "label": "True-Up ID", "type": "string"},
+					{"key": "poolId", "label": "Pool", "type": "string"},
+					{"key": "actualDrawdown", "label": "Actual drawdown", "type": "number"},
+					{"key": "poolAmount", "label": "Pool amount", "type": "number"},
+					{"key": "overageAmount", "label": "Overage amount", "type": "number"},
+					{"key": "overageRate", "label": "Overage rate", "type": "number"},
+					{"key": "overageInvoiceAmount", "label": "Overage invoice amount", "type": "number"},
+					{"key": "underUtilisationAmount", "label": "Under-utilisation", "type": "number"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "generatedAt", "label": "Generated at", "type": "string"},
+					{"key": "generatedBy", "label": "Generated by", "type": "string"},
+					{"key": "approvedBy", "label": "Approved by", "type": "string"},
+					{"key": "approvalDate", "label": "Approval date", "type": "string"},
+					{"key": "invoiceId", "label": "Invoice", "type": "string"},
+					{"key": "reversalOfTrueUpId", "label": "Reverses true-up", "type": "string"},
+					{"key": "manualTriggerReason", "label": "Manual trigger reason", "type": "string"}
+				],
+				"actions": [
+					{"id": "submit", "label": "Submit for approval", "type": "lifecycle", "transition": "submit", "enabledWhen": "status === 'generated'"},
+					{"id": "approve", "label": "Approve", "type": "lifecycle", "transition": "approve", "enabledWhen": "status === 'pending-approval'", "permission": "retainer:approve-true-up"},
+					{"id": "invoice", "label": "Generate invoice", "type": "lifecycle", "transition": "invoice", "enabledWhen": "status === 'approved' && overageAmount > 0"},
+					{"id": "settle", "label": "Mark settled", "type": "lifecycle", "transition": "settle", "enabledWhen": "status === 'invoiced'"},
+					{"id": "reverse", "label": "Reverse", "type": "lifecycle", "transition": "reverse", "enabledWhen": "status === 'approved' || status === 'invoiced'", "permission": "retainer:approve-true-up", "confirm": "This will reverse the true-up and create a new one for re-calculation. Continue?"}
+				]
+			}
+		}
+	]
+}
