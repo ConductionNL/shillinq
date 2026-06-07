@@ -64,6 +64,17 @@ import AdminInvoiceDetail from './views/invoice/AdminInvoiceDetail.vue'
 import PurchaseOrderForm from './components/purchase-order/PurchaseOrderForm.vue'
 import PurchaseOrderDetail from './components/purchase-order/PurchaseOrderDetail.vue'
 
+// bookkeeping-purchase-order-3way slice 04 (REQ-GRN-001 / REQ-PO3W-003):
+// the GRN capture form is a mobile-optimised multi-PO line-by-line receipt
+// flow with rejection-reason picker + delivery-photo upload, and the detail
+// view drives the quality-check + accept transitions (accept posts a
+// StockMove credit per accepted line and updates the originating PO(s)
+// lifecycle via the server-authoritative GoodsReceiptNoteService). Neither
+// fits a built-in `index` / `detail` page type, so both are kind:"page"
+// custom components.
+import GoodsReceiptNoteForm from './components/goods-receipt-note/GoodsReceiptNoteForm.vue'
+import GoodsReceiptNoteDetail from './components/goods-receipt-note/GoodsReceiptNoteDetail.vue'
+
 export default {
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
 	MobileScannerReceive: { kind: 'page', component: ReceivePage },
@@ -80,4 +91,7 @@ export default {
 
 	PurchaseOrderForm: { kind: 'page', component: PurchaseOrderForm },
 	PurchaseOrderDetail: { kind: 'page', component: PurchaseOrderDetail },
+
+	GoodsReceiptNoteForm: { kind: 'page', component: GoodsReceiptNoteForm },
+	GoodsReceiptNoteDetail: { kind: 'page', component: GoodsReceiptNoteDetail },
 }
