@@ -93,13 +93,25 @@
   REQ-INV-004 main scenario (100@3.50 + 200@4.00 = 300@3.8333) /
   outbound COGS at current average (50@3.8333 = 19167 cents = EUR
   191,67). All 3 pass.
-- [ ] Task 9: Author `lib/Service/CogsPosterService.php` — posts one
+- [x] Task 9: Author `lib/Service/CogsPosterService.php` — posts one
   balanced `JournalEntry` (debit COGS `7000`, credit Inventory `3000`,
   configurable per administration) per outbound `StockMovement`; sets
   `InventoryValuation.status = adjusted` and logs WARNING if GL accounts
   are not configured; reference `StockMovement.uuid` in
   `JournalEntry.reference`; `@spec` tag pointing to `tasks.md#task-9`
-  (REQ-INV-007)
+  (REQ-INV-007) — authored. Materialises a balanced 2-line
+  `GLTransaction` (header + GLLine debit COGS + GLLine credit
+  Inventory; shillinq GL vocabulary). Account numbers configurable
+  via app config `cogs_account` / `inventory_account`. Fail-soft on
+  missing config (logs WARNING, sets `status=adjusted` +
+  `pendingCogs=true` on snapshot per REQ-INV-007 — never silently
+  skips). `sourceReference: StockMove.id` carries the back-link.
+  PHPUnit `CogsPosterServiceTest`:
+  - testBalancedTransactionWhenAccountsConfigured (5 × EUR 89,00 =
+    EUR 445,00 debit/credit pair matching REQ-INV-007 scenario)
+  - testMissingAccountsAdjustsValuationAndWarns (status=adjusted +
+    pendingCogs=true + WARNING logged + no GL rows posted)
+  - testZeroCogsIsNoop. All 3 pass.
 - [ ] Task 10: Wire `FifoValuationService`, `MovingAverageValuationService`,
   and `CogsPosterService` into the Nextcloud event dispatcher via
   constructor DI (`private readonly`); register listeners in
