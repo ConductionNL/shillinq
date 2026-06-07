@@ -1,14 +1,11 @@
 # Spec: inventory-stock-tracking
 
-**Status:** proposed
-**Scope:** inventory-management (or shillinq — to be determined in implementation)
+**Status:** implemented
+**Scope:** shillinq
 **Tier:** T1 (foundational)
 **Depends on:** inventory-product-catalog
 
 ## ADDED Requirements
-
-@e2e exclude unbuilt UI: stock levels index/detail pages not yet implemented
-
 
 ### REQ-IST-001: The system SHALL store inventory stock levels as an OpenRegister-managed `InventoryStock` register
 
