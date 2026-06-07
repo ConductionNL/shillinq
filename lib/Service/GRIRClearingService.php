@@ -507,15 +507,26 @@ class GRIRClearingService
         );
         $postingDate    = $this->postingDate(grn: $invoice);
 
-        // Build settlement lines. Clearing leg debits totalExclVat; AP leg
-        // credits totalExclVat; VAT leg credits totalVat. Tax-only entries
-        // (totalExclVat == 0, totalVat > 0) are an edge case we still
-        // settle in a balanced 2-line shape against the AP leg.
+        // Build settlement lines per REQ-PO3W-009 settlement leg:
+        //   DR GR/IR Clearing  (excl VAT) - closes the receipt-side clearing
+        //                                  balance accumulated at GRN time;
+        //   DR VAT Input       (VAT)      - the input VAT the supplier charged
+        //                                  us, which we'll reclaim on our VAT
+        //                                  return (RGS 3.5 "voorbelasting").
+        //                                  The spec calls this account "VAT
+        //                                  Payable" by its credit-side label;
+        //                                  on a purchase invoice the entry is
+        //                                  on the debit side, so the entry
+        //                                  balances against the AP leg below.
+        //   CR Accounts Payable (incl VAT) - what we owe the supplier.
+        //
+        // Tax-only edge (excl == 0, vat > 0) materialises a balanced
+        // 2-line DR VAT / CR AP entry without the clearing leg.
         $clearingDebit = $totalExclVat;
-        $apCredit      = $totalExclVat;
-        $vatCredit     = $totalVat;
+        $vatDebit      = $totalVat;
+        $apCredit      = ($clearingDebit + $vatDebit);
 
-        if ($clearingDebit === 0 && $vatCredit === 0) {
+        if ($clearingDebit === 0 && $vatDebit === 0) {
             // Defensive: nothing to post.
             return [
                 'posted'  => false,
@@ -533,39 +544,27 @@ class GRIRClearingService
                 'costCenter'    => $costCenter,
                 'projectCode'   => $projectCode,
             ];
-            $lines[] = [
-                'accountNumber' => $apAccount,
-                'side'          => 'credit',
-                'amountCents'   => $apCredit,
-                'description'   => $description,
-                'costCenter'    => $costCenter,
-                'projectCode'   => $projectCode,
-            ];
         }
 
-        if ($vatCredit > 0) {
-            // When there is no clearing amount (rare tax-only edge), debit AP
-            // for the VAT leg to keep the entry balanced.
-            if ($clearingDebit === 0) {
-                $lines[] = [
-                    'accountNumber' => $apAccount,
-                    'side'          => 'debit',
-                    'amountCents'   => $vatCredit,
-                    'description'   => $description,
-                    'costCenter'    => $costCenter,
-                    'projectCode'   => $projectCode,
-                ];
-            }
-
+        if ($vatDebit > 0) {
             $lines[] = [
                 'accountNumber' => $vatAccount,
-                'side'          => 'credit',
-                'amountCents'   => $vatCredit,
+                'side'          => 'debit',
+                'amountCents'   => $vatDebit,
                 'description'   => $description,
                 'costCenter'    => $costCenter,
                 'projectCode'   => $projectCode,
             ];
         }
+
+        $lines[] = [
+            'accountNumber' => $apAccount,
+            'side'          => 'credit',
+            'amountCents'   => $apCredit,
+            'description'   => $description,
+            'costCenter'    => $costCenter,
+            'projectCode'   => $projectCode,
+        ];
 
         $transactionData = [
             'transactionNumber' => $this->settlementTransactionNumber(
