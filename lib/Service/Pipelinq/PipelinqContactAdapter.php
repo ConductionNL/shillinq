@@ -14,12 +14,13 @@
  * failure as a {@see PipelinqTransportException} with the safe-to-log
  * message + status code.
  *
- * No request methods are implemented here — `fetchContact()` and
- * `fetchKlantbeeld()` land in slices 03/04, `publishTimelineEntry()` in
- * slice 07. The single `request()` entrypoint is `protected` so those
- * slices can extend it via the cleanest possible seam, while this slice
- * stays focused on the cross-cutting concerns (auth, retries, breaker,
- * CloudEvents-compatible JSON shape, logging).
+ * Slice 03 extends the transport with the {@see self::getContact()} read
+ * path: a read-through cache around `GET /api/v1/contacts/{externalId}`
+ * with a 5-minute TTL, a fallback DTO on 404 / malformed JSON, and
+ * graceful degradation that serves a still-valid cached Contact when
+ * pipelinq is unavailable. The Klantbeeld read (04), timeline publish
+ * (07) and lifecycle events (08) extend this same transport via the
+ * `protected request()` seam.
  *
  * Security (ADR-005):
  *   - The bearer token is read from IAppConfig and sent only as an
@@ -28,9 +29,13 @@
  *   - Log lines redact credentials and only carry the endpoint host + path,
  *     attempt number, status code, and circuit-breaker state.
  *
- * Spec deltas added by this slice:
+ * Spec deltas added by slice 02 (transport):
  *   - "The adapter SHALL provide a resilient HTTP transport with bounded retries"
  *   - "The adapter SHALL fail fast via a circuit breaker"
+ *
+ * Spec deltas added by slice 03 (contact read):
+ *   - "The adapter SHALL load a pipelinq Contact by externalId"
+ *   - "The adapter SHALL cache Contact data with a bounded TTL"
  *
  * @category Service
  * @package  OCA\Shillinq\Service\Pipelinq
@@ -42,6 +47,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
+ * @spec openspec/changes/bookings-pipelinq-customer-bridge-03-contact-read/tasks.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -89,6 +95,30 @@ class PipelinqContactAdapter
      * @var string
      */
     public const CONFIG_KEY_TOKEN = 'pipelinq_token';
+
+    /**
+     * TTL (seconds) for cached Contact entries — giant decision D6.
+     *
+     * @var int
+     */
+    public const CONTACT_CACHE_TTL_SECONDS = 300;
+
+    /**
+     * Cache key prefix for cached Contact entries.
+     *
+     * Each Contact is stored at `pipelinq:contact:{externalId}`; the
+     * `clearCache()` invalidation wipes the whole prefix.
+     *
+     * @var string
+     */
+    public const CONTACT_CACHE_KEY_PREFIX = 'pipelinq:contact:';
+
+    /**
+     * HTTP path template for the Contact read endpoint.
+     *
+     * @var string
+     */
+    public const CONTACT_PATH_TEMPLATE = '/api/v1/contacts/%s';
 
     /**
      * Lazily-built HTTP client (one per adapter instance).
@@ -174,6 +204,207 @@ class PipelinqContactAdapter
         return $this->circuitBreaker->state();
 
     }//end circuitState()
+
+    /**
+     * Load a pipelinq Contact by `externalId`.
+     *
+     * Read-through cache against the injected {@see ICache} (5-minute
+     * TTL per `externalId`, key `pipelinq:contact:{externalId}`):
+     *
+     *   1. A cache hit is returned immediately, never touching pipelinq.
+     *   2. On a cache miss the adapter issues
+     *      `GET /api/v1/contacts/{externalId}` via the slice-02 request
+     *      loop (3s timeout, retry policy, circuit breaker).
+     *   3. A 200 response is parsed into a {@see PipelinqContact} DTO
+     *      and cached for the TTL.
+     *   4. A 404 is the expected "not found" outcome — a fallback DTO
+     *      is returned and cached (so the same lookup does not re-hit
+     *      pipelinq inside the TTL); no error is logged.
+     *   5. A malformed-JSON response yields a fallback DTO + a WARNING
+     *      log line; the raw body is truncated to 200 chars before
+     *      logging. No retry is issued — this is a client-side
+     *      classification, not a transient failure.
+     *   6. When pipelinq is unavailable (transport error / open
+     *      breaker) and a still-valid cached entry exists, the cached
+     *      entry is served instead of propagating the failure.
+     *
+     * @param string $externalId The pipelinq external Contact id (see slice 01).
+     *
+     * @return PipelinqContact The Contact (with `isFound()=true`) or a
+     *                         fallback DTO when the id is unknown / the
+     *                         response is malformed.
+     *
+     * @throws PipelinqTransportException When pipelinq is unavailable AND
+     *                                    no still-valid cache entry can
+     *                                    be served.
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-03-contact-read/tasks.md
+     */
+    public function getContact(string $externalId): PipelinqContact
+    {
+        $id = trim($externalId);
+        if ($id === '') {
+            throw new PipelinqTransportException(
+                message: 'pipelinq Contact lookup requires a non-empty externalId',
+                statusCode: 0
+            );
+        }
+
+        $cacheKey = self::CONTACT_CACHE_KEY_PREFIX.$id;
+        $cached   = $this->readCachedContact(key: $cacheKey);
+        if ($cached !== null) {
+            $this->logger->debug(
+                'pipelinq contact cache hit',
+                [
+                    'app'        => Application::APP_ID,
+                    'externalId' => $id,
+                ]
+            );
+            return $cached;
+        }
+
+        try {
+            $payload = $this->request(
+                method: 'GET',
+                path: sprintf(self::CONTACT_PATH_TEMPLATE, rawurlencode($id))
+            );
+        } catch (PipelinqTransportException $e) {
+            // 404 is an expected "not found" outcome — return the
+            // fallback without escalating the log severity.
+            if ($e->statusCode() === 404) {
+                $this->logger->debug(
+                    'pipelinq contact not found',
+                    [
+                        'app'        => Application::APP_ID,
+                        'externalId' => $id,
+                    ]
+                );
+                $contact = PipelinqContact::notFound(externalId: $id);
+                $this->writeCachedContact(key: $cacheKey, contact: $contact);
+                return $contact;
+            }
+
+            // Malformed JSON arrives wrapped in a TransportException
+            // with a JsonException previous; surface a WARNING + a
+            // fallback DTO and DO NOT retry (client-side classification).
+            $previous = $e->getPrevious();
+            if ($previous instanceof \JsonException) {
+                $this->logger->warning(
+                    'pipelinq contact response malformed',
+                    [
+                        'app'        => Application::APP_ID,
+                        'externalId' => $id,
+                        'status'     => $e->statusCode(),
+                        'reason'     => $previous->getMessage(),
+                    ]
+                );
+                return PipelinqContact::notFound(externalId: $id);
+            }
+
+            // Anything else (open breaker, transport error, 5xx) → try
+            // to serve a still-valid cache entry; otherwise propagate.
+            $stale = $this->readCachedContact(key: $cacheKey);
+            if ($stale !== null) {
+                $this->logger->warning(
+                    'pipelinq unavailable; serving cached contact',
+                    [
+                        'app'        => Application::APP_ID,
+                        'externalId' => $id,
+                        'status'     => $e->statusCode(),
+                    ]
+                );
+                return $stale;
+            }
+
+            throw $e;
+        }//end try
+
+        $contact = PipelinqContact::fromApiPayload(externalId: $id, payload: $payload);
+        $this->writeCachedContact(key: $cacheKey, contact: $contact);
+
+        return $contact;
+
+    }//end getContact()
+
+    /**
+     * Invalidate every cached Contact entry.
+     *
+     * Wipes all keys under {@see self::CONTACT_CACHE_KEY_PREFIX}. Used by
+     * the admin "Clear pipelinq cache" action and exposed for tests so a
+     * cache-expiry scenario can be simulated without sleeping for 5
+     * minutes.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-03-contact-read/tasks.md
+     */
+    public function clearCache(): void
+    {
+        $this->cache->clear(self::CONTACT_CACHE_KEY_PREFIX);
+
+    }//end clearCache()
+
+    /**
+     * Read a cached Contact entry by key.
+     *
+     * Returns `null` on miss or when the cached value cannot be decoded
+     * (treated as a miss so the caller refreshes from pipelinq).
+     *
+     * @param string $key Full cache key, including the prefix.
+     *
+     * @return PipelinqContact|null
+     */
+    private function readCachedContact(string $key): ?PipelinqContact
+    {
+        $raw = $this->cache->get($key);
+        if (is_string($raw) === false || $raw === '') {
+            return null;
+        }
+
+        try {
+            $decoded = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return null;
+        }
+
+        if (is_array($decoded) === false) {
+            return null;
+        }
+
+        return PipelinqContact::fromArray(data: $decoded);
+
+    }//end readCachedContact()
+
+    /**
+     * Persist a Contact in the cache with the configured TTL.
+     *
+     * Serialised as JSON because {@see ICache::set()} is documented to
+     * accept arbitrary "mixed" but the concrete distributed backends
+     * (APCu / Redis / Memcached) only round-trip scalars reliably.
+     *
+     * @param string          $key     Full cache key, including the prefix.
+     * @param PipelinqContact $contact Contact DTO to persist.
+     *
+     * @return void
+     */
+    private function writeCachedContact(string $key, PipelinqContact $contact): void
+    {
+        try {
+            $encoded = json_encode($contact->toArray(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+        } catch (\JsonException $e) {
+            $this->logger->warning(
+                'pipelinq contact cache write skipped — encode failed',
+                [
+                    'app'    => Application::APP_ID,
+                    'reason' => $e->getMessage(),
+                ]
+            );
+            return;
+        }
+
+        $this->cache->set($key, $encoded, self::CONTACT_CACHE_TTL_SECONDS);
+
+    }//end writeCachedContact()
 
     /**
      * Issue an authenticated request to pipelinq with retry + breaker.
