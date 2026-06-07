@@ -1622,4 +1622,138 @@ class SettingsService
         }//end try
 
     }//end seedInventoryLots()
+
+    /**
+     * Seed example InventoryValuation records from
+     * `inventory-valuation-examples.json`, idempotently per administration.
+     *
+     * Deduplication key per REQ-INV-005 is
+     * `(productId, warehouse, status=active, administrationId)`. When an
+     * active snapshot for the same tuple already exists the seed entry is
+     * skipped, preserving operator edits and preventing duplicate active
+     * snapshots from triggering the uniqueness validation.
+     *
+     * @param string $administrationId Administration scope for the seed.
+     *
+     * @return array<string,mixed> Result with success/seeded/skipped/message.
+     *
+     * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-12
+     */
+    public function seedInventoryValuationExamples(string $administrationId): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        if ($administrationId === '') {
+            return [
+                'success' => false,
+                'message' => 'administrationId is required for InventoryValuation seed.',
+            ];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/inventory-valuation-examples.json';
+        if (file_exists($seedPath) === false) {
+            return [
+                'success' => false,
+                'message' => 'Seed file not found: inventory-valuation-examples.json',
+            ];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return [
+                'success' => false,
+                'message' => 'Failed to read inventory-valuation-examples.json',
+            ];
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return [
+                'success' => false,
+                'message' => 'Failed to parse inventory-valuation-examples.json: '.json_last_error_msg(),
+            ];
+        }
+
+        $valuations = ($data['valuations'] ?? []);
+        if (empty($valuations) === true) {
+            return [
+                'success' => true,
+                'message' => 'Seed file contains no valuations, nothing to import.',
+                'seeded'  => 0,
+                'skipped' => 0,
+            ];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($valuations as $valuation) {
+                $productId = (string) ($valuation['productId'] ?? '');
+                $warehouse = (string) ($valuation['warehouse'] ?? '');
+                if ($productId === '' || $warehouse === '') {
+                    continue;
+                }
+
+                // Dedup key (productId, warehouse, status=active, administrationId) per REQ-INV-005.
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('InventoryValuation')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'productId'        => $productId,
+                                'warehouse'        => $warehouse,
+                                'status'           => 'active',
+                                'administrationId' => $administrationId,
+                            ],
+                            'limit'   => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $valuation['administrationId'] = $administrationId;
+                $objectService->saveObject(
+                    object: $valuation,
+                    register: $registerSlug,
+                    schema: 'InventoryValuation',
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: inventory valuation examples seeded',
+                ['seeded' => $seeded, 'skipped' => $skipped]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'Inventory valuation examples seeded successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: inventory valuation example seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedInventoryValuationExamples()
+
 }//end class
