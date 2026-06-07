@@ -1,5 +1,14 @@
 # Specifications — Trial Balance (Tier 2)
 
+> **Implementation note (hydra apply).** The monolith already ships a period
+> *snapshot* `TrialBalance` schema (totals + `isBalanced`, from
+> `add-shillinq-bookkeeping-operations`, REQ-FS-005). To satisfy this Tier-2
+> spec without rebuilding it (ADR-022), the per-account opening/movement/closing
+> rows below are realised as a new read-only schema named **`TrialBalanceLine`**
+> (not a second `TrialBalance`), declared in an ADR-037 `register.d` fragment
+> rather than by editing the monolith. The live GL field is `periodId` (not
+> `period_id`); the implementation uses the real field names throughout.
+
 ## Requirement: Trial Balance Aggregation Schema Declaration
 
 **REQ-TB-001**  

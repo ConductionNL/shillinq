@@ -1,0 +1,128 @@
+{
+	"menu": [
+		{
+			"id": "Verkoop",
+			"label": "Verkoop",
+			"icon": "CartOutline",
+			"order": 33,
+			"children": [
+				{
+					"id": "Afspraken",
+					"label": "Afspraken",
+					"icon": "CalendarClockOutline",
+					"route": "Afspraken",
+					"order": 10
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "Afspraken",
+			"route": "/verkoop/afspraken",
+			"type": "index",
+			"title": "Afspraken",
+			"config": {
+				"register": "shillinq",
+				"schema": "Appointment",
+				"columns": [
+					{
+						"key": "appointmentId",
+						"label": "Reference",
+						"sortable": true
+					},
+					{
+						"key": "startTime",
+						"label": "Start",
+						"sortable": true
+					},
+					{
+						"key": "endTime",
+						"label": "End",
+						"sortable": true
+					},
+					{
+						"key": "serviceId",
+						"label": "Service",
+						"sortable": true
+					},
+					{
+						"key": "resourceId",
+						"label": "Resource",
+						"sortable": true
+					},
+					{
+						"key": "customerId",
+						"label": "Customer",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "startTime",
+				"detailRoute": "AfspraakDetail"
+			}
+		},
+		{
+			"id": "AfspraakDetail",
+			"route": "/verkoop/afspraken/:id",
+			"type": "detail",
+			"title": "Afspraak",
+			"config": {
+				"register": "shillinq",
+				"schema": "Appointment",
+				"fields": [
+					{
+						"key": "appointmentId",
+						"label": "Reference",
+						"type": "string"
+					},
+					{
+						"key": "startTime",
+						"label": "Start (UTC)",
+						"type": "string"
+					},
+					{
+						"key": "endTime",
+						"label": "End (UTC)",
+						"type": "string"
+					},
+					{
+						"key": "serviceId",
+						"label": "Service",
+						"type": "string"
+					},
+					{
+						"key": "resourceId",
+						"label": "Resource",
+						"type": "string"
+					},
+					{
+						"key": "customerId",
+						"label": "Customer",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "notes",
+						"label": "Notes",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"indexRoute": "Afspraken"
+			}
+		}
+	]
+}

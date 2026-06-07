@@ -42,9 +42,9 @@ A posting (transaction line) recording waterschaps-specific tax/levy collections
 |----------|------|----------|-------------|
 | variantStructure | enum | No | Program structure type: `gemeente-functional`, `waterschap-kostentoedeling`, or `provincie-kerntaak` |
 
-## Requirements
+## ADDED Requirements
 
-### REQ-WSB-001: Account-level bbvVariant overlay
+### Requirement: REQ-WSB-001 — Account-level bbvVariant overlay
 
 SHALL provide an optional `bbvVariant` enum field on `Account` schema supporting values `gemeente`, `waterschap`, `provincie`.
 
@@ -54,7 +54,7 @@ GIVEN a new waterschappen administration
 WHEN an account is created with `bbvVariant: 'waterschap'`  
 THEN the account is tagged as waterschap-scoped and does not appear in gemeente-only reports.
 
-### REQ-WSB-002: WaterschapHeffingPosting register
+### Requirement: REQ-WSB-002 — WaterschapHeffingPosting register
 
 SHALL declare the `WaterschapHeffingPosting` register with lifecycle state management (draft → collected → posted → archived).
 
@@ -64,7 +64,7 @@ GIVEN a heffing collected in May 2026
 WHEN posted to the general ledger  
 THEN the posting status transitions from `collected` to `posted` and is immutable.
 
-### REQ-WSB-003: Waterschappen programma seed data
+### Requirement: REQ-WSB-003 — Waterschappen programma seed data
 
 SHALL ship a seed file `lib/Settings/seeds/bbv-waterschappen-programmas-2026.json` containing ~30 programma entries for BBVW (BBV-Waterschappen) structure per kostentoedeling categories.
 
@@ -74,7 +74,7 @@ GIVEN a waterschap selects the waterschappen feature flag on fresh install
 WHEN the repair step runs  
 THEN the 30 programma-indeling entries appear in the administration's chart of accounts.
 
-### REQ-WSB-004: EMU-saldo variant calculation
+### Requirement: REQ-WSB-004 — EMU-saldo variant calculation
 
 SHALL declare EMU-saldo exclusion rules for waterschappen (excluding certain heffingen per EMU-bijlage waterschappen handleiding) as a declarative aggregation filter.
 
@@ -84,7 +84,7 @@ GIVEN a waterschappen administration with mixed heffing postings
 WHEN EMU-saldo is calculated quarterly  
 THEN the computation excludes waterschaps-specific heffingen per regulation.
 
-### REQ-WSB-005: Manifest navigation entry
+### Requirement: REQ-WSB-005 — Manifest navigation entry
 
 SHALL add a feature-flag-controlled navigation entry in `src/manifest.json` under `featureFlags.gov-waterschap` pointing to the waterschappen-specific reporting views.
 
