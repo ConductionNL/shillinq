@@ -952,6 +952,12 @@
 						"nullable": true,
 						"example": "ap-team"
 					},
+					"grIrClearingAccount": {
+						"type": "string",
+						"description": "Optional per-profile override of the GR/IR clearing account code (REQ-PO3W-009). When set, GRIRClearingService uses this account for both the GRN-accept clearing posting and the match-approval settlement instead of the administration-wide default. Leaving this empty falls back to app config gr_ir_clearing_account (default 2910).",
+						"nullable": true,
+						"example": "2911"
+					},
 					"status": {
 						"type": "string",
 						"enum": ["active", "retired"],

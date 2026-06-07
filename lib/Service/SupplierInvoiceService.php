@@ -67,6 +67,15 @@ use SimpleXMLElement;
  *   needs `received` (the initial state) but exposes the guarded transition
  *   so the openconnector hook (and downstream slice 06) call a single
  *   server-authoritative method instead of writing statusCode directly.
+ * - linkInvoiceLineToPo() (slice 07): stamp the embedded invoice line with
+ *   linkedPoLineId / linkedPoId / linkedGrnLineId / linkedMatchId so the
+ *   SupplierInvoice document records its per-line PO links inline, and
+ *   append linkedPoId to the header's matchedPoIds (de-duplicated +
+ *   insertion-order preserved) + stamp consolidatedAt. Called by the
+ *   multi-PO consolidation engine once per matched invoice line so a
+ *   consumer reading the SupplierInvoice does not have to traverse
+ *   ThreeWayMatch records to see which POs a maand-factuur consolidates
+ *   (REQ-PO3W-007).
  *
  * The service uses the same in-app helpers as the PO service in slice 02
  * (register slug from IAppConfig, ObjectService resolved lazily via the
@@ -173,7 +182,7 @@ class SupplierInvoiceService
      *
      * @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md
      */
-    public function ingestUBLInvoice(string $administrationId, string $ublXml, array $context = []): array
+    public function ingestUBLInvoice(string $administrationId, string $ublXml, array $context=[]): array
     {
         if ($administrationId === '') {
             throw new RuntimeException('administrationId is required');
@@ -263,7 +272,7 @@ class SupplierInvoiceService
         string $administrationId,
         array $ocrPayload,
         float $confidenceScore,
-        array $context = []
+        array $context=[]
     ): array {
         if ($administrationId === '') {
             throw new RuntimeException('administrationId is required');
@@ -309,6 +318,167 @@ class SupplierInvoiceService
         return $this->saveObject(schema: 'SupplierInvoice', object: $record);
 
     }//end ingestPDFInvoice()
+
+    /**
+     * Slice 07 — record the (PO line, GRN line, ThreeWayMatch) link on a
+     * single embedded invoice line and update the SupplierInvoice header's
+     * `matchedPoIds` + `consolidatedAt` (REQ-PO3W-007).
+     *
+     * The multi-PO consolidation engine calls this method once per matched
+     * invoice line so the SupplierInvoice document itself records which POs
+     * the maand-factuur consolidates — consumers reading the invoice see the
+     * PO links inline without traversing ThreeWayMatch records.
+     *
+     * The method is server-authoritative:
+     *
+     *  - validates the administration scope (ADR-005); cross-tenant calls
+     *    are masked as "Supplier invoice not found";
+     *  - loads the persisted invoice; missing → same masked error;
+     *  - locates the embedded invoice line by 1-based `invoiceLineNumber`;
+     *    unknown line → RuntimeException so the controller layer maps to a
+     *    deterministic 404;
+     *  - stamps `linkedPoLineId`, `linkedPoId`, `linkedGrnLineId`,
+     *    `linkedMatchId` on the line; NULLable values are stored as NULL so
+     *    the JSON document matches the slice-07 schema fragment exactly;
+     *  - appends `linkedPoId` to the header's `matchedPoIds` (de-duplicated
+     *    + insertion-order preserved) and stamps `consolidatedAt`.
+     *
+     * The method is idempotent — re-linking the same line with the same
+     * trio yields the same persisted record; re-linking with a different
+     * trio overwrites the per-line link fields (the operator changing a
+     * disambiguation choice).
+     *
+     * @param string      $administrationId  Tenant scope (server-resolved).
+     * @param string      $invoiceId         SupplierInvoice id.
+     * @param int         $invoiceLineNumber 1-based line position.
+     * @param string|null $linkedPoLineId    PurchaseOrderLine id (NULL on exception path).
+     * @param string|null $linkedPoId        PurchaseOrder id (NULL on exception path).
+     * @param string|null $linkedGrnLineId   GoodsReceiptLine id (NULL on PO-only / exception).
+     * @param string|null $linkedMatchId     ThreeWayMatch id (NULL when no trio yet).
+     *
+     * @return array<string,mixed> The updated SupplierInvoice.
+     *
+     * @throws \RuntimeException On unknown invoice, unknown invoice line, or
+     *                            cross-tenant access.
+     *
+     * @spec openspec/changes/bookkeeping-purchase-order-3way-07-multi-po-consolidation/tasks.md
+     */
+    public function linkInvoiceLineToPo(
+        string $administrationId,
+        string $invoiceId,
+        int $invoiceLineNumber,
+        ?string $linkedPoLineId,
+        ?string $linkedPoId,
+        ?string $linkedGrnLineId,
+        ?string $linkedMatchId,
+    ): array {
+        if ($administrationId === '') {
+            throw new RuntimeException('administrationId is required');
+        }
+
+        if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+            throw new RuntimeException('Supplier invoice not found');
+        }
+
+        if ($invoiceId === '') {
+            throw new RuntimeException('Supplier invoice not found');
+        }
+
+        if ($invoiceLineNumber < 1) {
+            throw new RuntimeException('Invalid invoiceLineNumber');
+        }
+
+        $invoice = $this->findOne(
+            schema: 'SupplierInvoice',
+            filters: [
+                'id'               => $invoiceId,
+                'administrationId' => $administrationId,
+            ]
+        );
+        if ($invoice === null) {
+            throw new RuntimeException('Supplier invoice not found');
+        }
+
+        $lines = ($invoice['lines'] ?? []);
+        if (is_array($lines) === false) {
+            $lines = [];
+        }
+
+        $located = false;
+        foreach ($lines as $index => $line) {
+            if (is_array($line) === false) {
+                continue;
+            }
+
+            $candidateNumber = (int) ($line['lineNumber'] ?? ($index + 1));
+            if ($candidateNumber !== $invoiceLineNumber) {
+                continue;
+            }
+
+            $normalisedPoLineId  = $linkedPoLineId;
+            $normalisedPoId      = $linkedPoId;
+            $normalisedGrnLineId = $linkedGrnLineId;
+            $normalisedMatchId   = $linkedMatchId;
+            if ($normalisedPoLineId === '') {
+                $normalisedPoLineId = null;
+            }
+
+            if ($normalisedPoId === '') {
+                $normalisedPoId = null;
+            }
+
+            if ($normalisedGrnLineId === '') {
+                $normalisedGrnLineId = null;
+            }
+
+            if ($normalisedMatchId === '') {
+                $normalisedMatchId = null;
+            }
+
+            $line['linkedPoLineId']  = $normalisedPoLineId;
+            $line['linkedPoId']      = $normalisedPoId;
+            $line['linkedGrnLineId'] = $normalisedGrnLineId;
+            $line['linkedMatchId']   = $normalisedMatchId;
+            $lines[$index]           = $line;
+            $located = true;
+            break;
+        }//end foreach
+
+        if ($located === false) {
+            throw new RuntimeException('Invoice line not found');
+        }
+
+        $invoice['lines'] = $lines;
+
+        // De-duplicated, insertion-order-preserving matchedPoIds.
+        $existingMatchedPoIds = ($invoice['matchedPoIds'] ?? []);
+        if (is_array($existingMatchedPoIds) === false) {
+            $existingMatchedPoIds = [];
+        }
+
+        $matchedPoIds = [];
+        $seen         = [];
+        foreach ($existingMatchedPoIds as $existing) {
+            $existingPoId = trim((string) $existing);
+            if ($existingPoId === '' || isset($seen[$existingPoId]) === true) {
+                continue;
+            }
+
+            $matchedPoIds[]      = $existingPoId;
+            $seen[$existingPoId] = true;
+        }
+
+        if ($linkedPoId !== null && $linkedPoId !== '' && isset($seen[$linkedPoId]) === false) {
+            $matchedPoIds[]    = $linkedPoId;
+            $seen[$linkedPoId] = true;
+        }
+
+        $invoice['matchedPoIds']   = $matchedPoIds;
+        $invoice['consolidatedAt'] = $this->nowIso();
+
+        return $this->saveObject(schema: 'SupplierInvoice', object: $invoice);
+
+    }//end linkInvoiceLineToPo()
 
     /**
      * Server-authoritative lifecycle transition for a persisted
@@ -370,8 +540,8 @@ class SupplierInvoiceService
             throw new RuntimeException('Illegal transition from '.$fromStatus.' to '.$toStatus);
         }
 
-        $invoice['statusCode']      = $toStatus;
-        $invoice[$toStatus.'At']    = $this->nowIso();
+        $invoice['statusCode']   = $toStatus;
+        $invoice[$toStatus.'At'] = $this->nowIso();
 
         return $this->saveObject(schema: 'SupplierInvoice', object: $invoice);
 
@@ -417,12 +587,11 @@ class SupplierInvoiceService
         // XPath lookups work regardless of the source document's prefix
         // conventions.
         $namespaces = $xml->getNamespaces(true);
-        foreach (
-            [
-                'inv' => 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
-                'cbc' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2',
-                'cac' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2',
-            ] as $prefix => $uri
+        foreach ([
+            'inv' => 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
+            'cbc' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2',
+            'cac' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2',
+        ] as $prefix => $uri
         ) {
             if (in_array($uri, $namespaces, true) === true) {
                 $xml->registerXPathNamespace($prefix, $uri);
@@ -497,11 +666,10 @@ class SupplierInvoiceService
         // Re-register namespaces on the line node so XPath works against the
         // element scope (some SimpleXML implementations require this).
         $namespaces = $node->getNamespaces(true);
-        foreach (
-            [
-                'cbc' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2',
-                'cac' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2',
-            ] as $prefix => $uri
+        foreach ([
+            'cbc' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2',
+            'cac' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2',
+        ] as $prefix => $uri
         ) {
             if (in_array($uri, $namespaces, true) === true) {
                 $node->registerXPathNamespace($prefix, $uri);
@@ -511,12 +679,12 @@ class SupplierInvoiceService
         $idNode    = $node->xpath('cbc:ID');
         $rawLineId = (is_array($idNode) === true && isset($idNode[0]) === true) ? trim((string) $idNode[0]) : '';
 
-        $description    = $this->xpathFirst(xml: $node, paths: ['cac:Item/cbc:Description', 'cac:Item/cbc:Name']);
-        $productCode    = $this->xpathFirst(xml: $node, paths: ['cac:Item/cac:SellersItemIdentification/cbc:ID']);
-        $quantity       = $this->xpathFirstFloat(xml: $node, paths: ['cbc:InvoicedQuantity']);
-        $unitPrice      = $this->xpathFirstFloat(xml: $node, paths: ['cac:Price/cbc:PriceAmount']);
-        $lineExtension  = $this->xpathFirstFloat(xml: $node, paths: ['cbc:LineExtensionAmount']);
-        $vatRate        = $this->xpathFirstFloat(
+        $description   = $this->xpathFirst(xml: $node, paths: ['cac:Item/cbc:Description', 'cac:Item/cbc:Name']);
+        $productCode   = $this->xpathFirst(xml: $node, paths: ['cac:Item/cac:SellersItemIdentification/cbc:ID']);
+        $quantity      = $this->xpathFirstFloat(xml: $node, paths: ['cbc:InvoicedQuantity']);
+        $unitPrice     = $this->xpathFirstFloat(xml: $node, paths: ['cac:Price/cbc:PriceAmount']);
+        $lineExtension = $this->xpathFirstFloat(xml: $node, paths: ['cbc:LineExtensionAmount']);
+        $vatRate       = $this->xpathFirstFloat(
             xml: $node,
             paths: ['cac:Item/cac:ClassifiedTaxCategory/cbc:Percent', 'cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:Percent']
         );
@@ -525,9 +693,7 @@ class SupplierInvoiceService
         $vatRateFraction = ($vatRate > 0.0) ? ($vatRate / 100.0) : 0.0;
 
         return [
-            'lineNumber'    => ($rawLineId !== '' && ctype_digit($rawLineId) === true)
-                ? (int) $rawLineId
-                : $lineNumber,
+            'lineNumber'    => ($rawLineId !== '' && ctype_digit($rawLineId) === true) ? (int) $rawLineId : $lineNumber,
             'productCode'   => trim($productCode),
             'description'   => trim($description),
             'quantity'      => $quantity,
@@ -542,7 +708,7 @@ class SupplierInvoiceService
      * Run a sequence of xpath candidates and return the first non-empty
      * string match (or '' when nothing matches).
      *
-     * @param SimpleXMLElement $xml   Root element to search.
+     * @param SimpleXMLElement  $xml   Root element to search.
      * @param array<int,string> $paths Candidate xpath expressions, in priority.
      *
      * @return string
@@ -567,7 +733,7 @@ class SupplierInvoiceService
      * Convenience wrapper around xpathFirst() that converts the matched
      * text to a float (or 0.0 when no match).
      *
-     * @param SimpleXMLElement $xml   Root element.
+     * @param SimpleXMLElement  $xml   Root element.
      * @param array<int,string> $paths Candidate xpath expressions.
      *
      * @return float
