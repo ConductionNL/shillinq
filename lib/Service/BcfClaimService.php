@@ -144,6 +144,13 @@ class BcfClaimService
             }
         }
 
+        // No transactions for this administration+quarter → no lines can be in scope.
+        // Guard prevents the GLLine query from matching lines from other administrations
+        // when the transactionIds set is empty (CWE-284 / REQ-BCF-012).
+        if ($transactionIds === []) {
+            return [];
+        }
+
         // GLLines for the quarter; cross-check the parent transaction is in scope.
         $lines = $objectService
             ->setRegister($register)
