@@ -2,6 +2,7 @@
 
 **Status:** accepted
 **Entities:** 248
+**Entities:** 253
 
 ## Context
 
@@ -6837,3 +6838,114 @@ _A vooraankondiging for a collection. A collection MUST NOT enter a pain.008 bat
 | noticeDays | integer | Yes | Calendar days between notification and collection date (default 14) |
 | recipientAddress | string | No | Email, postal address, or invoice reference |
 | administrationId | string | Yes | FK to Administration |
+### CashflowForecastHorizon
+_The 13-week rolling cashflow window for one administration. Rolls forward every Monday 02:00 UTC: week-1 archived, week-13 appended. Categorisation follows IAS 7 / RJ 360._
+**Primary spec:** bookkeeping-cashflow-13wk
+| horizonId | string | Yes | Unique identifier (UUID) |
+| ondernemingId | string | Yes | FK to the onderneming/corporation |
+| horizonStart | date | Yes | First day of the 13-week window (a Monday) |
+| horizonEind | date | Yes | Last day of the window (Sunday, +90 days) |
+| rolledOp | datetime | Yes | Timestamp of the last weekly roll |
+| openingSaldo | object | Yes | Opening balance breakdown (zakelijkeRekening + three spaardoel buckets + totaal) |
+| modelVersie | string | No | Forecast model version string |
+| kalibratieScore | number | No | Prior-month forecast accuracy (0-1, MAPE-weighted) |
+| crisisModeActief | boolean | No | True when a negative saldo is predicted within 4 weeks |
+| administrationId | string | Yes | FK to the administration (tenant scope) |
+| lifecycleState | enum | Yes | One of active, rolling, archived |
+### CashflowWeek
+_One weekly slot in the 13-week horizon with inflows/outflows by category and computed ending saldo._
+**Primary spec:** bookkeeping-cashflow-13wk
+| weekId | string | Yes | Unique identifier (UUID) |
+| horizonId | string | Yes | FK to CashflowForecastHorizon |
+| weeknummer | integer | Yes | ISO 8601 week number |
+| weekStart | date | Yes | Monday of the week |
+| weekEind | date | Yes | Sunday of the week |
+| openingSaldo | number | Yes | Opening balance for the week |
+| inflows_ar_geprognosticeerd | number | Yes | Projected AR receipts (betalingsgedrag-based) |
+| inflows_totaal | number | Yes | Sum of all inflows |
+| outflows_ap_geprognosticeerd | number | Yes | Projected AP payments (due-date scheduled) |
+| outflows_totaal | number | Yes | Sum of all outflows |
+| nettoMutatie | number | Yes | inflows_totaal - outflows_totaal |
+| eindSaldo | number | Yes | openingSaldo + nettoMutatie |
+| bufferStatus | enum | No | One of BOVEN_BUFFER, VOORALARM, CRISIS |
+| alerts | array | No | Alert records raised for this week |
+| administrationId | string | Yes | FK to the administration (tenant scope) |
+### CashflowARProjection
+_One record per open AR invoice projecting the expected receipt date from customer-specific betalingsgedrag history rather than the contractual due date._
+**Primary spec:** bookkeeping-cashflow-13wk
+| projId | string | Yes | Unique identifier (UUID) |
+| horizonId | string | Yes | FK to CashflowForecastHorizon |
+| arInvoiceId | string | Yes | FK to the AR invoice (read-only) |
+| klantId | string | No | Denormalised customer identifier |
+| factuurDatum | date | Yes | Invoice issuance date |
+| vervalDatum | date | Yes | Contractual due date |
+| openstaandBedrag | number | Yes | Outstanding amount in EUR |
+| verwachtOntvangstDatum | date | Yes | Projected receipt date |
+| betrouwbaarheidScore | number | No | Confidence score (0-1) |
+| administrationId | string | Yes | FK to the administration (tenant scope) |
+### CashflowAPSchedule
+_One record per scheduled AP outflow within the horizon, derived from open AP invoices' due dates._
+**Primary spec:** bookkeeping-cashflow-13wk
+| schedId | string | Yes | Unique identifier (UUID) |
+| horizonId | string | Yes | FK to CashflowForecastHorizon |
+| apTransactionId | string | Yes | FK to the AP invoice/transaction (read-only) |
+| leverancierNaam | string | No | Supplier/creditor name (denormalised) |
+| vervalDatum | date | Yes | AP invoice due date |
+| geplandeBetaalDatum | date | Yes | Planned payment date |
+| bedrag | number | Yes | Amount to pay in EUR |
+| categorie | enum | No | Outflow category |
+| betalingsmethode | enum | No | Payment method |
+| administrationId | string | Yes | FK to the administration (tenant scope) |
+### CashflowRecurring
+_A declarative recurring inflow/outflow stream auto-expanded into the 13-week horizon by frequency, activation window and optional CPI indexing._
+**Primary spec:** bookkeeping-cashflow-13wk
+| recurId | string | Yes | Unique identifier (UUID) |
+| ondernemingId | string | Yes | FK to the onderneming/corporation |
+| label | string | Yes | Human-readable name |
+| categorie | enum | Yes | RECURRING_HUUR..RECURRING_OVERIG |
+| richting | enum | Yes | IN or OUT |
+| frequentie | enum | Yes | WEKELIJKS, TWEEWEKELIJKS, MAANDELIJKS, KWARTAALS, JAARLIJKS |
+| dagVanMaand | integer | No | Day of month for monthly recurrence |
+| maandVanJaar | integer | No | Month for annual recurrence |
+| standaardBedrag | number | Yes | Base amount in EUR |
+| indexatieRegel | enum | No | FIXED or CPI_AFGELOPEN_JAAR |
+| geldigVan | date | Yes | Effective start date |
+| geldigTot | date | No | Expiration date (null if indefinite) |
+| accountNumberExpense | string | No | GL account code (FK to Account.accountNumber) |
+| administrationId | string | Yes | FK to the administration (tenant scope) |
+### CashflowBufferPolicy
+_Operator-configured minimum cash reserve with two-tier alerts: vooralarm at 150% (yellow) and ondergrens at 50% (red) of the calculated buffer._
+**Primary spec:** bookkeeping-cashflow-13wk
+| policyId | string | Yes | Unique identifier (UUID) |
+| ondernemingId | string | Yes | FK to the onderneming/corporation |
+| policy | enum | Yes | MIN_FIXED_AMOUNT, MIN_MONTHS_VASTE_KOSTEN, CUSTOM_FORMULA |
+| berekendeBuffer | number | Yes | Calculated buffer threshold in EUR |
+| alertOndergrens | number | Yes | Red critical threshold (= buffer x 0.50) |
+| alertVooralarm | number | Yes | Yellow pre-alert threshold (= buffer x 1.50) |
+| administrationId | string | Yes | FK to the administration (tenant scope) |
+### CashflowScenario
+_An immutable what-if snapshot of a horizon with one or more adjustments, re-computed for comparison against the baseline. Scenarios are data, not stored logic._
+**Primary spec:** bookkeeping-cashflow-13wk
+| scenarioId | string | Yes | Unique identifier (UUID) |
+| horizonId | string | Yes | FK to the parent CashflowForecastHorizon |
+| naam | string | Yes | Scenario name |
+| description | string | No | Scenario description |
+| aanpassingen | array | Yes | Adjustment rules (AR_PROJECTION_OVERRIDE, RECURRING_COST_ADJUSTMENT, NEW_REVENUE, BUFFER_POLICY_OVERRIDE) |
+| resultaat | object | No | Computed forecast results |
+| createdAt | datetime | Yes | Scenario creation timestamp |
+| administrationId | string | Yes | FK to the administration (tenant scope) |
+### CashflowCalibrationReport
+**Schema.org:** `schema:Report`
+_Post-month-end forecast accuracy report comparing actual vs forecast by category (MAPE), used to recalibrate betalingsgedrag and pipeline-conversion models._
+**Primary spec:** bookkeeping-cashflow-13wk
+| reportId | string | Yes | Unique identifier (UUID) |
+| horizonId | string | Yes | FK to CashflowForecastHorizon |
+| calibrationPeriod | string | Yes | Period evaluated, YYYY-MM |
+| generatedAt | datetime | Yes | Timestamp of the calibration run |
+| ar_mape | number | Yes | MAPE for AR projections (%) |
+| ap_mape | number | Yes | MAPE for AP projections (%) |
+| recurring_mape | number | Yes | MAPE for recurring costs (%) |
+| tax_mape | number | Yes | MAPE for tax projections (%) |
+| betalingsgedragUpdates | array | No | Customers with re-calculated offsets |
+| pipelineConversionUpdates | array | No | Deals with re-calibrated probability |
+| administrationId | string | Yes | FK to the administration (tenant scope) |
