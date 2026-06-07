@@ -1067,6 +1067,91 @@
 					"order": 20
 				}
 			]
+		},
+		{
+			"id": "Verkoop",
+			"label": "Verkoop",
+			"icon": "CartOutline",
+			"order": 36,
+			"children": [
+				{
+					"id": "SalesFunnel",
+					"label": "Sales Funnel",
+					"icon": "FilterVariant",
+					"route": "SalesFunnel",
+					"order": 5
+				},
+				{
+					"id": "Quotes",
+					"label": "Quotes",
+					"icon": "FileDocumentOutline",
+					"route": "Quotes",
+					"order": 10
+				},
+				{
+					"id": "SalesOrders",
+					"label": "Sales Orders",
+					"icon": "ClipboardCheckOutline",
+					"route": "SalesOrders",
+					"order": 20
+				},
+				{
+					"id": "Deliveries",
+					"label": "Deliveries",
+					"icon": "TruckDeliveryOutline",
+					"route": "Deliveries",
+					"order": 30
+				},
+				{
+					"id": "SalesInvoices",
+					"label": "Invoices",
+					"icon": "ReceiptTextOutline",
+					"route": "SalesInvoices",
+					"order": 40
+				},
+				{
+					"id": "CreditNotes",
+					"label": "Credit Notes",
+					"icon": "ReceiptTextMinusOutline",
+					"route": "CreditNotes",
+					"order": 45
+				},
+				{
+					"id": "PricingRules",
+					"label": "Pricing Rules",
+					"icon": "TagMultipleOutline",
+					"route": "PricingRules",
+					"order": 50
+				},
+				{
+					"id": "VolumeDiscounts",
+					"label": "Volume Discounts",
+					"icon": "SaleOutline",
+					"route": "VolumeDiscounts",
+					"order": 55
+				},
+				{
+					"id": "BlanketOrders",
+					"label": "Blanket Orders",
+					"icon": "ClipboardListOutline",
+					"route": "BlanketOrders",
+					"order": 60
+				},
+				{
+					"id": "CreditHolds",
+					"label": "Credit Holds",
+					"icon": "AccountCancelOutline",
+					"route": "CreditHolds",
+					"order": 70
+				},
+				{
+					"id": "ARAgeing",
+					"label": "AR Ageing",
+					"icon": "CalendarClockOutline",
+					"route": "ARAgeing",
+					"order": 80
+				}
+			]
 		}
 	],
 	"pages": [
@@ -15054,12 +15139,36 @@
 				"register": "shillinq",
 				"schema": "Programmabegroting",
 				"columns": [
-					{ "key": "begrotingsjaar", "label": "Begrotingsjaar", "sortable": true },
-					{ "key": "organisationType", "label": "Type", "sortable": true },
-					{ "key": "status", "label": "Status", "sortable": true },
-					{ "key": "sluitendStructureel", "label": "Sluitend (struct.)", "sortable": true },
-					{ "key": "sluitendReëel", "label": "Sluitend (reëel)", "sortable": true },
-					{ "key": "toezichtRegime", "label": "Toezichtregime", "sortable": true }
+					{
+						"key": "begrotingsjaar",
+						"label": "Begrotingsjaar",
+						"sortable": true
+					},
+					{
+						"key": "organisationType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "sluitendStructureel",
+						"label": "Sluitend (struct.)",
+						"sortable": true
+					},
+					{
+						"key": "sluitendReëel",
+						"label": "Sluitend (reëel)",
+						"sortable": true
+					},
+					{
+						"key": "toezichtRegime",
+						"label": "Toezichtregime",
+						"sortable": true
+					}
 				],
 				"defaultSort": "begrotingsjaar",
 				"detailRoute": "ProgrammabegrotingDetail"
@@ -15074,16 +15183,56 @@
 				"register": "shillinq",
 				"schema": "Programmabegroting",
 				"fields": [
-					{ "key": "begrotingsjaar", "label": "Begrotingsjaar", "type": "number" },
-					{ "key": "organisationType", "label": "Organisatietype", "type": "string" },
-					{ "key": "version", "label": "Versie", "type": "number" },
-					{ "key": "status", "label": "Status", "type": "string" },
-					{ "key": "vaststellingsBesluit", "label": "Vaststellingsbesluit", "type": "string" },
-					{ "key": "vaststellingsDatum", "label": "Vaststellingsdatum", "type": "string" },
-					{ "key": "sluitendStructureel", "label": "Sluitend structureel", "type": "boolean" },
-					{ "key": "sluitendReëel", "label": "Sluitend reëel", "type": "boolean" },
-					{ "key": "toezichtRegime", "label": "Toezichtregime", "type": "string" },
-					{ "key": "nominaleOntwikkeling", "label": "Nominale ontwikkeling (%)", "type": "number" }
+					{
+						"key": "begrotingsjaar",
+						"label": "Begrotingsjaar",
+						"type": "number"
+					},
+					{
+						"key": "organisationType",
+						"label": "Organisatietype",
+						"type": "string"
+					},
+					{
+						"key": "version",
+						"label": "Versie",
+						"type": "number"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "vaststellingsBesluit",
+						"label": "Vaststellingsbesluit",
+						"type": "string"
+					},
+					{
+						"key": "vaststellingsDatum",
+						"label": "Vaststellingsdatum",
+						"type": "string"
+					},
+					{
+						"key": "sluitendStructureel",
+						"label": "Sluitend structureel",
+						"type": "boolean"
+					},
+					{
+						"key": "sluitendReëel",
+						"label": "Sluitend reëel",
+						"type": "boolean"
+					},
+					{
+						"key": "toezichtRegime",
+						"label": "Toezichtregime",
+						"type": "string"
+					},
+					{
+						"key": "nominaleOntwikkeling",
+						"label": "Nominale ontwikkeling (%)",
+						"type": "number"
+					}
 				],
 				"indexRoute": "Programmabegrotingen"
 			}
@@ -15097,12 +15246,36 @@
 				"register": "shillinq",
 				"schema": "Programma",
 				"columns": [
-					{ "key": "nummer", "label": "Nr.", "sortable": true },
-					{ "key": "naam", "label": "Naam", "sortable": true },
-					{ "key": "portefeuillehouder", "label": "Portefeuillehouder", "sortable": true },
-					{ "key": "batenTotaal", "label": "Baten", "sortable": true },
-					{ "key": "lastenTotaal", "label": "Lasten", "sortable": true },
-					{ "key": "saldoNaMutaties", "label": "Saldo", "sortable": true }
+					{
+						"key": "nummer",
+						"label": "Nr.",
+						"sortable": true
+					},
+					{
+						"key": "naam",
+						"label": "Naam",
+						"sortable": true
+					},
+					{
+						"key": "portefeuillehouder",
+						"label": "Portefeuillehouder",
+						"sortable": true
+					},
+					{
+						"key": "batenTotaal",
+						"label": "Baten",
+						"sortable": true
+					},
+					{
+						"key": "lastenTotaal",
+						"label": "Lasten",
+						"sortable": true
+					},
+					{
+						"key": "saldoNaMutaties",
+						"label": "Saldo",
+						"sortable": true
+					}
 				],
 				"defaultSort": "nummer",
 				"detailRoute": "ProgrammaDetail"
@@ -15117,15 +15290,51 @@
 				"register": "shillinq",
 				"schema": "Programma",
 				"fields": [
-					{ "key": "nummer", "label": "Nummer", "type": "string" },
-					{ "key": "naam", "label": "Naam", "type": "string" },
-					{ "key": "portefeuillehouder", "label": "Portefeuillehouder", "type": "string" },
-					{ "key": "doelstellingen", "label": "Doelstellingen", "type": "string" },
-					{ "key": "batenTotaal", "label": "Baten totaal", "type": "number" },
-					{ "key": "lastenTotaal", "label": "Lasten totaal", "type": "number" },
-					{ "key": "saldoVoorMutaties", "label": "Saldo voor mutaties", "type": "number" },
-					{ "key": "mutatiesReserves", "label": "Mutaties reserves", "type": "number" },
-					{ "key": "saldoNaMutaties", "label": "Saldo na mutaties", "type": "number" }
+					{
+						"key": "nummer",
+						"label": "Nummer",
+						"type": "string"
+					},
+					{
+						"key": "naam",
+						"label": "Naam",
+						"type": "string"
+					},
+					{
+						"key": "portefeuillehouder",
+						"label": "Portefeuillehouder",
+						"type": "string"
+					},
+					{
+						"key": "doelstellingen",
+						"label": "Doelstellingen",
+						"type": "string"
+					},
+					{
+						"key": "batenTotaal",
+						"label": "Baten totaal",
+						"type": "number"
+					},
+					{
+						"key": "lastenTotaal",
+						"label": "Lasten totaal",
+						"type": "number"
+					},
+					{
+						"key": "saldoVoorMutaties",
+						"label": "Saldo voor mutaties",
+						"type": "number"
+					},
+					{
+						"key": "mutatiesReserves",
+						"label": "Mutaties reserves",
+						"type": "number"
+					},
+					{
+						"key": "saldoNaMutaties",
+						"label": "Saldo na mutaties",
+						"type": "number"
+					}
 				],
 				"indexRoute": "Programmas"
 			}
@@ -15139,12 +15348,36 @@
 				"register": "shillinq",
 				"schema": "Meerjarenraming",
 				"columns": [
-					{ "key": "jaar", "label": "Jaar", "sortable": true },
-					{ "key": "batenStructureel", "label": "Baten (struct.)", "sortable": true },
-					{ "key": "lastenStructureel", "label": "Lasten (struct.)", "sortable": true },
-					{ "key": "saldoStructureel", "label": "Saldo (struct.)", "sortable": true },
-					{ "key": "saldoReëel", "label": "Saldo (reëel)", "sortable": true },
-					{ "key": "sluitend", "label": "Sluitend", "sortable": true }
+					{
+						"key": "jaar",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "batenStructureel",
+						"label": "Baten (struct.)",
+						"sortable": true
+					},
+					{
+						"key": "lastenStructureel",
+						"label": "Lasten (struct.)",
+						"sortable": true
+					},
+					{
+						"key": "saldoStructureel",
+						"label": "Saldo (struct.)",
+						"sortable": true
+					},
+					{
+						"key": "saldoReëel",
+						"label": "Saldo (reëel)",
+						"sortable": true
+					},
+					{
+						"key": "sluitend",
+						"label": "Sluitend",
+						"sortable": true
+					}
 				],
 				"defaultSort": "jaar",
 				"detailRoute": "MeerjarenramingDetail"
@@ -15159,14 +15392,46 @@
 				"register": "shillinq",
 				"schema": "Meerjarenraming",
 				"fields": [
-					{ "key": "jaar", "label": "Jaar", "type": "number" },
-					{ "key": "batenStructureel", "label": "Baten structureel", "type": "number" },
-					{ "key": "batenIncidenteel", "label": "Baten incidenteel", "type": "number" },
-					{ "key": "lastenStructureel", "label": "Lasten structureel", "type": "number" },
-					{ "key": "lastenIncidenteel", "label": "Lasten incidenteel", "type": "number" },
-					{ "key": "saldoStructureel", "label": "Saldo structureel", "type": "number" },
-					{ "key": "saldoReëel", "label": "Saldo reëel", "type": "number" },
-					{ "key": "sluitend", "label": "Sluitend", "type": "boolean" }
+					{
+						"key": "jaar",
+						"label": "Jaar",
+						"type": "number"
+					},
+					{
+						"key": "batenStructureel",
+						"label": "Baten structureel",
+						"type": "number"
+					},
+					{
+						"key": "batenIncidenteel",
+						"label": "Baten incidenteel",
+						"type": "number"
+					},
+					{
+						"key": "lastenStructureel",
+						"label": "Lasten structureel",
+						"type": "number"
+					},
+					{
+						"key": "lastenIncidenteel",
+						"label": "Lasten incidenteel",
+						"type": "number"
+					},
+					{
+						"key": "saldoStructureel",
+						"label": "Saldo structureel",
+						"type": "number"
+					},
+					{
+						"key": "saldoReëel",
+						"label": "Saldo reëel",
+						"type": "number"
+					},
+					{
+						"key": "sluitend",
+						"label": "Sluitend",
+						"type": "boolean"
+					}
 				],
 				"indexRoute": "MeerjarenramingPages"
 			}
@@ -15180,8 +15445,16 @@
 				"register": "shillinq",
 				"schema": "Paragraaf",
 				"columns": [
-					{ "key": "type", "label": "Type", "sortable": true },
-					{ "key": "begrotingId", "label": "Begroting", "sortable": true }
+					{
+						"key": "type",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "begrotingId",
+						"label": "Begroting",
+						"sortable": true
+					}
 				],
 				"defaultSort": "type",
 				"detailRoute": "ParagraafDetail"
@@ -15196,11 +15469,1138 @@
 				"register": "shillinq",
 				"schema": "Paragraaf",
 				"fields": [
-					{ "key": "type", "label": "Type", "type": "string" },
-					{ "key": "narrative", "label": "Toelichting", "type": "string" },
-					{ "key": "begrotingId", "label": "Begroting", "type": "string" }
+					{
+						"key": "type",
+						"label": "Type",
+						"type": "string"
+					},
+					{
+						"key": "narrative",
+						"label": "Toelichting",
+						"type": "string"
+					},
+					{
+						"key": "begrotingId",
+						"label": "Begroting",
+						"type": "string"
+					}
 				],
 				"indexRoute": "Paragrafen"
+			}
+		},
+		{
+			"id": "Quotes",
+			"route": "/sales/quotes",
+			"type": "index",
+			"title": "Quotes",
+			"config": {
+				"register": "shillinq",
+				"schema": "Quote",
+				"columns": [
+					{
+						"key": "quoteNumber",
+						"label": "Quote #",
+						"sortable": true
+					},
+					{
+						"key": "customerReference",
+						"label": "Customer",
+						"sortable": true
+					},
+					{
+						"key": "version",
+						"label": "Version",
+						"sortable": true
+					},
+					{
+						"key": "validUntil",
+						"label": "Valid Until",
+						"sortable": true
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "quoteNumber",
+				"detailRoute": "QuoteDetail"
+			}
+		},
+		{
+			"id": "QuoteDetail",
+			"route": "/sales/quotes/:id",
+			"type": "detail",
+			"title": "Quote",
+			"config": {
+				"register": "shillinq",
+				"schema": "Quote",
+				"fields": [
+					{
+						"key": "quoteNumber",
+						"label": "Quote #",
+						"type": "string"
+					},
+					{
+						"key": "customerReference",
+						"label": "Customer",
+						"type": "string"
+					},
+					{
+						"key": "version",
+						"label": "Version",
+						"type": "number"
+					},
+					{
+						"key": "validUntil",
+						"label": "Valid Until",
+						"type": "date"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "language",
+						"label": "Language",
+						"type": "string"
+					},
+					{
+						"key": "paymentTerms",
+						"label": "Payment Terms",
+						"type": "string"
+					},
+					{
+						"key": "deliveryTerms",
+						"label": "Delivery Terms",
+						"type": "string"
+					},
+					{
+						"key": "responsibleSalesperson",
+						"label": "Salesperson",
+						"type": "string"
+					},
+					{
+						"key": "acceptanceChannel",
+						"label": "Acceptance Channel",
+						"type": "string"
+					},
+					{
+						"key": "acceptedAt",
+						"label": "Accepted At",
+						"type": "date-time"
+					},
+					{
+						"key": "documentReference",
+						"label": "Document",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"indexRoute": "Quotes",
+				"lifecycleActions": true
+			}
+		},
+		{
+			"id": "SalesOrders",
+			"route": "/sales/orders",
+			"type": "index",
+			"title": "Sales Orders",
+			"config": {
+				"register": "shillinq",
+				"schema": "SalesOrder",
+				"columns": [
+					{
+						"key": "orderNumber",
+						"label": "Order #",
+						"sortable": true
+					},
+					{
+						"key": "customerReference",
+						"label": "Customer",
+						"sortable": true
+					},
+					{
+						"key": "orderDate",
+						"label": "Order Date",
+						"sortable": true
+					},
+					{
+						"key": "requestedDeliveryDate",
+						"label": "Requested",
+						"sortable": true
+					},
+					{
+						"key": "invoicingMode",
+						"label": "Invoicing",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "orderDate",
+				"detailRoute": "SalesOrderDetail"
+			}
+		},
+		{
+			"id": "SalesOrderDetail",
+			"route": "/sales/orders/:id",
+			"type": "detail",
+			"title": "Sales Order",
+			"config": {
+				"register": "shillinq",
+				"schema": "SalesOrder",
+				"fields": [
+					{
+						"key": "orderNumber",
+						"label": "Order #",
+						"type": "string"
+					},
+					{
+						"key": "customerReference",
+						"label": "Customer",
+						"type": "string"
+					},
+					{
+						"key": "sourceQuoteReference",
+						"label": "Source Quote",
+						"type": "string"
+					},
+					{
+						"key": "contractReference",
+						"label": "IFRS 15 Contract",
+						"type": "string"
+					},
+					{
+						"key": "orderDate",
+						"label": "Order Date",
+						"type": "date"
+					},
+					{
+						"key": "requestedDeliveryDate",
+						"label": "Requested Delivery",
+						"type": "date"
+					},
+					{
+						"key": "confirmedDeliveryDate",
+						"label": "Confirmed Delivery",
+						"type": "date"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "paymentTerms",
+						"label": "Payment Terms",
+						"type": "string"
+					},
+					{
+						"key": "deliveryTerms",
+						"label": "Delivery Terms",
+						"type": "string"
+					},
+					{
+						"key": "invoicingMode",
+						"label": "Invoicing Mode",
+						"type": "string"
+					},
+					{
+						"key": "creditCheckResult",
+						"label": "Credit Check",
+						"type": "string"
+					},
+					{
+						"key": "blanketOrderFlag",
+						"label": "Call-off",
+						"type": "boolean"
+					},
+					{
+						"key": "masterOrderReference",
+						"label": "Blanket Order",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"indexRoute": "SalesOrders",
+				"lifecycleActions": true
+			}
+		},
+		{
+			"id": "Deliveries",
+			"route": "/sales/deliveries",
+			"type": "index",
+			"title": "Deliveries",
+			"config": {
+				"register": "shillinq",
+				"schema": "Delivery",
+				"columns": [
+					{
+						"key": "deliveryNumber",
+						"label": "Delivery #",
+						"sortable": true
+					},
+					{
+						"key": "sourceOrderReference",
+						"label": "Order",
+						"sortable": true
+					},
+					{
+						"key": "shippedAt",
+						"label": "Shipped At",
+						"sortable": true
+					},
+					{
+						"key": "carrier",
+						"label": "Carrier",
+						"sortable": true
+					},
+					{
+						"key": "trackingNumber",
+						"label": "Tracking",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "shippedAt",
+				"detailRoute": "DeliveryDetail"
+			}
+		},
+		{
+			"id": "DeliveryDetail",
+			"route": "/sales/deliveries/:id",
+			"type": "detail",
+			"title": "Delivery",
+			"config": {
+				"register": "shillinq",
+				"schema": "Delivery",
+				"fields": [
+					{
+						"key": "deliveryNumber",
+						"label": "Delivery #",
+						"type": "string"
+					},
+					{
+						"key": "sourceOrderReference",
+						"label": "Order",
+						"type": "string"
+					},
+					{
+						"key": "shippedAt",
+						"label": "Shipped At",
+						"type": "date-time"
+					},
+					{
+						"key": "carrier",
+						"label": "Carrier",
+						"type": "string"
+					},
+					{
+						"key": "trackingNumber",
+						"label": "Tracking #",
+						"type": "string"
+					},
+					{
+						"key": "proofOfDeliveryReference",
+						"label": "Proof of Delivery",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"indexRoute": "Deliveries",
+				"lifecycleActions": true
+			}
+		},
+		{
+			"id": "SalesInvoices",
+			"route": "/sales/invoices",
+			"type": "index",
+			"title": "Invoices",
+			"config": {
+				"register": "shillinq",
+				"schema": "Invoice",
+				"columns": [
+					{
+						"key": "invoiceNumber",
+						"label": "Invoice #",
+						"sortable": true
+					},
+					{
+						"key": "customerReference",
+						"label": "Customer",
+						"sortable": true
+					},
+					{
+						"key": "invoiceDate",
+						"label": "Invoice Date",
+						"sortable": true
+					},
+					{
+						"key": "dueDate",
+						"label": "Due Date",
+						"sortable": true
+					},
+					{
+						"key": "grossAmount",
+						"label": "Gross (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "dueDate",
+				"detailRoute": "SalesInvoiceDetail"
+			}
+		},
+		{
+			"id": "SalesInvoiceDetail",
+			"route": "/sales/invoices/:id",
+			"type": "detail",
+			"title": "Invoice",
+			"config": {
+				"register": "shillinq",
+				"schema": "Invoice",
+				"fields": [
+					{
+						"key": "invoiceNumber",
+						"label": "Invoice #",
+						"type": "string"
+					},
+					{
+						"key": "customerReference",
+						"label": "Customer",
+						"type": "string"
+					},
+					{
+						"key": "invoiceDate",
+						"label": "Invoice Date",
+						"type": "date"
+					},
+					{
+						"key": "dueDate",
+						"label": "Due Date",
+						"type": "date"
+					},
+					{
+						"key": "invoiceType",
+						"label": "Invoice Type",
+						"type": "string"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "netAmount",
+						"label": "Net Amount",
+						"type": "number"
+					},
+					{
+						"key": "vatAmount",
+						"label": "BTW Amount",
+						"type": "number"
+					},
+					{
+						"key": "grossAmount",
+						"label": "Gross Amount",
+						"type": "number"
+					},
+					{
+						"key": "btwLegend",
+						"label": "BTW Legend",
+						"type": "string"
+					},
+					{
+						"key": "viesValidated",
+						"label": "VIES Validated",
+						"type": "boolean"
+					},
+					{
+						"key": "peppolMessageId",
+						"label": "Peppol Message",
+						"type": "string"
+					},
+					{
+						"key": "ublXmlReference",
+						"label": "UBL XML",
+						"type": "string"
+					},
+					{
+						"key": "glTransactionReference",
+						"label": "GL Posting",
+						"type": "string"
+					},
+					{
+						"key": "arOpenItemReference",
+						"label": "AR Open Item",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"indexRoute": "SalesInvoices",
+				"lifecycleActions": true
+			}
+		},
+		{
+			"id": "CreditNotes",
+			"route": "/sales/credit-notes",
+			"type": "index",
+			"title": "Credit Notes",
+			"config": {
+				"register": "shillinq",
+				"schema": "CreditNote",
+				"columns": [
+					{
+						"key": "creditNoteNumber",
+						"label": "Credit Note #",
+						"sortable": true
+					},
+					{
+						"key": "sourceInvoiceReference",
+						"label": "Source Invoice",
+						"sortable": true
+					},
+					{
+						"key": "creditDate",
+						"label": "Credit Date",
+						"sortable": true
+					},
+					{
+						"key": "totalAmount",
+						"label": "Amount (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "reason",
+						"label": "Reason",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "creditDate",
+				"detailRoute": "CreditNoteDetail"
+			}
+		},
+		{
+			"id": "CreditNoteDetail",
+			"route": "/sales/credit-notes/:id",
+			"type": "detail",
+			"title": "Credit Note",
+			"config": {
+				"register": "shillinq",
+				"schema": "CreditNote",
+				"fields": [
+					{
+						"key": "creditNoteNumber",
+						"label": "Credit Note #",
+						"type": "string"
+					},
+					{
+						"key": "sourceInvoiceReference",
+						"label": "Source Invoice",
+						"type": "string"
+					},
+					{
+						"key": "creditDate",
+						"label": "Credit Date",
+						"type": "date"
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total Amount",
+						"type": "number"
+					},
+					{
+						"key": "reason",
+						"label": "Reason",
+						"type": "string"
+					},
+					{
+						"key": "notes",
+						"label": "Notes",
+						"type": "string"
+					},
+					{
+						"key": "glTransactionReference",
+						"label": "GL Reversal",
+						"type": "string"
+					},
+					{
+						"key": "arOffsetReference",
+						"label": "AR Offset",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"indexRoute": "CreditNotes",
+				"lifecycleActions": true
+			}
+		},
+		{
+			"id": "PricingRules",
+			"route": "/sales/pricing-rules",
+			"type": "index",
+			"title": "Pricing Rules",
+			"config": {
+				"register": "shillinq",
+				"schema": "PricingTier",
+				"columns": [
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "customerReference",
+						"label": "Customer",
+						"sortable": true
+					},
+					{
+						"key": "productReference",
+						"label": "Product",
+						"sortable": true
+					},
+					{
+						"key": "priority",
+						"label": "Priority",
+						"sortable": true
+					},
+					{
+						"key": "validFrom",
+						"label": "Valid From",
+						"sortable": true
+					},
+					{
+						"key": "validUntil",
+						"label": "Valid Until",
+						"sortable": true
+					}
+				],
+				"defaultSort": "priority",
+				"detailRoute": "PricingRuleDetail"
+			}
+		},
+		{
+			"id": "PricingRuleDetail",
+			"route": "/sales/pricing-rules/:id",
+			"type": "detail",
+			"title": "Pricing Rule",
+			"config": {
+				"register": "shillinq",
+				"schema": "PricingTier",
+				"fields": [
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "customerReference",
+						"label": "Customer",
+						"type": "string"
+					},
+					{
+						"key": "customerGroupReference",
+						"label": "Customer Group",
+						"type": "string"
+					},
+					{
+						"key": "productReference",
+						"label": "Product",
+						"type": "string"
+					},
+					{
+						"key": "productGroupReference",
+						"label": "Product Group",
+						"type": "string"
+					},
+					{
+						"key": "priority",
+						"label": "Priority",
+						"type": "number"
+					},
+					{
+						"key": "validFrom",
+						"label": "Valid From",
+						"type": "date"
+					},
+					{
+						"key": "validUntil",
+						"label": "Valid Until",
+						"type": "date"
+					}
+				],
+				"indexRoute": "PricingRules"
+			}
+		},
+		{
+			"id": "VolumeDiscounts",
+			"route": "/sales/volume-discounts",
+			"type": "index",
+			"title": "Volume Discounts",
+			"config": {
+				"register": "shillinq",
+				"schema": "VolumeDiscount",
+				"columns": [
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "ruleType",
+						"label": "Rule",
+						"sortable": true
+					},
+					{
+						"key": "discountPercent",
+						"label": "Discount %",
+						"sortable": true
+					},
+					{
+						"key": "customerEligibility",
+						"label": "Eligibility",
+						"sortable": true
+					},
+					{
+						"key": "validFrom",
+						"label": "Valid From",
+						"sortable": true
+					},
+					{
+						"key": "validUntil",
+						"label": "Valid Until",
+						"sortable": true
+					}
+				],
+				"defaultSort": "validFrom",
+				"detailRoute": "VolumeDiscountDetail"
+			}
+		},
+		{
+			"id": "VolumeDiscountDetail",
+			"route": "/sales/volume-discounts/:id",
+			"type": "detail",
+			"title": "Volume Discount",
+			"config": {
+				"register": "shillinq",
+				"schema": "VolumeDiscount",
+				"fields": [
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "ruleType",
+						"label": "Rule Type",
+						"type": "string"
+					},
+					{
+						"key": "thresholdQuantity",
+						"label": "Threshold Qty",
+						"type": "number"
+					},
+					{
+						"key": "thresholdAmount",
+						"label": "Threshold Amount",
+						"type": "number"
+					},
+					{
+						"key": "discountPercent",
+						"label": "Discount %",
+						"type": "number"
+					},
+					{
+						"key": "productReference",
+						"label": "Product",
+						"type": "string"
+					},
+					{
+						"key": "customerEligibility",
+						"label": "Eligibility",
+						"type": "string"
+					},
+					{
+						"key": "automaticApplication",
+						"label": "Automatic",
+						"type": "boolean"
+					},
+					{
+						"key": "validFrom",
+						"label": "Valid From",
+						"type": "date"
+					},
+					{
+						"key": "validUntil",
+						"label": "Valid Until",
+						"type": "date"
+					}
+				],
+				"indexRoute": "VolumeDiscounts"
+			}
+		},
+		{
+			"id": "BlanketOrders",
+			"route": "/sales/blanket-orders",
+			"type": "index",
+			"title": "Blanket Orders",
+			"config": {
+				"register": "shillinq",
+				"schema": "BlanketOrder",
+				"columns": [
+					{
+						"key": "blanketOrderNumber",
+						"label": "Blanket Order #",
+						"sortable": true
+					},
+					{
+						"key": "customerReference",
+						"label": "Customer",
+						"sortable": true
+					},
+					{
+						"key": "productReference",
+						"label": "Product",
+						"sortable": true
+					},
+					{
+						"key": "committedQuantity",
+						"label": "Committed",
+						"sortable": true
+					},
+					{
+						"key": "calledOffQuantity",
+						"label": "Called Off",
+						"sortable": true
+					},
+					{
+						"key": "validUntil",
+						"label": "Valid Until",
+						"sortable": true
+					}
+				],
+				"defaultSort": "blanketOrderNumber",
+				"detailRoute": "BlanketOrderDetail"
+			}
+		},
+		{
+			"id": "BlanketOrderDetail",
+			"route": "/sales/blanket-orders/:id",
+			"type": "detail",
+			"title": "Blanket Order",
+			"config": {
+				"register": "shillinq",
+				"schema": "BlanketOrder",
+				"fields": [
+					{
+						"key": "blanketOrderNumber",
+						"label": "Blanket Order #",
+						"type": "string"
+					},
+					{
+						"key": "customerReference",
+						"label": "Customer",
+						"type": "string"
+					},
+					{
+						"key": "productReference",
+						"label": "Product",
+						"type": "string"
+					},
+					{
+						"key": "committedQuantity",
+						"label": "Committed Quantity",
+						"type": "number"
+					},
+					{
+						"key": "calledOffQuantity",
+						"label": "Called-off Quantity",
+						"type": "number"
+					},
+					{
+						"key": "agreedUnitPrice",
+						"label": "Agreed Unit Price",
+						"type": "number"
+					},
+					{
+						"key": "validFrom",
+						"label": "Valid From",
+						"type": "date"
+					},
+					{
+						"key": "validUntil",
+						"label": "Valid Until",
+						"type": "date"
+					},
+					{
+						"key": "expiryHandling",
+						"label": "Expiry Handling",
+						"type": "string"
+					}
+				],
+				"indexRoute": "BlanketOrders"
+			}
+		},
+		{
+			"id": "CreditHolds",
+			"route": "/sales/credit-holds",
+			"type": "index",
+			"title": "Credit Holds",
+			"config": {
+				"register": "shillinq",
+				"schema": "CreditHold",
+				"columns": [
+					{
+						"key": "customerReference",
+						"label": "Customer",
+						"sortable": true
+					},
+					{
+						"key": "severity",
+						"label": "Severity",
+						"sortable": true
+					},
+					{
+						"key": "openBalanceAtTrigger",
+						"label": "Open Balance",
+						"sortable": true
+					},
+					{
+						"key": "daysOverdueAtTrigger",
+						"label": "Days Overdue",
+						"sortable": true
+					},
+					{
+						"key": "appliedAt",
+						"label": "Applied At",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "appliedAt",
+				"detailRoute": "CreditHoldDetail"
+			}
+		},
+		{
+			"id": "CreditHoldDetail",
+			"route": "/sales/credit-holds/:id",
+			"type": "detail",
+			"title": "Credit Hold",
+			"config": {
+				"register": "shillinq",
+				"schema": "CreditHold",
+				"fields": [
+					{
+						"key": "customerReference",
+						"label": "Customer",
+						"type": "string"
+					},
+					{
+						"key": "severity",
+						"label": "Severity",
+						"type": "string"
+					},
+					{
+						"key": "reason",
+						"label": "Reason",
+						"type": "string"
+					},
+					{
+						"key": "openBalanceAtTrigger",
+						"label": "Open Balance",
+						"type": "number"
+					},
+					{
+						"key": "daysOverdueAtTrigger",
+						"label": "Days Overdue",
+						"type": "number"
+					},
+					{
+						"key": "appliedAt",
+						"label": "Applied At",
+						"type": "date-time"
+					},
+					{
+						"key": "createdBy",
+						"label": "Created By",
+						"type": "string"
+					},
+					{
+						"key": "releasedAt",
+						"label": "Released At",
+						"type": "date-time"
+					},
+					{
+						"key": "releasedBy",
+						"label": "Released By",
+						"type": "string"
+					},
+					{
+						"key": "releaseReason",
+						"label": "Release Reason",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"indexRoute": "CreditHolds",
+				"lifecycleActions": true
+			}
+		},
+		{
+			"id": "SalesFunnel",
+			"route": "/sales/funnel",
+			"type": "report",
+			"title": "Sales Funnel",
+			"config": {
+				"register": "shillinq",
+				"schema": "Quote",
+				"dashboard": {
+					"kpis": [
+						{
+							"id": "quotes-outstanding",
+							"label": "Quotes Outstanding",
+							"icon": "FileDocumentOutline",
+							"aggregation": "quotesOutstanding",
+							"field": "count",
+							"format": "number"
+						},
+						{
+							"id": "conversion-rate",
+							"label": "Conversion Rate",
+							"icon": "TrendingUp",
+							"aggregation": "conversionRate",
+							"field": "rate",
+							"format": "percent"
+						},
+						{
+							"id": "average-deal-size",
+							"label": "Average Deal Size",
+							"icon": "CurrencyEur",
+							"aggregation": "averageDealSize",
+							"field": "average",
+							"format": "currency",
+							"currency": "EUR"
+						},
+						{
+							"id": "days-to-close",
+							"label": "Days to Close",
+							"icon": "CalendarClockOutline",
+							"aggregation": "daysToClose",
+							"field": "averageDays",
+							"format": "number"
+						},
+						{
+							"id": "billed-vs-recognised",
+							"label": "Billed vs Recognised",
+							"icon": "ScaleBalanceOutline",
+							"aggregation": "billedVsRecognised",
+							"field": "gap",
+							"format": "currency",
+							"currency": "EUR"
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "ARAgeing",
+			"route": "/sales/ar-ageing",
+			"type": "report",
+			"title": "AR Ageing",
+			"config": {
+				"register": "shillinq",
+				"schema": "Invoice",
+				"dashboard": {
+					"kpis": [
+						{
+							"id": "ar-current",
+							"label": "Current (0-30 days)",
+							"icon": "CalendarOutline",
+							"aggregation": "arAgeing",
+							"field": "bucket0",
+							"format": "currency",
+							"currency": "EUR"
+						},
+						{
+							"id": "ar-30-60",
+							"label": "30-60 days",
+							"icon": "CalendarAlertOutline",
+							"aggregation": "arAgeing",
+							"field": "bucket30",
+							"format": "currency",
+							"currency": "EUR"
+						},
+						{
+							"id": "ar-60-90",
+							"label": "60-90 days",
+							"icon": "CalendarClockOutline",
+							"aggregation": "arAgeing",
+							"field": "bucket60",
+							"format": "currency",
+							"currency": "EUR"
+						},
+						{
+							"id": "ar-90-plus",
+							"label": "90+ days",
+							"icon": "AlertCircleOutline",
+							"aggregation": "arAgeing",
+							"field": "bucket90",
+							"format": "currency",
+							"currency": "EUR"
+						}
+					]
+				}
 			}
 		}
 	]
