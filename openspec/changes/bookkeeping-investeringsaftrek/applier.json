@@ -1,11 +1,22 @@
 {
   "ran": true,
-  "pass": null,
-  "blocking": [],
-  "turns": 0,
-  "cost_usd": 0.0,
-  "cost_eur": 0.0,
+  "pass": false,
+  "blocking": [
+    {
+      "file": "l10n/en.json",
+      "severity": "critical",
+      "note": "Unresolved git conflict markers (<<<<<<< HEAD / ======= / >>>>>>> origin/development) committed as literal text inside the JSON object \u2014 file is invalid JSON and will silently break all English translations at runtime."
+    },
+    {
+      "file": "l10n/nl.json",
+      "severity": "critical",
+      "note": "Same unresolved conflict markers committed as literal text \u2014 file is invalid JSON and will silently break all Dutch translations at runtime."
+    }
+  ],
+  "turns": 8,
+  "cost_usd": 0.3681,
+  "cost_eur": 0.3387,
   "pr": 299,
-  "commit": "7019eb9",
-  "timestamp": "2026-06-07T07:26:53.891530+00:00"
+  "commit": "75855d5",
+  "timestamp": "2026-06-07T07:50:16.353763+00:00"
 }
