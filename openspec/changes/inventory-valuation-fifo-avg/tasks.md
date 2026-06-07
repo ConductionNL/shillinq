@@ -162,12 +162,19 @@
   re-activating an adjusted snapshot also re-checks uniqueness). Allows
   own-row self-update (by id). PHPUnit tests cover permit / block /
   self-match. All 7 guard tests pass.
-- [ ] Task 15: Add Inventory Valuation navigation + pages to
+- [x] Task 15: Add Inventory Valuation navigation + pages to
   `src/manifest.json` (menu entry `Inventory > Valuation`, `type: index`
   page binding to `InventoryValuation` register with columns `warehouse`,
   `quantity`, `unitCost`, `totalValue`, `valuationMethod`, `status`;
   `type: detail` page for individual records); `node
-  tests/validate-manifest.js` exits 0 (REQ-INV-008)
+  tests/validate-manifest.js` exits 0 (REQ-INV-008) — added child nav
+  item `InventoryValuation` under `Inventory` (order 70, icon
+  ScaleBalance, EN+NL label). Pages `InventoryValuation` (`type: index`)
+  and `InventoryValuationDetail` (`type: detail`) bound to
+  register/schema. Index columns include `productId`, `warehouse`,
+  `quantity`, `unitCost`, `totalValue`, `valuationMethod`, `status`.
+  `node tests/validate-manifest.js` exits 0 (structural + consistency
+  PASS, 144 pages).
 
 ## Verification
 
