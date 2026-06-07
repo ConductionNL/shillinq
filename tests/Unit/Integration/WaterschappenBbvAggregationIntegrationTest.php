@@ -66,8 +66,7 @@ final class WaterschappenBbvAggregationIntegrationTest extends TestCase
      *
      * @var float
      */
-    private const THRESHOLD_AT_RISK  = 0.90;
-
+    private const THRESHOLD_AT_RISK = 0.90;
 
     /**
      * Load the base shillinq_register.json + merge every register.d/*.json
@@ -114,7 +113,6 @@ final class WaterschappenBbvAggregationIntegrationTest extends TestCase
 
     }//end loadMergedComponents()
 
-
     /**
      * Deep-merge an overlay onto a base; mirror of
      * SettingsService::deepMergeConfig (assoc arrays merge by key, list
@@ -148,7 +146,6 @@ final class WaterschappenBbvAggregationIntegrationTest extends TestCase
 
     }//end deepMerge()
 
-
     /**
      * Load the slice-02 seed fixture.
      *
@@ -171,7 +168,6 @@ final class WaterschappenBbvAggregationIntegrationTest extends TestCase
 
     }//end fixture()
 
-
     /**
      * Compute the aggregation outputs (totalBudget, ytdSpend, utilization,
      * complianceStatus) for one programme by evaluating the declarative
@@ -179,9 +175,9 @@ final class WaterschappenBbvAggregationIntegrationTest extends TestCase
      * given mappings + GL transactions. Mirrors what the OpenRegister
      * aggregation engine MUST produce — REQ-BBVW-005 / giant D3.
      *
-     * @param string                                    $programmeCode  The programme code to aggregate.
-     * @param array<int,array<string,mixed>>            $mappings       All BudgetBBVMapping records.
-     * @param array<int,array<string,mixed>>            $transactions   GL transaction lines in the fiscal year.
+     * @param string                         $programmeCode The programme code to aggregate.
+     * @param array<int,array<string,mixed>> $mappings      All BudgetBBVMapping records.
+     * @param array<int,array<string,mixed>> $transactions  GL transaction lines in the fiscal year.
      *
      * @return array{totalBudgetCents:int,ytdSpendCents:int,utilization:float,complianceStatus:string}
      */
@@ -202,9 +198,7 @@ final class WaterschappenBbvAggregationIntegrationTest extends TestCase
         $totalBudgetCents = 0;
         foreach ($programmeMappings as $m) {
             $totalBudgetCents += (int) (
-                ((int) $m['glAccountBudgetCents'])
-                * ((float) $m['allocationPercentage'])
-                / 100
+                ((int) $m['glAccountBudgetCents']) * ((float) $m['allocationPercentage']) / 100
             );
         }
 
@@ -229,12 +223,10 @@ final class WaterschappenBbvAggregationIntegrationTest extends TestCase
                 }
 
                 $ytdSpendCents += (int) (
-                    ((int) $line['amountCents'])
-                    * ((float) $m['allocationPercentage'])
-                    / 100
+                    ((int) $line['amountCents']) * ((float) $m['allocationPercentage']) / 100
                 );
-            }
-        }
+            }//end foreach
+        }//end foreach
 
         $utilization = 0.0;
         if ($totalBudgetCents > 0) {
@@ -260,7 +252,6 @@ final class WaterschappenBbvAggregationIntegrationTest extends TestCase
         ];
 
     }//end computeAggregation()
-
 
     /**
      * The slice-02 fragment must materialise the four required aggregations
@@ -311,7 +302,6 @@ final class WaterschappenBbvAggregationIntegrationTest extends TestCase
 
     }//end testAggregationBlockMaterialises()
 
-
     /**
      * Materialised TotalBudget per programme must equal
      * SUM(GL-budget × allocation%) for the slice-02 fixture mappings.
@@ -320,9 +310,9 @@ final class WaterschappenBbvAggregationIntegrationTest extends TestCase
      */
     public function testTotalBudgetMaterialisedFromFixtures(): void
     {
-        $fixture          = $this->fixture();
-        $mappings         = $fixture['mappings'];
-        $expectedBudgets  = $fixture['_notes']['expectedTotalBudgetCents'];
+        $fixture         = $this->fixture();
+        $mappings        = $fixture['mappings'];
+        $expectedBudgets = $fixture['_notes']['expectedTotalBudgetCents'];
 
         // No GL transactions yet — TotalBudget is a pure mapping aggregation.
         foreach ($expectedBudgets as $programmeCode => $expectedCents) {
@@ -346,7 +336,6 @@ final class WaterschappenBbvAggregationIntegrationTest extends TestCase
         self::assertSame('unconfigured', $unmapped['complianceStatus']);
 
     }//end testTotalBudgetMaterialisedFromFixtures()
-
 
     /**
      * YTDSpend + Utilization for programme 2.3.2 must match the on-track
@@ -385,7 +374,6 @@ final class WaterschappenBbvAggregationIntegrationTest extends TestCase
 
     }//end testYtdSpendAndUtilizationFromGlTransactions()
 
-
     /**
      * ComplianceStatus must transition on-track → at-risk → non-compliant as
      * GL spend on programme 2.3.2 rises through the three fixture
@@ -423,7 +411,7 @@ final class WaterschappenBbvAggregationIntegrationTest extends TestCase
         // Boundary semantics (programme 2.3.2 budget = 100 000 EUR / 10 000 000 ct;
         // GL 5000 allocation is 25%, so a 30 000 000-ct GL line delivers 7 500 000 ct =
         // 75% utilization, and a 36 000 000-ct GL line delivers 9 000 000 ct = 90%).
-        $boundary75 = [
+        $boundary75    = [
             ['glAccountNumber' => '5000', 'amountCents' => 30000000, 'postingDate' => '2026-03-15'],
         ];
         $aggBoundary75 = $this->computeAggregation('2.3.2', $mappings, $boundary75);
@@ -434,7 +422,7 @@ final class WaterschappenBbvAggregationIntegrationTest extends TestCase
             'Utilization == 0.75 must be on-track (≤ 75%, inclusive).'
         );
 
-        $boundary90 = [
+        $boundary90    = [
             ['glAccountNumber' => '5000', 'amountCents' => 36000000, 'postingDate' => '2026-03-15'],
         ];
         $aggBoundary90 = $this->computeAggregation('2.3.2', $mappings, $boundary90);
@@ -446,6 +434,4 @@ final class WaterschappenBbvAggregationIntegrationTest extends TestCase
         );
 
     }//end testComplianceStatusTransitionsOnRisingSpend()
-
-
 }//end class
