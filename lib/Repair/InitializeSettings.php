@@ -160,6 +160,7 @@ class InitializeSettings implements IRepairStep
             $this->seedBbvStamData(output: $output);
             $this->seedProjectData(output: $output);
             $this->seedSelectielijstRules(output: $output);
+            $this->seedArDemo(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
             $this->seedComplianceReferenceData(output: $output);
@@ -764,4 +765,55 @@ class InitializeSettings implements IRepairStep
         );
 
     }//end importStatementManifests()
+
+    /**
+     * Seed demo accounts-receivable data (customers + invoices) when opted in.
+     *
+     * Only runs when the admin has enabled `ar_demo_seed` and configured a
+     * non-empty `administration_id`. Idempotent: existing records are skipped.
+     * Declared by bookkeeping-accounts-receivable-core (T2).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md (REQ-006, REQ-007)
+     */
+    private function seedArDemo(IOutput $output): void
+    {
+        $settings = $this->settingsService->getSettings();
+
+        $arDemoSeed = ($settings['ar_demo_seed'] ?? '');
+        if ($arDemoSeed !== '1' && $arDemoSeed !== 'true') {
+            // Demo seeding is opt-in; skip silently when not enabled.
+            return;
+        }
+
+        $administrationId = ($settings['administration_id'] ?? '');
+        if ($administrationId === '') {
+            $output->warning(
+                'Shillinq: administration_id not configured — skipping AR demo seed. '
+                .'Set administration_id in Shillinq admin settings, then re-run.'
+            );
+            return;
+        }
+
+        $output->info('Seeding AR demo data (customers + invoices)...');
+
+        $seedResult = $this->settingsService->seedArDemo(administrationId: $administrationId);
+
+        if ($seedResult['success'] === true) {
+            $seeded  = ($seedResult['seeded'] ?? 0);
+            $skipped = ($seedResult['skipped'] ?? 0);
+            $output->info(
+                'AR demo seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        }
+
+        if ($seedResult['success'] !== true) {
+            $message = ($seedResult['message'] ?? 'unknown error');
+            $output->warning('AR demo seeding issue: '.$message);
+        }
+
+    }//end seedArDemo()
 }//end class
