@@ -58,7 +58,6 @@ use ZipArchive;
  */
 final class AuditExportServiceTest extends TestCase
 {
-
     /**
      * The pure ledger assembly returns events sorted by timestamp.
      *
@@ -72,7 +71,7 @@ final class AuditExportServiceTest extends TestCase
         );
 
         $bundle = [
-            'invoice' => [
+            'invoice'           => [
                 'id'               => 'inv-1',
                 'invoiceNumber'    => 'INV-2026-0001',
                 'administrationId' => 'admin-1',
@@ -82,19 +81,19 @@ final class AuditExportServiceTest extends TestCase
                 'totalInclVat'     => 121000,
                 'currency'         => 'EUR',
             ],
-            'purchaseOrders' => [
+            'purchaseOrders'    => [
                 [
-                    'id'           => 'po-1',
-                    'poNumber'     => 'PO-001',
-                    'requesterId'  => 'alice',
-                    'createdAt'    => '2026-02-01T10:00:00+00:00',
-                    'supplierId'   => 'sup-9',
-                    'totalAmount'  => 1210.00,
-                    'currency'     => 'EUR',
+                    'id'            => 'po-1',
+                    'poNumber'      => 'PO-001',
+                    'requesterId'   => 'alice',
+                    'createdAt'     => '2026-02-01T10:00:00+00:00',
+                    'supplierId'    => 'sup-9',
+                    'totalAmount'   => 1210.00,
+                    'currency'      => 'EUR',
                     'approvalChain' => [
                         ['userId' => 'bob', 'decision' => 'approved', 'decidedAt' => '2026-02-02T11:00:00+00:00'],
                     ],
-                    'peppolSentAt' => '2026-02-03T08:00:00+00:00',
+                    'peppolSentAt'  => '2026-02-03T08:00:00+00:00',
                 ],
             ],
             'goodsReceiptNotes' => [
@@ -107,7 +106,7 @@ final class AuditExportServiceTest extends TestCase
                     'photos'     => ['file-1', 'file-2'],
                 ],
             ],
-            'threeWayMatches' => [
+            'threeWayMatches'   => [
                 [
                     'id'                => 'twm-1',
                     'createdAt'         => '2026-03-01T09:05:00+00:00',
@@ -160,7 +159,6 @@ final class AuditExportServiceTest extends TestCase
 
     }//end testBuildLedgerReturnsTimeOrderedEvents()
 
-
     /**
      * Resolved match carries the resolver + action + notes in its event.
      *
@@ -176,17 +174,17 @@ final class AuditExportServiceTest extends TestCase
         $bundle = $this->emptyBundle();
         $bundle['threeWayMatches'] = [
             [
-                'id'                => 'twm-x',
-                'createdAt'         => '2026-04-01T00:00:00+00:00',
-                'matchStatus'       => 'exception_price',
-                'resolvedAt'        => '2026-04-02T00:00:00+00:00',
-                'resolvedBy'        => 'carol',
-                'resolutionAction'  => 'rejected',
-                'resolutionNotes'   => 'Wrong supplier',
+                'id'               => 'twm-x',
+                'createdAt'        => '2026-04-01T00:00:00+00:00',
+                'matchStatus'      => 'exception_price',
+                'resolvedAt'       => '2026-04-02T00:00:00+00:00',
+                'resolvedBy'       => 'carol',
+                'resolutionAction' => 'rejected',
+                'resolutionNotes'  => 'Wrong supplier',
             ],
         ];
 
-        $ledger = $service->buildLedger(bundle: $bundle);
+        $ledger     = $service->buildLedger(bundle: $bundle);
         $resolution = null;
         foreach ($ledger['events'] as $event) {
             if ($event['event'] === 'match_resolved') {
@@ -203,7 +201,6 @@ final class AuditExportServiceTest extends TestCase
 
     }//end testResolvedMatchEmitsResolverActionAndNotes()
 
-
     /**
      * Generate the ZIP package and inspect its contents.
      *
@@ -212,7 +209,7 @@ final class AuditExportServiceTest extends TestCase
     public function testGenerateAuditPackageWritesImmutableZip(): void
     {
         $data = [
-            'SupplierInvoice' => [
+            'SupplierInvoice'  => [
                 [
                     'id'               => 'inv-1',
                     'administrationId' => 'admin-1',
@@ -224,21 +221,21 @@ final class AuditExportServiceTest extends TestCase
                     'currency'         => 'EUR',
                 ],
             ],
-            'ThreeWayMatch' => [
+            'ThreeWayMatch'    => [
                 [
-                    'id'                => 'twm-1',
-                    'administrationId'  => 'admin-1',
-                    'invoiceId'         => 'inv-1',
-                    'createdAt'         => '2026-03-01T09:05:00+00:00',
-                    'matchStatus'       => 'auto_approved',
-                    'matchedPoIds'      => ['po-1'],
-                    'matchedGrnIds'     => ['grn-1'],
-                    'resolvedBy'        => 'carol',
-                    'resolvedAt'        => '2026-03-02T15:00:00+00:00',
-                    'resolutionAction'  => 'accepted',
+                    'id'               => 'twm-1',
+                    'administrationId' => 'admin-1',
+                    'invoiceId'        => 'inv-1',
+                    'createdAt'        => '2026-03-01T09:05:00+00:00',
+                    'matchStatus'      => 'auto_approved',
+                    'matchedPoIds'     => ['po-1'],
+                    'matchedGrnIds'    => ['grn-1'],
+                    'resolvedBy'       => 'carol',
+                    'resolvedAt'       => '2026-03-02T15:00:00+00:00',
+                    'resolutionAction' => 'accepted',
                 ],
             ],
-            'PurchaseOrder' => [
+            'PurchaseOrder'    => [
                 [
                     'id'               => 'po-1',
                     'administrationId' => 'admin-1',
@@ -290,7 +287,7 @@ final class AuditExportServiceTest extends TestCase
         $zip = new ZipArchive();
         self::assertTrue($zip->open($envelope['zipPath']));
 
-        $packageBase = $envelope['packageId'].'/';
+        $packageBase   = $envelope['packageId'].'/';
         $expectedFiles = [
             $packageBase.'manifest.json',
             $packageBase.'ledger.json',
@@ -322,7 +319,6 @@ final class AuditExportServiceTest extends TestCase
 
     }//end testGenerateAuditPackageWritesImmutableZip()
 
-
     /**
      * Cross-tenant access masks as not-found.
      *
@@ -353,7 +349,6 @@ final class AuditExportServiceTest extends TestCase
 
     }//end testCrossTenantAccessIsMaskedAsNotFound()
 
-
     /**
      * Missing invoice surfaces a not-found RuntimeException.
      *
@@ -374,7 +369,6 @@ final class AuditExportServiceTest extends TestCase
         );
 
     }//end testMissingInvoiceIsRejected()
-
 
     /**
      * Build the service over an in-memory OR stub.
@@ -422,7 +416,6 @@ final class AuditExportServiceTest extends TestCase
 
     }//end buildService()
 
-
     /**
      * Empty bundle helper for ledger-only tests.
      *
@@ -449,7 +442,6 @@ final class AuditExportServiceTest extends TestCase
         ];
 
     }//end emptyBundle()
-
 
     /**
      * In-memory OR stub (read-only — generateAuditPackage doesn't save).
@@ -486,7 +478,6 @@ final class AuditExportServiceTest extends TestCase
                 $this->data = $data;
             }//end __construct()
 
-
             /**
              * Fluent register setter.
              *
@@ -498,7 +489,6 @@ final class AuditExportServiceTest extends TestCase
             {
                 return $this;
             }//end setRegister()
-
 
             /**
              * Fluent schema setter.
@@ -512,7 +502,6 @@ final class AuditExportServiceTest extends TestCase
                 $this->schema = $schema;
                 return $this;
             }//end setSchema()
-
 
             /**
              * Apply equality filters to the active schema rows.
@@ -544,7 +533,6 @@ final class AuditExportServiceTest extends TestCase
                     )
                 );
             }//end findAll()
-
 
             /**
              * Stub saveObject (no writes in the export path).

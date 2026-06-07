@@ -217,7 +217,7 @@ class PurchaseOrderApprovalService
             }
 
             $entry['userId']    = $userId;
-            $entry['decision'] = $decision;
+            $entry['decision']  = $decision;
             $entry['decidedAt'] = $decidedAt;
             if ($comment !== null) {
                 $trimmed = trim($comment);
@@ -235,7 +235,7 @@ class PurchaseOrderApprovalService
             throw new RuntimeException('Approval chain is fully signed');
         }
 
-        $purchaseOrder['approvalChain'] = $chain;
+        $purchaseOrder['approvalChain']  = $chain;
         $purchaseOrder['lifecycleState'] = $this->nextLifecycleState(
             decision: $decision,
             chain: $chain,
@@ -254,9 +254,9 @@ class PurchaseOrderApprovalService
      * - approved + chain still has pending entries → pending_approval
      * - delegated → pending_approval (the slot is re-routed; outside this slice)
      *
-     * @param string                    $decision The decision recorded.
-     * @param array<int,mixed>          $chain    The updated approval chain.
-     * @param string                    $current  Current lifecycle (always `pending_approval`).
+     * @param string           $decision The decision recorded.
+     * @param array<int,mixed> $chain    The updated approval chain.
+     * @param string           $current  Current lifecycle (always `pending_approval`).
      *
      * @return string
      */

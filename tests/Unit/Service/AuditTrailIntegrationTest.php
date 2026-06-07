@@ -66,7 +66,6 @@ use ZipArchive;
  */
 final class AuditTrailIntegrationTest extends TestCase
 {
-
     /**
      * Drive a complete PO 3-way-match lifecycle and assert the audit
      * package captures every actor + timestamp.
@@ -76,7 +75,7 @@ final class AuditTrailIntegrationTest extends TestCase
     public function testFullLifecycleAuditTrailExport(): void
     {
         $data = [
-            'PurchaseOrder' => [
+            'PurchaseOrder'            => [
                 [
                     'id'               => 'po-100',
                     'administrationId' => 'admin-1',
@@ -94,7 +93,7 @@ final class AuditTrailIntegrationTest extends TestCase
                     ],
                 ],
             ],
-            'GoodsReceiptNote' => [
+            'GoodsReceiptNote'         => [
                 [
                     'id'                 => 'grn-100',
                     'administrationId'   => 'admin-1',
@@ -106,22 +105,22 @@ final class AuditTrailIntegrationTest extends TestCase
                     'photos'             => ['file-100', 'file-101'],
                 ],
             ],
-            'SupplierInvoice' => [
+            'SupplierInvoice'          => [
                 [
-                    'id'                => 'inv-100',
-                    'administrationId'  => 'admin-1',
-                    'invoiceNumber'     => 'INV-ERS-2026-00445',
-                    'supplierId'        => 'sup-77',
-                    'peppolReceivedAt'  => '2026-03-01T09:00:00+00:00',
-                    'statusCode'        => 'exception',
-                    'totalExclVat'      => 156000,
-                    'totalVat'          => 32760,
-                    'totalInclVat'      => 188760,
-                    'currency'          => 'EUR',
-                    'ublFileId'         => 'file-200',
+                    'id'               => 'inv-100',
+                    'administrationId' => 'admin-1',
+                    'invoiceNumber'    => 'INV-ERS-2026-00445',
+                    'supplierId'       => 'sup-77',
+                    'peppolReceivedAt' => '2026-03-01T09:00:00+00:00',
+                    'statusCode'       => 'exception',
+                    'totalExclVat'     => 156000,
+                    'totalVat'         => 32760,
+                    'totalInclVat'     => 188760,
+                    'currency'         => 'EUR',
+                    'ublFileId'        => 'file-200',
                 ],
             ],
-            'ThreeWayMatch' => [
+            'ThreeWayMatch'            => [
                 [
                     'id'                => 'twm-100',
                     'administrationId'  => 'admin-1',
@@ -158,9 +157,9 @@ final class AuditTrailIntegrationTest extends TestCase
         self::assertNotEmpty($purchaseOrder['approvalChain'][0]['decidedAt']);
 
         // ---- Step 2: simulate Peppol send + PO lifecycleState=sent ----
-        $purchaseOrder['lifecycleState']   = 'sent';
-        $purchaseOrder['peppolSentAt']     = '2026-02-15T08:00:00+00:00';
-        $purchaseOrder['peppolMessageId']  = 'urn:uuid:peppol-100';
+        $purchaseOrder['lifecycleState']  = 'sent';
+        $purchaseOrder['peppolSentAt']    = '2026-02-15T08:00:00+00:00';
+        $purchaseOrder['peppolMessageId'] = 'urn:uuid:peppol-100';
         $stub->saveObject($purchaseOrder);
 
         // ---- Step 3: exception resolution (slice 08) by user "carol" ----
@@ -254,7 +253,6 @@ final class AuditTrailIntegrationTest extends TestCase
 
     }//end testFullLifecycleAuditTrailExport()
 
-
     /**
      * Build PurchaseOrderApprovalService sharing the same OR stub.
      *
@@ -298,7 +296,6 @@ final class AuditTrailIntegrationTest extends TestCase
         );
 
     }//end buildApprovalService()
-
 
     /**
      * Build ExceptionResolutionService sharing the same OR stub.
@@ -348,7 +345,6 @@ final class AuditTrailIntegrationTest extends TestCase
         );
 
         $adapter = new class implements CreditNoteRequestAdapterInterface {
-
             /**
              * Stub — never invoked on the accept path.
              *
@@ -373,7 +369,6 @@ final class AuditTrailIntegrationTest extends TestCase
         );
 
     }//end buildResolutionService()
-
 
     /**
      * Build AuditExportService sharing the same OR stub.
@@ -418,7 +413,6 @@ final class AuditTrailIntegrationTest extends TestCase
         );
 
     }//end buildAuditService()
-
 
     /**
      * Build an in-memory OR ObjectService stub. Shared across slice-08,
@@ -467,7 +461,6 @@ final class AuditTrailIntegrationTest extends TestCase
                 $this->saved = &$saved;
             }//end __construct()
 
-
             /**
              * Fluent register setter.
              *
@@ -479,7 +472,6 @@ final class AuditTrailIntegrationTest extends TestCase
             {
                 return $this;
             }//end setRegister()
-
 
             /**
              * Fluent schema setter.
@@ -493,7 +485,6 @@ final class AuditTrailIntegrationTest extends TestCase
                 $this->schema = $schema;
                 return $this;
             }//end setSchema()
-
 
             /**
              * Apply equality filters to the active schema rows.
@@ -525,7 +516,6 @@ final class AuditTrailIntegrationTest extends TestCase
                     )
                 );
             }//end findAll()
-
 
             /**
              * Persist an object — capture the save + update the store so

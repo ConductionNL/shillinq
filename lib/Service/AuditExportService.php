@@ -287,14 +287,14 @@ class AuditExportService
      * timestamp are stamped with the parent record's createdAt to keep
      * the ordering deterministic.
      *
-     * @param array{
-     *     invoice:array<string,mixed>,
-     *     purchaseOrders:array<int,array<string,mixed>>,
-     *     goodsReceiptNotes:array<int,array<string,mixed>>,
-     *     threeWayMatches:array<int,array<string,mixed>>
-     * } $bundle The collected lifecycle bundle.
+     * @param array<string,mixed> $bundle The collected lifecycle bundle —
+     *                                    shape: { invoice: array,
+     *                                    purchaseOrders: list, goodsReceiptNotes:
+     *                                    list, threeWayMatches: list }.
      *
-     * @return array{events:array<int,array<string,mixed>>,summary:array<string,mixed>}
+     * @return array<string,mixed> The ledger payload (events list + summary).
+     *
+     * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
      */
     public function buildLedger(array $bundle): array
     {
@@ -408,7 +408,7 @@ class AuditExportService
                     'comment'  => (string) ($entry['comment'] ?? ''),
                 ],
             ];
-        }
+        }//end foreach
 
         $peppolSentAt = (string) ($purchaseOrder['peppolSentAt'] ?? '');
         if ($peppolSentAt !== '') {
@@ -657,14 +657,12 @@ class AuditExportService
      * Collect the deterministic attachment list — file ids referenced by
      * any GRN photo set + the invoice's stored UBL/PDF blob references.
      *
-     * @param array{
-     *     invoice:array<string,mixed>,
-     *     purchaseOrders:array<int,array<string,mixed>>,
-     *     goodsReceiptNotes:array<int,array<string,mixed>>,
-     *     threeWayMatches:array<int,array<string,mixed>>
-     * } $bundle Lifecycle bundle.
+     * @param array<string,mixed> $bundle Lifecycle bundle (same shape as
+     *                                    buildLedger()).
      *
-     * @return array<int,array{kind:string,fileId:string,sourceObject:string}>
+     * @return array<int,array<string,string>> The attachment list — each
+     *                                         entry carries kind, fileId,
+     *                                         sourceObject.
      */
     private function collectAttachmentList(array $bundle): array
     {
@@ -709,8 +707,8 @@ class AuditExportService
      */
     private function renderSummaryHtml(array $manifest, array $bundle, array $ledger): string
     {
-        $invoice    = (array) ($bundle['invoice'] ?? []);
-        $eventRows  = '';
+        $invoice   = (array) ($bundle['invoice'] ?? []);
+        $eventRows = '';
         foreach ((array) ($ledger['events'] ?? []) as $event) {
             $eventRows .= sprintf(
                 '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>',
@@ -787,11 +785,11 @@ HTML;
      * same byte sequence so the auditor can re-derive the SHA-256 over
      * the ledger to verify the package was not mutated post-export.
      *
-     * @param string              $packageId    Package id.
-     * @param array<string,mixed> $manifest     Manifest.
-     * @param string              $ledgerJson   Pre-serialised ledger JSON.
-     * @param string              $summaryHtml  HTML summary.
-     * @param array<string,mixed> $bundle       Lifecycle bundle.
+     * @param string              $packageId   Package id.
+     * @param array<string,mixed> $manifest    Manifest.
+     * @param string              $ledgerJson  Pre-serialised ledger JSON.
+     * @param string              $summaryHtml HTML summary.
+     * @param array<string,mixed> $bundle      Lifecycle bundle.
      *
      * @return string Absolute path to the ZIP.
      *

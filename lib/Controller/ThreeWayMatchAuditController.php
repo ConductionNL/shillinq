@@ -181,7 +181,7 @@ class ThreeWayMatchAuditController extends Controller
                 ]
             );
             return new JSONResponse(['error' => 'Could not load audit trail'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+        }//end try
 
         return new JSONResponse($ledger, Http::STATUS_OK);
 

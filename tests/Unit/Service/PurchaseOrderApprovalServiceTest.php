@@ -53,8 +53,6 @@ use RuntimeException;
  */
 final class PurchaseOrderApprovalServiceTest extends TestCase
 {
-
-
     /**
      * The single approver path with the authenticated user stamps a
      * non-empty userId + decidedAt and advances the PO to approved.
@@ -102,7 +100,6 @@ final class PurchaseOrderApprovalServiceTest extends TestCase
 
     }//end testRecordApprovalAdvancesLifecycleWhenChainFullySigned()
 
-
     /**
      * A chain with two pending entries only advances after BOTH are
      * approved. The first approval stays in pending_approval.
@@ -145,7 +142,6 @@ final class PurchaseOrderApprovalServiceTest extends TestCase
         self::assertSame('pending', $result['approvalChain'][1]['decision']);
 
     }//end testRecordApprovalKeepsPendingWhenChainHasMoreEntries()
-
 
     /**
      * A rejection terminates the lifecycle even with more pending
@@ -191,7 +187,6 @@ final class PurchaseOrderApprovalServiceTest extends TestCase
 
     }//end testRecordApprovalRejectionTerminatesLifecycle()
 
-
     /**
      * Cross-tenant access masks as a not-found RuntimeException so the
      * controller surfaces 404 (ADR-005 IDOR-safe).
@@ -228,7 +223,6 @@ final class PurchaseOrderApprovalServiceTest extends TestCase
 
     }//end testCrossTenantAccessIsMaskedAsNotFound()
 
-
     /**
      * An invalid decision is rejected before any save.
      *
@@ -264,7 +258,6 @@ final class PurchaseOrderApprovalServiceTest extends TestCase
 
     }//end testInvalidDecisionIsRejected()
 
-
     /**
      * Calling on a PO that is not pending_approval is rejected.
      *
@@ -299,7 +292,6 @@ final class PurchaseOrderApprovalServiceTest extends TestCase
         );
 
     }//end testNonPendingPoIsRejected()
-
 
     /**
      * Calling on a fully-signed chain (no pending entries) is rejected.
@@ -342,7 +334,6 @@ final class PurchaseOrderApprovalServiceTest extends TestCase
 
     }//end testFullySignedChainIsRejected()
 
-
     /**
      * An unauthenticated session is rejected (defensive — the
      * controller already blocks 401 before this is reached).
@@ -378,7 +369,6 @@ final class PurchaseOrderApprovalServiceTest extends TestCase
         );
 
     }//end testAnonymousSessionIsRejected()
-
 
     /**
      * Build the service over an in-memory OR ObjectService stub seeded
@@ -434,7 +424,6 @@ final class PurchaseOrderApprovalServiceTest extends TestCase
 
     }//end buildService()
 
-
     /**
      * Build an in-memory OpenRegister ObjectService stub.
      *
@@ -480,7 +469,6 @@ final class PurchaseOrderApprovalServiceTest extends TestCase
                 $this->saved = &$saved;
             }//end __construct()
 
-
             /**
              * Fluent register setter.
              *
@@ -492,7 +480,6 @@ final class PurchaseOrderApprovalServiceTest extends TestCase
             {
                 return $this;
             }//end setRegister()
-
 
             /**
              * Fluent schema setter.
@@ -506,7 +493,6 @@ final class PurchaseOrderApprovalServiceTest extends TestCase
                 $this->schema = $schema;
                 return $this;
             }//end setSchema()
-
 
             /**
              * Apply equality filters to the active schema rows.
@@ -538,7 +524,6 @@ final class PurchaseOrderApprovalServiceTest extends TestCase
                     )
                 );
             }//end findAll()
-
 
             /**
              * Persist an object — capture the save + update the in-memory
