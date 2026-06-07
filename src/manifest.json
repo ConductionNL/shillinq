@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "1.3.2",
+	"version": "1.3.3",
 	"dependencies": [
 		"openregister"
 	],
@@ -591,6 +591,41 @@
 			"icon": "ShoppingOutline",
 			"order": 35,
 			"children": [
+				{
+					"id": "PurchaseOrders",
+					"label": "Purchase Orders",
+					"icon": "ClipboardListOutline",
+					"route": "PurchaseOrders",
+					"order": 5
+				},
+				{
+					"id": "GoodsReceipts",
+					"label": "Goods Receipts",
+					"icon": "PackageVariantClosed",
+					"route": "GoodsReceipts",
+					"order": 6
+				},
+				{
+					"id": "SupplierInvoices",
+					"label": "Supplier Invoices",
+					"icon": "FileDocumentMultipleOutline",
+					"route": "SupplierInvoices",
+					"order": 7
+				},
+				{
+					"id": "ThreeWayMatches",
+					"label": "3-way Matches",
+					"icon": "VectorIntersection",
+					"route": "ThreeWayMatches",
+					"order": 8
+				},
+				{
+					"id": "ThreeWayMatchExceptions",
+					"label": "Match Exceptions",
+					"icon": "AlertOctagonOutline",
+					"route": "ThreeWayMatchExceptions",
+					"order": 9
+				},
 				{
 					"id": "Receipts",
 					"label": "Receipts",
@@ -7829,6 +7864,235 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "OninbareAfschrijvingen"
+			}
+		},
+		{
+			"id": "PurchaseOrders",
+			"route": "/inkoop/purchase-orders",
+			"type": "index",
+			"title": "Purchase Orders",
+			"config": {
+				"register": "shillinq",
+				"schema": "PurchaseOrder",
+				"columns": [
+					{ "key": "poNumber", "label": "PO #", "sortable": true },
+					{ "key": "supplierId", "label": "Supplier", "sortable": true },
+					{ "key": "expectedDeliveryDate", "label": "Expected", "sortable": true },
+					{ "key": "totalInclVat", "label": "Total (incl. VAT)", "sortable": true },
+					{ "key": "costCenter", "label": "Cost Centre", "sortable": true },
+					{ "key": "projectCode", "label": "Project", "sortable": true },
+					{ "key": "statusCode", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "poNumber",
+				"detailRoute": "PurchaseOrderDetail",
+				"description": "Purchase orders driving the 3-way match. Member 02 of bookkeeping-purchase-order-3way owns the controller + create flow."
+			}
+		},
+		{
+			"id": "PurchaseOrderDetail",
+			"route": "/inkoop/purchase-orders/:id",
+			"type": "detail",
+			"title": "Purchase Order",
+			"config": {
+				"register": "shillinq",
+				"schema": "PurchaseOrder",
+				"fields": [
+					{ "key": "poNumber", "label": "PO #", "type": "string" },
+					{ "key": "supplierId", "label": "Supplier", "type": "string" },
+					{ "key": "supplierReference", "label": "Supplier Reference", "type": "string" },
+					{ "key": "requester", "label": "Requester", "type": "string" },
+					{ "key": "costCenter", "label": "Cost Centre", "type": "string" },
+					{ "key": "projectCode", "label": "Project", "type": "string" },
+					{ "key": "currency", "label": "Currency", "type": "string" },
+					{ "key": "paymentTerms", "label": "Payment Terms", "type": "string" },
+					{ "key": "deliveryAddress", "label": "Delivery Address", "type": "string" },
+					{ "key": "expectedDeliveryDate", "label": "Expected Delivery", "type": "date" },
+					{ "key": "totalExclVat", "label": "Total (excl. VAT)", "type": "money" },
+					{ "key": "totalVat", "label": "VAT", "type": "money" },
+					{ "key": "totalInclVat", "label": "Total (incl. VAT)", "type": "money" },
+					{ "key": "peppolSentAt", "label": "Peppol Sent", "type": "datetime" },
+					{ "key": "peppolMessageId", "label": "Peppol Message ID", "type": "string" },
+					{ "key": "statusCode", "label": "Status", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "PurchaseOrders"
+			}
+		},
+		{
+			"id": "GoodsReceipts",
+			"route": "/inkoop/goods-receipts",
+			"type": "index",
+			"title": "Goods Receipts",
+			"config": {
+				"register": "shillinq",
+				"schema": "GoodsReceiptNote",
+				"columns": [
+					{ "key": "grnNumber", "label": "GRN #", "sortable": true },
+					{ "key": "receivedAt", "label": "Received", "sortable": true },
+					{ "key": "receivedBy", "label": "Received by", "sortable": true },
+					{ "key": "carrier", "label": "Carrier", "sortable": true },
+					{ "key": "qualityCheckPassed", "label": "QC", "sortable": true },
+					{ "key": "statusCode", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "receivedAt",
+				"detailRoute": "GoodsReceiptDetail",
+				"description": "Goods Receipt Notes (GRN) — physical receipt against POs. Member 04 owns the capture flow."
+			}
+		},
+		{
+			"id": "GoodsReceiptDetail",
+			"route": "/inkoop/goods-receipts/:id",
+			"type": "detail",
+			"title": "Goods Receipt Note",
+			"config": {
+				"register": "shillinq",
+				"schema": "GoodsReceiptNote",
+				"fields": [
+					{ "key": "grnNumber", "label": "GRN #", "type": "string" },
+					{ "key": "poIds", "label": "Purchase Orders", "type": "array" },
+					{ "key": "receivedAt", "label": "Received At", "type": "datetime" },
+					{ "key": "receivedBy", "label": "Received By", "type": "string" },
+					{ "key": "deliveryNoteReference", "label": "Delivery Note", "type": "string" },
+					{ "key": "carrier", "label": "Carrier", "type": "string" },
+					{ "key": "qualityCheckPassed", "label": "Quality Check", "type": "boolean" },
+					{ "key": "costCenter", "label": "Cost Centre", "type": "string" },
+					{ "key": "projectCode", "label": "Project", "type": "string" },
+					{ "key": "statusCode", "label": "Status", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "GoodsReceipts"
+			}
+		},
+		{
+			"id": "SupplierInvoices",
+			"route": "/inkoop/supplier-invoices",
+			"type": "index",
+			"title": "Supplier Invoices",
+			"config": {
+				"register": "shillinq",
+				"schema": "SupplierInvoice",
+				"columns": [
+					{ "key": "invoiceNumber", "label": "Invoice #", "sortable": true },
+					{ "key": "supplierId", "label": "Supplier", "sortable": true },
+					{ "key": "invoiceDate", "label": "Invoice Date", "sortable": true },
+					{ "key": "dueDate", "label": "Due", "sortable": true },
+					{ "key": "totalInclVat", "label": "Total (incl. VAT)", "sortable": true },
+					{ "key": "statusCode", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "dueDate",
+				"detailRoute": "SupplierInvoiceDetail",
+				"description": "Read-only stub at slice-01. Member 05 owns UBL/Peppol/OCR ingestion."
+			}
+		},
+		{
+			"id": "SupplierInvoiceDetail",
+			"route": "/inkoop/supplier-invoices/:id",
+			"type": "detail",
+			"title": "Supplier Invoice",
+			"config": {
+				"register": "shillinq",
+				"schema": "SupplierInvoice",
+				"fields": [
+					{ "key": "invoiceNumber", "label": "Invoice #", "type": "string" },
+					{ "key": "supplierId", "label": "Supplier", "type": "string" },
+					{ "key": "invoiceDate", "label": "Invoice Date", "type": "date" },
+					{ "key": "dueDate", "label": "Due Date", "type": "date" },
+					{ "key": "currency", "label": "Currency", "type": "string" },
+					{ "key": "totalExclVat", "label": "Total (excl. VAT)", "type": "money" },
+					{ "key": "totalVat", "label": "VAT", "type": "money" },
+					{ "key": "totalInclVat", "label": "Total (incl. VAT)", "type": "money" },
+					{ "key": "paymentReference", "label": "Payment Reference", "type": "string" },
+					{ "key": "ublSourceUri", "label": "UBL Source", "type": "string" },
+					{ "key": "peppolReceivedAt", "label": "Peppol Received", "type": "datetime" },
+					{ "key": "ocrConfidenceScore", "label": "OCR Confidence", "type": "number" },
+					{ "key": "costCenter", "label": "Cost Centre", "type": "string" },
+					{ "key": "projectCode", "label": "Project", "type": "string" },
+					{ "key": "statusCode", "label": "Status", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "SupplierInvoices"
+			}
+		},
+		{
+			"id": "ThreeWayMatches",
+			"route": "/inkoop/3way-matches",
+			"type": "index",
+			"title": "3-way Matches",
+			"config": {
+				"register": "shillinq",
+				"schema": "ThreeWayMatch",
+				"columns": [
+					{ "key": "invoiceId", "label": "Invoice", "sortable": true },
+					{ "key": "matchStatus", "label": "Match", "sortable": true },
+					{ "key": "createdAt", "label": "Created", "sortable": true },
+					{ "key": "resolvedAt", "label": "Resolved", "sortable": true },
+					{ "key": "costCenter", "label": "Cost Centre", "sortable": true },
+					{ "key": "projectCode", "label": "Project", "sortable": true }
+				],
+				"defaultSort": "createdAt",
+				"detailRoute": "ThreeWayMatchDetail",
+				"description": "3-way match outcomes. Member 06 owns the matching engine."
+			}
+		},
+		{
+			"id": "ThreeWayMatchDetail",
+			"route": "/inkoop/3way-matches/:id",
+			"type": "detail",
+			"title": "3-way Match",
+			"config": {
+				"register": "shillinq",
+				"schema": "ThreeWayMatch",
+				"fields": [
+					{ "key": "invoiceId", "label": "Invoice", "type": "string" },
+					{ "key": "matchedPoIds", "label": "Matched POs", "type": "array" },
+					{ "key": "matchedGrnIds", "label": "Matched GRNs", "type": "array" },
+					{ "key": "matchStatus", "label": "Match Status", "type": "string" },
+					{ "key": "divergenceDetails", "label": "Divergence", "type": "array" },
+					{ "key": "resolvedBy", "label": "Resolved By", "type": "string" },
+					{ "key": "resolutionAction", "label": "Resolution Action", "type": "string" },
+					{ "key": "resolutionNotes", "label": "Resolution Notes", "type": "string" },
+					{ "key": "createdAt", "label": "Created", "type": "datetime" },
+					{ "key": "resolvedAt", "label": "Resolved", "type": "datetime" },
+					{ "key": "costCenter", "label": "Cost Centre", "type": "string" },
+					{ "key": "projectCode", "label": "Project", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ThreeWayMatches"
+			}
+		},
+		{
+			"id": "ThreeWayMatchExceptions",
+			"route": "/inkoop/3way-matches/exceptions",
+			"type": "index",
+			"title": "Match Exceptions",
+			"config": {
+				"register": "shillinq",
+				"schema": "ThreeWayMatch",
+				"filter": {
+					"matchStatus": {
+						"in": [
+							"exception_price",
+							"exception_quantity",
+							"exception_missing_grn",
+							"exception_missing_po",
+							"fraud_alert"
+						]
+					}
+				},
+				"columns": [
+					{ "key": "invoiceId", "label": "Invoice", "sortable": true },
+					{ "key": "matchStatus", "label": "Exception", "sortable": true },
+					{ "key": "createdAt", "label": "Created", "sortable": true },
+					{ "key": "resolvedBy", "label": "Resolved By", "sortable": true },
+					{ "key": "resolutionAction", "label": "Action", "sortable": true }
+				],
+				"defaultSort": "createdAt",
+				"detailRoute": "ThreeWayMatchDetail",
+				"description": "Filtered view of 3-way matches that need operator action (price/quantity/missing-GRN/missing-PO/fraud-alert exceptions). Member 08 owns the exception workflow."
 			}
 		}
 	]
