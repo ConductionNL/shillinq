@@ -79,12 +79,20 @@
   `FifoValuationServiceTest` covers the two-lot split scenario
   (30+5 of 35 = EUR 360,00 COGS, residual qty 15 @ EUR 12,00 / EUR 180,00),
   full-lot exhaustion, and idempotent retry. All 3 tests pass.
-- [ ] Task 8: Author `lib/Service/MovingAverageValuationService.php` —
+- [x] Task 8: Author `lib/Service/MovingAverageValuationService.php` —
   listens to `StockMovement.inbound` event for `average` items;
   recalculates running weighted average (`new_avg = (cur_qty × cur_cost
   + rcv_qty × rcv_cost) / (cur_qty + rcv_qty)`); rounds `unitCost` to 4
   decimal places, `totalValue` to 2; updates `InventoryValuation`
-  snapshot; `@spec` tag pointing to `tasks.md#task-8` (REQ-INV-004)
+  snapshot; `@spec` tag pointing to `tasks.md#task-8` (REQ-INV-004) —
+  authored. Handles both receipt (recalculate running weighted average)
+  and issue (COGS at current average; cost retained). Idempotency
+  keyed on `lastStockMoveUuid` like the FIFO service. Money discipline:
+  integer-cent arithmetic for `totalValue` / COGS, `unitCost` rounded
+  4 dp. PHPUnit `MovingAverageValuationServiceTest`: first receipt /
+  REQ-INV-004 main scenario (100@3.50 + 200@4.00 = 300@3.8333) /
+  outbound COGS at current average (50@3.8333 = 19167 cents = EUR
+  191,67). All 3 pass.
 - [ ] Task 9: Author `lib/Service/CogsPosterService.php` — posts one
   balanced `JournalEntry` (debit COGS `7000`, credit Inventory `3000`,
   configurable per administration) per outbound `StockMovement`; sets
