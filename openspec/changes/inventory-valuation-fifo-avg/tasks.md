@@ -131,10 +131,19 @@
   Magazijn Noord) with SPDX header and `_meta` block
   (`source: "seed-example"`) (design.md §Seed Data) — shipped. SPDX +
   copyright in `_meta`, exact values from design.md §Seed Data table.
-- [ ] Task 12: Extend the repair step under `lib/Migration/` to import
+- [x] Task 12: Extend the repair step under `lib/Migration/` to import
   `inventory-valuation-examples.json` idempotently on first install
   (operator edits persist across re-runs; `StockMovement.uuid`-keyed
-  deduplication ensures no duplicate records) (REQ-INV-001)
+  deduplication ensures no duplicate records) (REQ-INV-001) — added
+  `SettingsService::seedInventoryValuationExamples($administrationId)`
+  using the same OR ObjectService fluent API as
+  `seedInventoryBarcodes`. Dedupe key is
+  `(productId, warehouse, status=active, administrationId)` per
+  REQ-INV-005 (snapshots are uuid-less; the uniqueness key prevents
+  duplicate active records). Wired into
+  `InitializeSettings::seedInventoryValuationExamples()` which runs
+  after the existing barcode demo step on every install/upgrade,
+  skipping cleanly when `administration_id` is not configured (C2).
 - [ ] Task 13: Add `x-openregister-relations` on `InventoryValuation`
   linking `Product` (many-to-one) and `CostCenter` (many-to-one) per
   ADR-000 entity relations (REQ-INV-002)

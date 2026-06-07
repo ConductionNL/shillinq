@@ -150,6 +150,7 @@ class InitializeSettings implements IRepairStep
             $this->seedReimbursementPolicies(output: $output);
             $this->seedPassThroughMarkupRules(output: $output);
             $this->seedInventoryBarcodeDemo(output: $output);
+            $this->seedInventoryValuationExamples(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -526,6 +527,47 @@ class InitializeSettings implements IRepairStep
         $output->warning('Demo barcode seeding issue: '.($result['message'] ?? 'unknown error'));
 
     }//end seedInventoryBarcodeDemo()
+
+
+    /**
+     * Seed example InventoryValuation snapshots from
+     * `inventory-valuation-examples.json`, idempotently per administration.
+     *
+     * Calls SettingsService::seedInventoryValuationExamples(). Idempotent:
+     * dedupes on (productId, warehouse, status=active, administrationId)
+     * per REQ-INV-005 so re-runs are safe and operator edits persist.
+     * Skipped when administration_id is not configured (C2).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-12
+     */
+    private function seedInventoryValuationExamples(IOutput $output): void
+    {
+        $settings         = $this->settingsService->getSettings();
+        $administrationId = ($settings['administration_id'] ?? '');
+
+        if ($administrationId === '') {
+            $output->info('Shillinq: InventoryValuation example seed skipped (no default administration configured)');
+            return;
+        }
+
+        $output->info('Seeding inventory valuation examples...');
+        $result = $this->settingsService->seedInventoryValuationExamples(administrationId: $administrationId);
+
+        if (($result['success'] ?? false) === true) {
+            $output->info(
+                'Inventory valuation examples seeded: '
+                .($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
+            );
+            return;
+        }
+
+        $output->warning('Inventory valuation example seeding issue: '.($result['message'] ?? 'unknown error'));
+
+    }//end seedInventoryValuationExamples()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.
