@@ -30,6 +30,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-15
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -256,6 +259,36 @@ class IntercompanyMatchingService
             'matchStatus'           => $status,
             'administrationId'      => $administrationId,
         ];
+
+        // REQ-ICE-008: warn on roll-forward inconsistency before persisting the match.
+        $priorPeriodId   = '';
+        $existingMatches = $objectService
+            ->setRegister($register)
+            ->setSchema('IntercompanyMatch')
+            ->findAll(['filters' => ['relationId' => $relationId]]);
+        foreach ($existingMatches as $existingMatch) {
+            $candidate = (string) ($existingMatch['periodId'] ?? '');
+            if ($candidate === $periodId || $candidate === '') {
+                continue;
+            }
+
+            if ($priorPeriodId === '' || strcmp($candidate, $priorPeriodId) > 0) {
+                $priorPeriodId = $candidate;
+            }
+        }//end foreach
+
+        $rollForwardOk = $priorPeriodId === ''
+            || $this->isRollForwardConsistent(
+                relationId: $relationId,
+                priorPeriodId: $priorPeriodId,
+                currentPeriodId: $periodId
+            );
+        if ($rollForwardOk === false) {
+            $this->logger->warning(
+                'IntercompanyMatchingService: roll-forward inconsistency — possible backdated change (REQ-ICE-008)',
+                ['relationId' => $relationId, 'priorPeriodId' => $priorPeriodId, 'currentPeriodId' => $periodId]
+            );
+        }
 
         $persisted = $objectService
             ->setRegister($register)
