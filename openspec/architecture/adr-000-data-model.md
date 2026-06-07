@@ -2474,6 +2474,64 @@ _Per-item, per-location reorder policy declaring min/max stock levels, lead-time
 
 > **Reconciliation note (inventory-multi-warehouse, 2026-06-05):** Original `InventoryStock` (primary spec: procurement-integration) used a free-text `location` string. This entry supersedes it with `locationId` FK to the hierarchical Location entity per REQ-LOC-009. Warehouse/zone-level stock is computed via `Location.stockRollup` aggregation (declarative, no separate warehouse table). The `quantity` field is now bin-only; calls for warehouse-level totals must use the `stockRollup` aggregation endpoint.
 
+### InventoryLot
+**Schema.org:** `schema:Product`
+_Lot/batch identifier for a homogeneous quantity of a Product received together. Sits below InventoryStock — InventoryStock is the aggregate position per (sku, locationId); InventoryLot adds the per-lot granularity required for FEFO (First-Expiry-First-Out) picking, expiry tracking, quality quarantine, and recall traceability._
+**Primary spec:** inventory-lot-batch-expiry
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| lotNumber | string | Yes | Warehouse-assigned lot identifier (unique per administration) |
+| batchCode | string | No | Supplier-assigned batch reference |
+| productSku | string (FK) | Yes | FK to Product.sku — identifies the product in this lot |
+| manufactureDate | date | No | Date of manufacture / production |
+| expiryDate | date | No | Legal expiry date; drives FEFO sort (ASC NULLS LAST) |
+| bestBeforeDate | date | No | Best-before (THT) quality date |
+| quantity | number ≥ 0 | Yes | Current available (un-consumed) quantity in this lot |
+| unitCode | string | No | UN/CEFACT unit of measure code (ZAK, BLIK, KG, ST, CA) |
+| unitCost | number ≥ 0 | No | Cost per unit at time of receipt in EUR |
+| warehouseLocation | string | No | Physical bin/rack location code |
+| lotStatus | enum | Yes | One of `active`, `quarantined`, `expired`, `exhausted` |
+| receivedDate | date | No | Date this lot was received |
+| goodsReceiptId | string (FK) | No | FK to GoodsReceipt.id — receipt event that created the lot |
+| administrationId | string (FK) | Yes | FK to Administration (adminScope enforced) |
+| notes | string | No | Operator-authored free text |
+
+**Relations:**
+- → Product (many-to-one, via productSku FK → Product.sku)
+- → GoodsReceipt (many-to-one, via goodsReceiptId)
+- ← StockMove (one-to-many, reverse via StockMove.lotId — additive patch when stock-movement-ledger gains lot awareness)
+- ← ExpiryAlert (one-to-many, reverse via ExpiryAlert.lotId)
+- → Organization (many-to-one, via administrationId)
+
+> **Annotation (inventory-lot-batch-expiry, 2026-06-07):** Lot lifecycle is fully declarative — `x-openregister-lifecycle` governs the four-state machine (active / quarantined / expired / exhausted) with guard validations (`expiryDateReached`, `quantityZero`, `expiryAfterManufacture`). FEFO order is declared via `x-openregister-sort` on `expiryDate ASC NULLS LAST`; the `OCA\Shillinq\Sort\FefoSort::sortLots` PHP guard is the ADR-031 exception path activated only when the directive is advisory at the API query layer (Risk 1 in proposal.md). Unique key (administrationId, lotNumber) keeps lot numbers tenant-scoped. RBAC: warehouse_manager / warehouse_operator / inventory / auditor.
+
+### ExpiryAlert
+**Schema.org:** `schema:Action`
+_Notification record for lots approaching expiry, lots that have crossed expiry, and lots received without an expiry date for tracked products. Distinct register (not embedded on InventoryLot) so multiple thresholds per lot can coexist, acknowledgement is tracked independently of lot state, and the alert history remains queryable after a lot is exhausted or expired._
+**Primary spec:** inventory-lot-batch-expiry
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| lotId | string (FK) | Yes | FK to InventoryLot.id — the lot triggering the alert |
+| alertType | enum | Yes | One of `approaching_expiry`, `expired`, `missing_expiry_date` |
+| daysBeforeExpiry | integer ≥ 0 | No | Days before expiry at which the alert was raised (e.g. 30, 7); null for expired/missing |
+| alertDate | date | Yes | Date the alert was generated |
+| status | enum | Yes | One of `pending`, `acknowledged`, `resolved` |
+| resolvedDate | date | No | Date the alert was acknowledged or resolved |
+| recipientId | string (FK) | No | FK to Person.id — the operator notified |
+| administrationId | string (FK) | Yes | FK to Administration (adminScope enforced) |
+| notes | string | No | Operator acknowledgement notes |
+
+**Relations:**
+- → InventoryLot (many-to-one, via lotId)
+- → Person (many-to-one, via recipientId)
+- → Organization (many-to-one, via administrationId)
+
+> **Annotation (inventory-lot-batch-expiry, 2026-06-07):** Alert generation is the responsibility of `OCA\Shillinq\Cron\LotExpiryAlertJob` — a daily TimedJob that raises `approaching_expiry` alerts at 30-day and 7-day thresholds and `expired` alerts past `InventoryLot.expiryDate`. Idempotent via the uniqueness key (lotId, alertType, daysBeforeExpiry). Alert lifecycle is declarative — `pending → acknowledged → resolved` with the `resolve` transition stamping `resolvedDate`. Per ADR-032 the daily sweep is a `kind: code` companion to the `kind: config` schema in this same change because the declarative engine cannot express date-arithmetic thresholds across all lots.
+
+> **Annotation (inventory-lot-batch-expiry, 2026-06-07):** The existing Product schema (the shillinq catalogue slug for the spec entity 'InventoryItem') gained one additive optional field via this change: `requiresLotTracking: boolean (default: false)`. When `true`, every receipt of that SKU MUST reference an `InventoryLot` — enforced by the `OCA\Shillinq\Lifecycle\LotTrackingReceiptGuard` on `GoodsReceipt` save (REQ-LOT-008). The patch is non-breaking; existing Product objects without the field default to `false` (lot tracking disabled).
+
 ### InventoryValuation
 **Schema.org:** `schema:Product`
 _Valuation of on-hand inventory items using cost accounting methods such as FIFO or average cost for P&L and balance sheet reporting_
