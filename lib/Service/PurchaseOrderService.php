@@ -34,6 +34,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+ * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,6 +45,11 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\PurchaseOrder\LogPeppolTransmissionAdapter;
+use OCA\Shillinq\Service\PurchaseOrder\LogPurchaseOrderMailer;
+use OCA\Shillinq\Service\PurchaseOrder\PeppolBisOrderMapper;
+use OCA\Shillinq\Service\PurchaseOrder\PeppolTransmissionAdapterInterface;
+use OCA\Shillinq\Service\PurchaseOrder\PurchaseOrderMailerInterface;
 use OCP\IAppConfig;
 use OCP\Notification\IManager as INotificationManager;
 use Psr\Container\ContainerInterface;
@@ -100,14 +106,43 @@ class PurchaseOrderService
     private const NOTIFICATION_SUBJECT_APPROVAL_REQUESTED = 'po_approval_requested';
 
     /**
+     * Peppol transmission adapter (port). Resolved at construction; defaults to the
+     * log adapter so slice 02 callers keep working without binding the new port.
+     *
+     * @var PeppolTransmissionAdapterInterface
+     */
+    private readonly PeppolTransmissionAdapterInterface $peppolAdapter;
+
+    /**
+     * PDF + email transmission mailer (port). Default binding logs the dispatch
+     * attempt; production deployments swap it for an SMTP-backed implementation.
+     *
+     * @var PurchaseOrderMailerInterface
+     */
+    private readonly PurchaseOrderMailerInterface $purchaseOrderMailer;
+
+    /**
+     * Pure PO → UBL Order document mapper.
+     *
+     * @var PeppolBisOrderMapper
+     */
+    private readonly PeppolBisOrderMapper $peppolMapper;
+
+    /**
      * Constructor.
      *
-     * @param ContainerInterface           $container             DI container — OR's ObjectService is
-     *                                                            fetched lazily.
-     * @param IAppConfig                   $appConfig             App config for the register slug.
-     * @param AdministrationContextService $administrationContext IDOR + tenant scope.
-     * @param INotificationManager         $notificationManager   NC notification dispatcher.
-     * @param LoggerInterface              $logger                Logger (no sensitive payloads).
+     * @param ContainerInterface                       $container             DI container — OR's ObjectService is
+     *                                                                        fetched lazily.
+     * @param IAppConfig                               $appConfig             App config for the register slug.
+     * @param AdministrationContextService             $administrationContext IDOR + tenant scope.
+     * @param INotificationManager                     $notificationManager   NC notification dispatcher.
+     * @param LoggerInterface                          $logger                Logger (no sensitive payloads).
+     * @param PeppolTransmissionAdapterInterface|null  $peppolAdapter         Optional Peppol port (slice 03);
+     *                                                                        defaults to LogPeppolTransmissionAdapter.
+     * @param PurchaseOrderMailerInterface|null        $purchaseOrderMailer   Optional PDF+email mailer (slice 03);
+     *                                                                        defaults to LogPurchaseOrderMailer.
+     * @param PeppolBisOrderMapper|null                $peppolMapper          Optional UBL mapper (slice 03);
+     *                                                                        defaults to a fresh instance.
      *
      * @return void
      */
@@ -117,7 +152,17 @@ class PurchaseOrderService
         private readonly AdministrationContextService $administrationContext,
         private readonly INotificationManager $notificationManager,
         private readonly LoggerInterface $logger,
+        ?PeppolTransmissionAdapterInterface $peppolAdapter=null,
+        ?PurchaseOrderMailerInterface $purchaseOrderMailer=null,
+        ?PeppolBisOrderMapper $peppolMapper=null,
     ) {
+        $this->peppolAdapter       = ($peppolAdapter ?? new LogPeppolTransmissionAdapter(
+            container: $container,
+            appConfig: $appConfig,
+            logger: $logger
+        ));
+        $this->purchaseOrderMailer = ($purchaseOrderMailer ?? new LogPurchaseOrderMailer(logger: $logger));
+        $this->peppolMapper        = ($peppolMapper ?? new PeppolBisOrderMapper());
     }//end __construct()
 
     /**
@@ -321,6 +366,225 @@ class PurchaseOrderService
         return $this->saveObject(schema: 'PurchaseOrder', object: $po);
 
     }//end blockSendUntilApproved()
+
+    /**
+     * Transmit an approved PO to the supplier via Peppol BIS Ordering 3.0.
+     *
+     * Slice 03 surface. The method enforces the slice-02 approval-complete
+     * precondition (re-using the same chain check as blockSendUntilApproved so
+     * the guard stays single-sourced), resolves the supplier's Peppol participant
+     * id via the adapter port, transforms the PO into a UBL 2.1 Order document
+     * via PeppolBisOrderMapper, submits the document to the Peppol Access Point,
+     * and persists `peppolMessageId` + `peppolSentAt` + `lifecycleState=sent`
+     * on the PurchaseOrder record (REQ-PO3W-002).
+     *
+     * Graceful fallback (REQ-PO3W-002 D2): when the supplier is not a Peppol
+     * participant the method automatically delegates to {@see sendToPDFEmail}
+     * with a `supplier_not_peppol_participant` reason — the PO is never silently
+     * un-transmitted. When the Peppol Access Point itself fails the fallback
+     * also fires with reason `peppol_send_failed`.
+     *
+     * Server-authoritative: the controller cannot forge `peppolMessageId` or
+     * bypass the approval-state precondition (ADR-005).
+     *
+     * @param string $administrationId Administration scope (server-resolved).
+     * @param string $purchaseOrderId  PO id (id of the persisted record).
+     *
+     * @return array<string,mixed> The PurchaseOrder after transition to "sent".
+     *
+     * @throws \RuntimeException When the PO is missing or the approval chain is
+     *                            incomplete (mapped to 404 / 409 by the controller).
+     *
+     * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+     */
+    public function sendToPeppol(string $administrationId, string $purchaseOrderId): array
+    {
+        $po          = $this->loadPurchaseOrderForTransmission(
+            administrationId: $administrationId,
+            purchaseOrderId: $purchaseOrderId
+        );
+        $supplierId  = (string) ($po['supplierId'] ?? '');
+        $participant = $this->peppolAdapter->lookupParticipant(
+            administrationId: $administrationId,
+            supplierId: $supplierId
+        );
+
+        // No Peppol participant id = graceful PDF + email fallback (REQ-PO3W-002 D2).
+        if ($participant === null || trim($participant) === '') {
+            return $this->sendToPDFEmail(
+                administrationId: $administrationId,
+                purchaseOrderId: $purchaseOrderId,
+                fallbackReason: 'supplier_not_peppol_participant'
+            );
+        }
+
+        $ubl = $this->peppolMapper->toUblOrderXml(
+            purchaseOrder: $po,
+            buyerParticipantId: $this->buyerParticipantId(administrationId: $administrationId),
+            supplierParticipantId: $participant,
+            issueDate: substr($this->nowIso(), 0, 10)
+        );
+
+        try {
+            $messageId = $this->peppolAdapter->submitOrder(
+                participantId: $participant,
+                ublOrderXml: $ubl
+            );
+        } catch (\Throwable $e) {
+            $this->logger->warning(
+                'PurchaseOrderService: Peppol submission failed, falling back to PDF+email',
+                [
+                    'purchaseOrderId' => $purchaseOrderId,
+                    'exception'       => $e->getMessage(),
+                ]
+            );
+            return $this->sendToPDFEmail(
+                administrationId: $administrationId,
+                purchaseOrderId: $purchaseOrderId,
+                fallbackReason: 'peppol_send_failed'
+            );
+        }
+
+        $po['peppolMessageId']      = $messageId;
+        $po['peppolSentAt']         = $this->nowIso();
+        $po['peppolFallbackReason'] = null;
+        $po['lifecycleState']       = 'sent';
+        $po['sentAt']               = $this->nowIso();
+
+        return $this->saveObject(schema: 'PurchaseOrder', object: $po);
+
+    }//end sendToPeppol()
+
+    /**
+     * Transmit an approved PO via the PDF + email fallback path.
+     *
+     * Slice 03 surface. Used directly when the operator selects "PDF + email" on
+     * the PO form, and used indirectly by {@see sendToPeppol} when the supplier
+     * is not Peppol-registered or the Access Point fails. The method enforces
+     * the slice-02 approval-complete precondition, delegates the actual
+     * dispatch to the mailer port, persists `peppolFallbackReason` (the audit
+     * trail of why Peppol was not used) and transitions the PO to `sent`
+     * (REQ-PO3W-002 D2 — graceful fallback, never silent).
+     *
+     * @param string $administrationId Administration scope (server-resolved).
+     * @param string $purchaseOrderId  PO id.
+     * @param string $fallbackReason   The reason the fallback was used (audit
+     *                                  trail); empty string defaults to
+     *                                  `manual_pdf_email_fallback`.
+     *
+     * @return array<string,mixed> The PurchaseOrder after transition to "sent".
+     *
+     * @throws \RuntimeException When the PO is missing, the approval chain is
+     *                            incomplete, or the mailer cannot dispatch.
+     *
+     * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+     */
+    public function sendToPDFEmail(
+        string $administrationId,
+        string $purchaseOrderId,
+        string $fallbackReason=''
+    ): array {
+        $po     = $this->loadPurchaseOrderForTransmission(
+            administrationId: $administrationId,
+            purchaseOrderId: $purchaseOrderId
+        );
+        $reason = trim($fallbackReason);
+        if ($reason === '') {
+            $reason = 'manual_pdf_email_fallback';
+        }
+
+        $this->purchaseOrderMailer->sendPurchaseOrderEmail(
+            administrationId: $administrationId,
+            purchaseOrder: $po
+        );
+
+        $po['peppolFallbackReason'] = $reason;
+        $po['lifecycleState']       = 'sent';
+        $po['sentAt']               = $this->nowIso();
+
+        return $this->saveObject(schema: 'PurchaseOrder', object: $po);
+
+    }//end sendToPDFEmail()
+
+    /**
+     * Load a PurchaseOrder for transmission and enforce the approval-complete
+     * precondition (REQ-PO3W-002 — reuses the slice-02 send-block guard).
+     *
+     * Centralises the IDOR + approval-chain checks so {@see sendToPeppol} and
+     * {@see sendToPDFEmail} cannot diverge — neither path can ever skip the
+     * approval gate (ADR-005 fail-closed).
+     *
+     * @param string $administrationId Administration scope.
+     * @param string $purchaseOrderId  PO id.
+     *
+     * @return array<string,mixed> The persisted PurchaseOrder record.
+     *
+     * @throws \RuntimeException When the PO is missing or the chain is incomplete.
+     */
+    private function loadPurchaseOrderForTransmission(
+        string $administrationId,
+        string $purchaseOrderId
+    ): array {
+        if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+            throw new RuntimeException('Purchase order not found');
+        }
+
+        $po = $this->findOne(
+            schema: 'PurchaseOrder',
+            filters: [
+                'id'               => $purchaseOrderId,
+                'administrationId' => $administrationId,
+            ]
+        );
+        if ($po === null) {
+            throw new RuntimeException('Purchase order not found');
+        }
+
+        $chain = (array) ($po['approvalChain'] ?? []);
+        if ($chain === []) {
+            throw new RuntimeException('Purchase order has no approval chain');
+        }
+
+        foreach ($chain as $entry) {
+            $status   = (string) ($entry['status'] ?? '');
+            $signedAt = trim((string) ($entry['signedAt'] ?? ''));
+            if ($status !== 'approved' || $signedAt === '') {
+                throw new RuntimeException('Purchase order cannot be sent: approval chain incomplete');
+            }
+        }
+
+        return $po;
+
+    }//end loadPurchaseOrderForTransmission()
+
+    /**
+     * Resolve the buyer's Peppol participant id from the administration record.
+     *
+     * Reads `peppolParticipantId` from the matching Administration record when
+     * the schema is present. Defaults to a Dutch KvK scheme placeholder
+     * (`0106:00000000`) so the UBL document still validates structurally when
+     * the field is absent in dev.
+     *
+     * @param string $administrationId Administration scope.
+     *
+     * @return string The buyer Peppol participant id.
+     */
+    private function buyerParticipantId(string $administrationId): string
+    {
+        $record = $this->findOne(
+            schema: 'Administration',
+            filters: ['id' => $administrationId]
+        );
+        if ($record !== null) {
+            $value = trim((string) ($record['peppolParticipantId'] ?? ''));
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return '0106:00000000';
+
+    }//end buyerParticipantId()
 
     /**
      * Assign an ApprovalTask record to each required approver and notify them.
