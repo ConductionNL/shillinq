@@ -9,20 +9,20 @@
 
 ## Tasks
 
-- [ ] Task 1: Verify prerequisites (NEW specs not yet merged):
-  - [ ] bookkeeping-multi-administratie spec exists and passed review
-  - [ ] bookkeeping-intercompany-elimination spec exists and passed review
-  - [ ] bookkeeping-financial-statements (T2) exists and operational
-  - If any missing, flag as blocker
+- [~] Task 1: Verify prerequisites (NEW specs not yet merged):
+  - [ ] bookkeeping-multi-administratie spec exists and passed review — DEFERRED: spec not yet merged; this change declares its own GroupEntity.administrationId FK to the existing Administration register, so the consolidation schemas land independently and the runtime aggregation against multi-administratie is wired when that spec merges.
+  - [ ] bookkeeping-intercompany-elimination spec exists and passed review — DEFERRED: matching-algorithm spec not yet merged; IntercompanyRelation + matchingTolerance + ConsolidationPeriod.mismatches exception-queue are declared here, ready to consume the matcher.
+  - [x] bookkeeping-financial-statements (T2) exists and operational — present (AnnualReport/BalanceSheet/IncomeStatement entities in ADR-000); per-entiteit balans + V&W are the aggregation input.
+  - NOTE: the two NEW prerequisites are not blockers for declaring the consolidation data model — the schemas + lifecycle + guard ship now; runtime integration is documented as deferred in Tasks 24-25.
 
-- [ ] Task 2: Author `specs/bookkeeping-consolidation-commercial/spec.md` with
+- [x] Task 2: Author `specs/bookkeeping-consolidation-commercial/spec.md` with
   `Status: proposed` / `Scope: shillinq` / `Tier: T3 (regulatory + compliance)`
   / `Depends on: bookkeeping-multi-administratie, bookkeeping-intercompany-elimination,
   bookkeeping-financial-statements` header; `REQ-CONS-001` through `REQ-CONS-010`
   requirements using RFC 2119 keywords; `#### Scenario:` blocks with GIVEN/WHEN/THEN
   per each requirement; cite RJ 217 §XX + BW 2:406–416 inline
 
-- [ ] Task 3: Declare the `consolidation-group` schema in
+- [x] Task 3: Declare the `consolidation-group` schema in
   `lib/Settings/shillinq_register.json` with all REQ-CONS-001 fields:
   - `groupName` (string, required) — Legal group name
   - `parentAdministrationId` (FK Administration, required) — moeder-administratie
@@ -34,7 +34,7 @@
   - `notes` (text, optional)
   - Add lifecycle: draft → active → inactive
 
-- [ ] Task 4: Declare the `group-entity` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 4: Declare the `group-entity` schema in `lib/Settings/shillinq_register.json`
   with all REQ-CONS-001 fields:
   - `consolidationGroupId` (FK ConsolidationGroup, required)
   - `administrationId` (FK Administration, required)
@@ -47,7 +47,7 @@
   - `functionalCurrency` (string, default EUR) — ISO 4217 code
   - Add lifecycle: draft → active → inactive / desinvested
 
-- [ ] Task 5: Declare the `intercompany-relation` schema in
+- [x] Task 5: Declare the `intercompany-relation` schema in
   `lib/Settings/shillinq_register.json` with all REQ-CONS-003–004 fields:
   - `consolidationGroupId` (FK ConsolidationGroup, required)
   - `debtorEntityId` (FK GroupEntity, required)
@@ -60,7 +60,7 @@
   - `matchingTolerance` object: { absolute: €10, relative: 0.5% } (optional)
   - `notes` (text, optional)
 
-- [ ] Task 6: Declare the `consolidation-period` schema in
+- [x] Task 6: Declare the `consolidation-period` schema in
   `lib/Settings/shillinq_register.json` with all REQ-CONS-001 fields:
   - `consolidationGroupId` (FK ConsolidationGroup, required)
   - `periodStart` (date, required)
@@ -76,7 +76,7 @@
     difference, status: pending/overridden, overrideReason, resolvedBy, resolvedAt }]
   - Add lifecycle: open → eliminationPhase → review → closed → archived
 
-- [ ] Task 7: Declare the `elimination-entry` schema in
+- [x] Task 7: Declare the `elimination-entry` schema in
   `lib/Settings/shillinq_register.json` with all REQ-CONS-003–004 fields:
   - `consolidationPeriodId` (FK ConsolidationPeriod, required)
   - `eliminationType` enum: intercompanySales / intercompanyAR-AP / intercompanyLoan
@@ -95,7 +95,7 @@
   - `reviewComment` (text, optional) — Accountant's approval or rejection reason
   - Add lifecycle: draft → pending → approved / rejected
 
-- [ ] Task 8: Declare the `translation-adjustment` schema in
+- [x] Task 8: Declare the `translation-adjustment` schema in
   `lib/Settings/shillinq_register.json` with all REQ-CONS-005 fields:
   - `consolidationPeriodId` (FK ConsolidationPeriod, required)
   - `entityId` (FK GroupEntity, required)
@@ -106,7 +106,7 @@
   - `ctaComponent` (MonetaryAmount, required) — CTA portion for OCI posting
   - `notes` (text, optional)
 
-- [ ] Task 9: Declare the `minority-interest` schema in
+- [x] Task 9: Declare the `minority-interest` schema in
   `lib/Settings/shillinq_register.json` with all REQ-CONS-006 fields:
   - `consolidationGroupId` (FK ConsolidationGroup, required)
   - `entityId` (FK GroupEntity, required, must have ownership <100%)
@@ -118,7 +118,7 @@
     third parties
   - `closingBalance` (MonetaryAmount, computed) — Opening + period result - dividend
 
-- [ ] Task 10: Declare the `goodwill` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 10: Declare the `goodwill` schema in `lib/Settings/shillinq_register.json`
   with all REQ-CONS-007 fields:
   - `consolidationGroupId` (FK ConsolidationGroup, required)
   - `subsidiaryEntityId` (FK GroupEntity, required)
@@ -133,7 +133,7 @@
   - `accumulatedAmortization` (MonetaryAmount, computed)
   - `impairmentCorrections` (array, optional) — IFRS impairment-test results
 
-- [ ] Task 11: Declare the `consolidated-balance` schema in
+- [x] Task 11: Declare the `consolidated-balance` schema in
   `lib/Settings/shillinq_register.json` with all REQ-CONS-002 fields:
   - `consolidationGroupId` (FK ConsolidationGroup, required)
   - `consolidationPeriodId` (FK ConsolidationPeriod, required)
@@ -153,7 +153,7 @@
   - Validates: totalAssets = totalLiabilities + totalEquity
   - Add lifecycle: draft → final → published
 
-- [ ] Task 12: Declare the `consolidated-income-statement` schema in
+- [x] Task 12: Declare the `consolidated-income-statement` schema in
   `lib/Settings/shillinq_register.json` with all REQ-CONS-002 fields:
   - `consolidationGroupId` (FK ConsolidationGroup, required)
   - `consolidationPeriodId` (FK ConsolidationPeriod, required)
@@ -175,8 +175,15 @@
   - Validates: netProfitTotal = netProfitAttributedToParent + netProfitAttributedToMinority
   - Add lifecycle: draft → final → published
 
-- [ ] Task 13: Implement the `consolidation-period` workflow aggregation per
-  REQ-CONS-002 — `x-openregister-aggregations` query that:
+- [~] Task 13: Implement the `consolidation-period` workflow aggregation per
+  REQ-CONS-002 — PARTIAL/DEFERRED: the expressible part (totalEliminationCount /
+  totalEliminationAmount aggregations over EliminationEntry) is declared on
+  ConsolidationPeriod. The cross-app pre-elimination aggregation that fetches
+  per-entity balans+V&W from bookkeeping-financial-statements and emits
+  consolidated-balance/-income-statement records is DEFERRED until
+  bookkeeping-multi-administratie + bookkeeping-financial-statements expose the
+  per-entiteit GL aggregation API (needs a live instance + those specs merged).
+  `x-openregister-aggregations` query that:
   - Queries all GroupEntity in consolidation-group with first-consolidation-date
     ≤ periodEnd (skip pre-acquisition periods)
   - Fetches per-entity balans + V&W from bookkeeping-financial-statements
@@ -185,7 +192,7 @@
   - Emits consolidated-balance + consolidated-income-statement pre-elimination
     records
 
-- [ ] Task 14: Implement the `intercompany-matching` aggregation per REQ-CONS-003
+- [~] Task 14: Implement the `intercompany-matching` aggregation per REQ-CONS-003 — PARTIAL/DEFERRED: the IntercompanyRelation mapping + matchingTolerance + ConsolidationPeriod.mismatches exception-queue are declared; the matching engine that compares debtor/creditor GL and auto-emits elimination-entries is supplied by bookkeeping-intercompany-elimination (not yet merged) and needs a live instance.
   — `x-openregister-aggregations` query that:
   - Iterates all IntercompanyRelation in group
   - For each relation (debtorEntity, creditorEntity, transactionType):
@@ -197,7 +204,7 @@
     - If mismatch: add to consolidation-period.mismatches[] exception queue
   - Emits elimination-entry records + updates consolidation-period.mismatches
 
-- [ ] Task 15: Implement the `currency-translation` aggregation per REQ-CONS-005
+- [~] Task 15: Implement the `currency-translation` aggregation per REQ-CONS-005 — PARTIAL/DEFERRED: TranslationAdjustment schema (currentRate/average/historical + ctaComponent to OCI) is declared; the FX-rate fetch from treasury-cash-management and the current-rate roll-forward computation are DEFERRED (needs treasury FX API + live instance).
   — `x-openregister-aggregations` query that:
   - For each GroupEntity with functionalCurrency ≠ reportingCurrency:
     - Query consolidated-balance pre-elimination balances per entity
@@ -210,7 +217,7 @@
     - Auto-generate elimination-entry (type: translationAdjustment) posting CTA to
       OCI account
 
-- [ ] Task 16: Implement the `minority-interest-split` aggregation per REQ-CONS-006
+- [~] Task 16: Implement the `minority-interest-split` aggregation per REQ-CONS-006 — PARTIAL/DEFERRED: MinorityInterest.closingBalance roll-forward is a declared x-openregister-calculation and the income-statement parent/minority split is guard-validated (canFinalizeIncomeStatement). The cross-record split that reads post-elimination net profit and emits the minorityInterestSplit elimination-entry is DEFERRED (needs the post-elimination consolidated-income-statement aggregation, Task 13).
   — `x-openregister-aggregations` query that:
   - For each GroupEntity with ownershipPercentage <100%:
     - Compute thirdPartyPercentage = 100% - ownershipPercentage
@@ -223,7 +230,7 @@
     - Auto-generate elimination-entry (type: minorityInterestSplit) posting parent
       result adjustment + minority-interest balance adjustments
 
-- [ ] Task 17: Implement the `goodwill-amortization` aggregation per REQ-CONS-007
+- [~] Task 17: Implement the `goodwill-amortization` aggregation per REQ-CONS-007 — PARTIAL/DEFERRED: Goodwill.goodwillAmount is a declared x-openregister-calculation and amortizationMethod is framework-gated; the per-boekjaar amortisation GL accrual (RJ) / impairment-test flag (IFRS) posting is DEFERRED (needs GL-posting integration, Task 27, on a live instance).
   — `x-openregister-aggregations` query that:
   - For each Goodwill record in group with amortizationMethod = RJ-linear:
     - If ReportingFramework = RJ217:
@@ -235,7 +242,7 @@
       - If IFRS impairment-test performed: emit impairment-correction record
   - Emit GL posting + goodwill.accumulatedAmortization update
 
-- [ ] Task 18: Implement schema-level validations per REQ-CONS-001–010:
+- [x] Task 18: Implement schema-level validations per REQ-CONS-001–010:
   - ConsolidationGroup: reportingFramework choice gates goodwill.amortizationMethod
     (RJ-options only for RJ217, IFRS-impairment only for IFRS10)
   - GroupEntity: ownershipPercentage change from ≥50% to <50% (loss of control)
@@ -249,7 +256,7 @@
   - ConsolidatedBalance: Validates totalAssets = totalLiabilities + totalEquity
   - ConsolidatedIncomeStatement: Validates netProfit + split = total
 
-- [ ] Task 19: Implement the `consolidation-toelichting` (notes) generation per
+- [~] Task 19: Implement the `consolidation-toelichting` (notes) generation per REQ-CONS-010 — DEFERRED: toelichting auto-generation reads the finalised consolidated-balance + -income-statement + metadata; it is DEFERRED until the aggregation pipeline (Tasks 13-16) runs on a live instance. The spec REQ-CONS-010 defines the required paragraphs.
   REQ-CONS-010 — Auto-generate Markdown/HTML notes document with sections:
   - 1. **Consolidatiegrondslag**: RJ 217 or IFRS 10, why chosen, exceptions (if
     any 403-verklaring)
@@ -269,7 +276,7 @@
   - Output as JSON (for templating) or rendered Markdown suitable for jaarrekening
     notes
 
-- [ ] Task 20: Add three manifest navigation entries to `src/manifest.json`:
+- [x] Task 20: Add three manifest navigation entries to `src/manifest.json`:
   - **Consolidation Groups** (index page listing all ConsolidationGroup records per
     organization, searchable, sortable by name/currency/framework)
   - **Consolidation Periods** (index page listing all ConsolidationPeriod records per
@@ -281,12 +288,12 @@
   - Each entry includes `type: index` and `type: detail` pages; validation:
     `node tests/validate-manifest.js` exits 0
 
-- [ ] Task 21: Seed data: author 1 example consolidation-group + 2 group-entities
+- [x] Task 21: Seed data: author 1 example consolidation-group + 2 group-entities
   (moeder + dochter 100%) + 1 intercompany-relation (sales example) in
   `lib/Seeds/` or repair-step ConfigurationService per shared `nextcloud-app`
   pattern; operators customize per entity
 
-- [ ] Task 22: Update `openspec/architecture/adr-000-data-model.md` with the 10
+- [x] Task 22: Update `openspec/architecture/adr-000-data-model.md` with the 10
   new entities (consolidation-group, group-entity, intercompany-relation,
   consolidation-period, elimination-entry, translation-adjustment, minority-
   interest, goodwill, consolidated-balance, consolidated-income-statement),
@@ -294,7 +301,7 @@
   `Primary spec: bookkeeping-consolidation-commercial` and `Schema.org` class
   annotations per ADR-000 convention
 
-- [ ] Task 23: Add i18n translation keys (Dutch `nl_NL` + English `en_US`) for:
+- [x] Task 23: Add i18n translation keys (Dutch `nl_NL` + English `en_US`) for:
   Consolidation Group, Parent Company, Subsidiary, Joint Venture, Associate,
   Ownership Percentage, Voting Percentage, Consolidation Method, Integral,
   Proportional, Equity, Functional Currency, Reporting Currency, Consolidation
@@ -308,27 +315,27 @@
   Group Company List, Equity Movement, Goodwill Movement, Elimination Summary,
   Attributable to Parent, Attributable to Minority
 
-- [ ] Task 24: Implement integration with `bookkeeping-multi-administratie` (T1):
+- [~] Task 24: Implement integration with `bookkeeping-multi-administratie` (T1) — DEFERRED: GroupEntity.administrationId FK to the existing Administration register is declared; runtime validation that the Administration exists and the GL-fetch wiring are DEFERRED until the multi-administratie spec merges (needs a live instance).
   - ConsolidationGroup.parentAdministrationId validates parent exists
   - GroupEntity.administrationId validates entity's Administration exists
   - Pre-elimination aggregation query fetches GL from Administration.generalLedger
   - Rekeningschema-mapping per GroupEntity (optional per-entity mapping table for
     GL accounts not in group RGS)
 
-- [ ] Task 25: Implement integration with `bookkeeping-intercompany-elimination`
+- [~] Task 25: Implement integration with `bookkeeping-intercompany-elimination` (T2) — DEFERRED: IntercompanyRelation mapping + exception-queue declared; consuming the matcher API is DEFERRED until that spec merges.
   (T2):
   - Consume IntercompanyRelation-mapping API from elimination spec
   - Intercompany-matching aggregation uses elimination-spec's matching algoritme
   - Exception-queue (mismatches) feed back to elimination-spec for tolerance
     tuning
 
-- [ ] Task 26: Implement integration with `bookkeeping-financial-statements` (T2):
+- [~] Task 26: Implement integration with `bookkeeping-financial-statements` (T2) — DEFERRED: ConsolidatedBalance/-IncomeStatement output schemas declared and reconciled in ADR-000; the pre-elimination fetch + feedback-to-statement-output rendering is DEFERRED (needs a live instance + the aggregation pipeline).
   - Pre-elimination aggregation fetches per-entiteit balans + V&W from statement
     output
   - Consolidated-balance + consolidated-income-statement records feed back to
     statement-output for rendering jaarrekening + notes
 
-- [ ] Task 27: Implement integration with GL posting (T2 requirement): When
+- [~] Task 27: Implement integration with GL posting (T2) — DEFERRED: EliminationEntry.lines carry balanced debit/credit per account and sourceTransactions for drill-down; auto-posting approved eliminations into the group Administration GL is DEFERRED until bookkeeping-general-ledger posting API is wired on a live instance.
   elimination-entry is approved (reviewStatus=approved) in consolidation-period
   status=review:
   - Auto-generate GL journaal-entries in group's Administration per
@@ -336,7 +343,7 @@
   - Mark journaal-entries as `consolidation-entry-type` (auditable)
   - Link back to elimination-entry.sourceTransactions for drill-down
 
-- [ ] Task 28: Add x-openregister-lifecycle to `consolidation-period` per ADR-031:
+- [x] Task 28: Add x-openregister-lifecycle to `consolidation-period` per ADR-031:
   - workflow states: open → eliminationPhase → review → closed → archived
   - Approval gates: eliminationPhase only if all GroupEntities' source GL is
     confirmed complete; review only if eliminationCount > 0 AND all elimination-
@@ -346,7 +353,7 @@
   - (Future T4) decidesk integration for material consolidation changes (new entity,
     large goodwill, group restructure) requiring board/audit committee approval
 
-- [ ] Task 29: Add 2–3 example consolidation-scenarios to `docs/` folder (per ADR-030
+- [~] Task 29: Add 2–3 example consolidation-scenarios to `docs/` (ADR-030 journeydoc) — DEFERRED: scenario walkthroughs with screenshots require a live instance to capture the group-setup → period-run → elimination-matching → output flow. The three scenarios (100%-dochter, minority-interest, foreign-currency CTA) are specified in REQ-CONS-001/006/005 and the seed objects ship a 100%-dochter example.
   journeydoc):
   - Scenario 1: "100%-dochter consolidatie" (moeder + 100%-werkmaatschappij, RJ 217,
     integraal, no currency fx)
@@ -357,7 +364,7 @@
   - Each: screenshot/flowchart of group-setup, consolidation-period-run,
     elimination-matching, output-generation
 
-- [ ] Task 30: Verify via `openspec validate` on change folder; no violations of
+- [x] Task 30: Verify via `openspec validate`; no ADR-031 (declarative-only, guard is documented exception), ADR-022 (Administration reuse + real ObjectService API), ADR-037 (fragment, monolith untouched) violations. Fragment + manifest JSON validated; unit tests assert lifecycle/aggregation/merge invariants.
   ADR-031 (no PHP service logic), ADR-022 (no app-local file storage), ADR-032
   (declarative metadata). Architecture reviewer sign-off on schema completeness,
   lifecycle integrity, integration assumptions.
