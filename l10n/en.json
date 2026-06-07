@@ -1133,7 +1133,24 @@
         "Point in time": "Point in time",
         "Over time": "Over time",
         "Signed": "Signed",
-        "In delivery": "In delivery"
+        "In delivery": "In delivery",
+        "Pending Confirmations": "Pending Confirmations",
+        "Confirm Your Appointment": "Confirm Your Appointment",
+        "Confirm Appointment": "Confirm Appointment",
+        "Resend confirmation email": "Resend confirmation email",
+        "Checking your confirmation link…": "Checking your confirmation link…",
+        "This confirmation link is no longer valid": "This confirmation link is no longer valid",
+        "Token has expired. Please request a new confirmation email.": "Token has expired. Please request a new confirmation email.",
+        "Token has already been used.": "Token has already been used.",
+        "Token is no longer valid; request a new confirmation email.": "Token is no longer valid; request a new confirmation email.",
+        "Please request a new confirmation email.": "Please request a new confirmation email.",
+        "Appointment confirmed!": "Appointment confirmed!",
+        "Your appointment is confirmed. You can close this page.": "Your appointment is confirmed. You can close this page.",
+        "Provider": "Provider",
+        "When": "When",
+        "Location": "Location",
+        "Time zone": "Time zone",
+        "Confirm by": "Confirm by"
     },
     "plurals": ""
 }

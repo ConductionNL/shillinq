@@ -1132,7 +1132,24 @@
         "Point in time": "Op een moment",
         "Over time": "Gedurende een periode",
         "Signed": "Getekend",
-        "In delivery": "In uitvoering"
+        "In delivery": "In uitvoering",
+        "Pending Confirmations": "Te bevestigen afspraken",
+        "Confirm Your Appointment": "Bevestig je afspraak",
+        "Confirm Appointment": "Afspraak bevestigen",
+        "Resend confirmation email": "Bevestigingsmail opnieuw versturen",
+        "Checking your confirmation link…": "Je bevestigingslink wordt gecontroleerd…",
+        "This confirmation link is no longer valid": "Deze bevestigingslink is niet meer geldig",
+        "Token has expired. Please request a new confirmation email.": "De token is verlopen. Vraag een nieuwe bevestigingsmail aan.",
+        "Token has already been used.": "De token is al gebruikt.",
+        "Token is no longer valid; request a new confirmation email.": "De token is niet meer geldig; vraag een nieuwe bevestigingsmail aan.",
+        "Please request a new confirmation email.": "Vraag een nieuwe bevestigingsmail aan.",
+        "Appointment confirmed!": "Afspraak bevestigd!",
+        "Your appointment is confirmed. You can close this page.": "Je afspraak is bevestigd. Je kunt deze pagina sluiten.",
+        "Provider": "Aanbieder",
+        "When": "Wanneer",
+        "Location": "Locatie",
+        "Time zone": "Tijdzone",
+        "Confirm by": "Bevestigen vóór"
     },
     "plurals": ""
 }

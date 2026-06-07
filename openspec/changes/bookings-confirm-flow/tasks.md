@@ -1,58 +1,62 @@
 # Tasks — Appointment Confirmation Flow
 
-> **Spec-only change.** Per `proposal.md` Scope, implementation code is
-> deliberately out of scope here. The tasks below describe the work an
-> `opsx-apply` cycle will execute against the
-> `bookings-confirm-flow` spec — they are recorded now so the
-> spec-review gate, dependency planning, and tier-cascade impact are all
-> visible at proposal time. No source files are edited by this change
-> itself.
+> **Implemented (hydra build 2026-06).** The spec/proposal/design (Tasks 1–4)
+> were authored in the proposal commit; this build executes the implementation
+> tasks. Per ADR-037 the Appointment + ConfirmationToken schemas, lifecycles and
+> seeds ship as a `lib/Settings/register.d/bookings-confirm-flow.json` fragment —
+> the `shillinq_register.json` monolith is NOT edited. Per ADR-022 all persistence
+> uses OpenRegister's real ObjectService API (`setRegister`/`setSchema`/`findAll`/
+> `saveObject`); the OCS paths named in the original tasks are served as the app's
+> own `appinfo/routes.php` routes (the app has no `ocs` route block). The customer
+> is a Nextcloud contact (no app-local person schema). Frontend follows manifest-v2
+> (declarative `index` page for the admin Confirmations list + one justified custom
+> `ConfirmationPortal` page). Deferred items needing a live instance are noted inline.
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `bookings-confirm-flow` capability spec already exists, no `ConfirmationToken` schema is declared, and no `lib/Service/IcsService.php` or confirmation controller PHP classes are present
-- [ ] Task 2: Author `specs/bookings-confirm-flow/spec.md` with `Status: proposed` / `Scope: nextcloud-bookings` / `Tier: T2` / `Depends on: bookings-create-appointment, bookings-notification-triggers` header, `REQ-BCF-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks with GIVEN/WHEN/THEN; explicitly address confirmation workflow completion and timezone handling
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks (ICS calendar app variation, token expiration UX, confirmation deadline automation, timezone TZID) / Rollback / Open Questions
-- [ ] Task 4: Author `design.md` with Reuse Analysis table, D1 (confirmation as state transition), D2 (ConfirmationToken as separate register), D3 (ICS as utility service), D4 (openconnector for email), D5 (token expiration + one-time use phases), D6 (confirmation deadline), D7 (ICS METHOD REQUEST with ATTACH), D8 (TZID with VTIMEZONE)
-- [ ] Task 5: Declare the `ConfirmationToken` schema in `lib/Settings/bookings_register.json` with all REQ-BCF-002 fields (tokenId, appointmentId, tokenString, expiresAt, status, redeemedAt, createdAt, createdBy) with FK relation to `Appointment`
-- [ ] Task 6: Extend the `Appointment` schema in `lib/Settings/bookings_register.json` with CHANGED fields (confirmationDeadline, confirmedAt, confirmationTokenId) and update docstring to reference REQ-BCF-004
-- [ ] Task 7: Add `x-openregister-lifecycle` block to `Appointment` schema declaring state transitions per REQ-BCF-004:
+- [x] Task 1: Confirm no `bookings-confirm-flow` capability spec already exists, no `ConfirmationToken` schema is declared, and no `lib/Service/IcsService.php` or confirmation controller PHP classes are present
+- [x] Task 2: Author `specs/bookings-confirm-flow/spec.md` with `Status: proposed` / `Scope: nextcloud-bookings` / `Tier: T2` / `Depends on: bookings-create-appointment, bookings-notification-triggers` header, `REQ-BCF-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks with GIVEN/WHEN/THEN; explicitly address confirmation workflow completion and timezone handling
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks (ICS calendar app variation, token expiration UX, confirmation deadline automation, timezone TZID) / Rollback / Open Questions
+- [x] Task 4: Author `design.md` with Reuse Analysis table, D1 (confirmation as state transition), D2 (ConfirmationToken as separate register), D3 (ICS as utility service), D4 (openconnector for email), D5 (token expiration + one-time use phases), D6 (confirmation deadline), D7 (ICS METHOD REQUEST with ATTACH), D8 (TZID with VTIMEZONE)
+- [x] Task 5: Declare the `ConfirmationToken` schema in `lib/Settings/bookings_register.json` with all REQ-BCF-002 fields (tokenId, appointmentId, tokenString, expiresAt, status, redeemedAt, createdAt, createdBy) with FK relation to `Appointment`
+- [x] Task 6: Extend the `Appointment` schema in `lib/Settings/bookings_register.json` with CHANGED fields (confirmationDeadline, confirmedAt, confirmationTokenId) and update docstring to reference REQ-BCF-004
+- [x] Task 7: Add `x-openregister-lifecycle` block to `Appointment` schema declaring state transitions per REQ-BCF-004:
   - `pending_confirmation` → `confirmed` (guarded by token validation)
   - `pending_confirmation` → `cancelled` (manual or deadline expiry)
   - `confirmed` → `completed` (manual or time-based)
   - `confirmed` → `cancelled` (manual cancellation)
   - Include audit trail action names (`appointment_confirmed`, `appointment_auto_cancelled`, etc.)
-- [ ] Task 8: Add `x-openregister-lifecycle` block to `ConfirmationToken` schema declaring token status transitions:
+- [x] Task 8: Add `x-openregister-lifecycle` block to `ConfirmationToken` schema declaring token status transitions:
   - `active` → `redeemed` (on token validation)
   - `active` → `revoked` (on resend request)
   - `active` → `expired` (on expiration check, auto-computed from expiresAt)
-- [ ] Task 9: Implement `lib/Service/IcsService.php` with method `generateIcs(Appointment $appt, Customer $customer): string` per REQ-BCF-003 that:
+- [x] Task 9: Implement `lib/Service/IcsService.php` with method `generateIcs(Appointment $appt, Customer $customer): string` per REQ-BCF-003 that:
   - Takes appointment and customer objects
   - Retrieves customer's timezone from Nextcloud user account or default to server timezone
   - Generates RFC 5545 compliant ICS with VEVENT, VTIMEZONE blocks
   - Includes DTSTART;TZID, DTEND;TZID with correct timezone offset
   - Includes METHOD:REQUEST, SUMMARY, LOCATION, DESCRIPTION, ATTACH properties
   - Returns ICS as string (no file I/O in the service; caller handles attachment)
-- [ ] Task 10: Implement `lib/Controller/ConfirmationApiController.php` with endpoints:
+- [x] Task 10: Implement `lib/Controller/ConfirmationApiController.php` with endpoints:
   - `PATCH /ocs/v2.php/apps/bookings/api/v1/appointments/{appointmentId}/confirm` — validate token, update appointment status to `confirmed`, update token status to `redeemed` (REQ-BCF-004)
   - `POST /ocs/v2.php/apps/bookings/api/v1/appointments/{appointmentId}/resend-confirmation` — revoke current token, generate new token, send new email (REQ-BCF-006)
   - `GET /ocs/v2.php/apps/bookings/api/v1/appointments/validate-confirmation-token` — dry-run token validation for portal load (no side effects) (REQ-BCF-007)
   - Include error handling for expired tokens, invalid tokens, already-confirmed appointments
-- [ ] Task 11: Implement token generation logic on appointment creation (likely in `AppointmentApiController` or a service listener) that:
+- [x] Task 11: Implement token generation logic on appointment creation (likely in `AppointmentApiController` or a service listener) that:
   - On appointment.create with status=`pending_confirmation`, automatically create `ConfirmationToken` (REQ-BCF-001)
   - Generate 32-char random URL-safe token string
   - Hash token with bcrypt for secure storage
   - Set expiresAt to +7 days
   - Set status to `active`
   - Log token generation in appointment auditTrail
-- [ ] Task 12: Implement confirmation email delivery (via openconnector) that:
+- [x] Task 12: Implement confirmation email delivery (via openconnector) that:
   - Uses templates from `bookings-notification-triggers` with confirmation-specific variables
   - Calls `IcsService::generateIcs()` to compose ICS content
   - Attaches ICS as MIME part (Content-Type: text/calendar; charset=utf-8)
   - Includes fallback web link `/index.php/apps/bookings/confirm?token={tokenString}`
   - Displays appointment time in customer's local timezone
   - Sends via openconnector email channel (REQ-BCF-003)
-- [ ] Task 13: Create `src/views/ConfirmationPortal.vue` per REQ-BCF-007 that:
+- [x] Task 13: Create `src/views/ConfirmationPortal.vue` per REQ-BCF-007 that:
   - Accepts token via URL query parameter (`?token=...`)
   - On mount, validates token with dry-run endpoint (no confirmation yet)
   - Displays appointment details (date, time, service name, provider, location, notes, timezone)
@@ -60,33 +64,33 @@
   - Provides "Confirm Appointment" button that calls confirmation endpoint with token
   - On success, displays "Appointment confirmed!" and redirects or closes after 2 seconds
   - Handles loading states and error states
-- [ ] Task 14: Create `src/api/confirmationApi.js` with client methods:
+- [x] Task 14: Create `src/api/confirmationApi.js` with client methods:
   - `validateConfirmationToken(token: string): Promise<Appointment>` — dry-run validation
   - `confirmAppointment(appointmentId: string, token: string): Promise<Appointment>` — confirm endpoint
   - `resendConfirmationEmail(appointmentId: string): Promise<{message}>` — resend endpoint
-- [ ] Task 15: Implement `lib/BackgroundJob/CancelUnconfirmedAppointments.php` per REQ-BCF-005 that:
+- [x] Task 15: Implement `lib/BackgroundJob/CancelUnconfirmedAppointments.php` per REQ-BCF-005 that:
   - Runs daily (configurable in `CronJob` registration)
   - Queries appointments with status=`pending_confirmation` and confirmationDeadline < now
   - Updates each to status=`cancelled`, sets cancelledReason="Confirmation deadline passed"
   - Logs cancellation in auditTrail (actor: system)
   - Optionally sends cancellation notification to customer (if template exists)
-- [ ] Task 16: Extend `src/manifest.json` per REQ-BCF-007:
+- [x] Task 16: Extend `src/manifest.json` per REQ-BCF-007:
   - Add navigation entry `Confirmations` (admin-only view showing pending confirmations with expiration warning)
   - Add modal action from appointment detail page: "Resend confirmation email" button
   - Update `nextcloud-app` type and routes
-- [ ] Task 17: Implement token hash/validate logic in a helper class (e.g., `lib/Util/TokenValidator.php`) that:
+- [x] Task 17: Implement token hash/validate logic in a helper class (e.g., `lib/Util/TokenValidator.php`) that:
   - Generates 32-char random URL-safe token string (base62)
   - Hashes token with bcrypt (cost 12)
   - Validates submitted token against stored hash
   - Checks expiration (expiresAt vs. now)
   - Prevents timing attacks (constant-time comparison)
-- [ ] Task 18: Add timezone handling logic that:
+- [x] Task 18: Add timezone handling logic that:
   - Retrieves customer's timezone from Nextcloud user account (account settings → locale → timezone map)
   - Falls back to server default timezone if not set
   - Passes timezone to `IcsService::generateIcs()` and email template renderer
   - Ensures VTIMEZONE block includes correct DAYLIGHT/STANDARD transition rules
-- [ ] Task 19: Update `openspec/architecture/adr-000-data-model.md` with `ConfirmationToken` and updated `Appointment` entries, reconciling against any existing token/confirmation data-model entries
-- [ ] Task 20: Add 10+ unit tests covering:
+- [x] Task 19: Update `openspec/architecture/adr-000-data-model.md` with `ConfirmationToken` and updated `Appointment` entries, reconciling against any existing token/confirmation data-model entries
+- [x] Task 20: Add 10+ unit tests covering:
   - Token generation (correct hash, expiration, status)
   - Token validation (valid token, expired token, invalid hash, already redeemed, revoked)
   - Appointment status transitions (pending → confirmed, pending → cancelled)
@@ -94,7 +98,7 @@
   - Confirmation deadline auto-cancel (background job queries correct records, updates status)
   - Email delivery (openconnector called with correct template, ICS attached)
   - Timezone handling (customer timezone retrieved, used in ICS and email)
-- [ ] Task 21: Add 5+ integration tests covering:
+- [~] Task 21 (DEFERRED — needs a live Nextcloud + OpenRegister + openconnector instance): Add 5+ integration tests covering:
   - Happy path: customer receives email, clicks confirmation link, appointment confirms
   - Token resend: customer requests new email, old token revoked, new token sent
   - Expired token: customer tries to confirm after deadline, appointment auto-cancelled
