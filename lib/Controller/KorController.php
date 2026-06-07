@@ -33,6 +33,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\KorMonitorService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -51,15 +52,17 @@ class KorController extends Controller
     /**
      * Constructor for the KorController.
      *
-     * @param IRequest          $request           The request object.
-     * @param KorMonitorService $korMonitorService The KOR drempel-bewaking service.
-     * @param LoggerInterface   $logger            Logger for diagnostics (no stack traces to client).
+     * @param IRequest                     $request           The request object.
+     * @param KorMonitorService            $korMonitorService The KOR drempel-bewaking service.
+     * @param AdministrationContextService $context           RBAC guard — resolves the user's administration memberships.
+     * @param LoggerInterface              $logger            Logger for diagnostics (no stack traces to client).
      *
      * @return void
      */
     public function __construct(
         IRequest $request,
         private readonly KorMonitorService $korMonitorService,
+        private readonly AdministrationContextService $context,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -98,6 +101,10 @@ class KorController extends Controller
                 ['error' => 'administration_id must be a valid administration identifier'],
                 Http::STATUS_BAD_REQUEST
             );
+        }
+
+        if ($this->context->canAccess(administrationId: $administrationId) === false) {
+            return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
         }
 
         $year = (int) date('Y');
