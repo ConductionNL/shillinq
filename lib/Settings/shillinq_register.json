@@ -9349,6 +9349,38 @@
 					"example": "adm-1"
 				}
 			},
+			"x-openregister-notifications": {
+				"runReady": {
+					"trigger": {
+						"type": "updated",
+						"condition": {
+							"field": "state",
+							"operator": "equals",
+							"value": "ready"
+						}
+					},
+					"enabled": true,
+					"channels": [
+						"nc-notification"
+					],
+					"recipients": [
+						{
+							"kind": "object-acl",
+							"permission": "manage"
+						},
+						{
+							"kind": "groups",
+							"groups": [
+								"shillinq-finance"
+							]
+						}
+					],
+					"subject": {
+						"nl": "Betaalrun gereed: {{runNumber}} (geplande datum {{runDate}})",
+						"en": "Payment run ready: {{runNumber}} (scheduled {{runDate}})"
+					}
+				}
+			},
 			"x-openregister-lifecycle": {
 				"field": "state",
 				"initialState": "draft",
