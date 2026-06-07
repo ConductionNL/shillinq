@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.5.4</version>
+    <version>0.5.5</version>
     <licence>agpl</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
@@ -84,5 +84,11 @@ Vrij en open source onder de EUPL-1.2-licentie.
              for InventoryLot records. Idempotent via the ExpiryAlert
              uniqueness key. -->
         <job>OCA\Shillinq\Cron\LotExpiryAlertJob</job>
+        <!-- bookings-pipelinq-customer-bridge slice 09: async retry drain
+             for failed timeline publishes. Per-event QueuedJob — one
+             argument (entryId) per queued event. PersistentTimelineRetryQueue
+             adds runtime ticks; this declaration only registers the class
+             with the job runner. -->
+        <job>OCA\Shillinq\Cron\PipelinqTimelineRetryJob</job>
     </background-jobs>
 </info>
