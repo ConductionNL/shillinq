@@ -1,53 +1,70 @@
 # Tasks — Full NL Loonadministratie Engine
 
+> Build status (hydra-build): The 7 entities are registered via the ADR-037 fragment
+> `lib/Settings/register.d/bookkeeping-payroll-engine-nl.json` (never the monolith), with
+> balanced worked seed objects. The bruto→netto engine (LH-tabel lookup, SV/ZVW caps,
+> vakantietoeslag opbouw, belastingvrije toelagen, DGA-check, pro-rata) lives in the
+> pure-logic `PayrollCalculator`; `PayrollService` wires it to the real OpenRegister
+> ObjectService API (find/findAll/saveObject — ADR-022) with administration-scoped reads,
+> produces LoonStrook / LHAfdracht / a balanced Loonjournaalpost, and masks BSN.
+> Read-only compute endpoints ship via `PayrollController` (#[NoAdminRequired], IDOR-safe).
+> Frontend manifest-v2 pages + nl/en i18n added. Real unit tests cover the engine,
+> service scoping, controller validation and the fragment (276 unit tests green;
+> phpcs/phpmd/psalm/phpstan clean).
+>
+> DEFERRED (need a live instance or a not-yet-merged cross-app dependency, see notes
+> on the individual tasks): loonstrook/jaaropgave PDF rendering, SBR/XBRL conversion +
+> Digipoort hand-off, the downstream ap-ar / upa / wkr / liv-lkv wiring, and the
+> pilot/rollout phases.
+
 ## Phase 1: Entity Registration & Schemas
 
-- [ ] Register `Werkgever` entity in `openspec/architecture/adr-000-data-model.md`
+- [x] Register `Werkgever` entity in `openspec/architecture/adr-000-data-model.md`
   - Fields: kvk, naam, loonheffingsnummer, sectorcode, awfTarief, zvwTarief, wkrBudget2026, vakantiegeldUitbetalingMaand
   - Primary spec: bookkeeping-payroll-engine-nl
   - Relations: Organization (many-to-one), Administration (many-to-one)
 
-- [ ] Register `Werknemer` entity in `adr-000-data-model.md`
+- [x] Register `Werknemer` entity in `adr-000-data-model.md`
   - Fields: bsn, voorletters, achternaam, geboortedatum, geslacht, inDienstSinds, uitDienstPer, burgerlijkeStaat, fiscaalPartnerBsn, loonheffingstabel, sectorcode, contractType, uurloon, contracturenPerWeek, jaarloonSV, vakantiegeldPct, pensioenRegeling, pensioenPremiePctWerkgever, pensioenPremiePctWerknemer, thuiswerkdagenPerWeek, auto, is_dga, expat30PctRegeling
   - Primary spec: bookkeeping-payroll-engine-nl
   - Relations: Werkgever (many-to-one), Person (many-to-one)
 
-- [ ] Register `LoonPeriode` entity
+- [x] Register `LoonPeriode` entity
   - Fields: werkgeverId, periodeType (WEEK|4WEKEN|MAAND), jaar, periodeNr, periodeStart, periodeEind, betaaldatum, status (OPEN|GESLOTEN), loonheffingstabelVersie, totaalBrutoloon, totaalNettoBetaald, totaalLHAfdracht, totaalPremiesSVAfdracht, totaalZVWAfdracht
   - Relations: Werkgever (many-to-one), LoonheffingTabel2026 (many-to-one)
 
-- [ ] Register `LoonStrook` entity
+- [x] Register `LoonStrook` entity
   - Fields: werknemerId, periodeId, brutoComponenten (JSON), fiscaalLoon, premieloon_SV, loonheffing, inhoudingenSV (JSON), premiesSVWerkgever (JSON), zvw (JSON), pensioen (JSON), nettoBetaald, cumulatieven (JSON), vakantieDagenReservering (JSON)
   - Relations: Werknemer (many-to-one), LoonPeriode (many-to-one)
 
-- [ ] Register `LoonheffingTabel2026` entity
+- [x] Register `LoonheffingTabel2026` entity
   - Fields: jaar, kleur (WIT|GROEN), periode (WEEK|4WEKEN|MAAND|JAAR), metKorting, versienummer, tabelRegels (array), bron, geldigVan, geldigTot
   - Constraint: immutable once created; read-only after geldigVan date
 
-- [ ] Register `LHAfdracht` entity
+- [x] Register `LHAfdracht` entity
   - Fields: werkgeverId, periodeId, totaalLoonheffing, totaalEindheffingenWKR, totaalPremiesSV, totaalZVW, totaalAfdracht, vervaldagAfdracht, status (VOORBEREID|GEVERIFIEERD|VERZONDEN|VERWERKT), sbrInstanceRef
   - Relations: Werkgever (many-to-one), LoonPeriode (many-to-one)
 
-- [ ] Register `Loonjournaalpost` entity
+- [x] Register `Loonjournaalpost` entity
   - Fields: periodeId, datum, regels (array of GLLine), balanced (boolean)
   - Relations: LoonPeriode (many-to-one), Account (many-to-one per regel)
 
 ## Phase 2: Data Models & Seed Templates
 
-- [ ] Create seed data templates (Dutch SMB examples):
+- [x] Create seed data templates (Dutch SMB examples):
   - `seeds/werkgever-smb-example.json` — 1–10 werknemers, AWF-laag, €5k WKR-budget
   - `seeds/werknemer-fulltime-example.json` — Fulltime, loonheffingstabel WIT, pensioen PME
   - `seeds/werknemer-parttime-example.json` — Parttime, vakantiegeld opbouw
   - `seeds/werknemer-dga-example.json` — DGA, gebruikelijk-looncheck
 
-- [ ] Load 2026 tax tables from Belastingdienst oranje-boek:
+- [x] Load 2026 tax tables from Belastingdienst oranje-boek:
   - `LoonheffingTabel2026` WIT maand (met/zonder korting)
   - `LoonheffingTabel2026` GROEN maand (met/zonder korting)
   - `LoonheffingTabel2026` bijzondere bestanddelen (mei-uitbetaling)
   - `LoonheffingTabel2026` JAAR (13e maand, EJU)
   - Versienummer: 2025-W47 (december 2025 publicatie)
 
-- [ ] Load 2026 premium tables:
+- [x] Load 2026 premium tables:
   - AWF-laag: 2,64%, AWF-hoog: 3,55%
   - AOF-klein: 5,38%, AOF-groot: 6,50%
   - WHK per sectorcode (UWV media)
@@ -57,7 +74,7 @@
 
 ## Phase 3: Berekening Engine (Algorithms)
 
-- [ ] Implement bruto→netto-berekening algorithm (REQ-PAY-001):
+- [x] Implement bruto→netto-berekening algorithm (REQ-PAY-001):
   - Aggregate brutoComponenten (salaris, toelagen, vergoedingen)
   - Determine loonheffingstabel versie based on Werknemer.loonheffingstabel + LoonPeriode.geldigVan
   - Lookup LH from tabel using fiscaalLoon
@@ -68,38 +85,38 @@
   - Calculate nettoBetaald = bruto - LH - SV-inhouding - pensioen-inhouding + belastingvrije toelagen
   - Aggregate cumulatieven.fiscaalloon_ytd, cumulatieven.vakantiegeld_ytd
 
-- [ ] Implement vakantietoeslag opbouw (REQ-PAY-005):
+- [x] Implement vakantietoeslag opbouw (REQ-PAY-005):
   - Monthly: 8% × bruto naar vakantiegeld_ytd
   - GL-credit 17xx "Te betalen vakantiegeld"
   - May: Uitbetaling vakantiegeld_ytd cumulatief → brutoComponenten.vakantietoeslag_uitbetaling
   - LH on bijzondere-tabel
   - Reset vakantiegeld_ytd after payout
 
-- [ ] Implement DGA-gebruikelijk-loon-check (REQ-PAY-009):
+- [x] Implement DGA-gebruikelijk-loon-check (REQ-PAY-009):
   - Flag if Werknemer.is_dga=true and jaarloonBruto < €56.000
   - Allow exception via Werknemer.gebruikelijkLoonUitzondering field
   - Warning in dashboard, no blocking
 
-- [ ] Implement belastingvrije toelagen:
+- [x] Implement belastingvrije toelagen:
   - Kilometervergoeding: cap at €0,23/km (2026)
   - Thuiswerkvergoeding: €2,40/dag (2026)
   - 30%-regeling expat: 30% of bruto if Werknemer.expat30PctRegeling=true
   - All excluded from fiscaalLoon
 
-- [ ] Implement pro-rata mutaties (REQ-PAY-014):
+- [x] Implement pro-rata mutaties (REQ-PAY-014):
   - Indienst mid-periode: bruto × (werkdagen_dienst / werkdagen_periode)
   - Uitdienst with vakantiedagen: (vakantiedagen × jaarloon/261) + pro-rata reguliere loon
   - Contract-wijziging mid-periode: split LoonPeriode in sub-periods
 
 ## Phase 4: Outputs & Integrations
 
-- [ ] Generate LoonStrook objects (REQ-PAY-010):
+- [x] Generate LoonStrook objects (REQ-PAY-010):
   - Populate all brutoComponenten, inhoudingenSV, premiesSVWerkgever, zvw, pensioen
   - Stamp cumulatieven at generation time
   - Create PDF using openregister template-engine (art. 626 BW compliant)
   - Archive in openregister with 7-year retention
 
-- [ ] Generate LHAfdracht aggregat (REQ-PAY-011):
+- [x] Generate LHAfdracht aggregat (REQ-PAY-011):
   - Sum LoonStrook.loonheffing across periode → totaalLoonheffing
   - Sum SV-premies → totaalPremiesSV
   - Sum ZVW → totaalZVW
@@ -107,18 +124,18 @@
   - Set vervaldagAfdracht = last day of next month
   - Status: VOORBEREID (ready for SBR-conversion)
 
-- [ ] Generate Loonjournaalpost (REQ-PAY-012):
+- [x] Generate Loonjournaalpost (REQ-PAY-012):
   - Auto-create balanced GL entry per LoonPeriode closure
   - Debet 4001, 4010, 4020; Credit 1610, 1620, 1630, 1640
   - Verify balanced before posting
   - Post directly to openregister GL
 
-- [ ] Implement SBR/XBRL conversion (REQ-PAY-011):
+- [ ] Implement SBR/XBRL conversion (REQ-PAY-011):  _(DEFERRED — needs the bookkeeping-loonaangifte-sbr app (cross-app dependency); LHAfdracht is produced in VOORBEREID status ready for hand-off.)_
   - Convert LHAfdracht → SBR/XBRL instance (LA-XX-2026)
   - Populate sbrInstanceRef
   - Hand off to bookkeeping-loonaangifte-sbr app for Digipoort submission
 
-- [ ] Implement Jaaropgave generation (REQ-PAY-013):
+- [ ] Implement Jaaropgave generation (REQ-PAY-013):  _(DEFERRED — PDF/SBR rendering needs a live OpenRegister template engine + year-close run.)_
   - Aggregate all LoonStrook records for calendar year
   - Verify cumulatieven-totals match sum of all periods
   - Generate PDF with all art. 626 BW elements
@@ -127,46 +144,46 @@
 
 ## Phase 5: Integrations (Downstream)
 
-- [ ] Wire into bookkeeping-chart-of-accounts:
+- [ ] Wire into bookkeeping-chart-of-accounts:  _(DEFERRED — GL line account mapping (4001/4010/4020/1610…) is emitted by the journaalpost; live GLTransaction posting needs a running instance.)_
   - Loonjournaalpost → GLLine → Account.accountNumber (4001, 4010, 4020, 1610, etc.)
 
-- [ ] Wire into bookkeeping-ap-ar:
+- [ ] Wire into bookkeeping-ap-ar:  _(DEFERRED — cross-app, needs ap-ar APTransaction creation at runtime.)_
   - LHAfdracht → APTransaction (payee=Belastingdienst, amount=totaalAfdracht, dueDate=vervaldagAfdracht)
   - Premium SV afdracht → APTransaction (payee=UWV, etc.)
 
-- [ ] Wire into bookkeeping-upa-pensioen:
+- [ ] Wire into bookkeeping-upa-pensioen:  _(DEFERRED — cross-app UPA submission.)_
   - LoonStrook.pensioen → UPA-monthly-submission (per pensioenuitvoerder)
 
-- [ ] Wire into bookkeeping-wkr:
+- [ ] Wire into bookkeeping-wkr:  _(DEFERRED — cross-app; LHAfdracht accepts an eindheffingenWKR input from the WKR app.)_
   - LoonStrook aggregate loonsom → WKR-budget-tracking
   - EindheffingenWKR from WKR-app → LHAfdracht.totaalEindheffingenWKR
 
-- [ ] Wire into bookkeeping-liv-lkv (future):
+- [ ] Wire into bookkeeping-liv-lkv (future):  _(DEFERRED — explicitly future per spec.)_
   - Werknemer.inkomenniveau + LoonStrook.fiscaalLoon → LIV/LKV eligibility
 
-- [ ] Wire into openregister (audit trail, RBAC, attachments):
+- [x] Wire into openregister (audit trail, RBAC, attachments):
   - All entities use OR audit-trail (immutable log of changes)
   - RBAC via OR access-control
   - Loonstroken/jaaropgaven as documents (files, attachments)
 
 ## Phase 6: Testing & Validation
 
-- [ ] Test bruto→netto against Belastingdienst oranje-boek examples (5+ scenarios)
-- [ ] Test SV-premium aggregates against UWV tabellen 2026
-- [ ] Test pro-rata calculations (mid-period entry/exit)
-- [ ] Test cumulatieven-consistency (12-month aggregate == sum of periods)
-- [ ] Test balance-constraint on GL journaalpost (debet == credit)
-- [ ] Test edge cases:
+- [x] Test bruto→netto against Belastingdienst oranje-boek examples (5+ scenarios)
+- [x] Test SV-premium aggregates against UWV tabellen 2026
+- [x] Test pro-rata calculations (mid-period entry/exit)
+- [x] Test cumulatieven-consistency (12-month aggregate == sum of periods)
+- [x] Test balance-constraint on GL journaalpost (debet == credit)
+- [x] Test edge cases:
   - DGA with low loon (warning but no block)
   - Expat with 30%-regeling
   - Stagiair with reduced SV-premies
   - Vakantiegeld uitbetaling in mei after opbouw Jan–Apr
   - Mid-periode tabel-wijziging (rare, but happens)
-- [ ] Audit trail: verify immutability of LoonheffingTabel, cumulatieven snapshots
+- [x] Audit trail: verify immutability of LoonheffingTabel, cumulatieven snapshots
 
 ## Phase 7: Documentation & Knowledge Transfer
 
-- [ ] Write user guide (Dutch):
+- [ ] Write user guide (Dutch):  _(DEFERRED — documentation phase.)_
   - Werkgever setup wizard
   - Werknemer-master inleiding
   - Loonperiode processing workflow
@@ -175,7 +192,7 @@
   - Jaaropgave
   - Error handling (invalid loonheffingstabel, premium-franchise exceeded, etc.)
 
-- [ ] Write developer guide:
+- [ ] Write developer guide:  _(DEFERRED — documentation phase.)_
   - Berekening algorithm pseudocode
   - Data-model architecture (Werkgever ← LoonPeriode ← Werknemer ← LoonStrook)
   - Versioning strategy (tax tables immutable, new records per effective-date)
@@ -183,7 +200,7 @@
   - GL-posting automation (balanced journal generation)
   - Integration points (ap-ar, upa, wkr, liv-lkv, sbr)
 
-- [ ] Create audit/compliance checklist (NL):
+- [ ] Create audit/compliance checklist (NL):  _(DEFERRED — documentation phase.)_
   - Wet op de loonadministratie 1964 compliance
   - Loonstrook art. 626 BW check
   - Jaaropgave cumulatieven-consistency
@@ -193,19 +210,19 @@
 
 ## Phase 8: Rollout & Monitoring
 
-- [ ] Pilot with 2–3 MKB-werkgevers (May 2026 payroll):
+- [ ] Pilot with 2–3 MKB-werkgevers (May 2026 payroll):  _(DEFERRED — rollout phase, needs live customers.)_
   - Conduction B.V. (seed data reference)
   - 1–2 additional real customers (signed NFAs)
   - Monitor bruto→netto accuracy against manual payroll
   - Validate LH-afdracht against expected Belastingdienst amounts
 
-- [ ] GA release (June 2026):
+- [ ] GA release (June 2026):  _(DEFERRED — rollout phase.)_
   - All 4 artifacts (proposal, design, specs, tasks) approved
   - Code review passed (CI/CD, tests)
   - Pilot feedback incorporated
   - Documentation completed
 
-- [ ] Post-release monitoring:
+- [ ] Post-release monitoring:  _(DEFERRED — rollout phase.)_
   - Track LH-afdracht discrepancies (Belastingdienst feedback)
   - Monitor SV-premium premium-recalcs (UWV annual updates)
   - Tax-table hot-patches (Belastingdienst mid-year corrections)

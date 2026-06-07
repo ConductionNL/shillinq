@@ -1,5 +1,7 @@
 # Design — Inventory Min/Max + Reorder Point
 
+**Status:** pr-created
+
 ## Context
 
 Dutch SMB and small retail operators depend on just-in-time inventory
