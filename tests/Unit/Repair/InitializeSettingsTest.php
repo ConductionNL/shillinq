@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/spec/tasks.md#task-11
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -143,6 +146,10 @@ class InitializeSettingsTest extends TestCase
             ->method('loadConfigurationForced')
             ->willReturn(['success' => true, 'version' => '0.3.0']);
 
+        // The default Administration seed (Task 14) runs first; stub it green.
+        $this->settingsService->method('seedDefaultAdministration')
+            ->willReturn(['success' => true, 'seeded' => 1, 'skipped' => 0]);
+
         $this->settingsService->expects($this->atLeastOnce())
             ->method('getSettings')
             ->willReturn(
@@ -178,7 +185,7 @@ class InitializeSettingsTest extends TestCase
             ->willReturn(['success' => true, 'seeded' => 100, 'skipped' => 0]);
 
         // ProductAttribute seeds are called once per category (5 categories) per REQ-IPC-007.
-        $this->settingsService->expects($this->exactly(5))
+        $this->settingsService->expects($this->exactly(count: 5))
             ->method('seedProductAttributes')
             ->willReturn(['success' => true, 'seeded' => 12, 'skipped' => 0]);
 
@@ -210,6 +217,11 @@ class InitializeSettingsTest extends TestCase
         $this->settingsService->expects($this->once())
             ->method('loadConfigurationForced')
             ->willReturn(['success' => true, 'version' => '0.2.0']);
+
+        // The default Administration is seeded regardless of administration_id (REQ-MA-001);
+        // stub it green so it does not emit an unrelated warning in this C2 assertion.
+        $this->settingsService->method('seedDefaultAdministration')
+            ->willReturn(['success' => true, 'seeded' => 1, 'skipped' => 0]);
 
         $this->settingsService->expects($this->atLeastOnce())
             ->method('getSettings')

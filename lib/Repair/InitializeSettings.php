@@ -137,6 +137,7 @@ class InitializeSettings implements IRepairStep
                 return;
             }
 
+            $this->seedDefaultAdministration(output: $output);
             $this->seedChartOfAccounts(output: $output);
             $this->seedProjectData(output: $output);
             $this->seedSelectielijstRules(output: $output);
@@ -156,6 +157,36 @@ class InitializeSettings implements IRepairStep
     }//end run()
 
     /**
+     * Seed the default Administration on fresh install, idempotently (REQ-MA-001, REQ-MA-007).
+     *
+     * Foundational multi-administratie boundary: a single default Administration
+     * (administrationCode ADM-001) is created so single-administratie installs have a
+     * valid administrationId FK target. Deduplicated on administrationCode inside
+     * SettingsService::seedDefaultAdministration(), so re-runs are safe.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-14
+     */
+    private function seedDefaultAdministration(IOutput $output): void
+    {
+        $output->info('Seeding default administration...');
+        $result = $this->settingsService->seedDefaultAdministration();
+
+        if (($result['success'] ?? false) !== true) {
+            $output->warning('Default administration seeding issue: '.($result['message'] ?? 'unknown error'));
+            return;
+        }
+
+        $output->info(
+            'Default administration: '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped (already exists).'
+        );
+
+    }//end seedDefaultAdministration()
+
+    /**
      * Seed project accounting data (RJ-270 stages and rate-card templates), idempotently.
      *
      * RJ-270 stages are seeded unconditionally (not tenant-specific).
@@ -171,13 +202,13 @@ class InitializeSettings implements IRepairStep
     {
         $output->info('Seeding RJ-270 stages...');
         $rj270Result = $this->settingsService->seedRj270Stages();
-        if ($rj270Result['success'] === true) {
+        if (($rj270Result['success'] ?? false) === true) {
             $output->info(
                 'RJ-270 stages seeded: '.($rj270Result['seeded'] ?? 0).' created, '.($rj270Result['skipped'] ?? 0).' skipped.'
             );
         }
 
-        if ($rj270Result['success'] !== true) {
+        if (($rj270Result['success'] ?? false) !== true) {
             $output->warning('RJ-270 stages seeding issue: '.($rj270Result['message'] ?? 'unknown error'));
         }
 
@@ -315,25 +346,25 @@ class InitializeSettings implements IRepairStep
     {
         $output->info('Seeding BTW tariffs...');
         $btwResult = $this->settingsService->seedBtwTariffs();
-        if ($btwResult['success'] === true) {
+        if (($btwResult['success'] ?? false) === true) {
             $output->info(
                 'BTW tariffs seeded: '.($btwResult['seeded'] ?? 0).' created, '.($btwResult['skipped'] ?? 0).' skipped.'
             );
         }
 
-        if ($btwResult['success'] !== true) {
+        if (($btwResult['success'] ?? false) !== true) {
             $output->warning('BTW tariffs seeding issue: '.($btwResult['message'] ?? 'unknown error'));
         }
 
         $output->info('Seeding BBV taakvelden...');
         $bbvResult = $this->settingsService->seedBbvTaakvelden();
-        if ($bbvResult['success'] === true) {
+        if (($bbvResult['success'] ?? false) === true) {
             $output->info(
                 'BBV taakvelden seeded: '.($bbvResult['seeded'] ?? 0).' created, '.($bbvResult['skipped'] ?? 0).' skipped.'
             );
         }
 
-        if ($bbvResult['success'] !== true) {
+        if (($bbvResult['success'] ?? false) !== true) {
             $output->warning('BBV taakvelden seeding issue: '.($bbvResult['message'] ?? 'unknown error'));
         }
 
