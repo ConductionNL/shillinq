@@ -168,6 +168,8 @@ final class CustomerBridgeMetricsService
      * @param bool $fromCache TRUE when served from the local cache, FALSE when fetched from pipelinq.
      *
      * @return void
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-11-docs-observability/tasks.md
      */
     public function recordContactSuccess(bool $fromCache): void
     {
@@ -184,13 +186,15 @@ final class CustomerBridgeMetricsService
      * @param string $reason Short reason tag (`not_found`, `malformed`).
      *
      * @return void
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-11-docs-observability/tasks.md
      */
     public function recordContactFallback(string $reason): void
     {
         $this->increment(key: self::COUNTER_CONTACT_FALLBACK);
         // Per-reason tagging — kept as a sibling counter so dashboards
         // can break the fallback rate down without joining tables.
-        $this->increment(key: self::COUNTER_CONTACT_FALLBACK.'.'.$this->normaliseTag($reason));
+        $this->increment(key: self::COUNTER_CONTACT_FALLBACK.'.'.$this->normaliseTag(tag: $reason));
 
     }//end recordContactFallback()
 
@@ -198,6 +202,8 @@ final class CustomerBridgeMetricsService
      * Record a stale-cache read served because pipelinq was unavailable.
      *
      * @return void
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-11-docs-observability/tasks.md
      */
     public function recordContactStaleServed(): void
     {
@@ -209,6 +215,8 @@ final class CustomerBridgeMetricsService
      * Record a successful synchronous timeline publish.
      *
      * @return void
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-11-docs-observability/tasks.md
      */
     public function recordTimelinePublishSuccess(): void
     {
@@ -220,6 +228,8 @@ final class CustomerBridgeMetricsService
      * Record a failed publish that was handed to the retry queue.
      *
      * @return void
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-11-docs-observability/tasks.md
      */
     public function recordTimelinePublishDeferred(): void
     {
@@ -233,11 +243,13 @@ final class CustomerBridgeMetricsService
      * @param string $reason Short tag (`auth`, `dead_letter`).
      *
      * @return void
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-11-docs-observability/tasks.md
      */
     public function recordPermanentFailure(string $reason): void
     {
         $this->increment(key: self::COUNTER_PERMANENT_FAILURE);
-        $this->increment(key: self::COUNTER_PERMANENT_FAILURE.'.'.$this->normaliseTag($reason));
+        $this->increment(key: self::COUNTER_PERMANENT_FAILURE.'.'.$this->normaliseTag(tag: $reason));
 
     }//end recordPermanentFailure()
 
@@ -247,6 +259,8 @@ final class CustomerBridgeMetricsService
      * @param int $attempt 1-based attempt counter that was just issued.
      *
      * @return void
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-11-docs-observability/tasks.md
      */
     public function recordRetryAttempt(int $attempt): void
     {
@@ -269,6 +283,8 @@ final class CustomerBridgeMetricsService
      * @param int $count Current dead-letter queue size.
      *
      * @return void
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-11-docs-observability/tasks.md
      */
     public function recordDeadLetterCount(int $count): void
     {
@@ -282,6 +298,8 @@ final class CustomerBridgeMetricsService
      * @param string $state One of CircuitBreaker::STATE_CLOSED/OPEN/HALF_OPEN.
      *
      * @return void
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-11-docs-observability/tasks.md
      */
     public function recordCircuitState(string $state): void
     {
@@ -297,25 +315,30 @@ final class CustomerBridgeMetricsService
      * dashboard payloads cheap.
      *
      * @return array<string, int|string> Counter/gauge map.
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-11-docs-observability/tasks.md
      */
     public function snapshot(): array
     {
         return [
-            self::COUNTER_CONTACT_SUCCESS            => $this->readInt(key: self::COUNTER_CONTACT_SUCCESS),
-            self::COUNTER_CONTACT_FALLBACK           => $this->readInt(key: self::COUNTER_CONTACT_FALLBACK),
-            self::COUNTER_CONTACT_FALLBACK.'.not_found'  => $this->readInt(key: self::COUNTER_CONTACT_FALLBACK.'.not_found'),
-            self::COUNTER_CONTACT_FALLBACK.'.malformed' => $this->readInt(key: self::COUNTER_CONTACT_FALLBACK.'.malformed'),
-            self::COUNTER_CONTACT_CACHE_HIT          => $this->readInt(key: self::COUNTER_CONTACT_CACHE_HIT),
-            self::COUNTER_CONTACT_CACHE_STALE        => $this->readInt(key: self::COUNTER_CONTACT_CACHE_STALE),
-            self::COUNTER_TIMELINE_PUBLISH_SUCCESS   => $this->readInt(key: self::COUNTER_TIMELINE_PUBLISH_SUCCESS),
-            self::COUNTER_TIMELINE_PUBLISH_DEFERRED  => $this->readInt(key: self::COUNTER_TIMELINE_PUBLISH_DEFERRED),
-            self::COUNTER_PERMANENT_FAILURE          => $this->readInt(key: self::COUNTER_PERMANENT_FAILURE),
-            self::COUNTER_PERMANENT_FAILURE.'.auth'  => $this->readInt(key: self::COUNTER_PERMANENT_FAILURE.'.auth'),
+            self::COUNTER_CONTACT_SUCCESS                  => $this->readInt(key: self::COUNTER_CONTACT_SUCCESS),
+            self::COUNTER_CONTACT_FALLBACK                 => $this->readInt(key: self::COUNTER_CONTACT_FALLBACK),
+            self::COUNTER_CONTACT_FALLBACK.'.not_found'    => $this->readInt(key: self::COUNTER_CONTACT_FALLBACK.'.not_found'),
+            self::COUNTER_CONTACT_FALLBACK.'.malformed'    => $this->readInt(key: self::COUNTER_CONTACT_FALLBACK.'.malformed'),
+            self::COUNTER_CONTACT_CACHE_HIT                => $this->readInt(key: self::COUNTER_CONTACT_CACHE_HIT),
+            self::COUNTER_CONTACT_CACHE_STALE              => $this->readInt(key: self::COUNTER_CONTACT_CACHE_STALE),
+            self::COUNTER_TIMELINE_PUBLISH_SUCCESS         => $this->readInt(key: self::COUNTER_TIMELINE_PUBLISH_SUCCESS),
+            self::COUNTER_TIMELINE_PUBLISH_DEFERRED        => $this->readInt(key: self::COUNTER_TIMELINE_PUBLISH_DEFERRED),
+            self::COUNTER_PERMANENT_FAILURE                => $this->readInt(key: self::COUNTER_PERMANENT_FAILURE),
+            self::COUNTER_PERMANENT_FAILURE.'.auth'        => $this->readInt(key: self::COUNTER_PERMANENT_FAILURE.'.auth'),
             self::COUNTER_PERMANENT_FAILURE.'.dead_letter' => $this->readInt(key: self::COUNTER_PERMANENT_FAILURE.'.dead_letter'),
-            self::COUNTER_RETRY_ATTEMPTS             => $this->readInt(key: self::COUNTER_RETRY_ATTEMPTS),
-            self::GAUGE_RETRY_DEPTH_MAX              => $this->readInt(key: self::GAUGE_RETRY_DEPTH_MAX),
-            self::GAUGE_DEAD_LETTER_COUNT            => $this->readInt(key: self::GAUGE_DEAD_LETTER_COUNT),
-            self::GAUGE_CIRCUIT_STATE                => $this->readString(key: self::GAUGE_CIRCUIT_STATE, default: CircuitBreaker::STATE_CLOSED),
+            self::COUNTER_RETRY_ATTEMPTS                   => $this->readInt(key: self::COUNTER_RETRY_ATTEMPTS),
+            self::GAUGE_RETRY_DEPTH_MAX                    => $this->readInt(key: self::GAUGE_RETRY_DEPTH_MAX),
+            self::GAUGE_DEAD_LETTER_COUNT                  => $this->readInt(key: self::GAUGE_DEAD_LETTER_COUNT),
+            self::GAUGE_CIRCUIT_STATE                      => $this->readString(
+                key: self::GAUGE_CIRCUIT_STATE,
+                default: CircuitBreaker::STATE_CLOSED
+            ),
         ];
 
     }//end snapshot()
@@ -324,6 +347,8 @@ final class CustomerBridgeMetricsService
      * Reset every counter — exposed for tests and the admin "Reset metrics" action.
      *
      * @return void
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-11-docs-observability/tasks.md
      */
     public function reset(): void
     {
@@ -339,6 +364,8 @@ final class CustomerBridgeMetricsService
      * value 1 so a dashboard can `label_values()` over them.
      *
      * @return string Prometheus exposition text.
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-11-docs-observability/tasks.md
      */
     public function renderPrometheus(): string
     {
@@ -346,25 +373,25 @@ final class CustomerBridgeMetricsService
         $lines    = [];
 
         $map = [
-            self::COUNTER_CONTACT_SUCCESS                  => ['shillinq_pipelinq_contact_success_total', 'counter'],
-            self::COUNTER_CONTACT_FALLBACK                 => ['shillinq_pipelinq_contact_fallback_total', 'counter'],
-            self::COUNTER_CONTACT_CACHE_HIT                => ['shillinq_pipelinq_contact_cache_hit_total', 'counter'],
-            self::COUNTER_CONTACT_CACHE_STALE              => ['shillinq_pipelinq_contact_cache_stale_total', 'counter'],
-            self::COUNTER_TIMELINE_PUBLISH_SUCCESS         => ['shillinq_pipelinq_timeline_publish_success_total', 'counter'],
-            self::COUNTER_TIMELINE_PUBLISH_DEFERRED        => ['shillinq_pipelinq_timeline_publish_deferred_total', 'counter'],
-            self::COUNTER_PERMANENT_FAILURE                => ['shillinq_pipelinq_permanent_failure_total', 'counter'],
-            self::COUNTER_RETRY_ATTEMPTS                   => ['shillinq_pipelinq_retry_attempts_total', 'counter'],
-            self::GAUGE_RETRY_DEPTH_MAX                    => ['shillinq_pipelinq_retry_depth_max', 'gauge'],
-            self::GAUGE_DEAD_LETTER_COUNT                  => ['shillinq_pipelinq_dead_letter_count', 'gauge'],
+            self::COUNTER_CONTACT_SUCCESS           => ['shillinq_pipelinq_contact_success_total', 'counter'],
+            self::COUNTER_CONTACT_FALLBACK          => ['shillinq_pipelinq_contact_fallback_total', 'counter'],
+            self::COUNTER_CONTACT_CACHE_HIT         => ['shillinq_pipelinq_contact_cache_hit_total', 'counter'],
+            self::COUNTER_CONTACT_CACHE_STALE       => ['shillinq_pipelinq_contact_cache_stale_total', 'counter'],
+            self::COUNTER_TIMELINE_PUBLISH_SUCCESS  => ['shillinq_pipelinq_timeline_publish_success_total', 'counter'],
+            self::COUNTER_TIMELINE_PUBLISH_DEFERRED => ['shillinq_pipelinq_timeline_publish_deferred_total', 'counter'],
+            self::COUNTER_PERMANENT_FAILURE         => ['shillinq_pipelinq_permanent_failure_total', 'counter'],
+            self::COUNTER_RETRY_ATTEMPTS            => ['shillinq_pipelinq_retry_attempts_total', 'counter'],
+            self::GAUGE_RETRY_DEPTH_MAX             => ['shillinq_pipelinq_retry_depth_max', 'gauge'],
+            self::GAUGE_DEAD_LETTER_COUNT           => ['shillinq_pipelinq_dead_letter_count', 'gauge'],
         ];
 
         foreach ($map as $key => [$metric, $type]) {
-            $value = (int) ($snapshot[$key] ?? 0);
+            $value   = (int) ($snapshot[$key] ?? 0);
             $lines[] = '# TYPE '.$metric.' '.$type;
             $lines[] = $metric.' '.$value;
         }
 
-        $state = (string) ($snapshot[self::GAUGE_CIRCUIT_STATE] ?? CircuitBreaker::STATE_CLOSED);
+        $state   = (string) ($snapshot[self::GAUGE_CIRCUIT_STATE] ?? CircuitBreaker::STATE_CLOSED);
         $lines[] = '# TYPE shillinq_pipelinq_circuit_state gauge';
         $lines[] = sprintf('shillinq_pipelinq_circuit_state{state="%s"} 1', $state);
 
@@ -450,7 +477,12 @@ final class CustomerBridgeMetricsService
             return 'unknown';
         }
 
-        return substr(trim($safe, '_'), 0, 32) ?: 'unknown';
+        $clamped = substr(trim($safe, '_'), 0, 32);
+        if ($clamped === '') {
+            return 'unknown';
+        }
+
+        return $clamped;
 
     }//end normaliseTag()
 }//end class

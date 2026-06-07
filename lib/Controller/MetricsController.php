@@ -39,8 +39,9 @@ class MetricsController extends Controller
     /**
      * Constructor for MetricsController.
      *
-     * @param IRequest                          $request                The request object.
-     * @param CustomerBridgeMetricsService|null $customerBridgeMetrics  Customer-bridge metrics aggregator (slice 11); nullable so the retrofitted endpoint keeps working when the integration is wired off.
+     * @param IRequest                          $request               The request object.
+     * @param CustomerBridgeMetricsService|null $customerBridgeMetrics Customer-bridge metrics aggregator (slice 11); nullable so the
+     *                                                                 retrofitted endpoint keeps working when the integration is wired off.
      *
      * @return void
      */

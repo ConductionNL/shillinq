@@ -156,14 +156,15 @@ class PipelinqContactAdapter
     /**
      * Constructor.
      *
-     * @param IClientService                  $clientService HTTP transport factory (NC `IHTTPClientService`).
-     * @param IAppConfig                      $appConfig     App-scoped config; reads endpoint + token from slice 01.
-     * @param LoggerInterface                 $logger        PSR logger; transport failures logged at WARNING.
-     * @param ICache                          $cache         Cache layer (in-memory or distributed); used by slice 03 for contact TTL caching.
-     * @param RetryPolicy                     $retryPolicy   Override the default retry policy (exposed for tests).
-     * @param CircuitBreaker|null             $breaker       Override the default circuit breaker (exposed for tests).
-     * @param \Closure|null                   $sleeper       Callable that pauses for N seconds; injected so tests can run without real delays.
-     * @param CustomerBridgeMetricsService|null $metrics     Optional metrics aggregator (slice 11); skipped when NULL so existing test wiring keeps working.
+     * @param IClientService                    $clientService HTTP transport factory (NC `IHTTPClientService`).
+     * @param IAppConfig                        $appConfig     App-scoped config; reads endpoint + token from slice 01.
+     * @param LoggerInterface                   $logger        PSR logger; transport failures logged at WARNING.
+     * @param ICache                            $cache         Cache layer (in-memory or distributed); used by slice 03 for contact TTL caching.
+     * @param RetryPolicy                       $retryPolicy   Override the default retry policy (exposed for tests).
+     * @param CircuitBreaker|null               $breaker       Override the default circuit breaker (exposed for tests).
+     * @param \Closure|null                     $sleeper       Callable that pauses for N seconds; injected so tests can run without real delays.
+     * @param CustomerBridgeMetricsService|null $metrics       Optional metrics aggregator (slice 11); skipped when NULL so existing test
+     *                                                         wiring keeps working.
      */
     public function __construct(
         private readonly IClientService $clientService,
@@ -555,7 +556,7 @@ class PipelinqContactAdapter
                 }
 
                 throw $lastException;
-            }
+            }//end if
 
             $this->metrics?->recordRetryAttempt(attempt: $attempt);
             $this->sleep(seconds: $this->retryPolicy->backoffSeconds(attempt: $attempt));

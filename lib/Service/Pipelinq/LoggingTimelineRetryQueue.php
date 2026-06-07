@@ -39,6 +39,7 @@ use Psr\Log\LoggerInterface;
  */
 final class LoggingTimelineRetryQueue implements TimelineRetryQueue
 {
+
     /**
      * In-memory counter of deferrals seen so far in this process.
      *
@@ -48,7 +49,7 @@ final class LoggingTimelineRetryQueue implements TimelineRetryQueue
      * persistent state. The metrics service holds the ICache-backed
      * cross-request value.
      *
-     * @var int
+     * @var integer
      */
     private int $deferrals = 0;
 
@@ -71,6 +72,9 @@ final class LoggingTimelineRetryQueue implements TimelineRetryQueue
      * @param TimelineEventDto $event Event the synchronous publish failed for.
      *
      * @return void
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-07-timeline-publish-core/tasks.md
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-11-docs-observability/tasks.md
      */
     public function enqueue(TimelineEventDto $event): void
     {

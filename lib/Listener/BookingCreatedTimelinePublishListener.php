@@ -84,6 +84,9 @@ final class BookingCreatedTimelinePublishListener implements IEventListener
      * @param Event $event Event from OpenRegister.
      *
      * @return void
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-07-timeline-publish-core/tasks.md
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-11-docs-observability/tasks.md
      */
     public function handle(Event $event): void
     {
