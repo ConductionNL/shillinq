@@ -253,6 +253,13 @@
 					"icon": "CalendarCheckOutline",
 					"route": "FiscalYears",
 					"order": 87
+				},
+				{
+					"id": "BankReconciliations",
+					"label": "Bank Reconciliation",
+					"icon": "BankOutline",
+					"route": "BankReconciliations",
+					"order": 80
 				}
 			]
 		},
@@ -12433,6 +12440,119 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "DunningLog"
+			}
+		},
+		{
+			"id": "BankReconciliations",
+			"route": "/bank-reconciliations",
+			"type": "index",
+			"title": "Bank Reconciliation",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankReconciliation",
+				"columns": [
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "bankAccountId",
+						"label": "Bank Account",
+						"sortable": true
+					},
+					{
+						"key": "statementStartDate",
+						"label": "Period Start",
+						"sortable": true
+					},
+					{
+						"key": "statementEndDate",
+						"label": "Period End",
+						"sortable": true
+					},
+					{
+						"key": "variance",
+						"label": "Variance",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-statementEndDate",
+				"detailRoute": "BankReconciliationDetail"
+			}
+		},
+		{
+			"id": "BankReconciliationMatchDetail",
+			"route": "/bank-reconciliation-matches/:id",
+			"type": "detail",
+			"title": "Bank Reconciliation Match",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankReconciliationMatch",
+				"fields": [
+					{
+						"key": "reconciliationId",
+						"label": "Reconciliation",
+						"type": "string"
+					},
+					{
+						"key": "bankTransactionRef",
+						"label": "Bank Transaction Ref",
+						"type": "string"
+					},
+					{
+						"key": "bankTransactionAmount",
+						"label": "Amount",
+						"type": "number"
+					},
+					{
+						"key": "journalEntryId",
+						"label": "Journal Entry ID",
+						"type": "string"
+					},
+					{
+						"key": "journalEntryDescription",
+						"label": "Journal Entry",
+						"type": "string"
+					},
+					{
+						"key": "matchType",
+						"label": "Match Type",
+						"type": "string"
+					},
+					{
+						"key": "confidenceScore",
+						"label": "Confidence",
+						"type": "integer"
+					},
+					{
+						"key": "operatorNotes",
+						"label": "Operator Notes",
+						"type": "string"
+					},
+					{
+						"key": "createdBy",
+						"label": "Created By",
+						"type": "string"
+					},
+					{
+						"key": "approvedBy",
+						"label": "Approved By",
+						"type": "string"
+					},
+					{
+						"key": "approvedAt",
+						"label": "Approved At",
+						"type": "date-time"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "BankReconciliations"
 			}
 		}
 	]
