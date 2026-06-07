@@ -124,12 +124,13 @@
   exception logged but never bubbles up to block the StockMove
   transition itself (REQ-INV-007 + design.md D4 separation). Registered
   in `Application::register()` alongside the existing listeners.
-- [ ] Task 11: Ship `lib/Settings/seeds/inventory-valuation-examples.json`
+- [x] Task 11: Ship `lib/Settings/seeds/inventory-valuation-examples.json`
   — JSON array of 5 `InventoryValuation` example records (GT-10-2026
   FIFO Magazijn Noord, KP-A4-500 average Centraal Depot, HP-200-B FIFO
   Magazijn Zuid, SM-5L-PRO average Centraal Depot, VHG-S-M FIFO
   Magazijn Noord) with SPDX header and `_meta` block
-  (`source: "seed-example"`) (design.md §Seed Data)
+  (`source: "seed-example"`) (design.md §Seed Data) — shipped. SPDX +
+  copyright in `_meta`, exact values from design.md §Seed Data table.
 - [ ] Task 12: Extend the repair step under `lib/Migration/` to import
   `inventory-valuation-examples.json` idempotently on first install
   (operator edits persist across re-runs; `StockMovement.uuid`-keyed
