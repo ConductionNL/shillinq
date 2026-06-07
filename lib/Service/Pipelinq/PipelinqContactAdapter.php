@@ -70,49 +70,59 @@ use Psr\Log\LoggerInterface;
 class PipelinqContactAdapter
 {
     /**
-     * @var int Per-request HTTP timeout in seconds (giant decision D5).
+     * Per-request HTTP timeout in seconds (giant decision D5).
+     *
+     * @var int
      */
     public const REQUEST_TIMEOUT_SECONDS = 3;
 
     /**
-     * @var string IAppConfig key for the pipelinq endpoint (slice 01).
+     * IAppConfig key for the pipelinq endpoint (slice 01).
+     *
+     * @var string
      */
     public const CONFIG_KEY_ENDPOINT = 'pipelinq_endpoint';
 
     /**
-     * @var string IAppConfig key for the pipelinq bearer token (slice 01).
+     * IAppConfig key for the pipelinq bearer token (slice 01).
+     *
+     * @var string
      */
     public const CONFIG_KEY_TOKEN = 'pipelinq_token';
 
     /**
-     * @var IClient|null Lazily-built HTTP client (one per adapter instance).
+     * Lazily-built HTTP client (one per adapter instance).
+     *
+     * @var IClient|null
      */
     private ?IClient $client = null;
 
     /**
-     * @var CircuitBreaker Shared circuit breaker.
+     * Shared circuit breaker.
+     *
+     * @var CircuitBreaker
      */
     private readonly CircuitBreaker $circuitBreaker;
 
     /**
      * Constructor.
      *
-     * @param IClientService     $clientService HTTP transport factory (NC `IHTTPClientService`).
-     * @param IAppConfig         $appConfig     App-scoped config; reads endpoint + token from slice 01.
-     * @param LoggerInterface    $logger        PSR logger; transport failures logged at WARNING.
-     * @param ICache             $cache         Cache layer (in-memory or distributed); used by slice 03 for contact TTL caching.
-     * @param RetryPolicy|null   $retryPolicy   Override the default retry policy (exposed for tests).
-     * @param CircuitBreaker|null $breaker      Override the default circuit breaker (exposed for tests).
-     * @param \Closure|null      $sleeper       Callable that pauses for N seconds; injected so tests can run without real delays.
+     * @param IClientService      $clientService HTTP transport factory (NC `IHTTPClientService`).
+     * @param IAppConfig          $appConfig     App-scoped config; reads endpoint + token from slice 01.
+     * @param LoggerInterface     $logger        PSR logger; transport failures logged at WARNING.
+     * @param ICache              $cache         Cache layer (in-memory or distributed); used by slice 03 for contact TTL caching.
+     * @param RetryPolicy         $retryPolicy   Override the default retry policy (exposed for tests).
+     * @param CircuitBreaker|null $breaker       Override the default circuit breaker (exposed for tests).
+     * @param \Closure|null       $sleeper       Callable that pauses for N seconds; injected so tests can run without real delays.
      */
     public function __construct(
         private readonly IClientService $clientService,
         private readonly IAppConfig $appConfig,
         private readonly LoggerInterface $logger,
         private readonly ICache $cache,
-        private readonly RetryPolicy $retryPolicy = new RetryPolicy(),
-        ?CircuitBreaker $breaker = null,
-        private readonly ?\Closure $sleeper = null
+        private readonly RetryPolicy $retryPolicy=new RetryPolicy(),
+        ?CircuitBreaker $breaker=null,
+        private readonly ?\Closure $sleeper=null
     ) {
         // Wire the breaker's WARNING-level transition log here so the
         // CircuitBreaker stays pure and unit-testable.
@@ -143,6 +153,8 @@ class PipelinqContactAdapter
      * same `ICache` instance the adapter holds.
      *
      * @return ICache
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
      */
     public function cache(): ICache
     {
@@ -154,6 +166,8 @@ class PipelinqContactAdapter
      * Inspect the current breaker state (exposed for tests + observability).
      *
      * @return string One of CircuitBreaker::STATE_CLOSED/OPEN/HALF_OPEN.
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
      */
     public function circuitState(): string
     {
@@ -182,7 +196,7 @@ class PipelinqContactAdapter
      *
      * @throws PipelinqTransportException When the breaker is open, the retry budget is exhausted, or the remote returns a non-retryable error.
      */
-    protected function request(string $method, string $path, ?array $payload = null): array
+    protected function request(string $method, string $path, ?array $payload=null): array
     {
         if ($this->circuitBreaker->allowRequest() === false) {
             $this->logger->warning(
@@ -193,23 +207,26 @@ class PipelinqContactAdapter
                     'path'   => $path,
                 ]
             );
-            throw new PipelinqTransportException('pipelinq circuit breaker open; failing fast', 0);
+            throw new PipelinqTransportException(
+                message: 'pipelinq circuit breaker open; failing fast',
+                statusCode: 0
+            );
         }
 
         $endpoint = $this->resolveEndpoint();
-        $url      = $this->joinUrl($endpoint, $path);
-        $options  = $this->buildOptions($payload);
+        $url      = $this->joinUrl(endpoint: $endpoint, path: $path);
+        $options  = $this->buildOptions(payload: $payload);
 
         $attempt        = 0;
         $lastException  = null;
         $lastStatusCode = 0;
 
         while ($attempt < RetryPolicy::MAX_ATTEMPTS) {
-            $attempt += 1;
+            $attempt  += 1;
             $transient = false;
 
             try {
-                $response = $this->dispatch($method, $url, $options);
+                $response = $this->dispatch(method: $method, url: $url, options: $options);
                 $status   = $response->getStatusCode();
 
                 if ($status >= 200 && $status < 300) {
@@ -224,14 +241,14 @@ class PipelinqContactAdapter
                             'status'  => $status,
                         ]
                     );
-                    return $this->decodeBody($response);
+                    return $this->decodeBody(response: $response);
                 }
 
                 $lastStatusCode = $status;
-                $transient      = $this->retryPolicy->isTransientStatus($status);
+                $transient      = $this->retryPolicy->isTransientStatus(statusCode: $status);
                 $lastException  = new PipelinqTransportException(
-                    sprintf('pipelinq request failed with HTTP %d', $status),
-                    $status
+                    message: sprintf('pipelinq request failed with HTTP %d', $status),
+                    statusCode: $status
                 );
             } catch (PipelinqTransportException $e) {
                 throw $e;
@@ -240,9 +257,9 @@ class PipelinqContactAdapter
                 $transient      = true;
                 $lastStatusCode = 0;
                 $lastException  = new PipelinqTransportException(
-                    'pipelinq request failed at transport layer',
-                    0,
-                    $e
+                    message: 'pipelinq request failed at transport layer',
+                    statusCode: 0,
+                    previous: $e
                 );
             }//end try
 
@@ -258,16 +275,22 @@ class PipelinqContactAdapter
                 ]
             );
 
-            if ($this->retryPolicy->shouldRetry($attempt, $transient) === false) {
+            if ($this->retryPolicy->shouldRetry(attempt: $attempt, isTransient: $transient) === false) {
                 $this->circuitBreaker->recordFailure();
-                throw $lastException ?? new PipelinqTransportException('pipelinq request failed', $lastStatusCode);
+                throw $lastException;
             }
 
-            $this->sleep($this->retryPolicy->backoffSeconds($attempt));
+            $this->sleep(seconds: $this->retryPolicy->backoffSeconds(attempt: $attempt));
         }//end while
 
+        // Loop exits only via the throws inside it; reaching here would mean
+        // the retry budget was somehow exhausted without a failure being
+        // recorded -- defensive fallback for the type checker.
         $this->circuitBreaker->recordFailure();
-        throw $lastException ?? new PipelinqTransportException('pipelinq retry budget exhausted', $lastStatusCode);
+        throw new PipelinqTransportException(
+            message: 'pipelinq retry budget exhausted',
+            statusCode: $lastStatusCode
+        );
 
     }//end request()
 
@@ -294,8 +317,8 @@ class PipelinqContactAdapter
             'PUT'    => $client->put($url, $options),
             'DELETE' => $client->delete($url, $options),
             default  => throw new PipelinqTransportException(
-                sprintf('unsupported HTTP method %s', $verb),
-                0
+                message: sprintf('unsupported HTTP method %s', $verb),
+                statusCode: 0
             ),
         };
 
@@ -327,7 +350,10 @@ class PipelinqContactAdapter
     {
         $endpoint = trim($this->appConfig->getValueString(Application::APP_ID, self::CONFIG_KEY_ENDPOINT, ''));
         if ($endpoint === '') {
-            throw new PipelinqTransportException('pipelinq endpoint is not configured', 0);
+            throw new PipelinqTransportException(
+                message: 'pipelinq endpoint is not configured',
+                statusCode: 0
+            );
         }
 
         return rtrim($endpoint, '/');
@@ -361,7 +387,10 @@ class PipelinqContactAdapter
     {
         $token = $this->resolveToken();
         if ($token === '') {
-            throw new PipelinqTransportException('pipelinq token is not configured', 0);
+            throw new PipelinqTransportException(
+                message: 'pipelinq token is not configured',
+                statusCode: 0
+            );
         }
 
         $options = [
@@ -401,14 +430,20 @@ class PipelinqContactAdapter
         }
 
         try {
-            /** @var mixed $decoded */
             $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
-            throw new PipelinqTransportException('pipelinq response is not valid JSON', $response->getStatusCode(), $e);
+            throw new PipelinqTransportException(
+                message: 'pipelinq response is not valid JSON',
+                statusCode: $response->getStatusCode(),
+                previous: $e
+            );
         }
 
         if (is_array($decoded) === false) {
-            throw new PipelinqTransportException('pipelinq response root must be a JSON object', $response->getStatusCode());
+            throw new PipelinqTransportException(
+                message: 'pipelinq response root must be a JSON object',
+                statusCode: $response->getStatusCode()
+            );
         }
 
         return $decoded;

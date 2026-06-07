@@ -38,8 +38,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class CircuitBreakerTest extends TestCase
 {
-
-
     /**
      * The breaker starts CLOSED and allows requests.
      *
@@ -53,7 +51,6 @@ final class CircuitBreakerTest extends TestCase
         self::assertTrue($breaker->allowRequest());
 
     }//end testBreakerStartsClosed()
-
 
     /**
      * Five consecutive failures open the breaker (default threshold).
@@ -80,6 +77,7 @@ final class CircuitBreakerTest extends TestCase
         for ($i = 1; $i <= 4; $i++) {
             $breaker->recordFailure();
         }
+
         self::assertSame(CircuitBreaker::STATE_CLOSED, $breaker->state());
         self::assertTrue($breaker->allowRequest());
         self::assertSame([], $transitions, 'No transition expected before the threshold');
@@ -96,7 +94,6 @@ final class CircuitBreakerTest extends TestCase
 
     }//end testFiveConsecutiveFailuresOpenTheBreaker()
 
-
     /**
      * One success between failures resets the counter — the breaker
      * does NOT open at 5 cumulative failures.
@@ -111,6 +108,7 @@ final class CircuitBreakerTest extends TestCase
         for ($i = 1; $i <= 4; $i++) {
             $breaker->recordFailure();
         }
+
         $breaker->recordSuccess();
         self::assertSame(0, $breaker->consecutiveFailures());
 
@@ -118,10 +116,10 @@ final class CircuitBreakerTest extends TestCase
         for ($i = 1; $i <= 4; $i++) {
             $breaker->recordFailure();
         }
+
         self::assertSame(CircuitBreaker::STATE_CLOSED, $breaker->state());
 
     }//end testSuccessResetsTheFailureCounter()
-
 
     /**
      * After the 5-minute cooldown the breaker moves to HALF_OPEN and lets
@@ -148,6 +146,7 @@ final class CircuitBreakerTest extends TestCase
         for ($i = 1; $i <= 5; $i++) {
             $breaker->recordFailure();
         }
+
         self::assertSame(CircuitBreaker::STATE_OPEN, $breaker->state());
         self::assertFalse($breaker->allowRequest());
 
@@ -161,15 +160,16 @@ final class CircuitBreakerTest extends TestCase
         self::assertSame(CircuitBreaker::STATE_HALF_OPEN, $breaker->state());
         self::assertTrue($breaker->allowRequest());
 
-        $halfOpenTransitions = array_values(array_filter(
+        $halfOpenTransitions = array_values(
+                array_filter(
             $transitions,
             static fn (array $t): bool => $t['to'] === CircuitBreaker::STATE_HALF_OPEN
-        ));
+        )
+                );
         self::assertCount(1, $halfOpenTransitions);
         self::assertSame('cooldown elapsed', $halfOpenTransitions[0]['reason']);
 
     }//end testBreakerHalfOpensAfterCooldown()
-
 
     /**
      * A successful probe in HALF_OPEN closes the breaker.
@@ -190,6 +190,7 @@ final class CircuitBreakerTest extends TestCase
         for ($i = 1; $i <= 5; $i++) {
             $breaker->recordFailure();
         }
+
         $now += 301;
         self::assertSame(CircuitBreaker::STATE_HALF_OPEN, $breaker->state());
 
@@ -199,7 +200,6 @@ final class CircuitBreakerTest extends TestCase
         self::assertSame(0, $breaker->consecutiveFailures());
 
     }//end testHalfOpenProbeSuccessClosesBreaker()
-
 
     /**
      * A failed probe in HALF_OPEN re-opens the breaker for another cooldown.
@@ -224,6 +224,7 @@ final class CircuitBreakerTest extends TestCase
         for ($i = 1; $i <= 5; $i++) {
             $breaker->recordFailure();
         }
+
         $now += 301;
         self::assertSame(CircuitBreaker::STATE_HALF_OPEN, $breaker->state());
 
@@ -231,10 +232,12 @@ final class CircuitBreakerTest extends TestCase
         self::assertSame(CircuitBreaker::STATE_OPEN, $breaker->state());
         self::assertFalse($breaker->allowRequest());
 
-        $reopen = array_values(array_filter(
+        $reopen = array_values(
+                array_filter(
             $transitions,
             static fn (array $t): bool => $t['from'] === CircuitBreaker::STATE_HALF_OPEN
-        ));
+        )
+                );
         self::assertCount(1, $reopen);
         self::assertSame(CircuitBreaker::STATE_OPEN, $reopen[0]['to']);
         self::assertSame('half-open probe failed', $reopen[0]['reason']);

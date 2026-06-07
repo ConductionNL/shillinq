@@ -48,10 +48,10 @@ final class PipelinqTransportException extends \RuntimeException
      */
     public function __construct(
         string $message,
-        private readonly int $statusCode = 0,
-        ?\Throwable $previous = null
+        private readonly int $statusCode=0,
+        ?\Throwable $previous=null
     ) {
-        parent::__construct($message, $statusCode, $previous);
+        parent::__construct(message: $message, code: $statusCode, previous: $previous);
 
     }//end __construct()
 
@@ -61,6 +61,8 @@ final class PipelinqTransportException extends \RuntimeException
      * Zero when the failure was network-level (no response, breaker open).
      *
      * @return int
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
      */
     public function statusCode(): int
     {
@@ -72,6 +74,8 @@ final class PipelinqTransportException extends \RuntimeException
      * Was the failure caused by a fail-fast circuit breaker?
      *
      * @return bool
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
      */
     public function isCircuitOpen(): bool
     {

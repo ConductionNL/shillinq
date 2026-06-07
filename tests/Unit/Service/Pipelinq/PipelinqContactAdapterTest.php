@@ -47,8 +47,6 @@ use Psr\Log\AbstractLogger;
  */
 final class PipelinqContactAdapterTest extends TestCase
 {
-
-
     /**
      * Build a test subclass that exposes `request()` publicly and replaces
      * the HTTP dispatch with a scripted queue of canned responses /
@@ -65,11 +63,11 @@ final class PipelinqContactAdapterTest extends TestCase
         array $script,
         array &$dispatchCalls,
         array &$sleepCalls,
-        ?CircuitBreaker $breaker = null
+        ?CircuitBreaker $breaker=null
     ): PipelinqContactAdapter {
         $appConfig = $this->createMock(IAppConfig::class);
         $appConfig->method('getValueString')->willReturnCallback(
-            static function (string $app, string $key, string $default = ''): string {
+            static function (string $app, string $key, string $default=''): string {
                 if ($key === PipelinqContactAdapter::CONFIG_KEY_ENDPOINT) {
                     return 'https://pipelinq.test';
                 }
@@ -83,6 +81,7 @@ final class PipelinqContactAdapterTest extends TestCase
         );
 
         $logger = new class extends AbstractLogger {
+
             /**
              * @var array<int, array<string, mixed>>
              */
@@ -95,10 +94,10 @@ final class PipelinqContactAdapterTest extends TestCase
              *
              * @return void
              */
-            public function log($level, string|\Stringable $message, array $context = []): void
+            public function log($level, string|\Stringable $message, array $context=[]): void
             {
                 $this->records[] = ['level' => $level, 'message' => (string) $message, 'context' => $context];
-            }
+            }//end log()
         };
 
         $clientService = $this->createMock(IClientService::class);
@@ -131,14 +130,14 @@ final class PipelinqContactAdapterTest extends TestCase
             private array $dispatchCalls;
 
             /**
-             * @param IClientService                   $clientService Mock client service.
-             * @param IAppConfig                       $appConfig     Mock config.
-             * @param AbstractLogger                   $logger        Recording logger.
-             * @param ICache                           $cache         Mock cache.
-             * @param RetryPolicy                      $retryPolicy   Retry policy.
-             * @param CircuitBreaker|null              $breaker       Optional shared breaker.
-             * @param \Closure                         $sleeper       Stubbed sleeper.
-             * @param array<int, IResponse|\Throwable> $script        Scripted dispatch outcomes.
+             * @param IClientService                   $clientService  Mock client service.
+             * @param IAppConfig                       $appConfig      Mock config.
+             * @param AbstractLogger                   $logger         Recording logger.
+             * @param ICache                           $cache          Mock cache.
+             * @param RetryPolicy                      $retryPolicy    Retry policy.
+             * @param CircuitBreaker|null              $breaker        Optional shared breaker.
+             * @param \Closure                         $sleeper        Stubbed sleeper.
+             * @param array<int, IResponse|\Throwable> $script         Scripted dispatch outcomes.
              * @param array<int, int>                  &$dispatchCalls Captured counter.
              */
             public function __construct(
@@ -155,7 +154,7 @@ final class PipelinqContactAdapterTest extends TestCase
                 parent::__construct($clientService, $appConfig, $logger, $cache, $retryPolicy, $breaker, $sleeper);
                 $this->script        = $script;
                 $this->dispatchCalls =& $dispatchCalls;
-            }
+            }//end __construct()
 
             /**
              * Bypass the real HTTP dispatch with a scripted queue.
@@ -169,7 +168,7 @@ final class PipelinqContactAdapterTest extends TestCase
             protected function dispatch(string $method, string $url, array $options): IResponse
             {
                 $this->dispatchCalls[] = 1;
-                $outcome               = array_shift($this->script);
+                $outcome = array_shift($this->script);
                 if ($outcome instanceof \Throwable) {
                     throw $outcome;
                 }
@@ -179,7 +178,7 @@ final class PipelinqContactAdapterTest extends TestCase
                 }
 
                 return $outcome;
-            }
+            }//end dispatch()
 
             /**
              * Expose the protected request loop to the test.
@@ -190,14 +189,13 @@ final class PipelinqContactAdapterTest extends TestCase
              *
              * @return array<string, mixed>
              */
-            public function callRequest(string $method, string $path, ?array $payload = null): array
+            public function callRequest(string $method, string $path, ?array $payload=null): array
             {
                 return $this->request($method, $path, $payload);
-            }
+            }//end callRequest()
         };
 
     }//end buildAdapter()
-
 
     /**
      * Build a canned IResponse with the given status and JSON body.
@@ -207,19 +205,18 @@ final class PipelinqContactAdapterTest extends TestCase
      *
      * @return IResponse
      */
-    private function response(int $statusCode, array $body = []): IResponse
+    private function response(int $statusCode, array $body=[]): IResponse
     {
         $encoded = json_encode($body, JSON_THROW_ON_ERROR);
 
         return new class($statusCode, (string) $encoded) implements IResponse {
-
             /**
              * @param int    $statusCode HTTP status.
              * @param string $body       Body string.
              */
             public function __construct(private readonly int $statusCode, private readonly string $body)
             {
-            }
+            }//end __construct()
 
             /**
              * @return string
@@ -227,7 +224,7 @@ final class PipelinqContactAdapterTest extends TestCase
             public function getBody()
             {
                 return $this->body;
-            }
+            }//end getBody()
 
             /**
              * @return int
@@ -235,7 +232,7 @@ final class PipelinqContactAdapterTest extends TestCase
             public function getStatusCode(): int
             {
                 return $this->statusCode;
-            }
+            }//end getStatusCode()
 
             /**
              * @param string $key Header name.
@@ -245,7 +242,7 @@ final class PipelinqContactAdapterTest extends TestCase
             public function getHeader(string $key): string
             {
                 return '';
-            }
+            }//end getHeader()
 
             /**
              * @return array<string, string>
@@ -253,11 +250,10 @@ final class PipelinqContactAdapterTest extends TestCase
             public function getHeaders(): array
             {
                 return [];
-            }
+            }//end getHeaders()
         };
 
     }//end response()
-
 
     /**
      * Retry logic: a transient 503 on the first attempt succeeds on the
@@ -284,7 +280,6 @@ final class PipelinqContactAdapterTest extends TestCase
         self::assertSame(CircuitBreaker::STATE_CLOSED, $adapter->circuitState());
 
     }//end testRetryLogicSucceedsOnSecondAttempt()
-
 
     /**
      * Three transient failures exhaust the retry budget and surface the
@@ -317,7 +312,6 @@ final class PipelinqContactAdapterTest extends TestCase
 
     }//end testRetryBudgetExhaustedAfterThreeTransientFailures()
 
-
     /**
      * Non-transient 404 short-circuits the retry loop on the first attempt.
      *
@@ -344,7 +338,6 @@ final class PipelinqContactAdapterTest extends TestCase
         self::assertSame([], $sleepCalls, 'No backoff before the loop exits');
 
     }//end testNonTransientErrorIsNotRetried()
-
 
     /**
      * Five consecutive failed requests open the breaker; the 6th call
@@ -392,7 +385,6 @@ final class PipelinqContactAdapterTest extends TestCase
 
     }//end testCircuitBreakerOpensAfterFiveConsecutiveFailures()
 
-
     /**
      * After the 5-minute cooldown the breaker moves to HALF_OPEN; a
      * successful probe closes it again.
@@ -417,6 +409,7 @@ final class PipelinqContactAdapterTest extends TestCase
         for ($i = 1; $i <= 5; $i++) {
             $breaker->recordFailure();
         }
+
         self::assertSame(CircuitBreaker::STATE_OPEN, $breaker->state());
 
         // 301 seconds later → HALF_OPEN.
@@ -433,7 +426,6 @@ final class PipelinqContactAdapterTest extends TestCase
 
     }//end testCircuitBreakerHalfOpensAfterCooldownAndClosesOnSuccess()
 
-
     /**
      * The bearer token must never appear in any log line; only redacted
      * context is recorded.
@@ -448,7 +440,7 @@ final class PipelinqContactAdapterTest extends TestCase
 
         $appConfig = $this->createMock(IAppConfig::class);
         $appConfig->method('getValueString')->willReturnCallback(
-            static function (string $app, string $key, string $default = ''): string {
+            static function (string $app, string $key, string $default=''): string {
                 if ($key === PipelinqContactAdapter::CONFIG_KEY_ENDPOINT) {
                     return 'https://pipelinq.test';
                 }
@@ -462,6 +454,7 @@ final class PipelinqContactAdapterTest extends TestCase
         );
 
         $logger = new class extends AbstractLogger {
+
             /**
              * @var array<int, array<string, mixed>>
              */
@@ -474,10 +467,10 @@ final class PipelinqContactAdapterTest extends TestCase
              *
              * @return void
              */
-            public function log($level, string|\Stringable $message, array $context = []): void
+            public function log($level, string|\Stringable $message, array $context=[]): void
             {
                 $this->records[] = ['level' => $level, 'message' => (string) $message, 'context' => $context];
-            }
+            }//end log()
         };
 
         $clientService = $this->createMock(IClientService::class);
@@ -508,14 +501,14 @@ final class PipelinqContactAdapterTest extends TestCase
             private array $dispatchCalls;
 
             /**
-             * @param IClientService                   $clientService Mock.
-             * @param IAppConfig                       $appConfig     Mock.
-             * @param AbstractLogger                   $logger        Recording.
-             * @param ICache                           $cache         Mock.
-             * @param RetryPolicy                      $retryPolicy   Policy.
-             * @param CircuitBreaker|null              $breaker       Optional breaker.
-             * @param \Closure                         $sleeper       Stubbed sleeper.
-             * @param array<int, IResponse|\Throwable> $script        Scripted outcomes.
+             * @param IClientService                   $clientService  Mock.
+             * @param IAppConfig                       $appConfig      Mock.
+             * @param AbstractLogger                   $logger         Recording.
+             * @param ICache                           $cache          Mock.
+             * @param RetryPolicy                      $retryPolicy    Policy.
+             * @param CircuitBreaker|null              $breaker        Optional breaker.
+             * @param \Closure                         $sleeper        Stubbed sleeper.
+             * @param array<int, IResponse|\Throwable> $script         Scripted outcomes.
              * @param array<int, int>                  &$dispatchCalls Capture.
              */
             public function __construct(
@@ -532,7 +525,7 @@ final class PipelinqContactAdapterTest extends TestCase
                 parent::__construct($clientService, $appConfig, $logger, $cache, $retryPolicy, $breaker, $sleeper);
                 $this->script        = $script;
                 $this->dispatchCalls =& $dispatchCalls;
-            }
+            }//end __construct()
 
             /**
              * @param string               $method  HTTP method.
@@ -544,7 +537,7 @@ final class PipelinqContactAdapterTest extends TestCase
             protected function dispatch(string $method, string $url, array $options): IResponse
             {
                 $this->dispatchCalls[] = 1;
-                $outcome               = array_shift($this->script);
+                $outcome = array_shift($this->script);
                 if ($outcome instanceof \Throwable) {
                     throw $outcome;
                 }
@@ -554,7 +547,7 @@ final class PipelinqContactAdapterTest extends TestCase
                 }
 
                 return $outcome;
-            }
+            }//end dispatch()
 
             /**
              * @param string                    $method  HTTP method.
@@ -563,10 +556,10 @@ final class PipelinqContactAdapterTest extends TestCase
              *
              * @return array<string, mixed>
              */
-            public function callRequest(string $method, string $path, ?array $payload = null): array
+            public function callRequest(string $method, string $path, ?array $payload=null): array
             {
                 return $this->request($method, $path, $payload);
-            }
+            }//end callRequest()
         };
 
         try {

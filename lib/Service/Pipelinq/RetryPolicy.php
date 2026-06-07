@@ -41,12 +41,16 @@ namespace OCA\Shillinq\Service\Pipelinq;
 final class RetryPolicy
 {
     /**
-     * @var int Maximum number of attempts (including the first one).
+     * Maximum number of attempts (including the first one).
+     *
+     * @var int
      */
     public const MAX_ATTEMPTS = 3;
 
     /**
-     * @var array<int, int> Backoff schedule in seconds, indexed by attempt number (1-based).
+     * Backoff schedule in seconds, indexed by attempt number (1-based).
+     *
+     * @var array<int, int>
      */
     private const BACKOFF_SCHEDULE = [
         1 => 1,
@@ -61,6 +65,8 @@ final class RetryPolicy
      * @param bool $isTransient Whether the failure is classified as transient (5xx / 408 / 429 / network).
      *
      * @return bool TRUE when the caller MUST schedule another attempt; FALSE when the loop should exit.
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
      */
     public function shouldRetry(int $attempt, bool $isTransient): bool
     {
@@ -80,6 +86,8 @@ final class RetryPolicy
      * @param int $attempt 1-based attempt counter that just completed.
      *
      * @return int Seconds to wait before the next attempt (1, 2, or 4); 0 when the schedule is exhausted.
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
      */
     public function backoffSeconds(int $attempt): int
     {
@@ -98,6 +106,8 @@ final class RetryPolicy
      * @param int $statusCode HTTP status code from the response.
      *
      * @return bool TRUE when the status code is a transient failure.
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
      */
     public function isTransientStatus(int $statusCode): bool
     {

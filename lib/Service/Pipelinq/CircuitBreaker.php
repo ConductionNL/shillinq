@@ -50,33 +50,39 @@ final class CircuitBreaker
     public const STATE_HALF_OPEN = 'half_open';
 
     /**
-     * @var string Current breaker state.
+     * Current breaker state.
+     *
+     * @var string
      */
     private string $state = self::STATE_CLOSED;
 
     /**
-     * @var int Count of consecutive failures since the last success.
+     * Count of consecutive failures since the last success.
+     *
+     * @var integer
      */
     private int $consecutiveFailures = 0;
 
     /**
-     * @var int|null Unix timestamp of the failure that opened the breaker.
+     * Unix timestamp of the failure that opened the breaker.
+     *
+     * @var integer|null
      */
     private ?int $openedAt = null;
 
     /**
      * Constructor.
      *
-     * @param int           $failureThreshold Consecutive failures that trip the breaker (default 5).
-     * @param int           $cooldownSeconds  Seconds to remain OPEN before moving to HALF_OPEN (default 300 = 5 minutes).
-     * @param \Closure|null $clock            Callable returning the current unix timestamp; defaults to time(). Injecting a fake clock keeps the breaker unit-testable.
-     * @param \Closure|null $onTransition     Callable invoked on every state transition with (string $from, string $to, string $reason); used for WARNING-level logging.
+     * @param int           $failureThreshold Consecutive failures that trip the breaker.
+     * @param int           $cooldownSeconds  Seconds OPEN before moving to HALF_OPEN (default 300 = 5 minutes).
+     * @param \Closure|null $clock            Callable returning the current unix timestamp; defaults to time().
+     * @param \Closure|null $onTransition     Callback (string $from, string $to, string $reason) for WARNING logging.
      */
     public function __construct(
-        private readonly int $failureThreshold = 5,
-        private readonly int $cooldownSeconds = 300,
-        private readonly ?\Closure $clock = null,
-        private readonly ?\Closure $onTransition = null
+        private readonly int $failureThreshold=5,
+        private readonly int $cooldownSeconds=300,
+        private readonly ?\Closure $clock=null,
+        private readonly ?\Closure $onTransition=null
     ) {
 
     }//end __construct()
@@ -89,11 +95,13 @@ final class CircuitBreaker
      * probe call may run.
      *
      * @return string One of STATE_CLOSED, STATE_OPEN, STATE_HALF_OPEN.
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
      */
     public function state(): string
     {
         if ($this->state === self::STATE_OPEN && $this->cooldownElapsed() === true) {
-            $this->transitionTo(self::STATE_HALF_OPEN, 'cooldown elapsed');
+            $this->transitionTo(to: self::STATE_HALF_OPEN, reason: 'cooldown elapsed');
         }
 
         return $this->state;
@@ -104,6 +112,8 @@ final class CircuitBreaker
      * Decide whether a request may proceed.
      *
      * @return bool TRUE when the breaker is CLOSED or HALF_OPEN; FALSE when OPEN (fail fast).
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
      */
     public function allowRequest(): bool
     {
@@ -117,12 +127,14 @@ final class CircuitBreaker
      * Closes a HALF_OPEN breaker and resets the failure counter.
      *
      * @return void
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
      */
     public function recordSuccess(): void
     {
         $this->consecutiveFailures = 0;
         if ($this->state !== self::STATE_CLOSED) {
-            $this->transitionTo(self::STATE_CLOSED, 'success');
+            $this->transitionTo(to: self::STATE_CLOSED, reason: 'success');
             $this->openedAt = null;
         }
 
@@ -136,6 +148,8 @@ final class CircuitBreaker
      * probe.
      *
      * @return void
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
      */
     public function recordFailure(): void
     {
@@ -143,13 +157,16 @@ final class CircuitBreaker
 
         if ($this->state === self::STATE_HALF_OPEN) {
             $this->openedAt = $this->now();
-            $this->transitionTo(self::STATE_OPEN, 'half-open probe failed');
+            $this->transitionTo(to: self::STATE_OPEN, reason: 'half-open probe failed');
             return;
         }
 
         if ($this->state === self::STATE_CLOSED && $this->consecutiveFailures >= $this->failureThreshold) {
             $this->openedAt = $this->now();
-            $this->transitionTo(self::STATE_OPEN, sprintf('%d consecutive failures', $this->consecutiveFailures));
+            $this->transitionTo(
+                to: self::STATE_OPEN,
+                reason: sprintf('%d consecutive failures', $this->consecutiveFailures)
+            );
         }
 
     }//end recordFailure()
@@ -158,6 +175,8 @@ final class CircuitBreaker
      * Current consecutive-failure counter (exposed for tests / observability).
      *
      * @return int
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
      */
     public function consecutiveFailures(): int
     {
