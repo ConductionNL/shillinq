@@ -463,6 +463,10 @@ class BadoControleprotocolService
             }
         }
 
+        if (empty($sampleIds) === true) {
+            return [];
+        }
+
         $findings = $this->objects()
             ->setRegister($this->register())
             ->setSchema('AuditFinding')
