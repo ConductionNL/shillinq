@@ -87,6 +87,14 @@ import PurchaseOrderDetail from './components/purchase-order/PurchaseOrderDetail
 import GoodsReceiptNoteForm from './components/goods-receipt-note/GoodsReceiptNoteForm.vue'
 import GoodsReceiptNoteDetail from './components/goods-receipt-note/GoodsReceiptNoteDetail.vue'
 
+// bookkeeping-purchase-order-3way slice 05 (REQ-PO3W-004 / REQ-PO3W-007):
+// the supplier-invoice detail view renders the OCR-confidence indicator,
+// the Peppol/UBL provenance block and the link to the related
+// ThreeWayMatch. None of those concerns fit a built-in `detail` page
+// type (the OCR meter is a conditional bespoke block), so the view is
+// registered as a kind:"page" custom component.
+import SupplierInvoiceDetail from './components/supplier-invoice/SupplierInvoiceDetail.vue'
+
 export default {
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
 	MobileScannerReceive: { kind: 'page', component: ReceivePage },
@@ -107,4 +115,6 @@ export default {
 
 	GoodsReceiptNoteForm: { kind: 'page', component: GoodsReceiptNoteForm },
 	GoodsReceiptNoteDetail: { kind: 'page', component: GoodsReceiptNoteDetail },
+
+	SupplierInvoiceDetail: { kind: 'page', component: SupplierInvoiceDetail },
 }
