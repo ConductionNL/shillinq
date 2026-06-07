@@ -78,7 +78,7 @@ class Application extends App implements IBootstrap
             listener: AppointmentCreatedListener::class
         );
 
-        // inventory-valuation-fifo-avg REQ-INV-003 / REQ-INV-004 / REQ-INV-007
+        // Inventory-valuation-fifo-avg REQ-INV-003 / REQ-INV-004 / REQ-INV-007
         // — dispatch posted StockMove records into the valuation engine
         // (FIFO or moving-average per the InventoryValuation.valuationMethod)
         // and post a balanced COGS GLTransaction on outbound moves.

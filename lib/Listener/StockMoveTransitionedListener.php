@@ -65,8 +65,6 @@ use Throwable;
  */
 class StockMoveTransitionedListener implements IEventListener
 {
-
-
     /**
      * Construct the listener with DI dependencies.
      *
@@ -88,13 +86,14 @@ class StockMoveTransitionedListener implements IEventListener
 
     }//end __construct()
 
-
     /**
      * Handle an ObjectTransitionedEvent.
      *
      * @param Event $event Event from OpenRegister.
      *
      * @return void
+     *
+     * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-10
      */
     public function handle(Event $event): void
     {
@@ -119,7 +118,7 @@ class StockMoveTransitionedListener implements IEventListener
 
             $movementType = (string) ($move['movementType'] ?? '');
             if (in_array($movementType, ['receipt', 'issue'], true) === false) {
-                // transfer, manufacture, repack — out of scope here.
+                // Transfer, manufacture, repack — out of scope here.
                 return;
             }
 
@@ -167,7 +166,6 @@ class StockMoveTransitionedListener implements IEventListener
 
     }//end handle()
 
-
     /**
      * Look up the active InventoryValuation snapshot for the move.
      *
@@ -178,9 +176,11 @@ class StockMoveTransitionedListener implements IEventListener
     private function lookupValuation(array $move): ?array
     {
         $movementType = (string) ($move['movementType'] ?? '');
-        $warehouse    = $movementType === 'receipt'
-            ? (string) ($move['destinationLocationId'] ?? '')
-            : (string) ($move['sourceLocationId'] ?? '');
+        if ($movementType === 'receipt') {
+            $warehouse = (string) ($move['destinationLocationId'] ?? '');
+        } else {
+            $warehouse = (string) ($move['sourceLocationId'] ?? '');
+        }
 
         $productId        = (string) ($move['itemId'] ?? '');
         $administrationId = (string) ($move['administrationId'] ?? '');
@@ -206,7 +206,9 @@ class StockMoveTransitionedListener implements IEventListener
                     ]
                 );
 
-            $rows = is_array($rows) === true ? $rows : [];
+            if (is_array($rows) === false) {
+                $rows = [];
+            }
             if (count($rows) === 0) {
                 return null;
             }
@@ -218,12 +220,20 @@ class StockMoveTransitionedListener implements IEventListener
 
             if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
                 $out = $row->jsonSerialize();
-                return is_array($out) === true ? $out : null;
+                if (is_array($out) === true) {
+                    return $out;
+                }
+
+                return null;
             }
 
             if (is_object($row) === true && method_exists($row, 'getObject') === true) {
                 $out = $row->getObject();
-                return is_array($out) === true ? $out : null;
+                if (is_array($out) === true) {
+                    return $out;
+                }
+
+                return null;
             }
 
             return null;
@@ -236,7 +246,6 @@ class StockMoveTransitionedListener implements IEventListener
         }//end try
 
     }//end lookupValuation()
-
 
     /**
      * Schema-name match for StockMove (plain slug or namespaced).
@@ -251,7 +260,6 @@ class StockMoveTransitionedListener implements IEventListener
         return ($normalised === 'stockmove' || str_ends_with($normalised, '/stockmove'));
 
     }//end isStockMoveSchema()
-
 
     /**
      * Resolve the OR register slug, defaulting to 'shillinq'.
@@ -268,6 +276,4 @@ class StockMoveTransitionedListener implements IEventListener
         return $register;
 
     }//end register()
-
-
 }//end class

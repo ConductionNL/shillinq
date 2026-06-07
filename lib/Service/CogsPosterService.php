@@ -82,7 +82,6 @@ class CogsPosterService
      */
     public const CFG_INVENTORY_ACCOUNT = 'inventory_account';
 
-
     /**
      * Construct the service.
      *
@@ -97,7 +96,6 @@ class CogsPosterService
     ) {
 
     }//end __construct()
-
 
     /**
      * Post one balanced GLTransaction for an outbound StockMove.
@@ -148,45 +146,51 @@ class CogsPosterService
         $description      = $this->describe(move: $move, cogsCents: $cogsCents);
 
         try {
-            $transaction = $this->saveTransaction(data: [
-                'transactionNumber' => $this->transactionNumber(move: $move),
-                'postingDate'       => $this->postingDate(move: $move),
-                'periodId'          => $this->periodId(move: $move),
-                'currency'          => 'EUR',
-                'description'       => $description,
-                'sourceReference'   => $sourceReference,
-                'state'             => 'draft',
-                'administrationId'  => $administrationId,
-            ]);
+            $transaction = $this->saveTransaction(
+                    data: [
+                        'transactionNumber' => $this->transactionNumber(move: $move),
+                        'postingDate'       => $this->postingDate(move: $move),
+                        'periodId'          => $this->periodId(move: $move),
+                        'currency'          => 'EUR',
+                        'description'       => $description,
+                        'sourceReference'   => $sourceReference,
+                        'state'             => 'draft',
+                        'administrationId'  => $administrationId,
+                    ]
+                    );
 
             $transactionId = (string) ($transaction['id'] ?? ($transaction['@self']['id'] ?? ''));
 
             $cogsAmount = round(($cogsCents / 100), 2);
 
-            $this->saveLine(data: [
-                'transactionId' => $transactionId,
-                'lineNumber'    => 1,
-                'accountNumber' => $cogsAccount,
-                'side'          => 'debit',
-                'amount'        => $cogsAmount,
-                'currency'      => 'EUR',
-                'description'   => $description,
-            ]);
+            $this->saveLine(
+                    data: [
+                        'transactionId' => $transactionId,
+                        'lineNumber'    => 1,
+                        'accountNumber' => $cogsAccount,
+                        'side'          => 'debit',
+                        'amount'        => $cogsAmount,
+                        'currency'      => 'EUR',
+                        'description'   => $description,
+                    ]
+                    );
 
-            $this->saveLine(data: [
-                'transactionId' => $transactionId,
-                'lineNumber'    => 2,
-                'accountNumber' => $inventoryAccount,
-                'side'          => 'credit',
-                'amount'        => $cogsAmount,
-                'currency'      => 'EUR',
-                'description'   => $description,
-            ]);
+            $this->saveLine(
+                    data: [
+                        'transactionId' => $transactionId,
+                        'lineNumber'    => 2,
+                        'accountNumber' => $inventoryAccount,
+                        'side'          => 'credit',
+                        'amount'        => $cogsAmount,
+                        'currency'      => 'EUR',
+                        'description'   => $description,
+                    ]
+                    );
 
-            // pendingCogs cleared on a successful post.
+            // PendingCogs cleared on a successful post.
             if (((bool) ($valuation['pendingCogs'] ?? false)) === true) {
                 $valuation['pendingCogs'] = false;
-                $valuation                = $this->saveValuation(data: $valuation);
+                $valuation = $this->saveValuation(data: $valuation);
             }
 
             return [
@@ -220,7 +224,6 @@ class CogsPosterService
 
     }//end postCogs()
 
-
     /**
      * Compose the human-readable description per REQ-INV-007.
      *
@@ -231,10 +234,13 @@ class CogsPosterService
      */
     private function describe(array $move, int $cogsCents): string
     {
-        $sku       = (string) ($move['itemId'] ?? '');
-        $qty       = (float) ($move['quantity'] ?? 0);
-        $unitCost  = $qty > 0 ? (($cogsCents / 100) / $qty) : 0.0;
-        $unitCost  = round($unitCost, 4);
+        $sku      = (string) ($move['itemId'] ?? '');
+        $qty      = (float) ($move['quantity'] ?? 0);
+        $unitCost = 0.0;
+        if ($qty > 0) {
+            $unitCost = (($cogsCents / 100) / $qty);
+        }
+        $unitCost = round($unitCost, 4);
 
         return sprintf(
             'COGS — %s — %s × EUR %s',
@@ -244,7 +250,6 @@ class CogsPosterService
         );
 
     }//end describe()
-
 
     /**
      * Build a transaction number unique per administration + fiscal year.
@@ -265,7 +270,6 @@ class CogsPosterService
 
     }//end transactionNumber()
 
-
     /**
      * Posting date as ISO yyyy-mm-dd, defaulting to the move postedAt.
      *
@@ -283,7 +287,6 @@ class CogsPosterService
         return substr($postedAt, 0, 10);
 
     }//end postingDate()
-
 
     /**
      * Resolve a periodId (e.g. 2026-Q2) from the posting date.
@@ -306,7 +309,6 @@ class CogsPosterService
 
     }//end periodId()
 
-
     /**
      * Resolve COGS account number from app config, default empty.
      *
@@ -318,7 +320,6 @@ class CogsPosterService
 
     }//end cogsAccount()
 
-
     /**
      * Resolve Inventory asset account number from app config, default empty.
      *
@@ -329,7 +330,6 @@ class CogsPosterService
         return trim($this->appConfig->getValueString(Application::APP_ID, self::CFG_INVENTORY_ACCOUNT, ''));
 
     }//end inventoryAccount()
-
 
     /**
      * Persist a GLTransaction header.
@@ -344,7 +344,6 @@ class CogsPosterService
 
     }//end saveTransaction()
 
-
     /**
      * Persist a GLLine row.
      *
@@ -357,7 +356,6 @@ class CogsPosterService
         return $this->saveOnSchema(schema: 'GLLine', data: $data);
 
     }//end saveLine()
-
 
     /**
      * Persist an InventoryValuation snapshot (pendingCogs / status patches).
@@ -372,11 +370,10 @@ class CogsPosterService
 
     }//end saveValuation()
 
-
     /**
      * Generic ObjectService::saveObject helper bound to the configured register.
      *
-     * @param string             $schema Schema slug.
+     * @param string              $schema Schema slug.
      * @param array<string,mixed> $data   Row body.
      *
      * @return array<string,mixed>
@@ -395,18 +392,25 @@ class CogsPosterService
 
         if (is_object($saved) === true && method_exists($saved, 'jsonSerialize') === true) {
             $out = $saved->jsonSerialize();
-            return is_array($out) === true ? $out : [];
+            if (is_array($out) === true) {
+                return $out;
+            }
+
+            return [];
         }
 
         if (is_object($saved) === true && method_exists($saved, 'getObject') === true) {
             $out = $saved->getObject();
-            return is_array($out) === true ? $out : [];
+            if (is_array($out) === true) {
+                return $out;
+            }
+
+            return [];
         }
 
         throw new RuntimeException('CogsPosterService: unsupported row type from ObjectService::saveObject');
 
     }//end saveOnSchema()
-
 
     /**
      * Resolve the OR register slug, defaulting to 'shillinq'.
@@ -423,6 +427,4 @@ class CogsPosterService
         return $register;
 
     }//end register()
-
-
 }//end class

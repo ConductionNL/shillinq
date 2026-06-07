@@ -528,7 +528,6 @@ class InitializeSettings implements IRepairStep
 
     }//end seedInventoryBarcodeDemo()
 
-
     /**
      * Seed example InventoryValuation snapshots from
      * `inventory-valuation-examples.json`, idempotently per administration.

@@ -68,8 +68,6 @@ use RuntimeException;
  */
 class FifoValuationService
 {
-
-
     /**
      * Construct the service.
      *
@@ -84,7 +82,6 @@ class FifoValuationService
     ) {
 
     }//end __construct()
-
 
     /**
      * Process a posted StockMove for a FIFO-valued item.
@@ -110,17 +107,20 @@ class FifoValuationService
     {
         $movementType = (string) ($move['movementType'] ?? '');
         if (in_array($movementType, ['receipt', 'issue'], true) === false) {
-            // transfer / manufacture / repack don't drive FIFO valuation directly.
+            // Transfer / manufacture / repack don't drive FIFO valuation directly.
             return [
                 'processed' => false,
                 'message'   => 'movementType '.$movementType.' is not a FIFO trigger',
             ];
         }
 
-        $productId        = (string) ($move['itemId'] ?? '');
-        $warehouse        = $movementType === 'receipt'
-            ? (string) ($move['destinationLocationId'] ?? '')
-            : (string) ($move['sourceLocationId'] ?? '');
+        $productId = (string) ($move['itemId'] ?? '');
+        if ($movementType === 'receipt') {
+            $warehouse = (string) ($move['destinationLocationId'] ?? '');
+        } else {
+            $warehouse = (string) ($move['sourceLocationId'] ?? '');
+        }
+
         $administrationId = (string) ($move['administrationId'] ?? '');
         $moveUuid         = (string) ($move['uuid'] ?? ($move['@self']['uuid'] ?? ($move['id'] ?? '')));
 
@@ -178,7 +178,6 @@ class FifoValuationService
 
     }//end processStockMove()
 
-
     /**
      * Recompute the snapshot from open inbound lots, no COGS to post.
      *
@@ -218,10 +217,10 @@ class FifoValuationService
 
         $snapshot = $this->snapshotFromLots(remainingLots: $remainingLots);
 
-        $valuation['quantity']          = $snapshot['quantity'];
-        $valuation['unitCost']          = $snapshot['unitCost'];
-        $valuation['totalValue']        = $snapshot['totalValue'];
-        $valuation['date']              = (string) ($move['postedAt'] ?? ($move['draftedAt'] ?? ''));
+        $valuation['quantity']   = $snapshot['quantity'];
+        $valuation['unitCost']   = $snapshot['unitCost'];
+        $valuation['totalValue'] = $snapshot['totalValue'];
+        $valuation['date']       = (string) ($move['postedAt'] ?? ($move['draftedAt'] ?? ''));
         $valuation['lastStockMoveUuid'] = $moveUuid;
 
         $saved = $this->saveValuation(data: $valuation);
@@ -235,7 +234,6 @@ class FifoValuationService
         ];
 
     }//end processReceipt()
-
 
     /**
      * Walk open lots oldest-first, deduct outbound qty, return cogs basis.
@@ -272,7 +270,7 @@ class FifoValuationService
         );
 
         // Subtract historical outbound consumption (excluding the current move).
-        $consumedQty = $this->consumedQtyFromHistory(
+        $consumedQty   = $this->consumedQtyFromHistory(
             productId: $productId,
             warehouse: $warehouse,
             administrationId: $administrationId,
@@ -301,10 +299,10 @@ class FifoValuationService
         }
 
         // Walk lots oldest-first, deduct, build cogs basis.
-        $remaining     = $outboundQty;
-        $cogsBasis     = [];
-        $cogsCents     = 0;
-        $residualLots  = [];
+        $remaining    = $outboundQty;
+        $cogsBasis    = [];
+        $cogsCents    = 0;
+        $residualLots = [];
 
         foreach ($availableLots as $lot) {
             $lotQty  = (float) $lot['quantity'];
@@ -314,14 +312,14 @@ class FifoValuationService
                 continue;
             }
 
-            $take         = min($lotQty, $remaining);
-            $takeCents    = (int) round($take * $lotCost * 100);
-            $cogsCents   += $takeCents;
-            $cogsBasis[]  = [
+            $take        = min($lotQty, $remaining);
+            $takeCents   = (int) round($take * $lotCost * 100);
+            $cogsCents  += $takeCents;
+            $cogsBasis[] = [
                 'lotCost'  => $lotCost,
                 'quantity' => $take,
             ];
-            $remaining -= $take;
+            $remaining  -= $take;
 
             $left = ($lotQty - $take);
             if ($left > 0) {
@@ -331,14 +329,14 @@ class FifoValuationService
                     'postedAt' => $lot['postedAt'],
                 ];
             }
-        }
+        }//end foreach
 
         $snapshot = $this->snapshotFromLots(remainingLots: $residualLots);
 
-        $valuation['quantity']          = $snapshot['quantity'];
-        $valuation['unitCost']          = $snapshot['unitCost'];
-        $valuation['totalValue']        = $snapshot['totalValue'];
-        $valuation['date']              = (string) ($move['postedAt'] ?? ($move['draftedAt'] ?? ''));
+        $valuation['quantity']   = $snapshot['quantity'];
+        $valuation['unitCost']   = $snapshot['unitCost'];
+        $valuation['totalValue'] = $snapshot['totalValue'];
+        $valuation['date']       = (string) ($move['postedAt'] ?? ($move['draftedAt'] ?? ''));
         $valuation['lastStockMoveUuid'] = $moveUuid;
 
         $saved = $this->saveValuation(data: $valuation);
@@ -352,7 +350,6 @@ class FifoValuationService
         ];
 
     }//end processIssue()
-
 
     /**
      * Compute snapshot (quantity, weighted-avg unitCost, totalValue) from
@@ -368,8 +365,8 @@ class FifoValuationService
         $totalQty   = 0.0;
         $totalCents = 0;
         foreach ($remainingLots as $lot) {
-            $qty   = (float) ($lot['quantity'] ?? 0);
-            $cost  = (float) ($lot['unitCost'] ?? 0);
+            $qty         = (float) ($lot['quantity'] ?? 0);
+            $cost        = (float) ($lot['unitCost'] ?? 0);
             $totalQty   += $qty;
             $totalCents += (int) round($qty * $cost * 100);
         }
@@ -386,7 +383,6 @@ class FifoValuationService
         ];
 
     }//end snapshotFromLots()
-
 
     /**
      * Subtract historical outbound consumption from open inbound lots,
@@ -422,13 +418,12 @@ class FifoValuationService
                 'unitCost' => $lot['unitCost'],
                 'postedAt' => $lot['postedAt'],
             ];
-            $remaining = 0.0;
+            $remaining  = 0.0;
         }
 
         return $residual;
 
     }//end residualLotsAfterConsumption()
-
 
     /**
      * Load all posted, non-cancelled inbound StockMove records for the
@@ -461,11 +456,13 @@ class FifoValuationService
                 ]
             );
 
-        $rows = is_array($rows) === true ? $rows : [];
+        if (is_array($rows) === false) {
+            $rows = [];
+        }
 
         $lots = [];
         foreach ($rows as $row) {
-            $data = $this->asArray(row: $row);
+            $data   = $this->asArray(row: $row);
             $lots[] = [
                 'quantity' => (float) ($data['quantity'] ?? 0),
                 'unitCost' => (float) ($data['unitCost'] ?? 0),
@@ -482,7 +479,6 @@ class FifoValuationService
 
     }//end openInboundLots()
 
-
     /**
      * Sum quantity of posted, non-cancelled outbound StockMove rows for
      * the same tuple — used to derive historical consumption.
@@ -498,7 +494,7 @@ class FifoValuationService
         string $productId,
         string $warehouse,
         string $administrationId,
-        ?string $excludeMoveUuid = null
+        ?string $excludeMoveUuid=null
     ): float {
         $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
         $rows          = $objectService
@@ -516,7 +512,9 @@ class FifoValuationService
                 ]
             );
 
-        $rows = is_array($rows) === true ? $rows : [];
+        if (is_array($rows) === false) {
+            $rows = [];
+        }
 
         $consumed = 0.0;
         foreach ($rows as $row) {
@@ -532,7 +530,6 @@ class FifoValuationService
         return $consumed;
 
     }//end consumedQtyFromHistory()
-
 
     /**
      * Locate the active InventoryValuation snapshot for the tuple, or
@@ -565,7 +562,10 @@ class FifoValuationService
                 ]
             );
 
-        $existing = is_array($existing) === true ? $existing : [];
+        if (is_array($existing) === false) {
+            $existing = [];
+        }
+
         if (count($existing) > 0) {
             return $this->asArray(row: $existing[0]);
         }
@@ -584,7 +584,6 @@ class FifoValuationService
         ];
 
     }//end findOrCreateValuation()
-
 
     /**
      * Persist the snapshot via OR's ObjectService.
@@ -609,7 +608,6 @@ class FifoValuationService
 
     }//end saveValuation()
 
-
     /**
      * Normalise an OR Object / array to a plain array<string,mixed>.
      *
@@ -625,18 +623,25 @@ class FifoValuationService
 
         if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
             $out = $row->jsonSerialize();
-            return is_array($out) === true ? $out : [];
+            if (is_array($out) === true) {
+                return $out;
+            }
+
+            return [];
         }
 
         if (is_object($row) === true && method_exists($row, 'getObject') === true) {
             $out = $row->getObject();
-            return is_array($out) === true ? $out : [];
+            if (is_array($out) === true) {
+                return $out;
+            }
+
+            return [];
         }
 
         throw new RuntimeException('FifoValuationService: unsupported row type from ObjectService');
 
     }//end asArray()
-
 
     /**
      * Resolve the OR register slug, defaulting to 'shillinq'.
@@ -653,6 +658,4 @@ class FifoValuationService
         return $register;
 
     }//end register()
-
-
 }//end class

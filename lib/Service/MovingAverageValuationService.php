@@ -63,8 +63,6 @@ use RuntimeException;
  */
 class MovingAverageValuationService
 {
-
-
     /**
      * Construct the service.
      *
@@ -79,7 +77,6 @@ class MovingAverageValuationService
     ) {
 
     }//end __construct()
-
 
     /**
      * Process a posted StockMove for an average-valued item.
@@ -110,10 +107,13 @@ class MovingAverageValuationService
             ];
         }
 
-        $productId        = (string) ($move['itemId'] ?? '');
-        $warehouse        = $movementType === 'receipt'
-            ? (string) ($move['destinationLocationId'] ?? '')
-            : (string) ($move['sourceLocationId'] ?? '');
+        $productId = (string) ($move['itemId'] ?? '');
+        if ($movementType === 'receipt') {
+            $warehouse = (string) ($move['destinationLocationId'] ?? '');
+        } else {
+            $warehouse = (string) ($move['sourceLocationId'] ?? '');
+        }
+
         $administrationId = (string) ($move['administrationId'] ?? '');
         $moveUuid         = (string) ($move['uuid'] ?? ($move['@self']['uuid'] ?? ($move['id'] ?? '')));
 
@@ -154,19 +154,19 @@ class MovingAverageValuationService
 
         if ($movementType === 'receipt') {
             $newQty = ($curQty + $rcvQty);
-            // new_unitCost = (cur_qty * cur_cost + rcv_qty * rcv_cost) / new_qty,
+            // New unitCost = (cur_qty * cur_cost + rcv_qty * rcv_cost) / new_qty,
             // rounded to 4 dp per design.md D3.
             $newCost = 0.0;
             if ($newQty > 0) {
                 $newCost = round(((($curQty * $curCost) + ($rcvQty * $rcvCost)) / $newQty), 4);
             }
 
-            // totalValue = newQty * newCost rounded to 2 dp via integer cents.
-            $totalCents       = (int) round(($newQty * $newCost) * 100);
-            $valuation['quantity']          = round($newQty, 2);
-            $valuation['unitCost']          = $newCost;
-            $valuation['totalValue']        = round(($totalCents / 100), 2);
-            $valuation['date']              = (string) ($move['postedAt'] ?? ($move['draftedAt'] ?? ''));
+            // TotalValue = newQty * newCost rounded to 2 dp via integer cents.
+            $totalCents            = (int) round(($newQty * $newCost) * 100);
+            $valuation['quantity'] = round($newQty, 2);
+            $valuation['unitCost'] = $newCost;
+            $valuation['totalValue'] = round(($totalCents / 100), 2);
+            $valuation['date']       = (string) ($move['postedAt'] ?? ($move['draftedAt'] ?? ''));
             $valuation['lastStockMoveUuid'] = $moveUuid;
 
             $saved = $this->saveValuation(data: $valuation);
@@ -177,7 +177,7 @@ class MovingAverageValuationService
                 'cogsCents' => 0,
                 'message'   => 'receipt processed (moving-average recalculated)',
             ];
-        }
+        }//end if
 
         // Issue: COGS at current unitCost; quantity decremented; cost retained.
         $cogsCents = (int) round(($rcvQty * $curCost) * 100);
@@ -186,20 +186,20 @@ class MovingAverageValuationService
             $this->logger->warning(
                 'MovingAverageValuationService: outbound exceeds current quantity — clamped to zero',
                 [
-                    'productId'    => $productId,
-                    'warehouse'    => $warehouse,
-                    'curQty'       => $curQty,
-                    'outboundQty'  => $rcvQty,
+                    'productId'   => $productId,
+                    'warehouse'   => $warehouse,
+                    'curQty'      => $curQty,
+                    'outboundQty' => $rcvQty,
                 ]
             );
             $newQty = 0.0;
         }
 
-        $totalCents       = (int) round(($newQty * $curCost) * 100);
-        $valuation['quantity']          = round($newQty, 2);
-        $valuation['unitCost']          = $curCost;
-        $valuation['totalValue']        = round(($totalCents / 100), 2);
-        $valuation['date']              = (string) ($move['postedAt'] ?? ($move['draftedAt'] ?? ''));
+        $totalCents            = (int) round(($newQty * $curCost) * 100);
+        $valuation['quantity'] = round($newQty, 2);
+        $valuation['unitCost'] = $curCost;
+        $valuation['totalValue'] = round(($totalCents / 100), 2);
+        $valuation['date']       = (string) ($move['postedAt'] ?? ($move['draftedAt'] ?? ''));
         $valuation['lastStockMoveUuid'] = $moveUuid;
 
         $saved = $this->saveValuation(data: $valuation);
@@ -212,7 +212,6 @@ class MovingAverageValuationService
         ];
 
     }//end processStockMove()
-
 
     /**
      * Locate the active InventoryValuation snapshot for the tuple, or
@@ -245,7 +244,10 @@ class MovingAverageValuationService
                 ]
             );
 
-        $existing = is_array($existing) === true ? $existing : [];
+        if (is_array($existing) === false) {
+            $existing = [];
+        }
+
         if (count($existing) > 0) {
             return $this->asArray(row: $existing[0]);
         }
@@ -264,7 +266,6 @@ class MovingAverageValuationService
         ];
 
     }//end findOrCreateValuation()
-
 
     /**
      * Persist the snapshot via OR's ObjectService.
@@ -289,7 +290,6 @@ class MovingAverageValuationService
 
     }//end saveValuation()
 
-
     /**
      * Normalise an OR Object / array to a plain array<string,mixed>.
      *
@@ -305,18 +305,25 @@ class MovingAverageValuationService
 
         if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
             $out = $row->jsonSerialize();
-            return is_array($out) === true ? $out : [];
+            if (is_array($out) === true) {
+                return $out;
+            }
+
+            return [];
         }
 
         if (is_object($row) === true && method_exists($row, 'getObject') === true) {
             $out = $row->getObject();
-            return is_array($out) === true ? $out : [];
+            if (is_array($out) === true) {
+                return $out;
+            }
+
+            return [];
         }
 
         throw new RuntimeException('MovingAverageValuationService: unsupported row type from ObjectService');
 
     }//end asArray()
-
 
     /**
      * Resolve the OR register slug, defaulting to 'shillinq'.
@@ -333,6 +340,4 @@ class MovingAverageValuationService
         return $register;
 
     }//end register()
-
-
 }//end class

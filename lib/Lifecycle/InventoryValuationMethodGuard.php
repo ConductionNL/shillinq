@@ -54,8 +54,6 @@ use Psr\Log\LoggerInterface;
  */
 class InventoryValuationMethodGuard
 {
-
-
     /**
      * Construct the guard with DI dependencies.
      *
@@ -70,7 +68,6 @@ class InventoryValuationMethodGuard
     ) {
 
     }//end __construct()
-
 
     /**
      * Predicate: the InventoryValuation's on-hand quantity is zero.
@@ -112,7 +109,6 @@ class InventoryValuationMethodGuard
         }//end try
 
     }//end checkZeroStock()
-
 
     /**
      * Predicate: no other active InventoryValuation snapshot exists for
@@ -158,16 +154,19 @@ class InventoryValuationMethodGuard
                     ]
                 );
 
-            $existing = is_array($existing) === true ? $existing : [];
+            if (is_array($existing) === false) {
+                $existing = [];
+            }
+
             foreach ($existing as $row) {
                 $rowId = '';
                 if (is_array($row) === true) {
                     $rowId = (string) ($row['id'] ?? ($row['@self']['id'] ?? ''));
-                } elseif (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-                    $data  = $row->jsonSerialize();
-                    $rowId = is_array($data) === true
-                        ? (string) ($data['id'] ?? ($data['@self']['id'] ?? ''))
-                        : '';
+                } else if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+                    $data = $row->jsonSerialize();
+                    if (is_array($data) === true) {
+                        $rowId = (string) ($data['id'] ?? ($data['@self']['id'] ?? ''));
+                    }
                 }
 
                 if ($rowId !== '' && $rowId === $selfId) {
@@ -177,13 +176,13 @@ class InventoryValuationMethodGuard
                 $this->logger->info(
                     'InventoryValuationMethodGuard: duplicate active snapshot blocked',
                     [
-                        'productId'       => $productId,
-                        'warehouse'       => $warehouse,
-                        'administrationId'=> $administrationId,
+                        'productId'        => $productId,
+                        'warehouse'        => $warehouse,
+                        'administrationId' => $administrationId,
                     ]
                 );
                 return false;
-            }
+            }//end foreach
 
             return true;
         } catch (\Throwable $e) {
@@ -195,7 +194,6 @@ class InventoryValuationMethodGuard
         }//end try
 
     }//end checkUniqueActiveSnapshot()
-
 
     /**
      * Resolve the OR register slug, defaulting to 'shillinq'.
@@ -212,6 +210,4 @@ class InventoryValuationMethodGuard
         return $register;
 
     }//end register()
-
-
 }//end class
