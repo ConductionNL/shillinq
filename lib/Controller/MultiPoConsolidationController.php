@@ -218,14 +218,14 @@ class MultiPoConsolidationController extends Controller
             $this->logger->error(
                 'MultiPoConsolidationController: candidates failed',
                 [
-                    'administrationId'   => $administrationId,
-                    'invoiceId'          => $invoiceId,
-                    'invoiceLineNumber'  => $invoiceLineNumber,
-                    'exception'          => $e->getMessage(),
+                    'administrationId'  => $administrationId,
+                    'invoiceId'         => $invoiceId,
+                    'invoiceLineNumber' => $invoiceLineNumber,
+                    'exception'         => $e->getMessage(),
                 ]
             );
             return new JSONResponse(['error' => 'Could not enumerate candidates'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+        }//end try
 
         return new JSONResponse(
             [
@@ -303,14 +303,14 @@ class MultiPoConsolidationController extends Controller
             $this->logger->error(
                 'MultiPoConsolidationController: disambiguate failed',
                 [
-                    'administrationId'   => $administrationId,
-                    'invoiceId'          => $invoiceId,
-                    'invoiceLineNumber'  => $invoiceLineNumber,
-                    'exception'          => $e->getMessage(),
+                    'administrationId'  => $administrationId,
+                    'invoiceId'         => $invoiceId,
+                    'invoiceLineNumber' => $invoiceLineNumber,
+                    'exception'         => $e->getMessage(),
                 ]
             );
             return new JSONResponse(['error' => 'Could not persist disambiguation choice'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+        }//end try
 
         return new JSONResponse($match, Http::STATUS_CREATED);
 
@@ -350,7 +350,7 @@ class MultiPoConsolidationController extends Controller
                 ]
             );
             return null;
-        }
+        }//end try
 
         foreach ($rows as $row) {
             if (is_array($row) === true) {
