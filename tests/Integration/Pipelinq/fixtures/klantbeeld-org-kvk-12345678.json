@@ -1,0 +1,26 @@
+{
+	"externalId": "org-kvk-12345678",
+	"summary": {
+		"lifetimeValueEur": 12450.00,
+		"openOrders": 2,
+		"openInvoicesEur": 850.00,
+		"lastInteractionAt": "2026-05-12T14:08:00Z",
+		"churnRisk": "low"
+	},
+	"segments": [
+		"retail-bakery",
+		"netherlands"
+	],
+	"recentInteractions": [
+		{
+			"channel": "email",
+			"subject": "Quarterly review",
+			"at": "2026-05-12T14:08:00Z"
+		},
+		{
+			"channel": "phone",
+			"subject": "Bulk order quote",
+			"at": "2026-04-30T10:15:00Z"
+		}
+	]
+}
