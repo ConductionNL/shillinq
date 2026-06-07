@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Commissie BBV handreiking + CBS IV3-bestand specificaties",
+    "bbvVersion": "2024",
+    "version": "2024-01-01",
+    "origin": "seeded",
+    "description": "Default mapping of RGS 3.5 accounts to BBV taakveld + BCF-compensable flag + IV3 bucket. Operator-overrideable per administration; operator edits are preserved across repair re-runs. REQ-BBV-005/006.",
+    "imported": "2026-06-01T00:00:00Z",
+    "schema": "BbvAccountMapping"
+  },
+  "records": [
+    { "accountNumber": "0100", "taakveld": "0.1", "programmaCode": "0", "bcfCompensable": false, "compensablePercentage": 0, "iv3Bucket": "bestuur", "autorisatieniveau": "I" },
+    { "accountNumber": "1100", "taakveld": "0.5", "programmaCode": "0", "bcfCompensable": false, "compensablePercentage": 0, "iv3Bucket": "treasury", "autorisatieniveau": "I" },
+    { "accountNumber": "4100", "taakveld": "1.2", "programmaCode": "1", "bcfCompensable": true, "compensablePercentage": 100, "iv3Bucket": "veiligheid", "autorisatieniveau": "II" },
+    { "accountNumber": "4200", "taakveld": "2.1", "programmaCode": "2", "bcfCompensable": true, "compensablePercentage": 100, "iv3Bucket": "verkeer", "autorisatieniveau": "II" },
+    { "accountNumber": "4250", "taakveld": "5.3", "programmaCode": "5", "bcfCompensable": true, "compensablePercentage": 100, "iv3Bucket": "cultuur", "autorisatieniveau": "II" },
+    { "accountNumber": "4300", "taakveld": "5.7", "programmaCode": "5", "bcfCompensable": true, "compensablePercentage": 100, "iv3Bucket": "groen", "autorisatieniveau": "II" },
+    { "accountNumber": "4400", "taakveld": "6.6", "programmaCode": "6", "bcfCompensable": false, "compensablePercentage": 0, "iv3Bucket": "sociaal-domein", "autorisatieniveau": "III" },
+    { "accountNumber": "4500", "taakveld": "7.3", "programmaCode": "7", "bcfCompensable": true, "compensablePercentage": 100, "iv3Bucket": "afval", "autorisatieniveau": "II" },
+    { "accountNumber": "4600", "taakveld": "8.3", "programmaCode": "8", "bcfCompensable": true, "compensablePercentage": 100, "iv3Bucket": "wonen", "autorisatieniveau": "II" }
+  ]
+}
