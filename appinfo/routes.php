@@ -209,6 +209,18 @@ return [
         ['name' => 'threeWayMatchException#dispute', 'url' => '/api/three-way-match/exceptions/dispute', 'verb' => 'POST'],
         ['name' => 'threeWayMatchException#reject', 'url' => '/api/three-way-match/exceptions/reject', 'verb' => 'POST'],
 
+        // bookkeeping-purchase-order-3way slice 11 (REQ-PO3W-010) — the
+        // audit-trail export endpoints (lifecycle ledger + ZIP package)
+        // and the approval-decision endpoint that records approver
+        // identity + timestamp on the PurchaseOrder approval chain.
+        // Every endpoint is #[NoAdminRequired] with a per-administration
+        // IDOR guard in the controller (ADR-005). Static segments only —
+        // no path wildcards — so Symfony route ordering vs. the SPA
+        // catch-all is not at risk.
+        ['name' => 'threeWayMatchAudit#ledger', 'url' => '/api/three-way-match/audit-trail', 'verb' => 'GET'],
+        ['name' => 'threeWayMatchAudit#export', 'url' => '/api/three-way-match/audit-trail/export', 'verb' => 'POST'],
+        ['name' => 'purchaseOrderApproval#decide', 'url' => '/api/purchase-orders/{id}/approval-decision', 'verb' => 'POST'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
