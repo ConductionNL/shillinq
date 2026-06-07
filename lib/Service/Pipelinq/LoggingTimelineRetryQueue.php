@@ -40,12 +40,28 @@ use Psr\Log\LoggerInterface;
 final class LoggingTimelineRetryQueue implements TimelineRetryQueue
 {
     /**
+     * In-memory counter of deferrals seen so far in this process.
+     *
+     * Used as a best-effort "dead-letter count" gauge until slice 09 ships
+     * the persistent queue. We deliberately do not write this counter to
+     * IAppConfig — that would couple a transient observability gauge to
+     * persistent state. The metrics service holds the ICache-backed
+     * cross-request value.
+     *
+     * @var int
+     */
+    private int $deferrals = 0;
+
+    /**
      * Construct the logging fallback queue.
      *
-     * @param LoggerInterface $logger PSR logger.
+     * @param LoggerInterface                   $logger  PSR logger.
+     * @param CustomerBridgeMetricsService|null $metrics Optional metrics aggregator (slice 11).
      */
-    public function __construct(private readonly LoggerInterface $logger)
-    {
+    public function __construct(
+        private readonly LoggerInterface $logger,
+        private readonly ?CustomerBridgeMetricsService $metrics=null
+    ) {
 
     }//end __construct()
 
@@ -58,6 +74,8 @@ final class LoggingTimelineRetryQueue implements TimelineRetryQueue
      */
     public function enqueue(TimelineEventDto $event): void
     {
+        $this->deferrals += 1;
+
         $this->logger->warning(
             'pipelinq timeline publish deferred (no persistent queue yet)',
             [
@@ -67,6 +85,12 @@ final class LoggingTimelineRetryQueue implements TimelineRetryQueue
                 'contactId'  => $event->contactId(),
             ]
         );
+
+        // Slice 09 will own the real dead-letter queue size; until then,
+        // surface the per-process count so an admin dashboard at least
+        // sees "this many deferrals happened during the current
+        // collection window".
+        $this->metrics?->recordDeadLetterCount(count: $this->deferrals);
 
     }//end enqueue()
 }//end class
