@@ -119,6 +119,11 @@
 						"key": "administrationId",
 						"label": "Administration",
 						"type": "string"
+					},
+					{
+						"key": "pipelinqContactId",
+						"label": "Pipelinq contact",
+						"type": "string"
 					}
 				],
 				"indexRoute": "Afspraken"
