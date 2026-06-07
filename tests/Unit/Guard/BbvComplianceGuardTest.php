@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -35,6 +38,7 @@ use Psr\Log\LoggerInterface;
  */
 class BbvComplianceGuardTest extends TestCase
 {
+
     /**
      * Mock ContainerInterface.
      *
@@ -72,9 +76,9 @@ class BbvComplianceGuardTest extends TestCase
     {
         parent::setUp();
 
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->logger    = $this->createMock(LoggerInterface::class);
+        $this->container = $this->createMock(originalClassName: ContainerInterface::class);
+        $this->appConfig = $this->createMock(originalClassName: IAppConfig::class);
+        $this->logger    = $this->createMock(originalClassName: LoggerInterface::class);
 
         $this->appConfig->method('getValueString')->willReturn('shillinq');
         $this->appConfig->method('getValueInt')->willReturn(5000000);
@@ -98,12 +102,14 @@ class BbvComplianceGuardTest extends TestCase
      */
     public function testNonBbvAccountWithoutRgsMappingIsPermitted(): void
     {
-        $result = $this->guard->requireBbvAccountMapping([
-            'accountNumber'      => '4100',
-            'administrationType' => 'mkb',
-        ]);
+        $result = $this->guard->requireBbvAccountMapping(
+                [
+                    'accountNumber'      => '4100',
+                    'administrationType' => 'mkb',
+                ]
+                );
 
-        self::assertTrue($result, 'REQ-BBV-001: non-BBV tenants are exempt');
+        self::assertTrue(condition: $result, message: 'REQ-BBV-001: non-BBV tenants are exempt');
 
     }//end testNonBbvAccountWithoutRgsMappingIsPermitted()
 
@@ -114,12 +120,14 @@ class BbvComplianceGuardTest extends TestCase
      */
     public function testBbvAccountWithoutRgsMappingIsRejected(): void
     {
-        $result = $this->guard->requireBbvAccountMapping([
-            'accountNumber'      => '4100',
-            'administrationType' => 'gemeente',
-        ]);
+        $result = $this->guard->requireBbvAccountMapping(
+                [
+                    'accountNumber'      => '4100',
+                    'administrationType' => 'gemeente',
+                ]
+                );
 
-        self::assertFalse($result, 'REQ-BBV-001: BBV account without rgsDecentraalCode is rejected');
+        self::assertFalse(condition: $result, message: 'REQ-BBV-001: BBV account without rgsDecentraalCode is rejected');
 
     }//end testBbvAccountWithoutRgsMappingIsRejected()
 
@@ -130,13 +138,15 @@ class BbvComplianceGuardTest extends TestCase
      */
     public function testBbvAccountWithRgsMappingIsPermitted(): void
     {
-        $result = $this->guard->requireBbvAccountMapping([
-            'accountNumber'      => '4100',
-            'administrationType' => 'gemeente',
-            'rgsDecentraalCode'  => 'WLasLes',
-        ]);
+        $result = $this->guard->requireBbvAccountMapping(
+                [
+                    'accountNumber'      => '4100',
+                    'administrationType' => 'gemeente',
+                    'rgsDecentraalCode'  => 'WLasLes',
+                ]
+                );
 
-        self::assertTrue($result);
+        self::assertTrue(condition: $result);
 
     }//end testBbvAccountWithRgsMappingIsPermitted()
 
@@ -154,13 +164,15 @@ class BbvComplianceGuardTest extends TestCase
         $account = ['accountNumber' => '4310', 'administrationId' => 'gem-1', 'bbvClassificatie' => 'exploitatie'];
         $this->container->method('get')->willReturn($this->buildAccountStub(account: $account));
 
-        $result = $this->guard->requireLineClassification([
-            'accountNumber'      => '4310',
-            'administrationId'   => 'gem-1',
-            'administrationType' => 'gemeente',
-        ]);
+        $result = $this->guard->requireLineClassification(
+                [
+                    'accountNumber'      => '4310',
+                    'administrationId'   => 'gem-1',
+                    'administrationType' => 'gemeente',
+                ]
+                );
 
-        self::assertFalse($result, 'REQ-BBV-002: exploitatie line without taakveld is rejected');
+        self::assertFalse(condition: $result, message: 'REQ-BBV-002: exploitatie line without taakveld is rejected');
 
     }//end testExploitatieLineWithoutTaakveldIsRejected()
 
@@ -174,15 +186,17 @@ class BbvComplianceGuardTest extends TestCase
         $account = ['accountNumber' => '4310', 'administrationId' => 'gem-1', 'bbvClassificatie' => 'exploitatie'];
         $this->container->method('get')->willReturn($this->buildAccountStub(account: $account));
 
-        $result = $this->guard->requireLineClassification([
-            'accountNumber'        => '4310',
-            'administrationId'     => 'gem-1',
-            'administrationType'   => 'gemeente',
-            'taakveld'             => '7.5',
-            'economischeCategorie' => '3.4.3',
-        ]);
+        $result = $this->guard->requireLineClassification(
+                [
+                    'accountNumber'        => '4310',
+                    'administrationId'     => 'gem-1',
+                    'administrationType'   => 'gemeente',
+                    'taakveld'             => '7.5',
+                    'economischeCategorie' => '3.4.3',
+                ]
+                );
 
-        self::assertTrue($result);
+        self::assertTrue(condition: $result);
 
     }//end testExploitatieLineWithClassificationIsPermitted()
 
@@ -195,12 +209,14 @@ class BbvComplianceGuardTest extends TestCase
     {
         $this->container->expects($this->never())->method('get');
 
-        $result = $this->guard->requireLineClassification([
-            'accountNumber'      => '4310',
-            'administrationType' => 'zzp',
-        ]);
+        $result = $this->guard->requireLineClassification(
+                [
+                    'accountNumber'      => '4310',
+                    'administrationType' => 'zzp',
+                ]
+                );
 
-        self::assertTrue($result);
+        self::assertTrue(condition: $result);
 
     }//end testNonBbvLineBypassesClassification()
 
@@ -218,14 +234,16 @@ class BbvComplianceGuardTest extends TestCase
         $account = ['accountNumber' => '2310', 'administrationId' => 'gem-1', 'bbvClassificatie' => 'reserve'];
         $this->container->method('get')->willReturn($this->buildAccountStub(account: $account));
 
-        $result = $this->guard->requireLineClassification([
-            'accountNumber'      => '2310',
-            'administrationId'   => 'gem-1',
-            'administrationType' => 'gemeente',
-            'taakveld'           => '4.2',
-        ]);
+        $result = $this->guard->requireLineClassification(
+                [
+                    'accountNumber'      => '2310',
+                    'administrationId'   => 'gem-1',
+                    'administrationType' => 'gemeente',
+                    'taakveld'           => '4.2',
+                ]
+                );
 
-        self::assertFalse($result, 'REQ-BBV-004: reserve mutation requires taakveld 0.10');
+        self::assertFalse(condition: $result, message: 'REQ-BBV-004: reserve mutation requires taakveld 0.10');
 
     }//end testReserveMutationOffTaakveld010IsRejected()
 
@@ -239,14 +257,16 @@ class BbvComplianceGuardTest extends TestCase
         $account = ['accountNumber' => '2310', 'administrationId' => 'gem-1', 'bbvClassificatie' => 'reserve'];
         $this->container->method('get')->willReturn($this->buildAccountStub(account: $account));
 
-        $result = $this->guard->requireLineClassification([
-            'accountNumber'      => '2310',
-            'administrationId'   => 'gem-1',
-            'administrationType' => 'gemeente',
-            'taakveld'           => '0.10',
-        ]);
+        $result = $this->guard->requireLineClassification(
+                [
+                    'accountNumber'      => '2310',
+                    'administrationId'   => 'gem-1',
+                    'administrationType' => 'gemeente',
+                    'taakveld'           => '0.10',
+                ]
+                );
 
-        self::assertTrue($result);
+        self::assertTrue(condition: $result);
 
     }//end testReserveMutationOnTaakveld010IsPermitted()
 
@@ -265,14 +285,16 @@ class BbvComplianceGuardTest extends TestCase
         ];
         $this->container->method('get')->willReturn($this->buildAccountStub(account: $account));
 
-        $result = $this->guard->requireLineClassification([
-            'accountNumber'      => '2420',
-            'administrationId'   => 'gem-1',
-            'administrationType' => 'gemeente',
-            'taakveld'           => '2.1',
-        ]);
+        $result = $this->guard->requireLineClassification(
+                [
+                    'accountNumber'      => '2420',
+                    'administrationId'   => 'gem-1',
+                    'administrationType' => 'gemeente',
+                    'taakveld'           => '2.1',
+                ]
+                );
 
-        self::assertTrue($result);
+        self::assertTrue(condition: $result);
 
     }//end testVoorzieningMutationOnGekoppeldTaakveldIsPermitted()
 
@@ -291,14 +313,16 @@ class BbvComplianceGuardTest extends TestCase
         ];
         $this->container->method('get')->willReturn($this->buildAccountStub(account: $account));
 
-        $result = $this->guard->requireLineClassification([
-            'accountNumber'      => '2420',
-            'administrationId'   => 'gem-1',
-            'administrationType' => 'gemeente',
-            'taakveld'           => '7.2',
-        ]);
+        $result = $this->guard->requireLineClassification(
+                [
+                    'accountNumber'      => '2420',
+                    'administrationId'   => 'gem-1',
+                    'administrationType' => 'gemeente',
+                    'taakveld'           => '7.2',
+                ]
+                );
 
-        self::assertFalse($result, 'REQ-BBV-004: voorziening mutation must use the gekoppelde taakveld');
+        self::assertFalse(condition: $result, message: 'REQ-BBV-004: voorziening mutation must use the gekoppelde taakveld');
 
     }//end testVoorzieningMutationOnWrongTaakveldIsRejected()
 
@@ -311,13 +335,15 @@ class BbvComplianceGuardTest extends TestCase
     {
         $this->container->method('get')->willReturn($this->buildAccountStub(account: null));
 
-        $result = $this->guard->requireLineClassification([
-            'accountNumber'      => '9999',
-            'administrationId'   => 'gem-1',
-            'administrationType' => 'gemeente',
-        ]);
+        $result = $this->guard->requireLineClassification(
+                [
+                    'accountNumber'      => '9999',
+                    'administrationId'   => 'gem-1',
+                    'administrationType' => 'gemeente',
+                ]
+                );
 
-        self::assertFalse($result, 'Unresolvable account must fail closed for BBV tenants');
+        self::assertFalse(condition: $result, message: 'Unresolvable account must fail closed for BBV tenants');
 
     }//end testLineWithUnresolvableAccountIsFailClosed()
 
@@ -338,13 +364,15 @@ class BbvComplianceGuardTest extends TestCase
         ];
         $this->container->method('get')->willReturn($this->buildBudgetStub(rows: $rows));
 
-        $result = $this->guard->requireMeerjarenramingSluitend([
-            'administrationType' => 'gemeente',
-            'administrationId'   => 'gem-1',
-            'boekjaar'           => 2026,
-        ]);
+        $result = $this->guard->requireMeerjarenramingSluitend(
+                [
+                    'administrationType' => 'gemeente',
+                    'administrationId'   => 'gem-1',
+                    'boekjaar'           => 2026,
+                ]
+                );
 
-        self::assertTrue($result, 'REQ-BBV-003: all horizons sluitend → publish permitted');
+        self::assertTrue(condition: $result, message: 'REQ-BBV-003: all horizons sluitend → publish permitted');
 
     }//end testSluitendeMeerjarenramingPermitsPublish()
 
@@ -361,13 +389,15 @@ class BbvComplianceGuardTest extends TestCase
         ];
         $this->container->method('get')->willReturn($this->buildBudgetStub(rows: $rows));
 
-        $result = $this->guard->requireMeerjarenramingSluitend([
-            'administrationType' => 'gemeente',
-            'administrationId'   => 'gem-1',
-            'boekjaar'           => 2026,
-        ]);
+        $result = $this->guard->requireMeerjarenramingSluitend(
+                [
+                    'administrationType' => 'gemeente',
+                    'administrationId'   => 'gem-1',
+                    'boekjaar'           => 2026,
+                ]
+                );
 
-        self::assertFalse($result, 'REQ-BBV-003: a negative horizon-saldo blocks publication');
+        self::assertFalse(condition: $result, message: 'REQ-BBV-003: a negative horizon-saldo blocks publication');
 
     }//end testNonSluitendeMeerjarenramingBlocksPublish()
 
@@ -381,15 +411,17 @@ class BbvComplianceGuardTest extends TestCase
         // Override short-circuits before any budget lookup.
         $this->container->expects($this->never())->method('get');
 
-        $result = $this->guard->requireMeerjarenramingSluitend([
-            'administrationType' => 'gemeente',
-            'administrationId'   => 'gem-1',
-            'boekjaar'           => 2026,
-            'raadsbesluitNummer' => 'RB-2026-12',
-            'raadsbesluitDatum'  => '2026-06-26',
-        ]);
+        $result = $this->guard->requireMeerjarenramingSluitend(
+                [
+                    'administrationType' => 'gemeente',
+                    'administrationId'   => 'gem-1',
+                    'boekjaar'           => 2026,
+                    'raadsbesluitNummer' => 'RB-2026-12',
+                    'raadsbesluitDatum'  => '2026-06-26',
+                ]
+                );
 
-        self::assertTrue($result, 'REQ-BBV-003: raadsbesluit override unblocks publication');
+        self::assertTrue(condition: $result, message: 'REQ-BBV-003: raadsbesluit override unblocks publication');
 
     }//end testRaadsbesluitOverridePermitsPublish()
 
@@ -402,13 +434,15 @@ class BbvComplianceGuardTest extends TestCase
     {
         $this->container->method('get')->willThrowException(new \RuntimeException('DB error'));
 
-        $result = $this->guard->requireMeerjarenramingSluitend([
-            'administrationType' => 'gemeente',
-            'administrationId'   => 'gem-1',
-            'boekjaar'           => 2026,
-        ]);
+        $result = $this->guard->requireMeerjarenramingSluitend(
+                [
+                    'administrationType' => 'gemeente',
+                    'administrationId'   => 'gem-1',
+                    'boekjaar'           => 2026,
+                ]
+                );
 
-        self::assertFalse($result, 'Fail-closed: lookup failure denies publication');
+        self::assertFalse(condition: $result, message: 'Fail-closed: lookup failure denies publication');
 
     }//end testMeerjarenramingLookupFailureIsFailClosed()
 
@@ -423,14 +457,16 @@ class BbvComplianceGuardTest extends TestCase
      */
     public function testMaatschappelijkNutAboveGrensWithoutTermijnIsRejected(): void
     {
-        $result = $this->guard->requireMvaActivation([
-            'administrationType' => 'gemeente',
-            'omschrijving'       => 'Rondweg',
-            'mvaCategorie'       => 'maatschappelijk-nut',
-            'aanschafwaardeCents' => 840000000,
-        ]);
+        $result = $this->guard->requireMvaActivation(
+                [
+                    'administrationType'  => 'gemeente',
+                    'omschrijving'        => 'Rondweg',
+                    'mvaCategorie'        => 'maatschappelijk-nut',
+                    'aanschafwaardeCents' => 840000000,
+                ]
+                );
 
-        self::assertFalse($result, 'REQ-BBV-005: investering boven grens moet geactiveerd worden');
+        self::assertFalse(condition: $result, message: 'REQ-BBV-005: investering boven grens moet geactiveerd worden');
 
     }//end testMaatschappelijkNutAboveGrensWithoutTermijnIsRejected()
 
@@ -441,15 +477,17 @@ class BbvComplianceGuardTest extends TestCase
      */
     public function testMaatschappelijkNutAboveGrensWithTermijnIsPermitted(): void
     {
-        $result = $this->guard->requireMvaActivation([
-            'administrationType'       => 'gemeente',
-            'omschrijving'             => 'Rondweg',
-            'mvaCategorie'             => 'maatschappelijk-nut',
-            'aanschafwaardeCents'      => 840000000,
-            'afschrijvingstermijnJaar' => 40,
-        ]);
+        $result = $this->guard->requireMvaActivation(
+                [
+                    'administrationType'       => 'gemeente',
+                    'omschrijving'             => 'Rondweg',
+                    'mvaCategorie'             => 'maatschappelijk-nut',
+                    'aanschafwaardeCents'      => 840000000,
+                    'afschrijvingstermijnJaar' => 40,
+                ]
+                );
 
-        self::assertTrue($result);
+        self::assertTrue(condition: $result);
 
     }//end testMaatschappelijkNutAboveGrensWithTermijnIsPermitted()
 
@@ -460,14 +498,16 @@ class BbvComplianceGuardTest extends TestCase
      */
     public function testMaatschappelijkNutBelowGrensIsPermitted(): void
     {
-        $result = $this->guard->requireMvaActivation([
-            'administrationType'  => 'gemeente',
-            'omschrijving'        => 'Bankje',
-            'mvaCategorie'        => 'maatschappelijk-nut',
-            'aanschafwaardeCents' => 100000,
-        ]);
+        $result = $this->guard->requireMvaActivation(
+                [
+                    'administrationType'  => 'gemeente',
+                    'omschrijving'        => 'Bankje',
+                    'mvaCategorie'        => 'maatschappelijk-nut',
+                    'aanschafwaardeCents' => 100000,
+                ]
+                );
 
-        self::assertTrue($result);
+        self::assertTrue(condition: $result);
 
     }//end testMaatschappelijkNutBelowGrensIsPermitted()
 
@@ -478,14 +518,16 @@ class BbvComplianceGuardTest extends TestCase
      */
     public function testEconomischNutMvaIsExempt(): void
     {
-        $result = $this->guard->requireMvaActivation([
-            'administrationType'  => 'gemeente',
-            'omschrijving'        => 'Gemeentehuis',
-            'mvaCategorie'        => 'economisch-nut',
-            'aanschafwaardeCents' => 5000000000,
-        ]);
+        $result = $this->guard->requireMvaActivation(
+                [
+                    'administrationType'  => 'gemeente',
+                    'omschrijving'        => 'Gemeentehuis',
+                    'mvaCategorie'        => 'economisch-nut',
+                    'aanschafwaardeCents' => 5000000000,
+                ]
+                );
 
-        self::assertTrue($result);
+        self::assertTrue(condition: $result);
 
     }//end testEconomischNutMvaIsExempt()
 
@@ -499,31 +541,53 @@ class BbvComplianceGuardTest extends TestCase
     private function buildAccountStub(?array $account): object
     {
         return new class($account) {
+
             /**
+             * The account data or null when empty.
+             *
              * @var array<string,mixed>|null
              */
             private ?array $account;
 
             /**
-             * @param array<string,mixed>|null $account
+             * Initialise with the account to return.
+             *
+             * @param array<string,mixed>|null $account The account stub data.
              */
             public function __construct(?array $account)
             {
                 $this->account = $account;
-            }
+            }//end __construct()
 
+            /**
+             * Set the register (fluent stub).
+             *
+             * @param string $register The register slug.
+             *
+             * @return static
+             */
             public function setRegister(string $register): static
             {
                 return $this;
-            }
+            }//end setRegister()
 
+            /**
+             * Set the schema (fluent stub).
+             *
+             * @param string $schema The schema slug.
+             *
+             * @return static
+             */
             public function setSchema(string $schema): static
             {
                 return $this;
-            }
+            }//end setSchema()
 
             /**
-             * @param array<string,mixed> $params
+             * Return the configured account stub as a one-element array, or empty.
+             *
+             * @param array<string,mixed> $params The query parameters (ignored in stub).
+             *
              * @return array<mixed>
              */
             public function findAll(array $params=[]): array
@@ -531,8 +595,9 @@ class BbvComplianceGuardTest extends TestCase
                 if ($this->account === null) {
                     return [];
                 }
+
                 return [$this->account];
-            }
+            }//end findAll()
         };
     }//end buildAccountStub()
 
@@ -546,37 +611,59 @@ class BbvComplianceGuardTest extends TestCase
     private function buildBudgetStub(array $rows): object
     {
         return new class($rows) {
+
             /**
+             * The budget rows to return.
+             *
              * @var array<int,array<string,mixed>>
              */
             private array $rows;
 
             /**
-             * @param array<int,array<string,mixed>> $rows
+             * Initialise with budget rows to return.
+             *
+             * @param array<int,array<string,mixed>> $rows The budget row stubs.
              */
             public function __construct(array $rows)
             {
                 $this->rows = $rows;
-            }
+            }//end __construct()
 
+            /**
+             * Set the register (fluent stub).
+             *
+             * @param string $register The register slug.
+             *
+             * @return static
+             */
             public function setRegister(string $register): static
             {
                 return $this;
-            }
+            }//end setRegister()
 
+            /**
+             * Set the schema (fluent stub).
+             *
+             * @param string $schema The schema slug.
+             *
+             * @return static
+             */
             public function setSchema(string $schema): static
             {
                 return $this;
-            }
+            }//end setSchema()
 
             /**
-             * @param array<string,mixed> $params
+             * Return the pre-configured budget rows.
+             *
+             * @param array<string,mixed> $params The query parameters (ignored in stub).
+             *
              * @return array<mixed>
              */
             public function findAll(array $params=[]): array
             {
                 return $this->rows;
-            }
+            }//end findAll()
         };
     }//end buildBudgetStub()
 }//end class

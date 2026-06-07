@@ -101,15 +101,15 @@ class InitializeSettings implements IRepairStep
     {
         $output->info('Initializing Shillinq configuration...');
 
-    if ($this->settingsService->isOpenRegisterAvailable() === false) {
-        $output->warning(
-        'OpenRegister is not installed or enabled. Skipping auto-configuration.'
-        );
-        $this->logger->warning(
-            'Shillinq: OpenRegister not available, skipping register initialization'
-        );
-        return;
-    }
+        if ($this->settingsService->isOpenRegisterAvailable() === false) {
+            $output->warning(
+            'OpenRegister is not installed or enabled. Skipping auto-configuration.'
+            );
+            $this->logger->warning(
+                'Shillinq: OpenRegister not available, skipping register initialization'
+            );
+            return;
+        }
 
         try {
             // C8: use loadConfigurationForced() so OR's per-register/per-schema
@@ -117,28 +117,28 @@ class InitializeSettings implements IRepairStep
             // routine upgrades when the shillinq_register.json version hasn't changed.
             $result = $this->settingsService->loadConfigurationForced();
 
-    if ($result['success'] === true) {
-        $skipped = (($result['skipped'] ?? false) === true);
-        $version = ($result['version'] ?? 'unknown');
-        if ($skipped === true) {
-            $output->info('Shillinq configuration already up-to-date (version-unchanged skip)');
-        }
+            if ($result['success'] === true) {
+                $skipped = (($result['skipped'] ?? false) === true);
+                $version = ($result['version'] ?? 'unknown');
+                if ($skipped === true) {
+                    $output->info('Shillinq configuration already up-to-date (version-unchanged skip)');
+                }
 
-        if ($skipped !== true) {
-            $output->info(
-                'Shillinq configuration imported successfully (version: '.$version.')'
-            );
-        }
-    }
+                if ($skipped !== true) {
+                    $output->info(
+                        'Shillinq configuration imported successfully (version: '.$version.')'
+                    );
+                }
+            }
 
-    if ($result['success'] !== true) {
-        $message = ($result['message'] ?? 'unknown error');
-        $output->warning('Shillinq configuration import issue: '.$message);
-        // H2: skip account seed when schema import failed to avoid writing
-        // accounts into an uninitialized register.
-        $output->warning('Shillinq: schema import failed, skipping account seed');
-        return;
-    }
+            if ($result['success'] !== true) {
+                $message = ($result['message'] ?? 'unknown error');
+                $output->warning('Shillinq configuration import issue: '.$message);
+                // H2: skip account seed when schema import failed to avoid writing
+                // accounts into an uninitialized register.
+                $output->warning('Shillinq: schema import failed, skipping account seed');
+                return;
+            }
 
             $this->seedDefaultAdministration(output: $output);
             $this->seedChartOfAccounts(output: $output);
@@ -333,17 +333,17 @@ class InitializeSettings implements IRepairStep
     }//end registerIv3ScheduledWorkflow()
 
     /**
-         * Seed T3 NL-compliance reference data (BTW tariffs + BBV taakvelden), idempotently.
+     * Seed T3 NL-compliance reference data (BTW tariffs + BBV taakvelden), idempotently.
      *
      * Both seeds are statutory reference catalogues that are not tenant-specific,
      * so they are seeded unconditionally. Deduplication is handled inside the
      * SettingsService seed helpers (by code), keeping re-runs safe.
-         *
+     *
      * @param IOutput $output The output interface for progress reporting.
      *
      * @return void
      *
-         * @spec openspec/changes/add-shillinq-bookkeeping-operations/tasks.md#task-311
+     * @spec openspec/changes/add-shillinq-bookkeeping-operations/tasks.md#task-311
      */
     private function seedComplianceReferenceData(IOutput $output): void
     {
@@ -503,12 +503,12 @@ class InitializeSettings implements IRepairStep
      * Gated on rgs_template = 'bbv' (the BBV-tenant indicator at install/upgrade
      * time) so generic SMB/ZZP administrations are unaffected. Idempotent on
      * re-run via the SettingsService dedup keys (REQ-BBV-001/002/007).
-         *
+     *
      * @param IOutput $output The output interface for progress reporting.
      *
      * @return void
      *
-         * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md
+     * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md
      */
     private function seedBbvStamData(IOutput $output): void
     {
@@ -608,4 +608,4 @@ class InitializeSettings implements IRepairStep
         }
 
     }//end seedChartOfAccounts()
-    }//end class
+}//end class
