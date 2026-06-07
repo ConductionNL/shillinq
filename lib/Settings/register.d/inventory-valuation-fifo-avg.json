@@ -106,6 +106,59 @@
 						"description": "True when the most recent outbound move could not post a COGS GLTransaction because GL account numbers are not yet configured (design.md Risks table + REQ-INV-007). Surfaces in the manifest view so operators know to configure the GL accounts."
 					}
 				},
+				"x-openregister-lifecycle": {
+					"field": "status",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"labelNl": "Actief",
+							"description": "Current in-use valuation snapshot per REQ-INV-009. unitCost and totalValue are recomputed on every StockMove that affects this (productId, warehouse) pair via FifoValuationService (FIFO) or MovingAverageValuationService (average)."
+						},
+						"adjusted": {
+							"label": "Adjusted",
+							"labelNl": "Aangepast",
+							"description": "Manual correction applied OR COGS posting pending due to missing GL account configuration (CogsPosterService sets adjusted + pendingCogs=true and logs a WARNING per REQ-INV-007). Remains usable for stock tracking; operator returns to active once the correction is confirmed or GL accounts are configured."
+						},
+						"obsolete": {
+							"label": "Obsolete",
+							"labelNl": "Vervallen",
+							"description": "Discontinued or moved-out item per REQ-INV-009. Historical only — no new StockMove processing accepted. Reaching obsolete requires on-hand quantity = 0 (InventoryValuationMethodGuard::checkZeroStock)."
+						}
+					},
+					"transitions": {
+						"adjust": {
+							"from": "active",
+							"to": "adjusted",
+							"label": "Adjust valuation",
+							"labelNl": "Waardering aanpassen",
+							"description": "Operator-initiated manual correction OR system-initiated transition by CogsPosterService when GL accounts are not configured (REQ-INV-007)."
+						},
+						"confirmAdjustment": {
+							"from": "adjusted",
+							"to": "active",
+							"label": "Confirm correction",
+							"labelNl": "Correctie bevestigen",
+							"description": "Operator confirms the adjustment has been resolved (manual correction posted OR GL accounts now configured); snapshot returns to active and is eligible for new StockMove processing."
+						},
+						"obsoleteFromActive": {
+							"from": "active",
+							"to": "obsolete",
+							"label": "Mark obsolete",
+							"labelNl": "Markeer als vervallen",
+							"description": "Move to historical-only state per REQ-INV-009. Guarded by InventoryValuationMethodGuard::checkZeroStock — quantity > 0 blocks the transition with a 'non-zero stock' error.",
+							"requires": "OCA\\Shillinq\\Lifecycle\\InventoryValuationMethodGuard::checkZeroStock"
+						},
+						"obsoleteFromAdjusted": {
+							"from": "adjusted",
+							"to": "obsolete",
+							"label": "Mark obsolete (from adjusted)",
+							"labelNl": "Markeer als vervallen (vanaf aangepast)",
+							"description": "Same as obsoleteFromActive but invoked from the adjusted state. Guard semantics identical.",
+							"requires": "OCA\\Shillinq\\Lifecycle\\InventoryValuationMethodGuard::checkZeroStock"
+						}
+					}
+				},
 				"x-openregister-rbac": {
 					"roles": {
 						"bookkeeper": {

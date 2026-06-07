@@ -39,10 +39,14 @@
   ADR-000 minimum field set plus `productId` / `costCenterId` FKs
   (relations declared in Task 13), `lastStockMoveUuid` for idempotent
   retry, `pendingCogs` for the missing-GL-config flag.
-- [ ] Task 4: Add `x-openregister-lifecycle` block to `InventoryValuation`
+- [x] Task 4: Add `x-openregister-lifecycle` block to `InventoryValuation`
   declaring `active ↔ adjusted`, `active → obsolete`, `adjusted →
   obsolete` transitions; reference `InventoryValuationMethodGuard::checkZeroStock()`
-  as the `requires` guard on `obsolete` transitions (REQ-INV-009)
+  as the `requires` guard on `obsolete` transitions (REQ-INV-009) —
+  added: transitions `adjust`, `confirmAdjustment`,
+  `obsoleteFromActive`, `obsoleteFromAdjusted`. Both obsolete
+  transitions reference `InventoryValuationMethodGuard::checkZeroStock`
+  as `requires` per ADR-031 thin-PHP-guard pattern.
 - [ ] Task 5: Add `x-openregister-lifecycle` `methodChange` transition
   on `InventoryValuation` with `requires: InventoryValuationMethodGuard::checkZeroStock()`
   precondition blocking method switch when `quantity > 0` (REQ-INV-006)
