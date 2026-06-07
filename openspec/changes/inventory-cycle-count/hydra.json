@@ -6,5 +6,9 @@
   "depends_on": [
     "inventory-stock-tracking"
   ],
-  "issue": null
+  "issue": null,
+  "status": "applied",
+  "applied_at": "2026-06-07",
+  "tasks_complete": 15,
+  "tasks_total": 15
 }

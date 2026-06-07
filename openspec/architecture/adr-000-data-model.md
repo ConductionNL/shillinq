@@ -2551,6 +2551,147 @@ _Valuation of on-hand inventory items using cost accounting methods such as FIFO
 - → Product (many-to-one)
 - → CostCenter (many-to-one)
 
+### InventoryAdjustment
+**Schema.org:** `schema:UpdateAction`
+_Stub. Inventory adjustment transaction linking an InventoryCycleCount to a posted StockMove for full audit traceability per REQ-ICC-007. In the inventory-cycle-count change the adjustment is **not** materialised as its own register row — the originating CycleCount lines + the resulting `cycle-count-variance` StockMove pair already carry the full provenance (line.adjustmentStockMoveId on the source side, StockMove.referenceDocumentUri='shillinq://cycle-count/<countId>' on the sink side). A future inventory-adjustment spec (T2 follow-up) will promote this to a top-level register when manual on-hand adjustments outside the cycle-count flow are required (e.g. supplier RMA, scrap, founder write-off)._
+**Primary spec:** inventory-cycle-count (stub) → inventory-adjustment (deferred T2 follow-up)
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| adjustmentId | string | Yes | Stable identifier of the adjustment (planned: ADJ-YYYY-NNNNN) |
+| cycleCountId | string (FK) | No | Back-reference to InventoryCycleCount when the adjustment originated from a cycle count per REQ-ICC-007 |
+| stockMoveId | string (FK) | Yes | FK to StockMove that materialised the on-hand + GL change (movementReason='cycle-count-variance' for cycle-count-origin) |
+| reasonCode | string (FK) | Yes | FK to InventoryVarianceReason per REQ-ICC-005 |
+| administrationId | string (FK) | Yes | FK to Administration; tenant scope per REQ-MA-001 |
+
+**Hierarchy / invariants:**
+- Every InventoryAdjustment MUST reference exactly one posted StockMove for the on-hand + GL effect (REQ-ICC-007).
+- Cycle-count adjustments carry a `cycleCountId`; manual adjustments (future inventory-adjustment spec) omit it.
+- Each (administrationId, cycleCountId) MAY produce 0..N InventoryAdjustment rows (one per non-zero-variance line).
+
+**Relations:**
+- → InventoryCycleCount (many-to-one, via cycleCountId — only for cycle-count-origin)
+- → StockMove (one-to-one, via stockMoveId)
+- → InventoryVarianceReason (many-to-one, via reasonCode)
+- → Administration (many-to-one, via administrationId)
+
+> **Annotation (inventory-cycle-count, 2026-06-07):** Stub. The cycle-count flow does **not** persist this entity yet — the (InventoryCycleCountLine.adjustmentStockMoveId, StockMove.referenceDocumentUri) pair already encodes the full provenance and the audit reader can re-derive every cycle-count adjustment from those two FKs. Promotion to a real register is deferred to the inventory-adjustment spec (T2 follow-up) which will also cover non-cycle-count manual adjustments.
+
+### InventoryCycleCount
+**Schema.org:** `schema:InventoryAction`
+_Periodic stock-take batch per REQ-ICC-001 + REQ-ICC-002. Carries the count scope (full or partial by location/category), the lifecycle state (draft → submitted → counting → posted → reconciled, plus cancelled from any non-terminal state per REQ-ICC-006), the aggregated expected/counted/variance values (snapshotted from the line set on transition counting → posted) and the configurable variance thresholds (5%% qty / EUR 500 absolute by default per REQ-ICC-004)._
+**Primary spec:** inventory-cycle-count
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| countId | string | Yes | Sequential CC-YYYY-MM-NNNNN; unique per administration per REQ-ICC-002 |
+| countDate | date | Yes | Physical count date per REQ-ICC-002 |
+| initiatedBy | string (FK) | Yes | FK to Person initiating the count per REQ-ICC-002 |
+| countType | enum | Yes | `full` (all SKUs) / `partial` (scoped to locationFilter or categoryFilter) per REQ-ICC-002 |
+| locationFilter | string (FK) | No | Optional FK to Location.id when countType=partial per REQ-ICC-008 |
+| categoryFilter | string | No | Optional product-category when countType=partial per REQ-ICC-008 |
+| expectedValue | number ≥ 0 (multipleOf 0.01) | No | SUM(line.expectedValue); null while draft per REQ-ICC-002 |
+| countedValue | number ≥ 0 (multipleOf 0.01) | No | SUM(line.countedValue); null until all lines counted |
+| varianceValue | number (multipleOf 0.01) | No | countedValue − expectedValue; signed |
+| variancePercentage | number | No | (varianceValue / expectedValue) × 100; null when expectedValue=0 |
+| state | enum | Yes | One of draft / submitted / counting / posted / reconciled / cancelled per REQ-ICC-006 |
+| notes | string | No | Supervisor notes |
+| submittedAt | datetime | No | Stamped on draft → submitted |
+| postedAt | datetime | No | Stamped on counting → posted |
+| reconciledAt | datetime | No | Stamped on posted → reconciled |
+| cancelledAt | datetime | No | Stamped on any → cancelled |
+| administrationId | string (FK) | Yes | FK to Administration; tenant scope per REQ-MA-001 |
+
+**Hierarchy / invariants (per REQ-ICC-002 + REQ-ICC-006 + REQ-ICC-008):**
+- Partial counts MUST carry at least one of locationFilter / categoryFilter (VarianceGate::requireValidScope on submit).
+- The line snapshot is created on draft → submitted by CycleCountService::snapshotScope (one InventoryCycleCountLine per in-scope (sku, locationId) pair).
+- Counting → posted is denied unless every line with `requiresReason=true` carries an active reasonCode (VarianceGate::requireReasonsOnPost).
+- Posted → reconciled emits one StockMove per non-zero-variance line via CycleCountService::emitAdjustments (movementReason='cycle-count-variance', referenceDocumentUri='shillinq://cycle-count/<countId>'); the StockMove lifecycle handles InventoryStock + GL.
+- Cancel is reachable from any non-terminal state; no StockMoves emitted; snapshot lines remain queryable for audit.
+
+**Declarative extensions (ADR-031):**
+- `x-openregister-lifecycle`: draft → submitted → counting → posted → reconciled (+ cancelled); submit/post/reconcile gated by VarianceGate.
+- `x-openregister-metadata`: quantityVarianceThresholdPercent (default 5), valueVarianceThresholdAbsolute (default 500) per REQ-ICC-004.
+- `x-openregister-indexes`: unique (administrationId, countId); (administrationId, state, countDate) for the index view.
+- Guards (ADR-031 exception path): `VarianceGate::requireValidScope`, `VarianceGate::requireReasonsOnPost`; service: `CycleCountService::snapshotScope`, `CycleCountService::emitAdjustments`, `CycleCountService::recalculateLine`.
+
+**Relations:**
+- → Person (many-to-one, via initiatedBy)
+- → Location (many-to-one, via locationFilter — only for partial counts)
+- → InventoryCycleCountLine (one-to-many, via countId)
+- → InventoryAdjustment (one-to-many, via stub cycleCountId — see InventoryAdjustment stub above)
+- → Administration (many-to-one, via administrationId)
+
+> **Annotation (inventory-cycle-count, 2026-06-07):** Lifecycle, line snapshot fan-out, variance threshold logic, and adjustment posting are all declarative per ADR-031 — no `CycleCountController` or domain Mapper was added. Two ADR-031 exception-path classes live in `lib/Lifecycle/VarianceGate.php` (scope + reason gates) and `lib/Service/CycleCountService.php` (snapshot fan-out + adjustment fan-out + recalculation). All arithmetic is integer-cent via `multipleOf 0.01` schema discipline; the post-time check recomputes `requiresReason` from raw counted/expected/unitCost rather than trusting a potentially stale stored flag.
+
+### InventoryCycleCountLine
+**Schema.org:** `schema:Quantity`
+_One snapshot row inside an InventoryCycleCount per REQ-ICC-003. Captures the (sku, locationId) pair, the expectedQuantity snapshotted from InventoryStock at submission, the operator-entered countedQuantity, the derived variance fields, the requiresReason flag (computed against the parent count's variance thresholds per REQ-ICC-004), and the optional reasonCode FK (mandatory when requiresReason=true per REQ-ICC-005)._
+**Primary spec:** inventory-cycle-count
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| lineId | string | Yes | Sequential CC-YYYY-MM-NNNNN-LLL; unique per administration per REQ-ICC-003 |
+| countId | string (FK) | Yes | FK to InventoryCycleCount per REQ-ICC-003 |
+| sku | string (FK) | Yes | FK to Product.sku per REQ-ICC-003 |
+| productName | string | No | Denormalized product-name snapshot for audit traceability |
+| locationId | string (FK) | Yes | Bin Location.id; required because the resulting adjustment StockMove targets this location |
+| expectedQuantity | number ≥ 0 (multipleOf 0.01) | Yes | InventoryStock.quantity snapshot at submission per REQ-ICC-003 |
+| countedQuantity | number ≥ 0 (multipleOf 0.01) | No | Operator-entered physical count; null while un-counted; negative rejected per REQ-ICC-003 |
+| unitCost | number ≥ 0 (multipleOf 0.01) | Yes | Unit cost at count date; used for valueVariance + GL posting per REQ-ICC-003 |
+| expectedValue | number ≥ 0 (multipleOf 0.01) | Yes | Calculated expectedQuantity × unitCost per REQ-ICC-003 |
+| countedValue | number ≥ 0 (multipleOf 0.01) | No | Calculated countedQuantity × unitCost; null until counted |
+| quantityVariance | number (multipleOf 0.01) | No | Calculated countedQuantity − expectedQuantity; signed |
+| valueVariance | number (multipleOf 0.01) | No | Calculated countedValue − expectedValue; signed |
+| requiresReason | boolean | No (default false) | Calculated flag per REQ-ICC-004: true when threshold crossed; drives VarianceGate on post |
+| reasonCode | string (FK) | No | FK to InventoryVarianceReason.reasonId; MUST be populated for lines with requiresReason=true per REQ-ICC-005 |
+| notes | string | No | Line-level investigation notes per REQ-ICC-003 |
+| adjustmentStockMoveId | string (FK) | No | Back-reference to the StockMove emitted by CycleCountService::emitAdjustments on reconcile per REQ-ICC-007 |
+| administrationId | string (FK) | Yes | FK to Administration; tenant scope per REQ-MA-001 |
+
+**Hierarchy / invariants (per REQ-ICC-003 + REQ-ICC-004 + REQ-ICC-007):**
+- Exactly one InventoryCycleCountLine per (countId, sku, locationId); enforced by the snapshot logic.
+- countedQuantity may not be negative.
+- requiresReason is recomputed by VarianceGate (raw counted/expected/unitCost vs. threshold) on every post — a stale stored flag never masks a flagged line.
+- adjustmentStockMoveId remains null for zero-variance lines and for un-reconciled counts; once stamped, partial-retry idempotency in CycleCountService::emitAdjustments skips the line.
+
+**Declarative extensions (ADR-031):**
+- `x-openregister-calculations`: expectedValue, countedValue, quantityVariance, valueVariance, requiresReason expressions per REQ-ICC-003 + REQ-ICC-004.
+- `x-openregister-indexes`: unique (administrationId, lineId); (administrationId, countId) for the count detail; (administrationId, countId, requiresReason) for the post-time gate.
+
+**Relations:**
+- → InventoryCycleCount (many-to-one, via countId)
+- → Product (many-to-one, via sku)
+- → Location (many-to-one, via locationId)
+- → InventoryVarianceReason (many-to-one, via reasonCode)
+- → StockMove (one-to-one, via adjustmentStockMoveId)
+- → Administration (many-to-one, via administrationId)
+
+### InventoryVarianceReason
+**Schema.org:** `schema:DefinedTerm`
+_Configurable reason-code taxonomy backing the InventoryCycleCountLine.reasonCode FK per REQ-ICC-005. Each administration maintains its own set; seven standard codes (DMG / OBS / ERR-COUNT / ERR-STOCK / THEFT / SYS / OTHER) are auto-seeded on first count. Inactive codes (isActive=false) stay queryable for audit but are hidden from the UI dropdown and rejected by VarianceGate so historical lines retain their FK while new lines cannot pick them. The category enum is closed so variance reports roll up consistently._
+**Primary spec:** inventory-cycle-count
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| reasonId | string | Yes | Reason code (e.g. DMG, OBS, ERR-COUNT); pattern `^[A-Z][A-Z0-9\-]{0,31}$` |
+| name | string | Yes | Human-readable reason name |
+| category | enum | Yes | Closed: damage / loss / obsolescence / error-counting / error-stocking / system-discrepancy / other |
+| description | string | No | Extended explanation for audit trail |
+| isActive | boolean | Yes (default true) | When false, hidden from UI + rejected by VarianceGate; historical FKs preserved |
+| administrationId | string (FK) | Yes | FK to Administration; tenant scope per REQ-MA-001 |
+
+**Hierarchy / invariants (per REQ-ICC-005):**
+- Unique (administrationId, reasonId).
+- VarianceGate::requireReasonsOnPost only accepts codes that are isActive=true for the count's administration.
+
+**Declarative extensions (ADR-031):**
+- `x-openregister-indexes`: unique (administrationId, reasonId); (administrationId, isActive) for the dropdown query.
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- ← InventoryCycleCountLine (many-to-one inverse, via reasonCode)
+
 ### Investment
 **Schema.org:** `schema:FinancialProduct`
 _Investment or capital contribution in an entity with terms and expected returns_
@@ -4722,6 +4863,8 @@ _Immutable double-entry stock-movement ledger entry (Odoo / Tryton Stock Move pa
 - → Organization (many-to-one, via administrationId)
 
 > **Annotation (inventory-stock-movement-ledger, 2026-06-07):** Lifecycle, GL materialisation, reservation CAS, audit trail and aggregations are all declarative per ADR-031 — no `StockMoveService` was added. Four ADR-031 exception-path guards live in `lib/Lifecycle/` for the predicates the declarative DSL cannot yet express (mandatory reason on post, locked-edit rejection, optimistic-lock CAS, posted-cancel offset materialisation). Read-side drill-down is served by `StockLedgerService` + `GET /api/stock-ledger/trace`; the engine never SUMs cents floats — all arithmetic is integer-cent via `multipleOf 0.01` schema discipline.
+
+> **Annotation (inventory-cycle-count, 2026-06-07):** Reused without modification. `movementReason` enum extended additively with `cycle-count-variance` so REQ-ICC-007 variance posting flows through the existing lifecycle (InventoryStock + GL materialisation) untouched. The originating `countId` is preserved in `referenceDocumentUri` as `shillinq://cycle-count/<countId>` for audit trace-back. See InventoryCycleCount above for the snapshot + adjustment fan-out service.
 
 ### SubmissionDossier
 **Schema.org:** `schema:DigitalDocument`
