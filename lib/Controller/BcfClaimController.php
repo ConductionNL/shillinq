@@ -34,6 +34,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\BcfClaimService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -52,15 +53,17 @@ class BcfClaimController extends Controller
     /**
      * Constructor for the BcfClaimController.
      *
-     * @param IRequest        $request         The request object.
-     * @param BcfClaimService $bcfClaimService The BCF compensable-VAT computation service.
-     * @param LoggerInterface $logger          Logger for diagnostics (no stack traces to client).
+     * @param IRequest                     $request         The request object.
+     * @param BcfClaimService              $bcfClaimService The BCF compensable-VAT computation service.
+     * @param AdministrationContextService $context         Administratie-aware IDOR guard (ADR-005).
+     * @param LoggerInterface              $logger          Logger for diagnostics (no stack traces to client).
      *
      * @return void
      */
     public function __construct(
         IRequest $request,
         private readonly BcfClaimService $bcfClaimService,
+        private readonly AdministrationContextService $context,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -115,6 +118,14 @@ class BcfClaimController extends Controller
             return new JSONResponse(
                 ['error' => 'claim_quarter must be a valid quarter identifier'],
                 Http::STATUS_BAD_REQUEST
+            );
+        }
+
+        // Per-object IDOR guard (ADR-005 Rule 3): 403 when user lacks administration membership.
+        if ($this->context->canAccess(administrationId: $administrationId) === false) {
+            return new JSONResponse(
+                ['error' => 'Access to this administration is not allowed'],
+                Http::STATUS_FORBIDDEN
             );
         }
 
