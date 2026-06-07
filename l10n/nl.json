@@ -1053,7 +1053,19 @@
         "Eliminated By Rule": "Geëlimineerd door regel",
         "Consolidation Group": "Consolidatiegroep",
         "Consolidated Report": "Geconsolideerd rapport",
-        "Cannot modify elimination status of transactions in a finalized or published report": "De eliminatiestatus van transacties in een gefinaliseerd of gepubliceerd rapport kan niet worden gewijzigd"
+        "Cannot modify elimination status of transactions in a finalized or published report": "De eliminatiestatus van transacties in een gefinaliseerd of gepubliceerd rapport kan niet worden gewijzigd",
+        "EMU-rapportage": "EMU-rapportage",
+        "EMU-correcties": "EMU-correcties",
+        "Kasstroomregels": "Kasstroomregels",
+        "Schuldposities": "Schuldposities",
+        "Indienen bij CBS": "Indienen bij CBS",
+        "EMU-saldo": "EMU-saldo",
+        "EMU-schuld": "EMU-schuld",
+        "Aansluitingscontrole": "Aansluitingscontrole",
+        "Wettelijke norm": "Wettelijke norm",
+        "Concept": "Concept",
+        "Ingediend": "Ingediend",
+        "Herzien": "Herzien"
     },
     "plurals": ""
 }
