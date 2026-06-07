@@ -3,15 +3,15 @@
   "pass": false,
   "blocking": [
     {
-      "file": "l10n/en.json",
+      "file": "l10n/en.json, l10n/nl.json",
       "severity": "critical",
-      "note": "PR has unresolvable merge conflicts with development (mergeable=false); l10n/en.json and l10n/nl.json contain raw git conflict markers and are not valid JSON \u2014 branch must be rebased onto current development before merge can proceed."
+      "note": "pr-state.json reports mergeable=false; diff confirms unresolved git conflict markers in both l10n files \u2014 files are not valid JSON and the branch must be rebased onto development"
     }
   ],
   "turns": 7,
-  "cost_usd": 0.1903,
-  "cost_eur": 0.1751,
+  "cost_usd": 0.1955,
+  "cost_eur": 0.1799,
   "pr": 279,
-  "commit": "ad4851a",
-  "timestamp": "2026-06-07T07:56:13.371156+00:00"
+  "commit": "f86b0b6",
+  "timestamp": "2026-06-07T08:23:35.284058+00:00"
 }
