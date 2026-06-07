@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "1.3.3",
+	"version": "1.3.4",
 	"dependencies": [
 		"openregister"
 	],
@@ -295,6 +295,20 @@
 					"icon": "BarcodeOutline",
 					"route": "Barcodes",
 					"order": 60
+				},
+				{
+					"id": "InventoryLots",
+					"label": "Lots & Batches",
+					"icon": "BarcodeOutline",
+					"route": "InventoryLots",
+					"order": 70
+				},
+				{
+					"id": "ExpiryAlerts",
+					"label": "Expiry Alerts",
+					"icon": "AlertCircleOutline",
+					"route": "ExpiryAlerts",
+					"order": 80
 				}
 			]
 		},
@@ -1005,6 +1019,229 @@
 					}
 				],
 				"indexRoute": "Barcodes"
+			}
+		},
+		{
+			"id": "InventoryLots",
+			"route": "/inventory/lots",
+			"type": "index",
+			"title": "Lots & Batches",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryLot",
+				"columns": [
+					{
+						"key": "lotNumber",
+						"label": "Lot Number",
+						"sortable": true
+					},
+					{
+						"key": "productSku",
+						"label": "Product SKU",
+						"sortable": true
+					},
+					{
+						"key": "expiryDate",
+						"label": "Expiry Date",
+						"sortable": true
+					},
+					{
+						"key": "quantity",
+						"label": "Quantity",
+						"sortable": true
+					},
+					{
+						"key": "lotStatus",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "warehouseLocation",
+						"label": "Location",
+						"sortable": true
+					}
+				],
+				"defaultSort": "expiryDate",
+				"defaultSortDirection": "asc",
+				"detailRoute": "InventoryLotDetail"
+			}
+		},
+		{
+			"id": "InventoryLotDetail",
+			"route": "/inventory/lots/:id",
+			"type": "detail",
+			"title": "Lot",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryLot",
+				"fields": [
+					{
+						"key": "lotNumber",
+						"label": "Lot Number",
+						"type": "string"
+					},
+					{
+						"key": "batchCode",
+						"label": "Batch Code",
+						"type": "string"
+					},
+					{
+						"key": "productSku",
+						"label": "Product SKU",
+						"type": "string"
+					},
+					{
+						"key": "manufactureDate",
+						"label": "Manufacture Date",
+						"type": "date"
+					},
+					{
+						"key": "expiryDate",
+						"label": "Expiry Date",
+						"type": "date"
+					},
+					{
+						"key": "bestBeforeDate",
+						"label": "Best Before",
+						"type": "date"
+					},
+					{
+						"key": "quantity",
+						"label": "Quantity",
+						"type": "number"
+					},
+					{
+						"key": "unitCode",
+						"label": "Unit",
+						"type": "string"
+					},
+					{
+						"key": "unitCost",
+						"label": "Unit Cost",
+						"type": "number"
+					},
+					{
+						"key": "warehouseLocation",
+						"label": "Warehouse Location",
+						"type": "string"
+					},
+					{
+						"key": "lotStatus",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "receivedDate",
+						"label": "Received Date",
+						"type": "date"
+					},
+					{
+						"key": "goodsReceiptId",
+						"label": "Goods Receipt",
+						"type": "string"
+					},
+					{
+						"key": "notes",
+						"label": "Notes",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "InventoryLots"
+			}
+		},
+		{
+			"id": "ExpiryAlerts",
+			"route": "/inventory/expiry-alerts",
+			"type": "index",
+			"title": "Expiry Alerts",
+			"config": {
+				"register": "shillinq",
+				"schema": "ExpiryAlert",
+				"columns": [
+					{
+						"key": "alertDate",
+						"label": "Alert Date",
+						"sortable": true
+					},
+					{
+						"key": "alertType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "lotId",
+						"label": "Lot",
+						"sortable": true
+					},
+					{
+						"key": "daysBeforeExpiry",
+						"label": "Days Before Expiry",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "alertDate",
+				"defaultSortDirection": "desc",
+				"detailRoute": "ExpiryAlertDetail"
+			}
+		},
+		{
+			"id": "ExpiryAlertDetail",
+			"route": "/inventory/expiry-alerts/:id",
+			"type": "detail",
+			"title": "Expiry Alert",
+			"config": {
+				"register": "shillinq",
+				"schema": "ExpiryAlert",
+				"fields": [
+					{
+						"key": "lotId",
+						"label": "Lot",
+						"type": "string"
+					},
+					{
+						"key": "alertType",
+						"label": "Alert Type",
+						"type": "string"
+					},
+					{
+						"key": "alertDate",
+						"label": "Alert Date",
+						"type": "date"
+					},
+					{
+						"key": "daysBeforeExpiry",
+						"label": "Days Before Expiry",
+						"type": "number"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "resolvedDate",
+						"label": "Resolved Date",
+						"type": "date"
+					},
+					{
+						"key": "recipientId",
+						"label": "Recipient",
+						"type": "string"
+					},
+					{
+						"key": "notes",
+						"label": "Notes",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ExpiryAlerts"
 			}
 		},
 		{
