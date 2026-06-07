@@ -560,6 +560,72 @@ class SettingsService
     }//end seedRateCardTemplates()
 
     /**
+     * Seed the 2026 KIA tier table from investeringsaftrek-kia-tiers-2026.json, idempotently.
+     *
+     * Imports the 5 statutory KIA tiers (Wet IB 2001 art. 3.41, geindexeerd) into
+     * the KIATier schema. Deduplication key is tier + jaartal. Idempotent on re-run.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+     */
+    public function seedKiaTiers(): array
+    {
+        return $this->seedGenericFile(
+            seedFileName: 'investeringsaftrek-kia-tiers-2026.json',
+            itemsKey: 'kiaTiers',
+            dedupeKey: 'tier',
+            schema: 'KIATier',
+            logLabel: 'KIA tiers 2026'
+        );
+
+    }//end seedKiaTiers()
+
+    /**
+     * Seed the 2026 RvO Energielijst from investeringsaftrek-energielijst-2026.json, idempotently.
+     *
+     * Imports the Energielijst codes (EIA) into the EnergielijstCode schema.
+     * Deduplication key is code. Idempotent on re-run; operator additions preserved.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+     */
+    public function seedEnergielijst(): array
+    {
+        return $this->seedGenericFile(
+            seedFileName: 'investeringsaftrek-energielijst-2026.json',
+            itemsKey: 'energielijstCodes',
+            dedupeKey: 'code',
+            schema: 'EnergielijstCode',
+            logLabel: 'RvO Energielijst 2026'
+        );
+
+    }//end seedEnergielijst()
+
+    /**
+     * Seed the 2026 RvO Milieulijst from investeringsaftrek-milieulijst-2026.json, idempotently.
+     *
+     * Imports the Milieulijst codes (MIA/Vamil) into the MilieulijstCode schema.
+     * Deduplication key is code. Idempotent on re-run; operator additions preserved.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+     */
+    public function seedMilieulijst(): array
+    {
+        return $this->seedGenericFile(
+            seedFileName: 'investeringsaftrek-milieulijst-2026.json',
+            itemsKey: 'milieulijstCodes',
+            dedupeKey: 'code',
+            schema: 'MilieulijstCode',
+            logLabel: 'RvO Milieulijst 2026'
+        );
+
+    }//end seedMilieulijst()
+
+    /**
      * Generic seed helper for single-schema seed files that don't require an administrationId.
      *
      * @param string $seedFileName Name of the seed file under lib/Settings/seeds/.
