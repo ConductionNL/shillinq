@@ -4,21 +4,21 @@ Sourced from the giant's Phase 3 (lifecycle transitions + auth error handling + 
 
 ## Lifecycle transitions
 
-- [ ] `booking.confirmed` → type=booking.confirmed
-- [ ] `booking.cancelled` → type=booking.cancelled (include cancellation reason if present)
-- [ ] `booking.completed` → type=booking.completed
-- [ ] Each transition follows the same publish + retry pattern (member 07)
+- [x] `booking.confirmed` → type=booking.confirmed
+- [x] `booking.cancelled` → type=booking.cancelled (include cancellation reason if present)
+- [x] `booking.completed` → type=booking.completed
+- [x] Each transition follows the same publish + retry pattern (member 07)
 
 ## Auth error handling
 
-- [ ] On 401 Unauthorized: log ERROR "Invalid pipelinq API token"
-- [ ] Do NOT retry (auth errors are permanent)
-- [ ] Send an admin notification if available
-- [ ] Booking operation still completes
+- [x] On 401 Unauthorized: log ERROR "Invalid pipelinq API token"
+- [x] Do NOT retry (auth errors are permanent)
+- [x] Send an admin notification if available
+- [x] Booking operation still completes
 
 ## Tests
 
-- [ ] Mock timeline API: 401 unauthorized (no retry)
-- [ ] Test event payload structure for confirmed / cancelled / completed
-- [ ] Test circuit-breaker behaviour on the write path
-- [ ] Test logging at each step
+- [x] Mock timeline API: 401 unauthorized (no retry)
+- [x] Test event payload structure for confirmed / cancelled / completed
+- [x] Test circuit-breaker behaviour on the write path
+- [x] Test logging at each step
