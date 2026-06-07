@@ -39,6 +39,8 @@ use OCP\IUserSession;
 
 /**
  * Thin page controller for the waterschappen BBV compliance dashboard.
+ *
+ * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-04-manifest-routes/tasks.md
  */
 class BBVDashboardController extends Controller
 {

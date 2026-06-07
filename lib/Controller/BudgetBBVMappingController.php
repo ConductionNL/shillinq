@@ -40,6 +40,8 @@ use OCP\IUserSession;
 
 /**
  * Thin page controller for the Budget BBV Mapping index + detail pages.
+ *
+ * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-04-manifest-routes/tasks.md
  */
 class BudgetBBVMappingController extends Controller
 {
