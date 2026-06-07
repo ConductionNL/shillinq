@@ -166,6 +166,16 @@ return [
         ['name' => 'goodsReceiptNote#accept', 'url' => '/api/goods-receipt-notes/{id}/accept', 'verb' => 'POST'],
         ['name' => 'goodsReceiptNote#uploadPhotos', 'url' => '/api/goods-receipt-notes/{id}/photos', 'verb' => 'POST'],
 
+        // Three-Way Matching Engine (slice 06 of bookkeeping-purchase-order-3way):
+        // server-authoritative trigger endpoint that evaluates a SupplierInvoice
+        // against its PO + GRN candidates, applies the most-specific
+        // ToleranceProfile (supplier > category > gl_account > global) and
+        // writes a ThreeWayMatch record. The endpoint is #[NoAdminRequired] with
+        // a per-administration IDOR guard inside the controller (ADR-005);
+        // cross-tenant invoice ids are masked as 404. Declared before the SPA
+        // catch-all so Symfony's route ordering matches it first.
+        ['name' => 'threeWayMatch#evaluate', 'url' => '/api/three-way-matches/evaluate', 'verb' => 'POST'],
+
         // Multi-PO consolidation (slice 07 of bookkeeping-purchase-order-3way):
         // consolidate fan-out, candidate enumeration for the disambiguation panel,
         // and the operator's disambiguation choice. Every endpoint is
