@@ -64,8 +64,8 @@ final class BookingsCancellationRulesFragmentTest extends TestCase
     private function load(string $path): array
     {
         $data = json_decode((string) file_get_contents($path), true);
-        self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
-        self::assertIsArray($data);
+        self::assertSame(expected: JSON_ERROR_NONE, actual: json_last_error(), message: json_last_error_msg());
+        self::assertIsArray(actual: $data);
         return $data;
 
     }//end load()
@@ -93,9 +93,9 @@ final class BookingsCancellationRulesFragmentTest extends TestCase
      */
     public function testFragmentIsValidJson(): void
     {
-        self::assertFileExists($this->fragmentPath);
-        $data = $this->load($this->fragmentPath);
-        self::assertArrayHasKey('schemas', $data['components']);
+        self::assertFileExists(filename: $this->fragmentPath);
+        $data = $this->load(path: $this->fragmentPath);
+        self::assertArrayHasKey(key: 'schemas', array: $data['components']);
 
     }//end testFragmentIsValidJson()
 
@@ -106,15 +106,26 @@ final class BookingsCancellationRulesFragmentTest extends TestCase
      */
     public function testDeclaresCancellationPolicySchema(): void
     {
-        $schemas = $this->load($this->fragmentPath)['components']['schemas'];
-        self::assertArrayHasKey('CancellationPolicy', $schemas);
+        $schemas = $this->load(path: $this->fragmentPath)['components']['schemas'];
+        self::assertArrayHasKey(key: 'CancellationPolicy', array: $schemas);
 
-        $props = $schemas['CancellationPolicy']['properties'];
-        foreach (['policyId', 'name', 'minNoticeDays', 'rescheduleWindowDays', 'lateFeeBrackets', 'noShowFee', 'refundPolicy', 'lifecycleState', 'administrationId'] as $field) {
-            self::assertArrayHasKey($field, $props, 'CancellationPolicy missing field '.$field);
+        $props  = $schemas['CancellationPolicy']['properties'];
+        $fields = [
+            'policyId',
+            'name',
+            'minNoticeDays',
+            'rescheduleWindowDays',
+            'lateFeeBrackets',
+            'noShowFee',
+            'refundPolicy',
+            'lifecycleState',
+            'administrationId',
+        ];
+        foreach ($fields as $field) {
+            self::assertArrayHasKey(key: $field, array: $props, message: 'CancellationPolicy missing field '.$field);
         }
 
-        self::assertContains('card_reversal', $schemas['CancellationPolicy']['properties']['refundPolicy']['enum']);
+        self::assertContains(needle: 'card_reversal', haystack: $schemas['CancellationPolicy']['properties']['refundPolicy']['enum']);
 
     }//end testDeclaresCancellationPolicySchema()
 
@@ -126,13 +137,13 @@ final class BookingsCancellationRulesFragmentTest extends TestCase
      */
     public function testBookingCancellationIsImmutableAndLinked(): void
     {
-        $schema   = $this->load($this->fragmentPath)['components']['schemas']['BookingCancellation'];
+        $schema   = $this->load(path: $this->fragmentPath)['components']['schemas']['BookingCancellation'];
         $operator = $schema['x-openregister-rbac']['roles']['operator']['permissions'];
-        self::assertNotContains('delete', $operator, 'BookingCancellation must be immutable (no delete)');
+        self::assertNotContains(needle: 'delete', haystack: $operator, message: 'BookingCancellation must be immutable (no delete)');
 
         $relation = $schema['x-openregister-relations']['appointment'];
-        self::assertSame('Appointment', $relation['relatedSchema']);
-        self::assertSame('one-to-one', $relation['cardinality']);
+        self::assertSame(expected: 'Appointment', actual: $relation['relatedSchema']);
+        self::assertSame(expected: 'one-to-one', actual: $relation['cardinality']);
 
     }//end testBookingCancellationIsImmutableAndLinked()
 
@@ -146,36 +157,36 @@ final class BookingsCancellationRulesFragmentTest extends TestCase
      */
     public function testAppointmentOverlayComposesAdditively(): void
     {
-        $base    = $this->load($this->appointmentFragmentPath);
-        $overlay = $this->load($this->fragmentPath);
+        $base    = $this->load(path: $this->appointmentFragmentPath);
+        $overlay = $this->load(path: $this->fragmentPath);
 
-        $merged    = $this->merge($base, $overlay);
-        $appt      = $merged['components']['schemas']['Appointment'];
-        $props     = $appt['properties'];
+        $merged = $this->merge(base: $base, overlay: $overlay);
+        $appt   = $merged['components']['schemas']['Appointment'];
+        $props  = $appt['properties'];
 
         // Base fields survive the merge.
         foreach (['appointmentId', 'startTime', 'cancelledAt', 'cancelledReason'] as $baseField) {
-            self::assertArrayHasKey($baseField, $props, 'merge dropped base Appointment field '.$baseField);
+            self::assertArrayHasKey(key: $baseField, array: $props, message: 'merge dropped base Appointment field '.$baseField);
         }
 
         // Overlay cancellation fields are present.
         foreach (['appliedPolicy', 'appointmentCost', 'refundAmount', 'refundStatus', 'refundedAt'] as $newField) {
-            self::assertArrayHasKey($newField, $props, 'overlay did not add Appointment field '.$newField);
+            self::assertArrayHasKey(key: $newField, array: $props, message: 'overlay did not add Appointment field '.$newField);
         }
 
-        // refundStatus carries the lifecycle enum.
+        // RefundStatus carries the lifecycle enum.
         self::assertSame(
-            ['pending', 'processed', 'failed', 'cancelled'],
-            $props['refundStatus']['enum']
+            expected: ['pending', 'processed', 'failed', 'cancelled'],
+            actual: $props['refundStatus']['enum']
         );
 
         // Optional cancellation fields MUST NOT have been appended to the base
         // required list (the deep-merge concatenates list arrays).
         foreach (['appliedPolicy', 'refundAmount', 'refundStatus', 'refundedAt'] as $optional) {
             self::assertNotContains(
-                $optional,
-                $appt['required'],
-                'optional cancellation field '.$optional.' must not be required on Appointment'
+                needle: $optional,
+                haystack: $appt['required'],
+                message: 'optional cancellation field '.$optional.' must not be required on Appointment'
             );
         }
 
@@ -189,11 +200,11 @@ final class BookingsCancellationRulesFragmentTest extends TestCase
      */
     public function testSeedsExamplePolicies(): void
     {
-        $objects = $this->load($this->fragmentPath)['objects'];
+        $objects = $this->load(path: $this->fragmentPath)['objects'];
         $slugs   = array_map(static fn(array $o): string => (string) ($o['@self']['slug'] ?? ''), $objects);
 
         foreach (['policy-yoga-standard', 'policy-coaching-premium', 'policy-consult-standard'] as $slug) {
-            self::assertContains($slug, $slugs, 'missing seed policy '.$slug);
+            self::assertContains(needle: $slug, haystack: $slugs, message: 'missing seed policy '.$slug);
         }
 
         // The fixed-fee consultation policy snapshots a €50 fixed late fee.
@@ -205,10 +216,10 @@ final class BookingsCancellationRulesFragmentTest extends TestCase
             }
         }
 
-        self::assertNotNull($consult);
+        self::assertNotNull(actual: $consult);
         $lateBracket = $consult['lateFeeBrackets'][1];
-        self::assertSame('fixed', $lateBracket['feeType']);
-        self::assertSame(5000, $lateBracket['feeAmount']);
+        self::assertSame(expected: 'fixed', actual: $lateBracket['feeType']);
+        self::assertSame(expected: 5000, actual: $lateBracket['feeAmount']);
 
     }//end testSeedsExamplePolicies()
 }//end class
