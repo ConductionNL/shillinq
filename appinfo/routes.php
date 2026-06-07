@@ -1,5 +1,21 @@
 <?php
 
+/**
+ * Shillinq route registrations.
+ *
+ * @category AppInfo
+ * @package  OCA\Shillinq\AppInfo
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @link https://conduction.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 return [
@@ -21,6 +37,9 @@ return [
 
         // Trial balance (Tier 2): read-only per-account period aggregation.
         ['name' => 'trialBalance#index', 'url' => '/api/trial-balance', 'verb' => 'GET'],
+
+        // BADO audit aggregation — per-topic finding roll-up + proposed opinion (REQ-006, REQ-007).
+        ['name' => 'badoControleprotocol#aggregation', 'url' => '/api/bado/aggregation', 'verb' => 'GET'],
 
         // OSS (One-Stop-Shop, Tier 2): destination-country rate resolution + quarterly return generation.
         ['name' => 'oss#resolveRate', 'url' => '/api/oss/rate', 'verb' => 'GET'],

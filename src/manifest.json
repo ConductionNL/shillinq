@@ -396,25 +396,74 @@
 					"order": 10
 				},
 				{
+					"id": "BbvProgrammaplan",
+					"label": "Programmaplan",
+					"icon": "FolderTextOutline",
+					"route": "BbvProgrammaplan",
+					"order": 20
+				},
+				{
+					"id": "BbvMeerjarenraming",
+					"label": "Meerjarenraming",
+					"icon": "ChartTimelineVariant",
+					"route": "BbvMeerjarenraming",
+					"order": 30
+				},
+				{
+					"id": "BbvReserves",
+					"label": "Reserves",
+					"icon": "PiggyBankOutline",
+					"route": "BbvReserves",
+					"order": 40
+				},
+				{
+					"id": "BbvVoorzieningen",
+					"label": "Voorzieningen",
+					"icon": "ShieldOutline",
+					"route": "BbvVoorzieningen",
+					"order": 50
+				},
+				{
+					"id": "BbvMvaRegister",
+					"label": "MVA-register",
+					"icon": "OfficeBuildingOutline",
+					"route": "BbvMvaRegister",
+					"order": 60
+				},
+				{
+					"id": "BbvParagrafen",
+					"label": "Paragrafen",
+					"icon": "TextBoxOutline",
+					"route": "BbvParagrafen",
+					"order": 70
+				},
+				{
+					"id": "BbvSubsidies",
+					"label": "Subsidies (SiSa)",
+					"icon": "HandCoinOutline",
+					"route": "BbvSubsidies",
+					"order": 80
+				},
+				{
 					"id": "BbvMapping",
 					"label": "BBV-mapping",
 					"icon": "TableArrowRight",
 					"route": "BbvMapping",
-					"order": 20
+					"order": 90
 				},
 				{
 					"id": "BcfClaims",
 					"label": "BCF-claims",
 					"icon": "CashRefund",
 					"route": "BcfClaims",
-					"order": 30
+					"order": 100
 				},
 				{
 					"id": "SchatkistPositie",
 					"label": "Schatkist-positie",
 					"icon": "BankOutline",
 					"route": "SchatkistPositie",
-					"order": 40
+					"order": 110
 				}
 			]
 		},
@@ -479,8 +528,7 @@
 					"label": "Auditdocumenten",
 					"icon": "FileSignOutline",
 					"route": "AuditDocuments",
-					"order": 40
-				}
+					"order": 40				}
 			]
 		},
 		{
@@ -1952,6 +2000,339 @@
 			}
 		},
 		{
+			"id": "BbvProgrammaplan",
+			"route": "/bbv/programmaplan",
+			"type": "index",
+			"title": "Programmaplan",
+			"config": {
+				"register": "shillinq",
+				"schema": "Programma",
+				"visibility": {
+					"field": "administrationType",
+					"in": ["gemeente", "provincie", "waterschap"]
+				},
+				"columns": [
+					{ "key": "nummer", "label": "Nr.", "sortable": true },
+					{ "key": "naam", "label": "Naam", "sortable": true },
+					{ "key": "portefeuillehouder", "label": "Portefeuillehouder", "sortable": true },
+					{ "key": "boekjaar", "label": "Boekjaar", "sortable": true },
+					{ "key": "versie", "label": "Versie", "sortable": true },
+					{ "key": "lifecycleState", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "nummer",
+				"detailRoute": "BbvProgrammaplanDetail"
+			}
+		},
+		{
+			"id": "BbvProgrammaplanDetail",
+			"route": "/bbv/programmaplan/:id",
+			"type": "detail",
+			"title": "Programma",
+			"config": {
+				"register": "shillinq",
+				"schema": "Programma",
+				"fields": [
+					{ "key": "nummer", "label": "Programmanummer", "type": "integer" },
+					{ "key": "naam", "label": "Naam", "type": "string" },
+					{ "key": "omschrijving", "label": "Omschrijving", "type": "string" },
+					{ "key": "portefeuillehouder", "label": "Portefeuillehouder", "type": "string" },
+					{ "key": "taakvelden", "label": "Taakvelden", "type": "json" },
+					{ "key": "doelstellingen", "label": "Doelstellingen", "type": "json" },
+					{ "key": "beleidsindicatoren", "label": "Beleidsindicatoren", "type": "json" },
+					{ "key": "boekjaar", "label": "Boekjaar", "type": "integer" },
+					{ "key": "versie", "label": "Versie", "type": "string" },
+					{ "key": "raadsbesluitNummer", "label": "Raadsbesluit (override)", "type": "string" },
+					{ "key": "raadsbesluitDatum", "label": "Raadsbesluit datum", "type": "date" },
+					{ "key": "lifecycleState", "label": "Status", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "BbvProgrammaplan"
+			}
+		},
+		{
+			"id": "BbvMeerjarenraming",
+			"route": "/bbv/meerjarenraming",
+			"type": "index",
+			"title": "Meerjarenraming",
+			"config": {
+				"register": "shillinq",
+				"schema": "MeerjarenBudget",
+				"visibility": {
+					"field": "administrationType",
+					"in": ["gemeente", "provincie", "waterschap"]
+				},
+				"columns": [
+					{ "key": "programma", "label": "Programma", "sortable": true },
+					{ "key": "taakveld", "label": "Taakveld", "sortable": true },
+					{ "key": "economischeCategorie", "label": "Ec. cat.", "sortable": true },
+					{ "key": "boekjaar", "label": "Jaar T", "sortable": true },
+					{ "key": "meerjarenHorizon", "label": "Horizon", "sortable": true },
+					{ "key": "batenCents", "label": "Baten (ct)", "sortable": true },
+					{ "key": "lastenCents", "label": "Lasten (ct)", "sortable": true },
+					{ "key": "versie", "label": "Versie", "sortable": true }
+				],
+				"defaultSort": "boekjaar",
+				"detailRoute": "BbvMeerjarenramingDetail"
+			}
+		},
+		{
+			"id": "BbvMeerjarenramingDetail",
+			"route": "/bbv/meerjarenraming/:id",
+			"type": "detail",
+			"title": "Meerjarenbudget",
+			"config": {
+				"register": "shillinq",
+				"schema": "MeerjarenBudget",
+				"fields": [
+					{ "key": "programma", "label": "Programma", "type": "string" },
+					{ "key": "taakveld", "label": "Taakveld", "type": "string" },
+					{ "key": "economischeCategorie", "label": "Economische categorie", "type": "string" },
+					{ "key": "boekjaar", "label": "Basisjaar T", "type": "integer" },
+					{ "key": "meerjarenHorizon", "label": "Horizon (0-3)", "type": "integer" },
+					{ "key": "batenCents", "label": "Baten (eurocent)", "type": "integer" },
+					{ "key": "lastenCents", "label": "Lasten (eurocent)", "type": "integer" },
+					{ "key": "mutatieReservesCents", "label": "Mutatie reserves (eurocent)", "type": "integer" },
+					{ "key": "incidenteelBatenCents", "label": "Incidentele baten (eurocent)", "type": "integer" },
+					{ "key": "incidenteelLastenCents", "label": "Incidentele lasten (eurocent)", "type": "integer" },
+					{ "key": "versie", "label": "Versie", "type": "string" },
+					{ "key": "toelichting", "label": "Toelichting", "type": "string" },
+					{ "key": "stelselwijziging", "label": "Stelselwijziging", "type": "boolean" }
+				],
+				"indexRoute": "BbvMeerjarenraming"
+			}
+		},
+		{
+			"id": "BbvReserves",
+			"route": "/bbv/reserves",
+			"type": "index",
+			"title": "Reserves",
+			"config": {
+				"register": "shillinq",
+				"schema": "Reserve",
+				"visibility": {
+					"field": "administrationType",
+					"in": ["gemeente", "provincie", "waterschap"]
+				},
+				"columns": [
+					{ "key": "naam", "label": "Naam", "sortable": true },
+					{ "key": "soort", "label": "Soort", "sortable": true },
+					{ "key": "plafondCents", "label": "Plafond (ct)", "sortable": true },
+					{ "key": "saldoBeginJaarCents", "label": "Saldo begin (ct)", "sortable": true },
+					{ "key": "saldoEindJaarCents", "label": "Saldo eind (ct)", "sortable": true }
+				],
+				"defaultSort": "naam",
+				"detailRoute": "BbvReserveDetail"
+			}
+		},
+		{
+			"id": "BbvReserveDetail",
+			"route": "/bbv/reserves/:id",
+			"type": "detail",
+			"title": "Reserve",
+			"config": {
+				"register": "shillinq",
+				"schema": "Reserve",
+				"fields": [
+					{ "key": "naam", "label": "Naam", "type": "string" },
+					{ "key": "soort", "label": "Soort", "type": "string" },
+					{ "key": "doel", "label": "Doel", "type": "string" },
+					{ "key": "raadsbesluitInstelling", "label": "Raadsbesluit instelling", "type": "string" },
+					{ "key": "plafondCents", "label": "Plafond (eurocent)", "type": "integer" },
+					{ "key": "bodemCents", "label": "Bodem (eurocent)", "type": "integer" },
+					{ "key": "looptijdEinde", "label": "Looptijd einde", "type": "date" },
+					{ "key": "rentetoerekening", "label": "Rentetoerekening", "type": "boolean" },
+					{ "key": "saldoBeginJaarCents", "label": "Saldo begin jaar (eurocent)", "type": "integer" },
+					{ "key": "saldoEindJaarCents", "label": "Saldo eind jaar (eurocent)", "type": "integer" }
+				],
+				"indexRoute": "BbvReserves"
+			}
+		},
+		{
+			"id": "BbvVoorzieningen",
+			"route": "/bbv/voorzieningen",
+			"type": "index",
+			"title": "Voorzieningen",
+			"config": {
+				"register": "shillinq",
+				"schema": "Voorziening",
+				"visibility": {
+					"field": "administrationType",
+					"in": ["gemeente", "provincie", "waterschap"]
+				},
+				"columns": [
+					{ "key": "naam", "label": "Naam", "sortable": true },
+					{ "key": "bbvArtikel44Categorie", "label": "Art. 44 cat.", "sortable": true },
+					{ "key": "taakveld", "label": "Taakveld", "sortable": true },
+					{ "key": "saldoEindJaarCents", "label": "Saldo eind (ct)", "sortable": true },
+					{ "key": "volgendeActualisatie", "label": "Actualisatie", "sortable": true }
+				],
+				"defaultSort": "naam",
+				"detailRoute": "BbvVoorzieningDetail"
+			}
+		},
+		{
+			"id": "BbvVoorzieningDetail",
+			"route": "/bbv/voorzieningen/:id",
+			"type": "detail",
+			"title": "Voorziening",
+			"config": {
+				"register": "shillinq",
+				"schema": "Voorziening",
+				"fields": [
+					{ "key": "naam", "label": "Naam", "type": "string" },
+					{ "key": "bbvArtikel44Categorie", "label": "BBV art. 44 categorie", "type": "string" },
+					{ "key": "onderbouwingDocument", "label": "Onderbouwing", "type": "link" },
+					{ "key": "actualisatieFrequentieJaar", "label": "Actualisatiefrequentie (jaar)", "type": "integer" },
+					{ "key": "volgendeActualisatie", "label": "Volgende actualisatie", "type": "date" },
+					{ "key": "taakveld", "label": "Gekoppeld taakveld", "type": "string" },
+					{ "key": "saldoBeginJaarCents", "label": "Saldo begin jaar (eurocent)", "type": "integer" },
+					{ "key": "dotatiesJaarCents", "label": "Dotaties (eurocent)", "type": "integer" },
+					{ "key": "vrijvallenJaarCents", "label": "Vrijvallen (eurocent)", "type": "integer" },
+					{ "key": "saldoEindJaarCents", "label": "Saldo eind jaar (eurocent)", "type": "integer" }
+				],
+				"indexRoute": "BbvVoorzieningen"
+			}
+		},
+		{
+			"id": "BbvMvaRegister",
+			"route": "/bbv/mva-register",
+			"type": "index",
+			"title": "MVA-register",
+			"config": {
+				"register": "shillinq",
+				"schema": "MaterieleVasteActiva",
+				"visibility": {
+					"field": "administrationType",
+					"in": ["gemeente", "provincie", "waterschap"]
+				},
+				"columns": [
+					{ "key": "omschrijving", "label": "Omschrijving", "sortable": true },
+					{ "key": "mvaCategorie", "label": "Categorie", "sortable": true },
+					{ "key": "aanschafwaardeCents", "label": "Aanschaf (ct)", "sortable": true },
+					{ "key": "ingebruiknameDatum", "label": "Ingebruikname", "sortable": true },
+					{ "key": "afschrijvingstermijnJaar", "label": "Termijn (jr)", "sortable": true },
+					{ "key": "boekwaardeBeginJaarCents", "label": "Boekwaarde (ct)", "sortable": true }
+				],
+				"defaultSort": "omschrijving",
+				"detailRoute": "BbvMvaRegisterDetail"
+			}
+		},
+		{
+			"id": "BbvMvaRegisterDetail",
+			"route": "/bbv/mva-register/:id",
+			"type": "detail",
+			"title": "Materieel vast actief",
+			"config": {
+				"register": "shillinq",
+				"schema": "MaterieleVasteActiva",
+				"fields": [
+					{ "key": "omschrijving", "label": "Omschrijving", "type": "string" },
+					{ "key": "mvaCategorie", "label": "MVA-categorie", "type": "string" },
+					{ "key": "aanschafwaardeCents", "label": "Aanschafwaarde (eurocent)", "type": "integer" },
+					{ "key": "subsidieVanDerdenCents", "label": "Subsidie van derden (eurocent)", "type": "integer" },
+					{ "key": "ingebruiknameDatum", "label": "Ingebruikname", "type": "date" },
+					{ "key": "afschrijvingsmethode", "label": "Afschrijvingsmethode", "type": "string" },
+					{ "key": "afschrijvingstermijnJaar", "label": "Afschrijvingstermijn (jaar)", "type": "integer" },
+					{ "key": "restwaardeCents", "label": "Restwaarde (eurocent)", "type": "integer" },
+					{ "key": "renteOmslagPercentage", "label": "Rente-omslag %", "type": "number" },
+					{ "key": "taakveld", "label": "Taakveld", "type": "string" },
+					{ "key": "kredietbesluit", "label": "Kredietbesluit", "type": "string" },
+					{ "key": "componentenMethode", "label": "Componentenmethode", "type": "boolean" },
+					{ "key": "boekwaardeBeginJaarCents", "label": "Boekwaarde begin jaar (eurocent)", "type": "integer" },
+					{ "key": "afschrijvingJaarCents", "label": "Afschrijving jaar (eurocent)", "type": "integer" }
+				],
+				"indexRoute": "BbvMvaRegister"
+			}
+		},
+		{
+			"id": "BbvParagrafen",
+			"route": "/bbv/paragrafen",
+			"type": "index",
+			"title": "Paragrafen",
+			"config": {
+				"register": "shillinq",
+				"schema": "Paragraaf",
+				"visibility": {
+					"field": "administrationType",
+					"in": ["gemeente", "provincie", "waterschap"]
+				},
+				"columns": [
+					{ "key": "type", "label": "Paragraaf", "sortable": true },
+					{ "key": "boekjaar", "label": "Boekjaar", "sortable": true },
+					{ "key": "weerstandsratio", "label": "Weerstandsratio", "sortable": true },
+					{ "key": "compleet", "label": "Compleet", "sortable": true }
+				],
+				"defaultSort": "type",
+				"detailRoute": "BbvParagraafDetail"
+			}
+		},
+		{
+			"id": "BbvParagraafDetail",
+			"route": "/bbv/paragrafen/:id",
+			"type": "detail",
+			"title": "Paragraaf",
+			"config": {
+				"register": "shillinq",
+				"schema": "Paragraaf",
+				"fields": [
+					{ "key": "type", "label": "Type", "type": "string" },
+					{ "key": "boekjaar", "label": "Boekjaar", "type": "integer" },
+					{ "key": "inhoud", "label": "Inhoud", "type": "string" },
+					{ "key": "weerstandsratio", "label": "Weerstandsratio", "type": "number" },
+					{ "key": "compleet", "label": "Compleet", "type": "boolean" }
+				],
+				"indexRoute": "BbvParagrafen"
+			}
+		},
+		{
+			"id": "BbvSubsidies",
+			"route": "/bbv/subsidies",
+			"type": "index",
+			"title": "Subsidies (SiSa)",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"visibility": {
+					"field": "administrationType",
+					"in": ["gemeente", "provincie", "waterschap"]
+				},
+				"columns": [
+					{ "key": "regelingNaam", "label": "Regeling", "sortable": true },
+					{ "key": "subsidieSoort", "label": "Soort", "sortable": true },
+					{ "key": "sisaIndicator", "label": "SiSa-indicator", "sortable": true },
+					{ "key": "beschikkingNummer", "label": "Beschikking", "sortable": true },
+					{ "key": "bedragVastgesteldCents", "label": "Vastgesteld (ct)", "sortable": true }
+				],
+				"defaultSort": "regelingNaam",
+				"detailRoute": "BbvSubsidieDetail"
+			}
+		},
+		{
+			"id": "BbvSubsidieDetail",
+			"route": "/bbv/subsidies/:id",
+			"type": "detail",
+			"title": "Subsidie",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"fields": [
+					{ "key": "subsidieSoort", "label": "Subsidiesoort", "type": "string" },
+					{ "key": "regelingNaam", "label": "Regeling", "type": "string" },
+					{ "key": "sisaIndicator", "label": "SiSa-indicator", "type": "string" },
+					{ "key": "verstrekkerOfOntvanger", "label": "Tegenpartij", "type": "string" },
+					{ "key": "beschikkingNummer", "label": "Beschikkingnummer", "type": "string" },
+					{ "key": "bedragVerleendCents", "label": "Verleend (eurocent)", "type": "integer" },
+					{ "key": "bedragVastgesteldCents", "label": "Vastgesteld (eurocent)", "type": "integer" },
+					{ "key": "bedragGerealiseerdCents", "label": "Gerealiseerd (eurocent)", "type": "integer" },
+					{ "key": "taakveld", "label": "Taakveld", "type": "string" },
+					{ "key": "economischeCategorie", "label": "Economische categorie", "type": "string" },
+					{ "key": "verleningsdatum", "label": "Verleningsdatum", "type": "date" },
+					{ "key": "beeindigingsdatum", "label": "Beeindigingsdatum", "type": "date" }
+				],
+				"indexRoute": "BbvSubsidies"
+			}
+		},
+		{
 			"id": "GeneralLedger",
 			"route": "/general-ledger",
 			"type": "index",
@@ -2208,8 +2589,7 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "Journals"
-			}
+				"indexRoute": "Journals"			}
 		},
 		{
 			"id": "ChartOfAccounts",
@@ -2477,6 +2857,26 @@
 						"key": "vatApplicable",
 						"label": "VAT Applicable",
 						"type": "boolean"
+					},
+					{
+						"key": "rgsDecentraalCode",
+						"label": "RGS-decentraal code",
+						"type": "string"
+					},
+					{
+						"key": "taakveld",
+						"label": "Taakveld",
+						"type": "string"
+					},
+					{
+						"key": "economischeCategorie",
+						"label": "Economische categorie",
+						"type": "string"
+					},
+					{
+						"key": "bbvClassificatie",
+						"label": "BBV-classificatie",
+						"type": "string"
 					},
 					{
 						"key": "description",

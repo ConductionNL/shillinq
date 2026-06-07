@@ -9,14 +9,14 @@
 
 ## Tasks
 
-- [ ] **Task 1: Verify no prior BADO capability exists**
+- [x] **Task 1: Verify no prior BADO capability exists**
   Confirm no `bookkeeping-bado-controleprotocol` capability spec already exists;
   verify no `Controleprotocol`, `ToleranceMatrix`, `Materialiteit`, `AuditSample`,
   `AuditFinding`, `VerklaringDraft`, `SiSaAssurance` schemas are declared in
   `lib/Settings/shillinq_register.json`; verify no `lib/Service/Audit*`,
   `lib/Service/Protocol*` PHP classes present (per ADR-031 anti-pattern).
 
-- [ ] **Task 2: Author `specs/bookkeeping-bado-controleprotocol/spec.md`**
+- [x] **Task 2: Author `specs/bookkeeping-bado-controleprotocol/spec.md`**
   Create specification with:
   - Header: `Status: proposed`, `Scope: Shillinq`, `Tier: T3 (regulatory + compliance)`
   - Dependencies: bookkeeping-programmabegroting, bookkeeping-bbv-compliance,
@@ -28,7 +28,7 @@
   - Lifecycle state diagrams (protocol states, finding states)
   - Entity definitions cross-referencing ADR-000
 
-- [ ] **Task 3: Author `proposal.md`**
+- [x] **Task 3: Author `proposal.md`**
   Create proposal with:
   - Summary of BADO operationalisation as machine-readable, versioned artefact
   - 7 new registers (Controleprotocol, ToleranceMatrix, Materialiteit,
@@ -43,7 +43,7 @@
     finding escalation, scope limitation)
   - Dependencies and Success Criteria
 
-- [ ] **Task 4: Author `design.md`**
+- [x] **Task 4: Author `design.md`**
   Create design document with:
   - Context on BADO audit cycle (protocol adoption → sample extraction →
     finding classification → opinion formation → publication)
@@ -75,7 +75,7 @@
     NV COS 700, Kadernota Rechtmatigheid, Notitie Materialiteit en Tolerantie,
     AFM Toezicht, iBoxx AA index)
 
-- [ ] **Task 5: Declare `Controleprotocol` schema in `lib/Settings/shillinq_register.json`**
+- [x] **Task 5: Declare `Controleprotocol` schema in `lib/Settings/shillinq_register.json`**
   Define schema with fields:
   - `version` (string, required): Protocol version (e.g., "2026.1")
   - `auditYear` (integer, required): Audit year (e.g., 2026)
@@ -93,7 +93,7 @@
   - Lifecycle: draft → in-review → adopted → superseded
   - Validation: organisationId + auditYear must be unique across adopted protocols
 
-- [ ] **Task 6: Declare `ToleranceMatrix` schema in `lib/Settings/shillinq_register.json`**
+- [x] **Task 6: Declare `ToleranceMatrix` schema in `lib/Settings/shillinq_register.json`**
   Define schema with fields:
   - `protocol` (FK, required): Reference to Controleprotocol
   - `topic` (string, required): Programma / taakveld / SiSa-regeling code
@@ -109,7 +109,7 @@
     3% qualification)
   - On creation: Auto-populate 6 default rows if protocol.status=draft
 
-- [ ] **Task 7: Declare `Materialiteit` schema in `lib/Settings/shillinq_register.json`**
+- [x] **Task 7: Declare `Materialiteit` schema in `lib/Settings/shillinq_register.json`**
   Define schema with fields:
   - `protocol` (FK, required): Reference to Controleprotocol
   - `scope` (enum, required): overall/programma/taakveld/sisa
@@ -120,7 +120,7 @@
   - Lifecycle: draft (editable) → frozen (immutable) on protocol adoption
   - Validation: percentage must be <= 1.0 (Notitie Materialiteit en Tolerantie)
 
-- [ ] **Task 8: Declare `AuditSample` schema in `lib/Settings/shillinq_register.json`**
+- [x] **Task 8: Declare `AuditSample` schema in `lib/Settings/shillinq_register.json`**
   Define schema with fields:
   - `protocol` (FK, required): Reference to Controleprotocol
   - `population` (string, required): Description of population (e.g., "invoices
@@ -134,7 +134,7 @@
   - Backed by OpenRegister query against grootboekposten; query re-executable
     using the seed
 
-- [ ] **Task 9: Declare `AuditFinding` schema in `lib/Settings/shillinq_register.json`**
+- [x] **Task 9: Declare `AuditFinding` schema in `lib/Settings/shillinq_register.json`**
   Define schema with fields:
   - `sample` (FK, required): Reference to AuditSample
   - `transaction` (FK, required): Reference to grootboekpost
@@ -152,7 +152,7 @@
   - Lifecycle: open → agreed (controller response) / disputed (escalation) →
     resolved (both axes resolved)
 
-- [ ] **Task 10: Declare `VerklaringDraft` schema in `lib/Settings/shillinq_register.json`**
+- [x] **Task 10: Declare `VerklaringDraft` schema in `lib/Settings/shillinq_register.json`**
   Define schema with fields:
   - `protocol` (FK, required): Reference to Controleprotocol
   - `aggregatedFindings` (JSON, computed): Findings rolled up by topic/programme,
@@ -167,7 +167,7 @@
   - Validation: All findings must have status=agreed or resolved before verklaring
     can be signed
 
-- [ ] **Task 11: Declare `SiSaAssurance` schema in `lib/Settings/shillinq_register.json`**
+- [x] **Task 11: Declare `SiSaAssurance` schema in `lib/Settings/shillinq_register.json`**
   Define schema with fields:
   - `protocol` (FK, required): Reference to Controleprotocol
   - `regelingCode` (string, required): SiSa-bijlage 1, 2, … code
@@ -180,7 +180,7 @@
   - Validation: assuranceLevel = financial-statement implies full BADO audit
     scope; sisa-specific implies regeling-level procedures only
 
-- [ ] **Task 12: Implement finding aggregation query per REQ-006**
+- [x] **Task 12: Implement finding aggregation query per REQ-006**
   Declare `x-openregister-aggregations` query that:
   - Groups AuditFinding records by topic (programma / taakveld)
   - Counts findings by severity (acceptabel / te-corrigeren / materieel)
@@ -189,7 +189,7 @@
   - Per REQ-006 scenario: €1.4M rechtmatigheid exception below ceiling →
     acceptable; €0.3M getrouwheid exception below ceiling → acceptable
 
-- [ ] **Task 13: Implement opinion derivation per REQ-007**
+- [x] **Task 13: Implement opinion derivation per REQ-007**
   Declare `x-openregister-calculations` formula that:
   - Applies BADO decision tree from REQ-007 scenario
   - IF no materieel findings AND no onzekerheden above ceiling
@@ -202,7 +202,7 @@
   - Auditor override allowed with explicit rationale; override triggers
     escalation task
 
-- [ ] **Task 14: Implement protocol adoption lifecycle per REQ-004**
+- [x] **Task 14: Implement protocol adoption lifecycle per REQ-004**
   Declare `x-openregister-lifecycle` state machine on Controleprotocol:
   - draft → in-review: Tolerantie ceilings + materialiteit locked; CFO + auditor
     sign-off fields required
@@ -213,7 +213,7 @@
   - Validation on in-review → adopted: adoptionDecision reference valid +
     contains besluitnummer + datum
 
-- [ ] **Task 15: Implement OpenConnector event emission per REQ-009**
+- [x] **Task 15: Implement OpenConnector event emission per REQ-009**
   Define three events:
   - **audit.protocol.adopted**: Emitted on Controleprotocol.status transition
     to adopted; payload: organisation_id, audit_year, effective_from, effective_to
@@ -240,7 +240,7 @@
   - Output: Single timestamped, signed PDF/A file suitable for AFM + provincial
     toezicht archive
 
-- [ ] **Task 17: Implement SiSa-bijlage IIA export linkage per REQ-008**
+- [x] **Task 17: Implement SiSa-bijlage IIA export linkage per REQ-008**
   Declare aggregation query that:
   - Reads completed SiSaAssurance records per protocol
   - Extracts per-regeling assurance level + linked AuditFinding summary
@@ -250,7 +250,7 @@
   - Validation: All SiSa-regelingen in protocol.scope must have ≥1 SiSaAssurance
     child before VerklaringDraft.status can = signed
 
-- [ ] **Task 18: Implement finding status workflow per REQ-006**
+- [x] **Task 18: Implement finding status workflow per REQ-006**
   Declare `x-openregister-lifecycle` state machine on AuditFinding:
   - open → agreed: Controller response (controllerResponse field) required; auto-
     transition if auditor accepts (auditorConclusion = "accepted")
@@ -261,7 +261,7 @@
   - Validation on resolved: Both axes (rechtmatigheid, getrouwheid) must have
     severity classification + amount
 
-- [ ] **Task 19: Add manifest navigation entries**
+- [x] **Task 19: Add manifest navigation entries**
   Register 4 new navigation items in shillinq-manifest.json:
   - "Audit Protocols" → list Controleprotocol records; actions: create draft,
     submit for review, view adopted
@@ -335,3 +335,31 @@
   - BADO decision-tree logic (four-point scale opinion derivation)
   - Integration points (openregister, OpenConnector, docudesk, AFM lookups)
   - Testing strategy (unit, integration, end-to-end scenarios)
+
+## Deferred (documented)
+
+The hydra build implemented tasks 1–15, 17, 18 and 19 declaratively + via the
+ADR-031 exception-path service (`BadoControleprotocolService` +
+`BadoControleprotocolCalculator`), the read-only aggregation API
+(`BadoControleprotocolController`), the `register.d` fragment (7 schemas,
+lifecycle, RBAC, events, aggregations/calculations, worked-example seeds), the
+`manifest.d` navigation fragment (4 entries + list/detail pages) and additive
+nl+en i18n, with pure-logic PHPUnit coverage of the tolerance-ceiling,
+severity-classification, finding-aggregation, opinion-derivation and four-eye
+rules. The following remain deferred:
+
+- **Task 16 (accountantsdossier PDF/A export + PKIO signing)** — deferred: the
+  PDF/A bundling + qualified-signature step depends on the docudesk document
+  service and external PKI infrastructure that is not available in this build
+  context. The bundle's *data* is already fully traceable through the seven
+  registers + the aggregation endpoint; only the document assembly/signing glue
+  is outstanding.
+- **Tasks 20–22 (integration tests: end-to-end workflow, SiSa-bijlage IIA,
+  finding escalation)** — deferred: these exercise live OpenRegister object
+  lifecycle + OpenConnector event emission + PKI verification against a running
+  instance; they belong to a container/e2e harness, not the pure-logic unit
+  suite. The decision logic they would assert is already unit-tested in
+  `BadoControleprotocolCalculatorTest`.
+- **Tasks 23–24 (user + developer documentation)** — deferred per fleet policy
+  (docs are authored in a dedicated `/journeydoc` / `sync-docs` pass, not in the
+  implementation PR).
