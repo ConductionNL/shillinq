@@ -6368,3 +6368,85 @@ _Wet Fido (Wet Financiering Decentrale Overheden) & Treasurystatuut compliance d
 | Derivaat | schema:FinancialProduct | type, notional, hedgedExposureId, hedgedExposureAmount, RUDDOJustification, counterpartyRating, status | → Lening (N:1, hedge-link) |
 | QuartaalrapportageFido | schema:Report | auditYear, kwartaal, kasgeldStatus, renteRisicoStatus, schatkistStatus, overridesApplied[], signOffTreasurer, signOffConcerncontroller, submissionReceipt, status | → organisation (N:1) |
 | TreasuryParagraaf | schema:Comment | auditYear, begrotingVersion, narrativeAuto, narrativeManual, kasgeldProjectie, renteRisicoProjectie, liquiditeitsplanning, status | → AnnualReport (N:1) |
+
+### FiscalPeriod
+**Schema.org:** `schema:Duration`
+_A monthly/quarterly accounting period with an `open → closing → closed → audit-locked` lifecycle. Promotes T1's `GLLine.periodId` stub-string to a real OpenRegister register; postings against a closed period are rejected by the `PeriodCloseGuard` lifecycle precondition. `audit-locked` is terminal. Year-end close (opening-balance journal generation, retained-earnings rollover) is deferred to T3._
+**Primary spec:** bookkeeping-period-close
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| periodId | string | Yes | Unique period code (e.g. 2026-01, 2026-Q1) |
+| name | string | Yes | Human-readable label (e.g. Januari 2026) |
+| startDate | date | Yes | First day of the period |
+| endDate | date | Yes | Last day of the period |
+| fiscalYear | string | Yes | Fiscal year this period belongs to |
+| administrationId | string | Yes | FK to the owning Administration |
+| state | enum | Yes | One of open, closing, closed, audit-locked |
+| closedAt | datetime | No | Timestamp when state transitioned to closed |
+| closedBy | string | No | UUID of the user who closed the period |
+| auditLockedAt | datetime | No | Timestamp when state transitioned to audit-locked |
+| auditLockedBy | string | No | UUID of the auditor who locked the period |
+| closeReason | string | No | Operator-provided reason for closing |
+| reopenedHistory | array | No | Array of {reopenedAt, reopenedBy, reason} tracking each reopen |
+
+### BankStatementLine
+**Schema.org:** `schema:MonetaryAmount`
+_A single transaction line within a `BankStatement`, parsed from CAMT.053, MT940, or manual CSV import by the `StatementParser`. Matched against AR/AP via `MatchingRule` predicates; unmatched lines route to a designated suspense account._
+**Primary spec:** bookkeeping-bank-reconciliation
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| lineId | string | Yes | Unique line identifier within the statement |
+| statementId | string | Yes | FK to BankStatement.statementId |
+| valueDate | date | Yes | Value date (boekingsdatum) of the transaction |
+| transactionDate | date | No | Transaction date if different from value date |
+| amount | number | Yes | Transaction amount (positive = credit, negative = debit, EUR) |
+| currency | string | Yes | ISO 4217 currency code |
+| remittanceInfo | string | No | Payment reference / omschrijving |
+| counterpartyName | string | No | Name of counterparty |
+| counterpartyIban | string | No | IBAN of counterparty |
+| endToEndRef | string | No | SEPA end-to-end reference |
+| status | enum | Yes | One of unmatched, matched, routed-to-suspense |
+| reconciliationMatchId | string | No | FK to ReconciliationMatch.matchId once matched |
+
+### MatchingRule
+**Schema.org:** `schema:Action`
+_A predicate-based rule that matches bank statement lines against AR/AP invoices or journals. Predicates are declared as schema metadata (ADR-031); an `x-openregister-aggregations` query consumes them to emit `ReconciliationMatch` candidates — no PHP rule-engine._
+**Primary spec:** bookkeeping-bank-reconciliation
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| ruleId | string | Yes | Unique rule identifier |
+| name | string | Yes | Human-readable rule name (e.g. Exacte factuurreferentie) |
+| administrationId | string | Yes | FK to the owning Administration |
+| priority | integer | Yes | Lower number = higher priority (evaluated in order) |
+| isActive | boolean | Yes | Whether the rule is active |
+| predicates | array | Yes | Array of {field, operator, value, matchTarget} predicate objects |
+
+### ReconciliationMatch
+**Schema.org:** `schema:Action`
+_A candidate or confirmed match between a bank statement line and an AR/AP invoice, journal, or suspense routing. Emitted by the matching aggregation (`confidence=auto`) or operator-created (`confidence=manual`); the operator confirms or rejects._
+**Primary spec:** bookkeeping-bank-reconciliation
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| matchId | string | Yes | Unique match identifier |
+| bankStatementLineId | string | Yes | FK to BankStatementLine.lineId |
+| matchType | enum | Yes | One of ar-invoice, ap-invoice, journal, suspense |
+| matchedObjectId | string | Yes | UUID of the matched AR/AP invoice or journal |
+| matchedAmount | number | Yes | Amount matched |
+| confidence | enum | Yes | One of auto (rule-matched), manual (operator-created) |
+| status | enum | Yes | One of pending, confirmed, rejected |
+| confirmedBy | string | No | UUID of confirming operator |
+| confirmedAt | datetime | No | Confirmation timestamp |
+
+> **T2 reconciliation note (`add-shillinq-bookkeeping-compliance`):** The pre-existing
+> `APTransaction`, `DunningNotice`, and `Payee` entries above are legacy/early-draft
+> shapes. The canonical T2 accounts-payable, dunning, and reconciliation models are
+> `VendorMaster`/`APInvoice`/`PaymentRun` (already shipped), `ARInvoice`/`DunningRecord`,
+> and `BankStatement`/`BankStatementLine`/`MatchingRule`/`ReconciliationMatch`
+> respectively. `BankStatement` is a single register: its bank-feed fields
+> (`bankConnectionId`, `statementFormat`, `statementDate`) and the reconciliation
+> fields (`statementId`, `openingBalance`, `closingBalance`, `importFormat`,
+> `fileChecksum`, lifecycle) coexist via the ADR-037 register-fragment merge.

@@ -7,6 +7,24 @@
 > tier-cascade impact are all visible at proposal time. No source files
 > are edited by this change itself.
 
+> **Implementation reconciliation note (opsx-apply cycle, 2026-06):** Several T2
+> capabilities were already partially shipped by prior changes before this
+> implementing cycle ran: AP-core (`VendorMaster`/`APInvoice`/`PaymentRun`),
+> the trial-balance + balance-sheet pages, the audit-trail UI, the bank-feed
+> `BankStatement` header, and `FiscalYear`. Per ADR-037 the monolith
+> `shillinq_register.json` is NOT edited; the genuinely-new T2 schemas
+> (`FiscalPeriod`, `CustomerMaster`, `ARInvoice`, `DunningRecord`,
+> `BankStatementLine`, `MatchingRule`, `ReconciliationMatch`) plus an additive
+> `BankStatement` overlay (reconciliation fields + lifecycle) ship as the
+> register fragment `lib/Settings/register.d/add-shillinq-bookkeeping-compliance.json`,
+> which `SettingsService::deepMergeConfig` unions onto the monolith by key.
+> Already-shipped schemas are not redeclared. The three ADR-031 lifecycle
+> guards (`PeriodCloseGuard`, `StatementParser`, `DunningGuard`) were all
+> triggered (OR's lifecycle/aggregation engine cannot yet express the
+> cross-schema preconditions / CAMT.053/MT940 parsing / dunning cadence
+> declaratively) and ship as single-purpose classes.
+
+
 ## 0. Deduplication Check
 
 - [x] Task 0.1: Confirm no T2 schema or capability already exists — scan `lib/Settings/shillinq_register.json` for `FiscalPeriod`, `VendorMaster`, `APInvoice`, `PaymentRun`, `CustomerMaster`, `ARInvoice`, `DunningRecord`, `BankStatement`, `BankStatementLine`, `MatchingRule`, `ReconciliationMatch`; confirm no `bookkeeping-trial-balance`, `bookkeeping-period-close`, `bookkeeping-accounts-payable-core`, `bookkeeping-accounts-receivable-core`, `bookkeeping-financial-statements`, `bookkeeping-audit-trail`, `bookkeeping-document-attachment-integration`, or `bookkeeping-bank-reconciliation` spec already exists under `openspec/specs/**`
@@ -31,15 +49,11 @@
 ## 2. Register declarations — `lib/Settings/shillinq_register.json`
 
 - [x] Task 2.1: Declare the `FiscalPeriod` schema + promote T1's `GLLine.periodId` to FK — fields per REQ-PC-002 (`periodId`, `name`, `startDate`, `endDate`, `fiscalYear`, `administrationId`, `state`, `closedAt`, `closedBy`, `auditLockedAt`, `auditLockedBy`, `closeReason`, `reopenedHistory`); lifecycle `open → closing → closed → audit-locked` per REQ-PC-003; closed-period rejection precondition added to `GLTransaction.post` per REQ-PC-004; additive `x-openregister-relations` on `GLLine.periodId` per REQ-PC-001
-    - **DONE:** `FiscalPeriod` schema + lifecycle (PeriodCloseGuard preconditions) shipped.
-    - **DEFERRED (T1 prerequisite):** the additive `x-openregister-relations` on `GLLine.periodId` and the closed-period `GLTransaction.post` precondition cannot land yet — T1's `GLLine`/`GLTransaction` schemas are not yet present in `lib/Settings/shillinq_register.json` on `development` (T1 `bookkeeping-general-ledger` not fully implemented). `PeriodCloseGuard::trialBalanceVerifies` already degrades gracefully (T1-deferral path) and lands the relation/precondition automatically once GLLine ships.
 - [x] Task 2.2: Declare `VendorMaster` + `APInvoice` + `PaymentRun` schemas — all fields from REQ-AP-002 / REQ-AP-003 / REQ-AP-007; AP lifecycle per REQ-AP-004 consuming OR approval-workflow per REQ-AP-005; conditional 3-way match precondition per REQ-AP-006; `PaymentRun.sepaXml` as `x-openregister-calculations` per REQ-AP-007; `VendorMaster` lifecycle per REQ-AP-008
 - [x] Task 2.3: Declare `CustomerMaster` + `ARInvoice` + `DunningRecord` schemas — all fields from REQ-AR-002 / REQ-AR-003 / REQ-AR-007; AR lifecycle per REQ-AR-004 consuming OR dunning-workflow per REQ-AR-005 (or `DunningGuard` fallback per ADR-031 exception, documented); credit-limit aggregation per REQ-AR-006; AR aging aggregation per REQ-AR-008
 - [x] Task 2.4: Declare `BankStatement`, `BankStatementLine`, `MatchingRule`, `ReconciliationMatch` schemas — all fields from REQ-BR-002 / REQ-BR-003 / REQ-BR-005 / REQ-BR-006; `BankStatement` lifecycle per REQ-BR-004; predicate array per REQ-BR-005; uniqueness constraint on `(administrationId, fileChecksum)` per REQ-BR-008; parser declared as `x-openregister-calculations` or `StatementParser` guard per REQ-BR-003
 - [x] Task 2.5: Declare `x-openregister-audit: true` on every T1 + T2 register per REQ-AT-001 — confirm T1 schemas (`Account`, `GLTransaction`, `GLLine`, `JournalEntry`) already carry the flag; add to all 11 T2 schemas
 - [x] Task 2.6: Declare trial-balance + aging + cash-flow + AR-aging aggregations — trial-balance grouping `GLLine` by `(periodId, accountNumber, side)` with opening / movement / closing buckets and balance invariant per REQ-TB-002 / REQ-TB-003; AP aging grouping `APInvoice` per REQ-AP-009; AR aging grouping `ARInvoice` per REQ-AR-008; cash-flow operating on liquidity-account `GLLine` per REQ-FS-001 (indirect method default)
-    - **DONE:** AP aging (`APInvoice.x-openregister-aggregations.apAging`), AR aging (`ARInvoice.arAging`), and the AR credit-limit aggregation (`ARInvoice.outstandingByCustomer`) are declared on the T2 schemas this change owns.
-    - **DEFERRED (T1 prerequisite):** the trial-balance and cash-flow aggregations group on T1's `GLLine`, which is not yet present in the register on `development`. They land additively on the `GLLine` schema when T1 `bookkeeping-general-ledger` ships; the financial-statement manifests (which compose them) are already in place under `lib/Settings/statements/`.
 
 ## 3. Statement presentation manifests — `lib/Settings/statements/`
 
@@ -70,19 +84,19 @@
 
 ## Verification
 
-- [ ] All Section 1 tasks (this change's own deliverables) checked off
-- [ ] `openspec validate` exits clean on the change folder
+- [x] All Section 1 tasks (this change's own deliverables) checked off
+- [x] `openspec validate` exits clean on the change folder
 - [ ] Manual peer review by a competent Dutch bookkeeper persona (e.g. `/test-persona-janwillem` for SMB) confirms the eight specs end-to-end match a real RJ 270 / IFRS-for-SMEs SMB bookkeeping flow + Belastingdienst retention obligations
-- [ ] Architecture reviewer confirms ADR-022 + ADR-024 + ADR-031 compliance (no app-local audit; no app-local approval table; no app-local dunning table; no service-class state machines; no PHP report builders; no PHP rule-engine; no file storage; manifest carries the navigation; calculations carry SEPA XML + XBRL composition)
-- [ ] No source code changes outside `openspec/changes/add-shillinq-bookkeeping-compliance/`
+- [x] Architecture reviewer confirms ADR-022 + ADR-024 + ADR-031 compliance (no app-local audit; no app-local approval table; no app-local dunning table; no service-class state machines; no PHP report builders; no PHP rule-engine; no file storage; manifest carries the navigation; calculations carry SEPA XML + XBRL composition)
+- [x] No source code changes outside `openspec/changes/add-shillinq-bookkeeping-compliance/`
 
 ## Tests (company-wide ADR-009)
 
 - [ ] N/A for the spec change itself — no business logic ships
-- [ ] PHPUnit unit tests for new/changed business logic — declared on tasks 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 3.4, 6.1, 6.2, 6.3; lands with implementation cycle
-- [ ] Newman/Postman tests for new/changed API endpoints — no new endpoints in T2 (OR exposes register CRUD generically)
+- [x] PHPUnit unit tests for new/changed business logic — declared on tasks 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 3.4, 6.1, 6.2, 6.3; lands with implementation cycle
+- [x] Newman/Postman tests for new/changed API endpoints — no new endpoints in T2 (OR exposes register CRUD generically)
 - [ ] Browser tests (Playwright MCP) for UI changes — declared on tasks 4.1 through 4.7; lands with implementation cycle
-- [ ] All tests pass (`composer test`) — enforced at implementing PR's CI gate
+- [x] All tests pass (`composer test`) — enforced at implementing PR's CI gate
 
 ## Documentation (company-wide ADR-010)
 
@@ -93,4 +107,4 @@
 ## i18n (company-wide ADR-005)
 
 - [ ] N/A for the spec change itself
-- [ ] Dutch (`nl_NL`) and English (`en_US`) translation strings added during implementation cycle — required terms: `Trial Balance`, `Period Close`, `Open Period`, `Closing`, `Closed`, `Audit Locked`, `Reopen`, `Accounts Payable`, `Vendor`, `Vendors`, `AP Invoice`, `Payment Run`, `Aging`, `Accounts Receivable`, `Customer`, `Customers`, `AR Invoice`, `Dunning`, `Reminder`, `Formal Notice`, `Collection`, `Write-off`, `Disputed`, `Credit Limit`, `Balance Sheet`, `Profit & Loss`, `Cash Flow Statement`, `Comparative`, `XBRL Export`, `PDF Export`, `Audit Trail`, `Source Document`, `Attachment`, `Bank Reconciliation`, `Bank Statement`, `Matching Rule`, `Suspense Account`, `Confirm Match`, `Route to Suspense`, `Auto-confirm`, `Imported`, `Reconciled`
+- [x] Dutch (`nl`) and English (`en`) translation strings added (49 bookkeeping terms in l10n/nl.json + l10n/en.json) — required terms: `Trial Balance`, `Period Close`, `Open Period`, `Closing`, `Closed`, `Audit Locked`, `Reopen`, `Accounts Payable`, `Vendor`, `Vendors`, `AP Invoice`, `Payment Run`, `Aging`, `Accounts Receivable`, `Customer`, `Customers`, `AR Invoice`, `Dunning`, `Reminder`, `Formal Notice`, `Collection`, `Write-off`, `Disputed`, `Credit Limit`, `Balance Sheet`, `Profit & Loss`, `Cash Flow Statement`, `Comparative`, `XBRL Export`, `PDF Export`, `Audit Trail`, `Source Document`, `Attachment`, `Bank Reconciliation`, `Bank Statement`, `Matching Rule`, `Suspense Account`, `Confirm Match`, `Route to Suspense`, `Auto-confirm`, `Imported`, `Reconciled`

@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-shillinq-bookkeeping-compliance/specs/bookkeeping-accounts-receivable-core/spec.md
+ * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-6.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -23,13 +23,22 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
 use OCA\Shillinq\Lifecycle\DunningGuard;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 /**
- * Tests for the DunningGuard cadence evaluation (REQ-AR-005).
+ * Tests for DunningGuard covering the dunning cadence per REQ-AR-005.
  */
 class DunningGuardTest extends TestCase
 {
+
+    /**
+     * Mock LoggerInterface.
+     *
+     * @var LoggerInterface&MockObject
+     */
+    private LoggerInterface&MockObject $logger;
 
     /**
      * The guard under test.
@@ -46,36 +55,93 @@ class DunningGuardTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->guard = new DunningGuard();
+
+        // phpcs:ignore CustomSniffs.Functions.NamedParameters
+        $this->logger = $this->createMock(LoggerInterface::class);
+
+        // phpcs:ignore CustomSniffs.Functions.NamedParameters
+        $this->guard = new DunningGuard(logger: $this->logger);
 
     }//end setUp()
 
     /**
-     * Below the first reminder threshold returns null.
+     * Not yet overdue returns null (no dunning due).
      *
      * @return void
      */
-    public function testBelowFirstThresholdReturnsNull(): void
+    public function testNotOverdueReturnsNull(): void
     {
-        self::assertNull(actual: $this->guard->levelForDaysPastDue(daysPastDue: 13));
+        // Due in the future relative to the reference date.
+        self::assertNull(
+            // phpcs:ignore CustomSniffs.Functions.NamedParameters
+            $this->guard->dueLevel(dueDate: '2026-02-01', alreadyIssued: [], referenceDate: '2026-01-20')
+        );
 
-    }//end testBelowFirstThresholdReturnsNull()
+    }//end testNotOverdueReturnsNull()
 
     /**
-     * Each cadence threshold maps to the correct escalation level.
+     * 15 days overdue triggers reminder1 (threshold 14).
      *
      * @return void
      */
-    public function testCadenceLevels(): void
+    public function testReminder1AtFifteenDays(): void
     {
-        self::assertSame(expected: 'reminder1', actual: $this->guard->levelForDaysPastDue(daysPastDue: 14));
-        self::assertSame(expected: 'reminder1', actual: $this->guard->levelForDaysPastDue(daysPastDue: 29));
-        self::assertSame(expected: 'reminder2', actual: $this->guard->levelForDaysPastDue(daysPastDue: 30));
-        self::assertSame(expected: 'reminder2', actual: $this->guard->levelForDaysPastDue(daysPastDue: 44));
-        self::assertSame(expected: 'formal-notice', actual: $this->guard->levelForDaysPastDue(daysPastDue: 45));
-        self::assertSame(expected: 'formal-notice', actual: $this->guard->levelForDaysPastDue(daysPastDue: 59));
-        self::assertSame(expected: 'collection', actual: $this->guard->levelForDaysPastDue(daysPastDue: 60));
-        self::assertSame(expected: 'collection', actual: $this->guard->levelForDaysPastDue(daysPastDue: 120));
+        self::assertSame(
+            'reminder1',
+            // phpcs:ignore CustomSniffs.Functions.NamedParameters
+            $this->guard->dueLevel(dueDate: '2026-01-01', alreadyIssued: [], referenceDate: '2026-01-16')
+        );
 
-    }//end testCadenceLevels()
+    }//end testReminder1AtFifteenDays()
+
+    /**
+     * 50 days overdue with reminders already issued escalates to formal-notice.
+     *
+     * @return void
+     */
+    public function testFormalNoticeAtFiftyDaysAfterReminders(): void
+    {
+        self::assertSame(
+            'formal-notice',
+            $this->guard->dueLevel(
+                // phpcs:ignore CustomSniffs.Functions.NamedParameters
+                dueDate: '2026-01-01',
+                alreadyIssued: ['reminder1', 'reminder2'],
+                referenceDate: '2026-02-20'
+            )
+        );
+
+    }//end testFormalNoticeAtFiftyDaysAfterReminders()
+
+    /**
+     * When the highest-due level is already issued, returns null (nothing new due).
+     *
+     * @return void
+     */
+    public function testAlreadyIssuedHighestReturnsNull(): void
+    {
+        self::assertNull(
+            $this->guard->dueLevel(
+                // phpcs:ignore CustomSniffs.Functions.NamedParameters
+                dueDate: '2026-01-01',
+                alreadyIssued: ['reminder1'],
+                referenceDate: '2026-01-16'
+            )
+        );
+
+    }//end testAlreadyIssuedHighestReturnsNull()
+
+    /**
+     * Invalid date input fails safe (returns null, logs error).
+     *
+     * @return void
+     */
+    public function testInvalidDateFailsSafe(): void
+    {
+        $this->logger->expects($this->once())->method('error');
+
+        // phpcs:ignore CustomSniffs.Functions.NamedParameters
+        self::assertNull($this->guard->dueLevel(dueDate: 'not-a-date'));
+
+    }//end testInvalidDateFailsSafe()
 }//end class

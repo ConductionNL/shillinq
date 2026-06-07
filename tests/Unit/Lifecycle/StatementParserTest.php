@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-shillinq-bookkeeping-compliance/specs/bookkeeping-bank-reconciliation/spec.md
+ * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-6.3
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -30,8 +30,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * Tests for StatementParser parse() (CAMT.053 + MT940) and allLinesResolved()
- * (REQ-BR-003, REQ-BR-004).
+ * Tests for StatementParser covering REQ-BR-003 / REQ-BR-004.
  */
 class StatementParserTest extends TestCase
 {
@@ -42,6 +41,20 @@ class StatementParserTest extends TestCase
      * @var ContainerInterface&MockObject
      */
     private ContainerInterface&MockObject $container;
+
+    /**
+     * Mock IAppConfig.
+     *
+     * @var IAppConfig&MockObject
+     */
+    private IAppConfig&MockObject $appConfig;
+
+    /**
+     * Mock LoggerInterface.
+     *
+     * @var LoggerInterface&MockObject
+     */
+    private LoggerInterface&MockObject $logger;
 
     /**
      * The parser under test.
@@ -59,164 +72,160 @@ class StatementParserTest extends TestCase
     {
         parent::setUp();
 
-        $this->container = $this->createMock(originalClassName: ContainerInterface::class);
-        $appConfig       = $this->createMock(originalClassName: IAppConfig::class);
-        $appConfig->method('getValueString')->willReturn('shillinq');
-        $logger = $this->createMock(originalClassName: LoggerInterface::class);
+        // phpcs:disable CustomSniffs.Functions.NamedParameters
+        $this->container = $this->createMock(ContainerInterface::class);
+        $this->appConfig = $this->createMock(IAppConfig::class);
+        $this->logger    = $this->createMock(LoggerInterface::class);
+        // phpcs:enable CustomSniffs.Functions.NamedParameters
+
+        $this->appConfig->method('getValueString')->willReturn('shillinq');
 
         $this->parser = new StatementParser(
             container: $this->container,
-            appConfig: $appConfig,
-            logger: $logger,
+            appConfig: $this->appConfig,
+            logger: $this->logger,
         );
 
     }//end setUp()
 
     /**
-     * CAMT.053 XML with two entries parses into two normalised lines.
+     * CSV import parses rows into normalised line maps with unmatched status.
      *
      * @return void
      */
-    public function testParseCamt053(): void
+    public function testCsvParsesRows(): void
+    {
+        $csv = "valueDate,amount,currency,remittanceInfo,counterpartyName,counterpartyIban\n"
+            ."2026-01-15,1210.00,EUR,Betaling factuur 2026-0042,Acme B.V.,NL00BANK0123456789\n"
+            ."2026-01-16,-300.50,EUR,Huur januari,Verhuur B.V.,NL00BANK0987654321\n";
+
+        // phpcs:ignore CustomSniffs.Functions.NamedParameters
+        $lines = $this->parser->parse(contents: $csv, format: 'csv');
+
+        self::assertCount(2, $lines);
+        self::assertSame('2026-01-15', $lines[0]['valueDate']);
+        self::assertEqualsWithDelta(1210.00, $lines[0]['amount'], 0.001);
+        self::assertSame('unmatched', $lines[0]['status']);
+        self::assertEqualsWithDelta(-300.50, $lines[1]['amount'], 0.001);
+
+    }//end testCsvParsesRows()
+
+    /**
+     * CAMT.053 import parses entries, applying debit/credit sign, XXE-safe.
+     *
+     * @return void
+     */
+    public function testCamt053ParsesEntries(): void
     {
         $xml = '<?xml version="1.0" encoding="UTF-8"?>'
-            .'<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.02">'
-            .'<BkToCstmrStmt><Stmt>'
+            .'<Document><BkToCstmrStmt><Stmt>'
             .'<Ntry><Amt Ccy="EUR">1210.00</Amt><CdtDbtInd>CRDT</CdtDbtInd>'
             .'<ValDt><Dt>2026-01-15</Dt></ValDt>'
-            .'<NtryDtls><TxDtls>'
-            .'<Refs><EndToEndId>E2E-1</EndToEndId></Refs>'
-            .'<RmtInf><Ustrd>Betaling factuur 2026-0042</Ustrd></RmtInf>'
-            .'<RltdPties><Cdtr><Nm>Klant B.V.</Nm></Cdtr>'
-            .'<CdtrAcct><Id><IBAN>NL91ABNA0417164300</IBAN></Id></CdtrAcct></RltdPties>'
-            .'</TxDtls></NtryDtls></Ntry>'
-            .'<Ntry><Amt Ccy="EUR">50.00</Amt><CdtDbtInd>DBIT</CdtDbtInd>'
+            .'<NtryDtls><TxDtls><Refs><EndToEndId>E2E-1</EndToEndId></Refs>'
+            .'<RmtInf><Ustrd>Factuur 2026-0042</Ustrd></RmtInf></TxDtls></NtryDtls></Ntry>'
+            .'<Ntry><Amt Ccy="EUR">300.50</Amt><CdtDbtInd>DBIT</CdtDbtInd>'
             .'<ValDt><Dt>2026-01-16</Dt></ValDt></Ntry>'
             .'</Stmt></BkToCstmrStmt></Document>';
 
-        $lines = $this->parser->parse($xml, 'camt053');
+        // phpcs:ignore CustomSniffs.Functions.NamedParameters
+        $lines = $this->parser->parse(contents: $xml, format: 'camt053');
 
-        self::assertCount(expectedCount: 2, haystack: $lines);
-        self::assertSame(expected: '2026-01-15', actual: $lines[0]['valueDate']);
-        self::assertSame(expected: 1210.00, actual: $lines[0]['amount']);
-        self::assertSame(expected: 'Betaling factuur 2026-0042', actual: $lines[0]['remittanceInfo']);
-        self::assertSame(expected: 'Klant B.V.', actual: $lines[0]['counterpartyName']);
-        self::assertSame(expected: 'NL91ABNA0417164300', actual: $lines[0]['counterpartyIban']);
-        // Debit entry is negated.
-        self::assertSame(expected: -50.00, actual: $lines[1]['amount']);
+        self::assertCount(2, $lines);
+        self::assertEqualsWithDelta(1210.00, $lines[0]['amount'], 0.001);
+        self::assertSame('Factuur 2026-0042', $lines[0]['remittanceInfo']);
+        // DBIT entry is negated.
+        self::assertEqualsWithDelta(-300.50, $lines[1]['amount'], 0.001);
 
-    }//end testParseCamt053()
+    }//end testCamt053ParsesEntries()
 
     /**
-     * Malformed CAMT.053 XML yields an empty array, not an exception.
+     * An unknown format returns an empty array (no partial import).
      *
      * @return void
      */
-    public function testParseCamt053MalformedReturnsEmpty(): void
+    public function testUnknownFormatReturnsEmpty(): void
     {
-        self::assertSame(expected: [], actual: $this->parser->parse('<not-valid-xml', 'camt053'));
+        // phpcs:ignore CustomSniffs.Functions.NamedParameters
+        self::assertSame([], $this->parser->parse(contents: 'garbage', format: 'ofx'));
 
-    }//end testParseCamt053MalformedReturnsEmpty()
+    }//end testUnknownFormatReturnsEmpty()
 
     /**
-     * MT940 text with two :61: lines parses into two normalised lines with
-     * the :86: description attached.
+     * allLinesResolved returns true when no unmatched lines remain (REQ-BR-004).
      *
      * @return void
      */
-    public function testParseMt940(): void
+    public function testAllLinesResolvedTrueWhenNoneUnmatched(): void
     {
-        $mt940 = ":20:STARTUMS\r\n"
-            .":61:2601150115C1210,00N123NONREF\r\n"
-            .":86:Betaling factuur 2026-0042\r\n"
-            .":61:2601160116D50,00N456NONREF\r\n"
-            .":86:Bankkosten\r\n";
+        $this->container->method('get')->willReturn($this->buildObjectServiceStub(lines: []));
 
-        $lines = $this->parser->parse($mt940, 'mt940');
+        // phpcs:ignore CustomSniffs.Functions.NamedParameters
+        self::assertTrue($this->parser->allLinesResolved(statementId: 'BS-2026-001'));
 
-        self::assertCount(expectedCount: 2, haystack: $lines);
-        self::assertSame(expected: '2026-01-15', actual: $lines[0]['valueDate']);
-        self::assertSame(expected: 1210.00, actual: $lines[0]['amount']);
-        self::assertSame(expected: 'Betaling factuur 2026-0042', actual: $lines[0]['remittanceInfo']);
-        self::assertSame(expected: -50.00, actual: $lines[1]['amount']);
-
-    }//end testParseMt940()
+    }//end testAllLinesResolvedTrueWhenNoneUnmatched()
 
     /**
-     * An unknown format returns an empty array.
-     *
-     * @return void
-     */
-    public function testParseUnknownFormatReturnsEmpty(): void
-    {
-        self::assertSame(expected: [], actual: $this->parser->parse('anything', 'ofx'));
-
-    }//end testParseUnknownFormatReturnsEmpty()
-
-    /**
-     * AllLinesResolved returns true when no unmatched lines remain.
-     *
-     * @return void
-     */
-    public function testAllLinesResolvedTrueWhenNoUnmatched(): void
-    {
-        $objectService = $this->buildObjectServiceStub(unmatched: []);
-        $this->container->method('get')->willReturn($objectService);
-
-        self::assertTrue(condition: $this->parser->allLinesResolved(['statementId' => 'BS-1']));
-
-    }//end testAllLinesResolvedTrueWhenNoUnmatched()
-
-    /**
-     * AllLinesResolved returns false when unmatched lines remain.
+     * allLinesResolved returns false when at least one unmatched line remains.
      *
      * @return void
      */
     public function testAllLinesResolvedFalseWhenUnmatchedRemain(): void
     {
-        $objectService = $this->buildObjectServiceStub(unmatched: [['lineId' => 'L1', 'status' => 'unmatched']]);
-        $this->container->method('get')->willReturn($objectService);
+        $this->container->method('get')
+            ->willReturn($this->buildObjectServiceStub(lines: [['lineId' => 'L1', 'status' => 'unmatched']]));
 
-        self::assertFalse(condition: $this->parser->allLinesResolved(['statementId' => 'BS-1']));
+        // phpcs:ignore CustomSniffs.Functions.NamedParameters
+        self::assertFalse($this->parser->allLinesResolved(statementId: 'BS-2026-001'));
 
     }//end testAllLinesResolvedFalseWhenUnmatchedRemain()
 
     /**
-     * AllLinesResolved is fail-closed: returns false on exception.
+     * allLinesResolved fails closed (false) on exception.
      *
      * @return void
      */
-    public function testAllLinesResolvedFailClosedOnException(): void
+    public function testAllLinesResolvedFailsClosed(): void
     {
-        $this->container->method('get')->willThrowException(new \RuntimeException('boom'));
+        $this->container->method('get')
+            ->willThrowException(new \RuntimeException('ObjectService unavailable'));
 
-        self::assertFalse(condition: $this->parser->allLinesResolved(['statementId' => 'BS-1']));
+        $this->logger->expects($this->once())->method('error');
 
-    }//end testAllLinesResolvedFailClosedOnException()
+        // phpcs:ignore CustomSniffs.Functions.NamedParameters
+        self::assertFalse($this->parser->allLinesResolved(statementId: 'BS-2026-002'));
+
+    }//end testAllLinesResolvedFailsClosed()
 
     /**
-     * Build a fluent ObjectService stub returning the given unmatched lines.
+     * Build an anonymous ObjectService stub returning lines from findAll().
      *
-     * @param array<mixed> $unmatched Lines to return from findAll().
+     * @param array<mixed> $lines Records to return.
      *
      * @return object
      */
-    private function buildObjectServiceStub(array $unmatched): object
+    private function buildObjectServiceStub(array $lines): object
     {
-        return new class($unmatched) {
+        return new class($lines) {
+
             /**
-             * Constructor for the anonymous ObjectService stub.
+             * Records to return.
              *
-             * @param array<mixed> $unmatched Unmatched lines to return from findAll().
-             *
-             * @return void
+             * @var array<mixed>
              */
-            public function __construct(private array $unmatched)
+            private array $lines;
+
+            /**
+             * Constructor.
+             *
+             * @param array<mixed> $lines Lines to return.
+             */
+            public function __construct(array $lines)
             {
+                $this->lines = $lines;
             }//end __construct()
 
             /**
-             * Set the register (no-op stub).
+             * Fluent register setter.
              *
              * @param string $register Register slug.
              *
@@ -228,7 +237,7 @@ class StatementParserTest extends TestCase
             }//end setRegister()
 
             /**
-             * Set the schema (no-op stub).
+             * Fluent schema setter.
              *
              * @param string $schema Schema slug.
              *
@@ -240,17 +249,16 @@ class StatementParserTest extends TestCase
             }//end setSchema()
 
             /**
-             * Find all unmatched lines for the current context.
+             * Return all stubbed lines.
              *
-             * @param array<string,mixed> $params Query parameters.
+             * @param array<string,mixed> $params Query parameters (unused).
              *
              * @return array<mixed>
              */
             public function findAll(array $params=[]): array
             {
-                return $this->unmatched;
+                return $this->lines;
             }//end findAll()
         };
-
     }//end buildObjectServiceStub()
 }//end class

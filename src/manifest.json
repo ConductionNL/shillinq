@@ -260,6 +260,69 @@
 					"icon": "BankOutline",
 					"route": "BankReconciliations",
 					"order": 80
+				},
+				{
+					"id": "PeriodCloseNav",
+					"label": "Period Close",
+					"icon": "CalendarRangeOutline",
+					"route": "FiscalPeriods",
+					"order": 55
+				},
+				{
+					"id": "CustomersNav",
+					"label": "Customers",
+					"icon": "AccountTieOutline",
+					"route": "Customers",
+					"order": 60
+				},
+				{
+					"id": "AccountsReceivableNav",
+					"label": "Accounts Receivable",
+					"icon": "FileDocumentOutline",
+					"route": "AccountsReceivable",
+					"order": 61
+				},
+				{
+					"id": "ARAgingNav",
+					"label": "AR Aging",
+					"icon": "ChartTimelineVariant",
+					"route": "ARAging",
+					"order": 62
+				},
+				{
+					"id": "DunningNav",
+					"label": "Dunning",
+					"icon": "EmailAlertOutline",
+					"route": "Dunning",
+					"order": 63
+				},
+				{
+					"id": "BankReconciliationNav",
+					"label": "Bank Reconciliation",
+					"icon": "BankTransferOutline",
+					"route": "BankStatements",
+					"order": 70
+				},
+				{
+					"id": "MatchingRulesNav",
+					"label": "Matching Rules",
+					"icon": "FilterCogOutline",
+					"route": "MatchingRules",
+					"order": 71
+				},
+				{
+					"id": "ProfitAndLossNav",
+					"label": "Profit & Loss",
+					"icon": "ChartLineVariant",
+					"route": "ProfitAndLoss",
+					"order": 135
+				},
+				{
+					"id": "CashFlowNav",
+					"label": "Cash Flow Statement",
+					"icon": "CashMultiple",
+					"route": "CashFlowStatement",
+					"order": 136
 				}
 			]
 		},
@@ -12836,6 +12899,293 @@
 						"gridHeight": 2
 					}
 				]
+			}
+		},
+		{
+			"id": "FiscalPeriods",
+			"route": "/bookkeeping/period-close",
+			"type": "index",
+			"title": "Period Close",
+			"config": {
+				"register": "shillinq",
+				"schema": "FiscalPeriod",
+				"columns": [
+					{
+						"key": "periodId",
+						"label": "Period",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "startDate",
+						"label": "Start",
+						"sortable": true
+					},
+					{
+						"key": "endDate",
+						"label": "End",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-startDate",
+				"detailRoute": "FiscalPeriodDetail"
+			}
+		},
+		{
+			"id": "FiscalPeriodDetail",
+			"route": "/bookkeeping/period-close/:id",
+			"type": "detail",
+			"title": "Fiscal Period",
+			"config": {
+				"register": "shillinq",
+				"schema": "FiscalPeriod",
+				"fields": [
+					{
+						"key": "periodId",
+						"label": "Period",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "startDate",
+						"label": "Start Date",
+						"type": "date"
+					},
+					{
+						"key": "endDate",
+						"label": "End Date",
+						"type": "date"
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Fiscal Year",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "closedAt",
+						"label": "Closed At",
+						"type": "date"
+					},
+					{
+						"key": "closedBy",
+						"label": "Closed By",
+						"type": "string"
+					},
+					{
+						"key": "auditLockedAt",
+						"label": "Audit Locked At",
+						"type": "date"
+					},
+					{
+						"key": "closeReason",
+						"label": "Close Reason",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "FiscalPeriods"
+			}
+		},
+		{
+			"id": "BankStatements",
+			"route": "/bookkeeping/bank-reconciliation",
+			"type": "index",
+			"title": "Bank Reconciliation",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankStatement",
+				"columns": [
+					{
+						"key": "statementId",
+						"label": "Statement #",
+						"sortable": true
+					},
+					{
+						"key": "bankAccountIban",
+						"label": "IBAN",
+						"sortable": true
+					},
+					{
+						"key": "periodStart",
+						"label": "From",
+						"sortable": true
+					},
+					{
+						"key": "periodEnd",
+						"label": "To",
+						"sortable": true
+					},
+					{
+						"key": "importFormat",
+						"label": "Format",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-periodEnd",
+				"detailRoute": "BankStatementDetail"
+			}
+		},
+		{
+			"id": "BankStatementDetail",
+			"route": "/bookkeeping/bank-reconciliation/:id",
+			"type": "detail",
+			"title": "Bank Statement",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankStatement",
+				"fields": [
+					{
+						"key": "statementId",
+						"label": "Statement #",
+						"type": "string"
+					},
+					{
+						"key": "bankAccountIban",
+						"label": "IBAN",
+						"type": "string"
+					},
+					{
+						"key": "periodStart",
+						"label": "Period Start",
+						"type": "date"
+					},
+					{
+						"key": "periodEnd",
+						"label": "Period End",
+						"type": "date"
+					},
+					{
+						"key": "openingBalance",
+						"label": "Opening Balance",
+						"type": "number"
+					},
+					{
+						"key": "closingBalance",
+						"label": "Closing Balance",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "importFormat",
+						"label": "Import Format",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "sourceDocumentUri",
+						"label": "Source Document",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "BankStatements"
+			}
+		},
+		{
+			"id": "ProfitAndLossDetail",
+			"route": "/financial-statements/profit-and-loss/:id",
+			"type": "detail",
+			"title": "Profit & Loss",
+			"config": {
+				"register": "shillinq",
+				"schema": "TrialBalance",
+				"fields": [
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"type": "date"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYearId",
+						"label": "Fiscal Year",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"indexRoute": "ProfitAndLoss"
+			}
+		},
+		{
+			"id": "CashFlowStatementDetail",
+			"route": "/financial-statements/cash-flow/:id",
+			"type": "detail",
+			"title": "Cash Flow Statement",
+			"config": {
+				"register": "shillinq",
+				"schema": "TrialBalance",
+				"fields": [
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"type": "date"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYearId",
+						"label": "Fiscal Year",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"indexRoute": "CashFlowStatement"
 			}
 		}
 	]

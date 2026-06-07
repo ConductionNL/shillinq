@@ -1870,4 +1870,90 @@ class SettingsService
         return ['seeded' => $seeded, 'skipped' => $skipped];
 
     }//end importProductAttributes()
+
+    /**
+     * Import the three RJ 270 statement presentation manifests, idempotently.
+     *
+     * Reads rj270-balance-sheet.json, rj270-pl.json, and rj270-cash-flow.json from
+     * lib/Settings/statements/ and persists each into app config under a per-statement
+     * key (statement_manifest_<type>) only when the key is not already set. This makes
+     * the import idempotent and preserves operator edits across repair re-runs per
+     * REQ-FS-002: a manifest that the operator has customised is never re-overwritten.
+     *
+     * Financial-statement assembly itself is declarative (trial-balance aggregations
+     * composed against these manifests per ADR-031); this method ships only the
+     * presentation templates, no report-builder logic.
+     *
+     * @return array<string,mixed> Result with success flag, imported count, skipped count.
+     *
+     * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-3.4
+     */
+    public function seedStatementManifests(): array
+    {
+        $files = [
+            'balance-sheet' => 'rj270-balance-sheet.json',
+            'profit-loss'   => 'rj270-pl.json',
+            'cash-flow'     => 'rj270-cash-flow.json',
+        ];
+
+        $imported = 0;
+        $skipped  = 0;
+
+        foreach ($files as $type => $fileName) {
+            $configKey = 'statement_manifest_'.$type;
+
+            // Preserve operator edits: skip when the manifest is already persisted.
+            $existing = $this->appConfig->getValueString(Application::APP_ID, $configKey, '');
+            if ($existing !== '') {
+                $skipped++;
+                continue;
+            }
+
+            $manifestPath = __DIR__.'/../Settings/statements/'.$fileName;
+            if (file_exists($manifestPath) === false) {
+                $this->logger->warning('Shillinq: statement manifest not found: '.$fileName);
+                continue;
+            }
+
+            $content = file_get_contents($manifestPath);
+            if ($content === false) {
+                $this->logger->warning('Shillinq: failed to read statement manifest: '.$fileName);
+                continue;
+            }
+
+            $decoded = json_decode($content, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                $this->logger->warning(
+                    'Shillinq: failed to parse statement manifest '.$fileName.': '.json_last_error_msg()
+                );
+                continue;
+            }
+
+            // Stamp the import timestamp so a future presentation-standard migration
+            // (BBV — T3; IFRS full — T5) can tell template-sourced from operator-authored.
+            if (isset($decoded['_meta']) === true && is_array($decoded['_meta']) === true) {
+                $decoded['_meta']['imported'] = gmdate('Y-m-d\TH:i:s\Z');
+            }
+
+            $this->appConfig->setValueString(
+                Application::APP_ID,
+                $configKey,
+                (string) json_encode($decoded)
+            );
+            $imported++;
+        }//end foreach
+
+        $this->logger->info(
+            'Shillinq: statement manifests imported',
+            ['imported' => $imported, 'skipped' => $skipped]
+        );
+
+        return [
+            'success'  => true,
+            'message'  => 'Statement manifests imported.',
+            'imported' => $imported,
+            'skipped'  => $skipped,
+        ];
+
+    }//end seedStatementManifests()
 }//end class
