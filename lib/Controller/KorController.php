@@ -104,7 +104,7 @@ class KorController extends Controller
         }
 
         if ($this->context->canAccess(administrationId: $administrationId) === false) {
-            return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
+            return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
         }
 
         $year = (int) date('Y');
