@@ -49,12 +49,12 @@
   destinationLocationId, lifecycleState). Operator can drill down from InventoryStock → all
   constituent moves with running-total trace
 
-- [ ] Task 10: Implement immutability: posted moves (`locked = true`) reject edits; cancellation
+- [x] Task 10: Implement immutability: posted moves (`locked = true`) reject edits; cancellation
   creates offsetting `StockMove` (not patch) to preserve immutable log. Original + offset linked
   via `relations` (OR built-in field). Offset move references original in `notes` or dedicated
   `offsetMoveId` field
 
-- [ ] Task 11: Declare audit trail per REQ-SM-007 — `auditTrail` captures operator, timestamp,
+- [x] Task 11: Declare audit trail per REQ-SM-007 — `auditTrail` captures operator, timestamp,
   previousState JSON, movementReason on every transition. Reason code mandatory on post (enum:
   normal, damaged, expired, shrinkage, inter-warehouse, adjustment, sample, demo, theft, loss;
   admin-configurable). Immutable log, no edits
