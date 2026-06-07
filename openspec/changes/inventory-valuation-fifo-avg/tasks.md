@@ -10,13 +10,23 @@
 
 ## Tasks
 
-- [ ] Task 1: Verify `inventory-stock-movement-ledger` change is merged
+- [x] Task 1: Verify `inventory-stock-movement-ledger` change is merged
   and that `StockMovement` schema exposes `movementType`, `quantity`,
   `unitCost`, `warehouse`, `itemId`, and `date` fields required by the
-  valuation services (REQ-INV-003, REQ-INV-004)
-- [ ] Task 2: Verify `add-shillinq-general-ledger` (T1) is merged and
+  valuation services (REQ-INV-003, REQ-INV-004) — verified: `StockMove`
+  schema lives in `lib/Settings/register.d/inventory-stock-movement-ledger.json`
+  (development HEAD `73af7f36`), exposing `movementType`, `quantity`,
+  `unitCost`, `itemId`, `sourceLocationId`, `destinationLocationId`,
+  `postedAt`, `lifecycleState`. Spec vocabulary ("StockMovement",
+  "warehouse", "date") maps to the shillinq vocabulary ("StockMove",
+  source / destination location FKs, `postedAt`).
+- [x] Task 2: Verify `add-shillinq-general-ledger` (T1) is merged and
   that `JournalEntry` and `Account` registers are queryable in shillinq
-  (REQ-INV-007)
+  (REQ-INV-007) — verified: `GLTransaction` + `GLLine` + `Account` are
+  declared in `lib/Settings/shillinq_register.json` (REQ-GL-001 /
+  REQ-GL-003). The spec uses "JournalEntry" generically; the COGS
+  posting in Task 9 materialises a balanced 2-line `GLTransaction`
+  (debit COGS line + credit Inventory line) matching shillinq's GL.
 - [ ] Task 3: Declare `InventoryValuation` schema in
   `lib/Settings/shillinq_register.json` with fields `quantity`,
   `unitCost`, `totalValue`, `valuationMethod` (enum: `FIFO`, `average`),
