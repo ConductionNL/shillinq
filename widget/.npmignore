@@ -1,0 +1,4 @@
+*.map
+*.test.js
+tsconfig.json
+.npmignore

@@ -1,0 +1,33 @@
+{
+  "name": "@shillinq/booking-widget",
+  "version": "1.0.0-beta.0",
+  "description": "Embeddable self-service booking widget for the Shillinq Nextcloud app (iframe, script tag, npm, web component).",
+  "license": "EUPL-1.2",
+  "author": "Conduction B.V. <info@conduction.nl>",
+  "type": "module",
+  "main": "index.js",
+  "module": "index.js",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js"
+    }
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "README.md"
+  ],
+  "peerDependencies": {
+    "vue": "^3.0.0"
+  },
+  "keywords": [
+    "nextcloud",
+    "shillinq",
+    "booking",
+    "appointments",
+    "widget",
+    "embed"
+  ]
+}

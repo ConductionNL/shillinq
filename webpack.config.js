@@ -23,6 +23,12 @@ webpackConfig.entry = {
 		import: path.join(__dirname, 'src', 'settings.js'),
 		filename: appId + '-settings.js',
 	},
+	// Standalone embeddable self-service booking widget (REQ-WSW-004).
+	// Loaded by partner sites via script tag / web component; not part of the SPA.
+	widget: {
+		import: path.join(__dirname, 'src', 'widget', 'embed.js'),
+		filename: 'widget.js',
+	},
 }
 
 // Use local source when available (monorepo dev), otherwise fall back to npm package

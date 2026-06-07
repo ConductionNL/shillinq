@@ -21,8 +21,15 @@
 // confirm-on-click) with no register list/detail equivalent, so it cannot be
 // expressed as a built-in declarative page type. See the component's docblock.
 
+// BookingWidgetKeys (bookings-self-service-widget): the widget API-key admin
+// page needs custom action buttons (generate / rotate / revoke) and one-time
+// plaintext-key display, which no declarative index/detail type expresses —
+// hence an explicit custom-page registration per ADR-024/ADR-036.
+
 import ConfirmationPortal from './views/ConfirmationPortal.vue'
+import BookingWidgetKeys from './views/BookingWidgetKeys.vue'
 
 export default {
 	ConfirmationPortal: { kind: 'page', component: ConfirmationPortal },
+	BookingWidgetKeys: { kind: 'page', component: BookingWidgetKeys },
 }
