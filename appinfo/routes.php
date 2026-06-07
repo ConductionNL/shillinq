@@ -19,6 +19,15 @@ return [
         ['name' => 'pipelinqSettings#create', 'url' => '/api/pipelinq/settings', 'verb' => 'POST'],
         ['name' => 'pipelinqSettings#test', 'url' => '/api/pipelinq/settings/test', 'verb' => 'POST'],
 
+        // bookings-pipelinq-customer-bridge slice 09 — admin dead-letter
+        // dashboard over the TimelineDeadLetter register populated by
+        // PipelinqTimelineRetryJob. index() lists exhausted retries;
+        // retry({id}) re-queues an event by writing a fresh
+        // TimelinePublishRetryEntry + scheduling a job tick. Both gated
+        // by #[AuthorizedAdminSetting].
+        ['name' => 'timelineDeadLetter#index', 'url' => '/api/pipelinq/dead-letter', 'verb' => 'GET'],
+        ['name' => 'timelineDeadLetter#retry', 'url' => '/api/pipelinq/dead-letter/{id}/retry', 'verb' => 'POST'],
+
         // Generic per-user preferences (used by shared nextcloud-vue widgets, e.g. CnSupportDialog).
         ['name' => 'preferences#getPreference', 'url' => '/api/preferences/{key}', 'verb' => 'GET'],
         ['name' => 'preferences#setPreference', 'url' => '/api/preferences/{key}', 'verb' => 'PUT'],

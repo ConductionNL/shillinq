@@ -29,7 +29,7 @@ use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Repair\InitializeSettings;
 use OCA\Shillinq\Service\Pipelinq\LoggingPipelinqAdminNotifier;
-use OCA\Shillinq\Service\Pipelinq\LoggingTimelineRetryQueue;
+use OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue;
 use OCA\Shillinq\Service\Pipelinq\PipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
@@ -108,14 +108,19 @@ class Application extends App implements IBootstrap
         // Appointment carries a non-empty `pipelinqContactId`, publish a
         // `booking.created` event to pipelinq's klantbeeld-360 timeline.
         // The synchronous publish uses the shared retry + circuit
-        // breaker; a failure hands the event to TimelineRetryQueue (the
-        // logging fallback below until slice 09 lands the persistent
-        // queue) so the booking commit is never blocked. ADR-032 chain
-        // member 7 of 11.
+        // breaker; a failure hands the event to TimelineRetryQueue so the
+        // booking commit is never blocked. ADR-032 chain member 7 of 11.
+        //
+        // Slice 09 swaps the slice-07 LoggingTimelineRetryQueue stub for
+        // the PersistentTimelineRetryQueue: failed publishes now write a
+        // TimelinePublishRetryEntry OR record + add a
+        // PipelinqTimelineRetryJob tick to the IJobList. The job retries
+        // with exponential backoff (1m/5m/30m) and dead-letters into
+        // TimelineDeadLetter on exhaustion (D3 in the giant).
         $context->registerService(
             TimelineRetryQueue::class,
             static function ($c): TimelineRetryQueue {
-                return $c->get(LoggingTimelineRetryQueue::class);
+                return $c->get(PersistentTimelineRetryQueue::class);
             }
         );
         $context->registerEventListener(
