@@ -816,6 +816,366 @@
 					}
 				}
 			},
+			"JournalEntry": {
+				"slug": "JournalEntry",
+				"icon": "BookOpenPageVariantOutline",
+				"version": "0.1.0",
+				"title": "Journal Entry",
+				"description": "A human-authored journal entry (memoriaalboeking, recurring template, or reversing accrual). Posting one materialises exactly one balanced GLTransaction per REQ-JE-007. Distinct from GLTransaction: recurring and reversing journals are templates that produce postings on a schedule, not postings themselves (design.md Decision D3). Consumes OR's audit-trail-immutable and approval-workflow abstractions per ADR-022 — no app-local audit or approval table.",
+				"x-schema-org": "schema:AccountingTransaction",
+				"type": "object",
+				"required": [
+					"journalNumber",
+					"entryDate",
+					"description",
+					"lines",
+					"journalType",
+					"approvalState",
+					"administrationId",
+					"state"
+				],
+				"properties": {
+					"journalNumber": {
+						"type": "string",
+						"description": "Sequential journal number, unique per administration and fiscal year.",
+						"example": "M-2026-0001"
+					},
+					"entryDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Operator-authored entry date.",
+						"example": "2026-03-01"
+					},
+					"description": {
+						"type": "string",
+						"description": "Human-readable description of the journal entry.",
+						"example": "Bankkosten Q1"
+					},
+					"lines": {
+						"type": "array",
+						"description": "Embedded line preview. Each row materialises 1:1 into a GLLine on post per REQ-JE-007. Amounts are non-negative integer cents (server-authoritative; no client-trusted totals).",
+						"items": {
+							"type": "object",
+							"required": [
+								"accountNumber",
+								"side",
+								"amountCents"
+							],
+							"properties": {
+								"accountNumber": {
+									"type": "string",
+									"description": "FK to Account.accountNumber.",
+									"example": "4500"
+								},
+								"side": {
+									"type": "string",
+									"enum": [
+										"debit",
+										"credit"
+									],
+									"description": "Debit or credit polarity; amountCents is always non-negative."
+								},
+								"amountCents": {
+									"type": "integer",
+									"minimum": 0,
+									"description": "Non-negative posting amount in integer cents (server-authoritative). Avoids IEEE-754 float-equality drift in the balance invariant per REQ-JE-007.",
+									"example": 2500
+								},
+								"description": {
+									"type": "string",
+									"description": "Optional line-level description.",
+									"nullable": true
+								}
+							}
+						}
+					},
+					"sourceDocumentUri": {
+						"type": "string",
+						"format": "uri",
+						"description": "FK URI to a docudesk attachment (source document: invoice scan, bank statement). Content lives in docudesk per ADR-022 / REQ-JE-006 — no embedded blob, no file-storage code in shillinq.",
+						"nullable": true,
+						"example": "docudesk://attachments/0d4e9c7f-.../factuur-2026-0001.pdf"
+					},
+					"sourceDocumentApp": {
+						"type": "string",
+						"enum": [
+							"docudesk",
+							"external"
+						],
+						"description": "Origin app of the source-document URI per REQ-JE-006.",
+						"nullable": true
+					},
+					"journalType": {
+						"type": "string",
+						"enum": [
+							"manual",
+							"recurring",
+							"reversing"
+						],
+						"description": "Closed enum per REQ-JE-003. manual = one-off memoriaalboeking; recurring = cadence-driven template; reversing = auto-inverted at a future period boundary. Adding a sub-type requires a future openspec change.",
+						"example": "manual"
+					},
+					"cadence": {
+						"type": "object",
+						"description": "Recurrence schedule consumed by OR's ScheduledWorkflow primitive. Required when journalType is 'recurring', forbidden otherwise (REQ-JE-005). The object shape allows future interval types (business-day, week-of-month) without a schema-breaking change (design.md D6).",
+						"nullable": true,
+						"required": [
+							"interval",
+							"anchor"
+						],
+						"properties": {
+							"interval": {
+								"type": "string",
+								"enum": [
+									"daily",
+									"weekly",
+									"monthly",
+									"yearly"
+								],
+								"description": "Recurrence interval."
+							},
+							"anchor": {
+								"type": "string",
+								"format": "date",
+								"description": "First materialisation date (ISO date).",
+								"example": "2026-01-01"
+							},
+							"endsOn": {
+								"type": "string",
+								"format": "date",
+								"description": "Optional end date; null for open-ended.",
+								"nullable": true
+							},
+							"count": {
+								"type": "integer",
+								"minimum": 1,
+								"description": "Optional maximum number of materialisations; null for unbounded.",
+								"nullable": true
+							}
+						}
+					},
+					"reversesOn": {
+						"type": "string",
+						"description": "FK to the FiscalPeriod (periodId) whose start triggers the inverse posting. Required when journalType is 'reversing', forbidden otherwise (REQ-JE-004).",
+						"nullable": true,
+						"example": "2027-01"
+					},
+					"glTransactionId": {
+						"type": "string",
+						"description": "Back-reference to the materialised GLTransaction once the journal is posted (REQ-JE-007).",
+						"nullable": true,
+						"example": "txn-001"
+					},
+					"approvalState": {
+						"type": "string",
+						"enum": [
+							"not-required",
+							"pending",
+							"approved",
+							"rejected"
+						],
+						"default": "not-required",
+						"description": "Approval state per REQ-JE-008. Driven by OR's approval-workflow extension — shillinq declares the trigger, OR runs the routing. No app-local approval table.",
+						"example": "not-required"
+					},
+					"approvalPolicy": {
+						"type": "string",
+						"description": "Optional administration approval-policy identifier resolved by OR's approval-workflow extension on the post transition (design.md D4).",
+						"nullable": true
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the administration owning the entry. Scopes per-tenant authorisation; never client-trusted for authorisation decisions.",
+						"example": "adm-1"
+					},
+					"state": {
+						"type": "string",
+						"enum": [
+							"draft",
+							"pending",
+							"posted",
+							"voided"
+						],
+						"default": "draft",
+						"description": "Journal lifecycle state per REQ-JE-008. Managed by x-openregister-lifecycle below."
+					}
+				},
+				"x-openregister-conditional-validation": {
+					"cadenceRequiredForRecurring": {
+						"description": "cadence is required when journalType is 'recurring' and forbidden otherwise, per REQ-JE-005.",
+						"if": {
+							"journalType": "recurring"
+						},
+						"then": {
+							"required": [
+								"cadence"
+							]
+						},
+						"else": {
+							"forbidden": [
+								"cadence"
+							]
+						},
+						"errorMessage": "Cadence is vereist voor terugkerende journaalposten"
+					},
+					"reversesOnRequiredForReversing": {
+						"description": "reversesOn is required when journalType is 'reversing' and forbidden otherwise, per REQ-JE-004.",
+						"if": {
+							"journalType": "reversing"
+						},
+						"then": {
+							"required": [
+								"reversesOn"
+							]
+						},
+						"else": {
+							"forbidden": [
+								"reversesOn"
+							]
+						},
+						"errorMessage": "reversesOn-periode is vereist voor omgekeerde journaalposten"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "state",
+					"initialState": "draft",
+					"states": {
+						"draft": {
+							"label": "Draft",
+							"description": "Editable working state. Not yet materialised into the general ledger."
+						},
+						"pending": {
+							"label": "Pending approval",
+							"description": "Submitted for approval; awaiting an approver per the administration's approval policy. No GLTransaction exists yet."
+						},
+						"posted": {
+							"label": "Posted",
+							"description": "Materialised into a balanced GLTransaction (glTransactionId set). Immutable except via void."
+						},
+						"voided": {
+							"label": "Voided",
+							"description": "Cancelled after posting. Remains queryable for audit but excluded from default listings and reconciliation aggregations per REQ-JE-010."
+						}
+					},
+					"transitions": {
+						"submit": {
+							"from": "draft",
+							"to": "pending",
+							"label": "Submit for approval",
+							"description": "Operator submits a journal that requires approval per the administration policy (REQ-JE-008).",
+							"requires": "OCA\\Shillinq\\Guard\\JournalPostingGuard::requireBalanced"
+						},
+						"postDirect": {
+							"from": "draft",
+							"to": "posted",
+							"label": "Post journal",
+							"description": "Operator posts a journal that does not require approval (approvalState becomes not-required). Materialises exactly one balanced GLTransaction per REQ-JE-007.",
+							"requires": "OCA\\Shillinq\\Guard\\JournalPostingGuard::requirePostable"
+						},
+						"postApproved": {
+							"from": "pending",
+							"to": "posted",
+							"label": "Approve and post",
+							"description": "Approver posts after approval (approvalState becomes approved). Materialises exactly one balanced GLTransaction per REQ-JE-007.",
+							"requires": "OCA\\Shillinq\\Guard\\JournalPostingGuard::requirePostable"
+						},
+						"reject": {
+							"from": "pending",
+							"to": "draft",
+							"label": "Reject",
+							"description": "Approver rejects the journal; approvalState becomes rejected and the journal returns to draft (REQ-JE-008)."
+						},
+						"void": {
+							"from": "posted",
+							"to": "voided",
+							"label": "Void journal",
+							"description": "Void a posted journal. Requires the materialised GLTransaction to already be reversed per REQ-GL-004 / REQ-JE-010.",
+							"requires": "OCA\\Shillinq\\Guard\\JournalVoidGuard::requireReversedGLTransaction"
+						}
+					},
+					"hooks": {
+						"onPost": {
+							"trigger": "JournalEntry:posted",
+							"description": "On every transition into 'posted', materialise exactly one balanced GLTransaction (with N GLLine rows derived 1:1 from lines) and write back glTransactionId, atomically, per REQ-JE-007. Cross-schema materialisation is executed by the JournalPostingGuard::requirePostable seam (ADR-031 Risk-3 exception) because the declarative engine cannot emit cross-schema GLTransaction + GLLine effects in T1; documented as an OR gap.",
+							"action": "OCA\\Shillinq\\Guard\\JournalPostingGuard::materializeGLTransaction"
+						},
+						"onReversingPeriodBoundary": {
+							"trigger": "bookkeeping-period-close:periodStarted",
+							"condition": "journalType = 'reversing' AND state = 'posted' AND reversesOn = @event.periodId",
+							"description": "When the period named in reversesOn begins, materialise an inverse GLTransaction (every line's side flipped), post it, and link it back via reversesTransactionId per REQ-JE-004. RECOMMENDED path is OR's lifecycle action driven by T3's period-close transition; MUST NOT be a per-app *Job walking findAll() (ADR-031 anti-pattern).",
+							"action": "x-openregister-cross-schema-reverse"
+						},
+						"onRecurringCadenceTick": {
+							"trigger": "x-openregister-scheduled-workflow:tick",
+							"condition": "journalType = 'recurring' AND state = 'posted'",
+							"description": "On each ScheduledWorkflow tick derived from cadence, materialise a new balanced GLTransaction from the template lines, post it, and back-reference the template via journalEntryId, until endsOn or count is exhausted per REQ-JE-005."
+						}
+					}
+				},
+				"x-openregister-scheduled-workflows": {
+					"recurring-journal-materialisation": {
+						"name": "Recurring journal materialisation",
+						"description": "Materialises postings for recurring journals on their declared cadence per REQ-JE-005. The cadence object (interval/anchor/endsOn/count) is consumed by OR's ScheduledWorkflow primitive; no app-local cron Job. Disabled until OR's ScheduledWorkflow + n8n adapter is confirmed stable in T1 (design.md Risk 2) — recurring may defer to T2.",
+						"register": "shillinq",
+						"schema": "JournalEntry",
+						"cadenceField": "cadence",
+						"enabled": false,
+						"filter": {
+							"journalType": "recurring",
+							"state": "posted"
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"glTransaction": {
+						"localField": "glTransactionId",
+						"relatedSchema": "GLTransaction",
+						"relatedField": "id",
+						"cardinality": "one-to-one",
+						"description": "Back-reference to the materialised GLTransaction once posted (REQ-JE-007)."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"approver": {
+							"permissions": [
+								"read",
+								"update"
+							],
+							"transitions": [
+								"postApproved",
+								"reject"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				},
+				"x-openregister-aggregations": {
+					"countByState": {
+						"field": "state",
+						"operation": "count",
+						"description": "Number of journal entries per lifecycle state.",
+						"groupBy": "state"
+					},
+					"countByType": {
+						"field": "journalType",
+						"operation": "count",
+						"description": "Number of journal entries per journalType.",
+						"groupBy": "journalType"
+					}
+				}
+			},
 			"GRDeelnemer": {
 				"slug": "GRDeelnemer",
 				"icon": "AccountGroupOutline",
@@ -7815,2880 +8175,6 @@
 								"read"
 							],
 							"description": "Read-only access to reorder rules for auditing."
-						}
-					}
-				}
-			},
-			"Taakveld": {
-				"slug": "Taakveld",
-				"icon": "ShapeOutline",
-				"version": "0.1.0",
-				"title": "Taakveld",
-				"description": "A BBV taakveld (function code) per Iv3-informatievoorschrift. 53 for gemeente, 14 for provincie, ~12 for waterschap. The unit of BBV function-classification on every exploitatie posting per REQ-BBV-002.",
-				"type": "object",
-				"x-schema-org": "schema:DefinedTerm",
-				"required": [
-					"code",
-					"naam",
-					"hoofdfunctie",
-					"overheidslaag"
-				],
-				"properties": {
-					"code": {
-						"type": "string",
-						"description": "Taakveld code (e.g. '0.10', '7.5'). Unique within an overheidslaag + geldigheid window.",
-						"example": "7.5"
-					},
-					"naam": {
-						"type": "string",
-						"description": "Human-readable taakveld name.",
-						"example": "Begraafplaatsen en crematoria"
-					},
-					"hoofdfunctie": {
-						"type": "integer",
-						"minimum": 0,
-						"maximum": 8,
-						"description": "BBV hoofdfunctie (0-8) this taakveld rolls up to. Validated against code prefix at Iv3-export time per REQ-BBV-006.",
-						"example": 7
-					},
-					"hoofdfunctieNaam": {
-						"type": "string",
-						"description": "Name of the hoofdfunctie.",
-						"nullable": true,
-						"example": "Volksgezondheid en milieu"
-					},
-					"omschrijvingIv3": {
-						"type": "string",
-						"description": "Official Iv3-informatievoorschrift description of the taakveld scope.",
-						"nullable": true
-					},
-					"overheidslaag": {
-						"type": "string",
-						"enum": [
-							"gemeente",
-							"provincie",
-							"waterschap"
-						],
-						"description": "Which overheidslaag this taakveld catalogue applies to.",
-						"example": "gemeente"
-					},
-					"verplichteEconomischeCategorieen": {
-						"type": "array",
-						"items": {
-							"type": "string"
-						},
-						"description": "Array of EconomischeCategorie.code values allowed/required for this taakveld. Empty array means all categorieën are allowed.",
-						"nullable": true,
-						"example": [
-							"3.4.3"
-						]
-					},
-					"geldigVanaf": {
-						"type": "string",
-						"format": "date",
-						"description": "First date this taakveld version is effective (Iv3 catalogue versioning per design Risk 1).",
-						"nullable": true,
-						"example": "2025-01-01"
-					},
-					"geldigTot": {
-						"type": "string",
-						"format": "date",
-						"description": "Last date this taakveld version is effective; null = open-ended.",
-						"nullable": true
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bbv-controller": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			},
-			"EconomischeCategorie": {
-				"slug": "EconomischeCategorie",
-				"icon": "TagOutline",
-				"version": "0.1.0",
-				"title": "Economische Categorie",
-				"description": "An Iv3 economische categorie (cost-type) — ~150 codes across 8 maingroups per Iv3-informatievoorschrift bijlage A. Drives the Iv3-aanlevering aggregation per REQ-BBV-006.",
-				"type": "object",
-				"x-schema-org": "schema:DefinedTerm",
-				"required": [
-					"code",
-					"naam",
-					"niveau",
-					"batenOfLasten"
-				],
-				"properties": {
-					"code": {
-						"type": "string",
-						"description": "Economische categorie code (e.g. '3.4.3', '1.2.1'). Unique within a catalogue version.",
-						"example": "3.4.3"
-					},
-					"naam": {
-						"type": "string",
-						"description": "Human-readable name of the economische categorie.",
-						"example": "Betaalde belastingen"
-					},
-					"niveau": {
-						"type": "integer",
-						"minimum": 1,
-						"maximum": 3,
-						"description": "Hierarchy level of the code (1 = maingroup, 3 = leaf).",
-						"example": 3
-					},
-					"parentCode": {
-						"type": "string",
-						"description": "FK to the parent EconomischeCategorie.code for hierarchy navigation.",
-						"nullable": true,
-						"example": "3.4"
-					},
-					"batenOfLasten": {
-						"type": "string",
-						"enum": [
-							"baten",
-							"lasten",
-							"balans"
-						],
-						"description": "Whether postings on this categorie are baten, lasten, or balans-mutaties.",
-						"example": "lasten"
-					},
-					"iv3Verplicht": {
-						"type": "boolean",
-						"default": false,
-						"description": "Whether this categorie is mandatory in the Iv3-aanlevering per informatievoorschrift."
-					}
-				},
-				"x-openregister-relations": {
-					"parent": {
-						"localField": "parentCode",
-						"relatedSchema": "EconomischeCategorie",
-						"relatedField": "code",
-						"cardinality": "many-to-one",
-						"description": "Self-relation for the economische-categorie hierarchy."
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bbv-controller": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			},
-			"BbvAccountMapping": {
-				"slug": "BbvAccountMapping",
-				"icon": "LinkVariant",
-				"version": "0.1.0",
-				"title": "BBV Account Mapping",
-				"description": "The RGS-decentraal koppeling: maps a grootboekrekening to its RGS-decentraal D-code, default taakveld, default economische categorie, and Iv3-bucket. The linchpin connecting administrative bookkeeping to CBS Iv3-reporting per REQ-BBV-001. Consumed by the Iv3Export.buckets aggregation.",
-				"type": "object",
-				"x-schema-org": "schema:DefinedTerm",
-				"required": [
-					"accountNumber",
-					"administrationId",
-					"rgsDecentraalCode",
-					"dc"
-				],
-				"properties": {
-					"accountNumber": {
-						"type": "string",
-						"description": "FK to Account.accountNumber. Scoped by administrationId — a tenant maps each account exactly once per REQ-BBV-001.",
-						"example": "4310"
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this mapping. Different tenants may map the same accountNumber to different taakvelden (both valid) per design D2.",
-						"example": "gem-lemelerveld"
-					},
-					"rgsCode": {
-						"type": "string",
-						"description": "RGS hoofdcode this account derives from (e.g. 'WLasOlpOlp').",
-						"nullable": true,
-						"example": "WLasOlpOlp"
-					},
-					"rgsDecentraalCode": {
-						"type": "string",
-						"description": "RGS-decentraal D-code establishing the wettelijke positie. Validated against the active RGS-decentraal seed version per REQ-BBV-001.",
-						"example": "WLasOlpOlp"
-					},
-					"omschrijvingKort": {
-						"type": "string",
-						"description": "Short description of the RGS-decentraal post.",
-						"nullable": true
-					},
-					"referentienummer": {
-						"type": "string",
-						"description": "5-niveau referentienummer used for confidence-scored auto-mapping of legacy charts per REQ-BBV-001 mass-mapping scenario.",
-						"nullable": true,
-						"example": "4.3.1.7.5"
-					},
-					"dc": {
-						"type": "string",
-						"enum": [
-							"D",
-							"C"
-						],
-						"description": "Debit/Credit hoofdkenmerk of the RGS-decentraal post.",
-						"example": "D"
-					},
-					"rgsNiveau": {
-						"type": "integer",
-						"minimum": 1,
-						"maximum": 5,
-						"description": "RGS hierarchy level (1-5).",
-						"nullable": true,
-						"example": 4
-					},
-					"taakveldDefault": {
-						"type": "string",
-						"description": "FK to Taakveld.code — default taakveld inherited by Account.taakveld and GLLine.taakveld per REQ-BBV-002.",
-						"nullable": true,
-						"example": "7.5"
-					},
-					"economischeCategorieDefault": {
-						"type": "string",
-						"description": "FK to EconomischeCategorie.code — default cost-type inherited by postings per REQ-BBV-002.",
-						"nullable": true,
-						"example": "3.4.3"
-					},
-					"iv3Bucket": {
-						"type": "string",
-						"description": "Iv3-bucket code this account aggregates into. Consumed by the Iv3Export.buckets aggregation (REQ-BBV-006).",
-						"nullable": true,
-						"example": "IV3-075"
-					},
-					"omslag": {
-						"type": "string",
-						"enum": [
-							"verplicht",
-							"toegestaan",
-							"niet-toegestaan"
-						],
-						"description": "Whether rente-omslag applies to this post.",
-						"nullable": true
-					}
-				},
-				"x-openregister-relations": {
-					"account": {
-						"localField": "accountNumber",
-						"relatedSchema": "Account",
-						"relatedField": "accountNumber",
-						"cardinality": "many-to-one",
-						"description": "Each mapping refines exactly one Account within an administration."
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bbv-controller": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			},
-			"Programma": {
-				"slug": "Programma",
-				"icon": "FolderTextOutline",
-				"version": "0.1.0",
-				"title": "Programma",
-				"description": "A BBV programma (policy objective) grouping taakvelden, doelstellingen, and beleidsindicatoren. The publish lifecycle enforces meerjarenraming sluitend-checks per REQ-BBV-003.",
-				"type": "object",
-				"x-schema-org": "schema:Thing",
-				"required": [
-					"nummer",
-					"naam",
-					"administrationId",
-					"boekjaar",
-					"lifecycleState"
-				],
-				"properties": {
-					"nummer": {
-						"type": "integer",
-						"minimum": 0,
-						"maximum": 99,
-						"description": "Programmanummer, unique per (administrationId, boekjaar).",
-						"example": 3
-					},
-					"naam": {
-						"type": "string",
-						"description": "Programme name.",
-						"example": "Sociaal Domein"
-					},
-					"omschrijving": {
-						"type": "string",
-						"description": "Programme description.",
-						"nullable": true
-					},
-					"portefeuillehouder": {
-						"type": "string",
-						"description": "Responsible bestuurder (portefeuillehouder).",
-						"nullable": true
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this programma.",
-						"example": "gem-lemelerveld"
-					},
-					"taakvelden": {
-						"type": "array",
-						"items": {
-							"type": "string"
-						},
-						"description": "Array of Taakveld.code values grouped under this programma.",
-						"nullable": true,
-						"example": [
-							"6.1",
-							"6.2"
-						]
-					},
-					"doelstellingen": {
-						"type": "array",
-						"items": {
-							"type": "object",
-							"properties": {
-								"wat": {
-									"type": "string"
-								},
-								"wanneer": {
-									"type": "string"
-								},
-								"kpi": {
-									"type": "string"
-								}
-							}
-						},
-						"description": "Goals with KPIs (wat/wanneer/kpi).",
-						"nullable": true
-					},
-					"beleidsindicatoren": {
-						"type": "array",
-						"items": {
-							"type": "string"
-						},
-						"description": "Array of BeleidsIndicator.code values tracked under this programma.",
-						"nullable": true
-					},
-					"boekjaar": {
-						"type": "integer",
-						"description": "Fiscal year of this programma version.",
-						"example": 2026
-					},
-					"versie": {
-						"type": "string",
-						"enum": [
-							"begroting",
-							"jaarrekening",
-							"burap-1",
-							"burap-2",
-							"marap",
-							"tussenrapportage"
-						],
-						"description": "Document version this programma belongs to.",
-						"default": "begroting"
-					},
-					"stelselwijziging": {
-						"type": "boolean",
-						"default": false,
-						"description": "Marks recomputed comparative figures after a taakveld catalogue change per REQ-BBV-008."
-					},
-					"raadsbesluitNummer": {
-						"type": "string",
-						"description": "Raadsbesluit reference motivating a non-sluitende publicatie override per REQ-BBV-003.",
-						"nullable": true
-					},
-					"raadsbesluitDatum": {
-						"type": "string",
-						"format": "date",
-						"description": "Date of the override raadsbesluit.",
-						"nullable": true
-					},
-					"lifecycleState": {
-						"type": "string",
-						"enum": [
-							"draft",
-							"published"
-						],
-						"default": "draft",
-						"description": "Publication state of the programma."
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "lifecycleState",
-					"initialState": "draft",
-					"states": {
-						"draft": {
-							"label": "Draft",
-							"description": "Editable; meerjarenraming may be incomplete."
-						},
-						"published": {
-							"label": "Published",
-							"description": "Vastgesteld; meerjarenraming verified sluitend per REQ-BBV-003."
-						}
-					},
-					"transitions": {
-						"publish": {
-							"from": "draft",
-							"to": "published",
-							"label": "Publiceer begroting",
-							"description": "Publish the programme budget. Verifies that the meerjarenraming is structureel en reëel sluitend for T..T+3 per REQ-BBV-003. Override requires raadsbesluitNummer + raadsbesluitDatum.",
-							"requires": "OCA\\Shillinq\\Guard\\BbvComplianceGuard::requireMeerjarenramingSluitend"
-						},
-						"revise": {
-							"from": "published",
-							"to": "draft",
-							"label": "Heropen voor wijziging",
-							"description": "Reopen a published programma for revision (begrotingswijziging)."
-						}
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bbv-controller": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			},
-			"BeleidsIndicator": {
-				"slug": "BeleidsIndicator",
-				"icon": "ChartLineVariant",
-				"version": "0.1.0",
-				"title": "Beleidsindicator",
-				"description": "One of the 39 BBV-verplichte beleidsindicatoren per Regeling Vaststelling Beleidsindicatoren, tracked per programma per administratie (REQ-BBV-007).",
-				"type": "object",
-				"x-schema-org": "schema:DefinedTerm",
-				"required": [
-					"code",
-					"naam",
-					"administrationId"
-				],
-				"properties": {
-					"code": {
-						"type": "string",
-						"description": "Indicator code, unique per (administrationId, programma).",
-						"example": "BBV-7.1"
-					},
-					"naam": {
-						"type": "string",
-						"description": "Indicator name.",
-						"example": "Fijn huishoudelijk restafval"
-					},
-					"eenheid": {
-						"type": "string",
-						"description": "Unit of measure (e.g. 'kg per inwoner').",
-						"nullable": true
-					},
-					"bron": {
-						"type": "string",
-						"description": "Source of the indicator value (e.g. 'CBS').",
-						"nullable": true
-					},
-					"waarde": {
-						"type": "number",
-						"description": "Measured indicator value.",
-						"nullable": true
-					},
-					"programma": {
-						"type": "string",
-						"description": "FK to Programma (composite key reference) this indicator belongs to.",
-						"nullable": true
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this indicator record.",
-						"example": "gem-lemelerveld"
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bbv-controller": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			},
-			"MeerjarenBudget": {
-				"slug": "MeerjarenBudget",
-				"icon": "ChartTimelineVariant",
-				"version": "0.1.0",
-				"title": "Meerjarenbudget",
-				"description": "A multi-year budget row per (programma, taakveld, economische categorie, boekjaar, horizon). The basis for the sluitend-check at Programma.publish per REQ-BBV-003. Amounts in integer cents to avoid float drift.",
-				"type": "object",
-				"x-schema-org": "schema:MonetaryAmount",
-				"required": [
-					"administrationId",
-					"boekjaar",
-					"meerjarenHorizon",
-					"versie"
-				],
-				"properties": {
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this budget row.",
-						"example": "gem-lemelerveld"
-					},
-					"programma": {
-						"type": "string",
-						"description": "FK to Programma (nummer) this budget row belongs to.",
-						"nullable": true
-					},
-					"taakveld": {
-						"type": "string",
-						"description": "FK to Taakveld.code.",
-						"nullable": true,
-						"example": "6.1"
-					},
-					"economischeCategorie": {
-						"type": "string",
-						"description": "FK to EconomischeCategorie.code.",
-						"nullable": true
-					},
-					"boekjaar": {
-						"type": "integer",
-						"description": "Base fiscal year T of the meerjarenraming.",
-						"example": 2026
-					},
-					"meerjarenHorizon": {
-						"type": "integer",
-						"minimum": 0,
-						"maximum": 3,
-						"description": "Horizon offset: 0 = T, 1 = T+1, 2 = T+2, 3 = T+3.",
-						"example": 0
-					},
-					"batenCents": {
-						"type": "integer",
-						"minimum": 0,
-						"description": "Budgeted baten in integer eurocents (server-authoritative; never client-trusted floats).",
-						"default": 0,
-						"example": 92400000000
-					},
-					"lastenCents": {
-						"type": "integer",
-						"minimum": 0,
-						"description": "Budgeted lasten in integer eurocents.",
-						"default": 0,
-						"example": 91800000000
-					},
-					"mutatieReservesCents": {
-						"type": "integer",
-						"description": "Saldo of reserve-mutaties (may be negative) in integer eurocents, contributing to the sluitend-saldo per REQ-BBV-003.",
-						"default": 0,
-						"example": 20000000
-					},
-					"incidenteelBatenCents": {
-						"type": "integer",
-						"minimum": 0,
-						"description": "Portion of baten that is incidenteel, shown apart per BBV-art. 19 (REQ-BBV-003).",
-						"default": 0
-					},
-					"incidenteelLastenCents": {
-						"type": "integer",
-						"minimum": 0,
-						"description": "Portion of lasten that is incidenteel.",
-						"default": 0
-					},
-					"versie": {
-						"type": "string",
-						"enum": [
-							"primitief",
-							"na-wijziging",
-							"realisatie"
-						],
-						"description": "Budget version.",
-						"default": "primitief"
-					},
-					"begrotingswijziging": {
-						"type": "string",
-						"description": "FK to Begrotingswijziging.nummer when this row results from a wijziging.",
-						"nullable": true
-					},
-					"toelichting": {
-						"type": "string",
-						"description": "Explanatory note.",
-						"nullable": true
-					},
-					"stelselwijziging": {
-						"type": "boolean",
-						"default": false,
-						"description": "Marks a recomputed comparative figure after a taakveld catalogue change per REQ-BBV-008."
-					}
-				},
-				"x-openregister-aggregations": {
-					"saldoPerJaar": {
-						"description": "Per-horizon sluitend-saldo = sum(batenCents) - sum(lastenCents) + sum(mutatieReservesCents), grouped by (boekjaar, meerjarenHorizon, versie). Consumed by the Programma.publish sluitend-check per REQ-BBV-003.",
-						"filter": "versie = 'primitief'",
-						"groupBy": "meerjarenHorizon",
-						"operations": {
-							"saldoCents": {
-								"field": "batenCents",
-								"operation": "sum"
-							}
-						}
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bbv-controller": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			},
-			"Reserve": {
-				"slug": "Reserve",
-				"icon": "PiggyBankOutline",
-				"version": "0.1.0",
-				"title": "Reserve",
-				"description": "A BBV reserve (algemeen of bestemming). Mutaties run uitsluitend via resultaatbestemming op taakveld 0.10 per REQ-BBV-004. Saldi in integer cents.",
-				"type": "object",
-				"x-schema-org": "schema:MonetaryAmount",
-				"required": [
-					"naam",
-					"soort",
-					"administrationId"
-				],
-				"properties": {
-					"naam": {
-						"type": "string",
-						"description": "Reserve name, unique per administration.",
-						"example": "Onderwijshuisvesting"
-					},
-					"soort": {
-						"type": "string",
-						"enum": [
-							"algemeen",
-							"bestemming"
-						],
-						"description": "Algemene reserve or bestemmingsreserve.",
-						"example": "bestemming"
-					},
-					"doel": {
-						"type": "string",
-						"description": "Purpose of the reserve; required for bestemmingsreserves.",
-						"nullable": true
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this reserve.",
-						"example": "gem-lemelerveld"
-					},
-					"raadsbesluitInstelling": {
-						"type": "string",
-						"description": "Raadsbesluit reference establishing the reserve.",
-						"nullable": true
-					},
-					"plafondCents": {
-						"type": "integer",
-						"description": "Upper bound (plafond) in integer eurocents.",
-						"nullable": true
-					},
-					"bodemCents": {
-						"type": "integer",
-						"description": "Lower bound (bodem) in integer eurocents.",
-						"nullable": true
-					},
-					"looptijdEinde": {
-						"type": "string",
-						"format": "date",
-						"description": "End date of the bestemmingsreserve.",
-						"nullable": true
-					},
-					"programma": {
-						"type": "string",
-						"description": "FK to Programma (nummer) this reserve is linked to.",
-						"nullable": true
-					},
-					"rentetoerekening": {
-						"type": "boolean",
-						"default": false,
-						"description": "Whether rente is toegerekend to this reserve."
-					},
-					"saldoBeginJaarCents": {
-						"type": "integer",
-						"default": 0,
-						"description": "Saldo at the start of the boekjaar in integer eurocents."
-					},
-					"saldoEindJaarCents": {
-						"type": "integer",
-						"description": "Saldo at the end of the boekjaar in integer eurocents.",
-						"nullable": true
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bbv-controller": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			},
-			"Voorziening": {
-				"slug": "Voorziening",
-				"icon": "ShieldOutline",
-				"version": "0.1.0",
-				"title": "Voorziening",
-				"description": "A BBV voorziening (art. 44 a-d). Mutaties run via exploitatie op het gekoppelde taakveld (dotatie = last, vrijval = negatieve last) per REQ-BBV-004. Saldi in integer cents.",
-				"type": "object",
-				"x-schema-org": "schema:MonetaryAmount",
-				"required": [
-					"naam",
-					"bbvArtikel44Categorie",
-					"administrationId"
-				],
-				"properties": {
-					"naam": {
-						"type": "string",
-						"description": "Voorziening name, unique per administration.",
-						"example": "Groot Onderhoud Wegen"
-					},
-					"bbvArtikel44Categorie": {
-						"type": "string",
-						"enum": [
-							"a",
-							"b",
-							"c",
-							"d"
-						],
-						"description": "BBV art. 44 sub-categorie (a/b/c/d).",
-						"example": "a"
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this voorziening.",
-						"example": "gem-lemelerveld"
-					},
-					"onderbouwingDocument": {
-						"type": "string",
-						"description": "Docudesk URI of the onderbouwing (e.g. beheerplan).",
-						"nullable": true
-					},
-					"actualisatieFrequentieJaar": {
-						"type": "integer",
-						"description": "Actualisation frequency in years.",
-						"nullable": true,
-						"example": 4
-					},
-					"volgendeActualisatie": {
-						"type": "string",
-						"format": "date",
-						"description": "Date of the next required actualisation.",
-						"nullable": true
-					},
-					"taakveld": {
-						"type": "string",
-						"description": "FK to Taakveld.code — the gekoppelde exploitatie-taakveld for dotatie/vrijval per REQ-BBV-004.",
-						"nullable": true,
-						"example": "2.1"
-					},
-					"saldoBeginJaarCents": {
-						"type": "integer",
-						"default": 0,
-						"description": "Saldo at the start of the boekjaar in integer eurocents."
-					},
-					"dotatiesJaarCents": {
-						"type": "integer",
-						"default": 0,
-						"description": "Total dotaties in the boekjaar in integer eurocents."
-					},
-					"vrijvallenJaarCents": {
-						"type": "integer",
-						"default": 0,
-						"description": "Total vrijvallen in the boekjaar in integer eurocents."
-					},
-					"saldoEindJaarCents": {
-						"type": "integer",
-						"description": "Saldo at the end of the boekjaar in integer eurocents.",
-						"nullable": true
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bbv-controller": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			},
-			"MaterieleVasteActiva": {
-				"slug": "MaterieleVasteActiva",
-				"icon": "OfficeBuildingOutline",
-				"version": "0.1.0",
-				"title": "Materiële Vaste Activa",
-				"description": "A BBV MVA record per Notitie MVA (Commissie BBV juli 2023). Activation rules per mva_categorie; afschrijving start month following ingebruikname per REQ-BBV-005. Amounts in integer cents.",
-				"type": "object",
-				"x-schema-org": "schema:MonetaryAmount",
-				"required": [
-					"omschrijving",
-					"mvaCategorie",
-					"aanschafwaardeCents",
-					"ingebruiknameDatum",
-					"administrationId"
-				],
-				"properties": {
-					"omschrijving": {
-						"type": "string",
-						"description": "MVA description, unique per (administrationId, ingebruiknameDatum).",
-						"example": "Sporthal De Brug"
-					},
-					"mvaCategorie": {
-						"type": "string",
-						"enum": [
-							"economisch-nut",
-							"economisch-nut-heffing",
-							"maatschappelijk-nut"
-						],
-						"description": "MVA category determining activation vs. P&L treatment per REQ-BBV-005.",
-						"example": "economisch-nut"
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this MVA.",
-						"example": "gem-lemelerveld"
-					},
-					"aanschafwaardeCents": {
-						"type": "integer",
-						"minimum": 0,
-						"description": "Gross acquisition value in integer eurocents (before subsidie van derden deduction).",
-						"example": 240000000
-					},
-					"subsidieVanDerdenCents": {
-						"type": "integer",
-						"minimum": 0,
-						"description": "Object-earmarked third-party contribution deducted directly from aanschafwaarde (not as bate) per REQ-BBV-005. Te activeren waarde = aanschafwaarde - subsidie.",
-						"default": 0,
-						"example": 35000000
-					},
-					"ingebruiknameDatum": {
-						"type": "string",
-						"format": "date",
-						"description": "In-use date. Depreciation starts the month following this date per REQ-BBV-005.",
-						"example": "2026-09-15"
-					},
-					"afschrijvingsmethode": {
-						"type": "string",
-						"enum": [
-							"lineair",
-							"annuitair"
-						],
-						"description": "Depreciation method.",
-						"default": "lineair"
-					},
-					"afschrijvingstermijnJaar": {
-						"type": "integer",
-						"minimum": 1,
-						"description": "Depreciation term in years.",
-						"nullable": true,
-						"example": 40
-					},
-					"restwaardeCents": {
-						"type": "integer",
-						"minimum": 0,
-						"description": "Residual value in integer eurocents.",
-						"default": 0
-					},
-					"renteOmslagPercentage": {
-						"type": "number",
-						"description": "Rente-omslag percentage applied to this actief.",
-						"nullable": true
-					},
-					"taakveld": {
-						"type": "string",
-						"description": "FK to Taakveld.code the afschrijving is booked on.",
-						"nullable": true,
-						"example": "5.2"
-					},
-					"kredietbesluit": {
-						"type": "string",
-						"description": "Kredietbesluit reference authorising the investment.",
-						"nullable": true
-					},
-					"componentenMethode": {
-						"type": "boolean",
-						"default": false,
-						"description": "Whether the componentenmethode applies (samengesteld actief split into components with separate schedules)."
-					},
-					"boekwaardeBeginJaarCents": {
-						"type": "integer",
-						"default": 0,
-						"description": "Boekwaarde at the start of the boekjaar in integer eurocents."
-					},
-					"afschrijvingJaarCents": {
-						"type": "integer",
-						"description": "Computed depreciation for the boekjaar in integer eurocents.",
-						"nullable": true
-					}
-				},
-				"x-openregister-lifecycle": {
-					"preconditions": {
-						"saveActivation": "OCA\\Shillinq\\Guard\\BbvComplianceGuard::requireMvaActivation"
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bbv-controller": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			},
-			"Subsidie": {
-				"slug": "Subsidie",
-				"icon": "HandCoinOutline",
-				"version": "0.1.0",
-				"title": "Subsidie",
-				"description": "A BBV subsidie (verstrekt of ontvangen), optionally linked to a SiSa-indicator for the SiSa-bijlage per REQ-BBV-010. Bedragen in integer cents.",
-				"type": "object",
-				"x-schema-org": "schema:MonetaryAmount",
-				"required": [
-					"subsidieSoort",
-					"regelingNaam",
-					"beschikkingNummer",
-					"administrationId"
-				],
-				"properties": {
-					"subsidieSoort": {
-						"type": "string",
-						"enum": [
-							"verstrekt-incidenteel",
-							"verstrekt-structureel",
-							"ontvangen-rijk",
-							"ontvangen-provincie",
-							"ontvangen-eu"
-						],
-						"description": "Subsidy direction and type.",
-						"example": "ontvangen-rijk"
-					},
-					"regelingNaam": {
-						"type": "string",
-						"description": "Name of the regeling.",
-						"example": "Combinatiefuncties"
-					},
-					"sisaIndicator": {
-						"type": "string",
-						"description": "SiSa-bijlage indicator code (e.g. 'H8'). If empty for a SiSa-plichtige regeling, a warning fires per REQ-BBV-010.",
-						"nullable": true,
-						"example": "H8"
-					},
-					"verstrekkerOfOntvanger": {
-						"type": "string",
-						"description": "Counterparty (verstrekker for ontvangen, ontvanger for verstrekt).",
-						"nullable": true
-					},
-					"beschikkingNummer": {
-						"type": "string",
-						"description": "Beschikking number, unique per administration.",
-						"example": "BES-2026-0042"
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this subsidie.",
-						"example": "gem-lemelerveld"
-					},
-					"bedragVerleendCents": {
-						"type": "integer",
-						"default": 0,
-						"description": "Granted amount in integer eurocents."
-					},
-					"bedragVastgesteldCents": {
-						"type": "integer",
-						"description": "Final established amount in integer eurocents.",
-						"nullable": true
-					},
-					"bedragGerealiseerdCents": {
-						"type": "integer",
-						"description": "Realised amount in integer eurocents.",
-						"nullable": true
-					},
-					"taakveld": {
-						"type": "string",
-						"description": "FK to Taakveld.code placing the subsidie in the BBV hierarchy.",
-						"nullable": true
-					},
-					"economischeCategorie": {
-						"type": "string",
-						"description": "FK to EconomischeCategorie.code.",
-						"nullable": true
-					},
-					"verleningsdatum": {
-						"type": "string",
-						"format": "date",
-						"description": "Grant date.",
-						"nullable": true
-					},
-					"beeindigingsdatum": {
-						"type": "string",
-						"format": "date",
-						"description": "End date.",
-						"nullable": true
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bbv-controller": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			},
-			"Begrotingswijziging": {
-				"slug": "Begrotingswijziging",
-				"icon": "FileDocumentEditOutline",
-				"version": "0.1.0",
-				"title": "Begrotingswijziging",
-				"description": "A BBV begrotingswijziging amending a budget line, tied to a raadsbesluit. Bedragen in integer cents.",
-				"type": "object",
-				"x-schema-org": "schema:Thing",
-				"required": [
-					"nummer",
-					"administrationId",
-					"status"
-				],
-				"properties": {
-					"nummer": {
-						"type": "string",
-						"description": "Begrotingswijziging number, unique per administration.",
-						"example": "BW-2026-007"
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this wijziging.",
-						"example": "gem-lemelerveld"
-					},
-					"programma": {
-						"type": "string",
-						"description": "FK to Programma (nummer).",
-						"nullable": true
-					},
-					"taakveld": {
-						"type": "string",
-						"description": "FK to Taakveld.code.",
-						"nullable": true
-					},
-					"economischeCategorie": {
-						"type": "string",
-						"description": "FK to EconomischeCategorie.code.",
-						"nullable": true
-					},
-					"bedragOorspronkelijkCents": {
-						"type": "integer",
-						"default": 0,
-						"description": "Original amount in integer eurocents."
-					},
-					"bedragWijzigingCents": {
-						"type": "integer",
-						"default": 0,
-						"description": "Change amount (may be negative) in integer eurocents."
-					},
-					"bedragNieuwCents": {
-						"type": "integer",
-						"default": 0,
-						"description": "Resulting amount in integer eurocents."
-					},
-					"reden": {
-						"type": "string",
-						"description": "Reason for the wijziging.",
-						"nullable": true
-					},
-					"raadsbesluitNummer": {
-						"type": "string",
-						"description": "Raadsbesluit reference.",
-						"nullable": true
-					},
-					"raadsbesluitDatum": {
-						"type": "string",
-						"format": "date",
-						"description": "Raadsbesluit date.",
-						"nullable": true
-					},
-					"status": {
-						"type": "string",
-						"enum": [
-							"concept",
-							"vastgesteld",
-							"verwerkt"
-						],
-						"default": "concept",
-						"description": "Processing status of the wijziging."
-					},
-					"effectievedatum": {
-						"type": "string",
-						"format": "date",
-						"description": "Effective date of the wijziging.",
-						"nullable": true
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bbv-controller": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			},
-			"Paragraaf": {
-				"slug": "Paragraaf",
-				"icon": "TextBoxOutline",
-				"version": "0.1.0",
-				"title": "Paragraaf",
-				"description": "One of the 7 verplichte BBV-paragrafen (art. 9). All 7 must be present and non-empty before a jaarrekening can be vastgesteld per REQ-BBV-007.",
-				"type": "object",
-				"x-schema-org": "schema:Thing",
-				"required": [
-					"type",
-					"administrationId",
-					"boekjaar"
-				],
-				"properties": {
-					"type": {
-						"type": "string",
-						"enum": [
-							"Lokale_heffingen",
-							"Weerstandsvermogen",
-							"Onderhoud_kapitaalgoederen",
-							"Financiering",
-							"Bedrijfsvoering",
-							"Verbonden_partijen",
-							"Grondbeleid"
-						],
-						"description": "Paragraaf type per BBV art. 9.",
-						"example": "Weerstandsvermogen"
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this paragraaf.",
-						"example": "gem-lemelerveld"
-					},
-					"boekjaar": {
-						"type": "integer",
-						"description": "Fiscal year of this paragraaf.",
-						"example": 2026
-					},
-					"inhoud": {
-						"type": "string",
-						"description": "Free-text content of the paragraaf (template-driven editor output).",
-						"nullable": true
-					},
-					"weerstandsratio": {
-						"type": "number",
-						"description": "Auto-computed weerstandsratio (beschikbaar / benodigd) for the Weerstandsvermogen paragraaf per REQ-BBV-007.",
-						"nullable": true
-					},
-					"compleet": {
-						"type": "boolean",
-						"default": false,
-						"description": "Whether the paragraaf is filled and signed-off."
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bbv-controller": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			},
-			"FiscalPeriod": {
-				"slug": "FiscalPeriod",
-				"icon": "CalendarRange",
-				"version": "0.1.0",
-				"title": "Fiscal Period",
-				"description": "A monthly or quarterly fiscal period with an open/closing/closed/audit-locked lifecycle. Promotes T1's GLLine.periodId stub to a managed register (REQ-PC-001).",
-				"type": "object",
-				"x-schema-org": "schema:DatedMoneySpecification",
-				"x-openregister-audit": true,
-				"required": [
-					"periodId",
-					"name",
-					"startDate",
-					"endDate",
-					"fiscalYear",
-					"administrationId",
-					"state"
-				],
-				"properties": {
-					"periodId": {
-						"type": "string",
-						"description": "Unique period code (e.g. '2026-01', '2026-Q1').",
-						"example": "2026-01"
-					},
-					"name": {
-						"type": "string",
-						"description": "Human-readable label.",
-						"example": "Januari 2026"
-					},
-					"startDate": {
-						"type": "string",
-						"format": "date",
-						"description": "First day of the period."
-					},
-					"endDate": {
-						"type": "string",
-						"format": "date",
-						"description": "Last day of the period."
-					},
-					"fiscalYear": {
-						"type": "string",
-						"description": "Fiscal year this period belongs to.",
-						"example": "2026"
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the owning Administration."
-					},
-					"state": {
-						"type": "string",
-						"description": "Lifecycle state of the period.",
-						"enum": [
-							"open",
-							"closing",
-							"closed",
-							"audit-locked"
-						],
-						"default": "open"
-					},
-					"closedAt": {
-						"type": "string",
-						"format": "date-time",
-						"description": "Timestamp when state transitioned to closed.",
-						"nullable": true
-					},
-					"closedBy": {
-						"type": "string",
-						"description": "UUID of user who closed the period.",
-						"nullable": true
-					},
-					"auditLockedAt": {
-						"type": "string",
-						"format": "date-time",
-						"description": "Timestamp when state transitioned to audit-locked.",
-						"nullable": true
-					},
-					"auditLockedBy": {
-						"type": "string",
-						"description": "UUID of auditor who locked the period.",
-						"nullable": true
-					},
-					"closeReason": {
-						"type": "string",
-						"description": "Operator-provided reason for closing.",
-						"nullable": true
-					},
-					"reopenedHistory": {
-						"type": "array",
-						"description": "Array of {reopenedAt, reopenedBy, reason} objects tracking each reopen (REQ-PC-006).",
-						"items": {
-							"type": "object",
-							"properties": {
-								"reopenedAt": {
-									"type": "string",
-									"format": "date-time"
-								},
-								"reopenedBy": {
-									"type": "string"
-								},
-								"reason": {
-									"type": "string"
-								}
-							}
-						},
-						"default": []
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "state",
-					"initialState": "open",
-					"states": {
-						"open": {
-							"label": "Open",
-							"description": "Period accepts new postings."
-						},
-						"closing": {
-							"label": "Closing",
-							"description": "Trial balance verified; close in progress."
-						},
-						"closed": {
-							"label": "Closed",
-							"description": "No new postings; reversible by elevated role."
-						},
-						"audit-locked": {
-							"label": "Audit Locked",
-							"description": "Terminal — auditor sign-off, irreversible."
-						}
-					},
-					"transitions": {
-						"startClose": {
-							"from": "open",
-							"to": "closing",
-							"label": "Start Close",
-							"description": "Begin period close; trial-balance debit=credit invariant must verify (REQ-TB-003).",
-							"requires": "OCA\\Shillinq\\Lifecycle\\PeriodCloseGuard::trialBalanceVerifies"
-						},
-						"confirmClose": {
-							"from": "closing",
-							"to": "closed",
-							"label": "Confirm Close",
-							"description": "Confirm close; all open AP/AR invoices in the period must be settled or explicitly acknowledged.",
-							"requires": "OCA\\Shillinq\\Lifecycle\\PeriodCloseGuard::openItemsSettled"
-						},
-						"reopen": {
-							"from": "closed",
-							"to": "open",
-							"label": "Reopen",
-							"description": "Reopen a closed period. Requires the elevated period-closer role and an audited reason.",
-							"roles": [
-								"period-closer"
-							],
-							"requires": "OCA\\Shillinq\\Lifecycle\\PeriodCloseGuard::recordReopen"
-						},
-						"auditLock": {
-							"from": "closed",
-							"to": "audit-locked",
-							"label": "Audit Lock",
-							"description": "Irreversibly lock the period after auditor sign-off.",
-							"roles": [
-								"auditor"
-							]
-						}
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bookkeeper": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"period-closer": {
-							"permissions": [
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read",
-								"update"
-							]
-						}
-					}
-				}
-			},
-			"VendorMaster": {
-				"slug": "VendorMaster",
-				"icon": "TruckOutline",
-				"version": "0.1.0",
-				"title": "Vendor",
-				"description": "Vendor (crediteur) master record carrying remittance and payment-terms data for accounts payable (REQ-AP-002).",
-				"type": "object",
-				"x-schema-org": "schema:Organization",
-				"x-openregister-audit": true,
-				"required": [
-					"vendorId",
-					"legalName",
-					"iban",
-					"email",
-					"administrationId",
-					"lifecycleState"
-				],
-				"properties": {
-					"vendorId": {
-						"type": "string",
-						"description": "Internal vendor code.",
-						"example": "CRD-0001"
-					},
-					"legalName": {
-						"type": "string",
-						"description": "Official registered business name."
-					},
-					"tradeName": {
-						"type": "string",
-						"description": "Trade name if different.",
-						"nullable": true
-					},
-					"kvkNumber": {
-						"type": "string",
-						"description": "Dutch KvK registration number.",
-						"nullable": true
-					},
-					"vatID": {
-						"type": "string",
-						"description": "Dutch VAT number (BTW-nummer).",
-						"nullable": true
-					},
-					"iban": {
-						"type": "string",
-						"description": "Vendor's SEPA bank account IBAN."
-					},
-					"bic": {
-						"type": "string",
-						"description": "BIC/SWIFT code.",
-						"nullable": true
-					},
-					"email": {
-						"type": "string",
-						"format": "email",
-						"description": "Contact email for remittance advice."
-					},
-					"paymentTermsDays": {
-						"type": "integer",
-						"description": "Default payment terms (days net).",
-						"default": 30
-					},
-					"defaultGlAccount": {
-						"type": "string",
-						"description": "FK to Account.accountNumber for default AP posting.",
-						"nullable": true
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the owning Administration."
-					},
-					"lifecycleState": {
-						"type": "string",
-						"enum": [
-							"active",
-							"blocked",
-							"archived"
-						],
-						"default": "active"
-					},
-					"taxRegistrationCountry": {
-						"type": "string",
-						"description": "ISO 3166-1 alpha-2 country code for cross-border VAT.",
-						"nullable": true
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "lifecycleState",
-					"initialState": "active",
-					"states": {
-						"active": {
-							"label": "Active",
-							"description": "Available for new AP invoices."
-						},
-						"blocked": {
-							"label": "Blocked",
-							"description": "New invoices rejected at creation."
-						},
-						"archived": {
-							"label": "Archived",
-							"description": "Historical reference only."
-						}
-					},
-					"transitions": {
-						"block": {
-							"from": "active",
-							"to": "blocked",
-							"label": "Block vendor"
-						},
-						"unblock": {
-							"from": "blocked",
-							"to": "active",
-							"label": "Unblock vendor"
-						},
-						"archiveFromActive": {
-							"from": "active",
-							"to": "archived",
-							"label": "Archive vendor",
-							"requires": "OCA\\Shillinq\\Lifecycle\\OpenBalanceGuard::vendorBalanceZero"
-						},
-						"archiveFromBlocked": {
-							"from": "blocked",
-							"to": "archived",
-							"label": "Archive vendor",
-							"requires": "OCA\\Shillinq\\Lifecycle\\OpenBalanceGuard::vendorBalanceZero"
-						}
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bookkeeper": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"ap-approver": {
-							"permissions": [
-								"read"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			},
-			"APInvoice": {
-				"slug": "APInvoice",
-				"icon": "FileDocumentArrowRightOutline",
-				"version": "0.1.0",
-				"title": "AP Invoice",
-				"description": "An incoming vendor invoice (inkoopfactuur) with a draft→received→matched→approved→posted→paid lifecycle (REQ-AP-003/004).",
-				"type": "object",
-				"x-schema-org": "schema:Invoice",
-				"x-openregister-audit": true,
-				"x-openregister-attachment-roles": {
-					"sourceDocumentUri": {
-						"role": "invoice",
-						"mimeTypes": [
-							"application/pdf",
-							"application/vnd.oasis.opendocument.text",
-							"image/jpeg",
-							"image/png"
-						]
-					}
-				},
-				"required": [
-					"vendorInvoiceRef",
-					"vendorId",
-					"administrationId",
-					"invoiceDate",
-					"dueDate",
-					"grossAmount",
-					"netAmount",
-					"currency",
-					"periodId",
-					"lifecycleState"
-				],
-				"properties": {
-					"vendorInvoiceRef": {
-						"type": "string",
-						"description": "Vendor's own invoice number."
-					},
-					"vendorId": {
-						"type": "string",
-						"description": "FK to VendorMaster.vendorId."
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the owning Administration."
-					},
-					"invoiceDate": {
-						"type": "string",
-						"format": "date",
-						"description": "Date the vendor invoice was issued."
-					},
-					"dueDate": {
-						"type": "string",
-						"format": "date",
-						"description": "Payment due date per vendor's payment terms."
-					},
-					"grossAmount": {
-						"type": "number",
-						"description": "Total amount including VAT in EUR."
-					},
-					"vatAmount": {
-						"type": "number",
-						"description": "VAT portion.",
-						"nullable": true
-					},
-					"netAmount": {
-						"type": "number",
-						"description": "Net amount excluding VAT."
-					},
-					"currency": {
-						"type": "string",
-						"minLength": 3,
-						"maxLength": 3,
-						"default": "EUR"
-					},
-					"periodId": {
-						"type": "string",
-						"description": "FK to FiscalPeriod.periodId (posting period)."
-					},
-					"lifecycleState": {
-						"type": "string",
-						"enum": [
-							"draft",
-							"received",
-							"matched",
-							"approved",
-							"posted",
-							"paid",
-							"voided"
-						],
-						"default": "draft"
-					},
-					"poRef": {
-						"type": "string",
-						"description": "FK to future PO register (declared for T4 3-way match).",
-						"nullable": true
-					},
-					"grRef": {
-						"type": "string",
-						"description": "FK to future GR register (declared for T4 3-way match).",
-						"nullable": true
-					},
-					"glTransactionId": {
-						"type": "string",
-						"description": "UUID of the materialised GLTransaction on posting.",
-						"nullable": true
-					},
-					"paymentRunId": {
-						"type": "string",
-						"description": "FK to PaymentRun.runId once included in a payment run.",
-						"nullable": true
-					},
-					"sourceDocumentUri": {
-						"type": "string",
-						"description": "Docudesk FK URI per bookkeeping-document-attachment-integration.",
-						"pattern": "^docudesk://[^/]+/.+/.+$",
-						"nullable": true
-					},
-					"idealPaymentLink": {
-						"type": "string",
-						"description": "Calculated iDEAL payment link for this invoice (REQ-AP-007).",
-						"nullable": true,
-						"x-openregister-calculations": {
-							"operation": "template",
-							"template": "https://ideal.example/pay?iban={{vendorId.iban}}&amount={{grossAmount}}&ref={{vendorInvoiceRef}}",
-							"description": "iDEAL payment link composed from vendor IBAN and invoice amount. Pure data→string transformation per ADR-031."
-						}
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "lifecycleState",
-					"initialState": "draft",
-					"states": {
-						"draft": {
-							"label": "Draft",
-							"description": "Captured, not yet recorded as received."
-						},
-						"received": {
-							"label": "Received",
-							"description": "Receipt recorded."
-						},
-						"matched": {
-							"label": "Matched",
-							"description": "2-way or 3-way match passed."
-						},
-						"approved": {
-							"label": "Approved",
-							"description": "Approval workflow completed."
-						},
-						"posted": {
-							"label": "Posted",
-							"description": "Materialised a balanced GLTransaction."
-						},
-						"paid": {
-							"label": "Paid",
-							"description": "Settled by a payment run."
-						},
-						"voided": {
-							"label": "Voided",
-							"description": "Discarded or reversed."
-						}
-					},
-					"preconditions": {
-						"create": "OCA\\Shillinq\\Lifecycle\\OpenBalanceGuard::vendorNotBlocked"
-					},
-					"transitions": {
-						"receive": {
-							"from": "draft",
-							"to": "received",
-							"label": "Record receipt"
-						},
-						"match": {
-							"from": "received",
-							"to": "matched",
-							"label": "Match invoice",
-							"description": "Conditional 3-way match (PO+GR) or 2-way fallback per REQ-AP-006.",
-							"requires": "OCA\\Shillinq\\Lifecycle\\ThreeWayMatchGuard::matches"
-						},
-						"approve": {
-							"from": "matched",
-							"to": "approved",
-							"label": "Approve",
-							"description": "Consumes OR approval-workflow per REQ-AP-005.",
-							"requires": "openregister:approval-workflow"
-						},
-						"post": {
-							"from": "approved",
-							"to": "posted",
-							"label": "Post to GL",
-							"description": "Materialises a balanced GLTransaction; writes glTransactionId."
-						},
-						"settle": {
-							"from": "posted",
-							"to": "paid",
-							"label": "Mark paid",
-							"description": "Payment run settles; writes paymentRunId."
-						},
-						"voidFromPosted": {
-							"from": "posted",
-							"to": "voided",
-							"label": "Void",
-							"description": "Posts a compensating reversing GLTransaction."
-						},
-						"voidFromDraft": {
-							"from": "draft",
-							"to": "voided",
-							"label": "Discard draft",
-							"description": "No GL impact."
-						}
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bookkeeper": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"ap-approver": {
-							"permissions": [
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				},
-				"x-openregister-aggregations": {
-					"apAging": {
-						"description": "AP aging grouping outstanding APInvoice records by (vendorId, agingBucket) computed from dueDate (REQ-AP-009). Excludes paid/voided.",
-						"groupBy": [
-							"vendorId",
-							"agingBucket"
-						],
-						"field": "grossAmount",
-						"operation": "sum",
-						"filters": {
-							"lifecycleState": {
-								"notIn": [
-									"paid",
-									"voided"
-								]
-							}
-						},
-						"buckets": {
-							"source": "dueDate",
-							"ranges": [
-								{
-									"key": "0-30",
-									"maxDaysOverdue": 30
-								},
-								{
-									"key": "31-60",
-									"minDaysOverdue": 31,
-									"maxDaysOverdue": 60
-								},
-								{
-									"key": "61-90",
-									"minDaysOverdue": 61,
-									"maxDaysOverdue": 90
-								},
-								{
-									"key": "90+",
-									"minDaysOverdue": 91
-								}
-							]
-						}
-					}
-				}
-			},
-			"PaymentRun": {
-				"slug": "PaymentRun",
-				"icon": "BankTransferOut",
-				"version": "0.1.0",
-				"title": "Payment Run",
-				"description": "A batch of selected AP invoices paid together; emits SEPA pain.001 XML as a calculated field (REQ-AP-007).",
-				"type": "object",
-				"x-schema-org": "schema:MoneyTransfer",
-				"x-openregister-audit": true,
-				"required": [
-					"runId",
-					"administrationId",
-					"runDate",
-					"totalAmount",
-					"currency",
-					"selectedInvoiceIds",
-					"lifecycleState"
-				],
-				"properties": {
-					"runId": {
-						"type": "string",
-						"description": "Unique payment run code.",
-						"example": "PAY-2026-001"
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the owning Administration."
-					},
-					"runDate": {
-						"type": "string",
-						"format": "date",
-						"description": "Intended value date for bank processing."
-					},
-					"totalAmount": {
-						"type": "number",
-						"description": "Sum of selected invoice amounts."
-					},
-					"currency": {
-						"type": "string",
-						"minLength": 3,
-						"maxLength": 3,
-						"default": "EUR"
-					},
-					"selectedInvoiceIds": {
-						"type": "array",
-						"items": {
-							"type": "string"
-						},
-						"description": "Array of APInvoice UUIDs included in this run."
-					},
-					"sepaXml": {
-						"type": "string",
-						"description": "Calculated SEPA pain.001.001.03 XML composing the credit transfers (REQ-AP-007).",
-						"nullable": true,
-						"x-openregister-calculations": {
-							"operation": "sepa-pain001",
-							"version": "pain.001.001.03",
-							"source": "selectedInvoiceIds",
-							"description": "Composes SEPA pain.001 credit-transfer XML from the selected invoices' vendor IBAN, amount, and remittance data. Pure data→string transformation per ADR-031 — no PHP SepaPaymentService."
-						}
-					},
-					"lifecycleState": {
-						"type": "string",
-						"enum": [
-							"draft",
-							"approved",
-							"exported",
-							"settled"
-						],
-						"default": "draft"
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "lifecycleState",
-					"initialState": "draft",
-					"states": {
-						"draft": {
-							"label": "Draft",
-							"description": "Invoices being selected."
-						},
-						"approved": {
-							"label": "Approved",
-							"description": "Run approved for export."
-						},
-						"exported": {
-							"label": "Exported",
-							"description": "SEPA XML downloaded for the bank portal."
-						},
-						"settled": {
-							"label": "Settled",
-							"description": "Bank confirmed; invoices marked paid."
-						}
-					},
-					"transitions": {
-						"approve": {
-							"from": "draft",
-							"to": "approved",
-							"label": "Approve run"
-						},
-						"export": {
-							"from": "approved",
-							"to": "exported",
-							"label": "Export SEPA XML"
-						},
-						"settle": {
-							"from": "exported",
-							"to": "settled",
-							"label": "Mark settled"
-						}
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"treasurer": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"bookkeeper": {
-							"permissions": [
-								"read"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			},
-			"CustomerMaster": {
-				"slug": "CustomerMaster",
-				"icon": "AccountTieOutline",
-				"version": "0.1.0",
-				"title": "Customer",
-				"description": "Customer (debiteur) master carrying credit-limit and dunning-policy data for accounts receivable (REQ-AR-002).",
-				"type": "object",
-				"x-schema-org": "schema:Organization",
-				"x-openregister-audit": true,
-				"required": [
-					"customerId",
-					"legalName",
-					"email",
-					"administrationId",
-					"lifecycleState"
-				],
-				"properties": {
-					"customerId": {
-						"type": "string",
-						"description": "Internal customer code.",
-						"example": "DEB-0001"
-					},
-					"legalName": {
-						"type": "string",
-						"description": "Official registered business name."
-					},
-					"tradeName": {
-						"type": "string",
-						"description": "Trade name if different.",
-						"nullable": true
-					},
-					"kvkNumber": {
-						"type": "string",
-						"description": "Dutch KvK registration number.",
-						"nullable": true
-					},
-					"vatID": {
-						"type": "string",
-						"description": "Dutch VAT number (BTW-nummer).",
-						"nullable": true
-					},
-					"email": {
-						"type": "string",
-						"format": "email",
-						"description": "Contact email for invoice delivery."
-					},
-					"telephone": {
-						"type": "string",
-						"description": "Contact telephone.",
-						"nullable": true
-					},
-					"iban": {
-						"type": "string",
-						"description": "Customer's IBAN for SEPA direct debit.",
-						"nullable": true
-					},
-					"creditLimit": {
-						"type": "number",
-						"description": "Maximum outstanding AR balance allowed (EUR).",
-						"nullable": true
-					},
-					"dunningPolicyRef": {
-						"type": "string",
-						"description": "FK to OR dunning-policy record.",
-						"nullable": true
-					},
-					"defaultGlAccount": {
-						"type": "string",
-						"description": "FK to Account.accountNumber for default AR posting.",
-						"nullable": true
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the owning Administration."
-					},
-					"lifecycleState": {
-						"type": "string",
-						"enum": [
-							"active",
-							"blocked",
-							"archived"
-						],
-						"default": "active"
-					},
-					"ublDebtorRef": {
-						"type": "string",
-						"description": "UBL 2.1 AccountingCustomerParty ID (declared for T4 Peppol outbound).",
-						"nullable": true
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "lifecycleState",
-					"initialState": "active",
-					"states": {
-						"active": {
-							"label": "Active",
-							"description": "Available for new AR invoices."
-						},
-						"blocked": {
-							"label": "Blocked",
-							"description": "New invoices rejected at creation."
-						},
-						"archived": {
-							"label": "Archived",
-							"description": "Historical reference only."
-						}
-					},
-					"transitions": {
-						"block": {
-							"from": "active",
-							"to": "blocked",
-							"label": "Block customer"
-						},
-						"unblock": {
-							"from": "blocked",
-							"to": "active",
-							"label": "Unblock customer"
-						},
-						"archiveFromActive": {
-							"from": "active",
-							"to": "archived",
-							"label": "Archive customer",
-							"requires": "OCA\\Shillinq\\Lifecycle\\OpenBalanceGuard::customerBalanceZero"
-						},
-						"archiveFromBlocked": {
-							"from": "blocked",
-							"to": "archived",
-							"label": "Archive customer",
-							"requires": "OCA\\Shillinq\\Lifecycle\\OpenBalanceGuard::customerBalanceZero"
-						}
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bookkeeper": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"ar-controller": {
-							"permissions": [
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			},
-			"ARInvoice": {
-				"slug": "ARInvoice",
-				"icon": "FileDocumentArrowLeftOutline",
-				"version": "0.1.0",
-				"title": "AR Invoice",
-				"description": "An outgoing customer invoice (verkoopfactuur) with a draft→issued→paid/overdue/disputed/written-off lifecycle (REQ-AR-003/004). Carries forward the original Shillinq invoicing scope.",
-				"type": "object",
-				"x-schema-org": "schema:Invoice",
-				"x-openregister-audit": true,
-				"x-openregister-attachment-roles": {
-					"sourceDocumentUri": {
-						"role": "invoice",
-						"mimeTypes": [
-							"application/pdf",
-							"application/vnd.oasis.opendocument.text",
-							"image/jpeg",
-							"image/png"
-						]
-					}
-				},
-				"required": [
-					"invoiceNumber",
-					"customerId",
-					"administrationId",
-					"invoiceDate",
-					"dueDate",
-					"grossAmount",
-					"netAmount",
-					"currency",
-					"periodId",
-					"lifecycleState"
-				],
-				"properties": {
-					"invoiceNumber": {
-						"type": "string",
-						"description": "Sequential invoice number.",
-						"example": "2026-0042"
-					},
-					"customerId": {
-						"type": "string",
-						"description": "FK to CustomerMaster.customerId."
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the owning Administration."
-					},
-					"invoiceDate": {
-						"type": "string",
-						"format": "date",
-						"description": "Date the invoice was issued."
-					},
-					"dueDate": {
-						"type": "string",
-						"format": "date",
-						"description": "Payment due date."
-					},
-					"grossAmount": {
-						"type": "number",
-						"description": "Total amount including VAT."
-					},
-					"vatAmount": {
-						"type": "number",
-						"description": "VAT portion.",
-						"nullable": true
-					},
-					"netAmount": {
-						"type": "number",
-						"description": "Net amount excluding VAT."
-					},
-					"currency": {
-						"type": "string",
-						"minLength": 3,
-						"maxLength": 3,
-						"default": "EUR"
-					},
-					"periodId": {
-						"type": "string",
-						"description": "FK to FiscalPeriod.periodId."
-					},
-					"lifecycleState": {
-						"type": "string",
-						"enum": [
-							"draft",
-							"issued",
-							"paid",
-							"overdue",
-							"disputed",
-							"written-off"
-						],
-						"default": "draft"
-					},
-					"glTransactionId": {
-						"type": "string",
-						"description": "UUID of the materialised GLTransaction on issue.",
-						"nullable": true
-					},
-					"sourceDocumentUri": {
-						"type": "string",
-						"description": "Docudesk FK URI (PDF invoice).",
-						"pattern": "^docudesk://[^/]+/.+/.+$",
-						"nullable": true
-					},
-					"matchedBankLineId": {
-						"type": "string",
-						"description": "FK to BankStatementLine.lineId once payment is matched.",
-						"nullable": true
-					},
-					"ublRef": {
-						"type": "string",
-						"description": "UBL 2.1 document reference (declared for T4 Peppol BIS 3.0 outbound).",
-						"nullable": true
-					},
-					"isOverdue": {
-						"type": "boolean",
-						"description": "Calculated: dueDate < now and not paid (REQ-AR-004). Consumed by OR scheduled workflow for the issued→overdue auto-transition.",
-						"default": false,
-						"x-openregister-calculations": {
-							"operation": "date-overdue",
-							"source": "dueDate",
-							"description": "True when dueDate has passed and the invoice is not paid. Pure derivation per ADR-031."
-						}
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "lifecycleState",
-					"initialState": "draft",
-					"states": {
-						"draft": {
-							"label": "Draft",
-							"description": "Captured, not yet issued."
-						},
-						"issued": {
-							"label": "Issued",
-							"description": "Issued; materialised a balanced GLTransaction."
-						},
-						"paid": {
-							"label": "Paid",
-							"description": "Payment matched from bank-rec."
-						},
-						"overdue": {
-							"label": "Overdue",
-							"description": "Due date passed without payment."
-						},
-						"disputed": {
-							"label": "Disputed",
-							"description": "Customer raised a dispute."
-						},
-						"written-off": {
-							"label": "Written Off",
-							"description": "Bad debt written off with a compensating GLTransaction."
-						}
-					},
-					"preconditions": {
-						"create": "OCA\\Shillinq\\Lifecycle\\OpenBalanceGuard::customerNotBlocked"
-					},
-					"transitions": {
-						"issue": {
-							"from": "draft",
-							"to": "issued",
-							"label": "Issue invoice",
-							"description": "Credit-limit check (REQ-AR-006); materialises a balanced GLTransaction; writes glTransactionId.",
-							"requires": "OCA\\Shillinq\\Lifecycle\\OpenBalanceGuard::withinCreditLimit"
-						},
-						"payFromIssued": {
-							"from": "issued",
-							"to": "paid",
-							"label": "Mark paid",
-							"description": "Payment matched from bank-rec; sets matchedBankLineId; posts payment GLTransaction."
-						},
-						"overdue": {
-							"from": "issued",
-							"to": "overdue",
-							"label": "Mark overdue",
-							"description": "Due date passed; driven by isOverdue calculated field + OR scheduled workflow."
-						},
-						"payFromOverdue": {
-							"from": "overdue",
-							"to": "paid",
-							"label": "Mark paid"
-						},
-						"disputeFromIssued": {
-							"from": "issued",
-							"to": "disputed",
-							"label": "Mark disputed"
-						},
-						"disputeFromOverdue": {
-							"from": "overdue",
-							"to": "disputed",
-							"label": "Mark disputed"
-						},
-						"resolveDispute": {
-							"from": "disputed",
-							"to": "issued",
-							"label": "Resolve dispute"
-						},
-						"writeOffFromIssued": {
-							"from": "issued",
-							"to": "written-off",
-							"label": "Write off",
-							"description": "Posts a compensating GLTransaction (debit bad-debt, credit AR control).",
-							"roles": [
-								"period-closer",
-								"ar-controller"
-							]
-						},
-						"writeOffFromOverdue": {
-							"from": "overdue",
-							"to": "written-off",
-							"label": "Write off",
-							"roles": [
-								"period-closer",
-								"ar-controller"
-							]
-						}
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bookkeeper": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"ar-controller": {
-							"permissions": [
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				},
-				"x-openregister-aggregations": {
-					"arAging": {
-						"description": "AR aging grouping outstanding ARInvoice records by (customerId, agingBucket) computed from dueDate (REQ-AR-008). Excludes paid/written-off.",
-						"groupBy": [
-							"customerId",
-							"agingBucket"
-						],
-						"field": "grossAmount",
-						"operation": "sum",
-						"filters": {
-							"lifecycleState": {
-								"notIn": [
-									"paid",
-									"written-off"
-								]
-							}
-						},
-						"buckets": {
-							"source": "dueDate",
-							"ranges": [
-								{
-									"key": "0-30",
-									"maxDaysOverdue": 30
-								},
-								{
-									"key": "31-60",
-									"minDaysOverdue": 31,
-									"maxDaysOverdue": 60
-								},
-								{
-									"key": "61-90",
-									"minDaysOverdue": 61,
-									"maxDaysOverdue": 90
-								},
-								{
-									"key": "90+",
-									"minDaysOverdue": 91
-								}
-							]
-						}
-					},
-					"outstandingByCustomer": {
-						"description": "Outstanding AR balance per customer for the credit-limit check (REQ-AR-006). Sum of grossAmount for non-paid, non-written-off invoices.",
-						"groupBy": [
-							"customerId"
-						],
-						"field": "grossAmount",
-						"operation": "sum",
-						"filters": {
-							"lifecycleState": {
-								"notIn": [
-									"paid",
-									"written-off"
-								]
-							}
-						}
-					}
-				}
-			},
-			"DunningRecord": {
-				"slug": "DunningRecord",
-				"icon": "EmailAlertOutline",
-				"version": "0.1.0",
-				"title": "Dunning Record",
-				"description": "A dunning (aanmaning) communication record at a given escalation level for an overdue AR invoice (REQ-AR-007). Written declaratively; the dunning workflow itself is consumed from OR.",
-				"type": "object",
-				"x-schema-org": "schema:Message",
-				"x-openregister-audit": true,
-				"required": [
-					"dunningId",
-					"arInvoiceId",
-					"dunningLevel",
-					"issuedDate",
-					"dueDate",
-					"amount",
-					"administrationId",
-					"status"
-				],
-				"properties": {
-					"dunningId": {
-						"type": "string",
-						"description": "Unique dunning record identifier."
-					},
-					"arInvoiceId": {
-						"type": "string",
-						"description": "FK to ARInvoice.invoiceNumber."
-					},
-					"dunningLevel": {
-						"type": "string",
-						"enum": [
-							"reminder1",
-							"reminder2",
-							"formal-notice",
-							"collection"
-						]
-					},
-					"issuedDate": {
-						"type": "string",
-						"format": "date",
-						"description": "Date the dunning communication was issued."
-					},
-					"dueDate": {
-						"type": "string",
-						"format": "date",
-						"description": "New payment deadline in the dunning notice."
-					},
-					"amount": {
-						"type": "number",
-						"description": "Outstanding amount stated in the notice."
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the owning Administration."
-					},
-					"status": {
-						"type": "string",
-						"enum": [
-							"pending",
-							"sent",
-							"responded",
-							"escalated",
-							"withdrawn"
-						],
-						"default": "pending"
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"ar-controller": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"bookkeeper": {
-							"permissions": [
-								"read"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			},
-			"BankStatementLine": {
-				"slug": "BankStatementLine",
-				"icon": "BankTransferOutline",
-				"version": "0.1.0",
-				"title": "Bank Statement Line",
-				"description": "A single transaction line on a bank statement, matchable against AR/AP invoices or routable to suspense (REQ-BR-003).",
-				"type": "object",
-				"x-schema-org": "schema:MoneyTransfer",
-				"x-openregister-audit": true,
-				"required": [
-					"lineId",
-					"statementId",
-					"valueDate",
-					"amount",
-					"currency",
-					"status"
-				],
-				"properties": {
-					"lineId": {
-						"type": "string",
-						"description": "Unique line identifier within the statement."
-					},
-					"statementId": {
-						"type": "string",
-						"description": "FK to BankStatement.statementId."
-					},
-					"valueDate": {
-						"type": "string",
-						"format": "date",
-						"description": "Value date (boekingsdatum) of the transaction."
-					},
-					"transactionDate": {
-						"type": "string",
-						"format": "date",
-						"description": "Transaction date if different from value date.",
-						"nullable": true
-					},
-					"amount": {
-						"type": "number",
-						"description": "Transaction amount (positive = credit, negative = debit, in EUR)."
-					},
-					"currency": {
-						"type": "string",
-						"minLength": 3,
-						"maxLength": 3,
-						"default": "EUR"
-					},
-					"remittanceInfo": {
-						"type": "string",
-						"description": "Payment reference / omschrijving.",
-						"nullable": true
-					},
-					"counterpartyName": {
-						"type": "string",
-						"description": "Name of counterparty.",
-						"nullable": true
-					},
-					"counterpartyIban": {
-						"type": "string",
-						"description": "IBAN of counterparty.",
-						"nullable": true
-					},
-					"endToEndRef": {
-						"type": "string",
-						"description": "SEPA end-to-end reference.",
-						"nullable": true
-					},
-					"status": {
-						"type": "string",
-						"enum": [
-							"unmatched",
-							"matched",
-							"routed-to-suspense"
-						],
-						"default": "unmatched"
-					},
-					"reconciliationMatchId": {
-						"type": "string",
-						"description": "FK to ReconciliationMatch.matchId once matched.",
-						"nullable": true
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bookkeeper": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"treasurer": {
-							"permissions": [
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			},
-			"MatchingRule": {
-				"slug": "MatchingRule",
-				"icon": "FilterCogOutline",
-				"version": "0.1.0",
-				"title": "Matching Rule",
-				"description": "A predicate-based rule for matching bank statement lines against AR/AP invoices or journals (REQ-BR-005). Predicates are declarative schema metadata per ADR-031.",
-				"type": "object",
-				"x-schema-org": "schema:DefinedTerm",
-				"x-openregister-audit": true,
-				"required": [
-					"ruleId",
-					"name",
-					"administrationId",
-					"priority",
-					"isActive",
-					"predicates"
-				],
-				"properties": {
-					"ruleId": {
-						"type": "string",
-						"description": "Unique rule identifier."
-					},
-					"name": {
-						"type": "string",
-						"description": "Human-readable rule name.",
-						"example": "Exacte factuurreferentie"
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the owning Administration."
-					},
-					"priority": {
-						"type": "integer",
-						"description": "Lower number = higher priority (evaluated in order)."
-					},
-					"isActive": {
-						"type": "boolean",
-						"default": true
-					},
-					"predicates": {
-						"type": "array",
-						"description": "Ordered predicate objects driving the match aggregation (REQ-BR-005).",
-						"items": {
-							"type": "object",
-							"required": [
-								"field",
-								"operator",
-								"matchTarget"
-							],
-							"properties": {
-								"field": {
-									"type": "string",
-									"description": "BankStatementLine field to match on.",
-									"enum": [
-										"remittanceInfo",
-										"amount",
-										"counterpartyIban",
-										"counterpartyName",
-										"endToEndRef"
-									]
-								},
-								"operator": {
-									"type": "string",
-									"enum": [
-										"exact",
-										"contains",
-										"regex",
-										"amount-range"
-									]
-								},
-								"value": {
-									"description": "Match target or pattern (string or number).",
-									"nullable": true
-								},
-								"matchTarget": {
-									"type": "string",
-									"enum": [
-										"ar-invoice",
-										"ap-invoice",
-										"journal"
-									]
-								}
-							}
-						}
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bookkeeper": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"treasurer": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			},
-			"ReconciliationMatch": {
-				"slug": "ReconciliationMatch",
-				"icon": "LinkVariant",
-				"version": "0.1.0",
-				"title": "Reconciliation Match",
-				"description": "A candidate or confirmed match linking a bank statement line to an AR/AP invoice, journal, or suspense routing (REQ-BR-006). Emitted by the matching aggregation; confirmed by an operator.",
-				"type": "object",
-				"x-schema-org": "schema:Action",
-				"x-openregister-audit": true,
-				"required": [
-					"matchId",
-					"bankStatementLineId",
-					"matchType",
-					"matchedObjectId",
-					"matchedAmount",
-					"confidence",
-					"status"
-				],
-				"properties": {
-					"matchId": {
-						"type": "string",
-						"description": "Unique match identifier."
-					},
-					"bankStatementLineId": {
-						"type": "string",
-						"description": "FK to BankStatementLine.lineId."
-					},
-					"matchType": {
-						"type": "string",
-						"enum": [
-							"ar-invoice",
-							"ap-invoice",
-							"journal",
-							"suspense"
-						]
-					},
-					"matchedObjectId": {
-						"type": "string",
-						"description": "UUID of the matched AR/AP invoice or journal."
-					},
-					"matchedAmount": {
-						"type": "number",
-						"description": "Amount matched."
-					},
-					"confidence": {
-						"type": "string",
-						"enum": [
-							"auto",
-							"manual"
-						],
-						"description": "auto = rule-matched; manual = operator-created."
-					},
-					"status": {
-						"type": "string",
-						"enum": [
-							"pending",
-							"confirmed",
-							"rejected"
-						],
-						"default": "pending"
-					},
-					"confirmedBy": {
-						"type": "string",
-						"description": "UUID of confirming operator.",
-						"nullable": true
-					},
-					"confirmedAt": {
-						"type": "string",
-						"format": "date-time",
-						"description": "Confirmation timestamp.",
-						"nullable": true
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bookkeeper": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"treasurer": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
 						}
 					}
 				}
