@@ -35,6 +35,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 
@@ -51,12 +52,16 @@ class BudgetBBVMappingController extends Controller
      * @param IRequest     $request     The current request.
      * @param IUserSession $userSession Anonymous-rejection guard
      *                                  (ADR-005 / hydra-gate-no-admin-idor).
+     * @param IL10N        $l10n        Translation service used to
+     *                                  localise response messages
+     *                                  (ADR-007 / slice 10 i18n).
      *
      * @return void
      */
     public function __construct(
         IRequest $request,
         private readonly IUserSession $userSession,
+        private readonly IL10N $l10n,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
@@ -84,7 +89,7 @@ class BudgetBBVMappingController extends Controller
     public function index(): JSONResponse
     {
         if ($this->userSession->getUser() === null) {
-            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+            return new JSONResponse(['error' => $this->l10n->t('Not logged in')], Http::STATUS_UNAUTHORIZED);
         }
 
         return new JSONResponse(
@@ -119,7 +124,7 @@ class BudgetBBVMappingController extends Controller
     public function show(string $id): JSONResponse
     {
         if ($this->userSession->getUser() === null) {
-            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+            return new JSONResponse(['error' => $this->l10n->t('Not logged in')], Http::STATUS_UNAUTHORIZED);
         }
 
         return new JSONResponse(
