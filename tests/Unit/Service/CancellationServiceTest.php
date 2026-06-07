@@ -18,6 +18,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-cancellation-rules/specs/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -53,7 +56,7 @@ final class CancellationServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $logger        = $this->createMock(LoggerInterface::class);
+        $logger        = $this->createMock(originalClassName: LoggerInterface::class);
         $this->service = new CancellationService(logger: $logger);
 
     }//end setUp()
@@ -101,7 +104,7 @@ final class CancellationServiceTest extends TestCase
         ];
 
         $refund = $this->service->calculateRefund(appointment: $appointment, cancelledAt: $this->utc(iso: '2026-05-26T10:00:00Z'));
-        self::assertSame(10000, $refund);
+        self::assertSame(expected: 10000, actual: $refund);
 
     }//end testFullRefundWhenCancelledWithinNotice()
 
@@ -120,7 +123,7 @@ final class CancellationServiceTest extends TestCase
         ];
 
         $refund = $this->service->calculateRefund($appointment, $this->utc(iso: '2026-05-27T10:00:00Z'));
-        self::assertSame(8000, $refund);
+        self::assertSame(expected: 8000, actual: $refund);
 
     }//end testPartialRefundWhenCancelledAfterNotice()
 
@@ -143,7 +146,7 @@ final class CancellationServiceTest extends TestCase
         ];
 
         $refund = $this->service->calculateRefund(appointment: $appointment, cancelledAt: $this->utc(iso: '2026-05-28T08:00:00Z'));
-        self::assertSame(5000, $refund);
+        self::assertSame(expected: 5000, actual: $refund);
 
     }//end testFixedFeeBracket()
 
@@ -165,7 +168,7 @@ final class CancellationServiceTest extends TestCase
         ];
 
         $refund = $this->service->calculateRefund(appointment: $appointment, cancelledAt: $this->utc(iso: '2026-05-28T13:00:00Z'));
-        self::assertSame(0, $refund);
+        self::assertSame(expected: 0, actual: $refund);
 
     }//end testNoRefundForFullFeeBracket()
 
@@ -188,7 +191,7 @@ final class CancellationServiceTest extends TestCase
         ];
 
         $refund = $this->service->calculateRefund(appointment: $appointment, cancelledAt: $this->utc(iso: '2026-05-28T13:00:00Z'));
-        self::assertSame(6701, $refund);
+        self::assertSame(expected: 6701, actual: $refund);
 
     }//end testPercentageRoundingHalfUp()
 
@@ -205,7 +208,8 @@ final class CancellationServiceTest extends TestCase
             'appliedPolicy'   => ['lateFeeBrackets' => []],
         ];
 
-        self::assertSame(4200, $this->service->calculateRefund(appointment: $appointment, cancelledAt: $this->utc(iso: '2026-05-28T13:00:00Z')));
+        $refund = $this->service->calculateRefund(appointment: $appointment, cancelledAt: $this->utc(iso: '2026-05-28T13:00:00Z'));
+        self::assertSame(expected: 4200, actual: $refund);
 
     }//end testNoBracketsFullRefund()
 
@@ -222,7 +226,8 @@ final class CancellationServiceTest extends TestCase
             'appliedPolicy'   => $this->yogaPolicy(),
         ];
 
-        self::assertSame(0, $this->service->calculateRefund(appointment: $appointment, cancelledAt: $this->utc(iso: '2026-05-27T10:00:00Z')));
+        $refund = $this->service->calculateRefund(appointment: $appointment, cancelledAt: $this->utc(iso: '2026-05-27T10:00:00Z'));
+        self::assertSame(expected: 0, actual: $refund);
 
     }//end testZeroCostZeroRefund()
 
@@ -242,7 +247,7 @@ final class CancellationServiceTest extends TestCase
 
         // 2026-05-27T12:00:00+02:00 == 2026-05-27T10:00:00Z → ~28h before start → 20% bracket.
         $amsterdam = new DateTimeImmutable('2026-05-27T12:00:00', new DateTimeZone('Europe/Amsterdam'));
-        self::assertSame(8000, $this->service->calculateRefund($appointment, $amsterdam));
+        self::assertSame(expected: 8000, actual: $this->service->calculateRefund($appointment, $amsterdam));
 
     }//end testTimezoneNormalisedToUtc()
 
@@ -259,8 +264,8 @@ final class CancellationServiceTest extends TestCase
             reason: 'customer_request'
         );
 
-        self::assertFalse($result['allowed']);
-        self::assertSame('already_cancelled', $result['code']);
+        self::assertFalse(condition: $result['allowed']);
+        self::assertSame(expected: 'already_cancelled', actual: $result['code']);
 
     }//end testValidateRejectsAlreadyCancelled()
 
@@ -272,8 +277,8 @@ final class CancellationServiceTest extends TestCase
     public function testValidateRejectsUnknownReason(): void
     {
         $result = $this->service->validateCancellation(appointment: [], reason: 'not_a_real_reason');
-        self::assertFalse($result['allowed']);
-        self::assertSame('invalid_reason', $result['code']);
+        self::assertFalse(condition: $result['allowed']);
+        self::assertSame(expected: 'invalid_reason', actual: $result['code']);
 
     }//end testValidateRejectsUnknownReason()
 
@@ -285,7 +290,7 @@ final class CancellationServiceTest extends TestCase
     public function testValidateAllowsFreshAppointment(): void
     {
         $result = $this->service->validateCancellation(appointment: [], reason: 'no_show');
-        self::assertTrue($result['allowed']);
+        self::assertTrue(condition: $result['allowed']);
 
     }//end testValidateAllowsFreshAppointment()
 
@@ -309,23 +314,23 @@ final class CancellationServiceTest extends TestCase
             cancelledAt: $this->utc(iso: '2026-05-27T10:00:00Z')
         );
 
-        self::assertSame('2026-05-27T10:00:00Z', $cancelled['cancelledAt']);
-        self::assertSame('double_booked', $cancelled['cancelledReason']);
-        self::assertSame(8000, $cancelled['refundAmount']);
-        self::assertSame(CancellationService::REFUND_STATUS_PENDING, $cancelled['refundStatus']);
+        self::assertSame(expected: '2026-05-27T10:00:00Z', actual: $cancelled['cancelledAt']);
+        self::assertSame(expected: 'double_booked', actual: $cancelled['cancelledReason']);
+        self::assertSame(expected: 8000, actual: $cancelled['refundAmount']);
+        self::assertSame(expected: CancellationService::REFUND_STATUS_PENDING, actual: $cancelled['refundStatus']);
         // Input untouched (audit before/after diffing relies on this).
-        self::assertArrayNotHasKey('cancelledAt', $appointment);
+        self::assertArrayNotHasKey(key: 'cancelledAt', array: $appointment);
 
     }//end testInitiateCancellationSnapshotsFields()
 
     /**
-     * initiateCancellation throws when the appointment is already cancelled.
+     * InitiateCancellation throws when the appointment is already cancelled.
      *
      * @return void
      */
     public function testInitiateCancellationThrowsOnAlreadyCancelled(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(exception: \InvalidArgumentException::class);
         $this->service->initiateCancellation(
             appointment: ['cancelledAt' => '2026-05-26T14:00:00Z'],
             reason: 'customer_request'
