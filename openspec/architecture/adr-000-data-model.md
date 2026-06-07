@@ -6372,6 +6372,10 @@ _Wet Fido (Wet Financiering Decentrale Overheden) & Treasurystatuut compliance d
 ### FiscalPeriod
 **Schema.org:** `schema:Duration`
 _A monthly/quarterly accounting period with an `open → closing → closed → audit-locked` lifecycle. Promotes T1's `GLLine.periodId` stub-string to a real OpenRegister register; postings against a closed period are rejected by the `PeriodCloseGuard` lifecycle precondition. `audit-locked` is terminal. Year-end close (opening-balance journal generation, retained-earnings rollover) is deferred to T3._
+
+### PeriodClose
+**Schema.org:** `schema:Event`
+_Accounting period with a guided-close lifecycle and audit trail, introduced by the `bookkeeping-period-close` change (T2). Carries the `open → closing → closed → audit-locked` lifecycle (ADR-031 / `register.d/bookkeeping-period-close.json`): `closed` is reversible by a `period-closer` with an audit-trailed close reason (appended to `reopenedHistory`), `audit-locked` is irreversible (auditor only). The change additively augments T1's `GLTransaction.post` transition with a declarative precondition (`OCA\Shillinq\Lifecycle\PeriodCloseGuard::periodOpen`) that rejects any posting whose `periodId` resolves to a `closed`/`audit-locked` PeriodClose — backdating prevention matching Exact/AFAS/Twinfield. The AI close assistant (`OCA\Shillinq\Service\PeriodCloseAssistantService`) detects open AP/AR (draft GLTransactions with `subLedgerType` ap/ar), unreconciled bank statements, and pending expense claims, surfacing them as non-blocking warning flags. Distinct from `FiscalYear` (the year master) and `BudgetPeriod`: PeriodClose tracks the close workflow state of a single month/quarter. Year-end close (opening-balance journal, retained-earnings rollover) is deferred to T3._
 **Primary spec:** bookkeeping-period-close
 
 | Property | Type | Required | Description |
@@ -6681,3 +6685,18 @@ _BBV programmabegroting (municipal/provincial/waterschap budget code) data model
 | Paragraaf | schema:Report | begrotingId, type (7 verplichte), narrative, kerncijfers | → Programmabegroting (N:1) |
 | Meerjarenraming | schema:MonetaryAmount | begrotingId, jaar, batenStructureel/lastenStructureel, saldoReëel, sluitend | → Programmabegroting (N:1) |
 | Begrotingswijziging | schema:Action | begrotingId, wijzigingsnummer, mutaties[] (delta), raadsbesluit, status | → Programmabegroting (N:1) |
+
+| periodId | string | Yes | Unique period identifier within an administration (e.g. "2026-01") |
+| administrationId | string | Yes | FK to Administration; scopes reads to the caller's administration |
+| startDate | date | Yes | First day of the period |
+| endDate | date | Yes | Last day of the period |
+| fiscalYear | integer | Yes | Fiscal year the period falls in |
+| state | enum | Yes | One of: open, closing, closed, audit-locked |
+| closedAt / closedBy | datetime / string | No | Close stamp (set on close, cleared on reopen) |
+| auditLockedAt / auditLockedBy | datetime / string | No | Audit-lock stamp (irreversible) |
+| closeReason | text | No | Audit-trailed reason captured on reopen |
+| reopenedHistory | array | No | Append-only {closedAt, closedBy, reopenedAt, reopenedBy, closeReason} |
+| taskChecklistItems | array | No | Pre-close checklist {id, category, description, resolved, resolvedAt, resolvedBy} |
+| aiFlags | array | No | Close-assistant warnings {id, severity, message, category, detectedAt} |
+
+**Relations:** → GLTransaction (1:N via periodId), → Administration (N:1), → FiscalYear (N:1 via fiscalYear).

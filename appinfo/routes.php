@@ -109,6 +109,15 @@ return [
         ['name' => 'programmabegroting#iv3', 'url' => '/api/programmabegroting/export/iv3', 'verb' => 'GET'],
         ['name' => 'programmabegroting#jsonExport', 'url' => '/api/programmabegroting/export/json', 'verb' => 'GET'],
 
+        // Period close (Tier 2): guided close lifecycle + AI close-assistant flags.
+        // Specific action routes MUST precede the {periodId} wildcard reads.
+        ['name' => 'periodClose#startClose', 'url' => '/api/period-close/{periodId}/start-close', 'verb' => 'POST'],
+        ['name' => 'periodClose#close', 'url' => '/api/period-close/{periodId}/close', 'verb' => 'POST'],
+        ['name' => 'periodClose#reopen', 'url' => '/api/period-close/{periodId}/reopen', 'verb' => 'POST'],
+        ['name' => 'periodClose#lockAudit', 'url' => '/api/period-close/{periodId}/lock-audit', 'verb' => 'POST'],
+        ['name' => 'periodClose#aiFlags', 'url' => '/api/period-close/{periodId}/ai-flags', 'verb' => 'GET'],
+        ['name' => 'periodClose#show', 'url' => '/api/period-close/{periodId}', 'verb' => 'GET'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],

@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-6.1
+ * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-14
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -24,166 +24,46 @@ namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
 use OCA\Shillinq\Lifecycle\PeriodCloseGuard;
 use OCP\IAppConfig;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * Tests for PeriodCloseGuard covering REQ-PC-004 / REQ-TB-003.
+ * Tests the closed-period posting rejection + close/reopen preconditions.
+ *
+ * Covers REQ-PC-003 (backdating prevention), REQ-PC-002 (mandatory checklist
+ * before close), and REQ-PC-006 (close reason before reopen).
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class PeriodCloseGuardTest extends TestCase
+final class PeriodCloseGuardTest extends TestCase
 {
-
     /**
-     * Mock ContainerInterface.
+     * Build the guard over a set of PeriodClose records the stub returns.
      *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
-
-    /**
-     * Mock IAppConfig.
+     * @param array<int,array<string,mixed>> $periods PeriodClose rows.
      *
-     * @var IAppConfig&MockObject
+     * @return PeriodCloseGuard
      */
-    private IAppConfig&MockObject $appConfig;
-
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
-
-    /**
-     * The guard under test.
-     *
-     * @var PeriodCloseGuard
-     */
-    private PeriodCloseGuard $guard;
-
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
+    private function buildGuard(array $periods): PeriodCloseGuard
     {
-        parent::setUp();
-
-        // phpcs:disable CustomSniffs.Functions.NamedParameters
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->logger    = $this->createMock(LoggerInterface::class);
-        // phpcs:enable CustomSniffs.Functions.NamedParameters
-
-        $this->appConfig->method('getValueString')->willReturn('shillinq');
-
-        $this->guard = new PeriodCloseGuard(
-            container: $this->container,
-            appConfig: $this->appConfig,
-            logger: $this->logger,
-        );
-
-    }//end setUp()
-
-    /**
-     * A period whose posted GL lines balance verifies (REQ-TB-003).
-     *
-     * @return void
-     */
-    public function testBalancedPeriodVerifies(): void
-    {
-        $lines = [
-            ['periodId' => '2026-01', 'side' => 'debit',  'amount' => 250.00],
-            ['periodId' => '2026-01', 'side' => 'credit', 'amount' => 250.00],
-        ];
-
-        $this->container->method('get')->willReturn($this->buildObjectServiceStub(lines: $lines));
-
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertTrue($this->guard->trialBalanceVerifies(periodId: '2026-01'));
-
-    }//end testBalancedPeriodVerifies()
-
-    /**
-     * A period whose debits != credits does not verify; close is denied.
-     *
-     * @return void
-     */
-    public function testUnbalancedPeriodDenied(): void
-    {
-        $lines = [
-            ['periodId' => '2026-02', 'side' => 'debit',  'amount' => 100.00],
-            ['periodId' => '2026-02', 'side' => 'credit', 'amount' => 90.00],
-        ];
-
-        $this->container->method('get')->willReturn($this->buildObjectServiceStub(lines: $lines));
-
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse($this->guard->trialBalanceVerifies(periodId: '2026-02'));
-
-    }//end testUnbalancedPeriodDenied()
-
-    /**
-     * Exception causes fail-closed (returns false): a period is never closed over
-     * an unverifiable ledger.
-     *
-     * @return void
-     */
-    public function testExceptionFailsClosed(): void
-    {
-        $this->container->method('get')
-            ->willThrowException(new \RuntimeException('ObjectService unavailable'));
-
-        $this->logger->expects($this->once())->method('error');
-
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse($this->guard->trialBalanceVerifies(periodId: '2026-03'));
-
-    }//end testExceptionFailsClosed()
-
-    /**
-     * An empty period (no postings) trivially verifies (0 = 0).
-     *
-     * @return void
-     */
-    public function testEmptyPeriodVerifies(): void
-    {
-        $this->container->method('get')->willReturn($this->buildObjectServiceStub(lines: []));
-
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertTrue($this->guard->trialBalanceVerifies(periodId: '2026-04'));
-
-    }//end testEmptyPeriodVerifies()
-
-    /**
-     * Build an anonymous ObjectService stub returning the given lines from findAll().
-     *
-     * @param array<mixed> $lines GL line records to return.
-     *
-     * @return object
-     */
-    private function buildObjectServiceStub(array $lines): object
-    {
-        return new class($lines) {
+        $stub = new class($periods) {
 
             /**
-             * GL line records to return.
+             * PeriodClose rows.
              *
-             * @var array<mixed>
+             * @var array<int,array<string,mixed>>
              */
-            private array $lines;
+            private array $periods;
 
             /**
              * Constructor.
              *
-             * @param array<mixed> $lines Lines to return.
+             * @param array<int,array<string,mixed>> $periods PeriodClose rows.
              */
-            public function __construct(array $lines)
+            public function __construct(array $periods)
             {
-                $this->lines = $lines;
+                $this->periods = $periods;
             }//end __construct()
 
             /**
@@ -211,16 +91,164 @@ class PeriodCloseGuardTest extends TestCase
             }//end setSchema()
 
             /**
-             * Return all stubbed lines.
+             * Filter PeriodClose rows by simple equality.
              *
-             * @param array<string,mixed> $params Query parameters (unused).
+             * @param array<string,mixed> $params Query parameters.
              *
-             * @return array<mixed>
+             * @return array<int,array<string,mixed>>
              */
             public function findAll(array $params=[]): array
             {
-                return $this->lines;
+                $filters = ($params['filters'] ?? []);
+                return array_values(
+                    array_filter(
+                        $this->periods,
+                        static function (array $row) use ($filters): bool {
+                            foreach ($filters as $key => $value) {
+                                if (($row[$key] ?? null) !== $value) {
+                                    return false;
+                                }
+                            }
+
+                            return true;
+                        }
+                    )
+                );
             }//end findAll()
         };
-    }//end buildObjectServiceStub()
+
+        $container = $this->createMock(ContainerInterface::class);
+        $container->method('get')->willReturn($stub);
+
+        $appConfig = $this->createMock(IAppConfig::class);
+        $appConfig->method('getValueString')->willReturn('shillinq');
+
+        return new PeriodCloseGuard(
+            container: $container,
+            appConfig: $appConfig,
+            logger: $this->createMock(LoggerInterface::class),
+        );
+
+    }//end buildGuard()
+
+    /**
+     * Posting into a closed period is rejected (REQ-PC-003).
+     *
+     * @return void
+     */
+    public function testPostingRejectedAgainstClosedPeriod(): void
+    {
+        $guard = $this->buildGuard(
+            [
+                ['periodId' => '2026-01', 'administrationId' => 'adm-1', 'state' => 'closed'],
+            ]
+        );
+
+        $allowed = $guard->periodOpen(['periodId' => '2026-01', 'administrationId' => 'adm-1']);
+        self::assertFalse($allowed);
+
+    }//end testPostingRejectedAgainstClosedPeriod()
+
+    /**
+     * Posting into an audit-locked period is rejected (REQ-PC-003).
+     *
+     * @return void
+     */
+    public function testPostingRejectedAgainstAuditLockedPeriod(): void
+    {
+        $guard = $this->buildGuard(
+            [
+                ['periodId' => '2026-01', 'administrationId' => 'adm-1', 'state' => 'audit-locked'],
+            ]
+        );
+
+        self::assertFalse($guard->periodOpen(['periodId' => '2026-01', 'administrationId' => 'adm-1']));
+
+    }//end testPostingRejectedAgainstAuditLockedPeriod()
+
+    /**
+     * Posting into an open period is allowed (REQ-PC-003).
+     *
+     * @return void
+     */
+    public function testPostingAllowedAgainstOpenPeriod(): void
+    {
+        $guard = $this->buildGuard(
+            [
+                ['periodId' => '2026-01', 'administrationId' => 'adm-1', 'state' => 'open'],
+            ]
+        );
+
+        self::assertTrue($guard->periodOpen(['periodId' => '2026-01', 'administrationId' => 'adm-1']));
+
+    }//end testPostingAllowedAgainstOpenPeriod()
+
+    /**
+     * A posting whose period has no PeriodClose record is allowed (REQ-PC-003).
+     *
+     * @return void
+     */
+    public function testPostingAllowedWhenNoPeriodRecord(): void
+    {
+        $guard = $this->buildGuard([]);
+        self::assertTrue($guard->periodOpen(['periodId' => '2026-09', 'administrationId' => 'adm-1']));
+
+    }//end testPostingAllowedWhenNoPeriodRecord()
+
+    /**
+     * A posting without a periodId is allowed (no period scope to gate) (REQ-PC-003).
+     *
+     * @return void
+     */
+    public function testPostingAllowedWhenNoPeriodId(): void
+    {
+        $guard = $this->buildGuard([]);
+        self::assertTrue($guard->periodOpen(['administrationId' => 'adm-1']));
+
+    }//end testPostingAllowedWhenNoPeriodId()
+
+    /**
+     * Close is gated until all mandatory (AP/AR) checklist items resolve (REQ-PC-002).
+     *
+     * @return void
+     */
+    public function testMandatoryChecklistResolved(): void
+    {
+        $guard = $this->buildGuard([]);
+
+        $unresolved = [
+            'taskChecklistItems' => [
+                ['category' => 'ap', 'resolved' => false],
+                ['category' => 'ar', 'resolved' => true],
+            ],
+        ];
+        self::assertFalse($guard->mandatoryChecklistResolved($unresolved));
+
+        $resolved = [
+            'taskChecklistItems' => [
+                ['category' => 'ap', 'resolved' => true],
+                ['category' => 'ar', 'resolved' => true],
+                // Non-mandatory bank item left unresolved must not block close.
+                ['category' => 'bank', 'resolved' => false],
+            ],
+        ];
+        self::assertTrue($guard->mandatoryChecklistResolved($resolved));
+
+    }//end testMandatoryChecklistResolved()
+
+    /**
+     * Reopen is gated until a non-empty close reason is supplied (REQ-PC-006).
+     *
+     * @return void
+     */
+    public function testCloseReasonSupplied(): void
+    {
+        $guard = $this->buildGuard([]);
+        self::assertFalse($guard->closeReasonSupplied(['closeReason' => '']));
+        self::assertFalse($guard->closeReasonSupplied(['closeReason' => '   ']));
+        self::assertTrue($guard->closeReasonSupplied(['closeReason' => 'Posted correction']));
+
+    }//end testCloseReasonSupplied()
+
+    // phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class
