@@ -85,6 +85,7 @@ class InitializeSettings implements IRepairStep
      * Phase 9: seeds ReimbursementPolicy + PassThroughMarkupRule master-data records per REQ-ERP-004 / REQ-ERP-005.
      * Phase 10: seeds demo Barcode records (EAN/GTIN/SSCC/UPC/internal) per REQ-SKU-011.
      * Phase 11: seeds demo InventoryStock records (Amsterdam / Rotterdam / Utrecht) per REQ-IST-009.
+     * Phase 12: seeds BBVProgramme + BudgetBBVMapping demo records (waterschappen BBV chain member 01) per REQ-BBVW-001 / REQ-BBVW-002.
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -96,6 +97,7 @@ class InitializeSettings implements IRepairStep
      * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
      * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
      * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
+     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed/tasks.md#seed-data
      */
     public function run(IOutput $output): void
     {
@@ -154,6 +156,7 @@ class InitializeSettings implements IRepairStep
             $this->seedInventoryLotsDemo(output: $output);
             $this->seedInventoryValuationExamples(output: $output);
             $this->seedInventoryStockExamples(output: $output);
+            $this->seedBbvWaterschappenDemo(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -531,7 +534,6 @@ class InitializeSettings implements IRepairStep
 
     }//end seedInventoryBarcodeDemo()
 
-
     /**
      * Seed the demo InventoryLot records, idempotently.
      *
@@ -562,7 +564,6 @@ class InitializeSettings implements IRepairStep
         $output->warning('Demo inventory lot seeding issue: '.($result['message'] ?? 'unknown error'));
 
     }//end seedInventoryLotsDemo()
-
 
     /**
      * Seed example InventoryValuation snapshots from
@@ -603,7 +604,6 @@ class InitializeSettings implements IRepairStep
         $output->warning('Inventory valuation example seeding issue: '.($result['message'] ?? 'unknown error'));
 
     }//end seedInventoryValuationExamples()
-
 
     /**
      * Seed example InventoryStock records from the three location seed files
@@ -647,6 +647,59 @@ class InitializeSettings implements IRepairStep
 
     }//end seedInventoryStockExamples()
 
+    /**
+     * Seed the bookkeeping-waterschappen-bbv-variant slice-01 demo data
+     * (BBVProgramme + BudgetBBVMapping) idempotently per administration.
+     *
+     * Calls SettingsService::seedBbvProgrammes() and seedBudgetBbvMappings().
+     * Both seeders dedupe on natural keys per REQ-BBVW-001 / REQ-BBVW-002 so
+     * re-runs never create duplicates and operator edits persist across
+     * upgrades. Skipped when administration_id is not configured (C2 —
+     * prevents "default" contamination of real tenant data).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed/tasks.md#seed-data
+     */
+    private function seedBbvWaterschappenDemo(IOutput $output): void
+    {
+        $settings         = $this->settingsService->getSettings();
+        $administrationId = ($settings['administration_id'] ?? '');
+
+        if ($administrationId === '') {
+            $output->info('Shillinq: BBV waterschappen demo seed skipped (no default administration configured)');
+            return;
+        }
+
+        $output->info('Seeding BBVProgramme demo records...');
+        $progResult = $this->settingsService->seedBbvProgrammes(administrationId: $administrationId);
+        if (($progResult['success'] ?? false) === true) {
+            $output->info(
+                'BBVProgramme demo records seeded: '
+                .($progResult['seeded'] ?? 0).' created, '.($progResult['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if (($progResult['success'] ?? false) !== true) {
+            $output->warning('BBVProgramme demo seeding issue: '.($progResult['message'] ?? 'unknown error'));
+            return;
+        }
+
+        $output->info('Seeding BudgetBBVMapping demo records...');
+        $mapResult = $this->settingsService->seedBudgetBbvMappings(administrationId: $administrationId);
+        if (($mapResult['success'] ?? false) === true) {
+            $output->info(
+                'BudgetBBVMapping demo records seeded: '
+                .($mapResult['seeded'] ?? 0).' created, '.($mapResult['skipped'] ?? 0).' skipped.'
+            );
+            return;
+        }
+
+        $output->warning('BudgetBBVMapping demo seeding issue: '.($mapResult['message'] ?? 'unknown error'));
+
+    }//end seedBbvWaterschappenDemo()
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.
