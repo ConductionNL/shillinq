@@ -348,4 +348,42 @@ final class WaterschappenBbvAggregationIntegrationTest extends TestCase
     }//end testTotalBudgetMaterialisedFromFixtures()
 
 
+    /**
+     * YTDSpend + Utilization for programme 2.3.2 must match the on-track
+     * snapshot (Σ GL.amount × allocation%, ratio against TotalBudget).
+     *
+     * @return void
+     */
+    public function testYtdSpendAndUtilizationFromGlTransactions(): void
+    {
+        $fixture  = $this->fixture();
+        $mappings = $fixture['mappings'];
+        $snapshot = $fixture['spendSnapshots']['onTrack'];
+
+        $agg = $this->computeAggregation(
+            '2.3.2',
+            $mappings,
+            $snapshot['transactions']
+        );
+
+        self::assertSame(
+            (int) $snapshot['expectedYtdSpendCents']['2.3.2'],
+            $agg['ytdSpendCents'],
+            'YTDSpend(2.3.2) must equal SUM(GL.amount × allocation%) for the on-track snapshot.'
+        );
+
+        // Utilization is a float ratio — assert with delta to allow IEEE-754 noise.
+        self::assertEqualsWithDelta(
+            (float) $snapshot['expectedUtilization']['2.3.2'],
+            $agg['utilization'],
+            0.0001,
+            'Utilization(2.3.2) must equal YTDSpend / TotalBudget.'
+        );
+
+        // ComplianceStatus on this snapshot must be on-track.
+        self::assertSame('on-track', $agg['complianceStatus']);
+
+    }//end testYtdSpendAndUtilizationFromGlTransactions()
+
+
 }//end class
