@@ -25,6 +25,7 @@ use OCA\Shillinq\Listener\AppointmentCreatedListener;
 use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
 use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
+use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Repair\InitializeSettings;
@@ -35,6 +36,7 @@ use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -148,6 +150,24 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: BookingLifecycleTransitionListener::class
+        );
+
+        // bookkeeping-waterschappen-bbv-variant slice 08 — invalidate the
+        // BBV-compliance cache when a GL transaction header or line is
+        // created or updated. The slice-02 x-openregister-aggregations
+        // block on BBVProgramme materialises totalBudget / ytdSpend /
+        // utilization / complianceStatus over those very lines, and
+        // ComplianceService caches the per-programme envelope for 1h
+        // (REQ-BBVW-006). The listener drops the cache namespace so the
+        // next dashboard render repopulates from the engine. Fail-soft:
+        // a cache hiccup never blocks a GL write (giant D3).
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: GLTransactionComplianceCacheListener::class
+        );
+        $context->registerEventListener(
+            event: ObjectUpdatedEvent::class,
+            listener: GLTransactionComplianceCacheListener::class
         );
 
         // Initialize register and schemas on install/upgrade.
