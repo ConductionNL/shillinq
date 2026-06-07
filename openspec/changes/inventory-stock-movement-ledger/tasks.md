@@ -59,12 +59,12 @@
   normal, damaged, expired, shrinkage, inter-warehouse, adjustment, sample, demo, theft, loss;
   admin-configurable). Immutable log, no edits
 
-- [ ] Task 12: Add manifest navigation entries per REQ-SM-008 (Stock Movements index, Stock Ledger
+- [x] Task 12: Add manifest navigation entries per REQ-SM-008 (Stock Movements index, Stock Ledger
   index with drill-down, Reserved Stock index) + their `type: detail` pages. Filters on Stock
   Movements: date range, type, status, location. Reserved Stock grouped by source location,
   showing age + operator
 
-- [ ] Task 13: Implement reserved quantity visibility per REQ-SM-009 — InventoryStock detail page
+- [x] Task 13: Implement reserved quantity visibility per REQ-SM-009 — InventoryStock detail page
   shows Available = quantity - reservedQty. Reserved Stock index lists draft moves holding reservations
   (age, operator name). Alert flag if reservedQty > 50% of quantity
 
