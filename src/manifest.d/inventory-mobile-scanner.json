@@ -1,0 +1,343 @@
+{
+	"menu": [
+		{
+			"id": "Warehouse",
+			"label": "Warehouse",
+			"icon": "Warehouse",
+			"order": 80,
+			"children": [
+				{
+					"id": "InventoryStock",
+					"label": "Stock",
+					"icon": "Warehouse",
+					"route": "InventoryStock",
+					"order": 10
+				},
+				{
+					"id": "InventoryItems",
+					"label": "Items",
+					"icon": "PackageVariantClosed",
+					"route": "InventoryItems",
+					"order": 20
+				},
+				{
+					"id": "InventoryLocations",
+					"label": "Locations",
+					"icon": "MapMarkerOutline",
+					"route": "InventoryLocations",
+					"order": 30
+				},
+				{
+					"id": "ScanOperations",
+					"label": "Scan Operations",
+					"icon": "BarcodeScan",
+					"route": "ScanOperations",
+					"order": 40
+				},
+				{
+					"id": "GoodsReceipts",
+					"label": "Goods Receipts",
+					"icon": "TruckCheckOutline",
+					"route": "GoodsReceipts",
+					"order": 50
+				},
+				{
+					"id": "InventoryTransfers",
+					"label": "Transfers",
+					"icon": "SwapHorizontal",
+					"route": "InventoryTransfers",
+					"order": 60
+				},
+				{
+					"id": "InventoryCounts",
+					"label": "Counts",
+					"icon": "ClipboardListOutline",
+					"route": "InventoryCounts",
+					"order": 70
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "InventoryStock",
+			"route": "/warehouse/stock",
+			"type": "index",
+			"title": "Inventory Stock",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryStock",
+				"columns": [
+					{"key": "sku", "label": "SKU", "sortable": true},
+					{"key": "location", "label": "Location", "sortable": true},
+					{"key": "quantity", "label": "On hand", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true},
+					{"key": "lastModified", "label": "Last modified", "sortable": true}
+				],
+				"defaultSort": "sku",
+				"detailRoute": "InventoryStockDetail"
+			}
+		},
+		{
+			"id": "InventoryStockDetail",
+			"route": "/warehouse/stock/:id",
+			"type": "detail",
+			"title": "Inventory Stock",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryStock",
+				"fields": [
+					{"key": "sku", "label": "SKU", "type": "string"},
+					{"key": "location", "label": "Location", "type": "string"},
+					{"key": "quantity", "label": "On hand", "type": "number"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "lastRestockDate", "label": "Last restock", "type": "string"},
+					{"key": "lastModified", "label": "Last modified", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"indexRoute": "InventoryStock"
+			}
+		},
+		{
+			"id": "InventoryItems",
+			"route": "/warehouse/items",
+			"type": "index",
+			"title": "Inventory Items",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryItem",
+				"columns": [
+					{"key": "sku", "label": "SKU", "sortable": true},
+					{"key": "name", "label": "Name", "sortable": true},
+					{"key": "barcode", "label": "Barcode", "sortable": true},
+					{"key": "category", "label": "Category", "sortable": true},
+					{"key": "unitPrice", "label": "Unit price", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true}
+				],
+				"defaultSort": "sku",
+				"detailRoute": "InventoryItemDetail"
+			}
+		},
+		{
+			"id": "InventoryItemDetail",
+			"route": "/warehouse/items/:id",
+			"type": "detail",
+			"title": "Inventory Item",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryItem",
+				"fields": [
+					{"key": "sku", "label": "SKU", "type": "string"},
+					{"key": "name", "label": "Name", "type": "string"},
+					{"key": "barcode", "label": "Barcode", "type": "string"},
+					{"key": "category", "label": "Category", "type": "string"},
+					{"key": "unitPrice", "label": "Unit price", "type": "number"},
+					{"key": "currency", "label": "Currency", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"}
+				],
+				"indexRoute": "InventoryItems"
+			}
+		},
+		{
+			"id": "InventoryLocations",
+			"route": "/warehouse/locations",
+			"type": "index",
+			"title": "Inventory Locations",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryLocation",
+				"columns": [
+					{"key": "code", "label": "Code", "sortable": true},
+					{"key": "name", "label": "Name", "sortable": true},
+					{"key": "warehouse", "label": "Warehouse", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true}
+				],
+				"defaultSort": "code",
+				"detailRoute": "InventoryLocationDetail"
+			}
+		},
+		{
+			"id": "InventoryLocationDetail",
+			"route": "/warehouse/locations/:id",
+			"type": "detail",
+			"title": "Inventory Location",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryLocation",
+				"fields": [
+					{"key": "code", "label": "Code", "type": "string"},
+					{"key": "name", "label": "Name", "type": "string"},
+					{"key": "warehouse", "label": "Warehouse", "type": "string"},
+					{"key": "organization", "label": "Organization", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"}
+				],
+				"indexRoute": "InventoryLocations"
+			}
+		},
+		{
+			"id": "ScanOperations",
+			"route": "/warehouse/scan-operations",
+			"type": "index",
+			"title": "Scan Operations",
+			"config": {
+				"register": "shillinq",
+				"schema": "MobileScanOperation",
+				"columns": [
+					{"key": "type", "label": "Type", "sortable": true},
+					{"key": "sku", "label": "SKU", "sortable": true},
+					{"key": "location", "label": "Location", "sortable": true},
+					{"key": "quantity", "label": "Quantity", "sortable": true},
+					{"key": "state", "label": "State", "sortable": true},
+					{"key": "syncedAt", "label": "Synced", "sortable": true}
+				],
+				"defaultSort": "syncedAt",
+				"detailRoute": "ScanOperationDetail"
+			}
+		},
+		{
+			"id": "ScanOperationDetail",
+			"route": "/warehouse/scan-operations/:id",
+			"type": "detail",
+			"title": "Scan Operation",
+			"config": {
+				"register": "shillinq",
+				"schema": "MobileScanOperation",
+				"fields": [
+					{"key": "type", "label": "Type", "type": "string"},
+					{"key": "transactionId", "label": "Transaction id", "type": "string"},
+					{"key": "sku", "label": "SKU", "type": "string"},
+					{"key": "location", "label": "Location", "type": "string"},
+					{"key": "toLocation", "label": "To location", "type": "string"},
+					{"key": "quantity", "label": "Quantity", "type": "number"},
+					{"key": "role", "label": "Role", "type": "string"},
+					{"key": "performedBy", "label": "Performed by", "type": "string"},
+					{"key": "clientTimestamp", "label": "Captured at", "type": "string"},
+					{"key": "syncedAt", "label": "Synced at", "type": "string"},
+					{"key": "state", "label": "State", "type": "string"},
+					{"key": "rejectionReason", "label": "Rejection reason", "type": "string"}
+				],
+				"indexRoute": "ScanOperations"
+			}
+		},
+		{
+			"id": "GoodsReceipts",
+			"route": "/warehouse/goods-receipts",
+			"type": "index",
+			"title": "Goods Receipts",
+			"config": {
+				"register": "shillinq",
+				"schema": "GoodsReceipt",
+				"columns": [
+					{"key": "sku", "label": "SKU", "sortable": true},
+					{"key": "location", "label": "Location", "sortable": true},
+					{"key": "quantity", "label": "Quantity", "sortable": true},
+					{"key": "receivedBy", "label": "Received by", "sortable": true},
+					{"key": "receivedAt", "label": "Received at", "sortable": true}
+				],
+				"defaultSort": "receivedAt",
+				"detailRoute": "GoodsReceiptDetail"
+			}
+		},
+		{
+			"id": "GoodsReceiptDetail",
+			"route": "/warehouse/goods-receipts/:id",
+			"type": "detail",
+			"title": "Goods Receipt",
+			"config": {
+				"register": "shillinq",
+				"schema": "GoodsReceipt",
+				"fields": [
+					{"key": "sku", "label": "SKU", "type": "string"},
+					{"key": "location", "label": "Location", "type": "string"},
+					{"key": "quantity", "label": "Quantity", "type": "number"},
+					{"key": "resultingQuantity", "label": "Resulting on hand", "type": "number"},
+					{"key": "receivedBy", "label": "Received by", "type": "string"},
+					{"key": "receivedAt", "label": "Received at", "type": "string"},
+					{"key": "transactionId", "label": "Transaction id", "type": "string"}
+				],
+				"indexRoute": "GoodsReceipts"
+			}
+		},
+		{
+			"id": "InventoryTransfers",
+			"route": "/warehouse/transfers",
+			"type": "index",
+			"title": "Inventory Transfers",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryTransfer",
+				"columns": [
+					{"key": "sku", "label": "SKU", "sortable": true},
+					{"key": "fromLocation", "label": "From", "sortable": true},
+					{"key": "toLocation", "label": "To", "sortable": true},
+					{"key": "quantity", "label": "Quantity", "sortable": true},
+					{"key": "transferredAt", "label": "Transferred at", "sortable": true}
+				],
+				"defaultSort": "transferredAt",
+				"detailRoute": "InventoryTransferDetail"
+			}
+		},
+		{
+			"id": "InventoryTransferDetail",
+			"route": "/warehouse/transfers/:id",
+			"type": "detail",
+			"title": "Inventory Transfer",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryTransfer",
+				"fields": [
+					{"key": "sku", "label": "SKU", "type": "string"},
+					{"key": "fromLocation", "label": "From", "type": "string"},
+					{"key": "toLocation", "label": "To", "type": "string"},
+					{"key": "quantity", "label": "Quantity", "type": "number"},
+					{"key": "transferredBy", "label": "Transferred by", "type": "string"},
+					{"key": "transferredAt", "label": "Transferred at", "type": "string"},
+					{"key": "transactionId", "label": "Transaction id", "type": "string"}
+				],
+				"indexRoute": "InventoryTransfers"
+			}
+		},
+		{
+			"id": "InventoryCounts",
+			"route": "/warehouse/counts",
+			"type": "index",
+			"title": "Inventory Counts",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryCount",
+				"columns": [
+					{"key": "sku", "label": "SKU", "sortable": true},
+					{"key": "location", "label": "Location", "sortable": true},
+					{"key": "systemQuantity", "label": "System", "sortable": true},
+					{"key": "physicalQuantity", "label": "Physical", "sortable": true},
+					{"key": "variance", "label": "Variance", "sortable": true},
+					{"key": "countedAt", "label": "Counted at", "sortable": true}
+				],
+				"defaultSort": "countedAt",
+				"detailRoute": "InventoryCountDetail"
+			}
+		},
+		{
+			"id": "InventoryCountDetail",
+			"route": "/warehouse/counts/:id",
+			"type": "detail",
+			"title": "Inventory Count",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryCount",
+				"fields": [
+					{"key": "sku", "label": "SKU", "type": "string"},
+					{"key": "location", "label": "Location", "type": "string"},
+					{"key": "systemQuantity", "label": "System quantity", "type": "number"},
+					{"key": "physicalQuantity", "label": "Physical quantity", "type": "number"},
+					{"key": "variance", "label": "Variance", "type": "number"},
+					{"key": "countedBy", "label": "Counted by", "type": "string"},
+					{"key": "countedAt", "label": "Counted at", "type": "string"},
+					{"key": "applied", "label": "Applied to stock", "type": "boolean"},
+					{"key": "transactionId", "label": "Transaction id", "type": "string"}
+				],
+				"indexRoute": "InventoryCounts"
+			}
+		}
+	]
+}

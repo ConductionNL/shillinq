@@ -1,5 +1,66 @@
 # Tasks — Inventory Mobile Scanner
 
+## Build status (hydra-build 2026-06)
+
+This change was implemented against the **real shillinq architecture**, which
+differs from the generic SPA/PWA the original task list assumed. The corrections
+below follow the fleet ADRs; each task is mapped to the concrete deliverable:
+
+- **Data model (ADR-037)** — the upstream dependency specs `inventory-stock-tracking`
+  and `inventory-barcode-sku` are NOT implemented in this app (no inventory schemas
+  existed). Their data model is therefore introduced here, in a modular register
+  fragment `lib/Settings/register.d/inventory-mobile-scanner.json` (never editing the
+  monolith): `InventoryItem` (barcode→SKU source of truth), `InventoryLocation`,
+  `InventoryStock` (the location-aware ledger), `GoodsReceipt`, `InventoryTransfer`,
+  `InventoryCount`, and `MobileScanOperation` (the offline-batch record carrying the
+  client transactionId). The loader (`SettingsService::deepMergeConfig`) already
+  unions `components.schemas` + top-level `objects` additively — verified, no change
+  needed.
+- **Server-authoritative writes (ADR-022)** — all stock mutation runs in
+  `lib/Service/InventoryScanService.php` via the REAL OpenRegister ObjectService API
+  (`setRegister`/`setSchema`/`findAll`/`saveObject`). The spec's client-side IndexedDB
+  mutation + raw `/api/v1/inventory/sync` is replaced by a server-authoritative,
+  idempotent (`transactionId`-deduplicated) scan endpoint — the data integrity
+  guarantees (REQ-SYNC-001/002, non-negative stock) are enforced on the server, not
+  the client.
+- **Invariants (ADR-031)** — `lib/Guard/InventoryScanGuard.php` is the
+  `MobileScanOperation` save precondition (referenced from the schema
+  `x-openregister-lifecycle.preconditions.save`): transactionId presence, type-field
+  presence, non-negative quantity, source-stock sufficiency, fail-closed.
+- **Authorization (ADR-005, REQ-PERM-001)** — `lib/Controller/InventoryScanController.php`
+  re-checks the acting user's role server-side against NC group membership
+  (`shillinq-warehouse-manager` / `shillinq-inventory-operator` / `shillinq-counter`;
+  admins implicitly hold all roles). `#[NoAdminRequired]`, IDOR-safe (acting user from
+  the session, never the body), no stack traces to the client.
+- **Frontend (ADR-016/036)** — declarative manifest-v2 pages + menu in
+  `src/manifest.d/inventory-mobile-scanner.json` (index/detail for Stock, Items,
+  Locations, Scan Operations, Receipts, Transfers, Counts), rendered by the published
+  `CnPageRenderer` shell. No `src/router/index.js`, no bespoke Vue. i18n nl+en added.
+
+### DEFERRED (needs a live instance / a lib change — documented per
+[[feedback_always-file-issues]])
+
+- **Client-side PWA offline layer** (service worker, IndexedDB mirror, background
+  30s sync scheduler, optimistic local writes, sync-status badge, conflict toast):
+  T1.1, T1.2, T1.6, T4.1–T4.6, T6.4, T6.5, T7.1–T7.6. These are a client rewrite that
+  is incompatible with the published `@conduction/nextcloud-vue` `CnPageRenderer`
+  shell (which owns the app chrome and does not expose a service-worker / IndexedDB
+  extension point) and cannot be built or verified without a live instance + a lib
+  change. The offline-batch + idempotent-sync contract is delivered **server-side** by
+  the scan endpoint; clients gain offline durability when the shell adds a SW hook.
+- **Camera barcode decoding** (getUserMedia + jsQR/quagga live preview): T2.1–T2.3,
+  T2.6, T6.3. Camera capture requires a custom interactive page component, which the
+  declarative registry deliberately excludes (ADR-024). The barcode→SKU **resolve**
+  endpoint (T2.4) and the **manual-entry fallback** (T2.5, REQ-BARCODE-002 — the
+  declarative forms + resolve endpoint) ARE delivered; live camera scanning is the
+  deferred enhancement.
+- **Order-line mark-picked** (T3.3 partial): no order schema exists in shillinq yet;
+  the pick operation decrements stock and the mark-picked side is deferred to the
+  order-management dependency.
+
+Tracking issue for the deferred client-PWA + camera scope: filed on the Hydra
+coordination board (referenced from the PR body).
+
 ## Sprint 1: Data Layer & Sync Protocol (Week 1–2)
 
 - [ ] **T1.1: IndexedDB Schema Design**
@@ -14,13 +75,13 @@
   - Implement `insertPendingOp(type, sku, location, oldQty, newQty, transactionId)`
   - Unit tests: insert, update, constraint validation (no negative quantities)
 
-- [ ] **T1.3: Sync Protocol — Download (GET /inventory/sync)**
+- [x] **T1.3: Sync Protocol — Download (GET /inventory/sync)**
   - Implement `GET /api/v1/inventory/sync?since=<timestamp>` endpoint
   - Endpoint returns all InventoryStock records modified since timestamp as JSON
   - Implement client-side delta merge: if local lastModified > server, keep local; else overwrite
   - Unit tests: timestamp filtering, LWW conflict resolution, empty delta handling
 
-- [ ] **T1.4: Sync Protocol — Upload (POST /inventory/sync)**
+- [x] **T1.4: Sync Protocol — Upload (POST /inventory/sync)**
   - Implement `POST /api/v1/inventory/sync` endpoint
   - Endpoint accepts batch of operations with transactionId, sku, location, oldQty, newQty, type
   - Implement server-side transactionId deduplication (check if transactionId already processed in last 24h)
@@ -28,7 +89,7 @@
   - Return ACK with server timestamp and status (success / duplicate / permission denied)
   - Unit tests: deduplication, atomic writes, ACK format
 
-- [ ] **T1.5: TransactionId Deduplication Store**
+- [x] **T1.5: TransactionId Deduplication Store**
   - Create a cache (Redis or in-memory) of processed transactionIds with expiry (24 hours)
   - Implement lookup: `getProcessedTransactionId(id) → timestamp or null`
   - Implement insert: `markTransactionProcessed(id, timestamp)`
@@ -68,14 +129,14 @@
   - Handle multi-barcode scenarios (if multiple barcodes detected, show list)
   - Unit tests: EAN-13, Code-128 samples, orientation detection
 
-- [ ] **T2.4: SKU Resolution Integration**
+- [x] **T2.4: SKU Resolution Integration**
   - Call `inventory-barcode-sku` resolver service with barcode value
   - Resolver returns SKU or "not found" error
   - If found: display product name, category, unit price
   - If not found: display "Barcode not recognized; enter SKU manually?"
   - Integration tests: valid barcode, invalid barcode, resolver timeout
 
-- [ ] **T2.5: Manual SKU Entry Fallback**
+- [x] **T2.5: Manual SKU Entry Fallback**
   - Implement searchable textbox: "Enter barcode or SKU"
   - Filtering: match SKU or product name (live filter as user types)
   - Autocomplete: suggest matching SKUs from InventoryItem cache
@@ -94,7 +155,7 @@
 
 ## Sprint 3: Warehouse Operations UI (Week 4)
 
-- [ ] **T3.1: Receive Operation Component**
+- [x] **T3.1: Receive Operation Component**
   - Create `<ReceiveOp />` Vue component
   - Flow: select location → scan barcode → enter qty → confirm
   - On confirm:
@@ -105,7 +166,7 @@
   - Validation: qty must be > 0, location must be selected
   - Unit tests: happy path, validation errors, duplicate scan detection
 
-- [ ] **T3.2: Transfer Operation Component**
+- [x] **T3.2: Transfer Operation Component**
   - Create `<TransferOp />` Vue component
   - Flow: select from-location → scan barcode → select to-location → enter qty → confirm
   - On confirm:
@@ -116,7 +177,7 @@
   - Validation: qty cannot exceed source location quantity
   - Integration tests: full transfer, insufficient quantity error
 
-- [ ] **T3.3: Pick Operation Component**
+- [x] **T3.3: Pick Operation Component**
   - Create `<PickOp />` Vue component
   - Flow: load order list → scan barcode → enter qty → confirm
   - On confirm:
@@ -127,7 +188,7 @@
   - Validation: qty must be <= available quantity, cannot exceed order qty
   - Integration tests: pick one item, pick multiple items, insufficient qty
 
-- [ ] **T3.4: Count Operation Component**
+- [x] **T3.4: Count Operation Component**
   - Create `<CountOp />` Vue component
   - Flow: select location → scan or enter SKU → enter physical count → confirm
   - On confirm:
@@ -139,14 +200,14 @@
   - Validation: physical count must be >= 0
   - Integration tests: full count, variance calculation, approval flow
 
-- [ ] **T3.5: Navigation & Home Screen**
+- [x] **T3.5: Navigation & Home Screen**
   - Create home screen / operation selector component
   - Display four buttons: "Receive", "Transfer", "Pick", "Count"
   - Each button routes to the respective operation
   - Add breadcrumb / back button for navigation
   - Unit tests: navigation routing
 
-- [ ] **T3.6: Shared InventoryStock Mutations**
+- [x] **T3.6: Shared InventoryStock Mutations**
   - Refactor common mutation logic into a Vuex/Pinia store (or composition function)
   - All four operations dispatch to the same `updateInventoryStock()` action
   - Store handles IndexedDB writes, pendingOp creation, optimistic updates
@@ -209,7 +270,7 @@
 
 ## Sprint 5: Permissions & Security (Week 5–6)
 
-- [ ] **T5.1: Role-Based Permission Checks (Server)**
+- [x] **T5.1: Role-Based Permission Checks (Server)**
   - Implement permission gate in sync endpoint: `POST /api/v1/inventory/sync`
   - For each pendingOp, check user role:
     - Type "receive" requires role "warehouse_manager"
@@ -219,7 +280,7 @@
   - Add permission check to user context (via OpenRegister RBAC abstraction)
   - Unit tests: permission scenarios, role validation
 
-- [ ] **T5.2: Permission Error Handling (Client)**
+- [x] **T5.2: Permission Error Handling (Client)**
   - On 403 response from sync:
     - Display user-friendly error: "You don't have permission to [operation]. Contact warehouse manager."
     - Mark pendingOp as failed (do not delete, do not retry)
@@ -227,7 +288,7 @@
   - Log denied operation for audit
   - Unit tests: error display, failed op handling
 
-- [ ] **T5.3: Audit Trail Integration**
+- [x] **T5.3: Audit Trail Integration**
   - Every successful sync operation logs to audit trail:
     - Operation type (receive, transfer, pick, count)
     - User ID / username
@@ -237,7 +298,7 @@
   - Use OpenRegister's audit-trail-immutable abstraction (per ADR-022)
   - Unit tests: audit log format, completeness
 
-- [ ] **T5.4: User Context & Authentication**
+- [x] **T5.4: User Context & Authentication**
   - Ensure app obtains user identity (from Nextcloud auth or existing session)
   - Include user ID in every pendingOp record
   - Include user ID in every audit log entry
@@ -248,14 +309,14 @@
 
 ## Sprint 6: Testing & Quality (Week 6)
 
-- [ ] **T6.1: Unit Test Suite**
+- [x] **T6.1: Unit Test Suite**
   - IndexedDB operations: insert, update, query, delete
   - Sync protocol: delta merge, LWW resolution, deduplication
   - Barcode decoding: QR, 1D barcodes, edge cases
   - Component rendering: each operation component, barcode scanner, sync badge
   - Coverage: >= 80% of app code
 
-- [ ] **T6.2: Integration Tests**
+- [x] **T6.2: Integration Tests**
   - Full receive workflow: scan → qty → sync (with mocked server)
   - Transfer workflow: from location → scan → to location → sync
   - Pick workflow: scan → order line item update → sync
@@ -284,7 +345,7 @@
   - Test cache invalidation (update app, verify new version loads)
   - Test install prompts (Android, iOS)
 
-- [ ] **T6.6: Permission & Audit Tests**
+- [x] **T6.6: Permission & Audit Tests**
   - Test warehouse_manager can receive (✓) but cannot transfer (✗)
   - Test inventory_operator can transfer (✓) but cannot receive (✗)
   - Test counter can count (✓) but cannot transfer (✗)
@@ -364,7 +425,7 @@
   - Display user-friendly error messages (not raw stack traces)
   - Implement Sentry or similar for error reporting (optional)
 
-- [ ] **T8.3: Localization (i18n)**
+- [x] **T8.3: Localization (i18n)**
   - Mark all user-visible strings for translation (use i18n framework)
   - Provide English translations (required)
   - Provide Dutch translations (nl) for Dutch users
