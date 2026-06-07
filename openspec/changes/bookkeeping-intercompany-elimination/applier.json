@@ -3,25 +3,25 @@
   "pass": false,
   "blocking": [
     {
+      "file": "Conduction/shillinq",
+      "severity": "critical",
+      "note": "mergeable=false \u2014 PR cannot be merged cleanly into development; orchestrator should escalate to rebuild:queued"
+    },
+    {
       "file": "l10n/en.json",
       "severity": "critical",
-      "note": "Committed Git merge conflict markers (<<<<<<< HEAD / ======= / >>>>>>> origin/development) make this file invalid JSON; Nextcloud translation loading will throw a parse error at runtime."
+      "note": "Committed Git conflict markers (<<<<<<< HEAD / ======= / >>>>>>> origin/development) make this file invalid JSON; Nextcloud translation loading will throw a parse error at runtime"
     },
     {
       "file": "l10n/nl.json",
       "severity": "critical",
-      "note": "Same committed conflict markers as en.json; Dutch locale translation file is invalid JSON and will fail to load."
-    },
-    {
-      "file": "src/manifest.json",
-      "severity": "critical",
-      "note": "Committed <<<<<<< HEAD marker injected into the pages array makes this file invalid JSON; the Vue app manifest parser will fail on load, breaking all frontend navigation."
+      "note": "Same committed conflict markers as l10n/en.json \u2014 Dutch locale file is invalid JSON and will fail to load at runtime"
     }
   ],
-  "turns": 8,
-  "cost_usd": 0.4397,
-  "cost_eur": 0.4045,
+  "turns": 7,
+  "cost_usd": 0.2106,
+  "cost_eur": 0.1938,
   "pr": 301,
-  "commit": "a5fa6dc",
-  "timestamp": "2026-06-07T07:49:11.106697+00:00"
+  "commit": "e86bf94",
+  "timestamp": "2026-06-07T08:25:33.330348+00:00"
 }
