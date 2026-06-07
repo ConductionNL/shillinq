@@ -41,6 +41,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -53,9 +54,10 @@ class BadoControleprotocolController extends Controller
     /**
      * Constructor for the BadoControleprotocolController.
      *
-     * @param IRequest                    $request The request object.
-     * @param BadoControleprotocolService $service The BADO aggregation + opinion service.
-     * @param LoggerInterface             $logger  Logger for diagnostics (no stack traces to client).
+     * @param IRequest                    $request     The request object.
+     * @param BadoControleprotocolService $service     The BADO aggregation + opinion service.
+     * @param LoggerInterface             $logger      Logger for diagnostics (no stack traces to client).
+     * @param IUserSession                $userSession The user session for authentication guard.
      *
      * @return void
      */
@@ -63,6 +65,7 @@ class BadoControleprotocolController extends Controller
         IRequest $request,
         private readonly BadoControleprotocolService $service,
         private readonly LoggerInterface $logger,
+        private readonly IUserSession $userSession,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -85,6 +88,10 @@ class BadoControleprotocolController extends Controller
     #[NoAdminRequired]
     public function aggregation(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
+
         $protocolId = trim((string) $this->request->getParam('protocol_id', ''));
 
         if ($protocolId === '') {
