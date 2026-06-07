@@ -147,6 +147,12 @@ return [
         ['name' => 'purchaseOrder#create', 'url' => '/api/purchase-orders', 'verb' => 'POST'],
         ['name' => 'purchaseOrder#send', 'url' => '/api/purchase-orders/{id}/send', 'verb' => 'POST'],
 
+        // Purchase Order 3-way-match slice 03 — Peppol transmission + PDF/email
+        // fallback. Static segments precede the {id} wildcard so they are matched
+        // first (Symfony route ordering).
+        ['name' => 'purchaseOrder#transmitPeppol', 'url' => '/api/purchase-orders/{id}/transmit/peppol', 'verb' => 'POST'],
+        ['name' => 'purchaseOrder#transmitEmail', 'url' => '/api/purchase-orders/{id}/transmit/email', 'verb' => 'POST'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],

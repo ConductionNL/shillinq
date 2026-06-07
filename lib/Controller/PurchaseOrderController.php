@@ -23,6 +23,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+ * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -227,6 +228,134 @@ class PurchaseOrderController extends Controller
         return new JSONResponse($po, Http::STATUS_OK);
 
     }//end send()
+
+    /**
+     * Transmit an approved PO to its supplier via Peppol BIS Ordering 3.0.
+     *
+     * POST /api/purchase-orders/{id}/transmit/peppol
+     * Body: administrationId.
+     * Server enforces the approval-complete precondition (REQ-PO3W-001 send-block)
+     * and routes the document through the openconnector Peppol Access Point. On
+     * success the response carries the updated PO with `peppolMessageId` +
+     * `peppolSentAt`; when the supplier is not Peppol-registered the server
+     * automatically falls back to PDF + email and records
+     * `peppolFallbackReason` (REQ-PO3W-002 D2 — graceful, never silent).
+     *
+     * @param string $id The PO id (path parameter).
+     *
+     * @return JSONResponse 200 with the updated PO; 400 on validation; 401
+     *                       anonymous; 404 on cross-tenant / missing PO; 409 when
+     *                       approval-chain incomplete; 500 without stack trace.
+     *
+     * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+     */
+    #[NoAdminRequired]
+    public function transmitPeppol(string $id): JSONResponse
+    {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
+
+        if (preg_match(self::ID_PATTERN, $id) !== 1) {
+            return new JSONResponse(['error' => 'Invalid purchase order id'], Http::STATUS_BAD_REQUEST);
+        }
+
+        $administrationId = $this->scopeParam(name: 'administrationId');
+        if ($administrationId === '') {
+            return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+        }
+
+        if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+            return new JSONResponse(['error' => 'Purchase order not found'], Http::STATUS_NOT_FOUND);
+        }
+
+        try {
+            $po = $this->purchaseOrderService->sendToPeppol(
+                administrationId: $administrationId,
+                purchaseOrderId: $id
+            );
+        } catch (\RuntimeException $e) {
+            $message = $e->getMessage();
+            if (str_contains($message, 'not found') === true) {
+                return new JSONResponse(['error' => $message], Http::STATUS_NOT_FOUND);
+            }
+
+            return new JSONResponse(['error' => $message], Http::STATUS_CONFLICT);
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'PurchaseOrderController: Peppol transmission failed',
+                ['purchaseOrderId' => $id, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
+            );
+            return new JSONResponse(['error' => 'Could not transmit purchase order'], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+
+        return new JSONResponse($po, Http::STATUS_OK);
+
+    }//end transmitPeppol()
+
+    /**
+     * Transmit an approved PO to its supplier via PDF + email fallback.
+     *
+     * POST /api/purchase-orders/{id}/transmit/email
+     * Body: administrationId, fallbackReason (optional).
+     * The fallbackReason audits why the operator chose the manual path; an empty
+     * value defaults to `manual_pdf_email_fallback`. Server-side guarantees
+     * are identical to the Peppol path (approval-complete precondition + IDOR).
+     *
+     * @param string $id The PO id (path parameter).
+     *
+     * @return JSONResponse 200 with the updated PO; 400 on validation; 401
+     *                       anonymous; 404 on cross-tenant / missing PO; 409 when
+     *                       approval-chain incomplete; 500 without stack trace.
+     *
+     * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+     */
+    #[NoAdminRequired]
+    public function transmitEmail(string $id): JSONResponse
+    {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
+
+        if (preg_match(self::ID_PATTERN, $id) !== 1) {
+            return new JSONResponse(['error' => 'Invalid purchase order id'], Http::STATUS_BAD_REQUEST);
+        }
+
+        $administrationId = $this->scopeParam(name: 'administrationId');
+        if ($administrationId === '') {
+            return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+        }
+
+        if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+            return new JSONResponse(['error' => 'Purchase order not found'], Http::STATUS_NOT_FOUND);
+        }
+
+        $fallbackReason = trim((string) $this->request->getParam('fallbackReason', ''));
+
+        try {
+            $po = $this->purchaseOrderService->sendToPDFEmail(
+                administrationId: $administrationId,
+                purchaseOrderId: $id,
+                fallbackReason: $fallbackReason
+            );
+        } catch (\RuntimeException $e) {
+            $message = $e->getMessage();
+            if (str_contains($message, 'not found') === true) {
+                return new JSONResponse(['error' => $message], Http::STATUS_NOT_FOUND);
+            }
+
+            return new JSONResponse(['error' => $message], Http::STATUS_CONFLICT);
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'PurchaseOrderController: PDF+email transmission failed',
+                ['purchaseOrderId' => $id, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
+            );
+            return new JSONResponse(['error' => 'Could not transmit purchase order'], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+
+        return new JSONResponse($po, Http::STATUS_OK);
+
+    }//end transmitEmail()
 
     /**
      * Read and validate a scope parameter, returning '' when blank/malformed.
