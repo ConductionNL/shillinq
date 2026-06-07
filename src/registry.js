@@ -135,6 +135,20 @@ import VendorPerformanceDetail from './components/vendor-performance/VendorPerfo
 // route + manifest entry pointing at this component id.
 import BBVComplianceDashboard from './components/Dashboard/BBVComplianceDashboard.vue'
 
+// bookkeeping-waterschappen-bbv-variant slice 07 (REQ-BBVW-004): the
+// Budget Mapping detail page composes two bespoke autocomplete pickers
+// (Chart of Accounts + BBVProgramme), a live per-account allocation
+// sum projection that warns when projected total exceeds the slice-03
+// ±0.1 % tolerance, an audit-trail sidebar and a confirm-gated delete
+// dialog. None of those concerns fit the built-in `detail` page type
+// slice 04 declared, so the page is re-registered as a kind:"page"
+// custom component. Slice 07's manifest fragment overlays slice 04's
+// detail page entry to point at this component id, and a second
+// legacy id (`BudgetMappingDetail`) is wired to the same component so
+// the slice-05 BBVProgrammeTable row drill-through continues to
+// resolve.
+import BudgetBBVMappingDetail from './components/BudgetBBVMapping/BudgetBBVMappingDetail.vue'
+
 export default {
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
 	MobileScannerReceive: { kind: 'page', component: ReceivePage },
@@ -166,4 +180,7 @@ export default {
 	VendorPerformanceDetail: { kind: 'page', component: VendorPerformanceDetail },
 
 	BBVComplianceDashboard: { kind: 'page', component: BBVComplianceDashboard },
+
+	BudgetBBVMappingDetail: { kind: 'page', component: BudgetBBVMappingDetail },
+	BudgetMappingDetail: { kind: 'page', component: BudgetBBVMappingDetail },
 }
