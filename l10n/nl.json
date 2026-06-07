@@ -1547,6 +1547,17 @@
         "End time must be after start time": "Eindtijd moet na de starttijd liggen",
         "Booking duration must be at least 15 minutes": "Boeking moet minimaal 15 minuten duren",
         "Failed to create booking": "Boeking aanmaken mislukt"
+"Credit Control": "Debiteurenbeheer",
+        "Dunning Ladders": "Dunning-ladders",
+        "Dunning Ladder": "Dunning-ladder",
+        "Customer Overrides": "Klant-overrides",
+        "Customer Override": "Klant-override",
+        "Dunning Runs": "Dunning-runs",
+        "Dunning Run": "Dunning-run",
+        "Collection Costs": "Incassokosten",
+        "Collection-cost Calculation": "Incassokosten-berekening",
+        "Bad-Debt Write-offs": "Oninbare afschrijvingen",
+        "Bad-Debt Write-off": "Oninbare afschrijving"
     },
     "plurals": ""
 }

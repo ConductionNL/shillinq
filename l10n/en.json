@@ -1547,6 +1547,17 @@
         "End time must be after start time": "End time must be after start time",
         "Booking duration must be at least 15 minutes": "Booking duration must be at least 15 minutes",
         "Failed to create booking": "Failed to create booking"
+"Credit Control": "Credit Control",
+        "Dunning Ladders": "Dunning Ladders",
+        "Dunning Ladder": "Dunning Ladder",
+        "Customer Overrides": "Customer Overrides",
+        "Customer Override": "Customer Override",
+        "Dunning Runs": "Dunning Runs",
+        "Dunning Run": "Dunning Run",
+        "Collection Costs": "Collection Costs",
+        "Collection-cost Calculation": "Collection-cost Calculation",
+        "Bad-Debt Write-offs": "Bad-Debt Write-offs",
+        "Bad-Debt Write-off": "Bad-Debt Write-off"
     },
     "plurals": ""
 }

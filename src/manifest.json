@@ -832,6 +832,90 @@
 					"order": 30
 				}
 			]
+},
+		{
+			"id": "Debiteurenbeheer",
+			"label": "Credit Control",
+			"icon": "icon-category-monitoring",
+			"order": 36,
+			"children": [
+				{
+					"id": "DunningLadders",
+					"label": "Dunning Ladders",
+					"icon": "StairsUp",
+					"route": "DunningLadders",
+					"order": 10
+				},
+				{
+					"id": "KlantOverrides",
+					"label": "Customer Overrides",
+					"icon": "AccountCogOutline",
+					"route": "KlantOverrides",
+					"order": 20
+				},
+				{
+					"id": "DunningRuns",
+					"label": "Dunning Runs",
+					"icon": "EmailFastOutline",
+					"route": "DunningRuns",
+					"order": 30
+				},
+				{
+					"id": "IncassoKosten",
+					"label": "Collection Costs",
+					"icon": "CalculatorVariantOutline",
+					"route": "IncassoKosten",
+					"order": 40
+				},
+				{
+					"id": "OninbareAfschrijvingen",
+					"label": "Bad-Debt Write-offs",
+					"icon": "FileRemoveOutline",
+					"route": "OninbareAfschrijvingen",
+					"order": 50
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "Products",
+			"route": "/inventory/products",
+			"type": "index",
+			"title": "Products",
+			"config": {
+				"register": "shillinq",
+				"schema": "Product",
+				"columns": [
+					{
+						"key": "sku",
+						"label": "SKU",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "category",
+						"label": "Category",
+						"sortable": true
+					},
+					{
+						"key": "unitPrice",
+						"label": "Unit Price",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "sku",
+				"detailRoute": "ProductDetail"
+			}
 		},
 		{
 			"id": "Retainers",
@@ -16782,6 +16866,199 @@
 					{ "key": "status", "label": "Status", "type": "string" }
 				],
 				"indexRoute": "RetainerTrueUps"
+			}
+		},
+		{
+			"id": "DunningLadders",
+			"route": "/dunning-ladders",
+			"type": "index",
+			"title": "Dunning Ladders",
+			"config": {
+				"register": "shillinq",
+				"schema": "DunningLadder",
+				"columns": [
+					{ "key": "naam", "label": "Naam", "sortable": true },
+					{ "key": "klantGroep", "label": "Klantgroep", "sortable": true },
+					{ "key": "actief", "label": "Actief", "sortable": true }
+				],
+				"defaultSort": "naam",
+				"detailRoute": "DunningLaddersDetail"
+			}
+		},
+		{
+			"id": "DunningLaddersDetail",
+			"route": "/dunning-ladders/:id",
+			"type": "detail",
+			"title": "Dunning Ladder",
+			"config": {
+				"register": "shillinq",
+				"schema": "DunningLadder",
+				"fields": [
+					{ "key": "naam", "label": "Naam", "type": "string" },
+					{ "key": "klantGroep", "label": "Klantgroep", "type": "string" },
+					{ "key": "ondernemingId", "label": "Onderneming", "type": "string" },
+					{ "key": "actief", "label": "Actief", "type": "boolean" },
+					{ "key": "stages", "label": "Stadia", "type": "object" }
+				]
+			}
+		},
+		{
+			"id": "KlantOverrides",
+			"route": "/klant-overrides",
+			"type": "index",
+			"title": "Customer Overrides",
+			"config": {
+				"register": "shillinq",
+				"schema": "KlantLadderOverride",
+				"columns": [
+					{ "key": "klantId", "label": "Klant", "sortable": true },
+					{ "key": "reden", "label": "Reden", "sortable": false },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "klantId",
+				"detailRoute": "KlantOverridesDetail"
+			}
+		},
+		{
+			"id": "KlantOverridesDetail",
+			"route": "/klant-overrides/:id",
+			"type": "detail",
+			"title": "Customer Override",
+			"config": {
+				"register": "shillinq",
+				"schema": "KlantLadderOverride",
+				"fields": [
+					{ "key": "klantId", "label": "Klant", "type": "string" },
+					{ "key": "baseLadderId", "label": "Basis-ladder", "type": "string" },
+					{ "key": "reden", "label": "Reden", "type": "string" },
+					{ "key": "createdBy", "label": "Aangemaakt door", "type": "string" },
+					{ "key": "approvedBy", "label": "Goedgekeurd door", "type": "string" },
+					{ "key": "approvedAt", "label": "Goedgekeurd op", "type": "date-time" },
+					{ "key": "state", "label": "Status", "type": "string" },
+					{ "key": "overrides", "label": "Overrides", "type": "object" }
+				]
+			}
+		},
+		{
+			"id": "DunningRuns",
+			"route": "/dunning-runs",
+			"type": "index",
+			"title": "Dunning Runs",
+			"config": {
+				"register": "shillinq",
+				"schema": "DunningRun",
+				"columns": [
+					{ "key": "factuurId", "label": "Factuur", "sortable": true },
+					{ "key": "stageNr", "label": "Stadium", "sortable": true },
+					{ "key": "kanaal", "label": "Kanaal", "sortable": true },
+					{ "key": "deliveryStatus", "label": "Afleverstatus", "sortable": true },
+					{ "key": "uitgevoerdOp", "label": "Uitgevoerd op", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "-uitgevoerdOp",
+				"detailRoute": "DunningRunsDetail"
+			}
+		},
+		{
+			"id": "DunningRunsDetail",
+			"route": "/dunning-runs/:id",
+			"type": "detail",
+			"title": "Dunning Run",
+			"config": {
+				"register": "shillinq",
+				"schema": "DunningRun",
+				"fields": [
+					{ "key": "factuurId", "label": "Factuur", "type": "string" },
+					{ "key": "ladderId", "label": "Ladder", "type": "string" },
+					{ "key": "stageNr", "label": "Stadium", "type": "integer" },
+					{ "key": "kanaal", "label": "Kanaal", "type": "string" },
+					{ "key": "uitgevoerdOp", "label": "Uitgevoerd op", "type": "date-time" },
+					{ "key": "ontvangerNaam", "label": "Ontvanger", "type": "string" },
+					{ "key": "ontvangerEmail", "label": "E-mail", "type": "string" },
+					{ "key": "renderedSubject", "label": "Onderwerp", "type": "string" },
+					{ "key": "renderedBody", "label": "Inhoud", "type": "string" },
+					{ "key": "renderedPdfHash", "label": "PDF-hash", "type": "string" },
+					{ "key": "deliveryStatus", "label": "Afleverstatus", "type": "string" },
+					{ "key": "factuurBedrag", "label": "Factuurbedrag", "type": "number" },
+					{ "key": "incassokostenBedrag", "label": "Collection Costs", "type": "number" },
+					{ "key": "renteBedrag", "label": "Rente", "type": "number" },
+					{ "key": "state", "label": "Status", "type": "string" }
+				]
+			}
+		},
+		{
+			"id": "IncassoKosten",
+			"route": "/incasso-kosten",
+			"type": "index",
+			"title": "Collection Costs",
+			"config": {
+				"register": "shillinq",
+				"schema": "IncassoKostenBerekening",
+				"columns": [
+					{ "key": "factuurId", "label": "Factuur", "sortable": true },
+					{ "key": "hoofdsom", "label": "Hoofdsom", "sortable": true },
+					{ "key": "partyType", "label": "Type", "sortable": true },
+					{ "key": "totaalVerschuldigd", "label": "Totaal verschuldigd", "sortable": true }
+				],
+				"defaultSort": "-hoofdsom",
+				"detailRoute": "IncassoKostenDetail"
+			}
+		},
+		{
+			"id": "IncassoKostenDetail",
+			"route": "/incasso-kosten/:id",
+			"type": "detail",
+			"title": "Collection-cost Calculation",
+			"config": {
+				"register": "shillinq",
+				"schema": "IncassoKostenBerekening",
+				"fields": [
+					{ "key": "factuurId", "label": "Factuur", "type": "string" },
+					{ "key": "hoofdsom", "label": "Hoofdsom", "type": "number" },
+					{ "key": "partyType", "label": "Type", "type": "string" },
+					{ "key": "berekening", "label": "BIK-staffel", "type": "object" },
+					{ "key": "wettelijkeRente", "label": "Wettelijke rente", "type": "object" },
+					{ "key": "totaalVerschuldigd", "label": "Totaal verschuldigd", "type": "number" }
+				]
+			}
+		},
+		{
+			"id": "OninbareAfschrijvingen",
+			"route": "/oninbare-afschrijvingen",
+			"type": "index",
+			"title": "Bad-Debt Write-offs",
+			"config": {
+				"register": "shillinq",
+				"schema": "OninbaarAfschrijving",
+				"columns": [
+					{ "key": "factuurId", "label": "Factuur", "sortable": true },
+					{ "key": "hoofdsomAfgeschreven", "label": "Afgeschreven", "sortable": true },
+					{ "key": "art29OBVerklaring", "label": "Verklaring", "sortable": false },
+					{ "key": "btwAangiftePeriode", "label": "BTW-periode", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "-hoofdsomAfgeschreven",
+				"detailRoute": "OninbareAfschrijvingenDetail"
+			}
+		},
+		{
+			"id": "OninbareAfschrijvingenDetail",
+			"route": "/oninbare-afschrijvingen/:id",
+			"type": "detail",
+			"title": "Bad-Debt Write-off",
+			"config": {
+				"register": "shillinq",
+				"schema": "OninbaarAfschrijving",
+				"fields": [
+					{ "key": "factuurId", "label": "Factuur", "type": "string" },
+					{ "key": "hoofdsomAfgeschreven", "label": "Afgeschreven hoofdsom", "type": "number" },
+					{ "key": "btwBedrag", "label": "BTW-bedrag", "type": "number" },
+					{ "key": "art29OBVerklaring", "label": "Art. 29 OB-verklaring", "type": "string" },
+					{ "key": "evidenceRef", "label": "Bewijsstuk", "type": "string" },
+					{ "key": "boekingId", "label": "GL-boeking", "type": "string" },
+					{ "key": "btwAangiftePeriode", "label": "BTW-aangifteperiode", "type": "string" },
+					{ "key": "state", "label": "Status", "type": "string" }
+				]
 			}
 		}
 	]
