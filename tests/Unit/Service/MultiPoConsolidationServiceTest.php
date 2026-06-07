@@ -40,6 +40,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\MultiPoConsolidationService;
+use OCA\Shillinq\Service\SupplierInvoiceService;
 use OCP\IAppConfig;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -56,6 +57,7 @@ use RuntimeException;
  */
 final class MultiPoConsolidationServiceTest extends TestCase
 {
+
     /**
      * Mock ContainerInterface.
      *
@@ -108,9 +110,9 @@ final class MultiPoConsolidationServiceTest extends TestCase
      * Build the service over an in-memory ObjectService stub seeded with
      * the supplied schema=>rows map.
      *
-     * @param array<string,array<int,array<string,mixed>>> $data                       Schema => rows.
-     * @param array<int,array<string,mixed>>               $saved                      Captured saves (by reference).
-     * @param array<int,string>                            $accessibleAdministrations  Tenants canAccess returns true for.
+     * @param array<string,array<int,array<string,mixed>>> $data                      Schema => rows.
+     * @param array<int,array<string,mixed>>               $saved                     Captured saves (by reference).
+     * @param array<int,string>                            $accessibleAdministrations Tenants canAccess returns true for.
      *
      * @return MultiPoConsolidationService
      */
@@ -261,11 +263,22 @@ final class MultiPoConsolidationServiceTest extends TestCase
             }
         );
 
+        // Use the real SupplierInvoiceService against the same in-memory
+        // stub so the slice-07 inline PO-link projection is exercised
+        // end-to-end alongside the consolidation fan-out.
+        $supplierInvoiceService = new SupplierInvoiceService(
+            container: $this->container,
+            appConfig: $this->appConfig,
+            administrationContext: $administrationContext,
+            logger: $this->logger,
+        );
+
         return new MultiPoConsolidationService(
             container: $this->container,
             appConfig: $this->appConfig,
             administrationContext: $administrationContext,
             userSession: $this->userSession,
+            supplierInvoiceService: $supplierInvoiceService,
             logger: $this->logger,
         );
 
@@ -281,7 +294,7 @@ final class MultiPoConsolidationServiceTest extends TestCase
     private function baselineSeed(): array
     {
         return [
-            'SupplierInvoice'      => [
+            'SupplierInvoice'   => [
                 [
                     'id'               => 'inv-1',
                     'invoiceNumber'    => 'INV-MAAND-2026-07',
@@ -308,7 +321,7 @@ final class MultiPoConsolidationServiceTest extends TestCase
                     ],
                 ],
             ],
-            'PurchaseOrder'        => [
+            'PurchaseOrder'     => [
                 [
                     'id'               => 'po-1',
                     'poNumber'         => 'PO-2026-001',
@@ -330,7 +343,7 @@ final class MultiPoConsolidationServiceTest extends TestCase
                     'administrationId' => 'adm-1',
                 ],
             ],
-            'PurchaseOrderLine'    => [
+            'PurchaseOrderLine' => [
                 [
                     'id'                   => 'pol-1',
                     'poId'                 => 'po-1',
@@ -357,7 +370,7 @@ final class MultiPoConsolidationServiceTest extends TestCase
                     'administrationId'     => 'adm-1',
                 ],
             ],
-            'GoodsReceiptLine'     => [
+            'GoodsReceiptLine'  => [
                 [
                     'id'               => 'grl-1',
                     'grnId'            => 'grn-1',
@@ -373,7 +386,7 @@ final class MultiPoConsolidationServiceTest extends TestCase
                     'administrationId' => 'adm-1',
                 ],
             ],
-            'GoodsReceiptNote'     => [
+            'GoodsReceiptNote'  => [
                 [
                     'id'               => 'grn-1',
                     'poIds'            => ['po-1'],
@@ -385,7 +398,7 @@ final class MultiPoConsolidationServiceTest extends TestCase
                     'administrationId' => 'adm-1',
                 ],
             ],
-            'ThreeWayMatch'        => [],
+            'ThreeWayMatch'     => [],
         ];
 
     }//end baselineSeed()
@@ -763,4 +776,112 @@ final class MultiPoConsolidationServiceTest extends TestCase
         );
 
     }//end testDisambiguateRejectsCrossTenantAccess()
+
+    /**
+     * Slice-07 inline projection — every per-trio ThreeWayMatch is mirrored
+     * back to the SupplierInvoice document so the embedded invoice line
+     * carries linkedPoLineId / linkedPoId / linkedGrnLineId / linkedMatchId
+     * and the header's matchedPoIds + consolidatedAt reflect the matched
+     * POs (REQ-PO3W-007).
+     *
+     * @return void
+     */
+    public function testConsolidateInvoiceMirrorsPoLinksOntoSupplierInvoiceDocument(): void
+    {
+        // Distinct product codes per invoice line so each line has exactly
+        // one candidate (unambiguous fan-out path).
+        $seed = $this->baselineSeed();
+        $seed['SupplierInvoice'][0]['lines'][1]['productCode'] = 'COFFEE-PRO-2';
+        $seed['PurchaseOrderLine'][1]['productOrServiceCode']  = 'COFFEE-PRO-2';
+
+        $saved   = [];
+        $service = $this->buildService(
+            data: $seed,
+            saved: $saved,
+            accessibleAdministrations: ['adm-1']
+        );
+
+        $service->consolidateInvoice(
+            administrationId: 'adm-1',
+            invoiceId: 'inv-1'
+        );
+
+        // The latest SupplierInvoice save carries both per-line PO links
+        // and the header-level matchedPoIds.
+        $invoiceSaves = array_values(
+            array_filter(
+                $saved,
+                static fn (array $save): bool => $save['schema'] === 'SupplierInvoice'
+            )
+        );
+        self::assertNotEmpty($invoiceSaves, 'Inline projection must save the invoice');
+
+        $latest = end($invoiceSaves)['object'];
+        self::assertSame(['po-1', 'po-2'], $latest['matchedPoIds']);
+        self::assertNotEmpty($latest['consolidatedAt']);
+
+        $linesByNumber = [];
+        foreach ($latest['lines'] as $line) {
+            $linesByNumber[$line['lineNumber']] = $line;
+        }
+
+        self::assertSame('pol-1', $linesByNumber[1]['linkedPoLineId']);
+        self::assertSame('po-1', $linesByNumber[1]['linkedPoId']);
+        self::assertSame('grl-1', $linesByNumber[1]['linkedGrnLineId']);
+        self::assertNotEmpty($linesByNumber[1]['linkedMatchId']);
+
+        self::assertSame('pol-2', $linesByNumber[2]['linkedPoLineId']);
+        self::assertSame('po-2', $linesByNumber[2]['linkedPoId']);
+        self::assertSame('grl-2', $linesByNumber[2]['linkedGrnLineId']);
+        self::assertNotEmpty($linesByNumber[2]['linkedMatchId']);
+
+    }//end testConsolidateInvoiceMirrorsPoLinksOntoSupplierInvoiceDocument()
+
+    /**
+     * Slice-07 inline projection — operator-resolved disambiguation also
+     * writes the chosen (PO line, GRN line, ThreeWayMatch) link back onto
+     * the SupplierInvoice document so the ambiguous line, once resolved,
+     * carries its linkedPoLineId inline.
+     *
+     * @return void
+     */
+    public function testDisambiguateMirrorsChoiceOntoSupplierInvoiceDocument(): void
+    {
+        $saved   = [];
+        $service = $this->buildService(
+            data: $this->baselineSeed(),
+            saved: $saved,
+            accessibleAdministrations: ['adm-1']
+        );
+
+        $service->disambiguateAmbiguousMatches(
+            administrationId: 'adm-1',
+            invoiceId: 'inv-1',
+            invoiceLineNumber: 1,
+            chosenPoLineId: 'pol-2',
+            chosenGrnLineId: 'grl-2'
+        );
+
+        $invoiceSaves = array_values(
+            array_filter(
+                $saved,
+                static fn (array $save): bool => $save['schema'] === 'SupplierInvoice'
+            )
+        );
+        self::assertNotEmpty($invoiceSaves);
+
+        $latest = end($invoiceSaves)['object'];
+        self::assertSame(['po-2'], $latest['matchedPoIds']);
+
+        $linesByNumber = [];
+        foreach ($latest['lines'] as $line) {
+            $linesByNumber[$line['lineNumber']] = $line;
+        }
+
+        self::assertSame('pol-2', $linesByNumber[1]['linkedPoLineId']);
+        self::assertSame('po-2', $linesByNumber[1]['linkedPoId']);
+        self::assertSame('grl-2', $linesByNumber[1]['linkedGrnLineId']);
+        self::assertNotEmpty($linesByNumber[1]['linkedMatchId']);
+
+    }//end testDisambiguateMirrorsChoiceOntoSupplierInvoiceDocument()
 }//end class
