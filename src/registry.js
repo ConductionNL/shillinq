@@ -123,6 +123,18 @@ import ThreeWayMatchExceptionPanel from './components/three-way-match/ThreeWayMa
 import VendorPerformanceIndex from './components/vendor-performance/VendorPerformanceIndex.vue'
 import VendorPerformanceDetail from './components/vendor-performance/VendorPerformanceDetail.vue'
 
+// bookkeeping-waterschappen-bbv-variant slice 05 (REQ-BBVW-003 /
+// REQ-BBVW-005): the BBV Compliance Dashboard composes four bespoke
+// widgets — KPI counts, a four-bucket compliance pie, a YTD cumulative
+// spend line chart and a per-programme utilization table with emoji
+// status badges and a drill-through to the mapping detail page. The
+// built-in `dashboard` page type can author static stats-block grids
+// but cannot host the YTD timeline transform, the at-risk tooltip
+// vocabulary or the emoji status badge palette, so the page is
+// registered as a kind:"page" custom component. Slice 04 registers the
+// route + manifest entry pointing at this component id.
+import BBVComplianceDashboard from './components/Dashboard/BBVComplianceDashboard.vue'
+
 export default {
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
 	MobileScannerReceive: { kind: 'page', component: ReceivePage },
@@ -152,4 +164,6 @@ export default {
 
 	VendorPerformanceIndex: { kind: 'page', component: VendorPerformanceIndex },
 	VendorPerformanceDetail: { kind: 'page', component: VendorPerformanceDetail },
+
+	BBVComplianceDashboard: { kind: 'page', component: BBVComplianceDashboard },
 }
