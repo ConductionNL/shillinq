@@ -27,12 +27,18 @@
   REQ-GL-003). The spec uses "JournalEntry" generically; the COGS
   posting in Task 9 materialises a balanced 2-line `GLTransaction`
   (debit COGS line + credit Inventory line) matching shillinq's GL.
-- [ ] Task 3: Declare `InventoryValuation` schema in
+- [x] Task 3: Declare `InventoryValuation` schema in
   `lib/Settings/shillinq_register.json` with fields `quantity`,
   `unitCost`, `totalValue`, `valuationMethod` (enum: `FIFO`, `average`),
   `date`, `warehouse`, `status` (enum: `active`, `adjusted`, `obsolete`),
   Schema.org type `schema:Product`, relations to `Product` and
-  `CostCenter` (REQ-INV-001, REQ-INV-002)
+  `CostCenter` (REQ-INV-001, REQ-INV-002) — declared in the new
+  `lib/Settings/register.d/inventory-valuation-fifo-avg.json` fragment
+  (ADR-037 modular fragment, merged into the monolith by
+  `SettingsService::loadRegisterConfigData()`). Schema declares the
+  ADR-000 minimum field set plus `productId` / `costCenterId` FKs
+  (relations declared in Task 13), `lastStockMoveUuid` for idempotent
+  retry, `pendingCogs` for the missing-GL-config flag.
 - [ ] Task 4: Add `x-openregister-lifecycle` block to `InventoryValuation`
   declaring `active ↔ adjusted`, `active → obsolete`, `adjusted →
   obsolete` transitions; reference `InventoryValuationMethodGuard::checkZeroStock()`

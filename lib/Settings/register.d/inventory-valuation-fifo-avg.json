@@ -1,0 +1,140 @@
+{
+	"info": {
+		"version": "0.1.0-inventory-valuation-fifo-avg"
+	},
+	"components": {
+		"schemas": {
+			"InventoryValuation": {
+				"slug": "InventoryValuation",
+				"icon": "ScaleBalance",
+				"version": "0.1.0",
+				"title": "Inventory Valuation",
+				"titleNl": "Voorraadwaardering",
+				"description": "Per-item, per-warehouse inventory valuation snapshot driven by the inventory-stock-movement-ledger StockMove stream. valuationMethod selects FIFO (oldest-lot-first cost layer traversal of open inbound StockMove lots) or average (running weighted moving average recalculated on each inbound receipt). The snapshot stores the current quantity, unitCost and totalValue used by both Cost of Goods Sold (COGS) posting on outbound moves (CogsPosterService -> balanced GLTransaction) and the balance-sheet inventory asset value. Schema.org Product because the snapshot is a Product-scoped measurement. status active|adjusted|obsolete and a methodChange transition (FIFO <-> average) are guarded by InventoryValuationMethodGuard::checkZeroStock(): both transitions to obsolete and any methodChange require on-hand quantity = 0. ADR-031 declarative path; the FIFO traversal, moving-average recalculation and COGS GL posting are imperative services per design.md D4 (cross-schema computed-amount writes outside the current declarative DSL range). REQ-INV-001 / REQ-INV-002 / REQ-INV-005.",
+				"x-schema-org": "schema:Product",
+				"x-openregister-purpose": "snapshot",
+				"x-spec": "openspec/changes/inventory-valuation-fifo-avg/specs/inventory-valuation-fifo-avg/spec.md",
+				"type": "object",
+				"required": [
+					"quantity",
+					"unitCost",
+					"totalValue",
+					"valuationMethod",
+					"date",
+					"status",
+					"administrationId"
+				],
+				"properties": {
+					"productId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to Product.sku (inventory-product-catalog). One InventoryValuation per (productId + warehouse) with status=active per REQ-INV-005.",
+						"example": "GT-10-2026"
+					},
+					"costCenterId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to CostCenter.id (add-shillinq-cost-centers-dimensions). Optional dimension on the snapshot per ADR-000.",
+						"example": "CC-MAGAZIJN-001"
+					},
+					"quantity": {
+						"type": "number",
+						"minimum": 0,
+						"multipleOf": 0.01,
+						"description": "On-hand quantity contributing to this snapshot. multipleOf 0.01 enforces 2-decimal precision (Money / quantity discipline; integer-cent arithmetic).",
+						"example": 50.0
+					},
+					"unitCost": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Cost per unit under the active valuation method. FIFO: weighted average of remaining open lot costs. Moving-average: running weighted average. Rounded to 4 decimal places for moving-average per design.md D3.",
+						"example": 12.5
+					},
+					"totalValue": {
+						"type": "number",
+						"minimum": 0,
+						"multipleOf": 0.01,
+						"description": "Total inventory value = quantity * unitCost, rounded to 2 decimal places (Money discipline). Recomputed on every StockMove that affects this snapshot.",
+						"example": 625.0
+					},
+					"valuationMethod": {
+						"type": "string",
+						"enum": [
+							"FIFO",
+							"average"
+						],
+						"description": "Costing method per REQ-INV-002. FIFO: oldest open StockMove lot consumed first. average: running weighted moving average. LIFO is intentionally excluded per NL GAAP. methodChange transition (FIFO <-> average) blocked when quantity > 0.",
+						"example": "FIFO"
+					},
+					"date": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Timestamp of the snapshot or its last update. Stamped from the originating StockMove.postedAt by the valuation services.",
+						"example": "2026-05-01T00:00:00Z"
+					},
+					"warehouse": {
+						"type": "string",
+						"nullable": true,
+						"description": "Warehouse / storage location identifier (the warehouse role of a Location FK; spec uses 'warehouse'). Together with productId forms the (productId, warehouse, status=active) uniqueness key per REQ-INV-005.",
+						"example": "Magazijn Noord"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"active",
+							"adjusted",
+							"obsolete"
+						],
+						"default": "active",
+						"description": "Lifecycle state per REQ-INV-009. active: current snapshot updated on every movement. adjusted: manual correction applied or COGS posting pending (missing GL config flagged by CogsPosterService). obsolete: discontinued or moved-out item; historical only.",
+						"example": "active"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to Administration owning this snapshot (REQ-MA-001 multi-administratie scope). Cross-administration reads/writes are masked 404 by AdministrationContextService.",
+						"example": "adm-consultancy-nl"
+					},
+					"lastStockMoveUuid": {
+						"type": "string",
+						"nullable": true,
+						"description": "UUID of the most recent StockMove processed against this snapshot. Used for idempotent retry in FifoValuationService / MovingAverageValuationService (REQ-INV-003 idempotency scenario): if the same StockMove uuid arrives twice the second invocation is a no-op.",
+						"example": "8c4f02e8-9a1b-4d3e-9f0a-1c2b3d4e5f60"
+					},
+					"pendingCogs": {
+						"type": "boolean",
+						"default": false,
+						"description": "True when the most recent outbound move could not post a COGS GLTransaction because GL account numbers are not yet configured (design.md Risks table + REQ-INV-007). Surfaces in the manifest view so operators know to configure the GL accounts."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"warehouse_manager": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					},
+					"adminScope": {
+						"field": "administrationId",
+						"enforce": true
+					}
+				}
+			}
+		}
+	},
+	"objects": []
+}
