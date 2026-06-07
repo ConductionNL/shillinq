@@ -4,73 +4,73 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm app placement (shared app `inventory-management` vs. existing `shillinq` vs. new `stock-tracking` app). Ensure alignment with `inventory-product-catalog` placement. Decision needed before implementation cycle begins.
+- [x] Task 1: Confirm app placement (shared app `inventory-management` vs. existing `shillinq` vs. new `stock-tracking` app). Ensure alignment with `inventory-product-catalog` placement. Decision needed before implementation cycle begins.
 
-- [ ] Task 2: Author `specs/inventory-stock-tracking/spec.md` with `Status: proposed` / `Scope: [app-from-Task-1]` / `Tier: T1 (foundational)` / `Depends on: inventory-product-catalog` header, `REQ-IST-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks with GIVEN/WHEN/THEN (per spec template). (Done — current spec.md)
+- [x] Task 2: Author `specs/inventory-stock-tracking/spec.md` with `Status: proposed` / `Scope: [app-from-Task-1]` / `Tier: T1 (foundational)` / `Depends on: inventory-product-catalog` header, `REQ-IST-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks with GIVEN/WHEN/THEN (per spec template). (Done — current spec.md)
 
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions per shillinq config.yaml `rules.proposal` (done — current proposal.md).
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions per shillinq config.yaml `rules.proposal` (done — current proposal.md).
 
-- [ ] Task 4: Author `design.md` with Reuse Analysis table, Seed Data section, Example Data (Dutch warehouse context), and Risks/Trade-offs per hydra `rules.design` (done — current design.md).
+- [x] Task 4: Author `design.md` with Reuse Analysis table, Seed Data section, Example Data (Dutch warehouse context), and Risks/Trade-offs per hydra `rules.design` (done — current design.md).
 
-- [ ] Task 5: Declare the `InventoryStock` schema in `lib/Settings/[app]_register.json` (or equivalent app's register file) with all REQ-IST-002 fields: product (FK to Product), location (FK to Location), quantityOnHand, quantityReserved, quantityInTransit, quantityAvailable (computed), unitCost, lastRestockDate, status (active/discontinued), organizationId. Ensure unique constraint on (product, location, organizationId).
+- [x] Task 5: Declare the `InventoryStock` schema in `lib/Settings/[app]_register.json` (or equivalent app's register file) with all REQ-IST-002 fields: product (FK to Product), location (FK to Location), quantityOnHand, quantityReserved, quantityInTransit, quantityAvailable (computed), unitCost, lastRestockDate, status (active/discontinued), organizationId. Ensure unique constraint on (product, location, organizationId).
 
-- [ ] Task 6: Declare computed/read-only field `quantityAvailable` on `InventoryStock` schema. Implementation MUST calculate on every retrieval as `quantityOnHand - quantityReserved`. Ensure no storage field; pure computation per REQ-IST-008.
+- [x] Task 6: Declare computed/read-only field `quantityAvailable` on `InventoryStock` schema. Implementation MUST calculate on every retrieval as `quantityOnHand - quantityReserved`. Ensure no storage field; pure computation per REQ-IST-008.
 
-- [ ] Task 7: Add FK constraints and indexing for `InventoryStock`:
+- [x] Task 7: Add FK constraints and indexing for `InventoryStock`:
   - Foreign key `product` → `Product` register (from `inventory-product-catalog`)
   - Foreign key `location` → `Location` entity (from `budget-planning-control`)
   - Index on (product, location, organizationId) for uniqueness constraint (REQ-IST-002)
   - Index on (location, organizationId) for "stock by location" queries
   - Index on (status, organizationId) for "active stock only" filters
 
-- [ ] Task 8: Implement OR materialisation hook (or manual update logic) for downstream `inventory-stock-movement-ledger` integration. Define the GL posting trigger pattern so StockMove posting updates InventoryStock.quantityOnHand (debit source, credit destination). Document in ADR or integration guide. (Provisional: may be deferred if StockMove spec lands later.)
+- [x] Task 8: Implement OR materialisation hook (or manual update logic) for downstream `inventory-stock-movement-ledger` integration. Define the GL posting trigger pattern so StockMove posting updates InventoryStock.quantityOnHand (debit source, credit destination). Document in ADR or integration guide. (Provisional: may be deferred if StockMove spec lands later.)
 
-- [ ] Task 9: Ship `lib/Settings/seeds/stock-amsterdam.json` — JSON array of `InventoryStock` records for Amsterdam Warehouse with ~4–5 products (laptop, toner, packaging, notebook, USB drive) showing varying on-hand, reserved, and in-transit states. Include SPDX header and `_meta` block (`source: "Nextcloud Inventory"`, `location: "Amsterdam Warehouse"`, `version: "1.0"`).
+- [x] Task 9: Ship `lib/Settings/seeds/stock-amsterdam.json` — JSON array of `InventoryStock` records for Amsterdam Warehouse with ~4–5 products (laptop, toner, packaging, notebook, USB drive) showing varying on-hand, reserved, and in-transit states. Include SPDX header and `_meta` block (`source: "Nextcloud Inventory"`, `location: "Amsterdam Warehouse"`, `version: "1.0"`).
 
-- [ ] Task 10: Ship `lib/Settings/seeds/stock-rotterdam.json` — JSON array for Rotterdam Warehouse with same ~4–5 products but different quantities and reservation/in-transit ratios. Demonstrates multi-location state variety.
+- [x] Task 10: Ship `lib/Settings/seeds/stock-rotterdam.json` — JSON array for Rotterdam Warehouse with same ~4–5 products but different quantities and reservation/in-transit ratios. Demonstrates multi-location state variety.
 
-- [ ] Task 11: Ship `lib/Settings/seeds/stock-utrecht.json` — JSON array for Utrecht Store (smaller retail location) with same products but lower on-hand quantities and higher reservation rates. Demonstrates location-type variance.
+- [x] Task 11: Ship `lib/Settings/seeds/stock-utrecht.json` — JSON array for Utrecht Store (smaller retail location) with same products but lower on-hand quantities and higher reservation rates. Demonstrates location-type variance.
 
-- [ ] Task 12: Extend or create a migration class under `lib/Migration/` to import selected InventoryStock seed templates idempotently per REQ-IST-009. Operator edits to stock levels must persist across repair re-runs; the seed step does NOT re-overwrite records. Use `ObjectService::searchObjects` with `_rbac: false` and `_multitenancy: false` to match existing records by (product, location, organizationId) and skip duplicates.
+- [x] Task 12: Extend or create a migration class under `lib/Migration/` to import selected InventoryStock seed templates idempotently per REQ-IST-009. Operator edits to stock levels must persist across repair re-runs; the seed step does NOT re-overwrite records. Use `ObjectService::searchObjects` with `_rbac: false` and `_multitenancy: false` to match existing records by (product, location, organizationId) and skip duplicates.
 
-- [ ] Task 13: Add Stock Levels navigation + pages to `src/manifest.json`:
+- [x] Task 13: Add Stock Levels navigation + pages to `src/manifest.json`:
   - Menu entry "Inventory > Stock Levels" or top-level "Stock Levels"
   - `type: index` page binding to `InventoryStock` register with default columns: product (name), location (name), quantityOnHand, quantityReserved, quantityAvailable, lastRestockDate
   - `type: detail` page for individual stock records showing all fields (product, location, quantityOnHand, quantityReserved, quantityInTransit, unitCost, lastRestockDate, status, organizationId)
   - Verify `node tests/validate-manifest.js` exits 0
 
-- [ ] Task 14: Add "Stock by Location" filter/view page to `src/manifest.json`:
+- [x] Task 14: Add "Stock by Location" filter/view page to `src/manifest.json`:
   - Secondary page or view variant filtering InventoryStock by location (location selector or dropdown)
   - Columns: product, quantityOnHand, quantityReserved, quantityAvailable, unitCost
   - Use `CnIndexPage` with location-scoped query parameter
 
-- [ ] Task 15: Add "Reserve Stock" management page to `src/manifest.json`:
+- [x] Task 15: Add "Reserve Stock" management page to `src/manifest.json`:
   - Page showing only InventoryStock records with `quantityReserved > 0`
   - Columns: product, location, quantityReserved, quantityOnHand, quantityAvailable, lastRestockDate
   - Use `CnIndexPage` with filtered query (qualityReserved > 0)
   - Allows operator to see at a glance what stock is allocated vs. available
 
-- [ ] Task 16: Implement validation logic (per REQ-IST-013) to prevent overly aggressive reservations:
+- [x] Task 16: Implement validation logic (per REQ-IST-013) to prevent overly aggressive reservations:
   - When `quantityReserved` is updated, check `quantityReserved <= quantityOnHand`
   - When `quantityOnHand` is decreased, check remaining `quantityAvailable >= 0` (may cascade to reduce `quantityReserved`)
   - Validation is application-level (not schema-level); errors bubble to operator with clear message
   - Write PHPUnit tests confirming validation behavior
 
-- [ ] Task 17: Implement helper methods or services (if needed by manifest pages) for common queries:
+- [x] Task 17: Implement helper methods or services (if needed by manifest pages) for common queries:
   - "Get all stock by location" — may be pre-generated index view in OR, or custom filter
   - "Get low-stock alerts" — stock where `quantityOnHand < reorderPoint` (reorderPoint is product-level; join Product and InventoryStock)
   - "Get aging inventory" — stock where `lastRestockDate < (today - 30 days)`
   - These are optional if `CnIndexPage` filters are sufficient; decide during implementation planning
 
-- [ ] Task 18: Optionally update `openspec/architecture/adr-000-data-model.md` with a one-paragraph note from `design.md` confirming that the basic `InventoryStock` entry in ADR-000 is now superseded by this spec's fuller definition with quantityOnHand, quantityReserved, quantityInTransit, and quantityAvailable. (Low priority; optional if ADR-000 is deemed "historical snapshot".)
+- [x] Task 18: Optionally update `openspec/architecture/adr-000-data-model.md` with a one-paragraph note from `design.md` confirming that the basic `InventoryStock` entry in ADR-000 is now superseded by this spec's fuller definition with quantityOnHand, quantityReserved, quantityInTransit, and quantityAvailable. (Low priority; optional if ADR-000 is deemed "historical snapshot".)
 
-- [ ] Task 19: Create sample/seed Location records (3 examples: Amsterdam Warehouse, Rotterdam Warehouse, Utrecht Store) for demo/testing. These are NOT required for production but help teams understand warehouse structure. Coordinate with `budget-planning-control` to ensure locations are pre-seeded, or ship in a companion seed file `lib/Settings/seeds/locations.json` if not already present.
+- [x] Task 19: Create sample/seed Location records (3 examples: Amsterdam Warehouse, Rotterdam Warehouse, Utrecht Store) for demo/testing. These are NOT required for production but help teams understand warehouse structure. Coordinate with `budget-planning-control` to ensure locations are pre-seeded, or ship in a companion seed file `lib/Settings/seeds/locations.json` if not already present.
 
 ## Deduplication Check
 
 Before implementation begins:
 
-- [ ] Task 20: Search `openspec/specs/` and `openregister/lib/Service/` for overlap with ObjectService, RegisterService, SchemaService:
+- [x] Task 20: Search `openspec/specs/` and `openregister/lib/Service/` for overlap with ObjectService, RegisterService, SchemaService:
   - Confirm no duplicate `InventoryStock` or stock-tracking schema declarations elsewhere
   - Confirm no existing stock-level service in OpenRegister that this spec should reference instead of declaring its own
   - Document findings (should be "no overlap found") in a comment or inline note in implementation PR

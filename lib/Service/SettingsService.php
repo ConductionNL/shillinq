@@ -1756,4 +1756,161 @@ class SettingsService
 
     }//end seedInventoryValuationExamples()
 
+
+    /**
+     * Seed demo InventoryStock records from the three location seed files,
+     * idempotently per administration.
+     *
+     * Reads `lib/Settings/seeds/stock-amsterdam.json`,
+     * `lib/Settings/seeds/stock-rotterdam.json` and
+     * `lib/Settings/seeds/stock-utrecht.json` and imports InventoryStock rows
+     * via OpenRegister's ObjectService. Deduplication key is
+     * `(administrationId, productSku, locationCode)` per REQ-IST-002 +
+     * REQ-IST-009 — re-running the repair step never creates duplicates and
+     * operator edits to quantities persist across upgrades. Skips silently
+     * when no default administration is configured (C2 — prevents "default"
+     * contamination of real tenant data).
+     *
+     * @param string $administrationId Administration scope for the seed.
+     *
+     * @return array<string, mixed> Result with success flag, seeded count, skipped count, message.
+     *
+     * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-12
+     */
+    public function seedInventoryStockExamples(string $administrationId): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        if ($administrationId === '') {
+            return [
+                'success' => true,
+                'message' => 'No default administration configured, skipping stock seed.',
+                'seeded'  => 0,
+                'skipped' => 0,
+            ];
+        }
+
+        $seedFiles = [
+            __DIR__.'/../Settings/seeds/stock-amsterdam.json',
+            __DIR__.'/../Settings/seeds/stock-rotterdam.json',
+            __DIR__.'/../Settings/seeds/stock-utrecht.json',
+        ];
+
+        $allRows = [];
+        foreach ($seedFiles as $seedPath) {
+            if (file_exists($seedPath) === false) {
+                $this->logger->warning(
+                    'Shillinq: InventoryStock seed file missing, skipping',
+                    ['file' => basename($seedPath)]
+                );
+                continue;
+            }
+
+            $content = file_get_contents($seedPath);
+            if ($content === false) {
+                $this->logger->warning(
+                    'Shillinq: failed to read InventoryStock seed file',
+                    ['file' => basename($seedPath)]
+                );
+                continue;
+            }
+
+            $data = json_decode($content, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                $this->logger->warning(
+                    'Shillinq: failed to parse InventoryStock seed file',
+                    [
+                        'file'  => basename($seedPath),
+                        'error' => json_last_error_msg(),
+                    ]
+                );
+                continue;
+            }
+
+            $rows = ($data['stock'] ?? []);
+            foreach ($rows as $row) {
+                $allRows[] = $row;
+            }
+        }//end foreach
+
+        if (empty($allRows) === true) {
+            return [
+                'success' => true,
+                'message' => 'No InventoryStock seed rows found.',
+                'seeded'  => 0,
+                'skipped' => 0,
+            ];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($allRows as $row) {
+                $productSku   = ($row['productSku'] ?? '');
+                $locationCode = ($row['locationCode'] ?? '');
+                if ($productSku === '' || $locationCode === '') {
+                    continue;
+                }
+
+                // Deduplication key (administrationId, productSku, locationCode) — REQ-IST-002.
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('InventoryStock')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'administrationId' => $administrationId,
+                                'productSku'       => $productSku,
+                                'locationCode'     => $locationCode,
+                            ],
+                            'limit'   => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $row['administrationId'] = $administrationId;
+                $objectService->saveObject(
+                    object: $row,
+                    register: $registerSlug,
+                    schema: 'InventoryStock',
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: InventoryStock seeded',
+                ['seeded' => $seeded, 'skipped' => $skipped]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'InventoryStock seeded successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: InventoryStock seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedInventoryStockExamples()
+
 }//end class
