@@ -14300,6 +14300,421 @@
 				],
 				"defaultSort": "ontstaansboekjaar"
 			}
+		},
+		{
+			"id": "Contracts",
+			"route": "/revenue/contracts",
+			"type": "index",
+			"title": "Contracts",
+			"config": {
+				"register": "shillinq",
+				"schema": "Contract",
+				"columns": [
+					{
+						"key": "contractNumber",
+						"label": "Contract Number",
+						"sortable": true
+					},
+					{
+						"key": "customerName",
+						"label": "Customer",
+						"sortable": true
+					},
+					{
+						"key": "signedAt",
+						"label": "Signed",
+						"sortable": true
+					},
+					{
+						"key": "fixedConsideration",
+						"label": "Fixed Consideration",
+						"sortable": true
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "State",
+						"sortable": true
+					}
+				],
+				"filters": [
+					{
+						"key": "lifecycleState",
+						"label": "State",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"defaultSort": "-signedAt",
+				"detailRoute": "ContractDetail"
+			}
+		},
+		{
+			"id": "ContractDetail",
+			"route": "/revenue/contracts/:id",
+			"type": "detail",
+			"title": "Contract",
+			"config": {
+				"register": "shillinq",
+				"schema": "Contract",
+				"fields": [
+					{
+						"key": "contractNumber",
+						"label": "Contract Number",
+						"type": "string"
+					},
+					{
+						"key": "customerName",
+						"label": "Customer",
+						"type": "string"
+					},
+					{
+						"key": "quoteOrderReference",
+						"label": "Quote / Order",
+						"type": "string"
+					},
+					{
+						"key": "contractGroupId",
+						"label": "Contract Group",
+						"type": "string"
+					},
+					{
+						"key": "signedAt",
+						"label": "Signed At",
+						"type": "date-time"
+					},
+					{
+						"key": "startDate",
+						"label": "Start Date",
+						"type": "date-time"
+					},
+					{
+						"key": "endDate",
+						"label": "End Date",
+						"type": "date-time"
+					},
+					{
+						"key": "fixedConsideration",
+						"label": "Fixed Consideration",
+						"type": "number"
+					},
+					{
+						"key": "variableConsideration",
+						"label": "Variable Consideration",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "State",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "Contracts"
+			}
+		},
+		{
+			"id": "PerformanceObligations",
+			"route": "/revenue/performance-obligations",
+			"type": "index",
+			"title": "Performance Obligations",
+			"config": {
+				"register": "shillinq",
+				"schema": "PerformanceObligation",
+				"columns": [
+					{
+						"key": "contractId",
+						"label": "Contract",
+						"sortable": true
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"sortable": true
+					},
+					{
+						"key": "satisfactionPattern",
+						"label": "Satisfaction",
+						"sortable": true
+					},
+					{
+						"key": "sspAmount",
+						"label": "SSP",
+						"sortable": true
+					},
+					{
+						"key": "allocatedPrice",
+						"label": "Allocated",
+						"sortable": true
+					},
+					{
+						"key": "statusAtPeriodEnd",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"filters": [
+					{
+						"key": "contractId",
+						"label": "Contract",
+						"type": "string"
+					},
+					{
+						"key": "satisfactionPattern",
+						"label": "Satisfaction Pattern",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"defaultSort": "contractId"
+			}
+		},
+		{
+			"id": "RevenueWaterfalls",
+			"route": "/revenue/waterfall",
+			"type": "index",
+			"title": "Revenue Waterfall",
+			"config": {
+				"register": "shillinq",
+				"schema": "RevenueWaterfall",
+				"columns": [
+					{
+						"key": "contractId",
+						"label": "Contract",
+						"sortable": true
+					},
+					{
+						"key": "periodEnd",
+						"label": "Period",
+						"sortable": true
+					},
+					{
+						"key": "transactionPriceAllocated",
+						"label": "Allocated",
+						"sortable": true
+					},
+					{
+						"key": "periodRecognised",
+						"label": "Period Recognised",
+						"sortable": true
+					},
+					{
+						"key": "cumulativeRecognised",
+						"label": "Cumulative Recognised",
+						"sortable": true
+					},
+					{
+						"key": "remainingAmount",
+						"label": "Remaining",
+						"sortable": true
+					},
+					{
+						"key": "deferredLiability",
+						"label": "Deferred Revenue",
+						"sortable": true
+					},
+					{
+						"key": "accrualAsset",
+						"label": "Accrued Revenue",
+						"sortable": true
+					}
+				],
+				"filters": [
+					{
+						"key": "contractId",
+						"label": "Contract",
+						"type": "string"
+					},
+					{
+						"key": "segmentCustomer",
+						"label": "Customer",
+						"type": "string"
+					},
+					{
+						"key": "segmentProduct",
+						"label": "Product",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"defaultSort": "contractId"
+			}
+		},
+		{
+			"id": "ContractBalances",
+			"route": "/revenue/contract-balances",
+			"type": "index",
+			"title": "Contract Balances",
+			"config": {
+				"register": "shillinq",
+				"schema": "ContractLiability",
+				"columns": [
+					{
+						"key": "contractId",
+						"label": "Contract",
+						"sortable": true
+					},
+					{
+						"key": "periodEnd",
+						"label": "Period",
+						"sortable": true
+					},
+					{
+						"key": "liabilityAmount",
+						"label": "Deferred Revenue",
+						"sortable": true
+					},
+					{
+						"key": "currentPeriodMovement",
+						"label": "Movement",
+						"sortable": true
+					}
+				],
+				"filters": [
+					{
+						"key": "contractId",
+						"label": "Contract",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"defaultSort": "contractId"
+			}
+		},
+		{
+			"id": "ContractModifications",
+			"route": "/revenue/contract-modifications",
+			"type": "index",
+			"title": "Contract Modifications",
+			"config": {
+				"register": "shillinq",
+				"schema": "ContractModification",
+				"columns": [
+					{
+						"key": "parentContractId",
+						"label": "Contract",
+						"sortable": true
+					},
+					{
+						"key": "modificationDate",
+						"label": "Date",
+						"sortable": true
+					},
+					{
+						"key": "modificationType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "newTransactionPrice",
+						"label": "New Price",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"filters": [
+					{
+						"key": "parentContractId",
+						"label": "Contract",
+						"type": "string"
+					},
+					{
+						"key": "modificationType",
+						"label": "Type",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"defaultSort": "-modificationDate"
+			}
+		},
+		{
+			"id": "ContractCostAssets",
+			"route": "/revenue/contract-cost-assets",
+			"type": "index",
+			"title": "Contract Cost Assets",
+			"config": {
+				"register": "shillinq",
+				"schema": "ContractCostAsset",
+				"columns": [
+					{
+						"key": "contractId",
+						"label": "Contract",
+						"sortable": true
+					},
+					{
+						"key": "costType",
+						"label": "Cost Type",
+						"sortable": true
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"sortable": true
+					},
+					{
+						"key": "initialCapitalisation",
+						"label": "Capitalised",
+						"sortable": true
+					},
+					{
+						"key": "carriedAmount",
+						"label": "Carried Amount",
+						"sortable": true
+					}
+				],
+				"filters": [
+					{
+						"key": "contractId",
+						"label": "Contract",
+						"type": "string"
+					},
+					{
+						"key": "costType",
+						"label": "Cost Type",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"defaultSort": "contractId"
+			}
 		}
 	]
 }
