@@ -980,6 +980,121 @@ class SettingsService
     }//end seedComplianceData()
 
     /**
+     * Seed mandaat (signing-authority) templates from mandaat-templates.json, idempotently.
+     *
+     * Reads lib/Settings/seeds/mandaat-templates.json and imports Mandaat records
+     * via OpenRegister's ObjectService, stamping the tenant administrationId.
+     * Already-existing records (matched by mandaatcode + administrationId) are
+     * skipped, preserving operator edits. Per REQ-VPL-002. Requires a non-empty
+     * administrationId (C2).
+     *
+     * @param string $administrationId The administrationId to stamp on seeded records.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.7
+     */
+    public function seedMandaatTemplates(string $administrationId): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        if ($administrationId === '') {
+            return [
+                'success' => false,
+                'message' => 'administrationId must not be empty.',
+            ];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/mandaat-templates.json';
+        if (file_exists($seedPath) === false) {
+            return ['success' => false, 'message' => 'Seed file not found: mandaat-templates.json'];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return ['success' => false, 'message' => 'Failed to read mandaat-templates.json'];
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return ['success' => false, 'message' => 'Failed to parse mandaat-templates.json: '.json_last_error_msg()];
+        }
+
+        $templates = ($data['mandaatTemplates'] ?? []);
+        if (empty($templates) === true) {
+            return ['success' => false, 'message' => 'Seed file contains no mandaatTemplates.'];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($templates as $template) {
+                // _meta-only fields that are not Mandaat properties are dropped.
+                unset($template['doelgroep']);
+                $template['administrationId'] = $administrationId;
+
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('Mandaat')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'mandaatcode'      => $template['mandaatcode'],
+                                'administrationId' => $administrationId,
+                            ],
+                            'limit'   => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $template,
+                    register: $registerSlug,
+                    schema: 'Mandaat',
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: mandaat templates seeded',
+                [
+                    'seeded'  => $seeded,
+                    'skipped' => $skipped,
+                ]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'Mandaat templates seeded successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: mandaat template seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedMandaatTemplates()
+
+    /**
      * Load configuration from shillinq_register.json via OpenRegister.
      *
      * Skips import when the register is already configured (idempotent).
