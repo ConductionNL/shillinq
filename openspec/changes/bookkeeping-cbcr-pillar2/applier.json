@@ -5,13 +5,13 @@
     {
       "file": "Conduction/shillinq",
       "severity": "critical",
-      "note": "PR has unresolvable merge conflicts with development \u2014 pr-state.json reports mergeable=false; rebase required before merge can proceed"
+      "note": "pr-state.json reports mergeable=false \u2014 branch has unresolvable merge conflicts with development; must rebase before merge can proceed"
     }
   ],
-  "turns": 7,
-  "cost_usd": 0.164,
-  "cost_eur": 0.1509,
+  "turns": 8,
+  "cost_usd": 0.2289,
+  "cost_eur": 0.2106,
   "pr": 297,
-  "commit": "b217c96",
-  "timestamp": "2026-06-07T07:52:45.073151+00:00"
+  "commit": "a93ae65",
+  "timestamp": "2026-06-07T08:20:56.992255+00:00"
 }
