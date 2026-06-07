@@ -106,6 +106,22 @@
 						"description": "True when the most recent outbound move could not post a COGS GLTransaction because GL account numbers are not yet configured (design.md Risks table + REQ-INV-007). Surfaces in the manifest view so operators know to configure the GL accounts."
 					}
 				},
+				"x-openregister-relations": {
+					"product": {
+						"localField": "productId",
+						"relatedSchema": "Product",
+						"relatedField": "sku",
+						"cardinality": "many-to-one",
+						"description": "Product master record (inventory-product-catalog). One InventoryValuation snapshot per (productId, warehouse, status=active). REQ-INV-002 + ADR-000."
+					},
+					"costCenter": {
+						"localField": "costCenterId",
+						"relatedSchema": "CostCenter",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "Optional CostCenter dimension on the snapshot (add-shillinq-cost-centers-dimensions). Used for per-cost-centre inventory value reporting. REQ-INV-002 + ADR-000."
+					}
+				},
 				"x-openregister-lifecycle": {
 					"field": "status",
 					"initialState": "active",

@@ -144,9 +144,12 @@
   `InitializeSettings::seedInventoryValuationExamples()` which runs
   after the existing barcode demo step on every install/upgrade,
   skipping cleanly when `administration_id` is not configured (C2).
-- [ ] Task 13: Add `x-openregister-relations` on `InventoryValuation`
+- [x] Task 13: Add `x-openregister-relations` on `InventoryValuation`
   linking `Product` (many-to-one) and `CostCenter` (many-to-one) per
-  ADR-000 entity relations (REQ-INV-002)
+  ADR-000 entity relations (REQ-INV-002) — `product`
+  (productId -> Product.sku, many-to-one) and `costCenter`
+  (costCenterId -> CostCenter.id, many-to-one) declared in the
+  schema block.
 - [ ] Task 14: Add uniqueness constraint on `InventoryValuation`
   (`productId` + `warehouse`, status = `active`) — use OR uniqueness
   validator if supported, otherwise a lifecycle guard on
