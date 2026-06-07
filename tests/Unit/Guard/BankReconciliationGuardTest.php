@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-bank-reconciliation/specs/bookkeeping-bank-reconciliation/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -67,7 +70,6 @@ class BankReconciliationGuardTest extends TestCase
      */
     private BankReconciliationGuard $guard;
 
-
     /**
      * Set up test fixtures.
      *
@@ -77,9 +79,9 @@ class BankReconciliationGuardTest extends TestCase
     {
         parent::setUp();
 
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->logger    = $this->createMock(LoggerInterface::class);
+        $this->container = $this->createMock(originalClassName: ContainerInterface::class);
+        $this->appConfig = $this->createMock(originalClassName: IAppConfig::class);
+        $this->logger    = $this->createMock(originalClassName: LoggerInterface::class);
 
         $this->appConfig->method('getValueString')->willReturn('shillinq');
 
@@ -90,7 +92,6 @@ class BankReconciliationGuardTest extends TestCase
         );
 
     }//end setUp()
-
 
     /**
      * A brand-new reconciliation (no id) with a valid period is permitted to save.
@@ -108,10 +109,9 @@ class BankReconciliationGuardTest extends TestCase
             ]
         );
 
-        self::assertTrue($result, 'New reconciliation with valid dates must be permitted');
+        self::assertTrue(condition: $result, message: 'New reconciliation with valid dates must be permitted');
 
     }//end testSavePermitsNewReconciliationWithValidDates()
-
 
     /**
      * A reconciliation whose start date is after its end date is rejected (REQ-BBR-001).
@@ -127,10 +127,9 @@ class BankReconciliationGuardTest extends TestCase
             ]
         );
 
-        self::assertFalse($result, 'statementStartDate after statementEndDate must be rejected');
+        self::assertFalse(condition: $result, message: 'statementStartDate after statementEndDate must be rejected');
 
     }//end testSaveRejectsInvalidStatementPeriod()
-
 
     /**
      * Editing a reconciled (locked) reconciliation is rejected (REQ-BBR-006).
@@ -154,10 +153,9 @@ class BankReconciliationGuardTest extends TestCase
             ]
         );
 
-        self::assertFalse($result, 'Editing a locked reconciliation must be rejected');
+        self::assertFalse(condition: $result, message: 'Editing a locked reconciliation must be rejected');
 
     }//end testSaveRejectsEditOfLockedReconciliation()
-
 
     /**
      * The archive transition (reconciled → archived) is the one permitted change on a locked session.
@@ -178,10 +176,9 @@ class BankReconciliationGuardTest extends TestCase
             ]
         );
 
-        self::assertTrue($result, 'reconciled → archived transition must be permitted');
+        self::assertTrue(condition: $result, message: 'reconciled → archived transition must be permitted');
 
     }//end testSavePermitsArchiveTransitionOnLockedReconciliation()
-
 
     /**
      * A match write is rejected when its parent reconciliation is locked (REQ-BBR-008).
@@ -202,10 +199,9 @@ class BankReconciliationGuardTest extends TestCase
             ]
         );
 
-        self::assertFalse($result, 'Match write must be rejected when parent reconciliation is locked');
+        self::assertFalse(condition: $result, message: 'Match write must be rejected when parent reconciliation is locked');
 
     }//end testMatchSaveRejectedWhenParentLocked()
-
 
     /**
      * A match write is permitted when its parent reconciliation is in-progress.
@@ -226,10 +222,9 @@ class BankReconciliationGuardTest extends TestCase
             ]
         );
 
-        self::assertTrue($result, 'Match write must be permitted when parent reconciliation is unlocked');
+        self::assertTrue(condition: $result, message: 'Match write must be permitted when parent reconciliation is unlocked');
 
     }//end testMatchSavePermittedWhenParentUnlocked()
-
 
     /**
      * Approval is denied while any pending-review match remains (REQ-BBR-006, 409 Conflict).
@@ -255,10 +250,9 @@ class BankReconciliationGuardTest extends TestCase
             ]
         );
 
-        self::assertFalse($result, 'Approval must be denied while a pending-review match remains');
+        self::assertFalse(condition: $result, message: 'Approval must be denied while a pending-review match remains');
 
     }//end testApproveDeniedWithUnresolvedMatches()
-
 
     /**
      * Approval is permitted once every match is resolved (approved/rejected),
@@ -287,19 +281,18 @@ class BankReconciliationGuardTest extends TestCase
             ]
         );
 
-        self::assertTrue($result, 'Approval must be permitted when all matches are resolved');
+        self::assertTrue(condition: $result, message: 'Approval must be permitted when all matches are resolved');
 
         $update = $stub->lastUpdate;
-        self::assertNotNull($update, 'recalculateBalance must persist an update');
+        self::assertNotNull(actual: $update, message: 'recalculateBalance must persist an update');
         // 5000.00 + 0.10 + 0.20 = 5000.30 exactly via integer cents (no float drift).
-        self::assertSame(5000.30, $update['reconciledBalance'], 'reconciledBalance must be integer-cents exact');
-        self::assertEquals(0, $update['variance'], 'variance must be exactly 0 (closing == reconciled)');
-        self::assertSame(0, (int) round(((float) $update['variance']) * 100), 'variance in cents must be exactly 0');
-        self::assertSame(2, $update['matchedCount'], 'two approved matches');
-        self::assertSame(1, $update['unmatchedBankCount'], 'the rejected match counts as an unmatched bank txn');
+        self::assertSame(expected: 5000.30, actual: $update['reconciledBalance'], message: 'reconciledBalance must be integer-cents exact');
+        self::assertEquals(expected: 0, actual: $update['variance'], message: 'variance must be exactly 0 (closing == reconciled)');
+        self::assertSame(expected: 0, actual: (int) round(((float) $update['variance']) * 100), message: 'variance in cents must be exactly 0');
+        self::assertSame(expected: 2, actual: $update['matchedCount'], message: 'two approved matches');
+        self::assertSame(expected: 1, actual: $update['unmatchedBankCount'], message: 'the rejected match counts as an unmatched bank txn');
 
     }//end testApprovePermittedAndRecomputesBalance()
-
 
     /**
      * Approval is denied fail-closed when the reconciliation has no id.
@@ -312,10 +305,9 @@ class BankReconciliationGuardTest extends TestCase
 
         $result = $this->guard->requireResolvedMatches(['openingBalance' => 0.0, 'closingBalance' => 0.0]);
 
-        self::assertFalse($result, 'Approval without a persisted id must be denied fail-closed');
+        self::assertFalse(condition: $result, message: 'Approval without a persisted id must be denied fail-closed');
 
     }//end testApproveDeniedWhenNoId()
-
 
     /**
      * Approval is denied fail-closed when the match lookup throws.
@@ -335,16 +327,15 @@ class BankReconciliationGuardTest extends TestCase
             ]
         );
 
-        self::assertFalse($result, 'Fail-closed: a match lookup error must deny approval');
+        self::assertFalse(condition: $result, message: 'Fail-closed: a match lookup error must deny approval');
 
     }//end testApproveFailClosedOnLookupError()
-
 
     /**
      * Build a fluent ObjectService stub.
      *
-     * @param array<string,mixed>|null         $stored  Object returned by find() (BankReconciliation lookups).
-     * @param array<int,array<string,mixed>>   $matches Records returned by findAll() (BankReconciliationMatch).
+     * @param array<string,mixed>|null       $stored  Object returned by find() (BankReconciliation lookups).
+     * @param array<int,array<string,mixed>> $matches Records returned by findAll() (BankReconciliationMatch).
      *
      * @return object
      */
@@ -353,22 +344,29 @@ class BankReconciliationGuardTest extends TestCase
         return new class($stored, $matches) {
 
             /**
+             * Last update payload captured by updateObject().
+             *
              * @var array<string,mixed>|null
              */
             public ?array $lastUpdate = null;
 
             /**
+             * Stored object returned by find().
+             *
              * @var array<string,mixed>|null
              */
             private ?array $stored;
 
             /**
+             * Match records returned by findAll().
+             *
              * @var array<int,array<string,mixed>>
              */
             private array $matches;
 
-
             /**
+             * Construct the stub.
+             *
              * @param array<string,mixed>|null       $stored  Stored object.
              * @param array<int,array<string,mixed>> $matches Match records.
              */
@@ -376,53 +374,72 @@ class BankReconciliationGuardTest extends TestCase
             {
                 $this->stored  = $stored;
                 $this->matches = $matches;
-            }
+            }//end __construct()
 
-
+            /**
+             * Set register context (fluent, no-op stub).
+             *
+             * @param string $register Register slug.
+             *
+             * @return static
+             */
             public function setRegister(string $register): static
             {
                 return $this;
-            }
+            }//end setRegister()
 
-
+            /**
+             * Set schema context (fluent, no-op stub).
+             *
+             * @param string $schema Schema name.
+             *
+             * @return static
+             */
             public function setSchema(string $schema): static
             {
                 return $this;
-            }
-
+            }//end setSchema()
 
             /**
+             * Return the stored object or null.
+             *
+             * @param string $id Object identifier.
+             *
              * @return array<string,mixed>|null
              */
             public function find(string $id): ?array
             {
                 return $this->stored;
-            }
-
+            }//end find()
 
             /**
-             * @param array<string,mixed> $params
+             * Return the preconfigured match records.
+             *
+             * @param array<string,mixed> $params Query parameters (ignored by stub).
+             *
              * @return array<int,array<string,mixed>>
              */
             public function findAll(array $params=[]): array
             {
                 return $this->matches;
-            }
-
+            }//end findAll()
 
             /**
-             * @param array<string,mixed> $data
+             * Capture the update payload and return it.
+             *
+             * @param string              $id   Object identifier.
+             * @param array<string,mixed> $data Update payload.
+             *
              * @return array<string,mixed>
              */
             public function updateObject(string $id, array $data): array
             {
                 $this->lastUpdate = $data;
                 return $data;
-            }
+            }//end updateObject()
         };
 
     }//end buildObjectServiceStub()
-
 
     /**
      * Build an ObjectService stub whose findAll() throws.
@@ -432,30 +449,44 @@ class BankReconciliationGuardTest extends TestCase
     private function buildObjectServiceStubThatThrows(): object
     {
         return new class {
-
+            /**
+             * Set register context (fluent, no-op stub).
+             *
+             * @param string $register Register slug.
+             *
+             * @return static
+             */
             public function setRegister(string $register): static
             {
                 return $this;
-            }
+            }//end setRegister()
 
-
+            /**
+             * Set schema context (fluent, no-op stub).
+             *
+             * @param string $schema Schema name.
+             *
+             * @return static
+             */
             public function setSchema(string $schema): static
             {
                 return $this;
-            }
-
+            }//end setSchema()
 
             /**
-             * @param array<string,mixed> $params
+             * Simulate a DB error on every call.
+             *
+             * @param array<string,mixed> $params Query parameters (ignored by stub).
+             *
              * @return array<int,array<string,mixed>>
+             *
+             * @throws \RuntimeException Always.
              */
             public function findAll(array $params=[]): array
             {
                 throw new \RuntimeException('DB error');
-            }
+            }//end findAll()
         };
 
     }//end buildObjectServiceStubThatThrows()
-
-
 }//end class
