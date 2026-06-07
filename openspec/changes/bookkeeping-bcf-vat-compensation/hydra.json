@@ -10,9 +10,9 @@
       "cycle": 1,
       "trigger": "build:queued",
       "started_at": "2026-06-07T07:41:38Z",
-      "ended_at": "2026-06-07T07:48:27Z",
-      "outcome": "done",
-      "outcome_reason": "pipeline complete \u2014 reviews passed and applier passed (if run)",
+      "ended_at": "2026-06-07T10:58:21Z",
+      "outcome": "needs-input",
+      "outcome_reason": "applier returned fail verdict",
       "pattern_tags": [
         "manual-build-backfill"
       ],
