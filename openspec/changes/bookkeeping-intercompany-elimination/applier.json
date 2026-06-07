@@ -1,0 +1,27 @@
+{
+  "ran": true,
+  "pass": false,
+  "blocking": [
+    {
+      "file": "Conduction/shillinq",
+      "severity": "critical",
+      "note": "mergeable=false \u2014 PR cannot be merged cleanly into development; orchestrator should escalate to rebuild:queued"
+    },
+    {
+      "file": "l10n/en.json",
+      "severity": "critical",
+      "note": "Committed Git conflict markers (<<<<<<< HEAD / ======= / >>>>>>> origin/development) make this file invalid JSON; Nextcloud translation loading will throw a parse error at runtime"
+    },
+    {
+      "file": "l10n/nl.json",
+      "severity": "critical",
+      "note": "Same committed conflict markers as l10n/en.json \u2014 Dutch locale file is invalid JSON and will fail to load at runtime"
+    }
+  ],
+  "turns": 7,
+  "cost_usd": 0.2106,
+  "cost_eur": 0.1938,
+  "pr": 301,
+  "commit": "e86bf94",
+  "timestamp": "2026-06-07T08:25:33.330348+00:00"
+}
