@@ -118,8 +118,8 @@ final class BookingLifecycleTransitionListener implements IEventListener
                 return;
             }
 
-            $to       = strtolower(trim($event->getTo()));
-            $typeMap  = self::TRANSITION_TYPE_MAP;
+            $to        = strtolower(trim($event->getTo()));
+            $typeMap   = self::TRANSITION_TYPE_MAP;
             $eventType = ($typeMap[$to] ?? null);
             if ($eventType === null) {
                 // Transition to a state we don't publish (e.g. drafted,
@@ -127,7 +127,7 @@ final class BookingLifecycleTransitionListener implements IEventListener
                 return;
             }
 
-            $entity = $event->getObject();
+            $entity      = $event->getObject();
             $appointment = $entity->getObject();
             if (is_array($appointment) === false) {
                 return;
