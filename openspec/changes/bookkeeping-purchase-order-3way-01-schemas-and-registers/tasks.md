@@ -23,6 +23,6 @@
 
 ## Seed data + integration test
 
-- [ ] Add seed fixtures (3-5 examples per entity) per design.md seed-data section
+- [x] Add seed fixtures (3-5 examples per entity) per design.md seed-data section
 - [ ] Write integration test: registers materialise with declared lifecycles + dimensional fields round-trip
 - [ ] Write integration test: manifest exposes the 5 navigation entries and seeded records are queryable
