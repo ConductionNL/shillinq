@@ -85,7 +85,6 @@ class VarianceGate
      */
     private const DEFAULT_VALUE_THRESHOLD_ABS = 500.0;
 
-
     /**
      * Construct the guard.
      *
@@ -100,7 +99,6 @@ class VarianceGate
     ) {
 
     }//end __construct()
-
 
     /**
      * Reject a partial count that has no scope per REQ-ICC-002 + REQ-ICC-008.
@@ -120,7 +118,7 @@ class VarianceGate
     public function requireValidScope(array $count): bool
     {
         try {
-            $countType = isset($count['countType']) === true ? (string) $count['countType'] : '';
+            $countType = (string) ($count['countType'] ?? '');
             if ($countType === 'full') {
                 return true;
             }
@@ -136,8 +134,8 @@ class VarianceGate
                 return false;
             }
 
-            $location = isset($count['locationFilter']) === true ? trim((string) $count['locationFilter']) : '';
-            $category = isset($count['categoryFilter']) === true ? trim((string) $count['categoryFilter']) : '';
+            $location = trim((string) ($count['locationFilter'] ?? ''));
+            $category = trim((string) ($count['categoryFilter'] ?? ''));
             if ($location === '' && $category === '') {
                 $this->logger->info(
                     'VarianceGate: submit denied — partial count without scope',
@@ -159,7 +157,6 @@ class VarianceGate
         }//end try
 
     }//end requireValidScope()
-
 
     /**
      * Reject a counting → posted (or posted → reconciled) transition when any
@@ -183,8 +180,8 @@ class VarianceGate
     public function requireReasonsOnPost(array $count): bool
     {
         try {
-            $countId          = isset($count['countId']) === true ? (string) $count['countId'] : '';
-            $administrationId = isset($count['administrationId']) === true ? (string) $count['administrationId'] : '';
+            $countId          = (string) ($count['countId'] ?? '');
+            $administrationId = (string) ($count['administrationId'] ?? '');
             if ($countId === '' || $administrationId === '') {
                 $this->logger->info(
                     'VarianceGate: post denied — countId or administrationId missing',
@@ -194,7 +191,7 @@ class VarianceGate
             }
 
             [$qtyThresholdPct, $valueThresholdAbs] = $this->thresholds(administrationId: $administrationId);
-            $lines        = $this->findLinesForCount(administrationId: $administrationId, countId: $countId);
+            $lines         = $this->findLinesForCount(administrationId: $administrationId, countId: $countId);
             $activeReasons = $this->activeReasonCodes(administrationId: $administrationId);
 
             foreach ($lines as $line) {
@@ -211,7 +208,7 @@ class VarianceGate
                     continue;
                 }
 
-                $reason = isset($line['reasonCode']) === true ? trim((string) $line['reasonCode']) : '';
+                $reason = trim((string) ($line['reasonCode'] ?? ''));
                 if ($reason === '') {
                     $this->logger->info(
                         'VarianceGate: post denied — line requires reason but reasonCode empty',
@@ -234,7 +231,7 @@ class VarianceGate
                     );
                     return false;
                 }
-            }
+            }//end foreach
 
             return true;
         } catch (\Throwable $e) {
@@ -249,7 +246,6 @@ class VarianceGate
         }//end try
 
     }//end requireReasonsOnPost()
-
 
     /**
      * Pure helper: recompute the derived fields on a single line per
@@ -266,18 +262,19 @@ class VarianceGate
      */
     public function recalculateLine(
         array $line,
-        ?float $qtyThresholdPct = null,
-        ?float $valueThresholdAbs = null
+        ?float $qtyThresholdPct=null,
+        ?float $valueThresholdAbs=null
     ): array {
         $qtyThresholdPct   = ($qtyThresholdPct ?? self::DEFAULT_QTY_THRESHOLD_PCT);
         $valueThresholdAbs = ($valueThresholdAbs ?? self::DEFAULT_VALUE_THRESHOLD_ABS);
 
-        $expectedQty = $this->numericOrNull($line['expectedQuantity'] ?? null);
-        $countedQty  = $this->numericOrNull($line['countedQuantity'] ?? null);
-        $unitCost    = $this->numericOrNull($line['unitCost'] ?? null);
+        $expectedQty = $this->numericOrNull(value: $line['expectedQuantity'] ?? null);
+        $countedQty  = $this->numericOrNull(value: $line['countedQuantity'] ?? null);
+        $unitCost    = $this->numericOrNull(value: $line['unitCost'] ?? null);
 
         if ($expectedQty !== null && $unitCost !== null) {
-            $line['expectedValue'] = $this->fromCents($this->cents($expectedQty) * $this->cents($unitCost) / 100);
+            $expCents = (int) round(($this->cents(value: $expectedQty) * $this->cents(value: $unitCost)) / 100);
+            $line['expectedValue'] = $this->fromCents(cents: $expCents);
         }
 
         if ($countedQty === null || $unitCost === null || $expectedQty === null) {
@@ -288,18 +285,18 @@ class VarianceGate
             return $line;
         }
 
-        $countedCents   = $this->cents($countedQty);
-        $expectedCents  = $this->cents($expectedQty);
-        $unitCostCents  = $this->cents($unitCost);
+        $countedCents  = $this->cents(value: $countedQty);
+        $expectedCents = $this->cents(value: $expectedQty);
+        $unitCostCents = $this->cents(value: $unitCost);
 
         $countedValueCents  = (int) round(($countedCents * $unitCostCents) / 100);
         $expectedValueCents = (int) round(($expectedCents * $unitCostCents) / 100);
         $qtyVarianceCents   = ($countedCents - $expectedCents);
         $valVarianceCents   = ($countedValueCents - $expectedValueCents);
 
-        $line['countedValue']     = $this->fromCents($countedValueCents);
-        $line['quantityVariance'] = $this->fromCents($qtyVarianceCents);
-        $line['valueVariance']    = $this->fromCents($valVarianceCents);
+        $line['countedValue']     = $this->fromCents(cents: $countedValueCents);
+        $line['quantityVariance'] = $this->fromCents(cents: $qtyVarianceCents);
+        $line['valueVariance']    = $this->fromCents(cents: $valVarianceCents);
         $line['requiresReason']   = $this->isFlagged(
             line: $line,
             qtyThresholdPct: $qtyThresholdPct,
@@ -309,7 +306,6 @@ class VarianceGate
         return $line;
 
     }//end recalculateLine()
-
 
     /**
      * Apply the REQ-ICC-004 threshold rule against a single line. Both
@@ -325,9 +321,9 @@ class VarianceGate
      */
     private function isFlagged(array $line, float $qtyThresholdPct, float $valueThresholdAbs): bool
     {
-        $expectedQty = $this->numericOrNull($line['expectedQuantity'] ?? null);
-        $countedQty  = $this->numericOrNull($line['countedQuantity'] ?? null);
-        $unitCost    = $this->numericOrNull($line['unitCost'] ?? null);
+        $expectedQty = $this->numericOrNull(value: $line['expectedQuantity'] ?? null);
+        $countedQty  = $this->numericOrNull(value: $line['countedQuantity'] ?? null);
+        $unitCost    = $this->numericOrNull(value: $line['unitCost'] ?? null);
 
         if ($expectedQty === null || $countedQty === null || $unitCost === null) {
             // An unentered line cannot be flagged — the count is not yet ready to post.
@@ -337,13 +333,12 @@ class VarianceGate
             return false;
         }
 
-        $qtyVariance = abs($this->fromCents(($this->cents($countedQty) - $this->cents($expectedQty))));
-        $valVariance = abs(
-            $this->fromCents(
-                ((int) round(($this->cents($countedQty) * $this->cents($unitCost)) / 100))
-                - ((int) round(($this->cents($expectedQty) * $this->cents($unitCost)) / 100))
-            )
-        );
+        $qtyVarianceCents = ($this->cents(value: $countedQty) - $this->cents(value: $expectedQty));
+        $qtyVariance      = abs($this->fromCents(cents: $qtyVarianceCents));
+
+        $countedValueCents  = (int) round(($this->cents(value: $countedQty) * $this->cents(value: $unitCost)) / 100);
+        $expectedValueCents = (int) round(($this->cents(value: $expectedQty) * $this->cents(value: $unitCost)) / 100);
+        $valVariance        = abs($this->fromCents(cents: ($countedValueCents - $expectedValueCents)));
 
         $qtyThresholdAbs = (($expectedQty * $qtyThresholdPct) / 100.0);
         if ($qtyVariance > $qtyThresholdAbs) {
@@ -357,7 +352,6 @@ class VarianceGate
         return false;
 
     }//end isFlagged()
-
 
     /**
      * Resolve the per-administration thresholds from app config, falling back
@@ -403,7 +397,6 @@ class VarianceGate
 
     }//end thresholds()
 
-
     /**
      * Fetch all InventoryCycleCountLine rows belonging to a count, scoped to
      * the administration.
@@ -427,9 +420,12 @@ class VarianceGate
                             'countId'          => $countId,
                         ],
                     ]
-                )
-                ?? []);
-            return is_array($rows) === true ? $rows : [];
+                ) ?? []);
+            if (is_array($rows) === true) {
+                return $rows;
+            }
+
+            return [];
         } catch (\Throwable $e) {
             $this->logger->error(
                 'VarianceGate: failed to list lines for count',
@@ -439,10 +435,9 @@ class VarianceGate
                 ]
             );
             return [];
-        }
+        }//end try
 
     }//end findLinesForCount()
-
 
     /**
      * Fetch the active reason codes for an administration. Empty result is
@@ -466,8 +461,7 @@ class VarianceGate
                             'isActive'         => true,
                         ],
                     ]
-                )
-                ?? []);
+                ) ?? []);
             if (is_array($rows) === false) {
                 return [];
             }
@@ -478,7 +472,7 @@ class VarianceGate
                     continue;
                 }
 
-                $code = isset($row['reasonId']) === true ? trim((string) $row['reasonId']) : '';
+                $code = trim((string) ($row['reasonId'] ?? ''));
                 if ($code !== '') {
                     $codes[] = $code;
                 }
@@ -494,10 +488,9 @@ class VarianceGate
                 ]
             );
             return [];
-        }
+        }//end try
 
     }//end activeReasonCodes()
-
 
     /**
      * Resolve the OpenRegister register slug, defaulting to 'shillinq'.
@@ -514,7 +507,6 @@ class VarianceGate
         return $register;
 
     }//end register()
-
 
     /**
      * Convert a money/quantity value to integer cents (multipleOf 0.01).
@@ -533,7 +525,6 @@ class VarianceGate
 
     }//end cents()
 
-
     /**
      * Convert integer cents back to a 2-decimal float.
      *
@@ -546,7 +537,6 @@ class VarianceGate
         return ((float) $cents / 100.0);
 
     }//end fromCents()
-
 
     /**
      * Coerce a schema value to a float or return null when missing / non-numeric.
@@ -572,6 +562,4 @@ class VarianceGate
         return null;
 
     }//end numericOrNull()
-
-
 }//end class

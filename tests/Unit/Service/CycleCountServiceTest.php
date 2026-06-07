@@ -37,6 +37,8 @@ use Psr\Log\LoggerInterface;
  * adjustment posting via StockMove), and REQ-ICC-008 (partial-count
  * filtering).
  */
+// phpcs:disable CustomSniffs.Functions.NamedParameters
+// phpcs:disable Squiz.PHP.DisallowInlineIf
 class CycleCountServiceTest extends TestCase
 {
 
@@ -84,7 +86,6 @@ class CycleCountServiceTest extends TestCase
      */
     private CycleCountService $service;
 
-
     /**
      * Set up test fixtures.
      *
@@ -99,40 +100,61 @@ class CycleCountServiceTest extends TestCase
         $this->appConfig = $this->createMock(IAppConfig::class);
         $this->logger    = $this->createMock(LoggerInterface::class);
 
+        // phpcs:disable Generic.Commenting.DocComment,Squiz.Commenting,PEAR.Commenting
         $this->objectService = new class {
+
+            /** @var string current schema set on the chain */
             public string $currentSchema = '';
-            /** @var array<int,array<string,mixed>> */
+
+            /** @var array<int,array<string,mixed>> stock rows for snapshot tests */
             public array $stockRows = [];
-            /** @var array<int,array<string,mixed>> */
+
+            /** @var array<int,array<string,mixed>> line rows for emit tests */
             public array $lineRows = [];
-            /** @var array<int,array<string,mixed>> */
+
+            /** @var array<int,array<string,mixed>> lines saved during the test */
             public array $savedLines = [];
-            /** @var array<int,array<string,mixed>> */
+
+            /** @var array<int,array<string,mixed>> stock moves saved during the test */
             public array $savedMoves = [];
+
+            /** @var int total saveObject calls observed */
             public int $saveCount = 0;
-            public function setRegister(string $r): self
+
+            /** Set OR register; chainable. */
+            public function setRegister(string $register): self
             {
                 return $this;
             }
-            public function setSchema(string $s): self
+
+            /** Set OR schema; chainable. */
+            public function setSchema(string $schema): self
             {
-                $this->currentSchema = $s;
+                $this->currentSchema = $schema;
                 return $this;
             }
-            public function findAll(array $args = []): array
+
+            /** Stubbed findAll returning per-schema fixture data. */
+            public function findAll(array $args=[]): array
             {
                 if ($this->currentSchema === 'InventoryStock') {
                     return $this->stockRows;
                 }
+
                 if ($this->currentSchema === 'InventoryCycleCountLine') {
                     return $this->lineRows;
                 }
+
                 return [];
             }
-            public function find(array $args = []): array
+
+            /** Stubbed find returning empty. */
+            public function find(array $args=[]): array
             {
                 return [];
             }
+
+            /** Stubbed saveObject capturing writes + returning row with synthetic id. */
             public function saveObject(array $obj): array
             {
                 $this->saveCount++;
@@ -142,14 +164,17 @@ class CycleCountServiceTest extends TestCase
                     $obj['id']          = 'line-id-'.count($this->savedLines);
                     return $obj;
                 }
+
                 if ($this->currentSchema === 'StockMove') {
                     $this->savedMoves[] = $obj;
                     $obj['id']          = 'sm-id-'.count($this->savedMoves);
                     return $obj;
                 }
+
                 return $obj;
             }
         };
+        // phpcs:enable Generic.Commenting.DocComment,Squiz.Commenting,PEAR.Commenting
 
         $this->container->method('get')->willReturn($this->objectService);
         $this->appConfig->method('getValueString')->willReturn('shillinq');
@@ -169,7 +194,6 @@ class CycleCountServiceTest extends TestCase
         );
 
     }//end setUp()
-
 
     /**
      * snapshotScope creates one InventoryCycleCountLine per InventoryStock row
@@ -211,7 +235,6 @@ class CycleCountServiceTest extends TestCase
 
     }//end testSnapshotScopeCreatesLinesFromStock()
 
-
     /**
      * snapshotScope is idempotent on (administrationId, countId): a second call
      * after lines already exist is a no-op per REQ-ICC-006.
@@ -220,7 +243,7 @@ class CycleCountServiceTest extends TestCase
      */
     public function testSnapshotScopeIdempotent(): void
     {
-        $this->objectService->lineRows = [
+        $this->objectService->lineRows  = [
             ['lineId' => 'CC-2026-05-00001-001'],
         ];
         $this->objectService->stockRows = [
@@ -243,7 +266,6 @@ class CycleCountServiceTest extends TestCase
 
     }//end testSnapshotScopeIdempotent()
 
-
     /**
      * snapshotScope denies when required fields missing (fail-closed).
      *
@@ -259,7 +281,6 @@ class CycleCountServiceTest extends TestCase
         );
 
     }//end testSnapshotScopeRequiresFields()
-
 
     /**
      * emitAdjustments creates one StockMove per non-zero-variance line per
@@ -329,7 +350,6 @@ class CycleCountServiceTest extends TestCase
 
     }//end testEmitAdjustmentsCreatesStockMovesPerLine()
 
-
     /**
      * emitAdjustments is idempotent per line: a line already carrying
      * adjustmentStockMoveId is skipped per REQ-ICC-007.
@@ -373,7 +393,6 @@ class CycleCountServiceTest extends TestCase
 
     }//end testEmitAdjustmentsIdempotentPerLine()
 
-
     /**
      * emitAdjustments returns true with no work when the count has no lines
      * (edge case).
@@ -394,7 +413,6 @@ class CycleCountServiceTest extends TestCase
 
     }//end testEmitAdjustmentsZeroLinesPasses()
 
-
     /**
      * emitAdjustments denies when required fields missing (fail-closed).
      *
@@ -407,7 +425,6 @@ class CycleCountServiceTest extends TestCase
         );
 
     }//end testEmitAdjustmentsRequiresFields()
-
 
     /**
      * emitAdjustments stamps the resulting StockMove id back on the originating
@@ -450,6 +467,4 @@ class CycleCountServiceTest extends TestCase
         self::assertSame('sm-id-1', $lineUpdates[0]['adjustmentStockMoveId']);
 
     }//end testEmitAdjustmentsBackReferencesStockMove()
-
-
 }//end class

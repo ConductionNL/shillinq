@@ -36,6 +36,8 @@ use Psr\Log\LoggerInterface;
  * REQ-ICC-004 (variance threshold flagging), REQ-ICC-005 (reason-code
  * validity on post), and REQ-ICC-006 (lifecycle transition gates).
  */
+// phpcs:disable CustomSniffs.Functions.NamedParameters
+// phpcs:disable Squiz.PHP.DisallowInlineIf
 class VarianceGateTest extends TestCase
 {
 
@@ -74,7 +76,6 @@ class VarianceGateTest extends TestCase
      */
     private VarianceGate $gate;
 
-
     /**
      * Set up test fixtures.
      *
@@ -91,36 +92,52 @@ class VarianceGateTest extends TestCase
 
         // Generic ObjectService stub: setRegister/setSchema return self;
         // find/findAll are overridden per-test.
+        // phpcs:disable Generic.Commenting.DocComment,Squiz.Commenting,PEAR.Commenting
         $this->objectService = new class {
-            /** @var array<int,array<string,mixed>> */
-            public array $lines = [];
-            /** @var array<int,array<string,mixed>> */
-            public array $reasons = [];
-            public function setRegister(string $r): self
-            {
-                return $this;
-            }
-            public function setSchema(string $s): self
-            {
-                $this->currentSchema = $s;
-                return $this;
-            }
+
+            /** @var string current schema set on the chain */
             public string $currentSchema = '';
-            public function findAll(array $args = []): array
+
+            /** @var array<int,array<string,mixed>> line rows returned by findAll */
+            public array $lines = [];
+
+            /** @var array<int,array<string,mixed>> reason rows returned by findAll */
+            public array $reasons = [];
+
+            /** Set OR register; chainable. */
+            public function setRegister(string $register): self
+            {
+                return $this;
+            }
+
+            /** Set OR schema; chainable. */
+            public function setSchema(string $schema): self
+            {
+                $this->currentSchema = $schema;
+                return $this;
+            }
+
+            /** Stubbed findAll returning per-schema fixture data. */
+            public function findAll(array $args=[]): array
             {
                 if ($this->currentSchema === 'InventoryCycleCountLine') {
                     return $this->lines;
                 }
+
                 if ($this->currentSchema === 'InventoryVarianceReason') {
                     return $this->reasons;
                 }
+
                 return [];
             }
-            public function find(array $args = []): array
+
+            /** Stubbed find returning empty. */
+            public function find(array $args=[]): array
             {
                 return [];
             }
         };
+        // phpcs:enable Generic.Commenting.DocComment,Squiz.Commenting,PEAR.Commenting
 
         $this->container->method('get')->willReturn($this->objectService);
         $this->appConfig->method('getValueString')->willReturn('shillinq');
@@ -133,7 +150,6 @@ class VarianceGateTest extends TestCase
         );
 
     }//end setUp()
-
 
     /**
      * Full counts always pass scope check per REQ-ICC-002.
@@ -149,7 +165,6 @@ class VarianceGateTest extends TestCase
         );
 
     }//end testFullCountScopeAlwaysValid()
-
 
     /**
      * Partial count without locationFilter or categoryFilter is rejected
@@ -170,7 +185,6 @@ class VarianceGateTest extends TestCase
 
     }//end testPartialCountWithoutScopeRejected()
 
-
     /**
      * Partial count with locationFilter passes per REQ-ICC-002.
      *
@@ -189,7 +203,6 @@ class VarianceGateTest extends TestCase
         );
 
     }//end testPartialCountWithLocationPasses()
-
 
     /**
      * Partial count with categoryFilter passes per REQ-ICC-002.
@@ -210,7 +223,6 @@ class VarianceGateTest extends TestCase
 
     }//end testPartialCountWithCategoryPasses()
 
-
     /**
      * Unknown countType is rejected (fail-closed) per REQ-ICC-002.
      *
@@ -228,7 +240,6 @@ class VarianceGateTest extends TestCase
         );
 
     }//end testUnknownCountTypeRejected()
-
 
     /**
      * A count whose lines are all under-threshold posts cleanly per REQ-ICC-004.
@@ -258,7 +269,6 @@ class VarianceGateTest extends TestCase
 
     }//end testCountWithNoFlaggedLinesPosts()
 
-
     /**
      * A flagged line without a reasonCode denies the post per REQ-ICC-004 +
      * REQ-ICC-005.
@@ -268,7 +278,7 @@ class VarianceGateTest extends TestCase
     public function testFlaggedLineWithoutReasonDeniesPost(): void
     {
         // Variance 6 / 100 = 6% > 5% threshold → flagged.
-        $this->objectService->lines = [
+        $this->objectService->lines   = [
             [
                 'lineId'           => 'CC-2026-05-00001-001',
                 'expectedQuantity' => 100,
@@ -292,7 +302,6 @@ class VarianceGateTest extends TestCase
 
     }//end testFlaggedLineWithoutReasonDeniesPost()
 
-
     /**
      * A flagged line with a valid active reasonCode passes per REQ-ICC-005.
      *
@@ -300,7 +309,7 @@ class VarianceGateTest extends TestCase
      */
     public function testFlaggedLineWithActiveReasonPosts(): void
     {
-        $this->objectService->lines = [
+        $this->objectService->lines   = [
             [
                 'lineId'           => 'CC-2026-05-00001-001',
                 'expectedQuantity' => 100,
@@ -324,7 +333,6 @@ class VarianceGateTest extends TestCase
         );
 
     }//end testFlaggedLineWithActiveReasonPosts()
-
 
     /**
      * A flagged line whose reasonCode is INACTIVE (not in active set) denies
@@ -359,7 +367,6 @@ class VarianceGateTest extends TestCase
 
     }//end testFlaggedLineWithInactiveReasonDeniesPost()
 
-
     /**
      * A line crossing the absolute value threshold (variance 50 * 15 = 750 >
      * 500) is flagged even when % variance would be tolerable per REQ-ICC-004.
@@ -372,7 +379,7 @@ class VarianceGateTest extends TestCase
         // we want to check the value-only path: pick qty variance under % but with
         // expensive unit cost. expected 1000, counted 950 → 5% exactly (not >), but
         // value variance is 50 * 15 = 750 > 500.
-        $this->objectService->lines = [
+        $this->objectService->lines   = [
             [
                 'lineId'           => 'CC-2026-05-00001-001',
                 'expectedQuantity' => 1000,
@@ -396,7 +403,6 @@ class VarianceGateTest extends TestCase
 
     }//end testValueThresholdFlagsExpensiveItems()
 
-
     /**
      * An empty count (no lines yet) posts trivially per REQ-ICC-006 — the
      * VarianceGate has no flagged-line work to do.
@@ -419,7 +425,6 @@ class VarianceGateTest extends TestCase
 
     }//end testEmptyCountPosts()
 
-
     /**
      * Missing countId or administrationId denies the post (fail-closed).
      *
@@ -435,7 +440,6 @@ class VarianceGateTest extends TestCase
         );
 
     }//end testMissingFieldsDenyPost()
-
 
     /**
      * recalculateLine recomputes expected/counted/variance/requiresReason
@@ -461,7 +465,6 @@ class VarianceGateTest extends TestCase
 
     }//end testRecalculateLineUnderThreshold()
 
-
     /**
      * recalculateLine flips requiresReason=true for a line over % threshold
      * per REQ-ICC-004.
@@ -483,7 +486,6 @@ class VarianceGateTest extends TestCase
         self::assertTrue($refreshed['requiresReason']);
 
     }//end testRecalculateLineFlagsOverPctThreshold()
-
 
     /**
      * recalculateLine flips requiresReason=true for a line over absolute
@@ -509,7 +511,6 @@ class VarianceGateTest extends TestCase
 
     }//end testRecalculateLineFlagsOverValueThreshold()
 
-
     /**
      * recalculateLine returns null variance + false requiresReason when
      * counted is null.
@@ -532,6 +533,4 @@ class VarianceGateTest extends TestCase
         self::assertFalse($refreshed['requiresReason']);
 
     }//end testRecalculateLineNullCountedNotFlagged()
-
-
 }//end class

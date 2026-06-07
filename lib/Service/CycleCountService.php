@@ -79,14 +79,14 @@ class CycleCountService
      */
     public const VARIANCE_REASON = 'cycle-count-variance';
 
-
     /**
      * Construct the service.
      *
-     * @param ContainerInterface $container     DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig     App config — used to read register slug.
-     * @param LoggerInterface    $logger        Logger for diagnostics; never logs payloads.
-     * @param VarianceGate       $varianceGate  Pure helper for threshold + recalculation.
+     * @param ContainerInterface $container    DI container for lazy ObjectService resolution.
+     * @param IAppConfig         $appConfig    App config — used to read register
+     *                                         slug.
+     * @param LoggerInterface    $logger       Logger for diagnostics; never logs payloads.
+     * @param VarianceGate       $varianceGate Pure helper for threshold + recalculation.
      */
     public function __construct(
         private readonly ContainerInterface $container,
@@ -96,7 +96,6 @@ class CycleCountService
     ) {
 
     }//end __construct()
-
 
     /**
      * Snapshot the in-scope InventoryStock rows into
@@ -119,9 +118,9 @@ class CycleCountService
     public function snapshotScope(array $count): bool
     {
         try {
-            $countId          = isset($count['countId']) === true ? (string) $count['countId'] : '';
-            $administrationId = isset($count['administrationId']) === true ? (string) $count['administrationId'] : '';
-            $countType        = isset($count['countType']) === true ? (string) $count['countType'] : '';
+            $countId          = (string) ($count['countId'] ?? '');
+            $administrationId = (string) ($count['administrationId'] ?? '');
+            $countType        = (string) ($count['countType'] ?? '');
             if ($countId === '' || $administrationId === '' || $countType === '') {
                 $this->logger->info(
                     'CycleCountService: snapshot denied — required fields missing',
@@ -160,41 +159,47 @@ class CycleCountService
                     continue;
                 }
 
-                $sku        = isset($stock['sku']) === true ? (string) $stock['sku'] : '';
-                $locationId = isset($stock['locationId']) === true ? (string) $stock['locationId'] : '';
+                $sku        = (string) ($stock['sku'] ?? '');
+                $locationId = (string) ($stock['locationId'] ?? '');
                 if ($sku === '' || $locationId === '') {
                     continue;
                 }
 
+                $productName = null;
+                if (isset($stock['productName']) === true) {
+                    $productName = (string) $stock['productName'];
+                }
+
                 $sequence++;
-                $lineId     = sprintf('%s-%03d', $countId, $sequence);
-                $unitCost   = $this->numericOrZero($stock['unitCost'] ?? null);
-                $expectedQ  = $this->numericOrZero($stock['quantity'] ?? null);
-                $line       = [
-                    'lineId'            => $lineId,
-                    'countId'           => $countId,
-                    'sku'               => $sku,
-                    'productName'       => isset($stock['productName']) === true ? (string) $stock['productName'] : null,
-                    'locationId'        => $locationId,
-                    'expectedQuantity'  => $expectedQ,
-                    'countedQuantity'   => null,
-                    'unitCost'          => $unitCost,
-                    'expectedValue'     => $this->fromCents($this->cents($expectedQ) * $this->cents($unitCost) / 100),
-                    'countedValue'      => null,
-                    'quantityVariance'  => null,
-                    'valueVariance'     => null,
-                    'requiresReason'    => false,
-                    'reasonCode'        => null,
-                    'notes'             => null,
+                $lineId         = sprintf('%s-%03d', $countId, $sequence);
+                $unitCost       = $this->numericOrZero(value: $stock['unitCost'] ?? null);
+                $expectedQ      = $this->numericOrZero(value: $stock['quantity'] ?? null);
+                $expectedValCts = (int) round(($this->cents(value: $expectedQ) * $this->cents(value: $unitCost)) / 100);
+                $line           = [
+                    'lineId'                => $lineId,
+                    'countId'               => $countId,
+                    'sku'                   => $sku,
+                    'productName'           => $productName,
+                    'locationId'            => $locationId,
+                    'expectedQuantity'      => $expectedQ,
+                    'countedQuantity'       => null,
+                    'unitCost'              => $unitCost,
+                    'expectedValue'         => $this->fromCents(cents: $expectedValCts),
+                    'countedValue'          => null,
+                    'quantityVariance'      => null,
+                    'valueVariance'         => null,
+                    'requiresReason'        => false,
+                    'reasonCode'            => null,
+                    'notes'                 => null,
                     'adjustmentStockMoveId' => null,
-                    'administrationId'  => $administrationId,
+                    'administrationId'      => $administrationId,
                 ];
 
                 $objectService
                     ->setRegister($this->register())
                     ->setSchema('InventoryCycleCountLine')
                     ->saveObject($line);
-            }
+            }//end foreach
 
             return true;
         } catch (\Throwable $e) {
@@ -209,7 +214,6 @@ class CycleCountService
         }//end try
 
     }//end snapshotScope()
-
 
     /**
      * Emit variance adjustment StockMoves per REQ-ICC-007.
@@ -241,8 +245,8 @@ class CycleCountService
     public function emitAdjustments(array $count): bool
     {
         try {
-            $countId          = isset($count['countId']) === true ? (string) $count['countId'] : '';
-            $administrationId = isset($count['administrationId']) === true ? (string) $count['administrationId'] : '';
+            $countId          = (string) ($count['countId'] ?? '');
+            $administrationId = (string) ($count['administrationId'] ?? '');
             if ($countId === '' || $administrationId === '') {
                 $this->logger->info(
                     'CycleCountService: emit-adjustments denied — required fields missing',
@@ -274,8 +278,8 @@ class CycleCountService
                     continue;
                 }
 
-                $countedQ  = $this->numericOrNull($line['countedQuantity'] ?? null);
-                $expectedQ = $this->numericOrNull($line['expectedQuantity'] ?? null);
+                $countedQ  = $this->numericOrNull(value: $line['countedQuantity'] ?? null);
+                $expectedQ = $this->numericOrNull(value: $line['expectedQuantity'] ?? null);
                 if ($countedQ === null || $expectedQ === null) {
                     // Un-entered line: skip silently. The post-time VarianceGate already
                     // refused any flagged line without reason; missing counted values are
@@ -283,16 +287,16 @@ class CycleCountService
                     continue;
                 }
 
-                $varianceCents = ($this->cents($countedQ) - $this->cents($expectedQ));
+                $varianceCents = ($this->cents(value: $countedQ) - $this->cents(value: $expectedQ));
                 if ($varianceCents === 0) {
                     continue;
                 }
 
                 $sequence++;
                 $movementNumber = sprintf('SM-CC-%s-%03d', $countId, $sequence);
-                $unitCost       = $this->numericOrZero($line['unitCost'] ?? null);
-                $locationId     = isset($line['locationId']) === true ? (string) $line['locationId'] : '';
-                $sku            = isset($line['sku']) === true ? (string) $line['sku'] : '';
+                $unitCost       = $this->numericOrZero(value: $line['unitCost'] ?? null);
+                $locationId     = (string) ($line['locationId'] ?? '');
+                $sku            = (string) ($line['sku'] ?? '');
                 if ($locationId === '' || $sku === '') {
                     $this->logger->error(
                         'CycleCountService: emit-adjustments denied — line missing sku or locationId',
@@ -311,14 +315,23 @@ class CycleCountService
                     $destinationLocation = null;
                 }
 
-                $absQty = abs($this->fromCents($varianceCents));
+                $absQty       = abs($this->fromCents(cents: $varianceCents));
+                $movementType = 'issue';
+                if ($varianceCents > 0) {
+                    $movementType = 'receipt';
+                }
+
+                $reasonNote = 'n/a';
+                if (isset($line['reasonCode']) === true) {
+                    $reasonNote = (string) $line['reasonCode'];
+                }
 
                 $move = [
                     'movementNumber'        => $movementNumber,
                     'itemId'                => $sku,
                     'quantity'              => $absQty,
                     'unitCost'              => $unitCost,
-                    'movementType'          => $varianceCents > 0 ? 'receipt' : 'issue',
+                    'movementType'          => $movementType,
                     'sourceLocationId'      => $sourceLocation,
                     'destinationLocationId' => $destinationLocation,
                     'referenceDocumentUri'  => sprintf('shillinq://cycle-count/%s', $countId),
@@ -326,7 +339,7 @@ class CycleCountService
                     'notes'                 => sprintf(
                         'Variance adjustment for line %s (reasonCode=%s)',
                         (string) ($line['lineId'] ?? ''),
-                        isset($line['reasonCode']) === true ? (string) $line['reasonCode'] : 'n/a'
+                        $reasonNote
                     ),
                     'draftedAt'             => $this->now(),
                     'administrationId'      => $administrationId,
@@ -339,7 +352,7 @@ class CycleCountService
                     ->setSchema('StockMove')
                     ->saveObject($move);
 
-                $stockMoveId = $this->extractId($saved);
+                $stockMoveId = $this->extractId(saved: $saved);
                 if ($stockMoveId === '') {
                     $this->logger->error(
                         'CycleCountService: emit-adjustments — saveObject returned no id',
@@ -370,7 +383,6 @@ class CycleCountService
         }//end try
 
     }//end emitAdjustments()
-
 
     /**
      * Recompute the derived fields on a single line and persist them. Useful
@@ -406,7 +418,6 @@ class CycleCountService
 
     }//end recalculateLine()
 
-
     /**
      * True iff any InventoryCycleCountLine already exists for the count.
      *
@@ -421,7 +432,6 @@ class CycleCountService
         return count($existing) > 0;
 
     }//end countHasLines()
-
 
     /**
      * Query InventoryStock for the in-scope rows per REQ-ICC-008.
@@ -450,8 +460,7 @@ class CycleCountService
             $rows = ($objectService
                 ->setRegister($this->register())
                 ->setSchema('InventoryStock')
-                ->findAll(['filters' => $filters])
-                ?? []);
+                ->findAll(['filters' => $filters]) ?? []);
             if (is_array($rows) === false) {
                 return [];
             }
@@ -478,10 +487,9 @@ class CycleCountService
                 ]
             );
             return [];
-        }
+        }//end try
 
     }//end findInScopeStock()
-
 
     /**
      * Client-side category filter for partial counts scoped by category.
@@ -499,13 +507,17 @@ class CycleCountService
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             $skuToCategory = [];
-            $skus          = array_values(
+            $rawSkus       = [];
+            foreach ($stockRows as $row) {
+                if (isset($row['sku']) === true) {
+                    $rawSkus[] = (string) $row['sku'];
+                }
+            }
+
+            $skus = array_values(
                 array_unique(
                     array_filter(
-                        array_map(
-                            static fn(array $row): string => isset($row['sku']) === true ? (string) $row['sku'] : '',
-                            $stockRows
-                        ),
+                        $rawSkus,
                         static fn(string $s): bool => $s !== ''
                     )
                 )
@@ -515,9 +527,11 @@ class CycleCountService
                     ->setRegister($this->register())
                     ->setSchema('Product')
                     ->find(['filters' => ['administrationId' => $administrationId, 'sku' => $sku]]);
-                $cat = is_array($product) === true && isset($product['category']) === true
-                    ? (string) $product['category']
-                    : '';
+                $cat     = '';
+                if (is_array($product) === true && isset($product['category']) === true) {
+                    $cat = (string) $product['category'];
+                }
+
                 $skuToCategory[$sku] = $cat;
             }
 
@@ -538,10 +552,9 @@ class CycleCountService
                 ]
             );
             return [];
-        }
+        }//end try
 
     }//end filterByCategory()
-
 
     /**
      * Fetch all InventoryCycleCountLine rows for a count.
@@ -565,9 +578,12 @@ class CycleCountService
                             'countId'          => $countId,
                         ],
                     ]
-                )
-                ?? []);
-            return is_array($rows) === true ? $rows : [];
+                ) ?? []);
+            if (is_array($rows) === true) {
+                return $rows;
+            }
+
+            return [];
         } catch (\Throwable $e) {
             $this->logger->error(
                 'CycleCountService: findLinesForCount failed',
@@ -577,10 +593,9 @@ class CycleCountService
                 ]
             );
             return [];
-        }
+        }//end try
 
     }//end findLinesForCount()
-
 
     /**
      * Extract the OR id from a saveObject return value (entity or array shape).
@@ -604,19 +619,26 @@ class CycleCountService
         if (is_object($saved) === true) {
             if (method_exists($saved, 'getId') === true) {
                 $id = $saved->getId();
-                return $id === null ? '' : (string) $id;
+                if ($id === null) {
+                    return '';
+                }
+
+                return (string) $id;
             }
 
             if (method_exists($saved, 'getUuid') === true) {
                 $uuid = $saved->getUuid();
-                return $uuid === null ? '' : (string) $uuid;
+                if ($uuid === null) {
+                    return '';
+                }
+
+                return (string) $uuid;
             }
         }
 
         return '';
 
     }//end extractId()
-
 
     /**
      * Resolve the OpenRegister register slug, defaulting to 'shillinq'.
@@ -634,7 +656,6 @@ class CycleCountService
 
     }//end register()
 
-
     /**
      * Current ISO-8601 timestamp (UTC) for set-field actions.
      *
@@ -645,7 +666,6 @@ class CycleCountService
         return gmdate('Y-m-d\TH:i:s\Z');
 
     }//end now()
-
 
     /**
      * Convert a money/quantity value to integer cents (multipleOf 0.01).
@@ -664,7 +684,6 @@ class CycleCountService
 
     }//end cents()
 
-
     /**
      * Convert integer cents back to a 2-decimal float.
      *
@@ -677,7 +696,6 @@ class CycleCountService
         return ((float) $cents / 100.0);
 
     }//end fromCents()
-
 
     /**
      * Coerce a schema value to a float or return null when missing / non-numeric.
@@ -704,7 +722,6 @@ class CycleCountService
 
     }//end numericOrNull()
 
-
     /**
      * Coerce a schema value to a float, returning 0.0 when missing.
      *
@@ -714,10 +731,12 @@ class CycleCountService
      */
     private function numericOrZero(mixed $value): float
     {
-        $coerced = $this->numericOrNull($value);
-        return $coerced === null ? 0.0 : $coerced;
+        $coerced = $this->numericOrNull(value: $value);
+        if ($coerced === null) {
+            return 0.0;
+        }
+
+        return $coerced;
 
     }//end numericOrZero()
-
-
 }//end class

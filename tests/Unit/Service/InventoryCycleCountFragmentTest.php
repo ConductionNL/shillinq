@@ -35,6 +35,8 @@ use ReflectionMethod;
  * + pages per REQ-ICC-010, and merges additively onto the monolith
  * register (ADR-037).
  */
+// phpcs:disable CustomSniffs.Functions.NamedParameters
+// phpcs:disable Squiz.PHP.DisallowInlineIf
 final class InventoryCycleCountFragmentTest extends TestCase
 {
 
@@ -59,7 +61,6 @@ final class InventoryCycleCountFragmentTest extends TestCase
      */
     private string $manifestPath = __DIR__.'/../../../src/manifest.d/inventory-cycle-count.json';
 
-
     /**
      * Invoke the private static SettingsService::deepMergeConfig().
      *
@@ -76,7 +77,6 @@ final class InventoryCycleCountFragmentTest extends TestCase
 
     }//end merge()
 
-
     /**
      * Decode the register fragment file to an array.
      *
@@ -90,7 +90,6 @@ final class InventoryCycleCountFragmentTest extends TestCase
         return $data;
 
     }//end fragment()
-
 
     /**
      * Decode the manifest fragment file to an array.
@@ -106,7 +105,6 @@ final class InventoryCycleCountFragmentTest extends TestCase
 
     }//end manifest()
 
-
     /**
      * Register fragment file exists and is valid JSON.
      *
@@ -119,7 +117,6 @@ final class InventoryCycleCountFragmentTest extends TestCase
         self::assertArrayHasKey('schemas', $data['components']);
 
     }//end testFragmentIsValidJson()
-
 
     /**
      * Fragment declares the three new cycle-count schemas per REQ-ICC-001 /
@@ -135,7 +132,6 @@ final class InventoryCycleCountFragmentTest extends TestCase
         }
 
     }//end testCycleCountSchemasArePresent()
-
 
     /**
      * Money/quantity fields use multipleOf 0.01 per ADR-000 + REQ-ICC-003.
@@ -154,9 +150,15 @@ final class InventoryCycleCountFragmentTest extends TestCase
             );
         }
 
-        foreach (
-            ['expectedQuantity', 'countedQuantity', 'unitCost', 'expectedValue', 'countedValue',
-                'quantityVariance', 'valueVariance'] as $field
+        foreach ([
+            'expectedQuantity',
+            'countedQuantity',
+            'unitCost',
+            'expectedValue',
+            'countedValue',
+            'quantityVariance',
+            'valueVariance',
+        ] as $field
         ) {
             self::assertSame(
                 0.01,
@@ -166,7 +168,6 @@ final class InventoryCycleCountFragmentTest extends TestCase
         }
 
     }//end testMoneyFieldsUseTwoDecimalPrecision()
-
 
     /**
      * InventoryCycleCount declares the full lifecycle per REQ-ICC-006:
@@ -194,7 +195,6 @@ final class InventoryCycleCountFragmentTest extends TestCase
 
     }//end testCycleCountLifecycleDeclaresAllStates()
 
-
     /**
      * Lifecycle transitions reference the VarianceGate + CycleCountService
      * ADR-031 exception-path entries.
@@ -203,8 +203,7 @@ final class InventoryCycleCountFragmentTest extends TestCase
      */
     public function testLifecycleReferencesGuardsAndService(): void
     {
-        $transitions = $this->fragment()['components']['schemas']
-            ['InventoryCycleCount']['x-openregister-lifecycle']['transitions'];
+        $transitions = $this->fragment()['components']['schemas']['InventoryCycleCount']['x-openregister-lifecycle']['transitions'];
 
         self::assertStringContainsString(
             'VarianceGate::requireValidScope',
@@ -231,7 +230,6 @@ final class InventoryCycleCountFragmentTest extends TestCase
 
     }//end testLifecycleReferencesGuardsAndService()
 
-
     /**
      * Variance threshold defaults declared in x-openregister-metadata per
      * REQ-ICC-004.
@@ -240,13 +238,11 @@ final class InventoryCycleCountFragmentTest extends TestCase
      */
     public function testVarianceThresholdsDeclared(): void
     {
-        $metadata = $this->fragment()['components']['schemas']
-            ['InventoryCycleCount']['x-openregister-metadata'];
+        $metadata = $this->fragment()['components']['schemas']['InventoryCycleCount']['x-openregister-metadata'];
         self::assertSame(5, $metadata['quantityVarianceThresholdPercent']['default']);
         self::assertSame(500, $metadata['valueVarianceThresholdAbsolute']['default']);
 
     }//end testVarianceThresholdsDeclared()
-
 
     /**
      * VarianceReason category enum is closed per REQ-ICC-005 — variance
@@ -256,15 +252,13 @@ final class InventoryCycleCountFragmentTest extends TestCase
      */
     public function testVarianceReasonCategoryIsClosedEnum(): void
     {
-        $enum = $this->fragment()['components']['schemas']
-            ['InventoryVarianceReason']['properties']['category']['enum'];
+        $enum = $this->fragment()['components']['schemas']['InventoryVarianceReason']['properties']['category']['enum'];
         self::assertSame(
             ['damage', 'loss', 'obsolescence', 'error-counting', 'error-stocking', 'system-discrepancy', 'other'],
             $enum
         );
 
     }//end testVarianceReasonCategoryIsClosedEnum()
-
 
     /**
      * The fragment additively extends the existing StockMove.movementReason
@@ -285,7 +279,6 @@ final class InventoryCycleCountFragmentTest extends TestCase
         }
 
     }//end testStockMoveReasonExtendedWithCycleCountVariance()
-
 
     /**
      * Seven standard reason codes are seeded per REQ-ICC-005.
@@ -308,7 +301,6 @@ final class InventoryCycleCountFragmentTest extends TestCase
         }
 
     }//end testSeedReasonsArePresent()
-
 
     /**
      * Deep-merging the fragment onto an empty base registers all three new
@@ -335,7 +327,6 @@ final class InventoryCycleCountFragmentTest extends TestCase
 
     }//end testFragmentDeepMergesAdditively()
 
-
     /**
      * Manifest fragment file exists, is valid JSON, and declares the three
      * navigation pages per REQ-ICC-010.
@@ -354,7 +345,6 @@ final class InventoryCycleCountFragmentTest extends TestCase
         }
 
     }//end testManifestFragmentDeclaresThreePages()
-
 
     /**
      * Manifest fragment menu children point to navigable pages per REQ-ICC-010.
@@ -383,7 +373,6 @@ final class InventoryCycleCountFragmentTest extends TestCase
 
     }//end testManifestMenuChildrenAreReachable()
 
-
     /**
      * Sanity: the live registers file is still valid JSON (the fragment is
      * merged at install time, not pre-merged here).
@@ -398,6 +387,4 @@ final class InventoryCycleCountFragmentTest extends TestCase
         self::assertIsArray($data);
 
     }//end testLiveRegisterFileIsValidJson()
-
-
 }//end class
