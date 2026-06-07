@@ -39,12 +39,12 @@
   qty from source `InventoryStock` via OR's optimistic-lock (CAS); posting commits; cancellation
   releases. Collision handling: operator sees "another operator is updating" message + retry suggestion
 
-- [ ] Task 8: Declare GL materialisation rules per REQ-SM-006 via `x-openregister-materialisation`
+- [x] Task 8: Declare GL materialisation rules per REQ-SM-006 via `x-openregister-materialisation`
   extension — receipt increases asset, issue decreases asset + posts COGS, transfer/repack neutral,
   manufacture posts finished goods. No PHP service; rule-driven. GL lines reference `StockMove`
   UUID via `subLedgerType: "inventory"`, `subLedgerRef: "<UUID>"`
 
-- [ ] Task 9: Declare stock ledger aggregation per REQ-SM-005 — InventoryStock.quantity =
+- [x] Task 9: Declare stock ledger aggregation per REQ-SM-005 — InventoryStock.quantity =
   SUM(destination moves) - SUM(source moves) excluding cancelled. Index on (sourceLocationId,
   destinationLocationId, lifecycleState). Operator can drill down from InventoryStock → all
   constituent moves with running-total trace
