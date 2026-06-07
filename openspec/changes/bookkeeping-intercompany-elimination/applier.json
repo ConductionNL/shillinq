@@ -1,11 +1,27 @@
 {
   "ran": true,
-  "pass": null,
-  "blocking": [],
-  "turns": 0,
-  "cost_usd": 0.0,
-  "cost_eur": 0.0,
+  "pass": false,
+  "blocking": [
+    {
+      "file": "l10n/en.json",
+      "severity": "critical",
+      "note": "Committed Git merge conflict markers (<<<<<<< HEAD / ======= / >>>>>>> origin/development) make this file invalid JSON; Nextcloud translation loading will throw a parse error at runtime."
+    },
+    {
+      "file": "l10n/nl.json",
+      "severity": "critical",
+      "note": "Same committed conflict markers as en.json; Dutch locale translation file is invalid JSON and will fail to load."
+    },
+    {
+      "file": "src/manifest.json",
+      "severity": "critical",
+      "note": "Committed <<<<<<< HEAD marker injected into the pages array makes this file invalid JSON; the Vue app manifest parser will fail on load, breaking all frontend navigation."
+    }
+  ],
+  "turns": 8,
+  "cost_usd": 0.4397,
+  "cost_eur": 0.4045,
   "pr": 301,
-  "commit": "7099747",
-  "timestamp": "2026-06-07T07:32:21.176330+00:00"
+  "commit": "a5fa6dc",
+  "timestamp": "2026-06-07T07:49:11.106697+00:00"
 }
