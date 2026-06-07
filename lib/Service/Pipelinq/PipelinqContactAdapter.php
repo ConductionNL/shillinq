@@ -295,6 +295,140 @@ class PipelinqContactAdapter
     }//end request()
 
     /**
+     * Fetch the klantbeeld transaction history for a contact.
+     *
+     * GETs `/api/v1/contacts/{externalId}/klantbeeld?limit=…&offset=…` via
+     * the resilient transport (slice 02), parses the `transactions` array
+     * into {@see KlantbeeldTransaction} rows, and wraps the page in a
+     * {@see KlantbeeldResult} envelope so the slice-05 controller can
+     * distinguish three legitimate outcomes:
+     *
+     *   1. Available with rows — render the history.
+     *   2. Available, empty — render "no previous transactions" (NOT an error).
+     *   3. Unavailable (klantbeeld 5xx while Contact succeeded) — render the
+     *      profile but hide / replace history.
+     *
+     * The `limit` argument is clamped to the spec range (1..100, default 5)
+     * before being placed on the query string so a downstream caller cannot
+     * fan out an unbounded page. The `offset` argument is clamped to a
+     * non-negative integer for the same reason.
+     *
+     * No persistent cache is used: transactions are immutable but the page
+     * window depends on the (limit, offset) tuple AND the live tail of the
+     * ledger, so per the giant's decision D6 we cache only within the
+     * request (the consumer holds its own session-scoped memoisation).
+     *
+     * Failure semantics:
+     *
+     *   - 404 on the contact → returns an empty available page (the
+     *     contact has no klantbeeld; the profile fetch in slice 03 owns
+     *     the strict "contact missing" answer).
+     *   - 5xx exhausting the retry budget, or the breaker tripping →
+     *     returns {@see KlantbeeldResult::unavailable()} so the profile
+     *     stays usable. The underlying transport failure is logged at
+     *     WARNING.
+     *   - Any other non-transport failure (malformed JSON, unsupported
+     *     shape) → returns {@see KlantbeeldResult::unavailable()} with a
+     *     WARNING log. We never raise out of this method: the entire
+     *     point of the envelope is to let the slice-05 controller keep
+     *     the profile rendered regardless.
+     *
+     * @param string $externalId Pipelinq contact id (slice 01 link).
+     * @param int    $limit      Page size, default 5, clamped to 1..100.
+     * @param int    $offset     Page offset, clamped to ≥0, default 0.
+     *
+     * @return KlantbeeldResult Envelope; never throws.
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-04-klantbeeld-read/tasks.md
+     */
+    public function fetchKlantbeeld(string $externalId, int $limit=5, int $offset=0): KlantbeeldResult
+    {
+        $safeLimit  = $this->clampLimit(limit: $limit);
+        $safeOffset = max(0, $offset);
+
+        $path = sprintf(
+            '/api/v1/contacts/%s/klantbeeld?limit=%d&offset=%d',
+            rawurlencode($externalId),
+            $safeLimit,
+            $safeOffset
+        );
+
+        try {
+            $body = $this->request(method: 'GET', path: $path);
+        } catch (PipelinqTransportException $e) {
+            if ($e->statusCode() === 404) {
+                // Treat "contact has no klantbeeld" as a valid empty page;
+                // the profile fetch (slice 03) is the canonical "contact
+                // missing" check.
+                return KlantbeeldResult::available(transactions: [], limit: $safeLimit, offset: $safeOffset);
+            }
+
+            $this->logger->warning(
+                'pipelinq klantbeeld unavailable',
+                [
+                    'app'        => Application::APP_ID,
+                    'externalId' => $externalId,
+                    'status'     => $e->statusCode(),
+                    'breaker'    => $this->circuitBreaker->state(),
+                ]
+            );
+
+            return KlantbeeldResult::unavailable(limit: $safeLimit, offset: $safeOffset);
+        }//end try
+
+        $rows = ($body['transactions'] ?? null);
+        if (is_array($rows) === false) {
+            $this->logger->warning(
+                'pipelinq klantbeeld response missing transactions array',
+                [
+                    'app'        => Application::APP_ID,
+                    'externalId' => $externalId,
+                ]
+            );
+            return KlantbeeldResult::unavailable(limit: $safeLimit, offset: $safeOffset);
+        }
+
+        $transactions = [];
+        foreach ($rows as $row) {
+            if (is_array($row) === false) {
+                continue;
+            }
+
+            $transactions[] = KlantbeeldTransaction::fromArray(row: $row);
+        }
+
+        return KlantbeeldResult::available(
+            transactions: $transactions,
+            limit: $safeLimit,
+            offset: $safeOffset
+        );
+
+    }//end fetchKlantbeeld()
+
+    /**
+     * Clamp the caller-supplied limit to the spec range (1..100, default 5).
+     *
+     * The pipelinq klantbeeld endpoint caps page size at 100; anything
+     * larger is rejected by the backend, and a non-positive value would
+     * round-trip to the backend as `limit=0` which is meaningless. Centralise
+     * the clamp so neither the controller nor the UI has to remember the
+     * bounds.
+     *
+     * @param int $limit Caller-supplied page size.
+     *
+     * @return int Clamped value in [1, 100].
+     */
+    private function clampLimit(int $limit): int
+    {
+        if ($limit < 1) {
+            return 5;
+        }
+
+        return min($limit, 100);
+
+    }//end clampLimit()
+
+    /**
      * Dispatch one HTTP request via the injected client service.
      *
      * Broken out so tests can override transport without re-implementing
