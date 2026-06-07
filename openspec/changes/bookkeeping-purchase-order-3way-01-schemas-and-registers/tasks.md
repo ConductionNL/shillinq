@@ -15,11 +15,11 @@
 
 ## Manifest navigation
 
-- [ ] Add manifest entry: Purchase Orders (index + detail) in `src/manifest.json`
-- [ ] Add manifest entry: Goods Receipts (index + detail)
-- [ ] Add manifest entry: Supplier Invoices (index + detail)
-- [ ] Add manifest entry: 3-way Matches (index + detail)
-- [ ] Add manifest entry: Exceptions (filtered index of match_status ∈ exception_*)
+- [x] Add manifest entry: Purchase Orders (index + detail) in `src/manifest.json`
+- [x] Add manifest entry: Goods Receipts (index + detail)
+- [x] Add manifest entry: Supplier Invoices (index + detail)
+- [x] Add manifest entry: 3-way Matches (index + detail)
+- [x] Add manifest entry: Exceptions (filtered index of match_status ∈ exception_*)
 
 ## Seed data + integration test
 
