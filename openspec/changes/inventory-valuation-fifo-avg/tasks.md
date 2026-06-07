@@ -64,12 +64,21 @@
   `@spec` tag pointing at `task-6`. Companion unit test
   `tests/Unit/Lifecycle/InventoryValuationMethodGuardTest.php`
   covers zero / non-zero / missing / fractional quantity branches.
-- [ ] Task 7: Author `lib/Service/FifoValuationService.php` — listens to
+- [x] Task 7: Author `lib/Service/FifoValuationService.php` — listens to
   `StockMovement.inbound` event (creates cost lot reference) and
   `StockMovement.outbound` event (traverses open inbound lots
   chronologically, deducts quantity, computes weighted COGS, updates
   `InventoryValuation` snapshot); idempotent on retry via `StockMovement.uuid`
-  deduplication; `@spec` tag pointing to `tasks.md#task-7` (REQ-INV-003)
+  deduplication; `@spec` tag pointing to `tasks.md#task-7` (REQ-INV-003) —
+  authored. Adapts shillinq vocabulary (`StockMove`, `movementType`
+  receipt/issue, `sourceLocationId`/`destinationLocationId`). Cost lots
+  live in the StockMove ledger itself (design.md D2); the service
+  derives open lots by querying posted receipts and subtracting
+  historical outbound consumption oldest-first. Idempotency keyed on
+  `lastStockMoveUuid` on the snapshot. PHPUnit test
+  `FifoValuationServiceTest` covers the two-lot split scenario
+  (30+5 of 35 = EUR 360,00 COGS, residual qty 15 @ EUR 12,00 / EUR 180,00),
+  full-lot exhaustion, and idempotent retry. All 3 tests pass.
 - [ ] Task 8: Author `lib/Service/MovingAverageValuationService.php` —
   listens to `StockMovement.inbound` event for `average` items;
   recalculates running weighted average (`new_avg = (cur_qty × cur_cost
