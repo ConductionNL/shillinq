@@ -68,7 +68,7 @@
   shows Available = quantity - reservedQty. Reserved Stock index lists draft moves holding reservations
   (age, operator name). Alert flag if reservedQty > 50% of quantity
 
-- [ ] Task 14: Declare movement reason codes as admin-configurable enum (default: normal, damaged,
+- [x] Task 14: Declare movement reason codes as admin-configurable enum (default: normal, damaged,
   expired, shrinkage, inter-warehouse, adjustment, sample, demo, theft, loss). Operator can add
   custom codes per administration. Reason code mandatory on post (REQ-SM-007 guard)
 
