@@ -47,7 +47,7 @@ use Throwable;
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
  */
-final class PipelinqConfig
+class PipelinqConfig
 {
 
     /**
@@ -204,7 +204,7 @@ final class PipelinqConfig
         $this->credentialsManager->store(
             userId: '',
             identifier: self::CREDENTIAL_ID_TOKEN,
-            secret: $trimmed
+            credentials: $trimmed
         );
 
     }//end setPipelinqToken()
