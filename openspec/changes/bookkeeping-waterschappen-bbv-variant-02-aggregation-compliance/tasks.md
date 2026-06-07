@@ -4,11 +4,11 @@ Sourced from the giant's Phase 4 (Compliance Status Aggregation).
 
 ## Aggregation definition (declarative)
 
-- [ ] Add `x-openregister-aggregations` block to the `BBVProgramme` schema (per ADR-031)
-- [ ] Define aggregation query: sum GL spend by mapped account, applying allocation percentage per mapping
-- [ ] Define aggregation query: sum total budget per programme (GL budget × allocation %)
-- [ ] Compute `Utilization` = YTDSpend / TotalBudget
-- [ ] Derive `ComplianceStatus` enum (unconfigured / on-track ≤75% / at-risk 75–90% / non-compliant >90%) per REQ-BBVW-005
+- [x] Add `x-openregister-aggregations` block to the `BBVProgramme` schema (per ADR-031)
+- [x] Define aggregation query: sum GL spend by mapped account, applying allocation percentage per mapping
+- [x] Define aggregation query: sum total budget per programme (GL budget × allocation %)
+- [x] Compute `Utilization` = YTDSpend / TotalBudget
+- [x] Derive `ComplianceStatus` enum (unconfigured / on-track ≤75% / at-risk 75–90% / non-compliant >90%) per REQ-BBVW-005
 
 ## Integration test
 
