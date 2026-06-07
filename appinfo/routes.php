@@ -123,6 +123,14 @@ return [
         // catch-all so Symfony matches it first per ADR-016.
         ['name' => 'barcodeLookup#lookup', 'url' => '/api/barcode/lookup/{code}', 'verb' => 'GET', 'requirements' => ['code' => '.+']],
 
+        // Stock-ledger drill-down per inventory-stock-movement-ledger REQ-SM-005 + REQ-SM-009.
+        // Returns the reconciled on-hand, reserved + available breakdown plus a chronological
+        // running-total trace of every posted, non-cancelled StockMove touching (admin, location, sku).
+        // #[NoAdminRequired] in the controller; AdministrationContextService enforces tenant IDOR
+        // (masked 404 for non-members). Declared before the SPA catch-all so Symfony matches it
+        // first per ADR-016.
+        ['name' => 'stockLedger#trace', 'url' => '/api/stock-ledger/trace', 'verb' => 'GET'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],

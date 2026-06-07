@@ -4616,6 +4616,55 @@ _Detailed specification of deliverables, milestones, payment terms, and service 
 - → Contract (many-to-one)
 - → PurchaseOrder (one-to-many)
 
+### StockMove
+**Schema.org:** `schema:Event`
+_Immutable double-entry stock-movement ledger entry (Odoo / Tryton Stock Move pattern). One row atomically debits a source location and credits a destination location for a single (item + quantity + unit cost) tuple. Five movement types — receipt (null sourceLocationId), transfer (both populated, no GL), issue (null destinationLocationId, posts COGS), manufacture (assembly), repack (consolidation)._
+**Primary spec:** inventory-stock-movement-ledger
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| movementNumber | string | Yes | Sequential SM-YYYY-NNNN, unique per (administrationId, movementNumber) per REQ-SM-002 |
+| itemId | string (FK) | Yes | FK to Product.sku (inventory-product-catalog). Spec text refers to the catalogue entity as "Item" |
+| quantity | number ≥ 0 (multipleOf 0.01) | Yes | Units moved; direction encoded by source/destination nullability + movementType |
+| unitCost | number ≥ 0 (multipleOf 0.01) | Yes | Cost per unit in administration base currency; GL amount = quantity * unitCost per REQ-SM-006 |
+| movementType | enum | Yes | One of receipt / transfer / issue / manufacture / repack per REQ-SM-002 |
+| sourceLocationId | string (FK) | No | FK to Location.id; null for receipt; differs from destination when both present |
+| destinationLocationId | string (FK) | No | FK to Location.id; null for issue; differs from source when both present |
+| referenceDocumentUri | string (URI) | No | PO (receipt), sales order (issue), production plan (manufacture); docudesk:// URIs accepted |
+| movementReason | enum | Yes | Standard set (normal, damaged, expired, shrinkage, inter-warehouse, adjustment, sample, demo, theft, loss, cancellation, manufacture, repack) unioned with per-administration custom codes; mandatory on post per REQ-SM-007 |
+| notes | string | No | Operator notes; offset rows carry "Offset for <original.movementNumber>" |
+| draftedAt | datetime | Yes | Stamped on create |
+| postedAt | datetime | No | Stamped on draft → posted |
+| cancelledAt | datetime | No | Stamped on cancel |
+| administrationId | string (FK) | Yes | FK to Administration; tenant scope per REQ-MA-001 |
+| locked | boolean | No (default false) | true on posted; edits to load-bearing fields rejected with HTTP 409 per REQ-SM-003 |
+| glTransactionId | string (FK) | No | Back-reference to materialised GLTransaction (receipt/issue/manufacture only) |
+| offsetOfMoveId | string (FK) | No | When this row is a cancellation offset, FK to the original posted StockMove per REQ-SM-003 |
+| lifecycleState | enum | Yes | One of draft / posted / cancelled per REQ-SM-003 |
+
+**Hierarchy / invariants (per REQ-SM-002 + REQ-SM-003 + REQ-SM-005):**
+- Receipt: sourceLocationId MUST be null; destinationLocationId MUST be present.
+- Issue: destinationLocationId MUST be null; sourceLocationId MUST be present.
+- Transfer / manufacture / repack: both locations populated; sourceLocationId ≠ destinationLocationId.
+- Posted moves are immutable (`locked = true`); cancellation creates an offsetting StockMove with swapped locations rather than patching the original.
+- `InventoryStock.quantity` reconciles to `initialStock + SUM(destination posted moves) - SUM(source posted moves)`, excluding cancelled — verifiable via `StockLedgerService::quantityForLocation`.
+
+**Declarative extensions (ADR-031):**
+- `x-openregister-lifecycle`: draft → posted → cancelled; post stamps postedAt+locked, runs commit-stock-reservation + materialise-gl-transaction (receipt/issue/manufacture); cancel forks on @previous (draft-cancel releases reservation; posted-cancel runs StockMoveOffsetCreator).
+- `x-openregister-aggregations`: netQuantityForLocation (REQ-SM-005), reservedQuantityForLocation (REQ-SM-009), movesByType (REQ-SM-008).
+- `x-openregister-indexes`: (administrationId, sourceLocationId, itemId, lifecycleState), (administrationId, destinationLocationId, itemId, lifecycleState), unique (administrationId, movementNumber).
+- Guards (ADR-031 exception path): `StockMoveReasonGuard::requireReasonOnPost`, `StockMoveImmutabilityGuard::rejectLockedEdit`/`canCancel`, `StockReservationGuard::reserveReservation`/`commitReservation`/`releaseReservation`, `StockMoveOffsetCreator::emitOffset`.
+
+**Relations:**
+- → Product (many-to-one, via itemId)
+- → Location (many-to-one, sourceLocationId — null for receipt)
+- → Location (many-to-one, destinationLocationId — null for issue)
+- → GLTransaction (one-to-one, via glTransactionId — receipt/issue/manufacture only)
+- → StockMove (many-to-one self-relation, via offsetOfMoveId — cancellation offset pair)
+- → Organization (many-to-one, via administrationId)
+
+> **Annotation (inventory-stock-movement-ledger, 2026-06-07):** Lifecycle, GL materialisation, reservation CAS, audit trail and aggregations are all declarative per ADR-031 — no `StockMoveService` was added. Four ADR-031 exception-path guards live in `lib/Lifecycle/` for the predicates the declarative DSL cannot yet express (mandatory reason on post, locked-edit rejection, optimistic-lock CAS, posted-cancel offset materialisation). Read-side drill-down is served by `StockLedgerService` + `GET /api/stock-ledger/trace`; the engine never SUMs cents floats — all arithmetic is integer-cent via `multipleOf 0.01` schema discipline.
+
 ### SubmissionDossier
 **Schema.org:** `schema:DigitalDocument`
 _Council submission dossier aggregating spending records and compliance documentation for public sector reporting_
