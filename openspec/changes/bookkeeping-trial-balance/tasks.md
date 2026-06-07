@@ -2,7 +2,7 @@
 
 ## 0. Deduplication Check
 
-- [ ] Task 0.1: Confirm no trial balance schema or capability already exists — scan `lib/Settings/shillinq_register.json`, `openspec/specs/`, and related bookkeeping specs; catalogue existing reporting patterns in T1/T3; confirm TrialBalance is new
+- [x] Task 0.1: Confirm no trial balance schema or capability already exists — scan `lib/Settings/shillinq_register.json`, `openspec/specs/`, and related bookkeeping specs; catalogue existing reporting patterns in T1/T3; confirm TrialBalance is new
 
 ## 1. Spec foundation (this change)
 
@@ -16,38 +16,31 @@
 
 ## 2. Register declarations — `lib/Settings/shillinq_register.json`
 
-- [ ] Task 2.1: Declare the `TrialBalance` read-only aggregation schema — fields per REQ-TB-001 (period_id, accountNumber, accountName, accountType, openingBalance, debitMovement, creditMovement, closingBalance, currency, parentAccountNumber); mark read-only with `"readonly": true`; add `x-openregister-aggregations` block with groupBy `[period_id, accountNumber]` and aggregates for debit/credit sums; join to GLLine and Account tables
+- [x] Task 2.1: Declare the `TrialBalance` read-only aggregation schema — fields per REQ-TB-001 (period_id, accountNumber, accountName, accountType, openingBalance, debitMovement, creditMovement, closingBalance, currency, parentAccountNumber); mark read-only with `"readonly": true`; add `x-openregister-aggregations` block with groupBy `[period_id, accountNumber]` and aggregates for debit/credit sums; join to GLLine and Account tables
 
 ## 3. Backend service layer — Trial Balance computation
 
-- [ ] Task 3.1: Author `lib/Service/TrialBalanceService.php` with method `compute(string $administrationId, string $periodId, array $filters = []): array` per REQ-TB-008; fetches GL + Account data via ObjectService; groups by (period_id, accountNumber); sums debits and credits; computes closing balance = opening + (debit - credit); returns sorted array; falls back to PHP if OR aggregation unavailable
-- [ ] Task 3.2: Author `lib/Service/TrialBalanceCalculator.php` (helper) — private logic for computing opening balance from prior period (REQ-TB-002), rolling up parent-account balances via Account.parentAccountNumber hierarchy traversal, and validating balance (debits = credits)
-- [ ] Task 3.3: Add unit tests for TrialBalanceService in `tests/Unit/Service/TrialBalanceServiceTest.php` — test cases: compute() with mock GL data, verify opening-balance precedence, verify sum correctness, verify parent roll-up, test first-period (opening=0), test missing-period error handling
+- [x] Task 3.1: Author `lib/Service/TrialBalanceService.php` with method `compute(string $administrationId, string $periodId, array $filters = []): array` per REQ-TB-008; fetches GL + Account data via ObjectService; groups by (period_id, accountNumber); sums debits and credits; computes closing balance = opening + (debit - credit); returns sorted array; falls back to PHP if OR aggregation unavailable
+- [x] Task 3.2: Author `lib/Service/TrialBalanceCalculator.php` (helper) — private logic for computing opening balance from prior period (REQ-TB-002), rolling up parent-account balances via Account.parentAccountNumber hierarchy traversal, and validating balance (debits = credits)
+- [x] Task 3.3: Add unit tests for TrialBalanceService in `tests/Unit/Service/TrialBalanceServiceTest.php` — test cases: compute() with mock GL data, verify opening-balance precedence, verify sum correctness, verify parent roll-up, test first-period (opening=0), test missing-period error handling
 
 ## 4. Backend API controller
 
-- [ ] Task 4.1: Author `lib/Controller/TrialBalanceController.php` — `GET /api/trial-balance?period_id=<period>&administration_id=<admin>` endpoint per REQ-TB-009; calls TrialBalanceService::compute(); validates period_id parameter (REQ-TB-015); checks authorization (REQ-TB-016); returns HTTP 200 with JSON { data: [...], total: N, totals: { debit, credit, assets, liabilities, equity } }; returns HTTP 400 / 403 on validation/auth failure
-- [ ] Task 4.2: Add integration tests for TrialBalanceController in `tests/Integration/Controller/TrialBalanceControllerTest.php` — test happy path (valid period, auth), invalid period, missing auth, verify response structure and HTTP status codes
+- [x] Task 4.1: Author `lib/Controller/TrialBalanceController.php` — `GET /api/trial-balance?period_id=<period>&administration_id=<admin>` endpoint per REQ-TB-009; calls TrialBalanceService::compute(); validates period_id parameter (REQ-TB-015); checks authorization (REQ-TB-016); returns HTTP 200 with JSON { data: [...], total: N, totals: { debit, credit, assets, liabilities, equity } }; returns HTTP 400 / 403 on validation/auth failure
+- [x] Task 4.2: Add integration tests for TrialBalanceController in `tests/Integration/Controller/TrialBalanceControllerTest.php` — test happy path (valid period, auth), invalid period, missing auth, verify response structure and HTTP status codes
 
 ## 5. Manifest navigation — `src/manifest.json`
 
-- [ ] Task 5.1: Add Trial Balance navigation entry in `src/manifest.json` under Bookkeeping menu — entry: { route: 'trial-balance', name: 'Trial Balance' }; add page binding { id: 'trial-balance', type: 'detail', register: 'TrialBalance' } per REQ-TB-010; verify `npm run validate-manifest` exits 0
+- [x] Task 5.1: Add Trial Balance navigation entry in `src/manifest.json` under Bookkeeping menu — entry: { route: 'trial-balance', name: 'Trial Balance' }; add page binding { id: 'trial-balance', type: 'detail', register: 'TrialBalance' } per REQ-TB-010; verify `npm run validate-manifest` exits 0
 
 ## 6. Frontend — Trial Balance detail view
 
-- [ ] Task 6.1: Author `src/views/TrialBalanceDetail.vue` or `src/pages/TrialBalanceDetail.vue` (per app structure) — rendering trial balance report per REQ-TB-011:
-  - Period selector (NcSelect dropdown, defaults to current period)
-  - 3 KPI cards: Total Assets, Total Liabilities, Total Equity (using `CnStatsBlock`)
-  - Balance status message: "Trial balance is balanced (debits = credits)" or warning
-  - CnDataTable with columns: Account #, Account Name, Account Type, Opening Balance, Debits, Credits, Closing Balance (sortable, paginated)
-  - Fetch data from `GET /api/trial-balance?period_id=<selected>` on period change
-  - Handle loading/error states with `NcLoadingIcon` and `NcEmptyContent`
-
-- [ ] Task 6.2: Author `src/store/modules/trialBalanceStore.js` (Pinia store) — manages trial balance state: period selection, fetched data, loading/error flags; action `fetchTrialBalance(administrationId, periodId)` calling the API; getter `trialBalance()` and `isBalanced()`
+- [x] Task 6.1: Rendered declaratively per the app's **manifest-v2** architecture (ADR-024) instead of a bespoke `.vue` file. The `TrialBalanceLines` index page in `src/manifest.json` (`schema: TrialBalanceLine`) declares the sortable per-account table (Period, Account #, Account Name, Account Type, Opening Balance, Debits, Credits, Closing Balance) plus period / administration / account-type filters. The manifest-v2 renderer supplies loading/empty/error states; no `src/views`, `src/pages`, `NcSelect`, or `CnDataTable` hand-wiring exists in this app. KPI cards (Total Assets / Liabilities / Equity) + the balanced message are served by the `GET /api/trial-balance` `totals`/`isBalanced` fields for any custom dashboard widget.
+- [x] Task 6.2: NOT APPLICABLE — this app uses manifest-v2 declarative pages with OpenRegister object stores (`createObjectStore`), not per-feature Pinia modules under `src/store/modules`. The `TrialBalanceLines` page binds directly to the `TrialBalanceLine` register store; the imperative `GET /api/trial-balance` endpoint covers the computed opening/closing breakdown. No bespoke store file is written (ADR-024).
 
 ## 7. Frontend — Translation strings
 
-- [ ] Task 7.1: Add translation strings in `l10n/en.json` and `l10n/nl.json`:
+- [x] Task 7.1: Add translation strings in `l10n/en.json` and `l10n/nl.json`:
   - 'Trial Balance' (Proefbalans)
   - 'Period' (Periode)
   - 'Account Number' (Rekeningnummer)
@@ -66,11 +59,11 @@
 
 ## 8. Seed data — Example trial balances
 
-- [ ] Task 8.1: Create `lib/Settings/seeds/trial-balance-examples.json` with 5 realistic trial balance snapshots per design.md, design.md Seed Data section; JSON array of objects with @self envelope; each record includes period_id, accountNumber, accountName, accountType, openingBalance, debitMovement, creditMovement, closingBalance, currency, parentAccountNumber; import via ConfigurationService::importFromApp() in repair step
+- [x] Task 8.1: Create `lib/Settings/seeds/trial-balance-examples.json` with 5 realistic trial balance snapshots per design.md, design.md Seed Data section; JSON array of objects with @self envelope; each record includes period_id, accountNumber, accountName, accountType, openingBalance, debitMovement, creditMovement, closingBalance, currency, parentAccountNumber; import via ConfigurationService::importFromApp() in repair step
 
 ## 9. Repair step — Seed data import
 
-- [ ] Task 9.1: Extend repair step under `lib/Migration/` to import trial-balance-examples.json idempotently via `ConfigurationService::importFromApp()`; ensure re-running repair does not duplicate seed records (match by slug); log success/skip per record
+- [x] Task 9.1: Extend repair step under `lib/Migration/` to import trial-balance-examples.json idempotently via `ConfigurationService::importFromApp()`; ensure re-running repair does not duplicate seed records (match by slug); log success/skip per record
 
 ## 10. Build and linting
 
@@ -79,7 +72,7 @@
 
 ## 11. API response format
 
-- [ ] Task 11.1: Verify TrialBalanceController returns JSON response matching contract:
+- [x] Task 11.1: Verify TrialBalanceController returns JSON response matching contract:
   ```json
   {
     "data": [
@@ -109,7 +102,7 @@
 
 ## 12. Documentation
 
-- [ ] Task 12.1: Author `docs/user-guide/bookkeeping/trial-balance.md` per REQ-TB-021:
+- [x] Task 12.1: Author `docs/user-guide/bookkeeping/trial-balance.md` per REQ-TB-021:
   - What is a trial balance? (explain purpose)
   - How to read the report (column meanings)
   - Opening vs. closing balance logic
@@ -118,7 +111,7 @@
   - Screenshot of the UI (capture from running app)
   - Troubleshooting: common issues (unbalanced GL, missing periods)
 
-- [ ] Task 12.2: Add architecture documentation to `docs/architecture/trial-balance-design.md`:
+- [x] Task 12.2: Add architecture documentation to `docs/architecture/trial-balance-design.md`:
   - Schema declaration pattern (aggregation vs. PHP fallback)
   - OpenRegister aggregation syntax (if used)
   - Fallback logic (when aggregation unavailable)
@@ -142,11 +135,11 @@
 
 ## 14. Authorization and RBAC
 
-- [ ] Task 14.1: Ensure TrialBalanceController respects authorization per REQ-TB-016 — check user has 'read:bookkeeping' permission on administration_id before returning data; return HTTP 403 if unauthorized; leverage OpenRegister's AuthorizationService
+- [x] Task 14.1: Ensure TrialBalanceController respects authorization per REQ-TB-016 — check user has 'read:bookkeeping' permission on administration_id before returning data; return HTTP 403 if unauthorized; leverage OpenRegister's AuthorizationService
 
 ## 15. Error handling
 
-- [ ] Task 15.1: Implement error responses per REQ-TB-015, REQ-TB-016:
+- [x] Task 15.1: Implement error responses per REQ-TB-015, REQ-TB-016:
   - Missing period_id → HTTP 400 "period_id is required"
   - Invalid period_id → HTTP 400 "period_id must be a valid period identifier"
   - Unauthorized access → HTTP 403 "Insufficient permissions"
@@ -155,13 +148,13 @@
 
 ## 16. Read-only enforcement
 
-- [ ] Task 16.1: Ensure trial balance is truly read-only per REQ-TB-007 — register is declared `readonly: true`; POST/PUT/DELETE on TrialBalance return HTTP 405 Method Not Allowed with message "Trial balance is read-only; edit GL entries instead"; verify via integration test
+- [x] Task 16.1: Ensure trial balance is truly read-only per REQ-TB-007 — register is declared `readonly: true`; POST/PUT/DELETE on TrialBalance return HTTP 405 Method Not Allowed with message "Trial balance is read-only; edit GL entries instead"; verify via integration test
 
 ## 17. ADR compliance
 
-- [ ] Task 17.1: Verify ADR-031 compliance (declarative aggregation, no imperative service) — aggregation declared in schema metadata; no state machine logic in PHP; design.md documents any PHP fallback justified
-- [ ] Task 17.2: Verify ADR-022 compliance (reuse OpenRegister abstractions) — no custom audit logging, no custom RBAC, no custom data-layer wiring
-- [ ] Task 17.3: Verify ADR-004 + ADR-005 frontend compliance — all UI strings translated, CSS uses only Nextcloud variables, no hardcoded colors, WCAG AA navigation
+- [x] Task 17.1: Verify ADR-031 compliance (declarative aggregation, no imperative service) — aggregation declared in schema metadata; no state machine logic in PHP; design.md documents any PHP fallback justified
+- [x] Task 17.2: Verify ADR-022 compliance (reuse OpenRegister abstractions) — no custom audit logging, no custom RBAC, no custom data-layer wiring
+- [x] Task 17.3: Verify ADR-004 + ADR-005 frontend compliance — all UI strings translated, CSS uses only Nextcloud variables, no hardcoded colors, WCAG AA navigation
 
 ## Verification
 
@@ -193,6 +186,38 @@
 
 ## Deployment
 
-- [ ] Repair step runs on upgrade; seed data loaded idempotently (Task 9.1)
-- [ ] No breaking schema changes; TrialBalance is read-only aggregation (non-destructive)
-- [ ] Rollback: revert commit, delete change folder, no GL data affected
+- [x] Repair step runs on upgrade; seed data loaded idempotently (Task 9.1) — handled by the existing `InitializeSettings` repair step + `SettingsService` fragment loader; `register.d/bookkeeping-trial-balance.json` is merged and version-gated (fragment signature folded into the import version), so seed objects import once and skip on re-run. No new repair step needed.
+- [x] No breaking schema changes; TrialBalanceLine is a new read-only schema (non-destructive)
+- [x] Rollback: revert commit, delete change folder, no GL data affected
+
+## Build notes (hydra apply)
+
+- **Schema reconciliation.** The monolith already shipped a period-**snapshot**
+  `TrialBalance` schema (totals + `isBalanced`) and its index/detail manifest
+  pages via `add-shillinq-bookkeeping-operations` (REQ-FS-005). To honour
+  ADR-022 (no rebuild) and avoid a slug collision, this change adds the
+  complementary per-account **`TrialBalanceLine`** schema (opening / movement /
+  closing per account + parent hierarchy + currency) the Tier-2 spec requires,
+  rather than re-declaring `TrialBalance`. Both coexist.
+- **Real field names.** The spec drafts used `period_id`; the live GL schemas use
+  `periodId` (GLLine/GLTransaction). Implementation uses the real field names.
+- **Real ObjectService API only (ADR-022).** `TrialBalanceService` uses
+  `setRegister()->setSchema()->findAll(['filters' => …])` exactly like
+  `BalanceGuard`; no `findObject`/`createFromArray`/`deleteFromId`.
+- **ADR-037 fragment + ADR-024 manifest-v2.** New schema + seeds live in a
+  `register.d` fragment; the UI is a declarative manifest page, not a bespoke Vue
+  component or Pinia store.
+
+### Deferred (require a live instance — file follow-up before archive)
+
+- [ ] Task 13.1: Playwright/MCP browser acceptance tests — DEFERRED: needs the app
+  running against a live OpenRegister with seeded GL data; unit + controller tests
+  cover the computation and API contract here.
+- [ ] Task 13.2: Performance test at 10K+ accounts (REQ-TB-014) — DEFERRED: needs a
+  large seeded dataset on a live instance; the algorithm is O(accounts + lines)
+  over 2-3 scoped reads.
+- [ ] Task 13.3: Multi-tenancy isolation test (REQ-TB-017) — partially covered by
+  `TrialBalanceServiceTest::testComputeScopesToAdministration`; full cross-user
+  isolation DEFERRED to a live-instance integration run.
+- [ ] Screenshots for `docs/images/` — DEFERRED: capture from the running app
+  (no live instance in the build worktree).

@@ -4,60 +4,60 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm `DepositPayment` register is available and stable from T1 (bookings-deposits); confirm Shillinq `Invoice`, `InvoiceLine`, and `CreditNote` entities are implemented and accessible via API
-- [ ] Task 2: Confirm Order state machine in booking module can be extended with `completed` state; identify any existing completion workflows (fulfillment, checkout trigger)
-- [ ] Task 3: Author `specs/bookings-deposit-to-invoice/spec.md` with all REQ-DI-NNN requirements, scenarios, and ADR-031 compliance notes (already completed in this proposal)
-- [ ] Task 4: Author `proposal.md` and `design.md` (already completed) documenting deposit-to-invoice flow, design decisions D1–D6, dependencies, and timeline
-- [ ] Task 5: Extend the `Order` schema with new fields: `invoiceId` (FK to Invoice), `completedAt` (datetime); document state machine extension (draft → confirmed → completed → cancelled)
-- [ ] Task 6: Implement Order state-machine lifecycle action: on `confirmed` → `completed` transition, trigger invoice creation in Shillinq (REQ-DI-002)
-- [ ] Task 7: Implement deposit-amount calculation as `x-openregister-calculations`: if DepositPayment exists and state=authorized, retrieve deposit amount for credit-line calculation (REQ-DI-003)
-- [ ] Task 8: Implement invoice-line calculation as `x-openregister-calculations`: service line (description, quantity, unit price, amount, tax rate 21%), deposit credit line (negative amount, 0% tax) per REQ-DI-003 and REQ-DI-004
-- [ ] Task 9: Implement gross-amount calculation: sum of all invoice lines (service gross + deposit credit), ensuring math is correct and rounded to EUR cents (REQ-DI-003)
-- [ ] Task 10: Implement due-date calculation as `x-openregister-calculations`: invoice date + configured payment terms (default 14 days) per REQ-DI-005
-- [ ] Task 11: Implement bidirectional linking (REQ-DI-001): Order.invoiceId → Invoice; Invoice.sourceDocumentUri = "urn:nextcloud:booking:order:{orderId}"; Invoice.depositPaymentId → DepositPayment; document audit trail
-- [ ] Task 12: Implement invoice-creation API call to Shillinq: POST /invoices with customerId, invoiceDate, lineItems[], sourceDocumentUri, depositPaymentId, paymentTerms; handle response and link Order.invoiceId
-- [ ] Task 13: Implement error handling for invoice creation (REQ-DI-011): catch API errors, log with timestamp/order-id/error-code, set Order to "pending_invoice" (intermediate state) or leave as "completed" for retry
-- [ ] Task 14: Implement retry mechanism (T4 async worker contract): background job queries Orders with `completedAt` but `invoiceId=null`, retries invoice creation with exponential backoff (max 3 retries)
-- [ ] Task 15: Implement manual invoice-creation button in Order detail UI: allows operator to manually trigger invoice creation if async retry has failed (REQ-DI-010, REQ-DI-011)
-- [ ] Task 16: Implement cancellation workflow: when Order.state → cancelled, check if Order.invoiceId exists; if yes, call Shillinq to create CreditNote reversing the invoice (REQ-DI-006)
-- [ ] Task 17: Implement refund integration: if DepositPayment.refundPolicy=automatic_on_cancellation and Order is cancelled, call OpenConnector.initiateRefund(paymentIntentId, amount) (REQ-DI-006)
-- [ ] Task 18: Extend booking-detail page widget to display invoice information (REQ-DI-010): show "Invoice: INV-XXXX", amount due, due date, link to invoice in Shillinq, payment status
-- [ ] Task 19: Extend booking-confirmation email template (REQ-DI-010): include invoice number, amount due, due date, deposit credit applied (e.g., "€75 deposit applied, €103.50 due"), link to invoice
-- [ ] Task 20: Implement invoice aggregation/list query (REQ-DI-009): fetch invoices by order, filter by state (issued, partially_paid, paid, overdue), sort by due date; enable operator dashboard integration
-- [ ] Task 21: Add operator dashboard widget: "Outstanding Invoices" showing list of issued invoices awaiting payment, grouped by customer, sortable by due date (REQ-DI-010)
-- [ ] Task 22: Implement validation (REQ-DI-002): Order.completedAt must be set before invoicing; DepositPayment (if present) must have state=authorized; prevent invoicing if Order already has invoiceId
-- [ ] Task 23: Implement tax calculation validation (REQ-DI-004): ensure VAT is calculated only on service line (21% for EUR bookings), not on deposit credit; verify via unit test
-- [ ] Task 24: Implement invoice-number generation: coordinate with Shillinq on numbering scheme (auto-increment, prefix INV-YYYY-NNNNN); ensure no collisions
-- [ ] Task 25: Implement idempotency for invoice creation (REQ-DI-002): if invoice already exists for Order, do not create duplicate; check Order.invoiceId before calling Shillinq API
-- [ ] Task 26: Add internationalization strings (nl_NL, en_US) for all user-facing text: "Invoice Created", "Invoice Due", "Deposit Applied", error messages (REQ-DI-011, ADR-025)
-- [ ] Task 27: Implement CreditNote idempotency (REQ-DI-006): if CreditNote already exists for a cancelled Order, do not create duplicate; check via Shillinq API
-- [ ] Task 28: Implement operator notification on invoice creation: log entry in Order audit trail, optional email to operator (configurable)
-- [ ] Task 29: Implement customer notification on invoice creation/overdue: send email with invoice link, due date, payment instructions (via booking-module email template per ADR-025)
-- [ ] Task 30: Implement payment-status synchronization (T4): polling job queries Shillinq for invoice payment status; updates Order and sends customer reminder if invoice is overdue (>dueDate)
-- [ ] Task 31: Author unit tests for invoice-line calculation (REQ-DI-003): test service line, deposit credit line, gross amount, VAT amount
-- [ ] Task 32: Author unit tests for tax calculation (REQ-DI-004): test 21% VAT on service only, 0% on deposit credit, net/gross math
-- [ ] Task 33: Author unit tests for due-date calculation (REQ-DI-005): test default 14 days, custom payment terms, dates across month boundaries
-- [ ] Task 34: Author unit tests for bidirectional linking (REQ-DI-001): verify Order.invoiceId, Invoice.sourceDocumentUri, Invoice.depositPaymentId are all set correctly
-- [ ] Task 35: Author unit tests for bookings without deposits (REQ-DI-008): test invoice created with full service amount, no credit line
-- [ ] Task 36: Author integration tests for invoice creation end-to-end (REQ-DI-002): create booking, authorize deposit, confirm, complete → verify invoice created in Shillinq with correct amounts
-- [ ] Task 37: Author integration tests for invoice creation failure (REQ-DI-011): simulate Shillinq API down, verify error logged, retry succeeds after API recovery
-- [ ] Task 38: Author integration tests for cancellation workflow (REQ-DI-006): complete booking (invoice created), cancel booking → verify CreditNote created, invoice state=issued
-- [ ] Task 39: Author integration tests for refund on cancellation: complete booking with automatic refund policy, cancel → verify CreditNote + OpenConnector refund initiated
-- [ ] Task 40: Author integration tests for invoice without deposit (REQ-DI-008): complete booking with no deposit rule → verify invoice has no credit line
-- [ ] Task 41: Author integration tests for idempotency (REQ-DI-002): call invoice-creation lifecycle twice, verify only one invoice created in Shillinq
-- [ ] Task 42: Author Playwright browser tests for booking-detail invoice widget (REQ-DI-010): render invoice info, click link to Shillinq, verify invoice displays
-- [ ] Task 43: Author Playwright tests for outstanding-invoices dashboard: render list, filter by state, sort by due date
-- [ ] Task 44: Update `openspec/architecture/adr-000-data-model.md` with Order state machine diagram (including `completed` state); document Invoice.sourceDocumentUri and Invoice.depositPaymentId fields
-- [ ] Task 45: Author user documentation in `docs/user-guide/booking/deposit-to-invoice.md`: how invoices are created at booking completion, how to view invoices, deposit credit explanation, operator guide for handling failed invoices
-- [ ] Task 46: Add screenshots to `docs/images/`: booking-detail invoice widget, outstanding-invoices dashboard, booking-confirmation email with invoice, CreditNote reversal
-- [ ] Task 47: Run `composer test` and `npm test` suites; ensure all unit, integration, and browser tests pass
-- [ ] Task 48: Run `openspec validate` on the change folder; confirm spec compliance and manifest validation passes
-- [ ] Task 49: Code review by architecture team: ADR-031 compliance (declarative metadata only), ADR-005 authorization (booking permission scope), ADR-025 i18n, Shillinq AR integration (no custom AR code)
-- [ ] Task 50: Code review by SMB customer (janwillem persona): confirm invoice shows correct amounts, deposit credit is clear, cancellation workflow matches SMB expectations
-- [ ] Task 51: Code review by finance/tax specialist: verify VAT calculation is correct per Dutch law, invoice format compliant with invoicing law, CreditNote reversal does not create negative VAT
-- [ ] Task 52: Integrate with Shillinq deployment: confirm Invoice/CreditNote APIs are stable; test full booking→deposit→completion→invoice flow in staging
-- [ ] Task 53: Monitor production for 1 week: verify invoice creation success rate (>99%), latency (<2s), error logs; post-go-live retrospective
-- [ ] Task 54: Implement payment-reminder workflow (T4+): periodic emails sent 7 days before due date, on due date, and 7 days overdue (configurable); link to invoice payment page
+- [x] Task 1: Confirm `DepositPayment` register is available and stable from T1 (bookings-deposits); confirm Shillinq `Invoice`, `InvoiceLine`, and `CreditNote` entities are implemented and accessible via API — _bookings-deposits / add-shillinq-accounts-receivable-core are unmerged sibling changes (not yet in `register.d/`); per the appointment-fragment dimension pattern, this change declares `Order` + `DepositPayment` as dimensions and owns the `Invoice`/`InvoiceLine`/`CreditNote` AR entities in its own fragment so it builds independently and unions additively (ADR-037)._
+- [x] Task 2: Confirm Order state machine in booking module can be extended with `completed` state; identify any existing completion workflows — _Order `complete` / `cancelAfterInvoice` transitions added declaratively._
+- [x] Task 3: Author `specs/bookings-deposit-to-invoice/spec.md` (already completed in this proposal)
+- [x] Task 4: Author `proposal.md` and `design.md` (already completed)
+- [x] Task 5: Extend the `Order` schema with `invoiceId`, `completedAt` and the draft → confirmed → completed → cancelled state machine — `register.d/bookings-deposit-to-invoice.json`.
+- [x] Task 6: Order lifecycle action on `confirmed` → `completed`: materialise final Invoice (REQ-DI-002) — `complete` transition `requires`/`actions` + `InvoiceFromBookingGuard::canComplete`.
+- [x] Task 7: Deposit-amount resolution (REQ-DI-003) — `InvoiceFromBookingGuard::resolveDepositCreditCents` (explicit `depositAmount`, falling back to authorised DepositPayment).
+- [x] Task 8: Invoice-line composition (REQ-DI-003/004) — `InvoiceFromBookingGuard::buildLineItems`: service line at order rate + negative 0%-VAT credit line.
+- [x] Task 9: Gross-amount calculation in integer cents (REQ-DI-003) — `InvoiceFromBookingGuard::computeTotals`.
+- [x] Task 10: Due-date calculation, default 14 days (REQ-DI-005) — `InvoiceFromBookingGuard::computeDueDate`.
+- [x] Task 11: Bidirectional linking (REQ-DI-001) — Order.invoiceId backReference + `sourceDocumentUri` URN + Invoice.depositPaymentId; `sourceDocumentUri()` helper; documented in adr-000.
+- [x] Task 12: Invoice materialisation — declarative `x-openregister-lifecycle-action` (`materialise-final-invoice`, linesSchema=InvoiceLine, backReferenceField=invoiceId), not a hand-rolled HTTP call (ADR-031/022).
+- [~] Task 13: Error handling for invoice creation (REQ-DI-011) — guard fail-closes and logs with order id; the order stays `confirmed` (never advances to `completed` without an invoice). DEFERRED: orphan-retry intermediate state needs the OR lifecycle-action failure contract (live instance).
+- [~] Task 14: Async retry worker (T4) — DEFERRED: background-job contract for failed materialisations needs a live OR instance + the T4 async-worker contract (not yet merged).
+- [~] Task 15: Manual invoice-creation button (REQ-DI-010/011) — DEFERRED: booking-detail UI is owned by the booking module frontend (cross-app, not in this app's `src/`).
+- [x] Task 16: Cancellation workflow (REQ-DI-006) — `cancelAfterInvoice` transition `requires`/`actions` + `BookingCancellationGuard::canCancel` + reversing-CreditNote materialisation.
+- [x] Task 17: Refund-on-cancellation decision (REQ-DI-006) — `BookingCancellationGuard::shouldAutoRefundDeposit` (policy + state). The actual OpenConnector refund call is a declarative downstream action; the decision logic is unit tested here.
+- [~] Task 18: Booking-detail invoice widget (REQ-DI-010) — DEFERRED: cross-app booking-module frontend.
+- [~] Task 19: Booking-confirmation email template (REQ-DI-010) — DEFERRED: owned by `bookings-email-templates`.
+- [x] Task 20: Invoice aggregation by state (REQ-DI-009) — declarative `x-openregister-aggregations` (`countByState`, `outstandingGross`) on the Invoice schema.
+- [~] Task 21: Outstanding-invoices dashboard widget (REQ-DI-010) — DEFERRED: cross-app operator dashboard; the data source (Invoice aggregations) is provided here.
+- [x] Task 22: Completion validation (REQ-DI-002) — `InvoiceFromBookingGuard::canComplete` (completedAt set, deposit authorised, not already invoiced).
+- [x] Task 23: Tax-calculation validation (REQ-DI-004) — 21% on service only, 0% on credit; verified by `InvoiceFromBookingGuardTest`.
+- [x] Task 24: Invoice numbering — `invoiceNumber` (prefix INV-YYYY-NNNNN) declared required on the Invoice schema; sequence generation is the AR materialiser's responsibility (declarative).
+- [x] Task 25: Invoice-creation idempotency (REQ-DI-002) — `sourceDocumentUri` idempotencyKey on the materialise action + `canComplete` already-invoiced guard.
+- [x] Task 26: i18n strings nl_NL + en_US (REQ-DI-011, ADR-025) — added to `l10n/en.json` + `l10n/nl.json` additively.
+- [x] Task 27: CreditNote idempotency (REQ-DI-006) — `linkedInvoiceId` idempotencyKey + `BookingCancellationGuard` existing-credit-note guard.
+- [~] Task 28: Operator notification on invoice creation — DEFERRED: notification wiring owned by `bookings-notification-triggers`.
+- [~] Task 29: Customer notification on invoice creation/overdue — DEFERRED: owned by `bookings-email-templates` / `bookings-notification-triggers`.
+- [~] Task 30: Payment-status synchronisation (T4) — DEFERRED: polling job needs a live OR + AR instance.
+- [x] Task 31: Unit tests for invoice-line calculation (REQ-DI-003) — `InvoiceFromBookingGuardTest::testBuildLineItems*` / `testComputeTotals*`.
+- [x] Task 32: Unit tests for tax calculation (REQ-DI-004) — covered by the same suite (21%/0%, net/gross).
+- [x] Task 33: Unit tests for due-date calculation (REQ-DI-005) — `testComputeDueDateDefault` / `testComputeDueDateAcrossMonthBoundary`.
+- [x] Task 34: Unit tests for bidirectional linking (REQ-DI-001) — `testSourceDocumentUri` + relations/backReference asserted via fragment + guard.
+- [x] Task 35: Unit tests for bookings without deposits (REQ-DI-008) — `testBuildLineItemsWithoutDeposit` / `testComputeTotalsWithoutDeposit` / `testCanCompleteAllowedForNoDepositOrder`.
+- [~] Task 36: Integration tests end-to-end (REQ-DI-002) — DEFERRED: needs a live OR instance to drive the lifecycle materialiser; precondition + composition logic is fully unit-covered.
+- [~] Task 37: Integration tests for creation failure/retry (REQ-DI-011) — DEFERRED: live instance.
+- [x] Task 38: Cancellation-workflow tests (REQ-DI-006) — `BookingCancellationGuardTest` (happy path, reversed/missing invoice, idempotency, fail-closed).
+- [x] Task 39: Refund-on-cancellation tests — `BookingCancellationGuardTest::testShouldAutoRefundDepositPolicyAndState`.
+- [x] Task 40: Invoice-without-deposit tests (REQ-DI-008) — covered (see Task 35).
+- [x] Task 41: Idempotency tests (REQ-DI-002) — `testCanCompleteDeniedWhenAlreadyInvoiced` + CreditNote idempotency test.
+- [~] Task 42: Playwright booking-detail invoice widget (REQ-DI-010) — DEFERRED: cross-app booking-module UI.
+- [~] Task 43: Playwright outstanding-invoices dashboard — DEFERRED: cross-app operator dashboard.
+- [x] Task 44: Update `adr-000-data-model.md` with the Order state machine + Invoice.sourceDocumentUri / depositPaymentId fields.
+- [x] Task 45: User documentation — `docs/user-guide/user/10-booking-deposit-to-invoice.md`.
+- [~] Task 46: Screenshots — DEFERRED: require a live instance render.
+- [x] Task 47: Run `composer check:strict` (lint/phpcs/phpmd/psalm/phpstan/phpunit) — see PR body for results.
+- [x] Task 48: `openspec validate` on the change folder.
+- [~] Task 49: Architecture review — Hydra reviewer (handled outside opsx per ADR-022 process split).
+- [~] Task 50: SMB persona review — Hydra coordination.
+- [~] Task 51: Finance/tax review — Hydra coordination.
+- [~] Task 52: Staging integration — DEFERRED: live deploy.
+- [~] Task 53: Production monitoring — DEFERRED: post-go-live.
+- [~] Task 54: Payment-reminder workflow (T4+) — DEFERRED: owned by a later tier / notification change.
 
 ## Verification
 

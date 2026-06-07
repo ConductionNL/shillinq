@@ -1,0 +1,7 @@
+{
+  "schema_version": 2,
+  "spec_slug": "bookings-pipelinq-customer-bridge-11-docs-observability",
+  "app": "shillinq",
+  "kind": "code",
+  "depends_on": ["bookings-pipelinq-customer-bridge-10-integration-e2e-tests"]
+}

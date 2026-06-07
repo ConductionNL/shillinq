@@ -2,16 +2,63 @@
   "_meta": {
     "spdx-license": "EUPL-1.2",
     "spdx-copyright": "2026 Conduction B.V.",
-    "source": "Conduction internal default",
-    "version": "2026-01-01",
-    "description": "Default consultancy rate-card per seniority level. REQ-CPA-005. Operators override per administration; these are starting points.",
+    "source": "Conduction internal default rate-card structure",
+    "description": "Default rate-card templates (junior / medior / senior / partner) for Dutch consultancy administrations. Operator overrides per administration — these are starting-point defaults only. Rates are indicative; actual market rates vary by sector and administration.",
     "imported": "2026-06-01T00:00:00Z",
-    "schema": "RateCard"
+    "note": "effectiveTo: null means currently-valid (no expiry). Operator must set administrationId when seeding."
   },
-  "records": [
-    { "level": "junior", "hourlyRate": 65, "effectiveFrom": "2026-01-01", "effectiveTo": null, "currency": "EUR" },
-    { "level": "medior", "hourlyRate": 95, "effectiveFrom": "2026-01-01", "effectiveTo": null, "currency": "EUR" },
-    { "level": "senior", "hourlyRate": 135, "effectiveFrom": "2026-01-01", "effectiveTo": null, "currency": "EUR" },
-    { "level": "partner", "hourlyRate": 180, "effectiveFrom": "2026-01-01", "effectiveTo": null, "currency": "EUR" }
+  "rateCards": [
+    {
+      "level": "junior",
+      "currency": "EUR",
+      "hourlyRate": 85,
+      "effectiveFrom": "2026-01-01",
+      "effectiveTo": null,
+      "description": "Junior consultant (0–3 jaar ervaring). Indicatief Conduction-starttarief; operator stelt eigen tarief in.",
+      "_meta": {
+        "source": "seeded",
+        "template": "rate-card-templates",
+        "version": "2026"
+      }
+    },
+    {
+      "level": "medior",
+      "currency": "EUR",
+      "hourlyRate": 120,
+      "effectiveFrom": "2026-01-01",
+      "effectiveTo": null,
+      "description": "Medior consultant (3–7 jaar ervaring). Indicatief Conduction-medior tarief; operator stelt eigen tarief in.",
+      "_meta": {
+        "source": "seeded",
+        "template": "rate-card-templates",
+        "version": "2026"
+      }
+    },
+    {
+      "level": "senior",
+      "currency": "EUR",
+      "hourlyRate": 165,
+      "effectiveFrom": "2026-01-01",
+      "effectiveTo": null,
+      "description": "Senior consultant (7+ jaar ervaring). Indicatief Conduction-senior tarief; operator stelt eigen tarief in.",
+      "_meta": {
+        "source": "seeded",
+        "template": "rate-card-templates",
+        "version": "2026"
+      }
+    },
+    {
+      "level": "partner",
+      "currency": "EUR",
+      "hourlyRate": 210,
+      "effectiveFrom": "2026-01-01",
+      "effectiveTo": null,
+      "description": "Partner / principal consultant. Indicatief Conduction-partner tarief; operator stelt eigen tarief in.",
+      "_meta": {
+        "source": "seeded",
+        "template": "rate-card-templates",
+        "version": "2026"
+      }
+    }
   ]
 }

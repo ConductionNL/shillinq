@@ -1,0 +1,82 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Raad voor de Jaarverslaggeving (RJ) richtlijnen + BW Boek 2 art. 2:381-388",
+    "description": "Mandatory/optional toelichting-template registry keyed to groottecategorie and RJ guideline (REQ-T9-004/REQ-T9-009). Each entry declares its applicability, required-flag, content type and structured fields. The toelichting generator reads this to know which notes to produce per category (design D4).",
+    "imported": "2026-06-05T00:00:00Z",
+    "url": "https://www.rjnet.nl/"
+  },
+  "templates": [
+    {
+      "templateName": "rj-240-grondslagen",
+      "rjGuideline": "RJ 240",
+      "sectionName": "Grondslagen voor waardering en resultaatbepaling",
+      "wettelijkeBasis": "RJ 240 Grondslagen",
+      "applicableFor": ["micro", "klein", "middelgroot", "groot"],
+      "required": true,
+      "contentType": "rich-text",
+      "fields": ["valuationBasis", "resultDetermination", "exceptions"]
+    },
+    {
+      "templateName": "rj-212-mva-verloop",
+      "rjGuideline": "RJ 212",
+      "sectionName": "Materiële vaste activa",
+      "wettelijkeBasis": "RJ 212 Materiële vaste activa",
+      "applicableFor": ["klein", "middelgroot", "groot"],
+      "required": false,
+      "contentType": "table",
+      "fields": ["acquisitionValueOpening", "additions", "disposals", "depreciation", "impairments", "acquisitionValueClosing", "accumulatedDepreciationOpening", "accumulatedDepreciationClosing", "bookValueOpening", "bookValueClosing", "depreciationMethod", "depreciationRate"]
+    },
+    {
+      "templateName": "rj-240-ev-mutatie",
+      "rjGuideline": "RJ 240",
+      "sectionName": "Mutaties eigen vermogen",
+      "wettelijkeBasis": "RJ 240 Eigen vermogen",
+      "applicableFor": ["klein", "middelgroot", "groot"],
+      "required": true,
+      "contentType": "matrix",
+      "fields": ["equityComponents", "openingBalance", "resultAppropriations", "dividends", "currentResult", "revaluations", "closingBalance"]
+    },
+    {
+      "templateName": "rj-250-schulden",
+      "rjGuideline": "RJ 250",
+      "sectionName": "Schulden",
+      "wettelijkeBasis": "RJ 250 Schulden",
+      "applicableFor": ["middelgroot", "groot"],
+      "required": true,
+      "contentType": "table",
+      "fields": ["debtType", "amount", "interestRate", "maturityDate", "maturityBand", "securityType"]
+    },
+    {
+      "templateName": "art-2-382-niet-uit-balans",
+      "rjGuideline": "Art. 2:382",
+      "sectionName": "Niet-in-de-balans-opgenomen verplichtingen",
+      "wettelijkeBasis": "Art. 2:382 Niet-uit-balans-verplichtingen",
+      "applicableFor": ["klein", "middelgroot", "groot"],
+      "required": true,
+      "contentType": "narrative",
+      "fields": ["operationalLeases", "contingencies", "parentGuarantees"]
+    },
+    {
+      "templateName": "rj-160-na-balansdatum",
+      "rjGuideline": "RJ 160",
+      "sectionName": "Gebeurtenissen na balansdatum",
+      "wettelijkeBasis": "RJ 160 Gebeurtenissen na balansdatum",
+      "applicableFor": ["middelgroot", "groot"],
+      "required": false,
+      "contentType": "narrative",
+      "fields": ["events"]
+    },
+    {
+      "templateName": "rj-271-bezoldigingen",
+      "rjGuideline": "RJ 271",
+      "sectionName": "Bezoldigingen bestuurders en commissarissen",
+      "wettelijkeBasis": "RJ 271 Bezoldigingen",
+      "applicableFor": ["middelgroot", "groot"],
+      "required": true,
+      "contentType": "table",
+      "fields": ["bestuurders", "commissarissen", "totaalBezoldiging"]
+    }
+  ]
+}

@@ -3,18 +3,18 @@
     "spdx-license": "EUPL-1.2",
     "spdx-copyright": "2026 Conduction B.V.",
     "source": "Wet OB 1968 art. 25 lid 1",
-    "version": "2026-01-01",
-    "description": "KOR (Kleine OndernemersRegeling) omzetdrempel and warning percentage. Statutory — not operator-overridable. REQ-KOR-003.",
-    "imported": "2026-06-01T00:00:00Z",
-    "schema": "KorThreshold"
+    "version": "2026",
+    "description": "KOR omzetdrempel €20.000 + waarschuwingspercentage 80% per Wet OB 1968 art. 25 lid 1. Geldig voor kalenderjaar 2026. Versioned seed: updates shipped as kor-thresholds-YYYY.json per REQ-KOR-003.",
+    "imported": "2026-06-01T00:00:00Z"
   },
-  "records": [
+  "thresholds": [
     {
-      "code": "kor-2026",
       "thresholdAmount": 20000,
       "warningPercentage": 80,
-      "currency": "EUR",
-      "legislativeReference": "Wet OB 1968 art. 25 lid 1"
+      "fiscalYear": 2026,
+      "citation": "Wet OB 1968 art. 25 lid 1",
+      "effectiveFrom": "2026-01-01",
+      "effectiveTo": null
     }
   ]
 }

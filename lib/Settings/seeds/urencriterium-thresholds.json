@@ -2,24 +2,13 @@
   "_meta": {
     "spdx-license": "EUPL-1.2",
     "spdx-copyright": "2026 Conduction B.V.",
-    "source": "Wet IB 2001 art. 3.6",
-    "version": "2026-01-01",
-    "description": "Urencriterium thresholds for ZZP qualification. Statutory — not operator-overridable. REQ-ZZP-005.",
-    "imported": "2026-06-01T00:00:00Z",
-    "schema": "UrencriteriumThreshold"
+    "source": "Wet IB 2001 art. 3.6 (urencriterium)",
+    "version": "2026",
+    "description": "Urencriterium thresholds per Wet IB 2001 art. 3.6 (REQ-ZZP-003/005). Statutory — operators cannot override. 1225 qualifying hours per calendar year for the urencriterium; 800-hour starters threshold for the verlaagd urencriterium.",
+    "imported": "2026-06-01T00:00:00Z"
   },
-  "records": [
-    {
-      "code": "urencriterium-full",
-      "hours": 1225,
-      "description": "Volledig urencriterium voor zelfstandigenaftrek.",
-      "legislativeReference": "Wet IB 2001 art. 3.6"
-    },
-    {
-      "code": "urencriterium-starters",
-      "hours": 800,
-      "description": "Verlaagd urencriterium voor starters/arbeidsongeschikten.",
-      "legislativeReference": "Wet IB 2001 art. 3.6"
-    }
+  "thresholds": [
+    {"key": "urencriterium", "hours": 1225, "label": "Urencriterium", "fiscalYear": 2026, "citation": "Wet IB 2001 art. 3.6 lid 1", "effectiveFrom": "2001-01-01", "effectiveTo": null},
+    {"key": "starters", "hours": 800, "label": "Verlaagd urencriterium starters", "fiscalYear": 2026, "citation": "Wet IB 2001 art. 3.6 lid 3", "effectiveFrom": "2001-01-01", "effectiveTo": null}
   ]
 }

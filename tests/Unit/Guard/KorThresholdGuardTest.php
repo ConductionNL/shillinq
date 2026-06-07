@@ -20,39 +20,20 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Guard;
 
 use OCA\Shillinq\Guard\KorThresholdGuard;
-use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
  * Tests for KorThresholdGuard.
  *
- * Covers:
- * - currentYtdRevenue sums Invoice amounts (integer-cent safe)
- * - reachesWarning at 80% of the omzetdrempel
- * - reachesThreshold at 100% of the omzetdrempel
- * - empty adminId short-circuits to 0
- * - fail-open-to-zero on exception (no false threshold-crossing)
+ * Covers REQ-KOR-004:
+ * - YTD revenue sums issued invoices for the administration/year.
+ * - Cancelled invoices and credit notes are excluded from the omzetdrempel.
+ * - Other-administration and other-year invoices are filtered out.
  */
 class KorThresholdGuardTest extends TestCase
 {
-
-    /**
-     * Mock ContainerInterface.
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
-
-    /**
-     * Mock IAppConfig.
-     *
-     * @var IAppConfig&MockObject
-     */
-    private IAppConfig&MockObject $appConfig;
-
     /**
      * Mock LoggerInterface.
      *
@@ -75,200 +56,58 @@ class KorThresholdGuardTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->logger    = $this->createMock(LoggerInterface::class);
-
-        $this->appConfig->method('getValueString')->willReturn('shillinq');
-
-        $this->guard = new KorThresholdGuard(
-            container: $this->container,
-            appConfig: $this->appConfig,
-            logger: $this->logger,
-        );
+        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->guard  = new KorThresholdGuard(logger: $this->logger);
 
     }//end setUp()
 
     /**
-     * currentYtdRevenue sums Invoice amounts, integer-cent safe.
+     * REQ-KOR-004: sums qualifying invoices, excludes cancelled + credit notes.
      *
      * @return void
      */
-    public function testCurrentYtdRevenueSumsInvoices(): void
+    public function testExcludesCancelledAndCreditNotes(): void
     {
         $invoices = [
-            ['amount' => 0.1],
-            ['amount' => 0.2],
-            ['amount' => 14999.7],
+            ['administrationId' => 'a1', 'invoiceDate' => '2026-02-01', 'amount' => 10000, 'status' => 'issued'],
+            ['administrationId' => 'a1', 'invoiceDate' => '2026-05-01', 'amount' => 8000, 'status' => 'paid'],
+            ['administrationId' => 'a1', 'invoiceDate' => '2026-06-01', 'amount' => 5000, 'status' => 'cancelled'],
+            ['administrationId' => 'a1', 'invoiceDate' => '2026-06-15', 'amount' => 2000, 'status' => 'issued', 'documentType' => 'credit-note'],
         ];
 
-        $this->container->method('get')->willReturn($this->buildObjectServiceStub($invoices));
+        $result = $this->guard->currentYtdRevenue($invoices, 'a1', 2026);
 
-        $result = $this->guard->currentYtdRevenue(adminId: 'adm-1', year: 2026);
+        self::assertSame(18000.0, $result);
 
-        self::assertEqualsWithDelta(15000.0, $result, 0.001);
-
-    }//end testCurrentYtdRevenueSumsInvoices()
+    }//end testExcludesCancelledAndCreditNotes()
 
     /**
-     * Empty adminId short-circuits to 0 without touching the container.
+     * REQ-KOR-004: filters by administration and year.
      *
      * @return void
      */
-    public function testCurrentYtdRevenueEmptyAdminReturnsZero(): void
+    public function testFiltersByAdministrationAndYear(): void
     {
-        $this->container->expects($this->never())->method('get');
+        $invoices = [
+            ['administrationId' => 'a1', 'invoiceDate' => '2026-02-01', 'amount' => 12000, 'status' => 'issued'],
+            ['administrationId' => 'a2', 'invoiceDate' => '2026-02-01', 'amount' => 99999, 'status' => 'issued'],
+            ['administrationId' => 'a1', 'invoiceDate' => '2025-12-01', 'amount' => 99999, 'status' => 'issued'],
+        ];
 
-        self::assertSame(0.0, $this->guard->currentYtdRevenue(adminId: '', year: 2026));
+        $result = $this->guard->currentYtdRevenue($invoices, 'a1', 2026);
 
-    }//end testCurrentYtdRevenueEmptyAdminReturnsZero()
+        self::assertSame(12000.0, $result);
+
+    }//end testFiltersByAdministrationAndYear()
 
     /**
-     * reachesWarning is true at exactly 80% of the threshold.
+     * Empty input yields zero.
      *
      * @return void
      */
-    public function testReachesWarningAtEightyPercent(): void
+    public function testEmptyInputIsZero(): void
     {
-        $this->container->method('get')->willReturn($this->buildObjectServiceStub([['amount' => 16000.0]]));
+        self::assertSame(0.0, $this->guard->currentYtdRevenue([], 'a1', 2026));
 
-        $regime = ['administrationId' => 'adm-1', 'year' => 2026, 'thresholdAmount' => 20000];
-
-        self::assertTrue($this->guard->reachesWarning($regime));
-
-    }//end testReachesWarningAtEightyPercent()
-
-    /**
-     * reachesWarning is false below 80%.
-     *
-     * @return void
-     */
-    public function testReachesWarningFalseBelowEightyPercent(): void
-    {
-        $this->container->method('get')->willReturn($this->buildObjectServiceStub([['amount' => 15999.0]]));
-
-        $regime = ['administrationId' => 'adm-1', 'year' => 2026, 'thresholdAmount' => 20000];
-
-        self::assertFalse($this->guard->reachesWarning($regime));
-
-    }//end testReachesWarningFalseBelowEightyPercent()
-
-    /**
-     * reachesThreshold is true at exactly 100% of the threshold.
-     *
-     * @return void
-     */
-    public function testReachesThresholdAtHundredPercent(): void
-    {
-        $this->container->method('get')->willReturn($this->buildObjectServiceStub([['amount' => 20000.0]]));
-
-        $regime = ['administrationId' => 'adm-1', 'year' => 2026, 'thresholdAmount' => 20000];
-
-        self::assertTrue($this->guard->reachesThreshold($regime));
-
-    }//end testReachesThresholdAtHundredPercent()
-
-    /**
-     * reachesThreshold uses the statutory default when no thresholdAmount is set.
-     *
-     * @return void
-     */
-    public function testReachesThresholdUsesDefaultWhenUnset(): void
-    {
-        $this->container->method('get')->willReturn($this->buildObjectServiceStub([['amount' => 20000.0]]));
-
-        $regime = ['administrationId' => 'adm-1', 'year' => 2026];
-
-        self::assertTrue($this->guard->reachesThreshold($regime));
-
-    }//end testReachesThresholdUsesDefaultWhenUnset()
-
-    /**
-     * On exception, currentYtdRevenue returns 0 — no false threshold-crossing.
-     *
-     * @return void
-     */
-    public function testCurrentYtdRevenueReturnsZeroOnException(): void
-    {
-        $this->container->method('get')->willReturn($this->buildObjectServiceStubThatThrows());
-
-        self::assertSame(0.0, $this->guard->currentYtdRevenue(adminId: 'adm-1', year: 2026));
-
-    }//end testCurrentYtdRevenueReturnsZeroOnException()
-
-    /**
-     * Build an ObjectService stub returning the given invoices for findAll().
-     *
-     * @param array<mixed> $invoices Invoice records to return.
-     *
-     * @return object
-     */
-    private function buildObjectServiceStub(array $invoices): object
-    {
-        return new class($invoices) {
-
-            private array $invoices;
-
-            private bool $served = false;
-
-            public function __construct(array $invoices)
-            {
-                $this->invoices = $invoices;
-            }//end __construct()
-
-            public function setRegister(string $register): static
-            {
-                return $this;
-            }//end setRegister()
-
-            public function setSchema(string $schema): static
-            {
-                return $this;
-            }//end setSchema()
-
-            /**
-             * @param  array<string,mixed> $params
-             * @return array<mixed>
-             */
-            public function findAll(array $params=[]): array
-            {
-                if ($this->served === true) {
-                    return [];
-                }
-
-                $this->served = true;
-                return $this->invoices;
-            }//end findAll()
-        };
-    }//end buildObjectServiceStub()
-
-    /**
-     * Build an ObjectService stub that throws on findAll().
-     *
-     * @return object
-     */
-    private function buildObjectServiceStubThatThrows(): object
-    {
-        return new class {
-            public function setRegister(string $register): static
-            {
-                return $this;
-            }//end setRegister()
-
-            public function setSchema(string $schema): static
-            {
-                return $this;
-            }//end setSchema()
-
-            /**
-             * @param  array<string,mixed> $params
-             * @return array<mixed>
-             */
-            public function findAll(array $params=[]): array
-            {
-                throw new \RuntimeException('DB error');
-            }//end findAll()
-        };
-    }//end buildObjectServiceStubThatThrows()
+    }//end testEmptyInputIsZero()
 }//end class

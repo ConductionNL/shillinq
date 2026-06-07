@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "1.0.0",
+	"version": "1.3.0",
 	"dependencies": [
 		"openregister"
 	],
@@ -26,6 +26,70 @@
 					"order": 10
 				},
 				{
+					"id": "GeneralLedger",
+					"label": "General Ledger",
+					"icon": "BookOutline",
+					"route": "GeneralLedger",
+					"order": 20
+				},
+				{
+					"id": "Journals",
+					"label": "Journals",
+					"icon": "BookEditOutline",
+					"route": "Journals",
+					"order": 22
+				},
+				{
+					"id": "BankConnections",
+					"label": "Bank Connections",
+					"icon": "BankOutline",
+					"route": "BankConnections",
+					"order": 25
+				},
+				{
+					"id": "FixedAssets",
+					"label": "Fixed Assets",
+					"icon": "OfficeBuildingOutline",
+					"route": "FixedAssets",
+					"order": 30
+				},
+				{
+					"id": "Vendors",
+					"label": "Vendors",
+					"icon": "StoreOutline",
+					"route": "Vendors",
+					"order": 31
+				},
+				{
+					"id": "AccountsPayable",
+					"label": "Accounts Payable",
+					"icon": "ReceiptTextOutline",
+					"route": "AccountsPayable",
+					"order": 32
+				},
+				{
+					"id": "APAging",
+					"label": "AP Aging",
+					"icon": "CalendarClockOutline",
+					"route": "APAging",
+					"order": 33
+				},
+				{
+					"id": "PaymentRuns",
+					"label": "Payment Runs",
+					"icon": "BankTransferOutline",
+					"route": "PaymentRuns",
+					"order": 34
+				},
+				{
+					"id": "Waterschapsbelastingen",
+					"label": "Waterschapsbelastingen",
+					"icon": "WaterOutline",
+					"route": "Waterschapsbelastingen",
+					"order": 40,
+					"featureFlag": "gov-waterschap"
+				},
+				{
 					"id": "GRDeelnemers",
 					"label": "Deelnemers",
 					"icon": "AccountMultipleOutline",
@@ -45,69 +109,378 @@
 					"icon": "TableMergeCellsOutline",
 					"route": "GRConsolidated",
 					"order": 70
+				},
+				{
+					"id": "BalanceSheet",
+					"label": "Balance Sheet",
+					"icon": "TableAccountOutline",
+					"route": "BalanceSheet",
+					"order": 80
+				},
+				{
+					"id": "TrialBalance",
+					"label": "Trial Balance",
+					"icon": "ScaleBalanceOutline",
+					"route": "TrialBalance",
+					"order": 81
+				},
+				{
+					"id": "TrialBalanceLines",
+					"label": "Trial Balance (by account)",
+					"icon": "ScaleBalance",
+					"route": "TrialBalanceLines",
+					"order": 815
+				},
+				{
+					"id": "Consolidations",
+					"label": "Consolidations",
+					"icon": "AccountMultipleOutline",
+					"route": "Consolidations",
+					"order": 82
+				},
+				{
+					"id": "ConsolidatedReport",
+					"label": "Consolidated Report",
+					"icon": "FileChartOutline",
+					"route": "ConsolidatedReport",
+					"order": 83
+				},
+				{
+					"id": "Iv3Reports",
+					"label": "IV3 Reports",
+					"icon": "FileChartOutline",
+					"route": "Iv3Reports",
+					"order": 84
+				},
+				{
+					"id": "EmuRapportage",
+					"label": "EMU-rapportage",
+					"icon": "ChartBarOutline",
+					"route": "EmuRapportage",
+					"order": 20,
+					"featureFlag": "gov-emu"
+				},
+				{
+					"id": "Dimensions",
+					"label": "Dimensions",
+					"icon": "ChartBubble",
+					"order": 90,
+					"children": [
+						{
+							"id": "CostCenters",
+							"label": "Cost Centers",
+							"icon": "OfficeBuilding",
+							"route": "CostCenters",
+							"order": 10
+						},
+						{
+							"id": "KostenDragers",
+							"label": "Kostendragers",
+							"icon": "CubeOutline",
+							"route": "KostenDragers",
+							"order": 20
+						},
+						{
+							"id": "Projects",
+							"label": "Projects",
+							"icon": "BriefcaseOutline",
+							"route": "Projects",
+							"order": 30
+						},
+						{
+							"id": "AllocationRules",
+							"label": "Allocation Rules",
+							"icon": "TransferRight",
+							"route": "AllocationRules",
+							"order": 40
+						}
+					]
+				},
+				{
+					"id": "RDSubsidies",
+					"label": "R&D Subsidies",
+					"icon": "FlaskOutline",
+					"route": "RDSubsidies",
+					"order": 86,
+					"featureFlag": "mkb-r-d-subsidies"
+				},
+				{
+					"id": "FiscalYears",
+					"label": "Fiscal Years",
+					"icon": "CalendarCheckOutline",
+					"route": "FiscalYears",
+					"order": 87
+				}
+			]
+		},
+		{
+			"id": "Inventory",
+			"label": "Inventory",
+			"icon": "icon-category-customization",
+			"order": 22,
+			"children": [
+				{
+					"id": "Products",
+					"label": "Products",
+					"icon": "PackageVariantOutline",
+					"route": "Products",
+					"order": 10
+				},
+				{
+					"id": "ProductAttributes",
+					"label": "Product Attributes",
+					"icon": "TagOutline",
+					"route": "ProductAttributes",
+					"order": 20
+				},
+				{
+					"id": "ReorderRules",
+					"label": "Reorder Rules",
+					"icon": "CartArrowDownOutline",
+					"route": "ReorderRules",
+					"order": 30
+				},
+				{
+					"id": "LowStockAlerts",
+					"label": "Low Stock Alerts",
+					"icon": "AlertCircleOutline",
+					"route": "LowStockAlerts",
+					"order": 40
+				},
+				{
+					"id": "StockLevelsDashboard",
+					"label": "Stock Levels",
+					"icon": "ChartBarOutline",
+					"route": "StockLevelsDashboard",
+					"order": 50
 				}
 			]
 		},
 		{
 			"id": "Belastingen",
 			"label": "Belastingen",
-			"icon": "ReceiptTextOutline",
-			"order": 30,
-			"visibility": { "administrationType": ["mkb", "zzp", "gemeente", "provincie", "waterschap"] },
+			"icon": "icon-category-monitoring",
+			"order": 25,
+			"visibility": {
+				"field": "administrationType",
+				"in": [
+					"mkb",
+					"zzp"
+				]
+			},
 			"children": [
-				{ "id": "VatReturns", "label": "BTW-aangiften", "icon": "ReceiptTextOutline", "route": "VatReturns", "order": 10 },
-				{ "id": "IcpStatements", "label": "ICP-opgaaf", "icon": "EarthOutline", "route": "IcpStatements", "order": 20 },
-				{ "id": "VatCorrections", "label": "BTW-correcties", "icon": "ReceiptTextEditOutline", "route": "VatCorrections", "order": 30 },
-				{ "id": "KorStatus", "label": "KOR-status", "icon": "StorefrontOutline", "route": "KorStatus", "order": 40, "visibility": { "administrationType": ["mkb", "zzp"] } },
-				{ "id": "Urenregistratie", "label": "Urenregistratie", "icon": "ClockOutline", "route": "Urenregistratie", "order": 50, "visibility": { "administrationType": ["zzp", "mkb"] } },
-				{ "id": "ZzpDeductions", "label": "ZZP-aftrek", "icon": "CalculatorVariantOutline", "route": "ZzpDeductions", "order": 60, "visibility": { "administrationType": ["zzp"] } },
-				{ "id": "IbAangiften", "label": "IB-aangifte", "icon": "FileExportOutline", "route": "IbAangiften", "order": 70, "visibility": { "administrationType": ["zzp"] } }
-			]
-		},
-		{
-			"id": "Overheid",
-			"label": "Overheid",
-			"icon": "BankOutline",
-			"order": 40,
-			"visibility": { "administrationType": ["gemeente", "provincie", "waterschap"] },
-			"children": [
-				{ "id": "BbvMapping", "label": "BBV-mapping", "icon": "SitemapOutline", "route": "BbvMapping", "order": 10 },
-				{ "id": "Iv3Rapportages", "label": "IV3-rapportages", "icon": "FileChartOutline", "route": "Iv3Rapportages", "order": 20 },
-				{ "id": "BcfClaims", "label": "BCF-claims", "icon": "CashRefund", "route": "BcfClaims", "order": 30, "visibility": { "administrationType": ["gemeente"] } },
-				{ "id": "SchatkistPosition", "label": "Schatkist-positie", "icon": "BankOutline", "route": "SchatkistPosition", "order": 40, "visibility": { "administrationType": ["gemeente"] } }
-			]
-		},
-		{
-			"id": "Subsidies",
-			"label": "Subsidies",
-			"icon": "HandCoinOutline",
-			"order": 50,
-			"children": [
-				{ "id": "SubsidiesOverview", "label": "Overzicht", "icon": "HandCoinOutline", "route": "SubsidiesOverview", "order": 10 },
-				{ "id": "SubsidiesVerleend", "label": "Verleende subsidies", "icon": "CheckDecagramOutline", "route": "SubsidiesVerleend", "order": 20 },
-				{ "id": "SubsidiesTerugvordering", "label": "Terugvorderingen", "icon": "CashRefund", "route": "SubsidiesTerugvordering", "order": 30 }
-			]
-		},
-		{
-			"id": "Projecten",
-			"label": "Projecten",
-			"icon": "BriefcaseOutline",
-			"order": 60,
-			"visibility": { "administrationType": ["consultancy"] },
-			"children": [
-				{ "id": "ProjectsOverview", "label": "Overzicht", "icon": "BriefcaseOutline", "route": "ProjectsOverview", "order": 10 },
-				{ "id": "ProjectsPl", "label": "P&L", "icon": "ChartLineVariant", "route": "ProjectsPl", "order": 20 },
-				{ "id": "RateCards", "label": "Tarieven", "icon": "TagOutline", "route": "RateCards", "order": 30 },
-				{ "id": "Utilisatie", "label": "Utilisatie", "icon": "GaugeOutline", "route": "Utilisatie", "order": 40 }
+				{
+					"id": "KorStatus",
+					"label": "KOR-status",
+					"icon": "ShieldCheckOutline",
+					"route": "KorStatus",
+					"order": 10
+				},
+				{
+					"id": "TaxFilingPrep",
+					"label": "Tax Filing Prep",
+					"icon": "FileDocumentCheckOutline",
+					"route": "TaxFilingPrep",
+					"order": 20
+				},
+				{
+					"id": "TaxEstimates",
+					"label": "Tax Estimates",
+					"icon": "CalculatorOutline",
+					"route": "TaxEstimates",
+					"order": 30
+				},
+				{
+					"id": "TaxConfiguration",
+					"label": "Tax Configuration",
+					"icon": "CogOutline",
+					"route": "TaxConfiguration",
+					"order": 40
+				},
+				{
+					"id": "BtwAangiften",
+					"label": "BTW-aangiften",
+					"icon": "FileDocumentOutline",
+					"route": "BtwAangiften",
+					"order": 50
+				},
+				{
+					"id": "IcpOpgaaf",
+					"label": "ICP-opgaaf",
+					"icon": "EarthArrowRight",
+					"route": "IcpOpgaaf",
+					"order": 60
+				},
+				{
+					"id": "BtwCorrecties",
+					"label": "BTW-correcties",
+					"icon": "FileDocumentEditOutline",
+					"route": "BtwCorrecties",
+					"order": 70
+				},
+				{
+					"id": "Urenregistratie",
+					"label": "Urenregistratie",
+					"icon": "ClockOutline",
+					"route": "Urenregistratie",
+					"order": 80,
+					"visibility": {
+						"field": "administrationType",
+						"in": [
+							"zzp"
+						]
+					}
+				},
+				{
+					"id": "ZzpAftrek",
+					"label": "ZZP-aftrek",
+					"icon": "AccountCashOutline",
+					"route": "ZzpAftrek",
+					"order": 90,
+					"visibility": {
+						"field": "administrationType",
+						"in": [
+							"zzp"
+						]
+					}
+				},
+				{
+					"id": "IbAangifte",
+					"label": "IB-aangifte",
+					"icon": "FileExportOutline",
+					"route": "IbAangifte",
+					"order": 100,
+					"visibility": {
+						"field": "administrationType",
+						"in": [
+							"zzp"
+						]
+					}
+				}
 			]
 		},
 		{
 			"id": "Administratie",
 			"label": "Administratie",
-			"icon": "ArchiveOutline",
-			"order": 70,
+			"icon": "icon-category-organization",
+			"order": 30,
 			"children": [
-				{ "id": "Bewaartermijnen", "label": "Bewaartermijnen", "icon": "ArchiveClockOutline", "route": "Bewaartermijnen", "order": 10 }
+				{
+					"id": "Bewaartermijnen",
+					"label": "Bewaartermijnen",
+					"icon": "ShieldCheckOutline",
+					"route": "Bewaartermijnen",
+					"order": 10
+				}
+			]
+		},
+		{
+			"id": "Overheid",
+			"label": "Overheid",
+			"icon": "icon-category-organization",
+			"order": 30,
+			"visibility": {
+				"field": "administrationType",
+				"in": [
+					"gemeente",
+					"provincie",
+					"waterschap"
+				]
+			},
+			"children": [
+				{
+					"id": "Iv3Rapportages",
+					"label": "IV3-rapportages",
+					"icon": "FileChartOutline",
+					"route": "Iv3Rapportages",
+					"order": 10
+				},
+				{
+					"id": "BbvMapping",
+					"label": "BBV-mapping",
+					"icon": "TableArrowRight",
+					"route": "BbvMapping",
+					"order": 20
+				},
+				{
+					"id": "BcfClaims",
+					"label": "BCF-claims",
+					"icon": "CashRefund",
+					"route": "BcfClaims",
+					"order": 30
+				},
+				{
+					"id": "SchatkistPositie",
+					"label": "Schatkist-positie",
+					"icon": "BankOutline",
+					"route": "SchatkistPositie",
+					"order": 40
+				}
+			]
+		},
+		{
+			"id": "Subsidies",
+			"label": "Subsidies",
+			"icon": "HandHeartOutline",
+			"order": 32,
+			"children": [
+				{
+					"id": "SubsidiesOverzicht",
+					"label": "Overzicht",
+					"icon": "TableLarge",
+					"route": "SubsidiesOverzicht",
+					"order": 10
+				},
+				{
+					"id": "SubsidiesVerleend",
+					"label": "Verleende subsidies",
+					"icon": "CheckDecagramOutline",
+					"route": "SubsidiesVerleend",
+					"order": 20
+				},
+				{
+					"id": "SubsidiesTeruggevorderd",
+					"label": "Terugvorderingen",
+					"icon": "CashRefund",
+					"route": "SubsidiesTeruggevorderd",
+					"order": 30
+				}
+			]
+		},
+		{
+			"id": "Compliance",
+			"label": "Compliance",
+			"icon": "icon-category-monitoring",
+			"order": 40,
+			"children": [
+				{
+					"id": "SisaRapportages",
+					"label": "SiSa-rapportages",
+					"icon": "FileDocumentCheckOutline",
+					"route": "SisaRapportages",
+					"order": 10
+				},
+				{
+					"id": "ComplianceAuditTrails",
+					"label": "Compliance audittrail",
+					"icon": "ClipboardCheckOutline",
+					"route": "ComplianceAuditTrails",
+					"order": 20
+				},
+				{
+					"id": "ManagementLetters",
+					"label": "Management letters",
+					"icon": "EmailOutline",
+					"route": "ManagementLetters",
+					"order": 30
+				},
+				{
+					"id": "AuditDocuments",
+					"label": "Auditdocumenten",
+					"icon": "FileSignOutline",
+					"route": "AuditDocuments",
+					"order": 40
+				}
 			]
 		},
 		{
@@ -133,9 +506,703 @@
 			"route": "Settings",
 			"section": "settings",
 			"order": 99
+		},
+		{
+			"id": "Projecten",
+			"label": "Projecten",
+			"icon": "FolderOpenOutline",
+			"order": 30,
+			"visibilityPredicate": {
+				"administrationType": [
+					"mkb",
+					"zzp"
+				],
+				"role": "project-administrator"
+			},
+			"children": [
+				{
+					"id": "ProjectenOverzicht",
+					"label": "Overzicht",
+					"icon": "TableLarge",
+					"route": "ProjectenOverzicht",
+					"order": 10
+				},
+				{
+					"id": "Tarieven",
+					"label": "Tarieven",
+					"icon": "CurrencyEur",
+					"route": "Tarieven",
+					"order": 20
+				},
+				{
+					"id": "Utilisatie",
+					"label": "Utilisatie",
+					"icon": "ChartLineVariant",
+					"route": "Utilisatie",
+					"order": 30
+				}
+			]
+		},
+		{
+			"id": "Inkoop",
+			"label": "Inkoop",
+			"icon": "ShoppingOutline",
+			"order": 35,
+			"children": [
+				{
+					"id": "Receipts",
+					"label": "Receipts",
+					"icon": "ReceiptOutline",
+					"route": "Receipts",
+					"order": 10
+				},
+				{
+					"id": "ExpenseClaims",
+					"label": "Expense Claims",
+					"icon": "ClipboardTextOutline",
+					"route": "ExpenseClaims",
+					"order": 20
+				},
+				{
+					"id": "MileageLog",
+					"label": "Mileage Log",
+					"icon": "CarOutline",
+					"route": "MileageLog",
+					"order": 30
+				}
+			]
 		}
 	],
 	"pages": [
+		{
+			"id": "Products",
+			"route": "/inventory/products",
+			"type": "index",
+			"title": "Products",
+			"config": {
+				"register": "shillinq",
+				"schema": "Product",
+				"columns": [
+					{
+						"key": "sku",
+						"label": "SKU",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "category",
+						"label": "Category",
+						"sortable": true
+					},
+					{
+						"key": "unitPrice",
+						"label": "Unit Price",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "sku",
+				"detailRoute": "ProductDetail"
+			}
+		},
+		{
+			"id": "ProductDetail",
+			"route": "/inventory/products/:id",
+			"type": "detail",
+			"title": "Product",
+			"config": {
+				"register": "shillinq",
+				"schema": "Product",
+				"fields": [
+					{
+						"key": "sku",
+						"label": "SKU",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "category",
+						"label": "Category",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "unitPrice",
+						"label": "Unit Price",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "unitCode",
+						"label": "Unit Code",
+						"type": "string"
+					},
+					{
+						"key": "taxRate",
+						"label": "Tax Rate (%)",
+						"type": "number"
+					},
+					{
+						"key": "primaryBarcode",
+						"label": "Primary Barcode",
+						"type": "string"
+					},
+					{
+						"key": "barcodes",
+						"label": "Barcodes",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "organizationId",
+						"label": "Organization",
+						"type": "string"
+					}
+				],
+				"indexRoute": "Products"
+			}
+		},
+		{
+			"id": "ProductAttributes",
+			"route": "/inventory/product-attributes",
+			"type": "index",
+			"title": "Product Attributes",
+			"config": {
+				"register": "shillinq",
+				"schema": "ProductAttribute",
+				"columns": [
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "dataType",
+						"label": "Data Type",
+						"sortable": true
+					},
+					{
+						"key": "applicableToCategories",
+						"label": "Categories",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "name",
+				"detailRoute": "ProductAttributeDetail"
+			}
+		},
+		{
+			"id": "ProductAttributeDetail",
+			"route": "/inventory/product-attributes/:id",
+			"type": "detail",
+			"title": "Product Attribute",
+			"config": {
+				"register": "shillinq",
+				"schema": "ProductAttribute",
+				"fields": [
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "dataType",
+						"label": "Data Type",
+						"type": "string"
+					},
+					{
+						"key": "applicableToCategories",
+						"label": "Applicable Categories",
+						"type": "string"
+					},
+					{
+						"key": "isRequired",
+						"label": "Required",
+						"type": "boolean"
+					},
+					{
+						"key": "displayOrder",
+						"label": "Display Order",
+						"type": "number"
+					},
+					{
+						"key": "validationRule",
+						"label": "Validation Rule",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"indexRoute": "ProductAttributes"
+			}
+		},
+		{
+			"id": "CostCenters",
+			"route": "/bookkeeping/dimensions/cost-centers",
+			"type": "index",
+			"title": "Cost Centers",
+			"config": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"columns": [
+					{
+						"key": "code",
+						"label": "Code",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "parentCode",
+						"label": "Parent",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "code",
+				"detailRoute": "CostCenterDetail"
+			}
+		},
+		{
+			"id": "CostCenterDetail",
+			"route": "/bookkeeping/dimensions/cost-centers/:id",
+			"type": "detail",
+			"title": "Cost Center",
+			"config": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"fields": [
+					{
+						"key": "code",
+						"label": "Code",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "parentCode",
+						"label": "Parent Cost Center",
+						"type": "string"
+					},
+					{
+						"key": "responsibleUser",
+						"label": "Responsible User",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"aggregation": "segmentPnl",
+				"indexRoute": "CostCenters"
+			}
+		},
+		{
+			"id": "KostenDragers",
+			"route": "/bookkeeping/dimensions/kostendragers",
+			"type": "index",
+			"title": "Kostendragers",
+			"config": {
+				"register": "shillinq",
+				"schema": "KostenDrager",
+				"columns": [
+					{
+						"key": "code",
+						"label": "Code",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "parentCode",
+						"label": "Parent",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "code",
+				"detailRoute": "KostenDragerDetail"
+			}
+		},
+		{
+			"id": "KostenDragerDetail",
+			"route": "/bookkeeping/dimensions/kostendragers/:id",
+			"type": "detail",
+			"title": "Kostendrager",
+			"config": {
+				"register": "shillinq",
+				"schema": "KostenDrager",
+				"fields": [
+					{
+						"key": "code",
+						"label": "Code",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "parentCode",
+						"label": "Parent Kostendrager",
+						"type": "string"
+					},
+					{
+						"key": "responsibleUser",
+						"label": "Responsible User",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"aggregation": "segmentPnl",
+				"indexRoute": "KostenDragers"
+			}
+		},
+		{
+			"id": "Projects",
+			"route": "/bookkeeping/dimensions/projects",
+			"type": "index",
+			"title": "Projects",
+			"config": {
+				"register": "shillinq",
+				"schema": "Project",
+				"columns": [
+					{
+						"key": "code",
+						"label": "Code",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "parentCode",
+						"label": "Parent",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "code",
+				"detailRoute": "ProjectDetail"
+			}
+		},
+		{
+			"id": "ProjectDetail",
+			"route": "/bookkeeping/dimensions/projects/:id",
+			"type": "detail",
+			"title": "Project",
+			"config": {
+				"register": "shillinq",
+				"schema": "Project",
+				"fields": [
+					{
+						"key": "code",
+						"label": "Code",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "parentCode",
+						"label": "Parent Project",
+						"type": "string"
+					},
+					{
+						"key": "responsibleUser",
+						"label": "Responsible User",
+						"type": "string"
+					},
+					{
+						"key": "timeBookingEnabled",
+						"label": "Time Booking (WBSO)",
+						"type": "boolean"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "projectNumber",
+						"label": "Projectnummer",
+						"type": "string"
+					},
+					{
+						"key": "customerId",
+						"label": "Klant",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "recognitionMethod",
+						"label": "Verantwoordingsmethode",
+						"type": "string"
+					},
+					{
+						"key": "recognitionStage",
+						"label": "Fase (RJ 270)",
+						"type": "string"
+					},
+					{
+						"key": "totalContractValue",
+						"label": "Contractwaarde",
+						"type": "number"
+					},
+					{
+						"key": "totalEstimatedCosts",
+						"label": "Geschatte kosten",
+						"type": "number"
+					},
+					{
+						"key": "costsIncurredToDate",
+						"label": "Gemaakte kosten",
+						"type": "number"
+					},
+					{
+						"key": "recognisedRevenue",
+						"label": "Erkende omzet",
+						"type": "number"
+					},
+					{
+						"key": "billedRevenue",
+						"label": "Gefactureerde omzet",
+						"type": "number"
+					},
+					{
+						"key": "wipBalance",
+						"label": "WIP-saldo",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Valuta",
+						"type": "string"
+					},
+					{
+						"key": "startDate",
+						"label": "Startdatum",
+						"type": "date"
+					},
+					{
+						"key": "endDate",
+						"label": "Einddatum",
+						"type": "date"
+					}
+				],
+				"lifecycleActions": true,
+				"aggregation": "segmentPnl",
+				"indexRoute": "Projects",
+				"relatedLists": [
+					{
+						"id": "assignments",
+						"title": "Projectopdrachten",
+						"schema": "ProjectAssignment",
+						"foreignKey": "projectId"
+					},
+					{
+						"id": "wip-history",
+						"title": "WIP-historie",
+						"schema": "WipBalance",
+						"foreignKey": "projectId"
+					}
+				]
+			}
+		},
+		{
+			"id": "AllocationRules",
+			"route": "/bookkeeping/dimensions/allocation-rules",
+			"type": "index",
+			"title": "Allocation Rules",
+			"config": {
+				"register": "shillinq",
+				"schema": "AllocationRule",
+				"columns": [
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "driver",
+						"label": "Driver",
+						"sortable": true
+					},
+					{
+						"key": "targetDimension",
+						"label": "Target Dimension",
+						"sortable": true
+					},
+					{
+						"key": "cadence",
+						"label": "Cadence",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "name",
+				"detailRoute": "AllocationRuleDetail"
+			}
+		},
+		{
+			"id": "AllocationRuleDetail",
+			"route": "/bookkeeping/dimensions/allocation-rules/:id",
+			"type": "detail",
+			"title": "Allocation Rule",
+			"config": {
+				"register": "shillinq",
+				"schema": "AllocationRule",
+				"fields": [
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "sourceAccountPattern",
+						"label": "Source Account Pattern",
+						"type": "string"
+					},
+					{
+						"key": "driver",
+						"label": "Driver",
+						"type": "string"
+					},
+					{
+						"key": "targets",
+						"label": "Targets",
+						"type": "json"
+					},
+					{
+						"key": "targetDimension",
+						"label": "Target Dimension",
+						"type": "string"
+					},
+					{
+						"key": "cadence",
+						"label": "Cadence",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"actions": [
+					{
+						"id": "activate-rule",
+						"label": "Try it",
+						"icon": "PlayCircleOutline",
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": [
+								"paused"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "activate",
+						"description": "Review the rule targets and activate it for evaluation on its cadence."
+					}
+				],
+				"indexRoute": "AllocationRules"
+			}
+		},
 		{
 			"id": "FeaturesRoadmap",
 			"route": "/features-roadmap",
@@ -143,6 +1210,624 @@
 			"title": "Features & roadmap",
 			"config": {
 				"documentationUrl": "https://shillinq.conduction.nl"
+			}
+		},
+		{
+			"id": "EmuRapportage",
+			"route": "/emu-rapportage",
+			"type": "index",
+			"title": "EMU-rapportage",
+			"featureFlag": "gov-emu",
+			"config": {
+				"register": "shillinq",
+				"schema": "Account",
+				"aggregation": "emuSaldoByQuarter",
+				"columns": [
+					{
+						"key": "period",
+						"label": "Periode",
+						"sortable": true
+					},
+					{
+						"key": "sector",
+						"label": "ESA-2010 sector",
+						"sortable": true
+					},
+					{
+						"key": "emuSaldo",
+						"label": "EMU-saldo (€)",
+						"sortable": true
+					},
+					{
+						"key": "emuAggregationHash",
+						"label": "Reproductie-hash",
+						"sortable": false
+					}
+				],
+				"defaultSort": "period",
+				"detailRoute": "EmuRapportageDetail"
+			}
+		},
+		{
+			"id": "EmuRapportageDetail",
+			"route": "/emu-rapportage/:id",
+			"type": "detail",
+			"title": "EMU-rapportage details",
+			"featureFlag": "gov-emu",
+			"config": {
+				"register": "shillinq",
+				"schema": "Account",
+				"fields": [
+					{
+						"key": "period",
+						"label": "Periode",
+						"type": "string"
+					},
+					{
+						"key": "sector",
+						"label": "ESA-2010 sector",
+						"type": "string"
+					},
+					{
+						"key": "esaClassifier",
+						"label": "ESA-classifier code",
+						"type": "string"
+					},
+					{
+						"key": "emuInclusionRule",
+						"label": "Inclusieregel",
+						"type": "string"
+					},
+					{
+						"key": "emuSaldo",
+						"label": "EMU-saldo (€)",
+						"type": "number"
+					},
+					{
+						"key": "emuSchuld",
+						"label": "EMU-schuld (€)",
+						"type": "number"
+					},
+					{
+						"key": "emuAggregationHash",
+						"label": "Reproductie-hash (SHA-256)",
+						"type": "string"
+					},
+					{
+						"key": "contributingPeriods",
+						"label": "Bijdragende periodes",
+						"type": "array"
+					},
+					{
+						"key": "classifierStateAtCompute",
+						"label": "Classifier-staat bij berekening",
+						"type": "object"
+					},
+					{
+						"key": "exclusionRulesApplied",
+						"label": "Toegepaste exclusieregels",
+						"type": "object"
+					}
+				],
+				"indexRoute": "EmuRapportage"
+			}
+		},
+		{
+			"id": "KorStatus",
+			"route": "/belastingen/kor",
+			"type": "index",
+			"title": "KOR-status",
+			"config": {
+				"register": "shillinq",
+				"schema": "KorRegime",
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"mkb",
+						"zzp"
+					]
+				},
+				"columns": [
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"sortable": true
+					},
+					{
+						"key": "currentCalendarYear",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "ytdRevenue",
+						"label": "Jaaromzet (YTD)",
+						"sortable": true
+					},
+					{
+						"key": "thresholdAmount",
+						"label": "Omzetdrempel",
+						"sortable": false
+					}
+				],
+				"defaultSort": "-currentCalendarYear",
+				"detailRoute": "KorStatusDetail",
+				"widget": "kor-status"
+			}
+		},
+		{
+			"id": "KorStatusDetail",
+			"route": "/belastingen/kor/:id",
+			"type": "detail",
+			"title": "KOR-regime",
+			"config": {
+				"register": "shillinq",
+				"schema": "KorRegime",
+				"fields": [
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "currentCalendarYear",
+						"label": "Kalenderjaar",
+						"type": "integer"
+					},
+					{
+						"key": "state",
+						"label": "KOR-status",
+						"type": "string"
+					},
+					{
+						"key": "ytdRevenue",
+						"label": "Jaaromzet (YTD)",
+						"type": "number"
+					},
+					{
+						"key": "thresholdAmount",
+						"label": "Omzetdrempel",
+						"type": "number"
+					},
+					{
+						"key": "warningPercentage",
+						"label": "Waarschuwingspercentage (%)",
+						"type": "integer"
+					},
+					{
+						"key": "optedInAt",
+						"label": "Opt-in datum",
+						"type": "date"
+					},
+					{
+						"key": "optedOutAt",
+						"label": "Opt-out datum",
+						"type": "date"
+					},
+					{
+						"key": "exceededAt",
+						"label": "Drempel overschreden op",
+						"type": "date"
+					},
+					{
+						"key": "notes",
+						"label": "Notities",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "KorStatus"
+			}
+		},
+		{
+			"id": "BankConnections",
+			"route": "/bank-connections",
+			"type": "index",
+			"title": "Bank Connections",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankConnection",
+				"columns": [
+					{
+						"key": "connectionNumber",
+						"label": "Connection",
+						"sortable": true
+					},
+					{
+						"key": "aggregator",
+						"label": "Aggregator",
+						"sortable": true
+					},
+					{
+						"key": "bankAccountIban",
+						"label": "IBAN",
+						"sortable": true
+					},
+					{
+						"key": "consentExpiresAt",
+						"label": "Consent Expires",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "connectionNumber",
+				"detailRoute": "BankConnectionDetail"
+			}
+		},
+		{
+			"id": "BankConnectionDetail",
+			"route": "/bank-connections/:id",
+			"type": "detail",
+			"title": "Bank Connection",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankConnection",
+				"fields": [
+					{
+						"key": "connectionNumber",
+						"label": "Connection Number",
+						"type": "string"
+					},
+					{
+						"key": "aggregator",
+						"label": "Aggregator",
+						"type": "string"
+					},
+					{
+						"key": "aggregatorSourceSlug",
+						"label": "Aggregator Source",
+						"type": "string"
+					},
+					{
+						"key": "bankBic",
+						"label": "BIC",
+						"type": "string"
+					},
+					{
+						"key": "bankCountry",
+						"label": "Country",
+						"type": "string"
+					},
+					{
+						"key": "bankAccountIban",
+						"label": "IBAN",
+						"type": "string"
+					},
+					{
+						"key": "consentReference",
+						"label": "Consent Reference",
+						"type": "string"
+					},
+					{
+						"key": "consentGrantedAt",
+						"label": "Consent Granted",
+						"type": "string"
+					},
+					{
+						"key": "consentExpiresAt",
+						"label": "Consent Expires",
+						"type": "string"
+					},
+					{
+						"key": "consentRemainingDays",
+						"label": "Days Until Expiry",
+						"type": "calculated",
+						"help": "Remaining days on the PSD2 consent. Negative when expired."
+					},
+					{
+						"key": "lastSyncAt",
+						"label": "Last Synced",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"actions": [
+					{
+						"id": "renew-consent",
+						"label": "Renew consent",
+						"icon": "Refresh",
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": [
+								"expiring",
+								"expired"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "renew",
+						"description": "Trigger PSD2 SCA renewal via the openconnector source reauthorise action."
+					}
+				],
+				"header": {
+					"countdownField": "consentRemainingDays",
+					"countdownLabel": "days until consent expires",
+					"countdownVisibleWhen": {
+						"field": "lifecycleState",
+						"in": [
+							"expiring"
+						]
+					}
+				},
+				"indexRoute": "BankConnections"
+			}
+		},
+		{
+			"id": "Waterschapsbelastingen",
+			"route": "/waterschapsbelastingen",
+			"type": "index",
+			"title": "Waterschapsbelastingen",
+			"featureFlag": "gov-waterschap",
+			"config": {
+				"register": "shillinq",
+				"schema": "WaterschapHeffingPosting",
+				"featureFlag": "gov-waterschap",
+				"columns": [
+					{
+						"key": "heffingType",
+						"label": "Heffing type",
+						"sortable": true
+					},
+					{
+						"key": "aanslagJaar",
+						"label": "Aanslagjaar",
+						"sortable": true
+					},
+					{
+						"key": "aanslagBedrag",
+						"label": "Aanslag bedrag",
+						"sortable": true
+					},
+					{
+						"key": "emuExclusionRule",
+						"label": "EMU-saldo",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-aanslagJaar",
+				"detailRoute": "WaterschapsbelastingenDetail"
+			}
+		},
+		{
+			"id": "WaterschapsbelastingenDetail",
+			"route": "/waterschapsbelastingen/:id",
+			"type": "detail",
+			"title": "Heffing posting",
+			"featureFlag": "gov-waterschap",
+			"config": {
+				"register": "shillinq",
+				"schema": "WaterschapHeffingPosting",
+				"featureFlag": "gov-waterschap",
+				"fields": [
+					{
+						"key": "heffingType",
+						"label": "Heffing type",
+						"type": "string"
+					},
+					{
+						"key": "aanslagJaar",
+						"label": "Aanslagjaar",
+						"type": "integer"
+					},
+					{
+						"key": "tariefGrondslag",
+						"label": "Tariefgrondslag",
+						"type": "string"
+					},
+					{
+						"key": "tarief",
+						"label": "Tarief (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "aanslagBedrag",
+						"label": "Aanslag bedrag (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "emuExclusionRule",
+						"label": "EMU-saldo uitsluiting",
+						"type": "string"
+					},
+					{
+						"key": "journalEntryId",
+						"label": "Journal entry",
+						"type": "link"
+					},
+					{
+						"key": "debitAccountNumber",
+						"label": "Debet rekening",
+						"type": "string"
+					},
+					{
+						"key": "creditAccountNumber",
+						"label": "Credit rekening",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Omschrijving",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "Waterschapsbelastingen"
+			}
+		},
+		{
+			"id": "Iv3Reports",
+			"route": "/iv3-reports",
+			"type": "index",
+			"title": "IV3 Reports",
+			"config": {
+				"register": "shillinq",
+				"schema": "IV3Report",
+				"columns": [
+					{
+						"key": "reportNumber",
+						"label": "Report Number",
+						"sortable": true
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Year",
+						"sortable": true
+					},
+					{
+						"key": "quarter",
+						"label": "Quarter",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "submissionDate",
+						"label": "Submitted",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-fiscalYear",
+				"detailRoute": "Iv3ReportDetail"
+			}
+		},
+		{
+			"id": "Iv3ReportDetail",
+			"route": "/iv3-reports/:id",
+			"type": "detail",
+			"title": "IV3 Report",
+			"config": {
+				"register": "shillinq",
+				"schema": "IV3Report",
+				"fields": [
+					{
+						"key": "reportNumber",
+						"label": "Report Number",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Year",
+						"type": "integer"
+					},
+					{
+						"key": "quarter",
+						"label": "Quarter",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"type": "date-time"
+					},
+					{
+						"key": "submissionDate",
+						"label": "Submission Date",
+						"type": "date-time"
+					},
+					{
+						"key": "filedDate",
+						"label": "Filed Date",
+						"type": "date-time"
+					},
+					{
+						"key": "cbsReceiptNumber",
+						"label": "CBS Receipt Number",
+						"type": "string"
+					},
+					{
+						"key": "notes",
+						"label": "Notes",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"relatedLists": [
+					{
+						"id": "iv3-report-lines",
+						"title": "IV3 Report Lines",
+						"schema": "IV3ReportLine",
+						"filter": {
+							"reportId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "iv3FieldCode",
+								"label": "CBS Field Code"
+							},
+							{
+								"key": "accountNumber",
+								"label": "Account"
+							},
+							{
+								"key": "debitAmount",
+								"label": "Debit (EUR)"
+							},
+							{
+								"key": "creditAmount",
+								"label": "Credit (EUR)"
+							},
+							{
+								"key": "netAmount",
+								"label": "Net (EUR)"
+							},
+							{
+								"key": "sequence",
+								"label": "Seq"
+							}
+						]
+					}
+				],
+				"indexRoute": "Iv3Reports"
 			}
 		},
 		{
@@ -155,7 +1840,11 @@
 				"schema": "Iv3Export",
 				"visibility": {
 					"field": "administrationType",
-					"in": ["gemeente", "provincie", "waterschap"]
+					"in": [
+						"gemeente",
+						"provincie",
+						"waterschap"
+					]
 				},
 				"columns": [
 					{
@@ -260,6 +1949,266 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "Iv3Rapportages"
+			}
+		},
+		{
+			"id": "GeneralLedger",
+			"route": "/general-ledger",
+			"type": "index",
+			"title": "General Ledger",
+			"config": {
+				"register": "shillinq",
+				"schema": "GLTransaction",
+				"columns": [
+					{
+						"key": "transactionNumber",
+						"label": "Number",
+						"sortable": true
+					},
+					{
+						"key": "postingDate",
+						"label": "Posting Date",
+						"sortable": true
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"sortable": true
+					},
+					{
+						"key": "periodId",
+						"label": "Period",
+						"sortable": true
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "State",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-postingDate",
+				"detailRoute": "GeneralLedgerDetail"
+			}
+		},
+		{
+			"id": "GeneralLedgerDetail",
+			"route": "/general-ledger/:id",
+			"type": "detail",
+			"title": "GL Transaction",
+			"config": {
+				"register": "shillinq",
+				"schema": "GLTransaction",
+				"fields": [
+					{
+						"key": "transactionNumber",
+						"label": "Transaction Number",
+						"type": "string"
+					},
+					{
+						"key": "postingDate",
+						"label": "Posting Date",
+						"type": "date"
+					},
+					{
+						"key": "periodId",
+						"label": "Period",
+						"type": "string"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "sourceReference",
+						"label": "Source Reference",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "State",
+						"type": "string"
+					},
+					{
+						"key": "journalEntryId",
+						"label": "Journal Entry",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"relations": [
+					{
+						"key": "lines",
+						"label": "GL Lines",
+						"schema": "GLLine",
+						"foreignKey": "transactionId",
+						"columns": [
+							{
+								"key": "lineNumber",
+								"label": "#"
+							},
+							{
+								"key": "accountNumber",
+								"label": "Account"
+							},
+							{
+								"key": "side",
+								"label": "D/C"
+							},
+							{
+								"key": "amount",
+								"label": "Amount"
+							},
+							{
+								"key": "currency",
+								"label": "Currency"
+							},
+							{
+								"key": "description",
+								"label": "Description"
+							}
+						]
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "GeneralLedger"
+			}
+		},
+		{
+			"id": "Journals",
+			"route": "/journals",
+			"type": "index",
+			"title": "Journals",
+			"config": {
+				"register": "shillinq",
+				"schema": "JournalEntry",
+				"columns": [
+					{
+						"key": "journalNumber",
+						"label": "Number",
+						"sortable": true
+					},
+					{
+						"key": "entryDate",
+						"label": "Entry Date",
+						"sortable": true
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"sortable": true
+					},
+					{
+						"key": "journalType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "State",
+						"sortable": true
+					},
+					{
+						"key": "approvalState",
+						"label": "Approval",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-entryDate",
+				"detailRoute": "JournalDetail"
+			}
+		},
+		{
+			"id": "JournalDetail",
+			"route": "/journals/:id",
+			"type": "detail",
+			"title": "Journal Entry",
+			"config": {
+				"register": "shillinq",
+				"schema": "JournalEntry",
+				"fields": [
+					{
+						"key": "journalNumber",
+						"label": "Journal Number",
+						"type": "string"
+					},
+					{
+						"key": "entryDate",
+						"label": "Entry Date",
+						"type": "date"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "journalType",
+						"label": "Type",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "State",
+						"type": "string"
+					},
+					{
+						"key": "approvalState",
+						"label": "Approval State",
+						"type": "string"
+					},
+					{
+						"key": "cadence",
+						"label": "Cadence",
+						"type": "object"
+					},
+					{
+						"key": "reversesOn",
+						"label": "Reverses On",
+						"type": "string"
+					},
+					{
+						"key": "sourceDocumentUri",
+						"label": "Source Document",
+						"type": "string"
+					},
+					{
+						"key": "sourceDocumentApp",
+						"label": "Source App",
+						"type": "string"
+					},
+					{
+						"key": "glTransactionId",
+						"label": "GL Transaction",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "lines",
+						"label": "Lines",
+						"type": "array"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "Journals"
 			}
 		},
 		{
@@ -540,497 +2489,181 @@
 			}
 		},
 		{
-			"id": "VatReturns",
-			"route": "/btw-aangiften",
+			"id": "FixedAssets",
+			"route": "/fixed-assets",
 			"type": "index",
-			"title": "BTW-aangiften",
+			"title": "Fixed Assets",
 			"config": {
 				"register": "shillinq",
-				"schema": "VatReturn",
+				"schema": "FixedAsset",
 				"columns": [
-					{ "key": "periodYear", "label": "Jaar", "sortable": true },
-					{ "key": "periodType", "label": "Periode", "sortable": true },
-					{ "key": "amount", "label": "Bedrag", "sortable": true },
-					{ "key": "state", "label": "Status", "sortable": true }
+					{
+						"key": "assetNumber",
+						"label": "Asset Number",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "assetCategory",
+						"label": "Category",
+						"sortable": true
+					},
+					{
+						"key": "acquisitionDate",
+						"label": "Acquisition Date",
+						"sortable": true
+					},
+					{
+						"key": "acquisitionCost",
+						"label": "Cost",
+						"sortable": true
+					},
+					{
+						"key": "currentBookValue",
+						"label": "Book Value",
+						"sortable": false
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
 				],
-				"defaultSort": "periodYear",
-				"detailRoute": "VatReturnDetail"
+				"defaultSort": "assetNumber",
+				"detailRoute": "FixedAssetDetail"
 			}
 		},
 		{
-			"id": "VatReturnDetail",
-			"route": "/btw-aangiften/:id",
+			"id": "FixedAssetDetail",
+			"route": "/fixed-assets/:id",
 			"type": "detail",
-			"title": "BTW-aangifte",
+			"title": "Fixed Asset",
 			"config": {
 				"register": "shillinq",
-				"schema": "VatReturn",
+				"schema": "FixedAsset",
 				"fields": [
-					{ "key": "periodType", "label": "Periodetype", "type": "string" },
-					{ "key": "periodYear", "label": "Jaar", "type": "number" },
-					{ "key": "amount", "label": "BTW-bedrag", "type": "number" },
-					{ "key": "state", "label": "Status", "type": "string" }
+					{
+						"key": "assetNumber",
+						"label": "Asset Number",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "assetCategory",
+						"label": "Category",
+						"type": "string"
+					},
+					{
+						"key": "acquisitionDate",
+						"label": "Acquisition Date",
+						"type": "string"
+					},
+					{
+						"key": "acquisitionCost",
+						"label": "Acquisition Cost",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "usefulLifeMonths",
+						"label": "Useful Life (months)",
+						"type": "number"
+					},
+					{
+						"key": "residualValue",
+						"label": "Residual Value",
+						"type": "number"
+					},
+					{
+						"key": "depreciationMethod",
+						"label": "Depreciation Method",
+						"type": "string"
+					},
+					{
+						"key": "degressiveRate",
+						"label": "Degressive Rate",
+						"type": "number"
+					},
+					{
+						"key": "commercialRate",
+						"label": "Commercial Rate",
+						"type": "number"
+					},
+					{
+						"key": "fiscalRate",
+						"label": "Fiscal Rate",
+						"type": "number"
+					},
+					{
+						"key": "assetAccountNumber",
+						"label": "Asset Account",
+						"type": "string"
+					},
+					{
+						"key": "accumulatedDepAccountNumber",
+						"label": "Accumulated Depreciation Account",
+						"type": "string"
+					},
+					{
+						"key": "depreciationExpenseAccountNumber",
+						"label": "Depreciation Expense Account",
+						"type": "string"
+					},
+					{
+						"key": "currentBookValue",
+						"label": "Current Book Value",
+						"type": "number"
+					},
+					{
+						"key": "monthlyDepreciation",
+						"label": "Monthly Depreciation",
+						"type": "number"
+					},
+					{
+						"key": "commercialBookValue",
+						"label": "Commercial Book Value",
+						"type": "number"
+					},
+					{
+						"key": "fiscalBookValue",
+						"label": "Fiscal Book Value",
+						"type": "number"
+					},
+					{
+						"key": "disposalDate",
+						"label": "Disposal Date",
+						"type": "string"
+					},
+					{
+						"key": "disposalAccountingTreatment",
+						"label": "Disposal Treatment",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "VatReturns"
-			}
-		},
-		{
-			"id": "IcpStatements",
-			"route": "/icp-opgaaf",
-			"type": "index",
-			"title": "ICP-opgaaf",
-			"config": {
-				"register": "shillinq",
-				"schema": "IcpStatement",
-				"columns": [
-					{ "key": "periodYear", "label": "Jaar", "sortable": true },
-					{ "key": "periodType", "label": "Periode", "sortable": true },
-					{ "key": "state", "label": "Status", "sortable": true }
-				],
-				"defaultSort": "periodYear",
-				"detailRoute": "IcpStatementDetail"
-			}
-		},
-		{
-			"id": "IcpStatementDetail",
-			"route": "/icp-opgaaf/:id",
-			"type": "detail",
-			"title": "ICP-opgaaf",
-			"config": {
-				"register": "shillinq",
-				"schema": "IcpStatement",
-				"fields": [
-					{ "key": "periodType", "label": "Periodetype", "type": "string" },
-					{ "key": "periodYear", "label": "Jaar", "type": "number" },
-					{ "key": "state", "label": "Status", "type": "string" }
-				],
-				"lifecycleActions": true,
-				"indexRoute": "IcpStatements"
-			}
-		},
-		{
-			"id": "VatCorrections",
-			"route": "/btw-correcties",
-			"type": "index",
-			"title": "BTW-correcties",
-			"config": {
-				"register": "shillinq",
-				"schema": "VatCorrection",
-				"columns": [
-					{ "key": "periodYear", "label": "Jaar", "sortable": true },
-					{ "key": "correctionReason", "label": "Reden", "sortable": true },
-					{ "key": "adjustmentAmount", "label": "Correctie", "sortable": true },
-					{ "key": "state", "label": "Status", "sortable": true }
-				],
-				"defaultSort": "periodYear",
-				"detailRoute": "VatCorrectionDetail"
-			}
-		},
-		{
-			"id": "VatCorrectionDetail",
-			"route": "/btw-correcties/:id",
-			"type": "detail",
-			"title": "BTW-correctie",
-			"config": {
-				"register": "shillinq",
-				"schema": "VatCorrection",
-				"fields": [
-					{ "key": "correctionReason", "label": "Reden", "type": "string" },
-					{ "key": "adjustmentAmount", "label": "Correctiebedrag", "type": "number" },
-					{ "key": "state", "label": "Status", "type": "string" }
-				],
-				"lifecycleActions": true,
-				"indexRoute": "VatCorrections"
-			}
-		},
-		{
-			"id": "KorStatus",
-			"route": "/kor-status",
-			"type": "detail",
-			"title": "KOR-status",
-			"config": {
-				"register": "shillinq",
-				"schema": "KorRegime",
-				"fields": [
-					{ "key": "state", "label": "Status", "type": "string" },
-					{ "key": "ytdRevenue", "label": "Omzet YTD", "type": "number" },
-					{ "key": "thresholdAmount", "label": "Omzetdrempel", "type": "number" }
-				],
-				"lifecycleActions": true
-			}
-		},
-		{
-			"id": "Urenregistratie",
-			"route": "/urenregistratie",
-			"type": "index",
-			"title": "Urenregistratie",
-			"config": {
-				"register": "shillinq",
-				"schema": "UrenRegistratie",
-				"columns": [
-					{ "key": "workDate", "label": "Datum", "sortable": true },
-					{ "key": "hours", "label": "Uren", "sortable": true },
-					{ "key": "category", "label": "Categorie", "sortable": true }
-				],
-				"defaultSort": "workDate",
-				"detailRoute": "UrenregistratieDetail"
-			}
-		},
-		{
-			"id": "UrenregistratieDetail",
-			"route": "/urenregistratie/:id",
-			"type": "detail",
-			"title": "Uren",
-			"config": {
-				"register": "shillinq",
-				"schema": "UrenRegistratie",
-				"fields": [
-					{ "key": "workDate", "label": "Datum", "type": "string" },
-					{ "key": "hours", "label": "Uren", "type": "number" },
-					{ "key": "category", "label": "Categorie", "type": "string" },
-					{ "key": "excludedReason", "label": "Reden uitsluiting", "type": "string" }
-				],
-				"indexRoute": "Urenregistratie"
-			}
-		},
-		{
-			"id": "ZzpDeductions",
-			"route": "/zzp-aftrek",
-			"type": "detail",
-			"title": "ZZP-aftrek",
-			"config": {
-				"register": "shillinq",
-				"schema": "ZzpDeduction",
-				"fields": [
-					{ "key": "year", "label": "Jaar", "type": "number" },
-					{ "key": "ytdQualifyingHours", "label": "Kwalificerende uren", "type": "number" },
-					{ "key": "qualifies1225", "label": "Voldoet aan 1225", "type": "boolean" },
-					{ "key": "totalAllowableDeduction", "label": "Totale aftrek", "type": "number" }
-				]
-			}
-		},
-		{
-			"id": "IbAangiften",
-			"route": "/ib-aangifte",
-			"type": "index",
-			"title": "IB-aangifte",
-			"config": {
-				"register": "shillinq",
-				"schema": "IbAangifteExport",
-				"columns": [
-					{ "key": "year", "label": "Jaar", "sortable": true },
-					{ "key": "taxableIncome", "label": "Belastbaar inkomen", "sortable": true }
-				],
-				"defaultSort": "year",
-				"detailRoute": "IbAangifteDetail"
-			}
-		},
-		{
-			"id": "IbAangifteDetail",
-			"route": "/ib-aangifte/:id",
-			"type": "detail",
-			"title": "IB-aangifte",
-			"config": {
-				"register": "shillinq",
-				"schema": "IbAangifteExport",
-				"fields": [
-					{ "key": "year", "label": "Jaar", "type": "number" },
-					{ "key": "totalIncome", "label": "Totaal inkomen", "type": "number" },
-					{ "key": "allowableDeductions", "label": "Aftrekposten", "type": "number" },
-					{ "key": "taxableIncome", "label": "Belastbaar inkomen", "type": "number" }
-				],
-				"indexRoute": "IbAangiften"
-			}
-		},
-		{
-			"id": "BbvMapping",
-			"route": "/bbv-mapping",
-			"type": "index",
-			"title": "BBV-mapping",
-			"config": {
-				"register": "shillinq",
-				"schema": "BbvAccountMapping",
-				"columns": [
-					{ "key": "accountNumber", "label": "Rekening", "sortable": true },
-					{ "key": "taakveld", "label": "Taakveld", "sortable": true },
-					{ "key": "bcfCompensable", "label": "BCF-compensabel", "sortable": true }
-				],
-				"defaultSort": "accountNumber",
-				"detailRoute": "BbvMappingDetail"
-			}
-		},
-		{
-			"id": "BbvMappingDetail",
-			"route": "/bbv-mapping/:id",
-			"type": "detail",
-			"title": "BBV-mapping",
-			"config": {
-				"register": "shillinq",
-				"schema": "BbvAccountMapping",
-				"fields": [
-					{ "key": "accountNumber", "label": "Rekening", "type": "string" },
-					{ "key": "taakveld", "label": "Taakveld", "type": "string" },
-					{ "key": "programmaCode", "label": "Programma", "type": "string" },
-					{ "key": "bcfCompensable", "label": "BCF-compensabel", "type": "boolean" },
-					{ "key": "compensablePercentage", "label": "Compensabel %", "type": "number" },
-					{ "key": "iv3Bucket", "label": "IV3-bucket", "type": "string" }
-				],
-				"indexRoute": "BbvMapping"
-			}
-		},
-		{
-			"id": "BcfClaims",
-			"route": "/bcf-claims",
-			"type": "index",
-			"title": "BCF-claims",
-			"config": {
-				"register": "shillinq",
-				"schema": "BcfClaim",
-				"columns": [
-					{ "key": "claimNumber", "label": "Claimnummer", "sortable": true },
-					{ "key": "periodYear", "label": "Jaar", "sortable": true },
-					{ "key": "totalClaimAmount", "label": "Bedrag", "sortable": true },
-					{ "key": "state", "label": "Status", "sortable": true }
-				],
-				"defaultSort": "claimNumber",
-				"detailRoute": "BcfClaimDetail"
-			}
-		},
-		{
-			"id": "BcfClaimDetail",
-			"route": "/bcf-claims/:id",
-			"type": "detail",
-			"title": "BCF-claim",
-			"config": {
-				"register": "shillinq",
-				"schema": "BcfClaim",
-				"fields": [
-					{ "key": "claimNumber", "label": "Claimnummer", "type": "string" },
-					{ "key": "totalClaimAmount", "label": "Claimbedrag", "type": "number" },
-					{ "key": "state", "label": "Status", "type": "string" }
-				],
-				"lifecycleActions": true,
-				"indexRoute": "BcfClaims"
-			}
-		},
-		{
-			"id": "SchatkistPosition",
-			"route": "/schatkist-positie",
-			"type": "dashboard",
-			"title": "Schatkist-positie",
-			"config": {
-				"register": "shillinq",
-				"schema": "SchatkistPosition",
-				"widgets": [
-					{ "id": "schatkist-position", "title": "Huidige positie", "type": "stats-block", "iconClass": "icon-category-monitoring", "props": { "countLabel": "EUR", "variant": "primary" } }
-				]
-			}
-		},
-		{
-			"id": "SubsidiesOverview",
-			"route": "/subsidies",
-			"type": "index",
-			"title": "Subsidies",
-			"config": {
-				"register": "shillinq",
-				"schema": "Subsidie",
-				"columns": [
-					{ "key": "subsidieNumber", "label": "Nummer", "sortable": true },
-					{ "key": "subsidieName", "label": "Naam", "sortable": true },
-					{ "key": "awardAmount", "label": "Bedrag", "sortable": true },
-					{ "key": "state", "label": "Status", "sortable": true }
-				],
-				"defaultSort": "subsidieNumber",
-				"detailRoute": "SubsidieDetail"
-			}
-		},
-		{
-			"id": "SubsidieDetail",
-			"route": "/subsidies/:id",
-			"type": "detail",
-			"title": "Subsidie",
-			"config": {
-				"register": "shillinq",
-				"schema": "Subsidie",
-				"fields": [
-					{ "key": "subsidieNumber", "label": "Nummer", "type": "string" },
-					{ "key": "subsidieName", "label": "Naam", "type": "string" },
-					{ "key": "awardAmount", "label": "Bedrag", "type": "number" },
-					{ "key": "state", "label": "Status", "type": "string" }
-				],
-				"lifecycleActions": true,
-				"indexRoute": "SubsidiesOverview"
-			}
-		},
-		{
-			"id": "SubsidiesVerleend",
-			"route": "/subsidies/verleend",
-			"type": "index",
-			"title": "Verleende subsidies",
-			"config": {
-				"register": "shillinq",
-				"schema": "Subsidie",
-				"filter": { "state": "verleend" },
-				"columns": [
-					{ "key": "subsidieNumber", "label": "Nummer", "sortable": true },
-					{ "key": "subsidieName", "label": "Naam", "sortable": true },
-					{ "key": "awardAmount", "label": "Bedrag", "sortable": true }
-				],
-				"defaultSort": "subsidieNumber",
-				"detailRoute": "SubsidieDetail"
-			}
-		},
-		{
-			"id": "SubsidiesTerugvordering",
-			"route": "/subsidies/terugvordering",
-			"type": "index",
-			"title": "Terugvorderingen",
-			"config": {
-				"register": "shillinq",
-				"schema": "Subsidie",
-				"filter": { "state": "teruggevorderd" },
-				"columns": [
-					{ "key": "subsidieNumber", "label": "Nummer", "sortable": true },
-					{ "key": "subsidieName", "label": "Naam", "sortable": true },
-					{ "key": "awardAmount", "label": "Bedrag", "sortable": true }
-				],
-				"defaultSort": "subsidieNumber",
-				"detailRoute": "SubsidieDetail"
-			}
-		},
-		{
-			"id": "ProjectsOverview",
-			"route": "/projecten",
-			"type": "index",
-			"title": "Projecten",
-			"config": {
-				"register": "shillinq",
-				"schema": "Project",
-				"columns": [
-					{ "key": "projectCode", "label": "Code", "sortable": true },
-					{ "key": "projectName", "label": "Naam", "sortable": true },
-					{ "key": "contractValue", "label": "Contractwaarde", "sortable": true },
-					{ "key": "state", "label": "Status", "sortable": true }
-				],
-				"defaultSort": "projectCode",
-				"detailRoute": "ProjectDetail"
-			}
-		},
-		{
-			"id": "ProjectDetail",
-			"route": "/projecten/:id",
-			"type": "detail",
-			"title": "Project",
-			"config": {
-				"register": "shillinq",
-				"schema": "Project",
-				"fields": [
-					{ "key": "projectCode", "label": "Code", "type": "string" },
-					{ "key": "projectName", "label": "Naam", "type": "string" },
-					{ "key": "contractValue", "label": "Contractwaarde", "type": "number" },
-					{ "key": "costIncurredToDate", "label": "Gemaakte kosten", "type": "number" },
-					{ "key": "recognisedRevenue", "label": "Verantwoorde omzet", "type": "number" },
-					{ "key": "state", "label": "Status", "type": "string" }
-				],
-				"lifecycleActions": true,
-				"indexRoute": "ProjectsOverview"
-			}
-		},
-		{
-			"id": "ProjectsPl",
-			"route": "/projecten/pl",
-			"type": "dashboard",
-			"title": "Project P&L",
-			"config": {
-				"register": "shillinq",
-				"schema": "Project",
-				"widgets": [
-					{ "id": "project-margin", "title": "Marge", "type": "stats-block", "iconClass": "icon-category-monitoring", "props": { "countLabel": "EUR", "variant": "success" } }
-				]
-			}
-		},
-		{
-			"id": "RateCards",
-			"route": "/tarieven",
-			"type": "index",
-			"title": "Tarieven",
-			"config": {
-				"register": "shillinq",
-				"schema": "RateCard",
-				"columns": [
-					{ "key": "level", "label": "Niveau", "sortable": true },
-					{ "key": "hourlyRate", "label": "Uurtarief", "sortable": true },
-					{ "key": "effectiveFrom", "label": "Geldig vanaf", "sortable": true }
-				],
-				"defaultSort": "level",
-				"detailRoute": "RateCardDetail"
-			}
-		},
-		{
-			"id": "RateCardDetail",
-			"route": "/tarieven/:id",
-			"type": "detail",
-			"title": "Tariefkaart",
-			"config": {
-				"register": "shillinq",
-				"schema": "RateCard",
-				"fields": [
-					{ "key": "level", "label": "Niveau", "type": "string" },
-					{ "key": "hourlyRate", "label": "Uurtarief", "type": "number" },
-					{ "key": "effectiveFrom", "label": "Geldig vanaf", "type": "string" },
-					{ "key": "effectiveTo", "label": "Geldig tot", "type": "string" }
-				],
-				"indexRoute": "RateCards"
-			}
-		},
-		{
-			"id": "Utilisatie",
-			"route": "/utilisatie",
-			"type": "dashboard",
-			"title": "Utilisatie",
-			"config": {
-				"register": "shillinq",
-				"schema": "ProjectAssignment",
-				"widgets": [
-					{ "id": "utilisation-rate", "title": "Utilisatie", "type": "stats-block", "iconClass": "icon-category-monitoring", "props": { "countLabel": "%", "variant": "primary" } }
-				]
-			}
-		},
-		{
-			"id": "Bewaartermijnen",
-			"route": "/bewaartermijnen",
-			"type": "index",
-			"title": "Bewaartermijnen",
-			"config": {
-				"register": "shillinq",
-				"schema": "RetentionRule",
-				"columns": [
-					{ "key": "selectielijstCode", "label": "Selectielijstcode", "sortable": true },
-					{ "key": "description", "label": "Omschrijving", "sortable": true },
-					{ "key": "retentionYears", "label": "Bewaartermijn (jaar)", "sortable": true },
-					{ "key": "disposition", "label": "Afhandeling", "sortable": true }
-				],
-				"defaultSort": "selectielijstCode",
-				"detailRoute": "BewaartermijnDetail"
-			}
-		},
-		{
-			"id": "BewaartermijnDetail",
-			"route": "/bewaartermijnen/:id",
-			"type": "detail",
-			"title": "Bewaartermijn",
-			"config": {
-				"register": "shillinq",
-				"schema": "RetentionRule",
-				"fields": [
-					{ "key": "selectielijstCode", "label": "Selectielijstcode", "type": "string" },
-					{ "key": "description", "label": "Omschrijving", "type": "string" },
-					{ "key": "retentionYears", "label": "Bewaartermijn (jaar)", "type": "number" },
-					{ "key": "disposition", "label": "Afhandeling", "type": "string" },
-					{ "key": "legalBasis", "label": "Wettelijke basis", "type": "string" }
-				],
-				"indexRoute": "Bewaartermijnen"
+				"indexRoute": "FixedAssets"
 			}
 		},
 		{
@@ -1122,6 +2755,1071 @@
 			}
 		},
 		{
+			"id": "BalanceSheet",
+			"route": "/financial-statements/balance-sheet",
+			"type": "index",
+			"title": "Balance Sheet",
+			"config": {
+				"register": "shillinq",
+				"schema": "BalanceSheet",
+				"columns": [
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					},
+					{
+						"key": "fiscalYearId",
+						"label": "Fiscal Year",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "totalAssets",
+						"label": "Total Assets",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-reportDate",
+				"detailRoute": "BalanceSheetDetail"
+			}
+		},
+		{
+			"id": "BalanceSheetDetail",
+			"route": "/financial-statements/balance-sheet/:id",
+			"type": "detail",
+			"title": "Balance Sheet",
+			"config": {
+				"register": "shillinq",
+				"schema": "BalanceSheet",
+				"fields": [
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"type": "date-time"
+					},
+					{
+						"key": "fiscalYearId",
+						"label": "Fiscal Year",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "totalAssets",
+						"label": "Total Assets",
+						"type": "number"
+					},
+					{
+						"key": "totalLiabilities",
+						"label": "Total Liabilities",
+						"type": "number"
+					},
+					{
+						"key": "totalEquity",
+						"label": "Total Equity",
+						"type": "number"
+					},
+					{
+						"key": "isBalanced",
+						"label": "Balanced",
+						"type": "boolean"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "BalanceSheet"
+			}
+		},
+		{
+			"id": "TrialBalance",
+			"route": "/financial-statements/trial-balance",
+			"type": "index",
+			"title": "Trial Balance",
+			"config": {
+				"register": "shillinq",
+				"schema": "TrialBalance",
+				"columns": [
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					},
+					{
+						"key": "fiscalYearId",
+						"label": "Fiscal Year",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "isBalanced",
+						"label": "Balanced",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-reportDate",
+				"detailRoute": "TrialBalanceDetail"
+			}
+		},
+		{
+			"id": "TrialBalanceDetail",
+			"route": "/financial-statements/trial-balance/:id",
+			"type": "detail",
+			"title": "Trial Balance",
+			"config": {
+				"register": "shillinq",
+				"schema": "TrialBalance",
+				"fields": [
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"type": "date-time"
+					},
+					{
+						"key": "fiscalYearId",
+						"label": "Fiscal Year",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "preparedBy",
+						"label": "Prepared By",
+						"type": "string"
+					},
+					{
+						"key": "totalDebits",
+						"label": "Total Debits",
+						"type": "number"
+					},
+					{
+						"key": "totalCredits",
+						"label": "Total Credits",
+						"type": "number"
+					},
+					{
+						"key": "isBalanced",
+						"label": "Balanced",
+						"type": "boolean"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "TrialBalance"
+			}
+		},
+		{
+			"id": "TrialBalanceLines",
+			"route": "/financial-statements/trial-balance-lines",
+			"type": "index",
+			"title": "Trial Balance (by account)",
+			"config": {
+				"register": "shillinq",
+				"schema": "TrialBalanceLine",
+				"columns": [
+					{
+						"key": "periodId",
+						"label": "Period",
+						"sortable": true
+					},
+					{
+						"key": "accountNumber",
+						"label": "Account Number",
+						"sortable": true
+					},
+					{
+						"key": "accountName",
+						"label": "Account Name",
+						"sortable": true
+					},
+					{
+						"key": "accountType",
+						"label": "Account Type",
+						"sortable": true
+					},
+					{
+						"key": "openingBalance",
+						"label": "Opening Balance",
+						"sortable": true
+					},
+					{
+						"key": "debitMovement",
+						"label": "Debits",
+						"sortable": true
+					},
+					{
+						"key": "creditMovement",
+						"label": "Credits",
+						"sortable": true
+					},
+					{
+						"key": "closingBalance",
+						"label": "Closing Balance",
+						"sortable": true
+					}
+				],
+				"filters": [
+					{
+						"key": "periodId",
+						"label": "Period",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "accountType",
+						"label": "Account Type",
+						"type": "string"
+					}
+				],
+				"defaultSort": "accountNumber"
+			}
+		},
+		{
+			"id": "Consolidations",
+			"route": "/financial-statements/consolidations",
+			"type": "index",
+			"title": "Consolidations",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidationGroup",
+				"columns": [
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "consolidationMethod",
+						"label": "Method",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "name",
+				"detailRoute": "ConsolidationsDetail"
+			}
+		},
+		{
+			"id": "ConsolidationsDetail",
+			"route": "/financial-statements/consolidations/:id",
+			"type": "detail",
+			"title": "Consolidation Group",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidationGroup",
+				"fields": [
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "consolidationMethod",
+						"label": "Consolidation Method",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "parentOrganizationId",
+						"label": "Parent Organization",
+						"type": "string"
+					},
+					{
+						"key": "administrationIds",
+						"label": "Member Administrations",
+						"type": "json"
+					},
+					{
+						"key": "eliminationRules",
+						"label": "Elimination Rules",
+						"type": "json"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "Consolidations"
+			}
+		},
+		{
+			"id": "ConsolidatedReport",
+			"route": "/financial-statements/consolidated-report",
+			"type": "index",
+			"title": "Consolidated Report",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidatedReport",
+				"columns": [
+					{
+						"key": "reportNumber",
+						"label": "Report Number",
+						"sortable": true
+					},
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"sortable": true
+					},
+					{
+						"key": "consolidationMethod",
+						"label": "Method",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "eliminationsApplied",
+						"label": "Eliminations Applied",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-reportDate",
+				"detailRoute": "ConsolidatedReportDetail"
+			}
+		},
+		{
+			"id": "ConsolidatedReportDetail",
+			"route": "/financial-statements/consolidated-report/:id",
+			"type": "detail",
+			"title": "Consolidated Report",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidatedReport",
+				"fields": [
+					{
+						"key": "reportNumber",
+						"label": "Report Number",
+						"type": "string"
+					},
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"type": "date-time"
+					},
+					{
+						"key": "consolidationGroupId",
+						"label": "Consolidation Group",
+						"type": "string"
+					},
+					{
+						"key": "consolidationMethod",
+						"label": "Consolidation Method",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYearId",
+						"label": "Fiscal Year",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "eliminationsApplied",
+						"label": "Eliminations Applied",
+						"type": "boolean"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ConsolidatedReport"
+			}
+		},
+		{
+			"id": "SisaRapportages",
+			"route": "/sisa-rapportages",
+			"type": "index",
+			"title": "SiSa-rapportages",
+			"config": {
+				"register": "shillinq",
+				"schema": "SisaReport",
+				"columns": [
+					{
+						"key": "reportNumber",
+						"label": "Rapportnummer",
+						"sortable": true
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Boekjaar",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"sortable": true
+					},
+					{
+						"key": "auditOpinion",
+						"label": "Controleverklaring",
+						"sortable": true
+					},
+					{
+						"key": "complianceStatus",
+						"label": "Nalevingsstatus",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-fiscalYear",
+				"detailRoute": "SisaRapportagesDetail"
+			}
+		},
+		{
+			"id": "SisaRapportagesDetail",
+			"route": "/sisa-rapportages/:id",
+			"type": "detail",
+			"title": "SiSa-rapportage",
+			"config": {
+				"register": "shillinq",
+				"schema": "SisaReport",
+				"fields": [
+					{
+						"key": "reportNumber",
+						"label": "Rapportnummer",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Boekjaar",
+						"type": "integer"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "reportDate",
+						"label": "Rapportdatum",
+						"type": "date-time"
+					},
+					{
+						"key": "totalTransactionCount",
+						"label": "Aantal transacties",
+						"type": "integer"
+					},
+					{
+						"key": "onTimeSettlementPercent",
+						"label": "Op-tijd-betaling %",
+						"type": "number"
+					},
+					{
+						"key": "totalAmount",
+						"label": "Totaalbedrag",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Valuta",
+						"type": "string"
+					},
+					{
+						"key": "criticalFindingsCount",
+						"label": "Kritieke bevindingen",
+						"type": "integer"
+					},
+					{
+						"key": "majorFindingsCount",
+						"label": "Majeure bevindingen",
+						"type": "integer"
+					},
+					{
+						"key": "minorFindingsCount",
+						"label": "Mineure bevindingen",
+						"type": "integer"
+					},
+					{
+						"key": "observationsCount",
+						"label": "Observaties",
+						"type": "integer"
+					},
+					{
+						"key": "remediationOverdueCount",
+						"label": "Achterstallige remediëringen",
+						"type": "integer"
+					},
+					{
+						"key": "auditOpinion",
+						"label": "Controleverklaring",
+						"type": "string"
+					},
+					{
+						"key": "managementLetterId",
+						"label": "Management letter",
+						"type": "string"
+					},
+					{
+						"key": "complianceStatus",
+						"label": "Nalevingsstatus",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "submissionDate",
+						"label": "Indiendatum",
+						"type": "date-time"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "SisaRapportages"
+			}
+		},
+		{
+			"id": "ComplianceAuditTrails",
+			"route": "/compliance-audit",
+			"type": "index",
+			"title": "Compliance audittrail",
+			"config": {
+				"register": "shillinq",
+				"schema": "ComplianceAuditTrail",
+				"columns": [
+					{
+						"key": "trailNumber",
+						"label": "Trailnummer",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"sortable": true
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Boekjaar",
+						"sortable": true
+					},
+					{
+						"key": "findingSeverity",
+						"label": "Ernst bevinding",
+						"sortable": true
+					},
+					{
+						"key": "remediationStatus",
+						"label": "Remediëringsstatus",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-fiscalYear",
+				"detailRoute": "ComplianceAuditTrailDetail"
+			}
+		},
+		{
+			"id": "ComplianceAuditTrailDetail",
+			"route": "/compliance-audit/:id",
+			"type": "detail",
+			"title": "Compliance audittrail",
+			"config": {
+				"register": "shillinq",
+				"schema": "ComplianceAuditTrail",
+				"fields": [
+					{
+						"key": "trailNumber",
+						"label": "Trailnummer",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Boekjaar",
+						"type": "integer"
+					},
+					{
+						"key": "findingNumber",
+						"label": "Bevindingsnummer",
+						"type": "string"
+					},
+					{
+						"key": "findingSeverity",
+						"label": "Ernst bevinding",
+						"type": "string"
+					},
+					{
+						"key": "findingDescription",
+						"label": "Bevindingomschrijving",
+						"type": "string"
+					},
+					{
+						"key": "observationNumber",
+						"label": "Observatienummer",
+						"type": "string"
+					},
+					{
+						"key": "observationDescription",
+						"label": "Observatieomschrijving",
+						"type": "string"
+					},
+					{
+						"key": "remediationDueDate",
+						"label": "Remediëring vóór",
+						"type": "date"
+					},
+					{
+						"key": "remediationStatus",
+						"label": "Remediëringsstatus",
+						"type": "string"
+					},
+					{
+						"key": "remediationCompletionDate",
+						"label": "Remediëring voltooid op",
+						"type": "date"
+					},
+					{
+						"key": "auditorName",
+						"label": "Auditor",
+						"type": "string"
+					},
+					{
+						"key": "auditDate",
+						"label": "Auditdatum",
+						"type": "date"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ComplianceAuditTrails"
+			}
+		},
+		{
+			"id": "ManagementLetters",
+			"route": "/management-letter",
+			"type": "index",
+			"title": "Management letters",
+			"config": {
+				"register": "shillinq",
+				"schema": "ManagementLetter",
+				"columns": [
+					{
+						"key": "letterNumber",
+						"label": "Briefnummer",
+						"sortable": true
+					},
+					{
+						"key": "auditorName",
+						"label": "Auditor",
+						"sortable": true
+					},
+					{
+						"key": "issuedDate",
+						"label": "Uitgiftedatum",
+						"sortable": true
+					},
+					{
+						"key": "auditOpinion",
+						"label": "Controleverklaring",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-issuedDate",
+				"detailRoute": "ManagementLetterDetail"
+			}
+		},
+		{
+			"id": "ManagementLetterDetail",
+			"route": "/management-letter/:id",
+			"type": "detail",
+			"title": "Management letter",
+			"config": {
+				"register": "shillinq",
+				"schema": "ManagementLetter",
+				"fields": [
+					{
+						"key": "letterNumber",
+						"label": "Briefnummer",
+						"type": "string"
+					},
+					{
+						"key": "sisaReportId",
+						"label": "SiSa-rapport",
+						"type": "string"
+					},
+					{
+						"key": "auditorName",
+						"label": "Auditor",
+						"type": "string"
+					},
+					{
+						"key": "issuedDate",
+						"label": "Uitgiftedatum",
+						"type": "date"
+					},
+					{
+						"key": "dueResponseDate",
+						"label": "Responsdatum",
+						"type": "date"
+					},
+					{
+						"key": "findingsSummary",
+						"label": "Samenvatting bevindingen",
+						"type": "string"
+					},
+					{
+						"key": "observationsSummary",
+						"label": "Samenvatting observaties",
+						"type": "string"
+					},
+					{
+						"key": "remediationRecommendations",
+						"label": "Remediëeringsaanbevelingen",
+						"type": "string"
+					},
+					{
+						"key": "auditOpinion",
+						"label": "Controleverklaring",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ManagementLetters"
+			}
+		},
+		{
+			"id": "AuditDocuments",
+			"route": "/audit-documents",
+			"type": "index",
+			"title": "Auditdocumenten",
+			"config": {
+				"register": "shillinq",
+				"schema": "AuditDocument",
+				"columns": [
+					{
+						"key": "documentNumber",
+						"label": "Documentnummer",
+						"sortable": true
+					},
+					{
+						"key": "documentType",
+						"label": "Documenttype",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Ondertekeningsstatus",
+						"sortable": true
+					},
+					{
+						"key": "signingTimestamp",
+						"label": "Ondertekend op",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-signingTimestamp",
+				"detailRoute": "AuditDocumentDetail"
+			}
+		},
+		{
+			"id": "AuditDocumentDetail",
+			"route": "/audit-documents/:id",
+			"type": "detail",
+			"title": "Auditdocument",
+			"config": {
+				"register": "shillinq",
+				"schema": "AuditDocument",
+				"fields": [
+					{
+						"key": "documentNumber",
+						"label": "Documentnummer",
+						"type": "string"
+					},
+					{
+						"key": "documentType",
+						"label": "Documenttype",
+						"type": "string"
+					},
+					{
+						"key": "glTransactionId",
+						"label": "GL-transactie",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "signingUser",
+						"label": "Ondertekenaar",
+						"type": "string"
+					},
+					{
+						"key": "signingTimestamp",
+						"label": "Ondertekend op",
+						"type": "date-time"
+					},
+					{
+						"key": "signingReason",
+						"label": "Reden ondertekening",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Ondertekeningsstatus",
+						"type": "string"
+					},
+					{
+						"key": "relatedTransactionAmount",
+						"label": "Transactiebedrag",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Valuta",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Archiveringsstatus",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"auditTrail": true,
+				"indexRoute": "AuditDocuments"
+			}
+		},
+		{
+			"id": "Bewaartermijnen",
+			"route": "/administratie/bewaartermijnen",
+			"type": "index",
+			"title": "Bewaartermijnen",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetentionRule",
+				"columns": [
+					{
+						"key": "selectielijstCode",
+						"label": "Selectielijst code",
+						"sortable": true
+					},
+					{
+						"key": "description",
+						"label": "Omschrijving",
+						"sortable": false
+					},
+					{
+						"key": "recordCategory",
+						"label": "Categorie",
+						"sortable": true
+					},
+					{
+						"key": "retentionYears",
+						"label": "Bewaartermijn (jaren)",
+						"sortable": true
+					},
+					{
+						"key": "disposition",
+						"label": "Actie bij verstrijken",
+						"sortable": true
+					},
+					{
+						"key": "daysUntilRetention",
+						"label": "Dagen tot bewaartermijn",
+						"sortable": true
+					}
+				],
+				"defaultSort": "selectielijstCode",
+				"detailRoute": "BewaartermijnenDetail"
+			}
+		},
+		{
+			"id": "BewaartermijnenDetail",
+			"route": "/administratie/bewaartermijnen/:id",
+			"type": "detail",
+			"title": "Bewaartermijn",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetentionRule",
+				"fields": [
+					{
+						"key": "selectielijstCode",
+						"label": "Selectielijst code",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Omschrijving",
+						"type": "string"
+					},
+					{
+						"key": "recordCategory",
+						"label": "Recordcategorie",
+						"type": "string"
+					},
+					{
+						"key": "retentionYears",
+						"label": "Bewaartermijn (jaren)",
+						"type": "number"
+					},
+					{
+						"key": "retentionTrigger",
+						"label": "Relatieve bewaartermijn",
+						"type": "string"
+					},
+					{
+						"key": "disposition",
+						"label": "Actie bij verstrijken",
+						"type": "string"
+					},
+					{
+						"key": "legalBasis",
+						"label": "Wettelijke grondslag",
+						"type": "string"
+					},
+					{
+						"key": "effectiveFrom",
+						"label": "Geldig vanaf",
+						"type": "string"
+					},
+					{
+						"key": "effectiveTo",
+						"label": "Geldig tot",
+						"type": "string"
+					},
+					{
+						"key": "customRetentionYears",
+						"label": "Afwijkende bewaartermijn (organisatie)",
+						"type": "number"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "daysUntilRetention",
+						"label": "Dagen tot bewaartermijn",
+						"type": "number"
+					}
+				],
+				"indexRoute": "Bewaartermijnen"
+			}
+		},
+		{
+			"id": "BewaartermijnenDashboard",
+			"route": "/administratie/bewaartermijnen/dashboard",
+			"type": "dashboard",
+			"title": "Bewaartermijnen — Dashboard",
+			"config": {
+				"widgets": [
+					{
+						"id": "nearing-retention",
+						"title": "Verlopen binnenkort",
+						"type": "stats-block",
+						"iconClass": "icon-calendar",
+						"props": {
+							"countLabel": "bewaartermijnen",
+							"variant": "warning"
+						},
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "RetentionRule",
+							"filter": {
+								"daysUntilRetention_lt": 90
+							},
+							"aggregate": "count"
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "layout-nearing-retention",
+						"widgetId": "nearing-retention",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 2
+					}
+				]
+			}
+		},
+		{
 			"id": "Settings",
 			"route": "/settings",
 			"type": "settings",
@@ -1149,6 +3847,3329 @@
 								"type": "version-info"
 							}
 						]
+					}
+				]
+			}
+		},
+		{
+			"id": "TaxFilingPrep",
+			"route": "/tax-filing-prep",
+			"type": "report",
+			"title": "Tax Filing Prep",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxSummaryReport",
+				"dashboard": {
+					"kpis": [
+						{
+							"id": "estimated-liability",
+							"label": "Estimated Annual Liability",
+							"icon": "CalculatorOutline",
+							"aggregation": "currentEstimateByYear",
+							"field": "latestLiability",
+							"format": "currency",
+							"currency": "EUR"
+						},
+						{
+							"id": "filing-deadline",
+							"label": "Filing Deadline",
+							"icon": "CalendarClockOutline",
+							"source": "TaxRegimeConfiguration",
+							"field": "filingDeadline",
+							"format": "days-until"
+						},
+						{
+							"id": "summaries-ready",
+							"label": "Tax Summaries Ready",
+							"icon": "FileCheckOutline",
+							"aggregation": "finalizedSummaryCount",
+							"field": "count",
+							"format": "integer"
+						},
+						{
+							"id": "gl-transaction-count",
+							"label": "GL Transactions Included",
+							"icon": "DatabaseOutline",
+							"source": "TaxEstimate",
+							"field": "glTransactionCount",
+							"filter": {
+								"status": "current"
+							},
+							"format": "integer"
+						}
+					],
+					"table": {
+						"schema": "TaxSummaryReport",
+						"filter": {
+							"fiscalYear": "@currentFiscalYear"
+						},
+						"columns": [
+							{
+								"key": "taxCategory",
+								"label": "Tax Category",
+								"sortable": true
+							},
+							{
+								"key": "grossAmount",
+								"label": "Gross Amount (EUR)",
+								"sortable": true
+							},
+							{
+								"key": "deductionsAmount",
+								"label": "Deductions (EUR)",
+								"sortable": true
+							},
+							{
+								"key": "netAmount",
+								"label": "Net Amount (EUR)",
+								"sortable": true
+							},
+							{
+								"key": "status",
+								"label": "Status",
+								"sortable": true
+							},
+							{
+								"key": "snapshotDate",
+								"label": "Snapshot Date",
+								"sortable": true
+							}
+						],
+						"defaultSort": "taxCategory"
+					}
+				}
+			}
+		},
+		{
+			"id": "TaxEstimates",
+			"route": "/tax-estimates",
+			"type": "index",
+			"title": "Tax Estimates",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxEstimate",
+				"columns": [
+					{
+						"key": "fiscalYear",
+						"label": "Fiscal Year",
+						"sortable": true
+					},
+					{
+						"key": "snapshotDate",
+						"label": "As of Date",
+						"sortable": true
+					},
+					{
+						"key": "estimatedNetLiability",
+						"label": "Estimated Net Liability (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "estimatedIncomeTax",
+						"label": "Estimated Income Tax (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "configurationVersionId",
+						"label": "Configuration Version",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-snapshotDate",
+				"detailRoute": "TaxEstimatesDetail"
+			}
+		},
+		{
+			"id": "TaxEstimatesDetail",
+			"route": "/tax-estimates/:id",
+			"type": "detail",
+			"title": "Tax Estimate",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxEstimate",
+				"fields": [
+					{
+						"key": "fiscalYear",
+						"label": "Fiscal Year",
+						"type": "number"
+					},
+					{
+						"key": "snapshotDate",
+						"label": "As of Date",
+						"type": "string"
+					},
+					{
+						"key": "configurationVersionId",
+						"label": "Configuration Version",
+						"type": "string"
+					},
+					{
+						"key": "glTransactionCount",
+						"label": "GL Transactions Included",
+						"type": "number"
+					},
+					{
+						"key": "ytdTaxableIncome",
+						"label": "YTD Taxable Income (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "ytdTaxableExpenses",
+						"label": "YTD Taxable Expenses (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "ytdNetIncome",
+						"label": "YTD Net Income (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "estimatedAnnualIncome",
+						"label": "Estimated Annual Income (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "estimatedAnnualExpenses",
+						"label": "Estimated Annual Expenses (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "estimatedAnnualNetIncome",
+						"label": "Estimated Annual Net Income (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "estimatedTaxableIncome",
+						"label": "Estimated Taxable Income (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "estimatedIncomeTax",
+						"label": "Estimated Income Tax (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "witholdingCredits",
+						"label": "Withholding Credits (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "estimatedNetLiability",
+						"label": "Estimated Net Liability (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "TaxEstimates"
+			}
+		},
+		{
+			"id": "TaxConfiguration",
+			"route": "/tax-configuration",
+			"type": "detail",
+			"title": "Tax Configuration",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxRegimeConfiguration",
+				"visibility": {
+					"roles": [
+						"administrator"
+					]
+				},
+				"fields": [
+					{
+						"key": "name",
+						"label": "Configuration Name",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Fiscal Year",
+						"type": "number"
+					},
+					{
+						"key": "regimeType",
+						"label": "Regime Type",
+						"type": "string"
+					},
+					{
+						"key": "incomeTaxRate",
+						"label": "Income Tax Rate",
+						"type": "number",
+						"help": "Decimal rate (e.g. 0.25 for 25%)"
+					},
+					{
+						"key": "generalAllowance",
+						"label": "General Allowance (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "soleTraderAllowance",
+						"label": "Sole Trader Allowance (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "filingDeadline",
+						"label": "Filing Deadline",
+						"type": "string"
+					},
+					{
+						"key": "categoryMappingRules",
+						"label": "GL Account Category Mapping Rules",
+						"type": "json",
+						"help": "Map GL account ranges (e.g. '4000-4099') or individual accounts to statutory tax categories."
+					},
+					{
+						"key": "allowanceAmounts",
+						"label": "Per-Category Allowance Overrides",
+						"type": "json"
+					},
+					{
+						"key": "versionId",
+						"label": "Version ID",
+						"type": "string"
+					},
+					{
+						"key": "effectiveFrom",
+						"label": "Effective From",
+						"type": "string"
+					},
+					{
+						"key": "effectiveUntil",
+						"label": "Effective Until",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "Dashboard"
+			}
+		},
+		{
+			"id": "Vendors",
+			"route": "/bookkeeping/vendors",
+			"type": "index",
+			"title": "Vendors",
+			"config": {
+				"register": "shillinq",
+				"schema": "VendorMaster",
+				"columns": [
+					{
+						"key": "vendorNumber",
+						"label": "Vendor #",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "iban",
+						"label": "IBAN",
+						"sortable": false
+					},
+					{
+						"key": "paymentTermDays",
+						"label": "Payment Terms (days)",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "vendorNumber",
+				"detailRoute": "VendorDetail"
+			}
+		},
+		{
+			"id": "VendorDetail",
+			"route": "/bookkeeping/vendors/:id",
+			"type": "detail",
+			"title": "Vendor",
+			"config": {
+				"register": "shillinq",
+				"schema": "VendorMaster",
+				"fields": [
+					{
+						"key": "vendorNumber",
+						"label": "Vendor #",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Legal Name",
+						"type": "string"
+					},
+					{
+						"key": "tradingName",
+						"label": "Trading Name",
+						"type": "string"
+					},
+					{
+						"key": "kvkNumber",
+						"label": "KvK Number",
+						"type": "string"
+					},
+					{
+						"key": "btwNumber",
+						"label": "BTW Number",
+						"type": "string"
+					},
+					{
+						"key": "iban",
+						"label": "IBAN",
+						"type": "string"
+					},
+					{
+						"key": "bic",
+						"label": "BIC",
+						"type": "string"
+					},
+					{
+						"key": "paymentTermDays",
+						"label": "Payment Terms (days)",
+						"type": "integer"
+					},
+					{
+						"key": "defaultExpenseAccountNumber",
+						"label": "Default Expense Account",
+						"type": "string"
+					},
+					{
+						"key": "email",
+						"label": "Email",
+						"type": "string"
+					},
+					{
+						"key": "phone",
+						"label": "Phone",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "Vendors"
+			}
+		},
+		{
+			"id": "AccountsPayable",
+			"route": "/bookkeeping/accounts-payable",
+			"type": "index",
+			"title": "Accounts Payable",
+			"config": {
+				"register": "shillinq",
+				"schema": "APInvoice",
+				"columns": [
+					{
+						"key": "invoiceNumber",
+						"label": "Invoice #",
+						"sortable": true
+					},
+					{
+						"key": "vendorInvoiceRef",
+						"label": "Vendor Ref",
+						"sortable": true
+					},
+					{
+						"key": "vendorId",
+						"label": "Vendor",
+						"sortable": true
+					},
+					{
+						"key": "invoiceDate",
+						"label": "Invoice Date",
+						"sortable": true
+					},
+					{
+						"key": "dueDate",
+						"label": "Due Date",
+						"sortable": true
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "dueDate",
+				"detailRoute": "APInvoiceDetail"
+			}
+		},
+		{
+			"id": "APInvoiceDetail",
+			"route": "/bookkeeping/accounts-payable/:id",
+			"type": "detail",
+			"title": "AP Invoice",
+			"config": {
+				"register": "shillinq",
+				"schema": "APInvoice",
+				"fields": [
+					{
+						"key": "invoiceNumber",
+						"label": "Invoice #",
+						"type": "string"
+					},
+					{
+						"key": "vendorInvoiceRef",
+						"label": "Vendor Invoice Ref",
+						"type": "string"
+					},
+					{
+						"key": "vendorId",
+						"label": "Vendor",
+						"type": "string"
+					},
+					{
+						"key": "invoiceDate",
+						"label": "Invoice Date",
+						"type": "date"
+					},
+					{
+						"key": "dueDate",
+						"label": "Due Date",
+						"type": "date"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total Amount",
+						"type": "number"
+					},
+					{
+						"key": "taxAmount",
+						"label": "Tax Amount",
+						"type": "number"
+					},
+					{
+						"key": "approvalState",
+						"label": "Approval Status",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "glTransactionId",
+						"label": "GL Transaction",
+						"type": "string"
+					},
+					{
+						"key": "sourceDocumentUri",
+						"label": "Source Document",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "AccountsPayable"
+			}
+		},
+		{
+			"id": "APAging",
+			"route": "/bookkeeping/ap-aging",
+			"type": "index",
+			"title": "AP Aging",
+			"config": {
+				"register": "shillinq",
+				"schema": "APInvoice",
+				"aggregation": "apAging",
+				"columns": [
+					{
+						"key": "vendorId",
+						"label": "Vendor",
+						"sortable": true
+					},
+					{
+						"key": "agingBucket",
+						"label": "Aging Bucket",
+						"sortable": true
+					},
+					{
+						"key": "count",
+						"label": "Invoices",
+						"sortable": true
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total Outstanding (EUR)",
+						"sortable": true
+					}
+				],
+				"defaultSort": "agingBucket",
+				"description": "AP aging report grouping open invoices by vendor and aging bucket per REQ-AP-009. Excludes paid and voided invoices."
+			}
+		},
+		{
+			"id": "PaymentRuns",
+			"route": "/bookkeeping/payment-runs",
+			"type": "index",
+			"title": "Payment Runs",
+			"config": {
+				"register": "shillinq",
+				"schema": "PaymentRun",
+				"columns": [
+					{
+						"key": "runNumber",
+						"label": "Run #",
+						"sortable": true
+					},
+					{
+						"key": "runDate",
+						"label": "Run Date",
+						"sortable": true
+					},
+					{
+						"key": "paymentMethod",
+						"label": "Method",
+						"sortable": true
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "runDate",
+				"detailRoute": "PaymentRunDetail"
+			}
+		},
+		{
+			"id": "PaymentRunDetail",
+			"route": "/bookkeeping/payment-runs/:id",
+			"type": "detail",
+			"title": "Payment Run",
+			"config": {
+				"register": "shillinq",
+				"schema": "PaymentRun",
+				"fields": [
+					{
+						"key": "runNumber",
+						"label": "Run #",
+						"type": "string"
+					},
+					{
+						"key": "runDate",
+						"label": "Scheduled Date",
+						"type": "date"
+					},
+					{
+						"key": "paymentMethod",
+						"label": "Payment Method",
+						"type": "string"
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total Amount",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "sepaXml",
+						"label": "SEPA pain.001 XML",
+						"type": "download",
+						"mimeType": "text/xml",
+						"filename": "sepa-pain001.xml"
+					},
+					{
+						"key": "idealLinks",
+						"label": "iDEAL Payment Links",
+						"type": "list"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "PaymentRuns"
+			}
+		},
+		{
+			"id": "ProjectenOverzicht",
+			"route": "/projecten",
+			"type": "index",
+			"title": "Projecten — Overzicht",
+			"visibilityPredicate": {
+				"administrationType": [
+					"mkb",
+					"zzp"
+				],
+				"role": "project-administrator"
+			},
+			"config": {
+				"register": "shillinq",
+				"schema": "Project",
+				"columns": [
+					{
+						"key": "projectNumber",
+						"label": "Projectnummer",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Naam",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "recognitionStage",
+						"label": "Fase",
+						"sortable": true
+					},
+					{
+						"key": "recognisedRevenue",
+						"label": "Erkende omzet",
+						"sortable": true
+					},
+					{
+						"key": "wipBalance",
+						"label": "WIP-saldo",
+						"sortable": true
+					}
+				],
+				"defaultSort": "projectNumber",
+				"detailRoute": "ProjectDetail"
+			}
+		},
+		{
+			"id": "Tarieven",
+			"route": "/tarieven",
+			"type": "index",
+			"title": "Tarieven",
+			"visibilityPredicate": {
+				"administrationType": [
+					"mkb",
+					"zzp"
+				],
+				"role": "project-administrator"
+			},
+			"config": {
+				"register": "shillinq",
+				"schema": "RateCard",
+				"columns": [
+					{
+						"key": "level",
+						"label": "Niveau",
+						"sortable": true
+					},
+					{
+						"key": "hourlyRate",
+						"label": "Uurtarief",
+						"sortable": true
+					},
+					{
+						"key": "currency",
+						"label": "Valuta",
+						"sortable": false
+					},
+					{
+						"key": "effectiveFrom",
+						"label": "Geldig vanaf",
+						"sortable": true
+					},
+					{
+						"key": "effectiveTo",
+						"label": "Geldig tot",
+						"sortable": true
+					}
+				],
+				"defaultSort": "level"
+			}
+		},
+		{
+			"id": "Utilisatie",
+			"route": "/utilisatie",
+			"type": "dashboard",
+			"title": "Utilisatie",
+			"visibilityPredicate": {
+				"administrationType": [
+					"mkb",
+					"zzp"
+				],
+				"role": "project-administrator"
+			},
+			"config": {
+				"widgets": [
+					{
+						"id": "utilisatie-widget",
+						"title": "Utilisatie per persoon",
+						"type": "utilisatie-chart",
+						"iconClass": "ChartLineVariant",
+						"schema": "ProjectAssignment",
+						"calculation": "utilization",
+						"bands": [
+							{
+								"min": 0.8,
+								"color": "success",
+								"label": "Hoog (>80%)"
+							},
+							{
+								"min": 0.5,
+								"color": "warning",
+								"label": "Gemiddeld (50–80%)"
+							},
+							{
+								"min": 0,
+								"color": "error",
+								"label": "Laag (<50%)"
+							}
+						]
+					}
+				],
+				"layout": [
+					{
+						"id": "layout-utilisatie",
+						"widgetId": "utilisatie-widget",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 6
+					}
+				]
+			}
+		},
+		{
+			"id": "IPAssetValuationDetail",
+			"route": "/bookkeeping/innovatiebox/ip-activa/:id",
+			"type": "detail",
+			"title": "IP-activum",
+			"featureFlag": "mkb-innovatiebox",
+			"config": {
+				"register": "shillinq",
+				"schema": "IPAssetValuation",
+				"featureFlag": "mkb-innovatiebox",
+				"fields": [
+					{
+						"key": "assetNaam",
+						"label": "Naam",
+						"type": "string"
+					},
+					{
+						"key": "assetType",
+						"label": "Type",
+						"type": "string"
+					},
+					{
+						"key": "wbsoVerklaringNummer",
+						"label": "WBSO-verklaringnummer",
+						"type": "string"
+					},
+					{
+						"key": "octrooiNummer",
+						"label": "Octrooinummer",
+						"type": "string"
+					},
+					{
+						"key": "valuationBedrag",
+						"label": "Waardering (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "valuationDate",
+						"label": "Peildatum",
+						"type": "date"
+					},
+					{
+						"key": "applicableTariff",
+						"label": "Innovatiebox tarief",
+						"type": "number"
+					},
+					{
+						"key": "vpbBalansLinkId",
+						"label": "Vpb-balans koppeling",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"relatedLists": [
+					{
+						"id": "winst-toerekeningen",
+						"title": "Winsttoerekening",
+						"schema": "WinstToerekening",
+						"filter": {
+							"ipAssetId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "periodId",
+								"label": "Periode"
+							},
+							{
+								"key": "toegerekendeWinst",
+								"label": "Toegerekende winst (EUR)"
+							},
+							{
+								"key": "verdeelsleutel",
+								"label": "Verdeelsleutel"
+							},
+							{
+								"key": "verdeelsleutelRatio",
+								"label": "Ratio"
+							}
+						]
+					}
+				],
+				"auditTrail": true
+			}
+		},
+		{
+			"id": "InnovatieboxElectionDetail",
+			"route": "/bookkeeping/innovatiebox/:id",
+			"type": "detail",
+			"title": "Innovatiebox elektie",
+			"featureFlag": "mkb-innovatiebox",
+			"config": {
+				"register": "shillinq",
+				"schema": "InnovatieboxElection",
+				"featureFlag": "mkb-innovatiebox",
+				"fields": [
+					{
+						"key": "fiscalYear",
+						"label": "Boekjaar",
+						"type": "integer"
+					},
+					{
+						"key": "route",
+						"label": "Route",
+						"type": "string",
+						"help": "forfaitair (Wet Vpb art. 12bg) of afpelmethode (Wet Vpb art. 12b)"
+					},
+					{
+						"key": "applicableTariff",
+						"label": "Innovatiebox tarief",
+						"type": "number",
+						"help": "Huidig wettelijk tarief: 0.09 (9%) per Wet Vpb art. 12b 2026"
+					},
+					{
+						"key": "forfaitairCapBedrag",
+						"label": "Forfaitair plafond (EUR)",
+						"type": "number",
+						"help": "Maximaal in aanmerking komende winst (default EUR 25.000)"
+					},
+					{
+						"key": "forfaitairPercentage",
+						"label": "Forfaitair percentage",
+						"type": "number",
+						"help": "Percentage van fiscale winst (default 25% per Wet Vpb art. 12bg)"
+					},
+					{
+						"key": "operatingProfit",
+						"label": "Fiscale winst",
+						"type": "number"
+					},
+					{
+						"key": "innovationAttributedProfitDisplay",
+						"label": "In aanmerking komende innovatiewinst",
+						"type": "calculated"
+					},
+					{
+						"key": "vpbAangifteId",
+						"label": "Vpb-aangifte koppeling",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"aggregations": [
+					{
+						"id": "innovatieboxAdministratie",
+						"title": "Innovatiebox administratie",
+						"description": "Berekende innovatiebox-impact voor dit boekjaar"
+					}
+				],
+				"relatedLists": [
+					{
+						"id": "ip-assets",
+						"title": "IP-activa (afpelmethode)",
+						"schema": "IPAssetValuation",
+						"filter": {
+							"administrationId": "@self.administrationId"
+						},
+						"visibleWhen": {
+							"field": "route",
+							"equals": "afpelmethode"
+						},
+						"columns": [
+							{
+								"key": "assetNaam",
+								"label": "Naam"
+							},
+							{
+								"key": "assetType",
+								"label": "Type"
+							},
+							{
+								"key": "valuationBedrag",
+								"label": "Waardering (EUR)"
+							},
+							{
+								"key": "applicableTariff",
+								"label": "Tarief"
+							},
+							{
+								"key": "valuationDate",
+								"label": "Peildatum"
+							}
+						],
+						"detailRoute": "IPAssetValuationDetail"
+					}
+				],
+				"auditTrail": true,
+				"indexRoute": "InnovatieboxElections"
+			}
+		},
+		{
+			"id": "InnovatieboxElections",
+			"route": "/bookkeeping/innovatiebox",
+			"type": "index",
+			"title": "Innovatiebox",
+			"featureFlag": "mkb-innovatiebox",
+			"config": {
+				"register": "shillinq",
+				"schema": "InnovatieboxElection",
+				"featureFlag": "mkb-innovatiebox",
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"mkb",
+						"zzp"
+					]
+				},
+				"columns": [
+					{
+						"key": "fiscalYear",
+						"label": "Boekjaar",
+						"sortable": true
+					},
+					{
+						"key": "route",
+						"label": "Route",
+						"sortable": true
+					},
+					{
+						"key": "applicableTariff",
+						"label": "Tarief",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-fiscalYear",
+				"detailRoute": "InnovatieboxElectionDetail"
+			}
+		},
+		{
+			"id": "RDSubsidies",
+			"route": "/bookkeeping/r-d-subsidies",
+			"type": "index",
+			"title": "R&D Subsidies",
+			"featureFlag": "mkb-r-d-subsidies",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"featureFlag": "mkb-r-d-subsidies",
+				"filter": {
+					"subsidieRegeling": {
+						"not": "other"
+					}
+				},
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"mkb",
+						"zzp",
+						"gemeente",
+						"provincie"
+					]
+				},
+				"columns": [
+					{
+						"key": "subsidieNumber",
+						"label": "Subsidienummer",
+						"sortable": true
+					},
+					{
+						"key": "regelingNaam",
+						"label": "Regeling",
+						"sortable": true
+					},
+					{
+						"key": "subsidieRegeling",
+						"label": "R&D regeling",
+						"sortable": true
+					},
+					{
+						"key": "counterpartyName",
+						"label": "Verstrekker",
+						"sortable": true
+					},
+					{
+						"key": "aangevraagdBedrag",
+						"label": "Aangevraagd (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-aanvraagDate",
+				"detailRoute": "RDSubsidieDetail"
+			}
+		},
+		{
+			"id": "RDSubsidieDetail",
+			"route": "/bookkeeping/r-d-subsidies/:id",
+			"type": "detail",
+			"title": "R&D Subsidie",
+			"featureFlag": "mkb-r-d-subsidies",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"featureFlag": "mkb-r-d-subsidies",
+				"fields": [
+					{
+						"key": "subsidieNumber",
+						"label": "Subsidienummer",
+						"type": "string"
+					},
+					{
+						"key": "regelingNaam",
+						"label": "Regelingnaam",
+						"type": "string"
+					},
+					{
+						"key": "subsidieRegeling",
+						"label": "R&D regeling",
+						"type": "string"
+					},
+					{
+						"key": "direction",
+						"label": "Richting",
+						"type": "string"
+					},
+					{
+						"key": "counterpartyName",
+						"label": "Verstrekker / begunstigde",
+						"type": "string"
+					},
+					{
+						"key": "aanvraagDate",
+						"label": "Aanvraagdatum",
+						"type": "date"
+					},
+					{
+						"key": "beschikkingDate",
+						"label": "Beschikkingsdatum",
+						"type": "date"
+					},
+					{
+						"key": "vaststellingDate",
+						"label": "Vaststellingsdatum",
+						"type": "date"
+					},
+					{
+						"key": "aangevraagdBedrag",
+						"label": "Aangevraagd bedrag (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "verleendBedrag",
+						"label": "Verleend bedrag (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "vastgesteldBedrag",
+						"label": "Vastgesteld bedrag (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "horizonIndirect25Warning",
+						"label": "Indirect-25% waarschuwing",
+						"type": "boolean"
+					},
+					{
+						"key": "horizonIndirect25UsagePercent",
+						"label": "Indirect-25% gebruik (%)",
+						"type": "number"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"aggregation": "voortgangsrapportage",
+				"relatedLists": [
+					{
+						"id": "kostenposten",
+						"title": "Kostenposten",
+						"schema": "Kostenpost",
+						"filter": {
+							"subsidieId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "kostencategorie",
+								"label": "Categorie"
+							},
+							{
+								"key": "periodId",
+								"label": "Periode"
+							},
+							{
+								"key": "amount",
+								"label": "Bedrag (EUR)"
+							},
+							{
+								"key": "state",
+								"label": "Status"
+							}
+						],
+						"detailRoute": "KostenpostDetail"
+					}
+				],
+				"indexRoute": "RDSubsidies"
+			}
+		},
+		{
+			"id": "KostenpostDetail",
+			"route": "/bookkeeping/r-d-subsidies/:subsidieId/kostenposten/:id",
+			"type": "detail",
+			"title": "Kostenpost",
+			"featureFlag": "mkb-r-d-subsidies",
+			"config": {
+				"register": "shillinq",
+				"schema": "Kostenpost",
+				"featureFlag": "mkb-r-d-subsidies",
+				"fields": [
+					{
+						"key": "subsidieId",
+						"label": "Subsidie",
+						"type": "string"
+					},
+					{
+						"key": "subsidieRegeling",
+						"label": "R&D regeling",
+						"type": "string"
+					},
+					{
+						"key": "kostencategorie",
+						"label": "Kostencategorie",
+						"type": "string"
+					},
+					{
+						"key": "amount",
+						"label": "Bedrag (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "description",
+						"label": "Omschrijving",
+						"type": "string"
+					},
+					{
+						"key": "periodId",
+						"label": "Periode",
+						"type": "string"
+					},
+					{
+						"key": "attachmentUri",
+						"label": "Bijlage URI",
+						"type": "string"
+					},
+					{
+						"key": "soUrenStaatUri",
+						"label": "S&O-uren-staat URI",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "RDSubsidies"
+			}
+		},
+		{
+			"id": "FiscalYears",
+			"route": "/bookkeeping/fiscal-years",
+			"type": "index",
+			"title": "Fiscal Years",
+			"config": {
+				"register": "shillinq",
+				"schema": "FiscalYear",
+				"columns": [
+					{
+						"key": "yearNumber",
+						"label": "Year",
+						"sortable": true
+					},
+					{
+						"key": "startDate",
+						"label": "Start Date",
+						"sortable": true
+					},
+					{
+						"key": "endDate",
+						"label": "End Date",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-yearNumber",
+				"detailRoute": "FiscalYearDetail"
+			}
+		},
+		{
+			"id": "FiscalYearDetail",
+			"route": "/bookkeeping/fiscal-years/:id",
+			"type": "detail",
+			"title": "Fiscal Year",
+			"config": {
+				"register": "shillinq",
+				"schema": "FiscalYear",
+				"fields": [
+					{
+						"key": "yearNumber",
+						"label": "Year",
+						"type": "integer"
+					},
+					{
+						"key": "startDate",
+						"label": "Start Date",
+						"type": "date"
+					},
+					{
+						"key": "endDate",
+						"label": "End Date",
+						"type": "date"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "closingJournalId",
+						"label": "Closing Journal",
+						"type": "string"
+					},
+					{
+						"key": "openingJournalId",
+						"label": "Opening Journal",
+						"type": "string"
+					},
+					{
+						"key": "closedAt",
+						"label": "Closed At",
+						"type": "date-time"
+					},
+					{
+						"key": "closedBy",
+						"label": "Closed By",
+						"type": "string"
+					},
+					{
+						"key": "reopenedAt",
+						"label": "Reopened At",
+						"type": "date-time"
+					},
+					{
+						"key": "reopenedBy",
+						"label": "Reopened By",
+						"type": "string"
+					},
+					{
+						"key": "reopenReason",
+						"label": "Reopen Reason",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "FiscalYears"
+			}
+		},
+		{
+			"id": "RateCards",
+			"route": "/beheer/rate-cards",
+			"type": "index",
+			"title": "Rate Cards",
+			"visibilityPredicate": {
+				"administrationType": [
+					"mkb",
+					"zzp"
+				],
+				"role": "project-administrator"
+			},
+			"config": {
+				"register": "shillinq",
+				"schema": "RateCardTemplate",
+				"columns": [
+					{
+						"key": "name",
+						"label": "Template Name",
+						"sortable": true
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"sortable": false
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": false
+					}
+				],
+				"defaultSort": "name",
+				"detailRoute": "RateCardDetail"
+			}
+		},
+		{
+			"id": "RateCardDetail",
+			"route": "/beheer/rate-cards/:id",
+			"type": "detail",
+			"title": "Rate Card Template",
+			"config": {
+				"register": "shillinq",
+				"schema": "RateCardTemplate",
+				"fields": [
+					{
+						"key": "templateId",
+						"label": "Template ID",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "tierStructure",
+						"label": "Tier Structure",
+						"type": "array"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "createdAt",
+						"label": "Created At",
+						"type": "date-time"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "RateCards"
+			}
+		},
+		{
+			"id": "RateSchedules",
+			"route": "/beheer/rate-schedules",
+			"type": "index",
+			"title": "Rate Schedules",
+			"visibilityPredicate": {
+				"administrationType": [
+					"mkb",
+					"zzp"
+				],
+				"role": "project-administrator"
+			},
+			"config": {
+				"register": "shillinq",
+				"schema": "RateSchedule",
+				"columns": [
+					{
+						"key": "tier",
+						"label": "Tier",
+						"sortable": true
+					},
+					{
+						"key": "entityId",
+						"label": "Entity",
+						"sortable": false
+					},
+					{
+						"key": "rate",
+						"label": "Rate",
+						"sortable": true
+					},
+					{
+						"key": "unit",
+						"label": "Unit",
+						"sortable": false
+					},
+					{
+						"key": "effectiveDate",
+						"label": "Effective Date",
+						"sortable": true
+					},
+					{
+						"key": "expiryDate",
+						"label": "Expiry Date",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "effectiveDate",
+				"detailRoute": "RateScheduleDetail"
+			}
+		},
+		{
+			"id": "RateScheduleDetail",
+			"route": "/beheer/rate-schedules/:id",
+			"type": "detail",
+			"title": "Rate Schedule",
+			"config": {
+				"register": "shillinq",
+				"schema": "RateSchedule",
+				"fields": [
+					{
+						"key": "scheduleId",
+						"label": "Schedule ID",
+						"type": "string"
+					},
+					{
+						"key": "versionId",
+						"label": "Version",
+						"type": "string"
+					},
+					{
+						"key": "tier",
+						"label": "Tier",
+						"type": "string"
+					},
+					{
+						"key": "entityId",
+						"label": "Entity",
+						"type": "string"
+					},
+					{
+						"key": "rate",
+						"label": "Rate",
+						"type": "number"
+					},
+					{
+						"key": "unit",
+						"label": "Unit",
+						"type": "string"
+					},
+					{
+						"key": "effectiveDate",
+						"label": "Effective Date",
+						"type": "date"
+					},
+					{
+						"key": "expiryDate",
+						"label": "Expiry Date",
+						"type": "date"
+					},
+					{
+						"key": "volumeBrackets",
+						"label": "Volume Brackets",
+						"type": "array"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "RateSchedules"
+			}
+		},
+		{
+			"id": "RateAuditTrail",
+			"route": "/beheer/rate-audit-trail",
+			"type": "index",
+			"title": "Rate Audit Trail",
+			"visibilityPredicate": {
+				"administrationType": [
+					"mkb",
+					"zzp"
+				],
+				"role": "project-administrator"
+			},
+			"config": {
+				"register": "shillinq",
+				"schema": "RateRecord",
+				"columns": [
+					{
+						"key": "lookupDate",
+						"label": "Lookup Date",
+						"sortable": true
+					},
+					{
+						"key": "userId",
+						"label": "User",
+						"sortable": false
+					},
+					{
+						"key": "resolvedTier",
+						"label": "Resolved Tier",
+						"sortable": true
+					},
+					{
+						"key": "resolvedRate",
+						"label": "Rate",
+						"sortable": true
+					},
+					{
+						"key": "resolvedUnit",
+						"label": "Unit",
+						"sortable": false
+					},
+					{
+						"key": "createdAt",
+						"label": "Recorded At",
+						"sortable": true
+					}
+				],
+				"defaultSort": "lookupDate",
+				"detailRoute": "RateRecordDetail"
+			}
+		},
+		{
+			"id": "RateRecordDetail",
+			"route": "/beheer/rate-audit-trail/:id",
+			"type": "detail",
+			"title": "Rate Record",
+			"config": {
+				"register": "shillinq",
+				"schema": "RateRecord",
+				"fields": [
+					{
+						"key": "recordId",
+						"label": "Record ID",
+						"type": "string"
+					},
+					{
+						"key": "lookupDate",
+						"label": "Lookup Date",
+						"type": "date"
+					},
+					{
+						"key": "userId",
+						"label": "User",
+						"type": "string"
+					},
+					{
+						"key": "roleId",
+						"label": "Role",
+						"type": "string"
+					},
+					{
+						"key": "projectId",
+						"label": "Project",
+						"type": "string"
+					},
+					{
+						"key": "clientId",
+						"label": "Client",
+						"type": "string"
+					},
+					{
+						"key": "resolvedTier",
+						"label": "Resolved Tier",
+						"type": "string"
+					},
+					{
+						"key": "resolvedScheduleId",
+						"label": "Schedule",
+						"type": "string"
+					},
+					{
+						"key": "resolvedRate",
+						"label": "Resolved Rate",
+						"type": "number"
+					},
+					{
+						"key": "resolvedUnit",
+						"label": "Unit",
+						"type": "string"
+					},
+					{
+						"key": "effectiveWindowStart",
+						"label": "Effective From",
+						"type": "date"
+					},
+					{
+						"key": "effectiveWindowEnd",
+						"label": "Effective To",
+						"type": "date"
+					},
+					{
+						"key": "createdAt",
+						"label": "Recorded At",
+						"type": "date-time"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"indexRoute": "RateAuditTrail"
+			}
+		},
+		{
+			"id": "Receipts",
+			"route": "/inkoop/receipts",
+			"type": "index",
+			"title": "Receipts",
+			"config": {
+				"register": "shillinq",
+				"schema": "Receipt",
+				"columns": [
+					{
+						"key": "receiptDate",
+						"label": "Date",
+						"sortable": true,
+						"type": "date"
+					},
+					{
+						"key": "vendorName",
+						"label": "Vendor",
+						"sortable": true
+					},
+					{
+						"key": "category",
+						"label": "Category",
+						"sortable": true
+					},
+					{
+						"key": "amount",
+						"label": "Amount",
+						"sortable": true,
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"sortable": true
+					},
+					{
+						"key": "amountInBaseCurrency",
+						"label": "Amount (EUR)",
+						"sortable": true,
+						"type": "number"
+					},
+					{
+						"key": "claimId",
+						"label": "Claim",
+						"sortable": false
+					}
+				],
+				"defaultSort": "receiptDate",
+				"filters": [
+					{
+						"key": "category",
+						"label": "Category",
+						"type": "string"
+					},
+					{
+						"key": "receiptDate",
+						"label": "Date Range",
+						"type": "date-range"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "claimId",
+						"label": "Has Claim",
+						"type": "boolean"
+					}
+				],
+				"detailRoute": "ReceiptDetail"
+			}
+		},
+		{
+			"id": "ReceiptDetail",
+			"route": "/inkoop/receipts/:id",
+			"type": "detail",
+			"title": "Receipt",
+			"config": {
+				"register": "shillinq",
+				"schema": "Receipt",
+				"fields": [
+					{
+						"key": "receiptNumber",
+						"label": "Receipt #",
+						"type": "string"
+					},
+					{
+						"key": "photoUri",
+						"label": "Photo",
+						"type": "file-upload"
+					},
+					{
+						"key": "receiptDate",
+						"label": "Date",
+						"type": "date"
+					},
+					{
+						"key": "vendorName",
+						"label": "Vendor",
+						"type": "string"
+					},
+					{
+						"key": "category",
+						"label": "Category",
+						"type": "string"
+					},
+					{
+						"key": "amount",
+						"label": "Original Amount",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "amountInBaseCurrency",
+						"label": "Amount (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "exchangeRate",
+						"label": "Exchange Rate",
+						"type": "number"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "costCentreCode",
+						"label": "Cost Centre",
+						"type": "string"
+					},
+					{
+						"key": "claimId",
+						"label": "Claim",
+						"type": "string"
+					},
+					{
+						"key": "extractedText",
+						"label": "Extracted Text (T3)",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"indexRoute": "Receipts"
+			}
+		},
+		{
+			"id": "ExpenseClaims",
+			"route": "/inkoop/expense-claims",
+			"type": "index",
+			"title": "Expense Claims",
+			"config": {
+				"register": "shillinq",
+				"schema": "ExpenseClaimEntry",
+				"columns": [
+					{
+						"key": "claimNumber",
+						"label": "Claim #",
+						"sortable": true
+					},
+					{
+						"key": "employeeId",
+						"label": "Employee",
+						"sortable": true
+					},
+					{
+						"key": "fromDate",
+						"label": "From",
+						"sortable": true,
+						"type": "date"
+					},
+					{
+						"key": "toDate",
+						"label": "To",
+						"sortable": true,
+						"type": "date"
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total (EUR)",
+						"sortable": true,
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "approvalState",
+						"label": "Approval",
+						"sortable": true
+					}
+				],
+				"defaultSort": "claimNumber",
+				"filters": [
+					{
+						"key": "employeeId",
+						"label": "Employee",
+						"type": "string"
+					},
+					{
+						"key": "fromDate",
+						"label": "Date Range",
+						"type": "date-range"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "enum",
+						"options": [
+							"draft",
+							"submitted",
+							"approved",
+							"posted",
+							"reimbursed",
+							"disputed",
+							"voided"
+						]
+					},
+					{
+						"key": "approvalState",
+						"label": "Approval State",
+						"type": "enum",
+						"options": [
+							"not-required",
+							"pending",
+							"approved",
+							"rejected"
+						]
+					}
+				],
+				"detailRoute": "ExpenseClaimDetail"
+			}
+		},
+		{
+			"id": "ExpenseClaimDetail",
+			"route": "/inkoop/expense-claims/:id",
+			"type": "detail",
+			"title": "Expense Claim",
+			"config": {
+				"register": "shillinq",
+				"schema": "ExpenseClaimEntry",
+				"fields": [
+					{
+						"key": "claimNumber",
+						"label": "Claim #",
+						"type": "string"
+					},
+					{
+						"key": "employeeId",
+						"label": "Employee",
+						"type": "string"
+					},
+					{
+						"key": "fromDate",
+						"label": "From Date",
+						"type": "date"
+					},
+					{
+						"key": "toDate",
+						"label": "To Date",
+						"type": "date"
+					},
+					{
+						"key": "submittedDate",
+						"label": "Submitted",
+						"type": "date-time"
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "approvalState",
+						"label": "Approval State",
+						"type": "string"
+					},
+					{
+						"key": "glTransactionId",
+						"label": "GL Transaction",
+						"type": "string"
+					},
+					{
+						"key": "costCentreAllocations",
+						"label": "Cost Centre Allocations",
+						"type": "object"
+					},
+					{
+						"key": "receiptIds",
+						"label": "Receipts",
+						"type": "relation-list",
+						"relatedSchema": "Receipt"
+					},
+					{
+						"key": "mileageIds",
+						"label": "Mileage Entries",
+						"type": "relation-list",
+						"relatedSchema": "MileageEntry"
+					},
+					{
+						"key": "perDiemIds",
+						"label": "Per Diem",
+						"type": "relation-list",
+						"relatedSchema": "PerDiem"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"indexRoute": "ExpenseClaims"
+			}
+		},
+		{
+			"id": "MileageLog",
+			"route": "/inkoop/mileage-log",
+			"type": "index",
+			"title": "Mileage Log",
+			"config": {
+				"register": "shillinq",
+				"schema": "MileageEntry",
+				"columns": [
+					{
+						"key": "mileageNumber",
+						"label": "Mileage #",
+						"sortable": true
+					},
+					{
+						"key": "journeyDate",
+						"label": "Date",
+						"sortable": true,
+						"type": "date"
+					},
+					{
+						"key": "fromLocation",
+						"label": "From",
+						"sortable": false
+					},
+					{
+						"key": "toLocation",
+						"label": "To",
+						"sortable": false
+					},
+					{
+						"key": "distance",
+						"label": "Distance (km)",
+						"sortable": true,
+						"type": "number"
+					},
+					{
+						"key": "vehicleType",
+						"label": "Vehicle",
+						"sortable": true
+					},
+					{
+						"key": "ratePerKm",
+						"label": "Rate (€/km)",
+						"sortable": true,
+						"type": "number"
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total (EUR)",
+						"sortable": true,
+						"type": "number"
+					},
+					{
+						"key": "costCentreCode",
+						"label": "Cost Centre",
+						"sortable": true
+					}
+				],
+				"defaultSort": "journeyDate",
+				"filters": [
+					{
+						"key": "vehicleType",
+						"label": "Vehicle Type",
+						"type": "enum",
+						"options": [
+							"car",
+							"motorcycle",
+							"van",
+							"bicycle"
+						]
+					},
+					{
+						"key": "journeyDate",
+						"label": "Date Range",
+						"type": "date-range"
+					},
+					{
+						"key": "costCentreCode",
+						"label": "Cost Centre",
+						"type": "string"
+					},
+					{
+						"key": "claimId",
+						"label": "Has Claim",
+						"type": "boolean"
+					}
+				],
+				"detailRoute": "MileageLogDetail"
+			}
+		},
+		{
+			"id": "MileageLogDetail",
+			"route": "/inkoop/mileage-log/:id",
+			"type": "detail",
+			"title": "Mileage Entry",
+			"config": {
+				"register": "shillinq",
+				"schema": "MileageEntry",
+				"fields": [
+					{
+						"key": "mileageNumber",
+						"label": "Mileage #",
+						"type": "string"
+					},
+					{
+						"key": "journeyDate",
+						"label": "Journey Date",
+						"type": "date"
+					},
+					{
+						"key": "fromLocation",
+						"label": "From",
+						"type": "string"
+					},
+					{
+						"key": "toLocation",
+						"label": "To",
+						"type": "string"
+					},
+					{
+						"key": "distance",
+						"label": "Distance (km)",
+						"type": "number"
+					},
+					{
+						"key": "vehicleType",
+						"label": "Vehicle Type",
+						"type": "string"
+					},
+					{
+						"key": "ratePerKm",
+						"label": "Rate (€/km)",
+						"type": "number"
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "purpose",
+						"label": "Purpose",
+						"type": "string"
+					},
+					{
+						"key": "costCentreCode",
+						"label": "Cost Centre",
+						"type": "string"
+					},
+					{
+						"key": "claimId",
+						"label": "Claim",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"indexRoute": "MileageLog"
+			}
+		},
+		{
+			"id": "BtwAangiften",
+			"route": "/belastingen/btw-aangiften",
+			"type": "index",
+			"title": "BTW-aangiften",
+			"config": {
+				"register": "shillinq",
+				"schema": "VatReturn",
+				"columns": [
+					{
+						"key": "periodYear",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "periodType",
+						"label": "Periode",
+						"sortable": true
+					},
+					{
+						"key": "amount",
+						"label": "Bedrag",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "periodYear",
+				"detailRoute": "BtwAangifteDetail"
+			}
+		},
+		{
+			"id": "BtwAangifteDetail",
+			"route": "/belastingen/btw-aangiften/:id",
+			"type": "detail",
+			"title": "BTW-aangifte",
+			"config": {
+				"register": "shillinq",
+				"schema": "VatReturn",
+				"fields": [
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "periodType",
+						"label": "Periode-type",
+						"type": "string"
+					},
+					{
+						"key": "periodYear",
+						"label": "Jaar",
+						"type": "number"
+					},
+					{
+						"key": "periodQuarter",
+						"label": "Kwartaal",
+						"type": "number"
+					},
+					{
+						"key": "periodMonth",
+						"label": "Maand",
+						"type": "number"
+					},
+					{
+						"key": "amount",
+						"label": "BTW-bedrag",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Valuta",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "notes",
+						"label": "Notities",
+						"type": "string"
+					}
+				],
+				"indexRoute": "BtwAangiften"
+			}
+		},
+		{
+			"id": "IcpOpgaaf",
+			"route": "/belastingen/icp-opgaaf",
+			"type": "index",
+			"title": "ICP-opgaaf",
+			"config": {
+				"register": "shillinq",
+				"schema": "IcpStatement",
+				"columns": [
+					{
+						"key": "periodYear",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "periodType",
+						"label": "Periode",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "periodYear",
+				"detailRoute": "IcpOpgaafDetail"
+			}
+		},
+		{
+			"id": "IcpOpgaafDetail",
+			"route": "/belastingen/icp-opgaaf/:id",
+			"type": "detail",
+			"title": "ICP-opgaaf",
+			"config": {
+				"register": "shillinq",
+				"schema": "IcpStatement",
+				"fields": [
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "periodType",
+						"label": "Periode-type",
+						"type": "string"
+					},
+					{
+						"key": "periodYear",
+						"label": "Jaar",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"indexRoute": "IcpOpgaaf"
+			}
+		},
+		{
+			"id": "BtwCorrecties",
+			"route": "/belastingen/btw-correcties",
+			"type": "index",
+			"title": "BTW-correcties",
+			"config": {
+				"register": "shillinq",
+				"schema": "VatCorrection",
+				"columns": [
+					{
+						"key": "periodYear",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "correctionReason",
+						"label": "Reden",
+						"sortable": true
+					},
+					{
+						"key": "adjustmentAmount",
+						"label": "Correctie",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "periodYear",
+				"detailRoute": "BtwCorrectieDetail"
+			}
+		},
+		{
+			"id": "BtwCorrectieDetail",
+			"route": "/belastingen/btw-correcties/:id",
+			"type": "detail",
+			"title": "BTW-correctie",
+			"config": {
+				"register": "shillinq",
+				"schema": "VatCorrection",
+				"fields": [
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "correctionReason",
+						"label": "Reden",
+						"type": "string"
+					},
+					{
+						"key": "originalReturnId",
+						"label": "Oorspronkelijke aangifte",
+						"type": "string"
+					},
+					{
+						"key": "adjustmentAmount",
+						"label": "Correctiebedrag",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"indexRoute": "BtwCorrecties"
+			}
+		},
+		{
+			"id": "Urenregistratie",
+			"route": "/belastingen/urenregistratie",
+			"type": "index",
+			"title": "Urenregistratie",
+			"config": {
+				"register": "shillinq",
+				"schema": "UrenRegistratie",
+				"columns": [
+					{
+						"key": "workDate",
+						"label": "Datum",
+						"sortable": true
+					},
+					{
+						"key": "hours",
+						"label": "Uren",
+						"sortable": true
+					},
+					{
+						"key": "category",
+						"label": "Categorie",
+						"sortable": true
+					}
+				],
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"zzp"
+					]
+				},
+				"defaultSort": "workDate"
+			}
+		},
+		{
+			"id": "ZzpAftrek",
+			"route": "/belastingen/zzp-aftrek",
+			"type": "index",
+			"title": "ZZP-aftrek",
+			"config": {
+				"register": "shillinq",
+				"schema": "ZzpDeduction",
+				"columns": [
+					{
+						"key": "year",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "ytdQualifyingHours",
+						"label": "Kwalificerende uren",
+						"sortable": true
+					},
+					{
+						"key": "qualifies1225",
+						"label": "Voldoet 1225",
+						"sortable": true
+					},
+					{
+						"key": "totalAllowableDeduction",
+						"label": "Totale aftrek",
+						"sortable": true
+					}
+				],
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"zzp"
+					]
+				},
+				"defaultSort": "year",
+				"detailRoute": "ZzpAftrekDetail"
+			}
+		},
+		{
+			"id": "ZzpAftrekDetail",
+			"route": "/belastingen/zzp-aftrek/:id",
+			"type": "detail",
+			"title": "ZZP-aftrek",
+			"config": {
+				"register": "shillinq",
+				"schema": "ZzpDeduction",
+				"fields": [
+					{
+						"key": "personId",
+						"label": "Persoon",
+						"type": "string"
+					},
+					{
+						"key": "year",
+						"label": "Jaar",
+						"type": "number"
+					},
+					{
+						"key": "ytdQualifyingHours",
+						"label": "Kwalificerende uren",
+						"type": "number"
+					},
+					{
+						"key": "qualifies1225",
+						"label": "Voldoet urencriterium",
+						"type": "boolean"
+					},
+					{
+						"key": "qualifiesStarters",
+						"label": "Starter",
+						"type": "boolean"
+					},
+					{
+						"key": "zelfstandigenaftrek",
+						"label": "Zelfstandigenaftrek",
+						"type": "number"
+					},
+					{
+						"key": "startersaftrek",
+						"label": "Startersaftrek",
+						"type": "number"
+					},
+					{
+						"key": "mkbWinstvrijstelling",
+						"label": "MKB-winstvrijstelling",
+						"type": "number"
+					},
+					{
+						"key": "totalAllowableDeduction",
+						"label": "Totale aftrek",
+						"type": "number"
+					}
+				],
+				"indexRoute": "ZzpAftrek"
+			}
+		},
+		{
+			"id": "IbAangifte",
+			"route": "/belastingen/ib-aangifte",
+			"type": "index",
+			"title": "IB-aangifte",
+			"config": {
+				"register": "shillinq",
+				"schema": "IbAangifteExport",
+				"columns": [
+					{
+						"key": "year",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "taxableIncome",
+						"label": "Belastbaar inkomen",
+						"sortable": true
+					},
+					{
+						"key": "exportDate",
+						"label": "Exportdatum",
+						"sortable": true
+					}
+				],
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"zzp"
+					]
+				},
+				"defaultSort": "year"
+			}
+		},
+		{
+			"id": "BbvMapping",
+			"route": "/overheid/bbv-mapping",
+			"type": "index",
+			"title": "BBV-mapping",
+			"config": {
+				"register": "shillinq",
+				"schema": "BbvAccountMapping",
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"gemeente",
+						"provincie",
+						"waterschap"
+					]
+				},
+				"columns": [
+					{
+						"key": "accountNumber",
+						"label": "Grootboek",
+						"sortable": true
+					},
+					{
+						"key": "taakveld",
+						"label": "Taakveld",
+						"sortable": true
+					},
+					{
+						"key": "programmaCode",
+						"label": "Programma",
+						"sortable": true
+					},
+					{
+						"key": "bcfCompensable",
+						"label": "BCF-compensabel",
+						"sortable": true
+					}
+				],
+				"defaultSort": "accountNumber"
+			}
+		},
+		{
+			"id": "BcfClaims",
+			"route": "/overheid/bcf-claims",
+			"type": "index",
+			"title": "BCF-claims",
+			"config": {
+				"register": "shillinq",
+				"schema": "BcfClaim",
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"gemeente"
+					]
+				},
+				"columns": [
+					{
+						"key": "claimNumber",
+						"label": "Claimnummer",
+						"sortable": true
+					},
+					{
+						"key": "periodYear",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "periodQuarter",
+						"label": "Kwartaal",
+						"sortable": true
+					},
+					{
+						"key": "totalClaimAmount",
+						"label": "Bedrag",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "periodYear",
+				"detailRoute": "BcfClaimDetail"
+			}
+		},
+		{
+			"id": "BcfClaimDetail",
+			"route": "/overheid/bcf-claims/:id",
+			"type": "detail",
+			"title": "BCF-claim",
+			"config": {
+				"register": "shillinq",
+				"schema": "BcfClaim",
+				"fields": [
+					{
+						"key": "claimNumber",
+						"label": "Claimnummer",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "periodYear",
+						"label": "Jaar",
+						"type": "number"
+					},
+					{
+						"key": "periodQuarter",
+						"label": "Kwartaal",
+						"type": "number"
+					},
+					{
+						"key": "totalClaimAmount",
+						"label": "Claimbedrag",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"indexRoute": "BcfClaims"
+			}
+		},
+		{
+			"id": "SchatkistPositie",
+			"route": "/overheid/schatkist-positie",
+			"type": "dashboard",
+			"title": "Schatkist-positie",
+			"config": {
+				"register": "shillinq",
+				"schema": "SchatkistPosition",
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"gemeente"
+					]
+				},
+				"widgets": [
+					{
+						"id": "schatkist-position",
+						"type": "line-with-threshold",
+						"title": "Schatkist-positie"
+					}
+				]
+			}
+		},
+		{
+			"id": "SubsidiesOverzicht",
+			"route": "/subsidies/overzicht",
+			"type": "index",
+			"title": "Subsidies",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"columns": [
+					{
+						"key": "subsidieNumber",
+						"label": "Nummer",
+						"sortable": true
+					},
+					{
+						"key": "subsidieName",
+						"label": "Naam",
+						"sortable": true
+					},
+					{
+						"key": "awardAmount",
+						"label": "Bedrag",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "subsidieNumber",
+				"detailRoute": "SubsidieDetail"
+			}
+		},
+		{
+			"id": "SubsidieDetail",
+			"route": "/subsidies/overzicht/:id",
+			"type": "detail",
+			"title": "Subsidie",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"fields": [
+					{
+						"key": "subsidieNumber",
+						"label": "Nummer",
+						"type": "string"
+					},
+					{
+						"key": "subsidieName",
+						"label": "Naam",
+						"type": "string"
+					},
+					{
+						"key": "granteeOrganization",
+						"label": "Ontvanger",
+						"type": "string"
+					},
+					{
+						"key": "awardAmount",
+						"label": "Toegekend bedrag",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "hasRepaymentPlan",
+						"label": "Afbetalingsregeling",
+						"type": "boolean"
+					}
+				],
+				"indexRoute": "SubsidiesOverzicht"
+			}
+		},
+		{
+			"id": "SubsidiesVerleend",
+			"route": "/subsidies/verleend",
+			"type": "index",
+			"title": "Verleende subsidies",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"filter": {
+					"state": "verleend"
+				},
+				"columns": [
+					{
+						"key": "subsidieNumber",
+						"label": "Nummer",
+						"sortable": true
+					},
+					{
+						"key": "subsidieName",
+						"label": "Naam",
+						"sortable": true
+					},
+					{
+						"key": "awardAmount",
+						"label": "Bedrag",
+						"sortable": true
+					}
+				],
+				"defaultSort": "subsidieNumber",
+				"detailRoute": "SubsidieDetail"
+			}
+		},
+		{
+			"id": "SubsidiesTeruggevorderd",
+			"route": "/subsidies/teruggevorderd",
+			"type": "index",
+			"title": "Terugvorderingen",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"filter": {
+					"state": "teruggevorderd"
+				},
+				"columns": [
+					{
+						"key": "subsidieNumber",
+						"label": "Nummer",
+						"sortable": true
+					},
+					{
+						"key": "subsidieName",
+						"label": "Naam",
+						"sortable": true
+					},
+					{
+						"key": "awardAmount",
+						"label": "Bedrag",
+						"sortable": true
+					}
+				],
+				"defaultSort": "subsidieNumber",
+				"detailRoute": "SubsidieDetail"
+			}
+		},
+		{
+			"id": "ReorderRules",
+			"route": "/inventory/reorder-rules",
+			"type": "index",
+			"title": "Reorder Rules",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryReorderRule",
+				"columns": [
+					{
+						"key": "inventoryStockId",
+						"label": "Stock Item",
+						"sortable": true
+					},
+					{
+						"key": "minimumLevel",
+						"label": "Minimum Level",
+						"sortable": true
+					},
+					{
+						"key": "maximumLevel",
+						"label": "Maximum Level",
+						"sortable": true
+					},
+					{
+						"key": "reorderPoint",
+						"label": "Reorder Point",
+						"sortable": true
+					},
+					{
+						"key": "autoPurchaseOrder",
+						"label": "Auto PO",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "lifecycleState",
+				"detailRoute": "ReorderRuleDetail",
+				"filters": [
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"options": [
+							"active",
+							"paused",
+							"archived"
+						]
+					},
+					{
+						"key": "autoPurchaseOrder",
+						"label": "Auto PO"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration"
+					}
+				]
+			}
+		},
+		{
+			"id": "ReorderRuleDetail",
+			"route": "/inventory/reorder-rules/:id",
+			"type": "detail",
+			"title": "Reorder Rule",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryReorderRule",
+				"fields": [
+					{
+						"key": "inventoryStockId",
+						"label": "Stock Item",
+						"type": "string"
+					},
+					{
+						"key": "supplierId",
+						"label": "Supplier",
+						"type": "string"
+					},
+					{
+						"key": "minimumLevel",
+						"label": "Minimum Level",
+						"type": "number"
+					},
+					{
+						"key": "maximumLevel",
+						"label": "Maximum Level",
+						"type": "number"
+					},
+					{
+						"key": "reorderPoint",
+						"label": "Reorder Point",
+						"type": "number"
+					},
+					{
+						"key": "reorderPointCalculated",
+						"label": "Calculated Reorder Point",
+						"type": "calculated"
+					},
+					{
+						"key": "reorderQuantity",
+						"label": "Reorder Quantity",
+						"type": "number"
+					},
+					{
+						"key": "leadTimeDays",
+						"label": "Lead Time (days)",
+						"type": "number"
+					},
+					{
+						"key": "safetyStockDays",
+						"label": "Safety Stock (days)",
+						"type": "number"
+					},
+					{
+						"key": "alertThreshold",
+						"label": "Warning Threshold (%)",
+						"type": "number"
+					},
+					{
+						"key": "autoPurchaseOrder",
+						"label": "Auto Purchase Order",
+						"type": "boolean"
+					},
+					{
+						"key": "autoPurchaseOrderApprovalRequired",
+						"label": "Approval Required",
+						"type": "boolean"
+					},
+					{
+						"key": "spendingLimit",
+						"label": "Spending Limit (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "alertChannel",
+						"label": "Alert Channel",
+						"type": "string"
+					},
+					{
+						"key": "alertRecipients",
+						"label": "Alert Recipients",
+						"type": "array"
+					},
+					{
+						"key": "snoozeUntil",
+						"label": "Snooze Until",
+						"type": "date-time"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"actions": [
+					{
+						"id": "pause-rule",
+						"label": "Pause Rule",
+						"icon": "PauseCircleOutline",
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": [
+								"active"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "pause",
+						"description": "Suspend alert monitoring for this rule. Use when a planned stockout or supplier change is in progress."
+					},
+					{
+						"id": "resume-rule",
+						"label": "Resume Rule",
+						"icon": "PlayCircleOutline",
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": [
+								"paused"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "resume",
+						"description": "Re-activate alert monitoring after planned suspension."
+					},
+					{
+						"id": "archive-rule",
+						"label": "Archive Rule",
+						"icon": "ArchiveArrowDownOutline",
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": [
+								"active"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "archive",
+						"description": "Permanently deactivate the rule. Audit trail is preserved."
+					},
+					{
+						"id": "restore-rule",
+						"label": "Restore Rule",
+						"icon": "ArchiveArrowUpOutline",
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": [
+								"archived"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "restore",
+						"description": "Re-activate an archived rule."
+					}
+				],
+				"indexRoute": "ReorderRules"
+			}
+		},
+		{
+			"id": "LowStockAlerts",
+			"route": "/inventory/low-stock-alerts",
+			"type": "index",
+			"title": "Low Stock Alerts",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryReorderRule",
+				"aggregation": "lowStockTrigger",
+				"columns": [
+					{
+						"key": "inventoryStockId",
+						"label": "Stock Item",
+						"sortable": true
+					},
+					{
+						"key": "minimumLevel",
+						"label": "Minimum Level",
+						"sortable": true
+					},
+					{
+						"key": "reorderPoint",
+						"label": "Reorder Point",
+						"sortable": true
+					},
+					{
+						"key": "autoPurchaseOrder",
+						"label": "Auto PO",
+						"sortable": true
+					},
+					{
+						"key": "snoozeUntil",
+						"label": "Snoozed Until",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-administrationId",
+				"detailRoute": "ReorderRuleDetail",
+				"filters": [
+					{
+						"key": "administrationId",
+						"label": "Administration"
+					},
+					{
+						"key": "autoPurchaseOrder",
+						"label": "Auto PO"
+					}
+				],
+				"description": "Items currently below their reorder point, grouped by administration. Dismiss by snoozing or placing an order."
+			}
+		},
+		{
+			"id": "StockLevelsDashboard",
+			"route": "/inventory/stock-levels",
+			"type": "dashboard",
+			"title": "Stock Levels Dashboard",
+			"config": {
+				"widgets": [
+					{
+						"id": "low-stock-by-location",
+						"title": "Low Stock by Location",
+						"type": "table",
+						"aggregation": "lowStockDashboard",
+						"schema": "InventoryReorderRule",
+						"register": "shillinq",
+						"columns": [
+							{
+								"key": "location",
+								"label": "Location"
+							},
+							{
+								"key": "itemCount",
+								"label": "Items Below Minimum"
+							},
+							{
+								"key": "totalDeficit",
+								"label": "Total Deficit (units)"
+							}
+						],
+						"description": "Locations with stock below minimum levels. Click a location to view its reorder rules."
+					},
+					{
+						"id": "auto-po-pending",
+						"title": "Auto-PO Pending Approval",
+						"type": "stats-block",
+						"props": {
+							"countLabel": "purchase orders awaiting approval",
+							"variant": "warning"
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "layout-low-stock-by-location",
+						"widgetId": "low-stock-by-location",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6
+					},
+					{
+						"id": "layout-auto-po-pending",
+						"widgetId": "auto-po-pending",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 2
 					}
 				]
 			}
