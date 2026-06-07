@@ -22,10 +22,13 @@ declare(strict_types=1);
 namespace OCA\Shillinq\AppInfo;
 
 use OCA\Shillinq\Listener\AppointmentCreatedListener;
+use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Repair\InitializeSettings;
+use OCA\Shillinq\Service\Pipelinq\LoggingTimelineRetryQueue;
+use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
@@ -96,6 +99,22 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectCreatedEvent::class,
             listener: PeppolInboundUblInvoiceListener::class
+        );
+
+        // bookings-pipelinq-customer-bridge slice 07 — when a new
+        // Appointment carries a non-empty `pipelinqContactId`, publish a
+        // `booking.created` event to pipelinq's klantbeeld-360 timeline.
+        // The synchronous publish uses the shared retry + circuit
+        // breaker; a failure hands the event to TimelineRetryQueue (the
+        // logging fallback below until slice 09 lands the persistent
+        // queue) so the booking commit is never blocked. ADR-032 chain
+        // member 7 of 11.
+        $context->registerService(TimelineRetryQueue::class, static function ($c): TimelineRetryQueue {
+            return $c->get(LoggingTimelineRetryQueue::class);
+        });
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: BookingCreatedTimelinePublishListener::class
         );
 
         // Initialize register and schemas on install/upgrade.
