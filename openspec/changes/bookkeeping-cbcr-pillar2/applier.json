@@ -1,11 +1,17 @@
 {
   "ran": true,
-  "pass": null,
-  "blocking": [],
-  "turns": 0,
-  "cost_usd": 0.0,
-  "cost_eur": 0.0,
+  "pass": false,
+  "blocking": [
+    {
+      "file": "Conduction/shillinq",
+      "severity": "critical",
+      "note": "pr-state.json reports mergeable=false \u2014 branch has unresolvable merge conflicts with development; must rebase before merge can proceed"
+    }
+  ],
+  "turns": 8,
+  "cost_usd": 0.2289,
+  "cost_eur": 0.2106,
   "pr": 297,
-  "commit": "edc5256",
-  "timestamp": "2026-06-07T07:23:25.041721+00:00"
+  "commit": "a93ae65",
+  "timestamp": "2026-06-07T08:20:56.992255+00:00"
 }
