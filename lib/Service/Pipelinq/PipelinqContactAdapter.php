@@ -37,6 +37,9 @@
  *   - "The adapter SHALL load a pipelinq Contact by externalId"
  *   - "The adapter SHALL cache Contact data with a bounded TTL"
  *
+ * Spec deltas added by slice 07 (timeline publish core):
+ *   - "The adapter SHALL publish a timeline event to pipelinq"
+ *
  * @category Service
  * @package  OCA\Shillinq\Service\Pipelinq
  *
@@ -48,6 +51,7 @@
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-03-contact-read/tasks.md
+ * @spec openspec/changes/bookings-pipelinq-customer-bridge-07-timeline-publish-core/tasks.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -119,6 +123,21 @@ class PipelinqContactAdapter
      * @var string
      */
     public const CONTACT_PATH_TEMPLATE = '/api/v1/contacts/%s';
+
+    /**
+     * HTTP path for the timeline publish endpoint (slice 07).
+     *
+     * @var string
+     */
+    public const TIMELINE_PATH = '/api/v1/timeline';
+
+    /**
+     * Expected HTTP status for a successful timeline publish (slice 07
+     * design.md — pipelinq returns 201 Created).
+     *
+     * @var int
+     */
+    public const TIMELINE_SUCCESS_STATUS = 201;
 
     /**
      * Lazily-built HTTP client (one per adapter instance).
@@ -635,6 +654,81 @@ class PipelinqContactAdapter
         );
 
     }//end fetchKlantbeeld()
+
+    /**
+     * Publish a timeline event to pipelinq.
+     *
+     * Slice 07 of the customer-bridge chain. POSTs the fixed JSON payload
+     * (type, externalId, timestamp, contactId, metadata) to
+     * `/api/v1/timeline` via the slice-02 request loop:
+     *
+     *   - 3 second HTTP timeout (giant decision D5).
+     *   - Shared retry policy (1s/2s/4s, max 3 attempts) on transient 5xx
+     *     and transport errors.
+     *   - Shared circuit breaker (open after 5 consecutive failures, fast
+     *     fail until the cooldown expires).
+     *   - Bearer token sent as `Authorization: Bearer …` only, never
+     *     reaches the payload, the URL, or any log line (ADR-005).
+     *
+     * The method is best-effort: any failure (open breaker, retry budget
+     * exhausted, non-2xx) is logged at WARNING and surfaced as a
+     * `false` return so the caller can hand the event off for async
+     * retry (slice 09) without raising. A success is logged at DEBUG
+     * via the underlying {@see self::request()} loop.
+     *
+     * The design.md contract is `201 Created` on success; the shared
+     * {@see self::request()} loop treats any 2xx as success and returns
+     * the decoded body. We accept that tolerance here rather than
+     * second-guess the transport — if pipelinq ever returns 200/202 to
+     * a publish, that signals an upstream contract drift that surfaces
+     * via the existing DEBUG `pipelinq request succeeded` log line
+     * (which already carries the actual status code).
+     *
+     * @param TimelineEventDto $event Event to publish.
+     *
+     * @return bool TRUE when the publish succeeded (HTTP 201), FALSE otherwise.
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-07-timeline-publish-core/tasks.md
+     */
+    public function publishTimelineEvent(TimelineEventDto $event): bool
+    {
+        $payload = $event->toPayload();
+
+        try {
+            $this->request(
+                method: 'POST',
+                path: self::TIMELINE_PATH,
+                payload: $payload
+            );
+        } catch (PipelinqTransportException $e) {
+            $this->logger->warning(
+                'pipelinq timeline publish failed',
+                [
+                    'app'        => Application::APP_ID,
+                    'type'       => $event->type(),
+                    'externalId' => $event->externalId(),
+                    'contactId'  => $event->contactId(),
+                    'status'     => $e->statusCode(),
+                    'breaker'    => $this->circuitBreaker->state(),
+                    'reason'     => $e->isCircuitOpen() ? 'breaker_open' : 'transport',
+                ]
+            );
+            return false;
+        }
+
+        $this->logger->info(
+            'pipelinq timeline publish succeeded',
+            [
+                'app'        => Application::APP_ID,
+                'type'       => $event->type(),
+                'externalId' => $event->externalId(),
+                'contactId'  => $event->contactId(),
+            ]
+        );
+
+        return true;
+
+    }//end publishTimelineEvent()
 
     /**
      * Clamp the caller-supplied limit to the spec range (1..100, default 5).
