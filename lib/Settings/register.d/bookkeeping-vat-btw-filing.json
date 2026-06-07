@@ -1,0 +1,629 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-vat-btw-filing",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Tier 3 — VAT/BTW filing capability. Declares the VATReturn (draft → submitted → verified → filed lifecycle + reconciliation aggregations), VATDeclaration (per-rate/per-type grouping) and VATLine (GL-sourced line item) registers, plus seed returns covering standard-rate, KOR and reverse-charge regimes. All VAT logic is declarative (schema lifecycle + aggregations) per ADR-031; no PHP service is authored. Distinct from the government-focused VatReturn (BTW-aangifte/Digipoort/rubrieken) schema from add-shillinq-bookkeeping-operations: this fragment covers the SMB/ZZP line-itemised return-preparation flow with explicit VATLine audit trail to GL."
+  },
+  "components": {
+    "schemas": {
+      "VATReturn": {
+        "slug": "VATReturn",
+        "icon": "FileDocumentMultipleOutline",
+        "version": "0.1.0",
+        "title": "VAT Return",
+        "description": "A VAT/BTW return for a fiscal period (REQ-VAT-001). Tracks total VAT collected, VAT paid, balance and submission status across the draft → submitted → verified → filed lifecycle (REQ-VAT-005). Totals are derived declaratively from child VATLine records via aggregations (REQ-VAT-011) — operators adjust the GL entry, never the VAT amount directly. Distinct from the Digipoort/rubrieken VatReturn (BTW-aangifte) schema: this is the SMB/ZZP line-itemised preparation flow with full GL audit trail.",
+        "x-schema-org": "schema:DigitalDocument",
+        "x-spec": "openspec/changes/bookkeeping-vat-btw-filing/specs/bookkeeping-vat-btw-filing.md",
+        "type": "object",
+        "required": [
+          "returnNumber",
+          "period",
+          "periodYear",
+          "periodNumber",
+          "startDate",
+          "endDate",
+          "regime",
+          "administrationId",
+          "statusCode"
+        ],
+        "properties": {
+          "returnNumber": {
+            "type": "string",
+            "description": "Unique return identifier per administration and period (REQ-VAT-001).",
+            "example": "NL-2026-Q1"
+          },
+          "period": {
+            "type": "string",
+            "enum": [
+              "quarter",
+              "month",
+              "year"
+            ],
+            "description": "Reporting cadence (REQ-VAT-001).",
+            "example": "quarter"
+          },
+          "periodYear": {
+            "type": "integer",
+            "description": "Fiscal year of the period.",
+            "example": 2026
+          },
+          "periodNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12,
+            "description": "Period within the year (quarter 1-4, month 1-12).",
+            "example": 1
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Period start date, inclusive. Must be ≤ today and ≥ the administration start date (validation rules in spec).",
+            "example": "2026-01-01"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Period end date, inclusive.",
+            "example": "2026-03-31"
+          },
+          "regime": {
+            "type": "string",
+            "enum": [
+              "standard",
+              "kor",
+              "reverse-charge"
+            ],
+            "default": "standard",
+            "description": "VAT regime variant (REQ-VAT-004). kor = small-business exemption (no VAT payable/deductible); reverse-charge = intra-EU / import liability.",
+            "example": "standard"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this return.",
+            "example": "adm-1"
+          },
+          "statusCode": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "submitted",
+              "verified",
+              "filed"
+            ],
+            "default": "draft",
+            "description": "Lifecycle status (REQ-VAT-005). Mirrors x-openregister-lifecycle.field.",
+            "example": "draft"
+          },
+          "submissionDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the return was electronically submitted (set on the submit transition)."
+          },
+          "verificationDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the tax authority acknowledged receipt (set on the verify transition)."
+          },
+          "filingReference": {
+            "type": "string",
+            "nullable": true,
+            "description": "Tax authority filing acknowledgment ID."
+          },
+          "totalVATCollected": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0,
+            "description": "Total VAT payable (sales + services, excl. reverse-charge). Derived from collected VATLine records (REQ-VAT-006, REQ-VAT-011).",
+            "example": 3150.0
+          },
+          "totalVATPaid": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0,
+            "description": "Total VAT deductible (purchases + services + reverse-charge). Derived from paid/reverse-charge VATLine records (REQ-VAT-006, REQ-VAT-011).",
+            "example": 2100.0
+          },
+          "vatBalance": {
+            "type": "number",
+            "description": "Balance: totalVATPaid - totalVATCollected. Negative = amount owed to the authority; positive = refund (REQ-VAT-006).",
+            "example": -1050.0
+          },
+          "totalTaxableAmount": {
+            "type": "number",
+            "default": 0,
+            "description": "Total taxable turnover for the period.",
+            "example": 25000.0
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Operator notes (review findings, exceptions)."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "statusCode",
+          "initialState": "draft",
+          "retention": {
+            "rule": "AWR art. 52",
+            "period": "P7Y",
+            "description": "VAT records retained 7 years per Algemene wet inzake rijksbelastingen art. 52."
+          },
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Return is being prepared; VAT lines can be (re)derived from GL and edited (REQ-VAT-001)."
+            },
+            "submitted": {
+              "label": "Ingediend",
+              "description": "Return is locked; VAT lines are immutable. Awaits authority verification (REQ-VAT-005, REQ-VAT-008)."
+            },
+            "verified": {
+              "label": "Geverifieerd",
+              "description": "Authority acknowledged receipt; still viewable and exportable."
+            },
+            "filed": {
+              "label": "Definitief",
+              "description": "Authority accepted the return as final; read-only."
+            }
+          },
+          "transitions": {
+            "submit": {
+              "from": "draft",
+              "to": "submitted",
+              "label": "Indienen",
+              "description": "Operator submits the return after reviewing totals; sets submissionDate and locks VAT lines (REQ-VAT-005)."
+            },
+            "verify": {
+              "from": "submitted",
+              "to": "verified",
+              "label": "Verifiëren",
+              "description": "Authority acknowledgement received; sets verificationDate."
+            },
+            "file": {
+              "from": "verified",
+              "to": "filed",
+              "label": "Definitief maken",
+              "description": "Authority accepted the return as final; records filingReference."
+            },
+            "rebase": {
+              "from": "submitted",
+              "to": "draft",
+              "label": "Heropenen",
+              "description": "Operator rebases a submitted return to draft to include new GL postings; clears submissionDate and re-derives VAT lines (REQ-VAT-008)."
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "vatCollectedByRate": {
+            "description": "Sum of VAT amounts for collected lines grouped by rate, feeding totalVATCollected (REQ-VAT-002, REQ-VAT-011).",
+            "source": "VATLine",
+            "groupBy": [
+              "taxRate"
+            ],
+            "filter": {
+              "returnId": "@self.id",
+              "type": "collected"
+            },
+            "sum": [
+              "vatAmount",
+              "taxableAmount"
+            ]
+          },
+          "vatPaidByRate": {
+            "description": "Sum of VAT amounts for paid + reverse-charge lines grouped by rate, feeding totalVATPaid (REQ-VAT-002, REQ-VAT-011).",
+            "source": "VATLine",
+            "groupBy": [
+              "taxRate",
+              "type"
+            ],
+            "filter": {
+              "returnId": "@self.id",
+              "type": {
+                "operator": "in",
+                "value": [
+                  "paid",
+                  "reverse-charge"
+                ]
+              }
+            },
+            "sum": [
+              "vatAmount",
+              "taxableAmount"
+            ]
+          }
+        }
+      },
+      "VATDeclaration": {
+        "slug": "VATDeclaration",
+        "icon": "FormatListGroup",
+        "version": "0.1.0",
+        "title": "VAT Declaration",
+        "description": "A grouping of VAT lines within a return, organised by rate or type (collected / paid / reverse-charge) per REQ-VAT-003. Provides per-bucket totals used to build the return summary; populated declaratively from VATLine aggregations.",
+        "x-schema-org": "schema:DigitalDocument",
+        "x-spec": "openspec/changes/bookkeeping-vat-btw-filing/specs/bookkeeping-vat-btw-filing.md",
+        "type": "object",
+        "required": [
+          "declarationNumber",
+          "returnId",
+          "type",
+          "totalVATAmount",
+          "totalTaxableAmount"
+        ],
+        "properties": {
+          "declarationNumber": {
+            "type": "string",
+            "description": "Unique within the return (REQ-VAT-003).",
+            "example": "VAT-2026-Q1-COLLECTED-21"
+          },
+          "returnId": {
+            "type": "string",
+            "description": "FK to the parent VATReturn.",
+            "example": "vat-2026-q1-standard"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "collected",
+              "paid",
+              "reverse-charge"
+            ],
+            "description": "Declaration bucket (REQ-VAT-003, REQ-VAT-010).",
+            "example": "collected"
+          },
+          "taxRate": {
+            "type": "number",
+            "nullable": true,
+            "description": "VAT rate as percentage (21, 9, 0); null for mixed-rate declarations.",
+            "example": 21
+          },
+          "totalVATAmount": {
+            "type": "number",
+            "description": "Sum of VAT amounts in this declaration.",
+            "example": 3150.0
+          },
+          "totalTaxableAmount": {
+            "type": "number",
+            "description": "Sum of taxable amounts (before VAT) in this declaration.",
+            "example": 15000.0
+          },
+          "lineCount": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Count of VATLine records in this declaration.",
+            "example": 1
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Notes specific to this declaration (rate changes, reversals)."
+          }
+        }
+      },
+      "VATLine": {
+        "slug": "VATLine",
+        "icon": "TableRow",
+        "version": "0.1.0",
+        "title": "VAT Line",
+        "description": "A line in a VAT return sourced from a GL account for the period (REQ-VAT-002). Captures the taxable amount, rate, VAT amount, type and GL reference for audit. The single source of truth is the GL posting; vatAmount is derived (taxableAmount × taxRate / 100) and the line is immutable once its parent return is submitted (REQ-VAT-008).",
+        "x-schema-org": "schema:Thing",
+        "x-spec": "openspec/changes/bookkeeping-vat-btw-filing/specs/bookkeeping-vat-btw-filing.md",
+        "type": "object",
+        "required": [
+          "lineNumber",
+          "returnId",
+          "declarationId",
+          "glAccountNumber",
+          "type",
+          "taxableAmount",
+          "taxRate",
+          "vatAmount"
+        ],
+        "properties": {
+          "lineNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Sequence within the return.",
+            "example": 1
+          },
+          "returnId": {
+            "type": "string",
+            "description": "FK to the parent VATReturn.",
+            "example": "vat-2026-q1-standard"
+          },
+          "declarationId": {
+            "type": "string",
+            "description": "FK to the parent VATDeclaration.",
+            "example": "vatdecl-2026-q1-collected-21"
+          },
+          "glAccountNumber": {
+            "type": "string",
+            "description": "FK to Account.accountNumber (audit link to the GL source).",
+            "example": "4000"
+          },
+          "glAccountName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cached account name at line creation time.",
+            "example": "Omzet 21%"
+          },
+          "glTransactionId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the source GL transaction / journal entry."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "collected",
+              "paid",
+              "reverse-charge"
+            ],
+            "description": "Line type: collected (sales VAT payable), paid (purchase VAT deductible), reverse-charge (intra-EU / import) per REQ-VAT-010.",
+            "example": "collected"
+          },
+          "taxableAmount": {
+            "type": "number",
+            "description": "Amount before VAT.",
+            "example": 15000.0
+          },
+          "taxRate": {
+            "type": "number",
+            "description": "VAT rate as percentage (21, 9, 0; -1 signals reverse-charge).",
+            "example": 21
+          },
+          "vatAmount": {
+            "type": "number",
+            "description": "Derived VAT amount (taxableAmount × taxRate / 100). 0 for reverse-charge (operator liable).",
+            "example": 3150.0
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "GL account or transaction description."
+          },
+          "reverseChargeApplicable": {
+            "type": "boolean",
+            "default": false,
+            "description": "Marked as reverse-charge eligible (intra-EU, import service) per REQ-VAT-010."
+          }
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "VATReturn",
+        "slug": "vat-2026-q1-standard"
+      },
+      "returnNumber": "NL-2026-Q1",
+      "period": "quarter",
+      "periodYear": 2026,
+      "periodNumber": 1,
+      "startDate": "2026-01-01",
+      "endDate": "2026-03-31",
+      "regime": "standard",
+      "administrationId": "adm-1",
+      "statusCode": "draft",
+      "totalVATCollected": 3330.0,
+      "totalVATPaid": 2100.0,
+      "vatBalance": -1230.0,
+      "totalTaxableAmount": 27000.0,
+      "notes": "Standaardtarief Q1 2026 — bevat 21%, 9% en 0% posten."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "VATReturn",
+        "slug": "vat-2026-q1-kor"
+      },
+      "returnNumber": "NL-2026-Q1-KOR",
+      "period": "quarter",
+      "periodYear": 2026,
+      "periodNumber": 1,
+      "startDate": "2026-01-01",
+      "endDate": "2026-03-31",
+      "regime": "kor",
+      "administrationId": "adm-2",
+      "statusCode": "submitted",
+      "submissionDate": "2026-02-15T10:00:00+00:00",
+      "totalVATCollected": 0.0,
+      "totalVATPaid": 0.0,
+      "vatBalance": 0.0,
+      "totalTaxableAmount": 0.0,
+      "notes": "KOR-vrijstelling toegepast — geen BTW-aangifte vereist."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "VATReturn",
+        "slug": "vat-2026-q2-reverse-charge"
+      },
+      "returnNumber": "NL-2026-Q2",
+      "period": "quarter",
+      "periodYear": 2026,
+      "periodNumber": 2,
+      "startDate": "2026-04-01",
+      "endDate": "2026-06-30",
+      "regime": "reverse-charge",
+      "administrationId": "adm-1",
+      "statusCode": "draft",
+      "totalVATCollected": 1890.0,
+      "totalVATPaid": 2000.0,
+      "vatBalance": 110.0,
+      "totalTaxableAmount": 19000.0,
+      "notes": "Intra-EU verlegde BTW (reverse-charge) Q2 2026."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "VATDeclaration",
+        "slug": "vatdecl-2026-q1-collected-21"
+      },
+      "declarationNumber": "VAT-2026-Q1-COLLECTED-21",
+      "returnId": "vat-2026-q1-standard",
+      "type": "collected",
+      "taxRate": 21,
+      "totalVATAmount": 3150.0,
+      "totalTaxableAmount": 15000.0,
+      "lineCount": 1,
+      "notes": "Omzet standaardtarief."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "VATDeclaration",
+        "slug": "vatdecl-2026-q1-collected-9"
+      },
+      "declarationNumber": "VAT-2026-Q1-COLLECTED-9",
+      "returnId": "vat-2026-q1-standard",
+      "type": "collected",
+      "taxRate": 9,
+      "totalVATAmount": 180.0,
+      "totalTaxableAmount": 2000.0,
+      "lineCount": 1,
+      "notes": "Omzet verlaagd tarief (voeding)."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "VATDeclaration",
+        "slug": "vatdecl-2026-q1-collected-0"
+      },
+      "declarationNumber": "VAT-2026-Q1-COLLECTED-0",
+      "returnId": "vat-2026-q1-standard",
+      "type": "collected",
+      "taxRate": 0,
+      "totalVATAmount": 0.0,
+      "totalTaxableAmount": 5000.0,
+      "lineCount": 1,
+      "notes": "Export / nultarief."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "VATDeclaration",
+        "slug": "vatdecl-2026-q1-paid-21"
+      },
+      "declarationNumber": "VAT-2026-Q1-PAID-21",
+      "returnId": "vat-2026-q1-standard",
+      "type": "paid",
+      "taxRate": 21,
+      "totalVATAmount": 2100.0,
+      "totalTaxableAmount": 10000.0,
+      "lineCount": 1,
+      "notes": "Inkoop standaardtarief — aftrekbaar."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "VATDeclaration",
+        "slug": "vatdecl-2026-q2-reverse-charge"
+      },
+      "declarationNumber": "VAT-2026-Q2-RC",
+      "returnId": "vat-2026-q2-reverse-charge",
+      "type": "reverse-charge",
+      "taxRate": 0,
+      "totalVATAmount": 0.0,
+      "totalTaxableAmount": 10000.0,
+      "lineCount": 1,
+      "notes": "Intra-EU inkoop — operator aansprakelijk onder verleggingsregeling."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "VATLine",
+        "slug": "vatline-2026-q1-1"
+      },
+      "lineNumber": 1,
+      "returnId": "vat-2026-q1-standard",
+      "declarationId": "vatdecl-2026-q1-collected-21",
+      "glAccountNumber": "4000",
+      "glAccountName": "Omzet 21%",
+      "type": "collected",
+      "taxableAmount": 15000.0,
+      "taxRate": 21,
+      "vatAmount": 3150.0,
+      "description": "Omzet standaardtarief Q1.",
+      "reverseChargeApplicable": false
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "VATLine",
+        "slug": "vatline-2026-q1-2"
+      },
+      "lineNumber": 2,
+      "returnId": "vat-2026-q1-standard",
+      "declarationId": "vatdecl-2026-q1-collected-9",
+      "glAccountNumber": "4010",
+      "glAccountName": "Omzet 9% (voeding)",
+      "type": "collected",
+      "taxableAmount": 2000.0,
+      "taxRate": 9,
+      "vatAmount": 180.0,
+      "description": "Omzet verlaagd tarief Q1.",
+      "reverseChargeApplicable": false
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "VATLine",
+        "slug": "vatline-2026-q1-3"
+      },
+      "lineNumber": 3,
+      "returnId": "vat-2026-q1-standard",
+      "declarationId": "vatdecl-2026-q1-collected-0",
+      "glAccountNumber": "4020",
+      "glAccountName": "Omzet 0% (export)",
+      "type": "collected",
+      "taxableAmount": 5000.0,
+      "taxRate": 0,
+      "vatAmount": 0.0,
+      "description": "Export / nultarief Q1.",
+      "reverseChargeApplicable": false
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "VATLine",
+        "slug": "vatline-2026-q1-4"
+      },
+      "lineNumber": 4,
+      "returnId": "vat-2026-q1-standard",
+      "declarationId": "vatdecl-2026-q1-paid-21",
+      "glAccountNumber": "5000",
+      "glAccountName": "Inkoop 21%",
+      "type": "paid",
+      "taxableAmount": 10000.0,
+      "taxRate": 21,
+      "vatAmount": 2100.0,
+      "description": "Inkoop standaardtarief Q1 — aftrekbaar.",
+      "reverseChargeApplicable": false
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "VATLine",
+        "slug": "vatline-2026-q2-1"
+      },
+      "lineNumber": 1,
+      "returnId": "vat-2026-q2-reverse-charge",
+      "declarationId": "vatdecl-2026-q2-reverse-charge",
+      "glAccountNumber": "5010",
+      "glAccountName": "Intra-EU inkoop (verlegd)",
+      "type": "reverse-charge",
+      "taxableAmount": 10000.0,
+      "taxRate": 0,
+      "vatAmount": 0.0,
+      "description": "Intra-EU softwarelicentie — verleggingsregeling.",
+      "reverseChargeApplicable": true
+    }
+  ]
+}
