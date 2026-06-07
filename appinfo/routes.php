@@ -186,6 +186,16 @@ return [
         ['name' => 'multiPoConsolidation#candidates', 'url' => '/api/three-way-match/candidates', 'verb' => 'GET'],
         ['name' => 'multiPoConsolidation#disambiguate', 'url' => '/api/three-way-match/disambiguate', 'verb' => 'POST'],
 
+        // bookkeeping-purchase-order-3way slice 08 (REQ-PO3W-005) — the
+        // three resolution dispositions of the exception workflow. Every
+        // endpoint is #[NoAdminRequired] with a per-administration IDOR
+        // guard in the controller (ADR-005). Static segments only — no
+        // path wildcards — so Symfony route ordering vs. the SPA
+        // catch-all is not at risk.
+        ['name' => 'threeWayMatchException#accept', 'url' => '/api/three-way-match/exceptions/accept', 'verb' => 'POST'],
+        ['name' => 'threeWayMatchException#dispute', 'url' => '/api/three-way-match/exceptions/dispute', 'verb' => 'POST'],
+        ['name' => 'threeWayMatchException#reject', 'url' => '/api/three-way-match/exceptions/reject', 'verb' => 'POST'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],

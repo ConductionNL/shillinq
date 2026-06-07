@@ -1,0 +1,18 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-purchase-order-3way-08-exception-workflow",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Slice 08 of the bookkeeping-purchase-order-3way chain wires the rich ThreeWayMatchExceptionPanel Vue view onto the ThreeWayMatchDetail manifest page so the crediteuren-administrateur can run the resolution workflow (accept-with-motivation / file-dispute / reject-and-block-payment) inline on the detail surface. The plain generated detail page lives in slice 01's fragment; this fragment overlays a kind=page custom component that adds the side-by-side PO/GRN/Invoice comparison, the divergence breakdown and the three action buttons. Registered as kind=page custom component in src/registry.js."
+	},
+	"pages": [
+		{
+			"id": "ThreeWayMatchDetail",
+			"route": "/inkoop/3way-matches/:id",
+			"type": "custom",
+			"title": "3-way Match",
+			"component": "ThreeWayMatchExceptionPanel"
+		}
+	]
+}
