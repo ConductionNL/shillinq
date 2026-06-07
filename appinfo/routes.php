@@ -221,6 +221,20 @@ return [
         ['name' => 'threeWayMatchAudit#export', 'url' => '/api/three-way-match/audit-trail/export', 'verb' => 'POST'],
         ['name' => 'purchaseOrderApproval#decide', 'url' => '/api/purchase-orders/{id}/approval-decision', 'verb' => 'POST'],
 
+        // bookkeeping-waterschappen-bbv-variant slice 04 — manifest + routes
+        // skeleton for the waterschappen BBV chain. Registers three GET page
+        // routes (the BBV compliance dashboard envelope + Budget Mapping
+        // index/detail) that members 05 (dashboard widgets) and 06/07
+        // (mapping UI) bind to. Every endpoint is #[NoAdminRequired] in the
+        // controller; mutating writes go through OpenRegister's object
+        // endpoints (admin-write per slice 01 permissions) so no per-object
+        // IDOR surface is introduced here. Routes are registered only in
+        // appinfo/routes.php (ADR-016) and declared before the SPA catch-all
+        // so Symfony matches them first.
+        ['name' => 'bBVDashboard#index', 'url' => '/bbv-dashboard', 'verb' => 'GET'],
+        ['name' => 'budgetBBVMapping#index', 'url' => '/budget-mappings', 'verb' => 'GET'],
+        ['name' => 'budgetBBVMapping#show', 'url' => '/budget-mappings/{id}', 'verb' => 'GET'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
