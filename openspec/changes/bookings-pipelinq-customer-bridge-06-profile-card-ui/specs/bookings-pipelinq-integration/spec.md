@@ -1,5 +1,15 @@
 # Spec Delta: bookings-pipelinq-integration (member 06 — profile card UI)
 
+<!--
+@e2e exclude UI tested via pure-JS render helpers (selectProfileState,
+selectHistoryState, buildProfileFields, nextPageParams in
+tests/unit/customer-bridge-profile-helpers.test.mjs) + the slice-05
+BookingDetailController contract tests. A Playwright suite would need
+a seeded Appointment + a linked pipelinq Contact + a stubbed
+klantbeeld upstream; those fixtures land with slice 10
+(bookings-pipelinq-customer-bridge-10-integration-e2e-tests).
+-->
+
 ## ADDED Requirements
 
 ### Requirement: The detail view SHALL render a read-only customer profile card
