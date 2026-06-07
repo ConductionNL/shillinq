@@ -284,10 +284,35 @@
 				},
 				{
 					"id": "StockLevelsDashboard",
-					"label": "Stock Levels",
+					"label": "Stock Levels Dashboard",
+					"labelNl": "Voorraad-dashboard",
 					"icon": "ChartBarOutline",
 					"route": "StockLevelsDashboard",
 					"order": 50
+				},
+				{
+					"id": "StockLevels",
+					"label": "Stock Levels",
+					"labelNl": "Voorraadniveaus",
+					"icon": "WarehouseOutline",
+					"route": "StockLevels",
+					"order": 51
+				},
+				{
+					"id": "StockByLocation",
+					"label": "Stock by Location",
+					"labelNl": "Voorraad per locatie",
+					"icon": "MapMarkerOutline",
+					"route": "StockByLocation",
+					"order": 52
+				},
+				{
+					"id": "ReserveStock",
+					"label": "Reserve Stock",
+					"labelNl": "Gereserveerde voorraad",
+					"icon": "BookmarkOutline",
+					"route": "ReserveStock",
+					"order": 53
 				},
 				{
 					"id": "Barcodes",
@@ -1367,6 +1392,257 @@
 					}
 				],
 				"indexRoute": "InventoryValuation"
+			}
+		},
+		{
+			"id": "StockLevels",
+			"route": "/inventory/stock",
+			"type": "index",
+			"title": "Stock Levels",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryStock",
+				"columns": [
+					{
+						"key": "productSku",
+						"label": "Product",
+						"sortable": true
+					},
+					{
+						"key": "locationName",
+						"label": "Location",
+						"sortable": true
+					},
+					{
+						"key": "quantityOnHand",
+						"label": "On-hand",
+						"sortable": true
+					},
+					{
+						"key": "quantityReserved",
+						"label": "Reserved",
+						"sortable": true
+					},
+					{
+						"key": "quantityAvailable",
+						"label": "Available",
+						"sortable": true
+					},
+					{
+						"key": "lastRestockDate",
+						"label": "Last Restock",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "productSku",
+				"defaultSortDirection": "asc",
+				"detailRoute": "StockLevelDetail",
+				"filters": [
+					{
+						"key": "locationCode",
+						"label": "Location"
+					},
+					{
+						"key": "status",
+						"label": "Status"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration"
+					}
+				],
+				"description": "Real-time stock-on-hand snapshot per Product per Location. Shows quantityOnHand (physical), quantityReserved (allocated), quantityAvailable (computed as on-hand minus reserved). Edit individual records to adjust stock manually; downstream StockMove postings update these values declaratively."
+			}
+		},
+		{
+			"id": "StockLevelDetail",
+			"route": "/inventory/stock/:id",
+			"type": "detail",
+			"title": "Stock Level",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryStock",
+				"fields": [
+					{
+						"key": "productSku",
+						"label": "Product SKU",
+						"type": "string"
+					},
+					{
+						"key": "locationCode",
+						"label": "Location Code",
+						"type": "string"
+					},
+					{
+						"key": "locationName",
+						"label": "Location Name",
+						"type": "string"
+					},
+					{
+						"key": "quantityOnHand",
+						"label": "Quantity On-hand",
+						"type": "number"
+					},
+					{
+						"key": "quantityReserved",
+						"label": "Quantity Reserved",
+						"type": "number"
+					},
+					{
+						"key": "quantityInTransit",
+						"label": "Quantity In-Transit",
+						"type": "number"
+					},
+					{
+						"key": "quantityAvailable",
+						"label": "Quantity Available",
+						"type": "number"
+					},
+					{
+						"key": "unitCost",
+						"label": "Unit Cost",
+						"type": "number"
+					},
+					{
+						"key": "lastRestockDate",
+						"label": "Last Restock Date",
+						"type": "date"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "StockLevels"
+			}
+		},
+		{
+			"id": "StockByLocation",
+			"route": "/inventory/stock-by-location",
+			"type": "index",
+			"title": "Stock by Location",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryStock",
+				"columns": [
+					{
+						"key": "locationName",
+						"label": "Location",
+						"sortable": true
+					},
+					{
+						"key": "productSku",
+						"label": "Product",
+						"sortable": true
+					},
+					{
+						"key": "quantityOnHand",
+						"label": "On-hand",
+						"sortable": true
+					},
+					{
+						"key": "quantityReserved",
+						"label": "Reserved",
+						"sortable": true
+					},
+					{
+						"key": "quantityAvailable",
+						"label": "Available",
+						"sortable": true
+					},
+					{
+						"key": "unitCost",
+						"label": "Unit Cost",
+						"sortable": true
+					}
+				],
+				"defaultSort": "locationName",
+				"defaultSortDirection": "asc",
+				"detailRoute": "StockLevelDetail",
+				"filters": [
+					{
+						"key": "locationCode",
+						"label": "Location"
+					},
+					{
+						"key": "productSku",
+						"label": "Product"
+					}
+				],
+				"description": "Stock pivoted on location. Pick a location filter to see only that warehouse / store; default sort groups all rows by location so warehouse managers see their full inventory at a glance."
+			}
+		},
+		{
+			"id": "ReserveStock",
+			"route": "/inventory/reserve-stock",
+			"type": "index",
+			"title": "Reserve Stock",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryStock",
+				"columns": [
+					{
+						"key": "productSku",
+						"label": "Product",
+						"sortable": true
+					},
+					{
+						"key": "locationName",
+						"label": "Location",
+						"sortable": true
+					},
+					{
+						"key": "quantityReserved",
+						"label": "Reserved",
+						"sortable": true
+					},
+					{
+						"key": "quantityOnHand",
+						"label": "On-hand",
+						"sortable": true
+					},
+					{
+						"key": "quantityAvailable",
+						"label": "Available",
+						"sortable": true
+					},
+					{
+						"key": "lastRestockDate",
+						"label": "Last Restock",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-quantityReserved",
+				"detailRoute": "StockLevelDetail",
+				"filters": [
+					{
+						"key": "locationCode",
+						"label": "Location"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration"
+					}
+				],
+				"defaultFilters": {
+					"quantityReserved": {
+						"operator": "gt",
+						"value": 0
+					}
+				},
+				"description": "Stock records with a non-zero reservation. Lets the operator see at a glance which products are allocated to pending orders / production plans across all locations, sorted by largest reservation first."
 			}
 		},
 		{
