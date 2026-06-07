@@ -23,9 +23,13 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
 use OCA\Shillinq\Lifecycle\InventoryValuationMethodGuard;
+use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+
+require_once __DIR__.'/../Service/InMemoryObjectService.php';
 
 /**
  * Tests for InventoryValuationMethodGuard.
@@ -55,6 +59,14 @@ class InventoryValuationMethodGuardTest extends TestCase
 
 
     /**
+     * In-memory ObjectService stub for uniqueness tests.
+     *
+     * @var \OCA\Shillinq\Tests\Unit\Service\InMemoryObjectService
+     */
+    private \OCA\Shillinq\Tests\Unit\Service\InMemoryObjectService $os;
+
+
+    /**
      * Set up test fixtures.
      *
      * @return void
@@ -63,8 +75,20 @@ class InventoryValuationMethodGuardTest extends TestCase
     {
         parent::setUp();
 
+        $this->os     = new \OCA\Shillinq\Tests\Unit\Service\InMemoryObjectService();
         $this->logger = $this->createMock(LoggerInterface::class);
-        $this->guard  = new InventoryValuationMethodGuard(logger: $this->logger);
+
+        $container = $this->createStub(ContainerInterface::class);
+        $container->method('get')->willReturn($this->os);
+
+        $appConfig = $this->createStub(IAppConfig::class);
+        $appConfig->method('getValueString')->willReturn('shillinq');
+
+        $this->guard = new InventoryValuationMethodGuard(
+            container: $container,
+            appConfig: $appConfig,
+            logger: $this->logger,
+        );
 
     }//end setUp()
 
@@ -144,6 +168,86 @@ class InventoryValuationMethodGuardTest extends TestCase
         $this->assertFalse($this->guard->checkZeroStock(valuation: $valuation));
 
     }//end testFractionalQuantityDeniesTransition()
+
+
+    /**
+     * REQ-INV-005: empty store permits the creation.
+     *
+     * @return void
+     */
+    public function testUniqueActiveSnapshotPermitsFirst(): void
+    {
+        $proposed = [
+            'productId'        => 'GT-10-2026',
+            'warehouse'        => 'Magazijn Noord',
+            'administrationId' => 'adm-1',
+            'status'           => 'active',
+        ];
+
+        $this->assertTrue($this->guard->checkUniqueActiveSnapshot(proposed: $proposed));
+
+    }//end testUniqueActiveSnapshotPermitsFirst()
+
+
+    /**
+     * REQ-INV-005: pre-existing active snapshot blocks the second create.
+     *
+     * @return void
+     */
+    public function testUniqueActiveSnapshotBlocksDuplicate(): void
+    {
+        $this->os->seed(schema: 'InventoryValuation', rows: [
+            [
+                'id'               => 'iv-existing',
+                'productId'        => 'GT-10-2026',
+                'warehouse'        => 'Magazijn Noord',
+                'status'           => 'active',
+                'administrationId' => 'adm-1',
+            ],
+        ]);
+
+        $proposed = [
+            'productId'        => 'GT-10-2026',
+            'warehouse'        => 'Magazijn Noord',
+            'administrationId' => 'adm-1',
+            'status'           => 'active',
+        ];
+
+        $this->logger->expects($this->once())->method('info');
+
+        $this->assertFalse($this->guard->checkUniqueActiveSnapshot(proposed: $proposed));
+
+    }//end testUniqueActiveSnapshotBlocksDuplicate()
+
+
+    /**
+     * REQ-INV-005: self-update with same id is allowed (own-row match).
+     *
+     * @return void
+     */
+    public function testUniqueActiveSnapshotAllowsSelfMatch(): void
+    {
+        $this->os->seed(schema: 'InventoryValuation', rows: [
+            [
+                'id'               => 'iv-1',
+                'productId'        => 'GT-10-2026',
+                'warehouse'        => 'Magazijn Noord',
+                'status'           => 'active',
+                'administrationId' => 'adm-1',
+            ],
+        ]);
+
+        $proposed = [
+            'id'               => 'iv-1',
+            'productId'        => 'GT-10-2026',
+            'warehouse'        => 'Magazijn Noord',
+            'administrationId' => 'adm-1',
+            'status'           => 'active',
+        ];
+
+        $this->assertTrue($this->guard->checkUniqueActiveSnapshot(proposed: $proposed));
+
+    }//end testUniqueActiveSnapshotAllowsSelfMatch()
 
 
 }//end class

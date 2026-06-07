@@ -150,10 +150,18 @@
   (productId -> Product.sku, many-to-one) and `costCenter`
   (costCenterId -> CostCenter.id, many-to-one) declared in the
   schema block.
-- [ ] Task 14: Add uniqueness constraint on `InventoryValuation`
+- [x] Task 14: Add uniqueness constraint on `InventoryValuation`
   (`productId` + `warehouse`, status = `active`) — use OR uniqueness
   validator if supported, otherwise a lifecycle guard on
-  `InventoryValuation.create` (REQ-INV-005)
+  `InventoryValuation.create` (REQ-INV-005) — OR's
+  `x-openregister-unique` is a flat-tuple form (no `where` clause), so
+  enforced via a lifecycle guard:
+  `InventoryValuationMethodGuard::checkUniqueActiveSnapshot()` invoked
+  from `validations.onCreate.uniqueActiveSnapshot` AND from
+  `validations.onUpdate.uniqueActiveSnapshotOnTransitionToActive` (so
+  re-activating an adjusted snapshot also re-checks uniqueness). Allows
+  own-row self-update (by id). PHPUnit tests cover permit / block /
+  self-match. All 7 guard tests pass.
 - [ ] Task 15: Add Inventory Valuation navigation + pages to
   `src/manifest.json` (menu entry `Inventory > Valuation`, `type: index`
   page binding to `InventoryValuation` register with columns `warehouse`,

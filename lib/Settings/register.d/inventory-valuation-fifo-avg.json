@@ -183,12 +183,26 @@
 						}
 					},
 					"validations": {
+						"onCreate": {
+							"uniqueActiveSnapshot": {
+								"condition": "@proposed.status == 'active'",
+								"message": "Duplicate active valuation for productId+warehouse in this administration.",
+								"messageNl": "Dubbele actieve waardering voor productId+magazijn binnen deze administratie.",
+								"guard": "OCA\\Shillinq\\Lifecycle\\InventoryValuationMethodGuard::checkUniqueActiveSnapshot"
+							}
+						},
 						"onUpdate": {
 							"methodChangeRequiresZeroStock": {
 								"condition": "CHANGED(valuationMethod) AND @current.quantity > 0",
 								"message": "Non-zero stock — cannot change valuation method.",
 								"messageNl": "Voorraad is niet leeg — kan waarderingsmethode niet wijzigen.",
 								"guard": "OCA\\Shillinq\\Lifecycle\\InventoryValuationMethodGuard::checkZeroStock"
+							},
+							"uniqueActiveSnapshotOnTransitionToActive": {
+								"condition": "CHANGED(status) AND @proposed.status == 'active'",
+								"message": "Duplicate active valuation for productId+warehouse in this administration.",
+								"messageNl": "Dubbele actieve waardering voor productId+magazijn binnen deze administratie.",
+								"guard": "OCA\\Shillinq\\Lifecycle\\InventoryValuationMethodGuard::checkUniqueActiveSnapshot"
 							}
 						}
 					}
