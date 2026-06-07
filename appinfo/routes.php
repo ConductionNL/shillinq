@@ -75,6 +75,11 @@ return [
         // Static/verb route declared before the SPA catch-all (ADR-016).
         ['name' => 'depositWebhook#handle', 'url' => '/api/deposits/webhook/{gateway}', 'verb' => 'POST'],
 
+        // Innovatiebox administratie (Tier 4): read-only Vpb roll-up + nexus scenario + doorsnijdingsverbod.
+        ['name' => 'innovatiebox#aggregation', 'url' => '/api/innovatiebox/aggregation', 'verb' => 'GET'],
+        ['name' => 'innovatiebox#scenario', 'url' => '/api/innovatiebox/scenario', 'verb' => 'GET'],
+        ['name' => 'innovatiebox#doorsnijdingsverbod', 'url' => '/api/innovatiebox/doorsnijdingsverbod', 'verb' => 'GET'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],

@@ -13809,6 +13809,497 @@
 				],
 				"indexRoute": "CashFlowStatement"
 			}
+		},
+		{
+			"id": "IBAssets",
+			"route": "/bookkeeping/innovatiebox/assets",
+			"type": "index",
+			"title": "Innovatiebox — Assets",
+			"featureFlag": "mkb-innovatiebox",
+			"config": {
+				"register": "shillinq",
+				"schema": "QualifyingAsset",
+				"featureFlag": "mkb-innovatiebox",
+				"columns": [
+					{
+						"key": "naam",
+						"label": "Naam",
+						"sortable": true
+					},
+					{
+						"key": "type",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "voortbrenger",
+						"label": "Voortbrenger",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"sortable": true
+					}
+				],
+				"filters": [
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"defaultSort": "naam",
+				"detailRoute": "IBAssetDetail"
+			}
+		},
+		{
+			"id": "IBAssetDetail",
+			"route": "/bookkeeping/innovatiebox/assets/:id",
+			"type": "detail",
+			"title": "Kwalificerend immaterieel activum",
+			"featureFlag": "mkb-innovatiebox",
+			"config": {
+				"register": "shillinq",
+				"schema": "QualifyingAsset",
+				"featureFlag": "mkb-innovatiebox",
+				"fields": [
+					{
+						"key": "naam",
+						"label": "Naam",
+						"type": "string"
+					},
+					{
+						"key": "type",
+						"label": "Type",
+						"type": "string"
+					},
+					{
+						"key": "type_immaterieel_activum",
+						"label": "Soort activum",
+						"type": "string"
+					},
+					{
+						"key": "voortbrenger",
+						"label": "Voortbrenger",
+						"type": "string"
+					},
+					{
+						"key": "kostendrager_id",
+						"label": "Kostendrager",
+						"type": "string"
+					},
+					{
+						"key": "verbonden_lichaam_betrokken",
+						"label": "Verbonden lichaam betrokken",
+						"type": "boolean"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"relatedLists": [
+					{
+						"id": "nexus-calculations",
+						"title": "Nexusberekeningen",
+						"schema": "NexusCalculation",
+						"filter": {
+							"qualifying_asset_id": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "boekjaar",
+								"label": "Boekjaar"
+							},
+							{
+								"key": "nexusbreuk_toegepast",
+								"label": "Nexusbreuk"
+							}
+						],
+						"detailRoute": "IBNexusDetail"
+					},
+					{
+						"id": "carry-forward-losses",
+						"title": "Voortwenteling verlies",
+						"schema": "CarryForwardLoss",
+						"filter": {
+							"qualifying_asset_id": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "ontstaansboekjaar",
+								"label": "Ontstaansjaar"
+							},
+							{
+								"key": "saldo_open",
+								"label": "Saldo open (EUR)"
+							},
+							{
+								"key": "status",
+								"label": "Status"
+							}
+						]
+					}
+				],
+				"auditTrail": true,
+				"indexRoute": "IBAssets"
+			}
+		},
+		{
+			"id": "IBNexus",
+			"route": "/bookkeeping/innovatiebox/nexus",
+			"type": "index",
+			"title": "Innovatiebox — Nexus",
+			"featureFlag": "mkb-innovatiebox",
+			"config": {
+				"register": "shillinq",
+				"schema": "NexusCalculation",
+				"featureFlag": "mkb-innovatiebox",
+				"columns": [
+					{
+						"key": "qualifying_asset_id",
+						"label": "Activum",
+						"sortable": true
+					},
+					{
+						"key": "boekjaar",
+						"label": "Boekjaar",
+						"sortable": true
+					},
+					{
+						"key": "totale_rd_kosten",
+						"label": "Totale R&D-kosten (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "nexusbreuk_toegepast",
+						"label": "Nexusbreuk",
+						"sortable": true
+					}
+				],
+				"filters": [
+					{
+						"key": "boekjaar",
+						"label": "Boekjaar",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"defaultSort": "-boekjaar",
+				"detailRoute": "IBNexusDetail"
+			}
+		},
+		{
+			"id": "IBNexusDetail",
+			"route": "/bookkeeping/innovatiebox/nexus/:id",
+			"type": "detail",
+			"title": "Nexusberekening",
+			"featureFlag": "mkb-innovatiebox",
+			"config": {
+				"register": "shillinq",
+				"schema": "NexusCalculation",
+				"featureFlag": "mkb-innovatiebox",
+				"fields": [
+					{
+						"key": "boekjaar",
+						"label": "Boekjaar",
+						"type": "integer"
+					},
+					{
+						"key": "eigen_rd_kosten",
+						"label": "Eigen R&D-kosten (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "rd_kosten_uitbesteed_derden",
+						"label": "Uitbesteed aan derden (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "rd_kosten_uitbesteed_verbonden",
+						"label": "Uitbesteed aan verbonden lichaam (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "totale_rd_kosten",
+						"label": "Totale R&D-kosten (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "uplift_factor",
+						"label": "Uplift-factor",
+						"type": "number"
+					},
+					{
+						"key": "nexusbreuk_ongecapt",
+						"label": "Nexusbreuk (ongecapt)",
+						"type": "number"
+					},
+					{
+						"key": "nexusbreuk_toegepast",
+						"label": "Nexusbreuk (toegepast)",
+						"type": "number"
+					}
+				],
+				"auditTrail": true,
+				"indexRoute": "IBNexus"
+			}
+		},
+		{
+			"id": "IBProfitAttributions",
+			"route": "/bookkeeping/innovatiebox/winsttoerekening",
+			"type": "index",
+			"title": "Innovatiebox — Winsttoerekening",
+			"featureFlag": "mkb-innovatiebox",
+			"config": {
+				"register": "shillinq",
+				"schema": "IBProfitAttribution",
+				"featureFlag": "mkb-innovatiebox",
+				"columns": [
+					{
+						"key": "qualifying_asset_id",
+						"label": "Activum",
+						"sortable": true
+					},
+					{
+						"key": "boekjaar",
+						"label": "Boekjaar",
+						"sortable": true
+					},
+					{
+						"key": "methode",
+						"label": "Methode",
+						"sortable": true
+					},
+					{
+						"key": "kwalificerende_winst_na_nexus",
+						"label": "Kwalificerende winst na nexus (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "vpb_op_innovatiedeel",
+						"label": "Vpb innovatiedeel (EUR)",
+						"sortable": true
+					}
+				],
+				"filters": [
+					{
+						"key": "boekjaar",
+						"label": "Boekjaar",
+						"type": "string"
+					},
+					{
+						"key": "methode",
+						"label": "Methode",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"defaultSort": "-boekjaar",
+				"detailRoute": "IBProfitAttributionDetail"
+			}
+		},
+		{
+			"id": "IBProfitAttributionDetail",
+			"route": "/bookkeeping/innovatiebox/winsttoerekening/:id",
+			"type": "detail",
+			"title": "Winsttoerekening",
+			"featureFlag": "mkb-innovatiebox",
+			"config": {
+				"register": "shillinq",
+				"schema": "IBProfitAttribution",
+				"featureFlag": "mkb-innovatiebox",
+				"fields": [
+					{
+						"key": "methode",
+						"label": "Methode",
+						"type": "string",
+						"help": "afpelmethode (Wet Vpb art. 12bd) of forfaitair 25% (art. 12bg)"
+					},
+					{
+						"key": "boekjaar",
+						"label": "Boekjaar",
+						"type": "integer"
+					},
+					{
+						"key": "bruto_opbrengst_activum",
+						"label": "Bruto-opbrengst (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "kwalificerende_winst_voor_nexus",
+						"label": "Kwalificerende winst voor nexus (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "nexusbreuk_toegepast",
+						"label": "Nexusbreuk",
+						"type": "number"
+					},
+					{
+						"key": "kwalificerende_winst_na_nexus",
+						"label": "Kwalificerende winst na nexus (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "effectief_tarief",
+						"label": "Innovatiebox tarief",
+						"type": "number",
+						"help": "Wettelijk tarief 0.09 (9%) per Wet Vpb art. 12b 2026"
+					},
+					{
+						"key": "vpb_op_innovatiedeel",
+						"label": "Vpb op innovatiedeel (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "voordeel_innovatiebox",
+						"label": "Voordeel innovatiebox (EUR)",
+						"type": "number"
+					}
+				],
+				"auditTrail": true,
+				"indexRoute": "IBProfitAttributions"
+			}
+		},
+		{
+			"id": "IBCostAllocations",
+			"route": "/bookkeeping/innovatiebox/kostentoerekening",
+			"type": "index",
+			"title": "Innovatiebox — Kostentoerekening",
+			"featureFlag": "mkb-innovatiebox",
+			"config": {
+				"register": "shillinq",
+				"schema": "IBExpenseAllocation",
+				"featureFlag": "mkb-innovatiebox",
+				"columns": [
+					{
+						"key": "qualifying_asset_id",
+						"label": "Activum",
+						"sortable": true
+					},
+					{
+						"key": "periode",
+						"label": "Periode",
+						"sortable": true
+					},
+					{
+						"key": "kostensoort",
+						"label": "Kostensoort",
+						"sortable": true
+					},
+					{
+						"key": "bedrag",
+						"label": "Bedrag (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "grootboekrekening",
+						"label": "Grootboekrekening",
+						"sortable": true
+					},
+					{
+						"key": "exclusief_in_winstbepaling",
+						"label": "Exclusief in winstbepaling",
+						"sortable": true
+					}
+				],
+				"filters": [
+					{
+						"key": "boekjaar",
+						"label": "Boekjaar",
+						"type": "string"
+					},
+					{
+						"key": "kostensoort",
+						"label": "Kostensoort",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"defaultSort": "periode"
+			}
+		},
+		{
+			"id": "IBCarryForwardLosses",
+			"route": "/bookkeeping/innovatiebox/verliesverrekening",
+			"type": "index",
+			"title": "Innovatiebox — Voortwenteling verlies",
+			"featureFlag": "mkb-innovatiebox",
+			"config": {
+				"register": "shillinq",
+				"schema": "CarryForwardLoss",
+				"featureFlag": "mkb-innovatiebox",
+				"columns": [
+					{
+						"key": "qualifying_asset_id",
+						"label": "Activum",
+						"sortable": true
+					},
+					{
+						"key": "ontstaansboekjaar",
+						"label": "Ontstaansjaar",
+						"sortable": true
+					},
+					{
+						"key": "negatief_kwalificerend_resultaat",
+						"label": "Verlies (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "saldo_open",
+						"label": "Saldo open (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"filters": [
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"defaultSort": "ontstaansboekjaar"
+			}
 		}
 	]
 }
