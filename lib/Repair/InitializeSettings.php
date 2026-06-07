@@ -534,7 +534,6 @@ class InitializeSettings implements IRepairStep
 
     }//end seedInventoryBarcodeDemo()
 
-
     /**
      * Seed the demo InventoryLot records, idempotently.
      *
@@ -565,7 +564,6 @@ class InitializeSettings implements IRepairStep
         $output->warning('Demo inventory lot seeding issue: '.($result['message'] ?? 'unknown error'));
 
     }//end seedInventoryLotsDemo()
-
 
     /**
      * Seed example InventoryValuation snapshots from
@@ -606,7 +604,6 @@ class InitializeSettings implements IRepairStep
         $output->warning('Inventory valuation example seeding issue: '.($result['message'] ?? 'unknown error'));
 
     }//end seedInventoryValuationExamples()
-
 
     /**
      * Seed example InventoryStock records from the three location seed files
@@ -649,7 +646,6 @@ class InitializeSettings implements IRepairStep
         $output->warning('InventoryStock example seeding issue: '.($result['message'] ?? 'unknown error'));
 
     }//end seedInventoryStockExamples()
-
 
     /**
      * Seed the bookkeeping-waterschappen-bbv-variant slice-01 demo data
@@ -704,7 +700,6 @@ class InitializeSettings implements IRepairStep
         $output->warning('BudgetBBVMapping demo seeding issue: '.($mapResult['message'] ?? 'unknown error'));
 
     }//end seedBbvWaterschappenDemo()
-
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.

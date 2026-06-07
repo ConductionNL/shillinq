@@ -1493,7 +1493,6 @@ class SettingsService
 
     }//end seedInventoryBarcodes()
 
-
     /**
      * Seed demo InventoryLot records from inventory-lots-demo.json, idempotently.
      *
@@ -1756,7 +1755,6 @@ class SettingsService
 
     }//end seedInventoryValuationExamples()
 
-
     /**
      * Seed demo InventoryStock records from the three location seed files,
      * idempotently per administration.
@@ -1913,7 +1911,6 @@ class SettingsService
 
     }//end seedInventoryStockExamples()
 
-
     /**
      * Seed the demo BBVProgramme records from
      * bbv-waterschappen-programmes-2026-demo.json, idempotently per administration.
@@ -2048,7 +2045,6 @@ class SettingsService
         }//end try
 
     }//end seedBbvProgrammes()
-
 
     /**
      * Seed the demo BudgetBBVMapping records from
@@ -2185,5 +2181,4 @@ class SettingsService
         }//end try
 
     }//end seedBudgetBbvMappings()
-
 }//end class

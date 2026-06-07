@@ -61,7 +61,6 @@ final class WaterschappenBbv01ConfigSchemasSeedIntegrationTest extends TestCase
         'BudgetBBVMapping',
     ];
 
-
     /**
      * Load the base shillinq_register.json + merge every register.d/*.json
      * fragment exactly the way SettingsService does at install time. Returns
@@ -107,7 +106,6 @@ final class WaterschappenBbv01ConfigSchemasSeedIntegrationTest extends TestCase
 
     }//end loadMergedComponents()
 
-
     /**
      * Deep-merge an overlay onto a base; mirror of SettingsService::deepMergeConfig
      * (associative arrays merge by key, list arrays concatenate, scalars overwrite).
@@ -140,7 +138,6 @@ final class WaterschappenBbv01ConfigSchemasSeedIntegrationTest extends TestCase
 
     }//end deepMerge()
 
-
     /**
      * Load the slice-01 seed fixture.
      *
@@ -166,7 +163,6 @@ final class WaterschappenBbv01ConfigSchemasSeedIntegrationTest extends TestCase
         return $data;
 
     }//end fixture()
-
 
     /**
      * Both schemas must materialise after the slice-01 fragment is merged
@@ -200,7 +196,6 @@ final class WaterschappenBbv01ConfigSchemasSeedIntegrationTest extends TestCase
 
     }//end testBothSchemasMaterialise()
 
-
     /**
      * BBVProgramme declares the five required fields per REQ-BBVW-001
      * (programmeCode, programmeName, fiscalYear, status, administrationId).
@@ -227,10 +222,13 @@ final class WaterschappenBbv01ConfigSchemasSeedIntegrationTest extends TestCase
 
         $statusEnum = $programme['properties']['status']['enum'];
         self::assertContains('active', $statusEnum, 'BBVProgramme.status MUST enumerate "active".');
-        self::assertContains('archived', $statusEnum, 'BBVProgramme.status MUST enumerate "archived" so operators can archive instead of delete (design D1).');
+        self::assertContains(
+            'archived',
+            $statusEnum,
+            'BBVProgramme.status MUST enumerate "archived" so operators archive instead of delete (design D1).'
+        );
 
     }//end testBbvProgrammeRequiredFields()
-
 
     /**
      * BudgetBBVMapping declares the five required fields per REQ-BBVW-002
@@ -273,7 +271,6 @@ final class WaterschappenBbv01ConfigSchemasSeedIntegrationTest extends TestCase
 
     }//end testBudgetBbvMappingRequiredFields()
 
-
     /**
      * BBVProgramme + BudgetBBVMapping carry the declared OpenRegister
      * relations to Administration / BBVProgramme / Account so the
@@ -305,7 +302,6 @@ final class WaterschappenBbv01ConfigSchemasSeedIntegrationTest extends TestCase
 
     }//end testRelationsDeclared()
 
-
     /**
      * The 5 demo programmes the design specifies are present in the fixture.
      *
@@ -328,7 +324,6 @@ final class WaterschappenBbv01ConfigSchemasSeedIntegrationTest extends TestCase
         }
 
     }//end testFixtureHasFiveDemoProgrammes()
-
 
     /**
      * Allocation rows sum to exactly 100 per GL account — the invariant the
@@ -360,7 +355,6 @@ final class WaterschappenBbv01ConfigSchemasSeedIntegrationTest extends TestCase
 
     }//end testFixtureMappingsSumToHundred()
 
-
     /**
      * Every mapping in the fixture references a programme that is also in
      * the fixture (referential integrity for chain members 02/08/11).
@@ -382,7 +376,6 @@ final class WaterschappenBbv01ConfigSchemasSeedIntegrationTest extends TestCase
 
     }//end testFixtureMappingsReferenceKnownProgrammes()
 
-
     /**
      * The GLTransaction + GLLine fixture pair is balanced (sum of debits =
      * sum of credits per transaction) and only references GL accounts that
@@ -393,9 +386,9 @@ final class WaterschappenBbv01ConfigSchemasSeedIntegrationTest extends TestCase
      */
     public function testFixtureGlEntriesBalanced(): void
     {
-        $fixture       = self::fixture();
-        $transactions  = ($fixture['GLTransaction'] ?? []);
-        $lines         = ($fixture['GLLine'] ?? []);
+        $fixture      = self::fixture();
+        $transactions = ($fixture['GLTransaction'] ?? []);
+        $lines        = ($fixture['GLLine'] ?? []);
         self::assertNotEmpty($transactions, 'Fixture MUST ship at least one GLTransaction for downstream aggregation tests.');
         self::assertNotEmpty($lines, 'Fixture MUST ship at least two GLLine rows so debits + credits balance.');
 
@@ -403,7 +396,11 @@ final class WaterschappenBbv01ConfigSchemasSeedIntegrationTest extends TestCase
         foreach ($lines as $line) {
             $txn  = (string) $line['transactionNumber'];
             $side = (string) $line['side'];
-            $sign = ($side === 'debit') ? 1 : -1;
+            $sign = -1;
+            if ($side === 'debit') {
+                $sign = 1;
+            }
+
             $balances[$txn] = (($balances[$txn] ?? 0) + ($sign * (int) $line['amount']));
         }
 
@@ -421,11 +418,9 @@ final class WaterschappenBbv01ConfigSchemasSeedIntegrationTest extends TestCase
             self::assertContains(
                 $line['accountNumber'],
                 $allowed,
-                'GLLine references unexpected account '.$line['accountNumber'].'; downstream chain members assume only mapping-covered + bank accounts.'
+                'GLLine references unexpected account '.$line['accountNumber'].'; only mapping-covered + bank accounts allowed.'
             );
         }
 
     }//end testFixtureGlEntriesBalanced()
-
-
 }//end class
