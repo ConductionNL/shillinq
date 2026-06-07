@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/add-shillinq-bookkeeping-compliance/specs/bookkeeping-accounts-payable-core/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -55,10 +58,10 @@ class ThreeWayMatchGuardTest extends TestCase
     {
         parent::setUp();
 
-        $this->container = $this->createMock(ContainerInterface::class);
-        $appConfig       = $this->createMock(IAppConfig::class);
+        $this->container = $this->createMock(originalClassName: ContainerInterface::class);
+        $appConfig       = $this->createMock(originalClassName: IAppConfig::class);
         $appConfig->method('getValueString')->willReturn('shillinq');
-        $logger = $this->createMock(LoggerInterface::class);
+        $logger = $this->createMock(originalClassName: LoggerInterface::class);
 
         $this->guard = new ThreeWayMatchGuard(
             container: $this->container,
@@ -82,7 +85,7 @@ class ThreeWayMatchGuardTest extends TestCase
             ['poRef' => null, 'grRef' => null, 'grossAmount' => 1210.00, 'administrationId' => 'adm-1']
         );
 
-        self::assertTrue($result);
+        self::assertTrue(condition: $result);
 
     }//end testTwoWayMatchPassesWithoutPoGr()
 
@@ -93,14 +96,14 @@ class ThreeWayMatchGuardTest extends TestCase
      */
     public function testThreeWayMatchPassesWhenAmountsMatch(): void
     {
-        $objectService = $this->buildObjectServiceStub(['grossAmount' => 1210.00]);
+        $objectService = $this->buildObjectServiceStub(gr: ['grossAmount' => 1210.00]);
         $this->container->method('get')->willReturn($objectService);
 
         $result = $this->guard->matches(
             ['poRef' => 'PO-1', 'grRef' => 'GR-1', 'grossAmount' => 1210.00, 'administrationId' => 'adm-1']
         );
 
-        self::assertTrue($result);
+        self::assertTrue(condition: $result);
 
     }//end testThreeWayMatchPassesWhenAmountsMatch()
 
@@ -111,14 +114,14 @@ class ThreeWayMatchGuardTest extends TestCase
      */
     public function testThreeWayMatchFailsOnAmountMismatch(): void
     {
-        $objectService = $this->buildObjectServiceStub(['grossAmount' => 1000.00]);
+        $objectService = $this->buildObjectServiceStub(gr: ['grossAmount' => 1000.00]);
         $this->container->method('get')->willReturn($objectService);
 
         $result = $this->guard->matches(
             ['poRef' => 'PO-1', 'grRef' => 'GR-1', 'grossAmount' => 1210.00, 'administrationId' => 'adm-1']
         );
 
-        self::assertFalse($result);
+        self::assertFalse(condition: $result);
 
     }//end testThreeWayMatchFailsOnAmountMismatch()
 
@@ -135,7 +138,7 @@ class ThreeWayMatchGuardTest extends TestCase
             ['poRef' => 'PO-1', 'grRef' => 'GR-1', 'grossAmount' => 1210.00, 'administrationId' => 'adm-1']
         );
 
-        self::assertFalse($result);
+        self::assertFalse(condition: $result);
 
     }//end testThreeWayFailsClosedWhenGrUnresolvable()
 
@@ -150,30 +153,55 @@ class ThreeWayMatchGuardTest extends TestCase
     {
         return new class($gr) {
             /**
-             * @param array<string,mixed>|null $gr
+             * Constructor for the anonymous ObjectService stub.
+             *
+             * @param array<string,mixed>|null $gr Goods-receipt record to return, or null for empty.
+             *
+             * @return void
              */
             public function __construct(private ?array $gr)
             {
-            }
+            }//end __construct()
 
+            /**
+             * Set the register (no-op stub).
+             *
+             * @param string $register Register slug.
+             *
+             * @return static
+             */
             public function setRegister(string $register): static
             {
                 return $this;
-            }
+            }//end setRegister()
 
+            /**
+             * Set the schema (no-op stub).
+             *
+             * @param string $schema Schema slug.
+             *
+             * @return static
+             */
             public function setSchema(string $schema): static
             {
                 return $this;
-            }
+            }//end setSchema()
 
             /**
-             * @param array<string,mixed> $params
+             * Find all records for the current schema context.
+             *
+             * @param array<string,mixed> $params Query parameters.
+             *
              * @return array<mixed>
              */
             public function findAll(array $params=[]): array
             {
-                return ($this->gr === null ? [] : [$this->gr]);
-            }
+                if ($this->gr === null) {
+                    return [];
+                }
+
+                return [$this->gr];
+            }//end findAll()
         };
 
     }//end buildObjectServiceStub()

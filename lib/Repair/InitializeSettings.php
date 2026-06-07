@@ -47,6 +47,8 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
  * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
 class InitializeSettings implements IRepairStep
 {
@@ -710,18 +712,14 @@ class InitializeSettings implements IRepairStep
 
         $result = $this->manifestService->import();
 
-        if ($result['success'] === true) {
-            $imported = ($result['imported'] ?? 0);
-            $skipped  = ($result['skipped'] ?? 0);
-            $output->info(
-                'Statement manifests imported: '.$imported.' created, '.$skipped.' skipped (operator edits preserved).'
-            );
+        if ($result['success'] !== true) {
+            $output->warning('Statement manifest import issue: '.$result['message']);
+            return;
         }
 
-        if ($result['success'] !== true) {
-            $message = ($result['message'] ?? 'unknown error');
-            $output->warning('Statement manifest import issue: '.$message);
-        }
+        $output->info(
+            'Statement manifests imported: '.$result['imported'].' created, '.$result['skipped'].' skipped (operator edits preserved).'
+        );
 
     }//end importStatementManifests()
 }//end class

@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/add-shillinq-bookkeeping-compliance/specs/bookkeeping-accounts-receivable-core/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -56,10 +59,10 @@ class OpenBalanceGuardTest extends TestCase
     {
         parent::setUp();
 
-        $this->container = $this->createMock(ContainerInterface::class);
-        $appConfig       = $this->createMock(IAppConfig::class);
+        $this->container = $this->createMock(originalClassName: ContainerInterface::class);
+        $appConfig       = $this->createMock(originalClassName: IAppConfig::class);
         $appConfig->method('getValueString')->willReturn('shillinq');
-        $logger = $this->createMock(LoggerInterface::class);
+        $logger = $this->createMock(originalClassName: LoggerInterface::class);
 
         $this->guard = new OpenBalanceGuard(
             container: $this->container,
@@ -86,7 +89,7 @@ class OpenBalanceGuardTest extends TestCase
             ['customerId' => 'DEB-1', 'administrationId' => 'adm-1', 'grossAmount' => 9999.00]
         );
 
-        self::assertTrue($result, 'No credit limit configured → check skipped');
+        self::assertTrue(condition: $result, message: 'No credit limit configured → check skipped');
 
     }//end testWithinCreditLimitSkippedWhenNoLimit()
 
@@ -110,7 +113,7 @@ class OpenBalanceGuardTest extends TestCase
             ['customerId' => 'DEB-1', 'administrationId' => 'adm-1', 'grossAmount' => 500.00]
         );
 
-        self::assertFalse($result);
+        self::assertFalse(condition: $result);
 
     }//end testWithinCreditLimitBlocksWhenExceeded()
 
@@ -135,7 +138,7 @@ class OpenBalanceGuardTest extends TestCase
             ['customerId' => 'DEB-1', 'administrationId' => 'adm-1', 'grossAmount' => 500.00]
         );
 
-        self::assertTrue($result, 'Paid invoices excluded; 1000 + 500 <= 5000');
+        self::assertTrue(condition: $result, message: 'Paid invoices excluded; 1000 + 500 <= 5000');
 
     }//end testWithinCreditLimitPermitsWhenUnderLimit()
 
@@ -156,7 +159,7 @@ class OpenBalanceGuardTest extends TestCase
             ['customerId' => 'DEB-1', 'administrationId' => 'adm-1']
         );
 
-        self::assertFalse($result);
+        self::assertFalse(condition: $result);
 
     }//end testCustomerNotBlockedRejectsBlocked()
 
@@ -177,7 +180,7 @@ class OpenBalanceGuardTest extends TestCase
             ['vendorId' => 'CRD-1', 'administrationId' => 'adm-1']
         );
 
-        self::assertTrue($result);
+        self::assertTrue(condition: $result);
 
     }//end testVendorNotBlockedPassesActive()
 
@@ -186,36 +189,63 @@ class OpenBalanceGuardTest extends TestCase
      * schemas and the invoice list for invoice schemas.
      *
      * @param array<string,mixed> $master   Vendor/Customer master record.
-     * @param array<mixed>         $invoices Invoice records for balance queries.
+     * @param array<mixed>        $invoices Invoice records for balance queries.
      *
      * @return object
      */
     private function buildObjectServiceStub(array $master, array $invoices): object
     {
         return new class($master, $invoices) {
+
+            /**
+             * Current schema context for routing findAll results.
+             *
+             * @var string
+             */
             private string $schema = '';
 
             /**
-             * @param array<string,mixed> $master
-             * @param array<mixed>        $invoices
+             * Constructor for the anonymous ObjectService stub.
+             *
+             * @param array<string,mixed> $master   Vendor/Customer master record.
+             * @param array<mixed>        $invoices Invoice records for balance queries.
+             *
+             * @return void
              */
             public function __construct(private array $master, private array $invoices)
             {
-            }
+            }//end __construct()
 
+            /**
+             * Set the register (no-op stub).
+             *
+             * @param string $register Register slug.
+             *
+             * @return static
+             */
             public function setRegister(string $register): static
             {
                 return $this;
-            }
+            }//end setRegister()
 
+            /**
+             * Set the schema context.
+             *
+             * @param string $schema Schema slug.
+             *
+             * @return static
+             */
             public function setSchema(string $schema): static
             {
                 $this->schema = $schema;
                 return $this;
-            }
+            }//end setSchema()
 
             /**
-             * @param array<string,mixed> $params
+             * Find all records for the current schema.
+             *
+             * @param array<string,mixed> $params Query parameters.
+             *
              * @return array<mixed>
              */
             public function findAll(array $params=[]): array
@@ -225,7 +255,7 @@ class OpenBalanceGuardTest extends TestCase
                 }
 
                 return $this->invoices;
-            }
+            }//end findAll()
         };
 
     }//end buildObjectServiceStub()

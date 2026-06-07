@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/add-shillinq-bookkeeping-compliance/specs/bookkeeping-accounts-receivable-core/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -54,7 +57,7 @@ class DunningGuardTest extends TestCase
      */
     public function testBelowFirstThresholdReturnsNull(): void
     {
-        self::assertNull($this->guard->levelForDaysPastDue(13));
+        self::assertNull(actual: $this->guard->levelForDaysPastDue(daysPastDue: 13));
 
     }//end testBelowFirstThresholdReturnsNull()
 
@@ -65,14 +68,14 @@ class DunningGuardTest extends TestCase
      */
     public function testCadenceLevels(): void
     {
-        self::assertSame('reminder1', $this->guard->levelForDaysPastDue(14));
-        self::assertSame('reminder1', $this->guard->levelForDaysPastDue(29));
-        self::assertSame('reminder2', $this->guard->levelForDaysPastDue(30));
-        self::assertSame('reminder2', $this->guard->levelForDaysPastDue(44));
-        self::assertSame('formal-notice', $this->guard->levelForDaysPastDue(45));
-        self::assertSame('formal-notice', $this->guard->levelForDaysPastDue(59));
-        self::assertSame('collection', $this->guard->levelForDaysPastDue(60));
-        self::assertSame('collection', $this->guard->levelForDaysPastDue(120));
+        self::assertSame(expected: 'reminder1', actual: $this->guard->levelForDaysPastDue(daysPastDue: 14));
+        self::assertSame(expected: 'reminder1', actual: $this->guard->levelForDaysPastDue(daysPastDue: 29));
+        self::assertSame(expected: 'reminder2', actual: $this->guard->levelForDaysPastDue(daysPastDue: 30));
+        self::assertSame(expected: 'reminder2', actual: $this->guard->levelForDaysPastDue(daysPastDue: 44));
+        self::assertSame(expected: 'formal-notice', actual: $this->guard->levelForDaysPastDue(daysPastDue: 45));
+        self::assertSame(expected: 'formal-notice', actual: $this->guard->levelForDaysPastDue(daysPastDue: 59));
+        self::assertSame(expected: 'collection', actual: $this->guard->levelForDaysPastDue(daysPastDue: 60));
+        self::assertSame(expected: 'collection', actual: $this->guard->levelForDaysPastDue(daysPastDue: 120));
 
     }//end testCadenceLevels()
 }//end class

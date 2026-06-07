@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/add-shillinq-bookkeeping-compliance/specs/bookkeeping-financial-statements/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -54,8 +57,8 @@ class StatementManifestServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $logger          = $this->createMock(LoggerInterface::class);
+        $this->appConfig = $this->createMock(originalClassName: IAppConfig::class);
+        $logger          = $this->createMock(originalClassName: LoggerInterface::class);
 
         $this->service = new StatementManifestService(
             appConfig: $this->appConfig,
@@ -65,7 +68,7 @@ class StatementManifestServiceTest extends TestCase
     }//end setUp()
 
     /**
-     * import() writes all three manifests when no config exists.
+     * Import() writes all three manifests when no config exists.
      *
      * @return void
      *
@@ -74,18 +77,18 @@ class StatementManifestServiceTest extends TestCase
     public function testImportImportsAllWhenAbsent(): void
     {
         $this->appConfig->method('getValueString')->willReturn('');
-        $this->appConfig->expects($this->exactly(3))->method('setValueString');
+        $this->appConfig->expects($this->exactly(count: 3))->method('setValueString');
 
         $result = $this->service->import();
 
-        self::assertTrue($result['success']);
-        self::assertSame(3, $result['imported']);
-        self::assertSame(0, $result['skipped']);
+        self::assertTrue(condition: $result['success']);
+        self::assertSame(expected: 3, actual: $result['imported']);
+        self::assertSame(expected: 0, actual: $result['skipped']);
 
     }//end testImportImportsAllWhenAbsent()
 
     /**
-     * import() preserves operator edits — skips keys that already exist.
+     * Import() preserves operator edits — skips keys that already exist.
      *
      * @return void
      *
@@ -98,14 +101,14 @@ class StatementManifestServiceTest extends TestCase
 
         $result = $this->service->import();
 
-        self::assertTrue($result['success']);
-        self::assertSame(0, $result['imported']);
-        self::assertSame(3, $result['skipped']);
+        self::assertTrue(condition: $result['success']);
+        self::assertSame(expected: 0, actual: $result['imported']);
+        self::assertSame(expected: 3, actual: $result['skipped']);
 
     }//end testImportSkipsExistingWithoutForce()
 
     /**
-     * importForced() re-imports existing keys, overwriting operator edits.
+     * ImportForced() re-imports existing keys, overwriting operator edits.
      *
      * @return void
      *
@@ -114,12 +117,12 @@ class StatementManifestServiceTest extends TestCase
     public function testImportForcedReimports(): void
     {
         $this->appConfig->method('getValueString')->willReturn('{"_meta":{},"sections":[]}');
-        $this->appConfig->expects($this->exactly(3))->method('setValueString');
+        $this->appConfig->expects($this->exactly(count: 3))->method('setValueString');
 
         $result = $this->service->importForced();
 
-        self::assertTrue($result['success']);
-        self::assertSame(3, $result['imported']);
+        self::assertTrue(condition: $result['success']);
+        self::assertSame(expected: 3, actual: $result['imported']);
 
     }//end testImportForcedReimports()
 }//end class
