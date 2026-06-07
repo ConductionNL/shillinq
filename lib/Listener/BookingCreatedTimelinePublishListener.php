@@ -43,6 +43,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\Pipelinq\CustomerBridgeMetricsService;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
 use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
@@ -63,14 +64,16 @@ final class BookingCreatedTimelinePublishListener implements IEventListener
     /**
      * Construct the listener with its DI deps.
      *
-     * @param PipelinqContactAdapter $pipelinq   Slice-02 adapter (publishTimelineEvent).
-     * @param TimelineRetryQueue     $retryQueue Async-retry queue (slice 09 binding).
-     * @param LoggerInterface        $logger     PSR logger for fail-soft observability.
+     * @param PipelinqContactAdapter            $pipelinq   Slice-02 adapter (publishTimelineEvent).
+     * @param TimelineRetryQueue                $retryQueue Async-retry queue (slice 09 binding).
+     * @param LoggerInterface                   $logger     PSR logger for fail-soft observability.
+     * @param CustomerBridgeMetricsService|null $metrics    Optional metrics aggregator (slice 11); NULL-safe for existing tests.
      */
     public function __construct(
         private readonly PipelinqContactAdapter $pipelinq,
         private readonly TimelineRetryQueue $retryQueue,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
+        private readonly ?CustomerBridgeMetricsService $metrics=null
     ) {
 
     }//end __construct()
@@ -81,6 +84,9 @@ final class BookingCreatedTimelinePublishListener implements IEventListener
      * @param Event $event Event from OpenRegister.
      *
      * @return void
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-07-timeline-publish-core/tasks.md
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-11-docs-observability/tasks.md
      */
     public function handle(Event $event): void
     {
@@ -143,6 +149,7 @@ final class BookingCreatedTimelinePublishListener implements IEventListener
             // Synchronous publish failed; hand off to the async retry
             // queue so the booking commit can proceed regardless (D3).
             $this->retryQueue->enqueue(event: $dto);
+            $this->metrics?->recordTimelinePublishDeferred();
         } catch (Throwable $e) {
             // The booking commit must NEVER fail because of a downstream
             // publish issue. Log + continue; the queue+adapter already

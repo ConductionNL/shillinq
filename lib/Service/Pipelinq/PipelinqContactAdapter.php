@@ -40,6 +40,11 @@
  * Spec deltas added by slice 07 (timeline publish core):
  *   - "The adapter SHALL publish a timeline event to pipelinq"
  *
+ * Spec deltas added by slice 08 (lifecycle events + auth handling):
+ *   - "The system SHALL publish confirmed, cancelled, and completed
+ *     timeline events"
+ *   - "The system SHALL treat timeline auth failures as permanent"
+ *
  * @category Service
  * @package  OCA\Shillinq\Service\Pipelinq
  *
@@ -52,6 +57,7 @@
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-03-contact-read/tasks.md
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-07-timeline-publish-core/tasks.md
+ * @spec openspec/changes/bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -156,13 +162,15 @@ class PipelinqContactAdapter
     /**
      * Constructor.
      *
-     * @param IClientService      $clientService HTTP transport factory (NC `IHTTPClientService`).
-     * @param IAppConfig          $appConfig     App-scoped config; reads endpoint + token from slice 01.
-     * @param LoggerInterface     $logger        PSR logger; transport failures logged at WARNING.
-     * @param ICache              $cache         Cache layer (in-memory or distributed); used by slice 03 for contact TTL caching.
-     * @param RetryPolicy         $retryPolicy   Override the default retry policy (exposed for tests).
-     * @param CircuitBreaker|null $breaker       Override the default circuit breaker (exposed for tests).
-     * @param \Closure|null       $sleeper       Callable that pauses for N seconds; injected so tests can run without real delays.
+     * @param IClientService                    $clientService HTTP transport factory (NC `IHTTPClientService`).
+     * @param IAppConfig                        $appConfig     App-scoped config; reads endpoint + token from slice 01.
+     * @param LoggerInterface                   $logger        PSR logger; transport failures logged at WARNING.
+     * @param ICache                            $cache         Cache layer (in-memory or distributed); used by slice 03 for contact TTL caching.
+     * @param RetryPolicy                       $retryPolicy   Override the default retry policy (exposed for tests).
+     * @param CircuitBreaker|null               $breaker       Override the default circuit breaker (exposed for tests).
+     * @param \Closure|null                     $sleeper       Callable that pauses for N seconds; injected so tests can run without real delays.
+     * @param CustomerBridgeMetricsService|null $metrics       Optional metrics aggregator (slice 11); skipped when NULL so existing test
+     *                                                         wiring keeps working.
      */
     public function __construct(
         private readonly IClientService $clientService,
@@ -171,7 +179,8 @@ class PipelinqContactAdapter
         private readonly ICache $cache,
         private readonly RetryPolicy $retryPolicy=new RetryPolicy(),
         ?CircuitBreaker $breaker=null,
-        private readonly ?\Closure $sleeper=null
+        private readonly ?\Closure $sleeper=null,
+        private readonly ?CustomerBridgeMetricsService $metrics=null
     ) {
         // Wire the breaker's WARNING-level transition log here so the
         // CircuitBreaker stays pure and unit-testable.
@@ -189,6 +198,7 @@ class PipelinqContactAdapter
                         'reason' => $reason,
                     ]
                 );
+                $this->metrics?->recordCircuitState(state: $to);
             }
         ));
 
@@ -279,6 +289,7 @@ class PipelinqContactAdapter
                     'externalId' => $id,
                 ]
             );
+            $this->metrics?->recordContactSuccess(fromCache: true);
             return $cached;
         }
 
@@ -300,6 +311,7 @@ class PipelinqContactAdapter
                 );
                 $contact = PipelinqContact::notFound(externalId: $id);
                 $this->writeCachedContact(key: $cacheKey, contact: $contact);
+                $this->metrics?->recordContactFallback(reason: 'not_found');
                 return $contact;
             }
 
@@ -317,6 +329,7 @@ class PipelinqContactAdapter
                         'reason'     => $previous->getMessage(),
                     ]
                 );
+                $this->metrics?->recordContactFallback(reason: 'malformed');
                 return PipelinqContact::notFound(externalId: $id);
             }
 
@@ -332,6 +345,7 @@ class PipelinqContactAdapter
                         'status'     => $e->statusCode(),
                     ]
                 );
+                $this->metrics?->recordContactStaleServed();
                 return $stale;
             }
 
@@ -340,6 +354,7 @@ class PipelinqContactAdapter
 
         $contact = PipelinqContact::fromApiPayload(externalId: $id, payload: $payload);
         $this->writeCachedContact(key: $cacheKey, contact: $contact);
+        $this->metrics?->recordContactSuccess(fromCache: false);
 
         return $contact;
 
@@ -527,9 +542,29 @@ class PipelinqContactAdapter
 
             if ($this->retryPolicy->shouldRetry(attempt: $attempt, isTransient: $transient) === false) {
                 $this->circuitBreaker->recordFailure();
-                throw $lastException;
-            }
 
+                // ADR-005 ops contract: a 401 from pipelinq means the token
+                // is rejected — every subsequent call will fail the same
+                // way until an admin updates the credentials. Surface this
+                // at ERROR so it crosses the "needs human attention"
+                // threshold of the nextcloud.log subscribers.
+                if ($lastStatusCode === 401) {
+                    $this->logger->error(
+                        'pipelinq authentication rejected — admin must rotate the bearer token',
+                        [
+                            'app'    => Application::APP_ID,
+                            'method' => $method,
+                            'path'   => $path,
+                            'status' => $lastStatusCode,
+                        ]
+                    );
+                    $this->metrics?->recordPermanentFailure(reason: 'auth');
+                }
+
+                throw $lastException;
+            }//end if
+
+            $this->metrics?->recordRetryAttempt(attempt: $attempt);
             $this->sleep(seconds: $this->retryPolicy->backoffSeconds(attempt: $attempt));
         }//end while
 
@@ -537,6 +572,16 @@ class PipelinqContactAdapter
         // the retry budget was somehow exhausted without a failure being
         // recorded -- defensive fallback for the type checker.
         $this->circuitBreaker->recordFailure();
+        $this->logger->error(
+            'pipelinq retry budget exhausted — request abandoned',
+            [
+                'app'    => Application::APP_ID,
+                'method' => $method,
+                'path'   => $path,
+                'status' => $lastStatusCode,
+            ]
+        );
+        $this->metrics?->recordPermanentFailure(reason: 'dead_letter');
         throw new PipelinqTransportException(
             message: 'pipelinq retry budget exhausted',
             statusCode: $lastStatusCode
@@ -692,6 +737,38 @@ class PipelinqContactAdapter
      */
     public function publishTimelineEvent(TimelineEventDto $event): bool
     {
+        return $this->publishWithOutcome(event: $event)->isSuccess();
+
+    }//end publishTimelineEvent()
+
+    /**
+     * Publish a timeline event and return the granular publish outcome.
+     *
+     * Slice 08 extension over {@see self::publishTimelineEvent()}: the
+     * lifecycle listener needs to distinguish a permanent auth rejection
+     * (401 — never retry, alert admin) from a transient failure (open
+     * breaker / 5xx / network — hand off to the async retry queue). This
+     * method returns the {@see TimelinePublishOutcome} produced by the
+     * publish attempt so the listener can choose the right follow-up.
+     *
+     * Logging contract:
+     *   - Success → INFO `pipelinq timeline publish succeeded`.
+     *   - 401     → ERROR `Invalid pipelinq API token`; the bearer token
+     *               is NEVER included in the log payload (ADR-005).
+     *   - Other   → WARNING `pipelinq timeline publish failed`, identical
+     *               to the slice-07 line.
+     *
+     * The method is best-effort: every failure produces an outcome
+     * value, never an exception.
+     *
+     * @param TimelineEventDto $event Event to publish.
+     *
+     * @return TimelinePublishOutcome Terminal outcome of the publish.
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
+     */
+    public function publishWithOutcome(TimelineEventDto $event): TimelinePublishOutcome
+    {
         $payload = $event->toPayload();
 
         try {
@@ -701,6 +778,26 @@ class PipelinqContactAdapter
                 payload: $payload
             );
         } catch (PipelinqTransportException $e) {
+            // 401 is a permanent failure — the configured token is
+            // invalid / revoked. Log ERROR with the *config key* (not
+            // the token value, ADR-005) so an operator can rotate the
+            // secret. Slice 08's spec REQ also requires no retry; the
+            // listener honours that by NOT enqueueing on AuthRejected.
+            if ($e->statusCode() === 401) {
+                $this->logger->error(
+                    'Invalid pipelinq API token; check config',
+                    [
+                        'app'        => Application::APP_ID,
+                        'configKey'  => self::CONFIG_KEY_TOKEN,
+                        'type'       => $event->type(),
+                        'externalId' => $event->externalId(),
+                        'contactId'  => $event->contactId(),
+                        'status'     => 401,
+                    ]
+                );
+                return TimelinePublishOutcome::AuthRejected;
+            }
+
             if ($e->isCircuitOpen() === true) {
                 $reason = 'breaker_open';
             } else {
@@ -719,7 +816,7 @@ class PipelinqContactAdapter
                     'reason'     => $reason,
                 ]
             );
-            return false;
+            return TimelinePublishOutcome::Transient;
         }//end try
 
         $this->logger->info(
@@ -731,10 +828,11 @@ class PipelinqContactAdapter
                 'contactId'  => $event->contactId(),
             ]
         );
+        $this->metrics?->recordTimelinePublishSuccess();
 
-        return true;
+        return TimelinePublishOutcome::Success;
 
-    }//end publishTimelineEvent()
+    }//end publishWithOutcome()
 
     /**
      * Clamp the caller-supplied limit to the spec range (1..100, default 5).

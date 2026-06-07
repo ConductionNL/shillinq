@@ -1,0 +1,36 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-purchase-order-3way-10-vendor-performance",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Slice 10 of the bookkeeping-purchase-order-3way chain adds the Vendor Performance index + detail surfaces — the visible artefact of the monthly aggregation cron. Both pages render the basis-point rates (on-time delivery, quantity accuracy, price accuracy, invoice accuracy), the weighted overall score, the trend pill (improving / stable / declining) and the auto-review eligibility badge. The detail view also links back to the supplier's POs and SupplierInvoices for drill-through. Registered as kind=page custom components in src/registry.js because the standard generated index does not render basis-point rates as percentage pills or a colour-coded trend indicator, and the detail view adds the bespoke score breakdown."
+	},
+	"menu": [
+		{
+			"id": "PurchaseOrders",
+			"label": "Purchase Orders",
+			"icon": "FileDocumentMultiple",
+			"order": 90,
+			"children": [
+				{"id": "VendorPerformanceIndex", "label": "Vendor performance", "icon": "ChartTimelineVariant", "route": "VendorPerformanceIndex", "order": 50}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "VendorPerformanceIndex",
+			"route": "/inkoop/vendor-performance",
+			"type": "custom",
+			"title": "Vendor performance",
+			"component": "VendorPerformanceIndex"
+		},
+		{
+			"id": "VendorPerformanceDetail",
+			"route": "/inkoop/vendor-performance/:id",
+			"type": "custom",
+			"title": "Vendor performance",
+			"component": "VendorPerformanceDetail"
+		}
+	]
+}

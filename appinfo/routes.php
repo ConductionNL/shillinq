@@ -34,6 +34,10 @@ return [
 
         // Prometheus metrics endpoint.
         ['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
+        // Pipelinq customer-bridge metrics (slice 11). Prometheus exposition
+        // format; pulls from CustomerBridgeMetricsService for the contact /
+        // timeline / retry / dead-letter / circuit-breaker series.
+        ['name' => 'metrics#pipelinq', 'url' => '/api/metrics/pipelinq', 'verb' => 'GET'],
         // Health check endpoint.
         ['name' => 'health#index', 'url' => '/api/health', 'verb' => 'GET'],
 

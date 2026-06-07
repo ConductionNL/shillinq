@@ -23,11 +23,14 @@ namespace OCA\Shillinq\AppInfo;
 
 use OCA\Shillinq\Listener\AppointmentCreatedListener;
 use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
+use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Repair\InitializeSettings;
+use OCA\Shillinq\Service\Pipelinq\LoggingPipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue;
+use OCA\Shillinq\Service\Pipelinq\PipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
@@ -123,6 +126,28 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectCreatedEvent::class,
             listener: BookingCreatedTimelinePublishListener::class
+        );
+
+        // Bookings-pipelinq-customer-bridge slice 08 — extend the timeline
+        // publish pattern to every booking lifecycle transition
+        // (confirmed / cancelled / completed). The `cancellationReason`
+        // is forwarded into the timeline metadata when present. A 401
+        // from pipelinq is treated as permanent: the admin notifier port
+        // surfaces an alert ("Invalid pipelinq API token") and the event
+        // is NOT requeued — retrying with the same invalid token would
+        // only repeat the failure. Until slice 09 lands the persistent
+        // notification surface, the default binding is the logging-only
+        // {@see LoggingPipelinqAdminNotifier}. ADR-032 chain member 8 of
+        // 11.
+        $context->registerService(
+            PipelinqAdminNotifier::class,
+            static function ($c): PipelinqAdminNotifier {
+                return $c->get(LoggingPipelinqAdminNotifier::class);
+            }
+        );
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: BookingLifecycleTransitionListener::class
         );
 
         // Initialize register and schemas on install/upgrade.

@@ -32,6 +32,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-07-timeline-publish-core/tasks.md
+ * @spec openspec/changes/bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -74,6 +75,38 @@ final class TimelineEventDto
      * @var string
      */
     public const TYPE_BOOKING_CREATED = 'booking.created';
+
+    /**
+     * Event type for a booking transitioning into `confirmed`.
+     *
+     * Slice 08 of the customer-bridge chain — pushed when the booking
+     * state machine transitions from any prior state into `confirmed`.
+     *
+     * @var string
+     */
+    public const TYPE_BOOKING_CONFIRMED = 'booking.confirmed';
+
+    /**
+     * Event type for a booking transitioning into `cancelled`.
+     *
+     * Slice 08 of the customer-bridge chain — pushed when the booking
+     * is cancelled. The originating appointment row's `cancellationReason`
+     * is forwarded into the timeline event metadata (when present).
+     *
+     * @var string
+     */
+    public const TYPE_BOOKING_CANCELLED = 'booking.cancelled';
+
+    /**
+     * Event type for a booking transitioning into `completed`.
+     *
+     * Slice 08 of the customer-bridge chain — pushed when the booking
+     * is marked complete (e.g. the appointment finished, work-done /
+     * payment-received transition).
+     *
+     * @var string
+     */
+    public const TYPE_BOOKING_COMPLETED = 'booking.completed';
 
     /**
      * Construct an immutable timeline event.

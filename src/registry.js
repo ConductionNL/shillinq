@@ -113,6 +113,16 @@ import ThreeWayMatchIndex from './components/three-way-match/ThreeWayMatchIndex.
 // the ThreeWayMatchDetail manifest page slice 01 declares.
 import ThreeWayMatchExceptionPanel from './components/three-way-match/ThreeWayMatchExceptionPanel.vue'
 
+// bookkeeping-purchase-order-3way slice 10 (REQ-PO3W-008 / REQ-VP-001 /
+// REQ-VP-005): the VendorPerformance index + detail render the monthly
+// scorecard with basis-point rate pills, the weighted overall score, the
+// period-over-period trend pill and the auto-review eligibility badge.
+// Neither view fits a built-in `index` or `detail` page type because the
+// rate pills, score colour band and trend indicator are bespoke, so both
+// are registered as kind:"page" custom components.
+import VendorPerformanceIndex from './components/vendor-performance/VendorPerformanceIndex.vue'
+import VendorPerformanceDetail from './components/vendor-performance/VendorPerformanceDetail.vue'
+
 export default {
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
 	MobileScannerReceive: { kind: 'page', component: ReceivePage },
@@ -139,4 +149,7 @@ export default {
 	ThreeWayMatchIndex: { kind: 'page', component: ThreeWayMatchIndex },
 
 	ThreeWayMatchExceptionPanel: { kind: 'page', component: ThreeWayMatchExceptionPanel },
+
+	VendorPerformanceIndex: { kind: 'page', component: VendorPerformanceIndex },
+	VendorPerformanceDetail: { kind: 'page', component: VendorPerformanceDetail },
 }
