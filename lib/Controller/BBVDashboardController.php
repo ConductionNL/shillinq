@@ -31,9 +31,11 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUserSession;
 
 /**
  * Thin page controller for the waterschappen BBV compliance dashboard.
@@ -43,12 +45,16 @@ class BBVDashboardController extends Controller
     /**
      * Constructor for BBVDashboardController.
      *
-     * @param IRequest $request The current request.
+     * @param IRequest     $request     The current request.
+     * @param IUserSession $userSession Anonymous-rejection guard
+     *                                  (ADR-005 / hydra-gate-no-admin-idor).
      *
      * @return void
      */
-    public function __construct(IRequest $request)
-    {
+    public function __construct(
+        IRequest $request,
+        private readonly IUserSession $userSession,
+    ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
 
@@ -60,6 +66,11 @@ class BBVDashboardController extends Controller
      * envelope shape (widgets[], generatedAt) is fixed here so the
      * dashboard component (slice 05) can bind unconditionally.
      *
+     * #[NoAdminRequired] opens the route to any authenticated user
+     * (finance officers, controllers); the explicit user-session check
+     * rejects anonymous callers per ADR-005 so the page never leaks
+     * an empty envelope to logged-out probes (hydra-gate-no-admin-idor).
+     *
      * @return JSONResponse {widgets: array<int,array>, generatedAt: string}
      *
      * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-04-manifest-routes/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-bbv-page-routes
@@ -67,6 +78,10 @@ class BBVDashboardController extends Controller
     #[NoAdminRequired]
     public function index(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
+
         return new JSONResponse(
             [
                 'widgets'     => [],

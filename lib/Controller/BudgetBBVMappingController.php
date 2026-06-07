@@ -32,9 +32,11 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUserSession;
 
 /**
  * Thin page controller for the Budget BBV Mapping index + detail pages.
@@ -44,12 +46,16 @@ class BudgetBBVMappingController extends Controller
     /**
      * Constructor for BudgetBBVMappingController.
      *
-     * @param IRequest $request The current request.
+     * @param IRequest     $request     The current request.
+     * @param IUserSession $userSession Anonymous-rejection guard
+     *                                  (ADR-005 / hydra-gate-no-admin-idor).
      *
      * @return void
      */
-    public function __construct(IRequest $request)
-    {
+    public function __construct(
+        IRequest $request,
+        private readonly IUserSession $userSession,
+    ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
 
@@ -63,6 +69,11 @@ class BudgetBBVMappingController extends Controller
      * (schema, register) is fixed here so the future Vue page can
      * resolve the manifest route deterministically.
      *
+     * #[NoAdminRequired] opens the route to any authenticated user;
+     * the explicit user-session check rejects anonymous callers per
+     * ADR-005 so route registrations are never reachable without a
+     * session (hydra-gate-no-admin-idor).
+     *
      * @return JSONResponse {register: string, schema: string, detailRoute: string}
      *
      * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-04-manifest-routes/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-bbv-page-routes
@@ -70,6 +81,10 @@ class BudgetBBVMappingController extends Controller
     #[NoAdminRequired]
     public function index(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
+
         return new JSONResponse(
             [
                 'register'    => 'shillinq',
@@ -89,7 +104,8 @@ class BudgetBBVMappingController extends Controller
      * admin-write register permission from slice 01). This skeleton
      * returns the id passed in the URL so the route is end-to-end
      * reachable; no per-object IDOR surface is introduced because no
-     * data is read from storage.
+     * data is read from storage. The session guard still rejects
+     * anonymous callers up-front per ADR-005.
      *
      * @param string $id The BudgetBBVMapping object id from the URL.
      *
@@ -100,6 +116,10 @@ class BudgetBBVMappingController extends Controller
     #[NoAdminRequired]
     public function show(string $id): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
+
         return new JSONResponse(
             [
                 'id'         => $id,
