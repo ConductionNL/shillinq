@@ -1,0 +1,67 @@
+{
+	"_meta": {
+		"description": "InventoryStock seed for Utrecht Store (smaller retail outlet). Lower on-hand quantities and a higher reservation rate than the warehouses — demonstrates location-type variance (retail vs. distribution centre) per design.md seed-data table + REQ-IST-009. Idempotent dedupe per REQ-IST-002.",
+		"spec": "openspec/changes/inventory-stock-tracking/specs/inventory-stock-tracking/spec.md",
+		"req": "REQ-IST-009",
+		"source": "Nextcloud Inventory",
+		"location": "Utrecht Store",
+		"version": "1.0"
+	},
+	"stock": [
+		{
+			"productSku": "LAPTOP-DELL-XPS13",
+			"locationCode": "ST-UTR-001",
+			"locationName": "Utrecht Store",
+			"quantityOnHand": 3,
+			"quantityReserved": 1,
+			"quantityInTransit": 0,
+			"unitCost": 1899.00,
+			"lastRestockDate": "2026-05-18T00:00:00Z",
+			"status": "active"
+		},
+		{
+			"productSku": "TONER-HP-CF283A",
+			"locationCode": "ST-UTR-001",
+			"locationName": "Utrecht Store",
+			"quantityOnHand": 40,
+			"quantityReserved": 0,
+			"quantityInTransit": 0,
+			"unitCost": 45.00,
+			"lastRestockDate": "2026-05-14T00:00:00Z",
+			"status": "active"
+		},
+		{
+			"productSku": "BOX-CARDBOARD-S",
+			"locationCode": "ST-UTR-001",
+			"locationName": "Utrecht Store",
+			"quantityOnHand": 200,
+			"quantityReserved": 50,
+			"quantityInTransit": 0,
+			"unitCost": 0.75,
+			"lastRestockDate": "2026-05-02T00:00:00Z",
+			"status": "active"
+		},
+		{
+			"productSku": "NOTEBOOK-A4-100",
+			"locationCode": "ST-UTR-001",
+			"locationName": "Utrecht Store",
+			"quantityOnHand": 12,
+			"quantityReserved": 5,
+			"quantityInTransit": 0,
+			"unitCost": 3.50,
+			"lastRestockDate": "2026-05-16T00:00:00Z",
+			"status": "active"
+		},
+		{
+			"productSku": "USB-DRIVE-32GB",
+			"locationCode": "ST-UTR-001",
+			"locationName": "Utrecht Store",
+			"quantityOnHand": 8,
+			"quantityReserved": 3,
+			"quantityInTransit": 0,
+			"unitCost": 12.00,
+			"lastRestockDate": "2026-05-17T00:00:00Z",
+			"status": "active"
+		}
+	]
+}
