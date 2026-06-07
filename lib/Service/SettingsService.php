@@ -232,6 +232,104 @@ class SettingsService
     }//end seedRgsTemplate()
 
     /**
+     * Seed the default Archiefwet retention policies, idempotently.
+     *
+     * Reads lib/Settings/seeds/retention-policies.json and imports the three
+     * organization-wide default RetentionPolicy records (financial 5yr, tax 7yr,
+     * general 3yr) per REQ-RET-012. Records are matched by `slug` and skipped when
+     * already present, preserving operator edits across upgrades. Unlike the chart
+     * of accounts these policies are organization-wide (no administrationId), so no
+     * tenant identifier is required.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/bookkeeping-archiefwet-retention/tasks.md (Task 13, REQ-RET-012)
+     */
+    public function seedRetentionPolicies(): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/retention-policies.json';
+        if (file_exists($seedPath) === false) {
+            return ['success' => false, 'message' => 'Retention policy seed file not found.'];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return ['success' => false, 'message' => 'Failed to read retention policy seed file.'];
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return ['success' => false, 'message' => 'Failed to parse retention policy seed file: '.json_last_error_msg()];
+        }
+
+        $policies = ($data['policies'] ?? []);
+        if (empty($policies) === true) {
+            return ['success' => false, 'message' => 'Retention policy seed file contains no policies.'];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($policies as $policy) {
+                $slug     = ($policy['slug'] ?? '');
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('RetentionPolicy')
+                    ->findAll(
+                        [
+                            'filters' => ['slug' => $slug],
+                            'limit'   => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $policy,
+                    register: $registerSlug,
+                    schema: 'RetentionPolicy',
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: retention policies seeded',
+                ['seeded' => $seeded, 'skipped' => $skipped]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'Retention policies seeded successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: retention policy seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedRetentionPolicies()
+
+    /**
      * Load and validate accounts from a seed file for the given template variant.
      *
      * Returns `['accounts' => array]` on success, or `['error' => array]` with a

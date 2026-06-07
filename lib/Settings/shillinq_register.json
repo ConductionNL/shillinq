@@ -9225,6 +9225,433 @@
 						"description": "Number of matches per matchType, for the detail-page match summary."
 					}
 				}
+			},
+			"DocumentRetention": {
+				"slug": "DocumentRetention",
+				"icon": "FileLockOutline",
+				"version": "0.1.0",
+				"title": "Document Retention",
+				"description": "Per-document retention tracking: governing policy, computed schedule, current lifecycle status, legal-hold flag, and structured exceptions. The lifecycle (active → under-review → retained → scheduled-for-deletion → deleted) consumes OR's archival-destruction workflow per ADR-022 + REQ-RET-003. All transitions are audit-trailed by OR's AuditTrailService per REQ-RET-007.",
+				"x-schema-org": "schema:Thing",
+				"type": "object",
+				"required": [
+					"documentId",
+					"policyId",
+					"status"
+				],
+				"properties": {
+					"documentId": {
+						"type": "string",
+						"description": "Polymorphic FK to the document under retention (UUID of the Invoice, Receipt, ledger entry, etc.).",
+						"example": "inv-2024-001"
+					},
+					"policyId": {
+						"type": "string",
+						"description": "FK to the governing RetentionPolicy.id.",
+						"example": "default-financial-5yr"
+					},
+					"scheduleId": {
+						"type": "string",
+						"description": "FK to the RetentionSchedule.id holding the computed dates for this document.",
+						"nullable": true,
+						"example": "sched-inv-2024-001"
+					},
+					"status": {
+						"type": "string",
+						"description": "Current retention lifecycle state. Managed by the x-openregister-lifecycle engine consuming OR archival-destruction — transitions cannot be skipped.",
+						"enum": [
+							"active",
+							"under-review",
+							"retained",
+							"scheduled-for-deletion",
+							"deleted"
+						],
+						"default": "active",
+						"example": "active"
+					},
+					"reviewDueDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Copied from the RetentionSchedule for fast lifecycle-guard evaluation (RetentionGuard::requiresReview). Read-only mirror of the schedule.",
+						"readOnly": true,
+						"nullable": true,
+						"example": "2028-12-16"
+					},
+					"retentionEndDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Copied from the RetentionSchedule for fast disposal-eligibility evaluation. Read-only mirror of the schedule.",
+						"readOnly": true,
+						"nullable": true,
+						"example": "2029-01-15"
+					},
+					"legalHold": {
+						"type": "boolean",
+						"default": false,
+						"description": "When true, automatic disposal is suspended regardless of retentionEndDate per REQ-RET-005 / REQ-RET-008. Changes are audit-trailed."
+					},
+					"exceptions": {
+						"type": "array",
+						"description": "Structured exception entries (legal holds, court orders, regulatory exemptions) appended over the document's lifetime per REQ-RET-005.",
+						"items": {
+							"type": "object",
+							"required": [
+								"type",
+								"reason",
+								"appliedDate"
+							],
+							"properties": {
+								"type": {
+									"type": "string",
+									"enum": [
+										"litigation",
+										"court-order",
+										"regulatory-exception",
+										"audit-hold"
+									],
+									"description": "Exception category, drawn from the governing policy's exemptionCategories."
+								},
+								"reason": {
+									"type": "string",
+									"description": "Free-text justification for the exception."
+								},
+								"authority": {
+									"type": "string",
+									"description": "Issuing authority (e.g. 'District Court Amsterdam').",
+									"nullable": true
+								},
+								"appliedDate": {
+									"type": "string",
+									"format": "date-time",
+									"description": "When the exception was applied."
+								},
+								"clearedDate": {
+									"type": "string",
+									"format": "date-time",
+									"description": "When the exception was cleared (null while active).",
+									"nullable": true
+								}
+							}
+						},
+						"default": []
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning the document. Scopes retention queries and IDOR-safe access per ADR-005.",
+						"nullable": true,
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "status",
+					"initialState": "active",
+					"consumes": "openregister:archival-destruction",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Document is within its retention period; no action due."
+						},
+						"under-review": {
+							"label": "Under review",
+							"description": "Review-due date reached; a records officer is reviewing the document before disposal per Archiefwet."
+						},
+						"retained": {
+							"label": "Retained",
+							"description": "Review completed with a retain decision; document continues to be held until its retention end date."
+						},
+						"scheduled-for-deletion": {
+							"label": "Scheduled for deletion",
+							"description": "Retention end date passed and no legal hold is active; document is queued for disposal authorisation."
+						},
+						"deleted": {
+							"label": "Deleted",
+							"description": "Disposal authorised and executed. Terminal state. The disposal action is captured immutably in the OR audit trail."
+						}
+					},
+					"retention": {
+						"rule": "archiefwet:1995",
+						"period": "P5Y",
+						"description": "Default Archiefwet retention envelope for financial records; the effective period is the governing RetentionPolicy.retentionYears per REQ-RET-001."
+					},
+					"transitions": {
+						"initiateReview": {
+							"from": "active",
+							"to": "under-review",
+							"label": "Initiate review",
+							"description": "An authorised retention-manager starts the mandatory pre-disposal review. Blocked until the review-due date is reached and no legal hold suspends the document.",
+							"requires": "OCA\\Shillinq\\Guard\\RetentionGuard::requiresReview"
+						},
+						"confirmRetention": {
+							"from": "under-review",
+							"to": "retained",
+							"label": "Confirm retention",
+							"description": "The reviewer confirms the document must continue to be held."
+						},
+						"scheduleDisposal": {
+							"from": "retained",
+							"to": "scheduled-for-deletion",
+							"label": "Schedule disposal",
+							"description": "Retention end date has passed; queue the document for disposal authorisation. Blocked while a legal hold is active.",
+							"requires": "OCA\\Shillinq\\Guard\\RetentionGuard::allowsDisposal"
+						},
+						"executeDisposal": {
+							"from": "scheduled-for-deletion",
+							"to": "deleted",
+							"label": "Execute disposal",
+							"description": "A document-disposal authority authorises and executes the deletion. Captured immutably in the OR audit trail with actor UID and reason.",
+							"requires": "OCA\\Shillinq\\Guard\\RetentionGuard::allowsDisposal"
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"policy": {
+						"localField": "policyId",
+						"relatedSchema": "RetentionPolicy",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "The governing RetentionPolicy."
+					},
+					"schedule": {
+						"localField": "scheduleId",
+						"relatedSchema": "RetentionSchedule",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "The computed RetentionSchedule holding the timeline."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"retention-manager": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"legal-hold-authority": {
+							"permissions": [
+								"read",
+								"update"
+							]
+						},
+						"document-disposal": {
+							"permissions": [
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				},
+				"x-openregister-aggregations": {
+					"overdueReviewCount": {
+						"field": "id",
+						"operation": "count",
+						"filter": "status != 'deleted' AND reviewDueDate < today",
+						"description": "Count of DocumentRetention records whose review is overdue (REQ-RET-006). Powers the Overdue Reviews KPI on the Retention Dashboard."
+					},
+					"activeLegalHoldCount": {
+						"field": "id",
+						"operation": "count",
+						"filter": "legalHold = true",
+						"description": "Count of documents currently under a legal hold (REQ-RET-006)."
+					},
+					"pendingDisposalCount": {
+						"field": "id",
+						"operation": "count",
+						"filter": "status = 'scheduled-for-deletion'",
+						"description": "Count of documents queued for disposal authorisation (REQ-RET-006)."
+					}
+				}
+			},
+			"RetentionSchedule": {
+				"slug": "RetentionSchedule",
+				"icon": "CalendarClockOutline",
+				"version": "0.1.0",
+				"title": "Retention Schedule",
+				"description": "The computed temporal schedule mapping a single document to its retention timeline. retentionEndDate and reviewDueDate are derived from startDate + the policy retentionYears per REQ-RET-002 / REQ-RET-013 — they are read-only aggregations, not operator-editable.",
+				"x-schema-org": "schema:Schedule",
+				"type": "object",
+				"required": [
+					"documentId",
+					"policyId",
+					"startDate",
+					"retentionYears"
+				],
+				"properties": {
+					"documentId": {
+						"type": "string",
+						"description": "Polymorphic FK to the document under retention (Invoice, Receipt, ledger entry, etc.). Stored as the document object UUID.",
+						"example": "inv-2024-001"
+					},
+					"policyId": {
+						"type": "string",
+						"description": "FK to the RetentionPolicy.id governing this document.",
+						"example": "default-financial-5yr"
+					},
+					"startDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Start-of-retention marker (e.g. invoiceDate). The retention clock starts here.",
+						"example": "2024-01-15"
+					},
+					"retentionYears": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Retention period copied from the governing RetentionPolicy at schedule-creation time, so historical schedules are stable when a policy is later amended.",
+						"example": 5
+					},
+					"retentionEndDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Read-only computed date: startDate + retentionYears. Document becomes eligible for disposal after this date. Derived via x-openregister-calculation — do not set directly.",
+						"readOnly": true,
+						"nullable": true,
+						"example": "2029-01-15"
+					},
+					"reviewDueDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Read-only computed date: retentionEndDate - 30 days. Archiefwet requires review before disposal. Derived via x-openregister-calculation — do not set directly.",
+						"readOnly": true,
+						"nullable": true,
+						"example": "2028-12-16"
+					}
+				},
+				"x-openregister-calculation": {
+					"retentionEndDate": {
+						"description": "startDate plus retentionYears whole years per REQ-RET-002.",
+						"expression": "dateAdd(startDate, retentionYears, 'years')"
+					},
+					"reviewDueDate": {
+						"description": "retentionEndDate minus 30 days per Archiefwet review-before-disposal rule (REQ-RET-002 / REQ-RET-004).",
+						"expression": "dateAdd(retentionEndDate, -30, 'days')"
+					}
+				},
+				"x-openregister-relations": {
+					"policy": {
+						"localField": "policyId",
+						"relatedSchema": "RetentionPolicy",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "The RetentionPolicy governing this schedule."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"retention-manager": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"RetentionPolicy": {
+				"slug": "RetentionPolicy",
+				"icon": "ShieldLockOutline",
+				"version": "0.1.0",
+				"title": "Retention Policy",
+				"description": "An organization-wide, document-type-scoped retention rule per Archiefwet 1995. Declares the retention period (in years), legal-hold allowances, and exemption categories. Pure configuration metadata per REQ-RET-001 / REQ-RET-009.",
+				"x-schema-org": "schema:Thing",
+				"type": "object",
+				"required": [
+					"name",
+					"documentType",
+					"retentionYears"
+				],
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "Human-readable name of the retention policy.",
+						"example": "Financial Records — Standard (5 years)"
+					},
+					"documentType": {
+						"type": "string",
+						"description": "Classification of documents this policy governs. Drives policy selection when a DocumentRetention record is created.",
+						"enum": [
+							"financial-record",
+							"tax-record",
+							"general-record",
+							"contract",
+							"invoice",
+							"receipt",
+							"ledger-entry"
+						],
+						"example": "financial-record"
+					},
+					"retentionYears": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Number of whole years a document must be retained from its start-of-retention marker before it becomes eligible for review and disposal.",
+						"example": 5
+					},
+					"legalHoldAllowed": {
+						"type": "boolean",
+						"default": true,
+						"description": "Whether documents under this policy may be placed on a legal hold (litigation, court order, regulatory investigation) that overrides the standard schedule."
+					},
+					"exemptionCategories": {
+						"type": "array",
+						"description": "Categories of exemption recognised by this policy (e.g. court-order, regulatory-exception). Used to classify entries appended to DocumentRetention.exceptions[].",
+						"items": {
+							"type": "string",
+							"enum": [
+								"court-order",
+								"regulatory-exception",
+								"litigation",
+								"audit-hold"
+							]
+						},
+						"default": []
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "Optional FK to the Administration owning an administration-specific override. When null, the policy is an organization-wide default per REQ-RET-009.",
+						"nullable": true,
+						"example": "adm-1"
+					},
+					"description": {
+						"type": "string",
+						"description": "Operator-authored explanation of the regulatory basis for the retention period.",
+						"nullable": true
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"retention-manager": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				},
+				"x-openregister-aggregations": {
+					"countByDocumentType": {
+						"field": "documentType",
+						"operation": "count",
+						"groupBy": "documentType",
+						"description": "Number of retention policies per documentType — surfaces coverage gaps in the Retention Dashboard per REQ-RET-006."
+					}
+				}
 			}
 		},
 		"SisaReport": {

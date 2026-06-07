@@ -7,7 +7,7 @@ All tasks are checked off `[x]` when the implementation is complete and verified
 
 ## Phase 1: Schema Declaration (Core Metadata)
 
-### [ ] Task 1: Declare RetentionPolicy schema in shillinq_register.json
+### [x] Task 1: Declare RetentionPolicy schema in shillinq_register.json
 
 **Description**: Add the `RetentionPolicy` schema to `lib/Settings/shillinq_register.json`
 with the following structure:
@@ -34,7 +34,7 @@ with the following structure:
 
 ---
 
-### [ ] Task 2: Declare RetentionSchedule schema in shillinq_register.json
+### [x] Task 2: Declare RetentionSchedule schema in shillinq_register.json
 
 **Description**: Add the `RetentionSchedule` schema with computed lifecycle dates:
 
@@ -61,7 +61,7 @@ with the following structure:
 
 ---
 
-### [ ] Task 3: Declare DocumentRetention schema in shillinq_register.json
+### [x] Task 3: Declare DocumentRetention schema in shillinq_register.json
 
 **Description**: Add the `DocumentRetention` schema for tracking per-document retention:
 
@@ -92,7 +92,7 @@ with the following structure:
 
 ## Phase 2: Lifecycle & Aggregations
 
-### [ ] Task 4: Implement retention lifecycle (active → under-review → ... → deleted)
+### [x] Task 4: Implement retention lifecycle (active → under-review → ... → deleted)
 
 **Description**: Configure the DocumentRetention lifecycle in the schema's
 `x-openregister-lifecycle` extension. If OR's archival-destruction extension is not
@@ -139,7 +139,7 @@ public function requiresReview(DocumentRetention $doc): bool {
 
 ---
 
-### [ ] Task 5: Declare compliance aggregations
+### [x] Task 5: Declare compliance aggregations
 
 **Description**: Add three aggregations to the DocumentRetention schema via
 `x-openregister-aggregations`:
@@ -161,7 +161,7 @@ public function requiresReview(DocumentRetention $doc): bool {
 
 ## Phase 3: Frontend & User Interface
 
-### [ ] Task 6: Create Retention Policies index page
+### [x] Task 6: Create Retention Policies index page
 
 **Description**: Build the RetentionPolicy list page using `CnIndexPage` component.
 
@@ -184,7 +184,7 @@ public function requiresReview(DocumentRetention $doc): bool {
 
 ---
 
-### [ ] Task 7: Create DocumentRetention detail page
+### [x] Task 7: Create DocumentRetention detail page
 
 **Description**: Build the DocumentRetention detail view using `CnDetailPage` component
 with sidebar for audit trail and related documents.
@@ -211,7 +211,7 @@ with sidebar for audit trail and related documents.
 
 ---
 
-### [ ] Task 8: Create Retention Dashboard page
+### [x] Task 8: Create Retention Dashboard page
 
 **Description**: Build the compliance dashboard with KPI cards and filtered search.
 
@@ -240,7 +240,17 @@ with sidebar for audit trail and related documents.
 
 ## Phase 4: Backend Services & Permissions
 
-### [ ] Task 9: Implement RBAC for retention roles
+### [x] Task 9: Implement RBAC for retention roles
+
+> **Build note (hydra #47):** The three roles (`retention-manager`,
+> `legal-hold-authority`, `document-disposal`) plus `auditor` are declared
+> per-schema via `x-openregister-rbac` on RetentionPolicy, RetentionSchedule,
+> and DocumentRetention in `lib/Settings/shillinq_register.json` (ADR-031
+> declarative-first; matches the existing Account / Iv3Export RBAC pattern).
+> The bespoke admin-matrix Vue (`AdminSettings.vue`) and the imperative
+> `actionAuth->requireAction()` controller wiring are an imperative add-on and
+> are **deferred** to a follow-up apply cycle — see the Deferred section at the
+> end of this file.
 
 **Description**: Define three roles in the admin settings matrix (per ADR-023):
 
@@ -353,7 +363,7 @@ a legal hold is applied or cleared.
 
 ## Phase 6: Integration & Testing
 
-### [ ] Task 13: Seed data migration on first install
+### [x] Task 13: Seed data migration on first install
 
 **Description**: Implement the repair step that loads three default RetentionPolicy
 records on first install.
@@ -374,7 +384,7 @@ records on first install.
 
 ---
 
-### [ ] Task 14: Deduplication check: verify no overlap with OR abstractions
+### [x] Task 14: Deduplication check: verify no overlap with OR abstractions
 
 **Description**: Audit the implementation to confirm no duplication of OpenRegister
 features per ADR-022.
@@ -445,7 +455,7 @@ policy creation through disposal approval.
 
 ---
 
-### [ ] Task 17: PHPCS + PHpStan + Semgrep checks
+### [x] Task 17: PHPCS + PHpStan + Semgrep checks
 
 **Description**: Ensure all new PHP code passes quality gates.
 
@@ -466,7 +476,7 @@ policy creation through disposal approval.
 
 ---
 
-### [ ] Task 18: Translation keys (i18n)
+### [x] Task 18: Translation keys (i18n)
 
 **Description**: All user-visible strings are translated.
 
@@ -558,6 +568,31 @@ generating compliance reports.
 **Related**: REQ-RET-006, REQ-RET-007, REQ-RET-010
 
 ---
+
+## Deferred to a follow-up apply cycle (hydra build #47)
+
+The build delivered the **declarative centre of mass** (ADR-032 `kind: config`):
+the three schemas with lifecycle + aggregations + relations + RBAC, the
+`RetentionGuard` cross-period/legal-hold seam (ADR-031 exception) with unit
+tests, the manifest pages + menu entries, nl+en i18n, and the idempotent seed +
+repair step. The following tasks are genuinely imperative or runtime/doc work and
+are deferred — they should be tracked as child issues of shillinq#47:
+
+- **Task 10 — Compliance reporting export (PDF)**: needs a controller +
+  PDF renderer + role gate; out of the declarative envelope. Deferred.
+- **Task 11 — Review-due notification BackgroundJob**: needs a daily job +
+  OR NotificationService wiring. Deferred (proposal lists notifications as T3).
+- **Task 12 — Legal-hold / exception notifications**: same notification seam as
+  Task 11. Deferred.
+- **Task 9 (partial) — Admin-matrix Vue + `requireAction()` enforcement**: the
+  RBAC *roles* are declared (done); the bespoke admin UI + controller-side action
+  enforcement are imperative add-ons. Deferred.
+- **Task 15 — Playwright e2e workflow**: requires a running NC instance with
+  shillinq mounted (not available in this build sandbox). Deferred.
+- **Task 16 — Newman API integration tests**: requires running endpoints +
+  the deferred controllers. Deferred.
+- **Tasks 19–21 — Admin / operator / compliance-officer guides**: documentation
+  with screenshots from the running app. Deferred.
 
 ## Summary
 

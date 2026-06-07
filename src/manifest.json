@@ -911,6 +911,28 @@
 					"order": 40
 				}
 			]
+		},
+		{
+			"id": "Retention",
+			"label": "Retention",
+			"icon": "icon-category-files",
+			"order": 40,
+			"children": [
+				{
+					"id": "RetentionPolicies",
+					"label": "Retention policies",
+					"icon": "ShieldLockOutline",
+					"route": "RetentionPolicies",
+					"order": 10
+				},
+				{
+					"id": "RetentionDashboard",
+					"label": "Retention dashboard",
+					"icon": "FileLockOutline",
+					"route": "RetentionDashboard",
+					"order": 20
+				}
+			]
 		}
 	],
 	"pages": [
@@ -12553,6 +12575,267 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "BankReconciliations"
+			}
+		},
+		{
+			"id": "RetentionPolicies",
+			"route": "/retention-policies",
+			"type": "index",
+			"title": "Retention policies",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetentionPolicy",
+				"columns": [
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "documentType",
+						"label": "Document type",
+						"sortable": true
+					},
+					{
+						"key": "retentionYears",
+						"label": "Retention (years)",
+						"sortable": true
+					},
+					{
+						"key": "legalHoldAllowed",
+						"label": "Legal hold allowed",
+						"sortable": true
+					}
+				],
+				"defaultSort": "name",
+				"detailRoute": "RetentionPolicyDetail"
+			}
+		},
+		{
+			"id": "RetentionPolicyDetail",
+			"route": "/retention-policies/:id",
+			"type": "detail",
+			"title": "Retention policy",
+			"config": {
+				"register": "shillinq",
+				"schema": "RetentionPolicy",
+				"fields": [
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "documentType",
+						"label": "Document type",
+						"type": "string"
+					},
+					{
+						"key": "retentionYears",
+						"label": "Retention (years)",
+						"type": "integer"
+					},
+					{
+						"key": "legalHoldAllowed",
+						"label": "Legal hold allowed",
+						"type": "boolean"
+					},
+					{
+						"key": "exemptionCategories",
+						"label": "Exemption categories",
+						"type": "object"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					}
+				],
+				"indexRoute": "RetentionPolicies"
+			}
+		},
+		{
+			"id": "DocumentRetentions",
+			"route": "/document-retentions",
+			"type": "index",
+			"title": "Document retention",
+			"config": {
+				"register": "shillinq",
+				"schema": "DocumentRetention",
+				"columns": [
+					{
+						"key": "documentId",
+						"label": "Document",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "reviewDueDate",
+						"label": "Review due",
+						"sortable": true
+					},
+					{
+						"key": "retentionEndDate",
+						"label": "Retention ends",
+						"sortable": true
+					},
+					{
+						"key": "legalHold",
+						"label": "Legal hold",
+						"sortable": true
+					}
+				],
+				"defaultSort": "retentionEndDate",
+				"detailRoute": "DocumentRetentionDetail"
+			}
+		},
+		{
+			"id": "DocumentRetentionDetail",
+			"route": "/document-retentions/:id",
+			"type": "detail",
+			"title": "Document retention",
+			"config": {
+				"register": "shillinq",
+				"schema": "DocumentRetention",
+				"fields": [
+					{
+						"key": "documentId",
+						"label": "Document",
+						"type": "string"
+					},
+					{
+						"key": "policyId",
+						"label": "Policy",
+						"type": "string"
+					},
+					{
+						"key": "scheduleId",
+						"label": "Schedule",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "reviewDueDate",
+						"label": "Review due",
+						"type": "date"
+					},
+					{
+						"key": "retentionEndDate",
+						"label": "Retention ends",
+						"type": "date"
+					},
+					{
+						"key": "legalHold",
+						"label": "Legal hold",
+						"type": "boolean"
+					},
+					{
+						"key": "exceptions",
+						"label": "Exceptions",
+						"type": "object"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "DocumentRetentions"
+			}
+		},
+		{
+			"id": "RetentionDashboard",
+			"route": "/retention-dashboard",
+			"type": "dashboard",
+			"title": "Retention dashboard",
+			"config": {
+				"widgets": [
+					{
+						"id": "overdue-reviews",
+						"title": "Overdue reviews",
+						"type": "stats-block",
+						"iconClass": "icon-calendar",
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "DocumentRetention",
+							"aggregation": "overdueReviewCount"
+						},
+						"props": {
+							"countLabel": "overdue",
+							"variant": "warning"
+						}
+					},
+					{
+						"id": "active-legal-holds",
+						"title": "Active legal holds",
+						"type": "stats-block",
+						"iconClass": "icon-lock",
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "DocumentRetention",
+							"aggregation": "activeLegalHoldCount"
+						},
+						"props": {
+							"countLabel": "on hold",
+							"variant": "primary"
+						}
+					},
+					{
+						"id": "pending-disposal",
+						"title": "Pending disposal",
+						"type": "stats-block",
+						"iconClass": "icon-delete",
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "DocumentRetention",
+							"aggregation": "pendingDisposalCount"
+						},
+						"props": {
+							"countLabel": "queued",
+							"variant": "default"
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "layout-overdue-reviews",
+						"widgetId": "overdue-reviews",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "layout-active-legal-holds",
+						"widgetId": "active-legal-holds",
+						"gridX": 4,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "layout-pending-disposal",
+						"widgetId": "pending-disposal",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 2
+					}
+				]
 			}
 		}
 	]
