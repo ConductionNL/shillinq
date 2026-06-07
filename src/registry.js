@@ -16,4 +16,13 @@
 // Example entry:
 //   'SomePage': { kind: 'page', component: SomePage },
 
-export default {}
+import PurchaseOrderForm from './components/purchase-order/PurchaseOrderForm.vue'
+import PurchaseOrderDetail from './components/purchase-order/PurchaseOrderDetail.vue'
+
+export default {
+	// Slice 02 of bookkeeping-purchase-order-3way — two custom kind=page entries
+	// resolved by CnPageRenderer for the manifest pages declared in
+	// src/manifest.d/bookkeeping-purchase-order-3way-02-core.json.
+	PurchaseOrderForm: { kind: 'page', component: PurchaseOrderForm },
+	PurchaseOrderDetail: { kind: 'page', component: PurchaseOrderDetail },
+}

@@ -1,0 +1,37 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-purchase-order-3way-02-purchase-order-core",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Slice 02 of the bookkeeping-purchase-order-3way chain wires the two PO Vue views (create form + detail) onto custom manifest pages. The PurchaseOrders index and supporting CRUD scaffolding live in slice 01's manifest fragment; this fragment adds the bespoke 'Create Purchase Order' form and the rich detail view that surfaces the approval chain, approval history (with timestamps) and links to related GoodsReceiptNotes + ThreeWayMatches. Registered as kind=page custom components in src/registry.js."
+	},
+	"menu": [
+		{
+			"id": "PurchaseOrders",
+			"label": "Purchase Orders",
+			"icon": "FileDocumentMultiple",
+			"order": 90,
+			"children": [
+				{"id": "PurchaseOrderForm", "label": "Create Purchase Order", "icon": "PlusCircle", "route": "PurchaseOrderForm", "order": 10},
+				{"id": "PurchaseOrderDetail", "label": "Purchase Order Detail", "icon": "FileDocumentOutline", "route": "PurchaseOrderDetail", "order": 20, "hidden": true}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "PurchaseOrderForm",
+			"route": "/purchase-orders/new",
+			"type": "custom",
+			"title": "Create Purchase Order",
+			"component": "PurchaseOrderForm"
+		},
+		{
+			"id": "PurchaseOrderDetail",
+			"route": "/purchase-orders/:id",
+			"type": "custom",
+			"title": "Purchase Order",
+			"component": "PurchaseOrderDetail"
+		}
+	]
+}
