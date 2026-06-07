@@ -79,6 +79,15 @@ use RuntimeException;
  *    invoice line, picks the unambiguous match OR the recorded
  *    disambiguation choice and writes one ThreeWayMatch per matched trio.
  *
+ * Every persisted ThreeWayMatch is also projected back onto the
+ * SupplierInvoice document via {@see SupplierInvoiceService::linkInvoiceLineToPo()}
+ * so the embedded invoice line carries linkedPoLineId / linkedPoId /
+ * linkedGrnLineId / linkedMatchId inline and the header's matchedPoIds +
+ * consolidatedAt reflect the full set of POs the maand-factuur consolidates
+ * (REQ-PO3W-007). The inline projection is best-effort — a write failure
+ * is logged but does not roll back the ThreeWayMatch record, which is the
+ * canonical surface for the matching engine in slice 06.
+ *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-07-multi-po-consolidation/tasks.md
@@ -167,13 +176,17 @@ class MultiPoConsolidationService
     /**
      * Constructor.
      *
-     * @param ContainerInterface           $container             DI container — OR's ObjectService
-     *                                                            is fetched lazily so unit tests
-     *                                                            can swap an in-memory stub.
-     * @param IAppConfig                   $appConfig             App config for the OR register slug.
-     * @param AdministrationContextService $administrationContext IDOR + tenant scope (ADR-005).
-     * @param IUserSession                 $userSession           Session for chosenBy attribution.
-     * @param LoggerInterface              $logger                Logger (no sensitive payloads).
+     * @param ContainerInterface           $container              DI container — OR's ObjectService
+     *                                                             is fetched lazily so unit tests
+     *                                                             can swap an in-memory stub.
+     * @param IAppConfig                   $appConfig              App config for the OR register slug.
+     * @param AdministrationContextService $administrationContext  IDOR + tenant scope (ADR-005).
+     * @param IUserSession                 $userSession            Session for chosenBy attribution.
+     * @param SupplierInvoiceService       $supplierInvoiceService Slice 05 service — extended in slice 07
+     *                                                             with linkInvoiceLineToPo() so the
+     *                                                             SupplierInvoice document records its
+     *                                                             per-line PO links inline (REQ-PO3W-007).
+     * @param LoggerInterface              $logger                 Logger (no sensitive payloads).
      *
      * @return void
      */
@@ -182,6 +195,7 @@ class MultiPoConsolidationService
         private readonly IAppConfig $appConfig,
         private readonly AdministrationContextService $administrationContext,
         private readonly IUserSession $userSession,
+        private readonly SupplierInvoiceService $supplierInvoiceService,
         private readonly LoggerInterface $logger,
     ) {
 
@@ -225,6 +239,8 @@ class MultiPoConsolidationService
      *          'expectedDeliveryDate' => string, 'matchSource' => 'po-grn'|'po-only'].
      *
      * @throws \RuntimeException When the administration is inaccessible.
+     *
+     * @spec openspec/changes/bookkeeping-purchase-order-3way-07-multi-po-consolidation/tasks.md
      */
     public function enumerateCandidateTuples(
         string $administrationId,
@@ -273,8 +289,8 @@ class MultiPoConsolidationService
         $candidatePoLines = $this->findAll(
             schema: self::SCHEMA_PO_LINE,
             filters: [
-                'administrationId'      => $administrationId,
-                'productOrServiceCode'  => $productCode,
+                'administrationId'     => $administrationId,
+                'productOrServiceCode' => $productCode,
             ]
         );
 
@@ -334,7 +350,7 @@ class MultiPoConsolidationService
                     'matchSource'          => 'po-grn',
                 ];
             }
-        }
+        }//end foreach
 
         return $tuples;
 
@@ -424,13 +440,15 @@ class MultiPoConsolidationService
             invoiceLine: $invoiceLine
         );
 
-        $chosen           = null;
+        $chosen            = null;
         $rejectedPoLineIds = [];
         foreach ($candidates as $candidate) {
             $sameLine = ((string) $candidate['poLineId'] === $chosenPoLineId);
-            $sameGrn  = ($chosenGrnLineId === ''
-                ? ($candidate['grnLineId'] === null || $candidate['grnLineId'] === '')
-                : ((string) ($candidate['grnLineId'] ?? '') === $chosenGrnLineId));
+            if ($chosenGrnLineId === '') {
+                $sameGrn = ($candidate['grnLineId'] === null || $candidate['grnLineId'] === '');
+            } else {
+                $sameGrn = ((string) ($candidate['grnLineId'] ?? '') === $chosenGrnLineId);
+            }
 
             if ($sameLine === true && $sameGrn === true) {
                 $chosen = $candidate;
@@ -446,10 +464,15 @@ class MultiPoConsolidationService
             throw new RuntimeException('Chosen tuple is not in the candidate set');
         }
 
+        $persistedGrnLineId = null;
+        if ($chosenGrnLineId !== '') {
+            $persistedGrnLineId = $chosenGrnLineId;
+        }
+
         $disambiguationChoice = [
             'candidateCount'    => count($candidates),
             'chosenPoLineId'    => $chosenPoLineId,
-            'chosenGrnLineId'   => ($chosenGrnLineId === '' ? null : $chosenGrnLineId),
+            'chosenGrnLineId'   => $persistedGrnLineId,
             'rejectedPoLineIds' => array_values(array_keys($rejectedPoLineIds)),
             'chosenBy'          => $this->currentUserId(),
             'chosenAt'          => $this->nowIso(),
@@ -551,7 +574,7 @@ class MultiPoConsolidationService
                     'candidateCount'    => 0,
                 ];
                 continue;
-            }
+            }//end if
 
             if (count($candidates) > 1) {
                 // Ambiguous — surface to the operator; no ThreeWayMatch yet.
@@ -564,10 +587,11 @@ class MultiPoConsolidationService
                 continue;
             }
 
-            $candidate = $candidates[0];
-            $matchStatus = ($candidate['grnLineId'] === null)
-                ? self::MATCH_STATUS_MISSING_GRN
-                : self::MATCH_STATUS_AUTO_APPROVED;
+            $candidate   = $candidates[0];
+            $matchStatus = self::MATCH_STATUS_AUTO_APPROVED;
+            if ($candidate['grnLineId'] === null) {
+                $matchStatus = self::MATCH_STATUS_MISSING_GRN;
+            }
 
             $persisted = $this->writeMatchRecord(
                 administrationId: $administrationId,
@@ -578,13 +602,18 @@ class MultiPoConsolidationService
                 matchStatus: $matchStatus
             );
 
+            $lineStatus = 'exception';
+            if ($matchStatus === self::MATCH_STATUS_AUTO_APPROVED) {
+                $lineStatus = 'auto';
+            }
+
             $results[] = [
                 'invoiceLineNumber' => $lineNumber,
-                'status'            => ($matchStatus === self::MATCH_STATUS_AUTO_APPROVED) ? 'auto' : 'exception',
+                'status'            => $lineStatus,
                 'matchId'           => $this->idOf(record: $persisted),
                 'candidateCount'    => 1,
             ];
-        }
+        }//end foreach
 
         return $results;
 
@@ -594,12 +623,12 @@ class MultiPoConsolidationService
      * Persist one ThreeWayMatch record for a (PO line, GRN line, invoice
      * line) trio.
      *
-     * @param string                    $administrationId     Tenant scope.
-     * @param string                    $invoiceId            SupplierInvoice id.
-     * @param int                       $invoiceLineNumber    1-based line position.
-     * @param array<string,mixed>       $candidate            Tuple snapshot.
-     * @param array<string,mixed>|null  $disambiguationChoice Operator's choice (null when unambiguous).
-     * @param string                    $matchStatus          Initial match status.
+     * @param string                   $administrationId     Tenant scope.
+     * @param string                   $invoiceId            SupplierInvoice id.
+     * @param int                      $invoiceLineNumber    1-based line position.
+     * @param array<string,mixed>      $candidate            Tuple snapshot.
+     * @param array<string,mixed>|null $disambiguationChoice Operator's choice (null when unambiguous).
+     * @param string                   $matchStatus          Initial match status.
      *
      * @return array<string,mixed> The persisted match record.
      */
@@ -622,21 +651,78 @@ class MultiPoConsolidationService
         }
 
         $record = [
-            'invoiceId'           => $invoiceId,
-            'invoiceLineNumber'   => $invoiceLineNumber,
-            'productCode'         => ($candidate['productCode'] ?? null),
-            'poLineId'            => ($candidate['poLineId'] ?? null),
-            'grnLineId'           => ($candidate['grnLineId'] ?? null),
-            'matchedPoIds'        => $matchedPoIds,
-            'matchedGrnIds'       => $matchedGrnIds,
-            'matchStatus'         => $matchStatus,
-            'divergenceDetails'   => [],
-            'disambiguationChoice'=> $disambiguationChoice,
-            'createdAt'           => $this->nowIso(),
-            'administrationId'    => $administrationId,
+            'invoiceId'            => $invoiceId,
+            'invoiceLineNumber'    => $invoiceLineNumber,
+            'productCode'          => ($candidate['productCode'] ?? null),
+            'poLineId'             => ($candidate['poLineId'] ?? null),
+            'grnLineId'            => ($candidate['grnLineId'] ?? null),
+            'matchedPoIds'         => $matchedPoIds,
+            'matchedGrnIds'        => $matchedGrnIds,
+            'matchStatus'          => $matchStatus,
+            'divergenceDetails'    => [],
+            'disambiguationChoice' => $disambiguationChoice,
+            'createdAt'            => $this->nowIso(),
+            'administrationId'     => $administrationId,
         ];
 
-        return $this->saveObject(schema: self::SCHEMA_THREE_WAY_MATCH, object: $record);
+        $persisted = $this->saveObject(schema: self::SCHEMA_THREE_WAY_MATCH, object: $record);
+
+        // Slice 07 — write the PO link back to the SupplierInvoice document so
+        // a consumer reading the invoice sees the per-line PO links inline
+        // (REQ-PO3W-007). On the missing-PO exception path the link fields
+        // are NULL but the matchId is still recorded so the UI can show the
+        // exception status without traversing ThreeWayMatch records.
+        $matchId         = $this->idOf(record: $persisted);
+        $linkedPoLineId  = ($candidate['poLineId'] ?? null);
+        $linkedPoId      = ($candidate['poId'] ?? null);
+        $linkedGrnLineId = ($candidate['grnLineId'] ?? null);
+
+        $projectedPoLineId  = null;
+        $projectedPoId      = null;
+        $projectedGrnLineId = null;
+        $projectedMatchId   = null;
+        if ($linkedPoLineId !== null) {
+            $projectedPoLineId = (string) $linkedPoLineId;
+        }
+
+        if ($linkedPoId !== null) {
+            $projectedPoId = (string) $linkedPoId;
+        }
+
+        if ($linkedGrnLineId !== null) {
+            $projectedGrnLineId = (string) $linkedGrnLineId;
+        }
+
+        if ($matchId !== '') {
+            $projectedMatchId = $matchId;
+        }
+
+        try {
+            $this->supplierInvoiceService->linkInvoiceLineToPo(
+                administrationId: $administrationId,
+                invoiceId: $invoiceId,
+                invoiceLineNumber: $invoiceLineNumber,
+                linkedPoLineId: $projectedPoLineId,
+                linkedPoId: $projectedPoId,
+                linkedGrnLineId: $projectedGrnLineId,
+                linkedMatchId: $projectedMatchId
+            );
+        } catch (\Throwable $e) {
+            // Inline-link is a best-effort projection — the canonical
+            // record is the ThreeWayMatch we just persisted, so a failure
+            // to update the invoice document MUST NOT roll back the
+            // engine. Log + continue.
+            $this->logger->warning(
+                'MultiPoConsolidationService: failed to link invoice line to PO',
+                [
+                    'invoiceId'         => $invoiceId,
+                    'invoiceLineNumber' => $invoiceLineNumber,
+                    'exception'         => $e->getMessage(),
+                ]
+            );
+        }//end try
+
+        return $persisted;
 
     }//end writeMatchRecord()
 
@@ -729,8 +815,8 @@ class MultiPoConsolidationService
      * true (the missing-date case is handled by the exception workflow
      * downstream — we do not silently drop candidates here).
      *
-     * @param string                                                       $date   Candidate date.
-     * @param array{from:?DateTimeImmutable,to:?DateTimeImmutable}         $window Window.
+     * @param string                                               $date   Candidate date.
+     * @param array{from:?DateTimeImmutable,to:?DateTimeImmutable} $window Window.
      *
      * @return bool
      */
