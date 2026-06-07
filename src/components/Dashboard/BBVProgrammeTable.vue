@@ -238,9 +238,11 @@ export default {
 .bbv-programme-table {
 	width: 100%;
 }
+
 .bbv-programme-table__money {
 	font-variant-numeric: tabular-nums;
 }
+
 .bbv-programme-table__util {
 	display: inline-block;
 	padding: 0.125rem 0.5rem;
@@ -248,21 +250,26 @@ export default {
 	font-weight: 600;
 	font-variant-numeric: tabular-nums;
 }
+
 .bbv-programme-table__util--ok {
 	background: var(--color-success);
 	color: var(--color-primary-text);
 }
+
 .bbv-programme-table__util--warning {
 	background: var(--color-warning);
 	color: var(--color-primary-text);
 }
+
 .bbv-programme-table__util--danger {
 	background: var(--color-error);
 	color: var(--color-primary-text);
 }
+
 .bbv-programme-table__util--muted {
 	background: var(--color-background-darker);
 }
+
 .bbv-programme-table__badge {
 	display: inline-flex;
 	align-items: center;
@@ -272,21 +279,26 @@ export default {
 	font-size: 0.875rem;
 	cursor: help;
 }
+
 .bbv-programme-table__badge--ok {
 	background: var(--color-success);
 	color: var(--color-primary-text);
 }
+
 .bbv-programme-table__badge--warning {
 	background: var(--color-warning);
 	color: var(--color-primary-text);
 }
+
 .bbv-programme-table__badge--danger {
 	background: var(--color-error);
 	color: var(--color-primary-text);
 }
+
 .bbv-programme-table__badge--muted {
 	background: var(--color-background-darker);
 }
+
 .bbv-programme-table__open {
 	border: 1px solid var(--color-border);
 	background: var(--color-main-background);
@@ -295,6 +307,7 @@ export default {
 	border-radius: var(--border-radius);
 	cursor: pointer;
 }
+
 .bbv-programme-table__open:hover {
 	background: var(--color-background-hover);
 }
