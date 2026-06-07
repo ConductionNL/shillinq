@@ -5,18 +5,18 @@
     {
       "file": "l10n/en.json",
       "severity": "critical",
-      "note": "Unresolved git conflict markers (<<<<<<< HEAD / ======= / >>>>>>> origin/development) committed as literal text inside the JSON object \u2014 file is invalid JSON and will silently break all English translations at runtime."
+      "note": "Committed unresolved git conflict markers (<<<<<<< HEAD / ======= / >>>>>>> origin/development at line ~9-66) make this file invalid JSON; the localization system will fail to parse it at runtime."
     },
     {
       "file": "l10n/nl.json",
       "severity": "critical",
-      "note": "Same unresolved conflict markers committed as literal text \u2014 file is invalid JSON and will silently break all Dutch translations at runtime."
+      "note": "Same unresolved conflict markers as l10n/en.json (lines ~78-135) \u2014 both l10n files are broken JSON and pr-state.json confirms mergeable=false; orchestrator should escalate to rebuild:queued."
     }
   ],
-  "turns": 8,
-  "cost_usd": 0.3681,
-  "cost_eur": 0.3387,
+  "turns": 7,
+  "cost_usd": 0.2032,
+  "cost_eur": 0.1869,
   "pr": 299,
-  "commit": "75855d5",
-  "timestamp": "2026-06-07T07:50:16.353763+00:00"
+  "commit": "75f67d7",
+  "timestamp": "2026-06-07T08:25:19.738822+00:00"
 }
