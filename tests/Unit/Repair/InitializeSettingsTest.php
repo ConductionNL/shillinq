@@ -90,9 +90,9 @@ class InitializeSettingsTest extends TestCase
 
         $this->settingsService          = $this->createMock(originalClassName: SettingsService::class);
         $this->statementManifestService = $this->createMock(originalClassName: StatementManifestService::class);
-        $this->container                = $this->createMock(originalClassName: ContainerInterface::class);
-        $this->logger                   = $this->createMock(originalClassName: LoggerInterface::class);
-        $this->output                   = $this->createMock(originalClassName: IOutput::class);
+        $this->container = $this->createMock(originalClassName: ContainerInterface::class);
+        $this->logger    = $this->createMock(originalClassName: LoggerInterface::class);
+        $this->output    = $this->createMock(originalClassName: IOutput::class);
 
         $this->repairStep = new InitializeSettings(
             settingsService: $this->settingsService,

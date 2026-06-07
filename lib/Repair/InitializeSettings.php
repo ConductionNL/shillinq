@@ -36,6 +36,8 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
  * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
 class InitializeSettings implements IRepairStep
 {
@@ -101,15 +103,15 @@ class InitializeSettings implements IRepairStep
     {
         $output->info('Initializing Shillinq configuration...');
 
-    if ($this->settingsService->isOpenRegisterAvailable() === false) {
-        $output->warning(
-        'OpenRegister is not installed or enabled. Skipping auto-configuration.'
-        );
-        $this->logger->warning(
-            'Shillinq: OpenRegister not available, skipping register initialization'
-        );
-        return;
-    }
+        if ($this->settingsService->isOpenRegisterAvailable() === false) {
+            $output->warning(
+            'OpenRegister is not installed or enabled. Skipping auto-configuration.'
+            );
+            $this->logger->warning(
+                'Shillinq: OpenRegister not available, skipping register initialization'
+            );
+            return;
+        }
 
         try {
             // C8: use loadConfigurationForced() so OR's per-register/per-schema
@@ -117,28 +119,28 @@ class InitializeSettings implements IRepairStep
             // routine upgrades when the shillinq_register.json version hasn't changed.
             $result = $this->settingsService->loadConfigurationForced();
 
-    if ($result['success'] === true) {
-        $skipped = (($result['skipped'] ?? false) === true);
-        $version = ($result['version'] ?? 'unknown');
-        if ($skipped === true) {
-            $output->info('Shillinq configuration already up-to-date (version-unchanged skip)');
-        }
+            if ($result['success'] === true) {
+                $skipped = (($result['skipped'] ?? false) === true);
+                $version = ($result['version'] ?? 'unknown');
+                if ($skipped === true) {
+                    $output->info('Shillinq configuration already up-to-date (version-unchanged skip)');
+                }
 
-        if ($skipped !== true) {
-            $output->info(
-                'Shillinq configuration imported successfully (version: '.$version.')'
-            );
-        }
-    }
+                if ($skipped !== true) {
+                    $output->info(
+                        'Shillinq configuration imported successfully (version: '.$version.')'
+                    );
+                }
+            }
 
-    if ($result['success'] !== true) {
-        $message = ($result['message'] ?? 'unknown error');
-        $output->warning('Shillinq configuration import issue: '.$message);
-        // H2: skip account seed when schema import failed to avoid writing
-        // accounts into an uninitialized register.
-        $output->warning('Shillinq: schema import failed, skipping account seed');
-        return;
-    }
+            if ($result['success'] !== true) {
+                $message = ($result['message'] ?? 'unknown error');
+                $output->warning('Shillinq configuration import issue: '.$message);
+                // H2: skip account seed when schema import failed to avoid writing
+                // accounts into an uninitialized register.
+                $output->warning('Shillinq: schema import failed, skipping account seed');
+                return;
+            }
 
             $this->seedDefaultAdministration(output: $output);
             $this->seedChartOfAccounts(output: $output);
@@ -588,18 +590,14 @@ class InitializeSettings implements IRepairStep
 
         $result = $this->manifestService->import();
 
-        if ($result['success'] === true) {
-            $imported = ($result['imported'] ?? 0);
-            $skipped  = ($result['skipped'] ?? 0);
-            $output->info(
-                'Statement manifests imported: '.$imported.' created, '.$skipped.' skipped (operator edits preserved).'
-            );
+        if ($result['success'] !== true) {
+            $output->warning('Statement manifest import issue: '.$result['message']);
+            return;
         }
 
-        if ($result['success'] !== true) {
-            $message = ($result['message'] ?? 'unknown error');
-            $output->warning('Statement manifest import issue: '.$message);
-        }
+        $output->info(
+            'Statement manifests imported: '.$result['imported'].' created, '.$result['skipped'].' skipped (operator edits preserved).'
+        );
 
     }//end importStatementManifests()
-    }//end class
+}//end class

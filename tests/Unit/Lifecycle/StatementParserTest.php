@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/add-shillinq-bookkeeping-compliance/specs/bookkeeping-bank-reconciliation/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -56,10 +59,10 @@ class StatementParserTest extends TestCase
     {
         parent::setUp();
 
-        $this->container = $this->createMock(ContainerInterface::class);
-        $appConfig       = $this->createMock(IAppConfig::class);
+        $this->container = $this->createMock(originalClassName: ContainerInterface::class);
+        $appConfig       = $this->createMock(originalClassName: IAppConfig::class);
         $appConfig->method('getValueString')->willReturn('shillinq');
-        $logger = $this->createMock(LoggerInterface::class);
+        $logger = $this->createMock(originalClassName: LoggerInterface::class);
 
         $this->parser = new StatementParser(
             container: $this->container,
@@ -93,14 +96,14 @@ class StatementParserTest extends TestCase
 
         $lines = $this->parser->parse($xml, 'camt053');
 
-        self::assertCount(2, $lines);
-        self::assertSame('2026-01-15', $lines[0]['valueDate']);
-        self::assertSame(1210.00, $lines[0]['amount']);
-        self::assertSame('Betaling factuur 2026-0042', $lines[0]['remittanceInfo']);
-        self::assertSame('Klant B.V.', $lines[0]['counterpartyName']);
-        self::assertSame('NL91ABNA0417164300', $lines[0]['counterpartyIban']);
+        self::assertCount(expectedCount: 2, haystack: $lines);
+        self::assertSame(expected: '2026-01-15', actual: $lines[0]['valueDate']);
+        self::assertSame(expected: 1210.00, actual: $lines[0]['amount']);
+        self::assertSame(expected: 'Betaling factuur 2026-0042', actual: $lines[0]['remittanceInfo']);
+        self::assertSame(expected: 'Klant B.V.', actual: $lines[0]['counterpartyName']);
+        self::assertSame(expected: 'NL91ABNA0417164300', actual: $lines[0]['counterpartyIban']);
         // Debit entry is negated.
-        self::assertSame(-50.00, $lines[1]['amount']);
+        self::assertSame(expected: -50.00, actual: $lines[1]['amount']);
 
     }//end testParseCamt053()
 
@@ -111,7 +114,7 @@ class StatementParserTest extends TestCase
      */
     public function testParseCamt053MalformedReturnsEmpty(): void
     {
-        self::assertSame([], $this->parser->parse('<not-valid-xml', 'camt053'));
+        self::assertSame(expected: [], actual: $this->parser->parse('<not-valid-xml', 'camt053'));
 
     }//end testParseCamt053MalformedReturnsEmpty()
 
@@ -131,11 +134,11 @@ class StatementParserTest extends TestCase
 
         $lines = $this->parser->parse($mt940, 'mt940');
 
-        self::assertCount(2, $lines);
-        self::assertSame('2026-01-15', $lines[0]['valueDate']);
-        self::assertSame(1210.00, $lines[0]['amount']);
-        self::assertSame('Betaling factuur 2026-0042', $lines[0]['remittanceInfo']);
-        self::assertSame(-50.00, $lines[1]['amount']);
+        self::assertCount(expectedCount: 2, haystack: $lines);
+        self::assertSame(expected: '2026-01-15', actual: $lines[0]['valueDate']);
+        self::assertSame(expected: 1210.00, actual: $lines[0]['amount']);
+        self::assertSame(expected: 'Betaling factuur 2026-0042', actual: $lines[0]['remittanceInfo']);
+        self::assertSame(expected: -50.00, actual: $lines[1]['amount']);
 
     }//end testParseMt940()
 
@@ -146,12 +149,12 @@ class StatementParserTest extends TestCase
      */
     public function testParseUnknownFormatReturnsEmpty(): void
     {
-        self::assertSame([], $this->parser->parse('anything', 'ofx'));
+        self::assertSame(expected: [], actual: $this->parser->parse('anything', 'ofx'));
 
     }//end testParseUnknownFormatReturnsEmpty()
 
     /**
-     * allLinesResolved returns true when no unmatched lines remain.
+     * AllLinesResolved returns true when no unmatched lines remain.
      *
      * @return void
      */
@@ -160,12 +163,12 @@ class StatementParserTest extends TestCase
         $objectService = $this->buildObjectServiceStub(unmatched: []);
         $this->container->method('get')->willReturn($objectService);
 
-        self::assertTrue($this->parser->allLinesResolved(['statementId' => 'BS-1']));
+        self::assertTrue(condition: $this->parser->allLinesResolved(['statementId' => 'BS-1']));
 
     }//end testAllLinesResolvedTrueWhenNoUnmatched()
 
     /**
-     * allLinesResolved returns false when unmatched lines remain.
+     * AllLinesResolved returns false when unmatched lines remain.
      *
      * @return void
      */
@@ -174,12 +177,12 @@ class StatementParserTest extends TestCase
         $objectService = $this->buildObjectServiceStub(unmatched: [['lineId' => 'L1', 'status' => 'unmatched']]);
         $this->container->method('get')->willReturn($objectService);
 
-        self::assertFalse($this->parser->allLinesResolved(['statementId' => 'BS-1']));
+        self::assertFalse(condition: $this->parser->allLinesResolved(['statementId' => 'BS-1']));
 
     }//end testAllLinesResolvedFalseWhenUnmatchedRemain()
 
     /**
-     * allLinesResolved is fail-closed: returns false on exception.
+     * AllLinesResolved is fail-closed: returns false on exception.
      *
      * @return void
      */
@@ -187,7 +190,7 @@ class StatementParserTest extends TestCase
     {
         $this->container->method('get')->willThrowException(new \RuntimeException('boom'));
 
-        self::assertFalse($this->parser->allLinesResolved(['statementId' => 'BS-1']));
+        self::assertFalse(condition: $this->parser->allLinesResolved(['statementId' => 'BS-1']));
 
     }//end testAllLinesResolvedFailClosedOnException()
 
@@ -202,30 +205,51 @@ class StatementParserTest extends TestCase
     {
         return new class($unmatched) {
             /**
-             * @param array<mixed> $unmatched
+             * Constructor for the anonymous ObjectService stub.
+             *
+             * @param array<mixed> $unmatched Unmatched lines to return from findAll().
+             *
+             * @return void
              */
             public function __construct(private array $unmatched)
             {
-            }
+            }//end __construct()
 
+            /**
+             * Set the register (no-op stub).
+             *
+             * @param string $register Register slug.
+             *
+             * @return static
+             */
             public function setRegister(string $register): static
             {
                 return $this;
-            }
+            }//end setRegister()
 
+            /**
+             * Set the schema (no-op stub).
+             *
+             * @param string $schema Schema slug.
+             *
+             * @return static
+             */
             public function setSchema(string $schema): static
             {
                 return $this;
-            }
+            }//end setSchema()
 
             /**
-             * @param array<string,mixed> $params
+             * Find all unmatched lines for the current context.
+             *
+             * @param array<string,mixed> $params Query parameters.
+             *
              * @return array<mixed>
              */
             public function findAll(array $params=[]): array
             {
                 return $this->unmatched;
-            }
+            }//end findAll()
         };
 
     }//end buildObjectServiceStub()
