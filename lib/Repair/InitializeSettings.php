@@ -150,6 +150,7 @@ class InitializeSettings implements IRepairStep
             $this->seedReimbursementPolicies(output: $output);
             $this->seedPassThroughMarkupRules(output: $output);
             $this->seedInventoryBarcodeDemo(output: $output);
+            $this->seedInventoryLotsDemo(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -526,6 +527,39 @@ class InitializeSettings implements IRepairStep
         $output->warning('Demo barcode seeding issue: '.($result['message'] ?? 'unknown error'));
 
     }//end seedInventoryBarcodeDemo()
+
+
+    /**
+     * Seed the demo InventoryLot records, idempotently.
+     *
+     * Calls `SettingsService::seedInventoryLots()`. Idempotent: lots
+     * matched by `(administrationId, lotNumber)` are skipped, preserving
+     * operator edits per REQ-LOT-002. The seed references inventory-product-
+     * catalog demo SKUs (DV-KAT-SENIOR-2KG etc.); the lots still load when
+     * those Products are absent and become discoverable once they land.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-lot-batch-expiry/tasks.md#task-14
+     */
+    private function seedInventoryLotsDemo(IOutput $output): void
+    {
+        $output->info('Seeding demo inventory lots...');
+        $result = $this->settingsService->seedInventoryLots();
+
+        if ($result['success'] === true) {
+            $output->info(
+                'Demo inventory lots seeded: '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
+            );
+            return;
+        }
+
+        $output->warning('Demo inventory lot seeding issue: '.($result['message'] ?? 'unknown error'));
+
+    }//end seedInventoryLotsDemo()
+
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.
