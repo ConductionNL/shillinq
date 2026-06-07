@@ -117,6 +117,15 @@ return [
         ['name' => 'notification#listForBooking', 'url' => '/api/bookings/{id}/notification-triggers', 'verb' => 'GET'],
         ['name' => 'notification#updateForBooking', 'url' => '/api/bookings/{id}/notification-triggers', 'verb' => 'PATCH'],
 
+        // Booking detail (bookings-pipelinq-customer-bridge-05). Hydrates the
+        // Appointment record with the linked pipelinq Contact profile +
+        // klantbeeld history when `pipelinqContactId` is set, degrading to
+        // `contactError` (booking still renders) on adapter failure.
+        // #[NoAdminRequired] + AdministrationContextService IDOR guard.
+        // Declared before the SPA catch-all so Symfony matches it first per
+        // ADR-016.
+        ['name' => 'bookingDetail#show', 'url' => '/api/v1/bookings/{id}', 'verb' => 'GET'],
+
         // Inventory barcode lookup endpoint (REQ-SKU-007 / REQ-SKU-008).
         // Public route attribute (Bearer API-key in the controller body) so POS
         // terminals without an NC session can call it; declared before the SPA
