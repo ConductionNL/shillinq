@@ -72,11 +72,11 @@
   expired, shrinkage, inter-warehouse, adjustment, sample, demo, theft, loss). Operator can add
   custom codes per administration. Reason code mandatory on post (REQ-SM-007 guard)
 
-- [ ] Task 15: Confirm Location entity (from budget-planning-control spec) carries minimum fields
+- [x] Task 15: Confirm Location entity (from budget-planning-control spec) carries minimum fields
   (name, code, address) for warehouse identity. If missing fields, file ADR-032 review or patch
   Location schema. StockMove simply FKs to Location
 
-- [ ] Task 16: Update `openspec/architecture/adr-000-data-model.md` with `StockMove` entry,
+- [x] Task 16: Update `openspec/architecture/adr-000-data-model.md` with `StockMove` entry,
   declaring schema, primary spec (`inventory-stock-movement-ledger`), all fields per REQ-SM-002,
   and relations to Product (via itemId), Location (sourceLocationId, destinationLocationId),
   InventoryStock (implicitly via product+location trace)
