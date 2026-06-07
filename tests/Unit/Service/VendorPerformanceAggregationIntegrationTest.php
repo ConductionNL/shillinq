@@ -55,8 +55,6 @@ require_once __DIR__.'/InMemoryObjectService.php';
  */
 final class VendorPerformanceAggregationIntegrationTest extends TestCase
 {
-
-
     /**
      * Build a service wired against the supplied in-memory stub.
      *
@@ -85,7 +83,6 @@ final class VendorPerformanceAggregationIntegrationTest extends TestCase
         );
 
     }//end makeService()
-
 
     /**
      * Seed a two-supplier dataset for the period 2026-05.
@@ -154,32 +151,32 @@ final class VendorPerformanceAggregationIntegrationTest extends TestCase
             'ThreeWayMatch',
             [
                 [
-                    'invoiceId' => 'inv-1',
-                    'matchStatus' => 'auto_approved',
+                    'invoiceId'        => 'inv-1',
+                    'matchStatus'      => 'auto_approved',
                     'administrationId' => 'adm-1',
-                    'createdAt' => '2026-05-11T12:00:00Z',
+                    'createdAt'        => '2026-05-11T12:00:00Z',
                 ],
                 [
-                    'invoiceId' => 'inv-2',
-                    'matchStatus' => 'auto_approved',
+                    'invoiceId'        => 'inv-2',
+                    'matchStatus'      => 'auto_approved',
                     'administrationId' => 'adm-1',
-                    'createdAt' => '2026-05-21T12:00:00Z',
+                    'createdAt'        => '2026-05-21T12:00:00Z',
                 ],
                 [
-                    'invoiceId' => 'inv-3',
-                    'matchStatus' => 'exception_price',
+                    'invoiceId'        => 'inv-3',
+                    'matchStatus'      => 'exception_price',
                     'administrationId' => 'adm-1',
-                    'createdAt' => '2026-05-16T12:00:00Z',
+                    'createdAt'        => '2026-05-16T12:00:00Z',
                     'resolutionAction' => 'credit_note_requested',
-                    'resolvedAt' => '2026-05-20T12:00:00Z',
+                    'resolvedAt'       => '2026-05-20T12:00:00Z',
                 ],
                 [
-                    'invoiceId' => 'inv-4',
-                    'matchStatus' => 'exception_price',
+                    'invoiceId'        => 'inv-4',
+                    'matchStatus'      => 'exception_price',
                     'administrationId' => 'adm-1',
-                    'createdAt' => '2026-05-23T12:00:00Z',
+                    'createdAt'        => '2026-05-23T12:00:00Z',
                     'resolutionAction' => 'supplier_contacted',
-                    'resolvedAt' => '2026-05-25T12:00:00Z',
+                    'resolvedAt'       => '2026-05-25T12:00:00Z',
                 ],
             ]
         );
@@ -217,7 +214,6 @@ final class VendorPerformanceAggregationIntegrationTest extends TestCase
 
     }//end seed()
 
-
     /**
      * Running the period aggregation persists one scorecard per supplier
      * with the correct overall score and dispute counts; only the
@@ -243,7 +239,7 @@ final class VendorPerformanceAggregationIntegrationTest extends TestCase
             $bySupplier[(string) $card['supplierId']] = $card;
         }
 
-        // vendor-001: 2 on-time / 2 GRNs, 2 exact qty / 2 lines,
+        // Vendor-001: 2 on-time / 2 GRNs, 2 exact qty / 2 lines,
         // 2 auto_approved / 2 matches, 2 first-try auto_approved / 2 invoices
         // → 10000 bp across the board → overall 10000.
         $good = $bySupplier['vendor-001'];
@@ -255,7 +251,7 @@ final class VendorPerformanceAggregationIntegrationTest extends TestCase
         self::assertSame(0, (int) $good['disputeCount']);
         self::assertTrue($good['automatedReviewEligible']);
 
-        // vendor-002: 1 on-time / 2, 1 exact / 2 qty, 0 of 2 price-accurate,
+        // Vendor-002: 1 on-time / 2, 1 exact / 2 qty, 0 of 2 price-accurate,
         // 0 of 2 invoice-accurate → 5000/5000/0/0 → weighted overall =
         // (5000*4000 + 5000*3000 + 0*2000 + 0*1000)/10000 = 3500 bp.
         $bad = $bySupplier['vendor-002'];
@@ -270,7 +266,6 @@ final class VendorPerformanceAggregationIntegrationTest extends TestCase
         self::assertFalse((bool) $bad['automatedReviewEligible']);
 
     }//end testAggregateAdministrationForPeriodPersistsBothSuppliers()
-
 
     /**
      * Eligibility side-effect: the relaxed ToleranceProfile is one step
@@ -313,6 +308,4 @@ final class VendorPerformanceAggregationIntegrationTest extends TestCase
         );
 
     }//end testEligibilityRelaxesSupplierToleranceProfile()
-
-
 }//end class

@@ -107,7 +107,7 @@ use Throwable;
  *  - aggregateAdministrationForPeriod(): cron entry point — loops every
  *    supplier with activity in the period and writes one scorecard each.
  *
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Aggregation touches
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)   Aggregation touches
  * five registers (PurchaseOrder, PurchaseOrderLine, GoodsReceiptNote,
  * GoodsReceiptLine, ThreeWayMatch, SupplierInvoice, ToleranceProfile,
  * VendorPerformance) by design.
@@ -182,15 +182,14 @@ class VendorPerformanceAggregation
      * Schema slugs (slice 01). Constants so a schema rename only changes
      * one place and so the slug list stays grep-able.
      */
-    private const SCHEMA_PURCHASE_ORDER     = 'PurchaseOrder';
-    private const SCHEMA_PO_LINE            = 'PurchaseOrderLine';
-    private const SCHEMA_GRN                = 'GoodsReceiptNote';
-    private const SCHEMA_GRN_LINE           = 'GoodsReceiptLine';
+    private const SCHEMA_PURCHASE_ORDER = 'PurchaseOrder';
+    private const SCHEMA_PO_LINE        = 'PurchaseOrderLine';
+    private const SCHEMA_GRN            = 'GoodsReceiptNote';
+    private const SCHEMA_GRN_LINE       = 'GoodsReceiptLine';
     private const SCHEMA_THREE_WAY_MATCH    = 'ThreeWayMatch';
     private const SCHEMA_SUPPLIER_INVOICE   = 'SupplierInvoice';
     private const SCHEMA_TOLERANCE_PROFILE  = 'ToleranceProfile';
     private const SCHEMA_VENDOR_PERFORMANCE = 'VendorPerformance';
-
 
     /**
      * Constructor.
@@ -208,7 +207,6 @@ class VendorPerformanceAggregation
     ) {
 
     }//end __construct()
-
 
     /**
      * Compute and persist the monthly VendorPerformance scorecard for
@@ -237,6 +235,7 @@ class VendorPerformanceAggregation
         if ($administrationId === '') {
             throw new RuntimeException('administrationId is required');
         }
+
         if ($supplierId === '') {
             throw new RuntimeException('supplierId is required');
         }
@@ -248,7 +247,7 @@ class VendorPerformanceAggregation
             schema: self::SCHEMA_PURCHASE_ORDER,
             filters: ['supplierId' => $supplierId, 'administrationId' => $administrationId]
         );
-        $poIds = [];
+        $poIds          = [];
         foreach ($purchaseOrders as $po) {
             $id = $this->idOf(row: $po);
             if ($id !== '') {
@@ -282,6 +281,7 @@ class VendorPerformanceAggregation
                             return true;
                         }
                     }
+
                     return false;
                 }
             )
@@ -302,7 +302,7 @@ class VendorPerformanceAggregation
             }
         }
 
-        $allMatches = $this->findAll(
+        $allMatches    = $this->findAll(
             schema: self::SCHEMA_THREE_WAY_MATCH,
             filters: ['administrationId' => $administrationId]
         );
@@ -321,16 +321,17 @@ class VendorPerformanceAggregation
                     if ($invoiceId === '') {
                         return false;
                     }
+
                     return isset($invoiceIds[$invoiceId]);
                 }
             )
         );
 
         // Sub-aggregations.
-        $onTimeRateBp   = $this->computeOnTimeDeliveryRate(grns: $periodGrns, poIds: $poIds);
-        $qtyRateBp      = $this->computeQuantityAccuracyRate(grns: $periodGrns, administrationId: $administrationId);
-        $priceRateBp    = $this->computePriceAccuracyRate(matches: $periodMatches);
-        $invoiceRateBp  = $this->computeInvoiceAccuracyRate(matches: $periodMatches, invoiceIds: $invoiceIds);
+        $onTimeRateBp  = $this->computeOnTimeDeliveryRate(grns: $periodGrns, poIds: $poIds);
+        $qtyRateBp     = $this->computeQuantityAccuracyRate(grns: $periodGrns, administrationId: $administrationId);
+        $priceRateBp   = $this->computePriceAccuracyRate(matches: $periodMatches);
+        $invoiceRateBp = $this->computeInvoiceAccuracyRate(matches: $periodMatches, invoiceIds: $invoiceIds);
 
         $overallBp = $this->weightedOverall(
             onTimeBp:  $onTimeRateBp,
@@ -344,8 +345,8 @@ class VendorPerformanceAggregation
         $avgResolutionDays = $this->averageResolutionDays(matches: $periodMatches);
 
         // Trend vs the prior period.
-        $priorPeriod   = $this->priorPeriodOf(period: $period);
-        $priorCard     = $this->findOne(
+        $priorPeriod = $this->priorPeriodOf(period: $period);
+        $priorCard   = $this->findOne(
             schema:  self::SCHEMA_VENDOR_PERFORMANCE,
             filters: [
                 'supplierId'       => $supplierId,
@@ -353,7 +354,7 @@ class VendorPerformanceAggregation
                 'administrationId' => $administrationId,
             ]
         );
-        $scoreTrend = $this->computeScoreTrend(currentBp: $overallBp, priorCard: $priorCard);
+        $scoreTrend  = $this->computeScoreTrend(currentBp: $overallBp, priorCard: $priorCard);
 
         $scorecard = [
             'supplierId'              => $supplierId,
@@ -410,7 +411,6 @@ class VendorPerformanceAggregation
 
     }//end calculateMonthlyScore()
 
-
     /**
      * Compute the on-time-delivery rate for the period in basis points.
      *
@@ -419,7 +419,7 @@ class VendorPerformanceAggregation
      * earliest expectedDeliveryDate across the referenced POs — the
      * strict reading of "delivered by the expected date".
      *
-     * @param array<int,array<string,mixed>> $grns  Period GRNs (already filtered).
+     * @param array<int,array<string,mixed>>    $grns  Period GRNs (already filtered).
      * @param array<string,array<string,mixed>> $poIds Supplier POs keyed by id.
      *
      * @return int Basis points (0..10000). 0 when no GRN has a comparable date.
@@ -435,10 +435,12 @@ class VendorPerformanceAggregation
             if ($receivedAt === '') {
                 continue;
             }
+
             $expectedDate = $this->expectedDeliveryDateFor(grn: $grn, poIds: $poIds);
             if ($expectedDate === '') {
                 continue;
             }
+
             $eligible++;
             if ($this->dateOnly(iso: $receivedAt) <= $expectedDate) {
                 $onTime++;
@@ -448,7 +450,6 @@ class VendorPerformanceAggregation
         return $this->rateBp(numerator: $onTime, denominator: $eligible);
 
     }//end computeOnTimeDeliveryRate()
-
 
     /**
      * Compute the quantity-accuracy rate for the period in basis points.
@@ -474,6 +475,7 @@ class VendorPerformanceAggregation
             if ($grnId === '') {
                 continue;
             }
+
             $lines = $this->findAll(
                 schema:  self::SCHEMA_GRN_LINE,
                 filters: ['grnId' => $grnId, 'administrationId' => $administrationId]
@@ -483,6 +485,7 @@ class VendorPerformanceAggregation
                 if ($poLineId === '') {
                     continue;
                 }
+
                 $poLine = $this->findOne(
                     schema:  self::SCHEMA_PO_LINE,
                     filters: ['id' => $poLineId, 'administrationId' => $administrationId]
@@ -490,19 +493,19 @@ class VendorPerformanceAggregation
                 if ($poLine === null) {
                     continue;
                 }
+
                 $eligible++;
                 $received = $this->thousandths(value: $line['quantityReceived'] ?? 0);
                 $ordered  = $this->thousandths(value: $poLine['quantityOrdered'] ?? 0);
                 if ($received === $ordered) {
                     $accurate++;
                 }
-            }
-        }
+            }//end foreach
+        }//end foreach
 
         return $this->rateBp(numerator: $accurate, denominator: $eligible);
 
     }//end computeQuantityAccuracyRate()
-
 
     /**
      * Compute the price-accuracy rate for the period in basis points.
@@ -532,7 +535,6 @@ class VendorPerformanceAggregation
 
     }//end computePriceAccuracyRate()
 
-
     /**
      * Compute the invoice-accuracy rate for the period in basis points.
      *
@@ -557,11 +559,13 @@ class VendorPerformanceAggregation
             if ($invoiceId === '' || isset($invoiceIds[$invoiceId]) === false) {
                 continue;
             }
+
             $createdAt = (string) ($match['createdAt'] ?? '');
             if (isset($byInvoice[$invoiceId]) === false) {
                 $byInvoice[$invoiceId] = $match;
                 continue;
             }
+
             $current = (string) ($byInvoice[$invoiceId]['createdAt'] ?? '');
             if ($createdAt !== '' && ($current === '' || $createdAt < $current)) {
                 $byInvoice[$invoiceId] = $match;
@@ -580,7 +584,6 @@ class VendorPerformanceAggregation
 
     }//end computeInvoiceAccuracyRate()
 
-
     /**
      * Weighted overall score in basis points.
      *
@@ -598,29 +601,29 @@ class VendorPerformanceAggregation
      */
     public function weightedOverall(int $onTimeBp, int $qtyBp, int $priceBp, int $invoiceBp): int
     {
-        $weighted = (
-            ($onTimeBp * self::WEIGHT_ON_TIME) +
-            ($qtyBp * self::WEIGHT_QUANTITY) +
-            ($priceBp * self::WEIGHT_PRICE) +
-            ($invoiceBp * self::WEIGHT_INVOICE)
-        );
-        $score = intdiv($weighted, self::MAX_BP);
+        $onTimePart  = ($onTimeBp * self::WEIGHT_ON_TIME);
+        $qtyPart     = ($qtyBp * self::WEIGHT_QUANTITY);
+        $pricePart   = ($priceBp * self::WEIGHT_PRICE);
+        $invoicePart = ($invoiceBp * self::WEIGHT_INVOICE);
+        $weightedSum = ($onTimePart + $qtyPart + $pricePart + $invoicePart);
+        $score       = intdiv($weightedSum, self::MAX_BP);
         if ($score < 0) {
             return 0;
         }
+
         if ($score > self::MAX_BP) {
             return self::MAX_BP;
         }
+
         return $score;
 
     }//end weightedOverall()
 
-
     /**
      * Trend bucket vs prior period.
      *
-     * @param int                       $currentBp Current overall score in basis points.
-     * @param array<string,mixed>|null  $priorCard Prior-period scorecard (or null).
+     * @param int                      $currentBp Current overall score in basis points.
+     * @param array<string,mixed>|null $priorCard Prior-period scorecard (or null).
      *
      * @return string One of `improving`, `stable`, `declining`.
      *
@@ -631,18 +634,20 @@ class VendorPerformanceAggregation
         if ($priorCard === null) {
             return 'stable';
         }
+
         $priorBp = $this->intOrZero(value: $priorCard['overallScore'] ?? 0);
         $delta   = ($currentBp - $priorBp);
         if ($delta >= self::TREND_BUCKET_BP) {
             return 'improving';
         }
+
         if ($delta <= -self::TREND_BUCKET_BP) {
             return 'declining';
         }
+
         return 'stable';
 
     }//end computeScoreTrend()
-
 
     /**
      * Server-authoritative eligibility flag.
@@ -686,10 +691,12 @@ class VendorPerformanceAggregation
             if ($period === '') {
                 continue;
             }
+
             if ($firstPeriod === '' || $period < $firstPeriod) {
                 $firstPeriod = $period;
             }
         }
+
         if ($firstPeriod === '') {
             return false;
         }
@@ -708,7 +715,6 @@ class VendorPerformanceAggregation
         return ($ageDays >= self::BOOTSTRAP_DAYS);
 
     }//end setAutoReviewEligible()
-
 
     /**
      * Nudge the supplier's ToleranceProfile one step more permissive.
@@ -747,10 +753,12 @@ class VendorPerformanceAggregation
         if ($priceBp > 1000) {
             $priceBp = 1000;
         }
+
         $qtyBp = $this->intOrZero(value: $profile['quantityTolerancePercentage'] ?? 0) + 25;
         if ($qtyBp > 1000) {
             $qtyBp = 1000;
         }
+
         $dateDays = $this->intOrZero(value: $profile['dateToleranceDays'] ?? 0) + 1;
         if ($dateDays > 14) {
             $dateDays = 14;
@@ -763,7 +771,6 @@ class VendorPerformanceAggregation
         return $this->saveObject(schema: self::SCHEMA_TOLERANCE_PROFILE, object: $profile);
 
     }//end autoRelaxToleranceProfile()
-
 
     /**
      * Aggregate every supplier with activity in the administration for the
@@ -782,7 +789,7 @@ class VendorPerformanceAggregation
             return [];
         }
 
-        $window  = $this->resolvePeriodWindow(period: $period);
+        $window   = $this->resolvePeriodWindow(period: $period);
         $invoices = $this->filterByDate(
             rows:  $this->findAll(
                 schema:  self::SCHEMA_SUPPLIER_INVOICE,
@@ -826,7 +833,6 @@ class VendorPerformanceAggregation
 
     }//end aggregateAdministrationForPeriod()
 
-
     /**
      * Resolve a period code to ['from' => 'YYYY-MM-DD', 'to' => 'YYYY-MM-DD'].
      *
@@ -861,7 +867,6 @@ class VendorPerformanceAggregation
 
     }//end resolvePeriodWindow()
 
-
     /**
      * Compute the prior period code for a given period.
      *
@@ -879,22 +884,25 @@ class VendorPerformanceAggregation
                 $month = 12;
                 $year--;
             }
+
             return sprintf('%04d-%02d', $year, $month);
         }
+
         if (preg_match('/^(\d{4})-Q([1-4])$/', $period, $matches) === 1) {
-            $year     = (int) $matches[1];
-            $quarter  = (int) $matches[2];
+            $year    = (int) $matches[1];
+            $quarter = (int) $matches[2];
             $quarter--;
             if ($quarter === 0) {
                 $quarter = 4;
                 $year--;
             }
+
             return sprintf('%04d-Q%d', $year, $quarter);
         }
+
         return '';
 
     }//end priorPeriodOf()
-
 
     /**
      * Translate a period code into the DateTimeImmutable of its first day.
@@ -912,7 +920,6 @@ class VendorPerformanceAggregation
 
     }//end periodToFirstDay()
 
-
     /**
      * Earliest expectedDeliveryDate across a GRN's referenced POs.
      *
@@ -929,19 +936,21 @@ class VendorPerformanceAggregation
             if ($po === null) {
                 continue;
             }
+
             $expected = trim((string) ($po['expectedDeliveryDate'] ?? ''));
             if ($expected === '') {
                 continue;
             }
+
             $expected = $this->dateOnly(iso: $expected);
             if ($earliest === '' || $expected < $earliest) {
                 $earliest = $expected;
             }
         }
+
         return $earliest;
 
     }//end expectedDeliveryDateFor()
-
 
     /**
      * Count supplier-facing disputes inside the matches.
@@ -959,10 +968,10 @@ class VendorPerformanceAggregation
                 $count++;
             }
         }
+
         return $count;
 
     }//end countDisputes()
-
 
     /**
      * Average resolution days (createdAt → resolvedAt) for resolved matches.
@@ -981,6 +990,7 @@ class VendorPerformanceAggregation
             if ($created === '' || $resolved === '') {
                 continue;
             }
+
             try {
                 $a    = new DateTimeImmutable($created);
                 $b    = new DateTimeImmutable($resolved);
@@ -988,20 +998,22 @@ class VendorPerformanceAggregation
                 if ($b < $a) {
                     $days = -$days;
                 }
+
                 $total += $days;
                 $count++;
             } catch (Throwable $e) {
                 continue;
             }
-        }
+        }//end foreach
+
         if ($count === 0) {
             return 0;
         }
+
         // Integer-rounding HALF-UP: (total + count/2) intdiv count.
         return intdiv(($total + intdiv($count, 2)), $count);
 
     }//end averageResolutionDays()
-
 
     /**
      * Quantise a count + denominator to basis points (0..10000).
@@ -1016,17 +1028,19 @@ class VendorPerformanceAggregation
         if ($denominator <= 0) {
             return 0;
         }
+
         $bp = intdiv(($numerator * self::MAX_BP), $denominator);
         if ($bp < 0) {
             return 0;
         }
+
         if ($bp > self::MAX_BP) {
             return self::MAX_BP;
         }
+
         return $bp;
 
     }//end rateBp()
-
 
     /**
      * Reduce an ISO timestamp to its date component.
@@ -1041,10 +1055,10 @@ class VendorPerformanceAggregation
         if (strlen($trimmed) >= 10) {
             return substr($trimmed, 0, 10);
         }
+
         return $trimmed;
 
     }//end dateOnly()
-
 
     /**
      * Coerce a quantity value to integer thousandths.
@@ -1058,16 +1072,18 @@ class VendorPerformanceAggregation
         if (is_int($value) === true) {
             return ($value * 1000);
         }
+
         if (is_float($value) === true) {
             return (int) round(($value * 1000));
         }
+
         if (is_string($value) === true && is_numeric($value) === true) {
             return (int) round(((float) $value * 1000));
         }
+
         return 0;
 
     }//end thousandths()
-
 
     /**
      * Coerce a value to a non-negative int.
@@ -1081,16 +1097,18 @@ class VendorPerformanceAggregation
         if (is_int($value) === true) {
             return $value;
         }
+
         if (is_string($value) === true && is_numeric($value) === true) {
             return (int) $value;
         }
+
         if (is_float($value) === true) {
             return (int) $value;
         }
+
         return 0;
 
     }//end intOrZero()
-
 
     /**
      * Filter rows by a date-field window (inclusive).
@@ -1110,14 +1128,15 @@ class VendorPerformanceAggregation
             if ($value === '') {
                 continue;
             }
+
             if ($value >= $from && $value <= $to) {
                 $result[] = $row;
             }
         }
+
         return $result;
 
     }//end filterByDate()
-
 
     /**
      * Extract a stable id from an OR row.
@@ -1132,7 +1151,6 @@ class VendorPerformanceAggregation
         return $id;
 
     }//end idOf()
-
 
     /**
      * Persist an object via OR's real ObjectService API (saveObject).
@@ -1156,6 +1174,7 @@ class VendorPerformanceAggregation
             if (is_array($result) === true) {
                 return $result;
             }
+
             return $object;
         } catch (Throwable $e) {
             $this->logger->error(
@@ -1166,7 +1185,6 @@ class VendorPerformanceAggregation
         }
 
     }//end saveObject()
-
 
     /**
      * Fetch one record via the real ObjectService API.
@@ -1184,10 +1202,10 @@ class VendorPerformanceAggregation
                 return $row;
             }
         }
+
         return null;
 
     }//end findOne()
-
 
     /**
      * Fetch all matching records via the real ObjectService API.
@@ -1219,10 +1237,10 @@ class VendorPerformanceAggregation
                 $result[] = $row;
             }
         }
+
         return $result;
 
     }//end findAll()
-
 
     /**
      * Resolve the OR register slug from app config (defaults to "shillinq").
@@ -1235,9 +1253,8 @@ class VendorPerformanceAggregation
         if ($register === '') {
             return 'shillinq';
         }
+
         return $register;
 
     }//end register()
-
-
 }//end class

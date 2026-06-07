@@ -54,8 +54,6 @@ require_once __DIR__.'/InMemoryObjectService.php';
  */
 final class VendorPerformanceAggregationTest extends TestCase
 {
-
-
     /**
      * Build a service wired against the supplied in-memory stub.
      *
@@ -85,7 +83,6 @@ final class VendorPerformanceAggregationTest extends TestCase
 
     }//end makeService()
 
-
     /**
      * Weighted overall: 9800/9950/9700/9900 → 98.25 % = 9825 bp.
      *
@@ -109,7 +106,6 @@ final class VendorPerformanceAggregationTest extends TestCase
 
     }//end testWeightedOverallComputesIntegerBasisPoints()
 
-
     /**
      * Weighted overall clamps to [0, 10000].
      *
@@ -130,7 +126,6 @@ final class VendorPerformanceAggregationTest extends TestCase
 
     }//end testWeightedOverallClampsToMax()
 
-
     /**
      * Trend bucketing: +49 bp → stable, +50 bp → improving, -50 bp →
      * declining, null prior → stable.
@@ -147,7 +142,6 @@ final class VendorPerformanceAggregationTest extends TestCase
         self::assertSame('stable', $service->computeScoreTrend(currentBp: 9700, priorCard: null));
 
     }//end testComputeScoreTrendBuckets()
-
 
     /**
      * Eligibility: below 9600 bp is FALSE regardless of age.
@@ -180,7 +174,6 @@ final class VendorPerformanceAggregationTest extends TestCase
         self::assertFalse($eligible);
 
     }//end testSetAutoReviewEligibleBelowThreshold()
-
 
     /**
      * Eligibility: above 9600 bp but bootstrap NOT met → FALSE.
@@ -215,7 +208,6 @@ final class VendorPerformanceAggregationTest extends TestCase
 
     }//end testSetAutoReviewEligibleRespectsBootstrap()
 
-
     /**
      * Eligibility: above 9600 bp AND bootstrap met → TRUE.
      *
@@ -249,9 +241,8 @@ final class VendorPerformanceAggregationTest extends TestCase
 
     }//end testSetAutoReviewEligibleHappyPath()
 
-
     /**
-     * autoRelaxToleranceProfile bumps the three tolerance fields when the
+     * AutoRelaxToleranceProfile bumps the three tolerance fields when the
      * supplier has a scope=supplier ToleranceProfile.
      *
      * @return void
@@ -290,16 +281,15 @@ final class VendorPerformanceAggregationTest extends TestCase
 
     }//end testAutoRelaxToleranceProfileBumpsFields()
 
-
     /**
-     * autoRelaxToleranceProfile is a no-op (null) when no supplier-scoped
+     * AutoRelaxToleranceProfile is a no-op (null) when no supplier-scoped
      * profile exists.
      *
      * @return void
      */
     public function testAutoRelaxToleranceProfileNoOpWithoutProfile(): void
     {
-        $os = new InMemoryObjectService();
+        $os      = new InMemoryObjectService();
         $service = $this->makeService($os);
 
         $updated = $service->autoRelaxToleranceProfile(
@@ -310,7 +300,6 @@ final class VendorPerformanceAggregationTest extends TestCase
         self::assertNull($updated);
 
     }//end testAutoRelaxToleranceProfileNoOpWithoutProfile()
-
 
     /**
      * On-time delivery rate: 2 of 3 GRNs on or before expectedDeliveryDate.
@@ -326,7 +315,7 @@ final class VendorPerformanceAggregationTest extends TestCase
             'po-2' => ['id' => 'po-2', 'expectedDeliveryDate' => '2026-05-20'],
             'po-3' => ['id' => 'po-3', 'expectedDeliveryDate' => '2026-05-15'],
         ];
-        $grns = [
+        $grns  = [
             ['receivedAt' => '2026-05-10T08:00:00Z', 'poIds' => ['po-1']],
             ['receivedAt' => '2026-05-21T08:00:00Z', 'poIds' => ['po-2']],
             ['receivedAt' => '2026-05-12T08:00:00Z', 'poIds' => ['po-3']],
@@ -338,7 +327,6 @@ final class VendorPerformanceAggregationTest extends TestCase
         self::assertSame(6666, $rate);
 
     }//end testComputeOnTimeDeliveryRate()
-
 
     /**
      * Quantity accuracy: 2 of 3 GRN lines have qtyReceived = qtyOrdered.
@@ -376,7 +364,6 @@ final class VendorPerformanceAggregationTest extends TestCase
 
     }//end testComputeQuantityAccuracyRate()
 
-
     /**
      * Price accuracy: 3 of 4 matches landed auto_approved/within_tolerance.
      *
@@ -400,7 +387,6 @@ final class VendorPerformanceAggregationTest extends TestCase
 
     }//end testComputePriceAccuracyRate()
 
-
     /**
      * Invoice accuracy: counts the FIRST match per invoice — a later
      * within_tolerance does NOT recover a first-try exception.
@@ -411,7 +397,7 @@ final class VendorPerformanceAggregationTest extends TestCase
     {
         $service = $this->makeService(new InMemoryObjectService());
 
-        $matches = [
+        $matches    = [
             ['invoiceId' => 'inv-1', 'matchStatus' => 'exception_price', 'createdAt' => '2026-05-10T09:00:00Z'],
             ['invoiceId' => 'inv-1', 'matchStatus' => 'within_tolerance', 'createdAt' => '2026-05-11T09:00:00Z'],
             ['invoiceId' => 'inv-2', 'matchStatus' => 'auto_approved', 'createdAt' => '2026-05-12T09:00:00Z'],
@@ -426,9 +412,8 @@ final class VendorPerformanceAggregationTest extends TestCase
 
     }//end testComputeInvoiceAccuracyRateUsesFirstMatch()
 
-
     /**
-     * rateBp returns 0 on zero-denominator.
+     * RateBp returns 0 on zero-denominator.
      *
      * @return void
      */
@@ -441,6 +426,4 @@ final class VendorPerformanceAggregationTest extends TestCase
         self::assertSame(0, $rate);
 
     }//end testRateBpZeroDenominator()
-
-
 }//end class

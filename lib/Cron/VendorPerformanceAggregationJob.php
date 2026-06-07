@@ -91,15 +91,14 @@ class VendorPerformanceAggregationJob extends TimedJob
      */
     private ITimeFactory $timeFactory;
 
-
     /**
      * Constructor.
      *
-     * @param ITimeFactory                $time        Time factory for scheduling and current-time reads.
-     * @param SettingsService             $settings    Resolves the active OR register slug.
+     * @param ITimeFactory                 $time        Time factory for scheduling and current-time reads.
+     * @param SettingsService              $settings    Resolves the active OR register slug.
      * @param VendorPerformanceAggregation $aggregation Aggregation service (server-authoritative scoring).
-     * @param ContainerInterface          $container   DI container for OR ObjectService lookup.
-     * @param LoggerInterface             $logger      Logger for diagnostics.
+     * @param ContainerInterface           $container   DI container for OR ObjectService lookup.
+     * @param LoggerInterface              $logger      Logger for diagnostics.
      *
      * @return void
      */
@@ -117,7 +116,6 @@ class VendorPerformanceAggregationJob extends TimedJob
         $this->timeFactory = $time;
 
     }//end __construct()
-
 
     /**
      * Sweep every administration with SupplierInvoice activity in the
@@ -191,7 +189,6 @@ class VendorPerformanceAggregationJob extends TimedJob
 
     }//end run()
 
-
     /**
      * Compute the YYYY-MM code of the calendar month before $now.
      *
@@ -206,7 +203,6 @@ class VendorPerformanceAggregationJob extends TimedJob
         return $prior->format('Y-m');
 
     }//end previousMonthPeriod()
-
 
     /**
      * Enumerate administrations with SupplierInvoice activity in the period.
@@ -224,6 +220,7 @@ class VendorPerformanceAggregationJob extends TimedJob
         if (preg_match('/^(\d{4})-(0[1-9]|1[0-2])$/', $period) !== 1) {
             return [];
         }
+
         $from = $period.'-01';
         $to   = (new DateTimeImmutable($from))->modify('last day of this month')->format('Y-m-d');
 
@@ -248,21 +245,23 @@ class VendorPerformanceAggregationJob extends TimedJob
                     continue;
                 }
             }
+
             $admin = trim((string) ($data['administrationId'] ?? ''));
             if ($admin === '') {
                 continue;
             }
+
             $invoiceDate = $this->dateOnly(iso: (string) ($data['invoiceDate'] ?? ''));
             if ($invoiceDate === '' || $invoiceDate < $from || $invoiceDate > $to) {
                 continue;
             }
+
             $administrations[$admin] = true;
-        }
+        }//end foreach
 
         return array_keys($administrations);
 
     }//end discoverAdministrationsForPeriod()
-
 
     /**
      * Reduce an ISO timestamp to its date component.
@@ -277,9 +276,8 @@ class VendorPerformanceAggregationJob extends TimedJob
         if (strlen($trimmed) >= 10) {
             return substr($trimmed, 0, 10);
         }
+
         return $trimmed;
 
     }//end dateOnly()
-
-
 }//end class
