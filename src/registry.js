@@ -95,6 +95,14 @@ import GoodsReceiptNoteDetail from './components/goods-receipt-note/GoodsReceipt
 // registered as a kind:"page" custom component.
 import SupplierInvoiceDetail from './components/supplier-invoice/SupplierInvoiceDetail.vue'
 
+// bookkeeping-purchase-order-3way slice 06 (REQ-PO3W-004 / REQ-PO3W-006):
+// the three-way-match index renders per-row match-status pills and a
+// "Re-evaluate" quick-action button that calls back into the matching
+// engine endpoint. The bespoke status pill + retrigger button do not
+// fit the built-in `index` page type, so the view is registered as a
+// kind:"page" custom component.
+import ThreeWayMatchIndex from './components/three-way-match/ThreeWayMatchIndex.vue'
+
 export default {
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
 	MobileScannerReceive: { kind: 'page', component: ReceivePage },
@@ -117,4 +125,6 @@ export default {
 	GoodsReceiptNoteDetail: { kind: 'page', component: GoodsReceiptNoteDetail },
 
 	SupplierInvoiceDetail: { kind: 'page', component: SupplierInvoiceDetail },
+
+	ThreeWayMatchIndex: { kind: 'page', component: ThreeWayMatchIndex },
 }
