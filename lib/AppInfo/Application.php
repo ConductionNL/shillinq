@@ -23,6 +23,7 @@ namespace OCA\Shillinq\AppInfo;
 
 use OCA\Shillinq\Listener\AppointmentCreatedListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
+use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Repair\InitializeSettings;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
@@ -85,6 +86,16 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: StockMoveTransitionedListener::class
+        );
+
+        // bookkeeping-purchase-order-3way slice 05 (REQ-PO3W-004) —
+        // openconnector publishes a `PeppolInboundMessage` OR record for
+        // every received Peppol message. This listener filters on the
+        // documentType=Invoice slice of those events and dispatches the
+        // UBL payload into SupplierInvoiceService::ingestUBLInvoice().
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: PeppolInboundUblInvoiceListener::class
         );
 
         // Initialize register and schemas on install/upgrade.
