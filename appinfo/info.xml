@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.5.4</version>
+    <version>0.5.5</version>
     <licence>agpl</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
@@ -84,5 +84,15 @@ Vrij en open source onder de EUPL-1.2-licentie.
              for InventoryLot records. Idempotent via the ExpiryAlert
              uniqueness key. -->
         <job>OCA\Shillinq\Cron\LotExpiryAlertJob</job>
+        <!-- bookkeeping-purchase-order-3way slice 10 (REQ-PO3W-008 /
+             REQ-VP-001 / REQ-VP-005): monthly vendor-performance scoring
+             that aggregates GoodsReceiptNote + ThreeWayMatch +
+             SupplierInvoice history per supplier, computes the
+             weighted overall score (40% on-time + 30% qty + 20% price +
+             10% invoice), sets automatedReviewEligible=TRUE once the
+             supplier crosses 96% (after the 90-day bootstrap window) and
+             optionally relaxes their ToleranceProfile. Idempotent per
+             (supplierId, period, administrationId) tuple. -->
+        <job>OCA\Shillinq\Cron\VendorPerformanceAggregationJob</job>
     </background-jobs>
 </info>
