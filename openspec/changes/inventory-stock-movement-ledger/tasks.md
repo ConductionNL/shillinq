@@ -35,7 +35,7 @@
   REQ-SM-003 (`draft → posted → cancelled`) consuming OR lifecycle extension; immutability
   lock (`locked = true` on post) enforced via guard or computed field
 
-- [ ] Task 7: Implement reserved quantity workflow per REQ-SM-004 — draft `StockMove` reserves
+- [x] Task 7: Implement reserved quantity workflow per REQ-SM-004 — draft `StockMove` reserves
   qty from source `InventoryStock` via OR's optimistic-lock (CAS); posting commits; cancellation
   releases. Collision handling: operator sees "another operator is updating" message + retry suggestion
 
