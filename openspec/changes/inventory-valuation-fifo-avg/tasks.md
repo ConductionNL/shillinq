@@ -112,10 +112,18 @@
   - testMissingAccountsAdjustsValuationAndWarns (status=adjusted +
     pendingCogs=true + WARNING logged + no GL rows posted)
   - testZeroCogsIsNoop. All 3 pass.
-- [ ] Task 10: Wire `FifoValuationService`, `MovingAverageValuationService`,
+- [x] Task 10: Wire `FifoValuationService`, `MovingAverageValuationService`,
   and `CogsPosterService` into the Nextcloud event dispatcher via
   constructor DI (`private readonly`); register listeners in
-  `lib/AppInfo/Application.php` (ADR-003)
+  `lib/AppInfo/Application.php` (ADR-003) — added
+  `StockMoveTransitionedListener` (private readonly constructor DI of
+  all three services + ContainerInterface + IAppConfig + LoggerInterface).
+  Subscribes to OR's `ObjectTransitionedEvent`; filters to StockMove
+  `to=posted` transitions, dispatches by valuationMethod and forwards
+  COGS basis to `CogsPosterService` for issue moves. Fail-soft: any
+  exception logged but never bubbles up to block the StockMove
+  transition itself (REQ-INV-007 + design.md D4 separation). Registered
+  in `Application::register()` alongside the existing listeners.
 - [ ] Task 11: Ship `lib/Settings/seeds/inventory-valuation-examples.json`
   — JSON array of 5 `InventoryValuation` example records (GT-10-2026
   FIFO Magazijn Noord, KP-A4-500 average Centraal Depot, HP-200-B FIFO

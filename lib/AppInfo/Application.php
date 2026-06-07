@@ -23,9 +23,11 @@ namespace OCA\Shillinq\AppInfo;
 
 use OCA\Shillinq\Listener\AppointmentCreatedListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
+use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Repair\InitializeSettings;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
+use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -74,6 +76,15 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectCreatedEvent::class,
             listener: AppointmentCreatedListener::class
+        );
+
+        // inventory-valuation-fifo-avg REQ-INV-003 / REQ-INV-004 / REQ-INV-007
+        // — dispatch posted StockMove records into the valuation engine
+        // (FIFO or moving-average per the InventoryValuation.valuationMethod)
+        // and post a balanced COGS GLTransaction on outbound moves.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: StockMoveTransitionedListener::class
         );
 
         // Initialize register and schemas on install/upgrade.
