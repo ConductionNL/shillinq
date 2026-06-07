@@ -84,6 +84,7 @@ class InitializeSettings implements IRepairStep
      * Phase 8: seeds ProductAttribute templates (office, it_hardware, logistics, food_beverage, clothing) per REQ-IPC-007.
      * Phase 9: seeds ReimbursementPolicy + PassThroughMarkupRule master-data records per REQ-ERP-004 / REQ-ERP-005.
      * Phase 10: seeds demo Barcode records (EAN/GTIN/SSCC/UPC/internal) per REQ-SKU-011.
+     * Phase 11: seeds demo InventoryStock records (Amsterdam / Rotterdam / Utrecht) per REQ-IST-009.
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -152,6 +153,7 @@ class InitializeSettings implements IRepairStep
             $this->seedInventoryBarcodeDemo(output: $output);
             $this->seedInventoryLotsDemo(output: $output);
             $this->seedInventoryValuationExamples(output: $output);
+            $this->seedInventoryStockExamples(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -601,6 +603,50 @@ class InitializeSettings implements IRepairStep
         $output->warning('Inventory valuation example seeding issue: '.($result['message'] ?? 'unknown error'));
 
     }//end seedInventoryValuationExamples()
+
+
+    /**
+     * Seed example InventoryStock records from the three location seed files
+     * (stock-amsterdam.json, stock-rotterdam.json, stock-utrecht.json),
+     * idempotently per administration.
+     *
+     * Calls SettingsService::seedInventoryStockExamples() which deduplicates
+     * on (administrationId, productSku, locationCode) per REQ-IST-002 +
+     * REQ-IST-009 so re-runs are safe and operator edits to quantities
+     * persist across upgrades. Skipped when administration_id is not
+     * configured (C2 — prevents "default" contamination of real tenant data).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-12
+     */
+    private function seedInventoryStockExamples(IOutput $output): void
+    {
+        $settings         = $this->settingsService->getSettings();
+        $administrationId = ($settings['administration_id'] ?? '');
+
+        if ($administrationId === '') {
+            $output->info('Shillinq: InventoryStock seed skipped (no default administration configured)');
+            return;
+        }
+
+        $output->info('Seeding InventoryStock examples...');
+        $result = $this->settingsService->seedInventoryStockExamples(administrationId: $administrationId);
+
+        if (($result['success'] ?? false) === true) {
+            $output->info(
+                'InventoryStock examples seeded: '
+                .($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
+            );
+            return;
+        }
+
+        $output->warning('InventoryStock example seeding issue: '.($result['message'] ?? 'unknown error'));
+
+    }//end seedInventoryStockExamples()
+
 
     /**
      * Seed the chart of accounts from the configured RGS template, idempotently.
