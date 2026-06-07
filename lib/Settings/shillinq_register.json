@@ -8998,6 +8998,62 @@
 					"example": "adm-1"
 				}
 			},
+			"x-openregister-notifications": {
+				"approvalNeeded": {
+					"trigger": {
+						"type": "updated",
+						"condition": {
+							"field": "approvalState",
+							"operator": "equals",
+							"value": "pending"
+						}
+					},
+					"enabled": true,
+					"channels": [
+						"nc-notification"
+					],
+					"recipients": [
+						{
+							"kind": "object-acl",
+							"permission": "manage"
+						},
+						{
+							"kind": "groups",
+							"groups": [
+								"shillinq-finance"
+							]
+						}
+					],
+					"subject": {
+						"nl": "AP-factuur ter goedkeuring: {{invoiceNumber}} (vervaldatum {{dueDate}})",
+						"en": "AP invoice awaiting approval: {{invoiceNumber}} (due {{dueDate}})"
+					}
+				},
+				"approvalApproved": {
+					"trigger": {
+						"type": "updated",
+						"condition": {
+							"field": "approvalState",
+							"operator": "equals",
+							"value": "approved"
+						}
+					},
+					"enabled": true,
+					"channels": [
+						"nc-notification"
+					],
+					"recipients": [
+						{
+							"kind": "object-acl",
+							"permission": "manage"
+						}
+					],
+					"subject": {
+						"nl": "AP-factuur goedgekeurd: {{invoiceNumber}}",
+						"en": "AP invoice approved: {{invoiceNumber}}"
+					}
+				}
+			},
 			"x-openregister-lifecycle": {
 				"field": "state",
 				"initialState": "draft",
