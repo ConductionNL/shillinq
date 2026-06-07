@@ -84,7 +84,6 @@ final class ExceptionResolutionServiceTest extends TestCase
      */
     private array $notifications = [];
 
-
     /**
      * Reset capture buffers between tests.
      *
@@ -98,17 +97,16 @@ final class ExceptionResolutionServiceTest extends TestCase
 
     }//end setUp()
 
-
     /**
      * Build the service over an in-memory ObjectService stub seeded with
      * the supplied schema=>rows map.
      *
-     * @param array<string,array<int,array<string,mixed>>> $data                      Schema => rows.
-     * @param array<int,array<string,mixed>>               $saved                     Captured saves (by reference).
-     * @param array<int,string>                            $accessibleAdministrations Tenants canAccess returns true for.
-     * @param array{accepted:bool,dispatchId:?string,error:?string}|null $dispatchResult Adapter outcome (default success).
-     * @param string                                       $userId                    UID returned by the session
-     *                                                                                 (default `alice`).
+     * @param array<string,array<int,array<string,mixed>>>               $data                      Schema => rows.
+     * @param array<int,array<string,mixed>>                             $saved                     Captured saves (by reference).
+     * @param array<int,string>                                          $accessibleAdministrations Tenants canAccess returns true for.
+     * @param array{accepted:bool,dispatchId:?string,error:?string}|null $dispatchResult            Adapter outcome (default success).
+     * @param string                                                     $userId                    UID returned by the session
+     *                                                                                              (default `alice`).
      *
      * @return ExceptionResolutionService
      */
@@ -200,19 +198,17 @@ final class ExceptionResolutionServiceTest extends TestCase
              */
             private array $result;
 
-
             /**
              * Constructor.
              *
-             * @param array<int,array<string,mixed>>                              $payloads Capture ref.
-             * @param array{accepted:bool,dispatchId:?string,error:?string}       $result   Fixed result.
+             * @param array<int,array<string,mixed>>                        $payloads Capture ref.
+             * @param array{accepted:bool,dispatchId:?string,error:?string} $result   Fixed result.
              */
             public function __construct(array &$payloads, array $result)
             {
                 $this->payloads = &$payloads;
                 $this->result   = $result;
             }//end __construct()
-
 
             /**
              * Capture the payload, return the fixed result.
@@ -239,7 +235,6 @@ final class ExceptionResolutionServiceTest extends TestCase
         );
 
     }//end buildService()
-
 
     /**
      * Build an in-memory OpenRegister ObjectService stub.
@@ -281,7 +276,6 @@ final class ExceptionResolutionServiceTest extends TestCase
              */
             private int $idCounter = 0;
 
-
             /**
              * Constructor.
              *
@@ -293,7 +287,6 @@ final class ExceptionResolutionServiceTest extends TestCase
                 $this->data  = $data;
                 $this->saved = &$saved;
             }//end __construct()
-
 
             /**
              * Fluent register setter.
@@ -307,7 +300,6 @@ final class ExceptionResolutionServiceTest extends TestCase
                 return $this;
             }//end setRegister()
 
-
             /**
              * Fluent schema setter.
              *
@@ -320,7 +312,6 @@ final class ExceptionResolutionServiceTest extends TestCase
                 $this->schema = $schema;
                 return $this;
             }//end setSchema()
-
 
             /**
              * Apply equality filters to the active schema rows.
@@ -352,7 +343,6 @@ final class ExceptionResolutionServiceTest extends TestCase
                     )
                 );
             }//end findAll()
-
 
             /**
              * Persist an object — stamps an id when absent + captures the save.
@@ -389,7 +379,6 @@ final class ExceptionResolutionServiceTest extends TestCase
 
     }//end objectServiceStub()
 
-
     /**
      * Seed an exception_price ThreeWayMatch with one linked invoice, PO
      * and AdministrationMembership row for the
@@ -400,7 +389,7 @@ final class ExceptionResolutionServiceTest extends TestCase
     private function baselineSeed(): array
     {
         return [
-            'ThreeWayMatch'             => [
+            'ThreeWayMatch'            => [
                 [
                     'id'                => 'twm-1',
                     'invoiceId'         => 'inv-1',
@@ -421,7 +410,7 @@ final class ExceptionResolutionServiceTest extends TestCase
                     'administrationId'  => 'adm-1',
                 ],
             ],
-            'SupplierInvoice'           => [
+            'SupplierInvoice'          => [
                 [
                     'id'               => 'inv-1',
                     'invoiceNumber'    => 'INV-NW-001',
@@ -434,8 +423,8 @@ final class ExceptionResolutionServiceTest extends TestCase
                     'administrationId' => 'adm-1',
                 ],
             ],
-            'ToleranceProfile'          => [],
-            'AdministrationMembership'  => [
+            'ToleranceProfile'         => [],
+            'AdministrationMembership' => [
                 [
                     'id'               => 'mem-1',
                     'administrationId' => 'adm-1',
@@ -453,10 +442,9 @@ final class ExceptionResolutionServiceTest extends TestCase
 
     }//end baselineSeed()
 
-
     /**
-     * acceptWithMotivation stamps resolution_action=accepted + notes +
-     * resolvedBy + resolvedAt and advances the linked invoice to
+     * Test acceptWithMotivation stamps resolution_action=accepted + notes
+     * + resolvedBy + resolvedAt and advances the linked invoice to
      * approved.
      *
      * @return void
@@ -497,9 +485,8 @@ final class ExceptionResolutionServiceTest extends TestCase
 
     }//end testAcceptWithMotivationCapturesAuditAndAdvancesInvoice()
 
-
     /**
-     * acceptWithMotivation rejects a blank motivation (mandatory).
+     * Test acceptWithMotivation rejects a blank motivation (mandatory).
      *
      * @return void
      */
@@ -523,16 +510,15 @@ final class ExceptionResolutionServiceTest extends TestCase
 
     }//end testAcceptWithMotivationRejectsBlankNotes()
 
-
     /**
-     * acceptWithMotivation refuses an already-resolved match — the audit
-     * trail stays clean.
+     * Test acceptWithMotivation refuses an already-resolved match — the
+     * audit trail stays clean.
      *
      * @return void
      */
     public function testAcceptWithMotivationRefusesAlreadyResolvedMatch(): void
     {
-        $seed                                     = $this->baselineSeed();
+        $seed = $this->baselineSeed();
         $seed['ThreeWayMatch'][0]['matchStatus'] = 'auto_approved';
 
         $saved   = [];
@@ -552,7 +538,6 @@ final class ExceptionResolutionServiceTest extends TestCase
         );
 
     }//end testAcceptWithMotivationRefusesAlreadyResolvedMatch()
-
 
     /**
      * Cross-tenant calls mask as RuntimeException("Administration not
@@ -580,10 +565,9 @@ final class ExceptionResolutionServiceTest extends TestCase
 
     }//end testAcceptWithMotivationRejectsCrossTenantAccess()
 
-
     /**
-     * fileDispute composes the UBL CreditNote envelope, dispatches it,
-     * records credit_note_requested with the dispatch id appended to
+     * Test fileDispute composes the UBL CreditNote envelope, dispatches
+     * it, records credit_note_requested with the dispatch id appended to
      * resolutionNotes, escalates to the Inkoper queue and KEEPS the
      * invoice in exception (payment stays blocked).
      *
@@ -653,12 +637,11 @@ final class ExceptionResolutionServiceTest extends TestCase
 
     }//end testFileDisputeDispatchesUblAndEscalatesToInkoper()
 
-
     /**
-     * fileDispute logs but does not roll back when the adapter rejects
-     * the dispatch — the canonical ThreeWayMatch resolution is still
-     * persisted and the dispatch envelope surfaces the error to the
-     * caller.
+     * Test fileDispute logs but does not roll back when the adapter
+     * rejects the dispatch — the canonical ThreeWayMatch resolution is
+     * still persisted and the dispatch envelope surfaces the error to
+     * the caller.
      *
      * @return void
      */
@@ -686,10 +669,9 @@ final class ExceptionResolutionServiceTest extends TestCase
 
     }//end testFileDisputeStillRecordsResolutionOnDispatchFailure()
 
-
     /**
-     * rejectAndBlockPayment marks the match rejected and advances the
-     * linked invoice to `rejected` so the payment block is immediate.
+     * Test rejectAndBlockPayment marks the match rejected and advances
+     * the linked invoice to `rejected` so the payment block is immediate.
      *
      * @return void
      */
@@ -724,16 +706,15 @@ final class ExceptionResolutionServiceTest extends TestCase
 
     }//end testRejectAndBlockAdvancesInvoiceToRejected()
 
-
     /**
-     * rejectAndBlockPayment masks a forged matchId from another tenant
-     * as "ThreeWayMatch not found" — ADR-005 IDOR-safe.
+     * Test rejectAndBlockPayment masks a forged matchId from another
+     * tenant as "ThreeWayMatch not found" — ADR-005 IDOR-safe.
      *
      * @return void
      */
     public function testRejectAndBlockRejectsForgedCrossTenantMatch(): void
     {
-        $seed                                    = $this->baselineSeed();
+        $seed = $this->baselineSeed();
         $seed['ThreeWayMatch'][0]['administrationId'] = 'adm-2';
 
         $saved   = [];
@@ -754,11 +735,10 @@ final class ExceptionResolutionServiceTest extends TestCase
 
     }//end testRejectAndBlockRejectsForgedCrossTenantMatch()
 
-
     /**
-     * notifyOnException defaults to the crediteuren-administrateur queue
-     * when the match's divergenceDetails do not name a ToleranceProfile
-     * with an exceptionRouting tag.
+     * Test notifyOnException defaults to the crediteuren-administrateur
+     * queue when the match's divergenceDetails do not name a
+     * ToleranceProfile with an exceptionRouting tag.
      *
      * @return void
      */
@@ -795,9 +775,8 @@ final class ExceptionResolutionServiceTest extends TestCase
 
     }//end testNotifyOnExceptionDefaultsToCrediteurenAdministrateur()
 
-
     /**
-     * notifyOnException routes to the role named in the matched
+     * Test notifyOnException routes to the role named in the matched
      * ToleranceProfile.exceptionRouting when present — operators can
      * pivot specific exception classes to a controller-approval queue
      * without touching the service.
@@ -806,13 +785,13 @@ final class ExceptionResolutionServiceTest extends TestCase
      */
     public function testNotifyOnExceptionHonoursToleranceProfileRouting(): void
     {
-        $seed                                                  = $this->baselineSeed();
+        $seed = $this->baselineSeed();
         $seed['ThreeWayMatch'][0]['divergenceDetails'][0]['toleranceProfileId'] = 'TP-CONTROLLER';
-        $seed['ToleranceProfile'][]                            = [
-            'id'                => 'tp-1',
-            'profileId'         => 'TP-CONTROLLER',
-            'exceptionRouting'  => 'controller_approval',
-            'administrationId'  => 'adm-1',
+        $seed['ToleranceProfile'][]         = [
+            'id'               => 'tp-1',
+            'profileId'        => 'TP-CONTROLLER',
+            'exceptionRouting' => 'controller_approval',
+            'administrationId' => 'adm-1',
         ];
         $seed['AdministrationMembership'][] = [
             'id'               => 'mem-3',

@@ -211,7 +211,6 @@ class ExceptionResolutionService
      */
     private readonly CreditNoteRequestAdapterInterface $creditNoteAdapter;
 
-
     /**
      * Constructor.
      *
@@ -248,7 +247,6 @@ class ExceptionResolutionService
         $this->creditNoteAdapter = ($creditNoteAdapter ?? new LogCreditNoteRequestAdapter(logger: $logger));
 
     }//end __construct()
-
 
     /**
      * Record the operator's accept-with-motivation disposition on a
@@ -322,7 +320,6 @@ class ExceptionResolutionService
 
     }//end acceptWithMotivation()
 
-
     /**
      * File a dispute on an out-of-tolerance ThreeWayMatch — auto-generate
      * a UBL CreditNote request via openconnector and escalate to the
@@ -389,46 +386,15 @@ class ExceptionResolutionService
         $resolvedBy = $this->currentUserId();
         $resolvedAt = $this->nowIso();
 
-        // Compose the UBL CreditNote dispute envelope. The adapter owns
-        // the wire serialisation; this layer only ships the structural
-        // payload needed for the dispute request.
-        $payload = [
-            'matchId'           => $this->idOf(record: $match),
-            'invoiceId'         => $invoiceId,
-            'invoiceNumber'    => (string) ($invoice['invoiceNumber'] ?? ''),
-            'supplierId'        => (string) ($invoice['supplierId'] ?? ''),
-            'administrationId'  => $administrationId,
-            'currency'          => (string) ($invoice['currency'] ?? 'EUR'),
-            'totalExclVat'      => (int) ($invoice['totalExclVat'] ?? 0),
-            'totalVat'          => (int) ($invoice['totalVat'] ?? 0),
-            'totalInclVat'      => (int) ($invoice['totalInclVat'] ?? 0),
-            'reason'            => $reason,
-            'divergenceDetails' => ($match['divergenceDetails'] ?? []),
-            'matchedPoIds'      => ($match['matchedPoIds'] ?? []),
-            'requestedAt'       => $resolvedAt,
-        ];
-
-        // Dispatch is best-effort — the canonical record is the
-        // ThreeWayMatch we save below. A dispatch failure is logged and
-        // surfaced through the returned envelope.
-        $dispatch = ['accepted' => false, 'dispatchId' => null, 'error' => 'not dispatched'];
-        try {
-            $dispatch = $this->creditNoteAdapter->submitDisputeCreditNote(payload: $payload);
-        } catch (\Throwable $exception) {
-            $dispatch = [
-                'accepted'   => false,
-                'dispatchId' => null,
-                'error'      => $exception->getMessage(),
-            ];
-            $this->logger->warning(
-                'ExceptionResolutionService: dispute UBL CreditNote dispatch failed',
-                [
-                    'matchId'   => $this->idOf(record: $match),
-                    'invoiceId' => $invoiceId,
-                    'exception' => $exception->getMessage(),
-                ]
-            );
-        }//end try
+        $payload  = $this->buildDisputePayload(
+            administrationId: $administrationId,
+            match: $match,
+            invoice: $invoice,
+            invoiceId: $invoiceId,
+            reason: $reason,
+            requestedAt: $resolvedAt
+        );
+        $dispatch = $this->dispatchDispute(payload: $payload, match: $match, invoiceId: $invoiceId);
 
         $resolutionNotes = $reason;
         $dispatchId      = ($dispatch['dispatchId'] ?? null);
@@ -459,7 +425,6 @@ class ExceptionResolutionService
         ];
 
     }//end fileDispute()
-
 
     /**
      * Reject an out-of-tolerance ThreeWayMatch and block the linked
@@ -531,7 +496,6 @@ class ExceptionResolutionService
 
     }//end rejectAndBlockPayment()
 
-
     /**
      * Send the exception alert to the crediteuren-administrateur queue
      * when a ThreeWayMatch transitions into an `exception_*` status.
@@ -593,6 +557,84 @@ class ExceptionResolutionService
 
     }//end notifyOnException()
 
+    /**
+     * Compose the UBL CreditNote dispute envelope from the match + the
+     * linked invoice header. The adapter owns the wire serialisation;
+     * this helper only ships the structural payload needed for the
+     * dispute request so fileDispute() stays under the PHPMD method-length
+     * threshold.
+     *
+     * @param string              $administrationId Tenant scope.
+     * @param array<string,mixed> $match            ThreeWayMatch record.
+     * @param array<string,mixed> $invoice          SupplierInvoice header.
+     * @param string              $invoiceId        Invoice id.
+     * @param string              $reason           Dispute reason.
+     * @param string              $requestedAt      ISO timestamp.
+     *
+     * @return array<string,mixed> The dispute payload envelope.
+     */
+    private function buildDisputePayload(
+        string $administrationId,
+        array $match,
+        array $invoice,
+        string $invoiceId,
+        string $reason,
+        string $requestedAt,
+    ): array {
+        return [
+            'matchId'           => $this->idOf(record: $match),
+            'invoiceId'         => $invoiceId,
+            'invoiceNumber'     => (string) ($invoice['invoiceNumber'] ?? ''),
+            'supplierId'        => (string) ($invoice['supplierId'] ?? ''),
+            'administrationId'  => $administrationId,
+            'currency'          => (string) ($invoice['currency'] ?? 'EUR'),
+            'totalExclVat'      => (int) ($invoice['totalExclVat'] ?? 0),
+            'totalVat'          => (int) ($invoice['totalVat'] ?? 0),
+            'totalInclVat'      => (int) ($invoice['totalInclVat'] ?? 0),
+            'reason'            => $reason,
+            'divergenceDetails' => ($match['divergenceDetails'] ?? []),
+            'matchedPoIds'      => ($match['matchedPoIds'] ?? []),
+            'requestedAt'       => $requestedAt,
+        ];
+
+    }//end buildDisputePayload()
+
+
+    /**
+     * Hand the dispute envelope to the credit-note adapter and translate
+     * a thrown exception into the same envelope shape so the caller never
+     * has to unwrap. Best-effort — the canonical record is the
+     * ThreeWayMatch the caller persists immediately after.
+     *
+     * @param array<string,mixed> $payload   Dispute envelope.
+     * @param array<string,mixed> $match     ThreeWayMatch record (for log context).
+     * @param string              $invoiceId Invoice id (for log context).
+     *
+     * @return array{accepted:bool,dispatchId:?string,error:?string}
+     */
+    private function dispatchDispute(array $payload, array $match, string $invoiceId): array
+    {
+        try {
+            return $this->creditNoteAdapter->submitDisputeCreditNote(payload: $payload);
+        } catch (\Throwable $exception) {
+            $this->logger->warning(
+                'ExceptionResolutionService: dispute UBL CreditNote dispatch failed',
+                [
+                    'matchId'   => $this->idOf(record: $match),
+                    'invoiceId' => $invoiceId,
+                    'exception' => $exception->getMessage(),
+                ]
+            );
+
+            return [
+                'accepted'   => false,
+                'dispatchId' => null,
+                'error'      => $exception->getMessage(),
+            ];
+        }
+
+    }//end dispatchDispute()
+
 
     /**
      * Resolve the membership role that should receive the exception
@@ -639,12 +681,11 @@ class ExceptionResolutionService
             if ($routing !== '') {
                 return $routing;
             }
-        }
+        }//end foreach
 
         return self::ROLE_CREDITEUREN_ADMIN;
 
     }//end resolveAlertRole()
-
 
     /**
      * Notify every member of the named role on the administration with
@@ -652,12 +693,12 @@ class ExceptionResolutionService
      * pattern (loop AdministrationMembership rows on (administrationId,
      * role), createNotification per user, log + continue on failure).
      *
-     * @param string              $administrationId Tenant scope.
-     * @param string              $role             Membership role.
-     * @param string              $subject          NC notification subject.
-     * @param string              $matchId          ThreeWayMatch id.
+     * @param string                   $administrationId Tenant scope.
+     * @param string                   $role             Membership role.
+     * @param string                   $subject          NC notification subject.
+     * @param string                   $matchId          ThreeWayMatch id.
      * @param array<string,mixed>|null $invoice          Optional invoice header
-     *                                                  for the parameter bag.
+     *                                                   for the parameter bag.
      *
      * @return void
      */
@@ -717,7 +758,6 @@ class ExceptionResolutionService
 
     }//end notifyRole()
 
-
     /**
      * Look up AdministrationMembership rows for the (administrationId,
      * role) pair and return the unique user-id list.
@@ -749,7 +789,6 @@ class ExceptionResolutionService
 
     }//end findRoleMembers()
 
-
     /**
      * Load a ThreeWayMatch by id, scoped to the administration so a
      * forged id from another tenant masks as "not found" (ADR-005).
@@ -778,7 +817,6 @@ class ExceptionResolutionService
 
     }//end loadMatch()
 
-
     /**
      * Assert a match is currently in one of the exception statuses —
      * calling a resolution on an already-resolved or auto-approved match
@@ -798,7 +836,6 @@ class ExceptionResolutionService
         }
 
     }//end assertExceptionStatus()
-
 
     /**
      * Advance the linked SupplierInvoice to the next status (approved /
@@ -849,7 +886,6 @@ class ExceptionResolutionService
 
     }//end advanceInvoiceStatus()
 
-
     /**
      * Extract a record id, handling both top-level `id` and OR's
      * `@self.id` envelope.
@@ -864,7 +900,6 @@ class ExceptionResolutionService
         return trim((string) $id);
 
     }//end idOf()
-
 
     /**
      * Validate the administration scope (ADR-005 IDOR-safe).
@@ -887,7 +922,6 @@ class ExceptionResolutionService
 
     }//end assertAccess()
 
-
     /**
      * Resolve the current user id, falling back to `system` when no
      * session is bound (e.g. inside a background job firing notifyOnException).
@@ -904,7 +938,6 @@ class ExceptionResolutionService
         return $user->getUID();
 
     }//end currentUserId()
-
 
     /**
      * Persist via the real ObjectService API (saveObject).
@@ -938,7 +971,6 @@ class ExceptionResolutionService
 
     }//end saveObject()
 
-
     /**
      * Fetch one record via the real ObjectService API (findAll then first).
      *
@@ -959,7 +991,6 @@ class ExceptionResolutionService
         return null;
 
     }//end findOne()
-
 
     /**
      * Fetch all records via the real ObjectService API (findAll).
@@ -996,7 +1027,6 @@ class ExceptionResolutionService
 
     }//end findAll()
 
-
     /**
      * Resolve the OR register slug from app config (defaults to "shillinq").
      *
@@ -1012,7 +1042,6 @@ class ExceptionResolutionService
         return $register;
 
     }//end register()
-
 
     /**
      * Current timestamp in ISO-8601 (Y-m-d\TH:i:sP) — server-authoritative.

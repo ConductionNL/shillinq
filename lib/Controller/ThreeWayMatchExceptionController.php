@@ -79,7 +79,6 @@ class ThreeWayMatchExceptionController extends Controller
      */
     private const NOTES_MAX_LENGTH = 2000;
 
-
     /**
      * Constructor.
      *
@@ -102,7 +101,6 @@ class ThreeWayMatchExceptionController extends Controller
         parent::__construct(appName: Application::APP_ID, request: $request);
 
     }//end __construct()
-
 
     /**
      * Record an accept-with-motivation disposition.
@@ -166,7 +164,6 @@ class ThreeWayMatchExceptionController extends Controller
 
     }//end accept()
 
-
     /**
      * File a dispute on an out-of-tolerance match.
      *
@@ -228,7 +225,6 @@ class ThreeWayMatchExceptionController extends Controller
         return new JSONResponse($result, Http::STATUS_OK);
 
     }//end dispute()
-
 
     /**
      * Reject and block payment on an out-of-tolerance match.
@@ -292,7 +288,6 @@ class ThreeWayMatchExceptionController extends Controller
 
     }//end reject()
 
-
     /**
      * Read and validate a scope parameter, returning '' when blank or
      * malformed.
@@ -311,7 +306,6 @@ class ThreeWayMatchExceptionController extends Controller
         return $value;
 
     }//end scopeParam()
-
 
     /**
      * Read a free-text notes/reason parameter, trimming whitespace and
@@ -335,7 +329,6 @@ class ThreeWayMatchExceptionController extends Controller
         return $value;
 
     }//end notesParam()
-
 
     /**
      * Map a service-level RuntimeException to a JSONResponse. Conventions:

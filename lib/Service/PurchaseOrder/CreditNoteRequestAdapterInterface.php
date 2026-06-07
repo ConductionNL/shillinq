@@ -49,7 +49,6 @@ namespace OCA\Shillinq\Service\PurchaseOrder;
  */
 interface CreditNoteRequestAdapterInterface
 {
-
     /**
      * Submit one UBL CreditNote dispute request through openconnector.
      *

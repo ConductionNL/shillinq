@@ -57,7 +57,6 @@ final class LogCreditNoteRequestAdapter implements CreditNoteRequestAdapterInter
      */
     private LoggerInterface $logger;
 
-
     /**
      * Constructor.
      *
@@ -71,7 +70,6 @@ final class LogCreditNoteRequestAdapter implements CreditNoteRequestAdapterInter
 
     }//end __construct()
 
-
     /**
      * Submit one UBL CreditNote dispute request — logs the envelope and
      * fabricates a deterministic dispatch id.
@@ -79,16 +77,18 @@ final class LogCreditNoteRequestAdapter implements CreditNoteRequestAdapterInter
      * @param array<string,mixed> $payload Dispute envelope (see interface).
      *
      * @return array{accepted:bool,dispatchId:?string,error:?string}
+     *
+     * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
      */
     public function submitDisputeCreditNote(array $payload): array
     {
-        $matchId         = (string) ($payload['matchId'] ?? '');
-        $invoiceId       = (string) ($payload['invoiceId'] ?? '');
-        $invoiceNumber   = (string) ($payload['invoiceNumber'] ?? '');
-        $supplierId      = (string) ($payload['supplierId'] ?? '');
+        $matchId          = (string) ($payload['matchId'] ?? '');
+        $invoiceId        = (string) ($payload['invoiceId'] ?? '');
+        $invoiceNumber    = (string) ($payload['invoiceNumber'] ?? '');
+        $supplierId       = (string) ($payload['supplierId'] ?? '');
         $administrationId = (string) ($payload['administrationId'] ?? '');
-        $currency        = (string) ($payload['currency'] ?? 'EUR');
-        $totalInclVat    = (int) ($payload['totalInclVat'] ?? 0);
+        $currency         = (string) ($payload['currency'] ?? 'EUR');
+        $totalInclVat     = (int) ($payload['totalInclVat'] ?? 0);
 
         $dispatchId = 'urn:uuid:cn-'.bin2hex(random_bytes(8));
 

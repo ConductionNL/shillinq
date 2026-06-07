@@ -89,7 +89,6 @@ final class ExceptionResolutionIntegrationTest extends TestCase
      */
     private array $notifications = [];
 
-
     /**
      * Reset buffers between tests.
      *
@@ -103,7 +102,6 @@ final class ExceptionResolutionIntegrationTest extends TestCase
         $this->notifications = [];
 
     }//end setUp()
-
 
     /**
      * Build an in-memory OR ObjectService stub seeded with the supplied
@@ -145,7 +143,6 @@ final class ExceptionResolutionIntegrationTest extends TestCase
              */
             private int $idCounter = 0;
 
-
             /**
              * Constructor.
              *
@@ -157,7 +154,6 @@ final class ExceptionResolutionIntegrationTest extends TestCase
                 $this->data  = $data;
                 $this->saved = &$saved;
             }//end __construct()
-
 
             /**
              * Fluent register setter.
@@ -171,7 +167,6 @@ final class ExceptionResolutionIntegrationTest extends TestCase
                 return $this;
             }//end setRegister()
 
-
             /**
              * Fluent schema setter.
              *
@@ -184,7 +179,6 @@ final class ExceptionResolutionIntegrationTest extends TestCase
                 $this->schema = $schema;
                 return $this;
             }//end setSchema()
-
 
             /**
              * Apply equality filters to the active schema rows.
@@ -216,7 +210,6 @@ final class ExceptionResolutionIntegrationTest extends TestCase
                     )
                 );
             }//end findAll()
-
 
             /**
              * Persist an object — stamps an id when absent + captures the save.
@@ -252,7 +245,6 @@ final class ExceptionResolutionIntegrationTest extends TestCase
         };
 
     }//end objectServiceStub()
-
 
     /**
      * Build the slice-08 service with all collaborators wired against
@@ -319,7 +311,7 @@ final class ExceptionResolutionIntegrationTest extends TestCase
         );
         $notificationManager->method('notify')->willReturnCallback(
             static function (INotification $notification): void {
-                // captured at createNotification time.
+                // Captured at createNotification time.
             }
         );
 
@@ -332,7 +324,6 @@ final class ExceptionResolutionIntegrationTest extends TestCase
              */
             private array $payloads;
 
-
             /**
              * Constructor.
              *
@@ -342,7 +333,6 @@ final class ExceptionResolutionIntegrationTest extends TestCase
             {
                 $this->payloads = &$payloads;
             }//end __construct()
-
 
             /**
              * Capture + accept.
@@ -374,7 +364,6 @@ final class ExceptionResolutionIntegrationTest extends TestCase
 
     }//end buildService()
 
-
     /**
      * Seed three sibling exception_price matches against three sibling
      * invoices (one per resolution path) + the shared AdministrationMembership
@@ -384,10 +373,10 @@ final class ExceptionResolutionIntegrationTest extends TestCase
      */
     private function seed(): array
     {
-        $matches = [];
+        $matches  = [];
         $invoices = [];
         foreach (['accept', 'dispute', 'reject'] as $disposition) {
-            $matches[] = [
+            $matches[]  = [
                 'id'                => 'twm-'.$disposition,
                 'invoiceId'         => 'inv-'.$disposition,
                 'matchedPoIds'      => ['po-'.$disposition],
@@ -395,10 +384,10 @@ final class ExceptionResolutionIntegrationTest extends TestCase
                 'matchStatus'       => 'exception_price',
                 'divergenceDetails' => [
                     [
-                        'field'       => 'unitPrice',
-                        'expected'    => 1850000,
-                        'actual'      => 1925000,
-                        'deltaCents'  => 75000,
+                        'field'           => 'unitPrice',
+                        'expected'        => 1850000,
+                        'actual'          => 1925000,
+                        'deltaCents'      => 75000,
                         'deltaPercentage' => 405,
                     ],
                 ],
@@ -416,7 +405,7 @@ final class ExceptionResolutionIntegrationTest extends TestCase
                 'statusCode'       => 'exception',
                 'administrationId' => 'adm-1',
             ];
-        }
+        }//end foreach
 
         return [
             'ThreeWayMatch'            => $matches,
@@ -440,7 +429,6 @@ final class ExceptionResolutionIntegrationTest extends TestCase
 
     }//end seed()
 
-
     /**
      * Full exception → resolution flow:
      *  1. notifyOnException raises the alert to crediteuren-administrateur.
@@ -462,11 +450,11 @@ final class ExceptionResolutionIntegrationTest extends TestCase
             administrationId: 'adm-1',
             matchId: 'twm-accept'
         );
-        $exceptionAlerts = array_values(
+        $exceptionSubject = ExceptionResolutionService::NOTIFICATION_SUBJECT_EXCEPTION;
+        $exceptionAlerts  = array_values(
             array_filter(
                 $this->notifications,
-                static fn (array $notification): bool => $notification['subject']['key']
-                    === ExceptionResolutionService::NOTIFICATION_SUBJECT_EXCEPTION
+                static fn (array $notification): bool => $notification['subject']['key'] === $exceptionSubject
             )
         );
         self::assertCount(1, $exceptionAlerts);
@@ -505,11 +493,11 @@ final class ExceptionResolutionIntegrationTest extends TestCase
             'Dispute MUST NOT advance the invoice — payment block persists.'
         );
 
+        $disputeSubject     = ExceptionResolutionService::NOTIFICATION_SUBJECT_DISPUTE;
         $inkoperEscalations = array_values(
             array_filter(
                 $this->notifications,
-                static fn (array $notification): bool => $notification['subject']['key']
-                    === ExceptionResolutionService::NOTIFICATION_SUBJECT_DISPUTE
+                static fn (array $notification): bool => $notification['subject']['key'] === $disputeSubject
             )
         );
         self::assertCount(1, $inkoperEscalations);
@@ -542,7 +530,6 @@ final class ExceptionResolutionIntegrationTest extends TestCase
         }
 
     }//end testFullExceptionToResolutionFlowWithPaymentBlock()
-
 
     /**
      * Find the last SupplierInvoice save for a given id (null when the
