@@ -78,11 +78,12 @@ final class TimelineEventDto
     /**
      * Construct an immutable timeline event.
      *
-     * @param string                $type       Event type (e.g. `booking.created`).
-     * @param string                $externalId Booking external id (UUID) — the timeline entry's stable reference.
-     * @param DateTimeInterface     $timestamp  When the event happened (UTC; rendered as ISO-8601).
-     * @param string                $contactId  pipelinq Contact id to attach the event to.
-     * @param array<string, mixed>  $metadata   Arbitrary scalar metadata; never contains secrets.
+     * @param string               $type       Event type (e.g. `booking.created`).
+     * @param string               $externalId Booking external id (UUID) — the timeline entry's stable
+     *                                         reference.
+     * @param DateTimeInterface    $timestamp  When the event happened (UTC; rendered as ISO-8601).
+     * @param string               $contactId  pipelinq Contact id to attach the event to.
+     * @param array<string, mixed> $metadata   Arbitrary scalar metadata; never contains secrets.
      */
     public function __construct(
         private readonly string $type,
@@ -235,12 +236,13 @@ final class TimelineEventDto
      */
     private function renderTimestamp(): string
     {
-        $utc = ($this->timestamp instanceof DateTimeImmutable)
-            ? $this->timestamp
-            : DateTimeImmutable::createFromInterface($this->timestamp);
+        if (($this->timestamp instanceof DateTimeImmutable) === true) {
+            $utc = $this->timestamp;
+        } else {
+            $utc = DateTimeImmutable::createFromInterface($this->timestamp);
+        }
 
         return $utc->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');
 
     }//end renderTimestamp()
-
 }//end class

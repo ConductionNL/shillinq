@@ -101,7 +101,7 @@ class Application extends App implements IBootstrap
             listener: PeppolInboundUblInvoiceListener::class
         );
 
-        // bookings-pipelinq-customer-bridge slice 07 — when a new
+        // Bookings-pipelinq-customer-bridge slice 07 — when a new
         // Appointment carries a non-empty `pipelinqContactId`, publish a
         // `booking.created` event to pipelinq's klantbeeld-360 timeline.
         // The synchronous publish uses the shared retry + circuit
@@ -109,9 +109,12 @@ class Application extends App implements IBootstrap
         // logging fallback below until slice 09 lands the persistent
         // queue) so the booking commit is never blocked. ADR-032 chain
         // member 7 of 11.
-        $context->registerService(TimelineRetryQueue::class, static function ($c): TimelineRetryQueue {
-            return $c->get(LoggingTimelineRetryQueue::class);
-        });
+        $context->registerService(
+            TimelineRetryQueue::class,
+            static function ($c): TimelineRetryQueue {
+                return $c->get(LoggingTimelineRetryQueue::class);
+            }
+        );
         $context->registerEventListener(
             event: ObjectCreatedEvent::class,
             listener: BookingCreatedTimelinePublishListener::class

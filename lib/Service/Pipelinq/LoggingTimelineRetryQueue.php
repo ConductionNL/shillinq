@@ -39,7 +39,6 @@ use Psr\Log\LoggerInterface;
  */
 final class LoggingTimelineRetryQueue implements TimelineRetryQueue
 {
-
     /**
      * Construct the logging fallback queue.
      *
@@ -70,5 +69,4 @@ final class LoggingTimelineRetryQueue implements TimelineRetryQueue
         );
 
     }//end enqueue()
-
 }//end class

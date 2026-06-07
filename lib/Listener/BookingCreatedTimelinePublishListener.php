@@ -60,13 +60,12 @@ use Throwable;
  */
 final class BookingCreatedTimelinePublishListener implements IEventListener
 {
-
     /**
      * Construct the listener with its DI deps.
      *
-     * @param PipelinqContactAdapter $pipelinq      Slice-02 adapter (publishTimelineEvent).
-     * @param TimelineRetryQueue     $retryQueue    Async-retry queue (slice 09 binding).
-     * @param LoggerInterface        $logger        PSR logger for fail-soft observability.
+     * @param PipelinqContactAdapter $pipelinq   Slice-02 adapter (publishTimelineEvent).
+     * @param TimelineRetryQueue     $retryQueue Async-retry queue (slice 09 binding).
+     * @param LoggerInterface        $logger     PSR logger for fail-soft observability.
      */
     public function __construct(
         private readonly PipelinqContactAdapter $pipelinq,
@@ -95,7 +94,7 @@ final class BookingCreatedTimelinePublishListener implements IEventListener
                 return;
             }
 
-            if ($this->isAppointmentSchema((string) $entity->getSchema()) === false) {
+            if ($this->isAppointmentSchema(schema: (string) $entity->getSchema()) === false) {
                 return;
             }
 
@@ -187,9 +186,9 @@ final class BookingCreatedTimelinePublishListener implements IEventListener
      * dropped) so the contract stays stable across boolean-falsy
      * absences.
      *
-     * @param string                $externalId  Booking id used as the timeline externalId.
-     * @param string                $contactId   Linked pipelinq Contact id.
-     * @param array<string, mixed>  $appointment Persisted appointment row.
+     * @param string               $externalId  Booking id used as the timeline externalId.
+     * @param string               $contactId   Linked pipelinq Contact id.
+     * @param array<string, mixed> $appointment Persisted appointment row.
      *
      * @return TimelineEventDto
      */
@@ -248,5 +247,4 @@ final class BookingCreatedTimelinePublishListener implements IEventListener
         return new DateTimeImmutable('now', new DateTimeZone('UTC'));
 
     }//end resolveTimestamp()
-
 }//end class

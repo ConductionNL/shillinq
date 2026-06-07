@@ -39,7 +39,6 @@ namespace OCA\Shillinq\Service\Pipelinq;
  */
 interface TimelineRetryQueue
 {
-
     /**
      * Hand an event off for async retry.
      *
@@ -53,5 +52,4 @@ interface TimelineRetryQueue
      * @return void
      */
     public function enqueue(TimelineEventDto $event): void;
-
 }//end interface

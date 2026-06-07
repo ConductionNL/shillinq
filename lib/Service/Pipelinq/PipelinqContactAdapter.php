@@ -701,6 +701,12 @@ class PipelinqContactAdapter
                 payload: $payload
             );
         } catch (PipelinqTransportException $e) {
+            if ($e->isCircuitOpen() === true) {
+                $reason = 'breaker_open';
+            } else {
+                $reason = 'transport';
+            }
+
             $this->logger->warning(
                 'pipelinq timeline publish failed',
                 [
@@ -710,11 +716,11 @@ class PipelinqContactAdapter
                     'contactId'  => $event->contactId(),
                     'status'     => $e->statusCode(),
                     'breaker'    => $this->circuitBreaker->state(),
-                    'reason'     => $e->isCircuitOpen() ? 'breaker_open' : 'transport',
+                    'reason'     => $reason,
                 ]
             );
             return false;
-        }
+        }//end try
 
         $this->logger->info(
             'pipelinq timeline publish succeeded',
