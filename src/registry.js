@@ -103,6 +103,16 @@ import SupplierInvoiceDetail from './components/supplier-invoice/SupplierInvoice
 // kind:"page" custom component.
 import ThreeWayMatchIndex from './components/three-way-match/ThreeWayMatchIndex.vue'
 
+// bookkeeping-purchase-order-3way slice 08 (REQ-PO3W-005): the
+// ThreeWayMatchExceptionPanel renders the side-by-side PO ↔ GRN ↔
+// Invoice comparison, the human-readable divergence breakdown and the
+// three resolution dispositions (accept-with-motivation / file-dispute /
+// reject-and-block-payment). Neither the comparison block nor the
+// inline resolution form fits the built-in `detail` page type, so the
+// panel is registered as a kind:"page" custom component overlaid onto
+// the ThreeWayMatchDetail manifest page slice 01 declares.
+import ThreeWayMatchExceptionPanel from './components/three-way-match/ThreeWayMatchExceptionPanel.vue'
+
 export default {
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
 	MobileScannerReceive: { kind: 'page', component: ReceivePage },
@@ -127,4 +137,6 @@ export default {
 	SupplierInvoiceDetail: { kind: 'page', component: SupplierInvoiceDetail },
 
 	ThreeWayMatchIndex: { kind: 'page', component: ThreeWayMatchIndex },
+
+	ThreeWayMatchExceptionPanel: { kind: 'page', component: ThreeWayMatchExceptionPanel },
 }
