@@ -14,4 +14,4 @@ Sourced from the giant's Phase 4 (Compliance Status Aggregation).
 
 - [x] Add integration test asserting materialised `TotalBudget` for seeded fixtures
 - [x] Assert `YTDSpend` and `Utilization` for seeded GL transactions
-- [ ] Assert `ComplianceStatus` transitions (on-track → at-risk → non-compliant) as GL spend rises
+- [x] Assert `ComplianceStatus` transitions (on-track → at-risk → non-compliant) as GL spend rises

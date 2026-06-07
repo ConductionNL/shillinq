@@ -386,4 +386,66 @@ final class WaterschappenBbvAggregationIntegrationTest extends TestCase
     }//end testYtdSpendAndUtilizationFromGlTransactions()
 
 
+    /**
+     * ComplianceStatus must transition on-track → at-risk → non-compliant as
+     * GL spend on programme 2.3.2 rises through the three fixture
+     * snapshots, with no manual recomputation step (REQ-BBVW-005).
+     *
+     * @return void
+     */
+    public function testComplianceStatusTransitionsOnRisingSpend(): void
+    {
+        $fixture  = $this->fixture();
+        $mappings = $fixture['mappings'];
+
+        $onTrack      = $fixture['spendSnapshots']['onTrack'];
+        $atRisk       = $fixture['spendSnapshots']['atRisk'];
+        $nonCompliant = $fixture['spendSnapshots']['nonCompliant'];
+
+        $aggOnTrack      = $this->computeAggregation('2.3.2', $mappings, $onTrack['transactions']);
+        $aggAtRisk       = $this->computeAggregation('2.3.2', $mappings, $atRisk['transactions']);
+        $aggNonCompliant = $this->computeAggregation('2.3.2', $mappings, $nonCompliant['transactions']);
+
+        // YTDSpend must rise monotonically as transactions accumulate.
+        self::assertLessThan($aggAtRisk['ytdSpendCents'], $aggOnTrack['ytdSpendCents']);
+        self::assertLessThan($aggNonCompliant['ytdSpendCents'], $aggAtRisk['ytdSpendCents']);
+
+        // Each snapshot's compliance status matches the threshold band.
+        self::assertSame('on-track', $aggOnTrack['complianceStatus']);
+        self::assertSame('at-risk', $aggAtRisk['complianceStatus']);
+        self::assertSame('non-compliant', $aggNonCompliant['complianceStatus']);
+
+        // Utilization values match the expected ratios within IEEE-754 delta.
+        self::assertEqualsWithDelta(0.65, $aggOnTrack['utilization'], 0.0001);
+        self::assertEqualsWithDelta(0.85, $aggAtRisk['utilization'], 0.0001);
+        self::assertEqualsWithDelta(0.96, $aggNonCompliant['utilization'], 0.0001);
+
+        // Boundary semantics (programme 2.3.2 budget = 100 000 EUR / 10 000 000 ct;
+        // GL 5000 allocation is 25%, so a 30 000 000-ct GL line delivers 7 500 000 ct =
+        // 75% utilization, and a 36 000 000-ct GL line delivers 9 000 000 ct = 90%).
+        $boundary75 = [
+            ['glAccountNumber' => '5000', 'amountCents' => 30000000, 'postingDate' => '2026-03-15'],
+        ];
+        $aggBoundary75 = $this->computeAggregation('2.3.2', $mappings, $boundary75);
+        self::assertEqualsWithDelta(0.75, $aggBoundary75['utilization'], 0.0001);
+        self::assertSame(
+            'on-track',
+            $aggBoundary75['complianceStatus'],
+            'Utilization == 0.75 must be on-track (≤ 75%, inclusive).'
+        );
+
+        $boundary90 = [
+            ['glAccountNumber' => '5000', 'amountCents' => 36000000, 'postingDate' => '2026-03-15'],
+        ];
+        $aggBoundary90 = $this->computeAggregation('2.3.2', $mappings, $boundary90);
+        self::assertEqualsWithDelta(0.90, $aggBoundary90['utilization'], 0.0001);
+        self::assertSame(
+            'at-risk',
+            $aggBoundary90['complianceStatus'],
+            'Utilization == 0.90 must be at-risk (≤ 90%, inclusive).'
+        );
+
+    }//end testComplianceStatusTransitionsOnRisingSpend()
+
+
 }//end class
