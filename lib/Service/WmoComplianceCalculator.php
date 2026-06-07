@@ -366,7 +366,7 @@ class WmoComplianceCalculator
      *
      * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md
      */
-    public function isReviewDue(?string $lastReviewedAt, string $referenceDate): bool
+    public function reviewIsDue(?string $lastReviewedAt, string $referenceDate): bool
     {
         if ($lastReviewedAt === null || trim($lastReviewedAt) === '') {
             return true;
@@ -382,5 +382,5 @@ class WmoComplianceCalculator
 
         return ($ageDays > self::REVIEW_INTERVAL_DAYS);
 
-    }//end isReviewDue()
+    }//end reviewIsDue()
 }//end class

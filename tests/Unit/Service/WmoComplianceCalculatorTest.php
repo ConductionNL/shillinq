@@ -312,7 +312,7 @@ final class WmoComplianceCalculatorTest extends TestCase
      */
     public function testReviewDueWhenStale(): void
     {
-        self::assertTrue($this->calc->isReviewDue('2024-12-31T00:00:00Z', '2026-01-15T00:00:00Z'));
+        self::assertTrue($this->calc->reviewIsDue('2024-12-31T00:00:00Z', '2026-01-15T00:00:00Z'));
 
     }//end testReviewDueWhenStale()
 
@@ -323,7 +323,7 @@ final class WmoComplianceCalculatorTest extends TestCase
      */
     public function testReviewNotDueWhenRecent(): void
     {
-        self::assertFalse($this->calc->isReviewDue('2025-12-31T00:00:00Z', '2026-01-15T00:00:00Z'));
+        self::assertFalse($this->calc->reviewIsDue('2025-12-31T00:00:00Z', '2026-01-15T00:00:00Z'));
 
     }//end testReviewNotDueWhenRecent()
 
@@ -334,9 +334,9 @@ final class WmoComplianceCalculatorTest extends TestCase
      */
     public function testReviewDueWhenNeverReviewedOrMalformed(): void
     {
-        self::assertTrue($this->calc->isReviewDue(null, '2026-01-15T00:00:00Z'));
-        self::assertTrue($this->calc->isReviewDue('', '2026-01-15T00:00:00Z'));
-        self::assertTrue($this->calc->isReviewDue('not-a-date', '2026-01-15T00:00:00Z'));
+        self::assertTrue($this->calc->reviewIsDue(null, '2026-01-15T00:00:00Z'));
+        self::assertTrue($this->calc->reviewIsDue('', '2026-01-15T00:00:00Z'));
+        self::assertTrue($this->calc->reviewIsDue('not-a-date', '2026-01-15T00:00:00Z'));
 
     }//end testReviewDueWhenNeverReviewedOrMalformed()
 }//end class
