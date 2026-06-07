@@ -47,9 +47,15 @@
   `obsoleteFromActive`, `obsoleteFromAdjusted`. Both obsolete
   transitions reference `InventoryValuationMethodGuard::checkZeroStock`
   as `requires` per ADR-031 thin-PHP-guard pattern.
-- [ ] Task 5: Add `x-openregister-lifecycle` `methodChange` transition
+- [x] Task 5: Add `x-openregister-lifecycle` `methodChange` transition
   on `InventoryValuation` with `requires: InventoryValuationMethodGuard::checkZeroStock()`
-  precondition blocking method switch when `quantity > 0` (REQ-INV-006)
+  precondition blocking method switch when `quantity > 0` (REQ-INV-006) —
+  added a self-loop `active → active` `methodChange` transition guarded
+  by `InventoryValuationMethodGuard::checkZeroStock` for the
+  operator-explicit transition path AND an `onUpdate`
+  `methodChangeRequiresZeroStock` validation that fires the same
+  guard on any direct `valuationMethod` patch (defence-in-depth so
+  generic OR CRUD edits cannot bypass the guard).
 - [ ] Task 6: Author
   `lib/Lifecycle/InventoryValuationMethodGuard.php` — single-method
   class (`checkZeroStock(InventoryValuation $v): bool`), ≤15 LOC,

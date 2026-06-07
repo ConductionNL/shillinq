@@ -156,6 +156,24 @@
 							"labelNl": "Markeer als vervallen (vanaf aangepast)",
 							"description": "Same as obsoleteFromActive but invoked from the adjusted state. Guard semantics identical.",
 							"requires": "OCA\\Shillinq\\Lifecycle\\InventoryValuationMethodGuard::checkZeroStock"
+						},
+						"methodChange": {
+							"from": "active",
+							"to": "active",
+							"label": "Change valuation method",
+							"labelNl": "Waarderingsmethode wijzigen",
+							"description": "Self-loop transition that flips valuationMethod between FIFO and average per REQ-INV-006. Blocked by InventoryValuationMethodGuard::checkZeroStock when quantity > 0 so cost layers cannot be re-valued mid-inventory (cost distortion). Operator must run all stock out before switching method.",
+							"requires": "OCA\\Shillinq\\Lifecycle\\InventoryValuationMethodGuard::checkZeroStock"
+						}
+					},
+					"validations": {
+						"onUpdate": {
+							"methodChangeRequiresZeroStock": {
+								"condition": "CHANGED(valuationMethod) AND @current.quantity > 0",
+								"message": "Non-zero stock — cannot change valuation method.",
+								"messageNl": "Voorraad is niet leeg — kan waarderingsmethode niet wijzigen.",
+								"guard": "OCA\\Shillinq\\Lifecycle\\InventoryValuationMethodGuard::checkZeroStock"
+							}
 						}
 					}
 				},
