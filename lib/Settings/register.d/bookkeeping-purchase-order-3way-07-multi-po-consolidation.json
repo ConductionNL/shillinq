@@ -1,0 +1,83 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-purchase-order-3way-07-multi-po-consolidation",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Member 7 of 11 in the bookkeeping-purchase-order-3way chain. Extends the ThreeWayMatch schema declared by slice 01 with the per-trio identifiers (poLineId, grnLineId, invoiceLineNumber, productCode) and the operator's persisted disambiguationChoice that the multi-PO consolidation engine writes when one supplier invoice consolidates lines from multiple POs (REQ-PO3W-007). Each (PO line, GRN line, invoice line) trio gets its own ThreeWayMatch record so the matching engine in slice 06 can process each independently through the tolerance path. The disambiguationChoice captures the candidate-tuple snapshot the crediteuren-administrateur picked plus the user id and timestamp so the audit trail in slice 11 can reconstruct the decision."
+  },
+  "components": {
+    "schemas": {
+      "ThreeWayMatch": {
+        "properties": {
+          "poLineId": {
+            "type": "string",
+            "description": "FK to the PurchaseOrderLine in the matched (PO line, GRN line, invoice line) trio. NULL on legacy header-level matches (single-PO whole-invoice records). REQ-PO3W-007.",
+            "nullable": true,
+            "example": "pol-1"
+          },
+          "grnLineId": {
+            "type": "string",
+            "description": "FK to the GoodsReceiptLine in the matched trio. NULL when no goods-receipt component (services, exception_missing_grn).",
+            "nullable": true,
+            "example": "grl-1"
+          },
+          "invoiceLineNumber": {
+            "type": "integer",
+            "description": "1-based position of the invoice line within the consolidated SupplierInvoice the match refers to. Mandatory for per-trio records produced by multi-PO consolidation; NULL for legacy header-level records.",
+            "nullable": true,
+            "example": 1
+          },
+          "productCode": {
+            "type": "string",
+            "description": "Product code shared by the matched PO line + GRN line + invoice line (the consolidation key). Stored on the match so the exception workflow + vendor performance reports do not need to re-resolve through the line FKs.",
+            "nullable": true,
+            "example": "COFFEE-PRO-1"
+          },
+          "disambiguationChoice": {
+            "type": "object",
+            "description": "Snapshot of the candidate tuple the crediteuren-administrateur selected when more than one (PO line, GRN line) candidate matched the invoice line. Persisted so the audit trail in slice 11 can reconstruct the decision without re-running candidate enumeration. NULL when the trio matched unambiguously (single candidate) or was created automatically by the matching engine.",
+            "nullable": true,
+            "properties": {
+              "candidateCount": {
+                "type": "integer",
+                "description": "Number of candidate tuples presented to the operator.",
+                "example": 2
+              },
+              "chosenPoLineId": {
+                "type": "string",
+                "description": "The PO line id chosen from the candidate set.",
+                "example": "pol-1"
+              },
+              "chosenGrnLineId": {
+                "type": "string",
+                "description": "The GRN line id chosen from the candidate set.",
+                "nullable": true,
+                "example": "grl-1"
+              },
+              "rejectedPoLineIds": {
+                "type": "array",
+                "description": "PO line ids the operator did not select; recorded for audit.",
+                "items": {
+                  "type": "string"
+                },
+                "example": ["pol-7"]
+              },
+              "chosenBy": {
+                "type": "string",
+                "description": "User id of the crediteuren-administrateur who made the choice.",
+                "example": "alice"
+              },
+              "chosenAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Timestamp of the disambiguation decision.",
+                "example": "2026-07-21T08:00:00Z"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
