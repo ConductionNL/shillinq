@@ -9,7 +9,16 @@
  will populate. The "Send to supplier" button stays disabled while any chain
  entry is still pending — the server enforces this guard too (ADR-005).
 
+ Slice 03 (bookkeeping-purchase-order-3way-03-peppol-transmission) replaces
+ the generic "Send to supplier" action with a paired "Send via Peppol /
+ PDF+email" control. Both call the server-authoritative transmit endpoints
+ (POST /api/purchase-orders/{id}/transmit/peppol|email) — the client never
+ forges peppolMessageId nor bypasses the approval-complete precondition
+ (ADR-005). The view reflects peppolSentAt / peppolMessageId on success and
+ peppolFallbackReason whenever the supplier was not Peppol-registered.
+
  @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+ @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
 -->
 <template>
 	<div class="po-detail">
@@ -122,16 +131,46 @@
 				</dl>
 			</section>
 
+			<section class="po-detail__transmission" data-testid="po-detail-transmission">
+				<h3>{{ t('shillinq', 'Transmission') }}</h3>
+				<dl>
+					<dt>{{ t('shillinq', 'Peppol message id') }}</dt>
+					<dd data-testid="po-detail-peppol-message-id">
+						{{ purchaseOrder.peppolMessageId || t('shillinq', 'Not yet transmitted') }}
+					</dd>
+					<dt>{{ t('shillinq', 'Peppol sent at') }}</dt>
+					<dd data-testid="po-detail-peppol-sent-at">
+						{{ purchaseOrder.peppolSentAt ? formatTimestamp(purchaseOrder.peppolSentAt) : '—' }}
+					</dd>
+					<template v-if="purchaseOrder.peppolFallbackReason">
+						<dt>{{ t('shillinq', 'Fallback reason') }}</dt>
+						<dd data-testid="po-detail-fallback-reason">
+							{{ purchaseOrder.peppolFallbackReason }}
+						</dd>
+					</template>
+				</dl>
+			</section>
+
 			<footer class="po-detail__actions">
 				<NcButton
 					type="primary"
 					:disabled="!canSend || sending"
-					data-testid="po-detail-send"
-					@click="onSend">
-					{{ sending ? t('shillinq', 'Sending...') : t('shillinq', 'Send to supplier') }}
+					data-testid="po-detail-send-peppol"
+					@click="onSendPeppol">
+					{{ sending && sendingChannel === 'peppol' ? t('shillinq', 'Sending Peppol...') : t('shillinq', 'Send via Peppol') }}
 				</NcButton>
-				<p v-if="!canSend" class="po-detail__send-hint">
+				<NcButton
+					type="secondary"
+					:disabled="!canSend || sending"
+					data-testid="po-detail-send-email"
+					@click="onSendEmail">
+					{{ sending && sendingChannel === 'email' ? t('shillinq', 'Sending PDF...') : t('shillinq', 'Send via PDF+email') }}
+				</NcButton>
+				<p v-if="!canSend && purchaseOrder.lifecycleState !== 'sent'" class="po-detail__send-hint">
 					{{ t('shillinq', 'Sending is blocked until every approver signs.') }}
+				</p>
+				<p v-else-if="purchaseOrder.lifecycleState === 'sent'" class="po-detail__send-hint" data-testid="po-detail-already-sent">
+					{{ t('shillinq', 'Purchase order has already been transmitted.') }}
 				</p>
 				<p v-if="sendError" class="po-detail__error" data-testid="po-detail-send-error">
 					{{ sendError }}
@@ -168,6 +207,7 @@ export default {
 			loading: true,
 			error: '',
 			sending: false,
+			sendingChannel: '',
 			sendError: '',
 		}
 	},
@@ -236,19 +276,32 @@ export default {
 				this.matches = []
 			}
 		},
-		async onSend() {
+		async onSendPeppol() {
+			await this.transmit('peppol', `/apps/shillinq/api/purchase-orders/${this.id}/transmit/peppol`)
+		},
+		async onSendEmail() {
+			await this.transmit('email', `/apps/shillinq/api/purchase-orders/${this.id}/transmit/email`, {
+				fallbackReason: 'manual_pdf_email_fallback',
+			})
+		},
+		async transmit(channel, path, extraBody = {}) {
 			this.sendError = ''
 			this.sending = true
+			this.sendingChannel = channel
 			try {
 				const response = await axios.post(
-					generateUrl(`/apps/shillinq/api/purchase-orders/${this.id}/send`),
-					{ administrationId: this.purchaseOrder?.administrationId },
+					generateUrl(path),
+					{
+						administrationId: this.purchaseOrder?.administrationId,
+						...extraBody,
+					},
 				)
 				this.purchaseOrder = response.data || this.purchaseOrder
 			} catch (e) {
 				this.sendError = e?.response?.data?.error || this.t('shillinq', 'Failed to send purchase order')
 			} finally {
 				this.sending = false
+				this.sendingChannel = ''
 			}
 		},
 		formatMoney(amount) {

@@ -11,7 +11,13 @@
  from /api/purchase-orders/approval-chain (server-authoritative). On submit it
  POSTs to /api/purchase-orders and navigates to PurchaseOrderDetail.
 
+ Slice 03 (bookkeeping-purchase-order-3way-03-peppol-transmission) surfaces
+ a notice that once approved the PO can be sent via Peppol or PDF+email from
+ the detail view (the actual transmission control lives on the detail view
+ because the action requires a persisted PO with a complete approval chain).
+
  @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+ @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
 -->
 <template>
 	<div class="po-form">
@@ -143,6 +149,10 @@
 			<div v-if="error" class="po-form__error" data-testid="po-form-error">
 				{{ error }}
 			</div>
+
+			<p class="po-form__transmission-hint" data-testid="po-form-transmission-hint">
+				{{ t('shillinq', 'Once the approval chain is complete you can send this PO via Peppol or PDF+email from the detail view.') }}
+			</p>
 
 			<div class="po-form__actions">
 				<NcButton
