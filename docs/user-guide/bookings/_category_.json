@@ -1,0 +1,11 @@
+{
+  "label": "Bookings",
+  "position": 3,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "generated-index",
+    "title": "Bookings and resource calendars",
+    "description": "Per-resource calendars with conflict detection: set up bookable resources (staff, rooms, equipment, furniture), create calendars with time zones and working hours, book appointments, and resolve double-booking conflicts."
+  }
+}

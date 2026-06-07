@@ -132,6 +132,13 @@ return [
         // Admin-only widget API-key management (AuthorizedAdminSetting, ADR-005).
         ['name' => 'widgetSettings#rotate', 'url' => '/api/widget-keys/rotate', 'verb' => 'POST'],
         ['name' => 'widgetSettings#revoke', 'url' => '/api/widget-keys/revoke', 'verb' => 'POST'],
+        // Booking module — calendar + booking endpoints (bookings-resource-calendar
+        // REQ-005). Declared BEFORE the SPA catch-all so they resolve ahead of the
+        // GET /{path} wildcard (ADR-016: static/verb routes precede wildcards).
+        ['name' => 'calendar#index', 'url' => '/api/v2/calendars', 'verb' => 'GET'],
+        ['name' => 'calendar#show', 'url' => '/api/v2/calendars/{calendarId}', 'verb' => 'GET'],
+        ['name' => 'calendar#bookings', 'url' => '/api/v2/calendars/{calendarId}/bookings', 'verb' => 'GET'],
+        ['name' => 'calendar#createBooking', 'url' => '/api/v2/calendars/{calendarId}/bookings', 'verb' => 'POST'],
 
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).

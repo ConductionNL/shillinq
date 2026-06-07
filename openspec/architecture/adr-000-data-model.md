@@ -6712,3 +6712,40 @@ _Retainer billing engine introduced by the `retainer-billing-engine` change (T2)
 | RetainerDrawdown | schema:Action | drawdownId, poolId, timeEntryId, drawdownDate, hoursOrAmount, drawdownRate, drawdownAmount, status | → RetainerPool (N:1), → TimeEntry (N:1, cross-app), self-FK reversalOf |
 | RetainerRollover | schema:Action | rolloverId, sourcePeriodPoolId, targetPeriodPoolId, carryoverAmount, carryoverHours, carryoverCapApplied, resetBalance, status | → RetainerPool source/target (N:1) |
 | RetainerTrueUp | schema:Invoice | trueUpId, poolId, actualDrawdown, poolAmount, overageAmount, overageRate, overageInvoiceAmount, approvedBy, invoiceId, status | → RetainerPool (1:1), → Invoice (1:1, cross-app), → Person approver (N:1), depends on rate-card-engine for overage rate, self-FK reversalOf |
+### Resource
+**Schema.org:** `schema:Thing`
+_A bookable resource — a staff member, a room, a piece of equipment, or furniture. Foundation entity for the booking module; every Calendar is bound to exactly one Resource. Owned by an organization and carries a lifecycle status._
+**Primary spec:** bookings-resource-calendar
+| type | enum | Yes | One of: staff, room, equipment, furniture, other |
+| name | string | Yes | Human-readable resource name (e.g. "Jan Peeters", "Vergaderruimte A") |
+| organization | string | Yes | FK to the organization that owns the resource |
+| status | enum | Yes | One of: active, inactive, archived (default: active) |
+- → Calendar (one-to-many, a resource may have multiple calendars)
+- → Booking (one-to-many, via the denormalized resource FK)
+- → Organization (many-to-one)
+### Calendar
+**Schema.org:** `schema:Schedule`
+_A per-resource calendar carrying time-zone and working-hours configuration. Bound to exactly one Resource. All booking times are stored in UTC; the timeZone field drives display conversion on the client (UTC+2 during CEST for Europe/Amsterdam)._
+**Primary spec:** bookings-resource-calendar
+| resource | string | Yes | FK to the Resource this calendar is bound to |
+| timeZone | string | Yes | IANA time zone identifier (default: Europe/Amsterdam). Storage is always UTC |
+| workingHours | object | No | Optional weekday-keyed template (e.g. {"monday": "09:00-17:00"}); null means 24/7 |
+| organization | string | Yes | FK to the organization that owns the calendar |
+| status | enum | Yes | One of: active, inactive, archived (default: active) |
+- → Resource (many-to-one, via resource)
+- → Booking (one-to-many, via calendar)
+- → Organization (many-to-one)
+### Booking
+_A scheduled appointment on a resource's calendar. Times are stored in UTC (ISO 8601). The resource FK is denormalized from the calendar for efficient per-resource conflict queries. Conflict detection prevents double-booking the same resource (overlapping intervals)._
+**Primary spec:** bookings-resource-calendar
+| calendar | string | Yes | FK to the Calendar this booking belongs to |
+| resource | string | Yes | Denormalized FK to the Resource (mirrors Calendar.resource) for conflict queries |
+| title | string | Yes | Short booking title (e.g. "Klant: Anna de Wit") |
+| startTime | datetime | Yes | Appointment start time in UTC (ISO 8601) |
+| endTime | datetime | Yes | Appointment end time in UTC (ISO 8601); must be after startTime |
+| attendee | string | Yes | Attendee name or free-text reference |
+| status | enum | Yes | One of: pending, confirmed, cancelled (default: pending) |
+| externalId | string | No | Optional external calendar event ID for future Tier-3 sync (Google/Outlook) |
+- → Calendar (many-to-one, via calendar)
+- → Resource (many-to-one, via resource — denormalized per design Decision 4)
+- → Organization (many-to-one, via the parent Calendar)
