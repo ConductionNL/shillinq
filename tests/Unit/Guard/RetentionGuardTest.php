@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-archiefwet-retention/specs.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -58,13 +61,13 @@ class RetentionGuardTest extends TestCase
     {
         parent::setUp();
 
-        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->logger = $this->createMock(originalClassName: LoggerInterface::class);
         $this->guard  = new RetentionGuard(logger: $this->logger);
 
     }//end setUp()
 
     /**
-     * requiresReview permits review when the review-due date is in the past and no hold.
+     * RequiresReview permits review when the review-due date is in the past and no hold.
      *
      * @return void
      */
@@ -72,16 +75,16 @@ class RetentionGuardTest extends TestCase
     {
         $doc = [
             'documentId'    => 'inv-1',
-            'reviewDueDate' => $this->daysFromToday(-5),
+            'reviewDueDate' => $this->daysFromToday(days: -5),
             'legalHold'     => false,
         ];
 
-        self::assertTrue($this->guard->requiresReview($doc));
+        self::assertTrue(condition: $this->guard->requiresReview($doc));
 
     }//end testRequiresReviewPermitsWhenDue()
 
     /**
-     * requiresReview denies review when the review-due date is still in the future.
+     * RequiresReview denies review when the review-due date is still in the future.
      *
      * @return void
      */
@@ -89,16 +92,16 @@ class RetentionGuardTest extends TestCase
     {
         $doc = [
             'documentId'    => 'inv-1',
-            'reviewDueDate' => $this->daysFromToday(30),
+            'reviewDueDate' => $this->daysFromToday(days: 30),
             'legalHold'     => false,
         ];
 
-        self::assertFalse($this->guard->requiresReview($doc));
+        self::assertFalse(condition: $this->guard->requiresReview($doc));
 
     }//end testRequiresReviewDeniesWhenNotYetDue()
 
     /**
-     * requiresReview denies review while a legal hold is active, even if due (REQ-RET-005).
+     * RequiresReview denies review while a legal hold is active, even if due (REQ-RET-005).
      *
      * @return void
      */
@@ -106,27 +109,27 @@ class RetentionGuardTest extends TestCase
     {
         $doc = [
             'documentId'    => 'inv-1',
-            'reviewDueDate' => $this->daysFromToday(-5),
+            'reviewDueDate' => $this->daysFromToday(days: -5),
             'legalHold'     => true,
         ];
 
-        self::assertFalse($this->guard->requiresReview($doc));
+        self::assertFalse(condition: $this->guard->requiresReview($doc));
 
     }//end testRequiresReviewDeniedByLegalHold()
 
     /**
-     * requiresReview is fail-closed when no review date is set.
+     * RequiresReview is fail-closed when no review date is set.
      *
      * @return void
      */
     public function testRequiresReviewFailsClosedWithoutDate(): void
     {
-        self::assertFalse($this->guard->requiresReview(['documentId' => 'inv-1']));
+        self::assertFalse(condition: $this->guard->requiresReview(['documentId' => 'inv-1']));
 
     }//end testRequiresReviewFailsClosedWithoutDate()
 
     /**
-     * allowsDisposal permits disposal when retention end date has passed and no hold.
+     * AllowsDisposal permits disposal when retention end date has passed and no hold.
      *
      * @return void
      */
@@ -134,16 +137,16 @@ class RetentionGuardTest extends TestCase
     {
         $doc = [
             'documentId'       => 'inv-1',
-            'retentionEndDate' => $this->daysFromToday(-1),
+            'retentionEndDate' => $this->daysFromToday(days: -1),
             'legalHold'        => false,
         ];
 
-        self::assertTrue($this->guard->allowsDisposal($doc));
+        self::assertTrue(condition: $this->guard->allowsDisposal($doc));
 
     }//end testAllowsDisposalPermitsAfterEndDate()
 
     /**
-     * allowsDisposal denies disposal before the retention end date (REQ-RET-008).
+     * AllowsDisposal denies disposal before the retention end date (REQ-RET-008).
      *
      * @return void
      */
@@ -151,16 +154,16 @@ class RetentionGuardTest extends TestCase
     {
         $doc = [
             'documentId'       => 'inv-1',
-            'retentionEndDate' => $this->daysFromToday(10),
+            'retentionEndDate' => $this->daysFromToday(days: 10),
             'legalHold'        => false,
         ];
 
-        self::assertFalse($this->guard->allowsDisposal($doc));
+        self::assertFalse(condition: $this->guard->allowsDisposal($doc));
 
     }//end testAllowsDisposalDeniesBeforeEndDate()
 
     /**
-     * allowsDisposal is suspended by a legal hold regardless of end date (REQ-RET-005).
+     * AllowsDisposal is suspended by a legal hold regardless of end date (REQ-RET-005).
      *
      * @return void
      */
@@ -168,22 +171,22 @@ class RetentionGuardTest extends TestCase
     {
         $doc = [
             'documentId'       => 'inv-1',
-            'retentionEndDate' => $this->daysFromToday(-100),
+            'retentionEndDate' => $this->daysFromToday(days: -100),
             'legalHold'        => true,
         ];
 
-        self::assertFalse($this->guard->allowsDisposal($doc));
+        self::assertFalse(condition: $this->guard->allowsDisposal($doc));
 
     }//end testAllowsDisposalSuspendedByLegalHold()
 
     /**
-     * allowsDisposal is fail-closed when no end date is set.
+     * AllowsDisposal is fail-closed when no end date is set.
      *
      * @return void
      */
     public function testAllowsDisposalFailsClosedWithoutDate(): void
     {
-        self::assertFalse($this->guard->allowsDisposal(['documentId' => 'inv-1']));
+        self::assertFalse(condition: $this->guard->allowsDisposal(['documentId' => 'inv-1']));
 
     }//end testAllowsDisposalFailsClosedWithoutDate()
 
@@ -195,9 +198,11 @@ class RetentionGuardTest extends TestCase
     public function testGuardsFailClosedOnUnparseableDate(): void
     {
         self::assertFalse(
+                condition:
             $this->guard->requiresReview(['reviewDueDate' => 'not-a-date', 'legalHold' => false])
         );
         self::assertFalse(
+                condition:
             $this->guard->allowsDisposal(['retentionEndDate' => 'not-a-date', 'legalHold' => false])
         );
 

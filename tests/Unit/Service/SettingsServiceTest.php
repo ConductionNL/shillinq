@@ -218,8 +218,8 @@ class SettingsServiceTest extends TestCase
 
         $result = $this->service->seedProductAttributes(category: 'office');
 
-        self::assertFalse($result['success']);
-        self::assertStringContainsString('OpenRegister', $result['message']);
+        self::assertFalse(condition: $result['success']);
+        self::assertStringContainsString(needle: 'OpenRegister', haystack: $result['message']);
 
     }//end testSeedProductAttributesFailsWhenOpenRegisterUnavailable()
 
