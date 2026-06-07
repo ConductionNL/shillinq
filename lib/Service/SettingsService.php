@@ -1493,7 +1493,6 @@ class SettingsService
 
     }//end seedInventoryBarcodes()
 
-
     /**
      * Seed example InventoryValuation records from
      * `inventory-valuation-examples.json`, idempotently per administration.
@@ -1626,6 +1625,4 @@ class SettingsService
         }//end try
 
     }//end seedInventoryValuationExamples()
-
-
 }//end class
