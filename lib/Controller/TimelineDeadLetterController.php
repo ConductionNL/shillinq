@@ -63,8 +63,6 @@ use Throwable;
  */
 class TimelineDeadLetterController extends Controller
 {
-
-
     /**
      * Construct the controller with its dependencies.
      *
@@ -86,7 +84,6 @@ class TimelineDeadLetterController extends Controller
         parent::__construct(appName: Application::APP_ID, request: $request);
 
     }//end __construct()
-
 
     /**
      * GET the current dead-letter list (admin dashboard).
@@ -117,9 +114,11 @@ class TimelineDeadLetterController extends Controller
             $rows = $objectService
                 ->setRegister($registerSlug)
                 ->setSchema('TimelineDeadLetter')
-                ->findAll([
-                    'limit' => 500,
-                ]);
+                ->findAll(
+                        [
+                            'limit' => 500,
+                        ]
+                        );
 
             $results = [];
             foreach ($rows as $row) {
@@ -153,7 +152,6 @@ class TimelineDeadLetterController extends Controller
         }//end try
 
     }//end index()
-
 
     /**
      * Re-queue a dead-lettered event by id.
@@ -244,7 +242,7 @@ class TimelineDeadLetterController extends Controller
             // Stamp dispatchedAt on the dead-letter row so audit shows it
             // was manually handled — preserve the row for post-mortem.
             $dead['dispatchedAt'] = $nowIso;
-            $deadId               = (string) ($dead['id'] ?? $id);
+            $deadId = (string) ($dead['id'] ?? $id);
             if ($deadId === '') {
                 $deadId = $id;
             }
@@ -266,11 +264,11 @@ class TimelineDeadLetterController extends Controller
             $this->logger->info(
                 'TimelineDeadLetterController: dead-letter manually re-queued',
                 [
-                    'app'         => Application::APP_ID,
-                    'deadLetter'  => $deadId,
-                    'retryEntry'  => $entryId,
-                    'type'        => $retry['type'],
-                    'externalId'  => $retry['externalId'],
+                    'app'        => Application::APP_ID,
+                    'deadLetter' => $deadId,
+                    'retryEntry' => $entryId,
+                    'type'       => $retry['type'],
+                    'externalId' => $retry['externalId'],
                 ]
             );
 
@@ -299,7 +297,6 @@ class TimelineDeadLetterController extends Controller
 
     }//end retry()
 
-
     /**
      * Look up a dead-letter entry by id.
      *
@@ -324,7 +321,6 @@ class TimelineDeadLetterController extends Controller
 
     }//end loadDead()
 
-
     /**
      * Extract a string id from a saveObject() return value.
      *
@@ -335,7 +331,12 @@ class TimelineDeadLetterController extends Controller
     private function extractId(mixed $result): ?string
     {
         if (is_array($result) === true) {
-            return ((string) ($result['id'] ?? '') !== '') ? (string) $result['id'] : null;
+            $id = (string) ($result['id'] ?? '');
+            if ($id !== '') {
+                return $id;
+            }
+
+            return null;
         }
 
         if (is_object($result) === true) {
@@ -362,12 +363,11 @@ class TimelineDeadLetterController extends Controller
                     return $id;
                 }
             }
-        }
+        }//end if
 
         return null;
 
     }//end extractId()
-
 
     /**
      * Current UTC time as ISO-8601.
@@ -381,7 +381,6 @@ class TimelineDeadLetterController extends Controller
         )->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');
 
     }//end nowIso()
-
 
     /**
      * Normalise an OR record into a flat array (copying id through).
@@ -423,11 +422,9 @@ class TimelineDeadLetterController extends Controller
             }
 
             return (array) $object;
-        }
+        }//end if
 
         return null;
 
     }//end toArray()
-
-
 }//end class

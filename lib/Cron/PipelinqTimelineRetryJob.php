@@ -92,7 +92,6 @@ class PipelinqTimelineRetryJob extends QueuedJob
         2 => 1800,
     ];
 
-
     /**
      * Construct the job with its container and dependencies.
      *
@@ -123,7 +122,6 @@ class PipelinqTimelineRetryJob extends QueuedJob
 
     }//end __construct()
 
-
     /**
      * Captured ITimeFactory (the parent owns a protected `$time` of the same
      * type; the duplicate makes intent explicit and helps testing).
@@ -131,7 +129,6 @@ class PipelinqTimelineRetryJob extends QueuedJob
      * @var ITimeFactory
      */
     private ITimeFactory $timeFactory;
-
 
     /**
      * Drain one queued timeline event.
@@ -208,7 +205,7 @@ class PipelinqTimelineRetryJob extends QueuedJob
                 return;
             }
 
-            $dto = $this->reconstructDto(entry: $entry);
+            $dto     = $this->reconstructDto(entry: $entry);
             $adapter = $this->container->get(PipelinqContactAdapter::class);
 
             $ok = $adapter->publishTimelineEvent(event: $dto);
@@ -249,7 +246,6 @@ class PipelinqTimelineRetryJob extends QueuedJob
         }//end try
 
     }//end run()
-
 
     /**
      * Increment retryCount, then either advance nextRetryAt + re-queue or
@@ -295,11 +291,11 @@ class PipelinqTimelineRetryJob extends QueuedJob
                 ]
             );
             return;
-        }
+        }//end if
 
         // Bump retry count, advance nextRetryAt, re-queue.
-        $backoffSeconds   = self::BACKOFF_SECONDS[$retryCount] ?? 1800;
-        $nextRetryAt      = $now->modify('+'.$backoffSeconds.' seconds');
+        $backoffSeconds = self::BACKOFF_SECONDS[$retryCount] ?? 1800;
+        $nextRetryAt    = $now->modify('+'.$backoffSeconds.' seconds');
 
         $entry['retryCount']    = $nextCount;
         $entry['nextRetryAt']   = $nextRetryAt->format('Y-m-d\TH:i:s\Z');
@@ -327,7 +323,6 @@ class PipelinqTimelineRetryJob extends QueuedJob
 
     }//end handleFailure()
 
-
     /**
      * Compute due-ness from an entry's nextRetryAt vs now.
      *
@@ -353,7 +348,6 @@ class PipelinqTimelineRetryJob extends QueuedJob
 
     }//end isDue()
 
-
     /**
      * Reconstruct the TimelineEventDto from a retry entry's persisted fields.
      *
@@ -376,7 +370,7 @@ class PipelinqTimelineRetryJob extends QueuedJob
 
         $metadata = [];
         if (is_array($entry['metadata'] ?? null) === true) {
-            /** @var array<string, mixed> $metadata */
+            // The metadata is a string-keyed scalar map (see DTO contract).
             $metadata = $entry['metadata'];
         }
 
@@ -389,7 +383,6 @@ class PipelinqTimelineRetryJob extends QueuedJob
         );
 
     }//end reconstructDto()
-
 
     /**
      * Look up the retry entry by id.
@@ -415,7 +408,6 @@ class PipelinqTimelineRetryJob extends QueuedJob
 
     }//end loadEntry()
 
-
     /**
      * Persist an updated retry entry.
      *
@@ -437,7 +429,6 @@ class PipelinqTimelineRetryJob extends QueuedJob
             );
 
     }//end saveEntry()
-
 
     /**
      * Delete the retry entry (successful drain or dead-letter move).
@@ -469,7 +460,6 @@ class PipelinqTimelineRetryJob extends QueuedJob
         }
 
     }//end deleteEntry()
-
 
     /**
      * Move the entry to the dead-letter queue + delete the retry row.
@@ -524,7 +514,7 @@ class PipelinqTimelineRetryJob extends QueuedJob
             // Re-raise — losing both the retry row and the dead-letter
             // copy would silently drop the event; the outer run() catches.
             throw $e;
-        }
+        }//end try
 
         $this->deleteEntry(
             objectService: $objectService,
@@ -533,7 +523,6 @@ class PipelinqTimelineRetryJob extends QueuedJob
         );
 
     }//end deadLetter()
-
 
     /**
      * Re-queue ourselves for another tick on the same entry. Used after a
@@ -560,7 +549,6 @@ class PipelinqTimelineRetryJob extends QueuedJob
 
     }//end enqueueNextTick()
 
-
     /**
      * Now as a UTC DateTimeImmutable.
      *
@@ -573,7 +561,6 @@ class PipelinqTimelineRetryJob extends QueuedJob
         )->setTimezone(new DateTimeZone('UTC'));
 
     }//end nowDateTime()
-
 
     /**
      * Normalise an OR record into a flat array, copying the id through under
@@ -618,11 +605,9 @@ class PipelinqTimelineRetryJob extends QueuedJob
             }
 
             return (array) $object;
-        }
+        }//end if
 
         return null;
 
     }//end toArray()
-
-
 }//end class

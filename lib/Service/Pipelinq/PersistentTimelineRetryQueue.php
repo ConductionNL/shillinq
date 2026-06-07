@@ -65,8 +65,6 @@ use Throwable;
  */
 final class PersistentTimelineRetryQueue implements TimelineRetryQueue
 {
-
-
     /**
      * Construct the persistent queue.
      *
@@ -88,7 +86,6 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue
 
     }//end __construct()
 
-
     /**
      * Hand the event off for async retry.
      *
@@ -98,6 +95,8 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue
      * @param TimelineEventDto $event Event the synchronous publish failed for.
      *
      * @return void
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
      */
     public function enqueue(TimelineEventDto $event): void
     {
@@ -162,7 +161,6 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue
 
     }//end enqueue()
 
-
     /**
      * Write the TimelinePublishRetryEntry row and return its id.
      *
@@ -217,7 +215,6 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue
 
     }//end persistEntry()
 
-
     /**
      * Pull a string id out of an OR saveObject() return value (entity or array).
      *
@@ -229,7 +226,11 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue
     {
         if (is_array($result) === true) {
             $id = (string) ($result['id'] ?? '');
-            return ($id !== '') ? $id : null;
+            if ($id !== '') {
+                return $id;
+            }
+
+            return null;
         }
 
         if (is_object($result) === true) {
@@ -256,12 +257,11 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue
                     return $id;
                 }
             }
-        }
+        }//end if
 
         return null;
 
     }//end extractId()
-
 
     /**
      * Current UTC time as ISO-8601.
@@ -275,7 +275,6 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue
         )->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');
 
     }//end nowIso()
-
 
     /**
      * Render a DateTimeInterface as UTC ISO-8601.
@@ -295,6 +294,4 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue
         return $utc->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');
 
     }//end renderTimestamp()
-
-
 }//end class
