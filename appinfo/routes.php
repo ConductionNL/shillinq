@@ -147,6 +147,19 @@ return [
         ['name' => 'purchaseOrder#create', 'url' => '/api/purchase-orders', 'verb' => 'POST'],
         ['name' => 'purchaseOrder#send', 'url' => '/api/purchase-orders/{id}/send', 'verb' => 'POST'],
 
+        // Goods Receipt Note (slice 04 of bookkeeping-purchase-order-3way):
+        // server-authoritative create / add-line / quality-check / accept /
+        // upload-photos endpoints. The accept transition posts a StockMove
+        // credit per accepted line and updates the originating PO(s) lifecycle.
+        // Every endpoint is #[NoAdminRequired] with a per-administration IDOR
+        // guard inside the controller (ADR-005). Static path segments precede
+        // the {id} wildcard so Symfony's route ordering matches them first.
+        ['name' => 'goodsReceiptNote#create', 'url' => '/api/goods-receipt-notes', 'verb' => 'POST'],
+        ['name' => 'goodsReceiptNote#addLine', 'url' => '/api/goods-receipt-notes/{id}/lines', 'verb' => 'POST'],
+        ['name' => 'goodsReceiptNote#qualityCheck', 'url' => '/api/goods-receipt-notes/{id}/quality-check', 'verb' => 'POST'],
+        ['name' => 'goodsReceiptNote#accept', 'url' => '/api/goods-receipt-notes/{id}/accept', 'verb' => 'POST'],
+        ['name' => 'goodsReceiptNote#uploadPhotos', 'url' => '/api/goods-receipt-notes/{id}/photos', 'verb' => 'POST'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
