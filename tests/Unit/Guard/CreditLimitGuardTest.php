@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -81,9 +84,9 @@ class CreditLimitGuardTest extends TestCase
     {
         parent::setUp();
 
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->logger    = $this->createMock(LoggerInterface::class);
+        $this->container = $this->createMock(originalClassName: ContainerInterface::class);
+        $this->appConfig = $this->createMock(originalClassName: IAppConfig::class);
+        $this->logger    = $this->createMock(originalClassName: LoggerInterface::class);
 
         $this->appConfig->method('getValueString')->willReturn('shillinq');
 
@@ -106,14 +109,16 @@ class CreditLimitGuardTest extends TestCase
         $objectService = $this->buildObjectServiceStub(customers: $customer, invoices: []);
         $this->container->method('get')->willReturn($objectService);
 
-        $result = $this->guard->requireWithinCreditLimit([
-            'invoiceNumber'    => 'INV-9',
-            'customerNumber'   => 'CUST-1',
-            'administrationId' => 'adm-1',
-            'totalCents'       => 999999999,
-        ]);
+        $result = $this->guard->requireWithinCreditLimit(
+                [
+                    'invoiceNumber'    => 'INV-9',
+                    'customerNumber'   => 'CUST-1',
+                    'administrationId' => 'adm-1',
+                    'totalCents'       => 999999999,
+                ]
+                );
 
-        self::assertTrue($result, 'No credit limit means unlimited credit');
+        self::assertTrue(condition: $result, message: 'No credit limit means unlimited credit');
 
     }//end testPermitsWhenNoCreditLimitSet()
 
@@ -124,8 +129,8 @@ class CreditLimitGuardTest extends TestCase
      */
     public function testPermitsWhenWithinLimit(): void
     {
-        $customer = [['customerNumber' => 'CUST-1', 'administrationId' => 'adm-1', 'creditLimitCents' => 100000]];
-        $invoices = [
+        $customer      = [['customerNumber' => 'CUST-1', 'administrationId' => 'adm-1', 'creditLimitCents' => 100000]];
+        $invoices      = [
             ['invoiceNumber' => 'INV-1', 'status' => 'issued', 'totalCents' => 30000],
             ['invoiceNumber' => 'INV-9', 'status' => 'draft', 'totalCents' => 40000],
         ];
@@ -133,14 +138,16 @@ class CreditLimitGuardTest extends TestCase
         $this->container->method('get')->willReturn($objectService);
 
         // Outstanding excluding INV-9 = 30000; + this invoice 40000 = 70000 <= 100000.
-        $result = $this->guard->requireWithinCreditLimit([
-            'invoiceNumber'    => 'INV-9',
-            'customerNumber'   => 'CUST-1',
-            'administrationId' => 'adm-1',
-            'totalCents'       => 40000,
-        ]);
+        $result = $this->guard->requireWithinCreditLimit(
+                [
+                    'invoiceNumber'    => 'INV-9',
+                    'customerNumber'   => 'CUST-1',
+                    'administrationId' => 'adm-1',
+                    'totalCents'       => 40000,
+                ]
+                );
 
-        self::assertTrue($result);
+        self::assertTrue(condition: $result);
 
     }//end testPermitsWhenWithinLimit()
 
@@ -151,22 +158,24 @@ class CreditLimitGuardTest extends TestCase
      */
     public function testDeniesWhenExceedsLimit(): void
     {
-        $customer = [['customerNumber' => 'CUST-1', 'administrationId' => 'adm-1', 'creditLimitCents' => 100000]];
-        $invoices = [
+        $customer      = [['customerNumber' => 'CUST-1', 'administrationId' => 'adm-1', 'creditLimitCents' => 100000]];
+        $invoices      = [
             ['invoiceNumber' => 'INV-1', 'status' => 'issued', 'totalCents' => 80000],
         ];
         $objectService = $this->buildObjectServiceStub(customers: $customer, invoices: $invoices);
         $this->container->method('get')->willReturn($objectService);
 
         // 80000 outstanding + 30000 this invoice = 110000 > 100000.
-        $result = $this->guard->requireWithinCreditLimit([
-            'invoiceNumber'    => 'INV-9',
-            'customerNumber'   => 'CUST-1',
-            'administrationId' => 'adm-1',
-            'totalCents'       => 30000,
-        ]);
+        $result = $this->guard->requireWithinCreditLimit(
+                [
+                    'invoiceNumber'    => 'INV-9',
+                    'customerNumber'   => 'CUST-1',
+                    'administrationId' => 'adm-1',
+                    'totalCents'       => 30000,
+                ]
+                );
 
-        self::assertFalse($result);
+        self::assertFalse(condition: $result);
 
     }//end testDeniesWhenExceedsLimit()
 
@@ -177,22 +186,24 @@ class CreditLimitGuardTest extends TestCase
      */
     public function testPermitsAtExactLimit(): void
     {
-        $customer = [['customerNumber' => 'CUST-1', 'administrationId' => 'adm-1', 'creditLimitCents' => 100000]];
-        $invoices = [
+        $customer      = [['customerNumber' => 'CUST-1', 'administrationId' => 'adm-1', 'creditLimitCents' => 100000]];
+        $invoices      = [
             ['invoiceNumber' => 'INV-1', 'status' => 'overdue', 'totalCents' => 60000],
         ];
         $objectService = $this->buildObjectServiceStub(customers: $customer, invoices: $invoices);
         $this->container->method('get')->willReturn($objectService);
 
         // 60000 + 40000 = 100000 == limit → permitted.
-        $result = $this->guard->requireWithinCreditLimit([
-            'invoiceNumber'    => 'INV-9',
-            'customerNumber'   => 'CUST-1',
-            'administrationId' => 'adm-1',
-            'totalCents'       => 40000,
-        ]);
+        $result = $this->guard->requireWithinCreditLimit(
+                [
+                    'invoiceNumber'    => 'INV-9',
+                    'customerNumber'   => 'CUST-1',
+                    'administrationId' => 'adm-1',
+                    'totalCents'       => 40000,
+                ]
+                );
 
-        self::assertTrue($result);
+        self::assertTrue(condition: $result);
 
     }//end testPermitsAtExactLimit()
 
@@ -203,8 +214,8 @@ class CreditLimitGuardTest extends TestCase
      */
     public function testExcludesPaidAndWrittenOffFromOutstanding(): void
     {
-        $customer = [['customerNumber' => 'CUST-1', 'administrationId' => 'adm-1', 'creditLimitCents' => 50000]];
-        $invoices = [
+        $customer      = [['customerNumber' => 'CUST-1', 'administrationId' => 'adm-1', 'creditLimitCents' => 50000]];
+        $invoices      = [
             ['invoiceNumber' => 'INV-1', 'status' => 'paid', 'totalCents' => 90000],
             ['invoiceNumber' => 'INV-2', 'status' => 'written-off', 'totalCents' => 90000],
             ['invoiceNumber' => 'INV-3', 'status' => 'issued', 'totalCents' => 10000],
@@ -213,14 +224,16 @@ class CreditLimitGuardTest extends TestCase
         $this->container->method('get')->willReturn($objectService);
 
         // Outstanding = 10000 (only INV-3); + 30000 this invoice = 40000 <= 50000.
-        $result = $this->guard->requireWithinCreditLimit([
-            'invoiceNumber'    => 'INV-9',
-            'customerNumber'   => 'CUST-1',
-            'administrationId' => 'adm-1',
-            'totalCents'       => 30000,
-        ]);
+        $result = $this->guard->requireWithinCreditLimit(
+                [
+                    'invoiceNumber'    => 'INV-9',
+                    'customerNumber'   => 'CUST-1',
+                    'administrationId' => 'adm-1',
+                    'totalCents'       => 30000,
+                ]
+                );
 
-        self::assertTrue($result, 'Paid and written-off invoices must not consume credit');
+        self::assertTrue(condition: $result, message: 'Paid and written-off invoices must not consume credit');
 
     }//end testExcludesPaidAndWrittenOffFromOutstanding()
 
@@ -234,14 +247,16 @@ class CreditLimitGuardTest extends TestCase
         $objectService = $this->buildObjectServiceStub(customers: [], invoices: []);
         $this->container->method('get')->willReturn($objectService);
 
-        $result = $this->guard->requireWithinCreditLimit([
-            'invoiceNumber'    => 'INV-9',
-            'customerNumber'   => 'CUST-MISSING',
-            'administrationId' => 'adm-1',
-            'totalCents'       => 1,
-        ]);
+        $result = $this->guard->requireWithinCreditLimit(
+                [
+                    'invoiceNumber'    => 'INV-9',
+                    'customerNumber'   => 'CUST-MISSING',
+                    'administrationId' => 'adm-1',
+                    'totalCents'       => 1,
+                ]
+                );
 
-        self::assertFalse($result, 'Unknown customer must fail-closed');
+        self::assertFalse(condition: $result, message: 'Unknown customer must fail-closed');
 
     }//end testDeniesWhenCustomerNotFound()
 
@@ -254,13 +269,15 @@ class CreditLimitGuardTest extends TestCase
     {
         $this->container->expects($this->never())->method('get');
 
-        $result = $this->guard->requireWithinCreditLimit([
-            'invoiceNumber'    => 'INV-9',
-            'administrationId' => 'adm-1',
-            'totalCents'       => 1,
-        ]);
+        $result = $this->guard->requireWithinCreditLimit(
+                [
+                    'invoiceNumber'    => 'INV-9',
+                    'administrationId' => 'adm-1',
+                    'totalCents'       => 1,
+                ]
+                );
 
-        self::assertFalse($result);
+        self::assertFalse(condition: $result);
 
     }//end testDeniesWhenCustomerNumberMissing()
 
@@ -274,14 +291,16 @@ class CreditLimitGuardTest extends TestCase
         $this->container->method('get')
             ->willThrowException(new \RuntimeException('DB error'));
 
-        $result = $this->guard->requireWithinCreditLimit([
-            'invoiceNumber'    => 'INV-9',
-            'customerNumber'   => 'CUST-1',
-            'administrationId' => 'adm-1',
-            'totalCents'       => 1,
-        ]);
+        $result = $this->guard->requireWithinCreditLimit(
+                [
+                    'invoiceNumber'    => 'INV-9',
+                    'customerNumber'   => 'CUST-1',
+                    'administrationId' => 'adm-1',
+                    'totalCents'       => 1,
+                ]
+                );
 
-        self::assertFalse($result, 'Fail-closed: exception must deny the issue');
+        self::assertFalse(condition: $result, message: 'Fail-closed: exception must deny the issue');
 
     }//end testIsFailClosedOnException()
 
@@ -298,29 +317,70 @@ class CreditLimitGuardTest extends TestCase
     private function buildObjectServiceStub(array $customers, array $invoices): object
     {
         return new class($customers, $invoices) {
+
+            /**
+             * CustomerMaster records to return.
+             *
+             * @var array<mixed>
+             */
             private array $customers;
+
+            /**
+             * ARInvoice records to return.
+             *
+             * @var array<mixed>
+             */
             private array $invoices;
+
+            /**
+             * Currently active schema name.
+             *
+             * @var string
+             */
             private string $currentSchema = '';
 
+            /**
+             * Construct stub with fixed return values.
+             *
+             * @param array<mixed> $customers CustomerMaster records to return.
+             * @param array<mixed> $invoices  ARInvoice records to return.
+             */
             public function __construct(array $customers, array $invoices)
             {
                 $this->customers = $customers;
                 $this->invoices  = $invoices;
-            }
+            }//end __construct()
 
+            /**
+             * Fluent register setter — returns self.
+             *
+             * @param string $register Register slug.
+             *
+             * @return static
+             */
             public function setRegister(string $register): static
             {
                 return $this;
-            }
+            }//end setRegister()
 
+            /**
+             * Fluent schema setter — records the active schema name.
+             *
+             * @param string $schema Schema name.
+             *
+             * @return static
+             */
             public function setSchema(string $schema): static
             {
                 $this->currentSchema = $schema;
                 return $this;
-            }
+            }//end setSchema()
 
             /**
-             * @param array<string,mixed> $params
+             * Return records for the currently active schema.
+             *
+             * @param array<string,mixed> $params Query parameters (unused in stub).
+             *
              * @return array<mixed>
              */
             public function findAll(array $params=[]): array
@@ -328,8 +388,9 @@ class CreditLimitGuardTest extends TestCase
                 if ($this->currentSchema === 'CustomerMaster') {
                     return $this->customers;
                 }
+
                 return $this->invoices;
-            }
+            }//end findAll()
         };
     }//end buildObjectServiceStub()
 }//end class
