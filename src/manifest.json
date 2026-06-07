@@ -648,6 +648,34 @@
 					"icon": "BankOutline",
 					"route": "SchatkistPositie",
 					"order": 110
+				},
+				{
+					"id": "Programmabegrotingen",
+					"label": "Programmabegroting",
+					"icon": "FileDocumentOutline",
+					"route": "Programmabegrotingen",
+					"order": 120
+				},
+				{
+					"id": "Programmas",
+					"label": "Programma's",
+					"icon": "ViewDashboardOutline",
+					"route": "Programmas",
+					"order": 130
+				},
+				{
+					"id": "MeerjarenramingPages",
+					"label": "Meerjarenraming",
+					"icon": "ChartTimelineVariant",
+					"route": "MeerjarenramingPages",
+					"order": 140
+				},
+				{
+					"id": "Paragrafen",
+					"label": "Paragrafen",
+					"icon": "TextBoxOutline",
+					"route": "Paragrafen",
+					"order": 150
 				}
 			]
 		},
@@ -15015,6 +15043,164 @@
 					}
 				],
 				"indexRoute": "IcpAuditTrail"
+			}
+		},
+		{
+			"id": "Programmabegrotingen",
+			"route": "/government/programmabegrotingen",
+			"type": "index",
+			"title": "Programmabegroting",
+			"config": {
+				"register": "shillinq",
+				"schema": "Programmabegroting",
+				"columns": [
+					{ "key": "begrotingsjaar", "label": "Begrotingsjaar", "sortable": true },
+					{ "key": "organisationType", "label": "Type", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "sluitendStructureel", "label": "Sluitend (struct.)", "sortable": true },
+					{ "key": "sluitendReëel", "label": "Sluitend (reëel)", "sortable": true },
+					{ "key": "toezichtRegime", "label": "Toezichtregime", "sortable": true }
+				],
+				"defaultSort": "begrotingsjaar",
+				"detailRoute": "ProgrammabegrotingDetail"
+			}
+		},
+		{
+			"id": "ProgrammabegrotingDetail",
+			"route": "/government/programmabegrotingen/:id",
+			"type": "detail",
+			"title": "Programmabegroting",
+			"config": {
+				"register": "shillinq",
+				"schema": "Programmabegroting",
+				"fields": [
+					{ "key": "begrotingsjaar", "label": "Begrotingsjaar", "type": "number" },
+					{ "key": "organisationType", "label": "Organisatietype", "type": "string" },
+					{ "key": "version", "label": "Versie", "type": "number" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "vaststellingsBesluit", "label": "Vaststellingsbesluit", "type": "string" },
+					{ "key": "vaststellingsDatum", "label": "Vaststellingsdatum", "type": "string" },
+					{ "key": "sluitendStructureel", "label": "Sluitend structureel", "type": "boolean" },
+					{ "key": "sluitendReëel", "label": "Sluitend reëel", "type": "boolean" },
+					{ "key": "toezichtRegime", "label": "Toezichtregime", "type": "string" },
+					{ "key": "nominaleOntwikkeling", "label": "Nominale ontwikkeling (%)", "type": "number" }
+				],
+				"indexRoute": "Programmabegrotingen"
+			}
+		},
+		{
+			"id": "Programmas",
+			"route": "/government/programmas",
+			"type": "index",
+			"title": "Programma's",
+			"config": {
+				"register": "shillinq",
+				"schema": "Programma",
+				"columns": [
+					{ "key": "nummer", "label": "Nr.", "sortable": true },
+					{ "key": "naam", "label": "Naam", "sortable": true },
+					{ "key": "portefeuillehouder", "label": "Portefeuillehouder", "sortable": true },
+					{ "key": "batenTotaal", "label": "Baten", "sortable": true },
+					{ "key": "lastenTotaal", "label": "Lasten", "sortable": true },
+					{ "key": "saldoNaMutaties", "label": "Saldo", "sortable": true }
+				],
+				"defaultSort": "nummer",
+				"detailRoute": "ProgrammaDetail"
+			}
+		},
+		{
+			"id": "ProgrammaDetail",
+			"route": "/government/programmas/:id",
+			"type": "detail",
+			"title": "Programma",
+			"config": {
+				"register": "shillinq",
+				"schema": "Programma",
+				"fields": [
+					{ "key": "nummer", "label": "Nummer", "type": "string" },
+					{ "key": "naam", "label": "Naam", "type": "string" },
+					{ "key": "portefeuillehouder", "label": "Portefeuillehouder", "type": "string" },
+					{ "key": "doelstellingen", "label": "Doelstellingen", "type": "string" },
+					{ "key": "batenTotaal", "label": "Baten totaal", "type": "number" },
+					{ "key": "lastenTotaal", "label": "Lasten totaal", "type": "number" },
+					{ "key": "saldoVoorMutaties", "label": "Saldo voor mutaties", "type": "number" },
+					{ "key": "mutatiesReserves", "label": "Mutaties reserves", "type": "number" },
+					{ "key": "saldoNaMutaties", "label": "Saldo na mutaties", "type": "number" }
+				],
+				"indexRoute": "Programmas"
+			}
+		},
+		{
+			"id": "MeerjarenramingPages",
+			"route": "/government/meerjarenraming",
+			"type": "index",
+			"title": "Meerjarenraming",
+			"config": {
+				"register": "shillinq",
+				"schema": "Meerjarenraming",
+				"columns": [
+					{ "key": "jaar", "label": "Jaar", "sortable": true },
+					{ "key": "batenStructureel", "label": "Baten (struct.)", "sortable": true },
+					{ "key": "lastenStructureel", "label": "Lasten (struct.)", "sortable": true },
+					{ "key": "saldoStructureel", "label": "Saldo (struct.)", "sortable": true },
+					{ "key": "saldoReëel", "label": "Saldo (reëel)", "sortable": true },
+					{ "key": "sluitend", "label": "Sluitend", "sortable": true }
+				],
+				"defaultSort": "jaar",
+				"detailRoute": "MeerjarenramingDetail"
+			}
+		},
+		{
+			"id": "MeerjarenramingDetail",
+			"route": "/government/meerjarenraming/:id",
+			"type": "detail",
+			"title": "Meerjarenraming",
+			"config": {
+				"register": "shillinq",
+				"schema": "Meerjarenraming",
+				"fields": [
+					{ "key": "jaar", "label": "Jaar", "type": "number" },
+					{ "key": "batenStructureel", "label": "Baten structureel", "type": "number" },
+					{ "key": "batenIncidenteel", "label": "Baten incidenteel", "type": "number" },
+					{ "key": "lastenStructureel", "label": "Lasten structureel", "type": "number" },
+					{ "key": "lastenIncidenteel", "label": "Lasten incidenteel", "type": "number" },
+					{ "key": "saldoStructureel", "label": "Saldo structureel", "type": "number" },
+					{ "key": "saldoReëel", "label": "Saldo reëel", "type": "number" },
+					{ "key": "sluitend", "label": "Sluitend", "type": "boolean" }
+				],
+				"indexRoute": "MeerjarenramingPages"
+			}
+		},
+		{
+			"id": "Paragrafen",
+			"route": "/government/paragrafen",
+			"type": "index",
+			"title": "Paragrafen",
+			"config": {
+				"register": "shillinq",
+				"schema": "Paragraaf",
+				"columns": [
+					{ "key": "type", "label": "Type", "sortable": true },
+					{ "key": "begrotingId", "label": "Begroting", "sortable": true }
+				],
+				"defaultSort": "type",
+				"detailRoute": "ParagraafDetail"
+			}
+		},
+		{
+			"id": "ParagraafDetail",
+			"route": "/government/paragrafen/:id",
+			"type": "detail",
+			"title": "Paragraaf",
+			"config": {
+				"register": "shillinq",
+				"schema": "Paragraaf",
+				"fields": [
+					{ "key": "type", "label": "Type", "type": "string" },
+					{ "key": "narrative", "label": "Toelichting", "type": "string" },
+					{ "key": "begrotingId", "label": "Begroting", "type": "string" }
+				],
+				"indexRoute": "Paragrafen"
 			}
 		}
 	]

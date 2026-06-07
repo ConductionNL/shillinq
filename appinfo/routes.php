@@ -104,6 +104,11 @@ return [
         ['name' => 'lease#schedule', 'url' => '/api/leases/schedule', 'verb' => 'GET'],
         ['name' => 'lease#disclosure', 'url' => '/api/leases/disclosure', 'verb' => 'GET'],
 
+        // Programmabegroting (Tier 2): read-only sluitend-status + exports.
+        ['name' => 'programmabegroting#sluitend', 'url' => '/api/programmabegroting/sluitend', 'verb' => 'GET'],
+        ['name' => 'programmabegroting#iv3', 'url' => '/api/programmabegroting/export/iv3', 'verb' => 'GET'],
+        ['name' => 'programmabegroting#jsonExport', 'url' => '/api/programmabegroting/export/json', 'verb' => 'GET'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
