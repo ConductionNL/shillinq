@@ -71,6 +71,9 @@ class Application extends App implements IBootstrap
         // Initialize register and schemas on install/upgrade.
         $context->registerRepairStep(InitializeSettings::class);
 
+        // The daily SEPA mandate dormancy-expiry job (REQ-SDD-008, ADR-031
+        // exception pending OpenRegister ScheduledWorkflow) is registered via
+        // appinfo/info.xml <background-jobs> and autowired by the DI container.
     }//end register()
 
     /**

@@ -6772,3 +6772,68 @@ _Commercial consolidation (RJ 217 / IAS 27 / IFRS 10) data model introduced by t
 | Goodwill | schema:MonetaryAmount | consolidationGroupId, subsidiaryEntityId, acquisitionDate, purchasePrice, fairValueNetAssetsAcquired, goodwillAmount (calc), amortizationMethod | → ConsolidationGroup (N:1), → GroupEntity (N:1) |
 | ConsolidatedBalance | schema:Report | consolidationGroupId, consolidationPeriodId, reportDate, lines[] (RGS), totalAssets/Liabilities/Equity, state | → ConsolidationGroup (N:1), → ConsolidationPeriod (N:1) |
 | ConsolidatedIncomeStatement | schema:Report | consolidationGroupId, consolidationPeriodId, reportDate, lines[] (RGS), netProfitTotal/AttributedToParent/Minority, state | → ConsolidationGroup (N:1), → ConsolidationPeriod (N:1) |
+### SepaMandate
+**Schema.org:** `schema:FinancialProduct`
+_A SEPA Direct Debit mandate (incassomachtiging). Source of truth for incasso eligibility: a collection may only be scheduled against an `active` mandate. Lifecycle `pending → active → cancelled | expired | suspended`. Referenced by Counterparty.defaultMandateId and Invoice.directDebitMandateId once accounts-receivable-core merges._
+**Primary spec:** bookkeeping-sepa-direct-debit
+| mandateReference | string | Yes | Unique per creditor, max 35 chars, immutable once issued |
+| creditorIdentifier | string | Yes | Dutch NL{check}ZZZ{KvK} creditor identifier |
+| scheme | enum | Yes | CORE (consumer) or B2B (business) |
+| type | enum | Yes | recurring or oneoff |
+| status | enum | Yes | pending, active, cancelled, expired, suspended |
+| signedAt | date | Yes | Date the mandate was signed |
+| debtorIban | string | Yes | Debtor IBAN (mod-97 validated at batch generation) |
+| debtorAccountType | enum | Yes | consumer (CORE) or business (B2B) |
+| lastUsedAt | date | No | Last successful collection date (drives 36-month dormancy) |
+| mandateDocument | file | No | Scanned signature / digital-signing evidence |
+| cancellationReason | string | No | Recorded on cancellation |
+| administrationId | string | Yes | FK to Administration |
+### DirectDebitCollection
+**Schema.org:** `schema:PaymentMethod`
+_A single SEPA Direct Debit collection against a mandate. sequenceType (FRST/RCUR/OOFF/FNAL) is derived from mandate history, never operator-supplied. Lifecycle `scheduled → submitted → accepted_by_bank → succeeded | rejected | refunded`. FK: mandateId → SepaMandate, invoiceId → Invoice, submittedInBatchId → DirectDebitBatch._
+**Primary spec:** bookkeeping-sepa-direct-debit
+| mandateId | string | Yes | FK to SepaMandate UUID |
+| invoiceId | string | No | FK to Invoice UUID (nullable for ad-hoc collections) |
+| amount | number | Yes | Collection amount in EUR (2 decimals) |
+| sequenceType | enum | Yes | Auto-derived: FRST, RCUR, OOFF, FNAL |
+| requestedCollectionDate | date | Yes | Date funds should hit the creditor account |
+| endToEndId | string | Yes | Unique per creditor, max 35 chars |
+| status | enum | Yes | scheduled, submitted, accepted_by_bank, presented, succeeded, rejected, refunded |
+| pain002ReasonCode | string | No | ISO 20022 reason code if rejected |
+| repostedAsCollectionId | string | No | FK to the new collection if reposted |
+| administrationId | string | Yes | FK to Administration |
+### DirectDebitBatch
+**Schema.org:** `schema:Invoice`
+_A pain.008.001.02 batch aggregating homo-sequence collections. pain008Xml/pain002Xml are archived 7+ years (bewaarplicht). Lifecycle `draft → generated → submitted → accepted_by_bank | partially_rejected | fully_rejected`._
+**Primary spec:** bookkeeping-sepa-direct-debit
+| messageId | string | Yes | Globally unique per creditor per file, max 35 chars |
+| requestedCollectionDate | date | Yes | Earliest collection date in the batch |
+| scheme | enum | Yes | CORE or B2B |
+| sequenceType | enum | Yes | FRST, RCUR, OOFF, FNAL (homo-sequence batch) |
+| collectionCount | integer | Yes | pain.008 NbOfTxs |
+| controlSum | number | Yes | pain.008 CtrlSum (EUR, 2 decimals) |
+| status | enum | Yes | draft, generated, submitted, accepted_by_bank, partially_rejected, fully_rejected |
+| pain008Xml | string | No | Archived ISO 20022 pain.008 payload (non-deletable) |
+| pain002Xml | string | No | Archived incoming pain.002 status report |
+| administrationId | string | Yes | FK to Administration |
+### RTransaction
+**Schema.org:** `schema:MoneyTransfer`
+_A bank-side R-transaction (reject/return/refund/reversal/revocation) parsed from pain.002 or camt.054. Captured separately for audit and reposting decisions. Non-deletable. FK: collectionId → DirectDebitCollection._
+**Primary spec:** bookkeeping-sepa-direct-debit
+| collectionId | string | Yes | FK to DirectDebitCollection UUID |
+| type | enum | Yes | reject, return, refund, reversal, revocation, request_for_cancellation |
+| reasonCode | string | Yes | ISO 20022 ExternalReturnReason code |
+| transactionAmount | number | Yes | R-transaction amount |
+| valueDate | date | Yes | Date the debtor account was re-credited |
+| notifiedAt | datetime | Yes | When shillinq received the notification |
+| administrationId | string | Yes | FK to Administration |
+### PreNotification
+**Schema.org:** `schema:Message`
+_A vooraankondiging for a collection. A collection MUST NOT enter a pain.008 batch unless its pre-notification is sent or carried on the invoice line (14-day default lead). FK: collectionId → DirectDebitCollection._
+**Primary spec:** bookkeeping-sepa-direct-debit
+| collectionId | string | Yes | FK to DirectDebitCollection UUID |
+| sentAt | datetime | No | When the notification was sent (null = not yet sent) |
+| channel | enum | No | email, letter, invoice_line |
+| noticeDays | integer | Yes | Calendar days between notification and collection date (default 14) |
+| recipientAddress | string | No | Email, postal address, or invoice reference |
+| administrationId | string | Yes | FK to Administration |

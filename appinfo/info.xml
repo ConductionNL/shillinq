@@ -69,6 +69,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
     </repair-steps>
 
     <background-jobs>
-        <job>OCA\Shillinq\BackgroundJob\CancelUnconfirmedAppointments</job>
+<job>OCA\Shillinq\BackgroundJob\CancelUnconfirmedAppointments</job>
+        <job>OCA\Shillinq\Job\MandateDormancyExpiryJob</job>
     </background-jobs>
 </info>
