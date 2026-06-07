@@ -99,12 +99,18 @@ use RuntimeException;
  *    a period; the result MUST equal zero when every GRN has a matching
  *    approved invoice.
  *
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Service touches multiple
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)   Service touches multiple
  * registers (PurchaseOrder, PurchaseOrderLine, GoodsReceiptNote,
  * GoodsReceiptLine, SupplierInvoice, ThreeWayMatch, ToleranceProfile,
  * GLTransaction, GLLine); the slice contract is "materialise the GR/IR
  * accounting in one place" so each register is touched at most once per
  * public method.
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength)     Long because of the
+ * exhaustive PHPDoc demanded by ADR-005 + the per-config doc blocks; the
+ * actual logic is concentrated in two public methods (slice contract D6).
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Aggregate complexity
+ * reflects the GRN-accept + settlement + reconciliation triad — each path
+ * is a single straight-through compute + post pipeline.
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-09-gl-gr-ir-clearing/tasks.md
  */
@@ -182,32 +188,11 @@ class GRIRClearingService
     private const SCHEMA_PO_LINE = 'PurchaseOrderLine';
 
     /**
-     * Schema slug for the GoodsReceiptNote register.
-     *
-     * @var string
-     */
-    private const SCHEMA_GRN = 'GoodsReceiptNote';
-
-    /**
-     * Schema slug for the GoodsReceiptLine register.
-     *
-     * @var string
-     */
-    private const SCHEMA_GRN_LINE = 'GoodsReceiptLine';
-
-    /**
      * Schema slug for the SupplierInvoice register.
      *
      * @var string
      */
     private const SCHEMA_INVOICE = 'SupplierInvoice';
-
-    /**
-     * Schema slug for the ThreeWayMatch register.
-     *
-     * @var string
-     */
-    private const SCHEMA_MATCH = 'ThreeWayMatch';
 
     /**
      * Schema slug for the ToleranceProfile register.
@@ -239,6 +224,9 @@ class GRIRClearingService
      *                                                            register slug).
      * @param AdministrationContextService $administrationContext IDOR + tenant scope (ADR-005).
      * @param LoggerInterface              $logger                Logger (no sensitive payloads).
+     *
+     * @SuppressWarnings(PHPMD.LongVariable) administrationContext is the
+     * canonical name fleet-wide.
      */
     public function __construct(
         private readonly ContainerInterface $container,
@@ -279,12 +267,16 @@ class GRIRClearingService
      *                            balance invariant fails.
      *
      * @spec openspec/changes/bookkeeping-purchase-order-3way-09-gl-gr-ir-clearing/tasks.md
+     *
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength) Straight-through
+     * clearing pipeline (resolve → compute → guard → post); splitting it
+     * obscures the single source of the GR/IR posting shape (design D6).
      */
     public function createGRIRPosting(
         string $administrationId,
         array $grn,
         array $grnLine,
-        ?string $threeWayMatchId = null
+        ?string $threeWayMatchId=null
     ): array {
         $this->assertAccess(administrationId: $administrationId);
 
@@ -304,7 +296,7 @@ class GRIRClearingService
             throw new RuntimeException('Purchase order line not found');
         }
 
-        // quantityAccepted is multipleOf 0.001 on the GRN line; unitPrice is
+        // QuantityAccepted is multipleOf 0.001 on the GRN line; unitPrice is
         // integer cents on the PO line (ADR-022). Compute the clearing
         // amount as a single integer-cent value with HALF-UP rounding.
         $quantityAccepted = (float) ($grnLine['quantityAccepted'] ?? 0);
@@ -342,16 +334,21 @@ class GRIRClearingService
         $costCenter  = trim((string) ($poLine['costCenter'] ?? ''));
         $projectCode = trim((string) ($poLine['projectCode'] ?? ''));
 
-        $grnNumber      = (string) ($grn['grnNumber'] ?? '');
-        $grnLineId      = (string) ($grnLine['id'] ?? ($grnLine['@self']['id'] ?? ''));
+        $grnNumber       = (string) ($grn['grnNumber'] ?? '');
+        $grnLineId       = (string) ($grnLine['id'] ?? ($grnLine['@self']['id'] ?? ''));
         $sourceReference = $threeWayMatchId ?? $grnLineId;
-        $description     = sprintf(
+        $grnLabel        = 'GRN';
+        if ($grnNumber !== '') {
+            $grnLabel = $grnNumber;
+        }
+
+        $description = sprintf(
             'GR/IR clearing — %s line %s — %d cents',
-            ($grnNumber !== '' ? $grnNumber : 'GRN'),
+            $grnLabel,
             $grnLineId,
             $amountCents
         );
-        $postingDate    = $this->postingDate(grn: $grn);
+        $postingDate = $this->postingDate(grn: $grn);
 
         $transactionData = [
             'transactionNumber' => $this->clearingTransactionNumber(grnNumber: $grnNumber, grnLineId: $grnLineId),
@@ -363,7 +360,7 @@ class GRIRClearingService
             'sourceReference'   => $sourceReference,
             'threeWayMatchId'   => $threeWayMatchId,
             'state'             => 'draft',
-            'administrationId' => $administrationId,
+            'administrationId'  => $administrationId,
         ];
 
         return $this->postBalancedTransaction(
@@ -422,6 +419,14 @@ class GRIRClearingService
      *                            invariant fails.
      *
      * @spec openspec/changes/bookkeeping-purchase-order-3way-09-gl-gr-ir-clearing/tasks.md
+     *
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength) Settlement pipeline
+     * mirrors createGRIRPosting() — splitting would scatter the balance
+     * invariant across helpers.
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)  Multiple guard branches
+     * cover the configured-account, tax-only, and missing-line edges; all
+     * paths converge on the same balanced-posting call.
+     * @SuppressWarnings(PHPMD.NPathComplexity)       Same as CyclomaticComplexity.
      */
     public function settleGRIRPosting(string $administrationId, array $threeWayMatch): array
     {
@@ -465,7 +470,7 @@ class GRIRClearingService
 
         $costCenter         = trim((string) (($matchedPoLine['costCenter'] ?? '')));
         $projectCode        = trim((string) (($matchedPoLine['projectCode'] ?? '')));
-        $toleranceProfileId = $this->toleranceProfileId(poLine: ($matchedPoLine ?? []));
+        $toleranceProfileId = $this->toleranceProfileId(poLine: $matchedPoLine);
 
         $clearingAccount = $this->grIrClearingAccount(toleranceProfileId: $toleranceProfileId);
         $apAccount       = $this->accountsPayableAccount();
@@ -497,28 +502,43 @@ class GRIRClearingService
             ];
         }
 
-        $matchId         = (string) ($threeWayMatch['id'] ?? ($threeWayMatch['@self']['id'] ?? ''));
-        $invoiceNumber   = (string) ($invoice['invoiceNumber'] ?? '');
-        $sourceReference = ($matchId !== '' ? $matchId : $invoiceId);
-        $description     = sprintf(
+        $matchId       = (string) ($threeWayMatch['id'] ?? ($threeWayMatch['@self']['id'] ?? ''));
+        $invoiceNumber = (string) ($invoice['invoiceNumber'] ?? '');
+
+        $sourceReference = $invoiceId;
+        if ($matchId !== '') {
+            $sourceReference = $matchId;
+        }
+
+        $invoiceLabel = $invoiceId;
+        if ($invoiceNumber !== '') {
+            $invoiceLabel = $invoiceNumber;
+        }
+
+        $matchLabel = 'n/a';
+        if ($matchId !== '') {
+            $matchLabel = $matchId;
+        }
+
+        $description = sprintf(
             'GR/IR settlement — invoice %s — match %s',
-            ($invoiceNumber !== '' ? $invoiceNumber : $invoiceId),
-            ($matchId !== '' ? $matchId : 'n/a')
+            $invoiceLabel,
+            $matchLabel
         );
-        $postingDate    = $this->postingDate(grn: $invoice);
+        $postingDate = $this->postingDate(grn: $invoice);
 
         // Build settlement lines per REQ-PO3W-009 settlement leg:
-        //   DR GR/IR Clearing  (excl VAT) - closes the receipt-side clearing
-        //                                  balance accumulated at GRN time;
-        //   DR VAT Input       (VAT)      - the input VAT the supplier charged
-        //                                  us, which we'll reclaim on our VAT
-        //                                  return (RGS 3.5 "voorbelasting").
-        //                                  The spec calls this account "VAT
-        //                                  Payable" by its credit-side label;
-        //                                  on a purchase invoice the entry is
-        //                                  on the debit side, so the entry
-        //                                  balances against the AP leg below.
-        //   CR Accounts Payable (incl VAT) - what we owe the supplier.
+        // DR GR/IR Clearing  (excl VAT) - closes the receipt-side clearing
+        // balance accumulated at GRN time;
+        // DR VAT Input       (VAT)      - the input VAT the supplier charged
+        // us, which we'll reclaim on our VAT
+        // return (RGS 3.5 "voorbelasting").
+        // The spec calls this account "VAT
+        // Payable" by its credit-side label;
+        // on a purchase invoice the entry is
+        // on the debit side, so the entry
+        // balances against the AP leg below.
+        // CR Accounts Payable (incl VAT) - what we owe the supplier.
         //
         // Tax-only edge (excl == 0, vat > 0) materialises a balanced
         // 2-line DR VAT / CR AP entry without the clearing leg.
@@ -566,21 +586,26 @@ class GRIRClearingService
             'projectCode'   => $projectCode,
         ];
 
+        $headerMatchId = null;
+        if ($matchId !== '') {
+            $headerMatchId = $matchId;
+        }
+
         $transactionData = [
             'transactionNumber' => $this->settlementTransactionNumber(
                 invoiceNumber: $invoiceNumber,
                 matchId: $matchId,
                 invoiceId: $invoiceId
             ),
-            'journalCode'      => self::JOURNAL_CODE_SETTLEMENT,
-            'postingDate'      => $postingDate,
-            'periodId'         => $this->periodId(postingDate: $postingDate),
-            'currency'         => 'EUR',
-            'description'      => $description,
-            'sourceReference'  => $sourceReference,
-            'threeWayMatchId'  => ($matchId !== '' ? $matchId : null),
-            'state'            => 'draft',
-            'administrationId' => $administrationId,
+            'journalCode'       => self::JOURNAL_CODE_SETTLEMENT,
+            'postingDate'       => $postingDate,
+            'periodId'          => $this->periodId(postingDate: $postingDate),
+            'currency'          => 'EUR',
+            'description'       => $description,
+            'sourceReference'   => $sourceReference,
+            'threeWayMatchId'   => $headerMatchId,
+            'state'             => 'draft',
+            'administrationId'  => $administrationId,
         ];
 
         return $this->postBalancedTransaction(
@@ -616,7 +641,7 @@ class GRIRClearingService
         $this->assertAccess(administrationId: $administrationId);
 
         $clearingAccount = $this->grIrClearingAccount(toleranceProfileId: null);
-        $lines = $this->findAll(
+        $lines           = $this->findAll(
             schema: self::SCHEMA_GL_LINE,
             filters: [
                 'accountNumber'    => $clearingAccount,
@@ -633,7 +658,7 @@ class GRIRClearingService
             $cents  = (int) round(($amount * 100.0), 0, PHP_ROUND_HALF_UP);
             if ($side === 'debit') {
                 $debitCents += $cents;
-            } elseif ($side === 'credit') {
+            } else if ($side === 'credit') {
                 $creditCents += $cents;
             }
         }
@@ -670,7 +695,7 @@ class GRIRClearingService
         }
 
         $quantityThousandths = (int) round(($quantity * 1000.0), 0, PHP_ROUND_HALF_UP);
-        // amountCents = (cents * thousandths) / 1000, half-up.
+        // AmountCents = (cents * thousandths) / 1000, half-up.
         $product = ($unitPriceCents * $quantityThousandths);
 
         return (int) (intdiv(($product + 500), 1000));
@@ -686,9 +711,9 @@ class GRIRClearingService
      * (defensive — should never happen), the transaction is logged but not
      * retroactively reverted; integration tests assert balance.
      *
-     * @param string                                                                                        $administrationId Tenant scope.
-     * @param array<string,mixed>                                                                           $transaction      Header data.
-     * @param array<int,array{accountNumber:string,side:string,amountCents:int,description:string,costCenter:string,projectCode:string}> $lines            Lines.
+     * @param string              $administrationId Tenant scope.
+     * @param array<string,mixed> $transaction      Header data.
+     * @param array<int,array>    $lines            Per-line entries (see method body for shape).
      *
      * @return array<string,mixed> Result envelope.
      *
@@ -704,7 +729,7 @@ class GRIRClearingService
         foreach ($lines as $line) {
             if ($line['side'] === 'debit') {
                 $debitCents += (int) $line['amountCents'];
-            } elseif ($line['side'] === 'credit') {
+            } else if ($line['side'] === 'credit') {
                 $creditCents += (int) $line['amountCents'];
             }
         }
@@ -720,26 +745,26 @@ class GRIRClearingService
         }
 
         try {
-            $header = $this->saveOnSchema(schema: self::SCHEMA_GL_TXN, data: $transaction);
+            $header   = $this->saveOnSchema(schema: self::SCHEMA_GL_TXN, data: $transaction);
             $headerId = (string) ($header['id'] ?? ($header['@self']['id'] ?? ''));
 
-            $lineNumber = 1;
+            $lineNumber     = 1;
             $persistedLines = [];
             foreach ($lines as $line) {
                 $persistedLines[] = $this->saveOnSchema(
                     schema: self::SCHEMA_GL_LINE,
                     data: [
-                        'transactionId'  => $headerId,
-                        'lineNumber'     => $lineNumber,
-                        'accountNumber'  => $line['accountNumber'],
-                        'side'           => $line['side'],
-                        'amount'         => round(($line['amountCents'] / 100.0), 2),
-                        'currency'       => 'EUR',
-                        'description'    => $line['description'],
-                        'costCenter'     => $line['costCenter'],
-                        'costCenterCode' => $line['costCenter'],
-                        'projectCode'    => $line['projectCode'],
-                        'periodId'       => ($transaction['periodId'] ?? ''),
+                        'transactionId'    => $headerId,
+                        'lineNumber'       => $lineNumber,
+                        'accountNumber'    => $line['accountNumber'],
+                        'side'             => $line['side'],
+                        'amount'           => round(($line['amountCents'] / 100.0), 2),
+                        'currency'         => 'EUR',
+                        'description'      => $line['description'],
+                        'costCenter'       => $line['costCenter'],
+                        'costCenterCode'   => $line['costCenter'],
+                        'projectCode'      => $line['projectCode'],
+                        'periodId'         => ($transaction['periodId'] ?? ''),
                         'administrationId' => $administrationId,
                     ]
                 );
@@ -765,7 +790,7 @@ class GRIRClearingService
                 ]
             );
             throw new RuntimeException('Failed to persist GR/IR posting');
-        }
+        }//end try
 
     }//end postBalancedTransaction()
 
@@ -820,11 +845,13 @@ class GRIRClearingService
             }
         }
 
-        $configured = trim($this->appConfig->getValueString(
+        $configured = trim(
+                $this->appConfig->getValueString(
             Application::APP_ID,
             self::CFG_GR_IR_CLEARING_ACCOUNT,
             self::DEFAULT_GR_IR_CLEARING_ACCOUNT
-        ));
+        )
+                );
         if ($configured !== '') {
             return $configured;
         }
@@ -840,11 +867,13 @@ class GRIRClearingService
      */
     private function accountsPayableAccount(): string
     {
-        $configured = trim($this->appConfig->getValueString(
+        $configured = trim(
+                $this->appConfig->getValueString(
             Application::APP_ID,
             self::CFG_ACCOUNTS_PAYABLE_ACCOUNT,
             self::DEFAULT_AP_ACCOUNT
-        ));
+        )
+                );
         if ($configured !== '') {
             return $configured;
         }
@@ -860,11 +889,13 @@ class GRIRClearingService
      */
     private function vatPayableAccount(): string
     {
-        $configured = trim($this->appConfig->getValueString(
+        $configured = trim(
+                $this->appConfig->getValueString(
             Application::APP_ID,
             self::CFG_VAT_PAYABLE_ACCOUNT,
             self::DEFAULT_VAT_ACCOUNT
-        ));
+        )
+                );
         if ($configured !== '') {
             return $configured;
         }
@@ -997,7 +1028,10 @@ class GRIRClearingService
     {
         $primary = trim($invoiceNumber);
         if ($primary === '') {
-            $primary = ($matchId !== '' ? $matchId : $invoiceId);
+            $primary = $invoiceId;
+            if ($matchId !== '') {
+                $primary = $matchId;
+            }
         }
 
         $suffix = preg_replace('/[^A-Za-z0-9]/', '', $matchId) ?? '';
@@ -1019,12 +1053,7 @@ class GRIRClearingService
     private function postingDate(array $grn): string
     {
         $candidate = (string) (
-            $grn['receivedAt']
-            ?? $grn['acceptedAt']
-            ?? $grn['invoiceDate']
-            ?? $grn['peppolReceivedAt']
-            ?? $grn['createdAt']
-            ?? ''
+            $grn['receivedAt'] ?? $grn['acceptedAt'] ?? $grn['invoiceDate'] ?? $grn['peppolReceivedAt'] ?? $grn['createdAt'] ?? ''
         );
         if ($candidate === '') {
             return date('Y-m-d');

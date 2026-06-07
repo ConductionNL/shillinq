@@ -49,13 +49,12 @@ require_once __DIR__.'/InMemoryObjectService.php';
  */
 final class GRIRClearingServiceTest extends TestCase
 {
-
     /**
      * Build a service wired against the supplied stub + appConfig overrides.
      *
-     * @param InMemoryObjectService $os                       In-memory OR stub.
-     * @param array<string,string>  $config                   App-config overrides.
-     * @param LoggerInterface|null  $logger                   Optional logger to assert against.
+     * @param InMemoryObjectService $os                        In-memory OR stub.
+     * @param array<string,string>  $config                    App-config overrides.
+     * @param LoggerInterface|null  $logger                    Optional logger to assert against.
      * @param array<int,string>     $accessibleAdministrations Tenants the caller may access.
      *
      * @return GRIRClearingService
@@ -73,7 +72,7 @@ final class GRIRClearingServiceTest extends TestCase
         $appConfig->method('getValueString')->willReturnCallback(
             static function (string $app, string $key, string $default=''): string {
                 static $captured = [];
-                $captured[$key] = $default;
+                $captured[$key]  = $default;
                 return $default;
             }
         );
@@ -116,21 +115,23 @@ final class GRIRClearingServiceTest extends TestCase
         $os = new InMemoryObjectService();
         $os->seed(
             'PurchaseOrderLine',
-            [[
-                'id'               => 'poline-1',
-                'poId'             => 'po-1',
-                'administrationId' => 'adm-1',
-                'unitPrice'        => 10278,
-                'glAccount'        => '1200',
-                'costCenter'       => 'FAC-2026',
-                'projectCode'      => 'PRJ-CHAIR',
-            ]]
+            [
+                [
+                    'id'               => 'poline-1',
+                    'poId'             => 'po-1',
+                    'administrationId' => 'adm-1',
+                    'unitPrice'        => 10278,
+                    'glAccount'        => '1200',
+                    'costCenter'       => 'FAC-2026',
+                    'projectCode'      => 'PRJ-CHAIR',
+                ],
+            ]
         );
 
         $service = $this->makeService(
             os: $os,
             config: [
-                'register' => 'shillinq',
+                'register'                                      => 'shillinq',
                 GRIRClearingService::CFG_GR_IR_CLEARING_ACCOUNT => '2910',
             ]
         );
@@ -170,7 +171,7 @@ final class GRIRClearingServiceTest extends TestCase
         self::assertSame(18500.40, (float) $debits[0]['amount']);
         self::assertSame(18500.40, (float) $credits[0]['amount']);
 
-        // costCenter + projectCode are preserved on BOTH lines.
+        // CostCenter + projectCode are preserved on BOTH lines.
         foreach ($lines as $line) {
             self::assertSame('FAC-2026', $line['costCenter']);
             self::assertSame('FAC-2026', $line['costCenterCode']);
@@ -196,30 +197,34 @@ final class GRIRClearingServiceTest extends TestCase
         $os = new InMemoryObjectService();
         $os->seed(
             'PurchaseOrderLine',
-            [[
-                'id'                  => 'poline-2',
-                'poId'                => 'po-2',
-                'administrationId'    => 'adm-1',
-                'unitPrice'           => 5000,
-                'glAccount'           => '1300',
-                'costCenter'          => 'IT-2026',
-                'projectCode'         => 'PRJ-IT',
-                'toleranceProfileId'  => 'tp-strict',
-            ]]
+            [
+                [
+                    'id'                 => 'poline-2',
+                    'poId'               => 'po-2',
+                    'administrationId'   => 'adm-1',
+                    'unitPrice'          => 5000,
+                    'glAccount'          => '1300',
+                    'costCenter'         => 'IT-2026',
+                    'projectCode'        => 'PRJ-IT',
+                    'toleranceProfileId' => 'tp-strict',
+                ],
+            ]
         );
         $os->seed(
             'ToleranceProfile',
-            [[
-                'id'                  => 'tp-strict',
-                'administrationId'    => 'adm-1',
-                'grIrClearingAccount' => '2911',
-            ]]
+            [
+                [
+                    'id'                  => 'tp-strict',
+                    'administrationId'    => 'adm-1',
+                    'grIrClearingAccount' => '2911',
+                ],
+            ]
         );
 
         $service = $this->makeService(
             os: $os,
             config: [
-                'register' => 'shillinq',
+                'register'                                      => 'shillinq',
                 GRIRClearingService::CFG_GR_IR_CLEARING_ACCOUNT => '2910',
             ]
         );
@@ -232,7 +237,7 @@ final class GRIRClearingServiceTest extends TestCase
 
         self::assertTrue($result['posted']);
 
-        $lines = $os->setSchema('GLLine')->findAll();
+        $lines   = $os->setSchema('GLLine')->findAll();
         $credits = array_values(array_filter($lines, static fn (array $l): bool => $l['side'] === 'credit'));
         self::assertCount(1, $credits);
         // Per-profile override beats the global 2910.
@@ -252,45 +257,49 @@ final class GRIRClearingServiceTest extends TestCase
         $os = new InMemoryObjectService();
         $os->seed(
             'PurchaseOrderLine',
-            [[
-                'id'               => 'poline-3',
-                'poId'             => 'po-3',
-                'administrationId' => 'adm-1',
-                'glAccount'        => '1200',
-                'costCenter'       => 'FAC-2026',
-                'projectCode'      => 'PRJ-CHAIR',
-            ]]
+            [
+                [
+                    'id'               => 'poline-3',
+                    'poId'             => 'po-3',
+                    'administrationId' => 'adm-1',
+                    'glAccount'        => '1200',
+                    'costCenter'       => 'FAC-2026',
+                    'projectCode'      => 'PRJ-CHAIR',
+                ],
+            ]
         );
         $os->seed(
             'SupplierInvoice',
-            [[
-                'id'               => 'inv-1',
-                'administrationId' => 'adm-1',
-                'invoiceNumber'    => 'INV-ERS-2026-00445',
-                'totalExclVat'     => 1850000,
-                'totalVat'         => 388500,
-                'totalInclVat'     => 2238500,
-                'invoiceDate'      => '2026-06-05',
-            ]]
+            [
+                [
+                    'id'               => 'inv-1',
+                    'administrationId' => 'adm-1',
+                    'invoiceNumber'    => 'INV-ERS-2026-00445',
+                    'totalExclVat'     => 1850000,
+                    'totalVat'         => 388500,
+                    'totalInclVat'     => 2238500,
+                    'invoiceDate'      => '2026-06-05',
+                ],
+            ]
         );
 
         $service = $this->makeService(
             os: $os,
             config: [
-                'register' => 'shillinq',
-                GRIRClearingService::CFG_GR_IR_CLEARING_ACCOUNT  => '2910',
+                'register'                                        => 'shillinq',
+                GRIRClearingService::CFG_GR_IR_CLEARING_ACCOUNT   => '2910',
                 GRIRClearingService::CFG_ACCOUNTS_PAYABLE_ACCOUNT => '4400',
                 GRIRClearingService::CFG_VAT_PAYABLE_ACCOUNT      => '2100',
             ]
         );
 
         $match = [
-            'id'                => 'match-1',
-            'administrationId'  => 'adm-1',
-            'invoiceId'         => 'inv-1',
-            'matchedPoIds'      => ['po-3'],
-            'matchedPoLineIds'  => ['poline-3'],
-            'matchStatus'       => 'auto_approved',
+            'id'               => 'match-1',
+            'administrationId' => 'adm-1',
+            'invoiceId'        => 'inv-1',
+            'matchedPoIds'     => ['po-3'],
+            'matchedPoLineIds' => ['poline-3'],
+            'matchStatus'      => 'auto_approved',
         ];
 
         $result = $service->settleGRIRPosting(administrationId: 'adm-1', threeWayMatch: $match);
@@ -335,9 +344,10 @@ final class GRIRClearingServiceTest extends TestCase
         }
 
         // Balance invariant: sum of debits == sum of credits.
-        $debitCents  = (int) round(((float) $byAccount['2910']['amount']) * 100.0, 0, PHP_ROUND_HALF_UP)
-            + (int) round(((float) $byAccount['2100']['amount']) * 100.0, 0, PHP_ROUND_HALF_UP);
-        $creditCents = (int) round(((float) $byAccount['4400']['amount']) * 100.0, 0, PHP_ROUND_HALF_UP);
+        $clearingCents = (int) round(((float) $byAccount['2910']['amount']) * 100.0, 0, PHP_ROUND_HALF_UP);
+        $vatCents      = (int) round(((float) $byAccount['2100']['amount']) * 100.0, 0, PHP_ROUND_HALF_UP);
+        $debitCents    = ($clearingCents + $vatCents);
+        $creditCents   = (int) round(((float) $byAccount['4400']['amount']) * 100.0, 0, PHP_ROUND_HALF_UP);
         self::assertSame($debitCents, $creditCents);
 
     }//end testSettleGRIRPostingMaterialisesBalancedSettlementLines()
@@ -354,12 +364,14 @@ final class GRIRClearingServiceTest extends TestCase
         $os = new InMemoryObjectService();
         $os->seed(
             'PurchaseOrderLine',
-            [[
-                'id'               => 'poline-4',
-                'poId'             => 'po-4',
-                'administrationId' => 'adm-1',
-                'unitPrice'        => 1000,
-            ]]
+            [
+                [
+                    'id'               => 'poline-4',
+                    'poId'             => 'po-4',
+                    'administrationId' => 'adm-1',
+                    'unitPrice'        => 1000,
+                ],
+            ]
         );
 
         $logger = $this->createMock(LoggerInterface::class);
@@ -398,13 +410,15 @@ final class GRIRClearingServiceTest extends TestCase
         $os = new InMemoryObjectService();
         $os->seed(
             'PurchaseOrderLine',
-            [[
-                'id'               => 'poline-zero',
-                'poId'             => 'po-zero',
-                'administrationId' => 'adm-1',
-                'unitPrice'        => 5000,
-                'glAccount'        => '1200',
-            ]]
+            [
+                [
+                    'id'               => 'poline-zero',
+                    'poId'             => 'po-zero',
+                    'administrationId' => 'adm-1',
+                    'unitPrice'        => 5000,
+                    'glAccount'        => '1200',
+                ],
+            ]
         );
 
         $service = $this->makeService(
@@ -459,21 +473,23 @@ final class GRIRClearingServiceTest extends TestCase
         $os = new InMemoryObjectService();
         $os->seed(
             'PurchaseOrderLine',
-            [[
-                'id'               => 'poline-r',
-                'poId'             => 'po-r',
-                'administrationId' => 'adm-1',
-                'unitPrice'        => 9999,
-                'glAccount'        => '1200',
-                'costCenter'       => '',
-                'projectCode'      => '',
-            ]]
+            [
+                [
+                    'id'               => 'poline-r',
+                    'poId'             => 'po-r',
+                    'administrationId' => 'adm-1',
+                    'unitPrice'        => 9999,
+                    'glAccount'        => '1200',
+                    'costCenter'       => '',
+                    'projectCode'      => '',
+                ],
+            ]
         );
 
         $service = $this->makeService(
             os: $os,
             config: [
-                'register' => 'shillinq',
+                'register'                                      => 'shillinq',
                 GRIRClearingService::CFG_GR_IR_CLEARING_ACCOUNT => '2910',
             ]
         );
@@ -489,5 +505,4 @@ final class GRIRClearingServiceTest extends TestCase
         self::assertSame(33327, $result['amountCents']);
 
     }//end testQuantityTimesUnitPriceRoundsHalfUp()
-
 }//end class
