@@ -1,5 +1,7 @@
 # Design — Accounts Receivable (Core)
 
+**Status:** pr-created
+
 ## Context
 
 Customer invoicing was the original Shillinq scope. AR is the

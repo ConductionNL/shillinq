@@ -1,5 +1,7 @@
 # Design — Bank Connectors
 
+**status: pr-created**
+
 ## Decisions
 
 ### D1 — PSD2 credentials live in openconnector, shillinq AppConfig holds shillinq-side settings only

@@ -10,18 +10,18 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `WaterschapHeffingPosting` schema or `bookkeeping-waterschappen-bbv-variant` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `openspec/changes/**`, `adr-000-data-model.md`)
-- [ ] Task 2: Author `specs/bookkeeping-waterschappen-bbv-variant/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4-specialized (NL gov sector)` / `Depends on: bookkeeping-bbv-compliance` header, `REQ-WSB-NNN` requirements using RFC 2119 keywords, `#### Scenario:` blocks with GIVEN/WHEN/THEN
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions per shillinq config.yaml `rules.proposal`
-- [ ] Task 4: Author `design.md` with Reuse Analysis table and Seed Data section per hydra `rules.design`; BBVW reviewer persona confirms the variant-flag shape matches handleiding
-- [ ] Task 5: Declare the `bbvVariant: gemeente | waterschap | provincie` enum field on `Account` and `BBVProgramma` in `lib/Settings/shillinq_register.json` (default `gemeente`) per REQ-WSB-001
-- [ ] Task 6: Add `programmaStructure: taakveld | kostentoedeling` discriminator to `BBVProgramma` per REQ-WSB-002; aggregations honour the discriminator at rollup time
-- [ ] Task 7: Declare the `WaterschapHeffingPosting` schema with `heffingType` enum (watersysteemheffing / zuiveringsheffing / verontreinigingsheffing), `aanslagJaar`, `tariefGrondslag`, `tarief`, `aanslagBedrag`, `journalEntryId` FK + `emuExclusionRule` field per REQ-WSB-004 and REQ-WSB-005
-- [ ] Task 8: Ship `lib/Settings/seeds/bbv-waterschappen-programmas-2026.json` (BBVW kostentoedeling cluster headers — watersysteembeheer, zuiveringsbeheer, wegenbeheer, muskusratbestrijding, etc.); SPDX in docblock; `_meta` block (`source: 'BBVW handleiding'`, `year: 2026`) per REQ-WSB-003
+- [x] Task 1: Confirm no `WaterschapHeffingPosting` schema or `bookkeeping-waterschappen-bbv-variant` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `openspec/changes/**`, `adr-000-data-model.md`)
+- [x] Task 2: Author `specs/bookkeeping-waterschappen-bbv-variant/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4-specialized (NL gov sector)` / `Depends on: bookkeeping-bbv-compliance` header, `REQ-WSB-NNN` requirements using RFC 2119 keywords, `#### Scenario:` blocks with GIVEN/WHEN/THEN
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions per shillinq config.yaml `rules.proposal`
+- [x] Task 4: Author `design.md` with Reuse Analysis table and Seed Data section per hydra `rules.design`; BBVW reviewer persona confirms the variant-flag shape matches handleiding
+- [x] Task 5: Declare the `bbvVariant: gemeente | waterschap | provincie` enum field on `Account` and `BBVProgramma` in `lib/Settings/shillinq_register.json` (default `gemeente`) per REQ-WSB-001
+- [x] Task 6: Add `programmaStructure: taakveld | kostentoedeling` discriminator to `BBVProgramma` per REQ-WSB-002; aggregations honour the discriminator at rollup time
+- [x] Task 7: Declare the `WaterschapHeffingPosting` schema with `heffingType` enum (watersysteemheffing / zuiveringsheffing / verontreinigingsheffing), `aanslagJaar`, `tariefGrondslag`, `tarief`, `aanslagBedrag`, `journalEntryId` FK + `emuExclusionRule` field per REQ-WSB-004 and REQ-WSB-005
+- [x] Task 8: Ship `lib/Settings/seeds/bbv-waterschappen-programmas-2026.json` (BBVW kostentoedeling cluster headers — watersysteembeheer, zuiveringsbeheer, wegenbeheer, muskusratbestrijding, etc.); SPDX in docblock; `_meta` block (`source: 'BBVW handleiding'`, `year: 2026`) per REQ-WSB-003
 - [ ] Task 9: Extend the repair step under `lib/Migration/` to import the BBVW programma seed idempotently when `featureFlags.gov-waterschap` is enabled (operator edits persist across re-runs)
-- [ ] Task 10: Wire `WaterschapHeffingPosting` to materialise a balanced 2-line `GLTransaction` per T1 REQ-GL-001 when state transitions to `posted`, with `sourceReference` back to the heffing-posting per REQ-WSB-004
-- [ ] Task 11: Add Waterschapsbelastingen navigation + pages to `src/manifest.json` (`featureFlags.gov-waterschap`, `Bookkeeping > Waterschapsbelastingen`, `type: index` binding to `WaterschapHeffingPosting`, `type: detail` for heffing fields + materialised journal link) per REQ-WSB-006; `node tests/validate-manifest.js` exits 0
-- [ ] Task 12: Update `openspec/architecture/adr-000-data-model.md` with a one-paragraph annotation for `WaterschapHeffingPosting` cross-referencing this spec
+- [x] Task 10: Wire `WaterschapHeffingPosting` to materialise a balanced 2-line `GLTransaction` per T1 REQ-GL-001 when state transitions to `posted`, with `sourceReference` back to the heffing-posting per REQ-WSB-004
+- [x] Task 11: Add Waterschapsbelastingen navigation + pages to `src/manifest.json` (`featureFlags.gov-waterschap`, `Bookkeeping > Waterschapsbelastingen`, `type: index` binding to `WaterschapHeffingPosting`, `type: detail` for heffing fields + materialised journal link) per REQ-WSB-006; `node tests/validate-manifest.js` exits 0
+- [x] Task 12: Update `openspec/architecture/adr-000-data-model.md` with a one-paragraph annotation for `WaterschapHeffingPosting` cross-referencing this spec
 
 ## Verification
 

@@ -38,17 +38,29 @@ Annual freelance filing (inkomstenbelasting form 47).
 | betalingen | array | No | Payment records |
 | rapportageStatus | enum | Yes | One of `draft`, `submitted`, `approved`, `archived` |
 
-## Requirements
+## ADDED Requirements
 
-### REQ-DPA-001: OpdrachtgeversVerklaring register
+### Requirement: REQ-DPA-001 — OpdrachtgeversVerklaring register
 
-SHALL declare `OpdrachtgeversVerklaring` register for Wet DBA declarations with RBAC restricting read to bookkeeper/payroll-officer/auditor.
+The system SHALL declare an `OpdrachtgeversVerklaring` register for Wet DBA declarations with RBAC restricting read to bookkeeper/payroll-officer/auditor.
 
-### REQ-DPA-002: IB47Record register
+#### Scenario: Opdrachtgeversverklaring is RBAC-restricted
 
-SHALL declare `IB47Record` register for annual freelance income reporting with RBAC restricting read to authorized roles.
+- **GIVEN** an OpdrachtgeversVerklaring record
+- **WHEN** a user without the bookkeeper, payroll-officer, or auditor role requests it
+- **THEN** the read MUST be denied; only the authorized roles MAY read it.
 
-### REQ-DPA-003: Salarisbureau openconnector sources
+### Requirement: REQ-DPA-002 — IB47Record register
+
+The system SHALL declare an `IB47Record` register for annual freelance income reporting with RBAC restricting read to authorized roles.
+
+#### Scenario: IB47 records are RBAC-restricted special-category data
+
+- **GIVEN** an IB47Record with personnel income data
+- **WHEN** an unauthorized user requests it
+- **THEN** the read MUST be denied and the access MUST be logged via the immutable audit trail.
+
+### Requirement: REQ-DPA-003 — Salarisbureau openconnector sources
 
 SHALL declare openconnector source rows for ADP/Loket/Visma/Nmbrs OAuth2 salary feed imports, materializing as loonkosten journal entries.
 
@@ -58,11 +70,17 @@ GIVEN ADP OAuth configured with credentials
 WHEN monthly salary run syncs  
 THEN journal entries materialize for each employee per period.
 
-### REQ-DPA-004: Opdrachtgeversverklaring docudesk template
+### Requirement: REQ-DPA-004 — Opdrachtgeversverklaring docudesk template
 
-SHALL reference standard docudesk template for opdrachtgeversverklaring.
+The system SHALL reference a standard docudesk template for the opdrachtgeversverklaring.
 
-### REQ-DPA-005: IB47-formulier docudesk template
+#### Scenario: Opdrachtgeversverklaring renders from a docudesk template
+
+- **GIVEN** an accepted OpdrachtgeversVerklaring
+- **WHEN** the declaration document is generated
+- **THEN** rendering MUST resolve a docudesk template URI, not a shillinq-local renderer.
+
+### Requirement: REQ-DPA-005 — IB47-formulier docudesk template
 
 SHALL reference docudesk template for IB47-formulier (Belastingdienst format) with annual batch submission.
 
@@ -72,9 +90,15 @@ GIVEN ZZP workers with income records in 2025
 WHEN annual IB47 batch is prepared  
 THEN each IB47Record generates a Form 47 for submission to Belastingdienst.
 
-### REQ-DPA-006: Manifest navigation entry
+### Requirement: REQ-DPA-006 — Manifest navigation entry
 
-SHALL add `featureFlags.mkb-detachering` navigation for payroll/detachering administration.
+The system SHALL add a `featureFlags.mkb-detachering` navigation entry for payroll/detachering administration.
+
+#### Scenario: Detachering navigation is feature-flag gated
+
+- **GIVEN** the `mkb-detachering` feature flag is off
+- **WHEN** the UI renders the menu
+- **THEN** the detachering/payroll entry MUST NOT appear; it appears only when the flag is on.
 
 ## Test Plan
 

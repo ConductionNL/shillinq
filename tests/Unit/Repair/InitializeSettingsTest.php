@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/spec/tasks.md#task-11
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -25,6 +28,7 @@ use OCA\Shillinq\Service\StatementManifestService;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -46,6 +50,13 @@ class InitializeSettingsTest extends TestCase
      * @var StatementManifestService&MockObject
      */
     private StatementManifestService&MockObject $statementManifestService;
+
+    /**
+     * Mock ContainerInterface.
+     *
+     * @var ContainerInterface&MockObject
+     */
+    private ContainerInterface&MockObject $container;
 
     /**
      * Mock LoggerInterface.
@@ -77,15 +88,17 @@ class InitializeSettingsTest extends TestCase
     {
         parent::setUp();
 
-        $this->settingsService          = $this->createMock(SettingsService::class);
-        $this->statementManifestService = $this->createMock(StatementManifestService::class);
-        $this->logger                   = $this->createMock(LoggerInterface::class);
-        $this->output                   = $this->createMock(IOutput::class);
+        $this->settingsService          = $this->createMock(originalClassName: SettingsService::class);
+        $this->statementManifestService = $this->createMock(originalClassName: StatementManifestService::class);
+        $this->container                = $this->createMock(originalClassName: ContainerInterface::class);
+        $this->logger                   = $this->createMock(originalClassName: LoggerInterface::class);
+        $this->output                   = $this->createMock(originalClassName: IOutput::class);
 
         $this->repairStep = new InitializeSettings(
             settingsService: $this->settingsService,
             manifestService: $this->statementManifestService,
             logger: $this->logger,
+            container: $this->container,
         );
 
     }//end setUp()
@@ -99,8 +112,8 @@ class InitializeSettingsTest extends TestCase
     {
         $name = $this->repairStep->getName();
 
-        self::assertIsString($name);
-        self::assertNotEmpty($name);
+        self::assertIsString(actual: $name);
+        self::assertNotEmpty(actual: $name);
 
     }//end testGetNameReturnsDescriptiveString()
 
@@ -120,16 +133,18 @@ class InitializeSettingsTest extends TestCase
 
         $this->output->expects($this->once())
             ->method('warning')
-            ->with($this->stringContains('OpenRegister'));
+            ->with($this->stringContains(string: 'OpenRegister'));
 
         $this->repairStep->run(output: $this->output);
 
     }//end testRunSkipsWhenOpenRegisterUnavailable()
 
     /**
-     * Test that run() calls loadConfiguration and seedRgsTemplate on success.
+     * Test that run() calls loadConfiguration, seedRgsTemplate, seedAllocationRules, and seedProductAttributes on success.
      *
      * @return void
+     *
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
      */
     public function testRunCallsLoadConfigurationAndSeedTemplate(): void
     {
@@ -139,17 +154,23 @@ class InitializeSettingsTest extends TestCase
 
         $this->settingsService->expects($this->once())
             ->method('loadConfigurationForced')
-            ->willReturn(['success' => true, 'version' => '0.2.0']);
+            ->willReturn(['success' => true, 'version' => '0.3.0']);
+
+        // The default Administration seed (Task 14) runs first; stub it green.
+        $this->settingsService->method('seedDefaultAdministration')
+            ->willReturn(['success' => true, 'seeded' => 1, 'skipped' => 0]);
 
         $this->settingsService->expects($this->atLeastOnce())
             ->method('getSettings')
-            ->willReturn([
-                'rgs_template'      => 'mkb',
-                'administration_id' => 'adm-1',
-                'register'          => '',
-                'openregisters'     => true,
-                'isAdmin'           => false,
-            ]);
+            ->willReturn(
+                    [
+                        'rgs_template'      => 'mkb',
+                        'administration_id' => 'adm-1',
+                        'register'          => '',
+                        'openregisters'     => true,
+                        'isAdmin'           => false,
+                    ]
+                    );
 
         $this->settingsService->expects($this->once())
             ->method('seedRgsTemplate')
@@ -158,6 +179,33 @@ class InitializeSettingsTest extends TestCase
                 administrationId: 'adm-1'
             )
             ->willReturn(['success' => true, 'seeded' => 150, 'skipped' => 0]);
+
+        $this->settingsService->expects($this->once())
+            ->method('seedAllocationRules')
+            ->with(administrationId: 'adm-1')
+            ->willReturn(['success' => true, 'seeded' => 3, 'skipped' => 0]);
+
+        $this->settingsService->method('seedRj270Stages')
+            ->willReturn(['success' => true, 'seeded' => 5, 'skipped' => 0]);
+
+        $this->settingsService->method('seedRateCardTemplates')
+            ->willReturn(['success' => true, 'seeded' => 2, 'skipped' => 0]);
+
+        $this->settingsService->method('seedSelectielijst')
+            ->willReturn(['success' => true, 'seeded' => 100, 'skipped' => 0]);
+
+        // ProductAttribute seeds are called once per category (5 categories) per REQ-IPC-007.
+        $this->settingsService->expects($this->exactly(count: 5))
+            ->method('seedProductAttributes')
+            ->willReturn(['success' => true, 'seeded' => 12, 'skipped' => 0]);
+
+        $this->settingsService->method('getRegisterSlug')
+            ->willReturn('shillinq');
+
+        // Container get() throws for ScheduledWorkflowMapper so registerIv3ScheduledWorkflow
+        // exits via its inner catch block without reaching the outer try/catch in run().
+        $this->container->method('get')
+            ->willThrowException(new \RuntimeException('Not available in test'));
 
         $this->repairStep->run(output: $this->output);
 
@@ -180,23 +228,33 @@ class InitializeSettingsTest extends TestCase
             ->method('loadConfigurationForced')
             ->willReturn(['success' => true, 'version' => '0.2.0']);
 
+        // The default Administration is seeded regardless of administration_id (REQ-MA-001);
+        // stub it green so it does not emit an unrelated warning in this C2 assertion.
+        $this->settingsService->method('seedDefaultAdministration')
+            ->willReturn(['success' => true, 'seeded' => 1, 'skipped' => 0]);
+
         $this->settingsService->expects($this->atLeastOnce())
             ->method('getSettings')
-            ->willReturn([
-                'rgs_template'      => 'mkb',
-                'administration_id' => '',
-                'register'          => '',
-                'openregisters'     => true,
-                'isAdmin'           => false,
-            ]);
+            ->willReturn(
+                    [
+                        'rgs_template'      => 'mkb',
+                        'administration_id' => '',
+                        'register'          => '',
+                        'openregisters'     => true,
+                        'isAdmin'           => false,
+                    ]
+                    );
 
-        // C2: seedRgsTemplate must NOT be called when administrationId is empty.
+        // C2: seedRgsTemplate and seedAllocationRules must NOT be called when administrationId is empty.
         $this->settingsService->expects($this->never())
             ->method('seedRgsTemplate');
 
+        $this->settingsService->expects($this->never())
+            ->method('seedAllocationRules');
+
         $this->output->expects($this->atLeastOnce())
             ->method('warning')
-            ->with($this->stringContains('administration_id'));
+            ->with($this->stringContains(string: 'administration_id'));
 
         $this->repairStep->run(output: $this->output);
 
@@ -219,9 +277,12 @@ class InitializeSettingsTest extends TestCase
             ->method('loadConfigurationForced')
             ->willReturn(['success' => false, 'message' => 'Config import error']);
 
-        // H2: seedRgsTemplate must NOT be called when schema import failed.
+        // H2: seedRgsTemplate and seedAllocationRules must NOT be called when schema import failed.
         $this->settingsService->expects($this->never())
             ->method('seedRgsTemplate');
+
+        $this->settingsService->expects($this->never())
+            ->method('seedAllocationRules');
 
         $this->output->expects($this->atLeastOnce())
             ->method('warning');
@@ -229,5 +290,4 @@ class InitializeSettingsTest extends TestCase
         $this->repairStep->run(output: $this->output);
 
     }//end testRunSkipsSeedWhenLoadConfigurationFails()
-
 }//end class

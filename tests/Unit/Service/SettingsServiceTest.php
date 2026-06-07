@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/spec/tasks.md#task-11
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -199,4 +202,268 @@ class SettingsServiceTest extends TestCase
 
     }//end testIsOpenRegisterAvailableDelegatesToAppManager()
 
+    /**
+     * Test seedProductAttributes returns failure when OpenRegister is unavailable.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
+     */
+    public function testSeedProductAttributesFailsWhenOpenRegisterUnavailable(): void
+    {
+        $this->appManager->expects($this->once())
+            ->method('isInstalled')
+            ->with('openregister')
+            ->willReturn(false);
+
+        $result = $this->service->seedProductAttributes(category: 'office');
+
+        self::assertFalse($result['success']);
+        self::assertStringContainsString('OpenRegister', $result['message']);
+
+    }//end testSeedProductAttributesFailsWhenOpenRegisterUnavailable()
+
+    /**
+     * Test seedProductAttributes returns failure for unknown category.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
+     */
+    public function testSeedProductAttributesFailsForUnknownCategory(): void
+    {
+        $this->appManager->expects($this->once())
+            ->method('isInstalled')
+            ->with('openregister')
+            ->willReturn(true);
+
+        $result = $this->service->seedProductAttributes(category: 'nonexistent_category');
+
+        self::assertFalse($result['success']);
+        self::assertStringContainsString('nonexistent', $result['message']);
+
+    }//end testSeedProductAttributesFailsForUnknownCategory()
+
+    /**
+     * Test that all five ProductAttribute seed files exist and parse as valid JSON.
+     *
+     * Covers REQ-IPC-006: seed files parse and validate.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-8
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-9
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-10
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-11
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-12
+     */
+    public function testProductAttributeSeedFilesAreValidJson(): void
+    {
+        $categories = ['office', 'it_hardware', 'logistics', 'food_beverage', 'clothing'];
+        $seedDir    = __DIR__.'/../../../lib/Settings/seeds/';
+
+        foreach ($categories as $category) {
+            $filename = $seedDir.'product-attributes-'.str_replace('_', '-', $category).'.json';
+            self::assertFileExists($filename, 'Seed file must exist for category: '.$category);
+
+            $content = file_get_contents($filename);
+            self::assertNotFalse($content, 'Must be able to read seed file: '.$filename);
+
+            $data = json_decode($content, associative: true);
+            self::assertSame(JSON_ERROR_NONE, json_last_error(), 'Seed file must be valid JSON: '.$filename);
+            self::assertArrayHasKey('productAttributes', $data, 'Seed file must have productAttributes key: '.$filename);
+            self::assertNotEmpty($data['productAttributes'], 'Seed file must have at least one attribute: '.$filename);
+
+            foreach ($data['productAttributes'] as $attr) {
+                self::assertArrayHasKey('name', $attr, 'Each attribute must have name in: '.$filename);
+                self::assertArrayHasKey('dataType', $attr, 'Each attribute must have dataType in: '.$filename);
+                self::assertArrayHasKey('applicableToCategories', $attr, 'Each attribute must have applicableToCategories in: '.$filename);
+                self::assertArrayHasKey('status', $attr, 'Each attribute must have status in: '.$filename);
+                self::assertContains($attr['dataType'], ['text', 'number', 'boolean', 'enum', 'date'], 'dataType must be valid enum value in: '.$filename);
+                self::assertContains($attr['status'], ['active', 'archived'], 'status must be active or archived in: '.$filename);
+            }
+        }//end foreach
+
+    }//end testProductAttributeSeedFilesAreValidJson()
+
+    /**
+     * Test seedProductAttributes calls ObjectService for a known category.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
+     */
+    public function testSeedProductAttributesCallsObjectServiceForKnownCategory(): void
+    {
+        $this->appManager->expects($this->once())
+            ->method('isInstalled')
+            ->with('openregister')
+            ->willReturn(true);
+
+        $this->appConfig->expects($this->once())
+            ->method('getValueString')
+            ->willReturn('shillinq');
+
+        $mockObjectService = $this->createMock(\stdClass::class);
+
+        $this->container->expects($this->once())
+            ->method('get')
+            ->with('OCA\OpenRegister\Service\ObjectService')
+            ->willReturn($mockObjectService);
+
+        $result = $this->service->seedProductAttributes(category: 'office');
+
+        self::assertArrayHasKey('success', $result);
+
+    }//end testSeedProductAttributesCallsObjectServiceForKnownCategory()
+
+    /**
+     * Test seedDefaultAdministration returns failure when OpenRegister is unavailable.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-14
+     */
+    public function testSeedDefaultAdministrationFailsWhenOpenRegisterUnavailable(): void
+    {
+        $this->appManager->expects($this->once())
+            ->method('isInstalled')
+            ->with('openregister')
+            ->willReturn(false);
+
+        $result = $this->service->seedDefaultAdministration();
+
+        self::assertFalse($result['success']);
+        self::assertStringContainsString('OpenRegister', $result['message']);
+
+    }//end testSeedDefaultAdministrationFailsWhenOpenRegisterUnavailable()
+
+    /**
+     * Test the default-administration seed file parses and carries the required fields.
+     *
+     * Covers REQ-MA-001 / REQ-MA-007: the seed provides exactly one Administration
+     * with a unique administrationCode dedupe key and the lifecycle/backup defaults
+     * the repair step relies on.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-14
+     */
+    public function testDefaultAdministrationSeedFileIsValid(): void
+    {
+        $seedPath = __DIR__.'/../../../lib/Settings/seeds/administraties/default.json';
+        self::assertFileExists($seedPath, 'Default administration seed file must exist.');
+
+        $content = file_get_contents($seedPath);
+        self::assertNotFalse($content, 'Must be able to read default administration seed file.');
+
+        $data = json_decode($content, associative: true);
+        self::assertSame(JSON_ERROR_NONE, json_last_error(), 'Default administration seed must be valid JSON.');
+        self::assertArrayHasKey('administrations', $data, 'Seed must have an administrations key.');
+        self::assertCount(1, $data['administrations'], 'Exactly one default administration must be seeded.');
+
+        $admin = $data['administrations'][0];
+        foreach (['administrationCode', 'name', 'legalForm', 'status', 'backupSchedule', 'dataRetentionYears'] as $field) {
+            self::assertArrayHasKey($field, $admin, 'Default administration must declare '.$field.'.');
+        }
+
+        self::assertSame('ADM-001', $admin['administrationCode'], 'Default administration code must be ADM-001.');
+        self::assertSame('actief', $admin['status'], 'Default administration must seed as actief.');
+        self::assertSame(7, $admin['dataRetentionYears'], 'Default retention must be the 7-year wettelijke bewaartermijn.');
+
+    }//end testDefaultAdministrationSeedFileIsValid()
+
+    /**
+     * Test seedDefaultAdministration resolves ObjectService when OpenRegister is available.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-14
+     */
+    public function testSeedDefaultAdministrationResolvesObjectService(): void
+    {
+        $this->appManager->expects($this->once())
+            ->method('isInstalled')
+            ->with('openregister')
+            ->willReturn(true);
+
+        $mockObjectService = $this->createMock(\stdClass::class);
+
+        $this->container->expects($this->once())
+            ->method('get')
+            ->with('OCA\OpenRegister\Service\ObjectService')
+            ->willReturn($mockObjectService);
+
+        $result = $this->service->seedDefaultAdministration();
+
+        self::assertArrayHasKey('success', $result);
+
+    }//end testSeedDefaultAdministrationResolvesObjectService()
+
+    /**
+     * Test the multi-administratie register fragment declares the five required schemas.
+     *
+     * Covers Tasks 5-9: Administration, AdministrationMembership, IntercompanyJournalEntry,
+     * ConsolidationMapping and AdministrationMigration are declared in the ADR-037 fragment
+     * (never in the monolith shillinq_register.json), each as a typed object with required fields.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-5
+     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-6
+     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-7
+     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-8
+     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-9
+     */
+    public function testMultiAdministratieRegisterFragmentDeclaresSchemas(): void
+    {
+        $fragmentPath = __DIR__.'/../../../lib/Settings/register.d/bookkeeping-multi-administratie.json';
+        self::assertFileExists($fragmentPath, 'Multi-administratie register fragment must exist.');
+
+        $content = file_get_contents($fragmentPath);
+        self::assertNotFalse($content, 'Must be able to read the register fragment.');
+
+        $data = json_decode($content, associative: true);
+        self::assertSame(JSON_ERROR_NONE, json_last_error(), 'Register fragment must be valid JSON.');
+
+        $schemas = ($data['components']['schemas'] ?? []);
+        foreach (['Administration', 'AdministrationMembership', 'IntercompanyJournalEntry', 'ConsolidationMapping', 'AdministrationMigration'] as $schemaName) {
+            self::assertArrayHasKey($schemaName, $schemas, $schemaName.' schema must be declared in the fragment.');
+            self::assertSame('object', $schemas[$schemaName]['type'], $schemaName.' must be an object schema.');
+            self::assertNotEmpty($schemas[$schemaName]['required'], $schemaName.' must declare required fields.');
+        }
+
+        // Administration is the tenant boundary: administrationCode is the dedupe key.
+        self::assertContains('administrationCode', $schemas['Administration']['required']);
+        // Membership ties a user to an administration with a role (Task 6).
+        self::assertContains('userId', $schemas['AdministrationMembership']['required']);
+        self::assertContains('administrationId', $schemas['AdministrationMembership']['required']);
+        self::assertContains('role', $schemas['AdministrationMembership']['required']);
+
+    }//end testMultiAdministratieRegisterFragmentDeclaresSchemas()
+
+    /**
+     * Test the multi-administratie schemas are NOT written into the monolith register (ADR-037).
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-1
+     */
+    public function testMultiAdministratieSchemasNotInMonolith(): void
+    {
+        $monolithPath = __DIR__.'/../../../lib/Settings/shillinq_register.json';
+        self::assertFileExists($monolithPath, 'Monolith register must exist.');
+
+        $data    = json_decode(file_get_contents($monolithPath), associative: true);
+        $schemas = ($data['components']['schemas'] ?? []);
+
+        foreach (['Administration', 'AdministrationMembership', 'IntercompanyJournalEntry', 'ConsolidationMapping', 'AdministrationMigration'] as $schemaName) {
+            self::assertArrayNotHasKey(
+                $schemaName,
+                $schemas,
+                $schemaName.' must live in the register.d fragment, never the monolith (ADR-037).'
+            );
+        }
+
+    }//end testMultiAdministratieSchemasNotInMonolith()
 }//end class

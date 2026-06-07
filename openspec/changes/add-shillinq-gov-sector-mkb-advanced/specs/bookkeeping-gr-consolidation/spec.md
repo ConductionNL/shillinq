@@ -41,9 +41,9 @@ The allocation key defining how GR costs are divided among deelnemers.
 |----------|------|----------|-------------|
 | eliminationFlag | boolean | No | True if this posting is inter-GR and should be eliminated in consolidated view |
 
-## Requirements
+## ADDED Requirements
 
-### REQ-GRC-001: GRDeelnemer register
+### Requirement: REQ-GRC-001 — GRDeelnemer register
 
 SHALL declare a `GRDeelnemer` register for managing GR member participation, with percentage or quota-based share tracking.
 
@@ -53,7 +53,7 @@ GIVEN a GR with three deelnemers (A: 40%, B: 35%, C: 25%)
 WHEN costs are posted to the GR  
 THEN the allocation key divides them per verdeelsleutel.
 
-### REQ-GRC-002: GRVerdeelsleutel register
+### Requirement: REQ-GRC-002 — GRVerdeelsleutel register
 
 SHALL declare a `GRVerdeelsleutel` register defining cost allocation rules per cost cluster.
 
@@ -63,7 +63,7 @@ GIVEN a verdeelsleutel "60% inhabitants, 40% area"
 WHEN monthly costs are posted  
 THEN automatic doorbelasting postings are generated per deelnemer.
 
-### REQ-GRC-003: Elimination flag on GLLine
+### Requirement: REQ-GRC-003 — Elimination flag on GLLine
 
 SHALL add `eliminationFlag: boolean` field to `GLLine` to mark inter-GR transactions (e.g., GR paying a deelnemer or vice versa) for exclusion from consolidated views.
 
@@ -73,7 +73,7 @@ GIVEN a GR transferring funds to deelnemer A
 WHEN consolidated trial balance is generated  
 THEN the transaction is excluded via `WHERE eliminationFlag = false` filter.
 
-### REQ-GRC-004: Consolidated trial balance aggregation
+### Requirement: REQ-GRC-004 — Consolidated trial balance aggregation
 
 SHALL declare an `x-openregister-aggregations` view filtering out elimination-flagged postings to produce the consolidated GR trial balance.
 
@@ -83,7 +83,7 @@ GIVEN multiple inter-GR transactions marked with `eliminationFlag: true`
 WHEN consolidated trial balance is queried  
 THEN these postings are excluded; balance matches deelnemer sum minus eliminations.
 
-### REQ-GRC-005: Per-deelnemer doorbelasting report
+### Requirement: REQ-GRC-005 — Per-deelnemer doorbelasting report
 
 SHALL provide a report showing each deelnemer's share of GR costs per verdeelsleutel.
 
@@ -93,9 +93,15 @@ GIVEN a GR with active deelnemers and a verdeelsleutel
 WHEN monthly doorbelasting is calculated  
 THEN each deelnemer receives a list of their allocated costs.
 
-### REQ-GRC-006: Manifest navigation entry
+### Requirement: REQ-GRC-006 — Manifest navigation entry
 
-SHALL add a feature-flag-controlled navigation entry under `featureFlags.gov-gr` for GR-specific consolidation views.
+The system SHALL add a feature-flag-controlled navigation entry under `featureFlags.gov-gr` for GR-specific consolidation views.
+
+#### Scenario: GR navigation is feature-flag gated
+
+- **GIVEN** the `gov-gr` feature flag is off
+- **WHEN** the UI renders the menu
+- **THEN** the GR consolidation entry MUST NOT appear; it appears only when the flag is on.
 
 ## Test Plan
 
