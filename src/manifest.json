@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "1.3.0",
+	"version": "1.4.0",
 	"dependencies": [
 		"openregister"
 	],
@@ -617,6 +617,63 @@
 					"icon": "CarOutline",
 					"route": "MileageLog",
 					"order": 30
+				}
+			]
+		},
+		{
+			"id": "Consolidatie",
+			"label": "Consolidatie",
+			"icon": "Sitemap",
+			"order": 38,
+			"children": [
+				{
+					"id": "IntercompanyRelations",
+					"label": "Intercompany Relations",
+					"icon": "LinkVariant",
+					"route": "IntercompanyRelations",
+					"order": 10
+				},
+				{
+					"id": "IntercompanyTransactions",
+					"label": "Intercompany Transactions",
+					"icon": "SwapHorizontal",
+					"route": "IntercompanyTransactions",
+					"order": 20
+				},
+				{
+					"id": "IntercompanyMatches",
+					"label": "Intercompany Matches",
+					"icon": "Compare",
+					"route": "IntercompanyMatches",
+					"order": 30
+				},
+				{
+					"id": "IntercompanyMismatches",
+					"label": "Intercompany Mismatches",
+					"icon": "AlertCircleOutline",
+					"route": "IntercompanyMismatches",
+					"order": 40
+				},
+				{
+					"id": "ToleranceRules",
+					"label": "Tolerance Rules",
+					"icon": "Tune",
+					"route": "ToleranceRules",
+					"order": 50
+				},
+				{
+					"id": "CounterpartyBalances",
+					"label": "Counterparty Balances",
+					"icon": "ScaleBalance",
+					"route": "CounterpartyBalances",
+					"order": 60
+				},
+				{
+					"id": "EliminationJournals",
+					"label": "Elimination Journals",
+					"icon": "BookRemoveOutline",
+					"route": "EliminationJournals",
+					"order": 70
 				}
 			]
 		}
@@ -7231,6 +7288,787 @@
 				],
 				"defaultSort": "subsidieNumber",
 				"detailRoute": "SubsidieDetail"
+			}
+		},
+		{
+			"id": "IntercompanyRelations",
+			"route": "/consolidatie/intercompany-relations",
+			"type": "index",
+			"title": "Intercompany Relations",
+			"config": {
+				"register": "shillinq",
+				"schema": "IntercompanyRelation",
+				"columns": [
+					{
+						"key": "relationId",
+						"label": "Relation",
+						"sortable": true
+					},
+					{
+						"key": "relationType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "entityAId",
+						"label": "Entity A",
+						"sortable": true
+					},
+					{
+						"key": "entityBId",
+						"label": "Entity B",
+						"sortable": true
+					},
+					{
+						"key": "activeFrom",
+						"label": "Active From",
+						"sortable": true
+					}
+				],
+				"defaultSort": "relationId",
+				"detailRoute": "IntercompanyRelationsDetail"
+			}
+		},
+		{
+			"id": "IntercompanyRelationsDetail",
+			"route": "/consolidatie/intercompany-relations/:id",
+			"type": "detail",
+			"title": "Intercompany Relations",
+			"config": {
+				"register": "shillinq",
+				"schema": "IntercompanyRelation",
+				"fields": [
+					{
+						"key": "relationId",
+						"label": "Relation",
+						"type": "string"
+					},
+					{
+						"key": "groupId",
+						"label": "Group",
+						"type": "string"
+					},
+					{
+						"key": "entityAId",
+						"label": "Entity A",
+						"type": "string"
+					},
+					{
+						"key": "entityBId",
+						"label": "Entity B",
+						"type": "string"
+					},
+					{
+						"key": "relationType",
+						"label": "Type",
+						"type": "string"
+					},
+					{
+						"key": "defaultAccountA",
+						"label": "Default Account A",
+						"type": "string"
+					},
+					{
+						"key": "defaultAccountB",
+						"label": "Default Account B",
+						"type": "string"
+					},
+					{
+						"key": "toleranceAbsolute",
+						"label": "Tolerance (absolute)",
+						"type": "number"
+					},
+					{
+						"key": "toleranceRelative",
+						"label": "Tolerance (relative)",
+						"type": "number"
+					},
+					{
+						"key": "activeFrom",
+						"label": "Active From",
+						"type": "date-time"
+					},
+					{
+						"key": "activeTo",
+						"label": "Active To",
+						"type": "date-time"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "IntercompanyRelations"
+			}
+		},
+		{
+			"id": "IntercompanyTransactions",
+			"route": "/consolidatie/intercompany-transactions",
+			"type": "index",
+			"title": "Intercompany Transactions",
+			"config": {
+				"register": "shillinq",
+				"schema": "IntercompanyTransaction",
+				"columns": [
+					{
+						"key": "bookingDate",
+						"label": "Date",
+						"sortable": true
+					},
+					{
+						"key": "glAccount",
+						"label": "Account",
+						"sortable": true
+					},
+					{
+						"key": "debitAmount",
+						"label": "Debit",
+						"sortable": true
+					},
+					{
+						"key": "creditAmount",
+						"label": "Credit",
+						"sortable": true
+					},
+					{
+						"key": "detectionMethod",
+						"label": "Method",
+						"sortable": true
+					},
+					{
+						"key": "detectionConfidence",
+						"label": "Confidence",
+						"sortable": true
+					},
+					{
+						"key": "isMatched",
+						"label": "Matched",
+						"sortable": true
+					}
+				],
+				"defaultSort": "bookingDate",
+				"detailRoute": "IntercompanyTransactionsDetail"
+			}
+		},
+		{
+			"id": "IntercompanyTransactionsDetail",
+			"route": "/consolidatie/intercompany-transactions/:id",
+			"type": "detail",
+			"title": "Intercompany Transactions",
+			"config": {
+				"register": "shillinq",
+				"schema": "IntercompanyTransaction",
+				"fields": [
+					{
+						"key": "sourceAdministrationId",
+						"label": "Source Administration",
+						"type": "string"
+					},
+					{
+						"key": "sourceJournalEntryId",
+						"label": "Journal Entry",
+						"type": "string"
+					},
+					{
+						"key": "bookingDate",
+						"label": "Date",
+						"type": "date-time"
+					},
+					{
+						"key": "glAccount",
+						"label": "Account",
+						"type": "string"
+					},
+					{
+						"key": "debitAmount",
+						"label": "Debit",
+						"type": "number"
+					},
+					{
+						"key": "creditAmount",
+						"label": "Credit",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "counterpartyEntityId",
+						"label": "Counterparty",
+						"type": "string"
+					},
+					{
+						"key": "relationId",
+						"label": "Relation",
+						"type": "string"
+					},
+					{
+						"key": "detectionMethod",
+						"label": "Method",
+						"type": "string"
+					},
+					{
+						"key": "detectionConfidence",
+						"label": "Confidence",
+						"type": "string"
+					},
+					{
+						"key": "isMatched",
+						"label": "Matched",
+						"type": "boolean"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "IntercompanyTransactions"
+			}
+		},
+		{
+			"id": "IntercompanyMatches",
+			"route": "/consolidatie/intercompany-matches",
+			"type": "index",
+			"title": "Intercompany Matches",
+			"config": {
+				"register": "shillinq",
+				"schema": "IntercompanyMatch",
+				"columns": [
+					{
+						"key": "periodId",
+						"label": "Period",
+						"sortable": true
+					},
+					{
+						"key": "relationId",
+						"label": "Relation",
+						"sortable": true
+					},
+					{
+						"key": "totalAmountA",
+						"label": "Total A",
+						"sortable": true
+					},
+					{
+						"key": "totalAmountB",
+						"label": "Total B",
+						"sortable": true
+					},
+					{
+						"key": "mismatchAmount",
+						"label": "Mismatch",
+						"sortable": true
+					},
+					{
+						"key": "matchStatus",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "periodId",
+				"detailRoute": "IntercompanyMatchesDetail"
+			}
+		},
+		{
+			"id": "IntercompanyMatchesDetail",
+			"route": "/consolidatie/intercompany-matches/:id",
+			"type": "detail",
+			"title": "Intercompany Matches",
+			"config": {
+				"register": "shillinq",
+				"schema": "IntercompanyMatch",
+				"fields": [
+					{
+						"key": "matchId",
+						"label": "Match",
+						"type": "string"
+					},
+					{
+						"key": "periodId",
+						"label": "Period",
+						"type": "string"
+					},
+					{
+						"key": "relationId",
+						"label": "Relation",
+						"type": "string"
+					},
+					{
+						"key": "totalAmountA",
+						"label": "Total A",
+						"type": "number"
+					},
+					{
+						"key": "totalAmountB",
+						"label": "Total B",
+						"type": "number"
+					},
+					{
+						"key": "mismatchAmount",
+						"label": "Mismatch",
+						"type": "number"
+					},
+					{
+						"key": "mismatchPercentage",
+						"label": "Mismatch %",
+						"type": "number"
+					},
+					{
+						"key": "matchStatus",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "generatedEliminationId",
+						"label": "Elimination",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "IntercompanyMatches"
+			}
+		},
+		{
+			"id": "IntercompanyMismatches",
+			"route": "/consolidatie/intercompany-mismatches",
+			"type": "index",
+			"title": "Intercompany Mismatches",
+			"config": {
+				"register": "shillinq",
+				"schema": "IntercompanyMismatch",
+				"columns": [
+					{
+						"key": "periodId",
+						"label": "Period",
+						"sortable": true
+					},
+					{
+						"key": "relationId",
+						"label": "Relation",
+						"sortable": true
+					},
+					{
+						"key": "causeClassification",
+						"label": "Cause",
+						"sortable": true
+					},
+					{
+						"key": "amount",
+						"label": "Amount",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "assigneeId",
+						"label": "Assignee",
+						"sortable": true
+					}
+				],
+				"defaultSort": "periodId",
+				"detailRoute": "IntercompanyMismatchesDetail"
+			}
+		},
+		{
+			"id": "IntercompanyMismatchesDetail",
+			"route": "/consolidatie/intercompany-mismatches/:id",
+			"type": "detail",
+			"title": "Intercompany Mismatches",
+			"config": {
+				"register": "shillinq",
+				"schema": "IntercompanyMismatch",
+				"fields": [
+					{
+						"key": "mismatchId",
+						"label": "Mismatch",
+						"type": "string"
+					},
+					{
+						"key": "periodId",
+						"label": "Period",
+						"type": "string"
+					},
+					{
+						"key": "relationId",
+						"label": "Relation",
+						"type": "string"
+					},
+					{
+						"key": "matchId",
+						"label": "Match",
+						"type": "string"
+					},
+					{
+						"key": "causeClassification",
+						"label": "Cause",
+						"type": "string"
+					},
+					{
+						"key": "amount",
+						"label": "Amount",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "assigneeId",
+						"label": "Assignee",
+						"type": "string"
+					},
+					{
+						"key": "resolutionAction",
+						"label": "Resolution Action",
+						"type": "string"
+					},
+					{
+						"key": "resolutionNotes",
+						"label": "Resolution Notes",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "IntercompanyMismatches"
+			}
+		},
+		{
+			"id": "ToleranceRules",
+			"route": "/consolidatie/tolerance-rules",
+			"type": "index",
+			"title": "Tolerance Rules",
+			"config": {
+				"register": "shillinq",
+				"schema": "ToleranceRule",
+				"columns": [
+					{
+						"key": "ruleId",
+						"label": "Rule",
+						"sortable": true
+					},
+					{
+						"key": "relationTypeFilter",
+						"label": "Relation Type",
+						"sortable": true
+					},
+					{
+						"key": "toleranceAbsolute",
+						"label": "Absolute",
+						"sortable": true
+					},
+					{
+						"key": "toleranceRelative",
+						"label": "Relative",
+						"sortable": true
+					},
+					{
+						"key": "toleranceMethod",
+						"label": "Method",
+						"sortable": true
+					},
+					{
+						"key": "autoResolve",
+						"label": "Auto-resolve",
+						"sortable": true
+					}
+				],
+				"defaultSort": "ruleId",
+				"detailRoute": "ToleranceRulesDetail"
+			}
+		},
+		{
+			"id": "ToleranceRulesDetail",
+			"route": "/consolidatie/tolerance-rules/:id",
+			"type": "detail",
+			"title": "Tolerance Rules",
+			"config": {
+				"register": "shillinq",
+				"schema": "ToleranceRule",
+				"fields": [
+					{
+						"key": "ruleId",
+						"label": "Rule",
+						"type": "string"
+					},
+					{
+						"key": "groupId",
+						"label": "Group",
+						"type": "string"
+					},
+					{
+						"key": "relationTypeFilter",
+						"label": "Relation Type",
+						"type": "string"
+					},
+					{
+						"key": "toleranceAbsolute",
+						"label": "Absolute",
+						"type": "number"
+					},
+					{
+						"key": "toleranceRelative",
+						"label": "Relative",
+						"type": "number"
+					},
+					{
+						"key": "toleranceMethod",
+						"label": "Method",
+						"type": "string"
+					},
+					{
+						"key": "fallbackAccount",
+						"label": "Fallback Account",
+						"type": "string"
+					},
+					{
+						"key": "autoResolve",
+						"label": "Auto-resolve",
+						"type": "boolean"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ToleranceRules"
+			}
+		},
+		{
+			"id": "CounterpartyBalances",
+			"route": "/consolidatie/counterparty-balances",
+			"type": "index",
+			"title": "Counterparty Balances",
+			"config": {
+				"register": "shillinq",
+				"schema": "CounterpartyBalance",
+				"columns": [
+					{
+						"key": "entityAId",
+						"label": "Entity A",
+						"sortable": true
+					},
+					{
+						"key": "entityBId",
+						"label": "Entity B",
+						"sortable": true
+					},
+					{
+						"key": "periodId",
+						"label": "Period",
+						"sortable": true
+					},
+					{
+						"key": "netPositionAtoB",
+						"label": "Net Position",
+						"sortable": true
+					},
+					{
+						"key": "mismatchCount",
+						"label": "Mismatches",
+						"sortable": true
+					},
+					{
+						"key": "lastUpdated",
+						"label": "Updated",
+						"sortable": true
+					}
+				],
+				"defaultSort": "entityAId",
+				"detailRoute": "CounterpartyBalancesDetail"
+			}
+		},
+		{
+			"id": "CounterpartyBalancesDetail",
+			"route": "/consolidatie/counterparty-balances/:id",
+			"type": "detail",
+			"title": "Counterparty Balances",
+			"config": {
+				"register": "shillinq",
+				"schema": "CounterpartyBalance",
+				"fields": [
+					{
+						"key": "balanceId",
+						"label": "Balance",
+						"type": "string"
+					},
+					{
+						"key": "groupId",
+						"label": "Group",
+						"type": "string"
+					},
+					{
+						"key": "entityAId",
+						"label": "Entity A",
+						"type": "string"
+					},
+					{
+						"key": "entityBId",
+						"label": "Entity B",
+						"type": "string"
+					},
+					{
+						"key": "periodId",
+						"label": "Period",
+						"type": "string"
+					},
+					{
+						"key": "totalReceivablesAonB",
+						"label": "Receivables",
+						"type": "number"
+					},
+					{
+						"key": "totalPayablesAtoB",
+						"label": "Payables",
+						"type": "number"
+					},
+					{
+						"key": "netPositionAtoB",
+						"label": "Net Position",
+						"type": "number"
+					},
+					{
+						"key": "totalSalesAtoB",
+						"label": "Sales",
+						"type": "number"
+					},
+					{
+						"key": "totalPurchasesAtoB",
+						"label": "Purchases",
+						"type": "number"
+					},
+					{
+						"key": "transactionCount",
+						"label": "Transactions",
+						"type": "number"
+					},
+					{
+						"key": "mismatchCount",
+						"label": "Mismatches",
+						"type": "number"
+					},
+					{
+						"key": "lastUpdated",
+						"label": "Updated",
+						"type": "date-time"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "CounterpartyBalances"
+			}
+		},
+		{
+			"id": "EliminationJournals",
+			"route": "/consolidatie/elimination-journals",
+			"type": "index",
+			"title": "Elimination Journals",
+			"config": {
+				"register": "shillinq",
+				"schema": "EliminationJournal",
+				"columns": [
+					{
+						"key": "eliminationId",
+						"label": "Elimination",
+						"sortable": true
+					},
+					{
+						"key": "consolidationPeriodId",
+						"label": "Period",
+						"sortable": true
+					},
+					{
+						"key": "bookingDate",
+						"label": "Date",
+						"sortable": true
+					},
+					{
+						"key": "totalDebit",
+						"label": "Total Debit",
+						"sortable": true
+					},
+					{
+						"key": "totalCredit",
+						"label": "Total Credit",
+						"sortable": true
+					},
+					{
+						"key": "generatedBy",
+						"label": "Generated By",
+						"sortable": true
+					}
+				],
+				"defaultSort": "eliminationId",
+				"detailRoute": "EliminationJournalsDetail"
+			}
+		},
+		{
+			"id": "EliminationJournalsDetail",
+			"route": "/consolidatie/elimination-journals/:id",
+			"type": "detail",
+			"title": "Elimination Journals",
+			"config": {
+				"register": "shillinq",
+				"schema": "EliminationJournal",
+				"fields": [
+					{
+						"key": "eliminationId",
+						"label": "Elimination",
+						"type": "string"
+					},
+					{
+						"key": "consolidationPeriodId",
+						"label": "Period",
+						"type": "string"
+					},
+					{
+						"key": "matchId",
+						"label": "Match",
+						"type": "string"
+					},
+					{
+						"key": "bookingDate",
+						"label": "Date",
+						"type": "date-time"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "totalDebit",
+						"label": "Total Debit",
+						"type": "number"
+					},
+					{
+						"key": "totalCredit",
+						"label": "Total Credit",
+						"type": "number"
+					},
+					{
+						"key": "generatedBy",
+						"label": "Generated By",
+						"type": "string"
+					},
+					{
+						"key": "approvedBy",
+						"label": "Approved By",
+						"type": "string"
+					},
+					{
+						"key": "approvedAt",
+						"label": "Approved At",
+						"type": "date-time"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "EliminationJournals"
 			}
 		},
 		{
