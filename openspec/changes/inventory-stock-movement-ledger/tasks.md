@@ -26,12 +26,12 @@
   D2 (declarative lifecycle with immutability), D3 (GL materialisation per move type),
   D4 (reserved quantity workflow), D5 (stock ledger aggregation), D6 (audit trail with reason codes)
 
-- [ ] Task 5: Declare the `StockMove` schema in `lib/Settings/shillinq_register.json` with all
+- [x] Task 5: Declare the `StockMove` schema in `lib/Settings/shillinq_register.json` with all
   REQ-SM-002 fields (movementNumber, itemId, quantity, unitCost, movementType, sourceLocationId,
   destinationLocationId, referenceDocumentUri, movementReason, notes, draftedAt, postedAt,
   cancelledAt, administrationId, locked, lifecycleState)
 
-- [ ] Task 6: Add `x-openregister-lifecycle` to `StockMove` declaring every transition in
+- [x] Task 6: Add `x-openregister-lifecycle` to `StockMove` declaring every transition in
   REQ-SM-003 (`draft → posted → cancelled`) consuming OR lifecycle extension; immutability
   lock (`locked = true` on post) enforced via guard or computed field
 
