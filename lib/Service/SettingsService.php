@@ -1492,4 +1492,134 @@ class SettingsService
         }//end try
 
     }//end seedInventoryBarcodes()
+
+
+    /**
+     * Seed demo InventoryLot records from inventory-lots-demo.json, idempotently.
+     *
+     * Reads `lib/Settings/seeds/inventory-lots-demo.json` and imports
+     * InventoryLot records via OpenRegister's ObjectService. Deduplication key
+     * is `(administrationId, lotNumber)` per REQ-LOT-002 — re-running the
+     * repair step never creates duplicates, preserving operator edits. The
+     * seeded lots reference inventory-product-catalog demo SKUs; when those
+     * Products are absent the lots still load and become discoverable once
+     * the products land. Skips silently when no default administration is
+     * configured (C2 — prevents "default" contamination).
+     *
+     * @return array<string, mixed> Result with success flag, seeded count, skipped count, message.
+     *
+     * @spec openspec/changes/inventory-lot-batch-expiry/tasks.md#task-14
+     */
+    public function seedInventoryLots(): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/inventory-lots-demo.json';
+        if (file_exists($seedPath) === false) {
+            return [
+                'success' => false,
+                'message' => 'Seed file not found: inventory-lots-demo.json',
+            ];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return [
+                'success' => false,
+                'message' => 'Failed to read inventory-lots-demo.json',
+            ];
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return [
+                'success' => false,
+                'message' => 'Failed to parse inventory-lots-demo.json: '.json_last_error_msg(),
+            ];
+        }
+
+        $lots = ($data['lots'] ?? []);
+        if (empty($lots) === true) {
+            return [
+                'success' => true,
+                'message' => 'Seed file contains no lots, nothing to import.',
+                'seeded'  => 0,
+                'skipped' => 0,
+            ];
+        }
+
+        $settings         = $this->getSettings();
+        $administrationId = ($settings['administration_id'] ?? '');
+        if ($administrationId === '') {
+            return [
+                'success' => true,
+                'message' => 'No default administration configured, skipping lot seed.',
+                'seeded'  => 0,
+                'skipped' => 0,
+            ];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($lots as $lot) {
+                // Deduplication key (administrationId, lotNumber) — idempotent re-runs per REQ-LOT-002.
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('InventoryLot')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'administrationId' => $administrationId,
+                                'lotNumber'        => ($lot['lotNumber'] ?? ''),
+                            ],
+                            'limit'   => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $lot['administrationId'] = $administrationId;
+                $objectService->saveObject(
+                    object: $lot,
+                    register: $registerSlug,
+                    schema: 'InventoryLot',
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: inventory lots seeded',
+                ['seeded' => $seeded, 'skipped' => $skipped]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'Inventory lots seeded successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: inventory lot seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedInventoryLots()
 }//end class

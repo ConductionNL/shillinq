@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.5.3</version>
+    <version>0.5.4</version>
     <licence>agpl</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
@@ -79,5 +79,10 @@ Vrij en open source onder de EUPL-1.2-licentie.
              pending_confirmation appointments past their confirmationDeadline
              to cancelled with reason "Confirmation deadline passed". -->
         <job>OCA\Shillinq\Cron\CancelUnconfirmedAppointmentsJob</job>
+        <!-- inventory-lot-batch-expiry REQ-LOT-007: daily sweep raising
+             approaching-expiry (30/7 day thresholds) and expired alerts
+             for InventoryLot records. Idempotent via the ExpiryAlert
+             uniqueness key. -->
+        <job>OCA\Shillinq\Cron\LotExpiryAlertJob</job>
     </background-jobs>
 </info>
