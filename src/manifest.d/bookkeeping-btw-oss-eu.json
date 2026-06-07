@@ -1,0 +1,112 @@
+{
+	"menu": [
+		{
+			"id": "Bookkeeping",
+			"label": "Bookkeeping",
+			"icon": "icon-category-organization",
+			"order": 20,
+			"children": [
+				{
+					"id": "OssRegistration",
+					"label": "OSS Registration",
+					"icon": "EarthArrowRight",
+					"route": "OssRegistration",
+					"order": 70
+				},
+				{
+					"id": "OssReturns",
+					"label": "OSS Returns",
+					"icon": "FileDocumentOutline",
+					"route": "OssReturns",
+					"order": 71
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "OssRegistration",
+			"route": "/bookkeeping/oss/registration",
+			"type": "index",
+			"title": "OSS Registration",
+			"config": {
+				"register": "shillinq",
+				"schema": "OssRegistration",
+				"columns": [
+					{"key": "ossIdentifier", "label": "OSS-Identifier", "sortable": true},
+					{"key": "homeMemberState", "label": "Home member state", "sortable": true},
+					{"key": "registrationStatus", "label": "Status", "sortable": true},
+					{"key": "effectiveDate", "label": "Effective date", "sortable": true},
+					{"key": "administrationId", "label": "Administration", "sortable": true}
+				],
+				"defaultSort": "effectiveDate",
+				"detailRoute": "OssRegistrationDetail"
+			}
+		},
+		{
+			"id": "OssRegistrationDetail",
+			"route": "/bookkeeping/oss/registration/:id",
+			"type": "detail",
+			"title": "OSS Registration",
+			"config": {
+				"register": "shillinq",
+				"schema": "OssRegistration",
+				"fields": [
+					{"key": "ossIdentifier", "label": "OSS-Identifier", "type": "string"},
+					{"key": "effectiveDate", "label": "Effective date", "type": "string"},
+					{"key": "homeMemberState", "label": "Home member state", "type": "string"},
+					{"key": "destinationCountries", "label": "EU Destination Country", "type": "array"},
+					{"key": "registrationStatus", "label": "Status", "type": "string"},
+					{"key": "voluntaryBelowThreshold", "label": "Voluntary below threshold", "type": "boolean"},
+					{"key": "lockInPeriodEndDate", "label": "Lock-in end date", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"indexRoute": "OssRegistration"
+			}
+		},
+		{
+			"id": "OssReturns",
+			"route": "/bookkeeping/oss/returns",
+			"type": "index",
+			"title": "OSS Returns",
+			"config": {
+				"register": "shillinq",
+				"schema": "OssReturn",
+				"columns": [
+					{"key": "periodYear", "label": "Year", "sortable": true},
+					{"key": "periodQuarter", "label": "Quarter", "sortable": true},
+					{"key": "type", "label": "Type", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true},
+					{"key": "totalVatAmount", "label": "VAT amount", "sortable": true},
+					{"key": "belastingdienstKenmerk", "label": "Kenmerk", "sortable": true},
+					{"key": "administrationId", "label": "Administration", "sortable": true}
+				],
+				"defaultSort": "periodYear",
+				"detailRoute": "OssReturnDetail"
+			}
+		},
+		{
+			"id": "OssReturnDetail",
+			"route": "/bookkeeping/oss/returns/:id",
+			"type": "detail",
+			"title": "OSS Return",
+			"config": {
+				"register": "shillinq",
+				"schema": "OssReturn",
+				"fields": [
+					{"key": "periodYear", "label": "Year", "type": "number"},
+					{"key": "periodQuarter", "label": "Quarter", "type": "string"},
+					{"key": "registrationId", "label": "Registration", "type": "string"},
+					{"key": "type", "label": "Type", "type": "string"},
+					{"key": "correctsPeriod", "label": "Corrects period", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "totalTaxableBase", "label": "Taxable base", "type": "number"},
+					{"key": "totalVatAmount", "label": "VAT amount", "type": "number"},
+					{"key": "belastingdienstKenmerk", "label": "Kenmerk", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"indexRoute": "OssReturns"
+			}
+		}
+	]
+}
