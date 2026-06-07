@@ -40,16 +40,16 @@ use Psr\Log\LoggerInterface;
 class ComplianceSeeder
 {
     /**
-     * Mapping of T3 compliance seed file → target schema + dedup key field.
+     * Mapping of T3 compliance seed file → target schema + dedup key field + items array key.
      *
-     * @var array<int, array{file: string, schema: string, key: string}>
+     * @var array<int, array{file: string, schema: string, key: string, itemsKey: string}>
      */
     private const COMPLIANCE_SEEDS = [
-        ['file' => 'btw-tariffs-2026.json',             'schema' => 'VatTariff',         'key' => 'code'],
-        ['file' => 'bbv-taakvelden-2024.json',          'schema' => 'BbvTaakveld',       'key' => 'code'],
-        ['file' => 'rgs-to-bbv-mapping.json',           'schema' => 'BbvAccountMapping', 'key' => 'accountNumber'],
-        ['file' => 'selectielijst-gemeenten-2020.json', 'schema' => 'RetentionRule',     'key' => 'selectielijstCode'],
-        ['file' => 'rate-card-templates.json',          'schema' => 'RateCard',          'key' => 'level'],
+        ['file' => 'btw-tariffs-2026.json',             'schema' => 'VatTariff',         'key' => 'code',               'itemsKey' => 'tariffs'],
+        ['file' => 'bbv-taakvelden-2024.json',          'schema' => 'BbvTaakveld',       'key' => 'code',               'itemsKey' => 'taakvelden'],
+        ['file' => 'rgs-to-bbv-mapping.json',           'schema' => 'BbvAccountMapping', 'key' => 'accountNumber',      'itemsKey' => 'records'],
+        ['file' => 'selectielijst-gemeenten-2020.json', 'schema' => 'RetentionRule', 'key' => 'selectielijstCode', 'itemsKey' => 'retentionRules'],
+        ['file' => 'rate-card-templates.json',          'schema' => 'RateCard',          'key' => 'level',              'itemsKey' => 'rateCards'],
     ];
 
     /**
@@ -87,7 +87,7 @@ class ComplianceSeeder
 
         $counts = [];
         foreach (self::COMPLIANCE_SEEDS as $seed) {
-            $records = $this->loadRecords(file: $seed['file']);
+            $records = $this->loadRecords(file: $seed['file'], itemsKey: $seed['itemsKey']);
             $counts[$seed['schema']] = $this->importRecords(
                 objectService: $objectService,
                 records: $records,
@@ -105,16 +105,17 @@ class ComplianceSeeder
     }//end seedAll()
 
     /**
-     * Load and decode the `records[]` array from a seed file.
+     * Load and decode the items array from a seed file using the given key.
      *
      * Missing or invalid files are logged and yield an empty array so the rest
      * of the run continues.
      *
-     * @param string $file Seed filename under lib/Settings/seeds/.
+     * @param string $file     Seed filename under lib/Settings/seeds/.
+     * @param string $itemsKey Top-level JSON key holding the items array.
      *
      * @return array<int, array<string,mixed>>
      */
-    private function loadRecords(string $file): array
+    private function loadRecords(string $file, string $itemsKey): array
     {
         $seedPath = __DIR__.'/../Settings/seeds/'.$file;
         if (file_exists($seedPath) === false) {
@@ -136,7 +137,7 @@ class ComplianceSeeder
             return [];
         }
 
-        $records = ($data['records'] ?? []);
+        $records = ($data[$itemsKey] ?? []);
         if (is_array($records) === false) {
             return [];
         }
@@ -161,7 +162,7 @@ class ComplianceSeeder
         $skipped = 0;
 
         foreach ($records as $record) {
-            if (is_array($record) === false || isset($record[$keyField]) === false) {
+            if (isset($record[$keyField]) === false) {
                 continue;
             }
 

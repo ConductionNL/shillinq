@@ -98,15 +98,15 @@ class InitializeSettings implements IRepairStep
     {
         $output->info('Initializing Shillinq configuration...');
 
-    if ($this->settingsService->isOpenRegisterAvailable() === false) {
-        $output->warning(
-        'OpenRegister is not installed or enabled. Skipping auto-configuration.'
-        );
-        $this->logger->warning(
-            'Shillinq: OpenRegister not available, skipping register initialization'
-        );
-        return;
-    }
+        if ($this->settingsService->isOpenRegisterAvailable() === false) {
+            $output->warning(
+            'OpenRegister is not installed or enabled. Skipping auto-configuration.'
+            );
+            $this->logger->warning(
+                'Shillinq: OpenRegister not available, skipping register initialization'
+            );
+            return;
+        }
 
         try {
             // C8: use loadConfigurationForced() so OR's per-register/per-schema
@@ -114,28 +114,28 @@ class InitializeSettings implements IRepairStep
             // routine upgrades when the shillinq_register.json version hasn't changed.
             $result = $this->settingsService->loadConfigurationForced();
 
-    if ($result['success'] === true) {
-        $skipped = (($result['skipped'] ?? false) === true);
-        $version = ($result['version'] ?? 'unknown');
-        if ($skipped === true) {
-            $output->info('Shillinq configuration already up-to-date (version-unchanged skip)');
-        }
+            if ($result['success'] === true) {
+                $skipped = (($result['skipped'] ?? false) === true);
+                $version = ($result['version'] ?? 'unknown');
+                if ($skipped === true) {
+                    $output->info('Shillinq configuration already up-to-date (version-unchanged skip)');
+                }
 
-        if ($skipped !== true) {
-            $output->info(
-                'Shillinq configuration imported successfully (version: '.$version.')'
-            );
-        }
-    }
+                if ($skipped !== true) {
+                    $output->info(
+                        'Shillinq configuration imported successfully (version: '.$version.')'
+                    );
+                }
+            }
 
-    if ($result['success'] !== true) {
-        $message = ($result['message'] ?? 'unknown error');
-        $output->warning('Shillinq configuration import issue: '.$message);
-        // H2: skip account seed when schema import failed to avoid writing
-        // accounts into an uninitialized register.
-        $output->warning('Shillinq: schema import failed, skipping account seed');
-        return;
-    }
+            if ($result['success'] !== true) {
+                $message = ($result['message'] ?? 'unknown error');
+                $output->warning('Shillinq configuration import issue: '.$message);
+                // H2: skip account seed when schema import failed to avoid writing
+                // accounts into an uninitialized register.
+                $output->warning('Shillinq: schema import failed, skipping account seed');
+                return;
+            }
 
             $this->seedDefaultAdministration(output: $output);
             $this->seedChartOfAccounts(output: $output);
@@ -564,35 +564,4 @@ class InitializeSettings implements IRepairStep
         }
 
     }//end seedChartOfAccounts()
-
-    /**
-     * Seed the T3 compliance reference data (BTW tariffs, BBV taakvelden,
-     * RGS↔BBV mapping, Selectielijst retention rules, rate-card templates),
-     * idempotently.
-     *
-     * Delegates to {@see SettingsService::seedComplianceData()}. Failures are
-     * surfaced as warnings without aborting the repair step (the register
-     * schema import is the critical path; reference data is best-effort).
-     *
-     * @param IOutput $output The output interface for progress reporting.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-archiefwet-retention/spec.md (Task 3.11)
-     */
-    private function seedComplianceData(IOutput $output): void
-    {
-        $output->info('Seeding compliance reference data (BTW tariffs, BBV taakvelden, retention rules, rate cards)...');
-
-        $result = $this->settingsService->seedComplianceData();
-
-        if (($result['success'] ?? false) === true) {
-            $output->info('Compliance reference data seeded.');
-            return;
-        }
-
-        $message = ($result['message'] ?? 'unknown error');
-        $output->warning('Compliance reference data seeding issue: '.$message);
-
-    }//end seedComplianceData()
-    }//end class
+}//end class
