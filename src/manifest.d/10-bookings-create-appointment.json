@@ -69,63 +69,12 @@
 		{
 			"id": "AfspraakDetail",
 			"route": "/verkoop/afspraken/:id",
-			"type": "detail",
+			"type": "custom",
 			"title": "Afspraak",
+			"component": "AfspraakDetail",
 			"config": {
 				"register": "shillinq",
 				"schema": "Appointment",
-				"fields": [
-					{
-						"key": "appointmentId",
-						"label": "Reference",
-						"type": "string"
-					},
-					{
-						"key": "startTime",
-						"label": "Start (UTC)",
-						"type": "string"
-					},
-					{
-						"key": "endTime",
-						"label": "End (UTC)",
-						"type": "string"
-					},
-					{
-						"key": "serviceId",
-						"label": "Service",
-						"type": "string"
-					},
-					{
-						"key": "resourceId",
-						"label": "Resource",
-						"type": "string"
-					},
-					{
-						"key": "customerId",
-						"label": "Customer",
-						"type": "string"
-					},
-					{
-						"key": "status",
-						"label": "Status",
-						"type": "string"
-					},
-					{
-						"key": "notes",
-						"label": "Notes",
-						"type": "string"
-					},
-					{
-						"key": "administrationId",
-						"label": "Administration",
-						"type": "string"
-					},
-					{
-						"key": "pipelinqContactId",
-						"label": "Pipelinq contact",
-						"type": "string"
-					}
-				],
 				"indexRoute": "Afspraken"
 			}
 		}

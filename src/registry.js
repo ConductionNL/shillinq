@@ -45,6 +45,18 @@ import BookingsCalendarPage from './views/bookings/CalendarPage.vue'
 // so the portal is registered as a kind:"page" custom component.
 import BookingsConfirmationPortal from './views/bookings/ConfirmationPortal.vue'
 
+// bookings-pipelinq-customer-bridge slice 06 (profile-card-ui): the
+// AfspraakDetail page fans out to /api/v1/bookings/{id} which returns
+// the Appointment AND the linked pipelinq Contact + klantbeeld history
+// in one hop (slice 05). The page then composes a read-only profile
+// card (PipelinqProfileCard) and a paginated transaction-history
+// timeline (KlantbeeldTimeline) around the standard appointment
+// summary. Neither concern fits the built-in `detail` page type
+// (single-object fetch from OR), so the page is registered as a
+// kind:"page" custom component with the same id (`AfspraakDetail`)
+// the manifest fragment now points at.
+import AfspraakDetail from './views/bookings/AfspraakDetail.vue'
+
 // invoice-from-time-and-expense (issue #111): drafting form + admin list
 // + detail page are imperative because the generator combines multi-source
 // dynamic look-ups (time entries + expenses + rate card + retainer) into
@@ -77,6 +89,7 @@ export default {
 
 	BookingsCalendarPage: { kind: 'page', component: BookingsCalendarPage },
 	BookingsConfirmationPortal: { kind: 'page', component: BookingsConfirmationPortal },
+	AfspraakDetail: { kind: 'page', component: AfspraakDetail },
 
 	PurchaseOrderForm: { kind: 'page', component: PurchaseOrderForm },
 	PurchaseOrderDetail: { kind: 'page', component: PurchaseOrderDetail },
