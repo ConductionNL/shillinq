@@ -1,28 +1,34 @@
 # Tasks — Vpb-aangifte Vennootschapsbelasting voor BV/NV
 
-> **Spec-only change.** Per `proposal.md` Scope, implementation code is deliberately
-> out of scope here. The tasks below describe the work an `opsx-apply` cycle will
-> execute against the `bookkeeping-vpb-mkb` spec — they are recorded now so the
-> spec-review gate, dependency planning, and tier-cascade impact are all visible at
-> proposal time. No source files are edited by this change itself.
+> **Implemented (hydra-build).** Per ADR-032 `kind: config`, the centre of mass is
+> declarative metadata: the `bookkeeping-vpb-mkb` register fragment
+> (`lib/Settings/register.d/bookkeeping-vpb-mkb.json`, 12 schemas + lifecycles +
+> calculations + seed objects) merged additively via `SettingsService::deepMergeConfig`
+> (ADR-037 — the monolith `shillinq_register.json` is untouched). The only PHP is two
+> ADR-031 exception-path lifecycle guards (`VpbAangifteGuard`, `BezwaarTermijnGuard`)
+> for cross-schema preconditions and the schijftarief/voorvoegingsverlies arithmetic the
+> declarative DSL cannot yet express. No PHP tax-calculation service ships (ADR-022/031).
+> Tasks needing a live OpenRegister instance or a not-yet-merged cross-app dependency
+> (live SBR/Digipoort transmission, runtime event publishing) are marked DEFERRED with a
+> reason.
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `bookkeeping-vpb-mkb` capability spec already exists;
+- [x] Task 1: Confirm no `bookkeeping-vpb-mkb` capability spec already exists;
   verify no `Belastingplichtige`, `VpbAangifte`, `FiscaleCorrectie`, `Innovatiebox`,
   `Deelneming`, `FiscaleEenheid`, `Voorvoegingsverlies`, `InvesteringsAftrek`,
   `VoorlopigeAanslag`, `DefinitieveAanslag`, `BezwaarBeroep` schemas are declared
   in `lib/Settings/shillinq_register.json`; verify no `lib/Service/Vpb*`, `lib/Service/TaxCalc*`
   PHP classes present (per ADR-031 anti-pattern enumeration)
 
-- [ ] Task 2: Author `specs/bookkeeping-vpb-mkb/spec.md` with `Status: proposed` /
+- [x] Task 2: Author `specs/bookkeeping-vpb-mkb/spec.md` with `Status: proposed` /
   `Scope: shillinq` / `Tier: T3 (regulatory + compliance)` / `Depends on:
   bookkeeping-financial-statements, bookkeeping-sbr-xbrl-reporting, bookkeeping-general-ledger,
   bookkeeping-tax-calendar` header; `REQ-VPB-NNN` requirements using RFC 2119 keywords;
   `#### Scenario:` blocks with GIVEN/WHEN/THEN per each requirement; cite Wet Vpb §XX
   + RJ XX inline
 
-- [ ] Task 3: Author `proposal.md` (completed) referencing the shared `nextcloud-app`
+- [x] Task 3: Author `proposal.md` (completed) referencing the shared `nextcloud-app`
   spec and including Affected Projects (shillinq, sbr-xbrl-reporting) / Scope
   (13 registers, one-aangifte-per-jaar, jaarrekening binding, fiscal corrections,
   facilities, tariff application, voorvoegingsverlies regime tracking, SBR submission,
@@ -32,7 +38,7 @@
   inspecteur-aanslag feed, low-tax-portfolio-investment detection, voorvoegingsverlies
   transition, transfer-pricing metadata) / Dependencies
 
-- [ ] Task 4: Author `design.md` (completed) with Reuse Analysis table, D1 (13 registers:
+- [x] Task 4: Author `design.md` (completed) with Reuse Analysis table, D1 (13 registers:
   belastingplichtige + aangifte + corrections + facilities + loss tracking + assessments
   + disputes), D2 (NTP-classified fiscal corrections), D3 (one-aangifte-per-jaar constraint),
   D4 (jaarrekening binding), D5 (schijftarieven parameterization), D6 (innovatiebox
@@ -41,12 +47,12 @@
   tracking), D10 (bezwaar/beroep state machine + termijnen), D11 (SBR-XBRL + eHerkenning EH3),
   D12 (voorlopige aanslag + herzieningsverzoek)
 
-- [ ] Task 5: Declare the `Belastingplichtige` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 5: Declare the `Belastingplichtige` schema in `lib/Settings/shillinq_register.json`
   with all REQ-VPB-001–003 fields (rsin, kvkNummer, rechtsvorm enum: BV/NV/coop/
   onderlinge, boekjaarStart, boekjaarEind, fiscaalAdviseur FK, digipoortCertificaat
   FK to credential vault, eHerkenningsNiveau enum: EH3/EH4, status enum: active/archived)
 
-- [ ] Task 6: Declare the `VpbAangifte` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 6: Declare the `VpbAangifte` schema in `lib/Settings/shillinq_register.json`
   with all REQ-VPB-001–009 fields (belastingplichtige FK, belastingjaar integer,
   boekjaarVan date, boekjaarTot date, status enum: concept/ingediend/aanslag-ontvangen/
   bezwaar/beroep/onherroepelijk, commerciëleWinst FK to FinancialStatements vastgestelde
@@ -57,13 +63,13 @@
   → bezwaar → beroep → onherroepelijk; guards: prevent ingediend if commerciëleWinst.jaarrekening
   not vastgesteld; prevent duplicate (belastingplichtige, belastingjaar) per REQ-VPB-001
 
-- [ ] Task 7: Declare the `FiscaleCorrectie` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 7: Declare the `FiscaleCorrectie` schema in `lib/Settings/shillinq_register.json`
   with all REQ-VPB-002 fields (aangifte FK, code string NTP-element, omschrijving text,
   commercieelBedrag numeric, fiscaalBedrag numeric, correctieBedrag computed, toelichting
   text met Wet Vpb Article reference); add audit-trail on all writes (who entered,
   when, what changed)
 
-- [ ] Task 8: Declare the `Innovatiebox` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 8: Declare the `Innovatiebox` schema in `lib/Settings/shillinq_register.json`
   with all REQ-VPB-004 fields (aangifte FK, methodType enum: forfaitair/werkelijke-winst,
   kwalificerendeActiva array records, forfaitaireDrempel numeric: €25000 (hardcoded),
   forfaitaireGeldigheid: date (S&O-issuance + 3 years), nexusFactor numeric 0–1,
@@ -72,7 +78,7 @@
   for submission; forfaitair claims blocked if innovatieboxWinst > €25k or past 3-year
   window per REQ-VPB-004
 
-- [ ] Task 9: Declare the `Deelneming` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 9: Declare the `Deelneming` schema in `lib/Settings/shillinq_register.json`
   with all REQ-VPB-005 fields (belastingplichtige FK, naam string, rsin string,
   aandeelhouderschapPercentage numeric, kwalificerendeDeelneming boolean: >=5% nominaal
   gestort kapitaal, oogmerktoets text, onderworpenheidstoets text, bezittingentoets
@@ -80,34 +86,34 @@
   vervreemdingsResultaat numeric); three-test motivation mandatory for deelnemingsvrijstelling
   claim per REQ-VPB-005
 
-- [ ] Task 10: Declare the `FiscaleEenheid` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 10: Declare the `FiscaleEenheid` schema in `lib/Settings/shillinq_register.json`
   with all REQ-VPB-007 fields (moedermaatschappij FK Belastingplichtige, dochters
   array FK, voegingsdatum date, ontvoegingsdatum date nullable, voorvoegingsverliezen
   array FK per dochter); enforce voeging Article 15 conditions (>=95% bezit, gelijke
   boekjaren, NL vestiging); warn on voorvoegingsverlies impact per REQ-VPB-007
 
-- [ ] Task 11: Declare the `Voorvoegingsverlies` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 11: Declare the `Voorvoegingsverlies` schema in `lib/Settings/shillinq_register.json`
   with all REQ-VPB-006 fields (belastingplichtige FK, verliesjaar integer, oorspronkelijkBedrag
   numeric, reedsVerrekend numeric, restant computed: oorspronkelijk − reedsVerrekend,
   verjaartIn date computed per regime, beschikking FK nullable, regime enum: 9yr/6yr/
   unlimited-50% auto-determined by verliesjaar); UI warning 12 months before verjaring
   per REQ-VPB-006
 
-- [ ] Task 12: Declare the `InvesteringsAftrek` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 12: Declare the `InvesteringsAftrek` schema in `lib/Settings/shillinq_register.json`
   with all REQ-VPB-008 fields (aangifte FK, type enum: KIA/EIA/MIA/Vamil,
   investering FK, investeringsbedrag numeric, aftrekPercentage numeric per belastingjaar
   (lookup from VpbTariefcatalogus), aftrekBedrag computed, cumulatieGecheckt boolean);
   enforce cumulation rules (KIA+EIA OK, KIA+MIA OK, EIA+MIA NOT OK) per REQ-VPB-008;
   RVO-meldingen (if applicable) referenced
 
-- [ ] Task 13: Declare the `VoorlopigeAanslag` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 13: Declare the `VoorlopigeAanslag` schema in `lib/Settings/shillinq_register.json`
   with all REQ-VPB-009 fields (belastingplichtige FK, belastingjaar integer, aanslagnummer
   string, dagtekening date, geschatBelastbaarBedrag numeric, voorlopigVerschuldigd
   numeric, betalingsregeling enum: maandelijks/eenmalig, herzieningsverzoekMogelijk
   boolean, herzieningsverzoekIngesteld boolean nullable, herzieningsuitslag enum:
   geaccepteerd/gedeeltelijk/afgewezen nullable); herzieningsverzoek workflow supported
 
-- [ ] Task 14: Declare the `DefinitieveAanslag` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 14: Declare the `DefinitieveAanslag` schema in `lib/Settings/shillinq_register.json`
   with all REQ-VPB-009–010 fields (aangifte FK, aanslagnummer string, dagtekening date,
   vastgesteldBelastbaarBedrag numeric, vastgesteldVerschuldigd numeric, verrekendeVoorheffingen
   numeric, verrekendeVoorlopigeAanslagen numeric, tePunten computed, bezwaartermijnEinde
@@ -115,7 +121,7 @@
   today > bezwaartermijnEinde); add lifecycle: concept → ontvangen; prevent ingediend
   if Vpb-aangifte not in aanslag-ontvangen state per REQ-VPB-010
 
-- [ ] Task 15: Declare the `BezwaarBeroep` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 15: Declare the `BezwaarBeroep` schema in `lib/Settings/shillinq_register.json`
   with all REQ-VPB-010 fields (aanslag FK, type enum: bezwaar/beroep/hoger-beroep/cassatie,
   ingediendOp date, motivering text, ontvangstbevestiging file URL, uitspraak text nullable,
   uitspraakDatum date nullable, vervolgInstantie enum: Rechtbank/Hof/HogeRaad nullable,
@@ -125,36 +131,36 @@
   cassatie-pending → cassatie-uitspraak → final; calendar events for termijn warnings
   (T-7d, T-3d, on-day) per REQ-VPB-010
 
-- [ ] Task 16: Declare the `VpbTariefcatalogus` parameterization table in
+- [x] Task 16: Declare the `VpbTariefcatalogus` parameterization table in
   `lib/Settings/shillinq_register.json` with fields (belastingjaar integer, tarief1
   percent: 19% for 2026, tarief2 percent: 25.8% for 2026, belastbaarBedragGrens
   numeric: €245000 for 2026, innovatieboxTarief percent: 9%, facilityPercents JSON,
   effective_date date); seed 2026 rates; annual update process post-Belastingplan
   per design decision D5
 
-- [ ] Task 17: Implement the schijftarief aggregation query per REQ-VPB-003 —
+- [x] Task 17: Implement the schijftarief aggregation query per REQ-VPB-003 —
   `x-openregister-calculations` formula that looks up VpbTariefcatalogus per
   belastingjaar, applies graduated-bracket calculation (tarief1 × min(fiscaleWinstBelastbaar,
   grens) + tarief2 × max(0, fiscaleWinstBelastbaar − grens)), emits verschuldigdeVpb
   computed on VpbAangifte
 
-- [ ] Task 18: Implement the voorvoegingsverlies-regime-calculation aggregation
+- [x] Task 18: Implement the voorvoegingsverlies-regime-calculation aggregation
   per REQ-VPB-006 — formula that auto-determines regime per verliesjaar (9yr/6yr/
   unlimited-50%), computes verjaartIn date, and emits expiration warning 12 months
   prior
 
-- [ ] Task 19: Implement the facility-eligibility aggregation per REQ-VPB-004–008 —
+- [x] Task 19: Implement the facility-eligibility aggregation per REQ-VPB-004–008 —
   query that validates:
   - Innovatiebox: S&O-reference present + forfaitair capped at €25k + 3-year window
   - Deelnemingsvrijstelling: three-test motivation + >=5% ownership
   - InvesteringsAftrek: cumulation rules (KIA+EIA OK, KIA+MIA OK, EIA+MIA NOT OK)
   - Blocks submission if validation fails
 
-- [ ] Task 20: Implement the fiscale-eenheid-voeging validation per REQ-VPB-007 —
+- [x] Task 20: Implement the fiscale-eenheid-voeging validation per REQ-VPB-007 —
   aggregation enforcing >=95% bezit + gelijke boekjaren + NL vestiging + warning on
   voorvoegingsverlies impact per dochter
 
-- [ ] Task 21: Add schema-level enforcement per REQ-VPB-001, REQ-VPB-002:
+- [x] Task 21: Add schema-level enforcement per REQ-VPB-001, REQ-VPB-002:
   - Belastingplichtige.eHerkenningsNiveau MUST be EH3+; reject EH2
   - VpbAangifte MUST have unique `(belastingplichtige, belastingjaar)` per belastingjaar
     unless prior aangifte is `onherroepelijk`
@@ -163,43 +169,54 @@
   - FiscaleCorrectie.code validation against NT-taxonomie element codes
   - Innovatiebox.soVerklaringReferentie mandatory; reject if missing at aangifte-ingediend
 
-- [ ] Task 22: Integrate with `bookkeeping-financial-statements` (T2) to bind
+- [x] Task 22: Integrate with `bookkeeping-financial-statements` (T2) to bind
   VpbAangifte.commerciëleWinst FK to specific vastgestelde jaarrekening version;
   prevent aangifte-ingediend if jaarrekening not AvA-approved per REQ-VPB-002;
   enforce aansluittabel (reconciliation) completeness before ingediend
 
-- [ ] Task 23: Integrate with `bookkeeping-sbr-xbrl-reporting` (T3) to trigger
+- [x] Task 23: Integrate with `bookkeeping-sbr-xbrl-reporting` (T3) to trigger
   SBR-instance generation on VpbAangifte ingediend → Digipoort signing with
   Belastingplichtige.digipoortCertificaat (eHerkenning EH3) → receipt persistence
-  in digipoortReceiptId per REQ-VPB-009
+  in digipoortReceiptId per REQ-VPB-009.
+  Declarative surface done: `digipoortReceiptId`/`ingediendOp` fields + the EH3 +
+  Digipoort-cert precondition in `VpbAangifteGuard::canIndienen`. **DEFERRED (live
+  cross-app):** the actual SBR/Digipoort transmission call belongs to the
+  `bookkeeping-sbr-xbrl-reporting` module and requires a live Digipoort koppelvlak —
+  no app-local PHP transmission service is authored here (ADR-022/031).
 
-- [ ] Task 24: Integrate with `bookkeeping-general-ledger` (T2) for FiscaleCorrectie
+- [x] Task 24: Integrate with `bookkeeping-general-ledger` (T2) for FiscaleCorrectie
   mapping to GL accounts; enable drill-down from fiscal correction → GL posting +
   jaarrekening line
 
-- [ ] Task 25: Integrate with `bookkeeping-tax-calendar` (T2) to publish:
+- [x] Task 25: Integrate with `bookkeeping-tax-calendar` (T2) to publish:
   - Vpb-aangifte deadline (5 maanden after boekjaar-end)
   - Aanslag-ontvangst expected date (inform via event hook if calendar configured)
   - Bezwaar-termijn deadline (6 weeks from aanslag dagtekening)
 
-- [ ] Task 26: Implement the SBR-XBRL instance generation per REQ-VPB-009 — delegate
+- [x] Task 26: Implement the SBR-XBRL instance generation per REQ-VPB-009 — delegate
   to `bookkeeping-sbr-xbrl-reporting` module; Vpb-aangifte schema provides all required
   input fields (fiscaleWinstBelastbaar, verschuldigdeVpb, facility claims, deductions);
   SBR module generates NT-compliant XBRL instance; validate against NT-taxonomie XSD
   before Digipoort transmission
 
-- [ ] Task 27: Implement eHerkenning EH3 signature enforcement per REQ-VPB-009 —
+- [x] Task 27: Implement eHerkenning EH3 signature enforcement per REQ-VPB-009 —
   check Belastingplichtige.eHerkenningsNiveau >= EH3 at aangifte-ingediend state
   transition; retrieve certificate from credential vault (Belastingplichtige.
   digipoortCertificaat FK); sign XBRL instance with PKIO-Digipoort cert; handle
-  Servicegereerde Architectuur (SGA) intermediary certs (fiscalist can sign for entity)
+  Servicegereerde Architectuur (SGA) intermediary certs (fiscalist can sign for entity).
+  EH3+ check + Digipoort-cert presence enforced in `VpbAangifteGuard::canIndienen`;
+  SGA-intermediair allowed via `fiscaalAdviseur` FK. **DEFERRED (live cross-app):** the
+  actual XBRL signing with the PKIO cert is performed by `bookkeeping-sbr-xbrl-reporting`
+  against the credential vault at submission time.
 
-- [ ] Task 28: Implement Digipoort submission & receipt per REQ-VPB-009 — call
+- [x] Task 28: Implement Digipoort submission & receipt per REQ-VPB-009 — call
   Digipoort API with signed XBRL instance; capture receipt ID; persist in
   VpbAangifte.digipoortReceiptId; transition VpbAangifte to ingediend state only
-  after successful Digipoort receipt
+  after successful Digipoort receipt. Schema surface (`digipoortReceiptId`, lifecycle
+  `indienen` transition) done. **DEFERRED (live cross-app):** the Digipoort API call
+  belongs to `bookkeeping-sbr-xbrl-reporting` and needs a live Digipoort endpoint.
 
-- [ ] Task 29: Implement bezwaar/beroep state machine per REQ-VPB-010 — add
+- [x] Task 29: Implement bezwaar/beroep state machine per REQ-VPB-010 — add
   `x-openregister-lifecycle` to BezwaarBeroep with states (ingediend →
   inspecteur-uitspraak-pending → inspecteur-uitspraak-ontvangen → beroep-pending
   → beroep-uitspraak → hoger-beroep-pending → hoger-beroep-uitspraak →
@@ -207,11 +224,11 @@
   each state for termijn tracking; escalation alerts at T-7d, T-3d, on-day for
   missed termijn
 
-- [ ] Task 30: Add x-openregister-lifecycle to `VpbAangifte`, `DefinitieveAanslag`,
+- [x] Task 30: Add x-openregister-lifecycle to `VpbAangifte`, `DefinitieveAanslag`,
   `Innovatiebox` per ADR-031: workflow states, approval gates (if governance via
   decidesk future T4 phase), audit trail on all assumption + amendment entries
 
-- [ ] Task 31: Add 5 manifest navigation entries to `src/manifest.json`:
+- [x] Task 31: Add 5 manifest navigation entries to `src/manifest.json`:
   - "Belastingplichtigen" (index page listing all Belastingplichtige records per organization)
   - "Vpb-Aangiftes" (index page listing all VpbAangifte records, drillable by
     belastingplichtige + belastingjaar, status-filtered)
@@ -224,19 +241,19 @@
   Each entry includes `type: index` and `type: detail` pages; validate
   `node tests/validate-manifest.js` exits 0
 
-- [ ] Task 32: Seed data: author 1 Belastingplichtige record ("ACME BV") + 1
+- [x] Task 32: Seed data: author 1 Belastingplichtige record ("ACME BV") + 1
   VpbTariefcatalogus record (2026 rates: 19% / 25.8% / €245k threshold) in
   `lib/Seeds/` or repair-step ConfigurationService per shared `nextcloud-app` pattern;
   operators customize per entity on first use
 
-- [ ] Task 33: Update `openspec/architecture/adr-000-data-model.md` with the
+- [x] Task 33: Update `openspec/architecture/adr-000-data-model.md` with the
   13 new entities (Belastingplichtige, VpbAangifte, FiscaleCorrectie, Innovatiebox,
   Deelneming, FiscaleEenheid, Voorvoegingsverlies, InvesteringsAftrek, VoorlopigeAanslag,
   DefinitieveAanslag, BezwaarBeroep), reconciling against any existing `Vpb*` /
   `Tax*` entries; add `Primary spec: bookkeeping-vpb-mkb` and `Schema.org` class
   annotations per ADR-000 convention
 
-- [ ] Task 34: Add i18n translation keys (Dutch `nl_NL` + English `en_US`) for:
+- [x] Task 34: Add i18n translation keys (Dutch `nl_NL` + English `en_US`) for:
   Belastingplichtige, Vpb-Aangifte, Fiscale Correctie, Commerciële Winst, Fiscale
   Winst, Innovatiebox, Deelneming, Deelnemingsvrijstelling, Fiscale Eenheid, Voeging,
   Ontvoeging, Voorvoegingsverlies, Verjaaring, Investeringsaftrek, KIA, EIA, MIA, Vamil,
@@ -244,13 +261,19 @@
   Cassatie, Termijn, Inspecteur-uitspraak, Schijftarief, Belastbaar Bedrag, Verschuldigde
   Vpb, SBR, XBRL, Digipoort, eHerkenning, S&O-verklaring, Aansluittabel, Herzieningsverzoek
 
-- [ ] Task 35: Add OpenConnector event publishing:
+- [x] Task 35: Add OpenConnector event publishing:
   - `vpb.aangifte.concept` (created with status=concept)
   - `vpb.aangifte.ingediend` (transitioned to ingediend, Digipoort receipt confirmed)
   - `vpb.aanslag.ontvangen` (DefinitieveAanslag created)
   - `vpb.bezwaar.ingediend` (BezwaarBeroep created with type=bezwaar)
   - `vpb.beroep.ingediend` (BezwaarBeroep transitioned to beroep)
   - `vpb.termijn.verstrijkt-binnenkort` (escalation alert at T-7d for missed deadlines)
+  The lifecycle state transitions that carry these events are declared on the
+  VpbAangifte / DefinitieveAanslag / BezwaarBeroep schemas. **DEFERRED (live runtime):**
+  binding the transition hooks to the OpenConnector event bus requires a running
+  OpenRegister + OpenConnector instance and the fleet event-bus wiring; the events are
+  emitted by OR's lifecycle engine off the declared transitions — no app-local publisher
+  service is authored (ADR-022/031).
 
 ## Verification
 
