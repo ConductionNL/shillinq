@@ -2307,23 +2307,59 @@ _Product tracked in inventory with stock levels and sourcing information_
 
 ### InventoryStock
 **Schema.org:** `schema:Thing`
-_Stock levels, inventory tracking, and reorder management by location_
-**Primary spec:** procurement-integration
+_Stock level per SKU at a specific bin Location. Always recorded at bin (most-granular) level; warehouse/zone quantities are aggregated via Location.stockRollup per REQ-LOC-005 and REQ-LOC-009._
+**Primary spec:** inventory-multi-warehouse
+**Co-declaring spec:** procurement-integration (original generic shape)
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| sku | string | Yes | Stock Keeping Unit identifier |
-| quantity | number | Yes | Current stock quantity |
-| reorderLevel | number | No | Minimum quantity threshold for reorder trigger |
-| reorderQuantity | number | No | Standard reorder quantity |
-| location | string | No | Physical storage location or warehouse |
-| unitCost | number | No | Cost per unit |
-| lastRestockDate | datetime | No | Date of last stock replenishment |
-| status | string | Yes | Inventory status (active, inactive, discontinued) |
+| sku | string | Yes | Product SKU — references Product.sku |
+| locationId | string | Yes | FK to Location (must be bin type per REQ-LOC-009) |
+| quantity | number | Yes | On-hand stock quantity at this bin location |
+| reservedQuantity | number | No | Quantity reserved for pending orders |
+| unitCost | number | No | Unit cost at this location for inventory valuation |
+| lastMovementDate | date | No | Date of most recent stock movement |
+| administrationId | string | Yes | FK to Administration — scoped per org |
 
 **Relations:**
 - → Product (many-to-one)
+- → Location (many-to-one, locationId FK → bin-type Location)
 - → Organization (many-to-one)
+- → InventoryReorderRule (one-to-many, via inventoryStockId — reorder policies per location)
+
+### InventoryReorderRule
+**Schema.org:** `schema:Thing`
+_Per-item, per-location reorder policy declaring min/max stock levels, lead-time-aware reorder-point thresholds, low-stock alert policy, and optional auto-purchase-order generation. Reorder decision logic is fully declarative via x-openregister-lifecycle, x-openregister-aggregations, and x-openregister-notifications per ADR-031 and ADR-022._
+**Primary spec:** inventory-reorder-automation
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| inventoryStockId | string (FK) | Yes | Reference to the InventoryStock record (item + location) |
+| supplierId | string (FK) | No | Primary supplier for reorder |
+| minimumLevel | number ≥ 0 | Yes | Stock quantity at or below which alert triggers |
+| maximumLevel | number > minimumLevel | Yes | Target stock quantity for replenishment |
+| reorderPoint | number ≥ minimumLevel | Yes | Stock quantity at which reorder is triggered (factors lead time) |
+| reorderQuantity | number > 0 | Yes | Standard quantity to order on alert |
+| leadTimeDays | integer ≥ 0 | No | Supplier lead time in days (defaults to supplier.leadTimeDays) |
+| safetyStockDays | integer ≥ 0 | No | Safety margin in days above lead time (default: 1) |
+| alertThreshold | number ≥ 0 | No | Percentage above minimum for early-warning alert (default: 20%) |
+| autoPurchaseOrder | boolean | Yes (default: false) | Whether to auto-generate PO on alert |
+| autoPurchaseOrderApprovalRequired | boolean | No (default: true) | Whether auto-PO requires operator approval |
+| spendingLimit | number ≥ 0 | No | Maximum spend per auto-generated PO; excess blocks auto-order |
+| alertChannel | enum | No | Notification channel: email, dashboard, slack, webhook (default: dashboard) |
+| alertRecipients | array of string | No | Email addresses or Nextcloud user IDs to notify |
+| snoozeUntil | datetime | No | Suppress alerts until this datetime |
+| lifecycleState | enum | Yes | One of `active`, `paused`, `archived` |
+| administrationId | string | Yes | FK to Administration |
+
+**Relations:**
+- → InventoryStock (many-to-one, via inventoryStockId)
+- → Supplier (many-to-one, via supplierId)
+- → Organization (many-to-one, via administrationId)
+
+> **Annotation (inventory-reorder-automation, 2026-06-05):** All reorder decision logic is declarative. `x-openregister-lifecycle` governs the active/paused/archived state machine. `x-openregister-aggregations` evaluates `SUM(InventoryStock.quantity) ≤ reorderPoint` on every stock quantity change and powers the Stock Levels Dashboard by location. `x-openregister-notifications` dispatches low-stock alerts via the configured channel with Order Now / Snooze / Update Rule action links. No PHP `InventoryReorderService` — this is the canonical ADR-031 pattern for reorder automation.
+
+> **Reconciliation note (inventory-multi-warehouse, 2026-06-05):** Original `InventoryStock` (primary spec: procurement-integration) used a free-text `location` string. This entry supersedes it with `locationId` FK to the hierarchical Location entity per REQ-LOC-009. Warehouse/zone-level stock is computed via `Location.stockRollup` aggregation (declarative, no separate warehouse table). The `quantity` field is now bin-only; calls for warehouse-level totals must use the `stockRollup` aggregation endpoint.
 
 ### InventoryValuation
 **Schema.org:** `schema:Product`
@@ -2652,19 +2688,47 @@ _Daily/weekly/monthly cash flow projections for liquidity planning, including in
 
 ### Location
 **Schema.org:** `schema:Place`
-_A physical or geographic location for multi-site budget allocation and tracking_
-**Primary spec:** budget-planning-control
+_Physical or virtual storage location in the warehouse hierarchy (warehouse → zone → bin → in-transit). Extended from simple multi-site budget location to full hierarchical warehouse management per inventory-multi-warehouse spec._
+**Primary spec:** inventory-multi-warehouse
+**Co-declaring spec:** budget-planning-control (original simple Location shape)
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| name | string | Yes | Location name |
-| code | string | No | Location code or identifier |
-| address | string | No | Physical address |
-| region | string | No | Geographic region |
+| name | string | Yes | Human-readable location name |
+| locationCode | string | Yes | Unique code per administration (immutable after creation per REQ-LOC-002) |
+| locationType | enum | Yes | warehouse, zone, bin, in-transit |
+| parentLocationId | string | No | FK to parent Location (null for warehouse + in-transit; required for zone + bin) |
+| address | string | No | Physical address of warehouse |
+| region | string | No | Geographic region for rollup reporting |
+| binNamingConvention | enum | No | bin, slot, compartment, location (admin-configurable per Task 6) |
+| capacity | number | No | Maximum storage capacity in capacityUnit units |
+| capacityUnit | string | No | Unit for capacity (pallets, items, kg, etc.) |
+| status | enum | No | active, inactive, archived |
+| administrationId | string | Yes | FK to Administration — all queries scoped per org (REQ-LOC-008) |
+| notes | string | No | Operator notes |
+
+**Hierarchy rules (per REQ-LOC-001 through REQ-LOC-004):**
+- `warehouse` type: no parent, may have zone children.
+- `zone` type: requires parent (warehouse), may have bin children.
+- `bin` type: requires parent (zone), leaf node — InventoryStock recorded at this level.
+- `in-transit` type: no parent, virtual holding during transfers (D2).
+- Max hierarchy depth: 4 levels (warehouse → zone → aisle → bin) per REQ-LOC-003.
+- Circular references blocked by `LocationHierarchyGuard.validateNoCircle` per REQ-LOC-018.
+
+**Declarative extensions (ADR-031):**
+- `x-openregister-lifecycle`: status (active/inactive/archived), code-immutability validation on update.
+- `x-openregister-aggregations`: stockRollup (SUM InventoryStock.quantity for all descendant bins), childCount, descendantCount, inTransitStock.
+- `x-openregister-calculations`: hierarchyPath (full slash-separated code path), hierarchyDepthValue (0-3), stockAvailabilityBadge.
+- Guards: `LocationHierarchyGuard` for recursive operations (depth validation, circle detection, path building) per ADR-031 exception-path seam.
 
 **Relations:**
+- ↔ Location (self-referential parent-child for hierarchy, one-to-many)
+- → InventoryStock (one-to-many, bin-level stock; warehouse/zone rollup via aggregation)
+- → InventoryStockTransfer (one-to-many as sourceLocationId or destinationLocationId)
 - → Organization (many-to-one)
-- → Budget (one-to-many)
+- → Budget (one-to-many, from co-declaring budget-planning-control spec)
+
+> **Reconciliation note (inventory-multi-warehouse, 2026-06-05):** The original `Location` entry (primary spec: budget-planning-control) described a simple location with `name/code/address/region` for multi-site budget tracking. This entry supersedes it for the shillinq inventory tier with the full hierarchical warehouse-management shape per REQ-LOC-001 through REQ-LOC-009: `locationCode/locationType/parentLocationId` for hierarchy, `status` lifecycle, `administrationId` tenant scope, and declarative aggregations for stock rollup. The `budget-planning-control` shape is retained as a co-declaring spec relationship — the budget FK to Location remains valid. Key change: `code` (budget-planning-control) renamed to `locationCode` in the inventory shape; implementors should map between them when combining tiers. No PHP service class added — location hierarchy is fully declarative per ADR-031.
 
 ### Lot
 **Schema.org:** `schema:Product`
@@ -5717,3 +5781,16 @@ _Btw-compensatiefonds (BCF) claim data model introduced by the `bookkeeping-bcf-
 | Entity | Schema.org | Key fields | Primary relations |
 |--------|-----------|-----------|-------------------|
 | BcfClaim | schema:MonetaryAmount | claimQuarter, administrationId, totalCompensableAmount (derived), breakdown (derived), state (draft→submitted→accepted→settled), submittedOn, acceptedOn, settledOn, settledAmount, attachmentUri, notes | → Administration (N:1), breakdown[].accountNumber → Account via BbvAccountMapping |
+
+### Administration / AdministrationMembership / IntercompanyJournalEntry / ConsolidationMapping / AdministrationMigration (multi-administratie)
+**Schema.org:** `schema:Organization` (Administration), join-record (AdministrationMembership), `schema:Action` (IntercompanyJournalEntry, AdministrationMigration), `schema:PropertyValue` (ConsolidationMapping)
+_Foundational multi-administratie (multi-tenant) data model introduced by the `bookkeeping-multi-administratie` change (T1 foundational refactor). `Administration` becomes the **first-class isolation boundary**: it is the juridisch-onafhankelijke boekhouding entity, and the `administrationId` FK that the existing financial schemas already carry (GLTransaction, GLLine, Account, BalanceSheet, FixedAsset, TrialBalanceLine, Order, Invoice, …) now points at it as a real register record rather than a bare string. Each `Administration` owns its own chart-of-accounts (`chartOfAccountsId`), fiscal-year cycle (`fiscalYearStartMonth` + `nonCalendarFiscalYear`), presentation/functional currency, VAT regime + filing frequency, holding linkage (`parentAdministrationId` / `childAdministrationIds` / `consolidateIntoId`), fiscal-unit references (`fiscalUnitVpbId` / `fiscalUnitVatId` — data only; VPB/BTW consolidation logic is delegated to bookkeeping-tax-filing / bookkeeping-vat-return), and a per-administratie backup + retention + archival lifecycle (`status` actief → in_liquidatie → gearchiveerd/opgeheven; archived administrations are read-only for the wettelijke bewaartermijn). `AdministrationMembership` is the **user-administratie-role join** — a Nextcloud uid plus a role (eigenaar/controller/boekhouder/inkijker/accountant_extern/…) and posting/closing rights — so one user may hold a different role per administration; a contact/person is a Nextcloud entity, no person schema is invented. `IntercompanyJournalEntry` links the **two mirrored, self-contained GLTransactions** of an intercompany flow across two administrations (Dutch GAAP keeps each entity's journaal separate): it tracks the `intercompanyNumber`, reconciliation `varianceAmount`, the `eliminateOnConsolidation` flag and the status concept → gekoppeld → bevestigd_beide → eliminatie_geboekt. `ConsolidationMapping` maps a dochter's chart-of-accounts onto the moeder's plus the intercompany elimination account and currency-translation method (pre-positioned for the future `bookkeeping-consolidatie` spec; no consolidation rendering ships here). `AdministrationMigration` is the **asset/contract/employee transfer audit record** between two administrations (boekwaarde vs marktwaarde, juridische grondslag, fiscale behandeling, paired journal-entry FKs, reversible status voorbereid → uitgevoerd → geboekt_beide → teruggedraaid). All five are schema-declared register-fragment metadata (ADR-037 fragment `register.d/bookkeeping-multi-administratie.json`) plus declarative manifest-v2 index/detail navigation (ADR-037 fragment `src/manifest.d/bookkeeping-multi-administratie.json`); object CRUD runs through OpenRegister's own ObjectService API (this app exposes no per-schema PHP controllers — `administrationId` isolation is applied by the read services via `findAll(['filters' => ['administrationId' => …]])`, e.g. `TrialBalanceService`). The administratie-aware RBAC/isolation layer ships as `lib/Service/AdministrationContextService.php` (resolves the user's `AdministrationMembership` records, builds the session context, and provides the IDOR `canAccess()` guard — masked-404 never 403 — and the default-secure `canPostJournalEntry()` check). The intercompany mirroring/reconciliation logic ships as the pure, unit-tested `lib/Service/IntercompanyJournalService.php` (cents-based mirror, reconciliation variance, and the concept → gekoppeld → bevestigd_beide → eliminatie_geboekt status machine). The context/switcher/export-scope API ships as `lib/Controller/AdministrationController.php` (`GET /api/administrations/context`, `POST /api/administrations/switch`, `GET /api/administrations/{id}/export-scope`, all `#[NoAdminRequired]` and scoped to the user's memberships, ADR-005). The in-session switcher Vue component, the per-administratie backup-scheduler side-effect, the archival write-block guard, the XAF byte stream, the migration dual-post flow and the cross-administratie audit viewer are deferred to a follow-up cycle against a live OpenRegister instance (tracked in this change's tasks.md "Deferred" section). The existing `ConsolidationGroup` / `ConsolidatedReport` schemas are unchanged and complementary. The default `Administration` (ADM-001) is seeded idempotently on fresh install (`SettingsService::seedDefaultAdministration()` via the `InitializeSettings` repair step, deduped on `administrationCode`) so single-administratie installs have a valid FK target._
+**Primary spec:** bookkeeping-multi-administratie
+
+| Entity | Schema.org | Key fields | Primary relations |
+|--------|-----------|-----------|-------------------|
+| Administration | schema:Organization | administrationCode, name, legalForm, kvkNumber, vatNumber, parentAdministrationId, childAdministrationIds[], chartOfAccountsId, fiscalYearStartMonth, vatRegime, status, backupSchedule, dataRetentionYears | → Administration (parent, N:1), → ConsolidationMapping (N:1) |
+| AdministrationMembership | join-record | userId, administrationId, role, mayPostJournalEntries, mayCloseFiscalYear, validFrom/validUntil, grantedBy | → Administration (N:1), → NC user (uid) |
+| IntercompanyJournalEntry | schema:Action | intercompanyNumber, date, kind, source/destinationAdministrationId, source/destinationJournalEntryId, amount, vatTreatment, eliminateOnConsolidation, status, varianceAmount | → Administration (source + destination), → GLTransaction (both sides) |
+| ConsolidationMapping | schema:PropertyValue | name, source/destinationAdministrationId, rules[] (sourceAccount→destinationAccount), intercompanyEliminationAccount, currencyTranslationMethod | → Administration (source + destination) |
+| AdministrationMigration | schema:Action | migrationNumber, date, source/destinationAdministrationId, kind, objectIds[], bookValue/marketValueTransferred, fiscalTreatment, legalBasis, source/destinationJournalEntryId, status | → Administration (source + destination), → GLTransaction (both sides) |

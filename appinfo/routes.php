@@ -25,6 +25,21 @@ return [
         // BCF claims (Tier 3): read-only compensable-VAT breakdown for a quarter.
         ['name' => 'bcfClaim#compensation', 'url' => '/api/bcf-claims/compensation', 'verb' => 'GET'],
 
+        // OSS (One-Stop-Shop, Tier 2): destination-country rate resolution + quarterly return generation.
+        ['name' => 'oss#resolveRate', 'url' => '/api/oss/rate', 'verb' => 'GET'],
+        ['name' => 'oss#generateReturn', 'url' => '/api/oss/return', 'verb' => 'GET'],
+
+        // Multi-administratie (multi-tenant) context, switcher and per-administration export scope.
+        // Static segments precede the {id} wildcard so they are matched first.
+        ['name' => 'administration#context', 'url' => '/api/administrations/context', 'verb' => 'GET'],
+        ['name' => 'administration#switch', 'url' => '/api/administrations/switch', 'verb' => 'POST'],
+        ['name' => 'administration#exportScope', 'url' => '/api/administrations/{id}/export-scope', 'verb' => 'GET'],
+
+        // Payroll engine (NL loonadministratie): read-only compute endpoints.
+        ['name' => 'payroll#loonstrook', 'url' => '/api/payroll/loonstrook', 'verb' => 'GET'],
+        ['name' => 'payroll#lhAfdracht', 'url' => '/api/payroll/lh-afdracht', 'verb' => 'GET'],
+        ['name' => 'payroll#journaalpost', 'url' => '/api/payroll/journaalpost', 'verb' => 'GET'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
