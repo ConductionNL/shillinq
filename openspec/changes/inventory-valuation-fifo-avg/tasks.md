@@ -56,10 +56,14 @@
   `methodChangeRequiresZeroStock` validation that fires the same
   guard on any direct `valuationMethod` patch (defence-in-depth so
   generic OR CRUD edits cannot bypass the guard).
-- [ ] Task 6: Author
+- [x] Task 6: Author
   `lib/Lifecycle/InventoryValuationMethodGuard.php` — single-method
   class (`checkZeroStock(InventoryValuation $v): bool`), ≤15 LOC,
-  `@spec` tag pointing to `tasks.md#task-6` (ADR-003, ADR-031)
+  `@spec` tag pointing to `tasks.md#task-6` (ADR-003, ADR-031) —
+  authored with `LoggerInterface` DI, fail-closed on exceptions,
+  `@spec` tag pointing at `task-6`. Companion unit test
+  `tests/Unit/Lifecycle/InventoryValuationMethodGuardTest.php`
+  covers zero / non-zero / missing / fractional quantity branches.
 - [ ] Task 7: Author `lib/Service/FifoValuationService.php` — listens to
   `StockMovement.inbound` event (creates cost lot reference) and
   `StockMovement.outbound` event (traverses open inbound lots
