@@ -53,6 +53,17 @@ import InvoiceGenerator from './components/invoice/InvoiceGenerator.vue'
 import AdminInvoiceList from './views/invoice/AdminInvoiceList.vue'
 import AdminInvoiceDetail from './views/invoice/AdminInvoiceDetail.vue'
 
+// bookkeeping-purchase-order-3way slice 02 (REQ-PO3W-001): the create form
+// previews the server-determined approval chain as the line total changes
+// and POSTs the normalised payload to /api/purchase-orders; the detail
+// view renders the materialised approval chain with per-approver
+// signature timestamps and gates the 'Send to supplier' action on the
+// server-authoritative blockSendUntilApproved guard. Neither view fits a
+// built-in `index` / `detail` page type, so both are kind:"page" custom
+// components.
+import PurchaseOrderForm from './components/purchase-order/PurchaseOrderForm.vue'
+import PurchaseOrderDetail from './components/purchase-order/PurchaseOrderDetail.vue'
+
 export default {
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
 	MobileScannerReceive: { kind: 'page', component: ReceivePage },
@@ -66,4 +77,7 @@ export default {
 
 	BookingsCalendarPage: { kind: 'page', component: BookingsCalendarPage },
 	BookingsConfirmationPortal: { kind: 'page', component: BookingsConfirmationPortal },
+
+	PurchaseOrderForm: { kind: 'page', component: PurchaseOrderForm },
+	PurchaseOrderDetail: { kind: 'page', component: PurchaseOrderDetail },
 }
