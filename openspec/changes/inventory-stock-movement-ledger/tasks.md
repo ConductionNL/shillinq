@@ -8,21 +8,21 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `inventory-stock-movement-ledger` capability spec already exists,
+- [x] Task 1: Confirm no `inventory-stock-movement-ledger` capability spec already exists,
   no `StockMove` schema is declared, and no `lib/Service/StockMove*` / `lib/Service/Inventory*`
   PHP classes are present (per ADR-031 anti-pattern enumeration); explicitly note this
   capability "follows Odoo's double-entry + Tryton's Stock Move pattern"
 
-- [ ] Task 2: Author `specs/inventory-stock-movement-ledger/spec.md` with `Status: proposed` /
+- [x] Task 2: Author `specs/inventory-stock-movement-ledger/spec.md` with `Status: proposed` /
   `Scope: shillinq` / `Tier: T2 (inventory + operations)` / `Depends on: inventory-stock-tracking,
   add-shillinq-general-ledger` header, `REQ-SM-NNN` requirements using RFC 2119 keywords, and
   `#### Scenario:` blocks with GIVEN/WHEN/THEN; cite ADR-022 + ADR-031 inline
 
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including
   Affected Projects / Scope / Risks (GL materialisation performance, reserved qty concurrency,
   cost method variance, manufacture BOM dependency) / Rollback / Open Questions
 
-- [ ] Task 4: Author `design.md` with Reuse Analysis table, D1 (double-entry semantics),
+- [x] Task 4: Author `design.md` with Reuse Analysis table, D1 (double-entry semantics),
   D2 (declarative lifecycle with immutability), D3 (GL materialisation per move type),
   D4 (reserved quantity workflow), D5 (stock ledger aggregation), D6 (audit trail with reason codes)
 
