@@ -4,6 +4,38 @@
 	},
 	"components": {
 		"schemas": {
+			"GoodsReceipt": {
+				"properties": {
+					"lotId": {
+						"type": "string",
+						"nullable": true,
+						"description": "REQ-LOT-008: optional FK to the InventoryLot created/replenished by this receipt. Required when the receipt's product (Product.requiresLotTracking == true) is lot-tracked — the LotTrackingReceiptGuard enforces this on save.",
+						"example": "lot-2026-001"
+					}
+				},
+				"x-openregister-relations": {
+					"lot": {
+						"localField": "lotId",
+						"relatedSchema": "InventoryLot",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"required": false,
+						"description": "REQ-LOT-008: receipt → lot back-reference. The LotTrackingReceiptGuard rejects saves for requiresLotTracking products when this field is empty AND no lot references this receipt via goodsReceiptId."
+					}
+				},
+				"x-openregister-lifecycle": {
+					"validations": {
+						"onCreate": {
+							"lotRequiredForTrackedProduct": {
+								"condition": "@product.requiresLotTracking == true AND lotId IS NULL AND NOT EXISTS(InventoryLot WHERE goodsReceiptId == @self.id)",
+								"message": "Lot number required for tracked item: receipt MUST reference an InventoryLot.",
+								"messageNl": "Lotnummer vereist voor gevolgd artikel: ontvangst MOET een InventoryLot referentie bevatten.",
+								"guard": "OCA\\Shillinq\\Lifecycle\\LotTrackingReceiptGuard::validate"
+							}
+						}
+					}
+				}
+			},
 			"Product": {
 				"properties": {
 					"requiresLotTracking": {
