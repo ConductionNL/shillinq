@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-journal-entries/specs/bookkeeping-journal-entries/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -236,21 +239,21 @@ class JournalPostingGuardTest extends TestCase
             public function setRegister(string $register): static
             {
                 return $this;
-            }
+            }//end setRegister()
 
             public function setSchema(string $schema): static
             {
                 return $this;
-            }
+            }//end setSchema()
 
             /**
-             * @param array<string,mixed> $params
+             * @param  array<string,mixed> $params
              * @return array<mixed>
              */
             public function findAll(array $params=[]): array
             {
                 throw new \RuntimeException('schema not found');
-            }
+            }//end findAll()
         };
         $this->container->method('get')->willReturn($objectService);
 
@@ -278,35 +281,37 @@ class JournalPostingGuardTest extends TestCase
     public function testMaterializeHappyPathCreatesTransactionAndLines(): void
     {
         $objectService = new class {
+
             /**
              * @var array<int,array{schema:string,data:array<string,mixed>}>
              */
             public array $saved = [];
+
             private string $currentSchema = '';
 
             public function setRegister(string $register): static
             {
                 return $this;
-            }
+            }//end setRegister()
 
             public function setSchema(string $schema): static
             {
                 $this->currentSchema = $schema;
                 return $this;
-            }
+            }//end setSchema()
 
             /**
-             * @param array<string,mixed> $params
+             * @param  array<string,mixed> $params
              * @return array<mixed>
              */
             public function findAll(array $params=[]): array
             {
                 // GLTransaction schema exists (availability probe succeeds).
                 return [];
-            }
+            }//end findAll()
 
             /**
-             * @param array<string,mixed> $data
+             * @param  array<string,mixed> $data
              * @return array<string,mixed>
              */
             public function saveObject(array $data): array
@@ -315,8 +320,9 @@ class JournalPostingGuardTest extends TestCase
                 if ($this->currentSchema === 'GLTransaction') {
                     return ['id' => 'txn-001'] + $data;
                 }
+
                 return ($data + ['id' => 'gen-id']);
-            }
+            }//end saveObject()
         };
         $this->container->method('get')->willReturn($objectService);
 

@@ -13,6 +13,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-journal-entries/specs/bookkeeping-journal-entries/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -115,10 +118,12 @@ class JournalVoidGuardTest extends TestCase
         $this->container->method('get')->willReturn($objectService);
 
         self::assertFalse(
-            $this->guard->requireReversedGLTransaction([
-                'journalNumber'   => 'M-2026-0002',
-                'glTransactionId' => 'txn-001',
-            ]),
+            $this->guard->requireReversedGLTransaction(
+                    [
+                        'journalNumber'   => 'M-2026-0002',
+                        'glTransactionId' => 'txn-001',
+                    ]
+                    ),
             'Void must be denied until the GL transaction is reversed (storneer eerst)'
         );
 
@@ -137,10 +142,12 @@ class JournalVoidGuardTest extends TestCase
         $this->container->method('get')->willReturn($objectService);
 
         self::assertTrue(
-            $this->guard->requireReversedGLTransaction([
-                'journalNumber'   => 'M-2026-0003',
-                'glTransactionId' => 'txn-001',
-            ])
+            $this->guard->requireReversedGLTransaction(
+                    [
+                        'journalNumber'   => 'M-2026-0003',
+                        'glTransactionId' => 'txn-001',
+                    ]
+                    )
         );
 
     }//end testVoidPermittedWhenReversalExists()
@@ -156,29 +163,31 @@ class JournalVoidGuardTest extends TestCase
             public function setRegister(string $register): static
             {
                 return $this;
-            }
+            }//end setRegister()
 
             public function setSchema(string $schema): static
             {
                 return $this;
-            }
+            }//end setSchema()
 
             /**
-             * @param array<string,mixed> $params
+             * @param  array<string,mixed> $params
              * @return array<mixed>
              */
             public function findAll(array $params=[]): array
             {
                 throw new \RuntimeException('DB error');
-            }
+            }//end findAll()
         };
         $this->container->method('get')->willReturn($objectService);
 
         self::assertFalse(
-            $this->guard->requireReversedGLTransaction([
-                'journalNumber'   => 'M-2026-0004',
-                'glTransactionId' => 'txn-001',
-            ])
+            $this->guard->requireReversedGLTransaction(
+                    [
+                        'journalNumber'   => 'M-2026-0004',
+                        'glTransactionId' => 'txn-001',
+                    ]
+                    )
         );
 
     }//end testVoidFailClosedOnException()
@@ -194,31 +203,32 @@ class JournalVoidGuardTest extends TestCase
     private function buildObjectServiceStub(array $reversals): object
     {
         return new class($reversals) {
+
             private array $reversals;
 
             public function __construct(array $reversals)
             {
                 $this->reversals = $reversals;
-            }
+            }//end __construct()
 
             public function setRegister(string $register): static
             {
                 return $this;
-            }
+            }//end setRegister()
 
             public function setSchema(string $schema): static
             {
                 return $this;
-            }
+            }//end setSchema()
 
             /**
-             * @param array<string,mixed> $params
+             * @param  array<string,mixed> $params
              * @return array<mixed>
              */
             public function findAll(array $params=[]): array
             {
                 return $this->reversals;
-            }
+            }//end findAll()
         };
 
     }//end buildObjectServiceStub()
