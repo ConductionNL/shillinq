@@ -156,13 +156,14 @@ class PipelinqContactAdapter
     /**
      * Constructor.
      *
-     * @param IClientService      $clientService HTTP transport factory (NC `IHTTPClientService`).
-     * @param IAppConfig          $appConfig     App-scoped config; reads endpoint + token from slice 01.
-     * @param LoggerInterface     $logger        PSR logger; transport failures logged at WARNING.
-     * @param ICache              $cache         Cache layer (in-memory or distributed); used by slice 03 for contact TTL caching.
-     * @param RetryPolicy         $retryPolicy   Override the default retry policy (exposed for tests).
-     * @param CircuitBreaker|null $breaker       Override the default circuit breaker (exposed for tests).
-     * @param \Closure|null       $sleeper       Callable that pauses for N seconds; injected so tests can run without real delays.
+     * @param IClientService                  $clientService HTTP transport factory (NC `IHTTPClientService`).
+     * @param IAppConfig                      $appConfig     App-scoped config; reads endpoint + token from slice 01.
+     * @param LoggerInterface                 $logger        PSR logger; transport failures logged at WARNING.
+     * @param ICache                          $cache         Cache layer (in-memory or distributed); used by slice 03 for contact TTL caching.
+     * @param RetryPolicy                     $retryPolicy   Override the default retry policy (exposed for tests).
+     * @param CircuitBreaker|null             $breaker       Override the default circuit breaker (exposed for tests).
+     * @param \Closure|null                   $sleeper       Callable that pauses for N seconds; injected so tests can run without real delays.
+     * @param CustomerBridgeMetricsService|null $metrics     Optional metrics aggregator (slice 11); skipped when NULL so existing test wiring keeps working.
      */
     public function __construct(
         private readonly IClientService $clientService,
@@ -171,7 +172,8 @@ class PipelinqContactAdapter
         private readonly ICache $cache,
         private readonly RetryPolicy $retryPolicy=new RetryPolicy(),
         ?CircuitBreaker $breaker=null,
-        private readonly ?\Closure $sleeper=null
+        private readonly ?\Closure $sleeper=null,
+        private readonly ?CustomerBridgeMetricsService $metrics=null
     ) {
         // Wire the breaker's WARNING-level transition log here so the
         // CircuitBreaker stays pure and unit-testable.
@@ -189,6 +191,7 @@ class PipelinqContactAdapter
                         'reason' => $reason,
                     ]
                 );
+                $this->metrics?->recordCircuitState(state: $to);
             }
         ));
 
@@ -279,6 +282,7 @@ class PipelinqContactAdapter
                     'externalId' => $id,
                 ]
             );
+            $this->metrics?->recordContactSuccess(fromCache: true);
             return $cached;
         }
 
@@ -300,6 +304,7 @@ class PipelinqContactAdapter
                 );
                 $contact = PipelinqContact::notFound(externalId: $id);
                 $this->writeCachedContact(key: $cacheKey, contact: $contact);
+                $this->metrics?->recordContactFallback(reason: 'not_found');
                 return $contact;
             }
 
@@ -317,6 +322,7 @@ class PipelinqContactAdapter
                         'reason'     => $previous->getMessage(),
                     ]
                 );
+                $this->metrics?->recordContactFallback(reason: 'malformed');
                 return PipelinqContact::notFound(externalId: $id);
             }
 
@@ -332,6 +338,7 @@ class PipelinqContactAdapter
                         'status'     => $e->statusCode(),
                     ]
                 );
+                $this->metrics?->recordContactStaleServed();
                 return $stale;
             }
 
@@ -340,6 +347,7 @@ class PipelinqContactAdapter
 
         $contact = PipelinqContact::fromApiPayload(externalId: $id, payload: $payload);
         $this->writeCachedContact(key: $cacheKey, contact: $contact);
+        $this->metrics?->recordContactSuccess(fromCache: false);
 
         return $contact;
 
@@ -527,9 +535,29 @@ class PipelinqContactAdapter
 
             if ($this->retryPolicy->shouldRetry(attempt: $attempt, isTransient: $transient) === false) {
                 $this->circuitBreaker->recordFailure();
+
+                // ADR-005 ops contract: a 401 from pipelinq means the token
+                // is rejected — every subsequent call will fail the same
+                // way until an admin updates the credentials. Surface this
+                // at ERROR so it crosses the "needs human attention"
+                // threshold of the nextcloud.log subscribers.
+                if ($lastStatusCode === 401) {
+                    $this->logger->error(
+                        'pipelinq authentication rejected — admin must rotate the bearer token',
+                        [
+                            'app'    => Application::APP_ID,
+                            'method' => $method,
+                            'path'   => $path,
+                            'status' => $lastStatusCode,
+                        ]
+                    );
+                    $this->metrics?->recordPermanentFailure(reason: 'auth');
+                }
+
                 throw $lastException;
             }
 
+            $this->metrics?->recordRetryAttempt(attempt: $attempt);
             $this->sleep(seconds: $this->retryPolicy->backoffSeconds(attempt: $attempt));
         }//end while
 
@@ -537,6 +565,16 @@ class PipelinqContactAdapter
         // the retry budget was somehow exhausted without a failure being
         // recorded -- defensive fallback for the type checker.
         $this->circuitBreaker->recordFailure();
+        $this->logger->error(
+            'pipelinq retry budget exhausted — request abandoned',
+            [
+                'app'    => Application::APP_ID,
+                'method' => $method,
+                'path'   => $path,
+                'status' => $lastStatusCode,
+            ]
+        );
+        $this->metrics?->recordPermanentFailure(reason: 'dead_letter');
         throw new PipelinqTransportException(
             message: 'pipelinq retry budget exhausted',
             statusCode: $lastStatusCode
@@ -731,6 +769,7 @@ class PipelinqContactAdapter
                 'contactId'  => $event->contactId(),
             ]
         );
+        $this->metrics?->recordTimelinePublishSuccess();
 
         return true;
 
