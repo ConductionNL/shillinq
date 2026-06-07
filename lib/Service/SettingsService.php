@@ -355,6 +355,31 @@ class SettingsService
     }//end seedRj270Stages()
 
     /**
+     * Seed the default Administration on a fresh install, idempotently.
+     *
+     * Single-administratie installs need exactly one valid Administration record so
+     * every financial entity has a valid administrationId FK target (REQ-MA-001).
+     * The seed (lib/Settings/seeds/administraties/default.json) is matched on
+     * administrationCode, so re-runs create no duplicates and operator edits to the
+     * default administration are preserved (REQ-MA-007).
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-14
+     */
+    public function seedDefaultAdministration(): array
+    {
+        return $this->seedGenericFile(
+            seedFileName: 'administraties/default.json',
+            itemsKey: 'administrations',
+            dedupeKey: 'administrationCode',
+            schema: 'Administration',
+            logLabel: 'Default administration'
+        );
+
+    }//end seedDefaultAdministration()
+
+    /**
      * Seed statutory BTW tariffs from btw-tariffs-2026.json, idempotently.
      *
      * Imports the current Dutch VAT rates into the VatTariff schema. Deduplication

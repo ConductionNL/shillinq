@@ -232,6 +232,27 @@
 					"icon": "TagOutline",
 					"route": "ProductAttributes",
 					"order": 20
+				},
+				{
+					"id": "ReorderRules",
+					"label": "Reorder Rules",
+					"icon": "CartArrowDownOutline",
+					"route": "ReorderRules",
+					"order": 30
+				},
+				{
+					"id": "LowStockAlerts",
+					"label": "Low Stock Alerts",
+					"icon": "AlertCircleOutline",
+					"route": "LowStockAlerts",
+					"order": 40
+				},
+				{
+					"id": "StockLevelsDashboard",
+					"label": "Stock Levels",
+					"icon": "ChartBarOutline",
+					"route": "StockLevelsDashboard",
+					"order": 50
 				}
 			]
 		},
@@ -6295,10 +6316,26 @@
 				"register": "shillinq",
 				"schema": "VatReturn",
 				"columns": [
-					{ "key": "periodYear", "label": "Jaar", "sortable": true },
-					{ "key": "periodType", "label": "Periode", "sortable": true },
-					{ "key": "amount", "label": "Bedrag", "sortable": true },
-					{ "key": "state", "label": "Status", "sortable": true }
+					{
+						"key": "periodYear",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "periodType",
+						"label": "Periode",
+						"sortable": true
+					},
+					{
+						"key": "amount",
+						"label": "Bedrag",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "periodYear",
 				"detailRoute": "BtwAangifteDetail"
@@ -6313,15 +6350,51 @@
 				"register": "shillinq",
 				"schema": "VatReturn",
 				"fields": [
-					{ "key": "administrationId", "label": "Administratie", "type": "string" },
-					{ "key": "periodType", "label": "Periode-type", "type": "string" },
-					{ "key": "periodYear", "label": "Jaar", "type": "number" },
-					{ "key": "periodQuarter", "label": "Kwartaal", "type": "number" },
-					{ "key": "periodMonth", "label": "Maand", "type": "number" },
-					{ "key": "amount", "label": "BTW-bedrag", "type": "number" },
-					{ "key": "currency", "label": "Valuta", "type": "string" },
-					{ "key": "state", "label": "Status", "type": "string" },
-					{ "key": "notes", "label": "Notities", "type": "string" }
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "periodType",
+						"label": "Periode-type",
+						"type": "string"
+					},
+					{
+						"key": "periodYear",
+						"label": "Jaar",
+						"type": "number"
+					},
+					{
+						"key": "periodQuarter",
+						"label": "Kwartaal",
+						"type": "number"
+					},
+					{
+						"key": "periodMonth",
+						"label": "Maand",
+						"type": "number"
+					},
+					{
+						"key": "amount",
+						"label": "BTW-bedrag",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Valuta",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "notes",
+						"label": "Notities",
+						"type": "string"
+					}
 				],
 				"indexRoute": "BtwAangiften"
 			}
@@ -6335,9 +6408,21 @@
 				"register": "shillinq",
 				"schema": "IcpStatement",
 				"columns": [
-					{ "key": "periodYear", "label": "Jaar", "sortable": true },
-					{ "key": "periodType", "label": "Periode", "sortable": true },
-					{ "key": "state", "label": "Status", "sortable": true }
+					{
+						"key": "periodYear",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "periodType",
+						"label": "Periode",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "periodYear",
 				"detailRoute": "IcpOpgaafDetail"
@@ -6352,10 +6437,26 @@
 				"register": "shillinq",
 				"schema": "IcpStatement",
 				"fields": [
-					{ "key": "administrationId", "label": "Administratie", "type": "string" },
-					{ "key": "periodType", "label": "Periode-type", "type": "string" },
-					{ "key": "periodYear", "label": "Jaar", "type": "number" },
-					{ "key": "state", "label": "Status", "type": "string" }
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "periodType",
+						"label": "Periode-type",
+						"type": "string"
+					},
+					{
+						"key": "periodYear",
+						"label": "Jaar",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					}
 				],
 				"indexRoute": "IcpOpgaaf"
 			}
@@ -6369,10 +6470,26 @@
 				"register": "shillinq",
 				"schema": "VatCorrection",
 				"columns": [
-					{ "key": "periodYear", "label": "Jaar", "sortable": true },
-					{ "key": "correctionReason", "label": "Reden", "sortable": true },
-					{ "key": "adjustmentAmount", "label": "Correctie", "sortable": true },
-					{ "key": "state", "label": "Status", "sortable": true }
+					{
+						"key": "periodYear",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "correctionReason",
+						"label": "Reden",
+						"sortable": true
+					},
+					{
+						"key": "adjustmentAmount",
+						"label": "Correctie",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "periodYear",
 				"detailRoute": "BtwCorrectieDetail"
@@ -6387,11 +6504,31 @@
 				"register": "shillinq",
 				"schema": "VatCorrection",
 				"fields": [
-					{ "key": "administrationId", "label": "Administratie", "type": "string" },
-					{ "key": "correctionReason", "label": "Reden", "type": "string" },
-					{ "key": "originalReturnId", "label": "Oorspronkelijke aangifte", "type": "string" },
-					{ "key": "adjustmentAmount", "label": "Correctiebedrag", "type": "number" },
-					{ "key": "state", "label": "Status", "type": "string" }
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "correctionReason",
+						"label": "Reden",
+						"type": "string"
+					},
+					{
+						"key": "originalReturnId",
+						"label": "Oorspronkelijke aangifte",
+						"type": "string"
+					},
+					{
+						"key": "adjustmentAmount",
+						"label": "Correctiebedrag",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					}
 				],
 				"indexRoute": "BtwCorrecties"
 			}
@@ -6405,11 +6542,28 @@
 				"register": "shillinq",
 				"schema": "UrenRegistratie",
 				"columns": [
-					{ "key": "workDate", "label": "Datum", "sortable": true },
-					{ "key": "hours", "label": "Uren", "sortable": true },
-					{ "key": "category", "label": "Categorie", "sortable": true }
+					{
+						"key": "workDate",
+						"label": "Datum",
+						"sortable": true
+					},
+					{
+						"key": "hours",
+						"label": "Uren",
+						"sortable": true
+					},
+					{
+						"key": "category",
+						"label": "Categorie",
+						"sortable": true
+					}
 				],
-				"visibility": { "field": "administrationType", "in": [ "zzp" ] },
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"zzp"
+					]
+				},
 				"defaultSort": "workDate"
 			}
 		},
@@ -6422,12 +6576,33 @@
 				"register": "shillinq",
 				"schema": "ZzpDeduction",
 				"columns": [
-					{ "key": "year", "label": "Jaar", "sortable": true },
-					{ "key": "ytdQualifyingHours", "label": "Kwalificerende uren", "sortable": true },
-					{ "key": "qualifies1225", "label": "Voldoet 1225", "sortable": true },
-					{ "key": "totalAllowableDeduction", "label": "Totale aftrek", "sortable": true }
+					{
+						"key": "year",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "ytdQualifyingHours",
+						"label": "Kwalificerende uren",
+						"sortable": true
+					},
+					{
+						"key": "qualifies1225",
+						"label": "Voldoet 1225",
+						"sortable": true
+					},
+					{
+						"key": "totalAllowableDeduction",
+						"label": "Totale aftrek",
+						"sortable": true
+					}
 				],
-				"visibility": { "field": "administrationType", "in": [ "zzp" ] },
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"zzp"
+					]
+				},
 				"defaultSort": "year",
 				"detailRoute": "ZzpAftrekDetail"
 			}
@@ -6441,15 +6616,51 @@
 				"register": "shillinq",
 				"schema": "ZzpDeduction",
 				"fields": [
-					{ "key": "personId", "label": "Persoon", "type": "string" },
-					{ "key": "year", "label": "Jaar", "type": "number" },
-					{ "key": "ytdQualifyingHours", "label": "Kwalificerende uren", "type": "number" },
-					{ "key": "qualifies1225", "label": "Voldoet urencriterium", "type": "boolean" },
-					{ "key": "qualifiesStarters", "label": "Starter", "type": "boolean" },
-					{ "key": "zelfstandigenaftrek", "label": "Zelfstandigenaftrek", "type": "number" },
-					{ "key": "startersaftrek", "label": "Startersaftrek", "type": "number" },
-					{ "key": "mkbWinstvrijstelling", "label": "MKB-winstvrijstelling", "type": "number" },
-					{ "key": "totalAllowableDeduction", "label": "Totale aftrek", "type": "number" }
+					{
+						"key": "personId",
+						"label": "Persoon",
+						"type": "string"
+					},
+					{
+						"key": "year",
+						"label": "Jaar",
+						"type": "number"
+					},
+					{
+						"key": "ytdQualifyingHours",
+						"label": "Kwalificerende uren",
+						"type": "number"
+					},
+					{
+						"key": "qualifies1225",
+						"label": "Voldoet urencriterium",
+						"type": "boolean"
+					},
+					{
+						"key": "qualifiesStarters",
+						"label": "Starter",
+						"type": "boolean"
+					},
+					{
+						"key": "zelfstandigenaftrek",
+						"label": "Zelfstandigenaftrek",
+						"type": "number"
+					},
+					{
+						"key": "startersaftrek",
+						"label": "Startersaftrek",
+						"type": "number"
+					},
+					{
+						"key": "mkbWinstvrijstelling",
+						"label": "MKB-winstvrijstelling",
+						"type": "number"
+					},
+					{
+						"key": "totalAllowableDeduction",
+						"label": "Totale aftrek",
+						"type": "number"
+					}
 				],
 				"indexRoute": "ZzpAftrek"
 			}
@@ -6463,11 +6674,28 @@
 				"register": "shillinq",
 				"schema": "IbAangifteExport",
 				"columns": [
-					{ "key": "year", "label": "Jaar", "sortable": true },
-					{ "key": "taxableIncome", "label": "Belastbaar inkomen", "sortable": true },
-					{ "key": "exportDate", "label": "Exportdatum", "sortable": true }
+					{
+						"key": "year",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "taxableIncome",
+						"label": "Belastbaar inkomen",
+						"sortable": true
+					},
+					{
+						"key": "exportDate",
+						"label": "Exportdatum",
+						"sortable": true
+					}
 				],
-				"visibility": { "field": "administrationType", "in": [ "zzp" ] },
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"zzp"
+					]
+				},
 				"defaultSort": "year"
 			}
 		},
@@ -6479,12 +6707,35 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "BbvAccountMapping",
-				"visibility": { "field": "administrationType", "in": [ "gemeente", "provincie", "waterschap" ] },
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"gemeente",
+						"provincie",
+						"waterschap"
+					]
+				},
 				"columns": [
-					{ "key": "accountNumber", "label": "Grootboek", "sortable": true },
-					{ "key": "taakveld", "label": "Taakveld", "sortable": true },
-					{ "key": "programmaCode", "label": "Programma", "sortable": true },
-					{ "key": "bcfCompensable", "label": "BCF-compensabel", "sortable": true }
+					{
+						"key": "accountNumber",
+						"label": "Grootboek",
+						"sortable": true
+					},
+					{
+						"key": "taakveld",
+						"label": "Taakveld",
+						"sortable": true
+					},
+					{
+						"key": "programmaCode",
+						"label": "Programma",
+						"sortable": true
+					},
+					{
+						"key": "bcfCompensable",
+						"label": "BCF-compensabel",
+						"sortable": true
+					}
 				],
 				"defaultSort": "accountNumber"
 			}
@@ -6497,13 +6748,38 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "BcfClaim",
-				"visibility": { "field": "administrationType", "in": [ "gemeente" ] },
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"gemeente"
+					]
+				},
 				"columns": [
-					{ "key": "claimNumber", "label": "Claimnummer", "sortable": true },
-					{ "key": "periodYear", "label": "Jaar", "sortable": true },
-					{ "key": "periodQuarter", "label": "Kwartaal", "sortable": true },
-					{ "key": "totalClaimAmount", "label": "Bedrag", "sortable": true },
-					{ "key": "state", "label": "Status", "sortable": true }
+					{
+						"key": "claimNumber",
+						"label": "Claimnummer",
+						"sortable": true
+					},
+					{
+						"key": "periodYear",
+						"label": "Jaar",
+						"sortable": true
+					},
+					{
+						"key": "periodQuarter",
+						"label": "Kwartaal",
+						"sortable": true
+					},
+					{
+						"key": "totalClaimAmount",
+						"label": "Bedrag",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "periodYear",
 				"detailRoute": "BcfClaimDetail"
@@ -6518,12 +6794,36 @@
 				"register": "shillinq",
 				"schema": "BcfClaim",
 				"fields": [
-					{ "key": "claimNumber", "label": "Claimnummer", "type": "string" },
-					{ "key": "administrationId", "label": "Administratie", "type": "string" },
-					{ "key": "periodYear", "label": "Jaar", "type": "number" },
-					{ "key": "periodQuarter", "label": "Kwartaal", "type": "number" },
-					{ "key": "totalClaimAmount", "label": "Claimbedrag", "type": "number" },
-					{ "key": "state", "label": "Status", "type": "string" }
+					{
+						"key": "claimNumber",
+						"label": "Claimnummer",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					},
+					{
+						"key": "periodYear",
+						"label": "Jaar",
+						"type": "number"
+					},
+					{
+						"key": "periodQuarter",
+						"label": "Kwartaal",
+						"type": "number"
+					},
+					{
+						"key": "totalClaimAmount",
+						"label": "Claimbedrag",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					}
 				],
 				"indexRoute": "BcfClaims"
 			}
@@ -6536,9 +6836,18 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "SchatkistPosition",
-				"visibility": { "field": "administrationType", "in": [ "gemeente" ] },
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"gemeente"
+					]
+				},
 				"widgets": [
-					{ "id": "schatkist-position", "type": "line-with-threshold", "title": "Schatkist-positie" }
+					{
+						"id": "schatkist-position",
+						"type": "line-with-threshold",
+						"title": "Schatkist-positie"
+					}
 				]
 			}
 		},
@@ -6551,10 +6860,26 @@
 				"register": "shillinq",
 				"schema": "Subsidie",
 				"columns": [
-					{ "key": "subsidieNumber", "label": "Nummer", "sortable": true },
-					{ "key": "subsidieName", "label": "Naam", "sortable": true },
-					{ "key": "awardAmount", "label": "Bedrag", "sortable": true },
-					{ "key": "state", "label": "Status", "sortable": true }
+					{
+						"key": "subsidieNumber",
+						"label": "Nummer",
+						"sortable": true
+					},
+					{
+						"key": "subsidieName",
+						"label": "Naam",
+						"sortable": true
+					},
+					{
+						"key": "awardAmount",
+						"label": "Bedrag",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "subsidieNumber",
 				"detailRoute": "SubsidieDetail"
@@ -6569,12 +6894,36 @@
 				"register": "shillinq",
 				"schema": "Subsidie",
 				"fields": [
-					{ "key": "subsidieNumber", "label": "Nummer", "type": "string" },
-					{ "key": "subsidieName", "label": "Naam", "type": "string" },
-					{ "key": "granteeOrganization", "label": "Ontvanger", "type": "string" },
-					{ "key": "awardAmount", "label": "Toegekend bedrag", "type": "number" },
-					{ "key": "state", "label": "Status", "type": "string" },
-					{ "key": "hasRepaymentPlan", "label": "Afbetalingsregeling", "type": "boolean" }
+					{
+						"key": "subsidieNumber",
+						"label": "Nummer",
+						"type": "string"
+					},
+					{
+						"key": "subsidieName",
+						"label": "Naam",
+						"type": "string"
+					},
+					{
+						"key": "granteeOrganization",
+						"label": "Ontvanger",
+						"type": "string"
+					},
+					{
+						"key": "awardAmount",
+						"label": "Toegekend bedrag",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "hasRepaymentPlan",
+						"label": "Afbetalingsregeling",
+						"type": "boolean"
+					}
 				],
 				"indexRoute": "SubsidiesOverzicht"
 			}
@@ -6587,11 +6936,25 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "Subsidie",
-				"filter": { "state": "verleend" },
+				"filter": {
+					"state": "verleend"
+				},
 				"columns": [
-					{ "key": "subsidieNumber", "label": "Nummer", "sortable": true },
-					{ "key": "subsidieName", "label": "Naam", "sortable": true },
-					{ "key": "awardAmount", "label": "Bedrag", "sortable": true }
+					{
+						"key": "subsidieNumber",
+						"label": "Nummer",
+						"sortable": true
+					},
+					{
+						"key": "subsidieName",
+						"label": "Naam",
+						"sortable": true
+					},
+					{
+						"key": "awardAmount",
+						"label": "Bedrag",
+						"sortable": true
+					}
 				],
 				"defaultSort": "subsidieNumber",
 				"detailRoute": "SubsidieDetail"
@@ -6605,14 +6968,369 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "Subsidie",
-				"filter": { "state": "teruggevorderd" },
+				"filter": {
+					"state": "teruggevorderd"
+				},
 				"columns": [
-					{ "key": "subsidieNumber", "label": "Nummer", "sortable": true },
-					{ "key": "subsidieName", "label": "Naam", "sortable": true },
-					{ "key": "awardAmount", "label": "Bedrag", "sortable": true }
+					{
+						"key": "subsidieNumber",
+						"label": "Nummer",
+						"sortable": true
+					},
+					{
+						"key": "subsidieName",
+						"label": "Naam",
+						"sortable": true
+					},
+					{
+						"key": "awardAmount",
+						"label": "Bedrag",
+						"sortable": true
+					}
 				],
 				"defaultSort": "subsidieNumber",
 				"detailRoute": "SubsidieDetail"
+			}
+		},
+		{
+			"id": "ReorderRules",
+			"route": "/inventory/reorder-rules",
+			"type": "index",
+			"title": "Reorder Rules",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryReorderRule",
+				"columns": [
+					{
+						"key": "inventoryStockId",
+						"label": "Stock Item",
+						"sortable": true
+					},
+					{
+						"key": "minimumLevel",
+						"label": "Minimum Level",
+						"sortable": true
+					},
+					{
+						"key": "maximumLevel",
+						"label": "Maximum Level",
+						"sortable": true
+					},
+					{
+						"key": "reorderPoint",
+						"label": "Reorder Point",
+						"sortable": true
+					},
+					{
+						"key": "autoPurchaseOrder",
+						"label": "Auto PO",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "lifecycleState",
+				"detailRoute": "ReorderRuleDetail",
+				"filters": [
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"options": [
+							"active",
+							"paused",
+							"archived"
+						]
+					},
+					{
+						"key": "autoPurchaseOrder",
+						"label": "Auto PO"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration"
+					}
+				]
+			}
+		},
+		{
+			"id": "ReorderRuleDetail",
+			"route": "/inventory/reorder-rules/:id",
+			"type": "detail",
+			"title": "Reorder Rule",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryReorderRule",
+				"fields": [
+					{
+						"key": "inventoryStockId",
+						"label": "Stock Item",
+						"type": "string"
+					},
+					{
+						"key": "supplierId",
+						"label": "Supplier",
+						"type": "string"
+					},
+					{
+						"key": "minimumLevel",
+						"label": "Minimum Level",
+						"type": "number"
+					},
+					{
+						"key": "maximumLevel",
+						"label": "Maximum Level",
+						"type": "number"
+					},
+					{
+						"key": "reorderPoint",
+						"label": "Reorder Point",
+						"type": "number"
+					},
+					{
+						"key": "reorderPointCalculated",
+						"label": "Calculated Reorder Point",
+						"type": "calculated"
+					},
+					{
+						"key": "reorderQuantity",
+						"label": "Reorder Quantity",
+						"type": "number"
+					},
+					{
+						"key": "leadTimeDays",
+						"label": "Lead Time (days)",
+						"type": "number"
+					},
+					{
+						"key": "safetyStockDays",
+						"label": "Safety Stock (days)",
+						"type": "number"
+					},
+					{
+						"key": "alertThreshold",
+						"label": "Warning Threshold (%)",
+						"type": "number"
+					},
+					{
+						"key": "autoPurchaseOrder",
+						"label": "Auto Purchase Order",
+						"type": "boolean"
+					},
+					{
+						"key": "autoPurchaseOrderApprovalRequired",
+						"label": "Approval Required",
+						"type": "boolean"
+					},
+					{
+						"key": "spendingLimit",
+						"label": "Spending Limit (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "alertChannel",
+						"label": "Alert Channel",
+						"type": "string"
+					},
+					{
+						"key": "alertRecipients",
+						"label": "Alert Recipients",
+						"type": "array"
+					},
+					{
+						"key": "snoozeUntil",
+						"label": "Snooze Until",
+						"type": "date-time"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"actions": [
+					{
+						"id": "pause-rule",
+						"label": "Pause Rule",
+						"icon": "PauseCircleOutline",
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": [
+								"active"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "pause",
+						"description": "Suspend alert monitoring for this rule. Use when a planned stockout or supplier change is in progress."
+					},
+					{
+						"id": "resume-rule",
+						"label": "Resume Rule",
+						"icon": "PlayCircleOutline",
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": [
+								"paused"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "resume",
+						"description": "Re-activate alert monitoring after planned suspension."
+					},
+					{
+						"id": "archive-rule",
+						"label": "Archive Rule",
+						"icon": "ArchiveArrowDownOutline",
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": [
+								"active"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "archive",
+						"description": "Permanently deactivate the rule. Audit trail is preserved."
+					},
+					{
+						"id": "restore-rule",
+						"label": "Restore Rule",
+						"icon": "ArchiveArrowUpOutline",
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": [
+								"archived"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "restore",
+						"description": "Re-activate an archived rule."
+					}
+				],
+				"indexRoute": "ReorderRules"
+			}
+		},
+		{
+			"id": "LowStockAlerts",
+			"route": "/inventory/low-stock-alerts",
+			"type": "index",
+			"title": "Low Stock Alerts",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryReorderRule",
+				"aggregation": "lowStockTrigger",
+				"columns": [
+					{
+						"key": "inventoryStockId",
+						"label": "Stock Item",
+						"sortable": true
+					},
+					{
+						"key": "minimumLevel",
+						"label": "Minimum Level",
+						"sortable": true
+					},
+					{
+						"key": "reorderPoint",
+						"label": "Reorder Point",
+						"sortable": true
+					},
+					{
+						"key": "autoPurchaseOrder",
+						"label": "Auto PO",
+						"sortable": true
+					},
+					{
+						"key": "snoozeUntil",
+						"label": "Snoozed Until",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-administrationId",
+				"detailRoute": "ReorderRuleDetail",
+				"filters": [
+					{
+						"key": "administrationId",
+						"label": "Administration"
+					},
+					{
+						"key": "autoPurchaseOrder",
+						"label": "Auto PO"
+					}
+				],
+				"description": "Items currently below their reorder point, grouped by administration. Dismiss by snoozing or placing an order."
+			}
+		},
+		{
+			"id": "StockLevelsDashboard",
+			"route": "/inventory/stock-levels",
+			"type": "dashboard",
+			"title": "Stock Levels Dashboard",
+			"config": {
+				"widgets": [
+					{
+						"id": "low-stock-by-location",
+						"title": "Low Stock by Location",
+						"type": "table",
+						"aggregation": "lowStockDashboard",
+						"schema": "InventoryReorderRule",
+						"register": "shillinq",
+						"columns": [
+							{
+								"key": "location",
+								"label": "Location"
+							},
+							{
+								"key": "itemCount",
+								"label": "Items Below Minimum"
+							},
+							{
+								"key": "totalDeficit",
+								"label": "Total Deficit (units)"
+							}
+						],
+						"description": "Locations with stock below minimum levels. Click a location to view its reorder rules."
+					},
+					{
+						"id": "auto-po-pending",
+						"title": "Auto-PO Pending Approval",
+						"type": "stats-block",
+						"props": {
+							"countLabel": "purchase orders awaiting approval",
+							"variant": "warning"
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "layout-low-stock-by-location",
+						"widgetId": "low-stock-by-location",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6
+					},
+					{
+						"id": "layout-auto-po-pending",
+						"widgetId": "auto-po-pending",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 2
+					}
+				]
 			}
 		}
 	]
