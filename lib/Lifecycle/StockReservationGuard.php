@@ -503,4 +503,56 @@ class StockReservationGuard
     }//end register()
 
 
+    /**
+     * Predicate: the proposed InventoryStock's quantityReserved does not
+     * exceed its quantityOnHand.
+     *
+     * Returns true (operation permitted) when reserved <= on-hand. Returns
+     * false (operation denied) when reserved > on-hand OR on any
+     * exception (fail-closed). Referenced by the InventoryStock schema's
+     * onCreate + onUpdate validations per REQ-IST-013 of the
+     * inventory-stock-tracking spec — separate from the StockMove
+     * reservation cycle handled by reserveReservation() /
+     * commitReservation() / releaseReservation() above. The two paths
+     * share the class because they share the same conceptual invariant
+     * ("never over-allocate reservation against on-hand") and the same
+     * fail-closed default.
+     *
+     * @param array<string,mixed> $stock The proposed InventoryStock record.
+     *
+     * @return bool True when the reservation is collateralised.
+     *
+     * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-16
+     */
+    public function checkReservationDoesNotExceedOnHand(array $stock): bool
+    {
+        try {
+            $reserved = (float) ($stock['quantityReserved'] ?? 0);
+            $onHand   = (float) ($stock['quantityOnHand'] ?? 0);
+
+            if ($reserved > $onHand) {
+                $this->logger->info(
+                    'StockReservationGuard: InventoryStock operation denied — reservation exceeds on-hand',
+                    [
+                        'productSku'       => ($stock['productSku'] ?? null),
+                        'locationCode'     => ($stock['locationCode'] ?? null),
+                        'quantityReserved' => $reserved,
+                        'quantityOnHand'   => $onHand,
+                    ]
+                );
+                return false;
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'StockReservationGuard: checkReservationDoesNotExceedOnHand failed — denying (fail-closed)',
+                ['exception' => $e->getMessage()]
+            );
+            return false;
+        }//end try
+
+    }//end checkReservationDoesNotExceedOnHand()
+
+
 }//end class
