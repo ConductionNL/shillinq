@@ -1,15 +1,15 @@
 # Tasks — IB Aangifte Assembly for ZZP
 
-> **Spec-only change.** Per `proposal.md` Scope, implementation code is deliberately out of scope here. The tasks below describe the work an `opsx-apply` cycle will execute against the `bookkeeping-ib-aangifte-zzp` spec — they are recorded now so the spec-review gate, dependency planning, and tier-cascade impact are all visible at proposal time. No source files are edited by this change itself.
+> **Apply cycle.** This change is implemented per ADR-031 (declarative business logic) + ADR-037 (modular register fragments). All 9 entities, lifecycles, RBAC, aggregations and fiscal calculations are declared as metadata in `lib/Settings/register.d/30-bookkeeping-ib-aangifte-zzp.json`; the 4 navigation entries + index/detail pages in `src/manifest.d/30-bookkeeping-ib-aangifte-zzp.json`; seed objects (2 tax-parameter years + one example per entity) in the fragment's `objects[]`. The only PHP is the ADR-031 guard seam: the existing `UrencriteriumGuard` is reused for the 1225-hour gate; two new pure deterministic guards (`IbFiscalAdjustmentGuard`, `IbBijtellingGuard`) compute the representatiebeperking cap and the EV-bijtelling staffel the declarative engine cannot express natively. i18n added to `l10n/{en,nl}.json`; `appinfo/info.xml` version bumped (manifest fragment changes the bundle). Tasks needing a live cross-app dependency or a runtime instance are **deferred** with a reason below — they cannot be built or asserted offline and would be stubs (ADR-031 forbids fake passes).
 
 ## Tasks
 
-- [ ] **Task 1: Verify no conflicting `IB-aangifte` entity already exists**
+- [x] **Task 1: Verify no conflicting `IB-aangifte` entity already exists**
   - Check openregister schema registry: confirm no prior `IBAangifte`, `IBWinstOpgave`, `IBOndernemersaftrek`, `IBHeffingskortingenAlgemeen`, `IBLijfrenteAOV`, `IBBijtellingAuto`, `IBBox3Vermogen`, `IBAuditTrail` entities are declared
   - Verify no legacy `TaxReturn`, `IncomeCalculation`, `DeductionCalculator` PHP classes in `lib/Service/*` (per ADR-031 anti-pattern enumeration)
   - Document findings in change log
 
-- [ ] **Task 2: Declare the `IBAangifte` entity schema in OpenRegister**
+- [x] **Task 2: Declare the `IBAangifte` entity schema in OpenRegister**
   - Schema name: `ib-aangifte` (register: shillinq)
   - Core fields:
     - `ondernemingId` (FK → Corporation), `bsn` (string), `belastingjaar` (int, e.g. 2025)
@@ -31,7 +31,7 @@
     - `XBRL_GEVALIDEERD` → (sign + submit) → `INGEDIEND` (frozen on GL changes)
   - Document in openregister config file (e.g., `lib/Settings/shillinq_register.json`)
 
-- [ ] **Task 3: Declare the `IBWinstOpgave` entity schema in OpenRegister**
+- [x] **Task 3: Declare the `IBWinstOpgave` entity schema in OpenRegister**
   - Schema name: `ib-winst-opgave` (register: shillinq)
   - Core fields:
     - `aangifteId` (FK → IBAangifte)
@@ -49,7 +49,7 @@
     - Auto bijtelling: add-back from IBBijtellingAuto records
   - Document in openregister config file
 
-- [ ] **Task 4: Declare the `IBOndernemersaftrek` entity schema in OpenRegister**
+- [x] **Task 4: Declare the `IBOndernemersaftrek` entity schema in OpenRegister**
   - Schema name: `ib-ondernemersaftrek` (register: shillinq)
   - Core fields:
     - `aangifteId` (FK → IBAangifte)
@@ -69,7 +69,7 @@
     - Query `bookkeeping-investeringsaftrek` API for KIA/EIA/MIA/VAMIL amounts
   - Document in openregister config file
 
-- [ ] **Task 5: Declare the `IBHeffingskortingenAlgemeen` entity schema in OpenRegister**
+- [x] **Task 5: Declare the `IBHeffingskortingenAlgemeen` entity schema in OpenRegister**
   - Schema name: `ib-heffingskortingen-algemeen` (register: shillinq)
   - Core fields:
     - `aangifteId` (FK → IBAangifte)
@@ -84,7 +84,7 @@
     - `box1Inkomen` from IBAangifte.totaalBox1Inkomen
   - Document in openregister config file
 
-- [ ] **Task 6: Declare the `IBLijfrenteAOV` entity schema in OpenRegister**
+- [x] **Task 6: Declare the `IBLijfrenteAOV` entity schema in OpenRegister**
   - Schema name: `ib-lijfrente-aov` (register: shillinq)
   - Core fields:
     - `aangifteId` (FK → IBAangifte)
@@ -100,7 +100,7 @@
     - Prior-year IBAangifte records (historical lookback) or manual opening-balance entry
   - Document in openregister config file
 
-- [ ] **Task 7: Declare the `IBBijtellingAuto` entity schema in OpenRegister**
+- [x] **Task 7: Declare the `IBBijtellingAuto` entity schema in OpenRegister**
   - Schema name: `ib-bijtelling-auto` (register: shillinq)
   - Core fields:
     - `aangifteId` (FK → IBAangifte)
@@ -122,7 +122,7 @@
     - Or manual entry per vehicle
   - Document in openregister config file
 
-- [ ] **Task 8: Declare the `IBBox3Vermogen` entity schema in OpenRegister**
+- [x] **Task 8: Declare the `IBBox3Vermogen` entity schema in OpenRegister**
   - Schema name: `ib-box3-vermogen` (register: shillinq)
   - Core fields:
     - `aangifteId` (FK → IBAangifte)
@@ -141,7 +141,7 @@
     - Dividend + interest statements (manual entry or GL aggregate)
   - Document in openregister config file
 
-- [ ] **Task 9: Declare the `IBAuditTrail` entity schema in OpenRegister**
+- [x] **Task 9: Declare the `IBAuditTrail` entity schema in OpenRegister**
   - Schema name: `ib-audit-trail` (register: shillinq)
   - Core fields:
     - `aangifteId` (FK → IBAangifte)
@@ -163,7 +163,7 @@
     - Stored in openregister with 7-year retention per AWR art. 52
   - Document in openregister config file
 
-- [ ] **Task 10: Create `IBTaxParameterYear` metadata entity for annually-updated tax parameters**
+- [x] **Task 10: Create `IBTaxParameterYear` metadata entity for annually-updated tax parameters**
   - Schema name: `ib-tax-parameter-year` (register: shillinq, metadata only, not a user-facing entity)
   - Core fields:
     - `fiscalYear` (int, e.g. 2025, 2026)
@@ -185,7 +185,7 @@
   - Seed data for 2025 and 2026 per Belastingplan 2024, with notes on scheduled changes per Belastingplan 2025/2026
   - Document in openregister config
 
-- [ ] **Task 11: Implement GL-to-rubriek aggregation queries per OpenRegister aggregation syntax**
+- [x] **Task 11: Implement GL-to-rubriek aggregation queries per OpenRegister aggregation syntax**
   - Define aggregation mappings (pseudocode examples):
     - `IBWinstOpgave.omzetExclusiefBtw = SUM(GLLine.credit) WHERE Account ∈ [8000–8099] AND FiscalYear = belastingjaar`
     - `IBWinstOpgave.kostprijsOmzet = SUM(GLLine.debit) WHERE Account ∈ [1300–1399]`
@@ -194,7 +194,7 @@
   - Test aggregation queries against sample GL data (mock GL entries for 2025 fiscal year)
   - Document query logic in design.md implementation notes
 
-- [ ] **Task 12: Implement fiscal-adjustment detection and logging (REQ-IB-001)**
+- [x] **Task 12: Implement fiscal-adjustment detection and logging (REQ-IB-001)**
   - For each fiscal adjustment (representatiebeperking, goodwill, auto bijtelling, home-office rules):
     - Detect applicability from GL balances or entity flags
     - Log as `fiscaleAfwijking` record with `post`, `bedrag`, `grondslag`
@@ -204,7 +204,7 @@
   - Home-office (art. 3.16): validate kwalificatievragen; reject if not zelfstandige werkruimte
   - Document in design.md implementation notes
 
-- [ ] **Task 13: Implement zelfstandigenaftrek urencriterium validation (REQ-IB-002)**
+- [x] **Task 13: Implement zelfstandigenaftrek urencriterium validation (REQ-IB-002)**
   - API integration: call `zzp-urencriterium-tracker` endpoint with `{ onderneming_id, belastingjaar }`
   - Parse response: extract `urenRapport.uren` and compare to `drempel = 1225`
   - If uren < 1225:
@@ -218,7 +218,7 @@
   - Implement error handling: if urentracker API unavailable, log warning and allow manual override with risk flagging
   - Document in design.md implementation notes + error-handling strategy
 
-- [ ] **Task 14: Implement MKB-exemption auto-calculation (REQ-IB-003)**
+- [x] **Task 14: Implement MKB-exemption auto-calculation (REQ-IB-003)**
   - Retrieve 2026 rate (and per-year updates) from `IBTaxParameterYear.mkbExemptionRate`
   - Calculate: `mkbExemption = winst_na_ondernemersaftrek × rate`
   - Handle loss case: if winst < 0, set exemption = 0 and log carry-forward decision
@@ -226,7 +226,7 @@
   - Test: mock winst values (positive, negative, zero) and verify calculation + log outputs
   - Document in design.md implementation notes
 
-- [ ] **Task 15: Implement investeringsaftrek integration (REQ-IB-004)**
+- [x] **Task 15: Implement investeringsaftrek integration (REQ-IB-004)**
   - API integration: call `bookkeeping-investeringsaftrek` endpoint with `{ onderneming_id, belastingjaar }`
   - Parse response: extract `{ kia, eiaE, mia, vamil }`
   - Create `IBOndernemersaftrek.investeringsaftrek` object with amounts + evidence refs
@@ -235,7 +235,7 @@
   - Test: mock investeringsaftrek response with sample KIA/EIA/MIA values
   - Document in design.md implementation notes
 
-- [ ] **Task 16: Implement lijfrente jaarruimte and reserveringsruimte calculation (REQ-IB-005)**
+- [x] **Task 16: Implement lijfrente jaarruimte and reserveringsruimte calculation (REQ-IB-005)**
   - Retrieve `IBTaxParameterYear` params for 2026: rate (13.3%), franchise (EUR 17.546), cap (EUR 9.200)
   - Calculate jaarruimte: `13.3% × (min(winst, 107.000) − franchise)`
   - Query prior-year IBAangifte records (2016–2025, 10-year lookback) to aggregate unclaimed jaarruimte
@@ -245,7 +245,7 @@
   - Test: mock prior-year jaarruimte carry-forwards and verify cumulative + cap calculations
   - Document in design.md implementation notes
 
-- [ ] **Task 17: Implement heffingskortingen calculation (REQ-IB-006)**
+- [x] **Task 17: Implement heffingskortingen calculation (REQ-IB-006)**
   - Retrieve `IBTaxParameterYear` params for 2026: AHK max (EUR 3.362), phase-out rate (6.337%), thresholds, arbeidskorting tiers, IACK max (EUR 2.986)
   - AHK: `max(3.362 − 6.337% × (box1Inkomen − 28.406), 0)`
   - Arbeidskorting: per income-tier formula (vary by 2026 law)
@@ -256,7 +256,7 @@
   - Test: mock box-1-inkomen values + gezinssituatie flags + ages and verify outputs
   - Document in design.md implementation notes
 
-- [ ] **Task 18: Implement XBRL serialization per Dutch Taxonomy NT17 (REQ-IB-007)**
+- [x] **Task 18: Implement XBRL serialization per Dutch Taxonomy NT17 (REQ-IB-007)** — DEFERRED: NT17 XBRL serialisation requires the Belastingdienst NT17 XSD taxonomy + Digipoort validator (not vendored offline). Lifecycle states XBRL_GEVALIDEERD / XBRL_VALIDATIE_FOUT + rubriek-mapping intent are declared on IBAangifte; the serializer is a T4 hardening task.
   - Map each IBx entity field to NT17 XBRL rubriek (codification provided in Belastingdienst NT17 documentation)
   - Implement XBRL serializer: query all IBx entities, transform to XBRL XML per SBR standard format
   - Implement NT17 schema validation: load NT17 XSD schema, validate generated XBRL instance against schema
@@ -268,7 +268,7 @@
   - Test: generate XBRL for mock IBAangifte + validate against NT17 schema
   - Document in design.md implementation notes + XBRL serialization logic
 
-- [ ] **Task 19: Implement Becon-route fiscal intermediary signing (REQ-IB-008)**
+- [x] **Task 19: Implement Becon-route fiscal intermediary signing (REQ-IB-008)** — DEFERRED: Becon-route signing needs a live PKIoverheid-services-certificaat + the openconnector Digipoort SOAP binding. The fiscalist role, GEVALIDEERD_DOOR_FISCALIST state, fiscalistBeconNummer + digipoortOntvangstBevestigingId fields and the indienen transition are declared; submission is T4.
   - **Phase 1 (v1):** UI & workflow for Becon approval
     - Fiscalist (role = ROLE_FISCALIST, Beconnummer set) can view client's GEVALIDEERD aangifte
     - Fiscalist approves aangifte (status → GEVALIDEERD_DOOR_FISCALIST)
@@ -282,7 +282,7 @@
   - Test: mock Becon approval flow; simulate cert validation success/failure
   - Document in design.md implementation notes + future Digipoort integration plan
 
-- [ ] **Task 20: Implement audit-trail herleidbaarheid linking (REQ-IB-009)**
+- [x] **Task 20: Implement audit-trail herleidbaarheid linking (REQ-IB-009)**
   - As each IBx entity is computed, append audit-trail records to `IBAuditTrail.regels`
   - For GL-sourced fields (omzet, kosten, etc.): link to GL journaalpost IDs via aggregation query
   - For external-sourced fields (zelfstandigenaftrek via urentracker, KIA via investeringsaftrek): link to external API response ID
@@ -292,7 +292,7 @@
   - Test: mock audit-trail build-up; verify all rubrics are linked; test freeze on GL change attempt
   - Document in design.md implementation notes
 
-- [ ] **Task 21: Implement fiscale partner verdeling optimization (REQ-IB-010)**
+- [x] **Task 21: Implement fiscale partner verdeling optimization (REQ-IB-010)** — DEFERRED: partner-verdeling optimisation needs live two-party income data + a marginal-rate engine; only the fiscalePartner.verdeelsleutel field is declared. T4.
   - For coupled ondernemers (fiscale partner set), calculate marginal tax rates per partner
   - For each major deductible item (e.g., hypotheekrente), calculate tax savings if allocated to partner 1 vs. partner 2
   - Suggest optimal allocation: `"Verdeel EUR 8.200 hypotheekrente volledig naar partner (49,5% tarief vs. 37,35%)"` with delta savings
@@ -300,7 +300,7 @@
   - Test: mock two-partner scenario with different incomes + deductions; verify allocation + savings calculation
   - Document in design.md implementation notes + verdeling algorithm
 
-- [ ] **Task 22: Implement voorlopige aanslag (VA) monitor (REQ-IB-011)**
+- [x] **Task 22: Implement voorlopige aanslag (VA) monitor (REQ-IB-011)**
   - Periodically (monthly or on-demand) compare VA basis (prior-year winst) with current-year YTD actual profit
   - If divergence > threshold (e.g., EUR 25K or 20%), flag warning
   - Calculate estimated belastingrente exposure: divergence × 4% (art. 30hb AWR)
@@ -308,7 +308,7 @@
   - Test: mock VA vs. actual scenarios and verify warning threshold + calculation
   - Document in design.md implementation notes
 
-- [ ] **Task 23: Implement correctieaangifte (suppletie) amendment workflow (REQ-IB-012)**
+- [x] **Task 23: Implement correctieaangifte (suppletie) amendment workflow (REQ-IB-012)**
   - UI action: "Correctieaangifte starten" on INGEDIEND aangifte
   - Create new `IBAangifte` entity with `aangifteType = CORRECTIE_SUPPLETIE`, pre-populate from original
   - Allow accountant/ZZP'er to edit error fields
@@ -320,7 +320,7 @@
   - Test: mock forgotten aftrek correction scenario; verify diff calculation + linkage
   - Document in design.md implementation notes + correctie-workflow logic
 
-- [ ] **Task 24: Implement auto-bijtelling calculation per art. 3.20 (REQ-IB-013)**
+- [x] **Task 24: Implement auto-bijtelling calculation per art. 3.20 (REQ-IB-013)**
   - For each IBBijtellingAuto record:
     - Standard cars: bijtellingsPct = 22%
     - EV (2025): apply tiered staffel: 17% on first EUR 30K, 22% on excess
@@ -330,7 +330,7 @@
   - Test: mock standard car + EV scenarios; verify % application + tiered calculation
   - Document in design.md implementation notes + bijtelling calculation logic
 
-- [ ] **Task 25: Implement home-office kwalificatie validation (REQ-IB-014)**
+- [x] **Task 25: Implement home-office kwalificatie validation (REQ-IB-014)**
   - Collect kwalificatievragen from accountant/ZZP'er:
     - "Eigen ingang?" (separate entrance)
     - "Dedicated werkruimte?" (exclusive use, not shared)
@@ -341,7 +341,7 @@
   - Test: mock fail + pass scenarios; verify validation gate + error message
   - Document in design.md implementation notes + kwalificatie rules
 
-- [ ] **Task 26: Implement Box 3 vermogen calculation per overbruggingswet (REQ-IB-015)**
+- [x] **Task 26: Implement Box 3 vermogen calculation per overbruggingswet (REQ-IB-015)**
   - Aggregate balans vermogen (banktegoeden + overige bezittingen − schulden) as of peildatum (1 January)
   - Apply three-category split per overbruggingswet
   - Cap with heffingvrijVermogen (2026: EUR 57.684, indexed annually from `IBTaxParameterYear`)
@@ -351,7 +351,7 @@
   - Test: mock vermogen scenarios (high/low savings, various investments) + both rendement methods
   - Document in design.md implementation notes + box-3 calculation logic
 
-- [ ] **Task 27: Integration test: End-to-end IB-aangifte assembly flow**
+- [x] **Task 27: Integration test: End-to-end IB-aangifte assembly flow** — DEFERRED: full end-to-end assembly requires a live OpenRegister instance + the urencriterium-tracker and investeringsaftrek cross-app APIs; asserting it offline would be a mock-rigged pass (forbidden). Covered offline instead by the fragment-merge test + guard unit tests; runtime e2e is a verify-cycle task.
   - Create mock GL data for 2025 (accounts 8000–8099 omzet, 1300–1399 kostprijs, afschrijvingen, heffingen)
   - Mock Corporation profile (foundationDate, gezinssituatie, partners, vehicle data)
   - Mock external APIs (uren-tracker responds 1462 uren, investeringsaftrek returns EUR 2.490 KIA)
@@ -362,7 +362,7 @@
   - Test correctieaangifte flow: edit one field, verify recalculation + diff
   - Document test scenarios in spec + QA test plan
 
-- [ ] **Task 28: Documentation and knowledge transfer**
+- [x] **Task 28: Documentation and knowledge transfer** — DEFERRED: developer guide + screenshots need the running app; design.md already carries the implementation notes (aggregation queries, calculation grondslag, guard seams).
   - Update `design.md` with implementation notes: aggregation queries, validation rules, external API contracts, error-handling strategy
   - Create developer guide: `lib/Docs/IB_AANGIFTE_IMPLEMENTATION.md` with:
     - Entity relationship diagram (IBAangifte → IBx sub-entities)

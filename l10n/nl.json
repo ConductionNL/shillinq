@@ -1021,7 +1021,22 @@
         "Insufficient funds. Please use a different card.": "Onvoldoende saldo. Gebruik een andere kaart.",
         "Payment failed. Please try again or contact support.": "Betaling mislukt. Probeer het opnieuw of neem contact op met support.",
         "Resend payment link": "Betaallink opnieuw versturen",
-        "Void selected": "Selectie annuleren"
+        "Void selected": "Selectie annuleren",
+        "IB-aangifte ZZP": "IB-aangifte ZZP",
+        "IB-aangiften": "IB-aangiften",
+        "IB-aangifte": "IB-aangifte",
+        "Ondernemersaftrekken": "Ondernemersaftrekken",
+        "Ondernemersaftrek": "Ondernemersaftrek",
+        "Lijfrente Beheer": "Lijfrente Beheer",
+        "Lijfrente & AOV": "Lijfrente & AOV",
+        "Box 3 Vermogen": "Box 3 Vermogen",
+        "Belastingjaar": "Belastingjaar",
+        "Belastbare winst": "Belastbare winst",
+        "MKB-winstvrijstelling": "MKB-winstvrijstelling",
+        "Te betalen / te ontvangen": "Te betalen / te ontvangen",
+        "Urencriterium niet behaald": "Urencriterium niet behaald",
+        "Zelfstandigenaftrek niet toegestaan — urencriterium niet behaald": "Zelfstandigenaftrek niet toegestaan — urencriterium niet behaald",
+        "Wijziging vereist correctieaangifte (suppletie)": "Wijziging vereist correctieaangifte (suppletie)"
     },
     "plurals": ""
 }

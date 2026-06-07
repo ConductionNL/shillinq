@@ -1022,7 +1022,22 @@
         "Insufficient funds. Please use a different card.": "Insufficient funds. Please use a different card.",
         "Payment failed. Please try again or contact support.": "Payment failed. Please try again or contact support.",
         "Resend payment link": "Resend payment link",
-        "Void selected": "Void selected"
+        "Void selected": "Void selected",
+        "IB-aangifte ZZP": "Income tax return (self-employed)",
+        "IB-aangiften": "Income tax returns",
+        "IB-aangifte": "Income tax return",
+        "Ondernemersaftrekken": "Entrepreneur deductions",
+        "Ondernemersaftrek": "Entrepreneur deduction",
+        "Lijfrente Beheer": "Annuity management",
+        "Lijfrente & AOV": "Annuity & disability insurance",
+        "Box 3 Vermogen": "Box 3 assets",
+        "Belastingjaar": "Tax year",
+        "Belastbare winst": "Taxable profit",
+        "MKB-winstvrijstelling": "SME profit exemption",
+        "Te betalen / te ontvangen": "To pay / to receive",
+        "Urencriterium niet behaald": "Hours criterion not met",
+        "Zelfstandigenaftrek niet toegestaan — urencriterium niet behaald": "Self-employed deduction not allowed — hours criterion not met",
+        "Wijziging vereist correctieaangifte (suppletie)": "Change requires a corrective return (supplement)"
     },
     "plurals": ""
 }
