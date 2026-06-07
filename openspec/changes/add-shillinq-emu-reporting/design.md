@@ -9,8 +9,23 @@ classifier. Per ADR-031, the computation MUST be declarative — but
 if the aggregation engine cannot express the multi-sector filter,
 the ADR-031 exception path (single ~20-LOC PHP guard) applies.
 
-This change is **spec-only**. Implementation lands later through
-`opsx-apply`; this doc explains *why* the shape is what it is.
+This change is **implemented**. The `opsx-apply` cycle landed the
+following artefacts — this doc explains *why* the shape is what it is.
+
+## Declarative-vs-imperative decision (ADR-031)
+
+The `x-openregister-aggregations` engine does not yet support
+cross-schema filter joins (GLLine → Account.esaClassifier) combined with
+a dynamic emuInclusionRule filter sourced from a sibling schema
+(WaterschapHeffingPosting). Therefore, the ADR-031 exception path
+applies: `lib/Guard/EmuCalculator.php` provides a single-class PHP guard
+(two public entry-point methods + one private helper, ≤ 30 LOC of domain
+logic) referenced from the `guard:` clause on both aggregation
+declarations in `lib/Settings/shillinq_register.json`. When the engine
+gains the required multi-schema filter capability, the guard class can be
+removed and the declarative aggregation will handle the full computation.
+
+**status: pr-created**
 
 ## Decisions
 

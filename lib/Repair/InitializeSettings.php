@@ -8,13 +8,16 @@
  * @category Repair
  * @package  OCA\Shillinq\Repair
  *
- * @author    Conduction Development Team <info@conduction.nl>
+ * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * @version GIT: <git-id>
+ *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-10
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -31,7 +34,8 @@ use Psr\Log\LoggerInterface;
 /**
  * Repair step that initializes Shillinq configuration via SettingsService.
  *
- * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-10
+ * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
+ * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
  */
 class InitializeSettings implements IRepairStep
 {
@@ -58,7 +62,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return string
      *
-     * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-10
+     * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
      */
     public function getName(): string
     {
@@ -75,27 +79,37 @@ class InitializeSettings implements IRepairStep
      * existing accounts are skipped on re-run, preserving operator edits.
      * Seeding is skipped entirely when administration_id is not configured
      * (C2: prevents "default" contamination of real tenant data).
-     * Phase 3: registers the IV3 quarterly CBS ScheduledWorkflow if not yet present.
+     * Phase 3: seeds the Archiefwet Selectielijst Gemeenten 2020 retention rules.
+     * Phase 4: registers the IV3 quarterly CBS ScheduledWorkflow if not yet present.
+     * Phase 5: seeds KOR thresholds from kor-thresholds-2026.json idempotently.
+     * Phase 6: seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
+     * Phase 7: seeds RJ-270 stages and rate-card templates for consultancy project accounting.
+     * Phase 8: seeds ProductAttribute templates (office, it_hardware, logistics, food_beverage, clothing) per REQ-IPC-007.
      *
      * @param IOutput $output The output interface for progress reporting
      *
      * @return void
      *
+     * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
      * @spec openspec/changes/add-shillinq-iv3-reporting/tasks.md#task-10
+     * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
+     * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
+     * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
      */
     public function run(IOutput $output): void
     {
         $output->info('Initializing Shillinq configuration...');
 
-        if ($this->settingsService->isOpenRegisterAvailable() === false) {
-            $output->warning(
-                'OpenRegister is not installed or enabled. Skipping auto-configuration.'
-            );
-            $this->logger->warning(
-                'Shillinq: OpenRegister not available, skipping register initialization'
-            );
-            return;
-        }
+    if ($this->settingsService->isOpenRegisterAvailable() === false) {
+        $output->warning(
+        'OpenRegister is not installed or enabled. Skipping auto-configuration.'
+        );
+        $this->logger->warning(
+            'Shillinq: OpenRegister not available, skipping register initialization'
+        );
+        return;
+    }
 
         try {
             // C8: use loadConfigurationForced() so OR's per-register/per-schema
@@ -103,32 +117,38 @@ class InitializeSettings implements IRepairStep
             // routine upgrades when the shillinq_register.json version hasn't changed.
             $result = $this->settingsService->loadConfigurationForced();
 
-            if ($result['success'] === true) {
-                $skipped = (($result['skipped'] ?? false) === true);
-                $version = ($result['version'] ?? 'unknown');
-                if ($skipped === true) {
-                    $output->info('Shillinq configuration already up-to-date (version-unchanged skip)');
-                }
+    if ($result['success'] === true) {
+        $skipped = (($result['skipped'] ?? false) === true);
+        $version = ($result['version'] ?? 'unknown');
+        if ($skipped === true) {
+            $output->info('Shillinq configuration already up-to-date (version-unchanged skip)');
+        }
 
-                if ($skipped !== true) {
-                    $output->info(
-                        'Shillinq configuration imported successfully (version: '.$version.')'
-                    );
-                }
-            }
+        if ($skipped !== true) {
+            $output->info(
+                'Shillinq configuration imported successfully (version: '.$version.')'
+            );
+        }
+    }
 
-            if ($result['success'] !== true) {
-                $message = ($result['message'] ?? 'unknown error');
-                $output->warning('Shillinq configuration import issue: '.$message);
-                // H2: skip account seed when schema import failed to avoid writing
-                // accounts into an uninitialized register.
-                $output->warning('Shillinq: schema import failed, skipping account seed');
-                return;
-            }
+    if ($result['success'] !== true) {
+        $message = ($result['message'] ?? 'unknown error');
+        $output->warning('Shillinq configuration import issue: '.$message);
+        // H2: skip account seed when schema import failed to avoid writing
+        // accounts into an uninitialized register.
+        $output->warning('Shillinq: schema import failed, skipping account seed');
+        return;
+    }
 
+            $this->seedDefaultAdministration(output: $output);
             $this->seedChartOfAccounts(output: $output);
             $this->seedBbvStamData(output: $output);
+            $this->seedProjectData(output: $output);
+            $this->seedSelectielijstRules(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
+            $this->seedKorThresholds(output: $output);
+            $this->seedComplianceReferenceData(output: $output);
+            $this->seedProductAttributeTemplates(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -138,6 +158,120 @@ class InitializeSettings implements IRepairStep
         }//end try
 
     }//end run()
+
+    /**
+     * Seed the default Administration on fresh install, idempotently (REQ-MA-001, REQ-MA-007).
+     *
+     * Foundational multi-administratie boundary: a single default Administration
+     * (administrationCode ADM-001) is created so single-administratie installs have a
+     * valid administrationId FK target. Deduplicated on administrationCode inside
+     * SettingsService::seedDefaultAdministration(), so re-runs are safe.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-14
+     */
+    private function seedDefaultAdministration(IOutput $output): void
+    {
+        $output->info('Seeding default administration...');
+        $result = $this->settingsService->seedDefaultAdministration();
+
+        if (($result['success'] ?? false) !== true) {
+            $output->warning('Default administration seeding issue: '.($result['message'] ?? 'unknown error'));
+            return;
+        }
+
+        $output->info(
+            'Default administration: '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped (already exists).'
+        );
+
+    }//end seedDefaultAdministration()
+
+    /**
+     * Seed project accounting data (RJ-270 stages and rate-card templates), idempotently.
+     *
+     * RJ-270 stages are seeded unconditionally (not tenant-specific).
+     * Rate-card templates require a configured administrationId (C2).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
+     */
+    private function seedProjectData(IOutput $output): void
+    {
+        $output->info('Seeding RJ-270 stages...');
+        $rj270Result = $this->settingsService->seedRj270Stages();
+        if (($rj270Result['success'] ?? false) === true) {
+            $output->info(
+                'RJ-270 stages seeded: '.($rj270Result['seeded'] ?? 0).' created, '.($rj270Result['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if (($rj270Result['success'] ?? false) !== true) {
+            $output->warning('RJ-270 stages seeding issue: '.($rj270Result['message'] ?? 'unknown error'));
+        }
+
+        $settings         = $this->settingsService->getSettings();
+        $administrationId = ($settings['administration_id'] ?? '');
+
+        if ($administrationId === '') {
+            $output->warning(
+                'Shillinq: administration_id not configured — skipping rate-card template seed.'
+            );
+            return;
+        }
+
+        $output->info('Seeding rate-card templates...');
+        $rcResult = $this->settingsService->seedRateCardTemplates(administrationId: $administrationId);
+        if ($rcResult['success'] === true) {
+            $output->info(
+                'Rate-card templates seeded: '.($rcResult['seeded'] ?? 0).' created, '.($rcResult['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if ($rcResult['success'] !== true) {
+            $output->warning('Rate-card templates seeding issue: '.($rcResult['message'] ?? 'unknown error'));
+        }
+
+    }//end seedProjectData()
+
+    /**
+     * Import the Selectielijst Gemeenten 2020 retention rules, idempotently.
+     *
+     * Calls SettingsService::seedSelectielijst() which skips already-existing
+     * seeded rules and preserves operator-authored overrides per REQ-ARC-002.
+     * Safe to call on every install/upgrade — the seed is idempotent.
+     *
+     * @param IOutput $output The output interface for progress reporting
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
+     */
+    private function seedSelectielijstRules(IOutput $output): void
+    {
+        $output->info('Seeding Archiefwet Selectielijst Gemeenten 2020 retention rules...');
+
+        $result = $this->settingsService->seedSelectielijst();
+
+        if ($result['success'] === true) {
+            $seeded  = ($result['seeded'] ?? 0);
+            $skipped = ($result['skipped'] ?? 0);
+            $output->info(
+                'Selectielijst retention rules seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        }
+
+        if ($result['success'] !== true) {
+            $message = ($result['message'] ?? 'unknown error');
+            $output->warning('Selectielijst seeding issue: '.$message);
+        }
+
+    }//end seedSelectielijstRules()
 
     /**
      * Register the IV3 quarterly CBS ScheduledWorkflow if not already present.
@@ -155,10 +289,6 @@ class InitializeSettings implements IRepairStep
      */
     private function registerIv3ScheduledWorkflow(IOutput $output): void
     {
-        if ($this->settingsService->isOpenRegisterAvailable() === false) {
-            return;
-        }
-
         try {
             $workflowMapper = $this->container->get(
                 'OCA\OpenRegister\Db\ScheduledWorkflowMapper'
@@ -182,25 +312,189 @@ class InitializeSettings implements IRepairStep
         // Operators reconfigure the interval and target via the OpenRegister admin UI
         // if CBS deadlines shift. REQ-IV3-006 / ADR-019.
         $workflowMapper->createFromArray(
-                data: [
-                    'name'        => $slug,
-                    'engine'      => 'openconnector',
-                    'workflowId'  => 'cbs-iv3',
-                    'intervalSec' => 7776000,
-                    'enabled'     => true,
-                    'payload'     => json_encode(
+            data: [
+                'name'        => $slug,
+                'engine'      => 'openconnector',
+                'workflowId'  => 'cbs-iv3',
+                'intervalSec' => 7776000,
+                'enabled'     => true,
+                'payload'     => json_encode(
                     [
                         'register'           => 'shillinq',
                         'schema'             => 'Iv3Export',
                         'administrationType' => ['gemeente', 'provincie', 'waterschap'],
                     ]
-                    ),
-                ]
-                );
+                ),
+            ]
+        );
 
         $output->info('Shillinq: IV3 quarterly CBS ScheduledWorkflow registered (interval: 90 days)');
 
     }//end registerIv3ScheduledWorkflow()
+
+    /**
+         * Seed T3 NL-compliance reference data (BTW tariffs + BBV taakvelden), idempotently.
+     *
+     * Both seeds are statutory reference catalogues that are not tenant-specific,
+     * so they are seeded unconditionally. Deduplication is handled inside the
+     * SettingsService seed helpers (by code), keeping re-runs safe.
+         *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+         * @spec openspec/changes/add-shillinq-bookkeeping-operations/tasks.md#task-311
+     */
+    private function seedComplianceReferenceData(IOutput $output): void
+    {
+        $output->info('Seeding BTW tariffs...');
+        $btwResult = $this->settingsService->seedBtwTariffs();
+        if (($btwResult['success'] ?? false) === true) {
+            $output->info(
+                'BTW tariffs seeded: '.($btwResult['seeded'] ?? 0).' created, '.($btwResult['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if (($btwResult['success'] ?? false) !== true) {
+            $output->warning('BTW tariffs seeding issue: '.($btwResult['message'] ?? 'unknown error'));
+        }
+
+        $output->info('Seeding BBV taakvelden...');
+        $bbvResult = $this->settingsService->seedBbvTaakvelden();
+        if (($bbvResult['success'] ?? false) === true) {
+            $output->info(
+                'BBV taakvelden seeded: '.($bbvResult['seeded'] ?? 0).' created, '.($bbvResult['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if (($bbvResult['success'] ?? false) !== true) {
+            $output->warning('BBV taakvelden seeding issue: '.($bbvResult['message'] ?? 'unknown error'));
+        }
+
+    }//end seedComplianceReferenceData()
+
+    /**
+     * Seed the KOR thresholds from kor-thresholds-2026.json, idempotently.
+     *
+     * Deduplication key is fiscalYear: if a KorThreshold record with the same
+     * fiscalYear already exists in OpenRegister, the seed entry is skipped.
+     * This means re-running the repair step is safe and preserves operator edits.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-kor-kleine-ondernemersregeling/tasks.md#task-12
+     */
+    private function seedKorThresholds(IOutput $output): void
+    {
+        $seedPath = __DIR__.'/../Settings/seeds/kor-thresholds-2026.json';
+        if (file_exists($seedPath) === false) {
+            $output->warning('Shillinq: KOR threshold seed file not found, skipping');
+            return;
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            $output->warning('Shillinq: failed to read KOR threshold seed file, skipping');
+            return;
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $output->warning('Shillinq: failed to parse KOR threshold seed file: '.json_last_error_msg());
+            return;
+        }
+
+        $thresholds = ($data['thresholds'] ?? []);
+        if (empty($thresholds) === true) {
+            $output->info('Shillinq: KOR threshold seed file contains no thresholds, skipping');
+            return;
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->settingsService->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($thresholds as $threshold) {
+                $fiscalYear = ($threshold['fiscalYear'] ?? null);
+                if ($fiscalYear === null) {
+                    continue;
+                }
+
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('KorThreshold')
+                    ->findAll(
+                            [
+                                'filters' => ['fiscalYear' => $fiscalYear],
+                                'limit'   => 1,
+                            ]
+                            );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $threshold,
+                    register: $registerSlug,
+                    schema: 'KorThreshold',
+                );
+                $seeded++;
+            }//end foreach
+
+            $output->info(
+                'Shillinq: KOR thresholds seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        } catch (\Throwable $e) {
+            $output->warning('Shillinq: KOR threshold seeding failed: '.$e->getMessage());
+            $this->logger->warning(
+                'Shillinq: KOR threshold seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+        }//end try
+
+    }//end seedKorThresholds()
+
+    /**
+     * Seed ProductAttribute templates for all five standard categories, idempotently.
+     *
+     * Calls SettingsService::seedProductAttributes() per category. Idempotent:
+     * attributes matched by name + applicableToCategories are skipped, preserving
+     * operator edits per REQ-IPC-007.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
+     */
+    private function seedProductAttributeTemplates(IOutput $output): void
+    {
+        $categories = ['office', 'it_hardware', 'logistics', 'food_beverage', 'clothing'];
+
+        foreach ($categories as $category) {
+            $output->info('Seeding ProductAttribute template: '.$category.'...');
+            $result = $this->settingsService->seedProductAttributes(category: $category);
+
+            if ($result['success'] === true) {
+                $output->info(
+                    'ProductAttribute ('.$category.'): '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
+                );
+            }
+
+            if ($result['success'] !== true) {
+                $output->warning(
+                    'ProductAttribute ('.$category.') seeding issue: '.($result['message'] ?? 'unknown error')
+                );
+            }
+        }//end foreach
+
+    }//end seedProductAttributeTemplates()
 
     /**
      * Seed the BBV stam-data (taakvelden, economische categorieen,
@@ -209,12 +503,12 @@ class InitializeSettings implements IRepairStep
      * Gated on rgs_template = 'bbv' (the BBV-tenant indicator at install/upgrade
      * time) so generic SMB/ZZP administrations are unaffected. Idempotent on
      * re-run via the SettingsService dedup keys (REQ-BBV-001/002/007).
-     *
+         *
      * @param IOutput $output The output interface for progress reporting.
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md
+         * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md
      */
     private function seedBbvStamData(IOutput $output): void
     {
@@ -298,5 +592,20 @@ class InitializeSettings implements IRepairStep
             $output->warning('Chart of accounts seeding issue: '.$message);
         }
 
+        $allocationResult = $this->settingsService->seedAllocationRules(administrationId: $administrationId);
+
+        if ($allocationResult['success'] === true) {
+            $seeded  = ($allocationResult['seeded'] ?? 0);
+            $skipped = ($allocationResult['skipped'] ?? 0);
+            $output->info(
+                'AllocationRule examples seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        }
+
+        if ($allocationResult['success'] !== true) {
+            $message = ($allocationResult['message'] ?? 'unknown error');
+            $output->warning('AllocationRule seeding issue: '.$message);
+        }
+
     }//end seedChartOfAccounts()
-}//end class
+    }//end class

@@ -1,0 +1,7 @@
+{
+  "schema_version": 2,
+  "spec_slug": "bookkeeping-waterschappen-bbv-variant-02-aggregation-compliance",
+  "app": "shillinq",
+  "kind": "config",
+  "depends_on": ["bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed"]
+}

@@ -1,5 +1,7 @@
 # Design — Rate Card Engine
 
+status: pr-created
+
 ## Context
 
 Rate-card management is foundational for time-tracking, project

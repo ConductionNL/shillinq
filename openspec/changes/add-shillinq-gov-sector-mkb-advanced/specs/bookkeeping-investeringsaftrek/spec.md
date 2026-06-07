@@ -30,17 +30,29 @@ Deduction classification on fixed asset.
 | aanvraagDate | date | No | RvO application date |
 | status | enum | Yes | One of `draft`, `requested`, `approved`, `applied`, `archived` |
 
-## Requirements
+## ADDED Requirements
 
-### REQ-INV-001: InvesteringClassifier overlay
+### Requirement: REQ-INV-001 — InvesteringClassifier overlay
 
-SHALL declare `InvesteringClassifier` overlay enabling KIA/EIA/MIA/Vamil tagging on fixed assets.
+The system SHALL declare an `InvesteringClassifier` overlay enabling KIA/EIA/MIA/Vamil tagging on fixed assets.
 
-### REQ-INV-002: Annual tarieven seed
+#### Scenario: A fixed asset is tagged with an investment scheme
 
-SHALL ship `lib/Settings/seeds/investeringsaftrek-tarieven-2026.json` with KIA thresholds, EIA/MIA percentages, Vamil bedrijfsmiddel codes per 2026 RvO release.
+- **GIVEN** a FixedAsset
+- **WHEN** an InvesteringClassifier with `aftrekType=eia` is applied
+- **THEN** the asset MUST be classified for EIA deduction without a parallel asset table.
 
-### REQ-INV-003: Deduction calculation block
+### Requirement: REQ-INV-002 — Annual tarieven seed
+
+The system SHALL ship `lib/Settings/seeds/investeringsaftrek-tarieven-2026.json` with KIA thresholds, EIA/MIA percentages, and Vamil bedrijfsmiddel codes per the 2026 RvO release.
+
+#### Scenario: Tarieven seed loads idempotently
+
+- **GIVEN** a fresh install with investeringsaftrek enabled
+- **WHEN** the repair-step seeding runs twice
+- **THEN** the 2026 tarieven MUST be present exactly once.
+
+### Requirement: REQ-INV-003 — Deduction calculation block
 
 SHALL declare `x-openregister-calculations` computing deduction amounts per scheme (KIA drempel/oploop/max, EIA/MIA percentage, Vamil full depreciation) reading seeded tarieven.
 
@@ -50,13 +62,25 @@ GIVEN asset €50k with aftrekType=kia
 WHEN KIA calc runs  
 THEN deduction respects 2026 drempel (threshold) and oploop (phase-in) rules.
 
-### REQ-INV-004: RvO aanvraagdossier template
+### Requirement: REQ-INV-004 — RvO aanvraagdossier template
 
-SHALL reference docudesk template for RvO aanvraagdossier preparation.
+The system SHALL reference a docudesk template for RvO aanvraagdossier preparation.
 
-### REQ-INV-005: Manifest navigation entry
+#### Scenario: Aanvraagdossier renders from a docudesk template
 
-SHALL add `featureFlags.mkb-investeringsaftrek` navigation.
+- **GIVEN** a computed deduction for an asset
+- **WHEN** the RvO aanvraagdossier is generated
+- **THEN** rendering MUST resolve a docudesk template URI rather than a shillinq-local renderer.
+
+### Requirement: REQ-INV-005 — Manifest navigation entry
+
+The system SHALL add a `featureFlags.mkb-investeringsaftrek` navigation entry.
+
+#### Scenario: Investeringsaftrek navigation is feature-flag gated
+
+- **GIVEN** the `mkb-investeringsaftrek` feature flag is off
+- **WHEN** the UI renders the menu
+- **THEN** the investeringsaftrek entry MUST NOT appear; it appears only when the flag is on.
 
 ## Test Plan
 

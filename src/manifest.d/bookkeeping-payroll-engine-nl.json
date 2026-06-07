@@ -1,0 +1,256 @@
+{
+	"menu": [
+		{
+			"id": "Loonadministratie",
+			"label": "Loonadministratie",
+			"icon": "AccountTie",
+			"order": 80,
+			"children": [
+				{"id": "Werkgevers", "label": "Werkgevers", "icon": "OfficeBuilding", "route": "Werkgevers", "order": 10},
+				{"id": "Werknemers", "label": "Werknemers", "icon": "AccountTie", "route": "Werknemers", "order": 20},
+				{"id": "Loonperiodes", "label": "Loonperiodes", "icon": "CalendarRange", "route": "Loonperiodes", "order": 30},
+				{"id": "Loonstroken", "label": "Loonstroken", "icon": "FileDocumentOutline", "route": "Loonstroken", "order": 40},
+				{"id": "LHAfdrachten", "label": "LH-afdrachten", "icon": "BankTransfer", "route": "LHAfdrachten", "order": 50},
+				{"id": "Loonjournaalposten", "label": "Loonjournaalposten", "icon": "BookOpenVariant", "route": "Loonjournaalposten", "order": 60}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "Werkgevers",
+			"route": "/loonadministratie/werkgevers",
+			"type": "index",
+			"title": "Werkgevers",
+			"config": {
+				"register": "shillinq",
+				"schema": "Werkgever",
+				"columns": [
+					{"key": "naam", "label": "Naam", "sortable": true},
+					{"key": "loonheffingsnummer", "label": "Loonheffingsnummer", "sortable": true},
+					{"key": "sectorcode", "label": "Sector", "sortable": true},
+					{"key": "awfTarief", "label": "AWF", "sortable": true},
+					{"key": "zvwTarief", "label": "ZVW", "sortable": true}
+				],
+				"defaultSort": "naam",
+				"detailRoute": "WerkgeverDetail"
+			}
+		},
+		{
+			"id": "WerkgeverDetail",
+			"route": "/loonadministratie/werkgevers/:id",
+			"type": "detail",
+			"title": "Werkgever",
+			"config": {
+				"register": "shillinq",
+				"schema": "Werkgever",
+				"fields": [
+					{"key": "naam", "label": "Naam", "type": "string"},
+					{"key": "kvk", "label": "KvK", "type": "string"},
+					{"key": "loonheffingsnummer", "label": "Loonheffingsnummer", "type": "string"},
+					{"key": "sectorcode", "label": "Sectorcode", "type": "number"},
+					{"key": "sectorOmschrijving", "label": "Sector", "type": "string"},
+					{"key": "awfTarief", "label": "AWF-tarief", "type": "string"},
+					{"key": "zvwTarief", "label": "ZVW-tarief", "type": "string"},
+					{"key": "wkrBudget2026", "label": "WKR-budget 2026", "type": "number"},
+					{"key": "vakantiegeldUitbetalingMaand", "label": "Vakantiegeld-maand", "type": "number"}
+				]
+			}
+		},
+		{
+			"id": "Werknemers",
+			"route": "/loonadministratie/werknemers",
+			"type": "index",
+			"title": "Werknemers",
+			"config": {
+				"register": "shillinq",
+				"schema": "Werknemer",
+				"columns": [
+					{"key": "achternaam", "label": "Achternaam", "sortable": true},
+					{"key": "voorletters", "label": "Voorletters", "sortable": true},
+					{"key": "loonheffingstabel", "label": "Tabel", "sortable": true},
+					{"key": "contractType", "label": "Contract", "sortable": true},
+					{"key": "is_dga", "label": "DGA", "sortable": true}
+				],
+				"defaultSort": "achternaam",
+				"detailRoute": "WerknemerDetail"
+			}
+		},
+		{
+			"id": "WerknemerDetail",
+			"route": "/loonadministratie/werknemers/:id",
+			"type": "detail",
+			"title": "Werknemer",
+			"config": {
+				"register": "shillinq",
+				"schema": "Werknemer",
+				"fields": [
+					{"key": "voorletters", "label": "Voorletters", "type": "string"},
+					{"key": "achternaam", "label": "Achternaam", "type": "string"},
+					{"key": "inDienstSinds", "label": "In dienst sinds", "type": "string"},
+					{"key": "uitDienstPer", "label": "Uit dienst per", "type": "string"},
+					{"key": "loonheffingstabel", "label": "Loonheffingstabel", "type": "string"},
+					{"key": "loonheffingstabelKorting", "label": "Korting toegepast", "type": "boolean"},
+					{"key": "contractType", "label": "Contracttype", "type": "string"},
+					{"key": "uurloon", "label": "Uurloon", "type": "number"},
+					{"key": "contracturenPerWeek", "label": "Contracturen/week", "type": "number"},
+					{"key": "jaarloonBruto", "label": "Jaarloon bruto", "type": "number"},
+					{"key": "vakantiegeldPct", "label": "Vakantiegeld %", "type": "number"},
+					{"key": "pensioenRegeling", "label": "Pensioenregeling", "type": "string"},
+					{"key": "thuiswerkdagenPerWeek", "label": "Thuiswerkdagen/week", "type": "number"},
+					{"key": "is_dga", "label": "DGA", "type": "boolean"},
+					{"key": "expat30PctRegeling", "label": "30%-regeling", "type": "boolean"}
+				]
+			}
+		},
+		{
+			"id": "Loonperiodes",
+			"route": "/loonadministratie/loonperiodes",
+			"type": "index",
+			"title": "Loonperiodes",
+			"config": {
+				"register": "shillinq",
+				"schema": "LoonPeriode",
+				"columns": [
+					{"key": "jaar", "label": "Jaar", "sortable": true},
+					{"key": "periodeNr", "label": "Periode", "sortable": true},
+					{"key": "periodeType", "label": "Type", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true},
+					{"key": "totaalBrutoloon", "label": "Totaal bruto", "sortable": true}
+				],
+				"defaultSort": "periodeNr",
+				"detailRoute": "LoonperiodeDetail"
+			}
+		},
+		{
+			"id": "LoonperiodeDetail",
+			"route": "/loonadministratie/loonperiodes/:id",
+			"type": "detail",
+			"title": "Loonperiode",
+			"config": {
+				"register": "shillinq",
+				"schema": "LoonPeriode",
+				"fields": [
+					{"key": "periodeType", "label": "Type", "type": "string"},
+					{"key": "jaar", "label": "Jaar", "type": "number"},
+					{"key": "periodeNr", "label": "Periodenummer", "type": "number"},
+					{"key": "periodeStart", "label": "Start", "type": "string"},
+					{"key": "periodeEind", "label": "Eind", "type": "string"},
+					{"key": "betaaldatum", "label": "Betaaldatum", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "loonheffingstabelVersie", "label": "Tabelversie", "type": "string"},
+					{"key": "totaalBrutoloon", "label": "Totaal bruto", "type": "number"},
+					{"key": "totaalNettoBetaald", "label": "Totaal netto", "type": "number"},
+					{"key": "totaalLHAfdracht", "label": "Totaal LH", "type": "number"}
+				]
+			}
+		},
+		{
+			"id": "Loonstroken",
+			"route": "/loonadministratie/loonstroken",
+			"type": "index",
+			"title": "Loonstroken",
+			"config": {
+				"register": "shillinq",
+				"schema": "LoonStrook",
+				"columns": [
+					{"key": "werknemerId", "label": "Werknemer", "sortable": true},
+					{"key": "periodeId", "label": "Periode", "sortable": true},
+					{"key": "fiscaalLoon", "label": "Fiscaal loon", "sortable": true},
+					{"key": "loonheffing", "label": "Loonheffing", "sortable": true},
+					{"key": "nettoBetaald", "label": "Netto", "sortable": true}
+				],
+				"defaultSort": "werknemerId",
+				"detailRoute": "LoonstrookDetail"
+			}
+		},
+		{
+			"id": "LoonstrookDetail",
+			"route": "/loonadministratie/loonstroken/:id",
+			"type": "detail",
+			"title": "Loonstrook",
+			"config": {
+				"register": "shillinq",
+				"schema": "LoonStrook",
+				"fields": [
+					{"key": "werknemerId", "label": "Werknemer", "type": "string"},
+					{"key": "periodeId", "label": "Periode", "type": "string"},
+					{"key": "fiscaalLoon", "label": "Fiscaal loon", "type": "number"},
+					{"key": "premieloon_SV", "label": "Premieloon SV", "type": "number"},
+					{"key": "loonheffing", "label": "Loonheffing", "type": "number"},
+					{"key": "nettoBetaald", "label": "Netto betaald", "type": "number"}
+				]
+			}
+		},
+		{
+			"id": "LHAfdrachten",
+			"route": "/loonadministratie/lh-afdrachten",
+			"type": "index",
+			"title": "LH-afdrachten",
+			"config": {
+				"register": "shillinq",
+				"schema": "LHAfdracht",
+				"columns": [
+					{"key": "periodeId", "label": "Periode", "sortable": true},
+					{"key": "totaalLoonheffing", "label": "Loonheffing", "sortable": true},
+					{"key": "totaalPremiesSV", "label": "Premies SV", "sortable": true},
+					{"key": "totaalAfdracht", "label": "Totaal afdracht", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true}
+				],
+				"defaultSort": "periodeId",
+				"detailRoute": "LHAfdrachtDetail"
+			}
+		},
+		{
+			"id": "LHAfdrachtDetail",
+			"route": "/loonadministratie/lh-afdrachten/:id",
+			"type": "detail",
+			"title": "LH-afdracht",
+			"config": {
+				"register": "shillinq",
+				"schema": "LHAfdracht",
+				"fields": [
+					{"key": "periodeId", "label": "Periode", "type": "string"},
+					{"key": "totaalLoonheffing", "label": "Loonheffing", "type": "number"},
+					{"key": "totaalEindheffingenWKR", "label": "Eindheffingen WKR", "type": "number"},
+					{"key": "totaalPremiesSV", "label": "Premies SV", "type": "number"},
+					{"key": "totaalZVW", "label": "ZVW", "type": "number"},
+					{"key": "totaalAfdracht", "label": "Totaal afdracht", "type": "number"},
+					{"key": "vervaldagAfdracht", "label": "Vervaldag", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"}
+				]
+			}
+		},
+		{
+			"id": "Loonjournaalposten",
+			"route": "/loonadministratie/loonjournaalposten",
+			"type": "index",
+			"title": "Loonjournaalposten",
+			"config": {
+				"register": "shillinq",
+				"schema": "Loonjournaalpost",
+				"columns": [
+					{"key": "periodeId", "label": "Periode", "sortable": true},
+					{"key": "datum", "label": "Datum", "sortable": true},
+					{"key": "balanced", "label": "In balans", "sortable": true}
+				],
+				"defaultSort": "datum",
+				"detailRoute": "LoonjournaalpostDetail"
+			}
+		},
+		{
+			"id": "LoonjournaalpostDetail",
+			"route": "/loonadministratie/loonjournaalposten/:id",
+			"type": "detail",
+			"title": "Loonjournaalpost",
+			"config": {
+				"register": "shillinq",
+				"schema": "Loonjournaalpost",
+				"fields": [
+					{"key": "periodeId", "label": "Periode", "type": "string"},
+					{"key": "datum", "label": "Datum", "type": "string"},
+					{"key": "balanced", "label": "In balans", "type": "boolean"}
+				]
+			}
+		}
+	]
+}

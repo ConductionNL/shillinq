@@ -1,74 +1,26 @@
 {
-  "spec": "openspec/changes/add-shillinq-gr-consolidation",
+  "spec": "openspec/changes/inventory-multi-warehouse",
   "verified": [
-    {
-      "task": "1",
-      "description": "Confirmed no GRDeelnemer, GRVerdeelsleutel, or bookkeeping-gr-consolidation already existed in lib/Settings/shillinq_register.json",
-      "ok": true
-    },
-    {
-      "task": "2",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/specs/bookkeeping-gr-consolidation/spec.md",
-      "ok": true
-    },
-    {
-      "task": "3",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/proposal.md",
-      "ok": true
-    },
-    {
-      "task": "4",
-      "file": "openspec/changes/add-shillinq-gr-consolidation/design.md",
-      "ok": true
-    },
-    {
-      "task": "5",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer schema declared with deelnemerType enum, deelnemerNaam, administrationId (optional), aandeel (0-1 validated), actief boolean, lifecycleState",
-      "ok": true
-    },
-    {
-      "task": "6",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRVerdeelsleutel schema declared with sleutelNaam, costClusterAccountNumbers array, verdelingsType enum (vast-percentage/inwoner-aantal/gewogen-oppervlak/custom-formula), parameters object, lineNumber",
-      "ok": true
-    },
-    {
-      "task": "7",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GLLine schema declared with eliminationFlag: boolean (default false); x-openregister-aggregations.consolidatedTrialBalance declared with filter: eliminationFlag = false",
-      "ok": true
-    },
-    {
-      "task": "8",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRVerdeelsleutel.x-openregister-aggregations.doorbelastingPerDeelnemer declared with join on GLLine WHERE accountNumber IN costClusterAccountNumbers AND eliminationFlag = false, grouped by deelnemerId",
-      "ok": true
-    },
-    {
-      "task": "9",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer.x-openregister-lifecycle.hooks.onGrPeriodClose declared: trigger bookkeeping-period-close:grPeriodClosed, condition administrationId IS NOT NULL, idempotency key (grAdministrationId, deelnemerId, periodId)",
-      "ok": true
-    },
-    {
-      "task": "10",
-      "file": "lib/Settings/shillinq_register.json",
-      "description": "GRDeelnemer.x-openregister-aggregations.aandeelSumCheck declared: filter actief = true, sum of aandeel field; non-blocking warning when result differs from 1.0",
-      "ok": true
-    },
-    {
-      "task": "11",
-      "file": "src/manifest.json",
-      "description": "featureFlags.gov-gr added; Gemeenschappelijke regeling menu entry under Bookkeeping with 3 children (Deelnemers, Verdeelsleutels, Geconsolideerde view); 5 pages added (GRDeelnemers, GRDeelnemerDetail, GRVerdeelsleutels, GRVerdeelsleutelDetail, GRConsolidated); node tests/validate-manifest.js: only pre-existing roadmap-type failure, no new failures",
-      "ok": true
-    },
-    {
-      "task": "12",
-      "file": "openspec/architecture/adr-000-data-model.md",
-      "description": "GRDeelnemer and GRVerdeelsleutel entity entries added alphabetically after GrantPortfolio, cross-referencing bookkeeping-gr-consolidation spec",
-      "ok": true
-    }
+    {"task": "1", "file": "lib/Service/", "ok": true, "note": "No Warehouse/Location PHP services found — confirmed absence per ADR-031"},
+    {"task": "2", "file": "openspec/changes/inventory-multi-warehouse/specs/inventory-multi-warehouse/spec.md", "ok": true},
+    {"task": "3", "file": "openspec/changes/inventory-multi-warehouse/proposal.md", "ok": true},
+    {"task": "4", "file": "openspec/changes/inventory-multi-warehouse/design.md", "ok": true},
+    {"task": "5", "file": "lib/Settings/shillinq_register.json:components.Location", "ok": true},
+    {"task": "6", "file": "lib/Settings/shillinq_register.json:components.Location.properties.locationType+binNamingConvention", "ok": true},
+    {"task": "7", "file": "lib/Guard/LocationHierarchyGuard.php", "ok": true},
+    {"task": "8", "file": "lib/Settings/shillinq_register.json:components.Location.x-openregister-aggregations.stockRollup", "ok": true},
+    {"task": "9", "file": "src/manifest.json:WarehouseLocationDetail", "ok": true},
+    {"task": "10", "file": "lib/Settings/shillinq_register.json:components.Location.properties.locationType=in-transit", "ok": true},
+    {"task": "11", "file": "lib/Settings/shillinq_register.json:components.InventoryStockTransfer", "ok": true},
+    {"task": "12", "file": "src/manifest.json:WarehouseLocations+InterWarehouseTransfers+InTransitInventory", "ok": true},
+    {"task": "13", "file": "src/manifest.json:WarehouseLocationDetail+InterWarehouseTransferDetail", "ok": true},
+    {"task": "14", "file": "src/manifest.json:WarehouseLocationDetail.actions.bulkImport", "ok": true},
+    {"task": "15", "file": "src/manifest.json:WarehouseLocationDetail.sections.audit-trail", "ok": true},
+    {"task": "16", "file": "lib/Settings/shillinq_register.json:components.Location.x-openregister-rbac.adminScope", "ok": true},
+    {"task": "17", "file": "openspec/architecture/adr-000-data-model.md:Location+InventoryStock", "ok": true},
+    {"task": "18", "file": "lib/Guard/LocationHierarchyGuard.php:validateNoCircle", "ok": true},
+    {"task": "19", "file": "lib/Guard/LocationHierarchyGuard.php:stockBadge", "ok": true},
+    {"task": "20", "file": "lib/Settings/shillinq_register.json:components.Location.x-openregister-lifecycle.validations.onUpdate.locationCodeImmutable", "ok": true}
   ],
   "stubs": [],
   "missing_routes": []
