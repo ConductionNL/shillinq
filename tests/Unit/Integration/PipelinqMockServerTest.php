@@ -35,8 +35,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class PipelinqMockServerTest extends TestCase
 {
-
-
     /**
      * Health route returns 200 with the canned ok payload.
      */
@@ -49,7 +47,6 @@ final class PipelinqMockServerTest extends TestCase
         self::assertSame('ok', $payload['status']);
 
     }//end testHealthRouteReturnsOk()
-
 
     /**
      * Contact route resolves the canned fixture for the externalId
@@ -69,7 +66,6 @@ final class PipelinqMockServerTest extends TestCase
 
     }//end testContactRouteServesCannedFixture()
 
-
     /**
      * Klantbeeld route serves the canned summary fixture.
      */
@@ -87,7 +83,6 @@ final class PipelinqMockServerTest extends TestCase
 
     }//end testKlantbeeldRouteServesCannedFixture()
 
-
     /**
      * Timeline GET serves the canned entry list.
      */
@@ -103,7 +98,6 @@ final class PipelinqMockServerTest extends TestCase
         self::assertCount(3, $payload['entries']);
 
     }//end testTimelineGetRouteServesCannedFixture()
-
 
     /**
      * Timeline POST returns 202 — used by member 07 publish tests.
@@ -123,7 +117,6 @@ final class PipelinqMockServerTest extends TestCase
 
     }//end testTimelinePostReturnsAccepted()
 
-
     /**
      * Unknown route resolves as 404 with a JSON envelope.
      */
@@ -134,7 +127,6 @@ final class PipelinqMockServerTest extends TestCase
         self::assertSame(404, $response['status']);
 
     }//end testUnknownRouteReturns404()
-
 
     /**
      * forceStatus() applies once and is cleared after the next dispatch
@@ -151,7 +143,6 @@ final class PipelinqMockServerTest extends TestCase
         self::assertSame(200, $second['status']);
 
     }//end testForceStatusAppliesOnceOnly()
-
 
     /**
      * Request history is captured so tests can assert what the
@@ -175,7 +166,6 @@ final class PipelinqMockServerTest extends TestCase
 
     }//end testRequestHistoryIsCaptured()
 
-
     /**
      * Missing fixture resolves to 404 so tests can exercise the
      * "Contact not found in pipelinq" branch (member 03).
@@ -190,6 +180,4 @@ final class PipelinqMockServerTest extends TestCase
         self::assertSame(404, $response['status']);
 
     }//end testMissingFixtureResolvesAs404()
-
-
 }//end class

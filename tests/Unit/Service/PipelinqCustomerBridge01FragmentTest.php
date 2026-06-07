@@ -55,7 +55,6 @@ final class PipelinqCustomerBridge01FragmentTest extends TestCase
      */
     private string $appointmentPath = __DIR__.'/../../../lib/Settings/register.d/10-bookings-create-appointment.json';
 
-
     /**
      * Invoke the private static SettingsService::deepMergeConfig().
      *
@@ -72,7 +71,6 @@ final class PipelinqCustomerBridge01FragmentTest extends TestCase
 
     }//end merge()
 
-
     /**
      * The fragment file is present and parses as JSON.
      */
@@ -86,7 +84,6 @@ final class PipelinqCustomerBridge01FragmentTest extends TestCase
         self::assertArrayHasKey('schemas', $data['components']);
 
     }//end testFragmentIsValidJson()
-
 
     /**
      * The fragment declares a chain-scoped version stamp so a config
@@ -102,7 +99,6 @@ final class PipelinqCustomerBridge01FragmentTest extends TestCase
         );
 
     }//end testFragmentDeclaresVersionStamp()
-
 
     /**
      * The fragment adds pipelinqContactId to the Appointment schema
@@ -121,7 +117,6 @@ final class PipelinqCustomerBridge01FragmentTest extends TestCase
 
     }//end testFragmentAddsPipelinqContactIdToAppointment()
 
-
     /**
      * Deep-merge with the create-appointment base preserves the
      * existing Appointment field set, lifecycle states, transitions
@@ -136,18 +131,17 @@ final class PipelinqCustomerBridge01FragmentTest extends TestCase
         $appt   = $merged['components']['schemas']['Appointment'];
 
         // Pre-existing fields survive.
-        foreach (
-            [
-                'administrationId',
-                'appointmentId',
-                'startTime',
-                'endTime',
-                'serviceId',
-                'resourceId',
-                'customerId',
-                'status',
-                'notes',
-            ] as $field
+        foreach ([
+            'administrationId',
+            'appointmentId',
+            'startTime',
+            'endTime',
+            'serviceId',
+            'resourceId',
+            'customerId',
+            'status',
+            'notes',
+        ] as $field
         ) {
             self::assertArrayHasKey(
                 $field,
@@ -174,7 +168,6 @@ final class PipelinqCustomerBridge01FragmentTest extends TestCase
 
     }//end testAppointmentIsExtendedAdditively()
 
-
     /**
      * The pipelinqContactId field is non-required on Appointment —
      * many bookings (and the "Booking without a pipelinq Contact"
@@ -195,6 +188,4 @@ final class PipelinqCustomerBridge01FragmentTest extends TestCase
         );
 
     }//end testPipelinqContactIdIsNotRequired()
-
-
 }//end class

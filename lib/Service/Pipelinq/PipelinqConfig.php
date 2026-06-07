@@ -85,7 +85,6 @@ class PipelinqConfig
      */
     private const HEALTH_TIMEOUT_SECONDS = 5;
 
-
     /**
      * Constructor.
      *
@@ -112,13 +111,14 @@ class PipelinqConfig
 
     }//end __construct()
 
-
     /**
      * Return the configured pipelinq API endpoint URL.
      *
      * Empty string when unset.
      *
      * @return string
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
      */
     public function getPipelinqEndpoint(): string
     {
@@ -129,7 +129,6 @@ class PipelinqConfig
         );
 
     }//end getPipelinqEndpoint()
-
 
     /**
      * Persist the pipelinq API endpoint URL.
@@ -142,6 +141,8 @@ class PipelinqConfig
      * @param string $url The endpoint URL.
      *
      * @return void
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
      */
     public function setPipelinqEndpoint(string $url): void
     {
@@ -153,7 +154,6 @@ class PipelinqConfig
 
     }//end setPipelinqEndpoint()
 
-
     /**
      * Return the configured pipelinq API token from the secrets store.
      *
@@ -161,6 +161,8 @@ class PipelinqConfig
      * MUST NOT log the result.
      *
      * @return string
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
      */
     public function getPipelinqToken(): string
     {
@@ -176,7 +178,6 @@ class PipelinqConfig
 
     }//end getPipelinqToken()
 
-
     /**
      * Persist the pipelinq API token in the secrets store.
      *
@@ -188,6 +189,8 @@ class PipelinqConfig
      * @param string $token The API token, or '' to clear.
      *
      * @return void
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
      */
     public function setPipelinqToken(string $token): void
     {
@@ -209,7 +212,6 @@ class PipelinqConfig
 
     }//end setPipelinqToken()
 
-
     /**
      * Indicates whether a non-empty token is stored.
      *
@@ -218,13 +220,14 @@ class PipelinqConfig
      * returned to the frontend).
      *
      * @return bool
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
      */
     public function hasPipelinqToken(): bool
     {
         return $this->getPipelinqToken() !== '';
 
     }//end hasPipelinqToken()
-
 
     /**
      * Issue a pipelinq health-check request and return the outcome.
@@ -239,6 +242,8 @@ class PipelinqConfig
      * config-only purposes a plain GET is sufficient.
      *
      * @return array<string,mixed> The outcome (success, status, message).
+     *
+     * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
      */
     public function testConnection(): array
     {
@@ -309,6 +314,4 @@ class PipelinqConfig
         ];
 
     }//end testConnection()
-
-
 }//end class

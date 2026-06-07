@@ -59,13 +59,11 @@ use OCP\IRequest;
  */
 class PipelinqSettingsController extends Controller
 {
-
-
     /**
      * Constructor.
      *
-     * @param IRequest        $request        The current HTTP request.
-     * @param PipelinqConfig  $pipelinqConfig The connection config service.
+     * @param IRequest       $request        The current HTTP request.
+     * @param PipelinqConfig $pipelinqConfig The connection config service.
      */
     public function __construct(
         IRequest $request,
@@ -74,7 +72,6 @@ class PipelinqSettingsController extends Controller
         parent::__construct(appName: Application::APP_ID, request: $request);
 
     }//end __construct()
-
 
     /**
      * GET the current pipelinq connection settings.
@@ -99,7 +96,6 @@ class PipelinqSettingsController extends Controller
         );
 
     }//end index()
-
 
     /**
      * POST to update the pipelinq connection settings.
@@ -136,7 +132,6 @@ class PipelinqSettingsController extends Controller
 
     }//end create()
 
-
     /**
      * POST to issue a pipelinq health-check ("Test Connection").
      *
@@ -156,6 +151,4 @@ class PipelinqSettingsController extends Controller
         );
 
     }//end test()
-
-
 }//end class

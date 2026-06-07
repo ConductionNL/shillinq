@@ -68,7 +68,7 @@ final class PipelinqMockServer
     /**
      * Override status code returned for the NEXT dispatch when set.
      *
-     * @var int|null
+     * @var integer|null
      */
     private ?int $forcedStatus = null;
 
@@ -78,7 +78,6 @@ final class PipelinqMockServer
      * @var array<int, array{method: string, path: string, body: ?string}>
      */
     private array $requests = [];
-
 
     /**
      * Constructor.
@@ -92,7 +91,6 @@ final class PipelinqMockServer
         $this->fixtureDir = ($fixtureDir ?? (__DIR__.'/fixtures'));
 
     }//end __construct()
-
 
     /**
      * Force the next dispatch to return the given HTTP status code.
@@ -111,7 +109,6 @@ final class PipelinqMockServer
 
     }//end forceStatus()
 
-
     /**
      * Return the full request-history captured by dispatch().
      *
@@ -122,7 +119,6 @@ final class PipelinqMockServer
         return $this->requests;
 
     }//end getRequests()
-
 
     /**
      * Reset the request history and any forced-status override.
@@ -135,7 +131,6 @@ final class PipelinqMockServer
         $this->forcedStatus = null;
 
     }//end reset()
-
 
     /**
      * Dispatch an HTTP request through the in-process router.
@@ -155,7 +150,7 @@ final class PipelinqMockServer
         ];
 
         if ($this->forcedStatus !== null) {
-            $forced            = $this->forcedStatus;
+            $forced = $this->forcedStatus;
             $this->forcedStatus = null;
             return $this->jsonResponse(
                 status: $forced,
@@ -200,7 +195,6 @@ final class PipelinqMockServer
 
     }//end dispatch()
 
-
     /**
      * Resolve a fixture file from disk and return it as a response.
      *
@@ -238,7 +232,6 @@ final class PipelinqMockServer
 
     }//end fixtureResponse()
 
-
     /**
      * Build a JSON HTTP response envelope.
      *
@@ -256,6 +249,4 @@ final class PipelinqMockServer
         ];
 
     }//end jsonResponse()
-
-
 }//end class

@@ -71,7 +71,6 @@ final class PipelinqConfigTest extends TestCase
      */
     private PipelinqConfig $config;
 
-
     /**
      * Set up mocks.
      *
@@ -94,7 +93,6 @@ final class PipelinqConfigTest extends TestCase
 
     }//end setUp()
 
-
     /**
      * getPipelinqEndpoint pulls from IAppConfig under the canonical key.
      */
@@ -109,7 +107,6 @@ final class PipelinqConfigTest extends TestCase
 
     }//end testGetPipelinqEndpointReturnsAppConfigValue()
 
-
     /**
      * setPipelinqEndpoint trims the value and writes it to IAppConfig.
      */
@@ -122,7 +119,6 @@ final class PipelinqConfigTest extends TestCase
         $this->config->setPipelinqEndpoint("  https://pipelinq.example.com/api  \n");
 
     }//end testSetPipelinqEndpointTrimsAndPersists()
-
 
     /**
      * Token storage: a non-empty token MUST land in the secrets store
@@ -144,7 +140,6 @@ final class PipelinqConfigTest extends TestCase
 
     }//end testSetPipelinqTokenStoresInSecretsStoreNotAppConfig()
 
-
     /**
      * An empty token deletes the secret — never an empty store call.
      */
@@ -158,7 +153,6 @@ final class PipelinqConfigTest extends TestCase
         $this->config->setPipelinqToken('   ');
 
     }//end testSetPipelinqTokenEmptyDeletesSecret()
-
 
     /**
      * getPipelinqToken retrieves from the credentials manager.
@@ -174,7 +168,6 @@ final class PipelinqConfigTest extends TestCase
 
     }//end testGetPipelinqTokenReadsFromSecretsStore()
 
-
     /**
      * hasPipelinqToken reflects whether the secret is non-empty.
      */
@@ -185,7 +178,6 @@ final class PipelinqConfigTest extends TestCase
 
     }//end testHasPipelinqTokenTrueWhenSecretPresent()
 
-
     /**
      * hasPipelinqToken is false when nothing is stored.
      */
@@ -195,7 +187,6 @@ final class PipelinqConfigTest extends TestCase
         self::assertFalse($this->config->hasPipelinqToken());
 
     }//end testHasPipelinqTokenFalseWhenAbsent()
-
 
     /**
      * The logger MUST NOT receive any log call that includes the token
@@ -217,7 +208,6 @@ final class PipelinqConfigTest extends TestCase
         $this->config->setPipelinqToken('super-secret');
 
     }//end testTokenNeverLoggedOnHappyPath()
-
 
     /**
      * testConnection success: 200 OK → success:true with status 200.
@@ -251,7 +241,6 @@ final class PipelinqConfigTest extends TestCase
 
     }//end testTestConnectionSuccessOn200()
 
-
     /**
      * testConnection: 401 → success:false, status:401 surfaced.
      */
@@ -266,7 +255,6 @@ final class PipelinqConfigTest extends TestCase
         self::assertStringContainsString('401', $result['message']);
 
     }//end testTestConnectionFailureOn401()
-
 
     /**
      * testConnection: 404 → success:false, status:404 surfaced.
@@ -283,7 +271,6 @@ final class PipelinqConfigTest extends TestCase
 
     }//end testTestConnectionFailureOn404()
 
-
     /**
      * testConnection: 5xx → success:false, status:503 surfaced.
      */
@@ -297,7 +284,6 @@ final class PipelinqConfigTest extends TestCase
         self::assertSame(503, $result['status']);
 
     }//end testTestConnectionFailureOn5xx()
-
 
     /**
      * testConnection: transport exception (timeout/DNS) → success:false,
@@ -332,7 +318,6 @@ final class PipelinqConfigTest extends TestCase
 
     }//end testTestConnectionFailureOnTransportException()
 
-
     /**
      * testConnection short-circuits with a clear message when no endpoint
      * is configured — avoiding a useless health-check against ''.
@@ -349,7 +334,6 @@ final class PipelinqConfigTest extends TestCase
 
     }//end testTestConnectionShortCircuitsOnMissingEndpoint()
 
-
     /**
      * testConnection short-circuits when no token is configured.
      */
@@ -365,7 +349,6 @@ final class PipelinqConfigTest extends TestCase
 
     }//end testTestConnectionShortCircuitsOnMissingToken()
 
-
     /**
      * Configure appConfig + credentialsManager mocks to return the
      * supplied endpoint URL and token to subsequent reads.
@@ -379,7 +362,6 @@ final class PipelinqConfigTest extends TestCase
         $this->credentials->method('retrieve')->willReturn($token);
 
     }//end primeEndpointAndToken()
-
 
     /**
      * Stub the HTTP client to return a response with the given status.
@@ -396,6 +378,4 @@ final class PipelinqConfigTest extends TestCase
         $this->clientService->method('newClient')->willReturn($client);
 
     }//end stubHealthResponse()
-
-
 }//end class

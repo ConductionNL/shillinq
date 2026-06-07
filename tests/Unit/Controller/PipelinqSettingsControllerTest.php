@@ -58,7 +58,6 @@ final class PipelinqSettingsControllerTest extends TestCase
      */
     private PipelinqSettingsController $controller;
 
-
     /**
      * Set up mocks.
      *
@@ -76,7 +75,6 @@ final class PipelinqSettingsControllerTest extends TestCase
         );
 
     }//end setUp()
-
 
     /**
      * index() returns endpoint + hasToken — and NEVER the token itself.
@@ -100,7 +98,6 @@ final class PipelinqSettingsControllerTest extends TestCase
         self::assertArrayNotHasKey('token', $data, 'Token MUST NOT be returned to the frontend');
 
     }//end testIndexReturnsEndpointAndHasTokenFlagOnly()
-
 
     /**
      * POST without a token preserves the currently-stored secret.
@@ -132,7 +129,6 @@ final class PipelinqSettingsControllerTest extends TestCase
 
     }//end testCreatePreservesTokenWhenAbsent()
 
-
     /**
      * POST with an explicit token rotates the stored secret.
      */
@@ -158,7 +154,6 @@ final class PipelinqSettingsControllerTest extends TestCase
 
     }//end testCreateRotatesTokenWhenProvided()
 
-
     /**
      * test() delegates to PipelinqConfig::testConnection() and
      * surfaces the outcome verbatim.
@@ -178,6 +173,4 @@ final class PipelinqSettingsControllerTest extends TestCase
         self::assertSame($expected, $response->getData());
 
     }//end testTestDelegatesToConfig()
-
-
 }//end class
