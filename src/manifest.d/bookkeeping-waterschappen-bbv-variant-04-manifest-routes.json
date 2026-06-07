@@ -4,7 +4,8 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "bookkeeping-waterschappen-bbv-variant-04-manifest-routes",
 		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
-		"description": "Slice 04 of the bookkeeping-waterschappen-bbv-variant chain wires the navigation + page skeleton that members 05-07 will fill in. Two navigation entries (BBV Compliance Dashboard + Budget Mapping with index/detail) are added under a top-level 'BBV' menu, ordered immediately after the main Dashboard (order 11) and gated to waterschap administrations. The dashboard page is declared as type=dashboard with an empty widget list (widgets are added in slice 05). The Budget Mapping index+detail pages are declared against the BudgetBBVMapping schema (introduced in slice 01) — the bespoke pickers + relations live in slices 06/07 which will re-declare them as kind=page custom components when needed. The HTTP-level routes that mirror these manifest pages are registered in appinfo/routes.php with explicit #[NoAdminRequired] auth attributes per ADR-016 + hydra-gate-route-auth."
+		"description": "Slice 04 of the bookkeeping-waterschappen-bbv-variant chain wires the navigation + page skeleton that members 05-07 will fill in. Two navigation entries (BBV Compliance Dashboard + Budget Mapping with index/detail) are added under a top-level 'BBV' menu, ordered immediately after the main Dashboard (order 11) and gated to waterschap administrations. The dashboard page is declared as type=dashboard with an empty widget list (widgets are added in slice 05). The Budget Mapping index+detail pages are declared against the BudgetBBVMapping schema (introduced in slice 01) — the bespoke pickers + relations live in slices 06/07 which will re-declare them as kind=page custom components when needed. The HTTP-level routes that mirror these manifest pages are registered in appinfo/routes.php with explicit #[NoAdminRequired] auth attributes per ADR-016 + hydra-gate-route-auth.",
+		"slice-06-update": "Slice 06 (bookkeeping-waterschappen-bbv-variant-06-mapping-index) swaps the BudgetBBVMappings page from type=index → type=custom + component=BudgetBBVMappingIndex so the manifest router dispatches the bespoke CnIndexPage wrapper that owns the four-facet filter chrome (search, fiscal year, allocation bucket, effective-date window) and the percentage/status cell renderers REQ-BBVW-004 calls for. The legacy `columns` array + `defaultSort` are dropped because the custom component declares them in code; the `register`, `schema`, `detailRoute` config keys are retained so the component still reads them from the manifest page config."
 	},
 	"menu": [
 		{
@@ -50,39 +51,12 @@
 		{
 			"id": "BudgetBBVMappings",
 			"route": "/budget-mappings",
-			"type": "index",
+			"type": "custom",
 			"title": "Budget Mapping",
+			"component": "BudgetBBVMappingIndex",
 			"config": {
 				"register": "shillinq",
 				"schema": "BudgetBBVMapping",
-				"columns": [
-					{
-						"key": "accountNumber",
-						"label": "Grootboek",
-						"sortable": true
-					},
-					{
-						"key": "programmaCode",
-						"label": "Programma",
-						"sortable": true
-					},
-					{
-						"key": "taakveld",
-						"label": "Taakveld",
-						"sortable": true
-					},
-					{
-						"key": "budgetAmount",
-						"label": "Budget",
-						"sortable": true
-					},
-					{
-						"key": "lifecycleState",
-						"label": "Status",
-						"sortable": true
-					}
-				],
-				"defaultSort": "programmaCode",
 				"detailRoute": "BudgetBBVMappingDetail"
 			}
 		},

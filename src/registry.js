@@ -135,6 +135,18 @@ import VendorPerformanceDetail from './components/vendor-performance/VendorPerfo
 // route + manifest entry pointing at this component id.
 import BBVComplianceDashboard from './components/Dashboard/BBVComplianceDashboard.vue'
 
+// bookkeeping-waterschappen-bbv-variant slice 06 (REQ-BBVW-004): the
+// Budget Mapping index page wraps CnIndexPage with bespoke filter
+// chrome (search by GL account or programme code, fiscal-year +
+// allocation-range + effective-date-range filters) and a custom
+// allocation/status cell renderer. The built-in `index` page type
+// cannot author the four-facet filter row or the percentage / status
+// pill renderers, so the page is registered as a kind:"page" custom
+// component. Slice 04's manifest fragment is updated in lock-step to
+// switch the BudgetBBVMappings page from type=index to
+// type=custom + component=BudgetBBVMappingIndex.
+import BudgetBBVMappingIndex from './components/BudgetBBVMapping/BudgetBBVMappingIndex.vue'
+
 // bookkeeping-waterschappen-bbv-variant slice 07 (REQ-BBVW-004): the
 // Budget Mapping detail page composes two bespoke autocomplete pickers
 // (Chart of Accounts + BBVProgramme), a live per-account allocation
@@ -180,6 +192,8 @@ export default {
 	VendorPerformanceDetail: { kind: 'page', component: VendorPerformanceDetail },
 
 	BBVComplianceDashboard: { kind: 'page', component: BBVComplianceDashboard },
+
+	BudgetBBVMappingIndex: { kind: 'page', component: BudgetBBVMappingIndex },
 
 	BudgetBBVMappingDetail: { kind: 'page', component: BudgetBBVMappingDetail },
 	BudgetMappingDetail: { kind: 'page', component: BudgetBBVMappingDetail },
