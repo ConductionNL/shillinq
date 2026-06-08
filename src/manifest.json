@@ -933,6 +933,42 @@
 					"order": 30
 				}
 			]
+		},
+		{
+			"id": "Incasso",
+			"label": "Incasso",
+			"icon": "BankTransferInOutline",
+			"order": 24,
+			"children": [
+				{
+					"id": "SepaMandates",
+					"label": "SEPA Mandates",
+					"icon": "FileSignOutline",
+					"route": "SepaMandates",
+					"order": 10
+				},
+				{
+					"id": "DirectDebitCollections",
+					"label": "Direct Debit Collections",
+					"icon": "BankTransferInOutline",
+					"route": "DirectDebitCollections",
+					"order": 20
+				},
+				{
+					"id": "DirectDebitBatches",
+					"label": "Batches",
+					"icon": "BankOutline",
+					"route": "DirectDebitBatches",
+					"order": 30
+				},
+				{
+					"id": "SepaRejections",
+					"label": "Rejections & Returns",
+					"icon": "BankTransferOutOutline",
+					"route": "SepaRejections",
+					"order": 40
+				}
+			]
 		}
 	],
 	"pages": [
@@ -13657,6 +13693,191 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "PensionDisclosureTables"
+			}
+		},
+		{
+			"id": "SepaMandates",
+			"route": "/incasso/mandates",
+			"type": "index",
+			"title": "SEPA Mandates",
+			"config": {
+				"register": "shillinq",
+				"schema": "SepaMandate",
+				"columns": [
+					{ "key": "mandateReference", "label": "Reference", "sortable": true },
+					{ "key": "debtorName", "label": "Debtor", "sortable": true },
+					{ "key": "scheme", "label": "Scheme", "sortable": true },
+					{ "key": "type", "label": "Type", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "signedAt", "label": "Signed", "sortable": true }
+				],
+				"defaultSort": "mandateReference",
+				"detailRoute": "SepaMandateDetail"
+			}
+		},
+		{
+			"id": "SepaMandateDetail",
+			"route": "/incasso/mandates/:id",
+			"type": "detail",
+			"title": "SEPA Mandate",
+			"config": {
+				"register": "shillinq",
+				"schema": "SepaMandate",
+				"fields": [
+					{ "key": "mandateReference", "label": "Reference", "type": "string" },
+					{ "key": "creditorIdentifier", "label": "Creditor Id", "type": "string" },
+					{ "key": "scheme", "label": "Scheme", "type": "string" },
+					{ "key": "type", "label": "Type", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "signedAt", "label": "Signed At", "type": "date" },
+					{ "key": "signedBy", "label": "Signed By", "type": "string" },
+					{ "key": "debtorName", "label": "Debtor Name", "type": "string" },
+					{ "key": "debtorIban", "label": "Debtor IBAN", "type": "string" },
+					{ "key": "debtorBic", "label": "Debtor BIC", "type": "string" },
+					{ "key": "debtorAccountType", "label": "Account Type", "type": "string" },
+					{ "key": "firstCollectionDate", "label": "First Collection", "type": "date" },
+					{ "key": "lastUsedAt", "label": "Last Used", "type": "date" },
+					{ "key": "preNotificationDays", "label": "Pre-notification Days", "type": "number" },
+					{ "key": "cancellationReason", "label": "Cancellation Reason", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "SepaMandates"
+			}
+		},
+		{
+			"id": "DirectDebitCollections",
+			"route": "/incasso/collections",
+			"type": "index",
+			"title": "Direct Debit Collections",
+			"config": {
+				"register": "shillinq",
+				"schema": "DirectDebitCollection",
+				"columns": [
+					{ "key": "endToEndId", "label": "End-to-End Id", "sortable": true },
+					{ "key": "amount", "label": "Amount", "sortable": true },
+					{ "key": "sequenceType", "label": "Sequence", "sortable": true },
+					{ "key": "requestedCollectionDate", "label": "Due", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "pain002ReasonCode", "label": "Reason", "sortable": true }
+				],
+				"defaultSort": "requestedCollectionDate",
+				"detailRoute": "DirectDebitCollectionDetail"
+			}
+		},
+		{
+			"id": "DirectDebitCollectionDetail",
+			"route": "/incasso/collections/:id",
+			"type": "detail",
+			"title": "Direct Debit Collection",
+			"config": {
+				"register": "shillinq",
+				"schema": "DirectDebitCollection",
+				"fields": [
+					{ "key": "endToEndId", "label": "End-to-End Id", "type": "string" },
+					{ "key": "mandateId", "label": "Mandate", "type": "string" },
+					{ "key": "invoiceId", "label": "Invoice", "type": "string" },
+					{ "key": "amount", "label": "Amount", "type": "number" },
+					{ "key": "currency", "label": "Currency", "type": "string" },
+					{ "key": "sequenceType", "label": "Sequence Type", "type": "string" },
+					{ "key": "requestedCollectionDate", "label": "Requested Collection Date", "type": "date" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "submittedInBatchId", "label": "Batch", "type": "string" },
+					{ "key": "pain002ReasonCode", "label": "Reason Code", "type": "string" },
+					{ "key": "camt054ReferenceId", "label": "camt.054 Ref", "type": "string" },
+					{ "key": "repostedAsCollectionId", "label": "Reposted As", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "DirectDebitCollections"
+			}
+		},
+		{
+			"id": "DirectDebitBatches",
+			"route": "/incasso/batches",
+			"type": "index",
+			"title": "Direct Debit Batches",
+			"config": {
+				"register": "shillinq",
+				"schema": "DirectDebitBatch",
+				"columns": [
+					{ "key": "messageId", "label": "Message Id", "sortable": true },
+					{ "key": "scheme", "label": "Scheme", "sortable": true },
+					{ "key": "sequenceType", "label": "Sequence", "sortable": true },
+					{ "key": "requestedCollectionDate", "label": "Due", "sortable": true },
+					{ "key": "collectionCount", "label": "Count", "sortable": true },
+					{ "key": "controlSum", "label": "Control Sum", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "creationDateTime",
+				"detailRoute": "DirectDebitBatchDetail"
+			}
+		},
+		{
+			"id": "DirectDebitBatchDetail",
+			"route": "/incasso/batches/:id",
+			"type": "detail",
+			"title": "Direct Debit Batch",
+			"config": {
+				"register": "shillinq",
+				"schema": "DirectDebitBatch",
+				"fields": [
+					{ "key": "messageId", "label": "Message Id", "type": "string" },
+					{ "key": "creationDateTime", "label": "Created", "type": "date-time" },
+					{ "key": "requestedCollectionDate", "label": "Requested Collection Date", "type": "date" },
+					{ "key": "scheme", "label": "Scheme", "type": "string" },
+					{ "key": "sequenceType", "label": "Sequence Type", "type": "string" },
+					{ "key": "collectionCount", "label": "Collection Count", "type": "number" },
+					{ "key": "controlSum", "label": "Control Sum", "type": "number" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "submittedAt", "label": "Submitted At", "type": "date-time" },
+					{ "key": "pain008Xml", "label": "pain.008 XML", "type": "string" },
+					{ "key": "pain002Xml", "label": "pain.002 XML", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "DirectDebitBatches"
+			}
+		},
+		{
+			"id": "SepaRejections",
+			"route": "/incasso/rejections",
+			"type": "index",
+			"title": "Rejections & Returns",
+			"config": {
+				"register": "shillinq",
+				"schema": "RTransaction",
+				"columns": [
+					{ "key": "type", "label": "Type", "sortable": true },
+					{ "key": "reasonCode", "label": "Reason Code", "sortable": true },
+					{ "key": "transactionAmount", "label": "Amount", "sortable": true },
+					{ "key": "valueDate", "label": "Value Date", "sortable": true },
+					{ "key": "notifiedAt", "label": "Notified", "sortable": true }
+				],
+				"defaultSort": "notifiedAt",
+				"detailRoute": "SepaRejectionDetail"
+			}
+		},
+		{
+			"id": "SepaRejectionDetail",
+			"route": "/incasso/rejections/:id",
+			"type": "detail",
+			"title": "R-Transaction",
+			"config": {
+				"register": "shillinq",
+				"schema": "RTransaction",
+				"fields": [
+					{ "key": "collectionId", "label": "Collection", "type": "string" },
+					{ "key": "type", "label": "Type", "type": "string" },
+					{ "key": "reasonCode", "label": "Reason Code", "type": "string" },
+					{ "key": "reasonText", "label": "Reason Text", "type": "string" },
+					{ "key": "originatorBic", "label": "Originator BIC", "type": "string" },
+					{ "key": "transactionAmount", "label": "Amount", "type": "number" },
+					{ "key": "valueDate", "label": "Value Date", "type": "date" },
+					{ "key": "notifiedAt", "label": "Notified At", "type": "date-time" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"indexRoute": "SepaRejections"
 			}
 		}
 	]
