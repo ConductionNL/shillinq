@@ -130,7 +130,7 @@
   aanbestedingsplichtig if threshold exceeded; block declaration without
   aanbestedingsdossier SupportingDocument
 
-- [ ] Task 17: Implement kwartaal-realisatie-rapportage per REQ-EUF-003 — aggregate
+- [~] Task 17: Implement kwartaal-realisatie-rapportage per REQ-EUF-003 — aggregate
   EuExpenditure records by declaration_period (ISO quarterly), split by cost_category,
   add RCO/RCR indicator fields, export XBRL/Excel per MA template, append digitale
   handtekening (projectleider public key)
