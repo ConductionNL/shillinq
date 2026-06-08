@@ -19,8 +19,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\Booking\TimezoneResolver;
 use OCA\Shillinq\Service\ConfirmationMailer;
 use OCA\Shillinq\Service\IcsService;
+use OCP\IConfig;
 use OCP\IURLGenerator;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -53,10 +55,21 @@ final class ConfirmationMailerTest extends TestCase
         $url = $this->createMock(IURLGenerator::class);
         $url->method('linkToRouteAbsolute')->willReturn('https://example.nl/index.php/apps/shillinq/confirm');
 
+        // IcsService is final — build a real one with mocked DI deps so the
+        // mailer's call into generateIcs() executes the real (cheap) path.
+        $tzResolver = new TimezoneResolver(
+            $this->createMock(IConfig::class),
+            $this->createMock(LoggerInterface::class),
+        );
+        $ics = new IcsService(
+            $tzResolver,
+            $this->createMock(LoggerInterface::class),
+        );
+
         return new ConfirmationMailer(
             container: $container,
             urlGenerator: $url,
-            icsService: new IcsService(),
+            icsService: $ics,
             logger: $this->createMock(LoggerInterface::class),
         );
     }//end makeMailer()
