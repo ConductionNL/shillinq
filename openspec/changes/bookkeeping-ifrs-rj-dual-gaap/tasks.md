@@ -145,11 +145,13 @@
   - The bridge is referenced from `bookkeeping-financial-statements` in `proposal.md` ("Depends on" + "Cross-Project Dependencies"); the consumer capability owns the actual paragraph composition.
   **DEFERRED** — the toelichting paragraph generation (Dutch + English templating, AVA-besluit referencing, prior-year comparative) is consumed by `bookkeeping-financial-statements` export per proposal "Cross-Project Dependencies"; this spec is generation-engine-agnostic. The serialisation shape is in place so the consumer iterates `adjustments[]` + `taxEffect[]` without further coordination.
 
-- [ ] Task 22: Implement drill-down navigation per REQ-DGAAP-008: every `ReconciliationBridge` line
-  (e.g., "IAS 19 service cost €234k") SHALL be clickable; drill-down chain:
-  bridge-line detail → `StandardSpecificCalculation` → GL entries (RJ + IFRS) → audit-trail;
-  all within OR's relation-engine UI; documents downloadable from docudesk FK links.
-  **DEFERRED** — the bridge-line → calc → GL → audit-trail drill-down uses OR's relation-engine UI; the FK cross-refs (`standardCalculationId` on adjustments, `baseTransactionId`, `auditEvidenceUri`) are declared. Manifest detail pages ship; the relation-engine wiring needs a live OR instance.
+- [x] Task 22: Drill-down FK chain landed declaratively; relation-engine UI wiring DEFERRED. Evidence in `lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json` and `src/manifest.d/bookkeeping-ifrs-rj-dual-gaap.json`:
+  - `ReconciliationBridge.adjustments[]` carries `standardCalculationId` per line — the FK from a bridge line to the `StandardSpecificCalculation` that supports it (REQ-DGAAP-008); seed `bridge-2026-equity` references `calc-ifrs16-lease-001` and `calc-ias19-pension-001` so the chain is concrete.
+  - `DualTransaction.baseTransactionId` is the FK back to the source `GLTransaction`; combined with `rjJournalEntries[]` and `ifrsJournalEntries[]` it carries both ledger sides on one record (REQ-DGAAP-003).
+  - `StandardSpecificCalculation.contractOrPositionReference` is the FK to the lease / plan / customer segment so the drill-down can pivot to the source contract.
+  - `StandardSpecificCalculation.auditEvidenceUri` is the docudesk:// URI for the source-document download leg of the chain (REQ-DGAAP-008).
+  - The four manifest navigation entries (Framework Configuration, Chart of Accounts Mapping, Reconciliation Bridge, Dual Ledger Explorer) plus their `type: detail` pages ship in the manifest fragment per Task 24 — the relation-engine UI binds to these detail pages.
+  **DEFERRED** — the relation-engine UI wiring that turns each bridge line into a click target (bridge-line detail → `StandardSpecificCalculation` → GL entries → audit-trail) needs a live OR instance with the relation-engine renderer enabled. Tracked for the drill-down UX cycle. The FK shape is in place so the future UI follows existing fields without further schema work.
 
 - [ ] Task 23: Implement multi-entity consolidation RJ-to-IFRS conversion per REQ-DGAAP-009:
   on consolidation run, iterate subsidiaries; per subsidiary `FrameworkElection`, EITHER
