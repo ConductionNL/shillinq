@@ -993,7 +993,23 @@
         "Untagged": "Untagged",
         "Auto-tagged": "Auto-tagged",
         "Manually tagged": "Manually tagged",
-        "Missing WBSO metadata on project — manual activity code assignment required before RVO export.": "Missing WBSO metadata on project — manual activity code assignment required before RVO export."
+        "Missing WBSO metadata on project — manual activity code assignment required before RVO export.": "Missing WBSO metadata on project — manual activity code assignment required before RVO export.",
+        "Currency Balances": "Currency Balances",
+        "Currency Balance": "Currency Balance",
+        "Bank Accounts": "Bank Accounts",
+        "Bank Account": "Bank Account",
+        "Account": "Account",
+        "Currency": "Currency",
+        "Balance": "Balance",
+        "Previous Balance": "Previous Balance",
+        "Last Updated": "Last Updated",
+        "Change": "Change",
+        "Liquidity Low Warning": "Liquidity Low Warning",
+        "EUR": "EUR",
+        "USD": "USD",
+        "GBP": "GBP",
+        "Primary Currency": "Primary Currency",
+        "Multi-currency Account": "Multi-currency Account"
     },
     "plurals": ""
 }

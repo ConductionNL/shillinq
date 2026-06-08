@@ -993,7 +993,23 @@
         "Untagged": "Niet getagd",
         "Auto-tagged": "Automatisch getagd",
         "Manually tagged": "Handmatig getagd",
-        "Missing WBSO metadata on project — manual activity code assignment required before RVO export.": "WBSO-metadata ontbreekt op project — handmatige activiteitscodetoewijzing vereist vóór RVO-export."
+        "Missing WBSO metadata on project — manual activity code assignment required before RVO export.": "WBSO-metadata ontbreekt op project — handmatige activiteitscodetoewijzing vereist vóór RVO-export.",
+        "Currency Balances": "Wisselkoersen-saldi",
+        "Currency Balance": "Wisselkoers-saldo",
+        "Bank Accounts": "Bankrekeningen",
+        "Bank Account": "Bankrekening",
+        "Account": "Rekening",
+        "Currency": "Valuta",
+        "Balance": "Saldo",
+        "Previous Balance": "Vorig saldo",
+        "Last Updated": "Laatst bijgewerkt",
+        "Change": "Mutatie",
+        "Liquidity Low Warning": "Waarschuwing lage liquiditeit",
+        "EUR": "EUR",
+        "USD": "USD",
+        "GBP": "GBP",
+        "Primary Currency": "Primaire valuta",
+        "Multi-currency Account": "Multi-valuta rekening"
     },
     "plurals": ""
 }
