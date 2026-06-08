@@ -92,14 +92,14 @@ class InventoryMobileScannerController extends Controller
     /**
      * Construct the controller with DI dependencies.
      *
-     * @param IRequest                       $request     The HTTP request.
-     * @param IUserSession                   $userSession Authenticated user session.
-     * @param IGroupManager                  $groupManager Group membership lookups.
-     * @param SettingsService                $settings    Shillinq settings.
-     * @param AdministrationContextService   $admin       Per-user administration scope.
-     * @param InventoryMobileScannerService  $scanner     Sync core.
-     * @param ContainerInterface             $container   DI container (locations lookup).
-     * @param LoggerInterface                $logger      Logger for diagnostics.
+     * @param IRequest                      $request      The HTTP request.
+     * @param IUserSession                  $userSession  Authenticated user session.
+     * @param IGroupManager                 $groupManager Group membership lookups.
+     * @param SettingsService               $settings     Shillinq settings.
+     * @param AdministrationContextService  $admin        Per-user administration scope.
+     * @param InventoryMobileScannerService $scanner      Sync core.
+     * @param ContainerInterface            $container    DI container (locations lookup).
+     * @param LoggerInterface               $logger       Logger for diagnostics.
      */
     public function __construct(
         IRequest $request,
@@ -130,7 +130,7 @@ class InventoryMobileScannerController extends Controller
      */
     #[NoAdminRequired]
     #[NoCSRFRequired]
-    public function downloadDeltas(?string $since = null): JSONResponse
+    public function downloadDeltas(?string $since=null): JSONResponse
     {
         $user = $this->userSession->getUser();
         if ($user === null) {
@@ -280,7 +280,7 @@ class InventoryMobileScannerController extends Controller
 
         $locations = [];
         foreach ($records as $record) {
-            $row = $this->normalise(record: $record);
+            $row         = $this->normalise(record: $record);
             $locations[] = [
                 'code'      => (string) ($row['code'] ?? ''),
                 'name'      => (string) ($row['name'] ?? ''),
@@ -375,5 +375,4 @@ class InventoryMobileScannerController extends Controller
         return [];
 
     }//end normalise()
-
 }//end class

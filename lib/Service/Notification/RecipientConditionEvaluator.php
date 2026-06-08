@@ -182,5 +182,4 @@ final class RecipientConditionEvaluator
                 return false;
         }
     }//end compare()
-
 }//end class

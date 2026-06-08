@@ -46,7 +46,6 @@ final class LogPurchaseOrderMailer implements PurchaseOrderMailerInterface
      */
     private LoggerInterface $logger;
 
-
     /**
      * Constructor.
      *
@@ -57,7 +56,6 @@ final class LogPurchaseOrderMailer implements PurchaseOrderMailerInterface
         $this->logger = ($logger ?? new NullLogger());
 
     }//end __construct()
-
 
     /**
      * @inheritDoc
@@ -74,6 +72,4 @@ final class LogPurchaseOrderMailer implements PurchaseOrderMailerInterface
         );
 
     }//end sendPurchaseOrderEmail()
-
-
 }//end class

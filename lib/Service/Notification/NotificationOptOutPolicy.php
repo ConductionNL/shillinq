@@ -42,7 +42,6 @@ namespace OCA\Shillinq\Service\Notification;
  */
 final class NotificationOptOutPolicy
 {
-
     /**
      * True when the recipient is opted out of this trigger type entirely.
      *
@@ -73,7 +72,6 @@ final class NotificationOptOutPolicy
         return ((bool) ($map[$type] ?? false));
     }//end isOptedOut()
 
-
     /**
      * True when the recipient has not opted out of the named channel.
      *
@@ -98,6 +96,4 @@ final class NotificationOptOutPolicy
 
         return true;
     }//end canUseChannel()
-
-
 }//end class

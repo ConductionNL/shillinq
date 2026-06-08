@@ -46,8 +46,6 @@ use Throwable;
  */
 final class TimezoneResolver
 {
-
-
     /**
      * Construct the resolver with DI dependencies.
      *
@@ -60,7 +58,6 @@ final class TimezoneResolver
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Resolve the IANA timezone identifier to use for an appointment.
@@ -106,7 +103,6 @@ final class TimezoneResolver
 
     }//end resolve()
 
-
     /**
      * Whether a string is a valid IANA timezone identifier.
      *
@@ -124,6 +120,4 @@ final class TimezoneResolver
         }
 
     }//end isValidTimezone()
-
-
 }//end class

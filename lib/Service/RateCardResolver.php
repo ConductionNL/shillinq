@@ -152,7 +152,7 @@ class RateCardResolver
     /**
      * Find all matching records via the real OR ObjectService API (findAll).
      *
-     * @param string             $schema  Schema slug.
+     * @param string              $schema  Schema slug.
      * @param array<string,mixed> $filters Filter map.
      *
      * @return array<int,array<string,mixed>>
@@ -189,5 +189,4 @@ class RateCardResolver
         return $register;
 
     }//end register()
-
 }//end class

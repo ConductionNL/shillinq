@@ -65,20 +65,20 @@ class VATCalculationService
             $byRate[$rateKey]['netCents'] += $net;
         }//end foreach
 
-        $netTotal = 0;
-        $vatTotal = 0;
+        $netTotal  = 0;
+        $vatTotal  = 0;
         $breakdown = [];
 
         foreach ($byRate as $group) {
-            $vat = $this->vatOnNet(netCents: $group['netCents'], rate: $group['rate']);
+            $vat         = $this->vatOnNet(netCents: $group['netCents'], rate: $group['rate']);
             $breakdown[] = [
                 'rate'       => $group['rate'],
                 'netCents'   => $group['netCents'],
                 'vatCents'   => $vat,
                 'grossCents' => ($group['netCents'] + $vat),
             ];
-            $netTotal += $group['netCents'];
-            $vatTotal += $vat;
+            $netTotal   += $group['netCents'];
+            $vatTotal   += $vat;
         }
 
         return [
@@ -122,5 +122,4 @@ class VATCalculationService
         return in_array($rate, self::VALID_RATES, true);
 
     }//end isValidRate()
-
 }//end class

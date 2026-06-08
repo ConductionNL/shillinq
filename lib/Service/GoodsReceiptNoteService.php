@@ -79,7 +79,7 @@ use RuntimeException;
  * registers (PurchaseOrder, PurchaseOrderLine, GoodsReceiptNote,
  * GoodsReceiptLine, StockMove); decomposing further would only obscure the
  * 3-way-match middle leg.
- * @SuppressWarnings(PHPMD.TooManyPublicMethods) GRN lifecycle exposes the
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods)   GRN lifecycle exposes the
  * five surfaces named above; each one corresponds 1:1 with a slice-04 task.
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
@@ -205,7 +205,7 @@ class GoodsReceiptNoteService
 
         $this->assertPurchaseOrdersAccessible(administrationId: $administrationId, poIds: $poIds);
 
-        $grnNumber = $this->generateGrnNumber(administrationId: $administrationId);
+        $grnNumber  = $this->generateGrnNumber(administrationId: $administrationId);
         $receivedAt = trim((string) ($payload['receivedAt'] ?? $payload['received_at'] ?? ''));
         if ($receivedAt === '') {
             $receivedAt = $this->nowIso();
@@ -480,9 +480,9 @@ class GoodsReceiptNoteService
      * 04 design — Security/ADR-005); this service only persists the FK array.
      * Existing photos are preserved.
      *
-     * @param string             $administrationId Administration scope.
-     * @param string             $grnId            GRN id.
-     * @param array<int,string>  $photoFileIds     File ids returned by docudesk.
+     * @param string            $administrationId Administration scope.
+     * @param string            $grnId            GRN id.
+     * @param array<int,string> $photoFileIds     File ids returned by docudesk.
      *
      * @return array<string,mixed> The persisted GoodsReceiptNote payload.
      *
@@ -636,7 +636,7 @@ class GoodsReceiptNoteService
 
         // Total accepted per PO-line across every GRN line that targets it.
         $acceptedByPoLine = [];
-        $allGrnLines     = $this->findAll(
+        $allGrnLines      = $this->findAll(
             schema: self::SCHEMA_GRN_LINE,
             filters: [
                 'administrationId' => $administrationId,
@@ -676,7 +676,7 @@ class GoodsReceiptNoteService
         $newLifecycle = $po['lifecycleState'] ?? '';
         if ($allFullyReceived === true) {
             $newLifecycle = 'fully_received';
-        } elseif ($anyReceived === true) {
+        } else if ($anyReceived === true) {
             $newLifecycle = 'partial_received';
         }
 

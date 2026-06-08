@@ -35,19 +35,21 @@ final class InvoiceGenerationRequest
     public const MODELS = ['t_and_m', 'fixed_fee', 'milestone', 'retainer', 'mixed'];
 
     /**
-     * @param string        $administrationId    Server-resolved tenant scope (NOT client-supplied).
-     * @param string        $billingModel        One of MODELS.
-     * @param string        $customerId          FK to customer (Nextcloud contact).
-     * @param string        $fromDate            ISO date — start of source-record period.
-     * @param string        $toDate              ISO date — end of source-record period.
-     * @param array<int,string> $timeEntryIds    FKs to UrenRegistratie rows.
-     * @param array<int,string> $expenseIds      FKs to ExpenseClaimEntry rows.
-     * @param string|null   $rateCardId          Required for t_and_m / mixed / retainer overage.
-     * @param string|null   $retainerScheduleId  Required for retainer / mixed.
-     * @param int|null      $fixedFeeCents       Required for fixed_fee / mixed setup fee.
-     * @param string|null   $milestoneId         Required for milestone.
-     * @param string|null   $projectId           Optional FK to Project.
-     * @param string|null   $notes               Free-text notes.
+     * @param string            $administrationId   Server-resolved tenant scope (NOT client-supplied).
+     * @param string            $billingModel       One of MODELS.
+     * @param string            $customerId         FK to customer (Nextcloud contact).
+     * @param string            $fromDate           ISO date — start of
+     *                                              source-record period.
+     * @param string            $toDate             ISO date — end of
+     *                                              source-record period.
+     * @param array<int,string> $timeEntryIds       FKs to UrenRegistratie rows.
+     * @param array<int,string> $expenseIds         FKs to ExpenseClaimEntry rows.
+     * @param string|null       $rateCardId         Required for t_and_m / mixed / retainer overage.
+     * @param string|null       $retainerScheduleId Required for retainer / mixed.
+     * @param int|null          $fixedFeeCents      Required for fixed_fee / mixed setup fee.
+     * @param string|null       $milestoneId        Required for milestone.
+     * @param string|null       $projectId          Optional FK to Project.
+     * @param string|null       $notes              Free-text notes.
      */
     public function __construct(
         public readonly string $administrationId,
@@ -55,14 +57,14 @@ final class InvoiceGenerationRequest
         public readonly string $customerId,
         public readonly string $fromDate,
         public readonly string $toDate,
-        public readonly array $timeEntryIds = [],
-        public readonly array $expenseIds = [],
-        public readonly ?string $rateCardId = null,
-        public readonly ?string $retainerScheduleId = null,
-        public readonly ?int $fixedFeeCents = null,
-        public readonly ?string $milestoneId = null,
-        public readonly ?string $projectId = null,
-        public readonly ?string $notes = null,
+        public readonly array $timeEntryIds=[],
+        public readonly array $expenseIds=[],
+        public readonly ?string $rateCardId=null,
+        public readonly ?string $retainerScheduleId=null,
+        public readonly ?int $fixedFeeCents=null,
+        public readonly ?string $milestoneId=null,
+        public readonly ?string $projectId=null,
+        public readonly ?string $notes=null,
     ) {
         $this->assertValid();
 
@@ -71,8 +73,8 @@ final class InvoiceGenerationRequest
     /**
      * Build from a request body array; throws if invalid.
      *
-     * @param string             $administrationId Server-resolved scope.
-     * @param array<string,mixed> $body            Decoded request body.
+     * @param string              $administrationId Server-resolved scope.
+     * @param array<string,mixed> $body             Decoded request body.
      *
      * @return self
      */
@@ -147,5 +149,4 @@ final class InvoiceGenerationRequest
         }
 
     }//end assertValid()
-
 }//end class

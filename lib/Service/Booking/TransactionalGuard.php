@@ -48,7 +48,6 @@ class TransactionalGuard
      */
     private bool $localInTransaction = false;
 
-
     /**
      * Construct the guard.
      *
@@ -60,7 +59,6 @@ class TransactionalGuard
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Begin a transaction. Idempotent — calling twice is a no-op.
@@ -76,7 +74,6 @@ class TransactionalGuard
 
         $this->localInTransaction = true;
     }//end beginTransaction()
-
 
     /**
      * Commit the outer transaction. Idempotent when no transaction is open.
@@ -96,7 +93,6 @@ class TransactionalGuard
         $this->localInTransaction = false;
     }//end commit()
 
-
     /**
      * Roll back the outer transaction. Idempotent when no transaction is open.
      *
@@ -115,7 +111,6 @@ class TransactionalGuard
         $this->localInTransaction = false;
     }//end rollBack()
 
-
     /**
      * Is the guard currently inside a transaction?
      *
@@ -129,7 +124,6 @@ class TransactionalGuard
 
         return $this->localInTransaction;
     }//end inTransaction()
-
 
     /**
      * Acquire a row-level lock on the OR object row backing the resource.
@@ -187,8 +181,6 @@ class TransactionalGuard
                 ]
             );
             return false;
-        }
+        }//end try
     }//end lockResourceRow()
-
-
 }//end class

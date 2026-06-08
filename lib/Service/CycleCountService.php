@@ -155,10 +155,6 @@ class CycleCountService
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             $sequence      = 0;
             foreach ($stockRows as $stock) {
-                if (is_array($stock) === false) {
-                    continue;
-                }
-
                 $sku        = (string) ($stock['sku'] ?? '');
                 $locationId = (string) ($stock['locationId'] ?? '');
                 if ($sku === '' || $locationId === '') {
@@ -267,10 +263,6 @@ class CycleCountService
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             $sequence      = 0;
             foreach ($lines as $line) {
-                if (is_array($line) === false) {
-                    continue;
-                }
-
                 if (isset($line['adjustmentStockMoveId']) === true
                     && trim((string) $line['adjustmentStockMoveId']) !== ''
                 ) {

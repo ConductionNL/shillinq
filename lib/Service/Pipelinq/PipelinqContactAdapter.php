@@ -550,12 +550,13 @@ class PipelinqContactAdapter
                 // threshold of the nextcloud.log subscribers.
                 if ($lastStatusCode === 401) {
                     $this->logger->error(
-                        'pipelinq authentication rejected — admin must rotate the bearer token',
+                        'Invalid pipelinq API token; check config',
                         [
-                            'app'    => Application::APP_ID,
-                            'method' => $method,
-                            'path'   => $path,
-                            'status' => $lastStatusCode,
+                            'app'       => Application::APP_ID,
+                            'configKey' => self::CONFIG_KEY_TOKEN,
+                            'method'    => $method,
+                            'path'      => $path,
+                            'status'    => $lastStatusCode,
                         ]
                     );
                     $this->metrics?->recordPermanentFailure(reason: 'auth');

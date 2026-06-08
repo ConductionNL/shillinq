@@ -49,7 +49,6 @@ final class LogOpenconnectorAdapter implements OpenconnectorAdapterInterface
      */
     private LoggerInterface $logger;
 
-
     /**
      * Constructor.
      *
@@ -59,7 +58,6 @@ final class LogOpenconnectorAdapter implements OpenconnectorAdapterInterface
     {
         $this->logger = ($logger ?? new NullLogger());
     }//end __construct()
-
 
     /**
      * @inheritDoc
@@ -82,7 +80,6 @@ final class LogOpenconnectorAdapter implements OpenconnectorAdapterInterface
         );
     }//end send()
 
-
     /**
      * @inheritDoc
      */
@@ -92,7 +89,6 @@ final class LogOpenconnectorAdapter implements OpenconnectorAdapterInterface
         // The log-only adapter is always "available" for dev / tests.
         return true;
     }//end isChannelAvailable()
-
 
     /**
      * Mask an address for log payloads (PII-safe).
@@ -118,6 +114,4 @@ final class LogOpenconnectorAdapter implements OpenconnectorAdapterInterface
 
         return '***';
     }//end mask()
-
-
 }//end class

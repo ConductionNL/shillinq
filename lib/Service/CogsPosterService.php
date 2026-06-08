@@ -240,6 +240,7 @@ class CogsPosterService
         if ($qty > 0) {
             $unitCost = (($cogsCents / 100) / $qty);
         }
+
         $unitCost = round($unitCost, 4);
 
         return sprintf(
@@ -349,11 +350,11 @@ class CogsPosterService
      *
      * @param array<string,mixed> $data Line data.
      *
-     * @return array<string,mixed> Persisted row (with id).
+     * @return void
      */
-    private function saveLine(array $data): array
+    private function saveLine(array $data): void
     {
-        return $this->saveOnSchema(schema: 'GLLine', data: $data);
+        $this->saveOnSchema(schema: 'GLLine', data: $data);
 
     }//end saveLine()
 

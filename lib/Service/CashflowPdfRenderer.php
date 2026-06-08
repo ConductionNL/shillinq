@@ -43,8 +43,6 @@ namespace OCA\Shillinq\Service;
  */
 class CashflowPdfRenderer
 {
-
-
     /**
      * Render a cashflow horizon to a textual PDF-compatible summary.
      *
@@ -61,11 +59,11 @@ class CashflowPdfRenderer
      *  4. Optional scenario comparison.
      *  5. Optional stress-test.
      *
-     * @param array<string,mixed>              $horizon            CashflowForecastHorizon as array.
-     * @param list<array<string,mixed>>        $weeks              13 CashflowWeek records ordered by weeknummer.
-     * @param array<string,mixed>|null         $scenario           Optional CashflowScenario to overlay.
-     * @param list<array<string,mixed>>        $topCustomers       Top-5 customers by AR balance with betalingsgedrag offsets.
-     * @param list<array<string,mixed>>        $recurringBreakdown CashflowRecurring rows expanded for the horizon.
+     * @param array<string,mixed>       $horizon            CashflowForecastHorizon as array.
+     * @param list<array<string,mixed>> $weeks              13 CashflowWeek records ordered by weeknummer.
+     * @param array<string,mixed>|null  $scenario           Optional CashflowScenario to overlay.
+     * @param list<array<string,mixed>> $topCustomers       Top-5 customers by AR balance with betalingsgedrag offsets.
+     * @param list<array<string,mixed>> $recurringBreakdown CashflowRecurring rows expanded for the horizon.
      *
      * @return array{filename:string,mimeType:string,payload:string}
      *
@@ -74,11 +72,11 @@ class CashflowPdfRenderer
     public function render(
         array $horizon,
         array $weeks,
-        ?array $scenario = null,
-        array $topCustomers = [],
-        array $recurringBreakdown = []
+        ?array $scenario=null,
+        array $topCustomers=[],
+        array $recurringBreakdown=[]
     ): array {
-        $lines = [];
+        $lines   = [];
         $lines[] = '13-WEEK CASHFLOW FORECAST';
         $lines[] = '==========================';
         $lines[] = '';
@@ -161,7 +159,7 @@ class CashflowPdfRenderer
         $lines[] = 'AR projection: customer-specific 12-month rolling betalingsgedrag with confidence score.';
         $lines[] = 'Recurring costs: declarative registry with CPI indexing on annual items.';
 
-        $payload = implode("\n", $lines);
+        $payload  = implode("\n", $lines);
         $filename = 'cashflow-'.($horizon['horizonId'] ?? 'horizon').'-'.date('Y-m-d').'.txt';
 
         return [
@@ -171,6 +169,4 @@ class CashflowPdfRenderer
         ];
 
     }//end render()
-
-
 }//end class

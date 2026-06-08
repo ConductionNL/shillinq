@@ -195,10 +195,6 @@ class VarianceGate
             $activeReasons = $this->activeReasonCodes(administrationId: $administrationId);
 
             foreach ($lines as $line) {
-                if (is_array($line) === false) {
-                    continue;
-                }
-
                 $flagged = $this->isFlagged(
                     line: $line,
                     qtyThresholdPct: $qtyThresholdPct,

@@ -178,12 +178,12 @@ class WidgetAuthService
             ];
         }
 
-        $window      = ((int) floor($this->time->getTime() / self::RATE_LIMIT_WINDOW_SECONDS));
-        $cacheKey    = 'widget-rl:'.$businessId.':'.$window;
-        $currentRaw  = $cache->get($cacheKey);
-        $current     = ((int) ($currentRaw ?? 0));
-        $next        = ($current + 1);
-        $retryAfter  = self::RATE_LIMIT_WINDOW_SECONDS;
+        $window     = ((int) floor($this->time->getTime() / self::RATE_LIMIT_WINDOW_SECONDS));
+        $cacheKey   = 'widget-rl:'.$businessId.':'.$window;
+        $currentRaw = $cache->get($cacheKey);
+        $current    = ((int) ($currentRaw ?? 0));
+        $next       = ($current + 1);
+        $retryAfter = self::RATE_LIMIT_WINDOW_SECONDS;
 
         if ($next > $limit) {
             return [
@@ -470,7 +470,7 @@ class WidgetAuthService
                 'Shillinq widget auth: lookup failed',
                 ['exception' => $e->getMessage()]
             );
-        }
+        }//end try
 
         return null;
 
@@ -598,25 +598,23 @@ class WidgetAuthService
      * @param string              $id     Persisted object id.
      * @param array<string,mixed> $data   Updated payload.
      *
-     * @return array<string,mixed>|null
+     * @return void
      */
-    private function updateObject(string $schema, string $id, array $data): ?array
+    private function updateObject(string $schema, string $id, array $data): void
     {
         if ($this->settings->isOpenRegisterAvailable() === false) {
-            return null;
+            return;
         }
 
         try {
             $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
             $registerSlug  = $this->settings->getRegisterSlug();
-            $saved         = $objectService->updateObject(
+            $objectService->updateObject(
                 id: $id,
                 object: $data,
                 register: $registerSlug,
                 schema: $schema,
             );
-
-            return $this->toArray(object: $saved);
         } catch (\Throwable $e) {
             $this->logger->error(
                 'Shillinq widget auth: updateObject failed',
@@ -626,8 +624,7 @@ class WidgetAuthService
                     'exception' => $e->getMessage(),
                 ]
             );
-            return null;
-        }
+        }//end try
 
     }//end updateObject()
 
@@ -641,14 +638,18 @@ class WidgetAuthService
     private function toArray(mixed $object): array
     {
         if (is_array($object) === true) {
-            /** @var array<string,mixed> $object */
+            /*
+             * @var array<string,mixed> $object
+             */
             return $object;
         }
 
         if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
             $serialised = $object->jsonSerialize();
             if (is_array($serialised) === true) {
-                /** @var array<string,mixed> $serialised */
+                /*
+                 * @var array<string,mixed> $serialised
+                 */
                 return $serialised;
             }
         }

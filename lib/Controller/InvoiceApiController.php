@@ -94,7 +94,7 @@ class InvoiceApiController extends Controller
             $admin = $this->resolveAdministrationId();
             $body  = $this->decodeBody();
 
-            $req = InvoiceGenerationRequest::fromArray($admin, $body);
+            $req     = InvoiceGenerationRequest::fromArray($admin, $body);
             $invoice = $this->service->draftInvoice($req);
 
             return new JSONResponse($invoice, Http::STATUS_OK);
@@ -138,7 +138,7 @@ class InvoiceApiController extends Controller
             }
 
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $all = $objectService
+            $all           = $objectService
                 ->setRegister('shillinq')
                 ->setSchema('BillableInvoice')
                 ->findAll(filters: $filters);
@@ -147,7 +147,7 @@ class InvoiceApiController extends Controller
         } catch (\Throwable $e) {
             $this->logger->error('InvoiceApiController.index failed: '.$e->getMessage());
             return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+        }//end try
 
     }//end index()
 
@@ -166,7 +166,7 @@ class InvoiceApiController extends Controller
         }
 
         try {
-            $admin = $this->resolveAdministrationId();
+            $admin         = $this->resolveAdministrationId();
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
             $invoice = $objectService
@@ -198,7 +198,7 @@ class InvoiceApiController extends Controller
         } catch (\Throwable $e) {
             $this->logger->error('InvoiceApiController.show failed: '.$e->getMessage());
             return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+        }//end try
 
     }//end show()
 
@@ -217,9 +217,9 @@ class InvoiceApiController extends Controller
         }
 
         try {
-            $admin = $this->resolveAdministrationId();
+            $admin         = $this->resolveAdministrationId();
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $invoice = $objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
+            $invoice       = $objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
 
             if (is_array($invoice) === false) {
                 return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
@@ -239,7 +239,7 @@ class InvoiceApiController extends Controller
         } catch (\Throwable $e) {
             $this->logger->error('InvoiceApiController.post failed: '.$e->getMessage());
             return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+        }//end try
 
     }//end post()
 
@@ -258,9 +258,9 @@ class InvoiceApiController extends Controller
         }
 
         try {
-            $admin = $this->resolveAdministrationId();
+            $admin         = $this->resolveAdministrationId();
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $invoice = $objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
+            $invoice       = $objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
 
             if (is_array($invoice) === false) {
                 return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
@@ -284,7 +284,7 @@ class InvoiceApiController extends Controller
         } catch (\Throwable $e) {
             $this->logger->error('InvoiceApiController.pdf failed: '.$e->getMessage());
             return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+        }//end try
 
     }//end pdf()
 
@@ -304,8 +304,7 @@ class InvoiceApiController extends Controller
         }
 
         // Fall back to request params.
-        $params = $this->request->getParams();
-        return is_array($params) === true ? $params : [];
+        return $this->request->getParams();
 
     }//end decodeBody()
 
@@ -317,7 +316,7 @@ class InvoiceApiController extends Controller
     private function resolveAdministrationId(): string
     {
         try {
-            $context = $this->administrationContext->buildContext();
+            $context   = $this->administrationContext->buildContext();
             $candidate = (string) ($context['activeAdministrationId'] ?? '');
             if ($candidate !== '') {
                 return $candidate;
@@ -329,5 +328,4 @@ class InvoiceApiController extends Controller
         return 'default';
 
     }//end resolveAdministrationId()
-
 }//end class

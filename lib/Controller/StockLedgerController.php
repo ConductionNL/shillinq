@@ -50,8 +50,6 @@ use Psr\Log\LoggerInterface;
  */
 class StockLedgerController extends Controller
 {
-
-
     /**
      * Construct the controller.
      *
@@ -69,7 +67,6 @@ class StockLedgerController extends Controller
         parent::__construct(appName: Application::APP_ID, request: $request);
 
     }//end __construct()
-
 
     /**
      * Return the stock-ledger trace per REQ-SM-005 + REQ-SM-009.
@@ -102,7 +99,7 @@ class StockLedgerController extends Controller
 
         $administrationId = trim((string) $this->request->getParam('administration_id', ''));
         $locationId       = trim((string) $this->request->getParam('location_id', ''));
-        $sku              = trim((string) $this->request->getParam('sku', ''));
+        $sku = trim((string) $this->request->getParam('sku', ''));
 
         if ($administrationId === '' || $locationId === '' || $sku === '') {
             return new JSONResponse(
@@ -194,6 +191,4 @@ class StockLedgerController extends Controller
         );
 
     }//end trace()
-
-
 }//end class

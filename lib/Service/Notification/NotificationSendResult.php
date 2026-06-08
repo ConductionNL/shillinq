@@ -107,5 +107,4 @@ final class NotificationSendResult
     {
         return $this->status === self::STATUS_FAILED;
     }//end isFailed()
-
 }//end class

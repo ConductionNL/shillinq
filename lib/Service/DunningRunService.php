@@ -66,16 +66,6 @@ use RuntimeException;
 class DunningRunService
 {
     /**
-     * App-config key for the B2B handelsrente default tarief.
-     */
-    private const CFG_HANDELSRENTE_B2B = 'dunning.ecb_rente_handelsrente_b2b_default';
-
-    /**
-     * App-config key for the B2C wettelijke-rente default tarief.
-     */
-    private const CFG_WETTELIJKE_RENTE_B2C = 'dunning.dnb_rente_wettelijke_b2c_default';
-
-    /**
      * App-config key for the dispute pause hard deadline (days).
      */
     private const CFG_DISPUTE_PAUSE_DAYS = 'dunning.dispute_pause_hard_deadline_days';
@@ -88,15 +78,13 @@ class DunningRunService
     /**
      * Construct the service with lazy DI of OR's ObjectService.
      *
-     * @param ContainerInterface    $container Lazy DI container.
-     * @param IAppConfig            $appConfig App config.
-     * @param BIKStaffelCalculator  $bik       Pure BIK + rente calculator.
-     * @param LoggerInterface       $logger    Logger.
+     * @param ContainerInterface $container Lazy DI container.
+     * @param IAppConfig         $appConfig App config.
+     * @param LoggerInterface    $logger    Logger.
      */
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly IAppConfig $appConfig,
-        private readonly BIKStaffelCalculator $bik,
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
@@ -122,6 +110,7 @@ class DunningRunService
         if ($baseLadder === null) {
             $baseLadder = $this->fetchOne(schema: 'DunningLadder', filters: ['slug' => $baseLadderId]);
         }
+
         if ($baseLadder === null) {
             throw new RuntimeException(sprintf('DunningLadder %s not found.', $baseLadderId));
         }
@@ -159,7 +148,7 @@ class DunningRunService
     /**
      * Pick the stage definition for a given stageNr from a resolved ladder.
      *
-     * @param array<int,array<string,mixed>> $stages Resolved stages.
+     * @param array<int,array<string,mixed>> $stages  Resolved stages.
      * @param int                            $stageNr Stage number to retrieve.
      *
      * @return array<string,mixed>|null Stage definition, null when no such stage exists.
@@ -192,13 +181,27 @@ class DunningRunService
      * incasso-bureau wiring (those land on dedicated handlers seeded via
      * openconnector per REQ-CCD-008 / REQ-CCD-009).
      *
-     * @param string             $administrationId Administration scope.
-     * @param array<string,mixed> $params         {
-     *   factuurId, ladderId, stageNr, kanaal, templateId, ontvangerEmail,
-     *   ontvangerNaam, ontvangerAdres, renderedSubject, renderedBody,
-     *   renderedPdfHash, factuurBedrag, incassokostenBedrag, renteBedrag,
-     *   deliveryStatus, postageStatus, openTracking, digitalSignature
-     * }
+     * @param string              $administrationId Administration scope.
+     * @param array<string,mixed> $params           {
+     *                                              factuurId,
+     *                                              ladderId,
+     *                                              stageNr,
+     *                                              kanaal,
+     *                                              templateId,
+     *                                              ontvangerEmail,
+     *                                              ontvangerNaam,
+     *                                              ontvangerAdres,
+     *                                              renderedSubject,
+     *                                              renderedBody,
+     *                                              renderedPdfHash,
+     *                                              factuurBedrag,
+     *                                              incassokostenBedrag,
+     *                                              renteBedrag,
+     *                                              deliveryStatus,
+     *                                              postageStatus,
+     *                                              openTracking,
+     *                                              digitalSignature
+     *                                              }
      *
      * @return array<string,mixed> The executed DunningRun record.
      *
@@ -252,12 +255,12 @@ class DunningRunService
      * (default 60). The pause is created with lifecycleState=active. Downstream
      * executeStage() calls refuse to fire while an active pause exists.
      *
-     * @param string $administrationId Administration scope.
-     * @param string $factuurId        Invoice FK.
-     * @param string $reden            One of DISPUTED / PAYMENT_PLAN / OTHER.
-     * @param string $details          Free-text details.
-     * @param string $gepauzeerdDoor   Operator id.
-     * @param array<int,string>|null $evidenceRefs Optional evidence refs.
+     * @param string                 $administrationId Administration scope.
+     * @param string                 $factuurId        Invoice FK.
+     * @param string                 $reden            One of DISPUTED / PAYMENT_PLAN / OTHER.
+     * @param string                 $details          Free-text details.
+     * @param string                 $gepauzeerdDoor   Operator id.
+     * @param array<int,string>|null $evidenceRefs     Optional evidence refs.
      *
      * @return array<string,mixed> The created pause record.
      *
@@ -269,7 +272,7 @@ class DunningRunService
         string $reden,
         string $details,
         string $gepauzeerdDoor,
-        ?array $evidenceRefs = null
+        ?array $evidenceRefs=null
     ): array {
         $hardDeadlineDays = max(1, (int) $this->appConfig->getValueString(Application::APP_ID, self::CFG_DISPUTE_PAUSE_DAYS, '60'));
         $pauzeStart       = new DateTimeImmutable();
@@ -300,9 +303,9 @@ class DunningRunService
      * when the hard deadline elapses). The ladder resumes from the stage where
      * the pause began — no stage 1..N re-execution.
      *
-     * @param string $administrationId Administration scope.
-     * @param string $pauseId          Pause record id.
-     * @param string $resolution       'resolve' or 'expire'.
+     * @param string     $administrationId  Administration scope.
+     * @param string     $pauseId           Pause record id.
+     * @param string     $resolution        'resolve' or 'expire'.
      * @param float|null $partialSettlement Optional new saldo after partial settlement.
      *
      * @return array<string,mixed> The updated pause record.
@@ -312,8 +315,8 @@ class DunningRunService
     public function resumePause(
         string $administrationId,
         string $pauseId,
-        string $resolution = 'resolve',
-        ?float $partialSettlement = null
+        string $resolution='resolve',
+        ?float $partialSettlement=null
     ): array {
         $pause = $this->fetchOne(schema: 'DunningPauseDispute', filters: ['id' => $pauseId]);
         if ($pause === null) {
@@ -337,9 +340,10 @@ class DunningRunService
      * BTW-aangifte engines; this method records the write-off declaration and
      * the FK back-references.
      *
-     * @param string $administrationId Administration scope.
-     * @param array<string,mixed> $params {factuurId, hoofdsomAfgeschreven, btwBedrag,
-     *                          art29OBVerklaring, evidenceRef, boekingId, btwAangiftePeriode}.
+     * @param string              $administrationId Administration scope.
+     * @param array<string,mixed> $params           {factuurId, hoofdsomAfgeschreven, btwBedrag,
+     *                                              art29OBVerklaring, evidenceRef, boekingId,
+     *                                              btwAangiftePeriode}.
      *
      * @return array<string,mixed> The created write-off record.
      *
@@ -372,9 +376,10 @@ class DunningRunService
      * failure, missing payment-reference). In that case the caller is
      * expected to soft-pause the dunning and reach out to the customer first.
      *
-     * @param string $administrationId Administration scope.
-     * @param string $klantId          Customer FK.
-     * @param array<string,mixed> $triggerContext Context — keys: bounce, ibanInvalid, paymentRefMissing.
+     * @param string              $administrationId Administration scope.
+     * @param string              $klantId          Customer FK.
+     * @param array<string,mixed> $triggerContext   Context — keys: bounce, ibanInvalid,
+     *                                              paymentRefMissing.
      *
      * @return bool True when a soft-pause is recommended.
      *
@@ -408,11 +413,13 @@ class DunningRunService
             if ($uitgevoerd === '') {
                 continue;
             }
+
             try {
                 $when = new DateTimeImmutable($uitgevoerd);
             } catch (\Throwable $e) {
                 continue;
             }
+
             if ($when >= $cutoff) {
                 return true;
             }
@@ -447,7 +454,7 @@ class DunningRunService
     /**
      * Find the first matching record (or null).
      *
-     * @param string $schema  Schema slug.
+     * @param string              $schema  Schema slug.
      * @param array<string,mixed> $filters Filter map.
      *
      * @return array<string,mixed>|null
@@ -462,7 +469,7 @@ class DunningRunService
     /**
      * Find all matching records via the canonical OR ObjectService API.
      *
-     * @param string $schema  Schema slug.
+     * @param string              $schema  Schema slug.
      * @param array<string,mixed> $filters Filter map.
      *
      * @return array<int,array<string,mixed>>
@@ -486,8 +493,8 @@ class DunningRunService
     /**
      * Persist a record via the canonical OR ObjectService API.
      *
-     * @param string $schema Schema slug.
-     * @param array<string,mixed> $data Record body.
+     * @param string              $schema Schema slug.
+     * @param array<string,mixed> $data   Record body.
      *
      * @return array<string,mixed> The saved record (with id).
      */
@@ -518,5 +525,4 @@ class DunningRunService
         return ($register === '') ? 'shillinq' : $register;
 
     }//end register()
-
 }//end class

@@ -98,7 +98,7 @@ class CreditScoreService
     /**
      * Render a UI warning payload for an invoice when the klant has a low score.
      *
-     * @param array<string,mixed>|null $score    The CreditScore record.
+     * @param array<string,mixed>|null $score         The CreditScore record.
      * @param float                    $invoiceBedrag Invoice principal (EUR).
      *
      * @return array{warning:bool,message:string,creditLimietAdvies:?float,deelfacturatieAdvies:bool}
@@ -165,16 +165,19 @@ class CreditScoreService
             $rows          = $objectService
                 ->setRegister($this->register())
                 ->setSchema('CreditScore')
-                ->findAll([
-                    'filters' => [
-                        'administrationId' => $administrationId,
-                        'klantId'          => $klantId,
-                        'provider'         => $provider,
-                    ],
-                ]);
+                ->findAll(
+                        [
+                            'filters' => [
+                                'administrationId' => $administrationId,
+                                'klantId'          => $klantId,
+                                'provider'         => $provider,
+                            ],
+                        ]
+                        );
             if (is_array($rows) === false || $rows === []) {
                 return null;
             }
+
             usort(
                 $rows,
                 static function (array $a, array $b): int {
@@ -185,7 +188,7 @@ class CreditScoreService
         } catch (\Throwable $e) {
             $this->logger->warning('Shillinq: CreditScoreService::latestForKlant failed: '.$e->getMessage());
             return null;
-        }
+        }//end try
 
     }//end latestForKlant()
 
@@ -198,16 +201,18 @@ class CreditScoreService
      */
     private function isFresh(array $score): bool
     {
-        $days   = max(1, (int) $this->appConfig->getValueString(Application::APP_ID, self::CFG_CACHE_DAYS, '30'));
-        $datum  = (string) ($score['scoreDatum'] ?? '');
+        $days  = max(1, (int) $this->appConfig->getValueString(Application::APP_ID, self::CFG_CACHE_DAYS, '30'));
+        $datum = (string) ($score['scoreDatum'] ?? '');
         if ($datum === '') {
             return false;
         }
+
         try {
             $when = new DateTimeImmutable($datum);
         } catch (\Throwable $e) {
             return false;
         }
+
         $cutoff = (new DateTimeImmutable())->modify('-'.$days.' days');
         return $when >= $cutoff;
 
@@ -224,5 +229,4 @@ class CreditScoreService
         return ($register === '') ? 'shillinq' : $register;
 
     }//end register()
-
 }//end class

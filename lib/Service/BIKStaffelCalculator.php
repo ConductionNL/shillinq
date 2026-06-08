@@ -133,11 +133,11 @@ class BIKStaffelCalculator
             $sliceTop = min($hoofdsomCents, $upperBound);
             $slice    = max($sliceTop - $previousBound, 0);
             $slabAmountsCents[$i] = (int) round($slice * self::SLAB_RATES[$i]);
-            $previousBound = $upperBound;
+            $previousBound        = $upperBound;
         }
 
         // Open-ended top slab (>€200.000).
-        $topSlice = max($hoofdsomCents - 20000000, 0);
+        $topSlice            = max($hoofdsomCents - 20000000, 0);
         $slabAmountsCents[4] = (int) round($topSlice * self::SLAB_RATES[4]);
 
         $totaalCents    = array_sum($slabAmountsCents);
@@ -163,12 +163,12 @@ class BIKStaffelCalculator
      * (day-44 from stage-3 dispatch on day 30); attempting to compute earlier
      * raises an InvalidArgumentException so callers fail closed.
      *
-     * @param string             $partyType    'B2B' or 'B2C' (anything else treated as B2B for safety).
-     * @param float              $hoofdsom     Outstanding principal in EUR.
-     * @param DateTimeImmutable  $ingangsdatum First day the rente accrues.
-     * @param DateTimeImmutable  $berekendOp   Calculation date.
-     * @param float|null         $tariefB2B    Override the default B2B handelsrente.
-     * @param float|null         $tariefB2C    Override the default B2C wettelijke rente.
+     * @param string            $partyType    'B2B' or 'B2C' (anything else treated as B2B for safety).
+     * @param float             $hoofdsom     Outstanding principal in EUR.
+     * @param DateTimeImmutable $ingangsdatum First day the rente accrues.
+     * @param DateTimeImmutable $berekendOp   Calculation date.
+     * @param float|null        $tariefB2B    Override the default B2B handelsrente.
+     * @param float|null        $tariefB2C    Override the default B2C wettelijke rente.
      *
      * @return array{tarief:float,type:string,ingangsdatum:string,berekendOp:string,dagen:int,bedrag:float}
      *
@@ -179,8 +179,8 @@ class BIKStaffelCalculator
         float $hoofdsom,
         DateTimeImmutable $ingangsdatum,
         DateTimeImmutable $berekendOp,
-        ?float $tariefB2B = null,
-        ?float $tariefB2C = null
+        ?float $tariefB2B=null,
+        ?float $tariefB2C=null
     ): array {
         if ($hoofdsom < 0) {
             throw new InvalidArgumentException('Rente hoofdsom must be non-negative.');
@@ -191,12 +191,8 @@ class BIKStaffelCalculator
         }
 
         $isB2C  = ($partyType === 'B2C');
-        $tarief = $isB2C
-            ? ($tariefB2C ?? self::DEFAULT_WETTELIJKE_RENTE_B2C)
-            : ($tariefB2B ?? self::DEFAULT_HANDELSRENTE_B2B);
-        $type   = $isB2C
-            ? 'WETTELIJKE_RENTE_B2C_6_119_BW'
-            : 'HANDELSRENTE_B2B_6_119A_BW';
+        $tarief = $isB2C ? ($tariefB2C ?? self::DEFAULT_WETTELIJKE_RENTE_B2C) : ($tariefB2B ?? self::DEFAULT_HANDELSRENTE_B2B);
+        $type   = $isB2C ? 'WETTELIJKE_RENTE_B2C_6_119_BW' : 'HANDELSRENTE_B2B_6_119A_BW';
 
         $dagen = (int) $ingangsdatum->diff($berekendOp)->days;
 
@@ -242,14 +238,14 @@ class BIKStaffelCalculator
     /**
      * Assemble the full IncassoKostenBerekening record body per REQ-CCD-003.
      *
-     * @param string             $factuurId        Invoice FK.
-     * @param string             $administrationId Administration scope.
-     * @param string             $partyType        'B2B' / 'B2C' / 'GOVERNMENT'.
-     * @param float              $hoofdsom         Outstanding principal in EUR.
-     * @param DateTimeImmutable  $ingangsdatum     First day the rente accrues.
-     * @param DateTimeImmutable  $berekendOp       Calculation date.
-     * @param float|null         $tariefB2B        Override the default B2B handelsrente.
-     * @param float|null         $tariefB2C        Override the default B2C wettelijke rente.
+     * @param string            $factuurId        Invoice FK.
+     * @param string            $administrationId Administration scope.
+     * @param string            $partyType        'B2B' / 'B2C' / 'GOVERNMENT'.
+     * @param float             $hoofdsom         Outstanding principal in EUR.
+     * @param DateTimeImmutable $ingangsdatum     First day the rente accrues.
+     * @param DateTimeImmutable $berekendOp       Calculation date.
+     * @param float|null        $tariefB2B        Override the default B2B handelsrente.
+     * @param float|null        $tariefB2C        Override the default B2C wettelijke rente.
      *
      * @return array<string,mixed> Body ready to persist via ObjectService::saveObject.
      *
@@ -262,8 +258,8 @@ class BIKStaffelCalculator
         float $hoofdsom,
         DateTimeImmutable $ingangsdatum,
         DateTimeImmutable $berekendOp,
-        ?float $tariefB2B = null,
-        ?float $tariefB2C = null
+        ?float $tariefB2B=null,
+        ?float $tariefB2C=null
     ): array {
         $berekening = $this->staffel(hoofdsom: $hoofdsom);
         // For GOVERNMENT we still need a rente choice — treat as B2B handelsrente.
@@ -277,9 +273,7 @@ class BIKStaffelCalculator
             tariefB2C: $tariefB2C
         );
 
-        $totaalCents = $this->toCents(amount: $hoofdsom)
-            + $this->toCents(amount: $berekening['toegepast'])
-            + $this->toCents(amount: $rente['bedrag']);
+        $totaalCents = $this->toCents(amount: $hoofdsom) + $this->toCents(amount: $berekening['toegepast']) + $this->toCents(amount: $rente['bedrag']);
 
         return [
             'factuurId'          => $factuurId,
@@ -318,5 +312,4 @@ class BIKStaffelCalculator
         return round(($cents / 100), 2);
 
     }//end fromCents()
-
 }//end class

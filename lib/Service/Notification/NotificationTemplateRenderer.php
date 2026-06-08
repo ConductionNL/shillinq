@@ -177,5 +177,4 @@ final class NotificationTemplateRenderer
         // Unknown filter — fail safe to the unfiltered value.
         return $string;
     }//end applyFilter()
-
 }//end class

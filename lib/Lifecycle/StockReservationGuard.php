@@ -62,8 +62,6 @@ use Psr\Log\LoggerInterface;
  */
 class StockReservationGuard
 {
-
-
     /**
      * Construct the service.
      *
@@ -78,7 +76,6 @@ class StockReservationGuard
     ) {
 
     }//end __construct()
-
 
     /**
      * Reserve `move.quantity` on the source InventoryStock row.
@@ -157,7 +154,6 @@ class StockReservationGuard
 
     }//end reserveReservation()
 
-
     /**
      * Commit the reservation: release the reserved hold, decrement source
      * on-hand and increment destination on-hand per REQ-SM-005.
@@ -177,7 +173,7 @@ class StockReservationGuard
             }
 
             $administrationId = (string) ($move['administrationId'] ?? '');
-            $sku              = (string) ($move['itemId'] ?? '');
+            $sku = (string) ($move['itemId'] ?? '');
             $sourceLocationId = ($move['sourceLocationId'] ?? null);
             $destLocationId   = ($move['destinationLocationId'] ?? null);
 
@@ -215,7 +211,7 @@ class StockReservationGuard
                 if ($this->casUpdate(row: $source, patch: $patch) === false) {
                     return false;
                 }
-            }
+            }//end if
 
             // Destination: increment on-hand (create row if absent — first delivery
             // to a bin).
@@ -245,7 +241,7 @@ class StockReservationGuard
                 if ($this->casUpdate(row: $destination, patch: $patch) === false) {
                     return false;
                 }
-            }
+            }//end if
 
             return true;
         } catch (\Throwable $e) {
@@ -260,7 +256,6 @@ class StockReservationGuard
         }//end try
 
     }//end commitReservation()
-
 
     /**
      * Release the reservation on draft cancellation (no on-hand change).
@@ -296,7 +291,7 @@ class StockReservationGuard
 
             $currentReservedCents = $this->cents(($row['reservedQuantity'] ?? 0));
             $newReservedCents     = max(0, ($currentReservedCents - $cents));
-            $patch                = [
+            $patch = [
                 'reservedQuantity' => $this->fromCents($newReservedCents),
                 'version'          => ((int) ($row['version'] ?? 0) + 1),
             ];
@@ -314,7 +309,6 @@ class StockReservationGuard
         }//end try
 
     }//end releaseReservation()
-
 
     /**
      * Find the InventoryStock row for an (admin, location, sku) triple.
@@ -352,7 +346,6 @@ class StockReservationGuard
         return $rows[0];
 
     }//end findInventoryStock()
-
 
     /**
      * CAS update on the InventoryStock row. The `version` field is the
@@ -407,7 +400,6 @@ class StockReservationGuard
 
     }//end casUpdate()
 
-
     /**
      * Create an InventoryStock row for a destination location that has not
      * yet received stock for the SKU. Initial quantity = move.quantity,
@@ -453,7 +445,6 @@ class StockReservationGuard
 
     }//end createInventoryStock()
 
-
     /**
      * Convert a money/quantity value to integer cents (multipleOf 0.01).
      *
@@ -471,7 +462,6 @@ class StockReservationGuard
 
     }//end cents()
 
-
     /**
      * Convert integer cents back to a float quantity with 2-decimal precision.
      *
@@ -484,7 +474,6 @@ class StockReservationGuard
         return ((float) $cents / 100.0);
 
     }//end fromCents()
-
 
     /**
      * Resolve the register slug, defaulting to 'shillinq'.
@@ -501,7 +490,6 @@ class StockReservationGuard
         return $register;
 
     }//end register()
-
 
     /**
      * Predicate: the proposed InventoryStock's quantityReserved does not
@@ -553,6 +541,4 @@ class StockReservationGuard
         }//end try
 
     }//end checkReservationDoesNotExceedOnHand()
-
-
 }//end class

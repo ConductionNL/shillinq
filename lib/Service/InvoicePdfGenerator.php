@@ -37,9 +37,9 @@ class InvoicePdfGenerator
     /**
      * Generate the renderable invoice payload.
      *
-     * @param array<string,mixed>            $invoice  BillableInvoice record.
-     * @param array<int,array<string,mixed>> $lines    BillableInvoiceLine records.
-     * @param array<string,mixed>            $creditor Creditor (issuing party) details.
+     * @param array<string,mixed>            $invoice   BillableInvoice record.
+     * @param array<int,array<string,mixed>> $lines     BillableInvoiceLine records.
+     * @param array<string,mixed>            $creditor  Creditor (issuing party) details.
      * @param array<string,mixed>            $recipient Recipient details.
      *
      * @return array{filename:string,html:string,mimeType:string}
@@ -47,8 +47,8 @@ class InvoicePdfGenerator
     public function generatePdf(
         array $invoice,
         array $lines,
-        array $creditor = [],
-        array $recipient = []
+        array $creditor=[],
+        array $recipient=[]
     ): array {
         $invoiceNumber = (string) ($invoice['invoiceNumber'] ?? 'INVOICE');
         $html          = $this->renderHtml(invoice: $invoice, lines: $lines, creditor: $creditor, recipient: $recipient);
@@ -87,7 +87,7 @@ class InvoicePdfGenerator
             );
         }
 
-        $summary = $invoice['summary'] ?? [];
+        $summary   = $invoice['summary'] ?? [];
         $breakdown = '';
         foreach (($summary['breakdown'] ?? []) as $group) {
             $breakdown .= sprintf(
@@ -176,5 +176,4 @@ class InvoicePdfGenerator
         return rtrim(rtrim($s, '0'), ',');
 
     }//end fmt()
-
 }//end class

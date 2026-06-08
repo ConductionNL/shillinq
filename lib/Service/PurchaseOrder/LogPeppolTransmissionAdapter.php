@@ -72,7 +72,6 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
      */
     private LoggerInterface $logger;
 
-
     /**
      * Constructor.
      *
@@ -93,7 +92,6 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
         $this->logger    = ($logger ?? new NullLogger());
 
     }//end __construct()
-
 
     /**
      * Resolve the Peppol participant id of a supplier from the Vendor schema.
@@ -138,7 +136,7 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
                 ]
             );
             return null;
-        }
+        }//end try
 
         foreach ($rows as $row) {
             if (is_array($row) === false) {
@@ -154,7 +152,6 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
         return null;
 
     }//end lookupParticipant()
-
 
     /**
      * @inheritDoc
@@ -186,7 +183,6 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
 
     }//end submitOrder()
 
-
     /**
      * Resolve the OpenRegister register slug from app config (defaults to "shillinq").
      *
@@ -202,6 +198,4 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
         return $register;
 
     }//end register()
-
-
 }//end class

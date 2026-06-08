@@ -356,8 +356,8 @@ class ExpenseReimbursementGuard
                     continue;
                 }
 
-                $itemArray   = (is_array($item) === true ? $item : (array) $item);
-                $itemMode    = ($itemArray['settlementMode'] ?? null);
+                $itemArray = (is_array($item) === true ? $item : (array) $item);
+                $itemMode  = ($itemArray['settlementMode'] ?? null);
 
                 if ($itemMode !== null && $itemMode !== '' && $itemMode !== $claimMode) {
                     $this->logger->info(
@@ -412,10 +412,12 @@ class ExpenseReimbursementGuard
         $matches = $objectService
             ->setRegister($register)
             ->setSchema('ReimbursementPolicy')
-            ->findAll([
-                'filters' => ['policyId' => $policyId],
-                'limit'   => 1,
-            ]);
+            ->findAll(
+                    [
+                        'filters' => ['policyId' => $policyId],
+                        'limit'   => 1,
+                    ]
+                    );
 
         if (empty($matches) === true) {
             return null;

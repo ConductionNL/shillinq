@@ -55,17 +55,16 @@ use Throwable;
  */
 final class BookingNotificationService
 {
-
     /**
      * Constructor.
      *
-     * @param NotificationOptOutPolicy        $optOutPolicy Opt-out gate.
-     * @param NotificationRateLimiter         $rateLimiter  Rate-limit gate.
-     * @param NotificationDeduplicator        $deduplicator Dedupe gate.
-     * @param RecipientResolver               $recipients   Recipient resolver.
-     * @param NotificationTemplateRenderer    $renderer     Template renderer.
-     * @param OpenconnectorAdapterInterface   $adapter      Channel adapter port.
-     * @param NotificationAuditWriter         $auditWriter  Audit record builder.
+     * @param NotificationOptOutPolicy      $optOutPolicy Opt-out gate.
+     * @param NotificationRateLimiter       $rateLimiter  Rate-limit gate.
+     * @param NotificationDeduplicator      $deduplicator Dedupe gate.
+     * @param RecipientResolver             $recipients   Recipient resolver.
+     * @param NotificationTemplateRenderer  $renderer     Template renderer.
+     * @param OpenconnectorAdapterInterface $adapter      Channel adapter port.
+     * @param NotificationAuditWriter       $auditWriter  Audit record builder.
      */
     public function __construct(
         private readonly NotificationOptOutPolicy $optOutPolicy,
@@ -79,13 +78,12 @@ final class BookingNotificationService
 
     }//end __construct()
 
-
     /**
      * Filter an active trigger list to those that match a fired event.
      *
-     * @param string                              $event   Event type (booking.created / changed / cancelled / reminder).
-     * @param array<string, mixed>                $booking Booking payload (slug, id).
-     * @param array<int, array<string, mixed>>    $triggers Available triggers (typically the active set).
+     * @param string                           $event    Event type (booking.created / changed / cancelled / reminder).
+     * @param array<string, mixed>             $booking  Booking payload (slug, id).
+     * @param array<int, array<string, mixed>> $triggers Available triggers (typically the active set).
      *
      * @return array<int, array<string, mixed>> Triggers that fire for this event + booking.
      *
@@ -96,10 +94,6 @@ final class BookingNotificationService
         $bookingSlug = (string) ($booking['slug'] ?? ($booking['id'] ?? ''));
         $matched     = [];
         foreach ($triggers as $trigger) {
-            if (is_array($trigger) === false) {
-                continue;
-            }
-
             if (((string) ($trigger['status'] ?? '')) !== 'enabled') {
                 continue;
             }
@@ -119,7 +113,6 @@ final class BookingNotificationService
         return $matched;
     }//end evaluateEventTrigger()
 
-
     /**
      * Dispatch one trigger for one booking against its recipient list.
      *
@@ -128,12 +121,12 @@ final class BookingNotificationService
      * until one succeeds. Every attempt produces a NotificationDelivery
      * record.
      *
-     * @param array<string, mixed>            $trigger Trigger config.
-     * @param array<string, mixed>            $booking Booking payload (incl. recipient maps).
-     * @param array<string, string>           $template Selected template body (subject, body[, language]).
+     * @param array<string, mixed>                  $trigger            Trigger config.
+     * @param array<string, mixed>                  $booking            Booking payload (incl. recipient maps).
+     * @param array<string, string>                 $template           Selected template body (subject, body[, language]).
      * @param array<int, array<string, mixed>>|null $resolvedRecipients Optional pre-resolved recipients
-     *     (typically provided by the engine; defaults to RecipientResolver::resolve).
-     * @param DateTimeImmutable|null          $at      Logical "now" (test injection).
+     *                                                                  (typically provided by the engine; defaults to RecipientResolver::resolve).
+     * @param DateTimeImmutable|null                $at                 Logical "now" (test injection).
      *
      * @return array<int, array<string, mixed>> Audit records (one per attempt).
      *
@@ -146,13 +139,13 @@ final class BookingNotificationService
         ?array $resolvedRecipients=null,
         ?DateTimeImmutable $at=null
     ): array {
-        $now             = ($at ?? new DateTimeImmutable('now', new DateTimeZone('UTC')));
-        $records         = [];
-        $bookingId       = (string) ($booking['id'] ?? ($booking['slug'] ?? ''));
-        $organizer       = (string) ($booking['organizerEmail'] ?? ($booking['organizer'] ?? ''));
-        $recipients      = ($resolvedRecipients ?? $this->recipients->resolve(trigger: $trigger, booking: $booking));
-        $dispatchGroup   = $this->auditWriter->newDispatchGroupId();
-        $templateName    = (string) ($template['name'] ?? '');
+        $now           = ($at ?? new DateTimeImmutable('now', new DateTimeZone('UTC')));
+        $records       = [];
+        $bookingId     = (string) ($booking['id'] ?? ($booking['slug'] ?? ''));
+        $organizer     = (string) ($booking['organizerEmail'] ?? ($booking['organizer'] ?? ''));
+        $recipients    = ($resolvedRecipients ?? $this->recipients->resolve(trigger: $trigger, booking: $booking));
+        $dispatchGroup = $this->auditWriter->newDispatchGroupId();
+        $templateName  = (string) ($template['name'] ?? '');
 
         foreach ($recipients as $recipient) {
             $address = (string) ($recipient['address'] ?? '');
@@ -162,7 +155,7 @@ final class BookingNotificationService
                     trigger: $trigger,
                     bookingId: $bookingId,
                     recipient: $address,
-                    channel: ((string) (($recipient['channels'][0] ?? '') ?? '')),
+                    channel: ((string) ($recipient['channels'][0] ?? '')),
                     templateName: null,
                     result: new NotificationSendResult(
                         status: NotificationSendResult::STATUS_SKIPPED,
@@ -257,8 +250,8 @@ final class BookingNotificationService
                 $channels = (array) ($trigger['channels'] ?? []);
             }
 
-            $sent     = false;
-            $attempt  = 0;
+            $sent    = false;
+            $attempt = 0;
             foreach ($channels as $channel) {
                 $channel = (string) $channel;
                 if ($this->optOutPolicy->canUseChannel(recipient: $recipientVars, channel: $channel) === false) {
@@ -362,7 +355,6 @@ final class BookingNotificationService
         return $records;
     }//end dispatchNotification()
 
-
     /**
      * Convenience wrapper for callers that want to record a one-off skip
      * (e.g. a customer fully opted-out, no rule match).
@@ -385,14 +377,13 @@ final class BookingNotificationService
             trigger: $trigger,
             bookingId: $bookingId,
             recipient: ((string) ($booking['recipient'] ?? '')),
-            channel: ((string) (($trigger['channels'][0] ?? '') ?? '')),
+            channel: ((string) ($trigger['channels'][0] ?? '')),
             templateName: null,
             result: $result,
             dispatchGroupId: null,
             at: $at
         );
     }//end recordAuditTrail()
-
 
     /**
      * Build the recipient variable map for opt-out lookup + rendering.
@@ -421,6 +412,4 @@ final class BookingNotificationService
             'notificationOptOut' => $optOuts,
         ];
     }//end buildRecipientVars()
-
-
 }//end class

@@ -63,12 +63,12 @@ use Psr\Log\LoggerInterface;
 class DunningController extends Controller
 {
     /**
-     * @param IRequest                     $request    NC request.
-     * @param BIKStaffelCalculator         $bik        Pure BIK + rente calculator.
-     * @param DunningRunService            $runs       Run orchestrator.
-     * @param IncassoDossierComposer       $dossier    Stage-5 dossier composer.
-     * @param AdministrationContextService $context    Admin-scope context.
-     * @param LoggerInterface              $logger     Logger.
+     * @param IRequest                     $request NC request.
+     * @param BIKStaffelCalculator         $bik     Pure BIK + rente calculator.
+     * @param DunningRunService            $runs    Run orchestrator.
+     * @param IncassoDossierComposer       $dossier Stage-5 dossier composer.
+     * @param AdministrationContextService $context Admin-scope context.
+     * @param LoggerInterface              $logger  Logger.
      */
     public function __construct(
         IRequest $request,
@@ -99,6 +99,7 @@ class DunningController extends Controller
         if ($authResult instanceof JSONResponse) {
             return $authResult;
         }
+
         $administrationId = $authResult;
 
         $hoofdsom     = (float) $this->request->getParam('hoofdsom', 0.0);
@@ -165,6 +166,7 @@ class DunningController extends Controller
         if ($authResult instanceof JSONResponse) {
             return $authResult;
         }
+
         $administrationId = $authResult;
 
         $params = $this->request->getParams();
@@ -197,6 +199,7 @@ class DunningController extends Controller
         if ($authResult instanceof JSONResponse) {
             return $authResult;
         }
+
         $administrationId = $authResult;
 
         $factuurId    = (string) $this->request->getParam('factuurId', '');
@@ -243,6 +246,7 @@ class DunningController extends Controller
         if ($authResult instanceof JSONResponse) {
             return $authResult;
         }
+
         $administrationId = $authResult;
 
         $resolution = (string) $this->request->getParam('resolution', 'resolve');
@@ -281,6 +285,7 @@ class DunningController extends Controller
         if ($authResult instanceof JSONResponse) {
             return $authResult;
         }
+
         $administrationId = $authResult;
 
         $params = $this->request->getParams();
@@ -319,6 +324,7 @@ class DunningController extends Controller
         if ($authResult instanceof JSONResponse) {
             return $authResult;
         }
+
         $administrationId = $authResult;
 
         $factuurId = (string) $this->request->getParam('factuurId', '');
@@ -356,24 +362,28 @@ class DunningController extends Controller
         if ($this->context->currentUserId() === null) {
             return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
         }
+
         $administrationId = trim((string) $this->request->getParam('administration_id', ''));
         if ($administrationId === '') {
             return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
         }
+
         if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
             return new JSONResponse(['error' => 'administration_id must be a valid identifier'], Http::STATUS_BAD_REQUEST);
         }
+
         try {
             $allowed = $this->context->canAccess(administrationId: $administrationId);
         } catch (\Throwable $e) {
             $this->logger->error('DunningController: admin access check failed: '.$e->getMessage());
             return new JSONResponse(['error' => 'Authorization failure'], Http::STATUS_INTERNAL_SERVER_ERROR);
         }
+
         if ($allowed === false) {
             return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
         }
+
         return $administrationId;
 
     }//end resolveAdministration()
-
 }//end class

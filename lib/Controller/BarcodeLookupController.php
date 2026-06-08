@@ -238,9 +238,6 @@ class BarcodeLookupController extends Controller
         }
 
         $first = reset($items);
-        if (is_array($first) === false) {
-            return null;
-        }
 
         return $first;
 

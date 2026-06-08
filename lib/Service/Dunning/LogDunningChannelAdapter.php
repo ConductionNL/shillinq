@@ -73,6 +73,7 @@ class LogDunningChannelAdapter implements DunningChannelAdapterInterface
             $extras['barcode']     = '3S'.str_pad((string) random_int(1, 9999999999999), 13, '0', STR_PAD_LEFT);
             $extras['trackingUrl'] = 'https://postnl.nl/tracktrace/'.$extras['barcode'];
         }
+
         if ($kanaal === 'INCASSOBUREAU_API') {
             $extras['dossierId'] = 'dossier-stub-'.bin2hex(random_bytes(6));
         }
@@ -85,5 +86,4 @@ class LogDunningChannelAdapter implements DunningChannelAdapterInterface
         );
 
     }//end send()
-
 }//end class

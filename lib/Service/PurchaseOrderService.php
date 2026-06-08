@@ -131,18 +131,19 @@ class PurchaseOrderService
     /**
      * Constructor.
      *
-     * @param ContainerInterface                       $container             DI container — OR's ObjectService is
-     *                                                                        fetched lazily.
-     * @param IAppConfig                               $appConfig             App config for the register slug.
-     * @param AdministrationContextService             $administrationContext IDOR + tenant scope.
-     * @param INotificationManager                     $notificationManager   NC notification dispatcher.
-     * @param LoggerInterface                          $logger                Logger (no sensitive payloads).
-     * @param PeppolTransmissionAdapterInterface|null  $peppolAdapter         Optional Peppol port (slice 03);
-     *                                                                        defaults to LogPeppolTransmissionAdapter.
-     * @param PurchaseOrderMailerInterface|null        $purchaseOrderMailer   Optional PDF+email mailer (slice 03);
-     *                                                                        defaults to LogPurchaseOrderMailer.
-     * @param PeppolBisOrderMapper|null                $peppolMapper          Optional UBL mapper (slice 03);
-     *                                                                        defaults to a fresh instance.
+     * @param ContainerInterface                      $container             DI container — OR's ObjectService
+     *                                                                       is fetched lazily.
+     * @param IAppConfig                              $appConfig             App config for the register slug.
+     * @param AdministrationContextService            $administrationContext IDOR + tenant scope.
+     * @param INotificationManager                    $notificationManager   NC notification dispatcher.
+     * @param LoggerInterface                         $logger                Logger (no sensitive payloads).
+     * @param PeppolTransmissionAdapterInterface|null $peppolAdapter         Optional Peppol port (slice 03);
+     *                                                                       defaults to
+     *                                                                       LogPeppolTransmissionAdapter.
+     * @param PurchaseOrderMailerInterface|null       $purchaseOrderMailer   Optional PDF+email mailer (slice 03);
+     *                                                                       defaults to LogPurchaseOrderMailer.
+     * @param PeppolBisOrderMapper|null               $peppolMapper          Optional UBL mapper (slice 03);
+     *                                                                       defaults to a fresh instance.
      *
      * @return void
      */
@@ -449,7 +450,7 @@ class PurchaseOrderService
         $po['peppolSentAt']         = $this->nowIso();
         $po['peppolFallbackReason'] = null;
         $po['lifecycleState']       = 'sent';
-        $po['sentAt']               = $this->nowIso();
+        $po['sentAt'] = $this->nowIso();
 
         return $this->saveObject(schema: 'PurchaseOrder', object: $po);
 
@@ -469,8 +470,8 @@ class PurchaseOrderService
      * @param string $administrationId Administration scope (server-resolved).
      * @param string $purchaseOrderId  PO id.
      * @param string $fallbackReason   The reason the fallback was used (audit
-     *                                  trail); empty string defaults to
-     *                                  `manual_pdf_email_fallback`.
+     *                                 trail); empty string defaults to
+     *                                 `manual_pdf_email_fallback`.
      *
      * @return array<string,mixed> The PurchaseOrder after transition to "sent".
      *
@@ -500,7 +501,7 @@ class PurchaseOrderService
 
         $po['peppolFallbackReason'] = $reason;
         $po['lifecycleState']       = 'sent';
-        $po['sentAt']               = $this->nowIso();
+        $po['sentAt'] = $this->nowIso();
 
         return $this->saveObject(schema: 'PurchaseOrder', object: $po);
 

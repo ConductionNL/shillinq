@@ -32,7 +32,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\Shillinq\Service\BIKStaffelCalculator;
 use OCA\Shillinq\Service\DunningRunService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -72,7 +71,6 @@ final class DunningRunServiceTest extends TestCase
         return new DunningRunService(
             container: $container,
             appConfig: $appConfig,
-            bik: new BIKStaffelCalculator(),
             logger: new NullLogger(),
         );
 

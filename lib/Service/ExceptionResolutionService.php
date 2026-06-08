@@ -599,7 +599,6 @@ class ExceptionResolutionService
 
     }//end buildDisputePayload()
 
-
     /**
      * Hand the dispute envelope to the credit-note adapter and translate
      * a thrown exception into the same envelope shape so the caller never
@@ -634,7 +633,6 @@ class ExceptionResolutionService
         }
 
     }//end dispatchDispute()
-
 
     /**
      * Resolve the membership role that should receive the exception

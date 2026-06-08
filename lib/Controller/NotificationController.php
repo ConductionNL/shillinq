@@ -50,8 +50,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\Notification\BookingNotificationService;
-use OCA\Shillinq\Service\Notification\NotificationRateLimiter;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -71,31 +69,25 @@ use Throwable;
  */
 class NotificationController extends Controller
 {
-
     /**
      * Constructor.
      *
-     * @param IRequest                   $request     Request object.
-     * @param ContainerInterface         $container   DI container for lazy ObjectService resolution.
-     * @param SettingsService            $settings    Register slug + OR availability.
-     * @param IUserSession               $userSession Logged-in user for the per-booking authorization gate.
-     * @param BookingNotificationService $service     Orchestration service for trigger evaluation.
-     * @param NotificationRateLimiter    $rateLimiter Counter reset gate (admin action).
-     * @param LoggerInterface            $logger      Logger for failure paths.
+     * @param IRequest           $request     Request object.
+     * @param ContainerInterface $container   DI container for lazy ObjectService resolution.
+     * @param SettingsService    $settings    Register slug + OR availability.
+     * @param IUserSession       $userSession Logged-in user for the per-booking authorization gate.
+     * @param LoggerInterface    $logger      Logger for failure paths.
      */
     public function __construct(
         IRequest $request,
         private readonly ContainerInterface $container,
         private readonly SettingsService $settings,
         private readonly IUserSession $userSession,
-        private readonly BookingNotificationService $service,
-        private readonly NotificationRateLimiter $rateLimiter,
         private readonly LoggerInterface $logger
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
 
     }//end __construct()
-
 
     /**
      * GET /api/bookings/{id}/notification-triggers
@@ -147,7 +139,6 @@ class NotificationController extends Controller
             ]
         );
     }//end listForBooking()
-
 
     /**
      * PATCH /api/bookings/{id}/notification-triggers
@@ -228,7 +219,6 @@ class NotificationController extends Controller
         return new JSONResponse(data: ['bookingId' => $id, 'triggers' => $applied]);
     }//end updateForBooking()
 
-
     /**
      * GET /api/admin/notification-monitor
      *
@@ -250,10 +240,10 @@ class NotificationController extends Controller
             return new JSONResponse(data: ['message' => 'Monitor unavailable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);
         }
 
-        $sent   = 0;
-        $failed = 0;
-        $queued = 0;
-        $skipped = 0;
+        $sent           = 0;
+        $failed         = 0;
+        $queued         = 0;
+        $skipped        = 0;
         $recentFailures = [];
         foreach ($deliveries as $delivery) {
             $status = (string) ($delivery['status'] ?? '');
@@ -283,7 +273,7 @@ class NotificationController extends Controller
 
         return new JSONResponse(
             data: [
-                'summary' => [
+                'summary'        => [
                     'sent'    => $sent,
                     'failed'  => $failed,
                     'queued'  => $queued,
@@ -294,7 +284,6 @@ class NotificationController extends Controller
             ]
         );
     }//end adminMonitor()
-
 
     /**
      * POST /api/admin/notification-monitor/disable-all
@@ -341,7 +330,6 @@ class NotificationController extends Controller
         return new JSONResponse(data: ['disabled' => $disabled]);
     }//end adminDisableAll()
 
-
     /**
      * Resolve the OR ObjectService bound to the BookingNotificationTrigger schema.
      *
@@ -362,7 +350,6 @@ class NotificationController extends Controller
 
         throw new \RuntimeException('OR ObjectService not bound');
     }//end resolveObjectService()
-
 
     /**
      * Fetch every BookingNotificationTrigger from OR.
@@ -390,7 +377,6 @@ class NotificationController extends Controller
 
         return is_array($items) === true ? $items : [];
     }//end fetchTriggers()
-
 
     /**
      * Fetch recent NotificationDelivery records (descending sentAt).
@@ -424,7 +410,6 @@ class NotificationController extends Controller
         return is_array($items) === true ? $items : [];
     }//end fetchRecentDeliveries()
 
-
     /**
      * Find a single trigger by slug.
      *
@@ -453,6 +438,4 @@ class NotificationController extends Controller
         $head = reset($items);
         return is_array($head) === true ? $head : null;
     }//end findTriggerBySlug()
-
-
 }//end class

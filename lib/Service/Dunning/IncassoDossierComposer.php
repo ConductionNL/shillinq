@@ -71,18 +71,30 @@ class IncassoDossierComposer
     {
         $register = $this->register();
 
-        $dunningRuns      = $this->findAll(register: $register, schema: 'DunningRun', filters: [
-            'administrationId' => $administrationId,
-            'factuurId'        => $factuurId,
-        ]);
-        $incassoKostenAll = $this->findAll(register: $register, schema: 'IncassoKostenBerekening', filters: [
-            'administrationId' => $administrationId,
-            'factuurId'        => $factuurId,
-        ]);
-        $pauseAll         = $this->findAll(register: $register, schema: 'DunningPauseDispute', filters: [
-            'administrationId' => $administrationId,
-            'factuurId'        => $factuurId,
-        ]);
+        $dunningRuns      = $this->findAll(
+                register: $register,
+                schema: 'DunningRun',
+                filters: [
+                    'administrationId' => $administrationId,
+                    'factuurId'        => $factuurId,
+                ]
+                );
+        $incassoKostenAll = $this->findAll(
+                register: $register,
+                schema: 'IncassoKostenBerekening',
+                filters: [
+                    'administrationId' => $administrationId,
+                    'factuurId'        => $factuurId,
+                ]
+                );
+        $pauseAll         = $this->findAll(
+                register: $register,
+                schema: 'DunningPauseDispute',
+                filters: [
+                    'administrationId' => $administrationId,
+                    'factuurId'        => $factuurId,
+                ]
+                );
 
         // Pick the latest IncassoKostenBerekening (highest berekendOp date).
         usort(
@@ -102,6 +114,7 @@ class IncassoDossierComposer
             if ($hash !== '') {
                 $evidenceRefs[] = 'dunning-run:'.((string) ($run['id'] ?? '')).':sha256='.$hash;
             }
+
             $barcode = (string) ($run['postageStatus']['barcode'] ?? '');
             if ($barcode !== '') {
                 $evidenceRefs[] = 'postnl:'.$barcode;
@@ -111,18 +124,18 @@ class IncassoDossierComposer
         return [
             'factuurId' => $factuurId,
             'inhoud'    => [
-                'invoice'        => [
+                'invoice'       => [
                     'factuurId'        => $factuurId,
                     'klantId'          => $klantId,
                     'administrationId' => $administrationId,
                 ],
-                'dunningRuns'    => $dunningRuns,
-                'incassoKosten'  => $latestIncassoKosten,
-                'pauseEvents'    => $pauseAll,
-                'klantGegevens'  => [
+                'dunningRuns'   => $dunningRuns,
+                'incassoKosten' => $latestIncassoKosten,
+                'pauseEvents'   => $pauseAll,
+                'klantGegevens' => [
                     'klantId' => $klantId,
                 ],
-                'evidenceRefs'   => $evidenceRefs,
+                'evidenceRefs'  => $evidenceRefs,
             ],
         ];
 
@@ -131,9 +144,9 @@ class IncassoDossierComposer
     /**
      * Find all matching records via the canonical OR ObjectService API.
      *
-     * @param string $register OR register slug.
-     * @param string $schema   Schema slug.
-     * @param array<string,mixed> $filters Filter map.
+     * @param string              $register OR register slug.
+     * @param string              $schema   Schema slug.
+     * @param array<string,mixed> $filters  Filter map.
      *
      * @return array<int,array<string,mixed>>
      */
@@ -164,5 +177,4 @@ class IncassoDossierComposer
         return ($register === '') ? 'shillinq' : $register;
 
     }//end register()
-
 }//end class

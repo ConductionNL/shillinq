@@ -43,7 +43,6 @@ namespace OCA\Shillinq\Service\Notification;
  */
 final class RecipientResolver
 {
-
     /**
      * Constructor.
      *
@@ -173,5 +172,4 @@ final class RecipientResolver
 
         return null;
     }//end resolveContact()
-
 }//end class

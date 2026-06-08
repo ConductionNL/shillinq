@@ -78,5 +78,4 @@ final class InMemoryNotificationCounterStore implements NotificationCounterStore
     {
         $this->counts = [];
     }//end clear()
-
 }//end class

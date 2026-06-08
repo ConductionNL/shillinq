@@ -64,7 +64,7 @@ class InvoiceDeduplicationService
         string $administrationId,
         array $timeEntryIds,
         array $expenseIds,
-        ?string $excludeInvoiceId = null
+        ?string $excludeInvoiceId=null
     ): array {
         if (count($timeEntryIds) === 0 && count($expenseIds) === 0) {
             return ['hasConflicts' => false, 'conflicts' => []];
@@ -117,7 +117,7 @@ class InvoiceDeduplicationService
     /**
      * Find all matching records via the real OR ObjectService API.
      *
-     * @param string             $schema  Schema slug.
+     * @param string              $schema  Schema slug.
      * @param array<string,mixed> $filters Filter map.
      *
      * @return array<int,array<string,mixed>>
@@ -154,5 +154,4 @@ class InvoiceDeduplicationService
         return $register;
 
     }//end register()
-
 }//end class
