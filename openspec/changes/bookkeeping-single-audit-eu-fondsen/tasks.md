@@ -197,7 +197,7 @@
   The runtime docudesk hashing/retention call needs a live docudesk instance
   (deferred), but the schema-level integration is complete.
 
-- [ ] Task 26: Integrate with openconnector (optional T4) — on IrregularityReport
+- [~] Task 26: Integrate with openconnector (optional T4) — on IrregularityReport
   with amount >= €10k + ims_reference populated, trigger IMS-API call to OLAF system;
   on accounts-package completion, trigger optional SFC2021 feed to EC
   — DEFERRED (T4, explicitly optional per proposal Out-of-Scope): needs the
