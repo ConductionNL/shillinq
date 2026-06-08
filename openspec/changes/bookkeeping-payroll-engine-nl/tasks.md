@@ -192,7 +192,7 @@
   - Jaaropgave
   - Error handling (invalid loonheffingstabel, premium-franchise exceeded, etc.)
 
-- [ ] Write developer guide:  _(DEFERRED — documentation phase.)_
+- [x] Write developer guide:  _(Published at `docs/Features/payroll-engine-nl/developer-guide.md`.)_
   - Berekening algorithm pseudocode
   - Data-model architecture (Werkgever ← LoonPeriode ← Werknemer ← LoonStrook)
   - Versioning strategy (tax tables immutable, new records per effective-date)
