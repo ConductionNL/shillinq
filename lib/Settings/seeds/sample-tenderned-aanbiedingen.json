@@ -1,0 +1,56 @@
+{
+	"_meta": {
+		"source": "openspec/changes/bookkeeping-tenderned-integratie/design.md (Seed Data §2 / Test Fixtures)",
+		"variant": "sample-tenderned-aanbiedingen",
+		"description": "Sample TenderNed tender records used by unit/integration test fixtures to mock TenderNed API responses. NOT auto-imported into live databases (design D2 / Task 3.2).",
+		"license": "EUPL-1.2",
+		"copyright": "2026 Conduction B.V."
+	},
+	"aanbiedingen": [
+		{
+			"aanbestedingId": "TN-SAMPLE-UTRECHT-001",
+			"tenderNedUrl": "https://www.tenderned.nl/aankondigingen/overzicht/TN-SAMPLE-UTRECHT-001",
+			"titel": "Schoonmaak Gemeentehuis Utrecht",
+			"beschrijving": "Doorlopende schoonmaakdienstverlening gemeentehuis, looptijd 1 jaar.",
+			"cpvCodes": ["90910000-9"],
+			"aanbestedendeDienst": "30280353 Gemeente Utrecht",
+			"gunningsDatum": "2026-01-15",
+			"contractWaarde": 50000.0,
+			"looptijdStart": "2026-02-01",
+			"looptijdEind": "2027-01-31",
+			"gegundeLeverancier": "76741850 Conduction B.V.",
+			"opdrachttype": "dienstverlening-doorlopend",
+			"status": "gegund"
+		},
+		{
+			"aanbestedingId": "TN-SAMPLE-BRABANT-002",
+			"tenderNedUrl": "https://www.tenderned.nl/aankondigingen/overzicht/TN-SAMPLE-BRABANT-002",
+			"titel": "IT-dienstverlening Provincie Brabant",
+			"beschrijving": "Gefaseerde levering IT-infrastructuur en beheer, looptijd 2 jaar.",
+			"cpvCodes": ["72000000-5", "30200000-1"],
+			"aanbestedendeDienst": "17278718 Provincie Noord-Brabant",
+			"gunningsDatum": "2026-02-10",
+			"contractWaarde": 250000.0,
+			"looptijdStart": "2026-03-01",
+			"looptijdEind": "2028-02-29",
+			"gegundeLeverancier": "76741850 Conduction B.V.",
+			"opdrachttype": "levering-in-fases",
+			"status": "gegund"
+		},
+		{
+			"aanbestedingId": "TN-SAMPLE-MKB-003",
+			"tenderNedUrl": "https://www.tenderned.nl/aankondigingen/overzicht/TN-SAMPLE-MKB-003",
+			"titel": "Webontwikkeling gemeenteportaal",
+			"beschrijving": "MKB-leverancier-test: kleine opdracht voor leverancier-perspectief (REQ-008).",
+			"cpvCodes": ["72413000-8"],
+			"aanbestedendeDienst": "30280353 Gemeente Utrecht",
+			"gunningsDatum": "2026-03-05",
+			"contractWaarde": 15000.0,
+			"looptijdStart": "2026-04-01",
+			"looptijdEind": "2026-09-30",
+			"gegundeLeverancier": "76741850 Conduction B.V.",
+			"opdrachttype": "other",
+			"status": "gegund"
+		}
+	]
+}
