@@ -99,4 +99,8 @@ adds Dutch (`nl_NL`) and English (`en_US`) translation strings for:
       points at `relatedSchema: Resource`, `relatedField: resourceId` — FK
       target exists in the same register file the implementation cycle
       already shipped.
-- [ ] No circular dependencies (this spec does not introduce them)
+- [x] No circular dependencies (this spec does not introduce them) —
+      verified: `bookings-resource-calendar/hydra.json` declares
+      `depends_on: []` (no edge back to `bookings-availability-rules`) and
+      this change's `hydra.json` lists only `bookings-resource-calendar`;
+      the dependency graph is a one-way edge.
