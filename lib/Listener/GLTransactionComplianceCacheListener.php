@@ -95,6 +95,8 @@ final class GLTransactionComplianceCacheListener implements IEventListener
      * @param Event $event OR ObjectCreatedEvent / ObjectUpdatedEvent.
      *
      * @return void
+     *
+     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-08-compliance-service/specs/bookkeeping-waterschappen-bbv-variant/spec.md
      */
     public function handle(Event $event): void
     {
