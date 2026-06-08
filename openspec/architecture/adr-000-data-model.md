@@ -767,6 +767,56 @@ _A candidate or confirmed match between a bank statement line and an AR/AP invoi
 - → BankStatementLine (many-to-one or many-to-many for N×M)
 - → ARInvoice / APInvoice / GLTransaction / Account-as-suspense (via matchType + matchedObjectId or targetRefs)
 
+### BbvAccountMapping
+**Schema.org:** `schema:PropertyValue`
+**Primary spec:** bookkeeping-bbv-compliance
+_Per-administration mapping that links an RGS account to its BBV (Besluit Begroting en Verantwoording) taakveld + programma + paragraaf + autorisatieniveau (REQ-BBV-002). The mapping is operator-overrideable per administration — one gemeente may map account `4250 Subsidies cultuur` to taakveld `5.3 Cultuurpresentatie`, another to `5.6 Media`. Default mapping is seeded from `lib/Settings/seeds/rgs-to-bbv-mapping.json` for `gemeente`/`provincie`/`waterschap` administrations only (REQ-BBV-006); non-municipal administrations bypass. Per ADR-022 this is a register — not an enum on `Account` and not a parallel link table — and per ADR-031 the BBV-mapping precondition on `GLTransaction.post` is declared via `x-openregister-lifecycle.preconditions` with a single thin guard `OCA\Shillinq\Lifecycle\BbvComplianceGuard::allLinesMappedForMunicipalAdmin`, forward-only by `postingDate` ≥ the app-config-stamped install date (REQ-BBV-003). Carries `bcfCompensable` + `compensablePercentage` driving BCF aggregation (REQ-BCF-004) and `iv3Bucket` driving IV3 export (REQ-IV3-003); both extension fields were declared by sibling changes and are preserved here additively. `_meta.source` (`"seeded"` / `"operator-edited"`) lets the repair step distinguish operator overrides on re-run (REQ-BBV-006)._
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the owning gemeente/provincie/waterschap administration |
+| accountNumber | string | Yes | FK to `Account.accountNumber` (T1) |
+| taakveld | string | Yes | BBV taakveld code per `bbv-taakvelden-2024.json` (REQ-BBV-005) |
+| programmaCode | string | No | Operator-defined programma code |
+| paragraafCode | string | No | Optional paragraaf code |
+| autorisatieniveau | enum | No | One of `I`, `II`, `III` — the raadsautorisatie level |
+| bcfCompensable | boolean | No | True if postings on this account are BCF-compensable (REQ-BCF-003) |
+| compensablePercentage | integer | No | Percentage of VAT recoverable from BCF (0..100, default 0) |
+| iv3Bucket | string | No | CBS IV3-bestand bucket name (REQ-IV3-003) |
+| _meta.source | enum | No | `"seeded"` or `"operator-edited"` — drives the repair-step idempotency (REQ-BBV-006) |
+| _meta.bbvVersion | string | No | BBV revision the mapping was seeded against (e.g. `2024`) |
+
+**Uniqueness:** `(administrationId, accountNumber)` — exactly one mapping per account per administration (REQ-BBV-002).
+
+**Relations:**
+- → Administration (many-to-one, via `administrationId`)
+- → Account (many-to-one, via `accountNumber`)
+- → BbvTaakveld (many-to-one, via `taakveld → BbvTaakveld.code`)
+
+**Aggregations:**
+- `byProgrammaCode` — sum of GLLine debit/credit grouped by `BbvAccountMapping.programmaCode` within the administration (REQ-BBV-004)
+- `byAutorisatieniveau` — sum of GLLine debit/credit grouped by `BbvAccountMapping.autorisatieniveau` (REQ-BBV-004)
+- `byTaakveld` — sum of GLLine debit/credit grouped by taakveld (REQ-BBV-007 roll-up consumed by IV3 export)
+
+### BbvTaakveld
+**Schema.org:** `schema:DefinedTerm`
+**Primary spec:** bookkeeping-bbv-compliance
+_Canonical Besluit BBV bijlage IV taakveld catalogue (REQ-BBV-005). The catalogue evolves at every BBV revision so it is a register, not a hard enum; a future revision ships as `bbv-taakvelden-YYYY.json` with a new `bbvVersion` stamp and coexists with prior revisions. Operators MAY add custom sub-taakvelden alongside the canonical catalogue; re-running the repair step does not delete them (REQ-BBV-005 scenario). Doubles as the enum source for `BbvAccountMapping.taakveld`._
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| code | string | Yes | Taakveld code (e.g. `0.1`, `5.3`, `7.1`) |
+| description | string | Yes | Taakveld description |
+| name | string | No | Official taakveld name per Besluit BBV bijlage IV |
+| category | enum | No | Canonical category (`bestuur`, `veiligheid`, `verkeer`, `economie`, `onderwijs`, `sport-cultuur-recreatie`, `sociaal-domein`, `volksgezondheid-milieu`, `vhrosv`, `algemene-dekkingsmiddelen`, `overhead`) |
+| legalBasis | string | No | Statutory citation (e.g. `Besluit BBV bijlage IV §0.1`) |
+| effectiveFrom | date | No | First date this code is valid (defaults to the BBV revision's effective date) |
+| effectiveTo | date | No | Last date this code is valid (null = currently valid) |
+| programmaFocus | string | No | Hint linking the taakveld to a typical programma |
+| bbvVersion | string | No | BBV catalogue version this entry belongs to (e.g. `2024`) |
+
+**Uniqueness:** `code` per `bbvVersion`.
+
 ### BcfClaim
 **Schema.org:** `schema:MonetaryAmount`
 **Primary spec:** bookkeeping-bcf-vat-compensation

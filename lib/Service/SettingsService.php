@@ -423,6 +423,176 @@ class SettingsService
 
     }//end seedBbvTaakvelden()
 
+
+    /**
+     * Seed the default RGS → BBV account mapping for a municipal administration
+     * from rgs-to-bbv-mapping.json, idempotently (REQ-BBV-006). Only runs for
+     * administrations whose `administrationType` is in {gemeente, provincie,
+     * waterschap}; other types are out of BBV scope.
+     *
+     * Deduplication key is (administrationId, accountNumber) — the natural
+     * uniqueness scope per REQ-BBV-002. Existing records with `_meta.source =
+     * operator-edited` are NEVER overwritten on re-run; existing `seeded`
+     * records are left in place so the re-seed is a true no-op until an
+     * operator edits a row.
+     *
+     * Records the BBV gate's install date on app config (`bbv_gate_install_date`)
+     * the first time a successful seed runs for any administration. The
+     * BbvComplianceGuard reads this date to enforce forward-only enforcement
+     * per REQ-BBV-003.
+     *
+     * @param string $administrationId   The municipal administration's id.
+     * @param string $administrationType The administration type — must be in
+     *                                   the municipal set or the seeder
+     *                                   short-circuits.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count,
+     *                             skipped count.
+     *
+     * @spec openspec/changes/add-shillinq-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
+     */
+    public function seedBbvAccountMappings(string $administrationId, string $administrationType): array
+    {
+        $municipalTypes = ['gemeente', 'provincie', 'waterschap'];
+        if (in_array($administrationType, $municipalTypes, true) === false) {
+            return [
+                'success' => true,
+                'seeded'  => 0,
+                'skipped' => 0,
+                'message' => 'Administration type "'.$administrationType.'" is non-municipal; BBV mapping seed skipped per REQ-BBV-006.',
+            ];
+        }
+
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        if ($administrationId === '') {
+            return [
+                'success' => false,
+                'message' => 'administrationId must not be empty.',
+            ];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/rgs-to-bbv-mapping.json';
+        if (file_exists($seedPath) === false) {
+            return ['success' => false, 'message' => 'Seed file not found: rgs-to-bbv-mapping.json'];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return ['success' => false, 'message' => 'Failed to read rgs-to-bbv-mapping.json'];
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return ['success' => false, 'message' => 'Failed to parse rgs-to-bbv-mapping.json: '.json_last_error_msg()];
+        }
+
+        $records = ($data['records'] ?? []);
+        if (empty($records) === true) {
+            return ['success' => false, 'message' => 'Seed file contains no records.'];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($records as $record) {
+                $accountNumber = (string) ($record['accountNumber'] ?? '');
+                if ($accountNumber === '') {
+                    continue;
+                }
+
+                // Per-administration uniqueness scope per REQ-BBV-002.
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('BbvAccountMapping')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'administrationId' => $administrationId,
+                                'accountNumber'    => $accountNumber,
+                            ],
+                            'limit'   => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    // Either a prior seed row or an operator override — never
+                    // clobber. The BbvComplianceGuard treats both as valid
+                    // mappings; only operator-edited records are intentionally
+                    // preserved on re-run per REQ-BBV-006.
+                    $skipped++;
+                    continue;
+                }
+
+                $record['administrationId']   = $administrationId;
+                $record['_meta']              = ($record['_meta'] ?? []);
+                $record['_meta']['source']    = 'seeded';
+                $record['_meta']['bbvVersion'] = ($data['_meta']['bbvVersion'] ?? '2024');
+
+                $objectService->saveObject(
+                    object: $record,
+                    register: $registerSlug,
+                    schema: 'BbvAccountMapping',
+                );
+                $seeded++;
+            }//end foreach
+
+            // Record the BBV gate's install date the first time any seed runs.
+            // Read-then-write keeps the date stable across upgrades.
+            $existingDate = $this->appConfig->getValueString(
+                Application::APP_ID,
+                'bbv_gate_install_date',
+                ''
+            );
+            if ($existingDate === '') {
+                $this->appConfig->setValueString(
+                    Application::APP_ID,
+                    'bbv_gate_install_date',
+                    date('Y-m-d')
+                );
+            }
+
+            $this->logger->info(
+                'Shillinq: BBV account mappings seeded',
+                [
+                    'administrationId'   => $administrationId,
+                    'administrationType' => $administrationType,
+                    'seeded'             => $seeded,
+                    'skipped'            => $skipped,
+                ]
+            );
+
+            return [
+                'success' => true,
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->warning(
+                'Shillinq: BBV account mapping seed failed',
+                [
+                    'administrationId' => $administrationId,
+                    'exception'        => $e->getMessage(),
+                ]
+            );
+
+            return [
+                'success' => false,
+                'message' => 'BBV mapping seed failed: '.$e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedBbvAccountMappings()
+
+
     /**
      * Seed default rate-card templates from rate-card-templates.json, idempotently.
      *
