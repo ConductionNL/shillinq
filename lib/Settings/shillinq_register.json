@@ -11476,6 +11476,62 @@
 						"consumedBy": "ARInvoice.issue.preconditions.credit-limit",
 						"cadence": "on-demand"
 					}
+				},
+				"arAging": {
+					"label": "AR Aging",
+					"description": "REQ-AR-008 declarative aggregation: groups open AR invoices by (customerId, agingBucket) where agingBucket is computed from (today - dueDate) thresholds. Excludes paid / voided / written-off invoices. Pure aggregation per ADR-031; no ARAgingReportService PHP class. Symmetric to AP apAging (REQ-AP-009).",
+					"register": "shillinq",
+					"schema": "ARInvoice",
+					"filter": {
+						"state": {
+							"not-in": [
+								"paid",
+								"voided",
+								"written-off"
+							]
+						}
+					},
+					"groupBy": [
+						"customerId",
+						"agingBucket"
+					],
+					"computedFields": {
+						"agingBucket": {
+							"type": "date-bucket",
+							"field": "dueDate",
+							"referenceDate": "today",
+							"direction": "past",
+							"buckets": [
+								{
+									"label": "current",
+									"maxDaysOverdue": 0
+								},
+								{
+									"label": "1-30 days",
+									"minDaysOverdue": 1,
+									"maxDaysOverdue": 30
+								},
+								{
+									"label": "31-60 days",
+									"minDaysOverdue": 31,
+									"maxDaysOverdue": 60
+								},
+								{
+									"label": "61-90 days",
+									"minDaysOverdue": 61,
+									"maxDaysOverdue": 90
+								},
+								{
+									"label": ">90 days",
+									"minDaysOverdue": 91
+								}
+							]
+						}
+					},
+					"metrics": [
+						"count",
+						"totalAmount"
+					]
 				}
 			},
 			"x-openregister-relations": {
