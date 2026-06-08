@@ -95,11 +95,29 @@ class DunningController extends Controller
     #[NoAdminRequired]
     public function bik(): JSONResponse
     {
-        $authResult = $this->resolveAdministration();
-        if ($authResult instanceof JSONResponse) {
-            return $authResult;
+        if ($this->context->currentUserId() === null) {
+            return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
         }
-        $administrationId = $authResult;
+
+        $administrationId = trim((string) $this->request->getParam('administration_id', ''));
+        if ($administrationId === '') {
+            return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+        }
+
+        if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
+            return new JSONResponse(['error' => 'administration_id must be a valid identifier'], Http::STATUS_BAD_REQUEST);
+        }
+
+        try {
+            $allowed = $this->context->canAccess(administrationId: $administrationId);
+        } catch (\Throwable $e) {
+            $this->logger->error('DunningController: admin access check failed: '.$e->getMessage());
+            return new JSONResponse(['error' => 'Authorization failure'], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+
+        if ($allowed === false) {
+            return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+        }
 
         $hoofdsom     = (float) $this->request->getParam('hoofdsom', 0.0);
         $partyType    = (string) $this->request->getParam('partyType', 'B2B');
@@ -161,11 +179,29 @@ class DunningController extends Controller
     #[NoAdminRequired]
     public function executeRun(): JSONResponse
     {
-        $authResult = $this->resolveAdministration();
-        if ($authResult instanceof JSONResponse) {
-            return $authResult;
+        if ($this->context->currentUserId() === null) {
+            return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
         }
-        $administrationId = $authResult;
+
+        $administrationId = trim((string) $this->request->getParam('administration_id', ''));
+        if ($administrationId === '') {
+            return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+        }
+
+        if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
+            return new JSONResponse(['error' => 'administration_id must be a valid identifier'], Http::STATUS_BAD_REQUEST);
+        }
+
+        try {
+            $allowed = $this->context->canAccess(administrationId: $administrationId);
+        } catch (\Throwable $e) {
+            $this->logger->error('DunningController: admin access check failed: '.$e->getMessage());
+            return new JSONResponse(['error' => 'Authorization failure'], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+
+        if ($allowed === false) {
+            return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+        }
 
         $params = $this->request->getParams();
         if (($params['factuurId'] ?? '') === '') {
@@ -193,11 +229,29 @@ class DunningController extends Controller
     #[NoAdminRequired]
     public function pause(): JSONResponse
     {
-        $authResult = $this->resolveAdministration();
-        if ($authResult instanceof JSONResponse) {
-            return $authResult;
+        if ($this->context->currentUserId() === null) {
+            return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
         }
-        $administrationId = $authResult;
+
+        $administrationId = trim((string) $this->request->getParam('administration_id', ''));
+        if ($administrationId === '') {
+            return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+        }
+
+        if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
+            return new JSONResponse(['error' => 'administration_id must be a valid identifier'], Http::STATUS_BAD_REQUEST);
+        }
+
+        try {
+            $allowed = $this->context->canAccess(administrationId: $administrationId);
+        } catch (\Throwable $e) {
+            $this->logger->error('DunningController: admin access check failed: '.$e->getMessage());
+            return new JSONResponse(['error' => 'Authorization failure'], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+
+        if ($allowed === false) {
+            return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+        }
 
         $factuurId    = (string) $this->request->getParam('factuurId', '');
         $reden        = (string) $this->request->getParam('reden', '');
@@ -239,11 +293,29 @@ class DunningController extends Controller
     #[NoAdminRequired]
     public function resumePause(string $pauseId): JSONResponse
     {
-        $authResult = $this->resolveAdministration();
-        if ($authResult instanceof JSONResponse) {
-            return $authResult;
+        if ($this->context->currentUserId() === null) {
+            return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
         }
-        $administrationId = $authResult;
+
+        $administrationId = trim((string) $this->request->getParam('administration_id', ''));
+        if ($administrationId === '') {
+            return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+        }
+
+        if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
+            return new JSONResponse(['error' => 'administration_id must be a valid identifier'], Http::STATUS_BAD_REQUEST);
+        }
+
+        try {
+            $allowed = $this->context->canAccess(administrationId: $administrationId);
+        } catch (\Throwable $e) {
+            $this->logger->error('DunningController: admin access check failed: '.$e->getMessage());
+            return new JSONResponse(['error' => 'Authorization failure'], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+
+        if ($allowed === false) {
+            return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+        }
 
         $resolution = (string) $this->request->getParam('resolution', 'resolve');
         $partial    = $this->request->getParam('partialSettlement');
@@ -277,11 +349,29 @@ class DunningController extends Controller
     #[NoAdminRequired]
     public function writeOff(): JSONResponse
     {
-        $authResult = $this->resolveAdministration();
-        if ($authResult instanceof JSONResponse) {
-            return $authResult;
+        if ($this->context->currentUserId() === null) {
+            return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
         }
-        $administrationId = $authResult;
+
+        $administrationId = trim((string) $this->request->getParam('administration_id', ''));
+        if ($administrationId === '') {
+            return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+        }
+
+        if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
+            return new JSONResponse(['error' => 'administration_id must be a valid identifier'], Http::STATUS_BAD_REQUEST);
+        }
+
+        try {
+            $allowed = $this->context->canAccess(administrationId: $administrationId);
+        } catch (\Throwable $e) {
+            $this->logger->error('DunningController: admin access check failed: '.$e->getMessage());
+            return new JSONResponse(['error' => 'Authorization failure'], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+
+        if ($allowed === false) {
+            return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+        }
 
         $params = $this->request->getParams();
         if (($params['factuurId'] ?? '') === ''
@@ -315,11 +405,29 @@ class DunningController extends Controller
     #[NoAdminRequired]
     public function dossier(): JSONResponse
     {
-        $authResult = $this->resolveAdministration();
-        if ($authResult instanceof JSONResponse) {
-            return $authResult;
+        if ($this->context->currentUserId() === null) {
+            return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
         }
-        $administrationId = $authResult;
+
+        $administrationId = trim((string) $this->request->getParam('administration_id', ''));
+        if ($administrationId === '') {
+            return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+        }
+
+        if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
+            return new JSONResponse(['error' => 'administration_id must be a valid identifier'], Http::STATUS_BAD_REQUEST);
+        }
+
+        try {
+            $allowed = $this->context->canAccess(administrationId: $administrationId);
+        } catch (\Throwable $e) {
+            $this->logger->error('DunningController: admin access check failed: '.$e->getMessage());
+            return new JSONResponse(['error' => 'Authorization failure'], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+
+        if ($allowed === false) {
+            return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+        }
 
         $factuurId = (string) $this->request->getParam('factuurId', '');
         $klantId   = (string) $this->request->getParam('klantId', '');
@@ -341,39 +449,5 @@ class DunningController extends Controller
         return new JSONResponse($bundle, Http::STATUS_OK);
 
     }//end dossier()
-
-    /**
-     * Resolve the administration scope for the request.
-     *
-     * Reads the administration_id query parameter and verifies the current user
-     * is a member. Returns either the resolved id (string) or a JSONResponse
-     * carrying the appropriate 4xx error.
-     *
-     * @return JSONResponse|string Administration id on success, error response otherwise.
-     */
-    private function resolveAdministration(): JSONResponse|string
-    {
-        if ($this->context->currentUserId() === null) {
-            return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
-        }
-        $administrationId = trim((string) $this->request->getParam('administration_id', ''));
-        if ($administrationId === '') {
-            return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
-        }
-        if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
-            return new JSONResponse(['error' => 'administration_id must be a valid identifier'], Http::STATUS_BAD_REQUEST);
-        }
-        try {
-            $allowed = $this->context->canAccess(administrationId: $administrationId);
-        } catch (\Throwable $e) {
-            $this->logger->error('DunningController: admin access check failed: '.$e->getMessage());
-            return new JSONResponse(['error' => 'Authorization failure'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
-        if ($allowed === false) {
-            return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-        }
-        return $administrationId;
-
-    }//end resolveAdministration()
 
 }//end class
