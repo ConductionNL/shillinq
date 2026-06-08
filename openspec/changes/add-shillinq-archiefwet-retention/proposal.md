@@ -148,12 +148,6 @@ remain queryable (retention enforcement re-engages on next install).
 
 ## Open Questions
 
-1. **Selective anonymisation feature** — OR gap confirmed missing
-   during `opsx-ff` (2026-06-08). Filed as
-   [Conduction/openregister#99](https://codeberg.org/Conduction/openregister/issues/99):
-   `ArchivalRetentionTask` only destroys, `RetentionEvaluator` does
-   not carry `disposition` through to the sweep, and no selective
-   field-level anonymisation path with audit-hash preservation
-   exists. shillinq's spec stays consumed-only (ADR-022) and
-   engages automatically when OR ships the engine.
+1. **Selective anonymisation feature** — OR gap; file issue if
+   confirmed missing during `opsx-ff`.
 2. **Industry-specific selectielijsten** — out of scope; roadmap.

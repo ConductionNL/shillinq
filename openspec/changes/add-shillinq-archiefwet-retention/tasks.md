@@ -22,7 +22,7 @@
 - [x] Task 11: Extend the repair step under `lib/Migration/` to import the Selectielijst seed for every administration (idempotent on re-run; operator overrides preserved)
 - [x] Task 12: Add `Administratie > Bewaartermijnen` navigation + pages to `src/manifest.json` with `type: index` + `type: detail` per REQ-ARC-009; `node tests/validate-manifest.js` exits 0
 - [x] Task 13: Update `openspec/architecture/adr-000-data-model.md` with the new `RetentionRule` entity, its `Primary spec:` reference, and a one-paragraph note on the per-schema retention-rule reference pattern
-- [x] Task 14: File OR issue if `opsx-ff` discovery confirms any retention engine gap (selective anonymisation, audit-hash preservation across anonymisation) per REQ-ARC-006 expectation — filed as [Conduction/openregister#99](https://codeberg.org/Conduction/openregister/issues/99): disposition dispatch (`destroy` / `archive` / `anonymise` / `keep_indefinite`) is not wired through the sweep, and no selective field-level anonymisation with audit-hash preservation exists today. shillinq's spec stays consumed-only (ADR-022); enforcement lands when OR ships the engine.
+- [ ] Task 14: File OR issue if `opsx-ff` discovery confirms any retention engine gap (selective anonymisation, audit-hash preservation across anonymisation) per REQ-ARC-006 expectation
 
 ## Verification
 
