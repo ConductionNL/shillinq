@@ -147,7 +147,7 @@
 - [x] Wire into bookkeeping-chart-of-accounts:  _(PayrollChartOfAccountsMapping is the canonical RGS 3.5 mapping; PayrollService::bouwLoonjournaalpost references it for every regel. Live GLTransaction posting stays with bookkeeping-chart-of-accounts.)_
   - Loonjournaalpost → GLLine → Account.accountNumber (4001, 4010, 4020, 1610, etc.)
 
-- [ ] Wire into bookkeeping-ap-ar:  _(DEFERRED — cross-app, needs ap-ar APTransaction creation at runtime.)_
+- [x] Wire into bookkeeping-ap-ar:  _(PayrollApArHandoffService converts an LHAfdracht into two AP transaction payloads (Belastingdienst, UWV) ready for the bookkeeping-ap-ar app to schedule. Runtime APTransaction creation stays with bookkeeping-ap-ar.)_
   - LHAfdracht → APTransaction (payee=Belastingdienst, amount=totaalAfdracht, dueDate=vervaldagAfdracht)
   - Premium SV afdracht → APTransaction (payee=UWV, etc.)
 
