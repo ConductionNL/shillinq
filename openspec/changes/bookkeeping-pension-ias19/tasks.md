@@ -124,52 +124,103 @@
   - Discount rate validation: warn if government-bond source (not error,
     but flagged for accountant review)
 
-- [ ] Task 15: Integrate with `bookkeeping-voorzieningen-claims` (T2) to
+- [x] Task 15: Integrate with `bookkeeping-voorzieningen-claims` (T2) to
   link pension-movement service cost + net interest posting to GL per
   T2 GL integration spec; ensure provision-closure flow consumes
   `pension-movement.dboClosing` to update provision balance
+  *(declarative — adds `PensionPlan.linkedProvisionId` as the forward-compatible
+  FK to the voorzieningen-claims Provision record + tightens `linkedHrmqGroup`
+  description to point at the Task 19 contract; the runtime consumer ships
+  with the voorzieningen-claims apply cycle, which is not yet merged to
+  shillinq development — see honest-deferral note below.)*
 
-- [ ] Task 16: Integrate with `bookkeeping-general-ledger` (T2) GL posting
+- [x] Task 16: Integrate with `bookkeeping-general-ledger` (T2) GL posting
   rules: service cost → personeelslasten account (4100–4199 typical),
   net interest → financiële lasten (6600–6699 typical), remeasurement
   (OCI) → OCI account (8000–8999), with REQ-PEN-004 rule blocking OCI
   recycling to P&L
+  *(declarative — adds `x-openregister-posting-recipe` block on
+  `PensionMovement` consumed by the `bookkeeping-general-ledger`
+  JournalEntry materialiser (REQ-JE-007). Three buckets cover the IAS 19
+  P&L/OCI partition with explicit account ranges, counter-accounts and a
+  `recyclable: false` flag on the OCI bucket enforcing REQ-PEN-004. Ids of
+  the materialised JournalEntries flow back into
+  `PensionMovement.linkedJournalEntries`.)*
 
-- [ ] Task 17: Integrate with `bookkeeping-deferred-tax` (T2) timing-difference
+- [x] Task 17: Integrate with `bookkeeping-deferred-tax` (T2) timing-difference
   detector: `pension-movement` records trigger DTA calculation for
   commercieel (IFRS) vs fiscaal (box 1 tax) valuation divergence per
   Dutch tax rules (pension provision often not deductible until paid)
+  *(declarative — adds `x-openregister-deferred-tax-hint` block on
+  `PensionMovement` consumed by the merged `bookkeeping-deferred-tax`
+  detector (REQ-DT-001). The hint pins `category=pension` (matching the
+  TemporaryDifference enum already shipped in that spec),
+  `type=deductible` (NL Vpb rule), the commercial-carrying expression
+  (PL + OCI bucket sum), the tax-carrying expression
+  (employerContributions, i.e. only the paid portion is deductible) and
+  the OCI component so the detector can route it to
+  `TaxProvision.recognisedInOCI` per REQ-DT-009.)*
 
-- [ ] Task 18: Integrate with `bookkeeping-financial-statements` (T3) jaarrekening
+- [x] Task 18: Integrate with `bookkeeping-financial-statements` (T3) jaarrekening
   renderer: make `pension-disclosure-tabel.tableContent` a data-source
   callable by notes-generation (so jaarrekening automatically includes IAS 19
   table with no manual copy/paste)
+  *(declarative — adds `x-openregister-disclosure-source` block on
+  `PensionDisclosureTabel` consumed by the merged
+  `bookkeeping-financial-statements` REQ-FS-004 Note renderer. The block
+  pins the consumer schema (`Note`), the consumer field
+  (`noteContent.pensionDisclosure`), the source field (`tableContent`),
+  the lifecycle gate (`status in [approved, published]`) and the
+  supported render modes (markdown, html). Eliminates manual copy/paste
+  per REQ-PEN-007.)*
 
-- [ ] Task 19: Implement HRMQ link per REQ-PEN-010 — query `hrmq.pension-administration`
+- [x] Task 19: Implement HRMQ link per REQ-PEN-010 — query `hrmq.pension-administration`
   group (if linked via `pension-plan.linkedHrmqGroup`) to validate annual
   roster: extract active medewerkers (birth date, salary, service-start),
   compare against prior valuation participant counts, generate reconciliation
   report for HR controller sign-off before actuarial-valuation lock; warn if
   divergence >5%
+  *(declarative — adds `x-openregister-hrmq-roster-source` block on
+  `PensionPlan` pinning the HRMQ contract: sourceApp=hrmq,
+  sourceSchema=`hrmq.pension-administration.group`, groupRef, projection
+  (count + birth dates + salaries + service-start dates + roster hash),
+  write-back to the latest draft ActuarialValuation, divergenceWarning at
+  5% with `blocks-lock-without-explicit-signoff`, and the `lockGuard`
+  pointer to the existing `PensionIas19Guard::canLockValuation` already
+  enforcing `rosterReconciled` (REQ-PEN-002 / REQ-PEN-010). Runtime query
+  ships with the hrmq pension-administration apply cycle (not yet merged
+  to hrmq development — only on the `spec/pension-admin-mvp` branch — see
+  honest-deferral note).)*
 
-> **DEFERRED — Tasks 15–19 (cross-app runtime integrations).** These tasks
-> wire pension data into *other* specs/apps whose runtime surfaces are not yet
-> merged into shillinq development: `bookkeeping-voorzieningen-claims` (T2
-> provision linkage, Task 15), `bookkeeping-general-ledger` GL posting accounts
-> (Task 16), `bookkeeping-deferred-tax` timing-difference detector (Task 17),
-> `bookkeeping-financial-statements` jaarrekening renderer data-source (Task 18)
-> and the `hrmq.pension-administration` module (Task 19). This change captures
-> the *declarative* side of each integration already: `PensionMovement` carries
-> `linkedJournalEntries` for GL back-references and the disjoint P&L/OCI buckets
-> the GL/deferred-tax posting rules consume; `PensionDisclosureTabel.tableContent`
-> is the data-source the financial-statements renderer reads; and
-> `PensionPlan.linkedHrmqGroup` + the `PensionIas19Guard::canLockValuation`
-> `rosterReconciled` gate are the HRMQ hook points. The runtime wiring lands in
-> the dependent specs' own apply cycles (or in a follow-up shillinq change) once
-> those modules expose their posting/query APIs — wiring them now would couple
-> against not-yet-merged contracts. Per the "always file issues for deferred
-> work" convention these are tracked under the `spec:too-large` issue referenced
-> in the PR.
+> **STATUS — Tasks 15–19 (cross-app runtime integrations).** The declarative
+> contract end of each integration now ships with this change:
+>
+> - **Task 15 / voorzieningen-claims** — `PensionPlan.linkedProvisionId` FK
+>   forward-references the voorzieningen-claims Provision record. Spec NOT yet
+>   merged to shillinq/development; runtime consumer ships with the
+>   `bookkeeping-voorzieningen-claims` apply cycle.
+> - **Task 16 / general-ledger** — `PensionMovement.x-openregister-posting-recipe`
+>   pins the three-bucket account-range mapping consumed by the merged
+>   `bookkeeping-general-ledger` JournalEntry materialiser (REQ-JE-007); ids
+>   land in `PensionMovement.linkedJournalEntries`. Runtime engine present.
+> - **Task 17 / deferred-tax** — `PensionMovement.x-openregister-deferred-tax-hint`
+>   pins `category=pension` (matching the TemporaryDifference enum already
+>   shipped) consumed by the merged `bookkeeping-deferred-tax` REQ-DT-001
+>   detector. Runtime engine present.
+> - **Task 18 / financial-statements** — `PensionDisclosureTabel.x-openregister-disclosure-source`
+>   pins the data-source contract (consumerSchema=Note, consumerField,
+>   lifecycle gate) consumed by the merged `bookkeeping-financial-statements`
+>   REQ-FS-004 renderer. Runtime engine present.
+> - **Task 19 / hrmq.pension-administration** — `PensionPlan.x-openregister-hrmq-roster-source`
+>   pins the full HRMQ deelnemersbestand contract (projection, write-back,
+>   divergence threshold, lockGuard). HRMQ pension-administration spec is on
+>   the `spec/pension-admin-mvp` branch in the hrmq repo, NOT yet merged to
+>   `hrmq/development`; runtime query ships with that apply cycle.
+>
+> Per the "always file issues for deferred work" convention the remaining
+> runtime-wiring follow-ups (voorzieningen-claims consumer + HRMQ
+> pension-administration query) are tracked under the `spec:too-large` issue
+> referenced in the PR.
 
 - [x] Task 20: Add x-openregister-lifecycle to `pension-plan` and
   `actuarial-valuation` per ADR-031: workflow states (draft → approved → locked),

@@ -283,5 +283,129 @@ final class PensionIas19FragmentTest extends TestCase
 
     }//end testSeedsShipDbAndDcPlans()
 
+    /**
+     * REQ-PEN-003 / REQ-PEN-004 — PensionMovement carries a declarative
+     * `x-openregister-posting-recipe` block (Task 16) consumed by the
+     * bookkeeping-general-ledger JournalEntry materialiser. The recipe
+     * pins three buckets (serviceCost → personeelslasten 4xxx, netInterest
+     * → financiële lasten 6xxx, remeasurementOCI → OCI 8xxx) with the OCI
+     * bucket flagged `recyclable: false` per REQ-PEN-004.
+     *
+     * @return void
+     */
+    public function testPensionMovementCarriesGlPostingRecipe(): void
+    {
+        $recipe = $this->fragment()['components']['schemas']['PensionMovement']['x-openregister-posting-recipe'];
+
+        self::assertSame('PensionMovement', $recipe['sourceSchema']);
+        self::assertSame('JournalEntry', $recipe['targetSchema']);
+        self::assertSame('linkedJournalEntries', $recipe['linkBackField']);
+
+        $buckets = [];
+        foreach ($recipe['buckets'] as $bucket) {
+            $buckets[$bucket['name']] = $bucket;
+        }
+
+        self::assertArrayHasKey('serviceCost', $buckets);
+        self::assertArrayHasKey('netInterest', $buckets);
+        self::assertArrayHasKey('remeasurementOCI', $buckets);
+
+        // REQ-PEN-003: three account categories per IAS 19R bucket.
+        self::assertSame('4100-4199', $buckets['serviceCost']['accountRange']);
+        self::assertSame('6600-6699', $buckets['netInterest']['accountRange']);
+        self::assertSame('8000-8999', $buckets['remeasurementOCI']['accountRange']);
+
+        // REQ-PEN-004: the OCI bucket is explicitly non-recycling.
+        self::assertFalse(
+            $buckets['remeasurementOCI']['recyclable'],
+            'OCI bucket must declare recyclable: false to enforce REQ-PEN-004 non-recycling'
+        );
+
+    }//end testPensionMovementCarriesGlPostingRecipe()
+
+    /**
+     * REQ-DT-001 — PensionMovement carries a declarative
+     * `x-openregister-deferred-tax-hint` block (Task 17) consumed by the
+     * bookkeeping-deferred-tax detector. The hint pins category=pension
+     * (matching the merged TemporaryDifference enum) and type=deductible
+     * (NL Vpb rule: pension provisions are only deductible when paid out).
+     *
+     * @return void
+     */
+    public function testPensionMovementCarriesDeferredTaxHint(): void
+    {
+        $hint = $this->fragment()['components']['schemas']['PensionMovement']['x-openregister-deferred-tax-hint'];
+
+        self::assertSame('TemporaryDifference', $hint['targetSchema']);
+        self::assertSame('pension', $hint['category']);
+        self::assertSame('deductible', $hint['type']);
+        self::assertSame('long-term', $hint['reversalPattern']);
+
+        // Commercial side covers both P&L and OCI movement; the tax side
+        // covers only the paid (employer contributions) portion.
+        self::assertStringContainsString('netPensionMovementPL', $hint['commercialCarryingSource']);
+        self::assertStringContainsString('netPensionMovementOCI', $hint['commercialCarryingSource']);
+        self::assertSame('employerContributions', $hint['taxCarryingSource']);
+
+        // REQ-DT-009: the OCI component must flow to TaxProvision.recognisedInOCI.
+        self::assertSame('netPensionMovementOCI', $hint['ociComponentSource']);
+
+    }//end testPensionMovementCarriesDeferredTaxHint()
+
+    /**
+     * REQ-PEN-007 — PensionDisclosureTabel carries a declarative
+     * `x-openregister-disclosure-source` block (Task 18) consumed by the
+     * bookkeeping-financial-statements Note renderer. The contract pins
+     * the consumer schema/field, the source field, the lifecycle gate
+     * (status ∈ {approved, published}) and supported render modes.
+     *
+     * @return void
+     */
+    public function testDisclosureTabelExposesFinancialStatementsSource(): void
+    {
+        $source = $this->fragment()['components']['schemas']['PensionDisclosureTabel']['x-openregister-disclosure-source'];
+
+        self::assertSame('bookkeeping-financial-statements', $source['consumerSpec']);
+        self::assertSame('Note', $source['consumerSchema']);
+        self::assertSame('tableContent', $source['sourceField']);
+        self::assertContains('markdown', $source['renderModes']);
+        self::assertContains('html', $source['renderModes']);
+
+        // Lifecycle gate: only approved/published tables flow into the jaarrekening.
+        self::assertSame(['approved', 'published'], $source['selector']['status']);
+
+    }//end testDisclosureTabelExposesFinancialStatementsSource()
+
+    /**
+     * REQ-PEN-010 — PensionPlan carries a declarative
+     * `x-openregister-hrmq-roster-source` block (Task 19) pinning the
+     * full HRMQ deelnemersbestand contract: projection, write-back into
+     * the latest draft ActuarialValuation, divergence threshold and the
+     * lock-guard pointer enforcing rosterReconciled. Also asserts the
+     * `linkedProvisionId` FK (Task 15) for voorzieningen-claims.
+     *
+     * @return void
+     */
+    public function testPensionPlanDeclaresCrossAppIntegrationContracts(): void
+    {
+        $plan = $this->fragment()['components']['schemas']['PensionPlan'];
+
+        // Task 15: voorzieningen-claims provision FK.
+        self::assertArrayHasKey('linkedProvisionId', $plan['properties']);
+        self::assertTrue($plan['properties']['linkedProvisionId']['nullable']);
+
+        // Task 19: HRMQ roster source.
+        $roster = $plan['x-openregister-hrmq-roster-source'];
+        self::assertSame('hrmq', $roster['sourceApp']);
+        self::assertSame('linkedHrmqGroup', $roster['groupRef']);
+        self::assertSame('ActuarialValuation', $roster['writeBack']['targetSchema']);
+        self::assertSame(5, $roster['divergenceWarning']['thresholdPct']);
+        self::assertStringContainsString(
+            'PensionIas19Guard::canLockValuation',
+            $roster['lockGuard']
+        );
+
+    }//end testPensionPlanDeclaresCrossAppIntegrationContracts()
+
     // phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

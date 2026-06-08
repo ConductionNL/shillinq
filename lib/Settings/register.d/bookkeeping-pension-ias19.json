@@ -125,9 +125,15 @@
 					},
 					"linkedHrmqGroup": {
 						"type": "string",
-						"description": "Optional reference to an HRMQ pension-administration group for annual deelnemersbestand validation (REQ-PEN-010).",
+						"description": "Optional reference to an HRMQ pension-administration group for annual deelnemersbestand validation (REQ-PEN-010). The HRMQ contract is captured declaratively in the PensionPlan x-openregister-hrmq-roster-source block (Task 19).",
 						"nullable": true,
 						"example": "vaste-staf-NL"
+					},
+					"linkedProvisionId": {
+						"type": "string",
+						"description": "Optional FK to the bookkeeping-voorzieningen-claims Provision record that carries the cumulative DBO on the balance sheet. When set, the voorzieningen-claims provision-closure flow consumes the latest PensionMovement.dboClosing for the linked plan and updates the provision balance accordingly (REQ-PEN-003 — pension provision linkage). Null when voorzieningen-claims is not yet provisioned in the administration; the linkage falls back to the standard DBO balance-sheet line.",
+						"nullable": true,
+						"example": "provision-pensioen-db-2026"
 					},
 					"governanceDocument": {
 						"type": "string",
@@ -206,6 +212,34 @@
 							"description": "Terminate a paused plan."
 						}
 					}
+				},
+				"x-openregister-hrmq-roster-source": {
+					"description": "Declarative HRMQ deelnemersbestand contract consumed by hrmq.pension-administration when PensionPlan.linkedHrmqGroup is set (REQ-PEN-010). The annual reconciliation job queries the linked HRMQ group for the active medewerkers and writes the count + roster-hash back into the most-recent draft ActuarialValuation; the roster is signed off via ValuationLifecycle.rosterReconciled, which is enforced by PensionIas19Guard::canLockValuation before the valuation can be locked into the jaarrekening. The contract is also the hook point for the >5% divergence warning required by the REQ-PEN-010 scenario.",
+					"sourceApp": "hrmq",
+					"sourceSchema": "hrmq.pension-administration.group",
+					"groupRef": "linkedHrmqGroup",
+					"projection": {
+						"activeCount": "count(members where status=active)",
+						"birthDates": "members.birthDate",
+						"salaries": "members.pensionableSalary",
+						"serviceStartDates": "members.serviceStartDate",
+						"rosterHash": "sha256(sorted(members.id))"
+					},
+					"writeBack": {
+						"targetSchema": "ActuarialValuation",
+						"targetSelector": "ActuarialValuation.plan == PensionPlan.id AND ActuarialValuation.approvalStatus == 'draft'",
+						"fields": {
+							"hrmqRosterCount": "activeCount",
+							"hrmqRosterHash": "rosterHash"
+						}
+					},
+					"divergenceWarning": {
+						"thresholdPct": 5,
+						"comparePriorPeriod": true,
+						"effect": "blocks-lock-without-explicit-signoff"
+					},
+					"lockGuard": "OCA\\Shillinq\\Lifecycle\\PensionIas19Guard::canLockValuation",
+					"x-spec": "openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md#REQ-PEN-010"
 				}
 			},
 			"ActuarialValuation": {
@@ -622,6 +656,61 @@
 							}
 						}
 					}
+				},
+				"x-openregister-posting-recipe": {
+					"description": "Declarative GL posting recipe for PensionMovement, consumed by the T1 bookkeeping-general-ledger JournalEntry materialiser (REQ-PEN-003, REQ-PEN-004, REQ-JE-007). Each bucket maps to a `bookkeeping-general-ledger` JournalEntry whose materialised GLTransaction posts the period charge to the configured chart-of-accounts range. The recipe is declarative: the JournalEntry orchestrator reads it on PensionMovement transition to `posted` and emits one JournalEntry per non-zero bucket; ids land in `PensionMovement.linkedJournalEntries`. Account ranges follow the standard Dutch SBR/RGS bookkeeping hierarchy (4xxx personeelslasten, 6xxx financiële lasten, 8xxx OCI/eigen vermogen) and may be overridden per administration via the chart-of-accounts mapping (REQ-COA-002).",
+					"sourceSchema": "PensionMovement",
+					"targetSchema": "JournalEntry",
+					"trigger": "PensionMovement.status:posted",
+					"buckets": [
+						{
+							"name": "serviceCost",
+							"amountSource": "serviceCostCurrent + pastServiceCost - gainOnSettlement",
+							"sign": "debit",
+							"accountRange": "4100-4199",
+							"accountCategory": "personeelslasten",
+							"counterAccountRange": "1700-1799",
+							"counterAccountCategory": "pensioenvoorziening",
+							"description": "IAS 19 service cost + past service cost - gain on settlement → personeelslasten (REQ-PEN-003 P&L bucket 1).",
+							"requirement": "REQ-PEN-003"
+						},
+						{
+							"name": "netInterest",
+							"amountSource": "netInterestCost",
+							"sign": "debit",
+							"accountRange": "6600-6699",
+							"accountCategory": "financiele-lasten",
+							"counterAccountRange": "1700-1799",
+							"counterAccountCategory": "pensioenvoorziening",
+							"description": "IAS 19 net interest on the net pension liability → financiële lasten (REQ-PEN-003 P&L bucket 2).",
+							"requirement": "REQ-PEN-003"
+						},
+						{
+							"name": "remeasurementOCI",
+							"amountSource": "netPensionMovementOCI",
+							"sign": "debit-on-positive",
+							"accountRange": "8000-8999",
+							"accountCategory": "oci-remeasurement-pension",
+							"counterAccountRange": "1700-1799",
+							"counterAccountCategory": "pensioenvoorziening",
+							"description": "Actuarieel resultaat (DBO + assets) → OCI account (REQ-PEN-003 OCI bucket 3); marked non-recycling per REQ-PEN-004 so the GL engine MUST refuse any later JournalEntry that moves this balance to a P&L account.",
+							"requirement": "REQ-PEN-004",
+							"recyclable": false
+						}
+					],
+					"linkBackField": "linkedJournalEntries",
+					"x-spec": "openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md#REQ-PEN-003"
+				},
+				"x-openregister-deferred-tax-hint": {
+					"description": "Declarative deferred-tax detection hint consumed by bookkeeping-deferred-tax (REQ-DT-001). PensionMovement creates timing differences between the commercial (IFRS / RJ 271) measurement of the pension liability and its tax basis (in NL: pension provisions are typically only deductible when contributions are paid out, so the commercial provision creates a deductible temporary difference / DTA). The detector reads this hint and emits TemporaryDifference records with category=pension per fiscal period per administration; the OCI component flows to TaxProvision.recognisedInOCI per REQ-DT-009.",
+					"targetSchema": "TemporaryDifference",
+					"category": "pension",
+					"type": "deductible",
+					"commercialCarryingSource": "netPensionMovementPL + netPensionMovementOCI",
+					"taxCarryingSource": "employerContributions",
+					"ociComponentSource": "netPensionMovementOCI",
+					"reversalPattern": "long-term",
+					"x-spec": "openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md#REQ-PEN-003"
 				}
 			},
 			"PensionAssumptionSensitivity": {
@@ -812,6 +901,20 @@
 						},
 						"groupBy": ["PensionMovement.plan", "PensionMovement.period"]
 					}
+				},
+				"x-openregister-disclosure-source": {
+					"description": "Declarative data-source contract consumed by bookkeeping-financial-statements REQ-FS-004 jaarrekening Note renderer. The Note schema's pension disclosure section reads PensionDisclosureTabel.tableContent for the (administrationId, valuationDate) tuple when status is `approved` or `published`, eliminating any manual copy/paste into the jaarrekening (REQ-PEN-007). When the renderer cannot project the JSON column directly, the same data is fetched via the real ObjectService API per ADR-022.",
+					"consumerSpec": "bookkeeping-financial-statements",
+					"consumerSchema": "Note",
+					"consumerField": "noteContent.pensionDisclosure",
+					"sourceField": "tableContent",
+					"selector": {
+						"administrationId": "${context.administrationId}",
+						"valuationDate": "${context.balansdatum}",
+						"status": ["approved", "published"]
+					},
+					"renderModes": ["markdown", "html"],
+					"x-spec": "openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md#REQ-PEN-007"
 				}
 			}
 		},
