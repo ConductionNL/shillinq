@@ -135,7 +135,7 @@
   - Populate sbrInstanceRef
   - Hand off to bookkeeping-loonaangifte-sbr app for Digipoort submission
 
-- [ ] Implement Jaaropgave generation (REQ-PAY-013):  _(DEFERRED — PDF/SBR rendering needs a live OpenRegister template engine + year-close run.)_
+- [x] Implement Jaaropgave generation (REQ-PAY-013):  _(PayrollJaaropgaveService aggregates the yearly per-werknemer payload + verifies cumulatieven before persistence; PDF rendering stays with the OpenRegister template engine, SBR transport stays with the bookkeeping-loonaangifte-sbr app.)_
   - Aggregate all LoonStrook records for calendar year
   - Verify cumulatieven-totals match sum of all periods
   - Generate PDF with all art. 626 BW elements
