@@ -71,7 +71,7 @@
   netPensionMovementPL computed, netPensionMovementOCI computed, linkedJournalEntries array FK,
   notes); validate REQ-PEN-004 OCI non-recycling rule in lifecycle
 
-- [ ] Task 8: Declare the `pension-assumption-sensitivity` schema in
+- [x] Task 8: Declare the `pension-assumption-sensitivity` schema in
   `lib/Settings/shillinq_register.json` with REQ-PEN-006 fields (valuation FK,
   assumption enum: discount-rate/salary-growth/mortality/inflation,
   direction string (e.g., "+0.5pp", "-0.5pp", "+1yr", "-1yr"), effectOnDBO,
