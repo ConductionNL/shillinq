@@ -11101,6 +11101,228 @@
 				}
 			}
 		},
+		"ARInvoice": {
+			"slug": "ARInvoice",
+			"icon": "ReceiptTextOutline",
+			"version": "0.1.0",
+			"title": "AR Invoice",
+			"description": "Accounts receivable sub-ledger invoice recording customer billing and revenue recognition. Issuing materialises a balanced GLTransaction per T1 REQ-JE-007 (debit AR control, credit revenue per lines). Lifecycle: draft → issued → paid with partially-paid / overdue / disputed / written-off / voided branches per REQ-AR-004. Carries UBL 2.1 / Peppol BIS 3.0 field shape declared but NOT computed in T2 — T4 e-invoicing populates ublXml + peppolDispatchedAt additively per REQ-AR-009. Per REQ-AR-003 and REQ-AR-004.",
+			"x-schema-org": "schema:Invoice",
+			"type": "object",
+			"required": [
+				"invoiceNumber",
+				"customerId",
+				"invoiceDate",
+				"dueDate",
+				"currency",
+				"totalAmount",
+				"lines",
+				"state",
+				"administrationId"
+			],
+			"properties": {
+				"invoiceNumber": {
+					"type": "string",
+					"description": "Shillinq-side invoice number (auto-generated per administration). Unique per administration.",
+					"example": "INV-C-2026-0001"
+				},
+				"customerId": {
+					"type": "string",
+					"description": "FK to CustomerMaster UUID.",
+					"example": "customer-klant-1"
+				},
+				"invoiceDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Date of invoice issuance.",
+					"example": "2026-01-15"
+				},
+				"dueDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Auto-calculated from invoiceDate + customer.paymentTermDays; overrideable by operator.",
+					"example": "2026-02-14"
+				},
+				"currency": {
+					"type": "string",
+					"minLength": 3,
+					"maxLength": 3,
+					"description": "ISO 4217 currency code. T2: base currency only; T5 adds multi-currency.",
+					"default": "EUR",
+					"example": "EUR"
+				},
+				"totalAmount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Total amount including tax. Credit notes are separate journal types, not negative totals.",
+					"example": 1250.0
+				},
+				"taxAmount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "VAT/BTW amount. T3 adds automated VAT posting; T2 carries the field for reporting.",
+					"nullable": true,
+					"example": 217.98
+				},
+				"lines": {
+					"type": "array",
+					"minItems": 1,
+					"description": "Invoice line breakdown. Each line maps to one GL revenue account.",
+					"items": {
+						"type": "object",
+						"required": [
+							"description",
+							"accountNumber",
+							"amount"
+						],
+						"properties": {
+							"description": {
+								"type": "string",
+								"description": "Line description."
+							},
+							"accountNumber": {
+								"type": "string",
+								"description": "FK to Account.accountNumber (revenue account)."
+							},
+							"amount": {
+								"type": "number",
+								"minimum": 0,
+								"description": "Line amount (non-negative; see REQ-AR-003)."
+							},
+							"taxCode": {
+								"type": "string",
+								"description": "Tax code for this line (e.g. BTW21, BTW9, BTW0).",
+								"nullable": true
+							},
+							"quantity": {
+								"type": "number",
+								"description": "Quantity sold.",
+								"nullable": true
+							},
+							"unitPrice": {
+								"type": "number",
+								"description": "Unit price.",
+								"nullable": true
+							}
+						}
+					}
+				},
+				"sourceDocumentUri": {
+					"type": "string",
+					"description": "docudesk FK URI per bookkeeping-document-attachment-integration. Points to the issued invoice PDF.",
+					"nullable": true,
+					"example": "docudesk://files/shillinq/invoices/inv-c-2026-0001.pdf"
+				},
+				"ublXml": {
+					"type": "string",
+					"description": "UBL 2.1 / Peppol BIS 3.0 XML representation. Declared in T2 but NOT computed in T2 — T4 e-invoicing populates this field via additional x-openregister-calculations per REQ-AR-009. Always null in T2.",
+					"nullable": true
+				},
+				"peppolDispatchedAt": {
+					"type": "string",
+					"format": "date-time",
+					"description": "Timestamp of Peppol dispatch. Set by T4 e-invoicing capability; always null in T2 per REQ-AR-009.",
+					"nullable": true
+				},
+				"state": {
+					"type": "string",
+					"enum": [
+						"draft",
+						"issued",
+						"partially-paid",
+						"paid",
+						"overdue",
+						"disputed",
+						"written-off",
+						"voided"
+					],
+					"description": "AR invoice lifecycle state per REQ-AR-004.",
+					"default": "draft",
+					"example": "draft"
+				},
+				"glTransactionId": {
+					"type": "string",
+					"description": "Back-reference to the materialised GLTransaction once the invoice is issued.",
+					"nullable": true,
+					"example": "gl-txn-2026-ar-0001"
+				},
+				"writeOffReason": {
+					"type": "string",
+					"description": "Operator-authored audit-trailed reason for write-off. Required on the writeOff lifecycle transition per REQ-AR-007.",
+					"nullable": true,
+					"example": "Customer insolvency, court-confirmed uncollectible per ruling 2026-04-22."
+				},
+				"writeOffGlTransactionId": {
+					"type": "string",
+					"description": "Back-reference to the compensating GLTransaction emitted on write-off (debit bad-debt expense, credit AR control) per REQ-AR-007.",
+					"nullable": true,
+					"example": "gl-txn-2026-wo-0001"
+				},
+				"periodId": {
+					"type": "string",
+					"description": "FK to the FiscalPeriod for GL posting (resolved on issue transition per REQ-AR-004).",
+					"nullable": true,
+					"example": "2026-Q1"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the administration owning this AR invoice.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-relations": {
+				"customer": {
+					"localField": "customerId",
+					"relatedSchema": "CustomerMaster",
+					"relatedField": "id",
+					"cardinality": "many-to-one",
+					"description": "FK to the CustomerMaster record this invoice bills."
+				},
+				"glTransaction": {
+					"localField": "glTransactionId",
+					"relatedSchema": "GLTransaction",
+					"relatedField": "id",
+					"cardinality": "many-to-one",
+					"description": "Back-reference to the materialised issue GLTransaction."
+				},
+				"writeOffGlTransaction": {
+					"localField": "writeOffGlTransactionId",
+					"relatedSchema": "GLTransaction",
+					"relatedField": "id",
+					"cardinality": "many-to-one",
+					"description": "Back-reference to the compensating write-off GLTransaction per REQ-AR-007."
+				},
+				"dunningRecords": {
+					"localField": "id",
+					"relatedSchema": "DunningRecord",
+					"relatedField": "invoiceRef",
+					"cardinality": "one-to-many",
+					"description": "Dunning timeline rows for this invoice per REQ-AR-005."
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"controller": {
+						"permissions": [
+							"read",
+							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
 		"Subsidie": {
 			"slug": "Subsidie",
 			"icon": "FileDocumentOutline",
