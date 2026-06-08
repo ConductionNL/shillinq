@@ -151,7 +151,7 @@
   - LHAfdracht → APTransaction (payee=Belastingdienst, amount=totaalAfdracht, dueDate=vervaldagAfdracht)
   - Premium SV afdracht → APTransaction (payee=UWV, etc.)
 
-- [ ] Wire into bookkeeping-upa-pensioen:  _(DEFERRED — cross-app UPA submission.)_
+- [x] Wire into bookkeeping-upa-pensioen:  _(PayrollUpaHandoffService aggregates LoonStrook.pensioen per pensioenuitvoerder into UPA submission payloads; transport stays with bookkeeping-upa-pensioen.)_
   - LoonStrook.pensioen → UPA-monthly-submission (per pensioenuitvoerder)
 
 - [ ] Wire into bookkeeping-wkr:  _(DEFERRED — cross-app; LHAfdracht accepts an eindheffingenWKR input from the WKR app.)_
