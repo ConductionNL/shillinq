@@ -138,7 +138,7 @@
   matrix and return permitted-status (zelfstandig / co-sign-required / college-besluit-required);
   use this in lening-validation hook per D5
 
-- [ ] Task 18: DEFERRED (needs a live OpenConnector source to AGT + a scheduled banking-day cron + GL-posting from `bookkeeping-schatkistbankieren`; not runtime-testable in this spec-build worktree). The `SchatkistbankierenSaldo` schema records the daily position, sweep timestamp and `lastSweepStatus`; the sweep orchestration lands in the implementation cycle. Implement schatkistbankieren daily sweep-job per REQ-FDO-005 —
+- [~] Task 18: DEFERRED (needs a live OpenConnector source to AGT + a scheduled banking-day cron + GL-posting from `bookkeeping-schatkistbankieren`; not runtime-testable in this spec-build worktree). The `SchatkistbankierenSaldo` schema records the daily position, sweep timestamp and `lastSweepStatus`; the sweep orchestration lands in the implementation cycle. Implement schatkistbankieren daily sweep-job per REQ-FDO-005 —
   scheduled daily task (post-bankafschrift-import, e.g., 16:00 each banking day):
   1. Compute drempelbedrag = max(0.75% begroting, €1M, capped €1bn)
   2. Query current rekeningcourant saldo
