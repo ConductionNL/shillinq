@@ -10,7 +10,7 @@
 
 - [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects (shillinq + optional belastingdienst-gateway) / Scope (InvoiceLine extension, VATAuditRecord schema, VAT accrual lifecycle, manifest entries) / Risks (kassakoppeling detail level, reverse-charge VAT scope, payment-date vs issue-date accrual, rounding thresholds) / Open Questions (5 questions listed) / Rollback plan
 
-- [ ] Task 4: Author `design.md` with Decisions table (D1 through D6), Reuse Analysis table, Declarative-vs-Imperative decision table, Seed Data (4 standard NL VAT rates), Risks / Trade-offs, Migration Plan, Implementation Notes (GL account mapping, timezone, currency, precondition failure)
+- [x] Task 4: Author `design.md` with Decisions table (D1 through D6), Reuse Analysis table, Declarative-vs-Imperative decision table, Seed Data (4 standard NL VAT rates), Risks / Trade-offs, Migration Plan, Implementation Notes (GL account mapping, timezone, currency, precondition failure)
 
 - [ ] Task 5: Extend the `InvoiceLine` schema in `lib/Settings/shillinq_register.json` with three new fields per REQ-VAT-001:
   - `vatRate` (enum: 21, 9, 6, 0; default: administration's standard rate)

@@ -28,9 +28,11 @@ The change is **spec-only**. Implementation lands later through `opsx-apply` and
 Each line item on an invoice specifies:
 - `vatRate`: one of 21 (standard), 9 (reduced services), 6 (books/media), 0 (exempt/export)
 - `serviceCategory`: enum (product, service, exempt) — gates VAT rate validity
-- `vatAmount`: computed from `lineAmount × vatRate / 100`
+- `vatAmount`: computed from `bankerRound(lineAmount × vatRate / 100)` in integer cents per ADR-022 money rule
 
 Segregation by service/product allows Dutch VAT audit to distinguish product taxability from service exemptions. No aggregate roll-up; each line is atomic.
+
+All monetary fields (`lineAmount`, `vatAmount`) MUST be stored as integer cents. ADR-022 forbids floating-point money; the schema declares both as `integer` with `description` calling out the cent encoding.
 
 ### D2 — Kassakoppeling compliance via immutable VATAuditRecord
 
@@ -69,7 +71,7 @@ No hardcoded rules; configuration table per administration allows exceptions wit
 
 ### D6 — Rounding per Dutch fiscal standard
 
-Per-line VAT amount: rounding to nearest cent (banker's rounding: 0.5 rounds to nearest even). Invoice-total VAT: sum of line VAT amounts with no additional rounding. This matches Belastingdienst decimal standard.
+Per-line VAT amount: banker's rounding (IEEE 754 `roundTiesToEven`) at integer-cent precision. When the fractional remainder is exactly 0.5 cent, the result rounds to the nearest even cent. Invoice-total VAT: sum of per-line VAT amounts with no additional rounding adjustment line. This matches Belastingdienst decimal standard and is consistent with the ADR-022 integer-cent money rule (no float drift).
 
 ## Reuse Analysis
 
