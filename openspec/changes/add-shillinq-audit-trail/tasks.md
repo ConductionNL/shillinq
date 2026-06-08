@@ -9,7 +9,7 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `bookkeeping-audit-trail` capability spec already exists and that no `lib/Db/Audit*` or `lib/Service/Audit*` classes are present in shillinq (per ADR-022 anti-pattern enumeration)
+- [x] Task 1: Confirm no `bookkeeping-audit-trail` capability spec already exists and that no `lib/Db/Audit*` or `lib/Service/Audit*` classes are present in shillinq (per ADR-022 anti-pattern enumeration) — clean per `audit-pattern-scan.md`; two pre-existing PO-3-way slice-11 files (`lib/Service/AuditExportService.php`, `src/components/three-way-match/AuditTrailDetail.vue`) are CONSUMERS of OR's audit trail, not parallel storage
 - [ ] Task 2: Author `specs/bookkeeping-audit-trail/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T2 (compliance + operations)` / `Depends on: none` header, `REQ-AT-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks with GIVEN/WHEN/THEN; explicitly cite ADR-022 forbiddance of app-local audit
 - [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions
 - [ ] Task 4: Author `design.md` with Reuse Analysis table; document the two-affordance audit UX (top-level nav + per-detail-page side panel) and the CI enforcement of the audit flag
