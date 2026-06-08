@@ -93,7 +93,7 @@
   x-openregister-aggregations query per REQ-PEN-007 scenario; format as
   Markdown / HTML suitable for jaarrekening notes
 
-- [ ] Task 11: Implement the roll-forward aggregation per REQ-PEN-003 —
+- [x] Task 11: Implement the roll-forward aggregation per REQ-PEN-003 —
   `x-openregister-aggregations` query consuming prior-period closing balance
   + current-period actuarial-valuation change + GL posting metadata, emitting
   `pension-movement` records with serviceCostCurrent, netInterestCost,
