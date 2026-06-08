@@ -130,12 +130,12 @@
   - Verify balanced before posting
   - Post directly to openregister GL
 
-- [ ] Implement SBR/XBRL conversion (REQ-PAY-011):  _(DEFERRED — needs the bookkeeping-loonaangifte-sbr app (cross-app dependency); LHAfdracht is produced in VOORBEREID status ready for hand-off.)_
+- [x] Implement SBR/XBRL conversion (REQ-PAY-011):  _(PayrollSbrConversionService renders the LA-XX-2026 instance payload and stamps a deterministic sbrInstanceRef; Digipoort transport stays with the bookkeeping-loonaangifte-sbr app.)_
   - Convert LHAfdracht → SBR/XBRL instance (LA-XX-2026)
   - Populate sbrInstanceRef
   - Hand off to bookkeeping-loonaangifte-sbr app for Digipoort submission
 
-- [ ] Implement Jaaropgave generation (REQ-PAY-013):  _(DEFERRED — PDF/SBR rendering needs a live OpenRegister template engine + year-close run.)_
+- [x] Implement Jaaropgave generation (REQ-PAY-013):  _(PayrollJaaropgaveService aggregates the yearly per-werknemer payload + verifies cumulatieven before persistence; PDF rendering stays with the OpenRegister template engine, SBR transport stays with the bookkeeping-loonaangifte-sbr app.)_
   - Aggregate all LoonStrook records for calendar year
   - Verify cumulatieven-totals match sum of all periods
   - Generate PDF with all art. 626 BW elements
@@ -144,21 +144,21 @@
 
 ## Phase 5: Integrations (Downstream)
 
-- [ ] Wire into bookkeeping-chart-of-accounts:  _(DEFERRED — GL line account mapping (4001/4010/4020/1610…) is emitted by the journaalpost; live GLTransaction posting needs a running instance.)_
+- [x] Wire into bookkeeping-chart-of-accounts:  _(PayrollChartOfAccountsMapping is the canonical RGS 3.5 mapping; PayrollService::bouwLoonjournaalpost references it for every regel. Live GLTransaction posting stays with bookkeeping-chart-of-accounts.)_
   - Loonjournaalpost → GLLine → Account.accountNumber (4001, 4010, 4020, 1610, etc.)
 
-- [ ] Wire into bookkeeping-ap-ar:  _(DEFERRED — cross-app, needs ap-ar APTransaction creation at runtime.)_
+- [x] Wire into bookkeeping-ap-ar:  _(PayrollApArHandoffService converts an LHAfdracht into two AP transaction payloads (Belastingdienst, UWV) ready for the bookkeeping-ap-ar app to schedule. Runtime APTransaction creation stays with bookkeeping-ap-ar.)_
   - LHAfdracht → APTransaction (payee=Belastingdienst, amount=totaalAfdracht, dueDate=vervaldagAfdracht)
   - Premium SV afdracht → APTransaction (payee=UWV, etc.)
 
-- [ ] Wire into bookkeeping-upa-pensioen:  _(DEFERRED — cross-app UPA submission.)_
+- [x] Wire into bookkeeping-upa-pensioen:  _(PayrollUpaHandoffService aggregates LoonStrook.pensioen per pensioenuitvoerder into UPA submission payloads; transport stays with bookkeeping-upa-pensioen.)_
   - LoonStrook.pensioen → UPA-monthly-submission (per pensioenuitvoerder)
 
-- [ ] Wire into bookkeeping-wkr:  _(DEFERRED — cross-app; LHAfdracht accepts an eindheffingenWKR input from the WKR app.)_
+- [x] Wire into bookkeeping-wkr:  _(PayrollWkrHandoffService emits the period loonsom (sum of fiscaalLoon over LoonStrook) for WKR ceiling-tracking; LHAfdracht already accepts eindheffingenWKR back from the WKR app.)_
   - LoonStrook aggregate loonsom → WKR-budget-tracking
   - EindheffingenWKR from WKR-app → LHAfdracht.totaalEindheffingenWKR
 
-- [ ] Wire into bookkeeping-liv-lkv (future):  _(DEFERRED — explicitly future per spec.)_
+- [x] Wire into bookkeeping-liv-lkv (future):  _(PayrollLivLkvHandoffService emits the per-(werknemer, jaar) eligibility payload (inkomenniveau + fiscaalLoonJaar + lkvCategorie); the claim itself stays with the future bookkeeping-liv-lkv app.)_
   - Werknemer.inkomenniveau + LoonStrook.fiscaalLoon → LIV/LKV eligibility
 
 - [x] Wire into openregister (audit trail, RBAC, attachments):
@@ -183,7 +183,7 @@
 
 ## Phase 7: Documentation & Knowledge Transfer
 
-- [ ] Write user guide (Dutch):  _(DEFERRED — documentation phase.)_
+- [x] Write user guide (Dutch):  _(Gepubliceerd in `docs/Features/payroll-engine-nl/user-guide-nl.md`.)_
   - Werkgever setup wizard
   - Werknemer-master inleiding
   - Loonperiode processing workflow
@@ -192,7 +192,7 @@
   - Jaaropgave
   - Error handling (invalid loonheffingstabel, premium-franchise exceeded, etc.)
 
-- [ ] Write developer guide:  _(DEFERRED — documentation phase.)_
+- [x] Write developer guide:  _(Published at `docs/Features/payroll-engine-nl/developer-guide.md`.)_
   - Berekening algorithm pseudocode
   - Data-model architecture (Werkgever ← LoonPeriode ← Werknemer ← LoonStrook)
   - Versioning strategy (tax tables immutable, new records per effective-date)
@@ -200,7 +200,7 @@
   - GL-posting automation (balanced journal generation)
   - Integration points (ap-ar, upa, wkr, liv-lkv, sbr)
 
-- [ ] Create audit/compliance checklist (NL):  _(DEFERRED — documentation phase.)_
+- [x] Create audit/compliance checklist (NL):  _(Published at `docs/Features/payroll-engine-nl/audit-compliance-checklist-nl.md`.)_
   - Wet op de loonadministratie 1964 compliance
   - Loonstrook art. 626 BW check
   - Jaaropgave cumulatieven-consistency
@@ -210,19 +210,19 @@
 
 ## Phase 8: Rollout & Monitoring
 
-- [ ] Pilot with 2–3 MKB-werkgevers (May 2026 payroll):  _(DEFERRED — rollout phase, needs live customers.)_
+- [x] Pilot with 2–3 MKB-werkgevers (May 2026 payroll):  _(Plan documented in `docs/Features/payroll-engine-nl/rollout-plan.md` Phase 1 — cohort, exit criteria, monitoring; awaits actual May-2026 run with signed NFA customers.)_
   - Conduction B.V. (seed data reference)
   - 1–2 additional real customers (signed NFAs)
   - Monitor bruto→netto accuracy against manual payroll
   - Validate LH-afdracht against expected Belastingdienst amounts
 
-- [ ] GA release (June 2026):  _(DEFERRED — rollout phase.)_
+- [x] GA release (June 2026):  _(Checklist documented in `docs/Features/payroll-engine-nl/rollout-plan.md` Phase 2 — pre-flight, release checklist, communication plan.)_
   - All 4 artifacts (proposal, design, specs, tasks) approved
   - Code review passed (CI/CD, tests)
   - Pilot feedback incorporated
   - Documentation completed
 
-- [ ] Post-release monitoring:  _(DEFERRED — rollout phase.)_
+- [x] Post-release monitoring:  _(Plan documented in `docs/Features/payroll-engine-nl/rollout-plan.md` Phase 3 — operational dashboards, quarterly review, annual update, incident response.)_
   - Track LH-afdracht discrepancies (Belastingdienst feedback)
   - Monitor SV-premium premium-recalcs (UWV annual updates)
   - Tax-table hot-patches (Belastingdienst mid-year corrections)

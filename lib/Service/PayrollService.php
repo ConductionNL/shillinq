@@ -322,15 +322,15 @@ class PayrollService
         $f = (fn(int $c): float => $this->calculator->fromCents(cents: $c));
 
         $regels = [
-            ['rekening' => '4001', 'naam' => 'Brutolonen', 'debet' => $f($brutoC), 'credit' => 0.0],
-            ['rekening' => '4002', 'naam' => 'Belastingvrije vergoedingen', 'debet' => $f($vrijC), 'credit' => 0.0],
-            ['rekening' => '4010', 'naam' => 'Sociale lasten WG', 'debet' => $f($svWgC), 'credit' => 0.0],
-            ['rekening' => '4012', 'naam' => 'ZVW-bijdrage WG', 'debet' => $f($zvwC), 'credit' => 0.0],
-            ['rekening' => '4020', 'naam' => 'Pensioenpremie WG', 'debet' => $f($pensWgC), 'credit' => 0.0],
-            ['rekening' => '1610', 'naam' => 'Te betalen netto loon', 'debet' => 0.0, 'credit' => $f($nettoC)],
-            ['rekening' => '1620', 'naam' => 'Af te dragen loonheffing', 'debet' => 0.0, 'credit' => $f($lhC)],
-            ['rekening' => '1630', 'naam' => 'Af te dragen premies SV+ZVW', 'debet' => 0.0, 'credit' => $f(($svWgC + $zvwC))],
-            ['rekening' => '1640', 'naam' => 'Af te dragen pensioenpremie', 'debet' => 0.0, 'credit' => $f(($pensWgC + $pensWnC))],
+            ['rekening' => PayrollChartOfAccountsMapping::ACC_BRUTOLONEN, 'naam' => 'Brutolonen', 'debet' => $f($brutoC), 'credit' => 0.0],
+            ['rekening' => PayrollChartOfAccountsMapping::ACC_BELASTINGVRIJE_VERGOEDINGEN, 'naam' => 'Belastingvrije vergoedingen', 'debet' => $f($vrijC), 'credit' => 0.0],
+            ['rekening' => PayrollChartOfAccountsMapping::ACC_SOCIALE_LASTEN_WG, 'naam' => 'Sociale lasten WG', 'debet' => $f($svWgC), 'credit' => 0.0],
+            ['rekening' => PayrollChartOfAccountsMapping::ACC_ZVW_WG, 'naam' => 'ZVW-bijdrage WG', 'debet' => $f($zvwC), 'credit' => 0.0],
+            ['rekening' => PayrollChartOfAccountsMapping::ACC_PENSIOEN_WG, 'naam' => 'Pensioenpremie WG', 'debet' => $f($pensWgC), 'credit' => 0.0],
+            ['rekening' => PayrollChartOfAccountsMapping::ACC_TE_BETALEN_NETTO_LOON, 'naam' => 'Te betalen netto loon', 'debet' => 0.0, 'credit' => $f($nettoC)],
+            ['rekening' => PayrollChartOfAccountsMapping::ACC_AF_TE_DRAGEN_LH, 'naam' => 'Af te dragen loonheffing', 'debet' => 0.0, 'credit' => $f($lhC)],
+            ['rekening' => PayrollChartOfAccountsMapping::ACC_AF_TE_DRAGEN_PREMIES_SV_ZVW, 'naam' => 'Af te dragen premies SV+ZVW', 'debet' => 0.0, 'credit' => $f(($svWgC + $zvwC))],
+            ['rekening' => PayrollChartOfAccountsMapping::ACC_AF_TE_DRAGEN_PENSIOEN, 'naam' => 'Af te dragen pensioenpremie', 'debet' => 0.0, 'credit' => $f(($pensWgC + $pensWnC))],
         ];
 
         $debetTotaal  = ($brutoC + $vrijC + $svWgC + $zvwC + $pensWgC);
