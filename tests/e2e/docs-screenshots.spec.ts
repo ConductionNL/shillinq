@@ -193,6 +193,18 @@ test.describe('docs: user track', () => {
 		await shoot(page, 'user', '08-financial-statements-04.png')
 		await shoot(page, 'user', '08-financial-statements-05.png')
 	})
+
+	test('UN post-journal-entry', async ({ page }) => {
+		// docs/user-guide/user/11-post-journal-entry.md — bookkeeping
+		// foundation T1 journal entries (manifest-rendered CnIndexPage /
+		// CnDetailPage on the JournalEntry register, per REQ-JE-009).
+		await go(page, '/journals')
+		await shoot(page, 'user', '11-post-journal-entry-01.png')
+		await shoot(page, 'user', '11-post-journal-entry-02.png')
+		await shoot(page, 'user', '11-post-journal-entry-03.png')
+		await shoot(page, 'user', '11-post-journal-entry-04.png')
+		await shoot(page, 'user', '11-post-journal-entry-05.png')
+	})
 })
 
 // ---------------------------------------------------------------------------
