@@ -1,0 +1,253 @@
+{
+	"menu": [
+		{
+			"id": "Cashflow",
+			"label": "Cashflow",
+			"icon": "ChartTimelineVariant",
+			"order": 21,
+			"children": [
+				{
+					"id": "CashflowDashboard",
+					"label": "Cashflow Dashboard",
+					"icon": "ChartTimelineVariant",
+					"route": "CashflowDashboard",
+					"order": 10
+				},
+				{
+					"id": "CashflowRecurring",
+					"label": "Recurring Costs",
+					"icon": "Sync",
+					"route": "CashflowRecurring",
+					"order": 20
+				},
+				{
+					"id": "CashflowBufferPolicy",
+					"label": "Buffer Policy",
+					"icon": "ShieldCheckOutline",
+					"route": "CashflowBufferPolicy",
+					"order": 30
+				},
+				{
+					"id": "CashflowScenarios",
+					"label": "Scenarios",
+					"icon": "Sitemap",
+					"route": "CashflowScenarios",
+					"order": 40
+				},
+				{
+					"id": "CashflowCalibration",
+					"label": "Calibration Report",
+					"icon": "ChartBellCurveCumulative",
+					"route": "CashflowCalibration",
+					"order": 50
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "CashflowDashboard",
+			"route": "/cashflow/dashboard",
+			"type": "index",
+			"title": "Cashflow Dashboard",
+			"config": {
+				"register": "shillinq",
+				"schema": "CashflowWeek",
+				"columns": [
+					{ "key": "weeknummer", "label": "Week", "sortable": true },
+					{ "key": "weekStart", "label": "Week start", "sortable": true },
+					{ "key": "inflows_totaal", "label": "Inflows", "sortable": true },
+					{ "key": "outflows_totaal", "label": "Outflows", "sortable": true },
+					{ "key": "nettoMutatie", "label": "Net change", "sortable": true },
+					{ "key": "eindSaldo", "label": "Closing balance", "sortable": true },
+					{ "key": "bufferStatus", "label": "Buffer status", "sortable": true }
+				],
+				"defaultSort": "weeknummer",
+				"detailRoute": "CashflowWeekDetail"
+			}
+		},
+		{
+			"id": "CashflowWeekDetail",
+			"route": "/cashflow/dashboard/:id",
+			"type": "detail",
+			"title": "Cashflow Week",
+			"config": {
+				"register": "shillinq",
+				"schema": "CashflowWeek",
+				"fields": [
+					{ "key": "weeknummer", "label": "Week", "type": "number" },
+					{ "key": "weekStart", "label": "Week start", "type": "string" },
+					{ "key": "weekEind", "label": "Week end", "type": "string" },
+					{ "key": "openingSaldo", "label": "Opening balance", "type": "number" },
+					{ "key": "inflows_ar_geprognosticeerd", "label": "AR inflows (projected)", "type": "number" },
+					{ "key": "inflows_pipeline", "label": "Pipeline inflows", "type": "number" },
+					{ "key": "inflows_totaal", "label": "Total inflows", "type": "number" },
+					{ "key": "outflows_ap_geprognosticeerd", "label": "AP outflows", "type": "number" },
+					{ "key": "outflows_recurring_huur", "label": "Rent", "type": "number" },
+					{ "key": "outflows_recurring_dga_loon", "label": "DGA salary", "type": "number" },
+					{ "key": "outflows_btw_afdracht", "label": "BTW settlement", "type": "number" },
+					{ "key": "outflows_ib_aanslag", "label": "IB assessment", "type": "number" },
+					{ "key": "outflows_totaal", "label": "Total outflows", "type": "number" },
+					{ "key": "nettoMutatie", "label": "Net change", "type": "number" },
+					{ "key": "eindSaldo", "label": "Closing balance", "type": "number" },
+					{ "key": "bufferStatus", "label": "Buffer status", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"indexRoute": "CashflowDashboard"
+			}
+		},
+		{
+			"id": "CashflowRecurring",
+			"route": "/cashflow/recurring",
+			"type": "index",
+			"title": "Recurring Costs",
+			"config": {
+				"register": "shillinq",
+				"schema": "CashflowRecurring",
+				"columns": [
+					{ "key": "label", "label": "Label", "sortable": true },
+					{ "key": "categorie", "label": "Category", "sortable": true },
+					{ "key": "richting", "label": "Direction", "sortable": true },
+					{ "key": "frequentie", "label": "Frequency", "sortable": true },
+					{ "key": "standaardBedrag", "label": "Amount", "sortable": true },
+					{ "key": "geldigVan", "label": "Valid from", "sortable": true }
+				],
+				"defaultSort": "label",
+				"detailRoute": "CashflowRecurringDetail"
+			}
+		},
+		{
+			"id": "CashflowRecurringDetail",
+			"route": "/cashflow/recurring/:id",
+			"type": "detail",
+			"title": "Recurring Cost",
+			"config": {
+				"register": "shillinq",
+				"schema": "CashflowRecurring",
+				"fields": [
+					{ "key": "label", "label": "Label", "type": "string" },
+					{ "key": "categorie", "label": "Category", "type": "string" },
+					{ "key": "richting", "label": "Direction", "type": "string" },
+					{ "key": "frequentie", "label": "Frequency", "type": "string" },
+					{ "key": "dagVanMaand", "label": "Day of month", "type": "number" },
+					{ "key": "maandVanJaar", "label": "Month of year", "type": "number" },
+					{ "key": "standaardBedrag", "label": "Amount", "type": "number" },
+					{ "key": "indexatieRegel", "label": "Indexation rule", "type": "string" },
+					{ "key": "geldigVan", "label": "Valid from", "type": "string" },
+					{ "key": "geldigTot", "label": "Valid until", "type": "string" },
+					{ "key": "accountNumberExpense", "label": "GL account", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"indexRoute": "CashflowRecurring"
+			}
+		},
+		{
+			"id": "CashflowBufferPolicy",
+			"route": "/cashflow/buffer-policy",
+			"type": "index",
+			"title": "Buffer Policy",
+			"config": {
+				"register": "shillinq",
+				"schema": "CashflowBufferPolicy",
+				"columns": [
+					{ "key": "policy", "label": "Policy", "sortable": true },
+					{ "key": "berekendeBuffer", "label": "Buffer", "sortable": true },
+					{ "key": "alertVooralarm", "label": "Pre-alert", "sortable": true },
+					{ "key": "alertOndergrens", "label": "Critical", "sortable": true }
+				],
+				"defaultSort": "policy",
+				"detailRoute": "CashflowBufferPolicyDetail"
+			}
+		},
+		{
+			"id": "CashflowBufferPolicyDetail",
+			"route": "/cashflow/buffer-policy/:id",
+			"type": "detail",
+			"title": "Buffer Policy",
+			"config": {
+				"register": "shillinq",
+				"schema": "CashflowBufferPolicy",
+				"fields": [
+					{ "key": "policy", "label": "Policy", "type": "string" },
+					{ "key": "berekendeBuffer", "label": "Calculated buffer", "type": "number" },
+					{ "key": "alertVooralarm", "label": "Pre-alert threshold", "type": "number" },
+					{ "key": "alertOndergrens", "label": "Critical threshold", "type": "number" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"indexRoute": "CashflowBufferPolicy"
+			}
+		},
+		{
+			"id": "CashflowScenarios",
+			"route": "/cashflow/scenarios",
+			"type": "index",
+			"title": "Scenarios",
+			"config": {
+				"register": "shillinq",
+				"schema": "CashflowScenario",
+				"columns": [
+					{ "key": "naam", "label": "Name", "sortable": true },
+					{ "key": "createdAt", "label": "Created", "sortable": true }
+				],
+				"defaultSort": "createdAt",
+				"detailRoute": "CashflowScenarioDetail"
+			}
+		},
+		{
+			"id": "CashflowScenarioDetail",
+			"route": "/cashflow/scenarios/:id",
+			"type": "detail",
+			"title": "Scenario",
+			"config": {
+				"register": "shillinq",
+				"schema": "CashflowScenario",
+				"fields": [
+					{ "key": "naam", "label": "Name", "type": "string" },
+					{ "key": "description", "label": "Description", "type": "string" },
+					{ "key": "createdAt", "label": "Created", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"indexRoute": "CashflowScenarios"
+			}
+		},
+		{
+			"id": "CashflowCalibration",
+			"route": "/cashflow/calibration",
+			"type": "index",
+			"title": "Calibration Report",
+			"config": {
+				"register": "shillinq",
+				"schema": "CashflowCalibrationReport",
+				"columns": [
+					{ "key": "calibrationPeriod", "label": "Period", "sortable": true },
+					{ "key": "ar_mape", "label": "AR Accuracy (MAPE)", "sortable": true },
+					{ "key": "ap_mape", "label": "AP Accuracy (MAPE)", "sortable": true },
+					{ "key": "recurring_mape", "label": "Recurring Costs Accuracy", "sortable": true },
+					{ "key": "tax_mape", "label": "Tax Accuracy", "sortable": true }
+				],
+				"defaultSort": "calibrationPeriod",
+				"detailRoute": "CashflowCalibrationDetail"
+			}
+		},
+		{
+			"id": "CashflowCalibrationDetail",
+			"route": "/cashflow/calibration/:id",
+			"type": "detail",
+			"title": "Calibration Report",
+			"config": {
+				"register": "shillinq",
+				"schema": "CashflowCalibrationReport",
+				"fields": [
+					{ "key": "calibrationPeriod", "label": "Period", "type": "string" },
+					{ "key": "generatedAt", "label": "Generated at", "type": "string" },
+					{ "key": "ar_mape", "label": "AR Accuracy (MAPE)", "type": "number" },
+					{ "key": "ap_mape", "label": "AP Accuracy (MAPE)", "type": "number" },
+					{ "key": "recurring_mape", "label": "Recurring Costs Accuracy", "type": "number" },
+					{ "key": "tax_mape", "label": "Tax Accuracy", "type": "number" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"indexRoute": "CashflowCalibration"
+			}
+		}
+	]
+}

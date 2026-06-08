@@ -1,0 +1,244 @@
+{
+  "menu": [
+    {
+      "id": "BtwFiling",
+      "label": "BTW (VAT)",
+      "icon": "BankOutline",
+      "order": 26,
+      "children": [
+        {
+          "id": "VATReturns",
+          "label": "BTW-aangiften (VAT)",
+          "icon": "FileDocumentMultipleOutline",
+          "route": "VATReturns",
+          "order": 5
+        },
+        {
+          "id": "VATReports",
+          "label": "BTW-rapportage (VAT)",
+          "icon": "ChartBoxOutline",
+          "route": "VATReports",
+          "order": 6
+        }
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "id": "VATReturns",
+      "route": "/belastingen/vat-returns",
+      "type": "index",
+      "title": "VAT Returns",
+      "config": {
+        "register": "shillinq",
+        "schema": "VATReturn",
+        "columns": [
+          {
+            "key": "returnNumber",
+            "label": "Return",
+            "sortable": true
+          },
+          {
+            "key": "period",
+            "label": "Period",
+            "sortable": true
+          },
+          {
+            "key": "periodYear",
+            "label": "Year",
+            "sortable": true
+          },
+          {
+            "key": "regime",
+            "label": "Regime",
+            "sortable": true
+          },
+          {
+            "key": "totalVATCollected",
+            "label": "VAT collected",
+            "sortable": true
+          },
+          {
+            "key": "totalVATPaid",
+            "label": "VAT paid",
+            "sortable": true
+          },
+          {
+            "key": "vatBalance",
+            "label": "Balance",
+            "sortable": true
+          },
+          {
+            "key": "statusCode",
+            "label": "Status",
+            "sortable": true
+          }
+        ],
+        "defaultSort": "periodYear",
+        "detailRoute": "VATReturnDetail"
+      }
+    },
+    {
+      "id": "VATReturnDetail",
+      "route": "/belastingen/vat-returns/:id",
+      "type": "detail",
+      "title": "VAT Return",
+      "config": {
+        "register": "shillinq",
+        "schema": "VATReturn",
+        "fields": [
+          {
+            "key": "returnNumber",
+            "label": "Return",
+            "type": "string"
+          },
+          {
+            "key": "period",
+            "label": "Period",
+            "type": "string"
+          },
+          {
+            "key": "periodYear",
+            "label": "Year",
+            "type": "number"
+          },
+          {
+            "key": "periodNumber",
+            "label": "Period number",
+            "type": "number"
+          },
+          {
+            "key": "startDate",
+            "label": "Start date",
+            "type": "string"
+          },
+          {
+            "key": "endDate",
+            "label": "End date",
+            "type": "string"
+          },
+          {
+            "key": "regime",
+            "label": "Regime",
+            "type": "string"
+          },
+          {
+            "key": "statusCode",
+            "label": "Status",
+            "type": "string"
+          },
+          {
+            "key": "totalVATCollected",
+            "label": "VAT collected",
+            "type": "number"
+          },
+          {
+            "key": "totalVATPaid",
+            "label": "VAT paid",
+            "type": "number"
+          },
+          {
+            "key": "vatBalance",
+            "label": "Balance",
+            "type": "number"
+          },
+          {
+            "key": "totalTaxableAmount",
+            "label": "Taxable amount",
+            "type": "number"
+          },
+          {
+            "key": "submissionDate",
+            "label": "Submitted",
+            "type": "string"
+          },
+          {
+            "key": "verificationDate",
+            "label": "Verified",
+            "type": "string"
+          },
+          {
+            "key": "filingReference",
+            "label": "Filing reference",
+            "type": "string"
+          },
+          {
+            "key": "administrationId",
+            "label": "Administration",
+            "type": "string"
+          },
+          {
+            "key": "notes",
+            "label": "Notes",
+            "type": "string"
+          }
+        ],
+        "indexRoute": "VATReturns"
+      }
+    },
+    {
+      "id": "VATReports",
+      "route": "/belastingen/vat-reports",
+      "type": "report",
+      "title": "VAT Reports",
+      "config": {
+        "register": "shillinq",
+        "schema": "VATReturn",
+        "dashboard": {
+          "kpis": [
+            {
+              "id": "vat-balance-ytd",
+              "label": "VAT Balance YTD",
+              "icon": "ScaleBalance",
+              "aggregation": "vatCollectedByRate",
+              "field": "vatAmount",
+              "format": "currency",
+              "currency": "EUR"
+            },
+            {
+              "id": "returns-filed",
+              "label": "Returns Filed",
+              "icon": "FileCheckOutline",
+              "source": "VATReturn",
+              "field": "statusCode",
+              "format": "integer"
+            }
+          ],
+          "table": {
+            "schema": "VATReturn",
+            "columns": [
+              {
+                "key": "returnNumber",
+                "label": "Return"
+              },
+              {
+                "key": "period",
+                "label": "Period"
+              },
+              {
+                "key": "regime",
+                "label": "Regime"
+              },
+              {
+                "key": "totalVATCollected",
+                "label": "Collected"
+              },
+              {
+                "key": "totalVATPaid",
+                "label": "Paid"
+              },
+              {
+                "key": "vatBalance",
+                "label": "Balance"
+              },
+              {
+                "key": "statusCode",
+                "label": "Status"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

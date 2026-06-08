@@ -171,6 +171,15 @@ import BudgetBBVMappingDetail from './components/BudgetBBVMapping/BudgetBBVMappi
 // justification per ADR-024 / ADR-036.
 import AdministrationSwitcherPage from './views/AdministrationSwitcherPage.vue'
 
+// bookings-resource-calendar (#117, REQ-006/REQ-007): the legacy multi-resource
+// CalendarView + BookingForm pages live under src/views/bookings/. They target
+// the /api/v2/calendars REST surface (Resource / Calendar / Booking schemas in
+// the shillinq register) — distinct from the customer-confirmation
+// BookingsCalendarPage above. Both are justified per ADR-024 (imperative time
+// grid + inline conflict dialog).
+import CalendarView from './views/bookings/CalendarView.vue'
+import BookingForm from './views/bookings/BookingForm.vue'
+
 export default {
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
 	MobileScannerReceive: { kind: 'page', component: ReceivePage },
@@ -208,4 +217,8 @@ export default {
 	BudgetBBVMappingDetail: { kind: 'page', component: BudgetBBVMappingDetail },
 	BudgetMappingDetail: { kind: 'page', component: BudgetBBVMappingDetail },
 	AdministrationSwitcherPage: { kind: 'page', component: AdministrationSwitcherPage },
+
+	// bookings-resource-calendar custom pages (REQ-006/REQ-007).
+	BookingsCalendar: { kind: 'page', component: CalendarView },
+	BookingsForm: { kind: 'page', component: BookingForm },
 }

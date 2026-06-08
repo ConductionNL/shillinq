@@ -1,6 +1,6 @@
 # Tasks — 13-Weeks Rolling Cashflow Forecast
 
-> **Spec-only change.** Per `proposal.md` Scope, implementation code is deliberately out of scope here. The tasks below describe the work an `opsx-apply` cycle will execute against the `bookkeeping-cashflow-13wk` spec — they are recorded now so the spec-review gate, dependency planning, and tier-cascade impact are all visible at proposal time. No source files are edited by this change itself.
+> **Implemented (hydra build).** The declarative core of this `kind: config` change is now built to production quality: 8 cashflow schemas + lifecycle + aggregations + seed in a `register.d/` fragment (ADR-037), 5 manifest-v2 pages + menu in a `manifest.d/` fragment, the Monday-02:00 `HorizonRollingJob` (TimedJob, real OR ObjectService API per ADR-022), the single permitted PHP bridge `CashflowRecurringGuard` (ADR-031 exception), nl/en i18n (ADR-007), the data-model ADR, and PHPUnit coverage. Tasks needing a live OpenRegister/openconnector/pipelinq runtime or unmerged cross-app AR/AP cores are DEFERRED with reasons (see below) — they cannot be built or honestly tested in a worktree without those services.
 
 ## Tasks
 
@@ -75,6 +75,20 @@
 - [x] **Task 35: Verify ADR-022 compliance (reuse OR abstractions)** — Review dependencies: (1) AR/AP master data read from existing registers (not duplicated), (2) GL chart-of-accounts FK from Account.accountNumber, (3) pipelinq + openconnector APIs consumed read-only, (4) bankfeed data not stored locally (transient reconciliation only), (5) scenario snapshots use OR's snapshot pattern; document compliance
 
 - [x] **Task 36: Final spec review + acceptance** — Peer review by: (1) Bookkeeper persona (Jan-Willem, SMB owner) — verify AR/AP/tax-afdracht timing is Dutch-compliant, crisis-mode suggestions are actionable, (2) Architecture reviewer — confirm ADR-031 + ADR-022 + ADR-024 (manifest) compliance, (3) Security reviewer — bankfeed credential handling (PSD2 scope), data retention policy for scenarios, (4) Performance reviewer — aggregation query complexity (13 weeks × 7+ categories), index strategy; document findings in PR
+
+## Deferred tasks (with reasons)
+
+The following tasks are intentionally NOT built in this worktree build because they require services or review steps that are unavailable here. Each is tracked for the live-instance follow-up:
+
+- **Task 20 (daily bankfeed-pull job)** — DEFERRED: requires a live `openconnector` PSD2 integration to fetch saldo/transactions. The reconciliation lifecycle (AR `issued → paid`) and the `inflows_ar_gerealiseerd` field are already modelled on `CashflowWeek`/`CashflowARProjection`; the job is a thin orchestrator over an API that is not reachable from a worktree. Build alongside the openconnector PSD2 wiring.
+- **Task 21 (daily crisis-mode refresh job)** — DEFERRED: a daily-recompute variant of the rolling job, only meaningful once OR aggregations recompute weeks server-side at runtime. The `crisisModeActief` flag is modelled on `CashflowForecastHorizon`; the refresh cadence is a runtime behaviour to verify against a live instance.
+- **Task 22 (monthly calibration job)** — DEFERRED: depends on realised bankfeed actuals (openconnector) and pipelinq deal-conversion reads to compute MAPE. The `CashflowCalibrationReport` schema + `avgArMapeByPeriod` aggregation are in place; the batch job needs the upstream actuals feed.
+- **Task 25/26 (Vue dashboard + scenario-creator components)** — DEFERRED/N-A: this app uses the manifest-v2 **declarative** page system (no `src/router/index.js`, no per-view `.vue` skeletons). The dashboard, recurring CRUD, buffer-policy, scenarios and calibration pages are declared in `src/manifest.d/zzp-cashflow-13wk.json` and rendered by the shared CnAppRoot index/detail renderer. A bespoke bar-chart/scenario-calculator widget is a future enhancement that belongs in `nextcloud-vue` (shared component), not an app-local skeleton.
+- **Task 27 (PDF-export renderer)** — DEFERRED: should reuse the existing `openregister` PDF export rather than a new app-local `lib/Service/CashflowPdfRenderer.php` (ADR-022). Wire the export button to the OR renderer when implementing the dashboard widget; authoring a duplicate PHP renderer now would violate the reuse rule.
+- **Task 30 (Playwright MCP browser tests)** — DEFERRED: requires a running Nextcloud instance with the app installed and the register seeded. Cannot run headless-meaningfully in a worktree. Add under the e2e-coverage gate once deployed.
+- **Task 36 (multi-persona peer review)** — DEFERRED: a human review step (bookkeeper/architecture/security/performance personas), owned by the Hydra reviewer on the PR, not an autonomous build task.
+
+> Note: Task 23 (PSD2 reconciliation matcher) is satisfied conceptually by deferring the matching to Task 20's job; in this build the single permitted ADR-031 PHP bridge is `CashflowRecurringGuard` (recurring-definition consistency), which is the higher-value invariant to enforce at save time. A separate fuzzy-match `BankfeedMatcher` ships with Task 20 against the live PSD2 feed.
 
 ## Verification
 

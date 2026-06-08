@@ -62,6 +62,13 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <admin-section>OCA\Shillinq\Sections\SettingsSection</admin-section>
     </settings>
 
+    <background-jobs>
+        <job>OCA\Shillinq\BackgroundJob\HorizonRollingJob</job>
+        <job>OCA\Shillinq\BackgroundJob\CancelUnconfirmedAppointments</job>
+        <job>OCA\Shillinq\Job\MandateDormancyExpiryJob</job>
+        <job>OCA\Shillinq\BackgroundJob\OverdueVerantwoordingJob</job>
+    </background-jobs>
+
     <repair-steps>
         <post-migration>
             <step>OCA\Shillinq\Repair\InitializeSettings</step>

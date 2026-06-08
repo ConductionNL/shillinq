@@ -29,6 +29,7 @@ use ReflectionMethod;
  */
 final class BookkeepingOperationsFragmentTest extends TestCase
 {
+
     /**
      * Absolute path to the change fragment.
      *
@@ -130,7 +131,7 @@ final class BookkeepingOperationsFragmentTest extends TestCase
 
         $accountFieldCountBefore = count($base['components']['schemas']['Account']['properties']);
 
-        $merged = $this->merge($base, $frag);
+        $merged  = $this->merge($base, $frag);
         $schemas = $merged['components']['schemas'];
 
         // New schemas present.

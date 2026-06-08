@@ -1,5 +1,66 @@
 # Tasks — Inventory Mobile Scanner
 
+## Build status (hydra-build 2026-06)
+
+This change was implemented against the **real shillinq architecture**, which
+differs from the generic SPA/PWA the original task list assumed. The corrections
+below follow the fleet ADRs; each task is mapped to the concrete deliverable:
+
+- **Data model (ADR-037)** — the upstream dependency specs `inventory-stock-tracking`
+  and `inventory-barcode-sku` are NOT implemented in this app (no inventory schemas
+  existed). Their data model is therefore introduced here, in a modular register
+  fragment `lib/Settings/register.d/inventory-mobile-scanner.json` (never editing the
+  monolith): `InventoryItem` (barcode→SKU source of truth), `InventoryLocation`,
+  `InventoryStock` (the location-aware ledger), `GoodsReceipt`, `InventoryTransfer`,
+  `InventoryCount`, and `MobileScanOperation` (the offline-batch record carrying the
+  client transactionId). The loader (`SettingsService::deepMergeConfig`) already
+  unions `components.schemas` + top-level `objects` additively — verified, no change
+  needed.
+- **Server-authoritative writes (ADR-022)** — all stock mutation runs in
+  `lib/Service/InventoryScanService.php` via the REAL OpenRegister ObjectService API
+  (`setRegister`/`setSchema`/`findAll`/`saveObject`). The spec's client-side IndexedDB
+  mutation + raw `/api/v1/inventory/sync` is replaced by a server-authoritative,
+  idempotent (`transactionId`-deduplicated) scan endpoint — the data integrity
+  guarantees (REQ-SYNC-001/002, non-negative stock) are enforced on the server, not
+  the client.
+- **Invariants (ADR-031)** — `lib/Guard/InventoryScanGuard.php` is the
+  `MobileScanOperation` save precondition (referenced from the schema
+  `x-openregister-lifecycle.preconditions.save`): transactionId presence, type-field
+  presence, non-negative quantity, source-stock sufficiency, fail-closed.
+- **Authorization (ADR-005, REQ-PERM-001)** — `lib/Controller/InventoryScanController.php`
+  re-checks the acting user's role server-side against NC group membership
+  (`shillinq-warehouse-manager` / `shillinq-inventory-operator` / `shillinq-counter`;
+  admins implicitly hold all roles). `#[NoAdminRequired]`, IDOR-safe (acting user from
+  the session, never the body), no stack traces to the client.
+- **Frontend (ADR-016/036)** — declarative manifest-v2 pages + menu in
+  `src/manifest.d/inventory-mobile-scanner.json` (index/detail for Stock, Items,
+  Locations, Scan Operations, Receipts, Transfers, Counts), rendered by the published
+  `CnPageRenderer` shell. No `src/router/index.js`, no bespoke Vue. i18n nl+en added.
+
+### DEFERRED (needs a live instance / a lib change — documented per
+[[feedback_always-file-issues]])
+
+- **Client-side PWA offline layer** (service worker, IndexedDB mirror, background
+  30s sync scheduler, optimistic local writes, sync-status badge, conflict toast):
+  T1.1, T1.2, T1.6, T4.1–T4.6, T6.4, T6.5, T7.1–T7.6. These are a client rewrite that
+  is incompatible with the published `@conduction/nextcloud-vue` `CnPageRenderer`
+  shell (which owns the app chrome and does not expose a service-worker / IndexedDB
+  extension point) and cannot be built or verified without a live instance + a lib
+  change. The offline-batch + idempotent-sync contract is delivered **server-side** by
+  the scan endpoint; clients gain offline durability when the shell adds a SW hook.
+- **Camera barcode decoding** (getUserMedia + jsQR/quagga live preview): T2.1–T2.3,
+  T2.6, T6.3. Camera capture requires a custom interactive page component, which the
+  declarative registry deliberately excludes (ADR-024). The barcode→SKU **resolve**
+  endpoint (T2.4) and the **manual-entry fallback** (T2.5, REQ-BARCODE-002 — the
+  declarative forms + resolve endpoint) ARE delivered; live camera scanning is the
+  deferred enhancement.
+- **Order-line mark-picked** (T3.3 partial): no order schema exists in shillinq yet;
+  the pick operation decrements stock and the mark-picked side is deferred to the
+  order-management dependency.
+
+Tracking issue for the deferred client-PWA + camera scope: filed on the Hydra
+coordination board (referenced from the PR body).
+
 ## Sprint 1: Data Layer & Sync Protocol (Week 1–2)
 
 - [x] **T1.1: IndexedDB Schema Design**

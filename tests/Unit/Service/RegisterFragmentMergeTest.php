@@ -94,4 +94,47 @@ final class RegisterFragmentMergeTest extends TestCase
         $this->assertSame(['a', 'b', 'c'], $merged['required']);
         $this->assertSame('0.2.0', $merged['info']['version']);
     }//end testListsConcatenateAndScalarsOverwrite()
+
+    /**
+     * A fragment introducing components.objects[] when the base has none sets the
+     * list wholesale; a second fragment then concatenates onto it. This locks the
+     * additive-union behaviour the bookings-resource-calendar seed fragment relies
+     * on so its seed objects merge cleanly alongside other changes' objects (ADR-037).
+     *
+     * @return void
+     */
+    public function testComponentsObjectsListUnionsAdditively(): void
+    {
+        // Base monolith carries schemas but no components.objects key.
+        $base = ['components' => ['schemas' => ['Existing' => ['type' => 'object']]]];
+
+        // Fragment A introduces the objects list and a new schema.
+        $base = $this->merge(
+            $base,
+            [
+                'components' => [
+                    'schemas' => ['Booking' => ['type' => 'object']],
+                    'objects' => [['@self' => ['schema' => 'Booking', 'slug' => 'bk-001']]],
+                ],
+            ]
+        );
+        $this->assertArrayHasKey('objects', $base['components']);
+        $this->assertCount(1, $base['components']['objects']);
+
+        // Fragment B appends another object — list concatenation, no clobber.
+        $base = $this->merge(
+            $base,
+            [
+                'components' => [
+                    'objects' => [['@self' => ['schema' => 'Booking', 'slug' => 'bk-002']]],
+                ],
+            ]
+        );
+        $this->assertCount(2, $base['components']['objects']);
+        $this->assertSame('bk-001', $base['components']['objects'][0]['@self']['slug']);
+        $this->assertSame('bk-002', $base['components']['objects'][1]['@self']['slug']);
+        // Pre-existing schema survives the object merges.
+        $this->assertArrayHasKey('Existing', $base['components']['schemas']);
+        $this->assertArrayHasKey('Booking', $base['components']['schemas']);
+    }//end testComponentsObjectsListUnionsAdditively()
 }//end class

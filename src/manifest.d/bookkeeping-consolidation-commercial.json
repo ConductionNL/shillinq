@@ -1,0 +1,157 @@
+{
+	"menu": [
+		{
+			"id": "Consolidation",
+			"label": "Consolidation",
+			"icon": "Sitemap",
+			"order": 75,
+			"children": [
+				{
+					"id": "ConsolidationGroups",
+					"label": "Consolidation Groups",
+					"icon": "Sitemap",
+					"route": "ConsolidationGroups",
+					"order": 10
+				},
+				{
+					"id": "ConsolidationPeriods",
+					"label": "Consolidation Periods",
+					"icon": "CalendarSync",
+					"route": "ConsolidationPeriods",
+					"order": 20
+				},
+				{
+					"id": "ConsolidatedReports",
+					"label": "Consolidated Reports",
+					"icon": "FileChartOutline",
+					"route": "ConsolidatedReports",
+					"order": 30
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "ConsolidationGroups",
+			"route": "/consolidation/groups",
+			"type": "index",
+			"title": "Consolidation Groups",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidationGroup",
+				"columns": [
+					{"key": "groupName", "label": "Group", "sortable": true},
+					{"key": "reportingCurrency", "label": "Currency", "sortable": true},
+					{"key": "reportingFramework", "label": "Framework", "sortable": true},
+					{"key": "fiscalYearEnd", "label": "Fiscal year end", "sortable": true},
+					{"key": "defaultConsolidationMethod", "label": "Default method", "sortable": true},
+					{"key": "state", "label": "State", "sortable": true}
+				],
+				"defaultSort": "groupName",
+				"detailRoute": "ConsolidationGroupDetail"
+			}
+		},
+		{
+			"id": "ConsolidationGroupDetail",
+			"route": "/consolidation/groups/:id",
+			"type": "detail",
+			"title": "Consolidation Group",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidationGroup",
+				"fields": [
+					{"key": "groupName", "label": "Group", "type": "string"},
+					{"key": "parentAdministrationId", "label": "Parent administration", "type": "string"},
+					{"key": "reportingCurrency", "label": "Reporting currency", "type": "string"},
+					{"key": "reportingFramework", "label": "Reporting framework", "type": "string"},
+					{"key": "fiscalYearEnd", "label": "Fiscal year end", "type": "string"},
+					{"key": "defaultConsolidationMethod", "label": "Default method", "type": "string"},
+					{"key": "firstConsolidationDate", "label": "First consolidation date", "type": "string"},
+					{"key": "notes", "label": "Notes", "type": "string"},
+					{"key": "state", "label": "State", "type": "string"}
+				],
+				"indexRoute": "ConsolidationGroups"
+			}
+		},
+		{
+			"id": "ConsolidationPeriods",
+			"route": "/consolidation/periods",
+			"type": "index",
+			"title": "Consolidation Periods",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidationPeriod",
+				"columns": [
+					{"key": "consolidationGroupId", "label": "Group", "sortable": true},
+					{"key": "periodStart", "label": "Period start", "sortable": true},
+					{"key": "periodEnd", "label": "Period end", "sortable": true},
+					{"key": "executor", "label": "Executor", "sortable": true},
+					{"key": "totalEliminationCount", "label": "Eliminations", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true}
+				],
+				"defaultSort": "periodEnd",
+				"detailRoute": "ConsolidationPeriodDetail"
+			}
+		},
+		{
+			"id": "ConsolidationPeriodDetail",
+			"route": "/consolidation/periods/:id",
+			"type": "detail",
+			"title": "Consolidation Period",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidationPeriod",
+				"fields": [
+					{"key": "consolidationGroupId", "label": "Group", "type": "string"},
+					{"key": "periodStart", "label": "Period start", "type": "string"},
+					{"key": "periodEnd", "label": "Period end", "type": "string"},
+					{"key": "executor", "label": "Executor", "type": "string"},
+					{"key": "executionTimestamp", "label": "Executed at", "type": "string"},
+					{"key": "totalEliminationCount", "label": "Elimination count", "type": "number"},
+					{"key": "totalEliminationAmount", "label": "Elimination amount", "type": "number"},
+					{"key": "status", "label": "Status", "type": "string"}
+				],
+				"indexRoute": "ConsolidationPeriods"
+			}
+		},
+		{
+			"id": "ConsolidatedReports",
+			"route": "/consolidation/reports",
+			"type": "index",
+			"title": "Consolidated Reports",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidatedBalance",
+				"columns": [
+					{"key": "consolidationGroupId", "label": "Group", "sortable": true},
+					{"key": "reportDate", "label": "Report date", "sortable": true},
+					{"key": "totalAssets", "label": "Total assets", "sortable": true},
+					{"key": "totalEquity", "label": "Total equity", "sortable": true},
+					{"key": "state", "label": "State", "sortable": true}
+				],
+				"defaultSort": "reportDate",
+				"detailRoute": "ConsolidatedReportDetail"
+			}
+		},
+		{
+			"id": "ConsolidatedReportDetail",
+			"route": "/consolidation/reports/:id",
+			"type": "detail",
+			"title": "Consolidated Balance",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidatedBalance",
+				"fields": [
+					{"key": "consolidationGroupId", "label": "Group", "type": "string"},
+					{"key": "consolidationPeriodId", "label": "Period", "type": "string"},
+					{"key": "reportDate", "label": "Report date", "type": "string"},
+					{"key": "totalAssets", "label": "Total assets", "type": "number"},
+					{"key": "totalLiabilities", "label": "Total liabilities", "type": "number"},
+					{"key": "totalEquity", "label": "Total equity", "type": "number"},
+					{"key": "state", "label": "State", "type": "string"}
+				],
+				"indexRoute": "ConsolidatedReports"
+			}
+		}
+	]
+}

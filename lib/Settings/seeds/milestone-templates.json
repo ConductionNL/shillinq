@@ -1,0 +1,50 @@
+{
+	"_meta": {
+		"source": "openspec/changes/bookkeeping-tenderned-integratie/design.md (Seed Data §1)",
+		"variant": "milestone-templates",
+		"description": "Milestone-plan templates keyed by opdrachttype. Consumed by MilestoneTemplateService::generatePlan to produce an initial mijlpalen plan when a TenderNed obligation is activated (REQ-003). Reference data, not register objects — templates are user-editable after generation.",
+		"license": "EUPL-1.2",
+		"copyright": "2026 Conduction B.V."
+	},
+	"templates": [
+		{
+			"opdrachttype": "levering-in-fases",
+			"naam": "Gefaseerde levering — per kwartaal",
+			"beschrijving": "4 kwartaal-deelopleveringen over een contract van 1 jaar.",
+			"mijlpalen": [
+				{ "percentage": 25, "label": "Q1 deeloplevering", "fractionOfTerm": 0.25, "opleveringsType": "deeloplevering" },
+				{ "percentage": 25, "label": "Q2 deeloplevering", "fractionOfTerm": 0.5, "opleveringsType": "deeloplevering" },
+				{ "percentage": 25, "label": "Q3 deeloplevering", "fractionOfTerm": 0.75, "opleveringsType": "deeloplevering" },
+				{ "percentage": 25, "label": "Q4 eindoplevering", "fractionOfTerm": 1.0, "opleveringsType": "eindoplevering" }
+			]
+		},
+		{
+			"opdrachttype": "dienstverlening-doorlopend",
+			"naam": "Doorlopende dienstverlening — per maand",
+			"beschrijving": "12 maandelijkse deelfacturen over een contract van 1 jaar.",
+			"mijlpalen": [
+				{ "percentage": 8.37, "label": "Maand 1", "fractionOfTerm": 0.0833, "opleveringsType": "deeloplevering" },
+				{ "percentage": 8.33, "label": "Maand 2", "fractionOfTerm": 0.1666, "opleveringsType": "deeloplevering" },
+				{ "percentage": 8.33, "label": "Maand 3", "fractionOfTerm": 0.25, "opleveringsType": "deeloplevering" },
+				{ "percentage": 8.33, "label": "Maand 4", "fractionOfTerm": 0.3333, "opleveringsType": "deeloplevering" },
+				{ "percentage": 8.33, "label": "Maand 5", "fractionOfTerm": 0.4166, "opleveringsType": "deeloplevering" },
+				{ "percentage": 8.33, "label": "Maand 6", "fractionOfTerm": 0.5, "opleveringsType": "tussentijdse-rapportage" },
+				{ "percentage": 8.33, "label": "Maand 7", "fractionOfTerm": 0.5833, "opleveringsType": "deeloplevering" },
+				{ "percentage": 8.33, "label": "Maand 8", "fractionOfTerm": 0.6666, "opleveringsType": "deeloplevering" },
+				{ "percentage": 8.33, "label": "Maand 9", "fractionOfTerm": 0.75, "opleveringsType": "deeloplevering" },
+				{ "percentage": 8.33, "label": "Maand 10", "fractionOfTerm": 0.8333, "opleveringsType": "deeloplevering" },
+				{ "percentage": 8.33, "label": "Maand 11", "fractionOfTerm": 0.9166, "opleveringsType": "deeloplevering" },
+				{ "percentage": 8.33, "label": "Maand 12", "fractionOfTerm": 1.0, "opleveringsType": "eindoplevering" }
+			]
+		},
+		{
+			"opdrachttype": "other",
+			"naam": "Standaard — halverwege en eind",
+			"beschrijving": "Fallback met 2 mijlpalen: 50% halverwege, 50% bij eindoplevering.",
+			"mijlpalen": [
+				{ "percentage": 50, "label": "Tussentijdse oplevering", "fractionOfTerm": 0.5, "opleveringsType": "deeloplevering" },
+				{ "percentage": 50, "label": "Eindoplevering", "fractionOfTerm": 1.0, "opleveringsType": "eindoplevering" }
+			]
+		}
+	]
+}

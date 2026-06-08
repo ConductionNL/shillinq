@@ -7,9 +7,14 @@
 `../add-shillinq-general-ledger/specs/bookkeeping-general-ledger/spec.md` (T1 GL posting),
 `../add-shillinq-accounts-receivable-core/specs/accounts-receivable-core/spec.md` (T2 AR posting)
 
-## EXTENDED & ADDED Requirements
+## ADDED Requirements
 
-### REQ-ERP-001: Settlement mode (reimbursable or pass-through) SHALL be an enum field on Expense and ExpenseClaim
+> Schema-naming note: this spec names the line item `Expense` and the claim
+> `ExpenseClaim`. The implemented shillinq schemas are `Receipt` and
+> `ExpenseClaimEntry` respectively (the real upstream `expense-capture-core`
+> names); the requirements below apply to those schemas (ADR-022).
+
+### Requirement: REQ-ERP-001 — Settlement mode (reimbursable or pass-through) SHALL be an enum field on Expense and ExpenseClaim
 
 `Expense` and `ExpenseClaim` MUST declare a `settlementMode` enum field with
 values `reimbursable | pass-through`. The field is immutable after claim
@@ -38,7 +43,7 @@ submission. Per ADR-031, the enum is purely declarative; no PHP service logic.
 - **THEN** validation MUST fail with a "settlement mode is immutable after
   submission" error.
 
-### REQ-ERP-002: Expense schema MUST carry pass-through linking and markup fields
+### Requirement: REQ-ERP-002 — Expense schema MUST carry pass-through linking and markup fields
 
 The `Expense` schema MUST declare the following new fields:
 
@@ -69,7 +74,7 @@ ADR-000).
 - **THEN** validation MUST fail with a "AR account not configured for this
   customer or settlement policy" error.
 
-### REQ-ERP-003: ExpenseClaim schema MUST declare settlement aggregates and dual-path state tracking
+### Requirement: REQ-ERP-003 — ExpenseClaim schema MUST declare settlement aggregates and dual-path state tracking
 
 The `ExpenseClaim` schema MUST be extended with:
 
@@ -100,7 +105,7 @@ The `ExpenseClaim` schema MUST be extended with:
 - **THEN** validation MUST fail with a "claim must have a single settlement mode"
   error.
 
-### REQ-ERP-004: ReimbursementPolicy master data MUST define per-administration settlement rules
+### Requirement: REQ-ERP-004 — ReimbursementPolicy master data MUST define per-administration settlement rules
 
 A new `ReimbursementPolicy` schema SHALL declare:
 
@@ -131,7 +136,7 @@ Schema.org annotation: `schema:Thing`.
 - **THEN** approval workflow MUST include a second approver gate (e.g., manager
   sign-off on markup).
 
-### REQ-ERP-005: PassThroughMarkupRule master data MUST define per-customer / per-category rates
+### Requirement: REQ-ERP-005 — PassThroughMarkupRule master data MUST define per-customer / per-category rates
 
 A new `PassThroughMarkupRule` schema SHALL declare:
 
@@ -170,7 +175,10 @@ Schema.org annotation: `schema:Offer`.
 - **WHEN** an operator applies Rule Y to 1 meal receipt
 - **THEN** final amount = cost + €2.50.
 
-### REQ-ERP-006: Settlement approval policy MAY require markup sign-off if threshold exceeded
+### Requirement: REQ-ERP-006 — Settlement approval policy MAY require markup sign-off if threshold exceeded
+
+The system MUST enforce an additional markup-approval gate when, and only when,
+a policy threshold is configured and exceeded.
 
 If `ReimbursementPolicy.requiresMarkupApprovalThreshold` is set, the
 `ExpenseClaim` lifecycle MUST consume OR's approval-workflow extension with an
@@ -196,7 +204,10 @@ configured through OR UI.
 - **THEN** an extra approver (e.g., finance manager) MUST sign off on markup
   before claim can proceed to payment/invoicing.
 
-### REQ-ERP-007: GL materialisation MUST emit one balanced entry per claim on post, branching by settlement mode
+### Requirement: REQ-ERP-007 — GL materialisation MUST emit one balanced entry per claim on post, branching by settlement mode
+
+On post, the system MUST materialise exactly one balanced GL entry per claim,
+branching on `settlementMode`.
 
 When an `ExpenseClaim` transitions to `posted`:
 
@@ -238,7 +249,7 @@ the settlement mode on the entry.
 - **THEN** the entry MUST carry metadata (e.g., in description or custom field)
   identifying settlement mode + claim ID for traceability.
 
-### REQ-ERP-008: Reimbursable claim SHALL trigger SEPA payment notification event on post
+### Requirement: REQ-ERP-008 — Reimbursable claim SHALL trigger SEPA payment notification event on post
 
 On `ExpenseClaim.post` (reimbursable mode), a notification event MUST be emitted:
 
@@ -274,7 +285,7 @@ deployment choice. Shillinq is neutral to payment infrastructure.
 - **THEN** claim MUST still transition to `posted`; event is retried asynchronously
   (per company-wide event retry policy).
 
-### REQ-ERP-009: Pass-through claim SHALL link to customer AR on post
+### Requirement: REQ-ERP-009 — Pass-through claim SHALL link to customer AR on post
 
 On `ExpenseClaim.post` (pass-through mode), the claim's AR debit entry MUST be
 linked to the customer AR record. On the next invoice cycle, the claim's
@@ -295,11 +306,12 @@ customer invoice.
 - **WHEN** the claim is posted
 - **THEN** TWO GL entries are created: one for CUST-123 AR, one for CUST-456 AR.
 
-### REQ-ERP-010: Markup rate MUST be locked at claim submission for audit immutability
+### Requirement: REQ-ERP-010 — Markup rate MUST be locked at claim submission for audit immutability
 
-Once a claim is submitted (or posted), the `markupRateApplied` and
-`markupAmountCalculated` fields on each `Expense` MUST be locked and immutable.
-Future changes to `PassThroughMarkupRule` do NOT affect historical claims.
+The `markupRateApplied` and `markupAmountCalculated` fields MUST be locked at
+submission. Once a claim is submitted (or posted), those fields on each `Expense`
+MUST be immutable. Future changes to `PassThroughMarkupRule` do NOT affect
+historical claims.
 
 #### Scenario: Markup rule change applies only to new claims
 
@@ -316,11 +328,12 @@ Future changes to `PassThroughMarkupRule` do NOT affect historical claims.
 - **THEN** entry metadata MUST record the applied markup rate and the
   `PassThroughMarkupRule` ID for audit trail clarity.
 
-### REQ-ERP-011: Settlement mode change post-submission SHALL require GL reversal
+### Requirement: REQ-ERP-011 — Settlement mode change post-submission SHALL require GL reversal
 
-If an operator (with high privilege) changes `settlementMode` after a claim is
-submitted, the existing GL entry MUST be reversed per T1 REQ-GL-004 before a new
-GL entry is created with the updated mode.
+A post-submission settlement-mode change MUST reverse the existing GL entry
+before re-posting. If an operator (with high privilege) changes `settlementMode`
+after a claim is submitted, the existing GL entry MUST be reversed per T1
+REQ-GL-004 before a new GL entry is created with the updated mode.
 
 #### Scenario: Reversing GL entry on settlement-mode change
 
@@ -329,7 +342,27 @@ GL entry is created with the updated mode.
 - **THEN** GL entry GL-123 MUST be reversed (credit/debit reversed); new GL
   entry GL-124 created for pass-through AR posting.
 
-## EXTENDED Lifecycle
+## MODIFIED Requirements
+
+### Requirement: REQ-ERP-012 — ExpenseClaim lifecycle SHALL track dual-path settlement
+
+The `ExpenseClaim` (`ExpenseClaimEntry`) lifecycle MUST distinguish the
+reimbursable path (`posted → reimbursed`) from the pass-through path
+(`posted → invoiced`), with shared `disputed`/`voided` branches and GL reversal
+on void per T1 REQ-GL-004. The settlement mode determines which path a posted
+claim follows.
+
+#### Scenario: Reimbursable claim follows the reimbursed path
+
+- **GIVEN** a posted `ExpenseClaimEntry` with `settlementMode: reimbursable`
+- **WHEN** the reimbursement payment is recorded
+- **THEN** the claim MUST transition `posted → reimbursed`.
+
+#### Scenario: Pass-through claim follows the invoiced path
+
+- **GIVEN** a posted `ExpenseClaimEntry` with `settlementMode: pass-through`
+- **WHEN** the customer invoice including the claim's cost + markup is generated
+- **THEN** the claim MUST transition `posted → invoiced`.
 
 `ExpenseClaim` lifecycle states are extended to track dual-path settlement:
 

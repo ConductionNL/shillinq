@@ -1,0 +1,360 @@
+{
+	"menu": [
+		{
+			"id": "IbAangifteZzpGroep",
+			"label": "IB-aangifte ZZP",
+			"icon": "FileDocumentEditOutline",
+			"order": 26,
+			"children": [
+				{
+					"id": "IbAangiftenZzp",
+					"label": "IB-aangiften",
+					"icon": "FileDocumentEditOutline",
+					"route": "IbAangiftenZzp",
+					"order": 10
+				},
+				{
+					"id": "IbOndernemersaftrekken",
+					"label": "Ondernemersaftrekken",
+					"icon": "AccountCashOutline",
+					"route": "IbOndernemersaftrekken",
+					"order": 20
+				},
+				{
+					"id": "IbLijfrenteBeheer",
+					"label": "Lijfrente Beheer",
+					"icon": "PiggyBankOutline",
+					"route": "IbLijfrenteBeheer",
+					"order": 30
+				},
+				{
+					"id": "IbBox3Vermogen",
+					"label": "Box 3 Vermogen",
+					"icon": "BankOutline",
+					"route": "IbBox3Vermogen",
+					"order": 40
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "IbAangiftenZzp",
+			"route": "/ib-aangifte/aangiften",
+			"type": "index",
+			"title": "IB-aangiften",
+			"config": {
+				"register": "shillinq",
+				"schema": "IBAangifte",
+				"columns": [
+					{
+						"key": "belastingjaar",
+						"label": "Belastingjaar",
+						"sortable": true
+					},
+					{
+						"key": "ondernemingId",
+						"label": "Onderneming",
+						"sortable": true
+					},
+					{
+						"key": "aangifteType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "belastbareWinst",
+						"label": "Belastbare winst",
+						"sortable": true
+					},
+					{
+						"key": "teBetalenOfTeOntvangen",
+						"label": "Te betalen / ontvangen",
+						"sortable": true
+					}
+				],
+				"defaultSort": "belastingjaar",
+				"detailRoute": "IbAangifteZzpDetail"
+			}
+		},
+		{
+			"id": "IbAangifteZzpDetail",
+			"route": "/ib-aangifte/aangiften/:id",
+			"type": "detail",
+			"title": "IB-aangifte",
+			"config": {
+				"register": "shillinq",
+				"schema": "IBAangifte",
+				"fields": [
+					{
+						"key": "belastingjaar",
+						"label": "Belastingjaar",
+						"type": "number"
+					},
+					{
+						"key": "ondernemingId",
+						"label": "Onderneming",
+						"type": "string"
+					},
+					{
+						"key": "aangifteType",
+						"label": "Aangiftetype",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "indieningKanaal",
+						"label": "Indieningskanaal",
+						"type": "string"
+					},
+					{
+						"key": "winstUitOnderneming",
+						"label": "Winst uit onderneming",
+						"type": "number"
+					},
+					{
+						"key": "ondernemersaftrek",
+						"label": "Ondernemersaftrek",
+						"type": "number"
+					},
+					{
+						"key": "mkbWinstvrijstelling",
+						"label": "MKB-winstvrijstelling",
+						"type": "number"
+					},
+					{
+						"key": "belastbareWinst",
+						"label": "Belastbare winst",
+						"type": "number"
+					},
+					{
+						"key": "totaalBox1Inkomen",
+						"label": "Totaal box 1",
+						"type": "number"
+					},
+					{
+						"key": "totaalBox3Inkomen",
+						"label": "Totaal box 3",
+						"type": "number"
+					},
+					{
+						"key": "heffingskortingen",
+						"label": "Heffingskortingen",
+						"type": "number"
+					},
+					{
+						"key": "teBetalenOfTeOntvangen",
+						"label": "Te betalen / te ontvangen",
+						"type": "number"
+					},
+					{
+						"key": "digipoortOntvangstBevestigingId",
+						"label": "Digipoort-ontvangstbevestiging",
+						"type": "string"
+					}
+				],
+				"indexRoute": "IbAangiftenZzp"
+			}
+		},
+		{
+			"id": "IbOndernemersaftrekken",
+			"route": "/ib-aangifte/ondernemersaftrekken",
+			"type": "index",
+			"title": "Ondernemersaftrekken",
+			"config": {
+				"register": "shillinq",
+				"schema": "IBOndernemersaftrek",
+				"columns": [
+					{
+						"key": "aangifteId",
+						"label": "Aangifte",
+						"sortable": true
+					},
+					{
+						"key": "mkbWinstvrijstelling",
+						"label": "MKB-vrijstelling",
+						"sortable": true
+					},
+					{
+						"key": "totaalAftrek",
+						"label": "Totaal aftrek",
+						"sortable": true
+					}
+				],
+				"defaultSort": "aangifteId",
+				"detailRoute": "IbOndernemersaftrekDetail"
+			}
+		},
+		{
+			"id": "IbOndernemersaftrekDetail",
+			"route": "/ib-aangifte/ondernemersaftrekken/:id",
+			"type": "detail",
+			"title": "Ondernemersaftrek",
+			"config": {
+				"register": "shillinq",
+				"schema": "IBOndernemersaftrek",
+				"fields": [
+					{
+						"key": "aangifteId",
+						"label": "Aangifte",
+						"type": "string"
+					},
+					{
+						"key": "mkbWinstvrijstelling",
+						"label": "MKB-winstvrijstelling",
+						"type": "number"
+					},
+					{
+						"key": "totaalAftrek",
+						"label": "Totaal aftrek",
+						"type": "number"
+					}
+				],
+				"indexRoute": "IbOndernemersaftrekken"
+			}
+		},
+		{
+			"id": "IbLijfrenteBeheer",
+			"route": "/ib-aangifte/lijfrente",
+			"type": "index",
+			"title": "Lijfrente Beheer",
+			"config": {
+				"register": "shillinq",
+				"schema": "IBLijfrenteAOV",
+				"columns": [
+					{
+						"key": "aangifteId",
+						"label": "Aangifte",
+						"sortable": true
+					},
+					{
+						"key": "totaalAftrekbaar",
+						"label": "Totaal aftrekbaar",
+						"sortable": true
+					}
+				],
+				"defaultSort": "aangifteId",
+				"detailRoute": "IbLijfrenteBeheerDetail"
+			}
+		},
+		{
+			"id": "IbLijfrenteBeheerDetail",
+			"route": "/ib-aangifte/lijfrente/:id",
+			"type": "detail",
+			"title": "Lijfrente & AOV",
+			"config": {
+				"register": "shillinq",
+				"schema": "IBLijfrenteAOV",
+				"fields": [
+					{
+						"key": "aangifteId",
+						"label": "Aangifte",
+						"type": "string"
+					},
+					{
+						"key": "totaalAftrekbaar",
+						"label": "Totaal aftrekbaar",
+						"type": "number"
+					}
+				],
+				"indexRoute": "IbLijfrenteBeheer"
+			}
+		},
+		{
+			"id": "IbBox3Vermogen",
+			"route": "/ib-aangifte/box3",
+			"type": "index",
+			"title": "Box 3 Vermogen",
+			"config": {
+				"register": "shillinq",
+				"schema": "IBBox3Vermogen",
+				"columns": [
+					{
+						"key": "aangifteId",
+						"label": "Aangifte",
+						"sortable": true
+					},
+					{
+						"key": "peildatum",
+						"label": "Peildatum",
+						"sortable": true
+					},
+					{
+						"key": "totaalRendementsgrondslag",
+						"label": "Rendementsgrondslag",
+						"sortable": true
+					},
+					{
+						"key": "belastbareGrondslag",
+						"label": "Belastbare grondslag",
+						"sortable": true
+					}
+				],
+				"defaultSort": "peildatum",
+				"detailRoute": "IbBox3VermogenDetail"
+			}
+		},
+		{
+			"id": "IbBox3VermogenDetail",
+			"route": "/ib-aangifte/box3/:id",
+			"type": "detail",
+			"title": "Box 3 Vermogen",
+			"config": {
+				"register": "shillinq",
+				"schema": "IBBox3Vermogen",
+				"fields": [
+					{
+						"key": "aangifteId",
+						"label": "Aangifte",
+						"type": "string"
+					},
+					{
+						"key": "peildatum",
+						"label": "Peildatum",
+						"type": "string"
+					},
+					{
+						"key": "bankEnSpaartegoeden",
+						"label": "Bank & spaartegoeden",
+						"type": "number"
+					},
+					{
+						"key": "overigeBezittingen",
+						"label": "Overige bezittingen",
+						"type": "number"
+					},
+					{
+						"key": "schulden",
+						"label": "Schulden",
+						"type": "number"
+					},
+					{
+						"key": "totaalRendementsgrondslag",
+						"label": "Rendementsgrondslag",
+						"type": "number"
+					},
+					{
+						"key": "heffingvrijVermogen",
+						"label": "Heffingvrij vermogen",
+						"type": "number"
+					},
+					{
+						"key": "belastbareGrondslag",
+						"label": "Belastbare grondslag",
+						"type": "number"
+					}
+				],
+				"indexRoute": "IbBox3Vermogen"
+			}
+		}
+	]
+}

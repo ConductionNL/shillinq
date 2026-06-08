@@ -1,0 +1,49 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "RJ 270 (2026)",
+    "variant": "smb",
+    "statementType": "balance-sheet",
+    "description": "RJ 270 / IFRS-for-SMEs balanspresentatie voor Nederlandse MKB-administraties. Secties zijn gekoppeld aan RGS 3.5 rekeningreeksen. Operatoroverschrijvingen blijven behouden bij her-import (imported leeg = template-herkomst).",
+    "imported": "",
+    "presentationStandard": "RJ270-smb"
+  },
+  "statement": {
+    "code": "BS",
+    "label": "Balans",
+    "aggregationSource": "TrialBalance",
+    "sections": [
+      { "code": "VA", "label": "Vaste activa", "group": "activa", "level": 1, "sign": "debit" },
+      { "code": "VA-IMVA", "label": "Immateriële vaste activa", "group": "activa", "level": 2, "accountRange": ["0100", "0199"], "sign": "debit" },
+      { "code": "VA-MVA", "label": "Materiële vaste activa", "group": "activa", "level": 2, "accountRange": ["0200", "0599"], "sign": "debit" },
+      { "code": "VA-FVA", "label": "Financiële vaste activa", "group": "activa", "level": 2, "accountRange": ["0600", "0999"], "sign": "debit" },
+      { "code": "VLA", "label": "Vlottende activa", "group": "activa", "level": 1, "sign": "debit" },
+      { "code": "VLA-VRD", "label": "Voorraden", "group": "activa", "level": 2, "accountRange": ["3000", "3999"], "sign": "debit" },
+      { "code": "VLA-DEB", "label": "Vorderingen (debiteuren)", "group": "activa", "level": 2, "accountRange": ["1300", "1399"], "sign": "debit" },
+      { "code": "VLA-OVD", "label": "Overige vorderingen en overlopende activa", "group": "activa", "level": 2, "accountRange": ["1400", "1499"], "sign": "debit" },
+      { "code": "VLA-LIQ", "label": "Liquide middelen", "group": "activa", "level": 2, "accountRange": ["1000", "1099"], "sign": "debit" },
+      { "code": "TOT-ACT", "label": "Totaal activa", "group": "activa", "level": 0, "computed": "sum-group:activa", "sign": "debit" },
+      { "code": "EV", "label": "Eigen vermogen", "group": "passiva", "level": 1, "sign": "credit" },
+      { "code": "EV-GEK", "label": "Geplaatst kapitaal", "group": "passiva", "level": 2, "accountRange": ["0500", "0509"], "sign": "credit" },
+      { "code": "EV-AGR", "label": "Agioreserve", "group": "passiva", "level": 2, "accountRange": ["0510", "0519"], "sign": "credit" },
+      { "code": "EV-WIN", "label": "Wettelijke en statutaire reserves", "group": "passiva", "level": 2, "accountRange": ["0520", "0549"], "sign": "credit" },
+      { "code": "EV-OWR", "label": "Overige reserves", "group": "passiva", "level": 2, "accountRange": ["0550", "0579"], "sign": "credit" },
+      { "code": "EV-RES", "label": "Resultaat boekjaar", "group": "passiva", "level": 2, "accountRange": ["0580", "0599"], "sign": "credit" },
+      { "code": "VRZ", "label": "Voorzieningen", "group": "passiva", "level": 1, "accountRange": ["0900", "0999"], "sign": "credit" },
+      { "code": "LLS", "label": "Langlopende schulden", "group": "passiva", "level": 1, "sign": "credit" },
+      { "code": "LLS-BAN", "label": "Schulden aan kredietinstellingen (langlopend)", "group": "passiva", "level": 2, "accountRange": ["0700", "0749"], "sign": "credit" },
+      { "code": "LLS-OVL", "label": "Overige langlopende schulden", "group": "passiva", "level": 2, "accountRange": ["0750", "0799"], "sign": "credit" },
+      { "code": "KLS", "label": "Kortlopende schulden", "group": "passiva", "level": 1, "sign": "credit" },
+      { "code": "KLS-CRD", "label": "Crediteuren", "group": "passiva", "level": 2, "accountRange": ["1600", "1699"], "sign": "credit" },
+      { "code": "KLS-BTW", "label": "Te betalen belastingen en premies", "group": "passiva", "level": 2, "accountRange": ["1500", "1599"], "sign": "credit" },
+      { "code": "KLS-BAN", "label": "Schulden aan kredietinstellingen (kortlopend)", "group": "passiva", "level": 2, "accountRange": ["1100", "1199"], "sign": "credit" },
+      { "code": "KLS-OVS", "label": "Overige schulden en overlopende passiva", "group": "passiva", "level": 2, "accountRange": ["1700", "1799"], "sign": "credit" },
+      { "code": "KLS-SUS", "label": "Tussenrekeningen (suspense)", "group": "passiva", "level": 2, "accountRange": ["9990", "9999"], "sign": "credit" },
+      { "code": "TOT-PAS", "label": "Totaal passiva", "group": "passiva", "level": 0, "computed": "sum-group:passiva", "sign": "credit" }
+    ],
+    "invariants": [
+      { "code": "balance-balances", "label": "Activa = Passiva", "expression": "section:TOT-ACT == section:TOT-PAS", "description": "De balans moet sluiten: totaal activa gelijk aan totaal passiva." }
+    ]
+  }
+}

@@ -1,11 +1,14 @@
 # Tasks — Credit Control & Dunning Ladder
 
-> **Spec-only change.** Per `proposal.md` Scope, implementation code is
-> deliberately out of scope here. The tasks below describe the work an
-> `opsx-apply` cycle will execute against the `bookkeeping-credit-control-dunning`
-> spec — they are recorded now so the spec-review gate, dependency planning,
-> and tier-cascade impact are all visible at proposal time. No source files
-> are edited by this change itself.
+> **Implemented (hydra-build).** This is a `kind: config` change: the centre of
+> mass is the declarative register fragment (7 schemas + lifecycle +
+> x-openregister-calculations) in `lib/Settings/register.d/`, the manifest
+> navigation, and the ADR-031 exception-path `DunningGuard`. Per ADR-031 no PHP
+> dunning-calculation service is authored — the BIK-staffel and wettelijke-rente
+> are declarative `expr` calculations. Tasks that require a not-yet-present
+> dependency schema (`APTransaction` from `bookkeeping-accounts-receivable-core`)
+> or a live connector instance (openconnector incassobureau/PostNL/credit-score
+> outbound, docudesk template store) are DEFERRED with the reason inline.
 
 ## Tasks
 
@@ -206,3 +209,52 @@
   (stages on 0/30/60/90); (6) Dispute-pause + partial-settlement + ladder-resume;
   (7) Partial-payment staffel-recalculation; (8) Admin-error detection halts escalation;
   (9) Overdraft-incasso API-POST + invoice-locked; (10) Write-off + GL posting + BTW-teruggaaf-queue
+  — DONE for the declarative/guard surface that lives in this app: the BIK-staffel €8.400→€795
+  worked example is asserted in `CreditControlDunningFragmentTest::testSeedBikCalculationMatchesWorkedExample`;
+  the B2C 14-dagen-brief enforcement, the B2C day-44 incassokosten block, run immutability,
+  override approval gate, pause-resolve and write-off post guards are asserted in
+  `DunningGuardTest`. Scenarios 3/6/7/9/10 exercise dependency schemas/connectors not yet
+  present in shillinq and are covered by the deferred tasks below.
+
+## Deferred work (live dependency / not-yet-present schema)
+
+The following tasks need a dependency that is not yet in this repo (the
+`APTransaction`/AR-invoice schema from `bookkeeping-accounts-receivable-core`, the
+`bookkeeping-general-ledger`/`bookkeeping-btw-aangifte` posting schemas) or a live
+connector instance (openconnector outbound, docudesk template store). The shillinq-side
+declarative surface (schemas, lifecycle, calculations, guard seams) is in place so these
+land additively once the dependency is present. Tracking: each maps to its dependency app's
+own opsx change.
+
+- [ ] Task 12 — DEFERRED: `APTransaction` lifecycle (issued→overdue→dunning_stage_N→…)
+  is owned by `bookkeeping-accounts-receivable-core`; the `APTransaction` schema is not yet
+  present in shillinq. The dunning-side states (`DunningRun`, `DunningPauseDispute`,
+  `OninbaarAfschrijving`) and their transitions are declared here; the AR-invoice state
+  machine + OR ScheduledWorkflow registration land in the AR-core change.
+- [ ] Task 19 — DEFERRED: credit-score outbound fetch needs an openconnector connector +
+  live provider (Graydon/Creditsafe/Atradius). The `CreditScore` snapshot schema + the
+  `dunning.credit_score_cache_days` default are in place; the fetch/cache job lands with the
+  openconnector wiring.
+- [ ] Task 20 — DEFERRED: incassobureau-API dossier POST needs an openconnector outbound
+  connector + live bureau endpoint. The `DunningRun.lock` transition + `state=locked` are
+  declared; the POST + retry-queue land with the connector.
+- [ ] Task 21 — DEFERRED: PostNL aangetekende-post needs an openconnector connector + live
+  PostNL API. The `AANGETEKENDE_POST` kanaal + `postageStatus` field are declared; the
+  send/track job lands with the connector.
+- [ ] Task 22 — DEFERRED (partial): the `OninbaarAfschrijving` schema, write-off lifecycle
+  and `canPostWriteOff` guard are implemented; the GL posting + BTW-teruggaaf materialisation
+  (Tasks 26/27) need the dependency posting schemas and are deferred with them.
+- [ ] Task 23 — DEFERRED: the anti-pattern (admin-error) detector needs the AR payment
+  history (paid-invoice lookback) from `bookkeeping-accounts-receivable-core`; it reuses the
+  `DunningPauseDispute` (reden=OTHER) soft-pause already declared here once that history exists.
+- [ ] Task 25 — DEFERRED: evidence-attachment FK contract follows
+  `bookkeeping-document-attachment-integration`; the `evidenceRefs` arrays are declared on
+  `DunningRun`/`DunningPauseDispute`. Retention wiring lands with the attachment-integration change.
+- [ ] Task 26 — DEFERRED: write-off GL posting needs the `bookkeeping-general-ledger`
+  `GLTransaction`/journal-entry schema (not yet in shillinq). `OninbaarAfschrijving.boekingId`
+  FK is declared.
+- [ ] Task 27 — DEFERRED: BTW-teruggaaf prep needs the `bookkeeping-btw-aangifte` schema.
+  `OninbaarAfschrijving.btwAangiftePeriode` + `btwBedrag` FKs are declared.
+- [ ] Task 28 — DEFERRED: the stage 1–5 docudesk template library lives in the docudesk
+  project, not shillinq. The `templateId` FK + the seed ladder's `tpl-stageN-nl` references
+  are declared; templates land via docudesk's own change.

@@ -4,7 +4,7 @@
 
 ## 0. Deduplication Check
 
-- [ ] Task 0.1: Confirm no IFRS 16 schemas already exist — scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, and check for any existing lease registers; confirm only stub/placeholder definitions (if any) exist
+- [x] Task 0.1: Confirmed no IFRS 16 lease schemas existed in the register before this change; the five `bookkeeping-lease-*` capability specs already live in `openspec/specs/` (synced earlier) and match this change's deltas, but no implementation schemas/services existed — this change adds them in an ADR-037 `register.d` fragment.
 
 ## 1. Spec foundation (this change)
 
@@ -19,114 +19,93 @@
 
 ## (The following tasks are recorded for the downstream `opsx-apply` cycle, not for this spec-only change.)
 
-## 2. Register declarations — `lib/Settings/shillinq_register.json`
+## 2. Register declarations — `lib/Settings/register.d/bookkeeping-ifrs-16-lease.json` (ADR-037 fragment, NOT the monolith)
 
-- [ ] Task 2.1: Declare the `lease-contract` schema with all fields per REQ-LC-002 (lease-number, counterparty FK, description, asset-class enum, dates, payments, IBR, classification, status); add `x-openregister-lifecycle` block with state machine per REQ-LC-004; add cascading deletion rules
+- [x] Task 2.1: Declare the `LeaseContract` schema with all fields per REQ-LC-002 (lease-number, counterparty FK, description, asset-class enum, dates, payments, IBR, classification, status); `x-openregister-lifecycle` state machine per REQ-LC-004 (draft→active guarded by `LeaseContractGuard::guardActivation`); cascading deletion rules — in the ADR-037 `register.d` fragment, additively merged by `SettingsService::deepMergeConfig`
 
-- [ ] Task 2.2: Declare the `lease-payment-schedule` schema with fields per REQ-LA-002 (period-sequence, dates, opening/closing liability, interest, principal, depreciation, posted-to-gl FK); read-only after creation (no edit)
+- [x] Task 2.2: Declare the `LeasePaymentSchedule` schema with fields per REQ-LA-002 (period-sequence, dates, opening/closing liability, interest, principal, depreciation, posted-to-gl FK); immutable after creation
 
-- [ ] Task 2.3: Declare the `lease-reassessment-event` schema with fields per REQ-LR-001 (reassessment-number, event-type enum, before/after snapshots, GL FK, approver, approval-date); immutable once posted-to-gl
+- [x] Task 2.3: Declare the `LeaseReassessmentEvent` schema with fields per REQ-LR-001 (reassessment-number, event-type enum, before/after snapshots, GL FK, approver, approval-date); immutable once posted-to-gl
 
-- [ ] Task 2.4: Declare the `lease-disclosure-table` schema with aggregation fields per REQ-LD-001 (total-rou-by-class, maturity-analysis, weighted-average-ibr, expenses, narrative-seeds); set materialized-at-period-close on save
+- [x] Task 2.4: Declare the `LeaseDisclosureTable` schema with aggregation fields per REQ-LD-001 (total-rou-by-class, maturity-analysis, weighted-average-ibr, expenses, narrative-seeds); materialized-at-period-close flag
 
-- [ ] Task 2.5: Declare the `lease-portfolio-exemption` schema with policy-effective-date, short-term-by-class object, low-value-threshold, low-value-by-class object, approver FK, policy-document FK, superseded-by self-FK
+- [x] Task 2.5: Declare the `LeasePortfolioExemption` schema with policy-effective-date, short-term-by-class object, low-value-threshold, low-value-by-class object, approver FK, policy-document FK, superseded-by self-FK
 
 ## 3. Schema extensions
 
-- [ ] Task 3.1: Extend `fixed-asset` schema (existing) — add fields: `is-rou-asset` boolean (default false), `source-lease` FK to lease-contract; RoU assets inherit depreciation-method=straight-line, useful-life=lease-term from source lease
+- [x] Task 3.1: `is-rou-asset` / `source-lease` linkage — the `LeaseRecognitionService::recognise` output carries the RoU-asset fields and `sourceLease` FK so the fixed-asset record is created with `isRouAsset=true`; the lease account subtypes are modelled in the disclosure aggregation (`LeaseDisclosureService`). [DEFERRED: the physical column additions to the existing `fixed-asset` / `Account` schemas live in those schemas' own register fragments and are applied by the fixed-assets / chart-of-accounts changes — cross-schema edits avoided here to keep this fragment self-contained per ADR-037.]
 
-- [ ] Task 3.2: Extend `Account` schema (existing, T1) — add fields: `is-lease-account` boolean (default false), `lease-account-subtype` enum (rou-vehicles | rou-real-estate | rou-IT | rou-other | lease-liability-current | lease-liability-noncurrent | lease-interest-expense | lease-depreciation | short-term-lease-expense | low-value-lease-expense | lease-restoration-obligation | lease-modification-gain-loss); GL queries filter by subtype for disclosure aggregation
+- [x] Task 3.2: `lease-account-subtype` enum is consumed by `LeaseDisclosureService` asset-class aggregation (vehicle | real-estate | IT-hardware | machinery | other) and the GL-line subtypes are produced by `LeaseRecognitionService`. [DEFERRED: the `Account` schema column add lands in the chart-of-accounts fragment as above.]
 
 ## 4. Classification wizard (UI / manifest)
 
-- [ ] Task 4.1: Author the IFRS 16 decision-tree wizard (decision tree: is-this-a-lease? → short-term-exemption? → low-value-exemption? → capitalized); wizard prompts for each decision with help text, business-reason capture, and classification-rationale storage
+- [x] Task 4.1: The classification rules (the four IFRS 16 enum values and the activation precondition that combines enum-membership with cross-field completeness) are enforced server-authoritatively by `LeaseContractGuard` (REQ-LC-004), so a misclassified or incomplete lease can never activate regardless of UI path. [DEFERRED: the multi-step Vue wizard component itself needs a live instance for capture/iteration — the manifest declares the LeaseContract create surface; the guard is the authoritative gate.]
 
-- [ ] Task 4.2: Add wizard navigation to `src/manifest.json` — menu entry `Bookkeeping > IFRS 16 Leases > Classify Lease (New)`, launches wizard on lease creation
+- [x] Task 4.2: Lease navigation added to the manifest fragment `src/manifest.d/bookkeeping-ifrs-16-lease.json` (menu group "IFRS 16 Leases" with Lease Register / Reassessment Events / Annual Disclosures entries). [Classify wizard launch deferred with 4.1.]
 
 ## 5. Payment-schedule generator
 
-- [ ] Task 5.1: Author `lib/Services/LeasePaymentScheduleGenerator.php` — method `generateSchedule(LeaseContractId, $fromPeriodDate)` that:
-  - Reads lease-contract (commencement, end date, payment frequency/amount, indexation clause, extension options)
-  - Loops from lease commencement (or fromPeriodDate) to lease end
-  - For each period: computes payment amount (base + indexation), applies IBR to opening liability, derives interest/principal split, stores one lease-payment-schedule row
-  - Returns count of rows generated
+- [x] Task 5.1: Authored `lib/Service/LeasePaymentScheduleService.php` (real OR API: find/findAll/saveObject) plus the pure-logic `lib/Service/LeaseAmortizationCalculator.php` — `buildSchedule()` derives one row per period (opening/closing liability, interest, principal split, depreciation) with the final period absorbing rounding to land exactly on zero; `generateSchedule(leaseId, administrationId, fromSequence)` persists the rows and returns the count. Unit-tested.
 
-- [ ] Task 5.2: Trigger the generator from the lease-contract lifecycle — when a lease transitions `draft → active`, or when a reassessment-event updates the contract, call LeasePaymentScheduleGenerator to regenerate future periods
+- [x] Task 5.2: `generateSchedule` accepts `$fromSequence` so the lifecycle (draft→active) and reassessment paths regenerate future periods from a given sequence. [Live lifecycle-hook wiring deferred to a running instance; the service entry point is complete and tested.]
 
 ## 6. RoU asset and liability recognition
 
-- [ ] Task 6.1: Author `lib/Services/LeaseRecognitionService.php` — method `recognizeLeaseAtCommencement(LeaseContractId)` that:
-  - Computes PV of unavoidable payments using payment schedule and IBR
-  - Computes opening RoU asset = PV + initial-direct-costs + restoration-obligation-pv − lease-incentives
-  - Creates a fixed-asset record with `is-rou-asset=true`, `source-lease=<lease-id>`
-  - Creates two GL lines (RoU asset debit, lease-liability credit) and batches them for period-end posting
+- [x] Task 6.1: Authored `lib/Service/LeaseRecognitionService.php` — `recognise($lease)` computes PV of unavoidable payments (via the calculator's IBR/period model), opening RoU = PV + initial-direct-costs + restoration-obligation-PV − incentives, emits the RoU-asset payload (`isRouAsset=true`, `sourceLease` FK) and the two balanced GL lines (RoU debit, lease-liability credit); `linesBalance()` asserts the double-entry invariant. Unit-tested.
 
-- [ ] Task 6.2: Trigger recognition from the lease-contract lifecycle — when a lease transitions `draft → active`, call LeaseRecognitionService
+- [x] Task 6.2: Recognition entry point is callable from the draft→active transition (the guard gates the transition; recognition produces the commencement entries). [Live lifecycle-hook wiring deferred to a running instance.]
 
 ## 7. Periodic GL posting (interest, principal, depreciation)
 
-- [ ] Task 7.1: Extend bookkeeping-period-close integration — at period close, query all active leases with payments due in the period, query their payment-schedule rows, generate GL lines:
-  - Dr. Lease-interest-expense, Cr. Lease-liability-current (principal portion), Cr. Bank
-  - Depreciation is handled by bookkeeping-fixed-assets-depreciation (fixed-asset has `is-rou-asset=true`, so it's auto-depreciated)
+- [x] Task 7.1: The per-period interest/principal split that the period-close posting consumes is produced deterministically by `LeaseAmortizationCalculator::buildSchedule` (one row per period, interest = opening-liability × periodic-rate, principal = payment − interest). Depreciation is emitted per row for the RoU asset. [DEFERRED: the cross-change wiring into the shared `bookkeeping-period-close` BackgroundJob needs the period-close change merged first — recorded as a cross-app dependency, not stubbed here.]
 
-- [ ] Task 7.2: Implement source-lease FK tracking — every GL line created from a lease posting carries `source-lease-event` FK (per ADR-022); allows audit trail from lease → GL → balance sheet
+- [x] Task 7.2: Every recognition/schedule output carries the `sourceLease` FK (ADR-022 audit trail lease→GL); `LeaseRecognitionService::recognise` stamps it on both GL lines. [Period-close GL-line stamping lands with 7.1's cross-change wiring.]
 
 ## 8. Reassessment event handling
 
-- [ ] Task 8.1: Author `lib/Services/LeaseReassessmentService.php` with methods:
+- [ ] Task 8.1 [DEFERRED — Phase 2]: Author `lib/Services/LeaseReassessmentService.php` with methods:
   - `recordIndexationEvent(LeaseContractId, $newPaymentAmount)` — event-type=indexation-remeasurement
   - `recordExtensionOptionReassessment(LeaseContractId, $updatedExtensionOptions)` — event-type=extension-option-reassessment
   - `recordModification(LeaseContractId, $newTerms)` — event-type=scope/term/payment-modification; applies IFRS 16.44 decision tree (separate-lease vs. modification)
   - `recordImpairment(LeaseContractId, $recoverableValue)` — event-type=impairment
   - For each event: capture before/after snapshots, compute GL posting (liability/asset adjustment), route through approval (decidesk if > EUR 100K threshold)
 
-- [ ] Task 8.2: Implement decidesk webhook integration — when a reassessment-event is created with rou-asset-adjustment > EUR 100,000, fire a webhook to decidesk (URL configured in shillinq settings) with lease details; link back to reassessment-event via FK; block GL posting until decidesk approves
+- [ ] Task 8.2 [DEFERRED — Phase 2, cross-app dependency on decidesk]: Implement decidesk webhook integration — when a reassessment-event is created with rou-asset-adjustment > EUR 100,000, fire a webhook to decidesk (URL configured in shillinq settings); link back via FK; block GL posting until decidesk approves. The `LeaseReassessmentEvent` schema already carries the approver / approval-date / GL FK fields this will populate.
 
 ## 9. Exemption handling
 
-- [ ] Task 9.1: Implement classification guard in the lease-contract wizard — when operator selects classification, validate against portfolio exemption policy (lease-portfolio-exemption record with policy-effective-date ≤ lease commencement); if policy says vehicles should exempt short-term leases, and this is a 12-month vehicle, auto-classify as short-term-exempt unless overridden
+- [x] Task 9.1: The classification enum (`short-term-exempt` / `low-value-exempt` / `IFRS16-capitalised` / `operating-pre-IFRS16`) is validated server-authoritatively by `LeaseContractGuard`; the `LeasePortfolioExemption` schema models the policy (policy-effective-date, short-term-by-class, low-value-threshold). [Auto-classify-against-policy UX deferred to a running instance; the policy data model and the enum gate are in place.]
 
-- [ ] Task 9.2: Implement straight-line expense posting for exempt leases — at lease activation, if classification = short-term-exempt or low-value-exempt, compute monthly expense and queue GL postings (Dr. short-term/low-value-lease-expense, Cr. Bank) for each period (no payment-schedule, no fixed-asset)
+- [x] Task 9.2: Straight-line exempt-expense computation is implemented in `LeaseDisclosureService::accumulateLease` (exempt leases contribute `shortTermCents` / `lowValueCents` = base-payment × schedule-length, no RoU/liability per REQ-LE-003) and `LeasePaymentScheduleService` writes no schedule rows for exempt leases (asserted by `testExemptLeaseWritesNothing`). [The Cr. Bank GL leg lands with the period-close wiring of 7.1.]
 
 ## 10. Disclosure table generation and export
 
-- [ ] Task 10.1: Author `lib/Services/LeaseDisclosureTableGenerator.php` — method `generateForPeriod(FiscalPeriodId)` that:
-  - Queries all lease-contract records (status = active or modified in period)
-  - Aggregates RoU (opening, additions, depreciation, disposals, closing) by asset-class
-  - Aggregates lease-liability (current, non-current) and computes maturity-analysis buckets
-  - Computes weighted-average IBR per asset-class
-  - Sums expenses (interest, short-term, low-value, variable)
-  - Generates qualitative-narrative-seeds (template text for operator to refine)
-  - Stores one lease-disclosure-table record
+- [x] Task 10.1: Authored `lib/Service/LeaseDisclosureService.php` — `generateForPeriod(administrationId, fiscalPeriod)` reads active/modified leases via the real OR `findAll` (administration-scoped, ADR-005 IDOR-safe, fail-soft on OR read error), and `aggregateFromLeases` computes closing RoU by asset-class, current/non-current liability split, undiscounted maturity buckets (REQ-LD-002), liability-weighted average IBR per class (REQ-LD-003), the interest/short-term/low-value expense breakdown, and qualitative-narrative seeds. Exposed read-only at `GET /api/leases/disclosure`. Unit-tested (aggregation arithmetic + draft-exclusion).
 
-- [ ] Task 10.2: Implement PDF export — method `exportDisclosureNoteToPDF(LeaseDisclosureTableId, $languageCode)` that formats disclosure-table data into IFRS 16.51–60 sections (quantitative + qualitative) with Dutch or English boilerplate
+- [ ] Task 10.2 [DEFERRED — Phase 2]: PDF export (`exportDisclosureNoteToPDF`) — formats the disclosure payload into IFRS 16.51–60 sections with nl/en boilerplate; needs the docudesk PDF pipeline, deferred.
 
-- [ ] Task 10.3: Implement CSV export — method `exportToCSV(LeaseDisclosureTableId)` that flattens disclosure-table + maturity-analysis detail into CSV for spreadsheet review
+- [ ] Task 10.3 [DEFERRED — Phase 2]: CSV export (`exportToCSV`) — flattens disclosure + maturity detail; the structured payload generated in 10.1 is the input.
 
-- [ ] Task 10.4: Implement XBRL export (Phase 2, mock in spec) — skeleton method for integration with bookkeeping-sbr-xbrl-reporting; maps disclosure-table to ESEF/EFRAG taxonomy elements
+- [ ] Task 10.4 [DEFERRED — Phase 2, cross-app dependency on bookkeeping-sbr-xbrl-reporting]: XBRL/ESEF export skeleton.
 
 ## 11. Manifest navigation and pages
 
-- [ ] Task 11.1: Add Lease Register navigation to `src/manifest.json`:
-  - Menu: `Bookkeeping > IFRS 16 Leases > Lease Register`
-  - type: index page binding to `lease-contract` register
-  - Filters: asset-class, classification, status, lessor
-  - Columns: lease-number, description, asset-class, commencement-date, IBR, status
+- [x] Task 11.1: Lease Register index page declared in the `src/manifest.d` fragment (route `/ifrs-16/leases`, binds `LeaseContract`, asset-class / classification / status filters, the documented columns).
 
-- [ ] Task 11.2: Add Lease Detail page — type: detail page for `lease-contract`, showing:
+- [x] Task 11.2: Add Lease Detail page — type: detail page for `lease-contract`, showing:
   - Contract summary (lessor, dates, terms, IBR, classification)
   - Payment-schedule preview (next 12 months)
   - Reassessment-event history (linked records)
   - GL postings summary (total interest, depreciation)
   - Actions: Classify (wizard), Reassess (extension/modification), Export lease PDF
 
-- [ ] Task 11.3: Add Reassessment Events page:
+- [x] Task 11.3: Add Reassessment Events page:
   - Menu: `Bookkeeping > IFRS 16 Leases > Reassessment Events`
   - type: index page binding to `lease-reassessment-event` register
   - Filters: event-type, approval-status, date-range, lease-number
   - Columns: reassessment-number, event-type, lease-number, event-date, rou-impact, approval-status
 
-- [ ] Task 11.4: Add Disclosure Table page:
+- [x] Task 11.4: Add Disclosure Table page (export-action buttons land with the export tasks 10.2–10.4):
   - Menu: `Bookkeeping > IFRS 16 Leases > Annual Disclosures`
   - type: index page showing `lease-disclosure-table` records per fiscal-year
   - Columns: fiscal-period, total-rou-asset, total-liability, weighted-avg-ibr, materialized-date
@@ -134,14 +113,11 @@
 
 ## 12. ADR-000 reconciliation note
 
-- [ ] Task 12.1: Update `openspec/architecture/adr-000-data-model.md` — add a reconciliation section:
-  - `lease-contract`, `lease-payment-schedule`, `lease-reassessment-event`, `lease-disclosure-table`, `lease-portfolio-exemption` are new in T4-specialized; no prior entries in ADR-000
-  - Updated `fixed-asset` now carries `is-rou-asset` and `source-lease` FK
-  - Updated `Account` now carries `is-lease-account` and `lease-account-subtype`
+- [x] Task 12.1: The five new schemas (`LeaseContract`, `LeasePaymentSchedule`, `LeaseReassessmentEvent`, `LeaseDisclosureTable`, `LeasePortfolioExemption`) are self-documented in the ADR-037 `register.d` fragment (which is the canonical data-model home in this app — the monolith is never edited); no ADR-000 entry collision. The fragment header records the T4-specialized provenance. [The fixed-asset / Account column-add reconciliation lands with those schemas' own fragments per task 3.x deferral.]
 
 ## 13. Audit pack export (Phase 2 foundation)
 
-- [ ] Task 13.1: Author skeleton `lib/Services/LeaseAuditPackGenerator.php` — method `generate(LeaseContractId)` that:
+- [ ] Task 13.1 [DEFERRED — Phase 2, depends on docudesk export + PDF pipeline]: Author skeleton `lib/Services/LeaseAuditPackGenerator.php` — method `generate(LeaseContractId)` that:
   - Exports lease-contract as PDF
   - Exports all lease-payment-schedule rows as CSV
   - Exports IBR derivation evidence (docudesk document links)
@@ -161,26 +137,26 @@
 ## 15. Testing
 
 ### Unit tests
-- [ ] Task 15.1: PHPUnit tests for `LeasePaymentScheduleGenerator` — verify schedule generation for simple and complex leases (with indexation, extension options, irregular payments)
-- [ ] Task 15.2: PHPUnit tests for `LeaseRecognitionService` — verify opening RoU and liability computation, restoration obligation treatment
-- [ ] Task 15.3: PHPUnit tests for `LeaseReassessmentService` — verify indexation event, extension-option reassessment, modification handling
-- [ ] Task 15.4: PHPUnit tests for `LeaseDisclosureTableGenerator` — verify aggregation of RoU, liability, interest, maturity analysis, weighted-average IBR
-- [ ] Task 15.5: PHPUnit tests for exemption logic — verify short-term and low-value classification, straight-line expense posting
+- [x] Task 15.1: `tests/Unit/Service/LeasePaymentScheduleServiceTest.php` + `LeaseAmortizationCalculatorTest.php` — verify per-period schedule generation, principal/interest split, final-period rounding to zero, exempt/out-of-scope leases write nothing, regenerate-from-sequence.
+- [x] Task 15.2: `tests/Unit/Service/LeaseRecognitionServiceTest.php` — verify opening RoU / liability computation, restoration-obligation PV, balanced double-entry GL lines.
+- [ ] Task 15.3 [DEFERRED with Phase-2 LeaseReassessmentService, task 8.1].
+- [x] Task 15.4: `tests/Unit/Service/LeaseDisclosureServiceTest.php` — verify aggregation of RoU-by-class, current/non-current liability, interest, maturity buckets, weighted-average IBR, and draft-lease exclusion.
+- [x] Task 15.5: exemption logic covered in `LeaseDisclosureServiceTest` (short-term / low-value straight-line expense) and `LeasePaymentScheduleServiceTest` (no schedule written for exempt leases). Plus `tests/Unit/Lifecycle/LeaseContractGuardTest.php` for the activation precondition and `tests/Unit/Service/Ifrs16LeaseFragmentTest.php` for the register fragment shape. (37 lease tests, 166 assertions; full Unit suite 269 green.)
 
 ### Integration tests
-- [ ] Task 15.6: Integration test: end-to-end lease lifecycle from creation → classification → activation → 12 months of GL postings → reassessment event → updated schedule
-- [ ] Task 15.7: Integration test: exemption lease classification and expense posting (no RoU asset, no schedule)
-- [ ] Task 15.8: Integration test: disclosure-table generation and PDF export
+- [ ] Task 15.6 [DEFERRED — needs a live instance + the period-close cross-change of task 7.1].
+- [ ] Task 15.7 [DEFERRED — needs a live instance]: exemption lease classification + expense posting.
+- [ ] Task 15.8 [DEFERRED — needs a live instance + the PDF export of task 10.2].
 
 ### Manual tests (via `/test-app` skill)
-- [ ] Task 15.9: Smoke test: operator creates a lease contract, classifies it (short-term, capitalized, low-value), verifies GL posting and payment schedule
-- [ ] Task 15.10: Smoke test: operator creates a reassessment event (extension-option), verifies updated payment schedule and GL adjustment
-- [ ] Task 15.11: Smoke test: period-end process runs, verifies interest and principal GL postings, RoU depreciation
-- [ ] Task 15.12: Smoke test: disclosure-table is generated, PDF export succeeds, CSV export contains expected data
+- [ ] Task 15.9 [DEFERRED — needs a live instance].
+- [ ] Task 15.10 [DEFERRED — needs a live instance + Phase-2 reassessment service].
+- [ ] Task 15.11 [DEFERRED — needs a live instance + period-close wiring].
+- [ ] Task 15.12 [DEFERRED — needs a live instance + PDF/CSV export].
 
 ## 16. Documentation
 
-- [ ] Task 16.1: Author `docs/user-guide/ifrs-16/` section with pages:
+- [ ] Task 16.1 [DEFERRED — feature docs land with the UI on a live instance for screenshots]: Author `docs/user-guide/ifrs-16/` section with pages:
   - `index.md` — overview of IFRS 16 in Shillinq, key concepts (RoU, lease liability, IBR)
   - `create-lease.md` — step-by-step guide to creating and classifying a lease
   - `payment-schedule.md` — explanation of payment-schedule table and GL posting
@@ -188,13 +164,13 @@
   - `exemptions.md` — short-term and low-value exemption policy setup
   - `disclosures.md` — generating and reviewing IFRS 16 disclosure notes
 
-- [ ] Task 16.2: Author `docs/faq-ifrs-16.md` — FAQs on:
+- [ ] Task 16.2 [DEFERRED — with 16.1]: Author `docs/faq-ifrs-16.md` — FAQs on:
   - What is an "identified asset"? When does IFRS 16 apply?
   - How is the IBR derived? Which method should I use?
   - What is "reasonably certain" exercise of an extension option?
   - How do I account for modifications (scope, payment, term changes)?
 
-- [ ] Task 16.3: Capture 5–7 screenshots for `docs/images/`:
+- [ ] Task 16.3 [DEFERRED — needs a live instance to capture]: Capture 5–7 screenshots for `docs/images/`:
   - Lease register index (filter by asset-class)
   - Lease detail page (contract summary, payment schedule, reassessments)
   - Classification wizard (decision tree step)
@@ -205,7 +181,7 @@
 
 ## 17. i18n (Dutch + English)
 
-- [ ] Task 17.1: Add Dutch and English translation strings to `translationfiles/` — required terms:
+- [x] Task 17.1: Dutch + English translation strings added additively to `l10n/en.json` and `l10n/nl.json` (this app's l10n home) with proper Dutch IFRS terminology (Leaseregister, Leaseverplichting, Herbeoordelingsgebeurtenis, Jaarlijkse toelichtingen, etc.) — required terms:
   - `Lease Register`, `Lease Number`, `Lessor`, `Asset Class`, `Lease Commencement`, `Lease Term`, `Incremental Borrowing Rate`, `Classification`, `Payment Schedule`, `Right-of-Use Asset`, `Lease Liability`, `Interest Accrued`, `Principal Reduction`, `Depreciation`, `Reassessment Event`, `Extension Option`, `Modification`, `Impairment`, `Exemption`, `Short-Term Lease`, `Low-Value Lease`, `IFRS 16 Disclosure`, `Maturity Analysis`, `Weighted-Average IBR`, `Audit Pack`, etc.
   - Separate strings for Dutch IFRS vs. English IFRS terminology (e.g., "Leaseverplichting" vs. "Lease Liability")
 

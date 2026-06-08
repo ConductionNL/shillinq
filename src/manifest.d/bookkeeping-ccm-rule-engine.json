@@ -1,0 +1,294 @@
+{
+	"menu": [
+		{
+			"id": "ContinuousControlsMonitoring",
+			"label": "Continuous Controls Monitoring",
+			"icon": "ShieldSearch",
+			"order": 80,
+			"children": [
+				{
+					"id": "CcmFindings",
+					"label": "Findings",
+					"icon": "AlertCircleOutline",
+					"route": "CcmFindings",
+					"order": 10
+				},
+				{
+					"id": "CcmRules",
+					"label": "Rule Library",
+					"icon": "ShieldSearch",
+					"route": "CcmRules",
+					"order": 20
+				},
+				{
+					"id": "CcmSegregationMatrix",
+					"label": "Segregation Matrix",
+					"icon": "AccountSwitch",
+					"route": "CcmSegregationMatrix",
+					"order": 30
+				},
+				{
+					"id": "CcmUserFunctionAssignments",
+					"label": "Function Assignments",
+					"icon": "AccountKey",
+					"route": "CcmUserFunctionAssignments",
+					"order": 40
+				},
+				{
+					"id": "CcmBaselines",
+					"label": "Baselines",
+					"icon": "ChartBellCurve",
+					"route": "CcmBaselines",
+					"order": 50
+				},
+				{
+					"id": "CcmAuditCommitteeReports",
+					"label": "Audit Committee Reports",
+					"icon": "FileChartOutline",
+					"route": "CcmAuditCommitteeReports",
+					"order": 60
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "CcmFindings",
+			"route": "/ccm/findings",
+			"type": "index",
+			"title": "Findings",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmFinding",
+				"columns": [
+					{"key": "ruleCode", "label": "Rule", "sortable": true},
+					{"key": "title", "label": "Title", "sortable": true},
+					{"key": "severity", "label": "Severity", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true},
+					{"key": "assignee", "label": "Assignee", "sortable": true},
+					{"key": "fireTimestamp", "label": "Fired", "sortable": true}
+				],
+				"defaultSort": "fireTimestamp",
+				"detailRoute": "CcmFindingDetail"
+			}
+		},
+		{
+			"id": "CcmFindingDetail",
+			"route": "/ccm/findings/:id",
+			"type": "detail",
+			"title": "Finding",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmFinding",
+				"fields": [
+					{"key": "ruleCode", "label": "Rule", "type": "string"},
+					{"key": "title", "label": "Title", "type": "string"},
+					{"key": "severity", "label": "Severity", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "assignee", "label": "Assignee", "type": "string"},
+					{"key": "triggeringEventType", "label": "Event type", "type": "string"},
+					{"key": "triggeringEventId", "label": "Event id", "type": "string"},
+					{"key": "fireTimestamp", "label": "Fired", "type": "string"},
+					{"key": "resolutionRationale", "label": "Resolution rationale", "type": "string"},
+					{"key": "resolvedBy", "label": "Resolved by", "type": "string"},
+					{"key": "resolvedAt", "label": "Resolved at", "type": "string"},
+					{"key": "escalated", "label": "Escalated", "type": "boolean"}
+				],
+				"indexRoute": "CcmFindings"
+			}
+		},
+		{
+			"id": "CcmRules",
+			"route": "/ccm/rules",
+			"type": "index",
+			"title": "Rule Library",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmRule",
+				"columns": [
+					{"key": "ruleCode", "label": "Code", "sortable": true},
+					{"key": "name", "label": "Name", "sortable": true},
+					{"key": "controlFamily", "label": "Family", "sortable": true},
+					{"key": "severity", "label": "Severity", "sortable": true},
+					{"key": "evaluationMode", "label": "Mode", "sortable": true},
+					{"key": "enabled", "label": "Enabled", "sortable": true}
+				],
+				"defaultSort": "ruleCode",
+				"detailRoute": "CcmRuleDetail"
+			}
+		},
+		{
+			"id": "CcmRuleDetail",
+			"route": "/ccm/rules/:id",
+			"type": "detail",
+			"title": "Rule",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmRule",
+				"fields": [
+					{"key": "ruleCode", "label": "Code", "type": "string"},
+					{"key": "name", "label": "Name", "type": "string"},
+					{"key": "description", "label": "Description", "type": "string"},
+					{"key": "controlFamily", "label": "Family", "type": "string"},
+					{"key": "controlObjective", "label": "Objective", "type": "string"},
+					{"key": "cosoAssertion", "label": "COSO assertion", "type": "string"},
+					{"key": "severity", "label": "Severity", "type": "string"},
+					{"key": "evaluationMode", "label": "Mode", "type": "string"},
+					{"key": "enabled", "label": "Enabled", "type": "boolean"},
+					{"key": "ruleOwner", "label": "Owner", "type": "string"},
+					{"key": "soxKeyControl", "label": "SOX key control", "type": "boolean"}
+				],
+				"indexRoute": "CcmRules"
+			}
+		},
+		{
+			"id": "CcmSegregationMatrix",
+			"route": "/ccm/segregation-matrix",
+			"type": "index",
+			"title": "Segregation Matrix",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmSegregationMatrix",
+				"columns": [
+					{"key": "functionCode", "label": "Function code", "sortable": true},
+					{"key": "label", "label": "Label", "sortable": true},
+					{"key": "conflictSeverity", "label": "Conflict severity", "sortable": true}
+				],
+				"defaultSort": "functionCode",
+				"detailRoute": "CcmSegregationMatrixDetail"
+			}
+		},
+		{
+			"id": "CcmSegregationMatrixDetail",
+			"route": "/ccm/segregation-matrix/:id",
+			"type": "detail",
+			"title": "Function Code",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmSegregationMatrix",
+				"fields": [
+					{"key": "functionCode", "label": "Function code", "type": "string"},
+					{"key": "label", "label": "Label", "type": "string"},
+					{"key": "conflictSeverity", "label": "Conflict severity", "type": "string"},
+					{"key": "rationale", "label": "Rationale", "type": "string"}
+				],
+				"indexRoute": "CcmSegregationMatrix"
+			}
+		},
+		{
+			"id": "CcmUserFunctionAssignments",
+			"route": "/ccm/function-assignments",
+			"type": "index",
+			"title": "Function Assignments",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmUserFunctionAssignment",
+				"columns": [
+					{"key": "user", "label": "User", "sortable": true},
+					{"key": "functionCode", "label": "Function code", "sortable": true},
+					{"key": "source", "label": "Source", "sortable": true},
+					{"key": "expiresAt", "label": "Expires", "sortable": true}
+				],
+				"defaultSort": "user",
+				"detailRoute": "CcmUserFunctionAssignmentDetail"
+			}
+		},
+		{
+			"id": "CcmUserFunctionAssignmentDetail",
+			"route": "/ccm/function-assignments/:id",
+			"type": "detail",
+			"title": "Function Assignment",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmUserFunctionAssignment",
+				"fields": [
+					{"key": "user", "label": "User", "type": "string"},
+					{"key": "functionCode", "label": "Function code", "type": "string"},
+					{"key": "source", "label": "Source", "type": "string"},
+					{"key": "grantedAt", "label": "Granted at", "type": "string"},
+					{"key": "grantedBy", "label": "Granted by", "type": "string"},
+					{"key": "expiresAt", "label": "Expires at", "type": "string"}
+				],
+				"indexRoute": "CcmUserFunctionAssignments"
+			}
+		},
+		{
+			"id": "CcmBaselines",
+			"route": "/ccm/baselines",
+			"type": "index",
+			"title": "Baselines",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmBaseline",
+				"columns": [
+					{"key": "baselineScope", "label": "Scope", "sortable": true},
+					{"key": "scopeKey", "label": "Scope key", "sortable": true},
+					{"key": "baselineMetric", "label": "Metric", "sortable": true},
+					{"key": "period", "label": "Period", "sortable": true},
+					{"key": "stable", "label": "Stable", "sortable": true}
+				],
+				"defaultSort": "period",
+				"detailRoute": "CcmBaselineDetail"
+			}
+		},
+		{
+			"id": "CcmBaselineDetail",
+			"route": "/ccm/baselines/:id",
+			"type": "detail",
+			"title": "Baseline",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmBaseline",
+				"fields": [
+					{"key": "baselineScope", "label": "Scope", "type": "string"},
+					{"key": "scopeKey", "label": "Scope key", "type": "string"},
+					{"key": "baselineMetric", "label": "Metric", "type": "string"},
+					{"key": "period", "label": "Period", "type": "string"},
+					{"key": "sampleSize", "label": "Sample size", "type": "number"},
+					{"key": "computedValue", "label": "Computed value", "type": "number"},
+					{"key": "stable", "label": "Stable", "type": "boolean"}
+				],
+				"indexRoute": "CcmBaselines"
+			}
+		},
+		{
+			"id": "CcmAuditCommitteeReports",
+			"route": "/ccm/audit-committee-reports",
+			"type": "index",
+			"title": "Audit Committee Reports",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmAuditCommitteeReport",
+				"columns": [
+					{"key": "period", "label": "Period", "sortable": true},
+					{"key": "reportingCadence", "label": "Cadence", "sortable": true},
+					{"key": "approver", "label": "Approver", "sortable": true},
+					{"key": "approvalDate", "label": "Approved", "sortable": true},
+					{"key": "state", "label": "State", "sortable": true}
+				],
+				"defaultSort": "period",
+				"detailRoute": "CcmAuditCommitteeReportDetail"
+			}
+		},
+		{
+			"id": "CcmAuditCommitteeReportDetail",
+			"route": "/ccm/audit-committee-reports/:id",
+			"type": "detail",
+			"title": "Audit Committee Report",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmAuditCommitteeReport",
+				"fields": [
+					{"key": "period", "label": "Period", "type": "string"},
+					{"key": "reportingCadence", "label": "Cadence", "type": "string"},
+					{"key": "executiveSummary", "label": "Executive summary", "type": "string"},
+					{"key": "recommendations", "label": "Recommendations", "type": "string"},
+					{"key": "approver", "label": "Approver", "type": "string"},
+					{"key": "approvalDate", "label": "Approved", "type": "string"},
+					{"key": "state", "label": "State", "type": "string"}
+				],
+				"indexRoute": "CcmAuditCommitteeReports"
+			}
+		}
+	]
+}

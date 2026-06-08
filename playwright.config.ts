@@ -39,7 +39,7 @@ export default defineConfig({
 		// PR pipelines don't reshoot screenshots on every push.
 		{
 			name: 'chromium',
-			testIgnore: ['**/docs-screenshots.spec.ts'],
+			testIgnore: ['**/docs-screenshots.spec.ts', '**/bookings-screenshots.spec.ts'],
 			use: {
 				...devices['Desktop Chrome'],
 				// Pick up the authenticated storage state globalSetup wrote.
@@ -48,10 +48,12 @@ export default defineConfig({
 		},
 		// Documentation capture project (ADR-030 / journeydoc). Opt-in:
 		//   npx playwright test --project docs-capture
-		// Output lands in `docs/static/screenshots/tutorials/{user,admin}/`.
+		// Output lands in `docs/static/screenshots/tutorials/{user,admin}/`
+		// (tutorial track) and `docs/static/screenshots/bookings/`
+		// (bookings module).
 		{
 			name: 'docs-capture',
-			testMatch: /docs-screenshots\.spec\.ts$/,
+			testMatch: /(docs-screenshots|bookings-screenshots)\.spec\.ts$/,
 			use: {
 				...devices['Desktop Chrome'],
 				viewport: { width: 1280, height: 800 },
