@@ -13,6 +13,7 @@
     "lint": "eslint src",
     "lint-fix": "npm run lint -- --fix",
     "check:manifest": "node tests/validate-manifest.js",
+    "check:registers": "node tests/validate-registers.js",
     "test:e2e": "playwright test",
     "test:e2e:docs": "playwright test --project docs-capture",
     "test:e2e:install": "playwright install chromium",

@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "1.3.4",
+	"version": "1.3.6",
 	"dependencies": [
 		"openregister"
 	],
@@ -245,6 +245,13 @@
 					"icon": "CalendarCheckOutline",
 					"route": "FiscalYears",
 					"order": 87
+				},
+				{
+					"id": "BookkeepingAuditTrail",
+					"label": "Audit Trail",
+					"icon": "HistoryIcon",
+					"route": "BookkeepingAuditTrail",
+					"order": 95
 				}
 			]
 		},
@@ -1721,7 +1728,27 @@
 				],
 				"lifecycleActions": true,
 				"aggregation": "segmentPnl",
-				"indexRoute": "CostCenters"
+				"indexRoute": "CostCenters",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -1800,7 +1827,27 @@
 				],
 				"lifecycleActions": true,
 				"aggregation": "segmentPnl",
-				"indexRoute": "KostenDragers"
+				"indexRoute": "KostenDragers",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -1968,7 +2015,27 @@
 						"schema": "WipBalance",
 						"foreignKey": "projectId"
 					}
-				]
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -2077,7 +2144,27 @@
 						"description": "Review the rule targets and activate it for evaluation on its cadence."
 					}
 				],
-				"indexRoute": "AllocationRules"
+				"indexRoute": "AllocationRules",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -2112,7 +2199,7 @@
 					},
 					{
 						"key": "emuSaldo",
-						"label": "EMU-saldo (\u20ac)",
+						"label": "EMU-saldo (€)",
 						"sortable": true
 					},
 					{
@@ -2157,12 +2244,12 @@
 					},
 					{
 						"key": "emuSaldo",
-						"label": "EMU-saldo (\u20ac)",
+						"label": "EMU-saldo (€)",
 						"type": "number"
 					},
 					{
 						"key": "emuSchuld",
-						"label": "EMU-schuld (\u20ac)",
+						"label": "EMU-schuld (€)",
 						"type": "number"
 					},
 					{
@@ -2186,7 +2273,27 @@
 						"type": "object"
 					}
 				],
-				"indexRoute": "EmuRapportage"
+				"indexRoute": "EmuRapportage",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -2297,7 +2404,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "KorStatus"
+				"indexRoute": "KorStatus",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -2443,7 +2570,27 @@
 						]
 					}
 				},
-				"indexRoute": "BankConnections"
+				"indexRoute": "BankConnections",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -2560,7 +2707,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "Waterschapsbelastingen"
+				"indexRoute": "Waterschapsbelastingen",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -2704,7 +2871,27 @@
 						]
 					}
 				],
-				"indexRoute": "Iv3Reports"
+				"indexRoute": "Iv3Reports",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -2825,7 +3012,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "Iv3Rapportages"
+				"indexRoute": "Iv3Rapportages",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -2962,7 +3169,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "GeneralLedger"
+				"indexRoute": "GeneralLedger",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -3085,7 +3312,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "Journals"
+				"indexRoute": "Journals",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -3197,7 +3444,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "GRDeelnemers"
+				"indexRoute": "GRDeelnemers",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -3264,7 +3531,27 @@
 						"type": "number"
 					}
 				],
-				"indexRoute": "GRVerdeelsleutels"
+				"indexRoute": "GRVerdeelsleutels",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -3362,7 +3649,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "ChartOfAccounts"
+				"indexRoute": "ChartOfAccounts",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -3540,7 +3847,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "FixedAssets"
+				"indexRoute": "FixedAssets",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -3726,7 +4053,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "BalanceSheet"
+				"indexRoute": "BalanceSheet",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -3819,7 +4166,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "TrialBalance"
+				"indexRoute": "TrialBalance",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -3962,7 +4329,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "Consolidations"
+				"indexRoute": "Consolidations",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -4050,7 +4437,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "ConsolidatedReport"
+				"indexRoute": "ConsolidatedReport",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -4168,7 +4575,7 @@
 					},
 					{
 						"key": "remediationOverdueCount",
-						"label": "Achterstallige remedi\u00ebringen",
+						"label": "Achterstallige remediëringen",
 						"type": "integer"
 					},
 					{
@@ -4198,7 +4605,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "SisaRapportages"
+				"indexRoute": "SisaRapportages",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -4232,7 +4659,7 @@
 					},
 					{
 						"key": "remediationStatus",
-						"label": "Remedi\u00ebringsstatus",
+						"label": "Remediëringsstatus",
 						"sortable": true
 					},
 					{
@@ -4296,17 +4723,17 @@
 					},
 					{
 						"key": "remediationDueDate",
-						"label": "Remedi\u00ebring v\u00f3\u00f3r",
+						"label": "Remediëring vóór",
 						"type": "date"
 					},
 					{
 						"key": "remediationStatus",
-						"label": "Remedi\u00ebringsstatus",
+						"label": "Remediëringsstatus",
 						"type": "string"
 					},
 					{
 						"key": "remediationCompletionDate",
-						"label": "Remedi\u00ebring voltooid op",
+						"label": "Remediëring voltooid op",
 						"type": "date"
 					},
 					{
@@ -4326,7 +4753,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "ComplianceAuditTrails"
+				"indexRoute": "ComplianceAuditTrails",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -4414,7 +4861,7 @@
 					},
 					{
 						"key": "remediationRecommendations",
-						"label": "Remedi\u00eberingsaanbevelingen",
+						"label": "Remediëeringsaanbevelingen",
 						"type": "string"
 					},
 					{
@@ -4429,7 +4876,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "ManagementLetters"
+				"indexRoute": "ManagementLetters",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -4538,7 +5005,27 @@
 				],
 				"lifecycleActions": true,
 				"auditTrail": true,
-				"indexRoute": "AuditDocuments"
+				"indexRoute": "AuditDocuments",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -4655,14 +5142,34 @@
 						"type": "number"
 					}
 				],
-				"indexRoute": "Bewaartermijnen"
+				"indexRoute": "Bewaartermijnen",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
 			"id": "BewaartermijnenDashboard",
 			"route": "/administratie/bewaartermijnen/dashboard",
 			"type": "dashboard",
-			"title": "Bewaartermijnen \u2014 Dashboard",
+			"title": "Bewaartermijnen — Dashboard",
 			"config": {
 				"widgets": [
 					{
@@ -4952,7 +5459,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "TaxEstimates"
+				"indexRoute": "TaxEstimates",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -5038,7 +5565,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "Dashboard"
+				"indexRoute": "Dashboard",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -5156,7 +5703,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "Vendors"
+				"indexRoute": "Vendors",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -5284,7 +5851,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "AccountsPayable"
+				"indexRoute": "AccountsPayable",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -5414,14 +6001,34 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "PaymentRuns"
+				"indexRoute": "PaymentRuns",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
 			"id": "ProjectenOverzicht",
 			"route": "/projecten",
 			"type": "index",
-			"title": "Projecten \u2014 Overzicht",
+			"title": "Projecten — Overzicht",
 			"visibilityPredicate": {
 				"administrationType": [
 					"mkb",
@@ -5543,7 +6150,7 @@
 							{
 								"min": 0.5,
 								"color": "warning",
-								"label": "Gemiddeld (50\u201380%)"
+								"label": "Gemiddeld (50–80%)"
 							},
 							{
 								"min": 0,
@@ -5650,7 +6257,27 @@
 						]
 					}
 				],
-				"auditTrail": true
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -5759,7 +6386,27 @@
 					}
 				],
 				"auditTrail": true,
-				"indexRoute": "InnovatieboxElections"
+				"indexRoute": "InnovatieboxElections",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -5983,7 +6630,27 @@
 						"detailRoute": "KostenpostDetail"
 					}
 				],
-				"indexRoute": "RDSubsidies"
+				"indexRoute": "RDSubsidies",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -6049,7 +6716,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "RDSubsidies"
+				"indexRoute": "RDSubsidies",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -6162,7 +6849,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "FiscalYears"
+				"indexRoute": "FiscalYears",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -6257,7 +6964,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "RateCards"
+				"indexRoute": "RateCards",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -6382,7 +7109,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "RateSchedules"
+				"indexRoute": "RateSchedules",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -6516,7 +7263,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "RateAuditTrail"
+				"indexRoute": "RateAuditTrail",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -6673,7 +7440,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "Receipts"
+				"indexRoute": "Receipts",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -6858,7 +7645,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "ExpenseClaims"
+				"indexRoute": "ExpenseClaims",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -6904,7 +7711,7 @@
 					},
 					{
 						"key": "ratePerKm",
-						"label": "Rate (\u20ac/km)",
+						"label": "Rate (€/km)",
 						"sortable": true,
 						"type": "number"
 					},
@@ -6993,7 +7800,7 @@
 					},
 					{
 						"key": "ratePerKm",
-						"label": "Rate (\u20ac/km)",
+						"label": "Rate (€/km)",
 						"type": "number"
 					},
 					{
@@ -7022,7 +7829,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "MileageLog"
+				"indexRoute": "MileageLog",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -7114,7 +7941,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "BtwAangiften"
+				"indexRoute": "BtwAangiften",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -7176,7 +8023,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "IcpOpgaaf"
+				"indexRoute": "IcpOpgaaf",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -7248,7 +8115,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "BtwCorrecties"
+				"indexRoute": "BtwCorrecties",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -7380,7 +8267,27 @@
 						"type": "number"
 					}
 				],
-				"indexRoute": "ZzpAftrek"
+				"indexRoute": "ZzpAftrek",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -7543,7 +8450,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "BcfClaims"
+				"indexRoute": "BcfClaims",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -7643,7 +8570,27 @@
 						"type": "boolean"
 					}
 				],
-				"indexRoute": "SubsidiesOverzicht"
+				"indexRoute": "SubsidiesOverzicht",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -8183,7 +9130,27 @@
 					"alertVooralarm",
 					"administrationId"
 				],
-				"description": "Configure the cash buffer threshold and two-tier alert levels. REQ-CF-009."
+				"description": "Configure the cash buffer threshold and two-tier alert levels. REQ-CF-009.",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -8298,10 +9265,26 @@
 				"register": "shillinq",
 				"schema": "DunningLadder",
 				"columns": [
-					{ "key": "naam", "label": "Name", "sortable": true },
-					{ "key": "klantGroep", "label": "Customer group", "sortable": true },
-					{ "key": "actief", "label": "Active", "sortable": true },
-					{ "key": "lifecycleState", "label": "State", "sortable": true }
+					{
+						"key": "naam",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "klantGroep",
+						"label": "Customer group",
+						"sortable": true
+					},
+					{
+						"key": "actief",
+						"label": "Active",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "State",
+						"sortable": true
+					}
 				],
 				"defaultSort": "naam",
 				"detailRoute": "DunningLadderDetail",
@@ -8317,16 +9300,64 @@
 				"register": "shillinq",
 				"schema": "DunningLadder",
 				"fields": [
-					{ "key": "naam", "label": "Name", "type": "string" },
-					{ "key": "klantGroep", "label": "Customer group", "type": "string" },
-					{ "key": "ondernemingId", "label": "Ondernemer", "type": "string" },
-					{ "key": "actief", "label": "Active", "type": "boolean" },
-					{ "key": "lifecycleState", "label": "State", "type": "string" },
-					{ "key": "stages", "label": "Stages", "type": "json" },
-					{ "key": "administrationId", "label": "Administration", "type": "string" }
+					{
+						"key": "naam",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "klantGroep",
+						"label": "Customer group",
+						"type": "string"
+					},
+					{
+						"key": "ondernemingId",
+						"label": "Ondernemer",
+						"type": "string"
+					},
+					{
+						"key": "actief",
+						"label": "Active",
+						"type": "boolean"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "State",
+						"type": "string"
+					},
+					{
+						"key": "stages",
+						"label": "Stages",
+						"type": "json"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "DunningLadders"
+				"indexRoute": "DunningLadders",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -8338,11 +9369,31 @@
 				"register": "shillinq",
 				"schema": "KlantLadderOverride",
 				"columns": [
-					{ "key": "klantId", "label": "Customer", "sortable": true },
-					{ "key": "baseLadderId", "label": "Base ladder", "sortable": true },
-					{ "key": "reden", "label": "Reason", "sortable": false },
-					{ "key": "approvedBy", "label": "Approved by", "sortable": true },
-					{ "key": "lifecycleState", "label": "State", "sortable": true }
+					{
+						"key": "klantId",
+						"label": "Customer",
+						"sortable": true
+					},
+					{
+						"key": "baseLadderId",
+						"label": "Base ladder",
+						"sortable": true
+					},
+					{
+						"key": "reden",
+						"label": "Reason",
+						"sortable": false
+					},
+					{
+						"key": "approvedBy",
+						"label": "Approved by",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "State",
+						"sortable": true
+					}
 				],
 				"defaultSort": "klantId",
 				"detailRoute": "DunningKlantOverrideDetail",
@@ -8358,19 +9409,79 @@
 				"register": "shillinq",
 				"schema": "KlantLadderOverride",
 				"fields": [
-					{ "key": "klantId", "label": "Customer", "type": "string" },
-					{ "key": "baseLadderId", "label": "Base ladder", "type": "string" },
-					{ "key": "overrides", "label": "Overrides", "type": "json" },
-					{ "key": "reden", "label": "Reason", "type": "string" },
-					{ "key": "createdBy", "label": "Created by", "type": "string" },
-					{ "key": "createdAt", "label": "Created at", "type": "datetime" },
-					{ "key": "approvedBy", "label": "Approved by", "type": "string" },
-					{ "key": "approvedAt", "label": "Approved at", "type": "datetime" },
-					{ "key": "lifecycleState", "label": "State", "type": "string" },
-					{ "key": "administrationId", "label": "Administration", "type": "string" }
+					{
+						"key": "klantId",
+						"label": "Customer",
+						"type": "string"
+					},
+					{
+						"key": "baseLadderId",
+						"label": "Base ladder",
+						"type": "string"
+					},
+					{
+						"key": "overrides",
+						"label": "Overrides",
+						"type": "json"
+					},
+					{
+						"key": "reden",
+						"label": "Reason",
+						"type": "string"
+					},
+					{
+						"key": "createdBy",
+						"label": "Created by",
+						"type": "string"
+					},
+					{
+						"key": "createdAt",
+						"label": "Created at",
+						"type": "datetime"
+					},
+					{
+						"key": "approvedBy",
+						"label": "Approved by",
+						"type": "string"
+					},
+					{
+						"key": "approvedAt",
+						"label": "Approved at",
+						"type": "datetime"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "State",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "DunningKlantOverrides"
+				"indexRoute": "DunningKlantOverrides",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -8382,11 +9493,31 @@
 				"register": "shillinq",
 				"schema": "DunningRun",
 				"columns": [
-					{ "key": "factuurId", "label": "Invoice", "sortable": true },
-					{ "key": "stageNr", "label": "Stage", "sortable": true },
-					{ "key": "kanaal", "label": "Channel", "sortable": true },
-					{ "key": "deliveryStatus", "label": "Delivery", "sortable": true },
-					{ "key": "uitgevoerdOp", "label": "Executed at", "sortable": true }
+					{
+						"key": "factuurId",
+						"label": "Invoice",
+						"sortable": true
+					},
+					{
+						"key": "stageNr",
+						"label": "Stage",
+						"sortable": true
+					},
+					{
+						"key": "kanaal",
+						"label": "Channel",
+						"sortable": true
+					},
+					{
+						"key": "deliveryStatus",
+						"label": "Delivery",
+						"sortable": true
+					},
+					{
+						"key": "uitgevoerdOp",
+						"label": "Executed at",
+						"sortable": true
+					}
 				],
 				"defaultSort": "uitgevoerdOp",
 				"detailRoute": "DunningRunDetail",
@@ -8402,25 +9533,109 @@
 				"register": "shillinq",
 				"schema": "DunningRun",
 				"fields": [
-					{ "key": "factuurId", "label": "Invoice", "type": "string" },
-					{ "key": "ladderId", "label": "Ladder", "type": "string" },
-					{ "key": "stageNr", "label": "Stage", "type": "integer" },
-					{ "key": "kanaal", "label": "Channel", "type": "string" },
-					{ "key": "ontvangerEmail", "label": "Recipient e-mail", "type": "string" },
-					{ "key": "ontvangerNaam", "label": "Recipient name", "type": "string" },
-					{ "key": "templateId", "label": "Template", "type": "string" },
-					{ "key": "renderedSubject", "label": "Subject", "type": "string" },
-					{ "key": "renderedBody", "label": "Body", "type": "text" },
-					{ "key": "renderedPdfHash", "label": "PDF SHA-256", "type": "string" },
-					{ "key": "deliveryStatus", "label": "Delivery status", "type": "string" },
-					{ "key": "uitgevoerdOp", "label": "Executed at", "type": "datetime" },
-					{ "key": "factuurBedrag", "label": "Invoice amount", "type": "money" },
-					{ "key": "incassokostenBedrag", "label": "Incasso costs", "type": "money" },
-					{ "key": "renteBedrag", "label": "Rente", "type": "money" },
-					{ "key": "lifecycleState", "label": "State", "type": "string" }
+					{
+						"key": "factuurId",
+						"label": "Invoice",
+						"type": "string"
+					},
+					{
+						"key": "ladderId",
+						"label": "Ladder",
+						"type": "string"
+					},
+					{
+						"key": "stageNr",
+						"label": "Stage",
+						"type": "integer"
+					},
+					{
+						"key": "kanaal",
+						"label": "Channel",
+						"type": "string"
+					},
+					{
+						"key": "ontvangerEmail",
+						"label": "Recipient e-mail",
+						"type": "string"
+					},
+					{
+						"key": "ontvangerNaam",
+						"label": "Recipient name",
+						"type": "string"
+					},
+					{
+						"key": "templateId",
+						"label": "Template",
+						"type": "string"
+					},
+					{
+						"key": "renderedSubject",
+						"label": "Subject",
+						"type": "string"
+					},
+					{
+						"key": "renderedBody",
+						"label": "Body",
+						"type": "text"
+					},
+					{
+						"key": "renderedPdfHash",
+						"label": "PDF SHA-256",
+						"type": "string"
+					},
+					{
+						"key": "deliveryStatus",
+						"label": "Delivery status",
+						"type": "string"
+					},
+					{
+						"key": "uitgevoerdOp",
+						"label": "Executed at",
+						"type": "datetime"
+					},
+					{
+						"key": "factuurBedrag",
+						"label": "Invoice amount",
+						"type": "money"
+					},
+					{
+						"key": "incassokostenBedrag",
+						"label": "Incasso costs",
+						"type": "money"
+					},
+					{
+						"key": "renteBedrag",
+						"label": "Rente",
+						"type": "money"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "State",
+						"type": "string"
+					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "DunningRuns"
+				"indexRoute": "DunningRuns",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -8432,10 +9647,26 @@
 				"register": "shillinq",
 				"schema": "IncassoKostenBerekening",
 				"columns": [
-					{ "key": "factuurId", "label": "Invoice", "sortable": true },
-					{ "key": "hoofdsom", "label": "Principal", "sortable": true },
-					{ "key": "partyType", "label": "Party type", "sortable": true },
-					{ "key": "totaalVerschuldigd", "label": "Total owed", "sortable": true }
+					{
+						"key": "factuurId",
+						"label": "Invoice",
+						"sortable": true
+					},
+					{
+						"key": "hoofdsom",
+						"label": "Principal",
+						"sortable": true
+					},
+					{
+						"key": "partyType",
+						"label": "Party type",
+						"sortable": true
+					},
+					{
+						"key": "totaalVerschuldigd",
+						"label": "Total owed",
+						"sortable": true
+					}
 				],
 				"defaultSort": "factuurId",
 				"detailRoute": "IncassoKostenDetail",
@@ -8451,15 +9682,63 @@
 				"register": "shillinq",
 				"schema": "IncassoKostenBerekening",
 				"fields": [
-					{ "key": "factuurId", "label": "Invoice", "type": "string" },
-					{ "key": "hoofdsom", "label": "Principal", "type": "money" },
-					{ "key": "partyType", "label": "Party type", "type": "string" },
-					{ "key": "berekening", "label": "BIK staffel", "type": "json" },
-					{ "key": "wettelijkeRente", "label": "Wettelijke rente", "type": "json" },
-					{ "key": "totaalVerschuldigd", "label": "Total owed", "type": "money" },
-					{ "key": "administrationId", "label": "Administration", "type": "string" }
+					{
+						"key": "factuurId",
+						"label": "Invoice",
+						"type": "string"
+					},
+					{
+						"key": "hoofdsom",
+						"label": "Principal",
+						"type": "money"
+					},
+					{
+						"key": "partyType",
+						"label": "Party type",
+						"type": "string"
+					},
+					{
+						"key": "berekening",
+						"label": "BIK staffel",
+						"type": "json"
+					},
+					{
+						"key": "wettelijkeRente",
+						"label": "Wettelijke rente",
+						"type": "json"
+					},
+					{
+						"key": "totaalVerschuldigd",
+						"label": "Total owed",
+						"type": "money"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
 				],
-				"indexRoute": "IncassoKosten"
+				"indexRoute": "IncassoKosten",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -8471,11 +9750,31 @@
 				"register": "shillinq",
 				"schema": "OninbaarAfschrijving",
 				"columns": [
-					{ "key": "factuurId", "label": "Invoice", "sortable": true },
-					{ "key": "hoofdsomAfgeschreven", "label": "Written off", "sortable": true },
-					{ "key": "btwBedrag", "label": "VAT recovery", "sortable": true },
-					{ "key": "btwAangiftePeriode", "label": "VAT period", "sortable": true },
-					{ "key": "lifecycleState", "label": "State", "sortable": true }
+					{
+						"key": "factuurId",
+						"label": "Invoice",
+						"sortable": true
+					},
+					{
+						"key": "hoofdsomAfgeschreven",
+						"label": "Written off",
+						"sortable": true
+					},
+					{
+						"key": "btwBedrag",
+						"label": "VAT recovery",
+						"sortable": true
+					},
+					{
+						"key": "btwAangiftePeriode",
+						"label": "VAT period",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "State",
+						"sortable": true
+					}
 				],
 				"defaultSort": "factuurId",
 				"detailRoute": "OninbareAfschrijvingDetail",
@@ -8491,17 +9790,69 @@
 				"register": "shillinq",
 				"schema": "OninbaarAfschrijving",
 				"fields": [
-					{ "key": "factuurId", "label": "Invoice", "type": "string" },
-					{ "key": "hoofdsomAfgeschreven", "label": "Written off (excl. VAT)", "type": "money" },
-					{ "key": "btwBedrag", "label": "VAT recovery (art. 29 OB)", "type": "money" },
-					{ "key": "art29OBVerklaring", "label": "Reason (art. 29 OB)", "type": "string" },
-					{ "key": "evidenceRef", "label": "Evidence", "type": "string" },
-					{ "key": "boekingId", "label": "GL posting", "type": "string" },
-					{ "key": "btwAangiftePeriode", "label": "BTW aangifte period", "type": "string" },
-					{ "key": "lifecycleState", "label": "State", "type": "string" }
+					{
+						"key": "factuurId",
+						"label": "Invoice",
+						"type": "string"
+					},
+					{
+						"key": "hoofdsomAfgeschreven",
+						"label": "Written off (excl. VAT)",
+						"type": "money"
+					},
+					{
+						"key": "btwBedrag",
+						"label": "VAT recovery (art. 29 OB)",
+						"type": "money"
+					},
+					{
+						"key": "art29OBVerklaring",
+						"label": "Reason (art. 29 OB)",
+						"type": "string"
+					},
+					{
+						"key": "evidenceRef",
+						"label": "Evidence",
+						"type": "string"
+					},
+					{
+						"key": "boekingId",
+						"label": "GL posting",
+						"type": "string"
+					},
+					{
+						"key": "btwAangiftePeriode",
+						"label": "BTW aangifte period",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "State",
+						"type": "string"
+					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "OninbareAfschrijvingen"
+				"indexRoute": "OninbareAfschrijvingen",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -8513,13 +9864,41 @@
 				"register": "shillinq",
 				"schema": "PurchaseOrder",
 				"columns": [
-					{ "key": "poNumber", "label": "PO #", "sortable": true },
-					{ "key": "supplierId", "label": "Supplier", "sortable": true },
-					{ "key": "expectedDeliveryDate", "label": "Expected", "sortable": true },
-					{ "key": "totalInclVat", "label": "Total (incl. VAT)", "sortable": true },
-					{ "key": "costCenter", "label": "Cost Centre", "sortable": true },
-					{ "key": "projectCode", "label": "Project", "sortable": true },
-					{ "key": "statusCode", "label": "Status", "sortable": true }
+					{
+						"key": "poNumber",
+						"label": "PO #",
+						"sortable": true
+					},
+					{
+						"key": "supplierId",
+						"label": "Supplier",
+						"sortable": true
+					},
+					{
+						"key": "expectedDeliveryDate",
+						"label": "Expected",
+						"sortable": true
+					},
+					{
+						"key": "totalInclVat",
+						"label": "Total (incl. VAT)",
+						"sortable": true
+					},
+					{
+						"key": "costCenter",
+						"label": "Cost Centre",
+						"sortable": true
+					},
+					{
+						"key": "projectCode",
+						"label": "Project",
+						"sortable": true
+					},
+					{
+						"key": "statusCode",
+						"label": "Status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "poNumber",
 				"detailRoute": "PurchaseOrderDetail",
@@ -8535,26 +9914,114 @@
 				"register": "shillinq",
 				"schema": "PurchaseOrder",
 				"fields": [
-					{ "key": "poNumber", "label": "PO #", "type": "string" },
-					{ "key": "supplierId", "label": "Supplier", "type": "string" },
-					{ "key": "supplierReference", "label": "Supplier Reference", "type": "string" },
-					{ "key": "requester", "label": "Requester", "type": "string" },
-					{ "key": "costCenter", "label": "Cost Centre", "type": "string" },
-					{ "key": "projectCode", "label": "Project", "type": "string" },
-					{ "key": "currency", "label": "Currency", "type": "string" },
-					{ "key": "paymentTerms", "label": "Payment Terms", "type": "string" },
-					{ "key": "deliveryAddress", "label": "Delivery Address", "type": "string" },
-					{ "key": "expectedDeliveryDate", "label": "Expected Delivery", "type": "date" },
-					{ "key": "totalExclVat", "label": "Total (excl. VAT)", "type": "money" },
-					{ "key": "totalVat", "label": "VAT", "type": "money" },
-					{ "key": "totalInclVat", "label": "Total (incl. VAT)", "type": "money" },
-					{ "key": "peppolSentAt", "label": "Peppol Sent", "type": "datetime" },
-					{ "key": "peppolMessageId", "label": "Peppol Message ID", "type": "string" },
-					{ "key": "statusCode", "label": "Status", "type": "string" },
-					{ "key": "administrationId", "label": "Administration", "type": "string" }
+					{
+						"key": "poNumber",
+						"label": "PO #",
+						"type": "string"
+					},
+					{
+						"key": "supplierId",
+						"label": "Supplier",
+						"type": "string"
+					},
+					{
+						"key": "supplierReference",
+						"label": "Supplier Reference",
+						"type": "string"
+					},
+					{
+						"key": "requester",
+						"label": "Requester",
+						"type": "string"
+					},
+					{
+						"key": "costCenter",
+						"label": "Cost Centre",
+						"type": "string"
+					},
+					{
+						"key": "projectCode",
+						"label": "Project",
+						"type": "string"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "paymentTerms",
+						"label": "Payment Terms",
+						"type": "string"
+					},
+					{
+						"key": "deliveryAddress",
+						"label": "Delivery Address",
+						"type": "string"
+					},
+					{
+						"key": "expectedDeliveryDate",
+						"label": "Expected Delivery",
+						"type": "date"
+					},
+					{
+						"key": "totalExclVat",
+						"label": "Total (excl. VAT)",
+						"type": "money"
+					},
+					{
+						"key": "totalVat",
+						"label": "VAT",
+						"type": "money"
+					},
+					{
+						"key": "totalInclVat",
+						"label": "Total (incl. VAT)",
+						"type": "money"
+					},
+					{
+						"key": "peppolSentAt",
+						"label": "Peppol Sent",
+						"type": "datetime"
+					},
+					{
+						"key": "peppolMessageId",
+						"label": "Peppol Message ID",
+						"type": "string"
+					},
+					{
+						"key": "statusCode",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "PurchaseOrders"
+				"indexRoute": "PurchaseOrders",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -8566,12 +10033,36 @@
 				"register": "shillinq",
 				"schema": "GoodsReceiptNote",
 				"columns": [
-					{ "key": "grnNumber", "label": "GRN #", "sortable": true },
-					{ "key": "receivedAt", "label": "Received", "sortable": true },
-					{ "key": "receivedBy", "label": "Received by", "sortable": true },
-					{ "key": "carrier", "label": "Carrier", "sortable": true },
-					{ "key": "qualityCheckPassed", "label": "QC", "sortable": true },
-					{ "key": "statusCode", "label": "Status", "sortable": true }
+					{
+						"key": "grnNumber",
+						"label": "GRN #",
+						"sortable": true
+					},
+					{
+						"key": "receivedAt",
+						"label": "Received",
+						"sortable": true
+					},
+					{
+						"key": "receivedBy",
+						"label": "Received by",
+						"sortable": true
+					},
+					{
+						"key": "carrier",
+						"label": "Carrier",
+						"sortable": true
+					},
+					{
+						"key": "qualityCheckPassed",
+						"label": "QC",
+						"sortable": true
+					},
+					{
+						"key": "statusCode",
+						"label": "Status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "receivedAt",
 				"detailRoute": "GoodsReceiptDetail",
@@ -8587,20 +10078,84 @@
 				"register": "shillinq",
 				"schema": "GoodsReceiptNote",
 				"fields": [
-					{ "key": "grnNumber", "label": "GRN #", "type": "string" },
-					{ "key": "poIds", "label": "Purchase Orders", "type": "array" },
-					{ "key": "receivedAt", "label": "Received At", "type": "datetime" },
-					{ "key": "receivedBy", "label": "Received By", "type": "string" },
-					{ "key": "deliveryNoteReference", "label": "Delivery Note", "type": "string" },
-					{ "key": "carrier", "label": "Carrier", "type": "string" },
-					{ "key": "qualityCheckPassed", "label": "Quality Check", "type": "boolean" },
-					{ "key": "costCenter", "label": "Cost Centre", "type": "string" },
-					{ "key": "projectCode", "label": "Project", "type": "string" },
-					{ "key": "statusCode", "label": "Status", "type": "string" },
-					{ "key": "administrationId", "label": "Administration", "type": "string" }
+					{
+						"key": "grnNumber",
+						"label": "GRN #",
+						"type": "string"
+					},
+					{
+						"key": "poIds",
+						"label": "Purchase Orders",
+						"type": "array"
+					},
+					{
+						"key": "receivedAt",
+						"label": "Received At",
+						"type": "datetime"
+					},
+					{
+						"key": "receivedBy",
+						"label": "Received By",
+						"type": "string"
+					},
+					{
+						"key": "deliveryNoteReference",
+						"label": "Delivery Note",
+						"type": "string"
+					},
+					{
+						"key": "carrier",
+						"label": "Carrier",
+						"type": "string"
+					},
+					{
+						"key": "qualityCheckPassed",
+						"label": "Quality Check",
+						"type": "boolean"
+					},
+					{
+						"key": "costCenter",
+						"label": "Cost Centre",
+						"type": "string"
+					},
+					{
+						"key": "projectCode",
+						"label": "Project",
+						"type": "string"
+					},
+					{
+						"key": "statusCode",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "GoodsReceipts"
+				"indexRoute": "GoodsReceipts",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -8612,12 +10167,36 @@
 				"register": "shillinq",
 				"schema": "SupplierInvoice",
 				"columns": [
-					{ "key": "invoiceNumber", "label": "Invoice #", "sortable": true },
-					{ "key": "supplierId", "label": "Supplier", "sortable": true },
-					{ "key": "invoiceDate", "label": "Invoice Date", "sortable": true },
-					{ "key": "dueDate", "label": "Due", "sortable": true },
-					{ "key": "totalInclVat", "label": "Total (incl. VAT)", "sortable": true },
-					{ "key": "statusCode", "label": "Status", "sortable": true }
+					{
+						"key": "invoiceNumber",
+						"label": "Invoice #",
+						"sortable": true
+					},
+					{
+						"key": "supplierId",
+						"label": "Supplier",
+						"sortable": true
+					},
+					{
+						"key": "invoiceDate",
+						"label": "Invoice Date",
+						"sortable": true
+					},
+					{
+						"key": "dueDate",
+						"label": "Due",
+						"sortable": true
+					},
+					{
+						"key": "totalInclVat",
+						"label": "Total (incl. VAT)",
+						"sortable": true
+					},
+					{
+						"key": "statusCode",
+						"label": "Status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "dueDate",
 				"detailRoute": "SupplierInvoiceDetail",
@@ -8633,25 +10212,109 @@
 				"register": "shillinq",
 				"schema": "SupplierInvoice",
 				"fields": [
-					{ "key": "invoiceNumber", "label": "Invoice #", "type": "string" },
-					{ "key": "supplierId", "label": "Supplier", "type": "string" },
-					{ "key": "invoiceDate", "label": "Invoice Date", "type": "date" },
-					{ "key": "dueDate", "label": "Due Date", "type": "date" },
-					{ "key": "currency", "label": "Currency", "type": "string" },
-					{ "key": "totalExclVat", "label": "Total (excl. VAT)", "type": "money" },
-					{ "key": "totalVat", "label": "VAT", "type": "money" },
-					{ "key": "totalInclVat", "label": "Total (incl. VAT)", "type": "money" },
-					{ "key": "paymentReference", "label": "Payment Reference", "type": "string" },
-					{ "key": "ublSourceUri", "label": "UBL Source", "type": "string" },
-					{ "key": "peppolReceivedAt", "label": "Peppol Received", "type": "datetime" },
-					{ "key": "ocrConfidenceScore", "label": "OCR Confidence", "type": "number" },
-					{ "key": "costCenter", "label": "Cost Centre", "type": "string" },
-					{ "key": "projectCode", "label": "Project", "type": "string" },
-					{ "key": "statusCode", "label": "Status", "type": "string" },
-					{ "key": "administrationId", "label": "Administration", "type": "string" }
+					{
+						"key": "invoiceNumber",
+						"label": "Invoice #",
+						"type": "string"
+					},
+					{
+						"key": "supplierId",
+						"label": "Supplier",
+						"type": "string"
+					},
+					{
+						"key": "invoiceDate",
+						"label": "Invoice Date",
+						"type": "date"
+					},
+					{
+						"key": "dueDate",
+						"label": "Due Date",
+						"type": "date"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "totalExclVat",
+						"label": "Total (excl. VAT)",
+						"type": "money"
+					},
+					{
+						"key": "totalVat",
+						"label": "VAT",
+						"type": "money"
+					},
+					{
+						"key": "totalInclVat",
+						"label": "Total (incl. VAT)",
+						"type": "money"
+					},
+					{
+						"key": "paymentReference",
+						"label": "Payment Reference",
+						"type": "string"
+					},
+					{
+						"key": "ublSourceUri",
+						"label": "UBL Source",
+						"type": "string"
+					},
+					{
+						"key": "peppolReceivedAt",
+						"label": "Peppol Received",
+						"type": "datetime"
+					},
+					{
+						"key": "ocrConfidenceScore",
+						"label": "OCR Confidence",
+						"type": "number"
+					},
+					{
+						"key": "costCenter",
+						"label": "Cost Centre",
+						"type": "string"
+					},
+					{
+						"key": "projectCode",
+						"label": "Project",
+						"type": "string"
+					},
+					{
+						"key": "statusCode",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "SupplierInvoices"
+				"indexRoute": "SupplierInvoices",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -8663,12 +10326,36 @@
 				"register": "shillinq",
 				"schema": "ThreeWayMatch",
 				"columns": [
-					{ "key": "invoiceId", "label": "Invoice", "sortable": true },
-					{ "key": "matchStatus", "label": "Match", "sortable": true },
-					{ "key": "createdAt", "label": "Created", "sortable": true },
-					{ "key": "resolvedAt", "label": "Resolved", "sortable": true },
-					{ "key": "costCenter", "label": "Cost Centre", "sortable": true },
-					{ "key": "projectCode", "label": "Project", "sortable": true }
+					{
+						"key": "invoiceId",
+						"label": "Invoice",
+						"sortable": true
+					},
+					{
+						"key": "matchStatus",
+						"label": "Match",
+						"sortable": true
+					},
+					{
+						"key": "createdAt",
+						"label": "Created",
+						"sortable": true
+					},
+					{
+						"key": "resolvedAt",
+						"label": "Resolved",
+						"sortable": true
+					},
+					{
+						"key": "costCenter",
+						"label": "Cost Centre",
+						"sortable": true
+					},
+					{
+						"key": "projectCode",
+						"label": "Project",
+						"sortable": true
+					}
 				],
 				"defaultSort": "createdAt",
 				"detailRoute": "ThreeWayMatchDetail",
@@ -8684,22 +10371,94 @@
 				"register": "shillinq",
 				"schema": "ThreeWayMatch",
 				"fields": [
-					{ "key": "invoiceId", "label": "Invoice", "type": "string" },
-					{ "key": "matchedPoIds", "label": "Matched POs", "type": "array" },
-					{ "key": "matchedGrnIds", "label": "Matched GRNs", "type": "array" },
-					{ "key": "matchStatus", "label": "Match Status", "type": "string" },
-					{ "key": "divergenceDetails", "label": "Divergence", "type": "array" },
-					{ "key": "resolvedBy", "label": "Resolved By", "type": "string" },
-					{ "key": "resolutionAction", "label": "Resolution Action", "type": "string" },
-					{ "key": "resolutionNotes", "label": "Resolution Notes", "type": "string" },
-					{ "key": "createdAt", "label": "Created", "type": "datetime" },
-					{ "key": "resolvedAt", "label": "Resolved", "type": "datetime" },
-					{ "key": "costCenter", "label": "Cost Centre", "type": "string" },
-					{ "key": "projectCode", "label": "Project", "type": "string" },
-					{ "key": "administrationId", "label": "Administration", "type": "string" }
+					{
+						"key": "invoiceId",
+						"label": "Invoice",
+						"type": "string"
+					},
+					{
+						"key": "matchedPoIds",
+						"label": "Matched POs",
+						"type": "array"
+					},
+					{
+						"key": "matchedGrnIds",
+						"label": "Matched GRNs",
+						"type": "array"
+					},
+					{
+						"key": "matchStatus",
+						"label": "Match Status",
+						"type": "string"
+					},
+					{
+						"key": "divergenceDetails",
+						"label": "Divergence",
+						"type": "array"
+					},
+					{
+						"key": "resolvedBy",
+						"label": "Resolved By",
+						"type": "string"
+					},
+					{
+						"key": "resolutionAction",
+						"label": "Resolution Action",
+						"type": "string"
+					},
+					{
+						"key": "resolutionNotes",
+						"label": "Resolution Notes",
+						"type": "string"
+					},
+					{
+						"key": "createdAt",
+						"label": "Created",
+						"type": "datetime"
+					},
+					{
+						"key": "resolvedAt",
+						"label": "Resolved",
+						"type": "datetime"
+					},
+					{
+						"key": "costCenter",
+						"label": "Cost Centre",
+						"type": "string"
+					},
+					{
+						"key": "projectCode",
+						"label": "Project",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "ThreeWayMatches"
+				"indexRoute": "ThreeWayMatches",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -8722,15 +10481,77 @@
 					}
 				},
 				"columns": [
-					{ "key": "invoiceId", "label": "Invoice", "sortable": true },
-					{ "key": "matchStatus", "label": "Exception", "sortable": true },
-					{ "key": "createdAt", "label": "Created", "sortable": true },
-					{ "key": "resolvedBy", "label": "Resolved By", "sortable": true },
-					{ "key": "resolutionAction", "label": "Action", "sortable": true }
+					{
+						"key": "invoiceId",
+						"label": "Invoice",
+						"sortable": true
+					},
+					{
+						"key": "matchStatus",
+						"label": "Exception",
+						"sortable": true
+					},
+					{
+						"key": "createdAt",
+						"label": "Created",
+						"sortable": true
+					},
+					{
+						"key": "resolvedBy",
+						"label": "Resolved By",
+						"sortable": true
+					},
+					{
+						"key": "resolutionAction",
+						"label": "Action",
+						"sortable": true
+					}
 				],
 				"defaultSort": "createdAt",
 				"detailRoute": "ThreeWayMatchDetail",
 				"description": "Filtered view of 3-way matches that need operator action (price/quantity/missing-GRN/missing-PO/fraud-alert exceptions). Member 08 owns the exception workflow."
+			}
+		},
+		{
+			"id": "BookkeepingAuditTrail",
+			"route": "/bookkeeping/audit-trail",
+			"type": "logs",
+			"title": "Audit Trail",
+			"config": {
+				"source": "/index.php/apps/openregister/api/audit-trails?objectTypes=Account,GLTransaction,GLLine,JournalEntry,FiscalPeriod,FiscalYear,VendorMaster,APInvoice,PaymentRun,CustomerMaster,ARInvoice,DunningRecord,BankStatement,BankStatementLine,BankConnection,ReconciliationMatch,PurchaseOrder,GoodsReceiptNote,SupplierInvoice,ThreeWayMatch,FixedAsset,Invoice,InvoiceLine,BillableInvoice,BillableInvoiceLine,CreditNote,DunningLadder,DunningRun,Subsidie,Grant,AnnualReport,BalanceSheet,IncomeStatement,CashFlowStatement,DirectorReport,TrialBalance,TrialBalanceLine,ConsolidationGroup,ConsolidatedReport,IntercompanyJournalEntry,DualTransaction,BBVProgramma,BBVProgramme,Iv3Export,WaterschapHeffingPosting,VATDeclaration,VATReturn,VatCorrection,VatReturn,OssRegistration,OssReturn,OssPayment,IcpStatement,BcfClaim,TaxSummaryReport,TaxEstimate,KorThreshold,KorRegime,IbAangifteExport,ZzpDeduction,LHAfdracht,LoonPeriode,LoonStrook,LoonheffingTabel2026,Loonjournaalpost,Werkgever,Werknemer,Receipt,MileageEntry,PerDiem,ExpenseClaimEntry,UrenRegistratie,WipBalance,RateCard,RateSchedule,RateRecord,Project,ProjectAssignment,CostCenter,KostenDrager,AllocationRule,Administration,AdministrationMembership,AdministrationMigration,RetentionRule,AssuranceEngagement,SisaReport,AuditDocument,ComplianceAuditTrail,ManagementLetter,Kostenpost",
+				"columns": [
+					{
+						"key": "created",
+						"label": "When",
+						"sortable": true
+					},
+					{
+						"key": "user",
+						"label": "Actor",
+						"sortable": true
+					},
+					{
+						"key": "action",
+						"label": "Action",
+						"sortable": true
+					},
+					{
+						"key": "schema",
+						"label": "Object type",
+						"sortable": true
+					},
+					{
+						"key": "objectId",
+						"label": "Object",
+						"sortable": false
+					},
+					{
+						"key": "summary",
+						"label": "Summary",
+						"sortable": false
+					}
+				],
+				"defaultSort": "-created"
 			}
 		}
 	]

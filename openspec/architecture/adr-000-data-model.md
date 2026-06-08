@@ -12,6 +12,32 @@ OpenRegister built-in fields (NOT listed below, always available):
 id, uuid, uri, version, createdAt, updatedAt, owner, organization,
 register, schema, relations, files, auditTrail, notes, tasks, tags, status, locked.
 
+> **Audit-trail-on-every-bookkeeping-register rule (add-shillinq-audit-trail,
+> 2026-06-08, capability `bookkeeping-audit-trail`):** Every bookkeeping
+> schema declared in shillinq — every register listed below MINUS the
+> explicit non-bookkeeping opt-out set (bookings, inventory, notification
+> delivery, the scaffolding `example` schema) — MUST carry
+> `x-openregister-audit-trail: { enabled: true }` so OR's audit-trail-
+> immutable abstraction (ADR-022 D2) captures actor, action,
+> before/after snapshot, timestamp, and hash chain on every create /
+> update / lifecycle transition / delete. The rule is enforced
+> declaratively at CI by `tests/validate-registers.js` (REQ-AT-001);
+> PRs introducing bookkeeping schemas without the flag fail the gate.
+> Per ADR-022 anti-pattern enumeration, shillinq MUST NOT author
+> parallel audit storage: no `lib/Db/Audit*` / `lib/Db/EventLog*` /
+> `lib/Db/ChangeLog*` Mappers, no `lib/Service/AuditService.php` /
+> `lib/Service/AuditLogger.php`, no `lib/BackgroundJob/*Audit*.php` /
+> `lib/Cron/*Audit*.php`, no `lib/Service/*Retention*.php`, no
+> `src/views/Audit*.vue` or `src/components/Audit*.vue` general
+> surface — every audit event flows through OR and surfaces through
+> OR's audit-log UI (manifest `BookkeepingAuditTrail` page +
+> per-detail-page `sidebarProps.tabs[audit]`). Retention is governed
+> by OR's archival + destruction workflow (Archiefwet, 7 years for
+> Belastingdienst-mandated financial records); shillinq adds no
+> cleanup job. See `openspec/changes/archive/2026-06-08-add-shillinq-audit-trail/`
+> (post-archive) for the full capability spec and the audit-pattern
+> scan that confirms the rule is met today.
+
 ## Entities
 
 ### APTransaction
