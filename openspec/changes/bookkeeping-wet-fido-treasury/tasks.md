@@ -138,7 +138,7 @@
   matrix and return permitted-status (zelfstandig / co-sign-required / college-besluit-required);
   use this in lening-validation hook per D5
 
-- [ ] Task 18: DEFERRED (needs a live OpenConnector source to AGT + a scheduled banking-day cron + GL-posting from `bookkeeping-schatkistbankieren`; not runtime-testable in this spec-build worktree). The `SchatkistbankierenSaldo` schema records the daily position, sweep timestamp and `lastSweepStatus`; the sweep orchestration lands in the implementation cycle. Implement schatkistbankieren daily sweep-job per REQ-FDO-005 —
+- [~] Task 18: DEFERRED (needs a live OpenConnector source to AGT + a scheduled banking-day cron + GL-posting from `bookkeeping-schatkistbankieren`; not runtime-testable in this spec-build worktree). The `SchatkistbankierenSaldo` schema records the daily position, sweep timestamp and `lastSweepStatus`; the sweep orchestration lands in the implementation cycle. Implement schatkistbankieren daily sweep-job per REQ-FDO-005 —
   scheduled daily task (post-bankafschrift-import, e.g., 16:00 each banking day):
   1. Compute drempelbedrag = max(0.75% begroting, €1M, capped €1bn)
   2. Query current rekeningcourant saldo
@@ -159,19 +159,19 @@
   + concerncontroller sign) → submitted (after transmission to toezichthouder via
   OpenConnector) → archived; store signOff-person + timestamp per signatory
 
-- [ ] Task 21: DEFERRED (needs a live OpenConnector `schatkistbankieren-sweep` source + AGT credentials; not runtime-testable here). Implement schatkistbankieren sweep-job OpenConnector integration per
+- [~] Task 21: DEFERRED (needs a live OpenConnector `schatkistbankieren-sweep` source + AGT credentials; not runtime-testable here). Implement schatkistbankieren sweep-job OpenConnector integration per
   REQ-FDO-005 — call OpenConnector source named `schatkistbankieren-sweep` with
   params {organisationId, sweepAmount, sourceAccount: RO, targetAccount: AGT},
   expecting {status: "success" | "failure", receiptNumber, timestamp}; log receipt in
   SchatkistbankierenSaldo
 
-- [ ] Task 22: DEFERRED (needs a live OpenConnector `fido-rapportage-submission` source to provincie/BZK; not runtime-testable here). The `submit` lifecycle transition + `submissionReceipt`/`submittedToToezichthouder` fields are in place; the transmission call lands in the implementation cycle. Implement quarterly-fido-report OpenConnector transmission per REQ-FDO-006 —
+- [~] Task 22: DEFERRED (needs a live OpenConnector `fido-rapportage-submission` source to provincie/BZK; not runtime-testable here). The `submit` lifecycle transition + `submissionReceipt`/`submittedToToezichthouder` fields are in place; the transmission call lands in the implementation cycle. Implement quarterly-fido-report OpenConnector transmission per REQ-FDO-006 —
   after sign-off, call OpenConnector source named `fido-rapportage-submission` with
   params {quarterly-fido-report JSON}, targeting provincie (for gemeente) or BZK
   (for provincie/waterschap) based on organisationType; expect {status: "success",
   submissionReceipt: string, timestamp}; log receipt in quarterly-fido-report
 
-- [ ] Task 23: DEFERRED (cross-app dependency: `bookkeeping-programmabegroting` is not yet merged in this repo; `baseBegroting` / `baseVasteSchuld` are first-class fields the operator/seed supplies until the begroting FK is available). Integrate with `bookkeeping-programmabegroting` (T2) to consume
+- [~] Task 23: DEFERRED (cross-app dependency: `bookkeeping-programmabegroting` is not yet merged in this repo; `baseBegroting` / `baseVasteSchuld` are first-class fields the operator/seed supplies until the begroting FK is available). Integrate with `bookkeeping-programmabegroting` (T2) to consume
   vastgestelde begroting per 1 januari for all limiet-percentage calculations;
   supply vastgestelde-begroting updates to FidoNormcatalogus query so percentages
   auto-apply per Task 24
@@ -182,11 +182,11 @@
   to auto-populate percentage. If Wet Fido changes percentages, administrator updates
   table without code-deploy.
 
-- [ ] Task 25: DEFERRED (cross-app dependency: `bookkeeping-bbv-compliance` GL-paspoort linkage; `Lening.bbvPaspoortId` is the FK placeholder ready for the link). Integrate with `bookkeeping-bbv-compliance` (T2) to link treasury GL
+- [~] Task 25: DEFERRED (cross-app dependency: `bookkeeping-bbv-compliance` GL-paspoort linkage; `Lening.bbvPaspoortId` is the FK placeholder ready for the link). Integrate with `bookkeeping-bbv-compliance` (T2) to link treasury GL
   postings to BBV-paspoort metadata; ensure uitzetting > 1 jaar vs ≤ 1 jaar classified
   correctly in GL per REQ-FDO-002 definition of "korte schuld"
 
-- [ ] Task 26: DEFERRED (cross-app dependency: `bookkeeping-jaarrekening-publication` notes-renderer must call the `TreasuryParagraaf` data-source; the schema + auto/manual narrative fields are in place for the consumer). Integrate with `bookkeeping-jaarrekening-publication` (T3) to expose
+- [~] Task 26: DEFERRED (cross-app dependency: `bookkeeping-jaarrekening-publication` notes-renderer must call the `TreasuryParagraaf` data-source; the schema + auto/manual narrative fields are in place for the consumer). Integrate with `bookkeeping-jaarrekening-publication` (T3) to expose
   treasury-paragraph data-source callable by jaarrekening notes-renderer; ensure
   treasury-paragraph is auto-populated in jaarrekening notes per REQ-FDO-007
 
