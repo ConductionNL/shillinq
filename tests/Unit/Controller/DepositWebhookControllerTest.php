@@ -155,7 +155,7 @@ final class DepositWebhookControllerTest extends TestCase
      *
      * @return void
      */
-    public function testInvalidSignatureReturns401(): void
+    public function testInvalidSignatureReturns400(): void
     {
         $body  = json_encode(['id' => 'tr_1', 'status' => 'paid']);
         $recon = $this->createMock(DepositReconciliationService::class);
@@ -164,11 +164,11 @@ final class DepositWebhookControllerTest extends TestCase
         $controller = $this->makeController($body, 'deadbeef', $recon);
         $response   = $controller->handle('mollie');
 
-        self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
-    }//end testInvalidSignatureReturns401()
+        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+    }//end testInvalidSignatureReturns400()
 
     /**
-     * When no secret is configured the endpoint fails closed (401), never open.
+     * When no secret is configured the endpoint fails closed (400), never open.
      *
      * @return void
      */
@@ -181,7 +181,7 @@ final class DepositWebhookControllerTest extends TestCase
         $controller = $this->makeController($body, $this->sign($body), $recon, configuredSecret: '');
         $response   = $controller->handle('mollie');
 
-        self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
     }//end testMissingSecretFailsClosed()
 
     /**

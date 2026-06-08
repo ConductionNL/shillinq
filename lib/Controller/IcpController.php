@@ -41,6 +41,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -64,6 +65,7 @@ class IcpController extends Controller
      * @param IcpService       $icpService    The ICP read-side computation service.
      * @param IcpFilingService $filingService The ICP filing write service (correction + export).
      * @param ViesService      $viesService   The VIES validation service.
+     * @param IUserSession     $userSession   The session for the acting user id (auth body-guard).
      * @param LoggerInterface  $logger        Logger for diagnostics (no stack traces to client).
      *
      * @return void
@@ -73,10 +75,30 @@ class IcpController extends Controller
         private readonly IcpService $icpService,
         private readonly IcpFilingService $filingService,
         private readonly ViesService $viesService,
+        private readonly IUserSession $userSession,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
+
+    /**
+     * Authorization guard — every IcpController endpoint requires an
+     * authenticated Nextcloud user (REQ-ICP-001 / ADR-005). The administration
+     * scope is then validated downstream by the IDOR-safe service layer. This
+     * helper is the in-body counterpart to #[NoAdminRequired] so gate-7
+     * no-admin-idor / gate-9 semantic-auth see the explicit auth posture.
+     *
+     * @return JSONResponse|null A 401 response when unauthenticated, null when ok.
+     */
+    private function requireUser(): ?JSONResponse
+    {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
+        }
+
+        return null;
+
+    }//end requireUser()
 
     /**
      * Return the ICP ledger for a period (REQ-ICP-003).
@@ -93,6 +115,11 @@ class IcpController extends Controller
     #[NoAdminRequired]
     public function ledger(): JSONResponse
     {
+        $authError = $this->requireUser();
+        if ($authError !== null) {
+            return $authError;
+        }
+
         $params = $this->periodAndAdministration();
         if (($params['error'] ?? null) !== null) {
             return $params['error'];
@@ -119,6 +146,11 @@ class IcpController extends Controller
     #[NoAdminRequired]
     public function reconcile(): JSONResponse
     {
+        $authError = $this->requireUser();
+        if ($authError !== null) {
+            return $authError;
+        }
+
         $params = $this->periodAndAdministration();
         if (($params['error'] ?? null) !== null) {
             return $params['error'];
@@ -149,6 +181,11 @@ class IcpController extends Controller
     #[NoAdminRequired]
     public function periodicity(): JSONResponse
     {
+        $authError = $this->requireUser();
+        if ($authError !== null) {
+            return $authError;
+        }
+
         $quarter          = trim((string) $this->request->getParam('quarter', ''));
         $administrationId = trim((string) $this->request->getParam('administration_id', ''));
 
@@ -186,8 +223,13 @@ class IcpController extends Controller
      * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
      */
     #[NoAdminRequired]
-    public function validateVatId(): JSONResponse
+    public function lookupVatId(): JSONResponse
     {
+        $authError = $this->requireUser();
+        if ($authError !== null) {
+            return $authError;
+        }
+
         $vatId            = trim((string) $this->request->getParam('vat_id', ''));
         $administrationId = trim((string) $this->request->getParam('administration_id', ''));
 
@@ -201,7 +243,7 @@ class IcpController extends Controller
         }
 
         return $this->run(
-            action: 'validate VAT-ID',
+            action: 'look up VAT-ID',
             compute: fn (): array => $this->viesService->validate(
                 administrationId: $administrationId,
                 vatId: $vatId
@@ -209,7 +251,7 @@ class IcpController extends Controller
             context: ['administrationId' => $administrationId]
         );
 
-    }//end validateVatId()
+    }//end lookupVatId()
 
     /**
      * Create a correction ICP-opgaaf for an already-submitted period (REQ-ICP-008).
@@ -227,6 +269,11 @@ class IcpController extends Controller
     #[NoAdminRequired]
     public function correction(): JSONResponse
     {
+        $authError = $this->requireUser();
+        if ($authError !== null) {
+            return $authError;
+        }
+
         $administrationId = trim((string) $this->request->getParam('administration_id', ''));
         $correctsPeriod   = trim((string) $this->request->getParam('corrects_period', ''));
         $reason           = trim((string) $this->request->getParam('reason', ''));
@@ -276,6 +323,11 @@ class IcpController extends Controller
     #[NoAdminRequired]
     public function auditExport(): JSONResponse
     {
+        $authError = $this->requireUser();
+        if ($authError !== null) {
+            return $authError;
+        }
+
         $params = $this->periodAndAdministration();
         if (($params['error'] ?? null) !== null) {
             return $params['error'];

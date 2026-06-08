@@ -29,6 +29,8 @@ use OCA\Shillinq\Service\NexusCalculationService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUser;
+use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -73,6 +75,13 @@ final class InnovatieboxControllerTest extends TestCase
     private DoorsnijdingsVerbodValidator&MockObject $doorsnijden;
 
     /**
+     * Mock user session.
+     *
+     * @var IUserSession&MockObject
+     */
+    private IUserSession&MockObject $userSession;
+
+    /**
      * Mock logger.
      *
      * @var LoggerInterface&MockObject
@@ -98,12 +107,19 @@ final class InnovatieboxControllerTest extends TestCase
         $this->aggregation = $this->createMock(InnovatieboxAggregationService::class);
         $this->nexus       = new NexusCalculationService();
         $this->doorsnijden = $this->createMock(DoorsnijdingsVerbodValidator::class);
+        $this->userSession = $this->createMock(IUserSession::class);
         $this->logger      = $this->createMock(LoggerInterface::class);
+
+        $user = $this->createMock(IUser::class);
+        $user->method('getUID')->willReturn('alice');
+        $this->userSession->method('getUser')->willReturn($user);
+
         $this->controller  = new InnovatieboxController(
             request: $this->request,
             aggregation: $this->aggregation,
             nexus: $this->nexus,
             doorsnijden: $this->doorsnijden,
+            userSession: $this->userSession,
             logger: $this->logger,
         );
 

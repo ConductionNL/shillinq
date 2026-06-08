@@ -37,6 +37,7 @@ use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -51,11 +52,13 @@ class SepaAuditController extends Controller
      *
      * @param IRequest         $request      The request.
      * @param SepaAuditService $auditService The audit assembly service.
+     * @param IUserSession     $userSession  Session for the auth body-guard.
      * @param LoggerInterface  $logger       Logger.
      */
     public function __construct(
         IRequest $request,
         private readonly SepaAuditService $auditService,
+        private readonly IUserSession $userSession,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -77,6 +80,10 @@ class SepaAuditController extends Controller
     #[NoAdminRequired]
     public function exportMandate(string $mandateId): DataDownloadResponse|JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
+        }
+
         try {
             $bundle = $this->auditService->buildMandateDossier(mandateId: $mandateId);
             if ($bundle === null) {

@@ -39,6 +39,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -54,6 +55,7 @@ class TaxReportController extends Controller
      *
      * @param IRequest         $request          The request object.
      * @param TaxReportService $taxReportService The tax-statement computation service.
+     * @param IUserSession     $userSession      Session for the auth body-guard.
      * @param LoggerInterface  $logger           Logger for diagnostics (no stack traces to client).
      *
      * @return void
@@ -61,6 +63,7 @@ class TaxReportController extends Controller
     public function __construct(
         IRequest $request,
         private readonly TaxReportService $taxReportService,
+        private readonly IUserSession $userSession,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -90,6 +93,10 @@ class TaxReportController extends Controller
     #[NoAdminRequired]
     public function quarter(string $year, string $quarter): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
+        }
+
         $administrationId = trim((string) $this->request->getParam('administration_id', ''));
 
         $error = $this->validateAdministration(administrationId: $administrationId);
@@ -146,6 +153,10 @@ class TaxReportController extends Controller
     #[NoAdminRequired]
     public function annual(string $year): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
+        }
+
         $administrationId = trim((string) $this->request->getParam('administration_id', ''));
 
         $error = $this->validateAdministration(administrationId: $administrationId);

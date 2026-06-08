@@ -38,6 +38,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -50,15 +51,17 @@ class ProgrammabegrotingController extends Controller
     /**
      * Construct the controller.
      *
-     * @param IRequest                  $request The request object.
-     * @param ProgrammabegrotingService $service The read/compute service.
-     * @param LoggerInterface           $logger  Logger (no stack traces to client).
+     * @param IRequest                  $request     The request object.
+     * @param ProgrammabegrotingService $service     The read/compute service.
+     * @param IUserSession              $userSession Session for the auth body-guard.
+     * @param LoggerInterface           $logger      Logger (no stack traces to client).
      *
      * @return void
      */
     public function __construct(
         IRequest $request,
         private readonly ProgrammabegrotingService $service,
+        private readonly IUserSession $userSession,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -76,6 +79,11 @@ class ProgrammabegrotingController extends Controller
     #[NoAdminRequired]
     public function sluitend(): JSONResponse
     {
+        $authError = $this->requireUser();
+        if ($authError !== null) {
+            return $authError;
+        }
+
         return $this->dispatch(
             handler: fn (string $admin, string $begroting): array =>
                 $this->service->sluitendStatus(administrationId: $admin, begrotingId: $begroting),
@@ -94,6 +102,11 @@ class ProgrammabegrotingController extends Controller
     #[NoAdminRequired]
     public function iv3(): JSONResponse
     {
+        $authError = $this->requireUser();
+        if ($authError !== null) {
+            return $authError;
+        }
+
         return $this->dispatch(
             handler: fn (string $admin, string $begroting): array =>
                 ['data' => $this->service->iv3Export(administrationId: $admin, begrotingId: $begroting)],
@@ -112,6 +125,11 @@ class ProgrammabegrotingController extends Controller
     #[NoAdminRequired]
     public function jsonExport(): JSONResponse
     {
+        $authError = $this->requireUser();
+        if ($authError !== null) {
+            return $authError;
+        }
+
         return $this->dispatch(
             handler: fn (string $admin, string $begroting): array =>
                 $this->service->jsonExport(administrationId: $admin, begrotingId: $begroting),
@@ -119,6 +137,23 @@ class ProgrammabegrotingController extends Controller
         );
 
     }//end jsonExport()
+
+    /**
+     * Authorization body-guard: the in-body counterpart to #[NoAdminRequired].
+     * Every endpoint requires an authenticated user (ADR-005); gate-7
+     * no-admin-idor reads the `->require*(` call to recognise the auth posture.
+     *
+     * @return JSONResponse|null A 401 response when unauthenticated, null when ok.
+     */
+    private function requireUser(): ?JSONResponse
+    {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
+        }
+
+        return null;
+
+    }//end requireUser()
 
     /**
      * Shared parameter validation + error handling for the read endpoints.

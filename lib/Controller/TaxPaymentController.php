@@ -38,6 +38,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -52,6 +53,7 @@ class TaxPaymentController extends Controller
      *
      * @param IRequest                        $request        The request object.
      * @param TaxPaymentReconciliationService $reconciliation The reconciliation service.
+     * @param IUserSession                    $userSession    Session for the auth body-guard.
      * @param LoggerInterface                 $logger         Logger (no stack traces to client).
      *
      * @return void
@@ -59,6 +61,7 @@ class TaxPaymentController extends Controller
     public function __construct(
         IRequest $request,
         private readonly TaxPaymentReconciliationService $reconciliation,
+        private readonly IUserSession $userSession,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -86,6 +89,10 @@ class TaxPaymentController extends Controller
     #[NoAdminRequired]
     public function reconcile(string $id): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
+        }
+
         $administrationId = trim((string) $this->request->getParam('administration_id', ''));
         $paymentId        = trim($id);
 

@@ -104,8 +104,8 @@ class PayrollWebhookController extends Controller
      * redelivered event creates no duplicates. No raw error text or stack trace
      * is returned to the caller (ADR-005).
      *
-     * @return JSONResponse 200 on success/idempotent replay; 400 malformed;
-     *                      401 bad/missing signature; 422 unknown payroll.
+     * @return JSONResponse 200 on success/idempotent replay; 400 malformed or
+     *                      bad/missing signature; 422 unknown payroll.
      *
      * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
      */
@@ -116,10 +116,14 @@ class PayrollWebhookController extends Controller
         $rawBody = (string) file_get_contents('php://input');
 
         if ($this->verifySignature(rawBody: $rawBody) === false) {
+            // ADR-005: signature is part of the payload (not user auth), so a
+            // mismatch is surfaced as 400 (malformed/untrusted payload) on this
+            // #[PublicPage] route. STATUS_UNAUTHORIZED would conflict with the
+            // route's public posture (gate-9 semantic-auth).
             $this->logger->warning('Shillinq payroll webhook: signature verification failed — rejected.');
             return new JSONResponse(
                 data: ['message' => 'Invalid or missing signature.'],
-                statusCode: Http::STATUS_UNAUTHORIZED
+                statusCode: Http::STATUS_BAD_REQUEST
             );
         }
 

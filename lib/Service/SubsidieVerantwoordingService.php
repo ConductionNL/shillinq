@@ -140,7 +140,7 @@ class SubsidieVerantwoordingService
         ?string $auditDate=null
     ): ?array {
         $awardedAmount = (float) ($verantwoording['awardedAmount'] ?? 0.0);
-        if ($awardedAmount < $this->resolveThreshold()) {
+        if ($this->requiresAuditorStatement(awardedAmount: $awardedAmount) === false) {
             return null;
         }
 

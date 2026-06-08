@@ -86,6 +86,10 @@ class KorController extends Controller
     #[NoAdminRequired]
     public function monitor(): JSONResponse
     {
+        if ($this->context->currentUserId() === null) {
+            return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
+        }
+
         $administrationId = trim((string) $this->request->getParam('administration_id', ''));
         $yearParam        = trim((string) $this->request->getParam('year', ''));
 

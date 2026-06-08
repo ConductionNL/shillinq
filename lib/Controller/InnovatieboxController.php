@@ -41,6 +41,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -64,6 +65,7 @@ class InnovatieboxController extends Controller
      * @param InnovatieboxAggregationService $aggregation The per-asset Vpb roll-up service.
      * @param NexusCalculationService        $nexus       The nexus arithmetic helper (scenario).
      * @param DoorsnijdingsVerbodValidator   $doorsnijden The doorsnijdingsverbod validator.
+     * @param IUserSession                   $userSession Session for the auth body-guard.
      * @param LoggerInterface                $logger      Logger (no stack traces to client).
      *
      * @return void
@@ -73,6 +75,7 @@ class InnovatieboxController extends Controller
         private readonly InnovatieboxAggregationService $aggregation,
         private readonly NexusCalculationService $nexus,
         private readonly DoorsnijdingsVerbodValidator $doorsnijden,
+        private readonly IUserSession $userSession,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -142,6 +145,10 @@ class InnovatieboxController extends Controller
     #[NoAdminRequired]
     public function scenario(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
+        }
+
         $eigen     = $this->request->getParam('eigen_rd_kosten', null);
         $derden    = $this->request->getParam('uitbesteed_derden', null);
         $verbonden = $this->request->getParam('uitbesteed_verbonden', null);

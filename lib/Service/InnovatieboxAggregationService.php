@@ -48,15 +48,20 @@ class InnovatieboxAggregationService
     /**
      * Construct the aggregation service.
      *
-     * @param ContainerInterface      $container   DI container — OR's ObjectService is
-     *                                             fetched lazily.
-     * @param IAppConfig              $appConfig   App config for the register slug.
-     * @param CarryForwardLossService $lossService Loss-offset arithmetic helper.
+     * @param ContainerInterface       $container   DI container — OR's ObjectService is
+     *                                              fetched lazily.
+     * @param IAppConfig               $appConfig   App config for the register slug.
+     * @param CarryForwardLossService  $lossService Loss-offset arithmetic helper.
+     * @param QualifyingAssetValidator $validator   Toegangsticket validator — re-runs the
+     *                                              S&O / octrooi / combinatie rules at compute
+     *                                              time to catch assets whose persisted
+     *                                              status='valid' is now stale (REQ-IBA-001).
      */
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly IAppConfig $appConfig,
         private readonly CarryForwardLossService $lossService,
+        private readonly QualifyingAssetValidator $validator,
     ) {
     }//end __construct()
 
@@ -222,7 +227,22 @@ class InnovatieboxAggregationService
             return [];
         }
 
-        return $rows;
+        // Re-run the toegangsticket validator at compute time so an asset whose
+        // persisted status='valid' is now stale (e.g. S&O cert expired since the
+        // last save) is excluded from the roll-up (REQ-IBA-001).
+        $current = [];
+        foreach ($rows as $asset) {
+            if (is_array($asset) === false) {
+                continue;
+            }
+
+            $result = $this->validator->validateAccessTicket(asset: $asset);
+            if (($result['valid'] ?? false) === true) {
+                $current[] = $asset;
+            }
+        }
+
+        return $current;
 
     }//end fetchValidAssets()
 

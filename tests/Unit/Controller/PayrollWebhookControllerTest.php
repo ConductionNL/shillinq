@@ -132,7 +132,7 @@ class PayrollWebhookControllerTest extends TestCase
         $this->request->method('getHeader')->willReturn('any-signature');
 
         $response = $controller->receive();
-        self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
     }//end testRejectsWhenSecretUnconfigured()
 
     /**
@@ -146,7 +146,7 @@ class PayrollWebhookControllerTest extends TestCase
         $this->request->method('getHeader')->willReturn('');
 
         $response = $controller->receive();
-        self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
     }//end testRejectsWhenSignatureHeaderMissing()
 
     /**
@@ -163,6 +163,6 @@ class PayrollWebhookControllerTest extends TestCase
         $this->container->expects(self::never())->method('get');
 
         $response = $controller->receive();
-        self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
     }//end testRejectsMismatchingSignatureWithoutTouchingObjects()
 }//end class
