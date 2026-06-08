@@ -7154,3 +7154,192 @@ _Per-quarter PDF-A3 evidence dossier that survives a Belastingdienst audit. Cont
 | sha256 | string | No | SHA-256 hash for integrity validation at audit |
 | gegenereerdOp | date-time | No | Generation timestamp |
 | bewaarTermijn | date | Yes | Retention end date (7 years after generation) |
+### CashPool
+**Schema.org:** `schema:FinancialProduct`
+_Group cash-pool header. Type discriminator distinguishes notional pooling (interest on aggregate, no cash movement) from physical zero-balance / target-balance sweeping. Drives the daily interest aggregation and the n8n sweep orchestration._
+**Primary spec:** bookkeeping-treasury-ihb
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| name | string | Yes | Pool name |
+| type | enum | Yes | notional, zero-balance, target-balance |
+| masterAccount | string | Yes | Master account IBAN |
+| currency | string | Yes | Pool base currency (ISO 4217) |
+| dailyInterestRate | number | No | Annualised interest rate (fraction) for notional accrual |
+| interestAllocationMethod | enum | Yes | proportional, weighted-average, fixed |
+| sweepFrequency | enum | No | daily, weekly, on-threshold |
+| minimumCashPolicy | number | No | Group minimum-cash floor; drives forecast alerts |
+| state | enum | Yes | draft, active, inactive |
+| administrationId | string | Yes | Owning (group) administration |
+
+**Relations:**
+- → CashPoolMembership (one-to-many, via poolId)
+- → Administration (many-to-one)
+
+### CashPoolMembership
+**Schema.org:** `schema:AggregateOffer`
+_Links one administration's bank account to a CashPool with a sweep direction, target balance, priority and intra-day limit._
+**Primary spec:** bookkeeping-treasury-ihb
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| poolId | string | Yes | FK to CashPool |
+| administrationId | string | Yes | FK to participating Administration |
+| bankAccount | string | Yes | Member account IBAN |
+| sweepDirection | enum | Yes | upstream, downstream, central |
+| targetBalance | number | No | Target end-of-day balance (target-balance pools) |
+| priority | integer | No | Sweep ordering (master = 0) |
+| intraDayLimit | number | No | Intra-day overdraft limit |
+| exclusions | array | No | Accounts excluded from automated sweeping |
+
+**Relations:**
+- → CashPool (many-to-one, via poolId)
+- → Administration (many-to-one)
+
+### IntercompanyLoan
+**Schema.org:** `schema:LoanOrCredit`
+_Inter-company loan between two administrations with fixed or floating (reference rate + spread) interest, daily accrual and monthly GL posting on both ledgers. Carries an OECD transfer-pricing documentation reference._
+**Primary spec:** bookkeeping-treasury-ihb
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| name | string | Yes | Loan label |
+| lenderAdministrationId | string | Yes | FK to lending Administration |
+| borrowerAdministrationId | string | Yes | FK to borrowing Administration |
+| principal | number | Yes | Loan principal |
+| currency | string | Yes | Loan currency (ISO 4217) |
+| rateType | enum | No | fixed, floating |
+| fixedRate | number | No | Fixed annual rate (fraction) |
+| referenceRate | enum | No | EURIBOR-3M, SOFR, SARON |
+| spread | number | No | Spread over reference rate (fraction) |
+| startDate | date | Yes | Drawdown date |
+| maturityDate | date | Yes | Maturity date |
+| transferPricingDocumentReference | string | No | docudesk URI to TP memo |
+| ifrsClassification | enum | No | amortised-cost, fvtpl |
+| state | enum | Yes | draft, active, repaid, written-off |
+
+**Relations:**
+- → Administration (lender, borrower; many-to-one each)
+- → IntercompanyTransaction (one-to-many, via loanId)
+
+### IntercompanyTransaction
+**Schema.org:** `schema:MoneyTransfer`
+_A single in-house-bank movement between two administrations (sweep, loan drawdown, interest accrual, settlement). Posting materialises balanced double-sided GL entries on both ledgers; blocked when either administration's period is closed._
+**Primary spec:** bookkeeping-treasury-ihb
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| poolId | string | No | FK to CashPool (sweep/interest) |
+| loanId | string | No | FK to IntercompanyLoan |
+| movementType | enum | Yes | sweep, loan-drawdown, interest-accrual, settlement, other |
+| amount | number | Yes | Movement amount (non-negative) |
+| fromAdministrationId | string | Yes | Source administration |
+| toAdministrationId | string | Yes | Destination administration |
+| postingDate | date | Yes | GL posting date |
+| valueDate | date | No | Cash value date |
+| glTransactionId | string | No | FK to materialised GLTransaction |
+| state | enum | Yes | draft, posted, settled |
+
+**Relations:**
+- → CashPool / IntercompanyLoan (many-to-one)
+- → GLTransaction (many-to-one, via glTransactionId)
+- → Administration (from, to; many-to-one each)
+
+### FXContract
+**Schema.org:** `schema:Invoice`
+_Foreign-exchange contract with full IFRS 9 lifecycle. Revalued at period close; unrealised gains/losses post to OCI or P&L per hedge designation._
+**Primary spec:** bookkeeping-treasury-ihb
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| counterpartyBank | string | No | Counterparty bank |
+| instrumentType | enum | Yes | spot, forward, swap, NDF |
+| buyCurrency | string | Yes | Currency bought (ISO 4217) |
+| buyAmount | number | Yes | Amount of buy currency |
+| sellCurrency | string | Yes | Currency sold (ISO 4217) |
+| sellAmount | number | Yes | Amount of sell currency |
+| tradeDate | date | Yes | Trade execution date |
+| contractRate | number | Yes | Agreed contract rate |
+| hedgeDesignation | enum | No | cashflow, fair-value, net-investment |
+| state | enum | Yes | drafted, confirmed, settled, closed, cancelled |
+
+**Relations:**
+- → Administration (many-to-one)
+- → FXPosition (informs valuation)
+
+### FXPosition
+**Schema.org:** `schema:MonetaryAmount`
+_Per-(entity, currency) open FX position with mark-to-market valuation and unrealised P&L. Group total is an aggregation across all entity positions per currency._
+**Primary spec:** bookkeeping-treasury-ihb
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | Administration holding the position |
+| foreignCurrency | string | Yes | Foreign currency (ISO 4217) |
+| position | number | Yes | Net open position (signed) |
+| spotRate | number | No | Spot rate at last valuation |
+| fairValue | number | No | Fair value (derived) |
+| unrealisedPL | number | No | Unrealised P&L (derived) |
+| valuationMethod | enum | No | mark-to-market, amortised-cost |
+| lastUpdated | date-time | No | Last revaluation timestamp |
+
+**Relations:**
+- → Administration (many-to-one)
+
+### CashForecast
+**Schema.org:** `schema:Statement`
+_One weekly bucket of the rolling 13-week cashflow forecast for a pool/scenario. Inflows and outflows are aggregated from AR/AP ageing, payroll and scheduled debt service; variance vs prior forecast drives treasury alerts._
+**Primary spec:** bookkeeping-treasury-ihb
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| poolId | string | Yes | FK to CashPool |
+| forecastWeek | integer | Yes | Week index (1–13) |
+| scenario | enum | Yes | base, downside, stress |
+| openingCash | number | Yes | Opening cash for the bucket |
+| inflows | object | No | arCollections, loanDrawdowns, other |
+| outflows | object | No | apPayments, payroll, taxPayments, debtService, other |
+| closingCash | number | No | Derived closing cash |
+| varianceVsPriorForecast | number | No | Variance vs prior run |
+
+**Relations:**
+- → CashPool (many-to-one, via poolId)
+
+### BankReconciliationGroup
+**Schema.org:** `schema:Action`
+_A multi-administration bank-reconciliation run across all participants of a pool. Links one bank line to GL entries from several administrations in a single workflow._
+**Primary spec:** bookkeeping-treasury-ihb
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| poolId | string | Yes | FK to CashPool |
+| bankReconciliationId | string | No | FK to underlying reconciliation master |
+| participatingAdministrationIds | array | Yes | Administrations searched for matches |
+| autoMatchedCount | integer | No | Lines auto-matched (score ≥ 95%) |
+| manualMatchesRequired | integer | No | Lines needing operator review |
+| exceptionQueue | array | No | Below-threshold lines with candidates |
+| state | enum | Yes | draft, in-progress, completed |
+
+**Relations:**
+- → CashPool (many-to-one, via poolId)
+- → Administration (many-to-many, via participatingAdministrationIds)
+
+### LiquidityKPI
+**Schema.org:** `schema:Observation`
+_Liquidity KPI snapshot per pool + measurement date: cash-conversion cycle, days cash on hand, current/quick ratio, with a per-entity breakdown and trend vs prior week. Computed from CashForecast plus AR/AP ageing._
+**Primary spec:** bookkeeping-treasury-ihb
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| poolId | string | Yes | FK to CashPool |
+| measurementDate | date | Yes | Measurement date |
+| cashConversionCycleDays | number | No | DIO + DSO − DPO |
+| daysCashOnHandDays | number | No | Closing cash / daily opex |
+| currentRatio | number | No | Current assets / current liabilities |
+| quickRatio | number | No | (Current assets − inventory) / current liabilities |
+| forecastRunwayWeeks | number | No | Weeks of cash at burn rate |
+| perEntityBreakdown | array | No | Per-administration KPI rows |
+| trendVsPriorWeek | object | No | KPI deltas vs prior week |
+
+**Relations:**
+- → CashPool (many-to-one, via poolId)
