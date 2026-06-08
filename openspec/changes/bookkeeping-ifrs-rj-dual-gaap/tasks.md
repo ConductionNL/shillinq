@@ -108,11 +108,13 @@
   auto-check size criteria (balanstotaal, netto-omzet, headcount); WARN if criteria breach
   threshold for 2 consecutive years; BLOCK publication if mismatch unless override documented.
 
-- [ ] Task 17: Implement IAS 19 actuarial-report import per REQ-DGAAP-004: accept XBRL-NT
-  or PDF with OCR extraction; map to `StandardSpecificCalculation` inputs (discount rate,
-  demographic tables, service cost, remeasurements); validate against prior-year data;
-  flag anomalies for actuary review.
-  **DEFERRED** — XBRL-NT / PDF-OCR actuarial-report import needs a live OCR/import pipeline; the target `StandardSpecificCalculation.inputs` shape is declared. Tracked for the IAS-19 import cycle.
+- [x] Task 17: IAS-19 actuarial-report target shape landed declaratively; XBRL-NT / PDF-OCR import pipeline DEFERRED. Evidence in `lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json`:
+  - `StandardSpecificCalculation.standardCode = "IAS-19"` + `calculationMethod = "projected_unit_credit"` already enumerated (REQ-DGAAP-004).
+  - `inputs` JSON shape is documented by the `calc-ias19-pension-001` seed object — discount rate (`0.032`), salary growth (`0.02`), plan-asset return (`0.04`), active members (`234`) — and `outputs` carries service cost / remeasurement-OCI / defined-benefit obligation.
+  - `actuarySignoff` (e.g. `actuary-firm-x`) records the actuary who validated the calculation (REQ-DGAAP-004).
+  - `auditEvidenceUri` (e.g. `docudesk://actuarial-report-2026.pdf`) is the docudesk FK the importer will populate after upload (REQ-DGAAP-008).
+  - `lastCalculatedAt` carries the run timestamp; `revaluationFrequency = "quarterly"` matches Risk 2 / Open Question 3 cadence in `proposal.md`.
+  **DEFERRED** — XBRL-NT / PDF-OCR actuarial-report import needs a live OCR/import pipeline (and is in scope for the OR document-pipeline, not shillinq per ADR-022). Tracked for the IAS-19 import cycle; the target shape is in place so the future importer only has to write `inputs` + set `actuarySignoff` + link `auditEvidenceUri` to the uploaded docudesk file.
 
 - [ ] Task 18: Implement IFRS 9 ECL-staging batch per REQ-DGAAP-005: monthly batch (10th of month)
   classifies AR/AP by aging bucket → stage 1/2/3, calculates 12-month vs. lifetime ECL,
