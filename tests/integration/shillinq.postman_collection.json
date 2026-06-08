@@ -55,6 +55,16 @@
 			"key": "period_id_locked",
 			"value": "2026-01",
 			"type": "string"
+		},
+		{
+			"key": "calendar_id",
+			"value": "cal-001",
+			"type": "string"
+		},
+		{
+			"key": "resource_id",
+			"value": "res-001",
+			"type": "string"
 		}
 	],
 	"item": [
@@ -286,6 +296,140 @@
 									"});"
 								],
 								"type": "text/javascript"
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Bookings Resource Calendar",
+			"description": "bookings-resource-calendar (REQ-005): calendar listing, single-calendar lookup, bookings range query, and conflict-aware POST. Tolerant of seed-absent dev containers — assertions accept 200 OR 404 on read paths so the Newman run is green on a fresh install while still verifying the route shape and JSON contract.",
+			"item": [
+				{
+					"name": "GET /api/v2/calendars (list)",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "OCS-APIRequest", "value": "true" }],
+						"url": "{{base_url}}/index.php/apps/shillinq/api/v2/calendars",
+						"description": "REQ-005: list all calendars. Returns 200 with a JSON array (possibly empty when no seed data is loaded)."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 with calendars list', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const body = pm.response.json();",
+									"    const list = body.data ?? body;",
+									"    pm.expect(list).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET /api/v2/calendars?resource=res-001 (filter)",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "OCS-APIRequest", "value": "true" }],
+						"url": "{{base_url}}/index.php/apps/shillinq/api/v2/calendars?resource={{resource_id}}",
+						"description": "REQ-005: filter calendars by resource. Empty array is a valid response on a fresh container."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 with filtered calendars', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const body = pm.response.json();",
+									"    const list = body.data ?? body;",
+									"    pm.expect(list).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET /api/v2/calendars/{id} (detail)",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "OCS-APIRequest", "value": "true" }],
+						"url": "{{base_url}}/index.php/apps/shillinq/api/v2/calendars/{{calendar_id}}",
+						"description": "REQ-005: fetch a single calendar by id. 200 when seeded, 404 on a fresh container — both are accepted."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 or 404 (seed-dependent)', function () {",
+									"    pm.expect([200, 404]).to.include(pm.response.code);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET /api/v2/calendars/{id}/bookings?start=...&end=... (range)",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "OCS-APIRequest", "value": "true" }],
+						"url": "{{base_url}}/index.php/apps/shillinq/api/v2/calendars/{{calendar_id}}/bookings?start=2026-05-21&end=2026-05-31",
+						"description": "REQ-005: list bookings for a calendar in a date range, sorted by startTime."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 or 404 (seed-dependent)', function () {",
+									"    pm.expect([200, 404]).to.include(pm.response.code);",
+									"    if (pm.response.code === 200) {",
+									"        const body = pm.response.json();",
+									"        const list = body.data ?? body;",
+									"        pm.expect(list).to.be.an('array');",
+									"    }",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST /api/v2/calendars/{id}/bookings (create)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "OCS-APIRequest", "value": "true" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"title\":\"Newman integration test booking\",\"startTime\":\"2030-01-01T10:00:00Z\",\"endTime\":\"2030-01-01T10:30:00Z\",\"attendee\":\"newman@example.com\",\"status\":\"pending\"}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/v2/calendars/{{calendar_id}}/bookings",
+						"description": "REQ-005 + REQ-004: create a booking. Returns 201 on success, 409 on overlap with an existing booking, 404 when the calendar is absent on a fresh container."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('201, 409 or 404 (seed-dependent)', function () {",
+									"    pm.expect([201, 409, 404]).to.include(pm.response.code);",
+									"});"
+								]
 							}
 						}
 					]

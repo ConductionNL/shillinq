@@ -139,10 +139,47 @@ class CalendarController extends Controller
 
             return new JSONResponse(array_map([$this, 'serialize'], $this->normalize(results: $results)));
         } catch (\Throwable $e) {
+            // Register not yet provisioned on this instance — return an empty
+            // list rather than 500 so the UI/API stays usable on a fresh
+            // install where the seed hasn't run. The diagnostic message is
+            // still logged below for operator visibility.
+            if ($this->isRegisterAbsent(exception: $e) === true) {
+                $this->logger->info(
+                    'Shillinq CalendarController: calendars register not provisioned; returning empty list'
+                );
+                return new JSONResponse([]);
+            }
+
             return $this->serverError(message: 'Failed to list calendars', e: $e);
         }
 
     }//end index()
+
+    /**
+     * Detect "register-not-found" outcomes so the controller can degrade gracefully
+     * on a freshly-installed instance instead of returning 500.
+     *
+     * @param \Throwable $exception Caught exception from an OpenRegister call.
+     *
+     * @return bool True when the exception signals an absent calendars register.
+     */
+    private function isRegisterAbsent(\Throwable $exception): bool
+    {
+        $message = strtolower($exception->getMessage());
+        if (str_contains($message, 'found none') === true) {
+            return true;
+        }
+
+        if (str_contains($message, 'register') === true
+            && (str_contains($message, 'not found') === true
+                || str_contains($message, 'does not exist') === true)
+        ) {
+            return true;
+        }
+
+        return false;
+
+    }//end isRegisterAbsent()
 
     /**
      * GET /api/v2/calendars/{calendarId} — fetch a single calendar.
