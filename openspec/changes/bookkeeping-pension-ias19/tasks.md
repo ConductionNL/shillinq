@@ -52,7 +52,7 @@
   retirementAge, participantCountActive/Deferred/Retirees, linkedHrmqGroup,
   governanceDocument, status, notes); planType enum: DB/DC/CDC/hybrid
 
-- [ ] Task 6: Declare the `actuarial-valuation` schema in
+- [x] Task 6: Declare the `actuarial-valuation` schema in
   `lib/Settings/shillinq_register.json` with all REQ-PEN-002–003 fields (plan FK,
   valuationDate, actuary, methodology enum: PUC/DC, dboGross, dboPastService,
   dboFutureService, discountRate, discountRateSource text, salaryGrowthAssumption,
