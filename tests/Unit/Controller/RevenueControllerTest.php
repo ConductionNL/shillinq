@@ -27,6 +27,8 @@ use OCA\Shillinq\Service\RevenueCutoffService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUser;
+use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -57,6 +59,13 @@ final class RevenueControllerTest extends TestCase
     private RevenueCutoffService&MockObject $service;
 
     /**
+     * Mock IUserSession.
+     *
+     * @var IUserSession&MockObject
+     */
+    private IUserSession&MockObject $userSession;
+
+    /**
      * Mock LoggerInterface.
      *
      * @var LoggerInterface&MockObject
@@ -78,12 +87,19 @@ final class RevenueControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->request    = $this->createMock(IRequest::class);
-        $this->service    = $this->createMock(RevenueCutoffService::class);
-        $this->logger     = $this->createMock(LoggerInterface::class);
+        $this->request     = $this->createMock(IRequest::class);
+        $this->service     = $this->createMock(RevenueCutoffService::class);
+        $this->userSession = $this->createMock(IUserSession::class);
+        $this->logger      = $this->createMock(LoggerInterface::class);
+
+        $user = $this->createMock(IUser::class);
+        $user->method('getUID')->willReturn('alice');
+        $this->userSession->method('getUser')->willReturn($user);
+
         $this->controller = new RevenueController(
             request: $this->request,
             cutoffService: $this->service,
+            userSession: $this->userSession,
             logger: $this->logger,
         );
 

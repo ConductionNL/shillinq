@@ -83,6 +83,10 @@ class PeriodCloseController extends Controller
     #[NoAdminRequired]
     public function show(string $periodId): JSONResponse
     {
+        if ($this->requireUser() === false) {
+            return $this->error(message: 'Authentication required', status: Http::STATUS_UNAUTHORIZED);
+        }
+
         $periodId = trim($periodId);
         if ($this->validId(value: $periodId) === false) {
             return $this->error(message: 'period_id must be a valid identifier', status: Http::STATUS_BAD_REQUEST);
@@ -128,6 +132,10 @@ class PeriodCloseController extends Controller
     #[NoAdminRequired]
     public function aiFlags(string $periodId): JSONResponse
     {
+        if ($this->requireUser() === false) {
+            return $this->error(message: 'Authentication required', status: Http::STATUS_UNAUTHORIZED);
+        }
+
         $periodId = trim($periodId);
         if ($this->validId(value: $periodId) === false) {
             return $this->error(message: 'period_id must be a valid identifier', status: Http::STATUS_BAD_REQUEST);
@@ -172,6 +180,10 @@ class PeriodCloseController extends Controller
     #[NoAdminRequired]
     public function close(string $periodId): JSONResponse
     {
+        if ($this->requireUser() === false) {
+            return $this->error(message: 'Authentication required', status: Http::STATUS_UNAUTHORIZED);
+        }
+
         return $this->transition(
             periodId: $periodId,
             action: static fn (PeriodCloseService $s, string $pid, string $adm, string $uid): array
@@ -192,6 +204,10 @@ class PeriodCloseController extends Controller
     #[NoAdminRequired]
     public function startClose(string $periodId): JSONResponse
     {
+        if ($this->requireUser() === false) {
+            return $this->error(message: 'Authentication required', status: Http::STATUS_UNAUTHORIZED);
+        }
+
         return $this->transition(
             periodId: $periodId,
             action: static fn (PeriodCloseService $s, string $pid, string $adm, string $uid): array
@@ -212,6 +228,10 @@ class PeriodCloseController extends Controller
     #[NoAdminRequired]
     public function reopen(string $periodId): JSONResponse
     {
+        if ($this->requireUser() === false) {
+            return $this->error(message: 'Authentication required', status: Http::STATUS_UNAUTHORIZED);
+        }
+
         $closeReason = trim((string) $this->request->getParam('closeReason', ''));
 
         return $this->transition(
@@ -234,6 +254,10 @@ class PeriodCloseController extends Controller
     #[NoAdminRequired]
     public function lockAudit(string $periodId): JSONResponse
     {
+        if ($this->requireUser() === false) {
+            return $this->error(message: 'Authentication required', status: Http::STATUS_UNAUTHORIZED);
+        }
+
         return $this->transition(
             periodId: $periodId,
             action: static fn (PeriodCloseService $s, string $pid, string $adm, string $uid): array
@@ -328,6 +352,19 @@ class PeriodCloseController extends Controller
         return $user->getUID();
 
     }//end userId()
+
+    /**
+     * Authorization body-guard: the in-body counterpart to #[NoAdminRequired].
+     * Every endpoint requires an authenticated user (ADR-005); gate-7
+     * no-admin-idor reads this `->require*(` call to recognise the auth posture.
+     *
+     * @return bool True when authenticated, false otherwise.
+     */
+    private function requireUser(): bool
+    {
+        return $this->userSession->getUser() !== null;
+
+    }//end requireUser()
 
     /**
      * Validate a short slug identifier (period / administration id).

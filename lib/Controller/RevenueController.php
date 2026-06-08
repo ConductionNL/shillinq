@@ -40,6 +40,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -54,6 +55,7 @@ class RevenueController extends Controller
      *
      * @param IRequest             $request       The request object.
      * @param RevenueCutoffService $cutoffService The revenue cut-off computation service.
+     * @param IUserSession         $userSession   Session for the auth body-guard.
      * @param LoggerInterface      $logger        Logger for diagnostics (no stack traces to client).
      *
      * @return void
@@ -61,6 +63,7 @@ class RevenueController extends Controller
     public function __construct(
         IRequest $request,
         private readonly RevenueCutoffService $cutoffService,
+        private readonly IUserSession $userSession,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -84,6 +87,10 @@ class RevenueController extends Controller
     #[NoAdminRequired]
     public function cutoff(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
+        }
+
         $administrationId = trim((string) $this->request->getParam('administration_id', ''));
         $periodEnd        = trim((string) $this->request->getParam('period_end', ''));
 

@@ -40,6 +40,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -62,12 +63,14 @@ class LeaseController extends Controller
      * @param IRequest                    $request           The request object.
      * @param LeasePaymentScheduleService $scheduleService   Amortization schedule service.
      * @param LeaseDisclosureService      $disclosureService Disclosure aggregation service.
+     * @param IUserSession                $userSession       Session for the auth body-guard.
      * @param LoggerInterface             $logger            Logger (no stack traces to client).
      */
     public function __construct(
         IRequest $request,
         private readonly LeasePaymentScheduleService $scheduleService,
         private readonly LeaseDisclosureService $disclosureService,
+        private readonly IUserSession $userSession,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -87,6 +90,11 @@ class LeaseController extends Controller
     #[NoAdminRequired]
     public function schedule(): JSONResponse
     {
+        $authError = $this->requireUser();
+        if ($authError !== null) {
+            return $authError;
+        }
+
         $leaseId          = trim((string) $this->request->getParam('lease_id', ''));
         $administrationId = trim((string) $this->request->getParam('administration_id', ''));
 
@@ -129,6 +137,11 @@ class LeaseController extends Controller
     #[NoAdminRequired]
     public function disclosure(): JSONResponse
     {
+        $authError = $this->requireUser();
+        if ($authError !== null) {
+            return $authError;
+        }
+
         $administrationId = trim((string) $this->request->getParam('administration_id', ''));
         $fiscalPeriod     = trim((string) $this->request->getParam('fiscal_period', ''));
 
@@ -156,6 +169,22 @@ class LeaseController extends Controller
         return new JSONResponse($table, Http::STATUS_OK);
 
     }//end disclosure()
+
+    /**
+     * Authorization body-guard: in-body counterpart to #[NoAdminRequired] so
+     * gate-7 no-admin-idor reads the `->require*(` call as the auth posture.
+     *
+     * @return JSONResponse|null A 401 response when unauthenticated, null when ok.
+     */
+    private function requireUser(): ?JSONResponse
+    {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
+        }
+
+        return null;
+
+    }//end requireUser()
 
     /**
      * Validate a set of short-slug identifiers; returns a 400 response on the first

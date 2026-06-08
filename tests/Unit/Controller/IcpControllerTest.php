@@ -29,6 +29,8 @@ use OCA\Shillinq\Service\ViesService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUser;
+use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -74,6 +76,13 @@ final class IcpControllerTest extends TestCase
     private ViesService&MockObject $vies;
 
     /**
+     * Mock IUserSession.
+     *
+     * @var IUserSession&MockObject
+     */
+    private IUserSession&MockObject $userSession;
+
+    /**
      * Mock LoggerInterface.
      *
      * @var LoggerInterface&MockObject
@@ -95,16 +104,24 @@ final class IcpControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->request    = $this->createMock(IRequest::class);
-        $this->service    = $this->createMock(IcpService::class);
-        $this->filing     = $this->createMock(IcpFilingService::class);
-        $this->vies       = $this->createMock(ViesService::class);
-        $this->logger     = $this->createMock(LoggerInterface::class);
+        $this->request     = $this->createMock(IRequest::class);
+        $this->service     = $this->createMock(IcpService::class);
+        $this->filing      = $this->createMock(IcpFilingService::class);
+        $this->vies        = $this->createMock(ViesService::class);
+        $this->userSession = $this->createMock(IUserSession::class);
+        $this->logger      = $this->createMock(LoggerInterface::class);
+
+        // Default to an authenticated session — each test can override.
+        $user = $this->createMock(IUser::class);
+        $user->method('getUID')->willReturn('alice');
+        $this->userSession->method('getUser')->willReturn($user);
+
         $this->controller = new IcpController(
             request: $this->request,
             icpService: $this->service,
             filingService: $this->filing,
             viesService: $this->vies,
+            userSession: $this->userSession,
             logger: $this->logger,
         );
 
@@ -268,11 +285,11 @@ final class IcpControllerTest extends TestCase
     }//end testServiceFailureReturns500WithoutStackTrace()
 
     /**
-     * The validateVatId endpoint delegates to ViesService and returns the outcome (REQ-ICP-001).
+     * The lookupVatId endpoint delegates to ViesService and returns the outcome (REQ-ICP-001).
      *
      * @return void
      */
-    public function testValidateVatIdReturns200(): void
+    public function testLookupVatIdReturns200(): void
     {
         $this->withParams(['vat_id' => 'BE0123456789', 'administration_id' => 'adm-1']);
         $this->vies->method('validate')->willReturn(
@@ -290,27 +307,27 @@ final class IcpControllerTest extends TestCase
             ]
         );
 
-        $response = $this->controller->validateVatId();
+        $response = $this->controller->lookupVatId();
 
         self::assertSame(Http::STATUS_OK, $response->getStatus());
         self::assertTrue($response->getData()['valid']);
 
-    }//end testValidateVatIdReturns200()
+    }//end testLookupVatIdReturns200()
 
     /**
-     * The validateVatId endpoint rejects a malformed VAT-ID with 400 (input validation, ADR-005).
+     * The lookupVatId endpoint rejects a malformed VAT-ID with 400 (input validation, ADR-005).
      *
      * @return void
      */
-    public function testValidateVatIdRejectsBadInput(): void
+    public function testLookupVatIdRejectsBadInput(): void
     {
         $this->withParams(['vat_id' => 'BE@@@inject;', 'administration_id' => 'adm-1']);
 
-        $response = $this->controller->validateVatId();
+        $response = $this->controller->lookupVatId();
 
         self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 
-    }//end testValidateVatIdRejectsBadInput()
+    }//end testLookupVatIdRejectsBadInput()
 
     /**
      * The correction endpoint delegates to IcpService::createCorrection (REQ-ICP-008).

@@ -26,6 +26,8 @@ use OCA\Shillinq\Controller\TaxPaymentController;
 use OCA\Shillinq\Service\TaxPaymentReconciliationService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
+use OCP\IUser;
+use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -55,6 +57,13 @@ final class TaxPaymentControllerTest extends TestCase
     private TaxPaymentReconciliationService&MockObject $service;
 
     /**
+     * Mock IUserSession.
+     *
+     * @var IUserSession&MockObject
+     */
+    private IUserSession&MockObject $userSession;
+
+    /**
      * Mock LoggerInterface.
      *
      * @var LoggerInterface&MockObject
@@ -76,12 +85,19 @@ final class TaxPaymentControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->request    = $this->createMock(IRequest::class);
-        $this->service    = $this->createMock(TaxPaymentReconciliationService::class);
-        $this->logger     = $this->createMock(LoggerInterface::class);
+        $this->request     = $this->createMock(IRequest::class);
+        $this->service     = $this->createMock(TaxPaymentReconciliationService::class);
+        $this->userSession = $this->createMock(IUserSession::class);
+        $this->logger      = $this->createMock(LoggerInterface::class);
+
+        $user = $this->createMock(IUser::class);
+        $user->method('getUID')->willReturn('alice');
+        $this->userSession->method('getUser')->willReturn($user);
+
         $this->controller = new TaxPaymentController(
             request: $this->request,
             reconciliation: $this->service,
+            userSession: $this->userSession,
             logger: $this->logger,
         );
 
