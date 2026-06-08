@@ -107,7 +107,7 @@
   emitting `pension-assumption-sensitivity` records with effectOnDBO,
   effectOnServiceCost, effectOnNetInterest
 
-- [ ] Task 13: Implement the disclosure-table generation aggregation per
+- [x] Task 13: Implement the disclosure-table generation aggregation per
   REQ-PEN-007 — `x-openregister-aggregations` query that consumes completed
   pension-movement + pension-asset-detail + pension-assumption-sensitivity
   records and emits a single `pension-disclosure-tabel` record with
