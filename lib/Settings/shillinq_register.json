@@ -6726,6 +6726,150 @@
 					}
 				}
 			},
+			"RetainedEarnings": {
+				"slug": "RetainedEarnings",
+				"icon": "PiggyBankOutline",
+				"version": "0.1.0",
+				"title": "Retained Earnings",
+				"description": "Tracks the retained-earnings sub-ledger position per fiscal year per REQ-YEC-002: opening balance, net income for the period, distributions paid, and closing balance. Materialised via the FiscalYear close lifecycle (retained-earnings transfer JournalEntry) and linked to its driving ClosingEntry. Sub-ledger view onto the equity-side retained-earnings GL account. All amounts in integer cents (money-safe).",
+				"x-schema-org": "schema:Thing",
+				"type": "object",
+				"x-openregister-unique": [
+					[
+						"fiscalYearId",
+						"administrationId"
+					]
+				],
+				"required": [
+					"retainedEarningsId",
+					"fiscalYearId",
+					"openingBalanceCents",
+					"netIncomeCents",
+					"closingBalanceCents",
+					"currency",
+					"administrationId"
+				],
+				"properties": {
+					"retainedEarningsId": {
+						"type": "string",
+						"description": "Operator-stable identifier for this retained-earnings record. Per REQ-YEC-002.",
+						"example": "re-2026-adm-consultancy-nl"
+					},
+					"fiscalYearId": {
+						"type": "string",
+						"description": "FK to the FiscalYear this record covers. One RetainedEarnings record per (fiscalYearId, administrationId). Per REQ-YEC-002.",
+						"example": "fy-2026-nl"
+					},
+					"openingBalanceCents": {
+						"type": "integer",
+						"description": "Retained earnings at the start of the fiscal year in integer cents (signed; negative values represent accumulated deficit). Equals prior FY closingBalanceCents per REQ-YEC-002 rollforward.",
+						"example": 50000000000
+					},
+					"netIncomeCents": {
+						"type": "integer",
+						"description": "Net income for the fiscal year (revenue minus expenses) in integer cents (signed; negative = net loss). Calculated as the income-summary closing balance after revenue and expense closing entries are posted. Per REQ-YEC-002.",
+						"example": 25000000000
+					},
+					"distributionsCents": {
+						"type": "integer",
+						"nullable": true,
+						"default": 0,
+						"description": "Dividends or distributions paid out during the fiscal year in integer cents (non-negative). Deducted from net income for closing-balance calculation. Per REQ-YEC-002.",
+						"example": 5000000000
+					},
+					"closingBalanceCents": {
+						"type": "integer",
+						"description": "Retained earnings at the end of the fiscal year in integer cents (signed). Computed as openingBalanceCents + netIncomeCents - distributionsCents per REQ-YEC-002.",
+						"example": 70000000000
+					},
+					"currency": {
+						"type": "string",
+						"description": "ISO 4217 currency of the retained-earnings balances.",
+						"minLength": 3,
+						"maxLength": 3,
+						"default": "EUR",
+						"example": "EUR"
+					},
+					"closingEntryId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to the ClosingEntry that materialised the retained-earnings transfer for this FY. Set when the FY close lifecycle posts the entry per REQ-YEC-002 / REQ-YEC-009.",
+						"example": "ce-2026-retained-earnings"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration that owns this retained-earnings record. Composite uniqueness with fiscalYearId per D5.",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-relations": {
+					"fiscalYear": {
+						"localField": "fiscalYearId",
+						"relatedSchema": "FiscalYear",
+						"cardinality": "many-to-one",
+						"description": "The fiscal year this retained-earnings record covers."
+					},
+					"closingEntry": {
+						"localField": "closingEntryId",
+						"relatedSchema": "ClosingEntry",
+						"cardinality": "one-to-one",
+						"description": "The closing entry that materialised the retained-earnings rollforward."
+					}
+				},
+				"x-openregister-aggregations": {
+					"validateRollforward": {
+						"description": "Validate the retained-earnings rollforward identity per REQ-YEC-002: closingBalanceCents == openingBalanceCents + netIncomeCents - (distributionsCents OR 0). Evaluated by the FiscalYear in-progress -> closed transition before the period locks.",
+						"expression": "@self.closingBalanceCents == (@self.openingBalanceCents + @self.netIncomeCents - (@self.distributionsCents | 0))",
+						"toleranceCents": 1,
+						"onFail": "block-transition"
+					},
+					"validateCarryforward": {
+						"description": "Validate that this FY's openingBalanceCents equals the prior FY's closingBalanceCents (within rounding tolerance) per REQ-YEC-008.",
+						"expression": "@self.openingBalanceCents == @prior.closingBalanceCents",
+						"prior": {
+							"register": "shillinq",
+							"schema": "RetainedEarnings",
+							"match": {
+								"administrationId": "@self.administrationId",
+								"fiscalYear.yearNumber": "@self.fiscalYear.yearNumber - 1"
+							}
+						},
+						"toleranceCents": 1,
+						"onFail": "warn"
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						},
+						"approver": {
+							"permissions": [
+								"read"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						},
+						"admin": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						}
+					},
+					"adminScope": {
+						"field": "administrationId",
+						"enforce": true
+					}
+				}
+			},
 			"Receipt": {
 				"slug": "Receipt",
 				"icon": "ReceiptOutline",
