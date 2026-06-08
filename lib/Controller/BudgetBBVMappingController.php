@@ -34,6 +34,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\FiscalYearContextService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -52,12 +54,19 @@ class BudgetBBVMappingController extends Controller
     /**
      * Constructor for BudgetBBVMappingController.
      *
-     * @param IRequest     $request     The current request.
-     * @param IUserSession $userSession Anonymous-rejection guard
-     *                                  (ADR-005 / hydra-gate-no-admin-idor).
-     * @param IL10N        $l10n        Translation service used to
-     *                                  localise response messages
-     *                                  (ADR-007 / slice 10 i18n).
+     * @param IRequest                     $request               The current request.
+     * @param IUserSession                 $userSession           Anonymous-rejection guard
+     *                                                            (ADR-005 / hydra-gate-no-admin-idor).
+     * @param IL10N                        $l10n                  Translation service used to
+     *                                                            localise response messages
+     *                                                            (ADR-007 / slice 10 i18n).
+     * @param AdministrationContextService $administrationContext Admin RBAC + accessibility
+     *                                                            checks (slice 09, ADR-005)
+     *                                                            — every mapping read is
+     *                                                            scoped to an administration
+     *                                                            the user is a member of.
+     * @param FiscalYearContextService     $fiscalYearContext     Active fiscal-year resolver
+     *                                                            (slice 09, REQ-BBVW-006).
      *
      * @return void
      */
@@ -65,6 +74,8 @@ class BudgetBBVMappingController extends Controller
         IRequest $request,
         private readonly IUserSession $userSession,
         private readonly IL10N $l10n,
+        private readonly AdministrationContextService $administrationContext,
+        private readonly FiscalYearContextService $fiscalYearContext,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
@@ -100,6 +111,7 @@ class BudgetBBVMappingController extends Controller
                 'register'    => 'shillinq',
                 'schema'      => 'BudgetBBVMapping',
                 'detailRoute' => 'BudgetBBVMappingDetail',
+                'scope'       => $this->resolveScope(),
             ]
         );
     }//end index()
@@ -136,7 +148,53 @@ class BudgetBBVMappingController extends Controller
                 'register'   => 'shillinq',
                 'schema'     => 'BudgetBBVMapping',
                 'indexRoute' => 'BudgetBBVMappings',
+                'scope'      => $this->resolveScope(),
             ]
         );
     }//end show()
+
+    /**
+     * Resolve the active administration + fiscal-year scope envelope.
+     *
+     * Slice-09 addition (REQ-BBVW-006). Returns the active
+     * administration id + fiscal year + half-open `[startDate, endDate)`
+     * window the Vue index/detail page applies as the default filter,
+     * derived server-side from {@see AdministrationContextService} +
+     * {@see FiscalYearContextService}. Returns null-valued fields when
+     * the user has no accessible administration so the page can still
+     * render an "empty / no administrations" state.
+     *
+     * @return array{administrationId:?string,fiscalYear:?int,startDate:?string,endDate:?string}
+     *
+     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-09-fiscal-audit/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-bbv-queries-and-views-shall-be-scoped-to-the-active-fiscal-year
+     */
+    private function resolveScope(): array
+    {
+        $context          = $this->administrationContext->buildContext();
+        $administrationId = ($context['activeAdministrationId'] ?? null);
+
+        $empty = [
+            'administrationId' => null,
+            'fiscalYear'       => null,
+            'startDate'        => null,
+            'endDate'          => null,
+        ];
+
+        if (is_string($administrationId) === false || $administrationId === '') {
+            return $empty;
+        }
+
+        $window = $this->fiscalYearContext->resolveActiveWindow(administrationId: $administrationId);
+        if ($window === null) {
+            return $empty;
+        }
+
+        return [
+            'administrationId' => $administrationId,
+            'fiscalYear'       => $window['fiscalYear'],
+            'startDate'        => $window['startDate'],
+            'endDate'          => $window['endDate'],
+        ];
+
+    }//end resolveScope()
 }//end class
