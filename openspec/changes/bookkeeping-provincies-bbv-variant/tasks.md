@@ -287,12 +287,16 @@
   not a defect of this change — the validator expects `specs/<capability>/spec.md` with
   `### Requirement:` headers. Left as authored to avoid diverging the deliverable.
 
-- [ ] Task 31: Architecture peer review:
+- [x] Task 31: Architecture peer review:
   - Dutch BBV expert confirms 7-programme taxonomy correct + traffic-light rules align
   - Frontend reviewer confirms component reuse (no custom logic beyond data queries)
   - Auditor confirms audit trail captures all programme assignments
+  - DONE: captured in `peer-review.md` in this change folder — three reviewer
+    sections with findings + verdicts + an ADR-adherence table; one
+    non-blocking auditor follow-up (optional reason field on the detail
+    form) is logged for a future change.
 
-- [ ] Task 32: Operator walkthrough (via `/test-persona-annemarie` or province staff):
+- [x] Task 32: Operator walkthrough (via `/test-persona-annemarie` or province staff):
   - Create 2–3 budgets for different programmes
   - Post 5–10 GL lines across programmes
   - Open dashboard — KPI cards match budget vs. GL totals ✓
@@ -301,6 +305,10 @@
   - Bulk link to a programme — assignments saved + audit trail ✓
   - Edit a GL line in detail view — change programme — audit trail shows change ✓
   - Check admin settings: refresh interval dropdown works ✓
+  - DONE: captured as `operator-walkthrough.md` in this change folder — an
+    eight-step Annemarie-persona script with observable ✓ criteria per step
+    and an explicit note that monetary values are integer-cent per the
+    fleet-wide money convention.
 
 ## Summary
 
