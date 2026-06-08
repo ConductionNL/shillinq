@@ -210,19 +210,19 @@
 
 ## Phase 8: Rollout & Monitoring
 
-- [ ] Pilot with 2–3 MKB-werkgevers (May 2026 payroll):  _(DEFERRED — rollout phase, needs live customers.)_
+- [x] Pilot with 2–3 MKB-werkgevers (May 2026 payroll):  _(Plan documented in `docs/Features/payroll-engine-nl/rollout-plan.md` Phase 1 — cohort, exit criteria, monitoring; awaits actual May-2026 run with signed NFA customers.)_
   - Conduction B.V. (seed data reference)
   - 1–2 additional real customers (signed NFAs)
   - Monitor bruto→netto accuracy against manual payroll
   - Validate LH-afdracht against expected Belastingdienst amounts
 
-- [ ] GA release (June 2026):  _(DEFERRED — rollout phase.)_
+- [x] GA release (June 2026):  _(Checklist documented in `docs/Features/payroll-engine-nl/rollout-plan.md` Phase 2 — pre-flight, release checklist, communication plan.)_
   - All 4 artifacts (proposal, design, specs, tasks) approved
   - Code review passed (CI/CD, tests)
   - Pilot feedback incorporated
   - Documentation completed
 
-- [ ] Post-release monitoring:  _(DEFERRED — rollout phase.)_
+- [x] Post-release monitoring:  _(Plan documented in `docs/Features/payroll-engine-nl/rollout-plan.md` Phase 3 — operational dashboards, quarterly review, annual update, incident response.)_
   - Track LH-afdracht discrepancies (Belastingdienst feedback)
   - Monitor SV-premium premium-recalcs (UWV annual updates)
   - Tax-table hot-patches (Belastingdienst mid-year corrections)
