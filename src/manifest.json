@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "1.3.7",
+	"version": "1.3.8",
 	"dependencies": [
 		"openregister"
 	],
@@ -480,6 +480,55 @@
 							"zzp"
 						]
 					}
+				},
+				{
+					"id": "UitgesteldeBelastingen",
+					"label": "Uitgestelde belastingen",
+					"icon": "ScaleBalance",
+					"order": 110,
+					"visibility": {
+						"field": "administrationType",
+						"in": [
+							"mkb"
+						]
+					},
+					"children": [
+						{
+							"id": "TaxProvisions",
+							"label": "Belastinglatentie",
+							"icon": "CurrencyEur",
+							"route": "TaxProvisions",
+							"order": 10
+						},
+						{
+							"id": "TemporaryDifferences",
+							"label": "Tijdelijke verschillen",
+							"icon": "ScaleBalance",
+							"route": "TemporaryDifferences",
+							"order": 20
+						},
+						{
+							"id": "DeferredTaxMovements",
+							"label": "Mutatieoverzicht",
+							"icon": "ArrowUpDown",
+							"route": "DeferredTaxMovements",
+							"order": 30
+						},
+						{
+							"id": "TaxLossCarryForwards",
+							"label": "Compensabele verliezen",
+							"icon": "AccountGroup",
+							"route": "TaxLossCarryForwards",
+							"order": 40
+						},
+						{
+							"id": "TaxRateReconciliations",
+							"label": "ETR-aansluiting",
+							"icon": "ChartBar",
+							"route": "TaxRateReconciliations",
+							"order": 50
+						}
+					]
 				}
 			]
 		},
@@ -11058,6 +11107,706 @@
 					}
 				],
 				"defaultSort": "-created"
+			}
+		},
+		{
+			"id": "TaxProvisions",
+			"route": "/belastingen/uitgestelde-belastingen/provisies",
+			"type": "index",
+			"title": "Belastinglatentie",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxProvision",
+				"columns": [
+					{
+						"key": "periodId",
+						"label": "Periode",
+						"sortable": true
+					},
+					{
+						"key": "jurisdiction",
+						"label": "Jurisdictie",
+						"sortable": true
+					},
+					{
+						"key": "currentTaxPayable",
+						"label": "Vpb te betalen (cent)",
+						"sortable": true
+					},
+					{
+						"key": "currentTaxPrepaid",
+						"label": "Vpb voorheffing (cent)",
+						"sortable": true
+					},
+					{
+						"key": "dtaTotal",
+						"label": "DTA totaal (cent)",
+						"sortable": true
+					},
+					{
+						"key": "dtlTotal",
+						"label": "DTL totaal (cent)",
+						"sortable": true
+					},
+					{
+						"key": "netDtaDtlPosition",
+						"label": "Netto DTA/DTL (cent)",
+						"sortable": true
+					},
+					{
+						"key": "presentationOnBalanceSheet",
+						"label": "Presentatie",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-periodId",
+				"detailRoute": "TaxProvisionDetail"
+			}
+		},
+		{
+			"id": "TaxProvisionDetail",
+			"route": "/belastingen/uitgestelde-belastingen/provisies/:id",
+			"type": "detail",
+			"title": "Belastinglatentie",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxProvision",
+				"fields": [
+					{
+						"key": "periodId",
+						"label": "Periode",
+						"type": "string"
+					},
+					{
+						"key": "jurisdiction",
+						"label": "Jurisdictie",
+						"type": "string"
+					},
+					{
+						"key": "currentTaxPayable",
+						"label": "Vpb te betalen (cent)",
+						"type": "number"
+					},
+					{
+						"key": "currentTaxPrepaid",
+						"label": "Vpb voorheffing (cent)",
+						"type": "number"
+					},
+					{
+						"key": "dtaTotal",
+						"label": "DTA totaal (cent)",
+						"type": "number"
+					},
+					{
+						"key": "dtlTotal",
+						"label": "DTL totaal (cent)",
+						"type": "number"
+					},
+					{
+						"key": "netDtaDtlPosition",
+						"label": "Netto DTA/DTL positie (cent)",
+						"type": "number"
+					},
+					{
+						"key": "presentationOnBalanceSheet",
+						"label": "Saldering / Presentatie",
+						"type": "string"
+					},
+					{
+						"key": "linkedVpbReturn",
+						"label": "Gekoppelde Vpb-aangifte",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"indexRoute": "TaxProvisions",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "TemporaryDifferences",
+			"route": "/belastingen/uitgestelde-belastingen/tijdelijke-verschillen",
+			"type": "index",
+			"title": "Tijdelijke verschillen",
+			"config": {
+				"register": "shillinq",
+				"schema": "TemporaryDifference",
+				"columns": [
+					{
+						"key": "periodId",
+						"label": "Periode",
+						"sortable": true
+					},
+					{
+						"key": "jurisdiction",
+						"label": "Jurisdictie",
+						"sortable": true
+					},
+					{
+						"key": "accountNumber",
+						"label": "Grootboek",
+						"sortable": true
+					},
+					{
+						"key": "category",
+						"label": "Categorie",
+						"sortable": true
+					},
+					{
+						"key": "type",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "temporaryDifference",
+						"label": "Verschil (cent)",
+						"sortable": true
+					},
+					{
+						"key": "deferredTaxBalance",
+						"label": "Latentie (cent)",
+						"sortable": true
+					},
+					{
+						"key": "reversalPattern",
+						"label": "Omkeerpatroon",
+						"sortable": true
+					}
+				],
+				"defaultSort": "accountNumber",
+				"detailRoute": "TemporaryDifferenceDetail"
+			}
+		},
+		{
+			"id": "TemporaryDifferenceDetail",
+			"route": "/belastingen/uitgestelde-belastingen/tijdelijke-verschillen/:id",
+			"type": "detail",
+			"title": "Tijdelijk verschil",
+			"config": {
+				"register": "shillinq",
+				"schema": "TemporaryDifference",
+				"fields": [
+					{
+						"key": "periodId",
+						"label": "Periode",
+						"type": "string"
+					},
+					{
+						"key": "jurisdiction",
+						"label": "Jurisdictie",
+						"type": "string"
+					},
+					{
+						"key": "accountNumber",
+						"label": "Grootboekrekening",
+						"type": "string"
+					},
+					{
+						"key": "category",
+						"label": "Categorie",
+						"type": "string"
+					},
+					{
+						"key": "commercialCarryingAmount",
+						"label": "Commerciële boekwaarde (cent)",
+						"type": "number"
+					},
+					{
+						"key": "taxCarryingAmount",
+						"label": "Fiscale boekwaarde (cent)",
+						"type": "number"
+					},
+					{
+						"key": "temporaryDifference",
+						"label": "Tijdelijk verschil (cent)",
+						"type": "number"
+					},
+					{
+						"key": "type",
+						"label": "Type (taxable/deductible)",
+						"type": "string"
+					},
+					{
+						"key": "reversalPattern",
+						"label": "Omkeerpatroon",
+						"type": "string"
+					},
+					{
+						"key": "expectedReversalYear",
+						"label": "Verwacht omkeerjaar",
+						"type": "number"
+					},
+					{
+						"key": "taxRate",
+						"label": "Tarief (basispunten)",
+						"type": "number"
+					},
+					{
+						"key": "deferredTaxBalance",
+						"label": "Latentie (cent)",
+						"type": "number"
+					},
+					{
+						"key": "notes",
+						"label": "Notities",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"indexRoute": "TemporaryDifferences",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "DeferredTaxMovements",
+			"route": "/belastingen/uitgestelde-belastingen/mutaties",
+			"type": "index",
+			"title": "Mutatieoverzicht uitgestelde belastingen",
+			"config": {
+				"register": "shillinq",
+				"schema": "DeferredTaxMovement",
+				"columns": [
+					{
+						"key": "periodId",
+						"label": "Periode",
+						"sortable": true
+					},
+					{
+						"key": "jurisdiction",
+						"label": "Jurisdictie",
+						"sortable": true
+					},
+					{
+						"key": "category",
+						"label": "Categorie",
+						"sortable": true
+					},
+					{
+						"key": "openingBalance",
+						"label": "Beginbalans (cent)",
+						"sortable": true
+					},
+					{
+						"key": "recognisedInPL",
+						"label": "Via P&L (cent)",
+						"sortable": true
+					},
+					{
+						"key": "closingBalance",
+						"label": "Eindbalans (cent)",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-periodId",
+				"detailRoute": "DeferredTaxMovementDetail"
+			}
+		},
+		{
+			"id": "DeferredTaxMovementDetail",
+			"route": "/belastingen/uitgestelde-belastingen/mutaties/:id",
+			"type": "detail",
+			"title": "Mutatie uitgestelde belasting",
+			"config": {
+				"register": "shillinq",
+				"schema": "DeferredTaxMovement",
+				"fields": [
+					{
+						"key": "periodId",
+						"label": "Periode",
+						"type": "string"
+					},
+					{
+						"key": "jurisdiction",
+						"label": "Jurisdictie",
+						"type": "string"
+					},
+					{
+						"key": "category",
+						"label": "Categorie",
+						"type": "string"
+					},
+					{
+						"key": "openingBalance",
+						"label": "Beginbalans (cent)",
+						"type": "number"
+					},
+					{
+						"key": "originatedInPeriod",
+						"label": "Origineel in periode (cent)",
+						"type": "number"
+					},
+					{
+						"key": "reversedInPeriod",
+						"label": "Omgekeerd in periode (cent)",
+						"type": "number"
+					},
+					{
+						"key": "rateChangeAdjustment",
+						"label": "Tariefswijziging (cent)",
+						"type": "number"
+					},
+					{
+						"key": "acquiredViaBusinessCombination",
+						"label": "Via overname (cent)",
+						"type": "number"
+					},
+					{
+						"key": "translationAdjustment",
+						"label": "Koersverschil (cent)",
+						"type": "number"
+					},
+					{
+						"key": "recognisedInPL",
+						"label": "Verwerkt via P&L (cent)",
+						"type": "number"
+					},
+					{
+						"key": "recognisedInOCI",
+						"label": "Verwerkt via OCI (cent)",
+						"type": "number"
+					},
+					{
+						"key": "closingBalance",
+						"label": "Eindbalans (cent)",
+						"type": "number"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"indexRoute": "DeferredTaxMovements",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "TaxLossCarryForwards",
+			"route": "/belastingen/uitgestelde-belastingen/verliescompensatie",
+			"type": "index",
+			"title": "Compensabele verliezen",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxLossCarryForward",
+				"columns": [
+					{
+						"key": "jurisdiction",
+						"label": "Jurisdictie",
+						"sortable": true
+					},
+					{
+						"key": "originatingYear",
+						"label": "Ontstaansjaar",
+						"sortable": true
+					},
+					{
+						"key": "applicableRegime",
+						"label": "Regime",
+						"sortable": true
+					},
+					{
+						"key": "originalAmount",
+						"label": "Origineel (cent)",
+						"sortable": true
+					},
+					{
+						"key": "utilisedAmount",
+						"label": "Gebruikt (cent)",
+						"sortable": true
+					},
+					{
+						"key": "remainingAmount",
+						"label": "Resterend (cent)",
+						"sortable": true
+					},
+					{
+						"key": "dtaRecognised",
+						"label": "DTA verantwoord (cent)",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-originatingYear",
+				"detailRoute": "TaxLossCarryForwardDetail"
+			}
+		},
+		{
+			"id": "TaxLossCarryForwardDetail",
+			"route": "/belastingen/uitgestelde-belastingen/verliescompensatie/:id",
+			"type": "detail",
+			"title": "Compensabel verlies",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxLossCarryForward",
+				"fields": [
+					{
+						"key": "jurisdiction",
+						"label": "Jurisdictie",
+						"type": "string"
+					},
+					{
+						"key": "originatingYear",
+						"label": "Ontstaansjaar",
+						"type": "number"
+					},
+					{
+						"key": "applicableRegime",
+						"label": "Compensatieregime",
+						"type": "string"
+					},
+					{
+						"key": "originalAmount",
+						"label": "Origineel verliesbedrag (cent)",
+						"type": "number"
+					},
+					{
+						"key": "utilisedAmount",
+						"label": "Cumulatief gebruikt (cent)",
+						"type": "number"
+					},
+					{
+						"key": "remainingAmount",
+						"label": "Resterend (cent)",
+						"type": "number"
+					},
+					{
+						"key": "expirationYear",
+						"label": "Verloopjaar",
+						"type": "number"
+					},
+					{
+						"key": "dtaRecognised",
+						"label": "DTA verantwoord (cent)",
+						"type": "number"
+					},
+					{
+						"key": "dtaRecoverabilityRationale",
+						"label": "Onderbouwing terugwinbaarheid",
+						"type": "string"
+					},
+					{
+						"key": "recoverabilityHorizon",
+						"label": "Horizon (jaren)",
+						"type": "number"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"indexRoute": "TaxLossCarryForwards",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "TaxRateReconciliations",
+			"route": "/belastingen/uitgestelde-belastingen/etr-aansluiting",
+			"type": "index",
+			"title": "ETR-aansluiting",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxRateReconciliation",
+				"columns": [
+					{
+						"key": "periodId",
+						"label": "Periode",
+						"sortable": true
+					},
+					{
+						"key": "jurisdiction",
+						"label": "Jurisdictie",
+						"sortable": true
+					},
+					{
+						"key": "profitBeforeTax",
+						"label": "Winst voor belasting (cent)",
+						"sortable": true
+					},
+					{
+						"key": "statutoryRate",
+						"label": "Wettelijk tarief (bp)",
+						"sortable": true
+					},
+					{
+						"key": "statutoryTaxExpense",
+						"label": "Wettelijke last (cent)",
+						"sortable": true
+					},
+					{
+						"key": "effectiveTaxExpense",
+						"label": "Effectieve last (cent)",
+						"sortable": true
+					},
+					{
+						"key": "effectiveTaxRate",
+						"label": "ETR (bp)",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-periodId",
+				"detailRoute": "TaxRateReconciliationDetail"
+			}
+		},
+		{
+			"id": "TaxRateReconciliationDetail",
+			"route": "/belastingen/uitgestelde-belastingen/etr-aansluiting/:id",
+			"type": "detail",
+			"title": "ETR-aansluiting",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxRateReconciliation",
+				"fields": [
+					{
+						"key": "periodId",
+						"label": "Periode",
+						"type": "string"
+					},
+					{
+						"key": "jurisdiction",
+						"label": "Jurisdictie",
+						"type": "string"
+					},
+					{
+						"key": "profitBeforeTax",
+						"label": "Winst voor belasting (cent)",
+						"type": "number"
+					},
+					{
+						"key": "statutoryRate",
+						"label": "Wettelijk tarief (basispunten)",
+						"type": "number"
+					},
+					{
+						"key": "statutoryTaxExpense",
+						"label": "Wettelijke belastinglast (cent)",
+						"type": "number"
+					},
+					{
+						"key": "effectiveTaxExpense",
+						"label": "Effectieve belastinglast (cent)",
+						"type": "number"
+					},
+					{
+						"key": "effectiveTaxRate",
+						"label": "Effectief tarief (basispunten)",
+						"type": "number"
+					},
+					{
+						"key": "disclosureNarrative",
+						"label": "Toelichting jaarrekening",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"indexRoute": "TaxRateReconciliations",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		}
 	]
