@@ -17,7 +17,7 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `bookkeeping-pension-ias19` capability spec already
+- [x] Task 1: Confirm no `bookkeeping-pension-ias19` capability spec already
   exists; verify no `pension-plan`, `actuarial-valuation`, `pension-movement`,
   `pension-assumption-sensitivity`, `pension-asset-detail`,
   `pension-disclosure-tabel` schemas are declared; verify no
