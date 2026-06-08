@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\IcpController;
+use OCA\Shillinq\Service\ArInvoiceIcpPdfRenderer;
 use OCA\Shillinq\Service\IcpFilingService;
 use OCA\Shillinq\Service\IcpService;
 use OCA\Shillinq\Service\ViesService;
@@ -33,6 +34,7 @@ use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -76,6 +78,20 @@ final class IcpControllerTest extends TestCase
     private ViesService&MockObject $vies;
 
     /**
+     * Mock ArInvoiceIcpPdfRenderer.
+     *
+     * @var ArInvoiceIcpPdfRenderer&MockObject
+     */
+    private ArInvoiceIcpPdfRenderer&MockObject $pdfRenderer;
+
+    /**
+     * Mock ContainerInterface.
+     *
+     * @var ContainerInterface&MockObject
+     */
+    private ContainerInterface&MockObject $container;
+
+    /**
      * Mock IUserSession.
      *
      * @var IUserSession&MockObject
@@ -108,6 +124,8 @@ final class IcpControllerTest extends TestCase
         $this->service     = $this->createMock(IcpService::class);
         $this->filing      = $this->createMock(IcpFilingService::class);
         $this->vies        = $this->createMock(ViesService::class);
+        $this->pdfRenderer = $this->createMock(ArInvoiceIcpPdfRenderer::class);
+        $this->container   = $this->createMock(ContainerInterface::class);
         $this->userSession = $this->createMock(IUserSession::class);
         $this->logger      = $this->createMock(LoggerInterface::class);
 
@@ -121,6 +139,8 @@ final class IcpControllerTest extends TestCase
             icpService: $this->service,
             filingService: $this->filing,
             viesService: $this->vies,
+            pdfRenderer: $this->pdfRenderer,
+            container: $this->container,
             userSession: $this->userSession,
             logger: $this->logger,
         );
