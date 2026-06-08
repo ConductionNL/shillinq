@@ -11809,6 +11809,394 @@
 				}
 			}
 		},
+		"VATAuditRecord": {
+			"slug": "VATAuditRecord",
+			"icon": "FileCertificateOutline",
+			"version": "0.1.0",
+			"title": "VAT Audit Record",
+			"description": "Kassakoppeling-compliant per-line VAT audit record per bookkeeping-invoice-vat-kassakoppeling REQ-VAT-004. Append-only timeline: one immutable record per ARInvoice line per lifecycle event (issued, paid, written_off, reversed). All amounts are decimal-euros copies taken at event time, never mutated after creation. The schema is created by the ARInvoice.issue lifecycle materialisation (and follow-up paid / written-off / reversed transitions) per ADR-031 declarative-first; no app-local PHP VAT-audit service exists per the spec's ADR-031 anti-pattern enumeration. Belastingdienst audits inspect these records directly via OR's generic CRUD API.",
+			"x-openregister-audit-trail": {
+				"enabled": true,
+				"description": "Kassakoppeling immutable VAT audit channel. REQ-VAT-004 mandates append-only semantics; RBAC roles below grant only create + read (no update / delete). PATCH or DELETE against an existing record MUST return 409 SCHEMA_IMMUTABLE per ADR-022."
+			},
+			"x-schema-org": "schema:Invoice",
+			"type": "object",
+			"required": [
+				"invoiceNumber",
+				"invoiceDate",
+				"lineSequence",
+				"lineDescription",
+				"lineAmount",
+				"vatRate",
+				"vatAmount",
+				"serviceCategory",
+				"lifecycleEvent",
+				"eventDate",
+				"settlementPeriod",
+				"administrationId"
+			],
+			"properties": {
+				"invoiceNumber": {
+					"type": "string",
+					"description": "ARInvoice.invoiceNumber at the time of the captured event. Immutable copy.",
+					"example": "INV-C-2026-0001"
+				},
+				"invoiceDate": {
+					"type": "string",
+					"format": "date",
+					"description": "ARInvoice.invoiceDate at issuance. Immutable copy.",
+					"example": "2026-05-15"
+				},
+				"lineSequence": {
+					"type": "integer",
+					"minimum": 1,
+					"description": "1-based index of the line within ARInvoice.lines[].",
+					"example": 1
+				},
+				"lineDescription": {
+					"type": "string",
+					"description": "Immutable copy of ARInvoice.lines[lineSequence-1].description at event time.",
+					"example": "Website hosting - May 2026"
+				},
+				"lineAmount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Immutable copy of ARInvoice.lines[lineSequence-1].amount in decimal euros (mirrors AR T2 convention).",
+					"example": 200.0
+				},
+				"vatRate": {
+					"type": "integer",
+					"enum": [
+						21,
+						9,
+						6,
+						0
+					],
+					"description": "VAT rate applied to this line at event time per REQ-VAT-001.",
+					"example": 9
+				},
+				"vatAmount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Immutable copy of the line's vatAmount in decimal euros at event time; banker's-rounded to 2 decimals per REQ-VAT-007.",
+					"example": 18.0
+				},
+				"serviceCategory": {
+					"type": "string",
+					"enum": [
+						"product",
+						"service",
+						"exempt"
+					],
+					"description": "Immutable copy of the line's serviceCategory at event time per REQ-VAT-002.",
+					"example": "service"
+				},
+				"lifecycleEvent": {
+					"type": "string",
+					"enum": [
+						"issued",
+						"paid",
+						"written_off",
+						"reversed"
+					],
+					"description": "Which ARInvoice lifecycle transition this record captures. issued: VAT accrual on first issue (REQ-VAT-003). paid: payment match cleared via bank-reconciliation. written_off: bad-debt write-off (REQ-AR-007). reversed: compensating reversal / credit note.",
+					"example": "issued"
+				},
+				"eventDate": {
+					"type": "string",
+					"format": "date-time",
+					"description": "Timestamp the lifecycle event was recorded. UTC. Immutable.",
+					"example": "2026-05-15T14:32:00Z"
+				},
+				"paymentDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Populated only when lifecycleEvent=paid; date of the matched payment.",
+					"nullable": true,
+					"example": "2026-05-20"
+				},
+				"settlementPeriod": {
+					"type": "string",
+					"description": "FK to the FiscalPeriod (periodId) bound at issue time per REQ-VAT-005. Immutable once set; survives subsequent administration.vatFilingFrequency reconfigurations.",
+					"example": "2026-05"
+				},
+				"overrideId": {
+					"type": "string",
+					"description": "Optional FK to ServiceCategoryOverride if this line's vatRate / serviceCategory combination was authorised under an exception per REQ-VAT-002bis.",
+					"nullable": true,
+					"example": "sco-2026-0001"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the administration owning this audit record.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-relations": {
+				"invoice": {
+					"localField": "invoiceNumber",
+					"relatedSchema": "ARInvoice",
+					"relatedField": "invoiceNumber",
+					"cardinality": "many-to-one",
+					"description": "FK to the ARInvoice the audit record belongs to. The number is a stable business key; immutable once issued."
+				},
+				"fiscalPeriod": {
+					"localField": "settlementPeriod",
+					"relatedSchema": "FiscalPeriod",
+					"relatedField": "periodId",
+					"cardinality": "many-to-one",
+					"description": "FK to the FiscalPeriod bound at issue time per REQ-VAT-005."
+				},
+				"override": {
+					"localField": "overrideId",
+					"relatedSchema": "ServiceCategoryOverride",
+					"relatedField": "id",
+					"cardinality": "many-to-one",
+					"description": "Optional link to the ServiceCategoryOverride consulted at issue time per REQ-VAT-002bis."
+				}
+			},
+			"x-openregister-aggregations": {
+				"vatByPeriod": {
+					"description": "REQ-VAT-009 declarative aggregation: VAT totals broken down by rate for a given (administrationId, settlementPeriod) tuple, restricted to lifecycleEvent=issued so reversed records do not double-count. Powers the VATByPeriod manifest entry per REQ-VAT-010.",
+					"groupBy": [
+						"administrationId",
+						"settlementPeriod"
+					],
+					"filter": {
+						"lifecycleEvent": "issued"
+					},
+					"compute": {
+						"totalNetAmount": "SUM(lineAmount)",
+						"totalVAT21": "SUM(vatAmount WHERE vatRate=21)",
+						"totalVAT9": "SUM(vatAmount WHERE vatRate=9)",
+						"totalVAT6": "SUM(vatAmount WHERE vatRate=6)",
+						"totalVAT0": "SUM(vatAmount WHERE vatRate=0)",
+						"totalGrossAmount": "totalNetAmount + totalVAT21 + totalVAT9 + totalVAT6 + totalVAT0",
+						"invoiceCount": "COUNT(DISTINCT invoiceNumber)",
+						"recordCount": "COUNT(*)"
+					},
+					"description2": "Pure aggregation per ADR-031; no app-local VAT-by-period service."
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": [
+							"create",
+							"read"
+						]
+					},
+					"controller": {
+						"permissions": [
+							"create",
+							"read"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				},
+				"adminScope": {
+					"field": "administrationId",
+					"enforce": true
+				}
+			}
+		},
+		"ServiceCategoryOverride": {
+			"slug": "ServiceCategoryOverride",
+			"icon": "ShieldEditOutline",
+			"version": "0.1.0",
+			"title": "Service Category Override",
+			"description": "Per-administration exception to the default REQ-VAT-002 service-category / VAT-rate matrix. Append-only register; createdAt + createdBy are immutable once written. Lookup by (administrationId, serviceCategory, vatRate); the ARInvoice.issue precondition (REQ-VAT-002) consults this register before rejecting a non-default combination per REQ-VAT-002bis.",
+			"x-openregister-audit-trail": {
+				"enabled": true,
+				"description": "VAT exception register; every override creation is audit-trailed on the OR audit-trail-immutable channel per ADR-022. The audit chain proves rare-rate authorisations to the Belastingdienst."
+			},
+			"x-schema-org": "schema:Permit",
+			"type": "object",
+			"required": [
+				"administrationId",
+				"serviceCategory",
+				"vatRate",
+				"reason",
+				"createdAt",
+				"createdBy"
+			],
+			"properties": {
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the administration owning the override.",
+					"example": "adm-1"
+				},
+				"serviceCategory": {
+					"type": "string",
+					"enum": [
+						"product",
+						"service",
+						"exempt"
+					],
+					"description": "The serviceCategory the override applies to.",
+					"example": "service"
+				},
+				"vatRate": {
+					"type": "integer",
+					"enum": [
+						21,
+						9,
+						6,
+						0
+					],
+					"description": "The vatRate the override permits for the serviceCategory.",
+					"example": 21
+				},
+				"reason": {
+					"type": "string",
+					"minLength": 1,
+					"description": "Operator-authored audit reason. Retained for Belastingdienst inspection; free text.",
+					"example": "Special consulting agreement per contract X-2026"
+				},
+				"createdAt": {
+					"type": "string",
+					"format": "date-time",
+					"description": "Set on creation; immutable copy.",
+					"example": "2026-05-10T09:00:00Z"
+				},
+				"createdBy": {
+					"type": "string",
+					"description": "Nextcloud user id of the creator; immutable.",
+					"example": "accountant1"
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"administrator": {
+						"permissions": [
+							"create",
+							"read"
+						]
+					},
+					"bookkeeper": {
+						"permissions": [
+							"read"
+						]
+					},
+					"controller": {
+						"permissions": [
+							"create",
+							"read"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				},
+				"adminScope": {
+					"field": "administrationId",
+					"enforce": true
+				}
+			}
+		},
+		"VATGLAccounts": {
+			"slug": "VATGLAccounts",
+			"icon": "BankCheckOutline",
+			"version": "0.1.0",
+			"title": "VAT GL Accounts",
+			"description": "Per-administration mapping from VAT rate to the GL liability (VATPayable*) account credited by the ARInvoice.issue lifecycle action per REQ-VAT-006. One record per administrationId. Defaults from the RGS (Referentie Grootboekschema) chart (vat21=2020, vat9=2021, vat6=2022, vat0=2023) and seeded on installer first-run.",
+			"x-openregister-audit-trail": {
+				"enabled": true,
+				"description": "Configuration register; every reassignment of the four VAT GL accounts is audit-trailed per ADR-022. Prior balances on previously-used accounts remain unchanged."
+			},
+			"x-schema-org": "schema:PropertyValueSpecification",
+			"type": "object",
+			"required": [
+				"administrationId",
+				"vat21Account",
+				"vat9Account",
+				"vat6Account",
+				"vat0Account",
+				"createdAt",
+				"updatedAt"
+			],
+			"properties": {
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the administration; one VATGLAccounts record per administration.",
+					"example": "adm-1"
+				},
+				"vat21Account": {
+					"type": "string",
+					"description": "GL account number credited for 21% VAT lines. Default 2020 per RGS baseline. MUST exist in Account for the administration.",
+					"example": "2020",
+					"default": "2020"
+				},
+				"vat9Account": {
+					"type": "string",
+					"description": "GL account number credited for 9% VAT lines. Default 2021. MUST exist in Account for the administration.",
+					"example": "2021",
+					"default": "2021"
+				},
+				"vat6Account": {
+					"type": "string",
+					"description": "GL account number credited for 6% VAT lines. Default 2022. MUST exist in Account for the administration.",
+					"example": "2022",
+					"default": "2022"
+				},
+				"vat0Account": {
+					"type": "string",
+					"description": "GL account number credited for 0% / exempt VAT lines. Default 2023. MUST exist in Account for the administration.",
+					"example": "2023",
+					"default": "2023"
+				},
+				"createdAt": {
+					"type": "string",
+					"format": "date-time",
+					"description": "Set on first save.",
+					"example": "2026-01-01T00:00:00Z"
+				},
+				"updatedAt": {
+					"type": "string",
+					"format": "date-time",
+					"description": "Updated on each save.",
+					"example": "2026-01-15T10:00:00Z"
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"administrator": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"bookkeeper": {
+						"permissions": [
+							"read"
+						]
+					},
+					"controller": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				},
+				"adminScope": {
+					"field": "administrationId",
+					"enforce": true
+				}
+			}
+		},
 		"Subsidie": {
 			"slug": "Subsidie",
 			"icon": "FileDocumentOutline",
