@@ -368,7 +368,7 @@ class WidgetService
 
         // Invalidate cached slots for the affected date so the next read updates.
         $this->slotService->invalidate(
-            serviceSlug: $serviceSlug,
+            serviceId: $serviceId,
             resourceId: $resourceId,
             date: $startUtc->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d')
         );
