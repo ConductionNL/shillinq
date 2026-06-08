@@ -171,7 +171,7 @@
 > work" convention these are tracked under the `spec:too-large` issue referenced
 > in the PR.
 
-- [ ] Task 20: Add x-openregister-lifecycle to `pension-plan` and
+- [x] Task 20: Add x-openregister-lifecycle to `pension-plan` and
   `actuarial-valuation` per ADR-031: workflow states (draft → approved → locked),
   approval gates, audit trail on all assumption + amendment entries, with
   decidesk integration (future T4) for material amendments (>EUR 100K past
