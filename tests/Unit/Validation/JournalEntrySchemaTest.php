@@ -218,4 +218,52 @@ final class JournalEntrySchemaTest extends TestCase
         }
 
     }//end testSeedObjectsAreWellFormed()
+
+    /**
+     * REQ-JE-005: the recurring `cadence` object declares the shape required by
+     * OR's `ScheduledWorkflow` primitive (interval enum, anchor date, optional
+     * endsOn / count bounds). T1 contract only — wiring `ScheduledWorkflow` to
+     * fire on the cadence is the deferred integration task (Task 7.4).
+     *
+     * @return void
+     */
+    public function testCadenceShapeReadyForScheduledWorkflow(): void
+    {
+        $schema  = $this->fragment['components']['schemas']['JournalEntry'];
+        $cadence = $schema['properties']['cadence'];
+
+        self::assertSame('object', $cadence['type'], 'cadence MUST be an object.');
+        self::assertArrayHasKey('interval', $cadence['properties']);
+        self::assertSame(
+            ['daily', 'weekly', 'monthly', 'yearly'],
+            $cadence['properties']['interval']['enum'],
+            'cadence.interval enum MUST match REQ-JE-005.'
+        );
+        self::assertArrayHasKey('anchor', $cadence['properties']);
+        self::assertSame('date', $cadence['properties']['anchor']['format']);
+        // endsOn + count are the bounded-recurrence inputs.
+        self::assertArrayHasKey('endsOn', $cadence['properties']);
+        self::assertArrayHasKey('count', $cadence['properties']);
+
+    }//end testCadenceShapeReadyForScheduledWorkflow()
+
+    /**
+     * REQ-JE-004: the `reversesOn` field is declared as the period-id pointer
+     * that drives the inverse-posting trigger. T1 contract only — actual
+     * period-boundary firing is owned by T3 period-close (Task 7.5 deferral).
+     *
+     * @return void
+     */
+    public function testReversesOnReadyForPeriodBoundaryTrigger(): void
+    {
+        $schema   = $this->fragment['components']['schemas']['JournalEntry'];
+        $reverses = $schema['properties']['reversesOn'];
+
+        self::assertSame('string', $reverses['type'], 'reversesOn MUST be a string period reference.');
+        self::assertTrue(($reverses['nullable'] ?? false), 'reversesOn MUST be nullable (only required when journalType=reversing).');
+        // reversing belongs to the closed enum so the T3 trigger can resolve type.
+        self::assertContains('reversing', $schema['properties']['journalType']['enum']);
+
+    }//end testReversesOnReadyForPeriodBoundaryTrigger()
+
 }//end class

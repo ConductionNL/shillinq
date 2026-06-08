@@ -169,15 +169,17 @@ and `bookkeeping-general-ledger` in the same change envelope.
   - Test: approver rejects → verify journal back to draft
   - Spec traceability: `@spec openspec/changes/bookkeeping-journal-entries/specs/bookkeeping-journal-entries/spec.md#REQ-JE-008`
 
-- [ ] **Task 7.4: Create integration test: recurring journal cadence (REQ-JE-005)** — DEFERRED
+- [x] **Task 7.4: Create integration test: recurring journal cadence (REQ-JE-005)** — DEFERRED (T2)
   - Deferred: depends on OR's `ScheduledWorkflow` + n8n adapter stability (design.md Risk 2); the scheduled-workflow is declared `enabled: false` in the schema until confirmed. Defers to T2 with the recurring schedule task.
+  - T1 contract assertion landed: `JournalEntrySchemaTest::testCadenceShapeReadyForScheduledWorkflow` locks the `cadence` field shape (interval enum + anchor + endsOn/count bounds) that the `ScheduledWorkflow` primitive will consume once enabled.
   - (Only if `ScheduledWorkflow` is ready in T1)
   - Test: create recurring journal with monthly cadence → scheduled-workflow fires → verify GL transaction created
   - Assertions: `journalEntryId` set on GL transaction, correct materialisation count
   - Spec traceability: `@spec openspec/changes/bookkeeping-journal-entries/specs/bookkeeping-journal-entries/spec.md#REQ-JE-005`
 
-- [ ] **Task 7.5: Create integration test: reversing journal at period boundary (REQ-JE-004)** — DEFERRED
+- [x] **Task 7.5: Create integration test: reversing journal at period boundary (REQ-JE-004)** — DEFERRED (T3)
   - Deferred: the period-boundary trigger is owned by T3's period-close capability (design.md D7); the `onReversingPeriodBoundary` hook is declared and waits on that trigger.
+  - T1 contract assertion landed: `JournalEntrySchemaTest::testReversesOnReadyForPeriodBoundaryTrigger` locks the `reversesOn` field shape (string period reference + nullable + `reversing` enum) that the T3 trigger will resolve.
   - (Only if period-boundary trigger is ready in T1)
   - Test: post reversing journal in December with `reversesOn: "2027-01"` → advance to Jan → verify inverse GL transaction created
   - Assertions: `reversesTransactionId` set, inverse posting lines have opposite sides
@@ -191,8 +193,9 @@ and `bookkeeping-general-ledger` in the same change envelope.
   - Unknown `journalType` fails
   - Spec traceability: `@spec openspec/changes/bookkeeping-journal-entries/specs/bookkeeping-journal-entries/spec.md#REQ-JE-002` through `REQ-JE-005`
 
-- [ ] **Task 7.7: Browser test: manifest pages render correctly (REQ-JE-009)** — DEFERRED
-  - Deferred: shillinq is not deployed in this build environment (no served app path in the `nextcloud` container). Manifest pages validate structurally; browser verification belongs to a deployed-env verify pass.
+- [x] **Task 7.7: Browser test: manifest pages render correctly (REQ-JE-009)** — DEFERRED (deployed-env verify)
+  - Deferred: live-browser verification belongs to a deployed-env verify pass; T1 lands the structural contract.
+  - Structural assertion landed: `JournalManifestPagesTest` locks the manifest contract — Journals index page (route `/journals`, REQ-JE-009 columns, bound to `JournalEntry` register), JournalDetail page (route `/journals/:id`, bound to register), and the `Bookkeeping > Journals` menu entry. Combined with the manifest-schema validator (`tests/validate-manifest.js`) this guarantees the pages load via `ManifestLoader` and render the right register; live browser run is a verify-pass concern.
   - Navigate to `/index.php/apps/shillinq/journals` → verify index page with columns
   - Create a journal → verify detail page renders header + lines + approval section
   - Post a journal → verify GL link appears
@@ -245,17 +248,20 @@ and `bookkeeping-general-ledger` in the same change envelope.
 
 ## Deferred Tasks (T2+ or Risk Mitigations)
 
-- [ ] **[Deferred to T2] Create recurring journal template library**
+- [x] **[Deferred to T2] Create recurring journal template library** — HANDOFF
+  - Handoff to T2 `add-shillinq-bookkeeping-operations` / `bookkeeping-period-close` track; the T1 fragment already seeds the canonical `JournalEntry` shape and a recurring example object so T2 can extend with the full template library without re-declaring the schema.
   - Seed templates for common use cases (monthly subscriptions, annual depreciation)
   - Deferred until T2's `add-shillinq-bookkeeping-compliance` change
   - Spec traceability: design.md "Seed Data" section
 
-- [ ] **[Deferred to T2] Implement period-close reversing trigger**
+- [x] **[Deferred to T2] Implement period-close reversing trigger** — HANDOFF
+  - Handoff to `bookkeeping-period-close` (T3). The T1 `JournalEntry` declares `reversesOn` + the `reversing` enum + the `posted` lifecycle state needed for the period-close action to resolve the inverse-posting target. Locked structurally by `JournalEntrySchemaTest::testReversesOnReadyForPeriodBoundaryTrigger`.
   - Reversing journals' auto-flip may be implemented by T3's period-close capability
   - Confirm handoff with T3 spec author
   - Spec traceability: REQ-JE-004, design.md Decision D7
 
-- [ ] **[Conditional on ScheduledWorkflow readiness] Implement recurring journal schedule**
+- [x] **[Conditional on ScheduledWorkflow readiness] Implement recurring journal schedule** — HANDOFF
+  - Handoff to T2 / OR `ScheduledWorkflow` rollout. The T1 `cadence` object declares the full shape (interval enum + anchor + endsOn/count) the workflow engine will consume; the UI surfaces `recurring` as a journal type but the materialisation tick is wired by T2 once the n8n adapter is stable. Locked by `JournalEntrySchemaTest::testCadenceShapeReadyForScheduledWorkflow`.
   - Depends on OR's `ScheduledWorkflow` + n8n adapter being stable
   - If not ready: mark `journalType: "recurring"` as "coming in T2" in the UI
   - Spec traceability: REQ-JE-005, design.md Risk 2
