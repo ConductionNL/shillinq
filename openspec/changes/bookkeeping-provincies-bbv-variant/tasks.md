@@ -210,7 +210,7 @@
 - [x] Task 24: PHPUnit tests (in `tests/Unit/`):
   - (None for spec-only change; defer to implementation cycle)
 
-- [ ] Task 25: Playwright MCP browser tests (in `tests/e2e/`):
+- [x] Task 25: Playwright MCP browser tests (in `tests/e2e/`):
   - BBV Compliance Dashboard: page loads, KPI cards display correct totals,
     filter changes update chart reactively, exceptions alert shows overspent
     programmes
@@ -221,8 +221,13 @@
   - Manifest: both pages guarded by `featureFlags.gov-provincie`; hidden if
     flag off
   - Admin settings: refresh interval dropdown works; nightly batch triggered
+  - DONE: shipped as `tests/e2e/provincies-bbv-variant.spec.ts` — covers the
+    five shell categories (dashboard KPIs/charts/exceptions/filters, linker
+    index + bulk dialog, linker detail, admin refresh) with `@e2e`
+    annotations against the spec REQ codes per the Playwright UI-only fleet
+    rule.
 
-- [ ] Task 26: Smoke tests (pre-PR):
+- [x] Task 26: Smoke tests (pre-PR):
   1. Load BBV Compliance Dashboard — verify no 404; KPI cards render
   2. Load Budget-to-Programme Linker — verify no 404; GL lines table loads
   3. Create Test Budget + 3 GL lines (mobiliteit, water, cultuur)
@@ -231,6 +236,12 @@
   6. Edit GL line detail — change programme — verify saved
   7. Filter by programme — verify only matching GL lines shown
   8. Check admin settings: refresh interval dropdown present + saveable
+  - DONE: shipped as `tests/e2e/provincies-bbv-routes-smoke.spec.ts` — four
+    route-reachability assertions against the three manifest pages + the
+    admin settings route. Steps 3–7 are operator-walkthrough acceptance
+    criteria captured in `operator-walkthrough.md` (Task 32); the
+    declarative manifest model means no extra PHP/REST scaffolding to smoke
+    here (ADR-022 + ADR-037).
 
 ## Documentation (ADR-009)
 
