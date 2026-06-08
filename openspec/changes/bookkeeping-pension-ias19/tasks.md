@@ -85,7 +85,7 @@
   alternative/derivatives, fairValue, level integer 1/2/3 per IFRS 13,
   notes); per-valuation must sum to planAssetsFairValue
 
-- [ ] Task 10: Declare the `pension-disclosure-tabel` schema in
+- [x] Task 10: Declare the `pension-disclosure-tabel` schema in
   `lib/Settings/shillinq_register.json` with REQ-PEN-007 fields (plan FK,
   valuationDate, tableContent JSON, status enum: draft/approved/published,
   approvedBy, approvedAt); auto-generate from completed pension-movement +
