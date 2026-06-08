@@ -176,8 +176,8 @@ class BBVDashboardController extends Controller
         // Server-derived default: when the client omits administrationId, fall
         // back to the active administration from the session (REQ-MA-001).
         if ($administrationId === null) {
-            $context          = $this->administrationContext->buildContext();
-            $sessionDefault   = ($context['activeAdministrationId'] ?? null);
+            $context        = $this->administrationContext->buildContext();
+            $sessionDefault = ($context['activeAdministrationId'] ?? null);
             if (is_string($sessionDefault) === true && $sessionDefault !== '') {
                 $administrationId = $sessionDefault;
             }
@@ -194,7 +194,7 @@ class BBVDashboardController extends Controller
 
         $window = $this->fiscalYearContext->resolveActiveWindow(administrationId: $administrationId);
         if ($window === null) {
-            return new JSONResponse($this->emptyEnvelope($administrationId));
+            return new JSONResponse($this->emptyEnvelope(administrationId: $administrationId));
         }
 
         $envelope          = $this->widget->buildEnvelope(
@@ -223,7 +223,7 @@ class BBVDashboardController extends Controller
      *
      * @return array<string,mixed>
      */
-    private function emptyEnvelope(?string $administrationId = null): array
+    private function emptyEnvelope(?string $administrationId=null): array
     {
         return [
             'widgets'     => [],

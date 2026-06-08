@@ -53,8 +53,6 @@ use Psr\Log\LoggerInterface;
  */
 final class BBVDashboardControllerTest extends TestCase
 {
-
-
     /**
      * Build a recording widget stub that captures the buildEnvelope args
      * and returns a deterministic envelope. The real BBVComplianceWidget
@@ -66,7 +64,7 @@ final class BBVDashboardControllerTest extends TestCase
      *
      * @return BBVComplianceWidget
      */
-    private function buildWidgetStub(?array $envelope = null): BBVComplianceWidget
+    private function buildWidgetStub(?array $envelope=null): BBVComplianceWidget
     {
         // Build a real BBVComplianceWidget with stub deps that always
         // return empty data — its buildEnvelope() will then produce an
@@ -94,11 +92,11 @@ final class BBVDashboardControllerTest extends TestCase
     /**
      * Build the controller with default-mock collaborators.
      *
-     * @param IRequest&MockObject                    $request               Request mock.
-     * @param IUserSession&MockObject                $userSession           User session mock.
-     * @param BBVComplianceWidget                    $widget                Widget instance.
+     * @param IRequest&MockObject                     $request               Request mock.
+     * @param IUserSession&MockObject                 $userSession           User session mock.
+     * @param BBVComplianceWidget                     $widget                Widget instance.
      * @param AdministrationContextService&MockObject $administrationContext Admin context mock.
-     * @param FiscalYearContextService&MockObject    $fiscalYearContext     Fiscal year context mock.
+     * @param FiscalYearContextService&MockObject     $fiscalYearContext     Fiscal year context mock.
      *
      * @return BBVDashboardController
      */
@@ -145,9 +143,9 @@ final class BBVDashboardControllerTest extends TestCase
      */
     public function testAnonymousIsRejected(): void
     {
-        $request               = $this->createMock(IRequest::class);
-        $userSession           = $this->createMock(IUserSession::class);
-        $widget                = $this->buildWidgetStub();
+        $request     = $this->createMock(IRequest::class);
+        $userSession = $this->createMock(IUserSession::class);
+        $widget      = $this->buildWidgetStub();
         $administrationContext = $this->createMock(AdministrationContextService::class);
         $fiscalYearContext     = $this->createMock(FiscalYearContextService::class);
 
@@ -173,9 +171,9 @@ final class BBVDashboardControllerTest extends TestCase
      */
     public function testServerDerivesAdministrationFromSession(): void
     {
-        $request               = $this->createMock(IRequest::class);
-        $userSession           = $this->createMock(IUserSession::class);
-        $widget                = $this->buildWidgetStub();
+        $request     = $this->createMock(IRequest::class);
+        $userSession = $this->createMock(IUserSession::class);
+        $widget      = $this->buildWidgetStub();
         $administrationContext = $this->createMock(AdministrationContextService::class);
         $fiscalYearContext     = $this->createMock(FiscalYearContextService::class);
 
@@ -226,9 +224,9 @@ final class BBVDashboardControllerTest extends TestCase
      */
     public function testCrossTenantRequestReturnsEmptyEnvelope(): void
     {
-        $request               = $this->createMock(IRequest::class);
-        $userSession           = $this->createMock(IUserSession::class);
-        $widget                = $this->buildWidgetStub();
+        $request     = $this->createMock(IRequest::class);
+        $userSession = $this->createMock(IUserSession::class);
+        $widget      = $this->buildWidgetStub();
         $administrationContext = $this->createMock(AdministrationContextService::class);
         $fiscalYearContext     = $this->createMock(FiscalYearContextService::class);
 
@@ -266,9 +264,9 @@ final class BBVDashboardControllerTest extends TestCase
      */
     public function testNoAccessibleAdministrationReturnsEmptyEnvelope(): void
     {
-        $request               = $this->createMock(IRequest::class);
-        $userSession           = $this->createMock(IUserSession::class);
-        $widget                = $this->buildWidgetStub();
+        $request     = $this->createMock(IRequest::class);
+        $userSession = $this->createMock(IUserSession::class);
+        $widget      = $this->buildWidgetStub();
         $administrationContext = $this->createMock(AdministrationContextService::class);
         $fiscalYearContext     = $this->createMock(FiscalYearContextService::class);
 

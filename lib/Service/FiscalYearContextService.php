@@ -106,7 +106,7 @@ class FiscalYearContextService
      */
     public function resolveActiveWindow(
         string $administrationId,
-        ?DateTimeInterface $now = null
+        ?DateTimeInterface $now=null
     ): ?array {
         if ($administrationId === '') {
             return null;
@@ -142,7 +142,7 @@ class FiscalYearContextService
      *
      * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-09-fiscal-audit/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-bbv-queries-and-views-shall-be-scoped-to-the-active-fiscal-year
      */
-    public function resolveDefaultWindow(?DateTimeInterface $now = null): ?array
+    public function resolveDefaultWindow(?DateTimeInterface $now=null): ?array
     {
         $context = $this->administrationContext->buildContext();
         $active  = $context['activeAdministrationId'] ?? null;
@@ -170,9 +170,9 @@ class FiscalYearContextService
      *
      * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-09-fiscal-audit/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-bbv-queries-and-views-shall-be-scoped-to-the-active-fiscal-year
      */
-    public function fiscalYearFor(array $administration, ?DateTimeInterface $now = null): int
+    public function fiscalYearFor(array $administration, ?DateTimeInterface $now=null): int
     {
-        $reference = ($now ?? new DateTimeImmutable('now', new DateTimeZone('UTC')));
+        $reference  = ($now ?? new DateTimeImmutable('now', new DateTimeZone('UTC')));
         $startMonth = $this->coerceMonth(value: ($administration['fiscalYearStartMonth'] ?? 1));
         $startDay   = $this->coerceDay(value: ($administration['fiscalYearStartDay'] ?? 1));
 
@@ -191,6 +191,8 @@ class FiscalYearContextService
      * @param int                 $fiscalYear     FY integer (end calendar year for non-calendar boekjaren).
      *
      * @return array{fiscalYear:int,startDate:string,endDate:string}
+     *
+     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-09-fiscal-audit/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-bbv-queries-and-views-shall-be-scoped-to-the-active-fiscal-year
      */
     public function windowForFiscalYear(array $administration, int $fiscalYear): array
     {
@@ -219,9 +221,9 @@ class FiscalYearContextService
     /**
      * Build the active window dictionary for an administration.
      *
-     * @param string            $administrationId Administration id.
-     * @param array<string,mixed> $administration  Administration record.
-     * @param DateTimeInterface $reference        Reference instant.
+     * @param string              $administrationId Administration id.
+     * @param array<string,mixed> $administration   Administration record.
+     * @param DateTimeInterface   $reference        Reference instant.
      *
      * @return array{fiscalYear:int,startDate:string,endDate:string,administrationId:string}
      */
@@ -307,7 +309,7 @@ class FiscalYearContextService
                 ]
             );
             return null;
-        }
+        }//end try
 
         foreach ($matches as $match) {
             if (is_array($match) === true) {
@@ -315,10 +317,8 @@ class FiscalYearContextService
             }
 
             if (is_object($match) === true && method_exists($match, 'getObject') === true) {
-                /** @var mixed $payload */
                 $payload = $match->getObject();
                 if (is_array($payload) === true) {
-                    /** @var array<string,mixed> $payload */
                     return $payload;
                 }
             }

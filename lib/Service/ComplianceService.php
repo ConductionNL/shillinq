@@ -133,7 +133,7 @@ final class ComplianceService
      *
      * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-09-fiscal-audit/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-bbv-queries-and-views-shall-be-scoped-to-the-active-fiscal-year
      */
-    public function computeComplianceStatus(array|string $programme, ?int $fiscalYear = null): array
+    public function computeComplianceStatus(array|string $programme, ?int $fiscalYear=null): array
     {
         $programmeCode = $this->resolveProgrammeCode(programme: $programme);
         if ($programmeCode === '') {
@@ -148,15 +148,11 @@ final class ComplianceService
         // caller that knows the active FY and passes it explicitly.
         $scopeYear = $fiscalYear;
         $cacheKey  = $this->buildCacheKey(programmeCode: $programmeCode, fiscalYear: $scopeYear);
-        $cache    = $this->getCache();
+        $cache     = $this->getCache();
 
         if ($cache !== null) {
             $cached = $cache->get($cacheKey);
             if (is_array($cached) === true && isset($cached['status']) === true) {
-                /*
-                 * @var array{utilization: float, status: string, budget: int, ytdSpend: int, programmeCode: string} $cached
-                 */
-
                 return $cached;
             }
         }
@@ -221,7 +217,7 @@ final class ComplianceService
      *
      * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-09-fiscal-audit/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-bbv-queries-and-views-shall-be-scoped-to-the-active-fiscal-year
      */
-    public function invalidate(string $programmeCode, ?int $fiscalYear = null): void
+    public function invalidate(string $programmeCode, ?int $fiscalYear=null): void
     {
         $cache = $this->getCache();
         if ($cache === null || $programmeCode === '') {
@@ -248,7 +244,7 @@ final class ComplianceService
                     'exception'     => $e->getMessage(),
                 ]
             );
-        }
+        }//end try
 
     }//end invalidate()
 
@@ -318,7 +314,7 @@ final class ComplianceService
      *
      * @return array<string,mixed>|null Record or null when unavailable.
      */
-    private function loadProgrammeRecord(string $programmeCode, ?int $fiscalYear = null): ?array
+    private function loadProgrammeRecord(string $programmeCode, ?int $fiscalYear=null): ?array
     {
         if ($this->settings->isOpenRegisterAvailable() === false) {
             return null;
@@ -388,9 +384,7 @@ final class ComplianceService
             $utilization = (float) $utilization;
         } else if ($budget > 0) {
             $utilization = ((float) $ytdSpend / (float) $budget);
-        }
-
-        if (is_float($utilization) === false) {
+        } else {
             $utilization = 0.0;
         }
 
@@ -475,7 +469,7 @@ final class ComplianceService
      *
      * @return string Stable cache key.
      */
-    private function buildCacheKey(string $programmeCode, ?int $fiscalYear = null): string
+    private function buildCacheKey(string $programmeCode, ?int $fiscalYear=null): string
     {
         $key = (self::CACHE_NAMESPACE.':'.$programmeCode);
         if ($fiscalYear !== null) {

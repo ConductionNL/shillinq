@@ -75,8 +75,8 @@ final class FiscalYearContextServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->container             = $this->createMock(ContainerInterface::class);
-        $this->appConfig             = $this->createMock(IAppConfig::class);
+        $this->container = $this->createMock(ContainerInterface::class);
+        $this->appConfig = $this->createMock(IAppConfig::class);
         $this->administrationContext = $this->createMock(AdministrationContextService::class);
         $this->appConfig->method('getValueString')->willReturn('shillinq');
 
@@ -143,7 +143,7 @@ final class FiscalYearContextServiceTest extends TestCase
             }//end setSchema()
 
             /**
-             * findAll on Administration with simple equality filters.
+             * FindAll on Administration with simple equality filters.
              *
              * @param array<string,mixed> $params Query parameters.
              *
@@ -199,7 +199,7 @@ final class FiscalYearContextServiceTest extends TestCase
     {
         $this->administrationContext->method('canAccess')->willReturn(true);
 
-        $admins = [
+        $admins  = [
             [
                 'id'                   => 'adm-werk-001',
                 'fiscalYearStartMonth' => 1,
@@ -231,7 +231,7 @@ final class FiscalYearContextServiceTest extends TestCase
     {
         $this->administrationContext->method('canAccess')->willReturn(true);
 
-        $admins = [
+        $admins  = [
             [
                 'id'                   => 'adm-waterschap-1',
                 'fiscalYearStartMonth' => 7,
@@ -272,7 +272,7 @@ final class FiscalYearContextServiceTest extends TestCase
     {
         $this->administrationContext->method('canAccess')->willReturn(false);
 
-        $admins = [
+        $admins  = [
             [
                 'id'                   => 'adm-werk-001',
                 'fiscalYearStartMonth' => 1,
@@ -314,7 +314,7 @@ final class FiscalYearContextServiceTest extends TestCase
     }//end testEmptyAdministrationIdIsRejected()
 
     /**
-     * resolveDefaultWindow falls back to the session's active admin.
+     * ResolveDefaultWindow falls back to the session's active admin.
      *
      * @return void
      */
@@ -329,7 +329,7 @@ final class FiscalYearContextServiceTest extends TestCase
         );
         $this->administrationContext->method('canAccess')->willReturn(true);
 
-        $admins = [
+        $admins  = [
             [
                 'id'                   => 'adm-waterschap-1',
                 'fiscalYearStartMonth' => 1,
@@ -348,7 +348,7 @@ final class FiscalYearContextServiceTest extends TestCase
     }//end testResolveDefaultWindowFollowsSessionContext()
 
     /**
-     * resolveDefaultWindow returns null when the session has no active admin.
+     * ResolveDefaultWindow returns null when the session has no active admin.
      *
      * @return void
      */

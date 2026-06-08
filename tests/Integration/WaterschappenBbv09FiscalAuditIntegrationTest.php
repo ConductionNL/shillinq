@@ -266,12 +266,11 @@ final class WaterschappenBbv09FiscalAuditIntegrationTest extends TestCase
 
             // OR opt-outs would surface as one of these toggles; their
             // presence with a falsey value is forbidden by REQ-BBVW-007.
-            foreach (
-                [
-                    'x-openregister-audit',
-                    'x-openregister-audit-trail',
-                    'x-openregister-immutable-audit',
-                ] as $optOutKey
+            foreach ([
+                'x-openregister-audit',
+                'x-openregister-audit-trail',
+                'x-openregister-immutable-audit',
+            ] as $optOutKey
             ) {
                 if (array_key_exists($optOutKey, $schema) === false) {
                     continue;
