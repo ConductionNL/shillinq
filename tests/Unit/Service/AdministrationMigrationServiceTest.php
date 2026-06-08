@@ -203,7 +203,7 @@ final class AdministrationMigrationServiceTest extends TestCase
     }//end testBuildDestinationJournalDraftFiscalTreatment()
 
     /**
-     * buildJournalDrafts groups both sides — controller persists atomically.
+     * buildJournalDrafts groups both sides and flags the lock based on status.
      *
      * @return void
      */
@@ -216,6 +216,7 @@ final class AdministrationMigrationServiceTest extends TestCase
             'bookValueTransferred'        => 50.0,
             'marketValueTransferred'      => 75.0,
             'date'                        => '2026-09-01',
+            'status'                      => 'voorbereid',
         ];
 
         $drafts = $this->service->buildJournalDrafts(migration: $migration);
@@ -223,6 +224,15 @@ final class AdministrationMigrationServiceTest extends TestCase
         self::assertArrayHasKey('destination', $drafts);
         self::assertSame('adm-werk-001', $drafts['source']['administrationId']);
         self::assertSame('adm-werk-002', $drafts['destination']['administrationId']);
+        self::assertFalse($drafts['source']['locked']);
+        self::assertFalse($drafts['destination']['locked']);
+
+        // Lock once the migration moves into a terminal state.
+        $locked = $this->service->buildJournalDrafts(
+            migration: ($migration + ['status' => 'geboekt_beide'])
+        );
+        self::assertTrue($locked['source']['locked']);
+        self::assertTrue($locked['destination']['locked']);
 
     }//end testBuildJournalDraftsBothSides()
 

@@ -270,6 +270,11 @@ class AdministrationMigrationService
      * DB transaction so the migration is either fully drafted on both
      * sides or fully rejected. No partial state ever lands in OR.
      *
+     * The build also enforces the editable-lock — a migration in
+     * `geboekt_beide` or `teruggedraaid` rejects any redraft attempt by
+     * marking both drafts `locked=true`, so the controller can refuse the
+     * write without consulting the service twice.
+     *
      * @param array<string,mixed> $migration The AdministrationMigration record.
      *
      * @return array{source:array<string,mixed>,destination:array<string,mixed>}
@@ -278,9 +283,18 @@ class AdministrationMigrationService
      */
     public function buildJournalDrafts(array $migration): array
     {
+        $status = (string) ($migration['status'] ?? 'voorbereid');
+        $locked = ($this->isEditable(status: $status) === false);
+
+        $source      = $this->buildSourceJournalDraft(migration: $migration);
+        $destination = $this->buildDestinationJournalDraft(migration: $migration);
+
+        $source['locked']      = $locked;
+        $destination['locked'] = $locked;
+
         return [
-            'source'      => $this->buildSourceJournalDraft(migration: $migration),
-            'destination' => $this->buildDestinationJournalDraft(migration: $migration),
+            'source'      => $source,
+            'destination' => $destination,
         ];
 
     }//end buildJournalDrafts()
