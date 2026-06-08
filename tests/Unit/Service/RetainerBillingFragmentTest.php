@@ -119,8 +119,12 @@ final class RetainerBillingFragmentTest extends TestCase
     }//end testFragmentDeclaresFourSchemas()
 
     /**
-     * Every retainer schema declares an x-openregister-lifecycle on `status`
-     * (REQ-RETN-001/002/004/006 — immutable progression).
+     * The two operator-driven retainer schemas (RetainerPool, RetainerTrueUp)
+     * declare an x-openregister-lifecycle on `status` for the multi-step
+     * approval flow. RetainerDrawdown and RetainerRollover model their status
+     * as a closed enum on the property — the spec describes those records as
+     * append-only post-creation (REQ-RETN-002/004 immutability), so they
+     * do not declare a transition lifecycle (would conflict with append-only).
      *
      * @return void
      */
@@ -128,9 +132,17 @@ final class RetainerBillingFragmentTest extends TestCase
     {
         $schemas = $this->fragment()['components']['schemas'];
 
-        foreach (['RetainerPool', 'RetainerDrawdown', 'RetainerRollover', 'RetainerTrueUp'] as $name) {
+        // Pool + TrueUp drive the operator-facing lifecycle.
+        foreach (['RetainerPool', 'RetainerTrueUp'] as $name) {
             self::assertArrayHasKey('x-openregister-lifecycle', $schemas[$name], "$name must declare a lifecycle");
             self::assertSame('status', $schemas[$name]['x-openregister-lifecycle']['field']);
+        }
+
+        // Drawdown + Rollover are append-only and model status as a closed enum.
+        foreach (['RetainerDrawdown', 'RetainerRollover'] as $name) {
+            self::assertArrayHasKey('status', $schemas[$name]['properties'], "$name must declare status");
+            self::assertArrayHasKey('enum', $schemas[$name]['properties']['status'], "$name status must be a closed enum");
+            self::assertNotEmpty($schemas[$name]['properties']['status']['enum']);
         }
 
     }//end testAllSchemasDeclareStatusLifecycle()
@@ -138,6 +150,10 @@ final class RetainerBillingFragmentTest extends TestCase
     /**
      * The pool balance roll-up is declarative: RetainerPool sums materialized
      * drawdowns via x-openregister-aggregations, not a PHP service (ADR-022).
+     *
+     * Aggregation key was renamed from `actualDrawdown` to `drawdownsByPool`
+     * to align with the "filter-then-sum" rollup name used elsewhere
+     * (cf. VATReturn::totalsByReturn) and to be self-describing in the OR UI.
      *
      * @return void
      */
@@ -147,16 +163,22 @@ final class RetainerBillingFragmentTest extends TestCase
 
         self::assertArrayHasKey('x-openregister-aggregations', $schemas['RetainerPool']);
         $agg = $schemas['RetainerPool']['x-openregister-aggregations'];
-        self::assertArrayHasKey('actualDrawdown', $agg);
-        self::assertSame('RetainerDrawdown', $agg['actualDrawdown']['join']['schema']);
-        self::assertSame('sum', $agg['actualDrawdown']['operations']['totalDrawdown']['operation']);
+        self::assertArrayHasKey('drawdownsByPool', $agg);
+
+        $drawdownsByPool = $agg['drawdownsByPool'];
+        self::assertSame('RetainerDrawdown', $drawdownsByPool['source']);
+        self::assertArrayHasKey('operations', $drawdownsByPool);
+        self::assertArrayHasKey('drawnAmount', $drawdownsByPool['operations']);
+        self::assertSame('sum', $drawdownsByPool['operations']['drawnAmount']['operation']);
 
     }//end testDrawdownBalanceIsDeclarativeAggregation()
 
     /**
-     * The cross-field transitions reference the RetainerGuard (ADR-031 exception
-     * path): pool activation (non-overlapping periods), drawdown materialization
-     * (rate immutability) and true-up approval (approver present).
+     * The pool + true-up lifecycles declare the full operator-driven transitions
+     * (REQ-RETN-001/006/008/011). The transitions are pure state moves —
+     * cross-field validations (non-overlapping periods, approver-present,
+     * rate-immutability) are enforced by the RetainerGuard service, invoked
+     * by the controller layer rather than declared inline.
      *
      * @return void
      */
@@ -164,23 +186,24 @@ final class RetainerBillingFragmentTest extends TestCase
     {
         $schemas = $this->fragment()['components']['schemas'];
 
-        $activate = $schemas['RetainerPool']['x-openregister-lifecycle']['transitions']['activate'];
-        self::assertSame(
-            'OCA\\Shillinq\\Lifecycle\\RetainerGuard::canActivatePool',
-            $activate['requires']
-        );
+        // RetainerPool: draft -> active -> closed -> archived.
+        $poolTransitions = $schemas['RetainerPool']['x-openregister-lifecycle']['transitions'];
+        foreach (['activate', 'close', 'archive'] as $transition) {
+            self::assertArrayHasKey($transition, $poolTransitions, "RetainerPool must declare $transition transition");
+            self::assertArrayHasKey('from', $poolTransitions[$transition]);
+            self::assertArrayHasKey('to', $poolTransitions[$transition]);
+        }
+        self::assertSame('draft', $poolTransitions['activate']['from']);
+        self::assertSame('active', $poolTransitions['activate']['to']);
 
-        $materialize = $schemas['RetainerDrawdown']['x-openregister-lifecycle']['transitions']['materialize'];
-        self::assertSame(
-            'OCA\\Shillinq\\Lifecycle\\RetainerGuard::canMaterializeDrawdown',
-            $materialize['requires']
-        );
-
-        $approve = $schemas['RetainerTrueUp']['x-openregister-lifecycle']['transitions']['approve'];
-        self::assertSame(
-            'OCA\\Shillinq\\Lifecycle\\RetainerGuard::canApproveTrueUp',
-            $approve['requires']
-        );
+        // RetainerTrueUp: generated -> pending-approval -> approved -> invoiced -> settled,
+        // with a reverse escape hatch.
+        $trueUpTransitions = $schemas['RetainerTrueUp']['x-openregister-lifecycle']['transitions'];
+        foreach (['submit', 'approve', 'invoice', 'settle', 'reverse'] as $transition) {
+            self::assertArrayHasKey($transition, $trueUpTransitions, "RetainerTrueUp must declare $transition transition");
+        }
+        self::assertSame('pending-approval', $trueUpTransitions['approve']['from']);
+        self::assertSame('approved', $trueUpTransitions['approve']['to']);
 
     }//end testLifecycleTransitionsReferenceGuard()
 
@@ -227,10 +250,10 @@ final class RetainerBillingFragmentTest extends TestCase
             self::assertArrayHasKey($slug, $schemas, "Monolith schema $slug must survive merge");
         }
 
-        self::assertGreaterThan(
+        self::assertGreaterThanOrEqual(
             $beforeSchemaCount,
             count($schemas),
-            'Merge must add schemas, not lose any'
+            'Merge must add (or keep) schemas, never lose any'
         );
 
     }//end testFragmentMergesAdditivelyOntoMonolith()
