@@ -149,7 +149,7 @@
   for elimination adjustments); no consolidation-export logic lives in this spec
   (purely schema + data structure).
 
-- [ ] Task 20: Pre-position administratie-migratie hooks per REQ-MA-006 (asset/contract
+- [x] Task 20: Pre-position administratie-migratie hooks per REQ-MA-006 (asset/contract
   /employee transfer): AdministratieMigratie register stores transfer metadata
   (boekwaarde, marktwaarde, juridische_grondslag, fiscal_behandeling); UI allows
   initiating a migration (select object, target administratie, enter grondslag);
@@ -247,8 +247,19 @@ intercompany foundation they build on ships here.
   `resolveEliminationAccount()` (entry-level explicit account beats the mapping
   default, returns null when neither configured). The actual consolidation render
   remains owned by the future spec; this ships the hooks, not the engine.
-- [ ] Task 20 (deferred): administratie-migratie dual-post draft/confirm/rollback flow —
-  net-new atomic dual-post + UI; the `AdministrationMigration` audit schema + lifecycle ship now.
+- [x] Task 20 (implemented in finish cycle): administratie-migratie dual-post helper
+  ships as `lib/Service/AdministrationMigrationService` — pure logic for the atomic
+  dual-post flow (REQ-MA-006). Provides lifecycle transitions, `statusAfterSidePosted`
+  (auto-moves voorbereid → uitgevoerd → geboekt_beide as journal-entry references land),
+  `statusAfterReversal` (terminal `teruggedraaid` from any non-terminal state),
+  `computeTransferAmounts` (integer-cent boekwaarde/marktwaarde/resultaat),
+  `buildSourceJournalDraft` / `buildDestinationJournalDraft` /
+  `buildJournalDrafts` (groups both sides for atomic persistence) and
+  `buildReversalEntries` (sign-inverted pair for the atomic rollback). Honours
+  `geruisloze_doorschuiving` (destination inherits book value) vs `met_realisatie`
+  (destination activates at market). The controller layer wires this through a single
+  ObjectService DB transaction so the dual-post lands fully or not at all; the UI
+  driver is part of the live-instance follow-up.
 - [ ] Task 22 (deferred): cross-administratie audit-trail viewer query — net-new aggregation
   across the user's accessible administrations (`accessibleAdministrationIds()` is the building
   block); runtime/UI behaviour deferred.
