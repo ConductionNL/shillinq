@@ -26,7 +26,11 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
+<<<<<<< HEAD
     <version>0.7.3</version>
+=======
+    <version>0.7.1</version>
+>>>>>>> feature/wbso-sno-r5/bookkeeping-wbso-sno-administratie
     <licence>agpl</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
@@ -116,11 +120,19 @@ Vrij en open source onder de EUPL-1.2-licentie.
              cross-tenant data ever lives in a single backup payload
              (REQ-MA-001 carried into REQ-MA-007). -->
         <job>OCA\Shillinq\BackgroundJob\AdministrationBackupSchedulerJob</job>
+<<<<<<< HEAD
         <!-- bookkeeping-emu-reporting REQ-EMU-001: daily-tick job that
              produces the kwartaal-EMU conceptaangifte 5..7 working days
              after a quarter-end (day-7 fallback per Task 9). Pipeline
              orchestration is delegated to EmuReportingService; the job
              only owns the scheduling window. -->
         <job>OCA\Shillinq\BackgroundJob\EmuQuarterlyDraftJob</job>
+=======
+        <!-- bookkeeping-wbso-sno-administratie REQ-WBSO-009: nightly sweep
+             that archives Document records past the seven-year Archiefwet
+             retention boundary. Fail-soft per record; idempotent via the
+             schema's filed → archived lifecycle gate. -->
+        <job>OCA\Shillinq\Cron\DocumentArchiveCron</job>
+>>>>>>> feature/wbso-sno-r5/bookkeeping-wbso-sno-administratie
     </background-jobs>
 </info>

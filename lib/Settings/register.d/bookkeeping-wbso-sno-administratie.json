@@ -1,0 +1,619 @@
+{
+	"components": {
+		"schemas": {
+			"Account": {
+				"slug": "Account",
+				"icon": "BankOutline",
+				"version": "0.2.0",
+				"title": "Account",
+				"description": "Chart-of-accounts entry conforming to the Dutch RGS (Referentie Grootboek Schema) standard (REQ-WBSO-001). Master data; queried by every Transaction and report. Hierarchy is capped at five levels and circular references are forbidden by schema constraint.",
+				"x-schema-org": "schema:Thing",
+				"x-spec": "openspec/changes/bookkeeping-wbso-sno-administratie/specs/bookkeeping-financial-administration/spec.md#req-wbso-001",
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "Account changes (renames, status flips, parent-account relocations) MUST be audit-trail-immutable per REQ-WBSO-004 / ADR-022 — every change influences downstream GL reporting and tax aggregations."
+				},
+				"x-openregister-constraint": {
+					"hierarchyDepthMax": 5,
+					"hierarchyParentField": "parentAccountNumber",
+					"hierarchyKeyField": "accountNumber",
+					"hierarchyScopeField": "administrationId",
+					"description": "Enforces REQ-WBSO-001 — chart-of-accounts depth is capped at five levels per administration; circular references are detected by the same walker."
+				},
+				"x-openregister-relations": {
+					"parent": {
+						"localField": "parentAccountNumber",
+						"relatedSchema": "Account",
+						"relatedField": "accountNumber",
+						"cardinality": "many-to-one",
+						"scopeField": "administrationId",
+						"requireRelatedStatus": "active",
+						"description": "FK to the parent account (REQ-WBSO-001); the parent MUST live in the same administration and be in `status=active`."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						},
+						"administrator": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						}
+					}
+				},
+				"type": "object",
+				"required": [
+					"accountNumber",
+					"name",
+					"accountType",
+					"status",
+					"currency",
+					"administrationId"
+				],
+				"properties": {
+					"accountNumber": {
+						"type": "string",
+						"description": "RGS-style code (REQ-WBSO-001). Unique per administration.",
+						"example": "1000"
+					},
+					"name": {
+						"type": "string",
+						"description": "Human-readable account name.",
+						"example": "Kas en bank"
+					},
+					"accountType": {
+						"type": "string",
+						"enum": [
+							"assets",
+							"liabilities",
+							"equity",
+							"revenue",
+							"expenses"
+						],
+						"description": "Semantic category per the Dutch Accounting Standard (REQ-WBSO-001)."
+					},
+					"parentAccountNumber": {
+						"type": "string",
+						"description": "FK to the parent Account.accountNumber in the same administration; null when the account is a root (REQ-WBSO-001).",
+						"nullable": true,
+						"example": "1"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"active",
+							"blocked",
+							"archived"
+						],
+						"default": "active",
+						"description": "Operational status (REQ-WBSO-001). Only `active` accounts can serve as parents."
+					},
+					"currency": {
+						"type": "string",
+						"enum": [
+							"EUR"
+						],
+						"default": "EUR",
+						"description": "ISO 4217 currency code. Phase 1 is EUR-only (REQ-WBSO-001)."
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration entity (REQ-WBSO-001)."
+					},
+					"description": {
+						"type": "string",
+						"description": "Free-text notes on the account purpose.",
+						"nullable": true
+					},
+					"vatApplicable": {
+						"type": "boolean",
+						"default": false,
+						"description": "Whether VAT applies to transactions on this account."
+					}
+				}
+			},
+			"Transaction": {
+				"slug": "Transaction",
+				"icon": "ReceiptTextOutline",
+				"version": "0.1.0",
+				"title": "Transaction",
+				"description": "Financial event (invoice, receipt, journal-entry, credit-note, debit-note) recorded by a bookkeeper (REQ-WBSO-002). State machine: `draft → posted → (terminal)` and `draft → reversed`. Posted transactions are immutable; reversals are recorded as new transactions linked through the audit trail (REQ-WBSO-008).",
+				"x-schema-org": "schema:AccountingTransaction",
+				"x-spec": "openspec/changes/bookkeeping-wbso-sno-administratie/specs/bookkeeping-financial-administration/spec.md#req-wbso-002",
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "Transaction changes MUST be audit-trail-immutable per REQ-WBSO-004 / ADR-022. Posted records carry the booked state of the books; mutating them would violate the audit trail."
+				},
+				"x-openregister-lifecycle": {
+					"stateField": "status",
+					"initial": "draft",
+					"states": {
+						"draft": {
+							"label": "Draft",
+							"description": "Entered but not yet posted; can be edited and deleted by bookkeepers (REQ-WBSO-002 / REQ-WBSO-008)."
+						},
+						"posted": {
+							"label": "Posted",
+							"description": "Recorded against the GL — immutable (REQ-WBSO-008)."
+						},
+						"reversed": {
+							"label": "Reversed",
+							"description": "Counter-entry created by an administrator. Both the original and this reversal remain in the audit trail (REQ-WBSO-008)."
+						}
+					},
+					"transitions": {
+						"post": {
+							"from": "draft",
+							"to": "posted",
+							"label": "Post transaction",
+							"description": "Validate and post the transaction. GL posting is deferred to tier-2 `bookkeeping-general-ledger` (REQ-WBSO-008).",
+							"requires": "OCA\\Shillinq\\Lifecycle\\WbsoTransactionGuard::canPost"
+						},
+						"reverse": {
+							"from": "posted",
+							"to": "reversed",
+							"label": "Reverse transaction",
+							"description": "Reverse a posted transaction. Requires an approval-workflow gate (administrator or auditor approval — REQ-WBSO-008 / ADR-022).",
+							"requires": "OCA\\Shillinq\\Lifecycle\\WbsoTransactionGuard::canReverse",
+							"approvalWorkflow": "transaction-reversal"
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"administration": {
+						"localField": "administrationId",
+						"relatedSchema": "Administration",
+						"relatedField": "administrationNumber",
+						"cardinality": "many-to-one",
+						"description": "FK to the Administration entity (REQ-WBSO-002 / ADR-022)."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							],
+							"writeStateScope": [
+								"draft"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						},
+						"administrator": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"reverse"
+							]
+						}
+					}
+				},
+				"type": "object",
+				"required": [
+					"transactionNumber",
+					"transactionType",
+					"transactionDate",
+					"amount",
+					"description",
+					"status",
+					"administrationId"
+				],
+				"properties": {
+					"transactionNumber": {
+						"type": "string",
+						"description": "Unique transaction identifier (e.g. INV-2026-001). Unique per administration.",
+						"example": "INV-2026-001"
+					},
+					"transactionType": {
+						"type": "string",
+						"enum": [
+							"invoice",
+							"receipt",
+							"journal-entry",
+							"credit-note",
+							"debit-note"
+						],
+						"description": "Operational classification (REQ-WBSO-002)."
+					},
+					"transactionDate": {
+						"type": "string",
+						"format": "date",
+						"description": "ISO-8601 date the transaction occurred — MUST fall in the active fiscal year.",
+						"example": "2026-01-15"
+					},
+					"amount": {
+						"type": "number",
+						"minimum": 0,
+						"multipleOf": 0.01,
+						"description": "Amount in EUR (REQ-WBSO-002). Reversals carry a negative-mirroring sibling record per REQ-WBSO-008 — the originating row's amount is always non-negative.",
+						"example": 1500.00
+					},
+					"description": {
+						"type": "string",
+						"description": "Human-readable description of the transaction.",
+						"example": "Invoice from supplier ABC"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"draft",
+							"posted",
+							"reversed"
+						],
+						"default": "draft",
+						"description": "Lifecycle state (REQ-WBSO-002 / REQ-WBSO-008)."
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration entity (REQ-WBSO-002)."
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Timestamp of creation. Set by the server.",
+						"readOnly": true
+					},
+					"createdBy": {
+						"type": "string",
+						"description": "Nextcloud user id of the creator. Set by the server.",
+						"readOnly": true
+					},
+					"reversalOfTransactionId": {
+						"type": "string",
+						"description": "When `status=reversed`, the id of the original posted transaction this row reverses (REQ-WBSO-008).",
+						"nullable": true
+					},
+					"reversalReason": {
+						"type": "string",
+						"description": "Free-text reason captured by the administrator at reverse-time (REQ-WBSO-008).",
+						"nullable": true
+					}
+				}
+			},
+			"Document": {
+				"slug": "Document",
+				"icon": "FileDocumentOutline",
+				"version": "0.1.0",
+				"title": "Document",
+				"description": "Bookkeeping document metadata (invoice PDF, receipt scan, contract, tax form, bank statement, memo) (REQ-WBSO-003). Files live in docudesk; this record stores the metadata and lifecycle (draft → filed → archived per REQ-WBSO-007 / REQ-WBSO-009).",
+				"x-schema-org": "schema:DigitalDocument",
+				"x-spec": "openspec/changes/bookkeeping-wbso-sno-administratie/specs/bookkeeping-financial-administration/spec.md#req-wbso-003",
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "Document lifecycle transitions MUST be audit-trail-immutable per REQ-WBSO-004 / ADR-022. Archived documents MUST remain in the audit trail even when the file is purged from docudesk (REQ-WBSO-009)."
+				},
+				"x-openregister-lifecycle": {
+					"stateField": "status",
+					"initial": "draft",
+					"states": {
+						"draft": {
+							"label": "Draft",
+							"description": "Created but not yet filed. May be edited and deleted by the owner (REQ-WBSO-003)."
+						},
+						"filed": {
+							"label": "Filed",
+							"description": "Approved and locked. Counts toward statutory retention (REQ-WBSO-007)."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Past the seven-year retention window. The file MAY be purged from docudesk; the metadata row remains for audit (REQ-WBSO-009)."
+						}
+					},
+					"transitions": {
+						"file": {
+							"from": "draft",
+							"to": "filed",
+							"label": "File document",
+							"description": "File a draft document for compliance. Requires `fileReference` to be set and a bookkeeping-approver to approve the transition (REQ-WBSO-007 / ADR-022).",
+							"requires": "OCA\\Shillinq\\Lifecycle\\WbsoDocumentGuard::canFile",
+							"approvalWorkflow": "document-filing"
+						},
+						"archive": {
+							"from": "filed",
+							"to": "archived",
+							"label": "Archive document",
+							"description": "Archive a filed document past the seven-year retention boundary. Requires an auditor or compliance-officer approval (REQ-WBSO-009 / ADR-022).",
+							"requires": "OCA\\Shillinq\\Lifecycle\\WbsoDocumentGuard::canArchive",
+							"approvalWorkflow": "document-archival",
+							"timeBased": {
+								"from": "filedAt",
+								"durationDays": 2557
+							}
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"administration": {
+						"localField": "administrationId",
+						"relatedSchema": "Administration",
+						"relatedField": "administrationNumber",
+						"cardinality": "many-to-one",
+						"description": "FK to the Administration entity."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							],
+							"writeStateScope": [
+								"draft"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read",
+								"archive"
+							]
+						},
+						"administrator": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"file",
+								"archive"
+							]
+						}
+					}
+				},
+				"type": "object",
+				"required": [
+					"documentType",
+					"documentNumber",
+					"documentDate",
+					"status",
+					"administrationId"
+				],
+				"properties": {
+					"documentType": {
+						"type": "string",
+						"enum": [
+							"invoice",
+							"receipt",
+							"contract",
+							"tax-form",
+							"bank-statement",
+							"memo"
+						],
+						"description": "Document classification (REQ-WBSO-003)."
+					},
+					"documentNumber": {
+						"type": "string",
+						"description": "Unique document identifier per administration.",
+						"example": "DOC-INV-2026-001"
+					},
+					"documentDate": {
+						"type": "string",
+						"format": "date",
+						"description": "ISO-8601 date the document was issued or created.",
+						"example": "2026-01-15"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"draft",
+							"filed",
+							"archived"
+						],
+						"default": "draft",
+						"description": "Lifecycle state (REQ-WBSO-007 / REQ-WBSO-009)."
+					},
+					"fileReference": {
+						"type": "string",
+						"description": "URI pointing to the file in docudesk storage (e.g. `docudesk://invoices/inv-2026-001.pdf`). Required to transition draft → filed (REQ-WBSO-007).",
+						"nullable": true,
+						"example": "docudesk://invoices/inv-2026-001.pdf"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration entity."
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Timestamp of creation. Set by the server.",
+						"readOnly": true
+					},
+					"createdBy": {
+						"type": "string",
+						"description": "Nextcloud user id of the creator. Set by the server.",
+						"readOnly": true
+					},
+					"filedAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Timestamp when the document transitioned to `filed`. Set by the server on the `file` transition (REQ-WBSO-007).",
+						"nullable": true,
+						"readOnly": true
+					},
+					"archivedAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Timestamp when the document transitioned to `archived`. Set by the server on the `archive` transition (REQ-WBSO-009).",
+						"nullable": true,
+						"readOnly": true
+					},
+					"archivalReason": {
+						"type": "string",
+						"description": "Free-text reason captured by the auditor at archive-time (REQ-WBSO-009).",
+						"nullable": true
+					}
+				}
+			}
+		}
+	},
+	"objects": [
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Account",
+				"slug": "account-wbso-1000-kas-en-bank",
+				"_synthetic": true
+			},
+			"accountNumber": "1000",
+			"name": "Kas en bank",
+			"accountType": "assets",
+			"parentAccountNumber": "1",
+			"status": "active",
+			"currency": "EUR",
+			"administrationId": "adm-consultancy-nl",
+			"description": "Cash and bank deposits (RGS code 1000).",
+			"vatApplicable": false
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Account",
+				"slug": "account-wbso-4100-omzet-diensten",
+				"_synthetic": true
+			},
+			"accountNumber": "4100",
+			"name": "Omzet diensten",
+			"accountType": "revenue",
+			"parentAccountNumber": "4",
+			"status": "active",
+			"currency": "EUR",
+			"administrationId": "adm-consultancy-nl",
+			"description": "Service revenue (RGS code 4100).",
+			"vatApplicable": true
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Account",
+				"slug": "account-wbso-6000-huisvestingskosten",
+				"_synthetic": true
+			},
+			"accountNumber": "6000",
+			"name": "Huisvestingskosten",
+			"accountType": "expenses",
+			"parentAccountNumber": "6",
+			"status": "active",
+			"currency": "EUR",
+			"administrationId": "adm-consultancy-nl",
+			"description": "Housing and office costs (RGS code 6000).",
+			"vatApplicable": true
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Account",
+				"slug": "account-wbso-2000-eigen-vermogen",
+				"_synthetic": true
+			},
+			"accountNumber": "2000",
+			"name": "Eigen vermogen",
+			"accountType": "equity",
+			"parentAccountNumber": "2",
+			"status": "active",
+			"currency": "EUR",
+			"administrationId": "adm-consultancy-nl",
+			"description": "Owner's equity (RGS code 2000).",
+			"vatApplicable": false
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Account",
+				"slug": "account-wbso-1500-crediteuren",
+				"_synthetic": true
+			},
+			"accountNumber": "1500",
+			"name": "Crediteuren",
+			"accountType": "liabilities",
+			"parentAccountNumber": "1",
+			"status": "active",
+			"currency": "EUR",
+			"administrationId": "adm-consultancy-nl",
+			"description": "Accounts payable (RGS code 1500).",
+			"vatApplicable": false
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Transaction",
+				"slug": "txn-wbso-inv-2026-001",
+				"_synthetic": true
+			},
+			"transactionNumber": "INV-2026-001",
+			"transactionType": "invoice",
+			"transactionDate": "2026-01-15",
+			"amount": 1500.00,
+			"description": "Sample posted invoice to Customer ABC",
+			"status": "posted",
+			"administrationId": "adm-consultancy-nl",
+			"createdBy": "system"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Transaction",
+				"slug": "txn-wbso-rec-2026-001-draft",
+				"_synthetic": true
+			},
+			"transactionNumber": "REC-2026-001",
+			"transactionType": "receipt",
+			"transactionDate": "2026-01-20",
+			"amount": 250.00,
+			"description": "Sample draft receipt — office supplies",
+			"status": "draft",
+			"administrationId": "adm-consultancy-nl",
+			"createdBy": "system"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Transaction",
+				"slug": "txn-wbso-inv-2026-001-rev",
+				"_synthetic": true
+			},
+			"transactionNumber": "INV-2026-001-REV",
+			"transactionType": "credit-note",
+			"transactionDate": "2026-01-25",
+			"amount": 1500.00,
+			"description": "Reversal of INV-2026-001",
+			"status": "reversed",
+			"administrationId": "adm-consultancy-nl",
+			"reversalOfTransactionId": "txn-wbso-inv-2026-001",
+			"reversalReason": "Customer ABC disputed scope; reversal issued for re-invoicing.",
+			"createdBy": "system"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Document",
+				"slug": "doc-wbso-inv-2026-001",
+				"_synthetic": true
+			},
+			"documentType": "invoice",
+			"documentNumber": "DOC-INV-2026-001",
+			"documentDate": "2026-01-15",
+			"status": "filed",
+			"fileReference": "docudesk://invoices/inv-2026-001.pdf",
+			"administrationId": "adm-consultancy-nl",
+			"createdBy": "system"
+		}
+	]
+}

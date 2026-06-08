@@ -332,6 +332,29 @@ return [
         ['name' => 'inventoryScan#sync', 'url' => '/api/inventory/sync', 'verb' => 'GET'],
         ['name' => 'inventoryScan#scan', 'url' => '/api/inventory/scan', 'verb' => 'POST'],
 
+        // bookkeeping-wbso-sno-administratie REQ-WBSO-001/002/003/005/006/007/008/009 —
+        // server-authoritative REST surface for Account / Transaction / Document
+        // registers. Static segments first; the {accountNumber}/{id} wildcards are
+        // last per Symfony route ordering. Every endpoint is #[NoAdminRequired] and
+        // authentication + role gating happens in the controller body.
+        ['name' => 'wbsoAccountApi#hierarchy', 'url' => '/api/v1/accounts/hierarchy', 'verb' => 'GET'],
+        ['name' => 'wbsoAccountApi#index', 'url' => '/api/v1/accounts', 'verb' => 'GET'],
+        ['name' => 'wbsoAccountApi#create', 'url' => '/api/v1/accounts', 'verb' => 'POST'],
+        ['name' => 'wbsoAccountApi#show', 'url' => '/api/v1/accounts/{accountNumber}', 'verb' => 'GET'],
+        ['name' => 'wbsoAccountApi#update', 'url' => '/api/v1/accounts/{accountNumber}', 'verb' => 'PUT'],
+
+        ['name' => 'wbsoTransactionApi#index', 'url' => '/api/v1/transactions', 'verb' => 'GET'],
+        ['name' => 'wbsoTransactionApi#create', 'url' => '/api/v1/transactions', 'verb' => 'POST'],
+        ['name' => 'wbsoTransactionApi#post', 'url' => '/api/v1/transactions/{id}/post', 'verb' => 'POST'],
+        ['name' => 'wbsoTransactionApi#reverse', 'url' => '/api/v1/transactions/{id}/reverse', 'verb' => 'POST'],
+        ['name' => 'wbsoTransactionApi#show', 'url' => '/api/v1/transactions/{id}', 'verb' => 'GET'],
+
+        ['name' => 'wbsoDocumentApi#index', 'url' => '/api/v1/documents', 'verb' => 'GET'],
+        ['name' => 'wbsoDocumentApi#create', 'url' => '/api/v1/documents', 'verb' => 'POST'],
+        ['name' => 'wbsoDocumentApi#file', 'url' => '/api/v1/documents/{id}/file', 'verb' => 'POST'],
+        ['name' => 'wbsoDocumentApi#archive', 'url' => '/api/v1/documents/{id}/archive', 'verb' => 'POST'],
+        ['name' => 'wbsoDocumentApi#show', 'url' => '/api/v1/documents/{id}', 'verb' => 'GET'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
