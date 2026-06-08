@@ -111,6 +111,7 @@ class InitializeSettings implements IRepairStep
      * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
      * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
      * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
+     * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
      */
     public function run(IOutput $output): void
     {
@@ -391,6 +392,18 @@ class InitializeSettings implements IRepairStep
 
         if (($bbvResult['success'] ?? false) !== true) {
             $output->warning('BBV taakvelden seeding issue: '.($bbvResult['message'] ?? 'unknown error'));
+        }
+
+        $output->info('Seeding audit-finding templates...');
+        $auditResult = $this->settingsService->seedAuditFindingTemplates();
+        if ($auditResult['success'] === true) {
+            $output->info(
+                'Audit-finding templates seeded: '.($auditResult['seeded'] ?? 0).' created, '.($auditResult['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if ($auditResult['success'] !== true) {
+            $output->warning('Audit-finding templates seeding issue: '.($auditResult['message'] ?? 'unknown error'));
         }
 
     }//end seedComplianceReferenceData()
