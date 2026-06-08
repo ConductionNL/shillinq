@@ -615,7 +615,8 @@ _A scannable code (EAN, GTIN, UPC, SSCC, or INTERNAL) bound to a Product at a sp
 
 ### BankAccount
 **Schema.org:** `schema:BankAccount`
-_Schema.org BankAccount — standard vocabulary for bankaccount data_
+_A bank account held by a Shillinq administration. Carries the IBAN / BIC / bank name plus the optional `primaryCurrency` (ISO 4217, REQ-MC-002) declaration. Existing single-currency deployments may leave `primaryCurrency` null — the system treats null as EUR on read (REQ-MC-001 scenario "Single-currency account without primaryCurrency declared"). Multi-currency tracking is delegated to CurrencyBalance snapshots keyed on (accountId, currency)._
+**Primary spec:** bookkeeping-multi-currency (additive `primaryCurrency` field) / bookkeeping-chart-of-accounts (T1 base entity)
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
@@ -623,8 +624,13 @@ _Schema.org BankAccount — standard vocabulary for bankaccount data_
 | iban | string | Yes | IBAN number |
 | bic | string | No | BIC/SWIFT code |
 | bankName | string | No | Name of the bank |
-| currency | string | Yes | Account currency |
-| balance | number | No | Current balance |
+| primaryCurrency | string | No | ISO 4217 currency code declaring the native currency (REQ-MC-002); nullable — treated as `EUR` on read (REQ-MC-001) |
+| administrationId | string | No | FK to the Administration owning this account |
+| lifecycleState | enum | No | One of `active`, `closed`, `frozen` |
+| notes | string | No | Free-text operator notes |
+
+**Relations:**
+- → CurrencyBalance (one-to-many, via `CurrencyBalance.accountId`)
 
 ### BankConnection
 **Schema.org:** `schema:FinancialProduct`
@@ -1493,19 +1499,25 @@ _A document issued to reduce customer debt due to returns or corrections_
 
 ### CurrencyBalance
 **Schema.org:** `schema:Thing`
-_Multi-currency balance tracking per account for foreign currency management_
-**Primary spec:** treasury-cash-management
+_Point-in-time per-currency balance snapshot for a (BankAccount, currency) pair (REQ-MC-003). Snapshots are operator-entered or refreshed by T4 bank-connector synchronisation — Shillinq NEVER auto-calculates `balance` by summing GL postings (REQ-MC-D4). One latest record per (accountId, currency); on duplicate writes the latest timestamp wins (REQ-MC-003 scenario "Prevent duplicate (accountId, currency) records"). The multi-account aggregation behind REQ-MC-004 is declared as `x-openregister-aggregations.balanceByCurrency` on the schema — no app-local PHP balance aggregator._
+**Primary spec:** bookkeeping-multi-currency
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| balanceId | string | Yes | Unique balance record identifier |
-| currency | string | Yes | Currency code (ISO 4217) |
-| balance | number | Yes | Current balance amount |
-| previousBalance | number | No | Previous balance for variance tracking |
-| lastUpdated | datetime | Yes | Last update timestamp |
+| balanceId | string | Yes | Stable unique snapshot identifier (e.g. `bal-usd-2026-05-21`) |
+| accountId | string | Yes | FK to BankAccount.slug; forms one half of the (accountId, currency) uniqueness constraint |
+| currency | string | Yes | ISO 4217 currency code (three uppercase letters); forms the second half of the (accountId, currency) uniqueness constraint |
+| balance | number | Yes | Current balance amount in the specified currency |
+| previousBalance | number | No | Previous balance for variance tracking + detail-page percentage-change rendering |
+| lastUpdated | datetime | Yes | ISO 8601 timestamp of the most recent balance update; tiebreaker on upsert |
+| notes | string | No | Free-text operator notes (source statement reference, manual-entry justification) |
 
 **Relations:**
-- → BankAccount (many-to-one)
+- → BankAccount (many-to-one, via `accountId` → `BankAccount.slug`)
+
+**Uniqueness:** `(accountId, currency)` — one latest snapshot per pair per REQ-MC-003.
+
+**Additive BankAccount fields (bookkeeping-multi-currency, REQ-MC-002):** the BankAccount schema (primary spec: bookkeeping-multi-currency / bookkeeping-chart-of-accounts) gains one optional field here — `primaryCurrency` (string, ISO 4217 code; nullable, treated as `EUR` on read for backward compatibility per REQ-MC-001). Non-breaking — existing BankAccount records remain valid without the field.
 
 ### CustomerMaster
 **Schema.org:** `schema:Organization`

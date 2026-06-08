@@ -7,9 +7,6 @@
 
 ## ADDED Requirements
 
-@e2e exclude pending playwright spec: currency balances index/detail pages are declared in src/manifest.d/bookkeeping-multi-currency.json (REQ-MC-005) but no Playwright spec ships in this change; covered by a follow-up tests/e2e/bookkeeping-multi-currency.spec.ts.
-
-
 ### REQ-MC-001: Multi-currency bank account management SHALL be declared as `BankAccount.primaryCurrency` extension + `CurrencyBalance` register
 
 Multi-currency cash management MUST be expressed as:
