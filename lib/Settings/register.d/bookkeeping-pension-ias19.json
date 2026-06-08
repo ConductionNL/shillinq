@@ -628,6 +628,50 @@
 							}
 						}
 					}
+				},
+				"x-openregister-posting-recipe": {
+					"description": "Declarative GL posting recipe for PensionMovement, consumed by the T1 bookkeeping-general-ledger JournalEntry materialiser (REQ-PEN-003, REQ-PEN-004, REQ-JE-007). Each bucket maps to a `bookkeeping-general-ledger` JournalEntry whose materialised GLTransaction posts the period charge to the configured chart-of-accounts range. The recipe is declarative: the JournalEntry orchestrator reads it on PensionMovement transition to `posted` and emits one JournalEntry per non-zero bucket; ids land in `PensionMovement.linkedJournalEntries`. Account ranges follow the standard Dutch SBR/RGS bookkeeping hierarchy (4xxx personeelslasten, 6xxx financiële lasten, 8xxx OCI/eigen vermogen) and may be overridden per administration via the chart-of-accounts mapping (REQ-COA-002).",
+					"sourceSchema": "PensionMovement",
+					"targetSchema": "JournalEntry",
+					"trigger": "PensionMovement.status:posted",
+					"buckets": [
+						{
+							"name": "serviceCost",
+							"amountSource": "serviceCostCurrent + pastServiceCost - gainOnSettlement",
+							"sign": "debit",
+							"accountRange": "4100-4199",
+							"accountCategory": "personeelslasten",
+							"counterAccountRange": "1700-1799",
+							"counterAccountCategory": "pensioenvoorziening",
+							"description": "IAS 19 service cost + past service cost - gain on settlement → personeelslasten (REQ-PEN-003 P&L bucket 1).",
+							"requirement": "REQ-PEN-003"
+						},
+						{
+							"name": "netInterest",
+							"amountSource": "netInterestCost",
+							"sign": "debit",
+							"accountRange": "6600-6699",
+							"accountCategory": "financiele-lasten",
+							"counterAccountRange": "1700-1799",
+							"counterAccountCategory": "pensioenvoorziening",
+							"description": "IAS 19 net interest on the net pension liability → financiële lasten (REQ-PEN-003 P&L bucket 2).",
+							"requirement": "REQ-PEN-003"
+						},
+						{
+							"name": "remeasurementOCI",
+							"amountSource": "netPensionMovementOCI",
+							"sign": "debit-on-positive",
+							"accountRange": "8000-8999",
+							"accountCategory": "oci-remeasurement-pension",
+							"counterAccountRange": "1700-1799",
+							"counterAccountCategory": "pensioenvoorziening",
+							"description": "Actuarieel resultaat (DBO + assets) → OCI account (REQ-PEN-003 OCI bucket 3); marked non-recycling per REQ-PEN-004 so the GL engine MUST refuse any later JournalEntry that moves this balance to a P&L account.",
+							"requirement": "REQ-PEN-004",
+							"recyclable": false
+						}
+					],
+					"linkBackField": "linkedJournalEntries",
+					"x-spec": "openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md#REQ-PEN-003"
 				}
 			},
 			"PensionAssumptionSensitivity": {

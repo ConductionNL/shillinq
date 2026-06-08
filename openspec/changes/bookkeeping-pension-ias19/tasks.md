@@ -134,11 +134,18 @@
   with the voorzieningen-claims apply cycle, which is not yet merged to
   shillinq development — see honest-deferral note below.)*
 
-- [ ] Task 16: Integrate with `bookkeeping-general-ledger` (T2) GL posting
+- [x] Task 16: Integrate with `bookkeeping-general-ledger` (T2) GL posting
   rules: service cost → personeelslasten account (4100–4199 typical),
   net interest → financiële lasten (6600–6699 typical), remeasurement
   (OCI) → OCI account (8000–8999), with REQ-PEN-004 rule blocking OCI
   recycling to P&L
+  *(declarative — adds `x-openregister-posting-recipe` block on
+  `PensionMovement` consumed by the `bookkeeping-general-ledger`
+  JournalEntry materialiser (REQ-JE-007). Three buckets cover the IAS 19
+  P&L/OCI partition with explicit account ranges, counter-accounts and a
+  `recyclable: false` flag on the OCI bucket enforcing REQ-PEN-004. Ids of
+  the materialised JournalEntries flow back into
+  `PensionMovement.linkedJournalEntries`.)*
 
 - [ ] Task 17: Integrate with `bookkeeping-deferred-tax` (T2) timing-difference
   detector: `pension-movement` records trigger DTA calculation for
