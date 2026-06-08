@@ -182,7 +182,7 @@
   to auto-populate percentage. If Wet Fido changes percentages, administrator updates
   table without code-deploy.
 
-- [ ] Task 25: DEFERRED (cross-app dependency: `bookkeeping-bbv-compliance` GL-paspoort linkage; `Lening.bbvPaspoortId` is the FK placeholder ready for the link). Integrate with `bookkeeping-bbv-compliance` (T2) to link treasury GL
+- [~] Task 25: DEFERRED (cross-app dependency: `bookkeeping-bbv-compliance` GL-paspoort linkage; `Lening.bbvPaspoortId` is the FK placeholder ready for the link). Integrate with `bookkeeping-bbv-compliance` (T2) to link treasury GL
   postings to BBV-paspoort metadata; ensure uitzetting > 1 jaar vs ≤ 1 jaar classified
   correctly in GL per REQ-FDO-002 definition of "korte schuld"
 
