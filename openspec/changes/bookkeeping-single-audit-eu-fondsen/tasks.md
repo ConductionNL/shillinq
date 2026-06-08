@@ -203,7 +203,7 @@
   — DEFERRED (T4, explicitly optional per proposal Out-of-Scope): needs the
   openconnector IMS/SFC2021 bridge which is not yet merged.
 
-- [ ] Task 27: Integrate with purchaseq (optional T4) — on EuExpenditure.booking
+- [~] Task 27: Integrate with purchaseq (optional T4) — on EuExpenditure.booking
   with gross_amount >= aanbestedings-drempel, purchaseq should flag as EU-procurement-relevant;
   EuExpenditure validation can query purchaseq for aanbestedingsdossier status
   — DEFERRED (T4, explicitly optional per proposal Out-of-Scope): purchaseq owns
