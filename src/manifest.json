@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "1.3.8",
+	"version": "1.3.9",
 	"dependencies": [
 		"openregister"
 	],
@@ -427,6 +427,21 @@
 					"icon": "FileDocumentOutline",
 					"route": "BtwAangiften",
 					"order": 50
+				},
+				{
+					"id": "VATByPeriod",
+					"label": "VAT by Period",
+					"icon": "ChartTimelineVariantOutline",
+					"route": "VATByPeriod",
+					"order": 55
+				},
+				{
+					"id": "VATReconciliation",
+					"label": "VAT Reconciliation",
+					"icon": "FileCertificateOutline",
+					"route": "VATReconciliation",
+					"order": 56,
+					"hiddenFromMenu": true
 				},
 				{
 					"id": "IcpOpgaaf",
@@ -8499,6 +8514,236 @@
 				"indexRoute": "BtwAangiften",
 				"sidebarProps": {
 					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "VATByPeriod",
+			"route": "/belastingen/vat-by-period",
+			"type": "index",
+			"title": "VAT by Period",
+			"description": "REQ-VAT-010 + REQ-VAT-009: lists all settlement periods for the active administration with VAT totals broken down by rate. Aggregation source: VATAuditRecord.vatByPeriod (declarative x-openregister-aggregations).",
+			"config": {
+				"register": "shillinq",
+				"schema": "VATAuditRecord",
+				"aggregation": "vatByPeriod",
+				"groupBy": "settlementPeriod",
+				"columns": [
+					{
+						"key": "settlementPeriod",
+						"label": "Settlement Period",
+						"sortable": true
+					},
+					{
+						"key": "totalNetAmount",
+						"label": "Total Net Amount",
+						"sortable": true,
+						"type": "number"
+					},
+					{
+						"key": "totalVAT21",
+						"label": "Total VAT 21%",
+						"sortable": true,
+						"type": "number"
+					},
+					{
+						"key": "totalVAT9",
+						"label": "Total VAT 9%",
+						"sortable": true,
+						"type": "number"
+					},
+					{
+						"key": "totalVAT6",
+						"label": "Total VAT 6%",
+						"sortable": true,
+						"type": "number"
+					},
+					{
+						"key": "totalVAT0",
+						"label": "Total VAT 0%",
+						"sortable": true,
+						"type": "number"
+					},
+					{
+						"key": "totalGrossAmount",
+						"label": "Total Gross Amount",
+						"sortable": true,
+						"type": "number"
+					},
+					{
+						"key": "invoiceCount",
+						"label": "Invoice Count",
+						"sortable": true,
+						"type": "number"
+					}
+				],
+				"defaultSort": "settlementPeriod",
+				"defaultSortDirection": "desc",
+				"detailRoute": "VATReconciliation"
+			}
+		},
+		{
+			"id": "VATReconciliation",
+			"route": "/belastingen/vat-by-period/:settlementPeriod",
+			"type": "detail",
+			"title": "VAT Reconciliation",
+			"description": "REQ-VAT-010: per-period VAT reconciliation page. Shows the contributing invoices, line-by-line VATAuditRecord entries, the four VATGLAccounts balances for the period, and a 'Ready for Filing' checklist.",
+			"config": {
+				"register": "shillinq",
+				"schema": "VATAuditRecord",
+				"aggregation": "vatByPeriod",
+				"groupBy": "settlementPeriod",
+				"filterParam": "settlementPeriod",
+				"fields": [
+					{
+						"key": "settlementPeriod",
+						"label": "Settlement Period",
+						"type": "string"
+					},
+					{
+						"key": "totalNetAmount",
+						"label": "Total Net Amount",
+						"type": "number"
+					},
+					{
+						"key": "totalVAT21",
+						"label": "Total VAT 21%",
+						"type": "number"
+					},
+					{
+						"key": "totalVAT9",
+						"label": "Total VAT 9%",
+						"type": "number"
+					},
+					{
+						"key": "totalVAT6",
+						"label": "Total VAT 6%",
+						"type": "number"
+					},
+					{
+						"key": "totalVAT0",
+						"label": "Total VAT 0%",
+						"type": "number"
+					},
+					{
+						"key": "totalGrossAmount",
+						"label": "Total Gross Amount",
+						"type": "number"
+					},
+					{
+						"key": "invoiceCount",
+						"label": "Invoice Count",
+						"type": "number"
+					},
+					{
+						"key": "recordCount",
+						"label": "Record Count",
+						"type": "number"
+					}
+				],
+				"indexRoute": "VATByPeriod",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit-records",
+							"label": "VAT Audit Records",
+							"icon": "ReceiptTextOutline",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-object-list",
+									"props": {
+										"register": "shillinq",
+										"schema": "VATAuditRecord",
+										"filter": {
+											"settlementPeriod": ":settlementPeriod"
+										},
+										"columns": [
+											"invoiceNumber",
+											"invoiceDate",
+											"lineSequence",
+											"lineDescription",
+											"lineAmount",
+											"vatRate",
+											"vatAmount",
+											"serviceCategory",
+											"lifecycleEvent",
+											"eventDate"
+										]
+									}
+								}
+							]
+						},
+						{
+							"id": "gl-balances",
+							"label": "GL Account Balances",
+							"icon": "BankOutline",
+							"order": 20,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-object-detail",
+									"props": {
+										"register": "shillinq",
+										"schema": "VATGLAccounts",
+										"filter": {
+											"administrationId": ":administrationId"
+										}
+									}
+								}
+							]
+						},
+						{
+							"id": "filing-checklist",
+							"label": "Ready for Filing",
+							"icon": "CheckboxMarkedOutline",
+							"order": 30,
+							"widgets": [
+								{
+									"type": "checklist",
+									"items": [
+										{
+											"id": "reconciled",
+											"label": "VAT totals reconciled against bank statements",
+											"defaultChecked": false
+										},
+										{
+											"id": "gl-balanced",
+											"label": "VATPayable21/9/6/0 GL balances match aggregation totals",
+											"defaultChecked": false
+										},
+										{
+											"id": "exceptions-reviewed",
+											"label": "All ServiceCategoryOverride exceptions reviewed for the period",
+											"defaultChecked": false
+										},
+										{
+											"id": "ready-for-filing",
+											"label": "Ready for Belastingdienst filing (BTW-aangifte)",
+											"defaultChecked": false
+										}
+									]
+								}
+							]
+						},
 						{
 							"id": "audit",
 							"label": "Audit Trail",

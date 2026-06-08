@@ -28,9 +28,11 @@ The change is **spec-only**. Implementation lands later through `opsx-apply` and
 Each line item on an invoice specifies:
 - `vatRate`: one of 21 (standard), 9 (reduced services), 6 (books/media), 0 (exempt/export)
 - `serviceCategory`: enum (product, service, exempt) — gates VAT rate validity
-- `vatAmount`: computed from `lineAmount × vatRate / 100`
+- `vatAmount`: computed from `bankerRound(lineAmount × vatRate / 100)` in integer cents per ADR-022 money rule
 
 Segregation by service/product allows Dutch VAT audit to distinguish product taxability from service exemptions. No aggregate roll-up; each line is atomic.
+
+All monetary fields (`lineAmount`, `vatAmount`) MUST be stored as integer cents. ADR-022 forbids floating-point money; the schema declares both as `integer` with `description` calling out the cent encoding.
 
 ### D2 — Kassakoppeling compliance via immutable VATAuditRecord
 
@@ -69,7 +71,7 @@ No hardcoded rules; configuration table per administration allows exceptions wit
 
 ### D6 — Rounding per Dutch fiscal standard
 
-Per-line VAT amount: rounding to nearest cent (banker's rounding: 0.5 rounds to nearest even). Invoice-total VAT: sum of line VAT amounts with no additional rounding. This matches Belastingdienst decimal standard.
+Per-line VAT amount: banker's rounding (IEEE 754 `roundTiesToEven`) at integer-cent precision. When the fractional remainder is exactly 0.5 cent, the result rounds to the nearest even cent. Invoice-total VAT: sum of per-line VAT amounts with no additional rounding adjustment line. This matches Belastingdienst decimal standard and is consistent with the ADR-022 integer-cent money rule (no float drift).
 
 ## Reuse Analysis
 
@@ -163,7 +165,9 @@ Down-direction: registers are non-destructive — reverting removes the new fiel
 
 ## Implementation Notes
 
-- **GL account mapping**: Administration must configure `VATPayable` GL account (e.g., 4020 per RGS chart). Installer script creates default; admin can override.
-- **Timezone handling**: All dates (issue, payment, settlement) in administration's local timezone. UTC stored in audit.
-- **Currency**: All VAT amounts in invoice currency (EUR in current scope; multi-currency T5).
-- **Precondition failure**: Prevent invoice issuance with error message linking to configuration table (e.g., "Service category 'repair' does not permit 21% VAT; check admin settings").
+- **GL account mapping (RGS baseline)**: Administration must configure the four `VATPayable*` GL accounts via `VATGLAccounts`. The installer seeds RGS (Referentie Grootboekschema) defaults: account `2020` = Belastingdienst VAT payable 21% (`WBeBoB`), `2021` = 9% (`WBeBoL`), `2022` = 6% (`WBeBoM`, historical), `2023` = 0% / exempt (`WBeBoN`). The admin can override during setup via `Settings > Accounting > Tax Configuration`; the form validates that all four account numbers exist in `Account` for the administration and are unique. Once an invoice is issued, the credit account number used is persisted in the `GLTransaction.lines[]` row — subsequent reconfiguration of `VATGLAccounts` does NOT rewrite historical GL postings.
+- **Timezone handling**: All dates (issue, payment, settlement) are computed in the administration's local timezone; the `eventDate` on `VATAuditRecord` is stored as UTC ISO 8601 (`Z`) for audit immutability.
+- **Currency**: All amounts (`lineAmount`, `vatAmount`, `totalAmount`) in invoice currency. T2 / T3 scope is EUR only; multi-currency lands in T5.
+- **Precondition failure**: Both new preconditions on `ARInvoice.issue` (`vat-service-category-gate` and `vat-gl-accounts-configured`) emit bilingual (nl + en) `messageTemplate` strings with `{{lineSequence}}`, `{{serviceCategory}}`, `{{vatRate}}` interpolation. The GL-accounts precondition additionally carries a `deepLink` to `/index.php/apps/shillinq/settings/tax-configuration` so the UI can jump straight to the admin panel; API clients see the message text only.
+- **Rate-bucket reassignment safety**: When a `VATGLAccounts` reassignment happens after invoices have been issued in a period, the historical `VATAuditRecord` rows remain unchanged (immutable per ADR-022). The new bucket configuration applies to subsequent issuances only; the period's `vatByPeriod` aggregation continues to summarise the audit records correctly because the aggregation groups by `(administrationId, settlementPeriod)` and reads the immutable per-line `vatAmount` rather than re-resolving GL accounts.
+- **6% rate retention**: The 6% rate listed in `nl_vat_rates_2026.json` is historical (replaced by 9% in 2019). It is retained so that historical invoices and international administrations that still use 6% remain queryable, and the `vatRate` enum stays stable across spec versions. New NL administrations default to 9% for reduced-rate services.

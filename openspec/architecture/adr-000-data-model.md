@@ -2870,8 +2870,8 @@ _Financial document detailing goods/services provided and creating an obligation
 
 ### InvoiceLine
 **Schema.org:** `schema:InvoiceItem`
-_A line item detailing goods or services on an invoice_
-**Primary spec:** accounts-payable-receivable
+_A line item detailing goods or services on an invoice. In Shillinq's ARInvoice this is the lines[] sub-document; bookkeeping-invoice-vat-kassakoppeling extends it with per-line Dutch VAT fields (REQ-VAT-001) so each line carries vatRate, vatAmount, and serviceCategory used by the REQ-VAT-002 issuance precondition and the REQ-VAT-003 GL VATPayable bucket posting._
+**Primary spec:** accounts-payable-receivable; bookkeeping-invoice-vat-kassakoppeling (VAT extension)
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
@@ -2879,13 +2879,19 @@ _A line item detailing goods or services on an invoice_
 | description | string | Yes | Item description |
 | quantity | number | Yes | Quantity of items |
 | unitPrice | number | Yes | Price per unit |
-| lineAmount | number | Yes | Total line amount before tax |
-| tax | number | No | Tax on line item |
+| lineAmount | number | Yes | Total line amount before tax (net of VAT) |
+| tax | number | No | Legacy tax-on-line field (free-form; retained for backward compatibility) |
+| taxCode | string | No | Legacy free-form tax code (e.g. BTW21); superseded by structured vatRate for new VAT logic |
+| vatRate | integer enum | Yes (T3) | Dutch VAT rate in percent (21, 9, 6, 0) per REQ-VAT-001; defaults to administration's standard rate |
+| vatAmount | number | Yes (T3) | Per-line VAT in decimal euros, banker's-rounded to 2 decimals per REQ-VAT-007 |
+| serviceCategory | enum | Yes (T3) | product / service / exempt — gates vatRate validity per REQ-VAT-002 |
 | unit | string | No | Unit of measurement |
 
 **Relations:**
 - → Invoice (many-to-one)
 - → Product (many-to-one)
+- → VATAuditRecord (one-to-many; each issued line generates an audit record per REQ-VAT-004)
+- → ServiceCategoryOverride (many-to-one optional; consulted by REQ-VAT-002bis when the default matrix would reject)
 
 ### Iv3Export
 **Schema.org:** `schema:Dataset`
@@ -4645,6 +4651,26 @@ _Payment scheduled for future execution with support for recurring transactions_
 - → BankAccount (many-to-one)
 - → Payment (one-to-many)
 
+### ServiceCategoryOverride
+**Schema.org:** `schema:Permit`
+_Append-only register capturing per-administration exceptions to the default REQ-VAT-002 service-category / VAT-rate matrix. Lookup by (administrationId, serviceCategory, vatRate); the ARInvoice.issue lifecycle precondition (REQ-VAT-002) consults this register before rejecting a non-default combination per REQ-VAT-002bis. createdAt + createdBy are immutable once written; reason is the operator-authored audit-trail text retained for Belastingdienst inspection._
+**Primary spec:** bookkeeping-invoice-vat-kassakoppeling
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the administration owning the override |
+| serviceCategory | enum | Yes | product, service, or exempt — category the override applies to |
+| vatRate | integer enum | Yes | 21, 9, 6, or 0 — the rate the override permits for this category |
+| reason | string | Yes | Free-text audit reason (retained for Belastingdienst inspection) |
+| createdAt | datetime | Yes | Set on creation; immutable |
+| createdBy | string | Yes | Nextcloud user id of the creator; immutable |
+
+**Relations:**
+- → Administration (many-to-one)
+- → VATAuditRecord (one-to-many; each VATAuditRecord captures `overrideId` when this override authorised the line)
+
+**Cites:** ADR-022 (immutable audit), ADR-031 (declarative-only).
+
 ### Service
 **Schema.org:** `schema:Service`
 _A bookable service offering — the foundational data-model for all scheduling, booking and appointment workloads (REQ-SC-001..008 of `bookings-service-catalog`). Carries identification (`serviceId`, stable per-administration `code` slug, `name`, `description`), temporal dimensions (`duration`, `prepareTime`, `bufferBefore`, `bufferAfter` — all in minutes; total calendar block = `prepareTime + duration + bufferAfter`), pricing (`basePrice` with two-decimal precision + `currency` ISO-4217 + `dynamicPricing` flag for T2+ rule engines), categorisation (`serviceCategory` flat string per REQ-SC-006, `resourceTypeRef` forward FK per REQ-SC-007), and lifecycle (`status`: draft → active → archived per REQ-SC-005). Code uniqueness is per-administration (REQ-SC-008). `dynamicPricing: true` signals downstream consumers that `basePrice` is a fallback only. `resourceTypeRef` resolution (skill/room/staff specialty/equipment class) is owned by dependent specs (`bookings-resource-calendar`, `bookings-availability-rules`). `duration: 0` is valid for non-scheduled services (subscriptions, products). Schema is declared declaratively in `lib/Settings/register.d/bookings-service-catalog.json` per ADR-031 + ADR-037; no `ServiceService` PHP class — validation/uniqueness/lifecycle/aggregations are expressed as `x-openregister-*` metadata._
@@ -5981,6 +6007,57 @@ _User-specific preferences for display settings, notifications, language, and ot
 
 **Relations:**
 - → User (many-to-one)
+
+### VATAuditRecord
+**Schema.org:** `schema:Invoice`
+_Kassakoppeling-compliant per-line VAT audit record per bookkeeping-invoice-vat-kassakoppeling REQ-VAT-004. Append-only timeline: one immutable record per ARInvoice line per lifecycle event (issued, paid, written_off, reversed). All amounts are decimal-euro copies taken at event time, never mutated after creation. PATCH and DELETE return 409 SCHEMA_IMMUTABLE per ADR-022. Created declaratively by the ARInvoice.issue lifecycle materialisation (and follow-up paid / written_off / reversed transitions) per ADR-031; no app-local PHP VAT-audit service exists. Belastingdienst audits inspect these records via OR's generic CRUD API. Carries the vatByPeriod x-openregister-aggregation used by the REQ-VAT-009 reporting query and powering the VATByPeriod manifest entry (REQ-VAT-010)._
+**Primary spec:** bookkeeping-invoice-vat-kassakoppeling
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| invoiceNumber | string | Yes | ARInvoice.invoiceNumber at event time (immutable copy) |
+| invoiceDate | date | Yes | ARInvoice.invoiceDate at issuance (immutable copy) |
+| lineSequence | integer | Yes | 1-based index of the line within ARInvoice.lines[] |
+| lineDescription | string | Yes | Immutable copy of the line description at event time |
+| lineAmount | number | Yes | Immutable copy of line.amount in decimal euros |
+| vatRate | integer enum | Yes | 21, 9, 6, or 0 — the rate applied at event time |
+| vatAmount | number | Yes | Immutable copy of the line's vatAmount (banker's-rounded to 2 decimals) |
+| serviceCategory | enum | Yes | product, service, or exempt — immutable copy |
+| lifecycleEvent | enum | Yes | issued, paid, written_off, or reversed |
+| eventDate | datetime | Yes | UTC timestamp when the lifecycle event was recorded |
+| paymentDate | date | No | Populated only when lifecycleEvent=paid |
+| settlementPeriod | string | Yes | FK to FiscalPeriod (periodId) bound at issue time per REQ-VAT-005; immutable |
+| overrideId | string | No | Optional FK to ServiceCategoryOverride if the line was authorised under an exception |
+| administrationId | string | Yes | FK to the administration |
+
+**Relations:**
+- → ARInvoice (many-to-one, via invoiceNumber)
+- → FiscalPeriod (many-to-one, via settlementPeriod)
+- → ServiceCategoryOverride (many-to-one optional, via overrideId)
+- → Administration (many-to-one)
+
+**Cites:** ADR-022 (immutable audit channel, kassakoppeling tamper-proofing), ADR-031 (declarative-only, no PHP VAT-audit service).
+
+### VATGLAccounts
+**Schema.org:** `schema:PropertyValueSpecification`
+_Per-administration GL account mapping from VAT rate bucket to VATPayable* liability account, consumed by the ARInvoice.issue lifecycle action's vatBucketMapping per REQ-VAT-006. One record per administrationId. Defaults from the RGS (Referentie Grootboekschema) baseline (vat21=2020, vat9=2021, vat6=2022, vat0=2023) and seeded on installer first-run. The admin UI validates that all four accounts exist in Account for the administration and are unique within the record (REQ-VAT-006)._
+**Primary spec:** bookkeeping-invoice-vat-kassakoppeling
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the administration; one record per administration |
+| vat21Account | string | Yes | GL account number credited for 21% VAT lines (default 2020) |
+| vat9Account | string | Yes | GL account number credited for 9% VAT lines (default 2021) |
+| vat6Account | string | Yes | GL account number credited for 6% VAT lines (default 2022) |
+| vat0Account | string | Yes | GL account number credited for 0% / exempt VAT lines (default 2023) |
+| createdAt | datetime | Yes | Set on first save |
+| updatedAt | datetime | Yes | Updated on each save |
+
+**Relations:**
+- → Administration (many-to-one)
+- → Account (one-to-many; the four GL accounts MUST exist in Account for the administration)
+
+**Cites:** ADR-022 (configuration audit trail), ADR-031 (declarative-only).
 
 ### VATReturn
 **Schema.org:** `schema:Thing`

@@ -73,17 +73,29 @@ None. Consumes existing OpenRegister abstractions (lifecycle materialisation, au
 - **T1 general ledger** — depends on `add-shillinq-bookkeeping-foundation` for GL account posting infra.
 - **T2 AR core** — depends on `add-shillinq-accounts-receivable-core` for invoice entity + lifecycle.
 
+## Risks
+
+- **Kassakoppeling detail level (R1)**: Belastingdienst kassakoppeling guidance evolves; spec captures the audit fields known today (rate, amount, lifecycle event, settlement period). Mitigated by declaring `VATAuditRecord` additively — extra fields can be added without breaking the immutable history.
+- **Reverse-charge VAT scope (R2)**: B2B intra-EU reverse-charge (0% VAT on invoice, customer self-accounts) is deferred to T5 (`bookkeeping-btw-oss-eu`). Spec's `vatRate=0 / serviceCategory=exempt` covers domestic exemption but not the reverse-charge flag.
+- **Payment-date vs issue-date accrual (R3)**: Current spec accrues VAT on `issue` (accrual basis). Cash-basis administrations (small traders) are out of scope; revisit if a customer requests it. Mitigated by audit-trail immutability — old records survive policy changes.
+- **Rounding thresholds (R4)**: Banker's rounding at integer-cent precision (REQ-VAT-007) matches Belastingdienst guidance for SMB; very-high-volume administrations may need an explicit fiscal-advisor review before relying on the per-line aggregation.
+- **Existing VAT*Service PHP classes (R5)**: `lib/Service/VATCalculationService.php` and `lib/Service/VATReturnService.php` already exist for OTHER capabilities (`invoice-from-time-and-expense` BillableInvoice + `bookkeeping-vat-btw-filing` periodic returns). This spec does NOT extend them; the new VAT accrual flow is declarative-only per ADR-031. Mitigated by the Task-1 anti-pattern note.
+- **GL bucket misconfiguration (R6)**: If `VATGLAccounts` is missing or duplicated, the lifecycle precondition blocks issuance with actionable guidance per REQ-VAT-008 (no silent posting drift).
+
 ## Open Questions
 
 1. **Kassakoppeling detail level**: Should `VATAuditRecord` capture payment-method (PIN/cash/bank)? Current scope is date/rate/amount only. Clarify with Belastingdienst gateway design.
 2. **Reverse-charge VAT (B2B exempt)**: Is B2B reverse-charge (0% VAT, 0% accrual) in-scope, or T5? Current proposal assumes all B2C domestic; answer determines REQ-VAT-004.
 3. **Payment-date VAT accrual**: Should VAT accrue on issue (current) or on payment (cash-basis)? Dutch SMB typically accrues on issue; confirm administration setting.
-4. **Rounding thresholds**: Define rounding rule for per-line VAT amounts (round-to-nearest vs round-down vs banker's rounding).
+4. **Rounding thresholds**: Define rounding rule for per-line VAT amounts (round-to-nearest vs round-down vs banker's rounding). Spec settles on banker's rounding (`roundTiesToEven`) at integer-cent precision per REQ-VAT-007.
+5. **Override approval workflow**: REQ-VAT-002bis records `createdBy` for traceability; should overrides above a revenue threshold also require dual approval (creator + reviewer)? Deferred to a follow-up requirement.
 
 ## Rollback
 
-- Remove `VATAuditRecord` schema from `shillinq_register.json`.
-- Revert `InvoiceLine` schema to pre-change state (remove `vatRate`, `vatAmount`, `serviceCategory` fields).
-- Remove VAT accrual lifecycle action from `ARInvoice.issued`.
-- Remove the 2 manifest entries.
-- Re-export invoice queries exclude VAT-by-period grouping.
+- Remove `VATAuditRecord`, `ServiceCategoryOverride`, and `VATGLAccounts` schemas from `lib/Settings/shillinq_register.json`.
+- Revert the `ARInvoice.lines[]` items extension (remove `vatRate`, `vatAmount`, `serviceCategory` fields).
+- Remove VAT accrual lifecycle action + service-category precondition from the `ARInvoice.issue` transition.
+- Remove the 2 manifest entries (`VATByPeriod`, `VATReconciliation`) and their page declarations.
+- Remove the seed data file `lib/Data/VAT/nl_vat_rates_2026.json`.
+- Revert the additions to `openspec/architecture/adr-000-data-model.md` (InvoiceLine extension + the three new schemas).
+- Down direction is non-destructive: existing `VATAuditRecord` rows remain queryable for forensic audit, but no new entries are generated and the aggregation query is removed from the manifest.
