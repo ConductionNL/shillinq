@@ -151,7 +151,7 @@
   reduce budget available for toekomstige declaraties, include correctie in volgend
   accounts-package
 
-- [ ] Task 20: Implement accounts-package generation per REQ-EUF-006 — for
+- [~] Task 20: Implement accounts-package generation per REQ-EUF-006 — for
   programma-year (1 juli – 30 juni), aggregate all EuExpenditure with status =
   betaald_door_EC, generate gecertificeerde-uitgaven-tabel, management-declaration
   template, samenvatting controles + audits, uitsplitsing per priority/specifiek doel,
