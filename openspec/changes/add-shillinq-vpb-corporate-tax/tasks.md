@@ -9,19 +9,19 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `vpbPligtig` flag on Account, no `VpbBalansLink` overlay, and no `bookkeeping-vpb-corporate-tax` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `openspec/changes/**`)
-- [ ] Task 2: Author `specs/bookkeeping-vpb-corporate-tax/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4-specialized (MKB / innovation — Vpb)` / `Depends on: bookkeeping-bbv-compliance, bookkeeping-market-government-separation` header, `REQ-VPB-NNN` requirements, `#### Scenario:` blocks with GIVEN/WHEN/THEN
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions
-- [ ] Task 4: Author `design.md` with Reuse Analysis table; Vpb-belastingadviseur reviewer persona confirms the Vpb-balans shape matches Wet modernisering Vpb-plicht
-- [ ] Task 5: Add `vpbPligtig: boolean` flag on `Account` in `lib/Settings/shillinq_register.json` (default `false`) per REQ-VPB-001
-- [ ] Task 6: Declare the `VpbBalansLink` overlay register with `costCenterId` FK (to `CostCenter` with `ondernemingsActiviteit: true`), `accountNumbers` array of `Account.accountNumber` strings, `vpbPligtigVanaf` date per REQ-VPB-002
-- [ ] Task 7: Declare the Vpb-balans aggregation (output `VpbBalansFiltered` with `schema:Dataset` annotation) filtering `GLLine` on `accountNumber IN VpbBalansLink.accountNumbers` AND `periodId IN fiscalYearPeriods`, grouped per `costCenterId`, producing Activa/Passiva/Resultaat per ondernemingsactiviteit per REQ-VPB-003
-- [ ] Task 8: Honour the T1 balance invariant (REQ-GL-005) per cost-center in the Vpb-balans; surface unbalanced ondernemingsactiviteiten as warnings
-- [ ] Task 9: Register the Vpb-aangifte voorbereiding docudesk template in `lib/Settings/docudesk-templates.json` populated from the Vpb-balans aggregation per REQ-VPB-004; SBR payload binding validates against the Belastingdienst Vpb XSD
-- [ ] Task 10: Wire the SBR aangifte transmission to ride the T4-base `bookkeeping-sbr-xbrl-reporting` SBR endpoint; no new SBR client per ADR-019
-- [ ] Task 11: Add aggregation invariant warning for orphaned Vpb-pligt (a Vpb-pligtige account not referenced by any `VpbBalansLink`) in the Vpb menu detail view
-- [ ] Task 12: Add Vennootschapsbelasting navigation + pages to `src/manifest.json` (`featureFlags.mkb-vpb`, `Bookkeeping > Vennootschapsbelasting`, `type: index` for Vpb-pligtige cost-centers/accounts + `type: detail` for Vpb-balans + aangifte voorbereiding per ondernemingsactiviteit) per REQ-VPB-005; `node tests/validate-manifest.js` exits 0
-- [ ] Task 13: Update `openspec/architecture/adr-000-data-model.md` with a one-paragraph annotation for `vpbPligtig` + `VpbBalansLink` cross-referencing this spec
+- [x] Task 1: Confirm no `vpbPligtig` flag on Account, no `VpbBalansLink` overlay, and no `bookkeeping-vpb-corporate-tax` capability already exists (scan `lib/Settings/shillinq_register.json`, `openspec/specs/**`, `openspec/changes/**`)
+- [x] Task 2: Author `specs/bookkeeping-vpb-corporate-tax/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4-specialized (MKB / innovation — Vpb)` / `Depends on: bookkeeping-bbv-compliance, bookkeeping-market-government-separation` header, `REQ-VPB-NNN` requirements, `#### Scenario:` blocks with GIVEN/WHEN/THEN
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions
+- [x] Task 4: Author `design.md` with Reuse Analysis table; Vpb-belastingadviseur reviewer persona confirms the Vpb-balans shape matches Wet modernisering Vpb-plicht
+- [x] Task 5: Add `vpbPligtig: boolean` flag on `Account` in `lib/Settings/shillinq_register.json` (default `false`) per REQ-VPB-001
+- [x] Task 6: Declare the `VpbBalansLink` overlay register with `costCenterId` FK (to `CostCenter` with `ondernemingsActiviteit: true`), `accountNumbers` array of `Account.accountNumber` strings, `vpbPligtigVanaf` date per REQ-VPB-002
+- [x] Task 7: Declare the Vpb-balans aggregation (output `VpbBalansFiltered` with `schema:Dataset` annotation) filtering `GLLine` on `accountNumber IN VpbBalansLink.accountNumbers` AND `periodId IN fiscalYearPeriods`, grouped per `costCenterId`, producing Activa/Passiva/Resultaat per ondernemingsactiviteit per REQ-VPB-003
+- [x] Task 8: Honour the T1 balance invariant (REQ-GL-005) per cost-center in the Vpb-balans; surface unbalanced ondernemingsactiviteiten as warnings
+- [x] Task 9: Register the Vpb-aangifte voorbereiding docudesk template in `lib/Settings/docudesk-templates.json` populated from the Vpb-balans aggregation per REQ-VPB-004; SBR payload binding validates against the Belastingdienst Vpb XSD
+- [x] Task 10: Wire the SBR aangifte transmission to ride the T4-base `bookkeeping-sbr-xbrl-reporting` SBR endpoint; no new SBR client per ADR-019
+- [x] Task 11: Add aggregation invariant warning for orphaned Vpb-pligt (a Vpb-pligtige account not referenced by any `VpbBalansLink`) in the Vpb menu detail view
+- [x] Task 12: Add Vennootschapsbelasting navigation + pages to `src/manifest.json` (`featureFlags.mkb-vpb`, `Bookkeeping > Vennootschapsbelasting`, `type: index` for Vpb-pligtige cost-centers/accounts + `type: detail` for Vpb-balans + aangifte voorbereiding per ondernemingsactiviteit) per REQ-VPB-005; `node tests/validate-manifest.js` exits 0
+- [x] Task 13: Update `openspec/architecture/adr-000-data-model.md` with a one-paragraph annotation for `vpbPligtig` + `VpbBalansLink` cross-referencing this spec
 
 ## Verification
 
