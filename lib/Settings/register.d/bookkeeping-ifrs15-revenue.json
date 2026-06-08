@@ -16,6 +16,10 @@
 				"description": "A customer contract under IFRS 15 — the legal instrument that bundles one or more performance obligations (REQ-IFRS15-001). Carries identification, dates, the decomposed transaction price (fixed + estimated variable), currency, the signed-at date, the originating quote/order reference, and a contractGroupId for IFRS 15.17 combination-of-contracts treatment (REQ-IFRS15-011). Contracts are first-class entities with their own lifecycle and modification history; they are never embedded in GL transactions or invoice rows.",
 				"x-schema-org": "schema:CreativeWork",
 				"x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
+				},
 				"type": "object",
 				"required": [
 					"contractNumber",
@@ -158,6 +162,10 @@
 				"description": "A distinct promised good or service within a contract (IFRS 15.22-30, REQ-IFRS15-005). Carries the satisfaction pattern (point-in-time | over-time) and, for over-time POs, the output method (units-delivered, milestones, time-elapsed, percentage-of-completion) or input method (cost-to-cost, labour-hours, machine-hours, units-produced). For cost-to-cost it sources actual + estimated cost from the project-accounting module (costBasis FK) and derives percentageComplete = actualCostToDate / revisedTotalEstimatedCost (REQ-IFRS15-005). Holds the stand-alone selling price (SSP) used for relative allocation and the resulting allocated price.",
 				"x-schema-org": "schema:Service",
 				"x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
+				},
 				"type": "object",
 				"required": [
 					"contractId",
@@ -287,6 +295,10 @@
 				"description": "The decomposed transaction price of a contract (IFRS 15.46-72, REQ-IFRS15-002). Splits the price into fixed consideration, estimated variable consideration (with estimation method and the IFRS 15.56 constraint), significant-financing-component adjustment (payment timing > 12 months), non-cash consideration at fair value, and consideration payable to the customer (a price reduction). Total = fixed + min(variable, constraint) + financing + nonCash - payableToCustomer.",
 				"x-schema-org": "schema:PriceSpecification",
 				"x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
+				},
 				"type": "object",
 				"required": [
 					"contractId",
@@ -372,6 +384,10 @@
 				"description": "The per-PO allocation of the total transaction price (IFRS 15.73-90, REQ-IFRS15-004). Default method is relative stand-alone selling price (allocatedAmount[i] = SSP[i] / sum(SSP) * totalPrice); the residual method applies when one PO's SSP is highly uncertain. Stored per PO (not derived each time) to preserve the original allocation intent for audit; recalculated on modification or material constraint change.",
 				"x-schema-org": "schema:MonetaryAmount",
 				"x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
+				},
 				"type": "object",
 				"required": [
 					"contractId",
@@ -429,6 +445,10 @@
 				"description": "Evidence that a performance obligation moved toward satisfaction in a period (REQ-IFRS15-005, REQ-IFRS15-007). Records the recognised amount, the basis (units delivered, % complete, milestone), and the supporting evidence (delivery note, timesheet, sign-off). Posting a RevenueRecognitionEvent materialises exactly one balanced GLTransaction (debit accrued-revenue / credit revenue) via the T1 materialisation extension, linked by glTransactionId.",
 				"x-schema-org": "schema:Event",
 				"x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
+				},
 				"type": "object",
 				"required": [
 					"poId",
@@ -519,6 +539,10 @@
 				"description": "Read-only, derived nightly per contract (IFRS 15.116-119, REQ-IFRS15-007). A contract asset is the entity's right to consideration when cumulative recognised revenue exceeds cumulative billed amount. Never authored by operators; recalculated by the idempotent nightly cut-off and posted to the accrued-revenue control account.",
 				"x-schema-org": "schema:MonetaryAmount",
 				"x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
+				},
 				"x-openregister": {
 					"readonly": true
 				},
@@ -594,6 +618,10 @@
 				"description": "Read-only, derived nightly per contract (IFRS 15.116-119, REQ-IFRS15-007). A contract liability (deferred revenue) is the obligation to transfer goods/services for which the entity has already been paid/billed, when cumulative billed exceeds cumulative recognised. Never authored by operators; recalculated by the idempotent nightly cut-off and posted to the deferred-revenue control account.",
 				"x-schema-org": "schema:MonetaryAmount",
 				"x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
+				},
 				"x-openregister": {
 					"readonly": true
 				},
@@ -663,6 +691,10 @@
 				"description": "An amendment to a contract, recorded as a separate entity (never an inline edit) and classified per IFRS 15.18-21 (REQ-IFRS15-006): new-contract (distinct goods/services at SSP), not-distinct-cumulative (combine + catch-up), or prospective (price-only). Carries before/after snapshots for audit and the new transaction price. Classification may be auto-proposed and overridden with a documented reason.",
 				"x-schema-org": "schema:UpdateAction",
 				"x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
+				},
 				"type": "object",
 				"required": [
 					"parentContractId",
@@ -764,6 +796,10 @@
 				"description": "A periodic re-estimation of variable consideration (rebates, refunds, bonuses, penalties, volume discounts) per IFRS 15.50-58 (REQ-IFRS15-003). Each entry records the prior and new constrained estimate, the constraint reason, the delta, the operator who recorded it, and the GLTransaction posted to recognise additional revenue (delta > 0) or reverse revenue (delta < 0).",
 				"x-schema-org": "schema:MonetaryAmount",
 				"x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
+				},
 				"type": "object",
 				"required": [
 					"contractId",
@@ -833,6 +869,10 @@
 				"description": "Incremental costs to obtain (sales commission, proposal costs) or fulfil (setup, customisation) a contract, capitalised when the IFRS 15.91-95 criteria are met (REQ-IFRS15-009). Amortised on the same pattern as the related PO satisfaction and tested for impairment each reporting date; if the contract becomes onerous the carried amount is written down with a GL posting.",
 				"x-schema-org": "schema:MonetaryAmount",
 				"x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
+				},
 				"type": "object",
 				"required": [
 					"contractId",
@@ -923,6 +963,10 @@
 				"description": "Read-only per-contract, per-period time series of the transaction price flowing into recognised revenue (IFRS 15.120 remaining-performance-obligation disclosure, REQ-IFRS15-008). Stores allocated price, prior cumulative, period recognised, cumulative recognised, remaining amount, remaining months, and the deferred-liability / accrual-asset split. Aggregatable by customer, segment, and consolidated; forecast forward 60+ months. Derived nightly after the cut-off; never authored by operators.",
 				"x-schema-org": "schema:MonetaryAmount",
 				"x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
+				},
 				"x-openregister": {
 					"readonly": true
 				},
