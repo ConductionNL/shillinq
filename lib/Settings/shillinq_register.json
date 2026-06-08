@@ -11350,7 +11350,7 @@
 						"from": "draft",
 						"to": "issued",
 						"label": "Issue invoice",
-						"description": "Issue the AR invoice. Guards: (1) FiscalPeriod open per REQ-PC-004; (2) balance guard (T1 REQ-JE-007); (3) credit-limit precondition per REQ-AR-006 — evaluated against the customerOpenArBalance aggregation; emits a warning by default, hard-block when administration policy sets requires.creditLimit.mode='block'. Action: materialise one balanced GLTransaction per T1 REQ-JE-007 pattern (debit AR control account, credit revenue accounts per lines). Sets glTransactionId back-reference.",
+						"description": "Issue the AR invoice. Guards: (1) FiscalPeriod open per REQ-PC-004; (2) balance guard (T1 REQ-JE-007); (3) credit-limit precondition per REQ-AR-006 — evaluated against the customerOpenArBalance aggregation; emits a warning by default, hard-block when administration policy sets requires.creditLimit.mode='block'; (4) per-line service-category VAT-rate gate per bookkeeping-invoice-vat-kassakoppeling REQ-VAT-002 (consults ServiceCategoryOverride before rejecting per REQ-VAT-002bis); (5) VATGLAccounts configured for the administration per REQ-VAT-006 (actionable error message + deep link per REQ-VAT-008). Actions: (a) materialise one balanced GLTransaction per T1 REQ-JE-007 pattern with revenue + VATPayable21/9/6/0 credits per REQ-VAT-003; (b) append one VATAuditRecord per line with lifecycleEvent=issued and settlementPeriod bound from invoiceDate + administration.vatFilingFrequency per REQ-VAT-004 + REQ-VAT-005. Sets glTransactionId back-reference.",
 						"requires": "OCA\\Shillinq\\Lifecycle\\BalanceGuard::isBalanced",
 						"preconditions": [
 							{
@@ -11371,21 +11371,94 @@
 									"en": "Credit limit exceeded: open AR €{{openBalance}} + invoice €{{totalAmount}} = €{{projectedBalance}} > limit €{{creditLimit}} for customer {{customerNumber}}."
 								},
 								"description": "REQ-AR-006 declarative aggregation predicate. Aggregates customer's open AR balance (sum of totalAmount for state in issued/partially-paid/overdue/disputed) and compares against CustomerMaster.creditLimit. Pure x-openregister-aggregations per ADR-031; no CreditLimitService PHP class."
+							},
+							{
+								"id": "vat-service-category-gate",
+								"type": "per-line-predicate",
+								"appliesPerItem": "lines[]",
+								"defaultMatrix": {
+									"product": [
+										0,
+										6,
+										21
+									],
+									"service": [
+										0,
+										9,
+										21
+									],
+									"exempt": [
+										0
+									]
+								},
+								"predicate": "this.vatRate IN defaultMatrix[this.serviceCategory] OR EXISTS(ServiceCategoryOverride WHERE administrationId=ARInvoice.administrationId AND serviceCategory=this.serviceCategory AND vatRate=this.vatRate)",
+								"defaultSeverity": "block",
+								"messageTemplate": {
+									"nl": "Regel {{lineSequence}}: servicecategorie '{{serviceCategory}}' staat geen BTW-tarief {{vatRate}}% toe. Controleer de admin-instellingen voor servicecategorie-uitzonderingen.",
+									"en": "Line {{lineSequence}}: Service category '{{serviceCategory}}' does not permit {{vatRate}}% VAT. Check admin settings for service-category overrides."
+								},
+								"description": "REQ-VAT-002 + REQ-VAT-002bis: validates every line's vatRate against the serviceCategory matrix; consults ServiceCategoryOverride before rejecting. Pure declarative predicate per ADR-031; no PHP VAT validator service. When an override authorises the line, the resulting VATAuditRecord stores overrideId for audit traceability per REQ-VAT-004."
+							},
+							{
+								"id": "vat-gl-accounts-configured",
+								"type": "existence-check",
+								"target": "VATGLAccounts",
+								"predicate": "EXISTS(VATGLAccounts WHERE administrationId=this.administrationId)",
+								"appliesWhen": "ANY(this.lines[].vatRate > 0) OR ANY(this.lines[].vatAmount > 0)",
+								"defaultSeverity": "block",
+								"messageTemplate": {
+									"nl": "Kan factuur niet uitgeven: BTW-grootboekrekeningen zijn niet geconfigureerd voor deze administratie. Ga naar Instellingen > Boekhouding > BTW-configuratie om de vier BTW-grootboekrekeningen toe te wijzen.",
+									"en": "Cannot issue invoice: VAT GL accounts not configured for administration. Go to Settings > Accounting > Tax Configuration to assign VAT GL accounts."
+								},
+								"deepLink": "/index.php/apps/shillinq/settings/tax-configuration",
+								"description": "REQ-VAT-006 + REQ-VAT-008: ensures the administration has configured the four VATPayable* GL accounts before VAT accrual materialises. The actionable error message + deep link guide the operator straight to the Tax Configuration admin panel."
 							}
 						],
 						"actions": [
 							{
 								"trigger": "x-openregister-lifecycle-action",
 								"action": "materialise-gl-transaction",
-								"description": "Emit one balanced GLTransaction with debit to AR control account (Account.isARControlAccount = true) and credit to revenue accounts per lines per T1 REQ-JE-007 pattern. Sets glTransactionId back-reference; sets GLLine.subLedgerType=ar + GLLine.subLedgerRef=<ARInvoice UUID> per REQ-AR-001.",
+								"description": "Emit one balanced GLTransaction with debit to AR control account (Account.isARControlAccount = true), credit to revenue accounts per lines per T1 REQ-JE-007 pattern, and credit to VATPayable21/9/6/0 per rate bucket per REQ-VAT-003 (account numbers resolved from VATGLAccounts for the administration). Sets glTransactionId back-reference; sets GLLine.subLedgerType=ar + GLLine.subLedgerRef=<ARInvoice UUID> per REQ-AR-001.",
 								"actionParameters": {
 									"register": "shillinq",
 									"targetSchema": "GLTransaction",
 									"debitMapping": "Account[isARControlAccount=true].accountNumber",
 									"creditMapping": "lines[].accountNumber",
+									"vatBucketMapping": {
+										"21": "VATGLAccounts[administrationId=this.administrationId].vat21Account",
+										"9": "VATGLAccounts[administrationId=this.administrationId].vat9Account",
+										"6": "VATGLAccounts[administrationId=this.administrationId].vat6Account",
+										"0": "VATGLAccounts[administrationId=this.administrationId].vat0Account"
+									},
+									"vatAmountField": "lines[].vatAmount",
+									"vatRateField": "lines[].vatRate",
 									"subLedgerType": "ar",
 									"subLedgerRefField": "id",
 									"keepBalanced": true
+								}
+							},
+							{
+								"trigger": "x-openregister-lifecycle-action",
+								"action": "append-vat-audit-record",
+								"description": "Per REQ-VAT-004 + REQ-VAT-005: append one VATAuditRecord per ARInvoice line with lifecycleEvent='issued', settlementPeriod bound from invoiceDate + administration.vatFilingFrequency (monthly|quarterly|annual), and immutable copies of (lineSequence, lineDescription, lineAmount, vatRate, vatAmount, serviceCategory). When the line was authorised under a ServiceCategoryOverride, the matching override's id is captured on overrideId. Pure declarative materialisation per ADR-031; no app-local VAT-audit service.",
+								"actionParameters": {
+									"register": "shillinq",
+									"targetSchema": "VATAuditRecord",
+									"perItem": "lines[]",
+									"setFields": {
+										"invoiceNumber": "this.invoiceNumber",
+										"invoiceDate": "this.invoiceDate",
+										"lineSequence": "item.index + 1",
+										"lineDescription": "item.description",
+										"lineAmount": "item.amount",
+										"vatRate": "item.vatRate",
+										"vatAmount": "item.vatAmount",
+										"serviceCategory": "item.serviceCategory",
+										"lifecycleEvent": "issued",
+										"eventDate": "NOW()",
+										"settlementPeriod": "bindSettlementPeriod(this.invoiceDate, Administration[id=this.administrationId].vatFilingFrequency)",
+										"administrationId": "this.administrationId"
+									}
 								}
 							}
 						]

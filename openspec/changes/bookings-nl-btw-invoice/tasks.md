@@ -19,9 +19,9 @@
 
 - [x] Task 6: Declare new immutable `VATAuditRecord` schema in `lib/Settings/shillinq_register.json` per REQ-VAT-004 with all fields (invoiceNumber, invoiceDate, lineSequence, lineDescription, lineAmount, vatRate, vatAmount, serviceCategory, lifecycleEvent, eventDate, paymentDate, settlementPeriod FK, administrationId FK); mark as append-only (no update/delete operations)
 
-- [ ] Task 7: Add `x-openregister-lifecycle` to `ARInvoice` schema declaring VAT accrual materialisation on `issued` transition (REQ-VAT-003) — creates balanced GL transaction with debit to AR control and credits to VATPayable21/9/6/0 by rate bucket; materialisation template captures VAT bucket mapping
+- [x] Task 7: Add `x-openregister-lifecycle` to `ARInvoice` schema declaring VAT accrual materialisation on `issued` transition (REQ-VAT-003) — creates balanced GL transaction with debit to AR control and credits to VATPayable21/9/6/0 by rate bucket; materialisation template captures VAT bucket mapping
 
-- [ ] Task 8: Add precondition to `ARInvoice.issue` lifecycle transition validating service-category per REQ-VAT-002 (product permits 21/6/0; service permits 21/9/0; exempt permits only 0); precondition logs failure with guidance linking to admin settings or override mechanism; generate audit-trail entry if override is applied
+- [x] Task 8: Add precondition to `ARInvoice.issue` lifecycle transition validating service-category per REQ-VAT-002 (product permits 21/6/0; service permits 21/9/0; exempt permits only 0); precondition logs failure with guidance linking to admin settings or override mechanism; generate audit-trail entry if override is applied
 
 - [x] Task 9: Declare service-category override mechanism in `lib/Settings/shillinq_register.json` as new `ServiceCategoryOverride` schema with fields (serviceCategory, vatRate, administrationId, reason, createdAt, createdBy) for exceptions; validation in REQ-VAT-002 checks overrides before rejection
 
