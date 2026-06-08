@@ -159,7 +159,7 @@
   + concerncontroller sign) → submitted (after transmission to toezichthouder via
   OpenConnector) → archived; store signOff-person + timestamp per signatory
 
-- [ ] Task 21: DEFERRED (needs a live OpenConnector `schatkistbankieren-sweep` source + AGT credentials; not runtime-testable here). Implement schatkistbankieren sweep-job OpenConnector integration per
+- [~] Task 21: DEFERRED (needs a live OpenConnector `schatkistbankieren-sweep` source + AGT credentials; not runtime-testable here). Implement schatkistbankieren sweep-job OpenConnector integration per
   REQ-FDO-005 — call OpenConnector source named `schatkistbankieren-sweep` with
   params {organisationId, sweepAmount, sourceAccount: RO, targetAccount: AGT},
   expecting {status: "success" | "failure", receiptNumber, timestamp}; log receipt in
