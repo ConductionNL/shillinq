@@ -73,11 +73,12 @@
   `GLLine.frameworkJournalEntry` FK, auto-populate `DualTransaction` record with framework
   references.
 
-- [ ] Task 12: Implement divergence auto-classification logic per REQ-DGAAP-003: on GL posting,
-  examine account + posting date; if account matches lease/pension/customer-AR/supplier-AP accounts
-  and posting aligns with standard-trigger dates, auto-populate `DualTransaction.divergence_reason_code`
-  and `divergence_classification`. Allow group-accountant override with audit-trail reason.
-  **DEFERRED** — the divergence reason-code enum + the override fields (`classificationOverridden`/`overrideReason`) and the reconcile guard ship declaratively; the on-posting auto-classification HOOK requires the not-yet-stable OR transaction-parallel materialisation extension. Tracked for the GL-materialisation integration cycle.
+- [x] Task 12: Declarative scaffold landed; on-posting auto-classification hook DEFERRED to OR transaction-parallel materialisation. Evidence in `lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json`:
+  - `DualTransaction.divergenceReasonCode` enum is fixed to `{LEASE_IFRS16, PENSION_IAS19, ECL_IFRS9, REVENUE_IFRS15, IMPAIRMENT_IAS36, BORROWING_COST_IAS23, DEFERRED_TAX_IAS12, BUSINESS_COMBINATION_IFRS3, NONE}` (REQ-DGAAP-003).
+  - `DualTransaction.divergenceClassification` enum `{permanent, temporary, reclassification}` drives IAS-12 deferred tax (REQ-DGAAP-006).
+  - `DualTransaction.classificationOverridden` (default `false`) + `DualTransaction.overrideReason` (nullable) carry the group-accountant override audit trail (REQ-DGAAP-003).
+  - Lifecycle `open → classified → reconciled` + `reopen` transition; the `reconcile` transition is gated by `OCA\Shillinq\Lifecycle\DualGaapGuard::canReconcileTransaction` (ADR-031 single-method exception) which enforces "reason code present AND, for temporary differences, deferred-tax effect present" — the two cross-field preconditions the declarative DSL cannot express.
+  **DEFERRED** — the on-posting auto-classification HOOK (examine account + posting date against lease/pension/AR/AP accounts and standard-trigger dates) requires the not-yet-stable OR transaction-parallel materialisation extension; tracked for the GL-materialisation integration cycle alongside Tasks 15 / 18. The data shape and guard are in place so the future hook only has to populate the existing fields.
 
 - [ ] Task 13: Implement COA-mapping validation per REQ-DGAAP-002: COA-mapping wizard accepts
   source account → target accounts[] with allocation rule (percentage, formula, ratio-driver);
