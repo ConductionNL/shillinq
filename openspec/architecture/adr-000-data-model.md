@@ -7474,3 +7474,154 @@ ondernemingsactiviteit.
 
 **Cites:** ADR-031 (schema-declarative), ADR-037 (modular register
 fragments), ADR-019 (no new SBR client), ADR-024 (Tier-4 manifest pages).
+
+## SEPA Direct Debit (Incasso) entities
+
+> **Source:** `openspec/changes/bookkeeping-sepa-direct-debit/`. Five
+> new registers + two AR-core overlays (`CustomerMaster.defaultMandateId`,
+> `ARInvoice.paymentMethod` / `directDebitMandateId` /
+> `directDebitPreNotificationInvoiceId`). All registers carry
+> `x-openregister-audit: true` semantics via T2 audit-trail-immutable;
+> pain.008 / pain.002 / camt.054 payloads are archived 7+ years
+> (bewaarplicht, design D11). Lifecycle guards live under
+> `lib/Lifecycle/` per ADR-031 exception. Owning fragment:
+> `lib/Settings/register.d/bookkeeping-sepa-direct-debit.json`.
+
+### SepaMandate
+**Schema.org:** `schema:FinancialProduct`
+_A SEPA Direct Debit mandate (incassomachtiging) authorising the creditor to collect from a debtor account under the SDD CORE or B2B rulebook. Source of truth for incasso eligibility; collections may only be scheduled against an `active` mandate (design D1)._
+**Primary spec:** bookkeeping-sepa-direct-debit
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| mandateReference | string | Yes | Unique mandate reference per creditor, max 35 chars, immutable once issued (REQ-SDD-001) |
+| creditorIdentifier | string | Yes | Dutch creditor identifier NL{check}ZZZ{KvK} (REQ-SDD-001) |
+| scheme | string | Yes | SDD rulebook: `CORE` (consumer) or `B2B` (business) (REQ-SDD-001) |
+| type | string | Yes | `recurring` (RCUR-capable) or `oneoff` (OOFF, single collection only) (REQ-SDD-002) |
+| status | string | Yes | Lifecycle: `pending` / `active` / `cancelled` / `expired` / `suspended` (REQ-SDD-001, REQ-SDD-008) |
+| signedAt | date | Yes | Date debtor signed the mandate (REQ-SDD-001) |
+| signedBy | string | Yes | Debtor name as on the mandate document (REQ-SDD-001) |
+| debtorIban | string | Yes | Debtor IBAN; mod-97 validated at batch generation (REQ-SDD-005) |
+| debtorBic | string | No | Mandatory for non-EEA destinations (REQ-SDD-001) |
+| debtorName | string | Yes | Debtor legal or trading name (REQ-SDD-001) |
+| debtorAddress | object | No | Optional postal address (REQ-SDD-001) |
+| debtorAccountType | string | Yes | `consumer` (CORE only) or `business` (B2B only); scheme mismatch rejected `sdd.mandate.scheme.mismatch` |
+| firstCollectionDate | date | No | First permissible collection date (REQ-SDD-001) |
+| lastCollectionDate | date | No | Last known or planned collection date (REQ-SDD-001) |
+| lastUsedAt | date | No | Drives 36-month dormancy expiry (REQ-SDD-008) |
+| mandateDocument | string | No | OR file reference to scanned signature / digital-signing evidence (REQ-SDD-001) |
+| cancellationReason | string | No | Free-text reason recorded on cancellation (REQ-SDD-008) |
+| preNotificationDays | integer | No | Lead time in calendar days; default 14 (REQ-SDD-003) |
+| reviewFlag | boolean | No | Set true on consumer refund (MD06); high refund rate risks scheme exclusion (REQ-SDD-007) |
+| administrationId | string | Yes | Tenant FK (REQ-SDD-001) |
+
+**Relations:**
+- → DirectDebitCollection (one-to-many, via collection.mandateId)
+- → CustomerMaster (many-to-one inverse, via customer.defaultMandateId; one default mandate per customer)
+- → ARInvoice (one-to-many inverse, via invoice.directDebitMandateId)
+
+### DirectDebitCollection
+**Schema.org:** `schema:PaymentMethod`
+_A single SEPA Direct Debit collection against a mandate. `sequenceType` is auto-derived from mandate history by `SequenceTypeGuard::deriveSequenceType`; operator input is rejected (design D2 / ADR-031 exception)._
+**Primary spec:** bookkeeping-sepa-direct-debit
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| mandateId | string | Yes | FK to SepaMandate (REQ-SDD-002) |
+| invoiceId | string | No | FK to ARInvoice (nullable for ad-hoc collections) |
+| amount | number | Yes | Collection amount EUR, two decimals, min 0.01 (REQ-SDD-002) |
+| currency | string | Yes | Always `EUR` for SEPA (REQ-SDD-002) |
+| sequenceType | string | Yes | `FRST` / `RCUR` / `OOFF` / `FNAL` — auto-derived (REQ-SDD-002, design D2) |
+| requestedCollectionDate | date | Yes | Date funds should hit creditor account (REQ-SDD-002) |
+| endToEndId | string | Yes | Unique end-to-end identifier per creditor, max 35 chars |
+| status | string | Yes | Lifecycle: `scheduled` → `submitted` → `accepted_by_bank` → `succeeded` / `rejected` / `refunded` |
+| submittedInBatchId | string | No | FK to DirectDebitBatch (REQ-SDD-005) |
+| pain002ReasonCode | string | No | ISO 20022 reason code if rejected (REQ-SDD-006) |
+| camt054ReferenceId | string | No | Reference ID from the camt.054 that closed the collection (REQ-SDD-007) |
+| repostedAsCollectionId | string | No | FK to new collection created on repost (REQ-SDD-009) |
+| administrationId | string | Yes | Tenant FK (REQ-SDD-002) |
+
+**Relations:**
+- → SepaMandate (many-to-one, via mandateId)
+- → DirectDebitBatch (many-to-one, via submittedInBatchId)
+- → ARInvoice (many-to-one, via invoiceId)
+- → RTransaction (one-to-many, via rtransaction.collectionId)
+- → PreNotification (one-to-many, via prenotification.collectionId)
+
+### DirectDebitBatch
+**Schema.org:** `schema:Invoice`
+_A pain.008.001.02 batch aggregating homo-sequence collections for submission. `pain008Xml` / `pain002Xml` are archived 7+ years (bewaarplicht, design D11). Marked `isArchived: true` by default; explicit retention-override required to delete._
+**Primary spec:** bookkeeping-sepa-direct-debit
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| messageId | string | Yes | Globally unique message id per creditor per file, max 35 chars |
+| creationDateTime | datetime | Yes | Timestamp the batch was generated (REQ-SDD-005) |
+| requestedCollectionDate | date | Yes | Earliest collection date in the batch (REQ-SDD-005) |
+| scheme | string | Yes | `CORE` or `B2B` (REQ-SDD-005) |
+| sequenceType | string | Yes | Homo-sequence: `FRST` / `RCUR` / `OOFF` / `FNAL` (REQ-SDD-005) |
+| collectionCount | integer | Yes | Equals pain.008 NbOfTxs (REQ-SDD-005) |
+| controlSum | number | Yes | Equals pain.008 CtrlSum, in EUR (REQ-SDD-005) |
+| status | string | Yes | Lifecycle: `draft` / `generated` / `submitted` / `accepted_by_bank` / `partially_rejected` / `fully_rejected` |
+| pain008Xml | string | No | Full ISO 20022 pain.008.001.02 payload; archived non-deletable (REQ-SDD-005, REQ-SDD-010) |
+| pain002Xml | string | No | Incoming pain.002 status report; archived (REQ-SDD-006, REQ-SDD-010) |
+| submittedAt | datetime | No | When the batch was submitted via bank connector (REQ-SDD-005) |
+| isArchived | boolean | No | Retention flag (default true); pain files must not auto-delete (REQ-SDD-010, design D11) |
+| administrationId | string | Yes | Tenant FK (REQ-SDD-005) |
+
+**Relations:**
+- → DirectDebitCollection (one-to-many inverse, via collection.submittedInBatchId)
+
+### RTransaction
+**Schema.org:** `schema:MoneyTransfer`
+_A bank-side R-transaction (reject / return / refund / reversal / revocation / request-for-cancellation) parsed from pain.002 or camt.054. Captured separately for audit and reposting decisions (design D7). Non-deletable per REQ-SDD-010; RBAC denies `delete`._
+**Primary spec:** bookkeeping-sepa-direct-debit
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| collectionId | string | Yes | FK to DirectDebitCollection (REQ-SDD-007) |
+| type | string | Yes | `reject` / `return` / `refund` / `reversal` / `revocation` / `request_for_cancellation` |
+| reasonCode | string | Yes | ISO 20022 ExternalReturnReason code (REQ-SDD-007) |
+| reasonText | string | No | Human-readable reason from the bank |
+| originatorBic | string | No | BIC of the initiating institution |
+| transactionAmount | number | Yes | Amount of the R-transaction (REQ-SDD-007) |
+| valueDate | date | Yes | Date the debtor account was re-credited (REQ-SDD-007) |
+| notifiedAt | datetime | Yes | When shillinq received the R-transaction notification |
+| administrationId | string | Yes | Tenant FK (REQ-SDD-007) |
+
+**Relations:**
+- → DirectDebitCollection (many-to-one, via collectionId)
+
+### PreNotification
+**Schema.org:** `schema:Message`
+_A vooraankondiging for a collection. A collection MUST NOT enter a pain.008 batch unless its pre-notification is sent or carried on the invoice line (design D3 / REQ-SDD-003)._
+**Primary spec:** bookkeeping-sepa-direct-debit
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| collectionId | string | Yes | FK to DirectDebitCollection (REQ-SDD-003) |
+| sentAt | datetime | No | When the notification was actually sent; null = not yet sent |
+| channel | string | No | Dispatch channel: `email` / `letter` / `invoice_line` |
+| noticeDays | integer | Yes | Calendar days between notification and collection date; default 14 |
+| recipientAddress | string | No | Email, postal address, or invoice reference per channel |
+| administrationId | string | Yes | Tenant FK (REQ-SDD-003) |
+
+**Relations:**
+- → DirectDebitCollection (many-to-one, via collectionId)
+
+### CustomerMaster (SDD overlay)
+Adds `defaultMandateId` (nullable FK to SepaMandate) to the AR-core
+`CustomerMaster` entity owned by `add-shillinq-bookkeeping-compliance.json`.
+When set, the AR billing flow proposes direct-debit collection by default
+(REQ-SDD-002). The shillinq `CustomerMaster` is the AR-core analogue of the
+company-wide `Counterparty` entity referenced in design D1.
+
+### ARInvoice (SDD overlay)
+Adds the direct-debit payment-method linkage to the AR-core `ARInvoice`
+entity owned by `add-shillinq-bookkeeping-compliance.json`:
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| paymentMethod | string | No | `bank_transfer` / `direct_debit` / `cash` / `card` / `other`; default `bank_transfer` (REQ-SDD-002) |
+| directDebitMandateId | string | No | FK to SepaMandate; required when `paymentMethod = direct_debit` (REQ-SDD-002) |
+| directDebitPreNotificationInvoiceId | string | No | Self-FK to the invoice whose line item carried the SEPA pre-notification (REQ-SDD-003, design D3) |
