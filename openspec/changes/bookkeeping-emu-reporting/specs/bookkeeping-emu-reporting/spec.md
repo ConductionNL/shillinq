@@ -104,9 +104,11 @@ Uitstaande schuld per instrument per peildatum (kwartaal-ultimo of jaar-ultimo).
 **Relations:**
 - → EMUReport (many-to-one)
 
-## Requirements
+## ADDED Requirements
 
 ### Requirement: REQ-EMU-001 Kwartaal-EMU-saldo aangifte produceren
+
+The system SHALL automatically generate a quarterly EMU-saldo concept-aangifte within 5 working days of quarter-end, derived from the BBV-grootboek for the period.
 
 Het systeem MOET per kwartaal automatisch een conceptaangifte EMU-saldo genereren binnen 5 werkdagen na het einde van het kwartaal, op basis van het BBV-grootboek over de betreffende periode.
 
@@ -128,6 +130,8 @@ Het systeem MOET per kwartaal automatisch een conceptaangifte EMU-saldo generere
 
 ### Requirement: REQ-EMU-002 Accrual-naar-kas conversie volgens Wet Hof
 
+The system SHALL correctly convert the BBV saldo of baten and lasten into the EMU-kassaldo by applying the adjustments mandated by Wet Hof art. 3 and the CBS-instructie EMU-enquête. Every adjustment SHALL be traceable to its source GL line or the applied macro-rule.
+
 Het systeem MOET het BBV saldo van baten en lasten correct converteren naar EMU-kassaldo door de in artikel 3 Wet Hof en de CBS-instructie EMU-enquête voorgeschreven adjustments toe te passen. Elke adjustment MOET traceerbaar zijn naar de bron-grootboekmutatie of de toegepaste macroregel.
 
 #### Scenario: Afschrijving wordt geëlimineerd, investering wordt toegevoegd
@@ -147,6 +151,8 @@ Het systeem MOET het BBV saldo van baten en lasten correct converteren naar EMU-
 
 ### Requirement: REQ-EMU-003 EMU-saldo per CBS-template
 
+The computed EMU-saldo SHALL be presented in the exact CBS-enquête EMU template (kwartaalenquête overheidsfinanciën decentrale overheden), including all 10 verplichte tussenregels.
+
 Het berekende EMU-saldo MOET worden gepresenteerd in het exacte format van de CBS-enquête EMU (kwartaalenquête overheidsfinanciën decentrale overheden), inclusief alle verplichte tussenregels.
 
 #### Scenario: Indeling volgt CBS-template kwartaal-EMU 2026
@@ -157,6 +163,8 @@ Het berekende EMU-saldo MOET worden gepresenteerd in het exacte format van de CB
 - **AND** is elke regel onderbouwd met de onderliggende `EMUAdjustment` records
 
 ### Requirement: REQ-EMU-004 EMU-schuld berekenen volgens Eurostat ESA2010
+
+The system SHALL compute the bruto EMU-schuld per Eurostat ESA2010: every outstanding debt in AF.2 (deposits, only when schatkistbankieren is negative), AF.3 (securities) and AF.4 (loans) at nominal value, ultimo periode.
 
 Het systeem MOET de bruto EMU-schuld berekenen conform Eurostat ESA2010 classificatie: alle uitstaande schuld in de categorieën AF.2 (deposito's, alleen indien negatief schatkistbankieren), AF.3 (obligaties en overige effecten) en AF.4 (leningen) tegen nominale waarde, ultimo periode.
 
@@ -176,6 +184,8 @@ Het systeem MOET de bruto EMU-schuld berekenen conform Eurostat ESA2010 classifi
 
 ### Requirement: REQ-EMU-005 Intercompany-eliminatie voor gemeenschappelijke regelingen
 
+For gemeenschappelijke regelingen (GR) and verbonden partijen in sector S.1313 (lokale overheid), the system SHALL eliminate inter-entity transactions and debt positions to prevent double-counting in the geconsolideerde EMU-rapportage.
+
 Bij gemeenschappelijke regelingen (GR) en verbonden partijen die binnen de overheidssector S.1313 (lokale overheid) vallen, MOET het systeem onderlinge transacties en schuldposities elimineren om dubbeltelling in geconsolideerde EMU-rapportage te voorkomen.
 
 #### Scenario: Bijdrage aan Veiligheidsregio wordt geëlimineerd op koepelniveau
@@ -186,6 +196,8 @@ Bij gemeenschappelijke regelingen (GR) en verbonden partijen die binnen de overh
 - **AND** wordt de eliminatie gemarkeerd met `tegenpartij.consolidatieEMU="intern-S1313"`
 
 ### Requirement: REQ-EMU-006 Automatische CBS XBRL-indiening
+
+The system SHALL submit the final EMU-aangifte via the SBR / CBS XBRL channel, with a digital signature from the authorised functionary, and store the confirmation response.
 
 Het systeem MOET de definitieve EMU-aangifte kunnen indienen via de SBR-/CBS XBRL-koppeling, met digitale ondertekening door de daartoe bevoegde functionaris, en de bevestigingsrespons opslaan.
 
@@ -208,6 +220,8 @@ Het systeem MOET de definitieve EMU-aangifte kunnen indienen via de SBR-/CBS XBR
 
 ### Requirement: REQ-EMU-007 Vergelijking met vastgestelde meerjarenraming
 
+The system SHALL compare the computed EMU-saldo per quarter to the established meerjarenraming (begroting) and surface both absolute and percentage variance.
+
 Het systeem MOET het berekende EMU-saldo per kwartaal automatisch vergelijken met de voor dat jaar/kwartaal vastgestelde meerjarenraming (begroting), en zowel absolute als procentuele afwijking weergeven.
 
 #### Scenario: Q2 EMU-saldo wijkt 27,8% af van begroot
@@ -218,6 +232,8 @@ Het systeem MOET het berekende EMU-saldo per kwartaal automatisch vergelijken me
 - **AND** wordt de afwijking automatisch toegelicht met de top-3 bijdragende EMU-adjustments (bijv. "versnelde dotatie voorziening pensioen wethouders EUR 450K, hogere investering MFA Centrum EUR 820K kas, lagere OZB-ontvangsten EUR 230K")
 
 ### Requirement: REQ-EMU-008 Afwijkingsalert bij overschrijding individuele EMU-referentiewaarde
+
+The system SHALL emit an alert when the running-year EMU-saldo approaches the individual EMU-referentiewaarde (the per-entity norm published annually by the Rijk) or when the sector macro-ruimte risks exhaustion.
 
 Het systeem MOET een alert genereren wanneer het EMU-saldo over een lopend jaar de individuele referentiewaarde (de "EMU-norm" per decentrale overheid, jaarlijks vastgesteld door het Rijk) dreigt te overschrijden, of wanneer de gezamenlijke ruimte voor de sector dreigt te worden uitgenut.
 
@@ -231,6 +247,8 @@ Het systeem MOET een alert genereren wanneer het EMU-saldo over een lopend jaar 
 
 ### Requirement: REQ-EMU-009 Reconciliatie tussen EMU-rapportage en BBV-jaarrekening
 
+The system SHALL show a closed reconciliation between the EMU-aangifte for a boekjaar and the definitive BBV-jaarrekening, with every difference traceable to an individual EMUAdjustment or a documented macro-rule.
+
 Het systeem MOET een sluitende aansluiting tonen tussen de EMU-aangifte over een boekjaar en de definitieve BBV-jaarrekening, waarbij elk verschil herleidbaar is tot een individuele `EMUAdjustment` of een gedocumenteerde macroregel.
 
 #### Scenario: Aansluitcontrole geslaagd voor jaarrekening 2025
@@ -242,6 +260,8 @@ Het systeem MOET een sluitende aansluiting tonen tussen de EMU-aangifte over een
 - **AND** toont het rapport "Aansluiting geslaagd: EUR 6,5M adjustments, 0 ongereconcilieerd"
 
 ### Requirement: REQ-EMU-010 IV3-classificatie als gedeelde taxonomie
+
+The system SHALL classify every CashFlowItem with the IV3 taxonomy (hoofdstuk / functie / categorie) so that the IV3 kwartaalaangifte and the EMU-aangifte are produced from the same classified dataset.
 
 Het systeem MOET alle `CashFlowItem`-records classificeren volgens de IV3-taxonomie (hoofdstuk, functie, categorie), zodanig dat de IV3-kwartaalaangifte aan CBS en de EMU-aangifte vanuit hetzelfde geclassificeerde dataset worden gegenereerd.
 
@@ -255,6 +275,8 @@ Het systeem MOET alle `CashFlowItem`-records classificeren volgens de IV3-taxono
 
 ### Requirement: REQ-EMU-011 Periodieke synchronisatie met Schatkistbankieren
 
+The system SHALL synchronise the schatkistbankieren rekening-courant and Ministerie van Financiën deposito positions daily (and mandatorily at every quarter-close) into DebtPosition records, so the sector-Rijk schuld view stays accurate.
+
 Het systeem MOET dagelijks (of bij elke kwartaalafsluiting verplicht) de uitstaande positie op de schatkistbankieren-rekeningcourant en deposito's bij het Ministerie van Financiën inlezen, om de `DebtPosition`-records voor sector-Rijk transacties accuraat te houden.
 
 #### Scenario: Dagelijkse import van schatkistbankieren-saldo
@@ -266,6 +288,8 @@ Het systeem MOET dagelijks (of bij elke kwartaalafsluiting verplicht) de uitstaa
 - **AND** als het saldo negatief is, telt dit per direct mee in lopende EMU-schuldprognoses
 
 ### Requirement: REQ-EMU-012 Audit-trail en bewaarplicht
+
+All EMU-rapportages, adjustments, CBS confirmations and modifications SHALL be retained immutably for the statutory bewaartermijn (10 years for financial administration of decentrale overheden per Archiefwet 1995) with a complete who/what/when audit-trail.
 
 Alle EMU-rapportages, adjustments, CBS-bevestigingen en wijzigingen MOETEN voor de wettelijke bewaartermijn (10 jaar voor financiële administratie decentrale overheden conform Archiefwet 1995) onveranderbaar worden bewaard, met volledige audit-trail wie wat wanneer wijzigde.
 
