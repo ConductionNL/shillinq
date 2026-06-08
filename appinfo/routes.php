@@ -265,6 +265,7 @@ return [
         ['name' => 'icp#lookupVatId', 'url' => '/api/icp/vat-id-lookup', 'verb' => 'POST'],
         ['name' => 'icp#correction', 'url' => '/api/icp/correction', 'verb' => 'POST'],
         ['name' => 'icp#auditExport', 'url' => '/api/icp/audit-export', 'verb' => 'GET'],
+        ['name' => 'icp#renderInvoicePdf', 'url' => '/api/icp/invoice-pdf', 'verb' => 'GET'],
 
         // IFRS 16 lease accounting (bookkeeping-ifrs-16-lease, REQ-LA-002,
         // REQ-LD-001). Per-contract amortization schedule + per-period

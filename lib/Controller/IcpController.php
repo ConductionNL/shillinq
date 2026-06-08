@@ -33,15 +33,18 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\ArInvoiceIcpPdfRenderer;
 use OCA\Shillinq\Service\IcpFilingService;
 use OCA\Shillinq\Service\IcpService;
 use OCA\Shillinq\Service\ViesService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUserSession;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -61,12 +64,14 @@ class IcpController extends Controller
     /**
      * Constructor for the IcpController.
      *
-     * @param IRequest         $request       The request object.
-     * @param IcpService       $icpService    The ICP read-side computation service.
-     * @param IcpFilingService $filingService The ICP filing write service (correction + export).
-     * @param ViesService      $viesService   The VIES validation service.
-     * @param IUserSession     $userSession   The session for the acting user id (auth body-guard).
-     * @param LoggerInterface  $logger        Logger for diagnostics (no stack traces to client).
+     * @param IRequest                $request       The request object.
+     * @param IcpService              $icpService    The ICP read-side computation service.
+     * @param IcpFilingService        $filingService The ICP filing write service (correction + export).
+     * @param ViesService             $viesService   The VIES validation service.
+     * @param ArInvoiceIcpPdfRenderer $pdfRenderer   The ICP overlay PDF renderer (REQ-ICP-007).
+     * @param ContainerInterface      $container     DI container — OR's ObjectService is fetched lazily.
+     * @param IUserSession            $userSession   The session for the acting user id (auth body-guard).
+     * @param LoggerInterface         $logger        Logger for diagnostics (no stack traces to client).
      *
      * @return void
      */
@@ -75,6 +80,8 @@ class IcpController extends Controller
         private readonly IcpService $icpService,
         private readonly IcpFilingService $filingService,
         private readonly ViesService $viesService,
+        private readonly ArInvoiceIcpPdfRenderer $pdfRenderer,
+        private readonly ContainerInterface $container,
         private readonly IUserSession $userSession,
         private readonly LoggerInterface $logger,
     ) {
@@ -350,6 +357,199 @@ class IcpController extends Controller
         );
 
     }//end auditExport()
+
+    /**
+     * Render the ICP overlay PDF for an AR invoice (REQ-ICP-007).
+     *
+     * Returns the HTML body (Content-Type: text/html, downstream converters
+     * wrap it to a PDF binary) for an ARInvoice whose `icpContext.treatAsIcp`
+     * is true, including the reverse-charge notice, buyer + seller VAT-IDs and
+     * supply-type indication. Fails with HTTP 422 + `icp.invoice.vatid.missing`
+     * when the buyer VAT-ID is absent on a treatAsIcp invoice.
+     *
+     * Query parameters:
+     *  - invoice_id        (required) the ARInvoice record id (slug or @self.id).
+     *  - administration_id (required) administration scope (IDOR-safe, REQ-ICP-001).
+     *
+     * @return DataDisplayResponse|JSONResponse The rendered HTML payload, or a 4xx /
+     *                                            500 JSONResponse on validation /
+     *                                            internal failure.
+     *
+     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     */
+    #[NoAdminRequired]
+    public function renderInvoicePdf(): DataDisplayResponse | JSONResponse
+    {
+        $authError = $this->requireUser();
+        if ($authError !== null) {
+            return $authError;
+        }
+
+        $invoiceId        = trim((string) $this->request->getParam('invoice_id', ''));
+        $administrationId = trim((string) $this->request->getParam('administration_id', ''));
+
+        $error = $this->validateId(value: $invoiceId, label: 'invoice_id');
+        if ($error !== null) {
+            return $error;
+        }
+
+        $error = $this->validateId(value: $administrationId, label: 'administration_id');
+        if ($error !== null) {
+            return $error;
+        }
+
+        try {
+            $records = $this->loadInvoiceContext(
+                invoiceId: $invoiceId,
+                administrationId: $administrationId
+            );
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'IcpController: failed to load ARInvoice + CustomerMaster for ICP PDF',
+                [
+                    'administrationId' => $administrationId,
+                    'invoiceId'        => $invoiceId,
+                    'exception'        => $e->getMessage(),
+                ]
+            );
+
+            return new JSONResponse(
+                ['error' => 'Failed to load invoice context'],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+
+        if ($records['invoice'] === null) {
+            return new JSONResponse(['error' => 'Invoice not found'], Http::STATUS_NOT_FOUND);
+        }
+
+        try {
+            $payload = $this->pdfRenderer->render(
+                invoice: $records['invoice'],
+                customer: $records['customer'],
+                seller: $records['seller']
+            );
+        } catch (\InvalidArgumentException $e) {
+            $message = $e->getMessage();
+            $code    = ArInvoiceIcpPdfRenderer::ERROR_VATID_MISSING;
+            if (str_starts_with($message, $code) === true) {
+                return new JSONResponse(
+                    ['error' => $code, 'message' => $message],
+                    Http::STATUS_UNPROCESSABLE_ENTITY
+                );
+            }
+
+            return new JSONResponse(
+                ['error' => 'Render failed', 'message' => $message],
+                Http::STATUS_UNPROCESSABLE_ENTITY
+            );
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'IcpController: failed to render ICP PDF',
+                [
+                    'administrationId' => $administrationId,
+                    'invoiceId'        => $invoiceId,
+                    'exception'        => $e->getMessage(),
+                ]
+            );
+
+            return new JSONResponse(
+                ['error' => 'Failed to render invoice PDF'],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }//end try
+
+        $response = new DataDisplayResponse(
+            data: $payload['html'],
+            statusCode: Http::STATUS_OK,
+            headers: [
+                'Content-Type'        => 'text/html; charset=utf-8',
+                'Content-Disposition' => 'inline; filename="'.$payload['filename'].'"',
+                'X-Shillinq-Icp'      => 'true',
+            ]
+        );
+
+        return $response;
+
+    }//end renderInvoicePdf()
+
+    /**
+     * Resolve the ARInvoice + CustomerMaster + seller administration triple
+     * for the requesting administration. Administration scope is server-resolved
+     * — clients never pick which administration's invoice to render
+     * (IDOR-safe, REQ-ICP-001).
+     *
+     * @param string $invoiceId        The ARInvoice slug or id.
+     * @param string $administrationId The administration scope.
+     *
+     * @return array{invoice:?array<string,mixed>,customer:array<string,mixed>,seller:array<string,mixed>}
+     */
+    private function loadInvoiceContext(string $invoiceId, string $administrationId): array
+    {
+        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+
+        $invoices = $objectService
+            ->setRegister('shillinq')
+            ->setSchema('ARInvoice')
+            ->findAll(['filters' => ['administrationId' => $administrationId]]);
+
+        $invoice = null;
+        foreach ($invoices as $candidate) {
+            $candidateId = (string) (
+                $candidate['@self']['slug'] ?? $candidate['@self']['id'] ?? $candidate['id'] ?? ''
+            );
+            if ($candidateId === $invoiceId) {
+                $invoice = $candidate;
+                break;
+            }
+        }
+
+        if ($invoice === null) {
+            return ['invoice' => null, 'customer' => [], 'seller' => []];
+        }
+
+        $customer    = [];
+        $customerKey = trim((string) ($invoice['customerId'] ?? ''));
+        if ($customerKey !== '') {
+            $candidates = $objectService
+                ->setRegister('shillinq')
+                ->setSchema('CustomerMaster')
+                ->findAll(['filters' => ['administrationId' => $administrationId]]);
+            foreach ($candidates as $candidate) {
+                $candidateId = (string) (
+                    $candidate['@self']['slug'] ?? $candidate['@self']['id'] ?? $candidate['id'] ?? ''
+                );
+                if ($candidateId === $customerKey
+                    || ((string) ($candidate['customerNumber'] ?? '')) === $customerKey
+                ) {
+                    $customer = $candidate;
+                    break;
+                }
+            }
+        }
+
+        $seller          = [];
+        $administrations = $objectService
+            ->setRegister('shillinq')
+            ->setSchema('Administration')
+            ->findAll(['filters' => []]);
+        foreach ($administrations as $candidate) {
+            $candidateId = (string) (
+                $candidate['@self']['slug'] ?? $candidate['@self']['id'] ?? $candidate['id'] ?? ''
+            );
+            if ($candidateId === $administrationId) {
+                $seller = $candidate;
+                break;
+            }
+        }
+
+        return [
+            'invoice'  => $invoice,
+            'customer' => $customer,
+            'seller'   => $seller,
+        ];
+
+    }//end loadInvoiceContext()
 
     /**
      * Validate and extract the shared period_id + administration_id parameters.
