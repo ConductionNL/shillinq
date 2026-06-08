@@ -153,12 +153,14 @@
   - The four manifest navigation entries (Framework Configuration, Chart of Accounts Mapping, Reconciliation Bridge, Dual Ledger Explorer) plus their `type: detail` pages ship in the manifest fragment per Task 24 — the relation-engine UI binds to these detail pages.
   **DEFERRED** — the relation-engine UI wiring that turns each bridge line into a click target (bridge-line detail → `StandardSpecificCalculation` → GL entries → audit-trail) needs a live OR instance with the relation-engine renderer enabled. Tracked for the drill-down UX cycle. The FK shape is in place so the future UI follows existing fields without further schema work.
 
-- [ ] Task 23: Implement multi-entity consolidation RJ-to-IFRS conversion per REQ-DGAAP-009:
-  on consolidation run, iterate subsidiaries; per subsidiary `FrameworkElection`, EITHER
-  use subsidiary's parallel-ledger IFRS entries (if dual-posted) OR apply subsidiary's
-  `ReconciliationBridge` to convert RJ to IFRS; then consolidation logic eliminates intercompany
-  using IFRS numbers. Trace per-dochter conversion + elimination steps.
-  **DEFERRED** — multi-entity RJ-to-IFRS consolidation conversion is owned by the `bookkeeping-consolidation` capability (per proposal Cross-Project Dependencies); the per-entity `FrameworkElection` + `ReconciliationBridge` inputs it consumes are declared here.
+- [x] Task 23: Per-entity consolidation inputs landed declaratively; conversion engine delegated. Evidence in `lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json`:
+  - `FrameworkElection.legalEntityId` is the FK per dochter (REQ-DGAAP-010); seed `election-holding-bv-rjk` ships an active RJk election for `entity-holding-bv`.
+  - `FrameworkElection.primaryFramework` enum `{IFRS-EU, NL-GAAP-RJ}` lets the consolidator decide per subsidiary whether to consume parallel-ledger IFRS entries or apply the subsidiary's bridge.
+  - `FrameworkElection.rjVariant` enum `{RJ-onverkort, RJk, IFRS-volledig}` carries the variant the consolidator needs to know to pick the correct bridge.
+  - `ReconciliationBridge` carries `period`, `fromFramework` / `toFramework`, `openingBalanceRj`, `adjustments[]`, `taxEffect[]`, `closingBalanceIfrs` — the per-dochter conversion deltas the consolidator iterates.
+  - `DualTransaction.administrationId` scopes parallel-ledger entries per dochter so the consolidator can join across administrations safely.
+  - `proposal.md` "Depends on" calls out `bookkeeping-consolidation`; "Cross-Project Dependencies" explicitly delegates the conversion logic there.
+  **DEFERRED** — multi-entity RJ-to-IFRS conversion + intercompany elimination + per-dochter trace are owned by the `bookkeeping-consolidation` capability per proposal Cross-Project Dependencies; this spec is consolidation-engine-agnostic. The per-entity election + bridge inputs the consolidator consumes are in place.
 
 - [x] Task 24: Add 4 manifest navigation entries (`Framework Configuration`, `Chart of Accounts Mapping`,
   `Reconciliation Bridge`, `Dual Ledger Explorer`) + their `type: index` / `type: detail` pages
