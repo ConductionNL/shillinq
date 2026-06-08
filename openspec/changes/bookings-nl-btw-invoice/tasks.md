@@ -27,7 +27,7 @@
 
 - [x] Task 10: Declare VAT GL account configuration in `lib/Settings/shillinq_register.json` as `VATGLAccounts` schema with fields (administrationId, vat21Account, vat9Account, vat6Account, vat0Account, createdAt, updatedAt) per REQ-VAT-006; installer script sets defaults (2020, 2021, 2022, 2023); admin UI validates all four accounts exist and are unique
 
-- [ ] Task 11: Create seed data file `lib/Data/VAT/nl_vat_rates_2026.json` (4 standard Dutch rates: 21%, 9%, 6%, 0%) per design.md Seed Data; installer inserts into `TaxRate` register on first run; mark as read-only / version-locked
+- [x] Task 11: Create seed data file `lib/Data/VAT/nl_vat_rates_2026.json` (4 standard Dutch rates: 21%, 9%, 6%, 0%) per design.md Seed Data; installer inserts into `TaxRate` register on first run; mark as read-only / version-locked
 
 - [ ] Task 12: Implement VAT-by-period aggregation query in OpenRegister materialization template per REQ-VAT-009 (returns totalNetAmount, totalVAT21/9/6/0, totalGrossAmount, invoiceCount, recordCount); query groups `VATAuditRecord` by `settlementPeriod` and aggregates `vatAmount` by `vatRate`
 
