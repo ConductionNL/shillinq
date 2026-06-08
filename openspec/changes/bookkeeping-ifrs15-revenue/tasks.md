@@ -86,27 +86,27 @@ responsible for:
 
 ### User-Persona Tests (ADR-030)
 
-- [ ] Test-Persona: CFO (archetypes per ADR-010 Dutch small/mid-market):
+- [x] Test-Persona: CFO (archetypes per ADR-010 Dutch small/mid-market) — `docs/journeys/cfo-revenue-forecast-accuracy.md`:
   - Creates contract from sales order (quote-to-cash integration)
   - Reviews revenue waterfall dashboard (60-month forecast)
   - Exports disclosure pack to PDF/XBRL for annual accounts
   - Interprets ARR/MRR forecasts from contract waterfall
   
-- [ ] Test-Persona: Revenue Accountant:
+- [x] Test-Persona: Revenue Accountant — `docs/journeys/revenue-accountant-ifrs15-entry.md`:
   - Enters contract with 3 POs (SaaS, implementation, usage-based)
   - Assigns SSPs and confirms allocation
   - Records variable-consideration estimate with constraint reason
   - Reviews monthly re-estimation and approves constraint change
   - Inspects contract asset/liability dashboard (accruals vs. deferrals)
   
-- [ ] Test-Persona: Controller (period close):
+- [x] Test-Persona: Controller (period close) — `docs/journeys/controller-ifrs15-closeout.md`:
   - Runs nightly cut-off job; validates GL posting balance
   - Reviews contract modifications in pending-approval queue
   - Checks fiscal period open flag (fails gracefully if closed)
   - Reviews on-screen or PDF contract-balance reconciliation
   - Exports disclosure note for auditor review
 
-- [ ] Test-Persona: Auditor:
+- [x] Test-Persona: Auditor — `docs/journeys/auditor-revenue-assertion.md`:
   - Drills into contract register and inspects lifecycle history
   - Validates variable-consideration constraint reason for reasonableness
   - Traces RevenueRecognitionEvent to GL posting (balanced, no duplicates)
