@@ -501,11 +501,25 @@
         "x-openregister-aggregations": {
           "matchCandidates": {
             "label": "Reconciliation Match Candidates",
-            "description": "Consumes active MatchingRule predicates and emits ReconciliationMatch candidates for unmatched BankStatementLine rows per REQ-BR-006. No PHP rule-engine.",
+            "description": "Consumes active MatchingRule predicates and emits ReconciliationMatch candidates for unmatched BankStatementLine rows per REQ-BR-006. Per REQ-BR-004, the first matching rule by priority (lowest number first) emits the candidate; lower-priority rules MUST NOT produce a duplicate candidate for the same line. Predicates within a rule combine with logical AND. No PHP rule-engine.",
             "register": "shillinq",
             "schema": "BankStatementLine",
             "filter": { "status": "unmatched" },
-            "appliesRules": { "register": "shillinq", "schema": "MatchingRule", "filter": { "isActive": true }, "orderBy": "priority" }
+            "appliesRules": { "register": "shillinq", "schema": "MatchingRule", "filter": { "isActive": true, "lifecycleState": "active" }, "orderBy": "priority", "dedupe": "first-match-wins" },
+            "targets": {
+              "ar-invoice": { "register": "shillinq", "schema": "ARInvoice", "matchOn": ["invoiceNumber", "totalAmount", "customerId"] },
+              "ap-invoice": { "register": "shillinq", "schema": "APInvoice", "matchOn": ["invoiceNumber", "totalAmount", "vendorId"] },
+              "gl-transaction": { "register": "shillinq", "schema": "GLTransaction", "matchOn": ["transactionDate", "amount"] },
+              "customer": { "register": "shillinq", "schema": "CustomerMaster", "matchOn": ["name", "iban"] },
+              "vendor": { "register": "shillinq", "schema": "VendorMaster", "matchOn": ["name", "iban"] }
+            },
+            "emits": {
+              "register": "shillinq",
+              "schema": "ReconciliationMatch",
+              "status": "pending",
+              "autoConfirmWhen": "MatchingRule.autoConfirm == true",
+              "description": "When autoConfirm is true the emitted ReconciliationMatch is created with status=confirmed directly, triggering the reconciliation-match-confirmed event consumed by AR/AP invoice lifecycles per REQ-BR-006."
+            }
           }
         },
         "x-openregister-rbac": {
