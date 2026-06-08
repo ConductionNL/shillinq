@@ -11312,8 +11312,29 @@
 						"from": "draft",
 						"to": "issued",
 						"label": "Issue invoice",
-						"description": "Issue the AR invoice. Guards: (1) FiscalPeriod open per REQ-PC-004; (2) credit-limit precondition per REQ-AR-006 (warning by default, hard-block when administration policy enables it; declared in task 10). Action: materialise one balanced GLTransaction per T1 REQ-JE-007 pattern (debit AR control account, credit revenue accounts per lines). Sets glTransactionId back-reference.",
+						"description": "Issue the AR invoice. Guards: (1) FiscalPeriod open per REQ-PC-004; (2) balance guard (T1 REQ-JE-007); (3) credit-limit precondition per REQ-AR-006 — evaluated against the customerOpenArBalance aggregation; emits a warning by default, hard-block when administration policy sets requires.creditLimit.mode='block'. Action: materialise one balanced GLTransaction per T1 REQ-JE-007 pattern (debit AR control account, credit revenue accounts per lines). Sets glTransactionId back-reference.",
 						"requires": "OCA\\Shillinq\\Lifecycle\\BalanceGuard::isBalanced",
+						"preconditions": [
+							{
+								"id": "credit-limit",
+								"type": "aggregation-predicate",
+								"aggregation": "customerOpenArBalance",
+								"groupBy": "customerId",
+								"predicate": "(@aggregation.openBalance + this.totalAmount) <= CustomerMaster[id=this.customerId].creditLimit",
+								"appliesWhen": "CustomerMaster[id=this.customerId].creditLimit IS NOT NULL AND CustomerMaster[id=this.customerId].creditLimit > 0",
+								"defaultSeverity": "warning",
+								"administrationPolicyKey": "ar.creditLimit.mode",
+								"administrationPolicyValues": {
+									"warn": "warning",
+									"block": "block"
+								},
+								"messageTemplate": {
+									"nl": "Kredietlimiet overschreden: open AR €{{openBalance}} + factuur €{{totalAmount}} = €{{projectedBalance}} > limiet €{{creditLimit}} voor klant {{customerNumber}}.",
+									"en": "Credit limit exceeded: open AR €{{openBalance}} + invoice €{{totalAmount}} = €{{projectedBalance}} > limit €{{creditLimit}} for customer {{customerNumber}}."
+								},
+								"description": "REQ-AR-006 declarative aggregation predicate. Aggregates customer's open AR balance (sum of totalAmount for state in issued/partially-paid/overdue/disputed) and compares against CustomerMaster.creditLimit. Pure x-openregister-aggregations per ADR-031; no CreditLimitService PHP class."
+							}
+						],
 						"actions": [
 							{
 								"trigger": "x-openregister-lifecycle-action",
@@ -11418,6 +11439,42 @@
 						"label": "Void",
 						"description": "Void a posted-and-issued invoice. Guard: the materialised GLTransaction MUST already be reversed per T1 REQ-GL-004.",
 						"requires": "OCA\\Shillinq\\Lifecycle\\GLReversalGuard::isReversed"
+					}
+				}
+			},
+			"x-openregister-aggregations": {
+				"customerOpenArBalance": {
+					"label": "Customer open AR balance",
+					"description": "REQ-AR-006 declarative aggregation: sum of open AR exposure per customer. Consumed as the predicate basis for the credit-limit precondition on ARInvoice.issue. Excludes paid / written-off / voided invoices. Pure aggregation per ADR-031; no CreditLimitService PHP class.",
+					"register": "shillinq",
+					"schema": "ARInvoice",
+					"filter": {
+						"state": {
+							"in": [
+								"issued",
+								"partially-paid",
+								"overdue",
+								"disputed"
+							]
+						}
+					},
+					"groupBy": [
+						"customerId"
+					],
+					"operations": {
+						"openBalance": {
+							"field": "totalAmount",
+							"operation": "sum",
+							"description": "Sum of totalAmount across the customer's open AR invoices (states: issued, partially-paid, overdue, disputed)."
+						},
+						"openCount": {
+							"operation": "count",
+							"description": "Count of open AR invoices for the customer."
+						}
+					},
+					"meta": {
+						"consumedBy": "ARInvoice.issue.preconditions.credit-limit",
+						"cadence": "on-demand"
 					}
 				}
 			},
