@@ -11386,7 +11386,31 @@
 						],
 						"to": "written-off",
 						"label": "Write off",
-						"description": "Operator in role controller declares the invoice uncollectible. Requires writeOffReason. The compensating GL posting (debit bad-debt expense, credit AR control) lands as a lifecycle action in task 9 per REQ-AR-007."
+						"description": "Operator in role controller declares the invoice uncollectible. Requires writeOffReason for audit-trail. Action: materialise a balanced compensating GLTransaction (debit bad-debt expense, credit AR control) for the residual open balance per REQ-AR-007. Sets writeOffGlTransactionId back-reference.",
+						"requires": "OCA\\Shillinq\\Lifecycle\\WriteOffReasonGuard::requireReason",
+						"rbac": {
+							"requiredRole": "controller"
+						},
+						"actions": [
+							{
+								"trigger": "x-openregister-lifecycle-action",
+								"action": "materialise-gl-transaction",
+								"description": "Emit one balanced compensating GLTransaction with debit to bad-debt expense account (Account.isBadDebtExpenseAccount=true) and credit to AR control account (Account.isARControlAccount=true) for the invoice's residual open balance per REQ-AR-007. Sets writeOffGlTransactionId back-reference; sets GLLine.subLedgerType=ar + GLLine.subLedgerRef=<ARInvoice UUID> + GLLine.description='AR write-off: <writeOffReason>' for audit-trail traceability. The amount written off equals totalAmount minus cumulative matched payments (the residual open balance).",
+								"actionParameters": {
+									"register": "shillinq",
+									"targetSchema": "GLTransaction",
+									"debitMapping": "Account[isBadDebtExpenseAccount=true].accountNumber",
+									"creditMapping": "Account[isARControlAccount=true].accountNumber",
+									"subLedgerType": "ar",
+									"subLedgerRefField": "id",
+									"amountExpression": "totalAmount - SUM(ReconciliationMatch.amount WHERE arInvoiceId = this.id)",
+									"descriptionExpression": "'AR write-off: ' + writeOffReason",
+									"sourceReferenceField": "invoiceNumber",
+									"backReferenceField": "writeOffGlTransactionId",
+									"keepBalanced": true
+								}
+							}
+						]
 					},
 					"void": {
 						"from": "issued",
