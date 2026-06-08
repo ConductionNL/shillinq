@@ -1779,7 +1779,23 @@
         "Ongeldige TenderNed-ID": "Ongeldige TenderNed-ID",
         "Status-sync naar TenderNed niet verzonden (probeer over 5 minuten opnieuw)": "Status-sync naar TenderNed niet verzonden (probeer over 5 minuten opnieuw)",
         "Vul kostenplaats en grootboekrekening in voordat u de verplichting activeert.": "Vul kostenplaats en grootboekrekening in voordat u de verplichting activeert.",
-        "Mijlpaaldatum valt buiten de contractlooptijd": "Mijlpaaldatum valt buiten de contractlooptijd"
+        "Mijlpaaldatum valt buiten de contractlooptijd": "Mijlpaaldatum valt buiten de contractlooptijd",
+        "EU-fondsen": "EU-fondsen",
+        "EU-projecten": "EU-projecten",
+        "Declaraties": "Declaraties",
+        "Bewijsstukken": "Bewijsstukken",
+        "Onregelmatigheden": "Onregelmatigheden",
+        "Audit-portaal": "Audit-portaal",
+        "EU-project": "EU-project",
+        "Declaratie": "Declaratie",
+        "Bewijsstuk": "Bewijsstuk",
+        "Onregelmatigheid": "Onregelmatigheid",
+        "Audit-trail": "Audit-trail",
+        "Political campaign is not eligible under ESF+ art 5(2)": "Politieke campagne is niet subsidiabel onder ESF+ art 5(2)",
+        "Cost category is not eligible for this fund": "Kostencategorie is niet subsidiabel voor dit fonds",
+        "Declaration blocked: required supporting documents are missing": "Declaratie geblokkeerd: verplichte bewijsstukken ontbreken",
+        "Declaration blocked: procurement dossier is required": "Declaratie geblokkeerd: aanbestedingsdossier is vereist",
+        "Irregularity exceeds the OLAF reporting threshold (EUR 10,000)": "Onregelmatigheid overschrijdt de OLAF-meldgrens (EUR 10.000)"
     },
     "plurals": ""
 }

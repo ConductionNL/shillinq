@@ -1779,7 +1779,23 @@
         "Ongeldige TenderNed-ID": "Invalid TenderNed ID",
         "Status-sync naar TenderNed niet verzonden (probeer over 5 minuten opnieuw)": "Status sync to TenderNed not sent (retry in 5 minutes)",
         "Vul kostenplaats en grootboekrekening in voordat u de verplichting activeert.": "Set a cost centre and GL account before activating the obligation.",
-        "Mijlpaaldatum valt buiten de contractlooptijd": "Milestone date falls outside the contract term"
+        "Mijlpaaldatum valt buiten de contractlooptijd": "Milestone date falls outside the contract term",
+        "EU-fondsen": "EU funds",
+        "EU-projecten": "EU projects",
+        "Declaraties": "Declarations",
+        "Bewijsstukken": "Supporting documents",
+        "Onregelmatigheden": "Irregularities",
+        "Audit-portaal": "Audit portal",
+        "EU-project": "EU project",
+        "Declaratie": "Declaration",
+        "Bewijsstuk": "Supporting document",
+        "Onregelmatigheid": "Irregularity",
+        "Audit-trail": "Audit trail",
+        "Political campaign is not eligible under ESF+ art 5(2)": "Political campaign is not eligible under ESF+ art 5(2)",
+        "Cost category is not eligible for this fund": "Cost category is not eligible for this fund",
+        "Declaration blocked: required supporting documents are missing": "Declaration blocked: required supporting documents are missing",
+        "Declaration blocked: procurement dossier is required": "Declaration blocked: procurement dossier is required",
+        "Irregularity exceeds the OLAF reporting threshold (EUR 10,000)": "Irregularity exceeds the OLAF reporting threshold (EUR 10,000)"
     },
     "plurals": ""
 }
