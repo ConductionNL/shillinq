@@ -22,14 +22,14 @@
 - [x] Task 16: Register 2–3 seed transactions in mock data (one draft, one posted, one reversed with GL-posting reference)
 - [x] Task 17: Register 1 seed document in mock data (invoice with fileReference to docudesk)
 - [x] Task 18: Create docudesk template `lib/Settings/docudesk-templates.json` entry for "Document Storage" supporting all documentTypes (invoice, receipt, contract, tax-form, bank-statement, memo)
-- [ ] Task 19: Add manifest navigation entry to `src/manifest.json` with:
+- [x] Task 19: Add manifest navigation entry to `src/manifest.json` with:
   - Menu item: "Bookkeeping" (or extends existing Financial menu)
   - Sub-pages: "Chart of Accounts" (tree view), "Transactions" (table view), "Documents" (table view)
   - Feature flag: `featureFlags.bookkeeping` (default: enabled)
   - Icons: ledger icon for main menu, hierarchy icon for CoA, document icon for docs
-- [ ] Task 20: Create `src/views/ChartOfAccountsView.vue` displaying accounts in hierarchical tree with expand/collapse, detail navigation, and "Add Account" action for authorized users
-- [ ] Task 21: Create `src/views/TransactionsView.vue` displaying transactions in table format (date, amount, description, status columns) with filters (date range, status, type) and "Create Transaction" action
-- [ ] Task 22: Create `src/views/DocumentsView.vue` displaying documents in table format (documentNumber, type, documentDate, status columns) with filters (type, status, filing-date) and "Upload Document" action
+- [x] Task 20: Create `src/views/ChartOfAccountsView.vue` displaying accounts in hierarchical tree with expand/collapse, detail navigation, and "Add Account" action for authorized users
+- [x] Task 21: Create `src/views/TransactionsView.vue` displaying transactions in table format (date, amount, description, status columns) with filters (date range, status, type) and "Create Transaction" action
+- [x] Task 22: Create `src/views/DocumentsView.vue` displaying documents in table format (documentNumber, type, documentDate, status columns) with filters (type, status, filing-date) and "Upload Document" action
 - [ ] Task 23: Implement `src/Service/AccountService.php` with methods:
   - `getAccountsByAdministration(administrationId)` — returns all accounts for an administration
   - `getAccountHierarchy(administrationId)` — returns tree-formatted accounts

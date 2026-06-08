@@ -180,6 +180,16 @@ import AdministrationSwitcherPage from './views/AdministrationSwitcherPage.vue'
 import CalendarView from './views/bookings/CalendarView.vue'
 import BookingForm from './views/bookings/BookingForm.vue'
 
+// bookkeeping-wbso-sno-administratie (REQ-WBSO-006/002/003): the three
+// bookkeeping foundation views are imperative — the Chart of Accounts is a
+// hierarchical RGS tree (no built-in tree page type), and the Transactions /
+// Documents tables fan out to dedicated REST surfaces that filter by status,
+// type, and date range. Registered as kind:"page" custom components per
+// ADR-024 / ADR-036.
+import WbsoChartOfAccountsView from './views/bookkeeping/ChartOfAccountsView.vue'
+import WbsoTransactionsView from './views/bookkeeping/TransactionsView.vue'
+import WbsoDocumentsView from './views/bookkeeping/DocumentsView.vue'
+
 export default {
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
 	MobileScannerReceive: { kind: 'page', component: ReceivePage },
@@ -221,4 +231,9 @@ export default {
 	// bookings-resource-calendar custom pages (REQ-006/REQ-007).
 	BookingsCalendar: { kind: 'page', component: CalendarView },
 	BookingsForm: { kind: 'page', component: BookingForm },
+
+	// bookkeeping-wbso-sno-administratie foundation views.
+	WbsoChartOfAccountsView: { kind: 'page', component: WbsoChartOfAccountsView },
+	WbsoTransactionsView: { kind: 'page', component: WbsoTransactionsView },
+	WbsoDocumentsView: { kind: 'page', component: WbsoDocumentsView },
 }

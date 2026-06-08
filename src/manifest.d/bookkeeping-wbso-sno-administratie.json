@@ -1,0 +1,57 @@
+{
+	"menu": [
+		{
+			"id": "BookkeepingGroup",
+			"label": "Bookkeeping",
+			"icon": "BookOpenPageVariantOutline",
+			"order": 20,
+			"featureFlag": "bookkeeping",
+			"children": [
+				{
+					"id": "WbsoChartOfAccounts",
+					"label": "Chart of Accounts",
+					"icon": "FileTreeOutline",
+					"route": "WbsoChartOfAccounts",
+					"order": 10
+				},
+				{
+					"id": "WbsoTransactions",
+					"label": "Transactions",
+					"icon": "ReceiptTextOutline",
+					"route": "WbsoTransactions",
+					"order": 20
+				},
+				{
+					"id": "WbsoDocuments",
+					"label": "Documents",
+					"icon": "FileDocumentOutline",
+					"route": "WbsoDocuments",
+					"order": 30
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "WbsoChartOfAccounts",
+			"route": "/bookkeeping/chart-of-accounts",
+			"type": "custom",
+			"customComponent": "WbsoChartOfAccountsView",
+			"title": "Chart of Accounts"
+		},
+		{
+			"id": "WbsoTransactions",
+			"route": "/bookkeeping/transactions",
+			"type": "custom",
+			"customComponent": "WbsoTransactionsView",
+			"title": "Transactions"
+		},
+		{
+			"id": "WbsoDocuments",
+			"route": "/bookkeeping/documents",
+			"type": "custom",
+			"customComponent": "WbsoDocumentsView",
+			"title": "Documents"
+		}
+	]
+}
