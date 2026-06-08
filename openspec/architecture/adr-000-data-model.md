@@ -2269,6 +2269,52 @@ _A fiscal year lifecycle record tracking the `open → closing → closed → re
 > stay correct. Declared as an `x-openspec-extend` patch in
 > `lib/Settings/register.d/bookkeeping-deferred-tax.json` (ADR-037).
 
+### FiscalPeriod
+**Schema.org:** `schema:DateRange`
+_A monthly / quarterly / weekly accounting period with a declarative
+`open → closing → closed → audit-locked` lifecycle that gates posting and
+freezes auditable history once an auditor signs off. Promotes T1's
+stub-string `GLLine.periodId` field to a real foreign key via the
+ADR-037 modular register fragment `lib/Settings/register.d/bookkeeping-period-close.json`._
+**Primary spec:** bookkeeping-period-close (T2)
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| periodId | string | Yes | Stable identifier within an administration (e.g. `2026-Q1`, `2026-M03`, `2026-W12`) |
+| name | string | Yes | Human-readable name surfaced in index columns and the detail header (e.g. `Q1 2026`, `March 2026`) |
+| administrationId | string | Yes | FK to the Administration owning the period; reads are scoped to the requesting user's administration |
+| startDate | date | Yes | Inclusive first day of the period |
+| endDate | date | Yes | Inclusive last day of the period |
+| fiscalYear | integer | Yes | The fiscal year this period belongs to |
+| state | enum | Yes | One of `open`, `closing`, `closed`, `audit-locked` |
+| closedAt | date-time | No | Timestamp the period was closed; set by the close transition |
+| closedBy | string | No | NC user id of the close operator |
+| auditLockedAt | date-time | No | Timestamp the period was audit-locked; set by the lockForAudit transition |
+| auditLockedBy | string | No | NC user id of the auditor who locked the period |
+| closeReason | string | No | Operator-supplied justification captured when a closed period is reopened |
+| reopenedHistory | array | No | Append-only audit trail of `{closedAt, closedBy, reopenedAt, reopenedBy, closeReason}` cycles |
+| taskChecklistItems | array | No | Pre-close checklist rows operators mark resolved before the `closing → closed` transition |
+| aiFlags | array | No | Non-blocking close-assistant warnings (open AP / AR / unreconciled bank receipts / expense claims) |
+
+**Relations:**
+- → Administration (many-to-one, via `administrationId`)
+- → GLLine (one-to-many, via `periodId` — promoted from T1's stub string by the `add-shillinq-period-close` change; existing string values resolve by exact match — no destructive data migration)
+- → GLTransaction (one-to-many, via `periodId` — the `GLTransaction.post` transition rejects postings whose resolved period is in state `closed` or `audit-locked`)
+- → VATAuditRecord, APInvoice, ARInvoice, BcfClaim, WipBalance, Kostenpost (one-to-many, via `periodId` — fleet-wide references already use `relatedSchema: FiscalPeriod`)
+
+**Lifecycle (x-openregister-lifecycle):**
+- `open → closing` (startClose): role `period-closer`; no preconditions.
+- `closing → closed` (close): role `period-closer`; precondition `PeriodCloseGuard::mandatoryChecklistResolved`; declarative `set-fields` action stamps `closedAt = @now`, `closedBy = @currentUser`.
+- `closed → open` (reopen): role `period-closer`; precondition `PeriodCloseGuard::closeReasonSupplied` (non-empty `closeReason`); declarative `append-reopen-history` action preserves `{closedAt, closedBy, reopenedAt, reopenedBy, closeReason}` in the append-only `reopenedHistory` array; clears `closedAt` / `closedBy`.
+- `closed → audit-locked` (lockForAudit): role `auditor`; declarative `set-fields` action stamps `auditLockedAt = @now`, `auditLockedBy = @currentUser`.
+- `audit-locked`: no outgoing transition declared → irreversibility at the schema level (REQ-PC-003). Late corrections require a compensating journal in the next open period.
+
+**Posting precondition (additive on T1 GLTransaction.post):** `PeriodCloseGuard::periodOpen` resolves the posting's `periodId` (or `postingDate` when `periodId` is absent) to a FiscalPeriod record scoped to the transaction's administration and rejects when state ∈ `{closed, audit-locked}`. The merge is additive — T1's existing `BalanceGuard::isBalanced` requires and allocation action survive (verified by `PeriodCloseFragmentTest::testAugmentsGlTransactionPostAdditively`).
+
+**Repair-step backfill:** `lib/Repair/BackfillFiscalPeriods.php` (wired in `appinfo/info.xml` `<post-migration>` after `InitializeSettings`) lists every distinct `(administrationId, periodId)` tuple on `GLLine` and creates a minimal `state: open` FiscalPeriod record for any that lacks one. Idempotent — re-runs produce zero saves when every tuple already has a record. The derived `name` / `startDate` / `endDate` / `fiscalYear` are parsed from the periodId slug (Q-quarter, M-month, W-ISO-week, FY-fiscal-year, or year-only fallback).
+
+**Reconciliation note (add-shillinq-period-close, 2026-06-08):** This entry supersedes the inline `FiscalPeriod` callout under the `FiscalYear` section (2026-06-08 deferred-tax note). The `enactedTaxRates` extension referenced in that callout remains additive — declared in the deferred-tax fragment and additive to the schema declared here. The previously merged `bookkeeping-period-close` change shipped the lifecycle + service implementation under the schema slug `PeriodClose`; that slug was renamed to the canonical `FiscalPeriod` by `add-shillinq-period-close` to align with the existing AR / AP / VAT / WIP / ICP / R&D-subsidies sibling schemas that already declared `relatedSchema: FiscalPeriod`.
+
 ### FixedAsset
 **Schema.org:** `schema:Thing`
 _A capitalised tangible or intangible business asset with declarative depreciation rules (linear, degressive, units-of-production, none), parallel commercial/fiscal streams, and a managed lifecycle (proposed → active → disposed → archived). Depreciation values are derived on demand via `x-openregister-calculations` — no materialised schedule table._
