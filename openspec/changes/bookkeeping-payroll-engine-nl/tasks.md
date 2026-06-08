@@ -154,7 +154,7 @@
 - [x] Wire into bookkeeping-upa-pensioen:  _(PayrollUpaHandoffService aggregates LoonStrook.pensioen per pensioenuitvoerder into UPA submission payloads; transport stays with bookkeeping-upa-pensioen.)_
   - LoonStrook.pensioen → UPA-monthly-submission (per pensioenuitvoerder)
 
-- [ ] Wire into bookkeeping-wkr:  _(DEFERRED — cross-app; LHAfdracht accepts an eindheffingenWKR input from the WKR app.)_
+- [x] Wire into bookkeeping-wkr:  _(PayrollWkrHandoffService emits the period loonsom (sum of fiscaalLoon over LoonStrook) for WKR ceiling-tracking; LHAfdracht already accepts eindheffingenWKR back from the WKR app.)_
   - LoonStrook aggregate loonsom → WKR-budget-tracking
   - EindheffingenWKR from WKR-app → LHAfdracht.totaalEindheffingenWKR
 
