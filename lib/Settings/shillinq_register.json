@@ -11270,6 +11270,133 @@
 					"example": "adm-1"
 				}
 			},
+			"x-openregister-lifecycle": {
+				"field": "state",
+				"initialState": "draft",
+				"states": {
+					"draft": {
+						"label": "Draft",
+						"description": "Under construction. Lines and header fields may be edited."
+					},
+					"issued": {
+						"label": "Issued",
+						"description": "Immutable header. GL transaction materialised; awaiting payment match."
+					},
+					"partially-paid": {
+						"label": "Partially paid",
+						"description": "One or more bank-reconciliation matches have applied but cumulative matched amount is less than totalAmount."
+					},
+					"paid": {
+						"label": "Paid",
+						"description": "Full payment matched via bank-reconciliation engine. Terminal state for the happy path."
+					},
+					"overdue": {
+						"label": "Overdue",
+						"description": "today > dueDate and no full payment match yet. OR's dunning-workflow drives REQ-AR-005 reminder cadence from this state."
+					},
+					"disputed": {
+						"label": "Disputed",
+						"description": "Operator placed payment-match pursuit on hold pending customer-raised dispute investigation."
+					},
+					"written-off": {
+						"label": "Written off",
+						"description": "Bad-debt write-off; compensating GL posting emitted per REQ-AR-007. Terminal state."
+					},
+					"voided": {
+						"label": "Voided",
+						"description": "Issued invoice voided. The materialised issue GLTransaction MUST already be reversed per T1 REQ-GL-004."
+					}
+				},
+				"transitions": {
+					"issue": {
+						"from": "draft",
+						"to": "issued",
+						"label": "Issue invoice",
+						"description": "Issue the AR invoice. Guards: (1) FiscalPeriod open per REQ-PC-004; (2) credit-limit precondition per REQ-AR-006 (warning by default, hard-block when administration policy enables it; declared in task 10). Action: materialise one balanced GLTransaction per T1 REQ-JE-007 pattern (debit AR control account, credit revenue accounts per lines). Sets glTransactionId back-reference.",
+						"requires": "OCA\\Shillinq\\Lifecycle\\BalanceGuard::isBalanced",
+						"actions": [
+							{
+								"trigger": "x-openregister-lifecycle-action",
+								"action": "materialise-gl-transaction",
+								"description": "Emit one balanced GLTransaction with debit to AR control account (Account.isARControlAccount = true) and credit to revenue accounts per lines per T1 REQ-JE-007 pattern. Sets glTransactionId back-reference; sets GLLine.subLedgerType=ar + GLLine.subLedgerRef=<ARInvoice UUID> per REQ-AR-001.",
+								"actionParameters": {
+									"register": "shillinq",
+									"targetSchema": "GLTransaction",
+									"debitMapping": "Account[isARControlAccount=true].accountNumber",
+									"creditMapping": "lines[].accountNumber",
+									"subLedgerType": "ar",
+									"subLedgerRefField": "id",
+									"keepBalanced": true
+								}
+							}
+						]
+					},
+					"markOverdue": {
+						"from": [
+							"issued",
+							"partially-paid"
+						],
+						"to": "overdue",
+						"label": "Mark overdue",
+						"description": "Scheduled OR ScheduledWorkflow tick when today > dueDate and no payment match has cleared totalAmount. Per ADR-031 §'Background jobs that walk an object queue' path 2 — no shillinq *Job PHP class.",
+						"trigger": {
+							"type": "scheduled",
+							"engine": "x-openregister-scheduled-workflow",
+							"condition": "today > dueDate AND state IN ('issued','partially-paid')"
+						}
+					},
+					"matchPartial": {
+						"from": [
+							"issued",
+							"overdue"
+						],
+						"to": "partially-paid",
+						"label": "Mark partially paid",
+						"description": "Triggered by bank-reconciliation REQ-BR-006 match event when matched payment amount is less than totalAmount. Detailed action wiring lands in task 12."
+					},
+					"matchPaid": {
+						"from": [
+							"issued",
+							"partially-paid",
+							"overdue"
+						],
+						"to": "paid",
+						"label": "Mark paid",
+						"description": "Triggered by bank-reconciliation REQ-BR-006 match event when cumulative matched amount equals totalAmount. Detailed action wiring lands in task 12."
+					},
+					"dispute": {
+						"from": [
+							"issued",
+							"overdue"
+						],
+						"to": "disputed",
+						"label": "Raise dispute",
+						"description": "Operator places payment-match pursuit on hold pending customer-raised dispute investigation. Dunning escalation pauses while in disputed state."
+					},
+					"resolveDispute": {
+						"from": "disputed",
+						"to": "issued",
+						"label": "Resolve dispute",
+						"description": "Operator resolves the dispute; invoice returns to issued and dunning escalation resumes."
+					},
+					"writeOff": {
+						"from": [
+							"overdue",
+							"disputed"
+						],
+						"to": "written-off",
+						"label": "Write off",
+						"description": "Operator in role controller declares the invoice uncollectible. Requires writeOffReason. The compensating GL posting (debit bad-debt expense, credit AR control) lands as a lifecycle action in task 9 per REQ-AR-007."
+					},
+					"void": {
+						"from": "issued",
+						"to": "voided",
+						"label": "Void",
+						"description": "Void a posted-and-issued invoice. Guard: the materialised GLTransaction MUST already be reversed per T1 REQ-GL-004.",
+						"requires": "OCA\\Shillinq\\Lifecycle\\GLReversalGuard::isReversed"
+					}
+				}
+			},
 			"x-openregister-relations": {
 				"customer": {
 					"localField": "customerId",
