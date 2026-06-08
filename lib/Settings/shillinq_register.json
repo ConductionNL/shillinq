@@ -6462,6 +6462,270 @@
 					}
 				}
 			},
+			"ClosingEntry": {
+				"slug": "ClosingEntry",
+				"icon": "ClipboardCheckOutline",
+				"version": "0.1.0",
+				"title": "Closing Entry",
+				"description": "A manual or automated year-end closing entry per REQ-YEC-001. Tracks accrual postings, reversals, revenue/expense closings to the income-summary account, depreciation postings, retained-earnings rollforward, and opening-balance seeding. Materialises as a balanced GLTransaction via the JournalEntry materialisation pattern (T1) when approved and posted. All amounts are stored as integer-cent for money-safe arithmetic per the foundation cents-based money convention.",
+				"x-schema-org": "schema:Thing",
+				"type": "object",
+				"x-openregister-unique": [
+					[
+						"closingEntryNumber",
+						"administrationId"
+					]
+				],
+				"required": [
+					"closingEntryNumber",
+					"fiscalYearId",
+					"entryDate",
+					"entryType",
+					"amountCents",
+					"currency",
+					"approvalStatus",
+					"administrationId"
+				],
+				"properties": {
+					"closingEntryNumber": {
+						"type": "string",
+						"description": "Sequential closing-entry number unique per administration (e.g. CE-2026-0001). Per REQ-YEC-001.",
+						"example": "CE-2026-0001"
+					},
+					"fiscalYearId": {
+						"type": "string",
+						"description": "FK to the FiscalYear this closing entry belongs to. Per REQ-YEC-001.",
+						"example": "fy-2026-nl"
+					},
+					"entryDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Posting date of the closing entry. Typically the last day of the fiscal year (or first day of next FY for opening-balance entries). Per REQ-YEC-001.",
+						"example": "2026-12-31"
+					},
+					"entryType": {
+						"type": "string",
+						"enum": [
+							"revenue-closing",
+							"expense-closing",
+							"accrual-reversal",
+							"depreciation",
+							"retained-earnings",
+							"opening-balance",
+							"manual"
+						],
+						"description": "Classification of the closing entry. Per REQ-YEC-001.",
+						"example": "revenue-closing"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "Operator-authored description of the entry. Per REQ-YEC-001.",
+						"example": "Close revenue accounts 4000-4999 to income summary 9900"
+					},
+					"automationTemplate": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to ClosingEntryTemplate.templateId when this entry was generated automatically by a template. Per REQ-YEC-001 / REQ-YEC-010.",
+						"example": "revenue-closing"
+					},
+					"amountCents": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Total closing-entry amount in minor units of the currency (integer cents). Per REQ-YEC-001. Money-safe arithmetic per the foundation cents-based convention.",
+						"example": 100000000
+					},
+					"currency": {
+						"type": "string",
+						"description": "ISO 4217 currency code of the closing entry amount.",
+						"minLength": 3,
+						"maxLength": 3,
+						"default": "EUR",
+						"example": "EUR"
+					},
+					"glTransactionId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to the GLTransaction that materialised this closing entry when posted. Set by the lifecycle action on transition:post per REQ-YEC-009.",
+						"example": "gl-txn-2026-close-revenue"
+					},
+					"approvalStatus": {
+						"type": "string",
+						"enum": [
+							"draft",
+							"pending-approval",
+							"approved",
+							"posted",
+							"reversed"
+						],
+						"default": "draft",
+						"description": "Lifecycle state of the closing entry. draft -> pending-approval -> approved -> posted; or posted -> reversed. Per REQ-YEC-001 / REQ-YEC-009."
+					},
+					"approvedBy": {
+						"type": "string",
+						"nullable": true,
+						"description": "Nextcloud user id of the financial officer / CFO who approved this closing entry. Per REQ-YEC-001.",
+						"example": "cfo"
+					},
+					"approvedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true,
+						"description": "ISO 8601 timestamp when the closing entry was approved. Per REQ-YEC-001.",
+						"example": "2026-12-31T18:00:00Z"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration that owns this closing entry. Per REQ-YEC-001.",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "approvalStatus",
+					"initialState": "draft",
+					"states": {
+						"draft": {
+							"label": "Draft",
+							"description": "Under construction. Editable. Not yet visible to approvers."
+						},
+						"pending-approval": {
+							"label": "Pending approval",
+							"description": "Submitted for CFO / financial-officer approval. Editable only by the originating bookkeeper until approved or rejected."
+						},
+						"approved": {
+							"label": "Approved",
+							"description": "Approved by CFO / financial officer. Ready to post to the GL."
+						},
+						"posted": {
+							"label": "Posted",
+							"description": "Materialised as a balanced GLTransaction. Immutable from the closing-entry side; reversed only via a compensating closing entry."
+						},
+						"reversed": {
+							"label": "Reversed",
+							"description": "Superseded by a compensating closing entry. Excluded from active reporting but remains queryable for audit."
+						}
+					},
+					"transitions": {
+						"submit": {
+							"from": "draft",
+							"to": "pending-approval",
+							"label": "Submit for approval",
+							"description": "Bookkeeper submits the closing entry to the CFO for review per REQ-YEC-001."
+						},
+						"approve": {
+							"from": "pending-approval",
+							"to": "approved",
+							"label": "Approve",
+							"description": "CFO / financial-officer approves the closing entry per REQ-YEC-001.",
+							"requiresRole": "approver",
+							"sets": {
+								"approvedAt": "@now",
+								"approvedBy": "@currentUser"
+							}
+						},
+						"post": {
+							"from": "approved",
+							"to": "posted",
+							"label": "Post to GL",
+							"description": "Materialise the closing entry as a balanced GLTransaction with matching GLLine rows per REQ-YEC-009. The lifecycle action invokes the same materialisation extension T1 uses for JournalEntry per ADR-031."
+						},
+						"reverse": {
+							"from": "posted",
+							"to": "reversed",
+							"label": "Reverse",
+							"description": "Mark this closing entry as reversed. A compensating closing entry must be created and posted separately to keep the GL balanced."
+						}
+					},
+					"hooks": {
+						"onPost": {
+							"trigger": "transition:post",
+							"description": "Materialise the approved closing entry as a balanced GLTransaction with matching GLLine rows per REQ-YEC-009. The lifecycle action mirrors the JournalEntry materialisation extension (T1). Lines are derived from the linked ClosingEntryTemplate.accountPattern (for automated entries) or from the operator-supplied draft body (for manual entries).",
+							"action": "x-openregister-create-related",
+							"actionParameters": {
+								"register": "shillinq",
+								"schema": "GLTransaction",
+								"data": {
+									"description": "Closing entry @self.closingEntryNumber - @self.entryType",
+									"postingDate": "@self.entryDate",
+									"currency": "@self.currency",
+									"state": "posted",
+									"sourceReference": "closing-entry:@self.closingEntryNumber",
+									"administrationId": "@self.administrationId"
+								},
+								"setBackReference": "glTransactionId"
+							}
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"fiscalYear": {
+						"localField": "fiscalYearId",
+						"relatedSchema": "FiscalYear",
+						"cardinality": "many-to-one",
+						"description": "The fiscal year this closing entry belongs to."
+					},
+					"template": {
+						"localField": "automationTemplate",
+						"relatedSchema": "ClosingEntryTemplate",
+						"relatedField": "templateId",
+						"cardinality": "many-to-one",
+						"description": "The closing-entry template that generated this entry (when generated automatically)."
+					},
+					"glTransaction": {
+						"localField": "glTransactionId",
+						"relatedSchema": "GLTransaction",
+						"cardinality": "one-to-one",
+						"description": "The materialised GL transaction (set when the entry is posted)."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							],
+							"lifecycleTransitions": [
+								"submit"
+							]
+						},
+						"approver": {
+							"permissions": [
+								"read"
+							],
+							"lifecycleTransitions": [
+								"approve",
+								"post",
+								"reverse"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						},
+						"admin": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							],
+							"lifecycleTransitions": [
+								"submit",
+								"approve",
+								"post",
+								"reverse"
+							]
+						}
+					},
+					"adminScope": {
+						"field": "administrationId",
+						"enforce": true
+					}
+				}
+			},
 			"Receipt": {
 				"slug": "Receipt",
 				"icon": "ReceiptOutline",
