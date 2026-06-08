@@ -399,6 +399,19 @@
           "status": { "type": "string", "enum": ["unmatched", "matched", "routed-to-suspense"], "default": "unmatched", "description": "Match state per REQ-BR-003." },
           "reconciliationMatchId": { "type": "string", "nullable": true, "description": "FK to ReconciliationMatch.matchId once matched." }
         },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "unmatched",
+          "states": {
+            "unmatched": { "label": "Unmatched", "description": "Awaiting candidate match emission or operator action." },
+            "matched": { "label": "Matched", "description": "A confirmed ReconciliationMatch covers this line (REQ-BR-006)." },
+            "routed-to-suspense": { "label": "Routed to suspense", "description": "Operator marked the line unmatched-final; a balanced GLTransaction materialised against the designated Account.isSuspenseAccount per REQ-BR-007." }
+          },
+          "transitions": {
+            "mark-matched": { "from": "unmatched", "to": "matched", "label": "Mark matched", "description": "Set when a ReconciliationMatch covering this line transitions to status=confirmed (REQ-BR-006)." },
+            "route-to-suspense": { "from": "unmatched", "to": "routed-to-suspense", "label": "Route to suspense", "description": "Operator action per REQ-BR-007: materialises a balanced GLTransaction debiting (or crediting) the designated suspense Account against the bank-account GL. Declarative per the T1 REQ-JE-007 materialisation pattern; no PHP suspense-routing service." }
+          }
+        },
         "x-openregister-rbac": {
           "roles": {
             "bookkeeper": { "permissions": ["create", "read", "update"] },
