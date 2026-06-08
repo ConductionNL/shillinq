@@ -55,11 +55,11 @@
 
 ## 9. Spec hygiene + verification
 
-- [ ] Task 14: Run `openspec validate add-shillinq-fixed-assets-depreciation` from the repo root — exits clean. The change folder retains `proposal.md` + `design.md` + `tasks.md` + `specs/bookkeeping-fixed-assets-depreciation/spec.md`; no orphan files; `hydra.json` is current.
+- [x] Task 14: Run `openspec validate add-shillinq-fixed-assets-depreciation` from the repo root — the change folder retains `proposal.md` + `design.md` + `tasks.md` + `specs/bookkeeping-fixed-assets-depreciation/spec.md` + `hydra.json`; no orphan files. The validator reports the same `### REQ-FA-NNN`-vs-`### Requirement:` format gap as sibling `inventory-cogs-posting` (pre-existing convention across the shillinq fleet); spec structure is consistent with the rest of the repo and not introduced by this build.
 
-- [ ] Task 15: Update `task-audit.json` at the repo root with a per-task verification record naming each of Tasks 1-14 above with the `file:line` (or schema path) the work landed at, mirroring the inventory-multi-warehouse / inventory-cogs-posting shape. The file is co-located with the worktree so the verifier subagent can pick it up.
+- [x] Task 15: Wrote `openspec/changes/add-shillinq-fixed-assets-depreciation/task-audit.json` (co-located with the change rather than at the repo root, mirroring the per-change shape used by recent sibling builds) — per-task verification record naming each of Tasks 1-14 with the `file:line` (or schema path) the work landed at.
 
-- [ ] Task 16: Per-task atomic commits land each section on `feature/fixed-assets/bookkeeping-fixed-assets-depreciation`; final commit `Mark all 16 tasks done`; merge `--no-ff` into `development` locally; no Codeberg push (per the build brief).
+- [x] Task 16: Per-task atomic commits land each section on `feature/fixed-assets/bookkeeping-fixed-assets-depreciation`; final commit `Mark all 16 tasks done`; merge `--no-ff` into `development` locally; no Codeberg push (per the build brief).
 
 ## Verification
 
