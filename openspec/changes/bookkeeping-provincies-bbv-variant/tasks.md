@@ -267,11 +267,15 @@
   - DONE: shipped. Screenshots deferred to the docs-screenshots Playwright
     suite (same fleet pattern as bookings and waterschappen variants).
 
-- [ ] Task 29: Create compliance guide `docs/guides/bbv-compliance-checklist.md`:
+- [x] Task 29: Create compliance guide `docs/guides/bbv-compliance-checklist.md`:
   - Pre-audit checklist: all GL lines mapped to a programme? Budget status
     updated? No overspends? Dashboard accessible?
   - How to handle overspends (correcting GL line, amending budget)
   - Audit trail export (for auditors)
+  - DONE: shipped together with `docs/guides/_category_.json` introducing the
+    "Compliance guides" sidebar group (position 50). Cross-links the two
+    user guides (Task 27 + 28) and the existing waterschappen technical
+    reference.
 
 ## Verification & Sign-Off
 
