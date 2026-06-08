@@ -23,7 +23,7 @@
 
 - [x] Task 3: Author `lib/Service/DepreciationCalculator.php` — side-effect-free helper for the linear-and-degressive depreciation arithmetic an OR `ScheduledWorkflow` (or a unit test) needs when materialising the monthly posting. Operates on plain `FixedAsset` arrays, returns `monthlyDepreciation` / `currentBookValue` / `commercialBookValue` / `fiscalBookValue` in integer cents alongside their float-money rendering. Mirrors `LeaseAmortizationCalculator` shape (REQ-FA-003 + REQ-FA-004).
 
-- [ ] Task 4: Author `lib/Service/DisposalJournalEmitter.php` — pure-logic emitter that, given a `FixedAsset` plus disposal input `(disposalDate, disposalAccountingTreatment, disposalProceeds)`, returns a balanced `GLTransaction`-shaped payload (header + lines) that credits the asset account for gross value, debits accumulated depreciation, posts gain or loss to the configured P&L account, and zeroes the asset's carrying amount per REQ-FA-006. The emitter is the deterministic kernel the OR `x-openregister-lifecycle.dispose.action.emit-journal-entry` action calls.
+- [x] Task 4: Author `lib/Service/DisposalJournalEmitter.php` — pure-logic emitter that, given a `FixedAsset` plus disposal input `(disposalDate, disposalAccountingTreatment, disposalProceeds)`, returns a balanced `GLTransaction`-shaped payload (header + lines) that credits the asset account for gross value, debits accumulated depreciation, posts gain or loss to the configured P&L account, and zeroes the asset's carrying amount per REQ-FA-006. The emitter is the deterministic kernel the OR `x-openregister-lifecycle.dispose.action.emit-journal-entry` action calls.
 
 ## 4. Monthly depreciation workflow
 
