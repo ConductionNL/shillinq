@@ -192,24 +192,35 @@
   to hrmq development — only on the `spec/pension-admin-mvp` branch — see
   honest-deferral note).)*
 
-> **DEFERRED — Tasks 15–19 (cross-app runtime integrations).** These tasks
-> wire pension data into *other* specs/apps whose runtime surfaces are not yet
-> merged into shillinq development: `bookkeeping-voorzieningen-claims` (T2
-> provision linkage, Task 15), `bookkeeping-general-ledger` GL posting accounts
-> (Task 16), `bookkeeping-deferred-tax` timing-difference detector (Task 17),
-> `bookkeeping-financial-statements` jaarrekening renderer data-source (Task 18)
-> and the `hrmq.pension-administration` module (Task 19). This change captures
-> the *declarative* side of each integration already: `PensionMovement` carries
-> `linkedJournalEntries` for GL back-references and the disjoint P&L/OCI buckets
-> the GL/deferred-tax posting rules consume; `PensionDisclosureTabel.tableContent`
-> is the data-source the financial-statements renderer reads; and
-> `PensionPlan.linkedHrmqGroup` + the `PensionIas19Guard::canLockValuation`
-> `rosterReconciled` gate are the HRMQ hook points. The runtime wiring lands in
-> the dependent specs' own apply cycles (or in a follow-up shillinq change) once
-> those modules expose their posting/query APIs — wiring them now would couple
-> against not-yet-merged contracts. Per the "always file issues for deferred
-> work" convention these are tracked under the `spec:too-large` issue referenced
-> in the PR.
+> **STATUS — Tasks 15–19 (cross-app runtime integrations).** The declarative
+> contract end of each integration now ships with this change:
+>
+> - **Task 15 / voorzieningen-claims** — `PensionPlan.linkedProvisionId` FK
+>   forward-references the voorzieningen-claims Provision record. Spec NOT yet
+>   merged to shillinq/development; runtime consumer ships with the
+>   `bookkeeping-voorzieningen-claims` apply cycle.
+> - **Task 16 / general-ledger** — `PensionMovement.x-openregister-posting-recipe`
+>   pins the three-bucket account-range mapping consumed by the merged
+>   `bookkeeping-general-ledger` JournalEntry materialiser (REQ-JE-007); ids
+>   land in `PensionMovement.linkedJournalEntries`. Runtime engine present.
+> - **Task 17 / deferred-tax** — `PensionMovement.x-openregister-deferred-tax-hint`
+>   pins `category=pension` (matching the TemporaryDifference enum already
+>   shipped) consumed by the merged `bookkeeping-deferred-tax` REQ-DT-001
+>   detector. Runtime engine present.
+> - **Task 18 / financial-statements** — `PensionDisclosureTabel.x-openregister-disclosure-source`
+>   pins the data-source contract (consumerSchema=Note, consumerField,
+>   lifecycle gate) consumed by the merged `bookkeeping-financial-statements`
+>   REQ-FS-004 renderer. Runtime engine present.
+> - **Task 19 / hrmq.pension-administration** — `PensionPlan.x-openregister-hrmq-roster-source`
+>   pins the full HRMQ deelnemersbestand contract (projection, write-back,
+>   divergence threshold, lockGuard). HRMQ pension-administration spec is on
+>   the `spec/pension-admin-mvp` branch in the hrmq repo, NOT yet merged to
+>   `hrmq/development`; runtime query ships with that apply cycle.
+>
+> Per the "always file issues for deferred work" convention the remaining
+> runtime-wiring follow-ups (voorzieningen-claims consumer + HRMQ
+> pension-administration query) are tracked under the `spec:too-large` issue
+> referenced in the PR.
 
 - [x] Task 20: Add x-openregister-lifecycle to `pension-plan` and
   `actuarial-valuation` per ADR-031: workflow states (draft → approved → locked),
