@@ -52,7 +52,9 @@
 - [x] Task 16: Seed three default `ClosingEntryTemplate` records per REQ-YEC-012 in `lib/Settings/shillinq_register.json` via `components.objects[]` with `@self` envelope: Revenue Closing (4000–4999 → 9900), Expense Closing (5000–6999 → 9900), Accrual Reversal (9700–9799 → 5900, reverse next period). All marked `lifecycleState: active` on install.
 
   Three objects appended to the `objects[]` array with `@self.register: shillinq` + `@self.schema: ClosingEntryTemplate` + slugs `closing-template-revenue-default` / `closing-template-expense-default` / `closing-template-accrual-reversal-default`. Bound to the default `adm-consultancy-nl` administration (matches the existing GLTransaction seed convention); operators add per-administration variants via the UI. All `automationTrigger: on-close`, `lifecycleState: active`; only the accrual-reversal template carries `reverseNextPeriod: true`.
-- [ ] Task 17: Update `openspec/architecture/adr-000-data-model.md` with `ClosingEntry` / `RetainedEarnings` / `ClosingAccount` / `ClosingEntryTemplate` entries and relations, reconciling against any existing `ClosingEntry` / `YearEndClose` / `ClosingJournal` data-model entries
+- [x] Task 17: Update `openspec/architecture/adr-000-data-model.md` with `ClosingEntry` / `RetainedEarnings` / `ClosingAccount` / `ClosingEntryTemplate` entries and relations, reconciling against any existing `ClosingEntry` / `YearEndClose` / `ClosingJournal` data-model entries
+
+  Four new sections (`ClosingEntry`, `RetainedEarnings`, `ClosingAccount`, `ClosingEntryTemplate`) inserted right before `FiscalYear` (kept in the year-end-close domain neighbourhood, not strictly alphabetic — file is chunked by domain). No conflicting prior entries existed (`YearEndClose` / `ClosingJournal` were never declared). The existing `FiscalYear` section was extended additively: the lifecycle bullets now mention `onBeginCloseGenerateClosingEntries`, `requirePreconditions` (the checklist), the declarative CFO override, the `immutablePeriod` block on the closed state, and `onCloseMaterialiseRetainedEarnings`; a new sub-section catalogues the 13 declarative aggregations.
 
 ## Verification
 

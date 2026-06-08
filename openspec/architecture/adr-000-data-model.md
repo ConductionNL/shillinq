@@ -2078,6 +2078,111 @@ _Exported financial statements (annual, management, or consolidated) generated f
 **Relations:**
 - → FiscalYear (many-to-one)
 
+### ClosingEntry
+**Schema.org:** `schema:Thing`
+_A manual or automated year-end closing entry per REQ-YEC-001. Captures accrual postings, reversals, revenue/expense closings to the income-summary account, depreciation postings, retained-earnings rollforward, and opening-balance seeding. Lifecycle (`draft → pending-approval → approved → posted` + `reversed`); the `post` transition materialises a balanced `GLTransaction` via the same `x-openregister-create-related` extension T1's `JournalEntry` uses (ADR-031). All amounts in integer cents (money-safe)._
+**Primary spec:** bookkeeping-year-end-close
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| closingEntryNumber | string | Yes | Sequential reference unique per administration (e.g. CE-2026-0001) |
+| fiscalYearId | string | Yes | FK to FiscalYear |
+| entryDate | date | Yes | Posting date (typically the FY end date; or next FY start date for opening-balance entries) |
+| entryType | enum | Yes | One of `revenue-closing`, `expense-closing`, `accrual-reversal`, `depreciation`, `retained-earnings`, `opening-balance`, `manual` |
+| description | string | No | Operator-authored description |
+| automationTemplate | string | No | FK to ClosingEntryTemplate.templateId when generated automatically |
+| amountCents | integer ≥ 0 | Yes | Total closing-entry amount in integer cents |
+| currency | string (ISO 4217) | Yes | Currency code (default EUR) |
+| glTransactionId | string | No | FK to the materialised GLTransaction (set on `transition:post`) |
+| approvalStatus | enum | Yes | One of `draft`, `pending-approval`, `approved`, `posted`, `reversed` |
+| approvedBy | string | No | NC user id of the approving CFO / financial officer |
+| approvedAt | date-time | No | ISO 8601 timestamp of approval |
+| administrationId | string | Yes | FK to Administration |
+
+**Relations:**
+- → FiscalYear (many-to-one)
+- → ClosingEntryTemplate (many-to-one, via `automationTemplate`)
+- → GLTransaction (one-to-one, via `glTransactionId`; set on post)
+- → Administration (many-to-one)
+
+**Lifecycle (x-openregister-lifecycle):**
+- `draft → pending-approval` (submit): bookkeeper submits for CFO review
+- `pending-approval → approved` (approve): approver / CFO approves (`requiresRole: approver`); sets `approvedAt`, `approvedBy`
+- `approved → posted` (post): materialises a balanced GLTransaction (`onPost` hook, `x-openregister-create-related`) with `sourceReference: closing-entry:@self.closingEntryNumber`; back-references `glTransactionId` via `setBackReference`
+- `posted → reversed` (reverse): superseded by a compensating closing entry (audit-only)
+
+### RetainedEarnings
+**Schema.org:** `schema:Thing`
+_Sub-ledger position for the retained-earnings GL account, one record per `(fiscalYearId, administrationId)` per REQ-YEC-002. Tracks `openingBalanceCents`, `netIncomeCents`, `distributionsCents`, and `closingBalanceCents` (all signed integer cents). The FY close lifecycle materialises this record via `onCloseMaterialiseRetainedEarnings` using helper aggregations (`priorRetainedEarningsClosingCents`, `netIncomeCents`, `distributionsCents`). Two declarative aggregations enforce rollforward and carryforward identity within a 1-cent tolerance._
+**Primary spec:** bookkeeping-year-end-close
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| retainedEarningsId | string | Yes | Operator-stable identifier |
+| fiscalYearId | string | Yes | FK to FiscalYear (composite uniqueness with administrationId) |
+| openingBalanceCents | integer (signed) | Yes | Opening balance in cents (equals prior FY closingBalanceCents) |
+| netIncomeCents | integer (signed) | Yes | Net income for the FY (revenue − expense) in cents; negative = net loss |
+| distributionsCents | integer ≥ 0 | No | Dividends / distributions paid (default 0) |
+| closingBalanceCents | integer (signed) | Yes | `openingBalanceCents + netIncomeCents - distributionsCents` |
+| currency | string (ISO 4217) | Yes | Currency code (default EUR) |
+| closingEntryId | string | No | FK to the ClosingEntry that materialised the retained-earnings transfer |
+| administrationId | string | Yes | FK to Administration |
+
+**Relations:**
+- → FiscalYear (many-to-one)
+- → ClosingEntry (one-to-one, via `closingEntryId`)
+- → Administration (many-to-one)
+
+**Declarative aggregations (x-openregister-aggregations):**
+- `validateRollforward` — `closingBalanceCents == openingBalanceCents + netIncomeCents - (distributionsCents | 0)` (tolerance 1 cent, `onFail: block-transition`)
+- `validateCarryforward` — `openingBalanceCents == @prior.closingBalanceCents` (tolerance 1 cent, `onFail: warn`)
+
+### ClosingAccount
+**Schema.org:** `schema:Thing`
+_Designates the single closing / income-summary account per administration (typically 9900) per REQ-YEC-003. Supports time-bounded historicity via `effectiveFrom` so administrations can rotate their closing account across fiscal years (e.g. 9900 → 9990) without rewriting prior closings. Admin-only write; read for bookkeeper / approver / auditor._
+**Primary spec:** bookkeeping-year-end-close
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| accountNumber | string | Yes | FK to Account.accountNumber (typically 9900) |
+| administrationId | string | Yes | FK to Administration (one active record per admin at any point in time) |
+| isActive | boolean | No | Whether this is the currently active closing account (default `true`) |
+| effectiveFrom | date | No | Optional start date if rotating closing accounts (null = applies indefinitely) |
+
+**Relations:**
+- → Account (many-to-one, via `accountNumber`)
+- → Administration (many-to-one)
+
+### ClosingEntryTemplate
+**Schema.org:** `schema:Thing`
+_Declarative rule driving automated closing-entry generation per REQ-YEC-004 / REQ-YEC-010. Each template matches a GL account range (`accountPattern`), transfers the matched balances through the configured `closingAccountNumber`, and optionally emits a companion accrual-reversal in the next FY (`reverseNextPeriod: true`). Lifecycle (`active → paused → archived`) lets operators disable a template without deleting it. Consumed by the FiscalYear `transition:beginClose` hook `onBeginCloseGenerateClosingEntries`._
+**Primary spec:** bookkeeping-year-end-close
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| templateId | string | Yes | Stable operator-readable id, unique per administrationId (e.g. `revenue-closing`) |
+| templateName | string | Yes | Display name |
+| description | string | No | Operator documentation |
+| accountPattern | string | Yes | Account range or regex (e.g. `4000-4999`) |
+| closingAccountNumber | string | Yes | FK to Account.accountNumber (the target closing / income-summary account, e.g. 9900) |
+| reverseNextPeriod | boolean | No | When true, auto-emit a companion accrual-reversal in the next FY (default `false`) |
+| automationTrigger | enum | No | One of `manual`, `on-close` (default), `on-check` |
+| administrationId | string | Yes | FK to Administration |
+| lifecycleState | enum | Yes | One of `active`, `paused`, `archived` (default `active`) |
+| createdAt | date-time | Yes | Creation timestamp |
+| modifiedAt | date-time | No | Last-modified timestamp |
+
+**Relations:**
+- → Account (many-to-one, via `closingAccountNumber`)
+- → Administration (many-to-one)
+
+**Lifecycle (x-openregister-lifecycle):**
+- `active → paused` (pause): stop firing during the next close cycle (approver / admin)
+- `paused → active` (resume): re-enable (approver / admin)
+- `paused → archived` (archive): permanently retire, kept for audit (admin only)
+
+**Seed records (REQ-YEC-012):** `revenue-closing` (4000-4999 → 9900), `expense-closing` (5000-6999 → 9900), `accrual-reversal` (9700-9799 → 5900, `reverseNextPeriod: true`).
+
 ### FiscalYear
 **Schema.org:** `schema:AccountingPeriod`
 _A fiscal year lifecycle record tracking the `open → closing → closed → reopened` state machine for the year-end close process. Closing emits a balanced retained-earnings transfer `JournalEntry` (manual sub-type) and an opening-balance `JournalEntry` for the next year (balance-sheet accounts only). Dimensional rollover fires via CloudEvents consumed by CostCenter, KostenDrager, and Project registers. Admin-only reopen emits two reversing `JournalEntry` records pairing with the original journals for full audit traceability. All close logic is schema-declared per ADR-031; no `YearEndCloseService` PHP class._
@@ -2103,9 +2208,15 @@ _A fiscal year lifecycle record tracking the `open → closing → closed → re
 - → CostCenter, KostenDrager, Project (via CloudEvents on `closing → closed` for dimensional rollover)
 
 **Lifecycle (x-openregister-lifecycle):**
-- `open → closing` (beginClose): requires all T3 fiscal periods closed (FiscalYearGuard); emits retained-earnings transfer JournalEntry
-- `closing → closed` (close): emits opening-balance JournalEntry for next year; fires dimensional rollover CloudEvents; sets `closedAt`, `closedBy`
-- `closed → reopened` (reopen): admin-only (`requiresRole: admin`); requires non-empty `reopenReason`; emits two reversing JournalEntry records; sets `reopenedAt`, `reopenedBy`
+- `open → closing` (beginClose): requires all T3 fiscal periods closed (FiscalYearGuard); emits retained-earnings transfer JournalEntry. Per `bookkeeping-year-end-close` (REQ-YEC-010), the `closing` state is the spec's `in-progress` and triggers the `onBeginCloseGenerateClosingEntries` hook which iterates active `ClosingEntryTemplate` records and creates one `pending-approval` `ClosingEntry` per template (sums `accountPattern`-matched GL balances; emits a `draft` companion accrual-reversal on the next FY when `reverseNextPeriod: true`).
+- `closing → closed` (close): emits opening-balance JournalEntry for next year; fires dimensional rollover CloudEvents; sets `closedAt`, `closedBy`. Per REQ-YEC-006, the transition is gated by a `requirePreconditions` array — `trial-balance-verified`, `accruals-recorded`, `depreciation-posted`, `fx-declared`, `related-party-reviewed` — each backed by a named aggregation. CFO override path is declarative via `overrideField: overrideChecklist` + `overrideRequiresRole: approver` + `overrideRequiresMemo: true` + `overrideAuditTrail: true`. On entry to `closed`, the `onCloseMaterialiseRetainedEarnings` hook creates the corresponding `RetainedEarnings` record using helper aggregations.
+- `closed` state: `immutablePeriod: enabled: true` per REQ-YEC-007 — all GLTransaction rows on this FY (and their GLLine rows via `matchVia: transactionId`) become read-only; new postings rejected with `Fiscal Year @self.yearNumber is closed and immutable.`
+- `closed → reopened` (reopen): admin-only (`requiresRole: admin`); requires non-empty `reopenReason`; emits two reversing JournalEntry records; sets `reopenedAt`, `reopenedBy`.
+
+**Declarative aggregations (x-openregister-aggregations) — added by `bookkeeping-year-end-close`:**
+- `trialBalanceImbalanceCents`, `accrualReversalCoverage`, `accrualAccountBalanceCents`, `depreciationClosingEntryCount`, `activeFixedAssetCount`, `foreignCurrencyFxCoverage`, `foreignCurrencyAccountCount`, `relatedPartyUnacknowledgedCount`, `relatedPartyTransactionCount` — back the closing-checklist preconditions (REQ-YEC-006)
+- `netIncomeCents`, `priorRetainedEarningsClosingCents`, `distributionsCents` — feed the `onCloseMaterialiseRetainedEarnings` hook (REQ-YEC-002)
+- `balanceCarryforwardValid` — counts cross-FY account-level mismatches between prior closing and current opening; `onFail: warn` (REQ-YEC-008)
 
 > **Reconciliation note (add-shillinq-year-end-close, 2026-06-03):** The original `FiscalYear` entry (primary spec: `financial-reporting-accountability`) declared a minimal 5-field schema (`year`, `startDate`, `endDate`, `isClosed`, `closingDate`) without lifecycle machinery. This entry supersedes it with the full T4 year-end close lifecycle declared in `lib/Settings/shillinq_register.json`. The field `year` is renamed `yearNumber` (integer type, composite uniqueness with `administrationId`); `isClosed` and `closingDate` are replaced by the `state` enum and `closedAt`/`closedBy` pair. New `JournalEntry` records now reference `FiscalYear` via `fiscalYearId` for close/reopen journal pairing (previously the reference existed only in the generic `JournalEntry → FiscalYear` relation). Implementations using the old field names must migrate to the new schema shape.
 
