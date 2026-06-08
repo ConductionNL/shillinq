@@ -32,6 +32,7 @@
  * lifecycle DSL. When the engine gains those capabilities, replace these references
  * with declarative conditions and delete this file. ADR-022: object reads use the
  * real OpenRegister ObjectService API (setRegister/setSchema/findAll) only. *
+ *
  * @category Lifecycle
  * @package  OCA\Shillinq\Lifecycle
  *
@@ -41,7 +42,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/spec.md */
+ * @spec openspec/changes/bookkeeping-credit-control-dunning/spec.md
+ */
 
 declare(strict_types=1);
 
@@ -62,7 +64,8 @@ use Psr\Log\LoggerInterface;
  * 14-dagen-brief fragment and the B2C day-44 threshold are read from app config so
  * they can be tuned without a code change (ADR-005 — secrets/config from app config).
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/spec.md */
+ * @spec openspec/changes/bookkeeping-credit-control-dunning/spec.md
+ */
 class DunningGuard
 {
     /**
@@ -90,7 +93,7 @@ class DunningGuard
      */
     public function __construct(
         private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,        private readonly LoggerInterface $logger,
+        private readonly IAppConfig $appConfig, private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
 
@@ -431,5 +434,4 @@ class DunningGuard
         return $register;
 
     }//end resolveRegister()
-
 }//end class
