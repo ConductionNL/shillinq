@@ -227,9 +227,11 @@ final class AdministrationMigrationServiceTest extends TestCase
         self::assertFalse($drafts['source']['locked']);
         self::assertFalse($drafts['destination']['locked']);
 
-        // Lock once the migration moves into a terminal state.
+        // Lock once the migration moves into a terminal state. Use
+        // array_merge / spread so the new status overrides the existing
+        // key — PHP's `+` operator keeps the left-hand value on collision.
         $locked = $this->service->buildJournalDrafts(
-            migration: ($migration + ['status' => 'geboekt_beide'])
+            migration: array_merge($migration, ['status' => 'geboekt_beide'])
         );
         self::assertTrue($locked['source']['locked']);
         self::assertTrue($locked['destination']['locked']);
