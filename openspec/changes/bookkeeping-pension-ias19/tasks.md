@@ -61,7 +61,7 @@
   computed, valuationReport file, approvalStatus enum: draft/approved/locked,
   approvedBy, approvedAt); add lifecycle: draft → approved → locked
 
-- [ ] Task 7: Declare the `pension-movement` schema in
+- [x] Task 7: Declare the `pension-movement` schema in
   `lib/Settings/shillinq_register.json` with all REQ-PEN-003–004 fields (plan FK,
   period, dboOpening, serviceCostCurrent, pastServiceCost, gainOnSettlement,
   netInterestCost, actuarialLossGainDBO, dueToDemographic/Financial/Experience,
