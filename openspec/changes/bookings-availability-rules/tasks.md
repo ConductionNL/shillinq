@@ -91,6 +91,16 @@ adds Dutch (`nl_NL`) and English (`en_US`) translation strings for:
 
 ## Dependency Check
 
-- [ ] Verify `bookings-resource-calendar` change is merged before applying
-      this spec (FK to `Resource` entity)
-- [ ] No circular dependencies (this spec does not introduce them)
+- [x] Verify `bookings-resource-calendar` change is merged before applying
+      this spec (FK to `Resource` entity) — confirmed `Resource` schema
+      present in `lib/Settings/register.d/bookings-resource-calendar.json`
+      (slug `Resource`, properties `resourceId`/`type`/`name`/`organization`/
+      `status`) and `x-openregister-relations` on `AvailabilityRule.resource`
+      points at `relatedSchema: Resource`, `relatedField: resourceId` — FK
+      target exists in the same register file the implementation cycle
+      already shipped.
+- [x] No circular dependencies (this spec does not introduce them) —
+      verified: `bookings-resource-calendar/hydra.json` declares
+      `depends_on: []` (no edge back to `bookings-availability-rules`) and
+      this change's `hydra.json` lists only `bookings-resource-calendar`;
+      the dependency graph is a one-way edge.
