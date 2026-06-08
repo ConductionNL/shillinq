@@ -27,7 +27,7 @@
 
 ## 4. Monthly depreciation workflow
 
-- [ ] Task 5: Register the `shillinq-fixed-assets-monthly-depreciation` `ScheduledWorkflow` from `lib/Repair/InitializeSettings.php` (new private method `registerFixedAssetsMonthlyDepreciationWorkflow()`), idempotently — mirrors `registerIv3ScheduledWorkflow()`. `engine=openconnector`, `workflowId=fixed-assets-monthly-depreciation`, `intervalSec=2592000` (30 days), `payload` carries `register=shillinq`, `schema=FixedAsset`, `lifecycleState=active`. Wires into `run()` after `registerIv3ScheduledWorkflow()`. Per REQ-FA-005 + ADR-031 path 2 — no `DepreciationJob extends TimedJob` ships.
+- [x] Task 5: Register the `shillinq-fixed-assets-monthly-depreciation` `ScheduledWorkflow` from `lib/Repair/InitializeSettings.php` (new private method `registerFixedAssetsMonthlyDepreciationWorkflow()`), idempotently — mirrors `registerIv3ScheduledWorkflow()`. `engine=openconnector`, `workflowId=fixed-assets-monthly-depreciation`, `intervalSec=2592000` (30 days), `payload` carries `register=shillinq`, `schema=FixedAsset`, `lifecycleState=active`. Wires into `run()` after `registerIv3ScheduledWorkflow()`. Per REQ-FA-005 + ADR-031 path 2 — no `DepreciationJob extends TimedJob` ships.
 
 ## 5. Tests
 

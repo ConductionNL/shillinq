@@ -78,6 +78,7 @@ class InitializeSettings implements IRepairStep
      * (C2: prevents "default" contamination of real tenant data).
      * Phase 3: seeds the Archiefwet Selectielijst Gemeenten 2020 retention rules.
      * Phase 4: registers the IV3 quarterly CBS ScheduledWorkflow if not yet present.
+     * Phase 4b: registers the FixedAssets monthly-depreciation ScheduledWorkflow per REQ-FA-005.
      * Phase 5: seeds KOR thresholds from kor-thresholds-2026.json idempotently.
      * Phase 6: seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
      * Phase 7: seeds RJ-270 stages and rate-card templates for consultancy project accounting.
@@ -151,6 +152,7 @@ class InitializeSettings implements IRepairStep
             $this->seedProjectData(output: $output);
             $this->seedSelectielijstRules(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
+            $this->registerFixedAssetsMonthlyDepreciationWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
             $this->seedComplianceReferenceData(output: $output);
             $this->seedProductAttributeTemplates(output: $output);
@@ -344,6 +346,75 @@ class InitializeSettings implements IRepairStep
         $output->info('Shillinq: IV3 quarterly CBS ScheduledWorkflow registered (interval: 90 days)');
 
     }//end registerIv3ScheduledWorkflow()
+
+    /**
+     * Register the monthly Fixed-Assets depreciation ScheduledWorkflow if not yet present.
+     *
+     * Idempotent: uses the slug 'shillinq-fixed-assets-monthly-depreciation'
+     * for deduplication. Interval defaults to 2592000 seconds (30 days). The
+     * workflow walks every `FixedAsset` with `lifecycleState=active` and,
+     * for each asset, reads the `monthlyDepreciation` derived field and
+     * materialises a balanced `GLTransaction` (debit depreciation expense,
+     * credit accumulated depreciation). Per ADR-031 §"Background jobs that
+     * walk an object queue" path 2 — no shillinq DepreciationJob extends
+     * TimedJob ships. REQ-FA-005.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md
+     */
+    private function registerFixedAssetsMonthlyDepreciationWorkflow(IOutput $output): void
+    {
+        try {
+            $workflowMapper = $this->container->get(
+                'OCA\OpenRegister\Db\ScheduledWorkflowMapper'
+            );
+        } catch (\Throwable $e) {
+            $output->info('Shillinq: ScheduledWorkflowMapper not available, skipping FixedAssets workflow registration');
+            return;
+        }
+
+        $slug = 'shillinq-fixed-assets-monthly-depreciation';
+
+        $existing = $workflowMapper->findAll();
+        foreach ($existing as $workflow) {
+            if ($workflow->getName() === $slug) {
+                $output->info('Shillinq: FixedAssets monthly-depreciation ScheduledWorkflow already registered, skipping');
+                return;
+            }
+        }
+
+        // 30 days in seconds — monthly cadence per REQ-FA-005. Operators
+        // adjust the interval and target via the OpenRegister
+        // ScheduledWorkflow admin UI if their close cadence differs.
+        $workflowMapper->createFromArray(
+            data: [
+                'name'        => $slug,
+                'engine'      => 'openconnector',
+                'workflowId'  => 'fixed-assets-monthly-depreciation',
+                'intervalSec' => 2592000,
+                'enabled'     => true,
+                'payload'     => json_encode(
+                    [
+                        'register'       => 'shillinq',
+                        'schema'         => 'FixedAsset',
+                        'lifecycleState' => 'active',
+                        'derivedFields'  => [
+                            'monthlyDepreciation',
+                            'currentBookValue',
+                            'commercialBookValue',
+                            'fiscalBookValue',
+                        ],
+                    ]
+                ),
+            ]
+        );
+
+        $output->info('Shillinq: FixedAssets monthly-depreciation ScheduledWorkflow registered (interval: 30 days)');
+
+    }//end registerFixedAssetsMonthlyDepreciationWorkflow()
 
     /**
      * Seed T3 NL-compliance reference data (BTW tariffs + BBV taakvelden), idempotently.
