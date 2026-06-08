@@ -440,7 +440,7 @@ class PeriodCloseService
 
         $found = $objectService
             ->setRegister($register)
-            ->setSchema('PeriodClose')
+            ->setSchema('FiscalPeriod')
             ->findAll(['filters' => $filters, 'limit' => 1]);
 
         if (is_array($found) === true && $found !== []) {
@@ -450,7 +450,7 @@ class PeriodCloseService
         // Fall back to the record-id lookup, still scoped to the administration.
         $byId = $objectService
             ->setRegister($register)
-            ->setSchema('PeriodClose')
+            ->setSchema('FiscalPeriod')
             ->findAll(['filters' => ['id' => $periodId], 'limit' => 1]);
 
         if (is_array($byId) === true && $byId !== []) {
@@ -478,7 +478,7 @@ class PeriodCloseService
         $objectService->saveObject(
             object: $record,
             register: $this->register(),
-            schema: 'PeriodClose',
+            schema: 'FiscalPeriod',
         );
 
         return $record;

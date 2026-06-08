@@ -263,7 +263,7 @@ class PeriodCloseGuard
         $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
         $found         = $objectService
             ->setRegister($this->register())
-            ->setSchema('PeriodClose')
+            ->setSchema('FiscalPeriod')
             ->findAll(['filters' => ['id' => $period], 'limit' => 1]);
 
         if (is_array($found) === true && $found !== []) {
@@ -292,7 +292,7 @@ class PeriodCloseGuard
 
         $found = $objectService
             ->setRegister($this->register())
-            ->setSchema('PeriodClose')
+            ->setSchema('FiscalPeriod')
             ->findAll(['filters' => $filters, 'limit' => 1]);
 
         if (is_array($found) === true && $found !== []) {
