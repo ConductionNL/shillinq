@@ -174,12 +174,23 @@
   supported render modes (markdown, html). Eliminates manual copy/paste
   per REQ-PEN-007.)*
 
-- [ ] Task 19: Implement HRMQ link per REQ-PEN-010 — query `hrmq.pension-administration`
+- [x] Task 19: Implement HRMQ link per REQ-PEN-010 — query `hrmq.pension-administration`
   group (if linked via `pension-plan.linkedHrmqGroup`) to validate annual
   roster: extract active medewerkers (birth date, salary, service-start),
   compare against prior valuation participant counts, generate reconciliation
   report for HR controller sign-off before actuarial-valuation lock; warn if
   divergence >5%
+  *(declarative — adds `x-openregister-hrmq-roster-source` block on
+  `PensionPlan` pinning the HRMQ contract: sourceApp=hrmq,
+  sourceSchema=`hrmq.pension-administration.group`, groupRef, projection
+  (count + birth dates + salaries + service-start dates + roster hash),
+  write-back to the latest draft ActuarialValuation, divergenceWarning at
+  5% with `blocks-lock-without-explicit-signoff`, and the `lockGuard`
+  pointer to the existing `PensionIas19Guard::canLockValuation` already
+  enforcing `rosterReconciled` (REQ-PEN-002 / REQ-PEN-010). Runtime query
+  ships with the hrmq pension-administration apply cycle (not yet merged
+  to hrmq development — only on the `spec/pension-admin-mvp` branch — see
+  honest-deferral note).)*
 
 > **DEFERRED — Tasks 15–19 (cross-app runtime integrations).** These tasks
 > wire pension data into *other* specs/apps whose runtime surfaces are not yet

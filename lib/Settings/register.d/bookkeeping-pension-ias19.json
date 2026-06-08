@@ -212,6 +212,34 @@
 							"description": "Terminate a paused plan."
 						}
 					}
+				},
+				"x-openregister-hrmq-roster-source": {
+					"description": "Declarative HRMQ deelnemersbestand contract consumed by hrmq.pension-administration when PensionPlan.linkedHrmqGroup is set (REQ-PEN-010). The annual reconciliation job queries the linked HRMQ group for the active medewerkers and writes the count + roster-hash back into the most-recent draft ActuarialValuation; the roster is signed off via ValuationLifecycle.rosterReconciled, which is enforced by PensionIas19Guard::canLockValuation before the valuation can be locked into the jaarrekening. The contract is also the hook point for the >5% divergence warning required by the REQ-PEN-010 scenario.",
+					"sourceApp": "hrmq",
+					"sourceSchema": "hrmq.pension-administration.group",
+					"groupRef": "linkedHrmqGroup",
+					"projection": {
+						"activeCount": "count(members where status=active)",
+						"birthDates": "members.birthDate",
+						"salaries": "members.pensionableSalary",
+						"serviceStartDates": "members.serviceStartDate",
+						"rosterHash": "sha256(sorted(members.id))"
+					},
+					"writeBack": {
+						"targetSchema": "ActuarialValuation",
+						"targetSelector": "ActuarialValuation.plan == PensionPlan.id AND ActuarialValuation.approvalStatus == 'draft'",
+						"fields": {
+							"hrmqRosterCount": "activeCount",
+							"hrmqRosterHash": "rosterHash"
+						}
+					},
+					"divergenceWarning": {
+						"thresholdPct": 5,
+						"comparePriorPeriod": true,
+						"effect": "blocks-lock-without-explicit-signoff"
+					},
+					"lockGuard": "OCA\\Shillinq\\Lifecycle\\PensionIas19Guard::canLockValuation",
+					"x-spec": "openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md#REQ-PEN-010"
 				}
 			},
 			"ActuarialValuation": {
