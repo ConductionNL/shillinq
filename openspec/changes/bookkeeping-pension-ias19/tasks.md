@@ -116,7 +116,7 @@
   summary, asset breakdown by category, duration, expected future contribution);
   format Markdown or HTML for jaarrekening notes
 
-- [ ] Task 14: Add schema-level enforcement per REQ-PEN-001, REQ-PEN-008:
+- [x] Task 14: Add schema-level enforcement per REQ-PEN-001, REQ-PEN-008:
   - DB plans MUST have `methodology=PUC`; any other value rejected at
     schema/lifecycle validation
   - DC plans BLOCKED from DBO, service cost, sensitivity workflows (enum
