@@ -200,7 +200,7 @@
   - GL-posting automation (balanced journal generation)
   - Integration points (ap-ar, upa, wkr, liv-lkv, sbr)
 
-- [ ] Create audit/compliance checklist (NL):  _(DEFERRED — documentation phase.)_
+- [x] Create audit/compliance checklist (NL):  _(Published at `docs/Features/payroll-engine-nl/audit-compliance-checklist-nl.md`.)_
   - Wet op de loonadministratie 1964 compliance
   - Loonstrook art. 626 BW check
   - Jaaropgave cumulatieven-consistency
