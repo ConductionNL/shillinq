@@ -58,22 +58,50 @@
 - [x] 5.3 PHP side untouched (no changes under `lib/`, `appinfo/`,
   `templates/`) — `composer check:strict` unaffected.
 
-## 6. Browser verification (dev container) — DEFERRED
+## 6. Browser verification (dev container)
 
-> Shillinq is not currently mounted/installed in the `nextcloud` dev
-> container (only `procest`, `pipelinq`, `larpingapp`, etc. are). Browser
-> verification happens when shillinq is deployed / on the PR. Checklist
-> kept for that step:
+> Verified 2026-06-08 on the `nextcloud` dev container at
+> `http://localhost:8080`. Shillinq is mounted at
+> `/var/www/html/custom_apps/shillinq` (compose bind from
+> `apps-extra/shillinq`) and is installed (`occ app:list` →
+> `shillinq: 0.6.6`). The 4 PNGs in `screenshots/` are the evidence.
 
-- [ ] 6.1 Mount/enable `shillinq` in the dev container; clear OPcache.
-- [ ] 6.2 Open `/index.php/apps/shillinq` — app boots; left nav shows
-  **Dashboard** + (settings section) **Documentation** + **Settings**.
-- [ ] 6.3 `/` renders `CnDashboardPage` with the 4 stats-block widgets.
-- [ ] 6.4 `/settings` renders `CnSettingsPage` (version-info + register).
-- [ ] 6.5 With OpenRegister disabled, `CnAppRoot`'s dependency-missing
-  state shows (not a blank screen).
-- [ ] 6.6 Personal/Admin → Shillinq settings page still renders.
-- [ ] 6.7 Screenshot for the PR.
+- [x] 6.1 Mount/enable `shillinq` in the dev container; clear OPcache.
+  Already bind-mounted via compose; `occ upgrade` ran (NC was in
+  upgrade-needed state from an earlier pipelinq upgrade); `apache2ctl
+  graceful` clears OPcache on each rebuild. `/index.php/apps/shillinq/`
+  → HTTP 200.
+- [x] 6.2 Open `/index.php/apps/shillinq` — app boots; left nav renders
+  via the v2 manifest. Top entries observed: **Dashboard**,
+  **Bookkeeping** (with **Chart of Accounts** sub-item),
+  **Documentation**, **Features & roadmap**, plus the **Settings**
+  section button. (The manifest has grown since this checklist was first
+  written; the load-bearing items for the Tier-4 shell — Dashboard +
+  Settings — both render.) Screenshot: `screenshots/dashboard.png`.
+- [x] 6.3 `/` renders `CnDashboardPage` with the 4 stats-block widgets
+  (**Open items**, **Due this week**, **Completed**, **Team members**,
+  each showing `0 sample`). Screenshot: `screenshots/dashboard.png`.
+- [x] 6.4 `/settings` (via the in-app nav) renders `CnSettingsPage`
+  with the **Configuration** card (Register selector + `OpenRegister
+  register ID` helper text) and the **Version** card (Application
+  information block). Screenshot: `screenshots/in-app-settings.png`.
+- [x] 6.5 With OpenRegister disabled (`occ app:disable openregister`),
+  `CnAppRoot`'s dependency-missing state shows (an `NcEmptyContent`
+  note with the missing-app icon, descriptive text, and an action link
+  to `/index.php/settings/apps/integration/openregister`). Not a blank
+  screen. OpenRegister re-enabled after the check. Screenshot:
+  `screenshots/dependency-missing.png`.
+- [x] 6.6 Personal/Admin → Shillinq admin settings page
+  (`/index.php/settings/admin/shillinq`) renders unchanged
+  (Version Information `Shillinq 0.6.6` / Up to date, Support, and
+  Configuration sections — served by the PHP `AdminSettings` +
+  `SettingsSection` registrations in `appinfo/info.xml`, which the
+  Tier-4 frontend migration did not touch). Screenshot:
+  `screenshots/admin-settings.png`.
+- [x] 6.7 Screenshot evidence captured at
+  `openspec/changes/shillinq-manifest-tier4/screenshots/`:
+  `dashboard.png`, `in-app-settings.png`, `dependency-missing.png`,
+  `admin-settings.png`.
 
 ## 7. Wrap-up
 

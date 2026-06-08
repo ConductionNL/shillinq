@@ -183,6 +183,16 @@ expectation. If OR's retention engine does not yet support
 hash-chain preservation across anonymisation, the gap MUST be
 filed as an OR issue and the spec annotated.
 
+> **OR engine gap (opsx-ff discovery, 2026-06-08)**: today
+> `ArchivalRetentionTask` only destroys rows past retention;
+> `RetentionEvaluator` does not carry `disposition` through to
+> the sweep; no selective field-level anonymisation path exists
+> that preserves the audit-trail-immutable hash chain. Filed as
+> [Conduction/openregister#99](https://codeberg.org/Conduction/openregister/issues/99).
+> shillinq stays consumed-only (ADR-022); enforcement of
+> `disposition: archive` and `disposition: anonymise` engages
+> automatically when OR ships the engine.
+
 #### Scenario: A destroyed GL transaction leaves an immutable audit metadata record
 
 - **GIVEN** a GL transaction from 2017 is destroyed by retention
