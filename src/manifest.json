@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "1.3.9",
+	"version": "1.3.10",
 	"dependencies": [
 		"openregister"
 	],
@@ -45,6 +45,20 @@
 					"icon": "BankOutline",
 					"route": "BankConnections",
 					"order": 25
+				},
+				{
+					"id": "BankReconciliation",
+					"label": "Bank Reconciliation",
+					"icon": "BankCheckOutline",
+					"route": "BankReconciliation",
+					"order": 26
+				},
+				{
+					"id": "MatchingRules",
+					"label": "Matching Rules",
+					"icon": "FilterCogOutline",
+					"route": "MatchingRules",
+					"order": 27
 				},
 				{
 					"id": "FixedAssets",
@@ -2738,6 +2752,221 @@
 					}
 				},
 				"indexRoute": "BankConnections",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "BankReconciliation",
+			"route": "/bookkeeping/bank-reconciliation",
+			"type": "index",
+			"title": "Bank Reconciliation",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankStatement",
+				"columns": [
+					{ "key": "statementId", "label": "Statement", "sortable": true },
+					{ "key": "bankAccountIban", "label": "IBAN", "sortable": true },
+					{ "key": "periodStart", "label": "Period From", "sortable": true },
+					{ "key": "periodEnd", "label": "Period To", "sortable": true },
+					{ "key": "importFormat", "label": "Format", "sortable": true },
+					{ "key": "transactionCount", "label": "Lines", "sortable": true },
+					{ "key": "lifecycleState", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "periodEnd",
+				"detailRoute": "BankReconciliationDetail",
+				"description": "Bank statements imported via CAMT.053, MT940, or manual CSV upload. Operators reconcile lines against AR/AP invoices or route to suspense (REQ-BR-002/REQ-BR-010)."
+			}
+		},
+		{
+			"id": "BankReconciliationDetail",
+			"route": "/bookkeeping/bank-reconciliation/:id",
+			"type": "detail",
+			"title": "Bank Statement",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankStatement",
+				"fields": [
+					{ "key": "statementId", "label": "Statement", "type": "string" },
+					{ "key": "bankAccountIban", "label": "Bank Account (IBAN)", "type": "string" },
+					{ "key": "periodStart", "label": "Period From", "type": "string" },
+					{ "key": "periodEnd", "label": "Period To", "type": "string" },
+					{ "key": "openingBalance", "label": "Opening Balance (EUR)", "type": "number" },
+					{ "key": "closingBalance", "label": "Closing Balance (EUR)", "type": "number" },
+					{ "key": "currency", "label": "Currency", "type": "string" },
+					{ "key": "importFormat", "label": "Import Format", "type": "string" },
+					{ "key": "importedAt", "label": "Imported At", "type": "datetime" },
+					{ "key": "importedBy", "label": "Imported By", "type": "string" },
+					{ "key": "fileChecksum", "label": "File Checksum (SHA-256)", "type": "string" },
+					{ "key": "transactionCount", "label": "Line Count", "type": "integer" },
+					{ "key": "lifecycleState", "label": "Status", "type": "string" },
+					{ "key": "sourceDocumentUri", "label": "Source Document (docudesk)", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"actions": [
+					{
+						"id": "import-statement",
+						"label": "Import statement",
+						"icon": "Upload",
+						"description": "Operator uploads a CAMT.053 / MT940 / CSV file; statement + lines created per REQ-BR-002. Original file archived via docudesk."
+					},
+					{
+						"id": "open-reconciliation",
+						"label": "Open for reconciliation",
+						"icon": "PlayCircleOutline",
+						"visibleWhen": { "field": "lifecycleState", "in": ["imported"] },
+						"type": "lifecycle-transition",
+						"transition": "open-reconciliation",
+						"description": "Move statement to in-progress; allow operator matching."
+					},
+					{
+						"id": "complete-reconciliation",
+						"label": "Confirm reconciliation",
+						"icon": "CheckCircleOutline",
+						"visibleWhen": { "field": "lifecycleState", "in": ["in-progress"] },
+						"type": "lifecycle-transition",
+						"transition": "complete-reconciliation",
+						"description": "All lines must be matched or routed-to-suspense (REQ-BR-008)."
+					},
+					{
+						"id": "audit-lock",
+						"label": "Audit lock",
+						"icon": "Lock",
+						"visibleWhen": { "field": "lifecycleState", "in": ["reconciled"] },
+						"type": "lifecycle-transition",
+						"transition": "audit-lock",
+						"description": "Auditor signs off; irreversible (REQ-BR-008)."
+					}
+				],
+				"indexRoute": "BankReconciliation",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "lines",
+							"label": "Lines",
+							"icon": "FormatListBulleted",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-related-list",
+									"props": {
+										"register": "shillinq",
+										"schema": "BankStatementLine",
+										"filterField": "statementId",
+										"filterValue": ":id",
+										"columns": [
+											{ "key": "lineNumber", "label": "#" },
+											{ "key": "valueDate", "label": "Value Date" },
+											{ "key": "counterpartyName", "label": "Counterparty" },
+											{ "key": "amount", "label": "Amount (EUR)" },
+											{ "key": "remittanceInfo", "label": "Reference" },
+											{ "key": "status", "label": "Match" }
+										]
+									}
+								}
+							]
+						},
+						{
+							"id": "candidates",
+							"label": "Candidate Matches",
+							"icon": "AutoFix",
+							"order": 20,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-related-list",
+									"props": {
+										"register": "shillinq",
+										"schema": "ReconciliationMatch",
+										"filter": { "status": "pending" },
+										"description": "Unconfirmed candidate matches for lines in this statement (REQ-BR-010). One-click confirm or reject."
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "MatchingRules",
+			"route": "/bookkeeping/matching-rules",
+			"type": "index",
+			"title": "Matching Rules",
+			"config": {
+				"register": "shillinq",
+				"schema": "MatchingRule",
+				"columns": [
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "priority", "label": "Priority", "sortable": true },
+					{ "key": "targetType", "label": "Target", "sortable": true },
+					{ "key": "autoConfirm", "label": "Auto-confirm", "sortable": true },
+					{ "key": "isActive", "label": "Active", "sortable": true },
+					{ "key": "lifecycleState", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "priority",
+				"detailRoute": "MatchingRuleDetail",
+				"description": "Operator-authored matching rules consumed by the ReconciliationMatch aggregation (REQ-BR-004/REQ-BR-005/REQ-BR-010). Lower priority = earlier evaluation."
+			}
+		},
+		{
+			"id": "MatchingRuleDetail",
+			"route": "/bookkeeping/matching-rules/:id",
+			"type": "detail",
+			"title": "Matching Rule",
+			"config": {
+				"register": "shillinq",
+				"schema": "MatchingRule",
+				"fields": [
+					{ "key": "ruleId", "label": "Rule ID", "type": "string" },
+					{ "key": "name", "label": "Name", "type": "string" },
+					{ "key": "priority", "label": "Priority", "type": "integer" },
+					{ "key": "targetType", "label": "Target Type", "type": "string" },
+					{ "key": "autoConfirm", "label": "Auto-confirm matches", "type": "boolean" },
+					{ "key": "confidenceScore", "label": "Confidence Score", "type": "number" },
+					{ "key": "isActive", "label": "Active", "type": "boolean" },
+					{ "key": "lifecycleState", "label": "Status", "type": "string" },
+					{ "key": "predicates", "label": "Predicates", "type": "array" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "MatchingRules",
 				"sidebarProps": {
 					"tabs": [
 						{
