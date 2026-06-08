@@ -9,7 +9,7 @@
 
 ## ADDED Requirements
 
-### REQ-SDD-001: Mandate registration with scheme rules enforced
+### Requirement: REQ-SDD-001 Mandate registration with scheme rules enforced
 
 The system MUST allow a bookkeeper to register a SEPA mandate and
 MUST enforce the structural rules of the SDD CORE or SDD B2B rulebook
@@ -58,7 +58,7 @@ Schema.org annotation: `schema:FinancialProduct` or `schema:BankAccount`.
 - **WHEN** a bookkeeper attempts to register a second mandate with the same reference
 - **THEN** the save MUST fail with error code `sdd.mandate.reference.duplicate`.
 
-### REQ-SDD-002: Sequence-type derivation per collection
+### Requirement: REQ-SDD-002 Sequence-type derivation per collection
 
 The system MUST automatically determine the correct `sequenceType`
 for every collection based on the mandate's history, per SDD rulebook
@@ -112,7 +112,7 @@ Schema.org annotation: `schema:PaymentMethod` or `schema:FinancialProduct`.
 - **WHEN** an operator attempts to schedule a second collection against the same mandate
 - **THEN** the system MUST refuse with error code `sdd.mandate.oneoff.second_collection_refused`.
 
-### REQ-SDD-003: Pre-notification with default 14 days lead time
+### Requirement: REQ-SDD-003 Pre-notification with default 14 days lead time
 
 For every scheduled collection the system MUST generate a `PreNotification`
 and MUST NOT allow the collection to be included in a generated pain.008
@@ -154,7 +154,7 @@ The `PreNotification` schema SHALL declare:
 - **WHEN** the bookkeeper attempts to generate a batch including it
 - **THEN** the system MUST block with error code `sdd.prenotification.too_short`, identify which collection(s) violate the deadline, and offer to push the collection date forward.
 
-### REQ-SDD-004: Submission-window enforcement
+### Requirement: REQ-SDD-004 Submission-window enforcement
 
 The system MUST enforce the SDD CORE submission windows (D-5 business
 days for FRST/OOFF, D-2 business days for RCUR/FNAL) and the SDD B2B
@@ -180,7 +180,7 @@ holidays.
 - **WHEN** the bookkeeper generates a batch on 2026-07-14 (Tuesday, 1 business day lead time)
 - **THEN** the system MUST accept.
 
-### REQ-SDD-005: pain.008.001.02 generation and validation
+### Requirement: REQ-SDD-005 pain.008.001.02 generation and validation
 
 The system MUST generate ISO 20022 `pain.008.001.02` XML conforming
 to the EPC SEPA Direct Debit Core Implementation Guidelines and the
@@ -227,7 +227,7 @@ The `DirectDebitBatch` schema SHALL declare:
 - **WHEN** generation is attempted
 - **THEN** it MUST fail with error code `sdd.mandate.signed.after.collection`.
 
-### REQ-SDD-006: pain.002 ingestion and status update
+### Requirement: REQ-SDD-006 pain.002 ingestion and status update
 
 The system MUST ingest pain.002 status reports from the creditor's bank
 (delivered manually as file upload, or automatically via OpenConnector
@@ -246,7 +246,7 @@ and `DirectDebitBatch` accordingly.
 - **WHEN** ingested
 - **THEN** the batch MUST transition to `partially_rejected`, the single collection matching `endToEndId: SDD-2026-00451` MUST transition to `rejected` with `pain002ReasonCode: AC04`, and the remaining 9 collections MUST remain in their current state or transition to `accepted_by_bank`.
 
-### REQ-SDD-007: camt.054 reconciliation and R-transaction handling
+### Requirement: REQ-SDD-007 camt.054 reconciliation and R-transaction handling
 
 The system MUST reconcile camt.054 debit notifications and credit-side
 R-transaction notifications against the originating collections and MUST
@@ -289,7 +289,7 @@ The `RTransaction` schema SHALL declare:
 - **WHEN** ingested
 - **THEN** the system MUST treat it identically to a return AND MUST flag the mandate for bookkeeper review (high refund rate can lead to bank-imposed scheme exclusion per SDD Core rulebook section 3.1).
 
-### REQ-SDD-008: Mandate cancellation and dormancy expiry
+### Requirement: REQ-SDD-008 Mandate cancellation and dormancy expiry
 
 The system MUST allow a bookkeeper to cancel a mandate, MUST refuse to
 schedule any further collections against a cancelled mandate, and MUST
@@ -314,12 +314,12 @@ per the rulebook.
 - **WHEN** the bookkeeper tries to schedule a new collection against it
 - **THEN** the system MUST refuse with error code `sdd.mandate.cancelled`.
 
-### REQ-SDD-009: Reposting of rejected collections
+### Requirement: REQ-SDD-009 Reposting of rejected collections
 
-When a collection moves to `rejected` or `refunded` because of a
-bank-side problem rather than a debtor refusal, the system MUST offer
-one-click reposting that creates a new `DirectDebitCollection` linked
-back via `repostedAsCollectionId` and preserving the original invoice link.
+The system MUST offer one-click reposting whenever a collection moves to
+`rejected` or `refunded` because of a bank-side problem rather than a
+debtor refusal, creating a new `DirectDebitCollection` linked back via
+`repostedAsCollectionId` and preserving the original invoice link.
 
 #### Scenario: Reposting after insufficient-funds rejection
 
@@ -333,7 +333,7 @@ back via `repostedAsCollectionId` and preserving the original invoice link.
 - **WHEN** the bookkeeper clicks "Opnieuw incasseren"
 - **THEN** the system MUST refuse with error code `sdd.mandate.debtor_refusal`, explain that reposting against a refused/revoked mandate is forbidden by the rulebook, and advise pursuing the receivable through dunning or manual bank transfer.
 
-### REQ-SDD-010: Audit-trail and bewaarplicht
+### Requirement: REQ-SDD-010 Audit-trail and bewaarplicht
 
 The system MUST retain every generated pain.008, every ingested pain.002
 and camt.054, every PreNotification, and every signed mandate document
