@@ -100,7 +100,7 @@
   queries must return empty if administratie not in user's accessible list; REQ-MA-001
   masked 404: non-administratie-owned data returns 404 not 403.
 
-- [ ] Task 13: Author `src/components/AdministratieSwitcher.vue` component:
+- [x] Task 13: Author `src/components/AdministratieSwitcher.vue` component:
   render dropdown or pill-bar under app header; list all user's accessible
   administraties with current administratie highlighted; on selection, call API to
   validate access, update session, redirect to home; support keyboard navigation
@@ -212,10 +212,13 @@ a running OR/NC instance, or belong to a separate spec. They are deferred to the
 cycle's CI gate against a live container; the schema + navigation + seed + RBAC/context +
 intercompany foundation they build on ships here.
 
-- [ ] Task 13 (deferred): `AdministratieSwitcher.vue` in-session switcher component —
-  the context/switch API ships (Task 11/16); the Vue dropdown is a thin client over it and is
-  best authored + Playwright-verified against a live instance. The declarative index/detail
-  navigation for all five schemas ships now (Task 23).
+- [x] Task 13 (implemented in finish cycle): `AdministratieSwitcher.vue` ships as
+  `src/components/AdministratieSwitcher.vue` (NcActions-backed dropdown, keyboard nav,
+  hidden when the user has ≤1 accessible administraties), backed by
+  `src/api/administrationApi.js` (axios client over context/switch). It is surfaced as
+  a custom manifest page `AdministrationSwitcherPage` (registry.js + manifest fragment),
+  reachable from the Administraties menu. Playwright/live-instance verification still
+  belongs to the CI gate; the production-grade component itself ships here.
 - [ ] Task 15 (deferred): per-administratie incremental backup routine — runtime scheduler
   side-effect against a live OR; `Administration.backupSchedule` (the routing field) ships now.
 - [ ] Task 17 (deferred): archival write-block enforcement — declared as
