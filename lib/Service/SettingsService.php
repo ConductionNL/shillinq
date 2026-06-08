@@ -1912,6 +1912,135 @@ class SettingsService
     }//end seedInventoryStockExamples()
 
     /**
+     * Seed the default `InventoryGLConfig` record for an administration
+     * (inventory-cogs-posting REQ-CG-001 + Task 11).
+     *
+     * Loads the RGS 3.5 MKB defaults (7000 Kostprijs omzet / 1400
+     * Voorraden / 1800 GR/IR clearing / 7100 Voorraadmutaties) from
+     * `seeds/inventory-gl-config-2026.json` and writes one row per
+     * administration via ObjectService. Idempotent: deduplicates on
+     * administrationId so re-runs preserve operator overrides (the
+     * config is administration-scoped — one active row per tenant).
+     * Skipped when administrationId is empty (C2 contamination guard).
+     *
+     * @param string $administrationId Administration scope for the seed.
+     *
+     * @return array<string,mixed> Result with success flag, seeded + skipped counts, message.
+     *
+     * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-11
+     */
+    public function seedInventoryGLConfig(string $administrationId): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        if ($administrationId === '') {
+            return [
+                'success' => false,
+                'message' => 'administrationId must not be empty.',
+            ];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/inventory-gl-config-2026.json';
+        if (file_exists($seedPath) === false) {
+            return [
+                'success' => false,
+                'message' => 'Seed file not found: '.$seedPath,
+            ];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return [
+                'success' => false,
+                'message' => 'Failed to read seed file.',
+            ];
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return [
+                'success' => false,
+                'message' => 'Failed to parse seed file: '.json_last_error_msg(),
+            ];
+        }
+
+        $configs = ($data['configs'] ?? []);
+        if (empty($configs) === true) {
+            return [
+                'success' => true,
+                'message' => 'No InventoryGLConfig entries in seed file.',
+                'seeded'  => 0,
+                'skipped' => 0,
+            ];
+        }
+
+        $seeded  = 0;
+        $skipped = 0;
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+
+            foreach ($configs as $config) {
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('InventoryGLConfig')
+                    ->findAll(
+                        [
+                            'filters' => ['administrationId' => $administrationId],
+                            'limit'   => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $config['administrationId'] = $administrationId;
+
+                $objectService->saveObject(
+                    object: $config,
+                    register: $registerSlug,
+                    schema: 'InventoryGLConfig',
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: InventoryGLConfig seeded',
+                [
+                    'administrationId' => $administrationId,
+                    'seeded'           => $seeded,
+                    'skipped'          => $skipped,
+                ]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'InventoryGLConfig seeded successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: InventoryGLConfig seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedInventoryGLConfig()
+
+    /**
      * Seed the demo BBVProgramme records from
      * bbv-waterschappen-programmes-2026-demo.json, idempotently per administration.
      *

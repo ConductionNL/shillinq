@@ -86,6 +86,9 @@ class InitializeSettings implements IRepairStep
      * Phase 10: seeds demo Barcode records (EAN/GTIN/SSCC/UPC/internal) per REQ-SKU-011.
      * Phase 11: seeds demo InventoryStock records (Amsterdam / Rotterdam / Utrecht) per REQ-IST-009.
      * Phase 12: seeds BBVProgramme + BudgetBBVMapping demo records (waterschappen BBV chain member 01) per REQ-BBVW-001 / REQ-BBVW-002.
+     * Phase 13: seeds the default InventoryGLConfig (RGS 3.5 MKB account
+     * routing for COGS / Inventory Asset / GR-IR / Inventory Adjustment)
+     * per REQ-CG-001 / Task 11.
      *
      * @param IOutput $output The output interface for progress reporting
      *
@@ -98,6 +101,7 @@ class InitializeSettings implements IRepairStep
      * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
      * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
      * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed/tasks.md#seed-data
+     * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-11
      */
     public function run(IOutput $output): void
     {
@@ -156,6 +160,7 @@ class InitializeSettings implements IRepairStep
             $this->seedInventoryLotsDemo(output: $output);
             $this->seedInventoryValuationExamples(output: $output);
             $this->seedInventoryStockExamples(output: $output);
+            $this->seedInventoryGLConfig(output: $output);
             $this->seedBbvWaterschappenDemo(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
@@ -646,6 +651,47 @@ class InitializeSettings implements IRepairStep
         $output->warning('InventoryStock example seeding issue: '.($result['message'] ?? 'unknown error'));
 
     }//end seedInventoryStockExamples()
+
+    /**
+     * Seed the default `InventoryGLConfig` record per administration,
+     * idempotently (inventory-cogs-posting REQ-CG-001 + Task 11).
+     *
+     * Calls SettingsService::seedInventoryGLConfig() which dedupes on
+     * administrationId per REQ-CG-001 (one active config per tenant)
+     * so re-runs preserve operator overrides. Skipped when
+     * administration_id is not configured (C2 — prevents "default"
+     * contamination of real tenant data).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-11
+     */
+    private function seedInventoryGLConfig(IOutput $output): void
+    {
+        $settings         = $this->settingsService->getSettings();
+        $administrationId = ($settings['administration_id'] ?? '');
+
+        if ($administrationId === '') {
+            $output->info('Shillinq: InventoryGLConfig seed skipped (no default administration configured)');
+            return;
+        }
+
+        $output->info('Seeding InventoryGLConfig defaults (RGS 3.5 MKB)...');
+        $result = $this->settingsService->seedInventoryGLConfig(administrationId: $administrationId);
+
+        if (($result['success'] ?? false) === true) {
+            $output->info(
+                'InventoryGLConfig seeded: '
+                .($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
+            );
+            return;
+        }
+
+        $output->warning('InventoryGLConfig seeding issue: '.($result['message'] ?? 'unknown error'));
+
+    }//end seedInventoryGLConfig()
 
     /**
      * Seed the bookkeeping-waterschappen-bbv-variant slice-01 demo data
