@@ -38,13 +38,13 @@
 
 - [x] Task 11: `TaxProvision.linkedVpbReturn` field declared in schema fragment for FK linkage. Runtime population (pointing to actual Vpb record) DEFERRED to bookkeeping-vpb-mkb dependency.
 
-- [ ] Task 12: DEFERRED — OR's audit-trail-immutable is a schema-level flag; requires OR runtime and schema registration to test. No code change needed; confirmed schema x-openregister pattern is correct per fragment.
+- [x] Task 12: All five deferred-tax schemas (`TemporaryDifference`, `TaxLossCarryForward`, `TaxRateReconciliation`, `DeferredTaxMovement`, `TaxProvision`) are opted into OR's `audit-trail-immutable` engine via `lib/Settings/register.d/add-shillinq-audit-trail.json` (the cross-cutting ADR-022 / REQ-AT-001 fragment) — each schema carries `x-openregister-audit-trail: { enabled: true }` so OR captures actor + timestamp + before/after + hash chain on every create / update / lifecycle / delete event. Per ADR-022 D2 no app-local audit table is authored. Runtime verification is covered by the separate `add-shillinq-audit-trail` change.
 
-- [ ] Task 13: DEFERRED — manifest navigation requires frontend manifest.json changes and a live NC instance for Playwright verification. `TaxCalculationService` is wired; UI surfaces pending manifest changes.
+- [x] Task 13: `src/manifest.json` surfaces the five deferred-tax schemas via a new `Belastingen > Uitgestelde belastingen` menu group (visibility=mkb) with children `TaxProvisions`, `TemporaryDifferences`, `DeferredTaxMovements`, `TaxLossCarryForwards`, `TaxRateReconciliations`. Each child has an `index` page (column table) and a `:id` `detail` page (full field list + `Audit Trail` sidebar tab pointing at `/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails`) using the generic v2 manifest rendering — no bespoke Vue components. Manifest `version` bumped 1.3.7 → 1.3.8 and `appinfo/info.xml` `<version>` bumped 0.6.7 → 0.6.8 per `nc-immutable-cache-bust` rule. Live-instance Playwright coverage is captured separately under the e2e gate.
 
 - [x] Task 14: `TaxRateReconciliation`, `TemporaryDifference`, `DeferredTaxMovement`, and `TaxProvision` schemas all carry `x-openregister-calculations` blocks per ADR-031. No parallel PHP report service was written.
 
-- [ ] Task 15: DEFERRED — `openspec/architecture/adr-000-data-model.md` update requires the architecture document to exist in the current state; low-risk doc-only task deferred to review cycle.
+- [x] Task 15: `openspec/architecture/adr-000-data-model.md` gained five new entity entries — `DeferredTaxMovement` (inserted between Deduction and Delegation), `TaxLossCarryForward` (between TaxExemption and TaxLot), `TaxProvision` (between TaxLot and TaxRate), `TaxRateReconciliation` (between TaxRate and TaxRegimeConfiguration), and `TemporaryDifference` (between Team and Tender). Each carries Schema.org type, italic narrative paragraph, property table (with cent / basis-point notes per ADR-022), relations and ADR cites (ADR-022 / ADR-031 / ADR-037). Two additive-extension annotation notes were appended: one on `Account` documenting the optional `taxBasisDifferenceCategory` enum hint per REQ-DT-001 / REQ-DT-002, and one on `FiscalYear` documenting the sibling `FiscalPeriod` schema's `enactedTaxRates` map per REQ-DT-005.
 
 ## Verification
 
