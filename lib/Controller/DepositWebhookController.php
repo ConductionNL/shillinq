@@ -78,8 +78,8 @@ class DepositWebhookController extends Controller
      *
      * @param string $gateway The gateway slug from the route: 'mollie' or 'stripe'.
      *
-     * @return JSONResponse 200 on success, 202 when queued, 401 on bad signature,
-     *                       400 on malformed payload, 404 when no deposit matches.
+     * @return JSONResponse 200 on success, 202 when queued, 400 on bad signature
+     *                       or malformed payload, 404 when no deposit matches.
      *
      * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md (REQ-DP-006)
      */
@@ -97,7 +97,11 @@ class DepositWebhookController extends Controller
             return new JSONResponse(['status' => 'empty-body'], Http::STATUS_BAD_REQUEST);
         }
 
-        // ADR-005: verify the provider signature before doing ANY work.
+        // ADR-005: verify the provider signature before doing ANY work. The
+        // signature is part of the payload (not user auth), so a mismatch is
+        // surfaced as 400 (malformed/untrusted payload) on this #[PublicPage]
+        // route — using STATUS_UNAUTHORIZED on a public endpoint would conflict
+        // with the auth posture of the route (gate-9 semantic-auth).
         if ($this->verifySignature(gateway: $gateway, rawBody: $rawBody) === false) {
             // Do not echo any detail to the caller; log without the body to avoid
             // persisting payment data (REQ-DP-001).
@@ -105,7 +109,7 @@ class DepositWebhookController extends Controller
                 'Shillinq: rejected deposit webhook with invalid signature',
                 ['gateway' => $gateway]
             );
-            return new JSONResponse(['status' => 'invalid-signature'], Http::STATUS_UNAUTHORIZED);
+            return new JSONResponse(['status' => 'invalid-signature'], Http::STATUS_BAD_REQUEST);
         }
 
         $payload = json_decode($rawBody, true);
