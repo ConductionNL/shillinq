@@ -3716,6 +3716,126 @@ _Payroll record for wage, salary, and deduction processing_
 - → Person (many-to-one)
 - → Deduction (one-to-many)
 
+### PensionPlan
+**Schema.org:** `schema:FinancialProduct`
+_IAS 19 / RJ 271 employee-benefit pension plan (regeling) header: plan type (DB/DC/CDC/hybrid), accrual, eligibility, provider, governance, participant counts and the optional HRMQ deelnemersbestand link. DB plans drive full Projected Unit Credit measurement; DC plans get light disclosure only (IAS 19 §53). Lifecycle: draft → active → paused → terminated._
+**Primary spec:** bookkeeping-pension-ias19
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| planName | string | Yes | Human-readable plan name |
+| planType | enum | Yes | DB / DC / CDC / hybrid |
+| regulatoryFramework | enum | Yes | Pensioenwet / BPW / vrijgesteld / IORP-II-buitenland |
+| funded | boolean | Yes | Whether the plan has segregated plan assets |
+| provider | string | Yes | Provider name (pensioenfonds, verzekeraar, eigen beheer) |
+| accrualRate | number | No | Annual DB accrual rate as a fraction of pensioengrondslag |
+| retirementAge | integer | Yes | Statutory retirement age |
+| participantCountActive | integer | Yes | Active employees with accruing benefits |
+| linkedHrmqGroup | string | No | Optional FK to an HRMQ pension-administration group |
+| status | enum | Yes | draft / active / paused / terminated |
+| administrationId | string | Yes | FK to the owning administration (read scope) |
+
+**Relations:**
+- → ActuarialValuation (one-to-many)
+- → PensionMovement (one-to-many)
+- → PensionDisclosureTabel (one-to-many)
+
+### ActuarialValuation
+**Schema.org:** `schema:MonetaryAmount`
+_Per-balansdatum measurement of a DB plan's defined-benefit obligation (DBO) and plan assets with the actuarial assumptions and actuaris sign-off. PUC methodology is mandatory for DB plans (IAS 19 §67); the discount rate must be market-referenced (IAS 19 §83); netPensionLiability applies the IFRIC 14 asset ceiling when overfunded. Lifecycle: draft → approved → locked._
+**Primary spec:** bookkeeping-pension-ias19
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| plan | FK | Yes | FK to PensionPlan |
+| valuationDate | date | Yes | As-of date (typically 31-12-yyyy) |
+| methodology | enum | Yes | PUC (DB) / DC (contribution-only) |
+| dboGross | number | Yes | Total defined-benefit obligation (EUR) |
+| discountRate | number | Yes | Discount rate (% p.a.) |
+| discountRateSource | string | Yes | Market source for the audit trail |
+| planAssetsFairValue | number | Yes | Fair value of plan assets (EUR) |
+| assetCeilingApplied | number | No | IFRIC 14 asset-ceiling adjustment (EUR) |
+| netPensionLiability | number | Yes | Computed dboGross − planAssetsFairValue + assetCeilingApplied |
+| approvalStatus | enum | Yes | draft / approved / locked |
+| administrationId | string | Yes | FK to the owning administration (read scope) |
+
+**Relations:**
+- → PensionPlan (many-to-one)
+- → PensionAssumptionSensitivity (one-to-many)
+- → PensionAssetDetail (one-to-many)
+
+### PensionMovement
+**Schema.org:** `schema:MonetaryAmount`
+_Per-period roll-forward of DBO and plan assets, split into the three IAS 19R buckets: service + past service + settlement (P&L), net interest (P&L) and actuarial gain/loss (OCI, non-recycling per IAS 19 §122). Closing balances and the P&L/OCI split are computed roll-forward fields._
+**Primary spec:** bookkeeping-pension-ias19
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| plan | FK | Yes | FK to PensionPlan |
+| period | string | Yes | Period identifier (e.g. 2026, 2026-H1) |
+| serviceCostCurrent | number | Yes | Current-period service cost (P&L) |
+| pastServiceCost | number | Yes | Past service cost on plan amendment (P&L, IAS 19 §103) |
+| netInterestCost | number | Yes | Net interest = discount rate × opening net liability (P&L) |
+| actuarialLossGainDBO | number | Yes | Actuarial change on DBO (OCI) |
+| actuarialGainLossAssets | number | Yes | Actual − expected return on assets (OCI) |
+| dboClosing | number | Yes | Computed closing DBO |
+| planAssetsClosing | number | Yes | Computed closing plan assets |
+| netPensionMovementPL | number | Yes | Computed total P&L charge |
+| netPensionMovementOCI | number | Yes | Computed total OCI remeasurement (non-recycling) |
+| administrationId | string | Yes | FK to the owning administration (read scope) |
+
+**Relations:**
+- → PensionPlan (many-to-one)
+
+### PensionAssumptionSensitivity
+**Schema.org:** `schema:MonetaryAmount`
+_DBO sensitivity line for one assumption delta on one ActuarialValuation per IAS 19 §145. Each DB valuation generates eight lines: discount rate ±0.5pp, salary growth ±0.5pp, mortality ±1yr, inflation ±0.5pp._
+**Primary spec:** bookkeeping-pension-ias19
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| valuation | FK | Yes | FK to ActuarialValuation |
+| assumption | enum | Yes | discount-rate / salary-growth / mortality / inflation |
+| direction | string | Yes | +0.5pp / -0.5pp / +1yr / -1yr |
+| effectOnDBO | number | Yes | Impact on DBO (EUR) |
+| effectOnServiceCost | number | Yes | Impact on service cost (EUR) |
+| administrationId | string | Yes | FK to the owning administration (read scope) |
+
+**Relations:**
+- → ActuarialValuation (many-to-one)
+
+### PensionAssetDetail
+**Schema.org:** `schema:MonetaryAmount`
+_Plan-asset breakdown by category with the IFRS 13 fair-value level (1 quoted / 2 observable / 3 unobservable) for one ActuarialValuation. The per-valuation category fair values sum to ActuarialValuation.planAssetsFairValue._
+**Primary spec:** bookkeeping-pension-ias19
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| valuation | FK | Yes | FK to ActuarialValuation |
+| assetCategory | enum | Yes | cash / equities-quoted / bonds-government / bonds-corporate / real-estate / alternative / derivatives |
+| fairValue | number | Yes | Fair value of assets in this category (EUR) |
+| level | integer | Yes | IFRS 13 fair-value level (1/2/3) |
+| administrationId | string | Yes | FK to the owning administration (read scope) |
+
+**Relations:**
+- → ActuarialValuation (many-to-one)
+
+### PensionDisclosureTabel
+**Schema.org:** `schema:Table`
+_Auto-generated jaarrekening disclosure table per IAS 19 §135–149 for a plan on a balansdatum (assumptions, DBO movement, asset movement, P&L + OCI summary, asset breakdown, duration, expected employer contribution). For DC plans it carries only the contribution amount + regeling summary. Lifecycle: draft → approved → published._
+**Primary spec:** bookkeeping-pension-ias19
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| plan | FK | Yes | FK to PensionPlan |
+| valuationDate | date | Yes | Balansdatum |
+| tableContent | JSON | Yes | Structured disclosure table, auto-generated |
+| status | enum | Yes | draft / approved / published |
+| administrationId | string | Yes | FK to the owning administration (read scope) |
+
+**Relations:**
+- → PensionPlan (many-to-one)
+
 ### PeppolAccessPoint
 **Schema.org:** `schema:Service`
 _Peppol Access Point providing gateway services for e-invoicing and document exchange_

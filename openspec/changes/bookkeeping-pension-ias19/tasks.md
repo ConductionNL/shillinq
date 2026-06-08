@@ -192,7 +192,7 @@
   repair-step ConfigurationService, per shared `nextcloud-app` pattern;
   operators customize per entity on first use
 
-- [ ] Task 23: Update `openspec/architecture/adr-000-data-model.md` with the
+- [x] Task 23: Update `openspec/architecture/adr-000-data-model.md` with the
   6 new entities (pension-plan, actuarial-valuation, pension-movement,
   pension-assumption-sensitivity, pension-asset-detail, pension-disclosure-tabel),
   reconciling against any existing `Pension*` entries; add `Primary spec:
