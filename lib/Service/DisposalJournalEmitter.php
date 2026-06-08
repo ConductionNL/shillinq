@@ -112,22 +112,22 @@ class DisposalJournalEmitter
         $cost        = (float) ($asset['acquisitionCost'] ?? 0);
         $costCents   = $this->calculator->toCents(amount: $cost);
 
-        $disposalDate     = (string) ($disposal['disposalDate'] ?? date('Y-m-d'));
-        $treatment        = (string) ($disposal['disposalAccountingTreatment'] ?? 'sale');
-        $proceeds         = (float) ($disposal['disposalProceeds'] ?? 0);
-        $proceedsCents    = $this->calculator->toCents(amount: $proceeds);
-        $bookValue        = $this->calculator->currentBookValue(asset: $asset, referenceDate: $disposalDate);
-        $bookValueCents   = $this->calculator->toCents(amount: $bookValue);
-        $accumDepCents    = max(0, ($costCents - $bookValueCents));
-        $gainOrLossCents  = ($proceedsCents - $bookValueCents);
-        $gainCents        = max(0, $gainOrLossCents);
-        $lossCents        = max(0, (-1 * $gainOrLossCents));
+        $disposalDate    = (string) ($disposal['disposalDate'] ?? date('Y-m-d'));
+        $treatment       = (string) ($disposal['disposalAccountingTreatment'] ?? 'sale');
+        $proceeds        = (float) ($disposal['disposalProceeds'] ?? 0);
+        $proceedsCents   = $this->calculator->toCents(amount: $proceeds);
+        $bookValue       = $this->calculator->currentBookValue(asset: $asset, referenceDate: $disposalDate);
+        $bookValueCents  = $this->calculator->toCents(amount: $bookValue);
+        $accumDepCents   = max(0, ($costCents - $bookValueCents));
+        $gainOrLossCents = ($proceedsCents - $bookValueCents);
+        $gainCents       = max(0, $gainOrLossCents);
+        $lossCents       = max(0, (-1 * $gainOrLossCents));
 
-        $assetAccount     = (string) ($asset['assetAccountNumber'] ?? '');
-        $accumDepAccount  = (string) ($asset['accumulatedDepAccountNumber'] ?? '');
-        $gainAccount      = (string) $accounts['gainAccountNumber'];
-        $lossAccount      = (string) $accounts['lossAccountNumber'];
-        $clearingAccount  = (string) $accounts['clearingAccountNumber'];
+        $assetAccount    = (string) ($asset['assetAccountNumber'] ?? '');
+        $accumDepAccount = (string) ($asset['accumulatedDepAccountNumber'] ?? '');
+        $gainAccount     = (string) $accounts['gainAccountNumber'];
+        $lossAccount     = (string) $accounts['lossAccountNumber'];
+        $clearingAccount = (string) $accounts['clearingAccountNumber'];
 
         $lines = [];
 
@@ -186,13 +186,13 @@ class DisposalJournalEmitter
         }
 
         $header = [
-            'transactionType' => 'disposal',
-            'postingDate'     => $disposalDate,
-            'description'     => 'Fixed asset disposal '.$assetNumber.' ('.$treatment.')',
-            'sourceReference' => 'fixed-asset:'.$assetNumber,
-            'subLedgerType'   => 'fixed-asset',
-            'subLedgerRef'    => $assetNumber,
-            'currency'        => (string) ($asset['currency'] ?? 'EUR'),
+            'transactionType'  => 'disposal',
+            'postingDate'      => $disposalDate,
+            'description'      => 'Fixed asset disposal '.$assetNumber.' ('.$treatment.')',
+            'sourceReference'  => 'fixed-asset:'.$assetNumber,
+            'subLedgerType'    => 'fixed-asset',
+            'subLedgerRef'     => $assetNumber,
+            'currency'         => (string) ($asset['currency'] ?? 'EUR'),
             'administrationId' => (string) ($asset['administrationId'] ?? ''),
         ];
 
@@ -266,5 +266,4 @@ class DisposalJournalEmitter
         ];
 
     }//end line()
-
 }//end class

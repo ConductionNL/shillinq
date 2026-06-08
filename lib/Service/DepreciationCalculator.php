@@ -166,7 +166,7 @@ class DepreciationCalculator
             return $this->fromCents(cents: $monthlyCents);
         }
 
-        // units-of-production and any other method fall through to 0 by
+        // Units-of-production and any other method fall through to 0 by
         // default; explicit unit-production posting is operator-driven and
         // not part of this declarative scheduled flow.
         return 0.0;
@@ -316,10 +316,10 @@ class DepreciationCalculator
     public function derivedFields(array $asset, string $referenceDate=''): array
     {
         return [
-            'monthlyDepreciation'  => $this->monthlyDepreciation(asset: $asset, referenceDate: $referenceDate),
-            'currentBookValue'     => $this->currentBookValue(asset: $asset, referenceDate: $referenceDate),
-            'commercialBookValue'  => $this->commercialBookValue(asset: $asset, referenceDate: $referenceDate),
-            'fiscalBookValue'      => $this->fiscalBookValue(asset: $asset, referenceDate: $referenceDate),
+            'monthlyDepreciation' => $this->monthlyDepreciation(asset: $asset, referenceDate: $referenceDate),
+            'currentBookValue'    => $this->currentBookValue(asset: $asset, referenceDate: $referenceDate),
+            'commercialBookValue' => $this->commercialBookValue(asset: $asset, referenceDate: $referenceDate),
+            'fiscalBookValue'     => $this->fiscalBookValue(asset: $asset, referenceDate: $referenceDate),
         ];
 
     }//end derivedFields()
@@ -346,14 +346,13 @@ class DepreciationCalculator
             $referenceDate = date('Y-m-d');
         }
 
-        $months   = $this->monthsElapsed(
+        $months     = $this->monthsElapsed(
             acquisitionDate: (string) ($asset['acquisitionDate'] ?? $referenceDate),
             referenceDate: $referenceDate
         );
-        $factor   = max(0.0, (1.0 - ($annualRate * ($months / 12.0))));
+        $factor     = max(0.0, (1.0 - ($annualRate * ($months / 12.0))));
         $valueCents = (int) round($costCents * $factor);
         return $this->fromCents(cents: max(0, $valueCents));
 
     }//end streamBookValue()
-
 }//end class

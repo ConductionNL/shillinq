@@ -46,6 +46,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class DisposalJournalEmitterTest extends TestCase
 {
+
     /**
      * Subject under test.
      *
@@ -54,6 +55,8 @@ final class DisposalJournalEmitterTest extends TestCase
     private DisposalJournalEmitter $emitter;
 
     /**
+     * Bootstrap the subject under test before each scenario.
+     *
      * @return void
      */
     protected function setUp(): void
@@ -223,11 +226,15 @@ final class DisposalJournalEmitterTest extends TestCase
             'disposalProceeds'            => 2300.0,
         ];
 
-        $payload = $this->emitter->emit($asset, $disposal, [
-            'gainAccountNumber'     => '7100-realised-gains',
-            'lossAccountNumber'     => '7101-realised-losses',
-            'clearingAccountNumber' => '1110-disposal-suspense',
-        ]);
+        $payload = $this->emitter->emit(
+                $asset,
+                $disposal,
+                [
+                    'gainAccountNumber'     => '7100-realised-gains',
+                    'lossAccountNumber'     => '7101-realised-losses',
+                    'clearingAccountNumber' => '1110-disposal-suspense',
+                ]
+                );
 
         $accounts = array_column($payload['lines'], 'accountNumber');
         self::assertContains('7100-realised-gains', $accounts);
@@ -290,18 +297,18 @@ final class DisposalJournalEmitterTest extends TestCase
     private function linearAsset(): array
     {
         return [
-            'assetNumber'                    => 'FA-0001',
-            'name'                           => 'Dell XPS-15',
-            'acquisitionCost'                => 2400.0,
-            'residualValue'                  => 0.0,
-            'usefulLifeMonths'               => 48,
-            'depreciationMethod'             => 'linear',
-            'acquisitionDate'                => '2026-01-01',
-            'assetAccountNumber'             => '0220',
-            'accumulatedDepAccountNumber'    => '0225',
+            'assetNumber'                      => 'FA-0001',
+            'name'                             => 'Dell XPS-15',
+            'acquisitionCost'                  => 2400.0,
+            'residualValue'                    => 0.0,
+            'usefulLifeMonths'                 => 48,
+            'depreciationMethod'               => 'linear',
+            'acquisitionDate'                  => '2026-01-01',
+            'assetAccountNumber'               => '0220',
+            'accumulatedDepAccountNumber'      => '0225',
             'depreciationExpenseAccountNumber' => '4500',
-            'currency'                       => 'EUR',
-            'administrationId'               => 'adm-1',
+            'currency'                         => 'EUR',
+            'administrationId'                 => 'adm-1',
         ];
 
     }//end linearAsset()

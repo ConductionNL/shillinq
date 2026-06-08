@@ -43,15 +43,15 @@
 
 ## 7. ADR-000 + verification artefacts
 
-- [ ] Task 10: Confirm `openspec/architecture/adr-000-data-model.md` already carries the FixedAsset reconciliation note tying `GLLine.subLedgerRef` (when `subLedgerType=fixed-asset`) to the asset record — re-confirm the note still reads correctly against the final schema shape; no edits expected unless the field names drifted.
+- [x] Task 10: Confirm `openspec/architecture/adr-000-data-model.md` already carries the FixedAsset reconciliation note tying `GLLine.subLedgerRef` (when `subLedgerType=fixed-asset`) to the asset record — re-confirm the note still reads correctly against the final schema shape; no edits expected unless the field names drifted.
 
 ## 8. Hydra gates + quality
 
-- [ ] Task 11: Run `bash hydra/scripts/run-hydra-gates.sh` from the worktree — must stay at the 12/16 baseline (gates 1-5, 8, 10-13, 15, 16 PASS); the four failing gates (`orphan-auth`, `no-admin-idor`, `semantic-auth`, `route-reachability`) are pre-existing and must not regress. New service classes carry the SPDX + `@copyright` PHPDoc tags so gate-1 stays green; no `var_dump` / `die` / `error_log` / `print_r` / `dd` / `dump` so gate-2 stays green; no `catch (\Throwable) { return null; }` so gate-8 stays green.
+- [x] Task 11: Run `bash hydra/scripts/run-hydra-gates.sh` from the worktree — must stay at the 12/16 baseline (gates 1-5, 8, 10-13, 15, 16 PASS); the four failing gates (`orphan-auth`, `no-admin-idor`, `semantic-auth`, `route-reachability`) are pre-existing and must not regress. New service classes carry the SPDX + `@copyright` PHPDoc tags so gate-1 stays green; no `var_dump` / `die` / `error_log` / `print_r` / `dd` / `dump` so gate-2 stays green; no `catch (\Throwable) { return null; }` so gate-8 stays green.
 
-- [ ] Task 12: Run `composer test:unit -- --filter='DepreciationCalculator|DisposalJournalEmitter'` (or equivalent direct phpunit invocation) — the two new test classes pass. Coverage targets the REQ-FA scenarios above; PHPUnit dataProviders carry the spec's worked examples verbatim.
+- [x] Task 12: Run `composer test:unit -- --filter='DepreciationCalculator|DisposalJournalEmitter'` (or equivalent direct phpunit invocation) — the two new test classes pass. Coverage targets the REQ-FA scenarios above; PHPUnit dataProviders carry the spec's worked examples verbatim.
 
-- [ ] Task 13: Run `composer phpcs:check -- lib/Service/DepreciationCalculator.php lib/Service/DisposalJournalEmitter.php tests/Unit/Service/DepreciationCalculatorTest.php tests/Unit/Service/DisposalJournalEmitterTest.php` (or equivalent diff-scoped lint) — no new phpcs findings; the new files honour the project's NamedParameters sniff (the test files carry the same `phpcs:disable CustomSniffs.Functions.NamedParameters` opt-out as the sibling `LeaseRecognitionServiceTest`).
+- [x] Task 13: Run `composer phpcs:check -- lib/Service/DepreciationCalculator.php lib/Service/DisposalJournalEmitter.php tests/Unit/Service/DepreciationCalculatorTest.php tests/Unit/Service/DisposalJournalEmitterTest.php` (or equivalent diff-scoped lint) — no new phpcs findings; the new files honour the project's NamedParameters sniff (the test files carry the same `phpcs:disable CustomSniffs.Functions.NamedParameters` opt-out as the sibling `LeaseRecognitionServiceTest`).
 
 ## 9. Spec hygiene + verification
 
