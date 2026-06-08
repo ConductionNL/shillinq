@@ -186,7 +186,7 @@
   Each entry includes `type: index` and `type: detail` pages; validate
   `node tests/validate-manifest.js` exits 0
 
-- [ ] Task 22: Seed data: author 2 pension-plan records (1 DB "NL Standard
+- [x] Task 22: Seed data: author 2 pension-plan records (1 DB "NL Standard
   DB Regeling", 1 DC "NL Standard DC Regeling") + 1 pension-assumption-
   sensitivity template record (discount-rate ±0.5pp) in `lib/Seeds/` or
   repair-step ConfigurationService, per shared `nextcloud-app` pattern;
