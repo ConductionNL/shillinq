@@ -83,40 +83,40 @@
   - Document read: all roles
   - Document write (draft): bookkeeper
   - Document file/archive: approver roles (admin, auditor, compliance)
-- [ ] Task 31: Create `tests/Unit/Service/AccountServiceTest.php` covering:
+- [x] Task 31: Create `tests/Unit/Service/AccountServiceTest.php` covering:
   - Happy path: create account, retrieve account, list accounts
   - Hierarchy validation: parent exists check, circular-ref prevention, depth limit
   - Status enforcement: active accounts can be parents, archived accounts cannot
   - Edge case: accountNumber uniqueness per administration
-- [ ] Task 32: Create `tests/Unit/Service/TransactionServiceTest.php` covering:
+- [x] Task 32: Create `tests/Unit/Service/TransactionServiceTest.php` covering:
   - Happy path: create transaction (draft), post transaction (draft→posted), reverse transaction
   - State machine validation: invalid state transitions rejected
   - Date validation: transactionDate must be in fiscal year
   - Amount validation: must be ≥ 0, 2 decimal places
   - Edge case: posting with GL failure (mocked), reversal with missing approver
-- [ ] Task 33: Create `tests/Unit/Service/DocumentServiceTest.php` covering:
+- [x] Task 33: Create `tests/Unit/Service/DocumentServiceTest.php` covering:
   - Happy path: create document (draft), file document (draft→filed), archive document (filed→archived)
   - Lifecycle validation: filed requires fileReference set, archived enforces 7-year gate
   - Approval-workflow: filing requires approver, archival requires compliance approval
   - Edge case: premature archival (< 7 years) blocked, manual override with admin
-- [ ] Task 34: Create `tests/Integration/Api/AccountApiControllerTest.php` covering:
+- [x] Task 34: Create `tests/Integration/Api/AccountApiControllerTest.php` covering:
   - GET /accounts (auth, filtering)
   - POST /accounts (validation, hierarchy check, RBAC)
   - GET /accounts/hierarchy (tree structure)
   - Concurrent requests (race condition on account creation)
-- [ ] Task 35: Create `tests/Integration/Api/TransactionApiControllerTest.php` covering:
+- [x] Task 35: Create `tests/Integration/Api/TransactionApiControllerTest.php` covering:
   - GET /transactions (auth, filtering by date/status/type)
   - POST /transactions (validation, state machine)
   - POST /transactions/{id}/post (GL posting success/failure)
   - POST /transactions/{id}/reverse (approval-workflow trigger, RBAC enforcement)
-- [ ] Task 36: Create `tests/Integration/Api/DocumentApiControllerTest.php` covering:
+- [x] Task 36: Create `tests/Integration/Api/DocumentApiControllerTest.php` covering:
   - GET /documents (auth, filtering)
   - POST /documents (file upload to docudesk, fileReference set)
   - POST /documents/{id}/file (approval-workflow, lifecycle transition)
   - POST /documents/{id}/archive (7-year gate, RBAC)
-- [ ] Task 37: Create `tests/Fixtures/AccountFixtures.php` with sample RGS accounts (5 accounts: assets, liabilities, revenue, expenses, equity with parent hierarchy)
-- [ ] Task 38: Create `tests/Fixtures/TransactionFixtures.php` with sample transactions (draft, posted, reversed with mock GL posting)
-- [ ] Task 39: Create `tests/Fixtures/DocumentFixtures.php` with sample documents (invoice PDF, receipt, tax form in various states)
+- [x] Task 37: Create `tests/Fixtures/AccountFixtures.php` with sample RGS accounts (5 accounts: assets, liabilities, revenue, expenses, equity with parent hierarchy)
+- [x] Task 38: Create `tests/Fixtures/TransactionFixtures.php` with sample transactions (draft, posted, reversed with mock GL posting)
+- [x] Task 39: Create `tests/Fixtures/DocumentFixtures.php` with sample documents (invoice PDF, receipt, tax form in various states)
 - [ ] Task 40: Add i18n strings to `src/locales/en_US.json` and `src/locales/nl_NL.json` for:
   - Account-related: "Account", "Chart of Accounts", "Account Number", "Account Type", "Add Account", "Parent Account", "Assets", "Liabilities", "Equity", "Revenue", "Expenses"
   - Transaction-related: "Transaction", "Create Transaction", "Post Transaction", "Reverse Transaction", "Transaction Date", "Amount", "Description", "Draft", "Posted", "Reversed"
