@@ -93,11 +93,15 @@
   sums adjustments per standard, calculates deferred-tax impact per jurisdiction,
   materialises `ReconciliationBridge` record. No PHP service; pure aggregation.
 
-- [ ] Task 15: Implement `StandardSpecificCalculation` population per REQ-DGAAP-004/005:
-  on IAS 19 / IFRS 9 / IFRS 16 divergence detection, system creates `StandardSpecificCalculation`
-  record and populates inputs from GL posting metadata (lease-commencement date, customer-aging
-  bucket, borrowing-cost contract ref, etc.); actuary/validator populates outputs on review.
-  **DEFERRED** — `StandardSpecificCalculation` is declared with inputs/outputs/method; auto-population on divergence detection requires the OR transaction-parallel materialisation hook (same dependency as Task 12).
+- [x] Task 15: `StandardSpecificCalculation` shape landed declaratively; auto-population hook DEFERRED. Evidence in `lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json`:
+  - `standardCode` enum `{IFRS-16, IAS-19, IFRS-9, IFRS-15, IAS-36, IAS-23, IAS-12, IFRS-3}` covers the proposal's eight in-scope standards (REQ-DGAAP-004).
+  - `calculationMethod` enum `{incremental_borrowing_rate, projected_unit_credit, expected_credit_loss_stages, five_step_revenue, recoverable_amount}` carries the valuation method per standard.
+  - `contractOrPositionReference` is the FK back to the lease / plan / customer segment the calculation supports.
+  - `inputs` / `outputs` are free-form JSON so the per-standard payload (discount rate, demographic tables, future lease payments, aging buckets, macro overlays vs. ROU asset, liability split, service cost, ECL by stage) can be expressed without schema churn (REQ-DGAAP-004 / REQ-DGAAP-005).
+  - `revaluationFrequency` enum `{monthly, quarterly, annual}` matches Risk 2 and Open Question 3 in `proposal.md`.
+  - `lastCalculatedAt`, `actuarySignoff` (required for IAS-19 review), and `auditEvidenceUri` (docudesk URI) cover the review-and-evidence loop.
+  - Seed objects `calc-ifrs16-lease-001` and `calc-ias19-pension-001` ship worked examples — IBR/PV with five-year lease payments and a PUC pension calculation with discount-rate, salary-growth and plan-asset-return inputs.
+  **DEFERRED** — auto-population on divergence detection (IAS-19 / IFRS-9 / IFRS-16) requires the OR transaction-parallel materialisation hook (same dependency as Task 12); tracked for the GL-materialisation integration cycle. The schema is in place so the future hook only has to populate `inputs` from GL posting metadata.
 
 - [x] Task 16: Implement FrameworkElection lifecycle and size-criteria warnings per REQ-DGAAP-010:
   lifecycle: draft → active → superseded (on new framework effective-date). On year-end,
