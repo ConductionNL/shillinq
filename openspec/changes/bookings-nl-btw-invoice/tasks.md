@@ -35,11 +35,11 @@
 
 - [x] Task 14: Add rounding helper function per REQ-VAT-007 (banker's rounding for per-line VAT: ROUND(amount × rate / 100, 2)) to be used in VAT-amount computation; validate that invoice total VAT = sum of line VAT amounts (no invoice-level rounding adjustment)
 
-- [ ] Task 15: Add 2 manifest navigation entries per REQ-VAT-010:
+- [x] Task 15: Add 2 manifest navigation entries per REQ-VAT-010:
   - "VAT by Period" (type: index) — lists all tax periods with summary totals (net, VAT by rate, gross); links to detail page
   - "VAT Reconciliation" (detail page for a single period) — shows invoices, line-by-line audit records, GL account balances, "Ready for Filing" checklist
 
-- [ ] Task 16: Add error-handling and precondition-failure messages per REQ-VAT-008 (e.g., "Service category 'repair' does not permit 21% VAT. Check admin settings for overrides." with navigation link if possible); log full context for API clients
+- [x] Task 16: Add error-handling and precondition-failure messages per REQ-VAT-008 (e.g., "Service category 'repair' does not permit 21% VAT. Check admin settings for overrides." with navigation link if possible); log full context for API clients
 
 - [ ] Task 17: Update `openspec/architecture/adr-000-data-model.md` with `InvoiceLine` (extended), `VATAuditRecord`, `ServiceCategoryOverride`, `VATGLAccounts` entries; reconcile against any existing `Invoice` / `LineItem` data-model entries; confirm no conflicts with T2 AR core
 
