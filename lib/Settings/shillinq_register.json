@@ -10910,6 +10910,197 @@
 				}
 			}
 		},
+		"CustomerMaster": {
+			"slug": "CustomerMaster",
+			"icon": "AccountTieOutline",
+			"version": "0.1.0",
+			"title": "Customer",
+			"description": "Customer party record for accounts receivable. Holds billing address, payment terms, tax registration, credit limit, dunning-policy reference, and Peppol endpoint for outbound e-invoicing within a single administration. Per REQ-AR-002.",
+			"x-schema-org": "schema:Organization",
+			"type": "object",
+			"required": [
+				"customerNumber",
+				"name",
+				"paymentTermDays",
+				"administrationId",
+				"lifecycleState"
+			],
+			"properties": {
+				"customerNumber": {
+					"type": "string",
+					"description": "Stable customer identifier unique per administration.",
+					"example": "C-2026-001"
+				},
+				"name": {
+					"type": "string",
+					"description": "Legal name of the customer.",
+					"example": "Klant Voorbeeld BV"
+				},
+				"tradingName": {
+					"type": "string",
+					"description": "Alternate or DBA trading name.",
+					"nullable": true,
+					"example": "Klant Voorbeeld"
+				},
+				"kvkNumber": {
+					"type": "string",
+					"description": "Dutch KvK number (8 digits).",
+					"nullable": true,
+					"example": "12345678"
+				},
+				"btwNumber": {
+					"type": "string",
+					"description": "Dutch BTW / EU VAT number.",
+					"nullable": true,
+					"example": "NL123456789B01"
+				},
+				"paymentTermDays": {
+					"type": "integer",
+					"minimum": 0,
+					"default": 30,
+					"description": "Default payment term in days (auto-sets ARInvoice.dueDate on creation).",
+					"example": 30
+				},
+				"defaultRevenueAccountNumber": {
+					"type": "string",
+					"description": "FK to Account.accountNumber for default revenue coding on AR invoices.",
+					"nullable": true,
+					"example": "8000"
+				},
+				"creditLimit": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Credit limit in administration's base currency. When > 0, REQ-AR-006 evaluates SUM(open ARInvoice.totalAmount where customerId=this.id) against this value on draft AR invoices.",
+					"nullable": true,
+					"example": 10000.0
+				},
+				"dunningPolicyRef": {
+					"type": "string",
+					"description": "FK to OR dunning-workflow policy record if the extension is stable per ADR-022; else null. Resolution deferred to implementing cycle.",
+					"nullable": true
+				},
+				"peppolEndpoint": {
+					"type": "string",
+					"description": "Peppol BIS 3.0 endpoint identifier for outbound e-invoicing (consumed by T4 e-invoicing capability; declared in T2 so T4 attaches additively per REQ-AR-009). Format: scheme::value (e.g. 0106::12345678 for Dutch KvK).",
+					"nullable": true,
+					"example": "0106::12345678"
+				},
+				"address": {
+					"type": "object",
+					"description": "Postal billing address of the customer.",
+					"nullable": true,
+					"properties": {
+						"street": {
+							"type": "string"
+						},
+						"houseNumber": {
+							"type": "string"
+						},
+						"postcode": {
+							"type": "string"
+						},
+						"city": {
+							"type": "string"
+						},
+						"country": {
+							"type": "string",
+							"default": "NL"
+						}
+					}
+				},
+				"email": {
+					"type": "string",
+					"format": "email",
+					"description": "Primary billing email for invoice dispatch and dunning notifications.",
+					"nullable": true,
+					"example": "facturen@klant-voorbeeld.nl"
+				},
+				"phone": {
+					"type": "string",
+					"description": "Primary contact phone number.",
+					"nullable": true,
+					"example": "+31201234567"
+				},
+				"contactRef": {
+					"type": "string",
+					"description": "FK to OR contact abstraction if stable per ADR-022; else null. Symmetric to AP REQ-AP-002. Resolution deferred to implementing cycle.",
+					"nullable": true
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the administration owning this customer record.",
+					"example": "adm-1"
+				},
+				"lifecycleState": {
+					"type": "string",
+					"enum": [
+						"active",
+						"blocked",
+						"archived"
+					],
+					"description": "Customer master lifecycle state. blocked: new invoices cannot be issued; archived: historical reference only.",
+					"default": "active",
+					"example": "active"
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "lifecycleState",
+				"initialState": "active",
+				"states": {
+					"active": {
+						"label": "Active",
+						"description": "Customer is active; AR invoices may be issued."
+					},
+					"blocked": {
+						"label": "Blocked",
+						"description": "Customer is blocked; new AR invoices cannot transition from draft to issued."
+					},
+					"archived": {
+						"label": "Archived",
+						"description": "Customer is archived for historical reference; no new invoices may be drafted."
+					}
+				},
+				"transitions": {
+					"block": {
+						"from": "active",
+						"to": "blocked",
+						"label": "Block customer",
+						"description": "Suspend new invoicing for this customer (e.g. credit hold)."
+					},
+					"unblock": {
+						"from": "blocked",
+						"to": "active",
+						"label": "Unblock customer",
+						"description": "Restore customer to active status."
+					},
+					"archive": {
+						"from": [
+							"active",
+							"blocked"
+						],
+						"to": "archived",
+						"label": "Archive customer",
+						"description": "Archive customer after all open AR invoices are settled or written off."
+					}
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
 		"Subsidie": {
 			"slug": "Subsidie",
 			"icon": "FileDocumentOutline",
