@@ -665,6 +665,63 @@
       "tone": "juridisch",
       "subject": "Overdracht incassobureau — factuur {{factuurNummer}}",
       "body": "Geachte {{klantNaam}},\n\nDe vordering met betrekking tot factuur {{factuurNummer}} ter waarde van €{{totaalVerschuldigd}} is per heden overgedragen aan {{incassobureauNaam}}. Alle verdere correspondentie en betaling dient via genoemd bureau te worden afgehandeld.\n\nHoogachtend,\nDe ondernemer"
+    },
+    {
+      "templateId": "vpb-aangifte-voorbereiding",
+      "title": "Vpb-aangifte voorbereiding",
+      "description": "Vpb-aangifte voorbereidingsdocument per ondernemingsactiviteit (REQ-VPB-004, add-shillinq-vpb-corporate-tax). Rendert de Vpb-balans (Activa / Passiva / Resultaat) van de vpbBalansFiltered aggregatie en de bijbehorende SBR-payload binding tegen de Belastingdienst Vpb XSD voor het geselecteerde boekjaar. De daadwerkelijke aangifte-transmissie verloopt via het T4-base bookkeeping-sbr-xbrl-reporting SBR-eindpunt (Digipoort/SBR) per ADR-019; deze template publiceert uitsluitend het voorbereidingsdocument + payload-binding. Per ADR-031 is er geen PHP Vpb-aangifte service. De template-versie volgt de Vpb XSD-versie per boekjaar; meerdere versies kunnen naast elkaar bestaan.",
+      "register": "shillinq",
+      "schema": "VpbBalansLink",
+      "aggregation": "vpbBalansFiltered",
+      "sbrPayloadBinding": {
+        "endpoint": "bookkeeping-sbr-xbrl-reporting",
+        "berichtsoort": "Vpb",
+        "xsd": "https://www.sbr-nl.nl/sites/default/files/bestanden/taxonomie/BD/Vpb",
+        "xsdVersion": "{{vpbXsdVersion}}",
+        "transmissionPath": "T4-base bookkeeping-sbr-xbrl-reporting SBR endpoint (Digipoort, eHerkenning EH3+); no new SBR client per ADR-019",
+        "fields": [
+          { "key": "fiscaalNummer", "source": "Belastingplichtige.fiscaalNummer" },
+          { "key": "boekjaar", "source": "VpbBalansLink.vpbPligtigVanaf -> fiscalYear" },
+          { "key": "activaTotaal", "source": "vpbBalansFiltered.activaTotal", "type": "currency", "unit": "cents" },
+          { "key": "passivaTotaal", "source": "vpbBalansFiltered.passivaTotal", "type": "currency", "unit": "cents" },
+          { "key": "resultaatTotaal", "source": "vpbBalansFiltered.resultaatTotal", "type": "currency", "unit": "cents" }
+        ],
+        "validate": "SBR payload MUST validate against the Belastingdienst Vpb XSD for the selected boekjaar before transmission; XSD validation failures block submission and surface to the operator."
+      },
+      "sections": [
+        {
+          "sectionId": "vpb-balans-per-ondernemingsactiviteit",
+          "title": "Vpb-balans per ondernemingsactiviteit ({{boekjaar}})",
+          "sourceSchema": "VpbBalansLink",
+          "joinAggregation": "vpbBalansFiltered",
+          "groupBy": "costCenterId",
+          "columns": [
+            { "key": "costCenterId", "label": "Ondernemingsactiviteit" },
+            { "key": "vpbPligtigVanaf", "label": "Vpb-pligtig vanaf", "type": "date" },
+            { "key": "activaTotal", "label": "Activa (EUR)", "type": "currency", "unit": "cents" },
+            { "key": "passivaTotal", "label": "Passiva (EUR)", "type": "currency", "unit": "cents" },
+            { "key": "resultaatTotal", "label": "Resultaat (EUR)", "type": "currency", "unit": "cents" },
+            { "key": "balansSluit", "label": "Balans sluit", "type": "boolean" }
+          ],
+          "warnings": [
+            {
+              "warningId": "unbalancedOndernemingsactiviteit",
+              "source": "vpbBalansFiltered.warnings.unbalancedOndernemingsactiviteit",
+              "render": "callout"
+            },
+            {
+              "warningId": "orphanedVpbPligt",
+              "source": "orphanedVpbPligtigAccounts.warnings.orphanedVpbPligt",
+              "render": "list"
+            }
+          ],
+          "totals": [
+            { "key": "activaTotal", "label": "Activa totaal", "operation": "sum", "type": "currency", "unit": "cents" },
+            { "key": "passivaTotal", "label": "Passiva totaal", "operation": "sum", "type": "currency", "unit": "cents" },
+            { "key": "resultaatTotal", "label": "Resultaat totaal", "operation": "sum", "type": "currency", "unit": "cents" }
+          ]
+        }
+      ]
     }
   ]
 }
