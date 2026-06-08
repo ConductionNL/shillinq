@@ -212,6 +212,11 @@ class InitializeSettingsTest extends TestCase
         $this->settingsService->method('getRegisterSlug')
             ->willReturn('shillinq');
 
+        // Statement-manifest import runs during seeding; stub it green so the
+        // repair step reports success against the full typed result shape.
+        $this->statementManifestService->method('import')
+            ->willReturn(['success' => true, 'imported' => 3, 'skipped' => 0]);
+
         // Container get() throws for ScheduledWorkflowMapper so registerIv3ScheduledWorkflow
         // exits via its inner catch block without reaching the outer try/catch in run().
         $this->container->method('get')

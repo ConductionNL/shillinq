@@ -2001,18 +2001,22 @@ class SettingsService
                 'message' => 'OpenRegister is not installed or enabled.',
             ];
         }
+
         $seedPath = __DIR__.'/../Settings/seeds/inventory-barcodes-demo.json';
         if (file_exists($seedPath) === false) {
             return ['success' => false, 'message' => 'Seed file not found: inventory-barcodes-demo.json'];
         }
+
         $content = file_get_contents($seedPath);
         if ($content === false) {
             return ['success' => false, 'message' => 'Failed to read inventory-barcodes-demo.json'];
         }
+
         $data = json_decode($content, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             return ['success' => false, 'message' => 'Failed to parse inventory-barcodes-demo.json: '.json_last_error_msg()];
         }
+
         $barcodes = ($data['barcodes'] ?? []);
         if (empty($barcodes) === true) {
             return [
@@ -2022,6 +2026,7 @@ class SettingsService
                 'skipped' => 0,
             ];
         }
+
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             $registerSlug  = $this->getRegisterSlug();
@@ -2045,6 +2050,7 @@ class SettingsService
                     $skipped++;
                     continue;
                 }
+
                 $objectService->saveObject(
                     object: $barcode,
                     register: $registerSlug,
@@ -2073,5 +2079,4 @@ class SettingsService
         }//end try
 
     }//end seedInventoryBarcodes()
-
 }//end class

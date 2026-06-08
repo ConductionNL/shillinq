@@ -47,8 +47,6 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
  * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
- *
- * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
 class InitializeSettings implements IRepairStep
 {
@@ -173,7 +171,7 @@ class InitializeSettings implements IRepairStep
             $this->seedMandaatTemplates(output: $output);
             $this->seedRetentionPolicies(output: $output);
             $this->seedStatementManifests(output: $output);
-$this->seedInventoryBarcodeDemo(output: $output);
+            $this->seedInventoryBarcodeDemo(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -398,13 +396,13 @@ $this->seedInventoryBarcodeDemo(output: $output);
 
         $output->info('Seeding audit-finding templates...');
         $auditResult = $this->settingsService->seedAuditFindingTemplates();
-        if ($auditResult['success'] === true) {
+        if (($auditResult['success'] ?? false) === true) {
             $output->info(
                 'Audit-finding templates seeded: '.($auditResult['seeded'] ?? 0).' created, '.($auditResult['skipped'] ?? 0).' skipped.'
             );
         }
 
-        if ($auditResult['success'] !== true) {
+        if (($auditResult['success'] ?? false) !== true) {
             $output->warning('Audit-finding templates seeding issue: '.($auditResult['message'] ?? 'unknown error'));
         }
 
@@ -427,13 +425,13 @@ $this->seedInventoryBarcodeDemo(output: $output);
     {
         $output->info('Seeding intercompany tolerance rules...');
         $result = $this->settingsService->seedIntercompanyToleranceRules();
-        if ($result['success'] === true) {
+        if (($result['success'] ?? false) === true) {
             $output->info(
                 'Intercompany tolerance rules seeded: '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
             );
         }
 
-        if ($result['success'] !== true) {
+        if (($result['success'] ?? false) !== true) {
             $output->warning('Intercompany tolerance rules seeding issue: '.($result['message'] ?? 'unknown error'));
         }
 
@@ -606,7 +604,7 @@ $this->seedInventoryBarcodeDemo(output: $output);
      * Gated on rgs_template = 'bbv' (the BBV-tenant indicator at install/upgrade
      * time) so generic SMB/ZZP administrations are unaffected. Idempotent on
      * re-run via the SettingsService dedup keys (REQ-BBV-001/002/007).
-* Seed the demo Barcode records, idempotently.
+     * Seed the demo Barcode records, idempotently.
      * Calls SettingsService::seedInventoryBarcodes(). Idempotent: barcodes matched
      * by (barcode, uomCode) are skipped, preserving operator edits per REQ-SKU-011.
      * The demo barcodes reference inventory-product-catalog demo SKUs.
@@ -672,13 +670,13 @@ $this->seedInventoryBarcodeDemo(output: $output);
         $output->info('Seeding mandaat templates...');
         $result = $this->settingsService->seedMandaatTemplates(administrationId: $administrationId);
 
-        if ($result['success'] === true) {
+        if (($result['success'] ?? false) === true) {
             $output->info(
                 'Mandaat templates seeded: '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
             );
         }
 
-        if ($result['success'] !== true) {
+        if (($result['success'] ?? false) !== true) {
             $output->warning('Mandaat templates seeding issue: '.($result['message'] ?? 'unknown error'));
         }
 
@@ -703,14 +701,14 @@ $this->seedInventoryBarcodeDemo(output: $output);
 
         $result = $this->settingsService->seedStatementManifests();
 
-        if ($result['success'] === true) {
+        if (($result['success'] ?? false) === true) {
             $output->info(
                 'Statement manifests imported: '.($result['imported'] ?? 0).' imported, '
                 .($result['skipped'] ?? 0).' skipped (already present).'
             );
         }
 
-        if ($result['success'] !== true) {
+        if (($result['success'] ?? false) !== true) {
             $output->warning('Statement manifest import issue: '.($result['message'] ?? 'unknown error'));
         }
 
@@ -734,7 +732,7 @@ $this->seedInventoryBarcodeDemo(output: $output);
         $output->info('Seeding demo barcodes...');
         $result = $this->settingsService->seedInventoryBarcodes();
 
-        if ($result['success'] === true) {
+        if (($result['success'] ?? false) === true) {
             $output->info(
                 'Demo barcodes seeded: '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
             );
@@ -838,7 +836,7 @@ $this->seedInventoryBarcodeDemo(output: $output);
         $result = $this->manifestService->import();
 
         if ($result['success'] !== true) {
-            $output->warning('Statement manifest import issue: '.$result['message']);
+            $output->warning('Statement manifest import issue: '.($result['message'] ?? 'unknown error'));
             return;
         }
 
@@ -884,7 +882,7 @@ $this->seedInventoryBarcodeDemo(output: $output);
 
         $seedResult = $this->settingsService->seedArDemo(administrationId: $administrationId);
 
-        if ($seedResult['success'] === true) {
+        if (($seedResult['success'] ?? false) === true) {
             $seeded  = ($seedResult['seeded'] ?? 0);
             $skipped = ($seedResult['skipped'] ?? 0);
             $output->info(
@@ -892,7 +890,7 @@ $this->seedInventoryBarcodeDemo(output: $output);
             );
         }
 
-        if ($seedResult['success'] !== true) {
+        if (($seedResult['success'] ?? false) !== true) {
             $message = ($seedResult['message'] ?? 'unknown error');
             $output->warning('AR demo seeding issue: '.$message);
         }
@@ -920,7 +918,7 @@ $this->seedInventoryBarcodeDemo(output: $output);
 
         $result = $this->settingsService->seedRetentionPolicies();
 
-        if ($result['success'] === true) {
+        if (($result['success'] ?? false) === true) {
             $seeded  = ($result['seeded'] ?? 0);
             $skipped = ($result['skipped'] ?? 0);
             $output->info(
@@ -928,7 +926,7 @@ $this->seedInventoryBarcodeDemo(output: $output);
             );
         }
 
-        if ($result['success'] !== true) {
+        if (($result['success'] ?? false) !== true) {
             $message = ($result['message'] ?? 'unknown error');
             $output->warning('Retention policy seeding issue: '.$message);
         }

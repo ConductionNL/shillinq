@@ -183,8 +183,8 @@ class StatementManifestService
             return null;
         }
 
-        if (isset($data['_meta']) === false || empty($data['sections']) === true) {
-            $this->logger->error('Shillinq: statement manifest '.$fileName.' missing _meta or sections');
+        if (isset($data['_meta']) === false || empty($data['statement']['sections']) === true) {
+            $this->logger->error('Shillinq: statement manifest '.$fileName.' missing _meta or statement.sections');
             return null;
         }
 
