@@ -194,8 +194,16 @@ final class CashflowForecastFragmentTest extends TestCase
     }//end testArProjectionDeclaresReceiptsAggregation()
 
     /**
-     * Merging the fragment onto the monolith unions schemas additively (ADR-037):
-     * existing schemas survive and the cashflow schemas are added.
+     * Merging the fragment onto the monolith unions additively (ADR-037):
+     * existing base schemas survive, every expected cashflow schema is
+     * present in the merged output, and the fragment's seed objects are
+     * concatenated onto the base's top-level objects list.
+     *
+     * Historical note: when this fragment was first authored its schemas
+     * were net-new. They have since been promoted into the base monolith
+     * (the merge is idempotent — re-importing the same key set is a no-op
+     * by the deep-merge contract). This test now asserts the merge's
+     * additive *outcome* rather than a strict net-new schema count.
      *
      * @return void
      */
@@ -209,25 +217,38 @@ final class CashflowForecastFragmentTest extends TestCase
 
         $merged = $this->merge($base, $fragment);
 
-        // Existing schemas are preserved.
+        // Existing schemas are preserved (no key collision drops anything).
         self::assertArrayHasKey('GLTransaction', $merged['components']['schemas']);
         self::assertArrayHasKey('Account', $merged['components']['schemas']);
+        foreach (array_keys($base['components']['schemas']) as $existing) {
+            self::assertArrayHasKey(
+                $existing,
+                $merged['components']['schemas'],
+                "Existing schema $existing must survive merge"
+            );
+        }
 
-        // New schemas are present.
+        // Every expected cashflow schema is present in the merged output.
         foreach ($this->expectedSchemas as $name) {
             self::assertArrayHasKey($name, $merged['components']['schemas']);
         }
 
-        // Schema count grew by exactly the number of new schemas (key union).
+        // Schema count grows by the count of *net-new* schemas only — for an
+        // already-promoted fragment this is zero, the merge is idempotent.
+        $fragSchemas = array_keys($fragment['components']['schemas']);
+        $netNew      = array_diff($fragSchemas, array_keys($base['components']['schemas']));
         self::assertSame(
-            ($baseSchemaCount + count($this->expectedSchemas)),
-            count($merged['components']['schemas'])
+            ($baseSchemaCount + count($netNew)),
+            count($merged['components']['schemas']),
+            'Schema count after merge equals base + net-new fragment schemas (key union)'
         );
 
         // Seed objects are concatenated (list union), not replaced.
+        $fragmentObjects = ($fragment['objects'] ?? []);
         self::assertSame(
-            ($baseObjectCount + count($fragment['objects'])),
-            count($merged['objects'])
+            ($baseObjectCount + count($fragmentObjects)),
+            count(($merged['objects'] ?? [])),
+            'Top-level objects are concatenated by list-union'
         );
 
     }//end testFragmentMergesAdditivelyOntoMonolith()
@@ -243,7 +264,7 @@ final class CashflowForecastFragmentTest extends TestCase
         $fragment = $this->load($this->fragmentPath);
         $schemas  = $fragment['components']['schemas'];
 
-        foreach ($fragment['objects'] as $object) {
+        foreach (($fragment['objects'] ?? []) as $object) {
             $schemaName = $object['@self']['schema'];
             self::assertArrayHasKey($schemaName, $schemas, "Seed references unknown schema $schemaName");
             foreach ($schemas[$schemaName]['required'] as $req) {
@@ -263,7 +284,7 @@ final class CashflowForecastFragmentTest extends TestCase
     {
         $fragment = $this->load($this->fragmentPath);
         $policy   = null;
-        foreach ($fragment['objects'] as $object) {
+        foreach (($fragment['objects'] ?? []) as $object) {
             if ($object['@self']['schema'] === 'CashflowBufferPolicy') {
                 $policy = $object;
                 break;
