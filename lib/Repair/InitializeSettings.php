@@ -530,7 +530,107 @@ class InitializeSettings implements IRepairStep
             $output->warning('BBV taakvelden seeding issue: '.($bbvResult['message'] ?? 'unknown error'));
         }
 
+        $this->seedBbvMappingsForMunicipalAdministrations(output: $output);
+
     }//end seedComplianceReferenceData()
+
+
+    /**
+     * Seed the default RGS → BBV account mapping for every existing municipal
+     * administration (REQ-BBV-006). The seed is per-administration scoped: a
+     * fresh `gemeente`-type administration receives the bundled defaults, but
+     * non-municipal administrations are skipped. Records the BBV gate's
+     * installation date inside SettingsService::seedBbvAccountMappings so the
+     * BbvComplianceGuard's forward-only filter has an anchor (REQ-BBV-003).
+     *
+     * Idempotent on re-run via the (administrationId, accountNumber)
+     * uniqueness key — operator overrides are preserved per REQ-BBV-006.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
+     */
+    private function seedBbvMappingsForMunicipalAdministrations(IOutput $output): void
+    {
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+        } catch (\Throwable $e) {
+            $output->info(
+                'Shillinq: ObjectService unavailable, skipping per-administration BBV mapping seed'
+            );
+            return;
+        }
+
+        try {
+            $registerSlug    = $this->settingsService->getRegisterSlug();
+            $administrations = $objectService
+                ->setRegister($registerSlug)
+                ->setSchema('Administration')
+                ->findAll(['limit' => 200]);
+        } catch (\Throwable $e) {
+            $output->info(
+                'Shillinq: Administration register not yet present, skipping BBV mapping seed'
+            );
+            return;
+        }
+
+        if (empty($administrations) === true) {
+            $output->info('Shillinq: no administrations found, skipping BBV mapping seed');
+            return;
+        }
+
+        $municipalTypes = ['gemeente', 'provincie', 'waterschap'];
+        $totalSeeded    = 0;
+        $totalSkipped   = 0;
+
+        foreach ($administrations as $administration) {
+            $administrationType = (string) ($administration['administrationType'] ?? '');
+            if (in_array($administrationType, $municipalTypes, true) === false) {
+                continue;
+            }
+
+            $administrationId = (string) (
+                $administration['administrationCode']
+                ?? $administration['id']
+                ?? $administration['uuid']
+                ?? ''
+            );
+            if ($administrationId === '') {
+                continue;
+            }
+
+            $output->info(
+                'Seeding BBV account mappings for administration '.$administrationId.' ('.$administrationType.')...'
+            );
+            $result = $this->settingsService->seedBbvAccountMappings(
+                administrationId: $administrationId,
+                administrationType: $administrationType
+            );
+
+            if (($result['success'] ?? false) === true) {
+                $output->info(
+                    'BBV mappings seeded for '.$administrationId.': '
+                    .($result['seeded'] ?? 0).' created, '
+                    .($result['skipped'] ?? 0).' skipped.'
+                );
+                $totalSeeded  += (int) ($result['seeded'] ?? 0);
+                $totalSkipped += (int) ($result['skipped'] ?? 0);
+                continue;
+            }
+
+            $output->warning(
+                'BBV mapping seed failed for '.$administrationId.': '
+                .($result['message'] ?? 'unknown error')
+            );
+        }//end foreach
+
+        $output->info(
+            'BBV mapping seed complete: '.$totalSeeded.' total created, '.$totalSkipped.' total skipped across municipal administrations.'
+        );
+
+    }//end seedBbvMappingsForMunicipalAdministrations()
 
     /**
      * Seed the KOR thresholds from kor-thresholds-2026.json, idempotently.
