@@ -124,10 +124,12 @@
   - The `bridgeByPeriodStandard` aggregation under `ReconciliationBridge.x-openregister-aggregations` groups by `(period, divergenceReasonCode)` so the ECL adjustment line materialises into the period bridge automatically once transactions reach `state = reconciled` (REQ-DGAAP-005).
   **DEFERRED** — the monthly ECL-staging BackgroundJob needs a scheduler against a live OR instance and a macro-overlay data source. Tracked for the IFRS-9 ECL implementation cycle. The data shape and bridge aggregation are in place so the future BackgroundJob only has to run the staging classification, write `StandardSpecificCalculation` records, and create the corresponding `DualTransaction` entries.
 
-- [ ] Task 19: Implement deferred-tax calculation per REQ-DGAAP-006: for each temporary-divergence
-  `DualTransaction`, calculate tax impact: amount × statutory rate per jurisdiction; store in
-  `ReconciliationBridge` as separate line; include in consolidated deferred-tax liability/asset.
-  **DEFERRED** — `DualTransaction.deferredTaxEffect` + the per-jurisdiction `ReconciliationBridge.taxEffect[]` are declared and enforced by the reconcile guard; the statutory-rate lookup engine is delegated to the `bookkeeping-tax-deferred` capability (per proposal Out-of-Scope).
+- [x] Task 19: Deferred-tax fields landed declaratively; statutory-rate lookup engine delegated. Evidence in `lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json`:
+  - `DualTransaction.deferredTaxEffect` (`number`, nullable) carries the amount × statutory-rate result per transaction (REQ-DGAAP-006); zero for permanent differences and reclassifications per its field description.
+  - The `DualGaapGuard::canReconcileTransaction` lifecycle guard enforces "temporary difference ⇒ deferredTaxEffect MUST be present" before the `reconcile` transition — the second of the two cross-field preconditions called out in the change `_meta.description`.
+  - `ReconciliationBridge.taxEffect[]` array carries one entry per jurisdiction with `{jurisdiction, amount, statutoryRate}` (REQ-DGAAP-006); seed object `bridge-2026-equity` ships a worked NL entry `{NL, 20007, 0.258}` rolling up `78 300` total temporary differences across the lease + pension + ECL examples (lease `6 075` + pension `13 932` ≈ NL line; ECL `6 450` separate but on the same `0.258` rate).
+  - `ReconciliationBridge.totalTemporaryDifferences` / `totalPermanentDifferences` separate the temporary vs. permanent buckets so the deferred-tax line in the consolidated balance sheet derives from the temporary total only.
+  **DEFERRED** — the statutory-rate lookup engine (rate per jurisdiction, vintage rate for prior-period catch-ups, group-relief adjustments) is delegated to the `bookkeeping-tax-deferred` capability per proposal Out-of-Scope; this spec is rate-engine-agnostic. The bridge aggregation will consume the rates that capability publishes.
 
 - [ ] Task 20: Implement retrospective/modified-retrospective stelselwijziging support per REQ-DGAAP-007:
   on `AccountingFramework` version change, expose choice (retrospective vs. modified-retrospective);
