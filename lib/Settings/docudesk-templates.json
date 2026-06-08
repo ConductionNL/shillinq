@@ -722,6 +722,43 @@
           ]
         }
       ]
+    },
+    {
+      "templateId": "wbso-sno-document-storage",
+      "title": "WBSO/SNO Bookkeeping Document Storage",
+      "description": "Generic document-storage template for bookkeeping documents declared by the bookkeeping-financial-administration spec (REQ-WBSO-003 / REQ-WBSO-007 / REQ-WBSO-009). Bound to the Document register so each upload from the Documents view persists as a `docudesk://` URI under one of the six supported documentTypes (invoice, receipt, contract, tax-form, bank-statement, memo). The template enforces draft → filed → archived lifecycle metadata in the rendered envelope, and surfaces the auditor-visible `filedAt` / `archivedAt` timestamps.",
+      "register": "shillinq",
+      "schema": "Document",
+      "supportedDocumentTypes": [
+        "invoice",
+        "receipt",
+        "contract",
+        "tax-form",
+        "bank-statement",
+        "memo"
+      ],
+      "lifecycleStates": [
+        "draft",
+        "filed",
+        "archived"
+      ],
+      "sections": [
+        {
+          "sectionId": "document-header",
+          "title": "{{documentType}} {{documentNumber}}",
+          "sourceSchema": "Document",
+          "joinField": "administrationId",
+          "columns": [
+            { "key": "documentNumber", "label": "Document number" },
+            { "key": "documentType", "label": "Type" },
+            { "key": "documentDate", "label": "Document date", "type": "date" },
+            { "key": "status", "label": "Status" },
+            { "key": "fileReference", "label": "File reference" },
+            { "key": "filedAt", "label": "Filed at", "type": "datetime" },
+            { "key": "archivedAt", "label": "Archived at", "type": "datetime" }
+          ]
+        }
+      ]
     }
   ]
 }
