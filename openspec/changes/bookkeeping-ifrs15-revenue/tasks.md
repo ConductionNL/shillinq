@@ -125,13 +125,13 @@ responsible for:
 
 Spec-only change — no user-facing docs ship here. The implementation cycle authors:
 
-- [ ] `docs/user-guide/bookkeeping/revenue-recognition-ifrs15.md` (entry point, 5-step overview, Dutch GAAP context per BW2 Title 9)
-- [ ] `docs/user-guide/bookkeeping/contracts-and-pos.md` (contract creation, PO management, modification workflow, audit trail inspection)
-- [ ] `docs/user-guide/bookkeeping/revenue-waterfall.md` (dashboard, drill-down, forecasting, segment filtering, export)
-- [ ] `docs/user-guide/bookkeeping/contract-balances.md` (deferred/accrued reconciliation, monthly cut-off job log, error recovery)
-- [ ] `docs/user-guide/bookkeeping/ifrs15-disclosure.md` (disclosure pack structure per IFRS 15.110-129, PDF/XBRL/JSON export, Big-4 audit alignment)
-- [ ] `docs/api/revenue-recognition.md` (contract lifecycle state machine, PO satisfaction event, variable-consideration re-estimation, GL posting patterns for API consumers)
-- [ ] Commit screenshots to `docs/images/revenue-recognition/` (contract entry form, waterfall chart, balance dashboard, disclosure viewer)
+- [x] `docs/user-guide/bookkeeping/revenue-recognition-ifrs15.md` (entry point, 5-step overview, Dutch GAAP context per BW2 Title 9)
+- [x] `docs/user-guide/bookkeeping/contracts-and-pos.md` (contract creation, PO management, modification workflow, audit trail inspection)
+- [x] `docs/user-guide/bookkeeping/revenue-waterfall.md` (dashboard, drill-down, forecasting, segment filtering, export)
+- [x] `docs/user-guide/bookkeeping/contract-balances.md` (deferred/accrued reconciliation, monthly cut-off job log, error recovery)
+- [x] `docs/user-guide/bookkeeping/ifrs15-disclosure.md` (disclosure pack structure per IFRS 15.110-129, PDF/XBRL/JSON export, Big-4 audit alignment)
+- [x] `docs/api/revenue-recognition.md` (contract lifecycle state machine, PO satisfaction event, variable-consideration re-estimation, GL posting patterns for API consumers)
+- [x] `docs/images/revenue-recognition/README.md` placeholder; actual PNGs (contract entry form, waterfall chart, balance dashboard, disclosure viewer) are captured by the Playwright screenshot run once the live-OR seed fixtures land in the implementing cycle.
 
 ## i18n (company-wide ADR-007)
 
