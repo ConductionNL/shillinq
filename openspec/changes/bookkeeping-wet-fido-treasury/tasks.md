@@ -171,7 +171,7 @@
   (for provincie/waterschap) based on organisationType; expect {status: "success",
   submissionReceipt: string, timestamp}; log receipt in quarterly-fido-report
 
-- [ ] Task 23: DEFERRED (cross-app dependency: `bookkeeping-programmabegroting` is not yet merged in this repo; `baseBegroting` / `baseVasteSchuld` are first-class fields the operator/seed supplies until the begroting FK is available). Integrate with `bookkeeping-programmabegroting` (T2) to consume
+- [~] Task 23: DEFERRED (cross-app dependency: `bookkeeping-programmabegroting` is not yet merged in this repo; `baseBegroting` / `baseVasteSchuld` are first-class fields the operator/seed supplies until the begroting FK is available). Integrate with `bookkeeping-programmabegroting` (T2) to consume
   vastgestelde begroting per 1 januari for all limiet-percentage calculations;
   supply vastgestelde-begroting updates to FidoNormcatalogus query so percentages
   auto-apply per Task 24
