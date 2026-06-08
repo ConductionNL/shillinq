@@ -130,7 +130,7 @@
   - Verify balanced before posting
   - Post directly to openregister GL
 
-- [ ] Implement SBR/XBRL conversion (REQ-PAY-011):  _(DEFERRED — needs the bookkeeping-loonaangifte-sbr app (cross-app dependency); LHAfdracht is produced in VOORBEREID status ready for hand-off.)_
+- [x] Implement SBR/XBRL conversion (REQ-PAY-011):  _(PayrollSbrConversionService renders the LA-XX-2026 instance payload and stamps a deterministic sbrInstanceRef; Digipoort transport stays with the bookkeeping-loonaangifte-sbr app.)_
   - Convert LHAfdracht → SBR/XBRL instance (LA-XX-2026)
   - Populate sbrInstanceRef
   - Hand off to bookkeeping-loonaangifte-sbr app for Digipoort submission
