@@ -141,6 +141,7 @@ final class PeriodCloseControllerTest extends TestCase
     public function testShowReturnsRecordWithFlags(): void
     {
         $this->stubParams(['administration_id' => 'adm-1']);
+        $this->stubUser('alice');
         $this->service->method('getPeriodForClose')->willReturn(
             ['periodId' => '2026-01', 'endDate' => '2026-01-31', 'state' => 'open']
         );
@@ -164,6 +165,7 @@ final class PeriodCloseControllerTest extends TestCase
     public function testShowRequiresAdministrationId(): void
     {
         $this->stubParams([]);
+        $this->stubUser('alice');
         $response = $this->controller->show('2026-01');
         self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 
@@ -177,6 +179,7 @@ final class PeriodCloseControllerTest extends TestCase
     public function testShowRejectsMalformedPeriodId(): void
     {
         $this->stubParams(['administration_id' => 'adm-1']);
+        $this->stubUser('alice');
         $response = $this->controller->show('bad id with spaces/../');
         self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 
@@ -190,6 +193,7 @@ final class PeriodCloseControllerTest extends TestCase
     public function testShowReturnsNotFound(): void
     {
         $this->stubParams(['administration_id' => 'adm-1']);
+        $this->stubUser('alice');
         $this->service->method('getPeriodForClose')->willReturn(null);
 
         $response = $this->controller->show('2026-01');
