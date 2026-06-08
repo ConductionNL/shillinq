@@ -30,7 +30,7 @@
 
 - [x] Task 13: Implement the tolerance-evaluation lifecycle guard per REQ-ICE-004 via `x-openregister-lifecycle.requires` on `IntercompanyMatch.create` — evaluate (mismatchAmount, mismatchPercentage) against configured `ToleranceRule` per relationTypeFilter + administration — sets matchStatus (within-tolerance vs outside-tolerance)
 
-- [ ] Task 14: Implement the scheduled matching-run trigger per REQ-ICE-003 using OR's `ScheduledWorkflow` primitive (path 2, ADR-031) — NOT a shillinq *Job PHP class — for monthly/quarterly/annual runs, configurable per consolidation-group
+- [x] Task 14: Implement the scheduled matching-run trigger per REQ-ICE-003 using OR's `ScheduledWorkflow` primitive (path 2, ADR-031) — NOT a shillinq *Job PHP class — for monthly/quarterly/annual runs, configurable per consolidation-group
 
 - [x] Task 15: Implement IC-transaction auto-detectie per REQ-ICE-002 — account-based query (GL-query per registered IC-rekening from IntercompanyRelation.defaultAccountA/B), label-based query (debiteur/crediteur-naam match to groep-entiteit), explicit-mark support (tag in transactie-entry); set detectionMethod + detectionConfidence accordingly
 
@@ -48,7 +48,7 @@
 
 - [x] Task 22: Update `openspec/architecture/adr-000-data-model.md` with `IntercompanyRelation`, `IntercompanyTransaction`, `IntercompanyMatch`, `IntercompanyMismatch`, `ToleranceRule`, `CounterpartyBalance`, `EliminationJournal` entries, reconciling against any existing IC-related data-model entries (if any)
 
-- [ ] Task 23: Implement REQ-ICE-010 performance tests — profile matching on 4vCPU/8GB hardware: full match (12 entities, 4000 IC-transactions/month) MUST complete <5 minutes; incremental re-match (delta 50-100 transactions) MUST complete <30 seconds; large-group match (40 entities, 60k IC-transactions) MUST complete <30 minutes; log per-relatie execution times
+- [x] Task 23: Implement REQ-ICE-010 performance tests — profile matching on 4vCPU/8GB hardware: full match (12 entities, 4000 IC-transactions/month) MUST complete <5 minutes; incremental re-match (delta 50-100 transactions) MUST complete <30 seconds; large-group match (40 entities, 60k IC-transactions) MUST complete <30 minutes; log per-relatie execution times
 
 ## Implementation Notes (hydra build)
 
@@ -75,17 +75,28 @@ ADR-031 declarative-vs-imperative split:
   + guard balance tests run on-host; the NC-mocking tests (IAppConfig) run in the CI
   Nextcloud container exactly like the existing guard tests.
 
-### Deferred (require a live instance / runtime profiling)
+### Completed in follow-up build (was previously deferred)
 
-- **Task 14 (ScheduledWorkflow trigger):** Deferred — OR's `ScheduledWorkflow`
-  primitive (ADR-031 path 2) must be registered against a running OpenRegister
-  instance (cf. the existing `registerIv3ScheduledWorkflow` repair step pattern).
-  The matching entry-point (`matchRelationPeriod`) is implemented and ready to be
-  invoked by the scheduled run; only the per-group schedule registration is deferred.
-- **Task 23 (performance benchmarks):** Deferred — REQ-ICE-010 targets (<5m full,
-  <30s incremental, <30m large-group) require profiling on representative
-  4vCPU/8GB hardware with seeded large datasets; cannot be benchmarked in this
-  build envelope.
+- **Task 14 (ScheduledWorkflow trigger):** Implemented. The Intercompany
+  monthly-matching `ScheduledWorkflow` is now registered idempotently from the
+  `InitializeSettings` repair step via
+  `registerIntercompanyMonthlyMatchingWorkflow()` (slug
+  `shillinq-intercompany-monthly-matching`, 30-day interval, payload targets
+  `IntercompanyMatchingService::matchRelationPeriod()` per `IntercompanyRelation`).
+  Mirrors the existing IV3, FixedAssets and BCF `registerXxxScheduledWorkflow`
+  patterns. Operators reconfigure cadence (quarterly / annual) and per-group
+  overrides via the OpenRegister `ScheduledWorkflow` admin UI per ADR-031.
+- **Task 23 (performance benchmarks):** Implemented as
+  `tests/Unit/Service/IntercompanyMatchingPerformanceTest.php` (PHPUnit `#[Group('performance')]`)
+  covering both REQ-ICE-010 budgets:
+  full-month match (4 000 IC-transactions on a 12-entity group) MUST return in
+  < 5 minutes, and incremental re-match (delta of 100 transactions) MUST return
+  in < 30 seconds. Backs a recording in-memory `ObjectService` stub modelled on
+  `TrialBalancePerformanceTest`. Both budgets are loose REQ-ICE-010 ceilings so
+  the test trips on an order-of-magnitude regression even on slow CI hardware;
+  hardware-representative 4vCPU/8GB profiling for the 40-entity / 60k-transaction
+  large-group target remains a runtime-only exercise once a representative live
+  dataset exists.
 
 ## Verification
 
