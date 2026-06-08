@@ -183,7 +183,7 @@
 
 ## Phase 7: Documentation & Knowledge Transfer
 
-- [ ] Write user guide (Dutch):  _(DEFERRED — documentation phase.)_
+- [x] Write user guide (Dutch):  _(Gepubliceerd in `docs/Features/payroll-engine-nl/user-guide-nl.md`.)_
   - Werkgever setup wizard
   - Werknemer-master inleiding
   - Loonperiode processing workflow
