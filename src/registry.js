@@ -190,6 +190,13 @@ import WbsoChartOfAccountsView from './views/bookkeeping/ChartOfAccountsView.vue
 import WbsoTransactionsView from './views/bookkeeping/TransactionsView.vue'
 import WbsoDocumentsView from './views/bookkeeping/DocumentsView.vue'
 
+// bookings-self-service-widget (REQ-WSW-009): per-business widget API-key
+// admin view. The page is wired through src/manifest.d/30-bookings-self-service-widget.json
+// and gated by #[AuthorizedAdminSetting] on the WidgetSettingsController
+// — it cannot be exposed publicly via the in-app router unless the
+// server-side attribute is dropped. ADR-004 compliant.
+import BookingWidgetKeys from './views/BookingWidgetKeys.vue'
+
 export default {
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
 	MobileScannerReceive: { kind: 'page', component: ReceivePage },
@@ -236,4 +243,7 @@ export default {
 	WbsoChartOfAccountsView: { kind: 'page', component: WbsoChartOfAccountsView },
 	WbsoTransactionsView: { kind: 'page', component: WbsoTransactionsView },
 	WbsoDocumentsView: { kind: 'page', component: WbsoDocumentsView },
+
+	// bookings-self-service-widget admin (REQ-WSW-009).
+	BookingWidgetKeys: { kind: 'page', component: BookingWidgetKeys },
 }

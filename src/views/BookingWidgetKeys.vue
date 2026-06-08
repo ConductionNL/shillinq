@@ -72,7 +72,7 @@ export default {
 		},
 		async rotate() {
 			this.plaintextKey = ''
-			const result = await this.post('widget-keys/rotate', {
+			const result = await this.post('widget/admin/keys/rotate', {
 				businessId: this.businessId,
 				administrationId: this.businessId,
 			})
@@ -83,7 +83,7 @@ export default {
 		},
 		async revoke() {
 			this.plaintextKey = ''
-			const result = await this.post('widget-keys/revoke', { businessId: this.businessId })
+			const result = await this.post('widget/admin/keys/revoke', { businessId: this.businessId })
 			this.message = result.message || ''
 		},
 	},
