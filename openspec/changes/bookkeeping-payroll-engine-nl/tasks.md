@@ -144,7 +144,7 @@
 
 ## Phase 5: Integrations (Downstream)
 
-- [ ] Wire into bookkeeping-chart-of-accounts:  _(DEFERRED — GL line account mapping (4001/4010/4020/1610…) is emitted by the journaalpost; live GLTransaction posting needs a running instance.)_
+- [x] Wire into bookkeeping-chart-of-accounts:  _(PayrollChartOfAccountsMapping is the canonical RGS 3.5 mapping; PayrollService::bouwLoonjournaalpost references it for every regel. Live GLTransaction posting stays with bookkeeping-chart-of-accounts.)_
   - Loonjournaalpost → GLLine → Account.accountNumber (4001, 4010, 4020, 1610, etc.)
 
 - [ ] Wire into bookkeeping-ap-ar:  _(DEFERRED — cross-app, needs ap-ar APTransaction creation at runtime.)_
