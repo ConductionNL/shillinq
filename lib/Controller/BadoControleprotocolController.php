@@ -35,6 +35,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AccountantsdossierExportService;
 use OCA\Shillinq\Service\BadoControleprotocolService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -54,10 +55,11 @@ class BadoControleprotocolController extends Controller
     /**
      * Constructor for the BadoControleprotocolController.
      *
-     * @param IRequest                    $request     The request object.
-     * @param BadoControleprotocolService $service     The BADO aggregation + opinion service.
-     * @param LoggerInterface             $logger      Logger for diagnostics (no stack traces to client).
-     * @param IUserSession                $userSession The user session for authentication guard.
+     * @param IRequest                        $request     The request object.
+     * @param BadoControleprotocolService     $service     The BADO aggregation + opinion service.
+     * @param LoggerInterface                 $logger      Logger for diagnostics (no stack traces to client).
+     * @param IUserSession                    $userSession The user session for authentication guard.
+     * @param AccountantsdossierExportService $exporter    The accountantsdossier PDF/A exporter (Task 16).
      *
      * @return void
      */
@@ -66,6 +68,7 @@ class BadoControleprotocolController extends Controller
         private readonly BadoControleprotocolService $service,
         private readonly LoggerInterface $logger,
         private readonly IUserSession $userSession,
+        private readonly AccountantsdossierExportService $exporter,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -127,4 +130,75 @@ class BadoControleprotocolController extends Controller
         return new JSONResponse($result, Http::STATUS_OK);
 
     }//end aggregation()
+
+    /**
+     * Export the accountantsdossier bundle for a Controleprotocol (REQ-010, Task 16).
+     *
+     * Builds the deterministic 7-schema bundle (Controleprotocol header +
+     * ToleranceMatrix + Materialiteit + AuditSample + AuditFinding +
+     * VerklaringDraft + SiSaAssurance), assembles the PDF/A-oriented HTML
+     * summary + manifest with SHA-256 anchor + ISO 8601 timestamp + retention
+     * marker, writes the bundle to a ZIP archive in the system temp directory
+     * and delegates the PKIO signature to the configured signer.
+     *
+     * Query parameters:
+     *  - protocol_id (required) the Controleprotocol id to export.
+     *
+     * Returns HTTP 200 with the export envelope on success; HTTP 400 on a
+     * missing/malformed parameter; HTTP 404 when the protocol cannot be
+     * resolved; HTTP 500 (without a stack trace) on an unexpected failure.
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-16
+     */
+    #[NoAdminRequired]
+    public function exportAccountantsdossier(): JSONResponse
+    {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
+
+        $protocolId = trim((string) $this->request->getParam('protocol_id', ''));
+
+        if ($protocolId === '') {
+            return new JSONResponse(
+                ['error' => 'protocol_id is required'],
+                Http::STATUS_BAD_REQUEST
+            );
+        }
+
+        if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $protocolId) !== 1) {
+            return new JSONResponse(
+                ['error' => 'protocol_id must be a valid protocol identifier'],
+                Http::STATUS_BAD_REQUEST
+            );
+        }
+
+        try {
+            $envelope = $this->exporter->exportDossier(protocolId: $protocolId);
+        } catch (\RuntimeException $e) {
+            $this->logger->info(
+                'BadoControleprotocolController: accountantsdossier export rejected',
+                ['protocolId' => $protocolId, 'reason' => $e->getMessage()]
+            );
+
+            return new JSONResponse(
+                ['error' => 'Accountantsdossier not available for this protocol'],
+                Http::STATUS_NOT_FOUND
+            );
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'BadoControleprotocolController: failed to export accountantsdossier',
+                ['protocolId' => $protocolId, 'exception' => $e->getMessage()]
+            );
+
+            return new JSONResponse(
+                ['error' => 'Failed to export accountantsdossier'],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }//end try
+
+        return new JSONResponse($envelope, Http::STATUS_OK);
+    }//end exportAccountantsdossier()
 }//end class

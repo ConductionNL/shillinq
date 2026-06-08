@@ -316,6 +316,8 @@ return [
 
         // BADO controleprotocol aggregation (bookkeeping-bado-controleprotocol).
         ['name' => 'badoControleprotocol#aggregation', 'url' => '/api/bado/controleprotocol/aggregation', 'verb' => 'GET'],
+        // BADO accountantsdossier export (bookkeeping-bado-controleprotocol, REQ-010, Task 16).
+        ['name' => 'badoControleprotocol#exportAccountantsdossier', 'url' => '/api/bado/controleprotocol/accountantsdossier', 'verb' => 'GET'],
 
         // Widget API-key admin (bookings-self-service-widget, REQ-WSW-009).
         // #[AuthorizedAdminSetting]-gated lifecycle of per-business widget keys.
