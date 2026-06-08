@@ -85,6 +85,7 @@ class InitializeSettings implements IRepairStep
      * Phase 3: seeds the Archiefwet Selectielijst Gemeenten 2020 retention rules.
      * Phase 4: registers the IV3 quarterly CBS ScheduledWorkflow if not yet present.
      * Phase 4b: registers the FixedAssets monthly-depreciation ScheduledWorkflow per REQ-FA-005.
+     * Phase 4c: registers the BCF quarterly DigiKoppeling ScheduledWorkflow per REQ-BCF-005.
      * Phase 5: seeds KOR thresholds from kor-thresholds-2026.json idempotently.
      * Phase 6: seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
      * Phase 7: seeds RJ-270 stages and rate-card templates for consultancy project accounting.
@@ -159,6 +160,7 @@ class InitializeSettings implements IRepairStep
             $this->seedSelectielijstRules(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
             $this->registerFixedAssetsMonthlyDepreciationWorkflow(output: $output);
+            $this->registerBcfQuarterlyDigikoppelingWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
             $this->seedComplianceReferenceData(output: $output);
             $this->seedProductAttributeTemplates(output: $output);
@@ -425,6 +427,69 @@ class InitializeSettings implements IRepairStep
         $output->info('Shillinq: FixedAssets monthly-depreciation ScheduledWorkflow registered (interval: 30 days)');
 
     }//end registerFixedAssetsMonthlyDepreciationWorkflow()
+
+    /**
+     * Register the BCF quarterly DigiKoppeling ScheduledWorkflow if not already present.
+     *
+     * Idempotent: uses the slug 'shillinq-bcf-quarterly-digikoppeling-submission'
+     * for deduplication. The interval defaults to 7776000 seconds (90 days /
+     * quarterly cadence aligned with the BCF claim window; the cron equivalent
+     * fires on the first day of each quarter). Per ADR-019 + ADR-022 the
+     * submission consumes the `digikoppeling-bcf` OpenConnector source — no
+     * app-local DigiKoppeling client ships. Operators adjust the interval and
+     * target via the OpenRegister ScheduledWorkflow admin UI per REQ-BCF-005.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-bcf-vat-compensation/tasks.md#task-11
+     */
+    private function registerBcfQuarterlyDigikoppelingWorkflow(IOutput $output): void
+    {
+        try {
+            $workflowMapper = $this->container->get(
+                'OCA\OpenRegister\Db\ScheduledWorkflowMapper'
+            );
+        } catch (\Throwable $e) {
+            $output->info('Shillinq: ScheduledWorkflowMapper not available, skipping BCF workflow registration');
+            return;
+        }
+
+        $slug = 'shillinq-bcf-quarterly-digikoppeling-submission';
+
+        $existing = $workflowMapper->findAll();
+        foreach ($existing as $workflow) {
+            if ($workflow->getName() === $slug) {
+                $output->info('Shillinq: BCF quarterly DigiKoppeling ScheduledWorkflow already registered, skipping');
+                return;
+            }
+        }
+
+        // 90 days in seconds — quarterly cadence aligned with digikoppeling-bcf
+        // cron `0 0 1 */3 *`. Operators reconfigure the interval and target via the
+        // OpenRegister admin UI when Belastingdienst deadlines shift.
+        // REQ-BCF-005 / ADR-019.
+        $workflowMapper->createFromArray(
+            data: [
+                'name'        => $slug,
+                'engine'      => 'openconnector',
+                'workflowId'  => 'digikoppeling-bcf',
+                'intervalSec' => 7776000,
+                'enabled'     => true,
+                'payload'     => json_encode(
+                    [
+                        'register'           => 'shillinq',
+                        'schema'             => 'BcfClaim',
+                        'administrationType' => ['gemeente', 'provincie', 'waterschap'],
+                    ]
+                ),
+            ]
+        );
+
+        $output->info('Shillinq: BCF quarterly DigiKoppeling ScheduledWorkflow registered (interval: 90 days)');
+
+    }//end registerBcfQuarterlyDigikoppelingWorkflow()
 
     /**
      * Seed T3 NL-compliance reference data (BTW tariffs + BBV taakvelden), idempotently.

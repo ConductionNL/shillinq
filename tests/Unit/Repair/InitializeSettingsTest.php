@@ -23,9 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\Shillinq\Repair\InitializeSettings;
-use OCA\Shillinq\Service\BbvSeedService;
 use OCA\Shillinq\Service\SettingsService;
-use OCA\Shillinq\Service\StatementManifestService;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -44,20 +42,6 @@ class InitializeSettingsTest extends TestCase
      * @var SettingsService&MockObject
      */
     private SettingsService&MockObject $settingsService;
-
-    /**
-     * Mock BbvSeedService.
-     *
-     * @var BbvSeedService&MockObject
-     */
-    private BbvSeedService&MockObject $bbvSeedService;
-
-    /**
-     * Mock StatementManifestService.
-     *
-     * @var StatementManifestService&MockObject
-     */
-    private StatementManifestService&MockObject $statementManifestService;
 
     /**
      * Mock ContainerInterface.
@@ -96,17 +80,13 @@ class InitializeSettingsTest extends TestCase
     {
         parent::setUp();
 
-        $this->settingsService          = $this->createMock(originalClassName: SettingsService::class);
-        $this->bbvSeedService           = $this->createMock(originalClassName: BbvSeedService::class);
-        $this->container                = $this->createMock(originalClassName: ContainerInterface::class);
-        $this->statementManifestService = $this->createMock(originalClassName: StatementManifestService::class);
-        $this->logger                   = $this->createMock(originalClassName: LoggerInterface::class);
-        $this->output                   = $this->createMock(originalClassName: IOutput::class);
+        $this->settingsService = $this->createMock(originalClassName: SettingsService::class);
+        $this->container       = $this->createMock(originalClassName: ContainerInterface::class);
+        $this->logger          = $this->createMock(originalClassName: LoggerInterface::class);
+        $this->output          = $this->createMock(originalClassName: IOutput::class);
 
         $this->repairStep = new InitializeSettings(
             settingsService: $this->settingsService,
-            bbvSeedService: $this->bbvSeedService,
-            manifestService: $this->statementManifestService,
             logger: $this->logger,
             container: $this->container,
         );
@@ -212,13 +192,9 @@ class InitializeSettingsTest extends TestCase
         $this->settingsService->method('getRegisterSlug')
             ->willReturn('shillinq');
 
-        // Statement-manifest import runs during seeding; stub it green so the
-        // repair step reports success against the full typed result shape.
-        $this->statementManifestService->method('import')
-            ->willReturn(['success' => true, 'imported' => 3, 'skipped' => 0]);
-
-        // Container get() throws for ScheduledWorkflowMapper so registerIv3ScheduledWorkflow
-        // exits via its inner catch block without reaching the outer try/catch in run().
+        // Container get() throws for ScheduledWorkflowMapper so the workflow
+        // registrations (IV3, FixedAssets, BCF) exit via their inner catch blocks
+        // without reaching the outer try/catch in run().
         $this->container->method('get')
             ->willThrowException(new \RuntimeException('Not available in test'));
 
