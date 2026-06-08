@@ -412,28 +412,40 @@
         "icon": "FilterCogOutline",
         "version": "0.1.0",
         "title": "Matching Rule",
-        "description": "A predicate-based rule that matches bank statement lines against AR/AP invoices or journals per REQ-BR-005. Rule predicates are declared as schema metadata (ADR-031); an x-openregister-aggregations query consumes them to emit ReconciliationMatch candidates. No PHP rule-engine.",
+        "description": "A predicate-based rule that matches bank statement lines against AR/AP invoices or journals per REQ-BR-004/REQ-BR-005. Rule predicates are declared as schema metadata (ADR-031); an x-openregister-aggregations query consumes them to emit ReconciliationMatch candidates. No PHP rule-engine.",
         "x-schema-org": "schema:Action",
         "type": "object",
         "x-openregister-audit": true,
-        "required": ["ruleId", "name", "administrationId", "priority", "isActive", "predicates"],
+        "x-openregister-audit-trail": { "enabled": true, "description": "REQ-AT-001: MatchingRule carries an immutable audit trail per ADR-022. Rule authoring, predicate edits, priority changes, and active/disabled flips append audit events." },
+        "required": ["ruleId", "name", "administrationId", "priority", "isActive", "targetType", "predicates"],
         "properties": {
           "ruleId": { "type": "string", "description": "Unique rule identifier." },
           "name": { "type": "string", "description": "Human-readable rule name.", "example": "Exacte factuurreferentie" },
           "administrationId": { "type": "string", "description": "FK to the owning Administration." },
-          "priority": { "type": "integer", "description": "Lower number = higher priority (evaluated in order)." },
+          "priority": { "type": "integer", "description": "Lower number = higher priority (evaluated in order) per REQ-BR-004." },
           "isActive": { "type": "boolean", "default": true, "description": "Whether the rule is active." },
+          "lifecycleState": { "type": "string", "enum": ["active", "disabled", "archived"], "default": "active", "description": "Rule lifecycle state per REQ-BR-004." },
+          "targetType": { "type": "string", "enum": ["ar-invoice", "ap-invoice", "gl-transaction", "customer", "vendor"], "description": "Which register the rule matches against per REQ-BR-004." },
+          "autoConfirm": { "type": "boolean", "default": false, "description": "If true, candidate matches are auto-confirmed; else operator-confirmed per REQ-BR-004/REQ-BR-006. Default false: bookkeeper trust is built first; auto-confirm is a future enhancement once rule packs are mature." },
+          "confidenceScore": { "type": "number", "minimum": 0, "maximum": 1, "nullable": true, "description": "Per-rule confidence score in [0,1] surfaced on emitted ReconciliationMatch candidates per REQ-BR-005. Used by the UI to rank suggestions." },
           "predicates": {
             "type": "array",
-            "description": "Ordered array of predicate objects per REQ-BR-005.",
+            "description": "Ordered array of predicate objects per REQ-BR-005. Predicates in the same rule MUST be combined with logical AND; cross-rule combinations are handled by priority ordering (REQ-BR-004).",
             "items": {
               "type": "object",
-              "required": ["field", "operator", "matchTarget"],
+              "required": ["op"],
               "properties": {
-                "field": { "type": "string", "description": "Which BankStatementLine field to match on (e.g. remittanceInfo, amount, counterpartyIban, counterpartyName)." },
-                "operator": { "type": "string", "enum": ["exact", "contains", "regex", "amount-range"], "description": "Match operator." },
-                "value": { "description": "Match target or pattern (string or number)." },
-                "matchTarget": { "type": "string", "enum": ["ar-invoice", "ap-invoice", "journal"], "description": "Which register to match against." }
+                "op": { "type": "string", "enum": ["exact-amount", "amount-range", "reference-match", "counterparty-fuzzy", "date-window", "exact", "contains", "regex"], "description": "Predicate operator per REQ-BR-005. T2 baseline: exact-amount, amount-range, reference-match, counterparty-fuzzy, date-window. Legacy ops (exact/contains/regex) retained for backwards compatibility with rules authored before REQ-BR-005 was finalised." },
+                "field": { "type": "string", "nullable": true, "description": "Which BankStatementLine field to match on (e.g. remittanceInfo, amount, counterpartyIban, counterpartyName). Optional when op carries an implicit field (e.g. exact-amount → amount)." },
+                "amount": { "type": "number", "nullable": true, "description": "Predicate amount for exact-amount per REQ-BR-005." },
+                "min": { "type": "number", "nullable": true, "description": "Lower bound for amount-range per REQ-BR-005." },
+                "max": { "type": "number", "nullable": true, "description": "Upper bound for amount-range per REQ-BR-005." },
+                "pattern": { "type": "string", "nullable": true, "description": "Regex pattern for reference-match per REQ-BR-005." },
+                "name": { "type": "string", "nullable": true, "description": "Counterparty name for counterparty-fuzzy per REQ-BR-005." },
+                "threshold": { "type": "number", "minimum": 0, "maximum": 1, "nullable": true, "description": "Levenshtein similarity threshold for counterparty-fuzzy in [0,1] per REQ-BR-005." },
+                "days": { "type": "integer", "nullable": true, "description": "Day window for date-window: line date MUST be within ±days of the target object's invoiceDate or dueDate per REQ-BR-005." },
+                "value": { "description": "Legacy match target or pattern (string or number) for op=exact/contains/regex." },
+                "matchTarget": { "type": "string", "nullable": true, "enum": ["ar-invoice", "ap-invoice", "journal"], "description": "Legacy per-predicate match target; superseded by the top-level targetType field (REQ-BR-004)." }
               }
             }
           }
