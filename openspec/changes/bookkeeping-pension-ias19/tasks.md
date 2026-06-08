@@ -79,7 +79,7 @@
   all 8 sensitivity lines (discount ±0.5pp, salary ±0.5pp, mortality ±1yr,
   inflation ±0.5pp)
 
-- [ ] Task 9: Declare the `pension-asset-detail` schema in
+- [x] Task 9: Declare the `pension-asset-detail` schema in
   `lib/Settings/shillinq_register.json` with REQ-PEN-007 fields (valuation FK,
   assetCategory enum: cash/equities-quoted/bonds-gov/bonds-corp/real-estate/
   alternative/derivatives, fairValue, level integer 1/2/3 per IFRS 13,
