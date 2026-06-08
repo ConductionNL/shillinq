@@ -144,14 +144,14 @@ class AppointmentConfirmationService
         }
 
         $register      = $this->getRegisterSlug();
-        $rawToken      = $this->tokenValidator->generateTokenString();
+        $rawToken      = TokenValidator::generate();
         $now           = new DateTimeImmutable('now');
         $appointmentId = (string) ($appointment['id'] ?? ($appointment['appointmentNumber'] ?? ''));
 
         $tokenRecord = [
             'tokenId'          => uniqid('tok-', true),
             'appointmentId'    => $appointmentId,
-            'tokenString'      => $this->tokenValidator->hashToken($rawToken),
+            'tokenString'      => TokenValidator::hash($rawToken),
             'expiresAt'        => $now->modify('+'.self::TOKEN_TTL.' seconds')->format('Y-m-d\TH:i:s\Z'),
             'status'           => 'active',
             'createdAt'        => $now->format('Y-m-d\TH:i:s\Z'),
@@ -238,7 +238,8 @@ class AppointmentConfirmationService
             return $status;
         }
 
-        if ($this->tokenValidator->isExpired(expiresAt: (string) ($token['expiresAt'] ?? '')) === true) {
+        $nowIso = (new DateTimeImmutable('now'))->format('Y-m-d\TH:i:s\Z');
+        if (TokenValidator::isExpired((string) ($token['expiresAt'] ?? ''), $nowIso) === true) {
             return 'expired';
         }
 
@@ -477,9 +478,9 @@ class AppointmentConfirmationService
         }
 
         foreach ($tokens as $token) {
-            $matches = $this->tokenValidator->verifyToken(
-                rawToken: $rawToken,
-                storedHash: (string) ($token['tokenString'] ?? '')
+            $matches = TokenValidator::verify(
+                $rawToken,
+                (string) ($token['tokenString'] ?? '')
             );
             if ($matches === true) {
                 return $token;

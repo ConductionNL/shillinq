@@ -2310,4 +2310,303 @@ class SettingsService
         }//end try
 
     }//end seedBudgetBbvMappings()
+
+    /**
+     * Seed the default Archiefwet retention policies, idempotently.
+     *
+     * Reads lib/Settings/seeds/retention-policies.json and imports the three
+     * organization-wide default RetentionPolicy records (financial 5yr, tax 7yr,
+     * general 3yr) per REQ-RET-012. Records are matched by `slug` and skipped when
+     * already present, preserving operator edits across upgrades. Unlike the chart
+     * of accounts these policies are organization-wide (no administrationId), so no
+     * tenant identifier is required.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/bookkeeping-archiefwet-retention/tasks.md (Task 13, REQ-RET-012)
+     */
+    public function seedRetentionPolicies(): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/retention-policies.json';
+        if (file_exists($seedPath) === false) {
+            return ['success' => false, 'message' => 'Retention policy seed file not found.'];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return ['success' => false, 'message' => 'Failed to read retention policy seed file.'];
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return ['success' => false, 'message' => 'Failed to parse retention policy seed file: '.json_last_error_msg()];
+        }
+
+        $policies = ($data['policies'] ?? []);
+        if (empty($policies) === true) {
+            return ['success' => false, 'message' => 'Retention policy seed file contains no policies.'];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($policies as $policy) {
+                $slug     = ($policy['slug'] ?? '');
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('RetentionPolicy')
+                    ->findAll(
+                        [
+                            'filters' => ['slug' => $slug],
+                            'limit'   => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $policy,
+                    register: $registerSlug,
+                    schema: 'RetentionPolicy',
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: retention policies seeded',
+                ['seeded' => $seeded, 'skipped' => $skipped]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'Retention policies seeded successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: retention policy seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedRetentionPolicies()
+
+    /**
+     * Seed mandaat (signing-authority) templates from mandaat-templates.json, idempotently.
+     *
+     * Reads lib/Settings/seeds/mandaat-templates.json and imports Mandaat records
+     * via OpenRegister's ObjectService, stamping the tenant administrationId.
+     * Already-existing records (matched by mandaatcode + administrationId) are
+     * skipped, preserving operator edits. Per REQ-VPL-002. Requires a non-empty
+     * administrationId (C2).
+     *
+     * @param string $administrationId The administrationId to stamp on seeded records.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.7
+     */
+    public function seedMandaatTemplates(string $administrationId): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        if ($administrationId === '') {
+            return [
+                'success' => false,
+                'message' => 'administrationId must not be empty.',
+            ];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/mandaat-templates.json';
+        if (file_exists($seedPath) === false) {
+            return ['success' => false, 'message' => 'Seed file not found: mandaat-templates.json'];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return ['success' => false, 'message' => 'Failed to read mandaat-templates.json'];
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return ['success' => false, 'message' => 'Failed to parse mandaat-templates.json: '.json_last_error_msg()];
+        }
+
+        $templates = ($data['mandaatTemplates'] ?? []);
+        if (empty($templates) === true) {
+            return ['success' => false, 'message' => 'Seed file contains no mandaatTemplates.'];
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+
+            foreach ($templates as $template) {
+                // _meta-only fields that are not Mandaat properties are dropped.
+                unset($template['doelgroep']);
+                $template['administrationId'] = $administrationId;
+
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('Mandaat')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'mandaatcode'      => $template['mandaatcode'],
+                                'administrationId' => $administrationId,
+                            ],
+                            'limit'   => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $template,
+                    register: $registerSlug,
+                    schema: 'Mandaat',
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: mandaat templates seeded',
+                [
+                    'seeded'  => $seeded,
+                    'skipped' => $skipped,
+                ]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'Mandaat templates seeded successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: mandaat template seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedMandaatTemplates()
+
+    /**
+     * Import the three RJ 270 statement presentation manifests, idempotently.
+     *
+     * Reads rj270-balance-sheet.json, rj270-pl.json, and rj270-cash-flow.json from
+     * lib/Settings/statements/ and persists each into app config under a per-statement
+     * key (statement_manifest_<type>) only when the key is not already set. This makes
+     * the import idempotent and preserves operator edits across repair re-runs per
+     * REQ-FS-002: a manifest that the operator has customised is never re-overwritten.
+     *
+     * Financial-statement assembly itself is declarative (trial-balance aggregations
+     * composed against these manifests per ADR-031); this method ships only the
+     * presentation templates, no report-builder logic.
+     *
+     * @return array<string,mixed> Result with success flag, imported count, skipped count.
+     *
+     * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-3.4
+     */
+    public function seedStatementManifests(): array
+    {
+        $files = [
+            'balance-sheet' => 'rj270-balance-sheet.json',
+            'profit-loss'   => 'rj270-pl.json',
+            'cash-flow'     => 'rj270-cash-flow.json',
+        ];
+
+        $imported = 0;
+        $skipped  = 0;
+
+        foreach ($files as $type => $fileName) {
+            $configKey = 'statement_manifest_'.$type;
+
+            // Preserve operator edits: skip when the manifest is already persisted.
+            $existing = $this->appConfig->getValueString(Application::APP_ID, $configKey, '');
+            if ($existing !== '') {
+                $skipped++;
+                continue;
+            }
+
+            $manifestPath = __DIR__.'/../Settings/statements/'.$fileName;
+            if (file_exists($manifestPath) === false) {
+                $this->logger->warning('Shillinq: statement manifest not found: '.$fileName);
+                continue;
+            }
+
+            $content = file_get_contents($manifestPath);
+            if ($content === false) {
+                $this->logger->warning('Shillinq: failed to read statement manifest: '.$fileName);
+                continue;
+            }
+
+            $decoded = json_decode($content, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                $this->logger->warning(
+                    'Shillinq: failed to parse statement manifest '.$fileName.': '.json_last_error_msg()
+                );
+                continue;
+            }
+
+            // Stamp the import timestamp so a future presentation-standard migration
+            // (BBV — T3; IFRS full — T5) can tell template-sourced from operator-authored.
+            if (isset($decoded['_meta']) === true && is_array($decoded['_meta']) === true) {
+                $decoded['_meta']['imported'] = gmdate('Y-m-d\TH:i:s\Z');
+            }
+
+            $this->appConfig->setValueString(
+                Application::APP_ID,
+                $configKey,
+                (string) json_encode($decoded)
+            );
+            $imported++;
+        }//end foreach
+
+        $this->logger->info(
+            'Shillinq: statement manifests imported',
+            ['imported' => $imported, 'skipped' => $skipped]
+        );
+
+        return [
+            'success'  => true,
+            'message'  => 'Statement manifests imported.',
+            'imported' => $imported,
+            'skipped'  => $skipped,
+        ];
+
+    }//end seedStatementManifests()
 }//end class

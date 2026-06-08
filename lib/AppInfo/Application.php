@@ -28,6 +28,7 @@ use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
+use OCA\Shillinq\Notification\Notifier;
 use OCA\Shillinq\Repair\InitializeSettings;
 use OCA\Shillinq\Service\Pipelinq\LoggingPipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue;
@@ -77,7 +78,7 @@ class Application extends App implements IBootstrap
             listener: DeepLinkRegistrationListener::class
         );
 
-        // bookings-confirm-flow REQ-BCF-001/010 — issue a ConfirmationToken
+        // Bookings-confirm-flow REQ-BCF-001/010 — issue a ConfirmationToken
         // + dispatch the confirmation email when a new Appointment record is
         // created with status `pending_confirmation` (customer self-service).
         // Admin-created bookings start `confirmed` and the listener ignores
@@ -96,7 +97,7 @@ class Application extends App implements IBootstrap
             listener: StockMoveTransitionedListener::class
         );
 
-        // bookkeeping-purchase-order-3way slice 05 (REQ-PO3W-004) —
+        // Bookkeeping-purchase-order-3way slice 05 (REQ-PO3W-004) —
         // openconnector publishes a `PeppolInboundMessage` OR record for
         // every received Peppol message. This listener filters on the
         // documentType=Invoice slice of those events and dispatches the
@@ -152,7 +153,7 @@ class Application extends App implements IBootstrap
             listener: BookingLifecycleTransitionListener::class
         );
 
-        // bookkeeping-waterschappen-bbv-variant slice 08 — invalidate the
+        // Bookkeeping-waterschappen-bbv-variant slice 08 — invalidate the
         // BBV-compliance cache when a GL transaction header or line is
         // created or updated. The slice-02 x-openregister-aggregations
         // block on BBVProgramme materialises totalBudget / ytdSpend /
@@ -172,6 +173,9 @@ class Application extends App implements IBootstrap
 
         // Initialize register and schemas on install/upgrade.
         $context->registerRepairStep(InitializeSettings::class);
+
+        // Register the notifier for Shillinq in-app notifications (REQ-SUBV-010).
+        $context->registerNotifierService(Notifier::class);
 
     }//end register()
 

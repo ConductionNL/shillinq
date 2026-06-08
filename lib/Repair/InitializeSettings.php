@@ -24,7 +24,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\Shillinq\Service\BbvSeedService;
 use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\StatementManifestService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Container\ContainerInterface;
@@ -41,14 +43,18 @@ class InitializeSettings implements IRepairStep
     /**
      * Constructor for InitializeSettings.
      *
-     * @param SettingsService    $settingsService The settings service
-     * @param LoggerInterface    $logger          The logger interface
-     * @param ContainerInterface $container       The DI container
+     * @param SettingsService          $settingsService The settings service
+     * @param BbvSeedService           $bbvSeedService  The BBV stam-data seed service
+     * @param StatementManifestService $manifestService The statement-manifest importer
+     * @param LoggerInterface          $logger          The logger interface
+     * @param ContainerInterface       $container       The DI container
      *
      * @return void
      */
     public function __construct(
         private SettingsService $settingsService,
+        private BbvSeedService $bbvSeedService,
+        private StatementManifestService $manifestService,
         private LoggerInterface $logger,
         private ContainerInterface $container,
     ) {
@@ -164,6 +170,10 @@ class InitializeSettings implements IRepairStep
             $this->seedInventoryStockExamples(output: $output);
             $this->seedInventoryGLConfig(output: $output);
             $this->seedBbvWaterschappenDemo(output: $output);
+            $this->importStatementManifests(output: $output);
+            $this->seedMandaatTemplates(output: $output);
+            $this->seedRetentionPolicies(output: $output);
+            $this->seedStatementManifests(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -1091,4 +1101,144 @@ class InitializeSettings implements IRepairStep
         }//end try
 
     }//end seedPassThroughMarkupRules()
+
+    /**
+     * Import the RJ 270 statement-presentation manifests idempotently.
+     *
+     * Delegates to StatementManifestService::import(), which preserves
+     * operator edits across re-runs (REQ-FS-002). Non-fatal — a failure here
+     * logs a warning but does not abort the repair step.
+     *
+     * @param IOutput $output The output interface for progress reporting
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-bookkeeping-compliance/specs/bookkeeping-financial-statements/spec.md (REQ-FS-002)
+     */
+    private function importStatementManifests(IOutput $output): void
+    {
+        $output->info('Importing RJ 270 statement presentation manifests...');
+
+        $result = $this->manifestService->import();
+
+        if (($result['success'] ?? false) !== true) {
+            $output->warning('Statement manifest import issue: '.($result['message'] ?? 'unknown error'));
+            return;
+        }
+
+        $output->info(
+            'Statement manifests imported: '.($result['imported'] ?? 0).' created, '
+            .($result['skipped'] ?? 0).' skipped (operator edits preserved).'
+        );
+
+    }//end importStatementManifests()
+
+    /**
+     * Seed mandaat (signing-authority) templates for verplichtingenadministratie, idempotently.
+     *
+     * Calls SettingsService::seedMandaatTemplates() with the configured
+     * administrationId. Requires a non-empty administrationId (C2); skips with a
+     * warning when unset. Idempotent: mandates matched by mandaatcode +
+     * administrationId are skipped, preserving operator edits per REQ-VPL-002.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-2.2
+     */
+    private function seedMandaatTemplates(IOutput $output): void
+    {
+        $settings         = $this->settingsService->getSettings();
+        $administrationId = ($settings['administration_id'] ?? '');
+
+        if ($administrationId === '') {
+            $output->warning(
+                'Shillinq: administration_id not configured — skipping mandaat template seed.'
+            );
+            return;
+        }
+
+        $output->info('Seeding mandaat templates...');
+        $result = $this->settingsService->seedMandaatTemplates(administrationId: $administrationId);
+
+        if (($result['success'] ?? false) === true) {
+            $output->info(
+                'Mandaat templates seeded: '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+        if (($result['success'] ?? false) !== true) {
+            $output->warning('Mandaat templates seeding issue: '.($result['message'] ?? 'unknown error'));
+        }
+
+    }//end seedMandaatTemplates()
+
+    /**
+     * Seed the default Archiefwet retention policies, idempotently.
+     *
+     * The three organization-wide default policies (financial 5yr, tax 7yr,
+     * general 3yr) are imported via SettingsService and matched by slug so
+     * re-runs on upgrade do not duplicate or overwrite operator edits
+     * (REQ-RET-012). No administration_id is required — retention policies are
+     * organization-wide defaults.
+     *
+     * @param IOutput $output The output interface for progress reporting
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-archiefwet-retention/tasks.md (Task 13)
+     */
+    private function seedRetentionPolicies(IOutput $output): void
+    {
+        $output->info('Seeding default retention policies...');
+
+        $result = $this->settingsService->seedRetentionPolicies();
+
+        if (($result['success'] ?? false) === true) {
+            $seeded  = ($result['seeded'] ?? 0);
+            $skipped = ($result['skipped'] ?? 0);
+            $output->info(
+                'Retention policies seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            );
+        }
+
+        if (($result['success'] ?? false) !== true) {
+            $message = ($result['message'] ?? 'unknown error');
+            $output->warning('Retention policy seeding issue: '.$message);
+        }
+
+    }//end seedRetentionPolicies()
+
+    /**
+     * Import the RJ 270 statement presentation manifests, idempotently.
+     *
+     * Calls SettingsService::seedStatementManifests() which imports the balance
+     * sheet, P&L, and cash-flow presentation manifests into app config and skips
+     * any manifest the operator has already customised per REQ-FS-002.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-3.4
+     */
+    private function seedStatementManifests(IOutput $output): void
+    {
+        $output->info('Importing RJ 270 statement presentation manifests...');
+
+        $result = $this->settingsService->seedStatementManifests();
+
+        if (($result['success'] ?? false) === true) {
+            $output->info(
+                'Statement manifests imported: '.($result['imported'] ?? 0).' imported, '
+                .($result['skipped'] ?? 0).' skipped (already present).'
+            );
+        }
+
+        if (($result['success'] ?? false) !== true) {
+            $output->warning('Statement manifest import issue: '.($result['message'] ?? 'unknown error'));
+        }
+
+    }//end seedStatementManifests()
 }//end class
