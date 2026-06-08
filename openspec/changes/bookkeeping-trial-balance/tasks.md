@@ -201,7 +201,13 @@
 
 - [x] User guide (Task 12.1) — `docs/user-guide/user/09-trial-balance.md` ships the end-user how-to.
 - [x] Architecture guide (Task 12.2) — `docs/Technical/trial-balance-design.md` documents the aggregation + PHP fallback shape.
-- [x] Screenshots captured and committed to `docs/images/` (trial-balance-index, trial-balance-detail) — DEFERRED, see "Deferred" block below (capture from the running app).
+- [x] Screenshots captured and committed to `docs/images/` (trial-balance-index, trial-balance-lines-index) — captured from the running app
+  (`docker exec nextcloud`, Shillinq 0.6.6) against the live SPA at
+  `/apps/shillinq/financial-statements/trial-balance` and
+  `/apps/shillinq/financial-statements/trial-balance-lines`. PNGs stored under
+  `docs/images/` per the spec and mirrored to
+  `docs/static/screenshots/user-guide/user/` so the Docusaurus user-guide page
+  (`docs/user-guide/user/09-trial-balance.md`) renders them.
 
 ## i18n (company-wide ADR-007)
 
@@ -250,5 +256,8 @@
   controller + service end-to-end with two distinct users across a shared GL
   dataset and proves IDOR 404 masking + per-tenant total isolation in both
   directions, plus defence-in-depth filtering at the service layer.
-- [ ] Screenshots for `docs/images/` — DEFERRED: capture from the running app
-  (no live instance in the build worktree).
+- [x] Screenshots for `docs/images/` — `trial-balance-index.png` (period snapshot
+  index) and `trial-balance-lines-index.png` (per-account index) captured against
+  the live container's Shillinq SPA and committed under `docs/images/`; mirrored
+  into the Docusaurus static tree at `docs/static/screenshots/user-guide/user/`
+  and referenced from `docs/user-guide/user/09-trial-balance.md`.

@@ -28,6 +28,8 @@ per-account summary at a period boundary. It serves four purposes:
 
 Open **Bookkeeping → Trial Balance (by account)**. Each row is one account:
 
+![Trial Balance (by account) — index view](/screenshots/user-guide/user/trial-balance-lines-index.png)
+
 | Column | Meaning |
 |--------|---------|
 | Period | The fiscal period this row covers (for example `2026-Q1`). |
@@ -84,3 +86,10 @@ The trial balance is a read-only report computed live from the general ledger.
 You cannot edit a trial-balance row directly — to change a balance, post or
 correct the underlying general-ledger entries and the report updates on its next
 run.
+
+## Period-snapshot index
+
+Posted period-close snapshots are listed under **Bookkeeping → Trial Balance**;
+each row is a frozen point-in-time trial balance for one fiscal period.
+
+![Trial Balance (period snapshot) — index view](/screenshots/user-guide/user/trial-balance-index.png)
