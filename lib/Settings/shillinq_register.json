@@ -6953,6 +6953,189 @@
 					}
 				}
 			},
+			"ClosingEntryTemplate": {
+				"slug": "ClosingEntryTemplate",
+				"icon": "FileCogOutline",
+				"version": "0.1.0",
+				"title": "Closing Entry Template",
+				"description": "Declarative rule that drives automated closing-entry generation per REQ-YEC-004. Each template matches a range of account numbers, transfers their balances to the configured closing account, and optionally reverses in the next period. Lifecycle (active/paused/archived) lets operators disable templates without deleting them. Templates are consumed by the FiscalYear in-progress -> closed transition per REQ-YEC-010 and by the ClosingEntry materialisation hook per REQ-YEC-009.",
+				"x-schema-org": "schema:Thing",
+				"type": "object",
+				"x-openregister-unique": [
+					[
+						"templateId",
+						"administrationId"
+					]
+				],
+				"required": [
+					"templateId",
+					"templateName",
+					"accountPattern",
+					"closingAccountNumber",
+					"administrationId",
+					"lifecycleState",
+					"createdAt"
+				],
+				"properties": {
+					"templateId": {
+						"type": "string",
+						"description": "Stable operator-readable identifier (e.g. revenue-closing). Unique per administrationId. Per REQ-YEC-004.",
+						"example": "revenue-closing"
+					},
+					"templateName": {
+						"type": "string",
+						"description": "Display name shown in the closing-entry generation UI. Per REQ-YEC-004.",
+						"example": "Revenue Closing"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "Operator documentation of what this template does. Per REQ-YEC-004.",
+						"example": "Close all revenue accounts (4000-4999) to income summary (9900)."
+					},
+					"accountPattern": {
+						"type": "string",
+						"description": "Account range or regex matching the GL accounts whose balances close through this template (e.g. 4000-4999 for revenue accounts, 5000-6999 for expense accounts). Per REQ-YEC-004.",
+						"example": "4000-4999"
+					},
+					"closingAccountNumber": {
+						"type": "string",
+						"description": "FK to Account.accountNumber. The target closing / income-summary account (typically 9900). Per REQ-YEC-004.",
+						"example": "9900"
+					},
+					"reverseNextPeriod": {
+						"type": "boolean",
+						"default": false,
+						"description": "When true, an accrual-reversal closing entry is generated in the next fiscal year reversing this one. Used for prior-period accrual reversals per REQ-YEC-004."
+					},
+					"automationTrigger": {
+						"type": "string",
+						"enum": [
+							"manual",
+							"on-close",
+							"on-check"
+						],
+						"default": "on-close",
+						"description": "When this template fires. on-close = at the FiscalYear in-progress -> closed transition (default); on-check = during the closing checklist; manual = only when explicitly invoked. Per REQ-YEC-004."
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration that owns this template. Per REQ-YEC-004.",
+						"example": "adm-consultancy-nl"
+					},
+					"lifecycleState": {
+						"type": "string",
+						"enum": [
+							"active",
+							"paused",
+							"archived"
+						],
+						"default": "active",
+						"description": "Whether this template is consumed by the FiscalYear close lifecycle. paused = skipped this cycle but remains in the catalogue; archived = retained for audit only. Per REQ-YEC-004."
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "ISO 8601 timestamp when this template was created. Per REQ-YEC-004.",
+						"example": "2026-01-15T10:00:00Z"
+					},
+					"modifiedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true,
+						"description": "ISO 8601 timestamp when this template was last modified. Per REQ-YEC-004.",
+						"example": "2026-06-08T14:00:00Z"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Consumed by the FiscalYear close lifecycle when automationTrigger matches."
+						},
+						"paused": {
+							"label": "Paused",
+							"description": "Skipped by the close lifecycle but remains in the catalogue and may be re-activated."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Retained for audit purposes only. Never executed."
+						}
+					},
+					"transitions": {
+						"pause": {
+							"from": "active",
+							"to": "paused",
+							"label": "Pause template",
+							"description": "Stop this template from firing during the next close cycle."
+						},
+						"resume": {
+							"from": "paused",
+							"to": "active",
+							"label": "Resume template",
+							"description": "Re-enable a paused template."
+						},
+						"archive": {
+							"from": "paused",
+							"to": "archived",
+							"label": "Archive template",
+							"description": "Permanently retire this template (kept for audit)."
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"closingAccount": {
+						"localField": "closingAccountNumber",
+						"relatedSchema": "Account",
+						"relatedField": "accountNumber",
+						"cardinality": "many-to-one",
+						"description": "The GL account these closing entries flow through."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						},
+						"approver": {
+							"permissions": [
+								"read",
+								"update"
+							],
+							"lifecycleTransitions": [
+								"pause",
+								"resume"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						},
+						"admin": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							],
+							"lifecycleTransitions": [
+								"pause",
+								"resume",
+								"archive"
+							]
+						}
+					},
+					"adminScope": {
+						"field": "administrationId",
+						"enforce": true
+					}
+				}
+			},
 			"Receipt": {
 				"slug": "Receipt",
 				"icon": "ReceiptOutline",
