@@ -34,7 +34,7 @@ The accounting flow is declarative: schema metadata + aggregation queries
 
 ---
 
-## Requirements
+## ADDED Requirements
 
 ### Requirement: REQ-PEN-001 PUC method enforced for DB plans
 
@@ -121,10 +121,10 @@ and MUST NEVER be reclassified to P&L in future periods per IAS 19 §122.
 
 ### Requirement: REQ-PEN-005 Asset ceiling per IFRIC 14 on net pension asset
 
-If the actuarial valuation results in a net pension **asset** (plan assets
-> DBO), the system MUST apply the asset ceiling per IFRIC 14 §5–7: the
-net asset is limited to the present value of future contribution reductions
-or repayments.
+The system MUST apply the asset ceiling per IFRIC 14 §5–7 whenever the
+actuarial valuation results in a net pension **asset** (plan assets
+exceeding the defined-benefit obligation): the net asset is limited to the
+present value of future contribution reductions or repayments.
 
 #### Scenario: Overfunded plan with asset ceiling EUR 800K
 
@@ -259,10 +259,10 @@ WITHOUT any DBO measurement, PUC calculation, or sensitivity analysis.
 
 ### Requirement: REQ-PEN-009 Past service cost direct P&L on plan amendment date
 
-When a plan amendment (regelingwijziging) occurs with material effect on
-DBO (e.g., raising retirement age), the past service cost MUST be posted
-directly to P&L on the amendment date per IAS 19 §103, NOT spread over
-multiple periods.
+The system MUST post past service cost directly to P&L on the amendment
+date per IAS 19 §103, NOT spread over multiple periods, whenever a plan
+amendment (regelingwijziging) occurs with material effect on the
+defined-benefit obligation (e.g., raising retirement age).
 
 #### Scenario: Pensioenleeftijd verhoogd van 67 naar 68 in 2026
 
