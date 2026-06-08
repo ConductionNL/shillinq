@@ -95,17 +95,18 @@ final class PeriodCloseFragmentTest extends TestCase
     }//end testFragmentIsValidJson()
 
     /**
-     * The fragment declares the PeriodClose schema with all spec fields (REQ-PC-001).
+     * The fragment declares the FiscalPeriod schema with all spec fields (REQ-PC-001, REQ-PC-002).
      *
      * @return void
      */
-    public function testDeclaresPeriodCloseSchema(): void
+    public function testDeclaresFiscalPeriodSchema(): void
     {
-        $schema = $this->fragment()['components']['schemas']['PeriodClose'];
-        self::assertSame('PeriodClose', $schema['slug']);
+        $schema = $this->fragment()['components']['schemas']['FiscalPeriod'];
+        self::assertSame('FiscalPeriod', $schema['slug']);
 
         $expected = [
             'periodId',
+            'name',
             'administrationId',
             'startDate',
             'endDate',
@@ -121,10 +122,13 @@ final class PeriodCloseFragmentTest extends TestCase
             'aiFlags',
         ];
         foreach ($expected as $field) {
-            self::assertArrayHasKey($field, $schema['properties'], "PeriodClose must declare $field");
+            self::assertArrayHasKey($field, $schema['properties'], "FiscalPeriod must declare $field");
         }
 
-    }//end testDeclaresPeriodCloseSchema()
+        // The required set MUST include the human-readable name (REQ-PC-002 add-shillinq-period-close).
+        self::assertContains('name', $schema['required']);
+
+    }//end testDeclaresFiscalPeriodSchema()
 
     /**
      * The lifecycle declares the four states and the transition role gates (REQ-PC-002, REQ-PC-008).
@@ -133,7 +137,7 @@ final class PeriodCloseFragmentTest extends TestCase
      */
     public function testDeclaresLifecycleStatesAndRoleGates(): void
     {
-        $lifecycle = $this->fragment()['components']['schemas']['PeriodClose']['x-openregister-lifecycle'];
+        $lifecycle = $this->fragment()['components']['schemas']['FiscalPeriod']['x-openregister-lifecycle'];
         self::assertSame('open', $lifecycle['initialState']);
         foreach (['open', 'closing', 'closed', 'audit-locked'] as $state) {
             self::assertArrayHasKey($state, $lifecycle['states'], "Lifecycle must declare state $state");
@@ -176,8 +180,8 @@ final class PeriodCloseFragmentTest extends TestCase
         self::assertSame('OCA\\Shillinq\\Lifecycle\\BalanceGuard::isBalanced', $post['requires']);
         self::assertArrayHasKey('actions', $post);
 
-        // PeriodClose joins the schema set without disturbing GLTransaction.
-        self::assertArrayHasKey('PeriodClose', $merged['components']['schemas']);
+        // FiscalPeriod joins the schema set without disturbing GLTransaction.
+        self::assertArrayHasKey('FiscalPeriod', $merged['components']['schemas']);
 
     }//end testAugmentsGlTransactionPostAdditively()
 
@@ -196,7 +200,7 @@ final class PeriodCloseFragmentTest extends TestCase
         foreach ($objects as $object) {
             self::assertArrayHasKey('@self', $object);
             self::assertSame('shillinq', $object['@self']['register']);
-            self::assertSame('PeriodClose', $object['@self']['schema']);
+            self::assertSame('FiscalPeriod', $object['@self']['schema']);
             self::assertContains(
                 $object['state'],
                 ['open', 'closing', 'closed', 'audit-locked'],

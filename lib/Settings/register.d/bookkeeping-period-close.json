@@ -4,21 +4,22 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "bookkeeping-period-close",
 		"adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-		"description": "Tier 2 — guided period close. Adds one new PeriodClose schema with an open → closing → closed → audit-locked x-openregister-lifecycle (REQ-PC-001, REQ-PC-002): closed is reversible by a period-closer with an audit-trailed close reason, audit-locked is irreversible (auditor only). Additively augments the monolith GLTransaction.post transition with a declarative precondition (REQ-PC-003) referencing OCA\\Shillinq\\Lifecycle\\PeriodCloseGuard::periodOpen, which rejects a posting whose periodId resolves to a PeriodClose in state closed or audit-locked (backdating prevention, matches Exact/AFAS/Twinfield). The AI close assistant (REQ-PC-004) — open AP/AR transactions, unreconciled bank receipts, outstanding expense claims — is computed on demand by OCA\\Shillinq\\Service\\PeriodCloseAssistantService via the real OpenRegister ObjectService API (find/findAll); flags surface as non-blocking warnings (design D3). Seed objects provide five worked example periods (open, closing, closed, audit-locked, reopened) across realistic Dutch administrations per REQ-PC-009. Year-end close (opening-balance journal, retained-earnings rollover) is deferred to T3."
+		"description": "Tier 2 — guided period close. Declares the canonical FiscalPeriod schema (REQ-PC-001, REQ-PC-002) with an open → closing → closed → audit-locked x-openregister-lifecycle (REQ-PC-003): closed is reversible by a period-closer with an audit-trailed close reason, audit-locked is irreversible (auditor only). Additively augments the monolith GLTransaction.post transition with a declarative precondition (REQ-PC-004) referencing OCA\\Shillinq\\Lifecycle\\PeriodCloseGuard::periodOpen, which rejects a posting whose periodId resolves to a FiscalPeriod in state closed or audit-locked (backdating prevention, matches Exact/AFAS/Twinfield). The AI close assistant (REQ-PC-007) — open AP/AR transactions, unreconciled bank receipts, outstanding expense claims — is computed on demand by OCA\\Shillinq\\Service\\PeriodCloseAssistantService via the real OpenRegister ObjectService API (find/findAll); flags surface as non-blocking warnings (design D3). Seed objects provide five worked example periods (open, closing, closed, audit-locked, reopened) across realistic Dutch administrations. The schema slug FiscalPeriod is the canonical fleet name referenced by AR / AP / VAT / WIP / ICP / R&D-subsidies sibling schemas. Year-end close (opening-balance journal, retained-earnings rollover) is deferred to T3."
 	},
 	"components": {
 		"schemas": {
-			"PeriodClose": {
-				"slug": "PeriodClose",
+			"FiscalPeriod": {
+				"slug": "FiscalPeriod",
 				"icon": "CalendarLock",
-				"version": "0.1.0",
-				"title": "Period Close",
-				"description": "An accounting period with lifecycle state, close audit-trail, and task checklist for guided month-end / quarter-end close workflows (REQ-PC-001). The open → closing → closed → audit-locked lifecycle freezes the period for audit; postings against a closed or audit-locked period are rejected by the GLTransaction.post precondition (REQ-PC-003).",
-				"x-schema-org": "schema:Event",
-				"x-spec": "openspec/changes/bookkeeping-period-close/specs.md",
+				"version": "0.2.0",
+				"title": "Fiscal Period",
+				"description": "An accounting period with lifecycle state, close audit-trail, and task checklist for guided month-end / quarter-end close workflows (REQ-PC-001). The open → closing → closed → audit-locked lifecycle freezes the period for audit; postings against a closed or audit-locked period are rejected by the GLTransaction.post precondition (REQ-PC-004). Canonical fleet schema referenced by AR / AP / VAT / WIP / ICP / R&D-subsidies sibling schemas (per add-shillinq-period-close).",
+				"x-schema-org": "schema:DateRange",
+				"x-spec": "openspec/changes/add-shillinq-period-close/specs/bookkeeping-period-close/spec.md",
 				"type": "object",
 				"required": [
 					"periodId",
+					"name",
 					"administrationId",
 					"startDate",
 					"endDate",
@@ -28,8 +29,13 @@
 				"properties": {
 					"periodId": {
 						"type": "string",
-						"description": "Unique identifier for the period within an administration (REQ-PC-001).",
-						"example": "2026-01"
+						"description": "Stable identifier for the period within an administration; e.g. `2026-Q1`, `2026-M03`, `2026-W12` (REQ-PC-002). The administration MAY choose calendar quarter, calendar month, broken fiscal month, or 13-period retail.",
+						"example": "2026-Q1"
+					},
+					"name": {
+						"type": "string",
+						"description": "Human-readable name for the period, surfaced in the index page columns and the detail page header (REQ-PC-002).",
+						"example": "Q1 2026"
 					},
 					"administrationId": {
 						"type": "string",
@@ -334,16 +340,28 @@
 						}
 					}
 				}
+			},
+			"GLLine": {
+				"x-openregister-relations": {
+					"periodRelation": {
+						"localField": "periodId",
+						"relatedSchema": "FiscalPeriod",
+						"relatedField": "periodId",
+						"cardinality": "many-to-one",
+						"description": "FK to FiscalPeriod.periodId. Additive promotion of the T1 stub-string field per REQ-PC-001: existing string values resolve against the new FiscalPeriod records by exact match — no destructive migration. Backfill is performed by lib/Migration/BackfillFiscalPeriodsFromGLLines.php (REQ-PC-001 idempotent repair step)."
+					}
+				}
 			}
 		},
 		"objects": [
 			{
 				"@self": {
 					"register": "shillinq",
-					"schema": "PeriodClose",
+					"schema": "FiscalPeriod",
 					"slug": "period-close-smb-2026-01"
 				},
 				"periodId": "2026-01",
+				"name": "January 2026",
 				"administrationId": "adm-smb-1",
 				"startDate": "2026-01-01",
 				"endDate": "2026-01-31",
@@ -378,10 +396,11 @@
 			{
 				"@self": {
 					"register": "shillinq",
-					"schema": "PeriodClose",
+					"schema": "FiscalPeriod",
 					"slug": "period-close-smb-2026-02"
 				},
 				"periodId": "2026-02",
+				"name": "February 2026",
 				"administrationId": "adm-smb-1",
 				"startDate": "2026-02-01",
 				"endDate": "2026-02-28",
@@ -424,10 +443,11 @@
 			{
 				"@self": {
 					"register": "shillinq",
-					"schema": "PeriodClose",
+					"schema": "FiscalPeriod",
 					"slug": "period-close-smb-2026-03"
 				},
 				"periodId": "2026-03",
+				"name": "March 2026",
 				"administrationId": "adm-smb-1",
 				"startDate": "2026-03-01",
 				"endDate": "2026-03-31",
@@ -468,10 +488,11 @@
 			{
 				"@self": {
 					"register": "shillinq",
-					"schema": "PeriodClose",
+					"schema": "FiscalPeriod",
 					"slug": "period-close-smb-2026-04"
 				},
 				"periodId": "2026-04",
+				"name": "April 2026",
 				"administrationId": "adm-smb-1",
 				"startDate": "2026-04-01",
 				"endDate": "2026-04-30",
@@ -489,10 +510,11 @@
 			{
 				"@self": {
 					"register": "shillinq",
-					"schema": "PeriodClose",
+					"schema": "FiscalPeriod",
 					"slug": "period-close-zzp-2026-q1"
 				},
 				"periodId": "2026-Q1",
+				"name": "Q1 2026",
 				"administrationId": "adm-zzp-1",
 				"startDate": "2026-01-01",
 				"endDate": "2026-03-31",
