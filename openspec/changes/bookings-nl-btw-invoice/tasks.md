@@ -8,7 +8,7 @@
 
 - [x] Task 2: Author `specs/bookkeeping-invoice-vat-kassakoppeling/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T3 (operational + NL regulatory)` / `Depends on: bookkeeping-general-ledger (T1), bookkeeping-accounts-receivable-core (T2)` header; cite all REQ-VAT-001 through REQ-VAT-010 using RFC 2119 keywords; include all `#### Scenario:` blocks with GIVEN/WHEN/THEN; cite ADR-022 + ADR-031 inline
 
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects (shillinq + optional belastingdienst-gateway) / Scope (InvoiceLine extension, VATAuditRecord schema, VAT accrual lifecycle, manifest entries) / Risks (kassakoppeling detail level, reverse-charge VAT scope, payment-date vs issue-date accrual, rounding thresholds) / Open Questions (5 questions listed) / Rollback plan
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects (shillinq + optional belastingdienst-gateway) / Scope (InvoiceLine extension, VATAuditRecord schema, VAT accrual lifecycle, manifest entries) / Risks (kassakoppeling detail level, reverse-charge VAT scope, payment-date vs issue-date accrual, rounding thresholds) / Open Questions (5 questions listed) / Rollback plan
 
 - [ ] Task 4: Author `design.md` with Decisions table (D1 through D6), Reuse Analysis table, Declarative-vs-Imperative decision table, Seed Data (4 standard NL VAT rates), Risks / Trade-offs, Migration Plan, Implementation Notes (GL account mapping, timezone, currency, precondition failure)
 
