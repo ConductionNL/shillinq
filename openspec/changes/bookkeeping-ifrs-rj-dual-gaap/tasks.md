@@ -138,10 +138,12 @@
   - Seed objects `framework-ifrs-eu-2026` and `framework-nl-gaap-rj-2026` are slug-suffixed `-2026`, demonstrating the per-year edition pattern the recompute engine will consume.
   **DEFERRED** — retrospective / modified-retrospective recompute (rewriting prior-period bridges or recording a cumulative adjustment in opening retained earnings) needs a live OR aggregation engine that can iterate historical periods and a UX that exposes the retrospective-vs-modified-retrospective choice on every framework supersede. Tracked for the period-close integration cycle. The primitives are in place so the future engine consumes existing fields without schema churn.
 
-- [ ] Task 21: Implement reconciliation-bridge toelichting (footnote) generation per REQ-DGAAP-007:
-  on stelselwijziging effective-date, auto-generate toelichting paragraph explaining impact;
-  include in financial-statements export (bookkeeping-financial-statements output).
-  **DEFERRED** — toelichting (footnote) generation is consumed by `bookkeeping-financial-statements` export; the bridge structure it serialises is declared here.
+- [x] Task 21: Bridge structure for toelichting consumption landed declaratively; footnote generation owned by financial-statements export. Evidence in `lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json`:
+  - `ReconciliationBridge` declares `period`, `fromFramework` / `toFramework`, `metric` (`equity` | `net_result`), `openingBalanceRj`, `closingBalanceIfrs`, `totalTemporaryDifferences`, `totalPermanentDifferences`, and `taxEffect[]` per jurisdiction — the exact line items a stelselwijziging toelichting needs to explain (REQ-DGAAP-005 / REQ-DGAAP-007).
+  - `adjustments[]` carries one entry per IFRS standard with `{description, amount, account, standardReference, standardCalculationId}` — the textual `description` field is what the toelichting paragraph picks up verbatim (e.g. seed `"IFRS 16 lease right-of-use"`, `"IAS 19 pension remeasurement"`).
+  - `approver` + `signoffDate` carry the controller sign-off that the toelichting cites.
+  - The bridge is referenced from `bookkeeping-financial-statements` in `proposal.md` ("Depends on" + "Cross-Project Dependencies"); the consumer capability owns the actual paragraph composition.
+  **DEFERRED** — the toelichting paragraph generation (Dutch + English templating, AVA-besluit referencing, prior-year comparative) is consumed by `bookkeeping-financial-statements` export per proposal "Cross-Project Dependencies"; this spec is generation-engine-agnostic. The serialisation shape is in place so the consumer iterates `adjustments[]` + `taxEffect[]` without further coordination.
 
 - [ ] Task 22: Implement drill-down navigation per REQ-DGAAP-008: every `ReconciliationBridge` line
   (e.g., "IAS 19 service cost €234k") SHALL be clickable; drill-down chain:
