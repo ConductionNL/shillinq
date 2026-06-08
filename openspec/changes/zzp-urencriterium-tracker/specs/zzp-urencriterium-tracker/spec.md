@@ -18,6 +18,8 @@
 
 ### Requirement: REQ-URC-000 Initiatie tracker en doel-norm bepaling
 
+The system MUST automatically determine the correct doel-norm (1.225 or 800 hours), the grotendeels-criterium applicability and the evidence requirements from the entrepreneur profile on first activation (art. 3.6 Wet IB 2001).
+
 Bij eerste activatie van de tracker moet het systeem op basis van het ondernemingsprofiel
 (rechtsvorm, arbeidsongeschiktheid-status, AOW-leeftijd, eventueel parallel loondienst)
 automatisch de juiste doel-norm (1.225 of 800 uren), het grotendeels-criterium en de
@@ -40,6 +42,8 @@ bewijslast-vereisten bepalen (art. 3.6 Wet IB 2001).
 
 ### Requirement: REQ-URC-001 Dagelijkse rolling tally
 
+The system MUST update the cumulative running hours for the current calendar year daily from time-tracking, agenda and manual registrations.
+
 Het systeem moet elke dag de cumulatieve urenstand voor het lopende kalenderjaar
 automatisch updaten op basis van time-tracking, agenda, en handmatige registraties.
 
@@ -58,6 +62,8 @@ automatisch updaten op basis van time-tracking, agenda, en handmatige registrati
 - **AND** moet een notitie "Reistijd-cap toegepast: 2 uur niet meegeteld" worden gelogd
 
 ### Requirement: REQ-URC-002 Prognose engine met seizoenscorrectie
+
+The system MUST produce a year-end forecast based on a rolling 12-week average, corrected for seasonality, known holidays and scheduled assignments.
 
 Het systeem moet een prognose tot einde kalenderjaar produceren op basis van een
 rolling 12-weeks gemiddelde, gecorrigeerd voor seizoenspatronen (zomerdip,
@@ -79,6 +85,8 @@ december-dip), bekende vakantieperioden, en ingeplande opdrachten.
 
 ### Requirement: REQ-URC-003 Drempel-alerts op kritieke momenten
 
+The system MUST generate alerts at fixed moments (quarter end) and on prognose omslagen (OP_KOERS to RISICO or RISICO to KRITIEK), with concrete handelingsperspectieven.
+
 Het systeem moet alerts genereren op vaste momenten (kwartaal-eind) en bij
 prognose-omslagen (OP_KOERS → RISICO of RISICO → KRITIEK), met concrete
 handelingsperspectieven.
@@ -99,6 +107,8 @@ handelingsperspectieven.
 
 ### Requirement: REQ-URC-004 Categorisatie en wegingsregels
 
+The system MUST support every Belastingdienst-recognised hour category with the correct cap rules and evidence requirements per category.
+
 Het systeem moet ondersteuning bieden voor alle door de Belastingdienst erkende
 uren-categorieën, met de juiste cap-regels en bewijsvereisten per categorie.
 
@@ -118,6 +128,8 @@ uren-categorieën, met de juiste cap-regels en bewijsvereisten per categorie.
 
 ### Requirement: REQ-URC-005 WBSO-uren dubbeltelling
 
+S&O hours registered for the WBSO deduction MUST count automatically toward the urencriterium without double manual registration.
+
 S&O-uren die geregistreerd zijn voor de WBSO-aftrek moeten automatisch meetellen
 in het urencriterium, zonder dat ze tweemaal handmatig moeten worden geregistreerd.
 
@@ -130,6 +142,8 @@ in het urencriterium, zonder dat ze tweemaal handmatig moeten worden geregistree
 
 ### Requirement: REQ-URC-006 Verlaagd urencriterium bij arbeidsongeschiktheid
 
+For entrepreneurs with UWV-assessed incapacity for work the system MUST support the reduced 800-hour criterion (art. 3.6 lid 5 Wet IB).
+
 Voor ondernemers met UWV-vastgestelde arbeidsongeschiktheid moet het systeem het
 verlaagde criterium van 800 uren ondersteunen (art. 3.6 lid 5 Wet IB).
 
@@ -141,6 +155,8 @@ verlaagde criterium van 800 uren ondersteunen (art. 3.6 lid 5 Wet IB).
 - **AND** moet normGrondslag "art. 3.6 lid 5 Wet IB 2001" tonen
 
 ### Requirement: REQ-URC-007 Grotendeels-criterium voor combinatie loondienst+ZZP
+
+For entrepreneurs who also work in paid employment the system MUST automatically test whether more than 50 percent of total working time is spent on the onderneming (art. 3.6 lid 2 Wet IB).
 
 Voor ondernemers die naast hun zaak in loondienst werken, moet het systeem automatisch
 toetsen of meer dan 50 procent van de totale arbeidstijd aan de onderneming wordt
@@ -156,6 +172,8 @@ besteed (art. 3.6 lid 2 Wet IB).
 
 ### Requirement: REQ-URC-008 Zwangerschap fictie 16 weken
 
+The system MUST support the statutory fiction that an entrepreneuring mother is deemed to have continued working during 16 weeks of pregnancy leave (Wet ZEZ).
+
 Het systeem moet de wettelijke fictie ondersteunen dat een ondernemende moeder
 geacht wordt te hebben doorgewerkt tijdens 16 weken zwangerschapsverlof (Wet ZEZ).
 
@@ -168,6 +186,8 @@ geacht wordt te hebben doorgewerkt tijdens 16 weken zwangerschapsverlof (Wet ZEZ
 
 ### Requirement: REQ-URC-009 Agenda-import met categorie-AI
 
+The system MUST offer an ICS or Outlook import in which agenda blocks are automatically categorised via a local classifier (LLM optional, MVP manual confirm).
+
 Het systeem moet een ICS- of Outlook-import bieden waarin agendablokken automatisch
 worden gecategoriseerd via een lokale classifier (LLM optioneel, MVP: manual confirm).
 
@@ -179,6 +199,8 @@ worden gecategoriseerd via een lokale classifier (LLM optioneel, MVP: manual con
 - **AND** moet de gebruiker per item kunnen heroverwegen voordat het definitief in tally landt
 
 ### Requirement: REQ-URC-010 Audit-vast bewijsdossier
+
+The system MUST be able to generate a per-quarter PDF-A3 evidence dossier that survives a Belastingdienst audit, with a SHA-256 hash and a 7-year retention term (art. 52 AWR).
 
 Per kwartaal moet het systeem een PDF-A3-bewijsdossier kunnen genereren dat een
 Belastingdienstcontrole doorstaat, met SHA-256-hash en bewaartermijn 7 jaar
@@ -200,6 +222,8 @@ Belastingdienstcontrole doorstaat, met SHA-256-hash en bewaartermijn 7 jaar
 
 ### Requirement: REQ-URC-011 Integratie met IB-aangifte
 
+On starting the IB-aangifte the urencriterium result with evidenceRef MUST be forwarded to bookkeeping-ib-aangifte-zzp.
+
 Bij start van IB-aangifte moet het urencriterium-resultaat met evidenceRef
 worden doorgestuurd naar `bookkeeping-ib-aangifte-zzp`.
 
@@ -212,6 +236,8 @@ worden doorgestuurd naar `bookkeeping-ib-aangifte-zzp`.
 
 ### Requirement: REQ-URC-012 Meerderejaarsoverzicht voor ZZP-strategie
 
+The system MUST provide a multi-year overview (5 years back) so entrepreneurs can recognise patterns and adjust their ZZP strategy.
+
 Het systeem moet een meerderejaars-overzicht (5 jaar terug) bieden zodat
 ondernemers patronen herkennen en hun ZZP-strategie kunnen bijsturen.
 
@@ -223,6 +249,8 @@ ondernemers patronen herkennen en hun ZZP-strategie kunnen bijsturen.
 - **AND** moeten jaren waarin urencriterium niet werd behaald, gemarkeerd worden met rode flag
 
 ### Requirement: REQ-URC-013 Pre-fill bron-suggesties met automatische detectie
+
+The system MUST actively scan open channels (email signature, agenda events, invoice hours) for unregistered hour evidence and offer pre-fill suggestions.
 
 Het systeem moet open kanalen (e-mail signatuur, agenda-events, factuur-uren) actief
 scannen op niet-geregistreerde uren-evidence en pre-fill suggesties bieden zodat
@@ -245,6 +273,8 @@ ondernemers niet handmatig backfillen.
 
 ### Requirement: REQ-URC-014 Multi-onderneming consolidatie
 
+For entrepreneurs with multiple ondernemingsvormen the system MUST be able to show the urencriterium per onderneming and consolidated, per the fiscal rule that the criterion applies per onderneming.
+
 Voor ondernemers met meerdere ondernemingsvormen (eenmanszaak + maatschap of VOF)
 moet het systeem het urencriterium per onderneming én geconsolideerd kunnen tonen,
 conform fiscale regel dat uren-criterium per onderneming geldt.
@@ -258,6 +288,8 @@ conform fiscale regel dat uren-criterium per onderneming geldt.
 
 ### Requirement: REQ-URC-015 Real-time tracking via Toggl/Harvest-integratie (Future T3)
 
+The system MUST support OAuth integration with popular time-tracking tools (Toggl, Harvest, Clockify, Pomofocus) so real-time time-entries land directly in shillinq.
+
 Het systeem moet via OAuth integratie ondersteunen met populaire tijdregistratie-tools
 (Toggl, Harvest, Clockify, Pomofocus) zodat real-time time-entries direct in shillinq landen.
 
@@ -269,6 +301,8 @@ Het systeem moet via OAuth integratie ondersteunen met populaire tijdregistratie
 - **AND** moet automatisch worden gecategoriseerd als BILLABLE_KLANTWERK
 
 ### Requirement: REQ-URC-016 Audit-modus voor Belastingdienst-controleur
+
+The system MUST be able to grant a temporary read-only controleur-toegang to a Belastingdienst inspector with scoped access to the urenregistratie and evidence for a given period, with a full access log.
 
 Het systeem moet een tijdelijke read-only "controleur-toegang" kunnen verlenen aan
 een Belastingdienst-inspecteur met scoped access tot urenregistratie + bewijsstukken
@@ -289,6 +323,8 @@ voor een opgegeven periode, met volledige access-log.
 - **AND** moet de inspecteur via mail een revocatie-bevestiging ontvangen
 
 ### Requirement: REQ-URC-017 Backfill met bewijsplafond
+
+If an entrepreneur wants to add hours retroactively (backfill) the system MUST allow this only for the past 7 days without restriction; beyond that only with an explicit reason and evidence upload.
 
 Indien een ondernemer achteraf uren wil toevoegen (backfill), moet het systeem dit
 alleen toestaan voor de afgelopen 7 dagen zonder beperking; daarbuiten alleen met

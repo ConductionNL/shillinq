@@ -1,34 +1,48 @@
 # Tasks — Urencriterium Tracker
 
-> **Spec-only change.** Per `proposal.md` Scope, implementation code is
-> deliberately out of scope here. The tasks below describe the work an
-> `opsx-apply` cycle will execute against the
-> `zzp-urencriterium-tracker` spec — they are recorded now so the
-> spec-review gate, dependency planning, and tier-cascade impact are
-> all visible at proposal time. No source files are edited by this change
-> itself.
+> **Implementation status (hydra build, 2026-06).** The declarative-first core
+> per ADR-031 is implemented: the six schemas live in the modular register
+> fragment `lib/Settings/register.d/20-zzp-urencriterium-tracker.json` (ADR-037,
+> no monolith edit), the deterministic fiscal logic (norm-determination,
+> drempel-status, grotendeels-criterium, reistijd-cap, scholing-evidence,
+> backfill rules) lives in two ADR-031 exception-path guards
+> (`UrencriteriumYearGuard`, `UrenDagregistratieGuard`) with real unit tests,
+> the standard category table is seeded, the 3 navigation entries + index pages
+> are added to `src/manifest.json`, nl/en l10n is extended, and the data model
+> ADR is updated. The scheduled batch jobs (tally / prognose / alert cron),
+> agenda ICS-import, PDF-A3 export, controleur-token and cross-app integrations
+> (openconnector / openregister file-storage / hrmq / bookkeeping-ib-aangifte-zzp
+> / bookkeeping-wbso-administratie) are DEFERRED with reasons below — they need a
+> live instance and not-yet-merged cross-app dependency surfaces.
+>
+> NOTE: the spec's REQ-URC-001 daily-categorised ledger is named
+> **UrenDagregistratie**, not UrenRegistratie: the monolith already declares
+> `UrenRegistratie` as the billable time-tracking ledger (a different shape).
+> Redeclaring it in a fragment would collide (ADR-037), so the new daily ledger
+> gets a distinct name and the existing UrenRegistratie is reused as the
+> BILLABLE_KLANTWERK source feed (design D1).
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `zzp-urencriterium-tracker` capability spec already exists, no `UrencriteriumYear`/`UrenRegistratie`/`UrenCategorie`/`UrenPrognose`/`UrenAlert`/`UrenEvidence` schemas are declared, and no `lib/Service/Uren*` PHP classes are present (per ADR-031 anti-pattern enumeration)
+- [x] Task 1: Confirm no `zzp-urencriterium-tracker` capability spec already exists, no `UrencriteriumYear`/`UrenRegistratie`/`UrenCategorie`/`UrenPrognose`/`UrenAlert`/`UrenEvidence` schemas are declared, and no `lib/Service/Uren*` PHP classes are present (per ADR-031 anti-pattern enumeration)
 
-- [ ] Task 2: Author `specs/zzp-urencriterium-tracker/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T2 (fiscal compliance + operations)` / `Depends on: bookkeeping-time-tracking, bookkeeping-ib-aangifte-zzp` header, `REQ-URC-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks with GIVEN/WHEN/THEN; cite Wet IB 2001 + Hoge Raad + Rechtbank inline
+- [x] Task 2: Author `specs/zzp-urencriterium-tracker/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T2 (fiscal compliance + operations)` / `Depends on: bookkeeping-time-tracking, bookkeeping-ib-aangifte-zzp` header, `REQ-URC-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks with GIVEN/WHEN/THEN; cite Wet IB 2001 + Hoge Raad + Rechtbank inline
 
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks (Belastingdienst-categorisation-brittleness, prognosis-backwards-data-dependency, 7-year-retention-scale, agenda-import-quality, grotendeels-loondienst-sync) / Rollback / Open Questions
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks (Belastingdienst-categorisation-brittleness, prognosis-backwards-data-dependency, 7-year-retention-scale, agenda-import-quality, grotendeels-loondienst-sync) / Rollback / Open Questions
 
-- [ ] Task 4: Author `design.md` with Reuse Analysis table, D1 (fiscal-ledger sub-ledger), D2 (stateless batch tally), D3 (rolling-12-week-seasonal prognosis), D4 (profile-driven norm determination), D5 (configurable categories table), D6 (reistijd daily cap + logging), D7 (WBSO auto-include), D8 (quarterly + omslag alerts), D9 (quarterly PDF-A3 evidence), D10 (≤7-day backfill free, >7-day with reden+bewijs)
+- [x] Task 4: Author `design.md` with Reuse Analysis table, D1 (fiscal-ledger sub-ledger), D2 (stateless batch tally), D3 (rolling-12-week-seasonal prognosis), D4 (profile-driven norm determination), D5 (configurable categories table), D6 (reistijd daily cap + logging), D7 (WBSO auto-include), D8 (quarterly + omslag alerts), D9 (quarterly PDF-A3 evidence), D10 (≤7-day backfill free, >7-day with reden+bewijs)
 
-- [ ] Task 5: Declare the `UrencriteriumYear` schema in `lib/Settings/shillinq_register.json` with all REQ-URC-000 fields (id, ondernemingId, kalenderjaar, doelNorm, normGrondslag, lopendeUren, prognoseEindeJaar, prognoseConfidence, drempelStatus, grotendeelsCriterium, berekendOp)
+- [x] Task 5: Declare the `UrencriteriumYear` schema in `lib/Settings/shillinq_register.json` with all REQ-URC-000 fields (id, ondernemingId, kalenderjaar, doelNorm, normGrondslag, lopendeUren, prognoseEindeJaar, prognoseConfidence, drempelStatus, grotendeelsCriterium, berekendOp)
 
-- [ ] Task 6: Declare the `UrenRegistratie` schema in `lib/Settings/shillinq_register.json` with all REQ-URC-001 fields (id, ondernemingId, datum, totaalUren, categorieen{BILLABLE_KLANTWERK, ACQUISITIE, ADMINISTRATIE, REISTIJD_ZAKELIJK, SCHOLING, FICTIE_ZEZ, R_AND_D_WBSO}, bronnen[], registratieMoment, verschilTussenWerkEnRegistratie)
+- [x] Task 6: Declare the `UrenRegistratie` schema in `lib/Settings/shillinq_register.json` with all REQ-URC-001 fields (id, ondernemingId, datum, totaalUren, categorieen{BILLABLE_KLANTWERK, ACQUISITIE, ADMINISTRATIE, REISTIJD_ZAKELIJK, SCHOLING, FICTIE_ZEZ, R_AND_D_WBSO}, bronnen[], registratieMoment, verschilTussenWerkEnRegistratie)
 
-- [ ] Task 7: Declare the `UrenCategorie` schema in `lib/Settings/shillinq_register.json` with all REQ-URC-004 fields (code, label, telTMee, fiscaleBron, voorwaarden[], maxPerDag, voorbeelden[])
+- [x] Task 7: Declare the `UrenCategorie` schema in `lib/Settings/shillinq_register.json` with all REQ-URC-004 fields (code, label, telTMee, fiscaleBron, voorwaarden[], maxPerDag, voorbeelden[])
 
-- [ ] Task 8: Declare the `UrenPrognose` schema in `lib/Settings/shillinq_register.json` with all REQ-URC-002 fields (id, ondernemingId, berekendOp, modelVersie, perMaandPrognose{}, vakanties[], totaalPrognose, kansBehaaldNorm)
+- [x] Task 8: Declare the `UrenPrognose` schema in `lib/Settings/shillinq_register.json` with all REQ-URC-002 fields (id, ondernemingId, berekendOp, modelVersie, perMaandPrognose{}, vakanties[], totaalPrognose, kansBehaaldNorm)
 
-- [ ] Task 9: Declare the `UrenAlert` schema in `lib/Settings/shillinq_register.json` with all REQ-URC-003 fields (id, ondernemingId, type, aanleidingDatum, lopendeUren, norm, prognoseEindeJaar, tekort, urgentie, handelingsperspectief[])
+- [x] Task 9: Declare the `UrenAlert` schema in `lib/Settings/shillinq_register.json` with all REQ-URC-003 fields (id, ondernemingId, type, aanleidingDatum, lopendeUren, norm, prognoseEindeJaar, tekort, urgentie, handelingsperspectief[])
 
-- [ ] Task 10: Declare the `UrenEvidence` schema in `lib/Settings/shillinq_register.json` with all REQ-URC-010 fields (id, ondernemingId, periode, totaalUren, perCategorie{}, exportFormaat, fileRef, sha256, gegenereerdOp, bewaarTermijn)
+- [x] Task 10: Declare the `UrenEvidence` schema in `lib/Settings/shillinq_register.json` with all REQ-URC-010 fields (id, ondernemingId, periode, totaalUren, perCategorie{}, exportFormaat, fileRef, sha256, gegenereerdOp, bewaarTermijn)
 
 - [ ] Task 11: Implement daily tally batch (end-of-day, idempotent) per REQ-URC-001 — sums `UrenRegistratie` entries for the day, applies reistijd-cap (max 4 uur, logs overages), updates `UrencriteriumYear.lopendeUren`; no PHP service, pure aggregation
 
@@ -56,17 +70,66 @@
 
 - [ ] Task 23: Implement multi-onderneming support per REQ-URC-014 — per-entity `UrencriteriumYear` records; norm determination per onderneming; consolidated view in reporting; per-entity status explicit; no automatic rollup (user sees per-onderneming status)
 
-- [ ] Task 24: Implement backfill rules per REQ-URC-017 — ≤7 days old: no evidence needed, system auto-logs "Backfill T+N days"; >7 days: require reden (reason string) + bewijs (file-upload); backfill-entries separately labeled in evidence-dossier for audit context
+- [x] Task 24: Implement backfill rules per REQ-URC-017 — ≤7 days old: no evidence needed, system auto-logs "Backfill T+N days"; >7 days: require reden (reason string) + bewijs (file-upload); backfill-entries separately labeled in evidence-dossier for audit context
 
 - [ ] Task 25: Implement read-only controleur-token per REQ-URC-016 — time-scoped token (14 days default, period-scoped, e.g. "2024 only") grants read-only access to `UrenRegistratie` + `UrenEvidence` + categorisatie + bron-referenties via unique URL; all page-views logged in access-log; token-revocation invalidates URL immediately
 
-- [ ] Task 26: Declare 3 manifest navigation entries (`Urencriterium Dashboard`, `Prognose Analyse`, `Alerts & Benaderingen`) + their `type: index` pages to `src/manifest.json` per REQ-URC-001/002/003; `node tests/validate-manifest.js` exits 0
+- [x] Task 26: Declare 3 manifest navigation entries (`Urencriterium Dashboard`, `Prognose Analyse`, `Alerts & Benaderingen`) + their `type: index` pages to `src/manifest.json` per REQ-URC-001/002/003; `node tests/validate-manifest.js` exits 0
 
-- [ ] Task 27: Update `openspec/architecture/adr-000-data-model.md` with `UrencriteriumYear`/`UrenRegistratie`/`UrenCategorie`/`UrenPrognose`/`UrenAlert`/`UrenEvidence` entries
+- [x] Task 27: Update `openspec/architecture/adr-000-data-model.md` with `UrencriteriumYear`/`UrenRegistratie`/`UrenCategorie`/`UrenPrognose`/`UrenAlert`/`UrenEvidence` entries
 
-- [ ] Task 28: Seed `UrenCategorie` definition table with Belastingdienst-2026 standard categories (BILLABLE_KLANTWERK, ACQUISITIE, ADMINISTRATIE, REISTIJD_ZAKELIJK, SCHOLING, FICTIE_ZEZ, R_AND_D_WBSO) with fiscal-grondslag citations (HR 2003 BNB 258, HR 1996 BNB 302, etc.) + caps + evidence-requirements; admin-only edit after init
+- [x] Task 28: Seed `UrenCategorie` definition table with Belastingdienst-2026 standard categories (BILLABLE_KLANTWERK, ACQUISITIE, ADMINISTRATIE, REISTIJD_ZAKELIJK, SCHOLING, FICTIE_ZEZ, R_AND_D_WBSO) with fiscal-grondslag citations (HR 2003 BNB 258, HR 1996 BNB 302, etc.) + caps + evidence-requirements; admin-only edit after init
 
 - [ ] Task 29: Register daily tally batch as scheduled job (e.g., 23:00 UTC); register quarterly alert batch (e.g., 09:00 UTC on quarter-end dates); register prognosis batch (e.g., daily 08:00 UTC); idempotency checks prevent re-runs
+
+## Deferral reasons (hydra build)
+
+The deterministic, unit-testable fiscal core of the deferred tasks is already
+implemented in the two guards; what remains deferred is the runtime wiring that
+needs a live instance and/or cross-app dependency surfaces that are not yet
+merged. The app currently ships **no** PHP TimedJob/cron infrastructure, so the
+batch jobs would be the first of their kind and require a running Nextcloud
+scheduler + OpenRegister data to verify — out of scope for a static hydra build.
+
+- **Task 11 (daily tally batch)** — DEFERRED: needs a live OpenRegister instance
+  to aggregate `UrenDagregistratie` rows; the reistijd-cap aggregation rule it
+  depends on IS implemented + tested in `UrenDagregistratieGuard::pasReistijdCapToe`.
+- **Task 12 (prognose batch)** — DEFERRED: rolling-12-week-seasonal computation
+  needs historical OR data + a scheduler to run against.
+- **Task 13 (alert-trigger batch)** — DEFERRED: needs the scheduler + live
+  drempel-status transitions; the alert shape + handelingsperspectief is declared
+  on the `UrenAlert` schema.
+- **Task 14 (norm-determination)** — PARTIAL: the deterministic logic
+  (`bepaalDoelNorm` / `bepaalNormGrondslag`) is implemented + tested in
+  `UrencriteriumYearGuard`; the `hrmq` profile query + init wiring is DEFERRED
+  (cross-app `hrmq` AO-status surface not yet available).
+- **Task 15 (grotendeels-criterium)** — PARTIAL: the >50% threshold logic
+  (`bepaalGrotendeelsCriterium`) is implemented + tested; the daily loondienst-hours
+  sync from `hrmq` is DEFERRED (cross-app dependency).
+- **Task 16 (WBSO sync)** — DEFERRED: needs `bookkeeping-wbso-administratie`
+  read surface; the R_AND_D_WBSO category is seeded for the eventual feed.
+- **Task 17 (zwangerschap-fictie)** — DEFERRED: needs ZEZ-uitkering registration
+  + avg-weekly-uren history; the FICTIE_ZEZ category is seeded.
+- **Task 18 (agenda-import)** — DEFERRED: needs `openconnector` ICS/CalDAV
+  endpoints (cross-app dependency).
+- **Task 19 (PDF-A3 export)** — DEFERRED: needs `openregister` file-storage +
+  SHA-256 hashing at runtime; the `UrenEvidence` schema captures the result shape
+  incl. sha256 + bewaarTermijn.
+- **Task 20 (IB-aangifte integration)** — DEFERRED: needs the
+  `bookkeeping-ib-aangifte-zzp` consumer API.
+- **Task 21 (5-year trend dashboard)** — DEFERRED: needs a custom Vue view +
+  charting beyond the declarative manifest index page; the `UrencriteriumYear`
+  history it queries is in place.
+- **Task 22 (source-suggestion detection)** — DEFERRED: needs email/factuur scan
+  surfaces + a scheduler.
+- **Task 23 (multi-onderneming)** — PARTIAL: per-entity isolation is enforced by
+  the `ondernemingId` field on every schema; consolidated reporting view is DEFERRED.
+- **Task 24 (backfill rules)** — DONE: implemented + tested in
+  `UrenDagregistratieGuard` (`bepaalBackfillLabel` + the >7-day reden+bewijs rule).
+- **Task 25 (controleur-token)** — DEFERRED: needs a token-issuance controller +
+  access-log + email; touches auth surfaces best built against a live instance.
+- **Task 29 (scheduled jobs)** — DEFERRED: the app has no TimedJob infrastructure
+  yet; registering cron jobs requires the live scheduler to verify idempotency.
 
 ## Verification
 

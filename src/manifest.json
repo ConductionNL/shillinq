@@ -547,6 +547,45 @@
 							"zzp"
 						]
 					}
+				},
+				{
+					"id": "UrencriteriumDashboard",
+					"label": "Urencriterium",
+					"icon": "CalendarCheckOutline",
+					"route": "UrencriteriumDashboard",
+					"order": 110,
+					"visibility": {
+						"field": "administrationType",
+						"in": [
+							"zzp"
+						]
+					}
+				},
+				{
+					"id": "UrencriteriumPrognose",
+					"label": "Prognose Analyse",
+					"icon": "ChartLineVariant",
+					"route": "UrencriteriumPrognose",
+					"order": 120,
+					"visibility": {
+						"field": "administrationType",
+						"in": [
+							"zzp"
+						]
+					}
+				},
+				{
+					"id": "UrencriteriumAlerts",
+					"label": "Alerts & Benaderingen",
+					"icon": "AlertOutline",
+					"route": "UrencriteriumAlerts",
+					"order": 130,
+					"visibility": {
+						"field": "administrationType",
+						"in": [
+							"zzp"
+						]
+					}
 				}
 			]
 		},
@@ -17528,6 +17567,61 @@
 				],
 				"defaultSort": "taxYear",
 				"detailRoute": "DeductionDetail"
+			}
+		},
+		{
+			"id": "UrencriteriumDashboard",
+			"route": "/belastingen/urencriterium",
+			"type": "index",
+			"title": "Urencriterium Dashboard",
+			"config": {
+				"register": "shillinq",
+				"schema": "UrencriteriumYear",
+				"columns": [
+					{ "key": "kalenderjaar", "label": "Jaar", "sortable": true },
+					{ "key": "doelNorm", "label": "Norm", "sortable": true },
+					{ "key": "lopendeUren", "label": "Lopende uren", "sortable": true },
+					{ "key": "prognoseEindeJaar", "label": "Prognose", "sortable": true },
+					{ "key": "drempelStatus", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "kalenderjaar",
+				"detailRoute": "UrencriteriumDashboard"
+			}
+		},
+		{
+			"id": "UrencriteriumPrognose",
+			"route": "/belastingen/urencriterium/prognose",
+			"type": "index",
+			"title": "Prognose Analyse",
+			"config": {
+				"register": "shillinq",
+				"schema": "UrenPrognose",
+				"columns": [
+					{ "key": "berekendOp", "label": "Berekend op", "sortable": true },
+					{ "key": "modelVersie", "label": "Model", "sortable": true },
+					{ "key": "totaalPrognose", "label": "Totaal prognose", "sortable": true },
+					{ "key": "kansBehaaldNorm", "label": "Kans norm", "sortable": true }
+				],
+				"defaultSort": "berekendOp",
+				"detailRoute": "UrencriteriumPrognose"
+			}
+		},
+		{
+			"id": "UrencriteriumAlerts",
+			"route": "/belastingen/urencriterium/alerts",
+			"type": "index",
+			"title": "Alerts & Benaderingen",
+			"config": {
+				"register": "shillinq",
+				"schema": "UrenAlert",
+				"columns": [
+					{ "key": "aanleidingDatum", "label": "Datum", "sortable": true },
+					{ "key": "type", "label": "Type", "sortable": true },
+					{ "key": "tekort", "label": "Tekort", "sortable": true },
+					{ "key": "urgentie", "label": "Urgentie", "sortable": true }
+				],
+				"defaultSort": "aanleidingDatum",
+				"detailRoute": "UrencriteriumAlerts"
 			}
 		}
 	]
