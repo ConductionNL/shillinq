@@ -120,7 +120,10 @@ final class BBVComplianceWidget
         ];
 
         foreach ($programmes as $programme) {
-            $envelope = $this->compliance->computeComplianceStatus(programme: $programme);
+            $envelope = $this->compliance->computeComplianceStatus(
+                programme: $programme,
+                fiscalYear: $fiscalYear
+            );
             $status   = $envelope['status'];
             if (array_key_exists($status, $counts) === false) {
                 $counts[$status] = 0;

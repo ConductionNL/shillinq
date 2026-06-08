@@ -113,23 +113,49 @@ final class ComplianceService
      *     populated by the engine (preferred call shape for the widget
      *     controller, which already paged the list).
      *
-     * @param array<string,mixed>|string $programme Programme record or programmeCode.
+     * Slice-09 addition (REQ-BBVW-006): the optional `fiscalYear` argument
+     * scopes the aggregation read to a single fiscal year. The fiscal
+     * year is folded into the cache key so a programme that exists across
+     * multiple fiscal years (e.g. "2.3.2" in both FY 2025 and FY 2026)
+     * does not return stale cross-FY envelopes. When the caller does not
+     * supply a fiscalYear (legacy slice-08 call shape) the cache key
+     * elides the FY segment and the lookup uses every fiscal year — that
+     * branch is kept compatible for the existing tests + the cache
+     * invalidation listener.
+     *
+     * @param array<string,mixed>|string $programme  Programme record or programmeCode.
+     * @param int|null                   $fiscalYear Optional fiscal-year scope (REQ-BBVW-006).
      *
      * @return array{utilization: float, status: string, budget: int, ytdSpend: int, programmeCode: string}
      *         Compliance envelope. Empty/unconfigured programmes return
      *         `utilization=0.0`, `status="unconfigured"`, `budget=0`,
      *         `ytdSpend=0`.
      *
-     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-08-compliance-service/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-the-system-shall-expose-a-compliance-service-that-reads-the-declarative-aggregation
+     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-09-fiscal-audit/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-bbv-queries-and-views-shall-be-scoped-to-the-active-fiscal-year
      */
-    public function computeComplianceStatus(array|string $programme): array
+    public function computeComplianceStatus(array|string $programme, ?int $fiscalYear = null): array
     {
         $programmeCode = $this->resolveProgrammeCode(programme: $programme);
         if ($programmeCode === '') {
             return $this->emptyEnvelope(programmeCode: '');
         }
 
-        $cacheKey = $this->buildCacheKey(programmeCode: $programmeCode);
+        // Prefer the fiscal year explicitly supplied by the caller (the
+        // dashboard envelope builder passes the active FY resolved by
+        // FiscalYearContextService). If absent, fall back to the FY
+        // carried on the programme record itself (REQ-BBVW-006 implicit
+        // scope) so a programme array from the engine still keys correctly.
+        $scopeYear = $fiscalYear;
+        if ($scopeYear === null && is_array($programme) === true) {
+            $candidate = ($programme['fiscalYear'] ?? null);
+            if (is_int($candidate) === true) {
+                $scopeYear = $candidate;
+            } elseif (is_string($candidate) === true && ctype_digit($candidate) === true) {
+                $scopeYear = (int) $candidate;
+            }
+        }
+
+        $cacheKey = $this->buildCacheKey(programmeCode: $programmeCode, fiscalYear: $scopeYear);
         $cache    = $this->getCache();
 
         if ($cache !== null) {
@@ -149,7 +175,7 @@ final class ComplianceService
         }
 
         if ($record === null) {
-            $record = $this->loadProgrammeRecord(programmeCode: $programmeCode);
+            $record = $this->loadProgrammeRecord(programmeCode: $programmeCode, fiscalYear: $scopeYear);
         }
 
         $envelope = $this->emptyEnvelope(programmeCode: $programmeCode);
@@ -192,13 +218,18 @@ final class ComplianceService
     /**
      * Invalidate a single programme's cached envelope.
      *
-     * @param string $programmeCode Programme code (e.g. "2.3.2").
+     * Slice-09 (REQ-BBVW-006): when the fiscalYear is null we drop every
+     * fiscal-year variant of the programme's cache entry — easier than
+     * tracking which years are warmed and a cheap on the cold path.
+     *
+     * @param string   $programmeCode Programme code (e.g. "2.3.2").
+     * @param int|null $fiscalYear    Optional FY scope to invalidate; null = all FYs.
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-08-compliance-service/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-the-system-shall-expose-a-compliance-service-that-reads-the-declarative-aggregation
+     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-09-fiscal-audit/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-bbv-queries-and-views-shall-be-scoped-to-the-active-fiscal-year
      */
-    public function invalidate(string $programmeCode): void
+    public function invalidate(string $programmeCode, ?int $fiscalYear = null): void
     {
         $cache = $this->getCache();
         if ($cache === null || $programmeCode === '') {
@@ -206,12 +237,22 @@ final class ComplianceService
         }
 
         try {
-            $cache->remove($this->buildCacheKey(programmeCode: $programmeCode));
+            if ($fiscalYear !== null) {
+                $cache->remove($this->buildCacheKey(programmeCode: $programmeCode, fiscalYear: $fiscalYear));
+                return;
+            }
+
+            // No FY specified — drop the legacy (no-FY) entry, and let
+            // ::clear() / invalidateAll() handle the broader sweep when
+            // callers want it. Removing one programme across every FY
+            // would require iterating cache keys we don't track here.
+            $cache->remove($this->buildCacheKey(programmeCode: $programmeCode, fiscalYear: null));
         } catch (Throwable $e) {
             $this->logger->warning(
                 'Shillinq compliance service: cache remove failed',
                 [
                     'programmeCode' => $programmeCode,
+                    'fiscalYear'    => $fiscalYear,
                     'exception'     => $e->getMessage(),
                 ]
             );
@@ -275,11 +316,17 @@ final class ComplianceService
     /**
      * Load a BBVProgramme record from OpenRegister by programmeCode.
      *
-     * @param string $programmeCode Programme code (e.g. "2.3.2").
+     * Slice-09: when a fiscalYear is provided the filter is narrowed so
+     * the lookup never returns a prior-year programme (REQ-BBVW-006). The
+     * declarative aggregation also keys on fiscalYear, so this is just a
+     * tighter pre-filter; the math result is unaffected.
+     *
+     * @param string   $programmeCode Programme code (e.g. "2.3.2").
+     * @param int|null $fiscalYear    Optional fiscal-year scope.
      *
      * @return array<string,mixed>|null Record or null when unavailable.
      */
-    private function loadProgrammeRecord(string $programmeCode): ?array
+    private function loadProgrammeRecord(string $programmeCode, ?int $fiscalYear = null): ?array
     {
         if ($this->settings->isOpenRegisterAvailable() === false) {
             return null;
@@ -288,12 +335,18 @@ final class ComplianceService
         try {
             $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
             $registerSlug  = $this->settings->getRegisterSlug();
-            $records       = $objectService
+
+            $filters = ['programmeCode' => $programmeCode];
+            if ($fiscalYear !== null) {
+                $filters['fiscalYear'] = $fiscalYear;
+            }
+
+            $records = $objectService
                 ->setRegister($registerSlug)
                 ->setSchema('BBVProgramme')
                 ->findAll(
                     [
-                        'filters' => ['programmeCode' => $programmeCode],
+                        'filters' => $filters,
                         'limit'   => 1,
                     ]
                 );
@@ -305,6 +358,7 @@ final class ComplianceService
                 'Shillinq compliance service: programme lookup failed',
                 [
                     'programmeCode' => $programmeCode,
+                    'fiscalYear'    => $fiscalYear,
                     'exception'     => $e->getMessage(),
                 ]
             );
@@ -418,13 +472,25 @@ final class ComplianceService
     /**
      * Compose the cache key for a programme.
      *
-     * @param string $programmeCode Programme code.
+     * Slice-09: when a fiscalYear is supplied the key gains an `:fy:<n>`
+     * segment so cross-FY entries cannot collide (REQ-BBVW-006). Callers
+     * that omit the fiscalYear get the legacy un-suffixed key — preserved
+     * for backward compatibility with slice-08 callers that have no FY
+     * to scope by yet.
+     *
+     * @param string   $programmeCode Programme code.
+     * @param int|null $fiscalYear    Optional fiscal-year scope.
      *
      * @return string Stable cache key.
      */
-    private function buildCacheKey(string $programmeCode): string
+    private function buildCacheKey(string $programmeCode, ?int $fiscalYear = null): string
     {
-        return (self::CACHE_NAMESPACE.':'.$programmeCode);
+        $key = (self::CACHE_NAMESPACE.':'.$programmeCode);
+        if ($fiscalYear !== null) {
+            $key .= (':fy:'.$fiscalYear);
+        }
+
+        return $key;
 
     }//end buildCacheKey()
 
