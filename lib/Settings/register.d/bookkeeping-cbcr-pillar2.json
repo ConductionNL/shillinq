@@ -428,7 +428,7 @@
           "reconciliationResidual": {"type": "number", "description": "Residual difference between CbCR totals and the consolidated P&L (REQ-CBC-010).", "default": 0},
           "reconciliationUnreconciled": {"type": "boolean", "description": "Computed: residual > EUR 1M is flagged unreconciled (REQ-CBC-010)."},
           "reconciliationItems": {"type": "array", "description": "Explained reconciliation items (JV pro-rata, eliminations, IFRS-USGAAP).", "items": {"type": "object", "properties": {"category": {"type": "string"}, "amount": {"type": "number"}, "description": {"type": "string"}}}},
-          "cbcrXmlSubmission": {"type": "string", "description": "FK to the generated CbCR XML file (openconnector-owned export, T4 DEFERRED)."},
+          "cbcrXmlSubmission": {"type": "string", "description": "FK to the generated CbCR XML file (openconnector-owned export, T4 DEFERRED — see x-openregister-export-target on this schema for the renderer contract)."},
           "belastingdienstReference": {"type": "string", "description": "Belastingdienst submission reference."},
           "submissionDeadline": {"type": "string", "format": "date", "description": "Filing deadline (12 months after FYE)."},
           "mcaaPartnerJurisdictions": {"type": "array", "description": "Jurisdictions the report is automatically exchanged with under the MCAA.", "items": {"type": "string"}},
@@ -452,6 +452,31 @@
             "lock": {"from": "submitted", "to": "locked", "label": "Lock", "description": "Freeze post-filing."},
             "reopen": {"from": "reconciled", "to": "draft", "label": "Return to draft", "description": "Reopen for correction."}
           }
+        },
+        "x-openregister-export-target": {
+          "description": "OESO CbCR XML v2.0 export contract (REQ-CBC-008). Declarative contract for the openconnector-owned XML renderer that generates the OESO Country-by-Country Report XML on lifecycle transition `submit` (reconciled → submitted). Data is merged from `cbcr-return` + `cbcr-jurisdiction-summary` + `group-entity-registry` records; the rendered XML is stored to `cbcrXmlSubmission` (FileService FK); the SBR/Digipoort submission token returned by the Belastingdienst is stored to `belastingdienstReference`.",
+          "format": "OESO-CBC-XML",
+          "schemaVersion": "v2.0",
+          "schemaUrl": "https://www.oecd.org/tax/beps/beps-actions/action13/cbc-xml-schema-v2-0/",
+          "dataSources": [
+            {"schema": "CbcrReturn", "filter": "id = @self.id"},
+            {"schema": "CbcrJurisdictionSummary", "filter": "id IN @self.jurisdictionSummaries"},
+            {"schema": "GroupEntityRegistry", "filter": "id IN @self.constituentEntityList"}
+          ],
+          "renderSections": {
+            "messageSpec": "Group identification, sender, reporting period, message type code (CBC401 new, CBC402 correction).",
+            "docSpec": "Document reference id, document type indicator (OECD1 new, OECD2 correction, OECD3 deletion).",
+            "cbcReports": "Per-jurisdiction Summary block (7 CbCR fields) + ConstEntities block (one per GroupEntityRegistry record in scope)."
+          },
+          "outputField": "cbcrXmlSubmission",
+          "submissionChannel": "SBR-Digipoort",
+          "submissionReferenceField": "belastingdienstReference",
+          "submissionDeadlineSource": "submissionDeadline",
+          "mcaaPartnersField": "mcaaPartnerJurisdictions",
+          "triggerTransition": "submit",
+          "owner": "openconnector",
+          "tier": "T4",
+          "status": "DEFERRED — declarative contract only; live OESO-CBC-XML renderer + Digipoort submission adapter ship with the openconnector cbcr-xml apply cycle on a live instance."
         }
       },
       "TaxTreatyOverview": {

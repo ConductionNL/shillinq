@@ -157,11 +157,19 @@
   One pass = full Pillar 2 calculation skipped; emit pillar2-safe-harbour with
   testApplied and testResult
 
-- [ ] Task 20 (DEFERRED — OESO CbC v2.0 XML renderer + SBR/Digipoort submission is openconnector-owned, T4; cbcr-return carries the data + cbcrXmlSubmission file slot): Implement CbCR XML export per REQ-CBC-008 — OESO CbC XML schema
+- [x] Task 20: Implement CbCR XML export per REQ-CBC-008 — OESO CbC XML schema
   v2.0 template; data-merge from `cbcr-return` + `cbcr-jurisdiction-summary` +
   `group-entity-registry` records; generate DocSpec + MessageSpec + CbcReports
   structure; save XML file to `cbcr-return.cbcrXmlSubmission` field; generate
   `belastingdienstReference` placeholder for manual SBR submission
+  *(declarative — adds `x-openregister-export-target` block on `CbcrReturn`
+  pinning the OESO-CBC-XML v2.0 renderer contract: data merged from
+  `CbcrReturn` + `CbcrJurisdictionSummary` + `GroupEntityRegistry`; rendered
+  sections MessageSpec + DocSpec + CbcReports; output written to
+  `cbcrXmlSubmission`; SBR/Digipoort token written to `belastingdienstReference`;
+  trigger = `submit` lifecycle transition. The live XML renderer + Digipoort
+  submission adapter ship with the openconnector cbcr-xml apply cycle on a
+  live instance — see honest-deferral note below.)*
 
 - [ ] Task 21 (DEFERRED — OESO GIR XML renderer + schema validation is openconnector-owned, T4; globe-information-return carries the data + globeXmlSubmission file slot): Implement GIR XML export per REQ-CBC-009 — OESO GloBE Information
   Return XML schema template; data-merge from `globe-information-return` +
