@@ -81,13 +81,24 @@
           },
           "cbcrIncluded": {
             "type": "boolean",
-            "description": "Whether the entity is included in CbCR aggregation.",
+            "description": "Whether the entity is included in CbCR aggregation. Set group-wide by the prior-year EUR 750M threshold watcher (REQ-CBC-001) — see x-openregister-threshold-watcher on the UltimateParentEntity record.",
             "default": true
           },
           "pillar2Included": {
             "type": "boolean",
-            "description": "Whether the entity is in Pillar 2 scope.",
+            "description": "Whether the entity is in Pillar 2 scope. Set group-wide by the prior-year EUR 750M threshold watcher (REQ-CBC-001) — see x-openregister-threshold-watcher on the UltimateParentEntity record.",
             "default": true
+          },
+          "thresholdCrossed": {
+            "type": "boolean",
+            "description": "UPE-only flag: did the group cross the EUR 750M consolidated-revenue threshold in the prior fiscal year, bringing it into CbCR / Pillar 2 scope for the current period (REQ-CBC-001)? Maintained by the openconnector-owned threshold watcher (see x-openregister-threshold-watcher); read-only for human operators. Null until the watcher first runs; ignored on non-UPE records.",
+            "nullable": true
+          },
+          "thresholdCrossedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "UPE-only: timestamp at which the threshold watcher first flagged the group as in-scope (REQ-CBC-001). Used for the first-CbCR (12 months after FYE) and first-GIR (18 months) deadline warnings.",
+            "nullable": true
           },
           "excludedEntityType": {
             "type": "string",
@@ -124,6 +135,39 @@
             "lock": {"from": "approved", "to": "locked", "label": "Lock for filing", "description": "Freeze the entity once its period is filed."},
             "reopen": {"from": "approved", "to": "draft", "label": "Return to draft", "description": "Reopen for correction before lock."}
           }
+        },
+        "x-openregister-threshold-watcher": {
+          "description": "EUR 750M prior-year consolidated-revenue threshold watcher for CbCR / Pillar 2 scope (REQ-CBC-001 / BEPS Action 13 / Wet Vpb art. 29b / Wet minimumbelasting 2024). Declarative contract for the openconnector-owned BackgroundJob that runs nightly on a live instance — when the prior-year consolidated revenue (sum of CbcrJurisdictionSummary.totalRevenue across all jurisdictions for the prior period) crosses thresholdEur, the watcher sets UPE.thresholdCrossed=true + UPE.thresholdCrossedAt=now() + UPE.cbcrIncluded=true + UPE.pillar2Included=true on the UltimateParentEntity record, and emits the first-CbCR (12 months after FYE) and first-GIR (18 months) deadline warnings as system notifications.",
+          "appliesTo": "ultimate-parent-only",
+          "thresholdEur": 750000000,
+          "comparisonWindow": "prior-fiscal-year",
+          "source": {
+            "schema": "CbcrJurisdictionSummary",
+            "field": "totalRevenue",
+            "operation": "sum",
+            "filterField": "period",
+            "filterOperation": "prior-year"
+          },
+          "writeBack": {
+            "schema": "GroupEntityRegistry",
+            "filter": "ultimateParentEntity = @self.id",
+            "fields": ["thresholdCrossed", "thresholdCrossedAt", "cbcrIncluded", "pillar2Included"]
+          },
+          "warnings": {
+            "firstCbcrDeadline": {
+              "description": "Emit first-CbCR filing warning 12 months after the FYE following the threshold-crossing year.",
+              "offsetMonths": 12,
+              "relativeTo": "fiscalYearEnd"
+            },
+            "firstGirDeadline": {
+              "description": "Emit first-GIR (GloBE Information Return) filing warning 18 months after the FYE following the threshold-crossing year.",
+              "offsetMonths": 18,
+              "relativeTo": "fiscalYearEnd"
+            }
+          },
+          "owner": "openconnector",
+          "tier": "T4",
+          "status": "DEFERRED — declarative contract only; live BackgroundJob ships with the openconnector cron-watcher apply cycle on a live instance."
         }
       },
       "CbcrJurisdictionSummary": {

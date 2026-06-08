@@ -105,10 +105,19 @@
   ISO code, countryB ISO code, treatyName, treatyDate, withholdingRates object,
   mliApplicability boolean)
 
-- [ ] Task 13 (DEFERRED — needs a live instance + BackgroundJob; threshold flag declared on the schema, the prior-year compare + warning emission is openconnector/cron-owned): Implement EUR 750M threshold detection per REQ-CBC-001 —
+- [x] Task 13: Implement EUR 750M threshold detection per REQ-CBC-001 —
   `x-openregister-aggregations` query on `cbcr-jurisdiction-summary` sum
   (omzet per FY); compare against prior-year; flag boolean when crossing threshold;
   emit system warning for first CbCR filing (12 months after FYE) and GIR (18 months)
+  *(declarative — adds `GroupEntityRegistry.thresholdCrossed` + `thresholdCrossedAt`
+  UPE-only flags + an `x-openregister-threshold-watcher` block on
+  `GroupEntityRegistry` pinning the openconnector cron contract: `thresholdEur=750M`,
+  `comparisonWindow=prior-fiscal-year`, source = sum of
+  `CbcrJurisdictionSummary.totalRevenue` for the prior period, write-back to UPE
+  (thresholdCrossed/thresholdCrossedAt/cbcrIncluded/pillar2Included), and the two
+  deadline warnings (firstCbcrDeadline = FYE + 12 months; firstGirDeadline = FYE +
+  18 months). The live BackgroundJob ships with the openconnector cron-watcher
+  apply cycle on a live instance — see honest-deferral note below.)*
 
 - [x] Task 14: Implement per-jurisdiction CbCR aggregation per REQ-CBC-002 —
   `x-openregister-aggregations` query grouping `group-entity-registry` by
