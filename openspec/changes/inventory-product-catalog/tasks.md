@@ -32,7 +32,7 @@
 
 - [x] Task 14: Added Products navigation to `src/manifest.json`: new "Inventory" top-level menu (order 22) with Products (index, route `/inventory/products`, schema `Product`, columns: sku/name/category/unitPrice/status) and ProductAttributes (index, route `/inventory/product-attributes`, schema `ProductAttribute`). Detail pages for both. All rendered by `CnIndexPage`/`CnDetailPage` per REQ-IPC-008.
 
-- [ ] Task 15: Optionally update `openspec/architecture/adr-000-data-model.md` with a one-paragraph note from `design.md` Reuse Analysis, confirming that the basic `Product` entry in ADR-000 is now superseded by this spec's fuller definition. (Low priority; optional if ADR-000 is deemed "historical snapshot".)
+- [x] Task 15: Updated `openspec/architecture/adr-000-data-model.md` with a one-paragraph reconciliation note after the basic `Product` entry, confirming it is superseded by the fuller `Product` register declared in `lib/Settings/shillinq_register.json` per the `inventory-product-catalog` spec. The note documents the carried-forward fields, additive fields (primaryBarcode, barcodes, status, organizationId, unique constraint on (organizationId, sku)), and the RBAC declarations; retains the basic entry as a historical snapshot.
 
 - [x] Task 16: Shipped `lib/Settings/seeds/product-samples.json` — 5 sample Product records in Dutch context: toner cartridge (office), Dell XPS 13 (it_hardware), custom carton with multi-barcode (logistics), Heineken beer (food_beverage), Snickers workwear (clothing).
 
