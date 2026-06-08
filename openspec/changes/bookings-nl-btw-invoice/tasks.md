@@ -29,11 +29,11 @@
 
 - [x] Task 11: Create seed data file `lib/Data/VAT/nl_vat_rates_2026.json` (4 standard Dutch rates: 21%, 9%, 6%, 0%) per design.md Seed Data; installer inserts into `TaxRate` register on first run; mark as read-only / version-locked
 
-- [ ] Task 12: Implement VAT-by-period aggregation query in OpenRegister materialization template per REQ-VAT-009 (returns totalNetAmount, totalVAT21/9/6/0, totalGrossAmount, invoiceCount, recordCount); query groups `VATAuditRecord` by `settlementPeriod` and aggregates `vatAmount` by `vatRate`
+- [x] Task 12: Implement VAT-by-period aggregation query in OpenRegister materialization template per REQ-VAT-009 (returns totalNetAmount, totalVAT21/9/6/0, totalGrossAmount, invoiceCount, recordCount); query groups `VATAuditRecord` by `settlementPeriod` and aggregates `vatAmount` by `vatRate`
 
-- [ ] Task 13: Declare `TaxPeriod` reference binding on `VATAuditRecord` per REQ-VAT-005 — when VAT accrual materializes, settlementPeriod is populated based on invoice-issuance date + administration's filing-frequency setting (monthly/quarterly/annual); immutable once set; old records survive admin reconfiguration
+- [x] Task 13: Declare `TaxPeriod` reference binding on `VATAuditRecord` per REQ-VAT-005 — when VAT accrual materializes, settlementPeriod is populated based on invoice-issuance date + administration's filing-frequency setting (monthly/quarterly/annual); immutable once set; old records survive admin reconfiguration
 
-- [ ] Task 14: Add rounding helper function per REQ-VAT-007 (banker's rounding for per-line VAT: ROUND(amount × rate / 100, 2)) to be used in VAT-amount computation; validate that invoice total VAT = sum of line VAT amounts (no invoice-level rounding adjustment)
+- [x] Task 14: Add rounding helper function per REQ-VAT-007 (banker's rounding for per-line VAT: ROUND(amount × rate / 100, 2)) to be used in VAT-amount computation; validate that invoice total VAT = sum of line VAT amounts (no invoice-level rounding adjustment)
 
 - [ ] Task 15: Add 2 manifest navigation entries per REQ-VAT-010:
   - "VAT by Period" (type: index) — lists all tax periods with summary totals (net, VAT by rate, gross); links to detail page
