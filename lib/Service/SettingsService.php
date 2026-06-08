@@ -796,7 +796,11 @@ class SettingsService
                     continue;
                 }
 
-                $rules = ($data['allocationRules'] ?? []);
+                // Seed files use the standard ConfigurationService::importFromApp
+                // shape `{ "register": ..., "schema": ..., "objects": [...] }`.
+                // Older variants stored the rules under `allocationRules`; keep
+                // backwards-compat by accepting either.
+                $rules = ($data['objects'] ?? ($data['allocationRules'] ?? []));
 
                 foreach ($rules as $rule) {
                     $rule['administrationId'] = $administrationId;
@@ -1097,125 +1101,19 @@ class SettingsService
     }//end runLoadConfiguration()
 
     /**
-     * Seed allocation-rule example objects from the default seed files, idempotently.
-     *
-     * Reads the three example seed files from lib/Settings/seeds/allocation-rules/
-     * and imports AllocationRule records via OpenRegister's ObjectService.
-     * Already-existing rules (matched by name + administrationId) are skipped,
-     * preserving operator edits. Seeds ship in lifecycleState: paused so operators
-     * can review and activate per REQ-CC-004.
+     * Deprecated alias retained for backwards compatibility — delegates to
+     * seedAllocationRules() which is the canonical method per REQ-CC-004.
      *
      * @param string $administrationId The administrationId to stamp on seeded rules.
      *
      * @return array<string,mixed> Result with success flag, seeded count, skipped count.
      *
-     * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
+     * @deprecated 0.2.0 Use seedAllocationRules() instead.
+     * @spec       openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
      */
     public function seedAllocationRuleExamples(string $administrationId): array
     {
-        if ($this->isOpenRegisterAvailable() === false) {
-            return [
-                'success' => false,
-                'message' => 'OpenRegister is not installed or enabled.',
-            ];
-        }
-
-        if ($administrationId === '') {
-            return [
-                'success' => false,
-                'message' => 'administrationId must not be empty.',
-            ];
-        }
-
-        $seedFiles = [
-            'overhead-by-headcount.json',
-            'it-by-volume.json',
-            'facility-by-fixed-percentage.json',
-        ];
-
-        $seeded  = 0;
-        $skipped = 0;
-
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $registerSlug  = $this->getRegisterSlug();
-
-            foreach ($seedFiles as $fileName) {
-                $seedPath = __DIR__.'/../Settings/seeds/allocation-rules/'.$fileName;
-                if (file_exists($seedPath) === false) {
-                    $this->logger->warning('Shillinq: allocation rule seed file not found: '.$seedPath);
-                    continue;
-                }
-
-                $content = file_get_contents($seedPath);
-                if ($content === false) {
-                    $this->logger->warning('Shillinq: failed to read allocation rule seed file: '.$seedPath);
-                    continue;
-                }
-
-                $data = json_decode($content, true);
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    $this->logger->warning(
-                        'Shillinq: failed to parse allocation rule seed file: '.$fileName.': '.json_last_error_msg()
-                    );
-                    continue;
-                }
-
-                $rules = ($data['allocationRules'] ?? []);
-                foreach ($rules as $rule) {
-                    $rule['administrationId'] = $administrationId;
-
-                    $existing = $objectService
-                        ->setRegister($registerSlug)
-                        ->setSchema('AllocationRule')
-                        ->findAll(
-                            [
-                                'filters' => [
-                                    'name'             => $rule['name'],
-                                    'administrationId' => $administrationId,
-                                ],
-                                'limit'   => 1,
-                            ]
-                        );
-
-                    if (empty($existing) === false) {
-                        $skipped++;
-                        continue;
-                    }
-
-                    $objectService->saveObject(
-                        object: $rule,
-                        register: $registerSlug,
-                        schema: 'AllocationRule',
-                    );
-                    $seeded++;
-                }//end foreach
-            }//end foreach
-
-            $this->logger->info(
-                'Shillinq: allocation rule examples seeded',
-                [
-                    'seeded'  => $seeded,
-                    'skipped' => $skipped,
-                ]
-            );
-
-            return [
-                'success' => true,
-                'message' => 'Allocation rule examples seeded successfully.',
-                'seeded'  => $seeded,
-                'skipped' => $skipped,
-            ];
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'Shillinq: allocation rule seeding failed',
-                ['exception' => $e->getMessage()]
-            );
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-            ];
-        }//end try
+        return $this->seedAllocationRules(administrationId: $administrationId);
 
     }//end seedAllocationRuleExamples()
 
