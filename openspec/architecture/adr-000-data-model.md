@@ -144,6 +144,19 @@ _Hierarchical chart-of-accounts entry conforming to the RGS (Referentie Grootboe
 > `schema:DefinedTerm` — a ledger account code is a coded financial classifier
 > (DefinedTerm), not a product.
 
+> **Deferred-tax category hint annotation (bookkeeping-deferred-tax, 2026-06-08):**
+> The T3 change `bookkeeping-deferred-tax` adds an optional `taxBasisDifferenceCategory`
+> enum field to `Account` (depreciation / provision / receivable-impairment /
+> inventory-valuation / development-cost / fair-value-adjustment / lease-ifrs16 /
+> pension / other) per REQ-DT-001. When set, the GL detection logic uses the hint
+> to automatically classify the account's commercial-vs-tax difference into the
+> matching `TemporaryDifference.category`. When null, no automatic detection runs
+> for that account; the operator may still create `TemporaryDifference` records
+> manually. The extension is additive (nullable) — existing T1 / T2 callers stay
+> correct. Declared as an `x-openspec-extend` patch in
+> `lib/Settings/register.d/bookkeeping-deferred-tax.json` (ADR-037 modular fragment;
+> never edit the monolith).
+
 ### AccountabilityReport
 **Schema.org:** `schema:Report`
 _An official accountability report submitted by an organization for a fiscal period covering financial position and transactions_
@@ -1521,6 +1534,36 @@ _Payroll deduction such as taxes, social security, or garnishments_
 **Relations:**
 - → Payroll (many-to-one)
 
+### DeferredTaxMovement
+**Schema.org:** `schema:MonetaryAmount`
+_Roll-forward of the deferred-tax balance per fiscal period per jurisdiction per category (REQ-DT-009 / IAS 12 §81(g) / RJ 272). One record per `(periodId, jurisdiction, category, administrationId)`. Opening balance plus originations, reversals, rate-change effects, business-combination acquisitions and FX translation give the computed closing balance; `recognisedInPL` is the schema-declared P&L component. All amounts integer euro cents (ADR-022 money rule). Roll-forward is the audit-trail of how DTA/DTL on the balance sheet moved between two balansdata; the `linkedJournalEntries` array points to the GL postings that materialised the movement._
+**Primary spec:** bookkeeping-deferred-tax
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| periodId | string | Yes | FK to FiscalPeriod (balansdatum) |
+| jurisdiction | string | Yes | ISO 3166-1 alpha-2 country code (REQ-DT-007) |
+| category | enum | Yes | One of depreciation, provision, receivable-impairment, inventory-valuation, development-cost, fair-value-adjustment, lease-ifrs16, pension, other (matches TemporaryDifference.category) |
+| openingBalance | integer | Yes | Deferred-tax position at start of period in euro cents; positive = DTL, negative = DTA |
+| originatedInPeriod | integer | Yes | New deferred-tax positions created during the period in euro cents |
+| reversedInPeriod | integer | Yes | Deferred-tax positions that reversed during the period in euro cents (typically negative) |
+| rateChangeAdjustment | integer | Yes | Adjustment from an enacted rate change per REQ-DT-005 in euro cents |
+| acquiredViaBusinessCombination | integer | Yes | DTA/DTL acquired via a business combination (IFRS 3) in euro cents |
+| translationAdjustment | integer | Yes | FX translation effect on deferred-tax balances of foreign operations in euro cents (OCI component) |
+| recognisedInPL | integer | Yes | Computed P&L effect: `originatedInPeriod + reversedInPeriod + rateChangeAdjustment + acquiredViaBusinessCombination` in euro cents |
+| recognisedInOCI | integer | Yes | Deferred-tax recognised directly in OCI (pension / hedging) in euro cents |
+| closingBalance | integer | Yes | Computed closing balance: `openingBalance + originatedInPeriod + reversedInPeriod + rateChangeAdjustment + acquiredViaBusinessCombination + translationAdjustment + recognisedInOCI` in euro cents |
+| linkedJournalEntries | array | No | FK references to GL journal entries posting the deferred-tax movement (REQ-DT-009 / REQ-DT-010) |
+| administrationId | string | Yes | FK to the Administration this record belongs to |
+
+**Relations:**
+- → FiscalPeriod (many-to-one, via periodId)
+- → JournalEntry (one-to-many, via linkedJournalEntries[])
+- → TaxProvision (logical: contributes to dtaTotal/dtlTotal per period/jurisdiction)
+- → Administration (many-to-one)
+
+**Cites:** ADR-022 (audit-trail-immutable, money rule), ADR-031 (schema-declarative calculations), ADR-037 (modular register fragment).
+
 ### Delegation
 **Schema.org:** `schema:Action`
 _A delegation of mandate authority from one signing authority to another for a specified period_
@@ -2065,6 +2108,22 @@ _A fiscal year lifecycle record tracking the `open → closing → closed → re
 - `closed → reopened` (reopen): admin-only (`requiresRole: admin`); requires non-empty `reopenReason`; emits two reversing JournalEntry records; sets `reopenedAt`, `reopenedBy`
 
 > **Reconciliation note (add-shillinq-year-end-close, 2026-06-03):** The original `FiscalYear` entry (primary spec: `financial-reporting-accountability`) declared a minimal 5-field schema (`year`, `startDate`, `endDate`, `isClosed`, `closingDate`) without lifecycle machinery. This entry supersedes it with the full T4 year-end close lifecycle declared in `lib/Settings/shillinq_register.json`. The field `year` is renamed `yearNumber` (integer type, composite uniqueness with `administrationId`); `isClosed` and `closingDate` are replaced by the `state` enum and `closedAt`/`closedBy` pair. New `JournalEntry` records now reference `FiscalYear` via `fiscalYearId` for close/reopen journal pairing (previously the reference existed only in the generic `JournalEntry → FiscalYear` relation). Implementations using the old field names must migrate to the new schema shape.
+
+> **FiscalPeriod sibling & enactedTaxRates annotation (bookkeeping-deferred-tax, 2026-06-08):**
+> The T3 fiscal sub-year period schema (`FiscalPeriod`, registered as a sibling
+> of `FiscalYear` in `lib/Settings/shillinq_register.json`) is the canonical
+> balansdatum entity referenced by `periodId` foreign keys throughout the
+> deferred-tax registers (`TemporaryDifference`, `DeferredTaxMovement`,
+> `TaxRateReconciliation`, `TaxProvision`) and by other T3 capabilities (vpb-mkb,
+> innovatiebox, BTW). The deferred-tax change adds an optional `enactedTaxRates`
+> object to `FiscalPeriod` keyed by jurisdiction (ISO 3166-1 alpha-2), where each
+> entry carries `rate` (basis points, 1/10000) and `effectiveDate` (date) for the
+> enacted statutory tax rate. `TaxCalculationService` reads this map to
+> re-measure deferred-tax positions reversing on or after `effectiveDate` per
+> REQ-DT-005 / IAS 12 §47–48, producing `DeferredTaxMovement.rateChangeAdjustment`
+> entries. The extension is additive (nullable) — existing FiscalPeriod consumers
+> stay correct. Declared as an `x-openspec-extend` patch in
+> `lib/Settings/register.d/bookkeeping-deferred-tax.json` (ADR-037).
 
 ### FixedAsset
 **Schema.org:** `schema:Thing`
@@ -5391,6 +5450,33 @@ _Reusable exemption rule or policy: qualifies transactions or amounts as exempt.
 - → Organization (many-to-one)
 - → ExemptionCertificate (many-to-one)
 
+### TaxLossCarryForward
+**Schema.org:** `schema:MonetaryAmount`
+_Compensable tax loss per `jurisdiction` per `originatingYear`, tracked under the applicable Wet Vpb regime (pre-2019 6-year expiry, 2019–2021 transitional, 2022+ unlimited with the 50%-above-EUR-1M cap per REQ-DT-003). `remainingAmount` = `originalAmount` − `utilisedAmount` (declarative calculation). DTA recognition is operator-judged (not auto), and the `dtaRecoverabilityRationale` text field is required when a DTA is recognised — citing the projection horizon and `linkedProjections` per REQ-DT-004 / IAS 12 §34. All amounts integer euro cents (ADR-022)._
+**Primary spec:** bookkeeping-deferred-tax
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| jurisdiction | string | Yes | ISO 3166-1 alpha-2 country code of the tax jurisdiction (REQ-DT-007) |
+| originatingYear | integer | Yes | Fiscal year in which the loss originated (determines applicable regime per REQ-DT-003) |
+| originalAmount | integer | Yes | Original loss amount in euro cents (positive integer) |
+| utilisedAmount | integer | Yes | Cumulative amount utilised for offset in euro cents (positive integer) |
+| remainingAmount | integer | Yes | Computed: `originalAmount − utilisedAmount` in euro cents |
+| expirationYear | integer | No | Year the loss expires under the applicable regime; null for 2022+ unlimited regime |
+| applicableRegime | enum | Yes | One of `pre-2019-6year`, `2019-2021-transition`, `2022-onwards` (REQ-DT-003 / Wet Vpb art. 20 & 20a) |
+| dtaRecognised | integer | Yes | DTA recognised on this loss in euro cents (may be less than `remainingAmount × taxRate` if recoverability assessment limits recognition per REQ-DT-004) |
+| dtaRecoverabilityRationale | string | No | Required text rationale for the recognised DTA percentage; cites the projection basis (REQ-DT-004) |
+| recoverabilityHorizon | integer | No | Number of years over which recoverability is projected |
+| linkedProjections | array | No | FK references to forecast records in `bookkeeping-budget-multi-year` supporting the recoverability assessment |
+| administrationId | string | Yes | FK to the Administration this record belongs to |
+
+**Relations:**
+- → Administration (many-to-one)
+- → VpbAangifte (logical, via the period's linked Vpb return that supplies the regime metadata)
+- → BudgetForecast (many-to-many, via linkedProjections[]; optional T4 dependency)
+
+**Cites:** ADR-022 (money rule, audit-trail), ADR-031 (declarative calculation of remainingAmount), ADR-037 (modular register fragment).
+
 ### TaxLot
 **Schema.org:** `schema:MonetaryAmount`
 _Individual tax line item: single transaction or aggregate category contributing to declaration. Tracks category, amount, and justification._
@@ -5409,6 +5495,32 @@ _Individual tax line item: single transaction or aggregate category contributing
 - → TaxDeclaration (many-to-one)
 - → BankAccount (many-to-one)
 
+### TaxProvision
+**Schema.org:** `schema:MonetaryAmount`
+_Aggregated balance-sheet deferred-tax position per fiscal period per jurisdiction (REQ-DT-008 / IAS 12 §71–78 / RJ 272.413). Holds current-tax payable / prepaid, total DTA and DTL across all categories, the computed net DTA-DTL position, the saldering presentation choice (`gross` vs `net`) and the FK to the Vpb return for current-tax reconciliation (REQ-DT-010). One record per `(periodId, jurisdiction, administrationId)`. Netting is per-jurisdiction only and gated by the entity's legal right to offset (IAS 12 §71). All amounts integer euro cents (ADR-022)._
+**Primary spec:** bookkeeping-deferred-tax
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| periodId | string | Yes | FK to FiscalPeriod (balansdatum) |
+| jurisdiction | string | Yes | ISO 3166-1 alpha-2 country code (REQ-DT-007); one record per period per jurisdiction |
+| currentTaxPayable | integer | Yes | Current Vpb payable for the period in euro cents (positive) |
+| currentTaxPrepaid | integer | Yes | Vpb prepaid / voorheffing in euro cents (positive reduces net payable) |
+| dtaTotal | integer | Yes | Total DTA across all categories in euro cents (positive); sourced from DeferredTaxMovement.closingBalance components |
+| dtlTotal | integer | Yes | Total DTL across all categories in euro cents (positive); sourced from DeferredTaxMovement.closingBalance components |
+| netDtaDtlPosition | integer | Yes | Computed: `dtlTotal − dtaTotal` in euro cents (positive = net liability) |
+| presentationOnBalanceSheet | enum | Yes | One of `gross` (separate DTA and DTL lines) or `net` (combined). Per IAS 12 §71–78; gated by legal right to offset within the same jurisdiction (REQ-DT-008) |
+| linkedVpbReturn | string | No | FK to the Vpb-aangifte record in `bookkeeping-vpb-mkb` for current-tax reconciliation (REQ-DT-010) |
+| administrationId | string | Yes | FK to the Administration this record belongs to |
+
+**Relations:**
+- → FiscalPeriod (many-to-one, via periodId)
+- → DeferredTaxMovement (one-to-many, contributes to dtaTotal / dtlTotal via closingBalance per category)
+- → VpbAangifte (many-to-one, via linkedVpbReturn; T3 bookkeeping-vpb-mkb dependency)
+- → Administration (many-to-one)
+
+**Cites:** ADR-022 (money rule, audit-trail), ADR-031 (declarative netDtaDtlPosition calculation), ADR-037 (modular register fragment).
+
 ### TaxRate
 **Schema.org:** `schema:Thing`
 _Individual tax rate rules for income, sales, VAT, capital gains, or other tax types with effective date management_
@@ -5425,6 +5537,32 @@ _Individual tax rate rules for income, sales, VAT, capital gains, or other tax t
 **Relations:**
 - → TaxConfiguration (many-to-one)
 - → Product (many-to-one)
+
+### TaxRateReconciliation
+**Schema.org:** `schema:Report`
+_Effective Tax Rate (ETR) reconciliation per period per jurisdiction (REQ-DT-006 / IAS 12 §81(c) / RJ 272 jaarrekening note). `statutoryTaxExpense`, `effectiveTaxExpense` and `effectiveTaxRate` are produced declaratively as `x-openregister-calculations` output (ADR-031, design D2 of the deferred-tax change) — no PHP report service. The `reconciliationItems[]` array bridges `statutoryTaxExpense = profitBeforeTax × statutoryRate` to `effectiveTaxExpense` through ordered `permanent`, `temporary`, `rate-change`, and `prior-year` items (each with a `taxEffect` in euro cents). One record per `(periodId, jurisdiction, administrationId)`. Marked `readonly: true` — the engine writes; the operator only reads. All monetary amounts integer euro cents; rates in basis points (1/10000, ADR-022)._
+**Primary spec:** bookkeeping-deferred-tax
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| periodId | string | Yes | FK to FiscalPeriod (balansdatum) |
+| jurisdiction | string | Yes | ISO 3166-1 alpha-2 country code (REQ-DT-007); one record per period per jurisdiction |
+| profitBeforeTax | integer | Yes | Profit before income tax in euro cents per P&L (REQ-DT-006) |
+| statutoryRate | integer | Yes | Blended statutory tax rate in basis points (1/10000); e.g. 2580 = 25.80% |
+| statutoryTaxExpense | integer | Yes | Computed: `profitBeforeTax × statutoryRate / 10000` in euro cents |
+| reconciliationItems | array | No | Ordered list of `{description, type, amount, taxEffect}`; `type` ∈ permanent / temporary / rate-change / prior-year (REQ-DT-006) |
+| effectiveTaxExpense | integer | Yes | Computed: `statutoryTaxExpense + sum(reconciliationItems[].taxEffect)` in euro cents |
+| effectiveTaxRate | integer | Yes | Computed: `effectiveTaxExpense × 10000 / profitBeforeTax` in basis points (0 when profitBeforeTax == 0) |
+| disclosureNarrative | string | No | Free-form / structured narrative for jaarrekening note disclosure per RJ 272 / IAS 12 §81 |
+| administrationId | string | Yes | FK to the Administration this record belongs to |
+
+**Relations:**
+- → FiscalPeriod (many-to-one, via periodId)
+- → TemporaryDifference (logical, contributes via reconciliationItems[type=temporary])
+- → DeferredTaxMovement (logical, contributes via reconciliationItems[type=rate-change])
+- → Administration (many-to-one)
+
+**Cites:** ADR-022 (money rule, audit-trail), ADR-031 (declarative calculations — readonly schema), ADR-037 (modular register fragment).
 
 ### TaxRegimeConfiguration
 **Schema.org:** `schema:Thing`
@@ -5532,6 +5670,36 @@ _Group of users organized for collaboration with shared access and permissions_
 **Relations:**
 - → Account (many-to-one)
 - → User (many-to-many)
+
+### TemporaryDifference
+**Schema.org:** `schema:MonetaryAmount`
+_Per-account, per-period detection of a timing difference between commercial (IFRS / RJ 272) carrying amount and tax basis at balansdatum (REQ-DT-001 / IAS 12 §5). One record per `(periodId, jurisdiction, accountNumber, category, administrationId)`. `temporaryDifference = commercialCarryingAmount − taxCarryingAmount` and `deferredTaxBalance = round(temporaryDifference × taxRate / 10000)` are declarative `x-openregister-calculations` outputs (ADR-031). `type` ∈ taxable / deductible — taxable creates DTL, deductible creates DTA. Permanent differences (e.g. deelnemingsvrijstelling) MUST NOT be stored here; they appear in `TaxRateReconciliation.reconciliationItems` with `type=permanent` (REQ-DT-002). `Account.taxBasisDifferenceCategory` provides an optional pre-tag for auto-classification. All amounts integer euro cents; tax rate in basis points (ADR-022)._
+**Primary spec:** bookkeeping-deferred-tax
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| periodId | string | Yes | FK to FiscalPeriod (balansdatum) |
+| jurisdiction | string | Yes | ISO 3166-1 alpha-2 country code (REQ-DT-007) |
+| accountNumber | string | Yes | RGS general-ledger account code (FK to Account.accountNumber, REQ-DT-001) |
+| category | enum | Yes | One of depreciation / provision / receivable-impairment / inventory-valuation / development-cost / fair-value-adjustment / lease-ifrs16 / pension / other |
+| commercialCarryingAmount | integer | Yes | Commercial carrying amount at balansdatum in euro cents (IAS 12 §5) |
+| taxCarryingAmount | integer | Yes | Tax basis (fiscale boekwaarde) at balansdatum in euro cents (IAS 12 §5) |
+| temporaryDifference | integer | Yes | Computed: `commercialCarryingAmount − taxCarryingAmount` in euro cents (negative for deductible differences) |
+| type | enum | Yes | One of `taxable` (creates DTL) or `deductible` (creates DTA) per REQ-DT-001 |
+| reversalPattern | enum | Yes | One of `short-term`, `long-term`, `indefinite`; used to determine whether a rate change applies (REQ-DT-005) |
+| expectedReversalYear | integer | No | Year the difference is expected to reverse; required when `reversalPattern=long-term` (REQ-DT-005) |
+| taxRate | integer | Yes | Applied tax rate in basis points (1/10000); sourced from `FiscalPeriod.enactedTaxRates[jurisdiction]` for the expectedReversalYear (REQ-DT-005) |
+| deferredTaxBalance | integer | Yes | Computed: `round(temporaryDifference × taxRate / 10000)` in euro cents (positive = DTL, negative = DTA) |
+| notes | string | No | Free-text auditor notes on the specific difference |
+| administrationId | string | Yes | FK to the Administration this record belongs to |
+
+**Relations:**
+- → FiscalPeriod (many-to-one, via periodId)
+- → Account (many-to-one, via accountNumber; reads optional taxBasisDifferenceCategory hint for auto-classification per REQ-DT-001)
+- → DeferredTaxMovement (logical, contributes origination / reversal flows by category)
+- → Administration (many-to-one)
+
+**Cites:** ADR-022 (money rule, audit-trail), ADR-031 (declarative calculations), ADR-037 (modular register fragment).
 
 ### Tender
 **Schema.org:** `schema:Order`

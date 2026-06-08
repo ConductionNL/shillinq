@@ -44,7 +44,7 @@
 
 - [x] Task 14: `TaxRateReconciliation`, `TemporaryDifference`, `DeferredTaxMovement`, and `TaxProvision` schemas all carry `x-openregister-calculations` blocks per ADR-031. No parallel PHP report service was written.
 
-- [ ] Task 15: DEFERRED — `openspec/architecture/adr-000-data-model.md` update requires the architecture document to exist in the current state; low-risk doc-only task deferred to review cycle.
+- [x] Task 15: `openspec/architecture/adr-000-data-model.md` gained five new entity entries — `DeferredTaxMovement` (inserted between Deduction and Delegation), `TaxLossCarryForward` (between TaxExemption and TaxLot), `TaxProvision` (between TaxLot and TaxRate), `TaxRateReconciliation` (between TaxRate and TaxRegimeConfiguration), and `TemporaryDifference` (between Team and Tender). Each carries Schema.org type, italic narrative paragraph, property table (with cent / basis-point notes per ADR-022), relations and ADR cites (ADR-022 / ADR-031 / ADR-037). Two additive-extension annotation notes were appended: one on `Account` documenting the optional `taxBasisDifferenceCategory` enum hint per REQ-DT-001 / REQ-DT-002, and one on `FiscalYear` documenting the sibling `FiscalPeriod` schema's `enactedTaxRates` map per REQ-DT-005.
 
 ## Verification
 
