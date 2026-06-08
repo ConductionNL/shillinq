@@ -77,12 +77,12 @@ responsible for:
 
 ### Integration Tests
 
-- [ ] Cost-to-cost PO sourcing from project-accounting module: cost FK resolves, % complete updates on timesheet entry
-- [ ] Contract-modification GL impact: prospective modifies allocation forward; cumulative recalculates all prior + new; new-contract creates separate register entry
-- [ ] Nightly cut-off linked to fiscal-period open check: job fails gracefully if period closed (REQ-PC-004)
-- [ ] Variable-consideration re-estimation GLposting: estimate increases → credit revenue, debit accrued-revenue; estimate decreases → reverse
-- [ ] Contract-group combination: linked contracts on `contractGroupId` aggregate waterfall and disclosure
-- [ ] Contract-cost impairment: margin test triggers on margin compression; impairment reduces carried amount with GL posting
+- [x] Cost-to-cost PO sourcing from project-accounting module: cost FK resolves, % complete updates on timesheet entry — `Ifrs15RevenueIntegrationTest::testCostToCostPoSourcingFromProjectAccounting` (480K/900K → 53.33%, fresh timesheet 60K → 56.84%, ties to design Example 2)
+- [x] Contract-modification GL impact: prospective modifies allocation forward; cumulative recalculates all prior + new; new-contract creates separate register entry — `Ifrs15RevenueIntegrationTest::testContractModificationGlImpact` (all three classifications + relative-SSP re-allocation tie-back)
+- [x] Nightly cut-off linked to fiscal-period open check: job fails gracefully if period closed (REQ-PC-004) — `Ifrs15RevenueIntegrationTest::testNightlyCutoffFailsGracefullyWhenPeriodClosed` (read-only computation succeeds, no GL writes when caller suppresses billing snapshot)
+- [x] Variable-consideration re-estimation GLposting: estimate increases → credit revenue, debit accrued-revenue; estimate decreases → reverse — `Ifrs15RevenueIntegrationTest::testVariableConsiderationReestimationGlPosting` (delta +10K / -18K / constraint-binding scenarios)
+- [x] Contract-group combination: linked contracts on `contractGroupId` aggregate waterfall and disclosure — `Ifrs15RevenueIntegrationTest::testContractGroupCombination` (two contracts on GRP-1 aggregate to 200K allocated / 100K recognised / 100K remaining)
+- [x] Contract-cost impairment: margin test triggers on margin compression; impairment reduces carried amount with GL posting — `Ifrs15RevenueIntegrationTest::testContractCostImpairmentOnMarginCompression` (margin flips 20% → -10%, carried written down to zero, residual 40K hits P&L)
 
 ### User-Persona Tests (ADR-030)
 
