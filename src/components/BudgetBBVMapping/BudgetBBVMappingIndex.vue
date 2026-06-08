@@ -57,6 +57,12 @@
 			@page-changed="onPageChange">
 			<template #header-actions>
 				<div class="bbv-mapping-index__filters" data-testid="bbv-mapping-index-filters">
+					<span
+						v-if="scope.fiscalYear"
+						class="bbv-mapping-index__fy"
+						data-testid="bbv-mapping-fy-label">
+						{{ fyLabel }}
+					</span>
 					<input
 						v-model="searchTerm"
 						type="search"
@@ -186,6 +192,12 @@ export default {
 			effectiveFromBefore: '',
 			rowKey: 'id',
 			searchDebounce: null,
+			scope: {
+				administrationId: null,
+				fiscalYear: null,
+				startDate: null,
+				endDate: null,
+			},
 		}
 	},
 	computed: {
@@ -234,6 +246,19 @@ export default {
 				list.push(y)
 			}
 			return list
+		},
+		/**
+		 * Server-derived "FY YYYY" label so the index header always reflects
+		 * the active fiscal year inherited from the Administration context
+		 * (REQ-BBVW-006). Empty when the user has no accessible administration.
+		 *
+		 * @return {string} The fiscal year label, e.g. "FY 2026".
+		 */
+		fyLabel() {
+			if (!this.scope.fiscalYear) {
+				return ''
+			}
+			return this.t('shillinq', 'FY {year}', { year: this.scope.fiscalYear })
 		},
 		/**
 		 * In-memory filter pipeline. Server-side scoping by administration
@@ -298,6 +323,7 @@ export default {
 		},
 	},
 	async created() {
+		await this.loadScope()
 		await this.loadMappings()
 	},
 	beforeDestroy() {
@@ -306,6 +332,44 @@ export default {
 		}
 	},
 	methods: {
+		/**
+		 * Load the active administration + fiscal-year scope from the
+		 * slice-04 envelope so the page header surfaces "FY YYYY" and the
+		 * filter dropdown pre-selects the active year (REQ-BBVW-006).
+		 *
+		 * Errors are silently absorbed — the page still renders without the
+		 * server-derived defaults; the user can manually pick a year.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async loadScope() {
+			try {
+				// Lazy-require here so the index works in unit tests that mock
+				// axios at the module level; the dashboard module also pulls
+				// from axios via the same generateUrl helper.
+				const axios = (await import('@nextcloud/axios')).default
+				const { generateUrl } = await import('@nextcloud/router')
+				const response = await axios.get(generateUrl('/apps/shillinq/budget-mappings'))
+				const data = response?.data?.scope || {}
+				this.scope = {
+					administrationId: data.administrationId || null,
+					fiscalYear: data.fiscalYear || null,
+					startDate: data.startDate || null,
+					endDate: data.endDate || null,
+				}
+				if (this.scope.fiscalYear && !this.fiscalYearFilter) {
+					this.fiscalYearFilter = this.scope.fiscalYear
+				}
+			} catch (e) {
+				// Scope is a nice-to-have; failure does not block the index.
+				this.scope = {
+					administrationId: null,
+					fiscalYear: null,
+					startDate: null,
+					endDate: null,
+				}
+			}
+		},
 		/**
 		 * Load BudgetBBVMapping objects from the OpenRegister API via the
 		 * slice-06 store. Errors surface as the inline `error` banner so the
@@ -562,5 +626,17 @@ export default {
 	background: var(--color-background-hover);
 	color: var(--color-error);
 	border-radius: var(--border-radius);
+}
+
+.bbv-mapping-index__fy {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.25rem 0.5rem;
+	margin-right: 0.5rem;
+	border-radius: var(--border-radius);
+	background: var(--color-primary-element-light);
+	color: var(--color-primary-element-light-text);
+	font-weight: 600;
+	font-size: var(--default-font-size, 0.875rem);
 }
 </style>

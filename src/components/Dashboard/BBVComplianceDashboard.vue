@@ -38,7 +38,7 @@
 		<CnDashboardPage
 			data-testid="bbv-compliance-dashboard"
 			:title="t('shillinq', 'BBV Compliance Dashboard')"
-			:description="t('shillinq', 'Fiscal-year overview of programme utilization and compliance status.')"
+			:description="scopeDescription"
 			:widgets="widgets"
 			:layout="layout"
 			:loading="loading"
@@ -46,16 +46,24 @@
 			:grid-margin="16"
 			:empty-label="t('shillinq', 'No widgets configured.')">
 			<template #header-actions>
+				<span
+					v-if="scope.fiscalYear"
+					class="bbv-dashboard__fy"
+					data-testid="bbv-dashboard-fy-label">
+					{{ fyLabel }}
+				</span>
 				<select
-					v-model="fiscalYear"
-					data-testid="bbv-dashboard-year"
-					:aria-label="t('shillinq', 'Fiscal year')"
-					@change="loadProgrammes">
+					v-if="administrationOptions.length > 1"
+					v-model="administrationId"
+					data-testid="bbv-dashboard-administration"
+					class="bbv-dashboard__administration"
+					:aria-label="t('shillinq', 'Administration')"
+					@change="onAdministrationChange">
 					<option
-						v-for="year in fiscalYearOptions"
-						:key="year"
-						:value="year">
-						{{ year }}
+						v-for="admin in administrationOptions"
+						:key="admin.value"
+						:value="admin.value">
+						{{ admin.label }}
 					</option>
 				</select>
 				<button
@@ -114,14 +122,20 @@ export default {
 		BBVProgrammeTable,
 	},
 	data() {
-		const currentYear = new Date().getFullYear()
 		return {
 			programmes: [],
 			timeline: [],
+			mappings: [],
 			loading: true,
 			error: '',
-			fiscalYear: currentYear,
-			fiscalYearOptions: [currentYear - 1, currentYear, currentYear + 1],
+			administrationId: '',
+			administrationOptions: [],
+			scope: {
+				administrationId: null,
+				fiscalYear: null,
+				startDate: null,
+				endDate: null,
+			},
 		}
 	},
 	computed: {
@@ -141,33 +155,78 @@ export default {
 				{ id: 'layout-table', widgetId: 'bbv-table', gridX: 0, gridY: 6, gridWidth: 12, gridHeight: 5 },
 			]
 		},
+		fyLabel() {
+			if (!this.scope.fiscalYear) {
+				return ''
+			}
+			return this.t('shillinq', 'FY {year}', { year: this.scope.fiscalYear })
+		},
+		scopeDescription() {
+			if (!this.scope.fiscalYear) {
+				return this.t('shillinq', 'Fiscal-year overview of programme utilization and compliance status.')
+			}
+			return this.t(
+				'shillinq',
+				'Fiscal-year {year} overview of programme utilization and compliance status.',
+				{ year: this.scope.fiscalYear },
+			)
+		},
 	},
 	async created() {
+		await this.loadAdministrationContext()
 		await this.loadProgrammes()
 	},
 	methods: {
 		t,
+		async loadAdministrationContext() {
+			try {
+				const response = await axios.get(generateUrl('/apps/shillinq/api/administrations/context'))
+				const admins = response.data?.administrations || []
+				this.administrationOptions = admins.map((a) => ({
+					value: a.administrationId,
+					label: a.name || a.administrationCode || a.administrationId,
+				}))
+				if (response.data?.activeAdministrationId) {
+					this.administrationId = response.data.activeAdministrationId
+				}
+			} catch (e) {
+				// Inline error; the dashboard still renders an empty envelope.
+				this.error = this.t('shillinq', 'Failed to load administration context')
+			}
+		},
+		async onAdministrationChange() {
+			// Server-side scope is derived from the session, but explicitly
+			// passing administrationId lets a multi-admin user pivot the
+			// view without a session-switch round-trip (REQ-BBVW-006).
+			await this.loadProgrammes()
+		},
 		async loadProgrammes() {
 			this.loading = true
 			this.error = ''
 			try {
+				const params = {}
+				if (this.administrationId) {
+					params.administrationId = this.administrationId
+				}
 				const response = await axios.get(
-					generateUrl('/apps/shillinq/api/openregister/objects/BBVProgramme'),
-					{
-						params: {
-							fiscalYear: this.fiscalYear,
-							status: 'active',
-						},
-					},
+					generateUrl('/apps/shillinq/bbv-dashboard'),
+					{ params },
 				)
-				const rows = response.data?.results || response.data || []
-				this.programmes = Array.isArray(rows) ? rows : []
-				this.timeline = Array.isArray(response.data?.timeline)
-					? response.data.timeline
-					: []
+				const data = response.data || {}
+				this.programmes = Array.isArray(data.programmes) ? data.programmes : []
+				this.mappings = Array.isArray(data.mappings) ? data.mappings : []
+				this.timeline = Array.isArray(data.timeline) ? data.timeline : []
+				this.scope = data.scope || {
+					administrationId: null,
+					fiscalYear: null,
+					startDate: null,
+					endDate: null,
+				}
 			} catch (e) {
 				this.programmes = []
 				this.timeline = []
+				this.mappings = []
+				this.scope = { administrationId: null, fiscalYear: null, startDate: null, endDate: null }
 				this.error = e?.response?.data?.error
 					|| this.t('shillinq', 'Failed to load BBV programmes')
 			} finally {
@@ -198,6 +257,23 @@ export default {
 	border-radius: var(--border-radius);
 	cursor: pointer;
 	margin-left: 0.5rem;
+}
+
+.bbv-dashboard__fy {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.25rem 0.5rem;
+	margin-right: 0.5rem;
+	border-radius: var(--border-radius);
+	background: var(--color-primary-element-light);
+	color: var(--color-primary-element-light-text);
+	font-weight: 600;
+	font-size: var(--default-font-size, 0.875rem);
+}
+
+.bbv-dashboard__administration {
+	margin-right: 0.5rem;
+	max-width: 16rem;
 }
 
 .bbv-dashboard__refresh:hover {
