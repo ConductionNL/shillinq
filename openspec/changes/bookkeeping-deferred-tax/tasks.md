@@ -38,7 +38,7 @@
 
 - [x] Task 11: `TaxProvision.linkedVpbReturn` field declared in schema fragment for FK linkage. Runtime population (pointing to actual Vpb record) DEFERRED to bookkeeping-vpb-mkb dependency.
 
-- [ ] Task 12: DEFERRED — OR's audit-trail-immutable is a schema-level flag; requires OR runtime and schema registration to test. No code change needed; confirmed schema x-openregister pattern is correct per fragment.
+- [x] Task 12: All five deferred-tax schemas (`TemporaryDifference`, `TaxLossCarryForward`, `TaxRateReconciliation`, `DeferredTaxMovement`, `TaxProvision`) are opted into OR's `audit-trail-immutable` engine via `lib/Settings/register.d/add-shillinq-audit-trail.json` (the cross-cutting ADR-022 / REQ-AT-001 fragment) — each schema carries `x-openregister-audit-trail: { enabled: true }` so OR captures actor + timestamp + before/after + hash chain on every create / update / lifecycle / delete event. Per ADR-022 D2 no app-local audit table is authored. Runtime verification is covered by the separate `add-shillinq-audit-trail` change.
 
 - [ ] Task 13: DEFERRED — manifest navigation requires frontend manifest.json changes and a live NC instance for Playwright verification. `TaxCalculationService` is wired; UI surfaces pending manifest changes.
 
