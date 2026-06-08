@@ -70,6 +70,19 @@ schema flag on T1's `Account` (`isSuspenseAccount: true` additive
 boolean) OR an administration setting. Resolved during `opsx-ff`
 discovery; spec shape-neutral.
 
+**Resolution (opsx-apply 2026-06-08):** schema-flag path chosen. T1's
+`Account` schema gains an additive `isSuspenseAccount: boolean` (default
+`false`) via the `lib/Settings/register.d/add-shillinq-bank-reconciliation.json`
+overlay fragment per ADR-037; the monolith `shillinq_register.json` is
+not edited. Rationale: (a) symmetry with the pre-existing
+`isClosingAccount` flag on the same schema (T1 closing-account pattern,
+REQ-CoA-009); (b) no new administration-settings surface to plumb
+through Vue + persisted config; (c) discoverable in the standard Account
+register UI; (d) one-flag-per-account allows future per-bank-account
+designation without a schema change. The materialisation of the
+suspense-clearing `GLTransaction` is declarative per the same T1
+REQ-JE-007 pattern; no PHP suspense-routing service ships.
+
 ### D4 — Reconciliation workflow is a lifecycle on `BankStatement`
 
 `BankStatement` declares
@@ -167,11 +180,21 @@ unreferenced.
 
 ## Open Questions
 
-1. **Parser path** — resolved in `opsx-ff` discovery against OR's
-   calculation extension capability.
-2. **Suspense account designation** (schema flag vs administration
-   setting) — resolved in `opsx-ff` discovery.
+1. **Parser path** — RESOLVED (opsx-apply 2026-06-08): ADR-031 exception
+   path taken. OR's calculation extension does not yet support
+   CAMT.053 / MT940 structured-text parsing primitives nor a
+   cross-schema `requires:` aggregation guard for the
+   "no unmatched lines remain" precondition, so the single-method
+   `OCA\Shillinq\Lifecycle\StatementParser` (parse + allLinesResolved)
+   ships, ~305 LOC. Sunset when OR's calculation extension lands.
+2. **Suspense account designation** — RESOLVED (opsx-apply 2026-06-08):
+   schema-flag path. `Account.isSuspenseAccount: boolean` ships as an
+   additive overlay in
+   `lib/Settings/register.d/add-shillinq-bank-reconciliation.json`. See
+   D3 above for rationale.
 3. **Matching-rule seed packs** — current decision: no T2 seeds;
    operators author rules; rule-template packs are roadmap.
 4. **Auto-confirm above confidence threshold** — explicitly out of
-   v1; future enhancement once rule packs are mature.
+   v1; future enhancement once rule packs are mature. The
+   `MatchingRule.autoConfirm` boolean exists for individual rules but
+   no global confidence-threshold gate ships in T2.
