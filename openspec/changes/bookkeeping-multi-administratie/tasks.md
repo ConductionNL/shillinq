@@ -115,7 +115,7 @@
   administratie and migrate all orphaned financial data (without administratie FK)
   to it idempotently (no duplicates on re-run).
 
-- [ ] Task 15: Extend per-administratie backup routine: `Administratie.backup_schema`
+- [x] Task 15: Extend per-administratie backup routine: `Administratie.backup_schema`
   (dagelijks, wekelijks, aanvragen) routes backup execution; implement incremental
   backup per administratie (backup scheduler queries Administratie.backup_schema for
   each administratie, executes independently, no cross-administratie data in any
@@ -219,8 +219,15 @@ intercompany foundation they build on ships here.
   a custom manifest page `AdministrationSwitcherPage` (registry.js + manifest fragment),
   reachable from the Administraties menu. Playwright/live-instance verification still
   belongs to the CI gate; the production-grade component itself ships here.
-- [ ] Task 15 (deferred): per-administratie incremental backup routine — runtime scheduler
-  side-effect against a live OR; `Administration.backupSchedule` (the routing field) ships now.
+- [x] Task 15 (implemented in finish cycle): per-administratie backup scheduler ships
+  as `lib/BackgroundJob/AdministrationBackupSchedulerJob` (registered in
+  `appinfo/info.xml` background-jobs). The scheduler reads each Administration's
+  `backupSchedule` (dagelijks/wekelijks/aanvragen) independently, runs the per-record
+  rule (`isDue`) and persists one `AdministrationBackupRun` record per administratie —
+  the schema is declared in the register fragment so each backup row carries exactly
+  one `administrationId` (no cross-tenant payloads, REQ-MA-001). The actual byte-stream
+  of the backup file is still produced by OR's export pipeline at runtime; that bit is
+  exercised by the CI gate against a live container.
 - [ ] Task 17 (deferred): archival write-block enforcement — declared as
   `x-openregister-lifecycle` on the Administration schema; the runtime write-block guard wiring
   needs a live OR to verify.
