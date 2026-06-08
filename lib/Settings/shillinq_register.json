@@ -6870,6 +6870,89 @@
 					}
 				}
 			},
+			"ClosingAccount": {
+				"slug": "ClosingAccount",
+				"icon": "AccountLockOutline",
+				"version": "0.1.0",
+				"title": "Closing Account",
+				"description": "Designates the single closing / income-summary account per administration (typically account 9900) per REQ-YEC-003. All revenue and expense closing entries flow through this account before being transferred to retained earnings. Supports time-bounded historicity via `effectiveFrom` so administrations can rotate their closing account across fiscal years if needed.",
+				"x-schema-org": "schema:Thing",
+				"type": "object",
+				"x-openregister-unique": [
+					[
+						"administrationId",
+						"effectiveFrom"
+					]
+				],
+				"required": [
+					"accountNumber",
+					"administrationId"
+				],
+				"properties": {
+					"accountNumber": {
+						"type": "string",
+						"description": "FK to Account.accountNumber. Typically 9900 (income summary) or another equity-side closing account. Per REQ-YEC-003.",
+						"example": "9900"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration. One active ClosingAccount per administration at any point in time per REQ-YEC-003.",
+						"example": "adm-consultancy-nl"
+					},
+					"isActive": {
+						"type": "boolean",
+						"default": true,
+						"description": "Whether this is the currently active closing account for the administration. The lifecycle action on ClosingEntry / FiscalYear close selects the active record. Per REQ-YEC-003."
+					},
+					"effectiveFrom": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "Optional start date if the administration rotates closing accounts across fiscal years (e.g. switching from 9900 to 9990). When null, this ClosingAccount applies indefinitely. Per REQ-YEC-003.",
+						"example": "2026-01-01"
+					}
+				},
+				"x-openregister-relations": {
+					"account": {
+						"localField": "accountNumber",
+						"relatedSchema": "Account",
+						"relatedField": "accountNumber",
+						"cardinality": "many-to-one",
+						"description": "The GL account designated as the closing / income-summary account."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						},
+						"approver": {
+							"permissions": [
+								"read"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						},
+						"admin": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						}
+					},
+					"adminScope": {
+						"field": "administrationId",
+						"enforce": true
+					}
+				}
+			},
 			"Receipt": {
 				"slug": "Receipt",
 				"icon": "ReceiptOutline",
