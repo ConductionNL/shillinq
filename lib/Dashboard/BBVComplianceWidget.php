@@ -90,7 +90,7 @@ final class BBVComplianceWidget
      *   - `widgets[]`     — the slice-05 widget declarations
      *   - `generatedAt`   — UTC ISO-8601 timestamp
      *
-     * @param int|null    $fiscalYear      Optional fiscal-year filter.
+     * @param int|null    $fiscalYear       Optional fiscal-year filter.
      * @param string|null $administrationId Optional administration scope.
      *
      * @return array{
@@ -104,15 +104,15 @@ final class BBVComplianceWidget
      *
      * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-08-compliance-service/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-the-dashboard-controller-shall-return-the-widget-data-envelope
      */
-    public function buildEnvelope(?int $fiscalYear = null, ?string $administrationId = null): array
+    public function buildEnvelope(?int $fiscalYear=null, ?string $administrationId=null): array
     {
         $programmes = $this->loadProgrammes(fiscalYear: $fiscalYear, administrationId: $administrationId);
         $mappings   = $this->loadMappings(fiscalYear: $fiscalYear, administrationId: $administrationId);
 
-        $rows           = [];
-        $totalBudget    = 0;
-        $totalYtdSpend  = 0;
-        $counts         = [
+        $rows          = [];
+        $totalBudget   = 0;
+        $totalYtdSpend = 0;
+        $counts        = [
             'unconfigured'  => 0,
             'on-track'      => 0,
             'at-risk'       => 0,
@@ -138,12 +138,17 @@ final class BBVComplianceWidget
             ]);
         }
 
+        $summaryUtilization = 0.0;
+        if ($totalBudget > 0) {
+            $summaryUtilization = ((float) $totalYtdSpend / (float) $totalBudget);
+        }
+
         $summary = [
             'programmeCount' => count($rows),
             'mappingCount'   => count($mappings),
             'totalBudget'    => $totalBudget,
             'totalYtdSpend'  => $totalYtdSpend,
-            'utilization'    => ($totalBudget > 0) ? ((float) $totalYtdSpend / (float) $totalBudget) : 0.0,
+            'utilization'    => $summaryUtilization,
         ];
 
         return [
@@ -180,7 +185,7 @@ final class BBVComplianceWidget
      * Empty list when OR is not available — the controller still returns
      * a well-formed envelope, just with zero programmes.
      *
-     * @param int|null    $fiscalYear      Optional fiscal-year filter.
+     * @param int|null    $fiscalYear       Optional fiscal-year filter.
      * @param string|null $administrationId Optional administration scope.
      *
      * @return array<int,array<string,mixed>>
@@ -201,18 +206,23 @@ final class BBVComplianceWidget
     /**
      * Load BudgetBBVMapping rows from OpenRegister.
      *
-     * @param int|null    $fiscalYear      Optional fiscal-year filter (matched against effectiveFrom year).
+     * The `$fiscalYear` parameter is intentionally accepted but not
+     * applied at this layer: BudgetBBVMapping has no fiscalYear field;
+     * the year scope is applied client-side by the dashboard against
+     * effectiveFrom / effectiveTo. Keeping the parameter in the
+     * signature lets slice 09 (fiscal-year scoping) tighten this
+     * without changing the public contract.
+     *
+     * @param int|null    $fiscalYear       Optional fiscal-year filter (matched against effectiveFrom year).
      * @param string|null $administrationId Optional administration scope.
      *
      * @return array<int,array<string,mixed>>
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     private function loadMappings(?int $fiscalYear, ?string $administrationId): array
     {
-        // BudgetBBVMapping has no fiscalYear field; the year scope is
-        // applied client-side by the dashboard against effectiveFrom /
-        // effectiveTo. The envelope therefore returns every active
-        // mapping for the requested administration; the chart hover
-        // panel narrows it.
+        unset($fiscalYear);
         return $this->findAllRows(
             schema: 'BudgetBBVMapping',
             filters: $this->scopedFilters(
@@ -248,7 +258,7 @@ final class BBVComplianceWidget
     }//end scopedFilters()
 
     /**
-     * findAll wrapper that returns plain arrays.
+     * FindAll wrapper that returns plain arrays.
      *
      * @param string              $schema  OR schema slug.
      * @param array<string,mixed> $filters OR filter map.
@@ -282,7 +292,7 @@ final class BBVComplianceWidget
                 ]
             );
             return [];
-        }
+        }//end try
 
         $rows = [];
         foreach ($records as $record) {
@@ -303,24 +313,19 @@ final class BBVComplianceWidget
     private function toArray(mixed $object): array
     {
         if (is_array($object) === true) {
-            /** @var array<string,mixed> $object */
             return $object;
         }
 
         if (is_object($object) === true && method_exists($object, 'getObject') === true) {
-            /** @var mixed $payload */
             $payload = $object->getObject();
             if (is_array($payload) === true) {
-                /** @var array<string,mixed> $payload */
                 return $payload;
             }
         }
 
         if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
-            /** @var mixed $payload */
             $payload = $object->jsonSerialize();
             if (is_array($payload) === true) {
-                /** @var array<string,mixed> $payload */
                 return $payload;
             }
         }

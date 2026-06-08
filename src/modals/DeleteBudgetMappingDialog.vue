@@ -44,7 +44,9 @@
 					<dt>{{ label('Effective') }}</dt>
 					<dd>
 						{{ mapping.effectiveFrom || '—' }}
-						<template v-if="mapping.effectiveTo"> → {{ mapping.effectiveTo }}</template>
+						<template v-if="mapping.effectiveTo">
+							→ {{ mapping.effectiveTo }}
+						</template>
 					</dd>
 				</dl>
 			</section>

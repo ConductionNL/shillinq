@@ -36,147 +36,149 @@
  @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-07-mapping-detail/specs/bookkeeping-waterschappen-bbv-variant/spec.md
 -->
 <template>
-	<CnDetailPage
-		data-testid="budget-bbv-mapping-detail"
-		:title="pageTitle"
-		:description="pageDescription"
-		:loading="loading"
-		:error="!!loadError"
-		:error-message="loadError"
-		icon="LinkVariant"
-		:object="record"
-		:max-width="'1100px'"
-		:sidebar="true"
-		:sidebar-open="false"
-		object-type="bbv-budget-mapping"
-		:object-id="recordId || ''"
-		:sidebar-props="{ register: 'shillinq', schema: 'BudgetBBVMapping', title: t('shillinq', 'Mapping audit trail') }">
-		<template #actions>
-			<button
-				type="button"
-				class="bbv-mapping-detail__btn"
-				data-testid="bbv-mapping-detail-cancel"
-				@click="onCancel">
-				{{ t('shillinq', 'Cancel') }}
-			</button>
-			<button
-				v-if="!isCreate"
-				type="button"
-				class="bbv-mapping-detail__btn bbv-mapping-detail__btn--danger"
-				data-testid="bbv-mapping-detail-delete"
-				:disabled="saving || deleting"
-				@click="openDeleteDialog">
-				{{ t('shillinq', 'Delete') }}
-			</button>
-			<button
-				type="button"
-				class="bbv-mapping-detail__btn bbv-mapping-detail__btn--primary"
-				data-testid="bbv-mapping-detail-save"
-				:disabled="!canSave"
-				@click="onSave">
-				{{ saveLabel }}
-			</button>
-		</template>
+	<div class="bbv-budget-mapping-detail-root">
+		<CnDetailPage
+			data-testid="budget-bbv-mapping-detail"
+			:title="pageTitle"
+			:description="pageDescription"
+			:loading="loading"
+			:error="!!loadError"
+			:error-message="loadError"
+			icon="LinkVariant"
+			:object="record"
+			:max-width="'1100px'"
+			:sidebar="true"
+			:sidebar-open="false"
+			object-type="bbv-budget-mapping"
+			:object-id="recordId || ''"
+			:sidebar-props="{ register: 'shillinq', schema: 'BudgetBBVMapping', title: t('shillinq', 'Mapping audit trail') }">
+			<template #actions>
+				<button
+					type="button"
+					class="bbv-mapping-detail__btn"
+					data-testid="bbv-mapping-detail-cancel"
+					@click="onCancel">
+					{{ t('shillinq', 'Cancel') }}
+				</button>
+				<button
+					v-if="!isCreate"
+					type="button"
+					class="bbv-mapping-detail__btn bbv-mapping-detail__btn--danger"
+					data-testid="bbv-mapping-detail-delete"
+					:disabled="saving || deleting"
+					@click="openDeleteDialog">
+					{{ t('shillinq', 'Delete') }}
+				</button>
+				<button
+					type="button"
+					class="bbv-mapping-detail__btn bbv-mapping-detail__btn--primary"
+					data-testid="bbv-mapping-detail-save"
+					:disabled="!canSave"
+					@click="onSave">
+					{{ saveLabel }}
+				</button>
+			</template>
 
-		<template #default>
-			<form
-				class="bbv-mapping-detail__form"
-				data-testid="bbv-mapping-detail-form"
-				@submit.prevent="onSave">
-				<div class="bbv-mapping-detail__row">
-					<GlAccountPicker
-						v-model="form.glAccountNumber"
-						:administration-id="form.administrationId"
-						data-testid="bbv-mapping-detail-gl"
-						@selected="onGlAccountSelected" />
-					<p v-if="selectedAccount" class="bbv-mapping-detail__hint" data-testid="bbv-mapping-detail-gl-hint">
-						{{ glAccountSummary }}
+			<template #default>
+				<form
+					class="bbv-mapping-detail__form"
+					data-testid="bbv-mapping-detail-form"
+					@submit.prevent="onSave">
+					<div class="bbv-mapping-detail__row">
+						<GlAccountPicker
+							v-model="form.glAccountNumber"
+							:administration-id="form.administrationId"
+							data-testid="bbv-mapping-detail-gl"
+							@selected="onGlAccountSelected" />
+						<p v-if="selectedAccount" class="bbv-mapping-detail__hint" data-testid="bbv-mapping-detail-gl-hint">
+							{{ glAccountSummary }}
+						</p>
+					</div>
+
+					<div class="bbv-mapping-detail__row">
+						<BBVProgrammePicker
+							v-model="form.programmeCode"
+							:administration-id="form.administrationId"
+							:fiscal-year="fiscalYearOfMapping"
+							data-testid="bbv-mapping-detail-programme"
+							@selected="onProgrammeSelected" />
+						<p v-if="selectedProgramme" class="bbv-mapping-detail__hint" data-testid="bbv-mapping-detail-programme-hint">
+							{{ programmeSummary }}
+						</p>
+					</div>
+
+					<div class="bbv-mapping-detail__row bbv-mapping-detail__row--inline">
+						<label class="bbv-mapping-detail__field">
+							<span>{{ t('shillinq', 'Allocation (%)') }}</span>
+							<input
+								v-model.number="form.allocationPercentage"
+								type="number"
+								min="0"
+								max="100"
+								step="0.01"
+								data-testid="bbv-mapping-detail-allocation"
+								class="bbv-mapping-detail__input"
+								@input="scheduleAllocationCheck">
+						</label>
+						<label class="bbv-mapping-detail__field">
+							<span>{{ t('shillinq', 'Effective from') }}</span>
+							<input
+								v-model="form.effectiveFrom"
+								type="date"
+								data-testid="bbv-mapping-detail-effective-from"
+								class="bbv-mapping-detail__input"
+								@change="scheduleAllocationCheck">
+						</label>
+						<label class="bbv-mapping-detail__field">
+							<span>{{ t('shillinq', 'Effective to') }}</span>
+							<input
+								v-model="form.effectiveTo"
+								type="date"
+								data-testid="bbv-mapping-detail-effective-to"
+								class="bbv-mapping-detail__input">
+						</label>
+						<label class="bbv-mapping-detail__field">
+							<span>{{ t('shillinq', 'Status') }}</span>
+							<select
+								v-model="form.status"
+								class="bbv-mapping-detail__input"
+								data-testid="bbv-mapping-detail-status">
+								<option value="active">{{ t('shillinq', 'Active') }}</option>
+								<option value="archived">{{ t('shillinq', 'Archived') }}</option>
+							</select>
+						</label>
+					</div>
+
+					<div
+						v-if="allocationFeedback.message"
+						class="bbv-mapping-detail__alloc"
+						:class="allocationFeedback.severity === 'error'
+							? 'bbv-mapping-detail__alloc--error'
+							: 'bbv-mapping-detail__alloc--info'"
+						data-testid="bbv-mapping-detail-alloc-feedback"
+						role="status"
+						aria-live="polite">
+						{{ allocationFeedback.message }}
+					</div>
+
+					<p
+						v-if="saveError"
+						class="bbv-mapping-detail__error"
+						data-testid="bbv-mapping-detail-save-error"
+						role="alert">
+						{{ saveError }}
 					</p>
-				</div>
+				</form>
+			</template>
+		</CnDetailPage>
 
-				<div class="bbv-mapping-detail__row">
-					<BBVProgrammePicker
-						v-model="form.programmeCode"
-						:administration-id="form.administrationId"
-						:fiscal-year="fiscalYearOfMapping"
-						data-testid="bbv-mapping-detail-programme"
-						@selected="onProgrammeSelected" />
-					<p v-if="selectedProgramme" class="bbv-mapping-detail__hint" data-testid="bbv-mapping-detail-programme-hint">
-						{{ programmeSummary }}
-					</p>
-				</div>
-
-				<div class="bbv-mapping-detail__row bbv-mapping-detail__row--inline">
-					<label class="bbv-mapping-detail__field">
-						<span>{{ t('shillinq', 'Allocation (%)') }}</span>
-						<input
-							v-model.number="form.allocationPercentage"
-							type="number"
-							min="0"
-							max="100"
-							step="0.01"
-							data-testid="bbv-mapping-detail-allocation"
-							class="bbv-mapping-detail__input"
-							@input="scheduleAllocationCheck">
-					</label>
-					<label class="bbv-mapping-detail__field">
-						<span>{{ t('shillinq', 'Effective from') }}</span>
-						<input
-							v-model="form.effectiveFrom"
-							type="date"
-							data-testid="bbv-mapping-detail-effective-from"
-							class="bbv-mapping-detail__input"
-							@change="scheduleAllocationCheck">
-					</label>
-					<label class="bbv-mapping-detail__field">
-						<span>{{ t('shillinq', 'Effective to') }}</span>
-						<input
-							v-model="form.effectiveTo"
-							type="date"
-							data-testid="bbv-mapping-detail-effective-to"
-							class="bbv-mapping-detail__input">
-					</label>
-					<label class="bbv-mapping-detail__field">
-						<span>{{ t('shillinq', 'Status') }}</span>
-						<select
-							v-model="form.status"
-							class="bbv-mapping-detail__input"
-							data-testid="bbv-mapping-detail-status">
-							<option value="active">{{ t('shillinq', 'Active') }}</option>
-							<option value="archived">{{ t('shillinq', 'Archived') }}</option>
-						</select>
-					</label>
-				</div>
-
-				<div
-					v-if="allocationFeedback.message"
-					class="bbv-mapping-detail__alloc"
-					:class="allocationFeedback.severity === 'error'
-						? 'bbv-mapping-detail__alloc--error'
-						: 'bbv-mapping-detail__alloc--info'"
-					data-testid="bbv-mapping-detail-alloc-feedback"
-					role="status"
-					aria-live="polite">
-					{{ allocationFeedback.message }}
-				</div>
-
-				<p
-					v-if="saveError"
-					class="bbv-mapping-detail__error"
-					data-testid="bbv-mapping-detail-save-error"
-					role="alert">
-					{{ saveError }}
-				</p>
-			</form>
-		</template>
-	</CnDetailPage>
-
-	<DeleteBudgetMappingDialog
-		:open="deleteDialogOpen"
-		:mapping="record"
-		:deleting="deleting"
-		@cancel="closeDeleteDialog"
-		@confirm="onDelete" />
+		<DeleteBudgetMappingDialog
+			:open="deleteDialogOpen"
+			:mapping="record"
+			:deleting="deleting"
+			@cancel="closeDeleteDialog"
+			@confirm="onDelete" />
+	</div>
 </template>
 
 <script>

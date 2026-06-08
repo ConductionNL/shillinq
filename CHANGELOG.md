@@ -8,6 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Waterschappen BBV variant capstone (chain
+  `bookkeeping-waterschappen-bbv-variant` member 12 of 12 — docs +
+  quality):
+  - **Developer + admin guide** `docs/Technical/waterschappen-bbv-variant.md`
+    — capability scope, component table per chain slice, data-flow
+    diagram, configuring programmes + mappings, dashboard widget
+    catalogue, audit-export usage, extension recipes.
+  - **README snippet** describing the BBV variant scope and pointing at
+    the technical guide.
+  - **Deduplication check (ADR-012)** — verified no second
+    GL-account-linkage, compliance dashboard, budget-mapping UI, or
+    aggregation implementation exists in Shillinq; `BBVProgramme` and
+    `BudgetBBVMapping` are the sole register-d schemas defining the
+    surface.
+  - **Quality + Hydra gates** — `composer check:strict`,
+    `npm run lint`, SPDX header on every new file's main docblock,
+    translation-key consistency, and the full Hydra mechanical gate
+    suite (route-auth, semantic-auth, nc-input-labels,
+    modal-isolation, and the rest) at zero findings.
 - Pipelinq customer-profile integration capstone (chain
   `bookings-pipelinq-customer-bridge` member 11 of 11):
   - **Admin guide** `docs/Integrations/pipelinq-admin.md` — endpoint +
