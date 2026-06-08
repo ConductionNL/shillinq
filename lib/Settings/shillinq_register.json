@@ -11323,6 +11323,133 @@
 				}
 			}
 		},
+		"DunningRecord": {
+			"slug": "DunningRecord",
+			"icon": "EmailAlertOutline",
+			"version": "0.1.0",
+			"title": "Dunning Record",
+			"description": "Per-invoice dunning timeline record capturing one reminder, formal notice, or collection escalation dispatched against an overdue ARInvoice. Append-only timeline; new rows are written by OR's dunning-workflow engine (or by the conditional DunningGuard fallback per ADR-031 exception if OR's extension is not yet stable). Shillinq carries no app-local dunning service per REQ-AR-005. Per REQ-AR-005.",
+			"x-schema-org": "schema:Action",
+			"type": "object",
+			"required": [
+				"invoiceRef",
+				"reminderLevel",
+				"dispatchedAt",
+				"dispatchedBy",
+				"administrationId"
+			],
+			"properties": {
+				"invoiceRef": {
+					"type": "string",
+					"description": "FK to ARInvoice UUID.",
+					"example": "arinv-2026-0001"
+				},
+				"reminderLevel": {
+					"type": "string",
+					"enum": [
+						"reminder-1",
+						"reminder-2",
+						"formal-notice",
+						"collection"
+					],
+					"description": "Dunning step. reminder-1 (default +14 days), reminder-2 (default +30 days), formal-notice (default +45 days; aanmaning), collection (default +60 days; doorgegeven aan incassobureau). Cadence is configurable per administration policy per REQ-AR-005.",
+					"example": "reminder-1"
+				},
+				"dispatchedAt": {
+					"type": "string",
+					"format": "date-time",
+					"description": "When this dunning step was dispatched.",
+					"example": "2026-05-14T08:00:00Z"
+				},
+				"dispatchedBy": {
+					"type": "string",
+					"description": "Actor that dispatched the dunning step. 'system' for the scheduled-workflow tick; otherwise the operator NC uid.",
+					"example": "system"
+				},
+				"channel": {
+					"type": "string",
+					"enum": [
+						"email",
+						"post",
+						"portal",
+						"sms",
+						"phone"
+					],
+					"description": "Channel used to deliver the dunning notice. Defaults to email; post / phone capture operator-logged contact attempts.",
+					"nullable": true,
+					"example": "email"
+				},
+				"templateRef": {
+					"type": "string",
+					"description": "FK to OR's notification template used for this dispatch (per ADR-022). Resolution deferred to implementing cycle if OR's notification-template abstraction is not yet stable.",
+					"nullable": true
+				},
+				"payload": {
+					"type": "object",
+					"description": "Snapshot of the rendered message for audit traceability (subject + body excerpt + recipient). Operator-readable; not used for re-dispatch.",
+					"nullable": true,
+					"properties": {
+						"subject": {
+							"type": "string"
+						},
+						"recipient": {
+							"type": "string"
+						},
+						"bodyExcerpt": {
+							"type": "string"
+						}
+					}
+				},
+				"escalationLevel": {
+					"type": "integer",
+					"minimum": 1,
+					"description": "1-based escalation counter for this invoice (1 = first reminder, 2 = second, …). Surfaces on the AR detail page dunning timeline.",
+					"nullable": true,
+					"example": 1
+				},
+				"acknowledgedAt": {
+					"type": "string",
+					"format": "date-time",
+					"description": "When the customer responded (operator-logged or portal-captured). Pauses further dunning escalation per OR's dunning-workflow policy when set within a configured response window.",
+					"nullable": true
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the administration owning this dunning record.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-relations": {
+				"invoice": {
+					"localField": "invoiceRef",
+					"relatedSchema": "ARInvoice",
+					"relatedField": "id",
+					"cardinality": "many-to-one",
+					"description": "FK to the parent ARInvoice this dunning record belongs to."
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": [
+							"create",
+							"read"
+						]
+					},
+					"controller": {
+						"permissions": [
+							"create",
+							"read"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
 		"Subsidie": {
 			"slug": "Subsidie",
 			"icon": "FileDocumentOutline",
