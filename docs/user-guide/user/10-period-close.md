@@ -58,7 +58,7 @@ from *closing* to *closed*.
    in the audit trail, and the state becomes *closed*.
 
 From now on, any attempt to post a transaction dated inside the period is
-rejected with *"Period {periodId} is closed; reopen required for corrections"*.
+rejected with *"Period \{periodId\} is closed; reopen required for corrections"*.
 
 ## Step 4 — Reopen for a correction (if needed)
 

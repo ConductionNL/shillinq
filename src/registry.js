@@ -28,10 +28,6 @@
 
 import ConfirmationPortal from './views/ConfirmationPortal.vue'
 import BookingWidgetKeys from './views/BookingWidgetKeys.vue'
-
-export default {
-	ConfirmationPortal: { kind: 'page', component: ConfirmationPortal },
-	BookingWidgetKeys: { kind: 'page', component: BookingWidgetKeys },
 // Bookings module (bookings-resource-calendar): the calendar (month/week/day)
 // and booking-form pages are genuinely custom — neither fits the declarative
 // `index`/`detail` page types because they render a time grid with conflict
@@ -41,6 +37,10 @@ export default {
 // declarative index pages in the manifest fragment.
 import CalendarView from './views/bookings/CalendarView.vue'
 import BookingForm from './views/bookings/BookingForm.vue'
+
+export default {
+	ConfirmationPortal: { kind: 'page', component: ConfirmationPortal },
+	BookingWidgetKeys: { kind: 'page', component: BookingWidgetKeys },
 	BookingsCalendar: { kind: 'page', component: CalendarView },
 	BookingsForm: { kind: 'page', component: BookingForm },
 }
