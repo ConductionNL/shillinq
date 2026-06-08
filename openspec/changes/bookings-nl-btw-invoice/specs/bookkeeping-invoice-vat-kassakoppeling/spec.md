@@ -22,27 +22,27 @@ This capability **extends the original Shillinq invoicing scope with Dutch VAT c
 Every line item on an `ARInvoice` (the `lines[]` array per the AR core schema) MUST carry three new fields:
 
 - `vatRate` (enum integer): one of `21`, `9`, `6`, `0` (percentage). Defaults to the administration's standard rate (typically 21).
-- `vatAmount` (integer, euro cents): computed as `bankerRound(lineAmount × vatRate / 100)` per REQ-VAT-007. Stored in integer cents per ADR-022 money rule.
+- `vatAmount` (number, decimal euros): computed as `bankerRound(amount × vatRate / 100, 2)` per REQ-VAT-007. Aligns with the existing AR T2 `ARInvoice.taxAmount` and `lines[].amount` convention (decimal euros, 2-decimal banker's rounding). Internal arithmetic is performed in integer cents to avoid floating-point drift; the stored value is the 2-decimal euro representation.
 - `serviceCategory` (enum string): one of `product`, `service`, `exempt`. Defaults to `product`. Determines VAT rate applicability (see REQ-VAT-002).
 
-**Rationale:** Dutch VAT law requires invoices to show VAT rate per line. Service/product distinction allows audit-trail filtering by category. Integer-cent storage prevents floating-point drift in the GL accrual posting.
+**Rationale:** Dutch VAT law requires invoices to show VAT rate per line. Service/product distinction allows audit-trail filtering by category. Decimal-euros storage (two decimal places) matches the existing AR T2 schema; integer-cent arithmetic prevents floating-point drift inside the computation.
 
 #### Scenario: Standard service-rate invoice line
 
 - **GIVEN** an administration in the Netherlands with standard VAT rate of 21
-- **WHEN** a user creates an `ARInvoice` line for `1 × "Server installation"` at €1000.00 (`lineAmount = 100000` cents)
+- **WHEN** a user creates an `ARInvoice` line for `1 × "Server installation"` at €1000.00 (`amount = 1000.00`)
 - **AND** selects `serviceCategory="service"`
 - **THEN** the system auto-suggests `vatRate=9` (reduced service rate)
-- **AND** computes `vatAmount = bankerRound(100000 × 9 / 100) = 9000` cents (€90.00)
+- **AND** computes `vatAmount = bankerRound(1000.00 × 9 / 100, 2) = 90.00` (€90.00)
 - **AND** stores the line with these values
 
 #### Scenario: Books with reduced product rate
 
 - **GIVEN** an administration with a book-retailing business
-- **WHEN** a user creates an `ARInvoice` line for `10 × "Beginner's Dutch"` at €15.00 each (`lineAmount = 15000` cents)
+- **WHEN** a user creates an `ARInvoice` line for `10 × "Beginner's Dutch"` at €15.00 each (`amount = 150.00`)
 - **AND** selects `serviceCategory="product"`
 - **THEN** the user MAY manually select `vatRate=6` (books / reduced product rate)
-- **AND** the system computes `vatAmount = bankerRound(15000 × 6 / 100) = 900` cents (€9.00) per line
+- **AND** the system computes `vatAmount = bankerRound(150.00 × 6 / 100, 2) = 9.00` (€9.00) per line
 
 ### Requirement: Service-category validation gates VAT rate (REQ-VAT-002)
 
@@ -99,8 +99,8 @@ Override records MUST be append-only (immutable per ADR-022). Lookup is keyed on
 
 When `ARInvoice` transitions to state `issued`, the lifecycle engine MUST materialise a balanced GL transaction per the T1 `bookkeeping-general-ledger` REQ-JE-007 pattern with the following posting shape:
 
-- **Debit** the AR control account (`Account.isARControlAccount = true`) by `SUM(line.lineAmount) + SUM(line.vatAmount)` (the gross invoice total in cents).
-- **Credit** each line's revenue `accountNumber` by `line.lineAmount` (net of VAT).
+- **Debit** the AR control account (`Account.isARControlAccount = true`) by `SUM(line.amount) + SUM(line.vatAmount)` (the gross invoice total in decimal euros, matching `ARInvoice.totalAmount`).
+- **Credit** each line's revenue `accountNumber` by `line.amount` (net of VAT).
 - **Credit**, by VAT-rate bucket, the configured `VATPayable*` GL account:
   - `vatRate=21` lines → `VATGLAccounts.vat21Account`
   - `vatRate=9` lines → `VATGLAccounts.vat9Account`
@@ -114,17 +114,17 @@ Each VAT bucket sums the `vatAmount` of all lines in that bucket. The materialis
 #### Scenario: Mixed-rate invoice GL posting
 
 - **GIVEN** an `ARInvoice` in `state="draft"` with two lines:
-  - Line 1: `lineAmount=10000`, `vatRate=21`, `vatAmount=2100`, revenue account `8000`
-  - Line 2: `lineAmount=20000`, `vatRate=9`, `vatAmount=1800`, revenue account `8001`
+  - Line 1: `amount=100.00`, `vatRate=21`, `vatAmount=21.00`, revenue account `8000`
+  - Line 2: `amount=200.00`, `vatRate=9`, `vatAmount=18.00`, revenue account `8001`
 - **AND** `VATGLAccounts` for the administration mapping `vat21Account=2020`, `vat9Account=2021`
 - **AND** the AR control account is `1200`
 - **WHEN** the lifecycle engine materialises the `issue` transition
 - **THEN** the GL transaction emitted is balanced and contains:
-  - Debit `1200` (AR control): `33900` cents
-  - Credit `8000` (revenue): `10000` cents
-  - Credit `8001` (revenue): `20000` cents
-  - Credit `2020` (VATPayable21): `2100` cents
-  - Credit `2021` (VATPayable9): `1800` cents
+  - Debit `1200` (AR control): `339.00`
+  - Credit `8000` (revenue): `100.00`
+  - Credit `8001` (revenue): `200.00`
+  - Credit `2020` (VATPayable21): `21.00`
+  - Credit `2021` (VATPayable9): `18.00`
 - **AND** `ARInvoice.glTransactionId` is set to the new transaction's id
 
 ### Requirement: Immutable VATAuditRecord for kassakoppeling compliance (REQ-VAT-004)
@@ -137,9 +137,9 @@ Every `ARInvoice` line MUST generate one append-only `VATAuditRecord` for each l
 | `invoiceDate` | date | Yes | `ARInvoice.invoiceDate` at issue |
 | `lineSequence` | integer | Yes | Line index within the invoice (1-based) |
 | `lineDescription` | string | Yes | `line.description` copy |
-| `lineAmount` | integer | Yes | `line.lineAmount` in cents (immutable copy) |
+| `lineAmount` | number | Yes | `line.amount` in decimal euros (immutable copy; mirrors AR T2 convention) |
 | `vatRate` | enum (21, 9, 6, 0) | Yes | The rate applied |
-| `vatAmount` | integer | Yes | `line.vatAmount` in cents (immutable copy) |
+| `vatAmount` | number | Yes | `line.vatAmount` in decimal euros (immutable copy; banker's-rounded to 2 decimals) |
 | `serviceCategory` | enum (product, service, exempt) | Yes | The category applied |
 | `lifecycleEvent` | enum (issued, paid, written_off, reversed) | Yes | Which event this record captures |
 | `eventDate` | datetime | Yes | When the event occurred |
@@ -153,11 +153,11 @@ The schema MUST be declared `x-openregister-immutable: true` (read-only after cr
 
 #### Scenario: Complete audit trail for a paid service invoice
 
-- **GIVEN** an `ARInvoice` issued on `2026-05-15` with one service line (`lineAmount=20000` cents, `vatRate=9`, `vatAmount=1800` cents, `serviceCategory="service"`)
+- **GIVEN** an `ARInvoice` issued on `2026-05-15` with one service line (`amount=200.00`, `vatRate=9`, `vatAmount=18.00`, `serviceCategory="service"`)
 - **WHEN** the invoice transitions to `issued`
 - **THEN** `VATAuditRecord` #1 is created with:
   - `invoiceNumber="INV-C-2026-0001"`, `invoiceDate=2026-05-15`, `lineSequence=1`
-  - `lineDescription="Website hosting - May 2026"`, `lineAmount=20000`, `vatRate=9`, `vatAmount=1800`, `serviceCategory="service"`
+  - `lineDescription="Website hosting - May 2026"`, `lineAmount=200.00`, `vatRate=9`, `vatAmount=18.00`, `serviceCategory="service"`
   - `lifecycleEvent="issued"`, `eventDate=2026-05-15T14:32:00Z`, `paymentDate=null`
   - `settlementPeriod="2026-05"`, `administrationId="adm-1"`
 - **WHEN** a bank-reconciliation match clears the invoice on `2026-05-20` and the lifecycle transitions to `paid`
@@ -222,26 +222,26 @@ The installer MUST insert a default `VATGLAccounts` record on first run with the
 
 VAT amounts MUST be computed and stored under the following rules:
 
-- **Per-line VAT amount**: `vatAmount = bankerRound(lineAmount × vatRate / 100)` in integer cents. The banker's rounding rule MUST be `round-to-even` (a.k.a. IEEE 754 `roundTiesToEven`): when the fractional remainder is exactly 0.5 cent, round to the nearest even cent.
+- **Per-line VAT amount**: `vatAmount = bankerRound(amount × vatRate / 100, 2)` in decimal euros (2 decimal places). The banker's rounding rule MUST be `round-to-even` (a.k.a. IEEE 754 `roundTiesToEven`): when the fractional remainder is exactly 0.5 cent (`x.xx5`), round to the nearest even cent. Internal arithmetic MAY use integer-cent intermediates to avoid floating-point drift, but the stored value is the decimal-euro representation.
 - **Invoice total VAT**: the sum of per-line `vatAmount` values; no invoice-level rounding adjustment line MAY be added.
 - **GL posting amounts**: equal to the per-line `vatAmount` sums; no rounding difference between invoice and GL.
 
-The change MUST declare a reusable rounding helper `bankerRound(amountCents)` available to both the schema's `x-openregister-calculations` block (for `vatAmount` derivation) and the lifecycle materialisation template (for GL bucket totals).
+The change MUST declare a reusable rounding helper `bankerRound(amount, decimals)` available to both the schema's `x-openregister-calculations` block (for `vatAmount` derivation) and the lifecycle materialisation template (for GL bucket totals).
 
 **Rationale:** Dutch fiscal standard (Belastingdienst) expects banker's rounding per line; no "rounding adjustment" line. This prevents audit discrepancies.
 
 #### Scenario: Banker's rounding applies at .5-cent boundary
 
-- **GIVEN** a service line with `lineAmount=3333` cents and `vatRate=9`
+- **GIVEN** a service line with `amount=33.33` and `vatRate=9`
 - **WHEN** the VAT amount is computed
-- **THEN** `vatAmount = bankerRound(3333 × 9 / 100) = bankerRound(299.97) = 300` cents (€3.00)
-- **GIVEN** a second line with `lineAmount=3334` cents and `vatRate=9`
+- **THEN** `vatAmount = bankerRound(33.33 × 9 / 100, 2) = bankerRound(2.9997, 2) = 3.00` (€3.00)
+- **GIVEN** a second line with `amount=33.34` and `vatRate=9`
 - **WHEN** the VAT amount is computed
-- **THEN** `vatAmount = bankerRound(3334 × 9 / 100) = bankerRound(300.06) = 300` cents (€3.00)
-- **GIVEN** a third line with `lineAmount=3335` cents and `vatRate=9`
+- **THEN** `vatAmount = bankerRound(33.34 × 9 / 100, 2) = bankerRound(3.0006, 2) = 3.00` (€3.00)
+- **GIVEN** a third line with `amount=33.35` and `vatRate=9`
 - **WHEN** the VAT amount is computed
-- **THEN** `vatAmount = bankerRound(3335 × 9 / 100) = bankerRound(300.15) = 300` cents (€3.00)
-- **AND** the invoice total VAT is `900` cents (sum of three lines, no rounding adjustment)
+- **THEN** `vatAmount = bankerRound(33.35 × 9 / 100, 2) = bankerRound(3.0015, 2) = 3.00` (€3.00)
+- **AND** the invoice total VAT is `9.00` (sum of three lines, no rounding adjustment)
 
 ### Requirement: Precondition failure blocks issuance with actionable guidance (REQ-VAT-008)
 
@@ -271,7 +271,7 @@ The system MUST expose a declarative aggregation query (`x-openregister-aggregat
 
 | Aggregate | Computation |
 |-----------|-------------|
-| `totalNetAmount` | `SUM(lineAmount)` across records in the period, filtered to `lifecycleEvent="issued"` |
+| `totalNetAmount` | `SUM(lineAmount)` across records in the period, filtered to `lifecycleEvent="issued"` (decimal euros) |
 | `totalVAT21` | `SUM(vatAmount WHERE vatRate=21)` |
 | `totalVAT9` | `SUM(vatAmount WHERE vatRate=9)` |
 | `totalVAT6` | `SUM(vatAmount WHERE vatRate=6)` |
@@ -287,13 +287,13 @@ The aggregation MUST be invoked by the two manifest entries declared in REQ-VAT-
 #### Scenario: May 2026 VAT reconciliation totals
 
 - **GIVEN** an administration `adm-1` with three invoices issued in May 2026, each generating one `VATAuditRecord` with `lifecycleEvent="issued"`:
-  - Invoice A: product line `lineAmount=10000`, `vatRate=21`, `vatAmount=2100`
-  - Invoice B: service line `lineAmount=20000`, `vatRate=9`, `vatAmount=1800`
-  - Invoice C: exempt line `lineAmount=30000`, `vatRate=0`, `vatAmount=0`
+  - Invoice A: product line `lineAmount=100.00`, `vatRate=21`, `vatAmount=21.00`
+  - Invoice B: service line `lineAmount=200.00`, `vatRate=9`, `vatAmount=18.00`
+  - Invoice C: exempt line `lineAmount=300.00`, `vatRate=0`, `vatAmount=0.00`
 - **WHEN** the bookkeeper queries `vatByPeriod(administrationId="adm-1", settlementPeriod="2026-05")`
 - **THEN** the result is:
-  - `totalNetAmount=60000`, `totalVAT21=2100`, `totalVAT9=1800`, `totalVAT6=0`, `totalVAT0=0`
-  - `totalGrossAmount=63900`, `invoiceCount=3`, `recordCount=3`
+  - `totalNetAmount=600.00`, `totalVAT21=21.00`, `totalVAT9=18.00`, `totalVAT6=0.00`, `totalVAT0=0.00`
+  - `totalGrossAmount=639.00`, `invoiceCount=3`, `recordCount=3`
 
 ### Requirement: Manifest entries for VAT by Period and VAT Reconciliation (REQ-VAT-010)
 

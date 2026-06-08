@@ -12,7 +12,7 @@
 
 - [x] Task 4: Author `design.md` with Decisions table (D1 through D6), Reuse Analysis table, Declarative-vs-Imperative decision table, Seed Data (4 standard NL VAT rates), Risks / Trade-offs, Migration Plan, Implementation Notes (GL account mapping, timezone, currency, precondition failure)
 
-- [ ] Task 5: Extend the `InvoiceLine` schema in `lib/Settings/shillinq_register.json` with three new fields per REQ-VAT-001:
+- [x] Task 5: Extend the `InvoiceLine` schema in `lib/Settings/shillinq_register.json` with three new fields per REQ-VAT-001:
   - `vatRate` (enum: 21, 9, 6, 0; default: administration's standard rate)
   - `vatAmount` (decimal; computed from `lineAmount × vatRate / 100` using banker's rounding)
   - `serviceCategory` (enum: "product", "service", "exempt"; default: "product")

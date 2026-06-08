@@ -11175,7 +11175,7 @@
 				"lines": {
 					"type": "array",
 					"minItems": 1,
-					"description": "Invoice line breakdown. Each line maps to one GL revenue account.",
+					"description": "Invoice line breakdown. Each line maps to one GL revenue account. Per bookkeeping-invoice-vat-kassakoppeling REQ-VAT-001 each line additionally carries vatRate (21|9|6|0), vatAmount (decimal euros computed via bankerRound), and serviceCategory (product|service|exempt) gating REQ-VAT-002 validation.",
 					"items": {
 						"type": "object",
 						"required": [
@@ -11195,12 +11195,42 @@
 							"amount": {
 								"type": "number",
 								"minimum": 0,
-								"description": "Line amount (non-negative; see REQ-AR-003)."
+								"description": "Line amount (non-negative; see REQ-AR-003). Net of VAT; the per-line VAT is stored separately in vatAmount per REQ-VAT-001."
 							},
 							"taxCode": {
 								"type": "string",
-								"description": "Tax code for this line (e.g. BTW21, BTW9, BTW0).",
+								"description": "Tax code for this line (e.g. BTW21, BTW9, BTW0). Pre-VAT-spec free-form field retained for legacy compatibility; new VAT logic uses the structured vatRate field per REQ-VAT-001.",
 								"nullable": true
+							},
+							"vatRate": {
+								"type": "integer",
+								"enum": [
+									21,
+									9,
+									6,
+									0
+								],
+								"description": "Per-line Dutch VAT rate in percent (REQ-VAT-001). Defaults to the administration's standard rate (typically 21). REQ-VAT-002 precondition gates which rates are permitted for each serviceCategory.",
+								"default": 21,
+								"example": 9
+							},
+							"vatAmount": {
+								"type": "number",
+								"minimum": 0,
+								"description": "Per-line VAT in decimal euros (REQ-VAT-001). Computed as bankerRound(amount * vatRate / 100, 2) per REQ-VAT-007. Sum of per-line vatAmount populates ARInvoice.taxAmount; no invoice-level rounding adjustment line is emitted.",
+								"nullable": true,
+								"example": 18.0
+							},
+							"serviceCategory": {
+								"type": "string",
+								"enum": [
+									"product",
+									"service",
+									"exempt"
+								],
+								"description": "Per-line service / product / exempt classification gating VAT rate validity (REQ-VAT-002). product permits {0,6,21}; service permits {0,9,21}; exempt permits only 0. Exceptions are recorded in ServiceCategoryOverride per REQ-VAT-002bis.",
+								"default": "product",
+								"example": "service"
 							},
 							"quantity": {
 								"type": "number",
