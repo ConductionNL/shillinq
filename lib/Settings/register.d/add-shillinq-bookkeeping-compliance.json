@@ -463,21 +463,40 @@
         "icon": "LinkVariant",
         "version": "0.1.0",
         "title": "Reconciliation Match",
-        "description": "A candidate or confirmed match between a bank statement line and an AR/AP invoice, journal, or suspense routing per REQ-BR-006. Emitted by the matching aggregation (confidence=auto) or operator-created (confidence=manual); the operator confirms or rejects.",
+        "description": "A candidate or confirmed match between a bank statement line and an AR/AP invoice, journal, or suspense routing per REQ-BR-006. Emitted by the matching aggregation (confidence=auto) or operator-created (confidence=manual); the operator confirms or rejects. Confirmed matches emit a `reconciliation-match-confirmed` event consumed by AR/AP invoice lifecycles per REQ-BR-006.",
         "x-schema-org": "schema:Action",
         "type": "object",
         "x-openregister-audit": true,
+        "x-openregister-audit-trail": { "enabled": true, "description": "REQ-AT-001: ReconciliationMatch carries an immutable audit trail per ADR-022. Candidate emission, operator confirm/reject, and downstream invoice transitions append audit events." },
         "required": ["matchId", "bankStatementLineId", "matchType", "matchedObjectId", "matchedAmount", "confidence", "status"],
         "properties": {
           "matchId": { "type": "string", "description": "Unique match identifier." },
-          "bankStatementLineId": { "type": "string", "description": "FK to BankStatementLine.lineId." },
-          "matchType": { "type": "string", "enum": ["ar-invoice", "ap-invoice", "journal", "suspense"], "description": "What the line matched against." },
-          "matchedObjectId": { "type": "string", "description": "UUID of the matched AR/AP invoice or journal." },
-          "matchedAmount": { "type": "number", "description": "Amount matched." },
+          "bankStatementLineId": { "type": "string", "description": "FK to BankStatementLine.lineId for the single-line case. For multi-line matches use bankLineRefs." },
+          "bankLineRefs": { "type": "array", "items": { "type": "string" }, "nullable": true, "description": "N×M multi-line support per REQ-BR-006: one bank line covering multiple invoices, or multiple bank lines covering one invoice. When set, the array supersedes bankStatementLineId." },
+          "targetRefs": { "type": "array", "items": { "type": "string" }, "nullable": true, "description": "N×M multi-line support per REQ-BR-006: array of matched AR/AP/GL object UUIDs. When set, the array supersedes matchedObjectId." },
+          "matchType": { "type": "string", "enum": ["ar-invoice", "ap-invoice", "journal", "gl-transaction", "suspense"], "description": "What the line matched against (alias: candidateType in legacy tasks docs)." },
+          "matchedObjectId": { "type": "string", "description": "UUID of the matched AR/AP invoice, GLTransaction, or journal (alias: candidateId in legacy tasks docs). For multi-target matches use targetRefs." },
+          "matchedAmount": { "type": "number", "description": "Amount matched (EUR). For partial matches this is less than the target invoice total." },
+          "partial": { "type": "boolean", "default": false, "description": "REQ-BR-006: when true the match covers part of the target invoice total; AR transitions to partially-paid, AP appends a partial-payment audit event." },
           "confidence": { "type": "string", "enum": ["auto", "manual"], "description": "auto = rule-matched; manual = operator-created." },
-          "status": { "type": "string", "enum": ["pending", "confirmed", "rejected"], "default": "pending", "description": "Operator confirmation status." },
+          "confidenceScore": { "type": "number", "minimum": 0, "maximum": 1, "nullable": true, "description": "Confidence score in [0,1] copied from the emitting MatchingRule per REQ-BR-005." },
+          "status": { "type": "string", "enum": ["pending", "confirmed", "rejected"], "default": "pending", "description": "Operator confirmation status (alias: state in legacy tasks docs). REQ-BR-006 lifecycle: candidate → confirmed / candidate → rejected." },
           "confirmedBy": { "type": "string", "nullable": true, "description": "UUID of confirming operator." },
-          "confirmedAt": { "type": "string", "format": "date-time", "nullable": true, "description": "Confirmation timestamp." }
+          "confirmedAt": { "type": "string", "format": "date-time", "nullable": true, "description": "Confirmation timestamp." },
+          "rejectedReason": { "type": "string", "nullable": true, "description": "Operator-supplied reason when status=rejected (e.g. 'not the right invoice', 'amount mismatch')." }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "pending",
+          "states": {
+            "pending": { "label": "Pending", "description": "Candidate emitted by the matching aggregation (REQ-BR-006); awaiting operator confirmation." },
+            "confirmed": { "label": "Confirmed", "description": "Operator confirmed (or autoConfirm=true rule); emits reconciliation-match-confirmed event consumed by AR/AP invoice lifecycles." },
+            "rejected": { "label": "Rejected", "description": "Operator rejected the candidate; line returns to unmatched for further matching attempts." }
+          },
+          "transitions": {
+            "confirm": { "from": "pending", "to": "confirmed", "label": "Confirm match", "description": "Emit reconciliation-match-confirmed event per REQ-BR-006; AR/AP invoice lifecycles consume it." },
+            "reject": { "from": "pending", "to": "rejected", "label": "Reject candidate", "description": "Rejects the candidate; bank line remains unmatched per REQ-BR-006." }
+          }
         },
         "x-openregister-aggregations": {
           "matchCandidates": {
