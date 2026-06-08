@@ -97,10 +97,26 @@ class ConfirmationMailer
      */
     private function buildPayload(array $appointment, string $rawToken, string $email): array
     {
-        $ics     = $this->icsService->generateIcs(appointment: $appointment);
-        $webLink = $this->urlGenerator->linkToRouteAbsolute(
+        $webLink  = $this->urlGenerator->linkToRouteAbsolute(
             Application::APP_ID.'.confirmationApi.portal',
         ).'?token='.rawurlencode($rawToken);
+        $customer = [
+            'id'     => (string) ($appointment['customerId'] ?? ''),
+            'userId' => (string) ($appointment['customerUserId'] ?? ''),
+            'name'   => (string) ($appointment['customerName'] ?? ''),
+            'email'  => $email,
+        ];
+        $context  = [
+            'serviceName'    => (string) ($appointment['serviceName'] ?? 'Appointment'),
+            'location'       => (string) ($appointment['location'] ?? ''),
+            'organizerEmail' => (string) ($appointment['organizerEmail'] ?? ''),
+        ];
+        $ics      = $this->icsService->generateIcs(
+            appointment: $appointment,
+            customer: $customer,
+            confirmUrl: $webLink,
+            context: $context,
+        );
 
         return [
             'to'          => $email,
