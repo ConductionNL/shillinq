@@ -94,10 +94,19 @@
 						"nullable": true,
 						"description": "Optional debtor postal address (REQ-SDD-001).",
 						"properties": {
-							"street": { "type": "string" },
-							"postcode": { "type": "string" },
-							"city": { "type": "string" },
-							"country": { "type": "string", "description": "ISO 3166-1 alpha-2." }
+							"street": {
+								"type": "string"
+							},
+							"postcode": {
+								"type": "string"
+							},
+							"city": {
+								"type": "string"
+							},
+							"country": {
+								"type": "string",
+								"description": "ISO 3166-1 alpha-2."
+							}
 						}
 					},
 					"debtorAccountType": {
@@ -799,6 +808,71 @@
 								"read"
 							]
 						}
+					}
+				}
+			},
+			"CustomerMaster": {
+				"description": "Customer master overlay adding the default SEPA mandate link (REQ-SDD-002). When a customer has a `defaultMandateId`, the AR billing flow proposes direct-debit collection by default; the field is OPTIONAL \u2014 collections may still be scheduled against any mandate the customer holds. Owning fragment: `add-shillinq-bookkeeping-compliance.json` (shillinq CustomerMaster is the AR-core analogue of the company-wide `Counterparty` entity referenced in design D1).",
+				"x-spec": "openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md",
+				"properties": {
+					"defaultMandateId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to the customer's default SEPA mandate UUID; when set the AR billing flow proposes direct-debit collection by default (REQ-SDD-002). Optional \u2014 collections may still be scheduled against any active mandate held by the customer. Cleared automatically when the referenced mandate transitions to `cancelled` or `expired`."
+					}
+				},
+				"x-openregister-relations": {
+					"defaultMandate": {
+						"localField": "defaultMandateId",
+						"relatedSchema": "SepaMandate",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "The customer's default mandate for direct-debit collection (REQ-SDD-002)."
+					}
+				}
+			},
+			"ARInvoice": {
+				"description": "AR invoice overlay adding direct-debit payment-method linkage (REQ-SDD-002, REQ-SDD-003). When `paymentMethod = direct_debit`, `directDebitMandateId` MUST reference an `active` SepaMandate; the optional `directDebitPreNotificationInvoiceId` links back to the invoice whose line item carried the SEPA pre-notification (design D3 / REQ-SDD-003 invoice-line pre-notification channel). Owning fragment: `add-shillinq-bookkeeping-compliance.json`.",
+				"x-spec": "openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md",
+				"properties": {
+					"paymentMethod": {
+						"type": "string",
+						"enum": [
+							"bank_transfer",
+							"direct_debit",
+							"cash",
+							"card",
+							"other"
+						],
+						"nullable": true,
+						"default": "bank_transfer",
+						"description": "Expected payment method (REQ-SDD-002). When `direct_debit`, `directDebitMandateId` MUST be populated and reference an `active` SepaMandate; collection scheduling is gated on this combination."
+					},
+					"directDebitMandateId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to the SepaMandate UUID under which this invoice is to be collected (REQ-SDD-002). Required when `paymentMethod = direct_debit`; ignored otherwise. The mandate MUST be `active` at collection-scheduling time; cancellation or expiry triggers `sdd.mandate.cancelled` / `sdd.mandate.expired`."
+					},
+					"directDebitPreNotificationInvoiceId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Optional FK to the ARInvoice whose line item carried the SEPA pre-notification text for this collection (REQ-SDD-003, design D3 invoice-line channel). When set, this invoice's pre-notification proof is sourced from the linked invoice's issue date + line text; the `PreNotification` register entry references the same invoice via `recipientAddress`."
+					}
+				},
+				"x-openregister-relations": {
+					"directDebitMandate": {
+						"localField": "directDebitMandateId",
+						"relatedSchema": "SepaMandate",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "The SEPA mandate authorising direct-debit collection of this invoice (REQ-SDD-002)."
+					},
+					"directDebitPreNotificationInvoice": {
+						"localField": "directDebitPreNotificationInvoiceId",
+						"relatedSchema": "ARInvoice",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "The invoice whose line item carried the SEPA pre-notification text for this collection (REQ-SDD-003, design D3)."
 					}
 				}
 			}
