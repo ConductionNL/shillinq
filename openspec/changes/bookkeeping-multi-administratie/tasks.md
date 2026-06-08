@@ -141,7 +141,7 @@
   tracks variance); status transitions: concept (one-sided) → gekoppeld (both exist)
   → bevestigd_beide (both confirmed) → eliminatie_geboekt (consolidation processed).
 
-- [ ] Task 19: Pre-position consolidation-mapping hooks per REQ-MA-005 (consumed by
+- [x] Task 19: Pre-position consolidation-mapping hooks per REQ-MA-005 (consumed by
   future `bookkeeping-consolidatie` spec): ConsolidatieMapping register is queryable;
   mapping rules are applied during consolidation export (deferred to that spec);
   intercompany-journaalpost field `geconsolideerd_elimineren` marks P&L lines for
@@ -237,9 +237,16 @@ intercompany foundation they build on ships here.
   consumable from any other service/controller that already holds an Administration
   record; the storage-backed helper is for call sites that only carry an
   administrationId.
-- [ ] Task 19 (deferred): consolidation export application of `ConsolidationMapping` rules —
-  explicitly owned by the future `bookkeeping-consolidatie` spec; the schema is queryable now,
-  no consolidation rendering ships here (per proposal Out-of-Scope).
+- [x] Task 19 (implemented in finish cycle): consolidation-mapping hooks ship as
+  `lib/Service/ConsolidationMappingService` — pure helpers the future
+  `bookkeeping-consolidatie` spec will dispatch through: `findActiveMapping()` (real
+  ObjectService.findAll + most-recent-by-validFrom picker), `applyAccountRule()` /
+  `applyMapping()` (rewrites with explicit unmapped pass-through so the gap is visible
+  to the consolidation layer, never silently swallowed), `shouldEliminate()` (honours
+  the `eliminateOnConsolidation` flag plus the balanced lifecycle status), and
+  `resolveEliminationAccount()` (entry-level explicit account beats the mapping
+  default, returns null when neither configured). The actual consolidation render
+  remains owned by the future spec; this ships the hooks, not the engine.
 - [ ] Task 20 (deferred): administratie-migratie dual-post draft/confirm/rollback flow —
   net-new atomic dual-post + UI; the `AdministrationMigration` audit schema + lifecycle ship now.
 - [ ] Task 22 (deferred): cross-administratie audit-trail viewer query — net-new aggregation
