@@ -164,7 +164,7 @@
   `canPostJournalEntry(administrationId, role)`); verify mag_journaalposten_boeken
   permission in the active administratie's AdministratielidMaatschap record.
 
-- [ ] Task 22: Add administratie-scoped audit trail queries per REQ-MA-009: audit
+- [x] Task 22: Add administratie-scoped audit trail queries per REQ-MA-009: audit
   logs (auditTrail field on each entity) are filtered by active administratie in
   single-administratie queries; implement cross-administratie audit query (for
   holding-controllers) that aggregates auditTrail from all accessible administraties
@@ -260,9 +260,17 @@ intercompany foundation they build on ships here.
   (destination activates at market). The controller layer wires this through a single
   ObjectService DB transaction so the dual-post lands fully or not at all; the UI
   driver is part of the live-instance follow-up.
-- [ ] Task 22 (deferred): cross-administratie audit-trail viewer query — net-new aggregation
-  across the user's accessible administrations (`accessibleAdministrationIds()` is the building
-  block); runtime/UI behaviour deferred.
+- [x] Task 22 (implemented in finish cycle): cross-administratie audit-trail
+  aggregator ships as `lib/Service/AdministrationAuditTrailService`. Two read-side
+  query shapes: `queryForAdministration()` for a single administratie (returns null
+  on non-membership so the caller masks as a 404 — REQ-MA-001), and
+  `queryAcrossAccessibleAdministrations()` for holding-controllers (iterates the
+  user's `accessibleAdministrationIds()` only, tags each row with its
+  `administrationId`, merges and sorts newest-first by auditTrailUpdatedAt /
+  updatedAt / createdAt). Pure helpers (`tagWithAdministration`,
+  `sortByTimestampDesc`) are unit-tested; the storage path uses the real
+  ObjectService API per ADR-022. The viewer UI itself is part of the live-instance
+  follow-up.
 
 ## Verification
 
