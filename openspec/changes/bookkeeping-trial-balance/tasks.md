@@ -147,7 +147,15 @@
   algorithm is O(accounts + lines) across three scoped `findAll()` reads, so the
   unit-level measurement is representative of the live shape.
 
-- [ ] Task 13.3: Multi-tenancy test — verify trial balance isolation: user-A queries admin-org-A, user-B queries admin-org-B, no cross-org data leakage (REQ-TB-017)
+- [x] Task 13.3: Multi-tenancy test — `tests/Unit/Service/TrialBalanceTenancyIsolationTest.php`
+  drives the controller + service end-to-end with two distinct users (user-A in
+  adm-A, user-B in adm-B) across a shared GL dataset containing rows for both
+  tenants and proves: (a) user-A → adm-B and user-B → adm-A are both masked as
+  HTTP 404 by the IDOR guard before the service is touched; (b) when each user
+  reads its own administration the service returns only that tenant's GL totals
+  (adm-A: 7000, adm-B: 333) with no cross-administration leakage; (c) the service
+  layer itself filters out foreign-tenant GLLines even when the IDOR guard is
+  bypassed (defence in depth, REQ-TB-017).
 
 ## 14. Authorization and RBAC
 
@@ -237,8 +245,10 @@
   `TrialBalanceService` to an in-memory ObjectService stub holding 10 000
   accounts + 10 000 transactions + 30 000 GLLines and asserts compute() returns
   inside two seconds; observed ~120 ms in the NC 8.3 container.
-- [ ] Task 13.3: Multi-tenancy isolation test (REQ-TB-017) — partially covered by
-  `TrialBalanceServiceTest::testComputeScopesToAdministration`; full cross-user
-  isolation DEFERRED to a live-instance integration run.
+- [x] Task 13.3: Multi-tenancy isolation test (REQ-TB-017) — committed as
+  `tests/Unit/Service/TrialBalanceTenancyIsolationTest.php`. Drives the
+  controller + service end-to-end with two distinct users across a shared GL
+  dataset and proves IDOR 404 masking + per-tenant total isolation in both
+  directions, plus defence-in-depth filtering at the service layer.
 - [ ] Screenshots for `docs/images/` — DEFERRED: capture from the running app
   (no live instance in the build worktree).
