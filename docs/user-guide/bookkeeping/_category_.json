@@ -1,0 +1,11 @@
+{
+  "label": "Bookkeeping",
+  "position": 40,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "generated-index",
+    "title": "Bookkeeping",
+    "description": "Compliance dashboards, programme mapping, and audit-ready bookkeeping workflows for Dutch public-sector administrations (BBV for provincies, waterschappen, gemeenten)."
+  }
+}

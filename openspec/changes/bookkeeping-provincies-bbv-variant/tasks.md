@@ -245,21 +245,27 @@
 
 ## Documentation (ADR-009)
 
-- [ ] Task 27: Create user guide `docs/user-guide/bookkeeping/bbv-compliance-dashboard.md`:
+- [x] Task 27: Create user guide `docs/user-guide/bookkeeping/bbv-compliance-dashboard.md`:
   - Overview: "Monitor your province's BBV budget health in real-time"
   - Section 1: Dashboard components (KPI cards, charts, exceptions)
   - Section 2: Interpreting traffic-light status (green/yellow/red)
   - Section 3: Using filters (programme, year, budget status)
   - Section 4: Troubleshooting (empty dashboard, stale data)
   - Screenshots: dashboard with sample data, exception alert, filters applied
+  - DONE: shipped together with `docs/user-guide/bookkeeping/_category_.json`
+    (new "Bookkeeping" sidebar group at position 40). Screenshots deferred to
+    the docs-screenshots Playwright suite (`docs-screenshots.spec.ts`) once
+    the dashboard renders against seeded provincie data.
 
-- [ ] Task 28: Create user guide `docs/user-guide/bookkeeping/budget-to-programme-linker.md`:
+- [x] Task 28: Create user guide `docs/user-guide/bookkeeping/budget-to-programme-linker.md`:
   - Overview: "Map your general ledger entries to BBV programme structure"
   - Section 1: Why mapping matters (audit compliance, budget tracking)
   - Section 2: Bulk mapping workflow (select GL lines → link modal → save)
   - Section 3: Viewing assignment history (audit trail)
   - Section 4: Troubleshooting (validation errors, remapping GL lines)
   - Screenshots: Linker index, bulk-select, link modal, success toast
+  - DONE: shipped. Screenshots deferred to the docs-screenshots Playwright
+    suite (same fleet pattern as bookings and waterschappen variants).
 
 - [ ] Task 29: Create compliance guide `docs/guides/bbv-compliance-checklist.md`:
   - Pre-audit checklist: all GL lines mapped to a programme? Budget status
