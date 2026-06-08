@@ -11373,7 +11373,34 @@
 						],
 						"to": "partially-paid",
 						"label": "Mark partially paid",
-						"description": "Triggered by bank-reconciliation REQ-BR-006 match event when matched payment amount is less than totalAmount. Detailed action wiring lands in task 12."
+						"description": "Event-driven transition fired when bookkeeping-bank-reconciliation emits a confirmed ReconciliationMatch (targetType=ar-invoice, targetId=this.id) per REQ-BR-006 AND the cumulative matched amount for this invoice is greater than 0 but less than totalAmount. Operator confirms the candidate match in bank-reconciliation UI; the lifecycle engine consumes the OR-native event. No shillinq matcher service per REQ-AR-009-bis; symmetric to AP matchPaid (REQ-AP-008).",
+						"trigger": {
+							"type": "event",
+							"engine": "x-openregister-event",
+							"eventSource": "bookkeeping-bank-reconciliation",
+							"eventName": "reconciliation-match-confirmed",
+							"filter": {
+								"targetType": "ar-invoice",
+								"targetId": "{{this.id}}"
+							},
+							"condition": "0 < SUM(ReconciliationMatch.amount WHERE targetType='ar-invoice' AND targetId=this.id AND state='confirmed') < this.totalAmount"
+						},
+						"actions": [
+							{
+								"trigger": "x-openregister-lifecycle-action",
+								"action": "audit-trail-append",
+								"description": "Append a partial-payment audit-trail event capturing the ReconciliationMatch UUID, matched amount, cumulative paid amount, and remaining balance for REQ-AR-009-bis scenario 'partial payment yields partially-paid state'.",
+								"actionParameters": {
+									"eventName": "ar-invoice-partial-payment",
+									"contextFields": [
+										"matchId",
+										"matchedAmount",
+										"cumulativeMatchedAmount",
+										"remainingBalance"
+									]
+								}
+							}
+						]
 					},
 					"matchPaid": {
 						"from": [
@@ -11383,7 +11410,33 @@
 						],
 						"to": "paid",
 						"label": "Mark paid",
-						"description": "Triggered by bank-reconciliation REQ-BR-006 match event when cumulative matched amount equals totalAmount. Detailed action wiring lands in task 12."
+						"description": "Event-driven transition fired when bookkeeping-bank-reconciliation emits a confirmed ReconciliationMatch (targetType=ar-invoice, targetId=this.id) per REQ-BR-006 AND the cumulative matched amount equals totalAmount. Operator confirms the candidate match in bank-reconciliation UI; the lifecycle engine consumes the OR-native event. No shillinq matcher service per REQ-AR-009-bis; symmetric to AP matchPaid (REQ-AP-008).",
+						"trigger": {
+							"type": "event",
+							"engine": "x-openregister-event",
+							"eventSource": "bookkeeping-bank-reconciliation",
+							"eventName": "reconciliation-match-confirmed",
+							"filter": {
+								"targetType": "ar-invoice",
+								"targetId": "{{this.id}}"
+							},
+							"condition": "SUM(ReconciliationMatch.amount WHERE targetType='ar-invoice' AND targetId=this.id AND state='confirmed') >= this.totalAmount"
+						},
+						"actions": [
+							{
+								"trigger": "x-openregister-lifecycle-action",
+								"action": "audit-trail-append",
+								"description": "Append a paid audit-trail event capturing the ReconciliationMatch UUID(s), final matched amount, and the bank statement line refs that cleared the invoice for REQ-AR-009-bis scenario 'exact-amount bank line marks invoice paid'.",
+								"actionParameters": {
+									"eventName": "ar-invoice-paid",
+									"contextFields": [
+										"matchIds",
+										"finalMatchedAmount",
+										"bankLineRefs"
+									]
+								}
+							}
+						]
 					},
 					"dispute": {
 						"from": [
