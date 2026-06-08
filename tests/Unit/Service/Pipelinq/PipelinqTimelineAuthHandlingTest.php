@@ -311,14 +311,19 @@ final class PipelinqTimelineAuthHandlingTest extends TestCase
         self::assertCount(1, $dispatchLog, '401 MUST not retry — RetryPolicy treats it as non-transient');
         self::assertSame([], $sleepCalls, '401 MUST not introduce any retry backoff');
 
-        // Find the ERROR record naming the bad token.
+        // Find the ERROR record that names the misconfigured token. The 401
+        // path emits two ERROR entries — the inner request loop logs the auth
+        // rejection (without configKey) and publishWithOutcome's catch block
+        // logs the canonical "Invalid pipelinq API token" alert with the
+        // configKey. The test asserts the canonical alert phrasing.
         $errors = array_values(
             array_filter(
                 $logger->records,
                 static fn (array $r): bool => $r['level'] === LogLevel::ERROR
+                    && str_contains($r['message'], 'Invalid pipelinq API token')
             )
         );
-        self::assertNotEmpty($errors, 'A 401 publish MUST emit an ERROR log entry');
+        self::assertNotEmpty($errors, 'A 401 publish MUST emit the canonical token-rejected ERROR log entry');
         self::assertStringContainsString('Invalid pipelinq API token', $errors[0]['message']);
         self::assertSame(401, $errors[0]['context']['status']);
         self::assertSame(
