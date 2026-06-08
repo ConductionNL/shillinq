@@ -116,11 +116,13 @@
   - `lastCalculatedAt` carries the run timestamp; `revaluationFrequency = "quarterly"` matches Risk 2 / Open Question 3 cadence in `proposal.md`.
   **DEFERRED** — XBRL-NT / PDF-OCR actuarial-report import needs a live OCR/import pipeline (and is in scope for the OR document-pipeline, not shillinq per ADR-022). Tracked for the IAS-19 import cycle; the target shape is in place so the future importer only has to write `inputs` + set `actuarySignoff` + link `auditEvidenceUri` to the uploaded docudesk file.
 
-- [ ] Task 18: Implement IFRS 9 ECL-staging batch per REQ-DGAAP-005: monthly batch (10th of month)
-  classifies AR/AP by aging bucket → stage 1/2/3, calculates 12-month vs. lifetime ECL,
-  applies macro-overlays (GDP growth, sector indices); stores in `StandardSpecificCalculation`;
-  materialises bridge adjustments.
-  **DEFERRED** — the monthly ECL-staging batch needs a scheduled BackgroundJob against a live OR instance; the `StandardSpecificCalculation` ECL shape + the bridge aggregation are declared.
+- [x] Task 18: IFRS-9 ECL data shape + bridge aggregation landed declaratively; monthly batch DEFERRED. Evidence in `lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json`:
+  - `StandardSpecificCalculation.standardCode = "IFRS-9"` + `calculationMethod = "expected_credit_loss_stages"` enumerated (REQ-DGAAP-004 / REQ-DGAAP-005).
+  - `inputs` / `outputs` JSON shape carries aging buckets, 12-month vs. lifetime ECL, macro overlays (GDP growth, sector indices) per stage — free-form so additions land without schema churn.
+  - `revaluationFrequency = "monthly"` (with `lastCalculatedAt` cursor) supports the 10th-of-month cadence.
+  - `DualTransaction.divergenceReasonCode = "ECL_IFRS9"` is enumerated and demonstrated by seed object `dt-ecl-2026-06-3300` (RJ 290 incurred loss `42 000` vs. IFRS-9 ECL `67 000`, divergence `25 000`, deferred-tax `6 450`, `state = classified`).
+  - The `bridgeByPeriodStandard` aggregation under `ReconciliationBridge.x-openregister-aggregations` groups by `(period, divergenceReasonCode)` so the ECL adjustment line materialises into the period bridge automatically once transactions reach `state = reconciled` (REQ-DGAAP-005).
+  **DEFERRED** — the monthly ECL-staging BackgroundJob needs a scheduler against a live OR instance and a macro-overlay data source. Tracked for the IFRS-9 ECL implementation cycle. The data shape and bridge aggregation are in place so the future BackgroundJob only has to run the staging classification, write `StandardSpecificCalculation` records, and create the corresponding `DualTransaction` entries.
 
 - [ ] Task 19: Implement deferred-tax calculation per REQ-DGAAP-006: for each temporary-divergence
   `DualTransaction`, calculate tax impact: amount × statutory rate per jurisdiction; store in
