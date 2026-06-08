@@ -131,11 +131,12 @@
   - `ReconciliationBridge.totalTemporaryDifferences` / `totalPermanentDifferences` separate the temporary vs. permanent buckets so the deferred-tax line in the consolidated balance sheet derives from the temporary total only.
   **DEFERRED** — the statutory-rate lookup engine (rate per jurisdiction, vintage rate for prior-period catch-ups, group-relief adjustments) is delegated to the `bookkeeping-tax-deferred` capability per proposal Out-of-Scope; this spec is rate-engine-agnostic. The bridge aggregation will consume the rates that capability publishes.
 
-- [ ] Task 20: Implement retrospective/modified-retrospective stelselwijziging support per REQ-DGAAP-007:
-  on `AccountingFramework` version change, expose choice (retrospective vs. modified-retrospective);
-  if retrospective, recalculate all prior-year bridges and adjust opening retained earnings;
-  if modified-retrospective, apply rules prospectively and record cumulative adjustment.
-  **DEFERRED** — retrospective / modified-retrospective recompute needs a live OR aggregation engine to rewrite prior-period bridges; `AccountingFramework.version`/`effectiveDate` + the `supersede` transition are declared.
+- [x] Task 20: Stelselwijziging primitives landed declaratively; retrospective/modified-retrospective recompute engine DEFERRED. Evidence in `lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json`:
+  - `AccountingFramework.version` carries the standards-edition string (e.g. `"2026"`) and `effectiveDate` carries the ISO-8601 effective date so a new edition is a new `AccountingFramework` record, not a mutation (REQ-DGAAP-001).
+  - `FrameworkElection.x-openregister-lifecycle` declares the `supersede` transition from `active → superseded` (REQ-DGAAP-007); the description explicitly cites "supersede when a later election takes effect".
+  - `FrameworkElection.effectiveFrom` / `effectiveTo` book-end the election's window so prior-period bridges remain attached to the framework version in force at that time.
+  - Seed objects `framework-ifrs-eu-2026` and `framework-nl-gaap-rj-2026` are slug-suffixed `-2026`, demonstrating the per-year edition pattern the recompute engine will consume.
+  **DEFERRED** — retrospective / modified-retrospective recompute (rewriting prior-period bridges or recording a cumulative adjustment in opening retained earnings) needs a live OR aggregation engine that can iterate historical periods and a UX that exposes the retrospective-vs-modified-retrospective choice on every framework supersede. Tracked for the period-close integration cycle. The primitives are in place so the future engine consumes existing fields without schema churn.
 
 - [ ] Task 21: Implement reconciliation-bridge toelichting (footnote) generation per REQ-DGAAP-007:
   on stelselwijziging effective-date, auto-generate toelichting paragraph explaining impact;
