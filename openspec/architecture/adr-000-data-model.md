@@ -3848,6 +3848,8 @@ _Schema.org Product — standard vocabulary for product data_
 | unitCode | string | No | Unit of measure (UN/CEFACT) |
 | taxRate | number | No | Applicable tax rate percentage |
 
+> **Reconciliation note (inventory-product-catalog, 2026-06-08):** This basic `Product` outline is superseded by the fuller `Product` register declared in `lib/Settings/shillinq_register.json` per primary spec `inventory-product-catalog` (T1, shillinq app). The fuller declaration carries forward the existing fields (name, sku, description, category, unitPrice, currency, unitCode, taxRate) and additively adds `primaryBarcode`, `barcodes` (JSON array supporting multi-UoM codes per inventory-barcode-sku), `status` (lifecycleState), `organizationId`, and the unique constraint on `(organizationId, sku)` via `x-openregister-unique`. RBAC is declared on the register (procurement: CRUD, inventory: CRU, auditor: R). A companion `ProductAttribute` register adds typed extensibility per category. This entry is retained as a historical snapshot; consumers MUST treat the inventory-product-catalog declaration as canonical.
+
 ### Project
 **Schema.org:** `schema:Project`
 _An analytical project for tracking time, materials, and costs per project in the shillinq bookkeeping tier. Same field shape as CostCenter and KostenDrager per REQ-CC-002. The `timeBookingEnabled` flag pre-positions the WBSO time-per-project shape: a WBSO capability can join `TimeEntry.projectCode` to `Project.code` and aggregate hours per project per fiscal year per REQ-CC-007 without modifying this schema. Segment P&L aggregation declared on GLLine keyed by projectCode per REQ-CC-005._
