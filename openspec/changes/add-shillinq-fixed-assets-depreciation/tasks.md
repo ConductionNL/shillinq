@@ -13,11 +13,11 @@
 
 ## 1. Spec authoring (done previously)
 
-- [ ] Task 1: Verify spec authoring complete — `proposal.md`, `design.md`, `specs/bookkeeping-fixed-assets-depreciation/spec.md` carry REQ-FA-001..REQ-FA-007 with RFC 2119 keywords and `#### Scenario:` GIVEN/WHEN/THEN blocks; confirm via `openspec validate add-shillinq-fixed-assets-depreciation`
+- [x] Task 1: Verify spec authoring complete — `proposal.md`, `design.md`, `specs/bookkeeping-fixed-assets-depreciation/spec.md` carry REQ-FA-001..REQ-FA-007 with RFC 2119 keywords and `#### Scenario:` GIVEN/WHEN/THEN blocks; confirm via `openspec validate add-shillinq-fixed-assets-depreciation`
 
 ## 2. Register + manifest (done previously)
 
-- [ ] Task 2: Verify the `FixedAsset` schema declaration in `lib/Settings/shillinq_register.json` carries the REQ-FA-002 field set, `x-openregister-calculations` (`monthlyDepreciation`, `currentBookValue`, `commercialBookValue`, `fiscalBookValue`), `x-openregister-lifecycle` (proposed → active → disposed → archived with `dispose` `emit-journal-entry` action), `x-openregister-relations` (administration, assetAccount, accumulatedDepAccount, depreciationExpenseAccount), `x-openregister-rbac`, and `x-openregister-aggregations`; verify the audit-trail entry in `lib/Settings/register.d/add-shillinq-audit-trail.json` covers `FixedAsset`; verify `src/manifest.json` declares the `FixedAssets` index page, `FixedAssetDetail` detail page, and the Bookkeeping > Fixed Assets navigation entry
+- [x] Task 2: Verify the `FixedAsset` schema declaration in `lib/Settings/shillinq_register.json` carries the REQ-FA-002 field set, `x-openregister-calculations` (`monthlyDepreciation`, `currentBookValue`, `commercialBookValue`, `fiscalBookValue`), `x-openregister-lifecycle` (proposed → active → disposed → archived with `dispose` `emit-journal-entry` action), `x-openregister-relations` (administration, assetAccount, accumulatedDepAccount, depreciationExpenseAccount), `x-openregister-rbac`, and `x-openregister-aggregations`; verify the audit-trail entry in `lib/Settings/register.d/add-shillinq-audit-trail.json` covers `FixedAsset`; verify `src/manifest.json` declares the `FixedAssets` index page, `FixedAssetDetail` detail page, and the Bookkeeping > Fixed Assets navigation entry
 
 ## 3. Pure-logic helpers (this build)
 
