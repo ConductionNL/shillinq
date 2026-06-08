@@ -125,9 +125,15 @@
 					},
 					"linkedHrmqGroup": {
 						"type": "string",
-						"description": "Optional reference to an HRMQ pension-administration group for annual deelnemersbestand validation (REQ-PEN-010).",
+						"description": "Optional reference to an HRMQ pension-administration group for annual deelnemersbestand validation (REQ-PEN-010). The HRMQ contract is captured declaratively in the PensionPlan x-openregister-hrmq-roster-source block (Task 19).",
 						"nullable": true,
 						"example": "vaste-staf-NL"
+					},
+					"linkedProvisionId": {
+						"type": "string",
+						"description": "Optional FK to the bookkeeping-voorzieningen-claims Provision record that carries the cumulative DBO on the balance sheet. When set, the voorzieningen-claims provision-closure flow consumes the latest PensionMovement.dboClosing for the linked plan and updates the provision balance accordingly (REQ-PEN-003 — pension provision linkage). Null when voorzieningen-claims is not yet provisioned in the administration; the linkage falls back to the standard DBO balance-sheet line.",
+						"nullable": true,
+						"example": "provision-pensioen-db-2026"
 					},
 					"governanceDocument": {
 						"type": "string",

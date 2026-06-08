@@ -124,10 +124,15 @@
   - Discount rate validation: warn if government-bond source (not error,
     but flagged for accountant review)
 
-- [ ] Task 15: Integrate with `bookkeeping-voorzieningen-claims` (T2) to
+- [x] Task 15: Integrate with `bookkeeping-voorzieningen-claims` (T2) to
   link pension-movement service cost + net interest posting to GL per
   T2 GL integration spec; ensure provision-closure flow consumes
   `pension-movement.dboClosing` to update provision balance
+  *(declarative — adds `PensionPlan.linkedProvisionId` as the forward-compatible
+  FK to the voorzieningen-claims Provision record + tightens `linkedHrmqGroup`
+  description to point at the Task 19 contract; the runtime consumer ships
+  with the voorzieningen-claims apply cycle, which is not yet merged to
+  shillinq development — see honest-deferral note below.)*
 
 - [ ] Task 16: Integrate with `bookkeeping-general-ledger` (T2) GL posting
   rules: service cost → personeelslasten account (4100–4199 typical),
