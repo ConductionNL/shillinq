@@ -781,6 +781,56 @@
 			]
 		},
 		{
+			"id": "Personeel",
+			"label": "Payroll",
+			"icon": "AccountGroupOutline",
+			"order": 36,
+			"children": [
+				{
+					"id": "Employees",
+					"label": "Employees",
+					"icon": "AccountTie",
+					"route": "Employees",
+					"order": 10
+				},
+				{
+					"id": "Payroll",
+					"label": "Payroll",
+					"icon": "CashMultiple",
+					"route": "Payroll",
+					"order": 20
+				},
+				{
+					"id": "PayrollCalendar",
+					"label": "Payroll calendar",
+					"icon": "CalendarMonthOutline",
+					"route": "PayrollCalendar",
+					"order": 30
+				},
+				{
+					"id": "Deductions",
+					"label": "Deductions",
+					"icon": "CashMinus",
+					"route": "Deductions",
+					"order": 40
+				},
+				{
+					"id": "DeterminationLetters",
+					"label": "Determination letters",
+					"icon": "FileDocumentOutline",
+					"route": "DeterminationLetters",
+					"order": 50
+				},
+				{
+					"id": "TaxSvReports",
+					"label": "Tax & social security reports",
+					"icon": "ChartBoxOutline",
+					"route": "TaxSvReports",
+					"order": 60
+				}
+			]
+		},
+		{
 			"id": "Documentation",
 			"label": "Documentation",
 			"icon": "icon-info",
@@ -17277,6 +17327,207 @@
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
 				],
 				"indexRoute": "SepaRejections"
+			}
+		},
+		{
+			"id": "Employees",
+			"route": "/payroll/employees",
+			"type": "index",
+			"title": "Employees",
+			"config": {
+				"register": "shillinq",
+				"schema": "Employee",
+				"columns": [
+					{ "key": "employeeNumber", "label": "Employee number", "sortable": true },
+					{ "key": "legalName", "label": "Name", "sortable": true },
+					{ "key": "contractType", "label": "Contract type", "sortable": true },
+					{ "key": "onboardingDate", "label": "Onboarding date", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "employeeNumber",
+				"detailRoute": "EmployeeDetail"
+			}
+		},
+		{
+			"id": "EmployeeDetail",
+			"route": "/payroll/employees/:id",
+			"type": "detail",
+			"title": "Employee",
+			"config": {
+				"register": "shillinq",
+				"schema": "Employee",
+				"fields": [
+					{ "key": "employeeNumber", "label": "Employee number", "type": "string" },
+					{ "key": "legalName", "label": "Name", "type": "string" },
+					{ "key": "bsn", "label": "BSN", "type": "string", "mask": "trailing4" },
+					{ "key": "contractType", "label": "Contract type", "type": "string" },
+					{ "key": "taxClassification", "label": "Tax classification", "type": "string" },
+					{ "key": "taxNumber", "label": "Tax number", "type": "string" },
+					{ "key": "onboardingDate", "label": "Onboarding date", "type": "string" },
+					{ "key": "exitDate", "label": "Exit date", "type": "string" },
+					{ "key": "salaryScale", "label": "Salary scale", "type": "string" },
+					{ "key": "placementAgencyId", "label": "Placement agency", "type": "string" },
+					{ "key": "contactEmail", "label": "Email", "type": "string" },
+					{ "key": "contactPhone", "label": "Phone", "type": "string" },
+					{ "key": "state", "label": "Status", "type": "string" }
+				]
+			}
+		},
+		{
+			"id": "Payroll",
+			"route": "/payroll/payrolls",
+			"type": "index",
+			"title": "Payroll",
+			"config": {
+				"register": "shillinq",
+				"schema": "Payroll",
+				"columns": [
+					{ "key": "payrollNumber", "label": "Payroll number", "sortable": true },
+					{ "key": "employeeId", "label": "Employee", "sortable": true },
+					{ "key": "period", "label": "Period", "sortable": true },
+					{ "key": "grossAmount", "label": "Gross amount", "sortable": true },
+					{ "key": "netAmount", "label": "Net amount", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "payrollNumber",
+				"detailRoute": "PayrollDetail"
+			}
+		},
+		{
+			"id": "PayrollDetail",
+			"route": "/payroll/payrolls/:id",
+			"type": "detail",
+			"title": "Payroll",
+			"config": {
+				"register": "shillinq",
+				"schema": "Payroll",
+				"fields": [
+					{ "key": "payrollNumber", "label": "Payroll number", "type": "string" },
+					{ "key": "employeeId", "label": "Employee", "type": "string" },
+					{ "key": "period", "label": "Period", "type": "string" },
+					{ "key": "periodStartDate", "label": "Period start", "type": "string" },
+					{ "key": "periodEndDate", "label": "Period end", "type": "string" },
+					{ "key": "grossAmount", "label": "Gross amount", "type": "number" },
+					{ "key": "netAmount", "label": "Net amount", "type": "number" },
+					{ "key": "placementFeeAmount", "label": "Placement fee", "type": "number" },
+					{ "key": "currency", "label": "Currency", "type": "string" },
+					{ "key": "payDate", "label": "Pay date", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				]
+			}
+		},
+		{
+			"id": "PayrollCalendar",
+			"route": "/payroll/calendar",
+			"type": "index",
+			"title": "Payroll calendar",
+			"config": {
+				"register": "shillinq",
+				"schema": "Payroll",
+				"columns": [
+					{ "key": "period", "label": "Period", "sortable": true },
+					{ "key": "payrollNumber", "label": "Payroll number", "sortable": true },
+					{ "key": "employeeId", "label": "Employee", "sortable": true },
+					{ "key": "payDate", "label": "Pay date", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "period",
+				"detailRoute": "PayrollDetail"
+			}
+		},
+		{
+			"id": "Deductions",
+			"route": "/payroll/deductions",
+			"type": "index",
+			"title": "Deductions",
+			"config": {
+				"register": "shillinq",
+				"schema": "Deduction",
+				"columns": [
+					{ "key": "payrollId", "label": "Payroll", "sortable": true },
+					{ "key": "deductionType", "label": "Type", "sortable": true },
+					{ "key": "deductionName", "label": "Name", "sortable": true },
+					{ "key": "amount", "label": "Amount", "sortable": true },
+					{ "key": "taxYear", "label": "Tax year", "sortable": true }
+				],
+				"defaultSort": "payrollId",
+				"detailRoute": "DeductionDetail"
+			}
+		},
+		{
+			"id": "DeductionDetail",
+			"route": "/payroll/deductions/:id",
+			"type": "detail",
+			"title": "Deduction",
+			"config": {
+				"register": "shillinq",
+				"schema": "Deduction",
+				"fields": [
+					{ "key": "payrollId", "label": "Payroll", "type": "string" },
+					{ "key": "deductionType", "label": "Type", "type": "string" },
+					{ "key": "deductionName", "label": "Name", "type": "string" },
+					{ "key": "amount", "label": "Amount", "type": "number" },
+					{ "key": "rate", "label": "Rate (%)", "type": "number" },
+					{ "key": "rateSource", "label": "Rate source", "type": "string" },
+					{ "key": "taxYear", "label": "Tax year", "type": "number" }
+				]
+			}
+		},
+		{
+			"id": "DeterminationLetters",
+			"route": "/payroll/determination-letters",
+			"type": "index",
+			"title": "Determination letters",
+			"config": {
+				"register": "shillinq",
+				"schema": "DeterminationLetter",
+				"columns": [
+					{ "key": "payrollId", "label": "Payroll", "sortable": true },
+					{ "key": "letterType", "label": "Type", "sortable": true },
+					{ "key": "generatedDate", "label": "Generated", "sortable": true },
+					{ "key": "archiveStatus", "label": "Archive status", "sortable": true }
+				],
+				"defaultSort": "generatedDate",
+				"detailRoute": "DeterminationLetterDetail"
+			}
+		},
+		{
+			"id": "DeterminationLetterDetail",
+			"route": "/payroll/determination-letters/:id",
+			"type": "detail",
+			"title": "Determination letter",
+			"config": {
+				"register": "shillinq",
+				"schema": "DeterminationLetter",
+				"fields": [
+					{ "key": "payrollId", "label": "Payroll", "type": "string" },
+					{ "key": "letterType", "label": "Type", "type": "string" },
+					{ "key": "generatedDate", "label": "Generated", "type": "string" },
+					{ "key": "year", "label": "Year", "type": "number" },
+					{ "key": "content", "label": "Content", "type": "string" },
+					{ "key": "fileUri", "label": "Document", "type": "string" },
+					{ "key": "archiveStatus", "label": "Archive status", "type": "string" },
+					{ "key": "retentionExpiryDate", "label": "Retention expiry", "type": "string" }
+				]
+			}
+		},
+		{
+			"id": "TaxSvReports",
+			"route": "/payroll/tax-sv-reports",
+			"type": "index",
+			"title": "Tax & social security reports",
+			"config": {
+				"register": "shillinq",
+				"schema": "Deduction",
+				"filter": { "deductionType": ["income-tax", "social-security-employee", "social-security-employer"] },
+				"columns": [
+					{ "key": "taxYear", "label": "Tax year", "sortable": true },
+					{ "key": "deductionType", "label": "Type", "sortable": true },
+					{ "key": "amount", "label": "Amount", "sortable": true },
+					{ "key": "rateSource", "label": "Rate source", "sortable": true }
+				],
+				"defaultSort": "taxYear",
+				"detailRoute": "DeductionDetail"
 			}
 		}
 	]
