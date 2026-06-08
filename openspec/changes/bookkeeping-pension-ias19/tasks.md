@@ -100,7 +100,7 @@
   actuarialLossGainDBO broken down by demographic/financial/experience,
   actuarialGainLossAssets, dboClosing, planAssetsClosing computed
 
-- [ ] Task 12: Implement the sensitivity-analysis aggregation per REQ-PEN-006 —
+- [x] Task 12: Implement the sensitivity-analysis aggregation per REQ-PEN-006 —
   `x-openregister-aggregations` query (or x-openregister-calculations) that
   recomputes DBO + service cost for each of the 8 assumption deltas
   (discount ±0.5pp, salary ±0.5pp, mortality ±1yr, inflation ±0.5pp),
