@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "1.3.8",
+	"version": "1.3.9",
 	"dependencies": [
 		"openregister"
 	],
@@ -377,6 +377,22 @@
 					"icon": "AlertCircleOutline",
 					"route": "ExpiryAlerts",
 					"order": 80
+				},
+				{
+					"id": "InventoryGLConfig",
+					"label": "Posting Configuratie",
+					"labelNl": "Boekingsconfiguratie",
+					"icon": "BankTransferOutline",
+					"route": "InventoryGLConfig",
+					"order": 95
+				},
+				{
+					"id": "InventoryPostingHistory",
+					"label": "Posting Historie",
+					"labelNl": "Boekingshistorie",
+					"icon": "BookOpenVariantOutline",
+					"route": "InventoryPostingHistory",
+					"order": 96
 				}
 			]
 		},
@@ -11807,6 +11823,144 @@
 						}
 					]
 				}
+			}
+		},
+		{
+			"id": "InventoryGLConfig",
+			"route": "/inventory/posting-config",
+			"type": "index",
+			"title": "Posting Configuratie",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryGLConfig",
+				"columns": [
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					},
+					{
+						"key": "cogsAccountNumber",
+						"label": "COGS Account",
+						"sortable": true
+					},
+					{
+						"key": "inventoryAssetAccountNumber",
+						"label": "Inventory Asset Account",
+						"sortable": true
+					},
+					{
+						"key": "grIrClearingAccountNumber",
+						"label": "GR/IR Clearing Account",
+						"sortable": true
+					},
+					{
+						"key": "inventoryAdjustmentAccountNumber",
+						"label": "Inventory Adjustment Account",
+						"sortable": true
+					},
+					{
+						"key": "isActive",
+						"label": "Active",
+						"sortable": true
+					}
+				],
+				"defaultSort": "administrationId",
+				"detailRoute": "InventoryGLConfigDetail"
+			}
+		},
+		{
+			"id": "InventoryGLConfigDetail",
+			"route": "/inventory/posting-config/:id",
+			"type": "detail",
+			"title": "Posting Configuratie",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryGLConfig",
+				"fields": [
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "cogsAccountNumber",
+						"label": "COGS Account",
+						"type": "string"
+					},
+					{
+						"key": "inventoryAssetAccountNumber",
+						"label": "Inventory Asset Account",
+						"type": "string"
+					},
+					{
+						"key": "grIrClearingAccountNumber",
+						"label": "GR/IR Clearing Account",
+						"type": "string"
+					},
+					{
+						"key": "inventoryAdjustmentAccountNumber",
+						"label": "Inventory Adjustment Account",
+						"type": "string"
+					},
+					{
+						"key": "isActive",
+						"label": "Active",
+						"type": "boolean"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					}
+				],
+				"indexRoute": "InventoryGLConfig"
+			}
+		},
+		{
+			"id": "InventoryPostingHistory",
+			"route": "/inventory/posting-history",
+			"type": "index",
+			"title": "Posting Historie",
+			"config": {
+				"register": "shillinq",
+				"schema": "GLTransaction",
+				"filters": {
+					"subLedgerType": "inventory"
+				},
+				"columns": [
+					{
+						"key": "entryNumber",
+						"label": "Entry #",
+						"sortable": true
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"sortable": true
+					},
+					{
+						"key": "debitAmount",
+						"label": "Debit",
+						"sortable": true
+					},
+					{
+						"key": "creditAmount",
+						"label": "Credit",
+						"sortable": true
+					},
+					{
+						"key": "entryDate",
+						"label": "Date",
+						"sortable": true
+					},
+					{
+						"key": "subLedgerRef",
+						"label": "Inventory Valuation",
+						"sortable": true
+					}
+				],
+				"defaultSort": "entryDate"
 			}
 		}
 	]
