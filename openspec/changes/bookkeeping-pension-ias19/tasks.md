@@ -199,7 +199,7 @@
   bookkeeping-pension-ias19` and `Schema.org` class annotations per ADR-000
   convention
 
-- [ ] Task 24: Add i18n translation keys (Dutch `nl_NL` + English `en_US`) for:
+- [x] Task 24: Add i18n translation keys (Dutch `nl_NL` + English `en_US`) for:
   Pension Plan, Defined Benefit, Defined Contribution, Actuarial Valuation,
   Discount Rate, Salary Growth Assumption, Mortality Table, Inflation Assumption,
   Service Cost, Past Service Cost, Net Interest, Actuarial Gain/Loss, Remeasurement,
