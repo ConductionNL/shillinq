@@ -23,7 +23,10 @@
 -->
 
 <template>
-	<div :class="rootClass" :lang="lang" role="form" :aria-label="t('Book an appointment')">
+	<div :class="rootClass"
+		:lang="lang"
+		role="form"
+		:aria-label="t('Book an appointment')">
 		<header class="wsw-widget__header">
 			<h2 class="wsw-widget__title">
 				{{ t('Book an appointment') }}
@@ -42,7 +45,9 @@
 				class="wsw-widget__select"
 				:disabled="loadingServices"
 				:aria-describedby="ids.serviceError">
-				<option value="">{{ t('Select a service') }}</option>
+				<option value="">
+					{{ t('Select a service') }}
+				</option>
 				<option v-for="service in services" :key="service.serviceId" :value="service.serviceId">
 					{{ service.name }} ({{ service.duration }} {{ t('minutes') }})
 				</option>
@@ -52,7 +57,10 @@
 			</p>
 
 			<div class="wsw-widget__actions">
-				<button type="button" class="wsw-widget__button" :disabled="!selectedServiceId" @click="goToDateStep">
+				<button type="button"
+					class="wsw-widget__button"
+					:disabled="!selectedServiceId"
+					@click="goToDateStep">
 					{{ t('Next') }}
 				</button>
 			</div>
@@ -67,10 +75,13 @@
 				class="wsw-widget__input"
 				type="date"
 				:min="todayIso"
-				@change="loadSlots" />
+				@change="loadSlots">
 
 			<label class="wsw-widget__label" :for="ids.slot">{{ t('Select a time') }}</label>
-			<div :id="ids.slot" class="wsw-widget__slot-grid" role="radiogroup" :aria-label="t('Select a time')">
+			<div :id="ids.slot"
+				class="wsw-widget__slot-grid"
+				role="radiogroup"
+				:aria-label="t('Select a time')">
 				<button
 					v-for="slot in slots"
 					:key="slot.startTime"
@@ -90,7 +101,10 @@
 				<button type="button" class="wsw-widget__button wsw-widget__button--secondary" @click="step = 'service'">
 					{{ t('Back') }}
 				</button>
-				<button type="button" class="wsw-widget__button" :disabled="!selectedSlot" @click="step = 'details'">
+				<button type="button"
+					class="wsw-widget__button"
+					:disabled="!selectedSlot"
+					@click="step = 'details'">
 					{{ t('Next') }}
 				</button>
 			</div>
@@ -99,26 +113,53 @@
 		<!-- STEP 3 — Customer details -->
 		<section v-if="step === 'details'">
 			<label class="wsw-widget__label" :for="ids.name">{{ t('Your name') }}</label>
-			<input :id="ids.name" v-model="customerName" class="wsw-widget__input" type="text" required maxlength="255" />
-			<p class="wsw-widget__error" role="alert">{{ errors.name }}</p>
+			<input :id="ids.name"
+				v-model="customerName"
+				class="wsw-widget__input"
+				type="text"
+				required
+				maxlength="255">
+			<p class="wsw-widget__error" role="alert">
+				{{ errors.name }}
+			</p>
 
 			<label class="wsw-widget__label" :for="ids.email">{{ t('Email address') }}</label>
-			<input :id="ids.email" v-model="email" class="wsw-widget__input" type="email" required />
-			<p class="wsw-widget__error" role="alert">{{ errors.email }}</p>
+			<input :id="ids.email"
+				v-model="email"
+				class="wsw-widget__input"
+				type="email"
+				required>
+			<p class="wsw-widget__error" role="alert">
+				{{ errors.email }}
+			</p>
 
 			<label class="wsw-widget__label" :for="ids.phone">{{ t('Phone (optional)') }}</label>
-			<input :id="ids.phone" v-model="phone" class="wsw-widget__input" type="tel" />
-			<p class="wsw-widget__error" role="alert">{{ errors.phone }}</p>
+			<input :id="ids.phone"
+				v-model="phone"
+				class="wsw-widget__input"
+				type="tel">
+			<p class="wsw-widget__error" role="alert">
+				{{ errors.phone }}
+			</p>
 
 			<label class="wsw-widget__label" :for="ids.notes">{{ t('Notes (optional)') }}</label>
-			<textarea :id="ids.notes" v-model="notes" class="wsw-widget__textarea" maxlength="500" rows="3"></textarea>
-			<p class="wsw-widget__error" role="alert">{{ errors.notes }}</p>
+			<textarea :id="ids.notes"
+				v-model="notes"
+				class="wsw-widget__textarea"
+				maxlength="500"
+				rows="3" />
+			<p class="wsw-widget__error" role="alert">
+				{{ errors.notes }}
+			</p>
 
 			<div class="wsw-widget__actions">
 				<button type="button" class="wsw-widget__button wsw-widget__button--secondary" @click="step = 'datetime'">
 					{{ t('Back') }}
 				</button>
-				<button type="button" class="wsw-widget__button" :disabled="!detailsValid" @click="step = 'review'">
+				<button type="button"
+					class="wsw-widget__button"
+					:disabled="!detailsValid"
+					@click="step = 'review'">
 					{{ t('Next') }}
 				</button>
 			</div>
@@ -139,13 +180,18 @@
 				<dd>{{ email }}</dd>
 			</dl>
 
-			<p v-if="submitError" class="wsw-widget__error" role="alert">{{ submitError }}</p>
+			<p v-if="submitError" class="wsw-widget__error" role="alert">
+				{{ submitError }}
+			</p>
 
 			<div class="wsw-widget__actions">
 				<button type="button" class="wsw-widget__button wsw-widget__button--secondary" @click="step = 'details'">
 					{{ t('Back') }}
 				</button>
-				<button type="button" class="wsw-widget__button" :disabled="submitting" @click="submit">
+				<button type="button"
+					class="wsw-widget__button"
+					:disabled="submitting"
+					@click="submit">
 					{{ submitting ? t('Submitting...') : t('Confirm booking') }}
 				</button>
 			</div>
@@ -299,7 +345,7 @@ export default {
 		authHeaders() {
 			return {
 				'Content-Type': 'application/json',
-				'Authorization': 'Bearer ' + this.apiKey,
+				Authorization: 'Bearer ' + this.apiKey,
 			}
 		},
 		buildUrl(path, params) {

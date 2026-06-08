@@ -23,6 +23,15 @@ webpackConfig.entry = {
 		import: path.join(__dirname, 'src', 'settings.js'),
 		filename: appId + '-settings.js',
 	},
+	// REQ-WSW-004: embeddable booking self-service widget — script-tag
+	// bundle (`widget.js`). The npm package (widget/) and web-component
+	// entrypoints re-import the same loader, so this is the single
+	// authoritative bundle for all four embed methods.
+	widget: {
+		import: path.join(__dirname, 'src', 'components', 'widget', 'WidgetEmbed.js'),
+		filename: 'widget.js',
+		library: { name: 'BookingWidget', type: 'umd', export: 'default' },
+	},
 }
 
 // Use local source when available (monorepo dev), otherwise fall back to npm package
