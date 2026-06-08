@@ -275,6 +275,20 @@
 					"order": 87
 				},
 				{
+					"id": "YearEndCloseChecklist",
+					"label": "Year-End Close Checklist",
+					"icon": "ClipboardCheckOutline",
+					"route": "YearEndCloseChecklist",
+					"order": 88
+				},
+				{
+					"id": "ClosingEntries",
+					"label": "Closing Entries",
+					"icon": "FileDocumentEditOutline",
+					"route": "ClosingEntries",
+					"order": 89
+				},
+				{
 					"id": "BookkeepingAuditTrail",
 					"label": "Audit Trail",
 					"icon": "HistoryIcon",
@@ -7436,6 +7450,206 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "FiscalYears",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "YearEndCloseChecklist",
+			"route": "/bookkeeping/year-end-close-checklist",
+			"type": "index",
+			"title": "Year-End Close Checklist",
+			"config": {
+				"register": "shillinq",
+				"schema": "FiscalYear",
+				"columns": [
+					{
+						"key": "yearNumber",
+						"label": "Year",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "closedAt",
+						"label": "Closed At",
+						"sortable": true
+					},
+					{
+						"key": "closedBy",
+						"label": "Closed By",
+						"sortable": false
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-yearNumber",
+				"detailRoute": "FiscalYearDetail",
+				"filters": {
+					"state": {
+						"in": [
+							"open",
+							"closing"
+						]
+					}
+				}
+			}
+		},
+		{
+			"id": "ClosingEntries",
+			"route": "/bookkeeping/closing-entries",
+			"type": "index",
+			"title": "Closing Entries",
+			"config": {
+				"register": "shillinq",
+				"schema": "ClosingEntry",
+				"columns": [
+					{
+						"key": "closingEntryNumber",
+						"label": "Entry #",
+						"sortable": true
+					},
+					{
+						"key": "entryDate",
+						"label": "Entry Date",
+						"sortable": true
+					},
+					{
+						"key": "entryType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "amountCents",
+						"label": "Amount (cents)",
+						"sortable": true
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"sortable": false
+					},
+					{
+						"key": "approvalStatus",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "fiscalYearId",
+						"label": "Fiscal Year",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-entryDate",
+				"detailRoute": "ClosingEntryDetail"
+			}
+		},
+		{
+			"id": "ClosingEntryDetail",
+			"route": "/bookkeeping/closing-entries/:id",
+			"type": "detail",
+			"title": "Closing Entry",
+			"config": {
+				"register": "shillinq",
+				"schema": "ClosingEntry",
+				"fields": [
+					{
+						"key": "closingEntryNumber",
+						"label": "Entry #",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYearId",
+						"label": "Fiscal Year",
+						"type": "string"
+					},
+					{
+						"key": "entryDate",
+						"label": "Entry Date",
+						"type": "date"
+					},
+					{
+						"key": "entryType",
+						"label": "Type",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "automationTemplate",
+						"label": "Template",
+						"type": "string"
+					},
+					{
+						"key": "amountCents",
+						"label": "Amount (cents)",
+						"type": "integer"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "glTransactionId",
+						"label": "GL Transaction",
+						"type": "string"
+					},
+					{
+						"key": "approvalStatus",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "approvedBy",
+						"label": "Approved By",
+						"type": "string"
+					},
+					{
+						"key": "approvedAt",
+						"label": "Approved At",
+						"type": "date-time"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ClosingEntries",
 				"sidebarProps": {
 					"tabs": [
 						{

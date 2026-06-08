@@ -6271,11 +6271,31 @@
 						},
 						"closing": {
 							"label": "Closing",
-							"description": "Year-end close is in progress; retained-earnings transfer JournalEntry posted. GL still writable until the closed transition completes."
+							"description": "Year-end close is in progress (semantically the spec's in-progress state per REQ-YEC-005); retained-earnings transfer JournalEntry posted. GL still writable until the closed transition completes. The closing checklist (REQ-YEC-006) is being evaluated."
 						},
 						"closed": {
 							"label": "Closed",
-							"description": "Fiscal year is closed. Opening-balance JournalEntry posted for the next year. Dimensional rollover CloudEvents fired. GL becomes immutable for this period."
+							"description": "Fiscal year is closed. Opening-balance JournalEntry posted for the next year. Dimensional rollover CloudEvents fired. GL becomes immutable for this period per REQ-YEC-007 (archive-period locking via immutablePeriod flag).",
+							"immutablePeriod": {
+								"enabled": true,
+								"description": "Per REQ-YEC-007: once a FiscalYear enters the closed state, all GLTransaction and GLLine records whose periodId / postingDate resolves to this fiscal year become read-only. New transactions are rejected with NC error 'Fiscal Year @self.yearNumber is closed and immutable. To post corrections, unclose the period (reopen), post the entry, and re-close.' Reads remain unrestricted for audit and reporting.",
+								"appliesTo": [
+									{
+										"register": "shillinq",
+										"schema": "GLTransaction",
+										"match": {
+											"administrationId": "@self.administrationId",
+											"fiscalYearId": "@self.id"
+										}
+									},
+									{
+										"register": "shillinq",
+										"schema": "GLLine",
+										"matchVia": "transactionId",
+										"matchTargetSchema": "GLTransaction"
+									}
+								]
+							}
 						},
 						"reopened": {
 							"label": "Reopened",
@@ -6297,7 +6317,84 @@
 							"from": "closing",
 							"to": "closed",
 							"label": "Complete year-end close",
-							"description": "Completes the year-end close. Emits an opening-balance JournalEntry for the next FiscalYear (balance-sheet accounts only; P&L accounts excluded per REQ-YEC-004). Auto-creates next FiscalYear record in state open if absent. Fires CloudEvents per dimension register (CostCenter, KostenDrager, Project) for dimensional rollover; each subscriber carries active dimensions forward and skips archived per REQ-YEC-005.",
+							"description": "Completes the year-end close. Emits an opening-balance JournalEntry for the next FiscalYear (balance-sheet accounts only; P&L accounts excluded per REQ-YEC-004). Auto-creates next FiscalYear record in state open if absent. Fires CloudEvents per dimension register (CostCenter, KostenDrager, Project) for dimensional rollover; each subscriber carries active dimensions forward and skips archived per REQ-YEC-005. The transition is gated by the closing checklist (REQ-YEC-006) declared in `requirePreconditions`; CFO override via `overrideChecklist: true` is audit-trailed.",
+							"requirePreconditions": [
+								{
+									"id": "trial-balance-verified",
+									"label": "Trial Balance Verified",
+									"description": "REQ-YEC-006 item 1: sum(debit GL lines) = sum(credit GL lines) for the FY within rounding tolerance.",
+									"aggregation": "trialBalanceImbalanceCents",
+									"operator": "<=",
+									"thresholdCents": 1,
+									"failMessage": "Trial Balance Verified: FAIL — imbalance @value cents. Post the correcting entry and try again.",
+									"passMessage": "Trial Balance Verified: PASS",
+									"overrideRole": "approver"
+								},
+								{
+									"id": "accruals-recorded",
+									"label": "Accruals Recorded",
+									"description": "REQ-YEC-006 item 2: when accrual accounts (default range 9700-9799) carry a non-zero balance, at least one ClosingEntry with entryType in {accrual-reversal, manual} (or a JournalEntry with subType year-end-closing) MUST be posted for this FY.",
+									"aggregation": "accrualReversalCoverage",
+									"operator": ">=",
+									"threshold": 1,
+									"appliesWhen": {
+										"accrualAccountBalanceCents": ">",
+										"thresholdCents": 0
+									},
+									"failMessage": "Accruals Recorded: FAIL — accrual accounts carry a non-zero balance but no accrual-reversal closing entry has been posted.",
+									"passMessage": "Accruals Recorded: PASS",
+									"overrideRole": "approver"
+								},
+								{
+									"id": "depreciation-posted",
+									"label": "Depreciation Posted",
+									"description": "REQ-YEC-006 item 3: when active FixedAsset records exist for this administration, a ClosingEntry of entryType depreciation MUST be posted for the FY. From T4-base bookkeeping-fixed-assets-depreciation.",
+									"aggregation": "depreciationClosingEntryCount",
+									"operator": ">=",
+									"threshold": 1,
+									"appliesWhen": {
+										"activeFixedAssetCount": ">",
+										"threshold": 0
+									},
+									"failMessage": "Depreciation Posted: FAIL — active fixed assets exist but no depreciation closing entry has been posted.",
+									"passMessage": "Depreciation Posted: PASS",
+									"overrideRole": "approver"
+								},
+								{
+									"id": "fx-declared",
+									"label": "FX Gains/Losses Declared",
+									"description": "REQ-YEC-006 item 4: when the administration's currency configuration includes a non-base currency, each foreign-currency GL account MUST have an FX revaluation closing entry. Multi-currency revaluation is the T5 boundary; T4 enforces declaration only.",
+									"aggregation": "foreignCurrencyFxCoverage",
+									"operator": ">=",
+									"threshold": 1,
+									"appliesWhen": {
+										"foreignCurrencyAccountCount": ">",
+										"threshold": 0
+									},
+									"failMessage": "FX Gains/Losses Declared: FAIL — foreign-currency accounts exist but no FX revaluation closing entry has been declared.",
+									"passMessage": "FX Gains/Losses Declared: PASS",
+									"overrideRole": "approver"
+								},
+								{
+									"id": "related-party-reviewed",
+									"label": "Related-Party Transactions Reviewed",
+									"description": "REQ-YEC-006 item 5: when any GLTransaction or JournalEntry carries `relatedParty: true`, the financial officer MUST acknowledge them via `GLTransaction.relatedPartyAcknowledged: true` (or the equivalent on JournalEntry).",
+									"aggregation": "relatedPartyUnacknowledgedCount",
+									"operator": "==",
+									"threshold": 0,
+									"appliesWhen": {
+										"relatedPartyTransactionCount": ">",
+										"threshold": 0
+									},
+									"failMessage": "Related-Party Transactions Reviewed: FAIL — @value related-party transactions remain unacknowledged.",
+									"passMessage": "Related-Party Transactions Reviewed: PASS",
+									"overrideRole": "approver"
+								}
+							],
+							"overrideField": "overrideChecklist",
+							"overrideRequiresRole": "approver",
+							"overrideRequiresMemo": true,
+							"overrideAuditTrail": true,
 							"sets": {
 								"closedAt": "@now",
 								"closedBy": "@currentUser",
@@ -6410,7 +6507,313 @@
 							"actionParameters": {
 								"eventType": "nl.conduction.shillinq.fiscal-year.reopened"
 							}
+						},
+						"onBeginCloseGenerateClosingEntries": {
+							"trigger": "transition:beginClose",
+							"description": "Per REQ-YEC-010: when the FiscalYear enters the closing state, auto-generate ClosingEntry records from every active ClosingEntryTemplate whose automationTrigger is on-close. For each matching template, sum the GL line balances inside the accountPattern range for this FY, create a ClosingEntry of the corresponding entryType (revenue-closing, expense-closing, accrual-reversal, …) with approvalStatus: pending-approval and automationTemplate: @template.templateId. When the template's reverseNextPeriod is true, generate a companion accrual-reversal ClosingEntry on the next FY (created as draft until the next FY activates). Per REQ-YEC-004 / REQ-YEC-010.",
+							"action": "x-openregister-iterate-and-create",
+							"actionParameters": {
+								"sourceRegister": "shillinq",
+								"sourceSchema": "ClosingEntryTemplate",
+								"sourceFilter": {
+									"administrationId": "@self.administrationId",
+									"lifecycleState": "active",
+									"automationTrigger": "on-close"
+								},
+								"forEach": {
+									"register": "shillinq",
+									"schema": "ClosingEntry",
+									"data": {
+										"closingEntryNumber": "CE-@self.yearNumber-@iter.index",
+										"fiscalYearId": "@self.id",
+										"entryDate": "@self.endDate",
+										"entryType": "@template.templateId",
+										"description": "Auto-generated from template @template.templateName for FY @self.yearNumber.",
+										"automationTemplate": "@template.templateId",
+										"amountCents": "@aggregate.sumAccountRangeCents(@template.accountPattern)",
+										"currency": "EUR",
+										"approvalStatus": "pending-approval",
+										"administrationId": "@self.administrationId"
+									},
+									"companion": {
+										"when": "@template.reverseNextPeriod == true",
+										"register": "shillinq",
+										"schema": "ClosingEntry",
+										"data": {
+											"closingEntryNumber": "CE-REV-@self.yearNumber+1-@iter.index",
+											"fiscalYearId": "@nextFiscalYear.id",
+											"entryDate": "@nextFiscalYear.startDate",
+											"entryType": "accrual-reversal",
+											"description": "Reversal of @template.templateName from FY @self.yearNumber, generated alongside the closing entry per REQ-YEC-010.",
+											"automationTemplate": "@template.templateId",
+											"amountCents": "@aggregate.sumAccountRangeCents(@template.accountPattern)",
+											"currency": "EUR",
+											"approvalStatus": "draft",
+											"administrationId": "@self.administrationId"
+										}
+									}
+								}
+							}
+						},
+						"onCloseMaterialiseRetainedEarnings": {
+							"trigger": "transition:close",
+							"description": "Per REQ-YEC-002 / REQ-YEC-009: on closing -> closed, materialise the RetainedEarnings record for this FY. Sums net income (revenue closing - expense closing) and rolls openingBalanceCents forward from the prior FY's closingBalanceCents. Links to the retained-earnings ClosingEntry that posts the equity-side transfer.",
+							"action": "x-openregister-create-related",
+							"actionParameters": {
+								"register": "shillinq",
+								"schema": "RetainedEarnings",
+								"data": {
+									"retainedEarningsId": "re-@self.yearNumber-@self.administrationId",
+									"fiscalYearId": "@self.id",
+									"openingBalanceCents": "@aggregate.priorRetainedEarningsClosingCents",
+									"netIncomeCents": "@aggregate.netIncomeCents",
+									"distributionsCents": "@aggregate.distributionsCents",
+									"closingBalanceCents": "@aggregate.priorRetainedEarningsClosingCents + @aggregate.netIncomeCents - @aggregate.distributionsCents",
+									"currency": "EUR",
+									"administrationId": "@self.administrationId"
+								}
+							}
 						}
+					}
+				},
+				"x-openregister-aggregations": {
+					"trialBalanceImbalanceCents": {
+						"description": "REQ-YEC-006 item 1 backing aggregation: absolute difference (in cents) between debit and credit GL line totals for this FY's GLTransactions in posted state. Feeds the trial-balance-verified checklist precondition. Tolerance is enforced via the precondition's thresholdCents.",
+						"expression": "ABS(SUM(GLLine.amountCents WHERE side = 'debit') - SUM(GLLine.amountCents WHERE side = 'credit'))",
+						"source": {
+							"register": "shillinq",
+							"schema": "GLLine",
+							"join": {
+								"to": "GLTransaction",
+								"on": "transactionId"
+							},
+							"filter": {
+								"GLTransaction.administrationId": "@self.administrationId",
+								"GLTransaction.fiscalYearId": "@self.id",
+								"GLTransaction.state": "posted"
+							}
+						}
+					},
+					"accrualReversalCoverage": {
+						"description": "REQ-YEC-006 item 2 backing aggregation: count of ClosingEntry records with entryType in {accrual-reversal, manual} or JournalEntry with subType year-end-closing for this FY. Feeds the accruals-recorded checklist precondition.",
+						"expression": "COUNT(*)",
+						"source": {
+							"register": "shillinq",
+							"schema": "ClosingEntry",
+							"filter": {
+								"administrationId": "@self.administrationId",
+								"fiscalYearId": "@self.id",
+								"entryType": {
+									"in": [
+										"accrual-reversal",
+										"manual"
+									]
+								},
+								"approvalStatus": {
+									"in": [
+										"approved",
+										"posted"
+									]
+								}
+							}
+						}
+					},
+					"accrualAccountBalanceCents": {
+						"description": "Helper aggregation: sum of cents balance on accrual accounts (default range 9700-9799) for this FY. Used by the accruals-recorded precondition's appliesWhen gate.",
+						"expression": "ABS(SUM(GLLine.amountCents WHERE side = 'credit') - SUM(GLLine.amountCents WHERE side = 'debit'))",
+						"source": {
+							"register": "shillinq",
+							"schema": "GLLine",
+							"join": {
+								"to": "GLTransaction",
+								"on": "transactionId"
+							},
+							"filter": {
+								"GLTransaction.administrationId": "@self.administrationId",
+								"GLTransaction.fiscalYearId": "@self.id",
+								"GLTransaction.state": "posted",
+								"accountNumber": {
+									"between": [
+										"9700",
+										"9799"
+									]
+								}
+							}
+						}
+					},
+					"depreciationClosingEntryCount": {
+						"description": "REQ-YEC-006 item 3 backing aggregation: count of ClosingEntry records with entryType = depreciation for this FY. Feeds the depreciation-posted checklist precondition.",
+						"expression": "COUNT(*)",
+						"source": {
+							"register": "shillinq",
+							"schema": "ClosingEntry",
+							"filter": {
+								"administrationId": "@self.administrationId",
+								"fiscalYearId": "@self.id",
+								"entryType": "depreciation",
+								"approvalStatus": {
+									"in": [
+										"approved",
+										"posted"
+									]
+								}
+							}
+						}
+					},
+					"activeFixedAssetCount": {
+						"description": "Helper aggregation: count of FixedAsset records in lifecycleState = active for this administration. Used by the depreciation-posted precondition's appliesWhen gate.",
+						"expression": "COUNT(*)",
+						"source": {
+							"register": "shillinq",
+							"schema": "FixedAsset",
+							"filter": {
+								"administrationId": "@self.administrationId",
+								"lifecycleState": "active"
+							}
+						}
+					},
+					"foreignCurrencyFxCoverage": {
+						"description": "REQ-YEC-006 item 4 backing aggregation: count of ClosingEntry records with currency != base currency for this FY (FX revaluation entries). Feeds the fx-declared checklist precondition.",
+						"expression": "COUNT(*)",
+						"source": {
+							"register": "shillinq",
+							"schema": "ClosingEntry",
+							"filter": {
+								"administrationId": "@self.administrationId",
+								"fiscalYearId": "@self.id",
+								"currency": {
+									"!=": "EUR"
+								}
+							}
+						}
+					},
+					"foreignCurrencyAccountCount": {
+						"description": "Helper aggregation: count of GLTransaction records on this FY where currency differs from the administration's base currency (EUR by default). Used by the fx-declared precondition's appliesWhen gate.",
+						"expression": "COUNT(DISTINCT currency)",
+						"source": {
+							"register": "shillinq",
+							"schema": "GLTransaction",
+							"filter": {
+								"administrationId": "@self.administrationId",
+								"fiscalYearId": "@self.id",
+								"currency": {
+									"!=": "EUR"
+								}
+							}
+						}
+					},
+					"relatedPartyUnacknowledgedCount": {
+						"description": "REQ-YEC-006 item 5 backing aggregation: count of posted GLTransaction records flagged relatedParty = true but relatedPartyAcknowledged != true for this FY. Feeds the related-party-reviewed checklist precondition.",
+						"expression": "COUNT(*)",
+						"source": {
+							"register": "shillinq",
+							"schema": "GLTransaction",
+							"filter": {
+								"administrationId": "@self.administrationId",
+								"fiscalYearId": "@self.id",
+								"state": "posted",
+								"relatedParty": true,
+								"relatedPartyAcknowledged": {
+									"!=": true
+								}
+							}
+						}
+					},
+					"relatedPartyTransactionCount": {
+						"description": "Helper aggregation: count of posted GLTransaction records flagged relatedParty = true for this FY. Used by the related-party-reviewed precondition's appliesWhen gate.",
+						"expression": "COUNT(*)",
+						"source": {
+							"register": "shillinq",
+							"schema": "GLTransaction",
+							"filter": {
+								"administrationId": "@self.administrationId",
+								"fiscalYearId": "@self.id",
+								"state": "posted",
+								"relatedParty": true
+							}
+						}
+					},
+					"netIncomeCents": {
+						"description": "Helper aggregation feeding the retained-earnings closing materialiser: sum of credit-side revenue (account range 4000-4999) minus debit-side expense (account range 5000-6999) for this FY in posted GL lines.",
+						"expression": "SUM(CASE WHEN accountNumber BETWEEN 4000 AND 4999 THEN (CASE WHEN side = 'credit' THEN amountCents ELSE -amountCents END) WHEN accountNumber BETWEEN 5000 AND 6999 THEN (CASE WHEN side = 'debit' THEN -amountCents ELSE amountCents END) ELSE 0 END)",
+						"source": {
+							"register": "shillinq",
+							"schema": "GLLine",
+							"join": {
+								"to": "GLTransaction",
+								"on": "transactionId"
+							},
+							"filter": {
+								"GLTransaction.administrationId": "@self.administrationId",
+								"GLTransaction.fiscalYearId": "@self.id",
+								"GLTransaction.state": "posted"
+							}
+						}
+					},
+					"priorRetainedEarningsClosingCents": {
+						"description": "Helper aggregation feeding the retained-earnings closing materialiser: prior FY's RetainedEarnings.closingBalanceCents (0 for the very first FY).",
+						"expression": "COALESCE(MAX(closingBalanceCents), 0)",
+						"source": {
+							"register": "shillinq",
+							"schema": "RetainedEarnings",
+							"filter": {
+								"administrationId": "@self.administrationId",
+								"fiscalYear.yearNumber": "@self.yearNumber - 1"
+							}
+						}
+					},
+					"distributionsCents": {
+						"description": "Helper aggregation feeding the retained-earnings closing materialiser: sum of distributions posted to the distribution-accounts range (default 9750-9799) for this FY. Operators override this range via the chart-of-accounts configuration.",
+						"expression": "SUM(GLLine.amountCents WHERE side = 'debit')",
+						"source": {
+							"register": "shillinq",
+							"schema": "GLLine",
+							"join": {
+								"to": "GLTransaction",
+								"on": "transactionId"
+							},
+							"filter": {
+								"GLTransaction.administrationId": "@self.administrationId",
+								"GLTransaction.fiscalYearId": "@self.id",
+								"GLTransaction.state": "posted",
+								"accountNumber": {
+									"between": [
+										"9750",
+										"9799"
+									]
+								}
+							}
+						}
+					},
+					"balanceCarryforwardValid": {
+						"description": "REQ-YEC-008 cross-FY balance-carryforward validation. Aggregation precondition on the next FY's open -> ... activation: confirms the next FY's opening-balance GL postings match the prior FY's closing balances per balance-sheet account. Returns 0 if perfectly matched (within rounding tolerance); positive integer counts mismatched accounts.",
+						"expression": "COUNT(DISTINCT accountNumber WHERE ABS(priorClosingBalanceCents - currentOpeningBalanceCents) > 1)",
+						"source": {
+							"register": "shillinq",
+							"schema": "GLLine",
+							"join": {
+								"to": "GLTransaction",
+								"on": "transactionId"
+							},
+							"filter": {
+								"GLTransaction.administrationId": "@self.administrationId",
+								"GLTransaction.subType": {
+									"in": [
+										"year-end-closing",
+										"year-end-opening-balance"
+									]
+								}
+							},
+							"prior": {
+								"fiscalYearId": "@self.priorFiscalYear.id"
+							},
+							"current": {
+								"fiscalYearId": "@self.id"
+							}
+						},
+						"toleranceCents": 1,
+						"onFail": "warn",
+						"failMessage": "Balance carryforward: @value account(s) show a closing/opening mismatch greater than 1 cent. Re-run the opening-balance JournalEntry from the prior FY's close."
 					}
 				},
 				"x-openregister-rbac": {
@@ -6459,6 +6862,680 @@
 						},
 						"title": "Boekjaar heropend",
 						"message": "Boekjaar @self.yearNumber is heropend door @self.reopenedBy. Reden: @self.reopenReason"
+					}
+				}
+			},
+			"ClosingEntry": {
+				"slug": "ClosingEntry",
+				"icon": "ClipboardCheckOutline",
+				"version": "0.1.0",
+				"title": "Closing Entry",
+				"description": "A manual or automated year-end closing entry per REQ-YEC-001. Tracks accrual postings, reversals, revenue/expense closings to the income-summary account, depreciation postings, retained-earnings rollforward, and opening-balance seeding. Materialises as a balanced GLTransaction via the JournalEntry materialisation pattern (T1) when approved and posted. All amounts are stored as integer-cent for money-safe arithmetic per the foundation cents-based money convention.",
+				"x-schema-org": "schema:Thing",
+				"type": "object",
+				"x-openregister-unique": [
+					[
+						"closingEntryNumber",
+						"administrationId"
+					]
+				],
+				"required": [
+					"closingEntryNumber",
+					"fiscalYearId",
+					"entryDate",
+					"entryType",
+					"amountCents",
+					"currency",
+					"approvalStatus",
+					"administrationId"
+				],
+				"properties": {
+					"closingEntryNumber": {
+						"type": "string",
+						"description": "Sequential closing-entry number unique per administration (e.g. CE-2026-0001). Per REQ-YEC-001.",
+						"example": "CE-2026-0001"
+					},
+					"fiscalYearId": {
+						"type": "string",
+						"description": "FK to the FiscalYear this closing entry belongs to. Per REQ-YEC-001.",
+						"example": "fy-2026-nl"
+					},
+					"entryDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Posting date of the closing entry. Typically the last day of the fiscal year (or first day of next FY for opening-balance entries). Per REQ-YEC-001.",
+						"example": "2026-12-31"
+					},
+					"entryType": {
+						"type": "string",
+						"enum": [
+							"revenue-closing",
+							"expense-closing",
+							"accrual-reversal",
+							"depreciation",
+							"retained-earnings",
+							"opening-balance",
+							"manual"
+						],
+						"description": "Classification of the closing entry. Per REQ-YEC-001.",
+						"example": "revenue-closing"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "Operator-authored description of the entry. Per REQ-YEC-001.",
+						"example": "Close revenue accounts 4000-4999 to income summary 9900"
+					},
+					"automationTemplate": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to ClosingEntryTemplate.templateId when this entry was generated automatically by a template. Per REQ-YEC-001 / REQ-YEC-010.",
+						"example": "revenue-closing"
+					},
+					"amountCents": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Total closing-entry amount in minor units of the currency (integer cents). Per REQ-YEC-001. Money-safe arithmetic per the foundation cents-based convention.",
+						"example": 100000000
+					},
+					"currency": {
+						"type": "string",
+						"description": "ISO 4217 currency code of the closing entry amount.",
+						"minLength": 3,
+						"maxLength": 3,
+						"default": "EUR",
+						"example": "EUR"
+					},
+					"glTransactionId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to the GLTransaction that materialised this closing entry when posted. Set by the lifecycle action on transition:post per REQ-YEC-009.",
+						"example": "gl-txn-2026-close-revenue"
+					},
+					"approvalStatus": {
+						"type": "string",
+						"enum": [
+							"draft",
+							"pending-approval",
+							"approved",
+							"posted",
+							"reversed"
+						],
+						"default": "draft",
+						"description": "Lifecycle state of the closing entry. draft -> pending-approval -> approved -> posted; or posted -> reversed. Per REQ-YEC-001 / REQ-YEC-009."
+					},
+					"approvedBy": {
+						"type": "string",
+						"nullable": true,
+						"description": "Nextcloud user id of the financial officer / CFO who approved this closing entry. Per REQ-YEC-001.",
+						"example": "cfo"
+					},
+					"approvedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true,
+						"description": "ISO 8601 timestamp when the closing entry was approved. Per REQ-YEC-001.",
+						"example": "2026-12-31T18:00:00Z"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration that owns this closing entry. Per REQ-YEC-001.",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "approvalStatus",
+					"initialState": "draft",
+					"states": {
+						"draft": {
+							"label": "Draft",
+							"description": "Under construction. Editable. Not yet visible to approvers."
+						},
+						"pending-approval": {
+							"label": "Pending approval",
+							"description": "Submitted for CFO / financial-officer approval. Editable only by the originating bookkeeper until approved or rejected."
+						},
+						"approved": {
+							"label": "Approved",
+							"description": "Approved by CFO / financial officer. Ready to post to the GL."
+						},
+						"posted": {
+							"label": "Posted",
+							"description": "Materialised as a balanced GLTransaction. Immutable from the closing-entry side; reversed only via a compensating closing entry."
+						},
+						"reversed": {
+							"label": "Reversed",
+							"description": "Superseded by a compensating closing entry. Excluded from active reporting but remains queryable for audit."
+						}
+					},
+					"transitions": {
+						"submit": {
+							"from": "draft",
+							"to": "pending-approval",
+							"label": "Submit for approval",
+							"description": "Bookkeeper submits the closing entry to the CFO for review per REQ-YEC-001."
+						},
+						"approve": {
+							"from": "pending-approval",
+							"to": "approved",
+							"label": "Approve",
+							"description": "CFO / financial-officer approves the closing entry per REQ-YEC-001.",
+							"requiresRole": "approver",
+							"sets": {
+								"approvedAt": "@now",
+								"approvedBy": "@currentUser"
+							}
+						},
+						"post": {
+							"from": "approved",
+							"to": "posted",
+							"label": "Post to GL",
+							"description": "Materialise the closing entry as a balanced GLTransaction with matching GLLine rows per REQ-YEC-009. The lifecycle action invokes the same materialisation extension T1 uses for JournalEntry per ADR-031."
+						},
+						"reverse": {
+							"from": "posted",
+							"to": "reversed",
+							"label": "Reverse",
+							"description": "Mark this closing entry as reversed. A compensating closing entry must be created and posted separately to keep the GL balanced."
+						}
+					},
+					"hooks": {
+						"onPost": {
+							"trigger": "transition:post",
+							"description": "Materialise the approved closing entry as a balanced GLTransaction with matching GLLine rows per REQ-YEC-009. The lifecycle action mirrors the JournalEntry materialisation extension (T1). Lines are derived from the linked ClosingEntryTemplate.accountPattern (for automated entries) or from the operator-supplied draft body (for manual entries).",
+							"action": "x-openregister-create-related",
+							"actionParameters": {
+								"register": "shillinq",
+								"schema": "GLTransaction",
+								"data": {
+									"description": "Closing entry @self.closingEntryNumber - @self.entryType",
+									"postingDate": "@self.entryDate",
+									"currency": "@self.currency",
+									"state": "posted",
+									"sourceReference": "closing-entry:@self.closingEntryNumber",
+									"administrationId": "@self.administrationId"
+								},
+								"setBackReference": "glTransactionId"
+							}
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"fiscalYear": {
+						"localField": "fiscalYearId",
+						"relatedSchema": "FiscalYear",
+						"cardinality": "many-to-one",
+						"description": "The fiscal year this closing entry belongs to."
+					},
+					"template": {
+						"localField": "automationTemplate",
+						"relatedSchema": "ClosingEntryTemplate",
+						"relatedField": "templateId",
+						"cardinality": "many-to-one",
+						"description": "The closing-entry template that generated this entry (when generated automatically)."
+					},
+					"glTransaction": {
+						"localField": "glTransactionId",
+						"relatedSchema": "GLTransaction",
+						"cardinality": "one-to-one",
+						"description": "The materialised GL transaction (set when the entry is posted)."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							],
+							"lifecycleTransitions": [
+								"submit"
+							]
+						},
+						"approver": {
+							"permissions": [
+								"read"
+							],
+							"lifecycleTransitions": [
+								"approve",
+								"post",
+								"reverse"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						},
+						"admin": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							],
+							"lifecycleTransitions": [
+								"submit",
+								"approve",
+								"post",
+								"reverse"
+							]
+						}
+					},
+					"adminScope": {
+						"field": "administrationId",
+						"enforce": true
+					}
+				}
+			},
+			"RetainedEarnings": {
+				"slug": "RetainedEarnings",
+				"icon": "PiggyBankOutline",
+				"version": "0.1.0",
+				"title": "Retained Earnings",
+				"description": "Tracks the retained-earnings sub-ledger position per fiscal year per REQ-YEC-002: opening balance, net income for the period, distributions paid, and closing balance. Materialised via the FiscalYear close lifecycle (retained-earnings transfer JournalEntry) and linked to its driving ClosingEntry. Sub-ledger view onto the equity-side retained-earnings GL account. All amounts in integer cents (money-safe).",
+				"x-schema-org": "schema:Thing",
+				"type": "object",
+				"x-openregister-unique": [
+					[
+						"fiscalYearId",
+						"administrationId"
+					]
+				],
+				"required": [
+					"retainedEarningsId",
+					"fiscalYearId",
+					"openingBalanceCents",
+					"netIncomeCents",
+					"closingBalanceCents",
+					"currency",
+					"administrationId"
+				],
+				"properties": {
+					"retainedEarningsId": {
+						"type": "string",
+						"description": "Operator-stable identifier for this retained-earnings record. Per REQ-YEC-002.",
+						"example": "re-2026-adm-consultancy-nl"
+					},
+					"fiscalYearId": {
+						"type": "string",
+						"description": "FK to the FiscalYear this record covers. One RetainedEarnings record per (fiscalYearId, administrationId). Per REQ-YEC-002.",
+						"example": "fy-2026-nl"
+					},
+					"openingBalanceCents": {
+						"type": "integer",
+						"description": "Retained earnings at the start of the fiscal year in integer cents (signed; negative values represent accumulated deficit). Equals prior FY closingBalanceCents per REQ-YEC-002 rollforward.",
+						"example": 50000000000
+					},
+					"netIncomeCents": {
+						"type": "integer",
+						"description": "Net income for the fiscal year (revenue minus expenses) in integer cents (signed; negative = net loss). Calculated as the income-summary closing balance after revenue and expense closing entries are posted. Per REQ-YEC-002.",
+						"example": 25000000000
+					},
+					"distributionsCents": {
+						"type": "integer",
+						"nullable": true,
+						"default": 0,
+						"description": "Dividends or distributions paid out during the fiscal year in integer cents (non-negative). Deducted from net income for closing-balance calculation. Per REQ-YEC-002.",
+						"example": 5000000000
+					},
+					"closingBalanceCents": {
+						"type": "integer",
+						"description": "Retained earnings at the end of the fiscal year in integer cents (signed). Computed as openingBalanceCents + netIncomeCents - distributionsCents per REQ-YEC-002.",
+						"example": 70000000000
+					},
+					"currency": {
+						"type": "string",
+						"description": "ISO 4217 currency of the retained-earnings balances.",
+						"minLength": 3,
+						"maxLength": 3,
+						"default": "EUR",
+						"example": "EUR"
+					},
+					"closingEntryId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to the ClosingEntry that materialised the retained-earnings transfer for this FY. Set when the FY close lifecycle posts the entry per REQ-YEC-002 / REQ-YEC-009.",
+						"example": "ce-2026-retained-earnings"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration that owns this retained-earnings record. Composite uniqueness with fiscalYearId per D5.",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-relations": {
+					"fiscalYear": {
+						"localField": "fiscalYearId",
+						"relatedSchema": "FiscalYear",
+						"cardinality": "many-to-one",
+						"description": "The fiscal year this retained-earnings record covers."
+					},
+					"closingEntry": {
+						"localField": "closingEntryId",
+						"relatedSchema": "ClosingEntry",
+						"cardinality": "one-to-one",
+						"description": "The closing entry that materialised the retained-earnings rollforward."
+					}
+				},
+				"x-openregister-aggregations": {
+					"validateRollforward": {
+						"description": "Validate the retained-earnings rollforward identity per REQ-YEC-002: closingBalanceCents == openingBalanceCents + netIncomeCents - (distributionsCents OR 0). Evaluated by the FiscalYear in-progress -> closed transition before the period locks.",
+						"expression": "@self.closingBalanceCents == (@self.openingBalanceCents + @self.netIncomeCents - (@self.distributionsCents | 0))",
+						"toleranceCents": 1,
+						"onFail": "block-transition"
+					},
+					"validateCarryforward": {
+						"description": "Validate that this FY's openingBalanceCents equals the prior FY's closingBalanceCents (within rounding tolerance) per REQ-YEC-008.",
+						"expression": "@self.openingBalanceCents == @prior.closingBalanceCents",
+						"prior": {
+							"register": "shillinq",
+							"schema": "RetainedEarnings",
+							"match": {
+								"administrationId": "@self.administrationId",
+								"fiscalYear.yearNumber": "@self.fiscalYear.yearNumber - 1"
+							}
+						},
+						"toleranceCents": 1,
+						"onFail": "warn"
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						},
+						"approver": {
+							"permissions": [
+								"read"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						},
+						"admin": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						}
+					},
+					"adminScope": {
+						"field": "administrationId",
+						"enforce": true
+					}
+				}
+			},
+			"ClosingAccount": {
+				"slug": "ClosingAccount",
+				"icon": "AccountLockOutline",
+				"version": "0.1.0",
+				"title": "Closing Account",
+				"description": "Designates the single closing / income-summary account per administration (typically account 9900) per REQ-YEC-003. All revenue and expense closing entries flow through this account before being transferred to retained earnings. Supports time-bounded historicity via `effectiveFrom` so administrations can rotate their closing account across fiscal years if needed.",
+				"x-schema-org": "schema:Thing",
+				"type": "object",
+				"x-openregister-unique": [
+					[
+						"administrationId",
+						"effectiveFrom"
+					]
+				],
+				"required": [
+					"accountNumber",
+					"administrationId"
+				],
+				"properties": {
+					"accountNumber": {
+						"type": "string",
+						"description": "FK to Account.accountNumber. Typically 9900 (income summary) or another equity-side closing account. Per REQ-YEC-003.",
+						"example": "9900"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration. One active ClosingAccount per administration at any point in time per REQ-YEC-003.",
+						"example": "adm-consultancy-nl"
+					},
+					"isActive": {
+						"type": "boolean",
+						"default": true,
+						"description": "Whether this is the currently active closing account for the administration. The lifecycle action on ClosingEntry / FiscalYear close selects the active record. Per REQ-YEC-003."
+					},
+					"effectiveFrom": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "Optional start date if the administration rotates closing accounts across fiscal years (e.g. switching from 9900 to 9990). When null, this ClosingAccount applies indefinitely. Per REQ-YEC-003.",
+						"example": "2026-01-01"
+					}
+				},
+				"x-openregister-relations": {
+					"account": {
+						"localField": "accountNumber",
+						"relatedSchema": "Account",
+						"relatedField": "accountNumber",
+						"cardinality": "many-to-one",
+						"description": "The GL account designated as the closing / income-summary account."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						},
+						"approver": {
+							"permissions": [
+								"read"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						},
+						"admin": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						}
+					},
+					"adminScope": {
+						"field": "administrationId",
+						"enforce": true
+					}
+				}
+			},
+			"ClosingEntryTemplate": {
+				"slug": "ClosingEntryTemplate",
+				"icon": "FileCogOutline",
+				"version": "0.1.0",
+				"title": "Closing Entry Template",
+				"description": "Declarative rule that drives automated closing-entry generation per REQ-YEC-004. Each template matches a range of account numbers, transfers their balances to the configured closing account, and optionally reverses in the next period. Lifecycle (active/paused/archived) lets operators disable templates without deleting them. Templates are consumed by the FiscalYear in-progress -> closed transition per REQ-YEC-010 and by the ClosingEntry materialisation hook per REQ-YEC-009.",
+				"x-schema-org": "schema:Thing",
+				"type": "object",
+				"x-openregister-unique": [
+					[
+						"templateId",
+						"administrationId"
+					]
+				],
+				"required": [
+					"templateId",
+					"templateName",
+					"accountPattern",
+					"closingAccountNumber",
+					"administrationId",
+					"lifecycleState",
+					"createdAt"
+				],
+				"properties": {
+					"templateId": {
+						"type": "string",
+						"description": "Stable operator-readable identifier (e.g. revenue-closing). Unique per administrationId. Per REQ-YEC-004.",
+						"example": "revenue-closing"
+					},
+					"templateName": {
+						"type": "string",
+						"description": "Display name shown in the closing-entry generation UI. Per REQ-YEC-004.",
+						"example": "Revenue Closing"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "Operator documentation of what this template does. Per REQ-YEC-004.",
+						"example": "Close all revenue accounts (4000-4999) to income summary (9900)."
+					},
+					"accountPattern": {
+						"type": "string",
+						"description": "Account range or regex matching the GL accounts whose balances close through this template (e.g. 4000-4999 for revenue accounts, 5000-6999 for expense accounts). Per REQ-YEC-004.",
+						"example": "4000-4999"
+					},
+					"closingAccountNumber": {
+						"type": "string",
+						"description": "FK to Account.accountNumber. The target closing / income-summary account (typically 9900). Per REQ-YEC-004.",
+						"example": "9900"
+					},
+					"reverseNextPeriod": {
+						"type": "boolean",
+						"default": false,
+						"description": "When true, an accrual-reversal closing entry is generated in the next fiscal year reversing this one. Used for prior-period accrual reversals per REQ-YEC-004."
+					},
+					"automationTrigger": {
+						"type": "string",
+						"enum": [
+							"manual",
+							"on-close",
+							"on-check"
+						],
+						"default": "on-close",
+						"description": "When this template fires. on-close = at the FiscalYear in-progress -> closed transition (default); on-check = during the closing checklist; manual = only when explicitly invoked. Per REQ-YEC-004."
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration that owns this template. Per REQ-YEC-004.",
+						"example": "adm-consultancy-nl"
+					},
+					"lifecycleState": {
+						"type": "string",
+						"enum": [
+							"active",
+							"paused",
+							"archived"
+						],
+						"default": "active",
+						"description": "Whether this template is consumed by the FiscalYear close lifecycle. paused = skipped this cycle but remains in the catalogue; archived = retained for audit only. Per REQ-YEC-004."
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "ISO 8601 timestamp when this template was created. Per REQ-YEC-004.",
+						"example": "2026-01-15T10:00:00Z"
+					},
+					"modifiedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true,
+						"description": "ISO 8601 timestamp when this template was last modified. Per REQ-YEC-004.",
+						"example": "2026-06-08T14:00:00Z"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Consumed by the FiscalYear close lifecycle when automationTrigger matches."
+						},
+						"paused": {
+							"label": "Paused",
+							"description": "Skipped by the close lifecycle but remains in the catalogue and may be re-activated."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Retained for audit purposes only. Never executed."
+						}
+					},
+					"transitions": {
+						"pause": {
+							"from": "active",
+							"to": "paused",
+							"label": "Pause template",
+							"description": "Stop this template from firing during the next close cycle."
+						},
+						"resume": {
+							"from": "paused",
+							"to": "active",
+							"label": "Resume template",
+							"description": "Re-enable a paused template."
+						},
+						"archive": {
+							"from": "paused",
+							"to": "archived",
+							"label": "Archive template",
+							"description": "Permanently retire this template (kept for audit)."
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"closingAccount": {
+						"localField": "closingAccountNumber",
+						"relatedSchema": "Account",
+						"relatedField": "accountNumber",
+						"cardinality": "many-to-one",
+						"description": "The GL account these closing entries flow through."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						},
+						"approver": {
+							"permissions": [
+								"read",
+								"update"
+							],
+							"lifecycleTransitions": [
+								"pause",
+								"resume"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						},
+						"admin": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							],
+							"lifecycleTransitions": [
+								"pause",
+								"resume",
+								"archive"
+							]
+						}
+					},
+					"adminScope": {
+						"field": "administrationId",
+						"enforce": true
 					}
 				}
 			},
@@ -14865,6 +15942,57 @@
 			"snoozeUntil": null,
 			"lifecycleState": "active",
 			"administrationId": "adm-warehouse-amsterdam"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "ClosingEntryTemplate",
+				"slug": "closing-template-revenue-default"
+			},
+			"templateId": "revenue-closing",
+			"templateName": "Revenue Closing",
+			"description": "Close all revenue accounts (4000-4999) to the income-summary account (9900) at the end of the fiscal year. Per REQ-YEC-012 default seed.",
+			"accountPattern": "4000-4999",
+			"closingAccountNumber": "9900",
+			"reverseNextPeriod": false,
+			"automationTrigger": "on-close",
+			"administrationId": "adm-consultancy-nl",
+			"lifecycleState": "active",
+			"createdAt": "2026-01-01T00:00:00Z"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "ClosingEntryTemplate",
+				"slug": "closing-template-expense-default"
+			},
+			"templateId": "expense-closing",
+			"templateName": "Expense Closing",
+			"description": "Close all expense accounts (5000-6999) to the income-summary account (9900) at the end of the fiscal year. Per REQ-YEC-012 default seed.",
+			"accountPattern": "5000-6999",
+			"closingAccountNumber": "9900",
+			"reverseNextPeriod": false,
+			"automationTrigger": "on-close",
+			"administrationId": "adm-consultancy-nl",
+			"lifecycleState": "active",
+			"createdAt": "2026-01-01T00:00:00Z"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "ClosingEntryTemplate",
+				"slug": "closing-template-accrual-reversal-default"
+			},
+			"templateId": "accrual-reversal",
+			"templateName": "Accrual Reversal",
+			"description": "Reverse prior-year accrual postings (9700-9799) into current-year audit/adjustments (5900) and mark the entries for automatic reversal in the next fiscal year. Per REQ-YEC-012 default seed.",
+			"accountPattern": "9700-9799",
+			"closingAccountNumber": "5900",
+			"reverseNextPeriod": true,
+			"automationTrigger": "on-close",
+			"administrationId": "adm-consultancy-nl",
+			"lifecycleState": "active",
+			"createdAt": "2026-01-01T00:00:00Z"
 		}
 	]
 }
