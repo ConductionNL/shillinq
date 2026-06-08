@@ -672,6 +672,17 @@
 					],
 					"linkBackField": "linkedJournalEntries",
 					"x-spec": "openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md#REQ-PEN-003"
+				},
+				"x-openregister-deferred-tax-hint": {
+					"description": "Declarative deferred-tax detection hint consumed by bookkeeping-deferred-tax (REQ-DT-001). PensionMovement creates timing differences between the commercial (IFRS / RJ 271) measurement of the pension liability and its tax basis (in NL: pension provisions are typically only deductible when contributions are paid out, so the commercial provision creates a deductible temporary difference / DTA). The detector reads this hint and emits TemporaryDifference records with category=pension per fiscal period per administration; the OCI component flows to TaxProvision.recognisedInOCI per REQ-DT-009.",
+					"targetSchema": "TemporaryDifference",
+					"category": "pension",
+					"type": "deductible",
+					"commercialCarryingSource": "netPensionMovementPL + netPensionMovementOCI",
+					"taxCarryingSource": "employerContributions",
+					"ociComponentSource": "netPensionMovementOCI",
+					"reversalPattern": "long-term",
+					"x-spec": "openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md#REQ-PEN-003"
 				}
 			},
 			"PensionAssumptionSensitivity": {

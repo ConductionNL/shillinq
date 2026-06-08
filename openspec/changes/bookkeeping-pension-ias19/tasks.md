@@ -147,10 +147,19 @@
   the materialised JournalEntries flow back into
   `PensionMovement.linkedJournalEntries`.)*
 
-- [ ] Task 17: Integrate with `bookkeeping-deferred-tax` (T2) timing-difference
+- [x] Task 17: Integrate with `bookkeeping-deferred-tax` (T2) timing-difference
   detector: `pension-movement` records trigger DTA calculation for
   commercieel (IFRS) vs fiscaal (box 1 tax) valuation divergence per
   Dutch tax rules (pension provision often not deductible until paid)
+  *(declarative — adds `x-openregister-deferred-tax-hint` block on
+  `PensionMovement` consumed by the merged `bookkeeping-deferred-tax`
+  detector (REQ-DT-001). The hint pins `category=pension` (matching the
+  TemporaryDifference enum already shipped in that spec),
+  `type=deductible` (NL Vpb rule), the commercial-carrying expression
+  (PL + OCI bucket sum), the tax-carrying expression
+  (employerContributions, i.e. only the paid portion is deductible) and
+  the OCI component so the detector can route it to
+  `TaxProvision.recognisedInOCI` per REQ-DT-009.)*
 
 - [ ] Task 18: Integrate with `bookkeeping-financial-statements` (T3) jaarrekening
   renderer: make `pension-disclosure-tabel.tableContent` a data-source
