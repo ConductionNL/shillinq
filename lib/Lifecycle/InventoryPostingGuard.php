@@ -75,7 +75,6 @@ use Psr\Log\LoggerInterface;
  */
 class InventoryPostingGuard
 {
-
     /**
      * Construct the guard with DI dependencies.
      *

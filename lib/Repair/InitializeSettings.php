@@ -86,7 +86,9 @@ class InitializeSettings implements IRepairStep
      * Phase 10: seeds demo Barcode records (EAN/GTIN/SSCC/UPC/internal) per REQ-SKU-011.
      * Phase 11: seeds demo InventoryStock records (Amsterdam / Rotterdam / Utrecht) per REQ-IST-009.
      * Phase 12: seeds BBVProgramme + BudgetBBVMapping demo records (waterschappen BBV chain member 01) per REQ-BBVW-001 / REQ-BBVW-002.
-     * Phase 13: seeds the default InventoryGLConfig (RGS 3.5 MKB account routing for COGS / Inventory Asset / GR-IR / Inventory Adjustment) per REQ-CG-001 / Task 11.
+     * Phase 13: seeds the default InventoryGLConfig (RGS 3.5 MKB account
+     * routing for COGS / Inventory Asset / GR-IR / Inventory Adjustment)
+     * per REQ-CG-001 / Task 11.
      *
      * @param IOutput $output The output interface for progress reporting
      *
