@@ -130,7 +130,7 @@
   aanbestedingsplichtig if threshold exceeded; block declaration without
   aanbestedingsdossier SupportingDocument
 
-- [ ] Task 17: Implement kwartaal-realisatie-rapportage per REQ-EUF-003 — aggregate
+- [~] Task 17: Implement kwartaal-realisatie-rapportage per REQ-EUF-003 — aggregate
   EuExpenditure records by declaration_period (ISO quarterly), split by cost_category,
   add RCO/RCR indicator fields, export XBRL/Excel per MA template, append digitale
   handtekening (projectleider public key)
@@ -151,7 +151,7 @@
   reduce budget available for toekomstige declaraties, include correctie in volgend
   accounts-package
 
-- [ ] Task 20: Implement accounts-package generation per REQ-EUF-006 — for
+- [~] Task 20: Implement accounts-package generation per REQ-EUF-006 — for
   programma-year (1 juli – 30 juni), aggregate all EuExpenditure with status =
   betaald_door_EC, generate gecertificeerde-uitgaven-tabel, management-declaration
   template, samenvatting controles + audits, uitsplitsing per priority/specifiek doel,
@@ -197,13 +197,13 @@
   The runtime docudesk hashing/retention call needs a live docudesk instance
   (deferred), but the schema-level integration is complete.
 
-- [ ] Task 26: Integrate with openconnector (optional T4) — on IrregularityReport
+- [~] Task 26: Integrate with openconnector (optional T4) — on IrregularityReport
   with amount >= €10k + ims_reference populated, trigger IMS-API call to OLAF system;
   on accounts-package completion, trigger optional SFC2021 feed to EC
   — DEFERRED (T4, explicitly optional per proposal Out-of-Scope): needs the
   openconnector IMS/SFC2021 bridge which is not yet merged.
 
-- [ ] Task 27: Integrate with purchaseq (optional T4) — on EuExpenditure.booking
+- [~] Task 27: Integrate with purchaseq (optional T4) — on EuExpenditure.booking
   with gross_amount >= aanbestedings-drempel, purchaseq should flag as EU-procurement-relevant;
   EuExpenditure validation can query purchaseq for aanbestedingsdossier status
   — DEFERRED (T4, explicitly optional per proposal Out-of-Scope): purchaseq owns
