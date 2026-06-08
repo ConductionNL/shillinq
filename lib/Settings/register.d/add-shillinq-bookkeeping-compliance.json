@@ -333,6 +333,7 @@
       },
       "BankStatement": {
         "x-openregister-audit": true,
+        "x-openregister-audit-trail": { "enabled": true, "description": "REQ-AT-001: BankStatement carries an immutable audit trail per ADR-022. Import, lifecycle transitions, and operator actions append audit events." },
         "properties": {
           "statementId": { "type": "string", "description": "Unique statement identifier (e.g. BS-2026-001) per REQ-BR-002. Additive overlay field for the reconciliation flow.", "example": "BS-2026-001" },
           "bankAccountIban": { "type": "string", "description": "IBAN of the reconciled bank account per REQ-BR-002." },
@@ -342,9 +343,16 @@
           "closingBalance": { "type": "number", "description": "Closing balance per the bank (EUR) per REQ-BR-002." },
           "currency": { "type": "string", "minLength": 3, "maxLength": 3, "default": "EUR", "description": "ISO 4217 currency code." },
           "importFormat": { "type": "string", "enum": ["camt053", "mt940", "csv", "manual"], "description": "Import format per REQ-BR-002/REQ-BR-003." },
-          "fileChecksum": { "type": "string", "description": "SHA-256 hash of the imported file for duplicate-import rejection per REQ-BR-008." },
-          "lifecycleState": { "type": "string", "enum": ["imported", "in-progress", "reconciled", "audit-locked"], "default": "imported", "description": "Bank-statement reconciliation lifecycle state per REQ-BR-004." },
-          "sourceDocumentUri": { "type": "string", "nullable": true, "description": "Docudesk FK URI for the original bank-statement file." }
+          "importedAt": { "type": "string", "format": "date-time", "nullable": true, "description": "Timestamp the operator uploaded the file per REQ-BR-002." },
+          "importedBy": { "type": "string", "nullable": true, "description": "UUID of the user who uploaded the statement per REQ-BR-002." },
+          "fileChecksum": { "type": "string", "description": "SHA-256 hash of the imported file for duplicate-import rejection per REQ-BR-009." },
+          "transactionCount": { "type": "integer", "nullable": true, "description": "Number of BankStatementLine rows parsed from this statement." },
+          "lifecycleState": { "type": "string", "enum": ["imported", "in-progress", "reconciled", "audit-locked"], "default": "imported", "description": "Bank-statement reconciliation lifecycle state per REQ-BR-008." },
+          "sourceDocumentUri": { "type": "string", "nullable": true, "description": "Docudesk FK URI for the original bank-statement file per REQ-BR-002 (consume bookkeeping-document-attachment-integration)." }
+        },
+        "x-openregister-uniqueness": {
+          "duplicateChecksum": { "fields": ["administrationId", "fileChecksum"], "scope": "administration", "description": "REQ-BR-009: re-uploading the identical statement file (same SHA-256) within the same administration is rejected as a duplicate import." },
+          "overlappingPeriod": { "fields": ["administrationId", "bankAccountIban", "periodStart", "periodEnd"], "rangeOverlap": true, "description": "REQ-BR-009: a second statement covering an overlapping [periodStart, periodEnd] window for the same bank account is rejected as a duplicate import." }
         },
         "x-openregister-lifecycle": {
           "field": "lifecycleState",
@@ -352,13 +360,13 @@
           "states": {
             "imported": { "label": "Imported", "description": "Statement imported; lines parsed; not yet reconciled." },
             "in-progress": { "label": "In progress", "description": "Operator is reconciling lines against AR/AP." },
-            "reconciled": { "label": "Reconciled", "description": "All lines matched or routed to suspense; no unmatched lines remain (REQ-BR-004)." },
-            "audit-locked": { "label": "Audit Locked", "description": "Terminal. Frozen after auditor sign-off." }
+            "reconciled": { "label": "Reconciled", "description": "All lines matched or routed to suspense; no unmatched lines remain (REQ-BR-008)." },
+            "audit-locked": { "label": "Audit Locked", "description": "Terminal. Frozen after auditor sign-off (REQ-BR-008)." }
           },
           "transitions": {
             "open-reconciliation": { "from": "imported", "to": "in-progress", "label": "Open for reconciliation" },
-            "complete-reconciliation": { "from": "in-progress", "to": "reconciled", "label": "Confirm reconciliation", "description": "All lines MUST be matched or routed-to-suspense; no unmatched lines remain per REQ-BR-004.", "requires": "OCA\\Shillinq\\Lifecycle\\StatementParser::allLinesResolved" },
-            "audit-lock": { "from": "reconciled", "to": "audit-locked", "label": "Audit lock", "description": "Auditor action; irreversible.", "x-openregister-rbac-required-role": "auditor" },
+            "complete-reconciliation": { "from": "in-progress", "to": "reconciled", "label": "Confirm reconciliation", "description": "All lines MUST be matched or routed-to-suspense; no unmatched lines remain per REQ-BR-008.", "requires": "OCA\\Shillinq\\Lifecycle\\StatementParser::allLinesResolved" },
+            "audit-lock": { "from": "reconciled", "to": "audit-locked", "label": "Audit lock", "description": "Auditor action; irreversible (REQ-BR-008).", "x-openregister-rbac-required-role": "auditor" },
             "reopen": { "from": "reconciled", "to": "in-progress", "label": "Reopen reconciliation", "description": "Elevated role required; records reopen in audit trail.", "x-openregister-rbac-required-role": "period-closer" }
           }
         }
