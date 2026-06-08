@@ -177,7 +177,7 @@
   decidesk integration (future T4) for material amendments (>EUR 100K past
   service cost) requiring management/audit committee approval
 
-- [ ] Task 21: Add 3 manifest navigation entries to `src/manifest.json`:
+- [x] Task 21: Add 3 manifest navigation entries to `src/manifest.json`:
   - "Pension Plans" (index page listing all pension-plan records per entity)
   - "Actuarial Valuations" (index page listing all actuarial-valuation
     records, drillable by plan + year)
