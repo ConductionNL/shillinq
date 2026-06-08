@@ -62,7 +62,7 @@ use Throwable;
  *
  * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-09-fiscal-audit/specs/bookkeeping-waterschappen-bbv-variant/spec.md
  */
-final class FiscalYearContextService
+class FiscalYearContextService
 {
     /**
      * Construct the service with DI dependencies.
