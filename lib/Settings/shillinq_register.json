@@ -15942,6 +15942,57 @@
 			"snoozeUntil": null,
 			"lifecycleState": "active",
 			"administrationId": "adm-warehouse-amsterdam"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "ClosingEntryTemplate",
+				"slug": "closing-template-revenue-default"
+			},
+			"templateId": "revenue-closing",
+			"templateName": "Revenue Closing",
+			"description": "Close all revenue accounts (4000-4999) to the income-summary account (9900) at the end of the fiscal year. Per REQ-YEC-012 default seed.",
+			"accountPattern": "4000-4999",
+			"closingAccountNumber": "9900",
+			"reverseNextPeriod": false,
+			"automationTrigger": "on-close",
+			"administrationId": "adm-consultancy-nl",
+			"lifecycleState": "active",
+			"createdAt": "2026-01-01T00:00:00Z"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "ClosingEntryTemplate",
+				"slug": "closing-template-expense-default"
+			},
+			"templateId": "expense-closing",
+			"templateName": "Expense Closing",
+			"description": "Close all expense accounts (5000-6999) to the income-summary account (9900) at the end of the fiscal year. Per REQ-YEC-012 default seed.",
+			"accountPattern": "5000-6999",
+			"closingAccountNumber": "9900",
+			"reverseNextPeriod": false,
+			"automationTrigger": "on-close",
+			"administrationId": "adm-consultancy-nl",
+			"lifecycleState": "active",
+			"createdAt": "2026-01-01T00:00:00Z"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "ClosingEntryTemplate",
+				"slug": "closing-template-accrual-reversal-default"
+			},
+			"templateId": "accrual-reversal",
+			"templateName": "Accrual Reversal",
+			"description": "Reverse prior-year accrual postings (9700-9799) into current-year audit/adjustments (5900) and mark the entries for automatic reversal in the next fiscal year. Per REQ-YEC-012 default seed.",
+			"accountPattern": "9700-9799",
+			"closingAccountNumber": "5900",
+			"reverseNextPeriod": true,
+			"automationTrigger": "on-close",
+			"administrationId": "adm-consultancy-nl",
+			"lifecycleState": "active",
+			"createdAt": "2026-01-01T00:00:00Z"
 		}
 	]
 }
