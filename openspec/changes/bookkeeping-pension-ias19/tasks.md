@@ -24,14 +24,14 @@
   `lib/Service/Pension*`, `lib/Service/Actuarial*` PHP classes present
   (per ADR-031 anti-pattern enumeration)
 
-- [ ] Task 2: Author `specs/bookkeeping-pension-ias19/spec.md` with
+- [x] Task 2: Author `specs/bookkeeping-pension-ias19/spec.md` with
   `Status: proposed` / `Scope: shillinq` / `Tier: T3 (regulatory + compliance)`
   / `Depends on: bookkeeping-voorzieningen-claims, bookkeeping-general-ledger,
   bookkeeping-deferred-tax, bookkeeping-financial-statements` header;
   `REQ-PEN-NNN` requirements using RFC 2119 keywords; `#### Scenario:` blocks
   with GIVEN/WHEN/THEN per each requirement; cite IAS 19 §XX + RJ 271 §XX inline
 
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app`
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app`
   spec and including Affected Projects (shillinq, openregister, hrmq) /
   Scope (6 registers, PUC method, DBO roll-forward, 3-bucket P&L/OCI,
   sensitivity, disclosure table, DC lichte disclosure) / Risks (actuarial
@@ -39,7 +39,7 @@
   / Rollback (non-reversible once disclosed) / Open Questions (actuarial
   source, asset ceiling reduction paths, mortality table) / Dependencies
 
-- [ ] Task 4: Author `design.md` with Reuse Analysis table, D1 (six registers:
+- [x] Task 4: Author `design.md` with Reuse Analysis table, D1 (six registers:
   plan + valuation + movement + sensitivity + asset-detail + disclosure),
   D2 (PUC mandatory for DB), D3 (discount rate market-referenced), D4 (3-bucket
   P&L/OCI split), D5 (asset ceiling per IFRIC 14), D6 (sensitivity ±0.5pp /
