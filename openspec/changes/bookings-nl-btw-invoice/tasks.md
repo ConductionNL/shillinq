@@ -4,9 +4,9 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `bookkeeping-invoice-vat-kassakoppeling` capability spec already exists, no `VATAuditRecord` schema is declared, and no `lib/Service/VAT*` PHP classes are present (per ADR-031 anti-pattern enumeration); explicitly note this capability "extends the original Shillinq invoicing scope with Dutch VAT compliance"
+- [x] Task 1: Confirm no `bookkeeping-invoice-vat-kassakoppeling` capability spec already exists, no `VATAuditRecord` schema is declared, and no `lib/Service/VAT*` PHP classes are present (per ADR-031 anti-pattern enumeration); explicitly note this capability "extends the original Shillinq invoicing scope with Dutch VAT compliance"
 
-- [ ] Task 2: Author `specs/bookkeeping-invoice-vat-kassakoppeling/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T3 (operational + NL regulatory)` / `Depends on: bookkeeping-general-ledger (T1), bookkeeping-accounts-receivable-core (T2)` header; cite all REQ-VAT-001 through REQ-VAT-010 using RFC 2119 keywords; include all `#### Scenario:` blocks with GIVEN/WHEN/THEN; cite ADR-022 + ADR-031 inline
+- [x] Task 2: Author `specs/bookkeeping-invoice-vat-kassakoppeling/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T3 (operational + NL regulatory)` / `Depends on: bookkeeping-general-ledger (T1), bookkeeping-accounts-receivable-core (T2)` header; cite all REQ-VAT-001 through REQ-VAT-010 using RFC 2119 keywords; include all `#### Scenario:` blocks with GIVEN/WHEN/THEN; cite ADR-022 + ADR-031 inline
 
 - [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects (shillinq + optional belastingdienst-gateway) / Scope (InvoiceLine extension, VATAuditRecord schema, VAT accrual lifecycle, manifest entries) / Risks (kassakoppeling detail level, reverse-charge VAT scope, payment-date vs issue-date accrual, rounding thresholds) / Open Questions (5 questions listed) / Rollback plan
 
