@@ -165,7 +165,7 @@
   expecting {status: "success" | "failure", receiptNumber, timestamp}; log receipt in
   SchatkistbankierenSaldo
 
-- [ ] Task 22: DEFERRED (needs a live OpenConnector `fido-rapportage-submission` source to provincie/BZK; not runtime-testable here). The `submit` lifecycle transition + `submissionReceipt`/`submittedToToezichthouder` fields are in place; the transmission call lands in the implementation cycle. Implement quarterly-fido-report OpenConnector transmission per REQ-FDO-006 —
+- [~] Task 22: DEFERRED (needs a live OpenConnector `fido-rapportage-submission` source to provincie/BZK; not runtime-testable here). The `submit` lifecycle transition + `submissionReceipt`/`submittedToToezichthouder` fields are in place; the transmission call lands in the implementation cycle. Implement quarterly-fido-report OpenConnector transmission per REQ-FDO-006 —
   after sign-off, call OpenConnector source named `fido-rapportage-submission` with
   params {quarterly-fido-report JSON}, targeting provincie (for gemeente) or BZK
   (for provincie/waterschap) based on organisationType; expect {status: "success",
