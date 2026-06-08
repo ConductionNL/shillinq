@@ -185,35 +185,6 @@ class FiscalYearContextService
     }//end fiscalYearFor()
 
     /**
-     * Whether a given fiscal year matches the active window for the administration.
-     *
-     * Used by callers that accept a client-supplied `fiscalYear` parameter and
-     * want to ignore values that do not point at the currently-active FY (the
-     * giant explicitly excludes multi-year views — D5).
-     *
-     * @param string                 $administrationId Administration id.
-     * @param int                    $fiscalYear       Candidate fiscal year integer.
-     * @param DateTimeInterface|null $now              Reference instant.
-     *
-     * @return bool
-     *
-     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-09-fiscal-audit/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-bbv-queries-and-views-shall-be-scoped-to-the-active-fiscal-year
-     */
-    public function isActiveFiscalYear(
-        string $administrationId,
-        int $fiscalYear,
-        ?DateTimeInterface $now = null
-    ): bool {
-        $window = $this->resolveActiveWindow(administrationId: $administrationId, now: $now);
-        if ($window === null) {
-            return false;
-        }
-
-        return $window['fiscalYear'] === $fiscalYear;
-
-    }//end isActiveFiscalYear()
-
-    /**
      * Build the half-open `[startDate, endDate)` window for a given FY integer + administration.
      *
      * @param array<string,mixed> $administration Administration record.

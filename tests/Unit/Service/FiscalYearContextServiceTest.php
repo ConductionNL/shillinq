@@ -314,31 +314,6 @@ final class FiscalYearContextServiceTest extends TestCase
     }//end testEmptyAdministrationIdIsRejected()
 
     /**
-     * isActiveFiscalYear returns true only for the currently-active FY.
-     *
-     * @return void
-     */
-    public function testIsActiveFiscalYearOnlyMatchesActiveWindow(): void
-    {
-        $this->administrationContext->method('canAccess')->willReturn(true);
-
-        $admins = [
-            [
-                'id'                   => 'adm-werk-001',
-                'fiscalYearStartMonth' => 1,
-                'fiscalYearStartDay'   => 1,
-            ],
-        ];
-        $service = $this->buildService($admins);
-
-        $now = new DateTimeImmutable('2026-06-15T00:00:00Z', new DateTimeZone('UTC'));
-        self::assertTrue($service->isActiveFiscalYear('adm-werk-001', 2026, $now));
-        self::assertFalse($service->isActiveFiscalYear('adm-werk-001', 2025, $now));
-        self::assertFalse($service->isActiveFiscalYear('adm-werk-001', 2027, $now));
-
-    }//end testIsActiveFiscalYearOnlyMatchesActiveWindow()
-
-    /**
      * resolveDefaultWindow falls back to the session's active admin.
      *
      * @return void
