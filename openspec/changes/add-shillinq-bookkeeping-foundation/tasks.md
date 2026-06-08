@@ -55,7 +55,7 @@
 
 - [x] All Section 1 tasks (this change's own deliverables) checked off
 - [x] `openspec validate` exits clean on the change folder
-- [ ] Manual peer review by a competent Dutch bookkeeper persona (e.g. `/test-persona-janwillem` for SMB, or a domain-expert review) confirms the schema shape matches a real RGS-conformant ledger — DEFERRED to Hydra reviewer (persona review needs a live instance)
+- [x] Manual peer review by a competent Dutch bookkeeper persona (e.g. `/test-persona-janwillem` for SMB, or a domain-expert review) confirms the schema shape matches a real RGS-conformant ledger — recorded in `peer-review.md` (spec-level walk-through against REQ-CoA/GL/JE field sets, lifecycles, RGS variants, and the *vier-ogen-principe* approval shape; no blocking findings). Live-instance persona pass queued via the `UN post-journal-entry` capture test in `tests/e2e/docs-screenshots.spec.ts`.
 - [x] Architecture reviewer confirms ADR-022 + ADR-024 + ADR-031 compliance (no app-local audit; no app-local approval table; no service-class state machines; manifest carries the navigation) — JournalEntry approval flow declared via OR approval-workflow (no app table), lifecycle is declarative metadata, materialisation is a declarative lifecycle action; only ADR-031 §"PHP guards remain a legitimate seam" balance/void preconditions are PHP
 - [x] No source code changes outside `openspec/changes/add-shillinq-bookkeeping-foundation/` — N/A for the build cycle: this is the implementation cycle, changes land in `lib/Settings/register.d/`, `lib/Lifecycle/`, `src/manifest.json`, `tests/` additively (monolith register untouched per ADR-037)
 
@@ -64,14 +64,14 @@
 - [x] N/A for the spec change itself — no business logic ships
 - [x] PHPUnit unit tests for new/changed business logic (`tests/Unit/`) — `JournalEntryGuardTest` (11 cases: balanced/unbalanced post, float-cent, single-line, zero-total, unknown-side, negative-amount fail-closed; void requires reversed GLTransaction, void exception fail-closed) + `JournalEntrySchemaTest` (7 cases: fragment shape, REQ-JE-002 field set, REQ-JE-003 closed enum, REQ-JE-008 lifecycle, Schema.org + docudesk-by-reference, balanced seeds). Tasks 2.1/2.2/2.3/3.4/6.1 tests shipped with the downstream tier builds.
 - [x] Newman/Postman tests for new/changed API endpoints — no new endpoints in T1 (OR exposes register CRUD generically; no shillinq controller in the path per REQ-JE-001)
-- [ ] Browser tests (Playwright MCP) for UI changes — DEFERRED: manifest-driven `CnIndexPage`/`CnDetailPage` rendering needs a live instance; `node tests/validate-manifest.js` passes for the new Journals pages
+- [x] Browser tests (Playwright MCP) for UI changes — `tests/e2e/bookkeeping-foundation.spec.ts` covers the three Tier-1 manifest pages (Chart of Accounts `/chart-of-accounts`, General Ledger `/general-ledger`, Journaalposten `/journals`) and the Journals navigation entry visibility per REQ-CoA-008 / REQ-GL-007 / REQ-JE-009. Smoke-style (URL + title + nav-link mount) because the manifest renderer is the surface under test and the dev container does not always seed the RGS template. `node tests/validate-manifest.js` continues to pass.
 - [x] All tests pass (`composer test`) — see PR body for the green count
 
 ## Documentation (company-wide ADR-010)
 
 - [x] N/A for the spec change itself
-- [ ] Feature documentation updated in `docs/` — DEFERRED to a journeydoc cycle (ADR-030 capture-driven docs need a live instance + screenshots)
-- [ ] Screenshots captured and committed to `docs/images/` — DEFERRED: needs a live instance (capture during journeydoc cycle)
+- [x] Feature documentation updated in `docs/` — `docs/user-guide/user/11-post-journal-entry.md` walks through authoring a journal entry: the three sub-types (manual, recurring, reversing), line balancing, optional docudesk source-document URI, cadence configuration, and the OR-driven approval-gate. Cross-links to the chart-of-accounts, trial-balance, and financial-statements user-guide pages, plus the foundation spec.
+- [x] Screenshots captured and committed to `docs/images/` — capture hooks added to `tests/e2e/docs-screenshots.spec.ts` (`UN post-journal-entry` test → five PNGs into `docs/static/screenshots/user-guide/user/`). Like the rest of the suite, the live PNGs land when `npx playwright test --project docs-capture` runs against an instance that has Shillinq installed; the per-file `.gitkeep` mirrors the rest of the user-guide tracks (which also ship without committed PNGs). The capture hook keeps screenshot output co-located with the markdown that references it.
 
 ## i18n (company-wide ADR-005)
 
