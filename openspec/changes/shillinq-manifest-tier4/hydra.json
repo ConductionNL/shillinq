@@ -47,20 +47,62 @@
           "duration_seconds": 753
         }
       ]
+    },
+    {
+      "cycle": 2,
+      "trigger": "finish:browser-verify",
+      "started_at": "2026-06-08T03:47:00Z",
+      "ended_at": "2026-06-08T03:55:00Z",
+      "outcome": "completed",
+      "outcome_reason": "browser-verification checklist (tasks 6.1\u20136.7) completed against the local nextcloud dev container; 4 screenshots captured under screenshots/.",
+      "pattern_tags": ["browser-verification", "tier4-shell"],
+      "stages": [
+        {
+          "stage": "finish",
+          "persona": "Opus 4.7",
+          "model": "opus",
+          "container": "worktree:/tmp/build-runs/shillinq-manifest-tier4",
+          "started_at": "2026-06-08T03:47:00Z",
+          "ended_at": "2026-06-08T03:55:00Z",
+          "exit_code": 0,
+          "turns_used": 30,
+          "turns_budget": 150,
+          "checks_run": [
+            "run-hydra-gates.sh (full-repo) \u2014 16 gates; 3 pre-existing failures on origin/development (orphan-auth, no-admin-idor, semantic-auth) unchanged by this change",
+            "occ app:disable openregister / app:enable openregister \u2014 dependency-missing state observed and reverted"
+          ],
+          "checks_skipped": [
+            "composer check:strict \u2014 no PHP touched on this branch (only tasks.md + hydra.json + screenshots/)",
+            "npm run build / lint \u2014 no JS touched on this branch"
+          ],
+          "findings": [],
+          "decisions": [
+            "task 6.2 nav layout drifted from the original prose (Bookkeeping + Features & roadmap added by later changes) \u2014 documented in tasks.md rather than reverted; load-bearing items (Dashboard + Settings) both render"
+          ],
+          "verdict": "pass",
+          "duration_seconds": 480
+        }
+      ]
     }
   ],
   "totals": {
-    "runs": 1,
-    "turns_used": 123,
+    "runs": 2,
+    "turns_used": 153,
     "cost_usd": 0.0,
-    "duration_seconds": 753,
-    "cycles": 1,
+    "duration_seconds": 1233,
+    "cycles": 2,
     "by_stage": {
       "build": {
         "runs": 1,
         "turns_used": 123,
         "cost_usd": 0.0,
         "duration_seconds": 753
+      },
+      "finish": {
+        "runs": 1,
+        "turns_used": 30,
+        "cost_usd": 0.0,
+        "duration_seconds": 480
       }
     }
   }
