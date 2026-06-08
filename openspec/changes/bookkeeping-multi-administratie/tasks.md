@@ -127,7 +127,7 @@
   administratie's KvK as entity ID; ZIP includes jaarrekening, journaalposten,
   balances, attached documents; no cross-administratie leakage.
 
-- [ ] Task 17: Implement administratie archival workflow per REQ-MA-007:
+- [x] Task 17: Implement administratie archival workflow per REQ-MA-007:
   `Administratie.status` transition from `actief` to `gearchiveerd` prevents writes
   (all POST/PUT/DELETE fail with "administratie gearchiveerd"); reads still work
   (pull historical data); archival timestamped in auditTrail; data_retentie_jaren
@@ -228,9 +228,15 @@ intercompany foundation they build on ships here.
   one `administrationId` (no cross-tenant payloads, REQ-MA-001). The actual byte-stream
   of the backup file is still produced by OR's export pipeline at runtime; that bit is
   exercised by the CI gate against a live container.
-- [ ] Task 17 (deferred): archival write-block enforcement — declared as
-  `x-openregister-lifecycle` on the Administration schema; the runtime write-block guard wiring
-  needs a live OR to verify.
+- [x] Task 17 (implemented in finish cycle): archival write-block enforcement ships
+  as `lib/Service/AdministrationArchivalService` (pure `writesAllowed`/`assertWritable`
+  rule + `assertWritableById` storage-backed wrapper via the real ObjectService API
+  + lifecycle transition validator + retention-clock starter). The AdministrationController
+  exposes `GET /api/administrations/{id}/writable` (#[NoAdminRequired], masked-404 on
+  non-membership) so the UI can probe before attempting a write. The pure rule is
+  consumable from any other service/controller that already holds an Administration
+  record; the storage-backed helper is for call sites that only carry an
+  administrationId.
 - [ ] Task 19 (deferred): consolidation export application of `ConsolidationMapping` rules —
   explicitly owned by the future `bookkeeping-consolidatie` spec; the schema is queryable now,
   no consolidation rendering ships here (per proposal Out-of-Scope).

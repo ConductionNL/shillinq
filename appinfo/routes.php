@@ -62,6 +62,7 @@ return [
         ['name' => 'administration#context', 'url' => '/api/administrations/context', 'verb' => 'GET'],
         ['name' => 'administration#switch', 'url' => '/api/administrations/switch', 'verb' => 'POST'],
         ['name' => 'administration#exportScope', 'url' => '/api/administrations/{id}/export-scope', 'verb' => 'GET'],
+        ['name' => 'administration#writableStatus', 'url' => '/api/administrations/{id}/writable', 'verb' => 'GET'],
 
         // Payroll engine (NL loonadministratie): read-only compute endpoints.
         ['name' => 'payroll#loonstrook', 'url' => '/api/payroll/loonstrook', 'verb' => 'GET'],

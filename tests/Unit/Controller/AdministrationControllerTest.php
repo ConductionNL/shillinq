@@ -23,12 +23,14 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\AdministrationController;
+use OCA\Shillinq\Service\AdministrationArchivalService;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
  * Tests the context / switcher / export-scope API including masked-404 IDOR guards.
@@ -56,6 +58,13 @@ final class AdministrationControllerTest extends TestCase
     private AdministrationContextService&MockObject $context;
 
     /**
+     * Mock archival service.
+     *
+     * @var AdministrationArchivalService&MockObject
+     */
+    private AdministrationArchivalService&MockObject $archival;
+
+    /**
      * Controller under test.
      *
      * @var AdministrationController
@@ -72,9 +81,11 @@ final class AdministrationControllerTest extends TestCase
         parent::setUp();
         $this->request    = $this->createMock(IRequest::class);
         $this->context    = $this->createMock(AdministrationContextService::class);
+        $this->archival   = $this->createMock(AdministrationArchivalService::class);
         $this->controller = new AdministrationController(
             request: $this->request,
             context: $this->context,
+            archival: $this->archival,
             logger: $this->createMock(LoggerInterface::class),
         );
 
@@ -197,6 +208,77 @@ final class AdministrationControllerTest extends TestCase
         self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 
     }//end testExportScopeForbiddenMasked404()
+
+    /**
+     * writableStatus returns 200 + writable=true when the administration is active (REQ-MA-007).
+     *
+     * @return void
+     */
+    public function testWritableStatusActiveAdministration(): void
+    {
+        $this->context->method('currentUserId')->willReturn('controller');
+        $this->context->method('canAccess')->with('adm-werk-001')->willReturn(true);
+        $this->archival->expects(self::once())
+            ->method('assertWritableById')
+            ->with('adm-werk-001');
+
+        $response = $this->controller->writableStatus('adm-werk-001');
+        self::assertSame(Http::STATUS_OK, $response->getStatus());
+        $data = $response->getData();
+        self::assertTrue($data['writable']);
+
+    }//end testWritableStatusActiveAdministration()
+
+    /**
+     * writableStatus returns 200 + writable=false when the administration is archived.
+     *
+     * @return void
+     */
+    public function testWritableStatusArchivedAdministration(): void
+    {
+        $this->context->method('currentUserId')->willReturn('controller');
+        $this->context->method('canAccess')->with('adm-werk-001')->willReturn(true);
+        $this->archival->expects(self::once())
+            ->method('assertWritableById')
+            ->with('adm-werk-001')
+            ->willThrowException(new RuntimeException('administratie gearchiveerd (status=gearchiveerd)'));
+
+        $response = $this->controller->writableStatus('adm-werk-001');
+        self::assertSame(Http::STATUS_OK, $response->getStatus());
+        $data = $response->getData();
+        self::assertFalse($data['writable']);
+        self::assertStringContainsString('gearchiveerd', $data['message']);
+
+    }//end testWritableStatusArchivedAdministration()
+
+    /**
+     * writableStatus masks a non-membership as 404 (REQ-MA-001).
+     *
+     * @return void
+     */
+    public function testWritableStatusForbiddenMasked404(): void
+    {
+        $this->context->method('currentUserId')->willReturn('controller');
+        $this->context->method('canAccess')->willReturn(false);
+
+        $response = $this->controller->writableStatus('adm-secret-999');
+        self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+    }//end testWritableStatusForbiddenMasked404()
+
+    /**
+     * writableStatus rejects malformed ids with a 400.
+     *
+     * @return void
+     */
+    public function testWritableStatusRejectsBadId(): void
+    {
+        $this->context->method('currentUserId')->willReturn('controller');
+
+        $response = $this->controller->writableStatus('not a valid id!');
+        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+
+    }//end testWritableStatusRejectsBadId()
 
     // phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class
