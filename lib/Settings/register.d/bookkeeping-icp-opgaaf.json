@@ -4,7 +4,7 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "bookkeeping-icp-opgaaf",
 		"adr": "ADR-037 modular register fragment — never edit shillinq_register.json; ADR-031 declarative-first (schemas + lifecycle + calculations + aggregations); ADR-022 OpenRegister approval-workflow (no app-local submission table)",
-		"description": "Tier 3 — intra-community supplies (ICP) filing. Adds four new schemas that union additively onto the monolith: ViesValidation (immutable VIES verification evidence per Implementing Regulation 282/2011 Art. 18), IcpSupply (the first-class, invoice-derived supply record), IcpOpgaaf (the recapitulative statement / ICP-opgaaf with draft → finalized → submitted → accepted/rejected/corrected lifecycle), and PeriodicitySwitch (the quarterly↔monthly transition log per Art. 263 §1bis Directive 2006/112/EC). IcpOpgaaf carries an x-openregister-lifecycle (reconciliation + SBR-schema gate on finalize, approval-workflow on submit) and x-openregister-calculations for SBR/Digipoort XBRL composition. IcpSupply carries the x-openregister-aggregations shape that groups supplies by (buyerVatId, supplyType) — the ICP ledger. The engine-side fallback (prior-period opening carry, cross-schema reconciliation join, periodicity threshold) is OCA\\Shillinq\\Service\\IcpService + IcpCalculator using the real OpenRegister ObjectService API (find/findAll/saveObject). Also seeds three zero-rated RGS chart-of-accounts Account objects (8190 Omzet ICP goederen, 8195 Omzet ICP diensten, 8196 Omzet ICP driehoekstransacties) and worked ViesValidation / IcpSupply / IcpOpgaaf / PeriodicitySwitch example objects per design.md Seed Data. The pre-existing minimal IcpStatement schema (period metadata only, from add-shillinq-bookkeeping-operations) is left untouched; IcpOpgaaf is the richer line-bearing filing register the T3 spec (REQ-ICP-001..REQ-ICP-010) requires. Invoice.icpContext / Counterparty.vatId* extension fields (tasks 9-10) are deferred until bookkeeping-accounts-receivable-core lands those schemas (this app has no Invoice/Counterparty schema yet)."
+		"description": "Tier 3 — intra-community supplies (ICP) filing. Adds four new schemas that union additively onto the monolith: ViesValidation (immutable VIES verification evidence per Implementing Regulation 282/2011 Art. 18), IcpSupply (the first-class, invoice-derived supply record), IcpOpgaaf (the recapitulative statement / ICP-opgaaf with draft → finalized → submitted → accepted/rejected/corrected lifecycle), and PeriodicitySwitch (the quarterly↔monthly transition log per Art. 263 §1bis Directive 2006/112/EC). IcpOpgaaf carries an x-openregister-lifecycle (reconciliation + SBR-schema gate on finalize, approval-workflow on submit) and x-openregister-calculations for SBR/Digipoort XBRL composition. IcpSupply carries the x-openregister-aggregations shape that groups supplies by (buyerVatId, supplyType) — the ICP ledger. The engine-side fallback (prior-period opening carry, cross-schema reconciliation join, periodicity threshold) is OCA\\Shillinq\\Service\\IcpService + IcpCalculator using the real OpenRegister ObjectService API (find/findAll/saveObject). Also seeds three zero-rated RGS chart-of-accounts Account objects (8190 Omzet ICP goederen, 8195 Omzet ICP diensten, 8196 Omzet ICP driehoekstransacties) and worked ViesValidation / IcpSupply / IcpOpgaaf / PeriodicitySwitch example objects per design.md Seed Data. The pre-existing minimal IcpStatement schema (period metadata only, from add-shillinq-bookkeeping-operations) is left untouched; IcpOpgaaf is the richer line-bearing filing register the T3 spec (REQ-ICP-001..REQ-ICP-010) requires. Tasks 9-10: ARInvoice.icpContext and CustomerMaster.vatId* extension fields are now landed as deep-merge property additions on the AR-core schemas (ADR-037 — properties unioned by key, monolith untouched); ARInvoice gets the icpContext sub-object (treatAsIcp, supplyType, viesValidationId, triangulation) for REQ-ICP-001/006/007, CustomerMaster gets canonical vatId + vatIdValidatedAt + vatIdValidUntil + vatIdValidationStatus for REQ-ICP-001/009."
 	},
 	"components": {
 		"schemas": {
@@ -477,6 +477,88 @@
 						"type": "string",
 						"nullable": true,
 						"example": null
+					}
+				}
+			},
+			"ARInvoice": {
+				"properties": {
+					"icpContext": {
+						"type": "object",
+						"description": "Intra-community supplies overlay populated when the invoice is treated as ICP (REQ-ICP-001, REQ-ICP-006, REQ-ICP-007). Set by the VIES validation flow when the customer is in another EU member state with a valid VAT-ID. Drives ICP ledger aggregation, reverse-charge PDF rendering (REQ-ICP-007), and the Belastingdienst rubriek 3b reconciliation gate (REQ-ICP-004). Triangulation supplies (Article 141 VAT Directive 2006/112/EC) carry supplyType T and report the C-party VAT-ID rather than the A-party's.",
+						"nullable": true,
+						"properties": {
+							"treatAsIcp": {
+								"type": "boolean",
+								"description": "True when the invoice MUST be reported on the ICP-opgaaf (intra-community supply, zero-rated, reverse-charged). Drives REQ-ICP-003 aggregation and REQ-ICP-007 PDF rendering.",
+								"default": false,
+								"example": true
+							},
+							"supplyType": {
+								"type": "string",
+								"enum": [
+									"L",
+									"S",
+									"T"
+								],
+								"description": "ICP supply-type code per Belastingdienst NT18 taxonomy: L = goods (Leveringen), S = services (diensten), T = triangulation (driehoekstransactie / ABC-levering per Article 141 VAT Directive). Routes to chart-of-accounts 8190 / 8195 / 8196.",
+								"nullable": true,
+								"example": "L"
+							},
+							"viesValidationId": {
+								"type": "string",
+								"description": "FK to the ViesValidation record proving the buyer VAT-ID was VIES-verified at invoice time (good-faith defence per Implementing Regulation 282/2011 Article 18).",
+								"nullable": true,
+								"example": "vies-2026-q2-be0123456789"
+							},
+							"triangulation": {
+								"type": "boolean",
+								"description": "True when this invoice is a triangulation supply (REQ-ICP-006). When true the system validates and reports the C-party VAT-ID against VIES, never the A-party's.",
+								"default": false,
+								"example": false
+							}
+						},
+						"example": {
+							"treatAsIcp": true,
+							"supplyType": "L",
+							"viesValidationId": "vies-2026-q2-be0123456789",
+							"triangulation": false
+						}
+					}
+				}
+			},
+			"CustomerMaster": {
+				"properties": {
+					"vatId": {
+						"type": "string",
+						"description": "EU VAT-ID in canonical form (country code + national number, e.g. BE0123456789, FR12345678901) used for VIES verification on B2B intra-community supplies per REQ-ICP-001. Decoupled from the legacy btwNumber free-form field; canonical form is REQUIRED for VIES round-trips. When set and the buyer country differs from the seller's, invoices for this customer become ICP candidates.",
+						"nullable": true,
+						"example": "BE0123456789"
+					},
+					"vatIdValidatedAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Timestamp of the most recent definitive VIES verification of vatId. Last-known-good evidence for the REQ-ICP-009 outage fallback (recent valid record within 30 days survives a transient VIES outage).",
+						"nullable": true,
+						"example": "2026-06-15T08:30:00+00:00"
+					},
+					"vatIdValidUntil": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Cache-expiry hint for the recorded VIES verification (typically vatIdValidatedAt + 1 day). After this timestamp the system MUST revalidate on next ICP-triggering save.",
+						"nullable": true,
+						"example": "2026-06-16T08:30:00+00:00"
+					},
+					"vatIdValidationStatus": {
+						"type": "string",
+						"enum": [
+							"unchecked",
+							"valid",
+							"invalid",
+							"vies_outage"
+						],
+						"description": "Most recent VIES verification outcome (REQ-ICP-001 + REQ-ICP-009). unchecked = no VIES query yet; valid = VIES returned valid:true; invalid = VIES returned valid:false (block ICP overlay); vies_outage = transient VIES outage; the system attaches the recent valid ViesValidation and queues daily revalidation via ViesOutageRetryJob.",
+						"default": "unchecked",
+						"example": "valid"
 					}
 				}
 			}
