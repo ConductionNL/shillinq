@@ -348,4 +348,261 @@ class EmuReportingService
         ];
 
     }//end reconcile()
+
+    /**
+     * Multi-period trend comparison Q vs Q-1..Q-3 (REQ-EMU-007, Task 18).
+     *
+     * Returns the per-quarter delta from the prior quarter and a four-quarter
+     * cumulative saldo. The first quarter has delta=0.0 (no prior). All values
+     * are in euro, computed via integer-cent arithmetic to avoid IEEE-754 drift.
+     *
+     * @param array<int,float> $kwartaalSaldi Up to 4 chronological quarterly EMU-saldo values (EUR).
+     *
+     * @return array{cumulatief:float,deltas:array<int,float>} Cumulative + per-Q delta.
+     *
+     * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+     */
+    public function computeTrend(array $kwartaalSaldi): array
+    {
+        $deltasCents     = [];
+        $cumulatiefCents = 0;
+        $vorigCents      = null;
+        foreach ($kwartaalSaldi as $saldo) {
+            $cents            = (int) round((float) $saldo * 100);
+            $cumulatiefCents += $cents;
+            if ($vorigCents === null) {
+                $deltasCents[] = 0;
+            } else {
+                $deltasCents[] = ($cents - $vorigCents);
+            }
+
+            $vorigCents = $cents;
+        }
+
+        $deltas = [];
+        foreach ($deltasCents as $d) {
+            $deltas[] = (float) ($d / 100);
+        }
+
+        return [
+            'cumulatief' => (float) ($cumulatiefCents / 100),
+            'deltas'     => $deltas,
+        ];
+
+    }//end computeTrend()
+
+    /**
+     * Sector macro-ruimte alert (REQ-EMU-008, Task 20).
+     *
+     * Fires when the cumulative sector EMU-tekort consumes at least the given
+     * fraction of the published BOFv sectornorm. Distinct from
+     * `shouldAlertReferentiewaarde` which checks the individuele norm; this is
+     * the geconsolideerde sector check used on consolidatie-overzichten. Returns
+     * false on a non-positive sector norm (no norm set).
+     *
+     * @param float $sectorCumulatief Cumulative tekort across the sector (EUR; magnitude).
+     * @param float $sectorMacroNorm  Published macro-norm for the sector (EUR; magnitude).
+     * @param float $drempel          Alert fraction (default 0.80).
+     *
+     * @return bool True when the macro-ruimte alert threshold is reached.
+     *
+     * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+     */
+    public function shouldAlertSectorMacro(float $sectorCumulatief, float $sectorMacroNorm, float $drempel=0.80): bool
+    {
+        if ($sectorMacroNorm <= 0.0) {
+            return false;
+        }
+
+        return (abs($sectorCumulatief) / abs($sectorMacroNorm)) >= $drempel;
+
+    }//end shouldAlertSectorMacro()
+
+    /**
+     * Render the 10 verplichte CBS-tussenregels from a set of adjustments (REQ-EMU-003, Task 29).
+     *
+     * Maps the eight EMUAdjustment macro types and the BBV saldo + computed
+     * EMU-saldo to the 10-row CBS kwartaal-EMU template. Returns a
+     * regelnummer-keyed array; each row carries label + bedrag (EUR, signed).
+     * Pure function — caller is responsible for exporting (XBRL/CSV/Excel).
+     *
+     * @param float                          $bbvSaldoBatenLasten BBV saldo baten/lasten (EUR).
+     * @param array<int,array<string,mixed>> $adjustments         EMUAdjustment object arrays.
+     * @param float                          $emuSaldoBerekend    Computed EMU-saldo (EUR).
+     *
+     * @return array<int,array{regel:int,label:string,bedrag:float}> The 10 CBS-tussenregels.
+     *
+     * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+     */
+    public function renderCbsTussenregels(float $bbvSaldoBatenLasten, array $adjustments, float $emuSaldoBerekend): array
+    {
+        $sumByType = $this->sumByType(adjustments: $adjustments);
+
+        return [
+            ['regel' => 1, 'label' => 'Saldo van baten en lasten BBV', 'bedrag' => round($bbvSaldoBatenLasten, 2)],
+            ['regel' => 2, 'label' => 'Mutatie reserves', 'bedrag' => round(($sumByType['eliminatie-onttrekking-reserve'] ?? 0.0), 2)],
+            ['regel' => 3, 'label' => 'Bruto investeringen MVA', 'bedrag' => round(-1.0 * ($sumByType['toevoeging-bruto-investering'] ?? 0.0), 2)],
+            ['regel' => 4, 'label' => 'Bijdragen van derden in investeringen', 'bedrag' => 0.0],
+            ['regel' => 5, 'label' => 'Desinvesteringen', 'bedrag' => round(($sumByType['eliminatie-boekwinst-desinvestering'] ?? 0.0), 2)],
+            ['regel' => 6, 'label' => 'Afschrijvingen', 'bedrag' => round(($sumByType['eliminatie-afschrijving'] ?? 0.0), 2)],
+            ['regel' => 7, 'label' => 'Dotaties voorzieningen ten laste exploitatie', 'bedrag' => round(($sumByType['eliminatie-voorzieningdotatie'] ?? 0.0), 2)],
+            ['regel' => 8, 'label' => 'Onttrekkingen voorzieningen via exploitatie', 'bedrag' => 0.0],
+            ['regel' => 9, 'label' => 'Boekwinst / verlies desinvesteringen', 'bedrag' => round(($sumByType['eliminatie-boekwinst-desinvestering'] ?? 0.0), 2)],
+            ['regel' => 10, 'label' => 'EMU-saldo', 'bedrag' => round($emuSaldoBerekend, 2)],
+        ];
+
+    }//end renderCbsTussenregels()
+
+    /**
+     * Sum adjustment bedrag by type, signed by richting. Internal helper.
+     *
+     * @param array<int,array<string,mixed>> $adjustments EMUAdjustment object arrays.
+     *
+     * @return array<string,float> Map of type → signed sum in euro.
+     */
+    private function sumByType(array $adjustments): array
+    {
+        $centsByType = [];
+        foreach ($adjustments as $adj) {
+            $type        = (string) ($adj['type'] ?? '');
+            $richting    = (string) ($adj['richting'] ?? 'saldo-neutraal');
+            $bedragCents = (int) round((float) ($adj['bedrag'] ?? 0) * 100);
+            if ($richting === 'saldo-verlagend') {
+                $bedragCents = -1 * $bedragCents;
+            } else if ($richting === 'saldo-neutraal') {
+                $bedragCents = 0;
+            }
+
+            $centsByType[$type] = ($centsByType[$type] ?? 0) + $bedragCents;
+        }
+
+        $result = [];
+        foreach ($centsByType as $type => $c) {
+            $result[$type] = (float) ($c / 100);
+        }
+
+        return $result;
+
+    }//end sumByType()
+
+    /**
+     * Export the 10 CBS-tussenregels as RFC 4180 CSV (Task 31).
+     *
+     * Header row + 10 data rows, semicolon-separated per CBS-template
+     * convention. Bedrag is the signed euro amount, two-decimal, period
+     * decimal separator (CBS-CSV convention; not the Dutch comma). Caller
+     * persists the string to a file or streams it to the user.
+     *
+     * @param array<int,array{regel:int,label:string,bedrag:float}> $tussenregels From renderCbsTussenregels.
+     *
+     * @return string CSV body (no BOM).
+     *
+     * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+     */
+    public function exportCsv(array $tussenregels): string
+    {
+        $lines = ['regel;label;bedrag'];
+        foreach ($tussenregels as $row) {
+            $regel  = (int) ($row['regel'] ?? 0);
+            $label  = str_replace(';', ',', (string) ($row['label'] ?? ''));
+            $bedrag = number_format((float) ($row['bedrag'] ?? 0.0), 2, '.', '');
+            $lines[] = $regel.';'.$label.';'.$bedrag;
+        }
+
+        return implode("\n", $lines);
+
+    }//end exportCsv()
+
+    /**
+     * Cascading IV3 lookup for a CashFlowItem (Task 14, REQ-EMU-010).
+     *
+     * Resolves the IV3 (hoofdstuk-functie-categorie) classification for a
+     * cash-flow item. Lookup priority: (1) explicit `iv3` already on the item,
+     * (2) `taakveld` map provided by the caller (typically the IV3-reporting
+     * cross-app), (3) `accountNumber` prefix map provided by the caller. Returns
+     * null when no source resolves — caller decides whether to fail validation.
+     *
+     * @param array<string,mixed>                $item           CashFlowItem object array.
+     * @param array<string,array<string,string>> $taakveldMap    Map taakveld → iv3 (hoofdstuk/functie/categorie).
+     * @param array<string,array<string,string>> $accountMap     Map account-prefix → iv3.
+     *
+     * @return array<string,string>|null Resolved iv3 object or null.
+     *
+     * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+     */
+    public function mapIv3Classification(array $item, array $taakveldMap=[], array $accountMap=[]): ?array
+    {
+        $explicit = $item['iv3'] ?? null;
+        if (is_array($explicit) === true && empty($explicit) === false) {
+            return $explicit;
+        }
+
+        $taakveld = (string) ($item['taakveld'] ?? '');
+        if ($taakveld !== '' && isset($taakveldMap[$taakveld]) === true) {
+            return $taakveldMap[$taakveld];
+        }
+
+        $account = (string) ($item['accountNumber'] ?? '');
+        if ($account !== '') {
+            // Longest-prefix wins.
+            $bestKey = null;
+            foreach ($accountMap as $prefix => $iv3) {
+                if (str_starts_with($account, (string) $prefix) === false) {
+                    continue;
+                }
+
+                if ($bestKey === null || strlen((string) $prefix) > strlen($bestKey)) {
+                    $bestKey = (string) $prefix;
+                }
+            }
+
+            if ($bestKey !== null) {
+                return $accountMap[$bestKey];
+            }
+        }
+
+        return null;
+
+    }//end mapIv3Classification()
+
+    /**
+     * Resolve the consolidatieEMU flag for an intercompany counterparty (Task 25, REQ-EMU-005).
+     *
+     * Pulls the counterparty's sector + S.1313 flag from the GR-registry hint
+     * (typically supplied by bookkeeping-verbonden-partijen). When the
+     * counterparty has an explicit `wetFidoExemption=true` flag the rule
+     * returns "extern" so the transaction is NOT eliminated; otherwise an
+     * S.1313 counterparty resolves to "intern-S1313" and everything else to
+     * "extern".
+     *
+     * @param array<string,mixed> $tegenpartij Counterparty hint: sector / wetFidoExemption / consolidatieEMU.
+     *
+     * @return string One of "extern" / "intern-S1313" / "internal-entity".
+     *
+     * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+     */
+    public function resolveConsolidatieEmu(array $tegenpartij): string
+    {
+        // Explicit override always wins.
+        $explicit = (string) ($tegenpartij['consolidatieEMU'] ?? '');
+        if (in_array($explicit, ['extern', 'intern-S1313', 'internal-entity'], true) === true) {
+            return $explicit;
+        }
+
+        if ((bool) ($tegenpartij['wetFidoExemption'] ?? false) === true) {
+            return 'extern';
+        }
+
+        $sector = (string) ($tegenpartij['sector'] ?? ($tegenpartij['soort'] ?? ''));
+        if ($sector === 'S.1313' || str_contains($sector, 'S1313') === true) {
+            return 'intern-S1313';
+        }
+
+        if ((bool) ($tegenpartij['sameLegalEntity'] ?? false) === true) {
+            return 'internal-entity';
+        }
+
+        return 'extern';
+
+    }//end resolveConsolidatieEmu()
 }//end class
