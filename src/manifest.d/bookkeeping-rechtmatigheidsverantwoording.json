@@ -1,0 +1,248 @@
+{
+	"menu": [
+		{
+			"id": "Rechtmatigheid",
+			"label": "Rechtmatigheid",
+			"icon": "ClipboardCheckOutline",
+			"order": 41,
+			"children": [
+				{
+					"id": "Rechtmatigheidstoetsing",
+					"label": "Rechtmatigheidstoetsing",
+					"icon": "ClipboardCheckOutline",
+					"route": "Rechtmatigheidstoetsing",
+					"order": 10
+				},
+				{
+					"id": "Bevindingen",
+					"label": "Bevindingen",
+					"icon": "AlertCircleOutline",
+					"route": "Bevindingen",
+					"order": 20
+				},
+				{
+					"id": "Toleranties",
+					"label": "Toleranties",
+					"icon": "PercentOutline",
+					"route": "Toleranties",
+					"order": 30
+				},
+				{
+					"id": "Rechtmatigheidsparagraaf",
+					"label": "Rechtmatigheidsparagraaf",
+					"icon": "FileDocumentCheckOutline",
+					"route": "Rechtmatigheidsparagraaf",
+					"order": 40
+				},
+				{
+					"id": "RechtmatigheidAuditExport",
+					"label": "Audit Export",
+					"icon": "DownloadOutline",
+					"route": "RechtmatigheidAuditExport",
+					"order": 50
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "Rechtmatigheidstoetsing",
+			"route": "/rechtmatigheid/toetsing",
+			"type": "index",
+			"title": "Rechtmatigheidstoetsing",
+			"config": {
+				"register": "shillinq",
+				"schema": "Rechtmatigheidstoets",
+				"columns": [
+					{ "key": "journaalpost", "label": "Journaalpost", "sortable": true },
+					{ "key": "criterium", "label": "Criterium", "sortable": true },
+					{ "key": "uitkomst", "label": "Uitkomst", "sortable": true },
+					{ "key": "toetstype", "label": "Toetstype", "sortable": true },
+					{ "key": "toetsdatum", "label": "Toetsdatum", "sortable": true },
+					{ "key": "bedrag_betrokken", "label": "Bedrag", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "toetsdatum",
+				"detailRoute": "RechtmatigheidstoetsDetail"
+			}
+		},
+		{
+			"id": "RechtmatigheidstoetsDetail",
+			"route": "/rechtmatigheid/toetsing/:id",
+			"type": "detail",
+			"title": "Rechtmatigheidstoets",
+			"config": {
+				"register": "shillinq",
+				"schema": "Rechtmatigheidstoets",
+				"fields": [
+					{ "key": "journaalpost", "label": "Journaalpost", "type": "string" },
+					{ "key": "criterium", "label": "Criterium", "type": "string" },
+					{ "key": "uitkomst", "label": "Uitkomst", "type": "string" },
+					{ "key": "toetstype", "label": "Toetstype", "type": "string" },
+					{ "key": "toetsdatum", "label": "Toetsdatum", "type": "string" },
+					{ "key": "toetser", "label": "Toetser", "type": "string" },
+					{ "key": "onderbouwing", "label": "Onderbouwing", "type": "string" },
+					{ "key": "bedrag_betrokken", "label": "Bedrag", "type": "string" },
+					{ "key": "bewijsstukken", "label": "Bewijsstukken", "type": "string" },
+					{ "key": "regelverwijzing", "label": "Regelverwijzing", "type": "string" },
+					{ "key": "rechtmatigheidsbevinding", "label": "Bevinding", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				],
+				"indexRoute": "Rechtmatigheidstoetsing"
+			}
+		},
+		{
+			"id": "Bevindingen",
+			"route": "/rechtmatigheid/bevindingen",
+			"type": "index",
+			"title": "Bevindingen",
+			"config": {
+				"register": "shillinq",
+				"schema": "Rechtmatigheidsbevinding",
+				"columns": [
+					{ "key": "bevindingsnummer", "label": "Bevindingsnummer", "sortable": true },
+					{ "key": "soort", "label": "Soort", "sortable": true },
+					{ "key": "criterium", "label": "Criterium", "sortable": true },
+					{ "key": "bedrag_fout", "label": "Bedrag fout", "sortable": true },
+					{ "key": "bedrag_onzekerheid", "label": "Bedrag onzekerheid", "sortable": true },
+					{ "key": "boekjaar", "label": "Boekjaar", "sortable": true },
+					{ "key": "programma", "label": "Programma", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "meldingsdatum",
+				"detailRoute": "BevindingDetail"
+			}
+		},
+		{
+			"id": "BevindingDetail",
+			"route": "/rechtmatigheid/bevindingen/:id",
+			"type": "detail",
+			"title": "Bevinding",
+			"config": {
+				"register": "shillinq",
+				"schema": "Rechtmatigheidsbevinding",
+				"fields": [
+					{ "key": "bevindingsnummer", "label": "Bevindingsnummer", "type": "string" },
+					{ "key": "soort", "label": "Soort", "type": "string" },
+					{ "key": "criterium", "label": "Criterium", "type": "string" },
+					{ "key": "bedrag_fout", "label": "Bedrag fout", "type": "string" },
+					{ "key": "bedrag_onzekerheid", "label": "Bedrag onzekerheid", "type": "string" },
+					{ "key": "boekjaar", "label": "Boekjaar", "type": "string" },
+					{ "key": "programma", "label": "Programma", "type": "string" },
+					{ "key": "omschrijving", "label": "Omschrijving", "type": "string" },
+					{ "key": "oorzaak", "label": "Oorzaak", "type": "string" },
+					{ "key": "maatregel", "label": "Maatregel", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "verantwoordelijke_portefeuillehouder", "label": "Portefeuillehouder", "type": "string" },
+					{ "key": "correctieboeking_id", "label": "Gekoppelde correctieboeking", "type": "string" }
+				],
+				"indexRoute": "Bevindingen"
+			}
+		},
+		{
+			"id": "Toleranties",
+			"route": "/rechtmatigheid/toleranties",
+			"type": "index",
+			"title": "Toleranties",
+			"config": {
+				"register": "shillinq",
+				"schema": "Tolerantiegrens",
+				"columns": [
+					{ "key": "boekjaar", "label": "Boekjaar", "sortable": true },
+					{ "key": "fout_percentage", "label": "Fout %", "sortable": true },
+					{ "key": "onzekerheid_percentage", "label": "Onzekerheid %", "sortable": true },
+					{ "key": "vastgesteld_bij_raadsbesluit", "label": "Raadsbesluit", "sortable": true },
+					{ "key": "vastgesteld_op", "label": "Vastgesteld op", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "boekjaar",
+				"detailRoute": "TolerantieDetail"
+			}
+		},
+		{
+			"id": "TolerantieDetail",
+			"route": "/rechtmatigheid/toleranties/:id",
+			"type": "detail",
+			"title": "Tolerantiegrens",
+			"config": {
+				"register": "shillinq",
+				"schema": "Tolerantiegrens",
+				"fields": [
+					{ "key": "boekjaar", "label": "Boekjaar", "type": "string" },
+					{ "key": "fout_percentage", "label": "Fout %", "type": "string" },
+					{ "key": "onzekerheid_percentage", "label": "Onzekerheid %", "type": "string" },
+					{ "key": "vastgesteld_bij_raadsbesluit", "label": "Raadsbesluit", "type": "string" },
+					{ "key": "vastgesteld_op", "label": "Vastgesteld op", "type": "string" },
+					{ "key": "geldig_vanaf", "label": "Geldig vanaf", "type": "string" },
+					{ "key": "geldig_tot", "label": "Geldig tot", "type": "string" },
+					{ "key": "berekeningsbasis", "label": "Berekeningsbasis", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				],
+				"indexRoute": "Toleranties"
+			}
+		},
+		{
+			"id": "Rechtmatigheidsparagraaf",
+			"route": "/rechtmatigheid/paragraaf",
+			"type": "index",
+			"title": "Rechtmatigheidsparagraaf",
+			"config": {
+				"register": "shillinq",
+				"schema": "Rechtmatigheidsparagraaf",
+				"columns": [
+					{ "key": "boekjaar", "label": "Boekjaar", "sortable": true },
+					{ "key": "totaal_geconstateerde_fouten", "label": "Fouten", "sortable": true },
+					{ "key": "totaal_geconstateerde_onzekerheden", "label": "Onzekerheden", "sortable": true },
+					{ "key": "binnen_tolerantie", "label": "Binnen tolerantie", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "boekjaar",
+				"detailRoute": "ParagraafDetail"
+			}
+		},
+		{
+			"id": "ParagraafDetail",
+			"route": "/rechtmatigheid/paragraaf/:id",
+			"type": "detail",
+			"title": "Rechtmatigheidsparagraaf",
+			"config": {
+				"register": "shillinq",
+				"schema": "Rechtmatigheidsparagraaf",
+				"fields": [
+					{ "key": "boekjaar", "label": "Boekjaar", "type": "string" },
+					{ "key": "totaal_lasten_inclusief_mutaties_reserves", "label": "Totaal lasten incl. mutaties reserves", "type": "string" },
+					{ "key": "tolerantiegrens_fout_bedrag", "label": "Tolerantiegrens fout (bedrag)", "type": "string" },
+					{ "key": "tolerantiegrens_onzekerheid_bedrag", "label": "Tolerantiegrens onzekerheid (bedrag)", "type": "string" },
+					{ "key": "totaal_geconstateerde_fouten", "label": "Totaal geconstateerde fouten", "type": "string" },
+					{ "key": "totaal_geconstateerde_onzekerheden", "label": "Totaal geconstateerde onzekerheden", "type": "string" },
+					{ "key": "binnen_tolerantie", "label": "Binnen tolerantie", "type": "string" },
+					{ "key": "verklaring_college", "label": "Verklaring college", "type": "string" },
+					{ "key": "vastgesteld_door_college_op", "label": "Vastgesteld door college op", "type": "string" },
+					{ "key": "behandeld_in_raad_op", "label": "Behandeld in raad op", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				],
+				"indexRoute": "Rechtmatigheidsparagraaf"
+			}
+		},
+		{
+			"id": "RechtmatigheidAuditExport",
+			"route": "/rechtmatigheid/audit-export",
+			"type": "index",
+			"title": "Audit Export",
+			"config": {
+				"register": "shillinq",
+				"schema": "Rechtmatigheidstoets",
+				"columns": [
+					{ "key": "journaalpost", "label": "Journaalpost", "sortable": true },
+					{ "key": "criterium", "label": "Criterium", "sortable": true },
+					{ "key": "uitkomst", "label": "Uitkomst", "sortable": true },
+					{ "key": "toetsdatum", "label": "Toetsdatum", "sortable": true },
+					{ "key": "toetser", "label": "Toetser", "sortable": true },
+					{ "key": "bedrag_betrokken", "label": "Bedrag", "sortable": true }
+				],
+				"defaultSort": "toetsdatum",
+				"detailRoute": "RechtmatigheidstoetsDetail"
+			}
+		}
+	]
+}
