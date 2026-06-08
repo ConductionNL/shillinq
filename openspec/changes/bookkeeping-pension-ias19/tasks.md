@@ -1,17 +1,19 @@
 # Tasks — IAS 19 Employee Benefit Pension Accounting (RJ 271)
 
-> **Implemented (hydra-build).** This change has been applied as a
-> `kind: config` change per ADR-032/ADR-037: the six pension schemas, their
-> lifecycles and aggregations ship as the modular register fragment
+> **Fresh-build plan (24 tasks).** This change is a `kind: config` change per
+> ADR-032/ADR-037: the six pension schemas, their lifecycles and aggregations
+> ship as the modular register fragment
 > `lib/Settings/register.d/bookkeeping-pension-ias19.json` (never editing the
-> monolith), the ADR-031 exception-path lifecycle preconditions ship as
+> monolith); the ADR-031 exception-path lifecycle preconditions ship as
 > `lib/Lifecycle/PensionIas19Guard.php` (fail-closed, real ObjectService API
-> per ADR-022), the three navigation entries + six declarative manifest-v2
-> pages ship in `src/manifest.json`, and nl/en i18n is additive. Unit tests
+> per ADR-022); the three navigation entries + six declarative manifest-v2
+> pages ship in `src/manifest.json`; and nl/en i18n is additive. Unit tests
 > cover the guard and the fragment. The cross-app *runtime* integrations
 > (Tasks 15–19: GL posting, deferred-tax, financial-statements, HRMQ roster
 > sync) are declared at spec/aggregation level here and DEFERRED for runtime
-> wiring to the dependent specs once those land (see notes per task).
+> wiring to the dependent specs once those land (per-task notes below). This
+> per-task pass walks every task with a focused commit, verifying the
+> declarative artifact is present and conformant on each pass.
 
 ## Tasks
 

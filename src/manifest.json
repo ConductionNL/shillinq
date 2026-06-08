@@ -874,6 +874,35 @@
 					"order": 50
 				}
 			]
+		},
+		{
+			"id": "Pensioen",
+			"label": "Pensioen",
+			"icon": "AccountCashOutline",
+			"order": 42,
+			"children": [
+				{
+					"id": "PensionPlans",
+					"label": "Pension Plans",
+					"icon": "AccountCashOutline",
+					"route": "PensionPlans",
+					"order": 10
+				},
+				{
+					"id": "ActuarialValuations",
+					"label": "Actuarial Valuations",
+					"icon": "CalculatorVariantOutline",
+					"route": "ActuarialValuations",
+					"order": 20
+				},
+				{
+					"id": "PensionDisclosureTables",
+					"label": "Disclosure Tables",
+					"icon": "TableLarge",
+					"route": "PensionDisclosureTables",
+					"order": 30
+				}
+			]
 		}
 	],
 	"pages": [
@@ -12420,6 +12449,515 @@
 					}
 				],
 				"defaultSort": "entryDate"
+			}
+		},
+		{
+			"id": "PensionPlans",
+			"route": "/pension/plans",
+			"type": "index",
+			"title": "Pension Plans",
+			"config": {
+				"register": "shillinq",
+				"schema": "PensionPlan",
+				"columns": [
+					{
+						"key": "planName",
+						"label": "Plan Name",
+						"sortable": true
+					},
+					{
+						"key": "planType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "regulatoryFramework",
+						"label": "Framework",
+						"sortable": true
+					},
+					{
+						"key": "provider",
+						"label": "Provider",
+						"sortable": true
+					},
+					{
+						"key": "participantCountActive",
+						"label": "Active",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "planName",
+				"detailRoute": "PensionPlanDetail"
+			}
+		},
+		{
+			"id": "PensionPlanDetail",
+			"route": "/pension/plans/:id",
+			"type": "detail",
+			"title": "Pension Plan",
+			"config": {
+				"register": "shillinq",
+				"schema": "PensionPlan",
+				"fields": [
+					{
+						"key": "planName",
+						"label": "Plan Name",
+						"type": "string"
+					},
+					{
+						"key": "planType",
+						"label": "Plan Type",
+						"type": "string"
+					},
+					{
+						"key": "country",
+						"label": "Country",
+						"type": "string"
+					},
+					{
+						"key": "regulatoryFramework",
+						"label": "Regulatory Framework",
+						"type": "string"
+					},
+					{
+						"key": "funded",
+						"label": "Funded",
+						"type": "boolean"
+					},
+					{
+						"key": "provider",
+						"label": "Provider",
+						"type": "string"
+					},
+					{
+						"key": "inceptionDate",
+						"label": "Inception Date",
+						"type": "date"
+					},
+					{
+						"key": "terminationDate",
+						"label": "Termination Date",
+						"type": "date"
+					},
+					{
+						"key": "accrualRate",
+						"label": "Accrual Rate",
+						"type": "number"
+					},
+					{
+						"key": "pensionableSalaryDefinition",
+						"label": "Pensionable Salary Definition",
+						"type": "string"
+					},
+					{
+						"key": "retirementAge",
+						"label": "Retirement Age",
+						"type": "integer"
+					},
+					{
+						"key": "participantCountActive",
+						"label": "Active Participants",
+						"type": "integer"
+					},
+					{
+						"key": "participantCountDeferred",
+						"label": "Deferred Participants",
+						"type": "integer"
+					},
+					{
+						"key": "participantCountRetirees",
+						"label": "Retirees",
+						"type": "integer"
+					},
+					{
+						"key": "linkedHrmqGroup",
+						"label": "HRMQ Roster Group",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "notes",
+						"label": "Notes",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"relatedLists": [
+					{
+						"id": "plan-valuations",
+						"title": "Actuarial Valuations",
+						"schema": "ActuarialValuation",
+						"filter": {
+							"plan": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "valuationDate",
+								"label": "Valuation Date"
+							},
+							{
+								"key": "actuary",
+								"label": "Actuary"
+							},
+							{
+								"key": "methodology",
+								"label": "Method"
+							},
+							{
+								"key": "dboGross",
+								"label": "DBO (EUR)"
+							},
+							{
+								"key": "planAssetsFairValue",
+								"label": "Plan Assets (EUR)"
+							},
+							{
+								"key": "netPensionLiability",
+								"label": "Net Liability (EUR)"
+							},
+							{
+								"key": "approvalStatus",
+								"label": "Status"
+							}
+						]
+					},
+					{
+						"id": "plan-movements",
+						"title": "Pension Movements",
+						"schema": "PensionMovement",
+						"filter": {
+							"plan": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "period",
+								"label": "Period"
+							},
+							{
+								"key": "serviceCostCurrent",
+								"label": "Service Cost (EUR)"
+							},
+							{
+								"key": "netInterestCost",
+								"label": "Net Interest (EUR)"
+							},
+							{
+								"key": "netPensionMovementPL",
+								"label": "P&L (EUR)"
+							},
+							{
+								"key": "netPensionMovementOCI",
+								"label": "OCI (EUR)"
+							}
+						]
+					}
+				],
+				"indexRoute": "PensionPlans"
+			}
+		},
+		{
+			"id": "ActuarialValuations",
+			"route": "/pension/valuations",
+			"type": "index",
+			"title": "Actuarial Valuations",
+			"config": {
+				"register": "shillinq",
+				"schema": "ActuarialValuation",
+				"columns": [
+					{
+						"key": "valuationDate",
+						"label": "Valuation Date",
+						"sortable": true
+					},
+					{
+						"key": "plan",
+						"label": "Plan",
+						"sortable": true
+					},
+					{
+						"key": "actuary",
+						"label": "Actuary",
+						"sortable": true
+					},
+					{
+						"key": "methodology",
+						"label": "Method",
+						"sortable": true
+					},
+					{
+						"key": "dboGross",
+						"label": "DBO (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "netPensionLiability",
+						"label": "Net Liability (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "approvalStatus",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-valuationDate",
+				"detailRoute": "ActuarialValuationDetail"
+			}
+		},
+		{
+			"id": "ActuarialValuationDetail",
+			"route": "/pension/valuations/:id",
+			"type": "detail",
+			"title": "Actuarial Valuation",
+			"config": {
+				"register": "shillinq",
+				"schema": "ActuarialValuation",
+				"fields": [
+					{
+						"key": "plan",
+						"label": "Plan",
+						"type": "string"
+					},
+					{
+						"key": "valuationDate",
+						"label": "Valuation Date",
+						"type": "date"
+					},
+					{
+						"key": "actuary",
+						"label": "Actuary",
+						"type": "string"
+					},
+					{
+						"key": "actuaryCertificationNumber",
+						"label": "Certification Number",
+						"type": "string"
+					},
+					{
+						"key": "methodology",
+						"label": "Methodology",
+						"type": "string"
+					},
+					{
+						"key": "dboGross",
+						"label": "DBO Gross (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "dboPastService",
+						"label": "DBO Past Service (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "dboFutureService",
+						"label": "DBO Future Service (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "discountRate",
+						"label": "Discount Rate (%)",
+						"type": "number"
+					},
+					{
+						"key": "discountRateSource",
+						"label": "Discount Rate Source",
+						"type": "string"
+					},
+					{
+						"key": "discountRateGovernmentBondFlag",
+						"label": "Government-Bond Source",
+						"type": "boolean"
+					},
+					{
+						"key": "salaryGrowthAssumption",
+						"label": "Salary Growth (%)",
+						"type": "number"
+					},
+					{
+						"key": "pensionGrowthAssumption",
+						"label": "Pension Growth (%)",
+						"type": "number"
+					},
+					{
+						"key": "inflationAssumption",
+						"label": "Inflation (%)",
+						"type": "number"
+					},
+					{
+						"key": "mortalityTable",
+						"label": "Mortality Table",
+						"type": "string"
+					},
+					{
+						"key": "retirementAgeAssumption",
+						"label": "Retirement Age",
+						"type": "integer"
+					},
+					{
+						"key": "planAssetsFairValue",
+						"label": "Plan Assets Fair Value (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "assetCeilingApplied",
+						"label": "Asset Ceiling Applied (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "netPensionLiability",
+						"label": "Net Pension Liability (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "approvalStatus",
+						"label": "Approval Status",
+						"type": "string"
+					},
+					{
+						"key": "approvedBy",
+						"label": "Approved By",
+						"type": "string"
+					},
+					{
+						"key": "approvedAt",
+						"label": "Approved At",
+						"type": "date-time"
+					}
+				],
+				"lifecycleActions": true,
+				"relatedLists": [
+					{
+						"id": "valuation-sensitivity",
+						"title": "Sensitivity Analysis",
+						"schema": "PensionAssumptionSensitivity",
+						"filter": {
+							"valuation": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "assumption",
+								"label": "Assumption"
+							},
+							{
+								"key": "direction",
+								"label": "Direction"
+							},
+							{
+								"key": "effectOnDBO",
+								"label": "Effect on DBO (EUR)"
+							},
+							{
+								"key": "effectOnServiceCost",
+								"label": "Effect on Service Cost (EUR)"
+							}
+						]
+					},
+					{
+						"id": "valuation-assets",
+						"title": "Asset Breakdown",
+						"schema": "PensionAssetDetail",
+						"filter": {
+							"valuation": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "assetCategory",
+								"label": "Category"
+							},
+							{
+								"key": "fairValue",
+								"label": "Fair Value (EUR)"
+							},
+							{
+								"key": "level",
+								"label": "IFRS 13 Level"
+							}
+						]
+					}
+				],
+				"indexRoute": "ActuarialValuations"
+			}
+		},
+		{
+			"id": "PensionDisclosureTables",
+			"route": "/pension/disclosure-tables",
+			"type": "index",
+			"title": "Disclosure Tables",
+			"config": {
+				"register": "shillinq",
+				"schema": "PensionDisclosureTabel",
+				"columns": [
+					{
+						"key": "valuationDate",
+						"label": "Valuation Date",
+						"sortable": true
+					},
+					{
+						"key": "plan",
+						"label": "Plan",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-valuationDate",
+				"detailRoute": "PensionDisclosureTableDetail"
+			}
+		},
+		{
+			"id": "PensionDisclosureTableDetail",
+			"route": "/pension/disclosure-tables/:id",
+			"type": "detail",
+			"title": "Disclosure Table",
+			"config": {
+				"register": "shillinq",
+				"schema": "PensionDisclosureTabel",
+				"fields": [
+					{
+						"key": "plan",
+						"label": "Plan",
+						"type": "string"
+					},
+					{
+						"key": "valuationDate",
+						"label": "Valuation Date",
+						"type": "date"
+					},
+					{
+						"key": "tableContent",
+						"label": "Disclosure Table",
+						"type": "json"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "approvedBy",
+						"label": "Approved By",
+						"type": "string"
+					},
+					{
+						"key": "approvedAt",
+						"label": "Approved At",
+						"type": "date-time"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "PensionDisclosureTables"
 			}
 		}
 	]
