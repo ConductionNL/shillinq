@@ -161,6 +161,16 @@ import BudgetBBVMappingIndex from './components/BudgetBBVMapping/BudgetBBVMappin
 // resolve.
 import BudgetBBVMappingDetail from './components/BudgetBBVMapping/BudgetBBVMappingDetail.vue'
 
+
+// bookkeeping-multi-administratie (Task 13): the in-session administration
+// switcher is a custom page hosting the AdministratieSwitcher dropdown. It is
+// genuinely custom (NOT a declarative index/detail over a register) because it
+// reads `/api/administrations/context`, posts to `/api/administrations/switch`
+// and triggers a session-level reload — none of which is expressible in a
+// built-in page type. See AdministratieSwitcher docblock for the kind-page
+// justification per ADR-024 / ADR-036.
+import AdministrationSwitcherPage from './views/AdministrationSwitcherPage.vue'
+
 export default {
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
 	MobileScannerReceive: { kind: 'page', component: ReceivePage },
@@ -197,4 +207,5 @@ export default {
 
 	BudgetBBVMappingDetail: { kind: 'page', component: BudgetBBVMappingDetail },
 	BudgetMappingDetail: { kind: 'page', component: BudgetBBVMappingDetail },
+	AdministrationSwitcherPage: { kind: 'page', component: AdministrationSwitcherPage },
 }

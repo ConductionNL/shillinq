@@ -895,6 +895,91 @@
 						"description": "Administration the object is transferred to."
 					}
 				}
+			},
+			"AdministrationBackupRun": {
+				"slug": "AdministrationBackupRun",
+				"icon": "DatabaseClock",
+				"version": "0.1.0",
+				"title": "Administration Backup Run",
+				"description": "Audit record of one per-administration backup run (REQ-MA-007). Each row carries exactly one administrationId — backups are scoped per administratie so no cross-tenant data leaks into a single backup file (REQ-MA-001). Written by AdministrationBackupSchedulerJob (BackgroundJob, Task 15).",
+				"x-spec": "openspec/changes/bookkeeping-multi-administratie/specs/bookkeeping-multi-administratie/spec.md",
+				"type": "object",
+				"required": [
+					"administrationId",
+					"startedAt",
+					"completedAt",
+					"status"
+				],
+				"properties": {
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the administration this backup covers.",
+						"example": "adm-werk-001"
+					},
+					"administrationCode": {
+						"type": "string",
+						"description": "Cached administrationCode for human-readable listing.",
+						"nullable": true,
+						"example": "WERK-001"
+					},
+					"schedule": {
+						"type": "string",
+						"description": "Backup-schedule slug that triggered the run.",
+						"enum": [
+							"dagelijks",
+							"wekelijks",
+							"aanvragen"
+						],
+						"example": "dagelijks"
+					},
+					"startedAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "ISO-8601 instant the backup started."
+					},
+					"completedAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "ISO-8601 instant the backup completed."
+					},
+					"status": {
+						"type": "string",
+						"description": "Outcome of the run.",
+						"enum": [
+							"success",
+							"failed",
+							"snapshot-only"
+						],
+						"default": "success",
+						"example": "success"
+					},
+					"snapshotOnly": {
+						"type": "boolean",
+						"description": "True when the administration is archived/opgeheven and the backup is a read-only snapshot.",
+						"default": false
+					},
+					"sizeBytes": {
+						"type": "integer",
+						"description": "Size of the backup payload in bytes.",
+						"nullable": true,
+						"example": 12345678
+					},
+					"nextBackupAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Computed next scheduled backup instant; null for on-request schedules.",
+						"nullable": true
+					}
+				},
+				"x-openregister-relations": {
+					"administration": {
+						"localField": "administrationId",
+						"relatedSchema": "Administration",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "Administration covered by this backup run."
+					}
+				}
 			}
 		},
 		"objects": [

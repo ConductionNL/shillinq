@@ -100,5 +100,13 @@ Vrij en open source onder de EUPL-1.2-licentie.
              optionally relaxes their ToleranceProfile. Idempotent per
              (supplierId, period, administrationId) tuple. -->
         <job>OCA\Shillinq\Cron\VendorPerformanceAggregationJob</job>
+        <!-- bookkeeping-multi-administratie Task 15: per-administration
+             backup scheduler. Evaluates each Administration record's
+             backupSchedule (dagelijks/wekelijks/aanvragen) independently
+             and persists one AdministrationBackupRun per due administratie.
+             Each row carries exactly one administrationId so no
+             cross-tenant data ever lives in a single backup payload
+             (REQ-MA-001 carried into REQ-MA-007). -->
+        <job>OCA\Shillinq\BackgroundJob\AdministrationBackupSchedulerJob</job>
     </background-jobs>
 </info>

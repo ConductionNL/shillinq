@@ -41,6 +41,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationArchivalService;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -48,6 +49,7 @@ use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
  * Administratie context + switcher + export-scope API.
@@ -59,15 +61,17 @@ class AdministrationController extends Controller
     /**
      * Constructor.
      *
-     * @param IRequest                     $request The request object.
-     * @param AdministrationContextService $context The administratie-aware RBAC context service.
-     * @param LoggerInterface              $logger  Logger (no stack traces to client).
+     * @param IRequest                      $request  The request object.
+     * @param AdministrationContextService  $context  The administratie-aware RBAC context service.
+     * @param AdministrationArchivalService $archival Archival write-block enforcement.
+     * @param LoggerInterface               $logger   Logger (no stack traces to client).
      *
      * @return void
      */
     public function __construct(
         IRequest $request,
         private readonly AdministrationContextService $context,
+        private readonly AdministrationArchivalService $archival,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -201,6 +205,78 @@ class AdministrationController extends Controller
         );
 
     }//end exportScope()
+
+    /**
+     * Probe whether the active administration accepts writes (REQ-MA-007 / Task 17).
+     *
+     * Returns the write-block status for the given administration: a 200 with
+     * `{writable, status, message?}` when the user has access, a masked 404 when
+     * the user has no membership (REQ-MA-001), a 400 on a malformed id. The
+     * endpoint is read-only and never mutates state — it lets the UI render
+     * a "this administratie is archived" empty-state without trying a write that
+     * would only fail downstream.
+     *
+     * @param string $id The administration id to check.
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
+     */
+    #[NoAdminRequired]
+    public function writableStatus(string $id): JSONResponse
+    {
+        if ($this->context->currentUserId() === null) {
+            return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
+        }
+
+        $administrationId = trim($id);
+        if ($this->isValidIdentifier(identifier: $administrationId) === false) {
+            return new JSONResponse(['error' => 'Invalid administration id'], Http::STATUS_BAD_REQUEST);
+        }
+
+        try {
+            $allowed = $this->context->canAccess(administrationId: $administrationId);
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'AdministrationController: failed to check writable status access',
+                ['exception' => $e->getMessage()]
+            );
+            return new JSONResponse(['error' => 'Failed to resolve writable status'], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+
+        if ($allowed === false) {
+            // Mask non-membership as 404 — never confirm administration existence (REQ-MA-001).
+            return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+        }
+
+        try {
+            $this->archival->assertWritableById(administrationId: $administrationId);
+            return new JSONResponse(
+                [
+                    'administrationId' => $administrationId,
+                    'writable'         => true,
+                    'status'           => 'actief_of_in_liquidatie',
+                ],
+                Http::STATUS_OK
+            );
+        } catch (RuntimeException $blocked) {
+            return new JSONResponse(
+                [
+                    'administrationId' => $administrationId,
+                    'writable'         => false,
+                    'message'          => $blocked->getMessage(),
+                ],
+                Http::STATUS_OK
+            );
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'AdministrationController: failed to resolve writable status',
+                ['exception' => $e->getMessage()]
+            );
+            return new JSONResponse(['error' => 'Failed to resolve writable status'], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+
+    }//end writableStatus()
 
     /**
      * Validate an administration identifier slug before touching the data layer.

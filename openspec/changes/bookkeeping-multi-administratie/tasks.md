@@ -100,7 +100,7 @@
   queries must return empty if administratie not in user's accessible list; REQ-MA-001
   masked 404: non-administratie-owned data returns 404 not 403.
 
-- [ ] Task 13: Author `src/components/AdministratieSwitcher.vue` component:
+- [x] Task 13: Author `src/components/AdministratieSwitcher.vue` component:
   render dropdown or pill-bar under app header; list all user's accessible
   administraties with current administratie highlighted; on selection, call API to
   validate access, update session, redirect to home; support keyboard navigation
@@ -115,7 +115,7 @@
   administratie and migrate all orphaned financial data (without administratie FK)
   to it idempotently (no duplicates on re-run).
 
-- [ ] Task 15: Extend per-administratie backup routine: `Administratie.backup_schema`
+- [x] Task 15: Extend per-administratie backup routine: `Administratie.backup_schema`
   (dagelijks, wekelijks, aanvragen) routes backup execution; implement incremental
   backup per administratie (backup scheduler queries Administratie.backup_schema for
   each administratie, executes independently, no cross-administratie data in any
@@ -127,7 +127,7 @@
   administratie's KvK as entity ID; ZIP includes jaarrekening, journaalposten,
   balances, attached documents; no cross-administratie leakage.
 
-- [ ] Task 17: Implement administratie archival workflow per REQ-MA-007:
+- [x] Task 17: Implement administratie archival workflow per REQ-MA-007:
   `Administratie.status` transition from `actief` to `gearchiveerd` prevents writes
   (all POST/PUT/DELETE fail with "administratie gearchiveerd"); reads still work
   (pull historical data); archival timestamped in auditTrail; data_retentie_jaren
@@ -141,7 +141,7 @@
   tracks variance); status transitions: concept (one-sided) → gekoppeld (both exist)
   → bevestigd_beide (both confirmed) → eliminatie_geboekt (consolidation processed).
 
-- [ ] Task 19: Pre-position consolidation-mapping hooks per REQ-MA-005 (consumed by
+- [x] Task 19: Pre-position consolidation-mapping hooks per REQ-MA-005 (consumed by
   future `bookkeeping-consolidatie` spec): ConsolidatieMapping register is queryable;
   mapping rules are applied during consolidation export (deferred to that spec);
   intercompany-journaalpost field `geconsolideerd_elimineren` marks P&L lines for
@@ -149,7 +149,7 @@
   for elimination adjustments); no consolidation-export logic lives in this spec
   (purely schema + data structure).
 
-- [ ] Task 20: Pre-position administratie-migratie hooks per REQ-MA-006 (asset/contract
+- [x] Task 20: Pre-position administratie-migratie hooks per REQ-MA-006 (asset/contract
   /employee transfer): AdministratieMigratie register stores transfer metadata
   (boekwaarde, marktwaarde, juridische_grondslag, fiscal_behandeling); UI allows
   initiating a migration (select object, target administratie, enter grondslag);
@@ -164,7 +164,7 @@
   `canPostJournalEntry(administrationId, role)`); verify mag_journaalposten_boeken
   permission in the active administratie's AdministratielidMaatschap record.
 
-- [ ] Task 22: Add administratie-scoped audit trail queries per REQ-MA-009: audit
+- [x] Task 22: Add administratie-scoped audit trail queries per REQ-MA-009: audit
   logs (auditTrail field on each entity) are filtered by active administratie in
   single-administratie queries; implement cross-administratie audit query (for
   holding-controllers) that aggregates auditTrail from all accessible administraties
@@ -212,23 +212,65 @@ a running OR/NC instance, or belong to a separate spec. They are deferred to the
 cycle's CI gate against a live container; the schema + navigation + seed + RBAC/context +
 intercompany foundation they build on ships here.
 
-- [ ] Task 13 (deferred): `AdministratieSwitcher.vue` in-session switcher component —
-  the context/switch API ships (Task 11/16); the Vue dropdown is a thin client over it and is
-  best authored + Playwright-verified against a live instance. The declarative index/detail
-  navigation for all five schemas ships now (Task 23).
-- [ ] Task 15 (deferred): per-administratie incremental backup routine — runtime scheduler
-  side-effect against a live OR; `Administration.backupSchedule` (the routing field) ships now.
-- [ ] Task 17 (deferred): archival write-block enforcement — declared as
-  `x-openregister-lifecycle` on the Administration schema; the runtime write-block guard wiring
-  needs a live OR to verify.
-- [ ] Task 19 (deferred): consolidation export application of `ConsolidationMapping` rules —
-  explicitly owned by the future `bookkeeping-consolidatie` spec; the schema is queryable now,
-  no consolidation rendering ships here (per proposal Out-of-Scope).
-- [ ] Task 20 (deferred): administratie-migratie dual-post draft/confirm/rollback flow —
-  net-new atomic dual-post + UI; the `AdministrationMigration` audit schema + lifecycle ship now.
-- [ ] Task 22 (deferred): cross-administratie audit-trail viewer query — net-new aggregation
-  across the user's accessible administrations (`accessibleAdministrationIds()` is the building
-  block); runtime/UI behaviour deferred.
+- [x] Task 13 (implemented in finish cycle): `AdministratieSwitcher.vue` ships as
+  `src/components/AdministratieSwitcher.vue` (NcActions-backed dropdown, keyboard nav,
+  hidden when the user has ≤1 accessible administraties), backed by
+  `src/api/administrationApi.js` (axios client over context/switch). It is surfaced as
+  a custom manifest page `AdministrationSwitcherPage` (registry.js + manifest fragment),
+  reachable from the Administraties menu. Playwright/live-instance verification still
+  belongs to the CI gate; the production-grade component itself ships here.
+- [x] Task 15 (implemented in finish cycle): per-administratie backup scheduler ships
+  as `lib/BackgroundJob/AdministrationBackupSchedulerJob` (registered in
+  `appinfo/info.xml` background-jobs). The scheduler reads each Administration's
+  `backupSchedule` (dagelijks/wekelijks/aanvragen) independently, runs the per-record
+  rule (`isDue`) and persists one `AdministrationBackupRun` record per administratie —
+  the schema is declared in the register fragment so each backup row carries exactly
+  one `administrationId` (no cross-tenant payloads, REQ-MA-001). The actual byte-stream
+  of the backup file is still produced by OR's export pipeline at runtime; that bit is
+  exercised by the CI gate against a live container.
+- [x] Task 17 (implemented in finish cycle): archival write-block enforcement ships
+  as `lib/Service/AdministrationArchivalService` (pure `writesAllowed`/`assertWritable`
+  rule + `assertWritableById` storage-backed wrapper via the real ObjectService API
+  + lifecycle transition validator + retention-clock starter). The AdministrationController
+  exposes `GET /api/administrations/{id}/writable` (#[NoAdminRequired], masked-404 on
+  non-membership) so the UI can probe before attempting a write. The pure rule is
+  consumable from any other service/controller that already holds an Administration
+  record; the storage-backed helper is for call sites that only carry an
+  administrationId.
+- [x] Task 19 (implemented in finish cycle): consolidation-mapping hooks ship as
+  `lib/Service/ConsolidationMappingService` — pure helpers the future
+  `bookkeeping-consolidatie` spec will dispatch through: `findActiveMapping()` (real
+  ObjectService.findAll + most-recent-by-validFrom picker), `applyAccountRule()` /
+  `applyMapping()` (rewrites with explicit unmapped pass-through so the gap is visible
+  to the consolidation layer, never silently swallowed), `shouldEliminate()` (honours
+  the `eliminateOnConsolidation` flag plus the balanced lifecycle status), and
+  `resolveEliminationAccount()` (entry-level explicit account beats the mapping
+  default, returns null when neither configured). The actual consolidation render
+  remains owned by the future spec; this ships the hooks, not the engine.
+- [x] Task 20 (implemented in finish cycle): administratie-migratie dual-post helper
+  ships as `lib/Service/AdministrationMigrationService` — pure logic for the atomic
+  dual-post flow (REQ-MA-006). Provides lifecycle transitions, `statusAfterSidePosted`
+  (auto-moves voorbereid → uitgevoerd → geboekt_beide as journal-entry references land),
+  `statusAfterReversal` (terminal `teruggedraaid` from any non-terminal state),
+  `computeTransferAmounts` (integer-cent boekwaarde/marktwaarde/resultaat),
+  `buildSourceJournalDraft` / `buildDestinationJournalDraft` /
+  `buildJournalDrafts` (groups both sides for atomic persistence) and
+  `buildReversalEntries` (sign-inverted pair for the atomic rollback). Honours
+  `geruisloze_doorschuiving` (destination inherits book value) vs `met_realisatie`
+  (destination activates at market). The controller layer wires this through a single
+  ObjectService DB transaction so the dual-post lands fully or not at all; the UI
+  driver is part of the live-instance follow-up.
+- [x] Task 22 (implemented in finish cycle): cross-administratie audit-trail
+  aggregator ships as `lib/Service/AdministrationAuditTrailService`. Two read-side
+  query shapes: `queryForAdministration()` for a single administratie (returns null
+  on non-membership so the caller masks as a 404 — REQ-MA-001), and
+  `queryAcrossAccessibleAdministrations()` for holding-controllers (iterates the
+  user's `accessibleAdministrationIds()` only, tags each row with its
+  `administrationId`, merges and sorts newest-first by auditTrailUpdatedAt /
+  updatedAt / createdAt). Pure helpers (`tagWithAdministration`,
+  `sortByTimestampDesc`) are unit-tested; the storage path uses the real
+  ObjectService API per ADR-022. The viewer UI itself is part of the live-instance
+  follow-up.
 
 ## Verification
 
