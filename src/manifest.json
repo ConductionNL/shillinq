@@ -268,6 +268,22 @@
 					"featureFlag": "mkb-r-d-subsidies"
 				},
 				{
+					"id": "WBSOTags",
+					"label": "WBSO Tags",
+					"icon": "TagCheckOutline",
+					"route": "WBSOTags",
+					"order": 87,
+					"featureFlag": "mkb-r-d-subsidies"
+				},
+				{
+					"id": "WBSOExport",
+					"label": "WBSO Export Dashboard",
+					"icon": "FileExportOutline",
+					"route": "WBSOExport",
+					"order": 88,
+					"featureFlag": "mkb-r-d-subsidies"
+				},
+				{
 					"id": "FiscalYears",
 					"label": "Fiscal Years",
 					"icon": "CalendarCheckOutline",
@@ -12885,6 +12901,393 @@
 					}
 				],
 				"indexRoute": "ActuarialValuations"
+			}
+		},
+		{
+			"id": "WBSOTags",
+			"route": "/wbso/tags",
+			"type": "index",
+			"title": "WBSO Tags",
+			"featureFlag": "mkb-r-d-subsidies",
+			"config": {
+				"register": "shillinq",
+				"schema": "WBSOTag",
+				"columns": [
+					{
+						"key": "wbsoCode",
+						"label": "WBSO Code",
+						"sortable": true
+					},
+					{
+						"key": "displayName",
+						"label": "Display Name",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "wbsoCode",
+				"detailRoute": "WBSOTagDetail"
+			}
+		},
+		{
+			"id": "WBSOTagDetail",
+			"route": "/wbso/tags/:id",
+			"type": "detail",
+			"title": "WBSO Tag",
+			"featureFlag": "mkb-r-d-subsidies",
+			"config": {
+				"register": "shillinq",
+				"schema": "WBSOTag",
+				"fields": [
+					{
+						"key": "wbsoCode",
+						"label": "WBSO Code",
+						"type": "string"
+					},
+					{
+						"key": "displayName",
+						"label": "Display Name",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "rvoCertificationUrl",
+						"label": "RVO Directive URL",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"relatedLists": [
+					{
+						"id": "tagged-time-entries",
+						"title": "Tagged Time Entries",
+						"schema": "UrenRegistratie",
+						"filter": {
+							"wbsoTagId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "date",
+								"label": "Date"
+							},
+							{
+								"key": "personId",
+								"label": "Employee"
+							},
+							{
+								"key": "hours",
+								"label": "Hours"
+							},
+							{
+								"key": "tagSource",
+								"label": "Tag Source"
+							}
+						]
+					}
+				],
+				"indexRoute": "WBSOTags"
+			}
+		},
+		{
+			"id": "WBSOActivityCodes",
+			"route": "/wbso/activity-codes",
+			"type": "index",
+			"title": "WBSO Activity Codes",
+			"featureFlag": "mkb-r-d-subsidies",
+			"config": {
+				"register": "shillinq",
+				"schema": "WBSOActivityCode",
+				"columns": [
+					{
+						"key": "activityCode",
+						"label": "Activity Code",
+						"sortable": true
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"sortable": true
+					},
+					{
+						"key": "category",
+						"label": "Category",
+						"sortable": true
+					},
+					{
+						"key": "isAllowed",
+						"label": "Eligible",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "activityCode",
+				"detailRoute": "WBSOActivityCodeDetail"
+			}
+		},
+		{
+			"id": "WBSOActivityCodeDetail",
+			"route": "/wbso/activity-codes/:id",
+			"type": "detail",
+			"title": "WBSO Activity Code",
+			"featureFlag": "mkb-r-d-subsidies",
+			"config": {
+				"register": "shillinq",
+				"schema": "WBSOActivityCode",
+				"fields": [
+					{
+						"key": "activityCode",
+						"label": "Activity Code",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "category",
+						"label": "Category",
+						"type": "string"
+					},
+					{
+						"key": "isAllowed",
+						"label": "Eligible for Subsidy",
+						"type": "boolean"
+					},
+					{
+						"key": "parentActivityCode",
+						"label": "Parent Code",
+						"type": "string",
+						"help": "FK to baseline code if this is a custom administration variant (REQ-WBSO-009)"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "WBSOActivityCodes"
+			}
+		},
+		{
+			"id": "WBSOExport",
+			"route": "/wbso/export",
+			"type": "index",
+			"title": "WBSO Export Dashboard",
+			"featureFlag": "mkb-r-d-subsidies",
+			"config": {
+				"register": "shillinq",
+				"schema": "WBSOExportLog",
+				"columns": [
+					{
+						"key": "exportId",
+						"label": "Export ID",
+						"sortable": true
+					},
+					{
+						"key": "periodStart",
+						"label": "Period Start",
+						"sortable": true
+					},
+					{
+						"key": "periodEnd",
+						"label": "Period End",
+						"sortable": true
+					},
+					{
+						"key": "exportFormat",
+						"label": "Format",
+						"sortable": true
+					},
+					{
+						"key": "recordCount",
+						"label": "Records",
+						"sortable": true
+					},
+					{
+						"key": "totalHours",
+						"label": "Total Hours",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-periodStart",
+				"detailRoute": "WBSOExportDetail",
+				"actions": [
+					{
+						"id": "new-export",
+						"label": "Generate Export",
+						"icon": "FileExportOutline",
+						"type": "create",
+						"description": "Select date range, format (CSV/PDF/XML), and filters to generate a new WBSO export for RVO submission."
+					}
+				]
+			}
+		},
+		{
+			"id": "WBSOExportDetail",
+			"route": "/wbso/export/:id",
+			"type": "detail",
+			"title": "WBSO Export",
+			"featureFlag": "mkb-r-d-subsidies",
+			"config": {
+				"register": "shillinq",
+				"schema": "WBSOExportLog",
+				"fields": [
+					{
+						"key": "exportId",
+						"label": "Export ID",
+						"type": "string"
+					},
+					{
+						"key": "periodStart",
+						"label": "Period Start",
+						"type": "date"
+					},
+					{
+						"key": "periodEnd",
+						"label": "Period End",
+						"type": "date"
+					},
+					{
+						"key": "exportFormat",
+						"label": "Format",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "recordCount",
+						"label": "Record Count",
+						"type": "integer"
+					},
+					{
+						"key": "totalHours",
+						"label": "Total Eligible Hours",
+						"type": "number"
+					},
+					{
+						"key": "totalHoursIneligible",
+						"label": "Total Non-eligible Hours",
+						"type": "number"
+					},
+					{
+						"key": "exportFilters",
+						"label": "Export Filters",
+						"type": "object",
+						"help": "Filters applied on generation: wbsoTagId, activityCodeId, isAllowed, employee, date range (REQ-WBSO-008)"
+					},
+					{
+						"key": "generatedAt",
+						"label": "Generated At",
+						"type": "date-time"
+					},
+					{
+						"key": "validatedAt",
+						"label": "Validated At",
+						"type": "date-time"
+					},
+					{
+						"key": "validationErrors",
+						"label": "Validation Errors",
+						"type": "array",
+						"help": "Empty if validated; lists untagged entry IDs and other validation failures (REQ-WBSO-006)"
+					},
+					{
+						"key": "submittedAt",
+						"label": "Submitted At",
+						"type": "date-time"
+					},
+					{
+						"key": "fileUri",
+						"label": "Export File",
+						"type": "link"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"actions": [
+					{
+						"id": "validate-for-rvo",
+						"label": "Validate for RVO",
+						"icon": "ShieldCheckOutline",
+						"visibleWhen": {
+							"field": "status",
+							"in": ["generated"]
+						},
+						"type": "lifecycle-transition",
+						"transition": "validate",
+						"description": "Run RVO validation: checks all included time entries carry WBSO tags and activity codes. Fails if any entry is untagged (REQ-WBSO-006)."
+					},
+					{
+						"id": "mark-submitted",
+						"label": "Mark as Submitted",
+						"icon": "CloudUploadOutline",
+						"visibleWhen": {
+							"field": "status",
+							"in": ["validated"]
+						},
+						"type": "lifecycle-transition",
+						"transition": "submit",
+						"description": "Record manual upload to RVO portal; sets submittedAt timestamp."
+					},
+					{
+						"id": "download-export",
+						"label": "Download Export File",
+						"icon": "DownloadOutline",
+						"visibleWhen": {
+							"field": "status",
+							"in": ["generated", "validated", "submitted", "archived"]
+						},
+						"type": "download",
+						"sourceField": "fileUri"
+					}
+				],
+				"indexRoute": "WBSOExport"
 			}
 		},
 		{

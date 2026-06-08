@@ -10,7 +10,13 @@ formats. Shillinq's time-tracking layer (`TimeEntry` per
 cost-allocation spec) is the perfect anchor; this capability bridges
 the gap from billable hours to WBSO compliance.
 
-The change is **spec-only**. Implementation lands later through
+status: pr-created
+
+The change is **spec-only** (no PHP business logic). Implementation
+is declarative — schemas + lifecycle + aggregations + manifest entries
+— per ADR-031. PR opened for review.
+
+The change was **spec-only**. Implementation landed through
 `opsx-apply` and the standard Hydra pipeline; this doc explains *why*
 the shape is what it is.
 

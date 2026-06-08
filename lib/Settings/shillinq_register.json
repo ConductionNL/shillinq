@@ -9,7 +9,7 @@
 		"type": "application",
 		"app": "shillinq",
 		"openregister": "^v0.2.10",
-		"description": "Shillinq \u2014 open-source business administration suite for Dutch SMB, ZZP, and government."
+		"description": "Shillinq — open-source business administration suite for Dutch SMB, ZZP, and government."
 	},
 	"paths": {},
 	"components": {
@@ -19,7 +19,7 @@
 				"icon": "FileDocumentOutline",
 				"version": "0.1.0",
 				"title": "Example",
-				"description": "Example schema \u2014 replace with your app's actual schemas.",
+				"description": "Example schema — replace with your app's actual schemas.",
 				"type": "object",
 				"required": [
 					"title"
@@ -100,7 +100,7 @@
 					},
 					"consentReference": {
 						"type": "string",
-						"description": "Aggregator-issued consent identifier returned from the SCA flow. Non-credential metadata \u2014 NOT an OAuth token or client secret.",
+						"description": "Aggregator-issued consent identifier returned from the SCA flow. Non-credential metadata — NOT an OAuth token or client secret.",
 						"example": "consent-ref-abc123"
 					},
 					"consentGrantedAt": {
@@ -259,7 +259,7 @@
 				"x-openregister-scheduled-workflows": {
 					"shillinq-bank-transaction-polling": {
 						"name": "Bank transaction polling",
-						"description": "Pulls transactions from the PSD2 aggregator via the openconnector source slug, normalises the aggregator JSON to CAMT.053 XML, attaches the XML via docudesk, and creates a BankStatement record per active BankConnection. Runs 4\u00d7 daily per REQ-BC-004. No BankPollingJob extends TimedJob.",
+						"description": "Pulls transactions from the PSD2 aggregator via the openconnector source slug, normalises the aggregator JSON to CAMT.053 XML, attaches the XML via docudesk, and creates a BankStatement record per active BankConnection. Runs 4× daily per REQ-BC-004. No BankPollingJob extends TimedJob.",
 						"cron": "0 */6 * * *",
 						"source": "@self.aggregatorSourceSlug",
 						"register": "shillinq",
@@ -856,7 +856,7 @@
 						"type": "number",
 						"minimum": 0,
 						"maximum": 1,
-						"description": "Quotum-aandeel (participation share) of this deelnemer in the GR. Must be 0 \u2264 x \u2264 1. The sum across all actief deelnemers SHOULD equal 1.0.",
+						"description": "Quotum-aandeel (participation share) of this deelnemer in the GR. Must be 0 ≤ x ≤ 1. The sum across all actief deelnemers SHOULD equal 1.0.",
 						"example": 0.4
 					},
 					"actief": {
@@ -1091,7 +1091,7 @@
 					},
 					"esaClassifier": {
 						"type": "string",
-						"description": "ESA 2010 (European System of Accounts) sector classifier. Drives EMU-saldo computation's sector grouping per REQ-EMU-002. S.1311 = centrale overheid, S.1312 = deelstaatoverheid (N/A in NL), S.1313 = lokale overheid (gemeente/provincie/waterschap), S.1314 = wettelijke sociale verzekering. S.11\u2013S.15/S.2 are non-government sectors per ESA 2010.",
+						"description": "ESA 2010 (European System of Accounts) sector classifier. Drives EMU-saldo computation's sector grouping per REQ-EMU-002. S.1311 = centrale overheid, S.1312 = deelstaatoverheid (N/A in NL), S.1313 = lokale overheid (gemeente/provincie/waterschap), S.1314 = wettelijke sociale verzekering. S.11–S.15/S.2 are non-government sectors per ESA 2010.",
 						"enum": [
 							"S.1311",
 							"S.1312",
@@ -1123,7 +1123,7 @@
 				"x-openregister-lifecycle": {
 					"retention": {
 						"rule": "selectielijst:5.1.1",
-						"description": "Chart-of-accounts records are kept indefinitely per Selectielijst Gemeenten 2020 \u00a7 5.1.1 (begroting, jaarrekening, rekeningschema)."
+						"description": "Chart-of-accounts records are kept indefinitely per Selectielijst Gemeenten 2020 § 5.1.1 (begroting, jaarrekening, rekeningschema)."
 					},
 					"field": "lifecycleState",
 					"initialState": "active",
@@ -1138,7 +1138,7 @@
 						},
 						"archived": {
 							"label": "Archived",
-							"description": "Historical only \u2014 no new postings, no edits; remains queryable."
+							"description": "Historical only — no new postings, no edits; remains queryable."
 						}
 					},
 					"preconditions": {
@@ -1348,7 +1348,7 @@
 					"description": {
 						"type": "string",
 						"description": "Plain-Dutch description of the record category covered by this rule.",
-						"example": "Dagelijkse financi\u00eble verantwoording (facturen, betalingen, dagboeken, bankafschriften)"
+						"example": "Dagelijkse financiële verantwoording (facturen, betalingen, dagboeken, bankafschriften)"
 					},
 					"recordCategory": {
 						"type": "string",
@@ -1389,7 +1389,7 @@
 					"legalBasis": {
 						"type": "string",
 						"description": "Citation of the legal basis: Archiefwet article + Selectielijst paragraph.",
-						"example": "Archiefwet 1995 art. 5 + Selectielijst Gemeenten 2020 \u00a7 5.1.2"
+						"example": "Archiefwet 1995 art. 5 + Selectielijst Gemeenten 2020 § 5.1.2"
 					},
 					"effectiveFrom": {
 						"type": "string",
@@ -1405,7 +1405,7 @@
 					},
 					"customRetentionYears": {
 						"type": "integer",
-						"description": "Operator-defined extension of the statutory retention period (archiefverordening override). MUST be >= retentionYears \u2014 operators may extend retention but NEVER shorten below the Archiefwet floor (REQ-ARC-004).",
+						"description": "Operator-defined extension of the statutory retention period (archiefverordening override). MUST be >= retentionYears — operators may extend retention but NEVER shorten below the Archiefwet floor (REQ-ARC-004).",
 						"minimum": 0,
 						"x-openregister-validation": {
 							"rule": "gte_field",
@@ -1442,7 +1442,7 @@
 				"icon": "TableAccountOutline",
 				"version": "0.1.0",
 				"title": "Balance Sheet",
-				"description": "Financial statement showing assets, liabilities, and equity at a fiscal-period snapshot. Status lifecycle: draft \u2192 final \u2192 published. Totals are computed via x-openregister-aggregations from GL entries grouped by Account.accountType per REQ-FS-004.",
+				"description": "Financial statement showing assets, liabilities, and equity at a fiscal-period snapshot. Status lifecycle: draft → final → published. Totals are computed via x-openregister-aggregations from GL entries grouped by Account.accountType per REQ-FS-004.",
 				"x-schema-org": "schema:Table",
 				"type": "object",
 				"required": [
@@ -1461,19 +1461,19 @@
 					},
 					"totalAssets": {
 						"type": "number",
-						"description": "Computed total assets in base currency. Populated by balance-sheet aggregation on draft\u2192final transition.",
+						"description": "Computed total assets in base currency. Populated by balance-sheet aggregation on draft→final transition.",
 						"nullable": true,
 						"example": 150000.0
 					},
 					"totalLiabilities": {
 						"type": "number",
-						"description": "Computed total liabilities in base currency. Populated by balance-sheet aggregation on draft\u2192final transition.",
+						"description": "Computed total liabilities in base currency. Populated by balance-sheet aggregation on draft→final transition.",
 						"nullable": true,
 						"example": 50000.0
 					},
 					"totalEquity": {
 						"type": "number",
-						"description": "Computed total equity in base currency. Populated by balance-sheet aggregation on draft\u2192final transition.",
+						"description": "Computed total equity in base currency. Populated by balance-sheet aggregation on draft→final transition.",
 						"nullable": true,
 						"example": 100000.0
 					},
@@ -1527,7 +1527,7 @@
 						},
 						"published": {
 							"label": "Published",
-							"description": "Released to stakeholders via OR publication extension. Immutable \u2014 no further edits."
+							"description": "Released to stakeholders via OR publication extension. Immutable — no further edits."
 						},
 						"archived": {
 							"label": "Archived",
@@ -1580,7 +1580,7 @@
 				},
 				"x-openregister-aggregations": {
 					"balanceSheetTotals": {
-						"description": "Computes totalAssets, totalLiabilities, totalEquity from GLLine entries grouped by Account.accountType for the fiscal period. Satisfies REQ-FS-004. No BalanceSheetService \u2014 pure declarative aggregation per ADR-031.",
+						"description": "Computes totalAssets, totalLiabilities, totalEquity from GLLine entries grouped by Account.accountType for the fiscal period. Satisfies REQ-FS-004. No BalanceSheetService — pure declarative aggregation per ADR-031.",
 						"join": {
 							"from": "GLLine.accountNumber",
 							"through": "Account",
@@ -1616,7 +1616,7 @@
 								"operation": "check",
 								"expression": "totalAssets = totalLiabilities + totalEquity",
 								"target": "isBalanced",
-								"diagnostic": "Balance-sheet equation violated: assets({{totalAssets}}) \u2260 liabilities({{totalLiabilities}}) + equity({{totalEquity}})"
+								"diagnostic": "Balance-sheet equation violated: assets({{totalAssets}}) ≠ liabilities({{totalLiabilities}}) + equity({{totalEquity}})"
 							}
 						}
 					}
@@ -1792,7 +1792,7 @@
 				},
 				"x-openregister-aggregations": {
 					"trialBalanceTotals": {
-						"description": "Computes totalDebits, totalCredits, and isBalanced flag from GLLine entries for the fiscal period. Satisfies REQ-FS-005 verification check. No TrialBalanceService \u2014 pure declarative aggregation per ADR-031.",
+						"description": "Computes totalDebits, totalCredits, and isBalanced flag from GLLine entries for the fiscal period. Satisfies REQ-FS-005 verification check. No TrialBalanceService — pure declarative aggregation per ADR-031.",
 						"filter": {
 							"administrationId": "@self.administrationId",
 							"fiscalYearId": "@self.fiscalYearId",
@@ -1815,7 +1815,7 @@
 								"operation": "check",
 								"expression": "totalDebits = totalCredits",
 								"target": "isBalanced",
-								"diagnostic": "Trial balance is not balanced: debits({{totalDebits}}) \u2260 credits({{totalCredits}}), discrepancy = {{totalDebits - totalCredits}}"
+								"diagnostic": "Trial balance is not balanced: debits({{totalDebits}}) ≠ credits({{totalCredits}}), discrepancy = {{totalDebits - totalCredits}}"
 							}
 						}
 					},
@@ -2022,7 +2022,7 @@
 				"icon": "FileChartOutline",
 				"version": "0.1.0",
 				"title": "Consolidated Report",
-				"description": "Aggregated financial report combining data from multiple administrations with consolidation method and inter-company elimination tracking per REQ-FS-006. Lifecycle draft \u2192 final \u2192 published consumes OR publication extension or ConsolidationGuard fallback per ADR-031.",
+				"description": "Aggregated financial report combining data from multiple administrations with consolidation method and inter-company elimination tracking per REQ-FS-006. Lifecycle draft → final → published consumes OR publication extension or ConsolidationGuard fallback per ADR-031.",
 				"x-schema-org": "schema:Report",
 				"type": "object",
 				"required": [
@@ -2216,7 +2216,7 @@
 					},
 					"buckets": {
 						"type": "object",
-						"description": "Aggregated GL values keyed by IV3 bucket code (sum of debit minus credit per bucket for closed-period postings). Derived via x-openregister-aggregations \u2014 do not set directly.",
+						"description": "Aggregated GL values keyed by IV3 bucket code (sum of debit minus credit per bucket for closed-period postings). Derived via x-openregister-aggregations — do not set directly.",
 						"additionalProperties": {
 							"type": "number"
 						},
@@ -2352,7 +2352,7 @@
 				},
 				"x-openregister-aggregations": {
 					"buckets": {
-						"description": "Sum of (debit - credit) per IV3 bucket code over closed-period GLLine rows for this export's administrationId + quarter. Joins GLLine \u2192 Account \u2192 BbvAccountMapping.iv3Bucket (T3 bbv-compliance). Filters to periodIds closed per T2 period-close boundaries.",
+						"description": "Sum of (debit - credit) per IV3 bucket code over closed-period GLLine rows for this export's administrationId + quarter. Joins GLLine → Account → BbvAccountMapping.iv3Bucket (T3 bbv-compliance). Filters to periodIds closed per T2 period-close boundaries.",
 						"operation": "sum",
 						"sourceSchema": "GLLine",
 						"sourceRegister": "shillinq",
@@ -2509,7 +2509,7 @@
 						"relatedSchema": "BBVProgramma",
 						"relatedField": "code",
 						"cardinality": "many-to-one",
-						"description": "Self-relation for hierarchical programma navigation (hoofdprogramma \u2192 sub-programma)."
+						"description": "Self-relation for hierarchical programma navigation (hoofdprogramma → sub-programma)."
 					}
 				}
 			},
@@ -2560,7 +2560,7 @@
 					"aanslagBedrag": {
 						"type": "number",
 						"minimum": 0,
-						"description": "Total aanslag amount in EUR (tarief \u00d7 grondslag-quantity). This amount is materialised into a balanced GLTransaction on post.",
+						"description": "Total aanslag amount in EUR (tarief × grondslag-quantity). This amount is materialised into a balanced GLTransaction on post.",
 						"example": 1500.0
 					},
 					"journalEntryId": {
@@ -2696,7 +2696,7 @@
 				"icon": "OfficeBuildingOutline",
 				"version": "0.1.0",
 				"title": "Fixed Asset",
-				"description": "A capitalised tangible or intangible business asset with declarative depreciation rules, parallel commercial/fiscal streams, and a managed lifecycle (proposed \u2192 active \u2192 disposed \u2192 archived). Depreciation values are derived on demand \u2014 no materialised schedule table.",
+				"description": "A capitalised tangible or intangible business asset with declarative depreciation rules, parallel commercial/fiscal streams, and a managed lifecycle (proposed → active → disposed → archived). Depreciation values are derived on demand — no materialised schedule table.",
 				"type": "object",
 				"x-schema-org": "schema:Thing",
 				"required": [
@@ -3043,7 +3043,7 @@
 				"properties": {
 					"thresholdAmount": {
 						"type": "number",
-						"description": "Statutory KOR omzetdrempel in EUR (currently \u20ac20,000 per Wet OB 1968 art. 25 lid 1).",
+						"description": "Statutory KOR omzetdrempel in EUR (currently €20,000 per Wet OB 1968 art. 25 lid 1).",
 						"example": 20000
 					},
 					"warningPercentage": {
@@ -3137,7 +3137,7 @@
 					},
 					"thresholdAmount": {
 						"type": "number",
-						"description": "Active KOR omzetdrempel for currentCalendarYear; read from KorThreshold seed. Default \u20ac20,000.",
+						"description": "Active KOR omzetdrempel for currentCalendarYear; read from KorThreshold seed. Default €20,000.",
 						"default": 20000,
 						"example": 20000
 					},
@@ -3180,7 +3180,7 @@
 					"retention": {
 						"rule": "selectielijst:5.1.2",
 						"period": "P7Y",
-						"description": "KOR financial records retained 7 years per AWR art. 52 (financi\u00eble administratie bewaarplicht)."
+						"description": "KOR financial records retained 7 years per AWR art. 52 (financiële administratie bewaarplicht)."
 					},
 					"states": {
 						"outside": {
@@ -3218,7 +3218,7 @@
 							"from": "opted-in",
 							"to": "threshold-warning",
 							"label": "Drempelwaarschuwing",
-							"description": "Auto-transitions when ytdRevenue reaches warningPercentage % of thresholdAmount (default 80% = \u20ac16,000 on \u20ac20,000 threshold). Calculation-crossing trigger per ADR-031.",
+							"description": "Auto-transitions when ytdRevenue reaches warningPercentage % of thresholdAmount (default 80% = €16,000 on €20,000 threshold). Calculation-crossing trigger per ADR-031.",
 							"trigger": "calculation-crossing",
 							"requires": "ytdRevenue >= thresholdAmount * warningPercentage / 100"
 						},
@@ -3271,7 +3271,7 @@
 					"hooks": {
 						"onOptOut": {
 							"trigger": "transition:optOutFromExceeded",
-							"description": "On threshold-exceeded \u2192 opted-out: create a JournalEntry template for BTW reclamation reversal. MUST ship in state: pending per REQ-KOR-006 safety constraint. Operator + accountant approval required before posting.",
+							"description": "On threshold-exceeded → opted-out: create a JournalEntry template for BTW reclamation reversal. MUST ship in state: pending per REQ-KOR-006 safety constraint. Operator + accountant approval required before posting.",
 							"action": "x-openregister-create-related",
 							"actionParameters": {
 								"register": "shillinq",
@@ -3322,7 +3322,7 @@
 							"scope": "@self.administrationId"
 						},
 						"title": "KOR-drempelwaarschuwing",
-						"message": "KOR-omzet bedraagt \u20ac@self.ytdRevenue (@self.ytdRevenue / @self.thresholdAmount * 100% van de drempel). Actie aanbevolen."
+						"message": "KOR-omzet bedraagt €@self.ytdRevenue (@self.ytdRevenue / @self.thresholdAmount * 100% van de drempel). Actie aanbevolen."
 					},
 					"onThresholdExceeded": {
 						"trigger": "lifecycle.exceedThreshold",
@@ -3332,7 +3332,7 @@
 							"scope": "@self.administrationId"
 						},
 						"title": "KOR-drempel overschreden",
-						"message": "KOR-omzetdrempel van \u20ac@self.thresholdAmount is overschreden (ytdRevenue: \u20ac@self.ytdRevenue). Opt-out vereist; er wordt een journaalpost aangemaakt ter beoordeling."
+						"message": "KOR-omzetdrempel van €@self.thresholdAmount is overschreden (ytdRevenue: €@self.ytdRevenue). Opt-out vereist; er wordt een journaalpost aangemaakt ter beoordeling."
 					},
 					"onOptOut": {
 						"trigger": "lifecycle.optOutFromExceeded,lifecycle.optOutFromOptedIn",
@@ -3874,12 +3874,12 @@
 					},
 					"estimatedAnnualIncome": {
 						"type": "number",
-						"description": "Projected annual income: ytdTaxableIncome \u00d7 (12 / months-elapsed). Months elapsed computed from snapshotDate and fiscalYear start per REQ-TAX-008.",
+						"description": "Projected annual income: ytdTaxableIncome × (12 / months-elapsed). Months elapsed computed from snapshotDate and fiscalYear start per REQ-TAX-008.",
 						"example": 40800.0
 					},
 					"estimatedAnnualExpenses": {
 						"type": "number",
-						"description": "Projected annual expenses: ytdTaxableExpenses \u00d7 (12 / months-elapsed) (EUR).",
+						"description": "Projected annual expenses: ytdTaxableExpenses × (12 / months-elapsed) (EUR).",
 						"example": 9200.0
 					},
 					"estimatedAnnualNetIncome": {
@@ -3894,7 +3894,7 @@
 					},
 					"estimatedIncomeTax": {
 						"type": "number",
-						"description": "estimatedTaxableIncome \u00d7 TaxRegimeConfiguration.incomeTaxRate (EUR).",
+						"description": "estimatedTaxableIncome × TaxRegimeConfiguration.incomeTaxRate (EUR).",
 						"example": 7900.0
 					},
 					"witholdingCredits": {
@@ -4330,7 +4330,7 @@
 				"icon": "FolderOpenOutline",
 				"version": "0.1.0",
 				"title": "Project",
-				"description": "Consultancy project with RJ 270 / IFRS 15 percentage-of-completion revenue recognition. Lifecycle offerte \u2192 active \u2192 on-hold \u2192 closed \u2192 archived.",
+				"description": "Consultancy project with RJ 270 / IFRS 15 percentage-of-completion revenue recognition. Lifecycle offerte → active → on-hold → closed → archived.",
 				"x-schema-org": "schema:Project",
 				"x-openregister-purpose": "dimension",
 				"type": "object",
@@ -4508,6 +4508,18 @@
 						"type": "string",
 						"nullable": true,
 						"description": "Operator justification when closing a project with non-zero WIP balance."
+					},
+					"wbsoTagId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to WBSOTag. When set, new Urenregistratie entries under this project auto-inherit this WBSO code (REQ-WBSO-004). Null for non-subsidized projects.",
+						"example": "wbso-tag-so-1"
+					},
+					"activityCodeId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to WBSOActivityCode. Combined with wbsoTagId, enables auto-tagging of Urenregistratie entries (REQ-WBSO-004). Null for non-subsidized projects.",
+						"example": "wbso-code-a001-1"
 					}
 				},
 				"x-openregister-lifecycle": {
@@ -4589,7 +4601,7 @@
 					"retention": {
 						"rule": "selectielijst:5.1.2",
 						"years": 7,
-						"description": "Financial records \u2014 7 years per Selectielijst 5.1.2 (REQ-CPA-014)."
+						"description": "Financial records — 7 years per Selectielijst 5.1.2 (REQ-CPA-014)."
 					}
 				},
 				"x-openregister-relations": {
@@ -4689,7 +4701,7 @@
 								"update",
 								"delete"
 							],
-							"description": "Full project management access; visibility predicate: administrationType \u2208 {mkb, zzp}."
+							"description": "Full project management access; visibility predicate: administrationType ∈ {mkb, zzp}."
 						}
 					}
 				},
@@ -4726,7 +4738,7 @@
 						],
 						"default": {
 							"formula": "@self.totalEstimatedCosts > 0 ? max(0, @self.totalContractValue * (@self.costsIncurredToDate / @self.totalEstimatedCosts)) : 0",
-							"description": "cost-to-cost (default): totalContractValue \u00d7 (costsIncurredToDate / totalEstimatedCosts), clamped \u2265 0."
+							"description": "cost-to-cost (default): totalContractValue × (costsIncurredToDate / totalEstimatedCosts), clamped ≥ 0."
 						}
 					},
 					"wipBalance": {
@@ -4915,7 +4927,7 @@
 						"monthlyAllocation": {
 							"cadence": "monthly",
 							"trigger": "ScheduledWorkflow",
-							"description": "Evaluates all active AllocationRule records with cadence=monthly against the previous month's posted GLLines per REQ-CC-004 design D2. No PHP AllocationService orchestrates this \u2014 the rule body lives in this schema.",
+							"description": "Evaluates all active AllocationRule records with cadence=monthly against the previous month's posted GLLines per REQ-CC-004 design D2. No PHP AllocationService orchestrates this — the rule body lives in this schema.",
 							"condition": "lifecycleState = 'active' AND cadence = 'monthly'"
 						},
 						"periodCloseAllocation": {
@@ -4984,7 +4996,7 @@
 					"recognisedRate": {
 						"type": "number",
 						"minimum": 0,
-						"description": "Snapshot of RateCard.hourlyRate at assignment time per RJ 270 \u00a73.2.4. Immutable after creation.",
+						"description": "Snapshot of RateCard.hourlyRate at assignment time per RJ 270 §3.2.4. Immutable after creation.",
 						"example": 180
 					},
 					"estimatedHours": {
@@ -5075,7 +5087,7 @@
 						"description": "Billable hours this period divided by capacity hours this period per person (REQ-CPA-011).",
 						"type": "number",
 						"formula": "@self.capacityHoursThisPeriod > 0 ? (@self.billableHoursThisPeriod / @self.capacityHoursThisPeriod) : 0",
-						"note": "billableHoursThisPeriod is aggregated from UrenRegistratie records for this assignment in the current FiscalPeriod; capacityHoursThisPeriod = capacityHoursPerWeek \u00d7 workingWeeksInPeriod."
+						"note": "billableHoursThisPeriod is aggregated from UrenRegistratie records for this assignment in the current FiscalPeriod; capacityHoursThisPeriod = capacityHoursPerWeek × workingWeeksInPeriod."
 					}
 				},
 				"x-openregister-widgets": {
@@ -5745,7 +5757,7 @@
 					},
 					"effectiveWindowLabel": {
 						"description": "Human-readable effective-date window string for UI display.",
-						"expression": "effectiveDate || ' \u2013 ' || COALESCE(expiryDate, 'open-ended')",
+						"expression": "effectiveDate || ' – ' || COALESCE(expiryDate, 'open-ended')",
 						"type": "string"
 					}
 				},
@@ -5968,7 +5980,7 @@
 				"icon": "ClockOutline",
 				"version": "0.1.0",
 				"title": "Urenregistratie",
-				"description": "Billable hour logging for ZZP / consultancy. Base schema from bookkeeping-zzp-tax-regime; extended here with recognisedRate (rate-at-write snapshot per RJ 270 \u00a73.2.4) and projectAssignmentId (FK to ProjectAssignment, REQ-CPA-009).",
+				"description": "Billable hour logging for ZZP / consultancy. Base schema from bookkeeping-zzp-tax-regime; extended here with recognisedRate (rate-at-write snapshot per RJ 270 §3.2.4) and projectAssignmentId (FK to ProjectAssignment, REQ-CPA-009).",
 				"type": "object",
 				"x-schema-org": "schema:HowToStep",
 				"required": [
@@ -6023,7 +6035,7 @@
 						"minimum": 0,
 						"nullable": true,
 						"readOnly": true,
-						"description": "Snapshot of the applicable RateCard.hourlyRate at the time this record is written, per RJ 270 \u00a73.2.4 (rate as of performance date, not invoice date). Immutable after creation \u2014 subsequent rate-card revisions do NOT retroactively change this field (REQ-CPA-009).",
+						"description": "Snapshot of the applicable RateCard.hourlyRate at the time this record is written, per RJ 270 §3.2.4 (rate as of performance date, not invoice date). Immutable after creation — subsequent rate-card revisions do NOT retroactively change this field (REQ-CPA-009).",
 						"example": 180
 					},
 					"glTransactionId": {
@@ -6031,6 +6043,36 @@
 						"nullable": true,
 						"description": "FK to the GLTransaction when this hour is posted to GL.",
 						"example": "glt-1"
+					},
+					"wbsoTagId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to WBSOTag. Null-safe for non-subsidized hour entries. Auto-assigned from parent Project.wbsoTagId on creation if project metadata is complete (REQ-WBSO-004).",
+						"example": "wbso-tag-so-1"
+					},
+					"activityCodeId": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to WBSOActivityCode. Null-safe for non-subsidized hour entries. Auto-assigned from parent Project.activityCodeId on creation if project metadata is complete (REQ-WBSO-004).",
+						"example": "wbso-code-a001-1"
+					},
+					"tagSource": {
+						"type": "string",
+						"nullable": true,
+						"description": "Indicates how WBSO tags were assigned: auto (inherited from project metadata), manual (operator assignment), or untagged (pending assignment) (REQ-WBSO-004).",
+						"enum": [
+							"auto",
+							"manual",
+							"untagged"
+						],
+						"example": "auto"
+					},
+					"wbsoTaggedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true,
+						"description": "Timestamp when WBSO tags were assigned — either automatically from project metadata or manually by operator (REQ-WBSO-004).",
+						"example": "2026-03-15T10:00:00Z"
 					}
 				},
 				"x-openregister-rbac": {
@@ -6051,6 +6093,76 @@
 							"permissions": [
 								"read"
 							]
+						}
+					}
+				},
+				"x-openregister-aggregations": {
+					"wbsoAutoTag": {
+						"description": "On Urenregistratie create/update: if parent Project.wbsoTagId and Project.activityCodeId are both non-null, auto-assign both to the entry and set tagSource=auto. Otherwise set tagSource=untagged and emit a warning to the operator (REQ-WBSO-004).",
+						"trigger": [
+							"create",
+							"update"
+						],
+						"source": {
+							"register": "shillinq",
+							"schema": "Project",
+							"foreignKey": "projectId"
+						},
+						"precondition": {
+							"allOf": [
+								{
+									"field": "wbsoTagId",
+									"op": "notNull"
+								},
+								{
+									"field": "activityCodeId",
+									"op": "notNull"
+								}
+							]
+						},
+						"onMatch": {
+							"set": {
+								"wbsoTagId": "@source.wbsoTagId",
+								"activityCodeId": "@source.activityCodeId",
+								"wbsoTaggedAt": "@now",
+								"tagSource": "auto"
+							}
+						},
+						"onMismatch": {
+							"set": {
+								"tagSource": "untagged"
+							},
+							"warn": "Missing WBSO metadata on project — manual activity code assignment required before RVO export."
+						}
+					},
+					"wbsoEligibleHours": {
+						"description": "Sum of hours for entries where the linked WBSOActivityCode.isAllowed is true. Used for export totals (REQ-WBSO-008).",
+						"type": "sum",
+						"field": "hours",
+						"filter": {
+							"join": {
+								"schema": "WBSOActivityCode",
+								"localKey": "activityCodeId",
+								"foreignKey": "id",
+								"where": {
+									"isAllowed": true
+								}
+							}
+						}
+					},
+					"wbsoIneligibleHours": {
+						"description": "Sum of hours for entries where the linked WBSOActivityCode.isAllowed is false. Tracked but excluded from subsidy submission (REQ-WBSO-008).",
+						"type": "sum",
+						"field": "hours",
+						"filter": {
+							"join": {
+								"schema": "WBSOActivityCode",
+								"localKey": "activityCodeId",
+								"foreignKey": "id",
+								"where": {
+									"isAllowed": false
+								}
+							}
 						}
 					}
 				}
@@ -6142,7 +6254,7 @@
 					"retention": {
 						"rule": "selectielijst:5.1.2",
 						"years": 7,
-						"description": "Financial records \u2014 7 years per Selectielijst 5.1.2 (REQ-CPA-014)."
+						"description": "Financial records — 7 years per Selectielijst 5.1.2 (REQ-CPA-014)."
 					}
 				},
 				"x-openregister-rbac": {
@@ -6426,7 +6538,7 @@
 									"type": "manual",
 									"subType": "year-end-closing",
 									"state": "posted",
-									"description": "Year-end retained-earnings transfer \u2014 boekjaar @self.yearNumber. Omzet- en kostenrekeningen afgesloten naar sluitrekening; nettoresultaat geboekt op eigen-vermogenrekening.",
+									"description": "Year-end retained-earnings transfer — boekjaar @self.yearNumber. Omzet- en kostenrekeningen afgesloten naar sluitrekening; nettoresultaat geboekt op eigen-vermogenrekening.",
 									"administrationId": "@self.administrationId"
 								}
 							}
@@ -7571,7 +7683,7 @@
 					},
 					"extractedText": {
 						"type": "string",
-						"description": "OCR placeholder \u2014 populated in T3. Null in T2.",
+						"description": "OCR placeholder — populated in T3. Null in T2.",
 						"nullable": true,
 						"example": "ACME BV / Amsterdam / EUR 45.00 / 2026-06-01"
 					},
@@ -7643,7 +7755,7 @@
 				},
 				"x-openregister-calculations": {
 					"photoValidation": {
-						"description": "File-type and size guard for receipt photo uploads per REQ-EC-008. Accepted types: image/jpeg, image/png, application/pdf. Maximum size: 10 MB. Declarative file-type check not supported by the OR engine \u2014 ADR-031 exception guard OCA\\Shillinq\\Validation\\PhotoValidator::validate() is invoked instead.",
+						"description": "File-type and size guard for receipt photo uploads per REQ-EC-008. Accepted types: image/jpeg, image/png, application/pdf. Maximum size: 10 MB. Declarative file-type check not supported by the OR engine — ADR-031 exception guard OCA\\Shillinq\\Validation\\PhotoValidator::validate() is invoked instead.",
 						"expression": null,
 						"guard": "OCA\\Shillinq\\Validation\\PhotoValidator::validate",
 						"guardParams": {
@@ -7702,7 +7814,7 @@
 				"icon": "CarOutline",
 				"version": "0.1.0",
 				"title": "Mileage Entry",
-				"description": "Journey log capturing distance travelled, vehicle type, and applicable rate per kilometre. totalAmount is auto-calculated as distance \u00d7 ratePerKm per REQ-EC-003. Linked to a parent ExpenseClaimEntry for approval and reimbursement.",
+				"description": "Journey log capturing distance travelled, vehicle type, and applicable rate per kilometre. totalAmount is auto-calculated as distance × ratePerKm per REQ-EC-003. Linked to a parent ExpenseClaimEntry for approval and reimbursement.",
 				"x-schema-org": "schema:Thing",
 				"type": "object",
 				"required": [
@@ -7764,7 +7876,7 @@
 					"totalAmount": {
 						"type": "number",
 						"exclusiveMinimum": 0,
-						"description": "Auto-calculated reimbursement: distance \u00d7 ratePerKm per REQ-EC-003. Do not set directly.",
+						"description": "Auto-calculated reimbursement: distance × ratePerKm per REQ-EC-003. Do not set directly.",
 						"example": 31.5
 					},
 					"purpose": {
@@ -7793,7 +7905,7 @@
 				},
 				"x-openregister-calculations": {
 					"totalAmount": {
-						"description": "Auto-calculated: distance \u00d7 ratePerKm per REQ-EC-003. Recalculated on every save while the parent claim is in draft state.",
+						"description": "Auto-calculated: distance × ratePerKm per REQ-EC-003. Recalculated on every save while the parent claim is in draft state.",
 						"expression": "@self.distance * @self.ratePerKm",
 						"targetField": "totalAmount"
 					},
@@ -7845,7 +7957,7 @@
 				"icon": "CalendarAccountOutline",
 				"version": "0.1.0",
 				"title": "Per Diem",
-				"description": "Daily travel allowance claimed per country and night count. allowanceAmount is auto-calculated as nightCount \u00d7 dailyRate per REQ-EC-004. Country-specific rates are maintained in the PerDiemRate master table per fiscal year.",
+				"description": "Daily travel allowance claimed per country and night count. allowanceAmount is auto-calculated as nightCount × dailyRate per REQ-EC-004. Country-specific rates are maintained in the PerDiemRate master table per fiscal year.",
 				"x-schema-org": "schema:Offer",
 				"type": "object",
 				"required": [
@@ -7898,14 +8010,14 @@
 					"allowanceAmount": {
 						"type": "number",
 						"exclusiveMinimum": 0,
-						"description": "Auto-calculated: nightCount \u00d7 dailyRate per REQ-EC-004. Do not set directly.",
+						"description": "Auto-calculated: nightCount × dailyRate per REQ-EC-004. Do not set directly.",
 						"example": 250.0
 					},
 					"description": {
 						"type": "string",
 						"description": "Purpose of travel.",
 						"nullable": true,
-						"example": "Conference attendance \u2014 Helsinki 2026"
+						"example": "Conference attendance — Helsinki 2026"
 					},
 					"claimId": {
 						"type": "string",
@@ -7927,7 +8039,7 @@
 				},
 				"x-openregister-calculations": {
 					"allowanceAmount": {
-						"description": "Auto-calculated: nightCount \u00d7 dailyRate per REQ-EC-004. Recalculated on every save while parent claim is in draft state.",
+						"description": "Auto-calculated: nightCount × dailyRate per REQ-EC-004. Recalculated on every save while parent claim is in draft state.",
 						"expression": "@self.nightCount * @self.dailyRate",
 						"targetField": "allowanceAmount"
 					},
@@ -7939,7 +8051,7 @@
 					},
 					"nightCountWarning": {
 						"description": "Issues a non-blocking warning when nightCount does not match the calendar span (travelEndDate - travelStartDate) per REQ-EC-004. Returns null when counts match, a warning message string otherwise.",
-						"expression": "datediff(@self.travelEndDate, @self.travelStartDate) != @self.nightCount ? 'Night count does not match travel dates \u2014 please verify' : null",
+						"expression": "datediff(@self.travelEndDate, @self.travelStartDate) != @self.nightCount ? 'Night count does not match travel dates — please verify' : null",
 						"nullable": true,
 						"severity": "warning"
 					}
@@ -7985,7 +8097,7 @@
 				"icon": "ClipboardTextOutline",
 				"version": "0.1.0",
 				"title": "Expense Claim",
-				"description": "Operator-curated batch grouping N receipts, mileage journeys, and per-diem records into a single claim for approval and reimbursement. Lifecycle: draft \u2192 submitted \u2192 approved \u2192 posted \u2192 reimbursed with disputed/voided branches. Approval routing consumes OR approval-workflow per ADR-022 (no app-local approval table). Posting materialises a balanced GL entry per T1 REQ-JE-007 pattern. Per REQ-EC-005 through REQ-EC-013.",
+				"description": "Operator-curated batch grouping N receipts, mileage journeys, and per-diem records into a single claim for approval and reimbursement. Lifecycle: draft → submitted → approved → posted → reimbursed with disputed/voided branches. Approval routing consumes OR approval-workflow per ADR-022 (no app-local approval table). Posting materialises a balanced GL entry per T1 REQ-JE-007 pattern. Per REQ-EC-005 through REQ-EC-013.",
 				"x-schema-org": "schema:Invoice",
 				"type": "object",
 				"required": [
@@ -8199,7 +8311,7 @@
 								{
 									"trigger": "x-openregister-lifecycle-action",
 									"action": "materialise-gl-transaction",
-									"description": "Emit one balanced GLTransaction: debit per expense line (Receipt\u2192expense account/CC, MileageEntry\u2192mileage-reimbursement account/CC, PerDiem\u2192per-diem account/CC), credit to expense-payable account (Account.isExpenseControlAccount=true). Sets glTransactionId back-reference per REQ-EC-012.",
+									"description": "Emit one balanced GLTransaction: debit per expense line (Receipt→expense account/CC, MileageEntry→mileage-reimbursement account/CC, PerDiem→per-diem account/CC), credit to expense-payable account (Account.isExpenseControlAccount=true). Sets glTransactionId back-reference per REQ-EC-012.",
 									"actionParameters": {
 										"register": "shillinq",
 										"targetSchema": "GLTransaction",
@@ -8267,20 +8379,20 @@
 						{
 							"condition": "totalAmount <= 500",
 							"action": "auto-approve",
-							"description": "Claims at or below \u20ac500 are auto-approved (approvalState: not-required) per REQ-EC-010."
+							"description": "Claims at or below €500 are auto-approved (approvalState: not-required) per REQ-EC-010."
 						},
 						{
 							"condition": "totalAmount > 500 AND totalAmount <= 5000",
 							"action": "route-to-approver",
 							"role": "manager",
-							"description": "Claims above \u20ac500 and at or below \u20ac5,000 require manager approval per REQ-EC-010."
+							"description": "Claims above €500 and at or below €5,000 require manager approval per REQ-EC-010."
 						},
 						{
 							"condition": "totalAmount > 5000",
 							"action": "route-to-approver",
 							"role": "cfo",
 							"dualControl": true,
-							"description": "Claims above \u20ac5,000 require CFO approval with dual-control (two independent approvals) per REQ-EC-010."
+							"description": "Claims above €5,000 require CFO approval with dual-control (two independent approvals) per REQ-EC-010."
 						}
 					],
 					"delegationSupport": true,
@@ -8451,7 +8563,7 @@
 						"type": "string",
 						"description": "Source or regulatory reference for this rate (e.g. 'IB 2025 rules').",
 						"nullable": true,
-						"example": "Belastingdienst 2026 \u2014 kilometertarief personenauto"
+						"example": "Belastingdienst 2026 — kilometertarief personenauto"
 					}
 				},
 				"x-openregister-rbac": {
@@ -8524,7 +8636,7 @@
 						"type": "string",
 						"description": "Regulatory source for this rate (e.g. 'Ministry travel rules').",
 						"nullable": true,
-						"example": "Ministerie van Financi\u00ebn \u2014 reiskostenvergoeding 2026"
+						"example": "Ministerie van Financiën — reiskostenvergoeding 2026"
 					}
 				},
 				"x-openregister-rbac": {
@@ -8557,7 +8669,7 @@
 				"icon": "CartArrowDownOutline",
 				"version": "0.1.0",
 				"title": "Inventory Reorder Rule",
-				"description": "Per-item, per-location reorder policy declaring min/max stock levels, lead-time-aware reorder-point thresholds, low-stock alert policy, and optional auto-purchase-order generation. Reorder decision logic is fully declarative via x-openregister-lifecycle, x-openregister-aggregations, and x-openregister-notifications per ADR-031 and ADR-022. No PHP InventoryReorderService \u2014 all reorder triggers and alert dispatch are schema-driven.",
+				"description": "Per-item, per-location reorder policy declaring min/max stock levels, lead-time-aware reorder-point thresholds, low-stock alert policy, and optional auto-purchase-order generation. Reorder decision logic is fully declarative via x-openregister-lifecycle, x-openregister-aggregations, and x-openregister-notifications per ADR-031 and ADR-022. No PHP InventoryReorderService — all reorder triggers and alert dispatch are schema-driven.",
 				"x-schema-org": "schema:Thing",
 				"type": "object",
 				"required": [
@@ -8597,7 +8709,7 @@
 					"reorderPoint": {
 						"type": "number",
 						"minimum": 0,
-						"description": "Stock quantity at which reorder is triggered, factoring supplier lead time. Formula: (expectedDailyUsage \u00d7 leadTimeDays) + safetyStock. REQ-IRA-005.",
+						"description": "Stock quantity at which reorder is triggered, factoring supplier lead time. Formula: (expectedDailyUsage × leadTimeDays) + safetyStock. REQ-IRA-005.",
 						"example": 75
 					},
 					"reorderQuantity": {
@@ -8626,7 +8738,7 @@
 						"minimum": 0,
 						"maximum": 100,
 						"default": 20,
-						"description": "Percentage above minimumLevel at which a warning alert fires (early warning before critical low-stock). E.g. 20 means alert at minimumLevel \u00d7 1.20.",
+						"description": "Percentage above minimumLevel at which a warning alert fires (early warning before critical low-stock). E.g. 20 means alert at minimumLevel × 1.20.",
 						"example": 20
 					},
 					"autoPurchaseOrder": {
@@ -8645,7 +8757,7 @@
 						"type": "number",
 						"minimum": 0,
 						"nullable": true,
-						"description": "Maximum spend per auto-generated PO in EUR. If reorderQuantity \u00d7 supplier.currentPrice exceeds this, the auto-order is blocked and escalated to role='procurement-manager'. REQ-IRA-006.",
+						"description": "Maximum spend per auto-generated PO in EUR. If reorderQuantity × supplier.currentPrice exceeds this, the auto-order is blocked and escalated to role='procurement-manager'. REQ-IRA-006.",
 						"example": 5000
 					},
 					"alertChannel": {
@@ -8702,7 +8814,7 @@
 					"states": {
 						"active": {
 							"label": "Active",
-							"description": "Rule is monitoring stock levels. Low-stock alerts fire when quantity \u2264 minimumLevel. Auto-PO triggers if enabled."
+							"description": "Rule is monitoring stock levels. Low-stock alerts fire when quantity ≤ minimumLevel. Auto-PO triggers if enabled."
 						},
 						"paused": {
 							"label": "Paused",
@@ -8793,7 +8905,7 @@
 				},
 				"x-openregister-notifications": {
 					"lowStockAlert": {
-						"description": "Dispatches a low-stock alert when InventoryStock.quantity \u2264 minimumLevel and lifecycleState = active and (snoozeUntil is null or snoozeUntil < now). REQ-IRA-004.",
+						"description": "Dispatches a low-stock alert when InventoryStock.quantity ≤ minimumLevel and lifecycleState = active and (snoozeUntil is null or snoozeUntil < now). REQ-IRA-004.",
 						"trigger": "aggregation:lowStockTrigger",
 						"guard": {
 							"field": "lifecycleState",
@@ -8857,7 +8969,7 @@
 				},
 				"x-openregister-calculations": {
 					"reorderPointCalculated": {
-						"description": "Computes the lead-time-aware reorder point. Formula: (expectedDailyUsage \u00d7 leadTimeDays) + safetyStock. Falls back to minimumLevel + (leadTimeDays \u00d7 5) + 10 if expectedDailyUsage unavailable. Operator may override reorderPoint manually. REQ-IRA-005.",
+						"description": "Computes the lead-time-aware reorder point. Formula: (expectedDailyUsage × leadTimeDays) + safetyStock. Falls back to minimumLevel + (leadTimeDays × 5) + 10 if expectedDailyUsage unavailable. Operator may override reorderPoint manually. REQ-IRA-005.",
 						"expression": "IF({expectedDailyUsage} IS NOT NULL, ({expectedDailyUsage} * COALESCE({leadTimeDays}, 7)) + ({expectedDailyUsage} * COALESCE({safetyStockDays}, 1)), {minimumLevel} + (COALESCE({leadTimeDays}, 7) * 5) + 10)",
 						"outputField": "reorderPointCalculated",
 						"type": "number"
@@ -10390,7 +10502,7 @@
 					"type": "number",
 					"minimum": 0,
 					"maximum": 100,
-					"description": "Percentage of obligations settled by their due date (0\u2013100). Computed via x-openregister-aggregations.onTimeSettlement.",
+					"description": "Percentage of obligations settled by their due date (0–100). Computed via x-openregister-aggregations.onTimeSettlement.",
 					"nullable": true,
 					"example": 95.4
 				},
@@ -10862,7 +10974,7 @@
 					"type": "string",
 					"description": "Detailed description of the audit finding.",
 					"nullable": true,
-					"example": "BTW-afdracht over Q3 2026 niet tijdig ingediend; \u20ac18.500 achterstalling."
+					"example": "BTW-afdracht over Q3 2026 niet tijdig ingediend; €18.500 achterstalling."
 				},
 				"observationNumber": {
 					"type": "string",
@@ -10874,7 +10986,7 @@
 					"type": "string",
 					"description": "Governance improvement observation (non-finding, informational).",
 					"nullable": true,
-					"example": "Inkoopproces mist formele budgethouder-goedkeuring voor orders boven \u20ac10.000."
+					"example": "Inkoopproces mist formele budgethouder-goedkeuring voor orders boven €10.000."
 				},
 				"remediationDueDate": {
 					"type": "string",
@@ -11013,13 +11125,13 @@
 					"type": "string",
 					"description": "Summary of governance improvement observations.",
 					"nullable": true,
-					"example": "Aanbeveling: versterking van het inkoopproces voor orders boven \u20ac10.000."
+					"example": "Aanbeveling: versterking van het inkoopproces voor orders boven €10.000."
 				},
 				"remediationRecommendations": {
 					"type": "string",
 					"description": "Recommended corrective actions for identified findings.",
 					"nullable": true,
-					"example": "Herstel BTW-aangifte Q3 2026 v\u00f3\u00f3r 31 maart 2027. Implementeer budgethouder-goedkeuring."
+					"example": "Herstel BTW-aangifte Q3 2026 vóór 31 maart 2027. Implementeer budgethouder-goedkeuring."
 				},
 				"auditOpinion": {
 					"type": "string",
@@ -11107,7 +11219,7 @@
 				"name": {
 					"type": "string",
 					"description": "Grant name or description.",
-					"example": "WBSO Subsidie 2026 \u2014 R&D innovatie"
+					"example": "WBSO Subsidie 2026 — R&D innovatie"
 				},
 				"awardedAmount": {
 					"type": "number",
@@ -11342,7 +11454,7 @@
 			"icon": "ReceiptTextOutline",
 			"version": "0.1.0",
 			"title": "AP Invoice",
-			"description": "Accounts payable sub-ledger invoice recording vendor billing and payment obligation. Posting materialises a balanced GLTransaction per T1 REQ-JE-007. Lifecycle: draft \u2192 pending \u2192 approved \u2192 posted \u2192 paid with disputed/voided branches. Approval routing consumes OR approval-workflow per ADR-022. Per REQ-AP-003 and REQ-AP-004.",
+			"description": "Accounts payable sub-ledger invoice recording vendor billing and payment obligation. Posting materialises a balanced GLTransaction per T1 REQ-JE-007. Lifecycle: draft → pending → approved → posted → paid with disputed/voided branches. Approval routing consumes OR approval-workflow per ADR-022. Per REQ-AP-003 and REQ-AP-004.",
 			"x-schema-org": "schema:Invoice",
 			"type": "object",
 			"required": [
@@ -11654,7 +11766,7 @@
 						"from": "posted",
 						"to": "paid",
 						"label": "Mark as paid",
-						"description": "Transition to paid when bank-reconciliation engine matches an exact-amount bank statement line per REQ-AP-008. No shillinq matcher service \u2014 OR event-driven."
+						"description": "Transition to paid when bank-reconciliation engine matches an exact-amount bank statement line per REQ-AP-008. No shillinq matcher service — OR event-driven."
 					},
 					"dispute": {
 						"from": "posted",
@@ -13352,7 +13464,7 @@
 			"icon": "FileDocumentOutline",
 			"version": "0.1.0",
 			"title": "Subsidie",
-			"description": "Grant/subsidie record covering the full ASV-model lifecycle (aanvraag \u2192 verleend \u2192 vastgesteld \u2192 uitbetaald). Works for both outgoing grants (gemeente to beneficiary) and incoming grants (beneficiary from granting body). The subsidieRegeling enum field overlays per-regeling R&D constraints (REQ-RDS-001). schema:Grant annotation; schema:ResearchProject materialisation when subsidieRegeling indicates an R&D regeling. Per bookkeeping-subsidie-verantwoording + bookkeeping-r-d-subsidies-mkb.",
+			"description": "Grant/subsidie record covering the full ASV-model lifecycle (aanvraag → verleend → vastgesteld → uitbetaald). Works for both outgoing grants (gemeente to beneficiary) and incoming grants (beneficiary from granting body). The subsidieRegeling enum field overlays per-regeling R&D constraints (REQ-RDS-001). schema:Grant annotation; schema:ResearchProject materialisation when subsidieRegeling indicates an R&D regeling. Per bookkeeping-subsidie-verantwoording + bookkeeping-r-d-subsidies-mkb.",
 			"x-schema-org": "schema:Grant",
 			"type": "object",
 			"required": [
@@ -13965,7 +14077,7 @@
 			"icon": "PackageVariantOutline",
 			"version": "0.1.0",
 			"title": "Product",
-			"description": "Universal product master data \u2014 SKU, name, category, pricing, barcodes, and status. Foundation for POS, procurement, and inventory workflows per REQ-IPC-001 through REQ-IPC-010. SKU uniqueness is scoped to (organizationId, sku) to support multi-tenant Nextcloud instances.",
+			"description": "Universal product master data — SKU, name, category, pricing, barcodes, and status. Foundation for POS, procurement, and inventory workflows per REQ-IPC-001 through REQ-IPC-010. SKU uniqueness is scoped to (organizationId, sku) to support multi-tenant Nextcloud instances.",
 			"x-schema-org": "schema:Product",
 			"type": "object",
 			"x-openregister-unique": [
@@ -14230,7 +14342,7 @@
 			"icon": "WarehouseOutline",
 			"version": "0.1.0",
 			"title": "Location",
-			"description": "Physical or virtual storage location in the warehouse hierarchy (warehouse \u2192 zone \u2192 bin \u2192 in-transit). Hierarchical parent-child FK (parentLocationId) enables rollup stock visibility and inter-location transfers per REQ-LOC-001 through REQ-LOC-009 and design.md D1-D6. No parallel warehouse table in PHP per ADR-031 \u2014 location hierarchy is pure declarative metadata.",
+			"description": "Physical or virtual storage location in the warehouse hierarchy (warehouse → zone → bin → in-transit). Hierarchical parent-child FK (parentLocationId) enables rollup stock visibility and inter-location transfers per REQ-LOC-001 through REQ-LOC-009 and design.md D1-D6. No parallel warehouse table in PHP per ADR-031 — location hierarchy is pure declarative metadata.",
 			"x-schema-org": "schema:Place",
 			"x-openregister-purpose": "dimension",
 			"type": "object",
@@ -14248,7 +14360,7 @@
 				},
 				"locationCode": {
 					"type": "string",
-					"description": "Operator-assigned location code unique per administration per REQ-LOC-002 and D5. Immutable after creation \u2014 operator must create new location + migrate stock if rename required. Examples: 'W-01', 'Z-01', 'B-100', 'IN-TRANSIT-W01-W02'.",
+					"description": "Operator-assigned location code unique per administration per REQ-LOC-002 and D5. Immutable after creation — operator must create new location + migrate stock if rename required. Examples: 'W-01', 'Z-01', 'B-100', 'IN-TRANSIT-W01-W02'.",
 					"example": "W-01",
 					"pattern": "^[A-Z0-9][A-Z0-9\\-_]{0,19}$"
 				},
@@ -14319,7 +14431,7 @@
 				},
 				"administrationId": {
 					"type": "string",
-					"description": "FK to the Administration owning this location per REQ-LOC-008. All location queries are scoped to this administration \u2014 cross-org access is rejected with 403.",
+					"description": "FK to the Administration owning this location per REQ-LOC-008. All location queries are scoped to this administration — cross-org access is rejected with 403.",
 					"example": "adm-1"
 				},
 				"notes": {
@@ -14536,7 +14648,7 @@
 			"icon": "TruckDeliveryOutline",
 			"version": "0.1.0",
 			"title": "Inventory Stock Transfer",
-			"description": "Inter-location transfer of stock between any two locations in the warehouse hierarchy per REQ-LOC-006. Transfer updates source and destination InventoryStock quantities. Optional GL integration via StockMove (if inventory-stock-movement-ledger is present). No PHP TransferService \u2014 transfer workflow is declarative per ADR-031.",
+			"description": "Inter-location transfer of stock between any two locations in the warehouse hierarchy per REQ-LOC-006. Transfer updates source and destination InventoryStock quantities. Optional GL integration via StockMove (if inventory-stock-movement-ledger is present). No PHP TransferService — transfer workflow is declarative per ADR-031.",
 			"x-schema-org": "schema:MoveAction",
 			"type": "object",
 			"required": [
@@ -14572,7 +14684,7 @@
 				"quantity": {
 					"type": "number",
 					"minimum": 0.001,
-					"description": "Quantity to transfer. Must be positive and \u2264 available stock at source.",
+					"description": "Quantity to transfer. Must be positive and ≤ available stock at source.",
 					"example": 50.0
 				},
 				"scheduledDate": {
@@ -14606,7 +14718,7 @@
 					"type": "string",
 					"nullable": true,
 					"description": "Operator notes about this transfer.",
-					"example": "Seasonal stock rebalancing W-MAIN \u2192 W-EAST"
+					"example": "Seasonal stock rebalancing W-MAIN → W-EAST"
 				},
 				"glPosted": {
 					"type": "boolean",
@@ -14666,7 +14778,7 @@
 						"to": "received",
 						"label": "Mark as received",
 						"labelNl": "Markeren als ontvangen",
-						"description": "Stock arrives at destination. InventoryStock updated atomically: source \u2212qty, dest +qty. GL entry posted if GL present."
+						"description": "Stock arrives at destination. InventoryStock updated atomically: source −qty, dest +qty. GL entry posted if GL present."
 					},
 					"cancel": {
 						"from": [
@@ -14794,6 +14906,549 @@
 					"enforce": true
 				}
 			}
+		},
+		"WBSOTag": {
+			"slug": "WBSOTag",
+			"icon": "TagCheckOutline",
+			"version": "0.1.0",
+			"title": "WBSO Tag",
+			"description": "WBSO project code register per REQ-WBSO-002 — SO (Stand-alone Project), TWO (TechnoWise Open), SMART (SME Collaboration) and custom codes per WBSO legislation. Administration-configurable; not hardcoded. Per ADR-024 this is a full OR register, not a config table.",
+			"type": "object",
+			"x-schema-org": "schema:DefinedTerm",
+			"required": [
+				"wbsoCode",
+				"displayName",
+				"administrationId",
+				"lifecycleState"
+			],
+			"properties": {
+				"wbsoCode": {
+					"type": "string",
+					"description": "Official WBSO project code (SO, TWO, SMART) or custom code per WBSO legislation. Not an enum — operators may add custom codes per subsidy agreement (REQ-WBSO-002).",
+					"example": "SO"
+				},
+				"displayName": {
+					"type": "string",
+					"description": "Dutch display name of the WBSO code shown in UI and exports (REQ-WBSO-002).",
+					"example": "Stand-alone Project"
+				},
+				"description": {
+					"type": "string",
+					"nullable": true,
+					"description": "RVO alignment notes and subsidy conditions for this code.",
+					"example": "Solo R&D project funded by WBSO subsidy — no collaborative partner required."
+				},
+				"rvoCertificationUrl": {
+					"type": "string",
+					"nullable": true,
+					"description": "Link to the official RVO directive or legislation reference for this code.",
+					"example": "https://www.rvo.nl/subsidies-financiering/wbso"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the Administration owning this WBSO code entry.",
+					"example": "adm-1"
+				},
+				"lifecycleState": {
+					"type": "string",
+					"description": "Lifecycle state of this code.",
+					"enum": [
+						"active",
+						"archived",
+						"deprecated"
+					],
+					"default": "active",
+					"example": "active"
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "lifecycleState",
+				"initialState": "active",
+				"states": {
+					"active": {
+						"label": "Actief",
+						"description": "Code is recognized by RVO and eligible for WBSO tagging."
+					},
+					"archived": {
+						"label": "Gearchiveerd",
+						"description": "Code is retired but historical entries remain queryable for audit."
+					},
+					"deprecated": {
+						"label": "Vervallen",
+						"description": "Code is no longer accepted by RVO for new subsidy applications."
+					}
+				},
+				"transitions": {
+					"archive": {
+						"from": "active",
+						"to": "archived",
+						"label": "Archiveer code",
+						"description": "Retire an active WBSO code; existing tagged entries remain valid."
+					},
+					"deprecate": {
+						"from": [
+							"active",
+							"archived"
+						],
+						"to": "deprecated",
+						"label": "Markeer als vervallen",
+						"description": "Mark code as no longer accepted by RVO for new applications."
+					},
+					"reactivate": {
+						"from": "archived",
+						"to": "active",
+						"label": "Reactiveer code",
+						"description": "Restore an archived code to active status."
+					}
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"administrator": {
+						"permissions": [
+							"create",
+							"read",
+							"update",
+							"delete"
+						]
+					},
+					"bookkeeper": {
+						"permissions": [
+							"read"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
+		"WBSOActivityCode": {
+			"slug": "WBSOActivityCode",
+			"icon": "ClipboardListOutline",
+			"version": "0.1.0",
+			"title": "WBSO Activity Code",
+			"description": "Activity classification register per REQ-WBSO-003 — A-codes (allowed R&D activities) and B-codes (non-eligible overhead). Baseline codes ship with the app; administrations may add custom variants via parentActivityCode FK (REQ-WBSO-009).",
+			"type": "object",
+			"x-schema-org": "schema:DefinedTerm",
+			"required": [
+				"activityCode",
+				"description",
+				"category",
+				"isAllowed",
+				"administrationId",
+				"lifecycleState"
+			],
+			"properties": {
+				"activityCode": {
+					"type": "string",
+					"description": "Activity code identifier: A001–A999 for allowed R&D activities, B001+ for restricted/overhead, or custom per subsidy agreement (REQ-WBSO-003).",
+					"example": "A001"
+				},
+				"description": {
+					"type": "string",
+					"description": "Activity description per RVO guidelines (REQ-WBSO-003).",
+					"example": "Software development for R&D"
+				},
+				"category": {
+					"type": "string",
+					"description": "RVO activity category for grouping and reporting (REQ-WBSO-003).",
+					"enum": [
+						"research-development",
+						"support",
+						"non-eligible",
+						"infrastructure"
+					],
+					"example": "research-development"
+				},
+				"isAllowed": {
+					"type": "boolean",
+					"description": "true = eligible for WBSO subsidy hours; false = tracked but excluded from RVO submission totals (REQ-WBSO-003).",
+					"example": true
+				},
+				"parentActivityCode": {
+					"type": "string",
+					"nullable": true,
+					"description": "FK to the baseline WBSOActivityCode.activityCode this entry is a custom variant of. Custom variants inherit isAllowed from parent unless explicitly overridden (REQ-WBSO-009).",
+					"example": "A001"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the Administration owning this code entry.",
+					"example": "adm-1"
+				},
+				"lifecycleState": {
+					"type": "string",
+					"description": "Lifecycle state of this activity code.",
+					"enum": [
+						"active",
+						"archived",
+						"deprecated"
+					],
+					"default": "active",
+					"example": "active"
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "lifecycleState",
+				"initialState": "active",
+				"states": {
+					"active": {
+						"label": "Actief",
+						"description": "Code is valid and assignable to time entries."
+					},
+					"archived": {
+						"label": "Gearchiveerd",
+						"description": "Code is retired; existing tagged entries remain queryable."
+					},
+					"deprecated": {
+						"label": "Vervallen",
+						"description": "Code is no longer accepted per current RVO directive."
+					}
+				},
+				"transitions": {
+					"archive": {
+						"from": "active",
+						"to": "archived",
+						"label": "Archiveer code",
+						"description": "Retire activity code."
+					},
+					"deprecate": {
+						"from": [
+							"active",
+							"archived"
+						],
+						"to": "deprecated",
+						"label": "Markeer als vervallen",
+						"description": "Deprecate per updated RVO directive."
+					},
+					"reactivate": {
+						"from": "archived",
+						"to": "active",
+						"label": "Reactiveer code",
+						"description": "Restore archived code to active status."
+					}
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"administrator": {
+						"permissions": [
+							"create",
+							"read",
+							"update",
+							"delete"
+						]
+					},
+					"bookkeeper": {
+						"permissions": [
+							"read"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
+		"WBSOExportLog": {
+			"slug": "WBSOExportLog",
+			"icon": "FileExportOutline",
+			"version": "0.1.0",
+			"title": "WBSO Export Log",
+			"description": "Tracks WBSO uren-export operations and their RVO validation lifecycle per REQ-WBSO-005. Lifecycle: draft → generated → validated → submitted → archived (with generated → rejected fallback). Validation guards enforce complete WBSO tagging on all included Urenregistratie entries before allowing RVO submission (REQ-WBSO-006).",
+			"type": "object",
+			"x-schema-org": "schema:DigitalDocument",
+			"required": [
+				"exportId",
+				"periodStart",
+				"periodEnd",
+				"exportFormat",
+				"status",
+				"recordCount",
+				"totalHours",
+				"administrationId"
+			],
+			"properties": {
+				"exportId": {
+					"type": "string",
+					"description": "Unique export identifier in the format EXP-{YEAR}-{PERIOD}-{SEQ} (REQ-WBSO-005).",
+					"example": "EXP-2026-Q1-001"
+				},
+				"periodStart": {
+					"type": "string",
+					"format": "date",
+					"description": "Start of the export date range (inclusive), typically fiscal quarter start (REQ-WBSO-005).",
+					"example": "2026-01-01"
+				},
+				"periodEnd": {
+					"type": "string",
+					"format": "date",
+					"description": "End of the export date range (inclusive), typically fiscal quarter end (REQ-WBSO-005).",
+					"example": "2026-03-31"
+				},
+				"exportFormat": {
+					"type": "string",
+					"description": "Output format for the RVO submission (REQ-WBSO-005, REQ-WBSO-007).",
+					"enum": [
+						"csv",
+						"pdf",
+						"xml"
+					],
+					"example": "csv"
+				},
+				"status": {
+					"type": "string",
+					"description": "Export lifecycle state (REQ-WBSO-005, REQ-WBSO-006).",
+					"enum": [
+						"draft",
+						"generated",
+						"validated",
+						"submitted",
+						"archived",
+						"rejected"
+					],
+					"default": "draft",
+					"example": "draft"
+				},
+				"recordCount": {
+					"type": "integer",
+					"minimum": 0,
+					"description": "Number of Urenregistratie entries included in this export (REQ-WBSO-005).",
+					"example": 247
+				},
+				"totalHours": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Total eligible hours (A-codes) included in the export. Excludes B-code entries (REQ-WBSO-005).",
+					"example": 320.5
+				},
+				"totalHoursIneligible": {
+					"type": "number",
+					"minimum": 0,
+					"nullable": true,
+					"description": "Total non-eligible hours (B-codes) tracked but excluded from RVO submission totals (REQ-WBSO-005).",
+					"example": 10.0
+				},
+				"exportFilters": {
+					"type": "object",
+					"nullable": true,
+					"description": "Filter parameters applied on export generation: wbsoTagId, activityCodeId, isAllowed, employee, date range (REQ-WBSO-008).",
+					"example": {
+						"wbsoTagId": "wbso-tag-so-1",
+						"isAllowed": true
+					}
+				},
+				"generatedAt": {
+					"type": "string",
+					"format": "date-time",
+					"nullable": true,
+					"description": "Timestamp when the export file was materialized (REQ-WBSO-005).",
+					"example": "2026-04-10T09:15:00Z"
+				},
+				"validatedAt": {
+					"type": "string",
+					"format": "date-time",
+					"nullable": true,
+					"description": "Timestamp when RVO validation passed (REQ-WBSO-005).",
+					"example": "2026-04-10T09:20:00Z"
+				},
+				"validationErrors": {
+					"type": "array",
+					"nullable": true,
+					"description": "List of validation error messages. Empty array if validated successfully; populated on rejection (REQ-WBSO-006).",
+					"items": {
+						"type": "string"
+					},
+					"example": [
+						"Entry abc-123: missing wbsoTagId"
+					]
+				},
+				"submittedAt": {
+					"type": "string",
+					"format": "date-time",
+					"nullable": true,
+					"description": "Timestamp when submitted to RVO portal or operator marked submission complete (REQ-WBSO-005).",
+					"example": "2026-04-10T10:30:00Z"
+				},
+				"fileUri": {
+					"type": "string",
+					"nullable": true,
+					"description": "Storage path or cloud URL of the generated export file (REQ-WBSO-005).",
+					"example": "s3://shillinq-exports/wbso-2026-q1.csv"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the Administration owning this export log.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "status",
+				"initialState": "draft",
+				"states": {
+					"draft": {
+						"label": "Concept",
+						"description": "Export configuration in progress; no file materialized yet."
+					},
+					"generated": {
+						"label": "Gegenereerd",
+						"description": "Export file materialized; awaiting RVO validation."
+					},
+					"validated": {
+						"label": "Gevalideerd",
+						"description": "RVO validation passed; all entries carry complete WBSO tags."
+					},
+					"submitted": {
+						"label": "Ingediend",
+						"description": "Submitted to RVO portal or operator recorded manual upload."
+					},
+					"archived": {
+						"label": "Gearchiveerd",
+						"description": "Submission cycle complete; export retained for 7-year audit trail."
+					},
+					"rejected": {
+						"label": "Afgewezen",
+						"description": "Validation failed or operator cancelled; validationErrors populated."
+					}
+				},
+				"transitions": {
+					"generate": {
+						"from": "draft",
+						"to": "generated",
+						"label": "Genereer export",
+						"description": "Operator selects date range, format, and filters; export record is created. File materialization is deferred to T4."
+					},
+					"validate": {
+						"from": "generated",
+						"to": "validated",
+						"label": "Valideer voor RVO",
+						"description": "Run RVO validation: all included Urenregistratie entries MUST have non-null wbsoTagId + activityCodeId; isAllowed MUST match entry eligibility (REQ-WBSO-006).",
+						"requires": "OCA\\Shillinq\\Lifecycle\\WBSOExportValidationGuard"
+					},
+					"submit": {
+						"from": "validated",
+						"to": "submitted",
+						"label": "Markeer als ingediend",
+						"description": "Operator uploads to RVO portal or clicks Mark submitted; sets submittedAt timestamp."
+					},
+					"archive": {
+						"from": "submitted",
+						"to": "archived",
+						"label": "Archiveer",
+						"description": "Close the submission cycle; retain export for audit."
+					},
+					"reject": {
+						"from": "generated",
+						"to": "rejected",
+						"label": "Wijs af",
+						"description": "Validation failed or operator cancels; validationErrors array MUST be populated before transition."
+					},
+					"regenerate": {
+						"from": "rejected",
+						"to": "draft",
+						"label": "Opnieuw genereren",
+						"description": "Reset to draft for correction and re-generation."
+					}
+				}
+			},
+			"x-openregister-aggregations": {
+				"wbsoExportTotals": {
+					"description": "Compute totalHours (eligible) and totalHoursIneligible (non-eligible) from Urenregistratie entries matching this export's period range (REQ-WBSO-006).",
+					"type": "multi-sum",
+					"source": {
+						"register": "shillinq",
+						"schema": "UrenRegistratie",
+						"dateFilter": {
+							"field": "date",
+							"start": "@self.periodStart",
+							"end": "@self.periodEnd"
+						}
+					},
+					"outputs": {
+						"totalHours": {
+							"field": "hours",
+							"filter": {
+								"join": {
+									"schema": "WBSOActivityCode",
+									"localKey": "activityCodeId",
+									"where": {
+										"isAllowed": true
+									}
+								}
+							}
+						},
+						"totalHoursIneligible": {
+							"field": "hours",
+							"filter": {
+								"join": {
+									"schema": "WBSOActivityCode",
+									"localKey": "activityCodeId",
+									"where": {
+										"isAllowed": false
+									}
+								}
+							}
+						},
+						"recordCount": {
+							"type": "count"
+						}
+					}
+				},
+				"untaggedEntryCount": {
+					"description": "Count of Urenregistratie entries in the export period where wbsoTagId or activityCodeId is null. Used by the validation guard to detect incomplete tagging (REQ-WBSO-006).",
+					"type": "count",
+					"source": {
+						"register": "shillinq",
+						"schema": "UrenRegistratie",
+						"dateFilter": {
+							"field": "date",
+							"start": "@self.periodStart",
+							"end": "@self.periodEnd"
+						},
+						"filter": {
+							"anyOf": [
+								{
+									"field": "wbsoTagId",
+									"op": "isNull"
+								},
+								{
+									"field": "activityCodeId",
+									"op": "isNull"
+								}
+							]
+						}
+					}
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"administrator": {
+						"permissions": [
+							"create",
+							"read",
+							"update",
+							"delete"
+						]
+					},
+					"bookkeeper": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
 		}
 	},
 	"mappings": {
@@ -14801,7 +15456,7 @@
 			"slug": "iv3-xml-transformation",
 			"version": "0.1.0",
 			"name": "IV3 XML Transformation",
-			"description": "Maps an Iv3Export record (with aggregated buckets) to the CBS IV3-bestand XML structure. ADR-031 declarative path \u2014 preferred over a PHP renderer. If OR's mapping engine cannot express CBS mixed-content XML nodes, the Iv3XmlRenderer::render() exception path (documented in openspec/changes/add-shillinq-iv3-reporting/design.md \u00a7D3) applies.",
+			"description": "Maps an Iv3Export record (with aggregated buckets) to the CBS IV3-bestand XML structure. ADR-031 declarative path — preferred over a PHP renderer. If OR's mapping engine cannot express CBS mixed-content XML nodes, the Iv3XmlRenderer::render() exception path (documented in openspec/changes/add-shillinq-iv3-reporting/design.md §D3) applies.",
 			"passThrough": false,
 			"mapping": {
 				"Aanlevering.Verslagperiode.Jaar": "reportingYear",
@@ -14818,6 +15473,114 @@
 					"Q2": "2",
 					"Q3": "3",
 					"Q4": "4"
+				}
+			}
+		},
+		"wbso-rvo-csv-format": {
+			"slug": "wbso-rvo-csv-format",
+			"version": "0.1.0",
+			"name": "WBSO RVO CSV Export Format",
+			"description": "Declares the RVO-required CSV column structure for WBSO uren-export (REQ-WBSO-007, RVO Administratie Directives 2026-05-21). T4 attaches the outbound computation; T2 declares the field shape only.",
+			"passThrough": false,
+			"mapping": {
+				"Date": "date",
+				"ProjectName": "projectId",
+				"ProjectCode": "wbsoTagId",
+				"ActivityCode": "activityCodeId",
+				"ActivityDescription": "description",
+				"Hours": "hours",
+				"EmployeeName": "personId",
+				"Notes": "description"
+			},
+			"outputFormat": {
+				"type": "csv",
+				"delimiter": ",",
+				"encoding": "UTF-8",
+				"header": true,
+				"columns": [
+					{
+						"name": "Date",
+						"format": "ISO 8601",
+						"example": "2026-01-15"
+					},
+					{
+						"name": "Project Name",
+						"example": "Project Alpha"
+					},
+					{
+						"name": "Project Code (WBSO)",
+						"example": "SO"
+					},
+					{
+						"name": "Activity Code",
+						"example": "A001"
+					},
+					{
+						"name": "Activity Description",
+						"example": "Software development for R&D"
+					},
+					{
+						"name": "Hours",
+						"format": "decimal",
+						"example": "8.0"
+					},
+					{
+						"name": "Employee Name",
+						"example": "Jan Jansen"
+					},
+					{
+						"name": "Notes",
+						"example": "Sprint planning"
+					}
+				]
+			}
+		},
+		"wbso-rvo-xml-format": {
+			"slug": "wbso-rvo-xml-format",
+			"version": "0.1.0",
+			"name": "WBSO RVO XML Export Format",
+			"description": "Declares the RVO portal XML element structure for automated WBSO submission (REQ-WBSO-007, RVO Administratie Directives 2026-05-21). T4 emits the file; T2 declares the schema only.",
+			"passThrough": false,
+			"outputFormat": {
+				"type": "xml",
+				"rootElement": "WBSOExport",
+				"structure": {
+					"Metadata": {
+						"Period": {
+							"attributes": [
+								"start",
+								"end"
+							]
+						},
+						"Administration": {
+							"attributes": [
+								"id"
+							]
+						},
+						"GeneratedAt": {
+							"attributes": [
+								"timestamp"
+							]
+						}
+					},
+					"TimeEntries": {
+						"Entry": {
+							"attributes": [
+								"id",
+								"date",
+								"project",
+								"wbsoCode",
+								"activityCode",
+								"hours",
+								"employee",
+								"eligible"
+							]
+						}
+					},
+					"Totals": {
+						"EligibleHours": "wbsoEligibleHours",
+						"IneligibleHours": "wbsoIneligibleHours"
+					}
 				}
 			}
 		}
@@ -14985,7 +15748,7 @@
 				"slug": "shillinq-bank-transaction-polling"
 			},
 			"name": "Bank Transaction Polling",
-			"description": "Periodic polling workflow that calls the openconnector PSD2 aggregator source by slug, normalises aggregator JSON to CAMT.053 format, attaches the document via docudesk, and creates BankStatement records. Runs 4\u00d7 daily per REQ-BC-004 + ADR-031 path 2. No shillinq-side TimedJob.",
+			"description": "Periodic polling workflow that calls the openconnector PSD2 aggregator source by slug, normalises aggregator JSON to CAMT.053 format, attaches the document via docudesk, and creates BankStatement records. Runs 4× daily per REQ-BC-004 + ADR-031 path 2. No shillinq-side TimedJob.",
 			"register": "shillinq",
 			"schema": "BankConnection",
 			"cronExpression": "0 */6 * * *",
@@ -15074,7 +15837,7 @@
 			"fiscalYear": 2025,
 			"findingNumber": "FIND-2025-AMS-001",
 			"findingSeverity": "major",
-			"findingDescription": "BTW-afdracht over Q3 2025 niet tijdig ingediend bij de Belastingdienst. Achterstalling van \u20ac18.500 geconstateerd in boeking 4320.",
+			"findingDescription": "BTW-afdracht over Q3 2025 niet tijdig ingediend bij de Belastingdienst. Achterstalling van €18.500 geconstateerd in boeking 4320.",
 			"observationNumber": null,
 			"observationDescription": null,
 			"remediationDueDate": "2026-06-30",
@@ -15095,9 +15858,9 @@
 			"fiscalYear": 2025,
 			"findingNumber": "FIND-2025-AMS-002",
 			"findingSeverity": "major",
-			"findingDescription": "Inkoopopdrachten boven \u20ac25.000 zonder formele aanbestedingsprocedure (6 gevallen, totaal \u20ac187.000).",
+			"findingDescription": "Inkoopopdrachten boven €25.000 zonder formele aanbestedingsprocedure (6 gevallen, totaal €187.000).",
 			"observationNumber": "OBS-2025-AMS-001",
-			"observationDescription": "Aanbeveling: implementeer automatische drempelwaarde-controle in inkoopsysteem voor orders boven \u20ac10.000.",
+			"observationDescription": "Aanbeveling: implementeer automatische drempelwaarde-controle in inkoopsysteem voor orders boven €10.000.",
 			"remediationDueDate": "2026-09-30",
 			"remediationStatus": "pending",
 			"remediationCompletionDate": null,
@@ -15116,7 +15879,7 @@
 			"fiscalYear": 2025,
 			"findingNumber": "FIND-2025-ROT-001",
 			"findingSeverity": "critical",
-			"findingDescription": "Tekenbevoegdheid overschreden: factuur van \u20ac450.000 getekend door functionaris zonder mandaat voor bedragen boven \u20ac100.000 (REQ-SISA-004 handtekeningbevoegdheid).",
+			"findingDescription": "Tekenbevoegdheid overschreden: factuur van €450.000 getekend door functionaris zonder mandaat voor bedragen boven €100.000 (REQ-SISA-004 handtekeningbevoegdheid).",
 			"observationNumber": null,
 			"observationDescription": null,
 			"remediationDueDate": "2026-04-30",
@@ -15192,8 +15955,8 @@
 			"issuedDate": "2026-02-20",
 			"dueResponseDate": "2026-03-20",
 			"findingsSummary": "Twee majeure bevindingen aangetroffen: (1) BTW-afdracht Q3 2025 niet tijdig ingediend; (2) inkoopopdrachten zonder aanbestedingsprocedure. Geen kritieke bevindingen.",
-			"observationsSummary": "Aanbeveling versterking inkoopproces voor drempelwaarden boven \u20ac10.000.",
-			"remediationRecommendations": "1. Herstel BTW-aangifte Q3 2025 v\u00f3\u00f3r 30 juni 2026. 2. Implementeer automatische drempelwaarde-controle. 3. Train inkoopmedewerkers op aanbestedingsregels.",
+			"observationsSummary": "Aanbeveling versterking inkoopproces voor drempelwaarden boven €10.000.",
+			"remediationRecommendations": "1. Herstel BTW-aangifte Q3 2025 vóór 30 juni 2026. 2. Implementeer automatische drempelwaarde-controle. 3. Train inkoopmedewerkers op aanbestedingsregels.",
 			"auditOpinion": "qualified",
 			"status": "issued"
 		},
@@ -15208,7 +15971,7 @@
 			"auditorName": "Deloitte Accountants B.V.",
 			"issuedDate": "2026-03-10",
 			"dueResponseDate": "2026-04-10",
-			"findingsSummary": "Kritieke bevinding: overschrijding tekenbevoegdheid (\u20ac450.000 zonder mandaat). Herstel niet tijdig afgerond \u2014 remedi\u00ebring verloopt.",
+			"findingsSummary": "Kritieke bevinding: overschrijding tekenbevoegdheid (€450.000 zonder mandaat). Herstel niet tijdig afgerond — remediëring verloopt.",
 			"observationsSummary": "Drie governance-observaties t.a.v. inkoopproces, budgetbeheer en periodieke mandaatcontroles.",
 			"remediationRecommendations": "1. Onmiddellijk mandaatregister actualiseren. 2. Terugbetalingsregeling treffen voor bedrag boven mandaat. 3. Kwartaalcontrole op tekenbevoegdheden implementeren.",
 			"auditOpinion": "disclaimer",
@@ -15221,7 +15984,7 @@
 				"slug": "grant-wbso-2026-amsterdam"
 			},
 			"grantId": "WBSO-2026-AMS-001",
-			"name": "WBSO Subsidie 2026 \u2014 Softwareontwikkeling gemeente Amsterdam",
+			"name": "WBSO Subsidie 2026 — Softwareontwikkeling gemeente Amsterdam",
 			"awardedAmount": 125000.0,
 			"awardDate": "2026-01-01T00:00:00Z",
 			"status": "active",
@@ -15235,7 +15998,7 @@
 				"slug": "grant-tozo-2025-rotterdam"
 			},
 			"grantId": "TOZO-2025-ROT-001",
-			"name": "Tozo Overbruggingskrediet 2025 \u2014 Rotterdam",
+			"name": "Tozo Overbruggingskrediet 2025 — Rotterdam",
 			"awardedAmount": 45000.0,
 			"awardDate": "2025-04-01T00:00:00Z",
 			"status": "completed",
@@ -15249,7 +16012,7 @@
 				"slug": "grant-bbv-2026-amsterdam"
 			},
 			"grantId": "BBV-2026-AMS-001",
-			"name": "BBV Specifieke Uitkering 2026 \u2014 Amsterdam Jeugdzorg",
+			"name": "BBV Specifieke Uitkering 2026 — Amsterdam Jeugdzorg",
 			"awardedAmount": 2350000.0,
 			"awardDate": "2026-01-15T00:00:00Z",
 			"status": "active",
@@ -15801,7 +16564,7 @@
 			"country": "NL",
 			"vehicleType": "car",
 			"ratePerKm": 0.21,
-			"notes": "Belastingdienst 2026 \u2014 IB 2025 rules: \u20ac0.21/km personenauto"
+			"notes": "Belastingdienst 2026 — IB 2025 rules: €0.21/km personenauto"
 		},
 		{
 			"@self": {
@@ -15813,7 +16576,7 @@
 			"country": "NL",
 			"vehicleType": "motorcycle",
 			"ratePerKm": 0.16,
-			"notes": "Belastingdienst 2026 \u2014 IB 2025 rules: \u20ac0.16/km motorfiets"
+			"notes": "Belastingdienst 2026 — IB 2025 rules: €0.16/km motorfiets"
 		},
 		{
 			"@self": {
@@ -15825,7 +16588,7 @@
 			"country": "FI",
 			"vehicleType": "car",
 			"ratePerKm": 0.42,
-			"notes": "Verohallinto 2026 \u2014 Finnish tax rules: \u20ac0.42/km"
+			"notes": "Verohallinto 2026 — Finnish tax rules: €0.42/km"
 		},
 		{
 			"@self": {
@@ -15837,7 +16600,7 @@
 			"country": "NL",
 			"dailyRate": 125.0,
 			"currency": "EUR",
-			"source": "Ministerie van Financi\u00ebn \u2014 reiskostenvergoeding 2026"
+			"source": "Ministerie van Financiën — reiskostenvergoeding 2026"
 		},
 		{
 			"@self": {
@@ -15849,7 +16612,7 @@
 			"country": "FI",
 			"dailyRate": 45.0,
 			"currency": "EUR",
-			"source": "Verohallinto \u2014 daily allowance 2026"
+			"source": "Verohallinto — daily allowance 2026"
 		},
 		{
 			"@self": {
@@ -15993,6 +16756,153 @@
 			"administrationId": "adm-consultancy-nl",
 			"lifecycleState": "active",
 			"createdAt": "2026-01-01T00:00:00Z"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "WBSOTag",
+				"slug": "wbso-tag-so"
+			},
+			"wbsoCode": "SO",
+			"displayName": "Stand-alone Project",
+			"description": "Solo R&D project funded by WBSO subsidy — no collaborative partner required. Official WBSO project code per RVO Administratie Directives 2026-05-21.",
+			"rvoCertificationUrl": "https://www.rvo.nl/subsidies-financiering/wbso",
+			"administrationId": "adm-consultancy-nl",
+			"lifecycleState": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "WBSOTag",
+				"slug": "wbso-tag-two"
+			},
+			"wbsoCode": "TWO",
+			"displayName": "TechnoWise Open",
+			"description": "Open-innovation collaborative R&D project. Multiple organizations collaborate on shared S&O research. Official WBSO project code per RVO Administratie Directives 2026-05-21.",
+			"rvoCertificationUrl": "https://www.rvo.nl/subsidies-financiering/wbso",
+			"administrationId": "adm-consultancy-nl",
+			"lifecycleState": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "WBSOTag",
+				"slug": "wbso-tag-smart"
+			},
+			"wbsoCode": "SMART",
+			"displayName": "SME Collaboration",
+			"description": "SME + university collaboration project (SMART funding). Requires a formal collaboration agreement with a knowledge institution. Official WBSO project code per RVO Administratie Directives 2026-05-21.",
+			"rvoCertificationUrl": "https://www.rvo.nl/subsidies-financiering/wbso",
+			"administrationId": "adm-consultancy-nl",
+			"lifecycleState": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "WBSOActivityCode",
+				"slug": "wbso-code-a001"
+			},
+			"activityCode": "A001",
+			"description": "Software development for R&D",
+			"category": "research-development",
+			"isAllowed": true,
+			"parentActivityCode": null,
+			"administrationId": "adm-consultancy-nl",
+			"lifecycleState": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "WBSOActivityCode",
+				"slug": "wbso-code-a002"
+			},
+			"activityCode": "A002",
+			"description": "Software testing & QA for R&D",
+			"category": "research-development",
+			"isAllowed": true,
+			"parentActivityCode": null,
+			"administrationId": "adm-consultancy-nl",
+			"lifecycleState": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "WBSOActivityCode",
+				"slug": "wbso-code-a003"
+			},
+			"activityCode": "A003",
+			"description": "Technical documentation for R&D",
+			"category": "research-development",
+			"isAllowed": true,
+			"parentActivityCode": null,
+			"administrationId": "adm-consultancy-nl",
+			"lifecycleState": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "WBSOActivityCode",
+				"slug": "wbso-code-a004"
+			},
+			"activityCode": "A004",
+			"description": "Project management (R&D context)",
+			"category": "research-development",
+			"isAllowed": true,
+			"parentActivityCode": null,
+			"administrationId": "adm-consultancy-nl",
+			"lifecycleState": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "WBSOActivityCode",
+				"slug": "wbso-code-a005"
+			},
+			"activityCode": "A005",
+			"description": "Patent filing & IP research",
+			"category": "research-development",
+			"isAllowed": true,
+			"parentActivityCode": null,
+			"administrationId": "adm-consultancy-nl",
+			"lifecycleState": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "WBSOActivityCode",
+				"slug": "wbso-code-b001"
+			},
+			"activityCode": "B001",
+			"description": "Project overhead (not eligible for WBSO subsidy)",
+			"category": "non-eligible",
+			"isAllowed": false,
+			"parentActivityCode": null,
+			"administrationId": "adm-consultancy-nl",
+			"lifecycleState": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "WBSOExportLog",
+				"slug": "wbso-export-2026-q1-001"
+			},
+			"exportId": "EXP-2026-Q1-001",
+			"periodStart": "2026-01-01",
+			"periodEnd": "2026-03-31",
+			"exportFormat": "csv",
+			"status": "submitted",
+			"recordCount": 247,
+			"totalHours": 320.5,
+			"totalHoursIneligible": 10.0,
+			"exportFilters": {
+				"isAllowed": true
+			},
+			"generatedAt": "2026-04-10T09:15:00Z",
+			"validatedAt": "2026-04-10T09:20:00Z",
+			"validationErrors": [],
+			"submittedAt": "2026-04-10T10:30:00Z",
+			"fileUri": "docudesk://attachments/shillinq/wbso-2026-q1.csv",
+			"administrationId": "adm-consultancy-nl"
 		}
 	]
 }
