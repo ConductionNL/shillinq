@@ -10910,6 +10910,875 @@
 				}
 			}
 		},
+		"CustomerMaster": {
+			"slug": "CustomerMaster",
+			"icon": "AccountTieOutline",
+			"version": "0.1.0",
+			"title": "Customer",
+			"description": "Customer party record for accounts receivable. Holds billing address, payment terms, tax registration, credit limit, dunning-policy reference, and Peppol endpoint for outbound e-invoicing within a single administration. Per REQ-AR-002.",
+			"x-openregister-audit-trail": {
+				"enabled": true,
+				"description": "Bookkeeping master register; every create / update / delete is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022."
+			},
+			"x-schema-org": "schema:Organization",
+			"type": "object",
+			"required": [
+				"customerNumber",
+				"name",
+				"paymentTermDays",
+				"administrationId",
+				"lifecycleState"
+			],
+			"properties": {
+				"customerNumber": {
+					"type": "string",
+					"description": "Stable customer identifier unique per administration.",
+					"example": "C-2026-001"
+				},
+				"name": {
+					"type": "string",
+					"description": "Legal name of the customer.",
+					"example": "Klant Voorbeeld BV"
+				},
+				"tradingName": {
+					"type": "string",
+					"description": "Alternate or DBA trading name.",
+					"nullable": true,
+					"example": "Klant Voorbeeld"
+				},
+				"kvkNumber": {
+					"type": "string",
+					"description": "Dutch KvK number (8 digits).",
+					"nullable": true,
+					"example": "12345678"
+				},
+				"btwNumber": {
+					"type": "string",
+					"description": "Dutch BTW / EU VAT number.",
+					"nullable": true,
+					"example": "NL123456789B01"
+				},
+				"paymentTermDays": {
+					"type": "integer",
+					"minimum": 0,
+					"default": 30,
+					"description": "Default payment term in days (auto-sets ARInvoice.dueDate on creation).",
+					"example": 30
+				},
+				"defaultRevenueAccountNumber": {
+					"type": "string",
+					"description": "FK to Account.accountNumber for default revenue coding on AR invoices.",
+					"nullable": true,
+					"example": "8000"
+				},
+				"creditLimit": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Credit limit in administration's base currency. When > 0, REQ-AR-006 evaluates SUM(open ARInvoice.totalAmount where customerId=this.id) against this value on draft AR invoices.",
+					"nullable": true,
+					"example": 10000.0
+				},
+				"dunningPolicyRef": {
+					"type": "string",
+					"description": "FK to OR dunning-workflow policy record if the extension is stable per ADR-022; else null. Resolution deferred to implementing cycle.",
+					"nullable": true
+				},
+				"peppolEndpoint": {
+					"type": "string",
+					"description": "Peppol BIS 3.0 endpoint identifier for outbound e-invoicing (consumed by T4 e-invoicing capability; declared in T2 so T4 attaches additively per REQ-AR-009). Format: scheme::value (e.g. 0106::12345678 for Dutch KvK).",
+					"nullable": true,
+					"example": "0106::12345678"
+				},
+				"address": {
+					"type": "object",
+					"description": "Postal billing address of the customer.",
+					"nullable": true,
+					"properties": {
+						"street": {
+							"type": "string"
+						},
+						"houseNumber": {
+							"type": "string"
+						},
+						"postcode": {
+							"type": "string"
+						},
+						"city": {
+							"type": "string"
+						},
+						"country": {
+							"type": "string",
+							"default": "NL"
+						}
+					}
+				},
+				"email": {
+					"type": "string",
+					"format": "email",
+					"description": "Primary billing email for invoice dispatch and dunning notifications.",
+					"nullable": true,
+					"example": "facturen@klant-voorbeeld.nl"
+				},
+				"phone": {
+					"type": "string",
+					"description": "Primary contact phone number.",
+					"nullable": true,
+					"example": "+31201234567"
+				},
+				"contactRef": {
+					"type": "string",
+					"description": "FK to OR contact abstraction if stable per ADR-022; else null. Symmetric to AP REQ-AP-002. Resolution deferred to implementing cycle.",
+					"nullable": true
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the administration owning this customer record.",
+					"example": "adm-1"
+				},
+				"lifecycleState": {
+					"type": "string",
+					"enum": [
+						"active",
+						"blocked",
+						"archived"
+					],
+					"description": "Customer master lifecycle state. blocked: new invoices cannot be issued; archived: historical reference only.",
+					"default": "active",
+					"example": "active"
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "lifecycleState",
+				"initialState": "active",
+				"states": {
+					"active": {
+						"label": "Active",
+						"description": "Customer is active; AR invoices may be issued."
+					},
+					"blocked": {
+						"label": "Blocked",
+						"description": "Customer is blocked; new AR invoices cannot transition from draft to issued."
+					},
+					"archived": {
+						"label": "Archived",
+						"description": "Customer is archived for historical reference; no new invoices may be drafted."
+					}
+				},
+				"transitions": {
+					"block": {
+						"from": "active",
+						"to": "blocked",
+						"label": "Block customer",
+						"description": "Suspend new invoicing for this customer (e.g. credit hold)."
+					},
+					"unblock": {
+						"from": "blocked",
+						"to": "active",
+						"label": "Unblock customer",
+						"description": "Restore customer to active status."
+					},
+					"archive": {
+						"from": [
+							"active",
+							"blocked"
+						],
+						"to": "archived",
+						"label": "Archive customer",
+						"description": "Archive customer after all open AR invoices are settled or written off."
+					}
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
+		"ARInvoice": {
+			"slug": "ARInvoice",
+			"icon": "ReceiptTextOutline",
+			"version": "0.1.0",
+			"title": "AR Invoice",
+			"description": "Accounts receivable sub-ledger invoice recording customer billing and revenue recognition. Issuing materialises a balanced GLTransaction per T1 REQ-JE-007 (debit AR control, credit revenue per lines). Lifecycle: draft → issued → paid with partially-paid / overdue / disputed / written-off / voided branches per REQ-AR-004. Carries UBL 2.1 / Peppol BIS 3.0 field shape declared but NOT computed in T2 — T4 e-invoicing populates ublXml + peppolDispatchedAt additively per REQ-AR-009. Per REQ-AR-003 and REQ-AR-004.",
+			"x-openregister-audit-trail": {
+				"enabled": true,
+				"description": "Bookkeeping sub-ledger register; every lifecycle transition (issue / overdue / match / dispute / write-off / void) and every header / line edit is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022. Audit trail is the canonical evidence chain for the AR write-off scenario per REQ-AR-007."
+			},
+			"x-schema-org": "schema:Invoice",
+			"type": "object",
+			"required": [
+				"invoiceNumber",
+				"customerId",
+				"invoiceDate",
+				"dueDate",
+				"currency",
+				"totalAmount",
+				"lines",
+				"state",
+				"administrationId"
+			],
+			"properties": {
+				"invoiceNumber": {
+					"type": "string",
+					"description": "Shillinq-side invoice number (auto-generated per administration). Unique per administration.",
+					"example": "INV-C-2026-0001"
+				},
+				"customerId": {
+					"type": "string",
+					"description": "FK to CustomerMaster UUID.",
+					"example": "customer-klant-1"
+				},
+				"invoiceDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Date of invoice issuance.",
+					"example": "2026-01-15"
+				},
+				"dueDate": {
+					"type": "string",
+					"format": "date",
+					"description": "Auto-calculated from invoiceDate + customer.paymentTermDays; overrideable by operator.",
+					"example": "2026-02-14"
+				},
+				"currency": {
+					"type": "string",
+					"minLength": 3,
+					"maxLength": 3,
+					"description": "ISO 4217 currency code. T2: base currency only; T5 adds multi-currency.",
+					"default": "EUR",
+					"example": "EUR"
+				},
+				"totalAmount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Total amount including tax. Credit notes are separate journal types, not negative totals.",
+					"example": 1250.0
+				},
+				"taxAmount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "VAT/BTW amount. T3 adds automated VAT posting; T2 carries the field for reporting.",
+					"nullable": true,
+					"example": 217.98
+				},
+				"lines": {
+					"type": "array",
+					"minItems": 1,
+					"description": "Invoice line breakdown. Each line maps to one GL revenue account.",
+					"items": {
+						"type": "object",
+						"required": [
+							"description",
+							"accountNumber",
+							"amount"
+						],
+						"properties": {
+							"description": {
+								"type": "string",
+								"description": "Line description."
+							},
+							"accountNumber": {
+								"type": "string",
+								"description": "FK to Account.accountNumber (revenue account)."
+							},
+							"amount": {
+								"type": "number",
+								"minimum": 0,
+								"description": "Line amount (non-negative; see REQ-AR-003)."
+							},
+							"taxCode": {
+								"type": "string",
+								"description": "Tax code for this line (e.g. BTW21, BTW9, BTW0).",
+								"nullable": true
+							},
+							"quantity": {
+								"type": "number",
+								"description": "Quantity sold.",
+								"nullable": true
+							},
+							"unitPrice": {
+								"type": "number",
+								"description": "Unit price.",
+								"nullable": true
+							}
+						}
+					}
+				},
+				"sourceDocumentUri": {
+					"type": "string",
+					"description": "docudesk FK URI per bookkeeping-document-attachment-integration. Points to the issued invoice PDF.",
+					"nullable": true,
+					"example": "docudesk://files/shillinq/invoices/inv-c-2026-0001.pdf"
+				},
+				"ublXml": {
+					"type": "string",
+					"description": "UBL 2.1 / Peppol BIS 3.0 XML representation. Declared in T2 but NOT computed in T2 — T4 e-invoicing populates this field via additional x-openregister-calculations per REQ-AR-009. Always null in T2.",
+					"nullable": true
+				},
+				"peppolDispatchedAt": {
+					"type": "string",
+					"format": "date-time",
+					"description": "Timestamp of Peppol dispatch. Set by T4 e-invoicing capability; always null in T2 per REQ-AR-009.",
+					"nullable": true
+				},
+				"state": {
+					"type": "string",
+					"enum": [
+						"draft",
+						"issued",
+						"partially-paid",
+						"paid",
+						"overdue",
+						"disputed",
+						"written-off",
+						"voided"
+					],
+					"description": "AR invoice lifecycle state per REQ-AR-004.",
+					"default": "draft",
+					"example": "draft"
+				},
+				"glTransactionId": {
+					"type": "string",
+					"description": "Back-reference to the materialised GLTransaction once the invoice is issued.",
+					"nullable": true,
+					"example": "gl-txn-2026-ar-0001"
+				},
+				"writeOffReason": {
+					"type": "string",
+					"description": "Operator-authored audit-trailed reason for write-off. Required on the writeOff lifecycle transition per REQ-AR-007.",
+					"nullable": true,
+					"example": "Customer insolvency, court-confirmed uncollectible per ruling 2026-04-22."
+				},
+				"writeOffGlTransactionId": {
+					"type": "string",
+					"description": "Back-reference to the compensating GLTransaction emitted on write-off (debit bad-debt expense, credit AR control) per REQ-AR-007.",
+					"nullable": true,
+					"example": "gl-txn-2026-wo-0001"
+				},
+				"periodId": {
+					"type": "string",
+					"description": "FK to the FiscalPeriod for GL posting (resolved on issue transition per REQ-AR-004).",
+					"nullable": true,
+					"example": "2026-Q1"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the administration owning this AR invoice.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "state",
+				"initialState": "draft",
+				"states": {
+					"draft": {
+						"label": "Draft",
+						"description": "Under construction. Lines and header fields may be edited."
+					},
+					"issued": {
+						"label": "Issued",
+						"description": "Immutable header. GL transaction materialised; awaiting payment match."
+					},
+					"partially-paid": {
+						"label": "Partially paid",
+						"description": "One or more bank-reconciliation matches have applied but cumulative matched amount is less than totalAmount."
+					},
+					"paid": {
+						"label": "Paid",
+						"description": "Full payment matched via bank-reconciliation engine. Terminal state for the happy path."
+					},
+					"overdue": {
+						"label": "Overdue",
+						"description": "today > dueDate and no full payment match yet. OR's dunning-workflow drives REQ-AR-005 reminder cadence from this state."
+					},
+					"disputed": {
+						"label": "Disputed",
+						"description": "Operator placed payment-match pursuit on hold pending customer-raised dispute investigation."
+					},
+					"written-off": {
+						"label": "Written off",
+						"description": "Bad-debt write-off; compensating GL posting emitted per REQ-AR-007. Terminal state."
+					},
+					"voided": {
+						"label": "Voided",
+						"description": "Issued invoice voided. The materialised issue GLTransaction MUST already be reversed per T1 REQ-GL-004."
+					}
+				},
+				"transitions": {
+					"issue": {
+						"from": "draft",
+						"to": "issued",
+						"label": "Issue invoice",
+						"description": "Issue the AR invoice. Guards: (1) FiscalPeriod open per REQ-PC-004; (2) balance guard (T1 REQ-JE-007); (3) credit-limit precondition per REQ-AR-006 — evaluated against the customerOpenArBalance aggregation; emits a warning by default, hard-block when administration policy sets requires.creditLimit.mode='block'. Action: materialise one balanced GLTransaction per T1 REQ-JE-007 pattern (debit AR control account, credit revenue accounts per lines). Sets glTransactionId back-reference.",
+						"requires": "OCA\\Shillinq\\Lifecycle\\BalanceGuard::isBalanced",
+						"preconditions": [
+							{
+								"id": "credit-limit",
+								"type": "aggregation-predicate",
+								"aggregation": "customerOpenArBalance",
+								"groupBy": "customerId",
+								"predicate": "(@aggregation.openBalance + this.totalAmount) <= CustomerMaster[id=this.customerId].creditLimit",
+								"appliesWhen": "CustomerMaster[id=this.customerId].creditLimit IS NOT NULL AND CustomerMaster[id=this.customerId].creditLimit > 0",
+								"defaultSeverity": "warning",
+								"administrationPolicyKey": "ar.creditLimit.mode",
+								"administrationPolicyValues": {
+									"warn": "warning",
+									"block": "block"
+								},
+								"messageTemplate": {
+									"nl": "Kredietlimiet overschreden: open AR €{{openBalance}} + factuur €{{totalAmount}} = €{{projectedBalance}} > limiet €{{creditLimit}} voor klant {{customerNumber}}.",
+									"en": "Credit limit exceeded: open AR €{{openBalance}} + invoice €{{totalAmount}} = €{{projectedBalance}} > limit €{{creditLimit}} for customer {{customerNumber}}."
+								},
+								"description": "REQ-AR-006 declarative aggregation predicate. Aggregates customer's open AR balance (sum of totalAmount for state in issued/partially-paid/overdue/disputed) and compares against CustomerMaster.creditLimit. Pure x-openregister-aggregations per ADR-031; no CreditLimitService PHP class."
+							}
+						],
+						"actions": [
+							{
+								"trigger": "x-openregister-lifecycle-action",
+								"action": "materialise-gl-transaction",
+								"description": "Emit one balanced GLTransaction with debit to AR control account (Account.isARControlAccount = true) and credit to revenue accounts per lines per T1 REQ-JE-007 pattern. Sets glTransactionId back-reference; sets GLLine.subLedgerType=ar + GLLine.subLedgerRef=<ARInvoice UUID> per REQ-AR-001.",
+								"actionParameters": {
+									"register": "shillinq",
+									"targetSchema": "GLTransaction",
+									"debitMapping": "Account[isARControlAccount=true].accountNumber",
+									"creditMapping": "lines[].accountNumber",
+									"subLedgerType": "ar",
+									"subLedgerRefField": "id",
+									"keepBalanced": true
+								}
+							}
+						]
+					},
+					"markOverdue": {
+						"from": [
+							"issued",
+							"partially-paid"
+						],
+						"to": "overdue",
+						"label": "Mark overdue",
+						"description": "Scheduled OR ScheduledWorkflow tick when today > dueDate and no payment match has cleared totalAmount. Per ADR-031 §'Background jobs that walk an object queue' path 2 — no shillinq *Job PHP class.",
+						"trigger": {
+							"type": "scheduled",
+							"engine": "x-openregister-scheduled-workflow",
+							"condition": "today > dueDate AND state IN ('issued','partially-paid')"
+						}
+					},
+					"matchPartial": {
+						"from": [
+							"issued",
+							"overdue"
+						],
+						"to": "partially-paid",
+						"label": "Mark partially paid",
+						"description": "Event-driven transition fired when bookkeeping-bank-reconciliation emits a confirmed ReconciliationMatch (targetType=ar-invoice, targetId=this.id) per REQ-BR-006 AND the cumulative matched amount for this invoice is greater than 0 but less than totalAmount. Operator confirms the candidate match in bank-reconciliation UI; the lifecycle engine consumes the OR-native event. No shillinq matcher service per REQ-AR-009-bis; symmetric to AP matchPaid (REQ-AP-008).",
+						"trigger": {
+							"type": "event",
+							"engine": "x-openregister-event",
+							"eventSource": "bookkeeping-bank-reconciliation",
+							"eventName": "reconciliation-match-confirmed",
+							"filter": {
+								"targetType": "ar-invoice",
+								"targetId": "{{this.id}}"
+							},
+							"condition": "0 < SUM(ReconciliationMatch.amount WHERE targetType='ar-invoice' AND targetId=this.id AND state='confirmed') < this.totalAmount"
+						},
+						"actions": [
+							{
+								"trigger": "x-openregister-lifecycle-action",
+								"action": "audit-trail-append",
+								"description": "Append a partial-payment audit-trail event capturing the ReconciliationMatch UUID, matched amount, cumulative paid amount, and remaining balance for REQ-AR-009-bis scenario 'partial payment yields partially-paid state'.",
+								"actionParameters": {
+									"eventName": "ar-invoice-partial-payment",
+									"contextFields": [
+										"matchId",
+										"matchedAmount",
+										"cumulativeMatchedAmount",
+										"remainingBalance"
+									]
+								}
+							}
+						]
+					},
+					"matchPaid": {
+						"from": [
+							"issued",
+							"partially-paid",
+							"overdue"
+						],
+						"to": "paid",
+						"label": "Mark paid",
+						"description": "Event-driven transition fired when bookkeeping-bank-reconciliation emits a confirmed ReconciliationMatch (targetType=ar-invoice, targetId=this.id) per REQ-BR-006 AND the cumulative matched amount equals totalAmount. Operator confirms the candidate match in bank-reconciliation UI; the lifecycle engine consumes the OR-native event. No shillinq matcher service per REQ-AR-009-bis; symmetric to AP matchPaid (REQ-AP-008).",
+						"trigger": {
+							"type": "event",
+							"engine": "x-openregister-event",
+							"eventSource": "bookkeeping-bank-reconciliation",
+							"eventName": "reconciliation-match-confirmed",
+							"filter": {
+								"targetType": "ar-invoice",
+								"targetId": "{{this.id}}"
+							},
+							"condition": "SUM(ReconciliationMatch.amount WHERE targetType='ar-invoice' AND targetId=this.id AND state='confirmed') >= this.totalAmount"
+						},
+						"actions": [
+							{
+								"trigger": "x-openregister-lifecycle-action",
+								"action": "audit-trail-append",
+								"description": "Append a paid audit-trail event capturing the ReconciliationMatch UUID(s), final matched amount, and the bank statement line refs that cleared the invoice for REQ-AR-009-bis scenario 'exact-amount bank line marks invoice paid'.",
+								"actionParameters": {
+									"eventName": "ar-invoice-paid",
+									"contextFields": [
+										"matchIds",
+										"finalMatchedAmount",
+										"bankLineRefs"
+									]
+								}
+							}
+						]
+					},
+					"dispute": {
+						"from": [
+							"issued",
+							"overdue"
+						],
+						"to": "disputed",
+						"label": "Raise dispute",
+						"description": "Operator places payment-match pursuit on hold pending customer-raised dispute investigation. Dunning escalation pauses while in disputed state."
+					},
+					"resolveDispute": {
+						"from": "disputed",
+						"to": "issued",
+						"label": "Resolve dispute",
+						"description": "Operator resolves the dispute; invoice returns to issued and dunning escalation resumes."
+					},
+					"writeOff": {
+						"from": [
+							"overdue",
+							"disputed"
+						],
+						"to": "written-off",
+						"label": "Write off",
+						"description": "Operator in role controller declares the invoice uncollectible. Requires writeOffReason for audit-trail. Action: materialise a balanced compensating GLTransaction (debit bad-debt expense, credit AR control) for the residual open balance per REQ-AR-007. Sets writeOffGlTransactionId back-reference.",
+						"requires": "OCA\\Shillinq\\Lifecycle\\WriteOffReasonGuard::requireReason",
+						"rbac": {
+							"requiredRole": "controller"
+						},
+						"actions": [
+							{
+								"trigger": "x-openregister-lifecycle-action",
+								"action": "materialise-gl-transaction",
+								"description": "Emit one balanced compensating GLTransaction with debit to bad-debt expense account (Account.isBadDebtExpenseAccount=true) and credit to AR control account (Account.isARControlAccount=true) for the invoice's residual open balance per REQ-AR-007. Sets writeOffGlTransactionId back-reference; sets GLLine.subLedgerType=ar + GLLine.subLedgerRef=<ARInvoice UUID> + GLLine.description='AR write-off: <writeOffReason>' for audit-trail traceability. The amount written off equals totalAmount minus cumulative matched payments (the residual open balance).",
+								"actionParameters": {
+									"register": "shillinq",
+									"targetSchema": "GLTransaction",
+									"debitMapping": "Account[isBadDebtExpenseAccount=true].accountNumber",
+									"creditMapping": "Account[isARControlAccount=true].accountNumber",
+									"subLedgerType": "ar",
+									"subLedgerRefField": "id",
+									"amountExpression": "totalAmount - SUM(ReconciliationMatch.amount WHERE arInvoiceId = this.id)",
+									"descriptionExpression": "'AR write-off: ' + writeOffReason",
+									"sourceReferenceField": "invoiceNumber",
+									"backReferenceField": "writeOffGlTransactionId",
+									"keepBalanced": true
+								}
+							}
+						]
+					},
+					"void": {
+						"from": "issued",
+						"to": "voided",
+						"label": "Void",
+						"description": "Void a posted-and-issued invoice. Guard: the materialised GLTransaction MUST already be reversed per T1 REQ-GL-004.",
+						"requires": "OCA\\Shillinq\\Lifecycle\\GLReversalGuard::isReversed"
+					}
+				}
+			},
+			"x-openregister-aggregations": {
+				"customerOpenArBalance": {
+					"label": "Customer open AR balance",
+					"description": "REQ-AR-006 declarative aggregation: sum of open AR exposure per customer. Consumed as the predicate basis for the credit-limit precondition on ARInvoice.issue. Excludes paid / written-off / voided invoices. Pure aggregation per ADR-031; no CreditLimitService PHP class.",
+					"register": "shillinq",
+					"schema": "ARInvoice",
+					"filter": {
+						"state": {
+							"in": [
+								"issued",
+								"partially-paid",
+								"overdue",
+								"disputed"
+							]
+						}
+					},
+					"groupBy": [
+						"customerId"
+					],
+					"operations": {
+						"openBalance": {
+							"field": "totalAmount",
+							"operation": "sum",
+							"description": "Sum of totalAmount across the customer's open AR invoices (states: issued, partially-paid, overdue, disputed)."
+						},
+						"openCount": {
+							"operation": "count",
+							"description": "Count of open AR invoices for the customer."
+						}
+					},
+					"meta": {
+						"consumedBy": "ARInvoice.issue.preconditions.credit-limit",
+						"cadence": "on-demand"
+					}
+				},
+				"arAging": {
+					"label": "AR Aging",
+					"description": "REQ-AR-008 declarative aggregation: groups open AR invoices by (customerId, agingBucket) where agingBucket is computed from (today - dueDate) thresholds. Excludes paid / voided / written-off invoices. Pure aggregation per ADR-031; no ARAgingReportService PHP class. Symmetric to AP apAging (REQ-AP-009).",
+					"register": "shillinq",
+					"schema": "ARInvoice",
+					"filter": {
+						"state": {
+							"not-in": [
+								"paid",
+								"voided",
+								"written-off"
+							]
+						}
+					},
+					"groupBy": [
+						"customerId",
+						"agingBucket"
+					],
+					"computedFields": {
+						"agingBucket": {
+							"type": "date-bucket",
+							"field": "dueDate",
+							"referenceDate": "today",
+							"direction": "past",
+							"buckets": [
+								{
+									"label": "current",
+									"maxDaysOverdue": 0
+								},
+								{
+									"label": "1-30 days",
+									"minDaysOverdue": 1,
+									"maxDaysOverdue": 30
+								},
+								{
+									"label": "31-60 days",
+									"minDaysOverdue": 31,
+									"maxDaysOverdue": 60
+								},
+								{
+									"label": "61-90 days",
+									"minDaysOverdue": 61,
+									"maxDaysOverdue": 90
+								},
+								{
+									"label": ">90 days",
+									"minDaysOverdue": 91
+								}
+							]
+						}
+					},
+					"metrics": [
+						"count",
+						"totalAmount"
+					]
+				}
+			},
+			"x-openregister-relations": {
+				"customer": {
+					"localField": "customerId",
+					"relatedSchema": "CustomerMaster",
+					"relatedField": "id",
+					"cardinality": "many-to-one",
+					"description": "FK to the CustomerMaster record this invoice bills."
+				},
+				"glTransaction": {
+					"localField": "glTransactionId",
+					"relatedSchema": "GLTransaction",
+					"relatedField": "id",
+					"cardinality": "many-to-one",
+					"description": "Back-reference to the materialised issue GLTransaction."
+				},
+				"writeOffGlTransaction": {
+					"localField": "writeOffGlTransactionId",
+					"relatedSchema": "GLTransaction",
+					"relatedField": "id",
+					"cardinality": "many-to-one",
+					"description": "Back-reference to the compensating write-off GLTransaction per REQ-AR-007."
+				},
+				"dunningRecords": {
+					"localField": "id",
+					"relatedSchema": "DunningRecord",
+					"relatedField": "invoiceRef",
+					"cardinality": "one-to-many",
+					"description": "Dunning timeline rows for this invoice per REQ-AR-005."
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"controller": {
+						"permissions": [
+							"read",
+							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
+		"DunningRecord": {
+			"slug": "DunningRecord",
+			"icon": "EmailAlertOutline",
+			"version": "0.1.0",
+			"title": "Dunning Record",
+			"description": "Per-invoice dunning timeline record capturing one reminder, formal notice, or collection escalation dispatched against an overdue ARInvoice. Append-only timeline; new rows are written by OR's dunning-workflow engine (or by the conditional DunningGuard fallback per ADR-031 exception if OR's extension is not yet stable). Shillinq carries no app-local dunning service per REQ-AR-005. Per REQ-AR-005.",
+			"x-openregister-audit-trail": {
+				"enabled": true,
+				"description": "Bookkeeping evidence register; every dispatch is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022. Forms the per-invoice dunning evidence chain for incassowet / aanmaningsprocedure compliance."
+			},
+			"x-schema-org": "schema:Action",
+			"type": "object",
+			"required": [
+				"invoiceRef",
+				"reminderLevel",
+				"dispatchedAt",
+				"dispatchedBy",
+				"administrationId"
+			],
+			"properties": {
+				"invoiceRef": {
+					"type": "string",
+					"description": "FK to ARInvoice UUID.",
+					"example": "arinv-2026-0001"
+				},
+				"reminderLevel": {
+					"type": "string",
+					"enum": [
+						"reminder-1",
+						"reminder-2",
+						"formal-notice",
+						"collection"
+					],
+					"description": "Dunning step. reminder-1 (default +14 days), reminder-2 (default +30 days), formal-notice (default +45 days; aanmaning), collection (default +60 days; doorgegeven aan incassobureau). Cadence is configurable per administration policy per REQ-AR-005.",
+					"example": "reminder-1"
+				},
+				"dispatchedAt": {
+					"type": "string",
+					"format": "date-time",
+					"description": "When this dunning step was dispatched.",
+					"example": "2026-05-14T08:00:00Z"
+				},
+				"dispatchedBy": {
+					"type": "string",
+					"description": "Actor that dispatched the dunning step. 'system' for the scheduled-workflow tick; otherwise the operator NC uid.",
+					"example": "system"
+				},
+				"channel": {
+					"type": "string",
+					"enum": [
+						"email",
+						"post",
+						"portal",
+						"sms",
+						"phone"
+					],
+					"description": "Channel used to deliver the dunning notice. Defaults to email; post / phone capture operator-logged contact attempts.",
+					"nullable": true,
+					"example": "email"
+				},
+				"templateRef": {
+					"type": "string",
+					"description": "FK to OR's notification template used for this dispatch (per ADR-022). Resolution deferred to implementing cycle if OR's notification-template abstraction is not yet stable.",
+					"nullable": true
+				},
+				"payload": {
+					"type": "object",
+					"description": "Snapshot of the rendered message for audit traceability (subject + body excerpt + recipient). Operator-readable; not used for re-dispatch.",
+					"nullable": true,
+					"properties": {
+						"subject": {
+							"type": "string"
+						},
+						"recipient": {
+							"type": "string"
+						},
+						"bodyExcerpt": {
+							"type": "string"
+						}
+					}
+				},
+				"escalationLevel": {
+					"type": "integer",
+					"minimum": 1,
+					"description": "1-based escalation counter for this invoice (1 = first reminder, 2 = second, …). Surfaces on the AR detail page dunning timeline.",
+					"nullable": true,
+					"example": 1
+				},
+				"acknowledgedAt": {
+					"type": "string",
+					"format": "date-time",
+					"description": "When the customer responded (operator-logged or portal-captured). Pauses further dunning escalation per OR's dunning-workflow policy when set within a configured response window.",
+					"nullable": true
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the administration owning this dunning record.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-relations": {
+				"invoice": {
+					"localField": "invoiceRef",
+					"relatedSchema": "ARInvoice",
+					"relatedField": "id",
+					"cardinality": "many-to-one",
+					"description": "FK to the parent ARInvoice this dunning record belongs to."
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": [
+							"create",
+							"read"
+						]
+					},
+					"controller": {
+						"permissions": [
+							"create",
+							"read"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
 		"Subsidie": {
 			"slug": "Subsidie",
 			"icon": "FileDocumentOutline",
