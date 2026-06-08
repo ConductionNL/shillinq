@@ -140,22 +140,14 @@ final class ComplianceService
             return $this->emptyEnvelope(programmeCode: '');
         }
 
-        // Prefer the fiscal year explicitly supplied by the caller (the
-        // dashboard envelope builder passes the active FY resolved by
-        // FiscalYearContextService). If absent, fall back to the FY
-        // carried on the programme record itself (REQ-BBVW-006 implicit
-        // scope) so a programme array from the engine still keys correctly.
+        // Only fold the fiscal year into the cache key when the caller
+        // *explicitly* supplied one. Auto-pulling the FY from the record
+        // would silently change the cache key shape for existing slice-08
+        // callers that pass programme arrays without expecting per-FY
+        // partitioning — the dashboard envelope builder is the only
+        // caller that knows the active FY and passes it explicitly.
         $scopeYear = $fiscalYear;
-        if ($scopeYear === null && is_array($programme) === true) {
-            $candidate = ($programme['fiscalYear'] ?? null);
-            if (is_int($candidate) === true) {
-                $scopeYear = $candidate;
-            } elseif (is_string($candidate) === true && ctype_digit($candidate) === true) {
-                $scopeYear = (int) $candidate;
-            }
-        }
-
-        $cacheKey = $this->buildCacheKey(programmeCode: $programmeCode, fiscalYear: $scopeYear);
+        $cacheKey  = $this->buildCacheKey(programmeCode: $programmeCode, fiscalYear: $scopeYear);
         $cache    = $this->getCache();
 
         if ($cache !== null) {
