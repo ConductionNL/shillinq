@@ -41,7 +41,7 @@
 
 - [x] Task 16: Add error-handling and precondition-failure messages per REQ-VAT-008 (e.g., "Service category 'repair' does not permit 21% VAT. Check admin settings for overrides." with navigation link if possible); log full context for API clients
 
-- [ ] Task 17: Update `openspec/architecture/adr-000-data-model.md` with `InvoiceLine` (extended), `VATAuditRecord`, `ServiceCategoryOverride`, `VATGLAccounts` entries; reconcile against any existing `Invoice` / `LineItem` data-model entries; confirm no conflicts with T2 AR core
+- [x] Task 17: Update `openspec/architecture/adr-000-data-model.md` with `InvoiceLine` (extended), `VATAuditRecord`, `ServiceCategoryOverride`, `VATGLAccounts` entries; reconcile against any existing `Invoice` / `LineItem` data-model entries; confirm no conflicts with T2 AR core
 
 - [ ] Task 18: Document VAT GL account mapping guidance in implementation notes — e.g., RGS account 2020 = Belastingdienst VAT payable 21%, 2021 = 9%, 2022 = 6%, 2023 = 0% / exempt; admin can override during setup
 
