@@ -947,6 +947,28 @@ _Track bank accounts, petty cash, and cash equivalents for liquidity management 
 **Relations:**
 - → Organization (many-to-one)
 
+### CashFlowItem
+**Schema.org:** `schema:MonetaryAmount`
+_Kasstroomregel geclassificeerd naar IV3 (hoofdstuk-functie-categorie) per REQ-EMU-010. Shared entity with bookkeeping-iv3-reporting: one classified dataset feeds both the IV3-kwartaalaangifte and the EMU-aangifte; EMU filters on `kasOfTransactiebasis="kas"`. Carries the betaalmoment (kasmoment) and an optional factuurmoment used to detect transactiemoment-corrections (Wet Hof art. 3, REQ-EMU-002). All bedrag values are MonetaryAmount in integer-cent precision per ADR-022 (negative = uitstroom)._
+**Primary spec:** bookkeeping-emu-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| reportId | string | Yes | FK to EMUReport |
+| datum | date | Yes | Transaction (kas) date |
+| bedrag | number | Yes | Cash amount in cents (negative = uitstroom) |
+| iv3 | object | No | hoofdstuk/functie/categorie per CBS IV3-taxonomie |
+| taakveld | string | No | BBV taakveld code |
+| tegenrekening | object | No | leverancier/klant/begunstigde + naam + nummer |
+| kasOfTransactiebasis | enum | Yes | kas / transactie |
+| betaalmoment | datetime | No | Actual cash transaction timestamp |
+| factuurmoment | datetime | No | Invoice date when different from cash date |
+| currency | string | No | ISO 4217 currency (default EUR) |
+
+**Relations:**
+- → EMUReport (many-to-one)
+- → Account (many-to-one, optional)
+
 ### CatalogItem
 **Schema.org:** `schema:Product`
 _Individual product or service in a procurement catalog with pricing, availability, lead time, and purchase price information_
@@ -1609,6 +1631,32 @@ _Roll-forward of the deferred-tax balance per fiscal period per jurisdiction per
 
 **Cites:** ADR-022 (audit-trail-immutable, money rule), ADR-031 (schema-declarative calculations), ADR-037 (modular register fragment).
 
+### DebtPosition
+**Schema.org:** `schema:MonetaryAmount`
+_Uitstaande schuld per instrument per peildatum (kwartaal- of jaar-ultimo) per REQ-EMU-004. Bruto nominaal amount classified per Eurostat ESA2010: AF.2-deposits / AF.3-securities / AF.4-loans count toward the EMU-schuld; AF.7-derivatives do not (Wet Hof art. 4). May be sourced from the schatkistbankieren daily sync (REQ-EMU-011) or entered manually. `teltMeeInEmuSchuld` materialises the ESA filter; `tegenpartij.consolidatieEMU` drives the S.1313 intercompany-eliminatie per REQ-EMU-005. All amounts integer-cent per ADR-022._
+**Primary spec:** bookkeeping-emu-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| reportId | string | Yes | FK to EMUReport |
+| peildatum | date | Yes | Measurement date (kwartaal- of jaar-ultimo) |
+| instrument | enum | Yes | vaste-geldlening / obligatie / kasgeldlening / schatkistbankieren-rekeningcourant / crediteurensaldo-1j+ / derivaten-passief / voorziening-juridisch |
+| tegenpartij | object | No | naam, soort (sector-S122-bank / sector-S11-nfv / sector-S13-government), consolidatieEMU |
+| hoofdsomOorspronkelijk | number | No | Original principal in cents |
+| uitstaandeSchuld | number | Yes | Outstanding nominal balance in cents |
+| rentevoet | number | No | Annual interest rate (%) |
+| rentevorm | enum | No | vast / variabel |
+| looptijdJaren | integer | No | Original term in years |
+| einddatum | date | No | Maturity date |
+| teltMeeInEmuSchuld | boolean | Yes | ESA2010 filter: AF.2/AF.3/AF.4 = true, AF.7 = false |
+| categorieEurostat | enum | Yes | AF.2-deposits / AF.3-securities / AF.4-loans / AF.7-derivatives / overig |
+| currency | string | No | ISO 4217 currency (default EUR) |
+
+**Relations:**
+- → EMUReport (many-to-one)
+
+**Cites:** ADR-022 (money rule), ADR-031 (schema-declarative aggregations), ADR-037 (modular register fragment).
+
 ### Delegation
 **Schema.org:** `schema:Action`
 _A delegation of mandate authority from one signing authority to another for a specified period_
@@ -1779,6 +1827,67 @@ _Annual ENSIA (Eenduidige Normatiek Single Information Audit) compliance evaluat
 **Relations:**
 - → Evaluatievraag (one-to-many)
 - → Bevinding (one-to-many)
+
+### EMUAdjustment
+**Schema.org:** `schema:MonetaryAmount`
+_Individuele accrual→kas correctie gekoppeld aan een grootboekmutatie of macroregel per Wet Hof art. 3 (REQ-EMU-002). One of eight macro types: eliminatie-afschrijving, eliminatie-voorzieningdotatie, eliminatie-onttrekking-reserve, toevoeging-bruto-investering, toevoeging-aflossing, eliminatie-boekwinst-desinvestering, correctie-transactiemoment, intercompany-eliminatie. `richting` (saldo-verhogend / saldo-verlagend / saldo-neutraal) carries the sign; `bedrag` is non-negative. `consolidatieEMU` drives the S.1313 intercompany-eliminatie (REQ-EMU-005). Concerncontroller can override via `overridden=true`; OR audit-trail logs the change. All amounts integer-cent per ADR-022._
+**Primary spec:** bookkeeping-emu-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| reportId | string | Yes | FK to EMUReport |
+| type | enum | Yes | One of 8 Wet Hof art. 3 macro types (REQ-EMU-002/005) |
+| richting | enum | Yes | saldo-verhogend / saldo-verlagend / saldo-neutraal |
+| bedrag | number | Yes | Adjustment amount in cents (non-negative) |
+| bron | object | No | grootboekrekening, omschrijving, taakveld, programma |
+| regel | string | Yes | Legal-basis citation (e.g. "Wet Hof art. 3 lid 2") |
+| toelichting | string | No | Free-text business context |
+| overridden | boolean | No | True when manually overridden (audit-trail logged) |
+| consolidatieEMU | enum | No | extern / intern-S1313 / internal-entity (REQ-EMU-005) |
+| currency | string | No | ISO 4217 currency (default EUR) |
+
+**Relations:**
+- → EMUReport (many-to-one)
+- → GLLine (many-to-one, optional via bron.grootboekrekening)
+
+**Cites:** ADR-022 (money rule + audit-trail), ADR-031 (PHP guard exception for macro-rule classification), ADR-037 (modular register fragment).
+
+### EMUReport
+**Schema.org:** `schema:GovernmentService`
+_Ingediende of in-progress EMU-aangifte voor een periode (kwartaal of jaar) per REQ-EMU-001. Atomic versioned submission unit; carries the computed EMU-saldo, bruto EMU-schuld ultimo, BBV-aansluiting and CBS-bevestigingsnummer. Lifecycle concept → ingediend → herzien per Wet Hof art. 10. Submission to CBS via SBR/Digipoort is the `indienen` lifecycle transition, gated by `EmuSubmissionGuard::requireApproval` (ADR-031 exception). 10-jaar retention per Archiefwet 1995 + Selectielijst Gemeenten 2020 (REQ-EMU-012). All amounts integer-cent per ADR-022._
+**Primary spec:** bookkeeping-emu-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the reporting Administration |
+| rapporterendeOrganisatie | object | No | RSIN/gemeentecode/naam/soort (gemeente/provincie/waterschap/GR) |
+| periodeJaar | integer | Yes | Calendar year of the period |
+| periodeKwartaal | integer | No | Quarter 1-4 (required when periodeType=kwartaal-emu-saldo) |
+| periodeType | enum | Yes | kwartaal-emu-saldo / jaar-emu-saldo / jaar-emu-schuld |
+| status | enum | Yes | concept / ingediend / herzien |
+| indieningsdatum | datetime | No | Timestamp of CBS submission |
+| cbsBevestigingsnummer | string | No | CBS confirmation reference |
+| cbsTemplateVersion | string | No | CBS-enquête template version (default 2026) |
+| emuSaldoBerekend | number | No | Computed EMU cash saldo in cents (negative = tekort) |
+| emuSaldoBegroot | number | No | Budgeted EMU saldo in cents |
+| emuSaldoAfwijking | number | No | berekend − begroot (derived) |
+| emuSaldoAfwijkingPercentage | number | No | (afwijking / abs(begroot)) × 100 |
+| emuSchuldBruto | number | No | Bruto nominal EMU-schuld in cents (AF.2+AF.3+AF.4) |
+| emuSchuldWettelijkeNorm | number | No | Individuele EMU-referentiewaarde in cents |
+| emuSchuldRuimte | number | No | wettelijkeNorm − bruto (derived) |
+| bbvSaldoBatenLasten | number | No | BBV jaarrekening saldo baten/lasten for reconciliation |
+| bbvTotaleAdjustments | number | No | Sum of EMUAdjustment.bedrag for the year (derived) |
+| bbvAansluitingscontrole | enum | No | geslaagd / mislukt / niet-uitgevoerd |
+| toelichting | string | No | Concerncontroller toelichting (auto-seeded with top-3 contributors) |
+| currency | string | No | ISO 4217 currency (default EUR) |
+
+**Relations:**
+- → Administration (many-to-one)
+- → EMUAdjustment (one-to-many)
+- → CashFlowItem (one-to-many)
+- → DebtPosition (one-to-many)
+
+**Cites:** ADR-022 (money rule + audit-trail + retention), ADR-031 (EmuSubmissionGuard exception), ADR-032 (manifest detail), ADR-037 (modular register fragment).
 
 ### Entitlement
 _Grant of access or permission to use specific features, resources, or data within the system_
