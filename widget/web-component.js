@@ -23,6 +23,7 @@
 import { BookingWidget } from './index.js'
 
 class NextcloudBookingWidget extends HTMLElement {
+
 	connectedCallback() {
 		const config = {
 			businessId: this.getAttribute('business-id') || '',
@@ -42,6 +43,7 @@ class NextcloudBookingWidget extends HTMLElement {
 			this._instance.$destroy()
 		}
 	}
+
 }
 
 if (typeof window !== 'undefined' && typeof window.customElements !== 'undefined') {

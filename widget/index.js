@@ -11,4 +11,5 @@
  * from the parent app.
  */
 
+// eslint-disable-next-line n/no-unpublished-import -- bundled by parent webpack into the published widget bundle (see widget/package.json scripts.build)
 export { BookingWidget, default } from '../src/components/widget/WidgetEmbed.js'

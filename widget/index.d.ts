@@ -35,9 +35,9 @@ export interface BookingWidgetInstance {
 }
 
 export interface BookingWidgetApi {
-	init(config: BookingWidgetConfig): BookingWidgetInstance | null;
-	iframeUrl(config: BookingWidgetConfig): string;
+	init(_config: BookingWidgetConfig): BookingWidgetInstance | null;
+	iframeUrl(_config: BookingWidgetConfig): string;
 }
 
-export const BookingWidget: BookingWidgetApi;
-export default BookingWidget;
+export const BookingWidget: BookingWidgetApi
+export default BookingWidget
