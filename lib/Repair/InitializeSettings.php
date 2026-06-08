@@ -86,6 +86,7 @@ class InitializeSettings implements IRepairStep
      * Phase 4: registers the IV3 quarterly CBS ScheduledWorkflow if not yet present.
      * Phase 4b: registers the FixedAssets monthly-depreciation ScheduledWorkflow per REQ-FA-005.
      * Phase 4c: registers the BCF quarterly DigiKoppeling ScheduledWorkflow per REQ-BCF-005.
+     * Phase 4d: registers the Intercompany monthly-matching ScheduledWorkflow per REQ-ICE-003.
      * Phase 5: seeds KOR thresholds from kor-thresholds-2026.json idempotently.
      * Phase 6: seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
      * Phase 7: seeds RJ-270 stages and rate-card templates for consultancy project accounting.
@@ -110,6 +111,7 @@ class InitializeSettings implements IRepairStep
      * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
      * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed/tasks.md#seed-data
      * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-11
+     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-14
      */
     public function run(IOutput $output): void
     {
@@ -161,6 +163,7 @@ class InitializeSettings implements IRepairStep
             $this->registerIv3ScheduledWorkflow(output: $output);
             $this->registerFixedAssetsMonthlyDepreciationWorkflow(output: $output);
             $this->registerBcfQuarterlyDigikoppelingWorkflow(output: $output);
+            $this->registerIntercompanyMonthlyMatchingWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
             $this->seedComplianceReferenceData(output: $output);
             $this->seedProductAttributeTemplates(output: $output);
@@ -490,6 +493,74 @@ class InitializeSettings implements IRepairStep
         $output->info('Shillinq: BCF quarterly DigiKoppeling ScheduledWorkflow registered (interval: 90 days)');
 
     }//end registerBcfQuarterlyDigikoppelingWorkflow()
+
+    /**
+     * Register the Intercompany monthly-matching ScheduledWorkflow if not already present.
+     *
+     * Idempotent: uses the slug 'shillinq-intercompany-monthly-matching' for
+     * deduplication. The interval defaults to 2592000 seconds (30 days / monthly
+     * cadence per REQ-ICE-003). Operators reconfigure interval and target via the
+     * OpenRegister ScheduledWorkflow admin UI for quarterly / annual cadences or
+     * per consolidation-group overrides. Per ADR-031 §"Background jobs that walk
+     * an object queue" path 2 — no shillinq IntercompanyMatchingJob extends
+     * TimedJob ships; the OR ScheduledWorkflow primitive owns the trigger and
+     * invokes IntercompanyMatchingService::matchRelationPeriod() per relation.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-14
+     */
+    private function registerIntercompanyMonthlyMatchingWorkflow(IOutput $output): void
+    {
+        try {
+            $workflowMapper = $this->container->get(
+                'OCA\OpenRegister\Db\ScheduledWorkflowMapper'
+            );
+        } catch (\Throwable $e) {
+            $output->info('Shillinq: ScheduledWorkflowMapper not available, skipping Intercompany matching workflow registration');
+            return;
+        }
+
+        $slug = 'shillinq-intercompany-monthly-matching';
+
+        $existing = $workflowMapper->findAll();
+        foreach ($existing as $workflow) {
+            if ($workflow->getName() === $slug) {
+                $output->info('Shillinq: Intercompany monthly-matching ScheduledWorkflow already registered, skipping');
+                return;
+            }
+        }
+
+        // 30 days in seconds — monthly cadence per REQ-ICE-003. Operators
+        // reconfigure the interval (quarterly / annual) and target group via the
+        // OpenRegister ScheduledWorkflow admin UI. The matching entry-point is
+        // IntercompanyMatchingService::matchRelationPeriod(), invoked per
+        // IntercompanyRelation by the scheduled run.
+        $workflowMapper->createFromArray(
+            data: [
+                'name'        => $slug,
+                'engine'      => 'openconnector',
+                'workflowId'  => 'intercompany-monthly-matching',
+                'intervalSec' => 2592000,
+                'enabled'     => true,
+                'payload'     => json_encode(
+                    [
+                        'register'     => 'shillinq',
+                        'schema'       => 'IntercompanyRelation',
+                        'service'      => 'OCA\Shillinq\Service\IntercompanyMatchingService',
+                        'method'       => 'matchRelationPeriod',
+                        'iterateField' => 'relationId',
+                        'periodField'  => 'periodId',
+                    ]
+                ),
+            ]
+        );
+
+        $output->info('Shillinq: Intercompany monthly-matching ScheduledWorkflow registered (interval: 30 days)');
+
+    }//end registerIntercompanyMonthlyMatchingWorkflow()
 
     /**
      * Seed T3 NL-compliance reference data (BTW tariffs + BBV taakvelden), idempotently.
