@@ -1009,7 +1009,26 @@
         "USD": "USD",
         "GBP": "GBP",
         "Primary Currency": "Primaire valuta",
-        "Multi-currency Account": "Multi-valuta rekening"
+        "Multi-currency Account": "Multi-valuta rekening",
+        "Vennootschapsbelasting": "Vennootschapsbelasting",
+        "Vpb-pligtig": "Vpb-pligtig",
+        "Vpb-pligtige accounts": "Vpb-pligtige accounts",
+        "Vpb-balans": "Vpb-balans",
+        "Vpb-balans link": "Vpb-balans link",
+        "Vpb-balans + aangifte voorbereiding": "Vpb-balans + aangifte voorbereiding",
+        "Aangifte": "Aangifte",
+        "Aangifte voorbereiding": "Aangifte voorbereiding",
+        "Activa": "Activa",
+        "Passiva": "Passiva",
+        "Resultaat": "Resultaat",
+        "Vpb-pligtig vanaf": "Vpb-pligtig vanaf",
+        "Vpb-pligtig t/m": "Vpb-pligtig t/m",
+        "Ondernemingsactiviteit": "Ondernemingsactiviteit",
+        "Ondernemingsactiviteiten (Vpb-balans link)": "Ondernemingsactiviteiten (Vpb-balans link)",
+        "Genereer Vpb-aangifte voorbereiding": "Genereer Vpb-aangifte voorbereiding",
+        "Balans sluit": "Balans sluit",
+        "Vpb-balans per ondernemingsactiviteit is niet in balans (T1 REQ-GL-005). Activa - Passiva - Resultaat != 0; controleer GL-postings voor cost-center {{costCenterId}}.": "Vpb-balans per ondernemingsactiviteit is niet in balans (T1 REQ-GL-005). Activa - Passiva - Resultaat != 0; controleer GL-postings voor cost-center {{costCenterId}}.",
+        "Account {{accountNumber}} ({{name}}) is gemarkeerd als Vpb-pligtig maar is niet gekoppeld aan een VpbBalansLink. Voeg het account toe aan een VpbBalansLink.accountNumbers van de relevante ondernemingsactiviteit, anders verschijnen postings niet in de Vpb-balans.": "Account {{accountNumber}} ({{name}}) is gemarkeerd als Vpb-pligtig maar is niet gekoppeld aan een VpbBalansLink. Voeg het account toe aan een VpbBalansLink.accountNumbers van de relevante ondernemingsactiviteit, anders verschijnen postings niet in de Vpb-balans."
     },
     "plurals": ""
 }

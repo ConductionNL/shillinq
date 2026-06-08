@@ -7163,3 +7163,62 @@ _Immutable audit-trail record of a notification dispatch attempt (REQ-BNT-005, A
 - → Booking (logical, via bookingId)
 
 **Cites:** ADR-022 (audit-trail-immutable), ADR-031 (schema-declarative), ADR-004 (modal isolation).
+
+### VpbBalansLink (add-shillinq-vpb-corporate-tax, REQ-VPB-002)
+
+Overlay register declaring per-ondernemingsactiviteit clusters of Vpb-pligtige
+accounts, per Wet modernisering Vpb-plicht (2016). One record per
+`(costCenterId, vpbPligtigVanaf)` tuple — `costCenterId` MUST reference a
+`CostCenter` with `ondernemingsActiviteit: true`, and each entry in
+`accountNumbers` MUST reference an `Account` with `vpbPligtig: true`. Per
+ADR-031 this is schema metadata — there is **no PHP Vpb-balans service**.
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| costCenterId | string | Yes | FK → CostCenter (must have `ondernemingsActiviteit: true`). |
+| accountNumbers | string[] | Yes | List of `Account.accountNumber` strings (each with `vpbPligtig: true`). |
+| vpbPligtigVanaf | date | Yes | Start date of Vpb-pligtigheid for this cluster (REQ-VPB-002). |
+| vpbPligtigTotEnMet | date | No | Optional end date (null = ongoing). |
+| toelichting | string | No | Bookkeeper note on the Vpb-pligt grond. |
+| administrationId | string | Yes | FK to the administration; reads are administration-scoped. |
+
+**Aggregations (declarative, ADR-031):**
+- `vpbBalansFiltered` — filters `GLLine` on
+  (`accountNumber IN VpbBalansLink.accountNumbers` AND
+  `periodId IN FiscalPeriod.fiscalYearPeriods`), groups per `costCenterId`,
+  emits `activaTotal`, `passivaTotal`, `resultaatTotal` per
+  ondernemingsactiviteit (output dataset `VpbBalansFiltered`,
+  `schema:Dataset`). Honours T1 REQ-GL-005 balance invariant per
+  cost-center; surfaces `unbalancedOndernemingsactiviteit` warning when
+  `activaTotal - passivaTotal - resultaatTotal != 0` (REQ-VPB-003).
+- `orphanedVpbPligtigAccounts` — flags `Account` records where
+  `vpbPligtig = true` but no `VpbBalansLink.accountNumbers` references the
+  account; rendered as warning in the Vpb menu detail view (Task 11).
+
+**Account / CostCenter additive flags (ADR-037 `x-openspec-extend`):**
+- `Account.vpbPligtig: boolean` (default `false`) — per REQ-VPB-001;
+  postings against flagged accounts contribute to the Vpb-balans
+  aggregation when an active `VpbBalansLink` references them.
+- `CostCenter.ondernemingsActiviteit: boolean` (default `false`) — owned at
+  proposal-time by sibling change `add-shillinq-market-government-separation`
+  and made visible to the Vpb-balans grouping here.
+
+**Vpb-aangifte voorbereiding (REQ-VPB-004):** docudesk template
+`vpb-aangifte-voorbereiding` is registered in
+`lib/Settings/docudesk-templates.json`; the SBR payload binding declares
+the Belastingdienst Vpb XSD and the T4-base
+`bookkeeping-sbr-xbrl-reporting` SBR endpoint (Digipoort) for
+transmission. No new SBR client per ADR-019. The Vpb-aangifte XSD version
+follows the Belastingdienst publication per fiscal year; multiple
+template versions may coexist (Risk 1 in design.md).
+
+**Manifest navigation (REQ-VPB-005):** the
+`Bookkeeping > Vennootschapsbelasting` menu group sits behind
+`featureFlags.mkb-vpb` in
+`src/manifest.d/bookkeeping-vpb-corporate-tax-balans.json` with `type:
+index` pages for Vpb-pligtige accounts + VpbBalansLink records and a
+`type: detail` page for the Vpb-balans + aangifte voorbereiding per
+ondernemingsactiviteit.
+
+**Cites:** ADR-031 (schema-declarative), ADR-037 (modular register
+fragments), ADR-019 (no new SBR client), ADR-024 (Tier-4 manifest pages).
