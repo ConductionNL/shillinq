@@ -30,49 +30,49 @@
 - [x] Task 20: Create `src/views/ChartOfAccountsView.vue` displaying accounts in hierarchical tree with expand/collapse, detail navigation, and "Add Account" action for authorized users
 - [x] Task 21: Create `src/views/TransactionsView.vue` displaying transactions in table format (date, amount, description, status columns) with filters (date range, status, type) and "Create Transaction" action
 - [x] Task 22: Create `src/views/DocumentsView.vue` displaying documents in table format (documentNumber, type, documentDate, status columns) with filters (type, status, filing-date) and "Upload Document" action
-- [ ] Task 23: Implement `src/Service/AccountService.php` with methods:
+- [x] Task 23: Implement `src/Service/AccountService.php` with methods:
   - `getAccountsByAdministration(administrationId)` — returns all accounts for an administration
   - `getAccountHierarchy(administrationId)` — returns tree-formatted accounts
   - `getAccountByNumber(administrationId, accountNumber)` — returns single account with parent/child links
   - `createAccount(DTO)` — creates account with hierarchy validation
   - `updateAccount(accountId, DTO)` — updates account properties
   - Validation: parent exists, circular-ref check, status enforcement
-- [ ] Task 24: Implement `src/Service/TransactionService.php` with methods:
+- [x] Task 24: Implement `src/Service/TransactionService.php` with methods:
   - `createTransaction(DTO)` — creates transaction in draft state
   - `postTransaction(transactionId)` — validates and transitions to posted (GL posting deferred to tier-2)
   - `reverseTransaction(transactionId, reason)` — creates reversal transaction with approval-workflow
   - Validation: date in fiscal year, amount validation, status state machine
-- [ ] Task 25: Implement `src/Service/DocumentService.php` with methods:
+- [x] Task 25: Implement `src/Service/DocumentService.php` with methods:
   - `createDocument(DTO)` — creates document in draft state
   - `fileDocument(documentId, approver)` — transitions draft→filed with approval-workflow binding
   - `archiveDocument(documentId, reason)` — transitions filed→archived with 7-year retention check
   - `getDocumentsByAdministration(administrationId)` — returns all documents
   - `getDocumentsByType(administrationId, type)` — filters by document type
-- [ ] Task 26: Implement `src/Controller/AccountApiController.php` with endpoints:
+- [x] Task 26: Implement `src/Controller/AccountApiController.php` with endpoints:
   - `GET /ocs/v2.php/apps/shillinq/api/v1/accounts` — list all accounts (RBAC: bookkeeper+)
   - `GET /ocs/v2.php/apps/shillinq/api/v1/accounts/{id}` — get single account with children
   - `POST /ocs/v2.php/apps/shillinq/api/v1/accounts` — create account (RBAC: administrator)
   - `PUT /ocs/v2.php/apps/shillinq/api/v1/accounts/{id}` — update account (RBAC: administrator)
   - `GET /ocs/v2.php/apps/shillinq/api/v1/accounts/hierarchy` — get tree view (RBAC: bookkeeper+)
   - All endpoints return 200/201 on success, 400/403/409 on validation/auth/conflict errors
-- [ ] Task 27: Implement `src/Controller/TransactionApiController.php` with endpoints:
+- [x] Task 27: Implement `src/Controller/TransactionApiController.php` with endpoints:
   - `GET /ocs/v2.php/apps/shillinq/api/v1/transactions` — list all transactions (with filters: date, status, type)
   - `GET /ocs/v2.php/apps/shillinq/api/v1/transactions/{id}` — get single transaction
   - `POST /ocs/v2.php/apps/shillinq/api/v1/transactions` — create transaction (RBAC: bookkeeper)
   - `POST /ocs/v2.php/apps/shillinq/api/v1/transactions/{id}/post` — post transaction (RBAC: bookkeeper)
   - `POST /ocs/v2.php/apps/shillinq/api/v1/transactions/{id}/reverse` — reverse transaction (RBAC: admin; triggers approval-workflow)
-- [ ] Task 28: Implement `src/Controller/DocumentApiController.php` with endpoints:
+- [x] Task 28: Implement `src/Controller/DocumentApiController.php` with endpoints:
   - `GET /ocs/v2.php/apps/shillinq/api/v1/documents` — list all documents (with filters: type, status)
   - `GET /ocs/v2.php/apps/shillinq/api/v1/documents/{id}` — get single document
   - `POST /ocs/v2.php/apps/shillinq/api/v1/documents` — create document with file upload to docudesk
   - `POST /ocs/v2.php/apps/shillinq/api/v1/documents/{id}/file` — transition draft→filed with approval-workflow
   - `POST /ocs/v2.php/apps/shillinq/api/v1/documents/{id}/archive` — transition filed→archived (RBAC: auditor)
-- [ ] Task 29: Create `lib/Cron/DocumentArchiveCron.php` that runs nightly to:
+- [x] Task 29: Create `lib/Cron/DocumentArchiveCron.php` that runs nightly to:
   - Query all documents with documentDate > 7 years ago in `filed` state
   - For each, trigger approval-workflow request (auto-assign to first available auditor/compliance officer)
   - Transition approved documents to `archived` state
   - Log results to system audit trail
-- [ ] Task 30: Implement RBAC enforcement per REQ-WBSO-005:
+- [x] Task 30: Implement RBAC enforcement per REQ-WBSO-005:
   - Add role checks to all API endpoints (check `$this->getCurrentUserRole()` and enforce per spec)
   - Account read: bookkeeper, auditor, administrator
   - Account write: administrator only

@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.7.0</version>
+    <version>0.7.1</version>
     <licence>agpl</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
@@ -116,5 +116,10 @@ Vrij en open source onder de EUPL-1.2-licentie.
              cross-tenant data ever lives in a single backup payload
              (REQ-MA-001 carried into REQ-MA-007). -->
         <job>OCA\Shillinq\BackgroundJob\AdministrationBackupSchedulerJob</job>
+        <!-- bookkeeping-wbso-sno-administratie REQ-WBSO-009: nightly sweep
+             that archives Document records past the seven-year Archiefwet
+             retention boundary. Fail-soft per record; idempotent via the
+             schema's filed → archived lifecycle gate. -->
+        <job>OCA\Shillinq\Cron\DocumentArchiveCron</job>
     </background-jobs>
 </info>
