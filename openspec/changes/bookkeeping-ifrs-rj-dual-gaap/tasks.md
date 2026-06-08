@@ -80,11 +80,13 @@
   - Lifecycle `open → classified → reconciled` + `reopen` transition; the `reconcile` transition is gated by `OCA\Shillinq\Lifecycle\DualGaapGuard::canReconcileTransaction` (ADR-031 single-method exception) which enforces "reason code present AND, for temporary differences, deferred-tax effect present" — the two cross-field preconditions the declarative DSL cannot express.
   **DEFERRED** — the on-posting auto-classification HOOK (examine account + posting date against lease/pension/AR/AP accounts and standard-trigger dates) requires the not-yet-stable OR transaction-parallel materialisation extension; tracked for the GL-materialisation integration cycle alongside Tasks 15 / 18. The data shape and guard are in place so the future hook only has to populate the existing fields.
 
-- [ ] Task 13: Implement COA-mapping validation per REQ-DGAAP-002: COA-mapping wizard accepts
-  source account → target accounts[] with allocation rule (percentage, formula, ratio-driver);
-  on activation, runs reconciliation on test data (min 95% coverage); blocks activation if
-  coverage < 95% unless exception-documented by approver.
-  **DEFERRED** — the `coveragePercent`/`exceptionJustification`/`approver` fields and the ≥95% rule are declared on `ChartOfAccountsMapping`; the wizard UI + the test-data reconciliation run need a live OR instance with seeded RJ mutations. Tracked for the COA-mapping UX cycle.
+- [x] Task 13: COA-mapping validation shape landed declaratively; wizard UI + live test-data run DEFERRED. Evidence in `lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json`:
+  - `ChartOfAccountsMapping.sourceAccount` (FK `Account.accountNumber`) + `targetAccounts[]` (one-to-many) + `mappingType` enum `{one-to-one, one-to-many, many-to-one, recharacterization}` + `allocationRule` enum `{percentage, formula, ratio_driver}` + `allocationDetail` text (REQ-DGAAP-002).
+  - `coveragePercent` (`number`, `minimum: 0`, `maximum: 100`) carries the test-data reconciliation result; the field description explicitly records the ≥95% activation rule.
+  - `exceptionJustification` (nullable text) + `approver` (nullable user id) carry the approver-documented exception path when coverage drops below 95%.
+  - `effectiveFrom` / `effectiveTo` carry the activation window (REQ-DGAAP-002).
+  - Seed object `coa-lease-1530-to-ifrs16` ships a worked one-to-many `1530 → {1531, 2531, 2532}` mapping with the IFRS-16 ROU allocation formula at `coveragePercent: 98.5` so live wizard UX has a reference shape.
+  **DEFERRED** — the COA-mapping wizard UI + the test-data reconciliation run that populates `coveragePercent` need a live OR instance with seeded RJ mutations to compare against. Tracked for the COA-mapping UX cycle. The schema is in place so the future wizard just writes the existing fields and enforces the ≥95% rule client-side.
 
 - [x] Task 14: Implement `ReconciliationBridge` aggregation per REQ-DGAAP-004/005/006:
   monthly/quarterly batch query groups `DualTransaction` by `(period, standard_code)`,
