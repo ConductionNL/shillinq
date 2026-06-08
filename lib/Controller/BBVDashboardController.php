@@ -40,6 +40,8 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Dashboard\BBVComplianceWidget;
+use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\FiscalYearContextService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -58,17 +60,30 @@ class BBVDashboardController extends Controller
     /**
      * Constructor for BBVDashboardController.
      *
-     * @param IRequest            $request     The current request.
-     * @param IUserSession        $userSession Anonymous-rejection guard
-     *                                         (ADR-005 / hydra-gate-no-admin-idor).
-     * @param IL10N               $l10n        Translation service used
-     *                                         to localise response
-     *                                         messages (ADR-007 / slice
-     *                                         10 i18n).
-     * @param BBVComplianceWidget $widget      Envelope assembler — reads
-     *                                         the slice-02 declarative
-     *                                         aggregation, cached for 1h
-     *                                         by ComplianceService.
+     * @param IRequest                     $request               The current request.
+     * @param IUserSession                 $userSession           Anonymous-rejection guard
+     *                                                            (ADR-005 / hydra-gate-no-admin-idor).
+     * @param IL10N                        $l10n                  Translation service used
+     *                                                            to localise response
+     *                                                            messages (ADR-007 / slice
+     *                                                            10 i18n).
+     * @param BBVComplianceWidget          $widget                Envelope assembler — reads
+     *                                                            the slice-02 declarative
+     *                                                            aggregation, cached for 1h
+     *                                                            by ComplianceService.
+     * @param AdministrationContextService $administrationContext Admin RBAC + accessibility
+     *                                                            checks (slice 09, ADR-005)
+     *                                                            — server-side admin scope
+     *                                                            so cross-tenant requests
+     *                                                            cannot read another
+     *                                                            administration's data.
+     * @param FiscalYearContextService     $fiscalYearContext     Active fiscal-year resolver
+     *                                                            (slice 09, REQ-BBVW-006) —
+     *                                                            collapses the client-
+     *                                                            supplied fiscal year to
+     *                                                            the active window
+     *                                                            inherited from the
+     *                                                            Administration context.
      *
      * @return void
      */
@@ -77,6 +92,8 @@ class BBVDashboardController extends Controller
         private readonly IUserSession $userSession,
         private readonly IL10N $l10n,
         private readonly BBVComplianceWidget $widget,
+        private readonly AdministrationContextService $administrationContext,
+        private readonly FiscalYearContextService $fiscalYearContext,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
@@ -97,10 +114,39 @@ class BBVDashboardController extends Controller
      *
      * Query parameters:
      *
-     *   - `fiscalYear` (int, optional)        — filter active programmes
-     *                                            to a given fiscal year.
-     *   - `administrationId` (string, optional) — scope the envelope
-     *                                            to one administration.
+     *   - `administrationId` (string, optional) — explicit administration
+     *                                            scope. When supplied it
+     *                                            MUST resolve to an admin
+     *                                            the user has a valid
+     *                                            membership for; cross-
+     *                                            tenant requests are
+     *                                            masked as an empty
+     *                                            envelope (ADR-005).
+     *                                            When omitted, the active
+     *                                            administration from the
+     *                                            session context is used.
+     *   - `fiscalYear` (int, optional)         — accepted but constrained
+     *                                            to the active fiscal
+     *                                            year of the resolved
+     *                                            administration. Multi-
+     *                                            year views are out of
+     *                                            scope (giant D5 /
+     *                                            REQ-BBVW-006).
+     *
+     * Slice 09 additions:
+     *
+     *   - administrationId is server-derived from the session when the
+     *     client omits it (REQ-MA-001 default).
+     *   - Cross-tenant administrationId values resolve to an empty
+     *     envelope, never leaking other administrations' programmes.
+     *   - fiscalYear is collapsed to the active window inherited from the
+     *     Administration record (`fiscalYearStartMonth/Day` — REQ-MA-002).
+     *     Prior-fiscal-year GL data is excluded because the underlying
+     *     declarative aggregation runs on transactions inside the active
+     *     window only.
+     *   - The envelope echoes the resolved `fiscalYear` + `startDate` +
+     *     `endDate` + `administrationId` under a `scope` key so the UI
+     *     can render the "FY 2026" label without re-deriving it.
      *
      * @return JSONResponse {
      *   widgets: array,
@@ -108,10 +154,11 @@ class BBVDashboardController extends Controller
      *   mappings: array,
      *   counts: array,
      *   summary: array,
+     *   scope: array,
      *   generatedAt: string
      * }
      *
-     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-08-compliance-service/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-the-dashboard-controller-shall-return-the-widget-data-envelope
+     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-09-fiscal-audit/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-bbv-queries-and-views-shall-be-scoped-to-the-active-fiscal-year
      */
     #[NoAdminRequired]
     public function index(): JSONResponse
@@ -120,23 +167,88 @@ class BBVDashboardController extends Controller
             return new JSONResponse(['error' => $this->l10n->t('Not logged in')], Http::STATUS_UNAUTHORIZED);
         }
 
-        $fiscalYearRaw = $this->request->getParam('fiscalYear');
-        $fiscalYear    = null;
-        if (is_numeric($fiscalYearRaw) === true) {
-            $fiscalYear = (int) $fiscalYearRaw;
-        }
-
         $administrationIdRaw = $this->request->getParam('administrationId');
         $administrationId    = null;
         if (is_string($administrationIdRaw) === true && trim($administrationIdRaw) !== '') {
             $administrationId = trim($administrationIdRaw);
         }
 
-        return new JSONResponse(
-            $this->widget->buildEnvelope(
-                fiscalYear: $fiscalYear,
-                administrationId: $administrationId,
-            )
+        // Server-derived default: when the client omits administrationId, fall
+        // back to the active administration from the session (REQ-MA-001).
+        if ($administrationId === null) {
+            $context        = $this->administrationContext->buildContext();
+            $sessionDefault = ($context['activeAdministrationId'] ?? null);
+            if (is_string($sessionDefault) === true && $sessionDefault !== '') {
+                $administrationId = $sessionDefault;
+            }
+        }
+
+        // IDOR mask (ADR-005) — when the user lacks a valid membership we
+        // return an empty envelope rather than 403 / 404 so the dashboard
+        // never discloses the existence of other tenants.
+        if ($administrationId === null
+            || $this->administrationContext->canAccess(administrationId: $administrationId) === false
+        ) {
+            return new JSONResponse($this->emptyEnvelope());
+        }
+
+        $window = $this->fiscalYearContext->resolveActiveWindow(administrationId: $administrationId);
+        if ($window === null) {
+            return new JSONResponse($this->emptyEnvelope(administrationId: $administrationId));
+        }
+
+        $envelope          = $this->widget->buildEnvelope(
+            fiscalYear: $window['fiscalYear'],
+            administrationId: $administrationId,
         );
+        $envelope['scope'] = [
+            'administrationId' => $administrationId,
+            'fiscalYear'       => $window['fiscalYear'],
+            'startDate'        => $window['startDate'],
+            'endDate'          => $window['endDate'],
+        ];
+
+        return new JSONResponse($envelope);
     }//end index()
+
+    /**
+     * Empty envelope for unauthorised / cross-tenant probes.
+     *
+     * Returned when the user has no accessible administration or the
+     * client-supplied administrationId resolves to a tenant the user is
+     * not a member of. Keeps the response shape stable so the dashboard
+     * still renders (with zero programmes) instead of crashing.
+     *
+     * @param string|null $administrationId Echoed administrationId or null.
+     *
+     * @return array<string,mixed>
+     */
+    private function emptyEnvelope(?string $administrationId=null): array
+    {
+        return [
+            'widgets'     => [],
+            'programmes'  => [],
+            'mappings'    => [],
+            'counts'      => [
+                'unconfigured'  => 0,
+                'on-track'      => 0,
+                'at-risk'       => 0,
+                'non-compliant' => 0,
+            ],
+            'summary'     => [
+                'programmeCount' => 0,
+                'mappingCount'   => 0,
+                'totalBudget'    => 0,
+                'totalYtdSpend'  => 0,
+                'utilization'    => 0.0,
+            ],
+            'scope'       => [
+                'administrationId' => $administrationId,
+                'fiscalYear'       => null,
+                'startDate'        => null,
+                'endDate'          => null,
+            ],
+            'generatedAt' => gmdate('Y-m-d\TH:i:s\Z'),
+        ];
+    }//end emptyEnvelope()
 }//end class
