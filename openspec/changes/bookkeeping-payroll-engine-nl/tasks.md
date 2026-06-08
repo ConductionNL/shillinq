@@ -158,7 +158,7 @@
   - LoonStrook aggregate loonsom → WKR-budget-tracking
   - EindheffingenWKR from WKR-app → LHAfdracht.totaalEindheffingenWKR
 
-- [ ] Wire into bookkeeping-liv-lkv (future):  _(DEFERRED — explicitly future per spec.)_
+- [x] Wire into bookkeeping-liv-lkv (future):  _(PayrollLivLkvHandoffService emits the per-(werknemer, jaar) eligibility payload (inkomenniveau + fiscaalLoonJaar + lkvCategorie); the claim itself stays with the future bookkeeping-liv-lkv app.)_
   - Werknemer.inkomenniveau + LoonStrook.fiscaalLoon → LIV/LKV eligibility
 
 - [x] Wire into openregister (audit trail, RBAC, attachments):
