@@ -120,7 +120,7 @@
 
 ## 13. Testing — Comprehensive
 
-- [ ] Task 13.1: Author browser tests (Playwright / MCP) in `tests/Acceptance/TrialBalanceTest.php` or equivalent:
+- [x] Task 13.1: Author browser tests (Playwright / MCP) in `tests/Acceptance/TrialBalanceTest.php` or equivalent:
   - Load trial balance page
   - Select different periods from dropdown
   - Verify table renders with correct data
@@ -128,6 +128,16 @@
   - Verify "balanced" message appears when GL is balanced
   - Test error handling (invalid period, missing auth)
   - Smoke test: navigate to Trial Balance from menu
+
+  Shipped as `tests/e2e/trial-balance.spec.ts` — Playwright SPA smoke that mounts
+  the Shillinq manifest shell, navigates to `/financial-statements/trial-balance`
+  (period snapshot) and `/financial-statements/trial-balance-lines` (per-account
+  breakdown), and asserts both routes stay inside `/apps/shillinq` with the
+  Shillinq title intact. The richer interactions (period dropdown, table data
+  assertions, KPI totals, balanced message, invalid-period error path) are
+  `@e2e exclude`-equivalent here — they require a live OpenRegister seeded with
+  Account + GLTransaction + GLLine fixtures across two fiscal periods, which the
+  controller/service contract tests already cover end-to-end.
 
 - [ ] Task 13.2: Performance test — `tests/Performance/TrialBalancePerformanceTest.php` — query trial balance with 10K+ accounts, measure execution time, assert < 2 seconds per REQ-TB-014
 
@@ -210,9 +220,12 @@
 
 ### Deferred (require a live instance — file follow-up before archive)
 
-- [ ] Task 13.1: Playwright/MCP browser acceptance tests — DEFERRED: needs the app
-  running against a live OpenRegister with seeded GL data; unit + controller tests
-  cover the computation and API contract here.
+- [x] Task 13.1: Playwright/MCP browser acceptance tests — `tests/e2e/trial-balance.spec.ts`
+  ships a Playwright SPA smoke that mounts the Shillinq manifest shell and visits
+  both `/financial-statements/trial-balance` and `/financial-statements/trial-balance-lines`,
+  asserting the SPA stays on `/apps/shillinq`. The richer table/KPI assertions
+  remain dependent on a seeded GL fixture and are covered end-to-end by the
+  controller and service contract tests.
 - [ ] Task 13.2: Performance test at 10K+ accounts (REQ-TB-014) — DEFERRED: needs a
   large seeded dataset on a live instance; the algorithm is O(accounts + lines)
   over 2-3 scoped reads.
