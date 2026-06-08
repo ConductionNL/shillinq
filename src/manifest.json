@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "1.3.6",
+	"version": "1.3.7",
 	"dependencies": [
 		"openregister"
 	],
@@ -80,6 +80,34 @@
 					"icon": "BankTransferOutline",
 					"route": "PaymentRuns",
 					"order": 34
+				},
+				{
+					"id": "Customers",
+					"label": "Customers",
+					"icon": "AccountTieOutline",
+					"route": "Customers",
+					"order": 41
+				},
+				{
+					"id": "AccountsReceivable",
+					"label": "Accounts Receivable",
+					"icon": "ReceiptTextOutline",
+					"route": "AccountsReceivable",
+					"order": 42
+				},
+				{
+					"id": "ARAging",
+					"label": "AR Aging",
+					"icon": "CalendarClockOutline",
+					"route": "ARAging",
+					"order": 43
+				},
+				{
+					"id": "DunningTimeline",
+					"label": "Dunning Timeline",
+					"icon": "EmailAlertOutline",
+					"route": "DunningTimeline",
+					"order": 44
 				},
 				{
 					"id": "DunningLadders",
@@ -6002,6 +6030,484 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "PaymentRuns",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "Customers",
+			"route": "/bookkeeping/customers",
+			"type": "index",
+			"title": "Customers",
+			"config": {
+				"register": "shillinq",
+				"schema": "CustomerMaster",
+				"columns": [
+					{
+						"key": "customerNumber",
+						"label": "Customer #",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "paymentTermDays",
+						"label": "Payment Terms (days)",
+						"sortable": true
+					},
+					{
+						"key": "creditLimit",
+						"label": "Credit Limit (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "customerNumber",
+				"detailRoute": "CustomerDetail"
+			}
+		},
+		{
+			"id": "CustomerDetail",
+			"route": "/bookkeeping/customers/:id",
+			"type": "detail",
+			"title": "Customer",
+			"config": {
+				"register": "shillinq",
+				"schema": "CustomerMaster",
+				"fields": [
+					{
+						"key": "customerNumber",
+						"label": "Customer #",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Legal Name",
+						"type": "string"
+					},
+					{
+						"key": "tradingName",
+						"label": "Trading Name",
+						"type": "string"
+					},
+					{
+						"key": "kvkNumber",
+						"label": "KvK Number",
+						"type": "string"
+					},
+					{
+						"key": "btwNumber",
+						"label": "BTW Number",
+						"type": "string"
+					},
+					{
+						"key": "paymentTermDays",
+						"label": "Payment Terms (days)",
+						"type": "integer"
+					},
+					{
+						"key": "defaultRevenueAccountNumber",
+						"label": "Default Revenue Account",
+						"type": "string"
+					},
+					{
+						"key": "creditLimit",
+						"label": "Credit Limit (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "dunningPolicyRef",
+						"label": "Dunning Policy",
+						"type": "string"
+					},
+					{
+						"key": "peppolEndpoint",
+						"label": "Peppol Endpoint",
+						"type": "string"
+					},
+					{
+						"key": "email",
+						"label": "Email",
+						"type": "string"
+					},
+					{
+						"key": "phone",
+						"label": "Phone",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "Customers",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "AccountsReceivable",
+			"route": "/bookkeeping/accounts-receivable",
+			"type": "index",
+			"title": "Accounts Receivable",
+			"config": {
+				"register": "shillinq",
+				"schema": "ARInvoice",
+				"columns": [
+					{
+						"key": "invoiceNumber",
+						"label": "Invoice #",
+						"sortable": true
+					},
+					{
+						"key": "customerId",
+						"label": "Customer",
+						"sortable": true
+					},
+					{
+						"key": "invoiceDate",
+						"label": "Invoice Date",
+						"sortable": true
+					},
+					{
+						"key": "dueDate",
+						"label": "Due Date",
+						"sortable": true
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "dueDate",
+				"detailRoute": "ARInvoiceDetail"
+			}
+		},
+		{
+			"id": "ARInvoiceDetail",
+			"route": "/bookkeeping/accounts-receivable/:id",
+			"type": "detail",
+			"title": "AR Invoice",
+			"config": {
+				"register": "shillinq",
+				"schema": "ARInvoice",
+				"fields": [
+					{
+						"key": "invoiceNumber",
+						"label": "Invoice #",
+						"type": "string"
+					},
+					{
+						"key": "customerId",
+						"label": "Customer",
+						"type": "string"
+					},
+					{
+						"key": "invoiceDate",
+						"label": "Invoice Date",
+						"type": "date"
+					},
+					{
+						"key": "dueDate",
+						"label": "Due Date",
+						"type": "date"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total Amount",
+						"type": "number"
+					},
+					{
+						"key": "taxAmount",
+						"label": "Tax Amount",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "glTransactionId",
+						"label": "GL Transaction",
+						"type": "string"
+					},
+					{
+						"key": "writeOffReason",
+						"label": "Write-off Reason",
+						"type": "string"
+					},
+					{
+						"key": "writeOffGlTransactionId",
+						"label": "Write-off GL Transaction",
+						"type": "string"
+					},
+					{
+						"key": "sourceDocumentUri",
+						"label": "Source Document",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "AccountsReceivable",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "dunning",
+							"label": "Dunning Timeline",
+							"icon": "EmailAlertOutline",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "list",
+									"register": "shillinq",
+									"schema": "DunningRecord",
+									"filter": {
+										"invoiceRef": ":id"
+									},
+									"orderBy": "dispatchedAt asc",
+									"columns": [
+										{
+											"key": "reminderLevel",
+											"label": "Step"
+										},
+										{
+											"key": "dispatchedAt",
+											"label": "Dispatched"
+										},
+										{
+											"key": "channel",
+											"label": "Channel"
+										},
+										{
+											"key": "acknowledgedAt",
+											"label": "Acknowledged"
+										}
+									]
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "ARAging",
+			"route": "/bookkeeping/ar-aging",
+			"type": "index",
+			"title": "AR Aging",
+			"config": {
+				"register": "shillinq",
+				"schema": "ARInvoice",
+				"aggregation": "arAging",
+				"columns": [
+					{
+						"key": "customerId",
+						"label": "Customer",
+						"sortable": true
+					},
+					{
+						"key": "agingBucket",
+						"label": "Aging Bucket",
+						"sortable": true
+					},
+					{
+						"key": "count",
+						"label": "Invoices",
+						"sortable": true
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total Outstanding (EUR)",
+						"sortable": true
+					}
+				],
+				"defaultSort": "agingBucket",
+				"description": "AR aging report grouping open invoices by customer and aging bucket per REQ-AR-008. Excludes paid, voided, and written-off invoices."
+			}
+		},
+		{
+			"id": "DunningTimeline",
+			"route": "/bookkeeping/dunning-timeline",
+			"type": "index",
+			"title": "Dunning Timeline",
+			"config": {
+				"register": "shillinq",
+				"schema": "DunningRecord",
+				"columns": [
+					{
+						"key": "invoiceRef",
+						"label": "Invoice",
+						"sortable": true
+					},
+					{
+						"key": "reminderLevel",
+						"label": "Step",
+						"sortable": true
+					},
+					{
+						"key": "dispatchedAt",
+						"label": "Dispatched",
+						"sortable": true
+					},
+					{
+						"key": "channel",
+						"label": "Channel",
+						"sortable": true
+					},
+					{
+						"key": "dispatchedBy",
+						"label": "By",
+						"sortable": true
+					},
+					{
+						"key": "acknowledgedAt",
+						"label": "Acknowledged",
+						"sortable": true
+					}
+				],
+				"defaultSort": "dispatchedAt",
+				"detailRoute": "DunningTimelineDetail"
+			}
+		},
+		{
+			"id": "DunningTimelineDetail",
+			"route": "/bookkeeping/dunning-timeline/:id",
+			"type": "detail",
+			"title": "Dunning Record",
+			"config": {
+				"register": "shillinq",
+				"schema": "DunningRecord",
+				"fields": [
+					{
+						"key": "invoiceRef",
+						"label": "Invoice",
+						"type": "string"
+					},
+					{
+						"key": "reminderLevel",
+						"label": "Step",
+						"type": "string"
+					},
+					{
+						"key": "escalationLevel",
+						"label": "Escalation Level",
+						"type": "integer"
+					},
+					{
+						"key": "dispatchedAt",
+						"label": "Dispatched At",
+						"type": "datetime"
+					},
+					{
+						"key": "dispatchedBy",
+						"label": "Dispatched By",
+						"type": "string"
+					},
+					{
+						"key": "channel",
+						"label": "Channel",
+						"type": "string"
+					},
+					{
+						"key": "templateRef",
+						"label": "Template",
+						"type": "string"
+					},
+					{
+						"key": "acknowledgedAt",
+						"label": "Acknowledged At",
+						"type": "datetime"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"indexRoute": "DunningTimeline",
 				"sidebarProps": {
 					"tabs": [
 						{
