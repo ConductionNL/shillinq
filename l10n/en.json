@@ -710,9 +710,7 @@
         "Unit Cost": "Unit Cost",
         "Last Restock Date": "Last Restock Date",
         "Last Restock": "Last Restock",
-        "Active": "Active",
         "Discontinued": "Discontinued",
-        "Location": "Location",
         "Location Code": "Location Code",
         "Location Name": "Location Name",
         "Product": "Product",
@@ -798,7 +796,20 @@
         "GL {gl} → Programme {code}": "GL {gl} → Programme {code}",
         "GL {gl} total: {sum} % — you can add up to {remaining} %.": "GL {gl} total: {sum} % — you can add up to {remaining} %.",
         "GL {gl} total would be {pct} % — {over} % over 100 %. Reduce the allocation before saving.": "GL {gl} total would be {pct} % — {over} % over 100 %. Reduce the allocation before saving.",
-        "Not logged in": "Not logged in"
+        "Not logged in": "Not logged in",
+        "Posting Configuration": "Posting Configuration",
+        "Posting Configuratie": "Posting Configuration",
+        "Posting History": "Posting History",
+        "Posting Historie": "Posting History",
+        "COGS Account": "COGS Account",
+        "Inventory Asset Account": "Inventory Asset Account",
+        "GR/IR Clearing Account": "GR/IR Clearing Account",
+        "Inventory Adjustment Account": "Inventory Adjustment Account",
+        "Posting Disabled": "Posting Disabled",
+        "Unit Cost Missing": "Unit Cost Missing",
+        "Sale Dispatch": "Sale Dispatch",
+        "Count Variance": "Count Variance",
+        "Inventory GL Posting Configuration": "Inventory GL Posting Configuration"
     },
     "plurals": ""
 }

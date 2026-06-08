@@ -710,9 +710,7 @@
         "Unit Cost": "Eenheidskosten",
         "Last Restock Date": "Datum laatste aanvulling",
         "Last Restock": "Laatste aanvulling",
-        "Active": "Actief",
         "Discontinued": "Vervallen",
-        "Location": "Locatie",
         "Location Code": "Locatiecode",
         "Location Name": "Locatienaam",
         "Product": "Product",
@@ -798,7 +796,20 @@
         "GL {gl} → Programme {code}": "GL {gl} → programma {code}",
         "GL {gl} total: {sum} % — you can add up to {remaining} %.": "GL {gl} totaal: {sum} % — je kunt nog {remaining} % toevoegen.",
         "GL {gl} total would be {pct} % — {over} % over 100 %. Reduce the allocation before saving.": "GL {gl} totaal zou {pct} % worden — {over} % boven 100 %. Verlaag de toewijzing voordat je opslaat.",
-        "Not logged in": "Niet ingelogd"
+        "Not logged in": "Niet ingelogd",
+        "Posting Configuration": "Boekingsconfiguratie",
+        "Posting Configuratie": "Boekingsconfiguratie",
+        "Posting History": "Boekingshistorie",
+        "Posting Historie": "Boekingshistorie",
+        "COGS Account": "Kostprijs rekening",
+        "Inventory Asset Account": "Voorraden rekening",
+        "GR/IR Clearing Account": "GR/IR clearing rekening",
+        "Inventory Adjustment Account": "Voorraadmutaties rekening",
+        "Posting Disabled": "Boeking uitgeschakeld",
+        "Unit Cost Missing": "Kostprijs ontbreekt",
+        "Sale Dispatch": "Verkoopafgifte",
+        "Count Variance": "Telverschil",
+        "Inventory GL Posting Configuration": "Voorraad GL Boekingsconfiguratie"
     },
     "plurals": ""
 }
