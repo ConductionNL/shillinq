@@ -10916,6 +10916,10 @@
 			"version": "0.1.0",
 			"title": "Customer",
 			"description": "Customer party record for accounts receivable. Holds billing address, payment terms, tax registration, credit limit, dunning-policy reference, and Peppol endpoint for outbound e-invoicing within a single administration. Per REQ-AR-002.",
+			"x-openregister-audit-trail": {
+				"enabled": true,
+				"description": "Bookkeeping master register; every create / update / delete is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022."
+			},
 			"x-schema-org": "schema:Organization",
 			"type": "object",
 			"required": [
@@ -11107,6 +11111,10 @@
 			"version": "0.1.0",
 			"title": "AR Invoice",
 			"description": "Accounts receivable sub-ledger invoice recording customer billing and revenue recognition. Issuing materialises a balanced GLTransaction per T1 REQ-JE-007 (debit AR control, credit revenue per lines). Lifecycle: draft → issued → paid with partially-paid / overdue / disputed / written-off / voided branches per REQ-AR-004. Carries UBL 2.1 / Peppol BIS 3.0 field shape declared but NOT computed in T2 — T4 e-invoicing populates ublXml + peppolDispatchedAt additively per REQ-AR-009. Per REQ-AR-003 and REQ-AR-004.",
+			"x-openregister-audit-trail": {
+				"enabled": true,
+				"description": "Bookkeeping sub-ledger register; every lifecycle transition (issue / overdue / match / dispute / write-off / void) and every header / line edit is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022. Audit trail is the canonical evidence chain for the AR write-off scenario per REQ-AR-007."
+			},
 			"x-schema-org": "schema:Invoice",
 			"type": "object",
 			"required": [
@@ -11646,6 +11654,10 @@
 			"version": "0.1.0",
 			"title": "Dunning Record",
 			"description": "Per-invoice dunning timeline record capturing one reminder, formal notice, or collection escalation dispatched against an overdue ARInvoice. Append-only timeline; new rows are written by OR's dunning-workflow engine (or by the conditional DunningGuard fallback per ADR-031 exception if OR's extension is not yet stable). Shillinq carries no app-local dunning service per REQ-AR-005. Per REQ-AR-005.",
+			"x-openregister-audit-trail": {
+				"enabled": true,
+				"description": "Bookkeeping evidence register; every dispatch is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022. Forms the per-invoice dunning evidence chain for incassowet / aanmaningsprocedure compliance."
+			},
 			"x-schema-org": "schema:Action",
 			"type": "object",
 			"required": [
