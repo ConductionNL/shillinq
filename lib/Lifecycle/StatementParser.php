@@ -29,6 +29,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-6.3
+ * @spec openspec/changes/add-shillinq-bank-reconciliation/tasks.md#task-10
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,6 +48,7 @@ use Psr\Log\LoggerInterface;
  * Bank statement parser + reconciliation-complete guard.
  *
  * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-6.3
+ * @spec openspec/changes/add-shillinq-bank-reconciliation/tasks.md#task-10
  */
 class StatementParser
 {
@@ -78,6 +80,7 @@ class StatementParser
      * @return array<int,array<string,mixed>> Normalised BankStatementLine field maps.
      *
      * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-6.3
+ * @spec openspec/changes/add-shillinq-bank-reconciliation/tasks.md#task-10
      */
     public function parse(string $contents, string $format): array
     {
@@ -113,6 +116,7 @@ class StatementParser
      * @return bool True when every line is matched or routed-to-suspense.
      *
      * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-6.3
+ * @spec openspec/changes/add-shillinq-bank-reconciliation/tasks.md#task-10
      */
     public function allLinesResolved(string $statementId): bool
     {
