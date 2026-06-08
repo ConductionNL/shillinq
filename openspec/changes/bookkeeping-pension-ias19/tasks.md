@@ -46,7 +46,7 @@
   ±1yr), D7 (actuarial input via manual v1), D8 (HRMQ roster validation),
   D9 (auto-generated disclosure tabel), D10 (DC lichte disclosure)
 
-- [ ] Task 5: Declare the `pension-plan` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 5: Declare the `pension-plan` schema in `lib/Settings/shillinq_register.json`
   with all REQ-PEN-001–010 fields (planName, planType, regulatoryFramework,
   funded, provider, inceptionDate, terminationDate, accrualRate, pensionableSalaryDefinition,
   retirementAge, participantCountActive/Deferred/Retirees, linkedHrmqGroup,
