@@ -236,6 +236,101 @@ return [
         ['name' => 'budgetBBVMapping#index', 'url' => '/budget-mappings', 'verb' => 'GET'],
         ['name' => 'budgetBBVMapping#show', 'url' => '/budget-mappings/{id}', 'verb' => 'GET'],
 
+        // Deposit payment webhook (bookings-deposits, REQ-DP-006). Public route
+        // (gateways are unauthenticated callers) but signature-gated inside the
+        // controller. The {gateway} placeholder selects mollie / stripe.
+        ['name' => 'depositWebhook#handle', 'url' => '/api/webhooks/deposits/{gateway}', 'verb' => 'POST'],
+
+        // Payroll webhook (bookkeeping-detachering-payroll-administratie,
+        // REQ-PAY-009). Public, signature-gated. info() is a 501 GET for callers
+        // probing the endpoint; receive() is the signed POST receiver.
+        ['name' => 'payrollWebhook#info', 'url' => '/api/webhooks/payroll', 'verb' => 'GET'],
+        ['name' => 'payrollWebhook#receive', 'url' => '/api/webhooks/payroll', 'verb' => 'POST'],
+
+        // SEPA mandate audit-trail export (bookkeeping-sepa-direct-debit,
+        // REQ-SDD-010). Returns a per-mandate ZIP dossier scoped server-side
+        // to the caller's accessible administrations (IDOR-safe).
+        ['name' => 'sepaAudit#exportMandate', 'url' => '/api/sepa/mandates/{mandateId}/audit-export', 'verb' => 'GET'],
+
+        // BCF compensation calculator (bookkeeping-bcf-claim). Pure compute
+        // surface returning a what-if compensation result.
+        ['name' => 'bcfClaim#compensation', 'url' => '/api/bcf/compensation', 'verb' => 'GET'],
+
+        // ICP opgaaf (bookkeeping-icp-opgaaf, REQ-ICP-002..010). Read-only ledger
+        // / reconcile / periodicity / VIES lookup endpoints plus the correction
+        // + audit-export write surface. All admin-scoped + IDOR-safe.
+        ['name' => 'icp#ledger', 'url' => '/api/icp/ledger', 'verb' => 'GET'],
+        ['name' => 'icp#reconcile', 'url' => '/api/icp/reconcile', 'verb' => 'GET'],
+        ['name' => 'icp#periodicity', 'url' => '/api/icp/periodicity', 'verb' => 'GET'],
+        ['name' => 'icp#lookupVatId', 'url' => '/api/icp/vat-id-lookup', 'verb' => 'POST'],
+        ['name' => 'icp#correction', 'url' => '/api/icp/correction', 'verb' => 'POST'],
+        ['name' => 'icp#auditExport', 'url' => '/api/icp/audit-export', 'verb' => 'GET'],
+
+        // IFRS 16 lease accounting (bookkeeping-ifrs-16-lease, REQ-LA-002,
+        // REQ-LD-001). Per-contract amortization schedule + per-period
+        // disclosure table. Read-only.
+        ['name' => 'lease#schedule', 'url' => '/api/leases/schedule', 'verb' => 'GET'],
+        ['name' => 'lease#disclosure', 'url' => '/api/leases/disclosure', 'verb' => 'GET'],
+
+        // IFRS 15 revenue cut-off (bookkeeping-ifrs15-revenue, REQ-IFRS15-007/008).
+        ['name' => 'revenue#cutoff', 'url' => '/api/revenue/cutoff', 'verb' => 'GET'],
+
+        // KOR drempel-bewaking (bookkeeping-kor-kleine-ondernemersregeling,
+        // REQ-KOR-002, REQ-KOR-003). Read-only monitor endpoint.
+        ['name' => 'kor#monitor', 'url' => '/api/kor/monitor', 'verb' => 'GET'],
+
+        // Vpb corporate-tax statements (bookkeeping-vpb-corporate-tax,
+        // REQ-VPB-009, REQ-VPB-012). Specific quarter/{quarter} segment
+        // precedes the bare year route per Symfony route ordering.
+        ['name' => 'taxReport#quarter', 'url' => '/api/tax-reports/{year}/{quarter}', 'verb' => 'GET'],
+        ['name' => 'taxReport#annual', 'url' => '/api/tax-reports/{year}', 'verb' => 'GET'],
+
+        // Vpb tax-payment reconciliation (bookkeeping-vpb-corporate-tax,
+        // REQ-VPB-008). Per-payment {id} reconciliation against the GL.
+        ['name' => 'taxPayment#reconcile', 'url' => '/api/tax-payments/{id}/reconcile', 'verb' => 'POST'],
+
+        // Period close (bookkeeping-period-close, REQ-PC-002..008). Detail,
+        // AI-flags, and the four lifecycle transitions (start, close, reopen,
+        // audit-lock). The specific {action} segments precede the bare {periodId}
+        // segment per Symfony route ordering.
+        ['name' => 'periodClose#aiFlags', 'url' => '/api/period-close/{periodId}/ai-flags', 'verb' => 'GET'],
+        ['name' => 'periodClose#startClose', 'url' => '/api/period-close/{periodId}/start-close', 'verb' => 'POST'],
+        ['name' => 'periodClose#close', 'url' => '/api/period-close/{periodId}/close', 'verb' => 'POST'],
+        ['name' => 'periodClose#reopen', 'url' => '/api/period-close/{periodId}/reopen', 'verb' => 'POST'],
+        ['name' => 'periodClose#lockAudit', 'url' => '/api/period-close/{periodId}/lock-audit', 'verb' => 'POST'],
+        ['name' => 'periodClose#show', 'url' => '/api/period-close/{periodId}', 'verb' => 'GET'],
+
+        // Innovatiebox administratie (bookkeeping-innovatiebox-administratie,
+        // REQ-IBA-004/006/009). Aggregation + scenario + doorsnijdingsverbod
+        // year-end check. Read-only.
+        ['name' => 'innovatiebox#aggregation', 'url' => '/api/innovatiebox/aggregation', 'verb' => 'GET'],
+        ['name' => 'innovatiebox#scenario', 'url' => '/api/innovatiebox/scenario', 'verb' => 'GET'],
+        ['name' => 'innovatiebox#doorsnijdingsverbod', 'url' => '/api/innovatiebox/doorsnijdingsverbod', 'verb' => 'GET'],
+
+        // Programmabegroting exports (bookkeeping-programmabegroting,
+        // REQ-011, REQ-012). Sluitend-status + iv3 + JSON exports.
+        ['name' => 'programmabegroting#sluitend', 'url' => '/api/programmabegroting/sluitend', 'verb' => 'GET'],
+        ['name' => 'programmabegroting#iv3', 'url' => '/api/programmabegroting/export/iv3', 'verb' => 'GET'],
+        ['name' => 'programmabegroting#jsonExport', 'url' => '/api/programmabegroting/export/json', 'verb' => 'GET'],
+
+        // BADO controleprotocol aggregation (bookkeeping-bado-controleprotocol).
+        ['name' => 'badoControleprotocol#aggregation', 'url' => '/api/bado/controleprotocol/aggregation', 'verb' => 'GET'],
+
+        // Widget API-key admin (bookings-self-service-widget, REQ-WSW-009).
+        // #[AuthorizedAdminSetting]-gated lifecycle of per-business widget keys.
+        ['name' => 'widgetSettings#rotate', 'url' => '/api/widget/admin/keys/rotate', 'verb' => 'POST'],
+        ['name' => 'widgetSettings#revoke', 'url' => '/api/widget/admin/keys/revoke', 'verb' => 'POST'],
+
+        // Inventory scanner server-authoritative API (inventory-mobile-scanner,
+        // REQ-SKU-001/002, REQ-OFFLINE-002/003, REQ-PERM-001). The
+        // InventoryMobileScannerController above mounts the original
+        // /api/v1/inventory/* surface used by the PWA; this controller exposes
+        // a parallel /api/inventory/* surface that performs role-gated batch
+        // application + barcode resolution server-side. Static segments only.
+        ['name' => 'inventoryScan#resolve', 'url' => '/api/inventory/resolve', 'verb' => 'GET'],
+        ['name' => 'inventoryScan#sync', 'url' => '/api/inventory/sync', 'verb' => 'GET'],
+        ['name' => 'inventoryScan#scan', 'url' => '/api/inventory/scan', 'verb' => 'POST'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
