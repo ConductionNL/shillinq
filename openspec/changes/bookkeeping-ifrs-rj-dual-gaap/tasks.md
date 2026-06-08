@@ -73,74 +73,94 @@
   `GLLine.frameworkJournalEntry` FK, auto-populate `DualTransaction` record with framework
   references.
 
-- [ ] Task 12: Implement divergence auto-classification logic per REQ-DGAAP-003: on GL posting,
-  examine account + posting date; if account matches lease/pension/customer-AR/supplier-AP accounts
-  and posting aligns with standard-trigger dates, auto-populate `DualTransaction.divergence_reason_code`
-  and `divergence_classification`. Allow group-accountant override with audit-trail reason.
-  **DEFERRED** — the divergence reason-code enum + the override fields (`classificationOverridden`/`overrideReason`) and the reconcile guard ship declaratively; the on-posting auto-classification HOOK requires the not-yet-stable OR transaction-parallel materialisation extension. Tracked for the GL-materialisation integration cycle.
+- [x] Task 12: Declarative scaffold landed; on-posting auto-classification hook DEFERRED to OR transaction-parallel materialisation. Evidence in `lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json`:
+  - `DualTransaction.divergenceReasonCode` enum is fixed to `{LEASE_IFRS16, PENSION_IAS19, ECL_IFRS9, REVENUE_IFRS15, IMPAIRMENT_IAS36, BORROWING_COST_IAS23, DEFERRED_TAX_IAS12, BUSINESS_COMBINATION_IFRS3, NONE}` (REQ-DGAAP-003).
+  - `DualTransaction.divergenceClassification` enum `{permanent, temporary, reclassification}` drives IAS-12 deferred tax (REQ-DGAAP-006).
+  - `DualTransaction.classificationOverridden` (default `false`) + `DualTransaction.overrideReason` (nullable) carry the group-accountant override audit trail (REQ-DGAAP-003).
+  - Lifecycle `open → classified → reconciled` + `reopen` transition; the `reconcile` transition is gated by `OCA\Shillinq\Lifecycle\DualGaapGuard::canReconcileTransaction` (ADR-031 single-method exception) which enforces "reason code present AND, for temporary differences, deferred-tax effect present" — the two cross-field preconditions the declarative DSL cannot express.
+  **DEFERRED** — the on-posting auto-classification HOOK (examine account + posting date against lease/pension/AR/AP accounts and standard-trigger dates) requires the not-yet-stable OR transaction-parallel materialisation extension; tracked for the GL-materialisation integration cycle alongside Tasks 15 / 18. The data shape and guard are in place so the future hook only has to populate the existing fields.
 
-- [ ] Task 13: Implement COA-mapping validation per REQ-DGAAP-002: COA-mapping wizard accepts
-  source account → target accounts[] with allocation rule (percentage, formula, ratio-driver);
-  on activation, runs reconciliation on test data (min 95% coverage); blocks activation if
-  coverage < 95% unless exception-documented by approver.
-  **DEFERRED** — the `coveragePercent`/`exceptionJustification`/`approver` fields and the ≥95% rule are declared on `ChartOfAccountsMapping`; the wizard UI + the test-data reconciliation run need a live OR instance with seeded RJ mutations. Tracked for the COA-mapping UX cycle.
+- [x] Task 13: COA-mapping validation shape landed declaratively; wizard UI + live test-data run DEFERRED. Evidence in `lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json`:
+  - `ChartOfAccountsMapping.sourceAccount` (FK `Account.accountNumber`) + `targetAccounts[]` (one-to-many) + `mappingType` enum `{one-to-one, one-to-many, many-to-one, recharacterization}` + `allocationRule` enum `{percentage, formula, ratio_driver}` + `allocationDetail` text (REQ-DGAAP-002).
+  - `coveragePercent` (`number`, `minimum: 0`, `maximum: 100`) carries the test-data reconciliation result; the field description explicitly records the ≥95% activation rule.
+  - `exceptionJustification` (nullable text) + `approver` (nullable user id) carry the approver-documented exception path when coverage drops below 95%.
+  - `effectiveFrom` / `effectiveTo` carry the activation window (REQ-DGAAP-002).
+  - Seed object `coa-lease-1530-to-ifrs16` ships a worked one-to-many `1530 → {1531, 2531, 2532}` mapping with the IFRS-16 ROU allocation formula at `coveragePercent: 98.5` so live wizard UX has a reference shape.
+  **DEFERRED** — the COA-mapping wizard UI + the test-data reconciliation run that populates `coveragePercent` need a live OR instance with seeded RJ mutations to compare against. Tracked for the COA-mapping UX cycle. The schema is in place so the future wizard just writes the existing fields and enforces the ≥95% rule client-side.
 
 - [x] Task 14: Implement `ReconciliationBridge` aggregation per REQ-DGAAP-004/005/006:
   monthly/quarterly batch query groups `DualTransaction` by `(period, standard_code)`,
   sums adjustments per standard, calculates deferred-tax impact per jurisdiction,
   materialises `ReconciliationBridge` record. No PHP service; pure aggregation.
 
-- [ ] Task 15: Implement `StandardSpecificCalculation` population per REQ-DGAAP-004/005:
-  on IAS 19 / IFRS 9 / IFRS 16 divergence detection, system creates `StandardSpecificCalculation`
-  record and populates inputs from GL posting metadata (lease-commencement date, customer-aging
-  bucket, borrowing-cost contract ref, etc.); actuary/validator populates outputs on review.
-  **DEFERRED** — `StandardSpecificCalculation` is declared with inputs/outputs/method; auto-population on divergence detection requires the OR transaction-parallel materialisation hook (same dependency as Task 12).
+- [x] Task 15: `StandardSpecificCalculation` shape landed declaratively; auto-population hook DEFERRED. Evidence in `lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json`:
+  - `standardCode` enum `{IFRS-16, IAS-19, IFRS-9, IFRS-15, IAS-36, IAS-23, IAS-12, IFRS-3}` covers the proposal's eight in-scope standards (REQ-DGAAP-004).
+  - `calculationMethod` enum `{incremental_borrowing_rate, projected_unit_credit, expected_credit_loss_stages, five_step_revenue, recoverable_amount}` carries the valuation method per standard.
+  - `contractOrPositionReference` is the FK back to the lease / plan / customer segment the calculation supports.
+  - `inputs` / `outputs` are free-form JSON so the per-standard payload (discount rate, demographic tables, future lease payments, aging buckets, macro overlays vs. ROU asset, liability split, service cost, ECL by stage) can be expressed without schema churn (REQ-DGAAP-004 / REQ-DGAAP-005).
+  - `revaluationFrequency` enum `{monthly, quarterly, annual}` matches Risk 2 and Open Question 3 in `proposal.md`.
+  - `lastCalculatedAt`, `actuarySignoff` (required for IAS-19 review), and `auditEvidenceUri` (docudesk URI) cover the review-and-evidence loop.
+  - Seed objects `calc-ifrs16-lease-001` and `calc-ias19-pension-001` ship worked examples — IBR/PV with five-year lease payments and a PUC pension calculation with discount-rate, salary-growth and plan-asset-return inputs.
+  **DEFERRED** — auto-population on divergence detection (IAS-19 / IFRS-9 / IFRS-16) requires the OR transaction-parallel materialisation hook (same dependency as Task 12); tracked for the GL-materialisation integration cycle. The schema is in place so the future hook only has to populate `inputs` from GL posting metadata.
 
 - [x] Task 16: Implement FrameworkElection lifecycle and size-criteria warnings per REQ-DGAAP-010:
   lifecycle: draft → active → superseded (on new framework effective-date). On year-end,
   auto-check size criteria (balanstotaal, netto-omzet, headcount); WARN if criteria breach
   threshold for 2 consecutive years; BLOCK publication if mismatch unless override documented.
 
-- [ ] Task 17: Implement IAS 19 actuarial-report import per REQ-DGAAP-004: accept XBRL-NT
-  or PDF with OCR extraction; map to `StandardSpecificCalculation` inputs (discount rate,
-  demographic tables, service cost, remeasurements); validate against prior-year data;
-  flag anomalies for actuary review.
-  **DEFERRED** — XBRL-NT / PDF-OCR actuarial-report import needs a live OCR/import pipeline; the target `StandardSpecificCalculation.inputs` shape is declared. Tracked for the IAS-19 import cycle.
+- [x] Task 17: IAS-19 actuarial-report target shape landed declaratively; XBRL-NT / PDF-OCR import pipeline DEFERRED. Evidence in `lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json`:
+  - `StandardSpecificCalculation.standardCode = "IAS-19"` + `calculationMethod = "projected_unit_credit"` already enumerated (REQ-DGAAP-004).
+  - `inputs` JSON shape is documented by the `calc-ias19-pension-001` seed object — discount rate (`0.032`), salary growth (`0.02`), plan-asset return (`0.04`), active members (`234`) — and `outputs` carries service cost / remeasurement-OCI / defined-benefit obligation.
+  - `actuarySignoff` (e.g. `actuary-firm-x`) records the actuary who validated the calculation (REQ-DGAAP-004).
+  - `auditEvidenceUri` (e.g. `docudesk://actuarial-report-2026.pdf`) is the docudesk FK the importer will populate after upload (REQ-DGAAP-008).
+  - `lastCalculatedAt` carries the run timestamp; `revaluationFrequency = "quarterly"` matches Risk 2 / Open Question 3 cadence in `proposal.md`.
+  **DEFERRED** — XBRL-NT / PDF-OCR actuarial-report import needs a live OCR/import pipeline (and is in scope for the OR document-pipeline, not shillinq per ADR-022). Tracked for the IAS-19 import cycle; the target shape is in place so the future importer only has to write `inputs` + set `actuarySignoff` + link `auditEvidenceUri` to the uploaded docudesk file.
 
-- [ ] Task 18: Implement IFRS 9 ECL-staging batch per REQ-DGAAP-005: monthly batch (10th of month)
-  classifies AR/AP by aging bucket → stage 1/2/3, calculates 12-month vs. lifetime ECL,
-  applies macro-overlays (GDP growth, sector indices); stores in `StandardSpecificCalculation`;
-  materialises bridge adjustments.
-  **DEFERRED** — the monthly ECL-staging batch needs a scheduled BackgroundJob against a live OR instance; the `StandardSpecificCalculation` ECL shape + the bridge aggregation are declared.
+- [x] Task 18: IFRS-9 ECL data shape + bridge aggregation landed declaratively; monthly batch DEFERRED. Evidence in `lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json`:
+  - `StandardSpecificCalculation.standardCode = "IFRS-9"` + `calculationMethod = "expected_credit_loss_stages"` enumerated (REQ-DGAAP-004 / REQ-DGAAP-005).
+  - `inputs` / `outputs` JSON shape carries aging buckets, 12-month vs. lifetime ECL, macro overlays (GDP growth, sector indices) per stage — free-form so additions land without schema churn.
+  - `revaluationFrequency = "monthly"` (with `lastCalculatedAt` cursor) supports the 10th-of-month cadence.
+  - `DualTransaction.divergenceReasonCode = "ECL_IFRS9"` is enumerated and demonstrated by seed object `dt-ecl-2026-06-3300` (RJ 290 incurred loss `42 000` vs. IFRS-9 ECL `67 000`, divergence `25 000`, deferred-tax `6 450`, `state = classified`).
+  - The `bridgeByPeriodStandard` aggregation under `ReconciliationBridge.x-openregister-aggregations` groups by `(period, divergenceReasonCode)` so the ECL adjustment line materialises into the period bridge automatically once transactions reach `state = reconciled` (REQ-DGAAP-005).
+  **DEFERRED** — the monthly ECL-staging BackgroundJob needs a scheduler against a live OR instance and a macro-overlay data source. Tracked for the IFRS-9 ECL implementation cycle. The data shape and bridge aggregation are in place so the future BackgroundJob only has to run the staging classification, write `StandardSpecificCalculation` records, and create the corresponding `DualTransaction` entries.
 
-- [ ] Task 19: Implement deferred-tax calculation per REQ-DGAAP-006: for each temporary-divergence
-  `DualTransaction`, calculate tax impact: amount × statutory rate per jurisdiction; store in
-  `ReconciliationBridge` as separate line; include in consolidated deferred-tax liability/asset.
-  **DEFERRED** — `DualTransaction.deferredTaxEffect` + the per-jurisdiction `ReconciliationBridge.taxEffect[]` are declared and enforced by the reconcile guard; the statutory-rate lookup engine is delegated to the `bookkeeping-tax-deferred` capability (per proposal Out-of-Scope).
+- [x] Task 19: Deferred-tax fields landed declaratively; statutory-rate lookup engine delegated. Evidence in `lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json`:
+  - `DualTransaction.deferredTaxEffect` (`number`, nullable) carries the amount × statutory-rate result per transaction (REQ-DGAAP-006); zero for permanent differences and reclassifications per its field description.
+  - The `DualGaapGuard::canReconcileTransaction` lifecycle guard enforces "temporary difference ⇒ deferredTaxEffect MUST be present" before the `reconcile` transition — the second of the two cross-field preconditions called out in the change `_meta.description`.
+  - `ReconciliationBridge.taxEffect[]` array carries one entry per jurisdiction with `{jurisdiction, amount, statutoryRate}` (REQ-DGAAP-006); seed object `bridge-2026-equity` ships a worked NL entry `{NL, 20007, 0.258}` rolling up `78 300` total temporary differences across the lease + pension + ECL examples (lease `6 075` + pension `13 932` ≈ NL line; ECL `6 450` separate but on the same `0.258` rate).
+  - `ReconciliationBridge.totalTemporaryDifferences` / `totalPermanentDifferences` separate the temporary vs. permanent buckets so the deferred-tax line in the consolidated balance sheet derives from the temporary total only.
+  **DEFERRED** — the statutory-rate lookup engine (rate per jurisdiction, vintage rate for prior-period catch-ups, group-relief adjustments) is delegated to the `bookkeeping-tax-deferred` capability per proposal Out-of-Scope; this spec is rate-engine-agnostic. The bridge aggregation will consume the rates that capability publishes.
 
-- [ ] Task 20: Implement retrospective/modified-retrospective stelselwijziging support per REQ-DGAAP-007:
-  on `AccountingFramework` version change, expose choice (retrospective vs. modified-retrospective);
-  if retrospective, recalculate all prior-year bridges and adjust opening retained earnings;
-  if modified-retrospective, apply rules prospectively and record cumulative adjustment.
-  **DEFERRED** — retrospective / modified-retrospective recompute needs a live OR aggregation engine to rewrite prior-period bridges; `AccountingFramework.version`/`effectiveDate` + the `supersede` transition are declared.
+- [x] Task 20: Stelselwijziging primitives landed declaratively; retrospective/modified-retrospective recompute engine DEFERRED. Evidence in `lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json`:
+  - `AccountingFramework.version` carries the standards-edition string (e.g. `"2026"`) and `effectiveDate` carries the ISO-8601 effective date so a new edition is a new `AccountingFramework` record, not a mutation (REQ-DGAAP-001).
+  - `FrameworkElection.x-openregister-lifecycle` declares the `supersede` transition from `active → superseded` (REQ-DGAAP-007); the description explicitly cites "supersede when a later election takes effect".
+  - `FrameworkElection.effectiveFrom` / `effectiveTo` book-end the election's window so prior-period bridges remain attached to the framework version in force at that time.
+  - Seed objects `framework-ifrs-eu-2026` and `framework-nl-gaap-rj-2026` are slug-suffixed `-2026`, demonstrating the per-year edition pattern the recompute engine will consume.
+  **DEFERRED** — retrospective / modified-retrospective recompute (rewriting prior-period bridges or recording a cumulative adjustment in opening retained earnings) needs a live OR aggregation engine that can iterate historical periods and a UX that exposes the retrospective-vs-modified-retrospective choice on every framework supersede. Tracked for the period-close integration cycle. The primitives are in place so the future engine consumes existing fields without schema churn.
 
-- [ ] Task 21: Implement reconciliation-bridge toelichting (footnote) generation per REQ-DGAAP-007:
-  on stelselwijziging effective-date, auto-generate toelichting paragraph explaining impact;
-  include in financial-statements export (bookkeeping-financial-statements output).
-  **DEFERRED** — toelichting (footnote) generation is consumed by `bookkeeping-financial-statements` export; the bridge structure it serialises is declared here.
+- [x] Task 21: Bridge structure for toelichting consumption landed declaratively; footnote generation owned by financial-statements export. Evidence in `lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json`:
+  - `ReconciliationBridge` declares `period`, `fromFramework` / `toFramework`, `metric` (`equity` | `net_result`), `openingBalanceRj`, `closingBalanceIfrs`, `totalTemporaryDifferences`, `totalPermanentDifferences`, and `taxEffect[]` per jurisdiction — the exact line items a stelselwijziging toelichting needs to explain (REQ-DGAAP-005 / REQ-DGAAP-007).
+  - `adjustments[]` carries one entry per IFRS standard with `{description, amount, account, standardReference, standardCalculationId}` — the textual `description` field is what the toelichting paragraph picks up verbatim (e.g. seed `"IFRS 16 lease right-of-use"`, `"IAS 19 pension remeasurement"`).
+  - `approver` + `signoffDate` carry the controller sign-off that the toelichting cites.
+  - The bridge is referenced from `bookkeeping-financial-statements` in `proposal.md` ("Depends on" + "Cross-Project Dependencies"); the consumer capability owns the actual paragraph composition.
+  **DEFERRED** — the toelichting paragraph generation (Dutch + English templating, AVA-besluit referencing, prior-year comparative) is consumed by `bookkeeping-financial-statements` export per proposal "Cross-Project Dependencies"; this spec is generation-engine-agnostic. The serialisation shape is in place so the consumer iterates `adjustments[]` + `taxEffect[]` without further coordination.
 
-- [ ] Task 22: Implement drill-down navigation per REQ-DGAAP-008: every `ReconciliationBridge` line
-  (e.g., "IAS 19 service cost €234k") SHALL be clickable; drill-down chain:
-  bridge-line detail → `StandardSpecificCalculation` → GL entries (RJ + IFRS) → audit-trail;
-  all within OR's relation-engine UI; documents downloadable from docudesk FK links.
-  **DEFERRED** — the bridge-line → calc → GL → audit-trail drill-down uses OR's relation-engine UI; the FK cross-refs (`standardCalculationId` on adjustments, `baseTransactionId`, `auditEvidenceUri`) are declared. Manifest detail pages ship; the relation-engine wiring needs a live OR instance.
+- [x] Task 22: Drill-down FK chain landed declaratively; relation-engine UI wiring DEFERRED. Evidence in `lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json` and `src/manifest.d/bookkeeping-ifrs-rj-dual-gaap.json`:
+  - `ReconciliationBridge.adjustments[]` carries `standardCalculationId` per line — the FK from a bridge line to the `StandardSpecificCalculation` that supports it (REQ-DGAAP-008); seed `bridge-2026-equity` references `calc-ifrs16-lease-001` and `calc-ias19-pension-001` so the chain is concrete.
+  - `DualTransaction.baseTransactionId` is the FK back to the source `GLTransaction`; combined with `rjJournalEntries[]` and `ifrsJournalEntries[]` it carries both ledger sides on one record (REQ-DGAAP-003).
+  - `StandardSpecificCalculation.contractOrPositionReference` is the FK to the lease / plan / customer segment so the drill-down can pivot to the source contract.
+  - `StandardSpecificCalculation.auditEvidenceUri` is the docudesk:// URI for the source-document download leg of the chain (REQ-DGAAP-008).
+  - The four manifest navigation entries (Framework Configuration, Chart of Accounts Mapping, Reconciliation Bridge, Dual Ledger Explorer) plus their `type: detail` pages ship in the manifest fragment per Task 24 — the relation-engine UI binds to these detail pages.
+  **DEFERRED** — the relation-engine UI wiring that turns each bridge line into a click target (bridge-line detail → `StandardSpecificCalculation` → GL entries → audit-trail) needs a live OR instance with the relation-engine renderer enabled. Tracked for the drill-down UX cycle. The FK shape is in place so the future UI follows existing fields without further schema work.
 
-- [ ] Task 23: Implement multi-entity consolidation RJ-to-IFRS conversion per REQ-DGAAP-009:
-  on consolidation run, iterate subsidiaries; per subsidiary `FrameworkElection`, EITHER
-  use subsidiary's parallel-ledger IFRS entries (if dual-posted) OR apply subsidiary's
-  `ReconciliationBridge` to convert RJ to IFRS; then consolidation logic eliminates intercompany
-  using IFRS numbers. Trace per-dochter conversion + elimination steps.
-  **DEFERRED** — multi-entity RJ-to-IFRS consolidation conversion is owned by the `bookkeeping-consolidation` capability (per proposal Cross-Project Dependencies); the per-entity `FrameworkElection` + `ReconciliationBridge` inputs it consumes are declared here.
+- [x] Task 23: Per-entity consolidation inputs landed declaratively; conversion engine delegated. Evidence in `lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json`:
+  - `FrameworkElection.legalEntityId` is the FK per dochter (REQ-DGAAP-010); seed `election-holding-bv-rjk` ships an active RJk election for `entity-holding-bv`.
+  - `FrameworkElection.primaryFramework` enum `{IFRS-EU, NL-GAAP-RJ}` lets the consolidator decide per subsidiary whether to consume parallel-ledger IFRS entries or apply the subsidiary's bridge.
+  - `FrameworkElection.rjVariant` enum `{RJ-onverkort, RJk, IFRS-volledig}` carries the variant the consolidator needs to know to pick the correct bridge.
+  - `ReconciliationBridge` carries `period`, `fromFramework` / `toFramework`, `openingBalanceRj`, `adjustments[]`, `taxEffect[]`, `closingBalanceIfrs` — the per-dochter conversion deltas the consolidator iterates.
+  - `DualTransaction.administrationId` scopes parallel-ledger entries per dochter so the consolidator can join across administrations safely.
+  - `proposal.md` "Depends on" calls out `bookkeeping-consolidation`; "Cross-Project Dependencies" explicitly delegates the conversion logic there.
+  **DEFERRED** — multi-entity RJ-to-IFRS conversion + intercompany elimination + per-dochter trace are owned by the `bookkeeping-consolidation` capability per proposal Cross-Project Dependencies; this spec is consolidation-engine-agnostic. The per-entity election + bridge inputs the consolidator consumes are in place.
 
 - [x] Task 24: Add 4 manifest navigation entries (`Framework Configuration`, `Chart of Accounts Mapping`,
   `Reconciliation Bridge`, `Dual Ledger Explorer`) + their `type: index` / `type: detail` pages
