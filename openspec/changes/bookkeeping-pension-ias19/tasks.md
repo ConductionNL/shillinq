@@ -161,10 +161,18 @@
   the OCI component so the detector can route it to
   `TaxProvision.recognisedInOCI` per REQ-DT-009.)*
 
-- [ ] Task 18: Integrate with `bookkeeping-financial-statements` (T3) jaarrekening
+- [x] Task 18: Integrate with `bookkeeping-financial-statements` (T3) jaarrekening
   renderer: make `pension-disclosure-tabel.tableContent` a data-source
   callable by notes-generation (so jaarrekening automatically includes IAS 19
   table with no manual copy/paste)
+  *(declarative — adds `x-openregister-disclosure-source` block on
+  `PensionDisclosureTabel` consumed by the merged
+  `bookkeeping-financial-statements` REQ-FS-004 Note renderer. The block
+  pins the consumer schema (`Note`), the consumer field
+  (`noteContent.pensionDisclosure`), the source field (`tableContent`),
+  the lifecycle gate (`status in [approved, published]`) and the
+  supported render modes (markdown, html). Eliminates manual copy/paste
+  per REQ-PEN-007.)*
 
 - [ ] Task 19: Implement HRMQ link per REQ-PEN-010 — query `hrmq.pension-administration`
   group (if linked via `pension-plan.linkedHrmqGroup`) to validate annual

@@ -873,6 +873,20 @@
 						},
 						"groupBy": ["PensionMovement.plan", "PensionMovement.period"]
 					}
+				},
+				"x-openregister-disclosure-source": {
+					"description": "Declarative data-source contract consumed by bookkeeping-financial-statements REQ-FS-004 jaarrekening Note renderer. The Note schema's pension disclosure section reads PensionDisclosureTabel.tableContent for the (administrationId, valuationDate) tuple when status is `approved` or `published`, eliminating any manual copy/paste into the jaarrekening (REQ-PEN-007). When the renderer cannot project the JSON column directly, the same data is fetched via the real ObjectService API per ADR-022.",
+					"consumerSpec": "bookkeeping-financial-statements",
+					"consumerSchema": "Note",
+					"consumerField": "noteContent.pensionDisclosure",
+					"sourceField": "tableContent",
+					"selector": {
+						"administrationId": "${context.administrationId}",
+						"valuationDate": "${context.balansdatum}",
+						"status": ["approved", "published"]
+					},
+					"renderModes": ["markdown", "html"],
+					"x-spec": "openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md#REQ-PEN-007"
 				}
 			}
 		},
