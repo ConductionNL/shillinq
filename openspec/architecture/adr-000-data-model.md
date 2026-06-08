@@ -2381,7 +2381,7 @@ _A debit-or-credit line within a GLTransaction, encoding polarity in the `side` 
 | amount | number ≥ 0 | Yes | Non-negative amount in the transaction's currency |
 | currency | string | Yes | ISO 4217 currency code; must equal GLTransaction.currency (T1 single-currency invariant) |
 | periodId | string | No | Auto-resolved by lifecycle engine on GLTransaction.post transition (stub string in T1, FK to FiscalPeriod in T3) |
-| subLedgerType | enum | No | One of ap, ar, project, none (T2 owns the sub-ledger registers) |
+| subLedgerType | enum | No | One of ap, ar, project, inventory, none (T2 owns the sub-ledger registers; `inventory` added by inventory-cogs-posting 2026-06-08 — REQ-CG-005 + REQ-GL-009 extension; subLedgerRef points to InventoryValuation.id) |
 | subLedgerRef | string | No | FK identifier into the sub-ledger when subLedgerType ≠ none |
 | costCenter | string | No | Cost-center code for allocation reporting (backwards-compatible alias; see costCenterCode) |
 | description | string | No | Line-level description |
@@ -2631,10 +2631,36 @@ _Valuation of on-hand inventory items using cost accounting methods such as FIFO
 | date | datetime | Yes | Date of valuation or inventory count |
 | warehouse | string | No | Warehouse or storage location identifier |
 | status | string | Yes | Status: active, adjusted, or obsolete |
+| glTransactionId | string (FK) | No | Back-reference to the most recently materialised GLTransaction.id produced by the postCOGS / postReceipt / postVariance lifecycle action; closes the drill-down loop from the inventory snapshot to its GL impact (additive per inventory-cogs-posting, 2026-06-08, REQ-CG-005 D5) |
+| postingEvent | enum | No | The stock-movement event that drove the most recent GL posting: saleDispatch, goodsReceipt, countVariance, returnDispatch (additive per inventory-cogs-posting, 2026-06-08, dispatch key for postCOGS / postReceipt / postVariance) |
 
 **Relations:**
 - → Product (many-to-one)
 - → CostCenter (many-to-one)
+- → GLTransaction (many-to-one, via glTransactionId → GLTransaction.id; back-reference for inventory-posted GL transactions per inventory-cogs-posting REQ-CG-005 D5)
+
+> **Reconciliation note (inventory-cogs-posting, 2026-06-08):** Additively extended with `glTransactionId` + `postingEvent` so each InventoryValuation snapshot carries a drill-down link to its materialised GL impact (REQ-CG-005 D5) and a dispatch key (REQ-CG-002 / REQ-CG-003 / REQ-CG-004) routing the lifecycle to `postCOGS` (saleDispatch → Dr COGS / Cr Inventory Asset), `postReceipt` (goodsReceipt → Dr Inventory Asset / Cr GR/IR clearing) or `postVariance` (countVariance → Dr/Cr Inventory Adjustment ↔ Inventory Asset, direction resolved by `InventoryPostingGuard::direction`). Both fields are optional — pre-existing snapshots without a GL posting remain valid. The account routing is read from the per-administration `InventoryGLConfig` register (REQ-CG-001).
+
+### InventoryGLConfig
+**Schema.org:** `schema:Thing`
+_Per-administration mapping from inventory stock-movement event types (sale dispatch, goods receipt, count variance) to General Ledger account numbers. One active record per administrationId; drives the declarative posting lifecycle on `InventoryValuation`. FK invariant: every account number MUST resolve to an `Account` record within the same administration; the `InventoryPostingGuard::accountExists` validation rule enforces this on save. When `isActive = false` or no config exists, the lifecycle action skips materialisation and emits a structured warning (no zero-cost / partial GL entry is ever written). Default seed (`seedInventoryGLConfig`): NL RGS 3.5 MKB (7000 / 1400 / 1800 / 7100)._
+**Primary spec:** inventory-cogs-posting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string (FK) | Yes | FK to Administration owning this posting configuration |
+| cogsAccountNumber | string (FK) | Yes | FK to Account.accountNumber — debited on sale/dispatch (Dr COGS); default RGS 7000 |
+| inventoryAssetAccountNumber | string (FK) | Yes | FK to Account.accountNumber — debited on goods receipt / credited on COGS posting; default RGS 1400 |
+| grIrClearingAccountNumber | string (FK) | Yes | FK to Account.accountNumber — credited on goods receipt and subsequently debited by AP invoice posting per REQ-AP-003 (GR/IR two-step pattern); default RGS 1800 |
+| inventoryAdjustmentAccountNumber | string (FK) | Yes | FK to Account.accountNumber — debited on negative count variance / credited on positive count variance; default RGS 7100 |
+| isActive | boolean | Yes | Whether perpetual inventory GL posting is enabled for this administration |
+| description | string | No | Operator notes (e.g. "NL RGS 3.5 MKB defaults applied") |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- → Account (many-to-one, via cogsAccountNumber, inventoryAssetAccountNumber, grIrClearingAccountNumber, inventoryAdjustmentAccountNumber → Account.accountNumber; FK invariant per REQ-CG-001)
+
+> **Annotation (inventory-cogs-posting, 2026-06-08):** New config register declared by the `inventory-cogs-posting` change. ADR-022 alignment: account routing is configuration data, not hardcoded logic; ADR-031 alignment: the lifecycle posting (`postCOGS` / `postReceipt` / `postVariance` on `InventoryValuation`) reads the active config record at action time. The single PHP guard `InventoryPostingGuard` (ADR-031 exception path) handles canPost / canPostVariance / direction (sign conditional for count variance) / accountExists (FK invariant) — the declarative DSL cannot express those four predicates inline today.
 
 ### InventoryAdjustment
 **Schema.org:** `schema:UpdateAction`
