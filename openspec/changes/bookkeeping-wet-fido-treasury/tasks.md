@@ -186,7 +186,7 @@
   postings to BBV-paspoort metadata; ensure uitzetting > 1 jaar vs ≤ 1 jaar classified
   correctly in GL per REQ-FDO-002 definition of "korte schuld"
 
-- [ ] Task 26: DEFERRED (cross-app dependency: `bookkeeping-jaarrekening-publication` notes-renderer must call the `TreasuryParagraaf` data-source; the schema + auto/manual narrative fields are in place for the consumer). Integrate with `bookkeeping-jaarrekening-publication` (T3) to expose
+- [~] Task 26: DEFERRED (cross-app dependency: `bookkeeping-jaarrekening-publication` notes-renderer must call the `TreasuryParagraaf` data-source; the schema + auto/manual narrative fields are in place for the consumer). Integrate with `bookkeeping-jaarrekening-publication` (T3) to expose
   treasury-paragraph data-source callable by jaarrekening notes-renderer; ensure
   treasury-paragraph is auto-populated in jaarrekening notes per REQ-FDO-007
 
