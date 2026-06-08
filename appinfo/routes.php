@@ -5,6 +5,11 @@
  *
  * @category AppInfo
  * @package  OCA\Shillinq\AppInfo
+* Shillinq route definitions.
+ * Static/verb routes are declared before the SPA `{path}` catch-all wildcard so
+ * Symfony matches API endpoints before falling through to the Vue app shell.
+ * @category Routes
+ * @package  OCA\Shillinq
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -141,6 +146,9 @@ return [
         ['name' => 'calendar#createBooking', 'url' => '/api/v2/calendars/{calendarId}/bookings', 'verb' => 'POST'],
         // SEPA Direct Debit mandate audit dossier export (REQ-SDD-010).
         ['name' => 'sepaAudit#exportMandate', 'url' => '/api/v1/sepa-mandate/{mandateId}/audit-export', 'verb' => 'GET'],
+// Barcode lookup for POS scanning (inventory-barcode-sku, REQ-SKU-007).
+        // Static verb route — declared before the SPA catch-all wildcard below.
+        ['name' => 'barcodeLookup#lookup', 'url' => '/api/barcode/lookup/{code}', 'verb' => 'GET'],
 
         // External payroll software webhook (REQ-PAY-009). Signature-verified
         // CloudEvents receiver; GET returns 501. Registered before the SPA

@@ -1979,4 +1979,99 @@ class SettingsService
         ];
 
     }//end seedStatementManifests()
+
+    /**
+     * Seed demo Barcode records from inventory-barcodes-demo.json, idempotently.
+     *
+     * Reads lib/Settings/seeds/inventory-barcodes-demo.json and imports Barcode
+     * records via OpenRegister's ObjectService. Deduplication key is
+     * (barcode, uomCode) per REQ-SKU-011 — re-running never creates duplicate
+     * barcodes, preserving operator edits. The seeded barcodes reference the
+     * inventory-product-catalog demo SKUs (DV-KAT-SENIOR-2KG, VIT-C-1000MG-100CT).
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/inventory-barcode-sku/tasks.md#task-15
+     */
+    public function seedInventoryBarcodes(): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+        $seedPath = __DIR__.'/../Settings/seeds/inventory-barcodes-demo.json';
+        if (file_exists($seedPath) === false) {
+            return ['success' => false, 'message' => 'Seed file not found: inventory-barcodes-demo.json'];
+        }
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return ['success' => false, 'message' => 'Failed to read inventory-barcodes-demo.json'];
+        }
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return ['success' => false, 'message' => 'Failed to parse inventory-barcodes-demo.json: '.json_last_error_msg()];
+        }
+        $barcodes = ($data['barcodes'] ?? []);
+        if (empty($barcodes) === true) {
+            return [
+                'success' => true,
+                'message' => 'Seed file contains no barcodes, nothing to import.',
+                'seeded'  => 0,
+                'skipped' => 0,
+            ];
+        }
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seeded        = 0;
+            $skipped       = 0;
+            foreach ($barcodes as $barcode) {
+                // Deduplication key (barcode, uomCode) — idempotent re-runs per REQ-SKU-011.
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('Barcode')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'barcode' => $barcode['barcode'],
+                                'uomCode' => $barcode['uomCode'],
+                            ],
+                            'limit'   => 1,
+                        ]
+                    );
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+                $objectService->saveObject(
+                    object: $barcode,
+                    register: $registerSlug,
+                    schema: 'Barcode',
+                );
+                $seeded++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: inventory barcodes seeded',
+                ['seeded' => $seeded, 'skipped' => $skipped]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'Inventory barcodes seeded successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: inventory barcode seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return ['success' => false, 'message' => $e->getMessage()];
+        }//end try
+
+    }//end seedInventoryBarcodes()
+
 }//end class

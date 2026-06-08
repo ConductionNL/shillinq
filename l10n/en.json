@@ -1795,7 +1795,17 @@
         "Cost category is not eligible for this fund": "Cost category is not eligible for this fund",
         "Declaration blocked: required supporting documents are missing": "Declaration blocked: required supporting documents are missing",
         "Declaration blocked: procurement dossier is required": "Declaration blocked: procurement dossier is required",
-        "Irregularity exceeds the OLAF reporting threshold (EUR 10,000)": "Irregularity exceeds the OLAF reporting threshold (EUR 10,000)"
+        "Irregularity exceeds the OLAF reporting threshold (EUR 10,000)": "Irregularity exceeds the OLAF reporting threshold (EUR 10,000)",
+        "Barcodes": "Barcodes",
+        "Barcode": "Barcode",
+        "Format": "Format",
+        "Product SKU": "Product SKU",
+        "UoM": "UoM",
+        "Unit of Measure": "Unit of Measure",
+        "Quantity": "Quantity",
+        "Default": "Default",
+        "Default barcode": "Default barcode",
+        "Barcode not found": "Barcode not found"
     },
     "plurals": ""
 }

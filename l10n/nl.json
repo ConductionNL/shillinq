@@ -1795,7 +1795,17 @@
         "Cost category is not eligible for this fund": "Kostencategorie is niet subsidiabel voor dit fonds",
         "Declaration blocked: required supporting documents are missing": "Declaratie geblokkeerd: verplichte bewijsstukken ontbreken",
         "Declaration blocked: procurement dossier is required": "Declaratie geblokkeerd: aanbestedingsdossier is vereist",
-        "Irregularity exceeds the OLAF reporting threshold (EUR 10,000)": "Onregelmatigheid overschrijdt de OLAF-meldgrens (EUR 10.000)"
+        "Irregularity exceeds the OLAF reporting threshold (EUR 10,000)": "Onregelmatigheid overschrijdt de OLAF-meldgrens (EUR 10.000)",
+        "Barcodes": "Barcodes",
+        "Barcode": "Barcode",
+        "Format": "Formaat",
+        "Product SKU": "Product-SKU",
+        "UoM": "Eenheid",
+        "Unit of Measure": "Maateenheid",
+        "Quantity": "Aantal",
+        "Default": "Standaard",
+        "Default barcode": "Standaardbarcode",
+        "Barcode not found": "Barcode niet gevonden"
     },
     "plurals": ""
 }
