@@ -7,11 +7,12 @@
 
 ## ADDED Requirements
 
-### REQ-SISA-001: The system SHALL declare a `SisaRegelingIndicator` register attaching per-regeling indicatoren to specifieke uitkeringen
+### Requirement: REQ-SISA-001 — The system SHALL declare a `SisaRegelingIndicator` register attaching per-regeling indicatoren to specifieke uitkeringen
 
-SiSa (Single Information Single Audit) requires per-regeling
-indicatoren to be reported in the annual jaarrekening-bijlage. The
-`SisaRegelingIndicator` register MUST declare records with fields:
+The system MUST administer SiSa (Single Information Single Audit)
+per-regeling indicatoren so that they can be reported in the annual
+jaarrekening-bijlage. The `SisaRegelingIndicator` register MUST
+declare records with fields:
 `subsidieId` (FK to the parent `Subsidie` record of subtype
 `specifieke-uitkering`), `regelingCode` (string — the BZK regeling
 identifier, e.g. `D8`), `indicatorCode` (string — per
@@ -29,11 +30,12 @@ SiSa subsidie register.
 - **THEN** the save MUST succeed; **AND** the indicator MUST be
   retrievable via the parent subsidie's relations.
 
-### REQ-SISA-002: The system SHALL ship the annual SiSa-controleprotocol indicatoren as seed data
+### Requirement: REQ-SISA-002 — The system SHALL ship the annual SiSa-controleprotocol indicatoren as seed data
 
-A seed file `lib/Settings/seeds/sisa-controleprotocol-2026.json`
-MUST declare the indicatoren per regeling for the 2026 SiSa
-controleprotocol release. The file MUST carry SPDX header inside
+The system MUST ship a seed file
+`lib/Settings/seeds/sisa-controleprotocol-2026.json` declaring the
+indicatoren per regeling for the 2026 SiSa controleprotocol release.
+The file MUST carry SPDX header inside
 docblock, `_meta` block (`source: 'BZK SiSa-controleprotocol'`,
 `year: 2026`), and indicator definitions (`regelingCode`,
 `indicatorCode`, `indicatorOmschrijving`, `indicatorType`,
@@ -46,7 +48,7 @@ docblock, `_meta` block (`source: 'BZK SiSa-controleprotocol'`,
 - **THEN** all `verplicht: true` indicatoren MUST be present in the
   loaded set.
 
-### REQ-SISA-003: The annual SiSa-bijlage SHALL be produced as a declarative aggregation per controleprotocol
+### Requirement: REQ-SISA-003 — The annual SiSa-bijlage SHALL be produced as a declarative aggregation per controleprotocol
 
 The SiSa-bijlage at jaarrekening MUST be produced as an
 `x-openregister-aggregations` declaration grouping
@@ -65,7 +67,7 @@ bijlage service.
   verplichte indicatoren MUST surface as warnings in the audit
   preview.
 
-### REQ-SISA-004: SiSa submission to BZK SHALL ride an openconnector source — no app-local HTTP client
+### Requirement: REQ-SISA-004 — SiSa submission to BZK SHALL ride an openconnector source — no app-local HTTP client
 
 Per ADR-019, the SiSa BZK upload MUST be configured as an
 openconnector source row (the BZK endpoint, OAuth or PKI-cert
@@ -81,7 +83,7 @@ declaration. No `lib/Service/SisaSubmissionService.php`.
   **AND** the response (acceptance / rejection) MUST log to the
   audit-trail-immutable per ADR-022.
 
-### REQ-SISA-005: Each SiSa submission SHALL be recorded as an immutable audit event with cryptographic linkage to the submitted document
+### Requirement: REQ-SISA-005 — Each SiSa submission SHALL be recorded as an immutable audit event with cryptographic linkage to the submitted document
 
 Per the SiSa controleprotocol, the submission lineage MUST be
 auditable. Every submission attempt MUST write an audit event
@@ -98,7 +100,7 @@ linked to the parent jaarrekening via the audit-trail hash chain.
 - **THEN** an event MUST exist with the submission's SHA-256 +
   document URI + BZK response status.
 
-### REQ-SISA-006: SiSa reporting SHALL be reachable through a feature-flag-controlled manifest navigation entry
+### Requirement: REQ-SISA-006 — SiSa reporting SHALL be reachable through a feature-flag-controlled manifest navigation entry
 
 `src/manifest.json` MUST declare a feature-flag-controlled menu
 entry (`featureFlags.gov-sisa`) under
