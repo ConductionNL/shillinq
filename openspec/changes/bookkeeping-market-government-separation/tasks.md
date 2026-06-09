@@ -30,7 +30,7 @@
 
 ### Navigation & Manifest
 
-- [ ] **P1-16**: Add manifest.json entries under `Bookkeeping > WMO Compliance`: Commercial Activities (index + detail pages, generic CnIndexPage/CnDetailPage), Integral Cost Prices (index), Activity Cost Allocations (index + detail, for auditors), node tests/validate-manifest.js exits 0
+- [x] **P1-16**: Add manifest.json entries under `Bookkeeping > WMO Compliance`: Commercial Activities (index + detail pages, generic CnIndexPage/CnDetailPage), Integral Cost Prices (index), Activity Cost Allocations (index + detail, for auditors), node tests/validate-manifest.js exits 0 — fragment lands at `src/manifest.d/bookkeeping-market-government-separation.json` (8 register entries: activities + IKPs + allocations + ABBs + ACM reports + alerts + audit log + market benchmarks); validate-manifest.js: structural lint PASS, consistency check PASS.
 
 ### Seed Data & Migration
 
