@@ -135,6 +135,7 @@ class PurchaseOrderApprovalService
         private readonly AdministrationContextService $administrationContext,
         private readonly IUserSession $userSession,
         private readonly LoggerInterface $logger,
+        private readonly ?ApprovalActivityEmitter $activityEmitter = null,
     ) {
 
     }//end __construct()
@@ -242,7 +243,35 @@ class PurchaseOrderApprovalService
             current: $lifecycleState
         );
 
-        return $this->saveObject(schema: self::SCHEMA_PURCHASE_ORDER, object: $purchaseOrder);
+        $saved = $this->saveObject(schema: self::SCHEMA_PURCHASE_ORDER, object: $purchaseOrder);
+
+        // Emit a Nextcloud Activity event per REQ-RAP-006 so the
+        // BookkeepingActivityFeed manifest entry surfaces the decision
+        // in the user-facing timeline. The emitter is optional (nullable)
+        // so unit tests don't have to wire IActivityManager; production
+        // DI always provides it via ApplicationServer.
+        if ($this->activityEmitter !== null) {
+            $summary = sprintf('Purchase order %s', (string) ($purchaseOrder['poNumber'] ?? $purchaseOrderId));
+            if ($decision === self::DECISION_APPROVED) {
+                $this->activityEmitter->emitApprovalApproved(
+                    objectType:  self::SCHEMA_PURCHASE_ORDER,
+                    objectId:    $purchaseOrderId,
+                    actorUid:    $userId,
+                    summaryHint: $summary,
+                    comment:     (string) ($comment ?? '')
+                );
+            } elseif ($decision === self::DECISION_REJECTED) {
+                $this->activityEmitter->emitApprovalRejected(
+                    objectType:  self::SCHEMA_PURCHASE_ORDER,
+                    objectId:    $purchaseOrderId,
+                    actorUid:    $userId,
+                    summaryHint: $summary,
+                    reason:      (string) ($comment ?? '')
+                );
+            }
+        }
+
+        return $saved;
 
     }//end recordApprovalDecision()
 
