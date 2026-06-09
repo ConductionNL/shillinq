@@ -7,10 +7,9 @@
 
 ## ADDED Requirements
 
-### REQ-SBR-001: The system SHALL produce SBR/XBRL instance documents from the bookkeeping-financial-statements output as a declarative transformation
+### Requirement: REQ-SBR-001 — SBR/XBRL instance documents SHALL be produced from the bookkeeping-financial-statements output as a declarative transformation
 
-Annual filings for KvK (jaarrekening) and Belastingdienst
-(aangifte VPB/IB) MUST be generated as a declarative transformation
+Annual filings for KvK (jaarrekening) and Belastingdienst (aangifte VPB/IB) MUST be generated as a declarative transformation
 on top of the `FinancialStatement` output owned by the T3
 `bookkeeping-financial-statements` capability. The XBRL instance document MUST
 NOT re-aggregate the underlying ledger — it consumes the already-
@@ -40,7 +39,9 @@ aggregation pass.
   instance MUST validate against the published NL-taxonomie schema
   for the entry point and reporting period.
 
-### REQ-SBR-002: The `XbrlInstance` register SHALL declare a fixed minimum field set
+### Requirement: REQ-SBR-002 — The `XbrlInstance` register SHALL declare a fixed minimum field set
+
+The `XbrlInstance` register MUST declare the following fields with the listed required/optional flag:
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -74,7 +75,7 @@ OpenRegister's built-in fields (`id`, `uuid`, `version`, `createdAt`,
   `digipoortReceiptId`
 - **THEN** the transition MUST fail with a "missing receipt" error.
 
-### REQ-SBR-003: The system SHALL declare a state-machine lifecycle on `XbrlInstance` per ADR-031
+### Requirement: REQ-SBR-003 — A state-machine lifecycle on `XbrlInstance` SHALL be declared per ADR-031
 
 The `XbrlInstance` schema MUST declare an `x-openregister-lifecycle`
 block with the following transitions:
@@ -105,10 +106,9 @@ The transitions MUST be declared via `x-openregister-lifecycle`
 - **THEN** the new state MUST be `submitted` and the audit trail
   MUST record both submission attempts.
 
-### REQ-SBR-004: Digipoort submission SHALL be consumed from openconnector per ADR-022
+### Requirement: REQ-SBR-004 — Digipoort submission SHALL be consumed from openconnector per ADR-022
 
-The submission HTTP path to Digipoort (the government gateway for
-SBR filings) MUST be consumed from openconnector as a `Source`
+The submission HTTP path to Digipoort (the government gateway for SBR filings) MUST be consumed from openconnector as a `Source`
 configured in the openconnector registry — shillinq MUST NOT embed
 a Digipoort HTTP client, MUST NOT store WS-Security certificates,
 and MUST NOT implement Digipoort's WUS / SMPP / SMP protocols
@@ -133,7 +133,7 @@ the app consumes it.
   the response receipt; **AND** no Digipoort credentials SHALL be
   read from shillinq's AppConfig.
 
-### REQ-SBR-005: The system SHALL support the five canonical SBR entry points
+### Requirement: REQ-SBR-005 — The five canonical SBR entry points SHALL be supported
 
 The supported entry points (`entryPoint` enum) MUST be:
 
@@ -156,10 +156,9 @@ concepts of that version.
   (not in the enum)
 - **THEN** schema validation MUST fail with an enum-violation error.
 
-### REQ-SBR-006: XBRL line → taxonomy mapping SHALL be declared via the OpenRegister Mappings abstraction
+### Requirement: REQ-SBR-006 — XBRL line → taxonomy mapping SHALL be declared via the OpenRegister Mappings abstraction
 
-The mapping from each `FinancialStatement` line to its
-NL-taxonomie concept MUST live in an OpenRegister `Mapping` record
+The mapping from each `FinancialStatement` line to its NL-taxonomie concept MUST live in an OpenRegister `Mapping` record
 consumed via the OR Mappings abstraction (per ADR-022). One mapping
 record MUST exist per entry point + taxonomy version pair; mappings
 are referenced by FK from `XbrlInstance.mappingId`.
@@ -181,7 +180,7 @@ are referenced by FK from `XbrlInstance.mappingId`.
 - **THEN** the historical instance MUST remain queryable with its
   original mapping reference and original `instanceHash` intact.
 
-### REQ-SBR-007: XBRL instances SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-SBR-007 — XBRL instances SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare a navigation entry (`Bookkeeping >
 SBR/XBRL Filings`) with a `type: index` page binding to the

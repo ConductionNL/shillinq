@@ -7,7 +7,7 @@
 
 ## ADDED Requirements
 
-### REQ-YEC-001: The fiscal-year close SHALL be expressed as a declarative lifecycle transition on a `FiscalYear` register
+### Requirement: REQ-YEC-001 — The fiscal-year close SHALL be expressed as a declarative lifecycle transition on a `FiscalYear` register
 
 A fiscal year MUST be represented as a `FiscalYear` OpenRegister
 record (declared in `lib/Settings/shillinq_register.json` per
@@ -26,7 +26,9 @@ dimensional rollover) MUST be declared on the transition.
 - **THEN** no such classes SHALL exist; the close logic MUST be
   schema-declared.
 
-### REQ-YEC-002: The `FiscalYear` register SHALL declare a fixed minimum field set
+### Requirement: REQ-YEC-002 — The `FiscalYear` register SHALL declare a fixed minimum field set
+
+The `FiscalYear` register MUST declare the following fields with the listed required/optional flag:
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -53,7 +55,7 @@ OpenRegister's built-in fields (`id`, `uuid`, `version`, `createdAt`,
 - **WHEN** another record with the same pair is saved
 - **THEN** the save MUST fail with a uniqueness-violation error.
 
-### REQ-YEC-003: The `closing` transition SHALL emit a balanced retained-earnings transfer journal
+### Requirement: REQ-YEC-003 — The `closing` transition SHALL emit a balanced retained-earnings transfer journal
 
 The `open → closing` lifecycle action MUST create exactly one
 `JournalEntry` of sub-type `manual` whose `GLTransaction` posts:
@@ -89,7 +91,7 @@ the OR engine — not by a PHP `transferRetainedEarnings()` method.
 - **THEN** the emitted journal MUST debit retained-earnings
   €30,000 and the transaction MUST remain balanced.
 
-### REQ-YEC-004: The `closed` transition SHALL emit an opening-balance journal in the next fiscal year
+### Requirement: REQ-YEC-004 — The `closed` transition SHALL emit an opening-balance journal in the next fiscal year
 
 The `closing → closed` lifecycle action MUST create one
 `JournalEntry` of sub-type `manual` in the *next* `FiscalYear`
@@ -111,7 +113,7 @@ in state `open` if it does not yet exist.
   line per asset / liability / equity account, no lines for any
   revenue or expense account.
 
-### REQ-YEC-005: Dimensional rollover SHALL carry active cost centers / projects / kostendragers into the new fiscal year
+### Requirement: REQ-YEC-005 — Dimensional rollover SHALL carry active cost centers / projects / kostendragers into the new fiscal year
 
 The close action MUST scan every active dimension record
 (`CostCenter`, `KostenDrager`, `Project`, custom dimensions per
@@ -131,10 +133,9 @@ registers — no PHP `RolloverService`.
   referenceable); **AND** postings against `KC-200` MUST fail per
   REQ-CoA-005's archived-rejects-new-postings rule.
 
-### REQ-YEC-006: Reopening a closed year SHALL require an Admin role and SHALL emit a reverse-and-reopen audit chain
+### Requirement: REQ-YEC-006 — Reopening a closed year SHALL require an Admin role and SHALL emit a reverse-and-reopen audit chain
 
-Per ADR-022 (apps consume OR's RBAC abstraction), the `closed →
-reopened` lifecycle transition MUST declare an `admin` role guard
+The `closed → reopened` lifecycle transition MUST (per ADR-022 — apps consume OR's RBAC abstraction) declare an `admin` role guard
 referencing OpenRegister's RBAC role definitions; the transition
 MUST NOT be available to the `bookkeeper`, `approver`, or
 `auditor` roles. The transition MUST require a non-empty
@@ -172,7 +173,7 @@ admin notifications stream.
   fiscal year `2027`'s `openingJournalId` MUST point at the
   reversed entry chain.
 
-### REQ-YEC-007: Year-end close SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-YEC-007 — Year-end close SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare a navigation entry (`Bookkeeping >
 Fiscal Years`) with a `type: index` page binding to the

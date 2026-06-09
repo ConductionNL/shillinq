@@ -7,10 +7,9 @@
 
 ## ADDED Requirements
 
-### REQ-CC-001: The system SHALL store analytical dimensions as OpenRegister-managed registers declared in the app manifest
+### Requirement: REQ-CC-001 — Analytical dimensions SHALL be stored as OpenRegister-managed registers declared in the app manifest
 
-Cost centers, kostendragers (cost units), projects, and any custom
-analytical dimension MUST be declared as registers in
+Cost centers, kostendragers (cost units), projects, and any custom analytical dimension MUST be declared as registers in
 `lib/Settings/shillinq_register.json` and surfaced through
 `src/manifest.json` per ADR-024. The set of supported dimension
 types MUST be open: an administration MAY add a custom dimension
@@ -37,7 +36,9 @@ than write a parallel dimension table).
   form alongside the built-in cost-center and kostendrager
   dimensions, with no shillinq PHP edits.
 
-### REQ-CC-002: The `CostCenter` schema SHALL declare a fixed minimum field set with hierarchy
+### Requirement: REQ-CC-002 — The `CostCenter` schema SHALL declare a fixed minimum field set with hierarchy
+
+The `CostCenter` schema MUST declare the field set below; equivalent schemas (same shape) MUST also be declared for `KostenDrager` (cost unit / cost object) and `Project` (the distinction is semantic per Dutch GAAP and surfaces in the UI labels).
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -48,11 +49,6 @@ than write a parallel dimension table).
 | `lifecycleState` | enum | Yes | One of `active`, `blocked`, `archived` (mirrors `Account` lifecycle per REQ-CoA-005) |
 | `administrationId` | string | Yes | FK to the administration |
 
-Equivalent schemas MUST be declared for `KostenDrager` (cost unit /
-cost object) and `Project`. The three share the same shape; the
-distinction is semantic (per Dutch GAAP and accounting practice)
-and surfaces in the UI labels.
-
 #### Scenario: A cost-center hierarchy resolves via OR's relation engine
 
 - **GIVEN** cost-center `KC-100 Sales` and child `KC-110 Sales NL`
@@ -61,7 +57,7 @@ and surfaces in the UI labels.
   **AND** the segment P&L (per REQ-CC-005) MUST roll child amounts
   up to the parent.
 
-### REQ-CC-003: The `GLLine` schema SHALL carry optional dimension references additively
+### Requirement: REQ-CC-003 — The `GLLine` schema SHALL carry optional dimension references additively
 
 The T1 `GLLine` schema MUST be extended additively with the
 following optional fields (the T1 `costCenter` field is the
@@ -93,11 +89,9 @@ written in PHP.
 - **WHEN** a `GLLine` is saved with `dimensions: {"campaign": "SUMMER2026"}`
 - **THEN** the save MUST fail with an "unknown dimension value" error.
 
-### REQ-CC-004: Cost allocation rules SHALL be declared as schema metadata per ADR-031, not authored as service classes
+### Requirement: REQ-CC-004 — Cost allocation rules SHALL be declared as schema metadata per ADR-031, not authored as service classes
 
-A cost-allocation rule (e.g. "spread overhead 1000-1099 across
-KC-100/KC-200/KC-300 by 50/30/20") MUST be declared as an
-`AllocationRule` register record. The schema MUST capture:
+Allocation rules MUST be declared as `AllocationRule` register records (e.g. "spread overhead 1000-1099 across KC-100/KC-200/KC-300 by 50/30/20"); the schema MUST capture:
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -144,10 +138,9 @@ ADR-031). No PHP `AllocationService.allocate()` ever runs the rule.
   cost-center-tagged lines splitting €500/€500, keeping the
   transaction balanced.
 
-### REQ-CC-005: The system SHALL expose a segment P&L derived from dimension-tagged GL lines via `x-openregister-aggregations`
+### Requirement: REQ-CC-005 — Segment P&L derived from dimension-tagged GL lines SHALL be exposed via `x-openregister-aggregations`
 
-Per ADR-031, segment P&L (P&L broken down by cost-center / project
-/ custom dimension) MUST be declared as an
+Segment P&L (P&L broken down by cost-center / project / custom dimension) MUST (per ADR-031) be declared as an
 `x-openregister-aggregations` on `GLLine` keyed by
 (`fiscalYearId`, `accountNumber`, dimension code). The aggregation
 MUST be consumable by:
@@ -170,7 +163,7 @@ ledger lines — the aggregation is declarative.
 - **THEN** the result MUST include the sum of both children's
   amounts under `KC-100`.
 
-### REQ-CC-006: Cost centers and other dimensions SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-CC-006 — Cost centers and other dimensions SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare navigation entries (under
 `Bookkeeping > Dimensions`) with `type: index` + `type: detail`
@@ -189,10 +182,9 @@ components — no bespoke Vue files (per ADR-024 Tier-4).
 - **THEN** the `Bookkeeping > Dimensions > Campaign` entry MUST
   appear with no PHP / Vue edits.
 
-### REQ-CC-007: This capability SHALL pre-position `time-per-cost-center` as the data shape WBSO (T4-specialized) will consume
+### Requirement: REQ-CC-007 — `time-per-cost-center` SHALL be pre-positioned as the data shape WBSO (T4-specialized) will consume
 
-The fields and aggregations declared here MUST be sufficient for a
-later T4-specialized WBSO capability to derive `hours-per-project`
+The fields and aggregations declared here MUST be sufficient for a later T4-specialized WBSO capability to derive `hours-per-project`
 totals without modification — i.e. the `Project` register's `code`
 field, the `GLLine.projectCode` FK, and the segment P&L
 aggregation MUST shape such that a WBSO time-tracking capability
