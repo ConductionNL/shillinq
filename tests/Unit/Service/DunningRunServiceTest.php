@@ -562,4 +562,41 @@ final class DunningRunServiceTest extends TestCase
 
     }//end testAdminErrorDetectorFlagsGoodCustomers()
 
+    /**
+     * Task-23: detectAdminError prefers the AR `Invoice.paid` history over the
+     * legacy DunningRun heuristic once the AR core is present.
+     *
+     * @return void
+     */
+    public function testAdminErrorDetectorPrefersInvoicePaidHistory(): void
+    {
+        $os = new InMemoryObjectService();
+        $os->seed(schema: 'Invoice', rows: [
+            [
+                'id'                 => 'inv-1',
+                'administrationId'   => 'adm-1',
+                'customerReference'  => 'klant-1',
+                'status'             => 'paid',
+                'paidOn'             => (new \DateTimeImmutable('-15 days'))->format('Y-m-d'),
+            ],
+        ]);
+        $service = $this->makeService(os: $os);
+
+        self::assertTrue($service->detectAdminError(
+            administrationId: 'adm-1',
+            klantId: 'klant-1',
+            triggerContext: ['paymentRefMissing' => true]
+        ));
+
+        // No matching paid invoice + no DunningRun history → no flag.
+        $os2     = new InMemoryObjectService();
+        $service2 = $this->makeService(os: $os2);
+        self::assertFalse($service2->detectAdminError(
+            administrationId: 'adm-1',
+            klantId: 'klant-other',
+            triggerContext: ['paymentRefMissing' => true]
+        ));
+
+    }//end testAdminErrorDetectorPrefersInvoicePaidHistory()
+
 }//end class

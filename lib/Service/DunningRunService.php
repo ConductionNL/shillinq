@@ -752,6 +752,18 @@ class DunningRunService
         $lookbackDays = max(1, (int) $this->appConfig->getValueString(Application::APP_ID, self::CFG_ADMIN_ERROR_LOOKBACK_DAYS, '90'));
         $cutoff       = (new DateTimeImmutable())->modify('-'.$lookbackDays.' days');
 
+        // Primary signal: a paid Invoice on the klant within the lookback window
+        // is the strongest "good customer" proxy. Falls back to the legacy
+        // DunningRun.DELIVERED heuristic only when the AR Invoice schema is
+        // absent (pre-bookkeeping-quote-order-invoice deployments).
+        if ($this->klantPaidInvoiceWithin(
+            administrationId: $administrationId,
+            klantId: $klantId,
+            cutoff: $cutoff
+        ) === true) {
+            return true;
+        }
+
         $paidRuns = $this->findAll(
             schema: 'DunningRun',
             filters: [
@@ -780,6 +792,53 @@ class DunningRunService
         return false;
 
     }//end detectAdminError()
+
+    /**
+     * Whether the klant has at least one `Invoice` that reached `paid` status
+     * within the lookback window. Used by `detectAdminError()` as the primary
+     * "good customer" signal (REQ-CCD-011 / task-23).
+     *
+     * @param string             $administrationId Administration scope.
+     * @param string             $klantId          Customer FK.
+     * @param DateTimeImmutable  $cutoff           Earliest acceptable paid-on date.
+     *
+     * @return bool
+     *
+     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-23
+     */
+    private function klantPaidInvoiceWithin(
+        string $administrationId,
+        string $klantId,
+        DateTimeImmutable $cutoff
+    ): bool {
+        $candidates = $this->findAll(
+            schema: 'Invoice',
+            filters: [
+                'administrationId'   => $administrationId,
+                'customerReference'  => $klantId,
+                'status'             => 'paid',
+            ]
+        );
+
+        foreach ($candidates as $inv) {
+            // Pick whichever ISO-8601 date the invoice carries: a paidOn /
+            // paymentDate field if set, otherwise the invoiceDate.
+            $when = (string) ($inv['paidOn'] ?? ($inv['paymentDate'] ?? ($inv['invoiceDate'] ?? '')));
+            if ($when === '') {
+                continue;
+            }
+            try {
+                $whenDt = new DateTimeImmutable($when);
+            } catch (\Throwable $e) {
+                continue;
+            }
+            if ($whenDt >= $cutoff) {
+                return true;
+            }
+        }
+        return false;
+
+    }//end klantPaidInvoiceWithin()
 
     /**
      * Whether the invoice has an active DunningPauseDispute.

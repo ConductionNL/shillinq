@@ -257,9 +257,13 @@ own opsx change.
   output-VAT-recover, credit `1300` AR control) and queues a `VATLine`
   correction (`type=CORRECTION_ART_29_OB`) against the next aangifte period.
   Caller-supplied `boekingId` is honoured to skip duplicate posting.
-- [ ] Task 23 — DEFERRED: the anti-pattern (admin-error) detector needs the AR payment
-  history (paid-invoice lookback) from `bookkeeping-accounts-receivable-core`; it reuses the
-  `DunningPauseDispute` (reden=OTHER) soft-pause already declared here once that history exists.
+- [x] Task 23 — LANDED 2026-06-09: `DunningRunService::detectAdminError()` now
+  uses the `Invoice` paid-history (status=`paid` + paidOn/paymentDate/invoiceDate
+  within `dunning.admin_error_lookback_days`) as the primary "good customer"
+  signal, with the legacy DunningRun.DELIVERED heuristic kept as a fallback
+  for pre-bookkeeping-quote-order-invoice deployments. The caller is still
+  responsible for issuing the soft-pause (DunningPauseDispute reden=OTHER) on
+  a true return. Verified by `testAdminErrorDetectorPrefersInvoicePaidHistory`.
 - [ ] Task 25 — DEFERRED: evidence-attachment FK contract follows
   `bookkeeping-document-attachment-integration`; the `evidenceRefs` arrays are declared on
   `DunningRun`/`DunningPauseDispute`. Retention wiring lands with the attachment-integration change.
