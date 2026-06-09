@@ -325,6 +325,38 @@
           "excessProfit": {"type": "number", "description": "Excess profit = max(0, GloBE income - SBIE) (REQ-CBC-005).", "expr": "MAX(0, @self.globeIncome - @self.substanceBasedIncomeExclusion)"},
           "topUpTaxAmount": {"type": "number", "description": "Top-up tax = top-up rate * excess profit (REQ-CBC-004/005).", "expr": "@self.topUpTaxRate * @self.excessProfit"}
         },
+        "x-openregister-tangible-assets-source": {
+          "description": "Declarative tangible-assets-NBV feed for the SBIE carve-out base (REQ-CBC-005). Per-jurisdiction net book value of eligible tangible assets (excluding cash, cash equivalents, intangibles, and held-for-sale assets per OESO Model Rules Art. 5.3) sourced from the bookkeeping-fixed-assets-depreciation app: each FixedAsset record carries a jurisdictionOfUse field; the feed sums NBV across all in-scope assets per (period, jurisdiction). Inventory, financial assets, and IFRS 16 right-of-use lease assets are EXCLUDED from the OESO definition unless held in long-term operating use — the feed honours the OESO carve-out scoping flag on FixedAsset.sbieEligible.",
+          "sourceApp": "bookkeeping-fixed-assets-depreciation",
+          "sourceSchemas": {
+            "fixedAsset": "FixedAsset",
+            "depreciationSchedule": "DepreciationSchedule",
+            "rouAssetLease": "RightOfUseAsset"
+          },
+          "groupBy": ["period", "jurisdiction"],
+          "scopeFilter": "FixedAsset.sbieEligible = true AND FixedAsset.jurisdictionOfUse = @self.jurisdiction",
+          "exclusions": [
+            "cash and cash equivalents",
+            "intangible assets",
+            "held-for-sale assets",
+            "inventory (already excluded by class)",
+            "financial assets",
+            "IFRS 16 RoU lease assets NOT in long-term operating use (Art. 5.3.4)"
+          ],
+          "tangibleAssetsNbvMap": {
+            "field": "tangibleAssetsNbv",
+            "amountExpr": "SUM(FixedAsset.netBookValueAtPeriodEnd WHERE jurisdictionOfUse = @self.jurisdiction AND sbieEligible = true AND period = @self.period)",
+            "descriptionExpr": "CONCAT('SBIE tangible NBV: jurisdiction=', @self.jurisdiction, ', FY', @self.period)"
+          },
+          "writeBack": {
+            "schema": "Pillar2JurisdictionComputation",
+            "filter": "period = @sourcePeriod AND jurisdiction = @sourceJurisdiction",
+            "fields": ["tangibleAssetsNbv"]
+          },
+          "owner": "bookkeeping-fixed-assets-depreciation",
+          "tier": "T3",
+          "status": "DEFERRED — declarative contract only; live integration ships with the not-yet-merged bookkeeping-fixed-assets-depreciation apply cycle on a live instance."
+        },
         "x-openregister-vpb-current-source": {
           "description": "Declarative NL Vpb (vennootschapsbelasting) current-tax feed for the adjustedCoveredTaxes input on NL-resident jurisdiction computations (REQ-CBC-004). Per-entity Vpb current-year + prior-year amounts sourced from the bookkeeping-vpb-mkb app; the NL fiscal-unity consolidation collapses fiscale-eenheid members into a single entity-level current-tax line before the per-jurisdiction sum, so intra-fiscale-eenheid Vpb double-counting cannot occur. Only the NL jurisdiction record is fed; non-NL jurisdiction computations continue to source their covered tax from local-jurisdiction tax provisions.",
           "sourceApp": "bookkeeping-vpb-mkb",

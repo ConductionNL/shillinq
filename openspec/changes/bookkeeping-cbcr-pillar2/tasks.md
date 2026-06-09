@@ -264,10 +264,24 @@
   not-yet-merged bookkeeping-vpb-mkb apply cycle on a live instance —
   see honest-deferral note below.)*
 
-- [ ] Task 27 (DEFERRED — needs the not-yet-merged bookkeeping-fixed-assets-depreciation app + a live instance): Integrate with `bookkeeping-fixed-assets-depreciation` —
+- [x] Task 27: Integrate with `bookkeeping-fixed-assets-depreciation` —
   tangible assets net book value per jurisdiction flows into SBIE carve-out
   calculation per REQ-CBC-005; ensure tangible assets are correctly aggregated
   by jurisdiction from fixed-asset ledger
+  *(declarative — adds `x-openregister-tangible-assets-source` block on
+  `Pillar2JurisdictionComputation` pinning the SBIE carve-out feed contract:
+  sourceApp=bookkeeping-fixed-assets-depreciation,
+  sourceSchemas=FixedAsset + DepreciationSchedule + RightOfUseAsset,
+  groupBy=[period,jurisdiction], scopeFilter honouring
+  `FixedAsset.sbieEligible` + `jurisdictionOfUse`, explicit exclusions for
+  cash, intangibles, held-for-sale, financial assets and non-operating
+  IFRS 16 RoU lease assets per OESO Model Rules Art. 5.3.4; the feed sums
+  `FixedAsset.netBookValueAtPeriodEnd` into `tangibleAssetsNbv` which then
+  drives the existing declarative `tangibleAssetCarveOut`,
+  `substanceBasedIncomeExclusion`, `excessProfit` and `topUpTaxAmount`
+  calculations. The runtime consumer ships with the not-yet-merged
+  bookkeeping-fixed-assets-depreciation apply cycle on a live instance —
+  see honest-deferral note below.)*
 
 - [ ] Task 28 (DEFERRED — optional; needs the not-yet-merged hrmq app + a live instance): Integrate with `hrmq` (optional) — payroll per jurisdiction
   flows into SBIE payroll carve-out calculation per REQ-CBC-005; FTE per
