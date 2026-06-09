@@ -73,6 +73,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <post-migration>
             <step>OCA\Shillinq\Repair\InitializeSettings</step>
             <step>OCA\Shillinq\Repair\BackfillFiscalPeriods</step>
+            <step>OCA\Shillinq\Repair\PeriodCloseBackfill</step>
         </post-migration>
     </repair-steps>
 

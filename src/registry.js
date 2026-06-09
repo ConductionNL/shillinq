@@ -161,7 +161,6 @@ import BudgetBBVMappingIndex from './components/BudgetBBVMapping/BudgetBBVMappin
 // resolve.
 import BudgetBBVMappingDetail from './components/BudgetBBVMapping/BudgetBBVMappingDetail.vue'
 
-
 // bookkeeping-multi-administratie (Task 13): the in-session administration
 // switcher is a custom page hosting the AdministratieSwitcher dropdown. It is
 // genuinely custom (NOT a declarative index/detail over a register) because it
@@ -196,6 +195,19 @@ import WbsoDocumentsView from './views/bookkeeping/DocumentsView.vue'
 // — it cannot be exposed publicly via the in-app router unless the
 // server-side attribute is dropped. ADR-004 compliant.
 import BookingWidgetKeys from './views/BookingWidgetKeys.vue'
+
+// bookkeeping-period-close (REQ-PC-005, REQ-PC-006, REQ-PC-007 / Task 9 + 10):
+// the PeriodCloseDetail page composes the FiscalPeriod metadata header, the
+// close-task checklist (AP / AR / bank / expense claims) with inline
+// close-assistant flags, the four lifecycle action buttons (Start close /
+// Close period / Reopen / Lock for audit) and the reopen-history audit
+// trail. The reopen flow is gated behind an isolated ReopenPeriodDialog
+// (modal isolation per hydra gate-13) that captures the mandatory
+// closeReason. Neither the lifecycle action ribbon, the bespoke AI-flag
+// pill renderer nor the reopen-history timeline fit the built-in
+// declarative `detail` page type — so the page is registered as a
+// kind:"page" custom component per ADR-024 / ADR-036.
+import PeriodCloseDetail from './components/period-close/PeriodCloseDetail.vue'
 
 export default {
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
@@ -246,4 +258,7 @@ export default {
 
 	// bookings-self-service-widget admin (REQ-WSW-009).
 	BookingWidgetKeys: { kind: 'page', component: BookingWidgetKeys },
+
+	// bookkeeping-period-close detail page (REQ-PC-005, REQ-PC-006).
+	PeriodCloseDetail: { kind: 'page', component: PeriodCloseDetail },
 }
