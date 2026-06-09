@@ -209,7 +209,10 @@
         "description": "A customer (accounts-receivable) invoice sub-ledger record per REQ-AR-003. On issue it materialises a balanced GLTransaction (T1 REQ-JE-007 pattern) and is subject to a credit-limit check (REQ-AR-006). Dunning is consumed from OR's dunning-workflow per REQ-AR-005 (DunningGuard fallback per ADR-031). Payment matching links to a BankStatementLine from bank-reconciliation.",
         "x-schema-org": "schema:Invoice",
         "type": "object",
-        "x-openregister-audit": true,
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Bookkeeping sub-ledger register; every lifecycle transition (issue / overdue / match / dispute / write-off / void) and every header / line edit is recorded on the OR audit-trail-immutable channel per REQ-RAP-001 / REQ-AT-001 + ADR-022."
+        },
         "required": ["invoiceNumber", "customerId", "administrationId", "invoiceDate", "dueDate", "grossAmount", "netAmount", "currency", "periodId", "lifecycleState"],
         "properties": {
           "invoiceNumber": { "type": "string", "description": "Sequential invoice number.", "example": "2026-0042" },
