@@ -256,6 +256,22 @@ return [
         // surface returning a what-if compensation result.
         ['name' => 'bcfClaim#compensation', 'url' => '/api/bcf/compensation', 'verb' => 'GET'],
 
+        // bookkeeping-reconciliation-reports (T4) — REQ-REC-004 unmatched-item
+        // resolution. POST one classification + reason at a time, or bulk-apply
+        // across a list of matchIds (REQ-REC-008 Unmatched Items bulk workflow).
+        // Both endpoints are #[NoAdminRequired] but IDOR-guarded: the service
+        // verifies match.reconId matches the path reconId before writing.
+        [
+            'name' => 'reconciliationResolution#resolve',
+            'url'  => '/api/reconciliations/{reconId}/matches/{matchId}/resolve',
+            'verb' => 'POST',
+        ],
+        [
+            'name' => 'reconciliationResolution#bulkResolve',
+            'url'  => '/api/reconciliations/{reconId}/matches/bulk-resolve',
+            'verb' => 'POST',
+        ],
+
         // ICP opgaaf (bookkeeping-icp-opgaaf, REQ-ICP-002..010). Read-only ledger
         // / reconcile / periodicity / VIES lookup endpoints plus the correction
         // + audit-export write surface. All admin-scoped + IDOR-safe.
