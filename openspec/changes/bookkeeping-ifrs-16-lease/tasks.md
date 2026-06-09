@@ -112,14 +112,7 @@
 
 ## 13. Audit pack export (Phase 2 foundation)
 
-- [ ] Task 13.1 [DEFERRED — Phase 2, depends on docudesk export + PDF pipeline]: Author skeleton `lib/Services/LeaseAuditPackGenerator.php` — method `generate(LeaseContractId)` that:
-  - Exports lease-contract as PDF
-  - Exports all lease-payment-schedule rows as CSV
-  - Exports IBR derivation evidence (docudesk document links)
-  - Exports all lease-reassessment-event records with snapshots
-  - Packages into a .zip file with index
-  - Returns ZIP download link
-  - (Full implementation in Phase 2; spec-only version provides skeleton)
+- [x] Task 13.1: Authored skeleton `lib/Service/LeaseAuditPackGenerator.php` — `generate(leaseId, administrationId, operatorId)` reads the lease + every LeaseReassessmentEvent + the full LeasePaymentSchedule administration-scoped (ADR-005), extracts the IBR-evidence FK list, and returns the audit-pack index manifest (index.md, lease-contract.pdf placeholder, schedule CSV path, disclosure CSV path, ibr-evidence/, reassessments/) plus the deterministic ZIP download path (`/shillinq/audit-packs/YYYY-MM-DD/<lease>.zip`) and status=`pending-pdf-pipeline`. 2 unit cases (`testGenerateBuildsContentsIndex`, `testOutOfScopeLeaseReturnsNull`). [Full PDF/ZIP rendering still depends on docudesk Phase 2.]
 
 ## 14. Transition support (modified-retrospective and full-retrospective) — Phase 2
 
