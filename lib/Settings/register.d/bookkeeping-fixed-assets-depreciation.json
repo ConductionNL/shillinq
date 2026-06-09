@@ -123,6 +123,66 @@
 						"example": "uuid-of-original-asset"
 					}
 				},
+				"x-openregister-lifecycle": {
+					"transitions": {
+						"activate": {
+							"action": {
+								"type": "emit-journal-entry-and-schedule",
+								"subType": "acquisition",
+								"description": "REQ-FA-008 — On acquisition (transition to active), materialise a balanced GLTransaction (debit assetAccountNumber for purchaseCost, credit cash/AP) AND auto-generate the first-year DepreciationSchedule record (REQ-FA-004) using depreciationMethod, usefulLifeYears/usefulLifeMonths, purchaseDate, and the administration's fiscal year. The DepreciationCalculator (ADR-031 exception, Float-Precision-aware per REQ-FA-005) is the deterministic kernel; OR's ScheduledWorkflow continues firing yearly per REQ-FA-007.",
+								"requiredInput": [
+									"purchaseDate"
+								]
+							}
+						},
+						"transferInternal": {
+							"from": "active",
+							"to": "active",
+							"label": "Internal transfer",
+							"description": "REQ-FA-006 — Reassign this FixedAsset between cost centres or departments. Updates costCenterCode and propagates to subsequent DepreciationSchedule records; NO GL posting (the asset stays on the same GL account). For proportional splits, see the `splitTransfer` transition which creates a new FixedAsset for the split-off portion.",
+							"action": {
+								"type": "update-cost-center",
+								"description": "Updates costCenterCode and any open-period DepreciationSchedule.costCenterCode in lock-step. Audit-trailed via OR.",
+								"requiredInput": [
+									"newCostCenterCode"
+								]
+							}
+						},
+						"splitTransfer": {
+							"from": "active",
+							"to": "active",
+							"label": "Proportional internal transfer (split)",
+							"description": "REQ-FA-006 — Split a percentage of this FixedAsset off to a new FixedAsset record (transferSourceAssetRef pointing back), proportionally reducing the original asset's purchaseCost/accumulatedDepreciation and creating a new DepreciationSchedule for the split-off portion. NO GL posting; both records remain on the same balance-sheet account.",
+							"action": {
+								"type": "split-asset",
+								"description": "Creates a new FixedAsset with transferSourceAssetRef pointing back, allocating the configured percentage of acquisitionCost and accumulatedDepreciation. Audit-trailed.",
+								"requiredInput": [
+									"splitPercentage",
+									"newCostCenterCode"
+								]
+							}
+						},
+						"dispose": {
+							"action": {
+								"description": "REQ-FA-008 — Materialises a balanced JournalEntry zeroing the asset account and accumulated depreciation; if disposalAccountingTreatment = sale and salvageProceeds > 0, posts the gain or loss (salvageProceeds − currentBookValue) to the configured P&L account; if scrap or donation with zero proceeds, the residual carrying amount books to loss on disposal."
+							}
+						}
+					}
+				},
+				"x-openregister-calculations": {
+					"floatPrecisionAware": {
+						"description": "REQ-FA-005 — Tag indicating the asset's depreciation calculations honour the Nextcloud System Settings Float Precision value. The DepreciationCalculator queries the setting at calculation time via SettingsService::getFloatPrecision(); fallback is 2 decimal places (Dutch accounting standard).",
+						"expression": "true",
+						"dependsOn": []
+					},
+					"yearsElapsed": {
+						"description": "REQ-FA-004 / REQ-FA-007 — Computed years elapsed since acquisitionDate. Drives the yearly auto-fire of depreciation-expense GL postings via the FixedAssets monthly-depreciation ScheduledWorkflow (Phase 4b of InitializeSettings).",
+						"expression": "monthsElapsed(@self.acquisitionDate) / 12",
+						"dependsOn": [
+							"acquisitionDate"
+						]
+					}
+				},
 				"x-openregister-aggregations": {
 					"depreciationByMethod": {
 						"description": "REQ-FA-009 (1) — count of active assets grouped by depreciationMethod. Drives the Depreciation Expense report method-mix breakdown.",
