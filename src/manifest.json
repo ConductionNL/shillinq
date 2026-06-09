@@ -1136,7 +1136,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "Products"
+				"indexRoute": "Products",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -1218,7 +1238,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "ProductAttributes"
+				"indexRoute": "ProductAttributes",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -1330,7 +1370,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "Barcodes"
+				"indexRoute": "Barcodes",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -1459,7 +1519,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "InventoryLots"
+				"indexRoute": "InventoryLots",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -1553,7 +1633,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "ExpiryAlerts"
+				"indexRoute": "ExpiryAlerts",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -1670,7 +1770,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "InventoryValuation"
+				"indexRoute": "InventoryValuation",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -1804,7 +1924,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "StockLevels"
+				"indexRoute": "StockLevels",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -10398,7 +10538,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "BbvMapping"
+				"indexRoute": "BbvMapping",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -10915,7 +11075,27 @@
 						"description": "Re-activate an archived rule."
 					}
 				],
-				"indexRoute": "ReorderRules"
+				"indexRoute": "ReorderRules",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -13605,7 +13785,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "InventoryGLConfig"
+				"indexRoute": "InventoryGLConfig",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -13864,7 +14064,27 @@
 						]
 					}
 				],
-				"indexRoute": "PensionPlans"
+				"indexRoute": "PensionPlans",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -14087,7 +14307,27 @@
 						]
 					}
 				],
-				"indexRoute": "ActuarialValuations"
+				"indexRoute": "ActuarialValuations",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -14195,7 +14435,27 @@
 						]
 					}
 				],
-				"indexRoute": "WBSOTags"
+				"indexRoute": "WBSOTags",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -14286,7 +14546,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "WBSOActivityCodes"
+				"indexRoute": "WBSOActivityCodes",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -14483,7 +14763,27 @@
 						"sourceField": "fileUri"
 					}
 				],
-				"indexRoute": "WBSOExport"
+				"indexRoute": "WBSOExport",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -14556,7 +14856,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "PensionDisclosureTables"
+				"indexRoute": "PensionDisclosureTables",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -14682,7 +15002,27 @@
 						]
 					}
 				],
-				"indexRoute": "XBRLTaxonomies"
+				"indexRoute": "XBRLTaxonomies",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -14831,7 +15171,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "SBRDocuments"
+				"indexRoute": "SBRDocuments",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -14920,7 +15280,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "XBRLMappingValidation"
+				"indexRoute": "XBRLMappingValidation",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -15506,7 +15886,27 @@
 				],
 				"lifecycleActions": false,
 				"indexRoute": "Reconciliations",
-				"description": "REQ-REC-001 + REQ-REC-006 sealed audit artifact. Immutable once created."
+				"description": "REQ-REC-001 + REQ-REC-006 sealed audit artifact. Immutable once created.",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		}
 	]

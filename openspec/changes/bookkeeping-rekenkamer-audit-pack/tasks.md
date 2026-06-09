@@ -43,7 +43,11 @@
 
   Manifest version bumped 1.3.15 → 1.3.16 for cache-bust per the fleet NC immutable Cache-Control note. `node tests/validate-manifest.js` exits 0 (structural lint PASS, consistency check PASS, 215 pages).
 
-- [ ] Task 11: Add the audit side-panel manifest binding to every bookkeeping and procurement `type: detail` page (filtered to the object's UUID and permission-scoped) per REQ-RAP-007
+- [x] Task 11: Add the audit side-panel manifest binding to every bookkeeping and procurement `type: detail` page (filtered to the object's UUID and permission-scoped) per REQ-RAP-007
+  - Baseline: 92 detail pages total; 72 already carried the `id: audit` sidebar tab using OR's `openregister-audit-trail` component sourcing `/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails` (path templating provides the per-object UUID filter, and Nextcloud's session ACL enforces the permission scope automatically).
+  - Swept the remaining 20 detail pages (ProductDetail, ProductAttributeDetail, BarcodeDetail, InventoryLotDetail, ExpiryAlertDetail, InventoryValuationDetail, StockLevelDetail, BbvMappingDetail, ReorderRuleDetail, InventoryGLConfigDetail, PensionPlanDetail, ActuarialValuationDetail, WBSOTagDetail, WBSOActivityCodeDetail, WBSOExportDetail, PensionDisclosureTableDetail, XBRLTaxonomyDetail, SBRDocumentDetail, XBRLMappingDetail, ReconciliationReportDetail) — every one of them now carries the same audit tab with the same source URL and `collapsed: true` default. Post-sweep coverage: 92/92.
+  - Per REQ-RAP-007: source is OR's audit-log component (no bespoke Vue); filtering to the object UUID is handled by the `:id` path token; permission scoping is enforced by OR's audit-trails endpoint (callers see only objects they have read access to).
+  - `node tests/validate-manifest.js` exits 0.
 
 - [ ] Task 12: Extend `tests/validate-manifest.js` (or add a sibling `validate-registers.js`) to assert `x-openregister-audit: true` on every register tagged as bookkeeping or procurement; CI fails if a future register PR omits the flag
 
