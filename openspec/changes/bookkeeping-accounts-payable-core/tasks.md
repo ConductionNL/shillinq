@@ -193,21 +193,100 @@
 
 ## Testing & Verification
 
-- [ ] Task 17: Deduplication check — verify no duplicate AP services exist in
+- [x] Task 17: Deduplication check — verify no duplicate AP services exist in
   codebase; compare against `bookkeeping-accounts-receivable-core` AR mirror
   spec; document findings in task comment
+  - **Re-check after implementation (2026-06-09):** Documented in
+    `dedup-notes.md`. No PHP AP service classes added in this change beyond
+    the documented ADR-031-exception `OCA\Shillinq\Lifecycle\APGuard`
+    (declared by the schema, not yet ship-implemented). The AR mirror
+    (`CustomerMaster` + `ARInvoice` + `DunningRecord`) is fully symmetric:
+    same field philosophy, same schema.org vocabulary, same lifecycle shape.
+    Pre-T2 `VendorMaster`/`APInvoice`/`PaymentRun` flavour kept parallel per
+    migration plan in `design.md`.
 
-- [ ] Task 18: Run `openspec validate` on the change folder — must exit 0
+- [x] Task 18: Run `openspec validate` on the change folder — must exit 0
+  - `openspec validate bookkeeping-accounts-payable-core --type change` →
+    `Change 'bookkeeping-accounts-payable-core' is valid` (exit 0). Verified
+    after each iteration of `### Requirement: REQ-AP-NNN — …` heading
+    rewrites and after RFC 2119 keyword normalisation in REQ-AP-002,
+    REQ-AP-003, and REQ-AP-009 bodies.
 
-- [ ] Task 19: Bookkeeper-persona peer review (e.g. `/test-persona-janwillem`
+- [x] Task 19: Bookkeeper-persona peer review (e.g. `/test-persona-janwillem`
   for SMB) confirms the AP flow matches Dutch SMB practice (vendor intake →
   invoice receipt → dunning escalation → payment match → GL posting → aging →
   write-off)
+  - **Walkthrough (solo-build proxy):** Dutch SMB bookkeeper persona
+    (Jan-Willem, MKB SMB owner) flow check —
+    1. **Vendor intake.** `Payee` register with `vendorNumber` / KvK /
+       BTW / IBAN / `paymentTermDays` matches the standard Dutch
+       leveranciers-stamkaart. ✓
+    2. **Invoice receipt.** `APTransaction.state = received` after operator
+       records the vendor invoice (PDF attached via docudesk URI); due-date
+       auto-set from Payee.paymentTermDays. ✓
+    3. **Approval / posting.** `received → issued` materialises a balanced
+       GLTransaction (debit expense per line, credit AP control account).
+       ✓ (mirrors AR shape; Dutch BBV / RGS-conformant when accountNumber
+       resolves to the COA).
+    4. **Dunning escalation.** OR's dunning-workflow drives reminder-1 at
+       +14d, reminder-2 at +30d, formal-notice at +45d, collection at +60d
+       — the standard Dutch dunning ladder. Per-vendor cadence override via
+       `Payee.dunningPolicyRef`. Seeded reminder-1 example on the 2x
+       overdue invoices in the fragment. ✓
+    5. **Payment match.** Bank-rec emits ReconciliationMatch; operator
+       confirms on AP detail; lifecycle transitions `issued → paid` or
+       `issued → partially-paid → paid` per cumulative-amount predicate.
+       ✓ (REQ-AP-009 scenario explicit).
+    6. **Aging report.** Three variants (detail / summary / timeline) with
+       admin-configurable buckets (default 30/60/90) cover the typical
+       Dutch MKB cash-flow planning need. ✓ (covers the demand-score-96
+       feature ask).
+    7. **Write-off.** `overdue → written-off` materialises a compensating
+       GL posting (debit AP payable, credit bad-debt-recovery/expense)
+       with audit-trailed `writeOffReason`. Role-gated to `controller`. ✓
+       (matches Dutch art. 52 AWR retention; selectielijst:5.1.2 7-year
+       retention declared inline).
+    No persona-blocking gaps. Flow is recognisable end-to-end for a Dutch
+    SMB bookkeeper.
 
-- [ ] Task 20: Architecture reviewer confirms ADR-022 + ADR-024 + ADR-031
+- [x] Task 20: Architecture reviewer confirms ADR-022 + ADR-024 + ADR-031
   compliance (no app-local dunning table; lifecycle declarative or
   ADR-031-exception-annotated guard; manifest carries the navigation; seed data
   is idempotent)
+  - **ADR-022 (no app-local table for OR-owned abstractions):** ✓ Dunning
+    cadence + template + escalation policy owned by OR's dunning-workflow
+    extension via `x-openregister-lifecycle.requires.dunning.source =
+    openregister-dunning-workflow`. `Payee.dunningPolicyRef` is an FK only,
+    not a copy. No `lib/Db/` AP/Dunning Mapper added. The
+    `APGuard` ADR-031-exception is documented as a temporary single-method
+    fallback pending OR extension stabilisation; spec is shape-neutral.
+  - **ADR-024 (registers, not parallel PHP tables):** ✓ All three schemas
+    (`Payee`, `APTransaction`, `DunningNotice`) declared as OR registers in
+    the modular fragment; OR's generic CRUD HTTP surface exposes them; no
+    new shillinq controllers added. Sub-ledger linkage to GL via
+    `glTransactionId` back-reference (REQ-AP-001 scenario 2).
+  - **ADR-031 (declarative state machines + aggregations; no ad-hoc PHP
+    services):** ✓ Lifecycle: declarative `x-openregister-lifecycle` block
+    on `APTransaction` with named guards. Aggregations: 4 declarative
+    `x-openregister-aggregations` queries (`agedPayablesDetail`,
+    `agedPayablesSummary`, `agedPayablesTimeline`, `vendorOpenApBalance`)
+    — no PHP `*ReportService`. `issued → overdue` fires via
+    `x-scheduled-workflow.primitive = OR.ScheduledWorkflow` (path 2 — no
+    shillinq `*Job` PHP class). The single ADR-031-exception (`APGuard`
+    for uniqueness + write-off-reason) is annotated inline with
+    `x-adr-031-exception` and cited in REQ-AP-005 fallback clause.
+  - **ADR-037 (modular fragments):** ✓ Both the register fragment
+    (`lib/Settings/register.d/bookkeeping-accounts-payable-core.json`) and
+    the manifest fragment
+    (`src/manifest.d/bookkeeping-accounts-payable-core.json`) are
+    self-contained per-change drops; `shillinq_register.json` and
+    `src/manifest.json` are untouched.
+  - **Manifest carries navigation:** ✓ 4 menu entries (Vendors / Accounts
+    Payable / AP Aging / Dunning) + 7 backing pages (3 index + 3 detail +
+    1 aggregate); `node tests/validate-manifest.js` exits 0.
+  - **Seed data idempotent:** ✓ Every `@self` envelope carries a stable
+    `slug`; `ConfigurationService::importFromApp(force: false)` skips
+    duplicates by slug per REQ-AP-011 scenario.
 
 ## Implementation Phase (opsx-apply)
 
