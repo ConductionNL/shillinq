@@ -7,14 +7,9 @@
 
 ## ADDED Requirements
 
-### REQ-CoA-001: The system SHALL store the chart of accounts as an OpenRegister-managed `Account` register
+### Requirement: REQ-CoA-001 — The system SHALL store the chart of accounts as an OpenRegister-managed `Account` register
 
-The chart of accounts MUST be declared as a register in
-`lib/Settings/shillinq_register.json` per ADR-024, with the `Account`
-schema as the canonical entity. No custom PHP model, no custom database
-table, no parallel link table (per ADR-022 anti-pattern list). The
-register is exposed through OpenRegister's generic CRUD HTTP surface;
-shillinq adds no per-app endpoint.
+The chart of accounts MUST be declared as a register in `lib/Settings/shillinq_register.json` per ADR-024, with the `Account` schema as the canonical entity. No custom PHP model, no custom database table, no parallel link table (per ADR-022 anti-pattern list). The register is exposed through OpenRegister's generic CRUD HTTP surface; shillinq adds no per-app endpoint.
 
 #### Scenario: Operator inspects the chart of accounts via the OpenRegister API
 
@@ -33,10 +28,9 @@ shillinq adds no per-app endpoint.
   table declarations naming `accounts` / `chart_of_accounts`
 - **THEN** no such classes or declarations SHALL exist.
 
-### REQ-CoA-002: The `Account` schema SHALL declare a fixed minimum field set
+### Requirement: REQ-CoA-002 — The `Account` schema SHALL declare a fixed minimum field set
 
-The `Account` schema MUST declare the following fields with the typing
-below. Additional fields MAY be added later (additive only).
+The `Account` schema MUST declare the following fields with the typing below. Additional fields MAY be added later (additive only).
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -66,12 +60,9 @@ per `adr-000-data-model.md`'s top-of-file note.
 - **WHEN** an object with `accountType: "magic"` is validated
 - **THEN** validation MUST fail with an enum-violation error.
 
-### REQ-CoA-003: The `Account` schema SHALL declare a self-relation for hierarchy via `x-openregister-relations`
+### Requirement: REQ-CoA-003 — The `Account` schema SHALL declare a self-relation for hierarchy via `x-openregister-relations`
 
-Account hierarchy MUST be declared as an `x-openregister-relations`
-self-relation: `parentAccountNumber` points at another
-`Account.accountNumber`. The relation MUST be traversable by
-OpenRegister's relation engine; no app-local join code.
+Account hierarchy MUST be declared as an `x-openregister-relations` self-relation: `parentAccountNumber` points at another `Account.accountNumber`. The relation MUST be traversable by OpenRegister's relation engine; no app-local join code.
 
 #### Scenario: A sub-account references its parent
 
@@ -89,15 +80,9 @@ OpenRegister's relation engine; no app-local join code.
 - **THEN** OR's relation validator SHOULD reject the save with a
   resolvable error message naming the missing parent.
 
-### REQ-CoA-004: The `Account` schema SHALL declare a canonical Schema.org annotation
+### Requirement: REQ-CoA-004 — The `Account` schema SHALL declare a canonical Schema.org annotation
 
-For interoperability with shared catalogues and the MCP discovery
-endpoint, the schema MUST carry a Schema.org type annotation (per
-shillinq config.yaml `rules.specs`). The canonical mapping is
-`schema:DefinedTerm` for ledger codes (an `Account` is a coded
-financial classifier, not a transaction); the existing ADR-000 entry
-for `GeneralLedgerAccount` uses `schema:Product` and SHALL be
-reconciled to `schema:DefinedTerm` in the data-model ADR update task.
+For interoperability with shared catalogues and the MCP discovery endpoint, the schema MUST carry a Schema.org type annotation (per shillinq config.yaml `rules.specs`). The canonical mapping is `schema:DefinedTerm` for ledger codes (an `Account` is a coded financial classifier, not a transaction); the existing ADR-000 entry for `GeneralLedgerAccount` uses `schema:Product` and SHALL be reconciled to `schema:DefinedTerm` in the data-model ADR update task.
 
 #### Scenario: Schema annotation surfaces in the MCP discovery output
 
@@ -107,10 +92,9 @@ reconciled to `schema:DefinedTerm` in the data-model ADR update task.
   `schema:DefinedTerm` (or, if the reconciliation lands later, the
   ADR-000-aligned value once agreed).
 
-### REQ-CoA-005: Accounts SHALL have a declarative active/blocked/archived lifecycle
+### Requirement: REQ-CoA-005 — Accounts SHALL have a declarative active/blocked/archived lifecycle
 
-The `Account` schema MUST declare an `x-openregister-lifecycle` block
-with the following states and transitions (per ADR-031):
+The `Account` schema MUST declare an `x-openregister-lifecycle` block with the following states and transitions (per ADR-031):
 
 - `active` — fully usable for new postings (default on create)
 - `blocked` — readable, referenceable by existing postings, but
@@ -150,14 +134,9 @@ legitimate seam".
 - **THEN** the transition MUST be rejected with a "non-zero balance"
   error and the account state MUST remain `active`/`blocked`.
 
-### REQ-CoA-006: The system SHALL ship RGS template seed data for SMB, ZZP, and government variants
+### Requirement: REQ-CoA-006 — The system SHALL ship RGS template seed data for SMB, ZZP, and government variants
 
-Three seed files under `lib/Settings/seeds/` MUST be shipped:
-`rgs-3.5-mkb.json`, `rgs-3.5-zzp.json`, `rgs-bbv.json`. Each is a
-JSON array of `Account` records conforming to the schema declared in
-REQ-CoA-002, carries an `_meta` block identifying its RGS variant +
-version, and starts with an SPDX header per
-`feedback_spdx-in-docblock.md`.
+Three seed files under `lib/Settings/seeds/` MUST be shipped: `rgs-3.5-mkb.json`, `rgs-3.5-zzp.json`, `rgs-bbv.json`. Each is a JSON array of `Account` records conforming to the schema declared in REQ-CoA-002, carries an `_meta` block identifying its RGS variant + version, and starts with an SPDX header per `feedback_spdx-in-docblock.md`.
 
 Templates MAY evolve over time; filename version pinning
 (`rgs-3.5-*` vs `rgs-4.0-*`) allows side-by-side coexistence.
@@ -177,14 +156,9 @@ Templates MAY evolve over time; filename version pinning
   expense top-level groupings) SHALL match the RGS 3.5 SMB reference
   chart documented at `https://www.referentiegrootboekschema.nl`.
 
-### REQ-CoA-007: The repair step SHALL seed the selected RGS template on first install, idempotently
+### Requirement: REQ-CoA-007 — The repair step SHALL seed the selected RGS template on first install, idempotently
 
-The shillinq repair step (or migration class) MUST extend
-`ConfigurationService::importFromApp()` to load the selected RGS
-template into the `Account` register on first install. The seed
-operation MUST be idempotent: re-running the repair step MUST NOT
-duplicate seeded records, and MUST NOT overwrite operator edits to
-seeded records (per the per-administration override allowance).
+The shillinq repair step (or migration class) MUST extend `ConfigurationService::importFromApp()` to load the selected RGS template into the `Account` register on first install. The seed operation MUST be idempotent: re-running the repair step MUST NOT duplicate seeded records, and MUST NOT overwrite operator edits to seeded records (per the per-administration override allowance).
 
 #### Scenario: First-install seed populates the register
 
@@ -201,17 +175,9 @@ seeded records (per the per-administration override allowance).
 - **THEN** account `4100`'s name MUST remain `Omzet binnenland`;
   the seed step MUST NOT revert operator edits.
 
-### REQ-CoA-008: Chart of accounts SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-CoA-008 — Chart of accounts SHALL be reachable through the shillinq manifest navigation
 
-`src/manifest.json` MUST declare a navigation entry (`Bookkeeping >
-Chart of Accounts` or top-level — exact placement settled in the
-implementing cycle's UX review) with a `type: index` page binding to
-the `Account` register and a `type: detail` page for individual
-accounts. Both pages MUST be rendered by the generic
-`@conduction/nextcloud-vue` `CnIndexPage` / `CnDetailPage`
-components driven by manifest config — no bespoke Vue files (per
-ADR-024 Tier-4 + the existing `customComponents.js` "empty on
-purpose" convention).
+`src/manifest.json` MUST declare a navigation entry (`Bookkeeping > Chart of Accounts` or top-level — exact placement settled in the implementing cycle's UX review) with a `type: index` page binding to the `Account` register and a `type: detail` page for individual accounts. Both pages MUST be rendered by the generic `@conduction/nextcloud-vue` `CnIndexPage` / `CnDetailPage` components driven by manifest config — no bespoke Vue files (per ADR-024 Tier-4 + the existing `customComponents.js` "empty on purpose" convention).
 
 #### Scenario: The index page lists accounts
 
@@ -229,15 +195,9 @@ purpose" convention).
   fields from REQ-CoA-002 and the lifecycle-state actions allowed
   by REQ-CoA-005.
 
-### REQ-CoA-009: Each administration SHALL designate exactly one account as the closing account
+### Requirement: REQ-CoA-009 — Each administration SHALL designate exactly one account as the closing account
 
-The `isClosingAccount` boolean field MAY be true on at most one
-`Account` record per administration (uniqueness constraint scoped to
-`administrationId`). This account is used by T3's period-close
-capability to absorb period-end results into equity. The
-constraint MUST be enforced declaratively by OR's uniqueness or
-single-true field validator if supported, otherwise by a thin
-lifecycle precondition on `Account.save`.
+The `isClosingAccount` boolean field MAY be true on at most one `Account` record per administration (uniqueness constraint scoped to `administrationId`). This account is used by T3's period-close capability to absorb period-end results into equity. The constraint MUST be enforced declaratively by OR's uniqueness or single-true field validator if supported, otherwise by a thin lifecycle precondition on `Account.save`.
 
 #### Scenario: Designating a second closing account fails
 
