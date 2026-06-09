@@ -354,6 +354,112 @@ class LeaseDisclosureService
     }//end weightedAverages()
 
     /**
+     * Flatten the disclosure payload into CSV rows (REQ-LD-001, task 10.3).
+     *
+     * Produces a header + one row per disclosure figure suitable for direct
+     * download. The structured payload (generateForPeriod / aggregateFromLeases)
+     * is the canonical input: this method just walks the rouByClass / maturity
+     * maps and the scalar totals into a flat 2-column table (label,value) plus
+     * a section-tag column so the consumer can group on import.
+     *
+     * No PDF / docudesk dependency — pure RFC 4180 CSV string. Tests cover the
+     * flattening shape; the streaming response wrapper lands with the
+     * controller surface.
+     *
+     * @param array<string,mixed> $disclosure The structured disclosure payload.
+     *
+     * @return string CSV body (RFC 4180, comma delimited, LF terminated).
+     *
+     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-disclosures/spec.md
+     */
+    public function exportToCSV(array $disclosure): string
+    {
+        $rows = [['section', 'label', 'value']];
+
+        $rows[] = ['header', 'fiscalPeriod', (string) ($disclosure['fiscalPeriod'] ?? '')];
+        $rows[] = ['header', 'administrationId', (string) ($disclosure['administrationId'] ?? '')];
+        $rows[] = ['header', 'materializedAtPeriodClose', empty($disclosure['materializedAtPeriodClose']) === false ? 'true' : 'false'];
+
+        foreach ((array) ($disclosure['closingRouByClass'] ?? []) as $class => $value) {
+            $rows[] = ['rou-by-class', (string) $class, $this->csvNumber(value: $value)];
+        }
+
+        foreach ((array) ($disclosure['maturityAnalysis'] ?? []) as $bucket => $value) {
+            $rows[] = ['maturity-analysis', (string) $bucket, $this->csvNumber(value: $value)];
+        }
+
+        foreach ((array) ($disclosure['weightedAverageIbrByClass'] ?? []) as $class => $value) {
+            $rows[] = ['weighted-average-ibr', (string) $class, $this->csvNumber(value: $value)];
+        }
+
+        foreach ([
+            'totalRouAdditionsInPeriod',
+            'totalRouDepreciationInPeriod',
+            'totalRouDisposalsInPeriod',
+            'totalLeaseLiabilityCurrent',
+            'totalLeaseLiabilityNoncurrent',
+            'totalInterestExpense',
+            'totalShortTermLeaseExpense',
+            'totalLowValueLeaseExpense',
+            'totalVariableLeaseExpense',
+        ] as $key) {
+            if (array_key_exists($key, $disclosure) === false) {
+                continue;
+            }
+
+            $rows[] = ['totals', $key, $this->csvNumber(value: $disclosure[$key])];
+        }
+
+        if (isset($disclosure['qualitativeNarrative']) === true) {
+            $rows[] = ['narrative', 'qualitativeNarrative', (string) $disclosure['qualitativeNarrative']];
+        }
+
+        return $this->joinCsv(rows: $rows);
+
+    }//end exportToCSV()
+
+    /**
+     * Render a numeric value as a two-decimal CSV string.
+     *
+     * @param mixed $value Numeric value (float|int|string).
+     *
+     * @return string Two-decimal string.
+     */
+    private function csvNumber(mixed $value): string
+    {
+        return number_format((float) ($value ?? 0), 2, '.', '');
+
+    }//end csvNumber()
+
+    /**
+     * Join CSV rows with RFC 4180 quoting.
+     *
+     * @param array<int,array<int,string>> $rows CSV rows.
+     *
+     * @return string CSV body.
+     */
+    private function joinCsv(array $rows): string
+    {
+        $lines = [];
+        foreach ($rows as $row) {
+            $escaped = [];
+            foreach ($row as $cell) {
+                $cell = (string) $cell;
+                if (str_contains($cell, ',') === true || str_contains($cell, '"') === true || str_contains($cell, "\n") === true) {
+                    $cell = '"'.str_replace('"', '""', $cell).'"';
+                }
+
+                $escaped[] = $cell;
+            }
+
+            $lines[] = implode(',', $escaped);
+        }
+
+        return implode("\n", $lines)."\n";
+
+    }//end joinCsv()
+
+    /**
      * Qualitative narrative seed for the disclosure note (IFRS 16.59, REQ-LD-001).
      *
      * @param int $leaseCount Number of leases in the period.
