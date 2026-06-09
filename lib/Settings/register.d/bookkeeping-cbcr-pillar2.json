@@ -325,6 +325,35 @@
           "excessProfit": {"type": "number", "description": "Excess profit = max(0, GloBE income - SBIE) (REQ-CBC-005).", "expr": "MAX(0, @self.globeIncome - @self.substanceBasedIncomeExclusion)"},
           "topUpTaxAmount": {"type": "number", "description": "Top-up tax = top-up rate * excess profit (REQ-CBC-004/005).", "expr": "@self.topUpTaxRate * @self.excessProfit"}
         },
+        "x-openregister-deferred-tax-source": {
+          "description": "Declarative deferred-tax feed for the adjusted covered taxes (REQ-CBC-004) and the GloBE income corrections (REQ-CBC-003). Per-jurisdiction DTA timing differences sourced from the bookkeeping-deferred-tax app: commercial-fiscaal divergence (IFRS valuation vs Vpb box 1 valuation) is recast on the GloBE basis per OESO Model Rules Art. 4.4 (covered-tax effect) + Art. 3.2.7 (DTA effect on GloBE income). The DTA effect is appended to globeIncomeAdjustments as type=deferred-tax-effect; the covered-tax effect is appended to coveredTaxAdjustments and folded into adjustedCoveredTaxes.",
+          "sourceApp": "bookkeeping-deferred-tax",
+          "sourceSchemas": {
+            "temporaryDifference": "TemporaryDifference",
+            "rollForward": "DeferredTaxRollForward",
+            "rateReconciliation": "DeferredTaxRateReconciliation"
+          },
+          "groupBy": ["period", "jurisdiction"],
+          "globeIncomeAdjustmentMap": {
+            "appendTo": "globeIncomeAdjustments[]",
+            "type": "deferred-tax-effect",
+            "amountExpr": "SUM(TemporaryDifference.globeBasisDelta WHERE period = @self.period AND jurisdiction = @self.jurisdiction)",
+            "descriptionExpr": "CONCAT('Deferred-tax recast: ', TemporaryDifference.category, ' / FY', @self.period)"
+          },
+          "coveredTaxAdjustmentMap": {
+            "appendTo": "coveredTaxAdjustments[]",
+            "type": "deferred-tax-effect",
+            "amountExpr": "SUM(DeferredTaxRollForward.coveredTaxDelta WHERE period = @self.period AND jurisdiction = @self.jurisdiction)",
+            "descriptionExpr": "CONCAT('Covered-tax recast: ', DeferredTaxRollForward.category, ' / FY', @self.period)"
+          },
+          "writeBack": {
+            "schema": "Pillar2JurisdictionComputation",
+            "filter": "period = @sourcePeriod AND jurisdiction = @sourceJurisdiction"
+          },
+          "owner": "bookkeeping-deferred-tax",
+          "tier": "T3",
+          "status": "DEFERRED — declarative contract only; live integration ships with the not-yet-merged bookkeeping-deferred-tax apply cycle on a live instance."
+        },
         "x-openregister-lifecycle": {
           "field": "state",
           "initialState": "draft",

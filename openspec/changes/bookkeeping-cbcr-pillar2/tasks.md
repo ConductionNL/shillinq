@@ -230,10 +230,22 @@
   not-yet-merged bookkeeping-consolidation-commercial apply cycle on a live
   instance — see honest-deferral note below.)*
 
-- [ ] Task 25 (DEFERRED — needs the not-yet-merged bookkeeping-deferred-tax app + a live instance): Integrate with `bookkeeping-deferred-tax` — DTA timing differences
+- [x] Task 25: Integrate with `bookkeeping-deferred-tax` — DTA timing differences
   (commercieel IFRS valuation vs fiscaal box 1 valuation) flow into
   `adjustedCoveredTaxes` calculation per REQ-CBC-004; DTA effect inclusion
   in `globeIncomeAdjustments` per REQ-CBC-003
+  *(declarative — adds `x-openregister-deferred-tax-source` block on
+  `Pillar2JurisdictionComputation` pinning the deferred-tax feed contract:
+  sourceApp=bookkeeping-deferred-tax,
+  sourceSchemas=TemporaryDifference + DeferredTaxRollForward +
+  DeferredTaxRateReconciliation, groupBy=[period,jurisdiction]; the recast
+  appends a `deferred-tax-effect` entry to `globeIncomeAdjustments[]`
+  (REQ-CBC-003) and to `coveredTaxAdjustments[]` (REQ-CBC-004) sourced from
+  the per-jurisdiction temporary differences / roll-forward; the existing
+  declarative `globeIncome` and `adjustedCoveredTaxes` calculations then fold
+  the recast into ETR. The runtime consumer ships with the not-yet-merged
+  bookkeeping-deferred-tax apply cycle on a live instance — see
+  honest-deferral note below.)*
 
 - [ ] Task 26 (DEFERRED — needs the not-yet-merged bookkeeping-vpb-mkb app + a live instance): Integrate with `bookkeeping-vpb-mkb` — NL Vpb current year +
   prior-year amounts flow into per-entity tax inputs; consolidation of Vpb per
