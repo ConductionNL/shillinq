@@ -7,7 +7,7 @@
 
 ## ADDED Requirements
 
-### REQ-JE-001: The system SHALL store journal entries as a `JournalEntry` register, distinct from the GL transactions they materialise
+### Requirement: REQ-JE-001 — The system SHALL store journal entries as a `JournalEntry` register, distinct from the GL transactions they materialise
 
 `JournalEntry` MUST be declared as a separate register in
 `lib/Settings/shillinq_register.json`. A `JournalEntry` is the
@@ -28,7 +28,11 @@ abstraction per ADR-022; no app-local audit table.
 - **THEN** no such code SHALL exist; the audit trail comes from OR
   per ADR-022.
 
-### REQ-JE-002: The `JournalEntry` schema SHALL declare a fixed minimum field set
+### Requirement: REQ-JE-002 — The `JournalEntry` schema SHALL declare a fixed minimum field set
+
+The `JournalEntry` schema MUST declare the following fields with the
+indicated types and required flags; additional Tier-N fields MAY be
+layered on later but the minimum set SHALL NOT shrink.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -63,9 +67,11 @@ config.yaml `rules.specs`).
 - **THEN** validation MUST fail with a "cadence required for
   recurring journals" error per REQ-JE-005.
 
-### REQ-JE-003: The `journalType` field SHALL be a closed enum of `manual`, `recurring`, `reversing`
+### Requirement: REQ-JE-003 — The `journalType` field SHALL be a closed enum of `manual`, `recurring`, `reversing`
 
-T1 supports exactly three journal sub-types. Adding a new sub-type
+The schema SHALL constrain `journalType` to exactly these three
+string values; any other value MUST be rejected by validation. T1
+supports exactly three journal sub-types. Adding a new sub-type
 (e.g. `closing` for T3 period close) MUST go through a future
 openspec change with explicit enum-extension justification.
 
@@ -82,7 +88,7 @@ openspec change with explicit enum-extension justification.
 - **WHEN** a journal with `journalType: "closing"` is saved
 - **THEN** validation MUST fail with an enum-violation error.
 
-### REQ-JE-004: Reversing journals SHALL automatically materialise an inverse `GLTransaction` on the designated period boundary
+### Requirement: REQ-JE-004 — Reversing journals SHALL automatically materialise an inverse `GLTransaction` on the designated period boundary
 
 A `JournalEntry` with `journalType: "reversing"` MUST carry a
 `reversesOn` field naming the `periodId` whose start triggers the
@@ -109,7 +115,7 @@ period-close transition.
   €1 000, posted, and the original transaction's
   `reversesTransactionId` MUST point at the new one.
 
-### REQ-JE-005: Recurring journals SHALL declare a `cadence` object that the OR scheduled-workflow primitive consumes
+### Requirement: REQ-JE-005 — Recurring journals SHALL declare a `cadence` object that the OR scheduled-workflow primitive consumes
 
 A `JournalEntry` with `journalType: "recurring"` MUST carry a
 `cadence` object of the shape `{interval: "monthly"|"weekly"|"daily"|"yearly", anchor: "<iso-date>", endsOn: "<iso-date>"|null, count: <integer>|null}`. The cadence MUST be consumed by OR's
@@ -137,7 +143,7 @@ back-reference the template via `journalEntryId`.
 - **THEN** no new `GLTransaction` MUST be materialised for this
   template.
 
-### REQ-JE-006: Source-document linkage SHALL consume docudesk via a foreign-key URI; no embedded blob
+### Requirement: REQ-JE-006 — Source-document linkage SHALL consume docudesk via a foreign-key URI; no embedded blob
 
 `JournalEntry.sourceDocumentUri` MUST hold a stable URI pointing at a
 docudesk attachment (or, for `sourceDocumentApp: "external"`, an
@@ -163,7 +169,7 @@ endpoint, or attachment table.
   `multipart/form-data` upload endpoints in shillinq controllers
 - **THEN** no such fields or endpoints SHALL exist.
 
-### REQ-JE-007: Posting a `JournalEntry` SHALL materialise exactly one balanced `GLTransaction`
+### Requirement: REQ-JE-007 — Posting a `JournalEntry` SHALL materialise exactly one balanced `GLTransaction`
 
 The `JournalEntry.post` lifecycle action MUST materialise exactly one
 `GLTransaction` (with N `GLLine` rows derived 1:1 from
@@ -190,7 +196,7 @@ service.
   state MUST remain `draft`; **AND** the operator MUST see a
   "transaction is not balanced" error surfaced from REQ-GL-005.
 
-### REQ-JE-008: Journal posting SHALL gate through OR's approval-workflow abstraction; no app-local approval table
+### Requirement: REQ-JE-008 — Journal posting SHALL gate through OR's approval-workflow abstraction; no app-local approval table
 
 `JournalEntry` MUST declare an `x-openregister-lifecycle` block with
 state transitions:
@@ -237,7 +243,7 @@ or per-shillinq approval service. Per ADR-022 anti-pattern list.
 - **THEN** no such classes or declarations SHALL exist; approval
   flow comes from OR.
 
-### REQ-JE-009: Journals SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-JE-009 — Journals SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare a navigation entry (`Bookkeeping >
 Journals`) with a `type: index` page binding to the `JournalEntry`
@@ -265,7 +271,7 @@ files (per ADR-024 Tier-4).
   `GLTransaction` detail page (rendered by the General Ledger
   capability's detail page per REQ-GL-007).
 
-### REQ-JE-010: Voided journals SHALL leave both the journal and its materialised posting auditable but excluded from balances
+### Requirement: REQ-JE-010 — Voided journals SHALL leave both the journal and its materialised posting auditable but excluded from balances
 
 Voiding (transitioning `posted → voided`) MUST require the
 materialised `GLTransaction` to already be reversed per REQ-GL-004
