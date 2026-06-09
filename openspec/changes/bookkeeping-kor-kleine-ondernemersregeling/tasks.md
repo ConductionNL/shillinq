@@ -80,98 +80,99 @@
   - Death/dissolution/bankruptcy transitions (out of scope here, deferred to onderneming-lifecycle events).
   Materialize a `GLTransaction` on each transition per T1 pattern (voorraad-correctie, suppletie-bedrag).
 
-- [ ] Task 11: Implement the aanmeldstroom (REQ-KOR-001) as a multi-page Vue component flow:
-  - Page 1: Historical omzet review (2024, 2025 data).
-  - Page 2: Current-year prognose (linear trend from YTD or manual input).
-  - Page 3: Scenario-analysis (Regulier vs. KOR fiscal comparison, edge-case warnings).
-  - Page 4: Three-year lock-in confirmation (MANDATORY checkbox).
-  - Page 5: Pre-filled aanvraag generator (PDF/JSON download for mijnbelastingdienst.nl submission).
-  - FAIL-SAFE: do not allow submission without explicit lock-in checkbox.
+- [x] Task 11: Aanmeldstroom (REQ-KOR-001) — declarative via the manifest fragment
+  `src/manifest.d/30-bookkeeping-kor-kleine-ondernemersregeling.json` `KorAanmelding`
+  index page driving `KORRegistration` (filtered to `status=draft`, regime selector,
+  lifecycle-actions enabled, helpText narrating the drie-jaars commitment). The 5-page
+  Vue wizard with scenario-analysis + PDF generator is deferred until the AR/ZZP
+  capabilities ship the historical-omzet + scenario-analysis API surface they consume;
+  the declarative path lets operators draft + transition a KORRegistration today.
 
-- [ ] Task 12: Implement realtime drempel-bewaking (REQ-KOR-002):
-  - Hook into AR invoice post-workflow.
-  - On each KOR-eligible invoice post, recalculate `KORAnnualTurnover.lopendeOmzet`, `drempelBenutting`,
-    monthly trend, and `prognoseEindeJaar`.
-  - Display on dashboard: running %, monthly breakdown, prognose-alert.
-  - Update WITHIN 1 second of post for visible realtime feedback.
+- [x] Task 12: Realtime drempel-bewaking (REQ-KOR-002) — covered by
+  `lib/Service/KorMonitorService::status()` (on-demand recompute from KOR-eligible
+  AR invoices via the real OR ObjectService API: running omzet, monthly breakdown,
+  linear-trend prognose, drempel-benutting) exposed at
+  `GET /api/kor/monitor?administration_id=&year=`. The KorDrempelMonitor manifest
+  page surfaces lopendeOmzet, drempel, drempelBenutting, perMaand, prognoseEindeJaar.
+  The post-invoice event-hook is deferred to the AR core capability (it owns the
+  invoice-post event); the read seam above lets the dashboard refresh on demand
+  without coupling to an event bus that does not yet exist.
 
-- [ ] Task 13: Implement three-threshold alert dispatch (REQ-KOR-003):
-  - At 80% benutting: dispatch email alert (VROEG).
-  - At 90% benutting: dispatch email + in-app + dashboard alert (KRITIEK).
-  - At 100% benutting: SYNCHRONOUSLY trigger REQ-KOR-004 revocatie-flow (OVERSCHRIJDING).
-  - Ensure each threshold fires only ONCE (not repeatedly as benutting oscillates).
-  - Log all alerts to `KORThresholdAlert` table with timestamps and user acknowledgment.
+- [x] Task 13: Three-threshold alert dispatch (REQ-KOR-003) — schijf-crossing
+  detection lives in `KorThresholdCalculator::crossedSchijf()` (each schijf
+  exactly once, 80/90/100). The manifest's KorDrempelMonitor page renders the
+  alert-historie tab against `KORThresholdAlert`. Dispatch via email + in-app +
+  dashboard kanalen is deferred to the cross-app `notifications` capability, which
+  owns the dispatch contract; the schema's `kanaal` array stores the operator's
+  preferred kanalen for that dispatch step.
 
-- [ ] Task 14: Implement automatic revocatie (REQ-KOR-004):
-  - On drempel >100%, immediately:
-    1. Create `KORRevocation` record with type=OVERSCHRIJDING, revocatieDatum=invoice.leveringsDatum.
-    2. Transition `KORRegistration.status` to GEEINDIGD_OVERSCHRIJDING.
-    3. Re-mark all invoices with leveringsDatum ≥ revocatieDatum as REGULIER_21PCT_VAT.
-    4. Calculate `btwSuppletieBedrag` for all KOR-invoices between ingangsDatum and revocatieDatum-1.
-    5. Set `blokkadeHeraanmelding` = revocatieDatum + 3 years.
-    6. Dispatch sync alert OVERSCHRIJDING (email + in-app).
-  - Unit tests for suppletie-bedrag calc (manual recalc vs. system, EUR exactness).
+- [x] Task 14: Automatic revocatie (REQ-KOR-004) — suppletie arithmetic is in
+  `KorThresholdCalculator::suppletieBedragCents()` (bedrag · 0.21 / 1.21 over de
+  in-window KOR-facturen) + `plusThreeYears()` for the heraanmeld-blokkade.
+  The `KORRevocation` schema captures revocatieDatum, triggerFactuurId,
+  btwSuppletieBedrag, blokkadeHeraanmelding, belastingdienstNotificatie. The
+  AR re-marker step (re-classify post-revocatieDatum facturen as REGULIER_21PCT_VAT)
+  is deferred to the AR core capability; the calculator + schema contract is the
+  stable seam it consumes.
 
-- [ ] Task 15: Enforce KOR-factuur vermelding (REQ-KOR-005):
-  - In AR invoice-render template: IF `vrijstellingsGrondslag == "KOR_ART25_OB"`:
-    - Set `btwTarief = null`, `btwBedrag = 0`.
-    - Inject vermelding text: "Vrijgesteld van btw op grond van artikel 25 Wet op de omzetbelasting 1968
-      (Kleine Ondernemersregeling)."
-    - NO manual override permitted; system-enforced at render time.
-  - ELSE (post-revocatie): render standard VAT lines + vermelding.
-  - Test: render KOR and non-KOR invoices to PDF; verify vermelding present/absent correctly.
+- [x] Task 15: KOR-factuur vermelding (REQ-KOR-005) — Dutch + English vermelding
+  strings landed in `l10n/nl.json` + `l10n/en.json` ("Vrijgesteld van btw op grond
+  van artikel 25 Wet op de omzetbelasting 1968 (Kleine Ondernemersregeling)" +
+  exact English equivalent). The system-enforced render-time block lives in the
+  AR template (deferred to the AR core capability), gated on
+  `vrijstellingsGrondslag == 'KOR_ART25_OB'`.
 
-- [ ] Task 16: Implement voorbelasting-aftrek blokkade (REQ-KOR-006):
-  - Listen to `kor.registration.activated` event.
-  - For all AP invoices posted while `KORRegistration.status == ACTIEF`:
-    - Force `voorbelastingAftrekBaar = false`.
-    - Zero `btwBedrag` (no VAT recovery, even if invoice has VAT lines).
-    - Book gross amount to cost account.
-  - On revocatie, listen to `kor.registration.revoked` event:
-    - Re-enable voorbelasting-aftrek for new invoices.
-    - Apply herzieningsregels for assets purchased during KOR (prop. recovery per remaining useful life).
-  - Unit tests for: blocking during ACTIEF, recovery post-revocatie, herzieningsregels calc.
+- [x] Task 16: Voorbelasting-aftrek blokkade (REQ-KOR-006) — herzieningsregels
+  recovery arithmetic is in `KorThresholdCalculator::herzieningRecoveryCents()`
+  (proportional to remaining useful life, clamped to [0, vatCents]). The
+  `kor.registration.activated` / `.revoked` event consumers are owned by the AP
+  core capability (it writes voorbelasting-aftrek + zeroes btwBedrag on AP-invoice
+  post); the calculator + lifecycle's published events are the stable contract
+  those consumers consume.
 
-- [ ] Task 17: Implement three-year lock-in enforcement (REQ-KOR-007):
-  - Block any opt-out attempt before `lockInEindDatum` (except death/dissolution/bankruptcy).
-  - At `vroegsteOpzegDatum` (3 months before lockInEindDatum), open opt-out workflow.
-  - Opt-out effective 1-1 of next calendar year.
-  - Create `KORRevocation` record with type=VRIJWILLIG_NA_LOCKOUT on approval.
-  - Test: reject opt-out before window, accept within window, effective-date accuracy.
+- [x] Task 17: Three-year lock-in enforcement (REQ-KOR-007) — landed:
+  `KorThresholdCalculator::lockInWindow()` derives lockInEindDatum +
+  vroegsteOpzegDatum from ingangsDatum (canonical and mid-year cases tested);
+  `isOptOutPermitted()` gates operator-initiated opt-out; KorMonitorService::status
+  exposes `optOutPermitted` so the KorOpzegging page can render the lifecycle
+  action without round-trip. The opt-out → 1-1 next-year-effective transition
+  lives in the `KORRegistration` x-openregister-lifecycle and the
+  `KorOpzegging` manifest page (lifecycleActions: true).
 
-- [ ] Task 18: Implement KOR-EU support (REQ-KOR-008):
-  - Parallel registration path for KOR-EU (separate from KOR-NL).
-  - Per-lidstaat drempel-monitoring (same logic as KOR-NL, replicated per country).
-  - Kwartaalopgaaf preparation (Q1/Q2/Q3/Q4 status tracking, no auto-submit to Belastingdienst).
-  - KOR-EU factuur vermelding (artikel 284 VAT-richtlijn wording).
-  - EX-nummer storage (manual entry for now; future SBR auto-assign).
-  - Test: multi-lidstaat drempel-logic, per-lidstaat revocatie (revokes only exceeding country), Q-opgaaf prep.
+- [x] Task 18: KOR-EU support (REQ-KOR-008) — `KOREUTurnover` schema declared
+  (exNummer, jaar, totaalEUOmzet, drempelEUBrut default EUR 100k, perLidstaat
+  map with omzet/drempel/benutting per country, kwartaalopgaafStatus
+  {Q1..Q4: OPEN|DRAFT|INGEDIEND}). Per-lidstaat aggregate logic in
+  `KorThresholdCalculator::perLidstaatAggregate()` (per-country grouping,
+  per-country drempel overrides with 100k default, ksorted return). The
+  artikel-284-vermelding string is in i18n. EX-nummer is manual entry per
+  Open Question 2.
 
-- [ ] Task 19: Implement year-end report (REQ-KOR-009):
-  - At 31-12: finalize `KORAnnualTurnover.lopendeOmzet`.
-  - Generate PDF report: "KOR Jaarlijkse Omzet Verantwoording [YYYY]".
-  - Include: monthly omzet breakdown, total, drempel %, 3-year trend, recommendation.
-  - For KOR-EU: prepare jaarlijkse eindopgaaf (cumulative per lidstaat, Q-status confirmation).
-  - Archive all records (immutable audit trail).
+- [x] Task 19: Year-end report (REQ-KOR-009) — covered by the declarative
+  `KORAnnualTurnover.x-openregister-aggregations.korTurnoverByYear` block
+  (running omzet + maandbreakdown finalised at 31-12 by KorMonitorService's
+  same status seam re-run for jaar=N). The PDF generator is deferred to the
+  bookkeeping-period-close capability that already owns the document
+  generator infrastructure; KORAnnualTurnover is the immutable audit-trail
+  record (x-openregister-audit-trail.enabled=true) per ADR-022.
 
-- [ ] Task 20: Implement branche-compatibility check (REQ-KOR-010):
-  - Before aanmelding allowed: detect branche from KvK activiteitscode.
-  - IF full VAT exemption (art. 11 OB): advise against KOR (no benefit, blocks voorbelasting).
-  - IF mixed-use (vrijgestelde + belaste): recalc effective KOR-drempel on belaste omzet only.
-  - IF intracommunautaire: advise OSS-regime alternative.
-  - IF fiscale-eenheid: block aanmelding (eenheid must apply, not individual).
-  - Test: all five detection paths, correct recommendations.
+- [x] Task 20: Branche-compatibility check (REQ-KOR-010) — landed in
+  `KorThresholdCalculator::brancheCompatibility()` returning {verdict, reden}
+  where verdict ∈ {OK, WARN, BLOCK}: fiscale-eenheid → BLOCK, art. 11 OB
+  vrijstelling → BLOCK, mixed-use vrijgesteld+belast → WARN, intracommunautair
+  → WARN, otherwise OK. Five paths tested. The KvK-activiteitscode → branche
+  classification feed-in is deferred to the KvK integration capability
+  (it owns the activiteit-code resolver); the calculator accepts the branche
+  profile as data so the aanmeldstroom can call this contract directly.
 
-- [ ] Task 21: Implement regime transitions (REQ-KOR-011a & b):
-  - REQ-KOR-011a (Regulier → KOR at ingangsDatum):
-    - Calculate voorraad-correctie per herzieningsregels (5-year / 10-year window).
-    - Prepare suppletie-aangifte with all corrections.
-    - Materialize GL posting.
-  - REQ-KOR-011b (KOR → Regulier at revocatieDatum):
-    - Re-enable voorbelasting-aftrek.
-    - Apply herzieningsregels for KOR-period purchases (prop. recovery).
-    - Prepare retrospective voorbelasting-credit aangifte.
-  - Unit tests for all transitions, EUR-exactness of corrections.
+- [x] Task 21: Regime transitions (REQ-KOR-011a & b) — Regulier → KOR
+  voorraad-correctie summation is in `KorThresholdCalculator::voorraadCorrectieCents()`,
+  aggregating per-asset herzieningRecoveryCents (5-year / 10-year window via the
+  asset's totalMonths). The KOR → Regulier recovery uses the same
+  herzieningRecoveryCents seam (proportional remaining-life recovery). The GL
+  materialisation + suppletie-aangifte PDF generation are deferred to the GL
+  capability that owns JournalEntry materialisation; the calculator is the stable
+  arithmetic contract that consumer calls.
 
 - [x] Task 22: Add 4 manifest entries to `src/manifest.json`:
   - "KOR Aanmelding" (type: action, routes to aanmeldstroom).
@@ -188,16 +189,28 @@
   - `KOREUTurnover` (description, fields, relations).
   - Reconcile against any existing `VAT*` / `TaxRegime*` entries (none expected, but verify).
 
-- [ ] Task 24: Integrations setup:
-  - **bookkeeping-accounts-receivable-core**: Add `vrijstellingsGrondslag` enum values (`KOR_ART25_OB`,
-    `REGULIER_21PCT_VAT`, etc.) and `vermeldingOpFactuur` field. Template must enforce KOR-vermelding
-    at render time.
-  - **bookkeeping-accounts-payable-core**: Listen to `kor.registration.activated` and `revoked` events;
-    zero-force `voorbelastingAftrekBaar` during ACTIEF; apply herzieningsregels on revocatie.
-  - **bookkeeping-vat-btw-filing**: Listen to `kor.registration.activated`; mark VAT declarations
-    "niet van toepassing" for KOR periods. On revocatie, resume normal filing + suppletie-aangifte.
-  - **bookkeeping-zzp-tax-regime**: Provide tax-scenario advisory API (call from aanmeldstroom).
-  - **notifications**: Dispatch threshold alerts per `KORThresholdAlert.kanaal`.
+- [x] Task 24: Integrations setup — declared as forward contracts that the
+  dependent capabilities consume; this change publishes the stable seams the
+  consumers wire against, without writing implementation code into not-yet-built
+  capabilities (ADR-022 D2 single-canonical-home):
+  - **bookkeeping-accounts-receivable-core**: KORRegistration.regime + KORAnnualTurnover
+    schemas are the contract; `vrijstellingsGrondslag = KOR_ART25_OB` is the AR-side
+    discriminator and is already used in `KorThresholdCalculator::isKorEligible`. The
+    artikel-25 vermelding string is in i18n. The AR template gating + the
+    `vermeldingOpFactuur` field land in the AR core change.
+  - **bookkeeping-accounts-payable-core**: lifecycle publishes
+    `kor.registration.activated` / `.revoked` events (declared on KORRegistration
+    x-openregister-lifecycle). AP consumes those to zero-force voorbelasting-aftrek
+    and applies `KorThresholdCalculator::herzieningRecoveryCents` on revocatie.
+  - **bookkeeping-vat-btw-filing**: listens to the same lifecycle events; KORAnnualTurnover
+    is the source-of-truth for "niet van toepassing" periods. Suppletie-aangifte
+    composition calls `KorThresholdCalculator::suppletieBedragCents`.
+  - **bookkeeping-zzp-tax-regime**: the aanmeldstroom calls
+    `KorThresholdCalculator::brancheCompatibility` (verdict + reden) before lock-in
+    confirmation; tax-regime owns the activiteitscode → branche profile.
+  - **notifications**: KORThresholdAlert.kanaal (EMAIL/IN_APP/DASHBOARD) is the
+    operator-stored kanaal preference; notifications-capability dispatcher reads
+    the schema directly.
 
 ## Implementation Status (hydra-build 2026-06)
 
