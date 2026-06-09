@@ -3320,6 +3320,16 @@ _Immaterieel activum eligible for the innovatiebox under the afpelmethode (Wet V
 - → WinstToerekening (one-to-many, via ipAssetId)
 - → InnovatieboxElection (many-to-one, via administrationId + fiscalYear)
 
+### QualifyingAsset / NexusCalculation / IBProfitAttribution / IBExpenseAllocation / CarryForwardLoss
+**Primary spec:** bookkeeping-innovatiebox-administratie
+
+> **Annotation (bookkeeping-innovatiebox-administratie, 2026-06-09):** Five Tier-4 schemas declared in `lib/Settings/register.d/bookkeeping-innovatiebox-administratie.json` (ADR-037 fragment; never the monolith). `QualifyingAsset` is the IP-asset registry with `toegangsticket` validation (S&O / octrooi / combinatie routes per Wet Vpb art. 12ba, REQ-IBA-001) — the `schema:CreativeWork` annotation is on the schema itself. `NexusCalculation` is the immutable per-asset OECD BEPS Action 5 modified nexus per boekjaar (`x-openregister.immutable: true`, REQ-IBA-002). `IBProfitAttribution` is per-asset winsttoerekening with three statutory methods (afpelmethode / forfaitair_25pct / cost_plus, REQ-IBA-003) plus the `vso_locked` + `forfaitair_cap_applied` flags that gate the audit-trail listener. `IBExpenseAllocation` carries the doorsnijdingsverbod `exclusief_in_winstbepaling` flag for the year-end duplication check (REQ-IBA-004). `CarryForwardLoss` is the asset-specific immutable voortwenteling-verlies queue with `verrekend_boekjaar` entries (REQ-IBA-005). Cross-references: `InnovatieboxElection` (year-level route choice that drives which IB schemas the aggregation walks); `WBSO-uren-tagging` (S&O-route ticket validation source); `Vpb-corporate-tax.regel23` (grand-total target).
+
+### InnovatieboxAuditEvent
+**Primary spec:** bookkeeping-innovatiebox-administratie
+
+> **Annotation (bookkeeping-innovatiebox-administratie, 2026-06-09):** Append-only audit-trail record per innovatiebox lifecycle transition (REQ-IBA-008, REQ-IBA-009). Declared with `x-openregister.immutable: true`. Captures one event per `NexusCalculation.calculated`, `IBProfitAttribution.created`/`finalized`/`amendment_attempt_blocked` (the last on a write that arrives under a VSO-locked year), `CarryForwardLoss.created`/`offset_applied`, `DoorsnijdingsVerbod.check_run` and `ForfaitairCap.applied`. Used by Belastingdienst VSO defence to reproduce the calculation chain end-to-end; the actor uid is stamped from the active session (never a BSN per ADR-005). Wired via the new `InnovatieboxAuditTrailListener` on OR's `ObjectCreatedEvent` + `ObjectUpdatedEvent`.
+
 ### Invoice
 **Schema.org:** `schema:DigitalDocument`
 _Financial document detailing goods/services provided and creating an obligation for payment_

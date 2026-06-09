@@ -317,6 +317,7 @@ return [
         ['name' => 'innovatiebox#aggregation', 'url' => '/api/innovatiebox/aggregation', 'verb' => 'GET'],
         ['name' => 'innovatiebox#scenario', 'url' => '/api/innovatiebox/scenario', 'verb' => 'GET'],
         ['name' => 'innovatiebox#doorsnijdingsverbod', 'url' => '/api/innovatiebox/doorsnijdingsverbod', 'verb' => 'GET'],
+        ['name' => 'innovatiebox#export', 'url' => '/api/innovatiebox/export', 'verb' => 'GET'],
 
         // Programmabegroting exports (bookkeeping-programmabegroting,
         // REQ-011, REQ-012). Sluitend-status + iv3 + JSON exports.

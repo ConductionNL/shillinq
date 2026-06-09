@@ -25,6 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 use OCA\Shillinq\Controller\InnovatieboxController;
 use OCA\Shillinq\Service\DoorsnijdingsVerbodValidator;
 use OCA\Shillinq\Service\InnovatieboxAggregationService;
+use OCA\Shillinq\Service\InnovatieboxSbrExportService;
 use OCA\Shillinq\Service\NexusCalculationService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -75,6 +76,13 @@ final class InnovatieboxControllerTest extends TestCase
     private DoorsnijdingsVerbodValidator&MockObject $doorsnijden;
 
     /**
+     * Real SBR/PDF export service (pure logic — no need to mock).
+     *
+     * @var InnovatieboxSbrExportService
+     */
+    private InnovatieboxSbrExportService $sbrExport;
+
+    /**
      * Mock user session.
      *
      * @var IUserSession&MockObject
@@ -107,6 +115,7 @@ final class InnovatieboxControllerTest extends TestCase
         $this->aggregation = $this->createMock(InnovatieboxAggregationService::class);
         $this->nexus       = new NexusCalculationService();
         $this->doorsnijden = $this->createMock(DoorsnijdingsVerbodValidator::class);
+        $this->sbrExport   = new InnovatieboxSbrExportService();
         $this->userSession = $this->createMock(IUserSession::class);
         $this->logger      = $this->createMock(LoggerInterface::class);
 
@@ -119,6 +128,7 @@ final class InnovatieboxControllerTest extends TestCase
             aggregation: $this->aggregation,
             nexus: $this->nexus,
             doorsnijden: $this->doorsnijden,
+            sbrExport: $this->sbrExport,
             userSession: $this->userSession,
             logger: $this->logger,
         );

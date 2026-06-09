@@ -26,6 +26,7 @@ use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
 use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
+use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Notification\Notifier;
@@ -42,6 +43,10 @@ use OCA\Shillinq\Service\Pipelinq\LoggingPipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue;
 use OCA\Shillinq\Service\Pipelinq\PipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
+use OCA\Shillinq\Service\DoorsnijdingsVerbodValidator;
+use OCA\Shillinq\Service\InnovatieboxAuditEventLogger;
+use OCP\IAppConfig;
+use Psr\Container\ContainerInterface;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
@@ -177,6 +182,40 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectUpdatedEvent::class,
             listener: GLTransactionComplianceCacheListener::class
+        );
+
+        // Bookkeeping-innovatiebox-administratie — append an immutable
+        // InnovatieboxAuditEvent per relevant lifecycle transition on the
+        // three innovatiebox subject schemas (NexusCalculation,
+        // IBProfitAttribution, CarryForwardLoss). Captures *.created,
+        // IBProfitAttribution.finalized (vso_locked: false -> true) and
+        // IBProfitAttribution.amendment_attempt_blocked when an update
+        // arrives on a VSO-locked year (REQ-IBA-008). Tasks 5.1-5.3.
+        // Fail-soft: the listener never bubbles an error into OR's write
+        // path; a logging failure becomes a Psr warning.
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: InnovatieboxAuditTrailListener::class
+        );
+        $context->registerEventListener(
+            event: ObjectUpdatedEvent::class,
+            listener: InnovatieboxAuditTrailListener::class
+        );
+
+        // Wire the DoorsnijdingsVerbodValidator with the optional audit
+        // logger so every validateNoDuplication run emits a
+        // DoorsnijdingsVerbod.check_run event (task 5.4, REQ-IBA-008).
+        // The constructor's third argument is nullable so the existing
+        // unit tests can build the validator without the OR event chain.
+        $context->registerService(
+            DoorsnijdingsVerbodValidator::class,
+            static function (ContainerInterface $c): DoorsnijdingsVerbodValidator {
+                return new DoorsnijdingsVerbodValidator(
+                    $c,
+                    $c->get(IAppConfig::class),
+                    $c->get(InnovatieboxAuditEventLogger::class),
+                );
+            }
         );
 
         // bookkeeping-credit-control-dunning tasks 19/20/21 — wire the

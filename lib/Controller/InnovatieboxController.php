@@ -35,6 +35,7 @@ namespace OCA\Shillinq\Controller;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\DoorsnijdingsVerbodValidator;
 use OCA\Shillinq\Service\InnovatieboxAggregationService;
+use OCA\Shillinq\Service\InnovatieboxSbrExportService;
 use OCA\Shillinq\Service\NexusCalculationService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -75,6 +76,7 @@ class InnovatieboxController extends Controller
         private readonly InnovatieboxAggregationService $aggregation,
         private readonly NexusCalculationService $nexus,
         private readonly DoorsnijdingsVerbodValidator $doorsnijden,
+        private readonly InnovatieboxSbrExportService $sbrExport,
         private readonly IUserSession $userSession,
         private readonly LoggerInterface $logger,
     ) {
@@ -220,6 +222,89 @@ class InnovatieboxController extends Controller
         return new JSONResponse($result, Http::STATUS_OK);
 
     }//end doorsnijdingsverbod()
+
+    /**
+     * Render the SBR/XBRL + docudesk PDF hand-off payload for the Vpb
+     * innovatiebox-sectie (REQ-IBA-006, task 8.1).
+     *
+     * Query parameters:
+     *  - administration_id (required) administration scope (REQ-IBA-008).
+     *  - boekjaar          (required) fiscal year (4-digit).
+     *  - methode           (optional) 'per_asset_afpelmethode' (default) or
+     *                      'forfaitair_25pct'.
+     *
+     * Returns {sbr, pdf} with the deterministic instanceRef, the per-asset
+     * rows (or the single forfaitair line), and the totals that contribute
+     * to Vpb-aangifte regel 23. The actual XBRL serialisation + Digipoort
+     * transport is owned by the not-yet-merged bookkeeping-sbr-xbrl-reporting
+     * NT mapper; this endpoint produces the deterministic hand-off contract.
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-8-1
+     */
+    #[NoAdminRequired]
+    public function export(): JSONResponse
+    {
+        $administrationId = trim((string) $this->request->getParam('administration_id', ''));
+        $boekjaar         = trim((string) $this->request->getParam('boekjaar', ''));
+        $methode          = trim((string) $this->request->getParam('methode', 'per_asset_afpelmethode'));
+
+        $error = $this->requireAdministration(administrationId: $administrationId);
+        if ($error !== null) {
+            return $error;
+        }
+
+        $yearError = $this->requireYear(boekjaar: $boekjaar);
+        if ($yearError !== null) {
+            return $yearError;
+        }
+
+        $allowed = ['per_asset_afpelmethode', 'forfaitair_25pct', 'cost_plus'];
+        if (in_array($methode, $allowed, true) === false) {
+            return new JSONResponse(
+                ['error' => 'methode must be one of '.implode(', ', $allowed)],
+                Http::STATUS_BAD_REQUEST
+            );
+        }
+
+        try {
+            $aggregation = $this->aggregation->aggregate(
+                administrationId: $administrationId,
+                boekjaar: (int) $boekjaar
+            );
+
+            $sbr = $this->sbrExport->toSbrInstancePayload(
+                aggregation: $aggregation,
+                administrationId: $administrationId,
+                boekjaar: (int) $boekjaar,
+                methode: $methode
+            );
+
+            $pdf = $this->sbrExport->toPdfRenderContext(
+                aggregation: $aggregation,
+                administrationId: $administrationId,
+                boekjaar: (int) $boekjaar,
+                methode: $methode
+            );
+        } catch (\Throwable $e) {
+            return $this->fail(
+                message: 'Failed to render innovatiebox SBR/PDF export',
+                context: [
+                    'administrationId' => $administrationId,
+                    'boekjaar'         => $boekjaar,
+                    'methode'          => $methode,
+                    'exception'        => $e->getMessage(),
+                ]
+            );
+        }
+
+        return new JSONResponse(
+            ['sbr' => $sbr, 'pdf' => $pdf],
+            Http::STATUS_OK
+        );
+
+    }//end export()
 
     /**
      * Validate the administration_id parameter (REQ-IBA-008).

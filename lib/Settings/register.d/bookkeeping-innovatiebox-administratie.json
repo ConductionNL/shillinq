@@ -402,6 +402,11 @@
 						"description": "True once the fiscal year is signed off in a VSO; record becomes read-only (REQ-IBA-008).",
 						"default": false
 					},
+					"forfaitair_cap_applied": {
+						"type": "boolean",
+						"description": "True when the forfaitair_25pct election hit the EUR 25k annual cap (art. 12bg). Drives the ForfaitairCap.applied audit event (REQ-IBA-008).",
+						"default": false
+					},
 					"administrationId": {
 						"type": "string",
 						"example": "adm-mkb-1"
@@ -624,6 +629,87 @@
 					"administrationId": {
 						"type": "string",
 						"example": "adm-mkb-1"
+					}
+				}
+			},
+			"InnovatieboxAuditEvent": {
+				"slug": "InnovatieboxAuditEvent",
+				"icon": "TextBoxCheckOutline",
+				"version": "0.1.0",
+				"title": "Innovatiebox Audit Event",
+				"description": "Immutable audit event for innovatiebox lifecycle transitions (REQ-IBA-008 + REQ-IBA-009). One record per nexus calculation, profit-attribution write, year-end finalisation, VSO-locked amendment attempt, doorsnijdingsverbod check and forfaitair-cap application. Append-only by x-openregister.immutable. Used by Belastingdienst VSO audit-reproducibility and by the internal audit log.",
+				"x-spec": "openspec/changes/bookkeeping-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008",
+				"x-openregister": {
+					"immutable": true
+				},
+				"type": "object",
+				"required": [
+					"event_type",
+					"event_timestamp",
+					"administrationId"
+				],
+				"properties": {
+					"event_type": {
+						"type": "string",
+						"description": "Lifecycle event type. Mirrors the listener constants in InnovatieboxAuditEventLogger.",
+						"enum": [
+							"NexusCalculation.calculated",
+							"IBProfitAttribution.created",
+							"IBProfitAttribution.finalized",
+							"IBProfitAttribution.amendment_attempt_blocked",
+							"CarryForwardLoss.created",
+							"CarryForwardLoss.offset_applied",
+							"DoorsnijdingsVerbod.check_run",
+							"ForfaitairCap.applied"
+						],
+						"example": "IBProfitAttribution.created"
+					},
+					"event_timestamp": {
+						"type": "string",
+						"format": "date-time",
+						"description": "ISO-8601 UTC timestamp when the event was recorded."
+					},
+					"actor_uid": {
+						"type": "string",
+						"description": "Acting user UID (Nextcloud uid, never a BSN per ADR-005).",
+						"nullable": true
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "Administration scope (REQ-IBA-008).",
+						"example": "adm-mkb-1"
+					},
+					"boekjaar": {
+						"type": "integer",
+						"description": "Fiscal year the event relates to.",
+						"nullable": true,
+						"example": 2026
+					},
+					"qualifying_asset_id": {
+						"type": "string",
+						"description": "FK to the QualifyingAsset (when applicable).",
+						"nullable": true
+					},
+					"subject_schema": {
+						"type": "string",
+						"description": "Schema slug of the subject record (NexusCalculation / IBProfitAttribution / CarryForwardLoss).",
+						"nullable": true
+					},
+					"subject_id": {
+						"type": "string",
+						"description": "Object id of the subject record.",
+						"nullable": true
+					},
+					"reason": {
+						"type": "string",
+						"description": "Reason / context (e.g. 'vso_locked', 'cap_hit', 'doorsnijdingsverbod_duplicate').",
+						"nullable": true
+					},
+					"details": {
+						"type": "object",
+						"description": "Structured event payload (event-type specific; e.g. nexus figures, blocked update fields, cap reduction, duplicate findings).",
+						"nullable": true,
+						"additionalProperties": true
 					}
 				}
 			}
