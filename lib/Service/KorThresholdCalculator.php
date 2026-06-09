@@ -308,6 +308,248 @@ class KorThresholdCalculator
     }//end plusThreeYears()
 
     /**
+     * Resolve the canonical lock-in window for a KOR-NL registration (REQ-KOR-007).
+     *
+     * NL-KOR lock-in is three full calendar years counted from the ingangsDatum.
+     * vroegsteOpzegDatum is the three-month opt-out window, opening on the first
+     * day of October of the third year (lockInEindDatum - 3 months). The returned
+     * dates are exact YYYY-MM-DD strings — the caller persists them on the
+     * KORRegistration record so the manifest pages can render the window.
+     *
+     * @param string $ingangsDatum KOR-NL effective date (YYYY-MM-DD).
+     *
+     * @return array{lockInEindDatum:string,vroegsteOpzegDatum:string}|null Window or null on invalid input.
+     *
+     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     */
+    public function lockInWindow(string $ingangsDatum): ?array
+    {
+        if (preg_match('/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/', $ingangsDatum, $match) !== 1) {
+            return null;
+        }
+
+        $year  = ((int) $match[1] + 3);
+        $month = (int) $match[2];
+        $day   = (int) $match[3];
+        if ($month < 1 || $month > 12 || $day < 1 || $day > 31) {
+            return null;
+        }
+
+        // lockInEindDatum: ingangsDatum - 1 day + 3 years = end of third calendar year.
+        // For a 1-1 ingangsdatum, that is 31-12 of (year + 2). We model the general
+        // case as +3 years - 1 day; for the canonical 1-1 start the prior day is 31-12.
+        if ($month === 1 && $day === 1) {
+            $lockInYear  = ($year - 1);
+            $lockInEinde = sprintf('%04d-12-31', $lockInYear);
+        } else {
+            $priorDay   = ($day - 1);
+            $priorMonth = $month;
+            if ($priorDay < 1) {
+                $priorMonth = ($month - 1);
+                if ($priorMonth < 1) {
+                    $priorMonth = 12;
+                    $year      -= 1;
+                }
+                $priorDay = (int) date('t', strtotime(sprintf('%04d-%02d-01', $year, $priorMonth)));
+            }
+            $lockInEinde = sprintf('%04d-%02d-%02d', $year, $priorMonth, $priorDay);
+        }
+
+        // Vroegste opzeg-datum = three months before lockInEinde, rounded to the
+        // first day of that month (canonical opt-out window opens 1 October when
+        // lockInEinde is 31 December).
+        if (preg_match('/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/', $lockInEinde, $m2) !== 1) {
+            return null;
+        }
+
+        $lyear  = (int) $m2[1];
+        $lmonth = (int) $m2[2];
+        $opzegMonth = ($lmonth - 2);
+        $opzegYear  = $lyear;
+        if ($opzegMonth < 1) {
+            $opzegMonth += 12;
+            $opzegYear  -= 1;
+        }
+        $vroegsteOpzeg = sprintf('%04d-%02d-01', $opzegYear, $opzegMonth);
+
+        return [
+            'lockInEindDatum'    => $lockInEinde,
+            'vroegsteOpzegDatum' => $vroegsteOpzeg,
+        ];
+
+    }//end lockInWindow()
+
+    /**
+     * Decide whether a vrijwillige opzegging is permitted at a moment in time (REQ-KOR-007).
+     *
+     * Opt-out is blocked until vroegsteOpzegDatum (three months before the end of
+     * the three-year lock-in) and again after lockInEindDatum the registration is
+     * already at its natural end (different lifecycle path).
+     *
+     * @param string $today              Today's date (YYYY-MM-DD).
+     * @param string $vroegsteOpzegDatum Earliest opt-out date (YYYY-MM-DD).
+     * @param string $lockInEindDatum    End of the lock-in window (YYYY-MM-DD).
+     *
+     * @return bool True when an operator-initiated opt-out is permitted.
+     *
+     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     */
+    public function isOptOutPermitted(string $today, string $vroegsteOpzegDatum, string $lockInEindDatum): bool
+    {
+        if ($vroegsteOpzegDatum === '' || $lockInEindDatum === '') {
+            return false;
+        }
+
+        return ($today >= $vroegsteOpzegDatum && $today <= $lockInEindDatum);
+
+    }//end isOptOutPermitted()
+
+    /**
+     * Aggregate cross-border KOR-EU omzet per lidstaat (REQ-KOR-008).
+     *
+     * Walks the KOR-EU AR invoices, groups them by lidstaat-ISO-code, sums omzet
+     * per country, and resolves benutting against the per-lidstaat drempel passed
+     * in $drempelsPerLidstaat. Countries not in the drempels map fall back to
+     * the EU-wide default 100000 EUR ceiling. Arithmetic in cents.
+     *
+     * @param array<int,array<string,mixed>> $invoices            KOR-EU AR-invoice records (must carry `lidstaat`).
+     * @param array<string,float>            $drempelsPerLidstaat Per-country drempel (EUR); e.g. ['BE' => 25000, 'DE' => 22000].
+     * @param int                            $year                Calendar year to bound the aggregation.
+     *
+     * @return array<string,array{omzet:float,drempel:float,benutting:float}> Per-lidstaat aggregate.
+     *
+     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     */
+    public function perLidstaatAggregate(array $invoices, array $drempelsPerLidstaat, int $year): array
+    {
+        $defaultDrempelCents = $this->toCents(amount: 100000);
+        $cents               = [];
+        foreach ($invoices as $invoice) {
+            if ((string) ($invoice['vrijstellingsGrondslag'] ?? '') !== 'KOR_ART25_OB') {
+                continue;
+            }
+
+            $lidstaat = strtoupper((string) ($invoice['lidstaat'] ?? ''));
+            if ($lidstaat === '') {
+                continue;
+            }
+
+            $leveringsDatum = (string) ($invoice['leveringsDatum'] ?? '');
+            if (substr($leveringsDatum, 0, 4) !== (string) $year) {
+                continue;
+            }
+
+            $cents[$lidstaat] = (($cents[$lidstaat] ?? 0) + $this->toCents(amount: ($invoice['bedrag'] ?? 0)));
+        }
+
+        $result = [];
+        foreach ($cents as $lidstaat => $omzetCents) {
+            $drempelCents = ($defaultDrempelCents);
+            if (isset($drempelsPerLidstaat[$lidstaat]) === true) {
+                $drempelCents = $this->toCents(amount: $drempelsPerLidstaat[$lidstaat]);
+            }
+
+            $result[$lidstaat] = [
+                'omzet'     => $this->fromCents(cents: $omzetCents),
+                'drempel'   => $this->fromCents(cents: $drempelCents),
+                'benutting' => round($this->benutting(omzetCents: $omzetCents, drempelCents: $drempelCents), 4),
+            ];
+        }
+
+        ksort($result);
+        return $result;
+
+    }//end perLidstaatAggregate()
+
+    /**
+     * Resolve a branche-specifieke advisory for a KOR-NL aanmelding (REQ-KOR-010).
+     *
+     * Combines the KvK activiteitscode-class and the administration's vrijstellingen
+     * to surface compatibility issues before lock-in:
+     *  - art. 11 OB full exemption -> KOR adds no benefit and disables voorbelasting (BLOCK).
+     *  - mixed-use vrijgesteld+belast -> effective drempel only on the belaste deel (WARN).
+     *  - intracommunautair -> OSS-regime is the better fit (WARN).
+     *  - fiscale-eenheid -> eenheid must apply, not the individual (BLOCK).
+     * Otherwise OK. The returned advisory is text-based (REQ-KOR-010 no chatbot).
+     *
+     * @param array<string,mixed> $branche Administration's branche profile.
+     *
+     * @return array{verdict:string,reden:string} Verdict (OK|WARN|BLOCK) + reden.
+     *
+     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     */
+    public function brancheCompatibility(array $branche): array
+    {
+        $isFiscaleEenheid = (bool) ($branche['fiscaleEenheid'] ?? false);
+        if ($isFiscaleEenheid === true) {
+            return [
+                'verdict' => 'BLOCK',
+                'reden'   => 'KOR aanmelden door een fiscale eenheid is niet mogelijk; de eenheid zelf moet aanmelden, niet een individuele deelnemer.',
+            ];
+        }
+
+        $fullExempt = (bool) ($branche['art11Vrijstelling'] ?? false);
+        if ($fullExempt === true) {
+            return [
+                'verdict' => 'BLOCK',
+                'reden'   => 'Onderneming valt volledig onder art. 11 OB; KOR levert geen voordeel en blokkeert voorbelasting-aftrek.',
+            ];
+        }
+
+        $isMixed = (bool) ($branche['vrijgesteldEnBelast'] ?? false);
+        if ($isMixed === true) {
+            return [
+                'verdict' => 'WARN',
+                'reden'   => 'Mixed-use vrijgesteld + belast: effective KOR-drempel wordt berekend over alleen het belaste deel.',
+            ];
+        }
+
+        $isIntra = (bool) ($branche['intracommunautair'] ?? false);
+        if ($isIntra === true) {
+            return [
+                'verdict' => 'WARN',
+                'reden'   => 'Bedrijf doet structureel intracommunautaire leveringen; overweeg OSS-regime als alternatief.',
+            ];
+        }
+
+        return ['verdict' => 'OK', 'reden' => 'Geen branche-specifieke contra-indicaties; KOR is geschikt.'];
+
+    }//end brancheCompatibility()
+
+    /**
+     * Compute the voorraad-correctie suppletie for a Regulier -> KOR transition (REQ-KOR-011a).
+     *
+     * On Regulier -> KOR aanmelding, voorbelasting-aftrek that was claimed on
+     * investeringsgoederen still held at ingangsDatum must be partially returned
+     * per herzieningsregels: corrected = original * (remainingMonths / totalMonths).
+     * Equipment lifetime defaults to 60 months, real estate to 120 months. The
+     * suppletie aangifte sums the corrections per asset. Arithmetic in cents.
+     *
+     * @param array<int,array<string,mixed>> $assets Asset records with vatCents + remainingMonths + totalMonths.
+     *
+     * @return int Total voorraad-correctie suppletie in cents.
+     *
+     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     */
+    public function voorraadCorrectieCents(array $assets): int
+    {
+        $total = 0;
+        foreach ($assets as $asset) {
+            $vatCents        = (int) ($asset['vatCents'] ?? 0);
+            $remainingMonths = (int) ($asset['remainingMonths'] ?? 0);
+            $totalMonths     = (int) ($asset['totalMonths'] ?? 0);
+            $total          += $this->herzieningRecoveryCents(
+                vatCents: $vatCents,
+                remainingMonths: $remainingMonths,
+                totalMonths: $totalMonths
+            );
+        }
+
+        return $total;
+
+    }//end voorraadCorrectieCents()
+
+    /**
      * Compute proportional voorbelasting recovery per herzieningsregels (REQ-KOR-006, REQ-KOR-011).
      *
      * On revocatie, voorbelasting on an asset purchased during KOR (where no aftrek

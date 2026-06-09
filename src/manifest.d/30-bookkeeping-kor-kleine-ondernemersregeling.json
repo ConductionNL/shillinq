@@ -1,0 +1,231 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-kor-kleine-ondernemersregeling",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Declarative manifest-v2 navigation for the Tier-2 KOR capability (Task 22). Adds four entries under the existing Belastingen menu: KorAanmelding (opt-in flow as an index of draft KORRegistrations), KorDashboard (drempel-benutting + alerts overview), KorDrempelMonitor (KORAnnualTurnover detail with monthly breakdown, prognose, alert-history), and KorOpzegging (opt-out flow as an index of ACTIEF KORRegistrations past their vroegsteOpzegDatum). All four are pure config rendered by the nc-vue manifest-v2 shell (createObjectStore against the shillinq register) — no Vue components, no router (ADR-024 / manifest-v2). The pre-existing KorStatus + KorStatusDetail entries (driven by the legacy KorRegime schema) are deliberately untouched and co-exist."
+	},
+	"menu": [
+		{
+			"id": "Belastingen",
+			"children": [
+				{
+					"id": "KorAanmelding",
+					"label": "KOR Aanmelding",
+					"icon": "ShieldPlusOutline",
+					"route": "KorAanmelding",
+					"order": 11
+				},
+				{
+					"id": "KorDashboard",
+					"label": "KOR Dashboard",
+					"icon": "ViewDashboardOutline",
+					"route": "KorDashboard",
+					"order": 12
+				},
+				{
+					"id": "KorDrempelMonitor",
+					"label": "Drempel Monitor",
+					"icon": "GaugeFull",
+					"route": "KorDrempelMonitor",
+					"order": 13
+				},
+				{
+					"id": "KorOpzegging",
+					"label": "KOR Opzegging",
+					"icon": "ShieldRemoveOutline",
+					"route": "KorOpzegging",
+					"order": 14
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "KorAanmelding",
+			"route": "/belastingen/kor-aanmelding",
+			"type": "index",
+			"title": "KOR Aanmelding",
+			"config": {
+				"register": "shillinq",
+				"schema": "KORRegistration",
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"mkb",
+						"zzp"
+					]
+				},
+				"filters": [
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "enum",
+						"defaultValue": "draft",
+						"options": [
+							{ "value": "draft", "label": "Concept" },
+							{ "value": "ACTIEF", "label": "Actief" }
+						]
+					},
+					{
+						"key": "regime",
+						"label": "Regime",
+						"type": "enum",
+						"options": [
+							{ "value": "KOR_NL", "label": "NL-KOR (art. 25 OB)" },
+							{ "value": "KOR_EU", "label": "KOR-EU (art. 25a-25d OB)" }
+						]
+					}
+				],
+				"columns": [
+					{ "key": "ondernemingId", "label": "Onderneming", "sortable": true },
+					{ "key": "regime", "label": "Regime", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "aanmeldDatum", "label": "Aanmeld-datum", "sortable": true },
+					{ "key": "ingangsDatum", "label": "Ingangs-datum", "sortable": true },
+					{ "key": "lockInEindDatum", "label": "Lock-in einde", "sortable": true },
+					{ "key": "belastingdienstReferentie", "label": "BD-referentie" }
+				],
+				"defaultSort": "-aanmeldDatum",
+				"lifecycleActions": true,
+				"helpText": "Begin een nieuwe KOR-aanmelding. Een aanmelding is een drie-jaars commitment (lock-in). Bevestig de scenario-analyse, de historische omzet, de prognose en de drempel-blokkade voor je submit naar mijnbelastingdienst.nl/zakelijk."
+			}
+		},
+		{
+			"id": "KorDashboard",
+			"route": "/belastingen/kor-dashboard",
+			"type": "index",
+			"title": "KOR Dashboard",
+			"config": {
+				"register": "shillinq",
+				"schema": "KORRegistration",
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"mkb",
+						"zzp"
+					]
+				},
+				"filters": [
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "enum",
+						"defaultValue": "ACTIEF",
+						"options": [
+							{ "value": "ACTIEF", "label": "Actief" },
+							{ "value": "GEEINDIGD_OVERSCHRIJDING", "label": "Beëindigd — overschrijding" },
+							{ "value": "GEEINDIGD_VRIJWILLIG", "label": "Beëindigd — vrijwillig" }
+						]
+					}
+				],
+				"columns": [
+					{ "key": "ondernemingId", "label": "Onderneming", "sortable": true },
+					{ "key": "regime", "label": "Regime" },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "ingangsDatum", "label": "Ingangs-datum", "sortable": true },
+					{ "key": "lockInEindDatum", "label": "Lock-in einde", "sortable": true },
+					{ "key": "drempelJaar", "label": "Drempel (EUR)" }
+				],
+				"defaultSort": "-ingangsDatum",
+				"detailRoute": "KorDrempelMonitor",
+				"helpText": "Overzicht van alle KOR-registraties van deze administratie. Klik door naar Drempel Monitor om realtime drempel-benutting, maandprognose en alert-historie te bekijken (REQ-KOR-002, REQ-KOR-003)."
+			}
+		},
+		{
+			"id": "KorDrempelMonitor",
+			"route": "/belastingen/kor-drempel/:id",
+			"type": "detail",
+			"title": "Drempel Monitor",
+			"config": {
+				"register": "shillinq",
+				"schema": "KORAnnualTurnover",
+				"fields": [
+					{ "key": "registrationId", "label": "Registratie", "type": "string" },
+					{ "key": "jaar", "label": "Kalenderjaar", "type": "integer" },
+					{ "key": "lopendeOmzet", "label": "Lopende omzet (EUR)", "type": "money" },
+					{ "key": "drempel", "label": "Drempel (EUR)", "type": "money" },
+					{ "key": "drempelBenutting", "label": "Benutting", "type": "number" },
+					{ "key": "perMaand", "label": "Omzet per maand", "type": "json" },
+					{ "key": "uitgeslotenPosten", "label": "Uitgesloten posten", "type": "array" },
+					{ "key": "prognoseEindeJaar", "label": "Prognose eind jaar (EUR)", "type": "money" },
+					{ "key": "prognoseStatus", "label": "Prognose-status", "type": "string" }
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "alerts",
+							"label": "Alert-historie",
+							"icon": "AlertOutline",
+							"order": 10,
+							"widgets": [
+								{
+									"id": "kor-alerts",
+									"type": "list",
+									"register": "shillinq",
+									"schema": "KORThresholdAlert",
+									"filter": {
+										"field": "registrationId",
+										"op": "eq",
+										"valueFromField": "registrationId"
+									},
+									"columns": [
+										{ "key": "uitgeloostOp", "label": "Tijdstip" },
+										{ "key": "trigger", "label": "Schijf" },
+										{ "key": "ernst", "label": "Ernst" },
+										{ "key": "drempelBenutting", "label": "Benutting" }
+									]
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "KorOpzegging",
+			"route": "/belastingen/kor-opzegging",
+			"type": "index",
+			"title": "KOR Opzegging",
+			"config": {
+				"register": "shillinq",
+				"schema": "KORRegistration",
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"mkb",
+						"zzp"
+					]
+				},
+				"filters": [
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "enum",
+						"defaultValue": "ACTIEF",
+						"options": [
+							{ "value": "ACTIEF", "label": "Actief" }
+						]
+					}
+				],
+				"columns": [
+					{ "key": "ondernemingId", "label": "Onderneming", "sortable": true },
+					{ "key": "regime", "label": "Regime" },
+					{ "key": "ingangsDatum", "label": "Ingangs-datum", "sortable": true },
+					{ "key": "lockInEindDatum", "label": "Lock-in einde", "sortable": true },
+					{ "key": "vroegsteOpzegDatum", "label": "Vroegste opzeg-datum", "sortable": true }
+				],
+				"defaultSort": "vroegsteOpzegDatum",
+				"lifecycleActions": true,
+				"helpText": "Vrijwillige opzegging van een ACTIEF KOR-registratie. Opzegging is geblokkeerd tot lockInEindDatum (REQ-KOR-007); de vroegste opzeg-datum is drie maanden vóór einde lock-in. De effectieve einddatum is 1-1 van het volgende kalenderjaar. Bij goedkeuring wordt automatisch een KORRevocation met type=VRIJWILLIG_NA_LOCKOUT aangemaakt."
+			}
+		}
+	]
+}

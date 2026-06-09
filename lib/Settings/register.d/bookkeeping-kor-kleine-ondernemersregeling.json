@@ -16,6 +16,10 @@
 				"description": "Eén KOR-registratie per onderneming per regime (NL-KOR of KOR-EU): aanmeldgegevens, ingangsdatum, drie-jaars-lock-in einddatum, status, en de Belastingdienst-referentie (REQ-KOR-001, REQ-KOR-007). Status verloopt via de declaratieve lifecycle (ADR-031): draft -> ACTIEF -> GEEINDIGD_OVERSCHRIJDING | GEEINDIGD_VRIJWILLIG. Wet OB 1968 art. 25 (NL-KOR) / art. 25a-25d (KOR-EU).",
 				"x-schema-org": "schema:DefinedTerm",
 				"x-spec": "openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/specs.md",
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "KORRegistration changes (status transitions, lock-in evolution, Belastingdienst-referentie updates) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022. Every change is fiscaal relevant — it gates voorbelasting-aftrek, factuurvermelding, en suppletie-berekening, and feeds into auditor + Belastingdienst review at year-end."
+				},
 				"type": "object",
 				"required": [
 					"ondernemingId",
@@ -179,6 +183,10 @@
 				"description": "Lopende KOR-relevante omzet per kalenderjaar met drempel-benutting en maandprognose (REQ-KOR-002). Niet alle omzet telt mee: vrijgestelde prestaties (art. 11 OB), intracommunautaire leveringen en onroerend goed worden uitgesloten. Drempel-benutting wordt door KorMonitorService na elke geboekte AR-factuur herrekend; de x-openregister-aggregations-blok documenteert de equivalente declaratieve vorm (ADR-031).",
 				"x-schema-org": "schema:MonetaryAmount",
 				"x-spec": "openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/specs.md",
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "KORAnnualTurnover updates (post-invoice recalcs, uitgesloten-posten herclassificatie, prognose-status flips) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — the running drempel-benutting is the fiscaal trigger for de revocatie-flow (REQ-KOR-004) en alert-dispatch (REQ-KOR-003)."
+				},
 				"type": "object",
 				"required": [
 					"registrationId",
@@ -311,6 +319,10 @@
 				"description": "Waarschuwingsevent zodra de drempel-benutting een schijf passeert (REQ-KOR-003): 80% (VROEG), 90% (KRITIEK), 100% (OVERSCHRIJDING -> synchrone revocatie). Elke schijf vuurt eenmalig. Logt omzet-op-moment, ernst, kanaal en aanbeveling; publiceert naar notifications.dispatch.",
 				"x-schema-org": "schema:Action",
 				"x-spec": "openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/specs.md",
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "KORThresholdAlert events MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — alert dispatch + acknowledgment is the operator-visible compliance trail (Belastingdienst review of the drempel-bewaking workflow), and 100% events synchronously gate REQ-KOR-004 revocatie."
+				},
 				"type": "object",
 				"required": [
 					"registrationId",
@@ -419,6 +431,10 @@
 				"description": "Beëindiging van de KOR (REQ-KOR-004, REQ-KOR-007): gedwongen bij overschrijding of vrijwillig na de lock-in. Bij overschrijding is revocatieDatum ALTIJD de leveringsdatum van de triggerfactuur — niet einde-maand/kwartaal/jaar (design D4). Bevat het berekende suppletie-bedrag en de drie-jaars blokkade op heraanmelding.",
 				"x-schema-org": "schema:Action",
 				"x-spec": "openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/specs.md",
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "KORRevocation records MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — the revocatie-datum (leveringsdatum, niet einde-jaar), suppletie-bedrag and Belastingdienst-notificatie are fiscale documenten van de Belastingdienst en moeten onveranderlijk zijn voor audit + bezwaar."
+				},
 				"type": "object",
 				"required": [
 					"registrationId",
@@ -543,6 +559,10 @@
 				"description": "Grensoverschrijdende KOR-EU omzetregistratie (alleen bij regime KOR_EU) per 1-1-2025 (REQ-KOR-008): EX-nummer, EU-brede EUR 100.000-drempel en omzet/drempel/benutting per lidstaat. Per-lidstaat drempels zijn DATA, niet code (design D7). Bevat de kwartaalopgaaf-status (Q1-Q4). Vermelding artikel 284 VAT-richtlijn 2006/112/EG.",
 				"x-schema-org": "schema:MonetaryAmount",
 				"x-spec": "openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/specs.md",
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "KOREUTurnover updates MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — per-lidstaat drempel-benutting en kwartaalopgaaf-status voeden de Q1-Q4 EU-aangiftes (art. 284 BTW-richtlijn) en gaan per OSS-route naar de Belastingdienst; correctie-historie is auditplichtig."
+				},
 				"type": "object",
 				"required": [
 					"registrationId",

@@ -194,5 +194,162 @@ final class KorThresholdCalculatorTest extends TestCase
 
     }//end testHerzieningRecovery()
 
+    /**
+     * The canonical NL-KOR lock-in window is 3 calendar years, opt-out window opens 3 months prior (REQ-KOR-007).
+     *
+     * @return void
+     */
+    public function testLockInWindowCanonical(): void
+    {
+        $window = $this->calc->lockInWindow(ingangsDatum: '2026-01-01');
+        self::assertSame('2028-12-31', $window['lockInEindDatum']);
+        self::assertSame('2028-10-01', $window['vroegsteOpzegDatum']);
+
+    }//end testLockInWindowCanonical()
+
+    /**
+     * Mid-year ingangsdatum produces the day-before in year+3 for lockInEindDatum (REQ-KOR-007).
+     *
+     * @return void
+     */
+    public function testLockInWindowMidYear(): void
+    {
+        $window = $this->calc->lockInWindow(ingangsDatum: '2026-07-15');
+        self::assertSame('2029-07-14', $window['lockInEindDatum']);
+        self::assertSame('2029-05-01', $window['vroegsteOpzegDatum']);
+
+    }//end testLockInWindowMidYear()
+
+    /**
+     * Invalid lock-in inputs return null (REQ-KOR-007).
+     *
+     * @return void
+     */
+    public function testLockInWindowInvalid(): void
+    {
+        self::assertNull($this->calc->lockInWindow(ingangsDatum: 'nope'));
+        self::assertNull($this->calc->lockInWindow(ingangsDatum: '2026-13-01'));
+
+    }//end testLockInWindowInvalid()
+
+    /**
+     * Opt-out is blocked outside the [vroegsteOpzeg, lockInEinde] window (REQ-KOR-007).
+     *
+     * @return void
+     */
+    public function testIsOptOutPermitted(): void
+    {
+        // Before vroegsteOpzeg => blocked.
+        self::assertFalse($this->calc->isOptOutPermitted(today: '2028-09-30', vroegsteOpzegDatum: '2028-10-01', lockInEindDatum: '2028-12-31'));
+        // Inside the window => permitted.
+        self::assertTrue($this->calc->isOptOutPermitted(today: '2028-10-15', vroegsteOpzegDatum: '2028-10-01', lockInEindDatum: '2028-12-31'));
+        // On the boundary => permitted.
+        self::assertTrue($this->calc->isOptOutPermitted(today: '2028-10-01', vroegsteOpzegDatum: '2028-10-01', lockInEindDatum: '2028-12-31'));
+        // After lockInEindDatum => blocked (different lifecycle path).
+        self::assertFalse($this->calc->isOptOutPermitted(today: '2029-01-01', vroegsteOpzegDatum: '2028-10-01', lockInEindDatum: '2028-12-31'));
+        // Empty windows are unsafe => blocked.
+        self::assertFalse($this->calc->isOptOutPermitted(today: '2028-10-15', vroegsteOpzegDatum: '', lockInEindDatum: '2028-12-31'));
+
+    }//end testIsOptOutPermitted()
+
+    /**
+     * Per-lidstaat KOR-EU aggregate groups by lidstaat, applies the per-country drempel (REQ-KOR-008).
+     *
+     * @return void
+     */
+    public function testPerLidstaatAggregate(): void
+    {
+        $invoices = [
+            ['bedrag' => 12000.0, 'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'lidstaat' => 'BE', 'leveringsDatum' => '2026-03-01'],
+            ['bedrag' => 4000.0,  'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'lidstaat' => 'BE', 'leveringsDatum' => '2026-05-15'],
+            ['bedrag' => 8000.0,  'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'lidstaat' => 'DE', 'leveringsDatum' => '2026-04-20'],
+            // Different year => excluded.
+            ['bedrag' => 9999.0,  'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'lidstaat' => 'BE', 'leveringsDatum' => '2025-12-31'],
+            // No lidstaat => excluded.
+            ['bedrag' => 100.0,   'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'leveringsDatum' => '2026-06-01'],
+            // Country without override => default 100k drempel.
+            ['bedrag' => 1000.0,  'vrijstellingsGrondslag' => 'KOR_ART25_OB', 'lidstaat' => 'FR', 'leveringsDatum' => '2026-07-01'],
+        ];
+
+        $aggregate = $this->calc->perLidstaatAggregate(
+            invoices: $invoices,
+            drempelsPerLidstaat: ['BE' => 25000, 'DE' => 22000],
+            year: 2026
+        );
+
+        // BE total 16.000 over drempel 25.000 => benutting 0.64.
+        self::assertEqualsWithDelta(16000.0, $aggregate['BE']['omzet'], 0.001);
+        self::assertEqualsWithDelta(25000.0, $aggregate['BE']['drempel'], 0.001);
+        self::assertEqualsWithDelta(0.64, $aggregate['BE']['benutting'], 0.001);
+
+        // DE 8000 / 22000 = 0.3636...
+        self::assertEqualsWithDelta(0.3636, $aggregate['DE']['benutting'], 0.001);
+
+        // FR uses default 100000 drempel.
+        self::assertEqualsWithDelta(100000.0, $aggregate['FR']['drempel'], 0.001);
+        self::assertEqualsWithDelta(0.01, $aggregate['FR']['benutting'], 0.001);
+
+    }//end testPerLidstaatAggregate()
+
+    /**
+     * Branche-compat check returns BLOCK on fiscale eenheid + art. 11 vrijstelling (REQ-KOR-010).
+     *
+     * @return void
+     */
+    public function testBrancheCompatibilityBlocking(): void
+    {
+        $eenheid = $this->calc->brancheCompatibility(branche: ['fiscaleEenheid' => true]);
+        self::assertSame('BLOCK', $eenheid['verdict']);
+
+        $art11 = $this->calc->brancheCompatibility(branche: ['art11Vrijstelling' => true]);
+        self::assertSame('BLOCK', $art11['verdict']);
+
+    }//end testBrancheCompatibilityBlocking()
+
+    /**
+     * Branche-compat check returns WARN on mixed-use and intracommunautair (REQ-KOR-010).
+     *
+     * @return void
+     */
+    public function testBrancheCompatibilityWarning(): void
+    {
+        $mixed = $this->calc->brancheCompatibility(branche: ['vrijgesteldEnBelast' => true]);
+        self::assertSame('WARN', $mixed['verdict']);
+
+        $intra = $this->calc->brancheCompatibility(branche: ['intracommunautair' => true]);
+        self::assertSame('WARN', $intra['verdict']);
+
+    }//end testBrancheCompatibilityWarning()
+
+    /**
+     * Branche-compat check returns OK for a clean ZZP / MKB without contra-indicaties (REQ-KOR-010).
+     *
+     * @return void
+     */
+    public function testBrancheCompatibilityOk(): void
+    {
+        $ok = $this->calc->brancheCompatibility(branche: []);
+        self::assertSame('OK', $ok['verdict']);
+
+    }//end testBrancheCompatibilityOk()
+
+    /**
+     * Voorraad-correctie sums per-asset herziening across all transitions assets (REQ-KOR-011a).
+     *
+     * @return void
+     */
+    public function testVoorraadCorrectie(): void
+    {
+        $assets = [
+            ['vatCents' => 13900, 'remainingMonths' => 57, 'totalMonths' => 60],   // => 13205.
+            ['vatCents' => 21000, 'remainingMonths' => 24, 'totalMonths' => 120],  // => 4200.
+            ['vatCents' => 5000,  'remainingMonths' => 0,  'totalMonths' => 60],   // => 0 (fully depreciated).
+        ];
+
+        // 13205 + 4200 + 0 = 17405.
+        self::assertSame(17405, $this->calc->voorraadCorrectieCents(assets: $assets));
+
+    }//end testVoorraadCorrectie()
+
     // phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class
