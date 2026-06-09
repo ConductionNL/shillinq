@@ -134,7 +134,7 @@
 ### Unit tests
 - [x] Task 15.1: `tests/Unit/Service/LeasePaymentScheduleServiceTest.php` + `LeaseAmortizationCalculatorTest.php` — verify per-period schedule generation, principal/interest split, final-period rounding to zero, exempt/out-of-scope leases write nothing, regenerate-from-sequence.
 - [x] Task 15.2: `tests/Unit/Service/LeaseRecognitionServiceTest.php` — verify opening RoU / liability computation, restoration-obligation PV, balanced double-entry GL lines.
-- [ ] Task 15.3 [DEFERRED with Phase-2 LeaseReassessmentService, task 8.1].
+- [x] Task 15.3: `tests/Unit/Service/LeaseReassessmentServiceTest.php` — 11 cases, 41 assertions covering indexation, extension-option, payment/term/IBR/scope modification, impairment, prospective approach (no GL lines), material vs immaterial decidesk routing, out-of-scope IDOR check, sequential reassessment-number numbering. All green inside container.
 - [x] Task 15.4: `tests/Unit/Service/LeaseDisclosureServiceTest.php` — verify aggregation of RoU-by-class, current/non-current liability, interest, maturity buckets, weighted-average IBR, and draft-lease exclusion.
 - [x] Task 15.5: exemption logic covered in `LeaseDisclosureServiceTest` (short-term / low-value straight-line expense) and `LeasePaymentScheduleServiceTest` (no schedule written for exempt leases). Plus `tests/Unit/Lifecycle/LeaseContractGuardTest.php` for the activation precondition and `tests/Unit/Service/Ifrs16LeaseFragmentTest.php` for the register fragment shape. (37 lease tests, 166 assertions; full Unit suite 269 green.)
 
