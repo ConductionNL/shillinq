@@ -116,11 +116,7 @@
 
 ## 14. Transition support (modified-retrospective and full-retrospective) — Phase 2
 
-- [ ] Task 14.1 (Phase 2): Author `lib/Services/LeaseTransitionWizard.php` — one-time wizard for customers adopting IFRS 16:
-  - Method 1: Modified-retrospective (standard) — recognize all pre-IFRS-16 operating leases at transition date using transition-date IBR
-  - Method 2: Full-retrospective — restate prior periods as if IFRS 16 had always applied (used by listed groups)
-  - Practical expedient elections (IFRS 16.C3, C10)
-  - Transition disclosure note generation
+- [x] Task 14.1: Authored skeleton `lib/Service/LeaseTransitionWizard.php` — `compute(leases, method, transitionDate, practicalExpedients)` covers modified-retrospective (RoU = liability, zero opening retained-earnings adjustment) and full-retrospective (catch-up posted to opening retained earnings) per IFRS 16.C5(a)/(b); honours the IFRS 16.C3/C10 expedient elections (single-discount-rate-by-class, short-term/low-value-exempt-at-transition, hindsight-on-extension-options, exclude-initial-direct-costs, use-onerous-contracts-provision); delegates the per-lease maths to `LeaseRecognitionService` so transition shares the production code path; emits the IFRS 16.C12 disclosure-note seed. 5 unit cases. [Live wizard UI + docudesk PDF render still deferred to a running instance.]
 
 ## 15. Testing
 
