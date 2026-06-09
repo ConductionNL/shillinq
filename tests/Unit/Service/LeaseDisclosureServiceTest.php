@@ -284,4 +284,61 @@ final class LeaseDisclosureServiceTest extends TestCase
         self::assertSame(0.0, $table['totalInterestExpense']);
 
     }//end testDraftLeasesExcluded()
+
+    /**
+     * exportToCSV flattens the disclosure payload to header + section rows (task 10.3).
+     *
+     * @return void
+     */
+    public function testExportToCsvFlattensPayload(): void
+    {
+        $lease = [
+            '@self'                    => ['slug' => 'lease-v'],
+            'assetClass'               => 'vehicle',
+            'status'                   => 'active',
+            'classification'           => 'IFRS16-capitalised',
+            'nonCancellableTermMonths' => 36,
+            'paymentFrequency'         => 'monthly',
+            'paymentTiming'            => 'in-arrears',
+            'basePaymentAmount'        => 1000.0,
+            'ibrPercent'               => 4.0,
+            'administrationId'         => 'adm-csv',
+            'extensionOptions'         => [],
+        ];
+
+        $service = $this->buildService([$lease]);
+        $table   = $service->generateForPeriod('adm-csv', '2026');
+        $csv     = $service->exportToCSV($table);
+
+        self::assertStringContainsString('section,label,value', $csv);
+        self::assertStringContainsString('header,fiscalPeriod,2026', $csv);
+        self::assertStringContainsString('rou-by-class,vehicle,', $csv);
+        self::assertStringContainsString('maturity-analysis,lt1y,', $csv);
+        self::assertStringContainsString('weighted-average-ibr,vehicle,', $csv);
+        self::assertStringContainsString('totals,totalLeaseLiabilityCurrent,', $csv);
+        self::assertStringEndsWith("\n", $csv);
+
+    }//end testExportToCsvFlattensPayload()
+
+    /**
+     * exportToCSV escapes commas / quotes per RFC 4180.
+     *
+     * @return void
+     */
+    public function testExportToCsvEscapesQuotesAndCommas(): void
+    {
+        $service = $this->buildService([]);
+
+        $csv = $service->exportToCSV(
+            [
+                'fiscalPeriod'              => '2026',
+                'administrationId'          => 'adm-quote',
+                'materializedAtPeriodClose' => true,
+                'qualitativeNarrative'      => 'Lessor "Acme, Inc." reviewed contracts.',
+            ]
+        );
+
+        self::assertStringContainsString('"Lessor ""Acme, Inc."" reviewed contracts."', $csv);
+
+    }//end testExportToCsvEscapesQuotesAndCommas()
 }//end class
