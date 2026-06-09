@@ -30,7 +30,6 @@ use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Notification\Notifier;
-use OCA\Shillinq\Repair\InitializeSettings;
 use OCA\Shillinq\Service\Dunning\CreditScoreFetchAdapterInterface;
 use OCA\Shillinq\Service\Dunning\DunningChannelAdapterInterface;
 use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
@@ -248,9 +247,6 @@ class Application extends App implements IBootstrap
                 return $c->get(LogPostNLAdapter::class);
             }
         );
-
-        // Initialize register and schemas on install/upgrade.
-        $context->registerRepairStep(InitializeSettings::class);
 
         // Register the notifier for Shillinq in-app notifications (REQ-SUBV-010).
         $context->registerNotifierService(Notifier::class);
