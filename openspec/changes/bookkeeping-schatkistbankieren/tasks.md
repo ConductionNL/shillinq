@@ -125,9 +125,27 @@
     enumerates the schatkist-specific optional fields and the three aggregations per
     REQ-SCHATKIST-007 — the two spec usages never collide because they scope reports
     by `administrationId` + the natural primary-spec key.
-- [ ] Task 16: Deduplication check — verify no overlap with existing OR services
+- [x] Task 16: Deduplication check — verify no overlap with existing OR services
   (`ObjectService`, `RegisterService`, `SchemaService`, `ConfigurationService`) or
   `@conduction/nextcloud-vue` components; document findings in design review
+  - **OR services**: shillinq does NOT declare local `ObjectService` / `RegisterService` /
+    `SchemaService` / `ConfigurationService` classes; the schatkist work consumes the
+    real OR services via `SettingsService::loadConfiguration` → `ConfigurationService::importFromApp`
+    on the version-gated path (real OR API names per memory: `find` / `findAll` / `saveObject` /
+    `createObject` / `updateObject` / `deleteObject`). No new shillinq service surface added.
+  - **`@conduction/nextcloud-vue`**: the three pages dispatch through the manifest-v2
+    `CnPageRenderer` (already wired in `src/main.js`) to the generic `CnIndexPage` and
+    `CnDetailPage` components per ADR-024 Tier-4. No bespoke `.vue` files authored —
+    rendering is fully driven by `src/manifest.d/bookkeeping-schatkistbankieren.json`.
+  - **Existing `ComplianceService` reuse**: shillinq ships a BBV `lib/Service/ComplianceService.php`
+    (waterschappen-bbv chain — caches the materialised BBV-aggregation envelope). It does
+    NOT overlap with schatkist concerns; schatkist scoring is a declarative
+    `x-openregister-calculations` extension, not a service. No new `Compliance*.php` /
+    `Treasury*.php` / `Report*.php` classes are introduced by this build.
+  - **`ComplianceReport` schema-name collision**: the same schema is already referenced
+    by the obligation-financial-administration primary spec (ADR-000); reconciled in
+    Task 15 via the "Additive fields" block. Reports remain disjoint by `administrationId`
+    + primary spec key.
 
 ## Verification
 

@@ -8,7 +8,7 @@
 
 ## ADDED Requirements
 
-### REQ-SCHATKIST-001: Treasury banking compliance SHALL be declared as `TreasuryAccount` + `BankingRule` + `ComplianceReport` registers
+### Requirement: REQ-SCHATKIST-001 Treasury banking compliance SHALL be declared as `TreasuryAccount` + `BankingRule` + `ComplianceReport` registers
 
 Treasury banking compliance MUST be expressed as three new registers in
 `lib/Settings/shillinq_register.json` per ADR-024:
@@ -38,7 +38,9 @@ every register consumes OR's audit-trail-immutable and RBAC abstractions.
 - **WHEN** it is linked to an `Account` marked as treasury-eligible
 - **THEN** the account reference MUST resolve via OR's relation engine.
 
-### REQ-SCHATKIST-002: The `TreasuryAccount` schema SHALL declare a fixed minimum field set
+### Requirement: REQ-SCHATKIST-002 The `TreasuryAccount` schema SHALL declare a fixed minimum field set
+
+The `TreasuryAccount` schema MUST declare every field listed below; all fields marked Required MUST be present on every persisted instance.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -70,7 +72,9 @@ Schema.org annotation: `schema:BankAccount` (per shillinq config.yaml `rules.spe
 - **WHEN** `{iban:"NL91ABNA04171643"}` (incomplete) is saved
 - **THEN** validation MUST fail with an "invalid IBAN format" error.
 
-### REQ-SCHATKIST-003: The `BankingRule` schema SHALL declare configurable compliance criteria
+### Requirement: REQ-SCHATKIST-003 The `BankingRule` schema SHALL declare configurable compliance criteria
+
+The `BankingRule` schema MUST declare every field listed below; the evaluationCriteria payload MUST conform to the ruleType-specific shape (iban-format → pattern, segregation → checkDuplicates, approval-required → requiresTreasurerApproval, transaction-limit → maxAmount, reporting-period → cadence).
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -105,7 +109,7 @@ Schema.org annotation: custom (`schatkist:BankingRule`).
 - **WHEN** an operator attempts to activate it without approval
 - **THEN** the activation MUST fail with an "approval required" error.
 
-### REQ-SCHATKIST-004: `TreasuryAccount` SHALL declare a declarative draft → configured → active → monitored → compliant lifecycle
+### Requirement: REQ-SCHATKIST-004 `TreasuryAccount` SHALL declare a declarative draft → configured → active → monitored → compliant lifecycle
 
 `TreasuryAccount` MUST declare an `x-openregister-lifecycle` block with
 the following states + transitions:
@@ -139,7 +143,9 @@ is declared in the schema.
 - **THEN** the transition MUST fail with a "segregation rule violation" error; **AND** the
   account MUST remain `configured`.
 
-### REQ-SCHATKIST-005: Treasury account activation SHALL enforce multi-criteria compliance precondition with declarative rule evaluation
+### Requirement: REQ-SCHATKIST-005 Treasury account activation SHALL enforce multi-criteria compliance precondition with declarative rule evaluation
+
+The `TreasuryAccount.activate` transition SHALL be gated by a multi-criteria compliance precondition that evaluates every active `BankingRule` scoped to the account's administration; the precondition MUST be expressed declaratively where the engine permits, otherwise via the ADR-031 single-method exception path.
 
 When a `TreasuryAccount` transitions from `configured → active`, the lifecycle
 engine MUST evaluate ALL active `BankingRule` records applicable to that administration
@@ -168,7 +174,7 @@ the lifecycle engine.
 - **THEN** the segregation rule MUST fail; the IBAN-format rule MAY pass, but activation
   MUST be blocked; the compliance event MUST cite the segregation failure.
 
-### REQ-SCHATKIST-006: `ComplianceReport` SHALL declare compliance snapshots with automated scoring and regulatory export
+### Requirement: REQ-SCHATKIST-006 `ComplianceReport` SHALL declare compliance snapshots with automated scoring and regulatory export
 
 `ComplianceReport` MUST be a register with the following fields:
 
@@ -210,7 +216,7 @@ or `ComplianceScoringService.php` classes — scoring is a calculation, not a se
 - **THEN** a CSV file MUST be generated with one row per account, columns including
   `accountNumber`, `iban`, `masterListStatus`, `complianceScore`, `lastCompliantDate`.
 
-### REQ-SCHATKIST-007: Compliance metrics SHALL be declared as `x-openregister-aggregations`, not a PHP reporting service
+### Requirement: REQ-SCHATKIST-007 Compliance metrics SHALL be declared as `x-openregister-aggregations`, not a PHP reporting service
 
 Compliance metrics MUST be expressed as `x-openregister-aggregations` queries:
 
@@ -241,7 +247,9 @@ GROUP BY + metric computation.
 - **WHEN** the aggregation query `GROUP BY administrationId, reportPeriod` is executed
 - **THEN** the result MUST include `{ administrationId: "adm-1", period: "2026-Q1", totalAccounts: 10, compliantCount: 8, compliancePercentage: 80 }`.
 
-### REQ-SCHATKIST-008: Treasury account transitions SHALL materialize audit trail events per T2 `bookkeeping-audit-trail`
+### Requirement: REQ-SCHATKIST-008 Treasury account transitions SHALL materialize audit trail events per T2 `bookkeeping-audit-trail`
+
+Every `TreasuryAccount` lifecycle transition MUST generate an immutable audit-trail event per T2 `bookkeeping-audit-trail`; the event SHALL include the timestamp, the actor (from `IUserSession`), the before/after state, the compliance rule-evaluation results on transitions to `active`/`monitored`, and any blocking reason on transitions to `suspended`.
 
 Every `TreasuryAccount` state transition (draft → configured → active → monitored
 → compliant) MUST generate an immutable audit trail event per the T2
@@ -267,7 +275,7 @@ but audit events are never deleted.
 - **WHEN** the transition occurs
 - **THEN** an audit event MUST be recorded with `{ ..., blockingReason: "segregation-rule violation: duplicate IBAN detected" }`.
 
-### REQ-SCHATKIST-009: Treasury banking compliance SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-SCHATKIST-009 Treasury banking compliance SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare:
 
@@ -297,7 +305,7 @@ Tier-4 — no bespoke Vue files.
 - **THEN** the page MUST display summary stats (total accounts, compliant count,
   compliance percentage) and a table of per-rule pass/fail counts.
 
-### REQ-SCHATKIST-010: Compliance seed data SHALL include three baseline banking rules
+### Requirement: REQ-SCHATKIST-010 Compliance seed data SHALL include three baseline banking rules
 
 On first install, the app MUST load three seed `BankingRule` records via
 `ConfigurationService::importFromApp()`:
