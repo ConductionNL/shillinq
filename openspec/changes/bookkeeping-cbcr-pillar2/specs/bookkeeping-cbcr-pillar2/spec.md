@@ -38,9 +38,13 @@ GloBE calculatieservice.
 
 ---
 
-## Requirements
+## ADDED Requirements
 
 ### Requirement: REQ-CBC-001 Drempelwaarde-detectie EUR 750M
+
+The system MUST detect whether the group is in CbCR / Pillar 2 scope based on
+prior-year consolidated revenue versus the EUR 750M threshold, per Wet Vpb
+art. 29b and Wet Minimumbelasting 2024.
 
 Het systeem MOET op basis van geconsolideerde groepsopbrengsten van het
 voorgaande boekjaar automatisch detecteren of de groep onder CbCR / Pillar 2 valt,
@@ -60,6 +64,9 @@ conform Wet Vpb art. 29b en Wet Minimumbelasting 2024.
 
 ### Requirement: REQ-CBC-002 CbCR-aggregatie per jurisdictie
 
+The system MUST aggregate the seven mandatory CbCR fields per jurisdiction per
+fiscal year over all `group-entity-registry` records in that jurisdiction.
+
 Het systeem MOET per jurisdictie per fiscaal jaar de zeven verplichte
 CbCR-velden aggregeren over alle `group-entity-registry` records in die jurisdictie.
 
@@ -77,6 +84,10 @@ CbCR-velden aggregeren over alle `group-entity-registry` records in die jurisdic
 
 ### Requirement: REQ-CBC-003 GloBE income met 35 verplichte correcties
 
+The system MUST compute GloBE income per jurisdiction by applying the
+OESO-prescribed corrections to commercial profit before tax (Art. 3.2-3.5
+GloBE Model Rules / EU Directive 2022/2523).
+
 Het systeem MOET per jurisdictie de GloBE income berekenen door op de
 commerciële winst de OESO-voorgeschreven correcties toe te passen (artikelen
 3.2–3.5 GloBE Model Rules / EU-richtlijn).
@@ -93,6 +104,9 @@ commerciële winst de OESO-voorgeschreven correcties toe te passen (artikelen
 - **AND** wordt `globeIncome` berekend en getoond met opbouwregels voor reconciliatie
 
 ### Requirement: REQ-CBC-004 ETR per jurisdictie berekenen
+
+The system MUST compute the Effective Tax Rate per jurisdiction per year as
+adjusted covered taxes / GloBE income, floored at 0% (no negative ETR).
 
 Het systeem MOET per jurisdictie per jaar de Effective Tax Rate berekenen als
 adjusted covered taxes / GloBE income, met begrenzing op 0% (geen negatieve ETR).
@@ -115,6 +129,10 @@ adjusted covered taxes / GloBE income, met begrenzing op 0% (geen negatieve ETR)
 
 ### Requirement: REQ-CBC-005 Substance-based income exclusion (SBIE)
 
+The system MUST compute the SBIE as a percentage of payroll plus a percentage
+of tangible assets, applying the FY-specific transitional carve-out percentages
+during the transition window (FY2023-FY2033).
+
 Het systeem MOET de SBIE berekenen als percentage van loonkosten + percentage
 van tangible assets, met de overgangspercentages tijdens de transition window.
 
@@ -131,6 +149,10 @@ van tangible assets, met de overgangspercentages tijdens de transition window.
   tax rate
 
 ### Requirement: REQ-CBC-006 QDMTT-prioriteit boven IIR
+
+The system MUST apply the NL QDMTT charge to low-taxed NL-resident group
+entities before any IIR claim by a higher-up parent in another country
+(QDMTT-priority over IIR).
 
 Bij een NL-resident groepsentiteit met laagbelaste winst MOET het systeem de
 QDMTT-heffing in NL toepassen vóór een eventuele IIR-claim van een hoger-gelegen
@@ -151,6 +173,10 @@ moedermaatschappij in een ander land.
 
 ### Requirement: REQ-CBC-007 Safe harbour testen toepassen
 
+The system MUST test each jurisdiction against the three transitional CbCR
+Safe Harbour tests (de minimis / simplified ETR / routine profits) and, on a
+pass, replace the full Pillar 2 computation with a simplified return.
+
 Het systeem MOET per jurisdictie testen of een transitional CbCR Safe Harbour
 van toepassing is (de minimis / simplified ETR / routine profits), en bij positief
 resultaat de volledige Pillar 2 berekening vervangen door een vereenvoudigde aangifte.
@@ -166,6 +192,9 @@ resultaat de volledige Pillar 2 berekening vervangen door een vereenvoudigde aan
 - **AND** verschijnt dit in de GIR met de safe-harbour-claim
 
 ### Requirement: REQ-CBC-008 XML/XBRL-export CbCR conform OESO-schema
+
+The system MUST export the CbCR report in the OESO CbC XML schema (v2.0 or
+newer), ready for SBR/Digipoort submission to the Belastingdienst.
 
 Het systeem MOET het CbCR-rapport exporteren in het OESO CbC XML-schema v2.0
 (of nieuwer), klaar voor SBR/Digipoort-indiening bij de Belastingdienst.
@@ -183,6 +212,10 @@ Het systeem MOET het CbCR-rapport exporteren in het OESO CbC XML-schema v2.0
   `belastingdienstReference` wordt opgeslagen
 
 ### Requirement: REQ-CBC-009 GIR (GloBE Information Return) genereren
+
+The system MUST generate a GIR carrying all jurisdiction computations,
+safe-harbour applications, and top-up tax allocations (IIR / UTPR / QDMTT
+credit), and submit it per the OESO GIR XML/XBRL schema.
 
 Het systeem MOET een GIR genereren met alle jurisdictie-computaties,
 safe-harbour-toepassingen, top-up-tax-toewijzingen (IIR/UTPR/QDMTT-credit),
@@ -202,6 +235,12 @@ en deze indienen volgens het OESO GIR XML/XBRL-schema.
   gevestigd is (typisch UPE-jurisdictie of designated filing entity)
 
 ### Requirement: REQ-CBC-010 Aansluiting met geconsolideerde jaarrekening
+
+The system MUST produce a complete reconciliation between the CbCR totals
+and the consolidated financial statements (revenue, profit before tax, tax
+expense), listing explicit reconciliation items (eliminations, joint
+ventures, IFRS-USGAAP differences) and flagging any residual difference over
+EUR 1M as unreconciled.
 
 Het systeem MOET een complete reconciliatie produceren tussen het CbCR-totaal
 en de geconsolideerde jaarrekening: omzet, profit before tax, en tax expense
