@@ -7,18 +7,9 @@
 
 ## ADDED Requirements
 
-### REQ-RR-001: All reconciliation reports SHALL be expressed as OpenRegister saved-query objects, NOT as a PHP report engine
+### Requirement: REQ-RR-001 — Reconciliation reports SHALL be expressed as OpenRegister saved-query objects, NOT as a PHP report engine
 
-Every reconciliation report (sub-ledger ↔ GL control account
-match, intercompany matching, variance analysis, controller
-exception report) MUST be declared as a saved-query record in an
-OpenRegister-managed `SavedQuery` register (or whatever OR's
-canonical name for parameterised aggregation queries is). The
-query MUST be an `x-openregister-aggregations` definition consumed
-both by mydash for dashboard rendering (per ADR-022) and by the
-shillinq manifest detail page that surfaces the report. shillinq
-MUST NOT author a `ReportingService` / `ReconciliationService`
-that loops ledger objects and produces rows.
+Every reconciliation report (sub-ledger ↔ GL control account match, intercompany matching, variance analysis, controller exception report) MUST be declared as a saved-query record in an OpenRegister-managed `SavedQuery` register (or whatever OR's canonical name for parameterised aggregation queries is). The query MUST be an `x-openregister-aggregations` definition consumed both by mydash for dashboard rendering (per ADR-022) and by the shillinq manifest detail page that surfaces the report. shillinq MUST NOT author a `ReportingService` / `ReconciliationService` that loops ledger objects and produces rows.
 
 #### Scenario: Reviewer confirms no report engine
 
@@ -38,7 +29,7 @@ that loops ledger objects and produces rows.
 - **THEN** the widget MUST resolve without any shillinq-side PHP
   controller in the call path.
 
-### REQ-RR-002: The system SHALL provide a sub-ledger ↔ GL control-account reconciliation for AP and AR
+### Requirement: REQ-RR-002 — The system SHALL provide a sub-ledger ↔ GL control-account reconciliation for AP and AR
 
 A saved query MUST be declared per sub-ledger control account
 (AP control, AR control) producing a row per
@@ -63,7 +54,7 @@ MUST flag rows where `|difference| > administrationTolerance`
   false`; **AND** the controller exception report (per REQ-RR-005)
   MUST surface the row.
 
-### REQ-RR-003: The system SHALL provide intercompany matching for group administrations
+### Requirement: REQ-RR-003 — The system SHALL provide intercompany matching for group administrations
 
 A saved query MUST match each intercompany posting in
 administration A against the corresponding mirror posting in
@@ -92,7 +83,7 @@ amount-A, amount-B, difference, matchedAt)`.
   `matchedAt: null`; **AND** the controller exception report MUST
   surface the row.
 
-### REQ-RR-004: The system SHALL provide variance analysis comparing actual to budget per account per period
+### Requirement: REQ-RR-004 — The system SHALL provide variance analysis comparing actual to budget per account per period
 
 A saved query MUST produce a row per (`accountNumber`, `period`,
 `actualAmount`, `budgetAmount`, `varianceAmount`, `variancePct`)
@@ -119,7 +110,7 @@ setting) MUST surface in the controller exception report.
 - **THEN** the row MUST show `variancePct: 25%`; **AND** the
   exception report MUST include it.
 
-### REQ-RR-005: The system SHALL provide a controller exception report aggregating all reconciliation exceptions
+### Requirement: REQ-RR-005 — The system SHALL provide a controller exception report aggregating all reconciliation exceptions
 
 A consolidating saved query MUST aggregate exception rows from
 REQ-RR-002 (sub-ledger mismatches), REQ-RR-003 (unmatched
@@ -138,7 +129,7 @@ to render the controller's home dashboard widget.
 - **THEN** the result MUST contain exactly 4 rows; **AND** the
   rows MUST be ordered by severity then administration.
 
-### REQ-RR-006: All reconciliation reports SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-RR-006 — Reconciliation reports SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare navigation entries under
 `Bookkeeping > Reconciliation Reports` with a `type: index` page
@@ -161,7 +152,7 @@ this capability introduces the `Budget` register).
   badges and per-row drill-down links into the underlying GL /
   sub-ledger objects.
 
-### REQ-RR-007: Reports SHALL be consumable from mydash via runtime GraphQL with no install-time dependency
+### Requirement: REQ-RR-007 — Reports SHALL be consumable from mydash via runtime GraphQL with no install-time dependency
 
 Per ADR-022 and `feedback_mydash-no-or-dependency.md`, mydash MUST
 consume reconciliation reports via runtime GraphQL against
