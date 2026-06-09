@@ -16,6 +16,10 @@
         "description": "Constituent entity of a multinational group within the consolidation perimeter (REQ-CBC-002). Holds incorporation + tax-residency jurisdiction, consolidation method/percentage, CbCR/Pillar 2 scope flags, and identification (LEI, VAT). The per-jurisdiction CbCR summary is the sum of all in-scope entities sharing a jurisdiction. A person/owner is a Nextcloud entity (responsibleOwner FK to the NC user directory) — never an invented contact schema.",
         "x-schema-org": "schema:Organization",
         "x-spec": "openspec/changes/bookkeeping-cbcr-pillar2/specs/bookkeeping-cbcr-pillar2/spec.md",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "GroupEntityRegistry changes (jurisdiction, taxResidency, consolidationMethod/Percentage, cbcrIncluded / pillar2Included flags, excludedEntityType, UPE thresholdCrossed flips, lifecycle transitions) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — every change reshapes the per-jurisdiction CbCR/Pillar 2 perimeter and is subject to operator + Belastingdienst auditor review."
+        },
         "type": "object",
         "required": [
           "entityName",
@@ -178,6 +182,10 @@
         "description": "Per-jurisdiction aggregation of the seven mandatory CbCR fields for a fiscal year (REQ-CBC-002). totalRevenue is derived declaratively from unrelated + related party revenue (ADR-031). One summary per jurisdiction per period; the sum of all in-scope GroupEntityRegistry records sharing a jurisdiction. Intra-jurisdiction transactions eliminate; cross-jurisdiction intra-group revenue survives as relatedPartyRevenue.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-cbcr-pillar2/specs/bookkeeping-cbcr-pillar2/spec.md",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "CbcrJurisdictionSummary changes (the 7 CbCR fields, mainBusinessActivities, employeeMethodologyNote, lifecycle transitions to reconciled / locked) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — the summary feeds the CbCR XML submission directly and must reproduce on demand for Belastingdienst MCAA partner-jurisdiction exchange (REQ-CBC-002 / REQ-CBC-008 / REQ-CBC-010)."
+        },
         "type": "object",
         "required": ["period", "jurisdiction", "state"],
         "properties": {
@@ -267,6 +275,10 @@
         "description": "Per-jurisdiction GloBE / Pillar 2 computation for a period (REQ-CBC-003..006). GloBE income carries the audit trail of the ~35 OESO corrections in globeIncomeAdjustments; ETR, top-up tax rate, SBIE carve-out, excess profit and top-up tax amount are all derived declaratively (x-openregister-calculations, ADR-031) — no GlobeIncomeCalculator.php. QDMTT/IIR/UTPR allocation captured for the GIR. QDMTT priority over IIR is enforced by the lifecycle guard.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-cbcr-pillar2/specs/bookkeeping-cbcr-pillar2/spec.md",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Pillar2JurisdictionComputation changes (commercialProfitBeforeTax, globeIncomeAdjustments[], coveredTaxAdjustments[], adjustedCoveredTaxes, payroll, tangibleAssetsNbv, qdmttAmount / iirAmount / utprAmount allocation, safeHarbourApplied flip, lifecycle transitions computed / approved / locked) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — the computation drives the GIR submission and the per-entity top-up tax allocation, and the OESO Model Rules require a full audit trail of each correction (REQ-CBC-003 / REQ-CBC-004 / REQ-CBC-006)."
+        },
         "type": "object",
         "required": ["period", "jurisdiction", "state"],
         "properties": {
@@ -476,6 +488,10 @@
         "description": "Transitional CbCR safe harbour test result per jurisdiction per period (REQ-CBC-007). A pass on any of the three tests (de-minimis, simplified-ETR, routine-profits) replaces the full Pillar 2 computation with a simplified return for the period (FY2024-2026 transition window).",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-cbcr-pillar2/specs/bookkeeping-cbcr-pillar2/spec.md",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Pillar2SafeHarbour changes (testApplied, testResult, dataSource, supportingCalculations) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — a safe-harbour pass replaces the full Pillar 2 computation for the jurisdiction and is the substantiation of choice in any Belastingdienst follow-up audit (REQ-CBC-007)."
+        },
         "type": "object",
         "required": ["period", "jurisdiction", "testApplied", "testResult"],
         "properties": {
@@ -495,6 +511,10 @@
         "description": "Dutch Qualified Domestic Minimum Top-up Tax return for an NL-resident entity (REQ-CBC-006, Wet minimumbelasting 2024). QDMTT is levied in NL before any foreign IIR claim. XML/XBRL submission to the Belastingdienst via SBR/Digipoort is openconnector-owned (T4) and DEFERRED; this schema captures the filing record + status.",
         "x-schema-org": "schema:GovernmentService",
         "x-spec": "openspec/changes/bookkeeping-cbcr-pillar2/specs/bookkeeping-cbcr-pillar2/spec.md",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "QdmttReturn changes (taxableGlobeIncome, qualifyingDomesticEtr, qdmttPayable, paymentDueDate, filingDueDate, belastingdienstReference, xbrlSubmission file slot, lifecycle transitions submit / accept / reject) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — Wet minimumbelasting 2024 requires the Belastingdienst to be able to reconstruct the basis of the QDMTT charge for any open assessment year (REQ-CBC-006)."
+        },
         "type": "object",
         "required": ["period", "entity", "state"],
         "properties": {
@@ -561,6 +581,10 @@
         "description": "GIR for a group for a period (REQ-CBC-009). References all per-jurisdiction Pillar 2 computations and carries the top-up tax allocation (IIR/UTPR/QDMTT credit per entity). The OESO GIR XML schema export + validation is openconnector-owned (T4) and DEFERRED; this schema is the data-merge source.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-cbcr-pillar2/specs/bookkeeping-cbcr-pillar2/spec.md",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "GlobeInformationReturn changes (mneGroupSummary, jurisdictionalComputations[], topUpTaxAllocation, submissionDeadline, globeXmlSubmission file slot, lifecycle transitions approved / submitted / locked) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — the GIR carries the per-entity IIR / UTPR / QDMTT credit distribution and must reproduce on demand for any partner-jurisdiction Belastingdienst exchange (REQ-CBC-006 / REQ-CBC-009)."
+        },
         "type": "object",
         "required": ["period", "ultimateParent", "state"],
         "properties": {
@@ -621,6 +645,10 @@
         "description": "CbCR report in the OESO CbC schema for a group for a period (REQ-CBC-008). References the jurisdiction summaries and the constituent-entity list, and carries the mandatory reconciliation to the consolidated financial statements (REQ-CBC-010). OESO CbC XML v2.0 export + SBR submission is openconnector-owned (T4) and DEFERRED.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-cbcr-pillar2/specs/bookkeeping-cbcr-pillar2/spec.md",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "CbcrReturn changes (jurisdictionSummaries[], constituentEntityList[], reconciliationResidual, reconciliationItems[], cbcrXmlSubmission file slot, belastingdienstReference, mcaaPartnerJurisdictions, lifecycle transitions reconciled / submitted / locked) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — the CbCR is automatically exchanged with up to 90 partner jurisdictions under the MCAA and must reproduce on demand for any follow-up assessment (REQ-CBC-008 / REQ-CBC-010)."
+        },
         "type": "object",
         "required": ["period", "reportingEntity", "state"],
         "properties": {
@@ -690,6 +718,10 @@
         "description": "Reference register of double-taxation agreements (DTAs) used when allocating withholding taxes to jurisdictions within adjusted covered taxes (REQ-CBC-004). Reference data only; no lifecycle.",
         "x-schema-org": "schema:Legislation",
         "x-spec": "openspec/changes/bookkeeping-cbcr-pillar2/specs/bookkeeping-cbcr-pillar2/spec.md",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "TaxTreatyOverview changes (treatyName, treatyDate, withholdingRates, mliApplicability flip) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — the treaty references drive withholding allocation in adjusted covered taxes (REQ-CBC-004); a stale rate would silently misstate the per-jurisdiction ETR. Reference data, but each amendment must reproduce on demand for auditor review."
+        },
         "type": "object",
         "required": ["countryA", "countryB"],
         "properties": {
