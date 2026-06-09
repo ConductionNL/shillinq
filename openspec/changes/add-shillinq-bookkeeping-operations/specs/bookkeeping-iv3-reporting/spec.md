@@ -19,7 +19,7 @@ Quarterly IV3 export to CBS (Centraal Bureau voor de Statistiek) for Dutch munic
 
 ## ADDED Requirements
 
-### REQ-IV3-001: Iv3Export register
+### Requirement: REQ-IV3-001 — Iv3Export register
 
 The `Iv3Export` schema SHALL track quarterly exports with:
 - `administrationId` (FK to Administration)
@@ -29,7 +29,13 @@ The `Iv3Export` schema SHALL track quarterly exports with:
 - `submittedAt` (timestamp, after state=submitted)
 - `acceptedAt` (timestamp, after state=accepted)
 
-### REQ-IV3-002: IV3 required fields
+#### Scenario: Spec conformance for REQ-IV3-001
+
+- **GIVEN** the REQ-IV3-001 requirement above ("Iv3Export register")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-IV3-002 — IV3 required fields
 
 The `Iv3Export` schema MUST include per CBS IV3-bestand specificaties:
 - Identification (gemeente code, reporting period)
@@ -37,18 +43,36 @@ The `Iv3Export` schema MUST include per CBS IV3-bestand specificaties:
 - Revenue / expense / balance figures (aggregated from GL by IV3Bucket)
 - Personnel data (FTE count from payroll, if available)
 
-### REQ-IV3-003: IV3 aggregation by bucket
+#### Scenario: Spec conformance for REQ-IV3-002
+
+- **GIVEN** the REQ-IV3-002 requirement above ("IV3 required fields")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-IV3-003 — IV3 aggregation by bucket
 
 The `Iv3Export.buckets` field SHALL be declared as `x-openregister-aggregations` grouping GL postings by:
 - `BbvAccountMapping.iv3Bucket` (CBS bucket identifier)
 - Summing amounts per bucket for the quarter
 - Excluding non-applicable GL lines per CBS rules
 
-### REQ-IV3-004: IV3 mapping to XML
+#### Scenario: Spec conformance for REQ-IV3-003
+
+- **GIVEN** the REQ-IV3-003 requirement above ("IV3 aggregation by bucket")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-IV3-004 — IV3 mapping to XML
 
 The system SHALL express the transformation from aggregated buckets to IV3 XML via OR's declarative mapping engine (per ADR-022), NOT via bespoke PHP rendering.
 
-### REQ-IV3-005: IV3 export lifecycle
+#### Scenario: Spec conformance for REQ-IV3-004
+
+- **GIVEN** the REQ-IV3-004 requirement above ("IV3 mapping to XML")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-IV3-005 — IV3 export lifecycle
 
 The `Iv3Export.state` lifecycle SHALL declare four transitions:
 - `draft → generated` (operator triggers aggregation)
@@ -56,7 +80,13 @@ The `Iv3Export.state` lifecycle SHALL declare four transitions:
 - `submitted → accepted` (CBS ACKs receipt)
 - `draft → corrected` (early amendment before submission)
 
-### REQ-IV3-006: Quarterly submission workflow
+#### Scenario: Spec conformance for REQ-IV3-005
+
+- **GIVEN** the REQ-IV3-005 requirement above ("IV3 export lifecycle")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-IV3-006 — Quarterly submission workflow
 
 The system SHALL declare an OR `ScheduledWorkflow` with cron `0 0 1 */3 *` (quarter start) that:
 - Creates a new `Iv3Export` record
@@ -64,16 +94,34 @@ The system SHALL declare an OR `ScheduledWorkflow` with cron `0 0 1 */3 *` (quar
 - Triggers submission to `cbs-iv3` OpenConnector source
 - Updates state on ACK
 
-### REQ-IV3-007: Manifest entry
+#### Scenario: Spec conformance for REQ-IV3-006
+
+- **GIVEN** the REQ-IV3-006 requirement above ("Quarterly submission workflow")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-IV3-007 — Manifest entry
 
 The `src/manifest.json` SHALL declare:
 - `Overheid > IV3-rapportages` (type: index, lists Iv3Export records)
 
 Visibility: gemeente/provincie/waterschap only.
 
-### REQ-IV3-008: CBS compliance citation
+#### Scenario: Spec conformance for REQ-IV3-007
+
+- **GIVEN** the REQ-IV3-007 requirement above ("Manifest entry")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-IV3-008 — CBS compliance citation
 
 This spec SHALL cite Statistische en Inlichtingendienst IV3-bestand specs (latest version per CBS guidance) for bucket definitions and submission format.
+
+#### Scenario: Spec conformance for REQ-IV3-008
+
+- **GIVEN** the REQ-IV3-008 requirement above ("CBS compliance citation")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
 
 ## Non-Goals
 

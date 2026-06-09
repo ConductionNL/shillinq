@@ -22,7 +22,7 @@ Project accounting for consultancy firms (Conduction's primary customer profile)
 
 ## ADDED Requirements
 
-### REQ-CPA-001: Project register
+### Requirement: REQ-CPA-001 — Project register
 
 The `Project` schema SHALL track projects with:
 - `administrationId` (FK to Administration)
@@ -35,7 +35,13 @@ The `Project` schema SHALL track projects with:
 - `costIncurredToDate` (derived aggregation, see REQ-CPA-007)
 - `recognisedRevenue` (derived calculation, see REQ-CPA-007)
 
-### REQ-CPA-002: Project lifecycle
+#### Scenario: Spec conformance for REQ-CPA-001
+
+- **GIVEN** the REQ-CPA-001 requirement above ("Project register")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-CPA-002 — Project lifecycle
 
 The `Project.state` lifecycle SHALL declare five transitions:
 - `offerte → active` (contract signed)
@@ -44,7 +50,13 @@ The `Project.state` lifecycle SHALL declare five transitions:
 - `active → closed` (delivery complete)
 - `closed → archived` (no further access)
 
-### REQ-CPA-003: ProjectAssignment register
+#### Scenario: Spec conformance for REQ-CPA-002
+
+- **GIVEN** the REQ-CPA-002 requirement above ("Project lifecycle")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-CPA-003 — ProjectAssignment register
 
 The `ProjectAssignment` schema SHALL track resource allocation with:
 - `projectId` (FK to Project)
@@ -54,7 +66,13 @@ The `ProjectAssignment` schema SHALL track resource allocation with:
 - `allocatedHours` (hours available for project)
 - `billableHours` (actual hours worked per BillableHour register)
 
-### REQ-CPA-004: RateCard register
+#### Scenario: Spec conformance for REQ-CPA-003
+
+- **GIVEN** the REQ-CPA-003 requirement above ("ProjectAssignment register")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-CPA-004 — RateCard register
 
 The `RateCard` schema SHALL define billing rates with:
 - `administrationId` (FK to Administration)
@@ -64,7 +82,13 @@ The `RateCard` schema SHALL define billing rates with:
 - `effectiveTo` (date rate expires, null for current)
 - `currency` (EUR)
 
-### REQ-CPA-005: RateCard seed
+#### Scenario: Spec conformance for REQ-CPA-004
+
+- **GIVEN** the REQ-CPA-004 requirement above ("RateCard register")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-CPA-005 — RateCard seed
 
 The system SHALL ship `rate-card-templates.json` with default rates:
 - Junior: €65/hour
@@ -74,7 +98,13 @@ The system SHALL ship `rate-card-templates.json` with default rates:
 
 (Operators override per administration.)
 
-### REQ-CPA-006: BillableHour register
+#### Scenario: Spec conformance for REQ-CPA-005
+
+- **GIVEN** the REQ-CPA-005 requirement above ("RateCard seed")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-CPA-006 — BillableHour register
 
 The `BillableHour` schema (extends T3's UrenRegistratie) SHALL track:
 - `urenRegistratieId` (FK to UrenRegistratie)
@@ -85,7 +115,13 @@ The `BillableHour` schema (extends T3's UrenRegistratie) SHALL track:
 - `recognisedRate` (MonetaryAmount, snapshotted at work-date per RateCard effective-date)
 - `recognisedRevenue` (hours × recognisedRate)
 
-### REQ-CPA-007: RJ 270 percentage-of-completion
+#### Scenario: Spec conformance for REQ-CPA-006
+
+- **GIVEN** the REQ-CPA-006 requirement above ("BillableHour register")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-CPA-007 — RJ 270 percentage-of-completion
 
 The `Project.recognisedRevenue` field SHALL be declared as `x-openregister-calculations` per RJ 270 §3.2.4 (cost-to-cost method):
 
@@ -101,7 +137,7 @@ GIVEN a project with contractValue=€100k, estimatedCost=€80k, costIncurredTo
 WHEN recognisedRevenue is calculated
 THEN it returns €50k (€100k × (€40k / €80k)).
 
-### REQ-CPA-008: WipBalance snapshots
+### Requirement: REQ-CPA-008 — WipBalance snapshots
 
 The `WipBalance` register SHALL snapshot WIP (work-in-progress) at period-end via a scheduled workflow triggered by T2's period-close event:
 - `projectId` (FK to Project)
@@ -110,7 +146,13 @@ The `WipBalance` register SHALL snapshot WIP (work-in-progress) at period-end vi
 - `recognisedRevenue` (snapshot of RJ 270 calculation)
 - `wipBalance` (cost incurred - recognised revenue)
 
-### REQ-CPA-009: Rate snapshot at write time
+#### Scenario: Spec conformance for REQ-CPA-008
+
+- **GIVEN** the REQ-CPA-008 requirement above ("WipBalance snapshots")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-CPA-009 — Rate snapshot at write time
 
 Each `BillableHour.recognisedRate` MUST be snapshotted at the hour's work date, not at invoice date. This prevents retroactive rate changes from distorting revenue recognition per RJ 270 §3.2.4.
 
@@ -121,7 +163,7 @@ AND a rate-card change on 2026-02-01 to €105/hour
 WHEN the hour is invoiced on 2026-03-15
 THEN BillableHour.recognisedRate = €95/hour (locked to work-date rate, not current rate).
 
-### REQ-CPA-010: Project P&L
+### Requirement: REQ-CPA-010 — Project P&L
 
 The `Project.profitLoss` (or project dashboard) SHALL display as `x-openregister-aggregations`:
 - Project revenue (recognisedRevenue + invoiced amount)
@@ -129,14 +171,26 @@ The `Project.profitLoss` (or project dashboard) SHALL display as `x-openregister
 - Gross margin (revenue - costs)
 - Margin % (margin / revenue)
 
-### REQ-CPA-011: Utilisation reporting
+#### Scenario: Spec conformance for REQ-CPA-010
+
+- **GIVEN** the REQ-CPA-010 requirement above ("Project P&L")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-CPA-011 — Utilisation reporting
 
 The system SHALL expose utilisation metrics via aggregation:
 - `billableHours / allocatedHours` per assignment
 - `billableHours / (8 hours/day × business days)` per person across projects
 - Utilisation trends over time
 
-### REQ-CPA-012: Manifest entries
+#### Scenario: Spec conformance for REQ-CPA-011
+
+- **GIVEN** the REQ-CPA-011 requirement above ("Utilisation reporting")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-CPA-012 — Manifest entries
 
 The `src/manifest.json` SHALL declare:
 - `Projecten > Overzicht` (type: index, lists all Project records)
@@ -146,7 +200,13 @@ The `src/manifest.json` SHALL declare:
 
 Visibility: consultancy administrations only.
 
-### REQ-CPA-013: RJ 270 stage seed
+#### Scenario: Spec conformance for REQ-CPA-012
+
+- **GIVEN** the REQ-CPA-012 requirement above ("Manifest entries")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-CPA-013 — RJ 270 stage seed
 
 The system SHALL ship `rj-270-stages.json` with 4 canonical stages:
 - `initiation: "RJ 270 §1: project setup"` (contract negotiation)
@@ -154,11 +214,23 @@ The system SHALL ship `rj-270-stages.json` with 4 canonical stages:
 - `closeout: "RJ 270 §3: revenue recognition"` (final billing)
 - `complete: "RJ 270 §4: project archived"` (closed)
 
-### REQ-CPA-014: Compliance citation
+#### Scenario: Spec conformance for REQ-CPA-013
+
+- **GIVEN** the REQ-CPA-013 requirement above ("RJ 270 stage seed")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-CPA-014 — Compliance citation
 
 This spec SHALL cite:
 - RJ 270 §3 (Raad voor de Jaarverslaglegging, percentage-of-completion)
 - IFRS 15 §B14-B19 (revenue recognition over time)
+
+#### Scenario: Spec conformance for REQ-CPA-014
+
+- **GIVEN** the REQ-CPA-014 requirement above ("Compliance citation")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
 
 ## Non-Goals
 

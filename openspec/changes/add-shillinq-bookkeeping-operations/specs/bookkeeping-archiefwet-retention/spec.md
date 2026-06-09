@@ -19,11 +19,17 @@ Records retention enforcement per Archiefwet 1995 and Selectielijst Gemeenten 20
 
 ## ADDED Requirements
 
-### REQ-ARC-001: OR retention abstraction
+### Requirement: REQ-ARC-001 — OR retention abstraction
 
-This spec consumes OR's `x-openregister-lifecycle.retention` abstraction per ADR-022. Retention enforcement is entirely OR's responsibility; Shillinq only declares the retention rule references and seeds the rule definitions.
+This spec SHALL consume OR's `x-openregister-lifecycle.retention` abstraction per ADR-022. Retention enforcement MUST remain entirely OR's responsibility; Shillinq only declares the retention rule references and seeds the rule definitions.
 
-### REQ-ARC-002: RetentionRule register
+#### Scenario: Spec conformance for REQ-ARC-001
+
+- **GIVEN** the REQ-ARC-001 requirement above ("OR retention abstraction")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-ARC-002 — RetentionRule register
 
 The `RetentionRule` schema (defined in OR, seeded by Shillinq) SHALL include:
 - `selectielijstCode` (e.g. "5.1.2", Selectielijst 2020 reference)
@@ -33,7 +39,13 @@ The `RetentionRule` schema (defined in OR, seeded by Shillinq) SHALL include:
 - `disposition` (enum: destroy, archive, anonymise, keep_indefinite)
 - `legalBasis` (citation: "Archiefwet 1995 art. 5, Selectielijst 2020 §5.1.2")
 
-### REQ-ARC-003: Retention rule mapping
+#### Scenario: Spec conformance for REQ-ARC-002
+
+- **GIVEN** the REQ-ARC-002 requirement above ("RetentionRule register")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-ARC-003 — Retention rule mapping
 
 Every Shillinq schema (T1, T2, and all 9 other T3 schemas) MUST be mapped to a Selectielijst retention code in the spec's retention table. Mapping rules:
 
@@ -48,39 +60,87 @@ Every Shillinq schema (T1, T2, and all 9 other T3 schemas) MUST be mapped to a S
 | Account | 5.1.1 | indefinite | keep |
 | ... | ... | ... | ... |
 
-### REQ-ARC-004: Selectielijst seed
+#### Scenario: Spec conformance for REQ-ARC-003
+
+- **GIVEN** the REQ-ARC-003 requirement above ("Retention rule mapping")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-ARC-004 — Selectielijst seed
 
 The system SHALL ship `selectielijst-gemeenten-2020.json` with 30+ retention rules from Selectielijst Gemeenten 2020, each with selectielijstCode, description, retentionYears, disposition, legalBasis.
 
-### REQ-ARC-005: Per-schema retention declaration
+#### Scenario: Spec conformance for REQ-ARC-004
+
+- **GIVEN** the REQ-ARC-004 requirement above ("Selectielijst seed")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-ARC-005 — Per-schema retention declaration
 
 Every Shillinq schema MUST declare `x-openregister-lifecycle.retention: { rule: "selectielijst:5.1.2" }` (or other applicable rule code).
 
-### REQ-ARC-006: Audit trail preservation
+#### Scenario: Spec conformance for REQ-ARC-005
+
+- **GIVEN** the REQ-ARC-005 requirement above ("Per-schema retention declaration")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-ARC-006 — Audit trail preservation
 
 When OR's retention engine purges records, audit-trail-immutable hashes MUST be preserved per OR contract. Shillinq documents this expectation in the spec.
 
-### REQ-ARC-007: Days-until-retention derived field
+#### Scenario: Spec conformance for REQ-ARC-006
 
-Every retention-bound schema SHOULD carry a `daysUntilRetention` derived field computed as `(retentionUntil - today)`, visible to operators for planning.
+- **GIVEN** the REQ-ARC-006 requirement above ("Audit trail preservation")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
 
-### REQ-ARC-008: Operator retention override
+### Requirement: REQ-ARC-007 — Days-until-retention derived field
 
-Each `RetentionRule` record per administration MAY be overridden by the operator (e.g. local archiefverordening exceptions). Overrides carry audit citations of the local regulation.
+Every retention-bound schema SHOULD carry a `daysUntilRetention` derived field computed as `(retentionUntil - today)`, and the field MUST be visible to operators for planning.
 
-### REQ-ARC-009: Manifest entry
+#### Scenario: Spec conformance for REQ-ARC-007
+
+- **GIVEN** the REQ-ARC-007 requirement above ("Days-until-retention derived field")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-ARC-008 — Operator retention override
+
+Each `RetentionRule` record per administration MAY be overridden by the operator (e.g. local archiefverordening exceptions); when overridden, the record MUST carry audit citations of the local regulation.
+
+#### Scenario: Spec conformance for REQ-ARC-008
+
+- **GIVEN** the REQ-ARC-008 requirement above ("Operator retention override")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-ARC-009 — Manifest entry
 
 The `src/manifest.json` SHALL declare:
 - `Administratie > Bewaartermijnen` (type: detail, shows retention rules + daysUntilRetention for each record type)
 
 Visibility: all administrations.
 
-### REQ-ARC-010: Legal compliance
+#### Scenario: Spec conformance for REQ-ARC-009
+
+- **GIVEN** the REQ-ARC-009 requirement above ("Manifest entry")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-ARC-010 — Legal compliance
 
 This spec SHALL cite:
 - Archiefwet 1995, artikel 5 (retention obligation)
 - Selectielijst Gemeenten 2020 (specific retention periods)
 - AVG (GDPR) where anonymisation is required per art. 17
+
+#### Scenario: Spec conformance for REQ-ARC-010
+
+- **GIVEN** the REQ-ARC-010 requirement above ("Legal compliance")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
 
 ## Non-Goals
 
