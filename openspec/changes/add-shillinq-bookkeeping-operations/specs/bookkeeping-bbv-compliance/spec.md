@@ -20,11 +20,17 @@ This specification defines the BBV (Besluit Begroting en Verantwoording) complia
 
 ## ADDED Requirements
 
-### REQ-BBV-001: BBV compliance for municipalities
+### Requirement: REQ-BBV-001 — BBV compliance for municipalities
 
 Municipal administrations MUST enforce BBV-conformant posting rules via the `BbvAccountMapping` register, mapping every GL posting to a taakveld per Besluit BBV bijlage IV.
 
-### REQ-BBV-002: BbvAccountMapping register
+#### Scenario: Spec conformance for REQ-BBV-001
+
+- **GIVEN** the REQ-BBV-001 requirement above ("BBV compliance for municipalities")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-BBV-002 — BbvAccountMapping register
 
 The `BbvAccountMapping` schema SHALL declare:
 - `administrationId` (FK to Administration)
@@ -38,7 +44,13 @@ The `BbvAccountMapping` schema SHALL declare:
 
 With unique constraint on `(administrationId, accountNumber)`.
 
-### REQ-BBV-003: Posting validation requires BBV mapping
+#### Scenario: Spec conformance for REQ-BBV-002
+
+- **GIVEN** the REQ-BBV-002 requirement above ("BbvAccountMapping register")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-BBV-003 — Posting validation requires BBV mapping
 
 When a GL posting is created on a municipal administration, a precondition SHALL check that the Account has a corresponding `BbvAccountMapping` entry. If missing, the posting MUST be rejected with a validation error.
 
@@ -48,35 +60,71 @@ GIVEN a gemeente administration
 WHEN a GL posting is attempted on Account "4250 Subsidies cultuur" without a BbvAccountMapping entry
 THEN the posting is rejected with a validation error: "Missing BBV taakveld mapping for account".
 
-### REQ-BBV-004: BBV taakveld catalogue seed
+### Requirement: REQ-BBV-004 — BBV taakveld catalogue seed
 
 The system SHALL ship `bbv-taakvelden-2024.json` seed containing ~50 canonical taakvelden per Commissie BBV, with:
 - `code` (e.g. "0.1")
 - `description` (e.g. "Bestuur")
 - `programmaFocus` (hint)
 
-### REQ-BBV-005: Default RGS↔BBV mapping seed
+#### Scenario: Spec conformance for REQ-BBV-004
+
+- **GIVEN** the REQ-BBV-004 requirement above ("BBV taakveld catalogue seed")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-BBV-005 — Default RGS↔BBV mapping seed
 
 The system SHALL ship `rgs-to-bbv-mapping.json` containing sensible default mappings from RGS 3.5 accounts to taakvelden, seeded per gemeente type (small/medium/large) with `_meta.source = "seeded"`.
 
-### REQ-BBV-006: Per-administration mapping override
+#### Scenario: Spec conformance for REQ-BBV-005
 
-Each gemeente administration SHOULD be seeded with the default `rgs-to-bbv-mapping.json` entries on install. Operators MAY override per-account mappings without affecting the seed (per ADR-022 pattern).
+- **GIVEN** the REQ-BBV-005 requirement above ("Default RGS↔BBV mapping seed")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
 
-### REQ-BBV-007: BBV aggregation queries
+### Requirement: REQ-BBV-006 — Per-administration mapping override
+
+Each gemeente administration SHOULD be seeded with the default `rgs-to-bbv-mapping.json` entries on install. Operators MAY override per-account mappings, and the override MUST NOT affect the seed (per ADR-022 pattern).
+
+#### Scenario: Spec conformance for REQ-BBV-006
+
+- **GIVEN** the REQ-BBV-006 requirement above ("Per-administration mapping override")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-BBV-007 — BBV aggregation queries
 
 The system SHALL expose `x-openregister-aggregations` queries grouping GL postings by taakveld for period-end reporting, enabling roll-up views like "Programma 1000 total by taakveld".
 
-### REQ-BBV-008: IV3 Bucket assignment
+#### Scenario: Spec conformance for REQ-BBV-007
+
+- **GIVEN** the REQ-BBV-007 requirement above ("BBV aggregation queries")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-BBV-008 — IV3 Bucket assignment
 
 Each `BbvAccountMapping.iv3Bucket` value SHALL align with the CBS IV3-bestand specification's bucket names, enabling deterministic IV3 export aggregation per REQ-IV3-003.
 
-### REQ-BBV-009: Manifest entry
+#### Scenario: Spec conformance for REQ-BBV-008
+
+- **GIVEN** the REQ-BBV-008 requirement above ("IV3 Bucket assignment")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
+
+### Requirement: REQ-BBV-009 — Manifest entry
 
 The `src/manifest.json` SHALL declare one navigation entry:
 - `Overheid > BBV-mapping` (type: detail, lists BbvAccountMapping records per administration)
 
 Visibility predicate: gemeente/provincie/waterschap administrations only.
+
+#### Scenario: Spec conformance for REQ-BBV-009
+
+- **GIVEN** the REQ-BBV-009 requirement above ("Manifest entry")
+- **WHEN** the implementing cycle authors register declarations, seeds, manifest entries, lifecycles, workflows, or guards per this requirement
+- **THEN** the artefacts SHALL satisfy every SHALL/MUST clause stated, and reviewers MUST cite this requirement id in the implementing PR's acceptance section.
 
 ## Non-Goals
 
