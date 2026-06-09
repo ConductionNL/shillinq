@@ -7,15 +7,9 @@
 
 ## ADDED Requirements
 
-### REQ-BC-001: PSD2 AIS aggregator integrations SHALL be consumed from openconnector per ADR-022
+### Requirement: REQ-BC-001 — PSD2 AIS aggregator integrations SHALL be consumed from openconnector per ADR-022
 
-PSD2 Account Information Service (AIS) connectivity to licensed
-EU aggregators (Tink, Klarna Kosma, Plaid-EU, Yapily, etc.) MUST
-be consumed from openconnector as configured `Source` records —
-shillinq MUST NOT embed an aggregator HTTP client, MUST NOT
-implement OAuth/SCA flows, and MUST NOT manage aggregator API
-versioning. Per ADR-022, when a sibling app provides the
-integration, the app consumes it.
+PSD2 AIS connectivity SHALL be consumed from openconnector as configured `Source` records: licensed EU aggregators (Tink, Klarna Kosma, Plaid-EU, Yapily, etc.) MUST be wired through openconnector, and shillinq MUST NOT embed an aggregator HTTP client, MUST NOT implement OAuth/SCA flows, and MUST NOT manage aggregator API versioning. Per ADR-022, when a sibling app provides the integration, the app consumes it.
 
 #### Scenario: Reviewer confirms no embedded aggregator client
 
@@ -34,9 +28,9 @@ integration, the app consumes it.
 - **THEN** no such imports SHALL exist in shillinq packages; the
   OAuth flow MUST live in openconnector.
 
-### REQ-BC-002: The `BankConnection` register SHALL declare a fixed minimum field set
+### Requirement: REQ-BC-002 — The `BankConnection` register SHALL declare a fixed minimum field set
 
-A `BankConnection` register MUST be declared in
+The `BankConnection` register MUST be declared in
 `lib/Settings/shillinq_register.json` representing the operator's
 authorisation with an aggregator to read one or more bank
 accounts.
@@ -69,14 +63,9 @@ is non-credential metadata.
 - **THEN** no such fields SHALL exist; credentials MUST live in
   openconnector.
 
-### REQ-BC-003: Aggregator credentials and shillinq-level connector settings SHALL live in NC AppConfig, not in a shillinq table
+### Requirement: REQ-BC-003 — Aggregator credentials and shillinq-level connector settings SHALL live in NC AppConfig, not in a shillinq table
 
-The shillinq-level configuration for bank connectors (e.g.
-"default aggregator for new administrations", "notification
-recipient for consent renewals") MUST be stored in Nextcloud's
-`IAppConfig` via the existing shillinq `SettingsController` /
-`SettingsService` (per shillinq config.yaml `design` rule). No
-custom `shillinq_bank_*` database table.
+Shillinq-level connector configuration MUST be stored in Nextcloud's `IAppConfig` via the existing shillinq `SettingsController` / `SettingsService` (per shillinq config.yaml `design` rule) — e.g. "default aggregator for new administrations" and "notification recipient for consent renewals" live in `IAppConfig`. No custom `shillinq_bank_*` database table.
 
 Aggregator-side credentials (OAuth client id/secret, refresh
 tokens) MUST live in openconnector's `Source` registry. Per
@@ -91,10 +80,10 @@ slug reference only.
 - **THEN** no such classes SHALL exist; both credentials and
   consent records live outside shillinq's data layer.
 
-### REQ-BC-004: Transaction import SHALL run as an OpenRegister scheduled workflow that materialises CAMT.053 from aggregator JSON
+### Requirement: REQ-BC-004 — Transaction import SHALL run as an OpenRegister scheduled workflow that materialises CAMT.053 from aggregator JSON
 
-Per ADR-031 §"Background jobs" path 2, periodic transaction pulls
-MUST run as an OpenRegister `ScheduledWorkflow` tied to the
+Periodic transaction pulls MUST run (per ADR-031 §"Background jobs"
+path 2) as an OpenRegister `ScheduledWorkflow` tied to the
 `BankConnection` register on an operator-configurable cadence
 (default: 4× daily). The workflow MUST call openconnector by
 source slug, normalise the aggregator-specific JSON into a
@@ -123,7 +112,7 @@ author a `BankPollJob extends TimedJob` PHP class.
   XML attached via docudesk, and the transactions surfaced to T3's
   reconciliation queue.
 
-### REQ-BC-005: New-transaction push notifications SHALL fan out through OpenRegister's notifications abstraction
+### Requirement: REQ-BC-005 — New-transaction push notifications SHALL fan out through OpenRegister's notifications abstraction
 
 Notifications on new transactions MUST be declared as
 `x-openregister-notifications` on the `BankStatement` register
@@ -140,10 +129,10 @@ to NC notifications + email.
 - **THEN** a NC notification MUST appear in `treasurer`'s feed
   with no per-app PHP dispatching the event.
 
-### REQ-BC-006: Consent renewal SHALL be a declarative lifecycle workflow with reminders before expiry
+### Requirement: REQ-BC-006 — Consent renewal SHALL be a declarative lifecycle workflow with reminders before expiry
 
-PSD2 SCA mandates consent renewal every 90 days. The
-`BankConnection` schema MUST declare an `x-openregister-lifecycle`
+The `BankConnection` schema MUST declare an `x-openregister-lifecycle`
+(PSD2 SCA mandates consent renewal every 90 days)
 that auto-transitions `active → expiring` 14 days before
 `consentExpiresAt`, fires a notification (per REQ-BC-005), and
 auto-transitions `expiring → expired` on `consentExpiresAt`. The
@@ -169,7 +158,7 @@ update `consentReference` + `consentExpiresAt` on success.
   bank's UI, the new `consentReference` MUST be persisted, and
   the connection state MUST transition back to `active`.
 
-### REQ-BC-007: Bank connections SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-BC-007 — Bank connections SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare a navigation entry (`Bookkeeping >
 Bank Connections`) with a `type: index` page binding to the

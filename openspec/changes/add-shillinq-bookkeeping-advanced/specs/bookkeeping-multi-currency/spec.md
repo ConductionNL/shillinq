@@ -7,16 +7,9 @@
 
 ## MODIFIED Requirements
 
-### REQ-GL-003: The `GLLine` schema SHALL declare a fixed minimum field set, encode sign in `side`, and carry both a transaction-currency amount and a base-currency presentation amount
+### Requirement: REQ-GL-003 — The `GLLine` schema SHALL declare a fixed minimum field set, encode sign in `side`, and carry both a transaction-currency amount and a base-currency presentation amount
 
-(Previously, per T1 `bookkeeping-general-ledger` REQ-GL-003: the
-schema declared a single `currency` field that MUST equal the parent
-transaction's `currency`, and a single `amount` field expressed in
-that currency. The T1 wording explicitly noted "T5 will revisit when
-multi-currency lands" — this spec is that revisit.)
-
-When the multi-currency extension is installed, T1's REQ-GL-003 is
-superseded by the field set below. The semantic shift is twofold:
+When the multi-currency extension is installed, T1's REQ-GL-003 SHALL be superseded by the field set below (previously T1 declared a single `currency` field that MUST equal the parent transaction's `currency`, and a single `amount` field expressed in that currency; T1 noted "T5 will revisit when multi-currency lands" — this spec is that revisit). The semantic shift is twofold:
 
 1. T1's single `amount` field is **reinterpreted** as
    `transactionAmount` (the amount in the foreign currency the line
@@ -102,9 +95,8 @@ share a unit across all lines of a multi-currency transaction.
 
 ## RENAMED Requirements
 
-### REQ-GL-003: `GLLine.transactionCurrency`
-FROM: `currency` (T1 `bookkeeping-general-ledger` REQ-GL-003)
-TO: `transactionCurrency` (this spec REQ-GL-003 above)
+- FROM: `### Requirement: REQ-GL-003 — The `GLLine` schema SHALL declare a fixed minimum field set, encode sign in `side`, and carry currency and amount`
+- TO: `### Requirement: REQ-GL-003 — The `GLLine` schema SHALL declare a fixed minimum field set, encode sign in `side`, and carry both a transaction-currency amount and a base-currency presentation amount`
 
 The T1 field `GLLine.currency` is renamed to `transactionCurrency`
 under the multi-currency extension so the line's foreign-currency
@@ -120,15 +112,9 @@ multi-currency rule.
 
 ## ADDED Requirements
 
-### REQ-MC-001: Every `GLLine` SHALL carry a transaction-currency amount, a base-currency presentation amount, and the FX rate that links them — orientation consistent with `FxRate.rate`
+### Requirement: REQ-MC-001 — Every `GLLine` SHALL carry a transaction-currency amount, a base-currency presentation amount, and the FX rate that links them — orientation consistent with `FxRate.rate`
 
-The detailed multi-currency field set, semantic shift of T1's
-`amount` to `transactionAmount`, the new mandatory
-`baseCurrencyAmount` / `baseCurrency` / `fxRate` / `fxRateSource` /
-`fxRateDate` fields, and the FX-orientation contract are defined
-in the `## MODIFIED Requirements` REQ-GL-003 above (because they
-supersede a T1 requirement, they belong in the MODIFIED section per
-hydra `openspec/config.yaml rules.specs`).
+Every `GLLine` MUST honour the multi-currency field set, the semantic shift of T1's `amount` to `transactionAmount`, the new mandatory `baseCurrencyAmount` / `baseCurrency` / `fxRate` / `fxRateSource` / `fxRateDate` fields, and the FX-orientation contract — all defined in the `## MODIFIED Requirements` REQ-GL-003 above (because they supersede a T1 requirement, they belong in the MODIFIED section per hydra `openspec/config.yaml rules.specs`).
 
 This REQ-MC-001 entry preserves the requirement ID and acts as the
 addition-side anchor for tasks.md / cross-spec references:
@@ -148,7 +134,7 @@ orientation matching REQ-MC-002 with no reciprocation between
   scenarios, orientation) MUST be the MODIFIED REQ-GL-003 in this
   spec — REQ-MC-001 is the anchor, REQ-GL-003 carries the content.
 
-### REQ-MC-002: The system SHALL store FX rates as an OpenRegister-managed `FxRate` register
+### Requirement: REQ-MC-002 — FX rates SHALL be stored as an OpenRegister-managed `FxRate` register
 
 FX rates MUST be declared as a register in
 `lib/Settings/shillinq_register.json` with the `FxRate` schema. The
@@ -210,10 +196,9 @@ when storing (`our rate = 1 / ECB rate`) and MUST round to at least
   to 6 dp), preserving the "1 USD = 0.9259 EUR" orientation that
   matches `GLLine.fxRate`.
 
-### REQ-MC-003: ECB daily FX rate ingestion SHALL be driven by an OpenRegister scheduled workflow
+### Requirement: REQ-MC-003 — ECB daily FX rate ingestion SHALL be driven by an OpenRegister scheduled workflow
 
-Per ADR-031 §"Background jobs" path 2, the daily import of ECB
-reference rates MUST be implemented as an OpenRegister
+Daily import of ECB reference rates MUST (per ADR-031 §"Background jobs" path 2) be implemented as an OpenRegister
 `ScheduledWorkflow` calling an n8n workflow that fetches the ECB
 XML feed, **inverts each published rate** per the orientation
 contract in REQ-MC-002, upserts `FxRate` records with
@@ -240,10 +225,9 @@ HTTP fetch itself routes through openconnector per ADR-022.
   resulting line MUST record `fxRateSource: manual` and `fxRate:
   0.9091`.
 
-### REQ-MC-004: Unrealised and realised FX gain/loss revaluation SHALL be a declarative scheduled OR workflow, not a service
+### Requirement: REQ-MC-004 — Unrealised and realised FX gain/loss revaluation SHALL be a declarative scheduled OR workflow, not a service
 
-Period-end revaluation of foreign-currency balances (open AR/AP
-items, foreign-cash balances) MUST be implemented as a
+Period-end revaluation of foreign-currency balances (open AR/AP items, foreign-cash balances) MUST be implemented as a
 `ScheduledWorkflow` triggered on period close (per T3
 `bookkeeping-year-end-close` / period close): the workflow reads
 each open foreign-currency position, computes the difference
@@ -276,12 +260,9 @@ settlement-rate. No PHP `FxRevaluationService` orchestrates either.
   difference between booked rate and settlement rate as "Gerealiseerde
   koerswinst" `EUR 26.45`.
 
-### REQ-MC-005: Foreign-subsidiary consolidation SHALL translate per IAS 21 functional currency rules
+### Requirement: REQ-MC-005 — Foreign-subsidiary consolidation SHALL translate per IAS 21 functional currency rules
 
-For groups consolidating foreign subsidiaries (per T5
-intercompany / consolidation), per-subsidiary statements MUST be
-translated to the parent's presentation currency using IAS 21
-rules: monetary assets/liabilities at closing rate, equity at
+Per-subsidiary statements MUST (for groups consolidating foreign subsidiaries per T5 intercompany / consolidation) be translated to the parent's presentation currency using IAS 21 rules: monetary assets/liabilities at closing rate, equity at
 historical rate, P&L at average rate for the period, and the
 resulting cumulative translation adjustment (CTA) MUST post to a
 dedicated equity account on the consolidated balance sheet.
@@ -302,7 +283,7 @@ register; no PHP `ConsolidationTranslationService`.
   carry the difference between the translated balance-sheet equity
   and translated P&L, per IAS 21.
 
-### REQ-MC-006: FX rates SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-MC-006 — FX rates SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare a navigation entry
 (`Bookkeeping > FX Rates`) with a `type: index` page binding to
