@@ -46,7 +46,7 @@
 
 - [x] Task 11: Implement daily tally batch (end-of-day, idempotent) per REQ-URC-001 — sums `UrenRegistratie` entries for the day, applies reistijd-cap (max 4 uur, logs overages), updates `UrencriteriumYear.lopendeUren`; no PHP service, pure aggregation
 
-- [ ] Task 12: Implement prognosis batch per REQ-URC-002 — rolling-12-week average + seasonality correction (e.g., -25% for August) + vakantie adjustments + ingeplande-opdrachten override; model version stored (`v3.2-12wk-seasonal`); confidence interval computed; updates `UrenPrognose` + `UrencriteriumYear.prognoseEindeJaar`
+- [x] Task 12: Implement prognosis batch per REQ-URC-002 — rolling-12-week average + seasonality correction (e.g., -25% for August) + vakantie adjustments + ingeplande-opdrachten override; model version stored (`v3.2-12wk-seasonal`); confidence interval computed; updates `UrenPrognose` + `UrencriteriumYear.prognoseEindeJaar`
 
 - [ ] Task 13: Implement alert-trigger batch per REQ-URC-003 — fires quarterly (31 Mar, 30 Jun, 30 Sep, 31 Dec) + on drempelStatus omslag (OP_KOERS → RISICO, RISICO → KRITIEK); generates `UrenAlert` with 3+ handelingsperspectief (acquisitie-hours, vakantie-revisie, fiscaal-verlies EUR context)
 
