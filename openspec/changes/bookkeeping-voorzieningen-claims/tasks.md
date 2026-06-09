@@ -282,18 +282,37 @@
     effectOfChangeInEstimate documents the REQ-PROV-019 prospective workflow:
     corrections land on the next open ProvisionMovement record.
 
-- [ ] Task 26: Seed data: Create 3 specimen `provision` records (garantie EUR 120K,
+- [x] Task 26: Seed data: Create 3 specimen `provision` records (garantie EUR 120K,
   milieu EUR 800K, claims EUR 500K) with complete three-criteria documentation,
   best-estimate + range, and linked type-specific detail records. Operators
   delete and replace with actual data on first use.
+  - DONE: three Provision seeds in the fragment objects: garantie-standaard-2026
+    (EUR 120K, range EUR 80K–150K, constructive obligation, current presentation),
+    milieu-bodemsanering-rijnmond (EUR 800K, discontering 3%, discountedValue EUR
+    731K, split presentation, priorYearBalanceTotal EUR 70M),
+    claims-productaansprakelijkheid-x (EUR 500K, range EUR 300K–700K, medium-term
+    timing). Each carries a recognitionRationale + obligatingEvent satisfying
+    REQ-PROV-001 and ships in `draft` status so operators activate after entering
+    their administration's peerReviewer + CFO sign-off.
 
-- [ ] Task 27: Seed data: Create 2 specimen `contingent-liability` records
+- [x] Task 27: Seed data: Create 2 specimen `contingent-liability` records
   (fiscaal geschil, huurgarantie) demonstrating disclosure-only entries for
   probabilityCategory=possible and remote scenarios.
+  - DONE: two ContingentLiability seeds: fiscaal-geschil-ib (probabilityCategory
+    possible, estimatedAmount EUR 400K, narrative for jaarrekening toelichting)
+    and borgstelling-dochter (probabilityCategory remote, estimatedAmount null
+    because no reliable estimate, narrative covering the EUR 2.5M parent
+    borgtocht).
 
-- [ ] Task 28: Seed data: Create 1 specimen `provision-movement` record for
+- [x] Task 28: Seed data: Create 1 specimen `provision-movement` record for
   guaranteed provision showing opening → additions → used → closing with linked
   GL entries.
+  - DONE: ProvisionMovement seed `provision-movement-garantie-2026-12` (period
+    2026-12, opening 0, additions 120K, used 45K, closing 75K) with empty
+    linkedJournalEntries plus a narrative instructing operators to fill in the
+    GL journal entries on first use. Status remains `open` so the
+    ProvisionGuard::canCloseMovement audit-trail requirement applies at close
+    time per REQ-PROV-016.
 
 - [ ] Task 29: Integration test: Verify three-criteria gating blocks provision
   without all three criteria.
