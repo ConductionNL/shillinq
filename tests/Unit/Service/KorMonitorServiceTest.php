@@ -286,5 +286,44 @@ final class KorMonitorServiceTest extends TestCase
 
     }//end testRegistrationDrempelOverride()
 
+    /**
+     * Status exposes optOutPermitted, false outside the lock-in opt-out window (REQ-KOR-007).
+     *
+     * @return void
+     */
+    public function testOptOutPermittedFalseWithoutWindow(): void
+    {
+        $service = $this->buildService([], []);
+        $result  = $service->status(administrationId: 'adm-1', year: 2026);
+
+        self::assertArrayHasKey('optOutPermitted', $result);
+        self::assertFalse($result['optOutPermitted']);
+
+    }//end testOptOutPermittedFalseWithoutWindow()
+
+    /**
+     * Status reports optOutPermitted=true when ACTIEF registratie's window covers today (REQ-KOR-007).
+     *
+     * @return void
+     */
+    public function testOptOutPermittedTrueInsideWindow(): void
+    {
+        $today         = date('Y-m-d');
+        $registrations = [
+            [
+                'administrationId'   => 'adm-1',
+                'status'             => 'ACTIEF',
+                'vroegsteOpzegDatum' => '1900-01-01',
+                'lockInEindDatum'    => '9999-12-31',
+            ],
+        ];
+
+        $service = $this->buildService([], $registrations);
+        $result  = $service->status(administrationId: 'adm-1', year: (int) substr($today, 0, 4));
+
+        self::assertTrue($result['optOutPermitted']);
+
+    }//end testOptOutPermittedTrueInsideWindow()
+
     // phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

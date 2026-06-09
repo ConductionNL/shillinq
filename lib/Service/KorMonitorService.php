@@ -72,7 +72,7 @@ class KorMonitorService
      * @return array{
      *   administrationId:string, jaar:int, lopendeOmzet:float, drempel:float,
      *   drempelBenutting:float, perMaand:array<string,float>, prognoseEindeJaar:float,
-     *   prognoseStatus:string, ernst:?string, trigger:?string
+     *   prognoseStatus:string, ernst:?string, trigger:?string, optOutPermitted:bool
      * }
      *
      * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
@@ -108,9 +108,51 @@ class KorMonitorService
             ),
             'ernst'             => ($schijf['ernst'] ?? null),
             'trigger'           => ($schijf['trigger'] ?? null),
+            'optOutPermitted'   => $this->resolveOptOutPermitted(administrationId: $administrationId),
         ];
 
     }//end status()
+
+    /**
+     * Resolve whether the administration's ACTIEF KOR-registratie may opt out today (REQ-KOR-007).
+     *
+     * Composes the calculator's lock-in arithmetic with the persisted registration
+     * window so the manifest's KorOpzegging page can gate the lifecycle action.
+     *
+     * @param string $administrationId Administration scope.
+     *
+     * @return bool True when an operator may opt out today.
+     */
+    private function resolveOptOutPermitted(string $administrationId): bool
+    {
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registrations = $objectService
+                ->setRegister($this->register())
+                ->setSchema('KORRegistration')
+                ->findAll(
+                    ['filters' => ['administrationId' => $administrationId, 'status' => 'ACTIEF']]
+                );
+        } catch (\Throwable $e) {
+            return false;
+        }
+
+        $today = date('Y-m-d');
+        foreach ($registrations as $registration) {
+            $vroegste = (string) ($registration['vroegsteOpzegDatum'] ?? '');
+            $eind     = (string) ($registration['lockInEindDatum'] ?? '');
+            if ($this->calculator->isOptOutPermitted(
+                today: $today,
+                vroegsteOpzegDatum: $vroegste,
+                lockInEindDatum: $eind
+            ) === true) {
+                return true;
+            }
+        }
+
+        return false;
+
+    }//end resolveOptOutPermitted()
 
     /**
      * Fetch the administration's KOR-eligible AR invoices for the year (REQ-KOR-002).
