@@ -7,10 +7,9 @@
 
 ## ADDED Requirements
 
-### REQ-ZZP-001: The system SHALL administer ZZP-specific tax regime data as OpenRegister-managed registers
+### Requirement: REQ-ZZP-001 — ZZP-specific tax regime data SHALL be administered as OpenRegister-managed registers
 
-For administrations of type `zzp` (zelfstandigen-zonder-personeel),
-shillinq MUST provide:
+For administrations of type `zzp` (zelfstandigen-zonder-personeel), shillinq MUST provide:
 
 1. **`UrenRegistratie`** — a register tracking billable + non-
    billable hours per operator per day, used for the 1225-uren-
@@ -37,7 +36,9 @@ Statutory basis: Wet IB 2001 art. 3.6 (urencriterium), art. 3.76
 - **WHEN** the dashboard renders
 - **THEN** the ZZP menus MUST NOT appear.
 
-### REQ-ZZP-002: The `UrenRegistratie` schema SHALL declare a fixed minimum field set
+### Requirement: REQ-ZZP-002 — The `UrenRegistratie` schema SHALL declare a fixed minimum field set
+
+The `UrenRegistratie` schema MUST declare the following fields with the listed required/optional flag, used by the urencriterium tracker and by the IB-aangifte export:
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -69,10 +70,9 @@ count per Wet IB 2001 art. 3.6 lid 4.
   `excludedReason` is saved
 - **THEN** the save MUST fail with a precondition error.
 
-### REQ-ZZP-003: YTD hours toward the 1225-criterium SHALL be a declarative calculation
+### Requirement: REQ-ZZP-003 — YTD hours toward the 1225-criterium SHALL be a declarative calculation
 
-A derived field `ytdQualifyingHours` MUST be declared via
-`x-openregister-calculations` on a `ZzpDeduction` record summing
+A derived field `ytdQualifyingHours` MUST be declared via `x-openregister-calculations` on a `ZzpDeduction` record summing
 `UrenRegistratie.hours` for the same `(administrationId, personId,
 calendarYear)` where `category ∈ {billable, non-billable-admin,
 non-billable-acquisition, non-billable-training}` (all the
@@ -97,7 +97,7 @@ resolved in implementing cycle's `opsx-ff`.
 - **WHEN** `ytdQualifyingHours` is recalculated
 - **THEN** the value MUST NOT increase by those 40 hours.
 
-### REQ-ZZP-004: A urencriterium-tracking widget SHALL be declared via `x-openregister-widgets`
+### Requirement: REQ-ZZP-004 — A urencriterium-tracking widget SHALL be declared via `x-openregister-widgets`
 
 A widget MUST be declared via `x-openregister-widgets` on
 `UrenRegistratie` (or the `ZzpDeduction` derived view), showing
@@ -120,7 +120,9 @@ notification fires warning of dreigend onderschrijden.
 - **THEN** an NC notification MUST appear for `user-1` warning
   "Dreigend onderschrijden urencriterium (projectie: 1000 uur)".
 
-### REQ-ZZP-005: The `ZzpDeduction` schema SHALL hold derived annual deduction values
+### Requirement: REQ-ZZP-005 — The `ZzpDeduction` schema SHALL hold derived annual deduction values
+
+The `ZzpDeduction` schema MUST hold the per-tax-year derived deduction values listed below; every monetary derivation MUST be expressed as `x-openregister-calculations` (no `ZzpDeductionCalculator` service per ADR-031).
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -150,7 +152,9 @@ Every monetary derivation MUST be expressed as
   `mkbWinstvrijstellingAmount` MUST equal `(60000 - 3750 - 2123) ×
   0.127` per Wet IB 2001 art. 3.79a.
 
-### REQ-ZZP-006: The IB-aangifteformulier export SHALL be an `IbAangifteExport` register
+### Requirement: REQ-ZZP-006 — The IB-aangifteformulier export SHALL be an `IbAangifteExport` register
+
+The IB-aangifteformulier export MUST be persisted as an `IbAangifteExport` register with the field set below; export aggregations MUST be declarative (`x-openregister-aggregations` on GL) and PDF/XML generation MAY be deferred to docudesk per ADR-022.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -179,7 +183,9 @@ is the document-generation abstraction).
   from the 2026 GL postings; `deductions` MUST equal the values
   computed in REQ-ZZP-005.
 
-### REQ-ZZP-007: Urencriterium and deduction thresholds SHALL ship as versioned seed data
+### Requirement: REQ-ZZP-007 — Urencriterium and deduction thresholds SHALL ship as versioned seed data
+
+Urencriterium thresholds and ZZP deduction amounts MUST ship as versioned seed JSON files under `lib/Settings/seeds/`, each record carrying `effectiveFrom`/`effectiveTo` so future revisions coexist:
 
 `lib/Settings/seeds/urencriterium-thresholds.json` MUST hold:
 
@@ -209,9 +215,9 @@ revisions coexist.
   `effectiveTo: "2026-12-31"`) AND a new 2027 record MUST be
   added; `ZzpDeduction` for tax-year 2027 MUST use the new amount.
 
-### REQ-ZZP-008: ZZP administration SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-ZZP-008 — ZZP administration SHALL be reachable through the shillinq manifest navigation
 
-`src/manifest.json` MUST declare navigation entries:
+`src/manifest.json` MUST declare navigation entries, predicated on `administrationType: "zzp"`:
 
 - `Belastingen > Urenregistratie` — `type: index` on
   `UrenRegistratie` + `type: detail` for daily entry editing.
@@ -230,13 +236,9 @@ Visibility predicated on `administrationType: "zzp"`.
 - **THEN** the page MUST render via `CnIndexPage` with columns
   (date, hours, category, projectId) and a "quick add row" UI.
 
-### REQ-ZZP-009: Audit trail and retention SHALL be consumed from OR's abstractions
+### Requirement: REQ-ZZP-009 — Audit trail and retention SHALL be consumed from OR's abstractions
 
-Every `UrenRegistratie`, `ZzpDeduction`, and `IbAangifteExport`
-operation MUST be audited via OR's audit-trail-immutable (ADR-022).
-Retention MUST be declared via
-`x-openregister-lifecycle.retention: { rule: "selectielijst:5.1.2" }`
-(financial records — 7 years per AWR art. 52).
+Every `UrenRegistratie`, `ZzpDeduction`, and `IbAangifteExport` operation MUST be audited via OR's audit-trail-immutable (ADR-022), and retention MUST be declared via `x-openregister-lifecycle.retention: { rule: "selectielijst:5.1.2" }` (financial records — 7 years per AWR art. 52). No app-local audit table.
 
 #### Scenario: A historical hours record is queryable after 5 years
 
