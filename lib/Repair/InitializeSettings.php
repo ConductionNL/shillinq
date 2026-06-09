@@ -180,6 +180,7 @@ class InitializeSettings implements IRepairStep
             $this->seedRetentionPolicies(output: $output);
             $this->seedStatementManifests(output: $output);
             $this->seedWmoCommercialActivities(output: $output);
+            $this->seedFixedAssetsDemo(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -1522,4 +1523,48 @@ class InitializeSettings implements IRepairStep
         $output->warning('WMO seeding issue: '.($result['message'] ?? 'unknown error'));
 
     }//end seedWmoCommercialActivities()
+
+
+    /**
+     * Seed FixedAsset + DepreciationSchedule demo records idempotently
+     * for `bookkeeping-fixed-assets-depreciation` Task 15 (REQ-FA-001..010).
+     *
+     * Calls SettingsService::seedFixedAssetsDemo() which imports four
+     * realistic Dutch SMB scenarios from
+     * `lib/Settings/seeds/fixed-assets-demo.json` (company vehicle, office
+     * building, computer equipment, retired asset) and their 2026
+     * DepreciationSchedule records. Skipped when administration_id is not
+     * configured (C2 — prevents "default" contamination of real tenant data).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
+     */
+    private function seedFixedAssetsDemo(IOutput $output): void
+    {
+        $settings         = $this->settingsService->getSettings();
+        $administrationId = ($settings['administration_id'] ?? '');
+
+        if ($administrationId === '') {
+            $output->info('Shillinq: FixedAssets demo seed skipped (no default administration configured)');
+            return;
+        }
+
+        $output->info('Seeding FixedAsset + DepreciationSchedule demo records...');
+        $result = $this->settingsService->seedFixedAssetsDemo(administrationId: $administrationId);
+
+        if (($result['success'] ?? false) === true) {
+            $output->info(
+                'FixedAsset demo seeded: '
+                .($result['seededAssets'] ?? 0).' assets created, '.($result['skippedAssets'] ?? 0).' skipped; '
+                .($result['seededSchedules'] ?? 0).' schedules created, '.($result['skippedSchedules'] ?? 0).' skipped.'
+            );
+            return;
+        }
+
+        $output->warning('FixedAssets demo seeding issue: '.($result['message'] ?? 'unknown error'));
+
+    }//end seedFixedAssetsDemo()
 }//end class

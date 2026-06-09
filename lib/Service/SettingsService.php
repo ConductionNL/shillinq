@@ -425,6 +425,173 @@ class SettingsService
 
 
     /**
+     * Seed FixedAsset + DepreciationSchedule demo records, idempotently (REQ-FA-001..010).
+     *
+     * Reads `lib/Settings/seeds/fixed-assets-demo.json` and imports four
+     * realistic Dutch SMB scenarios (company vehicle, office building,
+     * computer equipment, retired asset) together with their 2026
+     * DepreciationSchedule records. Each FixedAsset carries both the
+     * canonical fields (assetCategory / usefulLifeMonths / lifecycleState)
+     * and the REQ-FA-002 operator-facing aliases (assetType / usefulLifeYears
+     * / status). Deduplication key for both schemas is `assetNumber` /
+     * `scheduleNumber` + `administrationId`; idempotent on re-run.
+     *
+     * @param string $administrationId The administrationId to stamp on seeded records.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
+     */
+    public function seedFixedAssetsDemo(string $administrationId): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return ['success' => false, 'message' => 'OpenRegister is not installed or enabled.'];
+        }
+
+        if ($administrationId === '') {
+            return ['success' => false, 'message' => 'administrationId must not be empty.'];
+        }
+
+        $seedPath = __DIR__.'/../Settings/seeds/fixed-assets-demo.json';
+        if (file_exists($seedPath) === false) {
+            return ['success' => false, 'message' => 'Seed file not found: fixed-assets-demo.json'];
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return ['success' => false, 'message' => 'Failed to read fixed-assets-demo.json'];
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return [
+                'success' => false,
+                'message' => 'Failed to parse fixed-assets-demo.json: '.json_last_error_msg(),
+            ];
+        }
+
+        $fixedAssets           = ($data['fixedAssets'] ?? []);
+        $depreciationSchedules = ($data['depreciationSchedules'] ?? []);
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+            $seededAssets       = 0;
+            $skippedAssets      = 0;
+            $seededSchedules    = 0;
+            $skippedSchedules   = 0;
+            $assetUuidByNumber  = [];
+
+            foreach ($fixedAssets as $asset) {
+                $asset['administrationId'] = $administrationId;
+
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('FixedAsset')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'assetNumber'      => $asset['assetNumber'],
+                                'administrationId' => $administrationId,
+                            ],
+                            'limit'   => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    $skippedAssets++;
+                    // Cache the existing UUID for schedule linking.
+                    $firstRow = $existing[0];
+                    if (is_array($firstRow) === true && isset($firstRow['id']) === true) {
+                        $assetUuidByNumber[$asset['assetNumber']] = (string) $firstRow['id'];
+                    } else if (is_object($firstRow) === true && method_exists($firstRow, 'getId') === true) {
+                        $assetUuidByNumber[$asset['assetNumber']] = (string) $firstRow->getId();
+                    }
+
+                    continue;
+                }
+
+                $saved = $objectService->saveObject(
+                    object: $asset,
+                    register: $registerSlug,
+                    schema: 'FixedAsset',
+                );
+                $seededAssets++;
+
+                if (is_array($saved) === true && isset($saved['id']) === true) {
+                    $assetUuidByNumber[$asset['assetNumber']] = (string) $saved['id'];
+                } else if (is_object($saved) === true && method_exists($saved, 'getId') === true) {
+                    $assetUuidByNumber[$asset['assetNumber']] = (string) $saved->getId();
+                }
+            }//end foreach
+
+            foreach ($depreciationSchedules as $schedule) {
+                $schedule['administrationId'] = $administrationId;
+
+                // Resolve assetNumber → assetRef UUID.
+                $assetNumber = (string) ($schedule['assetNumber'] ?? '');
+                if ($assetNumber !== '' && isset($assetUuidByNumber[$assetNumber]) === true) {
+                    $schedule['assetRef'] = $assetUuidByNumber[$assetNumber];
+                }
+
+                unset($schedule['assetNumber']);
+
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('DepreciationSchedule')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'scheduleNumber'   => $schedule['scheduleNumber'],
+                                'administrationId' => $administrationId,
+                            ],
+                            'limit'   => 1,
+                        ]
+                    );
+
+                if (empty($existing) === false) {
+                    $skippedSchedules++;
+                    continue;
+                }
+
+                $objectService->saveObject(
+                    object: $schedule,
+                    register: $registerSlug,
+                    schema: 'DepreciationSchedule',
+                );
+                $seededSchedules++;
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: fixed-assets demo seeded',
+                [
+                    'seededAssets'     => $seededAssets,
+                    'skippedAssets'    => $skippedAssets,
+                    'seededSchedules'  => $seededSchedules,
+                    'skippedSchedules' => $skippedSchedules,
+                ]
+            );
+
+            return [
+                'success'           => true,
+                'message'           => 'FixedAsset + DepreciationSchedule demo records seeded successfully.',
+                'seededAssets'      => $seededAssets,
+                'skippedAssets'     => $skippedAssets,
+                'seededSchedules'   => $seededSchedules,
+                'skippedSchedules'  => $skippedSchedules,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: fixed-assets demo seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return ['success' => false, 'message' => $e->getMessage()];
+        }//end try
+
+    }//end seedFixedAssetsDemo()
+
+
+    /**
      * Seed the default RGS → BBV account mapping for a municipal administration
      * from rgs-to-bbv-mapping.json, idempotently (REQ-BBV-006). Only runs for
      * administrations whose `administrationType` is in {gemeente, provincie,
