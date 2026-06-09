@@ -100,9 +100,9 @@
 
 ## Documentation (company-wide ADR-010)
 
-- [ ] N/A for the spec change itself
-- [ ] Feature documentation updated in `docs/user-guide/bookkeeping/` — subpages for trial-balance, period-close, accounts-payable, accounts-receivable, financial-statements, audit-trail, document-attachment, bank-reconciliation authored during implementation cycle per ADR-030 journeydoc convention
-- [ ] Screenshots committed to `docs/images/` — ~8 screenshots: trial balance, period-close detail, AP invoice + payment run, AR invoice + dunning timeline, balance sheet, audit-log side panel, bank-rec detail
+- [~] N/A for the spec change itself — **DEFERRED (architectural / N/A)**: per the proposal Scope ("spec-only change"), no user-facing feature ships in this change envelope, so the ADR-010 feature-docs gate has no surface to document here. **Handoff**: per-feature journeydoc lands per leaf (see next two tasks). Closes as [~] (by design).
+- [~] Feature documentation updated in `docs/user-guide/bookkeeping/` — subpages for trial-balance, period-close, accounts-payable, accounts-receivable, financial-statements, audit-trail, document-attachment, bank-reconciliation authored during implementation cycle per ADR-030 journeydoc convention — **DEFERRED (downstream)**: each of the eight subpages lives with its own T3/T4 implementing change (a screenshot-bearing journeydoc requires a live UI surface per ADR-030, and those UIs land per leaf, not at the umbrella). **Handoff**: leaf changes (e.g. `bookkeeping-trial-balance`, `bookkeeping-period-close`, `bookkeeping-accounts-payable-core`, etc.) each carry their own `docs/user-guide/bookkeeping/<topic>.md` under their Documentation task. The umbrella closes the slot as [~]. Closes as [~] (umbrella → leaf).
+- [~] Screenshots committed to `docs/images/` — ~8 screenshots: trial balance, period-close detail, AP invoice + payment run, AR invoice + dunning timeline, balance sheet, audit-log side panel, bank-rec detail — **DEFERRED (downstream)**: screenshots are produced by the per-leaf journeydoc + gate-19 capture spec; the umbrella does not own a UI surface to screenshot. **Handoff**: each leaf change (trial-balance, period-close, AP, AR, financial-statements, audit-trail, bank-reconciliation) commits its own screenshots beside its own journeydoc — same cadence as the rechtmatigheidsverantwoording / cancellation-rules cycles. Closes as [~] (umbrella → leaf).
 
 ## i18n (company-wide ADR-005)
 
