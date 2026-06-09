@@ -6,18 +6,18 @@
 
 ### Core Registers & Calculation
 
-- [ ] **P1-1**: Confirm no `CommercialActivity` / `IntegralCostPrice` / `ActivityCostAllocation` schemas already exist in `lib/Settings/shillinq_register.json`, `openspec/specs/`, or `adr-000-data-model.md`
-- [ ] **P1-2**: Declare `CommercialActivity` schema in `lib/Settings/shillinq_register.json` with REQ-WMO-001 fields (code, naam, bestuursorgaan, organisatieonderdeel, beschrijving, marktsegment, concurrenten, afnemers, startDatum, eindDatum, kostprijsMethode, kostenplaatsCode, kostendragerCode, isExempted, exemptionBesluitId, jaaromzet, acmMelding, lastReviewedAt, administrationId); include RBAC role: `concerncontroller` (read/write/delete), `finansieel-beleidsadviseur` (read/write), `griffier` (read)
+- [x] **P1-1**: Confirm no `CommercialActivity` / `IntegralCostPrice` / `ActivityCostAllocation` schemas already exist in `lib/Settings/shillinq_register.json`, `openspec/specs/`, or `adr-000-data-model.md`
+- [x] **P1-2**: Declare `CommercialActivity` schema in `lib/Settings/shillinq_register.json` with REQ-WMO-001 fields (code, naam, bestuursorgaan, organisatieonderdeel, beschrijving, marktsegment, concurrenten, afnemers, startDatum, eindDatum, kostprijsMethode, kostenplaatsCode, kostendragerCode, isExempted, exemptionBesluitId, jaaromzet, acmMelding, lastReviewedAt, administrationId); include RBAC role: `concerncontroller` (read/write/delete), `finansieel-beleidsadviseur` (read/write), `griffier` (read) — landed as ADR-037 register.d fragment per repo convention.
 - [ ] **P1-3**: Wire automatic annual review-task generation: if lastReviewedAt > 365 days old, trigger a task "Annual review due: [activity code] [name]" assigned to concerncontroller via scheduled workflow (per ADR-031 ScheduledWorkflow)
-- [ ] **P1-4**: Declare `IntegralCostPrice` schema with REQ-WMO-002 fields (commercialActivityId, periode, berekendOp, status=[voorlopig|definitief], componenten object with 6 component groups, totaleKosten, verkochteEenheden, eenheidLabel, kostprijsPerEenheid, gehanteerdTarief, marge, margePercentage, compliant boolean, toelichting); time-versioned per (commercialActivityId, periode)
+- [x] **P1-4**: Declare `IntegralCostPrice` schema with REQ-WMO-002 fields (commercialActivityId, periode, berekendOp, status=[voorlopig|definitief], componenten object with 6 component groups, totaleKosten, verkochteEenheden, eenheidLabel, kostprijsPerEenheid, gehanteerdTarief, marge, margePercentage, compliant boolean, toelichting); time-versioned per (commercialActivityId, periode) — periode pattern accepts YYYY-MM / YYYY-Qn / YYYY-YTD and -restatement suffix.
 - [ ] **P1-5**: Implement `IntegralCostPriceCalculator` service method (monthly scheduled execution): query GL lines by kostenplaatsCode for the period, sum directe loonkosten/materialen/afschrijvingen, fetch OverheadDistributionRule for the period, apply to taakveld 0.4 overhead, add vermogenskosten (via WACC rate, default 4.5%, configurable), add winstopslag (default 2–5%, configurable per activity + per period), generate IKP record with status=voorlopig
 - [ ] **P1-6**: Wire monthly IKP calculation as `ScheduledWorkflow` (per ADR-031), default 1st of month 03:00 UTC; runs for all commercial activities in all administrations
-- [ ] **P1-7**: Declare `OverheadDistributionRule` as inherited from `bookkeeping-cost-centers-dimensions`; confirm BBV taakveld 0.4 sleutel is the canonical overhead source for WMO IKP calculations (consistency control)
+- [x] **P1-7**: Declare `OverheadDistributionRule` as inherited from `bookkeeping-cost-centers-dimensions`; confirm BBV taakveld 0.4 sleutel is the canonical overhead source for WMO IKP calculations (consistency control) — `verdeelsleutel` on `ActivityCostAllocation` is a FK string typed against `OverheadDistributionRule.id`; no shadow schema added (design.md D3).
 - [ ] **P1-8**: Implement year-end IKP lock: on 31 March of following year, aggregate all monthly voorlopig records for FY into single definitief record, locked by accountant digital signature (timestamp + user-id recorded)
 
 ### Automatic Transaction Splitting
 
-- [ ] **P1-9**: Declare `ActivityCostAllocation` schema with REQ-WMO-003 fields (journalEntryId, originalAmount, splits[] array, verdeelsleutel FK, automatischToegepast boolean, handmatigeOverride object with approvedBy array + reason + timestamp)
+- [x] **P1-9**: Declare `ActivityCostAllocation` schema with REQ-WMO-003 fields (journalEntryId, originalAmount, splits[] array, verdeelsleutel FK, automatischToegepast boolean, handmatigeOverride object with approvedBy array + reason + timestamp) — handmatigeOverride.approvedBy enforces exactly 2 user-ids; status lifecycle = active/overridden/reversed.
 - [ ] **P1-10**: Implement `ActivityCostAllocationSplitter` as event-listener on JournalEntry post event (per ADR-008 event-bus); on journal-entry post, query all GL lines in the entry for matching kostenplaats/kostendrager codes against CommercialActivity records; if match, fetch applicable OverheadDistributionRule for posting date; apply rule ratios to create split and store ActivityCostAllocation record
 - [ ] **P1-11**: Support handmatige override: allow marking an ActivityCostAllocation as overridden (automatischToegepast=false), require motivering + 2-user sign-off (implementer: UI form with two approver dropdowns), log original + new allocation with reason to audit trail, mark original allocation status=overridden
 - [ ] **P1-12**: Optional materialization mode: if operator configures "post splits to ledger", emit additional balanced GL lines for each split (e.g. original Dr 4430 €18.4k splits into Dr 4431 €11.8k PUBL + Dr 4432 €6.6k MO), keeping transaction balanced; if not configured, splits remain *derived* for reporting only
@@ -56,7 +56,7 @@
 
 ### ABB Lifecycle Management
 
-- [ ] **P2-1**: Declare `AlgemeenBelangBesluit` schema with REQ-WMO-005 fields (kenmerk, bestuursorgaan, vaststellingsdatum, publicatieGemeenteblad, publicatieDatum, kennisgevingAcm, betreftActiviteiten[], publiekBelangCategorieen[], motivering, evaluatieRitme, volgendeEvaluatie, status enum, bezwaarTermijnVerstreken, bestuursrechtelijkeProcedures[]); include RBAC role: `juridisch-beleidsadviseur` (read/write), `griffier` (read/write), `concerncontroller` (read)
+- [x] **P2-1**: Declare `AlgemeenBelangBesluit` schema with REQ-WMO-005 fields (kenmerk, bestuursorgaan, vaststellingsdatum, publicatieGemeenteblad, publicatieDatum, kennisgevingAcm, betreftActiviteiten[], publiekBelangCategorieen[], motivering, evaluatieRitme, volgendeEvaluatie, status enum, bezwaarTermijnVerstreken, bestuursrechtelijkeProcedures[]); include RBAC role: `juridisch-beleidsadviseur` (read/write), `griffier` (read/write), `concerncontroller` (read) — full 10-state x-openregister-lifecycle wired.
 - [ ] **P2-2**: Implement ABB state-machine workflow: on save, validate preconditions per target status (e.g., can't transition to geldig without publicatieDatum + ACM-kenmerk); emit status-change lifecycle actions
 - [ ] **P2-3**: Wire automatic task generation per status: raadsbesluit → "Publish in gemeenteblad by [+14d]"; publicatie + date → "Notify ACM by [+7d]"; acm-notified → "Review bezwaarschriften by [+42d]"; volgendeEvaluatie date reached → "Evaluate ABB" + status=evaluatie-due
 - [ ] **P2-4**: Implement DROP-API integration (via openconnector OC-sources): on publicatieDatum set, auto-verify gemeenteblad reference is retrievable from DROP (Decentrale Regelgeving Officiële Publicaties) API; log verification result to audit trail; alert if DROP lookup fails
@@ -64,7 +64,7 @@
 
 ### ACM Reporting
 
-- [ ] **P2-6**: Declare `ACMReport` schema with period (quarterly or annual), generatedAt, format=ACM-standaardformulier-mo-2024, activiteiten[] array listing all commercial activities with omzet/IKP/ratio/compliance status, samenvatting text, ondertekenaar, ondertekendOp (timestamp + sig), verzondenAanAcm boolean, publicatieGemeenteblad reference
+- [x] **P2-6**: Declare `ACMReport` schema with period (quarterly or annual), generatedAt, format=ACM-standaardformulier-mo-2024, activiteiten[] array listing all commercial activities with omzet/IKP/ratio/compliance status, samenvatting text, ondertekenaar, ondertekendOp (timestamp + sig), verzondenAanAcm boolean, publicatieGemeenteblad reference — lifecycle draft → ready-for-submission → verzonden → archived.
 - [ ] **P2-7**: Implement ACMReportGenerator service: query all CommercialActivity + IntegralCostPrice + ActivityCostAllocation records for period; aggregate omzet (GL revenue-sum), integrale kostprijs (from IKP-definitief), kostendekkingsratio, ABB list; serialize to JSON/XML (SBR/XBRL structure compatible with anticipated ACM API schema)
 - [ ] **P2-8**: Implement digital signature on ACMReport: require concerncontroller to sign (via Nextcloud certificate or similar PKI); timestamp signature to audit trail; upon signing, change status to "ready for submission"
 - [ ] **P2-9**: Implement ACMReport submission & immutability: on submit, copy to write-once archive store (per ADR-031 immutable log concept); mark status=verzonden; begin 7-year retention countdown (Mededingingswet bewaartermijn, review for archive at year 8)
@@ -72,14 +72,14 @@
 
 ### Cross-Subsidy Detection
 
-- [ ] **P2-11**: Declare `AlertLog` schema with alertType enum (6 scenarios from REQ-WMO-007), commercialActivityId, severity, generatedAt, assignedTo, status (open/reviewed-no-action/remediated/escalated), escalatedAt, resolutionNotes
+- [x] **P2-11**: Declare `AlertLog` schema with alertType enum (6 scenarios from REQ-WMO-007), commercialActivityId, severity, generatedAt, assignedTo, status (open/reviewed-no-action/remediated/escalated), escalatedAt, resolutionNotes — alertType also covers REQ-WMO-012 bevoordeling-risk (Phase 3); lifecycle adds escalation-due transitional state.
 - [ ] **P2-12**: Implement CrossSubsidyDetector as monthly `ScheduledWorkflow`: 1st of month 02:00 UTC, iterate all CommercialActivity records per administration; for each, check 6 risk scenarios (loss-financing 2+ months, omzetgroei >25%, overhead <1%, ABB stale, override-count >5%, overhead-onderschatting); create AlertLog records for any matches
 - [ ] **P2-13**: Implement alert escalation: mark any open AlertLog > 4 weeks old, escalate status to "escalation-due", assign to gemeentesecretaris (or configurable escalation-role), send notification
 - [ ] **P2-14**: Implement alert resolution workflow: operators can mark AlertLog status=reviewed-no-action (with motivation) or remediated (with remediation notes); all status-changes logged to audit trail
 
 ### Immutable Audit Trail
 
-- [ ] **P2-15**: Declare `WMOAuditLog` schema per `bookkeeping-audit-trail` cross-cutting spec, with eventType, entityId, entityType, userId, timestamp (ms-precision), beforeValues, afterValues, reason, status
+- [x] **P2-15**: Declare `WMOAuditLog` schema per `bookkeeping-audit-trail` cross-cutting spec, with eventType, entityId, entityType, userId, timestamp (ms-precision), beforeValues, afterValues, reason, status — 7-year retention via x-openregister-lifecycle; status transitions logged → archived.
 - [ ] **P2-16**: Wire all WMO entity-mutations to audit-log: on CommercialActivity.save (beforeValues=prior, afterValues=new, reason=user-provided); on IntegralCostPrice.calculate (beforeValues=null, afterValues=IKP record, reason="monthly calc" or "year-end lock"); on ActivityCostAllocation.override (beforeValues=auto split, afterValues=manual split, reason=2-eye approval note); on AlgemeenBelangBesluit.statusChange (beforeValues=prior status, afterValues=new status, reason=workflow-auto or user-provided); on CrossSubsidyAlert.create/resolve (beforeValues=null, afterValues=alert record, reason=detector-auto or resolution-note)
 - [ ] **P2-17**: Implement audit-log CSV export: query WMOAuditLog per period, serialize to CSV with columns (timestamp, eventType, entityType, entityId, userId, reason, beforeValues, afterValues)
 - [ ] **P2-18**: Implement ACM-handhavings-pakket generation: one-click export for selected fiscal year; generates zip with: manifest.json (index of all documents), commercial-activities/*.json (entity snapshots), cost-prices/<period>/*.json, allocations/<period>/*.json, besluiten/*.pdf (ABB decision PDFs scanned or text), audit-log/<period>.csv; zip is downloadable and transferable to ACM on vordering
@@ -119,7 +119,7 @@
 
 ### Market-Benchmark Register (REQ-WMO-012)
 
-- [ ] **P3-11**: Declare `MarketBenchmark` schema: commercialActivityId, peildatum, bron enum (offerte/prijslijst/brancheRapport/bdoBenchmark/coelo/custom), bedrag, eenheid, concurrentNaam, toelichting
+- [x] **P3-11**: Declare `MarketBenchmark` schema: commercialActivityId, peildatum, bron enum (offerte/prijslijst/brancheRapport/bdoBenchmark/coelo/custom), bedrag, eenheid, concurrentNaam, toelichting — landed in the Phase 1 register fragment to avoid a second migration pass when Phase 3 unlocks.
 - [ ] **P3-12**: Implement bevoordeling-risk detection: on IKP calculation, query all MarketBenchmarks for activity within 12 months; calculate median benchmark price; if gehanteerdTarief < median × 0.85 AND gehanteerdTarief ≥ kostprijsPerEenheid, create HIGH alert "Price is 15%+ below market; Art. 25j bevoordeling risk; justify or raise tariff"
 - [ ] **P3-13**: Implement benchmark-sourcing integrations (optional): BDO Benchmark, COELO benchmark feeds (future API integrations); operators can also manually enter offerte/prijslijst
 
