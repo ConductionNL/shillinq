@@ -220,6 +220,11 @@ return [
         // catch-all is not at risk.
         ['name' => 'threeWayMatchAudit#ledger', 'url' => '/api/three-way-match/audit-trail', 'verb' => 'GET'],
         ['name' => 'threeWayMatchAudit#export', 'url' => '/api/three-way-match/audit-trail/export', 'verb' => 'POST'],
+        // bookkeeping-rekenkamer-audit-pack REQ-RAP-005 — RBAC-scoped
+        // compliance export over the OR audit-trail (CSV / JSON;
+        // PII fields stripped; auditor / admin group only; the
+        // export request itself is recorded in the audit-trail).
+        ['name' => 'complianceExport#export', 'url' => '/api/audit/export', 'verb' => 'GET'],
         ['name' => 'purchaseOrderApproval#decide', 'url' => '/api/purchase-orders/{id}/approval-decision', 'verb' => 'POST'],
 
         // bookkeeping-waterschappen-bbv-variant slice 04 — manifest + routes

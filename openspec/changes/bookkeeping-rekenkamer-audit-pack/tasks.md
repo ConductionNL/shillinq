@@ -36,7 +36,9 @@
   - Nav child `BookkeepingChangeHistory` (order 98). Page sources `/index.php/apps/openregister/api/audit-trails?objectTypes=…&action=create,update,delete,lifecycle`; columns include Before/after diff rendered by OR's audit-log component.
 
 - [x] Task 9: Add Bookkeeping > Compliance Export button to manifest with export controller endpoint (`GET /api/audit/export?from=YYYY-MM-DD&to=YYYY-MM-DD&format=csv|xlsx|json`) that queries OR audit trail, filters PII, and renders export per REQ-RAP-005; RBAC-scoped to `auditor` group
-  - Nav child `BookkeepingComplianceExport` (order 99). Page is `type: form` with endpoint `/index.php/apps/shillinq/api/audit/export`, fields `from`/`to`/`format`/`scope`, RBAC `groups: [auditor, admin]`, submitLabel `Export audit data`. Controller binding is implemented in Task 9.controller below.
+  - Nav child `BookkeepingComplianceExport` (order 99). Page is `type: form` with endpoint `/index.php/apps/shillinq/api/audit/export`, fields `from`/`to`/`format`/`scope`, RBAC `groups: [auditor, admin]`, submitLabel `Export audit data`.
+  - Backend wired: `lib/Service/ComplianceExportService.php` (read OR audit-trail in [from, to] → strip PII → render CSV/JSON) + `lib/Controller/ComplianceExportController.php` (`#[NoAdminRequired]`, IGroupManager-based RBAC checking `auditor` group OR admin; non-auditor non-admin → 403; anonymous → 401; bad dates → 400) + route `complianceExport#export` registered in `appinfo/routes.php` at `/api/audit/export` (GET). CSV path returns `DataDisplayResponse` with `Content-Disposition: attachment; filename="shillinq-audit-export-{from}_{to}.csv"`.
+  - The export operation itself is recorded in the OR audit-trail (`action: export_request`, REQ-RAP-005 scenario 3 — falls back to app logger when OR's AuditTrailService lacks `recordEvent`/`log`).
 
 - [x] Task 10: Add Bookkeeping > Activity Feed navigation entry to `src/manifest.json` integrating Nextcloud Activity app for decision lifecycle events (approvals, sign-offs, rejections) per REQ-RAP-006
   - Nav child `BookkeepingActivityFeed` (order 100). Page sources `/index.php/apps/activity/activity/list?app=shillinq&filter=approval,signing,decision`; columns When / Actor / Activity / Detail / Object. Permission scope is provided by Nextcloud Activity (callers see only events on objects they have read access to).
@@ -58,7 +60,10 @@
 
 - [ ] Task 14: Implement destruction schedule lifecycle state transitions (create object → `status: retained` → `status: marked-for-destruction` → `status: destruction-completed`) with audit trail tracking per REQ-RAP-009; verify state machine enforces legal requirements
 
-- [ ] Task 15: Implement GDPR/AVG subject access query filtering audit trail by subject ID and excluding PII fields (email, phone, address, name) per REQ-RAP-010; test with `/test-persona-priya` (data subject access)
+- [x] Task 15: Implement GDPR/AVG subject access query filtering audit trail by subject ID and excluding PII fields (email, phone, address, name) per REQ-RAP-010; test with `/test-persona-priya` (data subject access)
+  - `ComplianceExportService::generateExport(from, to, scope, format, actorFilter)` accepts `scope=subject` per REQ-RAP-009. When subject scope is supplied without an explicit `actorFilter`, the current session UID is used (employees can request their own activity log without a separate admin lookup). PII exclusion (`ComplianceExportService::PII_FIELDS` = email, phone, address, displayName, firstName, lastName, birthDate, socialSecurityNumber, taxId, personId, ipAddress) is applied recursively to before/after snapshots via `stripPii()` — identical filter in both `scope=all` and `scope=subject` so there is no escape hatch.
+  - `fields_changed` is computed from the keys whose value differs between (PII-stripped) `before` and (PII-stripped) `after`, with PII keys forcibly excluded from the diff list.
+  - The export request is itself recorded in the OR audit-trail via `logExportRequest()` for accountability per REQ-RAP-005 scenario 3 / GDPR article 5(1)(a) transparency.
 
 - [ ] Task 16: Update `openspec/architecture/adr-000-data-model.md` with a two-paragraph note citing the audit-flag-on-every-bookkeeping-register rule, the destruction schedule lifecycle state model, the ADR-022 anti-pattern forbiddance, and cross-references to the five audit surfaces
 
