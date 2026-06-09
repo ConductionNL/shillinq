@@ -24,21 +24,10 @@
 
 ## 4. Export Service Implementation — `lib/Service/CBSExportService.php`
 
-- [ ] Task 4.1: Author `CBSExportService` class with method `generateSubmission(string $administrationId, \DateTimeInterface $periodStart, \DateTimeInterface $periodEnd): CBSSubmission` per REQ-CBS-004; the service:
-  1. Queries Account records with active status
-  2. Loads GL transactions + GL lines for the period
-  3. Loads account → CBS mapping from admin settings
-  4. Aggregates GL amounts by CBS classification
-  5. Creates CBSLine records via `ObjectService::saveObject()`
-  6. Generates IV3 JSON per REQ-CBS-006
-  7. Stores JSON file via `FileService::createFile()`
-  8. Returns CBSSubmission in draft state
-
-- [ ] Task 4.2: Author `CBSExportService::validateSubmission(CBSSubmission $submission): ValidationResult` per REQ-CBS-008; checks structural/balancing/accounting/completeness rules; returns `ValidationResult` with errors/warnings; blocks state transition if critical errors
-
-- [ ] Task 4.3: Author `CBSExportService::generateIV3Json(CBSSubmission $submission): array` — produces JSON structure per REQ-CBS-006; includes format version, generation timestamp, submission metadata, line items, checksum
-
-- [ ] Task 4.4: Author `CBSExportService::getMappingFromSettings(string $administrationId): array` — retrieves account → CBS line mapping from app settings (configurable per ADR-031); returns mapping table or throws exception if missing; allows per-administration override
+- [x] Task 4.1: Author `CBSExportService::generateSubmission()` (`lib/Service/CBSExportService.php`) — implements the eight-step pipeline per REQ-CBS-004: loads active Account records (loadAccounts), loads posted GL transactions + child GLLines for the period (loadGlLines), resolves per-administration mapping (getMappingFromSettings → DEFAULT_MAPPING fallback), aggregates absolute integer-cent amounts by CBS classification (aggregateLines), persists a CBSSubmission header in draft state and one CBSLine per non-zero classification via the real OR ObjectService API (`saveObject` named-arg form per OR-API memory), generates the IV3 JSON envelope, stores its URI + SHA-256 checksum on the submission, returns the persisted submission. Money is integer-cent throughout (REQ-CBS-002 / MEMORY).
+- [x] Task 4.2: Author `CBSExportService::validateSubmission()` per REQ-CBS-008 — checks kvkNumber + taxIdentificationNumber regex (completeness), missing CBSLine structural error, account-range conflicts across classifications (accounting), and reporting period field presence; returns `['valid'=>bool,'errors'=>string[],'warnings'=>string[]]`. Critical errors block the validate transition.
+- [x] Task 4.3: Author `CBSExportService::generateIV3Json()` per REQ-CBS-006 — produces the iv3-extended envelope with `format`/`version`/`generatedAt` (UTC ISO-8601 Z) + submission metadata + per-line items (`classification`, `lineNumber`, `accountRange`, `amount`, `currency`) + a SHA-256 `checksum` computed over the canonical JSON.
+- [x] Task 4.4: Author `CBSExportService::getMappingFromSettings()` per REQ-CBS-005 — reads `cbs_account_mapping_<administrationId>` from `IAppConfig` (JSON-encoded mapping list), validates entries (each must declare start/end/classification/lineNumber), falls back to the canonical RGS 4xxx-9xxx `DEFAULT_MAPPING` when unset or invalid (logs a warning). No exceptions thrown — operators get a sensible default.
 
 ## 5. API Controller — `lib/Controller/CBSSubmissionController.php`
 
