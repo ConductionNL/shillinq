@@ -10,7 +10,7 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `bookkeeping-reconciliation-reports` capability spec already exists, no `BankReconciliation`/`ReconciliationMatch`/`ReconciliationReport` schemas are declared, and no `lib/Service/Reconcil*` / `lib/Service/Variance*` PHP classes are present (per ADR-031 anti-pattern enumeration)
+- [x] Task 1: Confirm no `bookkeeping-reconciliation-reports` capability spec already exists, no `BankReconciliation`/`ReconciliationMatch`/`ReconciliationReport` schemas are declared, and no `lib/Service/Reconcil*` / `lib/Service/Variance*` PHP classes are present (per ADR-031 anti-pattern enumeration)
 - [ ] Task 2: Author `specs/bookkeeping-reconciliation-reports/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T4 (advanced engine features)` / `Depends on: bookkeeping-bank-reconciliation, bookkeeping-accounts-receivable-core, bookkeeping-accounts-payable-core` header, `REQ-REC-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks with GIVEN/WHEN/THEN; cite ADR-022 + ADR-031 inline
 - [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks (GL period lock availability, matching algorithm completeness, variance tolerance thresholds) / Rollback / Open Questions
 - [ ] Task 4: Author `design.md` with Reuse Analysis table, D1 (bounded workflow per account+period), D2 (matching delegated to T2), D3 (statement balance verification), D4 (unmatched items are resolution artifacts), D5 (variance as aggregation), D6 (lifecycle bounded and auditable)
