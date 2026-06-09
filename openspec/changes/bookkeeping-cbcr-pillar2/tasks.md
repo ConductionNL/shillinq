@@ -283,10 +283,27 @@
   bookkeeping-fixed-assets-depreciation apply cycle on a live instance —
   see honest-deferral note below.)*
 
-- [ ] Task 28 (DEFERRED — optional; needs the not-yet-merged hrmq app + a live instance): Integrate with `hrmq` (optional) — payroll per jurisdiction
+- [x] Task 28: Integrate with `hrmq` (optional) — payroll per jurisdiction
   flows into SBIE payroll carve-out calculation per REQ-CBC-005; FTE per
   jurisdiction flows into `cbcr-jurisdiction-summary` per REQ-CBC-002; annual
   validation of employee roster before actuarial valuation lock
+  *(declarative — adds optional `x-openregister-hrmq-payroll-source` block on
+  `Pillar2JurisdictionComputation` pinning the HRMQ payroll feed contract:
+  sourceApp=hrmq (optional=true), sourceSchemas=PayrollLine + Employee +
+  Secondment, groupBy=[period,jurisdiction], scopeFilter honouring
+  `PayrollLine.sbieEligible` + `employeeJurisdiction`, secondmentRule
+  attributing seconded staff to the operating-jurisdiction per OESO Art.
+  5.3.3.4, payrollMap writing SUM(PayrollLine.eligibleCompensation) into
+  `payroll` which then drives the existing declarative `payrollCarveOut`,
+  `substanceBasedIncomeExclusion`, `excessProfit` and `topUpTaxAmount`
+  calculations. The block also carries the concurrent
+  `numberOfEmployeesFeed` writing SUM(Employee.fte) into the CbCR
+  `CbcrJurisdictionSummary.numberOfEmployees` (REQ-CBC-002) and an
+  `annualRosterValidation` block at ±5% tolerance per jurisdiction (parity
+  with REQ-PEN-010). When hrmq is not provisioned, the carve-out base
+  collapses to the tangible-assets component only. The runtime consumer
+  ships with the not-yet-merged hrmq apply cycle on a live instance — see
+  honest-deferral note below.)*
 
 - [x] Task 29: Add schema-level enforcement per REQ-CBC-001, REQ-CBC-004,
   REQ-CBC-005:

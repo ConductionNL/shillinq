@@ -325,6 +325,46 @@
           "excessProfit": {"type": "number", "description": "Excess profit = max(0, GloBE income - SBIE) (REQ-CBC-005).", "expr": "MAX(0, @self.globeIncome - @self.substanceBasedIncomeExclusion)"},
           "topUpTaxAmount": {"type": "number", "description": "Top-up tax = top-up rate * excess profit (REQ-CBC-004/005).", "expr": "@self.topUpTaxRate * @self.excessProfit"}
         },
+        "x-openregister-hrmq-payroll-source": {
+          "description": "Declarative HRMQ payroll feed for the SBIE payroll carve-out base (REQ-CBC-005). Eligible payroll costs per jurisdiction (wages, salaries, payroll taxes, employer pension contributions; bonus, severance, equity comp per OESO Model Rules Art. 5.3.3 with stock-based compensation kept aligned with the GloBE income adjustment) sourced from the hrmq app: each PayrollLine record carries an employeeJurisdiction field; the feed sums eligible payroll across all PayrollLine records per (period, jurisdiction). Intercompany seconded staff use the operating-jurisdiction (not legal-employer-jurisdiction) per Art. 5.3.3.4. Optional feed — when hrmq is not provisioned, the carve-out base remains 0 and the carve-out collapses to the tangible-assets component only.",
+          "sourceApp": "hrmq",
+          "optional": true,
+          "sourceSchemas": {
+            "payrollLine": "PayrollLine",
+            "employee": "Employee",
+            "secondment": "Secondment"
+          },
+          "groupBy": ["period", "jurisdiction"],
+          "scopeFilter": "PayrollLine.sbieEligible = true AND PayrollLine.employeeJurisdiction = @self.jurisdiction",
+          "secondmentRule": "Seconded staff are attributed to the operating-jurisdiction (where the activity is performed), not the legal-employer-jurisdiction (OESO Model Rules Art. 5.3.3.4).",
+          "payrollMap": {
+            "field": "payroll",
+            "amountExpr": "SUM(PayrollLine.eligibleCompensation WHERE employeeJurisdiction = @self.jurisdiction AND sbieEligible = true AND period = @self.period)",
+            "descriptionExpr": "CONCAT('SBIE payroll: jurisdiction=', @self.jurisdiction, ', FY', @self.period)"
+          },
+          "writeBack": {
+            "schema": "Pillar2JurisdictionComputation",
+            "filter": "period = @sourcePeriod AND jurisdiction = @sourceJurisdiction",
+            "fields": ["payroll"]
+          },
+          "numberOfEmployeesFeed": {
+            "description": "Concurrent feed of FTE per jurisdiction into the CbCR 7-field roll-up (REQ-CBC-002).",
+            "writeBack": {
+              "schema": "CbcrJurisdictionSummary",
+              "filter": "period = @sourcePeriod AND jurisdiction = @sourceJurisdiction",
+              "fields": ["numberOfEmployees"]
+            },
+            "amountExpr": "SUM(Employee.fte WHERE employeeJurisdiction = @self.jurisdiction AND period = @self.period)"
+          },
+          "annualRosterValidation": {
+            "description": "Annual deelnemersbestand validation of the employee roster before the actuarial valuation lock (parity with REQ-PEN-010 / pension-ias19 HRMQ roster source). Validation passes when SUM(Employee.fte) matches the prior-year roster within ±5% per jurisdiction.",
+            "tolerance": 0.05,
+            "scope": "per-jurisdiction"
+          },
+          "owner": "hrmq",
+          "tier": "T3",
+          "status": "DEFERRED — optional declarative contract only; live integration ships with the not-yet-merged hrmq apply cycle on a live instance."
+        },
         "x-openregister-tangible-assets-source": {
           "description": "Declarative tangible-assets-NBV feed for the SBIE carve-out base (REQ-CBC-005). Per-jurisdiction net book value of eligible tangible assets (excluding cash, cash equivalents, intangibles, and held-for-sale assets per OESO Model Rules Art. 5.3) sourced from the bookkeeping-fixed-assets-depreciation app: each FixedAsset record carries a jurisdictionOfUse field; the feed sums NBV across all in-scope assets per (period, jurisdiction). Inventory, financial assets, and IFRS 16 right-of-use lease assets are EXCLUDED from the OESO definition unless held in long-term operating use — the feed honours the OESO carve-out scoping flag on FixedAsset.sbieEligible.",
           "sourceApp": "bookkeeping-fixed-assets-depreciation",
