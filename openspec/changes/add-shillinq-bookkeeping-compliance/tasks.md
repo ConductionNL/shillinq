@@ -106,5 +106,5 @@
 
 ## i18n (company-wide ADR-005)
 
-- [ ] N/A for the spec change itself
+- [~] N/A for the spec change itself — **DEFERRED (architectural / N/A)**: per the proposal Scope ("spec-only change"), no UI strings ship in this change envelope. **Handoff**: the 49 bookkeeping terms ARE shipped (next task) per the i18n-keys-english memory entry (English keys, Dutch translations); the slot itself is N/A. Closes as [~] (by design).
 - [x] Dutch (`nl`) and English (`en`) translation strings added (49 bookkeeping terms in l10n/nl.json + l10n/en.json) — required terms: `Trial Balance`, `Period Close`, `Open Period`, `Closing`, `Closed`, `Audit Locked`, `Reopen`, `Accounts Payable`, `Vendor`, `Vendors`, `AP Invoice`, `Payment Run`, `Aging`, `Accounts Receivable`, `Customer`, `Customers`, `AR Invoice`, `Dunning`, `Reminder`, `Formal Notice`, `Collection`, `Write-off`, `Disputed`, `Credit Limit`, `Balance Sheet`, `Profit & Loss`, `Cash Flow Statement`, `Comparative`, `XBRL Export`, `PDF Export`, `Audit Trail`, `Source Document`, `Attachment`, `Bank Reconciliation`, `Bank Statement`, `Matching Rule`, `Suspense Account`, `Confirm Match`, `Route to Suspense`, `Auto-confirm`, `Imported`, `Reconciled`
