@@ -37,41 +37,75 @@
   precondition), D4 (compliance reports are snapshots), D5 (compliance metrics are aggregations)
   - `design.md` documents D1..D5 with alternatives-considered, declarative-vs-imperative
     table, and migration plan.
-- [ ] Task 5: Declare the `TreasuryAccount` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 5: Declare the `TreasuryAccount` schema in `lib/Settings/shillinq_register.json`
   with all REQ-SCHATKIST-002 fields (accountNumber, iban, bic, accountName, description,
   complianceClassification, masterListStatus, administrationId, linkedAccountNumber,
   requiresApproval, approvalStatus, lifecycleState)
-- [ ] Task 6: Declare the `BankingRule` schema in `lib/Settings/shillinq_register.json`
+  - Declared via ADR-037 fragment `lib/Settings/register.d/bookkeeping-schatkistbankieren.json`
+    (never edit the monolith). Adds the optional `lastCompliantDate` for the aging
+    aggregation (REQ-SCHATKIST-007). Dutch IBAN `pattern` is enforced at schema level.
+- [x] Task 6: Declare the `BankingRule` schema in `lib/Settings/shillinq_register.json`
   with all REQ-SCHATKIST-003 fields (ruleNumber, name, description, ruleType,
   evaluationCriteria, severity, isActive, administrationId)
-- [ ] Task 7: Declare the `ComplianceReport` schema in `lib/Settings/shillinq_register.json`
+  - Declared in the same fragment per ADR-037. `ruleType` enum covers
+    iban-format / segregation / approval-required / transaction-limit / reporting-period.
+- [x] Task 7: Declare the `ComplianceReport` schema in `lib/Settings/shillinq_register.json`
   with all REQ-SCHATKIST-006 fields (reportNumber, reportPeriod, generatedAt,
   treasuryAccountId, complianceScore, criteriaResults, status, regulatoryExportFormat,
   regulatoryExportUri, administrationId)
-- [ ] Task 8: Add `x-openregister-lifecycle` to `TreasuryAccount` declaring every transition
+  - Declared in the same fragment per ADR-037; marked `readonly: true` because
+    `complianceScore` + `criteriaResults` are `x-openregister-calculations` outputs.
+- [x] Task 8: Add `x-openregister-lifecycle` to `TreasuryAccount` declaring every transition
   in REQ-SCHATKIST-004 (`draft → configured → active → monitored → compliant` plus
   `suspended` / `archived`) consuming OR approval-workflow per REQ-SCHATKIST-005
-- [ ] Task 9: Implement the multi-criteria compliance precondition on `TreasuryAccount.activate`
+  - Declared on `TreasuryAccount` with seven states and transitions configure, activate,
+    monitor, signOffCompliant, suspend, suspendFromMonitored, reactivate,
+    archiveFromConfigured, archiveFromActive. The `activate` and `reactivate` transitions
+    carry multi-criteria preconditions per Task 9.
+- [x] Task 9: Implement the multi-criteria compliance precondition on `TreasuryAccount.activate`
   per REQ-SCHATKIST-005 — declare it inside `x-openregister-lifecycle.requires` (preferred)
   OR if engine cannot express multi-criteria conditional clauses, register
   `OCA\Shillinq\Lifecycle\ComplianceValidator::isCompliant(string $accountId, array $rules): bool`
   (single-method, ~30 LOC, ADR-031 exception annotated)
-- [ ] Task 10: Declare the compliance score calculation as `x-openregister-calculations`
+  - Declared inside `x-openregister-lifecycle.transitions.activate.preconditions` (and
+    reactivate). The precondition enumerates iban-format / segregation /
+    approval-required rule shapes and pins the ADR-031 exception fallback
+    `OCA\Shillinq\Lifecycle\ComplianceValidator::isCompliant` for engines that cannot
+    yet evaluate multi-criteria preconditions declaratively. No PHP guard class is
+    authored by this build because the declarative shape is the contract per ADR-031
+    preferred path; if the engine reports the precondition as unsupported the
+    one-method guard can be added without spec change (per design.md D3 + risk 1).
+- [x] Task 10: Declare the compliance score calculation as `x-openregister-calculations`
   on `ComplianceReport.complianceScore` per REQ-SCHATKIST-006 (weighted rule-match aggregation);
   declare `ComplianceReport.criteriaResults` as calculated field with per-rule evaluation status
-- [ ] Task 11: Declare compliance metrics as `x-openregister-aggregations` queries grouping
+  - Declared as `x-openregister-calculations.complianceScore` (weighted_pass_ratio)
+    and `x-openregister-calculations.criteriaResults` (evaluate_each per active rule).
+- [x] Task 11: Declare compliance metrics as `x-openregister-aggregations` queries grouping
   `ComplianceReport` by `(administrationId, reportPeriod)` and per `ruleType` per REQ-SCHATKIST-007
   (compute compliance percentage, count pass/fail per rule, identify aging accounts)
-- [ ] Task 12: Declare audit-trail materialisation on every `TreasuryAccount` lifecycle transition
+  - Three aggregations declared: complianceByAdministrationAndPeriod (REQ-SCHATKIST-007.1),
+    complianceByRuleType (REQ-SCHATKIST-007.2), agingByLastCompliantDate
+    (REQ-SCHATKIST-007.3 — over TreasuryAccount with 0-30 / 31-60 / 60+ buckets).
+- [x] Task 12: Declare audit-trail materialisation on every `TreasuryAccount` lifecycle transition
   per REQ-SCHATKIST-008 and T2 `bookkeeping-audit-trail` spec — events include state, actor,
   compliance results, blocking reasons
+  - `x-openregister-audit-trail.enabled = true` declared on all three schemas
+    (TreasuryAccount, BankingRule, ComplianceReport). The description on
+    TreasuryAccount calls out compliance-rule-evaluation results on active/monitored
+    transitions and blocking reasons on suspend transitions per REQ-SCHATKIST-008.
 - [ ] Task 13: Add 3 manifest navigation entries (`Treasury Accounts`, `Banking Rules`,
   `Compliance Reports`) + their `type: index` / `type: detail` / `type: report` pages to
   `src/manifest.json` per REQ-SCHATKIST-009; `node tests/validate-manifest.js` exits 0
-- [ ] Task 14: Define and load three seed `BankingRule` records (rule-iban-format,
+- [x] Task 14: Define and load three seed `BankingRule` records (rule-iban-format,
   rule-segregation, rule-approval-required) via `lib/Settings/shillinq_register.json`
   `components.objects[]` per REQ-SCHATKIST-010 and `ConfigurationService::importFromApp()`
   idempotency contract
+  - Three seed objects declared under `components.objects[]` of the ADR-037 fragment
+    with slugs `rule-iban-format`, `rule-segregation`, `rule-approval-required`. They
+    load through the existing `SettingsService::loadRegisterConfigData` →
+    `ConfigurationService::importFromApp` path; `force:false` re-runs are idempotent
+    per the version-gated importer contract. Seeds use `administrationId: "default"`
+    as the cross-administration baseline; operators duplicate per administration.
 - [ ] Task 15: Update `openspec/architecture/adr-000-data-model.md` with `TreasuryAccount`/
   `BankingRule`/`ComplianceReport` entries, reconciling against any existing `BankAccount`,
   `Treasury*`, or `Compliance*` data-model entries
