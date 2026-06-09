@@ -27,7 +27,7 @@ repair-step seeding.
 post to GL accounts) and T1 `bookkeeping-general-ledger` (project P&L
 aggregates GL postings).
 
-## Motivation
+## Why
 
 Management accounting and project cost tracking are essential for
 consultancies and service organizations. Multi-project time tracking,
@@ -38,6 +38,33 @@ structure integrated with the general ledger.
 Without departmental and project accounting, operators must maintain
 separate time-tracking and budgeting tools — defeating the suite's
 value as an integrated business administration platform.
+
+## What Changes
+
+- Adds a `CostProject` analytical register (budget vs estimated vs
+  incurred costs) with declarative lifecycle `draft → active →
+  on-hold → closed → archived`.
+- Adds a `ProjectBudget` period-allocation register with
+  `pending → approved → allocated → spent` lifecycle.
+- Additively extends `CostCenter` (description, status alias,
+  budget, spentToDate, allocatedBudget, organizationId) and
+  declares `spentToDate` aggregation + `allocatedBudget` recursive
+  budget-rollup calculation.
+- Extends `UrenRegistratie` with optional `costProjectId` and
+  `taskId` for project-level time tracking; adds a declarative
+  `utilizationPercent` calculation grouped by (person, period).
+- Adds `CostProject.costsIncurredToDate` + `CostProject.profitAndLoss`
+  declarative GL aggregations.
+- Ships two seed JSON files (project-templates, cost-center-templates)
+  loaded idempotently by a new `InitializeSettings` repair-step phase.
+- Adds Projects (CostProjects + CostProjectDetail) navigation to
+  `src/manifest.json`; Cost Centers nav reused unchanged.
+- Reconciles `adr-000-data-model.md` `CostProject` and `CostCenter`
+  entries; adds `CostProjectBudget` ADR-000 entry.
+
+## Motivation
+
+(Retained for compatibility — see "Why" above.)
 
 ## Affected Projects
 

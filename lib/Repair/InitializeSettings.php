@@ -90,6 +90,7 @@ class InitializeSettings implements IRepairStep
      * Phase 5: seeds KOR thresholds from kor-thresholds-2026.json idempotently.
      * Phase 6: seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
      * Phase 7: seeds RJ-270 stages and rate-card templates for consultancy project accounting.
+     * Phase 7b: seeds CostProject + CostCenter consultancy templates per REQ-CPA-110/111/112.
      * Phase 8: seeds ProductAttribute templates (office, it_hardware, logistics, food_beverage, clothing) per REQ-IPC-007.
      * Phase 9: seeds ReimbursementPolicy + PassThroughMarkupRule master-data records per REQ-ERP-004 / REQ-ERP-005.
      * Phase 10: seeds demo Barcode records (EAN/GTIN/SSCC/UPC/internal) per REQ-SKU-011.
@@ -159,6 +160,7 @@ class InitializeSettings implements IRepairStep
             $this->seedDefaultAdministration(output: $output);
             $this->seedChartOfAccounts(output: $output);
             $this->seedProjectData(output: $output);
+            $this->seedConsultancyProjectAccountingTemplates(output: $output);
             $this->seedSelectielijstRules(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
             $this->registerFixedAssetsMonthlyDepreciationWorkflow(output: $output);
@@ -180,6 +182,8 @@ class InitializeSettings implements IRepairStep
             $this->seedRetentionPolicies(output: $output);
             $this->seedStatementManifests(output: $output);
             $this->seedWmoCommercialActivities(output: $output);
+            $this->seedSbrMappings(output: $output);
+            $this->seedFixedAssetsDemo(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -269,6 +273,251 @@ class InitializeSettings implements IRepairStep
         }
 
     }//end seedProjectData()
+
+    /**
+     * Seed the consultancy-project-accounting templates (CostProject + CostCenter)
+     * from lib/Settings/seeds/project-templates.json and
+     * lib/Settings/seeds/cost-center-templates.json, idempotently per administration.
+     *
+     * Deduplication keys: CostProject on projectNumber + administrationId;
+     * CostCenter on code + administrationId. Re-runs preserve operator
+     * edits per REQ-CPA-110 / REQ-CPA-111 / REQ-CPA-112. Skipped when
+     * administration_id is not configured (C2 — prevents "default"
+     * contamination of real tenant data).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-consultancy-project-accounting/tasks.md#task-16
+     * @spec openspec/changes/bookkeeping-consultancy-project-accounting/specs/bookkeeping-consultancy-project-accounting/spec.md (REQ-CPA-110, REQ-CPA-111, REQ-CPA-112)
+     */
+    private function seedConsultancyProjectAccountingTemplates(IOutput $output): void
+    {
+        $settings         = $this->settingsService->getSettings();
+        $administrationId = ($settings['administration_id'] ?? '');
+
+        if ($administrationId === '') {
+            $output->warning(
+                'Shillinq: administration_id not configured — skipping consultancy project accounting seed (REQ-CPA-112).'
+            );
+            return;
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->settingsService->getRegisterSlug();
+        } catch (\Throwable $e) {
+            $output->info('Shillinq: ObjectService unavailable, skipping consultancy project accounting seed');
+            return;
+        }
+
+        $this->seedConsultancyProjectTemplates(
+            output: $output,
+            objectService: $objectService,
+            registerSlug: $registerSlug,
+            administrationId: $administrationId
+        );
+        $this->seedConsultancyCostCenterTemplates(
+            output: $output,
+            objectService: $objectService,
+            registerSlug: $registerSlug,
+            administrationId: $administrationId
+        );
+
+    }//end seedConsultancyProjectAccountingTemplates()
+
+    /**
+     * Import CostProject seed records from project-templates.json idempotently.
+     *
+     * @param IOutput $output           The output interface for progress reporting.
+     * @param object  $objectService    The OR ObjectService instance.
+     * @param string  $registerSlug     The shillinq register slug.
+     * @param string  $administrationId The configured administration id.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-consultancy-project-accounting/specs/bookkeeping-consultancy-project-accounting/spec.md (REQ-CPA-110)
+     */
+    private function seedConsultancyProjectTemplates(
+        IOutput $output,
+        object $objectService,
+        string $registerSlug,
+        string $administrationId
+    ): void {
+        $seedPath = __DIR__.'/../Settings/seeds/project-templates.json';
+        if (file_exists($seedPath) === false) {
+            $output->warning('Shillinq: CostProject seed file not found, skipping');
+            return;
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            $output->warning('Shillinq: failed to read CostProject seed file, skipping');
+            return;
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $output->warning('Shillinq: failed to parse CostProject seed file: '.json_last_error_msg());
+            return;
+        }
+
+        $projects = ($data['projects'] ?? []);
+        if (empty($projects) === true) {
+            $output->info('Shillinq: CostProject seed file contains no projects, skipping');
+            return;
+        }
+
+        $seeded  = 0;
+        $skipped = 0;
+
+        foreach ($projects as $project) {
+            $projectNumber = ($project['projectNumber'] ?? null);
+            if ($projectNumber === null) {
+                continue;
+            }
+
+            try {
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('CostProject')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'projectNumber'    => $projectNumber,
+                                'administrationId' => $administrationId,
+                            ],
+                            'limit'   => 1,
+                        ]
+                    );
+            } catch (\Throwable $e) {
+                $output->warning('Shillinq: CostProject lookup failed for '.$projectNumber.': '.$e->getMessage());
+                continue;
+            }
+
+            if (empty($existing) === false) {
+                $skipped++;
+                continue;
+            }
+
+            $project['administrationId'] = $administrationId;
+            // Strip the @self envelope before persistence — @self is a seed-file convention
+            // not a CostProject schema field. Cast away to avoid OR slug collisions on re-seed.
+            unset($project['@self']);
+
+            try {
+                $objectService->saveObject(
+                    object: $project,
+                    register: $registerSlug,
+                    schema: 'CostProject',
+                );
+                $seeded++;
+            } catch (\Throwable $e) {
+                $output->warning('Shillinq: CostProject save failed for '.$projectNumber.': '.$e->getMessage());
+            }
+        }//end foreach
+
+        $output->info(
+            'CostProject templates seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+        );
+
+    }//end seedConsultancyProjectTemplates()
+
+    /**
+     * Import CostCenter seed records from cost-center-templates.json idempotently.
+     *
+     * @param IOutput $output           The output interface for progress reporting.
+     * @param object  $objectService    The OR ObjectService instance.
+     * @param string  $registerSlug     The shillinq register slug.
+     * @param string  $administrationId The configured administration id.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-consultancy-project-accounting/specs/bookkeeping-consultancy-project-accounting/spec.md (REQ-CPA-111)
+     */
+    private function seedConsultancyCostCenterTemplates(
+        IOutput $output,
+        object $objectService,
+        string $registerSlug,
+        string $administrationId
+    ): void {
+        $seedPath = __DIR__.'/../Settings/seeds/cost-center-templates.json';
+        if (file_exists($seedPath) === false) {
+            $output->warning('Shillinq: CostCenter seed file not found, skipping');
+            return;
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            $output->warning('Shillinq: failed to read CostCenter seed file, skipping');
+            return;
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $output->warning('Shillinq: failed to parse CostCenter seed file: '.json_last_error_msg());
+            return;
+        }
+
+        $costCenters = ($data['costCenters'] ?? []);
+        if (empty($costCenters) === true) {
+            $output->info('Shillinq: CostCenter seed file contains no records, skipping');
+            return;
+        }
+
+        $seeded  = 0;
+        $skipped = 0;
+
+        foreach ($costCenters as $costCenter) {
+            $code = ($costCenter['code'] ?? null);
+            if ($code === null) {
+                continue;
+            }
+
+            try {
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('CostCenter')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'code'             => $code,
+                                'administrationId' => $administrationId,
+                            ],
+                            'limit'   => 1,
+                        ]
+                    );
+            } catch (\Throwable $e) {
+                $output->warning('Shillinq: CostCenter lookup failed for '.$code.': '.$e->getMessage());
+                continue;
+            }
+
+            if (empty($existing) === false) {
+                $skipped++;
+                continue;
+            }
+
+            $costCenter['administrationId'] = $administrationId;
+            unset($costCenter['@self']);
+
+            try {
+                $objectService->saveObject(
+                    object: $costCenter,
+                    register: $registerSlug,
+                    schema: 'CostCenter',
+                );
+                $seeded++;
+            } catch (\Throwable $e) {
+                $output->warning('Shillinq: CostCenter save failed for '.$code.': '.$e->getMessage());
+            }
+        }//end foreach
+
+        $output->info(
+            'CostCenter templates seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+        );
+
+    }//end seedConsultancyCostCenterTemplates()
 
     /**
      * Import the Selectielijst Gemeenten 2020 retention rules, idempotently.
@@ -1522,4 +1771,176 @@ class InitializeSettings implements IRepairStep
         $output->warning('WMO seeding issue: '.($result['message'] ?? 'unknown error'));
 
     }//end seedWmoCommercialActivities()
+
+
+    /**
+     * Seed NL-taxonomie SBR/XBRL mapping templates idempotently
+     * (REQ-SBR-005, REQ-SBR-006).
+     *
+     * Iterates every file under `lib/Settings/seeds/sbr-mappings/` and seeds
+     * the contained mapping template as an OpenRegister `Mapping` record
+     * (consumed by `XbrlInstance.mappingId`). Deduplication key is the
+     * mapping slug `(entryPoint, taxonomyVersion)`; if a Mapping with the
+     * same `reference` (or `slug`) already exists in the OR MappingMapper,
+     * the seed is skipped — operator edits to the line→concept records
+     * persist across repair re-runs.
+     *
+     * The MappingMapper consumption is wrapped in a defensive Throwable
+     * catch: when the OR `MappingMapper` service is not available
+     * (OpenRegister disabled / pre-install), the seed degrades to a
+     * warning instead of fatal — same shape as the surrounding seed
+     * methods.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-sbr-xbrl-reporting/tasks.md#task-8
+     */
+    private function seedSbrMappings(IOutput $output): void
+    {
+        $seedDir = __DIR__.'/../Settings/seeds/sbr-mappings';
+        if (is_dir($seedDir) === false) {
+            $output->info('Shillinq: SBR/XBRL mapping seed dir not present, skipping');
+            return;
+        }
+
+        $files = glob($seedDir.'/*.json');
+        if ($files === false || empty($files) === true) {
+            $output->info('Shillinq: SBR/XBRL mapping seed dir empty, skipping');
+            return;
+        }
+
+        try {
+            // OR MappingMapper is the canonical surface for Mapping CRUD;
+            // it carries the findByRef() dedupe path REQ-SBR-006 expects.
+            $mappingMapper = $this->container->get('OCA\OpenRegister\Db\MappingMapper');
+        } catch (\Throwable $e) {
+            $output->warning(
+                'Shillinq: OpenRegister MappingMapper not available, skipping SBR/XBRL mapping seed ('
+                .$e->getMessage().')'
+            );
+            return;
+        }
+
+        $seeded  = 0;
+        $skipped = 0;
+        $failed  = 0;
+
+        foreach ($files as $file) {
+            $content = file_get_contents($file);
+            if ($content === false) {
+                $output->warning('Shillinq: failed to read SBR mapping seed '.basename($file));
+                $failed++;
+                continue;
+            }
+
+            $data = json_decode($content, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                $output->warning(
+                    'Shillinq: failed to parse SBR mapping seed '.basename($file).': '.json_last_error_msg()
+                );
+                $failed++;
+                continue;
+            }
+
+            $mapping = ($data['mapping'] ?? null);
+            if (is_array($mapping) === false) {
+                $output->warning('Shillinq: SBR mapping seed '.basename($file).' has no `mapping` block, skipping');
+                $failed++;
+                continue;
+            }
+
+            $slug = ($mapping['slug'] ?? null);
+            if ($slug === null || $slug === '') {
+                $output->warning('Shillinq: SBR mapping seed '.basename($file).' has no slug, skipping');
+                $failed++;
+                continue;
+            }
+
+            try {
+                // Dedupe on the slug/reference — operator-edited mappings persist.
+                $existing = $mappingMapper->findByRef($slug);
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $mappingMapper->createFromArray(
+                    [
+                        'reference'   => $slug,
+                        'name'        => ($mapping['name'] ?? $slug),
+                        'description' => 'SBR/XBRL line→concept mapping seeded by '
+                            .'add-shillinq-sbr-xbrl-reporting for entry point '
+                            .($mapping['entryPoint'] ?? 'unknown').' taxonomy '
+                            .($mapping['taxonomyVersion'] ?? 'unknown').'.',
+                        'mapping'     => ($mapping['records'] ?? []),
+                    ]
+                );
+                $seeded++;
+            } catch (\Throwable $e) {
+                $output->warning(
+                    'Shillinq: SBR mapping seed '.basename($file).' import failed: '.$e->getMessage()
+                );
+                $this->logger->warning(
+                    'Shillinq: SBR mapping seed import failed',
+                    [
+                        'file'      => basename($file),
+                        'exception' => $e->getMessage(),
+                    ]
+                );
+                $failed++;
+            }//end try
+        }//end foreach
+
+        $output->info(
+            'Shillinq: SBR/XBRL mappings seeded: '.$seeded.' created, '.$skipped
+            .' skipped (already exist), '.$failed.' failed.'
+        );
+
+    }//end seedSbrMappings()
+
+
+    /**
+     * Seed FixedAsset + DepreciationSchedule demo records idempotently
+     * for `bookkeeping-fixed-assets-depreciation` Task 15 (REQ-FA-001..010).
+     *
+     * Calls SettingsService::seedFixedAssetsDemo() which imports four
+     * realistic Dutch SMB scenarios from
+     * `lib/Settings/seeds/fixed-assets-demo.json` (company vehicle, office
+     * building, computer equipment, retired asset) and their 2026
+     * DepreciationSchedule records. Skipped when administration_id is not
+     * configured (C2 — prevents "default" contamination of real tenant data).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/tasks.md#task-15
+     */
+    private function seedFixedAssetsDemo(IOutput $output): void
+    {
+        $settings         = $this->settingsService->getSettings();
+        $administrationId = ($settings['administration_id'] ?? '');
+
+        if ($administrationId === '') {
+            $output->info('Shillinq: FixedAssets demo seed skipped (no default administration configured)');
+            return;
+        }
+
+        $output->info('Seeding FixedAsset + DepreciationSchedule demo records...');
+        $result = $this->settingsService->seedFixedAssetsDemo(administrationId: $administrationId);
+
+        if (($result['success'] ?? false) === true) {
+            $output->info(
+                'FixedAsset demo seeded: '
+                .($result['seededAssets'] ?? 0).' assets created, '.($result['skippedAssets'] ?? 0).' skipped; '
+                .($result['seededSchedules'] ?? 0).' schedules created, '.($result['skippedSchedules'] ?? 0).' skipped.'
+            );
+            return;
+        }
+
+        $output->warning('FixedAssets demo seeding issue: '.($result['message'] ?? 'unknown error'));
+
+    }//end seedFixedAssetsDemo()
 }//end class

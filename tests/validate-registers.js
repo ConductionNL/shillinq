@@ -2,19 +2,23 @@
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
 //
-// validate-registers.js — schema-level CI gate for capability
-// bookkeeping-audit-trail (REQ-AT-001).
+// validate-registers.js — schema-level CI gate for capabilities
+// bookkeeping-audit-trail (REQ-AT-001) and
+// bookkeeping-rekenkamer-audit-pack (REQ-RAP-001).
 //
-// Asserts that every shillinq bookkeeping register declares
+// Asserts that every shillinq bookkeeping AND procurement register
+// declares
 //
 //   "x-openregister-audit-trail": { "enabled": true }
 //
 // on its schema metadata. The check enumerates every JSON schema
 // across `lib/Settings/shillinq_register.json` and every modular
 // register fragment under `lib/Settings/register.d/*.json`, filters
-// to the bookkeeping scope (= every schema NOT listed in
-// NON_BOOKKEEPING below), and fails the build if any candidate is
-// missing the audit-trail flag.
+// to the bookkeeping + procurement scope (= every schema NOT listed
+// in NON_BOOKKEEPING below — note: procurement schemas like
+// PurchaseOrder, Tender, Bid, AwardDecision are bookkeeping-by-default
+// per REQ-RAP-001 and stay OUT of NON_BOOKKEEPING), and fails the
+// build if any candidate is missing the audit-trail flag.
 //
 // The non-bookkeeping list is deliberately explicit — every NEW
 // schema is bookkeeping-by-default and MUST therefore opt into OR's
@@ -32,9 +36,10 @@
 //   0 — every bookkeeping schema carries x-openregister-audit-trail.enabled=true
 //   1 — one or more bookkeeping schemas are missing the flag (or a parse error)
 //
-// Per spec REQ-AT-001 / capability bookkeeping-audit-trail and
-// ADR-022 (audit-trail-immutable from OR) + ADR-037 (modular
-// register fragments).
+// Per spec REQ-AT-001 (bookkeeping-audit-trail) AND REQ-RAP-001
+// (bookkeeping-rekenkamer-audit-pack — Rekenkamer / Accountantscontrole
+// audit pack) and ADR-022 (audit-trail-immutable from OR) + ADR-037
+// (modular register fragments).
 
 'use strict'
 
@@ -147,11 +152,11 @@ function main() {
 	console.log(`[validate-registers] schemas with x-openregister-audit-trail.enabled=true: ${bookkeeping.length - offenders.length}`)
 
 	if (offenders.length === 0) {
-		console.log('[validate-registers] PASS — every bookkeeping schema declares x-openregister-audit-trail.enabled=true (REQ-AT-001)')
+		console.log('[validate-registers] PASS — every bookkeeping + procurement schema declares x-openregister-audit-trail.enabled=true (REQ-AT-001 / REQ-RAP-001)')
 		process.exit(0)
 	}
 
-	console.error('[validate-registers] FAIL — the following bookkeeping schemas are missing x-openregister-audit-trail.enabled=true (REQ-AT-001):')
+	console.error('[validate-registers] FAIL — the following bookkeeping/procurement schemas are missing x-openregister-audit-trail.enabled=true (REQ-AT-001 / REQ-RAP-001):')
 	for (const slug of offenders) {
 		const file = registry[slug].files[0] || '(unknown)'
 		console.error(`  - ${slug} (declared in ${path.relative(REPO_ROOT, file)})`)

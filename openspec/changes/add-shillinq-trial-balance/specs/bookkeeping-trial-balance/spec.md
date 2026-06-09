@@ -7,7 +7,12 @@
 
 ## ADDED Requirements
 
-### REQ-TB-001: The system SHALL produce a trial balance as a declarative aggregation over `GLLine`, not a PHP report builder
+This capability is bound by **ADR-022** (consume OpenRegister abstractions; no
+parallel app-local report storage) and **ADR-031** (declarative aggregation
+over imperative report builders). Every requirement below is a restatement of
+those ADRs applied to the trial-balance slice.
+
+### Requirement: REQ-TB-001 — The system SHALL produce a trial balance as a declarative aggregation over `GLLine`, not a PHP report builder
 
 The trial balance MUST be expressed as one (or composed three)
 `x-openregister-aggregations` query against T1's `GLLine` register,
@@ -41,7 +46,7 @@ discovery; both shapes satisfy this requirement.
   per OR convention) naming the trial balance grouping and
   reduction.
 
-### REQ-TB-002: The trial balance SHALL report opening balance, period movement, and closing balance per account per period
+### Requirement: REQ-TB-002 — The trial balance SHALL report opening balance, period movement, and closing balance per account per period
 
 For each `(period_id, account_number)` pair, the aggregation MUST
 produce three buckets:
@@ -88,10 +93,11 @@ canonical four-column shape: opening Dr / opening Cr / movement Dr
   (`T1` is excluded because it is `reversed`); the net effect on
   account `4100` MUST be `-€100` credit.
 
-### REQ-TB-003: The trial balance output SHALL satisfy the debit-credit balance invariant as a schema-declared assertion
+### Requirement: REQ-TB-003 — The trial balance output SHALL satisfy the debit-credit balance invariant as a schema-declared assertion
 
-The sum of all `closing.debit` across all accounts in the requested
-period MUST equal the sum of all `closing.credit`. This invariant
+The trial-balance aggregation output MUST satisfy a debit-credit balance
+invariant. The sum of all `closing.debit` across all accounts in the
+requested period MUST equal the sum of all `closing.credit`. This invariant
 MUST be declared as a schema invariant on the aggregation output
 (per ADR-031 — the assertion is metadata on the aggregation, not a
 PHP service check). A failed invariant MUST surface as an error
@@ -122,7 +128,7 @@ report-building logic.
   the delta to the cent and listing the offending
   `(transaction_id, account_number)` pairs.
 
-### REQ-TB-004: Each trial-balance row SHALL be drill-through-able to the underlying GL transactions
+### Requirement: REQ-TB-004 — Each trial-balance row SHALL be drill-through-able to the underlying GL transactions
 
 Every row in the trial-balance output MUST carry sufficient
 identifiers (`period_id`, `account_number`) to construct a
@@ -153,7 +159,7 @@ filtered query.
   `2026-Q1` and account `4100`, showing all posted lines in
   that slice with their parent transaction reference.
 
-### REQ-TB-005: Trial balance SHALL be reachable through the shillinq manifest navigation as a `type: report` (or `type: index`) page
+### Requirement: REQ-TB-005 — Trial balance SHALL be reachable through the shillinq manifest navigation as a `type: report` (or `type: index`) page
 
 `src/manifest.json` MUST declare a navigation entry (`Bookkeeping >
 Trial Balance`) with a page binding the trial-balance aggregation
@@ -189,10 +195,11 @@ MUST default to the currently-open `FiscalPeriod` from the
   parameter
 - **THEN** the page MUST default to `period=2026-Q2`.
 
-### REQ-TB-006: The trial balance SHALL support multi-period comparison via repeated aggregation calls, not a separate report-builder
+### Requirement: REQ-TB-006 — The trial balance SHALL support multi-period comparison via repeated aggregation calls, not a separate report-builder
 
-When a consumer requests N periods of comparative trial balance
-data, the renderer MUST issue N independent aggregation calls (or
+The trial balance SHALL support multi-period comparison. When a consumer
+requests N periods of comparative trial balance data, the renderer MUST
+issue N independent aggregation calls (or
 one aggregation with N period filters if the OR engine supports
 it). No bespoke "multi-period report" assembly code in shillinq —
 the composition is a manifest concern. The `bookkeeping-financial-statements`

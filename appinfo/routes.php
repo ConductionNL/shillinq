@@ -220,6 +220,11 @@ return [
         // catch-all is not at risk.
         ['name' => 'threeWayMatchAudit#ledger', 'url' => '/api/three-way-match/audit-trail', 'verb' => 'GET'],
         ['name' => 'threeWayMatchAudit#export', 'url' => '/api/three-way-match/audit-trail/export', 'verb' => 'POST'],
+        // bookkeeping-rekenkamer-audit-pack REQ-RAP-005 — RBAC-scoped
+        // compliance export over the OR audit-trail (CSV / JSON;
+        // PII fields stripped; auditor / admin group only; the
+        // export request itself is recorded in the audit-trail).
+        ['name' => 'complianceExport#export', 'url' => '/api/audit/export', 'verb' => 'GET'],
         ['name' => 'purchaseOrderApproval#decide', 'url' => '/api/purchase-orders/{id}/approval-decision', 'verb' => 'POST'],
 
         // bookkeeping-waterschappen-bbv-variant slice 04 — manifest + routes
@@ -255,6 +260,22 @@ return [
         // BCF compensation calculator (bookkeeping-bcf-claim). Pure compute
         // surface returning a what-if compensation result.
         ['name' => 'bcfClaim#compensation', 'url' => '/api/bcf/compensation', 'verb' => 'GET'],
+
+        // bookkeeping-reconciliation-reports (T4) — REQ-REC-004 unmatched-item
+        // resolution. POST one classification + reason at a time, or bulk-apply
+        // across a list of matchIds (REQ-REC-008 Unmatched Items bulk workflow).
+        // Both endpoints are #[NoAdminRequired] but IDOR-guarded: the service
+        // verifies match.reconId matches the path reconId before writing.
+        [
+            'name' => 'reconciliationResolution#resolve',
+            'url'  => '/api/reconciliations/{reconId}/matches/{matchId}/resolve',
+            'verb' => 'POST',
+        ],
+        [
+            'name' => 'reconciliationResolution#bulkResolve',
+            'url'  => '/api/reconciliations/{reconId}/matches/bulk-resolve',
+            'verb' => 'POST',
+        ],
 
         // ICP opgaaf (bookkeeping-icp-opgaaf, REQ-ICP-002..010). Read-only ledger
         // / reconcile / periodicity / VIES lookup endpoints plus the correction

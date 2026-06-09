@@ -7,9 +7,21 @@
 
 ## ADDED Requirements
 
-### REQ-INV-001: The system SHALL declare an `InvesteringClassifier` overlay on `FixedAsset` for the four aftrek regimes
+This capability is bound by **ADR-022** (consume OpenRegister abstractions; no
+parallel app-local audit / RvO HTTP client) and **ADR-031** (declarative
+composition over imperative service classes). Each requirement below is a
+restatement of those ADRs applied to the investeringsaftrek slice, plus
+**ADR-019** for the RvO aanvraag + mededeling roundtrip routed through
+openconnector source rows, and **ADR-024 Tier-4** for the manifest navigation
+shape (`CnIndexPage` / `CnDetailPage` library components preferred, no
+bespoke Vue). The single ADR-031 exception path is the KIA-schalen lookup
+guard — a tiny single-method PHP seam permitted because the calculation
+engine cannot natively express tiered-threshold lookup against a year-versioned
+seed.
 
-The `FixedAsset` register (from T4-base
+### Requirement: REQ-INV-001 — The system SHALL declare an `InvesteringClassifier` overlay on `FixedAsset` for the four aftrek regimes
+
+The system SHALL declare an `InvesteringClassifier` overlay register on `FixedAsset` covering the four investeringsaftrek regimes (KIA / EIA / MIA / Vamil). The `FixedAsset` register (from T4-base
 `bookkeeping-fixed-assets-depreciation`) MUST gain an overlay
 `InvesteringClassifier` (schema.org type: `schema:Thing`) with
 fields: `fixedAssetId` (FK), `aftrekType` (enum
@@ -30,7 +42,7 @@ PHP investerings service.
 - **THEN** both records MUST save; **AND** the aftrek calculation
   MUST apply both regimes (cumulatively where RvO rules permit).
 
-### REQ-INV-002: KIA / EIA / MIA / Vamil aftrek SHALL be computed declaratively against the annual tarieven seed
+### Requirement: REQ-INV-002 — KIA / EIA / MIA / Vamil aftrek SHALL be computed declaratively against the annual tarieven seed
 
 The aftrek MUST be an `x-openregister-calculations` block on
 `FixedAsset` that consumes the seeded tarieven (REQ-INV-003) and
@@ -61,9 +73,9 @@ Calculation rules per regime:
 - **THEN** the KIA aftrek MUST match the 2026 schaal for
   €30 000 as loaded from the seed (tolerance: €1).
 
-### REQ-INV-003: The system SHALL ship an annual tarieven seed (`investeringsaftrek-tarieven-2026.json`)
+### Requirement: REQ-INV-003 — The system SHALL ship an annual tarieven seed (`investeringsaftrek-tarieven-2026.json`)
 
-The seed file at
+The system SHALL ship an annual tarieven seed file containing the 2026 KIA / EIA / MIA / Vamil schalen. The seed file at
 `lib/Settings/seeds/investeringsaftrek-tarieven-2026.json` MUST
 carry an EUPL-1.2 SPDX in the docblock, a `_meta` block
 (`source: 'RvO investeringsaftrek-regelingen'`, `year: 2026`),
@@ -86,9 +98,9 @@ alongside (`investeringsaftrek-tarieven-2027.json`).
   **AND** re-running MUST not duplicate records or overwrite
   operator edits.
 
-### REQ-INV-004: The system SHALL produce an RvO aanvraagdossier per aftrek aanvraag via docudesk
+### Requirement: REQ-INV-004 — The system SHALL produce an RvO aanvraagdossier per aftrek aanvraag via docudesk
 
-For EIA / MIA / Vamil applications (KIA requires no separate
+The system SHALL produce a docudesk-rendered RvO aanvraagdossier for every EIA / MIA / Vamil aanvraag. For EIA / MIA / Vamil applications (KIA requires no separate
 application), a docudesk template MUST generate an
 aanvraagdossier containing: asset description, bedrijfsmiddel
 code, purchase price, investment date, in-service date, and
@@ -104,9 +116,9 @@ go via an openconnector source (REQ-INV-006).
 - **THEN** a docudesk document MUST appear with the asset
   fields + URI references to the 2 invoices.
 
-### REQ-INV-005: Toegekende-bedragen MUST be ingested asynchronously from the RvO mededeling
+### Requirement: REQ-INV-005 — Toegekende-bedragen MUST be ingested asynchronously from the RvO mededeling
 
-After RvO award, the `InvesteringClassifier.toegekendBedrag`
+Toegekende-bedragen from RvO MUST be ingested asynchronously through the openconnector mededeling feed and an audit-trail event MUST be written on every award update. After RvO award, the `InvesteringClassifier.toegekendBedrag`
 field MUST be populated via an openconnector source row (RvO
 mededeling endpoint). The update MUST write an audit-trail event
 with the RvO mededeling id + date + amount.
@@ -120,9 +132,9 @@ with the RvO mededeling id + date + amount.
   `toegekendBedrag: 4000`; **AND** an audit-trail event MUST
   record the mededeling id + date.
 
-### REQ-INV-006: RvO submission + mededeling-feed SHALL ride openconnector — no app-local HTTP client
+### Requirement: REQ-INV-006 — RvO submission + mededeling-feed SHALL ride openconnector — no app-local HTTP client
 
-Per ADR-019, every RvO call (aanvraag submission + mededeling
+All RvO HTTP calls SHALL ride openconnector source rows; shillinq MUST NOT carry an app-local RvO HTTP client. Per ADR-019, every RvO call (aanvraag submission + mededeling
 poll) MUST go through an openconnector source row. Shillinq MUST
 reference the source id from the docudesk template
 output-channel declaration + the mededeling-poll declaration.
@@ -135,7 +147,7 @@ No `lib/Service/RvoClient.php`.
   targeting `rvo.nl`
 - **THEN** no such usage SHALL exist.
 
-### REQ-INV-007: Investeringsaftrek SHALL be reachable through a feature-flag-controlled manifest navigation entry
+### Requirement: REQ-INV-007 — Investeringsaftrek SHALL be reachable through a feature-flag-controlled manifest navigation entry
 
 `src/manifest.json` MUST declare a feature-flag-controlled menu
 entry (`featureFlags.mkb-investeringsaftrek`) under

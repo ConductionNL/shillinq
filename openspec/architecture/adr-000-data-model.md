@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 248
+**Entities:** 254
 
 ## Context
 
@@ -38,28 +38,76 @@ register, schema, relations, files, auditTrail, notes, tasks, tags, status, lock
 > (post-archive) for the full capability spec and the audit-pattern
 > scan that confirms the rule is met today.
 
+> **Source-document attachment URI contract (add-shillinq-document-attachment-integration,
+> 2026-06-09, capability `bookkeeping-document-attachment-integration`):**
+> Source documents (PDF invoices, scanned receipts, bank statements, payment-run
+> SEPA artefacts, contracts) MUST be stored in **docudesk** and referenced from
+> shillinq bookkeeping registers via the canonical foreign-key URI
+> `docudesk://attachments/<uuid>/<filename>` (REQ-DA-002). The contract surfaces
+> through one declarative schema field shape — `sourceDocumentUri` (string, URI
+> format) — on every bookkeeping register that needs a source-document reference,
+> with T1's `JournalEntry` additionally carrying `sourceDocumentApp` (enum
+> `docudesk` | `external`) as the pattern T2 registers extend additively. Per
+> ADR-022 anti-pattern enumeration, shillinq MUST NOT author parallel attachment
+> storage: no `lib/Db/Attachment*` Mappers, no `lib/Service/Attachment*` services,
+> no `lib/Controller/*Attachment*` proxy controllers, no `multipart/form-data`
+> upload endpoints, no `base64` / `binary` schema fields. Mime-type expectations
+> per attachment role (`invoice` → PDF + PNG + JPEG + UBL XML; `receipt` → PDF +
+> PNG + JPEG + HEIC; `statement` → CAMT.053 XML + MT940 + PDF; `archive-xml` →
+> pain.001 XML; `contract` → PDF) are declared as schema metadata, not enforced
+> at the shillinq layer — enforcement is docudesk's responsibility. When docudesk
+> is transiently unavailable, the bookkeeping save MUST succeed with the URI
+> persisted; the OR audit trail records the gap; the detail page renders a
+> non-blocking warning banner with a retry action (REQ-DA-004). Consuming
+> capabilities today: `bookkeeping-journal-entries` (T1), `bookkeeping-accounts-payable-core`,
+> `bookkeeping-accounts-receivable-core`, `bookkeeping-bank-reconciliation`,
+> `bookkeeping-bank-connectors` (all T2). The audit-side-panel manifest binding
+> lives in `src/manifest.json` on each detail page's `sidebarProps.tabs[]` as a
+> `documents` tab pointing at the `docudesk-attachment-viewer` widget. See
+> `openspec/changes/add-shillinq-document-attachment-integration/` for the
+> capability spec.
+
 ## Entities
 
 ### APTransaction
-**Schema.org:** `schema:Order`
-_Financial transaction representing an invoice, credit note, or debit note in accounts payable/receivable flow._
-**Primary spec:** accounts-payable-receivable
+**Schema.org:** `schema:Invoice`
+_Accounts payable sub-ledger invoice recording the vendor billing and payment obligation. Posting (issued transition) materialises a balanced GLTransaction per the T1 REQ-JE-007 pattern. The lifecycle covers draft → received → issued → paid with partially-paid / overdue / disputed / written-off / voided branches; write-off materialises a compensating GL posting._
+**Primary spec:** bookkeeping-accounts-payable-core
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| transactionNumber | string | Yes | Unique invoice or transaction identifier |
-| transactionType | enum | Yes | Type of transaction |
-| transactionDate | date | Yes | Date invoice or transaction issued |
-| dueDate | date | Yes | Payment due date |
-| amount | MonetaryAmount | Yes | Total transaction amount including tax |
-| paymentTerms | string | No | Payment conditions (e.g., net 30, 2/10 net 30) |
-| description | string | No | Invoice line items or transaction details |
+| invoiceNumber | string | Yes | Vendor invoice number; unique per administration + vendorId |
+| vendorId | string | Yes | FK to Payee UUID |
+| invoiceDate | date | Yes | Date the vendor issued the invoice |
+| dueDate | date | Yes | Auto-calculated from invoiceDate + Payee.paymentTermDays; operator overrideable |
+| currency | string | Yes | ISO 4217 currency code; T2: base currency only (T5 adds multi-currency) |
+| totalAmount | number | Yes | Total amount including tax in administration base currency |
+| taxAmount | number | No | VAT/BTW amount |
+| lines | array | Yes | Line items: {description, accountNumber, amount, taxCode, quantity, unitPrice} |
+| sourceDocumentUri | string | No | docudesk FK URI per bookkeeping-document-attachment-integration |
+| state | enum | Yes | One of draft, received, issued, partially-paid, paid, overdue, disputed, written-off, voided |
+| glTransactionId | string | No | Back-reference to materialised GLTransaction once posted |
+| writeOffReason | string | No | Audit-trailed reason required on the writeOff transition |
+| writeOffGlTransactionId | string | No | Back-reference to compensating GLTransaction on write-off |
+| periodId | string | No | FK to the FiscalPeriod for GL posting (resolved on issue transition) |
+| administrationId | string | Yes | FK to administration |
 
 **Relations:**
-- → Payee (many-to-one)
-- → Receipt (one-to-many)
-- → Payment (one-to-many)
-- → DunningNotice (one-to-many)
+- → Payee (many-to-one, via vendorId)
+- → GLTransaction (many-to-one, via glTransactionId — materialised on issue and write-off)
+- → DunningNotice (one-to-many, dunning timeline per AP invoice)
+- → FiscalPeriod (many-to-one, via periodId)
+- → Administration (many-to-one)
+
+> **Reconciliation note (bookkeeping-accounts-payable-core, 2026-06-09):** This
+> entry has been updated from the prior generic `accounts-payable-receivable`
+> draft to the canonical T2 shape registered in
+> `lib/Settings/register.d/bookkeeping-accounts-payable-core.json`. The fields
+> mirror the AR side (`ARInvoice`). The prior `VendorMaster` / `APInvoice` /
+> `PaymentRun` entries below (added by `add-shillinq-bookkeeping-compliance`)
+> remain a parallel pre-T2 flavour; new AP register declarations MUST use
+> `APTransaction`. See `openspec/changes/bookkeeping-accounts-payable-core/
+> dedup-notes.md` for the migration boundary.
 
 ### ARInvoice
 **Schema.org:** `schema:Invoice`
@@ -413,6 +461,8 @@ _A financial document participating in SiSa audit (invoice, purchase order, jour
 - → GLTransaction (many-to-one)
 - → Administration (many-to-one)
 
+> **Rekenkamer / accountantscontrole audit-pack annotation (T4 capability `bookkeeping-rekenkamer-audit-pack` — REQ-REK-001..006):** The rekenkamer + accountantscontrole audit-pack capability adds three external-auditor-facing deliverables on top of `AuditDocument` and the OR `audit-trail-immutable` event log — a NIVRA-bestand export (the NBA `auditfile-financieel` XML projection bundling every transaction + line + audit event + period trial-balance + chart-of-accounts in effect, per REQ-REK-002), a deterministic-seed steekproef sampler returning a reproducible random sample of `GLTransaction` records given `(periodId, sampleSize, seed)` for substantive testing (REQ-REK-003), and a ledenraadpleging-export with `redactFor: ['raadsleden']` metadata replacing free-text `description`-level fields and AP/AR sub-ledger counterparty references by stable hash or `[REDACTED]` placeholder while preserving numeric and account-code fields (REQ-REK-004). Per ADR-022, the audit-pack does **NOT** introduce a parallel audit register — no `RekenkamerExport`, no `NivraRecord`, no `lib/Db/Audit*` class — every output is a declarative `x-openregister-aggregations` projection over the existing audit-trail-immutable surface + `GLTransaction` / `GLLine` / `TrialBalance` / `Account`, rendered through three docudesk templates (`nivra-bestand-xml`, `steekproef-werkpapier`, `ledenraadpleging-export`) and optionally pushed to an external accountant portal via a single openconnector source row per accountant per administration (protocol mapping lives openconnector-side per ADR-019). Every audit-pack export is itself recorded as an immutable audit event (`audit-pack.{nivra,steekproef,ledenraadpleging}.exported`) on the OR audit engine — operator id + period id + document URI + SHA-256 — NOT via app-local logging (REQ-REK-005). The capability surfaces via a feature-flag-controlled (`featureFlags.gov-rekenkamer`) manifest navigation entry `Bookkeeping > Audit pack` with three sub-pages rendered by the generic `CnIndexPage` / `CnDetailPage` per ADR-024 Tier-4; no bespoke Vue files (REQ-REK-006). The T2 envelope's REQ-REK-* surface (external-auditor deliverables: NIVRA / steekproef / ledenraadpleging) is intentionally orthogonal to the sibling T3 `bookkeeping-rekenkamer-audit-pack` REQ-RAP-* surface (internal audit views: signing trail / destruction report / change history / compliance export / activity feed) — both sets of requirements ADD to the same capability spec without name overlap. Per ADR-031, deterministic seed reproducibility is preferred declaratively via the OR aggregation engine; if engine support is missing, the implementing cycle's fallback is bounded to a single-method ~20-LOC PHP sampler at `lib/Aggregation/SteekproefSampler.php` annotated with the ADR-031 exception reference.
+
 ### AuditFinding
 **Schema.org:** `schema:Report`
 _Individual finding or observation from audit requiring management action or response_
@@ -519,6 +569,23 @@ _A financial statement showing assets, liabilities, and equity at a fiscal-perio
 **Schema.org:** `schema:Table`
 _A read-only aggregate listing all GL accounts with debit/credit balances for period verification. isBalanced flag (totalDebits = totalCredits) is computed via x-openregister-aggregations per REQ-FS-005. No TrialBalanceService. Lifecycle: draft → verified → final → published → archived per REQ-FS-003._
 **Primary spec:** bookkeeping-financial-statements
+
+> **Trial-balance T2 capability (add-shillinq-trial-balance, 2026-06-09).** The
+> Tier-2 `bookkeeping-trial-balance` capability binds the per-account
+> opening / movement / closing roll-up to two declarative `x-openregister-aggregations`
+> blocks on this `TrialBalance` schema in `lib/Settings/shillinq_register.json` —
+> `trialBalanceTotals` (period-wide debit/credit roll-up + `isBalanced` check)
+> and `trialBalanceByAccount` (per-account roll-up joined to `Account` for
+> name/type display columns). The choice to compose two aggregations on the
+> existing snapshot schema rather than aggregating directly on `GLLine` is
+> the ADR-022 path of least storage (no parallel report table; reuses the
+> single-row `TrialBalance` snapshot already declared for REQ-FS-005). The
+> debit-credit balance invariant lands as a declarative `check` operation
+> on `trialBalanceTotals` (ADR-031). The sibling implementation cycle did
+> ship `lib/Service/TrialBalanceService.php` + `TrialBalanceCalculator.php`
+> as a constrained ADR-031 deviation (documented inline in the sibling
+> change's `specs.md`) to keep the existing snapshot lifecycle working;
+> new report-builders MUST NOT follow that precedent.
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
@@ -690,6 +757,27 @@ _A bank statement — either generated by the `shillinq-bank-transaction-polling
 
 > **Reconciliation note (add-shillinq-bank-reconciliation, 2026-06-08):** The T2 `bookkeeping-bank-reconciliation` change additively overlays the bank-connectors `BankStatement` skeleton with the operator-import fields (`statementId`, `bankAccountIban`, `periodStart`/`periodEnd`, `openingBalance`/`closingBalance`, `importFormat`, `importedAt`/`importedBy`, `fileChecksum`, `lifecycleState`, `sourceDocumentUri`) plus the `imported → in-progress → reconciled → audit-locked` lifecycle and the declarative duplicate-import uniqueness on `(administrationId, fileChecksum)` + `(administrationId, bankAccountIban, periodStart, periodEnd)` range-overlap per REQ-BR-009. Per ADR-037 the overlay ships in `lib/Settings/register.d/add-shillinq-bookkeeping-compliance.json`; the monolith `lib/Settings/shillinq_register.json` is NOT edited.
 
+### BankingRule
+**Schema.org:** `schatkist:BankingRule`
+_Configurable compliance criterion evaluated during TreasuryAccount lifecycle transitions per REQ-SCHATKIST-003. Operator-authored per administration; the evaluationCriteria payload shape varies by ruleType (iban-format → pattern, segregation → checkDuplicates, approval-required → requiresTreasurerApproval, transaction-limit → maxAmount, reporting-period → cadence). Severity (blocking/warning/informational) drives whether a failure blocks the transition. Three seed records ship via ConfigurationService::importFromApp per REQ-SCHATKIST-010 (rule-iban-format, rule-segregation, rule-approval-required) and are idempotent on re-import._
+**Primary spec:** bookkeeping-schatkistbankieren
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| ruleNumber | string | Yes | Stable identifier per REQ-SCHATKIST-003 |
+| name | string | Yes | Human-readable rule name |
+| description | string | No | Detailed rule rationale |
+| ruleType | enum | Yes | iban-format / segregation / approval-required / transaction-limit / reporting-period |
+| evaluationCriteria | object | Yes | Criteria payload — shape varies by ruleType |
+| severity | enum | Yes | informational / warning / blocking |
+| isActive | boolean | Yes | Whether enforced in the administration |
+| administrationId | string | Yes | FK to administration enabling per-org rule customization |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- ← TreasuryAccount (many-to-many via lifecycle-precondition evaluation per REQ-SCHATKIST-005)
+- ← ComplianceReport (one-to-many — every passing/failing rule appears in ComplianceReport.criteriaResults per REQ-SCHATKIST-006)
+
 ### BankStatementLine
 **Schema.org:** `schema:MonetaryAmount`
 _A single transaction line within a BankStatement per REQ-BR-003. Parsed from CAMT.053, MT940, or manual CSV import. Matched against AR/AP via MatchingRule predicates (REQ-BR-004/REQ-BR-005/REQ-BR-006); unmatched lines route to a designated suspense account (REQ-BR-007). Declares `x-openregister-lifecycle` with states `unmatched → matched` and `unmatched → routed-to-suspense`._
@@ -742,7 +830,9 @@ _A predicate-based rule that matches bank statement lines against AR/AP invoices
 ### ReconciliationMatch
 **Schema.org:** `schema:Action`
 _A candidate or confirmed match between a bank statement line and an AR/AP invoice, GLTransaction, or suspense routing per REQ-BR-006. Emitted by the matching aggregation (confidence=auto) or operator-created (confidence=manual); the operator confirms or rejects through the standard register UI. Confirmed matches emit a `reconciliation-match-confirmed` event consumed by AR/AP invoice lifecycles per REQ-BR-006 (event-driven, no shillinq matcher service forwards the event)._
+_**T4 bookkeeping-reconciliation-reports extension (2026-06-09):** the same register schema carries the T4 fields needed by the BankReconciliation session — `reconId` (FK to BankReconciliation), `matchAlgorithm` (exact/fuzzy/manual per REQ-REC-005 — T4 supports `exact` + `manual` only), `confidenceScoreT4`, `matchedAt`, `manualOverride`, `resolutionStatus` + `resolutionReason` (REQ-REC-004 unmatched-item classification: matched/timing/pending/adjustment), and the polymorphic FK shortcuts `arInvoiceId` / `apTransactionId` / `glTransactionId`. The T2 confirm event triggers `ReconciliationMatchToReportListener` which stamps these fields in-place (no parallel match table; see `lib/Settings/register.d/bookkeeping-reconciliation-reports.json`)._
 **Primary spec:** bookkeeping-bank-reconciliation
+**Extension spec:** bookkeeping-reconciliation-reports
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
@@ -760,12 +850,92 @@ _A candidate or confirmed match between a bank statement line and an AR/AP invoi
 | confirmedBy | string | No | UUID of confirming operator |
 | confirmedAt | date-time | No | Confirmation timestamp |
 | rejectedReason | string | No | Operator-supplied rejection reason |
+| reconId | string | No | T4: FK to BankReconciliation session (REQ-REC-005). Empty for pre-T4 records. |
+| glTransactionId | string | No | T4: FK shortcut to GLTransaction.id when matchType=gl-transaction/journal |
+| bankLineId | string | No | T4: alias of bankStatementLineId for T4 session schema |
+| matchAlgorithm | enum | No | T4: exact / fuzzy / manual — T4 supports exact + manual only (REQ-REC-005) |
+| confidenceScoreT4 | number | No | T4: confidence in [0,1] for the T4 record (distinct from T2's confidenceScore) |
+| matchedAt | date-time | No | T4: when the T4 ReconciliationMatch record was stamped |
+| manualOverride | boolean | No | T4: true when operator-created or operator-corrected (REQ-REC-004) |
+| resolutionStatus | enum | No | T4: matched / timing / pending / adjustment (REQ-REC-004 classification of unmatched items). Null while unclassified. |
+| resolutionReason | string | No | T4: operator-supplied reason for the classification (audit-trailed per REQ-REC-004) |
+| arInvoiceId | string | No | T4: FK to ARInvoice.id when the match is AR-based (REQ-REC-005 semantic shortcut) |
+| apTransactionId | string | No | T4: FK to APInvoice/APTransaction id when the match is AP-based (REQ-REC-005) |
 
 **Lifecycle:** `pending → confirmed` (emits `reconciliation-match-confirmed` event) / `pending → rejected` (line returns to unmatched).
 
 **Relations:**
 - → BankStatementLine (many-to-one or many-to-many for N×M)
 - → ARInvoice / APInvoice / GLTransaction / Account-as-suspense (via matchType + matchedObjectId or targetRefs)
+- → BankReconciliation (many-to-one via `reconId`, T4)
+
+**T4 Aggregations:**
+- `matchesByRecon` — count grouped by `reconId` filtered to `resolutionStatus = matched` (drives BankReconciliation.matchedCount)
+- `varianceByType` — count grouped by `(reconId, resolutionStatus)` per REQ-REC-007 variance-by-type
+- `unresolvedByRecon` — count grouped by `reconId` filtered to `resolutionStatus IS NULL` (drives REQ-REC-006 pre-close summary)
+
+### BankReconciliation
+**Schema.org:** `schema:Report`
+_A bounded reconciliation session for one bank account + one statement period per REQ-REC-001 (bookkeeping-reconciliation-reports). Captures opening/closing balances, expected GL balance, computed variance, lifecycle status (draft → in-progress → verified → closed), preparer/verifier signatures, and the closedAt timestamp. Not a live dashboard — an immutable audit artifact once closed. Matching is delegated to T2 bookkeeping-bank-reconciliation; T4 records outcomes through `ReconciliationMatch.reconId` and closes the audit loop. The single PHP seam (ADR-031 §exception) is `OCA\Shillinq\Guard\StatementVerifyGuard` for the cross-object GL-balance lookup the declarative engine cannot yet express._
+**Primary spec:** bookkeeping-reconciliation-reports
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| bankAccountId | string | Yes | FK to the bank account / IBAN this reconciliation belongs to (REQ-REC-001) |
+| statementDate | date | Yes | Statement issue date (period-end by convention) |
+| statementPeriodStart | date | Yes | First day of the reconciliation period (inclusive) |
+| statementPeriodEnd | date | Yes | Last day of the reconciliation period (inclusive) |
+| openingBalance | number | Yes | Statement opening balance in account currency (REQ-REC-001) |
+| closingBalance | number | Yes | Statement closing balance in account currency (REQ-REC-001) |
+| expectedGLBalance | number | No | Server-computed per REQ-REC-002 formula; populated by StatementVerifyGuard |
+| variance | number | No | \|closingBalance - expectedGLBalance\|; server-derived per REQ-REC-002 |
+| reconciliationStatus | enum | Yes | draft / in-progress / verified / closed / cancelled (REQ-REC-003) |
+| preparedBy | string | No | Nextcloud UID of the operator who initiated the reconciliation (REQ-REC-009) |
+| verifiedBy | string | No | Nextcloud UID of the verifier who signed off (REQ-REC-006) |
+| closedAt | date-time | No | UTC datetime when the session transitioned `verified → closed` |
+| signOffComment | string | No | Verifier sign-off note required on the verify transition (REQ-REC-006) |
+| matchedCount | integer | No | Server-derived count of matched ReconciliationMatch records |
+| unmatchedGLCount | integer | No | Server-derived count of GL transactions in the period without a confirmed match |
+| unmatchedBankCount | integer | No | Server-derived count of bank statement lines without a confirmed match |
+| administrationId | string | Yes | FK to Administration; scopes uniqueness of (bankAccountId, statementPeriodEnd) |
+
+**Lifecycle:** `draft → in-progress` (guard: `StatementVerifyGuard::verifyStatementBalance`, REQ-REC-002 — never blocks but persists expectedGLBalance + variance) / `in-progress → verified` (guard: `StatementVerifyGuard::requireResolvedAndSignedOff`, REQ-REC-004 + REQ-REC-006 — rejects when matches unclassified or signOffComment empty) / `verified → closed` (stamps closedAt; immutable thereafter per REQ-REC-003) / `draft → cancelled` (operator abandon) / `in-progress → draft` (operator revert for investigation).
+
+**Relations:**
+- → ReconciliationMatch (one-to-many via `reconId`)
+- → ReconciliationReport (one-to-one via `reconId` — created on close)
+- → Account / BankConnection (many-to-one via `bankAccountId`)
+- → Administration (many-to-one via `administrationId`)
+
+**Aggregations:**
+- `varianceByAccount` — sum of `variance` grouped by `bankAccountId`, filtered to `reconciliationStatus = closed` (REQ-REC-007 — open reconciliations excluded)
+- `varianceByPeriod` — sum of `variance` grouped by `(bankAccountId, statementPeriodEnd)`, filtered to `reconciliationStatus = closed`
+- `reconciliationCount` — count grouped by `bankAccountId` filtered to closed
+
+### ReconciliationReport
+**Schema.org:** `schema:Report`
+_A signed-off audit artifact captured when a BankReconciliation transitions verified → closed per REQ-REC-001/REQ-REC-006 (bookkeeping-reconciliation-reports). Records the final matched/unmatched counts, total variance, preparer + verifier UIDs, and the verifier sign-off comment for permanent retention. Immutable once created. Distinct from `BankReconciliation` (the session) — `ReconciliationReport` is the sealed certificate produced at close._
+**Primary spec:** bookkeeping-reconciliation-reports
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| reconId | string | Yes | FK to the BankReconciliation this report finalises (REQ-REC-001) |
+| reportDate | date-time | Yes | UTC datetime the report was sealed (mirrors parent's closedAt) |
+| matchedCount | integer | Yes | Final count of confirmed matches per REQ-REC-006 |
+| unmatchedGLCount | integer | Yes | Final count of unmatched GL transactions per REQ-REC-006 |
+| unmatchedBankCount | integer | Yes | Final count of unmatched bank lines per REQ-REC-006 |
+| totalVariance | number | Yes | Final \|closingBalance - expectedGLBalance\| per REQ-REC-006 |
+| preparedBy | string | Yes | Nextcloud UID of the preparer (mirrors parent) |
+| verifiedBy | string | Yes | Nextcloud UID of the verifier (mirrors parent) |
+| signOffComment | string | No | Verifier sign-off note copied from the parent at close time (REQ-REC-006) |
+| administrationId | string | Yes | FK to Administration (mirrors parent) |
+
+**Relations:**
+- → BankReconciliation (many-to-one via `reconId`; one-to-one in practice — one report per closed session)
+- → Administration (many-to-one via `administrationId`)
+
+**Aggregations:**
+- `totalVarianceByAdmin` — sum of `totalVariance` grouped by `administrationId` (REQ-REC-007 admin-level variance dashboard)
 
 ### BbvAccountMapping
 **Schema.org:** `schema:PropertyValue`
@@ -1005,6 +1175,8 @@ _A financial plan allocating resources for a specific period, organization, and 
 - → BudgetAllocation (one-to-many)
 - → BudgetAmendment (one-to-many)
 - → ExpenditureRequest (one-to-many)
+
+**Reconciliation note — `bookkeeping-reconciliation-reports` (T4 envelope, REQ-RR-004):** the shillinq capability `bookkeeping-reconciliation-reports` introduces an **account-period budget shape** alongside the existing programme-level `Budget` documented above. The account-period shape — `(accountNumber, periodId, budgetAmount, currency, administrationId, lifecycleState)` with FK `accountNumber → Account.accountNumber` — is the join target for the variance-vs-actual saved-query that compares aggregated `GLLine` activity to budgeted amounts at the account-per-period grain (REQ-RR-004). Two prior `Budget` declarations already ship in `lib/Settings/register.d/` fragment files — `bookkeeping-verplichtingenadministratie.json` (commitment shape: `geautoriseerd_bedrag` / `gerealiseerd_bedrag` / `openstaande_verplichtingen` / `vrije_ruimte`) and `bookkeeping-provincies-bbv-variant.json` (BBV-programme shape: `budgetName` / `totalAmount` / `programmaStructure` / `fiscalYear`) — neither of which carries the account-per-period fields the variance query needs; the implementing cycle (separate `opsx-apply` against `bookkeeping-reconciliation-reports`) decides whether to add a third Budget fragment owned by the reconciliation-reports capability or to extend one of the existing shapes (Task 5 carries the discovery-deferred decision). The four reconciliation saved queries (sub-ledger ↔ GL control match, intercompany match, variance vs Budget, controller exception report) declared by this capability per REQ-RR-002 / -003 / -004 / -005 are consumed by mydash via runtime GraphQL on OR's schema with no install-time dependency in either direction per ADR-022 and `feedback_mydash-no-or-dependency.md`; cites ADR-031 (saved-query / `x-openregister-aggregations` not a PHP `ReportingService`; severity as calculated field; cross-administration intercompany match and cross-schema budget-variance join carry a conditional single-method PHP guard fallback if engine cannot express declaratively — `lib/Aggregation/IntercompanyMatchGuard.php` and `lib/Aggregation/BudgetVarianceJoinGuard.php`, ADR-031-exception-annotated, ~20 LOC each).
 
 ### BudgetAllocation
 _A subdivision of budget resources allocated to a specific department, funding source, or purpose_
@@ -1288,6 +1460,8 @@ _Analytics report tracking obligation and payment compliance metrics, supporting
 - → Obligation (one-to-many)
 - → Payment (one-to-many)
 - → SettlementDecision (one-to-many)
+
+**Additive fields (bookkeeping-schatkistbankieren, REQ-SCHATKIST-006):** The same `ComplianceReport` register is reused as the schatkistbankieren compliance snapshot. The two capabilities scope reports by `administrationId` + the natural primary spec key (settlement metrics vs. schatkist criteria) so they never collide. The schatkistbankieren capability adds the optional fields `reportNumber` (sequential per administration), `treasuryAccountId` (FK to TreasuryAccount; null when aggregated), `complianceScore` (declarative x-openregister-calculations, 0-100 weighted rule-match), `criteriaResults` (calculated array of per-BankingRule pass/fail), `status` (draft / reviewed / approved-for-export / exported), `regulatoryExportFormat` (csv-master-list / xml-regulatory / json-audit), `regulatoryExportUri` (docudesk FK), and `administrationId` (Yes for schatkist usage). Three aggregations are declared per REQ-SCHATKIST-007 (complianceByAdministrationAndPeriod, complianceByRuleType, agingByLastCompliantDate over TreasuryAccount).
 
 ### ComplianceRisk
 **Schema.org:** `schema:Report`
@@ -1660,6 +1834,8 @@ _An analytical cost center (kostenplaats) for tracking, allocating, and analysin
 - → GLLine (one-to-many, via costCenterCode FK, additive dimension field per REQ-CC-003)
 
 > **Reconciliation note (add-shillinq-cost-centers-dimensions, 2026-06-03):** The earlier `CostCenter` entry (primary spec: cost-accounting-allocation) described a generic cost center with `description/status/budget/createdDate`. This entry supersedes it for the shillinq bookkeeping tier with the T4 dimensional accounting shape per REQ-CC-002: `parentCode` self-relation for hierarchy, `lifecycleState` enum mirroring Account, and `administrationId` FK. The OR-managed register pattern (ADR-022) replaces any parallel database table. No new PHP classes — this is a schema-only declaration per ADR-031.
+>
+> **Additive extension note (bookkeeping-consultancy-project-accounting, 2026-06-09):** The `CostCenter` schema is additively extended (non-breaking) with the optional fields `description` (operator-readable), `status` (alias enum `active/inactive` for external integrations expecting the simpler shape; `lifecycleState` remains authoritative), `budget` (integer cents — operator-set baseline), `spentToDate` (integer cents — derived via `x-openregister-aggregations` summing `GLLine.amount` filtered by `costCenterCode = @self.code AND side='debit'`, recursive over descendant cost centers via `parentCode`), `allocatedBudget` (integer cents — derived via `x-openregister-calculations` rolling up children's `allocatedBudget` + own `budget`), and `organizationId` (FK to owning Organization). Existing records remain valid without the new fields. All extensions are declarative per ADR-031 — no `BudgetRollupService` or `CostCenterSpendService` PHP class authored.
 
 ### KostenDrager
 **Schema.org:** `schema:Product`
@@ -1681,23 +1857,48 @@ _An analytical cost unit (kostendrager / cost object) for tracking costs per pro
 
 ### CostProject
 **Schema.org:** `schema:Project`
-_Project or cost object for tracking time, materials, and costs on a project basis with budget monitoring and multi-dimensional reporting_
-**Primary spec:** cost-accounting-allocation
+_Analytical project register for consultancy and departmental project accounting. Captures the management-accounting view of a project (authorised budget, estimated costs, costs incurred to date, lifecycle) — distinct from and complementing the RJ 270 revenue-recognition `Project` register. Costs and P&L derived from GL via x-openregister-aggregations; budget rollup via x-openregister-calculations._
+**Primary spec:** bookkeeping-consultancy-project-accounting
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| code | string | Yes | Unique project cost code |
-| name | string | Yes | Project name |
-| description | string | No | Project description and scope |
-| budget | number | No | Total project budget |
-| totalCost | number | No | Total costs incurred to date |
-| startDate | datetime | Yes | Project start date |
-| endDate | datetime | No | Project completion or planned end date |
-| status | string | Yes | Status: active, closed, or archived |
+| projectNumber | string | Yes | Operator-assigned unique reference within the administration |
+| name | string | Yes | Human-readable project name |
+| description | string | No | Project description / scope |
+| startDate | date | No | Project activation date |
+| endDate | date | No | Target close date |
+| totalBudget | integer (cents) | Yes | Authorised spend ceiling |
+| totalEstimatedCosts | integer (cents) | Yes | Project-manager estimate |
+| costsIncurredToDate | integer (cents) | No | Derived via x-openregister-aggregations |
+| administrationId | string | No | FK to Administration |
+| organizationId | string | No | FK to owning Organization |
+| costCenterCode | string | No | FK to CostCenter.code — associates project to a department |
+| lifecycleState | enum | Yes | One of draft, active, on-hold, closed, archived |
 
 **Relations:**
-- → Organization (many-to-one)
-- → CostCenter (many-to-one)
+- → CostCenter (many-to-one, via costCenterCode → code)
+- → ProjectBudget (one-to-many, via id ← projectId)
+- → GLLine (one-to-many, via subLedgerType='cost-project' AND subLedgerRef=id; for costsIncurredToDate + profitAndLoss aggregations)
+
+> **Reconciliation note (bookkeeping-consultancy-project-accounting, 2026-06-09):** The earlier `CostProject` entry (primary spec: cost-accounting-allocation) described a generic project cost object with `code/name/description/budget/totalCost/startDate/endDate/status`. This entry supersedes it as the **declared shillinq register**: the shape is realigned on `projectNumber` (not `code`, to avoid collision with the bookkeeping-tier `Project.code` analytical dimension), money fields move to **integer cents** per the suite's money rule, the lifecycle expands to `draft → active → on-hold → closed → archived`, and `costsIncurredToDate` + `profitAndLoss` are declared via `x-openregister-aggregations` over `GLLine` rather than stored. The OR-managed register pattern (ADR-022) replaces any parallel database table. No PHP service authored — all behaviour is `x-openregister-lifecycle / -aggregations / -calculations` per ADR-031. The existing RJ 270 / IFRS 15 revenue-recognition `Project` register (primary spec: bookkeeping-consultancy-project-accounting — REQ-CPA-001) coexists: `Project` carries `totalContractValue` / `recognisedRevenue` / `wipBalance` for revenue-side accounting, while `CostProject` carries `totalBudget` / `costsIncurredToDate` / `profitAndLoss` for management-accounting. Both share the same set of GL postings (filtered by sub-ledger reference). Companion register `ProjectBudget` (period-level allocation, lifecycle pending → approved → allocated → spent) is also declared by this spec.
+
+### CostProjectBudget (a.k.a. ProjectBudget)
+**Schema.org:** `schema:MonetaryAmount`
+_Period-level budget allocation for a `CostProject` with lifecycle pending → approved → allocated → spent. Allows operators to allocate budget per fiscal period (Q1, Q2 …) and track which allocations have been authorised vs consumed._
+**Primary spec:** bookkeeping-consultancy-project-accounting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| allocationNumber | string | Yes | Operator-assigned unique reference |
+| amount | integer (cents) | Yes | Allocation amount |
+| status | enum | Yes | One of pending, approved, allocated, spent |
+| projectId | string | Yes | FK to CostProject.id |
+| fiscalPeriod | string | Yes | FK to FiscalPeriod.code |
+| administrationId | string | No | FK to Administration |
+| description | string | No | Operator-readable description |
+
+**Relations:**
+- → CostProject (many-to-one, via projectId → id)
 
 ### CreditNote
 **Schema.org:** `schema:Invoice`
@@ -1739,6 +1940,8 @@ _Point-in-time per-currency balance snapshot for a (BankAccount, currency) pair 
 **Uniqueness:** `(accountId, currency)` — one latest snapshot per pair per REQ-MC-003.
 
 **Additive BankAccount fields (bookkeeping-multi-currency, REQ-MC-002):** the BankAccount schema (primary spec: bookkeeping-multi-currency / bookkeeping-chart-of-accounts) gains one optional field here — `primaryCurrency` (string, ISO 4217 code; nullable, treated as `EUR` on read for backward compatibility per REQ-MC-001). Non-breaking — existing BankAccount records remain valid without the field.
+
+**T4 multi-currency engine envelope (add-shillinq-multi-currency, REQ-MC-002 → REQ-MC-006 of the umbrella spec).** The T3 sibling above covers per-(account, currency) cash-position snapshots — the operator-readable cash side of multi-currency. The T4 envelope `add-shillinq-multi-currency` covers the orthogonal posting-side: it introduces (a) a separate `FxRate` register with `schema:ExchangeRateSpecification` annotation and uniqueness on (`transactionCurrency`, `baseCurrency`, `date`, `source`) for daily ECB / manual / internal-policy rates; (b) an additive multi-currency extension on `GLLine` declaring `baseCurrencyAmount` / `transactionCurrency` (renamed from T1 `currency`) / `baseCurrency` / `fxRate` / `fxRateSource` / `fxRateDate` per its MODIFIED REQ-GL-003 — the on-the-wire `amount` property name is preserved as `transactionAmount` semantically (no destructive migration); (c) a daily ECB ingestion `ScheduledWorkflow` per ADR-031 path 2 (no `FxRateImportJob extends TimedJob`); (d) a period-end revaluation `ScheduledWorkflow` per REQ-MC-004 plus an `x-openregister-lifecycle` action for realised gain/loss on settlement (no `FxRevaluationService`); (e) an IAS 21 consolidation translation declared as an OR `Mapping` referencing the `FxRate` register per REQ-MC-005 (no `ConsolidationTranslationService`). Both T3 and T4 reuse the existing `BookkeepingMultiCurrency` manifest menu (the T4 envelope adds an `FXRates` sibling child to `BankAccounts` + `CurrencyBalances`, not a parallel menu). Each piece (a)–(e) is currently a tracked GAP on the umbrella `add-shillinq-multi-currency` change tasks.md (Tasks 5–10); the T2 envelope is spec-only per its `proposal.md ## Scope > Out of Scope`. The shared FX orientation contract (`baseCurrencyAmount = transactionAmount × fxRate`; ECB feed inverted once on ingest; `GLLine.fxRate` and `FxRate.rate` join with no reciprocation) is the authoritative cross-spec invariant per ADR-022 (reuse OR abstractions) and ADR-031 (declarative workflows over services).
 
 ### CustomerMaster
 **Schema.org:** `schema:Organization`
@@ -1900,22 +2103,45 @@ _Rules for delegating approval tasks during out-of-office periods and escalation
 
 ### DepreciationSchedule
 **Schema.org:** `schema:Thing`
-_A detailed schedule defining depreciation method, rate, and yearly calculations for a fixed asset with automated computation_
-**Primary spec:** obligation-financial-administration
+_Per-asset, per-fiscal-year depreciation schedule record (REQ-FA-003). Immutable append-only history backing the audit trail for Wet Vpb / Wet IB tax compliance. `depreciationAmount` is materialised at period close (or on demand by the `DepreciationCalculator`) using the asset's `depreciationMethod`, `annualRate` and the Nextcloud System Settings Float Precision rounding (REQ-FA-005). `bookValue` is a derived `x-openregister-calculations` field (asset.acquisitionCost − accumulatedDepreciation) and not stored separately. `status` tracks the schedule lifecycle (planned → active → completed)._
+**Primary spec:** bookkeeping-fixed-assets-depreciation
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| scheduleNumber | string | Yes | Unique identifier for the depreciation schedule |
-| name | string | Yes | Name or description of the depreciation schedule |
-| startDate | datetime | Yes | Start date of the depreciation period |
-| endDate | datetime | Yes | End date of the depreciation period |
-| depreciationMethod | string | Yes | Method used: linear, declining-balance, units-of-production |
-| annualRate | number | Yes | Annual depreciation rate as a percentage or amount |
-| totalDepreciationAmount | number | No | Total depreciation amount over the schedule period |
-| status | string | Yes | Current status: planned, active, completed |
+| scheduleNumber | string | Yes | Unique identifier within an administration (e.g. SCH-FA-0001-2026) |
+| assetRef | string | Yes | FK to FixedAsset UUID — the asset this schedule covers |
+| depreciationMethod | enum | Yes | One of linear, declining-balance, units-of-production |
+| annualRate | number ≥ 0 | Yes | Annual depreciation rate (percentage for linear, declining percentage for declining-balance, units/year for units-of-production). Rounded to System Settings Float Precision per REQ-FA-005 |
+| rateType | enum | Yes | One of percentage, fixed-amount, units-per-year |
+| periodStartDate | date | Yes | Start date of the depreciation period (typically fiscal-year start) |
+| periodEndDate | date | Yes | End date of the depreciation period (typically fiscal-year end) |
+| depreciationAmount | number ≥ 0 | Yes | Depreciation expense for this period in base currency |
+| accumulatedDepreciation | number ≥ 0 | Yes | Total accumulated depreciation across all periods through periodEndDate |
+| fiscalYear | integer | Yes | Fiscal year this schedule covers (e.g. 2026) |
+| status | enum | Yes | One of planned, active, completed |
+| costCenterCode | string | No | Cost-centre allocation at schedule-creation time (REQ-FA-006) |
+| glTransactionRef | string | No | FK to the materialised yearly depreciation-expense GLTransaction (REQ-FA-007) |
+| calculationFloatPrecision | integer (0..8) | No | Float Precision value captured at calculation time (REQ-FA-005) |
+| administrationId | string | Yes | FK to the Administration owning this schedule |
+
+**Calculated fields (x-openregister-calculations, not stored):**
+- `bookValue` — net book value at periodEndDate (asset.acquisitionCost − accumulatedDepreciation)
 
 **Relations:**
-- → FixedAsset (many-to-one)
+- → FixedAsset (many-to-one, via `assetRef` → FixedAsset.id; the depreciation schedule references back to its asset record per REQ-FA-003 — see the FixedAsset entry above for the sub-ledger GL-link pattern)
+- → Administration (many-to-one, via administrationId)
+- → GLTransaction (many-to-one, via `glTransactionRef` → GLTransaction.id; the yearly depreciation-expense posting materialised per REQ-FA-007, balanced against the debit-depreciation-expense / credit-accumulated-depreciation pattern that consumes the canonical sub-ledger reference `GLLine.subLedgerType = "fa"` + `GLLine.subLedgerRef = <FixedAsset UUID>`)
+
+> **Reconciliation note (bookkeeping-fixed-assets-depreciation, 2026-06-09):** The earlier
+> stub entry (primary spec `obligation-financial-administration`) is superseded by the
+> field set above, which conforms to REQ-FA-003 of the T3
+> `bookkeeping-fixed-assets-depreciation` spec. DepreciationSchedule lands as an ADR-037
+> register-fragment new schema at `lib/Settings/register.d/bookkeeping-fixed-assets-depreciation.json`,
+> not by editing the monolith. The schema is the materialised audit-trail backing the
+> on-demand `x-openregister-calculations` derived fields on FixedAsset
+> (`monthlyDepreciation`, `currentBookValue`, `commercialBookValue`, `fiscalBookValue`)
+> — design D2 keeps the per-tick computation declarative; D4 (immutable append-only)
+> applies to the persisted history that anchors the tax-audit trail.
 
 ### DigitalDocument
 **Schema.org:** `schema:DigitalDocument`
@@ -1967,22 +2193,36 @@ _Managed document with version control for bookkeeping (invoices, contracts, rec
 - → Person (many-to-one)
 
 ### DunningNotice
-**Schema.org:** `schema:Event`
-_Follow-up notice for overdue unpaid transactions, escalating through dunning levels toward legal action._
-**Primary spec:** accounts-payable-receivable
+**Schema.org:** `schema:Message`
+_Per-AP-invoice dunning timeline entry recording each reminder level dispatched against an overdue APTransaction. Written by the AP lifecycle (or OR's dunning-workflow engine when stable per ADR-022) when a reminder fires; read by the APTransaction detail page to surface the dunning timeline. Symmetric to `DunningRecord` on the AR side._
+**Primary spec:** bookkeeping-accounts-payable-core
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| noticeDate | date | Yes | Date when dunning notice was issued |
-| dueDate | date | Yes | New payment deadline in the notice |
-| reminderLevel | enum | Yes | Escalation level of dunning process |
-| amount | MonetaryAmount | Yes | Outstanding amount due |
-| eventStatus | enum | Yes | Status of the dunning notice |
-| description | string | No | Custom message or legal terms included |
+| invoiceRef | string | Yes | FK to APTransaction UUID |
+| reminderLevel | enum | Yes | Dunning escalation level (reminder-1, reminder-2, formal-notice, collection) |
+| dispatchedAt | datetime | Yes | When the reminder was dispatched |
+| dispatchedBy | string | Yes | Actor that dispatched ("system" or operator user-id) |
+| templateRef | string | No | FK to OR notification template used for dispatch |
+| acknowledgedAt | datetime | No | When the vendor acknowledged the notice |
+| administrationId | string | Yes | FK to the administration owning this dunning notice |
 
 **Relations:**
-- → APTransaction (many-to-one)
-- → Payee (many-to-one)
+- → APTransaction (many-to-one, via invoiceRef)
+- → NotificationTemplate (many-to-one, via templateRef — OR-owned)
+- → Administration (many-to-one)
+
+> **Reconciliation note (bookkeeping-accounts-payable-core, 2026-06-09):** This
+> entry has been updated from the prior generic `accounts-payable-receivable`
+> draft to the canonical T2 shape registered in
+> `lib/Settings/register.d/bookkeeping-accounts-payable-core.json`. The fields
+> mirror `DunningRecord` on the AR side. Distinct from the
+> `bookkeeping-credit-control-dunning` ladder-run orchestrator (see
+> `DunningRun` / `DunningLadder` entries elsewhere in this document) which
+> operates on AR receivables via the credit-control ladder; this
+> `DunningNotice` is a per-AP-invoice timeline record per REQ-AP-005. See
+> `openspec/changes/bookkeeping-accounts-payable-core/dedup-notes.md` for
+> the boundary.
 
 ### DunningRecord
 **Schema.org:** `schema:Event`
@@ -2685,6 +2925,23 @@ _A capitalised tangible or intangible business asset with declarative depreciati
 > table (design D2). The `GLLine.subLedgerRef` link is the only cross-register pointer;
 > downward specs referencing `FixedAsset` MUST use `assetNumber` as the FK target and
 > `administrationId` for administration scoping.
+
+> **Reconciliation note (bookkeeping-fixed-assets-depreciation, 2026-06-09):** The T3
+> `bookkeeping-fixed-assets-depreciation` change carries forward the canonical FixedAsset
+> schema above and unions REQ-FA-002 operator-facing property aliases (`assetType` ↔
+> `assetCategory`, `usefulLifeYears` ↔ `usefulLifeMonths`, `purchaseDate` ↔ `acquisitionDate`,
+> `purchaseCost` ↔ `acquisitionCost`, `declineRate` ↔ `degressiveRate`, `status` ↔
+> `lifecycleState`, `accumulatedDepreciationAccountNumber` ↔ `accumulatedDepAccountNumber`)
+> plus four genuinely new optional fields (`description`, `productionUnits`,
+> `capitalizationAccountNumber`, `location`, `costCenterCode`, `retirementDate`,
+> `salvageProceeds`, `transferSourceAssetRef`). Aliases share the canonical field's
+> semantics; the canonical fields remain required. The aliasing lands as an ADR-037
+> register-fragment overlay at `lib/Settings/register.d/bookkeeping-fixed-assets-depreciation.json`,
+> never editing the monolith. The lifecycle is extended with `transferInternal` (cost-centre
+> reallocation; no GL posting) and `splitTransfer` (proportional split into a new FixedAsset
+> with `transferSourceAssetRef` pointing back), and the `activate` action acquires a
+> `emit-journal-entry-and-schedule` subtype that auto-generates the first DepreciationSchedule
+> + acquisition GL posting per REQ-FA-008.
 
 ### FrameworkAgreement
 **Schema.org:** `schema:Service`
@@ -3545,6 +3802,34 @@ _Formal partnership or joint venture between multiple corporations with shared p
 _A balanced transaction record affecting two or more GL accounts (debits equal credits)._
 **Primary spec:** financial-reporting-accountability
 
+> **Journal-entries T1 capability (add-shillinq-journal-entries, 2026-06-09).** The
+> Tier-1 `bookkeeping-journal-entries` capability binds the human-author surface
+> of the bookkeeping foundation to the `JournalEntry` schema declared in
+> `lib/Settings/register.d/add-shillinq-bookkeeping-foundation.json` (fragment file;
+> not the monolithic `shillinq_register.json`). The Tier-1 shape supersets this
+> legacy ADR-000 entry: `entryNumber` → `journalNumber`, the flat
+> `debitAmount`/`creditAmount`/`accountCode` is replaced by a `lines[]` array of
+> `{accountNumber, side, amount, description}` (each row materialises into a
+> `GLLine` on post, REQ-JE-007), the stored `isBalanced` boolean is replaced by
+> the ADR-031 declarative balance derivation on the materialised `GLTransaction`,
+> and `vatAmount` is deferred to Tier 5 (per `add-shillinq-journal-entries` Out
+> of Scope; the Tier-1 schema does not carry a `vatAmount` field). A
+> `journalType` closed enum (`manual` / `recurring` / `reversing`), `cadence`
+> object, `reversesOn` periodId, and `approvalState` enum are added. ADR-022 is
+> cited inline (consume OR's approval-workflow + audit-trail-immutable + docudesk
+> FK abstractions; no app-local approval table, no embedded source-document
+> blob); ADR-031 is cited inline (declarative `x-openregister-lifecycle`
+> `draft → pending → posted → voided` state machine + declarative balance
+> derivation + OR `ScheduledWorkflow` primitive for recurring/reversing
+> materialisation; no `RecurringJournalService` PHP class). The sibling
+> implementation cycle did ship `OCA\Shillinq\Lifecycle\JournalEntryGuard::canPost`
+> wired into the `post`/`postDirect`/`void` transitions' `requires` field as a
+> constrained ADR-031 deviation (delegates the policy decision rather than
+> reimplementing approval state). New lifecycle gates SHOULD wire
+> `requires: {approval-workflow: {policy: "@self.amountPolicy"}}` declaratively
+> once OR's approval-workflow extension exposes amount-threshold policy binding
+> (proposal Risk 1).
+
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
 | entryDate | datetime | Yes | Date of the journal entry |
@@ -4148,23 +4433,43 @@ _Schema.org Organization — standard vocabulary for organization data_
 
 ### Payee
 **Schema.org:** `schema:Organization`
-_Vendor (accounts payable) or customer (accounts receivable) party in financial transactions._
-**Primary spec:** accounts-payable-receivable
+_Vendor / supplier party record for accounts payable. Holds vendor contact details, payment terms, bank IBAN, dunning policy reference, and default expense account. Symmetric to `CustomerMaster` on the AR side. Posting an APTransaction (issued transition) consults `paymentTermDays` for the due-date default and `dunningPolicyRef` for the OR dunning-workflow cadence in the overdue state._
+**Primary spec:** bookkeeping-accounts-payable-core
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| legalName | string | Yes | Legal registered business name |
-| tradeName | string | No | Trade name or DBA if different from legal name |
-| vatID | string | Yes | Dutch VAT identification number |
-| kvkNumber | string | No | KvK (Chamber of Commerce) registration number |
-| email | string | Yes | Contact email address |
-| telephone | string | No | Contact telephone number |
-| iban | string | No | International Bank Account Number for transfers |
-| bic | string | No | BIC/SWIFT code for international transactions |
+| vendorNumber | string | Yes | Stable vendor identifier unique per administration |
+| name | string | Yes | Legal name of the vendor |
+| tradingName | string | No | Alternate or DBA trading name |
+| kvkNumber | string | No | Dutch KvK number (8 digits) |
+| btwNumber | string | No | Dutch BTW / EU VAT number |
+| paymentTermDays | integer | Yes | Default payment term in days (auto-sets APTransaction.dueDate); default 30 |
+| defaultExpenseAccountNumber | string | No | FK to Account.accountNumber for default expense coding |
+| bankAccount | string | No | Payee bank account IBAN for outgoing payments |
+| creditTerms | string | No | Free-text payment terms or reference to OR terms record |
+| dunningPolicyRef | string | No | FK to OR dunning-workflow policy record per ADR-022 |
+| address | object | No | Postal address (street, houseNumber, postcode, city, country) |
+| email | string | No | Primary contact email for remittance advice and queries |
+| phone | string | No | Primary contact phone number |
+| contactRef | string | No | FK to OR contact abstraction if stable per ADR-022; else null |
+| administrationId | string | Yes | FK to the administration owning this vendor record |
+| lifecycleState | enum | Yes | One of active, blocked, archived |
 
 **Relations:**
-- → APTransaction (one-to-many)
-- → DunningNotice (one-to-many)
+- → APTransaction (one-to-many, via vendorId)
+- → Account (many-to-one, via defaultExpenseAccountNumber)
+- → DunningPolicy (many-to-one, via dunningPolicyRef — OR-owned per ADR-022)
+- → Administration (many-to-one)
+
+> **Reconciliation note (bookkeeping-accounts-payable-core, 2026-06-09):** This
+> entry has been updated from the prior generic `accounts-payable-receivable`
+> draft to the canonical T2 shape registered in
+> `lib/Settings/register.d/bookkeeping-accounts-payable-core.json`. The fields
+> mirror `CustomerMaster` on the AR side. The pre-T2 `VendorMaster` entry
+> below (added by `add-shillinq-bookkeeping-compliance`) remains a parallel
+> historical flavour during the migration window; new AP register
+> declarations MUST use `Payee`. See `openspec/changes/
+> bookkeeping-accounts-payable-core/dedup-notes.md` for the migration boundary.
 
 ### Payment
 **Schema.org:** `schema:Order`
@@ -6712,6 +7017,36 @@ _Financial transaction in the bookkeeping system (debit/credit entry)_
 - → BankAccount (many-to-one)
 - → PaymentFraudAssessment (one-to-many)
 
+### TreasuryAccount
+**Schema.org:** `schema:BankAccount`
+_Treasury-managed bank account governed under Dutch schatkistbankieren regulations per REQ-SCHATKIST-002. Carries IBAN (validated against `^NL[0-9]{2}[A-Z]{4}[0-9]{10}$`), compliance classification (master-list/subsidiary/suspense/temporary), master-list status (active/pending-review/blocked/archived), optional GL linkage via `linkedAccountNumber → Account.accountNumber`, optional treasurer/CFO approval, and a seven-state lifecycle (draft → configured → active → monitored → compliant; plus suspended / archived). The `configured → active` transition is gated by a multi-criteria compliance precondition that evaluates every active BankingRule scoped to the administration per REQ-SCHATKIST-005; if any rule fails the transition is blocked and the failure is recorded as a compliance audit event per REQ-SCHATKIST-008. Lifecycle transitions materialise audit-trail-immutable events per ADR-022 / T2 bookkeeping-audit-trail; the activation side-effect creates a ComplianceReport with per-rule criteriaResults. Treasury accounts are deliberately separate from the generic `BankAccount` entity (commercial / single-currency tracking) — see Reconciliation note below._
+**Primary spec:** bookkeeping-schatkistbankieren
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| accountNumber | string | Yes | Stable identifier per administration (REQ-SCHATKIST-002) |
+| iban | string | Yes | Dutch IBAN, schema-validated |
+| bic | string | No | BIC / SWIFT code |
+| bankName | string | No | Bank name for display |
+| accountName | string | Yes | Treasury account label |
+| description | string | No | Business purpose and governance notes |
+| complianceClassification | enum | Yes | master-list / subsidiary / suspense / temporary |
+| masterListStatus | enum | Yes | active / pending-review / blocked / archived |
+| administrationId | string | Yes | FK to owning Administration |
+| linkedAccountNumber | string | No | FK to `Account.accountNumber` for GL classification (T1) |
+| requiresApproval | boolean | Yes | Whether activation requires CFO/treasurer approval (default true) |
+| approvalStatus | enum | Yes | not-required / pending / approved / rejected |
+| lifecycleState | enum | Yes | draft / configured / active / monitored / compliant / suspended / archived |
+| lastCompliantDate | datetime | No | Last datetime all active rules passed; drives the aging aggregation per REQ-SCHATKIST-007 |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- → Account (many-to-one, via linkedAccountNumber → Account.accountNumber)
+- → BankingRule (many-to-many via lifecycle precondition evaluation per REQ-SCHATKIST-005)
+- → ComplianceReport (one-to-many — every activation/monitoring cycle generates a report)
+
+> **Reconciliation note (bookkeeping-schatkistbankieren, 2026-06-09):** `TreasuryAccount` is intentionally a separate register from the generic `BankAccount` (bookkeeping-multi-currency / bookkeeping-chart-of-accounts base entity) and from `SchatkistbankierenSaldo` (Wet Fido T3, per-period sweep balance). The three carry disjoint concerns: `BankAccount` is the commercial single-currency bank-account master, `SchatkistbankierenSaldo` is the per-period drempelbedrag/sweep snapshot for Wet HOF reporting, and `TreasuryAccount` is the governance/compliance master with lifecycle-gated activation against the BankingRule register. Operators link a `TreasuryAccount` to its underlying `BankAccount` via the optional `linkedAccountNumber → Account.accountNumber` FK; sweep snapshots accumulate under `SchatkistbankierenSaldo` and feed the Wet Fido quarterly rapportage rather than the schatkist compliance ledger.
+
 ### TreasuryTask
 **Schema.org:** `schema:Event`
 _Unified AP/AR/spend task list for cash flow management with due dates and counterparty tracking_
@@ -6950,6 +7285,100 @@ _VAT-specific tax return showing collected VAT, paid VAT, and net amount due for
 - → Organization (many-to-one)
 - → TaxReturn (many-to-one)
 
+### VatReturn
+**Schema.org:** `schema:Invoice`
+_Dutch periodic BTW return (kwartaal / maand) per administration. Owns the declarative draft → submitted → accepted → corrected lifecycle (REQ-VBTW-005); rubrieken are derived via `x-openregister-aggregations` from period-filtered GL postings tagged by VatTariff (REQ-VBTW-004); submission to the Belastingdienst is dispatched via the `digipoort-sbr` OpenConnector source on the `submit` transition (REQ-VBTW-010). Audit + retention are consumed from OR's abstractions (REQ-VBTW-012). No app-local PHP `VatReturnService` (ADR-031), no parallel storage (ADR-022)._
+**Primary spec:** bookkeeping-vat-btw-filing
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the Administration owning the return |
+| periodType | enum | Yes | `month` or `quarter` per administration |
+| periodYear | integer | Yes | Calendar year of the period |
+| periodMonth | integer | No | 1-12 when `periodType=month` |
+| periodQuarter | integer | No | 1-4 when `periodType=quarter` |
+| state | enum | Yes | `draft`, `submitted`, `accepted`, `rejected`, `corrected` |
+| amount | number | Yes | Net `teBetalenOfTeruggave` (negative = refund) in euros |
+| currency | string | Yes | ISO 4217 currency code (EUR for NL) |
+| approvalThreshold | number | No | Approval-gate threshold per REQ-VBTW-006 |
+| submittedAt | datetime | No | Set on transition to `submitted` |
+| acceptedAt | datetime | No | Set on Belastingdienst ack |
+| attachmentUri | string | No | docudesk URI of the rendered aangifte PDF |
+| notes | string | No | Operator-visible note |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- → VatCorrection (one-to-many, via VatCorrection.originalReturnId)
+
+**Cites:** ADR-022 (audit / approval / retention), ADR-031 (declarative lifecycle + aggregations), ADR-019 (OpenConnector for SBR/Digipoort).
+
+### IcpStatement
+**Schema.org:** `schema:Invoice`
+_Intracommunautaire prestaties (ICP) opgaaf — periodic statement of intra-EU B2B sales per administration and period. Separate register from VatReturn (REQ-VBTW-007) because ICP filing has its own Belastingdienst surface and lifecycle. Audit + retention consumed from OR's abstractions._
+**Primary spec:** bookkeeping-icp-opgaaf
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the Administration owning the statement |
+| periodType | enum | Yes | `month` or `quarter` per administration |
+| periodYear | integer | Yes | Calendar year of the period |
+| periodMonth | integer | No | 1-12 when `periodType=month` |
+| periodQuarter | integer | No | 1-4 when `periodType=quarter` |
+| state | enum | Yes | ICP filing lifecycle state (`draft`, `submitted`, `accepted`, `rejected`, `corrected`) |
+| currency | string | Yes | ISO 4217 currency code (EUR for NL) |
+| notes | string | No | Operator-visible note |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- → IcpLine (one-to-many, per `bookkeeping-icp-opgaaf`)
+
+**Cites:** ADR-022, ADR-031, REQ-VBTW-007.
+
+### VatCorrection
+**Schema.org:** `schema:Invoice`
+_Suppletie-aangifte — standalone BTW correction filed when a prior accepted return contained an error above the Belastingdienst materiality threshold (REQ-VBTW-009). MUST carry a mandatory FK to the prior VatReturn; lifecycle `draft → submitted → accepted` mirrors the parent return. Below-threshold corrections fold into the next regular VatReturn rather than producing a VatCorrection._
+**Primary spec:** bookkeeping-vat-btw-filing
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the Administration owning the correction |
+| periodType | enum | Yes | `month` or `quarter` matching the original return |
+| periodYear | integer | Yes | Calendar year of the period being corrected |
+| periodMonth | integer | No | 1-12 when `periodType=month` |
+| periodQuarter | integer | No | 1-4 when `periodType=quarter` |
+| correctionReason | string | Yes | Free-text explanation surfaced on the aangifte |
+| originalReturnId | string | Yes | Mandatory FK to the VatReturn this corrects (REQ-VBTW-009) |
+| adjustmentAmount | number | Yes | Signed correction amount in euros (+ owed, − refund) |
+| currency | string | Yes | ISO 4217 currency code |
+| state | enum | Yes | `draft`, `submitted`, `accepted` |
+| notes | string | No | Operator-visible note |
+
+**Relations:**
+- → VatReturn (many-to-one, via originalReturnId)
+- → Administration (many-to-one, via administrationId)
+
+**Cites:** ADR-022, ADR-031, REQ-VBTW-009.
+
+### VatTariff
+**Schema.org:** `schema:PriceSpecification`
+_Statutory BTW tariff catalogue (21%, 9%, 0%, vrijgesteld, verleggingsregeling) per Wet OB 1968 (REQ-VBTW-003). Seeded from `lib/Settings/seeds/btw-tariffs-2026.json` via `ConfigurationService::importFromApp()` in the repair step (REQ-VBTW-003 / REQ-VBTW-011). Operators MAY add additional sector-specific or future EU-imposed rates; the canonical Belastingdienst rates remain authoritative. Verleggingsregeling is modelled as a tariff category, not a separate code path (REQ-VBTW-008)._
+**Primary spec:** bookkeeping-vat-btw-filing
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| code | string | Yes | Stable identifier (e.g. `21pct`, `9pct`, `0pct`, `vrij`, `verlegd`) |
+| label | string | Yes | Human-readable label (Dutch) |
+| ratePercentage | number | Yes | Rate as a percentage (e.g. 21.0, 9.0, 0.0) |
+| rgsAccountHint | string | No | Suggested RGS GL account for postings using this tariff |
+| reverseCharge | boolean | No | True for verleggingsregeling tariffs (REQ-VBTW-008) |
+| effectiveFrom | date | Yes | First day this tariff is valid |
+| effectiveTo | date | No | Last day this tariff is valid (nullable) |
+| legalBasis | string | No | Citation (`Wet OB 1968 art. 9` etc.) |
+
+**Relations:** none — referenced symbolically by `GLLine.vatTariffCode` per the GL spec.
+
+**Cites:** ADR-022 (seed-via-repair-step), ADR-031 (declarative catalogue, not enum), REQ-VBTW-003 / REQ-VBTW-008.
+
 ### VendorBill
 **Schema.org:** `schema:Invoice`
 _Vendor invoice with approval workflow before payment processing_
@@ -7048,19 +7477,72 @@ _Structured XBRL instance document for taxonomies (NTA7, SBR-NT). Contains facts
 
 ### XBRLTaxonomy
 **Schema.org:** `schema:CreativeWork`
-_XBRL (eXtensible Business Reporting Language) taxonomy definitions for structured tax reporting, compliance, and regulatory filing_
-**Primary spec:** tax-levy-management
+_XBRL (eXtensible Business Reporting Language) taxonomy definitions for structured tax reporting, compliance, and regulatory filing. Versionable register of official XBRL GL (General Ledger) taxonomy versions published annually by Belastingdienst; multiple versions coexist so historical and corrective filings retain their original mapping context. Reconciled 2026-06-09 alongside the T3 `bookkeeping-sbr-xbrl-reporting` capability (see SBRDocumentType + XBRLMapping below)._
+**Primary spec:** bookkeeping-sbr-xbrl-reporting
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| taxonomyId | string | Yes | Unique taxonomy identifier |
-| version | string | Yes | Taxonomy version number |
-| effectiveDate | datetime | Yes | Date when taxonomy becomes effective |
-| namespace | string | Yes | XML namespace URI for the taxonomy |
-| elements | array | No | List of XBRL element definitions and mappings |
+| taxonomyId | string | Yes | Unique taxonomy identifier (e.g. xbrl-gl-2026) |
+| name | string | Yes | Human-readable name (e.g. "XBRL GL 2026 — Belastingdienst Official") |
+| taxonomyVersion | string | Yes | Official version code (e.g. 2026-01); referenced by XBRLMapping.taxonomyVersion |
+| publicationDate | date | Yes | Date Belastingdienst published this taxonomy version |
+| effectiveDate | date | Yes | Date taxonomy becomes effective for filings |
+| expiryDate | date | No | Date taxonomy is superseded (null = active indefinitely) |
+| status | enum | Yes | One of active, archived, deprecated |
+| description | string | No | Regulatory reference (e.g. Handboek voor het Financieel Jaarverslag chapter) |
 
 **Relations:**
-- → TaxReturn (one-to-many)
+- → XBRLMapping (one-to-many, via taxonomyVersion)
+- → SBRDocumentType (one-to-many, via taxonomyVersion)
+
+### SBRDocumentType
+**Schema.org:** `schema:GovernmentService`
+_SBR (Standard Business Reporting) filing type per REQ-SBR-003 (jaarverslag, belastingaangifte, VAT declaration). Declares applicable entity types, regulatory filing deadline, mandatory fields, and the Belastingdienst / DNB submission contract (endpoint URL + authentication scheme). Carries the declarative draft → validated → submitted → approved / rejected lifecycle per REQ-SBR-005 with REQ-SBR-006 pre-filing validation guards (GL completeness, mapping coverage, GL balance). T3 declares the contract; T4 implements outbound XBRL generation + Digipoort submission via the openconnector source slug — no app-local PHP service ships._
+**Primary spec:** bookkeeping-sbr-xbrl-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| name | string | Yes | Human-readable filing name (e.g. "Jaarverslag") |
+| code | string | Yes | Unique filing code (e.g. JAARVERSLAG, BELASTINGAANGIFTE) |
+| description | string | No | Filing description and regulatory reference |
+| applicableEntityTypes | array | Yes | Entity types requiring this filing (e.g. ["BV", "NV", "Eenmanszaak"]) |
+| filingDeadline | date | Yes | Regulatory deadline; notification fires 30 days prior per REQ-SBR-008 |
+| requiredFields | array | No | Mandatory GL accounts or data elements (REQ-SBR-006 mandatory-field check) |
+| submissionEndpoint | string | Yes | Belastingdienst / DNB endpoint URL (T4 outbound consumer) |
+| authMethod | enum | Yes | One of oauth2, mutual-tls, pki-cert, api-key |
+| status | enum | Yes | One of draft, validated, submitted, approved, rejected, active, archived |
+| administrationId | string | Yes | FK to the Administration this filing applies to |
+| taxonomyVersion | string | No | FK to the XBRLTaxonomy.taxonomyVersion selected for this filing |
+| fiscalYearStart | date | No | Fiscal year start for the filing period |
+| fiscalYearEnd | date | No | Fiscal year end for the filing period |
+| validationErrors | array | No | Recorded validation errors blocking the validate transition (REQ-SBR-006) |
+| submittedAt | datetime | No | Timestamp when filing was submitted |
+| approvedAt | datetime | No | Timestamp when Belastingdienst approved the filing |
+| rejectionReason | string | No | Belastingdienst-supplied rejection reason for audit |
+| filingId | string | No | Belastingdienst-supplied filing identifier returned on acceptance |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- → XBRLTaxonomy (many-to-one, via taxonomyVersion)
+
+### XBRLMapping
+**Schema.org:** `schema:DefinedTerm`
+_Account-to-XBRL-GL-concept mapping per REQ-SBR-004. Source = Shillinq `Account.id`; target = XBRL GL concept URI from the active `XBRLTaxonomy`. Mappings are version-specific: a given account MAY have different XBRL concept targets across taxonomy versions to track regulatory evolution. The SBRDocumentType pre-filing validation aggregations (`unmappedAccountCount` / `unmappedAccountList` / `mappingCoveragePercent`) query this table to gate the `validate` lifecycle transition per REQ-SBR-006 + REQ-SBR-007._
+**Primary spec:** bookkeeping-sbr-xbrl-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| sourceAccountId | string | Yes | FK to Account.id |
+| targetXBRLConcept | string | Yes | XBRL GL concept URI (e.g. http://xbrl.gl/concept/CurrentAssets) |
+| taxonomyVersion | string | Yes | FK to XBRLTaxonomy.taxonomyVersion — mappings are version-scoped |
+| mappingDate | date | Yes | Date this mapping was established |
+| status | enum | Yes | One of active, archived, pending-review |
+| notes | string | No | Mapping rationale, special cases or operator override justification |
+| administrationId | string | No | Optional FK to Administration when a mapping is administration-specific (default: global) |
+
+**Relations:**
+- → Account (many-to-one, via sourceAccountId)
+- → XBRLTaxonomy (many-to-one, via taxonomyVersion)
 
 ### BBVProgramma
 **Schema.org:** `schema:DefinedTerm`
@@ -7676,6 +8158,93 @@ ondernemingsactiviteit.
 **Cites:** ADR-031 (schema-declarative), ADR-037 (modular register
 fragments), ADR-019 (no new SBR client), ADR-024 (Tier-4 manifest pages).
 
+## Wet Markt en Overheid Compliance entities (add-shillinq-market-government-separation, REQ-MGS-001..005 / REQ-WMO-001..007)
+
+> **Source:** `openspec/changes/bookkeeping-market-government-separation/`
+> (T3 sibling delivered on `development`, register.d + manifest.d
+> fragments) plus the T2 umbrella
+> `openspec/changes/add-shillinq-market-government-separation/`
+> (proposal + design + abstract REQ-MGS-NNN scope). Per Wet Markt en
+> Overheid (Mededingingswet hoofdstuk 4b) gemeenten / provincies /
+> waterschappen running ondernemingsactiviteiten MUST (a) identify
+> ondernemingsactiviteiten as distinct clusters on `CostCenter`,
+> (b) compute the integrale kostprijs (direct costs + allocated
+> overhead + equity compensation art. 25i), and (c) maintain a
+> transparantieadministratie showing the ondernemingsactiviteit is
+> not cross-subsidised. The owning fragment is
+> `lib/Settings/register.d/bookkeeping-market-government-separation.json`
+> (8 schemas: `CommercialActivity`, `IntegralCostPrice`,
+> `ActivityCostAllocation`, `AlgemeenBelangBesluit`, `ACMReport`,
+> `AlertLog`, `WMOAuditLog`, `MarketBenchmark`). The manifest entry
+> sits at `src/manifest.d/bookkeeping-market-government-separation.json`
+> behind the `WMO Compliance` menu group. The
+> `CostCenter.ondernemingsActiviteit` additive flag is layered via
+> the VPB-balans fragment (see preceding section) since both T4
+> capabilities consume the same flag.
+
+**CostCenter additive flag (ADR-037 `x-openspec-extend`):**
+- `CostCenter.ondernemingsActiviteit: boolean` (default `false`) —
+  the Wet Markt en Overheid trigger flag per REQ-MGS-001. When
+  `true`, the cost-center is subject to the integrale-kostprijs
+  requirement (REQ-MGS-002 / REQ-WMO-002) and surfaces in the WMO
+  Compliance manifest pages (REQ-MGS-005 / REQ-WMO-001..004). Per
+  ADR-031 the flag is schema metadata — there is no parallel
+  `OndernemingsActiviteit` register. The flag is defined in the
+  VPB-balans register.d fragment for ordering reasons (VPB-balans
+  consumes the flag in REQ-VPB-002); the WMO fragment references
+  the same flag without redeclaring it. Ondernemingsactiviteit
+  views carry `schema:Service` schema.org type per REQ-MGS-001.
+
+**AlgemeenBelangBesluit overlay (REQ-MGS-004 / REQ-WMO-005):**
+declared as a register fragment with `besluitNummer` (mapped to
+`kenmerk`), `besluitDatum` (mapped to `vaststellingsdatum`),
+`geldigheidsperiode` (derived from the 10-state lifecycle
+`raadsbesluit → publicatie → acm-notified → geldig → evaluatie-due
+→ herziening → intrekking → ingetrokken → archived` plus
+`volgendeEvaluatie`), `motivering` (docudesk attachment URI), and
+`betreftActiviteiten[]` (the WMO equivalent of `getrokkenBedrag`
+linking activities exempted by the besluit). The integrale-kostprijs
+warning (REQ-MGS-003 / REQ-WMO-004) is suppressed declaratively
+when a valid `AlgemeenBelangBesluit` covers the period: the
+`CommercialActivity.isExempted` flag plus the FK to
+`AlgemeenBelangBesluit.id` short-circuits the under-cost-recovery
+warning and an informational banner cites the besluit `kenmerk`.
+Both the suppression and the banner event log to `WMOAuditLog` per
+ADR-022 (immutable audit, 7-year retention).
+
+**Integrale kostprijs (REQ-MGS-002 / REQ-WMO-002):** declared on
+`IntegralCostPrice` per `(commercialActivityId, periode)`,
+time-versioned with `status: voorlopig` (monthly) → `definitief`
+(31 March of the following year, accountant digital signature
+locks the record). The componenten block sums direct costs +
+allocated overhead via the BBV taakveld 0.4 `OverheadDistributionRule`
+sleutel (inherited from `bookkeeping-cost-centers-dimensions`,
+no shadow schema) + a vermogenscompensatie (WACC, default 4.5%,
+configurable per activity per period). Tarieven-vs-kostprijs
+comparison surfaces an `unrecovered cost` warning when realised
+revenue (GL revenue-sum) < integrale kostprijs (REQ-MGS-003 /
+REQ-WMO-004 §compliant).
+
+**Transparantieadministratie navigation (REQ-MGS-005 / REQ-WMO-001
+manifest entries):** the `Bookkeeping > WMO Compliance` menu
+group in `src/manifest.d/bookkeeping-market-government-separation.json`
+carries `type: index` + `type: detail` pages bound to
+`CommercialActivity` / `IntegralCostPrice` /
+`ActivityCostAllocation` so the per-activity transparantie view
+(direct costs / overhead / equity comp / integrale kostprijs /
+revenue / margin / compliance status / besluit reference) renders
+without bespoke Vue components per ADR-024.
+
+**Cites:** ADR-022 (audit-trail-immutable), ADR-024 (Tier-4
+manifest pages), ADR-031 (schema-declarative, no bespoke kostprijs
+service), ADR-032 (`kind: config` change), ADR-037 (modular
+register.d / manifest.d fragments). See sibling spec
+`openspec/specs/bookkeeping-market-government-separation/spec.md`
+for the full REQ-WMO-NNN catalogue (8 schemas, lifecycle blocks,
+RBAC roles, ACM-handhavings-pakket export) and the parent T4
+envelope spec `openspec/specs/bookkeeping-bbv-compliance/spec.md`
+for BBV taakveld 0.4 sleutel inheritance.
+
 ## SEPA Direct Debit (Incasso) entities
 
 > **Source:** `openspec/changes/bookkeeping-sepa-direct-debit/`. Five
@@ -7998,3 +8567,118 @@ per AWR art. 52._
 single-method exception for DBAScoreCalculator), ADR-037 (modular register
 fragments). VBAR threshold and compliance-mode are stored as app-config
 under prefix `dba.` (mutable per administration).
+
+## SBR/XBRL Reporting (XbrlInstance)
+
+> **Source:** `openspec/changes/add-shillinq-sbr-xbrl-reporting/`.
+> Tier-4 umbrella spec `bookkeeping-sbr-xbrl-reporting` (REQ-SBR-001..007).
+> Owning fragment: `lib/Settings/register.d/add-shillinq-sbr-xbrl-reporting.json`.
+> Mapping seed templates under `lib/Settings/seeds/sbr-mappings/`
+> (`kvk-jaarrekening-nt17/nt18`, `belastingdienst-vpb-nt17/nt18`,
+> `belastingdienst-ib-nt17`, `sbr-banken-kredietrapportage-nt17`,
+> `sbr-wonen-nt17`).
+
+### XbrlInstance
+
+_A single NL-taxonomie XBRL instance document derived from a posted T3
+`FinancialStatement` (REQ-SBR-001/002). One record per filing event per
+administration + reporting period + entry point. Carries the
+canonicalised XML payload (`instanceXml`), its SHA-256
+tamper-evidence hash (`instanceHash`), the resolved Mapping FK
+(`mappingId` → OR `Mapping` reference), the openconnector source slug
+for Digipoort submission (`digipoortSourceSlug`, default
+`digipoort-prod`), the Digipoort acknowledgement receipt id
+(`digipoortReceiptId`) and the declarative `draft → validated →
+submitted → accepted/rejected` lifecycle (REQ-SBR-003 / ADR-031). The
+five canonical SBR entry points (kvk-jaarrekening, belastingdienst-vpb,
+belastingdienst-ib, sbr-banken-kredietrapportage, sbr-wonen) are enum on
+`entryPoint` (REQ-SBR-005)._
+
+**Reconciliation with the T3 `FinancialStatement` entity:** `XbrlInstance`
+is a **transformation, not a re-aggregation** on top of the T3
+`FinancialStatement` declared by sibling change
+`add-shillinq-financial-statements` (Decision D1 in
+`openspec/changes/add-shillinq-sbr-xbrl-reporting/design.md`). The
+already-balanced statement object is the single source of truth; the
+XBRL instance maps each statement line to a NL-taxonomie concept via an
+OpenRegister `Mapping` record (consumed by FK on
+`XbrlInstance.mappingId`, per REQ-SBR-006). No PHP `XbrlReportService`
+re-aggregates ledger lines per XBRL concept — that would duplicate the
+T3 aggregation and create drift between the filing and the
+operator-visible statement. Sibling T3 changes that own entry-point
+specific submission lifecycles (`bookkeeping-vpb-mkb`,
+`bookkeeping-bcf-vat-compensation`, `bookkeeping-emu-reporting`,
+`bookkeeping-icp-opgaaf`, `bookkeeping-ib-aangifte-zzp`) continue to
+carry their own `x-openregister-lifecycle` for their domain object;
+`XbrlInstance` is the umbrella **payload store** that captures the
+canonicalised XML, the Digipoort receipt, and the tamper-evidence hash
+for each filing event. Existing `IcpOpgaaf.xmlPayload` /
+`VpbAangifte`-side SBR fields remain in place for backward
+compatibility; the cross-cutting `XbrlInstance` is the long-term
+canonical surface and is introduced **additively** — no existing
+data-model entry is rewritten.
+
+**Cites:** ADR-022 (Digipoort consumed from openconnector by source
+slug; no embedded SOAP/WS-Security client in shillinq), ADR-024 (Tier-4
+manifest navigation: `Bookkeeping > SBR/XBRL Filings` with `type: index`
++ `type: detail` pages rendered by `CnIndexPage` / `CnDetailPage`),
+ADR-031 (declarative state machine on the schema; no `XbrlReportService`),
+ADR-037 (modular register fragment).
+
+## bookkeeping-rekenkamer-audit-pack — audit-flag-on-every-register + destruction-schedule lifecycle
+
+_The Rekenkamer / Accountantscontrole audit pack (capability
+`bookkeeping-rekenkamer-audit-pack`, Tier T2/T3) imposes two
+cross-cutting rules on the shillinq data model. First, every register
+declared by T1 + T2 + T3 + every future bookkeeping or procurement
+tier — `Account`, `GLTransaction`, `GLLine`, `JournalEntry`,
+`APInvoice`, `ARInvoice`, `PurchaseOrder`, `Tender`, `Bid`,
+`AwardDecision`, `Payment`, `Receipt`, `ApprovalRequest`,
+`ApprovalTask`, `SigningAuthority` and every other in-scope schema —
+MUST carry `"x-openregister-audit-trail": { "enabled": true, "description":
+"..." }` in its schema metadata (REQ-RAP-001). This switches on OR's
+`audit-trail-immutable` channel so every create / update / lifecycle
+transition is recorded with actor + before/after + hash-chained
+timestamp. The CI gate `tests/validate-registers.js` mechanically
+enforces the rule on every PR (the schemas in `NON_BOOKKEEPING` —
+inventory, bookings, notification-delivery, the scaffolding `example`
+— are the only legitimate opt-outs; procurement schemas like
+`PurchaseOrder`, `Tender`, `Bid`, `AwardDecision` stay OUT of
+NON_BOOKKEEPING per REQ-RAP-001 and ARE asserted). Per ADR-022
+anti-pattern enumeration (REQ-RAP-010), `lib/Db/Audit*`,
+`lib/Service/Audit*`, `lib/Db/EventLog*`, `lib/Db/ChangeLog*`,
+`AuditLogger`, `EventLogger`, `ChangeTracker` and app-local audit
+deletion logic are REVIEW-BLOCKING — every audit event MUST flow
+through OR. The existing `AuditExportService` (Slice 11 of
+`bookkeeping-purchase-order-3way`) and `ComplianceExportService`
+(REQ-RAP-005 / REQ-RAP-009) both READ OR's audit-trail; neither
+stores audit events._
+
+_Second, destruction-eligible records (any record subject to
+Archiefwet retention) follow the state machine `active →
+marked-for-destruction → destruction-completed`. `destruction-completed`
+is TERMINAL and immutable — Archiefwet requires proof of destruction,
+so the record itself is preserved as a state-change marker, not truly
+deleted. `lib/Lifecycle/DestructionScheduleGuard` enforces the
+preconditions: `active → marked-for-destruction` needs a
+`compliance-officer` role + the record older than `RETENTION_FLOOR_YEARS
+= 7` (Archiefwet article 7); `marked-for-destruction →
+destruction-completed` needs a compliance-officer or the
+`shillinq-destruction-runner` system actor; `marked-for-destruction →
+active` is permitted for reversal until the destruction order is
+executed (REQ-RAP-008). Every transition emits an audit event with
+`action=lifecycle:{from}→{to}`, `selectielijstCode` (default `5.1.2`),
+`legalBasis` (default `Archiefwet Article 7`), `actor`, and the OR
+hash-chain `previousHash` + `eventHash` per ADR-022. Cross-references
+to the five Bookkeeping audit-surface manifest entries —
+`BookkeepingSigningTrail` (REQ-RAP-002), `BookkeepingDestructionReport`
+(REQ-RAP-003), `BookkeepingChangeHistory` (REQ-RAP-004),
+`BookkeepingComplianceExport` (REQ-RAP-005) and `BookkeepingActivityFeed`
+(REQ-RAP-006) — are documented in
+`openspec/changes/bookkeeping-rekenkamer-audit-pack/specs/bookkeeping-rekenkamer-audit-pack/spec.md`._
+
+**Cites:** ADR-022 (audit-trail-immutable consumed from OR; anti-pattern
+enumeration for `lib/Db/Audit*` / `lib/Service/Audit*`), ADR-031
+(`DestructionScheduleGuard` as ADR-031 exception path; replace with
+declarative DSL when engine supports age + role + terminal-state
+primitives), ADR-037 (modular register fragments).

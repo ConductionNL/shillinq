@@ -4057,6 +4057,49 @@
 						"description": "Human-readable cost center name.",
 						"example": "Sales"
 					},
+					"description": {
+						"type": "string",
+						"description": "Operator-readable description of the cost center per REQ-CPA-104.",
+						"nullable": true,
+						"example": "Client acquisition and account management"
+					},
+					"status": {
+						"type": "string",
+						"description": "Convenience alias of lifecycleState for active/inactive integrations per REQ-CPA-104.",
+						"enum": [
+							"active",
+							"inactive"
+						],
+						"nullable": true,
+						"example": "active"
+					},
+					"budget": {
+						"type": "integer",
+						"description": "Operator-set baseline budget in integer cents (e.g. 10000000 = €100.000,00) per REQ-CPA-104. Used as input to allocatedBudget rollup (REQ-CPA-107).",
+						"nullable": true,
+						"minimum": 0,
+						"example": 10000000
+					},
+					"spentToDate": {
+						"type": "integer",
+						"description": "Derived via x-openregister-aggregations: sum of GLLine.amount where costCenterCode = @self.code AND side = 'debit' per REQ-CPA-106. Read-only.",
+						"nullable": true,
+						"readOnly": true,
+						"example": 4500000
+					},
+					"allocatedBudget": {
+						"type": "integer",
+						"description": "Derived via x-openregister-calculations: budget + sum(children.allocatedBudget) recursively per REQ-CPA-107. Read-only.",
+						"nullable": true,
+						"readOnly": true,
+						"example": 15000000
+					},
+					"organizationId": {
+						"type": "string",
+						"description": "FK to the Organization owning this cost center per REQ-CPA-104.",
+						"nullable": true,
+						"example": "org-1"
+					},
 					"parentCode": {
 						"type": "string",
 						"description": "FK to parent CostCenter.code for hierarchy navigation via x-openregister-relations self-relation per REQ-CC-002.",
@@ -4159,6 +4202,28 @@
 								"condition": "GLLine.side = 'credit'"
 							}
 						}
+					},
+					"spentToDate": {
+						"description": "Sum of GL debit postings tagged to this cost center (recursive over descendant cost centers reached via parentCode self-relation) per REQ-CPA-106. Excludes eliminated intercompany lines.",
+						"operation": "sum",
+						"field": "amount",
+						"source": {
+							"register": "@register",
+							"schema": "GLLine"
+						},
+						"filter": {
+							"costCenterCode": "@self.code OR @descendant.code",
+							"side": "debit",
+							"eliminationFlag": false
+						},
+						"recursiveOver": "parentCode"
+					}
+				},
+				"x-openregister-calculations": {
+					"allocatedBudget": {
+						"description": "Roll-up budget per REQ-CPA-107: this cost center's own budget plus the allocatedBudget of every child cost center reached via the parentCode self-relation (recursive descent). Leaves return their own budget; non-leaves return budget + sum(children.allocatedBudget).",
+						"type": "integer",
+						"formula": "(@self.budget ?? 0) + sum(@children(parentCode).allocatedBudget ?? 0)"
 					}
 				},
 				"x-openregister-rbac": {
@@ -4745,6 +4810,413 @@
 						"description": "Work-in-progress balance: recognised revenue minus billed revenue (REQ-CPA-008).",
 						"type": "number",
 						"formula": "@self.recognisedRevenue - @self.billedRevenue"
+					}
+				}
+			},
+			"CostProject": {
+				"slug": "CostProject",
+				"icon": "BriefcaseClockOutline",
+				"version": "0.1.0",
+				"title": "Cost Project",
+				"description": "Analytical project register for consultancy and departmental project accounting per REQ-CPA-101..115. Captures the management-accounting view of a project (authorised budget, estimated costs, costs incurred to date, lifecycle) — distinct from the RJ 270 revenue-recognition Project register. Costs and P&L are derived from GL via x-openregister-aggregations; budget rollup via x-openregister-calculations. No PHP service authored per ADR-031.",
+				"x-schema-org": "schema:Project",
+				"x-openregister-purpose": "analytical",
+				"type": "object",
+				"required": [
+					"projectNumber",
+					"name",
+					"totalBudget",
+					"totalEstimatedCosts",
+					"lifecycleState"
+				],
+				"properties": {
+					"projectNumber": {
+						"type": "string",
+						"description": "Operator-assigned unique project reference within the administration per REQ-CPA-101.",
+						"example": "CP-2026-001"
+					},
+					"name": {
+						"type": "string",
+						"description": "Human-readable project name.",
+						"example": "Service Engagement Template"
+					},
+					"description": {
+						"type": "string",
+						"description": "Project description / scope per REQ-CPA-101.",
+						"nullable": true,
+						"example": "Standard template for service contract delivery"
+					},
+					"startDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Project activation date per REQ-CPA-101.",
+						"nullable": true,
+						"example": "2026-01-15"
+					},
+					"endDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Target close date per REQ-CPA-101.",
+						"nullable": true,
+						"example": "2026-12-31"
+					},
+					"totalBudget": {
+						"type": "integer",
+						"description": "Authorised spend ceiling in integer cents per REQ-CPA-101 (e.g. 5000000 = €50.000,00).",
+						"minimum": 0,
+						"example": 5000000
+					},
+					"totalEstimatedCosts": {
+						"type": "integer",
+						"description": "Project-manager estimate of total project costs in integer cents per REQ-CPA-101.",
+						"minimum": 0,
+						"example": 4500000
+					},
+					"costsIncurredToDate": {
+						"type": "integer",
+						"description": "Derived via x-openregister-aggregations: sum of GLLine.amount where subLedgerType='cost-project' AND subLedgerRef=@self.id AND Account.accountType='expenses' per REQ-CPA-105. Integer cents. Read-only.",
+						"readOnly": true,
+						"nullable": true,
+						"minimum": 0,
+						"example": 1500000
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this cost project per REQ-CPA-101.",
+						"nullable": true,
+						"example": "adm-1"
+					},
+					"organizationId": {
+						"type": "string",
+						"description": "FK to the customer / owner Organization per REQ-CPA-101.",
+						"nullable": true,
+						"example": "org-1"
+					},
+					"costCenterCode": {
+						"type": "string",
+						"description": "FK to CostCenter.code — associates project to a department per REQ-CPA-101.",
+						"nullable": true,
+						"example": "CC-002"
+					},
+					"lifecycleState": {
+						"type": "string",
+						"description": "Current lifecycle state per REQ-CPA-102.",
+						"enum": [
+							"draft",
+							"active",
+							"on-hold",
+							"closed",
+							"archived"
+						],
+						"default": "draft",
+						"example": "active"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "draft",
+					"states": {
+						"draft": {
+							"label": "Draft",
+							"description": "Project is being prepared; not yet authorised for spend tracking."
+						},
+						"active": {
+							"label": "Active",
+							"description": "Project is in execution; GL postings may reference this project."
+						},
+						"on-hold": {
+							"label": "On hold",
+							"description": "Project is paused; no new GL postings reference this project."
+						},
+						"closed": {
+							"label": "Closed",
+							"description": "Project is complete; final cost snapshot taken."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Historical only; remains queryable per 7-year retention rule (REQ-CPA-115)."
+						}
+					},
+					"transitions": {
+						"activate": {
+							"from": "draft",
+							"to": "active",
+							"label": "Activate project",
+							"description": "Move project from draft to active execution per REQ-CPA-102."
+						},
+						"putOnHold": {
+							"from": "active",
+							"to": "on-hold",
+							"label": "Put project on hold",
+							"description": "Pause project per REQ-CPA-102."
+						},
+						"reactivate": {
+							"from": "on-hold",
+							"to": "active",
+							"label": "Reactivate project",
+							"description": "Resume project from on-hold per REQ-CPA-102."
+						},
+						"close": {
+							"from": "active",
+							"to": "closed",
+							"label": "Close project",
+							"description": "Close project; final cost snapshot taken per REQ-CPA-102."
+						},
+						"archive": {
+							"from": "closed",
+							"to": "archived",
+							"label": "Archive project",
+							"description": "Move closed project to archive (typically 12 months post-close) per REQ-CPA-102."
+						}
+					},
+					"retention": {
+						"rule": "selectielijst:5.1.2",
+						"years": 7,
+						"description": "Financial records — 7 years per Selectielijst 5.1.2 (REQ-CPA-115)."
+					}
+				},
+				"x-openregister-relations": {
+					"costCenter": {
+						"localField": "costCenterCode",
+						"relatedSchema": "CostCenter",
+						"relatedField": "code",
+						"cardinality": "many-to-one",
+						"description": "Association of project to a cost center / department per REQ-CPA-101."
+					},
+					"projectBudgets": {
+						"localField": "id",
+						"relatedSchema": "ProjectBudget",
+						"relatedField": "projectId",
+						"cardinality": "one-to-many",
+						"description": "Period-level budget allocations for this project per REQ-CPA-103."
+					}
+				},
+				"x-openregister-aggregations": {
+					"costsIncurredToDate": {
+						"description": "Sum of GL expense-account postings tagged to this cost project via subLedgerType='cost-project' AND subLedgerRef=@self.id per REQ-CPA-105. Integer cents.",
+						"operation": "sum",
+						"field": "amount",
+						"source": {
+							"register": "@register",
+							"schema": "GLLine"
+						},
+						"filter": {
+							"subLedgerType": "cost-project",
+							"subLedgerRef": "@self.id",
+							"account.accountType": "expenses"
+						}
+					},
+					"profitAndLoss": {
+						"description": "Project P&L per REQ-CPA-108: revenue minus expense across GL lines tagged to this cost project.",
+						"operation": "derived",
+						"fields": {
+							"revenue": {
+								"operation": "sum",
+								"field": "amount",
+								"source": {
+									"register": "@register",
+									"schema": "GLLine"
+								},
+								"filter": {
+									"subLedgerType": "cost-project",
+									"subLedgerRef": "@self.id",
+									"account.accountType": "revenue"
+								}
+							},
+							"expense": {
+								"operation": "sum",
+								"field": "amount",
+								"source": {
+									"register": "@register",
+									"schema": "GLLine"
+								},
+								"filter": {
+									"subLedgerType": "cost-project",
+									"subLedgerRef": "@self.id",
+									"account.accountType": "expenses"
+								}
+							},
+							"profitAndLoss": {
+								"formula": "@self.profitAndLoss.revenue - @self.profitAndLoss.expense"
+							}
+						}
+					}
+				},
+				"x-openregister-calculations": {
+					"budgetVariance": {
+						"description": "Budget variance: totalBudget - costsIncurredToDate (positive = under budget, negative = over budget). Integer cents.",
+						"type": "integer",
+						"formula": "(@self.totalBudget ?? 0) - (@self.costsIncurredToDate ?? 0)"
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						},
+						"project-administrator": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							],
+							"description": "Full cost-project management; visibility predicate: administrationType ∈ {mkb, zzp}."
+						}
+					}
+				}
+			},
+			"ProjectBudget": {
+				"slug": "ProjectBudget",
+				"icon": "CashCheck",
+				"version": "0.1.0",
+				"title": "Project Budget",
+				"description": "Period-level budget allocation for a CostProject per REQ-CPA-103. Captures the lifecycle pending → approved → allocated → spent.",
+				"x-schema-org": "schema:MonetaryAmount",
+				"x-openregister-purpose": "analytical",
+				"type": "object",
+				"required": [
+					"allocationNumber",
+					"amount",
+					"status",
+					"projectId",
+					"fiscalPeriod"
+				],
+				"properties": {
+					"allocationNumber": {
+						"type": "string",
+						"description": "Operator-assigned unique reference per REQ-CPA-103.",
+						"example": "ALLOC-2026-Q1-001"
+					},
+					"amount": {
+						"type": "integer",
+						"description": "Allocation amount in integer cents per REQ-CPA-103.",
+						"minimum": 0,
+						"example": 1500000
+					},
+					"status": {
+						"type": "string",
+						"description": "Current lifecycle state per REQ-CPA-103.",
+						"enum": [
+							"pending",
+							"approved",
+							"allocated",
+							"spent"
+						],
+						"default": "pending",
+						"example": "approved"
+					},
+					"projectId": {
+						"type": "string",
+						"description": "FK to CostProject.id per REQ-CPA-103.",
+						"example": "cp-1"
+					},
+					"fiscalPeriod": {
+						"type": "string",
+						"description": "FK to FiscalPeriod.code per REQ-CPA-103.",
+						"example": "2026-Q1"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this allocation per REQ-CPA-103.",
+						"nullable": true,
+						"example": "adm-1"
+					},
+					"description": {
+						"type": "string",
+						"description": "Operator-readable description of the allocation purpose.",
+						"nullable": true,
+						"example": "Q1 2026 service-engagement budget"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "status",
+					"initialState": "pending",
+					"states": {
+						"pending": {
+							"label": "Pending",
+							"description": "Allocation awaiting approval."
+						},
+						"approved": {
+							"label": "Approved",
+							"description": "Approved by budget owner; ready to be allocated to the project."
+						},
+						"allocated": {
+							"label": "Allocated",
+							"description": "Budget reserved on the project for the fiscal period."
+						},
+						"spent": {
+							"label": "Spent",
+							"description": "Fully consumed by GL postings."
+						}
+					},
+					"transitions": {
+						"approve": {
+							"from": "pending",
+							"to": "approved",
+							"label": "Approve allocation",
+							"description": "Promote pending allocation to approved per REQ-CPA-103."
+						},
+						"allocate": {
+							"from": "approved",
+							"to": "allocated",
+							"label": "Allocate to project",
+							"description": "Reserve approved budget on the project for the fiscal period per REQ-CPA-103."
+						},
+						"markSpent": {
+							"from": "allocated",
+							"to": "spent",
+							"label": "Mark allocation spent",
+							"description": "Recognise the allocation has been fully consumed per REQ-CPA-103."
+						}
+					},
+					"retention": {
+						"rule": "selectielijst:5.1.2",
+						"years": 7,
+						"description": "Financial records — 7 years per Selectielijst 5.1.2 (REQ-CPA-115)."
+					}
+				},
+				"x-openregister-relations": {
+					"costProject": {
+						"localField": "projectId",
+						"relatedSchema": "CostProject",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "Parent CostProject for this allocation per REQ-CPA-103."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						},
+						"project-administrator": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							],
+							"description": "Full budget-allocation management per REQ-CPA-103."
+						}
 					}
 				}
 			},
@@ -6024,6 +6496,18 @@
 						"description": "Optional FK to the Project this hour is billed against.",
 						"example": "proj-1"
 					},
+					"costProjectId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Optional FK to CostProject.id for analytical project-cost tracking per REQ-CPA-101. Independent of projectId (which targets the RJ 270 revenue-recognition Project register).",
+						"example": "cp-1"
+					},
+					"taskId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Optional task identifier for finer-grained time tracking within a project per REQ-CPA-101. Operator-defined (no Task register required).",
+						"example": "task-arch-review"
+					},
 					"projectAssignmentId": {
 						"type": "string",
 						"nullable": true,
@@ -6164,6 +6648,17 @@
 								}
 							}
 						}
+					}
+				},
+				"x-openregister-calculations": {
+					"utilizationPercent": {
+						"description": "Utilization percentage per REQ-CPA-109: billableHoursThisPeriod / availableHoursThisPeriod × 100. Computed per (personId, fiscalPeriod) grouping. billableHoursThisPeriod aggregates UrenRegistratie.hours for this person in the current FiscalPeriod (where projectId or costProjectId is non-null = billable). availableHoursThisPeriod sources from the assignment's capacityHoursPerWeek × workingWeeksInPeriod (default 40 × period weeks). Clamped to [0, 100].",
+						"type": "number",
+						"formula": "min(100, max(0, ((@aggregate.billableHoursThisPeriod ?? 0) / max(1, (@aggregate.availableHoursThisPeriod ?? 1))) * 100))",
+						"groupBy": [
+							"personId",
+							"@period.fiscalPeriodCode"
+						]
 					}
 				}
 			},

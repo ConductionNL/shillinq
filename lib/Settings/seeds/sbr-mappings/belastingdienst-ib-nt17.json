@@ -1,0 +1,27 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"source": "NL-taxonomie nt17 — Logius",
+		"variant": "belastingdienst-ib",
+		"taxonomyVersion": "nt17",
+		"entryPoint": "belastingdienst-ib",
+		"description": "Template mapping from FinancialStatement lines to NL-taxonomie nt17 concepts for the Belastingdienst Inkomstenbelasting (winst uit onderneming, IB-onderneming) entry point (REQ-SBR-005, REQ-SBR-006). Sibling spec bookkeeping-ib-aangifte-zzp owns the IB-aangifte object model + its own XBRL lifecycle; this mapping ships the concept resolution for those filings.",
+		"imported": "2026-06-09T00:00:00Z"
+	},
+	"mapping": {
+		"slug": "map-belastingdienst-ib-nt17",
+		"name": "Belastingdienst IB aangifte — NL-taxonomie nt17",
+		"entryPoint": "belastingdienst-ib",
+		"taxonomyVersion": "nt17",
+		"records": [
+			{"financialStatementLineId": "ib.winstUitOnderneming.brutoWinst", "taxonomyConcept": "bd-i:GrossProfit", "contextRef": "duration_belastingjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "ib.winstUitOnderneming.zelfstandigenaftrek", "taxonomyConcept": "bd-i:SelfEmployedDeduction", "contextRef": "duration_belastingjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "ib.winstUitOnderneming.startersaftrek", "taxonomyConcept": "bd-i:StarterDeduction", "contextRef": "duration_belastingjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "ib.winstUitOnderneming.mkbVrijstelling", "taxonomyConcept": "bd-i:SmeProfitExemption", "contextRef": "duration_belastingjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "ib.winstUitOnderneming.belastbareWinst", "taxonomyConcept": "bd-i:TaxableProfit", "contextRef": "duration_belastingjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "ib.fiscaleOudedagsReserve.dotatie", "taxonomyConcept": "bd-i:FORAddition", "contextRef": "duration_belastingjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "ib.uren.urencriteriumVoldaan", "taxonomyConcept": "bd-i:HoursCriterionMet", "contextRef": "duration_belastingjaar", "unitRef": "BOOL"}
+		]
+	}
+}

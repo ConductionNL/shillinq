@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "1.3.12",
+	"version": "1.3.16",
 	"dependencies": [
 		"openregister"
 	],
@@ -33,6 +33,14 @@
 					"order": 20
 				},
 				{
+					"id": "EmuRapportage",
+					"label": "EMU-rapportage",
+					"icon": "ChartBarOutline",
+					"route": "EmuRapportage",
+					"order": 20,
+					"featureFlag": "gov-emu"
+				},
+				{
 					"id": "Journals",
 					"label": "Journals",
 					"icon": "BookEditOutline",
@@ -59,6 +67,20 @@
 					"icon": "FilterCogOutline",
 					"route": "MatchingRules",
 					"order": 27
+				},
+				{
+					"id": "Reconciliations",
+					"label": "Reconciliations",
+					"icon": "ScaleBalance",
+					"route": "Reconciliations",
+					"order": 28
+				},
+				{
+					"id": "UnmatchedItems",
+					"label": "Unmatched Items",
+					"icon": "HelpRhombusOutline",
+					"route": "UnmatchedItems",
+					"order": 29
 				},
 				{
 					"id": "FixedAssets",
@@ -94,34 +116,6 @@
 					"icon": "BankTransferOutline",
 					"route": "PaymentRuns",
 					"order": 34
-				},
-				{
-					"id": "Customers",
-					"label": "Customers",
-					"icon": "AccountTieOutline",
-					"route": "Customers",
-					"order": 41
-				},
-				{
-					"id": "AccountsReceivable",
-					"label": "Accounts Receivable",
-					"icon": "ReceiptTextOutline",
-					"route": "AccountsReceivable",
-					"order": 42
-				},
-				{
-					"id": "ARAging",
-					"label": "AR Aging",
-					"icon": "CalendarClockOutline",
-					"route": "ARAging",
-					"order": 43
-				},
-				{
-					"id": "DunningTimeline",
-					"label": "Dunning Timeline",
-					"icon": "EmailAlertOutline",
-					"route": "DunningTimeline",
-					"order": 44
 				},
 				{
 					"id": "DunningLadders",
@@ -167,6 +161,41 @@
 					"featureFlag": "gov-waterschap"
 				},
 				{
+					"id": "Customers",
+					"label": "Customers",
+					"icon": "AccountTieOutline",
+					"route": "Customers",
+					"order": 41
+				},
+				{
+					"id": "AccountsReceivable",
+					"label": "Accounts Receivable",
+					"icon": "ReceiptTextOutline",
+					"route": "AccountsReceivable",
+					"order": 42
+				},
+				{
+					"id": "ARAging",
+					"label": "AR Aging",
+					"icon": "CalendarClockOutline",
+					"route": "ARAging",
+					"order": 43
+				},
+				{
+					"id": "DunningTimeline",
+					"label": "Dunning Timeline",
+					"icon": "EmailAlertOutline",
+					"route": "DunningTimeline",
+					"order": 44
+				},
+				{
+					"id": "VarianceReport",
+					"label": "Variance Report",
+					"icon": "ChartTimelineVariantShimmer",
+					"route": "VarianceReport",
+					"order": 45
+				},
+				{
 					"id": "GRDeelnemers",
 					"label": "Deelnemers",
 					"icon": "AccountMultipleOutline",
@@ -202,13 +231,6 @@
 					"order": 81
 				},
 				{
-					"id": "TrialBalanceLines",
-					"label": "Trial Balance (by account)",
-					"icon": "ScaleBalance",
-					"route": "TrialBalanceLines",
-					"order": 815
-				},
-				{
 					"id": "Consolidations",
 					"label": "Consolidations",
 					"icon": "AccountMultipleOutline",
@@ -230,12 +252,70 @@
 					"order": 84
 				},
 				{
-					"id": "EmuRapportage",
-					"label": "EMU-rapportage",
-					"icon": "ChartBarOutline",
-					"route": "EmuRapportage",
-					"order": 20,
-					"featureFlag": "gov-emu"
+					"id": "XBRLTaxonomies",
+					"label": "XBRL Taxonomies",
+					"icon": "FileTreeOutline",
+					"route": "XBRLTaxonomies",
+					"order": 85
+				},
+				{
+					"id": "SBRDocuments",
+					"label": "SBR Documents",
+					"icon": "FileDocumentEditOutline",
+					"route": "SBRDocuments",
+					"order": 86
+				},
+				{
+					"id": "RDSubsidies",
+					"label": "R&D Subsidies",
+					"icon": "FlaskOutline",
+					"route": "RDSubsidies",
+					"order": 86,
+					"featureFlag": "mkb-r-d-subsidies"
+				},
+				{
+					"id": "XBRLMappingValidation",
+					"label": "Mapping Validation",
+					"icon": "ArrowDecisionOutline",
+					"route": "XBRLMappingValidation",
+					"order": 87
+				},
+				{
+					"id": "WBSOTags",
+					"label": "WBSO Tags",
+					"icon": "TagCheckOutline",
+					"route": "WBSOTags",
+					"order": 87,
+					"featureFlag": "mkb-r-d-subsidies"
+				},
+				{
+					"id": "FiscalYears",
+					"label": "Fiscal Years",
+					"icon": "CalendarCheckOutline",
+					"route": "FiscalYears",
+					"order": 87
+				},
+				{
+					"id": "WBSOExport",
+					"label": "WBSO Export Dashboard",
+					"icon": "FileExportOutline",
+					"route": "WBSOExport",
+					"order": 88,
+					"featureFlag": "mkb-r-d-subsidies"
+				},
+				{
+					"id": "YearEndCloseChecklist",
+					"label": "Year-End Close Checklist",
+					"icon": "ClipboardCheckOutline",
+					"route": "YearEndCloseChecklist",
+					"order": 88
+				},
+				{
+					"id": "ClosingEntries",
+					"label": "Closing Entries",
+					"icon": "FileDocumentEditOutline",
+					"route": "ClosingEntries",
+					"order": 89
 				},
 				{
 					"id": "Dimensions",
@@ -265,6 +345,13 @@
 							"order": 30
 						},
 						{
+							"id": "CostProjects",
+							"label": "Cost Projects",
+							"icon": "BriefcaseClockOutline",
+							"route": "CostProjects",
+							"order": 35
+						},
+						{
 							"id": "AllocationRules",
 							"label": "Allocation Rules",
 							"icon": "TransferRight",
@@ -274,49 +361,11 @@
 					]
 				},
 				{
-					"id": "RDSubsidies",
-					"label": "R&D Subsidies",
-					"icon": "FlaskOutline",
-					"route": "RDSubsidies",
-					"order": 86,
-					"featureFlag": "mkb-r-d-subsidies"
-				},
-				{
-					"id": "WBSOTags",
-					"label": "WBSO Tags",
-					"icon": "TagCheckOutline",
-					"route": "WBSOTags",
-					"order": 87,
-					"featureFlag": "mkb-r-d-subsidies"
-				},
-				{
-					"id": "WBSOExport",
-					"label": "WBSO Export Dashboard",
-					"icon": "FileExportOutline",
-					"route": "WBSOExport",
-					"order": 88,
-					"featureFlag": "mkb-r-d-subsidies"
-				},
-				{
-					"id": "FiscalYears",
-					"label": "Fiscal Years",
-					"icon": "CalendarCheckOutline",
-					"route": "FiscalYears",
-					"order": 87
-				},
-				{
-					"id": "YearEndCloseChecklist",
-					"label": "Year-End Close Checklist",
-					"icon": "ClipboardCheckOutline",
-					"route": "YearEndCloseChecklist",
-					"order": 88
-				},
-				{
-					"id": "ClosingEntries",
-					"label": "Closing Entries",
-					"icon": "FileDocumentEditOutline",
-					"route": "ClosingEntries",
-					"order": 89
+					"id": "SbrXbrlFilings",
+					"label": "SBR/XBRL Filings",
+					"icon": "FileXmlBoxOutline",
+					"route": "SbrXbrlFilings",
+					"order": 92
 				},
 				{
 					"id": "BookkeepingAuditTrail",
@@ -324,6 +373,48 @@
 					"icon": "HistoryIcon",
 					"route": "BookkeepingAuditTrail",
 					"order": 95
+				},
+				{
+					"id": "BookkeepingSigningTrail",
+					"label": "Signing audit trail",
+					"icon": "SignatureFreehand",
+					"route": "BookkeepingSigningTrail",
+					"order": 96
+				},
+				{
+					"id": "BookkeepingDestructionReport",
+					"label": "Destruction report",
+					"icon": "DeleteSweepOutline",
+					"route": "BookkeepingDestructionReport",
+					"order": 97
+				},
+				{
+					"id": "BookkeepingChangeHistory",
+					"label": "Change history",
+					"icon": "HistoryIcon",
+					"route": "BookkeepingChangeHistory",
+					"order": 98
+				},
+				{
+					"id": "BookkeepingComplianceExport",
+					"label": "Compliance export",
+					"icon": "FileExportOutline",
+					"route": "BookkeepingComplianceExport",
+					"order": 99
+				},
+				{
+					"id": "BookkeepingActivityFeed",
+					"label": "Activity feed",
+					"icon": "RssBoxOutline",
+					"route": "BookkeepingActivityFeed",
+					"order": 100
+				},
+				{
+					"id": "TrialBalanceLines",
+					"label": "Trial Balance (by account)",
+					"icon": "ScaleBalance",
+					"route": "TrialBalanceLines",
+					"order": 815
 				}
 			]
 		},
@@ -1081,7 +1172,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "Products"
+				"indexRoute": "Products",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -1163,7 +1274,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "ProductAttributes"
+				"indexRoute": "ProductAttributes",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -1275,7 +1406,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "Barcodes"
+				"indexRoute": "Barcodes",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -1404,7 +1555,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "InventoryLots"
+				"indexRoute": "InventoryLots",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -1498,7 +1669,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "ExpiryAlerts"
+				"indexRoute": "ExpiryAlerts",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -1615,7 +1806,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "InventoryValuation"
+				"indexRoute": "InventoryValuation",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -1749,7 +1960,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "StockLevels"
+				"indexRoute": "StockLevels",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -2256,6 +2487,148 @@
 			}
 		},
 		{
+			"id": "CostProjects",
+			"route": "/bookkeeping/dimensions/cost-projects",
+			"type": "index",
+			"title": "Cost Projects",
+			"config": {
+				"register": "shillinq",
+				"schema": "CostProject",
+				"columns": [
+					{
+						"key": "projectNumber",
+						"label": "Project Number",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "totalBudget",
+						"label": "Budget",
+						"sortable": true
+					},
+					{
+						"key": "costsIncurredToDate",
+						"label": "Costs to Date",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "projectNumber",
+				"detailRoute": "CostProjectDetail"
+			}
+		},
+		{
+			"id": "CostProjectDetail",
+			"route": "/bookkeeping/dimensions/cost-projects/:id",
+			"type": "detail",
+			"title": "Cost Project",
+			"config": {
+				"register": "shillinq",
+				"schema": "CostProject",
+				"fields": [
+					{
+						"key": "projectNumber",
+						"label": "Project Number",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Project Name",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "startDate",
+						"label": "Start Date",
+						"type": "date"
+					},
+					{
+						"key": "endDate",
+						"label": "End Date",
+						"type": "date"
+					},
+					{
+						"key": "totalBudget",
+						"label": "Budget",
+						"type": "number"
+					},
+					{
+						"key": "totalEstimatedCosts",
+						"label": "Estimated Costs",
+						"type": "number"
+					},
+					{
+						"key": "costsIncurredToDate",
+						"label": "Costs to Date",
+						"type": "number"
+					},
+					{
+						"key": "costCenterCode",
+						"label": "Cost Center",
+						"type": "string"
+					},
+					{
+						"key": "organizationId",
+						"label": "Organization",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"aggregation": "profitAndLoss",
+				"indexRoute": "CostProjects",
+				"related": [
+					{
+						"id": "project-budgets",
+						"title": "Project Budgets",
+						"schema": "ProjectBudget",
+						"foreignKey": "projectId"
+					}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
 			"id": "AllocationRules",
 			"route": "/bookkeeping/dimensions/allocation-rules",
 			"type": "index",
@@ -2416,7 +2789,7 @@
 					},
 					{
 						"key": "emuSaldo",
-						"label": "EMU-saldo (€)",
+						"label": "EMU-saldo (\u20ac)",
 						"sortable": true
 					},
 					{
@@ -2461,12 +2834,12 @@
 					},
 					{
 						"key": "emuSaldo",
-						"label": "EMU-saldo (€)",
+						"label": "EMU-saldo (\u20ac)",
 						"type": "number"
 					},
 					{
 						"key": "emuSchuld",
-						"label": "EMU-schuld (€)",
+						"label": "EMU-schuld (\u20ac)",
 						"type": "number"
 					},
 					{
@@ -2491,6 +2864,179 @@
 					}
 				],
 				"indexRoute": "EmuRapportage",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "SbrXbrlFilings",
+			"route": "/sbr-xbrl-filings",
+			"type": "index",
+			"title": "SBR/XBRL Filings",
+			"config": {
+				"register": "shillinq",
+				"schema": "XbrlInstance",
+				"columns": [
+					{
+						"key": "instanceNumber",
+						"label": "Instance number",
+						"sortable": true
+					},
+					{
+						"key": "entryPoint",
+						"label": "Entry point",
+						"sortable": true
+					},
+					{
+						"key": "reportingPeriodEnd",
+						"label": "Reporting period end",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "State",
+						"sortable": true
+					},
+					{
+						"key": "digipoortReceiptId",
+						"label": "Digipoort receipt",
+						"sortable": false
+					}
+				],
+				"filters": [
+					{
+						"key": "state",
+						"label": "State",
+						"type": "chip",
+						"options": [
+							"draft",
+							"validated",
+							"submitted",
+							"accepted",
+							"rejected"
+						]
+					},
+					{
+						"key": "entryPoint",
+						"label": "Entry point",
+						"type": "chip",
+						"options": [
+							"kvk-jaarrekening",
+							"belastingdienst-vpb",
+							"belastingdienst-ib",
+							"sbr-banken-kredietrapportage",
+							"sbr-wonen"
+						]
+					}
+				],
+				"defaultSort": "-reportingPeriodEnd",
+				"detailRoute": "SbrXbrlFilingDetail"
+			}
+		},
+		{
+			"id": "SbrXbrlFilingDetail",
+			"route": "/sbr-xbrl-filings/:id",
+			"type": "detail",
+			"title": "SBR/XBRL Filing",
+			"config": {
+				"register": "shillinq",
+				"schema": "XbrlInstance",
+				"fields": [
+					{
+						"key": "instanceNumber",
+						"label": "Instance number",
+						"type": "string"
+					},
+					{
+						"key": "entryPoint",
+						"label": "Entry point",
+						"type": "string"
+					},
+					{
+						"key": "taxonomyVersion",
+						"label": "Taxonomy version",
+						"type": "string"
+					},
+					{
+						"key": "reportingPeriodStart",
+						"label": "Reporting period start",
+						"type": "date"
+					},
+					{
+						"key": "reportingPeriodEnd",
+						"label": "Reporting period end",
+						"type": "date"
+					},
+					{
+						"key": "sourceStatementId",
+						"label": "Source FinancialStatement",
+						"type": "string"
+					},
+					{
+						"key": "mappingId",
+						"label": "Mapping",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "State",
+						"type": "string"
+					},
+					{
+						"key": "digipoortSourceSlug",
+						"label": "Digipoort source",
+						"type": "string"
+					},
+					{
+						"key": "digipoortReceiptId",
+						"label": "Digipoort receipt id",
+						"type": "string"
+					},
+					{
+						"key": "submittedAt",
+						"label": "Submitted at",
+						"type": "datetime"
+					},
+					{
+						"key": "acceptedAt",
+						"label": "Accepted at",
+						"type": "datetime"
+					},
+					{
+						"key": "rejectionReason",
+						"label": "Rejection reason",
+						"type": "string"
+					},
+					{
+						"key": "instanceHash",
+						"label": "Instance hash (SHA-256)",
+						"type": "string"
+					},
+					{
+						"key": "instanceXml",
+						"label": "XBRL instance",
+						"type": "code"
+					}
+				],
+				"indexRoute": "SbrXbrlFilings",
 				"sidebarProps": {
 					"tabs": [
 						{
@@ -2819,13 +3365,41 @@
 				"register": "shillinq",
 				"schema": "BankStatement",
 				"columns": [
-					{ "key": "statementId", "label": "Statement", "sortable": true },
-					{ "key": "bankAccountIban", "label": "IBAN", "sortable": true },
-					{ "key": "periodStart", "label": "Period From", "sortable": true },
-					{ "key": "periodEnd", "label": "Period To", "sortable": true },
-					{ "key": "importFormat", "label": "Format", "sortable": true },
-					{ "key": "transactionCount", "label": "Lines", "sortable": true },
-					{ "key": "lifecycleState", "label": "Status", "sortable": true }
+					{
+						"key": "statementId",
+						"label": "Statement",
+						"sortable": true
+					},
+					{
+						"key": "bankAccountIban",
+						"label": "IBAN",
+						"sortable": true
+					},
+					{
+						"key": "periodStart",
+						"label": "Period From",
+						"sortable": true
+					},
+					{
+						"key": "periodEnd",
+						"label": "Period To",
+						"sortable": true
+					},
+					{
+						"key": "importFormat",
+						"label": "Format",
+						"sortable": true
+					},
+					{
+						"key": "transactionCount",
+						"label": "Lines",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "periodEnd",
 				"detailRoute": "BankReconciliationDetail",
@@ -2841,21 +3415,81 @@
 				"register": "shillinq",
 				"schema": "BankStatement",
 				"fields": [
-					{ "key": "statementId", "label": "Statement", "type": "string" },
-					{ "key": "bankAccountIban", "label": "Bank Account (IBAN)", "type": "string" },
-					{ "key": "periodStart", "label": "Period From", "type": "string" },
-					{ "key": "periodEnd", "label": "Period To", "type": "string" },
-					{ "key": "openingBalance", "label": "Opening Balance (EUR)", "type": "number" },
-					{ "key": "closingBalance", "label": "Closing Balance (EUR)", "type": "number" },
-					{ "key": "currency", "label": "Currency", "type": "string" },
-					{ "key": "importFormat", "label": "Import Format", "type": "string" },
-					{ "key": "importedAt", "label": "Imported At", "type": "datetime" },
-					{ "key": "importedBy", "label": "Imported By", "type": "string" },
-					{ "key": "fileChecksum", "label": "File Checksum (SHA-256)", "type": "string" },
-					{ "key": "transactionCount", "label": "Line Count", "type": "integer" },
-					{ "key": "lifecycleState", "label": "Status", "type": "string" },
-					{ "key": "sourceDocumentUri", "label": "Source Document (docudesk)", "type": "string" },
-					{ "key": "administrationId", "label": "Administration", "type": "string" }
+					{
+						"key": "statementId",
+						"label": "Statement",
+						"type": "string"
+					},
+					{
+						"key": "bankAccountIban",
+						"label": "Bank Account (IBAN)",
+						"type": "string"
+					},
+					{
+						"key": "periodStart",
+						"label": "Period From",
+						"type": "string"
+					},
+					{
+						"key": "periodEnd",
+						"label": "Period To",
+						"type": "string"
+					},
+					{
+						"key": "openingBalance",
+						"label": "Opening Balance (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "closingBalance",
+						"label": "Closing Balance (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "importFormat",
+						"label": "Import Format",
+						"type": "string"
+					},
+					{
+						"key": "importedAt",
+						"label": "Imported At",
+						"type": "datetime"
+					},
+					{
+						"key": "importedBy",
+						"label": "Imported By",
+						"type": "string"
+					},
+					{
+						"key": "fileChecksum",
+						"label": "File Checksum (SHA-256)",
+						"type": "string"
+					},
+					{
+						"key": "transactionCount",
+						"label": "Line Count",
+						"type": "integer"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "sourceDocumentUri",
+						"label": "Source Document (docudesk)",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
 				],
 				"lifecycleActions": true,
 				"actions": [
@@ -2869,7 +3503,12 @@
 						"id": "open-reconciliation",
 						"label": "Open for reconciliation",
 						"icon": "PlayCircleOutline",
-						"visibleWhen": { "field": "lifecycleState", "in": ["imported"] },
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": [
+								"imported"
+							]
+						},
 						"type": "lifecycle-transition",
 						"transition": "open-reconciliation",
 						"description": "Move statement to in-progress; allow operator matching."
@@ -2878,7 +3517,12 @@
 						"id": "complete-reconciliation",
 						"label": "Confirm reconciliation",
 						"icon": "CheckCircleOutline",
-						"visibleWhen": { "field": "lifecycleState", "in": ["in-progress"] },
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": [
+								"in-progress"
+							]
+						},
 						"type": "lifecycle-transition",
 						"transition": "complete-reconciliation",
 						"description": "All lines must be matched or routed-to-suspense (REQ-BR-008)."
@@ -2887,7 +3531,12 @@
 						"id": "audit-lock",
 						"label": "Audit lock",
 						"icon": "Lock",
-						"visibleWhen": { "field": "lifecycleState", "in": ["reconciled"] },
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": [
+								"reconciled"
+							]
+						},
 						"type": "lifecycle-transition",
 						"transition": "audit-lock",
 						"description": "Auditor signs off; irreversible (REQ-BR-008)."
@@ -2911,12 +3560,30 @@
 										"filterField": "statementId",
 										"filterValue": ":id",
 										"columns": [
-											{ "key": "lineNumber", "label": "#" },
-											{ "key": "valueDate", "label": "Value Date" },
-											{ "key": "counterpartyName", "label": "Counterparty" },
-											{ "key": "amount", "label": "Amount (EUR)" },
-											{ "key": "remittanceInfo", "label": "Reference" },
-											{ "key": "status", "label": "Match" }
+											{
+												"key": "lineNumber",
+												"label": "#"
+											},
+											{
+												"key": "valueDate",
+												"label": "Value Date"
+											},
+											{
+												"key": "counterpartyName",
+												"label": "Counterparty"
+											},
+											{
+												"key": "amount",
+												"label": "Amount (EUR)"
+											},
+											{
+												"key": "remittanceInfo",
+												"label": "Reference"
+											},
+											{
+												"key": "status",
+												"label": "Match"
+											}
 										]
 									}
 								}
@@ -2934,8 +3601,28 @@
 									"props": {
 										"register": "shillinq",
 										"schema": "ReconciliationMatch",
-										"filter": { "status": "pending" },
+										"filter": {
+											"status": "pending"
+										},
 										"description": "Unconfirmed candidate matches for lines in this statement (REQ-BR-010). One-click confirm or reject."
+									}
+								}
+							]
+						},
+						{
+							"id": "documents",
+							"label": "Source Document",
+							"icon": "FileDocumentOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "docudesk-attachment-viewer",
+									"props": {
+										"uriField": "sourceDocumentUri",
+										"appField": "sourceDocumentApp",
+										"role": "statement",
+										"fallbackMessage": "Source document unreachable \u2014 docudesk may be unavailable; retry later."
 									}
 								}
 							]
@@ -2969,12 +3656,36 @@
 				"register": "shillinq",
 				"schema": "MatchingRule",
 				"columns": [
-					{ "key": "name", "label": "Name", "sortable": true },
-					{ "key": "priority", "label": "Priority", "sortable": true },
-					{ "key": "targetType", "label": "Target", "sortable": true },
-					{ "key": "autoConfirm", "label": "Auto-confirm", "sortable": true },
-					{ "key": "isActive", "label": "Active", "sortable": true },
-					{ "key": "lifecycleState", "label": "Status", "sortable": true }
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "priority",
+						"label": "Priority",
+						"sortable": true
+					},
+					{
+						"key": "targetType",
+						"label": "Target",
+						"sortable": true
+					},
+					{
+						"key": "autoConfirm",
+						"label": "Auto-confirm",
+						"sortable": true
+					},
+					{
+						"key": "isActive",
+						"label": "Active",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "priority",
 				"detailRoute": "MatchingRuleDetail",
@@ -2990,16 +3701,56 @@
 				"register": "shillinq",
 				"schema": "MatchingRule",
 				"fields": [
-					{ "key": "ruleId", "label": "Rule ID", "type": "string" },
-					{ "key": "name", "label": "Name", "type": "string" },
-					{ "key": "priority", "label": "Priority", "type": "integer" },
-					{ "key": "targetType", "label": "Target Type", "type": "string" },
-					{ "key": "autoConfirm", "label": "Auto-confirm matches", "type": "boolean" },
-					{ "key": "confidenceScore", "label": "Confidence Score", "type": "number" },
-					{ "key": "isActive", "label": "Active", "type": "boolean" },
-					{ "key": "lifecycleState", "label": "Status", "type": "string" },
-					{ "key": "predicates", "label": "Predicates", "type": "array" },
-					{ "key": "administrationId", "label": "Administration", "type": "string" }
+					{
+						"key": "ruleId",
+						"label": "Rule ID",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "priority",
+						"label": "Priority",
+						"type": "integer"
+					},
+					{
+						"key": "targetType",
+						"label": "Target Type",
+						"type": "string"
+					},
+					{
+						"key": "autoConfirm",
+						"label": "Auto-confirm matches",
+						"type": "boolean"
+					},
+					{
+						"key": "confidenceScore",
+						"label": "Confidence Score",
+						"type": "number"
+					},
+					{
+						"key": "isActive",
+						"label": "Active",
+						"type": "boolean"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "predicates",
+						"label": "Predicates",
+						"type": "array"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
 				],
 				"lifecycleActions": true,
 				"indexRoute": "MatchingRules",
@@ -3747,6 +4498,24 @@
 				"indexRoute": "Journals",
 				"sidebarProps": {
 					"tabs": [
+						{
+							"id": "documents",
+							"label": "Source Document",
+							"icon": "FileDocumentOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "docudesk-attachment-viewer",
+									"props": {
+										"uriField": "sourceDocumentUri",
+										"appField": "sourceDocumentApp",
+										"role": "receipt",
+										"fallbackMessage": "Source document unreachable \u2014 docudesk may be unavailable; retry later."
+									}
+								}
+							]
+						},
 						{
 							"id": "audit",
 							"label": "Audit Trail",
@@ -5007,7 +5776,7 @@
 					},
 					{
 						"key": "remediationOverdueCount",
-						"label": "Achterstallige remediëringen",
+						"label": "Achterstallige remedi\u00ebringen",
 						"type": "integer"
 					},
 					{
@@ -5091,7 +5860,7 @@
 					},
 					{
 						"key": "remediationStatus",
-						"label": "Remediëringsstatus",
+						"label": "Remedi\u00ebringsstatus",
 						"sortable": true
 					},
 					{
@@ -5155,17 +5924,17 @@
 					},
 					{
 						"key": "remediationDueDate",
-						"label": "Remediëring vóór",
+						"label": "Remedi\u00ebring v\u00f3\u00f3r",
 						"type": "date"
 					},
 					{
 						"key": "remediationStatus",
-						"label": "Remediëringsstatus",
+						"label": "Remedi\u00ebringsstatus",
 						"type": "string"
 					},
 					{
 						"key": "remediationCompletionDate",
-						"label": "Remediëring voltooid op",
+						"label": "Remedi\u00ebring voltooid op",
 						"type": "date"
 					},
 					{
@@ -5293,7 +6062,7 @@
 					},
 					{
 						"key": "remediationRecommendations",
-						"label": "Remediëeringsaanbevelingen",
+						"label": "Remedi\u00eberingsaanbevelingen",
 						"type": "string"
 					},
 					{
@@ -5601,7 +6370,7 @@
 			"id": "BewaartermijnenDashboard",
 			"route": "/administratie/bewaartermijnen/dashboard",
 			"type": "dashboard",
-			"title": "Bewaartermijnen — Dashboard",
+			"title": "Bewaartermijnen \u2014 Dashboard",
 			"config": {
 				"widgets": [
 					{
@@ -6287,6 +7056,24 @@
 				"sidebarProps": {
 					"tabs": [
 						{
+							"id": "documents",
+							"label": "Source Document",
+							"icon": "FileDocumentOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "docudesk-attachment-viewer",
+									"props": {
+										"uriField": "sourceDocumentUri",
+										"appField": "sourceDocumentApp",
+										"role": "invoice",
+										"fallbackMessage": "Source document unreachable \u2014 docudesk may be unavailable; retry later."
+									}
+								}
+							]
+						},
+						{
 							"id": "audit",
 							"label": "Audit Trail",
 							"icon": "HistoryIcon",
@@ -6758,6 +7545,24 @@
 							]
 						},
 						{
+							"id": "documents",
+							"label": "Source Document",
+							"icon": "FileDocumentOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "docudesk-attachment-viewer",
+									"props": {
+										"uriField": "sourceDocumentUri",
+										"appField": "sourceDocumentApp",
+										"role": "invoice",
+										"fallbackMessage": "Source document unreachable \u2014 docudesk may be unavailable; retry later."
+									}
+								}
+							]
+						},
+						{
 							"id": "audit",
 							"label": "Audit Trail",
 							"icon": "HistoryIcon",
@@ -6938,7 +7743,7 @@
 			"id": "ProjectenOverzicht",
 			"route": "/projecten",
 			"type": "index",
-			"title": "Projecten — Overzicht",
+			"title": "Projecten \u2014 Overzicht",
 			"visibilityPredicate": {
 				"administrationType": [
 					"mkb",
@@ -7060,7 +7865,7 @@
 							{
 								"min": 0.5,
 								"color": "warning",
-								"label": "Gemiddeld (50–80%)"
+								"label": "Gemiddeld (50\u201380%)"
 							},
 							{
 								"min": 0,
@@ -8821,7 +9626,7 @@
 					},
 					{
 						"key": "ratePerKm",
-						"label": "Rate (€/km)",
+						"label": "Rate (\u20ac/km)",
 						"sortable": true,
 						"type": "number"
 					},
@@ -8910,7 +9715,7 @@
 					},
 					{
 						"key": "ratePerKm",
-						"label": "Rate (€/km)",
+						"label": "Rate (\u20ac/km)",
 						"type": "number"
 					},
 					{
@@ -9769,7 +10574,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "BbvMapping"
+				"indexRoute": "BbvMapping",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -10286,7 +11111,27 @@
 						"description": "Re-activate an archived rule."
 					}
 				],
-				"indexRoute": "ReorderRules"
+				"indexRoute": "ReorderRules",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -11473,7 +12318,7 @@
 				],
 				"defaultSort": "receivedAt",
 				"detailRoute": "GoodsReceiptDetail",
-				"description": "Goods Receipt Notes (GRN) — physical receipt against POs. Member 04 owns the capture flow."
+				"description": "Goods Receipt Notes (GRN) \u2014 physical receipt against POs. Member 04 owns the capture flow."
 			}
 		},
 		{
@@ -11962,6 +12807,232 @@
 			}
 		},
 		{
+			"id": "BookkeepingSigningTrail",
+			"route": "/bookkeeping/signing-trail",
+			"type": "logs",
+			"title": "Signing audit trail",
+			"config": {
+				"source": "/index.php/apps/openregister/api/audit-trails?objectTypes=Account,GLTransaction,GLLine,JournalEntry,FiscalPeriod,FiscalYear,VendorMaster,APInvoice,PaymentRun,CustomerMaster,ARInvoice,DunningRecord,BankStatement,BankStatementLine,BankConnection,ReconciliationMatch,PurchaseOrder,GoodsReceiptNote,SupplierInvoice,ThreeWayMatch,FixedAsset,Invoice,InvoiceLine,BillableInvoice,BillableInvoiceLine,CreditNote,DunningLadder,DunningRun,Subsidie,Grant,AnnualReport,BalanceSheet,IncomeStatement,CashFlowStatement,DirectorReport,TrialBalance,TrialBalanceLine,ConsolidationGroup,ConsolidatedReport,IntercompanyJournalEntry,DualTransaction,BBVProgramma,BBVProgramme,Iv3Export,WaterschapHeffingPosting,VATDeclaration,VATReturn,VatCorrection,VatReturn,OssRegistration,OssReturn,OssPayment,IcpStatement,BcfClaim,TaxSummaryReport,TaxEstimate,KorThreshold,KorRegime,IbAangifteExport,ZzpDeduction,LHAfdracht,LoonPeriode,LoonStrook,LoonheffingTabel2026,Loonjournaalpost,Werkgever,Werknemer,Receipt,MileageEntry,PerDiem,ExpenseClaimEntry,UrenRegistratie,WipBalance,RateCard,RateSchedule,RateRecord,Project,ProjectAssignment,CostCenter,KostenDrager,AllocationRule,Administration,AdministrationMembership,AdministrationMigration,RetentionRule,AssuranceEngagement,SisaReport,AuditDocument,ComplianceAuditTrail,ManagementLetter,Kostenpost,ApprovalRequest,ApprovalTask,SigningAuthority,Tender,Bid,AwardDecision&action=lifecycle,update&fields=signedBy,approvedBy,signedAt,approvedAt,signingStatus,approvalStatus",
+				"columns": [
+					{
+						"key": "created",
+						"label": "Approval timestamp",
+						"sortable": true
+					},
+					{
+						"key": "user",
+						"label": "Approval actor",
+						"sortable": true
+					},
+					{
+						"key": "schema",
+						"label": "Object type",
+						"sortable": true
+					},
+					{
+						"key": "objectId",
+						"label": "Object",
+						"sortable": false
+					},
+					{
+						"key": "action",
+						"label": "Signature status",
+						"sortable": true
+					},
+					{
+						"key": "summary",
+						"label": "Approval comment",
+						"sortable": false
+					}
+				],
+				"defaultSort": "-created",
+				"description": "Pre-filtered OR audit-log view showing only signing/approval lifecycle decisions for bookkeeping records per REQ-RAP-002. Source filter scopes results to lifecycle:*->signed transitions and updates on signedBy/approvedBy fields. Use this surface to answer 'who approved this document and when?' for accountantscontrole."
+			}
+		},
+		{
+			"id": "BookkeepingDestructionReport",
+			"route": "/bookkeeping/destruction-report",
+			"type": "logs",
+			"title": "Destruction report",
+			"config": {
+				"source": "/index.php/apps/openregister/api/audit-trails?objectTypes=Account,GLTransaction,GLLine,JournalEntry,FiscalPeriod,FiscalYear,VendorMaster,APInvoice,PaymentRun,CustomerMaster,ARInvoice,DunningRecord,BankStatement,BankStatementLine,BankConnection,ReconciliationMatch,PurchaseOrder,GoodsReceiptNote,SupplierInvoice,ThreeWayMatch,FixedAsset,Invoice,InvoiceLine,BillableInvoice,BillableInvoiceLine,CreditNote,DunningLadder,DunningRun,Subsidie,Grant,AnnualReport,BalanceSheet,IncomeStatement,CashFlowStatement,DirectorReport,TrialBalance,TrialBalanceLine,ConsolidationGroup,ConsolidatedReport,IntercompanyJournalEntry,DualTransaction,BBVProgramma,BBVProgramme,Iv3Export,WaterschapHeffingPosting,VATDeclaration,VATReturn,VatCorrection,VatReturn,OssRegistration,OssReturn,OssPayment,IcpStatement,BcfClaim,TaxSummaryReport,TaxEstimate,KorThreshold,KorRegime,IbAangifteExport,ZzpDeduction,LHAfdracht,LoonPeriode,LoonStrook,LoonheffingTabel2026,Loonjournaalpost,Werkgever,Werknemer,Receipt,MileageEntry,PerDiem,ExpenseClaimEntry,UrenRegistratie,WipBalance,RateCard,RateSchedule,RateRecord,Project,ProjectAssignment,CostCenter,KostenDrager,AllocationRule,Administration,AdministrationMembership,AdministrationMigration,RetentionRule,AssuranceEngagement,SisaReport,AuditDocument,ComplianceAuditTrail,ManagementLetter,Kostenpost,ApprovalRequest,ApprovalTask,SigningAuthority,Tender,Bid,AwardDecision,DestructionOrder,DestructionSchedule&action=lifecycle&lifecycleStateTo=marked-for-destruction,destruction-completed",
+				"columns": [
+					{
+						"key": "created",
+						"label": "Approval timestamp",
+						"sortable": true
+					},
+					{
+						"key": "user",
+						"label": "Compliance officer",
+						"sortable": true
+					},
+					{
+						"key": "schema",
+						"label": "Record type",
+						"sortable": true
+					},
+					{
+						"key": "objectId",
+						"label": "Record",
+						"sortable": false
+					},
+					{
+						"key": "action",
+						"label": "Lifecycle transition",
+						"sortable": true
+					},
+					{
+						"key": "summary",
+						"label": "Legal basis (Selectielijst/Archiefwet)",
+						"sortable": false
+					}
+				],
+				"defaultSort": "-created",
+				"description": "Pre-filtered OR audit-log view of records transitioning to marked-for-destruction or destruction-completed per REQ-RAP-003 / REQ-RAP-008. Serves as legal proof of Archiefwet-compliant disposal \u2014 every row links to the OR hash-chain entry certifying the transition. Use this surface for external auditor compliance verification."
+			}
+		},
+		{
+			"id": "BookkeepingChangeHistory",
+			"route": "/bookkeeping/change-history",
+			"type": "logs",
+			"title": "Change history",
+			"config": {
+				"source": "/index.php/apps/openregister/api/audit-trails?objectTypes=Account,GLTransaction,GLLine,JournalEntry,FiscalPeriod,FiscalYear,VendorMaster,APInvoice,PaymentRun,CustomerMaster,ARInvoice,DunningRecord,BankStatement,BankStatementLine,BankConnection,ReconciliationMatch,PurchaseOrder,GoodsReceiptNote,SupplierInvoice,ThreeWayMatch,FixedAsset,Invoice,InvoiceLine,BillableInvoice,BillableInvoiceLine,CreditNote,DunningLadder,DunningRun,Subsidie,Grant,AnnualReport,BalanceSheet,IncomeStatement,CashFlowStatement,DirectorReport,TrialBalance,TrialBalanceLine,ConsolidationGroup,ConsolidatedReport,IntercompanyJournalEntry,DualTransaction,BBVProgramma,BBVProgramme,Iv3Export,WaterschapHeffingPosting,VATDeclaration,VATReturn,VatCorrection,VatReturn,OssRegistration,OssReturn,OssPayment,IcpStatement,BcfClaim,TaxSummaryReport,TaxEstimate,KorThreshold,KorRegime,IbAangifteExport,ZzpDeduction,LHAfdracht,LoonPeriode,LoonStrook,LoonheffingTabel2026,Loonjournaalpost,Werkgever,Werknemer,Receipt,MileageEntry,PerDiem,ExpenseClaimEntry,UrenRegistratie,WipBalance,RateCard,RateSchedule,RateRecord,Project,ProjectAssignment,CostCenter,KostenDrager,AllocationRule,Administration,AdministrationMembership,AdministrationMigration,RetentionRule,AssuranceEngagement,SisaReport,AuditDocument,ComplianceAuditTrail,ManagementLetter,Kostenpost,ApprovalRequest,ApprovalTask,SigningAuthority,Tender,Bid,AwardDecision&action=create,update,delete,lifecycle",
+				"columns": [
+					{
+						"key": "created",
+						"label": "Change timestamp",
+						"sortable": true
+					},
+					{
+						"key": "user",
+						"label": "Change actor",
+						"sortable": true
+					},
+					{
+						"key": "schema",
+						"label": "Record type",
+						"sortable": true
+					},
+					{
+						"key": "objectId",
+						"label": "Record",
+						"sortable": false
+					},
+					{
+						"key": "action",
+						"label": "Action",
+						"sortable": true
+					},
+					{
+						"key": "summary",
+						"label": "Before/after diff",
+						"sortable": false
+					}
+				],
+				"defaultSort": "-created",
+				"description": "Pre-filtered OR audit-log view of all mutations (create / update / delete / lifecycle) across bookkeeping records per REQ-RAP-004. The OR audit-log component renders the before/after snapshot inline; this surface is the bookkeeper's first stop for 'what changed in this record?' inquiries."
+			}
+		},
+		{
+			"id": "BookkeepingComplianceExport",
+			"route": "/bookkeeping/compliance-export",
+			"type": "form",
+			"title": "Compliance export",
+			"config": {
+				"endpoint": "/index.php/apps/shillinq/api/audit/export",
+				"method": "GET",
+				"fields": [
+					{
+						"key": "from",
+						"label": "From",
+						"type": "date",
+						"required": true,
+						"description": "Inclusive start date (YYYY-MM-DD) for the export window."
+					},
+					{
+						"key": "to",
+						"label": "To",
+						"type": "date",
+						"required": true,
+						"description": "Inclusive end date (YYYY-MM-DD) for the export window."
+					},
+					{
+						"key": "format",
+						"label": "Format",
+						"type": "select",
+						"required": true,
+						"default": "csv",
+						"options": [
+							"csv",
+							"xlsx",
+							"json"
+						],
+						"description": "Export file format."
+					},
+					{
+						"key": "scope",
+						"label": "Scope",
+						"type": "select",
+						"required": true,
+						"default": "all",
+						"options": [
+							"all",
+							"subject"
+						],
+						"description": "all = every audit event in window; subject = events where caller is the actor (GDPR article 15 subject access)."
+					}
+				],
+				"submitLabel": "Export audit data",
+				"rbac": {
+					"groups": [
+						"auditor",
+						"admin"
+					]
+				},
+				"description": "Compliance Export API surface per REQ-RAP-005 \u2014 RBAC-scoped to the auditor group; non-auditor callers receive 403. Server filters PII fields (email, phone, address, displayName, firstName, lastName, birthDate, socialSecurityNumber, taxId, personId, ipAddress) before rendering CSV/XLSX/JSON. Every export request is itself recorded in the OR audit trail per REQ-RAP-005 scenario 3."
+			}
+		},
+		{
+			"id": "BookkeepingActivityFeed",
+			"route": "/bookkeeping/activity-feed",
+			"type": "logs",
+			"title": "Activity feed",
+			"config": {
+				"source": "/index.php/apps/activity/activity/list?app=shillinq&filter=approval,signing,decision",
+				"columns": [
+					{
+						"key": "datetime",
+						"label": "When",
+						"sortable": true
+					},
+					{
+						"key": "user",
+						"label": "Actor",
+						"sortable": true
+					},
+					{
+						"key": "subject",
+						"label": "Activity",
+						"sortable": false
+					},
+					{
+						"key": "message",
+						"label": "Detail",
+						"sortable": false
+					},
+					{
+						"key": "objectId",
+						"label": "Object",
+						"sortable": false
+					}
+				],
+				"defaultSort": "-datetime",
+				"description": "Nextcloud Activity app integration for decision lifecycle events (approval_requested / approval_approved / approval_rejected / document_signed / decision_made) per REQ-RAP-006. Events are emitted via IActivityManager::publish() from ApprovalRequest / ApprovalTask / SigningAuthority lifecycle transitions; the feed is permission-scoped by Nextcloud (callers see only events on objects they have read access to)."
+			}
+		},
+		{
 			"id": "TaxProvisions",
 			"route": "/belastingen/uitgestelde-belastingen/provisies",
 			"type": "index",
@@ -12183,7 +13254,7 @@
 					},
 					{
 						"key": "commercialCarryingAmount",
-						"label": "Commerciële boekwaarde (cent)",
+						"label": "Commerci\u00eble boekwaarde (cent)",
 						"type": "number"
 					},
 					{
@@ -12750,7 +13821,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "InventoryGLConfig"
+				"indexRoute": "InventoryGLConfig",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -13009,7 +14100,27 @@
 						]
 					}
 				],
-				"indexRoute": "PensionPlans"
+				"indexRoute": "PensionPlans",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -13232,7 +14343,27 @@
 						]
 					}
 				],
-				"indexRoute": "ActuarialValuations"
+				"indexRoute": "ActuarialValuations",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -13340,7 +14471,27 @@
 						]
 					}
 				],
-				"indexRoute": "WBSOTags"
+				"indexRoute": "WBSOTags",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -13431,7 +14582,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "WBSOActivityCodes"
+				"indexRoute": "WBSOActivityCodes",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -13589,7 +14760,9 @@
 						"icon": "ShieldCheckOutline",
 						"visibleWhen": {
 							"field": "status",
-							"in": ["generated"]
+							"in": [
+								"generated"
+							]
 						},
 						"type": "lifecycle-transition",
 						"transition": "validate",
@@ -13601,7 +14774,9 @@
 						"icon": "CloudUploadOutline",
 						"visibleWhen": {
 							"field": "status",
-							"in": ["validated"]
+							"in": [
+								"validated"
+							]
 						},
 						"type": "lifecycle-transition",
 						"transition": "submit",
@@ -13613,13 +14788,38 @@
 						"icon": "DownloadOutline",
 						"visibleWhen": {
 							"field": "status",
-							"in": ["generated", "validated", "submitted", "archived"]
+							"in": [
+								"generated",
+								"validated",
+								"submitted",
+								"archived"
+							]
 						},
 						"type": "download",
 						"sourceField": "fileUri"
 					}
 				],
-				"indexRoute": "WBSOExport"
+				"indexRoute": "WBSOExport",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -13692,7 +14892,1057 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "PensionDisclosureTables"
+				"indexRoute": "PensionDisclosureTables",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "XBRLTaxonomies",
+			"route": "/xbrl-taxonomies",
+			"type": "index",
+			"title": "XBRL Taxonomies",
+			"config": {
+				"register": "shillinq",
+				"schema": "XBRLTaxonomy",
+				"columns": [
+					{
+						"key": "taxonomyId",
+						"label": "Taxonomy ID",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "taxonomyVersion",
+						"label": "Version",
+						"sortable": true
+					},
+					{
+						"key": "publicationDate",
+						"label": "Published",
+						"sortable": true
+					},
+					{
+						"key": "effectiveDate",
+						"label": "Effective",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true,
+						"filterable": true
+					}
+				],
+				"defaultSort": "-publicationDate",
+				"detailRoute": "XBRLTaxonomyDetail"
+			}
+		},
+		{
+			"id": "XBRLTaxonomyDetail",
+			"route": "/xbrl-taxonomies/:id",
+			"type": "detail",
+			"title": "XBRL Taxonomy",
+			"config": {
+				"register": "shillinq",
+				"schema": "XBRLTaxonomy",
+				"fields": [
+					{
+						"key": "taxonomyId",
+						"label": "Taxonomy ID",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "taxonomyVersion",
+						"label": "Version",
+						"type": "string"
+					},
+					{
+						"key": "publicationDate",
+						"label": "Publication Date",
+						"type": "date"
+					},
+					{
+						"key": "effectiveDate",
+						"label": "Effective Date",
+						"type": "date"
+					},
+					{
+						"key": "expiryDate",
+						"label": "Expiry Date",
+						"type": "date"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					}
+				],
+				"relatedLists": [
+					{
+						"id": "taxonomy-mappings",
+						"title": "Account Mappings",
+						"schema": "XBRLMapping",
+						"filter": {
+							"taxonomyVersion": "@self.taxonomyVersion"
+						},
+						"columns": [
+							{
+								"key": "sourceAccountId",
+								"label": "Source Account"
+							},
+							{
+								"key": "targetXBRLConcept",
+								"label": "XBRL GL Concept"
+							},
+							{
+								"key": "mappingDate",
+								"label": "Mapping Date"
+							},
+							{
+								"key": "status",
+								"label": "Status"
+							}
+						]
+					}
+				],
+				"indexRoute": "XBRLTaxonomies",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "SBRDocuments",
+			"route": "/sbr-documents",
+			"type": "index",
+			"title": "SBR Documents",
+			"config": {
+				"register": "shillinq",
+				"schema": "SBRDocumentType",
+				"columns": [
+					{
+						"key": "code",
+						"label": "Code",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					},
+					{
+						"key": "taxonomyVersion",
+						"label": "Taxonomy Version",
+						"sortable": true
+					},
+					{
+						"key": "filingDeadline",
+						"label": "Filing Deadline",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true,
+						"filterable": true
+					}
+				],
+				"defaultSort": "filingDeadline",
+				"detailRoute": "SBRDocumentDetail"
+			}
+		},
+		{
+			"id": "SBRDocumentDetail",
+			"route": "/sbr-documents/:id",
+			"type": "detail",
+			"title": "SBR Document",
+			"config": {
+				"register": "shillinq",
+				"schema": "SBRDocumentType",
+				"fields": [
+					{
+						"key": "code",
+						"label": "Code",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "applicableEntityTypes",
+						"label": "Applicable Entity Types",
+						"type": "array"
+					},
+					{
+						"key": "filingDeadline",
+						"label": "Filing Deadline",
+						"type": "date"
+					},
+					{
+						"key": "fiscalYearStart",
+						"label": "Fiscal Year Start",
+						"type": "date"
+					},
+					{
+						"key": "fiscalYearEnd",
+						"label": "Fiscal Year End",
+						"type": "date"
+					},
+					{
+						"key": "taxonomyVersion",
+						"label": "Taxonomy Version",
+						"type": "string"
+					},
+					{
+						"key": "submissionEndpoint",
+						"label": "Submission Endpoint",
+						"type": "string"
+					},
+					{
+						"key": "authMethod",
+						"label": "Authentication Method",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "requiredFields",
+						"label": "Required Fields",
+						"type": "array"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "validationErrors",
+						"label": "Validation Errors",
+						"type": "array"
+					},
+					{
+						"key": "submittedAt",
+						"label": "Submitted At",
+						"type": "date-time"
+					},
+					{
+						"key": "approvedAt",
+						"label": "Approved At",
+						"type": "date-time"
+					},
+					{
+						"key": "rejectionReason",
+						"label": "Rejection Reason",
+						"type": "string"
+					},
+					{
+						"key": "filingId",
+						"label": "Belastingdienst Filing ID",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "SBRDocuments",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "XBRLMappingValidation",
+			"route": "/xbrl-mapping-validation",
+			"type": "index",
+			"title": "Mapping Validation",
+			"config": {
+				"register": "shillinq",
+				"schema": "XBRLMapping",
+				"columns": [
+					{
+						"key": "sourceAccountId",
+						"label": "Source Account",
+						"sortable": true
+					},
+					{
+						"key": "targetXBRLConcept",
+						"label": "XBRL GL Concept",
+						"sortable": true
+					},
+					{
+						"key": "taxonomyVersion",
+						"label": "Taxonomy Version",
+						"sortable": true,
+						"filterable": true
+					},
+					{
+						"key": "mappingDate",
+						"label": "Mapping Date",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true,
+						"filterable": true
+					}
+				],
+				"defaultSort": "sourceAccountId",
+				"detailRoute": "XBRLMappingDetail"
+			}
+		},
+		{
+			"id": "XBRLMappingDetail",
+			"route": "/xbrl-mapping-validation/:id",
+			"type": "detail",
+			"title": "XBRL Mapping",
+			"config": {
+				"register": "shillinq",
+				"schema": "XBRLMapping",
+				"fields": [
+					{
+						"key": "sourceAccountId",
+						"label": "Source Account",
+						"type": "string"
+					},
+					{
+						"key": "targetXBRLConcept",
+						"label": "XBRL GL Concept",
+						"type": "string"
+					},
+					{
+						"key": "taxonomyVersion",
+						"label": "Taxonomy Version",
+						"type": "string"
+					},
+					{
+						"key": "mappingDate",
+						"label": "Mapping Date",
+						"type": "date"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "notes",
+						"label": "Notes",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"indexRoute": "XBRLMappingValidation",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "Reconciliations",
+			"route": "/bookkeeping/reconciliations",
+			"type": "index",
+			"title": "Reconciliations",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankReconciliation",
+				"columns": [
+					{
+						"key": "bankAccountId",
+						"label": "Bank Account",
+						"sortable": true
+					},
+					{
+						"key": "statementDate",
+						"label": "Statement Date",
+						"sortable": true
+					},
+					{
+						"key": "statementPeriodStart",
+						"label": "Period From",
+						"sortable": true
+					},
+					{
+						"key": "statementPeriodEnd",
+						"label": "Period To",
+						"sortable": true
+					},
+					{
+						"key": "openingBalance",
+						"label": "Opening (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "closingBalance",
+						"label": "Closing (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "variance",
+						"label": "Variance (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "reconciliationStatus",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "preparedBy",
+						"label": "Preparer",
+						"sortable": false
+					},
+					{
+						"key": "verifiedBy",
+						"label": "Verifier",
+						"sortable": false
+					}
+				],
+				"defaultSort": "statementDate",
+				"detailRoute": "ReconciliationDetail",
+				"description": "Bank reconciliation sessions per REQ-REC-001. Each row is one account+period; click through to match, classify unresolved items, and produce a signed-off ReconciliationReport (REQ-REC-006)."
+			}
+		},
+		{
+			"id": "ReconciliationDetail",
+			"route": "/bookkeeping/reconciliations/:id",
+			"type": "detail",
+			"title": "Reconciliation",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankReconciliation",
+				"fields": [
+					{
+						"key": "bankAccountId",
+						"label": "Bank Account",
+						"type": "string"
+					},
+					{
+						"key": "statementDate",
+						"label": "Statement Date",
+						"type": "string"
+					},
+					{
+						"key": "statementPeriodStart",
+						"label": "Period From",
+						"type": "string"
+					},
+					{
+						"key": "statementPeriodEnd",
+						"label": "Period To",
+						"type": "string"
+					},
+					{
+						"key": "openingBalance",
+						"label": "Opening Balance (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "closingBalance",
+						"label": "Closing Balance (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "expectedGLBalance",
+						"label": "Expected GL Balance (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "variance",
+						"label": "Variance (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "matchedCount",
+						"label": "Matched",
+						"type": "number"
+					},
+					{
+						"key": "unmatchedGLCount",
+						"label": "Unmatched GL",
+						"type": "number"
+					},
+					{
+						"key": "unmatchedBankCount",
+						"label": "Unmatched Bank",
+						"type": "number"
+					},
+					{
+						"key": "reconciliationStatus",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "preparedBy",
+						"label": "Preparer",
+						"type": "string"
+					},
+					{
+						"key": "verifiedBy",
+						"label": "Verifier",
+						"type": "string"
+					},
+					{
+						"key": "closedAt",
+						"label": "Closed At",
+						"type": "string"
+					},
+					{
+						"key": "signOffComment",
+						"label": "Sign-Off Comment",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"actions": [
+					{
+						"id": "initiate",
+						"label": "Initiate (verify statement balance)",
+						"icon": "PlayCircleOutline",
+						"visibleWhen": {
+							"field": "reconciliationStatus",
+							"in": [
+								"draft"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "initiate",
+						"description": "REQ-REC-002 statement-balance verification runs server-side; non-zero variance surfaces a warning but does not block."
+					},
+					{
+						"id": "verify",
+						"label": "Verify (sign off)",
+						"icon": "CheckCircleOutline",
+						"visibleWhen": {
+							"field": "reconciliationStatus",
+							"in": [
+								"in-progress"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "verify",
+						"description": "REQ-REC-006 closure check: all matches must be classified, sign-off comment is required."
+					},
+					{
+						"id": "close",
+						"label": "Close",
+						"icon": "LockOutline",
+						"visibleWhen": {
+							"field": "reconciliationStatus",
+							"in": [
+								"verified"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "close",
+						"description": "Seal the reconciliation. After this, the session is immutable per REQ-REC-003."
+					},
+					{
+						"id": "revert",
+						"label": "Revert for investigation",
+						"icon": "UndoVariant",
+						"visibleWhen": {
+							"field": "reconciliationStatus",
+							"in": [
+								"in-progress"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "revert",
+						"description": "Return the session to draft so the statement balance can be re-verified."
+					},
+					{
+						"id": "cancel",
+						"label": "Cancel",
+						"icon": "CancelOutline",
+						"visibleWhen": {
+							"field": "reconciliationStatus",
+							"in": [
+								"draft"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "cancel",
+						"description": "Abandon a draft reconciliation. Audit-trailed but excluded from aggregations."
+					}
+				],
+				"indexRoute": "Reconciliations",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "matches",
+							"label": "Matches",
+							"icon": "FormatListBulleted",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-related-list",
+									"props": {
+										"register": "shillinq",
+										"schema": "ReconciliationMatch",
+										"filterField": "reconId",
+										"filterValue": ":id",
+										"columns": [
+											{
+												"key": "matchId",
+												"label": "Match"
+											},
+											{
+												"key": "bankLineId",
+												"label": "Bank Line"
+											},
+											{
+												"key": "glTransactionId",
+												"label": "GL Transaction"
+											},
+											{
+												"key": "matchAlgorithm",
+												"label": "Algorithm"
+											},
+											{
+												"key": "resolutionStatus",
+												"label": "Resolution"
+											},
+											{
+												"key": "matchedAt",
+												"label": "Matched At"
+											}
+										],
+										"description": "Matches recorded for this reconciliation session (REQ-REC-005). Filter to resolutionStatus=null to see unresolved items needing REQ-REC-004 classification."
+									}
+								}
+							]
+						},
+						{
+							"id": "unresolved",
+							"label": "Unresolved Items",
+							"icon": "HelpRhombusOutline",
+							"order": 20,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-related-list",
+									"props": {
+										"register": "shillinq",
+										"schema": "ReconciliationMatch",
+										"filter": {
+											"reconId": ":id",
+											"resolutionStatus": null
+										},
+										"description": "Unresolved items for this session \u2014 bulk-classify via the resolution endpoint (REQ-REC-004).",
+										"bulkActions": [
+											{
+												"id": "mark-timing",
+												"label": "Mark timing",
+												"resolutionStatus": "timing"
+											},
+											{
+												"id": "mark-pending",
+												"label": "Mark pending",
+												"resolutionStatus": "pending"
+											},
+											{
+												"id": "mark-adjustment",
+												"label": "Mark adjustment",
+												"resolutionStatus": "adjustment"
+											}
+										]
+									}
+								}
+							]
+						},
+						{
+							"id": "closure-summary",
+							"label": "Closure Summary",
+							"icon": "FileCheckOutline",
+							"order": 30,
+							"widgets": [
+								{
+									"type": "static",
+									"componentName": "reconciliation-closure-summary",
+									"props": {
+										"description": "REQ-REC-006: pre-close summary \u2014 matched count, unmatched GL/bank counts, total variance, and sign-off comment field. Verifier MUST supply sign-off before the verify transition.",
+										"fields": [
+											"matchedCount",
+											"unmatchedGLCount",
+											"unmatchedBankCount",
+											"variance",
+											"signOffComment"
+										]
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "UnmatchedItems",
+			"route": "/bookkeeping/unmatched-items",
+			"type": "index",
+			"title": "Unmatched Items",
+			"config": {
+				"register": "shillinq",
+				"schema": "ReconciliationMatch",
+				"filter": {
+					"resolutionStatus": null
+				},
+				"groupBy": "reconId",
+				"columns": [
+					{
+						"key": "reconId",
+						"label": "Reconciliation",
+						"sortable": true
+					},
+					{
+						"key": "matchId",
+						"label": "Match",
+						"sortable": false
+					},
+					{
+						"key": "bankLineId",
+						"label": "Bank Line",
+						"sortable": false
+					},
+					{
+						"key": "glTransactionId",
+						"label": "GL Transaction",
+						"sortable": false
+					},
+					{
+						"key": "matchedAmount",
+						"label": "Amount (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "matchType",
+						"label": "Type",
+						"sortable": true
+					}
+				],
+				"defaultSort": "reconId",
+				"bulkActions": [
+					{
+						"id": "bulk-classify-timing",
+						"label": "Classify as Timing",
+						"icon": "ClockOutline",
+						"endpoint": "/api/reconciliations/:reconId/matches/bulk-resolve",
+						"payload": {
+							"resolutionStatus": "timing"
+						},
+						"description": "Bulk REQ-REC-004 classification \u2014 operator supplies one reason for the whole selection."
+					},
+					{
+						"id": "bulk-classify-pending",
+						"label": "Classify as Pending",
+						"icon": "TimerSandEmpty",
+						"endpoint": "/api/reconciliations/:reconId/matches/bulk-resolve",
+						"payload": {
+							"resolutionStatus": "pending"
+						}
+					},
+					{
+						"id": "bulk-classify-adjustment",
+						"label": "Classify as Adjustment",
+						"icon": "TuneVariant",
+						"endpoint": "/api/reconciliations/:reconId/matches/bulk-resolve",
+						"payload": {
+							"resolutionStatus": "adjustment"
+						}
+					}
+				],
+				"description": "REQ-REC-008: unresolved items across all open reconciliations, grouped by session. Bulk-classify multiple items at once with a shared reason."
+			}
+		},
+		{
+			"id": "VarianceReport",
+			"route": "/bookkeeping/variance-report",
+			"type": "report",
+			"title": "Variance Report",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankReconciliation",
+				"dashboard": {
+					"kpis": [
+						{
+							"id": "total-variance",
+							"label": "Total Variance (closed)",
+							"icon": "ScaleBalance",
+							"aggregation": "varianceByAccount",
+							"field": "variance",
+							"format": "currency",
+							"currency": "EUR"
+						},
+						{
+							"id": "recon-count",
+							"label": "Closed Reconciliations",
+							"icon": "FileCheckOutline",
+							"aggregation": "reconciliationCount",
+							"field": "count",
+							"format": "integer"
+						},
+						{
+							"id": "unresolved",
+							"label": "Unresolved Items (open sessions)",
+							"icon": "HelpRhombusOutline",
+							"source": "ReconciliationMatch",
+							"aggregation": "unresolvedByRecon",
+							"field": "count",
+							"format": "integer"
+						}
+					],
+					"table": {
+						"schema": "BankReconciliation",
+						"aggregation": "varianceByPeriod",
+						"filter": {
+							"reconciliationStatus": "closed"
+						},
+						"columns": [
+							{
+								"key": "bankAccountId",
+								"label": "Bank Account",
+								"sortable": true
+							},
+							{
+								"key": "statementPeriodEnd",
+								"label": "Period End",
+								"sortable": true
+							},
+							{
+								"key": "variance",
+								"label": "Variance (EUR)",
+								"sortable": true
+							},
+							{
+								"key": "matchedCount",
+								"label": "Matched",
+								"sortable": true
+							},
+							{
+								"key": "unmatchedGLCount",
+								"label": "Unmatched GL",
+								"sortable": true
+							},
+							{
+								"key": "unmatchedBankCount",
+								"label": "Unmatched Bank",
+								"sortable": true
+							}
+						],
+						"defaultSort": "statementPeriodEnd",
+						"detailRoute": "ReconciliationDetail"
+					},
+					"description": "REQ-REC-007: variance reporting derived from x-openregister-aggregations on BankReconciliation + ReconciliationMatch (no PHP VarianceReportService). KPIs cover variance by account; the table breaks down by period; open reconciliations are excluded per the aggregation filter."
+				}
+			}
+		},
+		{
+			"id": "ReconciliationReportDetail",
+			"route": "/bookkeeping/reconciliations/:id/report",
+			"type": "detail",
+			"title": "Reconciliation Report",
+			"config": {
+				"register": "shillinq",
+				"schema": "ReconciliationReport",
+				"fields": [
+					{
+						"key": "reconId",
+						"label": "Reconciliation",
+						"type": "string"
+					},
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"type": "string"
+					},
+					{
+						"key": "matchedCount",
+						"label": "Matched",
+						"type": "number"
+					},
+					{
+						"key": "unmatchedGLCount",
+						"label": "Unmatched GL",
+						"type": "number"
+					},
+					{
+						"key": "unmatchedBankCount",
+						"label": "Unmatched Bank",
+						"type": "number"
+					},
+					{
+						"key": "totalVariance",
+						"label": "Total Variance (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "preparedBy",
+						"label": "Preparer",
+						"type": "string"
+					},
+					{
+						"key": "verifiedBy",
+						"label": "Verifier",
+						"type": "string"
+					},
+					{
+						"key": "signOffComment",
+						"label": "Sign-Off Comment",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": false,
+				"indexRoute": "Reconciliations",
+				"description": "REQ-REC-001 + REQ-REC-006 sealed audit artifact. Immutable once created.",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{

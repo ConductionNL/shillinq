@@ -7,12 +7,9 @@
 
 ## ADDED Requirements
 
-### REQ-RAP-001: Every financial and procurement register SHALL declare `x-openregister-audit: true` to enable OR's audit-trail-immutable abstraction
+### Requirement: REQ-RAP-001 — Every financial and procurement register SHALL declare `x-openregister-audit-trail.enabled: true` to enable OR's audit-trail-immutable abstraction
 
-Every register declared by T1 (`Account`, `GLTransaction`, `GLLine`, `JournalEntry`),
-T2 (`APInvoice`, `ARInvoice`, `PurchaseOrder`, `Tender`, `Bid`), and T3
-(`Payment`, `Receipt`, `ApprovalRequest`) MUST carry `x-openregister-audit: true`
-in its schema declaration in `lib/Settings/shillinq_register.json`.
+Every register declared by T1, T2, and T3 — including `Account`, `GLTransaction`, `GLLine`, `JournalEntry`, `APInvoice`, `ARInvoice`, `PurchaseOrder`, `Tender`, `Bid`, `Payment`, `Receipt`, `ApprovalRequest` — MUST carry `x-openregister-audit-trail.enabled: true` in its schema declaration in `lib/Settings/shillinq_register.json` (or the matching `lib/Settings/register.d/*.json` fragment per ADR-037).
 
 This switches on OR's built-in audit-trail-immutable abstraction per ADR-022 —
 every create / update / state-transition emits an audit event recorded in OR's
@@ -36,7 +33,7 @@ anti-pattern list ("Home-grown audit trails") this is review-blocking.
 - **THEN** each MUST carry `x-openregister-audit: true` (or the OR-canonical
   equivalent) in its schema metadata.
 
-### REQ-RAP-002: Shillinq SHALL expose a Signing Audit Trail manifest entry pre-filtered to signing decisions
+### Requirement: REQ-RAP-002 — Shillinq SHALL expose a Signing Audit Trail manifest entry pre-filtered to signing decisions
 
 `src/manifest.json` MUST declare a navigation entry (`Bookkeeping > Signing Audit Trail`)
 that opens OR's audit-log UI pre-filtered to document signing events. The UI MUST display:
@@ -67,7 +64,7 @@ approval (e.g. `signedBy`, `approvedBy`).
 - **THEN** the UI MUST list all three approval events chronologically with each
   approver's name and signature timestamp.
 
-### REQ-RAP-003: Shillinq SHALL expose a Destruction Report manifest entry for archived records
+### Requirement: REQ-RAP-003 — Shillinq SHALL expose a Destruction Report manifest entry for archived records
 
 `src/manifest.json` MUST declare a navigation entry (`Bookkeeping > Destruction Report`)
 that opens OR's audit-log UI pre-filtered to `status: marked-for-destruction` and
@@ -97,7 +94,7 @@ The report serves as legal proof of Archiefwet-compliant disposal for external a
 - **THEN** OR's verification API MUST report `valid: true`, proving the destruction
   was not tampered with.
 
-### REQ-RAP-004: Shillinq SHALL expose a Change History manifest entry showing before/after diffs
+### Requirement: REQ-RAP-004 — Shillinq SHALL expose a Change History manifest entry showing before/after diffs
 
 `src/manifest.json` MUST declare a navigation entry (`Bookkeeping > Change History`)
 that opens OR's audit-log UI pre-filtered to ALL mutations (create, update, state
@@ -124,11 +121,9 @@ transitions) for bookkeeping objects. The UI MUST display:
 - **THEN** the UI MUST list all four events (create, edit 1, edit 2, post) with
   actor + timestamp + field diffs for each change.
 
-### REQ-RAP-005: Shillinq SHALL expose a Compliance Export API for external auditors
+### Requirement: REQ-RAP-005 — Shillinq SHALL expose a Compliance Export API for external auditors
 
-`GET /index.php/apps/shillinq/api/audit/export` with query parameters
-`from=YYYY-MM-DD&to=YYYY-MM-DD&format=csv|xlsx|json&scope=all|subject-id`
-MUST query the OR audit trail, filter out PII fields, and render an export file.
+Shillinq MUST expose `GET /index.php/apps/shillinq/api/audit/export` with query parameters `from=YYYY-MM-DD&to=YYYY-MM-DD&format=csv|xlsx|json&scope=all|subject-id`; the endpoint MUST query the OR audit trail, filter out PII fields, and render an export file.
 
 **Export fields (PII-safe):**
 - `timestamp` (ISO-8601)
@@ -171,7 +166,7 @@ group membership.
   `action: export_request`, `actor: <caller>`, `timestamp`, `scope: all`,
   so an auditor can verify "who exported what, when".
 
-### REQ-RAP-006: Shillinq SHALL integrate with Nextcloud Activity app for decision lifecycle events
+### Requirement: REQ-RAP-006 — Shillinq SHALL integrate with Nextcloud Activity app for decision lifecycle events
 
 `lib/Services/*Service.php` MUST emit Nextcloud Activity events on approval /
 signing / rejection lifecycle transitions using `IActivityManager::publish()`.
@@ -206,7 +201,7 @@ Each event MUST include:
 - **WHEN** Staff B views the Activity feed
 - **THEN** the approval event MUST NOT appear (permission filtered by Nextcloud).
 
-### REQ-RAP-007: Bookkeeping detail pages SHALL surface an audit trail side panel via the manifest
+### Requirement: REQ-RAP-007 — Bookkeeping detail pages SHALL surface an audit trail side panel via the manifest
 
 The manifest entries for every bookkeeping `type: detail` page MUST declare a side
 panel that surfaces OR's audit log filtered to the detail page's object ID. The side
@@ -235,9 +230,9 @@ objects they have read access to.
 - **THEN** the side panel MUST show the edit with `amount: 5000 → 5500 EUR` and the
   actor who made the change.
 
-### REQ-RAP-008: Destruction schedule lifecycle transitions SHALL be audited and certified
+### Requirement: REQ-RAP-008 — Destruction schedule lifecycle transitions SHALL be audited and certified
 
-Records eligible for destruction (per Archiefwet, >7 years) follow a state machine:
+Records eligible for destruction (per Archiefwet, >7 years) MUST follow the state machine documented below; every transition MUST be recorded as an immutable OR audit event and MUST be approved by a `compliance-officer` role.
 
 ```
 status: active → status: marked-for-destruction → status: destruction-completed
@@ -270,11 +265,9 @@ the approval creates the destruction order which is itself an audited transition
   `lifecycle:marked-for-destruction→destruction-completed` with `actor: system` or
   the operator UUID, and the event's `eventHash` MUST be verifiable per ADR-022.
 
-### REQ-RAP-009: GDPR/AVG subject access requests SHALL be supported with PII-excluded audit export
+### Requirement: REQ-RAP-009 — GDPR/AVG subject access requests SHALL be supported with PII-excluded audit export
 
-When a data subject (employee, contractor, vendor) requests their personal data
-(article 15 GDPR), the system MUST export audit events where they are the actor
-or the subject, excluding direct PII fields (see REQ-RAP-005 exclusion list).
+When a data subject (employee, contractor, vendor) requests their personal data per GDPR article 15, the system MUST export audit events where they are the actor or the subject, excluding direct PII fields (see REQ-RAP-005 exclusion list).
 
 The export MUST timestamp when the request was made and who fulfilled it (for
 accountability per article 5(1)(a) "transparency").
@@ -294,9 +287,9 @@ accountability per article 5(1)(a) "transparency").
 - **THEN** the system MUST export events showing `lifecycle:*→destruction-completed`
   for any records linked to that vendor, with timestamp + actor + legal basis.
 
-### REQ-RAP-010: App-local audit tables, services, and loggers SHALL be explicitly forbidden
+### Requirement: REQ-RAP-010 — App-local audit tables, services, and loggers SHALL be explicitly forbidden
 
-Per ADR-022 anti-pattern enumeration, the following patterns are REVIEW-BLOCKING:
+Per ADR-022 anti-pattern enumeration, the following patterns are REVIEW-BLOCKING and MUST NOT be introduced:
 
 - NO `lib/Db/Audit*.php` Mapper classes
 - NO `lib/Service/Audit*.php` service classes

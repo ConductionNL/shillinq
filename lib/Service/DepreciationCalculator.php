@@ -50,6 +50,190 @@ namespace OCA\Shillinq\Service;
 class DepreciationCalculator
 {
     /**
+     * Fallback Float Precision (Dutch accounting standard) per REQ-FA-005.
+     *
+     * Used when Nextcloud System Settings is unavailable.
+     *
+     * @var int
+     */
+    public const FLOAT_PRECISION_FALLBACK = 2;
+
+
+    /**
+     * Round a value to the requested Float Precision (REQ-FA-005).
+     *
+     * Honours the Nextcloud System Settings Float Precision value when
+     * supplied; falls back to 2 decimal places (Dutch accounting standard)
+     * when null. Centralises the rounding so every code path that quotes
+     * REQ-FA-005 in the spec uses identical arithmetic.
+     *
+     * @param float    $value          Value to round.
+     * @param int|null $floatPrecision Float Precision (decimal places) or null for fallback.
+     *
+     * @return float Value rounded to the configured precision.
+     *
+     * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md#REQ-FA-005
+     */
+    public function applyFloatPrecision(float $value, ?int $floatPrecision=null): float
+    {
+        $precision = ($floatPrecision ?? self::FLOAT_PRECISION_FALLBACK);
+        if ($precision < 0) {
+            $precision = self::FLOAT_PRECISION_FALLBACK;
+        }
+
+        return round($value, $precision);
+
+    }//end applyFloatPrecision()
+
+
+    /**
+     * Yearly depreciation amount for a DepreciationSchedule period (REQ-FA-007).
+     *
+     * Computes the per-fiscal-year depreciation amount from the asset's
+     * depreciationMethod, acquisitionCost / residualValue / usefulLife,
+     * and (for declining-balance) declineRate. The result is rounded to
+     * the supplied Float Precision per REQ-FA-005, falling back to 2
+     * decimals when null. Drives the yearly depreciation-expense GL
+     * posting materialised by the FixedAssets ScheduledWorkflow.
+     *
+     * Worked examples (REQ-FA-001 / REQ-FA-007 spec scenarios):
+     *  - €25,000 acquisition, 5y linear, 0 residual: 25000 / 5 = €5,000/yr
+     *  - €200,000 acquisition, 20y linear, €20,000 residual:
+     *      (200000-20000)/20 = €9,000/yr
+     *  - €5,000 acquisition, declining 0.40 in year 1: €5,000 × 0.40 = €2,000
+     *
+     * @param array<string,mixed> $asset          FixedAsset record.
+     * @param string              $referenceDate  Reference date (Y-m-d) for declining-balance.
+     * @param int|null            $floatPrecision Float Precision (REQ-FA-005).
+     *
+     * @return float Yearly depreciation amount (>= 0, rounded).
+     *
+     * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md#REQ-FA-007
+     */
+    public function yearlyDepreciation(array $asset, string $referenceDate='', ?int $floatPrecision=null): float
+    {
+        $method = (string) ($asset['depreciationMethod'] ?? 'none');
+        if ($method === 'none') {
+            return $this->applyFloatPrecision(value: 0.0, floatPrecision: $floatPrecision);
+        }
+
+        $costCents     = $this->toCents(amount: ($asset['acquisitionCost'] ?? ($asset['purchaseCost'] ?? 0)));
+        $residualCents = $this->toCents(amount: ($asset['residualValue'] ?? 0));
+
+        // Useful-life lookup honours both REQ-FA-002 aliases (usefulLifeYears
+        // / usefulLifeMonths). When both are present they MUST agree to
+        // within 1-month rounding per the schema alias contract; the months
+        // form wins as the canonical storage shape.
+        $lifeMonths = (int) ($asset['usefulLifeMonths'] ?? 0);
+        if ($lifeMonths <= 0) {
+            $lifeYears = (int) ($asset['usefulLifeYears'] ?? 0);
+            if ($lifeYears > 0) {
+                $lifeMonths = ($lifeYears * 12);
+            }
+        }
+
+        if ($method === 'linear') {
+            if ($lifeMonths <= 0) {
+                return $this->applyFloatPrecision(value: 0.0, floatPrecision: $floatPrecision);
+            }
+
+            $depreciableCents = max(0, ($costCents - $residualCents));
+            $yearlyCents      = (int) round(($depreciableCents * 12) / $lifeMonths);
+            $yearly           = ($yearlyCents / 100);
+            return $this->applyFloatPrecision(value: $yearly, floatPrecision: $floatPrecision);
+        }
+
+        if ($method === 'declining-balance' || $method === 'degressive') {
+            $rate = (float) ($asset['declineRate'] ?? ($asset['degressiveRate'] ?? 0));
+            if ($rate <= 0.0) {
+                return $this->applyFloatPrecision(value: 0.0, floatPrecision: $floatPrecision);
+            }
+
+            $bookValue      = $this->currentBookValue(asset: $asset, referenceDate: $referenceDate);
+            $bookValueCents = $this->toCents(amount: $bookValue);
+            $yearlyCents    = (int) round($bookValueCents * $rate);
+            $yearly         = ($yearlyCents / 100);
+            return $this->applyFloatPrecision(value: $yearly, floatPrecision: $floatPrecision);
+        }
+
+        return $this->applyFloatPrecision(value: 0.0, floatPrecision: $floatPrecision);
+
+    }//end yearlyDepreciation()
+
+
+    /**
+     * Gain/loss on disposal at retirement (REQ-FA-008).
+     *
+     * Positive return = gain on disposal (salvage proceeds exceed net book
+     * value), to be credited to the gain-on-disposal P&L account. Negative
+     * return = loss on disposal (book value exceeds proceeds), to be
+     * debited to the loss-on-disposal P&L account. Zero return = clean
+     * retirement (no P&L impact beyond removing the asset and its
+     * accumulated depreciation from the balance sheet).
+     *
+     * @param array<string,mixed> $asset           FixedAsset record (including any salvageProceeds).
+     * @param string              $referenceDate   Reference date for the book-value snapshot.
+     * @param int|null            $floatPrecision  Float Precision for the rounding (REQ-FA-005).
+     *
+     * @return float Gain (positive) or loss (negative) on disposal.
+     *
+     * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md#REQ-FA-008
+     */
+    public function gainOrLossOnDisposal(array $asset, string $referenceDate='', ?int $floatPrecision=null): float
+    {
+        $proceeds  = (float) ($asset['salvageProceeds'] ?? ($asset['disposalProceeds'] ?? 0));
+        $bookValue = $this->currentBookValue(asset: $asset, referenceDate: $referenceDate);
+
+        return $this->applyFloatPrecision(value: ($proceeds - $bookValue), floatPrecision: $floatPrecision);
+
+    }//end gainOrLossOnDisposal()
+
+
+    /**
+     * Compute the proportional split allocations for an internal transfer (REQ-FA-006).
+     *
+     * For a `splitTransfer` action, returns a paired structure showing the
+     * original asset's reduced amounts and the split-off asset's new
+     * amounts, allocating purchaseCost and accumulatedDepreciation
+     * proportionally by the supplied splitPercentage. Both records remain
+     * on the same balance-sheet account; NO GL posting is required.
+     *
+     * @param array<string,mixed> $asset           Original FixedAsset.
+     * @param float               $splitPercentage Fraction (0..1) of the asset transferred (e.g. 0.30 for 30%).
+     * @param int|null            $floatPrecision  Float Precision (REQ-FA-005).
+     *
+     * @return array{original:array{purchaseCost:float, residualValue:float},split:array{purchaseCost:float, residualValue:float, transferSourceAssetRef:?string}}
+     *
+     * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md#REQ-FA-006
+     */
+    public function splitTransferAllocations(array $asset, float $splitPercentage, ?int $floatPrecision=null): array
+    {
+        $clamped = max(0.0, min(1.0, $splitPercentage));
+        $cost    = (float) ($asset['acquisitionCost'] ?? ($asset['purchaseCost'] ?? 0));
+        $residual = (float) ($asset['residualValue'] ?? 0);
+
+        $splitCost     = $this->applyFloatPrecision(value: ($cost * $clamped), floatPrecision: $floatPrecision);
+        $splitResidual = $this->applyFloatPrecision(value: ($residual * $clamped), floatPrecision: $floatPrecision);
+
+        $originalCost     = $this->applyFloatPrecision(value: ($cost - $splitCost), floatPrecision: $floatPrecision);
+        $originalResidual = $this->applyFloatPrecision(value: ($residual - $splitResidual), floatPrecision: $floatPrecision);
+
+        return [
+            'original' => [
+                'purchaseCost'   => $originalCost,
+                'residualValue'  => $originalResidual,
+            ],
+            'split' => [
+                'purchaseCost'           => $splitCost,
+                'residualValue'          => $splitResidual,
+                'transferSourceAssetRef' => (isset($asset['id']) === true ? (string) $asset['id'] : null),
+            ],
+        ];
+
+    }//end splitTransferAllocations()
+
+
+    /**
      * Convert a money amount to integer cents.
      *
      * @param mixed $amount Money amount (float|int|numeric-string|null).

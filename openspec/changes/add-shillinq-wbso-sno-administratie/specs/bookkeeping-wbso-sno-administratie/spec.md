@@ -7,7 +7,9 @@
 
 ## ADDED Requirements
 
-### REQ-WBSO-001: The system SHALL declare an `SoProject` register for S&O-projecten with an RvO link
+### Requirement: REQ-WBSO-001 — SoProject register
+
+The system SHALL declare an `SoProject` register for S&O-projecten with an RvO link.
 
 Per Wet vermindering afdracht loonbelasting hoofdstuk VA (WBSO),
 S&O-werk MUST be administered per project + per employee. The
@@ -28,7 +30,9 @@ register — no PHP S&O service.
 - **THEN** the save MUST succeed; **AND** the project MUST be
   referenceable from the hours administration (REQ-WBSO-002).
 
-### REQ-WBSO-002: The system SHALL declare an `SoUrenStaat` register for per-employee per-week per-project hours administration
+### Requirement: REQ-WBSO-002 — SoUrenStaat register with approval-workflow lifecycle
+
+The system SHALL declare an `SoUrenStaat` register for per-employee per-week per-project hours administration with an `x-openregister-lifecycle` `draft → goedgekeurd → afgesloten` and an approval-workflow on the `goedgekeurd` transition.
 
 The `SoUrenStaat` register (schema.org type: `schema:Action`)
 MUST declare records with fields: `soProjectId` (FK to
@@ -50,7 +54,9 @@ ADR-022 on the `goedgekeurd` transition.
 - **THEN** the transition MUST be refused ("lifecycle
   precondition: state must be goedgekeurd").
 
-### REQ-WBSO-003: The system SHALL produce an RvO mededeling per quarter as a docudesk document
+### Requirement: REQ-WBSO-003 — Quarterly RvO mededeling docudesk template
+
+The system SHALL produce a quarterly RvO mededeling as a docudesk document populated from an `x-openregister-aggregations` block that sums `SoUrenStaat` records (state ≠ `draft`) per quarter per project.
 
 Per RvO WBSO regulation, a mededeling of actually realised S&O
 hours + loonkosten per quarter MUST be reported to RvO. The
@@ -67,7 +73,9 @@ project. Per ADR-031, no PHP mededeling renderer.
 - **THEN** the docudesk document MUST show the total goedgekeurde
   hours per project.
 
-### REQ-WBSO-004: The system SHALL produce an RvO kwartaalrapportage + jaarrapport via docudesk
+### Requirement: REQ-WBSO-004 — Kwartaalrapportage + jaarrapport docudesk templates
+
+The system SHALL produce kwartaalrapportage and jaarrapport docudesk documents from the same S&O-hours aggregation; templates MUST follow RvO-conform layout and the rendering MUST go through docudesk (no app-local renderer).
 
 In addition to the mededeling, a kwartaalrapportage (operational
 progress per project) and a jaarrapport (annual close +
@@ -82,7 +90,9 @@ MUST go through docudesk; no app-local renderer.
 - **THEN** the document MUST show the aggregate totals identical
   to the sum of the four kwartaalmededelingen.
 
-### REQ-WBSO-005: RvO submissions SHALL ride openconnector sources — no app-local HTTP
+### Requirement: REQ-WBSO-005 — RvO submissions ride openconnector sources
+
+Every RvO submission (mededeling, kwartaalrapportage, jaarrapport) SHALL flow through an openconnector source row per ADR-019; shillinq MUST NOT ship an `lib/Service/RvoSubmissieClient.php` or any other app-local HTTP client for RvO.
 
 Per ADR-019, every RvO submission (mededeling, kwartaalrapportage,
 jaarrapport) MUST go through an openconnector source row.
@@ -98,7 +108,9 @@ docudesk template output-channel declaration. No
   source; **AND** the RvO response MUST be recorded in the
   audit-trail-immutable per ADR-022.
 
-### REQ-WBSO-006: The afdrachtvermindering loonheffing SHALL be computed declaratively from S&O-uren × S&O-uurloon
+### Requirement: REQ-WBSO-006 — Declarative afdrachtvermindering loonheffing calculation
+
+The afdrachtvermindering loonheffing SHALL be computed by an `x-openregister-calculations` block reading `SoUrenStaat.aantalUren × medewerker.sEnOUurloon × actueelAfdrachtPercentage` (RvO 2026 seed: 32% standard, 40% starters); the projected value MUST be shown side-by-side with the authoritative RvO mededeling value, with a delta reconciliation warning.
 
 The afdrachtvermindering loonheffing per loonaangifte period MUST
 be an `x-openregister-calculations` block that computes
@@ -118,7 +130,9 @@ show both values for reconciliation.
   reconciliation warning MUST surface the €1 500 delta for the
   loonheffing administration.
 
-### REQ-WBSO-007: WBSO administration SHALL be reachable through a feature-flag-controlled manifest navigation entry
+### Requirement: REQ-WBSO-007 — Feature-flag-controlled WBSO manifest navigation
+
+The WBSO administration SHALL be reachable through a `featureFlags.mkb-wbso`-controlled menu entry under `Bookkeeping > WBSO` with sub-pages for Projecten, Uren-staten, Mededelingen + rapportages, and Afdrachtvermindering; per ADR-024 Tier-4 no bespoke Vue files MAY be authored.
 
 `src/manifest.json` MUST declare a feature-flag-controlled menu
 entry (`featureFlags.mkb-wbso`) under `Bookkeeping > WBSO` with

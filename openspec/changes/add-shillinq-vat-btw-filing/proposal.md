@@ -29,7 +29,7 @@ repair-step seeding.
 from posted GL lines) and T2 `bookkeeping-period-close` (period
 boundaries define aangifte windows).
 
-## Motivation
+## Why
 
 Every Dutch operator hitting "go live" with Shillinq immediately
 needs to file BTW (kwartaal or maand), to file ICP-opgaaf for

@@ -112,6 +112,32 @@ shape; matches Exact / AFAS / Twinfield.
 
 No service class authored in this envelope.
 
+### Resolution: two composed aggregations on `TrialBalance` (recorded 2026-06-09)
+
+The one-vs-three question opened by Risk 1 was resolved during the sibling
+`bookkeeping-trial-balance` implementation cycle as **two composed
+aggregations on the existing `TrialBalance` snapshot schema** — not three,
+and not on `GLLine` directly. The two are:
+
+- `trialBalanceTotals` — period-wide debit/credit roll-up + `isBalanced`
+  check (REQ-TB-003 invariant).
+- `trialBalanceByAccount` — per-account roll-up joined to the `Account`
+  register for `accountNumber` / `name` / `accountType` display columns
+  (REQ-TB-002 by-account shape).
+
+Opening / movement / closing buckets are derived in the renderer (and in
+`lib/Service/TrialBalanceCalculator.php` for the imperative fallback path
+the sibling kept for the ADR-022-compatible reuse of the existing
+single-row `TrialBalance` snapshot). The sibling's `specs.md` documents
+this deviation from the strict "no service" reading of ADR-031 as an
+explicit ADR-022 trade-off; both ADRs remain in tension here, and the
+chosen path is the one the bookkeeper-persona review accepted.
+
+The spec stays **shape-neutral** — REQ-TB-001 says "one or composed", and
+"two composed" satisfies it. The Risks table entry "OR aggregation engine
+cannot express buckets in one query" can be considered resolved (engine
+supports composed queries; sibling uses them).
+
 ## Seed Data
 
 None. The trial balance is purely computed; no seeds.

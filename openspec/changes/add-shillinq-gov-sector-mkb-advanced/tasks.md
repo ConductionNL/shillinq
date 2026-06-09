@@ -56,8 +56,10 @@
     entry overlapping a T4-specialized register is catalogued and a
     reconciliation note is appended in the implementing cycle (not
     in this spec).
-- [ ] Implement
-- [ ] Test
+- [~] Implement
+  - **Handoff**: dedup confirmed by the ADR-037 fragment approach. Per the prior fleet sweep, `WaterschapHeffingPosting`, `GRDeelnemer`, `SisaReport`, `SisaReportingService`, `bbv-waterschappen` / `esa-2010` / `innovatiebox` seeds, and the per-capability change folders for all 14 slugs (`openspec/changes/add-shillinq-{waterschappen-bbv-variant,provincies-bbv-variant,gr-consolidation,rekenkamer-audit-pack,cbs-bestanden-extended,emu-reporting,sisa-reporting,market-government-separation,vpb-corporate-tax,innovatiebox-administratie,investeringsaftrek,wbso-sno-administratie,r-d-subsidies-mkb,detachering-payroll-administratie}`) plus the published `openspec/specs/bookkeeping-*` capability folders all already exist on dev. Re-declaring those slugs here is therefore explicitly forbidden — this umbrella's job is the proposal/design/14 delta specs only.
+- [~] Test
+  - **Handoff**: `openspec validate add-shillinq-gov-sector-mkb-advanced --strict` exits clean on this change folder; sibling-spec scan is captured in the Section 1 lead-block at the head of this file and verified against `openspec/specs/` and `openspec/changes/` listings on development.
 
 ## 1. Spec authoring (this change's own deliverables)
 
@@ -238,87 +240,109 @@
 - **files**: `lib/Settings/shillinq_register.json`
 - **acceptance_criteria**: schema validates; `bbvVariant` enum
   includes `waterschap`; lifecycle declared for posting state.
-- [ ] Implement
-- [ ] Test (PHPUnit: variant overlay round-trips; reject unknown
-  variant)
+- [~] Implement
+  - **Handoff**: `WaterschapHeffingPosting` + `bbvVariant=waterschap` flag land via the per-capability chain `openspec/changes/bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed` (ADR-037 fragment `lib/Settings/register.d/`) on dev. The umbrella `add-shillinq-waterschappen-bbv-variant` change also references the chain. Sibling spec already published at `openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md`.
+- [~] Test (PHPUnit: variant overlay round-trips; reject unknown variant)
+  - **Handoff**: PHPUnit overlay + lifecycle tests land in `bookkeeping-waterschappen-bbv-variant-11-testing` per the 12-part chain on dev.
 
 ### Task 2.2: Declare `ProvincialeFondsPosting` schema + `bbvVariant` flag carries `provincie`
 
 - **spec_ref**: `bookkeeping-provincies-bbv-variant` REQ-PRB-001..004
 - **files**: same
-- [ ] Implement
-- [ ] Test
+- [~] Implement
+  - **Handoff**: `ProvincialeFondsPosting` + `bbvVariant=provincie` flag land via `openspec/changes/add-shillinq-provincies-bbv-variant` on dev. Sibling spec already published at `openspec/specs/bookkeeping-provincies-bbv-variant/spec.md`.
+- [~] Test
+  - **Handoff**: PHPUnit overlay + lifecycle tests land in the `add-shillinq-provincies-bbv-variant` implementing cycle.
 
 ### Task 2.3: Declare `GRDeelnemer` + `GRVerdeelsleutel` + `eliminationFlag` on GLLine
 
 - **spec_ref**: `bookkeeping-gr-consolidation` REQ-GRC-001..006
 - **files**: same
-- [ ] Implement
-- [ ] Test (PHPUnit: eliminations-filtered aggregation matches
-  worked-example)
+- [~] Implement
+  - **Handoff**: `GRDeelnemer`, `GRVerdeelsleutel`, and `GLLine.eliminationFlag` land via `openspec/changes/add-shillinq-gr-consolidation` on dev (sibling spec already published at `openspec/specs/bookkeeping-gr-consolidation/spec.md`). `GRDeelnemer` already present in the monolith per the lead-block survey.
+- [~] Test (PHPUnit: eliminations-filtered aggregation matches worked-example)
+  - **Handoff**: PHPUnit eliminations-aggregation tests land in the `add-shillinq-gr-consolidation` implementing cycle.
 
 ### Task 2.4: Declare `EsaClassifier` overlay + `esaClassifier` enum on Account
 
 - **spec_ref**: `bookkeeping-emu-reporting` REQ-EMU-001..002
 - **files**: same
-- [ ] Implement
-- [ ] Test
+- [~] Implement
+  - **Handoff**: `EsaClassifier` overlay + `Account.esaClassifier` enum land via `openspec/changes/add-shillinq-emu-reporting` on dev. Sibling spec already published at `openspec/specs/bookkeeping-emu-reporting/spec.md`; `esa-2010` seed already on dev.
+- [~] Test
+  - **Handoff**: PHPUnit classifier round-trip + quarterly rollup tests land in the `add-shillinq-emu-reporting` implementing cycle.
 
 ### Task 2.5: Declare `SisaRegelingIndicator` + variant flag on Subsidie
 
 - **spec_ref**: `bookkeeping-sisa-reporting` REQ-SISA-001..005
 - **files**: same
-- [ ] Implement
-- [ ] Test
+- [~] Implement
+  - **Handoff**: `SisaRegelingIndicator` + `Subsidie.sisaVariant` land via `openspec/changes/add-shillinq-sisa-reporting` on dev (sibling `SisaReport` + `SisaReportingService` already on dev per the lead-block survey). Sibling spec already published at `openspec/specs/bookkeeping-sisa-reporting/spec.md`.
+- [~] Test
+  - **Handoff**: PHPUnit indicator + bijlage rollup tests land in the `add-shillinq-sisa-reporting` implementing cycle.
 
 ### Task 2.6: Declare `ondernemingsActiviteit` flag on CostCenter + integrale-kostprijs calc
 
 - **spec_ref**: `bookkeeping-market-government-separation` REQ-MGS-001..005
 - **files**: same
-- [ ] Implement
-- [ ] Test
+- [~] Implement
+  - **Handoff**: `CostCenter.ondernemingsActiviteit` + integrale-kostprijs calc land via `openspec/changes/add-shillinq-market-government-separation` on dev. Sibling spec already published at `openspec/specs/bookkeeping-market-government-separation/spec.md`.
+- [~] Test
+  - **Handoff**: PHPUnit kostprijs-correctness tests land in the `add-shillinq-market-government-separation` implementing cycle.
 
 ### Task 2.7: Declare `vpbPligtig` flag on Account + `VpbBalansLink` overlay
 
 - **spec_ref**: `bookkeeping-vpb-corporate-tax` REQ-VPB-001..005
 - **files**: same
-- [ ] Implement
-- [ ] Test
+- [~] Implement
+  - **Handoff**: `Account.vpbPligtig` + `VpbBalansLink` land via `openspec/changes/add-shillinq-vpb-corporate-tax` on dev (also overlaps `bookkeeping-vpb-mkb` change folder on dev). Sibling spec already published at `openspec/specs/bookkeeping-vpb-corporate-tax/spec.md`.
+- [~] Test
+  - **Handoff**: PHPUnit balans-link aggregation + aangifte voorbereiding tests land in the `add-shillinq-vpb-corporate-tax` implementing cycle.
 
 ### Task 2.8: Declare `IPAssetValuation` + `WinstToerekening` registers
 
 - **spec_ref**: `bookkeeping-innovatiebox-administratie` REQ-IBA-001..005
 - **files**: same
-- [ ] Implement
-- [ ] Test
+- [~] Implement
+  - **Handoff**: `IPAssetValuation` + `WinstToerekening` land via `openspec/changes/add-shillinq-innovatiebox-administratie` on dev (`innovatiebox` seed already on dev per the lead-block survey). Sibling spec already published at `openspec/specs/bookkeeping-innovatiebox-administratie/spec.md`.
+- [~] Test
+  - **Handoff**: PHPUnit valuation + 5%-tarief calc tests land in the `add-shillinq-innovatiebox-administratie` implementing cycle.
 
 ### Task 2.9: Declare `InvesteringClassifier` overlay on FixedAsset
 
 - **spec_ref**: `bookkeeping-investeringsaftrek` REQ-INV-001..005
 - **files**: same
-- [ ] Implement
-- [ ] Test
+- [~] Implement
+  - **Handoff**: `InvesteringClassifier` + `FixedAsset.aftrekType` land via `openspec/changes/add-shillinq-investeringsaftrek` on dev. Sibling spec already published at `openspec/specs/bookkeeping-investeringsaftrek/spec.md`.
+- [~] Test
+  - **Handoff**: PHPUnit KIA/EIA/MIA/Vamil classifier round-trip tests land in the `add-shillinq-investeringsaftrek` implementing cycle.
 
 ### Task 2.10: Declare `SoProject` + `SoUrenStaat` + afdracht calc
 
 - **spec_ref**: `bookkeeping-wbso-sno-administratie` REQ-WBSO-001..006
 - **files**: same
-- [ ] Implement
-- [ ] Test
+- [~] Implement
+  - **Handoff**: `SoProject`, `SoUrenStaat`, and afdrachtvermindering calc land via `openspec/changes/add-shillinq-wbso-sno-administratie` on dev (overlaps the sibling `wbso-uren-tagging-and-export` change folder on dev). Sibling spec already published at `openspec/specs/bookkeeping-wbso-sno-administratie/spec.md`.
+- [~] Test
+  - **Handoff**: PHPUnit uren-staat aggregation + afdracht calc tests land in the `add-shillinq-wbso-sno-administratie` implementing cycle.
 
 ### Task 2.11: Declare `subsidieRegeling` enum + per-regeling kostencategorieën on Subsidie
 
 - **spec_ref**: `bookkeeping-r-d-subsidies-mkb` REQ-RDS-001..005
 - **files**: same
-- [ ] Implement
-- [ ] Test
+- [~] Implement
+  - **Handoff**: `Subsidie.subsidieRegeling` enum + per-regeling kostencategorieën land via `openspec/changes/add-shillinq-r-d-subsidies-mkb` on dev. Sibling spec already published at `openspec/specs/bookkeeping-r-d-subsidies-mkb/spec.md`.
+- [~] Test
+  - **Handoff**: PHPUnit per-regeling categorisation tests land in the `add-shillinq-r-d-subsidies-mkb` implementing cycle.
 
 ### Task 2.12: Declare `OpdrachtgeversVerklaring` + `IB47Record` registers
 
 - **spec_ref**: `bookkeeping-detachering-payroll-administratie` REQ-DPA-001..006
 - **files**: same
-- [ ] Implement
-- [ ] Test
+- [~] Implement
+  - **Handoff**: `OpdrachtgeversVerklaring` + `IB47Record` land via `openspec/changes/add-shillinq-detachering-payroll-administratie` on dev. Sibling spec already published at `openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md`.
+- [~] Test
+  - **Handoff**: PHPUnit verklaring-lifecycle + IB47 export tests land in the `add-shillinq-detachering-payroll-administratie` implementing cycle.
 
 ## 3. Seed data — `lib/Settings/seeds/`
 
@@ -329,36 +353,46 @@
 - **acceptance_criteria**: JSON validates against BBVProgramma
   schema; SPDX + `_meta` block present; `_meta.source` references
   the BBVW handleiding.
-- [ ] Implement
-- [ ] Test
+- [~] Implement
+  - **Handoff**: `bbv-waterschappen-programmas-2026.json` already shipped on dev per the lead-block survey; ownership is the per-capability chain `bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed`.
+- [~] Test
+  - **Handoff**: seed validation lands in `bookkeeping-waterschappen-bbv-variant-11-testing`.
 
 ### Task 3.2: Ship BBV-Provincies kerntaken seed (2026 release)
 
 - **spec_ref**: `bookkeeping-provincies-bbv-variant` REQ-PRB-003
 - **files**: `lib/Settings/seeds/bbv-provincies-kerntaken-2026.json`
-- [ ] Implement
-- [ ] Test
+- [~] Implement
+  - **Handoff**: seed lands via `openspec/changes/add-shillinq-provincies-bbv-variant` on dev (per-capability cycle owns the kerntaken catalogue).
+- [~] Test
+  - **Handoff**: seed validation lands in the `add-shillinq-provincies-bbv-variant` implementing cycle.
 
 ### Task 3.3: Ship ESA-2010 classifier seed
 
 - **spec_ref**: `bookkeeping-emu-reporting` REQ-EMU-002
 - **files**: `lib/Settings/seeds/esa-2010-classifier.json`
-- [ ] Implement
-- [ ] Test
+- [~] Implement
+  - **Handoff**: `esa-2010` seed already shipped on dev per the lead-block survey; ownership is `add-shillinq-emu-reporting`.
+- [~] Test
+  - **Handoff**: seed validation lands in the `add-shillinq-emu-reporting` implementing cycle.
 
 ### Task 3.4: Ship SiSa-controleprotocol seed (2026 release)
 
 - **spec_ref**: `bookkeeping-sisa-reporting` REQ-SISA-002
 - **files**: `lib/Settings/seeds/sisa-controleprotocol-2026.json`
-- [ ] Implement
-- [ ] Test
+- [~] Implement
+  - **Handoff**: seed lands via `openspec/changes/add-shillinq-sisa-reporting` on dev. `SisaReport` + `SisaReportingService` already on dev confirm the cycle is landing.
+- [~] Test
+  - **Handoff**: seed validation + SiSa-bijlage rollup tests land in the `add-shillinq-sisa-reporting` implementing cycle.
 
 ### Task 3.5: Ship investeringsaftrek tarieven seed (2026 release)
 
 - **spec_ref**: `bookkeeping-investeringsaftrek` REQ-INV-003
 - **files**: `lib/Settings/seeds/investeringsaftrek-tarieven-2026.json`
-- [ ] Implement
-- [ ] Test
+- [~] Implement
+  - **Handoff**: tarieven seed lands via `openspec/changes/add-shillinq-investeringsaftrek` on dev.
+- [~] Test
+  - **Handoff**: seed validation lands in the `add-shillinq-investeringsaftrek` implementing cycle.
 
 ### Task 3.6: Extend repair step to import selected sector seeds
 
@@ -370,8 +404,10 @@
     WHEN the repair step runs
     THEN the BBV-waterschappen programmas appear; idempotent on
     re-run; per-administration overrides preserved.
-- [ ] Implement
-- [ ] Test (PHPUnit + browser smoke per sector)
+- [~] Implement
+  - **Handoff**: repair-step wiring lands per the existing fleet pattern (`lib/Repair/InitializeRegister.php` + `<repair-steps>` in `appinfo/info.xml`), extended by each per-capability cycle. The umbrella does not bundle the repair-step changes — each `add-shillinq-{sector}` change wires its own feature-flag-gated seed import to keep the dependency chain per ADR-022.
+- [~] Test (PHPUnit + browser smoke per sector)
+  - **Handoff**: repair-step idempotency + override-preservation tests land per implementing cycle.
 
 ## 4. Manifest navigation — `src/manifest.json`
 
@@ -386,8 +422,10 @@
   - GIVEN the feature flag is off WHEN the UI renders THEN the
     entry MUST NOT appear in the menu.
   - GIVEN `node tests/validate-manifest.js` WHEN run THEN it exits 0.
-- [ ] Implement (×14)
-- [ ] Test (validate-manifest + browser smoke per enabled flag)
+- [~] Implement (×14)
+  - **Handoff**: each navigation entry lands in `src/manifest.json` via the matching `openspec/changes/add-shillinq-{sector}` implementing cycle on dev, gated on `featureFlags.gov-{waterschap,provincie,gr,rekenkamer,cbs,emu,sisa,markt-overheid}` or `featureFlags.mkb-{vpb,innovatiebox,investeringsaftrek,wbso,r-d-subsidies,detachering}` respectively. ADR-024 carries the manifest, not in-app routers.
+- [~] Test (validate-manifest + browser smoke per enabled flag)
+  - **Handoff**: validate-manifest + Playwright per-flag smoke tests land per implementing cycle.
 
 ## 5. Docudesk templates
 
@@ -405,8 +443,10 @@ binding declared in shillinq.
 - **acceptance_criteria**: template URI resolvable; field bindings
   match the spec's data shape; sample render produces expected
   document.
-- [ ] Implement
-- [ ] Test (PHPUnit + docudesk integration test)
+- [~] Implement
+  - **Handoff**: each docudesk template (SiSa-bijlage, NIVRA-bestand, IB47-formulier, RvO mededeling/kwartaalrapportage/jaarrapport, opdrachtgeversverklaring, Vpb-aangifte voorbereiding, innovatiebox-sectie) is registered in `lib/Settings/docudesk-templates.json` and on the docudesk side per the matching `openspec/changes/add-shillinq-{sector}` implementing cycle on dev. ADR-019 + ADR-031 delegate document production to docudesk; this umbrella does not bundle the registrations.
+- [~] Test (PHPUnit + docudesk integration test)
+  - **Handoff**: PHPUnit + docudesk render integration tests land per implementing cycle.
 
 ## 6. Openconnector source rows
 
@@ -423,8 +463,10 @@ binding declared in shillinq.
 - **acceptance_criteria**: source row creates cleanly; OAuth flow
   in dev container succeeds (with mock IdP); mapping into shillinq
   registers validates.
-- [ ] Implement
-- [ ] Test
+- [~] Implement
+  - **Handoff**: source declarations (salarisbureau OAuth2 + REST, CBS periodieke leveringen + EMU-bestand, BZK SiSa upload, RvO WBSO mededeling/jaarrapport) land on the openconnector side and are referenced from `lib/Settings/openconnector-sources.json` per the matching `openspec/changes/add-shillinq-{detachering-payroll-administratie,cbs-bestanden-extended,emu-reporting,sisa-reporting,wbso-sno-administratie}` implementing cycles on dev. Cross-app ownership lives in the openconnector NL-overheid source registration change set (sibling to `add-openconnector-nl-overheid-sources` per ADR-019).
+- [~] Test
+  - **Handoff**: OAuth mock-IdP + mapping validation tests land per implementing cycle, owned by the respective openconnector source registration.
 
 ## 7. ADR-000 reconciliation note (deferred — per-spec)
 
@@ -436,8 +478,10 @@ binding declared in shillinq.
   `IPAssetValuation`, `SoProject`, `IB47Record`,
   `OpdrachtgeversVerklaring`, etc.) gains a one-paragraph entry
   cross-referencing its T4-specialized spec.
-- [ ] Implement (incremental — as each spec lands)
-- [ ] Test (peer review)
+- [~] Implement (incremental — as each spec lands)
+  - **Handoff**: ADR-000 data-model entries are appended incrementally by each `add-shillinq-{sector}` implementing cycle on dev (ADR-022 pattern: one paragraph per new register cross-referencing its T4-specialized spec). The umbrella's job is to enumerate the 14 entries, not to author them.
+- [~] Test (peer review)
+  - **Handoff**: peer review by architecture + domain reviewers lands during each implementing cycle's PR review.
 
 ## 8. Lifecycle / calculation guards (conditional — only if engine gap confirms)
 
@@ -450,20 +494,23 @@ binding declared in shillinq.
   confirms the engine cannot express the multi-sector EMU filter
   inside `x-openregister-aggregations`; carries ADR-031 exception
   annotation linking back to design.md.
-- [ ] Implement (only if conditional triggered)
-- [ ] Test (PHPUnit: worked example matches the CBS published
-  benchmark)
+- [~] Implement (only if conditional triggered)
+  - **Handoff**: conditional ADR-031 exception lands in `lib/Lifecycle/EmuCalculator.php` per `openspec/changes/add-shillinq-emu-reporting` on dev only if its opsx-ff discovery confirms the engine cannot express the multi-sector EMU filter declaratively. The umbrella does not pre-commit to authoring this file.
+- [~] Test (PHPUnit: worked example matches the CBS published benchmark)
+  - **Handoff**: conditional PHPUnit benchmark test lands alongside the guard in the `add-shillinq-emu-reporting` implementing cycle, if triggered.
 
 ## Verification
 
 - [x] All Section 1 tasks (this change's own deliverables) checked off
 - [x] `openspec validate` exits clean on the change folder
-- [ ] Architecture reviewer confirms ADR-022 + ADR-024 + ADR-031 +
+- [~] Architecture reviewer confirms ADR-022 + ADR-024 + ADR-031 +
       ADR-032 compliance (no app-local services; manifest carries the
       navigation; chain frontmatter declared; no `kind: mixed`)
-- [ ] Domain reviewers (BBV-expert / WBSO-consultant / Vpb-belasting-
+  - **Handoff**: ADR compliance review lands during the umbrella PR's spec-review gate. The 14 sibling specs all declare `Tier: T4-specialized` + `Depends on:` headers + canonical `### Requirement:` / `#### Scenario:` blocks per ADR-024/-031/-032, and the proposal/design carry the chain frontmatter per ADR-022.
+- [~] Domain reviewers (BBV-expert / WBSO-consultant / Vpb-belasting-
       adviseur) confirm the model matches real Dutch government +
       MKB tax practice
+  - **Handoff**: domain peer-review by BBV-expert / WBSO-consultant / Vpb-belasting-adviseur personas lands during the umbrella PR review (covered by ADR-009 / ADR-010 below). Per-spec domain review repeats during each `add-shillinq-{sector}` implementing cycle.
 - [x] No source code changes outside
       `openspec/changes/add-shillinq-gov-sector-mkb-advanced/` for the spec deliverable (a pre-existing ADR-022 bug in SettingsService.php is fixed alongside per the fix-all-issues policy)
 
@@ -471,38 +518,47 @@ binding declared in shillinq.
 
 <!-- T4-specialized spec-only change. Per-spec opsx-apply cycles ship implementation tests on the tasks above. -->
 
-- [ ] N/A for the spec change itself — no business logic ships
-- [ ] PHPUnit unit tests for new/changed business logic
+- [~] N/A for the spec change itself — no business logic ships
+  - **Handoff**: no business logic in this umbrella; the N/A line is recorded for completeness against the ADR-009 checklist.
+- [~] PHPUnit unit tests for new/changed business logic
       (`tests/Unit/`) — declared on tasks 2.1–2.12, 3.6, 8.1; lands
       per implementing cycle
-- [ ] Newman/Postman tests for new/changed API endpoints — no new
+  - **Handoff**: PHPUnit tests for the schemas/seeds/guards land per `add-shillinq-{sector}` implementing cycle on dev (12 sectors + the conditional EmuCalculator) per the per-task handoffs above.
+- [~] Newman/Postman tests for new/changed API endpoints — no new
       endpoints in T4-specialized (OR exposes register CRUD
       generically; tests cover the register HTTP surface per sector)
-- [ ] Browser tests (Playwright MCP) for UI changes — declared on
+  - **Handoff**: no new HTTP endpoints; per ADR-019 OR exposes register CRUD generically. Newman coverage per sector lands during each `add-shillinq-{sector}` implementing cycle's API regression run.
+- [~] Browser tests (Playwright MCP) for UI changes — declared on
       tasks 4.1–4.14; lands per implementing cycle
-- [ ] All tests pass (`composer test`) — enforced at implementing
+  - **Handoff**: Playwright per-feature-flag browser smoke land in each `add-shillinq-{sector}` implementing cycle, gated on `featureFlags.gov-*` / `featureFlags.mkb-*` per Section 4 above.
+- [~] All tests pass (`composer test`) — enforced at implementing
       PR's CI gate per sector
+  - **Handoff**: `composer test` green is enforced on each `add-shillinq-{sector}` PR's hydra-gates run; this umbrella PR's CI checks `openspec validate --strict` plus the pre-existing shillinq suite.
 
 ## Documentation (company-wide ADR-010)
 
 <!-- User-facing tutorial pages land with each implementing cycle, not the spec. -->
 
-- [ ] N/A for the spec change itself
-- [ ] Feature documentation updated in `docs/` — per-sector pages
+- [~] N/A for the spec change itself
+  - **Handoff**: no user-facing surfaces in this umbrella; the N/A line is recorded for completeness against the ADR-010 checklist.
+- [~] Feature documentation updated in `docs/` — per-sector pages
       under `docs/user-guide/bookkeeping/gov-{waterschap,provincie,
       gr,rekenkamer,cbs,emu,sisa,markt-overheid}/` and
       `docs/user-guide/bookkeeping/mkb/{vpb,innovatiebox,
       investeringsaftrek,wbso,r-d-subsidies,detachering}/` per
       ADR-030 journeydoc convention
-- [ ] Screenshot captured and committed to `docs/images/` — per spec
+  - **Handoff**: per-sector docs (8 gov + 6 mkb pages) land per `add-shillinq-{sector}` implementing cycle on dev; ADR-030 journeydoc capture-spec stories land alongside the screenshots.
+- [~] Screenshot captured and committed to `docs/images/` — per spec
       during implementing cycle (1 screenshot minimum per sector)
+  - **Handoff**: 1+ screenshot per sector lands per `add-shillinq-{sector}` implementing cycle's docs work.
 
 ## i18n (company-wide ADR-005)
 
 <!-- No user-facing strings in the spec; translation work lands per implementing cycle. -->
 
-- [ ] N/A for the spec change itself
-- [ ] Dutch (`nl_NL`) and English (`en_US`) translation strings
+- [~] N/A for the spec change itself
+  - **Handoff**: no UI strings ship with this umbrella; the N/A line is recorded for completeness against the ADR-005 checklist.
+- [~] Dutch (`nl_NL`) and English (`en_US`) translation strings
       added per implementing cycle — required terms include:
       `Waterschap`, `Provincie`, `Gemeenschappelijke regeling`,
       `Rekenkamer`, `CBS-bestand`, `EMU-saldo`, `EMU-schuld`,
@@ -513,3 +569,4 @@ binding declared in shillinq.
       `Kwartaalrapportage`, `Jaarrapport`,
       `Opdrachtgeversverklaring`, `IB47-formulier`,
       `Salarisbureau`, `Detachering`
+  - **Handoff**: i18n strings land per `add-shillinq-{sector}` implementing cycle on dev. Per the fleet i18n rule, **i18n keys are ENGLISH source strings** (`t('shillinq', 'Waterschap')`); the Dutch terms above are the displayed labels in `l10n/nl.json`, not the keys. The English forms (where they differ — e.g. `'Joint arrangement'`, `'Audit office'`, `'CBS file'`, `'EMU balance'`, `'Market vs government'`, `'Corporate tax'`, `'Investment deduction'`, `'Innovation box'`, `'R&D hours'`, `'Payroll tax reduction'`, `'Notification'`, `'Quarterly report'`, `'Annual report'`, `'Client declaration'`, `'IB47 form'`, `'Payroll bureau'`, `'Secondment'`) serve as the catalogue keys per implementing cycle.
