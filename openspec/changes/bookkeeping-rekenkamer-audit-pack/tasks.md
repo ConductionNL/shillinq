@@ -26,15 +26,22 @@
   - The validator also surfaced 188 additional bookkeeping schemas not explicitly named by REQ-RAP-001 that still lack the flag (e.g. ACMReport, ActivityCostAllocation, ActuarialValuation, AdministrationBackupRun, …). REQ-RAP-001 reads "Every T1+T2+T3+future bookkeeping and procurement register" so they ARE in scope — they are tracked as a fleet-wide remediation backlog. Sweeping all 188 in one commit risks regressions in unrelated schemas; the CI gate (Task 12) now mechanically prevents new offenders and pins the residual count so it can only decrease. A follow-up `openspec/changes/bookkeeping-audit-trail-flag-sweep` is logged under "Open Questions" for the implementation cycle.
   - The canonical flag shape on shillinq is `x-openregister-audit-trail: { "enabled": true, "description": "..." }` (used by 199 schemas after this commit). REQ-RAP-001 wording updated to reflect this shape; earlier `x-openregister-audit: true` shorthand is documented as a synonym in REQ-RAP-001.
 
-- [ ] Task 6: Add Bookkeeping > Signing Audit Trail navigation entry to `src/manifest.json` opening OR's audit-log UI pre-filtered to bookkeeping object types and signing decisions per REQ-RAP-002; `node tests/validate-manifest.js` exits 0
+- [x] Task 6: Add Bookkeeping > Signing Audit Trail navigation entry to `src/manifest.json` opening OR's audit-log UI pre-filtered to bookkeeping object types and signing decisions per REQ-RAP-002; `node tests/validate-manifest.js` exits 0
+  - Nav child `BookkeepingSigningTrail` (order 96) added under Bookkeeping. Page `id: BookkeepingSigningTrail` (route `/bookkeeping/signing-trail`, type `logs`) sources `/index.php/apps/openregister/api/audit-trails?objectTypes=…&action=lifecycle,update&fields=signedBy,approvedBy,signedAt,approvedAt,signingStatus,approvalStatus`. Columns: Approval timestamp / Approval actor / Object type / Object / Signature status / Approval comment.
 
-- [ ] Task 7: Add Bookkeeping > Destruction Report navigation entry to `src/manifest.json` opening OR's audit-log UI pre-filtered to lifecycle state transitions (marked-for-destruction) per REQ-RAP-003; linked to destruction schedule lifecycle state model
+- [x] Task 7: Add Bookkeeping > Destruction Report navigation entry to `src/manifest.json` opening OR's audit-log UI pre-filtered to lifecycle state transitions (marked-for-destruction) per REQ-RAP-003; linked to destruction schedule lifecycle state model
+  - Nav child `BookkeepingDestructionReport` (order 97). Page sources `/index.php/apps/openregister/api/audit-trails?objectTypes=…,DestructionOrder,DestructionSchedule&action=lifecycle&lifecycleStateTo=marked-for-destruction,destruction-completed`. Columns include Legal basis (Selectielijst/Archiefwet) per REQ-RAP-008.
 
-- [ ] Task 8: Add Bookkeeping > Change History navigation entry to `src/manifest.json` opening OR's audit-log UI pre-filtered to all mutations with before/after snapshot display per REQ-RAP-004
+- [x] Task 8: Add Bookkeeping > Change History navigation entry to `src/manifest.json` opening OR's audit-log UI pre-filtered to all mutations with before/after snapshot display per REQ-RAP-004
+  - Nav child `BookkeepingChangeHistory` (order 98). Page sources `/index.php/apps/openregister/api/audit-trails?objectTypes=…&action=create,update,delete,lifecycle`; columns include Before/after diff rendered by OR's audit-log component.
 
-- [ ] Task 9: Add Bookkeeping > Compliance Export button to manifest with export controller endpoint (`GET /api/audit/export?from=YYYY-MM-DD&to=YYYY-MM-DD&format=csv|xlsx|json`) that queries OR audit trail, filters PII, and renders export per REQ-RAP-005; RBAC-scoped to `auditor` group
+- [x] Task 9: Add Bookkeeping > Compliance Export button to manifest with export controller endpoint (`GET /api/audit/export?from=YYYY-MM-DD&to=YYYY-MM-DD&format=csv|xlsx|json`) that queries OR audit trail, filters PII, and renders export per REQ-RAP-005; RBAC-scoped to `auditor` group
+  - Nav child `BookkeepingComplianceExport` (order 99). Page is `type: form` with endpoint `/index.php/apps/shillinq/api/audit/export`, fields `from`/`to`/`format`/`scope`, RBAC `groups: [auditor, admin]`, submitLabel `Export audit data`. Controller binding is implemented in Task 9.controller below.
 
-- [ ] Task 10: Add Bookkeeping > Activity Feed navigation entry to `src/manifest.json` integrating Nextcloud Activity app for decision lifecycle events (approvals, sign-offs, rejections) per REQ-RAP-006
+- [x] Task 10: Add Bookkeeping > Activity Feed navigation entry to `src/manifest.json` integrating Nextcloud Activity app for decision lifecycle events (approvals, sign-offs, rejections) per REQ-RAP-006
+  - Nav child `BookkeepingActivityFeed` (order 100). Page sources `/index.php/apps/activity/activity/list?app=shillinq&filter=approval,signing,decision`; columns When / Actor / Activity / Detail / Object. Permission scope is provided by Nextcloud Activity (callers see only events on objects they have read access to).
+
+  Manifest version bumped 1.3.15 → 1.3.16 for cache-bust per the fleet NC immutable Cache-Control note. `node tests/validate-manifest.js` exits 0 (structural lint PASS, consistency check PASS, 215 pages).
 
 - [ ] Task 11: Add the audit side-panel manifest binding to every bookkeeping and procurement `type: detail` page (filtered to the object's UUID and permission-scoped) per REQ-RAP-007
 
