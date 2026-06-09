@@ -7315,3 +7315,113 @@ ondernemingsactiviteit.
 
 **Cites:** ADR-031 (schema-declarative), ADR-037 (modular register
 fragments), ADR-019 (no new SBR client), ADR-024 (Tier-4 manifest pages).
+
+## Continuous Close & Flux Analysis Entities (REQ-CLS-001..010)
+
+Eleven new entities landed by `bookkeeping-soft-close-flux` for the
+`bookkeeping-continuous-close` capability. All carry
+`x-openregister-audit-trail.enabled = true` per ADR-022 / REQ-AT-001. Money
+fields are integer cents per the fleet money convention.
+
+### PeriodStatus
+**Schema.org:** `schema:AccountingPeriod`
+_Continuous-close lifecycle wrapper around a FiscalPeriod (REQ-CLS-001). Five-stage lifecycle (open → soft-closed → hard-closed → audited → locked) with stage-change history, owner-per-stage, and posting-restriction flags. Sibling to FiscalPeriod (T1 period-close)._
+**Primary spec:** bookkeeping-continuous-close
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to Administration |
+| periodYear | integer | Yes | Fiscal year |
+| periodMonth | integer | Yes | Calendar month 1..12 |
+| stage | enum | Yes | `open` / `soft-closed` / `hard-closed` / `audited` / `locked` |
+| stageChangeHistory | array | No | Append-only `[{fromStage, toStage, actor, timestamp, reason}, …]` |
+| ownerPerStage | object | No | Stage→role map |
+| postingRestrictionsPerStage | object | No | Per-stage `{allow, requireOverride}` config |
+| softClosedAt / hardClosedAt / auditedAt / lockedAt | datetime | No | Stage timestamps |
+
+### AutoAccrualRule
+_Declarative auto-accrual rule (REQ-CLS-003) executed nightly by `SoftCloseExecutor`._
+**Primary spec:** bookkeeping-continuous-close
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| ruleName | string | Yes | Human-readable name |
+| targetGLAccount / contraGLAccount | string | Yes | GL accounts |
+| calculationMethod | enum | Yes | `fixed-amount` / `percentage-of-revenue` / `straight-line-from-contract` / `days-elapsed-of-period` / `external-lookup` |
+| calculationParameters | object | Yes | Method-specific bag (e.g. `{amountCents}`) |
+| reversalPattern | enum | Yes | `first-of-next-month` / `on-receipt-of-invoice` / `on-settlement` / `none` |
+| frequency | enum | Yes | `daily` / `weekly` / `monthly` |
+| administrationId | string | Yes | FK to Administration |
+| lifecycleState | enum | Yes | `active` / `disabled` / `archived` |
+| ruleVersion | integer | No | Monotonic version stamped onto each AutoAccrualPosting |
+
+### AutoAccrualPosting
+_Append-only audit record per rule execution (REQ-CLS-010); lifecycle `posted → reversed`._
+**Primary spec:** bookkeeping-continuous-close
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| ruleId / ruleVersion | string / integer | Yes | FK + version snapshot |
+| periodId | string | Yes | FK to FiscalPeriod.periodId |
+| amountCents | integer | Yes | Posted amount in cents |
+| journalEntryId | string | Yes | FK to JournalEntry written by the accrual |
+| postedAt | datetime | Yes | Posting timestamp |
+| postedBy | string | Yes | `SYSTEM:SoftCloseExecutor` or specific service id |
+| reversalId | string | No | FK to the reversal AutoAccrualPosting |
+| reversalState | enum | Yes | `posted` / `reversed` |
+
+### CloseChecklistTemplate
+_Reusable close-task list per administration type (REQ-CLS-004)._
+**Primary spec:** bookkeeping-continuous-close
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| templateName | string | Yes | Template name |
+| administrationTypeId | string | Yes | `BV` / `NV` / `eenmanszaak` |
+| tasks | array | Yes | `[{taskId, taskName, taskOwner, dueBefore, dependsOn[], evidenceRequired}, …]` |
+
+### CloseChecklistInstance
+_Per-period instantiation of a template; lifecycle `pending → in-progress → completed` (REQ-CLS-004)._
+
+### FluxRun
+_A single variance-analysis execution (REQ-CLS-005)._
+**Primary spec:** bookkeeping-continuous-close
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId / periodId | string | Yes | Scope |
+| scope | enum | Yes | `administratie` / `segment` / `cost-centre` / `consolidated` |
+| comparisonBasis | enum | Yes | `budget` / `forecast` / `prior-period` / `prior-year` |
+| materialityAbsoluteCents / materialityPercentage | integer / number | No | Threshold snapshot |
+| runTimestamp | datetime | Yes | Run start |
+| status | enum | Yes | `running` / `completed` / `failed` |
+| resultSummary | object | No | `{materialCount, autoExplainedCount, escalatedCount, totalVarianceCents}` |
+
+### FluxItem
+_Per-GL-account variance row of a FluxRun; status `open` / `auto-explained` / `owner-explained` / `escalated` / `accepted` (REQ-CLS-005, REQ-CLS-006)._
+
+### FluxAttribution
+_Driver decomposition of a FluxItem variance: `volume` / `price` / `mix` / `fx` / `one-off` with quantified contribution in cents (REQ-CLS-006)._
+
+### MaterialityPolicy
+_Per-administratie + per-account-group materiality thresholds (REQ-CLS-005). Special-rule overrides for cash / tax / revenue._
+
+### ContinuousCloseAlert
+_Alert raised by `SoftCloseExecutor` or the flux engine on soft-close failure or SLA breach (REQ-CLS-002, REQ-CLS-006)._
+
+### CloseMetrics
+_Close-quality KPI snapshot per administratie + period with rolling 12-month trend (REQ-CLS-009)._
+
+**Reconciliation with the T1 `FiscalPeriod` entity:** `PeriodStatus` is a
+sibling to the T1 `FiscalPeriod` (declared by `bookkeeping-period-close`).
+`FiscalPeriod` is the canonical period entity (start/end dates, fiscal
+year, close history, audit-lock); `PeriodStatus` extends it with the
+continuous-close stage model and posting-restriction enforcement via
+`OCA\Shillinq\Lifecycle\PeriodStatusGuard::postingAllowed` added
+additively to `GLTransaction.post.preconditions` alongside the existing
+`PeriodCloseGuard::periodOpen` precondition. Both schemas coexist; no
+existing data-model entry is rewritten.
+
+**Cites:** ADR-022 (audit-trail immutable on every register), ADR-031
+(orchestration-exception path for `SoftCloseExecutor`), ADR-037 (modular
+register fragments).
