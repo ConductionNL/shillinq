@@ -31,15 +31,15 @@
 
 ## 5. API Controller — `lib/Controller/CBSSubmissionController.php`
 
-- [ ] Task 5.1: Author `CBSSubmissionController` with RESTful routes per ADR-002:
-  - `GET /api/cbs-submissions` — list submissions with filters (status, period, organization)
-  - `GET /api/cbs-submissions/{id}` — retrieve single submission + lines
-  - `POST /api/cbs-submissions` — create new submission
-  - `PUT /api/cbs-submissions/{id}` — update submission (transition state)
-  - `DELETE /api/cbs-submissions/{id}` — delete draft submission
-  - `POST /api/cbs-submissions/{id}/generate` — trigger `CBSExportService::generateSubmission()` to compute lines
+- [x] Task 5.1: Author `CBSSubmissionController` (`lib/Controller/CBSSubmissionController.php`) — six RESTful actions wired in `appinfo/routes.php` (static segments before `{id}` wildcards per Symfony ordering):
+  - `GET /api/cbs-submissions` — `index()` lists submissions, filterable by `status` and `administrationId`
+  - `GET /api/cbs-submissions/{id}` — `show()` returns `{ submission, lines }`
+  - `POST /api/cbs-submissions` — `create()` requires the 6 REQ-CBS-001 fields, returns 201
+  - `PUT /api/cbs-submissions/{id}` — `update()` runs `CBSExportService::validateSubmission()` on `status=validated`, returns 422 + `errors[]` on failure
+  - `DELETE /api/cbs-submissions/{id}` — `destroy()` blocks non-draft with 409 (audit-trail integrity)
+  - `POST /api/cbs-submissions/{id}/generate` — `generate()` runs `CBSExportService::generateSubmission()` for the stored period + organization
 
-- [ ] Task 5.2: Controller methods are thin (<10 lines per ADR-003); call `CBSExportService` for business logic; validate input; return appropriate HTTP status (200, 400, 409, 422); include `message` field in error responses per ADR-002
+- [x] Task 5.2: Controller methods are thin per ADR-003 — each action delegates to `CBSExportService` or `ObjectService` via the `run()` helper that maps Throwable → 500 without leaking stack traces. Validation: `validateId()` enforces the slug pattern (400), `requireFields()` enforces required body fields (400), every action calls `requireUser()` (401) before delegating. All error responses carry `message` per ADR-002. Auth posture is explicit (`#[NoAdminRequired]` attribute + in-body `requireUser()` guard) so gate-7 / gate-9 see the same posture in attribute + code.
 
 ## 6. Seed Data — `lib/Settings/seeds/`
 

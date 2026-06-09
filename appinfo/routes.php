@@ -316,6 +316,16 @@ return [
         // BADO controleprotocol aggregation (bookkeeping-bado-controleprotocol).
         ['name' => 'badoControleprotocol#aggregation', 'url' => '/api/bado/controleprotocol/aggregation', 'verb' => 'GET'],
 
+        // CBS bestanden extended (bookkeeping-cbs-bestanden-extended,
+        // REQ-CBS-001..009). RESTful CBSSubmission CRUD + generate endpoint.
+        // Static segments precede the {id} wildcard per Symfony route ordering.
+        ['name' => 'CBSSubmission#index', 'url' => '/api/cbs-submissions', 'verb' => 'GET'],
+        ['name' => 'CBSSubmission#create', 'url' => '/api/cbs-submissions', 'verb' => 'POST'],
+        ['name' => 'CBSSubmission#generate', 'url' => '/api/cbs-submissions/{id}/generate', 'verb' => 'POST'],
+        ['name' => 'CBSSubmission#show', 'url' => '/api/cbs-submissions/{id}', 'verb' => 'GET'],
+        ['name' => 'CBSSubmission#update', 'url' => '/api/cbs-submissions/{id}', 'verb' => 'PUT'],
+        ['name' => 'CBSSubmission#destroy', 'url' => '/api/cbs-submissions/{id}', 'verb' => 'DELETE'],
+
         // Widget API-key admin (bookings-self-service-widget, REQ-WSW-009).
         // #[AuthorizedAdminSetting]-gated lifecycle of per-business widget keys.
         ['name' => 'widgetSettings#rotate', 'url' => '/api/widget/admin/keys/rotate', 'verb' => 'POST'],
