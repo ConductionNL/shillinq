@@ -43,7 +43,7 @@
     IAS 37 / RJ 252 citations; mirrored to `openspec/specs/bookkeeping-voorzieningen-claims/spec.md`;
     `@e2e exclude pure backend/compliance` marker added (gate-19).
 
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec
   and including Affected Projects (shillinq, openregister, hrmq, docudesk,
   decidesk) / Scope (9 registers, three-criteria, best-estimate + sensitivity,
   discontering, period roll-forward, peer review, disclosure table) / Risks
@@ -51,14 +51,20 @@
   detail, claims legal privilege) / Rollback (non-reversible once disclosed) /
   Open Questions (best-estimate sourcing, herstructurering approval format,
   dubieuze debiteuren treatment) / Dependencies
+  - DONE: `openspec/changes/bookkeeping-voorzieningen-claims/proposal.md` covers
+    Summary / Motivation / Affected Projects / Scope (In + Out) / Risks /
+    Rollback / Open Questions / Dependencies / Success Criteria.
 
-- [ ] Task 4: Author `design.md` with Reuse Analysis table, D1 (three registers:
+- [x] Task 4: Author `design.md` with Reuse Analysis table, D1 (three registers:
   core provision + movement + contingent liability + 6 type-specific details),
   D2 (three-criteria recognition gate at schema level), D3 (best-estimate +
   sensitivity range), D4 (disconteringsvoet when > 1 year), D5 (period
   immutability + annual herwaardering), D6 (peer-review EUR 100K+ / 1%+ balance),
   D7 (automatic probability classification), D8 (obligating-event documentation),
   D9 (type-specific detail extensions), D10 (jaarrekening disclosure table)
+  - DONE: `openspec/changes/bookkeeping-voorzieningen-claims/design.md` carries
+    Context / Goals / Non-Goals / D1..D10 / Reuse Analysis / Declarative-vs-imperative
+    table / Seed Data / Risks / Migration Plan / Compliance & Standards.
 
 - [ ] Task 5: Declare the `provision` schema in
   `lib/Settings/shillinq_register.json` with all REQ-PROV-001–010 fields
