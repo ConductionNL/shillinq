@@ -2,6 +2,64 @@
 	"info": {
 		"version": "0.1.0-dba-compliance-marker"
 	},
+	"objects": [
+		{
+			"@self": {
+				"schema": "DBAModelovereenkomst",
+				"slug": "modov-bd-2024-tussenkomstvrij-v3"
+			},
+			"naam": "Tussenkomstvrij - algemeen (Belastingdienst v3 - 2024)",
+			"bron": "BELASTINGDIENST_GOEDGEKEURD",
+			"publicatieURL": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/modelovereenkomsten/tussenkomstvrij",
+			"goedkeuringDatum": "2024-04-12",
+			"geldigTot": "2029-04-12",
+			"versie": "v3-2024",
+			"actueleVersie": true,
+			"essentieleBepalingen": [
+				{ "id": "EB-01", "tekst": "Opdrachtnemer is vrij in tijd, plaats en wijze van uitvoering.", "verplicht": true },
+				{ "id": "EB-02", "tekst": "Opdrachtnemer mag zich laten vervangen zonder toestemming opdrachtgever.", "verplicht": true },
+				{ "id": "EB-03", "tekst": "Opdrachtnemer factureert per opdracht, geen vaste maandelijkse vergoeding.", "verplicht": true },
+				{ "id": "EB-04", "tekst": "Opdrachtnemer draagt eigen ondernemersrisico (geen doorbetaling bij ziekte/vakantie).", "verplicht": true }
+			]
+		},
+		{
+			"@self": {
+				"schema": "DBAModelovereenkomst",
+				"slug": "modov-bd-2023-leverancier-zelfstandig-v2"
+			},
+			"naam": "Leverancier-zelfstandig (Belastingdienst v2 - 2023)",
+			"bron": "BELASTINGDIENST_GOEDGEKEURD",
+			"publicatieURL": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/modelovereenkomsten/leverancier-zelfstandig",
+			"goedkeuringDatum": "2023-06-01",
+			"geldigTot": "2028-06-01",
+			"versie": "v2-2023",
+			"actueleVersie": true,
+			"essentieleBepalingen": [
+				{ "id": "EB-01", "tekst": "Opdrachtnemer levert een specifiek werk of dienst tegen overeengekomen prijs.", "verplicht": true },
+				{ "id": "EB-02", "tekst": "Opdrachtnemer factureert per geleverd werk of mijlpaal.", "verplicht": true },
+				{ "id": "EB-03", "tekst": "Geen verplichting tot persoonlijke uitvoering door specifieke persoon.", "verplicht": true }
+			]
+		},
+		{
+			"@self": {
+				"schema": "DBAModelovereenkomst",
+				"slug": "modov-bd-2024-tussenkomst-v1"
+			},
+			"naam": "Tussenkomst (Belastingdienst v1 - 2024)",
+			"bron": "BELASTINGDIENST_GOEDGEKEURD",
+			"publicatieURL": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/modelovereenkomsten/tussenkomst",
+			"goedkeuringDatum": "2024-02-15",
+			"geldigTot": "2029-02-15",
+			"versie": "v1-2024",
+			"actueleVersie": true,
+			"essentieleBepalingen": [
+				{ "id": "EB-01", "tekst": "Drie-partijen-constructie: ZZP - intermediair - eindklant.", "verplicht": true },
+				{ "id": "EB-02", "tekst": "Intermediair heeft alleen administratieve rol; geen werkgeversgezag.", "verplicht": true },
+				{ "id": "EB-03", "tekst": "Opdrachtnemer factureert intermediair per opdracht; intermediair factureert eindklant.", "verplicht": true },
+				{ "id": "EB-04", "tekst": "Waadi- en Wka-bepalingen zijn opgenomen.", "verplicht": true }
+			]
+		}
+	],
 	"components": {
 		"schemas": {
 			"DBAOpdracht": {

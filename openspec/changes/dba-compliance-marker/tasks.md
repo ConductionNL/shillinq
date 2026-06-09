@@ -25,19 +25,19 @@
 - [x] Task 14: Implement daily background job for automated flag generation per REQ-DBA-004/-005/-006 (factuurfrequentie patterns, concentratie-waarschuwing, langjarige-hoofdrelatie, multiple-engagement-zelfde-concern); job generates immutable `DBARisicoflag` records
 - [x] Task 15: Implement monthly background job for portfolio-aggregatie per REQ-DBA-005 (compute `DBAPortfolioRisico` for each active onderneming; aggregate omzetconcentratie, langjarige relaties, exclusiviteit patterns)
 - [x] Task 16: Declare VBAR-grens constant (EUR 33, peil 2024) in `lib/Enums/DBAConstants.php` as mutable via administration settings per REQ-DBA-016
-- [ ] Task 17: Implement VBAR uurtarief-monitoring per REQ-DBA-016 (compute effective hourly rate on each factuur; generate flag if < EUR 33; block in hard-mode, warn in soft-mode)
-- [ ] Task 18: Seed `DBAModelovereenkomst` register with known Belastingdienst templates (tussenkomstvrij v3 – 2024, leverancier-zelfstandig v2, etc.) and allow operator upload of custom models per REQ-DBA-002
-- [ ] Task 19: Implement DBA intake wizard (3-step for eenmalig <€5k, 20-question for standard) per REQ-DBA-000/-001; enforce intake before first factuur; store answers in `DBAIntake` register
-- [ ] Task 20: Implement evidence-dossier curation UI (stukkenlijst with file-upload, type-selection, SHA-256 hash storage) per REQ-DBA-007; integrate with openregister file-api or docudesk
-- [ ] Task 21: Implement AVG-compliant email-archive opt-in per REQ-DBA-012 (explicit `ConsentRecord` for wederpartij communication; 7-year retention per AWR art. 52)
-- [ ] Task 22: Implement compliance-mode configuration per REQ-DBA-000 (soft/hard/intermediair modes; stored on administration config)
-- [ ] Task 23: Implement audit-rapport PDF generation per REQ-DBA-008 (intake summary, model-checklist, risk-score progression, flags, evidence inventory with SHA-256 hashes)
-- [ ] Task 24: Implement yearly herbeoordeling trigger per REQ-DBA-009 (notification on intake-anniversary for opdrachtnen >12 months; flag if no response within 30 days)
-- [ ] Task 25: Implement opdrachtgever-inhuur-intake mirror (optional MVP or later phase) per REQ-DBA-010; block PO at HOOG-risico in hard-mode
-- [ ] Task 26: Implement Belastingdienst WBA-integratie per REQ-DBA-013 (allow upload + storage of WBA assessment result; track validity period)
-- [ ] Task 27: Implement beëindiging-procedure per REQ-DBA-018 (mark opdracht ended, generate end-report, start 7-year retention-period clock per AWR art. 52)
-- [ ] Task 28: Implement tussenkomst-driehoek modelling (optional, later phase) per REQ-DBA-017 (separate intakes + risk-scores for ZZP–intermediair and intermediair–eindklant; Waadi/Wka flagging)
-- [ ] Task 29: Add 3 manifest navigation entries (`DBA Intake Wizard`, `DBA Portfolio Dashboard`, `Evidence Browser`) + their pages to `src/manifest.json` per REQ-DBA-001/-005/-007; `node tests/validate-manifest.js` exits 0
+- [x] Task 17: Implement VBAR uurtarief-monitoring per REQ-DBA-016 (compute effective hourly rate on each factuur; generate flag if < EUR 33; block in hard-mode, warn in soft-mode)
+- [x] Task 18: Seed `DBAModelovereenkomst` register with known Belastingdienst templates (tussenkomstvrij v3 – 2024, leverancier-zelfstandig v2, etc.) and allow operator upload of custom models per REQ-DBA-002
+- [x] Task 19: Implement DBA intake wizard (3-step for eenmalig <€5k, 20-question for standard) per REQ-DBA-000/-001; enforce intake before first factuur; store answers in `DBAIntake` register
+- [x] Task 20: Implement evidence-dossier curation UI (stukkenlijst with file-upload, type-selection, SHA-256 hash storage) per REQ-DBA-007; integrate with openregister file-api or docudesk
+- [x] Task 21: Implement AVG-compliant email-archive opt-in per REQ-DBA-012 (explicit `ConsentRecord` for wederpartij communication; 7-year retention per AWR art. 52)
+- [x] Task 22: Implement compliance-mode configuration per REQ-DBA-000 (soft/hard/intermediair modes; stored on administration config)
+- [x] Task 23: Implement audit-rapport PDF generation per REQ-DBA-008 (intake summary, model-checklist, risk-score progression, flags, evidence inventory with SHA-256 hashes)
+- [x] Task 24: Implement yearly herbeoordeling trigger per REQ-DBA-009 (notification on intake-anniversary for opdrachtnen >12 months; flag if no response within 30 days)
+- [x] Task 25: Implement opdrachtgever-inhuur-intake mirror (optional MVP or later phase) per REQ-DBA-010; block PO at HOOG-risico in hard-mode
+- [x] Task 26: Implement Belastingdienst WBA-integratie per REQ-DBA-013 (allow upload + storage of WBA assessment result; track validity period)
+- [x] Task 27: Implement beëindiging-procedure per REQ-DBA-018 (mark opdracht ended, generate end-report, start 7-year retention-period clock per AWR art. 52)
+- [x] Task 28: Implement tussenkomst-driehoek modelling (optional, later phase) per REQ-DBA-017 (separate intakes + risk-scores for ZZP–intermediair and intermediair–eindklant; Waadi/Wka flagging)
+- [x] Task 29: Add 3 manifest navigation entries (`DBA Intake Wizard`, `DBA Portfolio Dashboard`, `Evidence Browser`) + their pages to `src/manifest.json` per REQ-DBA-001/-005/-007; `node tests/validate-manifest.js` exits 0
 - [ ] Task 30: Update `openspec/architecture/adr-000-data-model.md` with `DBAOpdracht`/`DBAIntake`/`DBAModelovereenkomst`/`DBARisicoflag`/`DBAPortfolioRisico`/`DBAEvidenceDossier` entries, reconciling against any existing DBA-related data-model entries
 - [ ] Task 31: Hook AP/AR factuurfrequentie-monitoring (optional) to trigger flag-generation (non-blocking if AP/AR not deployed)
 - [ ] Task 32: Hook AP/AR uurtarief-detectie (optional) to feed VBAR-grens check per REQ-DBA-016 (non-blocking if AP/AR not deployed)

@@ -378,6 +378,20 @@ return [
         ['name' => 'wbsoDocumentApi#archive', 'url' => '/api/v1/documents/{id}/archive', 'verb' => 'POST'],
         ['name' => 'wbsoDocumentApi#show', 'url' => '/api/v1/documents/{id}', 'verb' => 'GET'],
 
+        // DBA compliance marker endpoints (dba-compliance-marker, T19/T17/T21/T22/T23/T25/T26/T27/T28).
+        // All marked NoAdminRequired; per-object IDOR check is in the controller body
+        // (ensureAdministrationAccess) per ADR-005.
+        ['name' => 'dBA#scoreIntake', 'url' => '/api/dba/intake/score', 'verb' => 'POST'],
+        ['name' => 'dBA#saveIntake', 'url' => '/api/dba/intake', 'verb' => 'POST'],
+        ['name' => 'dBA#vbarCheck', 'url' => '/api/dba/vbar/check', 'verb' => 'POST'],
+        ['name' => 'dBA#uploadWba', 'url' => '/api/dba/wba/upload', 'verb' => 'POST'],
+        ['name' => 'dBA#beeindigen', 'url' => '/api/dba/beeindiging', 'verb' => 'POST'],
+        ['name' => 'dBA#setMode', 'url' => '/api/dba/mode', 'verb' => 'POST'],
+        ['name' => 'dBA#setTussenkomstMode', 'url' => '/api/dba/tussenkomst', 'verb' => 'POST'],
+        ['name' => 'dBA#evidenceConsent', 'url' => '/api/dba/evidence/consent', 'verb' => 'POST'],
+        ['name' => 'dBA#inhuurIntake', 'url' => '/api/dba/inhuur-intake', 'verb' => 'POST'],
+        ['name' => 'dBA#auditReport', 'url' => '/api/dba/audit-report/{opdrachtId}', 'verb' => 'GET'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
