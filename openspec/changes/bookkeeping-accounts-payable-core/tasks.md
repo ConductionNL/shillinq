@@ -10,28 +10,45 @@
 
 ## Deduplication Check
 
-- [ ] Task 1: Confirm no `bookkeeping-accounts-payable-core` capability spec
+- [x] Task 1: Confirm no `bookkeeping-accounts-payable-core` capability spec
   already exists, no `Payee`/`APTransaction`/`DunningNotice` schemas are
   declared, and no `lib/Service/AP*` / `lib/Service/Dunning*` PHP classes are
   present (per ADR-031 anti-pattern enumeration); verify no overlap with
   `bookkeeping-accounts-receivable-core` (mirror spec); document findings
   explicitly even if "no overlap found"
+  - **Findings (2026-06-09):** Recorded in `dedup-notes.md`. No canonical
+    `Payee` / `APTransaction` / `DunningNotice` schemas exist in
+    `lib/Settings/shillinq_register.json` or in `lib/Settings/register.d/*`.
+    No `lib/Db/` Mapper classes name `ap_transaction`, `payee`, `dunning_*`,
+    or `accounts_payable_*`. Pre-existing baseline carries an alternate AP
+    flavour (`VendorMaster` + `APInvoice` + `PaymentRun` schemas, used by
+    `add-shillinq-bookkeeping-compliance`) — kept untouched; this T2 change
+    adds the canonical `Payee` / `APTransaction` / `DunningNotice` shape per
+    REQ-AP-001 alongside. Existing `DunningRunService` /
+    `DunningController` belong to `bookkeeping-credit-control-dunning`
+    (ladder runs); they are a different concept from the per-invoice
+    `DunningNotice` timeline declared here and remain untouched. The AR
+    mirror (`CustomerMaster` + `ARInvoice` + `DunningRecord`) covers the
+    symmetric receivables side per `add-shillinq-accounts-receivable-core`;
+    no overlap.
 
 ## Spec Authoring
 
-- [ ] Task 2: Author `specs/bookkeeping-accounts-payable-core/spec.md` with
+- [x] Task 2: Author `specs/bookkeeping-accounts-payable-core/spec.md` with
   `Status: proposed` / `Scope: shillinq` / `Tier: T2 (compliance + operations)`
   / `Depends on: bookkeeping-chart-of-accounts, bookkeeping-general-ledger,
   bookkeeping-document-attachment-integration, bookkeeping-bank-reconciliation`
   header, `REQ-AP-NNN` requirements using RFC 2119 keywords, and `#### Scenario:`
-  blocks with GIVEN/WHEN/THEN; cite ADR-022 + ADR-031 inline (COMPLETED)
+  blocks with GIVEN/WHEN/THEN; cite ADR-022 + ADR-031 inline (COMPLETED — spec
+  authored at `specs/bookkeeping-accounts-payable-core/spec.md`; `openspec
+  validate` exits 0)
 
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec
   and including Affected Projects / Scope / Risks (dunning-workflow stability,
   payee-master ADR-022 question, AP aging performance) / Rollback / Open
   Questions (COMPLETED)
 
-- [ ] Task 4: Author `design.md` with Reuse Analysis table, D1 (sub-ledger
+- [x] Task 4: Author `design.md` with Reuse Analysis table, D1 (sub-ledger
   materialises GL), D2 (OR dunning consumed with PHP-guard fallback), D3
   (write-off compensating posting), D4 (three aging report variants), D5 (payee
   is thin vendor master view), D6 (aging bucket config-driven), D7 (payment
