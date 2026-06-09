@@ -14,41 +14,49 @@
 
 **Done:** Confirmed no schema/service collisions. `openspec/specs/bookkeeping-continuous-close/spec.md` is the previously-published spec from the proposal stage; this change implements it. No `Accrual*`/`Flux*`/`Close*` services exist (only `PeriodCloseService`/`PeriodCloseAssistantService` from `bookkeeping-period-close`, which we extend orthogonally).
 
-- [ ] Task 2: Author `specs/bookkeeping-continuous-close/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T2` / dependency header; `REQ-CLS-NNN` requirements using RFC 2119 keywords; `#### Scenario:` blocks with GIVEN/WHEN/THEN; cite ADR-031 (orchestration exception for soft-close executor) + ADR-022 (audit trail immutable) inline
+- [x] Task 2: Author `specs/bookkeeping-continuous-close/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T2` / dependency header; `REQ-CLS-NNN` requirements using RFC 2119 keywords; `#### Scenario:` blocks with GIVEN/WHEN/THEN; cite ADR-031 (orchestration exception for soft-close executor) + ADR-022 (audit trail immutable) inline
 
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec; include Affected Projects / Scope / Risks (soft-close timing window, accrual reversal orphans, flux auto-explanation coverage, materiality tuning) / Rollback / Open Questions
+**Done:** `specs/bookkeeping-continuous-close/spec.md` ships REQ-CLS-001..010 with RFC 2119 keywords and `#### Scenario:` GIVEN/WHEN/THEN blocks; ADR-031 + ADR-022 cited in Implementation Notes.
 
-- [ ] Task 4: Author `design.md` with Reuse Analysis table, D1 (period lifecycle register), D2 (declarative accrual rules), D3 (soft-close orchestration service), D4 (post-soft-close flux), D5 (checklist template), D6 (materiality per administratie + account group), D7 (flux narrative aggregation)
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec; include Affected Projects / Scope / Risks (soft-close timing window, accrual reversal orphans, flux auto-explanation coverage, materiality tuning) / Rollback / Open Questions
 
-- [ ] Task 5: Declare the `PeriodStatus` schema in `lib/Settings/shillinq_register.json` with REQ-CLS-001 fields (administrationId, periodYear, periodMonth, stage, stageChangeHistory, ownerPerStage, postingRestrictionsPerStage)
+**Done:** `proposal.md` covers Affected Projects, In/Out Scope, 4 Risks, Rollback, and 4 Open Questions.
 
-- [ ] Task 6: Declare the `AutoAccrualRule` schema in `lib/Settings/shillinq_register.json` with REQ-CLS-003 fields (ruleName, targetGLAccount, contraGLAccount, calculationMethod, calculationParameters, reversalPattern, frequency, administrationId, lifecycleState)
+- [x] Task 4: Author `design.md` with Reuse Analysis table, D1 (period lifecycle register), D2 (declarative accrual rules), D3 (soft-close orchestration service), D4 (post-soft-close flux), D5 (checklist template), D6 (materiality per administratie + account group), D7 (flux narrative aggregation)
 
-- [ ] Task 7: Declare the `AutoAccrualPosting` schema in `lib/Settings/shillinq_register.json` with fields (ruleId, ruleVersion, periodId, amount, journalEntryId, postedAt, postedBy, reversalId) and lifecycle: "posted → reversed"
+**Done:** `design.md` ships D1..D7 with Reuse Analysis, ADR-031 declarative-vs-imperative table, Seed Data, Risks/Trade-offs, Migration Plan, Open Questions.
 
-- [ ] Task 8: Declare the `CloseChecklistTemplate` schema with fields (templateName, administrationTypeId, tasks: array of {taskId, taskName, taskOwner, dueBefore, dependsOn, evidenceRequired})
+- [x] Task 5: Declare the `PeriodStatus` schema in `lib/Settings/shillinq_register.json` with REQ-CLS-001 fields (administrationId, periodYear, periodMonth, stage, stageChangeHistory, ownerPerStage, postingRestrictionsPerStage)
 
-- [ ] Task 9: Declare the `CloseChecklistInstance` schema with fields (templateId, periodId, tasks: array of {taskId, status, owner, completedAt, evidence, slaBreach}) and lifecycle: "pending → in-progress → completed" with SLA escalation on overdue
+- [x] Task 6: Declare the `AutoAccrualRule` schema in `lib/Settings/shillinq_register.json` with REQ-CLS-003 fields (ruleName, targetGLAccount, contraGLAccount, calculationMethod, calculationParameters, reversalPattern, frequency, administrationId, lifecycleState)
 
-- [ ] Task 10: Declare the `FluxRun` schema with REQ-CLS-005 fields (administrationId, periodId, scope, comparisonBasis, materiality thresholds, runTimestamp, status, resultSummary)
+- [x] Task 7: Declare the `AutoAccrualPosting` schema in `lib/Settings/shillinq_register.json` with fields (ruleId, ruleVersion, periodId, amount, journalEntryId, postedAt, postedBy, reversalId) and lifecycle: "posted → reversed"
 
-- [ ] Task 11: Declare the `FluxItem` schema with fields (fluxRunId, glAccountNumber, budgetAmount, actualAmount, variance, percentageVariance, materialityClassification, autoExplanation, ownerExplanation, status: "open | auto-explained | owner-explained | escalated | accepted", ownerEscalationSLA)
+- [x] Task 8: Declare the `CloseChecklistTemplate` schema with fields (templateName, administrationTypeId, tasks: array of {taskId, taskName, taskOwner, dueBefore, dependsOn, evidenceRequired})
 
-- [ ] Task 12: Declare the `FluxAttribution` schema with fields (fluxItemId, driver: "volume | price | mix | fx | one-off", contribution, percentage, explanation)
+- [x] Task 9: Declare the `CloseChecklistInstance` schema with fields (templateId, periodId, tasks: array of {taskId, status, owner, completedAt, evidence, slaBreach}) and lifecycle: "pending → in-progress → completed" with SLA escalation on overdue
 
-- [ ] Task 13: Declare the `MaterialityPolicy` schema with fields (administrationId, accountGroupCode, absoluteThreshold, percentageThreshold, specialRules: {cash, tax, revenue})
+- [x] Task 10: Declare the `FluxRun` schema with REQ-CLS-005 fields (administrationId, periodId, scope, comparisonBasis, materiality thresholds, runTimestamp, status, resultSummary)
 
-- [ ] Task 14: Declare the `ContinuousCloseAlert` schema with fields (administrationId, periodId, severity: "info | warning | error", message, routedTo: array of roles, createdAt, acknowledged)
+- [x] Task 11: Declare the `FluxItem` schema with fields (fluxRunId, glAccountNumber, budgetAmount, actualAmount, variance, percentageVariance, materialityClassification, autoExplanation, ownerExplanation, status: "open | auto-explained | owner-explained | escalated | accepted", ownerEscalationSLA)
 
-- [ ] Task 15: Declare the `CloseMetrics` schema with fields (administrationId, periodId, timeToClose, postCloseAdjustmentCount, auditCorrectionRatio, fluxSLACompliance, unexplainedFluxItemCount, trendData: 12-month history)
+- [x] Task 12: Declare the `FluxAttribution` schema with fields (fluxItemId, driver: "volume | price | mix | fx | one-off", contribution, percentage, explanation)
 
-- [ ] Task 16: Add `x-openregister-lifecycle` to `PeriodStatus` declaring `open → soft-closed → hard-closed → audited → locked` with stage-change-history tracking per REQ-CLS-001; soft-closed transition triggers `SoftCloseExecutor`
+- [x] Task 13: Declare the `MaterialityPolicy` schema with fields (administrationId, accountGroupCode, absoluteThreshold, percentageThreshold, specialRules: {cash, tax, revenue})
 
-- [ ] Task 17: Add `x-openregister-lifecycle` to `CloseChecklistInstance` declaring `pending → in-progress → completed` with task-dependency enforcement per REQ-CLS-004; SLA escalation triggered on overdue
+- [x] Task 14: Declare the `ContinuousCloseAlert` schema with fields (administrationId, periodId, severity: "info | warning | error", message, routedTo: array of roles, createdAt, acknowledged)
 
-- [ ] Task 18: Add `x-openregister-lifecycle` to `AutoAccrualPosting` declaring `posted → reversed` with link to original entry + reversal entry for audit trail per REQ-CLS-010
+- [x] Task 15: Declare the `CloseMetrics` schema with fields (administrationId, periodId, timeToClose, postCloseAdjustmentCount, auditCorrectionRatio, fluxSLACompliance, unexplainedFluxItemCount, trendData: 12-month history)
 
-- [ ] Task 19: Declare GL posting precondition per REQ-CLS-001: no posting to periods in hard-closed, audited, or locked stages unless actor has controller override + exception-journal privilege
+- [x] Task 16: Add `x-openregister-lifecycle` to `PeriodStatus` declaring `open → soft-closed → hard-closed → audited → locked` with stage-change-history tracking per REQ-CLS-001; soft-closed transition triggers `SoftCloseExecutor`
+
+- [x] Task 17: Add `x-openregister-lifecycle` to `CloseChecklistInstance` declaring `pending → in-progress → completed` with task-dependency enforcement per REQ-CLS-004; SLA escalation triggered on overdue
+
+- [x] Task 18: Add `x-openregister-lifecycle` to `AutoAccrualPosting` declaring `posted → reversed` with link to original entry + reversal entry for audit trail per REQ-CLS-010
+
+- [x] Task 19: Declare GL posting precondition per REQ-CLS-001: no posting to periods in hard-closed, audited, or locked stages unless actor has controller override + exception-journal privilege
+
+**Done (5-19):** All 11 schemas + the GLTransaction.post additive precondition land in `lib/Settings/register.d/bookkeeping-soft-close-flux.json` (ADR-037 modular fragment — never edits the monolith). Money fields use the integer-cent convention. `x-openregister-audit-trail.enabled = true` is set on all 11 (REQ-AT-001 / ADR-022). PeriodStatus has the 5-stage lifecycle, AutoAccrualPosting has posted → reversed, CloseChecklistInstance has pending → in-progress → completed. GLTransaction.post adds a `PeriodStatusGuard::postingAllowed` precondition (REQ-CLS-001). Seed objects include 5 example accrual rules (rent, utilities, salaries, interest, depreciation), a sample MaterialityPolicy with cash/tax/revenue overrides, a default CloseChecklistTemplate (11 tasks with task-dependency graph), and a sample PeriodStatus (March 2026 soft-closed).
 
 - [ ] Task 20: Implement `OCA\Shillinq\Service\SoftCloseExecutor` service (~150 LOC, ADR-031 exception annotated) that:
   - Iterates each administratie
