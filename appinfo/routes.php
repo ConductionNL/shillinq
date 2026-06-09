@@ -301,6 +301,16 @@ return [
         ['name' => 'periodClose#lockAudit', 'url' => '/api/period-close/{periodId}/lock-audit', 'verb' => 'POST'],
         ['name' => 'periodClose#show', 'url' => '/api/period-close/{periodId}', 'verb' => 'GET'],
 
+        // Continuous close + flux analysis (bookkeeping-soft-close-flux,
+        // REQ-CLS-002, REQ-CLS-005, REQ-CLS-007). On-demand soft-close trigger
+        // per administratie + on-demand flux run + flux narrative export
+        // (PDF / Markdown / JSON). All three are #[NoAdminRequired] with
+        // server-side admin-id validation; writes are role-gated inside the
+        // services and PeriodStatusGuard.
+        ['name' => 'softClose#executeNow', 'url' => '/api/v2/soft-close/{administrationId}/execute-now', 'verb' => 'POST'],
+        ['name' => 'softClose#executeFlux', 'url' => '/api/v2/flux-runs/execute', 'verb' => 'POST'],
+        ['name' => 'softClose#narrative', 'url' => '/api/v2/flux-runs/{fluxRunId}/narrative', 'verb' => 'GET'],
+
         // Innovatiebox administratie (bookkeeping-innovatiebox-administratie,
         // REQ-IBA-004/006/009). Aggregation + scenario + doorsnijdingsverbod
         // year-end check. Read-only.

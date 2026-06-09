@@ -128,5 +128,12 @@ Vrij en open source onder de EUPL-1.2-licentie.
              retention boundary. Fail-soft per record; idempotent via the
              schema's filed → archived lifecycle gate. -->
         <job>OCA\Shillinq\Cron\DocumentArchiveCron</job>
+        <!-- bookkeeping-soft-close-flux Task 22: nightly continuous-close
+             orchestrator. Daily-interval TimedJob; for every active
+             Administration record, invokes SoftCloseExecutor::execute() for
+             the current yyyy-mm period (REQ-CLS-002). Targets 07:00 local
+             CET completion; on-demand testing route lives at POST
+             /api/v2/soft-close/{administrationId}/execute-now. -->
+        <job>OCA\Shillinq\Cron\SoftCloseJob</job>
     </background-jobs>
 </info>
