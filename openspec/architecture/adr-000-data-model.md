@@ -3390,6 +3390,141 @@ _Versioned statutory KOR threshold record per Wet OB 1968 art. 25 lid 1. Seeded 
 **Relations:**
 - → KorRegime (one-to-many, via fiscalYear)
 
+### KORRegistration
+**Schema.org:** `schema:DefinedTerm`
+_Tier-2 KOR (Kleine Ondernemersregeling) formal registration per onderneming per regime (NL-KOR / KOR-EU). Carries the aanmeldgegevens (REQ-KOR-001), the drie-jaars lock-in window (REQ-KOR-007), the Belastingdienst-referentie, and the status lifecycle that gates voorbelasting-aftrek (REQ-KOR-006), factuurvermelding (REQ-KOR-005) and de revocatie-flow (REQ-KOR-004). The pre-existing `KorRegime` (YTD-revenue tracker) co-exists side-by-side; KORRegistration formalises the full T2 capability per Wet OB 1968 art. 25 / 25a-25d._
+**Primary spec:** bookkeeping-kor-kleine-ondernemersregeling
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| ondernemingId | string | Yes | FK to the onderneming (Corporation/Entity); KOR is per KvK-nummer |
+| regime | enum | Yes | KOR_NL or KOR_EU; immutable after create (design D1) |
+| status | enum | Yes | draft, ACTIEF, GEEINDIGD_OVERSCHRIJDING, GEEINDIGD_VRIJWILLIG |
+| aanmeldDatum | date | No | Date of aanmelding at mijnbelastingdienst.nl/zakelijk |
+| ingangsDatum | date | Yes | Effective start date; typically 1-1 of next calendar year |
+| lockInEindDatum | date | No | Last day of third calendar year after ingangsDatum (REQ-KOR-007) |
+| vroegsteOpzegDatum | date | No | Earliest opt-out window date; 3 months before lockInEindDatum |
+| belastingdienstReferentie | string | No | Aanvraag-kenmerk from the Belastingdienst |
+| aanmeldKanaal | enum | No | MIJN_BELASTINGDIENST_ZAKELIJK / MIJN_BELASTINGDIENST_KORUS |
+| drempelJaar | number | No | Year threshold in EUR (default 20000 for NL-KOR) |
+| voorgaandeOmzet | object | No | Year-indexed historical omzet for scenario-analysis |
+| omzettingsRegeling | boolean | No | Legacy KOR (pre-2020 sliding-scale) indicator |
+| fiscalEenheidId | string | No | FK if part of a fiscale eenheid (else null) |
+| administrationId | string | Yes | FK to Administration; reads scoped per administration |
+
+**Relations:**
+- → Corporation (many-to-one, via ondernemingId)
+- → Administration (many-to-one)
+- → KORAnnualTurnover (one-to-many, via registrationId)
+- → KORThresholdAlert (one-to-many)
+- → KORRevocation (one-to-many; typically zero or one)
+- → KOREUTurnover (one-to-many, when regime=KOR_EU)
+
+**Lifecycle (x-openregister-lifecycle):**
+- draft → ACTIEF (at ingangsDatum; publishes `kor.registration.activated`)
+- ACTIEF → GEEINDIGD_OVERSCHRIJDING (synchronous on drempel >100%; publishes `kor.registration.revoked`)
+- ACTIEF → GEEINDIGD_VRIJWILLIG (after opt-out window; publishes `kor.registration.revoked`)
+
+**Retention:** 7 years per AWR art. 52 (selectielijst:5.1.2).
+
+### KORAnnualTurnover
+**Schema.org:** `schema:MonetaryAmount`
+_Running KOR-eligible omzet per calendar year with drempel-benutting and monthly prognose (REQ-KOR-002). KorMonitorService computes this on demand from KOR-eligible AR invoices (vrijstellingsGrondslag = KOR_ART25_OB); the declarative `x-openregister-aggregations.korTurnoverByYear` block on the schema documents the equivalent declarative shape per ADR-031. Vrijgestelde / intracommunautaire / onroerend-goed posten are excluded._
+**Primary spec:** bookkeeping-kor-kleine-ondernemersregeling
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| registrationId | string | Yes | FK to KORRegistration |
+| jaar | integer | Yes | Calendar year |
+| lopendeOmzet | number | Yes | Year-to-date KOR-eligible omzet in EUR |
+| drempel | number | Yes | Annual threshold in EUR (default 20000) |
+| drempelBenutting | number | Yes | Fraction lopendeOmzet/drempel (0..1+) |
+| perMaand | object | No | YYYY-MM-indexed omzet per month |
+| uitgeslotenPosten | array | No | Array of {type, bedrag, grondslag} explicitly excluded items |
+| prognoseEindeJaar | number | No | Linear-trend end-of-year omzet projection |
+| prognoseStatus | enum | No | ONDER_DREMPEL, WAARSCHUWING, OVERSCHRIJDING_VERWACHT |
+| administrationId | string | Yes | FK to Administration |
+
+**Relations:**
+- → KORRegistration (many-to-one)
+- → Administration (many-to-one)
+
+**Retention:** 7 years per AWR art. 52.
+
+### KORThresholdAlert
+**Schema.org:** `schema:Action`
+_Waarschuwingsevent zodra de drempel-benutting een schijf passeert (REQ-KOR-003): 80% VROEG, 90% KRITIEK, 100% OVERSCHRIJDING. Each schijf fires exactly once. Logs omzet-at-moment, ernst, kanaal and aanbeveling; publishes to `notifications.dispatch` per the schema's declarative kanaal field._
+**Primary spec:** bookkeeping-kor-kleine-ondernemersregeling
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| registrationId | string | Yes | FK to KORRegistration |
+| trigger | enum | Yes | DREMPEL_80PCT, DREMPEL_90PCT, DREMPEL_100PCT |
+| uitgeloostOp | datetime | Yes | Dispatch timestamp |
+| omzetOpMoment | number | Yes | YTD omzet at moment of dispatch (EUR) |
+| drempelBenutting | number | Yes | Benutting at moment of dispatch (0..1+) |
+| prognoseEindeJaar | number | No | Projected end-of-year omzet |
+| ernst | enum | Yes | VROEG, KRITIEK, OVERSCHRIJDING |
+| aanbeveling | text | No | Operator-facing recommendation |
+| kanaal | array | Yes | Subset of EMAIL, IN_APP, DASHBOARD |
+| bevestigdDoor | string | No | FK to User who acknowledged the alert |
+| actieOndernomen | text | No | Action taken by the operator |
+| administrationId | string | Yes | FK to Administration |
+
+**Relations:**
+- → KORRegistration (many-to-one)
+- → Administration (many-to-one)
+
+**Retention:** 7 years per AWR art. 52.
+
+### KORRevocation
+**Schema.org:** `schema:Action`
+_Beëindiging van de KOR (REQ-KOR-004 / REQ-KOR-007): gedwongen bij overschrijding of vrijwillig na de lock-in. Bij overschrijding is `revocatieDatum` ALTIJD de leveringsdatum van de triggerfactuur — niet einde-maand/kwartaal/jaar (design D4). Bevat het berekende suppletie-bedrag (bedrag · 0.21 / 1.21 over alle KOR-facturen tussen ingangsDatum en revocatieDatum) en de drie-jaars heraanmeld-blokkade._
+**Primary spec:** bookkeeping-kor-kleine-ondernemersregeling
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| registrationId | string | Yes | FK to KORRegistration |
+| type | enum | Yes | OVERSCHRIJDING, VRIJWILLIG_NA_LOCKOUT |
+| revocatieDatum | date | Yes | Leveringsdatum of triggerfactuur (NOT year-end) |
+| triggerFactuurId | string | No | FK to ARInvoice (the overschrijdingsfactuur) |
+| omzetOpMoment | number | No | YTD omzet at revocatie moment |
+| btwSuppletieBedrag | number | No | Computed: Σ bedrag · 0.21 / 1.21 over KOR-facturen |
+| herrekeningRange | object | No | {van, tot} date range for de hermarkering |
+| nieuwRegime | enum | No | REGULIER_BTW (default) |
+| blokkadeHeraanmelding | date | No | revocatieDatum + 3 years |
+| belastingdienstNotificatie | object | No | {verzonden, verzondenOp, bevestigingsnummer} |
+| administrationId | string | Yes | FK to Administration |
+
+**Relations:**
+- → KORRegistration (many-to-one)
+- → ARInvoice (many-to-one, via triggerFactuurId)
+- → Administration (many-to-one)
+
+**Retention:** 7 years per AWR art. 52.
+
+### KOREUTurnover
+**Schema.org:** `schema:MonetaryAmount`
+_Cross-border KOR-EU omzetregistratie (alleen bij regime KOR_EU) per 1-1-2025 (REQ-KOR-008): EX-nummer, EU-brede EUR 100.000-drempel, en omzet/drempel/benutting per lidstaat. Per-lidstaat drempels zijn DATA (design D7). Carries quarterly opgaaf-status (Q1-Q4) for de art. 284 VAT-richtlijn 2006/112/EG-aangifte._
+**Primary spec:** bookkeeping-kor-kleine-ondernemersregeling
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| registrationId | string | Yes | FK to KORRegistration where regime=KOR_EU |
+| exNummer | string | No | EX-nummer (e.g. EX-NL-2026-019234) from Belastingdienst |
+| jaar | integer | Yes | Calendar year |
+| totaalEUOmzet | number | Yes | Total cross-border KOR-EU omzet |
+| drempelEUBrut | number | Yes | EU-wide ceiling (default 100000) |
+| perLidstaat | object | No | Per-country keys: {omzet, drempel, benutting} |
+| kwartaalopgaafStatus | object | No | Q1..Q4 keys with enum OPEN/DRAFT/INGEDIEND |
+| administrationId | string | Yes | FK to Administration |
+
+**Relations:**
+- → KORRegistration (many-to-one)
+- → Administration (many-to-one)
+
+**Retention:** 10 years per VAT Directive 2006/112/EG art. 244 (cross-border surplus).
+
 ### LiquidityForecast
 **Schema.org:** `schema:Report`
 _Daily/weekly/monthly cash flow projections for liquidity planning, including inflow/outflow/net position_
