@@ -23,7 +23,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\Shillinq\Repair\InitializeSettings;
+use OCA\Shillinq\Service\BbvSeedService;
 use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\StatementManifestService;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -42,6 +44,20 @@ class InitializeSettingsTest extends TestCase
      * @var SettingsService&MockObject
      */
     private SettingsService&MockObject $settingsService;
+
+    /**
+     * Mock BbvSeedService (constructor arg #2).
+     *
+     * @var BbvSeedService&MockObject
+     */
+    private BbvSeedService&MockObject $bbvSeedService;
+
+    /**
+     * Mock StatementManifestService (constructor arg #3).
+     *
+     * @var StatementManifestService&MockObject
+     */
+    private StatementManifestService&MockObject $manifestService;
 
     /**
      * Mock ContainerInterface.
@@ -81,12 +97,16 @@ class InitializeSettingsTest extends TestCase
         parent::setUp();
 
         $this->settingsService = $this->createMock(originalClassName: SettingsService::class);
+        $this->bbvSeedService  = $this->createMock(originalClassName: BbvSeedService::class);
+        $this->manifestService = $this->createMock(originalClassName: StatementManifestService::class);
         $this->container       = $this->createMock(originalClassName: ContainerInterface::class);
         $this->logger          = $this->createMock(originalClassName: LoggerInterface::class);
         $this->output          = $this->createMock(originalClassName: IOutput::class);
 
         $this->repairStep = new InitializeSettings(
             settingsService: $this->settingsService,
+            bbvSeedService: $this->bbvSeedService,
+            manifestService: $this->manifestService,
             logger: $this->logger,
             container: $this->container,
         );
