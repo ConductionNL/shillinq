@@ -8,7 +8,9 @@
 
 ## ADDED Requirements
 
-### REQ-SBR-001: SBR / XBRL reporting capability SHALL be declared as `XBRLTaxonomy` + `SBRDocumentType` + `XBRLMapping` registers
+### Requirement: REQ-SBR-001 SBR / XBRL reporting capability SHALL be declared as XBRLTaxonomy + SBRDocumentType + XBRLMapping registers
+
+Shillinq MUST declare the SBR / XBRL reporting capability as three new OpenRegister-managed registers (`XBRLTaxonomy`, `SBRDocumentType`, `XBRLMapping`) declared in `lib/Settings/shillinq_register.json` per ADR-024, with no app-local XBRL or SBR PHP service class.
 
 Standard Business Reporting (SBR) and XBRL (eXtensible Business
 Reporting Language) compliance for Dutch financial institutions is
@@ -46,7 +48,9 @@ fields + aggregations) or config-driven.
 - **THEN** MUST contain `XBRLTaxonomy`, `SBRDocumentType`,
   `XBRLMapping` schema keys.
 
-### REQ-SBR-002: The `XBRLTaxonomy` schema SHALL declare official taxonomy versions
+### Requirement: REQ-SBR-002 The XBRLTaxonomy schema SHALL declare official taxonomy versions
+
+The `XBRLTaxonomy` schema MUST declare the field set below; the six fields marked `Yes` in the Required column MUST be enforced as schema-level required properties so a record cannot be saved without them.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -76,7 +80,9 @@ Schema.org annotation: `schema:Thing`.
 - **THEN** both versions MUST remain available for historical
   reference and prior-year filings.
 
-### REQ-SBR-003: The `SBRDocumentType` schema SHALL declare filing types and rules
+### Requirement: REQ-SBR-003 The SBRDocumentType schema SHALL declare filing types and rules
+
+The `SBRDocumentType` schema MUST declare the field set below; the ten fields marked `Yes` in the Required column MUST be enforced as schema-level required properties so a filing type without a deadline, endpoint, auth method, applicable entity types or administration cannot be saved.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -107,7 +113,9 @@ Schema.org annotation: `schema:Thing`.
 - **THEN** a fiscal-year event MUST surface the deadline (triggered
   at `today = filingDeadline - 30 days`).
 
-### REQ-SBR-004: The `XBRLMapping` schema SHALL map accounts to XBRL GL concepts
+### Requirement: REQ-SBR-004 The XBRLMapping schema SHALL map accounts to XBRL GL concepts
+
+The `XBRLMapping` schema MUST declare the field set below; the five fields marked `Yes` in the Required column MUST be enforced as schema-level required properties. Mappings MUST be unique per (sourceAccountId, taxonomyVersion) so a single account cannot carry two active mappings for the same taxonomy version.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -135,7 +143,7 @@ Schema.org annotation: `schema:Thing`.
 - **THEN** both mapping versions MUST coexist with their respective
   `taxonomyVersion` field values.
 
-### REQ-SBR-005: SBR document lifecycle SHALL be declarative via `x-openregister-lifecycle`
+### Requirement: REQ-SBR-005 SBR document lifecycle SHALL be declarative via x-openregister-lifecycle
 
 `SBRDocumentType` MUST declare an `x-openregister-lifecycle` block
 with the following state machine:
@@ -177,7 +185,9 @@ required fields) but outbound submission is T4 scope.
 - **THEN** the document MUST transition to `approved`; the webhook
   payload MUST be logged for audit trail.
 
-### REQ-SBR-006: Pre-filing validation SHALL enforce GL completeness, mapping coverage, and mandatory fields
+### Requirement: REQ-SBR-006 Pre-filing validation SHALL enforce GL completeness, mapping coverage, and mandatory fields
+
+Pre-filing validation SHALL block the `draft -> validated` transition unless every check below passes; each check MUST be expressed as an `x-openregister-aggregations` predicate (no PHP validator class).
 
 Before transitioning an SBR document to `validated`, the following
 checks MUST run as `x-openregister-aggregations` predicates:
@@ -227,7 +237,9 @@ lifecycle.
 - **THEN** validation MUST fail with "Fiscal year start date
   required".
 
-### REQ-SBR-007: XBRL mapping validation SHALL be pre-filing aggregation, not imperative
+### Requirement: REQ-SBR-007 XBRL mapping validation SHALL be pre-filing aggregation, not imperative
+
+XBRL mapping validation MUST be expressed as a declarative aggregation on `SBRDocumentType`; no PHP `XBRLValidator` / `SBRValidator` service SHALL be authored.
 
 Mapping validation is performed via aggregations that answer: "For
 this FiscalYear and XBRLTaxonomy version, is every GL account
@@ -254,7 +266,9 @@ state.
 - **WHEN** the aggregation is invoked
 - **THEN** it MUST return an empty list (all accounts covered).
 
-### REQ-SBR-008: Filing deadline notifications SHALL alert operators before regulatory deadline
+### Requirement: REQ-SBR-008 Filing deadline notifications SHALL alert operators before regulatory deadline
+
+The system SHALL dispatch a filing-deadline notification 30 days before each applicable `SBRDocumentType.filingDeadline`; notifications MUST be declared as an `x-openregister-notifications` scheduled trigger on the schema, not as a PHP cron job.
 
 For each `SBRDocumentType` where the entity's business type matches
 `applicableEntityTypes`, a notification MUST fire 30 days before
@@ -277,7 +291,7 @@ filing URL, and a link to the SBR document draft page.
 - **WHEN** checking notification state
 - **THEN** no notification MUST fire.
 
-### REQ-SBR-009: Manifest navigation SHALL expose XBRL Taxonomy, SBR Documents, and Mapping Validation
+### Requirement: REQ-SBR-009 Manifest navigation SHALL expose XBRL Taxonomy, SBR Documents, and Mapping Validation
 
 `src/manifest.json` MUST declare three new top-level navigation
 entries:
