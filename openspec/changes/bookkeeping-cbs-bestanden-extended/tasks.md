@@ -20,7 +20,7 @@
 
 ## 3. Data Model Update
 
-- [ ] Task 3.1: Update `openspec/architecture/adr-000-data-model.md` — add two new entity entries for `CBSSubmission` and `CBSLine` with schema.org types (Event, Thing), required fields, and relations; include reconciliation note linking this spec to the entries
+- [x] Task 3.1: Update `openspec/architecture/adr-000-data-model.md` — added CBSSubmission (schema:GovernmentService) and CBSLine (schema:MonetaryAmount) entries inserted alphabetically between CallOffOrder and CashAccount with required fields, lifecycle, relations, and reconciliation notes pointing to bookkeeping-cbs-bestanden-extended (REQ-CBS-001 through REQ-CBS-010). Header entity count bumped 246 → 248.
 
 ## 4. Export Service Implementation — `lib/Service/CBSExportService.php`
 

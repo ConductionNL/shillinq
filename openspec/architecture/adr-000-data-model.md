@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 246
+**Entities:** 248
 
 ## Context
 
@@ -1025,6 +1025,62 @@ _An order placed against a blanket or framework agreement, with delivery schedul
 - → Order (many-to-one)
 - → Organization (many-to-one)
 - → Product (many-to-many)
+
+### CBSLine
+**Schema.org:** `schema:MonetaryAmount`
+_Aggregated financial line item within a CBSSubmission, summing GL transactions whose account number falls within a configured account range and classified by CBS line code (Revenue, OperatingCosts, Depreciation, Interest, Taxes, OtherIncome, OtherExpenses). Computed by CBSExportService from Chart-of-Accounts + general-ledger data per REQ-CBS-002._
+**Primary spec:** cbs-bestanden-extended
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| cbsSubmissionId | string | Yes | FK to CBSSubmission |
+| cbsLineClassification | enum | Yes | One of Revenue, OperatingCosts, Depreciation, Interest, Taxes, OtherIncome, OtherExpenses |
+| cbsLineNumber | string | Yes | Official CBS line number in IV3 format (e.g., 1000, 2000) |
+| accountRangeStart | string | Yes | GL account code range start (e.g., 4000) |
+| accountRangeEnd | string | Yes | GL account code range end (e.g., 4999) |
+| aggregatedAmount | number | Yes | Sum of GL line amounts for this range (MonetaryAmount, integer-cent EUR) |
+| glLineCount | integer | No | Number of GL lines aggregated (auditing aid) |
+| currency | string | Yes | ISO 4217 currency code |
+| description | string | No | Notes on the aggregation logic or variance |
+
+**Relations:**
+- → CBSSubmission (many-to-one, via cbsSubmissionId)
+
+**Reconciliation:** Reconciles bookkeeping-cbs-bestanden-extended REQ-CBS-002 with the canonical CBS IV3-extended line taxonomy. Computed by CBSExportService::generateSubmission(); never edited directly by operators.
+
+### CBSSubmission
+**Schema.org:** `schema:GovernmentService`
+_Complete CBS (Centraal Bureau voor de Statistiek) IV3-extended statistical submission package for a reporting period. Header tracking submission metadata (number, period, organization KvK + tax id, lifecycle state, generated file reference). Lifecycle covers draft → validated → submitted → accepted/rejected per REQ-CBS-003. Distinct from Iv3Export (overheid IV3 quarterly cbs-iv3 source) — this is the SMB/sole-proprietor extended annual flow per Verordening Statistieken Bedrijven._
+**Primary spec:** cbs-bestanden-extended
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| submissionNumber | string | Yes | Unique CBS submission identifier (e.g., CBS-2025-001) |
+| reportingPeriodStartDate | date | Yes | First day of the reporting period |
+| reportingPeriodEndDate | date | Yes | Last day of the reporting period |
+| organizationLegalName | string | Yes | Legal name of the reporting organization |
+| kvkNumber | string | Yes | Dutch Chamber of Commerce registration number (`^[0-9]{8}$`) |
+| taxIdentificationNumber | string | Yes | Dutch VAT/BTW identification number (`^NL[0-9]{10}B[0-9]{2}$`) |
+| administrationId | string | Yes | FK to Administration |
+| status | enum | Yes | One of draft, validated, submitted, accepted, rejected |
+| submissionDate | datetime | No | Timestamp when submission was sent to CBS |
+| iv3FileUri | string | No | OpenRegister file reference to the generated IV3 JSON package |
+| iv3Checksum | string | No | SHA-256 checksum of the generated IV3 file content |
+| validationErrors | array | No | Recorded validation errors blocking the validate transition |
+| description | string | No | Optional operator notes |
+| currency | string | No | ISO 4217 currency, default EUR |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- → CBSLine (one-to-many, via cbsSubmissionId; aggregated GL lines)
+
+**Lifecycle (x-openregister-lifecycle):**
+- draft → validated (validate transition runs structural + balancing validation, attaches IV3 file)
+- validated → submitted (operator submits IV3 file to CBS portal; records submission timestamp)
+- submitted → accepted (CBS feedback received; manual operator update or webhook)
+- submitted → rejected (CBS feedback received; correction submission required)
+
+**Reconciliation:** Reconciles bookkeeping-cbs-bestanden-extended REQ-CBS-001 / REQ-CBS-003 / REQ-CBS-006 / REQ-CBS-007. Distinct from Iv3Export (overheid IV3 quarterly) and IV3Report (SMB IV3 quarterly) — CBSSubmission is the annual IV3-extended statistical aggregation flow. Audit-trail + 10-year retention per Archiefwet (REQ-CBS-010).
 
 ### CashAccount
 **Schema.org:** `schema:BankAccount`
