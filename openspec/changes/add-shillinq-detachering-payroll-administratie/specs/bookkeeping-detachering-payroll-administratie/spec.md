@@ -7,7 +7,11 @@
 
 ## ADDED Requirements
 
-### REQ-DPA-001: Salarisbureau imports SHALL flow via openconnector sources — no app-local payroll client
+### Requirement: REQ-DPA-001 — Salarisbureau imports via openconnector sources
+
+The system SHALL route every salarisbureau (ADP / Loket / Visma /
+Nmbrs) import through an openconnector source row and MUST NOT
+ship app-local payroll HTTP clients.
 
 Per ADR-019 + ADR-022, imports from salarisbureaus (ADP, Loket,
 Visma, Nmbrs) MUST go through openconnector source rows.
@@ -27,7 +31,11 @@ import batch before mapping to journal entries.
   targeting ADP / Loket / Visma / Nmbrs hostnames
 - **THEN** no such usage SHALL exist.
 
-### REQ-DPA-002: The salaris-feed SHALL materialise as balanced `JournalEntry` records of subtype `loonkosten` per employee per loontijdvak
+### Requirement: REQ-DPA-002 — Salaris-feed maps to balanced loonkosten JournalEntry
+
+Each salarisbureau batch SHALL materialise as a balanced
+`JournalEntry` of subtype `loonkosten` per employee per
+loontijdvak, declared as an `x-openregister-mappings` mapping.
 
 Each incoming salaris-feed batch MUST materialise a balanced
 `JournalEntry` per employee per loontijdvak — the journal entry
@@ -47,7 +55,11 @@ salarisbureau-feed to journal-entry lines MUST be an
   nettoloon-CR + premies-CR + loonheffing-CR + pensioen-CR =
   €4 000.
 
-### REQ-DPA-003: The system SHALL declare an `OpdrachtgeversVerklaring` register for Wet DBA opdrachtgever positions
+### Requirement: REQ-DPA-003 — OpdrachtgeversVerklaring register for Wet DBA
+
+The system SHALL declare the `OpdrachtgeversVerklaring`
+register tracking per-ZZP-assignment Wet-DBA classification
+with the canonical field shape and lifecycle defined below.
 
 Per Wet Deregulering Beoordeling Arbeidsrelaties (DBA), the
 opdrachtgevers-verklaring per ZZP assignment MUST be recorded
@@ -72,7 +84,11 @@ DBA service.
 - **THEN** the save MUST succeed; **AND** the DBA administration
   view MUST show the verklaring.
 
-### REQ-DPA-004: The system SHALL produce the standard opdrachtgeversverklaring as a docudesk template
+### Requirement: REQ-DPA-004 — Standaard opdrachtgeversverklaring as docudesk template
+
+The system SHALL render the Belastingdienst standaard
+opdrachtgeversverklaring as a docudesk template declared with
+field bindings from `OpdrachtgeversVerklaring`.
 
 The Belastingdienst standard opdrachtgeversverklaring MUST be
 rendered as a docudesk template from `OpdrachtgeversVerklaring`
@@ -87,7 +103,12 @@ shillinq only declares the template + field bindings.
   fields filled in; **AND** the `verklaringDocumentUri` MUST
   point at the generated document.
 
-### REQ-DPA-005: The system SHALL declare an `IB47Record` register for the annual IB47 form submission to the Belastingdienst
+### Requirement: REQ-DPA-005 — IB47Record register with BSN-encrypted personnel field
+
+The system SHALL declare an `IB47Record` register for the
+annual Belastingdienst IB47 batch and MUST encrypt the
+`ontvangerBSN` field plus restrict its read to the
+`payroll-officer` role.
 
 For freelance assignments + other non-loonhoudingsplichtige
 payments, an IB47 form MUST be assembled annually (with a
@@ -109,7 +130,12 @@ personnel data is mandatory.
 - **THEN** the final payment totals per recipient MUST equal the
   sum of the 12 monthly dry-runs (tolerance: €0).
 
-### REQ-DPA-006: The IB47 submission SHALL flow to the Belastingdienst via an openconnector source
+### Requirement: REQ-DPA-006 — IB47 submission via openconnector source
+
+The IB47 yearly batch SHALL transmit to the Belastingdienst
+through an openconnector source row, with the docudesk template
+rendering the official IB47 XML schema and the transmission
+writing an audit event with submission hash + response status.
 
 Per ADR-019, the IB47 yearly batch submission to the
 Belastingdienst MUST go through an openconnector source row. The
@@ -126,7 +152,12 @@ docudesk template output-channel.
   **AND** an audit-trail event MUST record the submission hash +
   response status per ADR-022.
 
-### REQ-DPA-007: Detachering + payroll administration SHALL be reachable through a feature-flag-controlled manifest navigation entry
+### Requirement: REQ-DPA-007 — Manifest navigation entry behind mkb-detachering feature flag
+
+The system SHALL surface the detachering + payroll administration
+area through a `featureFlags.mkb-detachering` controlled
+`Bookkeeping > Detachering en payroll` navigation entry with three
+sub-pages.
 
 `src/manifest.json` MUST declare a feature-flag-controlled menu
 entry (`featureFlags.mkb-detachering`) under
