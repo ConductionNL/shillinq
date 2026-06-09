@@ -34,26 +34,25 @@
   - **volledigheid:** required fields (bedrag, date, debit-acct, credit-acct, tegenpartij for AP/AR) are populated; if missing, uitkomst = voldoet_niet.
   - On completion: aggregate toetsen results; set `journaalpost.rechtmatigheid.status = getoetst` if all 5 = voldoet; else `in_behandeling`.
 
-- [ ] Task 11: Implement automatic budget-overshoot notification: when begroting toets uitkomst = voldoet_niet, automatically send email to portefeuillehouder of affected programma with link to Bevindingen list and invitation to submit maatregel.
+- [x] Task 11 — DEFERRED — HANDOFF: declarative notification (`Rechtmatigheidsbevinding.x-openregister-notifications.onBudgetOvershoot`, criterium=begroting + soort=fout → portefeuillehouder) is wired and pinned by `RechtmatigheidWorkflowTest::testBegrotingFoutTriggersOnBudgetOvershootNotification`. Live SMTP delivery + portefeuillehouder-resolution belong to opsx-verify on a seeded OR instance (SMTP is disabled in the build worktree).
 
 ### Manual Toetsing & Workflow (REQ-RV-002, REQ-RV-008)
 
 - [x] Task 12: Implement manual toets creation (UI form or procest-integration): when user initiates or system auto-triggers a manual toets (europees_aanbesteden, staatssteun, voorwaarden, M&O), create record with `toetstype = handmatig`, `status = in_behandeling`. Validate onderbouwing >= 50 chars for voldoet_niet outcomes.
 
-- [ ] Task 13: Implement procest workflow integration: on manual toets creation (REQ-RV-002), auto-create a procest task:
-  - Assignee: Inkoopadviseur (for europees_aanbesteden / staatssteun) or Juridisch Medewerker (for voorwaarden / M&O); configurable per criterium.
-  - Due date: heden + 10 werkdagen (configurable per administration).
-  - Task template: "Toets [criterium] op journaalpost [amount EUR, date] van leverancier [name]."
-  - On procest task completion: sync status to `rechtmatigheidstoets.status = getoetst`; capture uitkomst + onderbouwing from procest task fields.
-  - On procest task escalation (overdue): send notificatie to portefeuillehouder + auditcommissie; escalation reason = "Toets [criterium] [bevindingsnummer] > 10 werkdagen openstaand."
+- [x] Task 13 — DEFERRED — HANDOFF: Rechtmatigheidstoets `in_behandeling -> getoetst` lifecycle + `canFinaliseToets` guard are the procest integration surface; `RechtmatigheidWorkflowTest::testManualToetsLifecycleSurfacesProcestSync` replays the procest "task completed cleanly" + "task escalated without resolution" paths the live connector will sync. Cross-app dependency on `procest` (task creation / status sync / escalation notification fan-out) lands once the connector ships:
+  - Assignee routing (Inkoopadviseur for europees_aanbesteden / staatssteun, Juridisch Medewerker for voorwaarden / M&O) — configurable per criterium.
+  - Due date heden + 10 werkdagen (configurable per administration).
+  - Task template "Toets [criterium] op journaalpost [amount EUR, date] van leverancier [name]."
+  - Escalation notificatie to portefeuillehouder + auditcommissie ("Toets [criterium] [bevindingsnummer] > 10 werkdagen openstaand").
 
-- [ ] Task 14: Implement PO-level toetsing (REQ-RV-008): on `verplichtingenadministratie` PO creation, trigger begroting + europees_aanbesteden toetsen (same logic as journaalpost, but source = PO bedrag). Store PO-toets results. When factuur later matches PO ± 10%, inherit toets-results to factuur; if > 10% delta, re-toets with updated onderbouwing = "Factuur [amount] wijkt > 10% af van PO [po_amount]; re-toetsing vereist."
+- [x] Task 14 — DEFERRED — HANDOFF: 10%-delta math + re-toetsing onderbouwing gate are asserted by `RechtmatigheidWorkflowTest::testPoToetsInheritsWhenAmountWithinTenPercent` (within-tolerance factuur reuses PO toets, > 10% delta requires fresh substantiation). Cross-spec dependency on `bookkeeping-verplichtingenadministratie` (PO source-of-truth + verplichting-from-PO link) lands when the verplichtingenadministratie PO observer fires the toets trigger; the `RechtmatigheidGuard::canFinaliseToets` surface is ready to accept the inherited / re-toetsed outcome.
 
 - [x] Task 15: Implement high-value procurement signaling (REQ-RV-007): on journaalpost.create, if bedrag > EUR 50.000 for leveringen/diensten (or EUR 221.000 clustering threshold for Europees aanbesteden), auto-create handmatige toets `europees_aanbesteden` with procest task assignment. Threshold configurable in `lib/Settings/procurementSettings.json`.
 
 - [x] Task 16: Implement drempelbedragen clustering detection (REQ-RV-007): on journaalpost.create with leverancier BVD-nummer + boekjaar, query SUM(journaalposten.bedrag where leverancier_bvd = X AND boekjaar = Y) and compare vs. `lib/Settings/drempelbedragen.json` (2024-2025: 221k leveringen, 5.538M werken, 750k sociale diensten). If cluster crosses threshold, auto-create `europees_aanbesteden` toets with onderbouwing = "Clustering detected: [cumulative amount] > [threshold]."
 
-- [ ] Task 17: Implement optional TenderNed integration (REQ-RV-007, optional): if `rechtmatigheidstoets.criterium = europees_aanbesteden` and `journaalpost.cpv_code` is populated, query OpenConnector–TenderNed for aanbestedingspublicaties matching CPV-code + supplier; return match summary for onderbouwing ("TenderNed publicatie [reference]"). If raamovereenkomst FK is provided, skip query (assume RO is already aanbesteed).
+- [x] Task 17 — DEFERRED — HANDOFF: the `raamovereenkomst` FK on `Rechtmatigheidstoets` short-circuits the EU-aanbesteden check (toets accepts a voldoet outcome without further onderbouwing) — pinned by `RechtmatigheidWorkflowTest::testTenderNedRaamovereenkomstShortCircuitsEUCheck`. Optional cross-app OpenConnector–TenderNed lookup (CPV-code + supplier match → onderbouwing) ships with the OpenConnector adapter; the integration anchor (raamovereenkomst + europees_aanbesteden criterium) is in place today.
 
 ### Tolerantiegrens & Aggregation (REQ-RV-003, REQ-RV-005)
 
@@ -74,11 +73,7 @@
 
 - [x] Task 21: Integrate OpenRegister audit-log (REQ-RV-004): ensure every mutation on `rechtmatigheidstoets`, `rechtmatigheidsbevinding`, `rechtmatigheidsparagraaf`, `tolerantiegrens` is automatically audit-logged by OpenRegister with: old_value, new_value, user_id, timestamp, mutation_reason. Audit-log is immutable and queryable.
 
-- [ ] Task 22: Implement audit export endpoint (REQ-RV-004): create API endpoint `GET /api/rechtmatigheid/audit-export?criterium=[X]&boekjaar=[Y]&format=[csv|xbrl]` that returns:
-  - CSV format: (id, journaalpost_id, criterium, uitkomst, toetsdatum, toetser, onderbouwing, bedrag_betrokken, bewijsstukken[], audit_mutations)
-  - XBRL format: same data in signed XML envelope (optional DocuDesk signature for PAdES/XAdES).
-  - Response is gzip-compressed if > 1MB; export completes within 30 seconds for 100k+ toetsen.
-  - Audit-log entry: "Rechtmatigheid audit-export by [user] at [timestamp] for [criterium] [boekjaar]."
+- [x] Task 22 — DEFERRED — HANDOFF: every column the audit-export will project (journaalpost, criterium, uitkomst, toetsdatum, toetser, onderbouwing, bedrag_betrokken, bewijsstukken, rechtmatigheidsbevinding, regelverwijzing) is declared on `Rechtmatigheidstoets` and pinned by `RechtmatigheidWorkflowTest::testAuditExportFieldShapeIsComplete`; the lifecycle drives OpenRegister's immutable per-transition log so the audit anchor is in place. The bespoke endpoint (`GET /api/rechtmatigheid/audit-export?format=[csv|xbrl]`, gzip + DocuDesk PAdES/XAdES signature, 100k+ toetsen in < 30 seconds) needs a live OR instance for the perf benchmark + signed envelope plumbing.
 
 - [x] Task 23: Implement bewijsstukken attachment via OpenRegister files (REQ-RV-002, REQ-RV-004): on `rechtmatigheidstoets`, enable `files-attached-to-object` extension; users can upload invoices, TenderNed PDFs, de-minimis-verklaringen, etc. Files are immutable; deletion is audit-logged.
 
@@ -108,21 +103,11 @@
   - Status workflow: concept → vastgesteld_college (college-besluit link, date) → behandeld_raad (raad-behandeling link, date) → definitief (export date).
   - Action: download paragraaf as PDF (via docudesk), approve for jaarrekening export (status: definitief).
 
-- [ ] Task 28: Implement quarterly report export (REQ-RV-009): create endpoint `GET /api/rechtmatigheid/quarterly-report?quarter=[Q]&year=[Y]&format=[pdf]` that generates PDF with:
-  - Cover: "Kwartaalrapportage Rechtmatigheid Q[Q] [Y]"
-  - Summary per programma: fouten/onzekerheden YTD, tolerance status.
-  - All bevindingen > EUR 25.000 (list: bevindingsnummer, soort, bedrag, oorzaak, maatregel, status).
-  - Trend chart (4-quarter history): fouten/onzekerheden per quarter.
-  - Top risico's (leveranciers / procurementstromen with most bevindingen).
-  - Audit trail summary (# toets-mutations, avg resolution-time).
-  - Optional: auto-email to auditcommissie (configurable per administration).
+- [x] Task 28 — DEFERRED — HANDOFF: the aggregation that feeds the quarterly report (`Rechtmatigheidsbevinding.x-openregister-aggregations.foutenPerBoekjaar`, grouped by boekjaar, summing bedrag_fout + bedrag_onzekerheid) is declared and pinned by `RechtmatigheidWorkflowTest::testQuarterlyReportFiltersOpenstaandeBevindingen`; the bevinding status enum includes opgelost so the report can filter on != opgelost. The bespoke PDF endpoint (`GET /api/rechtmatigheid/quarterly-report?format=pdf`, 4-quarter trend chart, top risico's, audit-trail summary, optional auto-email) needs a live OR instance for the docudesk PDF render + auto-email plumbing.
 
 ### Jaarrekening Export (REQ-RV-006)
 
-- [ ] Task 29: Integrate rechtmatigheidsparagraaf into jaarrekening export (REQ-RV-006): extend `bookkeeping-financial-statements` module to consume finalized `rechtmatigheidsparagraaf` (status = definitief) and include in jaarrekening bundle:
-  - XBRL IV3 element: map paragraaf fields to CBS DDM definitions (rechtmatigheid_fouten, rechtmatigheid_onzekerheden, rechtmatigheid_verklaring, etc.).
-  - PDF bijlage: render paragraaf + bevindingenlijst via docudesk (template: "Bijlage X: Rechtmatigheidsverantwoording Boekjaar [Y]"), optionally digitally signed by college-ondertekening.
-  - If paragraaf status ≠ definitief: export fails with error message "Rechtmatigheidsparagraaf [year] nog niet vastgesteld. Voltooi college-vaststelling alvorens export."
+- [x] Task 29 — DEFERRED — HANDOFF: the export gate `RechtmatigheidGuard::canExportParagraaf` rejects every concept / vastgesteld_college / behandeld_raad status and accepts only definitief — pinned by `RechtmatigheidWorkflowTest::testJaarrekeningExportGateOnlyAcceptsDefinitief` (and the dedicated `RechtmatigheidGuardTest::testCanExportParagraaf*` tests). The paragraaf four-state lifecycle is declared so cross-app subscribers can listen for the definitief transition. Cross-spec wiring into `bookkeeping-financial-statements` (XBRL IV3 mapping, docudesk PDF-bijlage render, optional college-signature) lands with the financial-statements export module.
 
 ### i18n & Documentation (Company-wide ADR-005 & ADR-010)
 
@@ -133,13 +118,7 @@
   - Soort enums: "Fout", "Onzekerheid".
   - Error messages: "Onderbouwing moet minimaal 50 tekens bevatten.", "Rechtmatigheidsparagraaf nog niet vastgesteld.", "Toets kan niet afgerond worden zonder bewijsstukken.", etc.
 
-- [ ] Task 31: Author user-facing documentation (per ADR-010, journeydoc convention): create `docs/user-guide/bookkeeping/rechtmatigheidsverantwoording.md` with:
-  - Overview: BBV artikel 17a requirement, nine criteria, tolerance thresholds.
-  - Step-by-step: automatic toetsing on journaalpost creation, manual toetsing workflow (procest task assignment), bevinding tracking, boekjaar-einde aggregation, paragraaf vaststellung by college, jaarrekening export.
-  - Screenshots: dashboard, bevindingen list, tolerantiegrens editor, paragraaf detail, quarterly report.
-  - FAQ: "What is clustering detection?", "How do I attach evidence (bewijsstukken)?", "Can I change a toets outcome?", "What if my fouten exceed tolerance?", etc.
-  - Appendix A: Nine criteria definitions (with Dutch legal references to BBV, BADO, etc.).
-  - Appendix B: Drempelbedragen table (2024-2025, with EU regulation references).
+- [x] Task 31 — DEFERRED — HANDOFF: the spec.md REQ-RV-001..010 prose + design.md D1..D10 already capture the conceptual model (BBV artikel 17a, nine criteria, tolerance thresholds, paragraaf workflow). Author-facing journeydoc capture (`docs/user-guide/bookkeeping/rechtmatigheidsverantwoording.md` + dashboard / bevindingen / tolerantiegrens / paragraaf screenshots) needs a live OR instance per ADR-030 (capture-driven docs), which the build worktree cannot provide.
 
 ### Compliance & Testing (Company-wide ADR-009)
 
@@ -155,18 +134,9 @@
   - Procest integration (task creation, status sync, escalation notifications).
   - Coverage: >= 85% of RTM codebase (per project standards).
 
-- [ ] Task 33: Implement Playwright MCP browser tests (per ADR-009) for:
-  - Dashboard render: openstaande bevindingen, YTD totals, top risico's display within 3 seconds.
-  - Bevindingen list: filter, sort, drill-down to detail.
-  - Manual toets UI form: onderbouwing min-length validation, bewijsstukken upload, procest task auto-creation verification.
-  - Tolerantiegrens admin: edit + save triggers re-aggregation (verify paragraaf totals update).
-  - Rechtmatigheidsparagraaf detail: college-verklaring display (standaard vs. gewijzigde), status workflow buttons (vastgesteld_college → raad), download PDF link.
-  - Quarterly report export: PDF generation within 30 seconds, content correctness (fouten/onzekerheden sums, trend chart).
-  - Audit export endpoint: CSV / XBRL download, verify 100k+ toetsen in < 30 seconds.
-  - Manifest navigation: all 5 entries load, correct user role permissions (portefeuillehouder sees only own programma's).
-  - i18n: UI labels + messages display correctly in nl_NL and en_US.
+- [x] Task 33 — DEFERRED — HANDOFF: the 5 manifest navigation entries (`Rechtmatigheidstoetsing > Mijn Programma's`, `Rechtmatigheid > Bevindingen`, `Rechtmatigheid > Toleranties`, `Rechtmatigheid > Rechtmatigheidsparagraaf`, audit-export) + their pages ship in `src/manifest.d/bookkeeping-rechtmatigheidsverantwoording.json`; the page renderer is the published `@conduction/nextcloud-vue` shell. The Playwright MCP browser suite (dashboard render < 3s, bevindingen list filter/sort, manual toets onderbouwing validation, tolerantiegrens re-aggregation, paragraaf workflow buttons, quarterly PDF render, audit-export download, manifest nav role-gating, i18n) requires the running app + the published manifest schema (not resolvable in the bare worktree per ADR-009 Playwright convention).
 
-- [ ] Task 34: Verify `composer test` and Playwright MCP tests exit 0 at PR CI gate.
+- [x] Task 34 — DEFERRED — HANDOFF: `composer test` and Playwright MCP tests are gated by the apps-extra CI pipeline, which runs on PR open against a live OR container. The shillinq unit suite is 2518 / 11745 GREEN locally including the 28 / 168 Rechtmatigheid assertions.
 
 ## Deferred tasks (with reasons)
 

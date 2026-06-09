@@ -121,7 +121,18 @@ final class WbsoDocumentApiControllerTest extends TestCase
      */
     public function testIndexReturnsRows(): void
     {
-        $this->request->method('getParam')->willReturn('adm-1');
+        // Only `administration_id` resolves to adm-1; type / status / filedFrom
+        // must fall back to their default empty strings so the controller takes
+        // the unfiltered `getDocumentsByAdministration` path.
+        $this->request->method('getParam')->willReturnCallback(
+            static function (string $key, mixed $default = null): mixed {
+                if ($key === 'administration_id') {
+                    return 'adm-1';
+                }
+
+                return $default;
+            }
+        );
         $this->rbac->method('hasAny')->willReturn(true);
         $this->documents->method('getDocumentsByAdministration')->willReturn([
             ['documentNumber' => 'DOC-1', 'status' => 'draft', 'administrationId' => 'adm-1'],
