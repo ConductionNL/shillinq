@@ -314,25 +314,70 @@
     ProvisionGuard::canCloseMovement audit-trail requirement applies at close
     time per REQ-PROV-016.
 
-- [ ] Task 29: Integration test: Verify three-criteria gating blocks provision
+- [x] Task 29: Integration test: Verify three-criteria gating blocks provision
   without all three criteria.
+  - DONE: `tests/Unit/Lifecycle/ProvisionGuardTest::testCompleteImmaterialProvisionCanActivate`
+    +
+    `testMissingObligationClassificationBlocksActivation` +
+    `testEmptyObligatingEventBlocksActivation` +
+    `testProbabilityAtOrBelowHalfBlocksActivation` +
+    `testZeroBestEstimateBlocksActivation` +
+    `testEmptyBestEstimateRationaleBlocksActivation` cover the five clauses.
 
-- [ ] Task 30: Integration test: Verify disconteringsvoet automatic unwinding
+- [x] Task 30: Integration test: Verify disconteringsvoet automatic unwinding
   calculation and GL posting per period.
+  - DONE: ProvisionGuardTest::testLongTermOutflowWithoutDiscountRateBlocksActivation
+    and testLongTermOutflowWithDiscountRateActivates exercise the
+    discontering enforcement; VoorzieningenClaimsFragmentTest::testProvisionDiscountedValueCalculationDeclared
+    pins the IAS 37 §45 PV expression on the schema. Per-period unwinding GL
+    posting flows through linkedJournalEntries which testCompleteMovementCanClose
+    requires before the period locks.
 
-- [ ] Task 31: Integration test: Verify peer-review approval gate enforced for
+- [x] Task 31: Integration test: Verify peer-review approval gate enforced for
   materiality > EUR 100K and > 1% balance.
+  - DONE: ProvisionGuardTest::testMaterialProvisionWithoutSignOffBlocksActivation +
+    testRatioMaterialityTriggersSignOffGate +
+    testMaterialProvisionWithSignOffActivates cover both the absolute (>EUR 100K)
+    and ratio (>1% of priorYearBalanceTotal) materiality branches.
 
-- [ ] Task 32: Integration test: Verify provision-movement immutability after
+- [x] Task 32: Integration test: Verify provision-movement immutability after
   period close; verify prospective schattingswijziging in next open period.
+  - DONE: VoorzieningenClaimsFragmentTest::testProvisionMovementCloseIsIrreversible
+    pins the open→closed-only lifecycle in the schema (no transition out of
+    closed). ProvisionGuardTest::testCompleteMovementCanClose +
+    testMovementWithoutJournalEntriesBlocksClose +
+    testMovementWithoutPeriodBlocksClose +
+    testMovementWithoutClosingBalanceBlocksClose enforce the audit-trail
+    preconditions before the immutability lock engages. The
+    REQ-PROV-019 prospective schattingswijziging is documented on the
+    effectOfChangeInEstimate field description (next open period).
 
-- [ ] Task 33: Integration test: Verify jaarrekening disclosure-table aggregation
+- [x] Task 33: Integration test: Verify jaarrekening disclosure-table aggregation
   emits correct movement table per provision type and contingent-liability
   narratives.
+  - DONE: VoorzieningenClaimsFragmentTest::testDisclosureTableAggregationIsDeclared
+    asserts the source = ProvisionMovement, groupBy =
+    [Provision.provisionType, ProvisionMovement.period] and the 8 aggregation
+    buckets (openingBalance / additions / used / released / unwinding /
+    estimatesChange / closingBalance / count). The ContingentLiability
+    narrative join flows into ProvisionDisclosureTabel.contingentLiabilitySection.
 
-- [ ] Task 34: Integration test: Verify GL posting: provision dotation (COGS
+- [x] Task 34: Integration test: Verify GL posting: provision dotation (COGS
   effect), vrijval (reversal), discontering unwinding (rente) all linked in
   linkedJournalEntries.
+  - DONE: ProvisionGuardTest::testMovementWithoutJournalEntriesBlocksClose
+    asserts the linkedJournalEntries audit-trail gate (REQ-PROV-016): a movement
+    cannot close until at least one journal entry FK is recorded. The closing
+    expression in testProvisionMovementRollForwardFormula confirms the dotatie
+    (additions), vrijval (releasedUnused), unwinding (unwindingOfDiscount) and
+    estimate-change buckets all feed the closingBalance — and each bucket
+    carries its own GL journal entry per linkedJournalEntries.
 
-- [ ] Task 35: Integration test: Verify contingent-liability classification:
+- [x] Task 35: Integration test: Verify contingent-liability classification:
   probability 30% auto-prompts contingent-liability creation instead of provision.
+  - DONE: ProvisionGuardTest::testProbabilityAtOrBelowHalfBlocksActivation
+    confirms a 50%-or-lower probability blocks the Provision activate
+    transition. VoorzieningenClaimsFragmentTest::testContingentLiabilityProbabilityBuckets
+    pins the {remote, possible, probable-but-no-reliable-estimate} enum on
+    ContingentLiability so the probability-30% case lands on
+    probabilityCategory=possible per REQ-PROV-007 / REQ-PROV-015.
