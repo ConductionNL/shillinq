@@ -49,6 +49,7 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
+use OCA\Shillinq\Service\Dunning\EvidenceRetentionEnforcer;
 use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
 use OCA\Shillinq\Service\Dunning\PostNLAdapterInterface;
 use OCP\IAppConfig;
@@ -435,6 +436,11 @@ class DunningRunService
         $pauzeStart       = new DateTimeImmutable();
         $hardDeadline     = $pauzeStart->modify('+'.$hardDeadlineDays.' days');
 
+        $refs = ($evidenceRefs ?? []);
+        if ($refs !== []) {
+            (new EvidenceRetentionEnforcer())->validateEvidenceRefs(uris: $refs);
+        }
+
         $record = [
             'factuurId'           => $factuurId,
             'pauzeStart'          => $pauzeStart->format(DATE_ATOM),
@@ -442,7 +448,7 @@ class DunningRunService
             'reden'               => $reden,
             'details'             => $details,
             'gepauzeerdDoor'      => $gepauzeerdDoor,
-            'evidenceRefs'        => ($evidenceRefs ?? []),
+            'evidenceRefs'        => $refs,
             'hardDeadlineEindigt' => $hardDeadline->format(DATE_ATOM),
             'administrationId'    => $administrationId,
             'lifecycleState'      => 'active',

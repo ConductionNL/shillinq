@@ -750,4 +750,51 @@ final class DunningRunServiceTest extends TestCase
 
     }//end testSendRegisteredLetterCapturesPostNLTrackingOnRun()
 
+    /**
+     * Task-25: pause() rejects an evidenceRefs URI that does not match the
+     * `bookkeeping-document-attachment-integration` URI schemes (fail closed).
+     *
+     * @return void
+     */
+    public function testPauseRejectsMalformedEvidenceUri(): void
+    {
+        $os      = new InMemoryObjectService();
+        $service = $this->makeService(os: $os);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $service->pause(
+            administrationId: 'adm-1',
+            factuurId: 'inv-1',
+            reden: 'DISPUTED',
+            details: 'Klant betwist',
+            gepauzeerdDoor: 'user-1',
+            evidenceRefs: ['s3://my-bucket/evidence.pdf']
+        );
+
+    }//end testPauseRejectsMalformedEvidenceUri()
+
+    /**
+     * Task-25: pause() accepts a well-formed evidenceRefs URI.
+     *
+     * @return void
+     */
+    public function testPauseAcceptsWellFormedEvidenceUri(): void
+    {
+        $os      = new InMemoryObjectService();
+        $service = $this->makeService(os: $os);
+
+        $pause = $service->pause(
+            administrationId: 'adm-1',
+            factuurId: 'inv-1',
+            reden: 'DISPUTED',
+            details: 'Klant betwist',
+            gepauzeerdDoor: 'user-1',
+            evidenceRefs: ['docudesk:files/dispute/email-2026-06-02-disputereactie.eml']
+        );
+
+        self::assertSame('active', $pause['lifecycleState']);
+        self::assertCount(1, (array) $pause['evidenceRefs']);
+
+    }//end testPauseAcceptsWellFormedEvidenceUri()
+
 }//end class

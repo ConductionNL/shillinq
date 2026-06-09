@@ -281,9 +281,18 @@ own opsx change.
   for pre-bookkeeping-quote-order-invoice deployments. The caller is still
   responsible for issuing the soft-pause (DunningPauseDispute reden=OTHER) on
   a true return. Verified by `testAdminErrorDetectorPrefersInvoicePaidHistory`.
-- [ ] Task 25 — DEFERRED: evidence-attachment FK contract follows
-  `bookkeeping-document-attachment-integration`; the `evidenceRefs` arrays are declared on
-  `DunningRun`/`DunningPauseDispute`. Retention wiring lands with the attachment-integration change.
+- [x] Task 25 — LANDED 2026-06-09: `EvidenceRetentionEnforcer` lands the
+  shillinq-side gatekeeper for the
+  `bookkeeping-document-attachment-integration` FK contract. It accepts the
+  four canonical URI schemes (`docudesk:`, `openregister:`, `postnl:`,
+  `dunning-run:`), fails closed on malformed input (empty / bare-scheme /
+  unknown-scheme), surfaces every violation in one error message via
+  `validateEvidenceRefs()`, and returns a 7-year retention envelope via
+  `retentionPolicy()`. `DunningRunService::pause()` now invokes the enforcer
+  before persisting a `DunningPauseDispute` with evidence so a malformed URI
+  never silently logs as compliant. Verified by `EvidenceRetentionEnforcerTest`
+  (6 tests) + `testPauseRejectsMalformedEvidenceUri` +
+  `testPauseAcceptsWellFormedEvidenceUri`.
 - [x] Task 26 — LANDED 2026-06-09: `GLTransaction` is now present in shillinq
   (added by the bookkeeping-period-close + bookkeeping-general-ledger tracks).
   `DunningRunService::writeOff()` now materialises the balanced journal entry
@@ -298,6 +307,15 @@ own opsx change.
   the `OninbaarAfschrijving`. The existing `VATReturnService` picks the line up
   on the next return-prep cycle per art. 29 OB. Verified by
   `DunningRunServiceTest::testWriteOffQueuesArt29ObCorrectionVatLine`.
-- [ ] Task 28 — DEFERRED: the stage 1–5 docudesk template library lives in the docudesk
-  project, not shillinq. The `templateId` FK + the seed ladder's `tpl-stageN-nl` references
-  are declared; templates land via docudesk's own change.
+- [x] Task 28 — LANDED 2026-06-09: the shillinq-side seed for the docudesk
+  template library lands as `DunningTemplateRegistry`. It holds the canonical
+  default `templateId` mapping per stage (`tpl-stage1-vriendelijk-nl` …
+  `tpl-stage5-overdracht-incasso-nl`), the tone-gradient (vriendelijk →
+  juridisch per design D2), and the canonical merge-fields the docudesk
+  templates MUST interpolate (`klantNaam`, `factuurNummer`, `factuurDatum`,
+  `openstaandBedrag`, `vervalDatum`, `iban`, `betalingstermijn`,
+  `incassokosten`, `rente`). Each templateId is overridable per stage via
+  `dunning.template.stage_N` so a deployment can swap a template without a
+  code change. The actual template PDF / e-mail bodies still live in docudesk
+  and land via docudesk's own change. Verified by
+  `DunningTemplateRegistryTest` (5 tests, 13 assertions).

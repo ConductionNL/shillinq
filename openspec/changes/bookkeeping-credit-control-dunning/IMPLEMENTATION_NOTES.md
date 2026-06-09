@@ -18,6 +18,12 @@ seeding is required — the documented defaults apply when no value is set.
 | `dunning.credit_score_cache_days`                | `30`    | `CreditScoreService::isFresh()`         | How long a `CreditScore` snapshot is treated as fresh before a refresh is required. |
 | `dunning.credit_score_warning_threshold`         | `3.0`   | `CreditScoreService::evaluateForInvoice()` | Threshold below which the UI surfaces a low-credit-score warning. Scale depends on the active provider (`scoreSchaal`). |
 | `dunning.postal_bulk_batch_size`                 | `50`    | (reserved — PostNL outbound adapter)    | Batch size for the PostNL aangetekende-post API when the queue is drained. |
+| `dunning.write_off_default_btw_periode`          | *(empty)* | `DunningRunService::writeOff()`        | Target BTW-aangifte period for the art. 29 OB correction VATLine. Defaults to the current calendar quarter (e.g. `2026-Q2`) when empty. |
+| `dunning.template.stage_1`                       | `tpl-stage1-vriendelijk-nl`        | `DunningTemplateRegistry::templateIdForStage(1)` | Docudesk template id for stage 1 (vriendelijke reminder). |
+| `dunning.template.stage_2`                       | `tpl-stage2-herinnering-nl`        | `DunningTemplateRegistry::templateIdForStage(2)` | Docudesk template id for stage 2 (herinnering). |
+| `dunning.template.stage_3`                       | `tpl-stage3-aanmaning-14d-nl`      | `DunningTemplateRegistry::templateIdForStage(3)` | Docudesk template id for stage 3 (aanmaning + 14-dagen-brief). |
+| `dunning.template.stage_4`                       | `tpl-stage4-ingebrekestelling-nl`  | `DunningTemplateRegistry::templateIdForStage(4)` | Docudesk template id for stage 4 (ingebrekestelling). |
+| `dunning.template.stage_5`                       | `tpl-stage5-overdracht-incasso-nl` | `DunningTemplateRegistry::templateIdForStage(5)` | Docudesk template id for stage 5 (overdracht incasso). |
 
 Defaults are baked into the service constants; overriding via
 `occ config:app:set shillinq <key> <value>` is sufficient.
