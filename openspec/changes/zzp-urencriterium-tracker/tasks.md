@@ -44,7 +44,7 @@
 
 - [x] Task 10: Declare the `UrenEvidence` schema in `lib/Settings/shillinq_register.json` with all REQ-URC-010 fields (id, ondernemingId, periode, totaalUren, perCategorie{}, exportFormaat, fileRef, sha256, gegenereerdOp, bewaarTermijn)
 
-- [ ] Task 11: Implement daily tally batch (end-of-day, idempotent) per REQ-URC-001 — sums `UrenRegistratie` entries for the day, applies reistijd-cap (max 4 uur, logs overages), updates `UrencriteriumYear.lopendeUren`; no PHP service, pure aggregation
+- [x] Task 11: Implement daily tally batch (end-of-day, idempotent) per REQ-URC-001 — sums `UrenRegistratie` entries for the day, applies reistijd-cap (max 4 uur, logs overages), updates `UrencriteriumYear.lopendeUren`; no PHP service, pure aggregation
 
 - [ ] Task 12: Implement prognosis batch per REQ-URC-002 — rolling-12-week average + seasonality correction (e.g., -25% for August) + vakantie adjustments + ingeplande-opdrachten override; model version stored (`v3.2-12wk-seasonal`); confidence interval computed; updates `UrenPrognose` + `UrencriteriumYear.prognoseEindeJaar`
 
