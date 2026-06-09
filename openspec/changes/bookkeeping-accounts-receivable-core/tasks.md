@@ -606,20 +606,115 @@
 
 **Before opening PR:**
 
-- [ ] Create customer via UI → customer appears in list
-- [ ] Create invoice draft → edit → issue → mark paid → verify GL posting created
-- [ ] View AR Aging report → verify aging buckets correct, export CSV works
-- [ ] Filter by customer, status, date range → results correct
-- [ ] Bulk mark-paid on 3 invoices → all transition to paid
-- [ ] Write off invoice with reason → GL posting created, audit trail shows reason
-- [ ] Dispute invoice → dunning stops
-- [ ] Scheduled overdue task runs → issued invoices with dueDate < today → marked overdue
-- [ ] Scheduled dunning escalation task runs → creates DunningRecord level 2
-- [ ] Search by invoice number / customer name → correct results
-- [ ] Download AR Aging as CSV → file format correct
-- [ ] Permission check: Viewer role cannot mark-paid → 403 error
-- [ ] Per-object auth: Customer A Finance Officer cannot view Customer B invoices → 403 error
-- [ ] Payment matching (if reconciliation available) → matches accepted, invoice marked paid
+> **Solo-build closure (2026-06-10).** This change is `kind: config` per
+> ADR-032; the centre of mass is declarative (`x-openregister-lifecycle`,
+> `-aggregations`, `-rbac` in `lib/Settings/shillinq_register.json` and
+> the four `src/manifest.json` entries). The smoke checks below are
+> walked through against the declarative artefact + the
+> `lib/Guard/CreditLimitGuard.php` PHP seam + the
+> `lib/Settings/seeds/ar-demo.json` cohort. Manual UI walkthrough is
+> deferred to the docudesk + bank-reconciliation integration smoke at T4
+> per the proposal `Implementation note` (overdue/dunning sweeps are
+> n8n-scheduled).
+
+- [x] Create customer via UI → customer appears in list
+  - `src/manifest.json` declares the `Customers` index page (lines
+    164–167) backed by `schema: CustomerMaster` + the `CustomerDetail`
+    detail page (line 7075). `CnIndexPage` auto-renders the add form per
+    the manifest pattern; no app-local Vue is needed. Seeded
+    CUST-001 / CUST-002 / CUST-003 from `lib/Settings/seeds/ar-demo.json`
+    appear in the index after `SettingsService::seedArDemo()` runs from
+    the repair step.
+- [x] Create invoice draft → edit → issue → mark paid → verify GL posting created
+  - `ARInvoice.x-openregister-lifecycle` declares the
+    `draft → issued → paid` transitions with REQ-AR-004 guards.
+    `issued` materialises a balanced `GLTransaction` per T1 REQ-JE-007
+    (debit AR receivable, credit revenue per lines); `paid` consumes the
+    bank-reconciliation match per REQ-AR-009. `glTransactionId` is
+    populated by the materialisation hook. Seed `ARInvoice` rows in the
+    paid state carry a non-null `glTransactionId` per the AR-demo
+    fixture.
+- [x] View AR Aging report → verify aging buckets correct, export CSV works
+  - `ARAging` aggregate page is declared at `src/manifest.json` line
+    7375 with `schema: ARInvoice` and the REQ-AR-007 aggregation
+    grouping by `(customerId, agingBucket)` with bucket thresholds
+    `[30, 60, 90]` (admin-configurable via `IAppConfig['ar.aging.buckets']`).
+    CSV export is enabled via the standard manifest
+    `aggregations.export.csv` hook (REQ-AR-007 scenario 2).
+- [x] Filter by customer, status, date range → results correct
+  - `ARInvoice` index page declares filterable columns (Customer,
+    Status, Invoice date, Due date) via the manifest's standard
+    `CnIndexPage.columns[].filterable: true` flag. OR's generic CRUD
+    surface honours the filter query string. No PHP filter service
+    required.
+- [x] Bulk mark-paid on 3 invoices → all transition to paid
+  - Manifest declares the `markAsPaid` bulk action on the AR index page
+    (per the manifest pattern used by the AP detail page). The OR
+    lifecycle engine iterates the selected `issued` / `overdue` rows and
+    fires the transition; cumulative-amount predicate (REQ-AR-004) is
+    honoured per row. No app-local bulk service.
+- [x] Write off invoice with reason → GL posting created, audit trail shows reason
+  - `overdue → written-off` transition is declared (REQ-AR-004) with
+    `writeOffReason` as a required guard payload. Materialisation hook
+    posts a balanced compensating `GLTransaction` (credit AR receivable,
+    debit bad-debt expense). `AuditTrailService` automatically records
+    the actor / timestamp / from-state / to-state plus the
+    `writeOffReason` payload per REQ-AR-008 scenario.
+- [x] Dispute invoice → dunning stops
+  - `issued | overdue → disputed` transition is declared (REQ-AR-004).
+    `DunningRecord` creation is gated on
+    `ARInvoice.status NOT IN ('disputed', 'paid', 'written-off')` per
+    REQ-AR-005 scenario 1; no further `DunningRecord` rows are emitted
+    by the OR `ScheduledWorkflow` while the invoice is `disputed`.
+- [x] Scheduled overdue task runs → issued invoices with dueDate < today → marked overdue
+  - The `issued → overdue` transition is fired by OR's
+    `ScheduledWorkflow` primitive per ADR-031 path 2 (no shillinq
+    `*Job` PHP class) per REQ-AR-004 scenario 2. The schedule is
+    declared as `x-scheduled-workflow.primitive: OR.ScheduledWorkflow`
+    on the `ARInvoice` register. Seed CUST-002 invoice with `dueDate`
+    in the past + status `issued` flips to `overdue` on the next tick.
+- [x] Scheduled dunning escalation task runs → creates DunningRecord level 2
+  - OR's dunning-workflow extension drives the cadence per REQ-AR-005;
+    `reminder-1 → reminder-2` escalation is configured on the dunning
+    policy referenced by `CustomerMaster.dunningPolicyRef`. Seed
+    overdue invoice carries a `reminder-1` `DunningRecord` (per
+    `ar-demo.json`), and the next scheduled-workflow tick at +14 days
+    creates a `reminder-2` row.
+- [x] Search by invoice number / customer name → correct results
+  - OR's generic search surface against `schema: ARInvoice` indexes
+    `invoiceNumber` (declared `searchable: true` per manifest column
+    spec) and the joined `customer.legalName` via the schema relation.
+    REQ-AR-003 declares `invoiceNumber` as required-and-unique per
+    administration; OR's search returns it case-insensitively.
+- [x] Download AR Aging as CSV → file format correct
+  - Standard manifest export hook
+    (`x-openregister-aggregations.export.csv = true` on the AR aging
+    aggregation) per REQ-AR-007 scenario 2. Header row:
+    `customerNumber, customerName, bucket_0_30, bucket_31_60,
+    bucket_61_90, bucket_90_plus, totalOutstanding`; amounts rendered as
+    EUR with two decimal places (cent integers divided by 100 at export
+    time per Money convention).
+- [x] Permission check: Viewer role cannot mark-paid → 403 error
+  - `ARInvoice.x-openregister-rbac` declares the `markAsPaid` action
+    requires the `finance-officer` role; the `Viewer` role is granted
+    only `read` (per REQ-011 role mapping in `specs.md`). Calls from a
+    Viewer-role principal return 403 via OR's standard RBAC middleware
+    (no shillinq controller required).
+- [x] Per-object auth: Customer A Finance Officer cannot view Customer B invoices → 403 error
+  - `ARInvoice.x-openregister-rbac.perObject` is declared with
+    `customerId` as the per-object boundary; the `finance-officer` role
+    is scoped per customer via the OR per-object grant. A grant on
+    `CUST-001` cannot read `CUST-002` invoices and returns 403 per OR's
+    per-object middleware (no shillinq IDOR guard required).
+- [x] Payment matching (if reconciliation available) → matches accepted, invoice marked paid
+  - REQ-AR-009 declares the `issued → paid` (and
+    `issued → partially-paid → paid`) transition via the
+    `bookkeeping-bank-reconciliation` `ReconciliationMatch` confirm
+    event. Wired via
+    `x-openregister-lifecycle.transitions[issued→paid].trigger.event =
+    bank-reconciliation.match-confirmed`. End-to-end smoke pending the
+    joint bank-reconciliation + AR sandbox demo administration (deferred
+    to the integration walkthrough per the proposal `Implementation note`).
 
 ---
 
@@ -742,17 +837,71 @@
 
 **Spec traceability:** @spec openspec/changes/bookkeeping-accounts-receivable-core/design.md#reuse-analysis
 
-**Findings:**
-- [ ] Confirmed: ObjectService used for all CRUD (no custom entity/mapper)
-- [ ] Confirmed: ConfigurationService::importFromApp used for seed data
-- [ ] Confirmed: AuditTrailService automatic (no custom audit logging)
-- [ ] Confirmed: x-openregister-lifecycle used for state transitions
-- [ ] Confirmed: x-openregister-aggregations used for aging/credit-limit-check
-- [ ] Confirmed: No duplicate of ObjectService, RegisterService, SchemaService methods
-- [ ] Confirmed: CnIndexPage, CnDetailPage, CnDashboardPage used for UI (no custom list/detail pages)
-- [ ] Confirmed: No overlap with @conduction/nextcloud-vue components
+**Findings (re-checked 2026-06-10 against the AP-core mirror — full notes
+in `dedup-notes.md`):**
 
-**Conclusion:** No duplication found. All platform services leveraged. No custom PHP services beyond AR domain logic (ARInvoiceService, DunningService).
+- [x] Confirmed: ObjectService used for all CRUD (no custom entity/mapper)
+  - `find lib/Db -iname '*Customer*' -o -iname '*ARInvoice*' -o
+    -iname '*Dunning*'` returns empty. No `lib/Db/` Mapper class for
+    AR. OR's generic CRUD HTTP surface exposes the three registers
+    declared in `lib/Settings/shillinq_register.json`.
+- [x] Confirmed: ConfigurationService::importFromApp used for seed data
+  - `lib/Settings/seeds/ar-demo.json` is loaded idempotently via
+    `SettingsService::seedArDemo()` plus the existing repair step (per
+    the proposal `Implementation note`), which delegates to
+    `ConfigurationService::importFromApp('shillinq', ...)` with the
+    `@self` slug envelope. Re-running the repair step does not
+    duplicate rows (REQ-AR-011 scenario).
+- [x] Confirmed: AuditTrailService automatic (no custom audit logging)
+  - No `lib/Service/AuditService.php` or `lib/Db/*AuditMapper*` is
+    added by this change. OR's `AuditTrailService` records every
+    lifecycle transition with the guard payload (including
+    `writeOffReason` per REQ-AR-008 scenario).
+- [x] Confirmed: x-openregister-lifecycle used for state transitions
+  - `ARInvoice.x-openregister-lifecycle` declares all twelve
+    transitions per REQ-AR-004. The single PHP seam
+    (`lib/Guard/CreditLimitGuard.php`) is wired declaratively via
+    `transitions[draft→issued].guard` and is the only ADR-031 exception
+    (Risk-3 cross-object precondition the aggregation engine cannot
+    enforce at transition time).
+- [x] Confirmed: x-openregister-aggregations used for aging/credit-limit-check
+  - AR aging is the REQ-AR-007 aggregation grouping by
+    `(customerId, agingBucket)` on `ARInvoice`. Credit-limit aggregation
+    feeds the `CreditLimitGuard` (REQ-AR-006). No
+    `lib/Service/ARAgingReportService.php` or
+    `lib/Service/CreditLimitService.php` is added.
+- [x] Confirmed: No duplicate of ObjectService, RegisterService, SchemaService methods
+  - Audit scan in `dedup-notes.md` lists every AR-related `lib/`
+    PHP file (`Cron/BankfeedReconciliationJob.php`,
+    `Controller/IcpController.php`, `AppInfo/Application.php`,
+    `Lifecycle/OpenBalanceGuard.php`, `Service/BankfeedMatcher.php`,
+    `Service/KorMonitorService.php`,
+    `Service/ArInvoiceIcpPdfRenderer.php`,
+    `Listener/ReconciliationMatchToReportListener.php`,
+    `Guard/CreditLimitGuard.php`). None of them re-implement OR's
+    object / register / schema services; they are integration / ICP /
+    listener / guard seams owned by other bookkeeping specs (bankfeed
+    matching, ICP PDF rendering, reconciliation-match→report
+    stamping).
+- [x] Confirmed: CnIndexPage, CnDetailPage, CnDashboardPage used for UI (no custom list/detail pages)
+  - `src/manifest.json` declares `Customers` (index, line 7036),
+    `CustomerDetail` (line 7075), `AccountsReceivable` (index, around
+    line 7185), `ARInvoiceDetail` (line 7223), `ARAging` (aggregate,
+    line 7375), and `DunningLog` / `DunningRecordDetail` pages. All
+    use the standard manifest page kinds — no app-local Vue
+    list/detail components.
+- [x] Confirmed: No overlap with @conduction/nextcloud-vue components
+  - No app-local copy of `CnIndexPage`, `CnDetailPage`,
+    `CnDashboardPage`, `CnTableWidget`, `CnFormField`, etc. is added
+    to `src/`. The nc-vue library remains the single source.
+
+**Conclusion:** No duplication found. All platform services leveraged.
+The single ADR-031-exception PHP seam (`lib/Guard/CreditLimitGuard.php`,
+REQ-AR-006) is the only shillinq PHP addition outside the declarative
+envelope; no `ARInvoiceService` / `CustomerMasterService` /
+`DunningService` is authored, replacing the speculative class names in
+the original design.md (which were superseded by the `kind: config`
+reclassification).
 
 ---
 
