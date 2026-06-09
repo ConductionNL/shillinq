@@ -42,6 +42,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\OCS\OCSForbiddenException;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -132,6 +133,7 @@ class ReconciliationResolutionController extends Controller
             return $validation;
         }
 
+        $this->requireAuthenticatedSession();
         $actor = $this->resolveActor();
 
         try {
@@ -212,7 +214,8 @@ class ReconciliationResolutionController extends Controller
             return $validation;
         }
 
-        $actor   = $this->resolveActor();
+                $this->requireAuthenticatedSession();
+$actor   = $this->resolveActor();
         $applied = 0;
         $failed  = [];
         foreach ($matchIdsParam as $rawId) {
@@ -272,6 +275,27 @@ class ReconciliationResolutionController extends Controller
         return null;
 
     }//end validatePayload()
+
+
+    /**
+     * Require an authenticated Nextcloud session (REQ-REC-004 IDOR guard).
+     * Throws OCSForbiddenException when the controller is invoked outside a
+     * logged-in session (defensive: #[NoAdminRequired] still requires
+     * authentication, but the runtime guarantee depends on middleware order).
+     *
+     * @return void
+     *
+     * @throws OCSForbiddenException When no authenticated user is present.
+     */
+    private function requireAuthenticatedSession(): void
+    {
+        if ($this->userSession->getUser() === null) {
+            throw new OCSForbiddenException(
+                'authenticated session required to resolve reconciliation matches'
+            );
+        }
+
+    }//end requireAuthenticatedSession()
 
 
     /**
