@@ -2,6 +2,7 @@
 	"_meta": {
 		"change": "bookkeeping-reconciliation-reports",
 		"description": "T4 advanced engine feature — reconciliation sessions, reports, and variance aggregations on top of the T2 bookkeeping-bank-reconciliation matching engine. ADR-031 declarative: lifecycle, aggregations, manifest-only rendering; one PHP guard (StatementVerifyGuard) per ADR-031 §exception for GL-balance lookup that the declarative engine cannot express.",
+		"dedup-note": "T4 is the OUTCOME RECORDER, not a matcher. The bank-statement-line ↔ AR/AP/GL match decision is owned by T2 bookkeeping-bank-reconciliation (its MatchingRule register, x-openregister-aggregations on ReconciliationMatch, and the operator-confirm lifecycle). T4 consumes T2's confirm event via ReconciliationMatchToReportListener and stamps the BankReconciliation session (reconId) + resolution semantics (resolutionStatus/resolutionReason for unmatched items) on the same ReconciliationMatch register. There is intentionally no parallel match table, no T4 matching algorithm, and no VarianceReportService — REQ-REC-007 variance is pure x-openregister-aggregations metadata on closed sessions. Verified against lib/Service/* on 2026-06-09: no Reconcil*Engine, no Variance*Service, no BankMatch* mapper, no parallel reconciliation Db classes.",
 		"specs": [
 			"openspec/specs/bookkeeping-reconciliation-reports/spec.md"
 		]

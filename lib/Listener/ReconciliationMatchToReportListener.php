@@ -29,6 +29,18 @@
  * Fail-soft: a stamping failure logs but never bubbles back into the
  * T2 confirm write path.
  *
+ * **T4-vs-T2 deduplication note** (Task 19, openspec change
+ * `bookkeeping-reconciliation-reports`): the matching DECISION is owned
+ * by T2 — its MatchingRule register, the `x-openregister-aggregations`
+ * candidate emission on `ReconciliationMatch`, and the operator-confirm
+ * lifecycle (REQ-BR-005..010). T4 is the OUTCOME RECORDER, not a
+ * matcher: this listener does not compute matches, only stamps the
+ * T4-side session linkage (`reconId`) and the resolution-workflow
+ * fields (`resolutionStatus`, `resolutionReason`, `matchAlgorithm`,
+ * `matchedAt`, polymorphic FK shortcuts) on the SAME register record.
+ * There is intentionally no parallel match table and no `T4MatchingService`.
+ * See `openspec/changes/bookkeeping-reconciliation-reports/design.md` §D2.
+ *
  * @category Listener
  * @package  OCA\Shillinq\Listener
  *
