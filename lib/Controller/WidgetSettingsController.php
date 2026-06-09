@@ -35,6 +35,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUserSession;
 
 /**
  * Admin endpoints to generate, rotate, and revoke widget API keys.
@@ -48,13 +49,31 @@ class WidgetSettingsController extends Controller
      *
      * @param IRequest          $request     The request object.
      * @param WidgetAuthService $authService API-key lifecycle service.
+     * @param IUserSession      $userSession Session for the acting admin user id (audit-trail actor).
      */
     public function __construct(
         IRequest $request,
         private readonly WidgetAuthService $authService,
+        private readonly IUserSession $userSession,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
+
+    /**
+     * Resolve the acting admin's UID for audit-trail.
+     *
+     * @return string The acting admin's UID, or `'unknown'` when no session.
+     */
+    private function actor(): string
+    {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return 'unknown';
+        }
+
+        return $user->getUID();
+
+    }//end actor()
 
     /**
      * Generate or rotate the API key for a business (REQ-WSW-009).
@@ -66,8 +85,7 @@ class WidgetSettingsController extends Controller
     #[AuthorizedAdminSetting(Application::APP_ID)]
     public function rotate(): JSONResponse
     {
-        $businessId       = trim((string) $this->request->getParam('businessId', ''));
-        $administrationId = trim((string) $this->request->getParam('administrationId', $businessId));
+        $businessId = trim((string) $this->request->getParam('businessId', ''));
 
         if ($businessId === '') {
             return new JSONResponse(['success' => false, 'message' => 'businessId is required.'], Http::STATUS_BAD_REQUEST);
@@ -75,7 +93,7 @@ class WidgetSettingsController extends Controller
 
         $result = $this->authService->rotateApiKey(
             businessId: $businessId,
-            administrationId: $administrationId
+            actor: $this->actor()
         );
         $status = Http::STATUS_BAD_REQUEST;
         if ($result['success'] === true) {
@@ -99,7 +117,7 @@ class WidgetSettingsController extends Controller
             return new JSONResponse(['success' => false, 'message' => 'businessId is required.'], Http::STATUS_BAD_REQUEST);
         }
 
-        $result = $this->authService->revokeApiKey(businessId: $businessId);
+        $result = $this->authService->revokeApiKey(businessId: $businessId, actor: $this->actor());
         $status = Http::STATUS_BAD_REQUEST;
         if ($result['success'] === true) {
             $status = Http::STATUS_OK;
