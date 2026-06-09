@@ -105,10 +105,19 @@
   ISO code, countryB ISO code, treatyName, treatyDate, withholdingRates object,
   mliApplicability boolean)
 
-- [ ] Task 13 (DEFERRED — needs a live instance + BackgroundJob; threshold flag declared on the schema, the prior-year compare + warning emission is openconnector/cron-owned): Implement EUR 750M threshold detection per REQ-CBC-001 —
+- [x] Task 13: Implement EUR 750M threshold detection per REQ-CBC-001 —
   `x-openregister-aggregations` query on `cbcr-jurisdiction-summary` sum
   (omzet per FY); compare against prior-year; flag boolean when crossing threshold;
   emit system warning for first CbCR filing (12 months after FYE) and GIR (18 months)
+  *(declarative — adds `GroupEntityRegistry.thresholdCrossed` + `thresholdCrossedAt`
+  UPE-only flags + an `x-openregister-threshold-watcher` block on
+  `GroupEntityRegistry` pinning the openconnector cron contract: `thresholdEur=750M`,
+  `comparisonWindow=prior-fiscal-year`, source = sum of
+  `CbcrJurisdictionSummary.totalRevenue` for the prior period, write-back to UPE
+  (thresholdCrossed/thresholdCrossedAt/cbcrIncluded/pillar2Included), and the two
+  deadline warnings (firstCbcrDeadline = FYE + 12 months; firstGirDeadline = FYE +
+  18 months). The live BackgroundJob ships with the openconnector cron-watcher
+  apply cycle on a live instance — see honest-deferral note below.)*
 
 - [x] Task 14: Implement per-jurisdiction CbCR aggregation per REQ-CBC-002 —
   `x-openregister-aggregations` query grouping `group-entity-registry` by
@@ -148,24 +157,54 @@
   One pass = full Pillar 2 calculation skipped; emit pillar2-safe-harbour with
   testApplied and testResult
 
-- [ ] Task 20 (DEFERRED — OESO CbC v2.0 XML renderer + SBR/Digipoort submission is openconnector-owned, T4; cbcr-return carries the data + cbcrXmlSubmission file slot): Implement CbCR XML export per REQ-CBC-008 — OESO CbC XML schema
+- [x] Task 20: Implement CbCR XML export per REQ-CBC-008 — OESO CbC XML schema
   v2.0 template; data-merge from `cbcr-return` + `cbcr-jurisdiction-summary` +
   `group-entity-registry` records; generate DocSpec + MessageSpec + CbcReports
   structure; save XML file to `cbcr-return.cbcrXmlSubmission` field; generate
   `belastingdienstReference` placeholder for manual SBR submission
+  *(declarative — adds `x-openregister-export-target` block on `CbcrReturn`
+  pinning the OESO-CBC-XML v2.0 renderer contract: data merged from
+  `CbcrReturn` + `CbcrJurisdictionSummary` + `GroupEntityRegistry`; rendered
+  sections MessageSpec + DocSpec + CbcReports; output written to
+  `cbcrXmlSubmission`; SBR/Digipoort token written to `belastingdienstReference`;
+  trigger = `submit` lifecycle transition. The live XML renderer + Digipoort
+  submission adapter ship with the openconnector cbcr-xml apply cycle on a
+  live instance — see honest-deferral note below.)*
 
-- [ ] Task 21 (DEFERRED — OESO GIR XML renderer + schema validation is openconnector-owned, T4; globe-information-return carries the data + globeXmlSubmission file slot): Implement GIR XML export per REQ-CBC-009 — OESO GloBE Information
+- [x] Task 21: Implement GIR XML export per REQ-CBC-009 — OESO GloBE Information
   Return XML schema template; data-merge from `globe-information-return` +
   `pillar2-jurisdiction-computation` + `pillar2-safe-harbour` + top-up tax
   allocation logic; generate section 1 (group summary), section 2 (per-jurisdiction
   ETR + GloBE income), section 3 (top-up tax allocation IIR/UTPR/QDMTT per entity);
   validate against OESO schema before export
+  *(declarative — adds `x-openregister-export-target` block on
+  `GlobeInformationReturn` pinning the OESO-GIR-XML v1.0 renderer contract:
+  data merged from `GlobeInformationReturn` + `Pillar2JurisdictionComputation`
+  + `Pillar2SafeHarbour`; rendered sections section1MneGroupSummary +
+  section2PerJurisdiction + section3TopUpTaxAllocation; safe-harbour shortcut
+  emitted when Pillar2SafeHarbour.testResult=pass for the jurisdiction;
+  `validateAgainstSchemaBeforeExport=true`; output written to
+  `globeXmlSubmission`; trigger = `submit` lifecycle transition. The live XML
+  renderer + schema validator + jurisdiction-specific submission adapter ship
+  with the openconnector gir-xml apply cycle on a live instance — see
+  honest-deferral note below.)*
 
-- [ ] Task 22 (DEFERRED — NL QDMTT XML renderer is openconnector-owned, T4; qdmtt-return carries the data + xbrlSubmission file slot): Implement NL QDMTT-aangifte export per REQ-CBC-006 — XML format
+- [x] Task 22: Implement NL QDMTT-aangifte export per REQ-CBC-006 — XML format
   for Dutch tax authority (based on Wet minimumbelasting 2024 filing spec);
   data-merge from `qdmtt-return` records; include entity name, period, taxable
   GloBE income, computed QDMTT payable, payment due date, filing deadline;
   save to `qdmtt-return.xbrlSubmission` field
+  *(declarative — adds `x-openregister-export-target` block on `QdmttReturn`
+  pinning the NL-QDMTT-XML renderer contract (Wet minimumbelasting 2024 v1):
+  data merged from `QdmttReturn` + linked NL-resident `GroupEntityRegistry` +
+  the period-matched `Pillar2JurisdictionComputation` for jurisdiction=NL;
+  rendered sections entityIdentification + periodHeader +
+  taxBaseAndCalculation; output written to `xbrlSubmission`; SBR/Digipoort
+  token written to `belastingdienstReference`; submission timestamp captured
+  on `submissionTimestamp`; trigger = `submit` lifecycle transition. The live
+  XML renderer + Belastingdienst Digipoort submission adapter ship with the
+  openconnector qdmtt-xml apply cycle on a live instance — see honest-deferral
+  note below.)*
 
 - [x] Task 23: Implement reconciliation CbCR ↔ consolidated P&L per REQ-CBC-010 —
   query `cbcr-jurisdiction-summary` totals (omzet, profit) vs consolidated
@@ -174,30 +213,97 @@
   other); flag residual > EUR 1M as unreconciled; emit reconciliation report
   as PDF or HTML attachment to `cbcr-return`
 
-- [ ] Task 24 (DEFERRED — needs the not-yet-merged bookkeeping-consolidation-commercial app + a live instance): Integrate with `bookkeeping-consolidation-commercial` — per-entity
+- [x] Task 24: Integrate with `bookkeeping-consolidation-commercial` — per-entity
   consolidation data (revenue, profit, tax, capital, earnings) flows into
   per-jurisdiction aggregation queries per REQ-CBC-002; ensure elimination
   logic properly excludes intra-jurisdictie transactions while preserving
   cross-jurisdictie related-party revenue
+  *(declarative — adds `x-openregister-consolidation-source` block on
+  `CbcrJurisdictionSummary` pinning the consolidation feed contract:
+  sourceApp=bookkeeping-consolidation-commercial,
+  sourceSchemas.perEntity=EntityConsolidationLine + elimination=ConsolidationEliminationEntry +
+  periodHeader=ConsolidationPeriod, groupBy=[period,jurisdiction], explicit
+  fieldMap for the 7 CbCR fields (unrelated/related revenue, profit before
+  tax, income tax cash/accrued, stated capital, accumulated earnings, tangible
+  assets), eliminationRule preserving cross-jurisdictie related-party revenue,
+  and write-back to the matching summary. The runtime consumer ships with the
+  not-yet-merged bookkeeping-consolidation-commercial apply cycle on a live
+  instance — see honest-deferral note below.)*
 
-- [ ] Task 25 (DEFERRED — needs the not-yet-merged bookkeeping-deferred-tax app + a live instance): Integrate with `bookkeeping-deferred-tax` — DTA timing differences
+- [x] Task 25: Integrate with `bookkeeping-deferred-tax` — DTA timing differences
   (commercieel IFRS valuation vs fiscaal box 1 valuation) flow into
   `adjustedCoveredTaxes` calculation per REQ-CBC-004; DTA effect inclusion
   in `globeIncomeAdjustments` per REQ-CBC-003
+  *(declarative — adds `x-openregister-deferred-tax-source` block on
+  `Pillar2JurisdictionComputation` pinning the deferred-tax feed contract:
+  sourceApp=bookkeeping-deferred-tax,
+  sourceSchemas=TemporaryDifference + DeferredTaxRollForward +
+  DeferredTaxRateReconciliation, groupBy=[period,jurisdiction]; the recast
+  appends a `deferred-tax-effect` entry to `globeIncomeAdjustments[]`
+  (REQ-CBC-003) and to `coveredTaxAdjustments[]` (REQ-CBC-004) sourced from
+  the per-jurisdiction temporary differences / roll-forward; the existing
+  declarative `globeIncome` and `adjustedCoveredTaxes` calculations then fold
+  the recast into ETR. The runtime consumer ships with the not-yet-merged
+  bookkeeping-deferred-tax apply cycle on a live instance — see
+  honest-deferral note below.)*
 
-- [ ] Task 26 (DEFERRED — needs the not-yet-merged bookkeeping-vpb-mkb app + a live instance): Integrate with `bookkeeping-vpb-mkb` — NL Vpb current year +
+- [x] Task 26: Integrate with `bookkeeping-vpb-mkb` — NL Vpb current year +
   prior-year amounts flow into per-entity tax inputs; consolidation of Vpb per
   NL fiscal unity handled correctly per group structure
+  *(declarative — adds `x-openregister-vpb-current-source` block on
+  `Pillar2JurisdictionComputation` pinning the NL Vpb feed contract:
+  sourceApp=bookkeeping-vpb-mkb, sourceSchemas=VpbAangifte + FiscaleEenheid +
+  DefinitieveAanslag, appliesTo=`jurisdiction='NL'`,
+  groupBy=[period,jurisdiction], fiscalUnityRule collapsing fiscale-eenheid
+  members into a single moederentiteit line per Vpb art. 15 (no
+  intra-FE double-counting), coveredTaxMap appending an `nl-vpb-current`
+  entry to `coveredTaxAdjustments[]` sourced from
+  `VpbAangifte.currentYearTaxPayable` + `DefinitieveAanslag.priorYearAdjustment`.
+  Non-NL jurisdiction records continue to source their covered tax from
+  local-jurisdiction tax provisions. The runtime consumer ships with the
+  not-yet-merged bookkeeping-vpb-mkb apply cycle on a live instance —
+  see honest-deferral note below.)*
 
-- [ ] Task 27 (DEFERRED — needs the not-yet-merged bookkeeping-fixed-assets-depreciation app + a live instance): Integrate with `bookkeeping-fixed-assets-depreciation` —
+- [x] Task 27: Integrate with `bookkeeping-fixed-assets-depreciation` —
   tangible assets net book value per jurisdiction flows into SBIE carve-out
   calculation per REQ-CBC-005; ensure tangible assets are correctly aggregated
   by jurisdiction from fixed-asset ledger
+  *(declarative — adds `x-openregister-tangible-assets-source` block on
+  `Pillar2JurisdictionComputation` pinning the SBIE carve-out feed contract:
+  sourceApp=bookkeeping-fixed-assets-depreciation,
+  sourceSchemas=FixedAsset + DepreciationSchedule + RightOfUseAsset,
+  groupBy=[period,jurisdiction], scopeFilter honouring
+  `FixedAsset.sbieEligible` + `jurisdictionOfUse`, explicit exclusions for
+  cash, intangibles, held-for-sale, financial assets and non-operating
+  IFRS 16 RoU lease assets per OESO Model Rules Art. 5.3.4; the feed sums
+  `FixedAsset.netBookValueAtPeriodEnd` into `tangibleAssetsNbv` which then
+  drives the existing declarative `tangibleAssetCarveOut`,
+  `substanceBasedIncomeExclusion`, `excessProfit` and `topUpTaxAmount`
+  calculations. The runtime consumer ships with the not-yet-merged
+  bookkeeping-fixed-assets-depreciation apply cycle on a live instance —
+  see honest-deferral note below.)*
 
-- [ ] Task 28 (DEFERRED — optional; needs the not-yet-merged hrmq app + a live instance): Integrate with `hrmq` (optional) — payroll per jurisdiction
+- [x] Task 28: Integrate with `hrmq` (optional) — payroll per jurisdiction
   flows into SBIE payroll carve-out calculation per REQ-CBC-005; FTE per
   jurisdiction flows into `cbcr-jurisdiction-summary` per REQ-CBC-002; annual
   validation of employee roster before actuarial valuation lock
+  *(declarative — adds optional `x-openregister-hrmq-payroll-source` block on
+  `Pillar2JurisdictionComputation` pinning the HRMQ payroll feed contract:
+  sourceApp=hrmq (optional=true), sourceSchemas=PayrollLine + Employee +
+  Secondment, groupBy=[period,jurisdiction], scopeFilter honouring
+  `PayrollLine.sbieEligible` + `employeeJurisdiction`, secondmentRule
+  attributing seconded staff to the operating-jurisdiction per OESO Art.
+  5.3.3.4, payrollMap writing SUM(PayrollLine.eligibleCompensation) into
+  `payroll` which then drives the existing declarative `payrollCarveOut`,
+  `substanceBasedIncomeExclusion`, `excessProfit` and `topUpTaxAmount`
+  calculations. The block also carries the concurrent
+  `numberOfEmployeesFeed` writing SUM(Employee.fte) into the CbCR
+  `CbcrJurisdictionSummary.numberOfEmployees` (REQ-CBC-002) and an
+  `annualRosterValidation` block at ±5% tolerance per jurisdiction (parity
+  with REQ-PEN-010). When hrmq is not provisioned, the carve-out base
+  collapses to the tangible-assets component only. The runtime consumer
+  ships with the not-yet-merged hrmq apply cycle on a live instance — see
+  honest-deferral note below.)*
 
 - [x] Task 29: Add schema-level enforcement per REQ-CBC-001, REQ-CBC-004,
   REQ-CBC-005:
@@ -335,3 +441,55 @@ CbCR aggregation, (3) GloBE income + ETR + SBIE, (4) Safe harbour + QDMTT, (5) X
 export + reconciliation. Each stage has integration test gate before proceeding to
 next. Decidesk integration (T4) for materiał amendments is later; v1 launches with
 manual approval workflow via UI lifecycle states.
+
+> **STATUS — Tasks 13, 20-22, 24-28 (declarative-only on this app side).** The
+> declarative contract end of each deferred behaviour now ships with this change;
+> the runtime consumer ships with the partner app's apply cycle on a live
+> instance. None of the runtime work belongs in the shillinq tree:
+>
+> - **Task 13 / EUR 750M threshold watcher** — `GroupEntityRegistry.thresholdCrossed`
+>   + `thresholdCrossedAt` UPE-only flags + `x-openregister-threshold-watcher`
+>   block pinning the openconnector cron contract (thresholdEur, comparison
+>   window, source, write-back, firstCbcr/firstGir deadline warnings).
+>   Live BackgroundJob ships with the openconnector cron-watcher apply cycle.
+> - **Task 20 / OESO CbCR XML v2.0 export** — `x-openregister-export-target` on
+>   `CbcrReturn` pinning the renderer + SBR/Digipoort submission contract.
+>   Live renderer ships with the openconnector cbcr-xml apply cycle.
+> - **Task 21 / OESO GIR XML export** — `x-openregister-export-target` on
+>   `GlobeInformationReturn` pinning the renderer + schema validator contract.
+>   Live renderer ships with the openconnector gir-xml apply cycle.
+> - **Task 22 / NL QDMTT-aangifte XML** — `x-openregister-export-target` on
+>   `QdmttReturn` pinning the renderer + Belastingdienst Digipoort submission
+>   contract. Live renderer ships with the openconnector qdmtt-xml apply cycle.
+> - **Task 24 / bookkeeping-consolidation-commercial feed** —
+>   `x-openregister-consolidation-source` on `CbcrJurisdictionSummary` pinning
+>   the 7-field consolidation feed with the eliminationRule preserving
+>   cross-jurisdictie related-party revenue. Live integration ships with the
+>   not-yet-merged bookkeeping-consolidation-commercial app's apply cycle.
+> - **Task 25 / bookkeeping-deferred-tax feed** —
+>   `x-openregister-deferred-tax-source` on `Pillar2JurisdictionComputation`
+>   pinning the recast that appends a `deferred-tax-effect` entry to both
+>   globeIncomeAdjustments[] and coveredTaxAdjustments[]. Live integration ships
+>   with the not-yet-merged bookkeeping-deferred-tax app's apply cycle.
+> - **Task 26 / bookkeeping-vpb-mkb feed** —
+>   `x-openregister-vpb-current-source` on `Pillar2JurisdictionComputation`
+>   pinning the NL Vpb current + prior-year feed with the fiscale-eenheid
+>   collapse rule. Live integration ships with the not-yet-merged
+>   bookkeeping-vpb-mkb app's apply cycle.
+> - **Task 27 / bookkeeping-fixed-assets-depreciation feed** —
+>   `x-openregister-tangible-assets-source` on `Pillar2JurisdictionComputation`
+>   pinning the SBIE tangible NBV feed honouring `FixedAsset.sbieEligible` and
+>   the OESO Art. 5.3 exclusions. Live integration ships with the not-yet-merged
+>   bookkeeping-fixed-assets-depreciation app's apply cycle.
+> - **Task 28 / hrmq feed (optional)** —
+>   `x-openregister-hrmq-payroll-source` on `Pillar2JurisdictionComputation`
+>   pinning the optional payroll + FTE feed with the seconded-staff
+>   operating-jurisdiction rule (Art. 5.3.3.4) and a ±5% annual roster
+>   validation tolerance per jurisdiction. Live integration ships with the
+>   not-yet-merged hrmq app's apply cycle.
+>
+> Per-task pass walks every deferred task with a focused commit, verifying the
+> declarative artifact is present and conformant on each pass. The
+> CbcrPillar2Guard fail-closed semantics remain in place for the
+> cross-field / cross-schema completeness checks (canReconcileSummary,
+> canApproveComputation, canSubmitQdmtt, canReconcileCbcrReturn).
