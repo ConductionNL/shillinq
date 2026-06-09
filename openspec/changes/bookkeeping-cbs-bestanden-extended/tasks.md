@@ -43,41 +43,27 @@
 
 ## 6. Seed Data — `lib/Settings/seeds/`
 
-- [ ] Task 6.1: Include 3 example `CBSSubmission` records in `openspec/changes/bookkeeping-cbs-bestanden-extended/design.md` Seed Data section (already authored); when landing in register file, ensure:
-  - Each record has `@self` envelope with register, schema, slug
-  - Field values use realistic Dutch data (KVK numbers, legal names, periods)
-  - Submission statuses vary (draft, validated, submitted) to show lifecycle
-  - Idempotent slug matching per ADR-031 guidance
-
-- [ ] Task 6.2: Include 2-3 example `CBSLine` records in design.md (already authored); linked to example submissions; demonstrate aggregation logic (Revenue, OperatingCosts classifications with realistic amounts)
-
-- [ ] Task 6.3: Seed data is loaded via `ConfigurationService::importFromApp()` during repair step or first-run (same mechanism as T1-T2 seeds)
+- [x] Task 6.1: Three example `CBSSubmission` records ship in `lib/Settings/register.d/bookkeeping-cbs-bestanden-extended.json` `objects[]`: `cbs-sub-2025-org-001` (Gemeente Amsterdam, draft), `cbs-sub-2025-org-002` (Conduction B.V., validated, submissionDate=2026-03-15), `cbs-sub-2026-org-003` (Nederlandse Spoorwegen N.V., submitted, submissionDate=2027-03-10). Each carries a valid Dutch KvK + tax id (regex-matching), full reporting period, and the lifecycle status varies to exercise REQ-CBS-003. `@self` envelope uses the slug as the idempotency key per ADR-031.
+- [x] Task 6.2: Three example `CBSLine` records ship in the same fragment linked to `cbs-sub-2025-org-001`: `cbs-line-2025-001-revenue` (Revenue, 8000–8999, 1.25M€), `cbs-line-2025-001-costs` (OperatingCosts, 5000–5999, 950K€), `cbs-line-2025-001-depreciation` (Depreciation, 6000–6999, 145K€). Integer-cent amounts per the Money rule.
+- [x] Task 6.3: Seed data is loaded via the existing `SettingsService::loadConfigurationForced()` path called from `InitializeSettings` repair step — that path walks `register.d/*.json` per ADR-037 and forwards each fragment to OR's `ConfigurationService::importFromApp()`. No new repair-step wiring required for seeds; the existing post-migration hook is sufficient.
 
 ## 7. Manifest Navigation — `src/manifest.json`
 
-- [ ] Task 7.1: Add CBS Submissions navigation + pages per REQ-CBS-009:
-  - Menu entry: `Bookkeeping > CBS Submissions` (or top-level, per UX review)
-  - Index page: `type: index`, bound to `CBSSubmission` register, displays submission list with columns: submissionNumber, reportingPeriod, organizationLegalName, status, submissionDate
-  - Detail page: `type: detail`, shows CBSSubmission header fields + CBSLine table + Files/Audit tabs
-  - Filters: status (draft/validated/submitted/accepted/rejected), period (date range), organization (dropdown)
-  - Actions: Validate (draft→validated), Submit (validated→submitted), Accept/Reject (submitted→accepted/rejected)
-
-- [ ] Task 7.2: Validate manifest structure — run `node tests/validate-manifest.js`; confirm no errors
+- [x] Task 7.1: Authored `src/manifest.d/bookkeeping-cbs-bestanden-extended.json` per ADR-037 modular fragment. Adds CBS Submissions menu entry under Bookkeeping (icon FileChartCheckOutline, order 145) with the index page (`/bookkeeping/cbs-submissions`, type index, 7 columns incl. submissionNumber/period/organization/status/submissionDate, 4 filters incl. status enum + administrationId + date-range, defaultSort=submissionNumber) and the detail page (`/bookkeeping/cbs-submissions/:id`, type detail) carrying 14 header fields + CBSLine relations block + lines/files/audit tabs + 5 lifecycle actions (validate / submit / accept / reject / generate) each gated on `requiresStatus`. Frontmatter `_meta` carries SPDX + change tag + ADR-037 reference.
+- [x] Task 7.2: Manifest validates — `node tests/validate-manifest.js` passes (`structural lint: PASS (0 issues)` / `consistency check: PASS (0 issues)`). Fragment is merged at runtime via `mergeManifestFragments()` in `src/main.js` (webpack `require.context('./manifest.d/', false, /\.json$/)`).
 
 ## 8. Permissions & Authorization
 
-- [ ] Task 8.1: Define RBAC rules for CBS Submissions per ADR-023:
-  - `Read` — Finance Manager, Accountant, Auditor roles
-  - `Create` — Finance Manager role
-  - `Validate` — Auditor role
-  - `Submit` — Finance Manager role
-  - `Accept/Reject` — (workflow external; recorded via manual update or webhook)
-
-- [ ] Task 8.2: Implement via `AuthorizationService` (no custom code required; configured in register schema via `x-openregister-rbac` extensions)
+- [x] Task 8.1: Declared `x-openregister-rbac.roles` directly on the CBSSubmission + CBSLine schemas in `lib/Settings/register.d/bookkeeping-cbs-bestanden-extended.json`:
+  - `finance-manager` → create, read, update (matches "Create" + "Submit" rights)
+  - `accountant` → read (matches "Read")
+  - `auditor` → read, validate on CBSSubmission (matches "Read" + "Validate")
+  - Accept/Reject — terminal CBS-side transitions surfaced by manual operator update or future webhook; no specific role grant required.
+- [x] Task 8.2: No custom RBAC code authored — OpenRegister's `AuthorizationService` enforces the declarative `x-openregister-rbac` block per ADR-022 / ADR-023. Reads + writes flow through the existing `ObjectService.findAll()` / `saveObject()` calls that already honour the schema-level RBAC; the CBSSubmissionController does not re-implement authorisation.
 
 ## 9. Migration / Repair Step
 
-- [ ] Task 9.1: Create repair step `lib/Migration/Load_CBS_Seeds_Step.php` implementing `IRepairStep` per ADR-003 lifecycle guidance; calls `ConfigurationService::importFromApp('shillinq', $cbsSeedsData, version: '1.0', force: false)` to idempotently load seed data; repair step runs on install and upgrade
+- [x] Task 9.1: Created `lib/Repair/Load_CBS_Seeds_Step.php` implementing `IRepairStep` per ADR-003 lifecycle guidance (shillinq's repair-step directory is `lib/Repair/`, mirroring the existing `InitializeSettings` + `BackfillFiscalPeriods` siblings — the tasks.md wording `lib/Migration/` was a misnaming of the convention). Registered under `<repair-steps><post-migration>` in `appinfo/info.xml`. Implementation reads `lib/Settings/register.d/bookkeeping-cbs-bestanden-extended.json`, walks the `objects[]` block, filters by schema (CBSSubmission, CBSLine), looks up each by `slug` via OR `ObjectService::findAll()`, and persists missing ones via `saveObject()` named-arg form. Non-fatal on failures (logs + continues).
 
 ## 10. Tests
 
