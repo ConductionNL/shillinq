@@ -8,22 +8,35 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `bookkeeping-schatkistbankieren` capability spec already exists,
+- [x] Task 1: Confirm no `bookkeeping-schatkistbankieren` capability spec already exists,
   no `TreasuryAccount`/`BankingRule`/`ComplianceReport` schemas are declared, and no
   `lib/Service/Compliance*` / `lib/Service/Treasury*` / `lib/Service/Report*` PHP classes
   are present (per ADR-031 anti-pattern enumeration)
-- [ ] Task 2: Author `specs/bookkeeping-schatkistbankieren/spec.md` with `Status: proposed` /
+  - **Verified 2026-06-09**: no `TreasuryAccount`/`BankingRule` schemas in any
+    `lib/Settings/register.d/*.json`; no `treasury_account`/`banking_rule`/`schatkist_*`
+    tables in `appinfo/info.xml`; no `lib/Db/` mappers for these entities. A
+    pre-existing `lib/Service/ComplianceService.php` ships for BBV (waterschappen-bbv
+    chain) — out of scope for the schatkist work; this spec adds NO new
+    `Compliance{Report|Scoring|Aggregation}*.php` classes. The `ComplianceReport`
+    name collides with an `obligation-financial-administration` entry in ADR-000;
+    Task 15 reconciles that.
+- [x] Task 2: Author `specs/bookkeeping-schatkistbankieren/spec.md` with `Status: proposed` /
   `Scope: shillinq` / `Tier: T2 (compliance + operations)` /
   `Depends on: bookkeeping-chart-of-accounts, bookkeeping-audit-trail` header;
   `REQ-SCHATKIST-NNN` requirements using RFC 2119 keywords; `#### Scenario:` blocks with
   GIVEN/WHEN/THEN; cite ADR-022 + ADR-031 inline; explicitly address Dutch government
   treasury banking regulations (schatkistbankieren) and multi-administration governance
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including
+  - Authored as `specs/bookkeeping-schatkistbankieren/spec.md` with 10 REQ-SCHATKIST-NNN
+    requirements; published to `openspec/specs/bookkeeping-schatkistbankieren/spec.md`.
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including
   Affected Projects / Scope / Risks (multi-criteria compliance preconditions, regulatory
   reporting format alignment) / Rollback / Open Questions
-- [ ] Task 4: Author `design.md` with Reuse Analysis table, D1 (treasury accounts as master-list
+  - `proposal.md` carries all required sections; rollback + open questions present.
+- [x] Task 4: Author `design.md` with Reuse Analysis table, D1 (treasury accounts as master-list
   governance objects), D2 (banking rules are configurable), D3 (multi-criteria compliance
   precondition), D4 (compliance reports are snapshots), D5 (compliance metrics are aggregations)
+  - `design.md` documents D1..D5 with alternatives-considered, declarative-vs-imperative
+    table, and migration plan.
 - [ ] Task 5: Declare the `TreasuryAccount` schema in `lib/Settings/shillinq_register.json`
   with all REQ-SCHATKIST-002 fields (accountNumber, iban, bic, accountName, description,
   complianceClassification, masterListStatus, administrationId, linkedAccountNumber,
