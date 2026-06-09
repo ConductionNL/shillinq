@@ -241,20 +241,33 @@ own opsx change.
 - [ ] Task 21 — DEFERRED: PostNL aangetekende-post needs an openconnector connector + live
   PostNL API. The `AANGETEKENDE_POST` kanaal + `postageStatus` field are declared; the
   send/track job lands with the connector.
-- [ ] Task 22 — DEFERRED (partial): the `OninbaarAfschrijving` schema, write-off lifecycle
-  and `canPostWriteOff` guard are implemented; the GL posting + BTW-teruggaaf materialisation
-  (Tasks 26/27) need the dependency posting schemas and are deferred with them.
+- [x] Task 22 — LANDED 2026-06-09: the `OninbaarAfschrijving` schema, write-off
+  lifecycle and `canPostWriteOff` guard are implemented; the GL posting +
+  BTW-teruggaaf materialisation now also land here — `DunningRunService::writeOff()`
+  emits a balanced `GLTransaction` (debit `7220` bad-debt, optional debit `1500`
+  output-VAT-recover, credit `1300` AR control) and queues a `VATLine`
+  correction (`type=CORRECTION_ART_29_OB`) against the next aangifte period.
+  Caller-supplied `boekingId` is honoured to skip duplicate posting.
 - [ ] Task 23 — DEFERRED: the anti-pattern (admin-error) detector needs the AR payment
   history (paid-invoice lookback) from `bookkeeping-accounts-receivable-core`; it reuses the
   `DunningPauseDispute` (reden=OTHER) soft-pause already declared here once that history exists.
 - [ ] Task 25 — DEFERRED: evidence-attachment FK contract follows
   `bookkeeping-document-attachment-integration`; the `evidenceRefs` arrays are declared on
   `DunningRun`/`DunningPauseDispute`. Retention wiring lands with the attachment-integration change.
-- [ ] Task 26 — DEFERRED: write-off GL posting needs the `bookkeeping-general-ledger`
-  `GLTransaction`/journal-entry schema (not yet in shillinq). `OninbaarAfschrijving.boekingId`
-  FK is declared.
-- [ ] Task 27 — DEFERRED: BTW-teruggaaf prep needs the `bookkeeping-btw-aangifte` schema.
-  `OninbaarAfschrijving.btwAangiftePeriode` + `btwBedrag` FKs are declared.
+- [x] Task 26 — LANDED 2026-06-09: `GLTransaction` is now present in shillinq
+  (added by the bookkeeping-period-close + bookkeeping-general-ledger tracks).
+  `DunningRunService::writeOff()` now materialises the balanced journal entry
+  inline (see Task 22 above) and stamps the resulting transaction id onto
+  `OninbaarAfschrijving.boekingId`. Verified by
+  `DunningRunServiceTest::testWriteOffMaterialisesBalancedGlPosting`.
+- [x] Task 27 — LANDED 2026-06-09: the `VATReturn` / `VATLine` schemas from
+  `bookkeeping-vat-btw-filing` are present in shillinq. `DunningRunService::writeOff()`
+  now emits a `VATLine` with `type=CORRECTION_ART_29_OB`, negative
+  `vatAmount`, the next aangifte period (default = current calendar quarter,
+  overridable via `dunning.write_off_default_btw_periode`), and the FK back to
+  the `OninbaarAfschrijving`. The existing `VATReturnService` picks the line up
+  on the next return-prep cycle per art. 29 OB. Verified by
+  `DunningRunServiceTest::testWriteOffQueuesArt29ObCorrectionVatLine`.
 - [ ] Task 28 — DEFERRED: the stage 1–5 docudesk template library lives in the docudesk
   project, not shillinq. The `templateId` FK + the seed ladder's `tpl-stageN-nl` references
   are declared; templates land via docudesk's own change.

@@ -272,6 +272,105 @@ final class DunningRunServiceTest extends TestCase
     }//end testWriteOffPersistsRecord()
 
     /**
+     * REQ-CCD-010 / task-26: writeOff materialises a balanced GLTransaction
+     * (debit bad-debt + VAT-recover, credit AR control).
+     *
+     * @return void
+     */
+    public function testWriteOffMaterialisesBalancedGlPosting(): void
+    {
+        $os      = new InMemoryObjectService();
+        $service = $this->makeService(os: $os);
+
+        $persisted = $service->writeOff(administrationId: 'adm-1', params: [
+            'factuurId'            => 'inv-1',
+            'hoofdsomAfgeschreven' => 4200.00,
+            'btwBedrag'            => 882.00,
+            'art29OBVerklaring'    => 'Faillissement vonnis 2026-04-12',
+            'btwAangiftePeriode'   => '2026-Q2',
+        ]);
+
+        $glRows = $os->dump(schema: 'GLTransaction');
+        self::assertCount(1, $glRows, 'one GL transaction materialised');
+        $journal = $glRows[0];
+
+        // boekingId on the OninbaarAfschrijving points at the GL transaction.
+        self::assertSame($journal['id'], $persisted['boekingId']);
+        self::assertSame('inv-1', $journal['sourceReference']);
+        self::assertSame('posted', $journal['state']);
+        self::assertTrue((bool) $journal['isBalanced']);
+
+        // 3 postings: debit bad-debt 420000c + debit VAT-recover 88200c, credit AR 508200c.
+        $postings = (array) $journal['postings'];
+        self::assertCount(3, $postings);
+
+        $debit  = 0;
+        $credit = 0;
+        foreach ($postings as $line) {
+            $debit  += (int) $line['debitCents'];
+            $credit += (int) $line['creditCents'];
+        }
+        self::assertSame($debit, $credit, 'GL posting must balance');
+        self::assertSame(508200, $debit, 'debit total = hoofdsom + btw in cents');
+
+    }//end testWriteOffMaterialisesBalancedGlPosting()
+
+    /**
+     * REQ-CCD-010 / task-27: writeOff queues a `VATLine` correction line keyed
+     * to the next aangifte period with the FK back to the OninbaarAfschrijving.
+     *
+     * @return void
+     */
+    public function testWriteOffQueuesArt29ObCorrectionVatLine(): void
+    {
+        $os      = new InMemoryObjectService();
+        $service = $this->makeService(os: $os);
+
+        $persisted = $service->writeOff(administrationId: 'adm-1', params: [
+            'factuurId'            => 'inv-1',
+            'hoofdsomAfgeschreven' => 4200.00,
+            'btwBedrag'            => 882.00,
+            'art29OBVerklaring'    => 'Faillissement vonnis 2026-04-12',
+            'btwAangiftePeriode'   => '2026-Q2',
+        ]);
+
+        $lines = $os->dump(schema: 'VATLine');
+        self::assertCount(1, $lines);
+        $line = $lines[0];
+        self::assertSame('2026-Q2', $line['returnId']);
+        self::assertSame('CORRECTION_ART_29_OB', $line['type']);
+        self::assertSame(-882.0, (float) $line['vatAmount']);
+        self::assertSame($persisted['id'], $line['sourceOninbaarRef']);
+        self::assertSame('inv-1', $line['sourceInvoiceRef']);
+
+    }//end testWriteOffQueuesArt29ObCorrectionVatLine()
+
+    /**
+     * Task-22: when the caller supplies its own `boekingId`, the write-off
+     * reuses it instead of materialising a duplicate GL posting (idempotent
+     * for callers that already produced the journal upstream).
+     *
+     * @return void
+     */
+    public function testWriteOffHonorsCallerProvidedBoekingId(): void
+    {
+        $os      = new InMemoryObjectService();
+        $service = $this->makeService(os: $os);
+
+        $persisted = $service->writeOff(administrationId: 'adm-1', params: [
+            'factuurId'            => 'inv-1',
+            'hoofdsomAfgeschreven' => 1000.00,
+            'btwBedrag'            => 210.00,
+            'art29OBVerklaring'    => 'Schuldsanering',
+            'boekingId'            => 'caller-gl-7',
+        ]);
+
+        self::assertSame('caller-gl-7', $persisted['boekingId']);
+        self::assertCount(0, $os->dump(schema: 'GLTransaction'), 'caller boekingId skips re-posting');
+
+    }//end testWriteOffHonorsCallerProvidedBoekingId()
+
+    /**
      * REQ-CCD-011: detectAdminError flags good customers + admin-error trigger.
      *
      * @return void

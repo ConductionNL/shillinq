@@ -333,9 +333,20 @@ class DunningRunService
     /**
      * Materialise OninbaarAfschrijving (write-off + BTW-teruggaaf prep) per REQ-CCD-010.
      *
-     * The actual GL posting + BTW-teruggaaf records are produced by the GL +
-     * BTW-aangifte engines; this method records the write-off declaration and
-     * the FK back-references.
+     * On `posted`, this materialises:
+     *   - a balanced `GLTransaction` (debit bad-debt-recovery, credit AR control)
+     *     per REQ-CCD-010 task-26 cross-app FK contract with
+     *     `bookkeeping-general-ledger`; the `boekingId` FK on the
+     *     OninbaarAfschrijving is populated with the resulting GL transaction id.
+     *   - a stub `VATLine` against the next configured BTW-aangifte period for
+     *     the art. 29 OB teruggaaf, per REQ-CCD-010 task-27 cross-app FK
+     *     contract with `bookkeeping-btw-aangifte`. The `btwAangiftePeriode`
+     *     field is pre-set on the write-off; the VATLine carries the back-link.
+     *
+     * Both GL and VATLine writes are best-effort: a failure logs but does not
+     * roll back the OninbaarAfschrijving record (the lifecycle state stays
+     * `posted` and a follow-up cycle picks up the materialisation). This is
+     * the same fail-soft pattern InvoiceGenerationService uses.
      *
      * @param string $administrationId Administration scope.
      * @param array<string,mixed> $params {factuurId, hoofdsomAfgeschreven, btwBedrag,
@@ -344,24 +355,215 @@ class DunningRunService
      * @return array<string,mixed> The created write-off record.
      *
      * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-22
+     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-26
+     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-27
      */
     public function writeOff(string $administrationId, array $params): array
     {
+        $factuurId    = (string) ($params['factuurId'] ?? '');
+        $hoofdsom     = (float) ($params['hoofdsomAfgeschreven'] ?? 0.0);
+        $btwBedrag    = ($params['btwBedrag'] ?? null);
+        $periode      = (string) ($params['btwAangiftePeriode'] ?? $this->nextVATPeriod());
+        $callerBoekId = (string) ($params['boekingId'] ?? '');
+
+        // Materialise the GL posting first so we can carry its id onto the OninbaarAfschrijving record.
+        $boekingId = $callerBoekId;
+        if ($boekingId === '' && $hoofdsom > 0.0) {
+            $boekingId = $this->materialiseWriteOffGl(
+                administrationId: $administrationId,
+                factuurId: $factuurId,
+                hoofdsom: $hoofdsom,
+                btwBedrag: ($btwBedrag !== null) ? (float) $btwBedrag : null,
+                periode: $periode
+            );
+        }
+
         $record = [
-            'factuurId'            => (string) ($params['factuurId'] ?? ''),
-            'hoofdsomAfgeschreven' => (float) ($params['hoofdsomAfgeschreven'] ?? 0.0),
-            'btwBedrag'            => ($params['btwBedrag'] ?? null),
+            'factuurId'            => $factuurId,
+            'hoofdsomAfgeschreven' => $hoofdsom,
+            'btwBedrag'            => $btwBedrag,
             'art29OBVerklaring'    => (string) ($params['art29OBVerklaring'] ?? ''),
             'evidenceRef'          => ($params['evidenceRef'] ?? null),
-            'boekingId'            => ($params['boekingId'] ?? null),
-            'btwAangiftePeriode'   => ($params['btwAangiftePeriode'] ?? null),
+            'boekingId'            => ($boekingId !== '') ? $boekingId : null,
+            'btwAangiftePeriode'   => $periode,
             'administrationId'     => $administrationId,
             'lifecycleState'       => 'posted',
         ];
 
-        return $this->saveObject(schema: 'OninbaarAfschrijving', data: $record);
+        $saved = $this->saveObject(schema: 'OninbaarAfschrijving', data: $record);
+
+        // Queue the BTW art. 29 OB correction for the next aangifte.
+        if ($btwBedrag !== null && (float) $btwBedrag > 0.0) {
+            $this->queueVatTeruggaaf(
+                administrationId: $administrationId,
+                factuurId: $factuurId,
+                btwBedrag: (float) $btwBedrag,
+                periode: $periode,
+                boekingId: $boekingId,
+                oninbaarId: (string) ($saved['id'] ?? ($saved['@self']['id'] ?? ''))
+            );
+        }
+
+        return $saved;
 
     }//end writeOff()
+
+    /**
+     * Materialise the balanced GL posting for a write-off.
+     *
+     * Debit `7220` Bad debt expense (`hoofdsom`), debit `1500` Output VAT to
+     * recover (`btwBedrag`, when present), credit `1300` Accounts Receivable
+     * control (`hoofdsom + btwBedrag`). Account numbers mirror the chart used
+     * by `InvoiceGenerationService` so write-off + invoice posting net to zero
+     * on the AR control account when reconciled.
+     *
+     * @param string     $administrationId Administration scope.
+     * @param string     $factuurId        Invoice FK (carried as sourceReference).
+     * @param float      $hoofdsom         Principal written off (EUR).
+     * @param float|null $btwBedrag        Output VAT recoverable per art. 29 OB.
+     * @param string     $periode          Target VAT period (e.g. `2026-Q2`).
+     *
+     * @return string The created GLTransaction id, or `''` when persistence failed.
+     *
+     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-22
+     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-26
+     */
+    private function materialiseWriteOffGl(
+        string $administrationId,
+        string $factuurId,
+        float $hoofdsom,
+        ?float $btwBedrag,
+        string $periode
+    ): string {
+        $hoofdsomCents = (int) round($hoofdsom * 100);
+        $btwCents      = ($btwBedrag === null) ? 0 : (int) round($btwBedrag * 100);
+        $totalCents    = ($hoofdsomCents + $btwCents);
+
+        $postings = [
+            [
+                'accountNumber' => '7220',
+                'debitCents'    => $hoofdsomCents,
+                'creditCents'   => 0,
+                'description'   => 'Bad debt expense (art. 6:96 BW write-off)',
+            ],
+        ];
+        if ($btwCents > 0) {
+            $postings[] = [
+                'accountNumber' => '1500',
+                'debitCents'    => $btwCents,
+                'creditCents'   => 0,
+                'description'   => 'Output VAT recoverable (art. 29 OB)',
+            ];
+        }
+        $postings[] = [
+            'accountNumber' => '1300',
+            'debitCents'    => 0,
+            'creditCents'   => $totalCents,
+            'description'   => 'Accounts Receivable control',
+        ];
+
+        $journal = [
+            'administrationId' => $administrationId,
+            'description'      => sprintf('Write-off invoice %s (oninbaar)', $factuurId),
+            'postingDate'      => (new DateTimeImmutable())->format('Y-m-d'),
+            'periodId'         => $periode,
+            'currency'         => 'EUR',
+            'sourceReference'  => $factuurId,
+            'state'            => 'posted',
+            'isBalanced'       => true,
+            'postings'         => $postings,
+        ];
+
+        try {
+            $saved = $this->saveObject(schema: 'GLTransaction', data: $journal);
+            return (string) ($saved['id'] ?? ($saved['@self']['id'] ?? ''));
+        } catch (\Throwable $e) {
+            $this->logger->warning(
+                'Shillinq: write-off GL posting failed (continuing): '.$e->getMessage()
+            );
+            return '';
+        }
+
+    }//end materialiseWriteOffGl()
+
+    /**
+     * Queue a `VATLine` correction for the eerstvolgende BTW-aangifte per art. 29 OB.
+     *
+     * Per REQ-CCD-010 task-27 the actual return prep is owned by
+     * `bookkeeping-btw-aangifte`'s `VATReturnService`; this method only deposits
+     * a typed correction line keyed to the target period so the return-prep
+     * engine surfaces it on the next cycle.
+     *
+     * @param string $administrationId Administration scope.
+     * @param string $factuurId        Invoice FK.
+     * @param float  $btwBedrag        VAT amount to refund (EUR).
+     * @param string $periode          Target aangifte period.
+     * @param string $boekingId        Linked GLTransaction id (optional).
+     * @param string $oninbaarId       Linked OninbaarAfschrijving id.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-27
+     */
+    private function queueVatTeruggaaf(
+        string $administrationId,
+        string $factuurId,
+        float $btwBedrag,
+        string $periode,
+        string $boekingId,
+        string $oninbaarId
+    ): void {
+        $line = [
+            'administrationId'    => $administrationId,
+            'returnId'            => $periode,
+            'glTransactionId'     => ($boekingId !== '') ? $boekingId : null,
+            'type'                => 'CORRECTION_ART_29_OB',
+            'taxableAmount'       => 0.0,
+            'taxRate'             => 0.0,
+            'vatAmount'           => (-1.0 * $btwBedrag),
+            'glAccountNumber'     => '1500',
+            'glAccountName'       => 'Output VAT recoverable (art. 29 OB)',
+            'description'         => sprintf('Oninbaar art. 29 OB — invoice %s', $factuurId),
+            'sourceOninbaarRef'   => ($oninbaarId !== '') ? $oninbaarId : null,
+            'sourceInvoiceRef'    => $factuurId,
+        ];
+
+        try {
+            $this->saveObject(schema: 'VATLine', data: $line);
+        } catch (\Throwable $e) {
+            $this->logger->warning(
+                'Shillinq: write-off VATLine queue failed (continuing): '.$e->getMessage()
+            );
+        }
+
+    }//end queueVatTeruggaaf()
+
+    /**
+     * Resolve the next BTW filing period for a write-off `posted` today.
+     *
+     * Returns the current calendar quarter in `YYYY-QN` form unless an
+     * explicit override is provided via app config
+     * (`dunning.write_off_default_btw_periode`).
+     *
+     * @return string The target period, e.g. `2026-Q2`.
+     *
+     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-27
+     */
+    private function nextVATPeriod(): string
+    {
+        $override = $this->appConfig->getValueString(
+            Application::APP_ID,
+            'dunning.write_off_default_btw_periode',
+            ''
+        );
+        if ($override !== '') {
+            return $override;
+        }
+        $now = new DateTimeImmutable();
+        $q   = (int) ceil((int) $now->format('n') / 3);
+        return sprintf('%s-Q%d', $now->format('Y'), $q);
+
+    }//end nextVATPeriod()
 
     /**
      * REQ-CCD-011 anti-pattern detector.
