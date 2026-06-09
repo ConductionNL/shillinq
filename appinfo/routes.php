@@ -333,12 +333,12 @@ return [
         // CBS bestanden extended (bookkeeping-cbs-bestanden-extended,
         // REQ-CBS-001..009). RESTful CBSSubmission CRUD + generate endpoint.
         // Static segments precede the {id} wildcard per Symfony route ordering.
-        ['name' => 'CBSSubmission#index', 'url' => '/api/cbs-submissions', 'verb' => 'GET'],
-        ['name' => 'CBSSubmission#create', 'url' => '/api/cbs-submissions', 'verb' => 'POST'],
-        ['name' => 'CBSSubmission#generate', 'url' => '/api/cbs-submissions/{id}/generate', 'verb' => 'POST'],
-        ['name' => 'CBSSubmission#show', 'url' => '/api/cbs-submissions/{id}', 'verb' => 'GET'],
-        ['name' => 'CBSSubmission#update', 'url' => '/api/cbs-submissions/{id}', 'verb' => 'PUT'],
-        ['name' => 'CBSSubmission#destroy', 'url' => '/api/cbs-submissions/{id}', 'verb' => 'DELETE'],
+        ['name' => 'cBSSubmission#index', 'url' => '/api/cbs-submissions', 'verb' => 'GET'],
+        ['name' => 'cBSSubmission#create', 'url' => '/api/cbs-submissions', 'verb' => 'POST'],
+        ['name' => 'cBSSubmission#generate', 'url' => '/api/cbs-submissions/{id}/generate', 'verb' => 'POST'],
+        ['name' => 'cBSSubmission#show', 'url' => '/api/cbs-submissions/{id}', 'verb' => 'GET'],
+        ['name' => 'cBSSubmission#update', 'url' => '/api/cbs-submissions/{id}', 'verb' => 'PUT'],
+        ['name' => 'cBSSubmission#destroy', 'url' => '/api/cbs-submissions/{id}', 'verb' => 'DELETE'],
 
         // Widget API-key admin (bookings-self-service-widget, REQ-WSW-009).
         // #[AuthorizedAdminSetting]-gated lifecycle of per-business widget keys.
