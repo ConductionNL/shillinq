@@ -7,7 +7,7 @@
 
 ## ADDED Requirements
 
-### REQ-TB-001: The system SHALL declare the trial balance as an `x-openregister-aggregations` query on `GLLine`
+### Requirement: REQ-TB-001 — The system SHALL declare the trial balance as an `x-openregister-aggregations` query on `GLLine`
 
 Per ADR-031, the trial balance MUST NOT be implemented as a PHP
 report-builder service. It MUST be declared as one or more
@@ -35,7 +35,7 @@ layer composes them — still declarative, no PHP required.
   `TrialBalance`, `ReportBuilder`, or `LedgerSummary`
 - **THEN** no such classes SHALL exist.
 
-### REQ-TB-002: The trial-balance aggregation SHALL produce opening, movement, and closing buckets per period and account
+### Requirement: REQ-TB-002 — The trial-balance aggregation SHALL produce opening, movement, and closing buckets per period and account
 
 The aggregation output MUST include, for each
 `(periodId, accountNumber)` pair:
@@ -72,9 +72,9 @@ MUST be excluded from all buckets.
 - **THEN** the EUR 2.000 debit line MUST NOT appear in any bucket
   for account `4100`.
 
-### REQ-TB-003: The trial balance SHALL declare the debit-equals-credit invariant as a schema invariant
+### Requirement: REQ-TB-003 — The trial balance SHALL declare the debit-equals-credit invariant as a schema invariant
 
-The debit-credit-balance-verifies invariant (sum of all
+The trial balance MUST declare the debit-equals-credit invariant at the schema level — not as a PHP assertion inside a service method. The debit-credit-balance-verifies invariant (sum of all
 `closingDebit` across all accounts for a period MUST equal sum of
 all `closingCredit`) MUST be declared as a schema-level invariant
 on the trial-balance aggregation output per ADR-031 — not as a
@@ -99,9 +99,9 @@ on period-close (REQ-PC-003).
 - **THEN** the invariant MUST fire and surface an error or warning
   visible to the `auditor` role.
 
-### REQ-TB-004: The trial balance SHALL exclude accounts with zero opening and zero movement
+### Requirement: REQ-TB-004 — The trial balance SHALL exclude accounts with zero opening and zero movement
 
-To produce a readable report, the aggregation SHOULD filter out
+The trial balance SHALL exclude accounts whose opening and movement buckets are all zero, unless an `includeEmpty=true` query parameter is supplied. To produce a readable report, the aggregation SHOULD filter out
 accounts where `openingDebit`, `openingCredit`, `movementDebit`,
 and `movementCredit` are all zero. This filter MAY be toggled off
 by a query parameter (`includeEmpty=true`) to support full-chart
@@ -115,7 +115,7 @@ inspection.
   `includeEmpty=true`
 - **THEN** account `9999` MUST NOT appear in the aggregation output.
 
-### REQ-TB-005: The trial balance SHALL be reachable through the shillinq manifest navigation with drill-through to the GL
+### Requirement: REQ-TB-005 — The trial balance SHALL be reachable through the shillinq manifest navigation with drill-through to the GL
 
 `src/manifest.json` MUST declare a `Bookkeeping > Trial Balance`
 navigation entry. The page MUST bind to the trial-balance

@@ -17,9 +17,9 @@ shape-neutral on which renderer lands first.
 
 ## ADDED Requirements
 
-### REQ-FS-001: The system SHALL assemble financial statements as compositions of trial-balance aggregations
+### Requirement: REQ-FS-001 — The system SHALL assemble financial statements as compositions of trial-balance aggregations
 
-Per ADR-031, the Balance Sheet, Profit & Loss Statement, and Cash
+Financial statements MUST be assembled as compositions of trial-balance aggregations against presentation manifests; no PHP report-builder SHALL exist. Per ADR-031, the Balance Sheet, Profit & Loss Statement, and Cash
 Flow Statement MUST NOT be implemented as PHP report builders. They
 MUST be compositions of `x-openregister-aggregations` queries
 (consuming the trial-balance aggregations from REQ-TB-001 and
@@ -35,7 +35,7 @@ ADR-022 anti-pattern list, per ADR-031).
   `ProfitAndLoss*`, `CashFlow*`, `Statement*`, or `*ReportBuilder*`
 - **THEN** no such classes SHALL exist.
 
-### REQ-FS-002: The system SHALL ship RJ 270 presentation manifests for Balance Sheet, P&L, and Cash Flow
+### Requirement: REQ-FS-002 — The system SHALL ship RJ 270 presentation manifests for Balance Sheet, P&L, and Cash Flow
 
 Three presentation-manifest JSON files MUST be shipped under
 `lib/Settings/statements/` and imported via
@@ -76,7 +76,7 @@ step MUST NOT overwrite operator edits on subsequent runs
   balance sheet for SMB administrations, recognisable without
   additional explanation.
 
-### REQ-FS-003: Financial statements SHALL support year-over-year comparatives via the manifest
+### Requirement: REQ-FS-003 — Financial statements SHALL support year-over-year comparatives via the manifest
 
 The presentation manifest MUST declare support for N comparison
 periods. When the manifest is rendered, the aggregation runs once
@@ -98,9 +98,9 @@ direct-method variant is on the roadmap but NOT in T2.
   and `closingBalance 2025`, each populated from the respective
   period's trial-balance aggregation.
 
-### REQ-FS-004: XBRL and PDF export SHALL be declared as `x-openregister-calculations` actions
+### Requirement: REQ-FS-004 — XBRL and PDF export SHALL be declared as `x-openregister-calculations` actions
 
-Per ADR-031, XBRL export (SBR-compatible XML for the Nederlandse
+XBRL and PDF export MUST be declared as manifest actions backed by `x-openregister-calculations` — no PHP exporter service SHALL be authored. Per ADR-031, XBRL export (SBR-compatible XML for the Nederlandse
 Taxonomie / NT15+) and PDF export MUST be declared as manifest
 actions triggering `x-openregister-calculations` outputs — not as
 PHP exporter service classes.
@@ -126,9 +126,9 @@ PHP exporter service classes.
   `Sbr*`, or `*Exporter*`
 - **THEN** no such classes SHALL exist.
 
-### REQ-FS-005: BBV financial statement manifests are explicitly deferred to T3
+### Requirement: REQ-FS-005 — BBV financial statement manifests are explicitly deferred to T3
 
-The T2 statement manifests (`rj270-*.json`) are explicitly for SMB
+The T2 spec MUST NOT include any BBV-specific line items or account ranges; BBV financial statement manifests are explicitly deferred to T3. The T2 statement manifests (`rj270-*.json`) are explicitly for SMB
 administrations only. BBV-conformant manifests (`rgs-bbv-*.json`)
 and the related BBV programme / exploitation / balance formats are
 T3 (`add-shillinq-bookkeeping-operations` / `bookkeeping-bbv-compliance`).
@@ -143,7 +143,7 @@ ranges in the RJ 270 manifests.
   context)
 - **THEN** no BBV-specific section codes SHALL appear.
 
-### REQ-FS-006: Financial statements SHALL be reachable through the shillinq manifest navigation with drill-through
+### Requirement: REQ-FS-006 — Financial statements SHALL be reachable through the shillinq manifest navigation with drill-through
 
 `src/manifest.json` MUST declare:
 - `Bookkeeping > Financial Statements > Balance Sheet` — page with
@@ -165,9 +165,9 @@ range.
   sub-entries MUST be present under a `Bookkeeping > Financial
   Statements` parent.
 
-### REQ-FS-007: The `FiscalPeriod` register SHALL be declared before any financial statement is rendered
+### Requirement: REQ-FS-007 — The `FiscalPeriod` register SHALL be declared before any financial statement is rendered
 
-Financial statements draw their data from `FiscalPeriod`-scoped
+The `FiscalPeriod` register MUST be declared and a period MUST be selected before any financial statement is rendered. Financial statements draw their data from `FiscalPeriod`-scoped
 aggregations. A financial statement MUST only be rendered for a
 period in state `closed` or `audit-locked`; rendering for an `open`
 period MAY be allowed as a preview but MUST be clearly labelled

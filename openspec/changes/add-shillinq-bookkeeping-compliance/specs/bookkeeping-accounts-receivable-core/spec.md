@@ -13,7 +13,7 @@ completes the AP half delivered by `bookkeeping-accounts-payable-core`.
 
 ## ADDED Requirements
 
-### REQ-AR-001: The system SHALL store customer masters, AR invoices, and dunning records as OpenRegister-managed registers
+### Requirement: REQ-AR-001 — The system SHALL store customer masters, AR invoices, and dunning records as OpenRegister-managed registers
 
 Three registers MUST be declared in `lib/Settings/shillinq_register.json`:
 `CustomerMaster`, `ARInvoice`, `DunningRecord`. No parallel PHP Mapper
@@ -27,7 +27,9 @@ anti-pattern list). OR's generic CRUD HTTP surface exposes all three.
   `customer_master`, or `dunning_record`
 - **THEN** no such classes SHALL exist.
 
-### REQ-AR-002: The `CustomerMaster` schema SHALL declare a fixed minimum field set
+### Requirement: REQ-AR-002 — The `CustomerMaster` schema SHALL declare a fixed minimum field set
+
+The `CustomerMaster` schema MUST declare the following fields with the listed types and required flags.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
@@ -52,7 +54,9 @@ anti-pattern list). OR's generic CRUD HTTP surface exposes all three.
 - **WHEN** an object `{customerId: "DEB-0001", legalName: "Klant B.V.", email: "facturen@klant.nl", administrationId: "adm-1", lifecycleState: "active"}` is validated
 - **THEN** validation MUST pass.
 
-### REQ-AR-003: The `ARInvoice` schema SHALL declare a fixed minimum field set
+### Requirement: REQ-AR-003 — The `ARInvoice` schema SHALL declare a fixed minimum field set
+
+The `ARInvoice` schema MUST declare the following fields with the listed types and required flags.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
@@ -78,7 +82,7 @@ anti-pattern list). OR's generic CRUD HTTP surface exposes all three.
 - **WHEN** an object with required fields and `lifecycleState: "draft"` is validated
 - **THEN** validation MUST pass.
 
-### REQ-AR-004: The `ARInvoice` schema SHALL declare an AR invoice lifecycle via `x-openregister-lifecycle`
+### Requirement: REQ-AR-004 — The `ARInvoice` schema SHALL declare an AR invoice lifecycle via `x-openregister-lifecycle`
 
 Per ADR-031, the AR invoice lifecycle MUST be declared with the
 following transitions:
@@ -121,9 +125,9 @@ visual indicator only.
   account EUR 500; the write-off actor and timestamp MUST be recorded
   in the audit trail.
 
-### REQ-AR-005: AR dunning SHALL be consumed from OR's dunning-workflow abstraction
+### Requirement: REQ-AR-005 — AR dunning SHALL be consumed from OR's dunning-workflow abstraction
 
-Per ADR-022, the dunning workflow (reminder sequences, escalation
+AR dunning MUST be consumed from OpenRegister's dunning-workflow abstraction per ADR-022. Per ADR-022, the dunning workflow (reminder sequences, escalation
 cadence, debt-collection hand-off) MUST be consumed from OR's
 dunning-workflow abstraction. The `CustomerMaster.dunningPolicyRef`
 carries the FK to the OR-managed dunning policy. Shillinq carries
@@ -161,7 +165,7 @@ guard is removed when OR's extension lands; the spec is shape-neutral.
   `DunningGuard` per ADR-031 exception, if applicable and explicitly
   documented).
 
-### REQ-AR-006: The credit-limit check on `ARInvoice` issuance SHALL be declared as an `x-openregister-aggregations` query
+### Requirement: REQ-AR-006 — The credit-limit check on `ARInvoice` issuance SHALL be declared as an `x-openregister-aggregations` query
 
 Before the `draft → issued` transition, the lifecycle MUST verify
 that issuing the invoice would not push the customer's outstanding
@@ -181,7 +185,9 @@ is null or 0, the check is skipped.
   limit exceeded" error; outstanding balance plus new invoice (5.300)
   exceeds the limit (5.000).
 
-### REQ-AR-007: The `DunningRecord` schema SHALL declare a fixed minimum field set
+### Requirement: REQ-AR-007 — The `DunningRecord` schema SHALL declare a fixed minimum field set
+
+The `DunningRecord` schema MUST declare the following fields with the listed types and required flags.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
@@ -200,7 +206,7 @@ is null or 0, the check is skipped.
 - **WHEN** an object with required fields is validated
 - **THEN** validation MUST pass.
 
-### REQ-AR-008: AR aging SHALL be declared as an `x-openregister-aggregations` query
+### Requirement: REQ-AR-008 — AR aging SHALL be declared as an `x-openregister-aggregations` query
 
 Per ADR-031, the AR aging report MUST be declared as an
 `x-openregister-aggregations` query grouping `ARInvoice` by
@@ -217,7 +223,7 @@ Per ADR-031, the AR aging report MUST be declared as an
 - **THEN** `DEB-0001` MUST appear in the `0-30` bucket (EUR 1.000)
   and the `31-60` bucket (EUR 2.000).
 
-### REQ-AR-009: UBL 2.1 / Peppol BIS 3.0 field shapes SHALL be declared for T4 attachment
+### Requirement: REQ-AR-009 — UBL 2.1 / Peppol BIS 3.0 field shapes SHALL be declared for T4 attachment
 
 The `ARInvoice` schema MUST declare the `ublRef` field (string, optional)
 so that a future T4 UBL/Peppol e-invoicing capability can attach
@@ -231,7 +237,7 @@ The spec is shape-neutral for which format T4 selects.
 - **WHEN** the object is inspected
 - **THEN** the `ublRef` field MUST exist on the schema (may be null).
 
-### REQ-AR-010: Accounts receivable SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-AR-010 — Accounts receivable SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare the following navigation entries:
 - `Bookkeeping > Customers` — `type: index` + `type: detail` for

@@ -18,7 +18,7 @@ storage and retention to docudesk; shillinq carries the FK only.
 
 ## ADDED Requirements
 
-### REQ-DA-001: Source document attachments SHALL be stored in docudesk and referenced by FK URI from bookkeeping objects
+### Requirement: REQ-DA-001 — Source document attachments SHALL be stored in docudesk and referenced by FK URI from bookkeeping objects
 
 Per ADR-022, shillinq MUST NOT store or serve attachment files.
 Every source-document attachment MUST be stored in docudesk and
@@ -59,9 +59,9 @@ The following bookkeeping objects carry `sourceDocumentUri`:
   `/document/store`, or similar
 - **THEN** no such routes SHALL exist.
 
-### REQ-DA-002: The system SHALL declare expected mime types per attachment role
+### Requirement: REQ-DA-002 — The system SHALL declare expected mime types per attachment role
 
-Each `sourceDocumentUri` context has an expected set of MIME types.
+The system SHALL declare an expected set of MIME types per attachment role as schema-level metadata. Each `sourceDocumentUri` context has an expected set of MIME types.
 These MUST be declared as schema-level metadata (e.g.
 `x-openregister-attachment-roles`) so that the OR object-interactions
 UI can validate and display the attachment type correctly:
@@ -92,9 +92,9 @@ file-type validation service.
 - **THEN** the attachment MUST be rejected with a mime-type violation
   error surfacing the expected types.
 
-### REQ-DA-003: The bookkeeping flow SHALL NOT block on docudesk transient downtime
+### Requirement: REQ-DA-003 — The bookkeeping flow SHALL NOT block on docudesk transient downtime
 
-When a bookkeeping object with a `sourceDocumentUri` is saved and
+The bookkeeping flow MUST NOT block on docudesk transient downtime; saves and lifecycle transitions proceed and the gap is recorded in the audit trail. When a bookkeeping object with a `sourceDocumentUri` is saved and
 docudesk is temporarily unreachable:
 
 1. The save MUST succeed — the `sourceDocumentUri` is persisted
@@ -123,7 +123,7 @@ docudesk is temporarily unreachable:
 - **THEN** a warning banner MUST be displayed explaining docudesk
   unavailability; the remaining invoice fields MUST render normally.
 
-### REQ-DA-004: The `auditor` role SHALL be able to access source documents via docudesk
+### Requirement: REQ-DA-004 — The `auditor` role SHALL be able to access source documents via docudesk
 
 The RBAC configuration MUST grant `auditor`-role users read access
 to the `sourceDocumentUri` field and to the linked docudesk object
@@ -139,7 +139,7 @@ also hold a `docudesk:reader` role in OR's authorization scheme.
 - **THEN** the `sourceDocumentUri` field MUST be present in the response
   (not masked or omitted by RBAC).
 
-### REQ-DA-005: The document-attachment contract SHALL be consumed by T1 and T2 specs
+### Requirement: REQ-DA-005 — The document-attachment contract SHALL be consumed by T1 and T2 specs
 
 The following specs MUST reference this spec's FK URI contract
 (i.e. the `sourceDocumentUri` field with the `docudesk://` URI scheme
