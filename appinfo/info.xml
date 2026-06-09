@@ -116,5 +116,12 @@ Vrij en open source onder de EUPL-1.2-licentie.
              cross-tenant data ever lives in a single backup payload
              (REQ-MA-001 carried into REQ-MA-007). -->
         <job>OCA\Shillinq\BackgroundJob\AdministrationBackupSchedulerJob</job>
+        <!-- bookkeeping-soft-close-flux Task 22: nightly continuous-close
+             orchestrator. Daily-interval TimedJob; for every active
+             Administration record, invokes SoftCloseExecutor::execute() for
+             the current yyyy-mm period (REQ-CLS-002). Targets 07:00 local
+             CET completion; on-demand testing route lives at POST
+             /api/v2/soft-close/{administrationId}/execute-now. -->
+        <job>OCA\Shillinq\Cron\SoftCloseJob</job>
     </background-jobs>
 </info>
