@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 248
+**Entities:** 252
 
 ## Context
 
@@ -7029,6 +7029,100 @@ _VAT-specific tax return showing collected VAT, paid VAT, and net amount due for
 **Relations:**
 - → Organization (many-to-one)
 - → TaxReturn (many-to-one)
+
+### VatReturn
+**Schema.org:** `schema:Invoice`
+_Dutch periodic BTW return (kwartaal / maand) per administration. Owns the declarative draft → submitted → accepted → corrected lifecycle (REQ-VBTW-005); rubrieken are derived via `x-openregister-aggregations` from period-filtered GL postings tagged by VatTariff (REQ-VBTW-004); submission to the Belastingdienst is dispatched via the `digipoort-sbr` OpenConnector source on the `submit` transition (REQ-VBTW-010). Audit + retention are consumed from OR's abstractions (REQ-VBTW-012). No app-local PHP `VatReturnService` (ADR-031), no parallel storage (ADR-022)._
+**Primary spec:** bookkeeping-vat-btw-filing
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the Administration owning the return |
+| periodType | enum | Yes | `month` or `quarter` per administration |
+| periodYear | integer | Yes | Calendar year of the period |
+| periodMonth | integer | No | 1-12 when `periodType=month` |
+| periodQuarter | integer | No | 1-4 when `periodType=quarter` |
+| state | enum | Yes | `draft`, `submitted`, `accepted`, `rejected`, `corrected` |
+| amount | number | Yes | Net `teBetalenOfTeruggave` (negative = refund) in euros |
+| currency | string | Yes | ISO 4217 currency code (EUR for NL) |
+| approvalThreshold | number | No | Approval-gate threshold per REQ-VBTW-006 |
+| submittedAt | datetime | No | Set on transition to `submitted` |
+| acceptedAt | datetime | No | Set on Belastingdienst ack |
+| attachmentUri | string | No | docudesk URI of the rendered aangifte PDF |
+| notes | string | No | Operator-visible note |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- → VatCorrection (one-to-many, via VatCorrection.originalReturnId)
+
+**Cites:** ADR-022 (audit / approval / retention), ADR-031 (declarative lifecycle + aggregations), ADR-019 (OpenConnector for SBR/Digipoort).
+
+### IcpStatement
+**Schema.org:** `schema:Invoice`
+_Intracommunautaire prestaties (ICP) opgaaf — periodic statement of intra-EU B2B sales per administration and period. Separate register from VatReturn (REQ-VBTW-007) because ICP filing has its own Belastingdienst surface and lifecycle. Audit + retention consumed from OR's abstractions._
+**Primary spec:** bookkeeping-icp-opgaaf
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the Administration owning the statement |
+| periodType | enum | Yes | `month` or `quarter` per administration |
+| periodYear | integer | Yes | Calendar year of the period |
+| periodMonth | integer | No | 1-12 when `periodType=month` |
+| periodQuarter | integer | No | 1-4 when `periodType=quarter` |
+| state | enum | Yes | ICP filing lifecycle state (`draft`, `submitted`, `accepted`, `rejected`, `corrected`) |
+| currency | string | Yes | ISO 4217 currency code (EUR for NL) |
+| notes | string | No | Operator-visible note |
+
+**Relations:**
+- → Administration (many-to-one, via administrationId)
+- → IcpLine (one-to-many, per `bookkeeping-icp-opgaaf`)
+
+**Cites:** ADR-022, ADR-031, REQ-VBTW-007.
+
+### VatCorrection
+**Schema.org:** `schema:Invoice`
+_Suppletie-aangifte — standalone BTW correction filed when a prior accepted return contained an error above the Belastingdienst materiality threshold (REQ-VBTW-009). MUST carry a mandatory FK to the prior VatReturn; lifecycle `draft → submitted → accepted` mirrors the parent return. Below-threshold corrections fold into the next regular VatReturn rather than producing a VatCorrection._
+**Primary spec:** bookkeeping-vat-btw-filing
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| administrationId | string | Yes | FK to the Administration owning the correction |
+| periodType | enum | Yes | `month` or `quarter` matching the original return |
+| periodYear | integer | Yes | Calendar year of the period being corrected |
+| periodMonth | integer | No | 1-12 when `periodType=month` |
+| periodQuarter | integer | No | 1-4 when `periodType=quarter` |
+| correctionReason | string | Yes | Free-text explanation surfaced on the aangifte |
+| originalReturnId | string | Yes | Mandatory FK to the VatReturn this corrects (REQ-VBTW-009) |
+| adjustmentAmount | number | Yes | Signed correction amount in euros (+ owed, − refund) |
+| currency | string | Yes | ISO 4217 currency code |
+| state | enum | Yes | `draft`, `submitted`, `accepted` |
+| notes | string | No | Operator-visible note |
+
+**Relations:**
+- → VatReturn (many-to-one, via originalReturnId)
+- → Administration (many-to-one, via administrationId)
+
+**Cites:** ADR-022, ADR-031, REQ-VBTW-009.
+
+### VatTariff
+**Schema.org:** `schema:PriceSpecification`
+_Statutory BTW tariff catalogue (21%, 9%, 0%, vrijgesteld, verleggingsregeling) per Wet OB 1968 (REQ-VBTW-003). Seeded from `lib/Settings/seeds/btw-tariffs-2026.json` via `ConfigurationService::importFromApp()` in the repair step (REQ-VBTW-003 / REQ-VBTW-011). Operators MAY add additional sector-specific or future EU-imposed rates; the canonical Belastingdienst rates remain authoritative. Verleggingsregeling is modelled as a tariff category, not a separate code path (REQ-VBTW-008)._
+**Primary spec:** bookkeeping-vat-btw-filing
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| code | string | Yes | Stable identifier (e.g. `21pct`, `9pct`, `0pct`, `vrij`, `verlegd`) |
+| label | string | Yes | Human-readable label (Dutch) |
+| ratePercentage | number | Yes | Rate as a percentage (e.g. 21.0, 9.0, 0.0) |
+| rgsAccountHint | string | No | Suggested RGS GL account for postings using this tariff |
+| reverseCharge | boolean | No | True for verleggingsregeling tariffs (REQ-VBTW-008) |
+| effectiveFrom | date | Yes | First day this tariff is valid |
+| effectiveTo | date | No | Last day this tariff is valid (nullable) |
+| legalBasis | string | No | Citation (`Wet OB 1968 art. 9` etc.) |
+
+**Relations:** none — referenced symbolically by `GLLine.vatTariffCode` per the GL spec.
+
+**Cites:** ADR-022 (seed-via-repair-step), ADR-031 (declarative catalogue, not enum), REQ-VBTW-003 / REQ-VBTW-008.
 
 ### VendorBill
 **Schema.org:** `schema:Invoice`
