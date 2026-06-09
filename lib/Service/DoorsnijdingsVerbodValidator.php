@@ -49,12 +49,20 @@ class DoorsnijdingsVerbodValidator
     /**
      * Construct the validator with lazy DI of OpenRegister's ObjectService.
      *
-     * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
-     * @param IAppConfig         $appConfig App config for the register slug.
+     * @param ContainerInterface              $container   DI container — OR's ObjectService is fetched lazily.
+     * @param IAppConfig                      $appConfig   App config for the register slug.
+     * @param InnovatieboxAuditEventLogger|null $auditLogger Optional audit-event logger. When
+     *                                                       provided, every validateNoDuplication
+     *                                                       run emits a DoorsnijdingsVerbod.check_run
+     *                                                       event with the findings (REQ-IBA-008).
+     *                                                       Optional so the existing unit tests can
+     *                                                       construct the validator without the
+     *                                                       OpenRegister event chain.
      */
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly IAppConfig $appConfig,
+        private readonly ?InnovatieboxAuditEventLogger $auditLogger=null,
     ) {
     }//end __construct()
 
@@ -78,6 +86,28 @@ class DoorsnijdingsVerbodValidator
         $glLines     = $this->fetchGlDeductions(administrationId: $administrationId, boekjaar: $boekjaar);
 
         $findings = $this->detectDuplicates(allocations: $allocations, glLines: $glLines);
+
+        if ($this->auditLogger !== null) {
+            $totalAmount = 0.0;
+            foreach ($findings as $finding) {
+                $totalAmount += (float) ($finding['bedrag'] ?? 0);
+            }
+
+            $this->auditLogger->record(
+                options: [
+                    'event_type'       => InnovatieboxAuditEventLogger::EVENT_DOORSNIJDINGSVERBOD_CHECK_RUN,
+                    'administrationId' => $administrationId,
+                    'boekjaar'         => $boekjaar,
+                    'reason'           => ($findings !== []) ? 'doorsnijdingsverbod_duplicate' : null,
+                    'details'          => [
+                        'findings'      => $findings,
+                        'total_pairs'   => count($findings),
+                        'total_bedrag'  => $totalAmount,
+                        'blocking'      => ($findings !== []),
+                    ],
+                ]
+            );
+        }
 
         return [
             'findings' => $findings,
