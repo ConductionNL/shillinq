@@ -520,6 +520,23 @@ _A financial statement showing assets, liabilities, and equity at a fiscal-perio
 _A read-only aggregate listing all GL accounts with debit/credit balances for period verification. isBalanced flag (totalDebits = totalCredits) is computed via x-openregister-aggregations per REQ-FS-005. No TrialBalanceService. Lifecycle: draft → verified → final → published → archived per REQ-FS-003._
 **Primary spec:** bookkeeping-financial-statements
 
+> **Trial-balance T2 capability (add-shillinq-trial-balance, 2026-06-09).** The
+> Tier-2 `bookkeeping-trial-balance` capability binds the per-account
+> opening / movement / closing roll-up to two declarative `x-openregister-aggregations`
+> blocks on this `TrialBalance` schema in `lib/Settings/shillinq_register.json` —
+> `trialBalanceTotals` (period-wide debit/credit roll-up + `isBalanced` check)
+> and `trialBalanceByAccount` (per-account roll-up joined to `Account` for
+> name/type display columns). The choice to compose two aggregations on the
+> existing snapshot schema rather than aggregating directly on `GLLine` is
+> the ADR-022 path of least storage (no parallel report table; reuses the
+> single-row `TrialBalance` snapshot already declared for REQ-FS-005). The
+> debit-credit balance invariant lands as a declarative `check` operation
+> on `trialBalanceTotals` (ADR-031). The sibling implementation cycle did
+> ship `lib/Service/TrialBalanceService.php` + `TrialBalanceCalculator.php`
+> as a constrained ADR-031 deviation (documented inline in the sibling
+> change's `specs.md`) to keep the existing snapshot lifecycle working;
+> new report-builders MUST NOT follow that precedent.
+
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
 | reportDate | datetime | Yes | Snapshot date (typically fiscal-year-end) |
