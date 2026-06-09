@@ -140,19 +140,9 @@
 
 ## 16. Documentation
 
-- [ ] Task 16.1 [DEFERRED — feature docs land with the UI on a live instance for screenshots]: Author `docs/user-guide/ifrs-16/` section with pages:
-  - `index.md` — overview of IFRS 16 in Shillinq, key concepts (RoU, lease liability, IBR)
-  - `create-lease.md` — step-by-step guide to creating and classifying a lease
-  - `payment-schedule.md` — explanation of payment-schedule table and GL posting
-  - `reassessment.md` — guide to reassessing extension options, modifications, indexation
-  - `exemptions.md` — short-term and low-value exemption policy setup
-  - `disclosures.md` — generating and reviewing IFRS 16 disclosure notes
+- [x] Task 16.1: Authored `docs/Features/ifrs-16/` (project convention, not the abstract `docs/user-guide/` path) — `index.md` overview, `create-lease.md` step-by-step classification + activation, `payment-schedule.md` model + GL leg explanation, `reassessment.md` four service entry-points + decidesk threshold, `exemptions.md` policy schema + disclosure impact, `disclosures.md` table fields + CSV/PDF/XBRL roadmap + audit-pack layout. [Screenshots still need a running instance, deferred with 16.3.]
 
-- [ ] Task 16.2 [DEFERRED — with 16.1]: Author `docs/faq-ifrs-16.md` — FAQs on:
-  - What is an "identified asset"? When does IFRS 16 apply?
-  - How is the IBR derived? Which method should I use?
-  - What is "reasonably certain" exercise of an extension option?
-  - How do I account for modifications (scope, payment, term changes)?
+- [x] Task 16.2: Authored `docs/Features/ifrs-16/faq.md` (project convention) — identified-asset test, IBR derivation method picker, "reasonably certain" judgement bar, IFRS 16.44 modification decision tree, decidesk threshold, transition method comparison, draft exclusion rationale, final-period zero residual, exempt-lease no-schedule rationale.
 
 - [ ] Task 16.3 [DEFERRED — needs a live instance to capture]: Capture 5–7 screenshots for `docs/images/`:
   - Lease register index (filter by asset-class)
