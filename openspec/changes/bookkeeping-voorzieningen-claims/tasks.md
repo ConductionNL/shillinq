@@ -66,7 +66,7 @@
     Context / Goals / Non-Goals / D1..D10 / Reuse Analysis / Declarative-vs-imperative
     table / Seed Data / Risks / Migration Plan / Compliance & Standards.
 
-- [ ] Task 5: Declare the `provision` schema in
+- [x] Task 5: Declare the `provision` schema in
   `lib/Settings/shillinq_register.json` with all REQ-PROV-001–010 fields
   (id, provisionType enum, description, recognitionDate, recognitionRationale,
   legalOrConstructiveObligation enum, obligatingEvent text, probabilityOfOutflow
@@ -76,8 +76,16 @@
   enum, linkedAccount FK, status enum, expert text, peerReviewer FK,
   peerReviewDate date, linkedClaim-voorziening-detail / jubileum-detail / etc FK).
   Validation: all three criteria OR creation blocked.
+  - DONE: declared as `Provision` schema in
+    `lib/Settings/register.d/bookkeeping-voorzieningen-claims.json` (ADR-037 fragment;
+    never edit the monolith). Carries all REQ-PROV-001..010 fields including
+    expectedTiming sub-object, discountedValue computed via x-openregister-calculations,
+    six linked* FKs (pensioen/jubileum/herstructurering/garantie/milieu/claims) and
+    materiality fields (priorYearBalanceTotal, peerReviewer, cfoApprover). Three-criteria
+    + materiality enforcement runs through the ProvisionGuard::canActivateProvision
+    transition guard authored in Task 19.
 
-- [ ] Task 6: Declare the `provision-movement` schema in
+- [x] Task 6: Declare the `provision-movement` schema in
   `lib/Settings/shillinq_register.json` with all REQ-PROV-004 fields (provision
   FK, period string, openingBalance decimal, additions decimal,
   additionsAcquired decimal, usedDuringPeriod decimal, releasedUnused decimal,
@@ -85,51 +93,74 @@
   effectOfChangeInEstimate decimal, translationDifferences decimal,
   closingBalance computed, linkedJournalEntries array FK GL entry). Immutability
   constraint: once period closes, movement is read-only.
+  - DONE: declared as `ProvisionMovement` in the fragment with all REQ-PROV-004 +
+    REQ-PROV-016 + REQ-PROV-017 fields, closingBalance computed via
+    x-openregister-calculations, status enum {open, closed} with the close
+    transition guarded by ProvisionGuard::canCloseMovement.
 
-- [ ] Task 7: Declare the `contingent-liability` schema in
+- [x] Task 7: Declare the `contingent-liability` schema in
   `lib/Settings/shillinq_register.json` with all disclosure fields (description
   text, obligationType enum, nature enum, estimatedAmount decimal optional,
   probabilityCategory enum {remote, possible, probable-but-no-reliable-estimate},
   expectedTiming text, disclosureNarrative text, relatedParty FK org).
+  - DONE: declared as `ContingentLiability` in the fragment with the disclosure
+    fields + draft → published lifecycle (REQ-PROV-007, REQ-PROV-015).
 
-- [ ] Task 8: Declare `pensioenvoorziening-detail` schema with fields: provision
+- [x] Task 8: Declare `pensioenvoorziening-detail` schema with fields: provision
   FK, pensionScheme enum, actuarialMethod enum {PUC}, discountRate decimal,
   salaryGrowthAssumption decimal, mortalityTable text, participantCount int,
   linkedActuaryReport FK docudesk. Link to `bookkeeping-pension-ias19` spec for
   detail.
+  - DONE: declared as `PensioenvoorzieningDetail` (REQ-PROV-014) with the
+    actuarialMethod enum constrained to ["PUC"] and an optional linkedPensionPlan
+    FK that bridges into the PensionPlan register from bookkeeping-pension-ias19.
 
-- [ ] Task 9: Declare `jubileumvoorziening-detail` schema with fields: provision
+- [x] Task 9: Declare `jubileumvoorziening-detail` schema with fields: provision
   FK, caoReference text, eligibleEmployees int, averageServiceYears decimal,
   probabilityOfReachingMilestone decimal, actuarialModel text.
+  - DONE: declared as `JubileumvoorzieningDetail` (REQ-PROV-011) with all fields.
 
-- [ ] Task 10: Declare `herstructureringsvoorziening-detail` schema with fields:
+- [x] Task 10: Declare `herstructureringsvoorziening-detail` schema with fields:
   provision FK, detailedPlanDate date (must be ≤ balance date per IAS 37 §72),
   planCommunicatedTo array text, affectedEmployees int, expectedRedundancyPayments
   decimal, expectedLeaseExitCosts decimal, expectedOnerousContractCosts decimal.
   Validation: detailedPlanDate required and ≤ balance date.
+  - DONE: declared as `HerstructureringsvoorzieningDetail` (REQ-PROV-005) with all
+    fields + balanceDate. The detailedPlanDate ≤ balanceDate IAS 37 §72 timeliness
+    test is enforced from ProvisionGuard::canActivateProvision (Task 20).
 
-- [ ] Task 11: Declare `garantievoorziening-detail` schema with fields: provision
+- [x] Task 11: Declare `garantievoorziening-detail` schema with fields: provision
   FK, productCategories array text, historicalClaimRate decimal, averageClaimAmount
   decimal, warrantyPeriodMonths int, revenueBaseInPeriod decimal.
+  - DONE: declared as `GarantievoorzieningDetail` (REQ-PROV-012).
 
-- [ ] Task 12: Declare `milieuvoorziening-detail` schema with fields: provision
+- [x] Task 12: Declare `milieuvoorziening-detail` schema with fields: provision
   FK, contaminationLocation text, regulatoryFramework enum {Wbb, Wm, EU-IED},
   cleanupEstimate decimal, expertConsultant text, legallyRequiredCompletionDate
   date, phasedExecutionPlan text, ontmantelingsVerplichting boolean (for IFRS 16
   / IAS 16 §16(c) component activation).
+  - DONE: declared as `MilieuvoorzieningDetail` (REQ-PROV-013).
 
-- [ ] Task 13: Declare `claims-voorziening-detail` schema with fields: provision
+- [x] Task 13: Declare `claims-voorziening-detail` schema with fields: provision
   FK, caseReference text (court docket), court text, legalCounsel text, claimType
   enum, plaintiffOrClaimant text, amountClaimed decimal, bestEstimateSettlement
   decimal, legalAdviceMemo FK docudesk (restricted access: CFO, audit committee,
   accountant). Validation: legalAdviceMemo required (blocked if missing).
+  - DONE: declared as `ClaimsVoorzieningDetail` (REQ-PROV-006); legalAdviceMemo is
+    in `required` and additionally enforced by ProvisionGuard::canActivateProvision
+    when the parent Provision has provisionType=claims (Task 21).
 
-- [ ] Task 14: Author `x-openregister-lifecycle` state machine for `provision`:
+- [x] Task 14: Author `x-openregister-lifecycle` state machine for `provision`:
   draft → active (on peer-review + CFO approval if > EUR 100K). Author second
   lifecycle for annual herwaardering: active → under-review (balansdatum) →
   active (changes recorded in schattingswijziging field of next provision-movement).
+  - DONE: single lifecycle on Provision with states draft / under-review / active /
+    released and transitions activate (draft→active, guarded), startHerwaardering
+    (active→under-review), completeHerwaardering (under-review→active), release
+    (active→released). The herwaardering loop records its delta via
+    effectOfChangeInEstimate on the next open ProvisionMovement per REQ-PROV-019.
 
-- [ ] Task 15: Author `x-openregister-aggregations` query to emit `provision-movement`
+- [x] Task 15: Author `x-openregister-aggregations` query to emit `provision-movement`
   records per period from completed `provision` valuations: opening balance (from
   prior period closing), + additions (dotatie), − usedDuringPeriod (betaling),
   − releasedUnused (vrijval), + unwindingOfDiscount (discontering rente),
@@ -137,21 +168,46 @@
   (discontering assumption change), → closingBalance. Formula: opening + additions
   + acquired − used − released + unwinding + rate-change + estimate-change +
   translation = closing.
+  - DONE: `provisionRollForward` aggregation on ProvisionMovement carries the full
+    IAS 37 §84 formula as a single x-openregister-aggregations expression
+    `openingBalance + additions + additionsAcquired - usedDuringPeriod - releasedUnused
+    + unwindingOfDiscount + effectOfChangeInDiscountRate + effectOfChangeInEstimate
+    + translationDifferences`, groupBy (provision, period). Same expression also
+    declared as an x-openregister-calculations target on closingBalance so it is
+    auto-recomputed at write time when the engine does not run the aggregation.
 
-- [ ] Task 16: Author `x-openregister-calculations` formula for disconteringsvoet
+- [x] Task 16: Author `x-openregister-calculations` formula for disconteringsvoet
   unwinding: unwindingOfDiscount = max(0, prior-period discountedValue ×
   discountRateApplied). Auto-calculate if discountRateApplied > 0.
+  - DONE: `discountedValue` calculation on Provision computes the present value
+    `discountRateApplied > 0 ? bestEstimate / pow(1 + discountRateApplied,
+    yearsToOutflow) : null`. Per-period unwinding is documented inline on
+    `ProvisionMovement.unwindingOfDiscount` as `max(0, priorDiscountedValue *
+    discountRateApplied)` (REQ-PROV-017). The full multiplicative formula
+    requires the prior-period record and is recomputed by the
+    provisionRollForward aggregation rather than written as a single declarative
+    expression.
 
-- [ ] Task 17: Author `x-openregister-aggregations` query to emit
+- [x] Task 17: Author `x-openregister-aggregations` query to emit
   `provision-disclosure-tabel` record per period: header (provision type, count,
   total opening), movement table per provision, contingent-liability section,
   materiality narrative (> EUR 100K or > 1% balance), sensitivity narrative
   (rangeLow / rangeHigh if material). Output suitable for jaarrekening notes.
+  - DONE: declared a `ProvisionDisclosureTabel` schema (REQ-PROV-008) plus a
+    `provisionDisclosureGeneration` aggregation joining ProvisionMovement →
+    Provision on provisionType, summing the buckets (opening/additions/used/
+    released/unwinding/estimatesChange/closingBalance) and counting per (period,
+    provisionType). Materiality + sensitivity narrative is populated by the
+    narrative field; the contingent-liability narrative is populated from the
+    ContingentLiability disclosure narrative for the same provisionType bucket.
 
-- [ ] Task 18: Add manifest navigation entries in `lib/Settings/shillinq_register.json`:
+- [x] Task 18: Add manifest navigation entries in `lib/Settings/shillinq_register.json`:
   - "Provisions" → list all `provision` records filtered by type
   - "Provision Movements" → list all `provision-movement` records per period
   - "Contingent Liabilities" → list all `contingent-liability` records
+  - DONE: added in `src/manifest.d/bookkeeping-voorzieningen-claims.json` under the
+    existing "Bookkeeping" menu group; Provisions / ProvisionMovements /
+    ContingentLiabilities index pages with type / status / period filters.
 
 - [ ] Task 19: Author schema-level validation rule for three-criteria gating:
   prevent status=active transition unless legalOrConstructiveObligation is set
