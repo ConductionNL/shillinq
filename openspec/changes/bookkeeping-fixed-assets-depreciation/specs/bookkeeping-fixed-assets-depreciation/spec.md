@@ -6,6 +6,14 @@
 **Depends on:** `../add-shillinq-bookkeeping-foundation/specs/bookkeeping-general-ledger/spec.md` (T1 GL),
 `../add-shillinq-bookkeeping-foundation/specs/bookkeeping-chart-of-accounts/spec.md` (asset accounts)
 
+**ADRs:** Per [ADR-022](../../architecture/adr-022.md) (no app-local
+depreciation service — calculations sourced from OR's declarative
+business-logic extension) and [ADR-031](../../architecture/adr-031.md)
+(asset analytics expressed as `x-openregister-aggregations`, not PHP
+report services; a single-method `DepreciationCalculator` is permitted
+under the ADR-031 §"PHP guards remain a legitimate seam" exception
+while OR's calculation extension stabilises).
+
 ## ADDED Requirements
 
 ### REQ-FA-001: Fixed assets SHALL be declared as `FixedAsset` + `DepreciationSchedule` registers, not duplicates of GL

@@ -1975,22 +1975,45 @@ _Rules for delegating approval tasks during out-of-office periods and escalation
 
 ### DepreciationSchedule
 **Schema.org:** `schema:Thing`
-_A detailed schedule defining depreciation method, rate, and yearly calculations for a fixed asset with automated computation_
-**Primary spec:** obligation-financial-administration
+_Per-asset, per-fiscal-year depreciation schedule record (REQ-FA-003). Immutable append-only history backing the audit trail for Wet Vpb / Wet IB tax compliance. `depreciationAmount` is materialised at period close (or on demand by the `DepreciationCalculator`) using the asset's `depreciationMethod`, `annualRate` and the Nextcloud System Settings Float Precision rounding (REQ-FA-005). `bookValue` is a derived `x-openregister-calculations` field (asset.acquisitionCost − accumulatedDepreciation) and not stored separately. `status` tracks the schedule lifecycle (planned → active → completed)._
+**Primary spec:** bookkeeping-fixed-assets-depreciation
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| scheduleNumber | string | Yes | Unique identifier for the depreciation schedule |
-| name | string | Yes | Name or description of the depreciation schedule |
-| startDate | datetime | Yes | Start date of the depreciation period |
-| endDate | datetime | Yes | End date of the depreciation period |
-| depreciationMethod | string | Yes | Method used: linear, declining-balance, units-of-production |
-| annualRate | number | Yes | Annual depreciation rate as a percentage or amount |
-| totalDepreciationAmount | number | No | Total depreciation amount over the schedule period |
-| status | string | Yes | Current status: planned, active, completed |
+| scheduleNumber | string | Yes | Unique identifier within an administration (e.g. SCH-FA-0001-2026) |
+| assetRef | string | Yes | FK to FixedAsset UUID — the asset this schedule covers |
+| depreciationMethod | enum | Yes | One of linear, declining-balance, units-of-production |
+| annualRate | number ≥ 0 | Yes | Annual depreciation rate (percentage for linear, declining percentage for declining-balance, units/year for units-of-production). Rounded to System Settings Float Precision per REQ-FA-005 |
+| rateType | enum | Yes | One of percentage, fixed-amount, units-per-year |
+| periodStartDate | date | Yes | Start date of the depreciation period (typically fiscal-year start) |
+| periodEndDate | date | Yes | End date of the depreciation period (typically fiscal-year end) |
+| depreciationAmount | number ≥ 0 | Yes | Depreciation expense for this period in base currency |
+| accumulatedDepreciation | number ≥ 0 | Yes | Total accumulated depreciation across all periods through periodEndDate |
+| fiscalYear | integer | Yes | Fiscal year this schedule covers (e.g. 2026) |
+| status | enum | Yes | One of planned, active, completed |
+| costCenterCode | string | No | Cost-centre allocation at schedule-creation time (REQ-FA-006) |
+| glTransactionRef | string | No | FK to the materialised yearly depreciation-expense GLTransaction (REQ-FA-007) |
+| calculationFloatPrecision | integer (0..8) | No | Float Precision value captured at calculation time (REQ-FA-005) |
+| administrationId | string | Yes | FK to the Administration owning this schedule |
+
+**Calculated fields (x-openregister-calculations, not stored):**
+- `bookValue` — net book value at periodEndDate (asset.acquisitionCost − accumulatedDepreciation)
 
 **Relations:**
-- → FixedAsset (many-to-one)
+- → FixedAsset (many-to-one, via `assetRef` → FixedAsset.id; the depreciation schedule references back to its asset record per REQ-FA-003 — see the FixedAsset entry above for the sub-ledger GL-link pattern)
+- → Administration (many-to-one, via administrationId)
+- → GLTransaction (many-to-one, via `glTransactionRef` → GLTransaction.id; the yearly depreciation-expense posting materialised per REQ-FA-007, balanced against the debit-depreciation-expense / credit-accumulated-depreciation pattern that consumes the canonical sub-ledger reference `GLLine.subLedgerType = "fa"` + `GLLine.subLedgerRef = <FixedAsset UUID>`)
+
+> **Reconciliation note (bookkeeping-fixed-assets-depreciation, 2026-06-09):** The earlier
+> stub entry (primary spec `obligation-financial-administration`) is superseded by the
+> field set above, which conforms to REQ-FA-003 of the T3
+> `bookkeeping-fixed-assets-depreciation` spec. DepreciationSchedule lands as an ADR-037
+> register-fragment new schema at `lib/Settings/register.d/bookkeeping-fixed-assets-depreciation.json`,
+> not by editing the monolith. The schema is the materialised audit-trail backing the
+> on-demand `x-openregister-calculations` derived fields on FixedAsset
+> (`monthlyDepreciation`, `currentBookValue`, `commercialBookValue`, `fiscalBookValue`)
+> — design D2 keeps the per-tick computation declarative; D4 (immutable append-only)
+> applies to the persisted history that anchors the tax-audit trail.
 
 ### DigitalDocument
 **Schema.org:** `schema:DigitalDocument`
@@ -2760,6 +2783,23 @@ _A capitalised tangible or intangible business asset with declarative depreciati
 > table (design D2). The `GLLine.subLedgerRef` link is the only cross-register pointer;
 > downward specs referencing `FixedAsset` MUST use `assetNumber` as the FK target and
 > `administrationId` for administration scoping.
+
+> **Reconciliation note (bookkeeping-fixed-assets-depreciation, 2026-06-09):** The T3
+> `bookkeeping-fixed-assets-depreciation` change carries forward the canonical FixedAsset
+> schema above and unions REQ-FA-002 operator-facing property aliases (`assetType` ↔
+> `assetCategory`, `usefulLifeYears` ↔ `usefulLifeMonths`, `purchaseDate` ↔ `acquisitionDate`,
+> `purchaseCost` ↔ `acquisitionCost`, `declineRate` ↔ `degressiveRate`, `status` ↔
+> `lifecycleState`, `accumulatedDepreciationAccountNumber` ↔ `accumulatedDepAccountNumber`)
+> plus four genuinely new optional fields (`description`, `productionUnits`,
+> `capitalizationAccountNumber`, `location`, `costCenterCode`, `retirementDate`,
+> `salvageProceeds`, `transferSourceAssetRef`). Aliases share the canonical field's
+> semantics; the canonical fields remain required. The aliasing lands as an ADR-037
+> register-fragment overlay at `lib/Settings/register.d/bookkeeping-fixed-assets-depreciation.json`,
+> never editing the monolith. The lifecycle is extended with `transferInternal` (cost-centre
+> reallocation; no GL posting) and `splitTransfer` (proportional split into a new FixedAsset
+> with `transferSourceAssetRef` pointing back), and the `activate` action acquires a
+> `emit-journal-entry-and-schedule` subtype that auto-generates the first DepreciationSchedule
+> + acquisition GL posting per REQ-FA-008.
 
 ### FrameworkAgreement
 **Schema.org:** `schema:Service`
