@@ -45,6 +45,8 @@ use RuntimeException;
 class IncassoDossierComposer
 {
     /**
+     * Construct the composer with its DI dependencies.
+     *
      * @param ContainerInterface $container DI for OR ObjectService.
      * @param IAppConfig         $appConfig App config.
      * @param LoggerInterface    $logger    Logger.
@@ -71,18 +73,30 @@ class IncassoDossierComposer
     {
         $register = $this->register();
 
-        $dunningRuns      = $this->findAll(register: $register, schema: 'DunningRun', filters: [
-            'administrationId' => $administrationId,
-            'factuurId'        => $factuurId,
-        ]);
-        $incassoKostenAll = $this->findAll(register: $register, schema: 'IncassoKostenBerekening', filters: [
-            'administrationId' => $administrationId,
-            'factuurId'        => $factuurId,
-        ]);
-        $pauseAll         = $this->findAll(register: $register, schema: 'DunningPauseDispute', filters: [
-            'administrationId' => $administrationId,
-            'factuurId'        => $factuurId,
-        ]);
+        $dunningRuns      = $this->findAll(
+                register: $register,
+                schema: 'DunningRun',
+                filters: [
+                    'administrationId' => $administrationId,
+                    'factuurId'        => $factuurId,
+                ]
+                );
+        $incassoKostenAll = $this->findAll(
+                register: $register,
+                schema: 'IncassoKostenBerekening',
+                filters: [
+                    'administrationId' => $administrationId,
+                    'factuurId'        => $factuurId,
+                ]
+                );
+        $pauseAll         = $this->findAll(
+                register: $register,
+                schema: 'DunningPauseDispute',
+                filters: [
+                    'administrationId' => $administrationId,
+                    'factuurId'        => $factuurId,
+                ]
+                );
 
         // Pick the latest IncassoKostenBerekening (highest berekendOp date).
         usort(
@@ -94,7 +108,10 @@ class IncassoDossierComposer
                 );
             }
         );
-        $latestIncassoKosten = ($incassoKostenAll === []) ? null : $incassoKostenAll[0];
+        $latestIncassoKosten = null;
+        if ($incassoKostenAll !== []) {
+            $latestIncassoKosten = $incassoKostenAll[0];
+        }
 
         $evidenceRefs = [];
         foreach ($dunningRuns as $run) {
@@ -102,6 +119,7 @@ class IncassoDossierComposer
             if ($hash !== '') {
                 $evidenceRefs[] = 'dunning-run:'.((string) ($run['id'] ?? '')).':sha256='.$hash;
             }
+
             $barcode = (string) ($run['postageStatus']['barcode'] ?? '');
             if ($barcode !== '') {
                 $evidenceRefs[] = 'postnl:'.$barcode;
@@ -111,18 +129,18 @@ class IncassoDossierComposer
         return [
             'factuurId' => $factuurId,
             'inhoud'    => [
-                'invoice'        => [
+                'invoice'       => [
                     'factuurId'        => $factuurId,
                     'klantId'          => $klantId,
                     'administrationId' => $administrationId,
                 ],
-                'dunningRuns'    => $dunningRuns,
-                'incassoKosten'  => $latestIncassoKosten,
-                'pauseEvents'    => $pauseAll,
-                'klantGegevens'  => [
+                'dunningRuns'   => $dunningRuns,
+                'incassoKosten' => $latestIncassoKosten,
+                'pauseEvents'   => $pauseAll,
+                'klantGegevens' => [
                     'klantId' => $klantId,
                 ],
-                'evidenceRefs'   => $evidenceRefs,
+                'evidenceRefs'  => $evidenceRefs,
             ],
         ];
 
@@ -131,9 +149,9 @@ class IncassoDossierComposer
     /**
      * Find all matching records via the canonical OR ObjectService API.
      *
-     * @param string $register OR register slug.
-     * @param string $schema   Schema slug.
-     * @param array<string,mixed> $filters Filter map.
+     * @param string              $register OR register slug.
+     * @param string              $schema   Schema slug.
+     * @param array<string,mixed> $filters  Filter map.
      *
      * @return array<int,array<string,mixed>>
      */
@@ -145,7 +163,11 @@ class IncassoDossierComposer
                 ->setRegister($register)
                 ->setSchema($schema)
                 ->findAll(['filters' => $filters]);
-            return is_array($rows) ? $rows : [];
+            if (is_array($rows) === true) {
+                return $rows;
+            }
+
+            return [];
         } catch (\Throwable $e) {
             $this->logger->warning('Shillinq: IncassoDossierComposer findAll('.$schema.') failed: '.$e->getMessage());
             return [];
@@ -161,8 +183,11 @@ class IncassoDossierComposer
     private function register(): string
     {
         $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        return ($register === '') ? 'shillinq' : $register;
+        if ($register === '') {
+            return 'shillinq';
+        }
+
+        return $register;
 
     }//end register()
-
 }//end class

@@ -410,7 +410,7 @@ class SupplierInvoiceService
                 continue;
             }
 
-            $candidateNumber = (int) ($line['lineNumber'] ?? ($index + 1));
+            $candidateNumber = (int) ($line['lineNumber'] ?? ((int) $index + 1));
             if ($candidateNumber !== $invoiceLineNumber) {
                 continue;
             }

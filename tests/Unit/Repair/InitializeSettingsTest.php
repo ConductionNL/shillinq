@@ -46,14 +46,14 @@ class InitializeSettingsTest extends TestCase
     private SettingsService&MockObject $settingsService;
 
     /**
-     * Mock BbvSeedService.
+     * Mock BbvSeedService (constructor arg #2).
      *
      * @var BbvSeedService&MockObject
      */
     private BbvSeedService&MockObject $bbvSeedService;
 
     /**
-     * Mock StatementManifestService.
+     * Mock StatementManifestService (constructor arg #3).
      *
      * @var StatementManifestService&MockObject
      */

@@ -382,7 +382,7 @@ class MultiPoConsolidationController extends Controller
                 continue;
             }
 
-            $candidateLineNumber = (int) ($line['lineNumber'] ?? ($index + 1));
+            $candidateLineNumber = (int) ($line['lineNumber'] ?? ((int) $index + 1));
             if ($candidateLineNumber === $lineNumber) {
                 return $line;
             }

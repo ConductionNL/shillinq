@@ -57,14 +57,18 @@ class CreditScoreService
     private const CFG_WARNING_THRESHOLD = 'dunning.credit_score_warning_threshold';
 
     /**
-     * @param ContainerInterface $container DI for OR ObjectService.
-     * @param IAppConfig         $appConfig App config.
-     * @param LoggerInterface    $logger    Logger.
+     * Construct the credit-score service with its dependencies.
+     *
+     * @param ContainerInterface               $container DI for OR ObjectService.
+     * @param IAppConfig                       $appConfig App config.
+     * @param LoggerInterface                  $logger    Logger.
+     * @param CreditScoreFetchAdapterInterface $fetch     Outbound credit-score fetch port (task-19).
      */
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly IAppConfig $appConfig,
         private readonly LoggerInterface $logger,
+        private readonly CreditScoreFetchAdapterInterface $fetch,
     ) {
     }//end __construct()
 
@@ -86,19 +90,83 @@ class CreditScoreService
             return $cached;
         }
 
-        // Cache miss / stale — in production this would dispatch via
-        // openconnector to the provider's REST API. For now we return the
-        // stale snapshot (with a logger warning) so the caller can still
-        // surface the data while the fetch path lands in a follow-up.
-        $this->logger->info('Shillinq: CreditScore cache stale for '.$klantId.' / '.$provider.'; live refresh deferred.');
-        return $cached;
+        // Cache miss / stale — dispatch via the bound fetch adapter
+        // (LogCreditScoreFetchAdapter by default — swap for an
+        // openconnector-backed implementation in production). When the
+        // adapter returns a fresh snapshot, persist it and return it;
+        // otherwise fall back to the stale cache so the caller can still
+        // surface what's known.
+        $fresh = null;
+        try {
+            $fresh = $this->fetch->fetch(
+                administrationId: $administrationId,
+                klantId: $klantId,
+                provider: $provider
+            );
+        } catch (\Throwable $e) {
+            $this->logger->warning(
+                'Shillinq: CreditScoreFetchAdapter::fetch threw — falling back to cache: '.$e->getMessage()
+            );
+        }
+
+        if ($fresh === null) {
+            $this->logger->info('Shillinq: CreditScore live refresh unavailable for '.$klantId.' / '.$provider.'; using cached snapshot.');
+            return $cached;
+        }
+
+        // Normalise + persist the fresh snapshot so the next call hits the cache.
+        $fresh['administrationId'] = ($fresh['administrationId'] ?? $administrationId);
+        $fresh['klantId']          = ($fresh['klantId'] ?? $klantId);
+        $fresh['provider']         = ($fresh['provider'] ?? $provider);
+        if (isset($fresh['scoreDatum']) === false || (string) $fresh['scoreDatum'] === '') {
+            $fresh['scoreDatum'] = (new DateTimeImmutable())->format('Y-m-d');
+        }
+
+        try {
+            $persisted = $this->saveScore(score: $fresh);
+            if ($persisted !== null) {
+                return $persisted;
+            }
+
+            return $fresh;
+        } catch (\Throwable $e) {
+            $this->logger->warning('Shillinq: failed to persist fresh CreditScore — returning in-memory snapshot: '.$e->getMessage());
+            return $fresh;
+        }
 
     }//end getOrRefresh()
 
     /**
+     * Persist a CreditScore snapshot via the canonical OR ObjectService API.
+     *
+     * @param array<string,mixed> $score The snapshot to persist.
+     *
+     * @return array<string,mixed>|null
+     */
+    private function saveScore(array $score): ?array
+    {
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $saved         = $objectService
+                ->setRegister($this->register())
+                ->setSchema('CreditScore')
+                ->saveObject($score);
+            if (is_array($saved) === true) {
+                return $saved;
+            }
+
+            return null;
+        } catch (\Throwable $e) {
+            $this->logger->warning('Shillinq: CreditScoreService::saveScore failed: '.$e->getMessage());
+            return null;
+        }
+
+    }//end saveScore()
+
+    /**
      * Render a UI warning payload for an invoice when the klant has a low score.
      *
-     * @param array<string,mixed>|null $score    The CreditScore record.
+     * @param array<string,mixed>|null $score         The CreditScore record.
      * @param float                    $invoiceBedrag Invoice principal (EUR).
      *
      * @return array{warning:bool,message:string,creditLimietAdvies:?float,deelfacturatieAdvies:bool}
@@ -118,7 +186,10 @@ class CreditScoreService
 
         $threshold = (float) $this->appConfig->getValueString(Application::APP_ID, self::CFG_WARNING_THRESHOLD, '3.0');
         $value     = (float) ($score['score'] ?? 0.0);
-        $limit     = isset($score['creditLimietAdvies']) ? (float) $score['creditLimietAdvies'] : null;
+        $limit     = null;
+        if (isset($score['creditLimietAdvies']) === true) {
+            $limit = (float) $score['creditLimietAdvies'];
+        }
 
         $belowThreshold = ($value < $threshold);
         $overLimit      = ($limit !== null && $invoiceBedrag > $limit);
@@ -165,16 +236,19 @@ class CreditScoreService
             $rows          = $objectService
                 ->setRegister($this->register())
                 ->setSchema('CreditScore')
-                ->findAll([
-                    'filters' => [
-                        'administrationId' => $administrationId,
-                        'klantId'          => $klantId,
-                        'provider'         => $provider,
-                    ],
-                ]);
+                ->findAll(
+                        [
+                            'filters' => [
+                                'administrationId' => $administrationId,
+                                'klantId'          => $klantId,
+                                'provider'         => $provider,
+                            ],
+                        ]
+                        );
             if (is_array($rows) === false || $rows === []) {
                 return null;
             }
+
             usort(
                 $rows,
                 static function (array $a, array $b): int {
@@ -185,7 +259,7 @@ class CreditScoreService
         } catch (\Throwable $e) {
             $this->logger->warning('Shillinq: CreditScoreService::latestForKlant failed: '.$e->getMessage());
             return null;
-        }
+        }//end try
 
     }//end latestForKlant()
 
@@ -198,16 +272,18 @@ class CreditScoreService
      */
     private function isFresh(array $score): bool
     {
-        $days   = max(1, (int) $this->appConfig->getValueString(Application::APP_ID, self::CFG_CACHE_DAYS, '30'));
-        $datum  = (string) ($score['scoreDatum'] ?? '');
+        $days  = max(1, (int) $this->appConfig->getValueString(Application::APP_ID, self::CFG_CACHE_DAYS, '30'));
+        $datum = (string) ($score['scoreDatum'] ?? '');
         if ($datum === '') {
             return false;
         }
+
         try {
             $when = new DateTimeImmutable($datum);
         } catch (\Throwable $e) {
             return false;
         }
+
         $cutoff = (new DateTimeImmutable())->modify('-'.$days.' days');
         return $when >= $cutoff;
 
@@ -221,8 +297,11 @@ class CreditScoreService
     private function register(): string
     {
         $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        return ($register === '') ? 'shillinq' : $register;
+        if ($register === '') {
+            return 'shillinq';
+        }
+
+        return $register;
 
     }//end register()
-
 }//end class

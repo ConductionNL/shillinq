@@ -145,4 +145,17 @@ class InMemoryObjectService
 
     }//end saveObject()
 
+    /**
+     * Test helper: return every record stored on a schema regardless of filters.
+     *
+     * @param string $schema Schema slug.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function dump(string $schema): array
+    {
+        return ($this->records[$schema] ?? []);
+
+    }//end dump()
+
 }//end class

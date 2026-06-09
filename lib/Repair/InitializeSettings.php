@@ -845,7 +845,7 @@ class InitializeSettings implements IRepairStep
         $output->info('Seeding demo barcodes...');
         $result = $this->settingsService->seedInventoryBarcodes();
 
-        if ($result['success'] === true) {
+        if (($result['success'] ?? false) === true) {
             $output->info(
                 'Demo barcodes seeded: '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
             );
@@ -876,7 +876,7 @@ class InitializeSettings implements IRepairStep
         $output->info('Seeding demo inventory lots...');
         $result = $this->settingsService->seedInventoryLots();
 
-        if ($result['success'] === true) {
+        if (($result['success'] ?? false) === true) {
             $output->info(
                 'Demo inventory lots seeded: '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
             );

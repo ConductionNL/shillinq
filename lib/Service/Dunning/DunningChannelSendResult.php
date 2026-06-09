@@ -34,18 +34,20 @@ namespace OCA\Shillinq\Service\Dunning;
 final class DunningChannelSendResult
 {
     /**
-     * @param string              $kanaal         One of the four kanaal enum values.
-     * @param string              $deliveryStatus DELIVERED / BOUNCED / FAILED / PENDING.
+     * Build an immutable result value object.
+     *
+     * @param string              $kanaal            One of the four kanaal enum values.
+     * @param string              $deliveryStatus    DELIVERED / BOUNCED / FAILED / PENDING.
      * @param string|null         $providerMessageId Channel/provider message id, if any.
-     * @param array<string,mixed> $extras           Channel-specific extras (barcode, trackingUrl, dossierId, etc.).
-     * @param string|null         $errorMessage     Error detail when deliveryStatus is BOUNCED / FAILED.
+     * @param array<string,mixed> $extras            Channel-specific extras (barcode, trackingUrl, dossierId, etc.).
+     * @param string|null         $errorMessage      Error detail when deliveryStatus is BOUNCED / FAILED.
      */
     public function __construct(
         public readonly string $kanaal,
         public readonly string $deliveryStatus,
-        public readonly ?string $providerMessageId = null,
-        public readonly array $extras = [],
-        public readonly ?string $errorMessage = null,
+        public readonly ?string $providerMessageId=null,
+        public readonly array $extras=[],
+        public readonly ?string $errorMessage=null,
     ) {
     }//end __construct()
 
@@ -53,6 +55,8 @@ final class DunningChannelSendResult
      * Convenience for callers building a DunningRun postageStatus object.
      *
      * @return array<string,mixed>|null
+     *
+     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-21
      */
     public function postageStatus(): ?array
     {
@@ -61,18 +65,21 @@ final class DunningChannelSendResult
         if ($barcode === '' && $trackingUrl === '') {
             return null;
         }
+
         $status = [];
         if ($barcode !== '') {
             $status['barcode'] = $barcode;
         }
+
         if ($trackingUrl !== '') {
             $status['trackingUrl'] = $trackingUrl;
         }
+
         if (isset($this->extras['deliveredAt']) === true) {
             $status['deliveredAt'] = (string) $this->extras['deliveredAt'];
         }
+
         return $status;
 
     }//end postageStatus()
-
 }//end class

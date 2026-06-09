@@ -245,7 +245,7 @@ final class IcsService
             // Pull transitions covering the whole appointment year so the client
             // sees both STANDARD and DAYLIGHT rules for the date in question.
             $yearStart = (int) (new \DateTimeImmutable($start->format('Y').'-01-01T00:00:00Z'))->getTimestamp();
-            $yearEnd   = (int) (new \DateTimeImmutable(($start->format('Y') + 1).'-01-01T00:00:00Z'))->getTimestamp();
+            $yearEnd   = (int) (new \DateTimeImmutable(((int) $start->format('Y') + 1).'-01-01T00:00:00Z'))->getTimestamp();
             $transitions = $tz->getTransitions($yearStart, $yearEnd);
             if ($transitions === false) {
                 $transitions = [];
