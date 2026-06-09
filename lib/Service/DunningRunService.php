@@ -92,10 +92,10 @@ class DunningRunService
     /**
      * Construct the service with lazy DI of OR's ObjectService.
      *
-     * @param ContainerInterface    $container Lazy DI container.
-     * @param IAppConfig            $appConfig App config.
-     * @param BIKStaffelCalculator  $bik       Pure BIK + rente calculator.
-     * @param LoggerInterface       $logger    Logger.
+     * @param ContainerInterface   $container Lazy DI container.
+     * @param IAppConfig           $appConfig App config.
+     * @param BIKStaffelCalculator $bik       Pure BIK + rente calculator.
+     * @param LoggerInterface      $logger    Logger.
      */
     public function __construct(
         private readonly ContainerInterface $container,
@@ -141,8 +141,10 @@ class DunningRunService
                 $picked = $stage;
                 continue;
             }
+
             break;
         }
+
         return $picked;
 
     }//end stageForOverdueDays()
@@ -170,12 +172,13 @@ class DunningRunService
      * is the AR core's responsibility; it returns the picked stage so the
      * caller can mirror the transition upstream.
      *
-     * @param string             $administrationId Administration scope.
-     * @param array<string,mixed> $invoice          The `Invoice` record (from `bookkeeping-quote-order-invoice`).
-     * @param string             $baseLadderId     The base DunningLadder slug to resolve from.
-     * @param array<string,mixed> $params           Optional dispatch overrides — kanaal, templateId,
-     *                                              ontvangerEmail, ontvangerNaam, renderedSubject, renderedBody.
-     * @param DateTimeImmutable|null $now          Inject "now" for deterministic tests; defaults to wall-clock.
+     * @param string                 $administrationId Administration scope.
+     * @param array<string,mixed>    $invoice          The `Invoice` record (from `bookkeeping-quote-order-invoice`).
+     * @param string                 $baseLadderId     The base DunningLadder slug to resolve from.
+     * @param array<string,mixed>    $params           Optional dispatch overrides — kanaal,
+     *                                                 templateId, ontvangerEmail, ontvangerNaam,
+     *                                                 renderedSubject, renderedBody.
+     * @param DateTimeImmutable|null $now              Inject "now" for deterministic tests; defaults to wall-clock.
      *
      * @return array<string,mixed>|null The materialised `DunningRun`, or null when the tick was a no-op.
      *
@@ -185,8 +188,8 @@ class DunningRunService
         string $administrationId,
         array $invoice,
         string $baseLadderId,
-        array $params = [],
-        ?DateTimeImmutable $now = null
+        array $params=[],
+        ?DateTimeImmutable $now=null
     ): ?array {
         $now       = ($now ?? new DateTimeImmutable());
         $factuurId = (string) ($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
@@ -198,6 +201,7 @@ class DunningRunService
         if ($dueDateRaw === '') {
             return null;
         }
+
         try {
             $dueDate = new DateTimeImmutable($dueDateRaw);
         } catch (\Throwable $e) {
@@ -221,7 +225,7 @@ class DunningRunService
             klantId: $klantId,
             baseLadderId: $baseLadderId
         );
-        $stage = $this->stageForOverdueDays(stages: $resolved['stages'], dagenVerzuim: $dagenVerzuim);
+        $stage    = $this->stageForOverdueDays(stages: $resolved['stages'], dagenVerzuim: $dagenVerzuim);
         if ($stage === null) {
             return null;
         }
@@ -283,6 +287,7 @@ class DunningRunService
         if ($baseLadder === null) {
             $baseLadder = $this->fetchOne(schema: 'DunningLadder', filters: ['slug' => $baseLadderId]);
         }
+
         if ($baseLadder === null) {
             throw new RuntimeException(sprintf('DunningLadder %s not found.', $baseLadderId));
         }
@@ -320,10 +325,12 @@ class DunningRunService
     /**
      * Pick the stage definition for a given stageNr from a resolved ladder.
      *
-     * @param array<int,array<string,mixed>> $stages Resolved stages.
+     * @param array<int,array<string,mixed>> $stages  Resolved stages.
      * @param int                            $stageNr Stage number to retrieve.
      *
      * @return array<string,mixed>|null Stage definition, null when no such stage exists.
+     *
+     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-18
      */
     public function stageDefinition(array $stages, int $stageNr): ?array
     {
@@ -353,13 +360,27 @@ class DunningRunService
      * incasso-bureau wiring (those land on dedicated handlers seeded via
      * openconnector per REQ-CCD-008 / REQ-CCD-009).
      *
-     * @param string             $administrationId Administration scope.
-     * @param array<string,mixed> $params         {
-     *   factuurId, ladderId, stageNr, kanaal, templateId, ontvangerEmail,
-     *   ontvangerNaam, ontvangerAdres, renderedSubject, renderedBody,
-     *   renderedPdfHash, factuurBedrag, incassokostenBedrag, renteBedrag,
-     *   deliveryStatus, postageStatus, openTracking, digitalSignature
-     * }
+     * @param string              $administrationId Administration scope.
+     * @param array<string,mixed> $params           {
+     *                                              factuurId,
+     *                                              ladderId,
+     *                                              stageNr,
+     *                                              kanaal,
+     *                                              templateId,
+     *                                              ontvangerEmail,
+     *                                              ontvangerNaam,
+     *                                              ontvangerAdres,
+     *                                              renderedSubject,
+     *                                              renderedBody,
+     *                                              renderedPdfHash,
+     *                                              factuurBedrag,
+     *                                              incassokostenBedrag,
+     *                                              renteBedrag,
+     *                                              deliveryStatus,
+     *                                              postageStatus,
+     *                                              openTracking,
+     *                                              digitalSignature
+     *                                              }
      *
      * @return array<string,mixed> The executed DunningRun record.
      *
@@ -413,12 +434,12 @@ class DunningRunService
      * (default 60). The pause is created with lifecycleState=active. Downstream
      * executeStage() calls refuse to fire while an active pause exists.
      *
-     * @param string $administrationId Administration scope.
-     * @param string $factuurId        Invoice FK.
-     * @param string $reden            One of DISPUTED / PAYMENT_PLAN / OTHER.
-     * @param string $details          Free-text details.
-     * @param string $gepauzeerdDoor   Operator id.
-     * @param array<int,string>|null $evidenceRefs Optional evidence refs.
+     * @param string                 $administrationId Administration scope.
+     * @param string                 $factuurId        Invoice FK.
+     * @param string                 $reden            One of DISPUTED / PAYMENT_PLAN / OTHER.
+     * @param string                 $details          Free-text details.
+     * @param string                 $gepauzeerdDoor   Operator id.
+     * @param array<int,string>|null $evidenceRefs     Optional evidence refs.
      *
      * @return array<string,mixed> The created pause record.
      *
@@ -430,7 +451,7 @@ class DunningRunService
         string $reden,
         string $details,
         string $gepauzeerdDoor,
-        ?array $evidenceRefs = null
+        ?array $evidenceRefs=null
     ): array {
         $hardDeadlineDays = max(1, (int) $this->appConfig->getValueString(Application::APP_ID, self::CFG_DISPUTE_PAUSE_DAYS, '60'));
         $pauzeStart       = new DateTimeImmutable();
@@ -466,9 +487,9 @@ class DunningRunService
      * when the hard deadline elapses). The ladder resumes from the stage where
      * the pause began — no stage 1..N re-execution.
      *
-     * @param string $administrationId Administration scope.
-     * @param string $pauseId          Pause record id.
-     * @param string $resolution       'resolve' or 'expire'.
+     * @param string     $administrationId  Administration scope.
+     * @param string     $pauseId           Pause record id.
+     * @param string     $resolution        'resolve' or 'expire'.
      * @param float|null $partialSettlement Optional new saldo after partial settlement.
      *
      * @return array<string,mixed> The updated pause record.
@@ -478,18 +499,24 @@ class DunningRunService
     public function resumePause(
         string $administrationId,
         string $pauseId,
-        string $resolution = 'resolve',
-        ?float $partialSettlement = null
+        string $resolution='resolve',
+        ?float $partialSettlement=null
     ): array {
         $pause = $this->fetchOne(schema: 'DunningPauseDispute', filters: ['id' => $pauseId]);
         if ($pause === null) {
             throw new RuntimeException(sprintf('DunningPauseDispute %s not found.', $pauseId));
         }
 
-        $pause['pauzeEind']      = (new DateTimeImmutable())->format(DATE_ATOM);
-        $pause['lifecycleState'] = ($resolution === 'expire') ? 'hardDeadlineExpired' : 'resolved';
+        $pause['pauzeEind'] = (new DateTimeImmutable())->format(DATE_ATOM);
+        if ($resolution === 'expire') {
+            $pause['lifecycleState'] = 'hardDeadlineExpired';
+        } else {
+            $pause['lifecycleState'] = 'resolved';
+        }
+
         if ($partialSettlement !== null) {
-            $pause['details'] = trim(((string) ($pause['details'] ?? '')).' | partial settlement saldo '.number_format($partialSettlement, 2, '.', ''));
+            $detail           = trim((string) ($pause['details'] ?? ''));
+            $pause['details'] = $detail.' | partial settlement saldo '.number_format($partialSettlement, 2, '.', '');
         }
 
         return $this->saveObject(schema: 'DunningPauseDispute', data: $pause);
@@ -514,9 +541,10 @@ class DunningRunService
      * `posted` and a follow-up cycle picks up the materialisation). This is
      * the same fail-soft pattern InvoiceGenerationService uses.
      *
-     * @param string $administrationId Administration scope.
-     * @param array<string,mixed> $params {factuurId, hoofdsomAfgeschreven, btwBedrag,
-     *                          art29OBVerklaring, evidenceRef, boekingId, btwAangiftePeriode}.
+     * @param string              $administrationId Administration scope.
+     * @param array<string,mixed> $params           {factuurId, hoofdsomAfgeschreven, btwBedrag,
+     *                                              art29OBVerklaring, evidenceRef, boekingId,
+     *                                              btwAangiftePeriode}.
      *
      * @return array<string,mixed> The created write-off record.
      *
@@ -535,13 +563,23 @@ class DunningRunService
         // Materialise the GL posting first so we can carry its id onto the OninbaarAfschrijving record.
         $boekingId = $callerBoekId;
         if ($boekingId === '' && $hoofdsom > 0.0) {
+            $btwCast = null;
+            if ($btwBedrag !== null) {
+                $btwCast = (float) $btwBedrag;
+            }
+
             $boekingId = $this->materialiseWriteOffGl(
                 administrationId: $administrationId,
                 factuurId: $factuurId,
                 hoofdsom: $hoofdsom,
-                btwBedrag: ($btwBedrag !== null) ? (float) $btwBedrag : null,
+                btwBedrag: $btwCast,
                 periode: $periode
             );
+        }
+
+        $boekingIdValue = null;
+        if ($boekingId !== '') {
+            $boekingIdValue = $boekingId;
         }
 
         $record = [
@@ -550,7 +588,7 @@ class DunningRunService
             'btwBedrag'            => $btwBedrag,
             'art29OBVerklaring'    => (string) ($params['art29OBVerklaring'] ?? ''),
             'evidenceRef'          => ($params['evidenceRef'] ?? null),
-            'boekingId'            => ($boekingId !== '') ? $boekingId : null,
+            'boekingId'            => $boekingIdValue,
             'btwAangiftePeriode'   => $periode,
             'administrationId'     => $administrationId,
             'lifecycleState'       => 'posted',
@@ -602,8 +640,12 @@ class DunningRunService
         string $periode
     ): string {
         $hoofdsomCents = (int) round($hoofdsom * 100);
-        $btwCents      = ($btwBedrag === null) ? 0 : (int) round($btwBedrag * 100);
-        $totalCents    = ($hoofdsomCents + $btwCents);
+        $btwCents      = 0;
+        if ($btwBedrag !== null) {
+            $btwCents = (int) round($btwBedrag * 100);
+        }
+
+        $totalCents = ($hoofdsomCents + $btwCents);
 
         $postings = [
             [
@@ -621,6 +663,7 @@ class DunningRunService
                 'description'   => 'Output VAT recoverable (art. 29 OB)',
             ];
         }
+
         $postings[] = [
             'accountNumber' => '1300',
             'debitCents'    => 0,
@@ -679,19 +722,29 @@ class DunningRunService
         string $boekingId,
         string $oninbaarId
     ): void {
+        $glTxRef = null;
+        if ($boekingId !== '') {
+            $glTxRef = $boekingId;
+        }
+
+        $oninbaarRef = null;
+        if ($oninbaarId !== '') {
+            $oninbaarRef = $oninbaarId;
+        }
+
         $line = [
-            'administrationId'    => $administrationId,
-            'returnId'            => $periode,
-            'glTransactionId'     => ($boekingId !== '') ? $boekingId : null,
-            'type'                => 'CORRECTION_ART_29_OB',
-            'taxableAmount'       => 0.0,
-            'taxRate'             => 0.0,
-            'vatAmount'           => (-1.0 * $btwBedrag),
-            'glAccountNumber'     => '1500',
-            'glAccountName'       => 'Output VAT recoverable (art. 29 OB)',
-            'description'         => sprintf('Oninbaar art. 29 OB — invoice %s', $factuurId),
-            'sourceOninbaarRef'   => ($oninbaarId !== '') ? $oninbaarId : null,
-            'sourceInvoiceRef'    => $factuurId,
+            'administrationId'  => $administrationId,
+            'returnId'          => $periode,
+            'glTransactionId'   => $glTxRef,
+            'type'              => 'CORRECTION_ART_29_OB',
+            'taxableAmount'     => 0.0,
+            'taxRate'           => 0.0,
+            'vatAmount'         => (-1.0 * $btwBedrag),
+            'glAccountNumber'   => '1500',
+            'glAccountName'     => 'Output VAT recoverable (art. 29 OB)',
+            'description'       => sprintf('Oninbaar art. 29 OB — invoice %s', $factuurId),
+            'sourceOninbaarRef' => $oninbaarRef,
+            'sourceInvoiceRef'  => $factuurId,
         ];
 
         try {
@@ -725,6 +778,7 @@ class DunningRunService
         if ($override !== '') {
             return $override;
         }
+
         $now = new DateTimeImmutable();
         $q   = (int) ceil((int) $now->format('n') / 3);
         return sprintf('%s-Q%d', $now->format('Y'), $q);
@@ -740,9 +794,10 @@ class DunningRunService
      * failure, missing payment-reference). In that case the caller is
      * expected to soft-pause the dunning and reach out to the customer first.
      *
-     * @param string $administrationId Administration scope.
-     * @param string $klantId          Customer FK.
-     * @param array<string,mixed> $triggerContext Context — keys: bounce, ibanInvalid, paymentRefMissing.
+     * @param string              $administrationId Administration scope.
+     * @param string              $klantId          Customer FK.
+     * @param array<string,mixed> $triggerContext   Context — keys: bounce, ibanInvalid,
+     *                                              paymentRefMissing.
      *
      * @return bool True when a soft-pause is recommended.
      *
@@ -769,7 +824,8 @@ class DunningRunService
             administrationId: $administrationId,
             klantId: $klantId,
             cutoff: $cutoff
-        ) === true) {
+        ) === true
+        ) {
             return true;
         }
 
@@ -788,11 +844,13 @@ class DunningRunService
             if ($uitgevoerd === '') {
                 continue;
             }
+
             try {
                 $when = new DateTimeImmutable($uitgevoerd);
             } catch (\Throwable $e) {
                 continue;
             }
+
             if ($when >= $cutoff) {
                 return true;
             }
@@ -807,9 +865,9 @@ class DunningRunService
      * within the lookback window. Used by `detectAdminError()` as the primary
      * "good customer" signal (REQ-CCD-011 / task-23).
      *
-     * @param string             $administrationId Administration scope.
-     * @param string             $klantId          Customer FK.
-     * @param DateTimeImmutable  $cutoff           Earliest acceptable paid-on date.
+     * @param string            $administrationId Administration scope.
+     * @param string            $klantId          Customer FK.
+     * @param DateTimeImmutable $cutoff           Earliest acceptable paid-on date.
      *
      * @return bool
      *
@@ -823,9 +881,9 @@ class DunningRunService
         $candidates = $this->findAll(
             schema: 'Invoice',
             filters: [
-                'administrationId'   => $administrationId,
-                'customerReference'  => $klantId,
-                'status'             => 'paid',
+                'administrationId'  => $administrationId,
+                'customerReference' => $klantId,
+                'status'            => 'paid',
             ]
         );
 
@@ -836,15 +894,18 @@ class DunningRunService
             if ($when === '') {
                 continue;
             }
+
             try {
                 $whenDt = new DateTimeImmutable($when);
             } catch (\Throwable $e) {
                 continue;
             }
+
             if ($whenDt >= $cutoff) {
                 return true;
             }
         }
+
         return false;
 
     }//end klantPaidInvoiceWithin()
@@ -861,10 +922,10 @@ class DunningRunService
      * remains `executed` and the caller is expected to queue a retry / surface
      * the error to the operator.
      *
-     * @param string             $administrationId Administration scope.
-     * @param string             $factuurId        Invoice FK.
-     * @param array<string,mixed> $dossier         Composed dossier bundle.
-     * @param string             $dunningRunId     The DunningRun id to seal on success.
+     * @param string              $administrationId Administration scope.
+     * @param string              $factuurId        Invoice FK.
+     * @param array<string,mixed> $dossier          Composed dossier bundle.
+     * @param string              $dunningRunId     The DunningRun id to seal on success.
      *
      * @return DunningChannelSendResult The dispatch outcome.
      *
@@ -902,14 +963,16 @@ class DunningRunService
 
         $run['lifecycleState'] = 'locked';
         $run['deliveryStatus'] = 'DELIVERED';
-        $existing              = (array) ($run['postageStatus'] ?? []);
-        $dossierId             = (string) ($result->extras['dossierId'] ?? '');
+        $existing  = (array) ($run['postageStatus'] ?? []);
+        $dossierId = (string) ($result->extras['dossierId'] ?? '');
         if ($dossierId !== '') {
             $existing['dossierId'] = $dossierId;
         }
+
         if ($existing !== []) {
             $run['postageStatus'] = $existing;
         }
+
         try {
             $this->saveObject(schema: 'DunningRun', data: $run);
         } catch (\Throwable $e) {
@@ -927,9 +990,10 @@ class DunningRunService
      * Captures the resulting Track & Trace barcode + URL on the linked
      * `DunningRun.postageStatus` field for evidence-trail.
      *
-     * @param string             $administrationId Administration scope.
-     * @param string             $dunningRunId     The DunningRun id to update on success.
-     * @param array<string,mixed> $payload         Letter payload — recipientAdres + letterPdfRef.
+     * @param string              $administrationId Administration scope.
+     * @param string              $dunningRunId     The DunningRun id to update on success.
+     * @param array<string,mixed> $payload          Letter payload — recipientAdres +
+     *                                              letterPdfRef.
      *
      * @return DunningChannelSendResult The dispatch outcome.
      *
@@ -950,9 +1014,11 @@ class DunningRunService
             if ($extras !== null) {
                 $postage = array_merge($postage, $extras);
             }
+
             if ($postage !== []) {
                 $run['postageStatus'] = $postage;
             }
+
             $run['deliveryStatus'] = $result->deliveryStatus;
             try {
                 $this->saveObject(schema: 'DunningRun', data: $run);
@@ -994,6 +1060,8 @@ class DunningRunService
      * @param string $factuurId        Invoice FK.
      *
      * @return bool True when at least one active pause exists.
+     *
+     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-17
      */
     public function hasActivePause(string $administrationId, string $factuurId): bool
     {
@@ -1012,7 +1080,7 @@ class DunningRunService
     /**
      * Find the first matching record (or null).
      *
-     * @param string $schema  Schema slug.
+     * @param string              $schema  Schema slug.
      * @param array<string,mixed> $filters Filter map.
      *
      * @return array<string,mixed>|null
@@ -1020,14 +1088,18 @@ class DunningRunService
     private function fetchOne(string $schema, array $filters): ?array
     {
         $rows = $this->findAll(schema: $schema, filters: $filters);
-        return ($rows === []) ? null : $rows[0];
+        if ($rows === []) {
+            return null;
+        }
+
+        return $rows[0];
 
     }//end fetchOne()
 
     /**
      * Find all matching records via the canonical OR ObjectService API.
      *
-     * @param string $schema  Schema slug.
+     * @param string              $schema  Schema slug.
      * @param array<string,mixed> $filters Filter map.
      *
      * @return array<int,array<string,mixed>>
@@ -1040,7 +1112,11 @@ class DunningRunService
                 ->setRegister($this->register())
                 ->setSchema($schema)
                 ->findAll(['filters' => $filters]);
-            return is_array($rows) ? $rows : [];
+            if (is_array($rows) === true) {
+                return $rows;
+            }
+
+            return [];
         } catch (\Throwable $e) {
             $this->logger->warning('Shillinq: dunning findAll('.$schema.') failed: '.$e->getMessage());
             return [];
@@ -1051,8 +1127,8 @@ class DunningRunService
     /**
      * Persist a record via the canonical OR ObjectService API.
      *
-     * @param string $schema Schema slug.
-     * @param array<string,mixed> $data Record body.
+     * @param string              $schema Schema slug.
+     * @param array<string,mixed> $data   Record body.
      *
      * @return array<string,mixed> The saved record (with id).
      */
@@ -1080,8 +1156,11 @@ class DunningRunService
     private function register(): string
     {
         $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        return ($register === '') ? 'shillinq' : $register;
+        if ($register === '') {
+            return 'shillinq';
+        }
+
+        return $register;
 
     }//end register()
-
 }//end class

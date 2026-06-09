@@ -53,5 +53,4 @@ interface CreditScoreFetchAdapterInterface
      * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
      */
     public function fetch(string $administrationId, string $klantId, string $provider): ?array;
-
 }//end interface

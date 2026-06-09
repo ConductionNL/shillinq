@@ -50,5 +50,4 @@ interface PostNLAdapterInterface
      * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-21
      */
     public function sendRegisteredLetter(array $payload): DunningChannelSendResult;
-
 }//end interface

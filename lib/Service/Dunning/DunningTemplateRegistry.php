@@ -85,6 +85,8 @@ final class DunningTemplateRegistry
     ];
 
     /**
+     * Construct the registry with the app-config the override-lookup uses.
+     *
      * @param IAppConfig $appConfig App config for per-stage overrides.
      */
     public function __construct(private readonly IAppConfig $appConfig)
@@ -157,8 +159,8 @@ final class DunningTemplateRegistry
                 'tone'       => $this->toneForStage(stageNr: $stageNr),
             ];
         }
+
         return $rows;
 
     }//end listAll()
-
 }//end class

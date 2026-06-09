@@ -38,6 +38,8 @@ use Psr\Log\LoggerInterface;
 class LogCreditScoreFetchAdapter implements CreditScoreFetchAdapterInterface
 {
     /**
+     * Construct the log-backed credit-score fetch adapter.
+     *
      * @param LoggerInterface $logger Logger.
      */
     public function __construct(private readonly LoggerInterface $logger)
@@ -45,7 +47,15 @@ class LogCreditScoreFetchAdapter implements CreditScoreFetchAdapterInterface
     }//end __construct()
 
     /**
-     * @inheritDoc
+     * Return null (no live fetch) + log the deferred dispatch.
+     *
+     * @param string $administrationId Administration scope.
+     * @param string $klantId          Customer FK.
+     * @param string $provider         One of GRAYDON / CREDITSAFE / ATRADIUS_INSIGHTS.
+     *
+     * @return array<string,mixed>|null Always null on the log binding (caller falls back to cache).
+     *
+     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-19
      */
     public function fetch(string $administrationId, string $klantId, string $provider): ?array
     {
@@ -60,5 +70,4 @@ class LogCreditScoreFetchAdapter implements CreditScoreFetchAdapterInterface
         return null;
 
     }//end fetch()
-
 }//end class

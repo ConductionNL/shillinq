@@ -38,6 +38,8 @@ use Psr\Log\LoggerInterface;
 class LogIncassoBureauAdapter implements IncassoBureauAdapterInterface
 {
     /**
+     * Construct the log-backed incasso-bureau adapter.
+     *
      * @param LoggerInterface $logger Logger.
      */
     public function __construct(private readonly LoggerInterface $logger)
@@ -45,7 +47,15 @@ class LogIncassoBureauAdapter implements IncassoBureauAdapterInterface
     }//end __construct()
 
     /**
-     * @inheritDoc
+     * Synthesise a DELIVERED dossier transfer + log-only dispatch.
+     *
+     * @param string              $administrationId Administration scope.
+     * @param string              $factuurId        Invoice FK.
+     * @param array<string,mixed> $dossier          Composed dossier bundle.
+     *
+     * @return DunningChannelSendResult The dispatch outcome.
+     *
+     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
      */
     public function transfer(string $administrationId, string $factuurId, array $dossier): DunningChannelSendResult
     {
@@ -67,5 +77,4 @@ class LogIncassoBureauAdapter implements IncassoBureauAdapterInterface
         );
 
     }//end transfer()
-
 }//end class

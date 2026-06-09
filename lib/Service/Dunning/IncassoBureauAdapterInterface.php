@@ -53,5 +53,4 @@ interface IncassoBureauAdapterInterface
      * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
      */
     public function transfer(string $administrationId, string $factuurId, array $dossier): DunningChannelSendResult;
-
 }//end interface

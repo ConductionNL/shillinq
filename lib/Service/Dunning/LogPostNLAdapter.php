@@ -37,6 +37,8 @@ use Psr\Log\LoggerInterface;
 class LogPostNLAdapter implements PostNLAdapterInterface
 {
     /**
+     * Construct the log-backed PostNL adapter.
+     *
      * @param LoggerInterface $logger Logger.
      */
     public function __construct(private readonly LoggerInterface $logger)
@@ -44,7 +46,13 @@ class LogPostNLAdapter implements PostNLAdapterInterface
     }//end __construct()
 
     /**
-     * @inheritDoc
+     * Synthesise a DELIVERED send + log-only dispatch.
+     *
+     * @param array<string,mixed> $payload Letter payload — recipientAdres + letterPdfRef.
+     *
+     * @return DunningChannelSendResult The dispatch outcome.
+     *
+     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-21
      */
     public function sendRegisteredLetter(array $payload): DunningChannelSendResult
     {
@@ -55,8 +63,8 @@ class LogPostNLAdapter implements PostNLAdapterInterface
         $this->logger->info(
             'Shillinq PostNL registered-letter send deferred (no outbound connector bound)',
             [
-                'barcode'  => $barcode,
-                'payload'  => $sanitised,
+                'barcode' => $barcode,
+                'payload' => $sanitised,
             ]
         );
 
@@ -71,5 +79,4 @@ class LogPostNLAdapter implements PostNLAdapterInterface
         );
 
     }//end sendRegisteredLetter()
-
 }//end class

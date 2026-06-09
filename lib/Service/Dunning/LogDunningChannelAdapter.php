@@ -42,6 +42,8 @@ use Psr\Log\LoggerInterface;
 class LogDunningChannelAdapter implements DunningChannelAdapterInterface
 {
     /**
+     * Construct the log-backed channel adapter.
+     *
      * @param LoggerInterface $logger Logger.
      */
     public function __construct(private readonly LoggerInterface $logger)
@@ -49,7 +51,14 @@ class LogDunningChannelAdapter implements DunningChannelAdapterInterface
     }//end __construct()
 
     /**
-     * @inheritDoc
+     * Synthesise a DELIVERED send result + log the dispatch attempt.
+     *
+     * @param string              $kanaal  One of EMAIL / EMAIL+POSTREGISTRATIE / AANGETEKENDE_POST / INCASSOBUREAU_API.
+     * @param array<string,mixed> $payload Channel-specific payload.
+     *
+     * @return DunningChannelSendResult The (synthetic) dispatch outcome.
+     *
+     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
      */
     public function send(string $kanaal, array $payload): DunningChannelSendResult
     {
@@ -73,6 +82,7 @@ class LogDunningChannelAdapter implements DunningChannelAdapterInterface
             $extras['barcode']     = '3S'.str_pad((string) random_int(1, 9999999999999), 13, '0', STR_PAD_LEFT);
             $extras['trackingUrl'] = 'https://postnl.nl/tracktrace/'.$extras['barcode'];
         }
+
         if ($kanaal === 'INCASSOBUREAU_API') {
             $extras['dossierId'] = 'dossier-stub-'.bin2hex(random_bytes(6));
         }
@@ -85,5 +95,4 @@ class LogDunningChannelAdapter implements DunningChannelAdapterInterface
         );
 
     }//end send()
-
 }//end class

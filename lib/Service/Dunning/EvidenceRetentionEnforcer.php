@@ -88,6 +88,7 @@ final class EvidenceRetentionEnforcer
                         sprintf('Evidence URI %s missing locator after scheme.', $trimmed)
                     );
                 }
+
                 return;
             }
         }
@@ -121,12 +122,14 @@ final class EvidenceRetentionEnforcer
                 $errors[] = sprintf('evidenceRefs[%d] is not a string.', (int) $idx);
                 continue;
             }
+
             try {
                 $this->assertEvidenceUri(uri: $uri);
             } catch (InvalidArgumentException $e) {
                 $errors[] = sprintf('evidenceRefs[%d]: %s', (int) $idx, $e->getMessage());
             }
         }
+
         if ($errors !== []) {
             throw new InvalidArgumentException(implode(' | ', $errors));
         }
@@ -136,14 +139,14 @@ final class EvidenceRetentionEnforcer
     /**
      * Return the canonical retention policy envelope for a given evidence URI.
      *
-     * @param string                  $uri        The evidence URI (already validated).
-     * @param DateTimeImmutable|null  $issuedAt   The date the evidence was archived (defaults to now).
+     * @param string                 $uri      The evidence URI (already validated).
+     * @param DateTimeImmutable|null $issuedAt The date the evidence was archived (defaults to now).
      *
      * @return array{retentionYears:int,deletionDate:string,sourceUri:string}
      *
      * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-25
      */
-    public function retentionPolicy(string $uri, ?DateTimeImmutable $issuedAt = null): array
+    public function retentionPolicy(string $uri, ?DateTimeImmutable $issuedAt=null): array
     {
         $this->assertEvidenceUri(uri: $uri);
         $issuedAt = ($issuedAt ?? new DateTimeImmutable());
@@ -156,5 +159,4 @@ final class EvidenceRetentionEnforcer
         ];
 
     }//end retentionPolicy()
-
 }//end class
