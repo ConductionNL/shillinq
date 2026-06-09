@@ -8,7 +8,12 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `bookkeeping-rekenkamer-audit-pack` capability spec already exists and that no `lib/Db/Audit*` or `lib/Service/Audit*` classes are present in shillinq (per ADR-022 anti-pattern enumeration)
+- [x] Task 1: Confirm no `bookkeeping-rekenkamer-audit-pack` capability spec already exists and that no `lib/Db/Audit*` or `lib/Service/Audit*` classes are present in shillinq (per ADR-022 anti-pattern enumeration)
+  - Verified: `lib/Db/` contains only `SeedData/` (no `Audit*`, `EventLog*`, `ChangeLog*` Mappers).
+  - Verified: `lib/Service/AuditExportService.php` exists but is Slice 11 of bookkeeping-purchase-order-3way — it EXPORTS the OR audit trail as a deterministic ZIP forensic package; it does NOT store audit events. Not a violation per ADR-022.
+  - Verified: `lib/Lifecycle/AuditTrailGuard.php` + `AuditorStatementGuard.php` are ADR-031 declarative lifecycle guards that ENFORCE OR audit-trail-immutable semantics on the AuditTrail / AuditorStatement domain registers (themselves OR-backed). Not parallel audit storage.
+  - Verified: no `lib/Cron/*Audit*.php`, no `lib/BackgroundJob/*Audit*.php`, no `AuditLogger.php` / `EventLogger.php` / `ChangeTracker.php` services.
+  - Verified: no prior `bookkeeping-rekenkamer-audit-pack` capability spec under `openspec/specs/` (only the proposed change under `openspec/changes/`).
 
 - [ ] Task 2: Author `specs/bookkeeping-rekenkamer-audit-pack/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T2/T3 (compliance + operations)` / `Depends on: bookkeeping-chart-of-accounts, accounts-payable-receivable, procurement-compliance` header, `REQ-RAP-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks with GIVEN/WHEN/THEN; explicitly cite ADR-022 forbiddance of app-local audit
 
