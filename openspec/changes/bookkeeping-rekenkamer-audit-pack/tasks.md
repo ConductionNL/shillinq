@@ -49,7 +49,10 @@
   - Per REQ-RAP-007: source is OR's audit-log component (no bespoke Vue); filtering to the object UUID is handled by the `:id` path token; permission scoping is enforced by OR's audit-trails endpoint (callers see only objects they have read access to).
   - `node tests/validate-manifest.js` exits 0.
 
-- [ ] Task 12: Extend `tests/validate-manifest.js` (or add a sibling `validate-registers.js`) to assert `x-openregister-audit: true` on every register tagged as bookkeeping or procurement; CI fails if a future register PR omits the flag
+- [x] Task 12: Extend `tests/validate-manifest.js` (or add a sibling `validate-registers.js`) to assert `x-openregister-audit: true` on every register tagged as bookkeeping or procurement; CI fails if a future register PR omits the flag
+  - The sibling `tests/validate-registers.js` ALREADY existed (167 lines, shipped earlier for REQ-AT-001). It enumerates every schema in `lib/Settings/shillinq_register.json` + every `lib/Settings/register.d/*.json` fragment, asserts `x-openregister-audit-trail.enabled === true` is present, and explicitly excludes only the schemas in NON_BOOKKEEPING (currently 35 — inventory + bookings + notification-delivery + the scaffolding `example`). Procurement schemas (PurchaseOrder, Tender, Bid, AwardDecision) stay OUT of NON_BOOKKEEPING per REQ-RAP-001 and ARE asserted.
+  - Updated the file header / log strings to cite REQ-RAP-001 alongside REQ-AT-001 so the gate's audit trail surfaces both capabilities.
+  - Current corpus: 422 total schemas / 387 in scope / 199 declare the flag / 188 currently missing (tracked under Task 5 follow-up). The gate fails (exit 1) on the 188 — meaning new PRs that add bookkeeping schemas without the flag MUST raise the offender count and will be blocked by CI.
 
 - [ ] Task 13: Wire Nextcloud Activity event emission on approval/signing lifecycle transitions (ApprovalRequest::approved, ApprovalTask::completed, SigningAuthority::signed) to `IActivityManager` per REQ-RAP-008; verify Activity app receives events
 
