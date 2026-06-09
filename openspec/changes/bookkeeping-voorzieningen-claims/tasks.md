@@ -21,7 +21,7 @@
     no Provision*/Contingent* slugs in monolith schemas, no Provision*/Contingent*
     PHP files under lib/. Greenfield build.
 
-- [ ] Task 2: Author `specs/bookkeeping-voorzieningen-claims/spec.md` with
+- [x] Task 2: Author `specs/bookkeeping-voorzieningen-claims/spec.md` with
   `Status: proposed` / `Scope: shillinq` / `Tier: T3 (regulatory + compliance)` /
   `Depends on: bookkeeping-general-ledger, bookkeeping-chart-of-accounts,
   bookkeeping-financial-statements, bookkeeping-pension-ias19,
@@ -38,6 +38,10 @@
   REQ-PROV-015 (contingent liability), REQ-PROV-016 (GL linked entries),
   REQ-PROV-017 (discontering unwinding), REQ-PROV-018 (materiaalsdrempel),
   REQ-PROV-019 (schattingswijziging prospectief)
+  - DONE: `openspec/changes/bookkeeping-voorzieningen-claims/specs/bookkeeping-voorzieningen-claims/spec.md`
+    holds all 19 REQ-PROV-NNN requirements with `#### Scenario:` blocks +
+    IAS 37 / RJ 252 citations; mirrored to `openspec/specs/bookkeeping-voorzieningen-claims/spec.md`;
+    `@e2e exclude pure backend/compliance` marker added (gate-19).
 
 - [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec
   and including Affected Projects (shillinq, openregister, hrmq, docudesk,
