@@ -2783,13 +2783,41 @@
 				"register": "shillinq",
 				"schema": "BankStatement",
 				"columns": [
-					{ "key": "statementId", "label": "Statement", "sortable": true },
-					{ "key": "bankAccountIban", "label": "IBAN", "sortable": true },
-					{ "key": "periodStart", "label": "Period From", "sortable": true },
-					{ "key": "periodEnd", "label": "Period To", "sortable": true },
-					{ "key": "importFormat", "label": "Format", "sortable": true },
-					{ "key": "transactionCount", "label": "Lines", "sortable": true },
-					{ "key": "lifecycleState", "label": "Status", "sortable": true }
+					{
+						"key": "statementId",
+						"label": "Statement",
+						"sortable": true
+					},
+					{
+						"key": "bankAccountIban",
+						"label": "IBAN",
+						"sortable": true
+					},
+					{
+						"key": "periodStart",
+						"label": "Period From",
+						"sortable": true
+					},
+					{
+						"key": "periodEnd",
+						"label": "Period To",
+						"sortable": true
+					},
+					{
+						"key": "importFormat",
+						"label": "Format",
+						"sortable": true
+					},
+					{
+						"key": "transactionCount",
+						"label": "Lines",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "periodEnd",
 				"detailRoute": "BankReconciliationDetail",
@@ -2805,21 +2833,81 @@
 				"register": "shillinq",
 				"schema": "BankStatement",
 				"fields": [
-					{ "key": "statementId", "label": "Statement", "type": "string" },
-					{ "key": "bankAccountIban", "label": "Bank Account (IBAN)", "type": "string" },
-					{ "key": "periodStart", "label": "Period From", "type": "string" },
-					{ "key": "periodEnd", "label": "Period To", "type": "string" },
-					{ "key": "openingBalance", "label": "Opening Balance (EUR)", "type": "number" },
-					{ "key": "closingBalance", "label": "Closing Balance (EUR)", "type": "number" },
-					{ "key": "currency", "label": "Currency", "type": "string" },
-					{ "key": "importFormat", "label": "Import Format", "type": "string" },
-					{ "key": "importedAt", "label": "Imported At", "type": "datetime" },
-					{ "key": "importedBy", "label": "Imported By", "type": "string" },
-					{ "key": "fileChecksum", "label": "File Checksum (SHA-256)", "type": "string" },
-					{ "key": "transactionCount", "label": "Line Count", "type": "integer" },
-					{ "key": "lifecycleState", "label": "Status", "type": "string" },
-					{ "key": "sourceDocumentUri", "label": "Source Document (docudesk)", "type": "string" },
-					{ "key": "administrationId", "label": "Administration", "type": "string" }
+					{
+						"key": "statementId",
+						"label": "Statement",
+						"type": "string"
+					},
+					{
+						"key": "bankAccountIban",
+						"label": "Bank Account (IBAN)",
+						"type": "string"
+					},
+					{
+						"key": "periodStart",
+						"label": "Period From",
+						"type": "string"
+					},
+					{
+						"key": "periodEnd",
+						"label": "Period To",
+						"type": "string"
+					},
+					{
+						"key": "openingBalance",
+						"label": "Opening Balance (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "closingBalance",
+						"label": "Closing Balance (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "importFormat",
+						"label": "Import Format",
+						"type": "string"
+					},
+					{
+						"key": "importedAt",
+						"label": "Imported At",
+						"type": "datetime"
+					},
+					{
+						"key": "importedBy",
+						"label": "Imported By",
+						"type": "string"
+					},
+					{
+						"key": "fileChecksum",
+						"label": "File Checksum (SHA-256)",
+						"type": "string"
+					},
+					{
+						"key": "transactionCount",
+						"label": "Line Count",
+						"type": "integer"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "sourceDocumentUri",
+						"label": "Source Document (docudesk)",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
 				],
 				"lifecycleActions": true,
 				"actions": [
@@ -2833,7 +2921,12 @@
 						"id": "open-reconciliation",
 						"label": "Open for reconciliation",
 						"icon": "PlayCircleOutline",
-						"visibleWhen": { "field": "lifecycleState", "in": ["imported"] },
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": [
+								"imported"
+							]
+						},
 						"type": "lifecycle-transition",
 						"transition": "open-reconciliation",
 						"description": "Move statement to in-progress; allow operator matching."
@@ -2842,7 +2935,12 @@
 						"id": "complete-reconciliation",
 						"label": "Confirm reconciliation",
 						"icon": "CheckCircleOutline",
-						"visibleWhen": { "field": "lifecycleState", "in": ["in-progress"] },
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": [
+								"in-progress"
+							]
+						},
 						"type": "lifecycle-transition",
 						"transition": "complete-reconciliation",
 						"description": "All lines must be matched or routed-to-suspense (REQ-BR-008)."
@@ -2851,7 +2949,12 @@
 						"id": "audit-lock",
 						"label": "Audit lock",
 						"icon": "Lock",
-						"visibleWhen": { "field": "lifecycleState", "in": ["reconciled"] },
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"in": [
+								"reconciled"
+							]
+						},
 						"type": "lifecycle-transition",
 						"transition": "audit-lock",
 						"description": "Auditor signs off; irreversible (REQ-BR-008)."
@@ -2875,12 +2978,30 @@
 										"filterField": "statementId",
 										"filterValue": ":id",
 										"columns": [
-											{ "key": "lineNumber", "label": "#" },
-											{ "key": "valueDate", "label": "Value Date" },
-											{ "key": "counterpartyName", "label": "Counterparty" },
-											{ "key": "amount", "label": "Amount (EUR)" },
-											{ "key": "remittanceInfo", "label": "Reference" },
-											{ "key": "status", "label": "Match" }
+											{
+												"key": "lineNumber",
+												"label": "#"
+											},
+											{
+												"key": "valueDate",
+												"label": "Value Date"
+											},
+											{
+												"key": "counterpartyName",
+												"label": "Counterparty"
+											},
+											{
+												"key": "amount",
+												"label": "Amount (EUR)"
+											},
+											{
+												"key": "remittanceInfo",
+												"label": "Reference"
+											},
+											{
+												"key": "status",
+												"label": "Match"
+											}
 										]
 									}
 								}
@@ -2898,8 +3019,28 @@
 									"props": {
 										"register": "shillinq",
 										"schema": "ReconciliationMatch",
-										"filter": { "status": "pending" },
+										"filter": {
+											"status": "pending"
+										},
 										"description": "Unconfirmed candidate matches for lines in this statement (REQ-BR-010). One-click confirm or reject."
+									}
+								}
+							]
+						},
+						{
+							"id": "documents",
+							"label": "Source Document",
+							"icon": "FileDocumentOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "docudesk-attachment-viewer",
+									"props": {
+										"uriField": "sourceDocumentUri",
+										"appField": "sourceDocumentApp",
+										"role": "statement",
+										"fallbackMessage": "Source document unreachable — docudesk may be unavailable; retry later."
 									}
 								}
 							]
@@ -2933,12 +3074,36 @@
 				"register": "shillinq",
 				"schema": "MatchingRule",
 				"columns": [
-					{ "key": "name", "label": "Name", "sortable": true },
-					{ "key": "priority", "label": "Priority", "sortable": true },
-					{ "key": "targetType", "label": "Target", "sortable": true },
-					{ "key": "autoConfirm", "label": "Auto-confirm", "sortable": true },
-					{ "key": "isActive", "label": "Active", "sortable": true },
-					{ "key": "lifecycleState", "label": "Status", "sortable": true }
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "priority",
+						"label": "Priority",
+						"sortable": true
+					},
+					{
+						"key": "targetType",
+						"label": "Target",
+						"sortable": true
+					},
+					{
+						"key": "autoConfirm",
+						"label": "Auto-confirm",
+						"sortable": true
+					},
+					{
+						"key": "isActive",
+						"label": "Active",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
 				],
 				"defaultSort": "priority",
 				"detailRoute": "MatchingRuleDetail",
@@ -2954,16 +3119,56 @@
 				"register": "shillinq",
 				"schema": "MatchingRule",
 				"fields": [
-					{ "key": "ruleId", "label": "Rule ID", "type": "string" },
-					{ "key": "name", "label": "Name", "type": "string" },
-					{ "key": "priority", "label": "Priority", "type": "integer" },
-					{ "key": "targetType", "label": "Target Type", "type": "string" },
-					{ "key": "autoConfirm", "label": "Auto-confirm matches", "type": "boolean" },
-					{ "key": "confidenceScore", "label": "Confidence Score", "type": "number" },
-					{ "key": "isActive", "label": "Active", "type": "boolean" },
-					{ "key": "lifecycleState", "label": "Status", "type": "string" },
-					{ "key": "predicates", "label": "Predicates", "type": "array" },
-					{ "key": "administrationId", "label": "Administration", "type": "string" }
+					{
+						"key": "ruleId",
+						"label": "Rule ID",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "priority",
+						"label": "Priority",
+						"type": "integer"
+					},
+					{
+						"key": "targetType",
+						"label": "Target Type",
+						"type": "string"
+					},
+					{
+						"key": "autoConfirm",
+						"label": "Auto-confirm matches",
+						"type": "boolean"
+					},
+					{
+						"key": "confidenceScore",
+						"label": "Confidence Score",
+						"type": "number"
+					},
+					{
+						"key": "isActive",
+						"label": "Active",
+						"type": "boolean"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "predicates",
+						"label": "Predicates",
+						"type": "array"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
 				],
 				"lifecycleActions": true,
 				"indexRoute": "MatchingRules",
@@ -3711,6 +3916,24 @@
 				"indexRoute": "Journals",
 				"sidebarProps": {
 					"tabs": [
+						{
+							"id": "documents",
+							"label": "Source Document",
+							"icon": "FileDocumentOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "docudesk-attachment-viewer",
+									"props": {
+										"uriField": "sourceDocumentUri",
+										"appField": "sourceDocumentApp",
+										"role": "receipt",
+										"fallbackMessage": "Source document unreachable — docudesk may be unavailable; retry later."
+									}
+								}
+							]
+						},
 						{
 							"id": "audit",
 							"label": "Audit Trail",
@@ -6251,6 +6474,24 @@
 				"sidebarProps": {
 					"tabs": [
 						{
+							"id": "documents",
+							"label": "Source Document",
+							"icon": "FileDocumentOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "docudesk-attachment-viewer",
+									"props": {
+										"uriField": "sourceDocumentUri",
+										"appField": "sourceDocumentApp",
+										"role": "invoice",
+										"fallbackMessage": "Source document unreachable — docudesk may be unavailable; retry later."
+									}
+								}
+							]
+						},
+						{
 							"id": "audit",
 							"label": "Audit Trail",
 							"icon": "HistoryIcon",
@@ -6718,6 +6959,24 @@
 											"label": "Acknowledged"
 										}
 									]
+								}
+							]
+						},
+						{
+							"id": "documents",
+							"label": "Source Document",
+							"icon": "FileDocumentOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "docudesk-attachment-viewer",
+									"props": {
+										"uriField": "sourceDocumentUri",
+										"appField": "sourceDocumentApp",
+										"role": "invoice",
+										"fallbackMessage": "Source document unreachable — docudesk may be unavailable; retry later."
+									}
 								}
 							]
 						},
@@ -13553,7 +13812,9 @@
 						"icon": "ShieldCheckOutline",
 						"visibleWhen": {
 							"field": "status",
-							"in": ["generated"]
+							"in": [
+								"generated"
+							]
 						},
 						"type": "lifecycle-transition",
 						"transition": "validate",
@@ -13565,7 +13826,9 @@
 						"icon": "CloudUploadOutline",
 						"visibleWhen": {
 							"field": "status",
-							"in": ["validated"]
+							"in": [
+								"validated"
+							]
 						},
 						"type": "lifecycle-transition",
 						"transition": "submit",
@@ -13577,7 +13840,12 @@
 						"icon": "DownloadOutline",
 						"visibleWhen": {
 							"field": "status",
-							"in": ["generated", "validated", "submitted", "archived"]
+							"in": [
+								"generated",
+								"validated",
+								"submitted",
+								"archived"
+							]
 						},
 						"type": "download",
 						"sourceField": "fileUri"
