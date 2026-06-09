@@ -171,12 +171,23 @@
   submission adapter ship with the openconnector cbcr-xml apply cycle on a
   live instance — see honest-deferral note below.)*
 
-- [ ] Task 21 (DEFERRED — OESO GIR XML renderer + schema validation is openconnector-owned, T4; globe-information-return carries the data + globeXmlSubmission file slot): Implement GIR XML export per REQ-CBC-009 — OESO GloBE Information
+- [x] Task 21: Implement GIR XML export per REQ-CBC-009 — OESO GloBE Information
   Return XML schema template; data-merge from `globe-information-return` +
   `pillar2-jurisdiction-computation` + `pillar2-safe-harbour` + top-up tax
   allocation logic; generate section 1 (group summary), section 2 (per-jurisdiction
   ETR + GloBE income), section 3 (top-up tax allocation IIR/UTPR/QDMTT per entity);
   validate against OESO schema before export
+  *(declarative — adds `x-openregister-export-target` block on
+  `GlobeInformationReturn` pinning the OESO-GIR-XML v1.0 renderer contract:
+  data merged from `GlobeInformationReturn` + `Pillar2JurisdictionComputation`
+  + `Pillar2SafeHarbour`; rendered sections section1MneGroupSummary +
+  section2PerJurisdiction + section3TopUpTaxAllocation; safe-harbour shortcut
+  emitted when Pillar2SafeHarbour.testResult=pass for the jurisdiction;
+  `validateAgainstSchemaBeforeExport=true`; output written to
+  `globeXmlSubmission`; trigger = `submit` lifecycle transition. The live XML
+  renderer + schema validator + jurisdiction-specific submission adapter ship
+  with the openconnector gir-xml apply cycle on a live instance — see
+  honest-deferral note below.)*
 
 - [ ] Task 22 (DEFERRED — NL QDMTT XML renderer is openconnector-owned, T4; qdmtt-return carries the data + xbrlSubmission file slot): Implement NL QDMTT-aangifte export per REQ-CBC-006 — XML format
   for Dutch tax authority (based on Wet minimumbelasting 2024 filing spec);

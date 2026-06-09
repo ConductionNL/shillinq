@@ -389,7 +389,7 @@
           "mneGroupSummary": {"type": "object", "description": "Group-level summary (section 1 of the GIR)."},
           "jurisdictionalComputations": {"type": "array", "description": "FKs to Pillar2JurisdictionComputation records (section 2).", "items": {"type": "string"}},
           "topUpTaxAllocation": {"type": "object", "description": "IIR/UTPR/QDMTT distribution per entity (section 3) (REQ-CBC-009)."},
-          "globeXmlSubmission": {"type": "string", "description": "FK to the generated GIR XML file (openconnector-owned export, T4 DEFERRED)."},
+          "globeXmlSubmission": {"type": "string", "description": "FK to the generated GIR XML file (openconnector-owned export, T4 DEFERRED — see x-openregister-export-target on this schema for the renderer contract)."},
           "submissionDeadline": {"type": "string", "format": "date", "description": "Filing deadline (15 months after FYE; 18 months for the first year)."},
           "state": {"type": "string", "enum": ["draft", "approved", "submitted", "locked"], "default": "draft", "description": "Lifecycle state."}
         },
@@ -408,6 +408,29 @@
             "lock": {"from": "submitted", "to": "locked", "label": "Lock", "description": "Freeze post-filing."},
             "reopen": {"from": "approved", "to": "draft", "label": "Return to draft", "description": "Reopen for correction."}
           }
+        },
+        "x-openregister-export-target": {
+          "description": "OESO GloBE Information Return (GIR) XML export contract (REQ-CBC-009). Declarative contract for the openconnector-owned XML renderer that generates the OESO GIR XML on lifecycle transition `submit` (approved → submitted). Data is merged from `globe-information-return` + `pillar2-jurisdiction-computation` + `pillar2-safe-harbour` records; the rendered XML is stored to `globeXmlSubmission` (FileService FK); the renderer validates against the OESO GIR XML schema before export.",
+          "format": "OESO-GIR-XML",
+          "schemaVersion": "v1.0",
+          "schemaUrl": "https://www.oecd.org/tax/beps/globe-information-return-xml-schema/",
+          "dataSources": [
+            {"schema": "GlobeInformationReturn", "filter": "id = @self.id"},
+            {"schema": "Pillar2JurisdictionComputation", "filter": "id IN @self.jurisdictionalComputations"},
+            {"schema": "Pillar2SafeHarbour", "filter": "period = @self.period"}
+          ],
+          "renderSections": {
+            "section1MneGroupSummary": "Group identification + ultimate parent + perimeter + filing constituent (from @self.ultimateParent + @self.mneGroupSummary).",
+            "section2PerJurisdiction": "Per-jurisdiction ETR + GloBE income + SBIE + top-up tax for each Pillar2JurisdictionComputation record (REQ-CBC-004/005); safe-harbour shortcut emitted when Pillar2SafeHarbour.testResult=pass for the jurisdiction (REQ-CBC-007).",
+            "section3TopUpTaxAllocation": "IIR + UTPR + QDMTT distribution per entity (REQ-CBC-006/009) sourced from @self.topUpTaxAllocation."
+          },
+          "validateAgainstSchemaBeforeExport": true,
+          "outputField": "globeXmlSubmission",
+          "submissionDeadlineSource": "submissionDeadline",
+          "triggerTransition": "submit",
+          "owner": "openconnector",
+          "tier": "T4",
+          "status": "DEFERRED — declarative contract only; live OESO-GIR-XML renderer + schema validator + jurisdiction-specific submission adapter ship with the openconnector gir-xml apply cycle on a live instance."
         }
       },
       "CbcrReturn": {
