@@ -93,9 +93,15 @@
     (TreasuryAccount, BankingRule, ComplianceReport). The description on
     TreasuryAccount calls out compliance-rule-evaluation results on active/monitored
     transitions and blocking reasons on suspend transitions per REQ-SCHATKIST-008.
-- [ ] Task 13: Add 3 manifest navigation entries (`Treasury Accounts`, `Banking Rules`,
+- [x] Task 13: Add 3 manifest navigation entries (`Treasury Accounts`, `Banking Rules`,
   `Compliance Reports`) + their `type: index` / `type: detail` / `type: report` pages to
   `src/manifest.json` per REQ-SCHATKIST-009; `node tests/validate-manifest.js` exits 0
+  - Added via ADR-037 fragment `src/manifest.d/bookkeeping-schatkistbankieren.json`:
+    Governance menu group with three children (Treasury Accounts, Banking Rules,
+    Compliance Reports) routing to their respective index pages plus matching
+    `type: detail` pages. Manifest version bumped 1.3.12 → 1.3.13 + info.xml 0.7.4
+    → 0.7.5 for the NC `Cache-Control: immutable` cache-bust. `node tests/validate-manifest.js`
+    exits 0 (structural lint + consistency PASS).
 - [x] Task 14: Define and load three seed `BankingRule` records (rule-iban-format,
   rule-segregation, rule-approval-required) via `lib/Settings/shillinq_register.json`
   `components.objects[]` per REQ-SCHATKIST-010 and `ConfigurationService::importFromApp()`
