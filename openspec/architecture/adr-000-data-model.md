@@ -3593,6 +3593,34 @@ _Formal partnership or joint venture between multiple corporations with shared p
 _A balanced transaction record affecting two or more GL accounts (debits equal credits)._
 **Primary spec:** financial-reporting-accountability
 
+> **Journal-entries T1 capability (add-shillinq-journal-entries, 2026-06-09).** The
+> Tier-1 `bookkeeping-journal-entries` capability binds the human-author surface
+> of the bookkeeping foundation to the `JournalEntry` schema declared in
+> `lib/Settings/register.d/add-shillinq-bookkeeping-foundation.json` (fragment file;
+> not the monolithic `shillinq_register.json`). The Tier-1 shape supersets this
+> legacy ADR-000 entry: `entryNumber` → `journalNumber`, the flat
+> `debitAmount`/`creditAmount`/`accountCode` is replaced by a `lines[]` array of
+> `{accountNumber, side, amount, description}` (each row materialises into a
+> `GLLine` on post, REQ-JE-007), the stored `isBalanced` boolean is replaced by
+> the ADR-031 declarative balance derivation on the materialised `GLTransaction`,
+> and `vatAmount` is deferred to Tier 5 (per `add-shillinq-journal-entries` Out
+> of Scope; the Tier-1 schema does not carry a `vatAmount` field). A
+> `journalType` closed enum (`manual` / `recurring` / `reversing`), `cadence`
+> object, `reversesOn` periodId, and `approvalState` enum are added. ADR-022 is
+> cited inline (consume OR's approval-workflow + audit-trail-immutable + docudesk
+> FK abstractions; no app-local approval table, no embedded source-document
+> blob); ADR-031 is cited inline (declarative `x-openregister-lifecycle`
+> `draft → pending → posted → voided` state machine + declarative balance
+> derivation + OR `ScheduledWorkflow` primitive for recurring/reversing
+> materialisation; no `RecurringJournalService` PHP class). The sibling
+> implementation cycle did ship `OCA\Shillinq\Lifecycle\JournalEntryGuard::canPost`
+> wired into the `post`/`postDirect`/`void` transitions' `requires` field as a
+> constrained ADR-031 deviation (delegates the policy decision rather than
+> reimplementing approval state). New lifecycle gates SHOULD wire
+> `requires: {approval-workflow: {policy: "@self.amountPolicy"}}` declaratively
+> once OR's approval-workflow extension exposes amount-threshold policy binding
+> (proposal Risk 1).
+
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
 | entryDate | datetime | Yes | Date of the journal entry |
