@@ -50,7 +50,7 @@
 
 - [ ] Task 13: Implement alert-trigger batch per REQ-URC-003 — fires quarterly (31 Mar, 30 Jun, 30 Sep, 31 Dec) + on drempelStatus omslag (OP_KOERS → RISICO, RISICO → KRITIEK); generates `UrenAlert` with 3+ handelingsperspectief (acquisitie-hours, vakantie-revisie, fiscaal-verlies EUR context)
 
-- [ ] Task 14: Implement norm-determination logic per REQ-URC-000 on tracker init — query entrepreneur profiel (rechtsvorm, AO-status from `hrmq`, parallel loondienst, meewerkende-partner-status), auto-set doelNorm (1.225 default / 800 AO / 525 meewerkaftrek), grotendeelsCriterium applicability, normGrondslag; no manual entry required
+- [x] Task 14: Implement norm-determination logic per REQ-URC-000 on tracker init — query entrepreneur profiel (rechtsvorm, AO-status from `hrmq`, parallel loondienst, meewerkende-partner-status), auto-set doelNorm (1.225 default / 800 AO / 525 meewerkaftrek), grotendeelsCriterium applicability, normGrondslag; no manual entry required
 
 - [ ] Task 15: Implement grotendeels-criterium check per REQ-URC-007 — daily batch calculates (loondienst-uren + onderneming-uren); if loondienst > 50% total, flags NIET_GROTENDEELS_ONDERNEMING and blocks zelfstandigenaftrek; stored on `UrencriteriumYear`
 
