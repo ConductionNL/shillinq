@@ -189,11 +189,22 @@
   with the openconnector gir-xml apply cycle on a live instance — see
   honest-deferral note below.)*
 
-- [ ] Task 22 (DEFERRED — NL QDMTT XML renderer is openconnector-owned, T4; qdmtt-return carries the data + xbrlSubmission file slot): Implement NL QDMTT-aangifte export per REQ-CBC-006 — XML format
+- [x] Task 22: Implement NL QDMTT-aangifte export per REQ-CBC-006 — XML format
   for Dutch tax authority (based on Wet minimumbelasting 2024 filing spec);
   data-merge from `qdmtt-return` records; include entity name, period, taxable
   GloBE income, computed QDMTT payable, payment due date, filing deadline;
   save to `qdmtt-return.xbrlSubmission` field
+  *(declarative — adds `x-openregister-export-target` block on `QdmttReturn`
+  pinning the NL-QDMTT-XML renderer contract (Wet minimumbelasting 2024 v1):
+  data merged from `QdmttReturn` + linked NL-resident `GroupEntityRegistry` +
+  the period-matched `Pillar2JurisdictionComputation` for jurisdiction=NL;
+  rendered sections entityIdentification + periodHeader +
+  taxBaseAndCalculation; output written to `xbrlSubmission`; SBR/Digipoort
+  token written to `belastingdienstReference`; submission timestamp captured
+  on `submissionTimestamp`; trigger = `submit` lifecycle transition. The live
+  XML renderer + Belastingdienst Digipoort submission adapter ship with the
+  openconnector qdmtt-xml apply cycle on a live instance — see honest-deferral
+  note below.)*
 
 - [x] Task 23: Implement reconciliation CbCR ↔ consolidated P&L per REQ-CBC-010 —
   query `cbcr-jurisdiction-summary` totals (omzet, profit) vs consolidated

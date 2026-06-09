@@ -352,9 +352,35 @@
           "paymentDueDate": {"type": "string", "format": "date", "description": "Payment due date."},
           "filingDueDate": {"type": "string", "format": "date", "description": "Filing due date."},
           "belastingdienstReference": {"type": "string", "description": "Belastingdienst submission reference (placeholder until SBR submission, T4)."},
-          "xbrlSubmission": {"type": "string", "description": "FK to the generated XBRL submission file (openconnector-owned export, T4 DEFERRED)."},
+          "xbrlSubmission": {"type": "string", "description": "FK to the generated XBRL submission file (openconnector-owned export, T4 DEFERRED — see x-openregister-export-target on this schema for the renderer contract)."},
           "state": {"type": "string", "enum": ["draft", "submitted", "accepted", "rejected"], "default": "draft", "description": "Submission status."},
           "submissionTimestamp": {"type": "string", "format": "date-time", "description": "Timestamp of submission."}
+        },
+        "x-openregister-export-target": {
+          "description": "NL QDMTT-aangifte XML export contract (REQ-CBC-006). Declarative contract for the openconnector-owned XML renderer that generates the Dutch Qualified Domestic Minimum Top-up Tax filing on lifecycle transition `submit` (draft → submitted). Format follows the Belastingdienst Wet minimumbelasting 2024 filing spec; data is merged from this `qdmtt-return` record + the linked NL-resident `group-entity-registry` record + the per-jurisdiction `pillar2-jurisdiction-computation` for jurisdiction=NL. The rendered XML is stored to `xbrlSubmission` (FileService FK); the Belastingdienst SBR/Digipoort token is stored to `belastingdienstReference`.",
+          "format": "NL-QDMTT-XML",
+          "schemaVersion": "Wet minimumbelasting 2024 v1",
+          "schemaUrl": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/brochures_en_publicaties/wet-minimumbelasting-2024",
+          "dataSources": [
+            {"schema": "QdmttReturn", "filter": "id = @self.id"},
+            {"schema": "GroupEntityRegistry", "filter": "id = @self.entity"},
+            {"schema": "Pillar2JurisdictionComputation", "filter": "period = @self.period AND jurisdiction = 'NL'"}
+          ],
+          "renderSections": {
+            "entityIdentification": "NL-resident GroupEntityRegistry name + legalForm + LEI + vatNumber.",
+            "periodHeader": "Fiscal year (@self.period) + paymentDueDate + filingDueDate.",
+            "taxBaseAndCalculation": "taxableGlobeIncome (post-SBIE) + qualifyingDomesticEtr + qdmttPayable from @self + cross-check against the per-jurisdiction Pillar2JurisdictionComputation NL record."
+          },
+          "outputField": "xbrlSubmission",
+          "submissionChannel": "SBR-Digipoort",
+          "submissionReferenceField": "belastingdienstReference",
+          "submissionTimestampField": "submissionTimestamp",
+          "filingDueDateField": "filingDueDate",
+          "paymentDueDateField": "paymentDueDate",
+          "triggerTransition": "submit",
+          "owner": "openconnector",
+          "tier": "T4",
+          "status": "DEFERRED — declarative contract only; live NL-QDMTT-XML renderer + Belastingdienst Digipoort submission adapter ship with the openconnector qdmtt-xml apply cycle on a live instance."
         },
         "x-openregister-lifecycle": {
           "field": "state",
