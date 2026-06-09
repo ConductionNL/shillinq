@@ -63,12 +63,7 @@
 
 ## 8. Reassessment event handling
 
-- [ ] Task 8.1 [DEFERRED — Phase 2]: Author `lib/Services/LeaseReassessmentService.php` with methods:
-  - `recordIndexationEvent(LeaseContractId, $newPaymentAmount)` — event-type=indexation-remeasurement
-  - `recordExtensionOptionReassessment(LeaseContractId, $updatedExtensionOptions)` — event-type=extension-option-reassessment
-  - `recordModification(LeaseContractId, $newTerms)` — event-type=scope/term/payment-modification; applies IFRS 16.44 decision tree (separate-lease vs. modification)
-  - `recordImpairment(LeaseContractId, $recoverableValue)` — event-type=impairment
-  - For each event: capture before/after snapshots, compute GL posting (liability/asset adjustment), route through approval (decidesk if > EUR 100K threshold)
+- [x] Task 8.1: Authored `lib/Service/LeaseReassessmentService.php` with the four entry points (`recordIndexationEvent`, `recordExtensionOptionReassessment`, `recordModification`, `recordImpairment`). Each fetches the LeaseContract administration-scoped (ADR-005), builds before/after snapshots, computes the liability / RoU delta via the pure-logic `LeaseAmortizationCalculator`, persists an immutable `LeaseReassessmentEvent` via the real OR `saveObject` (stamped with the `sourceLease` FK for ADR-022 audit), and returns the event payload with balanced GL lines plus a `pending-approval` / `approved` status keyed off the EUR 100K decidesk threshold (REQ-LR-007). Modification flow resolves the event-type (payment/term/scope/IBR-reset) from the field-delta. [Webhook DELIVERY to decidesk remains deferred with 8.2.]
 
 - [ ] Task 8.2 [DEFERRED — Phase 2, cross-app dependency on decidesk]: Implement decidesk webhook integration — when a reassessment-event is created with rou-asset-adjustment > EUR 100,000, fire a webhook to decidesk (URL configured in shillinq settings); link back via FK; block GL posting until decidesk approves. The `LeaseReassessmentEvent` schema already carries the approver / approval-date / GL FK fields this will populate.
 
