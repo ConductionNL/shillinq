@@ -2677,4 +2677,151 @@ class SettingsService
         ];
 
     }//end seedStatementManifests()
+
+    /**
+     * Seed the WMO (Wet Markt en Overheid) example records, idempotently per administration.
+     *
+     * Reads the four JSON files under `lib/Settings/seeds/commercial-activities/`:
+     *
+     *   - sportaccommodaties-gemeente.json      → CommercialActivity records (state=paused)
+     *   - waterschap-slibruimte.json            → CommercialActivity records (state=paused)
+     *   - abb-example-gemeente.json             → AlgemeenBelangBesluit records (status=concept)
+     *   - integral-cost-price-example-q1-2026.json → IntegralCostPrice records (status=voorlopig)
+     *
+     * Each record is stamped with the configured administrationId and deduped on its
+     * natural key (`code` for activities, `kenmerk` for ABBs, `(commercialActivityId,periode)`
+     * for IKPs) so re-runs preserve operator edits per REQ-WMO-001 / REQ-WMO-002 /
+     * REQ-WMO-005. All seeded records ship in paused / concept / voorlopig lifecycle
+     * states; operators promote them through the workflow when adopting the seed.
+     *
+     * Skipped when administrationId is empty (C2 — prevents "default" contamination
+     * of real tenant data).
+     *
+     * @param string $administrationId The administrationId to stamp on seeded records.
+     *
+     * @return array<string,mixed> Result with success flag and per-schema counts.
+     *
+     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-17
+     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-18
+     */
+    public function seedWmoCommercialActivities(string $administrationId): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        if ($administrationId === '') {
+            return [
+                'success' => false,
+                'message' => 'administrationId must not be empty.',
+            ];
+        }
+
+        $seedDir = __DIR__.'/../Settings/seeds/commercial-activities';
+        if (is_dir($seedDir) === false) {
+            return [
+                'success' => false,
+                'message' => 'WMO seed directory not found: '.$seedDir,
+            ];
+        }
+
+        $totalSeeded  = 0;
+        $totalSkipped = 0;
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+
+            $files = [
+                'sportaccommodaties-gemeente.json'      => ['CommercialActivity', 'activities', 'code'],
+                'waterschap-slibruimte.json'            => ['CommercialActivity', 'activities', 'code'],
+                'abb-example-gemeente.json'             => ['AlgemeenBelangBesluit', 'besluiten', 'kenmerk'],
+                'integral-cost-price-example-q1-2026.json' => ['IntegralCostPrice', 'ikp', '__ikpKey'],
+            ];
+
+            foreach ($files as $filename => [$schema, $arrayKey, $dedupeKey]) {
+                $seedPath = $seedDir.'/'.$filename;
+                if (file_exists($seedPath) === false) {
+                    continue;
+                }
+
+                $content = file_get_contents($seedPath);
+                if ($content === false) {
+                    continue;
+                }
+
+                $data = json_decode($content, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    $this->logger->warning(
+                        'Shillinq: failed to parse WMO seed file: '.$filename,
+                        ['error' => json_last_error_msg()]
+                    );
+                    continue;
+                }
+
+                $records = ($data[$arrayKey] ?? []);
+                foreach ($records as $record) {
+                    // Drop _meta-only keys that aren't schema properties.
+                    unset($record['_meta']);
+                    $record['administrationId'] = $administrationId;
+
+                    // Build the dedupe filter per schema.
+                    $filter = ['administrationId' => $administrationId];
+                    if ($dedupeKey === '__ikpKey') {
+                        $filter['commercialActivityId'] = ($record['commercialActivityId'] ?? '');
+                        $filter['periode']              = ($record['periode'] ?? '');
+                    } else if ($dedupeKey !== '' && isset($record[$dedupeKey]) === true) {
+                        $filter[$dedupeKey] = $record[$dedupeKey];
+                    }
+
+                    $existing = $objectService
+                        ->setRegister($registerSlug)
+                        ->setSchema($schema)
+                        ->findAll(
+                            [
+                                'filters' => $filter,
+                                'limit'   => 1,
+                            ]
+                        );
+
+                    if (empty($existing) === false) {
+                        $totalSkipped++;
+                        continue;
+                    }
+
+                    $objectService->saveObject(
+                        object: $record,
+                        register: $registerSlug,
+                        schema: $schema,
+                    );
+                    $totalSeeded++;
+                }//end foreach
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: WMO commercial activities seeded',
+                ['seeded' => $totalSeeded, 'skipped' => $totalSkipped]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'WMO commercial activities seeded.',
+                'seeded'  => $totalSeeded,
+                'skipped' => $totalSkipped,
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Shillinq: WMO seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }//end try
+
+    }//end seedWmoCommercialActivities()
 }//end class

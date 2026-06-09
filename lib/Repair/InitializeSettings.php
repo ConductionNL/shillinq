@@ -179,6 +179,7 @@ class InitializeSettings implements IRepairStep
             $this->seedMandaatTemplates(output: $output);
             $this->seedRetentionPolicies(output: $output);
             $this->seedStatementManifests(output: $output);
+            $this->seedWmoCommercialActivities(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -1477,4 +1478,48 @@ class InitializeSettings implements IRepairStep
         }
 
     }//end seedStatementManifests()
+
+    /**
+     * Seed WMO (Wet Markt en Overheid) example commercial activities,
+     * ABBs and IKP records idempotently per administration (REQ-WMO-001 /
+     * REQ-WMO-002 / REQ-WMO-005).
+     *
+     * Calls SettingsService::seedWmoCommercialActivities() which iterates
+     * the four seed files under `lib/Settings/seeds/commercial-activities/`
+     * and dedupes on natural keys (code / kenmerk / (activity, periode))
+     * stamped with the configured administrationId. Records ship in paused /
+     * concept / voorlopig lifecycle states so the seed never contaminates
+     * live reporting. Skipped when administration_id is not configured (C2).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-17
+     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-18
+     */
+    private function seedWmoCommercialActivities(IOutput $output): void
+    {
+        $settings         = $this->settingsService->getSettings();
+        $administrationId = ($settings['administration_id'] ?? '');
+
+        if ($administrationId === '') {
+            $output->info('Shillinq: WMO commercial activity seed skipped (no default administration configured)');
+            return;
+        }
+
+        $output->info('Seeding WMO commercial activities, ABBs and IKP records...');
+        $result = $this->settingsService->seedWmoCommercialActivities(administrationId: $administrationId);
+
+        if (($result['success'] ?? false) === true) {
+            $output->info(
+                'WMO commercial activities seeded: '
+                .($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
+            );
+            return;
+        }
+
+        $output->warning('WMO seeding issue: '.($result['message'] ?? 'unknown error'));
+
+    }//end seedWmoCommercialActivities()
 }//end class
