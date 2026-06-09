@@ -102,6 +102,163 @@ class DunningRunService
     }//end __construct()
 
     /**
+     * Pick the highest ladder stage applicable to an invoice now.
+     *
+     * Given the resolved stages (base or override) and the number of days the
+     * invoice has been overdue, walk the stages by ascending `dagenNaVervalDatum`
+     * and return the last stage whose threshold has been reached. Returns null
+     * when no stage applies yet (invoice is still within terms).
+     *
+     * @param array<int,array<string,mixed>> $stages       Resolved stages.
+     * @param int                            $dagenVerzuim Days the invoice has been overdue (>= 0).
+     *
+     * @return array<string,mixed>|null The applicable stage definition or null.
+     *
+     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-12
+     */
+    public function stageForOverdueDays(array $stages, int $dagenVerzuim): ?array
+    {
+        if ($dagenVerzuim < 0) {
+            return null;
+        }
+
+        $sorted = $stages;
+        usort(
+            $sorted,
+            static function (array $a, array $b): int {
+                return (int) ($a['dagenNaVervalDatum'] ?? 0) <=> (int) ($b['dagenNaVervalDatum'] ?? 0);
+            }
+        );
+
+        $picked = null;
+        foreach ($sorted as $stage) {
+            $threshold = (int) ($stage['dagenNaVervalDatum'] ?? 0);
+            if ($dagenVerzuim >= $threshold) {
+                $picked = $stage;
+                continue;
+            }
+            break;
+        }
+        return $picked;
+
+    }//end stageForOverdueDays()
+
+    /**
+     * REQ-CCD-005 / task-12: tick the dunning ladder for one `Invoice` record.
+     *
+     * Walks the cross-app AR `Invoice` (from `bookkeeping-quote-order-invoice`)
+     * lifecycle from this side:
+     *
+     *   1. Skip when the invoice is not yet overdue (`today < dueDate`).
+     *   2. Skip when an active `DunningPauseDispute` exists for the invoice
+     *      (REQ-CCD-004 / pause halts ladder ticking).
+     *   3. Skip when the previous stage already fired today (idempotent — the
+     *      `DunningRun` table is the truth of stage progression and we never
+     *      re-execute the same stage twice).
+     *   4. Otherwise emit a `DunningRun` for the applicable stage via
+     *      `executeStage()` and return the materialised run.
+     *
+     * The actual AR-invoice state machine (`issued → overdue → dunning_stage_N`)
+     * is still owned by `bookkeeping-accounts-receivable-core`'s
+     * scheduled-workflow; this method is the shillinq-side observer that the
+     * AR scheduled-workflow calls with each tick (or that an integration test
+     * drives directly). It does not flip the invoice `status` field — that
+     * is the AR core's responsibility; it returns the picked stage so the
+     * caller can mirror the transition upstream.
+     *
+     * @param string             $administrationId Administration scope.
+     * @param array<string,mixed> $invoice          The `Invoice` record (from `bookkeeping-quote-order-invoice`).
+     * @param string             $baseLadderId     The base DunningLadder slug to resolve from.
+     * @param array<string,mixed> $params           Optional dispatch overrides — kanaal, templateId,
+     *                                              ontvangerEmail, ontvangerNaam, renderedSubject, renderedBody.
+     * @param DateTimeImmutable|null $now          Inject "now" for deterministic tests; defaults to wall-clock.
+     *
+     * @return array<string,mixed>|null The materialised `DunningRun`, or null when the tick was a no-op.
+     *
+     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-12
+     */
+    public function tickInvoice(
+        string $administrationId,
+        array $invoice,
+        string $baseLadderId,
+        array $params = [],
+        ?DateTimeImmutable $now = null
+    ): ?array {
+        $now       = ($now ?? new DateTimeImmutable());
+        $factuurId = (string) ($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
+        if ($factuurId === '') {
+            return null;
+        }
+
+        $dueDateRaw = (string) ($invoice['dueDate'] ?? '');
+        if ($dueDateRaw === '') {
+            return null;
+        }
+        try {
+            $dueDate = new DateTimeImmutable($dueDateRaw);
+        } catch (\Throwable $e) {
+            $this->logger->warning('Shillinq: tickInvoice malformed dueDate: '.$dueDateRaw);
+            return null;
+        }
+
+        if ($now < $dueDate) {
+            return null;
+        }
+
+        $dagenVerzuim = (int) $dueDate->diff($now)->days;
+        $klantId      = (string) ($invoice['customerReference'] ?? ($invoice['klantId'] ?? ''));
+
+        if ($this->hasActivePause(administrationId: $administrationId, factuurId: $factuurId) === true) {
+            return null;
+        }
+
+        $resolved = $this->resolveLadderForKlant(
+            administrationId: $administrationId,
+            klantId: $klantId,
+            baseLadderId: $baseLadderId
+        );
+        $stage = $this->stageForOverdueDays(stages: $resolved['stages'], dagenVerzuim: $dagenVerzuim);
+        if ($stage === null) {
+            return null;
+        }
+
+        $stageNr = (int) ($stage['nr'] ?? 1);
+
+        // Idempotency: skip when this stage has already fired for this invoice.
+        $existing = $this->findAll(
+            schema: 'DunningRun',
+            filters: [
+                'administrationId' => $administrationId,
+                'factuurId'        => $factuurId,
+                'stageNr'          => (string) $stageNr,
+            ]
+        );
+        if ($existing !== []) {
+            return null;
+        }
+
+        $kanaal = (string) ($params['kanaal'] ?? ($stage['kanaal'] ?? 'EMAIL'));
+        $tplId  = (string) ($params['templateId'] ?? ($stage['templateId'] ?? ''));
+
+        return $this->executeStage(
+            administrationId: $administrationId,
+            params: array_merge(
+                [
+                    'factuurId'      => $factuurId,
+                    'ladderId'       => (string) $resolved['ladderId'],
+                    'stageNr'        => $stageNr,
+                    'kanaal'         => $kanaal,
+                    'templateId'     => $tplId,
+                    'factuurBedrag'  => (float) ($invoice['grossAmount'] ?? 0.0),
+                    'deliveryStatus' => 'PENDING',
+                ],
+                $params
+            )
+        );
+
+    }//end tickInvoice()
+
+    /**
      * Apply the appropriate KlantLadderOverride on top of the base DunningLadder.
      *
      * REQ-CCD-001: per-klant overrides take precedence over the base ladder. When

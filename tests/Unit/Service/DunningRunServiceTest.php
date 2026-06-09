@@ -272,6 +272,164 @@ final class DunningRunServiceTest extends TestCase
     }//end testWriteOffPersistsRecord()
 
     /**
+     * Task-12: stageForOverdueDays picks the highest stage whose threshold has been reached.
+     *
+     * @return void
+     */
+    public function testStageForOverdueDaysPicksHighestApplicable(): void
+    {
+        $service = $this->makeService(os: new InMemoryObjectService());
+        $stages  = [
+            ['nr' => 1, 'dagenNaVervalDatum' => 0,  'kanaal' => 'EMAIL'],
+            ['nr' => 2, 'dagenNaVervalDatum' => 14, 'kanaal' => 'EMAIL'],
+            ['nr' => 3, 'dagenNaVervalDatum' => 30, 'kanaal' => 'EMAIL+POSTREGISTRATIE'],
+            ['nr' => 4, 'dagenNaVervalDatum' => 60, 'kanaal' => 'AANGETEKENDE_POST'],
+            ['nr' => 5, 'dagenNaVervalDatum' => 90, 'kanaal' => 'INCASSOBUREAU_API'],
+        ];
+
+        self::assertSame(1, (int) $service->stageForOverdueDays(stages: $stages, dagenVerzuim: 0)['nr']);
+        self::assertSame(2, (int) $service->stageForOverdueDays(stages: $stages, dagenVerzuim: 20)['nr']);
+        self::assertSame(3, (int) $service->stageForOverdueDays(stages: $stages, dagenVerzuim: 45)['nr']);
+        self::assertSame(5, (int) $service->stageForOverdueDays(stages: $stages, dagenVerzuim: 200)['nr']);
+        self::assertNull($service->stageForOverdueDays(stages: $stages, dagenVerzuim: -1));
+
+    }//end testStageForOverdueDaysPicksHighestApplicable()
+
+    /**
+     * Task-12: tickInvoice emits a DunningRun for the applicable stage when the
+     * invoice has crossed the threshold and no prior run exists.
+     *
+     * @return void
+     */
+    public function testTickInvoiceEmitsRunForApplicableStage(): void
+    {
+        $os = new InMemoryObjectService();
+        $os->seed(schema: 'DunningLadder', rows: [
+            [
+                'id'     => 'ladder-1',
+                'stages' => [
+                    ['nr' => 1, 'dagenNaVervalDatum' => 0,  'kanaal' => 'EMAIL', 'templateId' => 'tpl-1'],
+                    ['nr' => 2, 'dagenNaVervalDatum' => 14, 'kanaal' => 'EMAIL', 'templateId' => 'tpl-2'],
+                ],
+            ],
+        ]);
+        $service = $this->makeService(os: $os);
+
+        $now     = new \DateTimeImmutable('2026-06-09T12:00:00Z');
+        $invoice = [
+            'id'          => 'inv-1',
+            'dueDate'     => '2026-05-20',
+            'grossAmount' => 8400.00,
+            'customerReference' => 'klant-1',
+        ];
+
+        $run = $service->tickInvoice(
+            administrationId: 'adm-1',
+            invoice: $invoice,
+            baseLadderId: 'ladder-1',
+            params: [],
+            now: $now
+        );
+
+        self::assertNotNull($run);
+        self::assertSame(2, (int) $run['stageNr']);
+        self::assertSame('EMAIL', $run['kanaal']);
+        self::assertSame(8400.0, (float) $run['factuurBedrag']);
+        self::assertSame('executed', $run['lifecycleState']);
+
+    }//end testTickInvoiceEmitsRunForApplicableStage()
+
+    /**
+     * Task-12: tickInvoice is a no-op while an active DunningPauseDispute exists.
+     *
+     * @return void
+     */
+    public function testTickInvoiceSkipsWhilePaused(): void
+    {
+        $os = new InMemoryObjectService();
+        $os->seed(schema: 'DunningLadder', rows: [
+            ['id' => 'ladder-1', 'stages' => [['nr' => 1, 'dagenNaVervalDatum' => 0, 'kanaal' => 'EMAIL']]],
+        ]);
+        $os->seed(schema: 'DunningPauseDispute', rows: [
+            [
+                'administrationId' => 'adm-1',
+                'factuurId'        => 'inv-1',
+                'lifecycleState'   => 'active',
+            ],
+        ]);
+        $service = $this->makeService(os: $os);
+
+        $result = $service->tickInvoice(
+            administrationId: 'adm-1',
+            invoice: ['id' => 'inv-1', 'dueDate' => '2026-05-20', 'grossAmount' => 100.0],
+            baseLadderId: 'ladder-1',
+            params: [],
+            now: new \DateTimeImmutable('2026-06-09T12:00:00Z')
+        );
+
+        self::assertNull($result);
+
+    }//end testTickInvoiceSkipsWhilePaused()
+
+    /**
+     * Task-12: tickInvoice is a no-op when the same stage has already fired for the invoice.
+     *
+     * @return void
+     */
+    public function testTickInvoiceIsIdempotentPerStage(): void
+    {
+        $os = new InMemoryObjectService();
+        $os->seed(schema: 'DunningLadder', rows: [
+            ['id' => 'ladder-1', 'stages' => [['nr' => 1, 'dagenNaVervalDatum' => 0, 'kanaal' => 'EMAIL']]],
+        ]);
+        $os->seed(schema: 'DunningRun', rows: [
+            [
+                'administrationId' => 'adm-1',
+                'factuurId'        => 'inv-1',
+                'stageNr'          => 1,
+                'lifecycleState'   => 'executed',
+            ],
+        ]);
+        $service = $this->makeService(os: $os);
+
+        $result = $service->tickInvoice(
+            administrationId: 'adm-1',
+            invoice: ['id' => 'inv-1', 'dueDate' => '2026-05-20', 'grossAmount' => 100.0],
+            baseLadderId: 'ladder-1',
+            params: [],
+            now: new \DateTimeImmutable('2026-06-09T12:00:00Z')
+        );
+
+        self::assertNull($result);
+
+    }//end testTickInvoiceIsIdempotentPerStage()
+
+    /**
+     * Task-12: tickInvoice is a no-op when the invoice is still within terms.
+     *
+     * @return void
+     */
+    public function testTickInvoiceSkipsWhenWithinTerms(): void
+    {
+        $os = new InMemoryObjectService();
+        $os->seed(schema: 'DunningLadder', rows: [
+            ['id' => 'ladder-1', 'stages' => [['nr' => 1, 'dagenNaVervalDatum' => 0, 'kanaal' => 'EMAIL']]],
+        ]);
+        $service = $this->makeService(os: $os);
+
+        $result = $service->tickInvoice(
+            administrationId: 'adm-1',
+            invoice: ['id' => 'inv-1', 'dueDate' => '2026-07-01', 'grossAmount' => 100.0],
+            baseLadderId: 'ladder-1',
+            params: [],
+            now: new \DateTimeImmutable('2026-06-09T12:00:00Z')
+        );
+
+        self::assertNull($result);
+
+    }//end testTickInvoiceSkipsWhenWithinTerms()
+
+    /**
      * REQ-CCD-010 / task-26: writeOff materialises a balanced GLTransaction
      * (debit bad-debt + VAT-recover, credit AR control).
      *

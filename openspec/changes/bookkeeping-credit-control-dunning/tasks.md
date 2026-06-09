@@ -226,11 +226,20 @@ declarative surface (schemas, lifecycle, calculations, guard seams) is in place 
 land additively once the dependency is present. Tracking: each maps to its dependency app's
 own opsx change.
 
-- [ ] Task 12 — DEFERRED: `APTransaction` lifecycle (issued→overdue→dunning_stage_N→…)
-  is owned by `bookkeeping-accounts-receivable-core`; the `APTransaction` schema is not yet
-  present in shillinq. The dunning-side states (`DunningRun`, `DunningPauseDispute`,
-  `OninbaarAfschrijving`) and their transitions are declared here; the AR-invoice state
-  machine + OR ScheduledWorkflow registration land in the AR-core change.
+- [x] Task 12 — LANDED 2026-06-09: with `Invoice` (from
+  `bookkeeping-quote-order-invoice`) now present in shillinq,
+  `DunningRunService::tickInvoice()` is the shillinq-side observer the AR
+  scheduled-workflow calls per tick. It (a) skips invoices still within terms,
+  (b) skips when an active `DunningPauseDispute` exists, (c) picks the highest
+  applicable stage via `stageForOverdueDays()` (0/14/30/60/90 default; threshold
+  walk), (d) refuses to re-execute the same `(invoice, stage)` (idempotent on
+  `DunningRun`), and (e) materialises the `DunningRun` via `executeStage()`.
+  The full `Invoice.status` transition (`overdue → dunning_stage_N → paid`) is
+  still owned by the AR core; this method returns the picked stage so the AR
+  core can mirror it upstream. Verified by
+  `testStageForOverdueDaysPicksHighestApplicable`,
+  `testTickInvoiceEmitsRunForApplicableStage`, `testTickInvoiceSkipsWhilePaused`,
+  `testTickInvoiceIsIdempotentPerStage`, `testTickInvoiceSkipsWhenWithinTerms`.
 - [ ] Task 19 — DEFERRED: credit-score outbound fetch needs an openconnector connector +
   live provider (Graydon/Creditsafe/Atradius). The `CreditScore` snapshot schema + the
   `dunning.credit_score_cache_days` default are in place; the fetch/cache job lands with the
