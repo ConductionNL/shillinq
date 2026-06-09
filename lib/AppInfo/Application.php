@@ -28,6 +28,7 @@ use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
+use OCA\Shillinq\Listener\ReconciliationMatchToReportListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Notification\Notifier;
 use OCA\Shillinq\Service\Dunning\CreditScoreFetchAdapterInterface;
@@ -199,6 +200,22 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectUpdatedEvent::class,
             listener: InnovatieboxAuditTrailListener::class
+        );
+
+        // bookkeeping-reconciliation-reports (T4) — REQ-REC-010. T2's
+        // bookkeeping-bank-reconciliation engine confirms a
+        // ReconciliationMatch by transitioning its status to `confirmed`;
+        // the listener stamps the T4-side fields (reconId, matchAlgorithm,
+        // matchedAt, glTransactionId/arInvoiceId/apTransactionId, etc.) on
+        // the same record so the open BankReconciliation session sees the
+        // outcome within 1s. Fail-soft: never blocks the T2 write.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: ReconciliationMatchToReportListener::class
+        );
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: ReconciliationMatchToReportListener::class
         );
 
         // Wire the DoorsnijdingsVerbodValidator with the optional audit

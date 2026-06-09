@@ -1,7 +1,7 @@
 # ADR: Data Model — Shillinq
 
 **Status:** accepted
-**Entities:** 252
+**Entities:** 254
 
 ## Context
 
@@ -811,7 +811,9 @@ _A predicate-based rule that matches bank statement lines against AR/AP invoices
 ### ReconciliationMatch
 **Schema.org:** `schema:Action`
 _A candidate or confirmed match between a bank statement line and an AR/AP invoice, GLTransaction, or suspense routing per REQ-BR-006. Emitted by the matching aggregation (confidence=auto) or operator-created (confidence=manual); the operator confirms or rejects through the standard register UI. Confirmed matches emit a `reconciliation-match-confirmed` event consumed by AR/AP invoice lifecycles per REQ-BR-006 (event-driven, no shillinq matcher service forwards the event)._
+_**T4 bookkeeping-reconciliation-reports extension (2026-06-09):** the same register schema carries the T4 fields needed by the BankReconciliation session — `reconId` (FK to BankReconciliation), `matchAlgorithm` (exact/fuzzy/manual per REQ-REC-005 — T4 supports `exact` + `manual` only), `confidenceScoreT4`, `matchedAt`, `manualOverride`, `resolutionStatus` + `resolutionReason` (REQ-REC-004 unmatched-item classification: matched/timing/pending/adjustment), and the polymorphic FK shortcuts `arInvoiceId` / `apTransactionId` / `glTransactionId`. The T2 confirm event triggers `ReconciliationMatchToReportListener` which stamps these fields in-place (no parallel match table; see `lib/Settings/register.d/bookkeeping-reconciliation-reports.json`)._
 **Primary spec:** bookkeeping-bank-reconciliation
+**Extension spec:** bookkeeping-reconciliation-reports
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
@@ -829,12 +831,92 @@ _A candidate or confirmed match between a bank statement line and an AR/AP invoi
 | confirmedBy | string | No | UUID of confirming operator |
 | confirmedAt | date-time | No | Confirmation timestamp |
 | rejectedReason | string | No | Operator-supplied rejection reason |
+| reconId | string | No | T4: FK to BankReconciliation session (REQ-REC-005). Empty for pre-T4 records. |
+| glTransactionId | string | No | T4: FK shortcut to GLTransaction.id when matchType=gl-transaction/journal |
+| bankLineId | string | No | T4: alias of bankStatementLineId for T4 session schema |
+| matchAlgorithm | enum | No | T4: exact / fuzzy / manual — T4 supports exact + manual only (REQ-REC-005) |
+| confidenceScoreT4 | number | No | T4: confidence in [0,1] for the T4 record (distinct from T2's confidenceScore) |
+| matchedAt | date-time | No | T4: when the T4 ReconciliationMatch record was stamped |
+| manualOverride | boolean | No | T4: true when operator-created or operator-corrected (REQ-REC-004) |
+| resolutionStatus | enum | No | T4: matched / timing / pending / adjustment (REQ-REC-004 classification of unmatched items). Null while unclassified. |
+| resolutionReason | string | No | T4: operator-supplied reason for the classification (audit-trailed per REQ-REC-004) |
+| arInvoiceId | string | No | T4: FK to ARInvoice.id when the match is AR-based (REQ-REC-005 semantic shortcut) |
+| apTransactionId | string | No | T4: FK to APInvoice/APTransaction id when the match is AP-based (REQ-REC-005) |
 
 **Lifecycle:** `pending → confirmed` (emits `reconciliation-match-confirmed` event) / `pending → rejected` (line returns to unmatched).
 
 **Relations:**
 - → BankStatementLine (many-to-one or many-to-many for N×M)
 - → ARInvoice / APInvoice / GLTransaction / Account-as-suspense (via matchType + matchedObjectId or targetRefs)
+- → BankReconciliation (many-to-one via `reconId`, T4)
+
+**T4 Aggregations:**
+- `matchesByRecon` — count grouped by `reconId` filtered to `resolutionStatus = matched` (drives BankReconciliation.matchedCount)
+- `varianceByType` — count grouped by `(reconId, resolutionStatus)` per REQ-REC-007 variance-by-type
+- `unresolvedByRecon` — count grouped by `reconId` filtered to `resolutionStatus IS NULL` (drives REQ-REC-006 pre-close summary)
+
+### BankReconciliation
+**Schema.org:** `schema:Report`
+_A bounded reconciliation session for one bank account + one statement period per REQ-REC-001 (bookkeeping-reconciliation-reports). Captures opening/closing balances, expected GL balance, computed variance, lifecycle status (draft → in-progress → verified → closed), preparer/verifier signatures, and the closedAt timestamp. Not a live dashboard — an immutable audit artifact once closed. Matching is delegated to T2 bookkeeping-bank-reconciliation; T4 records outcomes through `ReconciliationMatch.reconId` and closes the audit loop. The single PHP seam (ADR-031 §exception) is `OCA\Shillinq\Guard\StatementVerifyGuard` for the cross-object GL-balance lookup the declarative engine cannot yet express._
+**Primary spec:** bookkeeping-reconciliation-reports
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| bankAccountId | string | Yes | FK to the bank account / IBAN this reconciliation belongs to (REQ-REC-001) |
+| statementDate | date | Yes | Statement issue date (period-end by convention) |
+| statementPeriodStart | date | Yes | First day of the reconciliation period (inclusive) |
+| statementPeriodEnd | date | Yes | Last day of the reconciliation period (inclusive) |
+| openingBalance | number | Yes | Statement opening balance in account currency (REQ-REC-001) |
+| closingBalance | number | Yes | Statement closing balance in account currency (REQ-REC-001) |
+| expectedGLBalance | number | No | Server-computed per REQ-REC-002 formula; populated by StatementVerifyGuard |
+| variance | number | No | \|closingBalance - expectedGLBalance\|; server-derived per REQ-REC-002 |
+| reconciliationStatus | enum | Yes | draft / in-progress / verified / closed / cancelled (REQ-REC-003) |
+| preparedBy | string | No | Nextcloud UID of the operator who initiated the reconciliation (REQ-REC-009) |
+| verifiedBy | string | No | Nextcloud UID of the verifier who signed off (REQ-REC-006) |
+| closedAt | date-time | No | UTC datetime when the session transitioned `verified → closed` |
+| signOffComment | string | No | Verifier sign-off note required on the verify transition (REQ-REC-006) |
+| matchedCount | integer | No | Server-derived count of matched ReconciliationMatch records |
+| unmatchedGLCount | integer | No | Server-derived count of GL transactions in the period without a confirmed match |
+| unmatchedBankCount | integer | No | Server-derived count of bank statement lines without a confirmed match |
+| administrationId | string | Yes | FK to Administration; scopes uniqueness of (bankAccountId, statementPeriodEnd) |
+
+**Lifecycle:** `draft → in-progress` (guard: `StatementVerifyGuard::verifyStatementBalance`, REQ-REC-002 — never blocks but persists expectedGLBalance + variance) / `in-progress → verified` (guard: `StatementVerifyGuard::requireResolvedAndSignedOff`, REQ-REC-004 + REQ-REC-006 — rejects when matches unclassified or signOffComment empty) / `verified → closed` (stamps closedAt; immutable thereafter per REQ-REC-003) / `draft → cancelled` (operator abandon) / `in-progress → draft` (operator revert for investigation).
+
+**Relations:**
+- → ReconciliationMatch (one-to-many via `reconId`)
+- → ReconciliationReport (one-to-one via `reconId` — created on close)
+- → Account / BankConnection (many-to-one via `bankAccountId`)
+- → Administration (many-to-one via `administrationId`)
+
+**Aggregations:**
+- `varianceByAccount` — sum of `variance` grouped by `bankAccountId`, filtered to `reconciliationStatus = closed` (REQ-REC-007 — open reconciliations excluded)
+- `varianceByPeriod` — sum of `variance` grouped by `(bankAccountId, statementPeriodEnd)`, filtered to `reconciliationStatus = closed`
+- `reconciliationCount` — count grouped by `bankAccountId` filtered to closed
+
+### ReconciliationReport
+**Schema.org:** `schema:Report`
+_A signed-off audit artifact captured when a BankReconciliation transitions verified → closed per REQ-REC-001/REQ-REC-006 (bookkeeping-reconciliation-reports). Records the final matched/unmatched counts, total variance, preparer + verifier UIDs, and the verifier sign-off comment for permanent retention. Immutable once created. Distinct from `BankReconciliation` (the session) — `ReconciliationReport` is the sealed certificate produced at close._
+**Primary spec:** bookkeeping-reconciliation-reports
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| reconId | string | Yes | FK to the BankReconciliation this report finalises (REQ-REC-001) |
+| reportDate | date-time | Yes | UTC datetime the report was sealed (mirrors parent's closedAt) |
+| matchedCount | integer | Yes | Final count of confirmed matches per REQ-REC-006 |
+| unmatchedGLCount | integer | Yes | Final count of unmatched GL transactions per REQ-REC-006 |
+| unmatchedBankCount | integer | Yes | Final count of unmatched bank lines per REQ-REC-006 |
+| totalVariance | number | Yes | Final \|closingBalance - expectedGLBalance\| per REQ-REC-006 |
+| preparedBy | string | Yes | Nextcloud UID of the preparer (mirrors parent) |
+| verifiedBy | string | Yes | Nextcloud UID of the verifier (mirrors parent) |
+| signOffComment | string | No | Verifier sign-off note copied from the parent at close time (REQ-REC-006) |
+| administrationId | string | Yes | FK to Administration (mirrors parent) |
+
+**Relations:**
+- → BankReconciliation (many-to-one via `reconId`; one-to-one in practice — one report per closed session)
+- → Administration (many-to-one via `administrationId`)
+
+**Aggregations:**
+- `totalVarianceByAdmin` — sum of `totalVariance` grouped by `administrationId` (REQ-REC-007 admin-level variance dashboard)
 
 ### BbvAccountMapping
 **Schema.org:** `schema:PropertyValue`

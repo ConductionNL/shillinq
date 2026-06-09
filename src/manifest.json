@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "1.3.13",
+	"version": "1.3.14",
 	"dependencies": [
 		"openregister"
 	],
@@ -33,6 +33,14 @@
 					"order": 20
 				},
 				{
+					"id": "EmuRapportage",
+					"label": "EMU-rapportage",
+					"icon": "ChartBarOutline",
+					"route": "EmuRapportage",
+					"order": 20,
+					"featureFlag": "gov-emu"
+				},
+				{
 					"id": "Journals",
 					"label": "Journals",
 					"icon": "BookEditOutline",
@@ -59,6 +67,20 @@
 					"icon": "FilterCogOutline",
 					"route": "MatchingRules",
 					"order": 27
+				},
+				{
+					"id": "Reconciliations",
+					"label": "Reconciliations",
+					"icon": "ScaleBalance",
+					"route": "Reconciliations",
+					"order": 28
+				},
+				{
+					"id": "UnmatchedItems",
+					"label": "Unmatched Items",
+					"icon": "HelpRhombusOutline",
+					"route": "UnmatchedItems",
+					"order": 29
 				},
 				{
 					"id": "FixedAssets",
@@ -94,34 +116,6 @@
 					"icon": "BankTransferOutline",
 					"route": "PaymentRuns",
 					"order": 34
-				},
-				{
-					"id": "Customers",
-					"label": "Customers",
-					"icon": "AccountTieOutline",
-					"route": "Customers",
-					"order": 41
-				},
-				{
-					"id": "AccountsReceivable",
-					"label": "Accounts Receivable",
-					"icon": "ReceiptTextOutline",
-					"route": "AccountsReceivable",
-					"order": 42
-				},
-				{
-					"id": "ARAging",
-					"label": "AR Aging",
-					"icon": "CalendarClockOutline",
-					"route": "ARAging",
-					"order": 43
-				},
-				{
-					"id": "DunningTimeline",
-					"label": "Dunning Timeline",
-					"icon": "EmailAlertOutline",
-					"route": "DunningTimeline",
-					"order": 44
 				},
 				{
 					"id": "DunningLadders",
@@ -167,6 +161,41 @@
 					"featureFlag": "gov-waterschap"
 				},
 				{
+					"id": "Customers",
+					"label": "Customers",
+					"icon": "AccountTieOutline",
+					"route": "Customers",
+					"order": 41
+				},
+				{
+					"id": "AccountsReceivable",
+					"label": "Accounts Receivable",
+					"icon": "ReceiptTextOutline",
+					"route": "AccountsReceivable",
+					"order": 42
+				},
+				{
+					"id": "ARAging",
+					"label": "AR Aging",
+					"icon": "CalendarClockOutline",
+					"route": "ARAging",
+					"order": 43
+				},
+				{
+					"id": "DunningTimeline",
+					"label": "Dunning Timeline",
+					"icon": "EmailAlertOutline",
+					"route": "DunningTimeline",
+					"order": 44
+				},
+				{
+					"id": "VarianceReport",
+					"label": "Variance Report",
+					"icon": "ChartTimelineVariantShimmer",
+					"route": "VarianceReport",
+					"order": 45
+				},
+				{
 					"id": "GRDeelnemers",
 					"label": "Deelnemers",
 					"icon": "AccountMultipleOutline",
@@ -200,13 +229,6 @@
 					"icon": "ScaleBalanceOutline",
 					"route": "TrialBalance",
 					"order": 81
-				},
-				{
-					"id": "TrialBalanceLines",
-					"label": "Trial Balance (by account)",
-					"icon": "ScaleBalance",
-					"route": "TrialBalanceLines",
-					"order": 815
 				},
 				{
 					"id": "Consolidations",
@@ -244,6 +266,14 @@
 					"order": 86
 				},
 				{
+					"id": "RDSubsidies",
+					"label": "R&D Subsidies",
+					"icon": "FlaskOutline",
+					"route": "RDSubsidies",
+					"order": 86,
+					"featureFlag": "mkb-r-d-subsidies"
+				},
+				{
 					"id": "XBRLMappingValidation",
 					"label": "Mapping Validation",
 					"icon": "ArrowDecisionOutline",
@@ -251,12 +281,41 @@
 					"order": 87
 				},
 				{
-					"id": "EmuRapportage",
-					"label": "EMU-rapportage",
-					"icon": "ChartBarOutline",
-					"route": "EmuRapportage",
-					"order": 20,
-					"featureFlag": "gov-emu"
+					"id": "WBSOTags",
+					"label": "WBSO Tags",
+					"icon": "TagCheckOutline",
+					"route": "WBSOTags",
+					"order": 87,
+					"featureFlag": "mkb-r-d-subsidies"
+				},
+				{
+					"id": "FiscalYears",
+					"label": "Fiscal Years",
+					"icon": "CalendarCheckOutline",
+					"route": "FiscalYears",
+					"order": 87
+				},
+				{
+					"id": "WBSOExport",
+					"label": "WBSO Export Dashboard",
+					"icon": "FileExportOutline",
+					"route": "WBSOExport",
+					"order": 88,
+					"featureFlag": "mkb-r-d-subsidies"
+				},
+				{
+					"id": "YearEndCloseChecklist",
+					"label": "Year-End Close Checklist",
+					"icon": "ClipboardCheckOutline",
+					"route": "YearEndCloseChecklist",
+					"order": 88
+				},
+				{
+					"id": "ClosingEntries",
+					"label": "Closing Entries",
+					"icon": "FileDocumentEditOutline",
+					"route": "ClosingEntries",
+					"order": 89
 				},
 				{
 					"id": "Dimensions",
@@ -295,49 +354,11 @@
 					]
 				},
 				{
-					"id": "RDSubsidies",
-					"label": "R&D Subsidies",
-					"icon": "FlaskOutline",
-					"route": "RDSubsidies",
-					"order": 86,
-					"featureFlag": "mkb-r-d-subsidies"
-				},
-				{
-					"id": "WBSOTags",
-					"label": "WBSO Tags",
-					"icon": "TagCheckOutline",
-					"route": "WBSOTags",
-					"order": 87,
-					"featureFlag": "mkb-r-d-subsidies"
-				},
-				{
-					"id": "WBSOExport",
-					"label": "WBSO Export Dashboard",
-					"icon": "FileExportOutline",
-					"route": "WBSOExport",
-					"order": 88,
-					"featureFlag": "mkb-r-d-subsidies"
-				},
-				{
-					"id": "FiscalYears",
-					"label": "Fiscal Years",
-					"icon": "CalendarCheckOutline",
-					"route": "FiscalYears",
-					"order": 87
-				},
-				{
-					"id": "YearEndCloseChecklist",
-					"label": "Year-End Close Checklist",
-					"icon": "ClipboardCheckOutline",
-					"route": "YearEndCloseChecklist",
-					"order": 88
-				},
-				{
-					"id": "ClosingEntries",
-					"label": "Closing Entries",
-					"icon": "FileDocumentEditOutline",
-					"route": "ClosingEntries",
-					"order": 89
+					"id": "SbrXbrlFilings",
+					"label": "SBR/XBRL Filings",
+					"icon": "FileXmlBoxOutline",
+					"route": "SbrXbrlFilings",
+					"order": 92
 				},
 				{
 					"id": "BookkeepingAuditTrail",
@@ -347,11 +368,11 @@
 					"order": 95
 				},
 				{
-					"id": "SbrXbrlFilings",
-					"label": "SBR/XBRL Filings",
-					"icon": "FileXmlBoxOutline",
-					"route": "SbrXbrlFilings",
-					"order": 92
+					"id": "TrialBalanceLines",
+					"label": "Trial Balance (by account)",
+					"icon": "ScaleBalance",
+					"route": "TrialBalanceLines",
+					"order": 815
 				}
 			]
 		},
@@ -2408,7 +2429,7 @@
 					},
 					{
 						"key": "emuSaldo",
-						"label": "EMU-saldo (€)",
+						"label": "EMU-saldo (\u20ac)",
 						"sortable": true
 					},
 					{
@@ -2453,12 +2474,12 @@
 					},
 					{
 						"key": "emuSaldo",
-						"label": "EMU-saldo (€)",
+						"label": "EMU-saldo (\u20ac)",
 						"type": "number"
 					},
 					{
 						"key": "emuSchuld",
-						"label": "EMU-schuld (€)",
+						"label": "EMU-schuld (\u20ac)",
 						"type": "number"
 					},
 					{
@@ -3241,7 +3262,7 @@
 										"uriField": "sourceDocumentUri",
 										"appField": "sourceDocumentApp",
 										"role": "statement",
-										"fallbackMessage": "Source document unreachable — docudesk may be unavailable; retry later."
+										"fallbackMessage": "Source document unreachable \u2014 docudesk may be unavailable; retry later."
 									}
 								}
 							]
@@ -4130,7 +4151,7 @@
 										"uriField": "sourceDocumentUri",
 										"appField": "sourceDocumentApp",
 										"role": "receipt",
-										"fallbackMessage": "Source document unreachable — docudesk may be unavailable; retry later."
+										"fallbackMessage": "Source document unreachable \u2014 docudesk may be unavailable; retry later."
 									}
 								}
 							]
@@ -5395,7 +5416,7 @@
 					},
 					{
 						"key": "remediationOverdueCount",
-						"label": "Achterstallige remediëringen",
+						"label": "Achterstallige remedi\u00ebringen",
 						"type": "integer"
 					},
 					{
@@ -5479,7 +5500,7 @@
 					},
 					{
 						"key": "remediationStatus",
-						"label": "Remediëringsstatus",
+						"label": "Remedi\u00ebringsstatus",
 						"sortable": true
 					},
 					{
@@ -5543,17 +5564,17 @@
 					},
 					{
 						"key": "remediationDueDate",
-						"label": "Remediëring vóór",
+						"label": "Remedi\u00ebring v\u00f3\u00f3r",
 						"type": "date"
 					},
 					{
 						"key": "remediationStatus",
-						"label": "Remediëringsstatus",
+						"label": "Remedi\u00ebringsstatus",
 						"type": "string"
 					},
 					{
 						"key": "remediationCompletionDate",
-						"label": "Remediëring voltooid op",
+						"label": "Remedi\u00ebring voltooid op",
 						"type": "date"
 					},
 					{
@@ -5681,7 +5702,7 @@
 					},
 					{
 						"key": "remediationRecommendations",
-						"label": "Remediëeringsaanbevelingen",
+						"label": "Remedi\u00eberingsaanbevelingen",
 						"type": "string"
 					},
 					{
@@ -5989,7 +6010,7 @@
 			"id": "BewaartermijnenDashboard",
 			"route": "/administratie/bewaartermijnen/dashboard",
 			"type": "dashboard",
-			"title": "Bewaartermijnen — Dashboard",
+			"title": "Bewaartermijnen \u2014 Dashboard",
 			"config": {
 				"widgets": [
 					{
@@ -6687,7 +6708,7 @@
 										"uriField": "sourceDocumentUri",
 										"appField": "sourceDocumentApp",
 										"role": "invoice",
-										"fallbackMessage": "Source document unreachable — docudesk may be unavailable; retry later."
+										"fallbackMessage": "Source document unreachable \u2014 docudesk may be unavailable; retry later."
 									}
 								}
 							]
@@ -7176,7 +7197,7 @@
 										"uriField": "sourceDocumentUri",
 										"appField": "sourceDocumentApp",
 										"role": "invoice",
-										"fallbackMessage": "Source document unreachable — docudesk may be unavailable; retry later."
+										"fallbackMessage": "Source document unreachable \u2014 docudesk may be unavailable; retry later."
 									}
 								}
 							]
@@ -7362,7 +7383,7 @@
 			"id": "ProjectenOverzicht",
 			"route": "/projecten",
 			"type": "index",
-			"title": "Projecten — Overzicht",
+			"title": "Projecten \u2014 Overzicht",
 			"visibilityPredicate": {
 				"administrationType": [
 					"mkb",
@@ -7484,7 +7505,7 @@
 							{
 								"min": 0.5,
 								"color": "warning",
-								"label": "Gemiddeld (50–80%)"
+								"label": "Gemiddeld (50\u201380%)"
 							},
 							{
 								"min": 0,
@@ -9245,7 +9266,7 @@
 					},
 					{
 						"key": "ratePerKm",
-						"label": "Rate (€/km)",
+						"label": "Rate (\u20ac/km)",
 						"sortable": true,
 						"type": "number"
 					},
@@ -9334,7 +9355,7 @@
 					},
 					{
 						"key": "ratePerKm",
-						"label": "Rate (€/km)",
+						"label": "Rate (\u20ac/km)",
 						"type": "number"
 					},
 					{
@@ -11897,7 +11918,7 @@
 				],
 				"defaultSort": "receivedAt",
 				"detailRoute": "GoodsReceiptDetail",
-				"description": "Goods Receipt Notes (GRN) — physical receipt against POs. Member 04 owns the capture flow."
+				"description": "Goods Receipt Notes (GRN) \u2014 physical receipt against POs. Member 04 owns the capture flow."
 			}
 		},
 		{
@@ -12607,7 +12628,7 @@
 					},
 					{
 						"key": "commercialCarryingAmount",
-						"label": "Commerciële boekwaarde (cent)",
+						"label": "Commerci\u00eble boekwaarde (cent)",
 						"type": "number"
 					},
 					{
@@ -14137,12 +14158,37 @@
 				"register": "shillinq",
 				"schema": "XBRLTaxonomy",
 				"columns": [
-					{"key": "taxonomyId", "label": "Taxonomy ID", "sortable": true},
-					{"key": "name", "label": "Name", "sortable": true},
-					{"key": "taxonomyVersion", "label": "Version", "sortable": true},
-					{"key": "publicationDate", "label": "Published", "sortable": true},
-					{"key": "effectiveDate", "label": "Effective", "sortable": true},
-					{"key": "status", "label": "Status", "sortable": true, "filterable": true}
+					{
+						"key": "taxonomyId",
+						"label": "Taxonomy ID",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "taxonomyVersion",
+						"label": "Version",
+						"sortable": true
+					},
+					{
+						"key": "publicationDate",
+						"label": "Published",
+						"sortable": true
+					},
+					{
+						"key": "effectiveDate",
+						"label": "Effective",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true,
+						"filterable": true
+					}
 				],
 				"defaultSort": "-publicationDate",
 				"detailRoute": "XBRLTaxonomyDetail"
@@ -14157,26 +14203,72 @@
 				"register": "shillinq",
 				"schema": "XBRLTaxonomy",
 				"fields": [
-					{"key": "taxonomyId", "label": "Taxonomy ID", "type": "string"},
-					{"key": "name", "label": "Name", "type": "string"},
-					{"key": "taxonomyVersion", "label": "Version", "type": "string"},
-					{"key": "publicationDate", "label": "Publication Date", "type": "date"},
-					{"key": "effectiveDate", "label": "Effective Date", "type": "date"},
-					{"key": "expiryDate", "label": "Expiry Date", "type": "date"},
-					{"key": "status", "label": "Status", "type": "string"},
-					{"key": "description", "label": "Description", "type": "string"}
+					{
+						"key": "taxonomyId",
+						"label": "Taxonomy ID",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "taxonomyVersion",
+						"label": "Version",
+						"type": "string"
+					},
+					{
+						"key": "publicationDate",
+						"label": "Publication Date",
+						"type": "date"
+					},
+					{
+						"key": "effectiveDate",
+						"label": "Effective Date",
+						"type": "date"
+					},
+					{
+						"key": "expiryDate",
+						"label": "Expiry Date",
+						"type": "date"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					}
 				],
 				"relatedLists": [
 					{
 						"id": "taxonomy-mappings",
 						"title": "Account Mappings",
 						"schema": "XBRLMapping",
-						"filter": {"taxonomyVersion": "@self.taxonomyVersion"},
+						"filter": {
+							"taxonomyVersion": "@self.taxonomyVersion"
+						},
 						"columns": [
-							{"key": "sourceAccountId", "label": "Source Account"},
-							{"key": "targetXBRLConcept", "label": "XBRL GL Concept"},
-							{"key": "mappingDate", "label": "Mapping Date"},
-							{"key": "status", "label": "Status"}
+							{
+								"key": "sourceAccountId",
+								"label": "Source Account"
+							},
+							{
+								"key": "targetXBRLConcept",
+								"label": "XBRL GL Concept"
+							},
+							{
+								"key": "mappingDate",
+								"label": "Mapping Date"
+							},
+							{
+								"key": "status",
+								"label": "Status"
+							}
 						]
 					}
 				],
@@ -14192,12 +14284,37 @@
 				"register": "shillinq",
 				"schema": "SBRDocumentType",
 				"columns": [
-					{"key": "code", "label": "Code", "sortable": true},
-					{"key": "name", "label": "Name", "sortable": true},
-					{"key": "administrationId", "label": "Administration", "sortable": true},
-					{"key": "taxonomyVersion", "label": "Taxonomy Version", "sortable": true},
-					{"key": "filingDeadline", "label": "Filing Deadline", "sortable": true},
-					{"key": "status", "label": "Status", "sortable": true, "filterable": true}
+					{
+						"key": "code",
+						"label": "Code",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					},
+					{
+						"key": "taxonomyVersion",
+						"label": "Taxonomy Version",
+						"sortable": true
+					},
+					{
+						"key": "filingDeadline",
+						"label": "Filing Deadline",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true,
+						"filterable": true
+					}
 				],
 				"defaultSort": "filingDeadline",
 				"detailRoute": "SBRDocumentDetail"
@@ -14212,24 +14329,96 @@
 				"register": "shillinq",
 				"schema": "SBRDocumentType",
 				"fields": [
-					{"key": "code", "label": "Code", "type": "string"},
-					{"key": "name", "label": "Name", "type": "string"},
-					{"key": "description", "label": "Description", "type": "string"},
-					{"key": "applicableEntityTypes", "label": "Applicable Entity Types", "type": "array"},
-					{"key": "filingDeadline", "label": "Filing Deadline", "type": "date"},
-					{"key": "fiscalYearStart", "label": "Fiscal Year Start", "type": "date"},
-					{"key": "fiscalYearEnd", "label": "Fiscal Year End", "type": "date"},
-					{"key": "taxonomyVersion", "label": "Taxonomy Version", "type": "string"},
-					{"key": "submissionEndpoint", "label": "Submission Endpoint", "type": "string"},
-					{"key": "authMethod", "label": "Authentication Method", "type": "string"},
-					{"key": "administrationId", "label": "Administration", "type": "string"},
-					{"key": "requiredFields", "label": "Required Fields", "type": "array"},
-					{"key": "status", "label": "Status", "type": "string"},
-					{"key": "validationErrors", "label": "Validation Errors", "type": "array"},
-					{"key": "submittedAt", "label": "Submitted At", "type": "date-time"},
-					{"key": "approvedAt", "label": "Approved At", "type": "date-time"},
-					{"key": "rejectionReason", "label": "Rejection Reason", "type": "string"},
-					{"key": "filingId", "label": "Belastingdienst Filing ID", "type": "string"}
+					{
+						"key": "code",
+						"label": "Code",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "applicableEntityTypes",
+						"label": "Applicable Entity Types",
+						"type": "array"
+					},
+					{
+						"key": "filingDeadline",
+						"label": "Filing Deadline",
+						"type": "date"
+					},
+					{
+						"key": "fiscalYearStart",
+						"label": "Fiscal Year Start",
+						"type": "date"
+					},
+					{
+						"key": "fiscalYearEnd",
+						"label": "Fiscal Year End",
+						"type": "date"
+					},
+					{
+						"key": "taxonomyVersion",
+						"label": "Taxonomy Version",
+						"type": "string"
+					},
+					{
+						"key": "submissionEndpoint",
+						"label": "Submission Endpoint",
+						"type": "string"
+					},
+					{
+						"key": "authMethod",
+						"label": "Authentication Method",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "requiredFields",
+						"label": "Required Fields",
+						"type": "array"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "validationErrors",
+						"label": "Validation Errors",
+						"type": "array"
+					},
+					{
+						"key": "submittedAt",
+						"label": "Submitted At",
+						"type": "date-time"
+					},
+					{
+						"key": "approvedAt",
+						"label": "Approved At",
+						"type": "date-time"
+					},
+					{
+						"key": "rejectionReason",
+						"label": "Rejection Reason",
+						"type": "string"
+					},
+					{
+						"key": "filingId",
+						"label": "Belastingdienst Filing ID",
+						"type": "string"
+					}
 				],
 				"lifecycleActions": true,
 				"indexRoute": "SBRDocuments"
@@ -14244,11 +14433,33 @@
 				"register": "shillinq",
 				"schema": "XBRLMapping",
 				"columns": [
-					{"key": "sourceAccountId", "label": "Source Account", "sortable": true},
-					{"key": "targetXBRLConcept", "label": "XBRL GL Concept", "sortable": true},
-					{"key": "taxonomyVersion", "label": "Taxonomy Version", "sortable": true, "filterable": true},
-					{"key": "mappingDate", "label": "Mapping Date", "sortable": true},
-					{"key": "status", "label": "Status", "sortable": true, "filterable": true}
+					{
+						"key": "sourceAccountId",
+						"label": "Source Account",
+						"sortable": true
+					},
+					{
+						"key": "targetXBRLConcept",
+						"label": "XBRL GL Concept",
+						"sortable": true
+					},
+					{
+						"key": "taxonomyVersion",
+						"label": "Taxonomy Version",
+						"sortable": true,
+						"filterable": true
+					},
+					{
+						"key": "mappingDate",
+						"label": "Mapping Date",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true,
+						"filterable": true
+					}
 				],
 				"defaultSort": "sourceAccountId",
 				"detailRoute": "XBRLMappingDetail"
@@ -14263,15 +14474,629 @@
 				"register": "shillinq",
 				"schema": "XBRLMapping",
 				"fields": [
-					{"key": "sourceAccountId", "label": "Source Account", "type": "string"},
-					{"key": "targetXBRLConcept", "label": "XBRL GL Concept", "type": "string"},
-					{"key": "taxonomyVersion", "label": "Taxonomy Version", "type": "string"},
-					{"key": "mappingDate", "label": "Mapping Date", "type": "date"},
-					{"key": "status", "label": "Status", "type": "string"},
-					{"key": "notes", "label": "Notes", "type": "string"},
-					{"key": "administrationId", "label": "Administration", "type": "string"}
+					{
+						"key": "sourceAccountId",
+						"label": "Source Account",
+						"type": "string"
+					},
+					{
+						"key": "targetXBRLConcept",
+						"label": "XBRL GL Concept",
+						"type": "string"
+					},
+					{
+						"key": "taxonomyVersion",
+						"label": "Taxonomy Version",
+						"type": "string"
+					},
+					{
+						"key": "mappingDate",
+						"label": "Mapping Date",
+						"type": "date"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "notes",
+						"label": "Notes",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
 				],
 				"indexRoute": "XBRLMappingValidation"
+			}
+		},
+		{
+			"id": "Reconciliations",
+			"route": "/bookkeeping/reconciliations",
+			"type": "index",
+			"title": "Reconciliations",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankReconciliation",
+				"columns": [
+					{
+						"key": "bankAccountId",
+						"label": "Bank Account",
+						"sortable": true
+					},
+					{
+						"key": "statementDate",
+						"label": "Statement Date",
+						"sortable": true
+					},
+					{
+						"key": "statementPeriodStart",
+						"label": "Period From",
+						"sortable": true
+					},
+					{
+						"key": "statementPeriodEnd",
+						"label": "Period To",
+						"sortable": true
+					},
+					{
+						"key": "openingBalance",
+						"label": "Opening (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "closingBalance",
+						"label": "Closing (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "variance",
+						"label": "Variance (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "reconciliationStatus",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "preparedBy",
+						"label": "Preparer",
+						"sortable": false
+					},
+					{
+						"key": "verifiedBy",
+						"label": "Verifier",
+						"sortable": false
+					}
+				],
+				"defaultSort": "statementDate",
+				"detailRoute": "ReconciliationDetail",
+				"description": "Bank reconciliation sessions per REQ-REC-001. Each row is one account+period; click through to match, classify unresolved items, and produce a signed-off ReconciliationReport (REQ-REC-006)."
+			}
+		},
+		{
+			"id": "ReconciliationDetail",
+			"route": "/bookkeeping/reconciliations/:id",
+			"type": "detail",
+			"title": "Reconciliation",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankReconciliation",
+				"fields": [
+					{
+						"key": "bankAccountId",
+						"label": "Bank Account",
+						"type": "string"
+					},
+					{
+						"key": "statementDate",
+						"label": "Statement Date",
+						"type": "string"
+					},
+					{
+						"key": "statementPeriodStart",
+						"label": "Period From",
+						"type": "string"
+					},
+					{
+						"key": "statementPeriodEnd",
+						"label": "Period To",
+						"type": "string"
+					},
+					{
+						"key": "openingBalance",
+						"label": "Opening Balance (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "closingBalance",
+						"label": "Closing Balance (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "expectedGLBalance",
+						"label": "Expected GL Balance (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "variance",
+						"label": "Variance (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "matchedCount",
+						"label": "Matched",
+						"type": "number"
+					},
+					{
+						"key": "unmatchedGLCount",
+						"label": "Unmatched GL",
+						"type": "number"
+					},
+					{
+						"key": "unmatchedBankCount",
+						"label": "Unmatched Bank",
+						"type": "number"
+					},
+					{
+						"key": "reconciliationStatus",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "preparedBy",
+						"label": "Preparer",
+						"type": "string"
+					},
+					{
+						"key": "verifiedBy",
+						"label": "Verifier",
+						"type": "string"
+					},
+					{
+						"key": "closedAt",
+						"label": "Closed At",
+						"type": "string"
+					},
+					{
+						"key": "signOffComment",
+						"label": "Sign-Off Comment",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"actions": [
+					{
+						"id": "initiate",
+						"label": "Initiate (verify statement balance)",
+						"icon": "PlayCircleOutline",
+						"visibleWhen": {
+							"field": "reconciliationStatus",
+							"in": [
+								"draft"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "initiate",
+						"description": "REQ-REC-002 statement-balance verification runs server-side; non-zero variance surfaces a warning but does not block."
+					},
+					{
+						"id": "verify",
+						"label": "Verify (sign off)",
+						"icon": "CheckCircleOutline",
+						"visibleWhen": {
+							"field": "reconciliationStatus",
+							"in": [
+								"in-progress"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "verify",
+						"description": "REQ-REC-006 closure check: all matches must be classified, sign-off comment is required."
+					},
+					{
+						"id": "close",
+						"label": "Close",
+						"icon": "LockOutline",
+						"visibleWhen": {
+							"field": "reconciliationStatus",
+							"in": [
+								"verified"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "close",
+						"description": "Seal the reconciliation. After this, the session is immutable per REQ-REC-003."
+					},
+					{
+						"id": "revert",
+						"label": "Revert for investigation",
+						"icon": "UndoVariant",
+						"visibleWhen": {
+							"field": "reconciliationStatus",
+							"in": [
+								"in-progress"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "revert",
+						"description": "Return the session to draft so the statement balance can be re-verified."
+					},
+					{
+						"id": "cancel",
+						"label": "Cancel",
+						"icon": "CancelOutline",
+						"visibleWhen": {
+							"field": "reconciliationStatus",
+							"in": [
+								"draft"
+							]
+						},
+						"type": "lifecycle-transition",
+						"transition": "cancel",
+						"description": "Abandon a draft reconciliation. Audit-trailed but excluded from aggregations."
+					}
+				],
+				"indexRoute": "Reconciliations",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "matches",
+							"label": "Matches",
+							"icon": "FormatListBulleted",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-related-list",
+									"props": {
+										"register": "shillinq",
+										"schema": "ReconciliationMatch",
+										"filterField": "reconId",
+										"filterValue": ":id",
+										"columns": [
+											{
+												"key": "matchId",
+												"label": "Match"
+											},
+											{
+												"key": "bankLineId",
+												"label": "Bank Line"
+											},
+											{
+												"key": "glTransactionId",
+												"label": "GL Transaction"
+											},
+											{
+												"key": "matchAlgorithm",
+												"label": "Algorithm"
+											},
+											{
+												"key": "resolutionStatus",
+												"label": "Resolution"
+											},
+											{
+												"key": "matchedAt",
+												"label": "Matched At"
+											}
+										],
+										"description": "Matches recorded for this reconciliation session (REQ-REC-005). Filter to resolutionStatus=null to see unresolved items needing REQ-REC-004 classification."
+									}
+								}
+							]
+						},
+						{
+							"id": "unresolved",
+							"label": "Unresolved Items",
+							"icon": "HelpRhombusOutline",
+							"order": 20,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-related-list",
+									"props": {
+										"register": "shillinq",
+										"schema": "ReconciliationMatch",
+										"filter": {
+											"reconId": ":id",
+											"resolutionStatus": null
+										},
+										"description": "Unresolved items for this session \u2014 bulk-classify via the resolution endpoint (REQ-REC-004).",
+										"bulkActions": [
+											{
+												"id": "mark-timing",
+												"label": "Mark timing",
+												"resolutionStatus": "timing"
+											},
+											{
+												"id": "mark-pending",
+												"label": "Mark pending",
+												"resolutionStatus": "pending"
+											},
+											{
+												"id": "mark-adjustment",
+												"label": "Mark adjustment",
+												"resolutionStatus": "adjustment"
+											}
+										]
+									}
+								}
+							]
+						},
+						{
+							"id": "closure-summary",
+							"label": "Closure Summary",
+							"icon": "FileCheckOutline",
+							"order": 30,
+							"widgets": [
+								{
+									"type": "static",
+									"componentName": "reconciliation-closure-summary",
+									"props": {
+										"description": "REQ-REC-006: pre-close summary \u2014 matched count, unmatched GL/bank counts, total variance, and sign-off comment field. Verifier MUST supply sign-off before the verify transition.",
+										"fields": [
+											"matchedCount",
+											"unmatchedGLCount",
+											"unmatchedBankCount",
+											"variance",
+											"signOffComment"
+										]
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "UnmatchedItems",
+			"route": "/bookkeeping/unmatched-items",
+			"type": "index",
+			"title": "Unmatched Items",
+			"config": {
+				"register": "shillinq",
+				"schema": "ReconciliationMatch",
+				"filter": {
+					"resolutionStatus": null
+				},
+				"groupBy": "reconId",
+				"columns": [
+					{
+						"key": "reconId",
+						"label": "Reconciliation",
+						"sortable": true
+					},
+					{
+						"key": "matchId",
+						"label": "Match",
+						"sortable": false
+					},
+					{
+						"key": "bankLineId",
+						"label": "Bank Line",
+						"sortable": false
+					},
+					{
+						"key": "glTransactionId",
+						"label": "GL Transaction",
+						"sortable": false
+					},
+					{
+						"key": "matchedAmount",
+						"label": "Amount (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "matchType",
+						"label": "Type",
+						"sortable": true
+					}
+				],
+				"defaultSort": "reconId",
+				"bulkActions": [
+					{
+						"id": "bulk-classify-timing",
+						"label": "Classify as Timing",
+						"icon": "ClockOutline",
+						"endpoint": "/api/reconciliations/:reconId/matches/bulk-resolve",
+						"payload": {
+							"resolutionStatus": "timing"
+						},
+						"description": "Bulk REQ-REC-004 classification \u2014 operator supplies one reason for the whole selection."
+					},
+					{
+						"id": "bulk-classify-pending",
+						"label": "Classify as Pending",
+						"icon": "TimerSandEmpty",
+						"endpoint": "/api/reconciliations/:reconId/matches/bulk-resolve",
+						"payload": {
+							"resolutionStatus": "pending"
+						}
+					},
+					{
+						"id": "bulk-classify-adjustment",
+						"label": "Classify as Adjustment",
+						"icon": "TuneVariant",
+						"endpoint": "/api/reconciliations/:reconId/matches/bulk-resolve",
+						"payload": {
+							"resolutionStatus": "adjustment"
+						}
+					}
+				],
+				"description": "REQ-REC-008: unresolved items across all open reconciliations, grouped by session. Bulk-classify multiple items at once with a shared reason."
+			}
+		},
+		{
+			"id": "VarianceReport",
+			"route": "/bookkeeping/variance-report",
+			"type": "report",
+			"title": "Variance Report",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankReconciliation",
+				"dashboard": {
+					"kpis": [
+						{
+							"id": "total-variance",
+							"label": "Total Variance (closed)",
+							"icon": "ScaleBalance",
+							"aggregation": "varianceByAccount",
+							"field": "variance",
+							"format": "currency",
+							"currency": "EUR"
+						},
+						{
+							"id": "recon-count",
+							"label": "Closed Reconciliations",
+							"icon": "FileCheckOutline",
+							"aggregation": "reconciliationCount",
+							"field": "count",
+							"format": "integer"
+						},
+						{
+							"id": "unresolved",
+							"label": "Unresolved Items (open sessions)",
+							"icon": "HelpRhombusOutline",
+							"source": "ReconciliationMatch",
+							"aggregation": "unresolvedByRecon",
+							"field": "count",
+							"format": "integer"
+						}
+					],
+					"table": {
+						"schema": "BankReconciliation",
+						"aggregation": "varianceByPeriod",
+						"filter": {
+							"reconciliationStatus": "closed"
+						},
+						"columns": [
+							{
+								"key": "bankAccountId",
+								"label": "Bank Account",
+								"sortable": true
+							},
+							{
+								"key": "statementPeriodEnd",
+								"label": "Period End",
+								"sortable": true
+							},
+							{
+								"key": "variance",
+								"label": "Variance (EUR)",
+								"sortable": true
+							},
+							{
+								"key": "matchedCount",
+								"label": "Matched",
+								"sortable": true
+							},
+							{
+								"key": "unmatchedGLCount",
+								"label": "Unmatched GL",
+								"sortable": true
+							},
+							{
+								"key": "unmatchedBankCount",
+								"label": "Unmatched Bank",
+								"sortable": true
+							}
+						],
+						"defaultSort": "statementPeriodEnd",
+						"detailRoute": "ReconciliationDetail"
+					},
+					"description": "REQ-REC-007: variance reporting derived from x-openregister-aggregations on BankReconciliation + ReconciliationMatch (no PHP VarianceReportService). KPIs cover variance by account; the table breaks down by period; open reconciliations are excluded per the aggregation filter."
+				}
+			}
+		},
+		{
+			"id": "ReconciliationReportDetail",
+			"route": "/bookkeeping/reconciliations/:id/report",
+			"type": "detail",
+			"title": "Reconciliation Report",
+			"config": {
+				"register": "shillinq",
+				"schema": "ReconciliationReport",
+				"fields": [
+					{
+						"key": "reconId",
+						"label": "Reconciliation",
+						"type": "string"
+					},
+					{
+						"key": "reportDate",
+						"label": "Report Date",
+						"type": "string"
+					},
+					{
+						"key": "matchedCount",
+						"label": "Matched",
+						"type": "number"
+					},
+					{
+						"key": "unmatchedGLCount",
+						"label": "Unmatched GL",
+						"type": "number"
+					},
+					{
+						"key": "unmatchedBankCount",
+						"label": "Unmatched Bank",
+						"type": "number"
+					},
+					{
+						"key": "totalVariance",
+						"label": "Total Variance (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "preparedBy",
+						"label": "Preparer",
+						"type": "string"
+					},
+					{
+						"key": "verifiedBy",
+						"label": "Verifier",
+						"type": "string"
+					},
+					{
+						"key": "signOffComment",
+						"label": "Sign-Off Comment",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": false,
+				"indexRoute": "Reconciliations",
+				"description": "REQ-REC-001 + REQ-REC-006 sealed audit artifact. Immutable once created."
 			}
 		}
 	]
