@@ -56,55 +56,87 @@
 
 ## Schema Declarations
 
-- [ ] Task 5: Declare the `Payee` schema in `lib/Settings/shillinq_register.json`
+- [x] Task 5: Declare the `Payee` schema in `lib/Settings/shillinq_register.json`
   with all REQ-AP-002 fields (vendorNumber, name, tradingName, kvkNumber,
   btwNumber, paymentTermDays, defaultExpenseAccountNumber, bankAccount,
   creditTerms, dunningPolicyRef, address, email, phone, administrationId,
   lifecycleState, contactRef); use `schema:Organization` per ADR-011
+  - Declared in `lib/Settings/register.d/bookkeeping-accounts-payable-core.json`
+    per ADR-037 modular-register-fragment convention (shillinq_register.json is
+    never edited directly).
 
-- [ ] Task 6: Declare the `APTransaction` schema in
+- [x] Task 6: Declare the `APTransaction` schema in
   `lib/Settings/shillinq_register.json` with all REQ-AP-003 fields (invoiceNumber,
   vendorId, invoiceDate, dueDate, currency, totalAmount, taxAmount, lines,
   sourceDocumentUri, state, glTransactionId, administrationId); use
   `schema:Invoice` per ADR-011
+  - Declared in the same register.d fragment with full lifecycle (Task 8) and
+    aged-payables aggregations (Tasks 10–12) inline.
 
-- [ ] Task 7: Declare the `DunningNotice` schema in
+- [x] Task 7: Declare the `DunningNotice` schema in
   `lib/Settings/shillinq_register.json` with all REQ-AP-005 fields (invoiceRef,
   reminderLevel, dispatchedAt, dispatchedBy, templateRef, acknowledgedAt,
   administrationId)
+  - Declared in the same register.d fragment.
 
 ## Lifecycle & Aggregations
 
-- [ ] Task 8: Add `x-openregister-lifecycle` to `APTransaction` declaring every
+- [x] Task 8: Add `x-openregister-lifecycle` to `APTransaction` declaring every
   transition in REQ-AP-004 (`draft → received → issued → paid` plus `overdue` /
   `disputed` / `written-off` / `voided`) consuming OR dunning-workflow per
   REQ-AP-005 (or `APGuard` fallback per ADR-031 exception, documented); ensure
   `issued → overdue` fires via OR's `ScheduledWorkflow` (path 2 per ADR-031)
+  - Lifecycle declared inline on `APTransaction`. The `markOverdue` transition
+    carries `x-scheduled-workflow.primitive: OR.ScheduledWorkflow` with a
+    daily 01:00 cron, per ADR-031 path 2 (no shillinq `*Job` PHP class). The
+    OR dunning-workflow integration is declared via
+    `x-openregister-lifecycle.requires.dunning.source =
+    openregister-dunning-workflow`; the `receive` and `writeOff` transitions
+    declare `OCA\Shillinq\Lifecycle\APGuard` ADR-031-exception guards
+    (uniqueness + reason-required), documented as temporary fallbacks pending
+    OR extension stabilisation per REQ-AP-005.
 
-- [ ] Task 9: Implement the write-off lifecycle action per REQ-AP-005 —
+- [x] Task 9: Implement the write-off lifecycle action per REQ-AP-005 —
   materialises a compensating GL posting (debit bad-debt recovery/write-off
   account, credit AP payable) via T1's materialisation extension; audit-trailed
   reason required
+  - `APTransaction.x-openregister-lifecycle.transitions.writeOff` declares:
+    `requires: OCA\Shillinq\Lifecycle\APGuard::requireWriteOffReason`,
+    `x-rbac-role: controller`, action documents the compensating posting
+    (debit AP payable, credit bad-debt recovery/write-off account) and sets
+    `writeOffGlTransactionId` back-reference. `writeOffReason` schema field is
+    required at runtime by the guard.
 
-- [ ] Task 10: Declare aged payables detail aggregation as
+- [x] Task 10: Declare aged payables detail aggregation as
   `x-openregister-aggregations` query per REQ-AP-006 (GROUP BY
   `(vendorId, dueDateBucket)`, exclude paid/written-off, order by vendor +
   dueDate); bucket thresholds from `IAppConfig['ap.aging.buckets']` with
   defaults `[30, 60, 90]`
+  - Declared as `x-openregister-aggregations.agedPayablesDetail` on
+    `APTransaction`. WHERE excludes paid / written-off / voided.
 
-- [ ] Task 11: Declare aged payables summary aggregation as
+- [x] Task 11: Declare aged payables summary aggregation as
   `x-openregister-aggregations` query per REQ-AP-007 (GROUP BY
   `(vendorId, agingBucket)`, SUM amount, exclude paid/written-off, order by
   bucket DESC + amount DESC); include count and percentage calculations
+  - Declared as `x-openregister-aggregations.agedPayablesSummary` on
+    `APTransaction`. Includes `count` + `totalAmount` + `percentageOfTotal`
+    via window-sum.
 
-- [ ] Task 12: Declare aged payables timeline aggregation as
+- [x] Task 12: Declare aged payables timeline aggregation as
   `x-openregister-aggregations` query per REQ-AP-008 (GROUP BY `dueDate`,
   exclude paid/written-off, order by dueDate ASC); include daysUntilDue
   calculation and vendor summaries
+  - Declared as `x-openregister-aggregations.agedPayablesTimeline` on
+    `APTransaction`. Includes `daysUntilDue` computed field and per-vendor
+    sub-list aggregate.
 
-- [ ] Task 13: Declare payment matching path per REQ-AP-009 — bank-rec emits
+- [x] Task 13: Declare payment matching path per REQ-AP-009 — bank-rec emits
   candidate `ReconciliationMatch`; operator confirms via AP detail; AP lifecycle
   transitions `issued → paid` / `partially-paid → paid` via lifecycle action
+  - `matchFull` + `matchPartial` transitions declared on `APTransaction`. Both
+    accept `issued`, `overdue`, and `partially-paid` as origin states; the
+    cumulative-amount predicate gates which transition fires per REQ-AP-009.
 
 ## Manifest & Navigation
 
