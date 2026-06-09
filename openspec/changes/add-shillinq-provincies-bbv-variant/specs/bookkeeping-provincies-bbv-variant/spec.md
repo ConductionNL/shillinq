@@ -7,7 +7,7 @@
 
 ## ADDED Requirements
 
-### REQ-PRB-001: The system SHALL support a `bbvVariant: 'provincie'` overlay on the existing BBV-compliance register
+### Requirement: REQ-PRB-001 — The system SHALL support a `bbvVariant: 'provincie'` overlay on the existing BBV-compliance register
 
 The same `bbvVariant` overlay declared by REQ-WSB-001 MUST accept
 the value `'provincie'`. When set, records MUST be interpreted
@@ -22,9 +22,9 @@ register.
 - **THEN** every seeded `Account` and `BBVProgramma` record MUST
   carry `bbvVariant: 'provincie'`.
 
-### REQ-PRB-002: The system SHALL declare the provinciale BBV programma-indeling per `kerntaak`
+### Requirement: REQ-PRB-002 — The system SHALL declare the provinciale BBV programma-indeling per `kerntaak`
 
-Provincies group postings by `kerntaak` — the seven canonical
+Provincies MUST group postings by `kerntaak` — the seven canonical
 provinciale kerntaken (ruimte, mobiliteit, water, milieu, cultuur,
 economie, bestuur). The `BBVProgramma` schema's
 `programmaStructure` discriminator MUST accept the value
@@ -40,7 +40,7 @@ variant (REQ-WSB-002).
 - **THEN** the programma-level aggregation MUST roll up under the
   `kerntaak` structure.
 
-### REQ-PRB-003: The system SHALL ship a provinciale BBV kerntaken seed (`bbv-provincies-kerntaken-2026.json`)
+### Requirement: REQ-PRB-003 — The system SHALL ship a provinciale BBV kerntaken seed (`bbv-provincies-kerntaken-2026.json`)
 
 The seed file MUST live at
 `lib/Settings/seeds/bbv-provincies-kerntaken-2026.json`, MUST carry
@@ -56,10 +56,10 @@ account sub-trees. Seed loading MUST be idempotent.
 - **THEN** all seven canonical kerntaken (ruimte, mobiliteit,
   water, milieu, cultuur, economie, bestuur) MUST be present.
 
-### REQ-PRB-004: The system SHALL declare a `ProvincialeFondsPosting` register for provinciefonds and decentralisatie-uitkering boekingen
+### Requirement: REQ-PRB-004 — The system SHALL declare a `ProvincialeFondsPosting` register for provinciefonds and decentralisatie-uitkering boekingen
 
-Provinciale fonds boekingen (provinciefonds, algemene uitkering,
-decentralisatie-uitkering, integratie-uitkering) MUST be expressible
+The system MUST express provinciale fonds boekingen (provinciefonds,
+algemene uitkering, decentralisatie-uitkering, integratie-uitkering)
 via a `ProvincialeFondsPosting` register with fields:
 `fondsType` (enum), `uitkeringJaar` (integer), `uitkeringBedrag`
 (number ≥ 0), `uitkeringBeschikking` (string — beschikkingnummer),
@@ -77,11 +77,11 @@ balanced `GLTransaction` per T1 REQ-GL-001.
   the provinciefonds inkomstenrekening; **AND** the journal MUST
   reference the fonds-posting via `sourceReference`.
 
-### REQ-PRB-005: The system SHALL declare opcenten MRB als een sub-administratie van motorrijtuigenbelasting-inkomsten
+### Requirement: REQ-PRB-005 — The system SHALL declare opcenten MRB als een sub-administratie van motorrijtuigenbelasting-inkomsten
 
-Provincies heffen `opcenten` op de motorrijtuigenbelasting (MRB).
 The provincie's opcenten administratie MUST be expressible as a
-sub-administration of MRB-inkomsten — a `GLLine` field
+sub-administration of MRB-inkomsten — provincies heffen `opcenten`
+op de motorrijtuigenbelasting (MRB) en a `GLLine` field
 `opcentenTarief` (number ≥ 0, the per-provincie tariefopslag in
 procenten) MUST be available on lines posted to the MRB-opcenten
 inkomstenrekening. Aggregations MUST be able to roll up opcenten-
@@ -96,7 +96,7 @@ inkomsten per provincie per period.
 - **THEN** the line MUST validate; **AND** the opcenten-rollup
   aggregation for the period MUST include the posting.
 
-### REQ-PRB-006: Provincie sector view SHALL be reachable through a feature-flag-controlled manifest navigation entry
+### Requirement: REQ-PRB-006 — Provincie sector view SHALL be reachable through a feature-flag-controlled manifest navigation entry
 
 `src/manifest.json` MUST declare a feature-flag-controlled menu
 entry (`featureFlags.gov-provincie`) under
