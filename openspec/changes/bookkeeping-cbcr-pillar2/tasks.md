@@ -247,9 +247,22 @@
   bookkeeping-deferred-tax apply cycle on a live instance — see
   honest-deferral note below.)*
 
-- [ ] Task 26 (DEFERRED — needs the not-yet-merged bookkeeping-vpb-mkb app + a live instance): Integrate with `bookkeeping-vpb-mkb` — NL Vpb current year +
+- [x] Task 26: Integrate with `bookkeeping-vpb-mkb` — NL Vpb current year +
   prior-year amounts flow into per-entity tax inputs; consolidation of Vpb per
   NL fiscal unity handled correctly per group structure
+  *(declarative — adds `x-openregister-vpb-current-source` block on
+  `Pillar2JurisdictionComputation` pinning the NL Vpb feed contract:
+  sourceApp=bookkeeping-vpb-mkb, sourceSchemas=VpbAangifte + FiscaleEenheid +
+  DefinitieveAanslag, appliesTo=`jurisdiction='NL'`,
+  groupBy=[period,jurisdiction], fiscalUnityRule collapsing fiscale-eenheid
+  members into a single moederentiteit line per Vpb art. 15 (no
+  intra-FE double-counting), coveredTaxMap appending an `nl-vpb-current`
+  entry to `coveredTaxAdjustments[]` sourced from
+  `VpbAangifte.currentYearTaxPayable` + `DefinitieveAanslag.priorYearAdjustment`.
+  Non-NL jurisdiction records continue to source their covered tax from
+  local-jurisdiction tax provisions. The runtime consumer ships with the
+  not-yet-merged bookkeeping-vpb-mkb apply cycle on a live instance —
+  see honest-deferral note below.)*
 
 - [ ] Task 27 (DEFERRED — needs the not-yet-merged bookkeeping-fixed-assets-depreciation app + a live instance): Integrate with `bookkeeping-fixed-assets-depreciation` —
   tangible assets net book value per jurisdiction flows into SBIE carve-out

@@ -325,6 +325,31 @@
           "excessProfit": {"type": "number", "description": "Excess profit = max(0, GloBE income - SBIE) (REQ-CBC-005).", "expr": "MAX(0, @self.globeIncome - @self.substanceBasedIncomeExclusion)"},
           "topUpTaxAmount": {"type": "number", "description": "Top-up tax = top-up rate * excess profit (REQ-CBC-004/005).", "expr": "@self.topUpTaxRate * @self.excessProfit"}
         },
+        "x-openregister-vpb-current-source": {
+          "description": "Declarative NL Vpb (vennootschapsbelasting) current-tax feed for the adjustedCoveredTaxes input on NL-resident jurisdiction computations (REQ-CBC-004). Per-entity Vpb current-year + prior-year amounts sourced from the bookkeeping-vpb-mkb app; the NL fiscal-unity consolidation collapses fiscale-eenheid members into a single entity-level current-tax line before the per-jurisdiction sum, so intra-fiscale-eenheid Vpb double-counting cannot occur. Only the NL jurisdiction record is fed; non-NL jurisdiction computations continue to source their covered tax from local-jurisdiction tax provisions.",
+          "sourceApp": "bookkeeping-vpb-mkb",
+          "sourceSchemas": {
+            "currentTax": "VpbAangifte",
+            "fiscaleEenheid": "FiscaleEenheid",
+            "priorYear": "DefinitieveAanslag"
+          },
+          "appliesTo": "jurisdiction = 'NL'",
+          "groupBy": ["period", "jurisdiction"],
+          "fiscalUnityRule": "Fiscale eenheid members are collapsed into a single moederentiteit current-tax line before the per-jurisdiction sum (Vpb art. 15); intra-fiscale-eenheid transactions are already eliminated upstream in bookkeeping-vpb-mkb.",
+          "coveredTaxMap": {
+            "appendTo": "coveredTaxAdjustments[]",
+            "type": "nl-vpb-current",
+            "amountExpr": "SUM(VpbAangifte.currentYearTaxPayable WHERE period = @self.period) + SUM(DefinitieveAanslag.priorYearAdjustment WHERE period = @self.period)",
+            "descriptionExpr": "CONCAT('NL Vpb (current + prior-year): FY', @self.period)"
+          },
+          "writeBack": {
+            "schema": "Pillar2JurisdictionComputation",
+            "filter": "period = @sourcePeriod AND jurisdiction = 'NL'"
+          },
+          "owner": "bookkeeping-vpb-mkb",
+          "tier": "T3",
+          "status": "DEFERRED — declarative contract only; live integration ships with the not-yet-merged bookkeeping-vpb-mkb apply cycle on a live instance."
+        },
         "x-openregister-deferred-tax-source": {
           "description": "Declarative deferred-tax feed for the adjusted covered taxes (REQ-CBC-004) and the GloBE income corrections (REQ-CBC-003). Per-jurisdiction DTA timing differences sourced from the bookkeeping-deferred-tax app: commercial-fiscaal divergence (IFRS valuation vs Vpb box 1 valuation) is recast on the GloBE basis per OESO Model Rules Art. 4.4 (covered-tax effect) + Art. 3.2.7 (DTA effect on GloBE income). The DTA effect is appended to globeIncomeAdjustments as type=deferred-tax-effect; the covered-tax effect is appended to coveredTaxAdjustments and folded into adjustedCoveredTaxes.",
           "sourceApp": "bookkeeping-deferred-tax",
