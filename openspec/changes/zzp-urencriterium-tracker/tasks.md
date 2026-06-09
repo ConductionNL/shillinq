@@ -52,7 +52,7 @@
 
 - [x] Task 14: Implement norm-determination logic per REQ-URC-000 on tracker init — query entrepreneur profiel (rechtsvorm, AO-status from `hrmq`, parallel loondienst, meewerkende-partner-status), auto-set doelNorm (1.225 default / 800 AO / 525 meewerkaftrek), grotendeelsCriterium applicability, normGrondslag; no manual entry required
 
-- [ ] Task 15: Implement grotendeels-criterium check per REQ-URC-007 — daily batch calculates (loondienst-uren + onderneming-uren); if loondienst > 50% total, flags NIET_GROTENDEELS_ONDERNEMING and blocks zelfstandigenaftrek; stored on `UrencriteriumYear`
+- [x] Task 15: Implement grotendeels-criterium check per REQ-URC-007 — daily batch calculates (loondienst-uren + onderneming-uren); if loondienst > 50% total, flags NIET_GROTENDEELS_ONDERNEMING and blocks zelfstandigenaftrek; stored on `UrencriteriumYear`
 
 - [ ] Task 16: Implement WBSO-uren sync per REQ-URC-005 — automatic feed from `bookkeeping-wbso-administratie` → `UrenRegistratie.R_AND_D_WBSO` without duplication; reconciliation check flags discrepancies between WBSO-recorded-uren and time-tracking-uren
 
