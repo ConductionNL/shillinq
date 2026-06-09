@@ -1,0 +1,27 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"source": "NL-taxonomie nt17 — SBR-banken consortium / Logius",
+		"variant": "sbr-banken-kredietrapportage",
+		"taxonomyVersion": "nt17",
+		"entryPoint": "sbr-banken-kredietrapportage",
+		"description": "Template mapping from FinancialStatement lines to NL-taxonomie nt17 concepts for the SBR-banken consortium kredietrapportage entry point (REQ-SBR-005, REQ-SBR-006). Used by the bank consortium for credit reporting (jaarcijfers + tussentijdse cijfers). Operator-extensible for bank-specific concept additions.",
+		"imported": "2026-06-09T00:00:00Z"
+	},
+	"mapping": {
+		"slug": "map-sbr-banken-kredietrapportage-nt17",
+		"name": "SBR-banken kredietrapportage — NL-taxonomie nt17",
+		"entryPoint": "sbr-banken-kredietrapportage",
+		"taxonomyVersion": "nt17",
+		"records": [
+			{"financialStatementLineId": "balans.activa.vasteActiva.totaal", "taxonomyConcept": "bb-i:FixedAssetsTotal", "contextRef": "instant_eindBoekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "balans.activa.vlottendeActiva.totaal", "taxonomyConcept": "bb-i:CurrentAssetsTotal", "contextRef": "instant_eindBoekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "balans.passiva.eigenVermogen.totaal", "taxonomyConcept": "bb-i:EquityTotal", "contextRef": "instant_eindBoekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "balans.passiva.kortlopendeSchulden.totaal", "taxonomyConcept": "bb-i:CurrentLiabilitiesTotal", "contextRef": "instant_eindBoekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "balans.passiva.langlopendeSchulden.totaal", "taxonomyConcept": "bb-i:LongTermLiabilitiesTotal", "contextRef": "instant_eindBoekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "winstEnVerlies.ebitda", "taxonomyConcept": "bb-i:EBITDA", "contextRef": "duration_boekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "winstEnVerlies.solvabiliteit", "taxonomyConcept": "bb-i:SolvencyRatio", "contextRef": "instant_eindBoekjaar", "unitRef": "RATIO"}
+		]
+	}
+}

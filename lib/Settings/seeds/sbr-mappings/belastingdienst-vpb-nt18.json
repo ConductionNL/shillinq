@@ -1,0 +1,31 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"source": "NL-taxonomie nt18 — Logius",
+		"variant": "belastingdienst-vpb",
+		"taxonomyVersion": "nt18",
+		"entryPoint": "belastingdienst-vpb",
+		"description": "Template mapping from FinancialStatement lines to NL-taxonomie nt18 concepts for the Belastingdienst Vpb aangifte entry point (REQ-SBR-005, REQ-SBR-006). nt18 successor of belastingdienst-vpb-nt17.json — both coexist for historical reproducibility.",
+		"imported": "2026-06-09T00:00:00Z"
+	},
+	"mapping": {
+		"slug": "map-belastingdienst-vpb-nt18",
+		"name": "Belastingdienst Vpb aangifte — NL-taxonomie nt18",
+		"entryPoint": "belastingdienst-vpb",
+		"taxonomyVersion": "nt18",
+		"records": [
+			{"financialStatementLineId": "vpb.commercieelResultaat", "taxonomyConcept": "bd-i:CommercialResult", "contextRef": "duration_belastingjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "vpb.fiscaleCorrecties.nietAftrekbareKosten", "taxonomyConcept": "bd-i:NonDeductibleCosts", "contextRef": "duration_belastingjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "vpb.fiscaleCorrecties.aftrekbeperking", "taxonomyConcept": "bd-i:DeductionLimitation", "contextRef": "duration_belastingjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "vpb.fiscaleCorrecties.deelnemingsvrijstelling", "taxonomyConcept": "bd-i:ParticipationExemption", "contextRef": "duration_belastingjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "vpb.belastbaarBedrag", "taxonomyConcept": "bd-i:TaxableAmount", "contextRef": "duration_belastingjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "vpb.verschuldigdeBelasting", "taxonomyConcept": "bd-i:TaxPayable", "contextRef": "duration_belastingjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "vpb.voorvoegingsverlies.verrekend", "taxonomyConcept": "bd-i:LossCarryForwardUsed", "contextRef": "duration_belastingjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "vpb.innovatiebox.voordeel", "taxonomyConcept": "bd-i:InnovationBoxBenefit", "contextRef": "duration_belastingjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "vpb.investeringsaftrek.kia", "taxonomyConcept": "bd-i:SmallScaleInvestmentDeduction", "contextRef": "duration_belastingjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "vpb.investeringsaftrek.eia", "taxonomyConcept": "bd-i:EnergyInvestmentDeduction", "contextRef": "duration_belastingjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "vpb.investeringsaftrek.mia", "taxonomyConcept": "bd-i:EnvironmentalInvestmentDeduction", "contextRef": "duration_belastingjaar", "unitRef": "EUR"}
+		]
+	}
+}

@@ -180,6 +180,7 @@ class InitializeSettings implements IRepairStep
             $this->seedRetentionPolicies(output: $output);
             $this->seedStatementManifests(output: $output);
             $this->seedWmoCommercialActivities(output: $output);
+            $this->seedSbrMappings(output: $output);
         } catch (\Throwable $e) {
             $output->warning('Could not auto-configure Shillinq: '.$e->getMessage());
             $this->logger->error(
@@ -1522,4 +1523,132 @@ class InitializeSettings implements IRepairStep
         $output->warning('WMO seeding issue: '.($result['message'] ?? 'unknown error'));
 
     }//end seedWmoCommercialActivities()
+
+
+    /**
+     * Seed NL-taxonomie SBR/XBRL mapping templates idempotently
+     * (REQ-SBR-005, REQ-SBR-006).
+     *
+     * Iterates every file under `lib/Settings/seeds/sbr-mappings/` and seeds
+     * the contained mapping template as an OpenRegister `Mapping` record
+     * (consumed by `XbrlInstance.mappingId`). Deduplication key is the
+     * mapping slug `(entryPoint, taxonomyVersion)`; if a Mapping with the
+     * same `reference` (or `slug`) already exists in the OR MappingMapper,
+     * the seed is skipped — operator edits to the line→concept records
+     * persist across repair re-runs.
+     *
+     * The MappingMapper consumption is wrapped in a defensive Throwable
+     * catch: when the OR `MappingMapper` service is not available
+     * (OpenRegister disabled / pre-install), the seed degrades to a
+     * warning instead of fatal — same shape as the surrounding seed
+     * methods.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-shillinq-sbr-xbrl-reporting/tasks.md#task-8
+     */
+    private function seedSbrMappings(IOutput $output): void
+    {
+        $seedDir = __DIR__.'/../Settings/seeds/sbr-mappings';
+        if (is_dir($seedDir) === false) {
+            $output->info('Shillinq: SBR/XBRL mapping seed dir not present, skipping');
+            return;
+        }
+
+        $files = glob($seedDir.'/*.json');
+        if ($files === false || empty($files) === true) {
+            $output->info('Shillinq: SBR/XBRL mapping seed dir empty, skipping');
+            return;
+        }
+
+        try {
+            // OR MappingMapper is the canonical surface for Mapping CRUD;
+            // it carries the findByRef() dedupe path REQ-SBR-006 expects.
+            $mappingMapper = $this->container->get('OCA\OpenRegister\Db\MappingMapper');
+        } catch (\Throwable $e) {
+            $output->warning(
+                'Shillinq: OpenRegister MappingMapper not available, skipping SBR/XBRL mapping seed ('
+                .$e->getMessage().')'
+            );
+            return;
+        }
+
+        $seeded  = 0;
+        $skipped = 0;
+        $failed  = 0;
+
+        foreach ($files as $file) {
+            $content = file_get_contents($file);
+            if ($content === false) {
+                $output->warning('Shillinq: failed to read SBR mapping seed '.basename($file));
+                $failed++;
+                continue;
+            }
+
+            $data = json_decode($content, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                $output->warning(
+                    'Shillinq: failed to parse SBR mapping seed '.basename($file).': '.json_last_error_msg()
+                );
+                $failed++;
+                continue;
+            }
+
+            $mapping = ($data['mapping'] ?? null);
+            if (is_array($mapping) === false) {
+                $output->warning('Shillinq: SBR mapping seed '.basename($file).' has no `mapping` block, skipping');
+                $failed++;
+                continue;
+            }
+
+            $slug = ($mapping['slug'] ?? null);
+            if ($slug === null || $slug === '') {
+                $output->warning('Shillinq: SBR mapping seed '.basename($file).' has no slug, skipping');
+                $failed++;
+                continue;
+            }
+
+            try {
+                // Dedupe on the slug/reference — operator-edited mappings persist.
+                $existing = $mappingMapper->findByRef($slug);
+                if (empty($existing) === false) {
+                    $skipped++;
+                    continue;
+                }
+
+                $mappingMapper->createFromArray(
+                    [
+                        'reference'   => $slug,
+                        'name'        => ($mapping['name'] ?? $slug),
+                        'description' => 'SBR/XBRL line→concept mapping seeded by '
+                            .'add-shillinq-sbr-xbrl-reporting for entry point '
+                            .($mapping['entryPoint'] ?? 'unknown').' taxonomy '
+                            .($mapping['taxonomyVersion'] ?? 'unknown').'.',
+                        'mapping'     => ($mapping['records'] ?? []),
+                    ]
+                );
+                $seeded++;
+            } catch (\Throwable $e) {
+                $output->warning(
+                    'Shillinq: SBR mapping seed '.basename($file).' import failed: '.$e->getMessage()
+                );
+                $this->logger->warning(
+                    'Shillinq: SBR mapping seed import failed',
+                    [
+                        'file'      => basename($file),
+                        'exception' => $e->getMessage(),
+                    ]
+                );
+                $failed++;
+            }//end try
+        }//end foreach
+
+        $output->info(
+            'Shillinq: SBR/XBRL mappings seeded: '.$seeded.' created, '.$skipped
+            .' skipped (already exist), '.$failed.' failed.'
+        );
+
+    }//end seedSbrMappings()
 }//end class
