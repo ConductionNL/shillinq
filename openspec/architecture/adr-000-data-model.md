@@ -8561,3 +8561,61 @@ manifest navigation: `Bookkeeping > SBR/XBRL Filings` with `type: index`
 + `type: detail` pages rendered by `CnIndexPage` / `CnDetailPage`),
 ADR-031 (declarative state machine on the schema; no `XbrlReportService`),
 ADR-037 (modular register fragment).
+
+## bookkeeping-rekenkamer-audit-pack — audit-flag-on-every-register + destruction-schedule lifecycle
+
+_The Rekenkamer / Accountantscontrole audit pack (capability
+`bookkeeping-rekenkamer-audit-pack`, Tier T2/T3) imposes two
+cross-cutting rules on the shillinq data model. First, every register
+declared by T1 + T2 + T3 + every future bookkeeping or procurement
+tier — `Account`, `GLTransaction`, `GLLine`, `JournalEntry`,
+`APInvoice`, `ARInvoice`, `PurchaseOrder`, `Tender`, `Bid`,
+`AwardDecision`, `Payment`, `Receipt`, `ApprovalRequest`,
+`ApprovalTask`, `SigningAuthority` and every other in-scope schema —
+MUST carry `"x-openregister-audit-trail": { "enabled": true, "description":
+"..." }` in its schema metadata (REQ-RAP-001). This switches on OR's
+`audit-trail-immutable` channel so every create / update / lifecycle
+transition is recorded with actor + before/after + hash-chained
+timestamp. The CI gate `tests/validate-registers.js` mechanically
+enforces the rule on every PR (the schemas in `NON_BOOKKEEPING` —
+inventory, bookings, notification-delivery, the scaffolding `example`
+— are the only legitimate opt-outs; procurement schemas like
+`PurchaseOrder`, `Tender`, `Bid`, `AwardDecision` stay OUT of
+NON_BOOKKEEPING per REQ-RAP-001 and ARE asserted). Per ADR-022
+anti-pattern enumeration (REQ-RAP-010), `lib/Db/Audit*`,
+`lib/Service/Audit*`, `lib/Db/EventLog*`, `lib/Db/ChangeLog*`,
+`AuditLogger`, `EventLogger`, `ChangeTracker` and app-local audit
+deletion logic are REVIEW-BLOCKING — every audit event MUST flow
+through OR. The existing `AuditExportService` (Slice 11 of
+`bookkeeping-purchase-order-3way`) and `ComplianceExportService`
+(REQ-RAP-005 / REQ-RAP-009) both READ OR's audit-trail; neither
+stores audit events._
+
+_Second, destruction-eligible records (any record subject to
+Archiefwet retention) follow the state machine `active →
+marked-for-destruction → destruction-completed`. `destruction-completed`
+is TERMINAL and immutable — Archiefwet requires proof of destruction,
+so the record itself is preserved as a state-change marker, not truly
+deleted. `lib/Lifecycle/DestructionScheduleGuard` enforces the
+preconditions: `active → marked-for-destruction` needs a
+`compliance-officer` role + the record older than `RETENTION_FLOOR_YEARS
+= 7` (Archiefwet article 7); `marked-for-destruction →
+destruction-completed` needs a compliance-officer or the
+`shillinq-destruction-runner` system actor; `marked-for-destruction →
+active` is permitted for reversal until the destruction order is
+executed (REQ-RAP-008). Every transition emits an audit event with
+`action=lifecycle:{from}→{to}`, `selectielijstCode` (default `5.1.2`),
+`legalBasis` (default `Archiefwet Article 7`), `actor`, and the OR
+hash-chain `previousHash` + `eventHash` per ADR-022. Cross-references
+to the five Bookkeeping audit-surface manifest entries —
+`BookkeepingSigningTrail` (REQ-RAP-002), `BookkeepingDestructionReport`
+(REQ-RAP-003), `BookkeepingChangeHistory` (REQ-RAP-004),
+`BookkeepingComplianceExport` (REQ-RAP-005) and `BookkeepingActivityFeed`
+(REQ-RAP-006) — are documented in
+`openspec/changes/bookkeeping-rekenkamer-audit-pack/specs/bookkeeping-rekenkamer-audit-pack/spec.md`._
+
+**Cites:** ADR-022 (audit-trail-immutable consumed from OR; anti-pattern
+enumeration for `lib/Db/Audit*` / `lib/Service/Audit*`), ADR-031
+(`DestructionScheduleGuard` as ADR-031 exception path; replace with
+declarative DSL when engine supports age + role + terminal-state
+primitives), ADR-037 (modular register fragments).
