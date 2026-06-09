@@ -15,11 +15,23 @@
   - Verified: no `lib/Cron/*Audit*.php`, no `lib/BackgroundJob/*Audit*.php`, no `AuditLogger.php` / `EventLogger.php` / `ChangeTracker.php` services.
   - Verified: no prior `bookkeeping-rekenkamer-audit-pack` capability spec under `openspec/specs/` (only the proposed change under `openspec/changes/`).
 
-- [ ] Task 2: Author `specs/bookkeeping-rekenkamer-audit-pack/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T2/T3 (compliance + operations)` / `Depends on: bookkeeping-chart-of-accounts, accounts-payable-receivable, procurement-compliance` header, `REQ-RAP-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks with GIVEN/WHEN/THEN; explicitly cite ADR-022 forbiddance of app-local audit
+- [x] Task 2: Author `specs/bookkeeping-rekenkamer-audit-pack/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T2/T3 (compliance + operations)` / `Depends on: bookkeeping-chart-of-accounts, accounts-payable-receivable, procurement-compliance` header, `REQ-RAP-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks with GIVEN/WHEN/THEN; explicitly cite ADR-022 forbiddance of app-local audit
+  - `specs/bookkeeping-rekenkamer-audit-pack/spec.md` exists with the required header (Status: proposed / Scope: shillinq / Tier: T2/T3 (compliance + operations + governance) / Depends on: bookkeeping-chart-of-accounts, accounts-payable-receivable, procurement-compliance).
+  - Ten requirements REQ-RAP-001 … REQ-RAP-010 are declared with RFC 2119 MUST / SHALL / SHALL NOT / MAY keywords and use the canonical `### Requirement: REQ-RAP-NNN — <name>` heading shape the openspec validator expects.
+  - Every requirement carries at least one `#### Scenario:` block (most carry 2-3) in GIVEN / WHEN / THEN form.
+  - REQ-RAP-001 + REQ-RAP-010 cite ADR-022 explicitly; REQ-RAP-010 enumerates the anti-pattern list (no `lib/Db/Audit*`, no `lib/Service/Audit*`, no `EventLog*`, no `ChangeLog*`, no `AuditLogger` / `EventLogger` / `ChangeTracker` services, no app-local audit deletion logic).
+  - `openspec change validate bookkeeping-rekenkamer-audit-pack` exits clean.
 
-- [ ] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions / Dutch compliance context (Burgerlijk Wetboek, Archiefwet, BBV, AVG/GDPR, Woo)
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks / Rollback / Open Questions / Dutch compliance context (Burgerlijk Wetboek, Archiefwet, BBV, AVG/GDPR, Woo)
+  - `proposal.md` declares `kind: config` per ADR-032 and notes "conforms to the shared [`nextcloud-app`](../../specs/nextcloud-app/spec.md) spec".
+  - Sections present: Summary / Motivation / Affected Projects (shillinq + openregister + nextcloud-core) / Scope (in scope / out of scope) / Approach / New Dependencies / Impact / Cross-Project Dependencies / Risks (4 risks with severity + mitigation) / Rollback Strategy / Open Questions (4 questions).
+  - Dutch compliance context surfaces in the Motivation section: Burgerlijk Wetboek Boek 2 (decision authenticity + change history) / Archiefwet (destruction schedules with audit certification) / BBV (programme transparency) / AVG / GDPR (subject access with activity logs) / Woo / Openbaarheid (procurement decision trails).
 
-- [ ] Task 4: Author `design.md` with Reuse Analysis table; document the five specialized audit surfaces (signing trail, destruction report, change history, compliance export, activity feed), the destruction schedule lifecycle state-transition model, and the CI enforcement of the audit flag
+- [x] Task 4: Author `design.md` with Reuse Analysis table; document the five specialized audit surfaces (signing trail, destruction report, change history, compliance export, activity feed), the destruction schedule lifecycle state-transition model, and the CI enforcement of the audit flag
+  - `design.md` carries Context / Goals / Non-Goals / Decisions (D1 audit-flag-CI / D2 five surfaces / D3 destruction-schedule lifecycle / D4 GDPR PII exclusion / D5 Activity-app integration / D6 anti-pattern forbiddance) / Reuse Analysis table (10 rows mapping capability → existing OR / Nextcloud abstraction → reuse strategy) / Declarative-vs-imperative decision per ADR-031 / Seed Data + Example Objects / Risks / Migration Plan / Open Questions.
+  - The five surfaces table (D2) maps surface → owner → question answered → users (Auditor, Compliance Officer, Bookkeeper, External Auditor, Staff).
+  - The destruction-schedule state-transition model (D3) is described prose-style and matched by `lib/Lifecycle/DestructionScheduleGuard` (Task 14).
+  - The CI enforcement of the audit flag (D1) is matched by `tests/validate-registers.js` (Task 12).
 
 - [x] Task 5: Audit every existing bookkeeping and procurement register (Account, GLTransaction, GLLine, JournalEntry, Invoice, APInvoice, ARInvoice, PurchaseOrder, etc.) and confirm/add `x-openregister-audit: true` per REQ-RAP-001
   - Ran `node tests/validate-registers.js` against the full 422-schema corpus. The 12 REQ-RAP-001-named registers (T1: Account, GLTransaction, GLLine, JournalEntry / T2: APInvoice, ARInvoice, PurchaseOrder, Tender, Bid / T3: Payment, Receipt, ApprovalRequest) were inspected — 11 already carried `x-openregister-audit-trail.enabled: true`. ARInvoice was missing — fixed in `lib/Settings/register.d/add-shillinq-bookkeeping-compliance.json`.
@@ -84,7 +96,25 @@
 - [x] Task 19: Create `docs/user-guide/compliance/gdpr-subject-access.md` with examples of GDPR data export, field exclusion rules, and external auditor workflow per ADR-010
   - Authored `docs/user-guide/compliance/_category_.json` (new "Compliance" category, position 7) plus `docs/user-guide/compliance/gdpr-subject-access.md`. Sections: Goal / Who can run a subject-access export / API contract (full GET signature + status table) / What IS in the export / What is EXCLUDED (PII fields full list) / Two worked examples (employee article 15 + vendor article 17) / Accountability (the export request itself is auditable) / External auditor workflow / Compliance citations.
 
-- [ ] Task 20: Add Dutch (`nl_NL`) and English (`en_US`) translation strings for: `Signing audit trail`, `Destruction report`, `Change history`, `Compliance export`, `Activity feed`, `Mark for destruction`, `Destruction order`, `Approved by`, `Signed by`, `Changed by`, `From`, `To`, `Open audit log`, `Export audit data`, `Subject access request` per ADR-007
+- [x] Task 20: Add Dutch (`nl_NL`) and English (`en_US`) translation strings for: `Signing audit trail`, `Destruction report`, `Change history`, `Compliance export`, `Activity feed`, `Mark for destruction`, `Destruction order`, `Approved by`, `Signed by`, `Changed by`, `From`, `To`, `Open audit log`, `Export audit data`, `Subject access request` per ADR-007
+  - All 15 strings added to `l10n/en.json` (English keys map to themselves as identity translations per ADR-007 — English IS the source language) and `l10n/nl.json` with Dutch translations:
+    - "Signing audit trail" → "Audittrail ondertekening"
+    - "Destruction report" → "Vernietigingsrapport"
+    - "Change history" → "Wijzigingshistorie"
+    - "Compliance export" → "Compliance-export"
+    - "Activity feed" → "Activiteitenfeed"
+    - "Mark for destruction" → "Markeren voor vernietiging"
+    - "Destruction order" → "Vernietigingsopdracht"
+    - "Approved by" → "Goedgekeurd door"
+    - "Signed by" → "Ondertekend door"
+    - "Changed by" → "Gewijzigd door"
+    - "From" → "Van"
+    - "To" → "Tot"
+    - "Open audit log" → "Open audittrail"
+    - "Export audit data" → "Auditgegevens exporteren"
+    - "Subject access request" → "Inzageverzoek betrokkene"
+  - English keys are the source strings per ADR-007 (the [[i18n-keys-english]] fleet convention); external translators can contribute additional locales without having to back out an English fallback.
+  - Both files now carry 1245 keys (was 1230) and parse as valid JSON.
 
 ## Verification
 
