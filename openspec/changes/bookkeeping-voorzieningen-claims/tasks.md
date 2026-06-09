@@ -9,13 +9,17 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `bookkeeping-voorzieningen-claims` capability spec
+- [x] Task 1: Confirm no `bookkeeping-voorzieningen-claims` capability spec
   already exists; verify no `provision`, `provision-movement`,
   `contingent-liability`, `pensioenvoorziening-detail`, `jubileumvoorziening-detail`,
   `herstructureringsvoorziening-detail`, `garantievoorziening-detail`,
   `milieuvoorziening-detail`, `claims-voorziening-detail` schemas are declared;
   verify no `lib/Service/Provision*`, `lib/Service/Contingent*` PHP classes
   present (per ADR-031 anti-pattern enumeration)
+  - VERIFIED: no `openspec/specs/bookkeeping-voorzieningen-claims/` dir,
+    no `lib/Settings/register.d/bookkeeping-voorzieningen-claims.json` fragment,
+    no Provision*/Contingent* slugs in monolith schemas, no Provision*/Contingent*
+    PHP files under lib/. Greenfield build.
 
 - [ ] Task 2: Author `specs/bookkeeping-voorzieningen-claims/spec.md` with
   `Status: proposed` / `Scope: shillinq` / `Tier: T3 (regulatory + compliance)` /
