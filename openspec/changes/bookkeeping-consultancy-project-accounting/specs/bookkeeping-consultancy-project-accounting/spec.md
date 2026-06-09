@@ -27,7 +27,7 @@
 
 @e2e exclude declarative-only delta: this change adds schema metadata, seeds, and a repair-step phase. UI surfaces are already covered by the canonical T3 spec's REQ-CPA-012 + REQ-CPA-013 e2e plan.
 
-### REQ-CPA-101: The system SHALL declare a `CostProject` analytical project register alongside the existing RJ 270 `Project`
+### Requirement: REQ-CPA-101 — The system SHALL declare a `CostProject` analytical project register alongside the existing RJ 270 `Project`
 
 For consultancy and professional-services operators, shillinq MUST
 declare a `CostProject` schema in
@@ -74,7 +74,7 @@ behaviour.
   `cost_project`, `project_budget`, or `cpa_`
 - **THEN** no such classes SHALL exist.
 
-### REQ-CPA-102: The `CostProject` lifecycle SHALL be declarative per ADR-031
+### Requirement: REQ-CPA-102 — The `CostProject` lifecycle SHALL be declarative per ADR-031
 
 `CostProject` MUST declare `x-openregister-lifecycle` with field
 `lifecycleState`, initialState `draft`, and the following transitions:
@@ -104,7 +104,7 @@ Per the ADR-031 anti-pattern list, no
 - **WHEN** the operator (or a calendar workflow) triggers `archive`
 - **THEN** the `lifecycleState` MUST become `"archived"`.
 
-### REQ-CPA-103: The `ProjectBudget` register SHALL declare period-level allocations
+### Requirement: REQ-CPA-103 — The `ProjectBudget` register SHALL declare period-level allocations
 
 `ProjectBudget` MUST be declared with the following fields:
 
@@ -127,12 +127,12 @@ Per ADR-031, no `ProjectBudgetService` MUST be authored.
   `projectId: "cp-1"`, `fiscalPeriod: "2026-Q1"`
 - **THEN** validation MUST pass.
 
-### REQ-CPA-104: `CostCenter` SHALL be additively extended with budget tracking fields
+### Requirement: REQ-CPA-104 — CostCenter MUST be additively extended with budget tracking fields
 
-The existing `CostCenter` schema (declared by
-`bookkeeping-cost-centers-dimensions`) MUST be additively extended
-with the following **optional** fields (non-breaking — existing
-records remain valid):
+The system MUST additively extend the existing `CostCenter` schema
+(declared by `bookkeeping-cost-centers-dimensions`) with the
+following **optional** fields (non-breaking — existing records
+remain valid):
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -164,7 +164,7 @@ shape.
 - **THEN** validation MUST pass AND `spentToDate` MUST be available
   as a derived field.
 
-### REQ-CPA-105: `CostProject.costsIncurredToDate` SHALL be a declarative aggregation over GL
+### Requirement: REQ-CPA-105 — `CostProject.costsIncurredToDate` SHALL be a declarative aggregation over GL
 
 `CostProject.costsIncurredToDate` MUST be derived via
 `x-openregister-aggregations` summing `GLLine.amount` filtered by
@@ -181,7 +181,7 @@ Per ADR-031, no `CostProjectCostAggregationService` MUST be authored.
 - **WHEN** the `costsIncurredToDate` aggregation is queried
 - **THEN** the result MUST equal €15.000 (1500000 cents).
 
-### REQ-CPA-106: `CostCenter.spentToDate` SHALL be a declarative aggregation over GL
+### Requirement: REQ-CPA-106 — `CostCenter.spentToDate` SHALL be a declarative aggregation over GL
 
 `CostCenter.spentToDate` MUST be derived via
 `x-openregister-aggregations` summing `GLLine.amount` filtered by
@@ -200,7 +200,7 @@ Per ADR-031, no `CostCenterSpendAggregationService` MUST be authored.
 - **WHEN** `KC-100.spentToDate` is queried
 - **THEN** the result MUST equal €50.000.
 
-### REQ-CPA-107: `CostCenter.allocatedBudget` SHALL be a declarative calculation rolling up children
+### Requirement: REQ-CPA-107 — `CostCenter.allocatedBudget` SHALL be a declarative calculation rolling up children
 
 `CostCenter.allocatedBudget` MUST be derived via
 `x-openregister-calculations` as the sum of this cost center's own
@@ -219,7 +219,7 @@ Per ADR-031, no `BudgetRollupService` MUST be authored.
 - **WHEN** `KC-100.allocatedBudget` is read
 - **THEN** the result MUST equal `10000000` (own 5M + children 5M).
 
-### REQ-CPA-108: `CostProject.profitAndLoss` SHALL be a declarative aggregation over revenue vs expense GL lines
+### Requirement: REQ-CPA-108 — `CostProject.profitAndLoss` SHALL be a declarative aggregation over revenue vs expense GL lines
 
 `CostProject.profitAndLoss` MUST be derived via
 `x-openregister-aggregations` producing:
@@ -242,7 +242,7 @@ Per ADR-031, no `CostProjectPnlService` MUST be authored.
 - **THEN** the result MUST contain `revenue: 5000000`, `expense:
   3000000`, `profitAndLoss: 2000000`.
 
-### REQ-CPA-109: Utilization SHALL be a declarative calculation per person per period
+### Requirement: REQ-CPA-109 — Utilization SHALL be a declarative calculation per person per period
 
 `UrenRegistratie` (the existing time-tracking register) MUST declare
 an `x-openregister-calculations.utilizationPercent` formula:
@@ -265,7 +265,7 @@ Per ADR-031, no `UtilizationService` MUST be authored.
 - **WHEN** the `utilizationPercent` calculation is evaluated
 - **THEN** the result MUST equal `65` (130/200 × 100).
 
-### REQ-CPA-110: A project-templates seed file SHALL ship and load idempotently
+### Requirement: REQ-CPA-110 — A project-templates seed file SHALL ship and load idempotently
 
 `lib/Settings/seeds/project-templates.json` MUST ship with:
 
@@ -286,7 +286,7 @@ keyed on `projectNumber` so re-runs preserve operator edits.
 - **THEN** only 3 `CostProject` records exist after the first run
   AND 0 new records are created on the second run.
 
-### REQ-CPA-111: A cost-center-templates seed file SHALL ship and load idempotently
+### Requirement: REQ-CPA-111 — A cost-center-templates seed file SHALL ship and load idempotently
 
 `lib/Settings/seeds/cost-center-templates.json` MUST ship with:
 
@@ -306,7 +306,7 @@ keyed on `code` so re-runs preserve operator edits.
 - **WHEN** the repair step runs twice
 - **THEN** the second run MUST create 0 new records (skipped: N).
 
-### REQ-CPA-112: The repair step SHALL import both seed files idempotently
+### Requirement: REQ-CPA-112 — The repair step SHALL import both seed files idempotently
 
 The repair step `OCA\Shillinq\Repair\InitializeSettings` MUST gain a
 new phase `seedConsultancyProjectAccountingTemplates()` that:
@@ -331,7 +331,7 @@ new phase `seedConsultancyProjectAccountingTemplates()` that:
   consultancy project accounting seed") AND MUST NOT write any
   records.
 
-### REQ-CPA-113: Projects navigation SHALL be reachable through `src/manifest.json`
+### Requirement: REQ-CPA-113 — Projects navigation SHALL be reachable through `src/manifest.json`
 
 `src/manifest.json` MUST declare:
 
@@ -350,7 +350,7 @@ new phase `seedConsultancyProjectAccountingTemplates()` that:
 - **WHEN** `node tests/validate-manifest.js` runs
 - **THEN** the validator MUST exit with status 0.
 
-### REQ-CPA-114: Cost Centers navigation SHALL be reachable through `src/manifest.json`
+### Requirement: REQ-CPA-114 — Cost Centers navigation SHALL be reachable through `src/manifest.json`
 
 `src/manifest.json` MUST continue to declare the `CostCenters`
 index page and `CostCenterDetail` detail page over the
@@ -367,14 +367,14 @@ present.
 - **THEN** the page MUST render budget, spent-to-date, and
   derived `allocatedBudget` (rolled up from children).
 
-### REQ-CPA-115: Audit trail and retention SHALL be consumed from OR's abstractions
+### Requirement: REQ-CPA-115 — The system MUST consume audit trail and retention from OR's abstractions
 
-Every `CostProject`, `ProjectBudget`, and extended `CostCenter`
-operation MUST be audited via OR's audit-trail-immutable (ADR-022).
-Retention MUST be declared via
+The system MUST audit every `CostProject`, `ProjectBudget`, and
+extended `CostCenter` operation via OR's audit-trail-immutable
+(ADR-022). The system MUST declare retention via
 `x-openregister-lifecycle.retention: { rule: "selectielijst:5.1.2",
 years: 7 }` on `CostProject` and `ProjectBudget` (financial records
-— 7 years).
+7 years).
 
 #### Scenario: An archived CostProject remains queryable
 
