@@ -7,7 +7,7 @@
 
 ## ADDED Requirements
 
-### REQ-SUB-001: The system SHALL administer grants/subsidies as an OpenRegister-managed `Subsidie` register
+### Requirement: REQ-SUB-001 — The system SHALL administer grants/subsidies as an OpenRegister-managed `Subsidie` register
 
 shillinq MUST provide a grant administration covering the full
 ASV-model lifecycle (aanvraag → verleend → vastgesteld →
@@ -27,7 +27,10 @@ Statutory basis: Algemene wet bestuursrecht (Awb) afdeling 4.2
   `grant_`, `subsidy_`
 - **THEN** no such classes SHALL exist.
 
-### REQ-SUB-002: The `Subsidie` schema SHALL declare a fixed minimum field set
+### Requirement: REQ-SUB-002 — The `Subsidie` schema SHALL declare a fixed minimum field set
+
+The `Subsidie` schema MUST declare the following fields with the
+listed types and required flags.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -62,7 +65,11 @@ Statutory basis: Algemene wet bestuursrecht (Awb) afdeling 4.2
   `state: "aanvraag"` is created
 - **THEN** validation MUST pass.
 
-### REQ-SUB-003: The `Subsidie` lifecycle SHALL be declarative per ADR-031
+### Requirement: REQ-SUB-003 — The `Subsidie` lifecycle SHALL be declarative per ADR-031
+
+The `Subsidie` schema MUST declare the ASV-model lifecycle via
+`x-openregister-lifecycle`. The transition matrix below MUST be
+authored declaratively; transitions outside the matrix MUST fail.
 
 | From | To | Trigger | Guard |
 |---|---|---|---|
@@ -85,11 +92,9 @@ Per ADR-031 anti-pattern list, shillinq MUST NOT author a
   `uitbetaald`
 - **THEN** the transition MUST fail (no direct path is declared).
 
-### REQ-SUB-004: Approval gates on `verleend` and `teruggevorderd` SHALL consume OR's approval-workflow
+### Requirement: REQ-SUB-004 — Approval gates on verleend and teruggevorderd SHALL consume OR's approval-workflow
 
-The `aanvraag → verleend` and `uitbetaald → teruggevorderd`
-transitions MUST declare
-`x-openregister-lifecycle.requires.approval-workflow` blocks.
+Approval gates on `verleend` and `teruggevorderd` SHALL consume OR's `approval-workflow` mechanism; the transitions MUST declare `x-openregister-lifecycle.requires.approval-workflow` blocks.
 Default policy: subsidie-coordinator initiates, manager approves
 (dual control). Per ADR-022, no app-local approval table.
 
@@ -102,7 +107,7 @@ Default policy: subsidie-coordinator initiates, manager approves
 - **THEN** the transition MUST fail with "approval required"
   surfaced from OR's approval-workflow.
 
-### REQ-SUB-005: The uitbetaling SHALL create a GL posting via a journal entry, not a parallel payment table
+### Requirement: REQ-SUB-005 — The uitbetaling SHALL create a GL posting via a journal entry, not a parallel payment table
 
 The `vastgesteld → uitbetaald` transition MUST create a T1
 `JournalEntry` (bookkeeping-journal-entries) of sub-type `manual`
@@ -123,7 +128,7 @@ operator approval still gates the post (per T1 REQ-JE-008).
   two balanced lines (debit subsidiekosten €15.000, credit cash
   €15.000), referencing the `Subsidie.id` in `sourceReference`.
 
-### REQ-SUB-006: ASV-model lifecycle state metadata SHALL ship as seed data
+### Requirement: REQ-SUB-006 — ASV-model lifecycle state metadata SHALL ship as seed data
 
 `lib/Settings/seeds/asv-model-lifecycle.json` MUST hold the
 canonical state-to-Awb-citation mapping:
@@ -149,7 +154,11 @@ audits.
   at minimum the 6 canonical lifecycle states with their Awb
   citations.
 
-### REQ-SUB-007: A repayment-plan (afbetalingsregeling) on terugvordering SHALL be a separate `RepaymentInstallment` register linked by FK
+### Requirement: REQ-SUB-007 — A repayment-plan (afbetalingsregeling) on terugvordering SHALL be a separate `RepaymentInstallment` register linked by FK
+
+A repayment-plan on terugvordering MUST be modelled as a separate
+`RepaymentInstallment` register linked to `Subsidie` by FK, not as
+a parallel state machine on `Subsidie`.
 
 When a terugvordering leads to a settlement plan
 (afbetalingsregeling), the system MUST create a
@@ -188,7 +197,7 @@ The `RepaymentInstallment` schema MUST declare:
   MUST be `true` AND a notification SHOULD fire (per
   `x-openregister-notifications`).
 
-### REQ-SUB-008: Subsidie administration SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-SUB-008 — Subsidie administration SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare a navigation entry `Subsidies`
 with:
@@ -208,7 +217,7 @@ grant or receive subsidies).
 - **WHEN** they filter on `direction: outgoing`
 - **THEN** only outgoing grants MUST be listed.
 
-### REQ-SUB-009: Audit trail and retention SHALL be consumed from OR's abstractions
+### Requirement: REQ-SUB-009 — Audit trail and retention SHALL be consumed from OR's abstractions
 
 Every `Subsidie` and `RepaymentInstallment` operation MUST be
 audited via OR's audit-trail-immutable (ADR-022). Retention MUST
@@ -233,7 +242,9 @@ last instalment if a repayment plan applies).
 - **THEN** the record MUST be archived per the Selectielijst rule
   AND the audit trail's hash chain MUST remain verifiable.
 
-### REQ-SUB-010: Notifications on lifecycle transitions SHALL fire via `x-openregister-notifications`
+### Requirement: REQ-SUB-010 — Notifications on lifecycle transitions SHALL fire via `x-openregister-notifications`
+
+Lifecycle transitions on `Subsidie` and `RepaymentInstallment` SHALL fire NC notifications declared via `x-openregister-notifications`; the system MUST NOT author an app-local notification service.
 
 Each lifecycle transition (`verleend`, `vastgesteld`, `uitbetaald`,
 `teruggevorderd`, repayment-instalment `overdue`) MUST declare an
