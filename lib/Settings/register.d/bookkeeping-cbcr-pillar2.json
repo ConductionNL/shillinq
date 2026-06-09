@@ -216,6 +216,34 @@
             }
           }
         },
+        "x-openregister-consolidation-source": {
+          "description": "Declarative consolidation feed for the 7 mandatory CbCR fields (REQ-CBC-002). Per-entity consolidation data is sourced from the bookkeeping-consolidation-commercial app: revenue, profit before tax, income tax, capital, and accumulated earnings are summed per (period, jurisdiction) tuple, with elimination logic that drops intra-jurisdictie transactions while preserving cross-jurisdictie related-party revenue (split into related vs unrelated). The runtime consumer ships with the bookkeeping-consolidation-commercial integration apply cycle on a live instance.",
+          "sourceApp": "bookkeeping-consolidation-commercial",
+          "sourceSchemas": {
+            "perEntity": "EntityConsolidationLine",
+            "elimination": "ConsolidationEliminationEntry",
+            "periodHeader": "ConsolidationPeriod"
+          },
+          "groupBy": ["period", "jurisdiction"],
+          "fieldMap": {
+            "unrelatedPartyRevenue": "EntityConsolidationLine.revenueUnrelated (sum, post-elimination)",
+            "relatedPartyRevenue": "EntityConsolidationLine.revenueRelated (sum, post-elimination; intra-jurisdictie eliminated, cross-jurisdictie preserved)",
+            "profitBeforeTax": "EntityConsolidationLine.profitBeforeTax (sum)",
+            "incomeTaxPaidCash": "EntityConsolidationLine.incomeTaxPaidCash (sum)",
+            "incomeTaxAccrued": "EntityConsolidationLine.incomeTaxAccrued (sum)",
+            "statedCapital": "EntityConsolidationLine.statedCapital (sum)",
+            "accumulatedEarnings": "EntityConsolidationLine.accumulatedEarnings (sum)",
+            "tangibleAssetsOtherThanCash": "EntityConsolidationLine.tangibleAssetsOtherThanCash (sum; cash + cash equivalents excluded)"
+          },
+          "eliminationRule": "intra-jurisdictie group transactions eliminate; cross-jurisdictie intra-group revenue survives as relatedPartyRevenue (OESO CbC technical guidance).",
+          "writeBack": {
+            "schema": "CbcrJurisdictionSummary",
+            "filter": "period = @sourcePeriod AND jurisdiction = @sourceJurisdiction"
+          },
+          "owner": "bookkeeping-consolidation-commercial",
+          "tier": "T3",
+          "status": "DEFERRED — declarative contract only; live integration ships with the not-yet-merged bookkeeping-consolidation-commercial apply cycle on a live instance."
+        },
         "x-openregister-lifecycle": {
           "field": "state",
           "initialState": "draft",

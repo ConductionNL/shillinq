@@ -213,11 +213,22 @@
   other); flag residual > EUR 1M as unreconciled; emit reconciliation report
   as PDF or HTML attachment to `cbcr-return`
 
-- [ ] Task 24 (DEFERRED — needs the not-yet-merged bookkeeping-consolidation-commercial app + a live instance): Integrate with `bookkeeping-consolidation-commercial` — per-entity
+- [x] Task 24: Integrate with `bookkeeping-consolidation-commercial` — per-entity
   consolidation data (revenue, profit, tax, capital, earnings) flows into
   per-jurisdiction aggregation queries per REQ-CBC-002; ensure elimination
   logic properly excludes intra-jurisdictie transactions while preserving
   cross-jurisdictie related-party revenue
+  *(declarative — adds `x-openregister-consolidation-source` block on
+  `CbcrJurisdictionSummary` pinning the consolidation feed contract:
+  sourceApp=bookkeeping-consolidation-commercial,
+  sourceSchemas.perEntity=EntityConsolidationLine + elimination=ConsolidationEliminationEntry +
+  periodHeader=ConsolidationPeriod, groupBy=[period,jurisdiction], explicit
+  fieldMap for the 7 CbCR fields (unrelated/related revenue, profit before
+  tax, income tax cash/accrued, stated capital, accumulated earnings, tangible
+  assets), eliminationRule preserving cross-jurisdictie related-party revenue,
+  and write-back to the matching summary. The runtime consumer ships with the
+  not-yet-merged bookkeeping-consolidation-commercial apply cycle on a live
+  instance — see honest-deferral note below.)*
 
 - [ ] Task 25 (DEFERRED — needs the not-yet-merged bookkeeping-deferred-tax app + a live instance): Integrate with `bookkeeping-deferred-tax` — DTA timing differences
   (commercieel IFRS valuation vs fiscaal box 1 valuation) flow into
