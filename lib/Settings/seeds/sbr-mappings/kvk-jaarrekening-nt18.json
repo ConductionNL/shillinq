@@ -1,0 +1,37 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"source": "NL-taxonomie nt18 — Logius",
+		"variant": "kvk-jaarrekening",
+		"taxonomyVersion": "nt18",
+		"entryPoint": "kvk-jaarrekening",
+		"description": "Template mapping from FinancialStatement lines to NL-taxonomie nt18 concepts for the KvK deponering jaarrekening entry point (REQ-SBR-005, REQ-SBR-006). Successor to kvk-jaarrekening-nt17.json — both coexist so historical filings remain reproducible. Operator edits persist across re-runs (idempotent on (entryPoint, taxonomyVersion)).",
+		"imported": "2026-06-09T00:00:00Z"
+	},
+	"mapping": {
+		"slug": "map-kvk-jaarrekening-nt18",
+		"name": "KvK deponering jaarrekening — NL-taxonomie nt18",
+		"entryPoint": "kvk-jaarrekening",
+		"taxonomyVersion": "nt18",
+		"records": [
+			{"financialStatementLineId": "balans.activa.vasteActiva.materieleVasteActiva", "taxonomyConcept": "bw2-i:TangibleFixedAssets", "contextRef": "instant_eindBoekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "balans.activa.vasteActiva.immaterieleVasteActiva", "taxonomyConcept": "bw2-i:IntangibleFixedAssets", "contextRef": "instant_eindBoekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "balans.activa.vasteActiva.financieleVasteActiva", "taxonomyConcept": "bw2-i:FinancialFixedAssets", "contextRef": "instant_eindBoekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "balans.activa.vlottendeActiva.voorraden", "taxonomyConcept": "bw2-i:Inventories", "contextRef": "instant_eindBoekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "balans.activa.vlottendeActiva.vorderingen", "taxonomyConcept": "bw2-i:TradeAndOtherReceivables", "contextRef": "instant_eindBoekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "balans.activa.vlottendeActiva.liquideMiddelen", "taxonomyConcept": "bw2-i:CashAndCashEquivalents", "contextRef": "instant_eindBoekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "balans.passiva.eigenVermogen", "taxonomyConcept": "bw2-i:Equity", "contextRef": "instant_eindBoekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "balans.passiva.voorzieningen", "taxonomyConcept": "bw2-i:Provisions", "contextRef": "instant_eindBoekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "balans.passiva.langlopendeSchulden", "taxonomyConcept": "bw2-i:LongTermLiabilities", "contextRef": "instant_eindBoekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "balans.passiva.kortlopendeSchulden", "taxonomyConcept": "bw2-i:ShortTermLiabilities", "contextRef": "instant_eindBoekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "winstEnVerlies.nettoOmzet", "taxonomyConcept": "bw2-i:NetRevenue", "contextRef": "duration_boekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "winstEnVerlies.brutomarge", "taxonomyConcept": "bw2-i:GrossMargin", "contextRef": "duration_boekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "winstEnVerlies.bedrijfsresultaat", "taxonomyConcept": "bw2-i:OperatingResult", "contextRef": "duration_boekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "winstEnVerlies.financieleBatenEnLasten", "taxonomyConcept": "bw2-i:FinancialIncomeAndExpenses", "contextRef": "duration_boekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "winstEnVerlies.resultaatVoorBelasting", "taxonomyConcept": "bw2-i:ResultBeforeTaxation", "contextRef": "duration_boekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "winstEnVerlies.belastingen", "taxonomyConcept": "bw2-i:Taxation", "contextRef": "duration_boekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "winstEnVerlies.resultaatNaBelasting", "taxonomyConcept": "bw2-i:ResultAfterTaxation", "contextRef": "duration_boekjaar", "unitRef": "EUR"}
+		]
+	}
+}

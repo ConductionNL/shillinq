@@ -324,6 +324,13 @@
 					"icon": "HistoryIcon",
 					"route": "BookkeepingAuditTrail",
 					"order": 95
+				},
+				{
+					"id": "SbrXbrlFilings",
+					"label": "SBR/XBRL Filings",
+					"icon": "FileXmlBoxOutline",
+					"route": "SbrXbrlFilings",
+					"order": 92
 				}
 			]
 		},
@@ -2455,6 +2462,179 @@
 					}
 				],
 				"indexRoute": "EmuRapportage",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "SbrXbrlFilings",
+			"route": "/sbr-xbrl-filings",
+			"type": "index",
+			"title": "SBR/XBRL Filings",
+			"config": {
+				"register": "shillinq",
+				"schema": "XbrlInstance",
+				"columns": [
+					{
+						"key": "instanceNumber",
+						"label": "Instance number",
+						"sortable": true
+					},
+					{
+						"key": "entryPoint",
+						"label": "Entry point",
+						"sortable": true
+					},
+					{
+						"key": "reportingPeriodEnd",
+						"label": "Reporting period end",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "State",
+						"sortable": true
+					},
+					{
+						"key": "digipoortReceiptId",
+						"label": "Digipoort receipt",
+						"sortable": false
+					}
+				],
+				"filters": [
+					{
+						"key": "state",
+						"label": "State",
+						"type": "chip",
+						"options": [
+							"draft",
+							"validated",
+							"submitted",
+							"accepted",
+							"rejected"
+						]
+					},
+					{
+						"key": "entryPoint",
+						"label": "Entry point",
+						"type": "chip",
+						"options": [
+							"kvk-jaarrekening",
+							"belastingdienst-vpb",
+							"belastingdienst-ib",
+							"sbr-banken-kredietrapportage",
+							"sbr-wonen"
+						]
+					}
+				],
+				"defaultSort": "-reportingPeriodEnd",
+				"detailRoute": "SbrXbrlFilingDetail"
+			}
+		},
+		{
+			"id": "SbrXbrlFilingDetail",
+			"route": "/sbr-xbrl-filings/:id",
+			"type": "detail",
+			"title": "SBR/XBRL Filing",
+			"config": {
+				"register": "shillinq",
+				"schema": "XbrlInstance",
+				"fields": [
+					{
+						"key": "instanceNumber",
+						"label": "Instance number",
+						"type": "string"
+					},
+					{
+						"key": "entryPoint",
+						"label": "Entry point",
+						"type": "string"
+					},
+					{
+						"key": "taxonomyVersion",
+						"label": "Taxonomy version",
+						"type": "string"
+					},
+					{
+						"key": "reportingPeriodStart",
+						"label": "Reporting period start",
+						"type": "date"
+					},
+					{
+						"key": "reportingPeriodEnd",
+						"label": "Reporting period end",
+						"type": "date"
+					},
+					{
+						"key": "sourceStatementId",
+						"label": "Source FinancialStatement",
+						"type": "string"
+					},
+					{
+						"key": "mappingId",
+						"label": "Mapping",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "State",
+						"type": "string"
+					},
+					{
+						"key": "digipoortSourceSlug",
+						"label": "Digipoort source",
+						"type": "string"
+					},
+					{
+						"key": "digipoortReceiptId",
+						"label": "Digipoort receipt id",
+						"type": "string"
+					},
+					{
+						"key": "submittedAt",
+						"label": "Submitted at",
+						"type": "datetime"
+					},
+					{
+						"key": "acceptedAt",
+						"label": "Accepted at",
+						"type": "datetime"
+					},
+					{
+						"key": "rejectionReason",
+						"label": "Rejection reason",
+						"type": "string"
+					},
+					{
+						"key": "instanceHash",
+						"label": "Instance hash (SHA-256)",
+						"type": "string"
+					},
+					{
+						"key": "instanceXml",
+						"label": "XBRL instance",
+						"type": "code"
+					}
+				],
+				"indexRoute": "SbrXbrlFilings",
 				"sidebarProps": {
 					"tabs": [
 						{

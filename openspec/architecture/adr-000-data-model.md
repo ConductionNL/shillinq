@@ -7964,3 +7964,60 @@ existing data-model entry is rewritten.
 **Cites:** ADR-022 (audit-trail immutable on every register), ADR-031
 (orchestration-exception path for `SoftCloseExecutor`), ADR-037 (modular
 register fragments).
+
+## SBR/XBRL Reporting (XbrlInstance)
+
+> **Source:** `openspec/changes/add-shillinq-sbr-xbrl-reporting/`.
+> Tier-4 umbrella spec `bookkeeping-sbr-xbrl-reporting` (REQ-SBR-001..007).
+> Owning fragment: `lib/Settings/register.d/add-shillinq-sbr-xbrl-reporting.json`.
+> Mapping seed templates under `lib/Settings/seeds/sbr-mappings/`
+> (`kvk-jaarrekening-nt17/nt18`, `belastingdienst-vpb-nt17/nt18`,
+> `belastingdienst-ib-nt17`, `sbr-banken-kredietrapportage-nt17`,
+> `sbr-wonen-nt17`).
+
+### XbrlInstance
+
+_A single NL-taxonomie XBRL instance document derived from a posted T3
+`FinancialStatement` (REQ-SBR-001/002). One record per filing event per
+administration + reporting period + entry point. Carries the
+canonicalised XML payload (`instanceXml`), its SHA-256
+tamper-evidence hash (`instanceHash`), the resolved Mapping FK
+(`mappingId` → OR `Mapping` reference), the openconnector source slug
+for Digipoort submission (`digipoortSourceSlug`, default
+`digipoort-prod`), the Digipoort acknowledgement receipt id
+(`digipoortReceiptId`) and the declarative `draft → validated →
+submitted → accepted/rejected` lifecycle (REQ-SBR-003 / ADR-031). The
+five canonical SBR entry points (kvk-jaarrekening, belastingdienst-vpb,
+belastingdienst-ib, sbr-banken-kredietrapportage, sbr-wonen) are enum on
+`entryPoint` (REQ-SBR-005)._
+
+**Reconciliation with the T3 `FinancialStatement` entity:** `XbrlInstance`
+is a **transformation, not a re-aggregation** on top of the T3
+`FinancialStatement` declared by sibling change
+`add-shillinq-financial-statements` (Decision D1 in
+`openspec/changes/add-shillinq-sbr-xbrl-reporting/design.md`). The
+already-balanced statement object is the single source of truth; the
+XBRL instance maps each statement line to a NL-taxonomie concept via an
+OpenRegister `Mapping` record (consumed by FK on
+`XbrlInstance.mappingId`, per REQ-SBR-006). No PHP `XbrlReportService`
+re-aggregates ledger lines per XBRL concept — that would duplicate the
+T3 aggregation and create drift between the filing and the
+operator-visible statement. Sibling T3 changes that own entry-point
+specific submission lifecycles (`bookkeeping-vpb-mkb`,
+`bookkeeping-bcf-vat-compensation`, `bookkeeping-emu-reporting`,
+`bookkeeping-icp-opgaaf`, `bookkeeping-ib-aangifte-zzp`) continue to
+carry their own `x-openregister-lifecycle` for their domain object;
+`XbrlInstance` is the umbrella **payload store** that captures the
+canonicalised XML, the Digipoort receipt, and the tamper-evidence hash
+for each filing event. Existing `IcpOpgaaf.xmlPayload` /
+`VpbAangifte`-side SBR fields remain in place for backward
+compatibility; the cross-cutting `XbrlInstance` is the long-term
+canonical surface and is introduced **additively** — no existing
+data-model entry is rewritten.
+
+**Cites:** ADR-022 (Digipoort consumed from openconnector by source
+slug; no embedded SOAP/WS-Security client in shillinq), ADR-024 (Tier-4
+manifest navigation: `Bookkeeping > SBR/XBRL Filings` with `type: index`
++ `type: detail` pages rendered by `CnIndexPage` / `CnDetailPage`),
+ADR-031 (declarative state machine on the schema; no `XbrlReportService`),
+ADR-037 (modular register fragment).

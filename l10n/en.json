@@ -1,5 +1,18 @@
 {
     "translations": {
+        "SBR/XBRL Filings": "SBR/XBRL Filings",
+        "SBR/XBRL Filing": "SBR/XBRL Filing",
+        "SBR Filing": "SBR Filing",
+        "XBRL Instance": "XBRL Instance",
+        "Jaarrekening": "Jaarrekening",
+        "Aangifte": "Aangifte",
+        "Digipoort": "Digipoort",
+        "NL-taxonomie": "NL-taxonomie",
+        "Draft": "Draft",
+        "Validated": "Validated",
+        "Submitted": "Submitted",
+        "Accepted": "Accepted",
+        "Rejected": "Rejected",
         "Pipelinq integration": "Pipelinq integration",
         "Configure the pipelinq customer-management connection used to enrich bookings with customer context.": "Configure the pipelinq customer-management connection used to enrich bookings with customer context.",
         "API endpoint": "API endpoint",
