@@ -7,7 +7,14 @@
 
 ## MODIFIED Requirements
 
-### REQ-GL-003: The `GLLine` schema SHALL declare a fixed minimum field set, encode sign in `side`, and carry both a transaction-currency amount and a base-currency presentation amount
+This capability is bound by **ADR-022** (consume OpenRegister abstractions; no
+parallel app-local model layer) and **ADR-031** (declarative scheduled
+workflows over imperative PHP services / TimedJobs). Every requirement below
+restates one of those ADRs applied to the multi-currency slice.
+
+### Requirement: REQ-GL-003 — The `GLLine` schema SHALL declare a fixed minimum field set, encode sign in `side`, and carry both a transaction-currency amount and a base-currency presentation amount
+
+The `GLLine` schema MUST declare the multi-currency field set below, MUST encode debit/credit sign in the `side` enum, and MUST carry both a transaction-currency amount and a base-currency presentation amount. This supersedes T1 `bookkeeping-general-ledger` REQ-GL-003 (which declared single-currency `currency` + `amount` fields).
 
 (Previously, per T1 `bookkeeping-general-ledger` REQ-GL-003: the
 schema declared a single `currency` field that MUST equal the parent
@@ -102,7 +109,7 @@ share a unit across all lines of a multi-currency transaction.
 
 ## RENAMED Requirements
 
-### REQ-GL-003: `GLLine.transactionCurrency`
+### Requirement: REQ-GL-003 — `GLLine.transactionCurrency` (renamed from `GLLine.currency`)
 FROM: `currency` (T1 `bookkeeping-general-ledger` REQ-GL-003)
 TO: `transactionCurrency` (this spec REQ-GL-003 above)
 
@@ -120,9 +127,9 @@ multi-currency rule.
 
 ## ADDED Requirements
 
-### REQ-MC-001: Every `GLLine` SHALL carry a transaction-currency amount, a base-currency presentation amount, and the FX rate that links them — orientation consistent with `FxRate.rate`
+### Requirement: REQ-MC-001 — Every `GLLine` SHALL carry a transaction-currency amount, a base-currency presentation amount, and the FX rate that links them — orientation consistent with `FxRate.rate`
 
-The detailed multi-currency field set, semantic shift of T1's
+Every `GLLine` MUST carry the multi-currency field set declared in MODIFIED REQ-GL-003 above. The detailed multi-currency field set, semantic shift of T1's
 `amount` to `transactionAmount`, the new mandatory
 `baseCurrencyAmount` / `baseCurrency` / `fxRate` / `fxRateSource` /
 `fxRateDate` fields, and the FX-orientation contract are defined
@@ -148,7 +155,7 @@ orientation matching REQ-MC-002 with no reciprocation between
   scenarios, orientation) MUST be the MODIFIED REQ-GL-003 in this
   spec — REQ-MC-001 is the anchor, REQ-GL-003 carries the content.
 
-### REQ-MC-002: The system SHALL store FX rates as an OpenRegister-managed `FxRate` register
+### Requirement: REQ-MC-002 — The system SHALL store FX rates as an OpenRegister-managed `FxRate` register
 
 FX rates MUST be declared as a register in
 `lib/Settings/shillinq_register.json` with the `FxRate` schema. The
@@ -210,9 +217,9 @@ when storing (`our rate = 1 / ECB rate`) and MUST round to at least
   to 6 dp), preserving the "1 USD = 0.9259 EUR" orientation that
   matches `GLLine.fxRate`.
 
-### REQ-MC-003: ECB daily FX rate ingestion SHALL be driven by an OpenRegister scheduled workflow
+### Requirement: REQ-MC-003 — ECB daily FX rate ingestion SHALL be driven by an OpenRegister scheduled workflow
 
-Per ADR-031 §"Background jobs" path 2, the daily import of ECB
+ECB daily FX rate ingestion MUST be driven by an OpenRegister `ScheduledWorkflow` record, NOT by an app-local PHP `TimedJob`. Per ADR-031 §"Background jobs" path 2, the daily import of ECB
 reference rates MUST be implemented as an OpenRegister
 `ScheduledWorkflow` calling an n8n workflow that fetches the ECB
 XML feed, **inverts each published rate** per the orientation
@@ -240,9 +247,9 @@ HTTP fetch itself routes through openconnector per ADR-022.
   resulting line MUST record `fxRateSource: manual` and `fxRate:
   0.9091`.
 
-### REQ-MC-004: Unrealised and realised FX gain/loss revaluation SHALL be a declarative scheduled OR workflow, not a service
+### Requirement: REQ-MC-004 — Unrealised and realised FX gain/loss revaluation SHALL be a declarative scheduled OR workflow, not a service
 
-Period-end revaluation of foreign-currency balances (open AR/AP
+Unrealised and realised FX gain/loss revaluation MUST be expressed declaratively (an OR `ScheduledWorkflow` for period-end revaluation; an `x-openregister-lifecycle` action for realised gain/loss on settlement). Period-end revaluation of foreign-currency balances (open AR/AP
 items, foreign-cash balances) MUST be implemented as a
 `ScheduledWorkflow` triggered on period close (per T3
 `bookkeeping-year-end-close` / period close): the workflow reads
@@ -276,9 +283,9 @@ settlement-rate. No PHP `FxRevaluationService` orchestrates either.
   difference between booked rate and settlement rate as "Gerealiseerde
   koerswinst" `EUR 26.45`.
 
-### REQ-MC-005: Foreign-subsidiary consolidation SHALL translate per IAS 21 functional currency rules
+### Requirement: REQ-MC-005 — Foreign-subsidiary consolidation SHALL translate per IAS 21 functional currency rules
 
-For groups consolidating foreign subsidiaries (per T5
+Foreign-subsidiary consolidation MUST translate per-subsidiary statements to the parent's presentation currency using IAS 21 functional-currency rules, declared as an OR `Mapping` and never as a PHP service. For groups consolidating foreign subsidiaries (per T5
 intercompany / consolidation), per-subsidiary statements MUST be
 translated to the parent's presentation currency using IAS 21
 rules: monetary assets/liabilities at closing rate, equity at
@@ -302,7 +309,7 @@ register; no PHP `ConsolidationTranslationService`.
   carry the difference between the translated balance-sheet equity
   and translated P&L, per IAS 21.
 
-### REQ-MC-006: FX rates SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-MC-006 — FX rates SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare a navigation entry
 (`Bookkeeping > FX Rates`) with a `type: index` page binding to
