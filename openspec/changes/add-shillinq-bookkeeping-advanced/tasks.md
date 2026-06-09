@@ -171,8 +171,9 @@
     table per ADR-031 enforcement, and the Seed Data section per
     hydra `rules.design`.
 - [x] Implement
-- [ ] Test (peer review — bookkeeper persona reads each capability
+- [~] Test (peer review — bookkeeper persona reads each capability
   end-to-end and confirms production-grade fit)
+  - **Handoff**: bookkeeper-persona peer review lands with each per-capability implementing PR (see Section 2 handoffs); the umbrella collects the seven sibling spec deltas and is itself spec-only per `proposal.md` Scope. `openspec validate add-shillinq-bookkeeping-advanced --strict` exits clean.
 
 ---
 
@@ -196,11 +197,13 @@
   - GIVEN the schema WHEN scanned THEN the submission action
     routes through an openconnector source slug (REQ-SBR-004), not
     via an embedded HTTP client.
-- [ ] Implement
-- [ ] Test (`composer check:strict` + `npm run check:manifest`;
+- [~] Implement
+  - **Handoff**: lands in the sibling implementing change `add-shillinq-sbr-xbrl-reporting` (spec on dev: `openspec/specs/bookkeeping-sbr-xbrl-reporting/spec.md` REQ-SBR-001..REQ-SBR-007). Schema fragment goes into `lib/Settings/register.d/bookkeeping-sbr-xbrl-reporting.json` per ADR-037; lifecycle + openconnector source-slug per REQ-SBR-003 / REQ-SBR-004.
+- [~] Test (`composer check:strict` + `npm run check:manifest`;
   PHPUnit asserting schema load + lifecycle transitions; integration
   test using a mocked openconnector source returning a Digipoort
   receipt)
+  - **Handoff**: PHPUnit + integration tests land in the implementing cycle alongside the schema fragment.
 
 ### Task 2.2: Declare the `FixedAsset` schema with depreciation calculations
 
@@ -222,9 +225,11 @@
   - GIVEN the schema's lifecycle WHEN scanned THEN the
     `active → disposed` action emits a closing `JournalEntry` per
     REQ-FA-006.
-- [ ] Implement
-- [ ] Test (PHPUnit: derived field correctness over time; parallel
+- [~] Implement
+  - **Handoff**: lands in the sibling implementing change `add-shillinq-fixed-assets-depreciation` (spec on dev: `openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md` REQ-FA-001..REQ-FA-007). Schema fragment goes into `lib/Settings/register.d/bookkeeping-fixed-assets-depreciation.json` per ADR-037 with `x-openregister-calculations` for monthly/current/commercial/fiscal book values and `x-openregister-lifecycle` for the `active → disposed` closing journal.
+- [~] Test (PHPUnit: derived field correctness over time; parallel
   stream divergence; disposal closing-journal emission)
+  - **Handoff**: PHPUnit tests land in the implementing cycle alongside the schema fragment.
 
 ### Task 2.3: Declare the `FxRate` register and the multi-currency extension on `GLLine`
 
@@ -243,10 +248,12 @@
   - GIVEN the implementing PR WHEN reviewed THEN no T1 field rename
     occurs; T1's `amount` is reinterpreted as `transactionAmount`
     semantically with no on-disk migration.
-- [ ] Implement
-- [ ] Test (PHPUnit: single-currency posting fxRate=1; foreign-
+- [~] Implement
+  - **Handoff**: lands in the sibling implementing change `add-shillinq-multi-currency` (spec on dev: `openspec/specs/bookkeeping-multi-currency/spec.md` REQ-MC-001..REQ-MC-006). `FxRate` register goes into `lib/Settings/register.d/bookkeeping-multi-currency.json`; the additive `GLLine` extension lands as a patch to the T1 GL fragment (no on-disk migration; semantic shift of `amount` → `transactionAmount` only).
+- [~] Test (PHPUnit: single-currency posting fxRate=1; foreign-
   currency posting converts correctly; rounding edge cases;
   duplicate FxRate rejected; manual rate without reason rejected)
+  - **Handoff**: PHPUnit tests land in the implementing cycle.
 
 ### Task 2.4: Declare `CostCenter`, `KostenDrager`, `Project`, `AllocationRule` and extend `GLLine` with dimensions
 
@@ -263,11 +270,13 @@
   - GIVEN `AllocationRule` WHEN scanned THEN `fixed-percentage`
     rules enforce the "targets sum to 100" precondition via
     `x-openregister-lifecycle.requires`.
-- [ ] Implement
-- [ ] Test (PHPUnit: relation resolution; dimension key/value
+- [~] Implement
+  - **Handoff**: lands in the sibling implementing change `add-shillinq-cost-centers-dimensions` (spec on dev: `openspec/specs/bookkeeping-cost-centers-dimensions/spec.md` REQ-CC-001..REQ-CC-007). Schema fragment goes into `lib/Settings/register.d/bookkeeping-cost-centers-dimensions.json` per ADR-037; T1 `GLLine` additive dimension fields land as a patch to the T1 GL fragment.
+- [~] Test (PHPUnit: relation resolution; dimension key/value
   validation; allocation precondition; per-posting rule splits
   transaction keeping balance; segment P&L aggregation rolls up
   children)
+  - **Handoff**: PHPUnit tests land in the implementing cycle.
 
 ### Task 2.5: Declare the `FiscalYear` register with year-end-close lifecycle
 
@@ -281,12 +290,14 @@
     the closing emits T1 `JournalEntry` records, the
     `closed → reopened` carries an admin role guard per ADR-022,
     and the reopen requires `reopenReason`.
-- [ ] Implement
-- [ ] Test (PHPUnit: profit-year + loss-year close emit balanced
+- [~] Implement
+  - **Handoff**: lands in the sibling implementing change `add-shillinq-year-end-close` (spec on dev: `openspec/specs/bookkeeping-year-end-close/spec.md` REQ-YEC-001..REQ-YEC-007). Schema fragment goes into `lib/Settings/register.d/bookkeeping-year-end-close.json` per ADR-037 with `x-openregister-lifecycle` for open/closing/closed/reopened transitions and the admin-only reopen guard (OR RBAC per ADR-022).
+- [~] Test (PHPUnit: profit-year + loss-year close emit balanced
   retained-earnings journal; opening-balance journal carries only
   balance-sheet accounts; archived dimensions skipped in rollover;
   non-admin reopen rejected; reopen-no-reason rejected; reopen
   emits two reversing journals)
+  - **Handoff**: PHPUnit tests land in the implementing cycle.
 
 ### Task 2.6: Declare the `BankConnection` register with PSD2 lifecycle
 
@@ -303,10 +314,12 @@
   - GIVEN the implementing PR WHEN reviewed THEN no Guzzle /
     Symfony HttpClient / curl_init usages exist in
     `lib/Service/Bank*` / `lib/Service/Psd2*` / `lib/Service/Aggregator*`.
-- [ ] Implement
-- [ ] Test (PHPUnit: lifecycle time-based transition; consent-renewal
+- [~] Implement
+  - **Handoff**: lands in the sibling implementing change `add-shillinq-bank-connectors` (spec on dev: `openspec/specs/bookkeeping-bank-connectors/spec.md` REQ-BC-001..REQ-BC-007). Schema fragment goes into `lib/Settings/register.d/bookkeeping-bank-connectors.json` per ADR-037; aggregator credentials route through openconnector `Source` slug (REQ-BC-001/004); no Guzzle/HttpClient in `lib/Service/Bank*` per the no-embedded-HTTP rule.
+- [~] Test (PHPUnit: lifecycle time-based transition; consent-renewal
   routes through openconnector; CAMT.053 attachment via docudesk;
   notification fires on new transaction)
+  - **Handoff**: PHPUnit tests land in the implementing cycle.
 
 ### Task 2.7: Declare the `Budget` register and saved-query reports
 
@@ -324,11 +337,13 @@
   - GIVEN the implementing PR WHEN reviewed THEN no `lib/Service/`
     class names match `*Report*` / `*Reconciliation*` / `*Variance*`
     (REQ-RR-001 scenario).
-- [ ] Implement
-- [ ] Test (PHPUnit: matched reconciliation reports zero variance;
+- [~] Implement
+  - **Handoff**: lands in the sibling implementing change `add-shillinq-reconciliation-reports` (spec on dev: `openspec/specs/bookkeeping-reconciliation-reports/spec.md` REQ-RR-001..REQ-RR-007). `Budget` schema + four saved-query records go into `lib/Settings/register.d/bookkeeping-reconciliation-reports.json` per ADR-037; mydash consumes via runtime GraphQL with no install-time dep (per ADR-022 / `feedback_mydash-no-or-dependency.md`).
+- [~] Test (PHPUnit: matched reconciliation reports zero variance;
   mismatched surfaces as exception; intercompany match for grouped
   administrations; within-threshold variance does not flag;
   exception report sorted by severity; mydash GraphQL discovery)
+  - **Handoff**: PHPUnit tests land in the implementing cycle.
 
 ## 3. Seed data — `lib/Settings/seeds/`
 
