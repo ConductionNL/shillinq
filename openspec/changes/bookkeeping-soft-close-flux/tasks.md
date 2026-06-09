@@ -10,7 +10,9 @@
 
 ## Tasks
 
-- [ ] Task 1: Confirm no `bookkeeping-continuous-close` capability spec already exists, no `PeriodStatus` / `AutoAccrualRule` / `FluxRun` schemas are declared, and no `lib/Service/Accrual*` / `lib/Service/Flux*` / `lib/Service/Close*` PHP classes are present (per ADR-031 anti-pattern enumeration)
+- [x] Task 1: Confirm no `bookkeeping-continuous-close` capability spec already exists, no `PeriodStatus` / `AutoAccrualRule` / `FluxRun` schemas are declared, and no `lib/Service/Accrual*` / `lib/Service/Flux*` / `lib/Service/Close*` PHP classes are present (per ADR-031 anti-pattern enumeration)
+
+**Done:** Confirmed no schema/service collisions. `openspec/specs/bookkeeping-continuous-close/spec.md` is the previously-published spec from the proposal stage; this change implements it. No `Accrual*`/`Flux*`/`Close*` services exist (only `PeriodCloseService`/`PeriodCloseAssistantService` from `bookkeeping-period-close`, which we extend orthogonally).
 
 - [ ] Task 2: Author `specs/bookkeeping-continuous-close/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T2` / dependency header; `REQ-CLS-NNN` requirements using RFC 2119 keywords; `#### Scenario:` blocks with GIVEN/WHEN/THEN; cite ADR-031 (orchestration exception for soft-close executor) + ADR-022 (audit trail immutable) inline
 
