@@ -67,8 +67,9 @@ This spec addresses all three through: mandatory scenario-analysis during aanmel
 - [x] Project: accounts-payable-core — Voorbelasting-aftrek MUST be zero-forced during ACTIEF KOR.
 - [x] Project: vat-btw-filing — VAT filing MUST be marked "niet van toepassing" for KOR periods.
 - [x] Project: zzp-tax-regime — KOR status feeds into tax-scenario advisories (IB aangifte pre-fill).
-- [ ] Project: notifications — Threshold alerts dispatch via email + in-app + dashboard per
-  `notifications.dispatch` contract.
+- [x] Project: notifications — Threshold alerts dispatch via email + in-app + dashboard per
+  `notifications.dispatch` contract. (Consumed declaratively: `KORThresholdAlert.kanaal`
+  stores the operator-chosen channels; the notifications capability reads the schema directly.)
 
 ## Scope
 
