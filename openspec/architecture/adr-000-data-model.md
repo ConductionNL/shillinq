@@ -38,6 +38,35 @@ register, schema, relations, files, auditTrail, notes, tasks, tags, status, lock
 > (post-archive) for the full capability spec and the audit-pattern
 > scan that confirms the rule is met today.
 
+> **Source-document attachment URI contract (add-shillinq-document-attachment-integration,
+> 2026-06-09, capability `bookkeeping-document-attachment-integration`):**
+> Source documents (PDF invoices, scanned receipts, bank statements, payment-run
+> SEPA artefacts, contracts) MUST be stored in **docudesk** and referenced from
+> shillinq bookkeeping registers via the canonical foreign-key URI
+> `docudesk://attachments/<uuid>/<filename>` (REQ-DA-002). The contract surfaces
+> through one declarative schema field shape — `sourceDocumentUri` (string, URI
+> format) — on every bookkeeping register that needs a source-document reference,
+> with T1's `JournalEntry` additionally carrying `sourceDocumentApp` (enum
+> `docudesk` | `external`) as the pattern T2 registers extend additively. Per
+> ADR-022 anti-pattern enumeration, shillinq MUST NOT author parallel attachment
+> storage: no `lib/Db/Attachment*` Mappers, no `lib/Service/Attachment*` services,
+> no `lib/Controller/*Attachment*` proxy controllers, no `multipart/form-data`
+> upload endpoints, no `base64` / `binary` schema fields. Mime-type expectations
+> per attachment role (`invoice` → PDF + PNG + JPEG + UBL XML; `receipt` → PDF +
+> PNG + JPEG + HEIC; `statement` → CAMT.053 XML + MT940 + PDF; `archive-xml` →
+> pain.001 XML; `contract` → PDF) are declared as schema metadata, not enforced
+> at the shillinq layer — enforcement is docudesk's responsibility. When docudesk
+> is transiently unavailable, the bookkeeping save MUST succeed with the URI
+> persisted; the OR audit trail records the gap; the detail page renders a
+> non-blocking warning banner with a retry action (REQ-DA-004). Consuming
+> capabilities today: `bookkeeping-journal-entries` (T1), `bookkeeping-accounts-payable-core`,
+> `bookkeeping-accounts-receivable-core`, `bookkeeping-bank-reconciliation`,
+> `bookkeeping-bank-connectors` (all T2). The audit-side-panel manifest binding
+> lives in `src/manifest.json` on each detail page's `sidebarProps.tabs[]` as a
+> `documents` tab pointing at the `docudesk-attachment-viewer` widget. See
+> `openspec/changes/add-shillinq-document-attachment-integration/` for the
+> capability spec.
+
 ## Entities
 
 ### APTransaction
