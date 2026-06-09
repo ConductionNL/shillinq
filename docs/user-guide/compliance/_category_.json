@@ -1,0 +1,11 @@
+{
+	"label": "Compliance",
+	"position": 7,
+	"collapsible": true,
+	"collapsed": true,
+	"link": {
+		"type": "generated-index",
+		"title": "Compliance user guide",
+		"description": "Cross-cutting compliance surfaces — Rekenkamer audit pack, accountantscontrole evidence chain, GDPR/AVG subject-access exports, Archiefwet destruction reports, and the AVG/GDPR data-protection workflows that span every Shillinq tier."
+	}
+}
