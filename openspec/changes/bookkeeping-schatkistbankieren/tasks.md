@@ -112,9 +112,19 @@
     `ConfigurationService::importFromApp` path; `force:false` re-runs are idempotent
     per the version-gated importer contract. Seeds use `administrationId: "default"`
     as the cross-administration baseline; operators duplicate per administration.
-- [ ] Task 15: Update `openspec/architecture/adr-000-data-model.md` with `TreasuryAccount`/
+- [x] Task 15: Update `openspec/architecture/adr-000-data-model.md` with `TreasuryAccount`/
   `BankingRule`/`ComplianceReport` entries, reconciling against any existing `BankAccount`,
   `Treasury*`, or `Compliance*` data-model entries
+  - Added `BankingRule` entry between `BankStatementLine` and `MatchingRule` and
+    `TreasuryAccount` entry before `TreasuryTask` (alphabetical placement). Added a
+    Reconciliation note on `TreasuryAccount` clarifying it does NOT overlap with the
+    generic `BankAccount` (commercial) nor with `SchatkistbankierenSaldo` (Wet Fido T3
+    per-period sweep balance). Extended the pre-existing `ComplianceReport` entry
+    (primary spec: obligation-financial-administration) with an
+    "Additive fields (bookkeeping-schatkistbankieren, REQ-SCHATKIST-006)" block that
+    enumerates the schatkist-specific optional fields and the three aggregations per
+    REQ-SCHATKIST-007 — the two spec usages never collide because they scope reports
+    by `administrationId` + the natural primary-spec key.
 - [ ] Task 16: Deduplication check — verify no overlap with existing OR services
   (`ObjectService`, `RegisterService`, `SchemaService`, `ConfigurationService`) or
   `@conduction/nextcloud-vue` components; document findings in design review
