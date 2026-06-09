@@ -67,6 +67,8 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <job>OCA\Shillinq\BackgroundJob\CancelUnconfirmedAppointments</job>
         <job>OCA\Shillinq\Job\MandateDormancyExpiryJob</job>
         <job>OCA\Shillinq\BackgroundJob\OverdueVerantwoordingJob</job>
+        <job>OCA\Shillinq\BackgroundJob\DBAFlagGenerationJob</job>
+        <job>OCA\Shillinq\BackgroundJob\DBAPortfolioAggregationJob</job>
     </background-jobs>
 
     <repair-steps>
@@ -76,6 +78,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Shillinq\Repair\PeriodCloseBackfill</step>
             <step>OCA\Shillinq\Repair\Load_CBS_Seeds_Step</step>
             <step>OCA\Shillinq\Repair\Load_SBR_XBRL_Seeds_Step</step>
+            <step>OCA\Shillinq\Repair\Load_DBA_Seeds_Step</step>
         </post-migration>
     </repair-steps>
 

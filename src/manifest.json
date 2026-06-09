@@ -819,6 +819,42 @@
 					"icon": "FileSignOutline",
 					"route": "AuditDocuments",
 					"order": 40
+				},
+				{
+					"id": "DBA",
+					"label": "DBA compliance",
+					"icon": "BriefcaseAccountOutline",
+					"order": 50,
+					"children": [
+						{
+							"id": "DBAIntakeWizard",
+							"label": "DBA Intake Wizard",
+							"icon": "ClipboardListOutline",
+							"route": "DBAIntakeWizard",
+							"order": 10
+						},
+						{
+							"id": "DBAPortfolioDashboard",
+							"label": "DBA Portfolio Dashboard",
+							"icon": "ChartDonutVariant",
+							"route": "DBAPortfolioDashboard",
+							"order": 20
+						},
+						{
+							"id": "DBAEvidenceBrowser",
+							"label": "Evidence Browser",
+							"icon": "FolderLockOutline",
+							"route": "DBAEvidenceBrowser",
+							"order": 30
+						},
+						{
+							"id": "DBAModelovereenkomstRegister",
+							"label": "Modelovereenkomst Register",
+							"icon": "FileDocumentMultipleOutline",
+							"route": "DBAModelovereenkomstRegister",
+							"order": 40
+						}
+					]
 				}
 			]
 		},
@@ -15907,6 +15943,179 @@
 						}
 					]
 				}
+			}
+		},
+		{
+			"id": "DBAIntakeWizard",
+			"route": "/dba/intake",
+			"type": "index",
+			"title": "DBA Intake Wizard",
+			"config": {
+				"register": "shillinq",
+				"schema": "DBAOpdracht",
+				"columns": [
+					{ "key": "opdrachtNaam", "label": "Opdracht", "sortable": true },
+					{ "key": "klantId", "label": "Klant", "sortable": true },
+					{ "key": "startDatum", "label": "Startdatum", "sortable": true },
+					{ "key": "intakeStatus", "label": "Intake-status", "sortable": true },
+					{ "key": "risicoNiveau", "label": "Risico-niveau", "sortable": true },
+					{ "key": "actueleRisicoscore", "label": "Score", "sortable": true },
+					{ "key": "openFlags", "label": "Open flags", "sortable": true }
+				],
+				"defaultSort": "-startDatum",
+				"detailRoute": "DBAIntakeWizardDetail",
+				"createAction": "POST:/api/dba/intake"
+			}
+		},
+		{
+			"id": "DBAIntakeWizardDetail",
+			"route": "/dba/intake/:id",
+			"type": "detail",
+			"title": "DBA Opdracht",
+			"config": {
+				"register": "shillinq",
+				"schema": "DBAOpdracht",
+				"fields": [
+					{ "key": "opdrachtNaam", "label": "Opdracht", "type": "string" },
+					{ "key": "klantId", "label": "Klant", "type": "string" },
+					{ "key": "startDatum", "label": "Startdatum", "type": "date" },
+					{ "key": "verwachteEindDatum", "label": "Verwachte einddatum", "type": "date" },
+					{ "key": "feitelijkeEindDatum", "label": "Feitelijke einddatum", "type": "date" },
+					{ "key": "modelOvereenkomstId", "label": "Modelovereenkomst", "type": "string" },
+					{ "key": "intakeStatus", "label": "Intake-status", "type": "string" },
+					{ "key": "intakeDatum", "label": "Intake-datum", "type": "date" },
+					{ "key": "actueleRisicoscore", "label": "Risico-score", "type": "integer" },
+					{ "key": "risicoNiveau", "label": "Risico-niveau", "type": "string" },
+					{ "key": "openFlags", "label": "Open flags", "type": "integer" },
+					{ "key": "wbaBeoordelingResultaat", "label": "WBA-uitkomst", "type": "string" },
+					{ "key": "wbaGeldigTot", "label": "WBA geldig tot", "type": "date" },
+					{ "key": "intermediairMode", "label": "Tussenkomst (intermediair)", "type": "boolean" },
+					{ "key": "perspectief", "label": "Perspectief", "type": "string" },
+					{ "key": "retentieDeadline", "label": "Retentie-deadline (AWR)", "type": "date" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "DBAIntakeWizard"
+			}
+		},
+		{
+			"id": "DBAPortfolioDashboard",
+			"route": "/dba/portfolio",
+			"type": "index",
+			"title": "DBA Portfolio Dashboard",
+			"config": {
+				"register": "shillinq",
+				"schema": "DBAPortfolioRisico",
+				"columns": [
+					{ "key": "ondernemingId", "label": "Onderneming", "sortable": true },
+					{ "key": "peilDatum", "label": "Peildatum", "sortable": true },
+					{ "key": "actieveOpdrachten", "label": "Actieve opdrachten", "sortable": true },
+					{ "key": "overallRisico", "label": "Portfolio-risico", "sortable": true }
+				],
+				"defaultSort": "-peilDatum",
+				"detailRoute": "DBAPortfolioDashboardDetail"
+			}
+		},
+		{
+			"id": "DBAPortfolioDashboardDetail",
+			"route": "/dba/portfolio/:id",
+			"type": "detail",
+			"title": "DBA Portfolio-risico",
+			"config": {
+				"register": "shillinq",
+				"schema": "DBAPortfolioRisico",
+				"fields": [
+					{ "key": "ondernemingId", "label": "Onderneming", "type": "string" },
+					{ "key": "peilDatum", "label": "Peildatum", "type": "date" },
+					{ "key": "actieveOpdrachten", "label": "Actieve opdrachten", "type": "integer" },
+					{ "key": "concentratie", "label": "Concentratie", "type": "object" },
+					{ "key": "langjarigeRelaties", "label": "Langjarige relaties", "type": "array" },
+					{ "key": "exclusieveRelaties", "label": "Exclusieve relaties", "type": "integer" },
+					{ "key": "multipleEngagementConcern", "label": "Multiple-engagement concerns", "type": "array" },
+					{ "key": "overallRisico", "label": "Portfolio-risico", "type": "string" }
+				],
+				"indexRoute": "DBAPortfolioDashboard"
+			}
+		},
+		{
+			"id": "DBAEvidenceBrowser",
+			"route": "/dba/evidence",
+			"type": "index",
+			"title": "Evidence Browser",
+			"config": {
+				"register": "shillinq",
+				"schema": "DBAEvidenceDossier",
+				"columns": [
+					{ "key": "opdrachtId", "label": "Opdracht", "sortable": true },
+					{ "key": "compleetheidScore", "label": "Compleetheid", "sortable": true },
+					{ "key": "bewaarTermijn", "label": "Bewaartermijn", "sortable": false },
+					{ "key": "archiveDate", "label": "Archief-datum", "sortable": true }
+				],
+				"defaultSort": "-archiveDate",
+				"detailRoute": "DBAEvidenceBrowserDetail"
+			}
+		},
+		{
+			"id": "DBAEvidenceBrowserDetail",
+			"route": "/dba/evidence/:id",
+			"type": "detail",
+			"title": "Evidence Dossier",
+			"config": {
+				"register": "shillinq",
+				"schema": "DBAEvidenceDossier",
+				"fields": [
+					{ "key": "opdrachtId", "label": "Opdracht", "type": "string" },
+					{ "key": "stukken", "label": "Stukken", "type": "array" },
+					{ "key": "compleetheidScore", "label": "Compleetheid (0-1)", "type": "number" },
+					{ "key": "ontbrekendeStukken", "label": "Ontbrekende stukken", "type": "array" },
+					{ "key": "emailArchiveOptIn", "label": "E-mail archief opt-in (AVG)", "type": "boolean" },
+					{ "key": "emailArchiveConsentRecordId", "label": "Consent-record", "type": "string" },
+					{ "key": "bewaarTermijn", "label": "Bewaartermijn", "type": "string" },
+					{ "key": "archiveDate", "label": "Archief-datum (delete-eligible)", "type": "date" }
+				],
+				"indexRoute": "DBAEvidenceBrowser"
+			}
+		},
+		{
+			"id": "DBAModelovereenkomstRegister",
+			"route": "/dba/modelovereenkomsten",
+			"type": "index",
+			"title": "Modelovereenkomst Register",
+			"config": {
+				"register": "shillinq",
+				"schema": "DBAModelovereenkomst",
+				"columns": [
+					{ "key": "naam", "label": "Naam", "sortable": true },
+					{ "key": "bron", "label": "Bron", "sortable": true },
+					{ "key": "versie", "label": "Versie", "sortable": true },
+					{ "key": "goedkeuringDatum", "label": "Goedgekeurd", "sortable": true },
+					{ "key": "geldigTot", "label": "Geldig tot", "sortable": true },
+					{ "key": "actueleVersie", "label": "Actueel", "sortable": true }
+				],
+				"defaultSort": "-goedkeuringDatum",
+				"detailRoute": "DBAModelovereenkomstRegisterDetail"
+			}
+		},
+		{
+			"id": "DBAModelovereenkomstRegisterDetail",
+			"route": "/dba/modelovereenkomsten/:id",
+			"type": "detail",
+			"title": "Modelovereenkomst",
+			"config": {
+				"register": "shillinq",
+				"schema": "DBAModelovereenkomst",
+				"fields": [
+					{ "key": "naam", "label": "Naam", "type": "string" },
+					{ "key": "bron", "label": "Bron", "type": "string" },
+					{ "key": "publicatieURL", "label": "Publicatie-URL", "type": "string" },
+					{ "key": "goedkeuringDatum", "label": "Goedkeuringsdatum", "type": "date" },
+					{ "key": "geldigTot", "label": "Geldig tot", "type": "date" },
+					{ "key": "essentieleBepalingen", "label": "Essentiele bepalingen", "type": "array" },
+					{ "key": "versie", "label": "Versie", "type": "string" },
+					{ "key": "actueleVersie", "label": "Actuele versie", "type": "boolean" },
+					{ "key": "fileRef", "label": "Bestand", "type": "string" },
+					{ "key": "sha256", "label": "SHA-256", "type": "string" }
+				],
+				"indexRoute": "DBAModelovereenkomstRegister"
 			}
 		}
 	]
