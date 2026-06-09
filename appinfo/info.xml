@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.7.4</version>
+    <version>0.7.5</version>
     <licence>agpl</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
@@ -67,6 +67,8 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <job>OCA\Shillinq\BackgroundJob\CancelUnconfirmedAppointments</job>
         <job>OCA\Shillinq\Job\MandateDormancyExpiryJob</job>
         <job>OCA\Shillinq\BackgroundJob\OverdueVerantwoordingJob</job>
+        <job>OCA\Shillinq\BackgroundJob\DBAFlagGenerationJob</job>
+        <job>OCA\Shillinq\BackgroundJob\DBAPortfolioAggregationJob</job>
     </background-jobs>
 
     <repair-steps>
