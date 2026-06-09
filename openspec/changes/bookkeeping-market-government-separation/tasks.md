@@ -34,8 +34,8 @@
 
 ### Seed Data & Migration
 
-- [ ] **P1-17**: Create seed data under `lib/Settings/seeds/commercial-activities/`: sportaccommodaties-gemeente.json (test gemeente, 3 activities), waterschap-slibruimte.json (test waterschap), abb-example-gemeente.json (ABB linked to sport activity), integral-cost-price-example-q1-2026.json (sample IKP record); all ship with SPDX header + _meta block, lifecycleState=archived for historical reference only
-- [ ] **P1-18**: Implement migration step in `lib/Migration/` to seed these data idempotently (ConfigurationService::importFromApp() repair-step); operators can ignore or delete seeds after initial review
+- [x] **P1-17**: Create seed data under `lib/Settings/seeds/commercial-activities/`: sportaccommodaties-gemeente.json (test gemeente, 3 activities), waterschap-slibruimte.json (test waterschap), abb-example-gemeente.json (ABB linked to sport activity), integral-cost-price-example-q1-2026.json (sample IKP record); all ship with SPDX header + _meta block, lifecycleState=archived for historical reference only — activities ship in state=paused, ABB in status=concept, IKP in status=voorlopig (any of these flags means "test seed, will not contaminate live reporting"; operators promote when adopting).
+- [x] **P1-18**: Implement migration step in `lib/Migration/` to seed these data idempotently (ConfigurationService::importFromApp() repair-step); operators can ignore or delete seeds after initial review — `SettingsService::seedWmoCommercialActivities()` (dedupe key: code / kenmerk / (activity,periode)+administrationId) + `InitializeSettings::seedWmoCommercialActivities()` repair hook wired in.
 
 ### Documentation & i18n (Phase 1)
 
