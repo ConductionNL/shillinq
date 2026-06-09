@@ -90,6 +90,7 @@ class InitializeSettings implements IRepairStep
      * Phase 5: seeds KOR thresholds from kor-thresholds-2026.json idempotently.
      * Phase 6: seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
      * Phase 7: seeds RJ-270 stages and rate-card templates for consultancy project accounting.
+     * Phase 7b: seeds CostProject + CostCenter consultancy templates per REQ-CPA-110/111/112.
      * Phase 8: seeds ProductAttribute templates (office, it_hardware, logistics, food_beverage, clothing) per REQ-IPC-007.
      * Phase 9: seeds ReimbursementPolicy + PassThroughMarkupRule master-data records per REQ-ERP-004 / REQ-ERP-005.
      * Phase 10: seeds demo Barcode records (EAN/GTIN/SSCC/UPC/internal) per REQ-SKU-011.
@@ -159,6 +160,7 @@ class InitializeSettings implements IRepairStep
             $this->seedDefaultAdministration(output: $output);
             $this->seedChartOfAccounts(output: $output);
             $this->seedProjectData(output: $output);
+            $this->seedConsultancyProjectAccountingTemplates(output: $output);
             $this->seedSelectielijstRules(output: $output);
             $this->registerIv3ScheduledWorkflow(output: $output);
             $this->registerFixedAssetsMonthlyDepreciationWorkflow(output: $output);
@@ -269,6 +271,251 @@ class InitializeSettings implements IRepairStep
         }
 
     }//end seedProjectData()
+
+    /**
+     * Seed the consultancy-project-accounting templates (CostProject + CostCenter)
+     * from lib/Settings/seeds/project-templates.json and
+     * lib/Settings/seeds/cost-center-templates.json, idempotently per administration.
+     *
+     * Deduplication keys: CostProject on projectNumber + administrationId;
+     * CostCenter on code + administrationId. Re-runs preserve operator
+     * edits per REQ-CPA-110 / REQ-CPA-111 / REQ-CPA-112. Skipped when
+     * administration_id is not configured (C2 — prevents "default"
+     * contamination of real tenant data).
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-consultancy-project-accounting/tasks.md#task-16
+     * @spec openspec/changes/bookkeeping-consultancy-project-accounting/specs/bookkeeping-consultancy-project-accounting/spec.md (REQ-CPA-110, REQ-CPA-111, REQ-CPA-112)
+     */
+    private function seedConsultancyProjectAccountingTemplates(IOutput $output): void
+    {
+        $settings         = $this->settingsService->getSettings();
+        $administrationId = ($settings['administration_id'] ?? '');
+
+        if ($administrationId === '') {
+            $output->warning(
+                'Shillinq: administration_id not configured — skipping consultancy project accounting seed (REQ-CPA-112).'
+            );
+            return;
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->settingsService->getRegisterSlug();
+        } catch (\Throwable $e) {
+            $output->info('Shillinq: ObjectService unavailable, skipping consultancy project accounting seed');
+            return;
+        }
+
+        $this->seedConsultancyProjectTemplates(
+            output: $output,
+            objectService: $objectService,
+            registerSlug: $registerSlug,
+            administrationId: $administrationId
+        );
+        $this->seedConsultancyCostCenterTemplates(
+            output: $output,
+            objectService: $objectService,
+            registerSlug: $registerSlug,
+            administrationId: $administrationId
+        );
+
+    }//end seedConsultancyProjectAccountingTemplates()
+
+    /**
+     * Import CostProject seed records from project-templates.json idempotently.
+     *
+     * @param IOutput $output           The output interface for progress reporting.
+     * @param object  $objectService    The OR ObjectService instance.
+     * @param string  $registerSlug     The shillinq register slug.
+     * @param string  $administrationId The configured administration id.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-consultancy-project-accounting/specs/bookkeeping-consultancy-project-accounting/spec.md (REQ-CPA-110)
+     */
+    private function seedConsultancyProjectTemplates(
+        IOutput $output,
+        object $objectService,
+        string $registerSlug,
+        string $administrationId
+    ): void {
+        $seedPath = __DIR__.'/../Settings/seeds/project-templates.json';
+        if (file_exists($seedPath) === false) {
+            $output->warning('Shillinq: CostProject seed file not found, skipping');
+            return;
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            $output->warning('Shillinq: failed to read CostProject seed file, skipping');
+            return;
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $output->warning('Shillinq: failed to parse CostProject seed file: '.json_last_error_msg());
+            return;
+        }
+
+        $projects = ($data['projects'] ?? []);
+        if (empty($projects) === true) {
+            $output->info('Shillinq: CostProject seed file contains no projects, skipping');
+            return;
+        }
+
+        $seeded  = 0;
+        $skipped = 0;
+
+        foreach ($projects as $project) {
+            $projectNumber = ($project['projectNumber'] ?? null);
+            if ($projectNumber === null) {
+                continue;
+            }
+
+            try {
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('CostProject')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'projectNumber'    => $projectNumber,
+                                'administrationId' => $administrationId,
+                            ],
+                            'limit'   => 1,
+                        ]
+                    );
+            } catch (\Throwable $e) {
+                $output->warning('Shillinq: CostProject lookup failed for '.$projectNumber.': '.$e->getMessage());
+                continue;
+            }
+
+            if (empty($existing) === false) {
+                $skipped++;
+                continue;
+            }
+
+            $project['administrationId'] = $administrationId;
+            // Strip the @self envelope before persistence — @self is a seed-file convention
+            // not a CostProject schema field. Cast away to avoid OR slug collisions on re-seed.
+            unset($project['@self']);
+
+            try {
+                $objectService->saveObject(
+                    object: $project,
+                    register: $registerSlug,
+                    schema: 'CostProject',
+                );
+                $seeded++;
+            } catch (\Throwable $e) {
+                $output->warning('Shillinq: CostProject save failed for '.$projectNumber.': '.$e->getMessage());
+            }
+        }//end foreach
+
+        $output->info(
+            'CostProject templates seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+        );
+
+    }//end seedConsultancyProjectTemplates()
+
+    /**
+     * Import CostCenter seed records from cost-center-templates.json idempotently.
+     *
+     * @param IOutput $output           The output interface for progress reporting.
+     * @param object  $objectService    The OR ObjectService instance.
+     * @param string  $registerSlug     The shillinq register slug.
+     * @param string  $administrationId The configured administration id.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-consultancy-project-accounting/specs/bookkeeping-consultancy-project-accounting/spec.md (REQ-CPA-111)
+     */
+    private function seedConsultancyCostCenterTemplates(
+        IOutput $output,
+        object $objectService,
+        string $registerSlug,
+        string $administrationId
+    ): void {
+        $seedPath = __DIR__.'/../Settings/seeds/cost-center-templates.json';
+        if (file_exists($seedPath) === false) {
+            $output->warning('Shillinq: CostCenter seed file not found, skipping');
+            return;
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            $output->warning('Shillinq: failed to read CostCenter seed file, skipping');
+            return;
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $output->warning('Shillinq: failed to parse CostCenter seed file: '.json_last_error_msg());
+            return;
+        }
+
+        $costCenters = ($data['costCenters'] ?? []);
+        if (empty($costCenters) === true) {
+            $output->info('Shillinq: CostCenter seed file contains no records, skipping');
+            return;
+        }
+
+        $seeded  = 0;
+        $skipped = 0;
+
+        foreach ($costCenters as $costCenter) {
+            $code = ($costCenter['code'] ?? null);
+            if ($code === null) {
+                continue;
+            }
+
+            try {
+                $existing = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('CostCenter')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'code'             => $code,
+                                'administrationId' => $administrationId,
+                            ],
+                            'limit'   => 1,
+                        ]
+                    );
+            } catch (\Throwable $e) {
+                $output->warning('Shillinq: CostCenter lookup failed for '.$code.': '.$e->getMessage());
+                continue;
+            }
+
+            if (empty($existing) === false) {
+                $skipped++;
+                continue;
+            }
+
+            $costCenter['administrationId'] = $administrationId;
+            unset($costCenter['@self']);
+
+            try {
+                $objectService->saveObject(
+                    object: $costCenter,
+                    register: $registerSlug,
+                    schema: 'CostCenter',
+                );
+                $seeded++;
+            } catch (\Throwable $e) {
+                $output->warning('Shillinq: CostCenter save failed for '.$code.': '.$e->getMessage());
+            }
+        }//end foreach
+
+        $output->info(
+            'CostCenter templates seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+        );
+
+    }//end seedConsultancyCostCenterTemplates()
 
     /**
      * Import the Selectielijst Gemeenten 2020 retention rules, idempotently.

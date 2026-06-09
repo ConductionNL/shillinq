@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "1.3.12",
+	"version": "1.3.13",
 	"dependencies": [
 		"openregister"
 	],
@@ -263,6 +263,13 @@
 							"icon": "BriefcaseOutline",
 							"route": "Projects",
 							"order": 30
+						},
+						{
+							"id": "CostProjects",
+							"label": "Cost Projects",
+							"icon": "BriefcaseClockOutline",
+							"route": "CostProjects",
+							"order": 35
 						},
 						{
 							"id": "AllocationRules",
@@ -2194,6 +2201,148 @@
 						"id": "wip-history",
 						"title": "WIP-historie",
 						"schema": "WipBalance",
+						"foreignKey": "projectId"
+					}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "CostProjects",
+			"route": "/bookkeeping/dimensions/cost-projects",
+			"type": "index",
+			"title": "Cost Projects",
+			"config": {
+				"register": "shillinq",
+				"schema": "CostProject",
+				"columns": [
+					{
+						"key": "projectNumber",
+						"label": "Project Number",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "totalBudget",
+						"label": "Budget",
+						"sortable": true
+					},
+					{
+						"key": "costsIncurredToDate",
+						"label": "Costs to Date",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "projectNumber",
+				"detailRoute": "CostProjectDetail"
+			}
+		},
+		{
+			"id": "CostProjectDetail",
+			"route": "/bookkeeping/dimensions/cost-projects/:id",
+			"type": "detail",
+			"title": "Cost Project",
+			"config": {
+				"register": "shillinq",
+				"schema": "CostProject",
+				"fields": [
+					{
+						"key": "projectNumber",
+						"label": "Project Number",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Project Name",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "startDate",
+						"label": "Start Date",
+						"type": "date"
+					},
+					{
+						"key": "endDate",
+						"label": "End Date",
+						"type": "date"
+					},
+					{
+						"key": "totalBudget",
+						"label": "Budget",
+						"type": "number"
+					},
+					{
+						"key": "totalEstimatedCosts",
+						"label": "Estimated Costs",
+						"type": "number"
+					},
+					{
+						"key": "costsIncurredToDate",
+						"label": "Costs to Date",
+						"type": "number"
+					},
+					{
+						"key": "costCenterCode",
+						"label": "Cost Center",
+						"type": "string"
+					},
+					{
+						"key": "organizationId",
+						"label": "Organization",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"aggregation": "profitAndLoss",
+				"indexRoute": "CostProjects",
+				"related": [
+					{
+						"id": "project-budgets",
+						"title": "Project Budgets",
+						"schema": "ProjectBudget",
 						"foreignKey": "projectId"
 					}
 				],
