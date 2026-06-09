@@ -92,10 +92,10 @@
 
 ## Tests (company-wide ADR-009)
 
-- [ ] N/A for the spec change itself — no business logic ships
+- [~] N/A for the spec change itself — no business logic ships — **DEFERRED (architectural / N/A)**: per the proposal Scope ("spec-only change"), no PHP business logic ships in this change envelope, so the company-wide ADR-009 PHPUnit gate has no surface to attach to here. **Handoff**: PHPUnit coverage is owned per-leaf (see tasks 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 3.4, 6.1, 6.2, 6.3 cross-references). Closes as [~] (by design).
 - [x] PHPUnit unit tests for new/changed business logic — declared on tasks 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 3.4, 6.1, 6.2, 6.3; lands with implementation cycle
 - [x] Newman/Postman tests for new/changed API endpoints — no new endpoints in T2 (OR exposes register CRUD generically)
-- [ ] Browser tests (Playwright MCP) for UI changes — declared on tasks 4.1 through 4.7; lands with implementation cycle
+- [~] Browser tests (Playwright MCP) for UI changes — declared on tasks 4.1 through 4.7; lands with implementation cycle — **DEFERRED (downstream)**: every UI surface enumerated here (Trial Balance, Period Close, AP/AR, Financial Statements, Audit Trail, Bank Reconciliation) ships under its own T3/T4 implementing change with its own Playwright spec (cf. gate-19 e2e-coverage rollout — shillinq tracked under the gate19-honest-coverage-program memory entry). Browser coverage at the umbrella level would duplicate per-leaf work. **Handoff**: each per-leaf finish cycle (e.g. period-close, journal-entries, AP-core) carries its own `tests/e2e/*.spec.ts`; the umbrella defers to them. Closes as [~] (umbrella → leaf).
 - [x] All tests pass (`composer test`) — enforced at implementing PR's CI gate
 
 ## Documentation (company-wide ADR-010)
