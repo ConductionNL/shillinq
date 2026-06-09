@@ -178,10 +178,18 @@
 
 ## Data Model Registry
 
-- [ ] Task 16: Update `openspec/architecture/adr-000-data-model.md` with
+- [x] Task 16: Update `openspec/architecture/adr-000-data-model.md` with
   `Payee`/`APTransaction`/`DunningNotice` entries, reconciling against any
   existing `Vendor`/`APInvoice` data-model entries; cite schema.org vocabulary
   and T2 tier placement
+  - Updated 3 entries: `APTransaction` (schema:Invoice now, primary spec
+    `bookkeeping-accounts-payable-core`), `Payee` (schema:Organization, primary
+    spec `bookkeeping-accounts-payable-core`), `DunningNotice` (schema:Message,
+    primary spec `bookkeeping-accounts-payable-core`). Each carries a 2026-06-09
+    reconciliation note pointing to the canonical T2 shape and to
+    `dedup-notes.md` for the parallel-flavour migration boundary. T2 tier
+    placement implied via the primary-spec attribution; the AR mirror
+    (`ARInvoice` / `CustomerMaster` / `DunningRecord`) is cross-referenced.
 
 ## Testing & Verification
 

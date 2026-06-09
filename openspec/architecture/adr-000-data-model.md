@@ -41,25 +41,44 @@ register, schema, relations, files, auditTrail, notes, tasks, tags, status, lock
 ## Entities
 
 ### APTransaction
-**Schema.org:** `schema:Order`
-_Financial transaction representing an invoice, credit note, or debit note in accounts payable/receivable flow._
-**Primary spec:** accounts-payable-receivable
+**Schema.org:** `schema:Invoice`
+_Accounts payable sub-ledger invoice recording the vendor billing and payment obligation. Posting (issued transition) materialises a balanced GLTransaction per the T1 REQ-JE-007 pattern. The lifecycle covers draft → received → issued → paid with partially-paid / overdue / disputed / written-off / voided branches; write-off materialises a compensating GL posting._
+**Primary spec:** bookkeeping-accounts-payable-core
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| transactionNumber | string | Yes | Unique invoice or transaction identifier |
-| transactionType | enum | Yes | Type of transaction |
-| transactionDate | date | Yes | Date invoice or transaction issued |
-| dueDate | date | Yes | Payment due date |
-| amount | MonetaryAmount | Yes | Total transaction amount including tax |
-| paymentTerms | string | No | Payment conditions (e.g., net 30, 2/10 net 30) |
-| description | string | No | Invoice line items or transaction details |
+| invoiceNumber | string | Yes | Vendor invoice number; unique per administration + vendorId |
+| vendorId | string | Yes | FK to Payee UUID |
+| invoiceDate | date | Yes | Date the vendor issued the invoice |
+| dueDate | date | Yes | Auto-calculated from invoiceDate + Payee.paymentTermDays; operator overrideable |
+| currency | string | Yes | ISO 4217 currency code; T2: base currency only (T5 adds multi-currency) |
+| totalAmount | number | Yes | Total amount including tax in administration base currency |
+| taxAmount | number | No | VAT/BTW amount |
+| lines | array | Yes | Line items: {description, accountNumber, amount, taxCode, quantity, unitPrice} |
+| sourceDocumentUri | string | No | docudesk FK URI per bookkeeping-document-attachment-integration |
+| state | enum | Yes | One of draft, received, issued, partially-paid, paid, overdue, disputed, written-off, voided |
+| glTransactionId | string | No | Back-reference to materialised GLTransaction once posted |
+| writeOffReason | string | No | Audit-trailed reason required on the writeOff transition |
+| writeOffGlTransactionId | string | No | Back-reference to compensating GLTransaction on write-off |
+| periodId | string | No | FK to the FiscalPeriod for GL posting (resolved on issue transition) |
+| administrationId | string | Yes | FK to administration |
 
 **Relations:**
-- → Payee (many-to-one)
-- → Receipt (one-to-many)
-- → Payment (one-to-many)
-- → DunningNotice (one-to-many)
+- → Payee (many-to-one, via vendorId)
+- → GLTransaction (many-to-one, via glTransactionId — materialised on issue and write-off)
+- → DunningNotice (one-to-many, dunning timeline per AP invoice)
+- → FiscalPeriod (many-to-one, via periodId)
+- → Administration (many-to-one)
+
+> **Reconciliation note (bookkeeping-accounts-payable-core, 2026-06-09):** This
+> entry has been updated from the prior generic `accounts-payable-receivable`
+> draft to the canonical T2 shape registered in
+> `lib/Settings/register.d/bookkeeping-accounts-payable-core.json`. The fields
+> mirror the AR side (`ARInvoice`). The prior `VendorMaster` / `APInvoice` /
+> `PaymentRun` entries below (added by `add-shillinq-bookkeeping-compliance`)
+> remain a parallel pre-T2 flavour; new AP register declarations MUST use
+> `APTransaction`. See `openspec/changes/bookkeeping-accounts-payable-core/
+> dedup-notes.md` for the migration boundary.
 
 ### ARInvoice
 **Schema.org:** `schema:Invoice`
@@ -1967,22 +1986,36 @@ _Managed document with version control for bookkeeping (invoices, contracts, rec
 - → Person (many-to-one)
 
 ### DunningNotice
-**Schema.org:** `schema:Event`
-_Follow-up notice for overdue unpaid transactions, escalating through dunning levels toward legal action._
-**Primary spec:** accounts-payable-receivable
+**Schema.org:** `schema:Message`
+_Per-AP-invoice dunning timeline entry recording each reminder level dispatched against an overdue APTransaction. Written by the AP lifecycle (or OR's dunning-workflow engine when stable per ADR-022) when a reminder fires; read by the APTransaction detail page to surface the dunning timeline. Symmetric to `DunningRecord` on the AR side._
+**Primary spec:** bookkeeping-accounts-payable-core
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| noticeDate | date | Yes | Date when dunning notice was issued |
-| dueDate | date | Yes | New payment deadline in the notice |
-| reminderLevel | enum | Yes | Escalation level of dunning process |
-| amount | MonetaryAmount | Yes | Outstanding amount due |
-| eventStatus | enum | Yes | Status of the dunning notice |
-| description | string | No | Custom message or legal terms included |
+| invoiceRef | string | Yes | FK to APTransaction UUID |
+| reminderLevel | enum | Yes | Dunning escalation level (reminder-1, reminder-2, formal-notice, collection) |
+| dispatchedAt | datetime | Yes | When the reminder was dispatched |
+| dispatchedBy | string | Yes | Actor that dispatched ("system" or operator user-id) |
+| templateRef | string | No | FK to OR notification template used for dispatch |
+| acknowledgedAt | datetime | No | When the vendor acknowledged the notice |
+| administrationId | string | Yes | FK to the administration owning this dunning notice |
 
 **Relations:**
-- → APTransaction (many-to-one)
-- → Payee (many-to-one)
+- → APTransaction (many-to-one, via invoiceRef)
+- → NotificationTemplate (many-to-one, via templateRef — OR-owned)
+- → Administration (many-to-one)
+
+> **Reconciliation note (bookkeeping-accounts-payable-core, 2026-06-09):** This
+> entry has been updated from the prior generic `accounts-payable-receivable`
+> draft to the canonical T2 shape registered in
+> `lib/Settings/register.d/bookkeeping-accounts-payable-core.json`. The fields
+> mirror `DunningRecord` on the AR side. Distinct from the
+> `bookkeeping-credit-control-dunning` ladder-run orchestrator (see
+> `DunningRun` / `DunningLadder` entries elsewhere in this document) which
+> operates on AR receivables via the credit-control ladder; this
+> `DunningNotice` is a per-AP-invoice timeline record per REQ-AP-005. See
+> `openspec/changes/bookkeeping-accounts-payable-core/dedup-notes.md` for
+> the boundary.
 
 ### DunningRecord
 **Schema.org:** `schema:Event`
@@ -4148,23 +4181,43 @@ _Schema.org Organization — standard vocabulary for organization data_
 
 ### Payee
 **Schema.org:** `schema:Organization`
-_Vendor (accounts payable) or customer (accounts receivable) party in financial transactions._
-**Primary spec:** accounts-payable-receivable
+_Vendor / supplier party record for accounts payable. Holds vendor contact details, payment terms, bank IBAN, dunning policy reference, and default expense account. Symmetric to `CustomerMaster` on the AR side. Posting an APTransaction (issued transition) consults `paymentTermDays` for the due-date default and `dunningPolicyRef` for the OR dunning-workflow cadence in the overdue state._
+**Primary spec:** bookkeeping-accounts-payable-core
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| legalName | string | Yes | Legal registered business name |
-| tradeName | string | No | Trade name or DBA if different from legal name |
-| vatID | string | Yes | Dutch VAT identification number |
-| kvkNumber | string | No | KvK (Chamber of Commerce) registration number |
-| email | string | Yes | Contact email address |
-| telephone | string | No | Contact telephone number |
-| iban | string | No | International Bank Account Number for transfers |
-| bic | string | No | BIC/SWIFT code for international transactions |
+| vendorNumber | string | Yes | Stable vendor identifier unique per administration |
+| name | string | Yes | Legal name of the vendor |
+| tradingName | string | No | Alternate or DBA trading name |
+| kvkNumber | string | No | Dutch KvK number (8 digits) |
+| btwNumber | string | No | Dutch BTW / EU VAT number |
+| paymentTermDays | integer | Yes | Default payment term in days (auto-sets APTransaction.dueDate); default 30 |
+| defaultExpenseAccountNumber | string | No | FK to Account.accountNumber for default expense coding |
+| bankAccount | string | No | Payee bank account IBAN for outgoing payments |
+| creditTerms | string | No | Free-text payment terms or reference to OR terms record |
+| dunningPolicyRef | string | No | FK to OR dunning-workflow policy record per ADR-022 |
+| address | object | No | Postal address (street, houseNumber, postcode, city, country) |
+| email | string | No | Primary contact email for remittance advice and queries |
+| phone | string | No | Primary contact phone number |
+| contactRef | string | No | FK to OR contact abstraction if stable per ADR-022; else null |
+| administrationId | string | Yes | FK to the administration owning this vendor record |
+| lifecycleState | enum | Yes | One of active, blocked, archived |
 
 **Relations:**
-- → APTransaction (one-to-many)
-- → DunningNotice (one-to-many)
+- → APTransaction (one-to-many, via vendorId)
+- → Account (many-to-one, via defaultExpenseAccountNumber)
+- → DunningPolicy (many-to-one, via dunningPolicyRef — OR-owned per ADR-022)
+- → Administration (many-to-one)
+
+> **Reconciliation note (bookkeeping-accounts-payable-core, 2026-06-09):** This
+> entry has been updated from the prior generic `accounts-payable-receivable`
+> draft to the canonical T2 shape registered in
+> `lib/Settings/register.d/bookkeeping-accounts-payable-core.json`. The fields
+> mirror `CustomerMaster` on the AR side. The pre-T2 `VendorMaster` entry
+> below (added by `add-shillinq-bookkeeping-compliance`) remains a parallel
+> historical flavour during the migration window; new AP register
+> declarations MUST use `Payee`. See `openspec/changes/
+> bookkeeping-accounts-payable-core/dedup-notes.md` for the migration boundary.
 
 ### Payment
 **Schema.org:** `schema:Order`
