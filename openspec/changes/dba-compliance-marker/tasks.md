@@ -38,11 +38,11 @@
 - [x] Task 27: Implement beëindiging-procedure per REQ-DBA-018 (mark opdracht ended, generate end-report, start 7-year retention-period clock per AWR art. 52)
 - [x] Task 28: Implement tussenkomst-driehoek modelling (optional, later phase) per REQ-DBA-017 (separate intakes + risk-scores for ZZP–intermediair and intermediair–eindklant; Waadi/Wka flagging)
 - [x] Task 29: Add 3 manifest navigation entries (`DBA Intake Wizard`, `DBA Portfolio Dashboard`, `Evidence Browser`) + their pages to `src/manifest.json` per REQ-DBA-001/-005/-007; `node tests/validate-manifest.js` exits 0
-- [ ] Task 30: Update `openspec/architecture/adr-000-data-model.md` with `DBAOpdracht`/`DBAIntake`/`DBAModelovereenkomst`/`DBARisicoflag`/`DBAPortfolioRisico`/`DBAEvidenceDossier` entries, reconciling against any existing DBA-related data-model entries
-- [ ] Task 31: Hook AP/AR factuurfrequentie-monitoring (optional) to trigger flag-generation (non-blocking if AP/AR not deployed)
-- [ ] Task 32: Hook AP/AR uurtarief-detectie (optional) to feed VBAR-grens check per REQ-DBA-016 (non-blocking if AP/AR not deployed)
-- [ ] Task 33: Documentation: Author `docs/user-guide/compliance/dba-compliance-marker.md` per ADR-030 journeydoc convention; include DBA intake flow, risk-scoring explanation, flag interpretation, evidence-dossier management, audit-rapport export
-- [ ] Task 34: i18n (Dutch `nl_NL` + English `en_US`): Translate all user-facing strings (Compliance Mode, Soft Mode, Hard Mode, DBA Intake, Risk Score, Risk Band names, Flag types + suggestions, Evidence Dossier, Audit Report, VBAR Threshold Warning, Portfolio Risk, Modelovereenkomst Register, etc.)
+- [x] Task 30: Update `openspec/architecture/adr-000-data-model.md` with `DBAOpdracht`/`DBAIntake`/`DBAModelovereenkomst`/`DBARisicoflag`/`DBAPortfolioRisico`/`DBAEvidenceDossier` entries, reconciling against any existing DBA-related data-model entries
+- [x] Task 31: Hook AP/AR factuurfrequentie-monitoring (optional) to trigger flag-generation (non-blocking if AP/AR not deployed)
+- [x] Task 32: Hook AP/AR uurtarief-detectie (optional) to feed VBAR-grens check per REQ-DBA-016 (non-blocking if AP/AR not deployed)
+- [x] Task 33: Documentation: Author `docs/user-guide/compliance/dba-compliance-marker.md` per ADR-030 journeydoc convention; include DBA intake flow, risk-scoring explanation, flag interpretation, evidence-dossier management, audit-rapport export
+- [x] Task 34: i18n (Dutch `nl_NL` + English `en_US`): Translate all user-facing strings (Compliance Mode, Soft Mode, Hard Mode, DBA Intake, Risk Score, Risk Band names, Flag types + suggestions, Evidence Dossier, Audit Report, VBAR Threshold Warning, Portfolio Risk, Modelovereenkomst Register, etc.)
 
 ## Verification
 

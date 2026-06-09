@@ -24,6 +24,7 @@ namespace OCA\Shillinq\AppInfo;
 use OCA\Shillinq\Listener\AppointmentCreatedListener;
 use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
 use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
+use OCA\Shillinq\Listener\DBAFactuurMonitorListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
@@ -250,6 +251,15 @@ class Application extends App implements IBootstrap
 
         // Register the notifier for Shillinq in-app notifications (REQ-SUBV-010).
         $context->registerNotifierService(Notifier::class);
+
+        // dba-compliance-marker T31/T32 — optional non-blocking hook into AP/AR
+        // factuur creation. The listener runs the VBAR uurtarief-toets
+        // (REQ-DBA-016) when an ARInvoice/APInvoice carries a
+        // `dbaOpdrachtId` field; it is silently inert otherwise.
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: DBAFactuurMonitorListener::class
+        );
 
     }//end register()
 
