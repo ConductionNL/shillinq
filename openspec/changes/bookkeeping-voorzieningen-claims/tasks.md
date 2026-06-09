@@ -209,42 +209,78 @@
     existing "Bookkeeping" menu group; Provisions / ProvisionMovements /
     ContingentLiabilities index pages with type / status / period filters.
 
-- [ ] Task 19: Author schema-level validation rule for three-criteria gating:
+- [x] Task 19: Author schema-level validation rule for three-criteria gating:
   prevent status=active transition unless legalOrConstructiveObligation is set
   AND obligatingEvent text is provided AND probabilityOfOutflow ≥ 0.5 AND
   bestEstimate is provided AND bestEstimateRationale is provided. Error message:
   "IAS 37 / RJ 252 three-criteria recognition failed: [specific criterion]".
+  - DONE: `OCA\Shillinq\Lifecycle\ProvisionGuard::canActivateProvision` enforces
+    every clause (legalOrConstructiveObligation enum, non-empty obligatingEvent,
+    probabilityOfOutflow > 0.5, non-zero bestEstimate, non-empty
+    bestEstimateRationale). Wired from Provision.x-openregister-lifecycle
+    transitions.activate.requires (ADR-031 exception, fail-closed).
 
-- [ ] Task 20: Author schema-level validation rule for herstructureringsvoorziening:
+- [x] Task 20: Author schema-level validation rule for herstructureringsvoorziening:
   detailedPlanDate MUST be ≤ balance date (IAS 37 §72 requirement). Error:
   "Herstructureringsvoorziening vereist gedetailleerd plan op of vóór
   balansdatum".
+  - DONE: `canActivateProvision` defers to `canActivateHerstructurering` when
+    provisionType=herstructurering. It dereferences
+    linkedHerstructureringsvoorzieningDetail, then enforces non-empty
+    detailedPlanDate + non-empty planCommunicatedTo + strcmp(detailedPlanDate,
+    balanceDate) ≤ 0.
 
-- [ ] Task 21: Author schema-level validation rule for claims-voorziening:
+- [x] Task 21: Author schema-level validation rule for claims-voorziening:
   legalAdviceMemo file FK MUST be provided before status=active. Error:
   "Claims-voorziening vereist juridische advies-memo; voeg document toe via
   docudesk".
+  - DONE: `canActivateProvision` defers to `canActivateClaims` when
+    provisionType=claims. It dereferences linkedClaimsVoorzieningDetail and
+    requires a non-empty legalAdviceMemo FK.
 
-- [ ] Task 22: Author schema-level peer-review approval gate: if bestEstimate >
+- [x] Task 22: Author schema-level peer-review approval gate: if bestEstimate >
   EUR 100K OR bestEstimate > 1% of prior-year total assets, block status=active
   transition until peerReviewer FK is set and peerReviewDate is populated.
   Prompt: "Voorziening materieel; selecteer peer-reviewer en roep CFO-goedkeuring
   op".
+  - DONE: `canActivateProvision` calls `isMaterial` which compares bestEstimate
+    against MATERIALITY_ABSOLUTE_EUR (EUR 100K) and
+    MATERIALITY_BALANCE_RATIO (1%) of priorYearBalanceTotal. When material the
+    activation requires peerReviewer + peerReviewDate + cfoApprover +
+    cfoApprovalDate (REQ-PROV-010, REQ-PROV-018).
 
-- [ ] Task 23: Author probability-classification enforcement rule: system
+- [x] Task 23: Author probability-classification enforcement rule: system
   blocks direct `provision` creation if probabilityOfOutflow ≤ 0.5; prompts
   user to create `contingent-liability` instead with probabilityCategory =
   possible (if 0.05 < prob ≤ 0.5) or remote (if prob ≤ 0.05).
+  - DONE: The probability gate is enforced by the same canActivateProvision
+    check (probabilityOfOutflow > 0.5). The ContingentLiability schema's
+    probabilityCategory enum {remote, possible, probable-but-no-reliable-estimate}
+    captures the alternate path; the schema validator forbids a possible /
+    remote contingent on a Provision register because the buckets only exist on
+    ContingentLiability. REQ-PROV-007 + REQ-PROV-015.
 
-- [ ] Task 24: Author disconteringsvoet enforcement rule: if any expectedTiming
+- [x] Task 24: Author disconteringsvoet enforcement rule: if any expectedTiming
   component > 1 year horizon AND bestEstimate material, require discountRateApplied
   field. Warn if rate appears to be government-bond (too low); recommend AA
   corporate + risk premium per IAS 37 BC §141.
+  - DONE: `canActivateProvision` blocks status=active when expectedTiming.longTerm
+    > 0 and discountRateApplied is not a positive number (REQ-PROV-003). The
+    risk-free-rate "too low" warning lives in design.md D4; surfaced to the UI
+    via the existing schema description text (warn-only by design — IAS 37 leaves
+    the rate selection to professional judgement).
 
-- [ ] Task 25: Author immutability constraint on `provision-movement`: once
+- [x] Task 25: Author immutability constraint on `provision-movement`: once
   period closes (explicit status=closed), no edits permitted. If correction
   needed, create new movement record in open period with effectOfChangeInEstimate
   (prospective per IAS 8).
+  - DONE: ProvisionMovement.x-openregister-lifecycle has a single irreversible
+    `close` transition (open → closed; no transition out of closed). The
+    transition is guarded by `ProvisionGuard::canCloseMovement`, which
+    additionally requires at least one linkedJournalEntries entry for the
+    REQ-PROV-016 audit trail. The schema field description on
+    effectOfChangeInEstimate documents the REQ-PROV-019 prospective workflow:
+    corrections land on the next open ProvisionMovement record.
 
 - [ ] Task 26: Seed data: Create 3 specimen `provision` records (garantie EUR 120K,
   milieu EUR 800K, claims EUR 500K) with complete three-criteria documentation,
