@@ -1,0 +1,30 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
+ * Gate-19 behavioural UI coverage — Shillinq "Projecten" navigation group
+ * (project overview, rates, utilisation). Deep-links each manifest page,
+ * asserts a genuine index surface, no shillinq-origin 5xx / page error.
+ * Data-independent.
+ */
+
+import { test } from '@playwright/test'
+import { gotoPage, assertIndexSurface, assertNoShillinqFailures, recordShillinqErrors } from './_helpers'
+
+const PAGES: Array<{ route: string, title: string, titleRe?: RegExp }> = [
+	{ route: '/projecten', title: 'Projecten', titleRe: /Project/i },
+	{ route: '/tarieven', title: 'Tarieven' },
+	{ route: '/utilisatie', title: 'Utilisatie' },
+]
+
+test.describe('shillinq spec-coverage — Projecten', () => {
+	test.describe.configure({ mode: 'serial' })
+	for (const p of PAGES) {
+		test(`Projecten › ${p.title} (${p.route})`, async ({ page }) => {
+			const rec = recordShillinqErrors(page)
+			await gotoPage(page, p.route)
+			await assertIndexSurface(page, p.title, { titleRe: p.titleRe })
+			assertNoShillinqFailures(rec, p.route)
+		})
+	}
+})
