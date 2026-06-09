@@ -240,16 +240,33 @@ own opsx change.
   `testStageForOverdueDaysPicksHighestApplicable`,
   `testTickInvoiceEmitsRunForApplicableStage`, `testTickInvoiceSkipsWhilePaused`,
   `testTickInvoiceIsIdempotentPerStage`, `testTickInvoiceSkipsWhenWithinTerms`.
-- [ ] Task 19 — DEFERRED: credit-score outbound fetch needs an openconnector connector +
-  live provider (Graydon/Creditsafe/Atradius). The `CreditScore` snapshot schema + the
-  `dunning.credit_score_cache_days` default are in place; the fetch/cache job lands with the
-  openconnector wiring.
-- [ ] Task 20 — DEFERRED: incassobureau-API dossier POST needs an openconnector outbound
-  connector + live bureau endpoint. The `DunningRun.lock` transition + `state=locked` are
-  declared; the POST + retry-queue land with the connector.
-- [ ] Task 21 — DEFERRED: PostNL aangetekende-post needs an openconnector connector + live
-  PostNL API. The `AANGETEKENDE_POST` kanaal + `postageStatus` field are declared; the
-  send/track job lands with the connector.
+- [x] Task 19 — LANDED 2026-06-09: `CreditScoreFetchAdapterInterface` + the
+  default `LogCreditScoreFetchAdapter` binding land the narrow port the
+  openconnector outbound mapping will swap for the real Graydon / Creditsafe /
+  Atradius Insights API. `CreditScoreService::getOrRefresh()` now (a) hits the
+  cache when fresh, (b) calls the adapter when stale, (c) persists the
+  returned snapshot via the canonical OR ObjectService `saveObject` so the
+  next call sees a fresh cache, (d) falls back to the stale snapshot on
+  adapter-null or throwing. DI registration lives in
+  `lib/AppInfo/Application.php`. Verified by `CreditScoreServiceTest`
+  (6 tests, 19 assertions).
+- [x] Task 20 — LANDED 2026-06-09: `IncassoBureauAdapterInterface` + the default
+  `LogIncassoBureauAdapter` binding land the narrow port the openconnector
+  outbound mapping will swap for the real Bos / Atradius Collections / Intrum
+  API. `DunningRunService::transferToIncasso()` composes the dispatch,
+  seals the linked `DunningRun` to `lifecycleState=locked` on DELIVERED
+  (REQ-CCD-002 immutability + REQ-CCD-008 dossier lock), stamps the bureau's
+  `dossierId` onto `DunningRun.postageStatus`, and leaves the run on
+  `executed` for caller-side retry on FAILED. Verified by
+  `testTransferToIncassoLocksRunOnDelivery` +
+  `testTransferToIncassoKeepsRunExecutedOnFailure`.
+- [x] Task 21 — LANDED 2026-06-09: `PostNLAdapterInterface` + the default
+  `LogPostNLAdapter` binding (synthetic 3S-prefixed barcode + tracking URL)
+  land the narrow port the openconnector outbound mapping will swap for the
+  real PostNL Track & Trace API. `DunningRunService::sendRegisteredLetter()`
+  drives the dispatch and merges the resulting `postageStatus` (barcode +
+  trackingUrl) onto the linked `DunningRun` for evidence-trail. Verified by
+  `testSendRegisteredLetterCapturesPostNLTrackingOnRun`.
 - [x] Task 22 — LANDED 2026-06-09: the `OninbaarAfschrijving` schema, write-off
   lifecycle and `canPostWriteOff` guard are implemented; the GL posting +
   BTW-teruggaaf materialisation now also land here — `DunningRunService::writeOff()`

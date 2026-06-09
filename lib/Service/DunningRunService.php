@@ -48,6 +48,9 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
+use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
+use OCA\Shillinq\Service\Dunning\PostNLAdapterInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -839,6 +842,144 @@ class DunningRunService
         return false;
 
     }//end klantPaidInvoiceWithin()
+
+    /**
+     * REQ-CCD-008 / task-20: dispatch the stage-5 dossier to the configured
+     * incasso bureau via the bound `IncassoBureauAdapterInterface`.
+     *
+     * The dossier MUST already be composed (by `IncassoDossierComposer`). On
+     * a DELIVERED outcome this method seals the linked `DunningRun` to
+     * `lifecycleState=locked` (REQ-CCD-002 immutability + IncassoDossierComposer
+     * REQ-CCD-008 lock) and stamps the provider's `dossierId` on the run's
+     * `postageStatus` field for evidence-trail. On any other outcome the run
+     * remains `executed` and the caller is expected to queue a retry / surface
+     * the error to the operator.
+     *
+     * @param string             $administrationId Administration scope.
+     * @param string             $factuurId        Invoice FK.
+     * @param array<string,mixed> $dossier         Composed dossier bundle.
+     * @param string             $dunningRunId     The DunningRun id to seal on success.
+     *
+     * @return DunningChannelSendResult The dispatch outcome.
+     *
+     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
+     */
+    public function transferToIncasso(
+        string $administrationId,
+        string $factuurId,
+        array $dossier,
+        string $dunningRunId
+    ): DunningChannelSendResult {
+        $adapter = $this->resolveIncassoAdapter();
+        $result  = $adapter->transfer(
+            administrationId: $administrationId,
+            factuurId: $factuurId,
+            dossier: $dossier
+        );
+
+        if ($result->deliveryStatus !== 'DELIVERED') {
+            $this->logger->warning(
+                sprintf(
+                    'Shillinq: incasso transfer for invoice %s ended in %s — caller must retry / notify',
+                    $factuurId,
+                    $result->deliveryStatus
+                )
+            );
+            return $result;
+        }
+
+        $run = $this->fetchOne(schema: 'DunningRun', filters: ['id' => $dunningRunId]);
+        if ($run === null) {
+            $this->logger->warning('Shillinq: transferToIncasso could not find DunningRun '.$dunningRunId);
+            return $result;
+        }
+
+        $run['lifecycleState'] = 'locked';
+        $run['deliveryStatus'] = 'DELIVERED';
+        $existing              = (array) ($run['postageStatus'] ?? []);
+        $dossierId             = (string) ($result->extras['dossierId'] ?? '');
+        if ($dossierId !== '') {
+            $existing['dossierId'] = $dossierId;
+        }
+        if ($existing !== []) {
+            $run['postageStatus'] = $existing;
+        }
+        try {
+            $this->saveObject(schema: 'DunningRun', data: $run);
+        } catch (\Throwable $e) {
+            $this->logger->warning('Shillinq: failed to seal DunningRun '.$dunningRunId.': '.$e->getMessage());
+        }
+
+        return $result;
+
+    }//end transferToIncasso()
+
+    /**
+     * REQ-CCD-009 / task-21: dispatch a stage-4 ingebrekestelling registered
+     * letter via the bound `PostNLAdapterInterface`.
+     *
+     * Captures the resulting Track & Trace barcode + URL on the linked
+     * `DunningRun.postageStatus` field for evidence-trail.
+     *
+     * @param string             $administrationId Administration scope.
+     * @param string             $dunningRunId     The DunningRun id to update on success.
+     * @param array<string,mixed> $payload         Letter payload — recipientAdres + letterPdfRef.
+     *
+     * @return DunningChannelSendResult The dispatch outcome.
+     *
+     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-21
+     */
+    public function sendRegisteredLetter(
+        string $administrationId,
+        string $dunningRunId,
+        array $payload
+    ): DunningChannelSendResult {
+        $adapter = $this->resolvePostNlAdapter();
+        $result  = $adapter->sendRegisteredLetter(payload: $payload);
+
+        $run = $this->fetchOne(schema: 'DunningRun', filters: ['id' => $dunningRunId]);
+        if ($run !== null) {
+            $postage = ((array) ($run['postageStatus'] ?? []));
+            $extras  = $result->postageStatus();
+            if ($extras !== null) {
+                $postage = array_merge($postage, $extras);
+            }
+            if ($postage !== []) {
+                $run['postageStatus'] = $postage;
+            }
+            $run['deliveryStatus'] = $result->deliveryStatus;
+            try {
+                $this->saveObject(schema: 'DunningRun', data: $run);
+            } catch (\Throwable $e) {
+                $this->logger->warning('Shillinq: failed to update DunningRun '.$dunningRunId.' with PostNL evidence: '.$e->getMessage());
+            }
+        }
+
+        return $result;
+
+    }//end sendRegisteredLetter()
+
+    /**
+     * Resolve the bound IncassoBureauAdapterInterface via the DI container.
+     *
+     * @return IncassoBureauAdapterInterface
+     */
+    private function resolveIncassoAdapter(): IncassoBureauAdapterInterface
+    {
+        return $this->container->get(IncassoBureauAdapterInterface::class);
+
+    }//end resolveIncassoAdapter()
+
+    /**
+     * Resolve the bound PostNLAdapterInterface via the DI container.
+     *
+     * @return PostNLAdapterInterface
+     */
+    private function resolvePostNlAdapter(): PostNLAdapterInterface
+    {
+        return $this->container->get(PostNLAdapterInterface::class);
+
+    }//end resolvePostNlAdapter()
 
     /**
      * Whether the invoice has an active DunningPauseDispute.

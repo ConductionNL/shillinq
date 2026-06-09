@@ -57,14 +57,16 @@ class CreditScoreService
     private const CFG_WARNING_THRESHOLD = 'dunning.credit_score_warning_threshold';
 
     /**
-     * @param ContainerInterface $container DI for OR ObjectService.
-     * @param IAppConfig         $appConfig App config.
-     * @param LoggerInterface    $logger    Logger.
+     * @param ContainerInterface                $container  DI for OR ObjectService.
+     * @param IAppConfig                        $appConfig  App config.
+     * @param LoggerInterface                   $logger     Logger.
+     * @param CreditScoreFetchAdapterInterface  $fetch      Outbound credit-score fetch port (task-19).
      */
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly IAppConfig $appConfig,
         private readonly LoggerInterface $logger,
+        private readonly CreditScoreFetchAdapterInterface $fetch,
     ) {
     }//end __construct()
 
@@ -86,14 +88,69 @@ class CreditScoreService
             return $cached;
         }
 
-        // Cache miss / stale — in production this would dispatch via
-        // openconnector to the provider's REST API. For now we return the
-        // stale snapshot (with a logger warning) so the caller can still
-        // surface the data while the fetch path lands in a follow-up.
-        $this->logger->info('Shillinq: CreditScore cache stale for '.$klantId.' / '.$provider.'; live refresh deferred.');
-        return $cached;
+        // Cache miss / stale — dispatch via the bound fetch adapter
+        // (LogCreditScoreFetchAdapter by default — swap for an
+        // openconnector-backed implementation in production). When the
+        // adapter returns a fresh snapshot, persist it and return it;
+        // otherwise fall back to the stale cache so the caller can still
+        // surface what's known.
+        $fresh = null;
+        try {
+            $fresh = $this->fetch->fetch(
+                administrationId: $administrationId,
+                klantId: $klantId,
+                provider: $provider
+            );
+        } catch (\Throwable $e) {
+            $this->logger->warning(
+                'Shillinq: CreditScoreFetchAdapter::fetch threw — falling back to cache: '.$e->getMessage()
+            );
+        }
+
+        if ($fresh === null) {
+            $this->logger->info('Shillinq: CreditScore live refresh unavailable for '.$klantId.' / '.$provider.'; using cached snapshot.');
+            return $cached;
+        }
+
+        // Normalise + persist the fresh snapshot so the next call hits the cache.
+        $fresh['administrationId'] = ($fresh['administrationId'] ?? $administrationId);
+        $fresh['klantId']          = ($fresh['klantId'] ?? $klantId);
+        $fresh['provider']         = ($fresh['provider'] ?? $provider);
+        if (isset($fresh['scoreDatum']) === false || (string) $fresh['scoreDatum'] === '') {
+            $fresh['scoreDatum'] = (new DateTimeImmutable())->format('Y-m-d');
+        }
+        try {
+            $persisted = $this->saveScore(score: $fresh);
+            return ($persisted !== null) ? $persisted : $fresh;
+        } catch (\Throwable $e) {
+            $this->logger->warning('Shillinq: failed to persist fresh CreditScore — returning in-memory snapshot: '.$e->getMessage());
+            return $fresh;
+        }
 
     }//end getOrRefresh()
+
+    /**
+     * Persist a CreditScore snapshot via the canonical OR ObjectService API.
+     *
+     * @param array<string,mixed> $score The snapshot to persist.
+     *
+     * @return array<string,mixed>|null
+     */
+    private function saveScore(array $score): ?array
+    {
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $saved         = $objectService
+                ->setRegister($this->register())
+                ->setSchema('CreditScore')
+                ->saveObject($score);
+            return is_array($saved) ? $saved : null;
+        } catch (\Throwable $e) {
+            $this->logger->warning('Shillinq: CreditScoreService::saveScore failed: '.$e->getMessage());
+            return null;
+        }
+
+    }//end saveScore()
 
     /**
      * Render a UI warning payload for an invoice when the klant has a low score.

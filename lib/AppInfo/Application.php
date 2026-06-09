@@ -30,6 +30,14 @@ use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Notification\Notifier;
 use OCA\Shillinq\Repair\InitializeSettings;
+use OCA\Shillinq\Service\Dunning\CreditScoreFetchAdapterInterface;
+use OCA\Shillinq\Service\Dunning\DunningChannelAdapterInterface;
+use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
+use OCA\Shillinq\Service\Dunning\LogCreditScoreFetchAdapter;
+use OCA\Shillinq\Service\Dunning\LogDunningChannelAdapter;
+use OCA\Shillinq\Service\Dunning\LogIncassoBureauAdapter;
+use OCA\Shillinq\Service\Dunning\LogPostNLAdapter;
+use OCA\Shillinq\Service\Dunning\PostNLAdapterInterface;
 use OCA\Shillinq\Service\Pipelinq\LoggingPipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue;
 use OCA\Shillinq\Service\Pipelinq\PipelinqAdminNotifier;
@@ -169,6 +177,37 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectUpdatedEvent::class,
             listener: GLTransactionComplianceCacheListener::class
+        );
+
+        // bookkeeping-credit-control-dunning tasks 19/20/21 — wire the
+        // narrow ports used by CreditScoreService + DunningRunService to the
+        // log-backed default bindings. The openconnector-backed bindings
+        // (Graydon/Creditsafe/Atradius, Bos/Atradius Collections/Intrum,
+        // PostNL Track & Trace) swap these in production via the same
+        // registerService call.
+        $context->registerService(
+            CreditScoreFetchAdapterInterface::class,
+            static function ($c): CreditScoreFetchAdapterInterface {
+                return $c->get(LogCreditScoreFetchAdapter::class);
+            }
+        );
+        $context->registerService(
+            DunningChannelAdapterInterface::class,
+            static function ($c): DunningChannelAdapterInterface {
+                return $c->get(LogDunningChannelAdapter::class);
+            }
+        );
+        $context->registerService(
+            IncassoBureauAdapterInterface::class,
+            static function ($c): IncassoBureauAdapterInterface {
+                return $c->get(LogIncassoBureauAdapter::class);
+            }
+        );
+        $context->registerService(
+            PostNLAdapterInterface::class,
+            static function ($c): PostNLAdapterInterface {
+                return $c->get(LogPostNLAdapter::class);
+            }
         );
 
         // Initialize register and schemas on install/upgrade.

@@ -33,6 +33,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\BIKStaffelCalculator;
+use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
+use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
+use OCA\Shillinq\Service\Dunning\PostNLAdapterInterface;
 use OCA\Shillinq\Service\DunningRunService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -52,10 +55,43 @@ final class DunningRunServiceTest extends TestCase
     /**
      * @return DunningRunService
      */
-    private function makeService(InMemoryObjectService $os): DunningRunService
-    {
+    private function makeService(
+        InMemoryObjectService $os,
+        ?IncassoBureauAdapterInterface $incasso = null,
+        ?PostNLAdapterInterface $postnl = null
+    ): DunningRunService {
         $container = $this->createStub(ContainerInterface::class);
-        $container->method('get')->willReturn($os);
+        $container->method('get')->willReturnCallback(
+            static function (string $id) use ($os, $incasso, $postnl) {
+                if ($id === IncassoBureauAdapterInterface::class) {
+                    return ($incasso !== null) ? $incasso : new class implements IncassoBureauAdapterInterface {
+                        public function transfer(string $administrationId, string $factuurId, array $dossier): DunningChannelSendResult
+                        {
+                            return new DunningChannelSendResult(
+                                kanaal: 'INCASSOBUREAU_API',
+                                deliveryStatus: 'DELIVERED',
+                                providerMessageId: 'noop',
+                                extras: ['dossierId' => 'test-dossier'],
+                            );
+                        }
+                    };
+                }
+                if ($id === PostNLAdapterInterface::class) {
+                    return ($postnl !== null) ? $postnl : new class implements PostNLAdapterInterface {
+                        public function sendRegisteredLetter(array $payload): DunningChannelSendResult
+                        {
+                            return new DunningChannelSendResult(
+                                kanaal: 'AANGETEKENDE_POST',
+                                deliveryStatus: 'DELIVERED',
+                                providerMessageId: 'noop',
+                                extras: ['barcode' => '3S1234567890123', 'trackingUrl' => 'https://postnl.nl/tracktrace/3S1234567890123'],
+                            );
+                        }
+                    };
+                }
+                return $os;
+            }
+        );
 
         $appConfig = $this->createStub(IAppConfig::class);
         $appConfig->method('getValueString')->willReturnCallback(
@@ -598,5 +634,120 @@ final class DunningRunServiceTest extends TestCase
         ));
 
     }//end testAdminErrorDetectorPrefersInvoicePaidHistory()
+
+    /**
+     * REQ-CCD-008 / task-20: transferToIncasso seals the DunningRun on DELIVERED.
+     *
+     * @return void
+     */
+    public function testTransferToIncassoLocksRunOnDelivery(): void
+    {
+        $os = new InMemoryObjectService();
+        $os->seed(schema: 'DunningRun', rows: [
+            [
+                'id'               => 'dr-1',
+                'administrationId' => 'adm-1',
+                'factuurId'        => 'inv-1',
+                'stageNr'          => 5,
+                'kanaal'           => 'INCASSOBUREAU_API',
+                'lifecycleState'   => 'executed',
+                'deliveryStatus'   => 'PENDING',
+            ],
+        ]);
+        $service = $this->makeService(os: $os);
+
+        $result = $service->transferToIncasso(
+            administrationId: 'adm-1',
+            factuurId: 'inv-1',
+            dossier: ['factuurId' => 'inv-1', 'inhoud' => []],
+            dunningRunId: 'dr-1'
+        );
+
+        self::assertSame('DELIVERED', $result->deliveryStatus);
+        $sealed = $os->dump(schema: 'DunningRun');
+        // The last persisted version is the sealed copy.
+        $last   = end($sealed);
+        self::assertSame('locked', $last['lifecycleState']);
+        self::assertSame('test-dossier', $last['postageStatus']['dossierId']);
+
+    }//end testTransferToIncassoLocksRunOnDelivery()
+
+    /**
+     * Task-20: transferToIncasso leaves the run on `executed` when the adapter fails.
+     *
+     * @return void
+     */
+    public function testTransferToIncassoKeepsRunExecutedOnFailure(): void
+    {
+        $os = new InMemoryObjectService();
+        $os->seed(schema: 'DunningRun', rows: [
+            [
+                'id'               => 'dr-1',
+                'administrationId' => 'adm-1',
+                'factuurId'        => 'inv-1',
+                'stageNr'          => 5,
+                'lifecycleState'   => 'executed',
+            ],
+        ]);
+        $incasso = new class implements IncassoBureauAdapterInterface {
+            public function transfer(string $administrationId, string $factuurId, array $dossier): DunningChannelSendResult
+            {
+                return new DunningChannelSendResult(
+                    kanaal: 'INCASSOBUREAU_API',
+                    deliveryStatus: 'FAILED',
+                    errorMessage: 'connection refused',
+                );
+            }
+        };
+        $service = $this->makeService(os: $os, incasso: $incasso);
+
+        $result = $service->transferToIncasso(
+            administrationId: 'adm-1',
+            factuurId: 'inv-1',
+            dossier: ['factuurId' => 'inv-1', 'inhoud' => []],
+            dunningRunId: 'dr-1'
+        );
+
+        self::assertSame('FAILED', $result->deliveryStatus);
+        $rows = $os->dump(schema: 'DunningRun');
+        self::assertSame('executed', end($rows)['lifecycleState']);
+
+    }//end testTransferToIncassoKeepsRunExecutedOnFailure()
+
+    /**
+     * REQ-CCD-009 / task-21: sendRegisteredLetter captures barcode + tracking on the DunningRun.
+     *
+     * @return void
+     */
+    public function testSendRegisteredLetterCapturesPostNLTrackingOnRun(): void
+    {
+        $os = new InMemoryObjectService();
+        $os->seed(schema: 'DunningRun', rows: [
+            [
+                'id'               => 'dr-1',
+                'administrationId' => 'adm-1',
+                'factuurId'        => 'inv-1',
+                'stageNr'          => 4,
+                'kanaal'           => 'AANGETEKENDE_POST',
+                'lifecycleState'   => 'executed',
+                'deliveryStatus'   => 'PENDING',
+            ],
+        ]);
+        $service = $this->makeService(os: $os);
+
+        $result = $service->sendRegisteredLetter(
+            administrationId: 'adm-1',
+            dunningRunId: 'dr-1',
+            payload: ['recipientAdres' => 'Voorbeeldstraat 1, 1234 AB Amsterdam', 'letterPdfRef' => 'docudesk:tpl-stage4-letter.pdf']
+        );
+
+        self::assertSame('DELIVERED', $result->deliveryStatus);
+        $rows = $os->dump(schema: 'DunningRun');
+        $last = end($rows);
+        self::assertSame('3S1234567890123', $last['postageStatus']['barcode']);
+        self::assertSame('https://postnl.nl/tracktrace/3S1234567890123', $last['postageStatus']['trackingUrl']);
+        self::assertSame('DELIVERED', $last['deliveryStatus']);
+
+    }//end testSendRegisteredLetterCapturesPostNLTrackingOnRun()
 
 }//end class
