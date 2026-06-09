@@ -8,7 +8,15 @@
 
 ## ADDED Requirements
 
-### REQ-FS-001: Financial statements SHALL be assembled as compositions of trial-balance aggregations + a presentation manifest; no PHP report engine
+This capability is bound by **ADR-022** (consume OpenRegister abstractions; no
+parallel app-local report storage) and **ADR-031** (declarative composition
+over imperative report builders). Each requirement below is a restatement of
+those ADRs applied to the financial-statements slice, plus **ADR-024 Tier-4**
+for the renderer path (`CnReportPage` library component preferred, per-statement
+bespoke Vue fallback). BBV (Dutch government) statement manifests are
+explicitly deferred to T3 (`add-shillinq-bbv-compliance`).
+
+### Requirement: REQ-FS-001 — Financial statements SHALL be assembled as compositions of trial-balance aggregations + a presentation manifest; no PHP report engine
 
 Balance Sheet, Profit & Loss, and Cash Flow Statement MUST be
 expressed as compositions of `bookkeeping-trial-balance`
@@ -42,7 +50,7 @@ ADR-024 Tier-4.
   each maps statement line items to account-number ranges per
   RJ 270 / IFRS for SMEs (per design.md Seed Data).
 
-### REQ-FS-002: Each presentation manifest SHALL declare a tree of statement line items mapped to account-number ranges
+### Requirement: REQ-FS-002 — Each presentation manifest SHALL declare a tree of statement line items mapped to account-number ranges
 
 A presentation manifest MUST be a JSON document with the shape:
 
@@ -93,7 +101,7 @@ T2 ships three manifests per design.md Seed Data:
   fixed assets / current assets / equity / provisions /
   long-term debt / short-term debt sections).
 
-### REQ-FS-003: Balance Sheet, P&L, and Cash Flow SHALL each be a distinct statement-type page bound through the manifest
+### Requirement: REQ-FS-003 — Balance Sheet, P&L, and Cash Flow SHALL each be a distinct statement-type page bound through the manifest
 
 `src/manifest.json` MUST declare three navigation entries:
 
@@ -132,13 +140,14 @@ only.
   for `2026-Q2` filtered to the account ranges in `rj270-pl.json`;
   **AND** display the assembled P&L statement.
 
-### REQ-FS-004: Financial statements SHALL support year-over-year comparatives via repeated aggregation calls; no bespoke comparison code
+### Requirement: REQ-FS-004 — Financial statements SHALL support year-over-year comparatives via repeated aggregation calls; no bespoke comparison code
 
-When an operator requests N comparative periods (typically
-current-year + prior-year for SMB), the renderer MUST issue N
-independent trial-balance aggregation calls (one per period per
-statement section) and compose the columnar result in the
-manifest, per REQ-TB-006's multi-period pattern.
+Financial statements MUST support year-over-year comparatives. When an
+operator requests N comparative periods (typically current-year +
+prior-year for SMB), the renderer MUST issue N independent trial-balance
+aggregation calls (one per period per statement section) and compose
+the columnar result in the manifest, per REQ-TB-006's multi-period
+pattern.
 
 No bespoke "comparative report" assembly code in shillinq.
 
@@ -152,7 +161,7 @@ No bespoke "comparative report" assembly code in shillinq.
   by side (prior year / current year) per RJ 270's standard
   comparative layout.
 
-### REQ-FS-005: Each statement row SHALL be drill-through-able to the underlying GL transactions
+### Requirement: REQ-FS-005 — Each statement row SHALL be drill-through-able to the underlying GL transactions
 
 Every statement line item MUST carry sufficient identifiers
 (statement `period_id` + section `accountRanges`) to construct a
@@ -172,7 +181,7 @@ pattern, no bespoke drill-through code.
   where the GL index page (per T1 REQ-GL-007) shows every line
   in the range for that period.
 
-### REQ-FS-006: XBRL/SBR export SHALL be a declarative `x-openregister-calculations` output, not a PHP exporter
+### Requirement: REQ-FS-006 — XBRL/SBR export SHALL be a declarative `x-openregister-calculations` output, not a PHP exporter
 
 XBRL (SBR-compatible) export MUST be an
 `x-openregister-calculations` field on the statement output
@@ -219,8 +228,9 @@ side PDF code.
   `wkhtmltopdf` adapter) — no shillinq PHP code MUST be involved
   in the rendering pipeline.
 
-### REQ-FS-007: Financial statements SHALL render via a `CnReportPage` library component or a thin per-statement Vue fallback
+### Requirement: REQ-FS-007 — Financial statements SHALL render via a `CnReportPage` library component or a thin per-statement Vue fallback
 
+Financial statements MUST render through a manifest-bound renderer.
 The financial-statement renderer SHOULD be a new `CnReportPage`
 component in `@conduction/nextcloud-vue` (the preferred path —
 preserves ADR-024 Tier-4 across the fleet). The component takes
@@ -255,8 +265,9 @@ roadmap; the spec is shape-neutral on which renderer.
   `// TODO(ADR-024 Tier-4): replace with CnReportPage when library
   ships` comment naming the tracking issue.
 
-### REQ-FS-008: Financial statements SHALL be limited to SMB (RJ 270 / IFRS for SMEs) in T2; BBV is T3
+### Requirement: REQ-FS-008 — Financial statements SHALL be limited to SMB (RJ 270 / IFRS for SMEs) in T2; BBV is T3
 
+Financial statements MUST be limited to SMB presentation in T2.
 T2 ships presentation manifests conformant with RJ 270 and IFRS
 for SMEs only. The BBV (Besluit Begroting en Verantwoording)
 financial-statement formats for Dutch municipal / government
