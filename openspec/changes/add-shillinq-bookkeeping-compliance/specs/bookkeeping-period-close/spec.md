@@ -7,7 +7,7 @@
 
 ## ADDED Requirements
 
-### REQ-PC-001: The system SHALL promote `FiscalPeriod` from a stub to a full OpenRegister-managed register
+### Requirement: REQ-PC-001 — The system SHALL promote `FiscalPeriod` from a stub to a full OpenRegister-managed register
 
 T1's `GLLine.periodId` is a stub string. T2 MUST declare `FiscalPeriod`
 as a full register in `lib/Settings/shillinq_register.json`. When
@@ -34,7 +34,9 @@ HTTP surface.
 - **WHEN** scanned for `lib/Db/` Mapper classes naming `fiscal_period`
 - **THEN** no such class SHALL exist.
 
-### REQ-PC-002: The `FiscalPeriod` schema SHALL declare a fixed minimum field set
+### Requirement: REQ-PC-002 — The `FiscalPeriod` schema SHALL declare a fixed minimum field set
+
+The `FiscalPeriod` schema MUST declare the following fields with the listed types and required flags.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
@@ -67,7 +69,7 @@ OpenRegister built-in fields are not redeclared per
 - **WHEN** an object with `state: "archief"` is validated
 - **THEN** validation MUST fail with an enum-violation error.
 
-### REQ-PC-003: The `FiscalPeriod` register SHALL declare an `open → closing → closed → audit-locked` lifecycle
+### Requirement: REQ-PC-003 — The `FiscalPeriod` register SHALL declare an `open → closing → closed → audit-locked` lifecycle
 
 The `FiscalPeriod` schema MUST declare an `x-openregister-lifecycle`
 block (per ADR-031) with the following states and transitions:
@@ -101,7 +103,7 @@ ADR-031 §"PHP guards remain a legitimate seam".
 - **THEN** the transition MUST be rejected with an "audit-locked,
   irreversible" error.
 
-### REQ-PC-004: Postings against a closed `FiscalPeriod` SHALL be rejected by an OR lifecycle precondition
+### Requirement: REQ-PC-004 — Postings against a closed `FiscalPeriod` SHALL be rejected by an OR lifecycle precondition
 
 The `GLTransaction.post` precondition list (T1, REQ-GL-004) MUST
 gain an additive closed-period rejection clause: if the target
@@ -126,9 +128,9 @@ may add a separate end-of-year-locked clause.
   `2026-02-10`
 - **THEN** the posting MUST succeed without a period-close error.
 
-### REQ-PC-005: The `FiscalPeriod` schema SHALL carry `x-openregister-audit: true`
+### Requirement: REQ-PC-005 — The `FiscalPeriod` schema SHALL carry `x-openregister-audit: true`
 
-Every `FiscalPeriod` lifecycle transition (open → closing, closing →
+The `FiscalPeriod` schema MUST carry `x-openregister-audit: true` so every lifecycle transition is captured in OR's immutable audit trail. Every `FiscalPeriod` lifecycle transition (open → closing, closing →
 closed, closed → open, closed → audit-locked) MUST be recorded in
 OR's immutable audit trail. No additional app-local audit table is
 permitted per ADR-022.
@@ -141,9 +143,9 @@ permitted per ADR-022.
 - **THEN** an audit event MUST exist recording the actor, the
   `open → closing` transition, and the timestamp.
 
-### REQ-PC-006: Reopening a closed period SHALL record the actor and reason in the `reopenedHistory` array
+### Requirement: REQ-PC-006 — Reopening a closed period SHALL record the actor and reason in the `reopenedHistory` array
 
-When an operator with `period-closer` role transitions a `FiscalPeriod`
+Reopening a closed period MUST append an entry recording the actor, timestamp, and reason to the `reopenedHistory` array. When an operator with `period-closer` role transitions a `FiscalPeriod`
 from `closed` back to `open`, the lifecycle MUST append an entry
 `{reopenedAt: <iso-timestamp>, reopenedBy: <user-uuid>, reason: <string>}`
 to `reopenedHistory`. The original `closedAt` and `closedBy` values
@@ -156,7 +158,7 @@ MUST be preserved on the object.
 - **THEN** `reopenedHistory` MUST contain exactly 2 entries, each
   with `reopenedAt`, `reopenedBy`, and a non-empty `reason`.
 
-### REQ-PC-007: Period close SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-PC-007 — Period close SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare a `Bookkeeping > Period Close`
 navigation entry with:

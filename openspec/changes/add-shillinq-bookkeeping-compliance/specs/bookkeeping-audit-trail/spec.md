@@ -16,10 +16,9 @@ An app-local audit table is explicitly forbidden.
 
 ## ADDED Requirements
 
-### REQ-AT-001: Every bookkeeping register SHALL declare `x-openregister-audit: true`
+### Requirement: REQ-AT-001 — Every bookkeeping register SHALL declare `x-openregister-audit: true`
 
-Every T1 and T2 register declared in `lib/Settings/shillinq_register.json`
-MUST carry `x-openregister-audit: true` (or the OR-canonical equivalent
+Every T1 and T2 register declared in `lib/Settings/shillinq_register.json` MUST carry `x-openregister-audit: true` (or the OR-canonical equivalent
 field). This activates OR's immutable audit trail (append-only hash-chained
 event log) for every create, update, and lifecycle transition on each
 object. The following registers MUST carry the flag:
@@ -48,9 +47,9 @@ anti-pattern list).
   routes matching `/audit/purge`
 - **THEN** no such classes or routes SHALL exist.
 
-### REQ-AT-002: Every bookkeeping object's lifecycle transition SHALL produce an audit event
+### Requirement: REQ-AT-002 — Every bookkeeping object's lifecycle transition SHALL produce an audit event
 
-For every bookkeeping register with an `x-openregister-lifecycle` block,
+Every bookkeeping object lifecycle transition MUST produce an immutable audit event in OR's append-only audit trail. For every bookkeeping register with an `x-openregister-lifecycle` block,
 each lifecycle transition MUST produce an audit event in OR's immutable
 log. The event MUST record at minimum: the object UUID, the schema name,
 the `from` state, the `to` state, the actor UUID, and the ISO 8601
@@ -72,7 +71,7 @@ no additional assertions on the hash chain.
 - **THEN** an audit event MUST exist with `from: "approved"`,
   `to: "posted"`, the actor's UUID, and the `glTransactionId` written.
 
-### REQ-AT-003: The audit trail SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-AT-003 — The audit trail SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare a `Bookkeeping > Audit Trail`
 navigation entry. This entry MUST open OR's audit-log UI
@@ -103,9 +102,9 @@ entry points to OR's existing audit-log UI surface.
 - **THEN** all lifecycle transition events for `FiscalPeriod` objects
   in that date range MUST be visible.
 
-### REQ-AT-004: Every bookkeeping `type: detail` manifest page SHALL declare the OR audit-log side panel
+### Requirement: REQ-AT-004 — Every bookkeeping `type: detail` manifest page SHALL declare the OR audit-log side panel
 
-Per ADR-024, every `type: detail` page entry for bookkeeping registers
+Every bookkeeping detail page MUST declare OpenRegister's audit-log side panel so reviewers can inspect the trail without leaving the page. Per ADR-024, every `type: detail` page entry for bookkeeping registers
 in `src/manifest.json` MUST declare the OR audit-log side panel
 (integration panel) filtered to the object's UUID. This allows
 bookkeepers and auditors to view the full audit history of any
@@ -119,9 +118,9 @@ individual object without navigating away from the detail page.
   be visible, including the `draft → received`, `received → matched`,
   `matched → approved`, and `approved → posted` transitions.
 
-### REQ-AT-005: Audit retention SHALL be governed by OR per ADR-022
+### Requirement: REQ-AT-005 — Audit retention SHALL be governed by OR per ADR-022
 
-The retention period for bookkeeping audit events is 7 years
+Audit retention MUST be governed by OpenRegister's archival-destruction-workflow per ADR-022; no shillinq-side purge code SHALL exist. The retention period for bookkeeping audit events is 7 years
 (Belastingdienst requirement, per Archiefwet). This retention policy
 MUST be configured in OR's archival-destruction-workflow — NOT as
 a shillinq cron job or a PHP purge service. Shillinq MUST NOT author

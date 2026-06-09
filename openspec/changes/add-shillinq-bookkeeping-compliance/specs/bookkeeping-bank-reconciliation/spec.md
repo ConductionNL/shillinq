@@ -15,7 +15,7 @@ connectors (auto-import on bank webhook) are explicitly T4.
 
 ## ADDED Requirements
 
-### REQ-BR-001: The system SHALL store bank statements, statement lines, matching rules, and reconciliation matches as OpenRegister-managed registers
+### Requirement: REQ-BR-001 — The system SHALL store bank statements, statement lines, matching rules, and reconciliation matches as OpenRegister-managed registers
 
 Four registers MUST be declared in `lib/Settings/shillinq_register.json`:
 `BankStatement`, `BankStatementLine`, `MatchingRule`,
@@ -30,7 +30,9 @@ exposes all four.
   `bank_statement_line`, `matching_rule`, or `reconciliation_match`
 - **THEN** no such classes SHALL exist.
 
-### REQ-BR-002: The `BankStatement` schema SHALL declare a fixed minimum field set
+### Requirement: REQ-BR-002 — The `BankStatement` schema SHALL declare a fixed minimum field set
+
+The `BankStatement` schema MUST declare the following fields with the listed types and required flags.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
@@ -53,7 +55,7 @@ exposes all four.
 - **WHEN** an object with required fields and `lifecycleState: "imported"` is validated
 - **THEN** validation MUST pass.
 
-### REQ-BR-003: The system SHALL declare `BankStatementLine` and support CAMT.053, MT940, and manual import
+### Requirement: REQ-BR-003 — The system SHALL declare `BankStatementLine` and support CAMT.053, MT940, and manual import
 
 The `BankStatementLine` schema MUST declare:
 
@@ -97,7 +99,7 @@ deferred to `opsx-ff` discovery during the implementing cycle.
 - **WHEN** the bank statement is imported
 - **THEN** exactly 8 `BankStatementLine` records MUST be created.
 
-### REQ-BR-004: The `BankStatement` register SHALL declare an `imported → in-progress → reconciled → audit-locked` lifecycle
+### Requirement: REQ-BR-004 — The `BankStatement` register SHALL declare an `imported → in-progress → reconciled → audit-locked` lifecycle
 
 Per ADR-031, the bank statement lifecycle MUST be declared as an
 `x-openregister-lifecycle` block with:
@@ -125,7 +127,7 @@ Per ADR-031, the bank statement lifecycle MUST be declared as an
 - **THEN** the transition MUST be rejected with an "audit-locked,
   irreversible" error.
 
-### REQ-BR-005: The `MatchingRule` schema SHALL declare predicate-based matching rules
+### Requirement: REQ-BR-005 — The `MatchingRule` schema SHALL declare predicate-based matching rules
 
 The `MatchingRule` schema MUST declare:
 
@@ -161,7 +163,7 @@ Each predicate in `predicates` MUST declare:
 - **THEN** a `ReconciliationMatch` candidate MUST be emitted linking
   the bank line to the AR invoice.
 
-### REQ-BR-006: Bank line matching SHALL be declared as an `x-openregister-aggregations` query emitting `ReconciliationMatch` candidates
+### Requirement: REQ-BR-006 — Bank line matching SHALL be declared as an `x-openregister-aggregations` query emitting `ReconciliationMatch` candidates
 
 Per ADR-031, the matching logic MUST be declared as an
 `x-openregister-aggregations` query that consumes `MatchingRule`
@@ -191,9 +193,9 @@ The `ReconciliationMatch` schema MUST declare:
 - **THEN** no such classes SHALL exist (other than at-most-1
   `StatementParser` guard, if applicable per ADR-031 exception).
 
-### REQ-BR-007: Unmatched bank statement lines SHALL be routable to a suspense account
+### Requirement: REQ-BR-007 — Unmatched bank statement lines SHALL be routable to a suspense account
 
-When an operator determines that a `BankStatementLine` cannot be
+Unmatched bank statement lines MUST be routable to a designated suspense account so the bank balance can still tie out. When an operator determines that a `BankStatementLine` cannot be
 matched to an AR/AP invoice or journal entry, the line MUST be
 routable to a designated suspense account. The suspense account is
 either:
@@ -216,9 +218,9 @@ not a PHP service.
   `9998`; the `BankStatementLine.status` MUST become
   `routed-to-suspense`.
 
-### REQ-BR-008: Duplicate bank statement import SHALL be rejected
+### Requirement: REQ-BR-008 — Duplicate bank statement import SHALL be rejected
 
-The `BankStatement.fileChecksum` field (SHA-256 of the uploaded
+Duplicate bank-statement imports MUST be rejected via a schema-level uniqueness rule on `(administrationId, fileChecksum)`. The `BankStatement.fileChecksum` field (SHA-256 of the uploaded
 file) MUST be used to prevent duplicate imports. The uniqueness
 constraint MUST be declared as a schema-level uniqueness rule on
 `(administrationId, fileChecksum)` — NOT as a PHP service check.
@@ -235,9 +237,9 @@ existing `BankStatement` record.
 - **THEN** the import MUST be rejected with "duplicate statement"
   and the ID of the existing record.
 
-### REQ-BR-009: PSD2 live-feed bank connectors are explicitly deferred to T4
+### Requirement: REQ-BR-009 — PSD2 live-feed bank connectors are explicitly deferred to T4
 
-T2 bank reconciliation supports CAMT.053 + MT940 + manual CSV import
+The T2 spec MUST NOT declare any PSD2 webhook, open-banking connector, or live-feed service; PSD2 live-feed bank connectors are explicitly deferred to T4. T2 bank reconciliation supports CAMT.053 + MT940 + manual CSV import
 only. Automated bank-feed integration via PSD2 webhooks or open-banking
 APIs is explicitly T4 (`add-shillinq-bookkeeping-advanced` /
 `bookkeeping-bank-connectors`). The T2 spec MUST NOT declare any
@@ -250,7 +252,7 @@ PSD2 route, webhook handler, or live-feed service.
   `/bank/feed`, or `/bank/connect`
 - **THEN** no such routes SHALL exist.
 
-### REQ-BR-010: Bank reconciliation SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-BR-010 — Bank reconciliation SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare:
 - `Bookkeeping > Bank Reconciliation` — `type: index` + `type: detail`
