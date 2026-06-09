@@ -7705,6 +7705,93 @@ ondernemingsactiviteit.
 **Cites:** ADR-031 (schema-declarative), ADR-037 (modular register
 fragments), ADR-019 (no new SBR client), ADR-024 (Tier-4 manifest pages).
 
+## Wet Markt en Overheid Compliance entities (add-shillinq-market-government-separation, REQ-MGS-001..005 / REQ-WMO-001..007)
+
+> **Source:** `openspec/changes/bookkeeping-market-government-separation/`
+> (T3 sibling delivered on `development`, register.d + manifest.d
+> fragments) plus the T2 umbrella
+> `openspec/changes/add-shillinq-market-government-separation/`
+> (proposal + design + abstract REQ-MGS-NNN scope). Per Wet Markt en
+> Overheid (Mededingingswet hoofdstuk 4b) gemeenten / provincies /
+> waterschappen running ondernemingsactiviteiten MUST (a) identify
+> ondernemingsactiviteiten as distinct clusters on `CostCenter`,
+> (b) compute the integrale kostprijs (direct costs + allocated
+> overhead + equity compensation art. 25i), and (c) maintain a
+> transparantieadministratie showing the ondernemingsactiviteit is
+> not cross-subsidised. The owning fragment is
+> `lib/Settings/register.d/bookkeeping-market-government-separation.json`
+> (8 schemas: `CommercialActivity`, `IntegralCostPrice`,
+> `ActivityCostAllocation`, `AlgemeenBelangBesluit`, `ACMReport`,
+> `AlertLog`, `WMOAuditLog`, `MarketBenchmark`). The manifest entry
+> sits at `src/manifest.d/bookkeeping-market-government-separation.json`
+> behind the `WMO Compliance` menu group. The
+> `CostCenter.ondernemingsActiviteit` additive flag is layered via
+> the VPB-balans fragment (see preceding section) since both T4
+> capabilities consume the same flag.
+
+**CostCenter additive flag (ADR-037 `x-openspec-extend`):**
+- `CostCenter.ondernemingsActiviteit: boolean` (default `false`) —
+  the Wet Markt en Overheid trigger flag per REQ-MGS-001. When
+  `true`, the cost-center is subject to the integrale-kostprijs
+  requirement (REQ-MGS-002 / REQ-WMO-002) and surfaces in the WMO
+  Compliance manifest pages (REQ-MGS-005 / REQ-WMO-001..004). Per
+  ADR-031 the flag is schema metadata — there is no parallel
+  `OndernemingsActiviteit` register. The flag is defined in the
+  VPB-balans register.d fragment for ordering reasons (VPB-balans
+  consumes the flag in REQ-VPB-002); the WMO fragment references
+  the same flag without redeclaring it. Ondernemingsactiviteit
+  views carry `schema:Service` schema.org type per REQ-MGS-001.
+
+**AlgemeenBelangBesluit overlay (REQ-MGS-004 / REQ-WMO-005):**
+declared as a register fragment with `besluitNummer` (mapped to
+`kenmerk`), `besluitDatum` (mapped to `vaststellingsdatum`),
+`geldigheidsperiode` (derived from the 10-state lifecycle
+`raadsbesluit → publicatie → acm-notified → geldig → evaluatie-due
+→ herziening → intrekking → ingetrokken → archived` plus
+`volgendeEvaluatie`), `motivering` (docudesk attachment URI), and
+`betreftActiviteiten[]` (the WMO equivalent of `getrokkenBedrag`
+linking activities exempted by the besluit). The integrale-kostprijs
+warning (REQ-MGS-003 / REQ-WMO-004) is suppressed declaratively
+when a valid `AlgemeenBelangBesluit` covers the period: the
+`CommercialActivity.isExempted` flag plus the FK to
+`AlgemeenBelangBesluit.id` short-circuits the under-cost-recovery
+warning and an informational banner cites the besluit `kenmerk`.
+Both the suppression and the banner event log to `WMOAuditLog` per
+ADR-022 (immutable audit, 7-year retention).
+
+**Integrale kostprijs (REQ-MGS-002 / REQ-WMO-002):** declared on
+`IntegralCostPrice` per `(commercialActivityId, periode)`,
+time-versioned with `status: voorlopig` (monthly) → `definitief`
+(31 March of the following year, accountant digital signature
+locks the record). The componenten block sums direct costs +
+allocated overhead via the BBV taakveld 0.4 `OverheadDistributionRule`
+sleutel (inherited from `bookkeeping-cost-centers-dimensions`,
+no shadow schema) + a vermogenscompensatie (WACC, default 4.5%,
+configurable per activity per period). Tarieven-vs-kostprijs
+comparison surfaces an `unrecovered cost` warning when realised
+revenue (GL revenue-sum) < integrale kostprijs (REQ-MGS-003 /
+REQ-WMO-004 §compliant).
+
+**Transparantieadministratie navigation (REQ-MGS-005 / REQ-WMO-001
+manifest entries):** the `Bookkeeping > WMO Compliance` menu
+group in `src/manifest.d/bookkeeping-market-government-separation.json`
+carries `type: index` + `type: detail` pages bound to
+`CommercialActivity` / `IntegralCostPrice` /
+`ActivityCostAllocation` so the per-activity transparantie view
+(direct costs / overhead / equity comp / integrale kostprijs /
+revenue / margin / compliance status / besluit reference) renders
+without bespoke Vue components per ADR-024.
+
+**Cites:** ADR-022 (audit-trail-immutable), ADR-024 (Tier-4
+manifest pages), ADR-031 (schema-declarative, no bespoke kostprijs
+service), ADR-032 (`kind: config` change), ADR-037 (modular
+register.d / manifest.d fragments). See sibling spec
+`openspec/specs/bookkeeping-market-government-separation/spec.md`
+for the full REQ-WMO-NNN catalogue (8 schemas, lifecycle blocks,
+RBAC roles, ACM-handhavings-pakket export) and the parent T4
+envelope spec `openspec/specs/bookkeeping-bbv-compliance/spec.md`
+for BBV taakveld 0.4 sleutel inheritance.
+
 ## SEPA Direct Debit (Incasso) entities
 
 > **Source:** `openspec/changes/bookkeeping-sepa-direct-debit/`. Five
